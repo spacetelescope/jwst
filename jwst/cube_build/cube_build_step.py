@@ -50,7 +50,6 @@ SHORT,MEDIUM,LONG, or ALL
 
     def process(self, input):
         self.log.info('Starting IFU Cube Building Step')
-
 #________________________________________________________________________________
 # For all parameters convert to a standard format
 # Report read in values to screen

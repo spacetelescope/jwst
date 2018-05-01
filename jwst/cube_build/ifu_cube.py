@@ -684,7 +684,7 @@ class IFUCubeData(object):
         IFUCube.meta.filename = self.output_name
         
         IFUCubeData.blend_output_metadata(self,IFUCube)
-
+#______________________________________________________________________
         if self.output_type == 'single':
             with datamodels.open(self.input_models[j]) as input:
                 # define the cubename for each single
@@ -696,11 +696,43 @@ class IFUCubeData(object):
                 IFUCube.meta.filename = newname
                 # need to set what type of SINGLE IFU Cube is being created in header
                 # this information is needed in the blotting stage
-                if(self.instrument == 'MIRI'):
+                if self.instrument == 'MIRI':
                     IFUCube.meta.instrument.channel = self.list_par1[0]
-                if(self.instrument == 'NIRSPEC'):
+                if self.instrument == 'NIRSPEC':
                     IFUCube.meta.instrument.grating = self.list_par1[0]
+#
+        else:
+            if self.instrument == 'MIRI':
+                # fill in Channel output meta data
+                num_ch = len(self.list_par1)
+                IFUCube.meta.instrument.channel = self.list_par1[0]
+                num_ch = len(self.list_par1)
+                for j in range (1, num_ch):
+                    IFUCube.meta.instrument.channel =  IFUCube.meta.instrument.channel + str(self.list_par1[j])
+                    print('meta channel',IFUCube.meta.instrument.channel)
 
+
+                # fill in Band output meta  data
+                num_band = len(set(self.list_par2))
+                if num_band == 1:  
+                    IFUCube.meta.instrument.band = self.list_par2[0]
+                else:
+                    IFUCube.meta.instrument.band = 'MULTIPLE'
+            # NIRSPEC
+            elif self.instrument == 'NIRSPEC':
+                num_grating = len(set(self.list_par1))
+                if num_grating == 1:  
+                    IFUCube.meta.instrument.grating = self.list_par1[0]
+                else:
+                    IFUCube.meta.instrument.grating = 'MULTIPLE'
+
+                num_filter = len(set(self.list_par2))
+                if num_filter == 1:  
+                    IFUCube.meta.instrument.filter = self.list_par2[0]
+                else:
+                    IFUCube.meta.instrument.filter = 'MULTIPLE'
+
+#______________________________________________________________________
         IFUCube.meta.wcsinfo.crval1 = self.Crval1
         IFUCube.meta.wcsinfo.crval2 = self.Crval2
         IFUCube.meta.wcsinfo.crval3 = self.Crval3
@@ -731,6 +763,9 @@ class IFUCubeData(object):
         IFUCube.meta.wcsinfo.pc3_2 = 0
         IFUCube.meta.wcsinfo.pc3_3 = 1
 
+
+#        IFUCube.meta.instrument.channel = '1'
+
         IFUCube.meta.ifu.flux_extension = 'SCI'
         IFUCube.meta.ifu.error_extension = 'ERR'
         IFUCube.meta.ifu.error_type = 'ERR'
@@ -739,6 +774,7 @@ class IFUCubeData(object):
         IFUCube.meta.ifu.roi_wave = self.roiw
         IFUCube.meta.ifu.weighting = self.weighting
         IFUCube.meta.ifu.weight_power = self.weight_power
+        
 
 
         with datamodels.open(self.input_models[j]) as input:
