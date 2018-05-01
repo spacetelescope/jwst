@@ -18,10 +18,12 @@ def test_detector1pipeline3(_bigdata):
     """
     step = Detector1Pipeline()
     step.save_calibrated_ramp = True
+    step.ipc.skip = True
     step.refpix.odd_even_columns = True
     step.refpix.use_side_ref_pixels = False
     step.refpix.side_smoothing_length = 10
     step.refpix.side_gain = 1.0
+    step.persistence.skip = True
     step.jump.rejection_threshold = 250.0
     step.ramp_fit.save_opt = True
     step.output_file = 'jw82500001003_02101_00001_NRCALONG_rate.fits'
