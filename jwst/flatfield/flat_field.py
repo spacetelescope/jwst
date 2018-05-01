@@ -32,17 +32,17 @@ def do_correction(input_model, flat_model,
     input_model: JWST data model
         Input science data model to be flat-fielded.
 
-    flat_model: JWST data model
+    flat_model: JWST data model, or None
         Data model containing flat-field for all instruments other than
         NIRSpec spectrographic data.
 
-    f_flat_model: NirspecFlatModel or NirspecQuadFlatModel object
+    f_flat_model: NirspecFlatModel, or NirspecQuadFlatModel object, or None
         Flat field for the fore optics.  Used only for NIRSpec data.
 
-    s_flat_model: NirspecFlatModel object
+    s_flat_model: NirspecFlatModel object, or None
         Flat field for the spectrograph.  Used only for NIRSpec data.
 
-    d_flat_model: NirspecFlatModel object
+    d_flat_model: NirspecFlatModel object, or None
         Flat field for the detector.  Used only for NIRSpec data.
 
     flat_suffix: str or None
@@ -61,9 +61,10 @@ def do_correction(input_model, flat_model,
     output_model = input_model.copy()
 
     # NIRSpec spectrographic data are processed differently from other
-    # types of data (including NIRSpec imaging).
+    # types of data (including NIRSpec imaging).  The test on flat_model is
+    # needed because NIRSpec imaging data are processed by do_flat_field().
     is_NRS_spectrographic = (input_model.meta.instrument.name == 'NIRSPEC' and
-                             f_flat_model is not None)
+                             flat_model is None)
 
     if is_NRS_spectrographic:
         interpolated_flats = do_NIRSpec_flat_field(output_model,
@@ -221,13 +222,13 @@ def do_NIRSpec_flat_field(output_model,
     output_model: JWST data model
         Science data model, modified (flat fielded) in-place.
 
-    f_flat_model: NirspecFlatModel or NirspecQuadFlatModel object
+    f_flat_model: NirspecFlatModel, or NirspecQuadFlatModel object, or None
         Flat field for the fore optics.
 
-    s_flat_model: NirspecFlatModel object
+    s_flat_model: NirspecFlatModel object, or None
         Flat field for the spectrograph.
 
-    d_flat_model: NirspecFlatModel object
+    d_flat_model: NirspecFlatModel object, or None
         Flat field for the detector.
 
     flat_suffix: str or None
@@ -434,13 +435,13 @@ def NIRSpec_brightobj(output_model,
     output_model: JWST data model
         CubeModel, modified (flat fielded) plane by plane, in-place.
 
-    f_flat_model: NirspecFlatModel object
+    f_flat_model: NirspecFlatModel object, or None
         Flat field for the fore optics.
 
-    s_flat_model: NirspecFlatModel object
+    s_flat_model: NirspecFlatModel object, or None
         Flat field for the spectrograph.
 
-    d_flat_model: NirspecFlatModel object
+    d_flat_model: NirspecFlatModel object, or None
         Flat field for the detector.
 
     flat_suffix: str or None
@@ -568,13 +569,13 @@ def NIRSpec_IFU(output_model,
     output_model: JWST data model
         Science data model, modified (flat fielded) in-place.
 
-    f_flat_model: NirspecFlatModel or NirspecQuadFlatModel object
+    f_flat_model: NirspecFlatModel, or NirspecQuadFlatModel object, or None
         Flat field for the fore optics.
 
-    s_flat_model: NirspecFlatModel object
+    s_flat_model: NirspecFlatModel object, or None
         Flat field for the spectrograph.
 
-    d_flat_model: NirspecFlatModel object
+    d_flat_model: NirspecFlatModel object, or None
         Flat field for the detector.
 
     flat_suffix: str or None
@@ -709,13 +710,13 @@ def create_flat_field(wl, f_flat_model, s_flat_model, d_flat_model,
         Wavelength at each pixel of the 2-D slit array.  This array has
         shape (ystop - ystart, xstop - xstart).
 
-    f_flat_model: NirspecFlatModel or NirspecQuadFlatModel object
+    f_flat_model: NirspecFlatModel, or NirspecQuadFlatModel object, or None
         Flat field for the fore optics.
 
-    s_flat_model: NirspecFlatModel object
+    s_flat_model: NirspecFlatModel object, or None
         Flat field for the spectrograph.
 
-    d_flat_model: NirspecFlatModel object
+    d_flat_model: NirspecFlatModel object, or None
         Flat field for the detector.
 
     xstart, ystart: int
@@ -776,7 +777,7 @@ def fore_optics_flat(wl, f_flat_model, exposure_type,
     wl: 2-D ndarray
         Wavelength at each pixel of the 2-D slit array.
 
-    f_flat_model: NirspecFlatModel or NirspecQuadFlatModel object
+    f_flat_model: NirspecFlatModel, or NirspecQuadFlatModel object, or None
         Flat field for the fore optics.
 
     exposure_type: str
@@ -794,7 +795,13 @@ def fore_optics_flat(wl, f_flat_model, exposure_type,
     -------
     tuple (f_flat, f_flat_dq)
         The flat field and associated data quality array.
+        f_flat_dq may be None.
     """
+
+    if f_flat_model is None:
+        f_flat = np.ones(wl.shape, dtype=np.float32)
+        f_flat_dq = None
+        return (f_flat, f_flat_dq)
 
     if slit_nt is None:
         quadrant = None
@@ -862,7 +869,7 @@ def spectrograph_flat(wl, s_flat_model,
     wl: 2-D ndarray
         Wavelength at each pixel of the 2-D slit array.
 
-    s_flat_model: NirspecFlatModel object
+    s_flat_model: NirspecFlatModel object, or None
         Flat field for the spectrograph.
 
     xstart, ystart: int
@@ -885,7 +892,13 @@ def spectrograph_flat(wl, s_flat_model,
     -------
     tuple (s_flat, s_flat_dq)
         The flat field and associated data quality array.
+        s_flat_dq may be None.
     """
+
+    if s_flat_model is None:
+        s_flat = np.ones(wl.shape, dtype=np.float32)
+        s_flat_dq = None
+        return (s_flat, s_flat_dq)
 
     quadrant = None
 
@@ -929,7 +942,7 @@ def detector_flat(wl, d_flat_model,
     wl: 2-D ndarray
         Wavelength at each pixel of the 2-D slit array.
 
-    d_flat_model: NirspecFlatModel object
+    d_flat_model: NirspecFlatModel object, or None
         Flat field for the detector.
 
     xstart, ystart: int
@@ -952,7 +965,13 @@ def detector_flat(wl, d_flat_model,
     -------
     tuple (d_flat, d_flat_dq)
         The flat field and associated data quality array.
+        d_flat_dq may be None.
     """
+
+    if d_flat_model is None:
+        d_flat = np.ones(wl.shape, dtype=np.float32)
+        d_flat_dq = None
+        return (d_flat, d_flat_dq)
 
     quadrant = None
 
