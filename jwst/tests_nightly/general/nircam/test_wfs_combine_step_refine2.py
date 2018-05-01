@@ -12,12 +12,11 @@ pytestmark = [
 
 def test_wfs_combine(_bigdata):
     """
-
     Regression test of wfs_combine using do_refine=True
-
     """
 
-    WfsCombineStep.call(_bigdata+'/nircam/test_wfs_combine/wfs_3sets_asn3.json')
+    WfsCombineStep.call(_bigdata+'/nircam/test_wfs_combine/wfs_3sets_asn3.json',
+        do_refine=True)
 
     # compare 1st pair of output files
     h = pf.open('test_wfscom3_wfscmb.fits')
