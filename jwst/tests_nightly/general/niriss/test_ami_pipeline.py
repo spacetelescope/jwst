@@ -16,11 +16,11 @@ def test_ami_pipeline(_bigdata):
     Regression test of the AMI pipeline performed on NIRISS AMI data.
 
     """
-    step = Ami3Pipeline()
-    step.save_averages = True
-    step.ami_analyze.oversample = 3
-    step.ami_analyze.rotation=1.49
-    step.run(_bigdata+'/niriss/test_ami_pipeline/test_lg1_asn.json')
+    pipe = Ami3Pipeline()
+    pipe.save_averages = True
+    pipe.ami_analyze.oversample = 3
+    pipe.ami_analyze.rotation = 1.49
+    pipe.run(_bigdata + '/niriss/test_ami_pipeline/test_lg1_asn.json')
 
     h = pf.open('test_targ_aminorm.fits')
     href = pf.open(_bigdata+'/niriss/test_ami_pipeline/ami_pipeline_targ_lgnorm.fits')
@@ -34,6 +34,6 @@ def test_ami_pipeline(_bigdata):
     result = pf.diff.FITSDiff(newh,
                               newhref,
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
-                              rtol = 0.00001
+                              rtol = 0.0001
     )
     assert result.identical, result.report()
