@@ -17,7 +17,7 @@ def test_rscd_miri2(_bigdata):
     Regression test of RSCD step performed on MIRI data.
 
     """
-    suffix = 'rcsd'
+    suffix = 'rscd'
     output_file_base, output_file = add_suffix('rscd2_output.fits', suffix)
 
     try:
