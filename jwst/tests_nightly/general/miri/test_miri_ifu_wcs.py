@@ -8,6 +8,7 @@ from astropy.io import fits
 
 from jwst.assign_wcs import AssignWcsStep
 from jwst.datamodels import ImageModel, fits_support
+from jwst.stpipe import crds_client
 
 pytestmark = [
     pytest.mark.usefixtures('_jail'),
@@ -37,7 +38,7 @@ def test_miri_ifu_wcs(_bigdata):
     imref = ImageModel(ref_file)
 
     # Get the valid region
-    region = AsdfFile.open('/grp/crds/cache/references/jwst/{}'.format(im.meta.ref_file_regions.name.replace('crds://', '')))
+    region = AsdfFile.open(crds_client.get_reference_file(im, 'regions'))
     y, x = np.nonzero(region.tree['regions'])
 
     # Get indices where pixels == 0. These should be NaNs in the output.
