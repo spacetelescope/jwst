@@ -8,7 +8,7 @@ import logging
 import numpy as np
 
 from astropy.modeling import models, fitting
-from astropy.modeling.models import Mapping, Identity, Const1D, Scale
+from astropy.modeling.models import Mapping, Identity, Const1D, Scale, Tabular1D
 from astropy import units as u
 from astropy import coordinates as coord
 from astropy.io import fits
@@ -850,12 +850,12 @@ def wavelength_from_disperser(disperser, input_model):
         n = Snell.compute_refraction_index(lam, system_temperature, tref, pref,
                                            system_pressure, kcoef, lcoef, tcoef
                                            )
-        poly = models.Polynomial1D(1)
-        fitter = fitting.LinearLSQFitter()
-        lam_of_n = fitter(poly, n, lam)
-        lam_of_n = lam_of_n.rename('n_interpolate')
+        n = np.flipud(n)
+        lam = np.flipud(lam)
         n_from_prism = RefractionIndexFromPrism(disperser['angle'], name='n_prism')
-        return n_from_prism | lam_of_n
+
+        tab = Tabular1D(points=(n,), lookup_table=lam, bounds_error=False)
+        return n_from_prism | tab
 
 
 def detector_to_gwa(reference_files, detector, disperser):
@@ -1280,11 +1280,11 @@ def gwa_to_ymsa(msa2gwa_model, lam_cen=None):
         cosin_grating_k = msa2gwa_model(dx, dy, [lam_cen] * nstep)
     else:
         cosin_grating_k = msa2gwa_model(dx, dy)
-    fitter = fitting.LinearLSQFitter()
-    model = models.Polynomial1D(1)
-    poly1d_model = fitter(model, cosin_grating_k[1], dy)
-    poly_model = poly1d_model.rename('interpolation')
-    return poly_model
+    beta_in = cosin_grating_k[1]
+
+    tab = Tabular1D(points=(beta_in,),
+                    lookup_table=dy, bounds_error=False, name='tabular')
+    return tab
 
 
 def nrs_wcs_set_input(input_model, slit_name, wavelength_range=None):
