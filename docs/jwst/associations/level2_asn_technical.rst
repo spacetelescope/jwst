@@ -134,9 +134,23 @@ expname *required*
 exptype *required*
   Type of information represented by the exposure. Possible values are
 
-  * `science`
-  * `background`
-  * `imprint`
+  * `science` *required*
+    
+    Primary science exposure. For each product, only one exposure can
+    be `science`.
+    
+  * `background` *optional*
+    
+    Off-target background exposure to subtract.
+    
+  * `imprint` *optional*
+    
+    Imprint exposure to subtract.
+    
+  * `sourcecat` *optional*
+    
+    The catalog of sources to extract spectra for. Usually produced by
+    `calwebb_image3` for wide-field slitless spectroscopy.
 
 Editing the member list
 ^^^^^^^^^^^^^^^^^^^^^^^
