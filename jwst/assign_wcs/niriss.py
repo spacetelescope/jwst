@@ -13,7 +13,9 @@ from ..transforms.models import (NirissSOSSModel,
                                  NIRISSForwardRowGrismDispersion,
                                  NIRISSBackwardGrismDispersion,
                                  NIRISSForwardColumnGrismDispersion)
-from ..datamodels import ImageModel, NIRISSGrismModel, DistortionModel
+from ..datamodels import (ImageModel, NIRISSGrismModel, DistortionModel,
+                          CubeModel)
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 

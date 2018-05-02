@@ -9,7 +9,7 @@ from gwcs import coordinate_frames as cf
 
 from .util import not_implemented_mode, subarray_transform
 from . import pointing
-from ..datamodels import DistortionModel
+from ..datamodels import (DistortionModel, ImageModel, CubeModel)
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
