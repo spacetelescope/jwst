@@ -709,7 +709,7 @@ class IFUCubeData(object):
                 num_ch = len(self.list_par1)
                 for j in range (1, num_ch):
                     IFUCube.meta.instrument.channel =  IFUCube.meta.instrument.channel + str(self.list_par1[j])
-                    print('meta channel',IFUCube.meta.instrument.channel)
+#                    print('meta channel',IFUCube.meta.instrument.channel)
 
 
                 # fill in Band output meta  data
