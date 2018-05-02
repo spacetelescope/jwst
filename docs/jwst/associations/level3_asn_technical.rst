@@ -133,7 +133,7 @@ exptype *required*
   * `science` *required*
 
     The primary science expsoures. There is usually more than one
-    since Level3 calibration involved combining multiple science
+    since Level3 calibration involves combining multiple science
     exposures. However, at least one exposure in an association needs
     to be `science`.
     

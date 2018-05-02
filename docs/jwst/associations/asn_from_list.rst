@@ -83,7 +83,7 @@ To create a Level3 association, use the following command:
 
 The `-o` option defines the name of the association file to create.
 
-The `--product-name` will set the `name` field which the Level3
+The `--product-name` will set the `name` field that the Level3
 calibration code will use as the output name. For the example, the
 output files created by `calwebb_image3`, or other Level3 pipelines,
 will all begin with **l3_results**.
@@ -94,8 +94,30 @@ association, with the presumption that all files will be combined.
 For coronagraphic or AMI processing, set the `exptype` of the
 exposures that are the PSF reference exposures to `psf`.  If the
 PSF files are not in the `members` list, edit the association and add
-them as members.
-  
+them as members. An example product with a psf exposure would look
+like::
+
+  "products": [
+      {
+          "name": "jw99999-o001_t14_nircam_f182m-mask210r",
+          "members": [
+              {
+                  "expname": "jw99999001001_011001_00001_nircam_cal.fits",
+                  "exptype": "science"
+              },
+              {
+                  "expname": "jw99999001001_011001_00002_nircam_cal.fits",
+                  "exptype": "science"
+              },
+              {
+                  "expname": "jw99999001001_011001_00003_nircam_cal.fits",
+                  "exptype": "psf"
+              }
+          ]
+      }
+  ]
+
+
 API
 ---
 
