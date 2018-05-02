@@ -143,7 +143,7 @@ class IFUCubeData(object):
                                      " are built from a single file")
 #________________________________________________________________________________
 # get the ROI sizes
-        roi = IFUCubeData.determine_roi_size(self)
+        roi = self.determine_roi_size()
         # if the user has not set the size of the ROI then use defaults in reference
         # parameter file
 
@@ -242,12 +242,11 @@ class IFUCubeData(object):
 
         """
 
-        self.output_name = IFUCubeData.define_cubename(self)
+        self.output_name = self.define_cubename()
+        self.find_output_type()
 
-#        print('output name',self.output_name)
-
-        IFUCubeData.find_output_type(self)
-        self.spaxel = IFUCubeData.create_spaxel(self)
+#        self.spaxel = IFUCubeData.create_spaxel(self)
+        self.spaxel = self.create_spaxel()
 
         # now need to loop over every file that covers this channel/subchannel (MIRI)
         # or Grating/filter(NIRSPEC)
@@ -260,7 +259,7 @@ class IFUCubeData(object):
             this_par2 = self.list_par2[i]
 
             log.debug("Working on Band defined by:%s %s " ,this_par1,this_par2)
-            IFUCubeData.map_detector_to_spaxel(self,this_par1, this_par2,self.spaxel)
+            self.map_detector_to_spaxel(this_par1, this_par2,self.spaxel)
 
         t1 = time.time()
         log.info("Time Map All slices on Detector to Cube = %.1f.s" % (t1 - t0,))
@@ -269,15 +268,15 @@ class IFUCubeData(object):
 # now determine Cube Spaxel flux
 
         t0 = time.time()
-        IFUCubeData.find_spaxel_flux(self, self.spaxel)
+        self.find_spaxel_flux(self.spaxel)
 
         t1 = time.time()
         log.info("Time to find Cube Flux= %.1f.s" % (t1 - t0,))
 
-        IFUCube = IFUCubeData.setup_IFUCube(self,0)
+        IFUCube = self.setup_IFUCube(0)
 #_______________________________________________________________________
 # shove Flux and iflux in the  final IFU cube
-        IFUCubeData.update_IFUCube(self,IFUCube, self.spaxel)
+        self.update_IFUCube(IFUCube, self.spaxel)
         return IFUCube
 
 #********************************************************************************
@@ -314,7 +313,8 @@ class IFUCubeData(object):
             t0 = time.time()
 # for each new data model create a new spaxel
             spaxel = []
-            spaxel = IFUCubeData.create_spaxel(self)
+#            spaxel = IFUCubeData.create_spaxel(self)
+            spaxel = self.create_spaxel()
 
             with datamodels.IFUImageModel(self.input_models[j]) as input_model:
 
@@ -360,11 +360,12 @@ class IFUCubeData(object):
                         log.debug("Time Match one NIRSPEC slice  to IFUCube = %.1f.s" % (t1a - t0a,))
 #_______________________________________________________________________
 # shove Flux and iflux in the  final IFU cube
-            IFUCubeData.find_spaxel_flux(self, spaxel)
-# now determine Cube Spaxel flux
-            IFUCube = IFUCubeData.setup_IFUCube(self,j)
 
-            IFUCubeData.update_IFUCube(self,IFUCube, spaxel)
+            self.find_spaxel_flux(spaxel)
+# now determine Cube Spaxel flux
+
+            IFUCube = self.setup_IFUCube(j)
+            self.update_IFUCube(IFUCube, spaxel)
             t1 = time.time()
             log.info("Time Create Single IFUcube  = %.1f.s" % (t1 - t0,))
 #_______________________________________________________________________
@@ -683,7 +684,7 @@ class IFUCubeData(object):
         IFUCube.update(self.input_models[j])
         IFUCube.meta.filename = self.output_name
         
-        IFUCubeData.blend_output_metadata(self,IFUCube)
+        self.blend_output_metadata(IFUCube)
 #______________________________________________________________________
         if self.output_type == 'single':
             with datamodels.open(self.input_models[j]) as input:
@@ -692,45 +693,39 @@ class IFUCubeData(object):
                 indx = filename.rfind('.fits')
                 self.output_name_base = filename[:indx]
                 self.output_file = None
-                newname  = IFUCubeData.define_cubename(self)
+                newname  = self.define_cubename()
                 IFUCube.meta.filename = newname
-                # need to set what type of SINGLE IFU Cube is being created in header
-                # this information is needed in the blotting stage
-                if self.instrument == 'MIRI':
-                    IFUCube.meta.instrument.channel = self.list_par1[0]
-                if self.instrument == 'NIRSPEC':
-                    IFUCube.meta.instrument.grating = self.list_par1[0]
-#
-        else:
-            if self.instrument == 'MIRI':
-                # fill in Channel output meta data
-                num_ch = len(self.list_par1)
-                IFUCube.meta.instrument.channel = self.list_par1[0]
-                num_ch = len(self.list_par1)
-                for j in range (1, num_ch):
-                    IFUCube.meta.instrument.channel =  IFUCube.meta.instrument.channel + str(self.list_par1[j])
-#                    print('meta channel',IFUCube.meta.instrument.channel)
 
+#______________________________________________________________________
+# fill in Channel, Band for MIRI
+        if self.instrument == 'MIRI':
+            # fill in Channel output meta data
+            num_ch = len(self.list_par1)
+            IFUCube.meta.instrument.channel = self.list_par1[0]
+            num_ch = len(self.list_par1)
+            for j in range (1, num_ch):
+                IFUCube.meta.instrument.channel =  IFUCube.meta.instrument.channel + str(self.list_par1[j])
 
-                # fill in Band output meta  data
-                num_band = len(set(self.list_par2))
-                if num_band == 1:  
-                    IFUCube.meta.instrument.band = self.list_par2[0]
-                else:
-                    IFUCube.meta.instrument.band = 'MULTIPLE'
-            # NIRSPEC
-            elif self.instrument == 'NIRSPEC':
-                num_grating = len(set(self.list_par1))
-                if num_grating == 1:  
-                    IFUCube.meta.instrument.grating = self.list_par1[0]
-                else:
-                    IFUCube.meta.instrument.grating = 'MULTIPLE'
+            # fill in Band output meta  data
+            num_band = len(set(self.list_par2))
+            if num_band == 1:  
+                IFUCube.meta.instrument.band = self.list_par2[0]
+            else:
+                IFUCube.meta.instrument.band = 'MULTIPLE'
+#______________________________________________________________________
+# fill in Grating, Filter for  NIRSPEC
+        elif self.instrument == 'NIRSPEC':
+            num_grating = len(set(self.list_par1))
+            if num_grating == 1:  
+                IFUCube.meta.instrument.grating = self.list_par1[0]
+            else:
+                IFUCube.meta.instrument.grating = 'MULTIPLE'
 
-                num_filter = len(set(self.list_par2))
-                if num_filter == 1:  
-                    IFUCube.meta.instrument.filter = self.list_par2[0]
-                else:
-                    IFUCube.meta.instrument.filter = 'MULTIPLE'
+            num_filter = len(set(self.list_par2))
+            if num_filter == 1:  
+                IFUCube.meta.instrument.filter = self.list_par2[0]
+            else:
+                IFUCube.meta.instrument.filter = 'MULTIPLE'
 
 #______________________________________________________________________
         IFUCube.meta.wcsinfo.crval1 = self.Crval1
