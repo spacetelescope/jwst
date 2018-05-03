@@ -19,30 +19,10 @@ def test_coron3_pipeline1(_bigdata):
     asn_file = os.path.join(subdir, asn_name)
     override_psfmask = os.path.join(subdir, 'jwst_nircam_psfmask_somb.fits')
 
-    step = Coron3Pipeline()
-    step.align_refs.override_psfmask = override_psfmask
-    step.outlier_detection.wht_type = 'exptime'
-    step.outlier_detection.pixfrac = 1.0
-    step.outlier_detection.kernel = 'square'
-    step.outlier_detection.fillval = 'INDEF'
-    step.outlier_detection.nlow = 0
-    step.outlier_detection.nhigh = 0
-    step.outlier_detection.maskpt = 0.7
-    step.outlier_detection.grow = 1
-    step.outlier_detection.snr = '4.0 3.0'
-    step.outlier_detection.scale = '0.5 0.4'
-    step.outlier_detection.backg = 0.0
-    step.outlier_detection.save_intermediate_results = False
-    step.outlier_detection.resample_data = False
-    step.outlier_detection.good_bits = 4
-    step.resample.single = False
-    step.resample.wht_type = 'exptime'
-    step.resample.pixfrac = 1.0
-    step.resample.kernel = 'square'
-    step.resample.fillval = 'INDEF'
-    step.resample.good_bits = 4
-    step.resample.blendheaders = True
-    step.run(asn_file)
+    pipe = Coron3Pipeline()
+    pipe.align_refs.override_psfmask = override_psfmask
+    pipe.outlier_detection.resample_data = False
+    pipe.run(asn_file)
 
     # Compare psfstack product
     n_cur = 'jw99999-a3001_t1_nircam_f140m-maskbar_psfstack.fits'
