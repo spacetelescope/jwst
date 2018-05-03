@@ -15,13 +15,13 @@ def test_nrs_ifu_spec2(_bigdata):
     Regression test of calwebb_spec2 pipeline performed on NIRSpec IFU data.
 
     """
-    step = Spec2Pipeline()
-    step.save_bsub = True
-    step.save_results = True
-    step.resample_spec.save_results = True
-    step.cube_build.save_results = True
-    step.extract_1d.save_results = True
-    step.run(_bigdata+'/pipelines/jw95175001001_02104_00001_nrs1_rate.fits')
+    pipe = Spec2Pipeline()
+    pipe.save_bsub = True
+    pipe.save_results = True
+    pipe.resample_spec.save_results = True
+    pipe.cube_build.save_results = True
+    pipe.extract_1d.save_results = True
+    pipe.run(_bigdata+'/pipelines/jw95175001001_02104_00001_nrs1_rate.fits')
 
     na = 'jw95175001001_02104_00001_nrs1_cal.fits'
     nb = _bigdata+'/pipelines/jw95175001001_02104_00001_nrs1_cal_ref.fits'

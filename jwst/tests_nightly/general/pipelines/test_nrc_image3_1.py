@@ -15,58 +15,52 @@ def test_image3_pipeline1(_bigdata):
 
     Regression test of calwebb_image3 pipeline on NIRCam
     simulated long-wave data.
-
     """
+
     subdir = os.path.join(_bigdata, 'pipelines', 'nircam_calimage3')
     ignore_kws = ['DATE', 'CAL_VER', 'CAL_VCS', 'CRDS_VER', 'CRDS_CTX']
 
-    try:
-        os.remove("nrca5_47Tuc_subpix_dither1_newpos_a3001_crf.fits")
-        os.remove("mosaic_long_i2d.fits")
-        os.remove("mosaic_long_cat.ecsv")
-    except:
-        pass
-
     asn_file = os.path.join(subdir, "mosaic_long_asn.json")
-    step = Image3Pipeline()
-    step.tweakreg.skip = True
-    skymethod = 'global+match'
-    step.skymatch.match_down =True
-    step.skymatch.subtract = False
-    step.skymatch.skystat = 'mode'
-    step.skymatch.nclip = 5
-    step.skymatch.lsigma = 4.0
-    step.skymatch.usigma = 4.0
-    step.skymatch.binwidth = 0.1
-    step.outlier_detection.wht_type = 'exptime'
-    step.outlier_detection.pixfrac = 1.0
-    step.outlier_detection.kernel = 'square'
-    step.outlier_detection.fillval = 'INDEF'
-    step.outlier_detection.nlow = 0
-    step.outlier_detection.nhigh = 0
-    step.outlier_detection.maskpt = 0.7
-    step.outlier_detection.grow = 1
-    step.outlier_detection.snr = '4.0 3.0'
-    step.outlier_detection.scale = '0.5 0.4'
-    step.outlier_detection.backg = 0.0
-    step.outlier_detection.save_intermediate_results = False
-    step.outlier_detection.resample_data = True
-    step.outlier_detection.good_bits = 4
-    step.resample.single = False
-    step.resample.wht_type = 'exptime'
-    step.resample.pixfrac = 1.0
-    step.resample.kernel = 'square'
-    step.resample.fillval = 'INDEF'
-    step.resample.good_bits = 4
-    step.resample.blendheaders = True
-    step.source_catalog.kernel_fwhm = 3.
-    step.source_catalog.kernel_xsize = 5.
-    step.source_catalog.kernel_ysize = 5.
-    step.source_catalog.snr_threshold = 3.
-    step.source_catalog.npixels = 50
-    step.source_catalog.deblend = False
 
-    step.run(asn_file)
+    pipe = Image3Pipeline()
+    pipe.tweakreg.skip = True
+    pipe.skymethod = 'global+match'
+    pipe.skymatch.match_down = True
+    pipe.skymatch.subtract = False
+    pipe.skymatch.skystat = 'mode'
+    pipe.skymatch.nclip = 5
+    pipe.skymatch.lsigma = 4.0
+    pipe.skymatch.usigma = 4.0
+    pipe.skymatch.binwidth = 0.1
+    pipe.outlier_detection.wht_type = 'exptime'
+    pipe.outlier_detection.pixfrac = 1.0
+    pipe.outlier_detection.kernel = 'square'
+    pipe.outlier_detection.fillval = 'INDEF'
+    pipe.outlier_detection.nlow = 0
+    pipe.outlier_detection.nhigh = 0
+    pipe.outlier_detection.maskpt = 0.7
+    pipe.outlier_detection.grow = 1
+    pipe.outlier_detection.snr = '4.0 3.0'
+    pipe.outlier_detection.scale = '0.5 0.4'
+    pipe.outlier_detection.backg = 0.0
+    pipe.outlier_detection.save_intermediate_results = False
+    pipe.outlier_detection.resample_data = True
+    pipe.outlier_detection.good_bits = 4
+    pipe.resample.single = False
+    pipe.resample.wht_type = 'exptime'
+    pipe.resample.pixfrac = 1.0
+    pipe.resample.kernel = 'square'
+    pipe.resample.fillval = 'INDEF'
+    pipe.resample.good_bits = 4
+    pipe.resample.blendheaders = True
+    pipe.source_catalog.kernel_fwhm = 3.
+    pipe.source_catalog.kernel_xsize = 5.
+    pipe.source_catalog.kernel_ysize = 5.
+    pipe.source_catalog.snr_threshold = 3.
+    pipe.source_catalog.npixels = 50
+    pipe.source_catalog.deblend = False
+
+    pipe.run(asn_file)
 
     # Compare level-2c product
     n_cur = 'nrca5_47Tuc_subpix_dither1_newpos_a3001_crf.fits'
