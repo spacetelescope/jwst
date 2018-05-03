@@ -24,6 +24,7 @@ def test_fgs_detector1_1(_bigdata):
     pipe.persistence.skip = True
     pipe.ramp_fit.save_opt = False
     pipe.save_calibrated_ramp = True
+    pipe.output_file = 'jw86500007001_02101_00001_GUIDER2_rate.fits'
 
     pipe.run(_bigdata+'/fgs/test_sloperpipeline/jw86500007001_02101_00001_GUIDER2_uncal.fits')
 
