@@ -24,9 +24,11 @@ def test_nrs_msa_spec2(_bigdata):
 
     # define primary output name
     na = 'F170LP-G235M_MOS_observation-6-c0e0_001_DN_NRS1_mod_cal.fits'
+    nin = 'F170LP-G235M_MOS_observation-6-c0e0_001_DN_NRS1_mod.fits'
 
     # define step for use in test
     step = Spec2Pipeline()
+    step.output_file = na
     step.save_bsub = False
     step.output_use_model = True
     step.resample_spec.save_results = True
@@ -34,9 +36,7 @@ def test_nrs_msa_spec2(_bigdata):
     step.extract_1d.save_results = True
     step.extract_1d.smoothing_length = 0
     step.extract_1d.bkg_order = 0
-    step.call(os.path.join(_bigdata,'pipelines',
-                       'F170LP-G235M_MOS_observation-6-c0e0_001_DN_NRS1_mod.fits'),
-                       output_file=na, name='Spec2Pipeline')
+    step.run(os.path.join(_bigdata,'pipelines',nin))
 
     nbname = 'f170lp-g235m_mos_observation-6-c0e0_001_dn_nrs1_mod_cal_ref.fits'
     nb = os.path.join(_bigdata,'pipelines', nbname)
@@ -149,7 +149,7 @@ def test_nrs_msa_spec2(_bigdata):
     #                          rtol = 0.00001)
     #assert result.identical, result.report()
 
-    na = 'f170lp-g235m_mos_observation-6-c0e0_001_dn_nrs1_mod_x1d.fits'
+    na = 'F170LP-G235M_MOS_observation-6-c0e0_001_DN_NRS1_mod_x1d.fits'
     nbname = 'f170lp-g235m_mos_observation-6-c0e0_001_dn_nrs1_mod_x1d_ref.fits'
     nb = os.path.join(_bigdata, 'pipelines', nbname)
     h = pf.open(na)

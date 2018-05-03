@@ -1,5 +1,7 @@
 import os
 import pytest
+import shutil
+
 from astropy.io import fits as pf
 from jwst.pipeline.calwebb_spec2 import Spec2Pipeline
 
@@ -16,17 +18,27 @@ def test_nrs_msa_spec2b(_bigdata):
     including barshadow correction.
 
     """
+    file_in = os.path.join(_bigdata, 'pipelines',
+                       'jw95065_nrs_msaspec_barshadow.fits')
+    # Insure the test can find the MSA shutter file referenced by the input 
+    msa_file = 'jwst_nirspec_shutters_barshadow.fits'
+    msa_ref_in = os.path.join(_bigdata, 'pipelines', msa_file)
+    msa_ref_out = os.path.join(os.path.abspath(os.curdir), msa_file)
+    shutil.copyfile(msa_ref_in, msa_ref_out)
+     
     step = Spec2Pipeline()
     step.output_file='jw95065_nrs_msaspec_barshadow_cal.fits'
-    step.save_bsub = True
+    step.save_bsub = False
     step.save_results = True
+    step.resample_spec.skip = True
     step.resample_spec.save_results = True
     step.cube_build.save_results = True
     step.extract_1d.save_results = True
-    step.run(_bigdata+'/pipelines/jw95065_nrs_msaspec_barshadow.fits')
+    step.run(file_in)
 
     na = 'jw95065_nrs_msaspec_barshadow_cal.fits'
-    nb = _bigdata+'/pipelines/jw95065_nrs_msaspec_barshadow_cal_ref.fits'
+    nb = os.path.join(_bigdata,'pipelines',
+                      'jw95065_nrs_msaspec_barshadow_cal_ref.fits')
     h = pf.open(na)
     href = pf.open(nb)
     newh = pf.HDUList([h['primary'],h['sci',1],h['err',1],h['dq',1],h['relsens',1],
@@ -135,7 +147,8 @@ def test_nrs_msa_spec2b(_bigdata):
     assert result.identical, result.report()
 
     na = 'jw95065_nrs_msaspec_barshadow_x1d.fits'
-    nb = _bigdata+'/pipelines/jw95065_nrs_msaspec_barshadow_x1d_ref.fits'
+    nb = os.path.join(_bigdata,'pipelines',
+                      'jw95065_nrs_msaspec_barshadow_x1d_ref.fits')
     h = pf.open(na)
     href = pf.open(nb)
     newh = pf.HDUList([h['primary'],h['extract1d',1],h['extract1d',2],h['extract1d',3],h['extract1d',4],h['extract1d',5],h['extract1d',6],h['extract1d',7],h['extract1d',8],h['extract1d',9],h['extract1d',10]])
