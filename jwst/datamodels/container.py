@@ -197,13 +197,14 @@ class ModelContainer(model_base.DataModel):
 
         filepath = op.abspath(op.expanduser(op.expandvars(filepath)))
         basedir = op.dirname(filepath)
+        filename = op.basename(filepath)
         try:
             with open(filepath) as asn_file:
                 asn_data = load_asn(asn_file)
         except AssociationNotValidError:
             raise IOError("Cannot read ASN file.")
 
-        # make a list of all the input FITS files
+        # make a list of all the input files
         infiles = [op.join(basedir, member['expname']) for member
                    in asn_data['products'][0]['members']]
         self._models = infiles
@@ -214,15 +215,9 @@ class ModelContainer(model_base.DataModel):
             self.meta.asn_table._instance, asn_data
         )
 
-        # populate the output metadata with the output file from the ASN file
-        # Should remove the following lines eventually
-        self.meta.resample.output = str(asn_data['products'][0]['name'])
-        self.meta.table_name = str(filepath)
-        self.meta.pool_name = str(asn_data['asn_pool'])
-        self.meta.targname = str(asn_data['target'])
-        self.meta.program = str(asn_data['program'])
-        self.meta.asn_type = str(asn_data['asn_type'])
-        self.meta.asn_rule = str(asn_data['asn_rule'])
+        self.meta.resample.output = asn_data['products'][0]['name']
+        self.meta.table_name = filename
+        self.meta.pool_name = asn_data['asn_pool']
 
     def save(self,
              path=None,
