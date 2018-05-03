@@ -34,7 +34,7 @@ def test_nrs_msa_spec2(_bigdata):
     step.extract_1d.save_results = True
     step.extract_1d.smoothing_length = 0
     step.extract_1d.bkg_order = 0
-    step.call(os.path.join(_bigdata+'pipelines',
+    step.call(os.path.join(_bigdata,'pipelines',
                        'F170LP-G235M_MOS_observation-6-c0e0_001_DN_NRS1_mod.fits'),
                        output_file=na, name='Spec2Pipeline')
 
