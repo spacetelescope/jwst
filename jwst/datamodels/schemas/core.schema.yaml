@@ -591,6 +591,16 @@ properties:
             type: integer
             fits_keyword: EXSEGTOT
             blend_table: True
+          integration_start:
+            title: Integration number at start of segment
+            type: integer
+            fits_keyword: INTSTART
+            blend_table: True
+          integration_end:
+            title: Integration number at end of segment
+            type: integer
+            fits_keyword: INTEND
+            blend_table: True
           noutputs:
             title: Number of detector outputs used
             type: integer

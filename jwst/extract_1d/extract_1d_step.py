@@ -58,7 +58,8 @@ class Extract1dStep(Step):
                 self.log.debug("Input contains %d items", len(input_model))
                 result = datamodels.ModelContainer()
                 for model in input_model:
-                    if model.meta.exposure.type in ['NIS_WFSS', 'NRC_GRISM']:
+                    if (model.meta.exposure.type in
+                                ['NIS_WFSS', 'NRC_GRISM', 'NRC_WFSS']):
                         self.ref_file = 'N/A'
                         self.log.info('No EXTRACT1D reference file '
                                       'will be used')
@@ -76,8 +77,8 @@ class Extract1dStep(Step):
                     result.append(temp)
                     del temp
             elif len(input_model) == 1:
-                if input_model[0].meta.exposure.type in ['NIS_WFSS',
-                                                         'NRC_GRISM']:
+                if (input_model[0].meta.exposure.type in
+                                ['NIS_WFSS', 'NRC_GRISM', 'NRC_WFSS']):
                     self.ref_file = 'N/A'
                     self.log.info('No EXTRACT1D reference file will be used')
                 else:
@@ -97,7 +98,8 @@ class Extract1dStep(Step):
                 return input_model
         else:
             # Get the reference file name
-            if input_model.meta.exposure.type in ['NIS_WFSS', 'NRC_GRISM']:
+            if (input_model.meta.exposure.type in
+                                ['NIS_WFSS', 'NRC_GRISM', 'NRC_WFSS']):
                 self.ref_file = 'N/A'
                 self.log.info('No EXTRACT1D reference file will be used')
             else:
