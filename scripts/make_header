@@ -43,7 +43,8 @@ from jwst.datamodels import schema as mschema
 from jwst.datamodels import (ImageModel, IFUImageModel, DataModel)
 
 from jwst.pipeline import (GuiderPipeline, DarkPipeline, Ami3Pipeline,
-                           Tso3Pipeline, Detector1Pipeline, Image2Pipeline,
+                           Tso3Pipeline, Coron3Pipeline,
+                           Detector1Pipeline, Image2Pipeline,
                            Image3Pipeline, Spec2Pipeline, Spec3Pipeline)
 
 DEBUG = 0
@@ -211,27 +212,27 @@ def choose_pipeline(defaults):
     """
     mode = {'FGS_ACQ1':1, 'FGS_ACQ2':1, 'FGS_DARK':2,
             'FGS_FINEGUIDE':1, 'FGS_FOCUS':1, 'FGS_ID-IMAGE':1,
-            'FGS_ID-STACK':1, 'FGS_IMAGE':1, 'FGS_INTFLAT':1,
-            'FGS_SKYFLAT':1, 'FGS_TRACK':1, 'MIR_IMAGE':5,
-            'MIR_TACQ':0, 'MIR_LYOT':0, 'MIR_4QPM':0,
-            'MIR_LRS-FIXEDSLIT':8, 'MIR_LRS-SLITLESS':8, 'MIR_MRS':8,
-            'MIR_DARK':2, 'MIR_FLAT-IMAGE':5, 'MIR_FLATIMAGE':5,
-            'MIR_FLAT-MRS':5, 'MIR_FLATMRS':5, 'MIR_CORONCAL':7,
-            'NIS_AMI':3, 'NIS_DARK':2, 'NIS_FOCUS':0, 'NIS_IMAGE':5,
-            'NIS_LAMP':0, 'NIS_SOSS':0, 'NIS_TACQ':0,
-            'NIS_TACONFIRM':0, 'NIS_WFSS':8, 'N/A':5, 'ANY':5,
-            'NRC_IMAGE':5, 'NRC_GRISM':8, 'NRC_TACQ':0,
-            'NRC_CORON':0, 'NRC_FOCUS':0, 'NRC_DARK':2, 'NRC_FLAT':5,
+            'FGS_ID-STACK':1, 'FGS_IMAGE':6, 'FGS_INTFLAT':1,
+            'FGS_SKYFLAT':1, 'FGS_TRACK':1, 'MIR_IMAGE':6,
+            'MIR_TACQ':0, 'MIR_LYOT':5, 'MIR_4QPM':5,
+            'MIR_LRS-FIXEDSLIT':9, 'MIR_LRS-SLITLESS':4, 'MIR_MRS':9,
+            'MIR_DARK':2, 'MIR_FLAT-IMAGE':6, 'MIR_FLATIMAGE':6,
+            'MIR_FLAT-MRS':6, 'MIR_FLATMRS':6, 'MIR_CORONCAL':7,
+            'NIS_AMI':3, 'NIS_DARK':2, 'NIS_FOCUS':0, 'NIS_IMAGE':6,
+            'NIS_LAMP':0, 'NIS_SOSS':4, 'NIS_TACQ':0,
+            'NIS_TACONFIRM':0, 'NIS_WFSS':9, 'N/A':6, 'ANY':6,
+            'NRC_IMAGE':6, 'NRC_GRISM':9, 'NRC_TACQ':0,
+            'NRC_CORON':5, 'NRC_FOCUS':0, 'NRC_DARK':2, 'NRC_FLAT':6,
             'NRC_LED':0, 'NRC_TACONFIRM':0, 'NRC_TSIMAGE':4,
             'NRC_TSGRISM':4, 'NRS_AUTOFLAT':0, 'NRS_AUTOWAVE':0,
-            'NRS_BOTA':0, 'NRS_BRIGHTOBJ':0, 'NRS_CONFIRM':0,
-            'NRS_DARK':2, 'NRS_FIXEDSLIT':8, 'NRS_FOCUS':0,
-            'NRS_IFU':8, 'NRS_IMAGE':5, 'NRS_LAMP':0,
-            'NRS_MIMF':0, 'NRS_MSASPEC':8, 'NRS_TACONFIRM':0,
-            'NRS_TACQ':0, 'NRS_TASLIT':8}
+            'NRS_BOTA':0, 'NRS_BRIGHTOBJ':4, 'NRS_CONFIRM':0,
+            'NRS_DARK':2, 'NRS_FIXEDSLIT':9, 'NRS_FOCUS':0,
+            'NRS_IFU':9, 'NRS_IMAGE':6, 'NRS_LAMP':0,
+            'NRS_MIMF':0, 'NRS_MSASPEC':9, 'NRS_TACONFIRM':0,
+            'NRS_TACQ':0, 'NRS_TASLIT':9}
 
     pipelines = [None, GuiderPipeline, DarkPipeline,
-                 Ami3Pipeline, Tso3Pipeline,
+                 Ami3Pipeline, Tso3Pipeline, Coron3Pipeline,
                  Detector1Pipeline, Image2Pipeline, Image3Pipeline,
                  Detector1Pipeline, Spec2Pipeline, Spec3Pipeline]
 
@@ -240,7 +241,7 @@ def choose_pipeline(defaults):
     if index == 0:
         raise ValueError("Pipeline not defined for mode " +
                          exposure_type)
-    if index > 4:
+    if index > 5:
         level = defaults['meta.pipeline_level']
         index += level - 1
 
@@ -261,9 +262,9 @@ def drop_suffix(name):
     Drop a method name from the keyword name
     """
     parts = name.split('.')
-    if (parts[-1][0] == '_' or
-         hasattr(str, parts[-1]) or
-         hasattr(list, parts[-1])):
+    while parts:
+        if parts[-1][0] != '_' and parts[-1][-1] != '(':
+            break
         parts.pop()
 
     return '.'.join(parts)
@@ -366,6 +367,19 @@ def import_objects(package, line):
             objects.append(value)
     return objects
 
+def log_file(filename):
+    """
+    Log files checked to a log file
+    """
+    if DEBUG:
+        path = filename.split('/')
+        try:
+            jpos = path.index('jwst')
+        except ValueError:
+            jpos = 0
+        filename = '/'.join(path[jpos:])
+        print("Searching " + '/'.join(path[jpos:]))
+
 def log_results(title, strings):
     """
     Write intermediate results to a log file
@@ -438,6 +452,7 @@ def search_source_lines(obj, string, seen):
         if source_file not in seen:
             seen.add(source_file)
             if source_file.endswith('.py'):
+                log_file(source_file)
                 new_matches = search_file(source_file, package,
                                           string, seen)
                 matches.extend(new_matches)
@@ -652,7 +667,7 @@ def undefined_metadata(module, string):
     for i in range(2):
         name_set.append(set())
 
-    pat = re.compile(r'([\w\.]+' + string + r'[\w\.]+)')
+    pat = re.compile(r'([\w\.]+' + string + r'[\w\.]+\(?)')
     seen = set()
     matched = search_source_lines(module,
                                    '.' + string + '.',
