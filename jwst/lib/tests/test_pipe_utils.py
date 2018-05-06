@@ -38,12 +38,21 @@ exp_types.extend([
 
 
 @pytest.mark.parametrize(
-    'model, expected',
+    'model_class, expected',
     model_list
 )
-def test_is_tso_from_datamodel(model, expected):
+def test_is_tso_from_datamodel(model_class, expected):
     """Test integrity of is_tso based on datamodels"""
-    assert pipe_utils.is_tso(model) is expected
+    try:
+        model = model_class()
+    except Exception:
+        # Can't generate a model. Mark as skipped
+        pytest.skip(
+            'Unable to generate a model from class'
+            '{}'.format(model_class)
+        )
+    else:
+        assert pipe_utils.is_tso(model) is expected
 
 
 @pytest.mark.parametrize(

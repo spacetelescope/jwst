@@ -22,16 +22,20 @@ def is_tso(model):
     """
     is_tso = False
 
-    # Check on exposure types
-    try:
-        is_tso = model.meta.exposure.type.lower() in TSO_EXP_TYPES
-    except AttributeError:
-        pass
-
     # Check on JWST-specific TSOVISIT flag
     try:
-        is_tso = is_tso or model.meta.observation.tsovisit
+        is_tso = model.meta.observation.tsovisit
     except AttributeError:
         pass
 
+    # Check on exposure types
+    try:
+        is_tso = is_tso or model.meta.exposure.type.lower() in TSO_EXP_TYPES
+    except AttributeError:
+        pass
+
+    # Check on model type
+    is_tso = is_tso or isinstance(model, TSO_MODEL_TYPES)
+
+    # We've checked everything.
     return is_tso
