@@ -16,6 +16,8 @@ from . import spec_wcs
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+WFSS_EXPTYPES = ['NIS_WFSS', 'NRC_GRISM', 'NRC_WFSS']
+
 # These values are used to indicate whether the input reference file
 # (if any) is JSON or IMAGE.
 FILE_TYPE_JSON = "JSON"
@@ -1436,7 +1438,7 @@ class ExtractModel(ExtractBase):
             if not got_wavelength:
                 log.debug("Wavelengths are from the wcs function.")
             nelem = slice1 - slice0
-            if self.exp_type in ['NIS_WFSS', 'NRC_GRISM', 'NRC_WFSS']:
+            if self.exp_type in WFSS_EXPTYPES:
                 # We expect two (x and y) or three (x, y, spectral order).
                 n_inputs = self.wcs.forward_transform.n_inputs
                 ra = np.zeros(nelem, dtype=np.float64)
@@ -1807,7 +1809,7 @@ class ImageExtractModel(ExtractBase):
         if self.wcs is not None:
             if not got_wavelength:
                 log.debug("Wavelengths are from the wcs function.")
-            if self.exp_type in ['NIS_WFSS', 'NRC_GRISM', 'NRC_WFSS']:
+            if self.exp_type in WFSS_EXPTYPES:
                 # We expect two (x and y) or three (x, y, spectral order).
                 n_inputs = self.wcs.forward_transform.n_inputs
                 ra = np.zeros(nelem, dtype=np.float)
