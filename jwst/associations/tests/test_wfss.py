@@ -30,7 +30,7 @@ def test_niriss_wfss():
         asn['asn_type']
         for asn in asns
     ]
-    assert REQUIRED_ASN_TYPES == asn_types
+    assert REQUIRED_ASN_TYPES == set(asn_types)
 
     # Arrange associations by type
     asn_by_type = {

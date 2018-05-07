@@ -254,12 +254,12 @@ class Asn_WFSS(AsnMixin_Spectrum):
             DMSAttrConstraint(
                 name='opt_elem',
                 sources=['filter'],
+                value='gr150r|gr150c',
+                force_unique=False,
             ),
             DMSAttrConstraint(
                 name='opt_elem2',
-                sources=['grating'],
-                value='gr150r|gr150c',
-                force_unique=False,
+                sources=['pupil'],
             ),
         ])
 
