@@ -14,7 +14,7 @@ __all__ = [
     'Asn_TSO_EXPTYPE',
     'Asn_TSO_Flag',
     'Asn_WFSCMB',
-    'Asn_WFSS',
+    'Asn_WFSS_NIS',
 ]
 
 # Configure logging
@@ -238,7 +238,7 @@ class Asn_AMI(AsnMixin_Science):
         super(Asn_AMI, self)._init_hook(item)
 
 
-class Asn_WFSS(AsnMixin_Spectrum):
+class Asn_WFSS_NIS(AsnMixin_Spectrum):
     """WFSS/Grism modes"""
 
     def __init__(self, *args, **kwargs):
@@ -264,7 +264,7 @@ class Asn_WFSS(AsnMixin_Spectrum):
         ])
 
         # Check and continue initialization.
-        super(Asn_WFSS, self).__init__(*args, **kwargs)
+        super(Asn_WFSS_NIS, self).__init__(*args, **kwargs)
 
 
 class Asn_TSO_Flag(AsnMixin_Science):
