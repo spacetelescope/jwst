@@ -67,6 +67,8 @@ Latest regression test results can be found here:
 
 https://boyle.stsci.edu:8081/job/RT/job/JWST/
 
+Test builds start at 10am and 7pm local time every day.
+
 Software vs DMS build version map
 ---------------------------------
 
