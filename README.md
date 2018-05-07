@@ -60,6 +60,12 @@ Documentation (latest off `master`) is available here:
 
 https://jwst-pipeline.readthedocs.io/en/latest/
 
+Regression Tests
+----------------
+
+Latest regression test results can be found here:
+
+https://boyle.stsci.edu:8081/job/RT/job/JWST/
 
 Software vs DMS build version map
 ---------------------------------
