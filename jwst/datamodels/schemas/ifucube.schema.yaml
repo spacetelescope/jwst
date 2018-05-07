@@ -31,11 +31,11 @@ allOf:
               type: string
               fits_keyword: MASKEXT
             roi_spatial:
-              title: Size of ROI in spatial dimension [arcsec]
+              title: "[arcsec] Size of ROI in spatial dimension"
               type: number
               fits_keyword: ROIS
             roi_wave:
-              title: Size of ROI in wavelength dimension [um]
+              title: "[um] Size of ROI in wavelength dimension"
               type: number
               fits_keyword: ROIW
             weighting:

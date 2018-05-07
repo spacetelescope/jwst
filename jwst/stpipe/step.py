@@ -349,6 +349,10 @@ class Step():
 
         step_result = None
 
+        self.log.info(
+            'Step {0} running with args {1}.'.format(
+                self.name, args))
+
         try:
             # prefetch truly occurs at the Pipeline (or subclass) level.
             if (
@@ -357,10 +361,6 @@ class Step():
                     self.prefetch_references
             ):
                 self._precache_references(args[0])
-
-            self.log.info(
-                'Step {0} running with args {1}.'.format(
-                    self.name, args))
 
             # Default output file configuration
             if self.output_file is not None:

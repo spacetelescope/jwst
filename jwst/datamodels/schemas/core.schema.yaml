@@ -7,7 +7,7 @@ properties:
         anyOf:
           - $ref: http://stsci.edu/schemas/asdf/time/time-1.0.0
           - type: string
-        title: Date this file was created [UTC]
+        title: "[yyyy-mm-ddThh:mm:ss.ss] UTC date file created"
         fits_keyword: DATE
         blend_table: True
       origin:
@@ -131,28 +131,29 @@ properties:
             anyOf:
               - $ref: http://stsci.edu/schemas/asdf/time/time-1.0.0
               - type: string
-            title: (yyyy-mm-dd) UTC date at start of exposure
+            title: "[yyyy-mm-dd] UTC date at start of exposure"
             fits_keyword: DATE-OBS
             blend_table: True
             blend_rule: first
           time:
-            title: (hh:mm:ss.ssssss) UTC time at start of exposure
+            title: "[hh:mm:ss.sss] UTC time at start of exposure"
             type: string
             fits_keyword: TIME-OBS
             blend_table: True
             blend_rule: first
           date_end:
-            title: UTC date at end of exposure
+            title: "[yyyy-mm-dd] UTC date at end of exposure"
             type: string
             fits_keyword: DATE-END
             blend_rule: last
             blend_table: True
           time_end:
-            title: UTC time at end of exposure
+            title: "[hh:mm:ss.sss] UTC time at end of exposure"
             type: string
             fits_keyword: TIME-END
             blend_rule: last
             blend_table: True
+          
           obs_id:
             title: Programmatic observation identifier
             type: string
@@ -612,6 +613,18 @@ properties:
             type: integer
             fits_keyword: NINTS
             blend_table: True
+          integration_start:
+            title: Starting integration number in this segment
+            type: integer
+            fits_keyword: INTSTART
+            blend_table: True
+            blend_rule: min
+          integration_end:
+            title: Ending integration number in this segment
+            type: integer
+            fits_keyword: INTEND
+            blend_table: True
+            blend_rule: max
           ngroups:
             title: Number of groups in integration
             type: integer
@@ -648,7 +661,7 @@ properties:
             fits_keyword: NSAMPLES
             blend_table: True
           sample_time:
-            title: Time between samples (microsec)
+            title: "[us] Time between samples"
             type: number
             fits_keyword: TSAMPLE
             blend_table: True
@@ -723,6 +736,11 @@ properties:
             title: data compressed on-board (T/F)
             type: boolean
             fits_keyword: COMPRSSD
+            blend_table: True
+          clock_adjust_rate:
+            title: Spacecraft Clock Time Adjust RATE
+            type: number
+            fits_keyword: SCTARATE
             blend_table: True
           gain_factor:
             title: Gain scale factor
@@ -1218,6 +1236,22 @@ properties:
             type: string
             fits_keyword: VISITEND
             blend_table: True
+          gs_function_start_time:
+            title: Observatory UTC time at guider function start
+            type: string
+            fits_keyword: GF_START
+          gs_function_end_time:
+            title: Observatory UTC time at guider function end
+            type: string
+            fits_keyword: GF_END
+          data_start:
+            title: MJD start time of guider data within this file
+            type: number
+            fits_keyword: DATASTRT
+          data_end:
+            title: MJD end time of guider data within this file
+            type: number
+            fits_keyword: DATAEND
           gs_acq_exec_stat:
             title: Guide star acquisition execution status
             type: string
