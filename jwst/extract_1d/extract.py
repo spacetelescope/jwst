@@ -16,6 +16,8 @@ from . import spec_wcs
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+WFSS_EXPTYPES = ['NIS_WFSS', 'NRC_GRISM', 'NRC_WFSS']
+
 # These values are used to indicate whether the input reference file
 # (if any) is JSON or IMAGE.
 FILE_TYPE_JSON = "JSON"
@@ -1436,7 +1438,7 @@ class ExtractModel(ExtractBase):
             if not got_wavelength:
                 log.debug("Wavelengths are from the wcs function.")
             nelem = slice1 - slice0
-            if self.exp_type in ['NIS_WFSS', 'NRC_GRISM']:
+            if self.exp_type in WFSS_EXPTYPES:
                 # We expect two (x and y) or three (x, y, spectral order).
                 n_inputs = self.wcs.forward_transform.n_inputs
                 ra = np.zeros(nelem, dtype=np.float64)
@@ -1807,7 +1809,7 @@ class ImageExtractModel(ExtractBase):
         if self.wcs is not None:
             if not got_wavelength:
                 log.debug("Wavelengths are from the wcs function.")
-            if self.exp_type in ['NIS_WFSS', 'NRC_GRISM']:
+            if self.exp_type in WFSS_EXPTYPES:
                 # We expect two (x and y) or three (x, y, spectral order).
                 n_inputs = self.wcs.forward_transform.n_inputs
                 ra = np.zeros(nelem, dtype=np.float)
@@ -2231,6 +2233,10 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
             log.error("The input file is not supported for this step.")
             raise RuntimeError("Can't extract a spectrum from this file.")
 
+    # Copy the integration time information from the INT_TIMES table
+    # to keywords in the output file.
+    populate_time_keywords(input_model, output_model)
+
     # See output_model.spec[i].meta.wcs instead.
     output_model.meta.wcs = None
 
@@ -2239,6 +2245,164 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
         ref_dict['ref_model'].close()
 
     return output_model
+
+
+def populate_time_keywords(input_model, output_model):
+    """Copy the integration times keywords to header keywords.
+
+    Parameters
+    ----------
+    input_model: data model
+        The input science model.
+
+    output_model: data model
+        The output science model.  This may be modified in-place.
+    """
+
+    nints = input_model.meta.exposure.nints
+    int_start = input_model.meta.exposure.integration_start
+    if int_start is None:
+        log.warning("INTSTART not found; assuming a value of 1.")
+        int_start = 1
+    int_start -= 1                              # zero indexed
+    int_end = input_model.meta.exposure.integration_end
+    if int_end is None:
+        log.warning("INTEND not found; assuming a value of %d.", nints)
+        int_end = nints
+    int_end -= 1                                # zero indexed
+    if nints > 1:
+        num_integrations = int_end - int_start + 1
+    else:
+        num_integrations = 1
+
+    if hasattr(input_model, 'int_times') and input_model.int_times is not None:
+        nrows = len(input_model.int_times)
+    else:
+        nrows = 0
+    if nrows < 1:
+        log.warning("There is no INT_TIMES table in the input file.")
+        return
+
+    # If we have a single plane (e.g. ImageModel or MultiSlitModel),
+    # we will only populate the keywords if the corresponding uncal file
+    # had one integration.  If the data were or might have been segmented,
+    # we use the first and last integration numbers to determine whether
+    # the data were in fact averaged over integrations, and if so, we
+    # should not populate the int_times-related header keywords.
+
+    skip = False                        # initial value
+
+    if isinstance(input_model, (datamodels.MultiSlitModel,
+                                datamodels.MultiProductModel,
+                                datamodels.ImageModel,
+                                datamodels.DrizProductModel)):
+        if num_integrations > 1:
+            log.warning("Not using INT_TIMES table because the data "
+                        "have been averaged over integrations.")
+            skip = True
+    elif isinstance(input_model, (datamodels.CubeModel,
+                                  datamodels.SlitModel)):
+        shape = input_model.data.shape
+        if len(shape) == 2 and num_integrations > 1:
+            log.warning("Not using INT_TIMES table because the data "
+                        "have been averaged over integrations.")
+            skip = True
+        elif len(shape) != 3 or shape[0] > nrows:
+            # Later, we'll check that the integration_number column actually
+            # has a row corresponding to every integration in the input.
+            log.warning("Not using INT_TIMES table because the data shape "
+                        "is not consistent with the number of table rows.")
+            skip = True
+    elif isinstance(input_model, datamodels.IFUCubeModel):
+        log.warning("The INT_TIMES table will be ignored for IFU data.")
+        skip = True
+
+    if skip:
+        return
+
+    if nrows > 0:
+        int_num = input_model.int_times['integration_number']
+        start_utc = input_model.int_times['int_start_MJD_UTC']
+        mid_utc = input_model.int_times['int_mid_MJD_UTC']
+        end_utc = input_model.int_times['int_end_MJD_UTC']
+        start_tdb = input_model.int_times['int_start_BJD_TDB']
+        mid_tdb = input_model.int_times['int_mid_BJD_TDB']
+        end_tdb = input_model.int_times['int_end_BJD_TDB']
+
+        # Inclusive range of integration numbers in the input data,
+        # zero indexed.
+        data_range = (int_start, int_end)
+        # Inclusive range of integration numbers in the INT_TIMES table,
+        # zero indexed.
+        table_range = (int_num[0] - 1, int_num[-1] - 1)
+        offset = data_range[0] - table_range[0]
+        if data_range[0] < table_range[0] or data_range[1] > table_range[1]:
+            log.warning("Not using the INT_TIMES table because it does not "
+                        "include rows for all integrations in the data.")
+            return
+
+        log.debug("Copying values from the INT_TIMES table.")
+
+        if hasattr(input_model, 'data'):
+            shape = input_model.data.shape
+            if len(shape) == 2:
+                num_integ = 1
+            else:                               # len(shape) == 3
+                num_integ = shape[0]
+        else:                                   # e.g. MultiSlit data
+            num_integ = 1
+
+        n_output_spec = len(output_model.spec)
+
+        # Assumptions about input_model:
+        # If the number of integrations is one, there may be multiple
+        # spectra.  These might be different spectral orders, and different
+        # orders can be in the same image (e.g. NIRISS SOSS data) or in
+        # different 2-D cutouts (e.g. MultiSlit data).  Or these might be
+        # spectra through different slits but projected onto a single
+        # image and subsequently (via extract_2d) separated into different
+        # 2-D cutouts (MultiSlit data, again).  But there could be just
+        # one spectrum, either in a single 2-D image (e.g. MIRI LRS),
+        # subarray, or MultiSlit with just one slit.
+        # If the number of integrations is greater than one (or if the
+        # input is multi-integration format (3-D) but with a length of
+        # 1 for the first axis), we will only extract the spectrum of
+        # one object; the location will be the same for every integration,
+        # and the number of output spectra will be equal to the number
+        # of integrations (unless there was a problem with the extraction).
+
+        # num_j is the number of different spectra, e.g. the number of
+        # fixed-slit spectra, MSA spectra, or different spectral orders;
+        # num_j = 1 for multi-integration data (meaning there's just one
+        # spectrum in each integration).
+        # The total number of output spectra n_output_spec = num_integ * num_j
+        if num_integ > 1:
+            num_j = 1
+        else:
+            num_j = n_output_spec
+
+        log.debug("Number of integrations = %d; number of spectra for "
+                  "one integration = %d", num_integ, num_j)
+
+        # Note that either num_integ or num_j (or possibly both) will be one.
+        # n is a counter for spectra in output_model.
+        n = 0
+        for k in range(num_integ):              # for each integration
+            row = k + offset
+            for j in range(num_j):                  # for each input spectrum
+                spec = output_model.spec[n]         # n is incremented in loop
+                spec.int_num = int_num[row]
+                spec.start_utc = start_utc[row]
+                spec.mid_utc = mid_utc[row]
+                spec.end_utc = end_utc[row]
+                spec.start_tdb = start_tdb[row]
+                spec.mid_tdb = mid_tdb[row]
+                spec.end_tdb = end_tdb[row]
+                n += 1
+
+    else:
+        log.warning("There is no INT_TIMES table in the input file.")
+
 
 def get_spectral_order(slit):
 
