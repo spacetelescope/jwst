@@ -52,7 +52,6 @@ class OptRes:
         self.firstf_int = np.zeros((n_int,) + imshape, dtype=np.float32)
         self.ped_int = np.zeros((n_int,) + imshape, dtype=np.float32)
         self.cr_mag_seg = np.zeros((n_int,)+(nreads,)+imshape, dtype=np.float32)
-        self.cr_mag_seg = np.zeros((n_int,) + (nreads,)+imshape, dtype=np.int16)
         self.var_p_seg = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
         self.var_r_seg = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
 
