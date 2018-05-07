@@ -625,7 +625,7 @@ class Step():
         if override is not None:
             if override.strip() != "":
                 self._reference_files_used.append(
-                    (reference_file_type, abspath(override)))
+                    (reference_file_type, basename(override)))
                 reference_name = override
             else:
                 return ""
