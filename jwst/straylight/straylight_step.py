@@ -11,9 +11,9 @@ class StraylightStep (Step):
     """
 
     spec = """
-         method = option('Nearest','ModShepard',default='ModShepard') #Algorithm to use to determine straylight correction, default is to use the Modified Shepard Method for weighting (ModShepard). The other option (Nearest) uses the nearest gap pixels in a science pixels row to find the correction. 
-         roi = float(default = 50.0) # Region of interest, default = 50.0
-         power = float(default = 1.0) # Power of weighting function, default = 1.0
+         method = option('Nearest','ModShepard',default='ModShepard') #Algorithm method
+         roi = float(default = 50.0) # Region of interest
+         power = float(default = 1.0) # Power of weighting function
 
     """
     reference_file_types = ['straymask']
