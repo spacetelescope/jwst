@@ -375,6 +375,7 @@ properties:
               GR150R, OPAQUE, P750L, WL3, WLP4, N/A, MULTIPLE]
             fits_keyword: FILTER
             blend_table: True
+            blend_rule: multi
           pupil:
             title: Name of the pupil element used
             type: string
@@ -395,12 +396,14 @@ properties:
             enum: [G140M, G235M, G395M, G140H, G235H, G395H, PRISM, MIRROR, N/A, ANY, NULL, MULTIPLE]
             fits_keyword: GRATING
             blend_table: True
+            blend_rule: multi
           band:
             title: MRS wavelength band
             type: string
             enum: [SHORT, MEDIUM, LONG, N/A, ANY, MULTIPLE]
             fits_keyword: BAND
             blend_table: True
+            blend_rule: multi
           fixed_slit:
             title: Name of fixed slit aperture used
             type: string

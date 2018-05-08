@@ -703,29 +703,36 @@ class IFUCubeData(object):
             num_ch = len(self.list_par1)
             IFUCube.meta.instrument.channel = self.list_par1[0]
             num_ch = len(self.list_par1)
-            for j in range (1, num_ch):
-                IFUCube.meta.instrument.channel =  IFUCube.meta.instrument.channel + str(self.list_par1[j])
+            for m in range (1, num_ch):
+                IFUCube.meta.instrument.channel =  IFUCube.meta.instrument.channel + str(self.list_par1[m])
 
             # fill in Band output meta  data
-            num_band = len(set(self.list_par2))
-            if num_band == 1:  
-                IFUCube.meta.instrument.band = self.list_par2[0]
-            else:
-                IFUCube.meta.instrument.band = 'MULTIPLE'
+#            print('list_par2',self.list_par2)
+#            self.list_par2[1] = 'LONG'
+
+#            IFUCube.meta.instrument.band = self.list_par2
+#            num_band = len(set(self.list_par2))
+#            if num_band == 1:  
+#                IFUCube.meta.instrument.band = self.list_par2[0]
+#            else:
+#                IFUCube.meta.instrument.band = 'MULTIPLE'
 #______________________________________________________________________
 # fill in Grating, Filter for  NIRSPEC
-        elif self.instrument == 'NIRSPEC':
-            num_grating = len(set(self.list_par1))
-            if num_grating == 1:  
-                IFUCube.meta.instrument.grating = self.list_par1[0]
-            else:
-                IFUCube.meta.instrument.grating = 'MULTIPLE'
+#        elif self.instrument == 'NIRSPEC':
+#            IFUCube.meta.instrument.grating = self.list_par1
+#            IFUCube.meta.instrument.filter = self.list_par2
+#            num_grating = len(set(self.list_par1))
+#            if num_grating == 1:  
+#                IFUCube.meta.instrument.grating = self.list_par1[0]
+#            else:
+#                IFUCube.meta.instrument.grating = 'MULTIPLE'
 
-            num_filter = len(set(self.list_par2))
-            if num_filter == 1:  
-                IFUCube.meta.instrument.filter = self.list_par2[0]
-            else:
-                IFUCube.meta.instrument.filter = 'MULTIPLE'
+#            num_filter = len(set(self.list_par2))
+
+#            if num_filter == 1:  
+#                IFUCube.meta.instrument.filter = self.list_par2[0]
+#            else:
+#                IFUCube.meta.instrument.filter = 'MULTIPLE'
 
 #______________________________________________________________________
         IFUCube.meta.wcsinfo.crval1 = self.Crval1
@@ -758,9 +765,6 @@ class IFUCubeData(object):
         IFUCube.meta.wcsinfo.pc3_2 = 0
         IFUCube.meta.wcsinfo.pc3_3 = 1
 
-
-#        IFUCube.meta.instrument.channel = '1'
-
         IFUCube.meta.ifu.flux_extension = 'SCI'
         IFUCube.meta.ifu.error_extension = 'ERR'
         IFUCube.meta.ifu.error_type = 'ERR'
@@ -769,8 +773,6 @@ class IFUCubeData(object):
         IFUCube.meta.ifu.roi_wave = self.roiw
         IFUCube.meta.ifu.weighting = self.weighting
         IFUCube.meta.ifu.weight_power = self.weight_power
-        
-
 
         with datamodels.open(self.input_models[j]) as input:
             IFUCube.meta.bunit_data = input.meta.bunit_data
