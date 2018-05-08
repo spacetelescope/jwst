@@ -24,8 +24,7 @@ def test_miri_lrs_slit_1b(_bigdata):
     step.extract_1d.save_results = True
     step.run(_bigdata+'/pipelines/jw00035001001_01101_00001_MIRIMAGE_rateints.fits')
 
-    #  n_cr = 'jw00035001001_01101_00001_MIRIMAGE_calints.fits'
-    n_cr = 'jw00035001001_01101_00001_MIRIMAGE_cal.fits'
+    n_cr = 'jw00035001001_01101_00001_MIRIMAGE_calints.fits'
     n_ref = _bigdata+'/pipelines/jw00035001001_01101_00001_MIRIMAGE_calints_ref.fits'
     h = pf.open(n_cr)
     href = pf.open(n_ref)
@@ -39,8 +38,7 @@ def test_miri_lrs_slit_1b(_bigdata):
     assert result.identical, result.report()
 
 
-    #  n_cr = 'jw00035001001_01101_00001_MIRIMAGE_x1dints.fits'
-    n_cr = 'jw00035001001_01101_00001_MIRIMAGE_x1d.fits'
+    n_cr = 'jw00035001001_01101_00001_MIRIMAGE_x1dints.fits'
     n_ref = _bigdata+'/pipelines/jw00035001001_01101_00001_MIRIMAGE_x1dints_ref.fits'
     h = pf.open(n_cr)
     href = pf.open(n_ref)
