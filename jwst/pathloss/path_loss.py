@@ -8,9 +8,15 @@ import numpy as np
 import logging
 from .. import datamodels
 from jwst.assign_wcs import nirspec, util
+from gwcs import wcstools
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
+
+#
+# There are 30 slices in the NIRSPEC IFU, numbered from
+# 0 to 29
+NIRSPEC_IFU_SLICES = np.arange(30)
 
 def getCenter(exp_type, input):
     """
@@ -93,7 +99,7 @@ def calculate_pathloss_vector(pathloss_refdata, pathloss_wcs, xcenter, ycenter):
         crval1 = pathloss_wcs.crval1
         cdelt1 = pathloss_wcs.cdelt1
         for i in np.arange(wavesize):
-            wavelength[i] = crval1 +(float(i+1) - crpix1)*cdelt1
+            wavelength[i] = crval1 +(float(i) - crpix1)*cdelt1
         return wavelength, pathloss_refdata
     #
     # pointsource.data is 3-d, so we have to extract a wavelength vector
@@ -103,7 +109,7 @@ def calculate_pathloss_vector(pathloss_refdata, pathloss_wcs, xcenter, ycenter):
         crval3 = pathloss_wcs.crval3
         cdelt3 = pathloss_wcs.cdelt3
         for i in np.arange(wavesize):
-            wavelength[i] = crval3 +(float(i+1) - crpix3)*cdelt3
+            wavelength[i] = crval3 +(float(i) - crpix3)*cdelt3
         # Calculate python index of object center
         crpix1 = pathloss_wcs.crpix1
         crval1 = pathloss_wcs.crval1
@@ -264,15 +270,25 @@ def do_correction(input_model, pathloss_model):
         input_model.wavelength_uniformsource = wavelength_uniformsource
         input_model.pathloss_uniformsource = pathloss_uniform_vector
         #
-        # Create the 2-d pathloss arrays
-        wavelength_array = slit.wavelength
+        # Create the 2-d pathloss arrays, initialize with NaNs
+        wavelength_array = np.zeros(input_model.data.shape, dtype=np.float32)
+        wavelength_array.fill(np.nan)
+        for slice in NIRSPEC_IFU_SLICES:
+            slice_wcs = nirspec.nrs_wcs_set_input(input_model, slice)
+            x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
+            xmin = int(x.min())
+            xmax = int(x.max())
+            ymin = int(y.min())
+            ymax = int(y.max())
+            ra, dec, wavelength = slice_wcs(x, y)
+            wavelength_array[ymin:ymax+1, xmin:xmax+1] = wavelength
         pathloss_pointsource_2d = interpolate_onto_grid(wavelength_array, wavelength_pointsource,
                                                         pathloss_pointsource_vector)
         pathloss_uniformsource_2d = interpolate_onto_grid(wavelength_array, wavelength_uniformsource,
                                                           pathloss_uniform_vector)
-        slit.pathloss_pointsource2d = pathloss_pointsource_2d
-        slit.pathloss_uniformsource2d = pathloss_uniformsource_2d
-
+        input_model.pathloss_pointsource2d = pathloss_pointsource_2d
+        input_model.pathloss_uniformsource2d = pathloss_uniformsource_2d
+        input_model.wavelength = wavelength_array
         input_model.meta.cal_step.pathloss = 'COMPLETE'
 
     return input_model.copy()
