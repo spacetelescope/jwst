@@ -71,7 +71,12 @@ The ``ami_analyze`` step applies the Lacour-Greenbaum (LG) image plane
 modeling algorithm to a NIRISS AMI image.
 The routine computes a number of parameters, including a model fit (and
 residuals) to the image, fringe amplitudes and phases, and closure phases
-and amplitudes.
+and amplitudes.  For a full-frame exposure, instead of using the FULL subarray,
+a subarray will be extracted from its center to keep the execution time acceptable.
+Because the AMI observing template allows only SUBARRAY values of FULL or SUB80,
+the extraction from the full-frame exposures will match the location and size of
+the SUB80 subarray.
+
 
 Inputs
 ------

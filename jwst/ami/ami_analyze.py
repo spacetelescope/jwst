@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division
-
 #
 #  Module for applying the LG algorithm to an AMI exposure
 #
@@ -41,9 +39,7 @@ def apply_LG(input_model, filter_model, oversample, rotation):
     -------
     output_model: Fringe model object
         Fringe analysis data
-
     """
-
     # Supress harmless arithmetic warnings for now
     warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
     warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
@@ -66,9 +62,9 @@ def apply_LG(input_model, filter_model, oversample, rotation):
 
     # Instantiate the NRM model object
     jwnrm = NRM_Model(mask='JWST', holeshape='hex',
-                       pixscale=leastsqnrm.mas2rad(63.52554816773347),
-                       rotate=rotation, rotlist_deg=rots_deg,
-                       scallist=relpixscales)
+                pixscale=leastsqnrm.mas2rad(63.52554816773347),
+                rotate=rotation, rotlist_deg=rots_deg,
+                scallist=relpixscales)
 
     # Load the filter bandpass data into the NRM model
     jwnrm.bandpass = band
@@ -78,7 +74,22 @@ def apply_LG(input_model, filter_model, oversample, rotation):
     # Now fit the data in the science exposure
     # (pixguess is a guess at the pixel scale of the data)
     #  produces a 19x19 image of the fit
-    jwnrm.fit_image(input_model.data, pixguess=jwnrm.pixel)
+
+    subarray = input_model.meta.subarray.name.upper()
+    if subarray == 'FULL':
+        # Instead of using the FULL subarray, extract the same region (size and
+        #   location) as used by SUB80 to make execution time acceptable
+        xstart = 1045 # / Starting pixel in axis 1 direction
+        ystart = 1    # / Starting pixel in axis 2 direction
+        xsize = 80    # / Number of pixels in axis 1 direction
+        ysize = 80    # / Number of pixels in axis 2 direction
+        xstop = xstart + xsize - 1
+        ystop = ystart + ysize - 1
+
+        jwnrm.fit_image(input_model.data[ ystart-1:ystop, xstart-1:xstop ],
+                        pixguess=jwnrm.pixel)
+    else:
+        jwnrm.fit_image(input_model.data, pixguess=jwnrm.pixel)
 
     # Construct model image from fitted PSF
     jwnrm.create_modelpsf()
@@ -88,13 +99,13 @@ def apply_LG(input_model, filter_model, oversample, rotation):
 
     # Store fit results in output model
     output_model = datamodels.AmiLgModel(fit_image=jwnrm.modelpsf,
-                  resid_image=jwnrm.residual,
-                  closure_amp_table=np.asarray(jwnrm.redundant_cas),
-                  closure_phase_table=np.asarray(jwnrm.redundant_cps),
-                  fringe_amp_table=np.asarray(jwnrm.fringeamp),
-                  fringe_phase_table=np.asarray(jwnrm.fringephase),
-                  pupil_phase_table=np.asarray(jwnrm.piston),
-                  solns_table=np.asarray(jwnrm.soln))
+                resid_image=jwnrm.residual,
+                closure_amp_table=np.asarray(jwnrm.redundant_cas),
+                closure_phase_table=np.asarray(jwnrm.redundant_cps),
+                fringe_amp_table=np.asarray(jwnrm.fringeamp),
+                fringe_phase_table=np.asarray(jwnrm.fringephase),
+                pupil_phase_table=np.asarray(jwnrm.piston),
+                solns_table=np.asarray(jwnrm.soln))
 
     # Copy header keywords from input to output
     output_model.update(input_model)
