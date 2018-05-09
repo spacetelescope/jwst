@@ -21,7 +21,7 @@ from ..ramp_fitting import ramp_fit_step
 from ..gain_scale import gain_scale_step
 
 
-__version__ = '0.8.0'
+__version__ = '0.9.3'
 
 # Define logging
 import logging

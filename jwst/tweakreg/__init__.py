@@ -7,7 +7,7 @@ from __future__ import absolute_import
 __docformat__ = 'restructuredtext'
 
 __taskname__ = 'tweakreg'
-__version__ = '0.9.1'
+__version__ = '0.9.3'
 __vdate__ = '10-January-2018'
 __author__ = 'Mihai Cara'
 

@@ -8,7 +8,7 @@ from ..tso_photometry import tso_photometry_step
 from ..extract_1d import extract_1d_step
 from ..white_light import white_light_step
 
-__version__ = '0.8.0'
+__version__ = '0.9.3'
 
 
 class Tso3Pipeline(Pipeline):
