@@ -9,6 +9,7 @@ from os.path import (
     dirname,
     expanduser,
     expandvars,
+    isfile,
     join,
     split,
     splitext,
@@ -47,6 +48,7 @@ class Step():
     skip               = boolean(default=False)      # Skip this step
     suffix             = string(default=None)        # Default suffix for output files
     search_output_file = boolean(default=True)       # Use outputfile define in parent step
+    input_dir          = string(default=None)        # Input directory
     """
 
     # Reference types for both command line override
@@ -352,6 +354,8 @@ class Step():
         self.log.info(
             'Step {0} running with args {1}.'.format(
                 self.name, args))
+
+        self._set_input_dir(args)
 
         try:
             # prefetch truly occurs at the Pipeline (or subclass) level.
@@ -887,6 +891,28 @@ class Step():
                     'Reason:\n{}'.format(item, exception)
                 )
         gc.collect()
+
+    def _set_input_dir(self, args):
+        """Set the input directory
+
+        If sufficient information is at hand, set a value
+        for the attribute `input_dir`.
+
+        Parameters
+        ----------
+        args: list
+            The arguments passed.
+
+        """
+        if self.input_dir is None:
+            self.input_dir = self.search_attr('input_dir', default='')
+            if len(args):
+                try:
+                    if isfile(args[0]):
+                        self.input_dir = split(args[0])[0]
+                except Exception:
+                    # Not a file-checkable object. Ignore.
+                    pass
 
 
 # #########
