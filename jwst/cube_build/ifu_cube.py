@@ -706,34 +706,6 @@ class IFUCubeData(object):
             for m in range (1, num_ch):
                 IFUCube.meta.instrument.channel =  IFUCube.meta.instrument.channel + str(self.list_par1[m])
 
-            # fill in Band output meta  data
-#            print('list_par2',self.list_par2)
-#            self.list_par2[1] = 'LONG'
-
-#            IFUCube.meta.instrument.band = self.list_par2
-#            num_band = len(set(self.list_par2))
-#            if num_band == 1:  
-#                IFUCube.meta.instrument.band = self.list_par2[0]
-#            else:
-#                IFUCube.meta.instrument.band = 'MULTIPLE'
-#______________________________________________________________________
-# fill in Grating, Filter for  NIRSPEC
-#        elif self.instrument == 'NIRSPEC':
-#            IFUCube.meta.instrument.grating = self.list_par1
-#            IFUCube.meta.instrument.filter = self.list_par2
-#            num_grating = len(set(self.list_par1))
-#            if num_grating == 1:  
-#                IFUCube.meta.instrument.grating = self.list_par1[0]
-#            else:
-#                IFUCube.meta.instrument.grating = 'MULTIPLE'
-
-#            num_filter = len(set(self.list_par2))
-
-#            if num_filter == 1:  
-#                IFUCube.meta.instrument.filter = self.list_par2[0]
-#            else:
-#                IFUCube.meta.instrument.filter = 'MULTIPLE'
-
 #______________________________________________________________________
         IFUCube.meta.wcsinfo.crval1 = self.Crval1
         IFUCube.meta.wcsinfo.crval2 = self.Crval2
