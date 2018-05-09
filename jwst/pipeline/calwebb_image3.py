@@ -9,7 +9,7 @@ from ..resample import resample_step
 from ..outlier_detection import outlier_detection_step
 from ..source_catalog import source_catalog_step
 
-__version__ = '0.8.0'
+__version__ = '0.9.3'
 
 
 class Image3Pipeline(Pipeline):

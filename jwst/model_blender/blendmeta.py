@@ -14,8 +14,8 @@ from ..datamodels import fits_support
 
 from .blendrules import KeywordRules
 
-__version__ = '0.8.0'
-__vdate__ = '14-Feb-2018'
+__version__ = '0.9.3'
+__vdate__ = '11-May-2018'
 
 EMPTY_LIST = [None, '', ' ', 'INDEF', 'None']
 
