@@ -300,15 +300,11 @@ def find_footprint_MIRI(self, input, this_channel, instrument_info):
     if self.coord_system == 'alpha-beta':
         detector2alpha_beta = input.meta.wcs.get_transform('detector', 'alpha_beta')
         coord1, coord2, lam = detector2alpha_beta(x, y)
-
-
     elif self.coord_system == 'ra-dec':
         detector2v23 = input.meta.wcs.get_transform('detector', 'v2v3')
         v23toworld = input.meta.wcs.get_transform("v2v3","world")
-
         v2, v3, lam = detector2v23(x, y)
         coord1,coord2,lam = v23toworld(v2,v3,lam)
-
     else:
         # error the coordinate system is not defined
         raise NoCoordSystem(" The output cube coordinate system is not definded")
@@ -326,7 +322,6 @@ def find_footprint_MIRI(self, input, this_channel, instrument_info):
     lambda_min = np.nanmin(lam)
     lambda_max = np.nanmax(lam)
 
-#    print('find footprint',a_min,a_max,b_min,b_max)
     return a_min, a_max, b_min, b_max, lambda_min, lambda_max
 
 #********************************************************************************
@@ -375,32 +370,33 @@ def find_footprint_NIRSPEC(self, input,flag_data):
         slice_wcs = nirspec.nrs_wcs_set_input(input,  i)
         yrange_slice = slice_wcs.bounding_box[1][0],slice_wcs.bounding_box[1][1]
         xrange_slice = slice_wcs.bounding_box[0][0],slice_wcs.bounding_box[0][1]
-
         if(xrange_slice[0] >= 0 and xrange_slice[1] > 0):
 
             x,y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box,step=(1,1), center=True)
-            #NIRSPEC TEMPORARY FIX FOR WCS 1 BASED and NOT 0 BASED
-            # NIRSPEC team delivered transforms that are valid for x,y in 1 based system
-            #x = x + 1
-            #y = y + 1
-            # Done NIRSPEC FIX
 
-            ra,dec,lam = slice_wcs(x,y)
-
+            if self.coord_system == 'ra-dec':
+                coord1,coord2,lam = slice_wcs(x,y)
+            elif self.coord_system == 'alpha-beta':
+                raise InvalidCoordSystem(" The Alpha-Beta Coordinate system is not valid (at this time) for NIRSPEC data")
+#                detector2slicer = input.meta.wcs.get_transform('detector','slicer')
+#                coord1,coord2,lam = detector2slicer(x,y)
+            else:
+            # error the coordinate system is not defined
+                raise NoCoordSystem(" The output cube coordinate system is not definded")
+            
 #________________________________________________________________________________
 # For each slice  test for 0/360 wrapping in ra. 
 # If exists it makes it difficult to determine  ra range of IFU cube. 
 ##            print(' # ra values',ra.size,ra.size/2048)
-            ra_wrap = wrap_ra(ra)
-
-            a_min = np.nanmin(ra_wrap)
-            a_max = np.nanmax(ra_wrap)
+            coord1_wrap = wrap_ra(coord1)
+            a_min = np.nanmin(coord1_wrap)
+            a_max = np.nanmax(coord1_wrap)
 
             a_slice[k] = a_min
             a_slice[k + 1] = a_max
 
-            b_slice[k] = np.nanmin(dec)
-            b_slice[k + 1] = np.nanmax(dec)
+            b_slice[k] = np.nanmin(coord2)
+            b_slice[k + 1] = np.nanmax(coord2)
 
             lambda_slice[k] = np.nanmin(lam)
             lambda_slice[k + 1] = np.nanmax(lam)
@@ -409,10 +405,9 @@ def find_footprint_NIRSPEC(self, input,flag_data):
 #________________________________________________________________________________
 # now test the ra slices for conistency. Adjust if needed.  
         
-    raslice_wrap = wrap_ra(a_slice)
-
-    a_min = np.nanmin(raslice_wrap)
-    a_max = np.nanmax(raslice_wrap)
+    a_slice_wrap = wrap_ra(a_slice)
+    a_min = np.nanmin(a_slice_wrap)
+    a_max = np.nanmax(a_slice_wrap)
 
     b_min = min(b_slice)
     b_max = max(b_slice)
@@ -751,6 +746,9 @@ def wrap_ra(ravalues):
 #________________________________________________________________________________
 # Errors 
 class NoCoordSystem(Exception):
+    pass
+
+class InvalidCoordSystem(Exception):
     pass
 
 class RaAveError(Exception):
