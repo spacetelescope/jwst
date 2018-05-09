@@ -58,7 +58,7 @@ class StraylightStep (Step):
                     #det2ab is a RegionsSelector model
                     slices = det2ab.label_mapper.mapper
 
-                    self.log.info(' Region of influence radius (pixels) %62f',self.roi)
+                    self.log.info(' Region of influence radius (pixels) %6.2f',self.roi)
                     self.log.info(' Modified Shepard weighting power %5.2f',self.power)
                 # Do the correction
                     result = straylight.correct_MRS_ModShepard(input_model, 
