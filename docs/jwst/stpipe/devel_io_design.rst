@@ -27,6 +27,8 @@ API Summary
       parent `Step` or `Pipeline`. :ref:`[more]<devel_io_substeps_and_output>`
     - `output_use_model`: True to always base output file names on the
       `DataModel.meta.filename` of the `DataModel` being saved.
+    - `input_dir`: The directory where the input files are located.
+      General defined by the primary input file.
 
 Classes, Methods, Functions
 ---------------------------
@@ -147,6 +149,15 @@ is returned. `ModelContainer` is, among other features, a list-like
 object where each element is the `DataModel` of each member of the
 association. The `meta.asn_table` is populated with the association
 data structure, allowing direct access to the association itself.
+
+Input Source
+------------
+
+In general, all input, except for references files provided by CRDS,
+are expected to be co-resident in the same directory. That directory
+is determined by the directory in which the primary input file
+resides. For programmatic use, this directory is available in the
+`Step.input_dir` attribute.
 
 Output
 ======
