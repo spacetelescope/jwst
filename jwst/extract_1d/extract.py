@@ -9,6 +9,7 @@ from astropy.modeling import polynomial
 from .. import datamodels
 from ..datamodels import dqflags
 from .. assign_wcs import niriss        # for specifying spectral order number
+from .. transforms import models as trmodels
 from . import extract1d
 from . import ifu
 from . import spec_wcs
@@ -41,10 +42,6 @@ ANY_ORDER = 1000
 # are to be compared with keyword DISPAXIS from the input header.
 HORIZONTAL = 1
 VERTICAL = 2
-
-# This is intended to be larger than any possible distance (in pixels)
-# between the target and any point in the image; used by locn_from_wcs().
-HUGE_DIST = 1.e20
 
 # These values are assigned in get_extract_parameters, using key "match".
 # If there was an aperture in the reference file for which the "id" key
@@ -597,7 +594,6 @@ def aperture_from_wcs(wcs):
     try:
         bounding_box = wcs.bounding_box
         got_bounding_box = True
-        log.debug("Using wcs.bounding_box.")
     except AttributeError:
         log.info("wcs.bounding_box not found; using wcs.domain instead.")
         bounding_box = ((wcs.domain[0]['lower'], wcs.domain[0]['upper']),
@@ -849,140 +845,114 @@ class ExtractBase:
         pass
 
 
-    def locn_from_wcs(self, input_model, slit):
-        """Get the location of the spectrum, based on the WCS.
+    def offset_from_offset(self, input_model, verbose):
+        """Get nod/dither pixel offset from [xy]_offset.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         input_model: data model
-            The input science model.  This will only be used if `slit`
-            is "dummy".
+            The input science data.
 
-        slit: one slit from a MultiSlitModel (or similar), or "dummy"
-            The WCS and target coordinates will be gotten from `slit`
-            unless `slit` is "dummy", and in that case they will be gotten
-            from `input_model`.
-
-        Returns:
-        --------
-        middle: int or None
-            Pixel coordinate in the dispersion direction within the 2-D
-            cutout (or the entire input image) at the middle of the WCS
-            bounding box.  This is the point at which to determine the
-            nominal extraction location, in case it varies along the
-            spectrum.  The offset will then be the difference between
-            `locn` (below) and the nominal location.
-
-        middle_wl: float or None
-            The wavelength at pixel `middle`.
-
-        locn: int or None
-            Pixel coordinate in the cross-dispersion direction within the
-            2-D cutout (or the entire input image) that has right ascension
-            and declination coordinates closest to the target location.
-            The spectral extraction region should be centered here.
-            None will be returned for `middle`, `middle_wl`, and `locn`
-            if there was not sufficient information available, e.g. if the
-            wavelength attribute or wcs function is not defined.
+        verbose: boolean
+            If True, write log messages.
         """
 
-        transform = self.wcs.forward_transform
+        total_points = input_model.meta.dither.total_points
+        if total_points is None or total_points < 2:
+            if verbose:
+                log.info("Total number of dither points = %s; assuming no "
+                         "nod/dither offset", str(total_points))
+            return None
 
-        bb = self.wcs.bounding_box          # ((x0, x1), (y0, y1))
+        if 'detector' not in self.wcs.available_frames:
+            if verbose:
+                log.warning("detector frame not available, so "
+                            "can't compute nod/dither offset")
+            return None
+        if 'v2v3' not in self.wcs.available_frames:
+            if verbose:
+                log.warning("v2v3 frame not available, so "
+                            "can't compute nod/dither offset")
+            return None
+        v2v3_detector = self.wcs.get_transform('v2v3', 'detector')
 
-        if bb is None:
-            log.warning("The WCS bounding box is None, "
-                        "so we can't get target location using the WCS.")
-            return None, None, None
+        xoffset = input_model.meta.dither.x_offset      # in arcsec
+        yoffset = input_model.meta.dither.y_offset      # in arcsec
+        if verbose:
+            log.debug("xoffset = %s, yoffset = %s", str(xoffset), str(yoffset))
+        if xoffset is None or yoffset is None:
+            if verbose:
+                log.warning("XOFFSET and/or YOFFSET not found; "
+                            "assuming no nod/dither offset")
+            return None
 
-        # Size of the bounding box.
-        dx = int(bb[0][1] - bb[0][0] + 1)
-        dy = int(bb[1][1] - bb[1][0] + 1)
+        if hasattr(input_model.meta.wcsinfo, "v2_ref"):
+            v2ref = input_model.meta.wcsinfo.v2_ref     # in arcsec
+        else:
+            v2ref = None
+        if hasattr(input_model.meta.wcsinfo, "v3_ref"):
+            v3ref = input_model.meta.wcsinfo.v3_ref     # in arcsec
+        else:
+            v3ref = None
+        if hasattr(input_model.meta.wcsinfo, "v3yangle"):
+            v3idlyangle = input_model.meta.wcsinfo.v3yangle     # in deg
+        else:
+            v3idlyangle = None
+        if hasattr(input_model.meta.wcsinfo, "vparity"):
+            vparity = input_model.meta.wcsinfo.vparity
+        else:
+            vparity = None
+        if hasattr(input_model.meta.wcsinfo, "waverange_start"):
+            wl_start = input_model.meta.wcsinfo.waverange_start
+        else:
+            wl_start = None
+        if hasattr(input_model.meta.wcsinfo, "waverange_end"):
+            wl_end = input_model.meta.wcsinfo.waverange_end
+        else:
+            wl_end = None
+        if verbose:
+            log.debug("v2ref = %s, v3ref = %s, v3idlyangle = %s, "
+                      "vparity = %s, wl_start = %s, wl_end = %s",
+                      str(v2ref), str(v3ref), str(v3idlyangle), str(vparity),
+                        str(wl_start), str(wl_end))
+        if (v2ref is None or v3ref is None or
+            v3idlyangle is None or vparity is None or
+            wl_start is None or wl_end is None):
+                if verbose:
+                    log.warning("Missing wcsinfo values; "
+                                "can't compute nod/dither offset")
+                return None
 
+        idl_v23 = trmodels.IdealToV2V3(v3idlyangle, v2ref, v3ref, vparity)
+
+        wavelength = 0.5 * (wl_end - wl_start) + wl_start
+
+        # Compute the location in V2,V3 [in arcsec]
+        xv0, yv0 = idl_v23(0., 0.)
+        xv, yv = idl_v23(xoffset, yoffset)
+        (x0, y0) = v2v3_detector(xv0, yv0, wavelength)
+        (x, y) = v2v3_detector(xv, yv, wavelength)
+        if verbose:
+            log.debug("x0 = %s, x = %s, y0 = %s, y = %s",
+                      str(x0), str(x), str(y0), str(y))
+        if x0 is None or y0 is None or x is None or y is None:
+            if verbose:
+                log.warning("One or more of x, y, x0, y0 is None; "
+                            "can't compute nod/dither offset")
+            return None
+        # offsets from xoffset = 0, yoffset = 0
+        dx = x - x0
+        dy = y - y0
         if self.dispaxis == HORIZONTAL:
-            # Width in the cross-dispersion direction, from the start of
-            # the 2-D cutout (or of the full image) to the upper limit of
-            # the bounding box.  This may be smaller than the full width
-            # of the image, but it's all we need to consider.
-            width = bb[0][1] + 1
-            width = int(round(width))           # must be an int
-            # This is the middle of the bounding_box in the dispersion
-            # direction.  The zero point is the first pixel of the input data.
-            middle = int(bb[0][0] + dx // 2)
-            x = np.empty(width, dtype=np.float64)
-            x[:] = float(middle)
-            y = np.arange(width, dtype=np.float64)
-        else:                                   # dispaxis = VERTICAL
-            width = bb[1][1] + 1                # in cross-dispersion direction
-            middle = int(bb[1][0] + dy // 2)    # in dispersion direction
-            width = int(round(width))           # must be an int
-            x = np.arange(width, dtype=np.float64)
-            y = np.empty(width, dtype=np.float64)
-            y[:] = float(middle)
-
-        if slit != DUMMY and hasattr(slit.meta, "target"):
-            log.debug("Target coordinates were gotten from slit.meta")
-            ra = slit.meta.target.ra
-            dec = slit.meta.target.dec
-        elif hasattr(input_model.meta, "target"):
-            log.debug("Target coordinates were gotten from input_model.meta")
-            ra = input_model.meta.target.ra
-            dec = input_model.meta.target.dec
+            offset = dy
         else:
-            log.warning("Target RA and Dec are not available, "
-                        "so we can't get target location using the WCS.")
-            return None, None, None
-        log.debug("Target ra = %.5f dec = %.5f", ra, dec)
+            offset = dx
+        if np.isnan(offset):
+            if verbose:
+                log.warning("Nod/dither offset is NaN, setting to 0.")
+            offset = 0.
 
-        if transform.n_inputs > 2:
-            stuff = transform(x, y, self.spectral_order)
-            ra_i = stuff[0]
-            dec_i = stuff[1]
-            middle_wl = stuff[2]
-        else:
-            stuff = transform(x, y)
-            ra_i = stuff[0]
-            dec_i = stuff[1]
-            middle_wl = stuff[2]
-        # Rough approximation for handling targets near a pole.
-        dec_m = (dec_i + dec) / 2.
-        dra = (ra_i - ra) * np.cos(dec_m * math.pi / 180.)
-        ddec = dec_i - dec
-
-        nan_ra = np.isnan(dra)
-        nan_dec = np.isnan(ddec)
-        nan_mask = np.logical_or(nan_ra, nan_dec)
-
-        dist = np.where(nan_mask, HUGE_DIST, np.sqrt(dra**2 + ddec**2))
-        del nan_ra, nan_dec, nan_mask
-
-        indx = np.argsort(dist)
-        # This should be the xd location of the spectrum:
-        locn = int(indx[0])     # index of the minimum value in dist
-        # If the minimum distance to the target is at the edge of the image
-        # or at the edge of the non-NaN area, we can't use the WCS to find
-        # the location of the target spectrum.
-        if (locn <= 0 or locn >= width - 1 or
-            dist[locn - 1] > HUGE_DIST / 2. or
-            dist[locn + 1] > HUGE_DIST / 2.):
-            log.warning("WCS implies the target is outside the bounding box, "
-                        "so we can't get target location using the WCS.")
-            if locn <= 0 or locn >= width - 1:
-                log.debug("location = %d, at edge", locn)
-            else:
-                log.debug("location = %d, adjacent to NaN region", locn)
-            if slit == DUMMY:
-                shape = input_model.data.shape
-            else:
-                shape = slit.data.shape
-            locn = None
-
-        return middle, middle_wl, locn
-
-
-    def nominal_locn(self, middle, middle_wl):
-        # Implemented in the subclasses.
-        pass
+        return offset
 
 
 class ExtractModel(ExtractBase):
@@ -1134,64 +1104,6 @@ class ExtractModel(ExtractBase):
             self.wcs = slit.meta.wcs
         if self.wcs is None:
             log.warning("WCS function not found in input.")
-
-
-    def nominal_locn(self, middle, middle_wl):
-        """Find the nominal cross-dispersion location of the target spectrum.
-
-        This version is for the case that the reference file is a JSON file,
-        or that there is no reference file.
-
-        Parameters
-        ----------
-        middle: int
-            The zero-indexed pixel number of the point in the dispersion
-            direction at which `locn_from_wcs` determined the actual
-            location (in the cross-dispersion direction) of the target
-            spectrum.  This is used for evaluating the polynomial
-            functions if the independent variable is pixel.
-
-        middle_wl: float
-            The wavelength at pixel `middle`.  This is only used if the
-            independent variable for polynomial functions is wavelength.
-
-        Returns
-        -------
-        location: float or None
-            The nominal cross-dispersion location (i.e. unmodified by
-            nod or dither offset) of the target spectrum.
-        """
-
-        if self.src_coeff is None:
-            if self.dispaxis == HORIZONTAL:
-                location = float(self.ystart + self.ystop) / 2.
-            else:
-                location = float(self.xstart + self.xstop) / 2.
-        else:
-            if self.independent_var.startswith("wavelength"):
-                x = float(middle_wl)
-            else:
-                x = float(middle)
-            # Create the polynomial functions.  We'll do this again later,
-            # after adding the nod/dither offset to the coefficients, but
-            # we need to evaluate them at x now in order to get the nominal
-            # location of the spectrum.
-            self.assign_polynomial_limits()
-            n_srclim = len(self.p_src)
-            sum_data = 0.
-            sum_weights = 0.
-            for i in range(n_srclim):
-                lower = self.p_src[i][0](x)
-                upper = self.p_src[i][1](x)
-                weight = (upper - lower)
-                sum_data += weight * (lower + upper) / 2.
-                sum_weights += weight
-            if sum_weights == 0.:
-                location = None
-            else:
-                location = sum_data / sum_weights
-
-        return location
 
 
     def add_nod_correction(self):
@@ -1455,9 +1367,9 @@ class ExtractModel(ExtractBase):
                         ra[i], dec[i], wcs_wl[i], _ = transform(
                                 x_array[i], y_array[i], self.spectral_order)
                 else:
-                    log.error("n_inputs for wcs function is %d", n_inputs)
-                    log.error("WCS function was expected to take "
-                              "either 2 or 3 arguments.")
+                    log.warning("n_inputs for wcs function is %d", n_inputs)
+                    log.warning("WCS function was expected to take "
+                                "either 2 or 3 arguments.")
                     ra[:] = -999.
                     dec[:] = -999.
                     wcs_wl[:] = -999.
@@ -1584,56 +1496,6 @@ class ImageExtractModel(ExtractBase):
             self.wcs = slit.meta.wcs
         if self.wcs is None:
             log.warning("WCS function not found in input.")
-
-
-    def nominal_locn(self, middle, middle_wl):
-        """Find the nominal cross-dispersion location of the target spectrum.
-
-        This version is for the case that the reference file is an image.
-
-        Parameters
-        ----------
-        middle: int
-            The zero-indexed pixel number of the point in the dispersion
-            direction at which `locn_from_wcs` determined the actual
-            location (in the cross-dispersion direction) of the target
-            spectrum.
-
-        middle_wl: float
-            The wavelength at pixel `middle`.  This is not used.
-
-        Returns
-        -------
-        location: float or None
-            The nominal cross-dispersion location (i.e. unmodified by
-            nod or dither offset) of the target spectrum.
-            The value will be None if `middle` is outside the reference
-            image or if the reference image does not specify any pixels
-            to extract at `middle`.
-        """
-
-        shape = self.ref_image.data.shape
-
-        if self.dispaxis == HORIZONTAL:
-            if middle < 0 or middle >= shape[1]:
-                return None
-            middle_line = self.ref_image.data[:, middle]
-        else:
-            if middle < 0 or middle >= shape[0]:
-                return None
-            middle_line = self.ref_image.data[middle, :]
-
-        mask_target = np.where(middle_line > 0., 1., 0.)
-        x = np.arange(len(middle_line), dtype=np.float64)
-
-        numerator = (x * mask_target).sum()
-        denominator = mask_target.sum()
-        if denominator > 0.:
-            location = numerator / denominator
-        else:
-            location = None
-
-        return location
 
 
     def add_nod_correction(self):
@@ -1826,9 +1688,9 @@ class ImageExtractModel(ExtractBase):
                         ra[i], dec[i], wcs_wl[i], _ = transform(
                                 x_array[i], y_array[i], self.spectral_order)
                 else:
-                    log.error("n_inputs for wcs function is %d", n_inputs)
-                    log.error("WCS function was expected to take "
-                              "either 2 or 3 arguments.")
+                    log.warning("n_inputs for wcs function is %d", n_inputs)
+                    log.warning("WCS function was expected to take "
+                                "either 2 or 3 arguments.")
                     ra[:] = -999.
                     dec[:] = -999.
                     wcs_wl[:] = -999.
@@ -2543,27 +2405,15 @@ def extract_one_slit(input_model, slit, integ, verbose, **extract_params):
         ap = get_aperture(data.shape, extract_model.wcs, extract_params)
         extract_model.update_extraction_limits(ap)
 
-    # Use the WCS function to find the cross-dispersion (XD) location that
-    # is closest to the target coordinates.  This is the "actual" location
-    # of the spectrum, so the extraction region should be centered here.
-    (middle, middle_wl, locn) = extract_model.locn_from_wcs(input_model, slit)
-    if middle is not None:
-        log.debug("Spectrum location from WCS used column (or row) %d",
-                  middle)
-
-    # Find the nominal extraction location, i.e. the XD location specified
-    # in the reference file prior to adding any nod/dither offset.  The
-    # difference is the nod/dither offset.
-    if middle is not None and locn is not None:
-        nominal_location = extract_model.nominal_locn(middle, middle_wl)
-        log.debug("Target spectrum is at %g in the cross-dispersion direction",
-                  locn)
-        if nominal_location is not None:
-            log.debug("and the nominal XD location of the target spectrum "
-                      "is %g", nominal_location)
-            extract_model.nod_correction = locn - nominal_location
-        else:
-            log.debug("but couldn't determine the nominal XD location.")
+    # xxx This only needs to be called for the first integration.
+    offset = extract_model.offset_from_offset(input_model, verbose=verbose)
+    if offset is not None:
+        if offset != 0:                         # xxx should be temporary
+            if verbose:
+                log.debug("Computed nod/dither offset = %s, but don't "
+                          "trust this yet, so assuming 0", str(offset))
+            offset = 0.                         # xxx should be temporary
+        extract_model.nod_correction = offset
 
     # Add the nod/dither offset to the polynomial coefficients, or shift
     # the reference image (depending on the type of reference file).
