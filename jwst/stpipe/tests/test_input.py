@@ -51,7 +51,6 @@ def test_use_input_dir(mk_tmp_dirs):
 
 def test_fail_input_dir(mk_tmp_dirs):
 
-    input_dir = t_path('data')
     input_file = 'flat.fits'
 
     with pytest.raises(FileNotFoundError):
