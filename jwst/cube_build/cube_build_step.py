@@ -31,12 +31,12 @@ SHORT,MEDIUM,LONG, or ALL
          scale1 = float(default=0.0) # cube sample size to use for axis 1, arc seconds
          scale2 = float(default=0.0) # cube sample size to use for axis 2, arc seconds
          scalew = float(default=0.0) # cube sample size to use for axis 3, microns
-         weighting = option('msm','miripsf','area','MSM','MIRIPSF','AREA',default = 'msm') # Type of weighting function, msm: modified Shepard Method, miripsf: use information on shape of miri psf in the msm method, Area: only used if coord_system = alpha-beta [advanced option]
+         weighting = option('msm','miripsf','area','MSM','MIRIPSF','AREA',default = 'msm') # Type of weighting function, 
          coord_system = option('ra-dec','alpha-beta','ALPHA-BETA',default='ra-dec') # Coordinate system of the output IFUcube. Options: ra-dec or  alpha-beta
          rois = float(default=0.0) # region of interest spatial size, arc seconds
          roiw = float(default=0.0) # region of interest wavelength size, microns
          weight_power = float(default=2.0) # Weighting option to use when combining pixel surface brightness in the RIO centered on cube spaxial center
-         offset_list = string(default='NA')  # A file for dithered data containing additional ra and dec offsets to be applied to files in the association. The offset tweaks the wcs of the input exposures. Offsets are given in arcseconds. EXPERIMENTAL OPTION - ADVANCED USERS ONLY
+         offset_list = string(default='NA')  # A file for dithered data containing additional ra and dec offsets (in arcseconds) to be applied to files in the association.  EXPERIMENTAL OPTION - ADVANCED USERS ONLY
          wavemin = float(default=None)  # Minimum wavelength to be used in the IFUCube
          wavemax = float(default=None)  # Maximum wavelength to be used in the IFUCube
          xdebug = integer(default=None) # debug option, x spaxel value to report information on
