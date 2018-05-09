@@ -99,7 +99,7 @@ def calculate_pathloss_vector(pathloss_refdata, pathloss_wcs, xcenter, ycenter):
         crval1 = pathloss_wcs.crval1
         cdelt1 = pathloss_wcs.cdelt1
         for i in np.arange(wavesize):
-            wavelength[i] = crval1 +(float(i) - crpix1)*cdelt1
+            wavelength[i] = crval1 +(float(i+1) - crpix1)*cdelt1
         return wavelength, pathloss_refdata
     #
     # pointsource.data is 3-d, so we have to extract a wavelength vector
@@ -109,7 +109,7 @@ def calculate_pathloss_vector(pathloss_refdata, pathloss_wcs, xcenter, ycenter):
         crval3 = pathloss_wcs.crval3
         cdelt3 = pathloss_wcs.cdelt3
         for i in np.arange(wavesize):
-            wavelength[i] = crval3 +(float(i) - crpix3)*cdelt3
+            wavelength[i] = crval3 +(float(i+1) - crpix3)*cdelt3
         # Calculate python index of object center
         crpix1 = pathloss_wcs.crpix1
         crval1 = pathloss_wcs.crval1
