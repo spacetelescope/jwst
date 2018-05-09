@@ -45,6 +45,7 @@ SHORT,MEDIUM,LONG, or ALL
          single = boolean(default=false) # Internal pipeline option used by mrs_imatch and outlier detection
          output_type = option('band','channel','grating','multi',default='band') # Type of output cube to create. Options = band,channel,grating, multi
          search_output_file = boolean(default=false)
+         output_use_model = boolean(default=true) # Use filenames in the output models
        """
     reference_file_types = ['cubepar','resol']
 

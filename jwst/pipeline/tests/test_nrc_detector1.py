@@ -45,7 +45,11 @@ def test_run_full(mk_tmp_dirs):
     # Check for primary pipeline result
     input_basename, ext = path.splitext(input_file)
     output_basename, separator = remove_suffix(input_basename)
-    output_file = output_basename + separator + 'ramp' + ext
+    output_file = output_basename + separator + 'rate' + ext
+    assert output_file in output_files
+    output_files.remove(output_file)
+
+    output_file = output_basename + separator + 'rateints' + ext
     assert output_file in output_files
     output_files.remove(output_file)
 
