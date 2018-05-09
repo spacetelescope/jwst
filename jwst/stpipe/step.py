@@ -892,6 +892,30 @@ class Step():
                 )
         gc.collect()
 
+    def make_input_path(self, file_path):
+        """Create an input path for a given file path
+
+        If `file_path` has no directory path, use `self.input_dir`
+        as the directory path.
+
+        Parameters
+        ----------
+        file_path: str
+            The supplied file path to check and modify.
+
+        Returns
+        -------
+        full_path: str
+            File path using `input_dir` if the input
+            had no directory path.
+        """
+        full_path = file_path
+        original_path, file_name = split(file_path)
+        if not len(original_path):
+            full_path = join(self.input_dir, file_name)
+
+        return full_path
+
     def _set_input_dir(self, args):
         """Set the input directory
 
