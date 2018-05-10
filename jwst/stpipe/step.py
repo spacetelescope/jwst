@@ -30,6 +30,7 @@ from . import utilities
 from .. import __version_commit__, __version__
 from ..associations.lib.format_template import FormatTemplate
 from ..datamodels import (DataModel, ModelContainer)
+from ..datamodels import open as dm_open
 
 
 class Step():
@@ -892,6 +893,24 @@ class Step():
                 )
         gc.collect()
 
+    def open_model(self, obj):
+        """Open a datamodel
+
+        Primarily a wrapper around `DataModel.open` to
+        handle `Step` peculiarities
+
+        Parameters
+        ----------
+        obj: object
+            The object to open
+
+        Returns
+        -------
+        datamodel: DataModel
+            Object opened as a datamodel
+        """
+        return dm_open(self.make_input_path(obj))
+
     def make_input_path(self, file_path):
         """Create an input path for a given file path
 
@@ -900,19 +919,22 @@ class Step():
 
         Parameters
         ----------
-        file_path: str
+        file_path: str or obj
             The supplied file path to check and modify.
+            If anything other than `str`, the object
+            is simply passed back.
 
         Returns
         -------
-        full_path: str
+        full_path: str or obj
             File path using `input_dir` if the input
             had no directory path.
         """
         full_path = file_path
-        original_path, file_name = split(file_path)
-        if not len(original_path):
-            full_path = join(self.input_dir, file_name)
+        if isinstance(file_path, str):
+            original_path, file_name = split(file_path)
+            if not len(original_path):
+                full_path = join(self.input_dir, file_name)
 
         return full_path
 

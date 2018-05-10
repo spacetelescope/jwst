@@ -56,7 +56,7 @@ class StepWithModel(Step):
     def process(self, *args):
         from ....datamodels import ImageModel
 
-        input_path = self.make_input_path(args[0])
+        input_path = self.open_model(args[0])
         model = ImageModel(input_path)
 
         return model
