@@ -2,8 +2,6 @@
 # have been moved here
 #
 
-from __future__ import division
-
 import numpy as np
 
 # Constants used in NRM_Model.py
@@ -17,14 +15,14 @@ phi_nb = np.array([0.028838669455909766, -0.061516214504502634, \
 phi_nb = phi_nb * 4.3e-6 # phi_nb in m
 
 ctrs = np.array([[0.00000000, -2.640000],
-                  [-2.2863100, 0.0000000],
-                  [2.2863100, -1.3200001],
-                  [-2.2863100, 1.3200001],
-                  [-1.1431500, 1.9800000],
-                  [2.2863100, 1.3200001],
-                  [1.1431500, 1.9800000]])
+                 [-2.2863100, 0.0000000],
+                 [2.2863100, -1.3200001],
+                 [-2.2863100, 1.3200001],
+                 [-1.1431500, 1.9800000],
+                 [2.2863100, 1.3200001],
+                 [1.1431500, 1.9800000]])
 
-# Constants in (but not used) in webb_psf.py; included here in case
+# Constants in (but not used) webb_psf.py; included here in case
 #    they will be used
 m_ = 1.0
 mm_ = m_ / 1000.0

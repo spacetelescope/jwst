@@ -63,6 +63,27 @@ def rotatevectors(vectors, thetarad):
     return rot_vectors
 
 
+def mas2rad(mas):
+    """
+    Short Summary
+    -------------
+    Convert angle in milli arc-sec to radians
+
+    Parameters
+    ----------
+    mas: float
+        angle in milli arc-sec
+
+    Returns
+    -------
+    rad: float
+        angle in radians
+    """
+
+    rad = mas * (10**(-3)) / (3600 * 180 / np.pi)
+    return rad
+
+
 def rad2mas(rad):
     """
     Short Summary

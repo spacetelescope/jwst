@@ -9,7 +9,7 @@ from .. import datamodels
 
 from .NRM_Model import NRM_Model
 from . import webb_psf
-from . import hexee
+from . import leastsqnrm
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -62,7 +62,7 @@ def apply_LG(input_model, filter_model, oversample, rotation):
 
     # Instantiate the NRM model object
     jwnrm = NRM_Model(mask='JWST', holeshape='hex',
-                pixscale=hexee.mas2rad(63.52554816773347),
+                pixscale=leastsqnrm.mas2rad(63.52554816773347),
                 rotate=rotation, rotlist_deg=rots_deg,
                 scallist=relpixscales)
 
@@ -74,7 +74,22 @@ def apply_LG(input_model, filter_model, oversample, rotation):
     # Now fit the data in the science exposure
     # (pixguess is a guess at the pixel scale of the data)
     #  produces a 19x19 image of the fit
-    jwnrm.fit_image(input_model.data, pixguess=jwnrm.pixel)
+
+    subarray = input_model.meta.subarray.name.upper()
+    if subarray == 'FULL':
+        # Instead of using the FULL subarray, extract the same region (size and
+        #   location) as used by SUB80 to make execution time acceptable
+        xstart = 1045 # / Starting pixel in axis 1 direction
+        ystart = 1    # / Starting pixel in axis 2 direction
+        xsize = 80    # / Number of pixels in axis 1 direction
+        ysize = 80    # / Number of pixels in axis 2 direction
+        xstop = xstart + xsize - 1
+        ystop = ystart + ysize - 1
+
+        jwnrm.fit_image(input_model.data[ ystart-1:ystop, xstart-1:xstop ],
+                        pixguess=jwnrm.pixel)
+    else:
+        jwnrm.fit_image(input_model.data, pixguess=jwnrm.pixel)
 
     # Construct model image from fitted PSF
     jwnrm.create_modelpsf()
