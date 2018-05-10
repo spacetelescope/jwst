@@ -358,7 +358,7 @@ properties:
             fits_keyword: MODULE
             blend_table: True
           channel:
-            title: 'MIRI channel: long or short'
+            title: 'NIRCam channel: long or short'
             type: string
             enum: [LONG, SHORT, '12', '34', '1', '2', '3', '4', ANY, N/A, '1234', '123', '234']
             fits_keyword: CHANNEL
