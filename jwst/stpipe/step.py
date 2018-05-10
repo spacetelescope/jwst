@@ -28,7 +28,9 @@ from . import log
 from .suffix import remove_suffix
 from . import utilities
 from .. import __version_commit__, __version__
+from ..associations.load_as_asn import LoadAsLevel2Asn
 from ..associations.lib.format_template import FormatTemplate
+from ..associations.lib.update_path import update_key_value
 from ..datamodels import (DataModel, ModelContainer)
 from ..datamodels import open as dm_open
 
@@ -937,6 +939,26 @@ class Step():
                 full_path = join(self.input_dir, file_name)
 
         return full_path
+
+    def load_as_level2_asn(self, obj):
+        """Load object as an association
+
+        Loads the specified object into a Level2 association.
+        If necessary, prepend `Step.input_dir` to all members.
+
+        Parameters
+        ----------
+        obj: object
+            Object to load as a Level2 association
+
+        Returns
+        -------
+        association: jwst.associations.lib.rules_level2_base.DMSLevel2bBase
+            Association
+        """
+        asn = LoadAsLevel2Asn.load(obj, basename=self.output_file)
+        update_key_value(asn, 'expname', (), mod_func=self.make_input_path)
+        return asn
 
     def _set_input_dir(self, args):
         """Set the input directory

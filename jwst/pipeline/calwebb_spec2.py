@@ -2,7 +2,6 @@
 from collections import defaultdict
 
 from .. import datamodels
-from ..associations.load_as_asn import LoadAsLevel2Asn
 from ..lib.pipe_utils import is_tso
 from ..stpipe import Pipeline
 
@@ -73,7 +72,7 @@ class Spec2Pipeline(Pipeline):
         self.log.info('Starting calwebb_spec2 ...')
 
         # Retrieve the input(s)
-        asn = LoadAsLevel2Asn.load(input, basename=self.output_file)
+        asn = self.load_as_level2_asn(input)
 
         # Each exposure is a product in the association.
         # Process each exposure.
@@ -127,10 +126,7 @@ class Spec2Pipeline(Pipeline):
         science = science[0]
 
         self.log.info('Working on input %s ...', science)
-        if isinstance(science, datamodels.DataModel):
-            input = science
-        else:
-            input = datamodels.open(science)
+        input = self.open_model(science)
         exp_type = input.meta.exposure.type
         tso_mode = is_tso(input)
 
