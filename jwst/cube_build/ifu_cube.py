@@ -684,7 +684,12 @@ class IFUCubeData(object):
         IFUCube.update(self.input_models[j])
         IFUCube.meta.filename = self.output_name
         
-        self.blend_output_metadata(IFUCube)
+        # Call model_blender if there are multiple inputs
+        #if len(self.input_models) > 1:
+        #    saved_model_type = IFUCube.meta.model_type
+        #    self.blend_output_metadata(IFUCube)
+        #    IFUCube.meta.model_type = saved_model_type  # Reset to original
+
 #______________________________________________________________________
         if self.output_type == 'single':
             with datamodels.open(self.input_models[j]) as input:

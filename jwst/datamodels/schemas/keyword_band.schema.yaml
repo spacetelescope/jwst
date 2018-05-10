@@ -9,5 +9,5 @@ properties:
           band:
             title: MRS wavelength band
             type: string
-            enum: [SHORT, MEDIUM, LONG, N/A, ANY]
+            enum: [SHORT, MEDIUM, LONG, N/A, ANY, MULTIPLE]
             fits_keyword: BAND
