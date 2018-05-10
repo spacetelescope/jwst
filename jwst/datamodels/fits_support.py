@@ -461,11 +461,11 @@ def _load_from_schema(hdulist, schema, tree, context):
                 ctx.get('hdu_index'), known_keywords)
 
             if result is None:
-                util.validate_schema(result, schema,
+                util.validate_schema(path, result, schema,
                                      context._pass_invalid_values,
                                      context._strict_validation)
             else:
-                if util.validate_schema(result, schema,
+                if util.validate_schema(path, result, schema,
                                         context._pass_invalid_values,
                                         context._strict_validation):
                     properties.put_value(path, result, tree)
@@ -476,11 +476,11 @@ def _load_from_schema(hdulist, schema, tree, context):
                 hdulist, schema, ctx.get('hdu_index'), known_datas)
 
             if result is None:
-                util.validate_schema(result, schema,
+                util.validate_schema(path, result, schema,
                                      context._pass_invalid_values,
                                      context._strict_validation)
             else:
-                if util.validate_schema(result, schema,
+                if util.validate_schema(path, result, schema,
                                         context._pass_invalid_values,
                                         context._strict_validation):
                     properties.put_value(path, result, tree)
