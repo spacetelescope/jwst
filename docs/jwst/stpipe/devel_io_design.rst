@@ -35,6 +35,8 @@ Classes, Methods, Functions
 
     - :meth:`Step.open_model <jwst.stpipe.step.Step.open_model>`: Open
       a `DataModel`
+    - :meth:`Step.load_as_level2_asn`: Open a list or file as Level2 association.
+    - :meth:`Step.load_as_level3_asn`: Open a list or file as Level3 association.
     - :meth:`Step.make_input_path
       <jwst.stpipe.step.Step.make_input_path>`: Create a file name to
       be used as input
@@ -164,6 +166,9 @@ is, among other features, a list-like object where each element is the
 `DataModel` of each member of the association. The `meta.asn_table` is
 populated with the association data structure, allowing direct access
 to the association itself.
+
+To read in a list of files, or an association file, as an association,
+use the `load_as_level2_asn` or `load_as_level3_asn` methods.
 
 Input Source
 ------------
