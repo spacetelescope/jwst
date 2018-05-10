@@ -28,7 +28,7 @@ from . import log
 from .suffix import remove_suffix
 from . import utilities
 from .. import __version_commit__, __version__
-from ..associations.load_as_asn import LoadAsLevel2Asn
+from ..associations.load_as_asn import (LoadAsAssociation, LoadAsLevel2Asn)
 from ..associations.lib.format_template import FormatTemplate
 from ..associations.lib.update_path import update_key_value
 from ..datamodels import (DataModel, ModelContainer)
@@ -957,6 +957,26 @@ class Step():
             Association
         """
         asn = LoadAsLevel2Asn.load(obj, basename=self.output_file)
+        update_key_value(asn, 'expname', (), mod_func=self.make_input_path)
+        return asn
+
+    def load_as_level3_asn(self, obj):
+        """Load object as an association
+
+        Loads the specified object into a Level3 association.
+        If necessary, prepend `Step.input_dir` to all members.
+
+        Parameters
+        ----------
+        obj: object
+            Object to load as a Level3 association
+
+        Returns
+        -------
+        association: jwst.associations.lib.rules_level3_base.DMS_Level3_Base
+            Association
+        """
+        asn = LoadAsAssociation.load(obj)
         update_key_value(asn, 'expname', (), mod_func=self.make_input_path)
         return asn
 

@@ -28,10 +28,7 @@ def test_run_full(mk_tmp_dirs):
     """Test a full run"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
-    asn_path = update_asn_basedir(
-        path.join(DATAPATH, 'test_lg1_asn.json'),
-        root=DATAPATH
-    )
+    asn_path = path.join(DATAPATH, 'test_lg1_correct_asn.json')
     args = [
         path.join(SCRIPT_DATA_PATH, 'cfgs', 'calwebb_ami3.cfg'),
         asn_path,
