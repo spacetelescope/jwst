@@ -16,7 +16,7 @@ from ..lastframe import lastframe_step
 from ..linearity import linearity_step
 
 
-__version__ = '0.8.0'
+__version__ = '0.9.3'
 
 # Define logging
 log = logging.getLogger()

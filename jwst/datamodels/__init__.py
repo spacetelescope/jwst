@@ -28,7 +28,7 @@
 # DAMAGE.
 
 
-__version__ = '0.9.1'
+__version__ = '0.9.3'
 
 from os.path import basename
 from astropy.io import registry
