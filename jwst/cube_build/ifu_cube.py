@@ -685,10 +685,10 @@ class IFUCubeData(object):
         IFUCube.meta.filename = self.output_name
         
         # Call model_blender if there are multiple inputs
-        #if len(self.input_models) > 1:
-        #    saved_model_type = IFUCube.meta.model_type
-        #    self.blend_output_metadata(IFUCube)
-        #    IFUCube.meta.model_type = saved_model_type  # Reset to original
+        if len(self.input_models) > 1:
+            saved_model_type = IFUCube.meta.model_type
+            self.blend_output_metadata(IFUCube)
+            IFUCube.meta.model_type = saved_model_type  # Reset to original
 
 #______________________________________________________________________
         if self.output_type == 'single':
@@ -873,9 +873,8 @@ class IFUCubeData(object):
 
         """Create new output metadata based on blending all input metadata."""
         # Run fitsblender on output product
-        input_list = [i.meta.filename for i in self.input_models]
         output_file = IFUCube.meta.filename
 
         log.info('Blending metadata for {}'.format(output_file))
-        blendmeta.blendmodels(IFUCube, inputs=input_list,
+        blendmeta.blendmodels(IFUCube, inputs=self.input_models,
                               output=output_file)
