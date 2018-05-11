@@ -32,9 +32,6 @@ from jwst.transforms.jwextension import JWSTExtension
 from gwcs.extension import GWCSExtension
 
 
-jwst_extensions = [GWCSExtension(), JWSTExtension(), BaseExtension()]
-
-
 class DataModel(properties.ObjectNode, ndmodel.NDModel):
     """
     Base class of all of the data models.
@@ -80,10 +77,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             an excption. If false, they will generate a warning.
         """
         # Set the extensions
-        if extensions is None:
-            extensions = jwst_extensions[:]
-        else:
-            extensions.extend(jwst_extensions)
         self._extensions = extensions
 
         # Override value of validation parameters
@@ -128,10 +121,10 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             asdf = AsdfFile(extensions=extensions)
 
         elif isinstance(init, dict):
-            asdf = AsdfFile(init, extensions=extensions)
+            asdf = AsdfFile(init, extensions=self._extensions)
 
         elif isinstance(init, np.ndarray):
-            asdf = AsdfFile(extensions=extensions)
+            asdf = AsdfFile(extensions=self._extensions)
             shape = init.shape
             is_array = True
 
@@ -155,7 +148,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         elif isinstance(init, fits.HDUList):
             asdf = fits_support.from_fits(init, self._schema,
-                                          extensions, self._ctx)
+                                          self._extensions, self._ctx)
 
         elif isinstance(init, (str, bytes)):
             if isinstance(init, bytes):
@@ -165,12 +158,12 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             if file_type == "fits":
                 hdulist = fits.open(init)
                 asdf = fits_support.from_fits(hdulist, self._schema,
-                                              extensions, self._ctx)
+                                              self._extensions, self._ctx)
 
                 self._files_to_close.append(hdulist)
 
             elif file_type == "asdf":
-                asdf = AsdfFile.open(init, extensions=extensions)
+                asdf = AsdfFile.open(init, extensions=self._extensions)
 
             else:
                 # TODO handle json files as well
@@ -414,7 +407,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         -------
         model : DataModel instance
         """
-        return cls(init, schema=schema, extensions=jwst_extensions)
+        return cls(init, schema=schema)
 
     def to_asdf(self, init, *args, **kwargs):
         """
