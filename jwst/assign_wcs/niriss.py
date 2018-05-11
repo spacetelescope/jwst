@@ -1,10 +1,9 @@
 import logging
-from copy import deepcopy
 
 from asdf import AsdfFile
 from astropy import coordinates as coord
 from astropy import units as u
-from astropy.modeling.models import Const1D, Mapping, Scale, Identity
+from astropy.modeling.models import Const1D, Mapping, Identity
 import gwcs.coordinate_frames as cf
 from gwcs import wcs
 
@@ -14,7 +13,8 @@ from ..transforms.models import (NirissSOSSModel,
                                  NIRISSForwardRowGrismDispersion,
                                  NIRISSBackwardGrismDispersion,
                                  NIRISSForwardColumnGrismDispersion)
-from ..datamodels import ImageModel, NIRISSGrismModel
+from ..datamodels import (ImageModel, NIRISSGrismModel, DistortionModel,
+                          CubeModel)
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -153,19 +153,32 @@ def imaging(input_model, reference_files):
 
 
 def imaging_distortion(input_model, reference_files):
-    distortion = AsdfFile.open(reference_files['distortion']).tree['model']
-    # Convert to deg.  Output of distortion model is in arcsec.
-    transform = distortion | Scale(1 / 3600) & Scale(1 / 3600)
-
+    dist = DistortionModel(reference_files['distortion'])
+    distortion = dist.model
     try:
-        # assign the bounding box to the entire compound model
-        transform.bounding_box = distortion.bounding_box
+        # Check if the model has a bounding box.
+        distortion.bounding_box
     except NotImplementedError:
         shape = input_model.data.shape
-        # Note: Since bounding_box is attached to the model here it's in reverse order.
-        transform.bounding_box = ((-0.5, shape[0] - 0.5),
-                                   (-0.5, shape[1] - 0.5))
-    return transform
+        # Note: Since bounding_box is attached to the model here
+        # it's in reverse order.
+        """
+        A CubeModel is always treated as a stack (in dimension 1)
+        of 2D images, as opposed to actual 3D data. In this case
+        the bounding box is set to the 2nd and 3rd dimension.
+        """
+        if isinstance(input_model, CubeModel):
+            bb = ((-0.5, shape[1] - 0.5),
+                  (-0.5, shape[2] - 0.5))
+        elif isinstance(input_model, ImageModel):
+            bb = ((-0.5, shape[0] - 0.5),
+                  (-0.5, shape[1] - 0.5))
+        else:
+            raise TypeError("Input is not an ImageModel or CubeModel")
+        distortion.bounding_box = bb
+
+    dist.close()
+    return distortion
 
 
 def wfss(input_model, reference_files):

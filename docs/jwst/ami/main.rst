@@ -77,6 +77,12 @@ The routine computes a number of parameters, including a model fit (and
 residuals) to the image, fringe amplitudes and phases, and closure phases
 and amplitudes.
 
+The JWST AMI observing template allows for exposures to be obtained using
+either full-frame (SUBARRAY="FULL") or subarray (SUBARRAY="SUB80") readouts.
+When processing a full-frame exposure, the ``ami_analyze`` step extracts
+(on the fly) a region from the image corresponding to the size and location of
+the SUB80 subarray, in order to keep the processing time to a reasonable level.
+
 Inputs
 ------
 The ``ami_analyze`` step takes a single input image, in the form of a simple 2D

@@ -8,9 +8,15 @@ import numpy as np
 import logging
 from .. import datamodels
 from jwst.assign_wcs import nirspec, util
+from gwcs import wcstools
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
+
+#
+# There are 30 slices in the NIRSPEC IFU, numbered from
+# 0 to 29
+NIRSPEC_IFU_SLICES = np.arange(30)
 
 def getCenter(exp_type, input):
     """
@@ -93,7 +99,7 @@ def calculate_pathloss_vector(pathloss_refdata, pathloss_wcs, xcenter, ycenter):
         crval1 = pathloss_wcs.crval1
         cdelt1 = pathloss_wcs.cdelt1
         for i in np.arange(wavesize):
-            wavelength[i] = crval1 +(float(i) - crpix1)*cdelt1
+            wavelength[i] = crval1 +(float(i+1) - crpix1)*cdelt1
         return wavelength, pathloss_refdata
     #
     # pointsource.data is 3-d, so we have to extract a wavelength vector
@@ -103,7 +109,7 @@ def calculate_pathloss_vector(pathloss_refdata, pathloss_wcs, xcenter, ycenter):
         crval3 = pathloss_wcs.crval3
         cdelt3 = pathloss_wcs.cdelt3
         for i in np.arange(wavesize):
-            wavelength[i] = crval3 +(float(i) - crpix3)*cdelt3
+            wavelength[i] = crval3 +(float(i+1) - crpix3)*cdelt3
         # Calculate python index of object center
         crpix1 = pathloss_wcs.crpix1
         crval1 = pathloss_wcs.crval1
@@ -184,6 +190,15 @@ def do_correction(input_model, pathloss_model):
                     slit.wavelength_pointsource =  wavelength_pointsource
                     slit.pathloss_uniformsource = pathloss_uniform_vector
                     slit.wavelength_uniformsource = wavelength_uniformsource
+                    #
+                    # Create the 2-d pathloss arrays
+                    wavelength_array = slit.wavelength
+                    pathloss_pointsource_2d = interpolate_onto_grid(wavelength_array, wavelength_pointsource,
+                                                                    pathloss_pointsource_vector)
+                    pathloss_uniformsource_2d = interpolate_onto_grid(wavelength_array, wavelength_uniformsource,
+                                                                      pathloss_uniform_vector)
+                    slit.pathloss_pointsource2d = pathloss_pointsource_2d
+                    slit.pathloss_uniformsource2d = pathloss_uniformsource_2d
                 else:
                     log.warning("Cannot find matching pathloss model for slit with size %d" % nshutters)
                     continue
@@ -219,6 +234,15 @@ def do_correction(input_model, pathloss_model):
                 slit.wavelength_pointsource =  wavelength_pointsource
                 slit.pathloss_uniformsource = pathloss_uniform_vector
                 slit.wavelength_uniformsource = wavelength_uniformsource
+                #
+                # Create the 2-d pathloss arrays
+                wavelength_array = slit.wavelength
+                pathloss_pointsource_2d = interpolate_onto_grid(wavelength_array, wavelength_pointsource,
+                                                                pathloss_pointsource_vector)
+                pathloss_uniformsource_2d = interpolate_onto_grid(wavelength_array, wavelength_uniformsource,
+                                                                  pathloss_uniform_vector)
+                slit.pathloss_pointsource2d = pathloss_pointsource_2d
+                slit.pathloss_uniformsource2d = pathloss_uniformsource_2d
             else:
                 log.warning("Cannot find matching pathloss model for aperture %s" % slit.name)
                 continue
@@ -245,6 +269,69 @@ def do_correction(input_model, pathloss_model):
         input_model.pathloss_pointsource = pathloss_pointsource_vector
         input_model.wavelength_uniformsource = wavelength_uniformsource
         input_model.pathloss_uniformsource = pathloss_uniform_vector
+        #
+        # Create the 2-d pathloss arrays, initialize with NaNs
+        wavelength_array = np.zeros(input_model.data.shape, dtype=np.float32)
+        wavelength_array.fill(np.nan)
+        for slice in NIRSPEC_IFU_SLICES:
+            slice_wcs = nirspec.nrs_wcs_set_input(input_model, slice)
+            x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
+            xmin = int(x.min())
+            xmax = int(x.max())
+            ymin = int(y.min())
+            ymax = int(y.max())
+            ra, dec, wavelength = slice_wcs(x, y)
+            wavelength_array[ymin:ymax+1, xmin:xmax+1] = wavelength
+        pathloss_pointsource_2d = interpolate_onto_grid(wavelength_array, wavelength_pointsource,
+                                                        pathloss_pointsource_vector)
+        pathloss_uniformsource_2d = interpolate_onto_grid(wavelength_array, wavelength_uniformsource,
+                                                          pathloss_uniform_vector)
+        input_model.pathloss_pointsource2d = pathloss_pointsource_2d
+        input_model.pathloss_uniformsource2d = pathloss_uniformsource_2d
+        input_model.wavelength = wavelength_array
         input_model.meta.cal_step.pathloss = 'COMPLETE'
 
     return input_model.copy()
+
+def interpolate_onto_grid(wavelength_grid, wavelength_vector, pathloss_vector):
+    """Get the value of pathloss by interpolating each non-NaN element of wavelength_grid
+      into pathloss_vector using the index lookup of wavelength_vector.
+
+    Parameters:
+    -----------
+
+    wavelength_grid: numpy ndarray (2-d)
+
+    The grid of wavelengths for each science data pixel
+
+    wavelength_vector: numpy ndarray (1-d)
+
+    Vector of wavelengths
+
+    pathloss_vector:  numpy ndarray (1-d)
+
+    Corresponding vector of pathloss values
+
+    Returns:
+    --------
+
+    grid of pathloss corrections for each non-Nan pixel
+
+    """
+
+    valid_pixels = np.where(~np.isnan(wavelength_grid))
+
+    upper_indices = np.searchsorted(wavelength_vector, wavelength_grid[valid_pixels])
+    lower_indices = upper_indices - 1
+
+    numerator = wavelength_grid[valid_pixels] - wavelength_vector[lower_indices]
+    denominator = wavelength_vector[upper_indices] - wavelength_vector[lower_indices]
+    fraction = numerator / denominator
+
+    pathloss_grid = wavelength_grid * 0.0
+
+    pathloss_grid[valid_pixels] = pathloss_vector[lower_indices] + \
+                                  fraction*(pathloss_vector[upper_indices] -
+                                            pathloss_vector[lower_indices])
+
+    return pathloss_grid

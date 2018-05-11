@@ -23,8 +23,8 @@ from ..calwebb_image2 import Image2Pipeline
 DATAPATH = abspath(
     '${TEST_BIGDATA}/miri/test_image2pipeline/'
 )
-EXPFILE = 'jw00001001001_01101_00001_MIRIMAGE_uncal_MiriSloperPipeline.fits'
-CALFILE = 'jw00001001001_01101_00001_mirimage_uncal_mirisloperpipeline_cal.fits'
+EXPFILE = 'jw00001001001_01101_00001_mirimage_rate.fits'
+CALFILE = 'jw00001001001_01101_00001_mirimage_cal.fits'
 
 # Skip if the data is not available
 pytestmark = pytest.mark.skipif(

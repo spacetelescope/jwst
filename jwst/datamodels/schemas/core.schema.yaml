@@ -7,7 +7,7 @@ properties:
         anyOf:
           - $ref: http://stsci.edu/schemas/asdf/time/time-1.0.0
           - type: string
-        title: Date this file was created [UTC]
+        title: "[yyyy-mm-ddThh:mm:ss.ss] UTC date file created"
         fits_keyword: DATE
         blend_table: True
       origin:
@@ -131,28 +131,29 @@ properties:
             anyOf:
               - $ref: http://stsci.edu/schemas/asdf/time/time-1.0.0
               - type: string
-            title: (yyyy-mm-dd) UTC date at start of exposure
+            title: "[yyyy-mm-dd] UTC date at start of exposure"
             fits_keyword: DATE-OBS
             blend_table: True
             blend_rule: first
           time:
-            title: (hh:mm:ss.ssssss) UTC time at start of exposure
+            title: "[hh:mm:ss.sss] UTC time at start of exposure"
             type: string
             fits_keyword: TIME-OBS
             blend_table: True
             blend_rule: first
           date_end:
-            title: UTC date at end of exposure
+            title: "[yyyy-mm-dd] UTC date at end of exposure"
             type: string
             fits_keyword: DATE-END
             blend_rule: last
             blend_table: True
           time_end:
-            title: UTC time at end of exposure
+            title: "[hh:mm:ss.sss] UTC time at end of exposure"
             type: string
             fits_keyword: TIME-END
             blend_rule: last
             blend_table: True
+          
           obs_id:
             title: Programmatic observation identifier
             type: string
@@ -359,7 +360,7 @@ properties:
           channel:
             title: 'NIRCam channel: long or short'
             type: string
-            enum: [LONG, SHORT, '12', '34', '1', '2', '3', '4', ANY, N/A]
+            enum: [LONG, SHORT, '12', '34', '1', '2', '3', '4', ANY, N/A, '1234', '123', '234']
             fits_keyword: CHANNEL
             blend_table: True
           filter:
@@ -371,9 +372,10 @@ properties:
               F212N, F227W, F2300C, F250M, F2550W, F2550WR, F277W, F290LP, F300M,
               F322W2, F335M, F356W, F360M, F380M, F410M, F430M, F444W,
               F460M, F480M, F560W, F770W, FLENS, FND, FNDP750L, GR150C,
-              GR150R, OPAQUE, P750L, WL3, WLP4, N/A]
+              GR150R, OPAQUE, P750L, WL3, WLP4, N/A, MULTIPLE]
             fits_keyword: FILTER
             blend_table: True
+            blend_rule: multi
           pupil:
             title: Name of the pupil element used
             type: string
@@ -391,15 +393,17 @@ properties:
           grating:
             title: Name of the grating element used
             type: string
-            enum: [G140M, G235M, G395M, G140H, G235H, G395H, PRISM, MIRROR, N/A, ANY, NULL]
+            enum: [G140M, G235M, G395M, G140H, G235H, G395H, PRISM, MIRROR, N/A, ANY, NULL, MULTIPLE]
             fits_keyword: GRATING
             blend_table: True
+            blend_rule: multi
           band:
             title: MRS wavelength band
             type: string
-            enum: [SHORT, MEDIUM, LONG, N/A, ANY]
+            enum: [SHORT, MEDIUM, LONG, N/A, ANY, MULTIPLE]
             fits_keyword: BAND
             blend_table: True
+            blend_rule: multi
           fixed_slit:
             title: Name of fixed slit aperture used
             type: string
@@ -524,18 +528,27 @@ properties:
           type:
             title: Type of data in the exposure
             type: string
-            enum: [FGS_ACQ1, FGS_ACQ2, FGS_DARK, FGS_FINEGUIDE, FGS_FOCUS,
-              FGS_ID-IMAGE, FGS_ID-STACK, FGS_IMAGE, FGS_INTFLAT, FGS_SKYFLAT, FGS_TRACK,
-              MIR_IMAGE, MIR_TACQ, MIR_LYOT, MIR_4QPM, MIR_LRS-FIXEDSLIT,
-              MIR_LRS-SLITLESS, MIR_MRS, MIR_DARK, MIR_FLAT-IMAGE, MIR_FLATIMAGE,
-              MIR_FLAT-MRS, MIR_FLATMRS, MIR_CORONCAL, NIS_AMI, NIS_DARK,
-              NIS_FOCUS, NIS_IMAGE, NIS_LAMP, NIS_SOSS, NIS_TACQ, NIS_TACONFIRM,
-              NIS_WFSS, N/A, ANY, NRC_IMAGE, NRC_GRISM, NRC_TACQ, NRC_CORON,
-              NRC_FOCUS, NRC_DARK, NRC_FLAT, NRC_LED, NRC_TACONFIRM,
-              NRC_TSIMAGE, NRC_TSGRISM, NRS_AUTOFLAT, NRS_AUTOWAVE, NRS_BOTA,
-              NRS_BRIGHTOBJ, NRS_CONFIRM, NRS_DARK, NRS_FIXEDSLIT, NRS_FOCUS,
-              NRS_IFU, NRS_IMAGE, NRS_LAMP, NRS_MIMF, NRS_MSASPEC, NRS_TACONFIRM,
-              NRS_TACQ, NRS_TASLIT]
+            enum:
+              # FGS science
+             [FGS_DARK, FGS_FOCUS, FGS_IMAGE, FGS_INTFLAT, FGS_SKYFLAT,
+              # FGS guide star
+              FGS_ACQ1, FGS_ACQ2, FGS_FINEGUIDE, FGS_ID-IMAGE, FGS_ID-STACK, FGS_TRACK,
+              # MIRI
+              MIR_4QPM, MIR_CORONCAL, MIR_DARK, MIR_FLAT-IMAGE, MIR_FLATIMAGE,
+              MIR_FLAT-MRS, MIR_FLATMRS, MIR_IMAGE, MIR_LRS-FIXEDSLIT,
+              MIR_LRS-SLITLESS, MIR_LYOT, MIR_MRS, MIR_TACQ,
+              # NIRISS
+              NIS_AMI, NIS_DARK, NIS_EXTCAL, NIS_FOCUS, NIS_IMAGE, NIS_LAMP,
+              NIS_SOSS, NIS_TACQ, NIS_TACONFIRM, NIS_WFSS,
+              # NIRCam
+              NRC_CORON, NRC_DARK, NRC_FLAT, NRC_FOCUS, NRC_IMAGE, NRC_GRISM,
+              NRC_LED, NRC_TACONFIRM, NRC_TACQ, NRC_TSGRISM, NRC_TSIMAGE,
+              # NIRSpec
+              NRS_AUTOFLAT, NRS_AUTOWAVE, NRS_BOTA, NRS_BRIGHTOBJ, NRS_CONFIRM,
+              NRS_DARK, NRS_FIXEDSLIT, NRS_FOCUS, NRS_IFU, NRS_IMAGE, NRS_LAMP,
+              NRS_MIMF, NRS_MSASPEC, NRS_TACONFIRM, NRS_TACQ, NRS_TASLIT,
+              # Misc
+              N/A, ANY]
             fits_keyword: EXP_TYPE
             blend_table: True
           start_time:
@@ -571,6 +584,17 @@ properties:
               SHALLOW2, SHALLOW4, SLOW, TRACK, ANY, N/A]
             fits_keyword: READPATT
             blend_table: True
+          segment_number:
+            title: Sequential segment number
+            type: integer
+            fits_keyword: EXSEGNUM
+            blend_table: True
+            blend_rule: first
+          segment_total:
+            title: Total number of segments
+            type: integer
+            fits_keyword: EXSEGTOT
+            blend_table: True
           noutputs:
             title: Number of detector outputs used
             type: integer
@@ -582,6 +606,18 @@ properties:
             type: integer
             fits_keyword: NINTS
             blend_table: True
+          integration_start:
+            title: Starting integration number in this segment
+            type: integer
+            fits_keyword: INTSTART
+            blend_table: True
+            blend_rule: min
+          integration_end:
+            title: Ending integration number in this segment
+            type: integer
+            fits_keyword: INTEND
+            blend_table: True
+            blend_rule: max
           ngroups:
             title: Number of groups in integration
             type: integer
@@ -618,7 +654,7 @@ properties:
             fits_keyword: NSAMPLES
             blend_table: True
           sample_time:
-            title: Time between samples (microsec)
+            title: "[us] Time between samples"
             type: number
             fits_keyword: TSAMPLE
             blend_table: True
@@ -694,6 +730,11 @@ properties:
             type: boolean
             fits_keyword: COMPRSSD
             blend_table: True
+          clock_adjust_rate:
+            title: Spacecraft Clock Time Adjust RATE
+            type: number
+            fits_keyword: SCTARATE
+            blend_table: True
           gain_factor:
             title: Gain scale factor
             type: number
@@ -707,7 +748,7 @@ properties:
           psf_reference:
             title: exposure is PSF reference
             type: boolean
-            fits_keyword: PSFREF
+            fits_keyword: IS_PSF
             blend_table: True
           self_reference_survey:
             title: self-referencing PSF
@@ -737,7 +778,7 @@ properties:
               SUBGRISM128, SUBGRISM256, SUBGRISM64, SUBNDA210R, SUBNDA335R,
               SUBNDA430R, SUBNDALWBL, SUBNDALWBS, SUBNDASWBL, SUBNDASWBS,
               # Obsolete NIRCam
-              MASKBLWB, MASKBSWB,
+              MASKA210R, MASKA430R, MASKBLWB, MASKBSWB,
               # NIRISS
               SUB64, SUB80, SUB128, SUB256, SUBAMPCAL, SUBSTRIP96, SUBSTRIP256,
               SUBTAAMI, SUBTASOSS, WFSS64C, WFSS64R, WFSS128C, WFSS128R,
@@ -745,7 +786,7 @@ properties:
               SUBSTRIP80,
               # NIRSpec
               ALLSLITS, SUBS200A1, SUBS200A2, SUBS200B1, SUBS400A1, SUB1024A, SUB1024B,
-              SUB512, SUB32, SUB512S, SUB2048,
+              SUB512, SUB32, SUB512S, SUB2048, STRIPE,
               # Obsolete NIRSpec
               FULL_IRS2, S200A1, S200A2, S200B1, S400A1,
               # All
@@ -1188,6 +1229,22 @@ properties:
             type: string
             fits_keyword: VISITEND
             blend_table: True
+          gs_function_start_time:
+            title: Observatory UTC time at guider function start
+            type: string
+            fits_keyword: GF_START
+          gs_function_end_time:
+            title: Observatory UTC time at guider function end
+            type: string
+            fits_keyword: GF_END
+          data_start:
+            title: MJD start time of guider data within this file
+            type: number
+            fits_keyword: DATASTRT
+          data_end:
+            title: MJD end time of guider data within this file
+            type: number
+            fits_keyword: DATAEND
           gs_acq_exec_stat:
             title: Guide star acquisition execution status
             type: string
@@ -1205,7 +1262,7 @@ properties:
             blend_table: True
           gs_epoch:
             title: Epoch of guide star coordinates
-            type: number
+            type: string
             fits_keyword: GS_EPOCH
             blend_table: True
           gs_jmag:
@@ -1245,17 +1302,17 @@ properties:
             blend_table: True
           gs_srcjm:
             title: Guide star NIR J magnitude source
-            type: number
+            type: string
             fits_keyword: GS_SRCJM
             blend_table: True
           gs_srchm:
             title: Guide star NIR H magnitude source
-            type: number
+            type: string
             fits_keyword: GS_SRCHM
             blend_table: True
           gs_srckm:
             title: Guide star NIR K magnitude source
-            type: number
+            type: string
             fits_keyword: GS_SRCKM
             blend_table: True
           gs_ujmag:

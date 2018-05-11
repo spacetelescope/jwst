@@ -13,7 +13,7 @@ from ..photom import photom_step
 from ..resample import resample_step
 
 
-__version__ = '0.8.0'
+__version__ = '0.9.3'
 
 
 class Image2Pipeline(Pipeline):

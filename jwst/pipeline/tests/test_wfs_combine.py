@@ -15,7 +15,7 @@ from .helpers import (
 )
 
 from ...associations import load_asn
-from ...stpipe.step import (REMOVE_SUFFIX, Step)
+from ...stpipe.step import Step
 
 DATAPATH = abspath(
     path.join('$TEST_BIGDATA', 'nircam', 'test_wfs_combine')

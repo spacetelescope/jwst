@@ -31,31 +31,34 @@ SHORT,MEDIUM,LONG, or ALL
          scale1 = float(default=0.0) # cube sample size to use for axis 1, arc seconds
          scale2 = float(default=0.0) # cube sample size to use for axis 2, arc seconds
          scalew = float(default=0.0) # cube sample size to use for axis 3, microns
-         weighting = option('msm','miripsf','area','MSM','MIRIPSF','AREA',default = 'msm') # Type of weighting function, msm: modified Shepard Method, miripsf: use information on shape of miri psf in the msm method, Area: only used if coord_system = alpha-beta [advanced option]
-         coord_system = option('ra-dec','alpha-beta','ALPHA-BETA',default='ra-dec') # Coordinate system of the output IFUcube. Options: ra-dec or  alpha-beta
+         weighting = option('msm','miripsf','area','MSM','MIRIPSF','AREA',default = 'msm') # Type of weighting function, 
+         coord_system = option('ra-dec','alpha-beta','ALPHA-BETA',default='ra-dec') # Output Coordinate system. Options: ra-dec or alpha-beta
          rois = float(default=0.0) # region of interest spatial size, arc seconds
          roiw = float(default=0.0) # region of interest wavelength size, microns
-         weight_power = float(default=2.0) # Weighting option to use when combining pixel surface brightness in the RIO centered on cube spaxial center
-         offset_list = string(default='NA')  # A file for dithered data containing additional ra and dec offsets to be applied to files in the association. The offset tweaks the wcs of the input exposures. Offsets are given in arcseconds. EXPERIMENTAL OPTION - ADVANCED USERS ONLY
+         weight_power = float(default=2.0) # Weighting option to use for Modified Shepard Method
+         offset_list = string(default='NA')  # A file for dithered data containing additional ra and dec offsets 
          wavemin = float(default=None)  # Minimum wavelength to be used in the IFUCube
          wavemax = float(default=None)  # Maximum wavelength to be used in the IFUCube
          xdebug = integer(default=None) # debug option, x spaxel value to report information on
          ydebug = integer(default=None) # debug option, y spaxel value to report information on
          zdebug = integer(default=None) # debug option, z spaxel value to report  information on
          single = boolean(default=false) # Internal pipeline option used by mrs_imatch and outlier detection
-         output_type = option('band','channel','grating','multi',default='band') # Type of output cube to create. Options = band,channel,grating, multi
-         output_use_model = boolean(default=true)
+         output_type = option('band','channel','grating','multi',default='band') # Type IFUcube to create. Options=band,channel,grating,multi
+         search_output_file = boolean(default=false)
+         output_use_model = boolean(default=true) # Use filenames in the output models
        """
     reference_file_types = ['cubepar','resol']
 
     def process(self, input):
         self.log.info('Starting IFU Cube Building Step')
-
 #________________________________________________________________________________
 # For all parameters convert to a standard format
 # Report read in values to screen
 #________________________________________________________________________________
         self.subchannel = self.band
+        # print('self suffix',self.suffix)
+        self.suffix = 's3d' # override suffix = cube_build
+
         if(not self.subchannel.isupper()): self.subchannel = self.subchannel.upper()
         if(not self.filter.isupper()): self.filter = self.filter.upper()
         if(not self.grating.isupper()): self.grating = self.grating.upper()
@@ -150,15 +153,14 @@ SHORT,MEDIUM,LONG, or ALL
                                            self.output_file,
                                            self.output_dir)
 
-        self.cube_type = input_table.input_type
         self.input_models = input_table.input_models
         self.input_filenames = input_table.filenames
         self.output_name_base = input_table.output_name
 
-        self.data_type = input_table.data_type
         self.pipeline = 3
         if self.output_type =='multi' and len(self.input_filenames) ==1 :
             self.pipeline = 2
+        if(len(self.input_filenames)==1): self.offset_list = 'NA'
 #________________________________________________________________________________
 # Read in Cube Parameter Reference file
         # identify what reference file has been associated with these input
@@ -213,13 +215,12 @@ SHORT,MEDIUM,LONG, or ALL
 #________________________________________________________________________________
 # create an instance of class CubeData
 
-        cubeinfo = cube_build.CubeData(self.cube_type,
-                                       self.input_models,
-                                       self.input_filenames,
-                                       self.data_type,
-                                       par_filename,
-                                       resol_filename,
-                                       **pars)
+        cubeinfo = cube_build.CubeData(
+            self.input_models,
+            self.input_filenames,
+            par_filename,
+            resol_filename,
+            **pars)
 #________________________________________________________________________________
 # cubeinfo.setup:
 # read in all the input files, information from cube_pars, read in input data and
@@ -247,20 +248,19 @@ SHORT,MEDIUM,LONG, or ALL
             icube = str(i+1)
             list_par1 = cube_pars[icube]['par1']
             list_par2 = cube_pars[icube]['par2']
-            thiscube = ifu_cube.IFUCubeData(self.cube_type,
-                                            self.pipeline,
-                                            self.input_filenames,
-                                            self.input_models,
-                                            self.output_name_base,
-                                            self.data_type,
-                                            self.output_type,
-                                            instrument,
-                                            detector,
-                                            list_par1,
-                                            list_par2,
-                                            instrument_info,
-                                            master_table,
-                                            **pars_cube)
+            thiscube = ifu_cube.IFUCubeData(
+                self.pipeline,
+                self.input_filenames,
+                self.input_models,
+                self.output_name_base,
+                self.output_type,
+                instrument,
+                detector,
+                list_par1,
+                list_par2,
+                instrument_info,
+                master_table,
+                **pars_cube)
 
 #________________________________________________________________________________
 
@@ -285,8 +285,8 @@ SHORT,MEDIUM,LONG, or ALL
 # Else standard IFU cube building
             else:
                 result =  thiscube.build_ifucube()
-#                print('returning',result.meta.filename)
                 Final_IFUCube.append(result)
+
             if(self.debug_pixel ==1):
                 self.spaxel_debug.close()
 

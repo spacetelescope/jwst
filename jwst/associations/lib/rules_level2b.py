@@ -156,7 +156,7 @@ class Asn_Lv2SpecSpecial(
         super(Asn_Lv2SpecSpecial, self).__init__(*args, **kwargs)
 
 
-class Asn_Lv2WFSS(
+class Asn_Lv2WFSS_NIS(
         AsnMixin_Lv2Singleton,
         AsnMixin_Lv2Spectral,
         DMSLevel2bBase
@@ -178,21 +178,21 @@ class Asn_Lv2WFSS(
             )
         ])
 
-        super(Asn_Lv2WFSS, self).__init__(*args, **kwargs)
+        super(Asn_Lv2WFSS_NIS, self).__init__(*args, **kwargs)
 
     def _init_hook(self, item):
         """Post-check and pre-add initialization"""
-        super(Asn_Lv2WFSS, self)._init_hook(item)
+        super(Asn_Lv2WFSS_NIS, self)._init_hook(item)
 
         # Get the Level3 product name of this association.
         # Except for the grism component, it should be what
         # the Level3 direct image name is.
-        lv3_direct_image_catalog = DMS_Level3_Base._dms_product_name(self) + '.ecsv'
+        lv3_direct_image_catalog = DMS_Level3_Base._dms_product_name(self) + '_cat.ecsv'
 
         # Insert the needed catalog member
         member = {
             'expname': lv3_direct_image_catalog,
-            'exptype': 'catalog'
+            'exptype': 'sourcecat'
         }
         members = self.current_product['members']
         members.append(member)
@@ -212,7 +212,7 @@ class Asn_Lv2WFSS(
         """
         opt_elem = ''
         try:
-            value = format_list(self.constraints['opt_elem'].found_values)
+            value = format_list(self.constraints['opt_elem2'].found_values)
         except KeyError:
             pass
         else:

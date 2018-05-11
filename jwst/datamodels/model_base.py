@@ -25,6 +25,7 @@ from . import filetype
 from . import fits_support
 from . import properties
 from . import schema as mschema
+from . import util
 
 from .extension import BaseExtension
 from jwst.transforms.jwextension import JWSTExtension
@@ -119,34 +120,39 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         # proper code to intiailize the model
         self._files_to_close = []
         self._iscopy = False
-
         is_array = False
         is_shape = False
         shape = None
+
         if init is None:
             asdf = AsdfFile(extensions=extensions)
+
         elif isinstance(init, dict):
             asdf = AsdfFile(init, extensions=extensions)
+
         elif isinstance(init, np.ndarray):
             asdf = AsdfFile(extensions=extensions)
             shape = init.shape
             is_array = True
-        elif isinstance(init, self.__class__):
-            self.clone(self, init)
-            return
-        elif isinstance(init, DataModel):
-            raise TypeError(
-                "Passed in {0!r} is not of the expected subclass {1!r}".format(
-                    init.__class__.__name__, self.__class__.__name__))
-        elif isinstance(init, AsdfFile):
-            asdf = init
+
         elif isinstance(init, tuple):
             for item in init:
                 if not isinstance(item, int):
                     raise ValueError("shape must be a tuple of ints")
+
             shape = init
             asdf = AsdfFile()
             is_shape = True
+
+        elif isinstance(init, DataModel):
+            self.clone(self, init)
+            if not isinstance(init, self.__class__):
+                self.validate()
+            return
+
+        elif isinstance(init, AsdfFile):
+            asdf = init
+
         elif isinstance(init, fits.HDUList):
             asdf = fits_support.from_fits(init, self._schema,
                                           extensions, self._ctx)
@@ -175,11 +181,27 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             raise ValueError(
                 "Can't initialize datamodel using {0}".format(str(type(init))))
 
-        # Initialize object fields as determined fro the code above
-
+        # Initialize object fields as determined from the code above
         self._shape = shape
         self._instance = asdf.tree
         self._asdf = asdf
+
+        # Instantiate the primary array of the image
+        if is_array:
+            primary_array = self.get_primary_array_name()
+            if primary_array is None:
+                raise TypeError(
+                    "Array passed to DataModel.__init__, but model has "
+                    "no primary array in its schema")
+            setattr(self, primary_array, init)
+
+        if is_shape:
+            try:
+                getattr(self, self.get_primary_array_name())
+            except AttributeError:
+                raise TypeError(
+                    "Shape passed to DataModel.__init__, but model has "
+                    "no primary array in its schema")
 
         # if the input is from a file, set the filename attribute
         if isinstance(init, str):
@@ -200,26 +222,36 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         # store the data model type, if not already set
         klass = self.__class__.__name__
-        if klass == 'DataModel':
-            klass = None
-
-        if hasattr(self.meta, 'model_type'):
-            if self.meta.model_type is None:
+        if klass != 'DataModel':
+            if hasattr(self.meta, 'model_type'):
+                if self.meta.model_type is None:
+                    self.meta.model_type = klass
+            else:
                 self.meta.model_type = klass
+
+    def __repr__(self):
+        import re
+
+        buf = ['<']
+        match = re.search(r"(\w+)'", str(type(self)))
+        if match:
+            buf.append(match.group(1))
         else:
-            self.meta.model_type = klass
+            buf.append("DataModel")
 
-        if is_array:
-            primary_array_name = self.get_primary_array_name()
-            if primary_array_name is None:
-                raise TypeError(
-                    "Array passed to DataModel.__init__, but model has "
-                    "no primary array in its schema")
-            setattr(self, primary_array_name, init)
+        if self.shape:
+            buf.append(str(self.shape))
 
-        # TODO this code looks useless
-        if is_shape:
-            getattr(self, self.get_primary_array_name())
+        try:
+            filename = self.meta.filename
+        except AttributeError:
+            filename = None
+        if filename:
+            buf.append(" from ")
+            buf.append(filename)
+        buf.append('>')
+
+        return "".join(buf)
 
     def __enter__(self):
         return self
@@ -262,7 +294,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             target._iscopy = True
 
         target._files_to_close = []
-        target._schema = source._schema
         target._shape = source._shape
         target._ctx = target
 
@@ -278,6 +309,14 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         return result
 
     __copy__ = __deepcopy__ = copy
+
+    def validate(self):
+        """
+        Re-validate the model instance againsst its schema
+        """
+        util.validate_schema(self._instance, self._schema,
+                             self._pass_invalid_values,
+                             self._strict_validation)
 
     def get_primary_array_name(self):
         """
@@ -309,11 +348,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         current_date = Time(datetime.datetime.now())
         current_date.format = 'isot'
         self.meta.date = current_date.value
-
-        if not hasattr(self.meta, 'model_type'):
-            klass = self.__class__.__name__
-            if klass != 'DataModel':
-                self.meta.model_type = klass
 
     def save(self, path, dir_path=None, *args, **kwargs):
         """
@@ -761,6 +795,8 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             path = ['extra_fits', hdu_name, 'header']
             set_hdu_keyword(self._instance, d, path)
 
+        self.validate()
+
     def to_flat_dict(self, include_arrays=True):
         """
         Returns a dictionary of all of the schema items as a flat dictionary.
@@ -803,7 +839,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
     @property
     def history(self):
-        return self._instance.setdefault('history', [])
+        return self._instance.setdefault('history', {})
 
     @history.setter
     def history(self, value):

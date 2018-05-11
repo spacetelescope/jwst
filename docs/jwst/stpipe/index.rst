@@ -24,5 +24,7 @@ For Developers
    devel_step.rst
    devel_pipeline.rst
    devel_logging.rst
+   devel_io_design.rst
 
 .. automodapi:: jwst.stpipe
+  

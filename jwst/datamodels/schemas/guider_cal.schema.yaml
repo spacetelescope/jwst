@@ -1,7 +1,7 @@
 allOf:
 - $ref: core.schema.yaml
-- $ref: wcsinfo.schema.yaml
 - $ref: bunit.schema.yaml
+- $ref: wcsinfo.schema.yaml
 - type: object
   properties:
     data:
@@ -9,6 +9,11 @@ allOf:
       fits_hdu: SCI
       default: 0.0
       ndim: 3
+      datatype: float32
+    err:
+      title: Error array
+      fits_hdu: ERR
+      default: 0.0
       datatype: float32
     dq:
       title: Data quality array
@@ -23,7 +28,7 @@ allOf:
       - name: guide_star_order
         datatype: int32
       - name: reference_star_id
-        datatype: [ascii, 10]
+        datatype: [ascii, 12]
       - name: ra
         datatype: float64
       - name: dec
@@ -78,6 +83,8 @@ allOf:
         datatype: float64
       - name: delta_j3_pa
         datatype: float64
+      - name: HGA_motion
+        datatype: int16
     centroid_table: 
       title: Centroid packet table
       fits_hdu: FGS Centroid Packet

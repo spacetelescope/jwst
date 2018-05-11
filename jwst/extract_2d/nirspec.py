@@ -44,7 +44,7 @@ def nrs_extract2d(input_model, slit_name=None, apply_wavecorr=False, reference_f
     slit2msa = input_model.meta.wcs.get_transform('slit_frame', 'msa_frame')
     # This is a cludge but will work for now.
     # This model keeps open_slits as an attribute.
-    open_slits = slit2msa[1].slits[:]
+    open_slits = slit2msa.slits[:]
     if slit_name is not None:
         open_slits = [sub for sub in open_slits if sub.name == slit_name]
     log.debug('open slits {0}'.format(open_slits))
@@ -197,9 +197,6 @@ def extract_slit(input_model, slit, exp_type):
 
     # compute wavelengths
     x, y = wcstools.grid_from_bounding_box(slit_wcs.bounding_box, step=(1, 1))
-    # The Nirspec model expects 1-based coordinates
-    x += 1
-    y += 1
     ra, dec, lam = slit_wcs(x, y)
     lam = lam.astype(np.float32)
     new_model = datamodels.SlitModel(data=ext_data, err=ext_err, dq=ext_dq, wavelength=lam,
@@ -373,9 +370,6 @@ def get_source_xpos(input_model, slit, slit_wcs, lam, msa_model):
     idl2v23 = trmodels.IdealToV2V3(v3idlyangle, v2ref, v3ref, vparity)
     # Compute the location in V2,V3 [in arcsec]
     xv, yv = idl2v23(xoffset, yoffset)
-    # The NIRSPEC transforms expect V2,V3 positions in deg
-    xv = xv / 3600.
-    yv = yv / 3600.
 
     v2v3_to_msa_frame = slit_wcs.get_transform("v2v3", "msa_frame")
     xpos_abs, ypos_abs, lam = v2v3_to_msa_frame(xv, yv, lam)

@@ -57,10 +57,7 @@ def setup_wcs(self):
     """
 
 #________________________________________________________________________________
-    if self.cube_type == 'File' or self.cube_type == 'ASN' :
-        log.info('Building Cube %s ', self.output_name)
-
-        # Scale is 3 dimensions and is determined from values held in  instrument_info.GetScale
+# Scale is 3 dimensions and is determined from values held in  instrument_info.GetScale
     scale = determine_scale(self)
     self.Cdelt1 = scale[0]
     self.Cdelt2 = scale[1]
@@ -303,15 +300,11 @@ def find_footprint_MIRI(self, input, this_channel, instrument_info):
     if self.coord_system == 'alpha-beta':
         detector2alpha_beta = input.meta.wcs.get_transform('detector', 'alpha_beta')
         coord1, coord2, lam = detector2alpha_beta(x, y)
-
-
     elif self.coord_system == 'ra-dec':
         detector2v23 = input.meta.wcs.get_transform('detector', 'v2v3')
         v23toworld = input.meta.wcs.get_transform("v2v3","world")
-
         v2, v3, lam = detector2v23(x, y)
         coord1,coord2,lam = v23toworld(v2,v3,lam)
-
     else:
         # error the coordinate system is not defined
         raise NoCoordSystem(" The output cube coordinate system is not definded")
@@ -319,9 +312,7 @@ def find_footprint_MIRI(self, input, this_channel, instrument_info):
 # test for 0/360 wrapping in ra. if exists it makes it difficult to determine
 # ra range of IFU cube. 
 
-
     coord1_wrap = wrap_ra(coord1)
-
     a_min = np.nanmin(coord1_wrap)
     a_max = np.nanmax(coord1_wrap)
 
@@ -379,28 +370,33 @@ def find_footprint_NIRSPEC(self, input,flag_data):
         slice_wcs = nirspec.nrs_wcs_set_input(input,  i)
         yrange_slice = slice_wcs.bounding_box[1][0],slice_wcs.bounding_box[1][1]
         xrange_slice = slice_wcs.bounding_box[0][0],slice_wcs.bounding_box[0][1]
-
-##        print(' for slice ',i,yrange_slice,xrange_slice)
-
         if(xrange_slice[0] >= 0 and xrange_slice[1] > 0):
 
             x,y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box,step=(1,1), center=True)
-            ra,dec,lam = slice_wcs(x,y)
 
+            if self.coord_system == 'ra-dec':
+                coord1,coord2,lam = slice_wcs(x,y)
+            elif self.coord_system == 'alpha-beta':
+                raise InvalidCoordSystem(" The Alpha-Beta Coordinate system is not valid (at this time) for NIRSPEC data")
+#                detector2slicer = input.meta.wcs.get_transform('detector','slicer')
+#                coord1,coord2,lam = detector2slicer(x,y)
+            else:
+            # error the coordinate system is not defined
+                raise NoCoordSystem(" The output cube coordinate system is not definded")
+            
 #________________________________________________________________________________
 # For each slice  test for 0/360 wrapping in ra. 
 # If exists it makes it difficult to determine  ra range of IFU cube. 
 ##            print(' # ra values',ra.size,ra.size/2048)
-            ra_wrap = wrap_ra(ra)
-
-            a_min = np.nanmin(ra_wrap)
-            a_max = np.nanmax(ra_wrap)
+            coord1_wrap = wrap_ra(coord1)
+            a_min = np.nanmin(coord1_wrap)
+            a_max = np.nanmax(coord1_wrap)
 
             a_slice[k] = a_min
             a_slice[k + 1] = a_max
 
-            b_slice[k] = np.nanmin(dec)
-            b_slice[k + 1] = np.nanmax(dec)
+            b_slice[k] = np.nanmin(coord2)
+            b_slice[k + 1] = np.nanmax(coord2)
 
             lambda_slice[k] = np.nanmin(lam)
             lambda_slice[k + 1] = np.nanmax(lam)
@@ -409,10 +405,9 @@ def find_footprint_NIRSPEC(self, input,flag_data):
 #________________________________________________________________________________
 # now test the ra slices for conistency. Adjust if needed.  
         
-    raslice_wrap = wrap_ra(a_slice)
-
-    a_min = np.nanmin(raslice_wrap)
-    a_max = np.nanmax(raslice_wrap)
+    a_slice_wrap = wrap_ra(a_slice)
+    a_min = np.nanmin(a_slice_wrap)
+    a_max = np.nanmax(a_slice_wrap)
 
     b_min = min(b_slice)
     b_max = max(b_slice)
@@ -730,11 +725,11 @@ def wrap_ra(ravalues):
 
     valid = np.isfinite(ravalues)
     index_good = np.where( valid == True)
-##    print('number of non nan ra values',index_good[0].size,index_good[0].size/2048)
+#    print('number of non nan ra values',index_good[0].size,index_good[0].size/2048)
     ravalues_wrap = ravalues[index_good].copy()
     
     median_ra = np.nanmedian(ravalues_wrap) # find the median 
-##    print('median_ra',median_ra)
+#    print('median_ra',median_ra)
 
     # using median to test if there is any wrapping going on
     wrap_index = np.where( np.fabs(ravalues_wrap - median_ra) > 180.0)
@@ -751,6 +746,9 @@ def wrap_ra(ravalues):
 #________________________________________________________________________________
 # Errors 
 class NoCoordSystem(Exception):
+    pass
+
+class InvalidCoordSystem(Exception):
     pass
 
 class RaAveError(Exception):

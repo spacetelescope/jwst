@@ -19,7 +19,9 @@ def v23tosky(input_model):
     angles = [-v2_ref, v3_ref, -roll_ref, -dec_ref, ra_ref]
     axes = "zyxyz"
     sky_rotation = V23ToSky(angles, axes_order=axes, name="v23tosky")
-    return sky_rotation
+    # The sky rotation expects values in deg.
+    # This should be removed when models work with quantities.
+    return astmodels.Scale(1/3600) & astmodels.Scale(1/3600) | sky_rotation
 
 
 def compute_roll_ref(v2_ref, v3_ref, roll_ref, ra_ref, dec_ref, new_v2_ref, new_v3_ref):
@@ -184,9 +186,11 @@ def frame_from_model(wcsinfo):
                                 axes_names=('wavelength',))
         frames.append(spec)
     if other:
+        # Make sure these are strings and not np.str_ objects.
+        axes_names = tuple([str(name) for name in wcsinfo['CTYPE'][other]])
         name = "_".join(wcsinfo['CTYPE'][other])
         spatial = cf.Frame2D(name=name, axes_order=tuple(other), unit=cunit[other],
-                             axes_names=tuple(wcsinfo['CTYPE'][other]))
+                             axes_names=axes_names)
         frames.append(spatial)
     if wcsaxes == 2:
         return frames[0]

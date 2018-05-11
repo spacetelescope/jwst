@@ -16,7 +16,7 @@ from __future__ import (absolute_import, division, unicode_literals,
 import numpy as np
 
 # THIRD-PARTY
-from stsci.sphere.polygon import SphericalPolygon
+from spherical_geometry.polygon import SphericalPolygon
 
 #LOCAL
 from . skystatistics import SkyStats
@@ -24,7 +24,7 @@ from . import region
 
 
 __all__ = ['SkyImage', 'SkyGroup']
-__version__ = '0.8.0'
+__version__ = '0.9.3'
 __vdate__ = '01-March-2016'
 
 
@@ -205,7 +205,7 @@ class SkyImage(object):
         """
         Compute intersection of this `SkyImage` object and another
         `SkyImage`, `SkyGroup`, or
-        :py:class:`~stsci.sphere.polygon.SphericalPolygon`
+        :py:class:`~spherical_geometry.polygon.SphericalPolygon`
         object.
 
         Parameters
@@ -216,7 +216,7 @@ class SkyImage(object):
         Returns
         -------
         polygon : SphericalPolygon
-            A :py:class:`~stsci.sphere.polygon.SphericalPolygon` that is
+            A :py:class:`~spherical_geometry.polygon.SphericalPolygon` that is
             the intersection of this `SkyImage` and `skyimage`.
 
         """
@@ -344,7 +344,7 @@ class SkyImage(object):
         overlap : SkyImage, SkyGroup, SphericalPolygon, list of tuples, \
 None, optional
             Another `SkyImage`, `SkyGroup`,
-            :py:class:`stsci.sphere.polygons.SphericalPolygon`, or
+            :py:class:`spherical_geometry.polygons.SphericalPolygon`, or
             a list of tuples of (RA, DEC) of vertices of a spherical
             polygon. This parameter is used to indicate that sky statistics
             should computed only in the region of intersection of *this*
@@ -467,7 +467,7 @@ None, optional
         overlap : SkyImage, SkyGroup, SphericalPolygon, list of tuples, \
 None, optional
             Another `SkyImage`, `SkyGroup`,
-            :py:class:`stsci.sphere.polygons.SphericalPolygon`, or
+            :py:class:`spherical_geometry.polygons.SphericalPolygon`, or
             a list of tuples of (RA, DEC) of vertices of a spherical
             polygon. This parameter is used to indicate that sky statistics
             should computed only in the region of intersection of *this*
@@ -662,7 +662,7 @@ class SkyGroup(object):
         """
         Compute intersection of this `SkyImage` object and another
         `SkyImage`, `SkyGroup`, or
-        :py:class:`~stsci.sphere.polygon.SphericalPolygon`
+        :py:class:`~spherical_geometry.polygon.SphericalPolygon`
         object.
 
         Parameters
@@ -673,7 +673,7 @@ class SkyGroup(object):
         Returns
         -------
         polygon : SphericalPolygon
-            A :py:class:`~stsci.sphere.polygon.SphericalPolygon` that is
+            A :py:class:`~spherical_geometry.polygon.SphericalPolygon` that is
             the intersection of this `SkyImage` and `skyimage`.
 
         """
@@ -742,7 +742,7 @@ class SkyGroup(object):
         overlap : SkyImage, SkyGroup, SphericalPolygon, list of tuples, \
 None, optional
             Another `SkyImage`, `SkyGroup`,
-            :py:class:`stsci.sphere.polygons.SphericalPolygon`, or
+            :py:class:`spherical_geometry.polygons.SphericalPolygon`, or
             a list of tuples of (RA, DEC) of vertices of a spherical
             polygon. This parameter is used to indicate that sky statistics
             should computed only in the region of intersection of *this*
