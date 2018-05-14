@@ -128,11 +128,10 @@ class ResampleData:
     def blend_output_metadata(self, output_model):
         """Create new output metadata based on blending all input metadata."""
         # Run fitsblender on output product
-        input_list = [i.meta.filename for i in self.input_models]
         output_file = output_model.meta.filename
 
         log.info('Blending metadata for {}'.format(output_file))
-        blendmeta.blendmodels(output_model, inputs=input_list,
+        blendmeta.blendmodels(output_model, inputs=self.input_models,
                               output=output_file)
 
     def do_drizzle(self):
