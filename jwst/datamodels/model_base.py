@@ -314,7 +314,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         """
         Re-validate the model instance againsst its schema
         """
-        util.validate_schema(self._instance, self._schema,
+        util.validate_schema(str(self), self._instance, self._schema,
                              self._pass_invalid_values,
                              self._strict_validation)
 
@@ -506,7 +506,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         """
         schema = {'allOf': [self._schema, new_schema]}
         self._schema = mschema.flatten_combiners(schema)
-        self._validate()
+        self.validate()
         return self
 
     def add_schema_entry(self, position, new_schema):

@@ -415,7 +415,7 @@ def create_history_entry(description, software=None):
     return entry
 
 
-def validate_schema(value, schema, pass_invalid_values,
+def validate_schema(path, value, schema, pass_invalid_values,
                     strict_validation):
     """
     Validate a change in value against a schema and
@@ -424,16 +424,27 @@ def validate_schema(value, schema, pass_invalid_values,
         _validate_value(value, schema)
         update = True
 
-    except jsonschema.ValidationError as errmsg:
+    except jsonschema.ValidationError as error:
         update = False
+        errmsg = _validate_error(path, error)
         if pass_invalid_values:
             update = True
         if strict_validation:
-            raise
+            raise jsonschema.ValidationError(errmsg)
         else:
-            warnings.warn(str(errmsg), ValidationWarning)
+            warnings.warn(errmsg, ValidationWarning)
     return update
 
+def _validate_error(path, error):
+    if isinstance(path, list):
+        spath = [str(p) for p in path]
+        name = '.'.join(spath)
+    else:
+        name = str(path)
+
+    errfmt = "While validating {} the following error occurred:\n{}"
+    errmsg = errfmt.format(name, str(error))
+    return errmsg
 
 def _validate_value(value, schema):
     if value is None:
