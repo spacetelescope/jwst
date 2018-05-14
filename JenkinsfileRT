@@ -7,7 +7,7 @@ def test_env = [
     "PATH=./miniconda/bin:/bin:/usr/bin",
     "TEST_BIGDATA=/data4/jwst_test_data",
     "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
-    "CRDS_CONTEXT=jwst_0454.pmap",
+    "CRDS_CONTEXT=jwst_0456.pmap",
 ]
 
 //def python_version = ['3.5', '3.6']

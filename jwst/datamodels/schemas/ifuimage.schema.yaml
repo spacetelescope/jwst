@@ -45,6 +45,11 @@ allOf:
       ndim: 2
       default: 0.0
       datatype: float32
+    wavelength:
+      title: wavelength
+      fits_hdu: WAVELENGTH
+      datatype: float32
+      default: 0.0
 - $ref: pathlosscorr.schema.yaml
 
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

@@ -9,7 +9,7 @@ A module that provides functions for manipulating bitmasks and data quality (DQ)
 
 import numpy as np
 
-__version__ = '0.8.0'
+__version__ = '0.9.3'
 __vdate__ = '29-March-2015'
 __author__ = 'Mihai Cara'
 

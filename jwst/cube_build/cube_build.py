@@ -113,7 +113,7 @@ class CubeData(object):
     # constructed from.
     # fills in band_channel, band_subchannel, band_grating, band_filer
 #________________________________________________________________________________
-        CubeData.determine_band_coverage(self, master_table)
+        self.determine_band_coverage(master_table)
 #________________________________________________________________________________
 # InstrumentDefaults is an  dictionary that holds default parameters for
 # difference instruments and for each band

@@ -42,7 +42,7 @@ import pymssql
 import scipy.interpolate as sciint
 import logging
 
-__version__ = '0.8.0'
+__version__ = '0.9.3'
 
 # Configure logging
 logger = logging.getLogger(__name__)

@@ -1,7 +1,7 @@
-from __future__ import absolute_import, division
 
-import numpy as np
 import logging
+import numpy as np
+
 from . import utils
 from . import NRM_consts
 
@@ -31,7 +31,6 @@ def get_webbpsf_filter(filter_model, specbin=None, trim=False):
     spec - 2D float array
         filter bandpass data: [weight, wavelength_in_microns]
     """
-
     W = 1  # remove confusion - wavelength index
     T = 0  # remove confusion - trans index after reading in...
 
@@ -49,7 +48,7 @@ def get_webbpsf_filter(filter_model, specbin=None, trim=False):
     spec = tmp_array[flag, :]
 
     # rebin as desired - fewer wavelengths for debugging quickly
-    if specbin:
+    if specbin is not None:
         smallshape = spec.shape[0] // specbin
 
         log.debug(' bin filter data by %d from %d to %d', specbin,

@@ -24,10 +24,15 @@ def test_spec3_pipeline1(_bigdata):
 
     step = Spec3Pipeline()
     step.save_bsub = False
+    step.mrs_imatch.suffix = 'mrs_imatch'
+    step.outlier_detection.skip = True
     step.output_use_model = True
     step.resample_spec.save_results = True
-    step.resample_spec.skip = True
+    step.resample_spec.suffix = 's2d'
+    step.cube_build.save_results = True
+    step.cube_build.suffix = 's3d'
     step.extract_1d.save_results = True
+    step.extract_1d.suffix = 'x1d'
     step.run(asn_file)
 
     ignore_kws = ['DATE', 'CAL_VER', 'CAL_VCS', 'CRDS_VER', 'CRDS_CTX']

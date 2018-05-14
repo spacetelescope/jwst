@@ -31,26 +31,26 @@ SHORT,MEDIUM,LONG, or ALL
          scale1 = float(default=0.0) # cube sample size to use for axis 1, arc seconds
          scale2 = float(default=0.0) # cube sample size to use for axis 2, arc seconds
          scalew = float(default=0.0) # cube sample size to use for axis 3, microns
-         weighting = option('msm','miripsf','area','MSM','MIRIPSF','AREA',default = 'msm') # Type of weighting function, msm: modified Shepard Method, miripsf: use information on shape of miri psf in the msm method, Area: only used if coord_system = alpha-beta [advanced option]
-         coord_system = option('ra-dec','alpha-beta','ALPHA-BETA',default='ra-dec') # Coordinate system of the output IFUcube. Options: ra-dec or  alpha-beta
+         weighting = option('msm','miripsf','area','MSM','MIRIPSF','AREA',default = 'msm') # Type of weighting function, 
+         coord_system = option('ra-dec','alpha-beta','ALPHA-BETA',default='ra-dec') # Output Coordinate system. Options: ra-dec or alpha-beta
          rois = float(default=0.0) # region of interest spatial size, arc seconds
          roiw = float(default=0.0) # region of interest wavelength size, microns
-         weight_power = float(default=2.0) # Weighting option to use when combining pixel surface brightness in the RIO centered on cube spaxial center
-         offset_list = string(default='NA')  # A file for dithered data containing additional ra and dec offsets to be applied to files in the association. The offset tweaks the wcs of the input exposures. Offsets are given in arcseconds. EXPERIMENTAL OPTION - ADVANCED USERS ONLY
+         weight_power = float(default=2.0) # Weighting option to use for Modified Shepard Method
+         offset_list = string(default='NA')  # A file for dithered data containing additional ra and dec offsets 
          wavemin = float(default=None)  # Minimum wavelength to be used in the IFUCube
          wavemax = float(default=None)  # Maximum wavelength to be used in the IFUCube
          xdebug = integer(default=None) # debug option, x spaxel value to report information on
          ydebug = integer(default=None) # debug option, y spaxel value to report information on
          zdebug = integer(default=None) # debug option, z spaxel value to report  information on
          single = boolean(default=false) # Internal pipeline option used by mrs_imatch and outlier detection
-         output_type = option('band','channel','grating','multi',default='band') # Type of output cube to create. Options = band,channel,grating, multi
+         output_type = option('band','channel','grating','multi',default='band') # Type IFUcube to create. Options=band,channel,grating,multi
          search_output_file = boolean(default=false)
+         output_use_model = boolean(default=true) # Use filenames in the output models
        """
     reference_file_types = ['cubepar','resol']
 
     def process(self, input):
         self.log.info('Starting IFU Cube Building Step')
-
 #________________________________________________________________________________
 # For all parameters convert to a standard format
 # Report read in values to screen
@@ -286,12 +286,6 @@ SHORT,MEDIUM,LONG, or ALL
             else:
                 result =  thiscube.build_ifucube()
                 Final_IFUCube.append(result)
-
-#                print('crval',result.meta.wcsinfo.crval1,result.meta.wcsinfo.crval2,result.meta.wcsinfo.crval3)
-#                print('crpix',result.meta.wcsinfo.crpix1,result.meta.wcsinfo.crpix2,result.meta.wcsinfo.crpix3)
-#                print('crdelt',result.meta.wcsinfo.crdelt1,result.meta.wcsinfo.crdelt2,result.meta.wcsinfo.crdelt3)
-#                print('ctype',result.meta.wcsinfo.ctype1,result.meta.wcsinfo.ctype2,result.meta.wcsinfo.ctype3)
-#                print('cunit',result.meta.wcsinfo.cunit1,result.meta.wcsinfo.cunit2,result.meta.wcsinfo.cunit3)
 
             if(self.debug_pixel ==1):
                 self.spaxel_debug.close()

@@ -24,7 +24,7 @@ from . skyimage import *
 
 __all__ = ['match']
 
-__version__ = '0.8.0'
+__version__ = '0.9.3'
 __vdate__ = '07-April-2017'
 __author__ = 'Mihai Cara'
 
