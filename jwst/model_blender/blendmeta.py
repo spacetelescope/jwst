@@ -156,7 +156,8 @@ def get_blended_metadata(input_models, verbose=False):
         and each column corresponds to a single keyword listed in the rules.
 
     """
-    if not isinstance(input_models, list):
+    if not isinstance(input_models, list) and \
+       not isinstance(input_models, datamodels.ModelContainer):
         input_models = [input_models]
 
     # Turn input filenames into a set of metadata objects
