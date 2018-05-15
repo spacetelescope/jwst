@@ -264,7 +264,7 @@ def find_dispaxis(slit, spectral_order, extract_params):
         return
 
     if hasattr(slit, "wavelength"):
-        wl_array = slit.wavelength
+        wl_array = slit.wavelength.copy()
     else:
         wl_array = None
     if wl_array is None or len(wl_array) == 0:
@@ -290,6 +290,10 @@ def find_dispaxis(slit, spectral_order, extract_params):
     # vertical directions.
     dispaxis = None                             # pessimistic value
     if got_wavelength:
+        mask = (wl_array == 0)
+        if np.any(mask):
+            wl_array[mask] = np.nan
+        del mask
         dwlx = wl_array[:, 1:-1] - wl_array[:, 0:-2]
         dwly = wl_array[1:-1, :] - wl_array[0:-2, :]
         dwlx = np.nanmean(dwlx)
@@ -303,8 +307,21 @@ def find_dispaxis(slit, spectral_order, extract_params):
         elif dwlx < dwly:
             dispaxis = VERTICAL
     else:
-        transform = wcs.forward_transform
-        if transform.n_inputs > 2:
+        if slit.meta.exposure.type == "NIS_SOSS":
+            try:
+                transform = niriss.niriss_soss_set_input(slit, spectral_order)
+            except ValueError:
+                if spectral_order == 1:
+                    log.warning("Spectral order 1 not found")
+                    log.warning("Can't determine dispaxis from the WCS.")
+                    return
+                else:
+                    log.warning("Spectral order %d not found, using 1",
+                                spectral_order)
+                    transform = niriss.niriss_soss_set_input(slit, 1)
+        else:
+            transform = wcs.forward_transform
+        if hasattr(transform, 'n_inputs') and transform.n_inputs > 2:
             stuff = transform(x_cent, y_cent, spectral_order)
             wl_00 = stuff[2]
             stuff = transform(x_cent, y_cent + 1, spectral_order)
@@ -318,20 +335,29 @@ def find_dispaxis(slit, spectral_order, extract_params):
             wl_01 = stuff[2]
             stuff = transform(x_cent + 1, y_cent)
             wl_10 = stuff[2]
-        dwlx = abs(wl_10 - wl_00)
-        dwly = abs(wl_01 - wl_00)
-        if np.isnan(dwlx) or np.isnan(dwly):
-            log.warning("wavelength from WCS is NaN within the bounding box")
-            shape = slit.data.shape
-            grid = np.indices(shape[-2:], dtype=np.float64)
-            # The arguments are the X and Y pixel coordinates.
-            stuff = slit.meta.wcs(grid[1], grid[0])
-            wl_wcs = stuff[2]
-            del grid, stuff
-            dwlx = wl_wcs[:, 1:-1] - wl_wcs[:, 0:-2]
-            dwly = wl_wcs[1:-1, :] - wl_wcs[0:-2, :]
-            dwlx = np.nanmean(dwlx)
-            dwly = np.nanmean(dwly)
+        dwlx = wl_10 - wl_00
+        dwly = wl_01 - wl_00
+        if (np.isnan(dwlx) or np.isnan(dwly) or
+            wl_00 == 0 or wl_01 == 0 or wl_10 == 0):
+                log.warning("wavelength from WCS is NaN or 0 "
+                            "within the bounding box")
+                shape = slit.data.shape
+                grid = np.indices(shape[-2:], dtype=np.float64)
+                if hasattr(transform, 'n_inputs') and transform.n_inputs > 2:
+                    stuff = transform(grid[1], grid[0], spectral_order)
+                else:
+                    stuff = transform(grid[1], grid[0])
+                wl_wcs = stuff[2]
+                del grid, stuff
+                # Flag wavelength = 0 as invalid.
+                mask = (wl_wcs == 0)
+                if np.any(mask):
+                    wl_wcs[mask] = np.nan
+                del mask
+                dwlx = wl_wcs[:, 1:-1] - wl_wcs[:, 0:-2]
+                dwly = wl_wcs[1:-1, :] - wl_wcs[0:-2, :]
+                dwlx = np.nanmean(dwlx)
+                dwly = np.nanmean(dwly)
         log.debug("find_dispaxis:  dwlx = %s dwly = %s", str(dwlx), str(dwly))
         if np.isnan(dwlx) or np.isnan(dwly):
             log.warning("dwlx and/or dwly is STILL NaN!  "
@@ -351,8 +377,8 @@ def find_dispaxis(slit, spectral_order, extract_params):
         # reference file, or if there was no reference file.
         extract_params['dispaxis'] = dispaxis
 
-    log.debug("find_dispaxis:  dispaxis from ref file = %s; from wcs = %s",
-              str(initial_value), str(dispaxis))
+    log.debug("find_dispaxis:  dispaxis from ref file = %s, "
+              "from wavelengths = %s", str(initial_value), str(dispaxis))
 
 
 def log_initial_parameters(extract_params):
@@ -2043,7 +2069,7 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
 
                 # Loop over each integration in the input model
                 slit = DUMMY
-                verbose = True
+                verbose = True          # for just the first integration
                 for integ in range(input_model.data.shape[0]):
                     # Extract spectrum
                     try:
