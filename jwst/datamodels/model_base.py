@@ -925,4 +925,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
     # --------------------------------------------------------
 
     read = __init__
-    write = save
+
+    def write(self, path, *args, **kwargs):
+        self.save(path, *args, **kwargs)
