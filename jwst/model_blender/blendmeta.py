@@ -11,8 +11,6 @@ from astropy.io import fits
 from .. import datamodels
 from .. import associations
 from ..datamodels import fits_support
-from ..datamodels import schema as dm_schema
-
 
 from .blendrules import KeywordRules
 
@@ -102,18 +100,13 @@ def blendmodels(product, inputs=None, output=None, verbose=False):
        https://github.com/STScI-JWST/jwst/issues/1650
     '''
 
-    # Start by identifying elements of the model which need to be ignored
-    ignore_list = _build_schema_ignore_list(newmeta._schema)
-    ignore_list += ['meta.wcs'] # Necessary since meta.wcs is not in schema
-
     # Now assign values from new_hdrs to output_model.meta
     flat_new_metadata = newmeta.to_flat_dict()
-    
     for attr in flat_new_metadata:
-        attr_use = not [attr.startswith(i) for i in ignore_list].count(True)
-        if attr.startswith('meta') and attr_use:
-            output_model[attr] = newmeta[attr]
-                
+        if attr.startswith('meta'):
+            if attr != 'meta.wcs':
+                output_model[attr] = newmeta[attr]
+
     # Apply any user-specified filename for output product
     if output:
         output_model.meta.filename = output
@@ -156,7 +149,8 @@ def get_blended_metadata(input_models, verbose=False):
         and each column corresponds to a single keyword listed in the rules.
 
     """
-    if not isinstance(input_models, list):
+    if not isinstance(input_models, list) and \
+       not isinstance(input_models, datamodels.ModelContainer):
         input_models = [input_models]
 
     # Turn input filenames into a set of metadata objects
@@ -263,34 +257,3 @@ def convert_dtype(value):
         new_dtype = str(value)
 
     return new_dtype
-    
-def _build_schema_ignore_list(schema):
-    """ Create a list of metadata that should be ignored when blending.
-
-    Parameters
-    ----------
-    schema : JSON schema fragment
-        The schema in which to search.
-
-    Returns
-    -------
-    results : list
-        List with schema attributes that needs to be ignored
-
-    """
-    def build_rules_list(subschema, path, combiner, ctx, recurse):
-        # Only interpret elements of the meta component of the model
-        if len(path) > 1 and path[0] == 'meta' and 'items' not in path:
-            attr = '.'.join(path)
-            if subschema.get('properties'):
-                return # Ignore ObjectNodes
-            kwtype = subschema.get('type')
-            if kwtype == 'array':
-                results.append(attr)
-        else:
-            return
-
-    results = []
-    dm_schema.walk_schema(schema, build_rules_list, results)
-    return results
-
