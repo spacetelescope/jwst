@@ -1,6 +1,6 @@
-from ... import (Pipeline, Step)
-from .... import datamodels
-from ....datamodels import (
+from jwst.stpipe import (Pipeline, Step)
+from jwst import datamodels
+from jwst.datamodels import (
     ImageModel,
     ModelContainer,
 )
@@ -54,7 +54,7 @@ class StepWithModel(Step):
     """
 
     def process(self, *args):
-        from ....datamodels import ImageModel
+        from jwst.datamodels import ImageModel
 
         input_path = self.open_model(args[0])
         model = ImageModel(input_path)
@@ -69,7 +69,7 @@ class StepWithContainer(Step):
     """
 
     def process(self, *args):
-        from ....datamodels import ImageModel
+        from jwst.datamodels import ImageModel
 
         container = ModelContainer()
         model1 = ImageModel(args[0]).copy()

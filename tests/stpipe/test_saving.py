@@ -4,7 +4,7 @@ import os
 from os import path
 import shutil
 
-from ..step import Step
+from jwst.stpipe.step import Step
 from .util import mk_tmp_dirs
 
 data_fn = 'flat.fits'

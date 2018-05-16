@@ -2,7 +2,7 @@ import io
 
 
 def setup():
-    from ..stpipe import log
+    from jwst.stpipe import log
 
     # Turn off default logging when running tests
     buffer = io.BytesIO(b"[*]\n")

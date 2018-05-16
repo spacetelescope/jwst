@@ -2,8 +2,8 @@
 
 import pytest
 
-from ..step import remove_suffix
-from .. import suffix
+from jwst.stpipe.step import remove_suffix
+from jwst.stpipe import suffix
 
 
 def test_suffix_existence():

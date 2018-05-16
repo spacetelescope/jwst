@@ -5,7 +5,7 @@ import sys
 import numpy as np
 from numpy.testing import assert_allclose
 
-from .. import Step, Pipeline, LinearPipeline
+from jwst.stpipe import Step, Pipeline, LinearPipeline
 # TODO: Test system call steps
 
 
@@ -23,7 +23,7 @@ class FlatField(Step):
     # Load the spec from a file
 
     def process(self, science, flat):
-        from ... import datamodels
+        from jwst import datamodels
 
         self.log.info("Removing flat field")
         self.log.info("Threshold: {0}".format(self.threshold))
@@ -39,7 +39,7 @@ class Combine(Step):
     """
 
     def process(self, images):
-        from ... import datamodels
+        from jwst import datamodels
 
         combined = np.zeros((50, 50))
         for image in images:
@@ -62,7 +62,7 @@ class MultiplyBy2(Step):
     """
 
     def process(self, image):
-        from ... import datamodels
+        from jwst import datamodels
 
         with datamodels.ImageModel(image) as dm:
             with datamodels.ImageModel() as dm2:
@@ -88,7 +88,7 @@ class MyPipeline(Pipeline):
     """
 
     def process(self, *args):
-        from ... import datamodels
+        from jwst import datamodels
 
         science = datamodels.open(self.science_filename)
         if self.flat_filename is None:

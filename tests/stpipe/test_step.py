@@ -7,13 +7,13 @@ from os.path import (
 import pytest
 import numpy as np
 
-from ..config_parser import ValidationError
+from jwst.stpipe.config_parser import ValidationError
 
 
 def test_hook():
     """Test the running of hooks"""
-    from .. import Step
-    from ... import datamodels
+    from jwst.stpipe import Step
+    from jwst import datamodels
 
     step_fn = join(dirname(__file__), 'steps', 'stepwithmodel_hook.cfg')
     step = Step.from_config_file(step_fn)
@@ -29,8 +29,8 @@ def test_hook():
 
 def test_hook_with_return():
     """Test the running of hooks"""
-    from .. import Step
-    from ... import datamodels
+    from jwst.stpipe import Step
+    from jwst import datamodels
 
     step_fn = join(dirname(__file__), 'steps', 'stepwithmodel_hookreturn.cfg')
     step = Step.from_config_file(step_fn)
@@ -44,7 +44,7 @@ def test_hook_with_return():
 
 
 def test_step():
-    from .. import Step
+    from jwst.stpipe import Step
 
     step_fn = join(dirname(__file__), 'steps', 'some_other_step.cfg')
     step = Step.from_config_file(step_fn)
@@ -92,7 +92,7 @@ def test_step_from_python_simple2():
 
 
 def test_step_from_commandline():
-    from .. import Step
+    from jwst.stpipe import Step
 
     args = [
         abspath(join(dirname(__file__), 'steps', 'some_other_step.cfg')),
@@ -109,7 +109,7 @@ def test_step_from_commandline():
 
 
 def test_step_from_commandline_class():
-    from .. import Step
+    from jwst.stpipe import Step
 
     args = [
         'jwst.stpipe.tests.steps.AnotherDummyStep',
@@ -126,7 +126,8 @@ def test_step_from_commandline_class():
 
 
 def test_step_from_commandline_invalid():
-    from .. import Step
+    from jwst.stpipe import Step
+
     args = [
             '__foo__'
         ]
@@ -136,7 +137,7 @@ def test_step_from_commandline_invalid():
 
 
 def test_step_from_commandline_invalid2():
-    from .. import Step
+    from jwst.stpipe import Step
 
     args = [
         '__foo__.__bar__'
@@ -146,7 +147,7 @@ def test_step_from_commandline_invalid2():
 
 
 def test_step_from_commandline_invalid3():
-    from .. import Step
+    from jwst.stpipe import Step
 
     args = [
         'sys.foo'
@@ -156,7 +157,7 @@ def test_step_from_commandline_invalid3():
 
 
 def test_step_from_commandline_invalid4():
-    from .. import Step
+    from jwst.stpipe import Step
 
     args = [
         'sys.argv'
@@ -169,7 +170,7 @@ def test_step_print_spec():
     import io
     buf = io.BytesIO()
 
-    from .. import subproc
+    from jwst.stpipe import subproc
 
     subproc.SystemCall.print_configspec(buf)
 
@@ -179,7 +180,7 @@ def test_step_print_spec():
 
 
 def test_step_with_local_class():
-    from .. import Step
+    from jwst.stpipe import Step
 
     step_fn = join(dirname(__file__), 'steps', 'local_class.cfg')
     step = Step.from_config_file(step_fn)
@@ -195,7 +196,7 @@ def test_extra_parameter():
 
 def test_crds_override():
     from .steps import AnotherDummyStep
-    from ... import datamodels
+    from jwst import datamodels
 
     step = AnotherDummyStep(
         "SomeOtherStepOriginal",

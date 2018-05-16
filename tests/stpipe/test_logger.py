@@ -28,7 +28,7 @@
 # DAMAGE.
 import io
 
-from .. import log as stpipe_log
+from jwst.stpipe import log as stpipe_log
 from .util import *
 
 
