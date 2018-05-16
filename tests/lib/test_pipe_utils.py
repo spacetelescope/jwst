@@ -2,9 +2,9 @@
 import inspect
 import pytest
 
-from .. import pipe_utils
-from ... import datamodels
-from ...associations.lib import dms_base
+from jwst.lib import pipe_utils
+from jwst import datamodels
+from jwst.associations.lib import dms_base
 
 all_datamodels = [
     model

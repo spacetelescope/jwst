@@ -2,8 +2,8 @@
 import logging
 from numpy import array
 
-from ...datamodels import Level1bModel
-from .. import set_telescope_pointing as stp
+from jwst.datamodels import Level1bModel
+from jwst.lib import set_telescope_pointing as stp
 
 
 # Set logging for the module to be tested.

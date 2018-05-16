@@ -13,10 +13,10 @@ import requests_mock
 from astropy.table import Table
 from astropy.time import Time
 
-from .. import engdb_tools
-from .. import set_telescope_pointing as stp
-from ... import datamodels
-from ...tests.helpers import word_precision_check
+from jwst.lib import engdb_tools
+from jwst.lib import set_telescope_pointing as stp
+from jwst import datamodels
+from ..tests.helpers import word_precision_check
 
 # Setup mock engineering service
 GOOD_MNEMONIC = 'INRSI_GWA_Y_TILT_AVGED'

@@ -19,8 +19,8 @@ from astropy.io import fits
 from astropy.table import Table
 from astropy.time import Time
 
-from .. import engdb_tools
-from .. import set_telescope_pointing as stp
+from jwst.lib import engdb_tools
+from jwst.lib import set_telescope_pointing as stp
 
 # Setup mock engineering service
 GOOD_MNEMONIC = 'INRSI_GWA_Y_TILT_AVGED'

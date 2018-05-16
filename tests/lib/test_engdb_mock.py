@@ -9,7 +9,7 @@ from tempfile import TemporaryDirectory
 from astropy.time import Time
 
 from . import engdb_mock
-from .. import engdb_tools
+from jwst.lib import engdb_tools
 
 GOOD_MNEMONIC = 'inrsi_gwa_y_tilt_avged'
 GOOD_STARTTIME = '2016-01-23 00:00:00'
