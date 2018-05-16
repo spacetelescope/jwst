@@ -25,9 +25,9 @@ from astropy.modeling.models import Scale, Shift, Identity
 from gwcs import wcs
 from numpy.testing import utils
 
-from ...datamodels.image import ImageModel
-from .. import miri
-from ..assign_wcs_step import AssignWcsStep
+from jwst.datamodels.image import ImageModel
+from jwst.assign_wcs import miri
+from jwst.assign_wcs.assign_wcs_step import AssignWcsStep
 
 
 wcs_kw = {'wcsaxes': 3, 'ra_ref': 165, 'dec_ref': 54,

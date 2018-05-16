@@ -3,7 +3,7 @@ import shutil
 import tempfile
 from astropy.modeling import models
 from astropy import units as u
-from ...datamodels import DistortionModel
+from jwst.datamodels import DistortionModel
 
 
 def setup():

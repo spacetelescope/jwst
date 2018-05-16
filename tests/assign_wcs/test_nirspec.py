@@ -8,10 +8,10 @@ from astropy.io import fits
 from astropy.modeling import models as astmodels
 from astropy import wcs as astwcs
 from gwcs import wcs
-from ... import datamodels
-from ...transforms.models import Slit
-from .. import nirspec
-from .. import assign_wcs_step
+from jwst import datamodels
+from jwst.transforms.models import Slit
+from jwst.assign_wcs import nirspec
+from jwst.assign_wcs import assign_wcs_step
 from . import data
 import pytest
 

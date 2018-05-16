@@ -6,9 +6,9 @@ from astropy import wcs
 from astropy.tests.helper import  assert_quantity_allclose
 from asdf.tests import helpers
 
-from .. import pointing
-from ...transforms import models
-from ...datamodels import ImageModel, fits_support
+from jwst.assign_wcs import pointing
+from jwst.transforms import models
+from jwst.datamodels import ImageModel, fits_support
 
 
 
