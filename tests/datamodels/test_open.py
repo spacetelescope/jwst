@@ -5,6 +5,7 @@ Test datamodel.open
 import os
 import os.path
 import numpy as np
+from pathlib import Path
 from astropy.io import fits
 
 from jwst.datamodels.util import open
@@ -16,14 +17,14 @@ from jwst.datamodels import (DataModel, ModelContainer, ImageModel, ReferenceFil
 def test_open_fits():
     """Test opening a model from a FITS file"""
 
-    fits_file = t_path('test.fits')
+    fits_file = t_path('data/test.fits')
     m = open(fits_file)
     assert isinstance(m, DataModel)
 
 def test_open_association():
     """Test for opening an association"""
 
-    asn_file = t_path('association.json')
+    asn_file = t_path('data/association.json')
     m = open(asn_file)
     assert isinstance(m, ModelContainer)
 
@@ -56,7 +57,7 @@ def test_open_hdulist():
     model.close()
 
 def test_open_image():
-    image_name = t_path('jwst_image.fits')
+    image_name = t_path('data/jwst_image.fits')
     model = open(image_name)
     assert type(model) == ImageModel
     model.close()
@@ -70,7 +71,7 @@ def test_open_reference_files():
              'nircam_readnoise.fits' : ReadnoiseModel}
     
     for base_name, klass in files.items():
-        file = t_path(base_name)
+        file = t_path(os.path.join('data', base_name))
         model = open(file)
         if model.shape:
             ndim = len(model.shape)
