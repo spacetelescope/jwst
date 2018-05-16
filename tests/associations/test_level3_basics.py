@@ -7,7 +7,7 @@ from .helpers import (
     t_path
 )
 
-from .. import generate
+from jwst.associations import generate
 
 
 def test_meta():

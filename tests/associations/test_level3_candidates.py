@@ -7,7 +7,7 @@ from .helpers import (
     t_path,
 )
 
-from ..main import Main
+from jwst.associations.main import Main
 
 
 @pytest.mark.parametrize(

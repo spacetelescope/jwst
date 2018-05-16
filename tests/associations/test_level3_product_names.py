@@ -9,8 +9,8 @@ from .helpers import (
     t_path,
 )
 
-from .. import (AssociationPool, generate)
-from ..lib.dms_base import DMSAttrConstraint
+from jwst.associations import (AssociationPool, generate)
+from jwst.associations.lib.dms_base import DMSAttrConstraint
 
 # Temporarily skip if running under Travis
 # pytestmark = pytest.mark.skipif(

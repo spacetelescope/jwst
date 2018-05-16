@@ -1,7 +1,7 @@
 from . import helpers
 from .helpers import full_pool_rules
 
-from .. import (generate, load_asn)
+from jwst.associations import (generate, load_asn)
 
 
 @helpers.runslow

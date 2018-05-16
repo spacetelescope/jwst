@@ -10,8 +10,8 @@ from .helpers import (
     runslow,
 )
 
-from ..main import Main
-from .. import load_asn
+from jwst.associations.main import Main
+from jwst.associations import load_asn
 
 # Temporarily skip if running under Travis
 # pytestmark = pytest.mark.skipif(

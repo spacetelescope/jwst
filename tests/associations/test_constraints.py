@@ -1,7 +1,7 @@
 """Constraint Tests"""
 import pytest
 
-from ..lib.constraint import (
+from jwst.associations.lib.constraint import (
     Constraint,
     SimpleConstraint,
     SimpleConstraintABC,

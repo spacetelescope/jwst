@@ -3,8 +3,8 @@ import re
 
 from . import helpers
 
-from .. import generate
-from ..main import constrain_on_candidates
+from jwst.associations import generate
+from jwst.associations.main import constrain_on_candidates
 
 LEVEL3_ASN_ACID_NAME_REGEX = (
     'jw'

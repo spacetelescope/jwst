@@ -1,6 +1,6 @@
 from .helpers import t_path
 
-from .. import AssociationPool
+from jwst.associations import AssociationPool
 
 POOL_FILE = t_path('data/jw93060_20150312T160130_pool.csv')
 

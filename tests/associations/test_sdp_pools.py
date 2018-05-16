@@ -17,8 +17,8 @@ from .helpers import (
     t_path,
 )
 
-from .. import (AssociationPool, load_asn)
-from ..main import Main
+from jwst.associations import (AssociationPool, load_asn)
+from jwst.associations.main import Main
 
 # Main test args
 TEST_ARGS = ['--dry-run']

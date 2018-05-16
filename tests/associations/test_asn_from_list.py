@@ -2,10 +2,10 @@
 
 import pytest
 
-from .. import (Association, AssociationRegistry, load_asn)
-from ..asn_from_list import (Main, asn_from_list)
-from ..exceptions import AssociationNotValidError
-from ..lib.rules_level2_base import DMSLevel2bBase
+from jwst.associations import (Association, AssociationRegistry, load_asn)
+from jwst.associations.asn_from_list import (Main, asn_from_list)
+from jwst.associations.exceptions import AssociationNotValidError
+from jwst.associations.lib.rules_level2_base import DMSLevel2bBase
 
 
 def test_level2():

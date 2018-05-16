@@ -3,18 +3,20 @@ from collections import namedtuple
 from contextlib import contextmanager
 from copy import copy
 from glob import glob
+from pathlib import Path
 import os
 import pytest
 import re
 from tempfile import TemporaryDirectory
 
-from ...tests.helpers import runslow
+from ..tests.helpers import runslow
 
 from astropy.table import (Table, vstack)
 
-from .. import (AssociationRegistry, AssociationPool, generate)
-from ..lib.counter import Counter
-from ..lib.utilities import is_iterable
+from jwst.associations import (AssociationRegistry, AssociationPool, generate)
+from jwst.associations.lib.counter import Counter
+from jwst.associations.lib.utilities import is_iterable
+from jwst.associations.lib import (rules_level2b, rules_level3)
 
 
 # Compare associations
@@ -204,9 +206,15 @@ def not_none(value):
 
 
 def t_path(partial_path):
-    """Construction the full path for test files"""
-    test_dir = os.path.dirname(__file__)
-    return os.path.join(test_dir, partial_path)
+    here_path = Path(os.path.dirname(__file__))
+    path = Path(partial_path)
+    """Construct the full path for test files"""
+    if path.is_absolute():
+        result = path
+    else:
+        result = here_path.joinpath(path)
+
+    return str(result)
 
 
 def combine_pools(pools, **pool_kwargs):
@@ -379,12 +387,12 @@ def get_rule_names(rules):
 
 def level3_rule_path():
     """Return the path to the level 3 rules"""
-    return t_path('../lib/rules_level3.py')
+    return t_path(rules_level3.__file__)
 
 
 def level2_rule_path():
     """Return the path to the level 2 rules"""
-    return t_path('../lib/rules_level2b.py')
+    return t_path(rules_level2b.__file__)
 
 
 def registry_level3_only(global_constraints=None):

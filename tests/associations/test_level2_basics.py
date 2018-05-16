@@ -7,11 +7,11 @@ from .helpers import (
     t_path
 )
 
-from .. import (
+from jwst.associations import (
     generate,
     load_asn,
 )
-from ..main import Main
+from jwst.associations.main import Main
 
 NONSSCIENCE = ['background']
 REGEX_LEVEL2A = '(?P<path>.+)(?P<type>_rate(ints)?)(?P<extension>\..+)'

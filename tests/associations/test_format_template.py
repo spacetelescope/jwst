@@ -1,6 +1,6 @@
 """Tests of the format_template module"""
 
-from ..lib.format_template import FormatTemplate
+from jwst.associations.lib.format_template import FormatTemplate
 
 
 def test_basics():

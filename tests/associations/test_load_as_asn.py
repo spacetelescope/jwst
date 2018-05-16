@@ -1,8 +1,8 @@
 """Test LoadAsAssociation"""
 
 from . import helpers
-from ...datamodels import ImageModel
-from ..load_as_asn import (
+from jwst.datamodels import ImageModel
+from jwst.associations.load_as_asn import (
     LoadAsLevel2Asn
 )
 

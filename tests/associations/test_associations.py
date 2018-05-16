@@ -4,16 +4,17 @@ import pytest
 
 from . import helpers
 
-from .. import (
+from jwst.associations import (
     Association,
     AssociationError,
     AssociationRegistry,
     generate)
-from ..registry import (
+from jwst.associations.registry import (
     import_from_file,
     find_object
 )
-from ..lib.dms_base import DMSAttrConstraint
+from jwst.associations.lib import association_rules
+from jwst.associations.lib.dms_base import DMSAttrConstraint
 
 
 # Basic Association object
@@ -141,7 +142,7 @@ def test_global_constraints(constraints, pool, n_asns):
 
 def test_rulesets():
     """Test finding objects in a ruleset"""
-    rule_file = helpers.t_path('../lib/association_rules.py')
+    rule_file = helpers.t_path(association_rules.__file__)
     module = import_from_file(rule_file)
     schemas = [schema for schema in find_object(module, 'ASN_SCHEMA')]
     assert len(schemas) == 2

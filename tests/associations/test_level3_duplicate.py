@@ -6,8 +6,8 @@ from .helpers import (
     t_path,
 )
 
-from .. import (AssociationPool, generate)
-from ..main import (Main, constrain_on_candidates)
+from jwst.associations import (AssociationPool, generate)
+from jwst.associations.main import (Main, constrain_on_candidates)
 
 
 def test_duplicate_generate():

@@ -2,7 +2,7 @@
 
 from . import helpers
 
-from .. import generate
+from jwst.associations import generate
 
 
 class TestLevel3WFS(helpers.BasePoolRule):

@@ -18,8 +18,9 @@ from .helpers import (
     t_path,
 )
 
-from .. import load_asn
-from ..main import Main
+from jwst.associations import load_asn
+from jwst.associations.lib import (rules_level2b, rules_level3)
+from jwst.associations.main import Main
 
 
 # Main test args
@@ -28,14 +29,14 @@ TEST_ARGS = ['--dry-run']
 # Produce Level2b only associations
 LV2_ONLY_ARGS = [
     '-r',
-    t_path('../lib/rules_level2b.py'),
+    t_path(rules_level2b.__file__),
     '--ignore-default'
 ]
 
 # Produce Level3 only associations
 LV3_ONLY_ARGS = [
     '-r',
-    t_path('../lib/rules_level3.py'),
+    t_path(rules_level3.__file__),
     '--ignore-default'
 ]
 

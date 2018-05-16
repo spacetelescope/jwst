@@ -1,8 +1,8 @@
 """Test for various WFSS modes"""
 from os import path
 
-from .. import AssociationPool
-from ..main import Main
+from jwst.associations import AssociationPool
+from jwst.associations.main import Main
 from .helpers import t_path
 
 REQUIRED_ASN_TYPES = set(['image2', 'spec2', 'image3', 'spec3'])

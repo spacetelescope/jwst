@@ -1,7 +1,7 @@
 from collections import MutableMapping
 
-from ..lib.dictwithattrs import DictWithAttributes
-from ..lib.member import Member
+from jwst.associations.lib.dictwithattrs import DictWithAttributes
+from jwst.associations.lib.member import Member
 
 import pytest
 

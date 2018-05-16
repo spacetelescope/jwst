@@ -7,7 +7,7 @@ from .helpers import (
     runslow,
 )
 
-from ..main import Main
+from jwst.associations.main import Main
 
 
 @runslow

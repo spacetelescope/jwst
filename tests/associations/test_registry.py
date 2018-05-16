@@ -1,7 +1,7 @@
 """Test the Registry"""
 from .helpers import full_pool_rules
 
-from .. import Association
+from jwst.associations import Association
 
 def test_registry_match(full_pool_rules):
     """Test the match method"""
