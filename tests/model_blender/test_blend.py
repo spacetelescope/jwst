@@ -9,7 +9,7 @@ import numpy as np
 from jwst.datamodels import (DataModel, ImageModel, ModelContainer)
 from jwst.datamodels.util import open as open_model
 
-from .. import blendmeta
+from jwst.model_blender import blendmeta
 
 #ROOT_DIR = os.path.join(os.path.dirname(__file__), 'data')
 start_times = [57877.00359994354, 57877.0168373584, 57877.03126958496]
