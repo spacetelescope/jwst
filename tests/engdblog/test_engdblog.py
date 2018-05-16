@@ -5,8 +5,8 @@ import os
 import pytest
 from tempfile import TemporaryDirectory
 
-from ..engdblog import EngDBLogStep
-from ...lib.tests.engdb_mock import EngDB_Mocker
+from jwst.engdblog import EngDBLogStep
+from ..lib.engdb_mock import EngDB_Mocker
 
 
 def test_engdblogstep(caplog, engdb):
