@@ -134,7 +134,7 @@ class Spec2Pipeline(Pipeline):
         exp_type = input.meta.exposure.type
         tso_mode = is_tso(input)
 
-        WFSS_TYPES = ["NIS_WFSS", "NRC_GRISM"]
+        WFSS_TYPES = ["NIS_WFSS", "NRC_WFSS"]
 
         # Apply WCS info
         # check the datamodel to see if it's
@@ -195,7 +195,7 @@ class Spec2Pipeline(Pipeline):
         # It isn't really necessary to include 'NRC_TSGRISM' in this list,
         # but it doesn't hurt, and it makes it clear that flat_field
         # should be done before extract_2d for all WFSS/GRISM data.
-        if exp_type in ['NRC_GRISM', 'NIS_WFSS', 'NRC_TSGRISM']:
+        if exp_type in ['NRC_WFSS', 'NIS_WFSS', 'NRC_TSGRISM']:
             # Apply flat-field correction
             input = self.flat_field(input)
 
