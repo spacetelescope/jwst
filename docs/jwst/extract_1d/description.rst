@@ -6,7 +6,7 @@ data through any one or more of the fixed slits, MIRI LRS data through
 the slit or in the slitless region, and NIRISS slitless data) as well as
 IFU data and NIRSpec MOS (micro-shutter array) data.
 
-For GRISM data (NIS_WFSS or NRC_GRISM), no reference file is used.
+For GRISM data (NIS_WFSS or NRC_WFSS), no reference file is used.
 The extraction region is taken to be the full size of the input subarray
 or cutout, or it could be restricted to the region within which the
 world coordinate system is defined.  The dispersion direction is the one
