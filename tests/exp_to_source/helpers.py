@@ -1,24 +1,31 @@
 # Testing helpers
 from contextlib import contextmanager
 from glob import glob
+from pathlib import Path
 import os
 
-from ...tests.helpers import abspath
-
-INPUT_FILES_GLOB = 'data/jwst_nod?_cal.fits'
-
-
-def t_path(partial_path):
-    """Construction the full path for test files"""
-    test_dir = os.path.dirname(__file__)
-    return os.path.join(test_dir, partial_path)
-
+from ..tests.helpers import abspath
 
 # Python2 compatibility for TemporaryDirectory
 try:
     from tempfile import TemporaryDirectory
 except ImportError:
     from .tempfile_py2 import TemporaryDirectory
+
+
+INPUT_FILES_GLOB = 'data/jwst_nod?_cal.fits'
+
+
+def t_path(partial_path):
+    here_path = Path(os.path.dirname(__file__))
+    path = Path(partial_path)
+    """Construct the full path for test files"""
+    if path.is_absolute():
+        result = path
+    else:
+        result = here_path.joinpath(path)
+
+    return str(result)
 
 
 @contextmanager

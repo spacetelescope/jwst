@@ -3,8 +3,8 @@ import pytest
 import numpy as np
 
 from . import helpers
-from ...datamodels import (MultiExposureModel, MultiSlitModel, ModelContainer)
-from ..exp_to_source import exp_to_source, multislit_to_container
+from jwst.datamodels import (MultiExposureModel, MultiSlitModel, ModelContainer)
+from jwst.exp_to_source import exp_to_source, multislit_to_container
 
 
 @pytest.fixture(scope='module')

@@ -4,7 +4,7 @@ import sys
 import pytest
 
 from . import helpers
-from ..main import Main
+from jwst.exp_to_source.main import Main
 
 
 @pytest.mark.skipif(sys.version_info < (3,3),
