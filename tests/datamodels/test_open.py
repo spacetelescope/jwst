@@ -97,6 +97,12 @@ def test_open_reference_files():
 
 # Utilities
 def t_path(partial_path):
-    """Construction the full path for test files"""
-    test_dir = os.path.join(os.path.dirname(__file__), 'data')
-    return os.path.join(test_dir, partial_path)
+    here_path = Path(os.path.dirname(__file__))
+    path = Path(partial_path)
+    """Construct the full path for test files"""
+    if path.is_absolute():
+        result = path
+    else:
+        result = here_path.joinpath(path)
+
+    return str(result)
