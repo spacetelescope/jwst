@@ -11,7 +11,7 @@ from astropy.time import Time
 
 from asdf.tags.core import HistoryEntry
 
-from .. import DataModel
+from jwst.datamodels import DataModel
 
 TMP_FITS = None
 TMP_DIR = None

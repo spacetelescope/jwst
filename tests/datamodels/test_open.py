@@ -7,8 +7,8 @@ import os.path
 import numpy as np
 from astropy.io import fits
 
-from ..util import open
-from .. import (DataModel, ModelContainer, ImageModel, ReferenceFileModel,
+from jwst.datamodels.util import open
+from jwst.datamodels import (DataModel, ModelContainer, ImageModel, ReferenceFileModel,
                 ReferenceImageModel, ReferenceCubeModel, ReferenceQuadModel,
                 FlatModel, MaskModel, NircamPhotomModel, GainModel,
                 ReadnoiseModel)

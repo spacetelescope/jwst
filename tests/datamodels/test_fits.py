@@ -11,7 +11,7 @@ from numpy.testing import assert_array_equal
 
 from asdf import schema as mschema
 
-from .. import DataModel, ImageModel, RampModel, open
+from jwst.datamodels import DataModel, ImageModel, RampModel, open, schemas
 
 ROOT_DIR = None
 FITS_FILE = None
@@ -143,8 +143,8 @@ def test_fits_without_sci():
     schema = {
         "allOf": [
             mschema.load_schema(
-                os.path.join(os.path.dirname(__file__),
-                             "../schemas/core.schema.yaml"),
+                os.path.join(os.path.dirname(schemas.__file__),
+                             "core.schema.yaml"),
                 resolve_references=True),
             {
                 "type": "object",
@@ -262,8 +262,8 @@ def test_table_with_metadata():
     schema = {
         "allOf": [
             mschema.load_schema(
-                os.path.join(os.path.dirname(__file__),
-                             "../schemas/core.schema.yaml"),
+                os.path.join(os.path.dirname(schemas.__file__),
+                             "core.schema.yaml"),
                 resolve_references=True),
             {"type": "object",
             "properties": {
@@ -329,8 +329,8 @@ def test_replace_table():
     schema_narrow = {
         "allOf": [
             mschema.load_schema(
-                os.path.join(os.path.dirname(__file__),
-                             "../schemas/core.schema.yaml"),
+                os.path.join(os.path.dirname(schemas.__file__),
+                             "core.schema.yaml"),
                 resolve_references=True),
             {
                 "type": "object",
@@ -354,8 +354,8 @@ def test_replace_table():
     schema_wide = {
         "allOf": [
             mschema.load_schema(
-                os.path.join(os.path.dirname(__file__),
-                             "../schemas/core.schema.yaml"),
+                os.path.join(os.path.dirname(schemas.__file__),
+                             "core.schema.yaml"),
                 resolve_references=True),
             {
                 "type": "object",

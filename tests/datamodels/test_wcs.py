@@ -5,7 +5,7 @@ import tempfile
 import numpy as np
 from numpy.testing import assert_array_almost_equal
 
-from .. import ImageModel
+from jwst.datamodels import ImageModel
 
 
 TMP_DIR = None

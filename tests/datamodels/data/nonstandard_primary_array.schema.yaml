@@ -1,5 +1,5 @@
 allOf:
-- $ref: ../../schemas/core.schema.yaml
+- $ref: ../../../jwst/datamodels/schemas/core.schema.yaml
 - type: object
   title: Test schema - demonstrate infinite recursion loop
   properties:

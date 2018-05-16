@@ -3,7 +3,7 @@
 import pytest
 import numpy as np
 
-from .. import Level1bModel
+from jwst.datamodels import Level1bModel
 
 
 @pytest.mark.xfail

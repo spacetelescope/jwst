@@ -1,5 +1,5 @@
 import numpy as np
-from .. import util
+from jwst.datamodels import util
 
 
 def test_gentle_asarray():

@@ -16,11 +16,11 @@ import numpy as np
 from numpy.testing.decorators import knownfailureif
 from numpy.testing import assert_allclose
 
-from .. import (DataModel, ImageModel, MaskModel, QuadModel,
+from jwst.datamodels import (DataModel, ImageModel, MaskModel, QuadModel,
                 MultiSlitModel, ModelContainer, SlitModel,
                 SlitDataModel, IFUImageModel)
-from ..util import open as open_model
-from .. import schema
+from jwst.datamodels.util import open as open_model
+from jwst.datamodels import schema
 
 
 ROOT_DIR = os.path.join(os.path.dirname(__file__), 'data')
@@ -356,7 +356,7 @@ def test_model_with_nonstandard_primary_array():
             return 'wavelength'
 
     m = NonstandardPrimaryArrayModel()
-    list(m.keys())
+    #list(m.keys())
 
 
 def test_relsens():

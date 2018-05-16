@@ -13,8 +13,8 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal
 import jsonschema
 from astropy.io import fits
 
-from .. import util, validate
-from .. import DataModel, ImageModel, RampModel, MaskModel, MultiSlitModel, AsnModel
+from jwst.datamodels import util, validate
+from jwst.datamodels import DataModel, ImageModel, RampModel, MaskModel, MultiSlitModel, AsnModel
 
 from asdf import schema as mschema
 
@@ -73,8 +73,8 @@ def test_date2():
 transformation_schema = {
     "allOf": [
         mschema.load_schema(
-            os.path.join(os.path.dirname(__file__),
-                         "../schemas/image.schema.yaml"),
+            os.path.join(os.path.dirname(schemas.__file__),
+                         "image.schema.yaml"),
             resolve_references=True),
         {
             "type": "object",
@@ -325,8 +325,8 @@ def test_table_array():
     table_schema = {
         "allOf": [
             mschema.load_schema(
-                os.path.join(os.path.dirname(__file__),
-                             "../schemas/image.schema.yaml"),
+                os.path.join(os.path.dirname(schemas.__file__),
+                             "image.schema.yaml"),
                 resolve_references=True),
             {
                 "type": "object",
@@ -381,8 +381,8 @@ def test_table_array_convert():
     table_schema = {
         "allOf": [
             mschema.load_schema(
-                os.path.join(os.path.dirname(__file__),
-                             "../schemas/image.schema.yaml"),
+                os.path.join(os.path.dirname(schemas.__file__),
+                             "image.schema.yaml"),
                 resolve_references=True),
             {
                 "type": "object",
@@ -446,8 +446,8 @@ def test_data_array():
     data_array_schema = {
         "allOf": [
             mschema.load_schema(
-                os.path.join(os.path.dirname(__file__),
-                         "../schemas/core.schema.yaml"),
+                os.path.join(os.path.dirname(schemas.__file__),
+                         "core.schema.yaml"),
                 resolve_references=True),
             {
                 "type": "object",
