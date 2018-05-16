@@ -9,7 +9,7 @@ from jwst.datamodels import dqflags
 from jwst.firstframe.firstframe_sub import do_correction
 
 def test_firstframe_set_groupdq():
-    """ 
+    """
     Test if the firstframe code set the groupdq flag on the first
     group to 'do_not_use'
     """
@@ -33,7 +33,7 @@ def test_firstframe_set_groupdq():
     # check that the difference in the groupdq flags is equal to
     #   the 'do_not_use' flag
     dq_diff = dm_ramp_firstframe.groupdq[0,0,:,:] - dm_ramp.groupdq[0,0,:,:]
-    
+
     np.testing.assert_array_equal(np.full((xsize,ysize),
                                           dqflags.group['DO_NOT_USE'],
                                           dtype=int),
@@ -50,10 +50,10 @@ def test_firstframe_set_groupdq():
                                   dq_diff,
                                   err_msg='n >= 2 groupdq flags changes ' \
                                            + 'and they should not be')
-    
+
 def test_firstframe_single_group():
-    """ 
-    Test that the firstframe code does nothing when passed a single 
+    """
+    Test that the firstframe code does nothing when passed a single
     group integration
     """
 
@@ -77,14 +77,14 @@ def test_firstframe_single_group():
     #   the 'do_not_use' flag
 
     dq_diff = dm_ramp_firstframe.groupdq[0,0,:,:] - dm_ramp.groupdq[0,0,:,:]
-    
+
     np.testing.assert_array_equal(np.full((xsize,ysize),
                                           0,
                                           dtype=int),
                                   dq_diff,
                                   err_msg='groupdq changed for single group ' \
                                            + 'when it should not')
-    
+
 if __name__ == '__main__':
     test_firstframe_set_groupdq()
     test_firstframe_single_group()
