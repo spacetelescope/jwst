@@ -16,9 +16,9 @@ from .helpers import (
     update_asn_basedir,
 )
 
-from ...associations import load_asn
-from ...stpipe.step import (Step, remove_suffix)
-from ...white_light import WhiteLightStep
+from jwst.associations import load_asn
+from jwst.stpipe.step import (Step, remove_suffix)
+from jwst.white_light import WhiteLightStep
 
 DATAPATH = abspath(
     path.join('$TEST_BIGDATA', 'pipelines', 'niriss_caltso3')

@@ -13,9 +13,9 @@ from .helpers import (
     update_asn_basedir,
 )
 
-from ...associations import load_asn
-from ...stpipe.step import (Step, remove_suffix)
-from ..collect_pipeline_cfgs import collect_pipeline_cfgs
+from jwst.associations import load_asn
+from jwst.pipeline import collect_pipeline_cfgs
+from jwst.stpipe.step import (Step, remove_suffix)
 
 DATAPATH = abspath(
     path.join('$TEST_BIGDATA', 'pipelines', 'nircam_calimage3')

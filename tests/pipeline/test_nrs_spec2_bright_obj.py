@@ -15,8 +15,8 @@ from .helpers import (
     update_asn_basedir,
 )
 
-from ...associations import load_asn
-from ...stpipe.step import (Step, remove_suffix)
+from jwst.associations import load_asn
+from jwst.stpipe.step import (Step, remove_suffix)
 
 DATAPATH = abspath(
     path.join('$TEST_BIGDATA', 'pipelines')

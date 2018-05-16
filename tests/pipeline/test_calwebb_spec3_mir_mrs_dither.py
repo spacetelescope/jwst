@@ -17,8 +17,8 @@ from .helpers import (
     runslow,
 )
 
-from ...associations import load_asn
-from ...stpipe.step import Step
+from jwst.associations import load_asn
+from jwst.stpipe.step import Step
 
 DATAPATH = abspath(
     '$TEST_BIGDATA/miri/test_datasets/mrs/cv3_ifu_dither'

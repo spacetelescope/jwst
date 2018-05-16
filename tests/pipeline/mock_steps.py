@@ -2,8 +2,8 @@
 
 import numpy as np
 
-from ... import datamodels
-from ...stpipe import Step
+from jwst import datamodels
+from jwst.stpipe import Step
 
 
 class TempSkipStep(Step):

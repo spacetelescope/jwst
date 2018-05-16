@@ -8,14 +8,14 @@ import tempfile
 
 # Import from the common helpers module
 # simply to make available from this module.
-from ...tests.helpers import (
+from ..tests.helpers import (
     abspath,
     require_bigdata,
     require_crds_context,
     runslow,
 )
 
-from ...associations import load_asn
+from jwst.associations import load_asn
 
 SCRIPT_PATH = path.dirname(__file__)
 SCRIPT_DATA_PATH = path.join(SCRIPT_PATH, 'data')

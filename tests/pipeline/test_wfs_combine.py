@@ -14,8 +14,8 @@ from .helpers import (
     update_asn_basedir,
 )
 
-from ...associations import load_asn
-from ...stpipe.step import Step
+from jwst.associations import load_asn
+from jwst.stpipe.step import Step
 
 DATAPATH = abspath(
     path.join('$TEST_BIGDATA', 'nircam', 'test_wfs_combine')

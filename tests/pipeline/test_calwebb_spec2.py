@@ -11,11 +11,11 @@ from .helpers import (
     mk_tmp_dirs,
 )
 
-from ...associations.asn_from_list import asn_from_list
-from ...associations.lib.rules_level2_base import DMSLevel2bBase
-from ...datamodels import open as dm_open
-from ..calwebb_spec2 import Spec2Pipeline
-from ...stpipe.step import Step
+from jwst.associations.asn_from_list import asn_from_list
+from jwst.associations.lib.rules_level2_base import DMSLevel2bBase
+from jwst.datamodels import open as dm_open
+from jwst.pipeline.calwebb_spec2 import Spec2Pipeline
+from jwst.stpipe.step import Step
 
 DATAPATH = abspath(
     '$TEST_BIGDATA/pipelines'

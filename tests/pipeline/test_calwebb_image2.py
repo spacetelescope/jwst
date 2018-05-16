@@ -14,11 +14,11 @@ from .helpers import (
     update_asn_basedir,
 )
 
-from ...associations.asn_from_list import asn_from_list
-from ...associations.lib.rules_level2_base import DMSLevel2bBase
-from ...datamodels import open as dm_open
-from ...stpipe.step import Step
-from ..calwebb_image2 import Image2Pipeline
+from jwst.associations.asn_from_list import asn_from_list
+from jwst.associations.lib.rules_level2_base import DMSLevel2bBase
+from jwst.datamodels import open as dm_open
+from jwst.stpipe.step import Step
+from jwst.pipeline.calwebb_image2 import Image2Pipeline
 
 DATAPATH = abspath(
     '${TEST_BIGDATA}/miri/test_image2pipeline/'
