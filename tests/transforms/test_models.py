@@ -3,8 +3,8 @@
 import numpy as np
 from astropy.modeling.models import Shift, Rotation2D
 from asdf.tests import helpers
-from ...import jwextension
-from ...models import *
+from jwst.transforms import jwextension
+from jwst.transforms.models import *
 import pytest
 
 
