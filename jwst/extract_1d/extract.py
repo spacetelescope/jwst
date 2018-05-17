@@ -228,15 +228,17 @@ def get_extract_parameters(ref_dict,
     return extract_params
 
 
-def find_dispaxis(slit, spectral_order, extract_params):
+def find_dispaxis(input_model, slit, spectral_order, extract_params):
     """Get the location of the spectrum, based on the WCS.
 
     Parameters:
     -----------
+    input_model: data model
+        The input science file.
+
     slit: data model
-        This can be a slit from a MultiSlitModel (or similar), or it
-        could be a SlitModel, perhaps a full image, including a
-        multi-integration exposure.
+        This is a slit from a MultiSlitModel (or similar), or "dummy"
+        if the input is not an array of 2-D cutouts.
         We use the meta.wcs and wavelength attributes.
 
     spectral_order: int
@@ -257,26 +259,72 @@ def find_dispaxis(slit, spectral_order, extract_params):
     else:
         initial_value = None
 
-    if hasattr(slit, 'meta') and hasattr(slit.meta, 'wcs'):
-        wcs = slit.meta.wcs
+    if slit == DUMMY:
+        shape = input_model.data.shape[-2:]
     else:
+        shape = slit.data.shape[-2:]
+
+    wcs = None                                  # initial value
+    if slit == DUMMY:
+        if input_model.meta.exposure.type == "NIS_SOSS":
+            if hasattr(input_model.meta, 'wcs'):
+                try:
+                    transform = niriss.niriss_soss_set_input(
+                                        input_model, spectral_order)
+                except ValueError:
+                    if spectral_order == 1:
+                        log.warning("Spectral order 1 not found")
+                        log.warning("Can't determine dispaxis from the WCS.")
+                        return
+                    else:
+                        log.warning("Spectral order %d not found, using 1",
+                                    spectral_order)
+                        transform = niriss.niriss_soss_set_input(
+                                        input_model, 1)
+                wcs = transform                 # not None
+        elif hasattr(input_model.meta, 'wcs'):
+            wcs = input_model.meta.wcs
+            transform = wcs.forward_transform
+    elif hasattr(slit, 'meta') and hasattr(slit.meta, 'wcs'):
+        wcs = slit.meta.wcs
+        transform = wcs.forward_transform
+
+    if wcs is None:
         log.warning("find_dispaxis:  WCS not found")
         return
 
-    if hasattr(slit, "wavelength"):
-        wl_array = slit.wavelength.copy()
+    n_inputs = None
+    if hasattr(transform, 'n_inputs'):
+        n_inputs = transform.n_inputs
+    elif (hasattr(transform, 'forward_transform') and
+          hasattr(transform.forward_transform, 'n_inputs')):
+            n_inputs = transform.forward_transform.n_inputs
+    elif (hasattr(wcs, 'forward_transform') and
+          hasattr(wcs.forward_transform, 'n_inputs')):
+            n_inputs = wcs.forward_transform.n_inputs
     else:
-        wl_array = None
-    if wl_array is None or len(wl_array) == 0:
+        log.warning("Can't find n_inputs, assuming n_inputs = 2")
+        n_inputs = 2
+    if n_inputs is None or n_inputs < 2 or n_inputs > 3:
+        log.warning("n_inputs for wcs is %s; should be 2 or 3", str(n_inputs))
+        log.warning("Can't determine dispaxis from the WCS.")
+        return
+
+    if slit == DUMMY:
         got_wavelength = False
     else:
-        got_wavelength = True                   # may be reset later
-    if not got_wavelength or wl_array.min() == 0. and wl_array.max() == 0.:
-        got_wavelength = False
+        if hasattr(slit, "wavelength"):
+            wl_array = slit.wavelength.copy()
+        else:
+            wl_array = None
+        if (wl_array is None or len(wl_array) == 0 or
+            wl_array.min() == 0. and wl_array.max() == 0.):
+                got_wavelength = False
+        else:
+            got_wavelength = True
 
     bb = wcs.bounding_box
     if bb is None:
-        shape = slit.data.shape
         x_cent = shape[-1] // 2
         y_cent = shape[-2] // 2
     else:
@@ -298,7 +346,8 @@ def find_dispaxis(slit, spectral_order, extract_params):
         dwly = wl_array[1:-1, :] - wl_array[0:-2, :]
         dwlx = np.nanmean(dwlx)
         dwly = np.nanmean(dwly)
-        log.debug("find_dispaxis:  dwlx = %s dwly = %s", str(dwlx), str(dwly))
+        log.debug("find_dispaxis, wavelength attribute:  dwlx = %s dwly = %s",
+                  str(dwlx), str(dwly))
 
         dwlx = np.abs(dwlx)
         dwly = np.abs(dwly)
@@ -307,21 +356,7 @@ def find_dispaxis(slit, spectral_order, extract_params):
         elif dwlx < dwly:
             dispaxis = VERTICAL
     else:
-        if slit.meta.exposure.type == "NIS_SOSS":
-            try:
-                transform = niriss.niriss_soss_set_input(slit, spectral_order)
-            except ValueError:
-                if spectral_order == 1:
-                    log.warning("Spectral order 1 not found")
-                    log.warning("Can't determine dispaxis from the WCS.")
-                    return
-                else:
-                    log.warning("Spectral order %d not found, using 1",
-                                spectral_order)
-                    transform = niriss.niriss_soss_set_input(slit, 1)
-        else:
-            transform = wcs.forward_transform
-        if hasattr(transform, 'n_inputs') and transform.n_inputs > 2:
+        if n_inputs > 2:
             stuff = transform(x_cent, y_cent, spectral_order)
             wl_00 = stuff[2]
             stuff = transform(x_cent, y_cent + 1, spectral_order)
@@ -341,24 +376,45 @@ def find_dispaxis(slit, spectral_order, extract_params):
             wl_00 == 0 or wl_01 == 0 or wl_10 == 0):
                 log.warning("wavelength from WCS is NaN or 0 "
                             "within the bounding box")
-                shape = slit.data.shape
-                grid = np.indices(shape[-2:], dtype=np.float64)
-                if hasattr(transform, 'n_inputs') and transform.n_inputs > 2:
-                    stuff = transform(grid[1], grid[0], spectral_order)
+                if input_model.meta.exposure.type in WFSS_EXPTYPES:
+                    wl_wcs = np.zeros(shape, dtype=np.float64)
+                    log.debug("Starting to compute wavelengths ...")
+                    if n_inputs > 2:
+                        for j in range(shape[0]):
+                            for i in range(shape[1]):
+                                stuff = transform(i, j, spectral_order)
+                                if stuff[2] == 0.:
+                                    wl_wcs[j, i] = np.nan
+                                else:
+                                    wl_wcs[j, i] = stuff[2]
+                    else:
+                        for j in range(shape[0]):
+                            for i in range(shape[1]):
+                                stuff = transform(i, j)
+                                if stuff[2] == 0.:
+                                    wl_wcs[j, i] = np.nan
+                                else:
+                                    wl_wcs[j, i] = stuff[2]
+                    log.debug("... finished computing wavelengths")
                 else:
-                    stuff = transform(grid[1], grid[0])
-                wl_wcs = stuff[2]
-                del grid, stuff
-                # Flag wavelength = 0 as invalid.
-                mask = (wl_wcs == 0)
-                if np.any(mask):
-                    wl_wcs[mask] = np.nan
-                del mask
+                    grid = np.indices(shape, dtype=np.float64)
+                    if n_inputs > 2:
+                        stuff = transform(grid[1], grid[0], spectral_order)
+                    else:
+                        stuff = transform(grid[1], grid[0])
+                    wl_wcs = stuff[2].copy()
+                    del grid, stuff
+                    # Flag wavelength = 0 as invalid.
+                    mask = (wl_wcs == 0)
+                    if np.any(mask):
+                        wl_wcs[mask] = np.nan
+                    del mask
                 dwlx = wl_wcs[:, 1:-1] - wl_wcs[:, 0:-2]
                 dwly = wl_wcs[1:-1, :] - wl_wcs[0:-2, :]
                 dwlx = np.nanmean(dwlx)
                 dwly = np.nanmean(dwly)
-        log.debug("find_dispaxis:  dwlx = %s dwly = %s", str(dwlx), str(dwly))
+        log.debug("find_dispaxis, using wcs:  dwlx = %s dwly = %s",
+                  str(dwlx), str(dwly))
         if np.isnan(dwlx) or np.isnan(dwly):
             log.warning("dwlx and/or dwly is STILL NaN!  "
                         "Can't determine dispaxis from WCS")
@@ -1905,7 +1961,7 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
             elif extract_params['match'] == PARTIAL:
                 log.info('Spectral order %d not found, skipping ...', sp_order)
                 continue
-            find_dispaxis(slit, sp_order, extract_params)
+            find_dispaxis(input_model, slit, sp_order, extract_params)
 
             try:
                 (ra, dec, wavelength, net, background, dq) = \
@@ -1980,7 +2036,7 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                                     bkg_order)
                 if extract_params['match'] == EXACT:
                     slit = DUMMY
-                    find_dispaxis(input_model, sp_order, extract_params)
+                    find_dispaxis(input_model, slit, sp_order, extract_params)
                     try:
                         (ra, dec, wavelength, net, background, dq) = \
                                 extract_one_slit(input_model, slit, -1,
@@ -2037,6 +2093,8 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
         elif isinstance(input_model, (datamodels.CubeModel,
                                       datamodels.SlitModel)):
 
+            slit = DUMMY
+
             # NRS_BRIGHTOBJ exposures are instances of SlitModel.
             for sp_order in spectral_order_list:
                 if sp_order == "not set yet":
@@ -2054,7 +2112,7 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                     log.warning('Spectral order %d not found, skipping ...',
                                 sp_order)
                     continue
-                find_dispaxis(input_model, sp_order, extract_params)
+                find_dispaxis(input_model, slit, sp_order, extract_params)
 
                 got_relsens = True
                 try:
@@ -2068,7 +2126,6 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                                 "so can't compute flux.")
 
                 # Loop over each integration in the input model
-                slit = DUMMY
                 verbose = True          # for just the first integration
                 for integ in range(input_model.data.shape[0]):
                     # Extract spectrum
