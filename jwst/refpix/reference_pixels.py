@@ -59,8 +59,8 @@ NIR_reference_sections = {'A': {'top': (2044, 2048, 0, 512),
                                'data': (0, 2048, 1536, 2048)},
                           'SUBARRAY': {'top': (2044, 2048, 0, 2048),
                                        'bottom': (0, 4, 0, 2048),
-                                       'left': (0, 2048, 0, 4),
-                                       'right': (0, 2048, 2044, 2048),
+                                       'left': (4, 2044, 0, 4),
+                                       'right': (4, 2044, 2044, 2048),
                                        'data': (0, 2048, 0, 2048)}
                           }
 
@@ -425,6 +425,7 @@ class NIRDataset(Dataset):
 
         """
 
+        if is_
         refpix = {}
         for amplifier in 'ABCD':
             refpix[amplifier] = {}
@@ -1452,10 +1453,9 @@ def create_embedded(input_model,
     else:
         full_shape = (nints, ngroups, 2048, 2048)
         dq_shape = (2048, 2048)
-    print(colstart, colstop, rowstart, rowstop)
     embedded_model.data = np.zeros(full_shape, dtype=input_model.data.dtype)
     embedded_model.data[:, :, rowstart:rowstop, colstart:colstop] = input_model.data
-    embedded_model.pixeldq = np.zeros(dq_shape, dtype=input_model.pixeldq.dtype)
+    embedded_model.pixeldq = np.ones(dq_shape, dtype=input_model.pixeldq.dtype)
     embedded_model.pixeldq[rowstart:rowstop, colstart:colstop] = input_model.pixeldq
     return create_dataset(embedded_model,
                           odd_even_columns,
