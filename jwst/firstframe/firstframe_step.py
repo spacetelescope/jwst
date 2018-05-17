@@ -6,7 +6,7 @@ from . import firstframe_sub
 class FirstFrameStep(Step):
     """
     FirstFrameStep: This is a MIRI specific task.  If the number of groups
-    is greater than 1, the DO_NOT_USE group data quality flag is added to 
+    is greater than 3, the DO_NOT_USE group data quality flag is added to 
     first group.
     """
 
