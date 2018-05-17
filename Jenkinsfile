@@ -33,6 +33,7 @@ def CONDA_DEPS = "asdf \
                   namedlist \
                   numpy \
                   photutils \
+                  pytest-runner \
                   scipy \
                   six \
                   spherical-geometry \

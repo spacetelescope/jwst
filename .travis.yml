@@ -30,6 +30,8 @@ env:
                               namedlist
                               numpy
                               photutils
+                              pytest
+                              pytest-runner
                               scipy
                               six
                               spherical-geometry

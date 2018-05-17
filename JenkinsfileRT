@@ -27,6 +27,8 @@ def CONDA_DEPS = "asdf \
                   namedlist \
                   numpy \
                   photutils \
+                  pytest \
+                  pytest-runner \
                   scipy \
                   six \
                   spherical-geometry \
@@ -36,13 +38,18 @@ def CONDA_DEPS = "asdf \
                   stsci.tools \
                   verhawk"
 def CONDA_CHANNEL = "http://ssb.stsci.edu/conda-dev"
+
+def PIP_ARGS = "-q"
+def PIP_INST = "pip install ${PIP_ARGS}"
+def PIP_DEPS = "requests_mock"
+
 def PY_SETUP = "python setup.py"
 def PYTEST = "pytest -r s --bigdata --basetemp=test_outputs --junit-xml=results.xml"
 def PY_VER = '3.6'
 def CONDA_ENV = 'py${PY_VER}'
 def CONDA_CREATE = "conda create -y -q"
 def WRAPPER = "with_env -n ${CONDA_ENV}"
-def TEST_ROOT = "jwst/tests_nightly/general"
+def TEST_ROOT = "tests/nightly"
 def matrix = []
 
 conda.CONDA_INSTALLER_VERSION = '4.4.10'
@@ -64,6 +71,7 @@ bc.build_mode = PY_VER
 bc.test_cmds = [
     "conda config --add channels ${CONDA_CHANNEL}",
     "${CONDA_CREATE} -n ${CONDA_ENV} python=${PY_VER} ${CONDA_DEPS}",
+    "${WRAPPER} ${PIP_INST} ${PIP_DEPS}",
     "${WRAPPER} printenv | sort",
     "${WRAPPER} ${PY_SETUP} develop",
     "${WRAPPER} ${PYTEST} ${TEST_ROOT}",
