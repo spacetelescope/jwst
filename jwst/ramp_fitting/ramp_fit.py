@@ -152,7 +152,6 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
         DM object containing optional OLS-specific ramp fitting data for the
         exposure; this will be None if save_opt is False
     """
-
     tstart = time.time()
 
     # get needed sizes and shapes
@@ -180,8 +179,8 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
         # Next block is to satisfy github issue 1681:
         # "MIRI FirstFrame and LastFrame minimum number of groups #1681"
         if (ngroups < 2):
-            log.error('MIRI datasets require at least 2 groups/integration')
-            log.error('(NGROUPS), so will not process this dataset.')
+            log.warning('MIRI datasets require at least 2 groups/integration')
+            log.warning('(NGROUPS), so will not process this dataset.')
             return None, None, None
 
     if (ngroups == 1):
