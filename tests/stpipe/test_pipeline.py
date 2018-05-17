@@ -173,7 +173,7 @@ def test_pipeline_commandline():
 
 def test_pipeline_commandline_class():
     args = [
-        'jwst.stpipe.tests.test_pipeline.MyPipeline',
+        'tests.stpipe.test_pipeline.MyPipeline',
         '--logcfg={0}'.format(
             abspath(join(dirname(__file__), 'steps', 'log.cfg'))),
         # The file_name parameters are *required*
@@ -197,7 +197,7 @@ def test_pipeline_commandline_invalid_args():
     from io import StringIO
 
     args = [
-        'jwst.stpipe.tests.test_pipeline.MyPipeline',
+        'tests.stpipe.test_pipeline.MyPipeline',
         # The file_name parameters are *required*, and one of them
         # is missing, so we should get a message to that effect
         # followed by the commandline usage message.
@@ -207,7 +207,7 @@ def test_pipeline_commandline_invalid_args():
         ]
 
     __stdout = sys.stdout
-    sys.stdout = buffer = StringIO()
+    sys.stdout = obuffer = StringIO()
 
     try:
         pipe = Step.from_cmdline(args)
@@ -218,8 +218,8 @@ def test_pipeline_commandline_invalid_args():
     finally:
         sys.stdout = __stdout
 
-    help = buffer.getvalue()
-    print(help)
+    ohelp = obuffer.getvalue()
+    print(ohelp)
 
     # Make sure the comments made it into the help message
-    assert "Multiply by this number" in help
+    assert "Multiply by this number" in ohelp, ohelp

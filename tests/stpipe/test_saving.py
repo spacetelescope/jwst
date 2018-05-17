@@ -40,7 +40,7 @@ def test_save_step_default(mk_tmp_dirs):
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     args = [
-        'jwst.stpipe.tests.steps.StepWithModel',
+        'tests.stpipe.steps.StepWithModel',
         data_fn_path
     ]
 
@@ -57,7 +57,7 @@ def test_save_step_withoutput(mk_tmp_dirs):
     output_file = 'junk.fits'
 
     args = [
-        'jwst.stpipe.tests.steps.StepWithModel',
+        'tests.stpipe.steps.StepWithModel',
         data_fn_path,
         '--output_file=' + output_file
     ]
@@ -76,7 +76,7 @@ def test_save_step_withoutputsuffix(mk_tmp_dirs):
     actual_output_file = 'junk_stepwithmodel.fits'
 
     args = [
-        'jwst.stpipe.tests.steps.StepWithModel',
+        'tests.stpipe.steps.StepWithModel',
         data_fn_path,
         '--output_file=' + output_file
     ]
@@ -91,7 +91,7 @@ def test_save_step_withdir(mk_tmp_dirs):
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     args = [
-        'jwst.stpipe.tests.steps.StepWithModel',
+        'tests.stpipe.steps.StepWithModel',
         data_fn_path,
         '--output_dir=' + tmp_data_path
     ]
@@ -112,7 +112,7 @@ def test_save_step_withdir_environment(mk_tmp_dirs):
     os.environ['TSSWE_OUTPATH'] = tmp_data_path
 
     args = [
-        'jwst.stpipe.tests.steps.StepWithModel',
+        'tests.stpipe.steps.StepWithModel',
         data_fn_path,
         '--output_dir=$TSSWE_OUTPATH'
     ]
@@ -133,7 +133,7 @@ def test_save_step_withdir_withoutput(mk_tmp_dirs):
     output_file = 'junk.fits'
 
     args = [
-        'jwst.stpipe.tests.steps.StepWithModel',
+        'tests.stpipe.steps.StepWithModel',
         data_fn_path,
         '--output_dir=' + tmp_data_path,
         '--output_file=' + output_file
@@ -154,7 +154,7 @@ def test_save_container(mk_tmp_dirs):
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     args = [
-        'jwst.stpipe.tests.steps.StepWithContainer',
+        'tests.stpipe.steps.StepWithContainer',
         data_fn_path,
     ]
 
@@ -169,7 +169,7 @@ def test_save_container_usemodel(mk_tmp_dirs):
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     args = [
-        'jwst.stpipe.tests.steps.StepWithContainer',
+        'tests.stpipe.steps.StepWithContainer',
         data_fn_path,
         '--output_use_model=true'
     ]
@@ -185,7 +185,7 @@ def test_save_container_withfile(mk_tmp_dirs):
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     args = [
-        'jwst.stpipe.tests.steps.StepWithContainer',
+        'tests.stpipe.steps.StepWithContainer',
         data_fn_path,
         '--output_file=tscwf.fits',
     ]
@@ -293,7 +293,7 @@ def test_save_substep_withdir(mk_tmp_dirs):
 def test_save_proper_pipeline(mk_tmp_dirs):
     """Test how pipeline saving should work"""
     args = [
-        'jwst.stpipe.tests.steps.ProperPipeline',
+        'tests.stpipe.steps.ProperPipeline',
         data_fn_path,
         '--steps.stepwithcontainer.skip=true',
     ]
@@ -308,7 +308,7 @@ def test_save_proper_pipeline_withdir(mk_tmp_dirs):
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     args = [
-        'jwst.stpipe.tests.steps.ProperPipeline',
+        'tests.stpipe.steps.ProperPipeline',
         data_fn_path,
         '--output_dir=' + tmp_data_path,
         '--steps.stepwithcontainer.skip=true',
@@ -325,7 +325,7 @@ def test_save_proper_pipeline_withdir_withoutput(mk_tmp_dirs):
     output_name = 'junk.fits'
 
     args = [
-        'jwst.stpipe.tests.steps.ProperPipeline',
+        'tests.stpipe.steps.ProperPipeline',
         data_fn_path,
         '--output_file=' + output_name,
         '--output_dir=' + tmp_data_path,
@@ -342,7 +342,7 @@ def test_save_proper_pipeline_withdir_withoutput(mk_tmp_dirs):
 def test_save_proper_pipeline_substeps(mk_tmp_dirs):
     """Test how pipeline saving should work"""
     args = [
-        'jwst.stpipe.tests.steps.ProperPipeline',
+        'tests.stpipe.steps.ProperPipeline',
         data_fn_path,
         '--steps.stepwithmodel.save_results=true',
         '--steps.another_stepwithmodel.save_results=true',
@@ -358,7 +358,7 @@ def test_save_proper_pipeline_substeps(mk_tmp_dirs):
 def test_save_proper_pipeline_substeps_skip(mk_tmp_dirs):
     """Test how pipeline saving should work"""
     args = [
-        'jwst.stpipe.tests.steps.ProperPipeline',
+        'tests.stpipe.steps.ProperPipeline',
         data_fn_path,
         '--steps.stepwithmodel.save_results=true',
         '--steps.another_stepwithmodel.save_results=true',
@@ -377,7 +377,7 @@ def test_save_proper_pipeline_substeps_withdir(mk_tmp_dirs):
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     args = [
-        'jwst.stpipe.tests.steps.ProperPipeline',
+        'tests.stpipe.steps.ProperPipeline',
         data_fn_path,
         '--output_dir=' + tmp_data_path,
         '--steps.stepwithmodel.save_results=true',
@@ -395,7 +395,7 @@ def test_save_proper_pipeline_substeps_withdir(mk_tmp_dirs):
 def test_save_proper_pipeline_container(mk_tmp_dirs):
     """Test how pipeline saving should work"""
     args = [
-        'jwst.stpipe.tests.steps.ProperPipeline',
+        'tests.stpipe.steps.ProperPipeline',
         data_fn_path,
     ]
 
@@ -410,7 +410,7 @@ def test_save_proper_pipeline_container_withdir(mk_tmp_dirs):
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     args = [
-        'jwst.stpipe.tests.steps.ProperPipeline',
+        'tests.stpipe.steps.ProperPipeline',
         data_fn_path,
         '--output_dir=' + tmp_data_path,
     ]
@@ -427,7 +427,7 @@ def test_save_proper_pipeline_container_withdir_withoutput(mk_tmp_dirs):
     output_name = 'junk.fits'
 
     args = [
-        'jwst.stpipe.tests.steps.ProperPipeline',
+        'tests.stpipe.steps.ProperPipeline',
         data_fn_path,
         '--output_file=' + output_name,
         '--output_dir=' + tmp_data_path,
@@ -446,7 +446,7 @@ def test_save_proper_pipeline_container_withdir_withoutput(mk_tmp_dirs):
 def test_save_proper_pipeline_container_substeps(mk_tmp_dirs):
     """Test how pipeline saving should work"""
     args = [
-        'jwst.stpipe.tests.steps.ProperPipeline',
+        'tests.stpipe.steps.ProperPipeline',
         data_fn_path,
         '--steps.stepwithmodel.save_results=true',
         '--steps.another_stepwithmodel.save_results=true',
@@ -465,7 +465,7 @@ def test_save_proper_pipeline_container_substeps(mk_tmp_dirs):
 def test_save_proper_pipeline_container_substeps_skip(mk_tmp_dirs):
     """Test how pipeline saving should work"""
     args = [
-        'jwst.stpipe.tests.steps.ProperPipeline',
+        'tests.stpipe.steps.ProperPipeline',
         data_fn_path,
         '--steps.stepwithmodel.save_results=true',
         '--steps.another_stepwithmodel.save_results=true',
@@ -487,7 +487,7 @@ def test_save_proper_pipeline_container_substeps_withdir(mk_tmp_dirs):
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     args = [
-        'jwst.stpipe.tests.steps.ProperPipeline',
+        'tests.stpipe.steps.ProperPipeline',
         data_fn_path,
         '--output_dir=' + tmp_data_path,
         '--steps.stepwithmodel.save_results=true',
@@ -508,7 +508,7 @@ def test_save_proper_pipeline_container_substeps_withdir(mk_tmp_dirs):
 def test_save_proper_pipeline_container_usemodel(mk_tmp_dirs):
     """Test how pipeline saving should work"""
     args = [
-        'jwst.stpipe.tests.steps.ProperPipeline',
+        'tests.stpipe.steps.ProperPipeline',
         data_fn_path,
         '--output_use_model=true',
         '--steps.stepwithcontainer.output_use_model=true',
@@ -537,7 +537,7 @@ def test_save_proper_pipeline_container_usemodel(mk_tmp_dirs):
 def test_save_proper_pipeline_container_nosearch(mk_tmp_dirs):
     """Test how pipeline saving should work"""
     args = [
-        'jwst.stpipe.tests.steps.ProperPipeline',
+        'tests.stpipe.steps.ProperPipeline',
         data_fn_path,
         '--steps.stepwithcontainer.save_results=true',
         '--steps.stepwithcontainer.search_output_file=false',
