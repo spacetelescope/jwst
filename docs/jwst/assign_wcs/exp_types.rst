@@ -32,7 +32,7 @@ WCS reference file information per EXP_TYPE
   | WCS pipeline coordinate frames: detector, v2v3, world
   | Implements: Distortion file created from TEL team data.
 
-:NRC_GRISM, NRC_TSGRISM:
+:NRC_WFSS, NRC_TSGRISM:
   | reftypes: *specwcs*, *distortion* *wavelengthrange*
   | WCS pipeline coordinate frames: grism_detector, detector, v2v3, world
   | Implements: reference files provided by NIRCAM team

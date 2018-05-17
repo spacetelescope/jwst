@@ -38,7 +38,7 @@ subtracted from it. If the target exposure is in the form of a CubeModel
 (e.g. the result of a time-series exposure), the background image
 is subtracted from all planes of the CubeModel.
 
-For wide-field slitless spectroscopy data (NIS_WFSS or NRC_GRISM), the
+For wide-field slitless spectroscopy data (NIS_WFSS or NRC_WFSS), the
 background reference image will be scaled to match the science data within
 background regions, and the scaled image will be subtracted from the
 science data.  The background regions in the science data are places where

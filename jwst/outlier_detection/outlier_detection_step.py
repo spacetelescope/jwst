@@ -18,7 +18,7 @@ outlier_registry = {'imaging': outlier_detection.OutlierDetection,
 
 # Categorize all supported modes
 IMAGE_MODES = ['NRC_IMAGE', 'MIR_IMAGE', 'NRS_IMAGE', 'NIS_IMAGE', 'FGS_IMAGE']
-SLIT_SPEC_MODES = ['NRC_GRISM', 'MIR_LRS-FIXEDSLIT', 'NRS_FIXEDSLIT',
+SLIT_SPEC_MODES = ['NRC_WFSS', 'MIR_LRS-FIXEDSLIT', 'NRS_FIXEDSLIT',
                    'NRS_MSASPEC', 'NIS_WFSS']
 TSO_SPEC_MODES = ['NIS_SOSS', 'MIR_LRS-SLITLESS', 'NRC_TSGRISM',
                   'NRS_BRIGHTOBJ']

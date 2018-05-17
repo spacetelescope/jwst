@@ -488,7 +488,7 @@ class DataSet(object):
 
                 # Handle WFSS data separately from regular imaging
                 if (isinstance(self.input, datamodels.MultiSlitModel) and
-                        self.exptype == 'NRC_GRISM'):
+                        self.exptype == 'NRC_WFSS'):
 
                     # Loop over the WFSS slits, applying the same photom
                     # ref data to all slits

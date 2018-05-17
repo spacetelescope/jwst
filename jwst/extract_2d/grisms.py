@@ -37,7 +37,7 @@ def extract_grism_objects(input_model, grism_objects=[], reference_files={}):
 
     Notes
     -----
-    This method supports NRC_GRISM and NIS_WFSS only
+    This method supports NRC_WFSS and NIS_WFSS only
 
     GrismObject is a named tuple which contains distilled
     information about each catalog object. It can be created

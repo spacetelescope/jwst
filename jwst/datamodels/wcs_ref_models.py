@@ -193,14 +193,14 @@ class NIRCAMGrismModel(ReferenceFileModel):
 
     def populate_meta(self):
         self.meta.instrument.name = "NIRCAM"
-        self.meta.exposure.type = "NRC_GRISM"
+        self.meta.exposure.type = "NRC_WFSS"
         self.meta.reftype = self.reftype
 
     def validate(self):
         assert isinstance(self.meta.input_units, (str, u.NamedUnit))
         assert isinstance(self.meta.output_units, (str, u.NamedUnit))
         assert self.meta.instrument.name == "NIRCAM"
-        assert self.meta.exposure.type == "NRC_GRISM"
+        assert self.meta.exposure.type == "NRC_WFSS"
         assert self.meta.reftype == self.reftype
 
     def to_fits(self):
