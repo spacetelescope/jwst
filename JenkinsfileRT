@@ -29,6 +29,7 @@ def CONDA_DEPS = "asdf \
                   photutils \
                   pytest \
                   pytest-runner \
+                  pytest-remotedata \
                   scipy \
                   six \
                   spherical-geometry \
@@ -44,7 +45,7 @@ def PIP_INST = "pip install ${PIP_ARGS}"
 def PIP_DEPS = "requests_mock"
 
 def PY_SETUP = "python setup.py"
-def PYTEST = "pytest -r s --bigdata --basetemp=test_outputs --junit-xml=results.xml"
+def PYTEST = "pytest -r a --remote-data any --bigdata --basetemp=test_outputs --junit-xml=results.xml"
 def PY_VER = '3.6'
 def CONDA_ENV = 'py${PY_VER}'
 def CONDA_CREATE = "conda create -y -q"

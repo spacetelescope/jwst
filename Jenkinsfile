@@ -33,7 +33,6 @@ def CONDA_DEPS = "asdf \
                   namedlist \
                   numpy \
                   photutils \
-                  pytest-runner \
                   scipy \
                   six \
                   spherical-geometry \
@@ -45,7 +44,9 @@ def CONDA_DEPS = "asdf \
 def CONDA_DOC_DEPS = "sphinx \
                       sphinx_rtd_theme \
                       stsci_rtd_theme"
-def CONDA_TEST_DEPS = "pytest"
+def CONDA_TEST_DEPS = "pytest \
+                       pytest-remotedata \
+                       pytest-runner"
 
 // Pip related setup
 def PIP_ARGS = "-q"
@@ -56,8 +57,8 @@ def PIP_TEST_DEPS = "requests_mock"
 
 // Pytest wrapper
 def PYTEST = "pytest \
-              -r s \
-              -v \
+              -r a \
+              --remote-data=any \
               --basetemp=./test_results \
               --junit-xml=results.xml"
 
