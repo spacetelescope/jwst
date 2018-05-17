@@ -1,3 +1,5 @@
+import os.path as op
+
 from astropy.table import vstack
 
 from ..stpipe import Pipeline
@@ -135,7 +137,7 @@ class Tso3Pipeline(Pipeline):
             # Update some metadata from the association
             x1d_result.meta.asn.pool_name = \
                 input_models.meta.asn_table.asn_pool
-            x1d_result.meta.asn.table_name = input
+            x1d_result.meta.asn.table_name = op.basename(input)
 
             # Save the final x1d Multispec model
             self.save_model(x1d_result, suffix='x1dints')
