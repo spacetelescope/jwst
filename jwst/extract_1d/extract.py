@@ -342,8 +342,8 @@ def find_dispaxis(input_model, slit, spectral_order, extract_params):
         if np.any(mask):
             wl_array[mask] = np.nan
         del mask
-        dwlx = wl_array[:, 1:-1] - wl_array[:, 0:-2]
-        dwly = wl_array[1:-1, :] - wl_array[0:-2, :]
+        dwlx = wl_array[:, 1:] - wl_array[:, 0:-1]
+        dwly = wl_array[1:, :] - wl_array[0:-1, :]
         dwlx = np.nanmean(dwlx)
         dwly = np.nanmean(dwly)
         log.debug("find_dispaxis, wavelength attribute:  dwlx = %s dwly = %s",
@@ -409,8 +409,8 @@ def find_dispaxis(input_model, slit, spectral_order, extract_params):
                     if np.any(mask):
                         wl_wcs[mask] = np.nan
                     del mask
-                dwlx = wl_wcs[:, 1:-1] - wl_wcs[:, 0:-2]
-                dwly = wl_wcs[1:-1, :] - wl_wcs[0:-2, :]
+                dwlx = wl_wcs[:, 1:] - wl_wcs[:, 0:-1]
+                dwly = wl_wcs[1:, :] - wl_wcs[0:-1, :]
                 dwlx = np.nanmean(dwlx)
                 dwly = np.nanmean(dwly)
         log.debug("find_dispaxis, using wcs:  dwlx = %s dwly = %s",
