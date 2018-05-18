@@ -99,27 +99,18 @@ def _get_hdu_name(schema):
     return hdu_name
 
 
-def _get_hdu_type(hdu_name, value):
+def _get_hdu_type(hdu_name, schema=None, value=None):
+    hdu_type = None
     if hdu_name in (0, 'PRIMARY'):
         hdu_type = fits.PrimaryHDU
-    elif value is None:
-        hdu_type = fits.ImageHDU
-    else:
-        try:
-            defs = fits.ColDefs(value) # just to test if value is a table
+    elif schema is not None:
+        dtype = ndarray.asdf_datatype_to_numpy_dtype(schema['datatype'])
+        if dtype.fields is not None:
             hdu_type = fits.BinTableHDU
-        except TypeError:
-            hdu_type = fits.ImageHDU
+    elif value is not None:
+        if hasattr(value, 'dtype') and value.dtype.names is not None:
+            hdu_type = fits.BinTableHDU
     return hdu_type
-
-
-def _make_new_hdu(hdulist, value, hdu_name, index=None):
-    hdu_type = _get_hdu_type(hdu_name, value)
-    hdu = hdu_type(value, name=hdu_name)
-    if index is not None:
-        hdu.ver = index + 1
-    hdulist.append(hdu)
-    return hdu
 
 
 def _get_hdu_pair(hdu_name, index=None):
@@ -160,7 +151,10 @@ def get_hdu(hdulist, hdu_name, index=None):
 
 def _make_hdu(hdulist, hdu_name, index=None, hdu_type=None, value=None):
     if hdu_type is None:
-        hdu_type = _get_hdu_type(hdu_name, value)
+        hdu_type = _get_hdu_type(hdu_name, value=value)
+        if hdu_type is None:
+            hdu_type = fits.ImageHDU
+
     if hdu_type == fits.PrimaryHDU:
         hdu = hdu_type(value)
     else:
@@ -268,13 +262,11 @@ def _fits_array_writer(validator, _, instance, schema):
 
     hdu_name = _get_hdu_name(schema)
     _assert_non_primary_hdu(hdu_name)
-    if instance.dtype.names is not None:
-        hdu_type = fits.BinTableHDU
-    else:
-        hdu_type = fits.ImageHDU
     index = getattr(validator, 'sequence_index', 0)
 
-    hdu = _get_or_make_hdu(validator.hdulist, hdu_name, index=index, hdu_type=hdu_type)
+    hdu_type = _get_hdu_type(hdu_name, schema=schema, value=instance)
+    hdu = _get_or_make_hdu(validator.hdulist, hdu_name,
+                           index=index, hdu_type=hdu_type)
 
     hdu.data = instance
     hdu.ver = index + 1
@@ -355,7 +347,9 @@ def _save_extra_fits(hdulist, tree):
     for hdu_name, parts in tree.get('extra_fits', {}).items():
         hdu_name = fits_hdu_name(hdu_name)
         if 'data' in parts:
-            hdu = _get_or_make_hdu(hdulist, hdu_name, value=parts['data'])
+            hdu_type = _get_hdu_type(hdu_name, value=parts['data'])
+            hdu = _get_or_make_hdu(hdulist, hdu_name, hdu_type = hdu_type,
+                                   value=parts['data'])
         if 'header' in parts:
             hdu = _get_or_make_hdu(hdulist, hdu_name)
             for key, val, comment in parts['header']:
@@ -559,7 +553,7 @@ def from_fits_hdu(hdu, schema):
     data2 = properties._cast(data, schema)
 
     # Casting a table loses the listeners, so restore them
-    if isinstance(hdu, fits.BinTableHDU):
+    if hasattr(data, '_coldefs'):
         coldefs = data._coldefs
         coldefs2 = data2._coldefs
         coldefs2._listeners = coldefs._listeners
