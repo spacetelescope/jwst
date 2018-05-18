@@ -16,34 +16,36 @@ detailed below.
 
 
 The count rate for each pixel is determined by a linear fit to the
-cosmic-ray-free ramp intervals for each pixel. CR-free intervals are derived
-using the 4-D GROUPDQ array of the input data set, under the assumption that
-the jump step will have already flagged CR's. Ramp intervals are also terminated
-where saturation flags are found.  Ramp intervals that are noiseless, or have
-no signal, or contain only 2 reads will initially have fits with variance = 0,
-preventing their slopes from contributing to the weighted slopes.  In these
-cases, the variance will be recalculated as the poisson noise of the ramp added
-in quadrature to the pixel-specific read noise, ensuring that all variance
-values are positive.  If the input dataset has only a single group in each
-integration, the count rate for all unsaturated pixels in that integration will
-be calculated to be the value of the science data in that group divided by the
-exposure time.  If the input dataset has only two groups per integration, the
-count rate for all unsaturated pixels in each integration will be calculated
-from the 2 valid values of the science data.  If any input dataset contains
-ramps saturated in their second read, the count rates for those pixels in that
-integration will be calculated to be the value of the science data in that group
-divided by the exposure time. After computing the slopes for all intervals for
-a given pixel, the final slope is determined as a weighted average from all
-intervals and is written to a file as the primary output product.  In this
-output product, the 4-D GROUPDQ from all integrations is compressed into 2-D,
-which is then merged (using a bitwise OR) with the input 2-D PIXELDQ to create
-the output DQ array.  The 3-D VAR_POISSON and VAR_RNOISE arrays from all 
-integrations are averaged into corresponding 2-D output arrays.  If the ramp 
-fitting step is run by itself, the output file name will have the suffix 
-'_RampFit' or the suffix '_RampFitStep'; if the ramp fitting step is run as part 
-of the calwebb_detector1 pipeline, the final output file name will have the 
-suffix '_rate'.  In either case, the user can override this name by specifying 
-an output file name.
+cosmic-ray-free ramp intervals for each pixel. The fitting algorithm does an 
+'optimal' linear fit, which is the weighting used by Fixsen et 
+al, PASP,112, 1350. ('unweighted' in which pixels are equally weighted, is no 
+longer a weighting option.)  CR-free intervals are derived using the 4-D
+GROUPDQ array of the input data set, under the assumption that the jump step
+will have already flagged CR's. Ramp intervals are also terminated where
+saturation flags are found. Pixels are processed simultaneously in blocks 
+using the array-based functionality of numpy.  The size of the block depends
+on the image size and the number of groups.
+
+
+If the input dataset has only a single group in each integration, the count rate
+for all unsaturated pixels in that integration will be calculated to be the
+value of the science data in that group divided by the exposure time.  If the
+input dataset has only two groups per integration, the count rate for all
+unsaturated pixels in each integration will be calculated from the 2 valid
+values of the science data.  If any input dataset contains ramps saturated in
+their second read, the count rates for those pixels in that integration will be
+calculated to be the value of the science data in that group divided by the
+exposure time. After computing the slopes for all intervals for a given pixel,
+the final slope is determined as a weighted average from all intervals and is
+written to a file as the primary output product.  In this output product, the
+4-D GROUPDQ from all integrations is compressed into 2-D, which is then merged
+(using a bitwise OR) with the input 2-D PIXELDQ to create the output DQ array.
+The 3-D VAR_POISSON and VAR_RNOISE arrays from all integrations are averaged
+into corresponding 2-D output arrays.  If the ramp fitting step is run by itself,
+the output file name will have the suffix '_RampFit' or the suffix '_RampFitStep';
+if the ramp fitting step is run as part of the calwebb_detector1 pipeline, the
+final output file name will have the suffix '_rate'.  In either case, the user
+can override this name by specifying an output file name.
 
 
 If the input exposure contains more than one integration, the resulting slope
@@ -84,29 +86,110 @@ read with a non-zero magnitude. The order of the cosmic rays within the ramp is
 preserved.
 
 
-The fitting algorithm does an 'optimal' linear fit, which is the weighting used
-by Fixsen et al, PASP,112, 1350. ('unweighted' in which pixels are equally
-weighted, is no longer a weighting option.)  Pixels are processed simultaneously
-in blocks using the array-based functionality of numpy.  The size of the block
-depends on the image size and the number of groups.
+Slopes and their variances are calculated for each segment, for each integration,
+and for the entire dataset. A segment, or semi-ramp, is a set of contiguous
+groups where none of the groups are saturated or cosmic ray-affected.  The 
+appropriate slopes and variances are output to the primary output product, the 
+integration-specific output product, and the optional output product. The 
+following is a description of these computations. The notation is the type 
+of noise (when appropriate) will appear as a superscript: 'R', 'P', or 'C' 
+for readnoise, Poisson noise, or combined. The form of the data will appear as a
+subscript: 's', 'i', 'o' for segment, integration, or overall (for the entire 
+dataset).
+
+
+Segment-specific computations:
+------------------------------
+
+The slope of each segment is calculated using the least-squares method with 
+optimal weighting. The variance of the slope of the segment due to read noise is: 
+
+.. math::  
+   var^R_{s} = \frac{12 \ R^2 }{ (ngroups_{s}^3 - ngroups_{s})(tgroup^2) } \,,
+
+\noindent where $R$ is the noise in the difference between 2 frames, 
+$ngroups_{s}$ is the number of groups in the segment, and $tgroup$ is the group 
+time in seconds.  
+
+The variance of the slope of the segment due to Poisson noise is: 
+
+.. math::  
+   var^P_{s} = \frac{ slope_{est} }{  tgroup \times gain\ (ngroups_{s} -1)}  \,,
+
+
+\noindent where $gain$ is the gain for the pixel, in e/DN. The $slope_{est}$ is
+an estimate of the over-all slope of the segment, calculated by taking the
+median of the first differences of the groups that are unaffected by saturation
+and cosmic rays, in all integrations. This is a more robust estimate of the
+slope than the segment-specific slope, which may be noisy for short segments. 
+
+The combined variance of the slope of the segment is the sum of the variances: 
+.. math::  
+   var^C_{s} = var^R_{s} + var^P_{s}
+
+
+Integration-specific computations:
+----------------------------------  
+
+The combined slope for a single integration depends on the slope and the
+combined variance of each segment's slope:
+
+.. math::  
+   slope_{i} = \sum_{s}  \frac{ slope_{est}} {var^R_{s} + var^P_{s}}  \,,
+
+\noindent where the sum is over all segments in the integration.
+
+
+The variance of the slope for the integration due to read noise is: 
+
+.. math::  
+   var^R_{i} = \frac{1}{ \sum_{s} \frac{1}{ var^R_{s} }}
+
+The variance of the slope for the integration due to Poisson noise is: 
+
+.. math::  
+   var^P_{i} = \frac{1}{ \sum_{s} \frac{1}{ var^P_{s}}}  
+
+The variance of the slope for the integration due to both Poisson and read
+noise is: 
+
+.. math::  
+   var^C_{i} = \frac{1}{ \sum_{s} \frac{1}{ var^R_{s} + var^P_{s}}}
+
+
+Total dataset computations:
+---------------------------
+
+The overall slope and the variances of the slope depend on sums over all of the
+segments in all integrations. The variance of the slope due to read noise is: 
+
+.. math::  
+   var^R_{o} = \frac{1}{ \sum_{i} \frac{1}{ var^R_{i}}} 
+
+The variance of the slope due to Poisson noise is: 
+
+.. math::  
+   var^P_{o} = \frac{1}{ \sum_{i} \frac{1}{var^P_{i}}}
+
+The overall slope is: 
+
+.. math::    
+    slope_{o} = \frac{ \sum_{i}{ \frac{slope_{est}} {var^C_{i}}}} { \sum_{i}{ \frac{1} {var^C_{i}}}}
 
 
 Upon successful completion of this step, the status keyword S_RAMP will be set
 to COMPLETE.
 
+The MIRI first frame correction step flags all pixels in the first group of data
+in each integration of a MIRI exposure having more than 3 groups, so that those 
+data do not get used in either the jump detection or ramp fitting steps. 
+Similarly, the MIRI last frame correction step flags all pixels in the last 
+group of data in each integration of a MIRI exposure having more than 2 groups, 
+so that those data do not get used in either the jump detection or ramp fitting 
+steps. The ramp fitting will only fit data if there are at least 2 good groups 
+of data, and will log a warning otherwise.
 
-The MIRI last frame correction step flags all pixels in the last group of data
-in each integration of a MIRI exposure, so that those data do not get used in
-either the jump detection or ramp fitting steps.  As a result, the ramp fitting
-step does not include any data from the last group of an integration in its 
-calculations; for MIRI exposures that have original values of 2 and 3 groups 
-per integration, ramp fitting processing proceeds using only the first 1 and 2
-groups, respectively, using the calculations described above.  For MIRI 
-exposures that originally have only 1 group per integration, that group will 
-NOT be flagged by the last frame correction step, so that there will always 
-be at least 1 group of data to work with in subsequent steps.  Hence the 
-special ramp fitting processing that's applied to exposures that have only 1 
-group will be applied to MIRI exposures that originally have 1 or 2 groups.
+
 
 Step Arguments
 ==============
