@@ -217,8 +217,8 @@ def get_rscd_parameters(input_model, rscd_model):
         log.warning('No matching row found in RSCD reference table for')
         log.warning('READPATT=%s, SUBARRAY=%s, Row type=EVEN',
                     readpatt, subarray)
-        raise NoTableEntry('No match for READPATT or SUBARRAY in RSCD ref table')
-        return None, None
+        log.warning('RSCD correction will be skipped, only 1 Group need at least 2')
+        return None
 
     # Load the params from the matching table row
     param = {}
@@ -249,8 +249,8 @@ def get_rscd_parameters(input_model, rscd_model):
         log.warning('No matching row found in RSCD reference table for')
         log.warning('READPATT=%s, SUBARRAY=%s, Row type=ODD',
                     readpatt, subarray)
-        raise NoTableEntry('No match for READPATT or SUBARRAY in RSCD ref table')
-        return None, None
+
+        return None
 
     # Load the params from the matching table row
     param['odd']['tau'] = tau_table[index2]
