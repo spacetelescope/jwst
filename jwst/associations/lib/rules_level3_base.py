@@ -84,7 +84,7 @@ LEVEL2B_EXPTYPES.extend(IMAGE2_NONSCIENCE_EXP_TYPES)
 LEVEL2B_EXPTYPES.extend(SPEC2_SCIENCE_EXP_TYPES)
 
 # Association Candidates that should never make Level3 associations
-INVALID_AC_TYPES = ['BACKGROUND']
+INVALID_AC_TYPES = ['background']
 
 
 class DMS_Level3_Base(DMSBaseMixin, Association):
@@ -431,7 +431,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         -------
         is_valid: bool
         """
-        return self.acid.type not in INVALID_AC_TYPES
+        return self.acid.type.lower() not in INVALID_AC_TYPES
 
 
 class Utility():

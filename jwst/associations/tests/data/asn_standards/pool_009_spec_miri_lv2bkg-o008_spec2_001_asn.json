@@ -2,7 +2,7 @@
     "asn_type": "spec2",
     "asn_rule": "candidate_Asn_Lv2SpecSpecial",
     "version_id": null,
-    "code_version": "0.9.8",
+    "code_version": "0.9.14",
     "degraded_status": "No known degraded exposures in association.",
     "program": "99009",
     "target": "1",
