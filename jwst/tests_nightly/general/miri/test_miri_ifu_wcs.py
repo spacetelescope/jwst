@@ -16,7 +16,7 @@ pytestmark = [
                        reason='requires --bigdata')
 ]
 
-
+@pytest.mark.xfail
 def test_miri_ifu_wcs(_bigdata):
     """
 
