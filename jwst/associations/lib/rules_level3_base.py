@@ -83,6 +83,9 @@ LEVEL2B_EXPTYPES.extend(IMAGE2_SCIENCE_EXP_TYPES)
 LEVEL2B_EXPTYPES.extend(IMAGE2_NONSCIENCE_EXP_TYPES)
 LEVEL2B_EXPTYPES.extend(SPEC2_SCIENCE_EXP_TYPES)
 
+# Association Candidates that should never make Level3 associations
+INVALID_AC_TYPES = ['background']
+
 
 class DMS_Level3_Base(DMSBaseMixin, Association):
     """Basic class for DMS Level3 associations."""
@@ -106,6 +109,10 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             'has_science': {
                 'validated': False,
                 'check': lambda member: member['exptype'] == 'science'
+            },
+            'ok_candidate': {
+                'validated': False,
+                'check': self.ok_candidate
             }
         })
 
@@ -410,6 +417,21 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             )
         result = '\n'.join(result_list)
         return result
+
+    def ok_candidate(self, member=None):
+        """Validation test for acceptable candidates
+
+        Parameters
+        ----------
+        member: dict
+            Member being added causing check.
+            Not used
+
+        Returns
+        -------
+        is_valid: bool
+        """
+        return self.acid.type.lower() not in INVALID_AC_TYPES
 
 
 class Utility():
