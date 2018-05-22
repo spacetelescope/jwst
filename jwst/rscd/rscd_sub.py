@@ -212,12 +212,11 @@ def get_rscd_parameters(input_model, rscd_model):
     index = np.asarray(np.where(np.logical_and(readpatt_table == readpatt,
                        np.logical_and(subarray_table == subarray, rowtype == 'EVEN'))))
 
-    # Check for no match found
+    # Check for no match found for EVEN
     if len(index[0]) == 0:
         log.warning('No matching row found in RSCD reference table for')
         log.warning('READPATT=%s, SUBARRAY=%s, Row type=EVEN',
                     readpatt, subarray)
-        log.warning('RSCD correction will be skipped, only 1 Group need at least 2')
         return None
 
     # Load the params from the matching table row
@@ -240,11 +239,11 @@ def get_rscd_parameters(input_model, rscd_model):
     param['even']['sat_rowterm'] = sat_rowterm_table[index]
     param['even']['sat_scale'] = sat_scale_table[index]
 
-    # Find the matching table row index for odd row parameters:
+    # Find the matching table row index for ODD row
     index2 = np.asarray(np.where(np.logical_and(readpatt_table == readpatt,
                         np.logical_and(subarray_table == subarray, rowtype == 'ODD'))))
 
-    # Check for no match found
+    # Check for no match found ODD row
     if len(index[0]) == 0:
         log.warning('No matching row found in RSCD reference table for')
         log.warning('READPATT=%s, SUBARRAY=%s, Row type=ODD',
@@ -383,5 +382,3 @@ def ols_fit(y,dq):
     return (slope, intercept,ngood)
 
 
-class NoTableEntry(Exception):
-    pass
