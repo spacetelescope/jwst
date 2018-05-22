@@ -278,29 +278,12 @@ def do_NIRSpec_flat_field(output_model,
         interpolated_flats = None
 
     any_updated = False
-    if exposure_type == "NRS_MSASPEC":
-        # This is not the same as output_model.slits; `slits` will be
-        # used a few lines farther down.
-        slits = nirspec.get_open_slits(output_model)
+
     for (k, slit) in enumerate(output_model.slits):
         log.info("Processing slit %s", slit.name)
-        slit_nt = None
+        slit_nt = slit
         flat_2d = np.ones_like(slit.data)       # default values
         flat_dq_2d = np.zeros_like(slit.dq)
-        if exposure_type == "NRS_MSASPEC":
-            # Find this slit in the list of open slits.
-            for j in range(len(slits)):
-                if str(slits[j].name) == slit.name:
-                    slit_nt = slits[j]
-                    break
-            if slit_nt is None:
-                log.error("Couldn't find slit %s in list of open slits; "
-                          "skipping ...", slit.name)
-                populate_interpolated_flats(k, slit,
-                                            interpolated_flats, output_model,
-                                            flat_2d, flat_dq_2d,
-                                            got_wl_attribute=False)
-                continue
 
         # pixels with respect to the original image
         ysize, xsize = slit.data.shape

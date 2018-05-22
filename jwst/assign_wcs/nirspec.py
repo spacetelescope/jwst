@@ -292,7 +292,7 @@ def slitlets_wcs(input_model, reference_files, open_slits_id):
 def get_open_slits(input_model, reference_files=None):
     exp_type = input_model.meta.exposure.type.lower()
     if exp_type == "nrs_msaspec":
-        msa_metadata_file, msa_metadata_id = get_msa_metadata(input_model)
+        msa_metadata_file, msa_metadata_id = get_msa_metadata(input_model, reference_files)
         slits = get_open_msa_slits(msa_metadata_file, msa_metadata_id)
     elif exp_type == "nrs_fixedslit":
         slits = get_open_fixed_slits(input_model)
@@ -338,16 +338,17 @@ def get_open_fixed_slits(input_model):
     return slits
 
 
-def get_msa_metadata(input_model):
+def get_msa_metadata(input_model, reference_files):
     """
     Get the MSA metadata file (MSAMTFL) and the msa metadata id (MSAMETID).
 
     """
-    msa_config = input_model.meta.instrument.msa_metadata_file
-    if msa_config is None:
-        message = "MSA metadata file is not available (keyword MSAMETFL)."
+    try:
+        msa_config = reference_files['msametafile']
+    except KeyError:
+        msa_config = None
+        message = "MSA metadata file is not defined (keyword MSAMETFL)"
         log.critical(message)
-        raise KeyError(message)
     msa_metadata_id = input_model.meta.instrument.msa_metadata_id
     if msa_metadata_id is None:
         message = "MSA metadata ID is not available (keyword MSAMETID)."
