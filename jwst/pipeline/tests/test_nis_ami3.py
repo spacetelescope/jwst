@@ -16,6 +16,7 @@ from .helpers import (
 
 from ...associations import load_asn
 from ...stpipe.step import (Step, remove_suffix)
+from ..collect_pipeline_cfgs import collect_pipeline_cfgs
 
 DATAPATH = abspath(
     path.join('$TEST_BIGDATA', 'niriss', 'test_ami_pipeline')
@@ -28,12 +29,15 @@ def test_run_full(mk_tmp_dirs):
     """Test a full run"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
+    cfg_dir = path.join(tmp_data_path, 'cfgs')
+    collect_pipeline_cfgs(cfg_dir)
+
     asn_path = update_asn_basedir(
         path.join(DATAPATH, 'test_lg1_asn.json'),
         root=DATAPATH
     )
     args = [
-        path.join(SCRIPT_DATA_PATH, 'cfgs', 'calwebb_ami3.cfg'),
+        path.join(cfg_dir, 'calwebb_ami3.cfg'),
         asn_path,
     ]
 
@@ -84,18 +88,22 @@ def test_run_full(mk_tmp_dirs):
     # If there are files left, this is an error
     assert len(output_files) == 0
 
+
 @runslow
 @require_bigdata
 def test_run_single(mk_tmp_dirs):
     """Test a full run"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
+    cfg_dir = path.join(tmp_data_path, 'cfgs')
+    collect_pipeline_cfgs(cfg_dir)
+
     asn_path = update_asn_basedir(
         path.join(DATAPATH, 'test_lg1_single_asn.json'),
         root=DATAPATH
     )
     args = [
-        path.join(SCRIPT_DATA_PATH, 'cfgs', 'calwebb_ami3.cfg'),
+        path.join(cfg_dir, 'calwebb_ami3.cfg'),
         asn_path,
     ]
 
@@ -117,10 +125,6 @@ def test_run_single(mk_tmp_dirs):
 
     # Check Level3 products
     product_name_file = product_name + '_amiavg.fits'
-    assert product_name_file in output_files
-    output_files.remove(product_name_file)
-
-    product_name_file = product_name + '_psf-amiavg.fits'
     assert product_name_file in output_files
     output_files.remove(product_name_file)
 
