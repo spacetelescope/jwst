@@ -327,10 +327,10 @@ There are two general types of input to any stage: references files
 and data files.  The references files, unless explicitly
 overridden, are provided through CRDS.
 
-The data files, such as the exposure FITS files and associations, are
-all presumed to be co-resident: They will all be located within the
-same directory. This input directory is presumed to be the same as
-where the primary input file is located.
+The input data files - the exposure FITS files, association JSON files
+and input catalogs - are presumed to all be in the same directory as
+the primary input file. Sometimes the primary input is an association
+JSON file, and sometimes it is an exposure FITS file.
 
 Output File Names
 =================

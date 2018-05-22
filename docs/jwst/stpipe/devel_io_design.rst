@@ -27,8 +27,8 @@ API Summary
       parent `Step` or `Pipeline`. :ref:`[more]<devel_io_substeps_and_output>`
     - `output_use_model`: True to always base output file names on the
       `DataModel.meta.filename` of the `DataModel` being saved.
-    - `input_dir`: The directory where the input files are located.
-      General defined by the primary input file.
+    - `input_dir`: Generally defined by the location of the primary
+      input file unless otherwise specified. 
 
 Classes, Methods, Functions
 ---------------------------
@@ -129,13 +129,13 @@ arguments to expect are the same number of arguments defined by
 However, to facilitate code development and interactive usage, code
 is expected to accept other object types as well.
 
-For JWST-produced code, nearly all `Step`'s primary argument is
-expected to be either a string containing the file path to a data
-file, or a JWST :class:`~jwst.datamodels.DataModel` object. The method
-:meth:`~jwst.stpipe.step.Step.open_model` handles either type of input,
-returning a `DataModel` from the specified file or a shallow copy of
-the `DataModel` that was originally passed to it. A typical pattern
-for handling input arguments is::
+A `Step`'s primary argument is expected to be either a string containing
+the file path to a data file, or a JWST
+:class:`~jwst.datamodels.DataModel` object. The method
+:meth:`~jwst.stpipe.step.Step.open_model` handles either type of
+input, returning a `DataModel` from the specified file or a shallow
+copy of the `DataModel` that was originally passed to it. A typical
+pattern for handling input arguments is::
 
   class MyStep(jwst.stpipe.step.Step):
 
@@ -152,8 +152,8 @@ file, such as `FITS` file, or a `DataModel` directly.
 issues, such ensuring consistency of input directory handling.
 
 If some other file type is to be opened, the lower level method
-:meth:`~jwst.stpipe.step.Step.make_input_path` can be used to make a
-`Step`-safe file path.
+:meth:`~jwst.stpipe.step.Step.make_input_path` can be used to specify
+the input directory location.
 
 Input and Associations
 ----------------------
