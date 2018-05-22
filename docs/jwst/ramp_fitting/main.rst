@@ -110,7 +110,7 @@ optimal weighting. The variance of the slope of the segment due to read noise is
 .. math::  
    var^R_{s} = \frac{12 \ R^2 }{ (ngroups_{s}^3 - ngroups_{s})(tgroup^2) } \,,
 
-\noindent where :math:`R` is the noise in the difference between 2 frames, 
+where :math:`R` is the noise in the difference between 2 frames, 
 :math:`ngroups_{s}` is the number of groups in the segment, and :math:`tgroup` is the group 
 time in seconds (from the keyword TGROUP).  
 
@@ -120,7 +120,7 @@ The variance of the slope of the segment due to Poisson noise is:
    var^P_{s} = \frac{ slope_{est} }{  tgroup \times gain\ (ngroups_{s} -1)}  \,,
 
 
-\noindent where :math:`gain` is the gain for the pixel (from the GAIN reference file),
+where :math:`gain` is the gain for the pixel (from the GAIN reference file),
 in e/DN. The :math:`slope_{est}` is an overall estimated slope of the pixel,
 calculated by taking the median of the first differences of the groups that are
 unaffected by saturation and cosmic rays, in all integrations. This is a more
@@ -140,7 +140,7 @@ The variance of the slope for the integration due to read noise is:
 .. math::  
    var^R_{i} = \frac{1}{ \sum_{s} \frac{1}{ var^R_{s} }}  \,,
 
-\noindent where the sum is over all segments in the integration.
+where the sum is over all segments in the integration.
 
 The variance of the slope for the integration due to Poisson noise is: 
 
