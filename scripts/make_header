@@ -111,14 +111,15 @@ def additional_metadata(im, defaults, keyword):
                       'meta.subarray.xsize',
                       'meta.subarray.ysize')))
 
-    groups.append(set(('meta.telescope',
+    groups.append(set(('meta.instrument.name',
                       'meta.instrument.band',
                       'meta.instrument.channel',
                       'meta.instrument.module',
                       'meta.instrument.detector',
                       'meta.instrument.filter',
                       'meta.instrument.grating',
-                      'meta.instrument.pupil')))
+                      'meta.instrument.pupil',
+                      'meta.exposure.readpatt')))
 
     groups.append(set(('meta.asn.pool_name',
                       'meta.asn.table_name')))
@@ -157,6 +158,7 @@ def another_instrument(defaults, im, keyword):
     """
     modes = ((('NIRCAM',), 'NIRCAM'),
              (('NIRSPEC',), 'NIRSPEC'),
+             (('NIRSPEC',), 'IRS2'),
              (('MIRI',), 'MIRI'),
              (('FGS',), 'FGS'),
              (('NIRISS',), 'NIRISS'),
@@ -177,7 +179,7 @@ def another_instrument(defaults, im, keyword):
             title = schema.get('title', '').upper()
             for mode in modes:
                 (mode_name, mode_value) = mode
-                if not (instrument in mode_name and
+                if not (instrument in mode_name or
                         exposure_type in mode_name):
                     if title.find(mode_value) >= 0:
                         return True
@@ -211,23 +213,23 @@ def choose_pipeline(defaults):
     Select the pipeline class from the exposure type and level
     """
     mode = {'FGS_ACQ1':1, 'FGS_ACQ2':1, 'FGS_DARK':2,
-            'FGS_FINEGUIDE':1, 'FGS_FOCUS':1, 'FGS_ID-IMAGE':1,
-            'FGS_ID-STACK':1, 'FGS_IMAGE':6, 'FGS_INTFLAT':1,
-            'FGS_SKYFLAT':1, 'FGS_TRACK':1, 'MIR_IMAGE':6,
+            'FGS_FINEGUIDE':1, 'FGS_FOCUS':6, 'FGS_ID-IMAGE':1,
+            'FGS_ID-STACK':1, 'FGS_IMAGE':6, 'FGS_INTFLAT':0,
+            'FGS_SKYFLAT':6, 'FGS_TRACK':1, 'MIR_IMAGE':6,
             'MIR_TACQ':0, 'MIR_LYOT':5, 'MIR_4QPM':5,
             'MIR_LRS-FIXEDSLIT':9, 'MIR_LRS-SLITLESS':4, 'MIR_MRS':9,
             'MIR_DARK':2, 'MIR_FLAT-IMAGE':6, 'MIR_FLATIMAGE':6,
             'MIR_FLAT-MRS':6, 'MIR_FLATMRS':6, 'MIR_CORONCAL':7,
-            'NIS_AMI':3, 'NIS_DARK':2, 'NIS_FOCUS':0, 'NIS_IMAGE':6,
-            'NIS_LAMP':0, 'NIS_SOSS':4, 'NIS_TACQ':0,
-            'NIS_TACONFIRM':0, 'NIS_WFSS':9, 'N/A':6, 'ANY':6,
-            'NRC_IMAGE':6, 'NRC_GRISM':9, 'NRC_TACQ':0,
-            'NRC_CORON':5, 'NRC_FOCUS':0, 'NRC_DARK':2, 'NRC_FLAT':6,
-            'NRC_LED':0, 'NRC_TACONFIRM':0, 'NRC_TSIMAGE':4,
-            'NRC_TSGRISM':4, 'NRS_AUTOFLAT':0, 'NRS_AUTOWAVE':0,
-            'NRS_BOTA':0, 'NRS_BRIGHTOBJ':4, 'NRS_CONFIRM':0,
-            'NRS_DARK':2, 'NRS_FIXEDSLIT':9, 'NRS_FOCUS':0,
-            'NRS_IFU':9, 'NRS_IMAGE':6, 'NRS_LAMP':0,
+            'NIS_AMI':3, 'NIS_DARK':2, 'NIS_FOCUS':6, 'NIS_IMAGE':6,
+            'NIS_LAMP':0, 'NIS_SOSS':4, 'NIS_TACQ':6,
+            'NIS_TACONFIRM':6, 'NIS_WFSS':9, 'N/A':6, 'ANY':6,
+            'NRC_IMAGE':6, 'NRC_GRISM':9, 'NRC_TACQ':6,
+            'NRC_CORON':5, 'NRC_FOCUS':6, 'NRC_DARK':2, 'NRC_FLAT':6,
+            'NRC_LED':0, 'NRC_TACONFIRM':6, 'NRC_TSIMAGE':4,
+            'NRC_WFSS':9, 'NRC_TSGRISM':4, 'NRS_AUTOFLAT':0,
+            'NRS_AUTOWAVE':0, 'NRS_BOTA':0, 'NRS_BRIGHTOBJ':4,
+            'NRS_CONFIRM':0, 'NRS_DARK':2, 'NRS_FIXEDSLIT':9,
+            'NRS_FOCUS':0, 'NRS_IFU':9, 'NRS_IMAGE':6, 'NRS_LAMP':0,
             'NRS_MIMF':0, 'NRS_MSASPEC':9, 'NRS_TACONFIRM':0,
             'NRS_TACQ':0, 'NRS_TASLIT':9}
 
@@ -302,7 +304,7 @@ def get_class(instrument, mode):
     mode = mode.upper()
     exposure_type = build_exposure_type(instrument, mode)
 
-    if exposure_type.find('IFU') >= 0:
+    if exposure_type in ('NRS_IFU', 'MIR_MRS'):
         cls = IFUImageModel
     else:
         cls = ImageModel
@@ -511,11 +513,11 @@ def set_pipeline_defaults(im, defaults):
                      'meta.subarray.name': 'FULL',
                      'meta.instrument.channel': '34',
                      'meta.instrument.band': 'SHORT',
-                     'meta.instrument.detector': 'MIRIFULONG',
+                     'meta.instrument.detector': 'MIRIMAGE',
                      'meta.instrument.filter': 'N/A',
                      }
 
-    fgs_defaults = {'meta.subarray.xsize': 2304,
+    fgs_defaults = {'meta.subarray.xsize': 2048,
                     'meta.subarray.ysize': 2048,
                     'meta.subarray.fastaxis': 2,
                     'meta.subarray.slowaxis': -1,
@@ -540,9 +542,30 @@ def set_pipeline_defaults(im, defaults):
                            'ANY': any_defaults
                            }
 
+    mir_slitless_defaults = {'meta.subarray.name': 'SLITLESSPRISM',
+                             'meta.subarray.xstart': 1,
+                             'meta.subarray.ystart': 321,
+                             'meta.subarray.xsize': 68,
+                             'meta.subarray.ysize': 1024
+                            }
+
+    mir_fixedslit_defaults = {'meta.instrument.detector': 'MIRIFULONG'}
+
+    mir_mrs_defaults = {'meta.instrument.detector': 'MIRIFULONG'}
+
+    exposure_type_defaults = {'MIR_LRS-SLITLESS': mir_slitless_defaults,
+                              'MIR_LRS-FIXEDSLIT': mir_fixedslit_defaults,
+                              'MIR_MRS': mir_mrs_defaults
+                             }
+
+
     defaults.update(generic_defaults);
     instrument = defaults['meta.instrument.name']
     defaults.update(instrument_defaults[instrument])
+    exposure_type = defaults['meta.exposure.type']
+    exposure_deltas = exposure_type_defaults.get(exposure_type)
+    if exposure_deltas is not None:
+        defaults.update(exposure_deltas)
 
     shape = im.shape
     if shape[0] != 0:
@@ -601,9 +624,9 @@ def set_value(im, defaults, keyword):
         elif 'default' in schema:
             val = schema['default']
         elif 'enum' in schema:
-            for keyword in ('ANY', 'N/A', 'NONE'):
+            for choice in ('N/A', 'NONE', 'ANY'):
                 try:
-                    i = schema['enum'].index(keyword)
+                    i = schema['enum'].index(choice)
                     break
                 except ValueError:
                     i = 0
