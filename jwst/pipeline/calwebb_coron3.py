@@ -1,5 +1,6 @@
 """Interface for running CALCORON3 pipeline."""
 #!/usr/bin/env python
+import os.path as op
 
 from ..stpipe import Pipeline
 from ..associations import load_asn
@@ -49,8 +50,7 @@ class Coron3Pipeline(Pipeline):
         self.log.info('Starting calwebb_coron3 ...')
 
         # Load the input association table
-        with open(input, 'r') as input_fh:
-            asn = load_asn(input_fh)
+        asn = self.load_as_level3_asn(input)
         acid = asn.get('asn_id', '')
 
         # We assume there's one final product defined by the association
@@ -165,7 +165,7 @@ class Coron3Pipeline(Pipeline):
             blendmeta.blendmodels(result, inputs=targ_files)
 
         result.meta.asn.pool_name = asn['asn_pool']
-        result.meta.asn.table_name = input
+        result.meta.asn.table_name = op.basename(input)
 
         # Save the final result
         self.save_model(result, suffix=self.suffix)
