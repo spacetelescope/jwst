@@ -80,6 +80,15 @@ allOf:
       default: ""
       fits_keyword: SHUTSTA
       fits_hdu: SCI
+    quadrant:
+      title: MSA quadrant for slit
+      type: integer
+    xcen:
+      title: Center of shutter in MSA coordinates (X dir)
+      type: integer
+    ycen:
+      title: Center of shutter in MSA coordinates (Y dir)
+      type: integer
     data:
       title: The science data
       fits_hdu: SCI

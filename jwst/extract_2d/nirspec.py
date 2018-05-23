@@ -121,6 +121,9 @@ def set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi):
         output_model.source_xpos = float(slit.source_xpos)
         output_model.source_ypos = float(slit.source_ypos)
         output_model.slitlet_id = int(slit.name)
+        output_model.quadrant = int(slit.quadrant)
+        output_model.xcen = int(slit.xcen)
+        output_model.ycen = int(slit.ycen)
         # for pathloss correction
         output_model.shutter_state = slit.shutter_state
     log.info('set slit_attributes completed')
