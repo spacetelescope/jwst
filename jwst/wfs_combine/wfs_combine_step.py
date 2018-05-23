@@ -18,7 +18,7 @@ class WfsCombineStep(Step):
 
     def process(self, input_table):
 
-        asn_table = json.load(open(input_table, 'r'))
+        asn_table = self.load_as_level2_asn(input_table)
         num_sets = len(asn_table['products'])
 
         self.log.info('Using input table: %s', input_table)

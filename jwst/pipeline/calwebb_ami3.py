@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import logging
+import os.path as op
 
 from .. import datamodels
 from ..associations.load_as_asn import LoadAsAssociation
@@ -87,7 +88,7 @@ class Ami3Pipeline(Pipeline):
 
             # Save the LG analysis results to a file
             result.meta.asn.pool_name = asn['asn_pool']
-            result.meta.asn.table_name = asn.filename
+            result.meta.asn.table_name = op.basename(asn.filename)
             output_file = self.save_model(
                 result, output_file=input_file, suffix='ami', acid=acid,
             )
@@ -108,7 +109,7 @@ class Ami3Pipeline(Pipeline):
             # Save the results to a file, if requested
             if self.save_averages:
                 psf_avg.meta.asn.pool_name = asn['asn_pool']
-                psf_avg.meta.asn.table_name = asn.filename
+                psf_avg.meta.asn.table_name = op.basename(asn.filename)
 
                 # Perform blending of metadata for all inputs to this
                 # output file
@@ -143,7 +144,7 @@ class Ami3Pipeline(Pipeline):
             # Save the results to a file, if requested
             if self.save_averages:
                 targ_avg.meta.asn.pool_name = asn['asn_pool']
-                targ_avg.meta.asn.table_name = asn.filename
+                targ_avg.meta.asn.table_name = op.basename(asn.filename)
 
                 # Perform blending of metadata for all inputs to this
                 # output file
@@ -169,7 +170,7 @@ class Ami3Pipeline(Pipeline):
 
             # Save the result
             result.meta.asn.pool_name = asn['asn_pool']
-            result.meta.asn.table_name = asn.filename
+            result.meta.asn.table_name = op.basename(asn.filename)
 
             # Perform blending of metadata for all inputs to this output file
             self.log.info(
