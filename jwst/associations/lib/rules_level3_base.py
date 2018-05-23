@@ -32,6 +32,7 @@ from jwst.associations.lib.dms_base import (
     IMAGE2_SCIENCE_EXP_TYPES,
     IMAGE2_NONSCIENCE_EXP_TYPES,
     SPEC2_SCIENCE_EXP_TYPES,
+    TSO_EXP_TYPES,
 )
 from jwst.associations.lib.format_template import FormatTemplate
 
@@ -67,15 +68,6 @@ _DMS_POOLNAME_REGEX = 'jw(\d{5})_(\d{8}[Tt]\d{6})_pool'
 
 # Product name regex's
 _REGEX_ACID_VALUE = '(o\d{3}|(c|a)\d{4})'
-
-# Exposures that are always TSO
-TSO_EXP_TYPES = (
-    'mir_lrs-slitless',
-    'nis_soss',
-    'nrc_tsimage',
-    'nrc_tsgrism',
-    'nrs_brightobj'
-)
 
 # Exposures that should have received Level2b processing
 LEVEL2B_EXPTYPES = []
