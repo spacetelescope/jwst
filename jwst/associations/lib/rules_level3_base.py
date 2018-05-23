@@ -672,6 +672,7 @@ class Constraint_Spectral(DMSAttrConstraint):
                 '|nrs_autowave'
                 '|nrs_fixedslit'
                 '|nrc_grism'
+                '|nrc_wfss'
                 '|nrs_msaspec'
             ),
             force_unique=False
