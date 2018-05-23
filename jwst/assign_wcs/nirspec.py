@@ -345,10 +345,14 @@ def get_msa_metadata(input_model, reference_files):
     """
     try:
         msa_config = reference_files['msametafile']
-    except KeyError:
-        msa_config = None
-        message = "MSA metadata file is not defined (keyword MSAMETFL)"
-        log.critical(message)
+    except KeyError as error:
+        log.info('MSA metadata file not in reference files dict')
+        log.info('Getting MSA metadata file from MSAMETFL keyword')
+        msa_config = input_model.meta.instrument.msa_metadata_file
+        if msa_config is None:
+            message = "MSA metadata file is not available (keyword MSAMETFL)."
+            log.critical(message)
+            raise KeyError(message)
     msa_metadata_id = input_model.meta.instrument.msa_metadata_id
     if msa_metadata_id is None:
         message = "MSA metadata ID is not available (keyword MSAMETID)."
