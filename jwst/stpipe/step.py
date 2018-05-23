@@ -9,6 +9,7 @@ from os.path import (
     dirname,
     expanduser,
     expandvars,
+    isfile,
     join,
     split,
     splitext,
@@ -27,8 +28,11 @@ from . import log
 from .suffix import remove_suffix
 from . import utilities
 from .. import __version_commit__, __version__
+from ..associations.load_as_asn import (LoadAsAssociation, LoadAsLevel2Asn)
 from ..associations.lib.format_template import FormatTemplate
+from ..associations.lib.update_path import update_key_value
 from ..datamodels import (DataModel, ModelContainer)
+from ..datamodels import open as dm_open
 
 
 class Step():
@@ -47,6 +51,7 @@ class Step():
     skip               = boolean(default=False)      # Skip this step
     suffix             = string(default=None)        # Default suffix for output files
     search_output_file = boolean(default=True)       # Use outputfile define in parent step
+    input_dir          = string(default=None)        # Input directory
     """
 
     # Reference types for both command line override
@@ -352,6 +357,8 @@ class Step():
         self.log.info(
             'Step {0} running with args {1}.'.format(
                 self.name, args))
+
+        self._set_input_dir(args)
 
         try:
             # prefetch truly occurs at the Pipeline (or subclass) level.
@@ -887,6 +894,113 @@ class Step():
                     'Reason:\n{}'.format(item, exception)
                 )
         gc.collect()
+
+    def open_model(self, obj):
+        """Open a datamodel
+
+        Primarily a wrapper around `DataModel.open` to
+        handle `Step` peculiarities
+
+        Parameters
+        ----------
+        obj: object
+            The object to open
+
+        Returns
+        -------
+        datamodel: DataModel
+            Object opened as a datamodel
+        """
+        return dm_open(self.make_input_path(obj))
+
+    def make_input_path(self, file_path):
+        """Create an input path for a given file path
+
+        If `file_path` has no directory path, use `self.input_dir`
+        as the directory path.
+
+        Parameters
+        ----------
+        file_path: str or obj
+            The supplied file path to check and modify.
+            If anything other than `str`, the object
+            is simply passed back.
+
+        Returns
+        -------
+        full_path: str or obj
+            File path using `input_dir` if the input
+            had no directory path.
+        """
+        full_path = file_path
+        if isinstance(file_path, str):
+            original_path, file_name = split(file_path)
+            if not len(original_path):
+                full_path = join(self.input_dir, file_name)
+
+        return full_path
+
+    def load_as_level2_asn(self, obj):
+        """Load object as an association
+
+        Loads the specified object into a Level2 association.
+        If necessary, prepend `Step.input_dir` to all members.
+
+        Parameters
+        ----------
+        obj: object
+            Object to load as a Level2 association
+
+        Returns
+        -------
+        association: jwst.associations.lib.rules_level2_base.DMSLevel2bBase
+            Association
+        """
+        asn = LoadAsLevel2Asn.load(obj, basename=self.output_file)
+        update_key_value(asn, 'expname', (), mod_func=self.make_input_path)
+        return asn
+
+    def load_as_level3_asn(self, obj):
+        """Load object as an association
+
+        Loads the specified object into a Level3 association.
+        If necessary, prepend `Step.input_dir` to all members.
+
+        Parameters
+        ----------
+        obj: object
+            Object to load as a Level3 association
+
+        Returns
+        -------
+        association: jwst.associations.lib.rules_level3_base.DMS_Level3_Base
+            Association
+        """
+        asn = LoadAsAssociation.load(obj)
+        update_key_value(asn, 'expname', (), mod_func=self.make_input_path)
+        return asn
+
+    def _set_input_dir(self, args):
+        """Set the input directory
+
+        If sufficient information is at hand, set a value
+        for the attribute `input_dir`.
+
+        Parameters
+        ----------
+        args: list
+            The arguments passed.
+
+        """
+        if self.input_dir is None:
+            self.input_dir = self.search_attr('input_dir', default='')
+            if len(args):
+                try:
+                    if isfile(args[0]):
+                        self.input_dir = split(args[0])[0]
+                except Exception:
+                    # Not a file-checkable object. Ignore.
+                    pass
 
 
 # #########

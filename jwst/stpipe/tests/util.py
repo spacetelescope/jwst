@@ -34,6 +34,7 @@ Contains a number of testing utilities.
 import contextlib
 import logging
 import os
+import pytest
 import re
 import tempfile
 
@@ -107,9 +108,34 @@ def match_log(log, expected):
                     fd.write('    {0!r},\n'.format(a))
                 fd.write(']\n')
 
-            raise ValueError(
-                "Logs do not match.\nExpected:\n   '{0}'\nGot:\n   '{1}'\n".format(
-                b, msg))
+            raise ValueError((
+                "Logs do not match."
+                "\nExpected:"
+                "\n   '{0}'"
+                "\nGot:"
+                "\n   '{1}'\n".format(
+                    b, msg
+                )))
+
+
+def t_path(partial_path):
+    """Construction the full path for test files"""
+    test_dir = os.path.dirname(__file__)
+    return os.path.join(test_dir, partial_path)
+
+
+@pytest.fixture
+def mk_tmp_dirs():
+    tmp_current_path = tempfile.mkdtemp()
+    tmp_data_path = tempfile.mkdtemp()
+    tmp_config_path = tempfile.mkdtemp()
+
+    old_path = os.getcwd()
+    try:
+        os.chdir(tmp_current_path)
+        yield (tmp_current_path, tmp_data_path, tmp_config_path)
+    finally:
+        os.chdir(old_path)
 
 
 @contextlib.contextmanager

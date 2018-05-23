@@ -3,29 +3,13 @@ from glob import glob
 import os
 from os import path
 import shutil
-import tempfile
-
-import pytest
 
 from ..step import Step
+from .util import mk_tmp_dirs
 
 data_fn = 'flat.fits'
 data_fn_path = path.join(path.dirname(__file__), 'data', data_fn)
 data_name, data_ext = path.splitext(data_fn)
-
-
-@pytest.fixture
-def mk_tmp_dirs():
-    tmp_current_path = tempfile.mkdtemp()
-    tmp_data_path = tempfile.mkdtemp()
-    tmp_config_path = tempfile.mkdtemp()
-
-    old_path = os.getcwd()
-    try:
-        os.chdir(tmp_current_path)
-        yield (tmp_current_path, tmp_data_path, tmp_config_path)
-    finally:
-        os.chdir(old_path)
 
 
 def test_make_output_path():

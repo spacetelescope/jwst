@@ -110,8 +110,8 @@ optimal weighting. The variance of the slope of the segment due to read noise is
 .. math::  
    var^R_{s} = \frac{12 \ R^2 }{ (ngroups_{s}^3 - ngroups_{s})(tgroup^2) } \,,
 
-\noindent where $R$ is the noise in the difference between 2 frames, 
-$ngroups_{s}$ is the number of groups in the segment, and $tgroup$ is the group 
+where :math:`R` is the noise in the difference between 2 frames, 
+:math:`ngroups_{s}` is the number of groups in the segment, and :math:`tgroup` is the group 
 time in seconds (from the keyword TGROUP).  
 
 The variance of the slope of the segment due to Poisson noise is: 
@@ -120,52 +120,50 @@ The variance of the slope of the segment due to Poisson noise is:
    var^P_{s} = \frac{ slope_{est} }{  tgroup \times gain\ (ngroups_{s} -1)}  \,,
 
 
-\noindent where $gain$ is the gain for the pixel (from the GAIN reference file),
-in e/DN. The $slope_{est}$ is an overall estimated slope of the pixel,
+where :math:`gain` is the gain for the pixel (from the GAIN reference file),
+in e/DN. The :math:`slope_{est}` is an overall estimated slope of the pixel,
 calculated by taking the median of the first differences of the groups that are
 unaffected by saturation and cosmic rays, in all integrations. This is a more
 robust estimate of the slope than the segment-specific slope, which may be noisy
 for short segments. 
 
 The combined variance of the slope of the segment is the sum of the variances: 
+
 .. math::  
    var^C_{s} = var^R_{s} + var^P_{s}
 
 
 Integration-specific computations:
 ----------------------------------  
-
-The combined slope for a single integration depends on the slope and the
-combined variance of each segment's slope:
+The variance of the slope for the integration due to read noise is:
 
 .. math::  
-   slope_{i} = \sum_{s}  \frac{ slope_{est}} {var^R_{s} + var^P_{s}}  \,,
+   var^R_{i} = \frac{1}{ \sum_{s} \frac{1}{ var^R_{s} }}  \,,
 
-\noindent where the sum is over all segments in the integration.
-
-
-The variance of the slope for the integration due to read noise is: 
-
-.. math::  
-   var^R_{i} = \frac{1}{ \sum_{s} \frac{1}{ var^R_{s} }}
+where the sum is over all segments in the integration.
 
 The variance of the slope for the integration due to Poisson noise is: 
 
 .. math::  
    var^P_{i} = \frac{1}{ \sum_{s} \frac{1}{ var^P_{s}}}  
 
-The variance of the slope for the integration due to both Poisson and read
-noise is: 
+The combined variance of the slope for the integration is due to both Poisson and read
+noise: 
 
 .. math::  
    var^C_{i} = \frac{1}{ \sum_{s} \frac{1}{ var^R_{s} + var^P_{s}}}
+
+The slope for the integration depends on the slope and the combined variance of each segment's slope:
+
+.. math::  
+   slope_{i} = \frac{ \sum_{s}{ \frac{slope_{s}} {var^C_{s}}}} { \sum_{s}{ \frac{1} {var^C_{s}}}}
+
 
 
 Exposure-level computations:
 ----------------------------
 
-The overall slope and the variances of the slope depend on sums over all of the
-segments in all integrations. The variance of the slope due to read noise is: 
+The variance of the slope due to read noise depends on a sum over all integrations: 
 
 .. math::  
    var^R_{o} = \frac{1}{ \sum_{i} \frac{1}{ var^R_{i}}} 
@@ -173,20 +171,23 @@ segments in all integrations. The variance of the slope due to read noise is:
 The variance of the slope due to Poisson noise is: 
 
 .. math::  
-   var^P_{o} = \frac{1}{ \sum_{i} \frac{1}{var^P_{i}}}
+   var^P_{o} = \frac{1}{ \sum_{i} \frac{1}{ var^P_{i}}}
 
 
 The combined variance of the slope is the sum of the variances: 
+
 .. math::  
    var^C_{o} = var^R_{o} + var^P_{o}
 
 The square root of the combined variance is what gets stored in the ERR array of
 the primary output.
 
-The overall slope is: 
+
+
+The overall slope depends on the slope and the combined variance of the slope of each integration's segments, so is a sum over integrations and segments:
 
 .. math::    
-    slope_{o} = \frac{ \sum_{i}{ \frac{slope_{est}} {var^C_{i}}}} { \sum_{i}{ \frac{1} {var^C_{i}}}}
+    slope_{o} = \frac{ \sum_{i,s}{ \frac{slope_{i,s}} {var^C_{i,s}}}} { \sum_{i,s}{ \frac{1} {var^C_{i,s}}}}
 
 
 Upon successful completion of this step, the status keyword S_RAMP will be set

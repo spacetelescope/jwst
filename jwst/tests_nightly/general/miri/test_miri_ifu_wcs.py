@@ -3,11 +3,9 @@ import pytest
 
 import numpy as  np
 from numpy.testing import utils
-from asdf import AsdfFile
-from astropy.io import fits
 
 from jwst.assign_wcs import AssignWcsStep
-from jwst.datamodels import ImageModel, fits_support
+from jwst.datamodels import ImageModel, RegionsModel
 from jwst.stpipe import crds_client
 
 pytestmark = [
@@ -37,12 +35,15 @@ def test_miri_ifu_wcs(_bigdata):
     im = ImageModel('miri_ifu_wcs_output.fits')
     imref = ImageModel(ref_file)
 
-    # Get the valid region
-    region = AsdfFile.open(crds_client.get_reference_file(im, 'regions'))
-    y, x = np.nonzero(region.tree['regions'])
-
+    # Get the region file
+    region = RegionsModel(crds_client.get_reference_file(im, 'regions'))
+    
+    # inputs
+    shape = region.regions.shape
+    y, x = np.mgrid[ : shape[0], : shape[1]]
+    
     # Get indices where pixels == 0. These should be NaNs in the output.
-    ind_zeros = region.tree['regions'] == 0
+    ind_zeros = region.regions == 0
 
     ra, dec, lam = im.meta.wcs(x, y)
     raref, decref, lamref = imref.meta.wcs(x, y)
@@ -51,15 +52,13 @@ def test_miri_ifu_wcs(_bigdata):
     utils.assert_allclose(lam, lamref, equal_nan=True)
 
     # Test that we got NaNs at ind_zero
-    # DISABLED - What is this `all()` business?
-    #assert(np.isnan(ra).nonzero()[0] == ind0[0])all()
-    #assert(np.isnan(ra).nonzero()[1] == ind0[1])all()
+    assert(np.isnan(ra).nonzero()[0] == ind_zeros.nonzero()[0]).all()
+    assert(np.isnan(ra).nonzero()[1] == ind_zeros.nonzero()[1]).all()
 
     # Test the inverse transform
     x1, y1 = im.meta.wcs.backward_transform(ra, dec, lam)
-    # DISABLED - What is this `all()` business?
-    #assert(np.isnan(x1).nonzero()[0] == ind0[0])all()
-    #assert (np.isnan(x1).nonzero()[1] == ind0[1])all()
+    assert(np.isnan(x1).nonzero()[0] == ind_zeros.nonzero()[0]).all()
+    assert (np.isnan(x1).nonzero()[1] == ind_zeros.nonzero()[1]).all()
 
     # Also run a smoke test with values outside the region.
     dec[100][200] = -80
@@ -69,4 +68,3 @@ def test_miri_ifu_wcs(_bigdata):
     x2, y2 = im.meta.wcs.backward_transform(ra, dec, lam)
     assert np.isnan(x2[100][200])
     assert np.isnan(x2[100][200])
-

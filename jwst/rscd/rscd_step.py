@@ -44,7 +44,7 @@ class RSCD_Step(Step):
 
                 # Do the rscd correction
                 result = rscd_sub.do_correction(input_model, rscd_model)
-
+                
                 # Close the reference file
                 rscd_model.close()
 
