@@ -102,6 +102,7 @@ IMAGE2_NONSCIENCE_EXP_TYPES = [
 SPEC2_SCIENCE_EXP_TYPES = [
     'nrc_grism',
     'nrc_tsgrism',
+    'nrc_wfss',
     'mir_lrs-fixedslit',
     'mir_lrs-slitless',
     'mir_mrs',
