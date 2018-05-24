@@ -42,6 +42,11 @@ class SimpleConstraintABC(abc.ABC):
 
     **kwargs: key:value pairs
         Other initialization parameters
+
+    Attributes
+    ----------
+    matched: bool
+        Last call to `check_and_set`
     """
 
     # Attributes to show in the string representation.
@@ -52,6 +57,7 @@ class SimpleConstraintABC(abc.ABC):
         # Defined attributes
         self.value = value
         self.name = name
+        self.matched = False
 
         if init is not None:
             self.__dict__.update(init)
@@ -69,7 +75,8 @@ class SimpleConstraintABC(abc.ABC):
             - success: True if check is successful.
             - List of `ProcessList`.
         """
-        return True, []
+        self.matched = True
+        return self.matched, []
 
     def copy(self):
         """Copy ourselves"""
@@ -241,7 +248,8 @@ class SimpleConstraint(SimpleConstraintABC):
                 rules=[]
             ))
 
-        return satisfied, reprocess
+        self.matched = satisfied
+        return self.matched, reprocess
 
     def eq(self, value1, value2):
         """True if constraint.value and item are equal."""
@@ -275,9 +283,6 @@ class AttrConstraint(SimpleConstraintABC):
         `value` will be set to the first source.
         Otherwise, this will be left as None.
 
-    found_values: set(str[,...])
-        Set of actual found values for this condition.
-
     invalid_values: [str[,...]]
         List of values that are invalid in an item.
         Will cause a non-match.
@@ -297,6 +302,15 @@ class AttrConstraint(SimpleConstraintABC):
     required: bool
         One of the sources must exist. Otherwise,
         return as a matched constraint.
+
+    Attributes
+    ----------
+    found_values: set(str[,...])
+        Set of actual found values for this condition.
+
+    matched: bool
+        Last result of `check_and_set`
+
     """
 
     # Attributes to show in the string representation.
@@ -335,6 +349,7 @@ class AttrConstraint(SimpleConstraintABC):
 
         # Haven't actually matched anything yet.
         self.found_values = set()
+        self.matched = False
 
     def check_and_set(self, item):
         """Check and set constraints based on item
@@ -363,7 +378,8 @@ class AttrConstraint(SimpleConstraintABC):
                         only_on_match=self.only_on_match,
                     )
                 )
-            return (True, reprocess)
+            self.matched = True
+            return (self.matched, reprocess)
 
         # Get the condition information.
         try:
@@ -374,12 +390,15 @@ class AttrConstraint(SimpleConstraintABC):
             )
         except KeyError:
             if self.required and not self.force_undefined:
-                return False, reprocess
+                self.matched = False
+                return self.matched, reprocess
             else:
-                return True, reprocess
+                self.matched = True
+                return self.matched, reprocess
         else:
             if self.force_undefined:
-                return False, reprocess
+                self.matched = False
+                return self.matched, reprocess
 
         # If the value is a list, build the reprocess list
         if self.evaluate:
@@ -393,7 +412,8 @@ class AttrConstraint(SimpleConstraintABC):
                 reprocess.append(ProcessList(
                     items=reprocess_items,
                 ))
-                return False, reprocess
+                self.matched = False
+                return self.matched, reprocess
             value = str(evaled)
 
         # Check condition
@@ -405,7 +425,8 @@ class AttrConstraint(SimpleConstraintABC):
             if not meets_conditions(
                     value, match_value
             ):
-                return False, reprocess
+                self.matched = False
+                return self.matched, reprocess
 
         # At this point, the constraint has passed.
         # Fix the conditions.
@@ -417,7 +438,8 @@ class AttrConstraint(SimpleConstraintABC):
             self.force_unique = False
 
         # That's all folks
-        return True, reprocess
+        self.matched = True
+        return self.matched, reprocess
 
 
 class Constraint:
@@ -452,6 +474,9 @@ class Constraint:
     constraints: [Constraint[,...]]
         `Constraint`s or `SimpleConstaint`s that
         make this constraint.
+
+    matched: bool
+        Result of the last `check_and_set`
 
     reduce: function
         A reduction function with signature `x(iterable)`
@@ -503,6 +528,7 @@ class Constraint:
             )
 
         # Give some defaults real meaning.
+        self.matched = False
         if self.reduce is None:
             self.reduce = self.all
 
@@ -517,9 +543,9 @@ class Constraint:
             return False, []
 
         # Do we have positive?
-        match, reprocess = self.reduce(item, self.constraints)
+        self.matched, reprocess = self.reduce(item, self.constraints)
 
-        return match, list(chain(*reprocess))
+        return self.matched, list(chain(*reprocess))
 
     def copy(self):
         """Copy ourselves"""
