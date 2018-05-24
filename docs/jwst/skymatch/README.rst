@@ -14,8 +14,10 @@ cf. :doc:`mrs_imatch step <../mrs_imatch/README>`) of a set of input images
 and computes the signal offsets for each image that will minimize
 the residuals across the entire set in the least squares sence. This comparison
 is performed directly on input images without resampling them onto a common
-grid. By default the sky value computed for each image is recorded, but
-not actually subtracted from the images.
+grid. The overlap regions are computed directly on the sky (celestial sphere)
+for each pair of input images. By default the sky value computed for each image
+is recorded, but not actually subtracted from the images. Also note that the
+meaning of "sky background" is depends on the chosen sky computation method.
 
 
 Assumptions
@@ -33,8 +35,8 @@ value computations.
 
 First method, called ``'localmin'`` essentially is an enhanced version of the
 original sky subtraction method used in older
-`astrodrizzle <http://stsdas.stsci.edu/\
-stsci_python_sphinxdocs_2.13/drizzlepac/astrodrizzle.html>`_\ versions. This
+`astrodrizzle <https://drizzlepac.readthedocs.io/en/latest/astrodrizzle.html>`_
+versions. This
 method simply computes the mean/median/mode/etc. value of the "sky" separately
 in each input image. This method was upgraded to be able to use
 DQ flags and user supplied masks to remove "bad" pixels from being
@@ -53,7 +55,7 @@ two other methods have been introduced: ``'globalmin'`` and
   corrections to be applied to input images such that the mismatch in computed
   background values between *all* pairs of images is minimized in the least
   squares sence. For each pair of images background mismatch is computed
-  *only* in the regions in which the two images intersect.
+  *only* in the regions in which the two images overlap on the sky.
 
   This makes ``'match'`` sky computation algorithm particularly useful
   for "equalizing" sky values in large mosaics in which one may have
@@ -65,6 +67,21 @@ two other methods have been introduced: ``'globalmin'`` and
   algorithm to find a baseline sky value common to all input images
   and the ``'match'`` algorithm to "equalize" sky values among images.
 
+In methods that find sky background levels in each image (``'localmin'``) or
+a single level for all images (``'globalmin'``), usually statistics is
+computed using sigma-clipping. If input images contain vast swaths of empty
+sky, then the sigma-clipping algorithm should be able to automatically
+exclude (clip) contributions from bright compact sources.
+In this case the measured "sky background" is the
+measured signal level from the "empty sky". On the other hand, the
+``'match'`` method compares *total* signal levels integrated over those regions
+in the images that correspond to common ("overlap") regions on the celestial
+sphere for both images being compared (comparison is pair-wise).
+Often, this method is used when there are no large
+"empty sky" regions in the images such as when a large nebula occupies most
+part of the view. This method cannot measure "true background" but
+rather additive corrections that need to be applied to input images so that
+total signal from the same part of the sky is equal in all images.
 
 Step Arguments
 --------------
@@ -83,11 +100,11 @@ The ``skymatch`` step has the following optional arguments:
   highest sky value (``match_down`` = `False`). (Default = `True`)
 
   .. note::
-     This setting applies *only* when `skymethod` parameter is
-     either `'match'` or `'global+match'`.
+    This setting applies *only* when ``skymethod`` parameter is
+    either ``'match'`` or ``'global+match'``.
 
 * ``subtract``: A boolean indicating whether computed sky background values
-    be subtracted from image data. (Default = `False`)
+  be subtracted from image data. (Default = `False`)
 
 **Image's bounding polygon parameters:**
 
