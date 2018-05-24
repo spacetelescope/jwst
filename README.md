@@ -19,7 +19,7 @@ and the [astroconda](https://astroconda.readthedocs.io) channel to install the
 software and using a conda environment for the installation:
 
     conda create -n jwst --override-channels -c http://ssb.stsci.edu/astroconda-dev -c defaults python=3.6 jwst
-    conda activate jwst
+    source activate jwst
 
 This will install the latest released version of the package, and within the
 `jwst` environment, the pipeline can be run from the command line or imported
@@ -35,7 +35,7 @@ environment, using the [astroconda](https://astroconda.readthedocs.io) channel
 to install the dependencies, and then installing from the github repository:
 
     conda create -n jwst_dev --only-deps --override-channels -c http://ssb.stsci.edu/astroconda-dev -c defaults python=3.6 jwst
-    conda activate jwst_dev
+    source activate jwst_dev
     git clone https://github.com/STScI-JWST/jwst.git
     cd jwst
     python setup.py develop
