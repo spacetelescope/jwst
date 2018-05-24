@@ -102,7 +102,6 @@ def do_correction(input_model, rscd_model):
     tau_odd = np.asscalar(param['odd']['tau'])
     # loop over all integrations except the first
     for i in range(1, sci_nints):
-
         sat,is_ref,dn_last23,dn_lastfit = get_DNaccumulated_last_int(input_model, i, sci_ngroups)
         lastframe_even = dn_last23[1::2,:]
         lastframe_odd = dn_last23[0::2,:]
@@ -116,7 +115,7 @@ def do_correction(input_model, rscd_model):
 
         counts2_even = lastframe_even - crossopt_even
         counts2_odd =  lastframe_odd - crossopt_odd
-        
+
         counts2_even[np.where(counts2_even< 0)] = 0.0
         counts2_odd[ np.where(counts2_odd< 0)] = 0.0
 
@@ -131,7 +130,6 @@ def do_correction(input_model, rscd_model):
         # odd row values
         factor2_odd[good_odd] = 1.0/(np.exp(counts2_odd[good_odd]/b3_odd) -1)
         a1_odd = b1_odd *(np.power(counts2_odd,b2_odd)) * factor2_odd
-
         #______________________________________________________________________
         # SATURATED DATA 
         counts3_even = dn_lastfit[1::2,:] * sat_scale_even                    
@@ -142,13 +140,11 @@ def do_correction(input_model, rscd_model):
 
         sat_even = sat[1::2,:]
         sat_odd = sat[0::2,:]
-
         # loop over groups in input science data:
         for j in range(sci_ngroups):
                                 
             # Compute the correction factors for even and odd rows
             T = (j + 1) 
-                            
             eterm_even = np.exp(-T / tau_even)
             eterm_odd = np.exp(-T / tau_odd)
 
@@ -157,14 +153,12 @@ def do_correction(input_model, rscd_model):
             # the second row is the first even row (python index of 1)
             correction_odd = lastframe_odd * a1_odd * 0.01*eterm_odd
             correction_even = lastframe_even * a1_even * 0.01* eterm_even
-
             correction_sat_odd = lastframe_odd *  a1_sat_odd * 0.01*  eterm_odd
             correction_sat_even = lastframe_even * a1_sat_even* 0.01 * eterm_even
             sat_index_even  = np.where(sat_even)
             sat_index_odd  = np.where(sat_odd)
             correction_even[sat_index_even] = correction_sat_even[sat_index_even]
             correction_odd[sat_index_odd] = correction_sat_odd[sat_index_odd]
-
             output.data[i, j, 0::2, :] += correction_odd
             output.data[i, j, 1::2, :] += correction_even
 
@@ -298,7 +292,6 @@ def get_DNaccumulated_last_int(input_model, i, sci_ngroups):
  
     nrows = input_model.data.shape[2]
     ncols = input_model.data.shape[3]
-
     dn_lastframe2 = input_model.data[i - 1][sci_ngroups - 2]
     dn_lastframe3 = input_model.data[i - 1][sci_ngroups - 3]
     dn_lastframe23 = dn_lastframe2.copy() * 0.0
@@ -316,11 +309,10 @@ def get_DNaccumulated_last_int(input_model, i, sci_ngroups):
     for j in range(nrows):
         for k in range(ncols):
             pixeldq = input_model.pixeldq[j,k]
-            ref = np.bitwise_and(pixeldq,ref_flag) == 0
-            if ref == True:
+            ref = np.bitwise_and(pixeldq,ref_flag) 
+            if ref !=0 :
                 is_ref[j,k] = True
                 dn_lastframe23[j,k] = 0.0
-
             else : # pixel is not a reference pixels. Make a correction
                 is_ref[j,k] = False
                 # starting on second frame and going to second to last frame
@@ -339,7 +331,6 @@ def get_DNaccumulated_last_int(input_model, i, sci_ngroups):
                     dn_lastframe_fit[j,k] = slope*sci_ngroups + intercept
                 else: 
                     dn_lastframe_fit[j,k] = dn_lastframe23[j,k]
-
     return saturated, is_ref,dn_lastframe23,dn_lastframe_fit
 
 
