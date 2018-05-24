@@ -10,8 +10,6 @@ pytestmark = [
 ]
 
 
-@pytest.mark.skipif(not pytest.config.getoption('--runslow'),
-                    reason="requires --runslow; (>4hr)")
 def test_spec3_pipeline1(_bigdata):
     """
     Regression test of calwebb_spec3 pipeline on simulated
@@ -19,7 +17,6 @@ def test_spec3_pipeline1(_bigdata):
     """
 
     subdir = os.path.join(_bigdata, 'pipelines', 'mrs_calspec3')
-    # asn_file = os.path.join(subdir, "test_asn17.json")
     asn_file = os.path.join(subdir, "test_asn4.json")
 
     step = Spec3Pipeline()
