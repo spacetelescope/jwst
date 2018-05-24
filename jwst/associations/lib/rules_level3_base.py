@@ -272,7 +272,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
         # Get exposure type
         try:
-            is_tso = self.constraints['is_tso'].value == 't'
+            is_tso = self.constraints['is_tso'].matched
         except KeyError:
             is_tso = item['exp_type'] in TSO_EXP_TYPES
 
