@@ -6,9 +6,11 @@ from jwst.associations.exceptions import (
     AssociationNotValidError,
 )
 from jwst.associations.lib.acid import ACIDMixin
-from jwst.associations.lib.constraint import AttrConstraint
+from jwst.associations.lib.constraint import (Constraint, AttrConstraint)
 from jwst.associations.lib.utilities import getattr_from_list
 
+
+__all__ = ['Constraint_TSO', 'DMSBaseMixin']
 
 # Default product name
 PRODUCT_NAME_DEFAULT = 'undefined'
@@ -133,8 +135,6 @@ _DEGRADED_STATUS_NOTOK = (
     'One or more members have an error associated with them.'
     '\nDetails can be found in the member.exposerr attribute.'
 )
-
-__all__ = ['DMSBaseMixin']
 
 
 class DMSBaseMixin(ACIDMixin):
@@ -560,11 +560,28 @@ class DMSAttrConstraint(AttrConstraint):
         super(DMSAttrConstraint, self).__init__(**kwargs)
 
 
+class Constraint_TSO(Constraint):
+    """Match on Time-Series Observations"""
+    def __init__(self, *args, **kwargs):
+        super(Constraint_TSO, self).__init__(
+            [
+                DMSAttrConstraint(
+                    sources=['tsovisit'],
+                    value='t',
+                ),
+                DMSAttrConstraint(
+                    sources=['exp_type'],
+                    value='|'.join(TSO_EXP_TYPES),
+                ),
+            ],
+            reduce=Constraint.any,
+            name='is_tso'
+        )
+
+
 # #########
 # Utilities
 # #########
-
-
 def format_list(alist):
     """Format a list according to DMS naming specs"""
     return '-'.join(alist)

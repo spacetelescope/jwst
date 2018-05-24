@@ -2,7 +2,7 @@
 """
 import logging
 
-from jwst.associations.lib.dms_base import ACQ_EXP_TYPES
+from jwst.associations.lib.dms_base import (ACQ_EXP_TYPES, Constraint_TSO)
 from jwst.associations.lib.rules_level3_base import *
 
 __all__ = [
@@ -11,8 +11,7 @@ __all__ = [
     'Asn_IFU',
     'Asn_Image',
     'Asn_Spectral',
-    'Asn_TSO_EXPTYPE',
-    'Asn_TSO_Flag',
+    'Asn_TSO',
     'Asn_WFSCMB',
     'Asn_WFSS_NIS',
 ]
@@ -103,7 +102,10 @@ class Asn_Spectral(AsnMixin_Spectrum):
 
         # Setup for checking.
         self.constraints = Constraint([
-            Constraint_NotTSO(),
+            Constraint(
+                [Constraint_TSO()],
+                reduce=Constraint.notany
+            ),
             Constraint_Optical_Path(),
             Constraint_Target(),
             Constraint_Spectral(),
@@ -267,7 +269,7 @@ class Asn_WFSS_NIS(AsnMixin_Spectrum):
         super(Asn_WFSS_NIS, self).__init__(*args, **kwargs)
 
 
-class Asn_TSO_Flag(AsnMixin_Science):
+class Asn_TSO(AsnMixin_Science):
     """Time-Series observations"""
 
     def __init__(self, *args, **kwargs):
@@ -276,62 +278,20 @@ class Asn_TSO_Flag(AsnMixin_Science):
         self.constraints = Constraint([
             Constraint_Target(),
             Constraint_Optical_Path(),
-            DMSAttrConstraint(
-                name='is_tso',
-                sources=['tsovisit'],
-                value='t',
-            ),
-            DMSAttrConstraint(
-                name='exp_type',
-                sources=['exp_type']
-            )
-        ])
-
-        super(Asn_TSO_Flag, self).__init__(*args, **kwargs)
-
-    def _init_hook(self, item):
-        """Post-check and pre-add initialization"""
-
-        self.data['asn_type'] = 'tso3'
-        super(Asn_TSO_Flag, self)._init_hook(item)
-
-
-class Asn_TSO_EXPTYPE(AsnMixin_Science):
-    """Time-Series observations"""
-
-    def __init__(self, *args, **kwargs):
-
-        # Setup for checking.
-        self.constraints = Constraint([
-            Constraint_Target(),
-            Constraint_Optical_Path(),
+            Constraint_TSO(),
             DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
-                value=(
-                    'mir_lrs-slitless'
-                    '|nis_soss'
-                    '|nrc_tsimage'
-                    '|nrc_tsgrism'
-                    '|nrs_bota'
-                    '|nrs_brightobj'
-                ),
             ),
-            DMSAttrConstraint(
-                name='no_tso_flag',
-                sources=['tsovisit'],
-                required=False,
-                force_undefined=True
-            )
         ])
 
-        super(Asn_TSO_EXPTYPE, self).__init__(*args, **kwargs)
+        super(Asn_TSO, self).__init__(*args, **kwargs)
 
     def _init_hook(self, item):
         """Post-check and pre-add initialization"""
 
         self.data['asn_type'] = 'tso3'
-        super(Asn_TSO_EXPTYPE, self)._init_hook(item)
+        super(Asn_TSO, self)._init_hook(item)
 
 
 class Asn_ACQ_Reprocess(DMS_Level3_Base):

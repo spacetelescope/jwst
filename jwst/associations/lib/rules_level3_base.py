@@ -32,6 +32,7 @@ from jwst.associations.lib.dms_base import (
     IMAGE2_SCIENCE_EXP_TYPES,
     IMAGE2_NONSCIENCE_EXP_TYPES,
     SPEC2_SCIENCE_EXP_TYPES,
+    TSO_EXP_TYPES,
 )
 from jwst.associations.lib.format_template import FormatTemplate
 
@@ -42,7 +43,6 @@ __all__ = [
     'Constraint_Base',
     'Constraint_IFU',
     'Constraint_Image',
-    'Constraint_NotTSO',
     'Constraint_Optical_Path',
     'Constraint_Spectral',
     'Constraint_Target',
@@ -67,15 +67,6 @@ _DMS_POOLNAME_REGEX = 'jw(\d{5})_(\d{8}[Tt]\d{6})_pool'
 
 # Product name regex's
 _REGEX_ACID_VALUE = '(o\d{3}|(c|a)\d{4})'
-
-# Exposures that are always TSO
-TSO_EXP_TYPES = (
-    'mir_lrs-slitless',
-    'nis_soss',
-    'nrc_tsimage',
-    'nrc_tsgrism',
-    'nrs_brightobj'
-)
 
 # Exposures that should have received Level2b processing
 LEVEL2B_EXPTYPES = []
@@ -280,7 +271,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
         # Get exposure type
         try:
-            is_tso = self.constraints['is_tso'].value == 't'
+            is_tso = self.constraints['is_tso'].matched
         except KeyError:
             is_tso = item['exp_type'] in TSO_EXP_TYPES
 
@@ -615,17 +606,6 @@ class Constraint_Image(DMSAttrConstraint):
                 '|nis_image'
                 '|fgs_image'
             ),
-        )
-
-
-class Constraint_NotTSO(DMSAttrConstraint):
-    """Select on not-TSO-like exposures"""
-    def __init__(self):
-        super(Constraint_NotTSO, self).__init__(
-            name='is_not_tso',
-            sources=['tsovisit'],
-            value='[^t]',
-            required=False,
         )
 
 
