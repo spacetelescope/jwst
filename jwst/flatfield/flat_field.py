@@ -281,7 +281,10 @@ def do_NIRSpec_flat_field(output_model,
 
     for (k, slit) in enumerate(output_model.slits):
         log.info("Processing slit %s", slit.name)
-        slit_nt = slit
+        if exposure_type == "NRS_MSASPEC":
+            slit_nt = slit                      # includes quadrant info
+        else:
+            slit_nt = None
         flat_2d = np.ones_like(slit.data)       # default values
         flat_dq_2d = np.zeros_like(slit.dq)
 
