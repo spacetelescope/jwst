@@ -22,6 +22,8 @@ def test_spec3_pipeline1(_bigdata):
     step = Spec3Pipeline()
     step.save_bsub = False
     step.mrs_imatch.suffix = 'mrs_imatch'
+    step.mrs_imatch.bkg_degree = 1
+    step.mrs_imatch.subtract = False
     step.outlier_detection.skip = True
     step.output_use_model = True
     step.resample_spec.save_results = True
