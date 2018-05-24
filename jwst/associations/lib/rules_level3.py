@@ -102,7 +102,10 @@ class Asn_Spectral(AsnMixin_Spectrum):
 
         # Setup for checking.
         self.constraints = Constraint([
-            Constraint_NotTSO(),
+            Constraint(
+                [Constraint_TSO()],
+                reduce=Constraint.notany
+            ),
             Constraint_Optical_Path(),
             Constraint_Target(),
             Constraint_Spectral(),

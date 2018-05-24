@@ -599,6 +599,12 @@ class Constraint:
             to_reprocess.append(reprocess)
         return match, to_reprocess
 
+    @staticmethod
+    def notany(item, constraints):
+        """True if none of the constraints match"""
+        match, to_reprocess = Constraint.any(item, constraints)
+        return not match, to_reprocess
+
     # Make iterable
     def __iter__(self):
         for constraint in chain(*map(iter, self.constraints)):

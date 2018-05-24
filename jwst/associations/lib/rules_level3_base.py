@@ -43,7 +43,6 @@ __all__ = [
     'Constraint_Base',
     'Constraint_IFU',
     'Constraint_Image',
-    'Constraint_NotTSO',
     'Constraint_Optical_Path',
     'Constraint_Spectral',
     'Constraint_Target',
@@ -607,17 +606,6 @@ class Constraint_Image(DMSAttrConstraint):
                 '|nis_image'
                 '|fgs_image'
             ),
-        )
-
-
-class Constraint_NotTSO(DMSAttrConstraint):
-    """Select on not-TSO-like exposures"""
-    def __init__(self):
-        super(Constraint_NotTSO, self).__init__(
-            name='is_not_tso',
-            sources=['tsovisit'],
-            value='[^t]',
-            required=False,
         )
 
 
