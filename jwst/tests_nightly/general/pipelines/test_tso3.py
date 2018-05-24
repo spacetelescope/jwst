@@ -16,8 +16,6 @@ def test_tso3_pipeline_nrc1(_bigdata):
     Default imaging mode outlier_detection will be tested here.
     """
     subdir = 'pipelines/nircam_caltso3/'
-
-    # Run pipeline step...
     asn_file = os.path.join(_bigdata, subdir,
                             "jw93065-a3001_20170511t111213_tso3_001_asn.json")
     step = Tso3Pipeline()
@@ -58,8 +56,6 @@ def test_tso3_pipeline_nrc2(_bigdata):
     Scaled imaging mode outlier_detection will be tested here.
     """
     subdir = 'pipelines/nircam_caltso3/'
-
-    # Run pipeline step...
     asn_file = os.path.join(_bigdata, subdir,
                             "jw93065-a3002_20170511t111213_tso3_001_asn.json")
     step = Tso3Pipeline()
@@ -98,24 +94,6 @@ def test_tso3_pipeline_nis(_bigdata):
     """Regression test of calwebb_tso3 on NIRISS SOSS simulated data.
     """
     subdir3 = 'pipelines/niriss_caltso3/'
-
-    # You need to have a tda dict for:
-    #  - recording information to make FlagOK work
-    #  - recording parameters to the task as attributes
-    global tda
-    tda = {}
-
-    output = [
-        # one dict for each output file to compare (i.e. each <val>)
-        {
-            'file'      : 'jw87600-a3001_t1_niriss_clear-gr700xd_whtlt.ecsv',
-            'reference' : os.path.join(_bigdata,subdir3,'jw87600-a3001_t1_niriss_clear-gr700xd_whtlt_ref.ecsv'),
-            'comparator': 'diff',
-            'args'      : {},
-        }
-    ]
-
-    # Run pipeline step...
     asn_file = os.path.join(_bigdata, subdir3,
                             "jw87600-a3001_20170527t111213_tso3_001_asn.json")
     Tso3Pipeline.call(asn_file)
@@ -127,7 +105,7 @@ def test_tso3_pipeline_nis(_bigdata):
 
     refname = os.path.join(_bigdata, subdir3, reffile)
 
-    result = perform_FITS_comparison(fname, refname, extn_list=extn_list)
+    result = perform_fits_comparison(fname, refname, extn_list=extn_list)
     assert result.identical, result.report()
 
     # Compare level-3 product
