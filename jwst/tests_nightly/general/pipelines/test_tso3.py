@@ -2,8 +2,6 @@ import os
 import pytest
 from astropy.io import fits as pf
 from jwst.pipeline.calwebb_tso3 import Tso3Pipeline
-# DISABLED
-# import pandokia.helpers.filecomp as filecomp
 
 pytestmark = [
     pytest.mark.usefixtures('_jail'),
@@ -12,14 +10,12 @@ pytestmark = [
 ]
 
 
-def test_tso3_pipeline1(_bigdata):
+def test_tso3_pipeline_nrc1(_bigdata):
     """Regression test of calwebb_tso3 pipeline on NIRCam simulated data.
 
     Default imaging mode outlier_detection will be tested here.
     """
-    testname = "test_tso3_pipeline1"
-    # Define where this test data resides in testing tree
-    subdir = 'pipelines/nircam_caltso3/'  # Can NOT start with path separator
+    subdir = 'pipelines/nircam_caltso3/'
 
     # Run pipeline step...
     asn_file = os.path.join(_bigdata, subdir,
@@ -52,19 +48,16 @@ def test_tso3_pipeline1(_bigdata):
 
     refname = os.path.join(_bigdata, subdir, reffile)
 
-    result = perform_FITS_comparison(fname, refname, extn_list=extn_list)
+    result = perform_fits_comparison(fname, refname, extn_list=extn_list)
     assert result.identical, result.report()
 
 
-def test_tso3_pipeline2(_bigdata):
+def test_tso3_pipeline_nrc2(_bigdata):
     """Regression test of calwebb_tso3 pipeline on NIRCam simulated data.
 
     Scaled imaging mode outlier_detection will be tested here.
     """
-    testname = "test_tso3_pipeline2"
-
-    # Define where this test data resides in testing tree
-    subdir = 'pipelines/nircam_caltso3/'  # Can NOT start with path separator
+    subdir = 'pipelines/nircam_caltso3/'
 
     # Run pipeline step...
     asn_file = os.path.join(_bigdata, subdir,
@@ -97,13 +90,62 @@ def test_tso3_pipeline2(_bigdata):
 
     refname = os.path.join(_bigdata, subdir, reffile)
 
-    result = perform_FITS_comparison(fname, refname, extn_list=extn_list)
+    result = perform_fits_comparison(fname, refname, extn_list=extn_list)
     assert result.identical, result.report()
 
 
+def test_tso3_pipeline_nis(_bigdata):
+    """Regression test of calwebb_tso3 on NIRISS SOSS simulated data.
+    """
+    subdir3 = 'pipelines/niriss_caltso3/'
+
+    # You need to have a tda dict for:
+    #  - recording information to make FlagOK work
+    #  - recording parameters to the task as attributes
+    global tda
+    tda = {}
+
+    output = [
+        # one dict for each output file to compare (i.e. each <val>)
+        {
+            'file'      : 'jw87600-a3001_t1_niriss_clear-gr700xd_whtlt.ecsv',
+            'reference' : os.path.join(_bigdata,subdir3,'jw87600-a3001_t1_niriss_clear-gr700xd_whtlt_ref.ecsv'),
+            'comparator': 'diff',
+            'args'      : {},
+        }
+    ]
+
+    # Run pipeline step...
+    asn_file = os.path.join(_bigdata, subdir3,
+                            "jw87600-a3001_20170527t111213_tso3_001_asn.json")
+    Tso3Pipeline.call(asn_file)
+
+    # Compare level-2c product
+    fname = 'jw87600024001_02101_00001_nis_a3001_crfints.fits'
+    reffile = 'jw87600-a3001_t1_niriss_clear-gr700xd_crfints_ref.fits'
+    extn_list = ['primary', 'sci', 'dq', 'err']
+
+    refname = os.path.join(_bigdata, subdir3, reffile)
+
+    result = perform_FITS_comparison(fname, refname, extn_list=extn_list)
+    assert result.identical, result.report()
+
+    # Compare level-3 product
+    fname = 'jw87600-a3001_t1_niriss_clear-gr700xd_x1dints.fits'
+    reffile = 'jw87600-a3001_t1_niriss_clear-gr700xd_x1dints_ref.fits'
+    extn_list = ['primary', 'extract1d']
+
+    refname = os.path.join(_bigdata, subdir3, reffile)
+
+    result = perform_fits_comparison(fname, refname, extn_list=extn_list)
+    assert result.identical, result.report()
+
+
+
+
 # Utility function to simplify FITS comparisons
-def perform_FITS_comparison(filename, refname, **pars):
-    """Perform FITSDIFF comparison.
+def perform_fits_comparison(filename, refname, **pars):
+    """Perform FITSDiff comparison.
 
     Comparision will be done on `filename` in current directory with
         file that has same filename in `_bigdata` directory.
