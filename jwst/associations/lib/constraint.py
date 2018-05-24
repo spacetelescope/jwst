@@ -226,7 +226,7 @@ class SimpleConstraint(SimpleConstraintABC):
 
         Returns
         -------
-        success: SimpleConstraint or False
+        success: bool
             If successful, a copy of the constraint
             is returned with modified value.
         """
@@ -361,9 +361,9 @@ class AttrConstraint(SimpleConstraintABC):
 
         Returns
         -------
-        matching_constraint, reprocess: AttrConstraint or False
+        bool, reprocess: AttrConstraint or False
             A 2-tuple consisting of:
-            - matching_constraint if a successful match
+            - bool indicating if a match or not.
             - List of `ProcessList`s that need to be checked again.
         """
         reprocess = []
@@ -537,7 +537,7 @@ class Constraint:
 
         Returns
         -------
-        2-tuple of (`Constraint`, reprocess)
+        2-tuple of (bool, reprocess)
         """
         if work_over not in (self.work_over, ProcessList.BOTH):
             return False, []
