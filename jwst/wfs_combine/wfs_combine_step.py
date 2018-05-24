@@ -2,8 +2,6 @@
 
 from ..stpipe import Step
 from . import wfs_combine
-import json
-import os
 
 
 class WfsCombineStep(Step):
@@ -18,7 +16,7 @@ class WfsCombineStep(Step):
 
     def process(self, input_table):
 
-        asn_table = self.load_as_level2_asn(input_table)
+        asn_table = self.load_as_level3_asn(input_table)
         num_sets = len(asn_table['products'])
 
         self.log.info('Using input table: %s', input_table)
