@@ -2,23 +2,19 @@
 Various utility functions and data types
 """
 
-import re
 import sys
-import warnings
-import jsonschema
 from os.path import basename
 
 import numpy as np
 from astropy.io import fits
+
+from asdf import AsdfFile
 from asdf import schema as asdf_schema
 
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 log.addHandler(logging.NullHandler())
-
-class ValidationWarning(Warning):
-    pass
 
 def open(init=None, extensions=None, **kwargs):
     """
@@ -413,49 +409,3 @@ def create_history_entry(description, software=None):
     if software is not None:
         entry['software'] = software
     return entry
-
-
-def validate_schema(path, value, schema, pass_invalid_values,
-                    strict_validation):
-    """
-    Validate a change in value against a schema and
-    """
-    try:
-        _validate_value(value, schema)
-        update = True
-
-    except jsonschema.ValidationError as error:
-        update = False
-        errmsg = _validate_error(path, error)
-        if pass_invalid_values:
-            update = True
-        if strict_validation:
-            raise jsonschema.ValidationError(errmsg)
-        else:
-            warnings.warn(errmsg, ValidationWarning)
-    return update
-
-def _validate_error(path, error):
-    if isinstance(path, list):
-        spath = [str(p) for p in path]
-        name = '.'.join(spath)
-    else:
-        name = str(path)
-
-    errfmt = "While validating {} the following error occurred:\n{}"
-    errmsg = errfmt.format(name, str(error))
-    return errmsg
-
-def _validate_value(value, schema):
-    if value is None:
-        if schema.get('fits_required'):
-            name = schema.get("fits_keyword") or schema.get("fits_hdu")
-            raise jsonschema.ValidationError("%s is a required value"
-                                              % name)
-    else:
-        temp_schema = {
-            '$schema':
-            'http://stsci.edu/schemas/asdf-schema/0.1.0/asdf-schema'}
-        temp_schema.update(schema)
-        asdf_schema.validate(value, schema=temp_schema)
-

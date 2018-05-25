@@ -13,6 +13,7 @@ from asdf.tags.core import ndarray
 from asdf import tagged
 
 from . import util
+from . import validate
 
 import logging
 log = logging.getLogger(__name__)
@@ -176,8 +177,8 @@ class Node(object):
     def _validate(self):
         instance = yamlutil.custom_tree_to_tagged_tree(self._instance,
                                                        self._ctx._asdf)
-        return util.validate_schema(self._name, instance, self._schema,
-                                    False, self._ctx._strict_validation)
+        return validate.value_change(self._name, instance, self._schema,
+                                      False, self._ctx._strict_validation)
 
     @property
     def instance(self):
@@ -241,8 +242,8 @@ class ObjectNode(Node):
             del self.__dict__[attr]
         else:
             schema = _get_schema_for_property(self._schema, attr)
-            if not util.validate_schema(attr, None, schema, False,
-                                        self._ctx._strict_validation):
+            if not validate.value_change(attr, None, schema, False,
+                                          self._ctx._strict_validation):
                 return
 
             try:
