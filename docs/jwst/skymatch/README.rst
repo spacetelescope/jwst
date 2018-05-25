@@ -4,20 +4,22 @@ Description
 
 Overview
 --------
-The ``skymatch`` step can be used to compute sky values of input images or
-it can be used to compute corrections that need to be applied to images such
-as to "equalize" (match) sky background in input images.
-When running ``skymatch`` step in a matching mode, ``skymatch`` compares
-*total* signal levels in *the overlap regions*
-(instead of doing this comparison on a per-pixel basis,
-cf. :doc:`mrs_imatch step <../mrs_imatch/README>`) of a set of input images
-and computes the signal offsets for each image that will minimize
-the residuals across the entire set in the least squares sence. This comparison
-is performed directly on input images without resampling them onto a common
-grid. The overlap regions are computed directly on the sky (celestial sphere)
-for each pair of input images. By default the sky value computed for each image
-is recorded, but not actually subtracted from the images. Also note that the
-meaning of "sky background" is depends on the chosen sky computation method.
+The skymatch step can be used to compute sky values in a collection of input
+images that contain both sky and source signal. The sky values can be computed
+for each image separately or in a way that matches the sky levels amongst the
+collection of images so as to minimize their differences. This operation is
+typically applied before combining multiple images into a mosaic. When running
+``skymatch`` step in a matching mode, ``skymatch`` compares *total* signal
+levels in *the overlap regions* (instead of doing this comparison on a
+per-pixel basis, cf. :doc:`mrs_imatch step <../mrs_imatch/README>`)
+of a set of input images and computes the signal offsets for each image
+that will minimize the residuals across the entire set in the least squares
+sence. This comparison is performed directly on input images without resampling
+them onto a common grid. The overlap regions are computed directly on the sky
+(celestial sphere) for each pair of input images. By default the sky value
+computed for each image is recorded, but not actually subtracted from the
+images. Also note that the meaning of "sky background" depends on the chosen
+sky computation method.
 
 
 Assumptions
@@ -68,7 +70,7 @@ two other methods have been introduced: ``'globalmin'`` and
   and the ``'match'`` algorithm to "equalize" sky values among images.
 
 In methods that find sky background levels in each image (``'localmin'``) or
-a single level for all images (``'globalmin'``), usually statistics is
+a single level for all images (``'globalmin'``), usually statistic is
 computed using sigma-clipping. If input images contain vast swaths of empty
 sky, then the sigma-clipping algorithm should be able to automatically
 exclude (clip) contributions from bright compact sources.
@@ -79,7 +81,7 @@ in the images that correspond to common ("overlap") regions on the celestial
 sphere for both images being compared (comparison is pair-wise).
 Often, this method is used when there are no large
 "empty sky" regions in the images such as when a large nebula occupies most
-part of the view. This method cannot measure "true background" but
+of the view. This method cannot measure "true background" but
 rather additive corrections that need to be applied to input images so that
 total signal from the same part of the sky is equal in all images.
 
@@ -104,7 +106,7 @@ The ``skymatch`` step has the following optional arguments:
     either ``'match'`` or ``'global+match'``.
 
 * ``subtract``: A boolean indicating whether computed sky background values
-  be subtracted from image data. (Default = `False`)
+  are to be subtracted from image data. (Default = `False`)
 
 **Image's bounding polygon parameters:**
 
@@ -114,7 +116,7 @@ The ``skymatch`` step has the following optional arguments:
 
 **Sky statistics parameters:**
 
-* ``skystat``: A string describing statistics to be used for sky background
+* ``skystat``: A string describing statistic to be used for sky background
   value computations. Supported values are: 'mean', 'mode', 'midpt',
   and 'median' (Default = 'mode')
 
@@ -169,7 +171,8 @@ The ``skymatch`` step has the following optional arguments:
   (Default = 4.0)
 
 * ``binwidth``: Bin width, in sigma, used to sample the distribution of pixel
-  brightness values in order to compute the sky background statistics.
+  brightness values in order to compute the sky background using statistics
+  that require binning such as `mode` and `midpt`.
   (Default = 0.1)
 
 
