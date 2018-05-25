@@ -44,7 +44,8 @@ def do_correction(input_model):
         log.debug("LastFrame Sub: resetting GROUPDQ in last frame to DO_NOT_USE")
         output.meta.cal_step.lastframe = 'COMPLETE'
     else:   # too few groups
-        log.warning("LastFrame Sub: too few groups, skipping step")
+        log.warning("Too few groups to apply correction")
+        log.warning("Step will be skipped")
         output.meta.cal_step.lastframe = 'SKIPPED'
 
     return output
