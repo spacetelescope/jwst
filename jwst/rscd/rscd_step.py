@@ -32,9 +32,9 @@ class RSCD_Step(Step):
                 # Check that data has the minimum number of groups/int
                 sci_ngroups = input_model.data.shape[1]     # number of groups
                 min_number = 4
-                if sci_ngroups < min_number :
+                if sci_ngroups < min_number:
                     self.log.warning('Input file does not contain enough groups '
-                                     'for RSCD correctionto be applied ')
+                                     'for RSCD correction to be applied')
                     self.log.warning('RSCD step will be skipped')
                     input_model.meta.cal_step.rscd = 'SKIPPED'
                     return input_model
