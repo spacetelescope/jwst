@@ -23,6 +23,7 @@ from jsonschema import validators
 from . import properties
 from . import schema as mschema
 from . import util
+from . import validate
 
 import logging
 log = logging.getLogger(__name__)
@@ -455,13 +456,13 @@ def _load_from_schema(hdulist, schema, tree, context):
                 ctx.get('hdu_index'), known_keywords)
 
             if result is None:
-                util.validate_schema(path, result, schema,
-                                     context._pass_invalid_values,
-                                     context._strict_validation)
+                validate.value_change(path, result, schema,
+                                      context._pass_invalid_values,
+                                      context._strict_validation)
             else:
-                if util.validate_schema(path, result, schema,
-                                        context._pass_invalid_values,
-                                        context._strict_validation):
+                if validate.value_change(path, result, schema,
+                                         context._pass_invalid_values,
+                                         context._strict_validation):
                     properties.put_value(path, result, tree)
 
         elif 'fits_hdu' in schema and (
@@ -470,13 +471,13 @@ def _load_from_schema(hdulist, schema, tree, context):
                 hdulist, schema, ctx.get('hdu_index'), known_datas)
 
             if result is None:
-                util.validate_schema(path, result, schema,
-                                     context._pass_invalid_values,
-                                     context._strict_validation)
+                validate.value_change(path, result, schema,
+                                      context._pass_invalid_values,
+                                      context._strict_validation)
             else:
-                if util.validate_schema(path, result, schema,
-                                        context._pass_invalid_values,
-                                        context._strict_validation):
+                if validate.value_change(path, result, schema,
+                                         context._pass_invalid_values,
+                                         context._strict_validation):
                     properties.put_value(path, result, tree)
 
         if schema.get('type') == 'array':

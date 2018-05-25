@@ -26,6 +26,7 @@ from . import fits_support
 from . import properties
 from . import schema as mschema
 from . import util
+from . import validate
 
 from .extension import BaseExtension
 from jwst.transforms.jwextension import JWSTExtension
@@ -307,9 +308,9 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         """
         Re-validate the model instance againsst its schema
         """
-        util.validate_schema(str(self), self._instance, self._schema,
-                             self._pass_invalid_values,
-                             self._strict_validation)
+        validate.value_change(str(self), self._instance, self._schema,
+                              self._pass_invalid_values,
+                              self._strict_validation)
 
     def get_primary_array_name(self):
         """
