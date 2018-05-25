@@ -62,10 +62,22 @@ We welcome contributions and feedback on the project. Please follow the [contrib
 
 We strive to provide a welcoming community to all of our users by abiding to the [Code of Conduct](CODE_OF_CONDUCT.md).
 
+Unit Tests
+----------
+
+Unit tests can be run via `pytest`.  We recommend using `pytest-xdist` so you can run them in parallel.  Install `pytest-xdist` and run pytest in the top level of the repository
+
+    conda install pytest-xdist
+    pytest -n <cores>
+
+where `cores` is the number of cores you'd like to use on your machine for the tests.
+
 Regression Tests
 ----------------
 
-Latest regression test results can be found here (internal STScI only):
+Regression tests - both the data and the result reports - are currently only accessible to STScI staff members. If you do need information about this, please open an issue.
+
+Latest regression test results can be found here:
 
 https://boyle.stsci.edu:8081/job/RT/job/JWST/
 
@@ -83,18 +95,6 @@ and then run the tests in the repository
 
     cd ~/path/to/jwst
     pytest --bigdata .
-
-
-Unit Tests
-----------
-
-Unit tests can be run via `pytest`.  We recommend using `pytest-xdist` so you can run them in parallel.  Install `pytest-xdist` and run pytest in the top level of the repository
-
-    conda install pytest-xdist
-    pytest -n N
-
-where `N` is the number of cores you'd like to use on your machine.
-
 
 Software vs DMS build version map
 ---------------------------------
