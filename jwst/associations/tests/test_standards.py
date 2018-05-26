@@ -75,7 +75,7 @@ standards = [
     MakePars('pool_014_ami_niriss'),
     MakePars('pool_015_spec_nirspec_lv2bkg_reversed', main_args=LV2_ONLY_ARGS),
     MakePars('pool_016_spec_nirspec_lv2bkg_double', main_args=LV2_ONLY_ARGS),
-    MakePars('pool_017_spec_nirspec_lv2imprint', xfail='See issue #1716'),
+    MakePars('pool_017_spec_nirspec_lv2imprint'),
     MakePars('pool_018_all_exptypes', main_args=LV2_ONLY_ARGS),
     MakePars('pool_019_niriss_wfss'),
     MakePars('pool_021_tso'),
