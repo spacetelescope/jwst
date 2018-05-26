@@ -702,6 +702,10 @@ class AsnMixin_Science(DMS_Level3_Base):
         self.constraints = Constraint(
             [
                 Constraint_Base(),
+                DMSAttrConstraint(
+                    sources=['is_imprt', 'bkgdtarg'],
+                    force_undefined=True
+                ),
                 Constraint(
                     [
                         Constraint(
@@ -715,7 +719,7 @@ class AsnMixin_Science(DMS_Level3_Base):
                     ],
                     name='acq_check',
                     reduce=Constraint.any
-                )
+                ),
             ],
             name='dmsbase_top'
         )
