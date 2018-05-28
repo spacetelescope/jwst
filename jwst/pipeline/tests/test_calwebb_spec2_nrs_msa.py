@@ -28,14 +28,25 @@ def test_run_msaflagging(mk_tmp_dirs, caplog):
     """Test msa flagging operation"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
-    # Copy msa config files from DATAPATH to
-    # current working directory
-    file_copy(path.join(DATAPATH, 'jw95065006001_0_msa_twoslit.fits'), '.')
-
-    asn_path = update_asn_basedir(
-        path.join(DATAPATH, 'mos_udf_g235m_twoslit_spec2_asn.json'),
-        root=path.join(DATAPATH, 'level2a_twoslit')
+    # Copy necessary data to the tmp_data_path
+    file_copy(
+        path.join(DATAPATH, 'jw95065006001_0_msa_twoslit.fits'),
+        tmp_data_path
     )
+    file_copy(
+        path.join(DATAPATH, 'mos_udf_g235m_twoslit_spec2_asn.json'),
+        tmp_data_path
+    )
+    asn_path = path.join(tmp_data_path, 'mos_udf_g235m_twoslit_spec2_asn.json')
+    with open(asn_path) as fp:
+        asn = load_asn(fp)
+    for product in asn['products']:
+        for member in product['members']:
+            file_copy(
+                path.join(DATAPATH, 'level2a_twoslit', member['expname']),
+                tmp_data_path
+            )
+
     args = [
         path.join(SCRIPT_DATA_PATH, 'calwebb_spec2_basic.cfg'),
         asn_path,
@@ -46,9 +57,6 @@ def test_run_msaflagging(mk_tmp_dirs, caplog):
 
     assert 'Step msa_flagging running with args' in caplog.text
     assert 'Step msa_flagging done' in caplog.text
-
-    with open(asn_path) as fp:
-        asn = load_asn(fp)
 
     for product in asn['products']:
         prod_name = product['name'] + '_cal.fits'
