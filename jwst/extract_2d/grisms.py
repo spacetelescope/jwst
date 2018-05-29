@@ -270,6 +270,8 @@ def extract_grism_objects(input_model,
 
     if not isinstance(grism_objects, list):
             raise TypeError("Expected input grism objects to be a list")
+    if len(grism_objects) == 0:
+        raise ValueError("No grism objects created from source catalog")
 
     log.info("Extracting grism objects into MultiSlitModel")
     output_model = datamodels.MultiSlitModel()

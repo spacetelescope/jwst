@@ -323,7 +323,7 @@ def get_object_info(catalog_name=None):
     objects = []
     if isinstance(catalog_name, (str)):
         catalog = QTable.read(catalog_name, format='ascii.ecsv')
-    elif isinstance(catalog, astropy.table.table.QTable):
+    elif isinstance(catalog_name, QTable):
         pass
     else:
         raise TypeError("Need to input name of catalog or astropy.table.table.QTable instance")
