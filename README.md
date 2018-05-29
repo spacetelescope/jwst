@@ -101,6 +101,7 @@ Software vs DMS build version map
 
 | jwst tag | DMS build |    Date    |          Notes                      |
 | -------- | --------- | ---------- | ----------------------------------- |
+|  0.9.4   |           | 05/29/2018 | DMS test, no delivery to I&T        |
 |  0.9.2   |           | 03/28/2018 | DMS test, no delivery to I&T        |
 |  0.9.1   |           | 02/16/2018 | DMS test, no delivery to I&T        |
 |  0.9.0   |   B7.1.2  | 12/22/2017 | DMS patch release to I&T 02/15/2018 |
