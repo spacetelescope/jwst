@@ -1,5 +1,5 @@
-Reference File
-==============
+Reference File Types
+====================
 The reset correction step uses a RESET reference file.
 
 CRDS Selection Criteria
