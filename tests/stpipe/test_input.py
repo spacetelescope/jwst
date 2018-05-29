@@ -2,10 +2,10 @@
 from os import path
 import pytest
 
-from .steps import StepWithModel
+from tests.stpipe.steps import StepWithModel
+from jwst.stpipe.step import Step
+from jwst.datamodels import open as dm_open
 from .util import (mk_tmp_dirs, t_path)
-from ..step import Step
-from ...datamodels import open as dm_open
 
 
 def test_default_input_dir(mk_tmp_dirs):
@@ -13,7 +13,7 @@ def test_default_input_dir(mk_tmp_dirs):
     input_file = t_path('data/flat.fits')
 
     step = Step.from_cmdline([
-        'jwst.stpipe.tests.steps.StepWithModel',
+        'tests.stpipe.steps.StepWithModel',
         input_file
     ])
 
@@ -27,7 +27,7 @@ def test_set_input_dir(mk_tmp_dirs):
     input_file = t_path('data/flat.fits')
 
     step = Step.from_cmdline([
-        'jwst.stpipe.tests.steps.StepWithModel',
+        'tests.stpipe.steps.StepWithModel',
         input_file,
         '--input_dir', 'junkdir'
     ])
@@ -42,7 +42,7 @@ def test_use_input_dir(mk_tmp_dirs):
     input_file = 'flat.fits'
 
     step = Step.from_cmdline([
-        'jwst.stpipe.tests.steps.StepWithModel',
+        'tests.stpipe.steps.StepWithModel',
         input_file,
         '--input_dir', input_dir
     ])
@@ -57,7 +57,7 @@ def test_fail_input_dir(mk_tmp_dirs):
 
     with pytest.raises(FileNotFoundError):
         step = Step.from_cmdline([
-            'jwst.stpipe.tests.steps.StepWithModel',
+            'tests.stpipe.steps.StepWithModel',
             input_file,
         ])
 
