@@ -3,6 +3,7 @@
 from glob import glob
 from os import path
 import pytest
+from shutil import copy as file_copy
 
 from .helpers import (
     SCRIPT_PATH,
@@ -32,10 +33,22 @@ def test_run_outlier_only(mk_tmp_dirs):
     """Test a basic run"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
-    asn_path = update_asn_basedir(
+    # Copy necessary data to the tmp_data_path
+    file_copy(
         path.join(DATAPATH, 'two_member_spec3_asn.json'),
-        root=path.join(DATAPATH, 'level2b_twoslit')
+        tmp_data_path
     )
+    asn_path = path.join(tmp_data_path, 'two_member_spec3_asn.json')
+
+    with open(asn_path) as fp:
+        asn = load_asn(fp)
+    for product in asn['products']:
+        for member in product['members']:
+            file_copy(
+                path.join(DATAPATH, 'level2b_twoslit', member['expname']),
+                tmp_data_path
+            )
+
     args = [
         path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_default.cfg'),
         asn_path,
@@ -55,10 +68,22 @@ def test_run_outlier_only_mock(mk_tmp_dirs):
     """Test a basic run"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
-    asn_path = update_asn_basedir(
+    # Copy necessary data to the tmp_data_path
+    file_copy(
         path.join(DATAPATH, 'two_member_spec3_asn.json'),
-        root=path.join(DATAPATH, 'level2b_twoslit')
+        tmp_data_path
     )
+    asn_path = path.join(tmp_data_path, 'two_member_spec3_asn.json')
+
+    with open(asn_path) as fp:
+        asn = load_asn(fp)
+    for product in asn['products']:
+        for member in product['members']:
+            file_copy(
+                path.join(DATAPATH, 'level2b_twoslit', member['expname']),
+                tmp_data_path
+            )
+
     args = [
         path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_mock.cfg'),
         asn_path,
@@ -96,10 +121,22 @@ def test_run_resample_only(mk_tmp_dirs):
     """Test resample step only."""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
-    asn_path = update_asn_basedir(
-        path.join(DATAPATH, 'mos_udf_g235M_spec3_asn.json'),
-        root=path.join(DATAPATH, 'level2b')
+    # Copy necessary data to the tmp_data_path
+    file_copy(
+        path.join(DATAPATH, 'two_member_spec3_asn.json'),
+        tmp_data_path
     )
+    asn_path = path.join(tmp_data_path, 'two_member_spec3_asn.json')
+
+    with open(asn_path) as fp:
+        asn = load_asn(fp)
+    for product in asn['products']:
+        for member in product['members']:
+            file_copy(
+                path.join(DATAPATH, 'level2b_twoslit', member['expname']),
+                tmp_data_path
+            )
+
     args = [
         path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_default.cfg'),
         asn_path,
@@ -132,10 +169,22 @@ def test_run_resample_mock_only(mk_tmp_dirs):
     """Test resample step only."""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
-    asn_path = update_asn_basedir(
+    # Copy necessary data to the tmp_data_path
+    file_copy(
         path.join(DATAPATH, 'two_member_spec3_asn.json'),
-        root=path.join(DATAPATH, 'level2b_twoslit')
+        tmp_data_path
     )
+    asn_path = path.join(tmp_data_path, 'two_member_spec3_asn.json')
+
+    with open(asn_path) as fp:
+        asn = load_asn(fp)
+    for product in asn['products']:
+        for member in product['members']:
+            file_copy(
+                path.join(DATAPATH, 'level2b_twoslit', member['expname']),
+                tmp_data_path
+            )
+
     args = [
         path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_mock.cfg'),
         asn_path,
@@ -167,10 +216,22 @@ def test_run_cube_build(mk_tmp_dirs):
     """NRS MSA data is not cube data. Nothing should happen"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
-    asn_path = update_asn_basedir(
+    # Copy necessary data to the tmp_data_path
+    file_copy(
         path.join(DATAPATH, 'two_member_spec3_asn.json'),
-        root=path.join(DATAPATH, 'level2b_twoslit')
+        tmp_data_path
     )
+    asn_path = path.join(tmp_data_path, 'two_member_spec3_asn.json')
+
+    with open(asn_path) as fp:
+        asn = load_asn(fp)
+    for product in asn['products']:
+        for member in product['members']:
+            file_copy(
+                path.join(DATAPATH, 'level2b_twoslit', member['expname']),
+                tmp_data_path
+            )
+
     args = [
         path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_default.cfg'),
         asn_path,
@@ -202,10 +263,22 @@ def test_run_extract_1d_only(mk_tmp_dirs):
     """
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
-    asn_path = update_asn_basedir(
+    # Copy necessary data to the tmp_data_path
+    file_copy(
         path.join(DATAPATH, 'two_member_spec3_asn.json'),
-        root=path.join(DATAPATH, 'level2b_twoslit')
+        tmp_data_path
     )
+    asn_path = path.join(tmp_data_path, 'two_member_spec3_asn.json')
+
+    with open(asn_path) as fp:
+        asn = load_asn(fp)
+    for product in asn['products']:
+        for member in product['members']:
+            file_copy(
+                path.join(DATAPATH, 'level2b_twoslit', member['expname']),
+                tmp_data_path
+            )
+
     args = [
         path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_default.cfg'),
         asn_path,
@@ -241,10 +314,22 @@ def test_run_extract_1d_resample_mock(mk_tmp_dirs):
     """
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
-    asn_path = update_asn_basedir(
+    # Copy necessary data to the tmp_data_path
+    file_copy(
         path.join(DATAPATH, 'two_member_spec3_asn.json'),
-        root=path.join(DATAPATH, 'level2b_twoslit')
+        tmp_data_path
     )
+    asn_path = path.join(tmp_data_path, 'two_member_spec3_asn.json')
+
+    with open(asn_path) as fp:
+        asn = load_asn(fp)
+    for product in asn['products']:
+        for member in product['members']:
+            file_copy(
+                path.join(DATAPATH, 'level2b_twoslit', member['expname']),
+                tmp_data_path
+            )
+
     args = [
         path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_mock.cfg'),
         asn_path,
@@ -281,10 +366,22 @@ def test_run_nosteps(mk_tmp_dirs):
     """Test where no steps execute"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
-    asn_path = update_asn_basedir(
+    # Copy necessary data to the tmp_data_path
+    file_copy(
         path.join(DATAPATH, 'two_member_spec3_asn.json'),
-        root=path.join(DATAPATH, 'level2b_twoslit')
+        tmp_data_path
     )
+    asn_path = path.join(tmp_data_path, 'two_member_spec3_asn.json')
+
+    with open(asn_path) as fp:
+        asn = load_asn(fp)
+    for product in asn['products']:
+        for member in product['members']:
+            file_copy(
+                path.join(DATAPATH, 'level2b_twoslit', member['expname']),
+                tmp_data_path
+            )
+
     args = [
         path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_default.cfg'),
         asn_path,
@@ -322,10 +419,22 @@ def test_run_full(mk_tmp_dirs):
     """Test a full run"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
-    asn_path = update_asn_basedir(
+    # Copy necessary data to the tmp_data_path
+    file_copy(
         path.join(DATAPATH, 'two_member_spec3_asn.json'),
-        root=path.join(DATAPATH, 'level2b_twoslit')
+        tmp_data_path
     )
+    asn_path = path.join(tmp_data_path, 'two_member_spec3_asn.json')
+
+    with open(asn_path) as fp:
+        asn = load_asn(fp)
+    for product in asn['products']:
+        for member in product['members']:
+            file_copy(
+                path.join(DATAPATH, 'level2b_twoslit', member['expname']),
+                tmp_data_path
+            )
+
     args = [
         path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_default.cfg'),
         asn_path,
