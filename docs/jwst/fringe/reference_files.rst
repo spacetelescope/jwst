@@ -1,5 +1,6 @@
-Reference File
-==============
+Reference File Types
+====================
+
 The fringe correction step uses a FRINGE reference file, which has the same
 format as the FLAT reference file.  This correction is applied only to MIRI 
 MRS (IFU) mode exposures, which are always single full-frame 2-D images.
