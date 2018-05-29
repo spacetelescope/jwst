@@ -13,7 +13,7 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal
 import jsonschema
 from astropy.io import fits
 
-from jwst.datamodels import util, validate
+from jwst.datamodels import util, schemas, validate
 from jwst.datamodels import DataModel, ImageModel, RampModel, MaskModel, MultiSlitModel, AsnModel
 
 from asdf import schema as mschema
