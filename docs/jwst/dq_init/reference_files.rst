@@ -1,5 +1,5 @@
-Reference File
-==============
+Reference File Types
+====================
 The Data Quality Initialization step uses a MASK reference file.
 
 CRDS Selection Criteria
