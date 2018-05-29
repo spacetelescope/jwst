@@ -23,7 +23,7 @@ software and using a conda environment for the installation:
 
 This will install the latest released version of the package, and within the
 `jwst` environment, the pipeline can be run from the command line or imported
-into python programs.   In order to install a specific version, the exact 
+into python programs.   In order to install a specific version, the exact
 version can be supplied, e.g. `jwst=0.9.2`.
 
 To update to the latest nightly build
@@ -41,7 +41,7 @@ to install the dependencies, and then installing from the github repository:
     python setup.py develop
 
 Once installed, the software can be updated to the lastest development version by updating the dependencies,
-pulling the latest version of `master` from the Github repository inside the `jwst` directory: 
+pulling the latest version of `master` from the Github repository inside the `jwst` directory:
 
     conda update -n jwst_dev --override-channels -c http://ssb.stsci.edu/astroconda-dev -c defaults --all
     git pull origin master
@@ -61,6 +61,22 @@ Contributions and Feedback
 We welcome contributions and feedback on the project. Please follow the [contributing guidelines](CONTRIBUTING.md) to submit an issue or a pull request.
 
 We strive to provide a welcoming community to all of our users by abiding to the [Code of Conduct](CODE_OF_CONDUCT.md).
+
+
+Software vs DMS build version map
+---------------------------------
+
+| jwst tag | DMS build |    Date    |          Notes                           |
+| -------- | --------- | ---------- | -----------------------------------------|
+|  0.9.4   | B7.1.3rc2 | 05/29/2018 | Second release candidate for Build 7.1.3 |
+|  0.9.3   | B7.1.3rc1 | 05/11/2018 | First release candidate for Build 7.1.3  |
+|  0.9.2   |           | 03/28/2018 | DMS test, no delivery to I&T             |
+|  0.9.1   |           | 02/16/2018 | DMS test, no delivery to I&T             |
+|  0.9.0   |   B7.1.2  | 12/22/2017 | DMS patch release to I&T 02/15/2018      |
+|  0.8.0   |   B7.1.1  |            | DMS patch release to I&T 01/17/2018      |
+|  0.8.0   |   B7.1    | 11/14/2017 | Final, delivered to I&T 11/17/2017       |
+|  0.7.0rc7|   B7.0    | 12/13/2016 | Final, delivered to I&T                  |
+
 
 Unit Tests
 ----------
@@ -96,15 +112,4 @@ and then run the tests in the repository
     cd ~/path/to/jwst
     pytest --bigdata .
 
-Software vs DMS build version map
----------------------------------
 
-| jwst tag | DMS build |    Date    |          Notes                      |
-| -------- | --------- | ---------- | ----------------------------------- |
-|  0.9.4   |           | 05/29/2018 | DMS test, no delivery to I&T        |
-|  0.9.2   |           | 03/28/2018 | DMS test, no delivery to I&T        |
-|  0.9.1   |           | 02/16/2018 | DMS test, no delivery to I&T        |
-|  0.9.0   |   B7.1.2  | 12/22/2017 | DMS patch release to I&T 02/15/2018 |
-|  0.8.0   |   B7.1.1  |            | DMS patch release to I&T 01/17/2018 |
-|  0.8.0   |   B7.1    | 11/14/2017 | Final, delivered to I&T 11/17/2017  |
-|  0.7.0rc7|   B7.0    | 12/13/2016 | Final, delivered to I&T             |
