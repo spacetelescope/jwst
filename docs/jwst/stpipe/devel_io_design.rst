@@ -27,12 +27,23 @@ API Summary
       parent `Step` or `Pipeline`. :ref:`[more]<devel_io_substeps_and_output>`
     - `output_use_model`: True to always base output file names on the
       `DataModel.meta.filename` of the `DataModel` being saved.
+    - `input_dir`: Generally defined by the location of the primary
+      input file unless otherwise specified. 
 
 Classes, Methods, Functions
 ---------------------------
 
-    - :meth:`Step.save_model <jwst.stpipe.step.Step.save_model>`: Save a `DataModel` immediately.
-    - :attr:`Step.make_output_path <jwst.stpipe.step.Step._make_output_path>`: Create a file name.
+    - :meth:`Step.open_model <jwst.stpipe.step.Step.open_model>`: Open
+      a `DataModel`
+    - :meth:`Step.load_as_level2_asn`: Open a list or file as Level2 association.
+    - :meth:`Step.load_as_level3_asn`: Open a list or file as Level3 association.
+    - :meth:`Step.make_input_path
+      <jwst.stpipe.step.Step.make_input_path>`: Create a file name to
+      be used as input
+    - :meth:`Step.save_model <jwst.stpipe.step.Step.save_model>`: Save a `DataModel` immediately
+    - :attr:`Step.make_output_path
+      <jwst.stpipe.step.Step._make_output_path>`: Create a file name
+      to be used as output
 
 Design
 ======
@@ -118,35 +129,55 @@ arguments to expect are the same number of arguments defined by
 However, to facilitate code development and interactive usage, code
 is expected to accept other object types as well.
 
-For JWST-produced code, nearly all `Step`'s primary argument is
-expected to be either a string containing the file path to a data
-file, or a JWST :class:`~jwst.datamodels.DataModel` object. The utility
-function :func:`~jwst.datamodels.open` handles either type of input,
-returning a `DataModel` from the specified file or a shallow copy of
-the `DataModel` that was originally passed to it. The code to
-accomplish this looks like::
+A `Step`'s primary argument is expected to be either a string containing
+the file path to a data file, or a JWST
+:class:`~jwst.datamodels.DataModel` object. The method
+:meth:`~jwst.stpipe.step.Step.open_model` handles either type of
+input, returning a `DataModel` from the specified file or a shallow
+copy of the `DataModel` that was originally passed to it. A typical
+pattern for handling input arguments is::
 
   class MyStep(jwst.stpipe.step.Step):
 
       def process(self, input_argument):
 
-          input_model = jwst.datamodels.open(input_argument)
+          input_model = self.open_model(input_argument)
 
           ...
 
 `input_argument` can either be a string containing a path to a data
 file, such as `FITS` file, or a `DataModel` directly.
 
+:meth:`~jwst.stpipe.step.Step.open_model` handles `Step`-specific
+issues, such ensuring consistency of input directory handling.
+
+If some other file type is to be opened, the lower level method
+:meth:`~jwst.stpipe.step.Step.make_input_path` can be used to specify
+the input directory location.
+
 Input and Associations
 ----------------------
 
 Many of the JWST calibration steps and pipelines expect an
 :ref:`Association <associations>` file as input. When opened with
-:func:`jwst.datamodels.open`, a :class:`~jwst.datamodels.ModelContainer`
-is returned. `ModelContainer` is, among other features, a list-like
-object where each element is the `DataModel` of each member of the
-association. The `meta.asn_table` is populated with the association
-data structure, allowing direct access to the association itself.
+:meth:`~jwst.stpipe.step.Step.open_model`, a
+:class:`~jwst.datamodels.ModelContainer` is returned. `ModelContainer`
+is, among other features, a list-like object where each element is the
+`DataModel` of each member of the association. The `meta.asn_table` is
+populated with the association data structure, allowing direct access
+to the association itself.
+
+To read in a list of files, or an association file, as an association,
+use the `load_as_level2_asn` or `load_as_level3_asn` methods.
+
+Input Source
+------------
+
+In general, all input, except for references files provided by CRDS,
+are expected to be co-resident in the same directory. That directory
+is determined by the directory in which the primary input file
+resides. For programmatic use, this directory is available in the
+`Step.input_dir` attribute.
 
 Output
 ======

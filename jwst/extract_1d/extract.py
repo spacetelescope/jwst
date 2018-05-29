@@ -25,6 +25,10 @@ FILE_TYPE_JSON = "JSON"
 FILE_TYPE_IMAGE = "IMAGE"
 FILE_TYPE_OTHER = "N/A"
 
+# This is to prevent calling offset_from_offset multiple times for
+# multi-integration data.
+OFFSET_NOT_ASSIGNED_YET = "not assigned yet"
+
 # For full-frame input data, keyword SLTNAME may not be populated, so use
 # the following string to indicate that the first slit in the reference
 # file should be used.
@@ -228,15 +232,17 @@ def get_extract_parameters(ref_dict,
     return extract_params
 
 
-def find_dispaxis(slit, spectral_order, extract_params):
+def find_dispaxis(input_model, slit, spectral_order, extract_params):
     """Get the location of the spectrum, based on the WCS.
 
     Parameters:
     -----------
+    input_model: data model
+        The input science file.
+
     slit: data model
-        This can be a slit from a MultiSlitModel (or similar), or it
-        could be a SlitModel, perhaps a full image, including a
-        multi-integration exposure.
+        This is a slit from a MultiSlitModel (or similar), or "dummy"
+        if the input is not an array of 2-D cutouts.
         We use the meta.wcs and wavelength attributes.
 
     spectral_order: int
@@ -257,26 +263,72 @@ def find_dispaxis(slit, spectral_order, extract_params):
     else:
         initial_value = None
 
-    if hasattr(slit, 'meta') and hasattr(slit.meta, 'wcs'):
-        wcs = slit.meta.wcs
+    if slit == DUMMY:
+        shape = input_model.data.shape[-2:]
     else:
+        shape = slit.data.shape[-2:]
+
+    wcs = None                                  # initial value
+    if slit == DUMMY:
+        if input_model.meta.exposure.type == "NIS_SOSS":
+            if hasattr(input_model.meta, 'wcs'):
+                try:
+                    transform = niriss.niriss_soss_set_input(
+                                        input_model, spectral_order)
+                except ValueError:
+                    if spectral_order == 1:
+                        log.warning("Spectral order 1 not found")
+                        log.warning("Can't determine dispaxis from the WCS.")
+                        return
+                    else:
+                        log.warning("Spectral order %d not found, using 1",
+                                    spectral_order)
+                        transform = niriss.niriss_soss_set_input(
+                                        input_model, 1)
+                wcs = transform                 # not None
+        elif hasattr(input_model.meta, 'wcs'):
+            wcs = input_model.meta.wcs
+            transform = wcs.forward_transform
+    elif hasattr(slit, 'meta') and hasattr(slit.meta, 'wcs'):
+        wcs = slit.meta.wcs
+        transform = wcs.forward_transform
+
+    if wcs is None:
         log.warning("find_dispaxis:  WCS not found")
         return
 
-    if hasattr(slit, "wavelength"):
-        wl_array = slit.wavelength
+    n_inputs = None
+    if hasattr(transform, 'n_inputs'):
+        n_inputs = transform.n_inputs
+    elif (hasattr(transform, 'forward_transform') and
+          hasattr(transform.forward_transform, 'n_inputs')):
+            n_inputs = transform.forward_transform.n_inputs
+    elif (hasattr(wcs, 'forward_transform') and
+          hasattr(wcs.forward_transform, 'n_inputs')):
+            n_inputs = wcs.forward_transform.n_inputs
     else:
-        wl_array = None
-    if wl_array is None or len(wl_array) == 0:
+        log.warning("Can't find n_inputs, assuming n_inputs = 2")
+        n_inputs = 2
+    if n_inputs is None or n_inputs < 2 or n_inputs > 3:
+        log.warning("n_inputs for wcs is %s; should be 2 or 3", str(n_inputs))
+        log.warning("Can't determine dispaxis from the WCS.")
+        return
+
+    if slit == DUMMY:
         got_wavelength = False
     else:
-        got_wavelength = True                   # may be reset later
-    if not got_wavelength or wl_array.min() == 0. and wl_array.max() == 0.:
-        got_wavelength = False
+        if hasattr(slit, "wavelength"):
+            wl_array = slit.wavelength.copy()
+        else:
+            wl_array = None
+        if (wl_array is None or len(wl_array) == 0 or
+            wl_array.min() == 0. and wl_array.max() == 0.):
+                got_wavelength = False
+        else:
+            got_wavelength = True
 
     bb = wcs.bounding_box
     if bb is None:
-        shape = slit.data.shape
         x_cent = shape[-1] // 2
         y_cent = shape[-2] // 2
     else:
@@ -290,11 +342,16 @@ def find_dispaxis(slit, spectral_order, extract_params):
     # vertical directions.
     dispaxis = None                             # pessimistic value
     if got_wavelength:
-        dwlx = wl_array[:, 1:-1] - wl_array[:, 0:-2]
-        dwly = wl_array[1:-1, :] - wl_array[0:-2, :]
+        mask = (wl_array == 0)
+        if np.any(mask):
+            wl_array[mask] = np.nan
+        del mask
+        dwlx = wl_array[:, 1:] - wl_array[:, 0:-1]
+        dwly = wl_array[1:, :] - wl_array[0:-1, :]
         dwlx = np.nanmean(dwlx)
         dwly = np.nanmean(dwly)
-        log.debug("find_dispaxis:  dwlx = %s dwly = %s", str(dwlx), str(dwly))
+        log.debug("find_dispaxis, wavelength attribute:  dwlx = %s dwly = %s",
+                  str(dwlx), str(dwly))
 
         dwlx = np.abs(dwlx)
         dwly = np.abs(dwly)
@@ -303,8 +360,7 @@ def find_dispaxis(slit, spectral_order, extract_params):
         elif dwlx < dwly:
             dispaxis = VERTICAL
     else:
-        transform = wcs.forward_transform
-        if transform.n_inputs > 2:
+        if n_inputs > 2:
             stuff = transform(x_cent, y_cent, spectral_order)
             wl_00 = stuff[2]
             stuff = transform(x_cent, y_cent + 1, spectral_order)
@@ -318,21 +374,51 @@ def find_dispaxis(slit, spectral_order, extract_params):
             wl_01 = stuff[2]
             stuff = transform(x_cent + 1, y_cent)
             wl_10 = stuff[2]
-        dwlx = abs(wl_10 - wl_00)
-        dwly = abs(wl_01 - wl_00)
-        if np.isnan(dwlx) or np.isnan(dwly):
-            log.warning("wavelength from WCS is NaN within the bounding box")
-            shape = slit.data.shape
-            grid = np.indices(shape[-2:], dtype=np.float64)
-            # The arguments are the X and Y pixel coordinates.
-            stuff = slit.meta.wcs(grid[1], grid[0])
-            wl_wcs = stuff[2]
-            del grid, stuff
-            dwlx = wl_wcs[:, 1:-1] - wl_wcs[:, 0:-2]
-            dwly = wl_wcs[1:-1, :] - wl_wcs[0:-2, :]
-            dwlx = np.nanmean(dwlx)
-            dwly = np.nanmean(dwly)
-        log.debug("find_dispaxis:  dwlx = %s dwly = %s", str(dwlx), str(dwly))
+        dwlx = wl_10 - wl_00
+        dwly = wl_01 - wl_00
+        if (np.isnan(dwlx) or np.isnan(dwly) or
+            wl_00 == 0 or wl_01 == 0 or wl_10 == 0):
+                log.warning("wavelength from WCS is NaN or 0 "
+                            "within the bounding box")
+                if input_model.meta.exposure.type in WFSS_EXPTYPES:
+                    wl_wcs = np.zeros(shape, dtype=np.float64)
+                    log.debug("Starting to compute wavelengths ...")
+                    if n_inputs > 2:
+                        for j in range(shape[0]):
+                            for i in range(shape[1]):
+                                stuff = transform(i, j, spectral_order)
+                                if stuff[2] == 0.:
+                                    wl_wcs[j, i] = np.nan
+                                else:
+                                    wl_wcs[j, i] = stuff[2]
+                    else:
+                        for j in range(shape[0]):
+                            for i in range(shape[1]):
+                                stuff = transform(i, j)
+                                if stuff[2] == 0.:
+                                    wl_wcs[j, i] = np.nan
+                                else:
+                                    wl_wcs[j, i] = stuff[2]
+                    log.debug("... finished computing wavelengths")
+                else:
+                    grid = np.indices(shape, dtype=np.float64)
+                    if n_inputs > 2:
+                        stuff = transform(grid[1], grid[0], spectral_order)
+                    else:
+                        stuff = transform(grid[1], grid[0])
+                    wl_wcs = stuff[2].copy()
+                    del grid, stuff
+                    # Flag wavelength = 0 as invalid.
+                    mask = (wl_wcs == 0)
+                    if np.any(mask):
+                        wl_wcs[mask] = np.nan
+                    del mask
+                dwlx = wl_wcs[:, 1:] - wl_wcs[:, 0:-1]
+                dwly = wl_wcs[1:, :] - wl_wcs[0:-1, :]
+                dwlx = np.nanmean(dwlx)
+                dwly = np.nanmean(dwly)
+        log.debug("find_dispaxis, using wcs:  dwlx = %s dwly = %s",
+                  str(dwlx), str(dwly))
         if np.isnan(dwlx) or np.isnan(dwly):
             log.warning("dwlx and/or dwly is STILL NaN!  "
                         "Can't determine dispaxis from WCS")
@@ -351,8 +437,8 @@ def find_dispaxis(slit, spectral_order, extract_params):
         # reference file, or if there was no reference file.
         extract_params['dispaxis'] = dispaxis
 
-    log.debug("find_dispaxis:  dispaxis from ref file = %s; from wcs = %s",
-              str(initial_value), str(dispaxis))
+    log.debug("find_dispaxis:  dispaxis from ref file = %s, "
+              "from wavelengths = %s", str(initial_value), str(dispaxis))
 
 
 def log_initial_parameters(extract_params):
@@ -375,7 +461,7 @@ def log_initial_parameters(extract_params):
     log.debug("bkg_order = %d", extract_params["bkg_order"])
 
 
-def get_aperture(im_shape, wcs, extract_params):
+def get_aperture(im_shape, wcs, verbose, extract_params):
     """Get the extraction limits xstart, xstop, ystart, ystop.
 
     Parameters
@@ -386,6 +472,9 @@ def get_aperture(im_shape, wcs, extract_params):
 
     wcs: a WCS object, or None
         The wcs (if any) for the input data or slit.
+
+    verbose: bool
+        If True, log messages.
 
     extract_params: dictionary
         Parameters read from the reference file.
@@ -402,12 +491,12 @@ def get_aperture(im_shape, wcs, extract_params):
     ap_ref = aperture_from_ref(extract_params, im_shape)
 
     (ap_ref, truncated) = update_from_shape(ap_ref, im_shape)
-    if truncated:
+    if truncated and verbose:
         log.warning("Extraction limits extended outside the input image "
                     "borders; limits have been truncated.")
 
     if wcs is not None:
-        ap_wcs = aperture_from_wcs(wcs)
+        ap_wcs = aperture_from_wcs(wcs, verbose)
     else:
         ap_wcs = None
 
@@ -415,7 +504,7 @@ def get_aperture(im_shape, wcs, extract_params):
     # direction, the extraction region should be centered within the
     # WCS bounding box (domain).
     ap_ref = update_from_wcs(ap_ref, ap_wcs, extract_params["extract_width"],
-                             extract_params["dispaxis"])
+                             extract_params["dispaxis"], verbose)
     ap_ref = update_from_width(ap_ref, extract_params["extract_width"],
                                extract_params["dispaxis"])
 
@@ -574,13 +663,16 @@ def update_from_shape(ap, im_shape):
     return (ap_shape, truncated)
 
 
-def aperture_from_wcs(wcs):
+def aperture_from_wcs(wcs, verbose):
     """Get the limits over which the WCS is defined.
 
     Parameters
     ----------
     wcs: data model
         The world coordinate system interface.
+
+    verbose: bool
+        If True, log messages.
 
     Returns
     -------
@@ -595,18 +687,21 @@ def aperture_from_wcs(wcs):
         bounding_box = wcs.bounding_box
         got_bounding_box = True
     except AttributeError:
-        log.info("wcs.bounding_box not found; using wcs.domain instead.")
+        if verbose:
+            log.info("wcs.bounding_box not found; using wcs.domain instead.")
         bounding_box = ((wcs.domain[0]['lower'], wcs.domain[0]['upper']),
                         (wcs.domain[1]['lower'], wcs.domain[1]['upper']))
 
     if got_bounding_box and bounding_box is None:
-        log.warning("wcs.bounding_box is None")
+        if verbose:
+            log.warning("wcs.bounding_box is None")
         return None
 
     # bounding_box should be a tuple of tuples, each of the latter
     # consisting of (lower, upper) limits.
     if len(bounding_box) < 2:
-        log.warning("wcs.bounding_box has the wrong shape")
+        if verbose:
+            log.warning("wcs.bounding_box has the wrong shape")
         return None
 
     # These limits are float, and they are inclusive.
@@ -620,7 +715,7 @@ def aperture_from_wcs(wcs):
     return ap_wcs
 
 
-def update_from_wcs(ap_ref, ap_wcs, extract_width, direction):
+def update_from_wcs(ap_ref, ap_wcs, extract_width, direction, verbose):
     """Limit the extraction region to the WCS bounding box.
 
     Parameters
@@ -642,6 +737,9 @@ def update_from_wcs(ap_ref, ap_wcs, extract_width, direction):
         horizontal.  VERTICAL (2) if the dispersion direction is
         predominantly vertical.
 
+    verbose: bool
+        If True, log messages.
+
     Returns
     -------
     ap: namedtuple
@@ -652,7 +750,7 @@ def update_from_wcs(ap_ref, ap_wcs, extract_width, direction):
         return ap_ref
 
     # If the wcs limits don't pass the sanity test, ignore the bounding box.
-    if not sanity_check_limits(ap_ref, ap_wcs):
+    if not sanity_check_limits(ap_ref, ap_wcs, verbose):
         return ap_ref
 
     # ap_wcs has the limits over which the WCS transformation is defined;
@@ -668,15 +766,16 @@ def update_from_wcs(ap_ref, ap_wcs, extract_width, direction):
         else:
             width = xstop - xstart + 1
         if width < extract_width:
-            log.warning("extract_width was truncated from %g to %g",
-                        extract_width, width)
+            if verbose:
+                log.warning("extract_width was truncated from %g to %g",
+                            extract_width, width)
 
     ap = Aperture(xstart=xstart, xstop=xstop, ystart=ystart, ystop=ystop)
 
     return ap
 
 
-def sanity_check_limits(ap_ref, ap_wcs):
+def sanity_check_limits(ap_ref, ap_wcs, verbose):
     """Sanity check.
 
     Parameters
@@ -689,6 +788,9 @@ def sanity_check_limits(ap_ref, ap_wcs):
     ap_wcs: namedtuple
         These are the bounding box limits.
 
+    verbose: bool
+        If True, log messages.
+
     Returns
     -------
     flag: boolean
@@ -697,14 +799,15 @@ def sanity_check_limits(ap_ref, ap_wcs):
 
     if (ap_wcs.xstart >= ap_ref.xstop or ap_wcs.xstop <= ap_ref.xstart or
         ap_wcs.ystart >= ap_ref.ystop or ap_wcs.ystop <= ap_ref.ystart):
-        log.warning("The WCS bounding box is outside the aperture:")
-        log.warning("  aperture:  %s, %s, %s, %s",
-                    str(ap_ref.xstart), str(ap_ref.xstop),
-                    str(ap_ref.ystart), str(ap_ref.ystop))
-        log.warning("  wcs:       %s, %s, %s, %s",
-                    str(ap_wcs.xstart), str(ap_wcs.xstop),
-                    str(ap_wcs.ystart), str(ap_wcs.ystop))
-        log.warning(" so the wcs bounding box will be ignored.")
+        if verbose:
+            log.warning("The WCS bounding box is outside the aperture:")
+            log.warning("  aperture:  %s, %s, %s, %s",
+                        str(ap_ref.xstart), str(ap_ref.xstop),
+                        str(ap_ref.ystart), str(ap_ref.ystop))
+            log.warning("  wcs:       %s, %s, %s, %s",
+                        str(ap_wcs.xstart), str(ap_wcs.xstop),
+                        str(ap_wcs.ystart), str(ap_wcs.ystop))
+            log.warning(" so the wcs bounding box will be ignored.")
         flag = False
     else:
         flag = True
@@ -841,7 +944,7 @@ class ExtractBase:
         pass
 
 
-    def assign_polynomial_limits(self):
+    def assign_polynomial_limits(self, verbose):
         pass
 
 
@@ -855,6 +958,10 @@ class ExtractBase:
 
         verbose: boolean
             If True, write log messages.
+
+        Returns
+        -------
+        offset: float
         """
 
         total_points = input_model.meta.dither.total_points
@@ -862,18 +969,18 @@ class ExtractBase:
             if verbose:
                 log.info("Total number of dither points = %s; assuming no "
                          "nod/dither offset", str(total_points))
-            return None
+            return 0.
 
         if 'detector' not in self.wcs.available_frames:
             if verbose:
                 log.warning("detector frame not available, so "
                             "can't compute nod/dither offset")
-            return None
+            return 0.
         if 'v2v3' not in self.wcs.available_frames:
             if verbose:
                 log.warning("v2v3 frame not available, so "
                             "can't compute nod/dither offset")
-            return None
+            return 0.
         v2v3_detector = self.wcs.get_transform('v2v3', 'detector')
 
         xoffset = input_model.meta.dither.x_offset      # in arcsec
@@ -884,7 +991,7 @@ class ExtractBase:
             if verbose:
                 log.warning("XOFFSET and/or YOFFSET not found; "
                             "assuming no nod/dither offset")
-            return None
+            return 0.
 
         if hasattr(input_model.meta.wcsinfo, "v2_ref"):
             v2ref = input_model.meta.wcsinfo.v2_ref     # in arcsec
@@ -921,7 +1028,7 @@ class ExtractBase:
                 if verbose:
                     log.warning("Missing wcsinfo values; "
                                 "can't compute nod/dither offset")
-                return None
+                return 0.
 
         idl_v23 = trmodels.IdealToV2V3(v3idlyangle, v2ref, v3ref, vparity)
 
@@ -939,7 +1046,7 @@ class ExtractBase:
             if verbose:
                 log.warning("One or more of x, y, x0, y0 is None; "
                             "can't compute nod/dither offset")
-            return None
+            return 0.
         # offsets from xoffset = 0, yoffset = 0
         dx = x - x0
         dy = y - y0
@@ -1106,7 +1213,7 @@ class ExtractModel(ExtractBase):
             log.warning("WCS function not found in input.")
 
 
-    def add_nod_correction(self):
+    def add_nod_correction(self, verbose):
         """Add the nod offset to the extraction location (in-place).
 
         If source extraction coefficients src_coeff were specified, this
@@ -1131,12 +1238,16 @@ class ExtractModel(ExtractBase):
                 dir = "x"
                 self.xstart += self.nod_correction
                 self.xstop += self.nod_correction
-            log.info("Applying nod/dither offset of %s to %sstart and %sstop",
-                     str(self.nod_correction), dir, dir)
+            if verbose:
+                log.info("Applying nod/dither offset of %s "
+                         "to %sstart and %sstop",
+                         str(self.nod_correction), dir, dir)
 
         if self.src_coeff is not None or self.bkg_coeff is not None:
-            log.info("Applying nod/dither offset of %s "
-                     "to polynomial coefficients", str(self.nod_correction))
+            if verbose:
+                log.info("Applying nod/dither offset of %s "
+                         "to polynomial coefficients",
+                         str(self.nod_correction))
 
         if self.src_coeff is not None:
             n_lists = len(self.src_coeff)
@@ -1198,7 +1309,7 @@ class ExtractModel(ExtractBase):
             log.debug("bkg_coeff = %s", str(self.bkg_coeff))
 
 
-    def assign_polynomial_limits(self):
+    def assign_polynomial_limits(self, verbose):
         """Create polynomial functions for extraction limits.
 
         self.src_coeff and self.bkg_coeff contain lists of polynomial
@@ -1236,8 +1347,9 @@ class ExtractModel(ExtractBase):
             else:
                 lower = float(self.xstart) - 0.5
                 upper = float(self.xstop) + 0.5
-            log.debug("Converting extraction limits to [[%g], [%g]]",
-                      lower, upper)
+            if verbose:
+                log.debug("Converting extraction limits to [[%g], [%g]]",
+                          lower, upper)
             self.p_src = [[create_poly([lower]), create_poly([upper])]]
         else:
             # The source extraction can include more than one region.
@@ -1271,7 +1383,7 @@ class ExtractModel(ExtractBase):
                 expect_lower = not expect_lower
 
 
-    def extract(self, data, wl_array):
+    def extract(self, data, wl_array, verbose):
         """
         Do the actual extraction, for the case that the reference file
         is a JSON file, or that there is no reference file.
@@ -1284,6 +1396,9 @@ class ExtractModel(ExtractBase):
         wl_array: array_like (2-D) or None
             Wavelengths corresponding to `data`, or None if no WAVELENGTH
             was found in the input file.
+
+        verbose: bool
+            If True, log messages.
 
         Returns
         -------
@@ -1309,7 +1424,8 @@ class ExtractModel(ExtractBase):
         if not got_wavelength or wl_array.min() == 0. and wl_array.max() == 0.:
             got_wavelength = False
         if got_wavelength:
-            log.debug("Wavelengths are from wavelength attribute.")
+            if verbose:
+                log.debug("Wavelengths are from wavelength attribute.")
             # We need a 1-D array of wavelengths, one element for each
             # output table row.
             # These are slice limits.
@@ -1347,7 +1463,7 @@ class ExtractModel(ExtractBase):
             x_array.fill((self.xstart + self.xstop) / 2.)
 
         if self.wcs is not None:
-            if not got_wavelength:
+            if verbose and not got_wavelength:
                 log.debug("Wavelengths are from the wcs function.")
             nelem = slice1 - slice0
             if self.exp_type in WFSS_EXPTYPES:
@@ -1367,9 +1483,11 @@ class ExtractModel(ExtractBase):
                         ra[i], dec[i], wcs_wl[i], _ = transform(
                                 x_array[i], y_array[i], self.spectral_order)
                 else:
-                    log.warning("n_inputs for wcs function is %d", n_inputs)
-                    log.warning("WCS function was expected to take "
-                                "either 2 or 3 arguments.")
+                    if verbose:
+                        log.warning("n_inputs for wcs function is %d",
+                                    n_inputs)
+                        log.warning("WCS function was expected to take "
+                                    "either 2 or 3 arguments.")
                     ra[:] = -999.
                     dec[:] = -999.
                     wcs_wl[:] = -999.
@@ -1385,8 +1503,9 @@ class ExtractModel(ExtractBase):
                 max_ra = ra2.max()
                 ra = (min_ra + max_ra) / 2.
             else:
-                log.warning("All right ascension values are NaN; "
-                            "assigning dummy value -999.")
+                if verbose:
+                    log.warning("All right ascension values are NaN; "
+                                "assigning dummy value -999.")
                 ra = -999.
             mask = np.isnan(dec)
             not_nan = np.logical_not(mask)
@@ -1396,8 +1515,9 @@ class ExtractModel(ExtractBase):
                 max_dec = dec2.max()
                 dec = (min_dec + max_dec) / 2.
             else:
-                log.warning("All declination values are NaN; "
-                            "assigning dummy value -999.")
+                if verbose:
+                    log.warning("All declination values are NaN; "
+                                "assigning dummy value -999.")
                 dec = -999.
 
         else:
@@ -1413,7 +1533,8 @@ class ExtractModel(ExtractBase):
         else:
             image = np.transpose(data, (1, 0))
         if wavelength is None:
-            log.warning("Wavelengths could not be determined.")
+            if verbose:
+                log.warning("Wavelengths could not be determined.")
             if slice0 <= 0:
                 wavelength = np.arange(1, slice1 - slice0 + 1,
                                        dtype=np.float64)
@@ -1424,7 +1545,8 @@ class ExtractModel(ExtractBase):
         nan_mask = np.isnan(wavelength)
         n_nan = nan_mask.sum(dtype=np.intp)
         if n_nan > 0:
-            log.warning("%d NaNs in wavelength array", n_nan)
+            if verbose:
+                log.warning("%d NaNs in wavelength array", n_nan)
             temp_wl[nan_mask] = 0.01            # because NaNs cause problems
 
         # src total flux, area, total weight
@@ -1438,7 +1560,7 @@ class ExtractModel(ExtractBase):
         dq = np.zeros(net.shape, dtype=np.int32)
         if n_nan > 0:
             (wavelength, net, background, dq) = \
-                nans_at_endpoints(wavelength, net, background, dq)
+                nans_at_endpoints(wavelength, net, background, dq, verbose)
 
         return (ra, dec, wavelength, net, background, dq)
 
@@ -1498,23 +1620,29 @@ class ImageExtractModel(ExtractBase):
             log.warning("WCS function not found in input.")
 
 
-    def add_nod_correction(self):
+    def add_nod_correction(self, verbose):
         """Shift the reference image (in-place)."""
 
         if self.nod_correction == 0:
             return
 
-        log.info("Applying nod/dither offset of %s", str(self.nod_correction))
+        if verbose:
+            log.info("Applying nod/dither offset of %s",
+                     str(self.nod_correction))
 
         # Shift the image in the cross-dispersion direction.
         ref = self.ref_image.data.copy()
         shift = self.nod_correction
         ishift = int(round(shift))
         if ishift != shift:
-            log.info("Rounding nod/dither offset of %g to %d", shift, ishift)
+            if verbose:
+                log.info("Rounding nod/dither offset of %g to %d",
+                         shift, ishift)
         if self.dispaxis == HORIZONTAL:
             if abs(ishift) >= ref.shape[0]:
-                log.error("Nod offset %d is too large, skipping ...", ishift)
+                if verbose:
+                    log.warning("Nod offset %d is too large, skipping ...",
+                                ishift)
                 return
             self.ref_image.data[:, :] = 0.
             if ishift > 0:
@@ -1524,7 +1652,9 @@ class ImageExtractModel(ExtractBase):
                 self.ref_image.data[:-ishift, :] = ref[ishift:, :]
         else:
             if abs(ishift) >= ref.shape[1]:
-                log.error("Nod offset %d is too large, skipping ...", ishift)
+                if verbose:
+                    log.warning("Nod offset %d is too large, skipping ...",
+                                ishift)
                 return
             self.ref_image.data[:, :] = 0.
             if ishift > 0:
@@ -1543,7 +1673,7 @@ class ImageExtractModel(ExtractBase):
         log.debug("nod_correction = %s", str(self.nod_correction))
 
 
-    def extract(self, data, wl_array):
+    def extract(self, data, wl_array, verbose):
         """
         Do the actual extraction, for the case that the reference file
         is an image.
@@ -1556,6 +1686,9 @@ class ImageExtractModel(ExtractBase):
         wl_array: array_like (2-D) or None
             Wavelengths corresponding to `data`, or None if no WAVELENGTH
             was found in the input file.
+
+        verbose: bool
+            If True, log messages.
 
         Returns
         -------
@@ -1657,7 +1790,8 @@ class ImageExtractModel(ExtractBase):
             y_array = y_array[trim_slc]
 
         if got_wavelength:
-            log.debug("Wavelengths are from wavelength attribute.")
+            if verbose:
+                log.debug("Wavelengths are from wavelength attribute.")
             indx = np.around(x_array).astype(np.int)
             indy = np.around(y_array).astype(np.int)
             indx = np.where(indx < 0, 0, indx)
@@ -1669,7 +1803,7 @@ class ImageExtractModel(ExtractBase):
         nelem = len(x_array)
 
         if self.wcs is not None:
-            if not got_wavelength:
+            if verbose and not got_wavelength:
                 log.debug("Wavelengths are from the wcs function.")
             if self.exp_type in WFSS_EXPTYPES:
                 # We expect two (x and y) or three (x, y, spectral order).
@@ -1688,9 +1822,11 @@ class ImageExtractModel(ExtractBase):
                         ra[i], dec[i], wcs_wl[i], _ = transform(
                                 x_array[i], y_array[i], self.spectral_order)
                 else:
-                    log.warning("n_inputs for wcs function is %d", n_inputs)
-                    log.warning("WCS function was expected to take "
-                                "either 2 or 3 arguments.")
+                    if verbose:
+                        log.warning("n_inputs for wcs function is %d",
+                                    n_inputs)
+                        log.warning("WCS function was expected to take "
+                                    "either 2 or 3 arguments.")
                     ra[:] = -999.
                     dec[:] = -999.
                     wcs_wl[:] = -999.
@@ -1710,16 +1846,21 @@ class ImageExtractModel(ExtractBase):
             mask = np.isnan(ra)
             not_nan = np.logical_not(mask)
             if not_nan[middle]:
-                log.debug("Using midpoint of spectral trace for RA and Dec.")
+                if verbose:
+                    log.debug("Using midpoint of spectral trace "
+                              "for RA and Dec.")
                 ra = ra[middle]
             else:
                 if np.any(not_nan):
-                    log.warning("Midpoint of coordinate array is NaN; using "
-                                "the average of non-NaN min and max values.")
+                    if verbose:
+                        log.warning("Midpoint of coordinate array is NaN; "
+                                    "using the average of non-NaN min and "
+                                    "max values.")
                     ra = (np.nanmin(ra) + np.nanmax(ra)) / 2.
                 else:
-                    log.warning("All right ascension values are NaN; "
-                                "assigning dummy value -999.")
+                    if verbose:
+                        log.warning("All right ascension values are NaN; "
+                                    "assigning dummy value -999.")
                     ra = -999.
             mask = np.isnan(dec)
             not_nan = np.logical_not(mask)
@@ -1729,8 +1870,9 @@ class ImageExtractModel(ExtractBase):
                 if np.any(not_nan):
                     dec = (np.nanmin(dec) + np.nanmax(dec)) / 2.
                 else:
-                    log.warning("All declination values are NaN; "
-                                "assigning dummy value -999.")
+                    if verbose:
+                        log.warning("All declination values are NaN; "
+                                    "assigning dummy value -999.")
                     dec = -999.
 
         else:
@@ -1749,9 +1891,10 @@ class ImageExtractModel(ExtractBase):
         nan_mask = np.isnan(wavelength)
         n_nan = nan_mask.sum(dtype=np.intp)
         if n_nan > 0:
-            log.warning("%d NaNs in wavelength array", n_nan)
+            if verbose:
+                log.warning("%d NaNs in wavelength array", n_nan)
             (wavelength, net, background, dq) = \
-                nans_at_endpoints(wavelength, net, background, dq)
+                nans_at_endpoints(wavelength, net, background, dq, verbose)
 
         return (ra, dec, wavelength, net, background, dq)
 
@@ -1845,7 +1988,8 @@ def interpolate_response(wavelength, relsens):
     return r_factor
 
 
-def do_extract1d(input_model, refname, smoothing_length, bkg_order):
+def do_extract1d(input_model, refname, smoothing_length, bkg_order,
+                 log_increment):
 
     output_model = datamodels.MultiSpecModel()
     output_model.update(input_model)
@@ -1865,6 +2009,7 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
         # Loop over the slits in the input model
         for slit in slits:
             log.info('Working on slit %s', slit.name)
+            prev_offset = OFFSET_NOT_ASSIGNED_YET
             if np.size(slit.data) <= 0:
                 log.info('No data for slit %s, skipping ...', slit.name)
                 continue
@@ -1879,13 +2024,13 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
             elif extract_params['match'] == PARTIAL:
                 log.info('Spectral order %d not found, skipping ...', sp_order)
                 continue
-            find_dispaxis(slit, sp_order, extract_params)
+            find_dispaxis(input_model, slit, sp_order, extract_params)
 
             try:
-                (ra, dec, wavelength, net, background, dq) = \
-                        extract_one_slit(input_model, slit, -1,
-                                         verbose=True,
-                                         **extract_params)
+                (ra, dec, wavelength, net, background, dq,
+                 prev_offset) = extract_one_slit(
+                                        input_model, slit, -1,
+                                        prev_offset, True, extract_params)
             except InvalidSpectralOrderNumberError as e:
                 log.info(str(e) + ", skipping ...")
                 continue
@@ -1943,6 +2088,7 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
 
         if isinstance(input_model, (datamodels.ImageModel,
                                     datamodels.DrizProductModel)):
+            prev_offset = OFFSET_NOT_ASSIGNED_YET
             for sp_order in spectral_order_list:
                 if sp_order == "not set yet":
                     sp_order = get_spectral_order(input_model)
@@ -1954,12 +2100,12 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                                     bkg_order)
                 if extract_params['match'] == EXACT:
                     slit = DUMMY
-                    find_dispaxis(input_model, sp_order, extract_params)
+                    find_dispaxis(input_model, slit, sp_order, extract_params)
                     try:
-                        (ra, dec, wavelength, net, background, dq) = \
-                                extract_one_slit(input_model, slit, -1,
-                                                 verbose=True,
-                                                 **extract_params)
+                        (ra, dec, wavelength, net, background, dq,
+                         prev_offset) = extract_one_slit(
+                                        input_model, slit, -1,
+                                        prev_offset, True, extract_params)
                     except InvalidSpectralOrderNumberError as e:
                         log.info(str(e) + ", skipping ...")
                         continue
@@ -2011,7 +2157,10 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
         elif isinstance(input_model, (datamodels.CubeModel,
                                       datamodels.SlitModel)):
 
+            slit = DUMMY
+
             # NRS_BRIGHTOBJ exposures are instances of SlitModel.
+            prev_offset = OFFSET_NOT_ASSIGNED_YET
             for sp_order in spectral_order_list:
                 if sp_order == "not set yet":
                     sp_order = get_spectral_order(input_model)
@@ -2028,7 +2177,7 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                     log.warning('Spectral order %d not found, skipping ...',
                                 sp_order)
                     continue
-                find_dispaxis(input_model, sp_order, extract_params)
+                find_dispaxis(input_model, slit, sp_order, extract_params)
 
                 got_relsens = True
                 try:
@@ -2042,15 +2191,19 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                                 "so can't compute flux.")
 
                 # Loop over each integration in the input model
-                slit = DUMMY
-                verbose = True
+                verbose = True          # for just the first integration
+                if input_model.data.shape[0] == 1:
+                    log.info("Beginning loop, just 1 integration ...")
+                else:
+                    log.info("Beginning loop over %d integrations ...",
+                             input_model.data.shape[0])
                 for integ in range(input_model.data.shape[0]):
                     # Extract spectrum
                     try:
-                        (ra, dec, wavelength, net, background, dq) = \
-                                extract_one_slit(input_model, slit, integ,
-                                                 verbose=verbose,
-                                                 **extract_params)
+                        (ra, dec, wavelength, net, background, dq,
+                         prev_offset) = extract_one_slit(
+                                        input_model, slit, integ,
+                                        prev_offset, verbose, extract_params)
                     except InvalidSpectralOrderNumberError as e:
                         log.info(str(e) + ", skipping ...")
                         break
@@ -2082,6 +2235,29 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                     spec.slit_dec = dec
                     spec.spectral_order = sp_order
                     output_model.spec.append(spec)
+
+                    if (log_increment > 0 and
+                        (integ + 1) % log_increment == 0):
+                            if integ == 0:
+                                if input_model.data.shape[0] == 1:
+                                    log.info("1 integration done")
+                                else:
+                                    log.info("... 1 integration done")
+                            elif integ == input_model.data.shape[0] - 1:
+                                log.info("All %d integrations done",
+                                         input_model.data.shape[0])
+                            else:
+                                log.info("... %d integrations done", integ + 1)
+                            progress_msg_printed = True
+                    else:
+                            progress_msg_printed = False
+
+                if not progress_msg_printed:
+                    if input_model.data.shape[0] == 1:
+                        log.info("1 integration done")
+                    else:
+                        log.info("All %d integrations done",
+                                 input_model.data.shape[0])
 
         elif isinstance(input_model, datamodels.IFUCubeModel):
 
@@ -2327,7 +2503,8 @@ def copy_keyword_info(slit, slitname, spec):
         spec.shutter_state = slit.shutter_state
 
 
-def extract_one_slit(input_model, slit, integ, verbose, **extract_params):
+def extract_one_slit(input_model, slit, integ,
+                     prev_offset, verbose, extract_params):
     """Extract data for one slit, or spectral order, or plane.
     Parameters
     ----------
@@ -2345,15 +2522,23 @@ def extract_one_slit(input_model, slit, integ, verbose, **extract_params):
         `integ` is the integration number.  If the integration number is
         not relevant (i.e. the data array is 2-D), `integ` should be -1.
 
+    prev_offset: float or str
+        When extracting from multi-integration data, the nod/dither offset
+        only needs to be determined once.  `prev_offset` is either the
+        previously computed offset or a value (currently a string)
+        indicating that the offset hasn't been computed yet.  In the latter
+        case, method offset_from_offset will be called to determine the
+        offset.
+
     verbose: boolean
-        If True, log more info (extraction parameters, in particular).
+        If True, log more info (extraction parameters, for example).
 
     extract_params: dictionary
         Parameters read from the reference file.
 
     Returns
     -------
-    tuple (ra, dec, wavelength, net, background, dq)
+    tuple (ra, dec, wavelength, net, background, dq, offset)
         `ra` and `dec` are floats, and the others are 1-D arrays.
         `ra` and `dec` are the right ascension and declination at the
         nominal center of the slit.  `wavelength` is the wavelength in
@@ -2361,6 +2546,9 @@ def extract_one_slit(input_model, slit, integ, verbose, **extract_params):
         minus the background at each pixel.  `background` is the background
         count rate that was subtracted from the total source count rate
         to get `net`.  `dq` is the data quality array.
+        `offset` is the nod/dither offset in the cross-dispersion
+        direction, either computed by calling offset_from_offset in this
+        function, or copied from the input `prev_offset`.
     """
 
     if verbose:
@@ -2402,31 +2590,34 @@ def extract_one_slit(input_model, slit, integ, verbose, **extract_params):
         # If there is a reference file (there doesn't have to be), it's in
         # JSON format.
         extract_model = ExtractModel(input_model, slit, **extract_params)
-        ap = get_aperture(data.shape, extract_model.wcs, extract_params)
+        ap = get_aperture(data.shape, extract_model.wcs,
+                          verbose, extract_params)
         extract_model.update_extraction_limits(ap)
 
-    # xxx This only needs to be called for the first integration.
-    offset = extract_model.offset_from_offset(input_model, verbose=verbose)
-    if offset is not None:
+    # Only call this method for the first integration.
+    if prev_offset == OFFSET_NOT_ASSIGNED_YET:
+        offset = extract_model.offset_from_offset(input_model, verbose)
         if offset != 0:                         # xxx should be temporary
             if verbose:
                 log.debug("Computed nod/dither offset = %s, but don't "
                           "trust this yet, so assuming 0", str(offset))
             offset = 0.                         # xxx should be temporary
-        extract_model.nod_correction = offset
+    else:
+        offset = prev_offset
+    extract_model.nod_correction = offset
 
     # Add the nod/dither offset to the polynomial coefficients, or shift
     # the reference image (depending on the type of reference file).
-    extract_model.add_nod_correction()
+    extract_model.add_nod_correction(verbose)
 
     if verbose:
         extract_model.log_extraction_parameters()
 
-    extract_model.assign_polynomial_limits()
+    extract_model.assign_polynomial_limits(verbose)
     (ra, dec, wavelength, net, background, dq) = \
-                extract_model.extract(data, wl_array)
+                extract_model.extract(data, wl_array, verbose)
 
-    return (ra, dec, wavelength, net, background, dq)
+    return (ra, dec, wavelength, net, background, dq, offset)
 
 
 def replace_bad_values(data, input_dq, fill=0.):
@@ -2461,7 +2652,7 @@ def replace_bad_values(data, input_dq, fill=0.):
     else:
         return data
 
-def nans_at_endpoints(wavelength, net, background, dq):
+def nans_at_endpoints(wavelength, net, background, dq, verbose):
     """Flag NaNs in the wavelength array.
 
     All five input arrays should be 1-D and the same shape.
@@ -2483,6 +2674,9 @@ def nans_at_endpoints(wavelength, net, background, dq):
 
     dq: ndarray
         Data quality array.
+
+    verbose: bool
+        If True, log a message.
 
     Returns
     -------
@@ -2507,8 +2701,9 @@ def nans_at_endpoints(wavelength, net, background, dq):
     if len(flag[0]) > 0:
         n_trimmed = flag[0][0] + nelem - (flag[0][-1] + 1)
         if n_trimmed > 0:
-            log.info("Output arrays have been trimmed by %d elements",
-                     n_trimmed)
+            if verbose:
+                log.info("Output arrays have been trimmed by %d elements",
+                         n_trimmed)
             slc = slice(flag[0][0], flag[0][-1] + 1)
             new_wl = new_wl[slc]
             new_net = new_net[slc]

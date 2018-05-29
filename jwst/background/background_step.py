@@ -39,7 +39,7 @@ class BackgroundStep(Step):
         # Load the input data model
         with datamodels.open(input) as input_model:
 
-            if input_model.meta.exposure.type in ["NIS_WFSS", "NRC_GRISM"]:
+            if input_model.meta.exposure.type in ["NIS_WFSS", "NRC_WFSS"]:
 
                 # Get the reference file names
                 bkg_name = self.get_reference_file(input_model, "wfssbkg")

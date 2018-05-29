@@ -51,7 +51,6 @@ class RampFitStep (Step):
             # If found, store it in the science model meta data, so that it's
             # available later in the gain_scale step, which avoids having to
             # load the gain ref file again in that step.
-            input_model.meta.exposure.gain_factor = None
             if gain_model.meta.exposure.gain_factor is not None:
                 input_model.meta.exposure.gain_factor = \
                     gain_model.meta.exposure.gain_factor

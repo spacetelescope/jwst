@@ -92,7 +92,7 @@ class Image3Pipeline(Pipeline):
 
         try:
             result.meta.asn.pool_name = input_models.meta.asn_table.asn_pool
-            result.meta.asn.table_name = input
+            result.meta.asn.table_name = os.path.basename(input)
             result.meta.filename = input_models.meta.asn_table.products[0].name
         except:
             pass

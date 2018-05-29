@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 from collections import defaultdict
+import os.path as op
 
 from .. import datamodels
-from ..associations.load_as_asn import LoadAsLevel2Asn
 from ..lib.pipe_utils import is_tso
 from ..stpipe import Pipeline
 
@@ -73,7 +73,7 @@ class Spec2Pipeline(Pipeline):
         self.log.info('Starting calwebb_spec2 ...')
 
         # Retrieve the input(s)
-        asn = LoadAsLevel2Asn.load(input, basename=self.output_file)
+        asn = self.load_as_level2_asn(input)
 
         # Each exposure is a product in the association.
         # Process each exposure.
@@ -127,14 +127,11 @@ class Spec2Pipeline(Pipeline):
         science = science[0]
 
         self.log.info('Working on input %s ...', science)
-        if isinstance(science, datamodels.DataModel):
-            input = science
-        else:
-            input = datamodels.open(science)
+        input = self.open_model(science)
         exp_type = input.meta.exposure.type
         tso_mode = is_tso(input)
 
-        WFSS_TYPES = ["NIS_WFSS", "NRC_GRISM"]
+        WFSS_TYPES = ["NIS_WFSS", "NRC_WFSS"]
 
         # Apply WCS info
         # check the datamodel to see if it's
@@ -195,7 +192,7 @@ class Spec2Pipeline(Pipeline):
         # It isn't really necessary to include 'NRC_TSGRISM' in this list,
         # but it doesn't hurt, and it makes it clear that flat_field
         # should be done before extract_2d for all WFSS/GRISM data.
-        if exp_type in ['NRC_GRISM', 'NIS_WFSS', 'NRC_TSGRISM']:
+        if exp_type in ['NRC_WFSS', 'NIS_WFSS', 'NRC_TSGRISM']:
             # Apply flat-field correction
             input = self.flat_field(input)
 
@@ -234,7 +231,7 @@ class Spec2Pipeline(Pipeline):
 
         # Record ASN pool and table names in output
         input.meta.asn.pool_name = pool_name
-        input.meta.asn.table_name = asn_file
+        input.meta.asn.table_name = op.basename(asn_file)
 
         # Setup to save the calibrated exposure at end of step.
         self.suffix = 'cal'

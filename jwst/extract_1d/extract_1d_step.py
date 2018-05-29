@@ -16,6 +16,8 @@ class Extract1dStep(Step):
     # Order of polynomial fit to one column (or row if the dispersion
     # direction is vertical) of background regions.
     bkg_order = integer(default=None, min=0)
+    # Log a progress message when processing multi-integration data.
+    log_increment = integer(default=50)
     """
 
     reference_file_types = ['extract1d']
@@ -70,7 +72,8 @@ class Extract1dStep(Step):
                                       self.ref_file)
                     temp = extract.do_extract1d(model, self.ref_file,
                                                 self.smoothing_length,
-                                                self.bkg_order)
+                                                self.bkg_order,
+                                                self.log_increment)
                     # Set the step flag to complete in each MultiSpecModel
                     temp.meta.cal_step.extract_1d = 'COMPLETE'
                     result.append(temp)
@@ -87,7 +90,8 @@ class Extract1dStep(Step):
                                   self.ref_file)
                 result = extract.do_extract1d(input_model[0], self.ref_file,
                                               self.smoothing_length,
-                                              self.bkg_order)
+                                              self.bkg_order,
+                                              self.log_increment)
                 # Set the step flag to complete
                 result.meta.cal_step.extract_1d = 'COMPLETE'
             else:
@@ -106,7 +110,8 @@ class Extract1dStep(Step):
                               self.ref_file)
             result = extract.do_extract1d(input_model, self.ref_file,
                                           self.smoothing_length,
-                                          self.bkg_order)
+                                          self.bkg_order,
+                                          self.log_increment)
             # Set the step flag to complete
             result.meta.cal_step.extract_1d = 'COMPLETE'
 

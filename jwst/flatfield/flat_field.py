@@ -278,29 +278,15 @@ def do_NIRSpec_flat_field(output_model,
         interpolated_flats = None
 
     any_updated = False
-    if exposure_type == "NRS_MSASPEC":
-        # This is not the same as output_model.slits; `slits` will be
-        # used a few lines farther down.
-        slits = nirspec.get_open_slits(output_model)
+
     for (k, slit) in enumerate(output_model.slits):
         log.info("Processing slit %s", slit.name)
-        slit_nt = None
+        if exposure_type == "NRS_MSASPEC":
+            slit_nt = slit                      # includes quadrant info
+        else:
+            slit_nt = None
         flat_2d = np.ones_like(slit.data)       # default values
         flat_dq_2d = np.zeros_like(slit.dq)
-        if exposure_type == "NRS_MSASPEC":
-            # Find this slit in the list of open slits.
-            for j in range(len(slits)):
-                if str(slits[j].name) == slit.name:
-                    slit_nt = slits[j]
-                    break
-            if slit_nt is None:
-                log.error("Couldn't find slit %s in list of open slits; "
-                          "skipping ...", slit.name)
-                populate_interpolated_flats(k, slit,
-                                            interpolated_flats, output_model,
-                                            flat_2d, flat_dq_2d,
-                                            got_wl_attribute=False)
-                continue
 
         # pixels with respect to the original image
         ysize, xsize = slit.data.shape
@@ -471,8 +457,10 @@ def NIRSpec_brightobj(output_model,
 
     slit_name = output_model.name
 
+    # The input may be either 2-D or 3-D; save `shape` for use later.
+    shape = output_model.data.shape
+    ysize, xsize = shape[-2:]
     # pixels with respect to the original image
-    n_ints, ysize, xsize = output_model.data.shape
     xstart = output_model.meta.subarray.xstart - 1
     ystart = output_model.meta.subarray.ystart - 1
     xstop = xstart + xsize
@@ -545,11 +533,15 @@ def NIRSpec_brightobj(output_model,
         else:
             interpolated_flats.wavelength = np.zeros_like(flat_2d)
 
-    flat_3d = flat_2d.reshape((1, ysize, xsize))
-    flat_dq_3d = flat_dq_2d.reshape((1, ysize, xsize))
-    output_model.data /= flat_3d
-    output_model.err /= flat_3d
-    output_model.dq |= flat_dq_3d
+    if len(shape) == 3:
+        flat_Nd = flat_2d.reshape((1, ysize, xsize))
+        flat_dq_Nd = flat_dq_2d.reshape((1, ysize, xsize))
+    else:
+        flat_Nd = flat_2d
+        flat_dq_Nd = flat_dq_2d
+    output_model.data /= flat_Nd
+    output_model.err /= flat_Nd
+    output_model.dq |= flat_dq_Nd
 
     output_model.meta.cal_step.flat_field = 'COMPLETE'
 

@@ -13,6 +13,7 @@ from asdf.tags.core import ndarray
 from asdf import tagged
 
 from . import util
+from . import validate
 
 import logging
 log = logging.getLogger(__name__)
@@ -120,11 +121,11 @@ def _make_default(attr, schema, ctx):
     return None
 
 
-def _make_node(instance, schema, ctx):
+def _make_node(attr, instance, schema, ctx):
     if isinstance(instance, dict):
-        return ObjectNode(instance, schema, ctx)
+        return ObjectNode(attr, instance, schema, ctx)
     elif isinstance(instance, list):
-        return ListNode(instance, schema, ctx)
+        return ListNode(attr, instance, schema, ctx)
     else:
         return instance
 
@@ -166,7 +167,8 @@ def _find_property(schema, attr):
     return find
 
 class Node(object):
-    def __init__(self, instance, schema, ctx):
+    def __init__(self, attr, instance, schema, ctx):
+        self._name = attr
         self._instance = instance
         self._schema = schema
         self._schema['$schema'] = 'http://stsci.edu/schemas/asdf-schema/0.1.0/asdf-schema'
@@ -175,8 +177,8 @@ class Node(object):
     def _validate(self):
         instance = yamlutil.custom_tree_to_tagged_tree(self._instance,
                                                        self._ctx._asdf)
-        return util.validate_schema(instance, self._schema, False,
-                                    self._ctx._strict_validation)
+        return validate.value_change(self._name, instance, self._schema,
+                                      False, self._ctx._strict_validation)
 
     @property
     def instance(self):
@@ -206,16 +208,17 @@ class ObjectNode(Node):
             if schema == {}:
                 raise AttributeError("No attribute '{0}'".format(attr))
             val = _make_default(attr, schema, self._ctx)
-            self._instance[attr] = val
+            if val is not None:
+                self._instance[attr] = val
 
         if isinstance(val, dict):
             # Meta is special cased to support NDData interface
             if attr == 'meta':
-                node = ndmodel.MetaNode(val, schema, self._ctx)
+                node = ndmodel.MetaNode(attr, val, schema, self._ctx)
             else:
-                node = ObjectNode(val, schema, self._ctx)
+                node = ObjectNode(attr, val, schema, self._ctx)
         elif isinstance(val, list):
-            node = ListNode(val, schema, self._ctx)
+            node = ListNode(attr, val, schema, self._ctx)
         else:
             node = val
 
@@ -230,7 +233,7 @@ class ObjectNode(Node):
                 val = _make_default(attr, schema, self._ctx)
             val = _cast(val, schema)
 
-            node = ObjectNode(val, schema, self._ctx)
+            node = ObjectNode(attr, val, schema, self._ctx)
             if node._validate():
                 self._instance[attr] = val
 
@@ -239,8 +242,8 @@ class ObjectNode(Node):
             del self.__dict__[attr]
         else:
             schema = _get_schema_for_property(self._schema, attr)
-            if not util.validate_schema(None, schema, False,
-                                        self._ctx._strict_validation):
+            if not validate.value_change(attr, None, schema, False,
+                                          self._ctx._strict_validation):
                 return
 
             try:
@@ -287,12 +290,12 @@ class ListNode(Node):
 
     def __getitem__(self, i):
         schema = _get_schema_for_index(self._schema, i)
-        return _make_node(self._instance[i], schema, self._ctx)
+        return _make_node(self._name, self._instance[i], schema, self._ctx)
 
     def __setitem__(self, i, val):
         schema = _get_schema_for_index(self._schema, i)
         val =  _cast(val, schema)
-        node = ObjectNode(val, schema, self._ctx)
+        node = ObjectNode(self._name, val, schema, self._ctx)
         if node._validate():
             self._instance[i] = val
 
@@ -309,7 +312,7 @@ class ListNode(Node):
         else:
             schema_parts = self._schema['items']
         schema = {'type': 'array', 'items': schema_parts}
-        return _make_node(self._instance[i:j], schema, self._ctx)
+        return _make_node(self._name, self._instance[i:j], schema, self._ctx)
 
     def __setslice__(self, i, j, other):
         parts = _unmake_node(other)
@@ -325,21 +328,21 @@ class ListNode(Node):
     def append(self, item):
         schema = _get_schema_for_index(self._schema, len(self._instance))
         item = _cast(item, schema)
-        node = ObjectNode(item, schema, self._ctx)
+        node = ObjectNode(self._name, item, schema, self._ctx)
         if node._validate():
             self._instance.append(item)
 
     def insert(self, i, item):
         schema = _get_schema_for_index(self._schema, i)
         item = _cast(item, schema)
-        node = ObjectNode(item, schema, self._ctx)
+        node = ObjectNode(self._name, item, schema, self._ctx)
         if node._validate():
             self._instance.insert(i, item)
 
     def pop(self, i=-1):
         schema = _get_schema_for_index(self._schema, 0)
         x = self._instance.pop(i)
-        return _make_node(x, schema, self._ctx)
+        return _make_node(self._name, x, schema, self._ctx)
 
     def remove(self, item):
         self._instance.remove(item)
@@ -362,7 +365,8 @@ class ListNode(Node):
 
     def item(self, **kwargs):
         assert isinstance(self._schema['items'], dict)
-        node = ObjectNode(kwargs, self._schema['items'], self._ctx)
+        node = ObjectNode(self._name, kwargs, self._schema['items'],
+                          self._ctx)
         if not node._validate():
             node = None
         return node

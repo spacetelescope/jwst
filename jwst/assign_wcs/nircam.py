@@ -80,7 +80,6 @@ def imaging_distortion(input_model, reference_files):
     return transform
 
 
-
 def tsgrism(input_model, reference_files):
     """Create WCS pipeline for a NIRCAM Time Series Grism observation.
 
@@ -116,7 +115,6 @@ def tsgrism(input_model, reference_files):
     if input_model.meta.instrument.pupil != "GRISMR":
         raise ValueError('TSGRIM mode only supports GRISMR')
 
-
     gdetector = cf.Frame2D(name='grism_detector', axes_order=(0, 1), unit=(u.pix, u.pix))
     detector = cf.Frame2D(name='full_detector', axes_order=(0, 1), unit=(u.pix, u.pix))
     v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.deg, u.deg))
@@ -124,7 +122,6 @@ def tsgrism(input_model, reference_files):
 
     # get the shift to full frame coordinates
     subarray2full = subarray_transform(input_model)
-
 
     # translate the x,y detector-in to x,y detector out coordinates
     # Get the disperser parameters which are defined as a model for each
@@ -153,7 +150,6 @@ def tsgrism(input_model, reference_files):
                                                     xmodels=dispx,
                                                     ymodels=dispy)
 
-
     # input into the forward transform is x,y,x0,y0,order
     #
     sub2direct = (subarray2full & Identity(3)) | det2det
@@ -166,10 +162,10 @@ def tsgrism(input_model, reference_files):
                 (v2v3, tel2sky),
                 (world, None)]
 
-
     return pipeline
 
-def grism(input_model, reference_files):
+
+def wfss(input_model, reference_files):
     """
     Create the WCS pipeline for a NIRCAM grism observation.
 
@@ -248,9 +244,8 @@ def grism(input_model, reference_files):
         raise TypeError('The input data model must be an ImageModel.')
 
     # make sure this is a grism image
-    if "NRC_GRISM" not in input_model.meta.exposure.type:
+    if "NRC_WFSS" not in input_model.meta.exposure.type:
             raise TypeError('The input exposure is not a NIRCAM grism')
-
 
     # Create the empty detector as a 2D coordinate frame in pixel units
     gdetector = cf.Frame2D(name='grism_detector',
@@ -287,7 +282,6 @@ def grism(input_model, reference_files):
                                                     xmodels=dispx,
                                                     ymodels=dispy)
 
-
     # create the pipeline to construct a WCS object for the whole image
     # which can translate ra,dec to image frame reference pixels
     # it also needs to be part of the grism image wcs pipeline to
@@ -315,7 +309,7 @@ def grism(input_model, reference_files):
 
 
 exp_type2transform = {'nrc_image': imaging,
-                      'nrc_grism': grism,
+                      'nrc_wfss': wfss,
                       'nrc_tacq': imaging,
                       'nrc_taconfirm': imaging,
                       'nrc_coron': imaging,

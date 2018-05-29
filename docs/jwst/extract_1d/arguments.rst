@@ -1,7 +1,7 @@
 Step Arguments
 ==============
 
-The extract_1d step has two step-specific arguments.  Currently neither of
+The extract_1d step has three step-specific arguments.  Currently none of
 these is used for IFU data.
 
 *  ``--smoothing_length``
@@ -24,3 +24,17 @@ subtracted from the target data.  ``bkg_order`` = 0 (the minimum allowed
 value) means to fit a constant.  The user-supplied value (if any)
 overrides the value in the reference file.  If neither is specified, a
 value of 0 will be used.
+
+*  ``--log_increment``
+
+Most log messages are suppressed while looping over integrations, i.e. when
+the input is a CubeModel or a 3-D SlitModel.  Messages will be logged while
+processing the first integration, but since they would be the same for
+every integration, most messages will only be written once.  However, since
+there can be hundreds or thousands of integrations, which can take a long
+time to process, it would be useful to log a message every now and then to
+let the user know that the step is still running.
+
+``log_increment`` is an integer, with default value 50.  If it is greater
+than 0, an INFO message will be printed every ``log_increment``
+integrations, e.g. "... 150 integrations done".

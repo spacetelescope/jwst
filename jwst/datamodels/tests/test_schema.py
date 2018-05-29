@@ -13,7 +13,7 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal
 import jsonschema
 from astropy.io import fits
 
-from .. import util
+from .. import util, validate
 from .. import DataModel, ImageModel, RampModel, MaskModel, MultiSlitModel, AsnModel
 
 from asdf import schema as mschema
@@ -142,7 +142,7 @@ def test_invalid_fits():
     hdulist.writeto(TMP_FITS)
     hdulist.close()
 
-    with pytest.raises(util.ValidationWarning):
+    with pytest.raises(validate.ValidationWarning):
         with warnings.catch_warnings():
             os.environ['PASS_INVALID_VALUES'] = '0'
             os.environ['STRICT_VALIDATION'] = '0'
@@ -173,7 +173,7 @@ def test_invalid_fits():
     del os.environ['PASS_INVALID_VALUES']
     del os.environ['STRICT_VALIDATION']
 
-    with pytest.raises(util.ValidationWarning):
+    with pytest.raises(validate.ValidationWarning):
         with warnings.catch_warnings():
             warnings.simplefilter('error')
             model = util.open(TMP_FITS,

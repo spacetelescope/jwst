@@ -17,7 +17,7 @@ def do_correction(input_model):
     -------------
     The sole correction is to add the DO_NOT_USE flat to the GROUP data 
     quality flags for the first group, if the number of groups is greater 
-    than 1.
+    than 3.
     
     Parameters
     ----------
@@ -37,15 +37,16 @@ def do_correction(input_model):
     # Create output as a copy of the input science data model
     output = input_model.copy()
 
-    # Update the step status, and if ngroups > 1, set all of the GROUPDQ in
+    # Update the step status, and if ngroups > 3, set all of the GROUPDQ in
     # the first group to 'DO_NOT_USE'
-    if sci_ngroups > 1:
+    if sci_ngroups > 3:
         output.groupdq[:, 0, :, :] = \
             np.bitwise_or(output.groupdq[:,0,:,:], dqflags.group['DO_NOT_USE'])
         log.debug("FirstFrame Sub: resetting GROUPDQ in first frame to DO_NOT_USE")
         output.meta.cal_step.firstframe = 'COMPLETE'
     else:   # too few groups
-        log.warning("FirstFrame Corr: too few groups, skipping step")
+        log.warning("Too few groups to apply correction")
+        log.warning("Step will be skipped")
         output.meta.cal_step.firstframe = 'SKIPPED'
 
     return output

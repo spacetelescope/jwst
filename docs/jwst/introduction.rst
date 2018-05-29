@@ -320,6 +320,18 @@ logging level designations of `DEBUG`, `INFO`, `WARNING`, `ERROR`, and
 will be displayed.
 
 
+Input Files
+===========
+
+There are two general types of input to any stage: references files
+and data files.  The references files, unless explicitly
+overridden, are provided through CRDS.
+
+The input data files - the exposure FITS files, association JSON files
+and input catalogs - are presumed to all be in the same directory as
+the primary input file. Sometimes the primary input is an association
+JSON file, and sometimes it is an exposure FITS file.
+
 Output File Names
 =================
 
