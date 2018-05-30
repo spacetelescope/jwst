@@ -78,7 +78,29 @@ class Asn_Lv2ImageNonScience(
         self.constraints = Constraint([
             Constraint_Base(),
             Constraint_Mode(),
-            Constraint_Image_Nonscience(),
+            Constraint(
+                [
+                    Constraint_Image_Nonscience(),
+                    Constraint(
+                        [
+                            DMSAttrConstraint(
+                                name='exp_type',
+                                sources=['exp_type'],
+                                value='nrs_msaspec'
+                            ),
+                            DMSAttrConstraint(
+                                sources=['msastate'],
+                                value='primarypark_allopen'
+                            ),
+                            DMSAttrConstraint(
+                                sources=['grating'],
+                                value='mirror'
+                            )
+                        ]
+                    )
+                ],
+                reduce=Constraint.any
+            )
         ])
 
         # Now check and continue initialization.
