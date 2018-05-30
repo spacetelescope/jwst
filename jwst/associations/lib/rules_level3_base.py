@@ -668,7 +668,7 @@ class Constraint_MSA(Constraint):
                     name='exp_type',
                     sources=['exp_type'],
                     value=(
-                        '|nrs_autoflat'
+                        'nrs_autoflat'
                         '|nrs_autowave'
                         '|nrs_msaspec'
                     ),
