@@ -622,13 +622,35 @@ class Constraint_Image_Science(DMSAttrConstraint):
         )
 
 
-class Constraint_Image_Nonscience(DMSAttrConstraint):
+class Constraint_Image_Nonscience(Constraint):
     """Select on non-science images"""
     def __init__(self):
         super(Constraint_Image_Nonscience, self).__init__(
-            name='non_science',
-            sources=['exp_type'],
-            value='|'.join(IMAGE2_NONSCIENCE_EXP_TYPES),
+            [
+                DMSAttrConstraint(
+                    name='non_science',
+                    sources=['exp_type'],
+                    value='|'.join(IMAGE2_NONSCIENCE_EXP_TYPES),
+                ),
+                Constraint(
+                    [
+                        DMSAttrConstraint(
+                            name='exp_type',
+                            sources=['exp_type'],
+                            value='nrs_msaspec'
+                        ),
+                        DMSAttrConstraint(
+                            sources=['msastate'],
+                            value='primarypark_allopen'
+                        ),
+                        DMSAttrConstraint(
+                            sources=['grating'],
+                            value='mirror'
+                        )
+                    ]
+                )
+            ],
+            reduce=Constraint.any
         )
 
 
