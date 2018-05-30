@@ -1,6 +1,3 @@
-from __future__ import (absolute_import, unicode_literals, division,
-                        print_function)
-
 import logging
 import importlib
 from gwcs.wcs import WCS
@@ -12,8 +9,15 @@ log.setLevel(logging.DEBUG)
 
 def load_wcs(input_model, reference_files={}):
     """
-    Create the WCS object from the input model and reference files and
-    store the pickled WCS-related object into the model meta data.
+    Create a gWCS object and store it in ``Model.meta``.
+
+    Parameters
+    ----------
+    input_model : `~jwst.datamodels.DataModel`
+        The exposure.
+    reference_files : dict
+        A dict {reftype: reference_file_name} containing all
+        reference files that apply to this exposure.
     """
     if reference_files:
         for ref_type, ref_file in reference_files.items():
