@@ -1,5 +1,5 @@
 """
-Utility function for WCS
+Utility function for assign_wcs.
 
 """
 import warnings
@@ -262,10 +262,12 @@ def subarray_transform(input_model):
 
 
 def not_implemented_mode(input_model, ref):
+    """
+    Return ``None`` if assign_wcs has not been implemented for a mode.
+    """
     exp_type = input_model.meta.exposure.type
     message = "WCS for EXP_TYPE of {0} is not implemented.".format(exp_type)
     log.critical(message)
-    # raise AttributeError(message)
     return None
 
 
@@ -450,7 +452,7 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
                 # I think this should be taken care of in the trace polys
                 wave_min = lmax
                 wave_max = lmin
-                if (disperse_row_right or  disperse_column):
+                if (disperse_row_right or disperse_column):
                     wave_min = lmin
                     wave_max = lmax
 

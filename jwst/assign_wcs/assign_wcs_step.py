@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-from ..stpipe import Step, cmdline
+from ..stpipe import Step
 from .. import datamodels
 import logging
 from .assign_wcs import load_wcs
@@ -10,14 +10,8 @@ log.setLevel(logging.DEBUG)
 
 class AssignWcsStep(Step):
     """
-    AssignWcsStep: Loads all WCS and distortion information for an exposure
-    and stores it in the model meta data.
-    """
+    AssignWcsStep: Create a gWCS object and store it in ``Model.meta``.
 
-    spec = """
-    """
-
-    """
     Reference file types:
 
     camera             Camera model (NIRSPEC)
@@ -35,7 +29,16 @@ class AssignWcsStep(Step):
     specwcs            Wavelength calibration models (MIRI, NIRCAM, NIRISS)
     regions            Stores location of the regions on the detector (MIRI)
     wavelengthrange    Typical wavelength ranges (MIRI, NIRCAM, NIRISS, NIRSPEC)
+
+    Parameters
+    ----------
+    input : `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`, `~jwst.datamodels.CubeModel`
+        Input exposure.
     """
+
+    spec = """
+    """
+
     reference_file_types = ['distortion', 'filteroffset', 'specwcs', 'regions',
                             'wavelengthrange', 'camera', 'collimator', 'disperser',
                             'fore', 'fpa', 'msa', 'ote', 'ifupost',

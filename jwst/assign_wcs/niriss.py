@@ -21,10 +21,8 @@ log.setLevel(logging.DEBUG)
 
 
 def create_pipeline(input_model, reference_files):
-    '''
-    get reference files from crds
-
-    '''
+    """Create the WCS pipeline based on EXP_TYPE.
+    """
 
     exp_type = input_model.meta.exposure.type.lower()
     pipeline = exp_type2transform[exp_type](input_model, reference_files)
@@ -34,27 +32,27 @@ def create_pipeline(input_model, reference_files):
 
 def niriss_soss_set_input(model, order_number):
     """
-    Get the right model given the order number.
+    Extract a WCS fr a specific spectral order.
 
     Parameters
     ----------
-    model - Input model
-    order_number - the, well, order number desired
+    model - `~jwst.datamodels.ImageModel`
+    order_number - the spectral order
 
     Returns
     -------
-    WCS - the WCS corresponding to the order_number
+    WCS - the WCS corresponding to the spectral order.
 
     """
 
-    # Make sure the order number is correct.
+    # Make sure the spectral order is available.
     if order_number < 1 or order_number > 3:
         raise ValueError('Order must be between 1 and 3')
 
     # Return the correct transform based on the order_number
     obj = model.meta.wcs.forward_transform.get_model(order_number)
 
-    # use the size of the input subarray7
+    # use the size of the input subarray
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
     spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.micron,),
                             axes_names=('wavelength',))
@@ -71,14 +69,16 @@ def niriss_soss_set_input(model, order_number):
 
 def niriss_soss(input_model, reference_files):
     """
-    The NIRISS SOSS pipeline includes 3 coordinate frames -
-    detector, focal plane and sky
+    The NIRISS SOSS WCS pipeline.
 
-    reference_files={'specwcs': 'soss_wavelengths_configuration.asdf'}
+    It includes tWO coordinate frames -
+    "detector" and "world".
+
+    It uses the "specwcs" reference file.
     """
 
-    # Get the target RA and DEC, they will be used for setting the WCS RA and DEC based on a conversation
-    # with Kevin Volk.
+    # Get the target RA and DEC, they will be used for setting the WCS RA
+    # and DEC based on a conversation with Kevin Volk.
     try:
         target_ra = float(input_model['meta.target.ra'])
         target_dec = float(input_model['meta.target.dec'])
@@ -131,13 +131,15 @@ def niriss_soss(input_model, reference_files):
 
 def imaging(input_model, reference_files):
     """
-    The NIRISS imaging pipeline includes 3 coordinate frames -
-    detector, focal plane and sky
+    The NIRISS imaging WCS pipeline.
 
-    reference_files={'distortion': 'jwst_niriss_distortioon_0001.asdf'}
+    It includes three coordinate frames -
+    "detector" "v2v3" and "world".
+
+    It uses the "distortion" reference file.
     """
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
-    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.deg, u.deg))
+    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.arcsec, u.arcsec))
     world = cf.CelestialFrame(reference_frame=coord.ICRS(), name='world')
 
     subarray2full = subarray_transform(input_model)
@@ -153,6 +155,8 @@ def imaging(input_model, reference_files):
 
 
 def imaging_distortion(input_model, reference_files):
+    """ Create the transform from "detector" to "v2v3".
+    """
     dist = DistortionModel(reference_files['distortion'])
     distortion = dist.model
     try:
@@ -272,19 +276,19 @@ def wfss(input_model, reference_files):
                                                   lmodels=displ,
                                                   xmodels=dispx,
                                                   ymodels=dispy,
-                                                  theta=fwcpos_ref-fwcpos)
+                                                  theta=fwcpos_ref - fwcpos)
     else:
         det2det = NIRISSForwardColumnGrismDispersion(orders,
                                                      lmodels=displ,
                                                      xmodels=dispx,
                                                      ymodels=dispy,
-                                                     theta=fwcpos_ref-fwcpos)
+                                                     theta=fwcpos_ref - fwcpos)
 
     backward = NIRISSBackwardGrismDispersion(orders,
                                              lmodels=invdispl,
                                              xmodels=dispx,
                                              ymodels=dispy,
-                                             theta=fwcpos_ref-fwcpos)
+                                             theta=fwcpos_ref - fwcpos)
     det2det.inverse = backward
 
     # create the pipeline to construct a WCS object for the whole image
