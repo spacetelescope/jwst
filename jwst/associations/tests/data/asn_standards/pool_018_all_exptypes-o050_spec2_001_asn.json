@@ -1,8 +1,8 @@
 {
     "asn_type": "spec2",
-    "asn_rule": "candidate_Asn_Lv2WFSS",
+    "asn_rule": "candidate_Asn_Lv2WFSS_NIS",
     "version_id": null,
-    "code_version": "0.9.13",
+    "code_version": "0.9.17",
     "degraded_status": "No known degraded exposures in association.",
     "program": "99009",
     "target": "1",
