@@ -140,6 +140,7 @@ class Dataset(object):
         self.side_gain = side_gain
         self.odd_even_rows = odd_even_rows
         self.bad_reference_pixels = False
+        self.is_subarray = False
 
     def sigma_clip(self, data, dq, low=3.0, high=3.0):
         """Wrap the scipy.stats.sigmaclip so that data with zero variance
@@ -425,9 +426,12 @@ class NIRDataset(Dataset):
 
         """
 
-        if is_
         refpix = {}
-        for amplifier in 'ABCD':
+        if self.is_subarray:
+            amplifiers = ['SUBARRAY']
+        else:
+            amplifiers = ['A', 'B', 'C', 'D']
+        for amplifier in amplifiers:
             refpix[amplifier] = {}
             refpix[amplifier]['odd'] = {}
             refpix[amplifier]['even'] = {}
@@ -670,10 +674,15 @@ class NIRDataset(Dataset):
         return corrected_group
 
     def do_corrections(self):
+        if self.is_subarray:
+            self.do_subarray_corrections()
+        else:
+            self.do_fullframe_corrections()
+
+    def do_fullframe_corrections(self):
         """Do Reference Pixels Corrections for all amplifiers, NIR detectors
         First read of each integration is NOT subtracted, as the signal is removed
         in the superbias subtraction step"""
-
         #
         #  First transform to detector coordinates
         #
@@ -700,6 +709,58 @@ class NIRDataset(Dataset):
         self.detector_to_DMS()
         log.setLevel(logging.INFO)
         return
+
+    def do_subarray_corrections(self):
+        """Do corrections for subarray.  Reference pixel value calculated
+        separately for odd and even columns if odd_even_columns is True,
+        otherwise a single number calculated from all reference pixels"""
+        #
+        #  First transform to detector coordinates
+        #
+        self.DMS_to_detector()
+        refdq = dqflags.pixel['REFERENCE_PIXEL']
+        (nints, ngroups, nrows, ncols) = self.data.shape
+        for integration in range(nints):
+            for group in range(ngroups):
+                #
+                # Get the reference values from the top and bottom reference
+                # pixels
+                #
+                thisgroup = self.data[integration, group].copy()
+                refpixindices = np.where(np.bitwise_and(self.pixeldq, refdq) == refdq)
+                nrefpixels = len(refpixindices[0])
+                if self.odd_even_columns:
+                    oddrefpixindices_row = []
+                    oddrefpixindices_col = []
+                    evenrefpixindices_row = []
+                    evenrefpixindices_col = []
+                    for i in range(nrefpixels):
+                        if (refpixindices[1][i] % 2) == 0:
+                            evenrefpixindices_row.append(refpixindices[0][i])
+                            evenrefpixindices_col.append(refpixindices[1][i])
+                        else:
+                            oddrefpixindices_row.append(refpixindices[0][i])
+                            oddrefpixindices_col.append(refpixindices[1][i])
+                    evenrefpixindices = (np.array(evenrefpixindices_row),
+                                         np.array(evenrefpixindices_col))
+                    oddrefpixindices = (np.array(oddrefpixindices_row),
+                                        np.array(oddrefpixindices_col))
+                    evenrefpixvalue = self.sigma_clip(thisgroup[evenrefpixindices],
+                                                      self.pixeldq[evenrefpixelindices])
+                    oddrefpixvalue = self.sigma_clip(thisgroup[oddrefpixindices],
+                                                      self.pixeldq[oddrefpixelindices])
+                    thisgroup[:, 0::2] = thisgroup[:, 0::2] - evenrefpixvalue
+                    thisgroup[:, 1::2] = thisgroup[:, 1::2] - oddrefpixvalue
+                else:
+                    refpixvalue = self.sigma_clip(thisgroup[refpixindices],
+                                                  self.pixeldq[refpixindices])
+                    thisgroup = thisgroup - refpixvalue
+                self.data[integration, group] = thisgroup
+        #
+        #  Now transform back from detector to DMS coordinates.
+        self.detector_to_DMS()
+        log.setLevel(logging.INFO)
+        return 
 
 class NRS1Dataset(NIRDataset):
     """For NRS1 data"""
@@ -1457,12 +1518,14 @@ def create_embedded(input_model,
     embedded_model.data[:, :, rowstart:rowstop, colstart:colstop] = input_model.data
     embedded_model.pixeldq = np.ones(dq_shape, dtype=input_model.pixeldq.dtype)
     embedded_model.pixeldq[rowstart:rowstop, colstart:colstop] = input_model.pixeldq
-    return create_dataset(embedded_model,
-                          odd_even_columns,
-                          use_side_ref_pixels,
-                          side_smoothing_length,
-                          side_gain,
-                          odd_even_rows)
+    embedded_dataset = create_dataset(embedded_model,
+                                      odd_even_columns,
+                                      use_side_ref_pixels,
+                                      side_smoothing_length,
+                                      side_gain,
+                                      odd_even_rows)
+    embedded_dataset.is_subarray = True
+    return embedded_dataset
 
 def is_subarray(input_model):
     """Test for whether the data in a model is full-frame or subarray
