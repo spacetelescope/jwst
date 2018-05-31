@@ -935,9 +935,7 @@ class Step():
         full_path = file_path
         if isinstance(file_path, str):
             original_path, file_name = split(file_path)
-            if not len(original_path):
-                if self.input_dir is None:
-                    self._set_input_dir([file_path])
+            if not len(original_path) and self.input_dir is not None:
                 full_path = join(self.input_dir, file_name)
 
         return full_path

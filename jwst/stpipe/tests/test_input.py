@@ -76,7 +76,7 @@ def test_input_dir_from_step_process(mk_tmp_dirs):
     input_file = t_path('data/flat.fits')
 
     step = StepWithModel()
-    step.process(input_file)
+    step._set_input_dir([input_file])
 
     # Check that `input_dir` is set.
     input_path = path.split(input_file)[0]
