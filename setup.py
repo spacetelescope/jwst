@@ -138,16 +138,17 @@ else:
 version = relic.release.get_info()
 relic.release.write_template(version, NAME)
 
-entry_points = dict(asdf_extensions=['jwst_pipeline = jwst.transforms.jwextension:JWSTExtension',
-                                     'model_extensions = jwst.datamodels.extension:BaseExtension'])
+entry_points = dict(asdf_extensions=[
+    'jwst_pipeline = jwst.transforms.jwextension:JWSTExtension',
+    'model_extensions = jwst.datamodels.extension:BaseExtension'])
 
 setup(
     name=NAME,
     version=version.pep386,
-    author='OED/SSB, etc',
+    author='STScI',
     author_email='help@stsci.edu',
     description='JWST',
-    url='http://ssb.stsci.edu',
+    url='https://github.com/STScI-JWST/jwst',
     license='BSD',
     classifiers=[
         'License :: OSI Approved :: BSD License',
@@ -166,7 +167,8 @@ setup(
             define_macros=[('NUMPY', '1')]),
     ],
     install_requires=[
-        'namedlist'
+        'namedlist',
+        'configobj'
     ],
     tests_require=[
         'pytest',

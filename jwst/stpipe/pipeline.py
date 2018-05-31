@@ -32,7 +32,7 @@ Pipeline
 """
 from os.path import dirname, join
 
-from .configobj.configobj import Section
+from configobj import Section
 
 from . import config_parser
 from . import Step
