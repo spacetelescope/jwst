@@ -18,6 +18,7 @@ env:
         - CONDA_CHANNELS='http://ssb.stsci.edu/astroconda-dev'
         - CONDA_DEPENDENCIES="asdf
                               astropy
+                              configobj
                               crds
                               dask
                               drizzle
