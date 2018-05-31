@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+import os.path
 from ..stpipe import Step
 from .. import datamodels
 import logging
@@ -65,7 +66,8 @@ class AssignWcsStep(Step):
             # Get the MSA metadata file if needed and add to reffiles
             msa_metadata_file = input_model.meta.instrument.msa_metadata_file
             if msa_metadata_file is not None:
-                msa_metadata_file = self.make_input_path(msa_metadata_file)
+                input_dir = os.path.split(self.make_input_path(input))[0]
+                msa_metadata_file = os.path.join(input_dir, msa_metadata_file)
                 reference_file_names['msametafile'] = msa_metadata_file
 
             result = load_wcs(input_model, reference_file_names)
