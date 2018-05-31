@@ -43,6 +43,7 @@ __all__ = [
     'Constraint_Base',
     'Constraint_IFU',
     'Constraint_Image',
+    'Constraint_MSA',
     'Constraint_Optical_Path',
     'Constraint_Spectral',
     'Constraint_Target',
@@ -648,14 +649,37 @@ class Constraint_Spectral(DMSAttrConstraint):
             sources=['exp_type'],
             value=(
                 'mir_lrs-fixedslit'
+                '|nrc_grism'
+                '|nrc_wfss'
                 '|nrs_autoflat'
                 '|nrs_autowave'
                 '|nrs_fixedslit'
-                '|nrc_grism'
-                '|nrc_wfss'
-                '|nrs_msaspec'
             ),
             force_unique=False
+        )
+
+
+class Constraint_MSA(Constraint):
+    """Constrain on NIRSpec MSA exposures that are spectral"""
+    def __init__(self):
+        super(Constraint_MSA, self).__init__(
+            [
+                DMSAttrConstraint(
+                    name='exp_type',
+                    sources=['exp_type'],
+                    value=(
+                        'nrs_autoflat'
+                        '|nrs_autowave'
+                        '|nrs_msaspec'
+                    ),
+                    force_unique=False
+                ),
+                DMSAttrConstraint(
+                    name='is_msa',
+                    sources=['msametfl'],
+                )
+            ],
+            name='msa_spectral'
         )
 
 
