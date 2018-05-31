@@ -69,3 +69,15 @@ def test_input_dir_with_model(mk_tmp_dirs):
     step.run(model)
 
     assert step.input_dir == ''
+
+
+def test_set_input_dir_1(mk_tmp_dirs):
+    """ Test that input_dir is set when calling step.process. """
+    input_file = t_path('data/flat.fits')
+
+    step = StepWithModel()
+    step._set_input_dir([input_file])
+
+    # Check that `input_dir` is set.
+    input_path = path.split(input_file)[0]
+    assert step.input_dir == input_path
