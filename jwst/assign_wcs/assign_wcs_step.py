@@ -69,7 +69,7 @@ class AssignWcsStep(Step):
                     msa_metadata_file = self.make_input_path(msa_metadata_file)
                     reference_file_names['msametafile'] = msa_metadata_file
                 else:
-                    log.info("MSA metadata file (MSAMETFL) is required for NRS_MSASPEC exposures.")
+                    log.error("MSA metadata file (MSAMETFL) is required for NRS_MSASPEC exposures.")
                     input_model.meta.cal_step.assign_wcs = 'SKIPPED'
                     log.warning("assign_wcs: SKIPPED")
                     return input_model
