@@ -26,14 +26,17 @@ __all__ = ['AngleFromGratingEquation', 'WavelengthFromGratingEquation',
            'NIRISSBackwardGrismDispersion', 'V2V3ToIdeal', 'IdealToV2V3']
 
 
-# Number of shutters per quadrant inthe NIRSPEC MSA shutter array
 N_SHUTTERS_QUADRANT = 62415
+""" Number of shutters per quadrant in the NIRSPEC MSA shutter array"""
 
-# Nirspec slit definition
+
 Slit = namedtuple('Slit', ["name", "shutter_id", "xcen", "ycen",
                            "ymin", "ymax", "quadrant", "source_id", "shutter_state",
                            "source_name", "source_alias", "stellarity",
                            "source_xpos", "source_ypos"])
+""" Nirspec Slit structure definition"""
+
+
 Slit.__new__.__defaults__ = ("", 0, 0.0, 0.0, 0.0, 0.0, 0, 0, "", "", "", "",
                              0.0, 0.0, 0.0)
 
@@ -139,11 +142,17 @@ class MIRI_AB2Slice(Model):
     _separable = False
 
     inputs = ("beta",)
+    """ "beta": the beta angle """
     outputs = ("slice",)
+    """ "slice": Slice number"""
 
     beta_zero = Parameter('beta_zero', default=0)
+    """ Beta_zero parameter"""
     beta_del = Parameter('beta_del', default=1)
+    """ Beta_del parameter"""
     channel = Parameter("channel", default=1)
+    """ MIRI MRS channel: one of 1, 2, 3, 4"""
+
 
     @staticmethod
     def evaluate(beta, beta_zero, beta_del, channel):
@@ -874,9 +883,9 @@ class V23ToSky(Rotation3D):
     _separable = False
 
     inputs = ("v2", "v3")
-    """ Coordinates in the (V2, V3) telescope frame."""
+    """ ("v2", "v3"): Coordinates in the (V2, V3) telescope frame."""
     outputs = ("ra", "dec")
-    """ RA, DEC cooridnates in ICRS."""
+    """ ("ra", "dec"): RA, DEC cooridnates in ICRS."""
 
     def __init__(self, angles, axes_order, name=None):
         super(V23ToSky, self).__init__(angles, axes_order=axes_order, name=name)
