@@ -1072,8 +1072,9 @@ def get_ref_subs(model, readnoise_model, gain_model):
         log.info('Extracting readnoise subarray to match science data')
         readnoise_2d = reffile_utils.get_subarray_data(model, readnoise_model)
 
-    readnoise_2d *= gain_2d # convert read noise to correct units
-
+    # convert read noise to correct units & scale down for single groups
+    readnoise_2d *= gain_2d/np.sqrt(2.)
+ 
     return readnoise_2d, gain_2d
 
 
