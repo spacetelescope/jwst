@@ -1,5 +1,5 @@
 #
-#  Module for 2d extraction
+#  Module for 2d extraction of Nirspec fixed slits or MOS slitlets.
 #
 import logging
 import warnings
@@ -9,7 +9,7 @@ from gwcs.utils import _toindex
 from gwcs import wcstools
 
 from .. import datamodels
-from ..transforms import models as trmodels, Slit
+from ..transforms import models as trmodels
 from ..assign_wcs import nirspec
 from ..assign_wcs import util
 
@@ -18,6 +18,21 @@ log.setLevel(logging.DEBUG)
 
 
 def nrs_extract2d(input_model, slit_name=None, apply_wavecorr=False, reference_files={}):
+    """
+    Main extract_2d function for Nirspec exposures.
+
+    Parameters
+    ----------
+    input_model : `~jwst.datamodels.ImageModel` or `~jwst.datamodels.CubeModel`
+        Input data model.
+    slit_name : str or int
+        Slit name.
+    apply_wavecorr : bool
+        Flag whether to apply the zero point wavelength correction to
+        Nirspec exposures.
+    reference_files : dict
+        Reference files - uses the ``wavecorr`` reference file.
+    """
     exp_type = input_model.meta.exposure.type.upper()
 
     wavecorr_supported_modes = ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_BRIGHTOBJ']
@@ -181,15 +196,15 @@ def extract_slit(input_model, slit, exp_type):
         ext_err = input_model.err[ylo: yhi + 1, xlo: xhi + 1].copy()
         ext_dq = input_model.dq[ylo: yhi + 1, xlo: xhi + 1].copy()
         shape = ext_data.shape
-        bounding_box= ((0, shape[1] - 1), (0, shape[0] - 1))
+        bounding_box = ((0, shape[1] - 1), (0, shape[0] - 1))
         ext_var_rnoise = input_model.var_rnoise[ylo: yhi + 1, xlo: xhi + 1].copy()
         ext_var_poisson = input_model.var_poisson[ylo: yhi + 1, xlo: xhi + 1].copy()
     elif lenshape == 3:
-        ext_data = input_model.data[ : , ylo: yhi + 1, xlo: xhi + 1].copy()
-        ext_err = input_model.err[ : , ylo: yhi + 1, xlo: xhi + 1].copy()
-        ext_dq = input_model.dq[ : , ylo: yhi + 1, xlo: xhi + 1].copy()
+        ext_data = input_model.data[:, ylo: yhi + 1, xlo: xhi + 1].copy()
+        ext_err = input_model.err[:, ylo: yhi + 1, xlo: xhi + 1].copy()
+        ext_dq = input_model.dq[:, ylo: yhi + 1, xlo: xhi + 1].copy()
         shape = ext_data.shape
-        bounding_box= ((0, shape[2] - 1), (0, shape[1] - 1))
+        bounding_box = ((0, shape[2] - 1), (0, shape[1] - 1))
         ext_var_rnoise = input_model.var_rnoise[:, ylo: yhi + 1, xlo: xhi + 1].copy()
         ext_var_poisson = input_model.var_poisson[:, ylo: yhi + 1, xlo: xhi + 1].copy()
     else:
@@ -287,7 +302,7 @@ def compute_zero_point_correction(lam, freference, source_xpos, aperture_name, d
     lam = lam.copy()
     l = lam[~np.isnan(lam)]
     offset_model.bounds_error = False
-    correction = offset_model(l * 10 ** -6, [deltax]*l.size)
+    correction = offset_model(l * 10 ** -6, [deltax] * l.size)
     lam[~np.isnan(lam)] = correction
     # The correction for pixels outside the slit and wavelengths
     # outside the wave_range is 0.
@@ -311,7 +326,7 @@ def compute_dispersion(wcs):
         The pixel dispersion [in m].
 
     """
-    xpix, ypix = wcstools.grid_from_bounding_box(wcs.bounding_box, step=(1,1))
+    xpix, ypix = wcstools.grid_from_bounding_box(wcs.bounding_box, step=(1, 1))
     xleft = xpix - 0.5
     xright = xpix + 0.5
     _, _, lamright = wcs(xright, ypix)
@@ -409,4 +424,4 @@ def absolute2fractional(msa_model, slit, xposabs, yposabs):
         The fractional X coordinates within the slit.
     """
     num, xcenter, ycenter, xsize, ysize = msa_model.Q5.data[slit.shutter_id]
-    return (xposabs - xcenter) / (xsize/ 2.)
+    return (xposabs - xcenter) / (xsize / 2.)
