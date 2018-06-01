@@ -75,7 +75,7 @@ class TPCorr(Model):
 
     # input_units_strict = False
     # input_units_allow_dimensionless = True
-    separable = False
+    _separable = False
     standard_broadcasting = False
 
     # Radius of the generating sphere. This sets the circumference to 360 deg

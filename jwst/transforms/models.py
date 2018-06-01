@@ -131,7 +131,8 @@ class MIRI_AB2Slice(Model):
     beta_zero : float
     beta_del : float
     """
-    standard_broadcastnig = False
+    standard_broadcasting = False
+    _separable = False
 
     inputs = ("beta",)
     outputs = ("slice",)
@@ -173,6 +174,7 @@ class Snell(Model):
     """
 
     standard_broadcasting = False
+    _separable = False
 
     inputs = ("lam", "alpha_in", "beta_in", "zin")
     outputs = ("alpha_out", "beta_out", "zout")
@@ -284,6 +286,7 @@ class RefractionIndexFromPrism(Model):
 
     """
     standard_broadcasting = False
+    _separable = False
 
     inputs = ("alpha_in", "beta_in", "alpha_out",)
     outputs = ("n")
@@ -313,7 +316,7 @@ class AngleFromGratingEquation(Model):
         Spectral order.
     """
 
-    separable = False
+    _separable = False
 
     inputs = ("lam", "alpha_in", "beta_in", "z")
     outputs = ("alpha_out", "beta_out", "zout")
@@ -343,7 +346,7 @@ class WavelengthFromGratingEquation(Model):
         Spectral order.
     """
 
-    separable = False
+    _separable = False
 
     inputs = ("alpha_in", "beta_in", "alpha_out")
     outputs = ("lam",)
@@ -362,7 +365,7 @@ class Unitless2DirCos(Model):
     """
     Vector to directional cosines.
     """
-    separable = False
+    _separable = False
 
     inputs = ('x', 'y')
     outputs = ('x', 'y', 'z')
@@ -382,7 +385,7 @@ class DirCos2Unitless(Model):
     """
     Directional Cosines to vector.
     """
-    separable = False
+    _separable = False
 
     inputs = ('x', 'y', 'z')
     outputs = ('x', 'y')
@@ -396,8 +399,6 @@ class DirCos2Unitless(Model):
 
 
 class Rotation3DToGWA(Model):
-    separable = False
-
     """
     Perform a 3D rotation given an angle in degrees.
 
@@ -411,6 +412,7 @@ class Rotation3DToGWA(Model):
         A sequence of 'x', 'y', 'z' corresponding of axis of rotation/
     """
     standard_broadcasting = False
+    _separable = False
 
     inputs = ('x', 'y', 'z')
     outputs = ('x', 'y', 'z')
@@ -480,8 +482,6 @@ class Rotation3DToGWA(Model):
 
 
 class Rotation3D(Model):
-
-    separable = False
     """
     Perform a 3D rotation given an angle in degrees.
     Positive angles represent a counter-clockwise rotation and vice-versa.
@@ -493,6 +493,8 @@ class Rotation3D(Model):
         A sequence of 'x', 'y', 'z' corresponding of axis of rotation/
     """
     standard_broadcasting = False
+    _separable = False
+
     inputs = ('x', 'y', 'z')
     outputs = ('x', 'y', 'z')
     angles = Parameter(getter=np.rad2deg, setter=np.deg2rad)
@@ -582,6 +584,7 @@ class Rotation3D(Model):
 class LRSWavelength(Model):
 
     standard_broadcasting = False
+    _separable = False
 
     linear = False
     fittable = False
@@ -646,6 +649,8 @@ class Gwa2Slit(Model):
     models : list
         an instance of `~astropy.modeling.core.Model`
     """
+    _separable = False
+
     inputs = ('name', 'angle1', 'angle2', 'angle3')
     outputs = ('name', 'x_slit', 'y_slit', 'lam')
 
@@ -691,6 +696,7 @@ class Slit2Msa(Model):
     models : list
         an instance of `~astropy.modeling.core.Model`
     """
+    _separable = False
 
     inputs = ('name', 'x_slit', 'y_slit')
     outputs = ('x_msa', 'y_msa')
@@ -736,6 +742,8 @@ class NirissSOSSModel(Model):
         ``spectral_orders``.
     """
 
+    _separable = False
+
     inputs = ('x', 'y', 'spectral_order')
     outputs = ('ra', 'dec', 'lam')
 
@@ -778,6 +786,8 @@ class Logical(Model):
     """
     inputs = ('x', )
     outputs = ('x', )
+
+    _separable = False
 
     conditions = {'GT': np.greater,
                   'LT': np.less,
@@ -823,6 +833,8 @@ class V23ToSky(Rotation3D):
         axis of rotation and matching the order in ``angles``.
         The axes are "zyxyz".
     """
+
+    _separable = False
 
     inputs = ("v2", "v3")
     outputs = ("ra", "dec")
@@ -879,6 +891,7 @@ class IdealToV2V3(Model):
 
     Note: This model has no schema implemented - add schema if needed.
     """
+    _separable = False
 
     inputs = ('xidl', 'yidl')
 
@@ -932,6 +945,7 @@ class V2V3ToIdeal(Model):
 
     Note: This model has no schema implemented - add if needed.
     """
+    _separable = False
 
     inputs = ('v2', 'v3')
 
@@ -1031,7 +1045,7 @@ class NIRCAMForwardRowGrismDispersion(Model):
     dependence)
     """
     standard_broadcasting = False
-    separable = False
+    _separable = False
     fittable = False
     linear = False
 
@@ -1109,7 +1123,7 @@ class NIRCAMForwardColumnGrismDispersion(Model):
     dependence)
     """
     standard_broadcasting = False
-    separable = False
+    _separable = False
     fittable = False
     linear = False
 
@@ -1186,7 +1200,7 @@ class NIRCAMBackwardGrismDispersion(Model):
     (NIRCAM polynomials currently do not have any field dependence)
     """
     standard_broadcasting = False
-    separable = False
+    _separable = False
     fittable = False
     linear = False
 
@@ -1266,7 +1280,7 @@ class NIRISSBackwardGrismDispersion(Model):
     """
 
     standard_broadcasting = False
-    separable = False
+    _separable = False
     fittable = False
     linear = False
 
@@ -1364,7 +1378,7 @@ class NIRISSForwardRowGrismDispersion(Model):
     """
 
     standard_broadcasting = False
-    separable = False
+    _separable = False
     fittable = False
     linear = False
 
@@ -1465,7 +1479,7 @@ class NIRISSForwardColumnGrismDispersion(Model):
     """
 
     standard_broadcasting = False
-    separable = False
+    _separable = False
     fittable = False
     linear = False
 
