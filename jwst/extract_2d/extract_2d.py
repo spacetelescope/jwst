@@ -12,6 +12,22 @@ log.setLevel(logging.DEBUG)
 
 
 def extract2d(input_model, slit_name=None, apply_wavecorr=False, reference_files={}, grism_objects=[]):
+    """
+    The main extract_2d function.
+
+    Parameters
+    ----------
+    input_model : `~jwst.datamodels.ImageModel` or `~jwst.datamodels.CubeModel`
+    slit_name : str or int
+        Slit name.
+    apply_wavecorr : bool
+        Flag whether to apply the zero point wavelength correction to
+        Nirspec exposures.
+    reference_files : dict
+        Reference files.
+    grism_objects : list
+        A list of grism objects.
+    """
 
     nrs_modes = ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_BRIGHTOBJ', 'NRS_LAMP']
     grism_modes = ['NIS_WFSS', 'NRC_WFSS']
