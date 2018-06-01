@@ -207,7 +207,7 @@ keyword argument::
 While the most commonly useful parts of the configspec format are
 discussed here, greater detail can be found in the `configspec
 documentation
-<http://www.voidspace.org.uk/python/configobj.html#validation>`_.
+<https://configobj.readthedocs.io/en/latest/>`_.
 
 Configspec types
 ````````````````
