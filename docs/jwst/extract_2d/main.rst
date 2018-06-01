@@ -28,7 +28,7 @@ the 2D cutouts from the dispersed image.
 Algorithm
 ---------
 The step is currently applied only to NIRSpec Fixed Slit, NIRSPEC MSA, NIRSPEC TSO,
-NIRCAM GRISM and NIRISS WFSS observations.
+NIRCAM WFSS and NIRISS WFSS observations.
 
 For NIRSPEC:
 
