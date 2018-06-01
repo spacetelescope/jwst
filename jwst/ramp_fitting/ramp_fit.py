@@ -340,6 +340,8 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
     median_diffs_2d /= n_int
     med_rates = median_diffs_2d/group_time
 
+    del median_diffs_2d
+
     # In this 'Second Pass' over the data, loop over integrations and data
     #   sections to calculate the variances of the slope using the estimated
     #   median slopes from the 'First Pass'. These variances are due to Poisson
