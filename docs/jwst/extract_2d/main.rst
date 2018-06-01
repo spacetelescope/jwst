@@ -27,7 +27,7 @@ the 2D cutouts from the dispersed image.
 
 Algorithm
 ---------
-The step is currently applied only to NIRSpec Fixed Slit, NIRSPEC MSA,
+The step is currently applied only to NIRSpec Fixed Slit, NIRSPEC MSA, NIRSPEC TSO,
 NIRCAM GRISM and NIRISS WFSS observations.
 
 For NIRSPEC:
@@ -97,6 +97,3 @@ when running the step.
 NIRCAM GRISM and NIRISS WFSS observations use the wavelengthrange reference file in order
 to construct the bounding boxes around each objects orders. If a list of ``GrismObject``
 is supplied, then no reference file is neccessary.
-
-
-
