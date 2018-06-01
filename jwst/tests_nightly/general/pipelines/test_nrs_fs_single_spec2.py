@@ -11,10 +11,8 @@ pytestmark = [
 
 def test_nrs_fs_single_spec2(_bigdata):
     """
-
-    Regression test of calwebb_spec2 pipeline performed on NIRSpec fixed-slit data
-    that uses a single-slit subarray (S200B1).
-
+    Regression test of calwebb_spec2 pipeline performed on NIRSpec fixed-slit
+    data that uses a single-slit (S200B1).
     """
     step = Spec2Pipeline()
     step.save_bsub = True
