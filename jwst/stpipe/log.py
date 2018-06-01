@@ -36,8 +36,8 @@ import os
 import sys
 import threading
 
-from configobj import ConfigObj
-import validate
+from ..extern.configobj.configobj import ConfigObj
+from ..extern.configobj import validate
 
 from . import config_parser
 
