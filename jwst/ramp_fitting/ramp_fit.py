@@ -225,7 +225,7 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
     # Get readnoise array for calculation of variance of noiseless ramps, and
     #   gain array in case optimal weighting is to be done
     readnoise_2d, gain_2d = utils.get_ref_subs(model, readnoise_model,
-                            gain_model)
+                                               gain_model, nframes)
 
     # Flag any bad pixels in the gain
     pixeldq = utils.reset_bad_gain( pixeldq, gain_2d )
