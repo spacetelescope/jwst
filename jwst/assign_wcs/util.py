@@ -25,6 +25,8 @@ from ..datamodels import WavelengthrangeModel, DataModel
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+__all__ = ["reproject", "wcs_from_footprints"]
+
 
 class MissingMSAFileError(Exception):
 
@@ -92,7 +94,7 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
         scaling and rotation transform is created from it. If not supplied
         the first model in the list is used as ``refmodel``.
     transform : `~astropy.modeling.core.Model`, optional
-        A transform, passed to :class_method:`~gwcs.WCS.wcs_from_fiducial`
+        A transform, passed to :meth:`~gwcs.wcstools.wcs_from_fiducial`
         If not supplied Scaling | Rotation is computed from ``refmodel``.
     bounding_box : tuple, optional
         Bounding_box of the new WCS.

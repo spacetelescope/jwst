@@ -6,6 +6,8 @@ from.util import update_s_region
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+__all__ = ["load_wcs"]
+
 
 def load_wcs(input_model, reference_files={}):
     """

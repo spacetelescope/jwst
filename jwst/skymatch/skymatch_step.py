@@ -4,7 +4,6 @@ JWST pipeline step for sky matching.
 
 :Authors: Mihai Cara
 
-:License: :doc:`../LICENSE`
 
 """
 from __future__ import (absolute_import, division, unicode_literals,

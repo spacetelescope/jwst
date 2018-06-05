@@ -4,6 +4,9 @@ from . import resample
 from ..assign_wcs.util import update_s_region
 
 
+__all__ = ["ResampleStep"]
+
+
 class ResampleStep(Step):
     """
     ResampleStep: Resample input data onto a regular grid using the

@@ -4,6 +4,8 @@ from ..stpipe import Step
 from ..datamodels import DrizProductModel
 from . import source_catalog
 
+__all__ = ["SourceCatalogStep"]
+
 
 class SourceCatalogStep(Step):
     """

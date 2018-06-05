@@ -4,6 +4,8 @@ from ..stpipe import Step
 from .. import datamodels
 from .white_light import white_light
 
+__all__ = ["WhiteLightStep"]
+
 
 class WhiteLightStep(Step):
     """

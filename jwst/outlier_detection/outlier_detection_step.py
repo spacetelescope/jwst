@@ -26,6 +26,8 @@ IFU_SPEC_MODES = ['NRS_IFU', 'MIR_MRS']
 TSO_IMAGE_MODES = ['NRC_TSIMAGE']
 CORON_IMAGE_MODES = ['NRC_CORON', 'MIR_LYOT', 'MIR_4QPM']
 
+__all__ = ["OutlierDetectionStep"]
+
 
 class OutlierDetectionStep(Step):
     """Flag outlier bad pixels and cosmic rays in DQ array of each input image.

@@ -4,6 +4,10 @@ from ..stpipe import Step, cmdline
 from .. import datamodels
 from . import fringe
 
+
+__all__ = ["FringeStep"]
+
+
 class FringeStep(Step):
     """
     FringeStep: Apply fringe correction to a science image using a fringe

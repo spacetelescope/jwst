@@ -5,7 +5,6 @@ images catalogs "align" to the reference catalog *on the sky*.
 
 :Authors: Mihai Cara (contact: help@stsci.edu)
 
-:License: :doc:`../LICENSE`
 
 """
 from __future__ import (absolute_import, division, unicode_literals,

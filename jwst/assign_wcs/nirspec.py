@@ -29,6 +29,10 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
+__all__ = ["create_pipeline", "imaging", "ifu", "slits_wcs", "get_open_slits", "nrs_wcs_set_input",
+           "nrs_ifu_wcs", "get_spectral_order_wrange"]
+
+
 def create_pipeline(input_model, reference_files):
     """
     Create a pipeline list based on EXP_TYPE.

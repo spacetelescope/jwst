@@ -5,6 +5,9 @@ from ..exp_to_source import multislit_to_container
 from ..assign_wcs.util import update_s_region
 
 
+__all__ = ["ResampleSpecStep"]
+
+
 class ResampleSpecStep(Step):
     """
     ResampleSpecStep: Resample input data onto a regular grid using the

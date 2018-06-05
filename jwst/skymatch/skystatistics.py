@@ -5,7 +5,6 @@ and :py:class:`~jwst.skymatch.skyimage.SkyImage`.
 
 :Authors: Mihai Cara (contact: help@stsci.edu)
 
-:License: :doc:`../LICENSE`
 
 """
 # THIRD PARTY
