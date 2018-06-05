@@ -1,10 +1,10 @@
-from . import model_base
+from .reference import ReferenceFileModel
 from .dynamicdq import dynamic_mask
 
 __all__ = ['PhotomModel']
 
 
-class PhotomModel(model_base.DataModel):
+class PhotomModel(ReferenceFileModel):
     """
     A base class for photometric reference file models.
     """

@@ -1,9 +1,9 @@
-from . import model_base
+from .reference import ReferenceFileModel
 from .dynamicdq import dynamic_mask
 
 __all__ = ['TrapDensityModel']
 
-class TrapDensityModel(model_base.DataModel):
+class TrapDensityModel(ReferenceFileModel):
     """
     A data model for the trap density of a detector, for persistence.
 
