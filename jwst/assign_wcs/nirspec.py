@@ -420,105 +420,112 @@ def get_open_msa_slits(msa_file, msa_metadata_id):
     Returns
     -------
     slitlets : list
-        A list of slitlets. Each slitlet is a tuple with
-        ("name", "shutter_id", "xcen", "ycen", "ymin", "ymax", "quadrant", "source_id", "shutter_state")
+        A list of `~jwst.transforms.models.Slit` objects. Each slitlet is a tuple with
+        ("name", "shutter_id", "xcen", "ycen", "ymin", "ymax",
+        "quadrant", "source_id", "shutter_state")
 
     """
     slitlets = []
 
     # If they passed in a string then we shall assume it is the filename
     # of the configuration file.
-    with fits.open(msa_file) as msa_file:
-        # Get the configuration header from teh _msa.fits file.  The EXTNAME should be 'SHUTTER_INFO'
-        msa_conf = msa_file[('SHUTTER_INFO', 1)]
-        msa_source = msa_file[("SOURCE_INFO", 1)].data
+    try:
+        msa_file = fits.open(msa_file)
+    except:
+        log.error("Unable to open MSA FITS file (MSAMETFL) {0}".format(msa_file))
+        return []
 
-        # First we are going to filter the msa_file data on the msa_metadata_id
-        # as that is all we are interested in for this function.
-        msa_data = [x for x in msa_conf.data if x['msa_metadata_id'] == msa_metadata_id]
+    # Get the configuration header from teh _msa.fits file.  The EXTNAME should be 'SHUTTER_INFO'
+    msa_conf = msa_file[('SHUTTER_INFO', 1)]
+    msa_source = msa_file[("SOURCE_INFO", 1)].data
 
-        log.debug('msa_data with msa_metadata_id = {}   {}'.format(msa_metadata_id, msa_data))
-        log.info('Retrieving open slitlets for msa_metadata_id = {}'.format(msa_metadata_id))
+    # First we are going to filter the msa_file data on the msa_metadata_id
+    # as that is all we are interested in for this function.
+    msa_data = [x for x in msa_conf.data if x['msa_metadata_id'] == msa_metadata_id]
 
-        # First thing to do is to get the unique slitlet_ids
-        slitlet_ids_unique = list(set([x['slitlet_id'] for x in msa_data]))
+    log.debug('msa_data with msa_metadata_id = {}   {}'.format(msa_metadata_id, msa_data))
+    log.info('Retrieving open slitlets for msa_metadata_id = {}'.format(msa_metadata_id))
 
-        # Now lets look at each unique slitlet id
-        for slitlet_id in slitlet_ids_unique:
+    # First thing to do is to get the unique slitlet_ids
+    slitlet_ids_unique = list(set([x['slitlet_id'] for x in msa_data]))
 
-            # Get the rows for the current slitlet_id
-            slitlets_sid = [x for x in msa_data if x['slitlet_id'] == slitlet_id]
-            open_shutters = [x['shutter_column'] for x in slitlets_sid]
+    # Now lets look at each unique slitlet id
+    for slitlet_id in slitlet_ids_unique:
 
-            # Count the number of backgrounds that have an 'N' (meaning main shutter)
-            # This needs to be 0 or 1 and we will have to deal with those differently
-            # See: https://github.com/STScI-JWST/jwst/commit/7588668b44b77486cdafb35f7e2eb2dcfa7d1b63#commitcomment-18987564
+        # Get the rows for the current slitlet_id
+        slitlets_sid = [x for x in msa_data if x['slitlet_id'] == slitlet_id]
+        open_shutters = [x['shutter_column'] for x in slitlets_sid]
 
-            n_main_shutter = len([s for s in slitlets_sid if s['background'] == 'N'])
+        # Count the number of backgrounds that have an 'N' (meaning main shutter)
+        # This needs to be 0 or 1 and we will have to deal with those differently
+        # See: https://github.com/STScI-JWST/jwst/commit/7588668b44b77486cdafb35f7e2eb2dcfa7d1b63#commitcomment-18987564
 
-            # In the next part we need to calculate, find, determine 5 things:
-            #    quadrant,  xcen, ycen,  ymin, max
+        n_main_shutter = len([s for s in slitlets_sid if s['background'] == 'N'])
 
-            margin = 0.05
+        # In the next part we need to calculate, find, determine 5 things:
+        #    quadrant,  xcen, ycen,  ymin, max
 
-            # There are no main shutters, all are background
-            if n_main_shutter == 0:
-                jmin = min([s['shutter_column'] for s in slitlets_sid])
-                jmax = max([s['shutter_column'] for s in slitlets_sid])
-                j = jmin + (jmax - jmin) // 2 + 1
-                ymax = 0.5 + margin + (jmax - j) * 1.15
-                ## TODO: check this formula - it is different (assuming it's incorrect in the report).
-                ymin = -(0.5 + margin) + (jmin - j) * 1.15
-                quadrant = slitlets_sid[0]['shutter_quadrant']
-                ycen = j
-                xcen = slitlets_sid[0]['shutter_row']  # grab the first as they are all the same
-                source_xpos = 0.0
-                source_ypos = 0.0
-            # There is 1 main shutter, phew, that makes it easier.
-            elif n_main_shutter == 1:
-                xcen, ycen, quadrant, source_xpos, source_ypos = [
-                    (s['shutter_row'], s['shutter_column'], s['shutter_quadrant'],
-                     s['estimated_source_in_shutter_x'],
-                     s['estimated_source_in_shutter_y'])
-                    for s in slitlets_sid if s['background'] == 'N'][0]
+        margin = 0.05
 
-                # y-size
-                jmin = min([s['shutter_column'] for s in slitlets_sid])
-                jmax = max([s['shutter_column'] for s in slitlets_sid])
-                j = ycen
-                ymax = 0.5 + margin + (jmax - j) * 1.15
-                ymin = -(0.5 + margin) + (jmin - j) * 1.15
+        # There are no main shutters, all are background
+        if n_main_shutter == 0:
+            jmin = min([s['shutter_column'] for s in slitlets_sid])
+            jmax = max([s['shutter_column'] for s in slitlets_sid])
+            j = jmin + (jmax - jmin) // 2 + 1
+            ymax = 0.5 + margin + (jmax - j) * 1.15
+            ## TODO: check this formula - it is different (assuming it's incorrect in the report).
+            ymin = -(0.5 + margin) + (jmin - j) * 1.15
+            quadrant = slitlets_sid[0]['shutter_quadrant']
+            ycen = j
+            xcen = slitlets_sid[0]['shutter_row']  # grab the first as they are all the same
+            source_xpos = 0.0
+            source_ypos = 0.0
+        # There is 1 main shutter, phew, that makes it easier.
+        elif n_main_shutter == 1:
+            xcen, ycen, quadrant, source_xpos, source_ypos = [
+                (s['shutter_row'], s['shutter_column'], s['shutter_quadrant'],
+                 s['estimated_source_in_shutter_x'],
+                 s['estimated_source_in_shutter_y'])
+                for s in slitlets_sid if s['background'] == 'N'][0]
 
-            # Not allowed....
-            else:
-                raise ValueError("MSA configuration file has more than 1 shutter with "
-                                 "sources for metadata_id = {}".format(msa_metadata_id))
+            # y-size
+            jmin = min([s['shutter_column'] for s in slitlets_sid])
+            jmax = max([s['shutter_column'] for s in slitlets_sid])
+            j = ycen
+            ymax = 0.5 + margin + (jmax - j) * 1.15
+            ymin = -(0.5 + margin) + (jmin - j) * 1.15
 
-            # subtract 1 because shutter numbers in the MSA reference file are 1-based.
-            shutter_id = xcen + (ycen - 1) * 365
-            source_id = slitlets_sid[0]['source_id']
-            source_name, source_alias, stellarity = [
-                (s['source_name'], s['alias'], s['stellarity']) \
-                for s in msa_source if s['source_id'] == source_id][0]
-            # Create the output list of tuples that contain the required
-            # data for further computations
-            """
-            Convert source positions from PPS to Model coordinate frame.
-            The source x,y position in the shutter is given in the msa configuration file,
-            columns "estimated_source_in_shutter_x" and "estimated_source_in_shutter_y".
-            The source position is in a coordinate system associated with each shutter whose
-            origin is the upper left corner of the shutter, positive x is to the right
-            and positive y is downwards.
-            """
-            source_xpos = source_xpos - 0.5
-            source_ypos = -source_ypos + 0.5
+        # Not allowed....
+        else:
+            raise ValueError("MSA configuration file has more than 1 shutter with "
+                             "sources for metadata_id = {}".format(msa_metadata_id))
 
-            # Create the shutter_state string
-            all_shutters = _shutter_id_to_str(open_shutters, ycen)
+        # subtract 1 because shutter numbers in the MSA reference file are 1-based.
+        shutter_id = xcen + (ycen - 1) * 365
+        source_id = slitlets_sid[0]['source_id']
+        source_name, source_alias, stellarity = [
+            (s['source_name'], s['alias'], s['stellarity']) \
+            for s in msa_source if s['source_id'] == source_id][0]
+        # Create the output list of tuples that contain the required
+        # data for further computations
+        """
+        Convert source positions from PPS to Model coordinate frame.
+        The source x,y position in the shutter is given in the msa configuration file,
+        columns "estimated_source_in_shutter_x" and "estimated_source_in_shutter_y".
+        The source position is in a coordinate system associated with each shutter whose
+        origin is the upper left corner of the shutter, positive x is to the right
+        and positive y is downwards.
+        """
+        source_xpos = source_xpos - 0.5
+        source_ypos = -source_ypos + 0.5
 
-            slitlets.append(Slit(slitlet_id, shutter_id, xcen, ycen, ymin, ymax,
-                                 quadrant, source_id, all_shutters, source_name, source_alias,
-                                 stellarity, source_xpos, source_ypos))
+        # Create the shutter_state string
+        all_shutters = _shutter_id_to_str(open_shutters, ycen)
+
+        slitlets.append(Slit(slitlet_id, shutter_id, xcen, ycen, ymin, ymax,
+                             quadrant, source_id, all_shutters, source_name, source_alias,
+                             stellarity, source_xpos, source_ypos))
+    msa_file.close()
     return slitlets
 
 
