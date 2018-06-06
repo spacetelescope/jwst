@@ -17,15 +17,15 @@ log.setLevel(logging.DEBUG)
 
 def create_pipeline(input_model, reference_files):
     """
-    Create a pipeline list based on EXP_TYPE.
+    Create a ``gWCS.pipeline`` using models from reference files.
 
     Parameters
     ----------
     input_model : jwst.datamodels.DataModel
         Either an ImageModel or a CubeModel
     reference_files : dict
-        {reftype: file_name} mapping
-        In the pipeline it's returned by CRDS.
+        {reftype: file_name} mapping.
+        Reference files.
     """
     exp_type = input_model.meta.exposure.type.lower()
     pipeline = exp_type2transform[exp_type](input_model, reference_files)
@@ -36,21 +36,25 @@ def create_pipeline(input_model, reference_files):
 
 def imaging(input_model, reference_files):
     """
-    The FGS imaging pipeline includes 3 coordinate frames -
-    detector, focal plane and sky.
+    The FGS imaging WCS pipeline.
 
-    reference_files={'distortion': 'jwst_fgs_distortioon_0001.asdf'}
+    It includes 3 coordinate frames -
+    "detector", "v2v3" and "world".
+
+    Uses a ``distortion`` reference file.
     """
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
-    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.deg, u.deg))
+    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.arcsec, u.arcsec))
     world = cf.CelestialFrame(name='world', reference_frame=coord.ICRS())
-    # V2, V3 to sky
+    # Crete the v2v3 to sky transform.
     tel2sky = pointing.v23tosky(input_model)
 
+    # If subarray, ceate an offset transform to be prepended to the distortion.
     subarray2full = subarray_transform(input_model)
     if reference_files:
         imdistortion = imaging_distortion(input_model, reference_files)
         distortion = subarray2full | imdistortion
+        # If the bounding box is saved in the model, move it to the first transform.
         distortion.bounding_box = imdistortion.bounding_box
         del imdistortion.bounding_box
     else:
@@ -63,8 +67,14 @@ def imaging(input_model, reference_files):
 
 
 def imaging_distortion(input_model, reference_files):
+    """
+    Create the transform from "detector" to "v2v3".
+    """
     dist = DistortionModel(reference_files['distortion'])
     transform = dist.model
+
+    # Get the ``bounding_box`` from the transform in the reference file.
+    # If not set a ``bounding_box`` equal to the size of the image.
     try:
         bb = transform.bounding_box
     except NotImplementedError:
@@ -90,6 +100,8 @@ def imaging_distortion(input_model, reference_files):
     return transform
 
 
+# EXP_TYPE to function mapping.
+# The function creates the WCS pipeline.
 exp_type2transform = {'fgs_image': imaging,
                       'fgs_focus': imaging,
                       'fgs_skyflat': not_implemented_mode,

@@ -1,10 +1,10 @@
-from . import model_base
+from .model_base import DataModel
 
 
-__all__ = ['ReferencefileModel']
+__all__ = ['ReferenceFileModel']
 
 
-class ReferenceFileModel(model_base.DataModel):
+class ReferenceFileModel(DataModel):
     """
     A data model for reference tables
 
@@ -17,6 +17,7 @@ class ReferenceFileModel(model_base.DataModel):
 
     def __init__(self, init=None, **kwargs):
         super(ReferenceFileModel, self).__init__(init=init, **kwargs)
+        self._no_asdf_extension = True
         self.meta.telescope = "JWST"
 
     def validate(self):
@@ -32,8 +33,10 @@ class ReferenceFileModel(model_base.DataModel):
         assert self.meta.useafter is not None
         assert self.meta.instrument.name is not None
 
+        super(ReferenceFileModel, self).validate()
 
-class ReferenceImageModel(model_base.DataModel):
+
+class ReferenceImageModel(ReferenceFileModel):
     """
     A data model for 2D reference images
 
@@ -70,7 +73,7 @@ class ReferenceImageModel(model_base.DataModel):
         self.err = self.err
 
 
-class ReferenceCubeModel(model_base.DataModel):
+class ReferenceCubeModel(ReferenceFileModel):
     """
     A data model for 3D reference images
 
@@ -106,7 +109,7 @@ class ReferenceCubeModel(model_base.DataModel):
         self.dq = self.dq
         self.err = self.err
 
-class ReferenceQuadModel(model_base.DataModel):
+class ReferenceQuadModel(ReferenceFileModel):
     """
     A data model for 4D reference images
 

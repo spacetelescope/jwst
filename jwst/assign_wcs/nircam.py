@@ -18,10 +18,10 @@ log.setLevel(logging.DEBUG)
 
 
 def create_pipeline(input_model, reference_files):
-    '''
-    get reference files from crds
+    """
+    Create the WCS pipeline based on EXP_TYPE.
 
-    '''
+    """
     exp_type = input_model.meta.exposure.type.lower()
     pipeline = exp_type2transform[exp_type](input_model, reference_files)
 
@@ -30,13 +30,15 @@ def create_pipeline(input_model, reference_files):
 
 def imaging(input_model, reference_files):
     """
-    The NIRCAM imaging pipeline includes 3 coordinate frames -
-    detector, focal plane and sky
+    The NIRCAM imaging WCS pipeline.
 
-    reference_files={'distortion': 'test.asdf', 'filter_offsets': 'filter_offsets.asdf'}
+    It includes three coordinate frames -
+    "detector", "v2v3" and "world".
+
+    It uses the "distortion" reference file.
     """
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
-    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.deg, u.deg))
+    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.arcsec, u.arcsec))
     world = cf.CelestialFrame(reference_frame=coord.ICRS(), name='world')
 
     subarray2full = subarray_transform(input_model)
@@ -52,6 +54,9 @@ def imaging(input_model, reference_files):
 
 
 def imaging_distortion(input_model, reference_files):
+    """
+    Create the "detector" to "v2v3" transform.
+    """
     dist = DistortionModel(reference_files['distortion'])
     transform = dist.model
 
@@ -109,7 +114,7 @@ def tsgrism(input_model, reference_files):
     if "NRC_TSGRISM" != input_model.meta.exposure.type:
         raise TypeError('The input exposure is not a NIRCAM time series grism')
 
-    if input_model.meta.instrument.module  != "A":
+    if input_model.meta.instrument.module != "A":
         raise ValueError('TSGRISM mode only supports module A')
 
     if input_model.meta.instrument.pupil != "GRISMR":

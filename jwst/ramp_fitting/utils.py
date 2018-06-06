@@ -1034,7 +1034,7 @@ def reset_bad_gain(pdq, gain):
     return pdq
 
 
-def get_ref_subs(model, readnoise_model, gain_model):
+def get_ref_subs(model, readnoise_model, gain_model, nframes):
     """
     Short Summary
     -------------
@@ -1051,6 +1051,10 @@ def get_ref_subs(model, readnoise_model, gain_model):
 
     gain_model: instance of gain Model
         gain for all pixels
+
+    nframes: int
+        number of frames averaged per group; from the NFRAMES keyword. Does
+        not contain the groupgap.
 
     Returns
     -------
@@ -1072,7 +1076,9 @@ def get_ref_subs(model, readnoise_model, gain_model):
         log.info('Extracting readnoise subarray to match science data')
         readnoise_2d = reffile_utils.get_subarray_data(model, readnoise_model)
 
-    readnoise_2d *= gain_2d # convert read noise to correct units
+    # convert read noise to correct units & scale down for single groups,
+    #   and account for the number of frames per group
+    readnoise_2d *= gain_2d/np.sqrt(2. * nframes)
 
     return readnoise_2d, gain_2d
 

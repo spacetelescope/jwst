@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-from ..stpipe import Step, cmdline
+from ..stpipe import Step
 from .. import datamodels
 import logging
 from .assign_wcs import load_wcs
@@ -10,14 +10,8 @@ log.setLevel(logging.DEBUG)
 
 class AssignWcsStep(Step):
     """
-    AssignWcsStep: Loads all WCS and distortion information for an exposure
-    and stores it in the model meta data.
-    """
+    AssignWcsStep: Create a gWCS object and store it in ``Model.meta``.
 
-    spec = """
-    """
-
-    """
     Reference file types:
 
     camera             Camera model (NIRSPEC)
@@ -35,7 +29,16 @@ class AssignWcsStep(Step):
     specwcs            Wavelength calibration models (MIRI, NIRCAM, NIRISS)
     regions            Stores location of the regions on the detector (MIRI)
     wavelengthrange    Typical wavelength ranges (MIRI, NIRCAM, NIRISS, NIRSPEC)
+
+    Parameters
+    ----------
+    input : `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`, `~jwst.datamodels.CubeModel`
+        Input exposure.
     """
+
+    spec = """
+    """
+
     reference_file_types = ['distortion', 'filteroffset', 'specwcs', 'regions',
                             'wavelengthrange', 'camera', 'collimator', 'disperser',
                             'fore', 'fpa', 'msa', 'ote', 'ifupost',
@@ -60,10 +63,16 @@ class AssignWcsStep(Step):
                 reference_file_names[reftype] = reffile if reffile else ""
 
             # Get the MSA metadata file if needed and add to reffiles
-            msa_metadata_file = input_model.meta.instrument.msa_metadata_file
-            if msa_metadata_file is not None:
-                msa_metadata_file = self.make_input_path(msa_metadata_file)
-                reference_file_names['msametafile'] = msa_metadata_file
+            if input_model.meta.exposure.type == "NRS_MSASPEC":
+                msa_metadata_file = input_model.meta.instrument.msa_metadata_file
+                if msa_metadata_file is not None and msa_metadata_file.strip() not in ["", "N/A"]:
+                    msa_metadata_file = self.make_input_path(msa_metadata_file)
+                    reference_file_names['msametafile'] = msa_metadata_file
+                else:
+                    log.error("MSA metadata file (MSAMETFL) is required for NRS_MSASPEC exposures.")
+                    input_model.meta.cal_step.assign_wcs = 'SKIPPED'
+                    log.warning("assign_wcs: SKIPPED")
+                    return input_model
 
             result = load_wcs(input_model, reference_file_names)
 

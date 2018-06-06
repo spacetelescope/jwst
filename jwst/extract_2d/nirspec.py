@@ -1,5 +1,5 @@
 #
-#  Module for 2d extraction
+#  Module for 2d extraction of Nirspec fixed slits or MOS slitlets.
 #
 import logging
 import warnings
@@ -9,7 +9,7 @@ from gwcs.utils import _toindex
 from gwcs import wcstools
 
 from .. import datamodels
-from ..transforms import models as trmodels, Slit
+from ..transforms import models as trmodels
 from ..assign_wcs import nirspec
 from ..assign_wcs import util
 
@@ -18,6 +18,21 @@ log.setLevel(logging.DEBUG)
 
 
 def nrs_extract2d(input_model, slit_name=None, apply_wavecorr=False, reference_files={}):
+    """
+    Main extract_2d function for Nirspec exposures.
+
+    Parameters
+    ----------
+    input_model : `~jwst.datamodels.ImageModel` or `~jwst.datamodels.CubeModel`
+        Input data model.
+    slit_name : str or int
+        Slit name.
+    apply_wavecorr : bool
+        Flag whether to apply the zero point wavelength correction to
+        Nirspec exposures.
+    reference_files : dict
+        Reference files - uses the ``wavecorr`` reference file.
+    """
     exp_type = input_model.meta.exposure.type.upper()
 
     wavecorr_supported_modes = ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_BRIGHTOBJ']
@@ -84,6 +99,35 @@ def nrs_extract2d(input_model, slit_name=None, apply_wavecorr=False, reference_f
 
 
 def process_slit(input_model, slit, exp_type, apply_wavecorr, reffile):
+    """
+    Construct a data model for each slit.
+
+    Extract the data and apply the wavelength
+    zero point correction if requested.
+
+    Parameters
+    ----------
+    input_model : `~jwst.datamodels.ImageModel` or `~jwst.datamodels.CubeModel`
+        Input data model. The ``CubeModel`` is used only for TSO data, i.e.
+        ``NRS_BRIGHTOBJ`` exposure.
+    slit_name : str or int
+        Slit name.
+    exp_type : str
+        The type of exposure. Supported types are
+        ``NRS_FIXEDSLIT``, ``NRS_MSASPEC``, ``NRS_BRIGHTOBJ``
+    apply_wavecorr : bool
+        Flag whether to apply the zero point wavelength correction.
+    reffile : str
+        Path to ``wavecorr`` reference file.
+
+    Returns
+    -------
+    new_model : `~jwst/datamodels/SlitModel`
+        The new data model for a slit.
+    xlo, xhi, ylo, yhi : float
+        The corners of the extracted slit in pixel space.
+
+    """
     new_model, xlo, xhi, ylo, yhi = extract_slit(input_model, slit, exp_type)
     if apply_wavecorr and _is_point_source(slit, exp_type, input_model.meta.target.source_type):
         apply_zero_point_correction(new_model, slit, reffile)
@@ -102,10 +146,11 @@ def set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi):
     ----------
     output_model : `~jwst.datamodels.multislit.MultiSlitModel`
         The output model representing a slit.
-    nslit : int
-        The index o fthis slit in the `~jwst.datamodels.multislit.MultiSlitModel`.
+    slit : namedtuple
+        A `~jwst.transforms.models.Slit` object representing a slit.
     xlo, xhi, ylo, yhi : float
         Indices into the data array where extraction should be done.
+        These are converted to "pixel indices" - the center of a pixel.
     """
     xlo_ind, xhi_ind, ylo_ind, yhi_ind = _toindex((xlo, xhi, ylo, yhi)).astype(np.int16)
     output_model.name = str(slit.name)
@@ -131,7 +176,7 @@ def set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi):
 
 def offset_wcs(slit_wcs, slit_name):
     """
-    Prepend a Shift to the slit WCS to account for subarrays.
+    Prepend a Shift transform to the slit WCS to account for subarrays.
 
     Parameters
     ----------
@@ -156,7 +201,7 @@ def offset_wcs(slit_wcs, slit_name):
 
 def extract_slit(input_model, slit, exp_type):
     """
-    Extract a Slit from a full frame image.
+    Extract a slit from a full frame image.
 
     Parameters
     ----------
@@ -169,9 +214,8 @@ def extract_slit(input_model, slit, exp_type):
 
     Returns
     -------
-    new_model : `~jwst.datamodels.image.ImageModel`, `~jwst.datamodels.cube.CubeModel`
-        The slit model it is the same type as the input_model.
-        Attributes are added later.
+    new_model : `~jwst.datamodels.SlitModel`
+        The slit data model with WCS attached to it.
     """
     slit_wcs = nirspec.nrs_wcs_set_input(input_model, slit.name)
     xlo, xhi, ylo, yhi = offset_wcs(slit_wcs, slit.name)
@@ -181,15 +225,15 @@ def extract_slit(input_model, slit, exp_type):
         ext_err = input_model.err[ylo: yhi + 1, xlo: xhi + 1].copy()
         ext_dq = input_model.dq[ylo: yhi + 1, xlo: xhi + 1].copy()
         shape = ext_data.shape
-        bounding_box= ((0, shape[1] - 1), (0, shape[0] - 1))
+        bounding_box = ((0, shape[1] - 1), (0, shape[0] - 1))
         ext_var_rnoise = input_model.var_rnoise[ylo: yhi + 1, xlo: xhi + 1].copy()
         ext_var_poisson = input_model.var_poisson[ylo: yhi + 1, xlo: xhi + 1].copy()
     elif lenshape == 3:
-        ext_data = input_model.data[ : , ylo: yhi + 1, xlo: xhi + 1].copy()
-        ext_err = input_model.err[ : , ylo: yhi + 1, xlo: xhi + 1].copy()
-        ext_dq = input_model.dq[ : , ylo: yhi + 1, xlo: xhi + 1].copy()
+        ext_data = input_model.data[:, ylo: yhi + 1, xlo: xhi + 1].copy()
+        ext_err = input_model.err[:, ylo: yhi + 1, xlo: xhi + 1].copy()
+        ext_dq = input_model.dq[:, ylo: yhi + 1, xlo: xhi + 1].copy()
         shape = ext_data.shape
-        bounding_box= ((0, shape[2] - 1), (0, shape[1] - 1))
+        bounding_box = ((0, shape[2] - 1), (0, shape[1] - 1))
         ext_var_rnoise = input_model.var_rnoise[:, ylo: yhi + 1, xlo: xhi + 1].copy()
         ext_var_poisson = input_model.var_poisson[:, ylo: yhi + 1, xlo: xhi + 1].copy()
     else:
@@ -216,12 +260,12 @@ def apply_zero_point_correction(model, slit, reffile):
 
     Parameters
     ----------
-    model : `~jwst.datamodels.image.ImageModel`, `~jwst.datamodels.cube.CubeModel`
+    model : `~jwst.datamodels.SlitModel`, `~jwst.datamodels.cube.CubeModel`
         The output of `extract_slit`.
     slit : `~jwst.transforms.models.Slit`
         A slit object.
     reffile : str
-        The MSa reference file used to construct the WCS.
+        The ``wavecorr`` reference file.
     """
     slit_wcs = model.meta.wcs
 
@@ -251,10 +295,10 @@ def compute_zero_point_correction(lam, freference, source_xpos, aperture_name, d
 
     Parameters
     ----------
-    lam : nd-array like
-        Wavelength array
+    lam : ndarray
+        Wavelength array.
     freference : str
-        WAVECORR reference file name.
+        ``wavecorr`` reference file name.
     source_xpos : float
         X position of the source as a fraction of the slit size.
     aperture_name : str
@@ -264,9 +308,9 @@ def compute_zero_point_correction(lam, freference, source_xpos, aperture_name, d
 
     Returns
     -------
-    lambda_corr : ndarray like
+    lambda_corr : ndarray
         Wavelength correction.
-    lam : ndarray like
+    lam : ndarray
         Interpolated wavelengths. Extrapolated values are reset to 0.
         This is returned so that the DQ array can be updated with a flag
         which indicates that no zero-point correction was done.
@@ -287,7 +331,7 @@ def compute_zero_point_correction(lam, freference, source_xpos, aperture_name, d
     lam = lam.copy()
     l = lam[~np.isnan(lam)]
     offset_model.bounds_error = False
-    correction = offset_model(l * 10 ** -6, [deltax]*l.size)
+    correction = offset_model(l * 10 ** -6, [deltax] * l.size)
     lam[~np.isnan(lam)] = correction
     # The correction for pixels outside the slit and wavelengths
     # outside the wave_range is 0.
@@ -311,7 +355,7 @@ def compute_dispersion(wcs):
         The pixel dispersion [in m].
 
     """
-    xpix, ypix = wcstools.grid_from_bounding_box(wcs.bounding_box, step=(1,1))
+    xpix, ypix = wcstools.grid_from_bounding_box(wcs.bounding_box, step=(1, 1))
     xleft = xpix - 0.5
     xright = xpix + 0.5
     _, _, lamright = wcs(xright, ypix)
@@ -320,6 +364,18 @@ def compute_dispersion(wcs):
 
 
 def _is_point_source(slit, exp_type, user_type):
+    """
+    Determine if a source is a point source.
+
+    Parameters
+    ----------
+    slit : `~jwst.transforms.models.Slit`
+        A slit object.
+    exp_type : str
+        The exposure type
+    user_type : str
+        User defined source type (coming from the proposal).
+    """
     result = False
     if exp_type == 'NRS_MSASPEC':
         if slit.stellarity > 0.75:
@@ -345,14 +401,14 @@ def _is_point_source(slit, exp_type, user_type):
 
 def get_source_xpos(input_model, slit, slit_wcs, lam, msa_model):
     """
-    Compute the source position within the slit for a NIRSPEC FS.
+    Compute the source position within the slit for a NIRSPEC fixed slit.
 
     Parameters
     ----------
-    input_model : `~jwst/datamodels/model_base.DataModel`
+    input_model : `~jwst.datamodels.ImageModel`
         The input to ``extract_2d``.
-    slit : `~jwst/transforms/models/Slit`
-        The slit tuple.
+    slit : `~jwst.transforms.models.Slit`
+        The slit object (tuple).
     slit_wcs : `~gwcs.wcs.WCS`
         The WCS object for this slit.
     lam : float
@@ -381,7 +437,8 @@ def get_source_xpos(input_model, slit, slit_wcs, lam, msa_model):
 
 
 def get_msa_model(input_model):
-    # Get the reference file used in constructing the WCS.
+    """Get the reference file used in constructing the WCS.
+    """
     msa_ref = input_model.meta.ref_file.msa.name
     from .. import assign_wcs
     from .. datamodels import MSAModel
@@ -396,10 +453,10 @@ def absolute2fractional(msa_model, slit, xposabs, yposabs):
 
     Parameters
     ----------
-    input_model : `~jwst/datamodels/model_base.DataModel`
+    input_model : `~jwst.datamodels.ImageModel`
         The input to ``extract_2d``.
-    slit : `~jwst/transforms/models/Slit`
-        The slit tuple.
+    slit : `~jwst.transforms.models.Slit`
+        The slit object.
     xposabs, yposabs : float
         (x, y) positions in the ``msa_frame``.
 
@@ -409,4 +466,4 @@ def absolute2fractional(msa_model, slit, xposabs, yposabs):
         The fractional X coordinates within the slit.
     """
     num, xcenter, ycenter, xsize, ysize = msa_model.Q5.data[slit.shutter_id]
-    return (xposabs - xcenter) / (xsize/ 2.)
+    return (xposabs - xcenter) / (xsize / 2.)

@@ -1,10 +1,10 @@
 """Base classes which define the Level2 Associations"""
+import copy
 import logging
 from os.path import (
     basename,
     splitext
 )
-
 import re
 
 from jwst.associations import (
@@ -622,13 +622,35 @@ class Constraint_Image_Science(DMSAttrConstraint):
         )
 
 
-class Constraint_Image_Nonscience(DMSAttrConstraint):
+class Constraint_Image_Nonscience(Constraint):
     """Select on non-science images"""
     def __init__(self):
         super(Constraint_Image_Nonscience, self).__init__(
-            name='non_science',
-            sources=['exp_type'],
-            value='|'.join(IMAGE2_NONSCIENCE_EXP_TYPES),
+            [
+                DMSAttrConstraint(
+                    name='non_science',
+                    sources=['exp_type'],
+                    value='|'.join(IMAGE2_NONSCIENCE_EXP_TYPES),
+                ),
+                Constraint(
+                    [
+                        DMSAttrConstraint(
+                            name='exp_type',
+                            sources=['exp_type'],
+                            value='nrs_msaspec'
+                        ),
+                        DMSAttrConstraint(
+                            sources=['msastate'],
+                            value='primarypark_allopen'
+                        ),
+                        DMSAttrConstraint(
+                            sources=['grating'],
+                            value='mirror'
+                        )
+                    ]
+                )
+            ],
+            reduce=Constraint.any
         )
 
 
@@ -644,13 +666,34 @@ class Constraint_Special(DMSAttrConstraint):
         )
 
 
-class Constraint_Spectral_Science(DMSAttrConstraint):
+class Constraint_Spectral_Science(Constraint):
     """Select on spectral science"""
     def __init__(self):
+
+        # Remove NRS_MSASPEC from the science list.
+        science_exp_types = copy.copy(SPEC2_SCIENCE_EXP_TYPES)
+        science_exp_types.remove('nrs_msaspec')
         super(Constraint_Spectral_Science, self).__init__(
-            name='exp_type',
-            sources=['exp_type'],
-            value='|'.join(SPEC2_SCIENCE_EXP_TYPES)
+            [
+                DMSAttrConstraint(
+                    name='exp_type',
+                    sources=['exp_type'],
+                    value='|'.join(science_exp_types)
+                ),
+                Constraint(
+                    [
+                        DMSAttrConstraint(
+                            name='exp_type',
+                            sources=['exp_type'],
+                            value='nrs_msaspec'
+                        ),
+                        DMSAttrConstraint(
+                            sources=['msametfl']
+                        )
+                    ]
+                )
+            ],
+            reduce=Constraint.any
         )
 
 

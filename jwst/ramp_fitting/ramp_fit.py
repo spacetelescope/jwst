@@ -224,7 +224,7 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
     # Get readnoise array for calculation of variance of noiseless ramps, and
     #   gain array in case optimal weighting is to be done
     readnoise_2d, gain_2d = utils.get_ref_subs(model, readnoise_model,
-                            gain_model)
+                                               gain_model, nframes)
 
     # Flag any bad pixels in the gain
     pixeldq = utils.reset_bad_gain( pixeldq, gain_2d )
@@ -335,9 +335,9 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
             opt_res.cr_mag_seg[num_int, :, rlo:rhi, :] = \
                        data_diff * (dq_cr != 0)
 
-    # Compute the final 2D array of differences.
+    # Compute the final 2D array of differences; create rate array
     median_diffs_2d /= n_int
-    med_slopes = median_diffs_2d.copy()
+    med_rates = median_diffs_2d/group_time
 
     del median_diffs_2d
 
@@ -379,10 +379,10 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
                                        group_time, max_seg )
 
             segs_4[num_int, :, rlo:rhi, :] = segs_beg_3
-            var_p4[num_int, :, rlo:rhi, :] = den_p3 * med_slopes[ rlo:rhi, :]
+            var_p4[num_int, :, rlo:rhi, :] = den_p3 * med_rates[ rlo:rhi, :]
             var_r4[num_int, :, rlo:rhi, :] = num_r3 * den_r3
 
-        var_p4[var_p4 < 0.] = 0.
+        var_p4[var_p4 < 0.] = 0. # ignore contributions from negative slopes
         var_p4 = utils.rem_nan_inf(var_p4)
 
         var_r4[var_r4 < 0.] = 0.
@@ -457,7 +457,7 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
         var_both3[num_int, :, :] = 1./s_inv_var_both3[num_int, :, :]
 
     var_p3 = utils.rem_nan_inf(var_p3)
-    var_p3[ var_p3 < 0. ] = 0.
+    var_p3[var_p3 < 0.] = 0.   # ignore contributions from negative slopes
 
     var_r3 = utils.rem_nan_inf(var_r3)
 

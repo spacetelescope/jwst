@@ -108,7 +108,10 @@ class Asn_Spectral(AsnMixin_Spectrum):
             ),
             Constraint_Optical_Path(),
             Constraint_Target(),
-            Constraint_Spectral(),
+            Constraint(
+                [Constraint_Spectral(), Constraint_MSA()],
+                reduce=Constraint.any
+            )
         ])
 
         # Check and continue initialization.

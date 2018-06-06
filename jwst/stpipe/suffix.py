@@ -41,7 +41,7 @@ logger.addHandler(logging.NullHandler())
 SUFFIXES_TO_ADD = [
     'ami', 'amiavg', 'aminorm',
     'blot', 'bsub', 'bsubints',
-    'cal', 'calints', 'crf', 'crfints',
+    'cal', 'calints', 'cat', 'crf', 'crfints',
     'dark',
     'i2d',
     'median',

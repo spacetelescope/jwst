@@ -15,6 +15,7 @@ from .helpers import (
 
 from ...associations import load_asn
 from ...stpipe.step import (Step, remove_suffix)
+from ..collect_pipeline_cfgs import collect_pipeline_cfgs
 
 DATAPATH = abspath(
     path.join('$TEST_BIGDATA', 'pipelines', 'nircam_calimage3')
@@ -27,12 +28,12 @@ def test_run_full(mk_tmp_dirs):
     """Test a full run"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
-    asn_path = update_asn_basedir(
-        path.join(DATAPATH, 'mosaic_long_asn.json'),
-        root=DATAPATH
-    )
+    cfg_dir = path.join(tmp_data_path, 'cfgs')
+    collect_pipeline_cfgs(cfg_dir)
+
+    asn_path = path.join(DATAPATH, 'mosaic_long_asn.json')
     args = [
-        path.join(SCRIPT_DATA_PATH, 'cfgs', 'calwebb_image3.cfg'),
+        path.join(cfg_dir, 'calwebb_image3.cfg'),
         asn_path,
     ]
 
@@ -64,9 +65,12 @@ def test_single_image(mk_tmp_dirs):
     """Test a full run"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
+    cfg_dir = path.join(tmp_data_path, 'cfgs')
+    collect_pipeline_cfgs(cfg_dir)
+
     input_file = 'nrca5_47Tuc_subpix_dither1_newpos_cal.fits'
     args = [
-        path.join(SCRIPT_DATA_PATH, 'cfgs', 'calwebb_image3.cfg'),
+        path.join(cfg_dir, 'calwebb_image3.cfg'),
         path.join(
             DATAPATH,
             input_file
