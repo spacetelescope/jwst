@@ -1,11 +1,11 @@
-from . import model_base
+from .reference import ReferenceFileModel
 from .dynamicdq import dynamic_mask
 
 
 __all__ = ['LinearityModel']
 
 
-class LinearityModel(model_base.DataModel):
+class LinearityModel(ReferenceFileModel):
     """
     A data model for linearity correction information.
 

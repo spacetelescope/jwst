@@ -1,8 +1,8 @@
-from . import model_base
+from .reference import ReferenceFileModel
 
 __all__ = ['IPCModel']
 
-class IPCModel(model_base.DataModel):
+class IPCModel(ReferenceFileModel):
     """
     A data model for IPC kernel checking information.
 

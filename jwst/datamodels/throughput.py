@@ -1,10 +1,10 @@
-from . import model_base
+from .reference import ReferenceFileModel
 
 
 __all__ = ['ThroughputModel']
 
 
-class ThroughputModel(model_base.DataModel):
+class ThroughputModel(ReferenceFileModel):
     """
     A data model for filter throughput.
     """
