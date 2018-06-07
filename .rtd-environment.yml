@@ -1,6 +1,6 @@
 channels:
   - http://ssb.stsci.edu/astroconda-dev
-  
+
 dependencies:
   - python>=3
   - setuptools
@@ -9,7 +9,6 @@ dependencies:
   - crds
   - dask
   - drizzle
-  - drizzlepac
   - gwcs
   - jsonschema
   - jplephem

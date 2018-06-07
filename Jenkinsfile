@@ -24,7 +24,6 @@ def CONDA_DEPS = "asdf \
                   crds \
                   dask \
                   drizzle \
-                  fitsblender \
                   flake8 \
                   gwcs \
                   jsonschema \
