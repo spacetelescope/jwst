@@ -872,6 +872,8 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         for value in values:
             if isinstance(value, HistoryEntry):
                 entries.append(value)
+            elif isinstance(value, dict):
+                entries.append(HistoryEntry(value))
             else:
                 entries.append(HistoryEntry({'description': value}))
 
