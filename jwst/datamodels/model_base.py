@@ -19,6 +19,7 @@ from asdf import AsdfFile
 from asdf import yamlutil
 from asdf import schema as asdf_schema
 from asdf import extension as asdf_extension
+from asdf.tags.core import HistoryEntry
 
 from . import ndmodel
 from . import filetype
@@ -840,22 +841,39 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
     @property
     def history(self):
-        return self._instance.setdefault('history', {})
+        """
+        Get the history as a list of entries
+        """
+        # Auto-vivify any part of the hierachy that might be missing
+        tree = self._asdf.tree
+        if 'history' not in tree:
+            tree['history'] = {}
+        if 'entries' not in tree['history']:
+            tree['history']['entries'] = []
+        return tree['history']['entries']
 
     @history.setter
-    def history(self, value):
+    def history(self, values):
         """
         Set a history entry.
 
         Parameters
         ----------
-        value : list
+        values : list
             For FITS files this should be a list of strings.
             For ASDF files use a list of ``HistoryEntry`` object. It can be created
             with `~jwst.datamodels.util.create_history_entry`.
 
         """
-        self._instance['history'] = value
+        if not isinstance(values, list):
+            values = [values]
+
+        entries = self.history
+        for value in values:
+            if isinstance(value, HistoryEntry):
+                entries.append(value)
+            else:
+                entries.append(HistoryEntry({'description': value}))
 
     def get_fits_wcs(self, hdu_name='SCI', hdu_ver=1, key=' '):
         """
