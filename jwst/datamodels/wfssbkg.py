@@ -1,11 +1,11 @@
-from .reference import ReferenceFileModel
+from . import model_base
 from .dynamicdq import dynamic_mask
 
 
 __all__ = ['WfssBkgModel']
 
 
-class WfssBkgModel(ReferenceFileModel):
+class WfssBkgModel(model_base.DataModel):
     """
     A data model for 2D WFSS master background reference files.
 
