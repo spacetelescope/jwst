@@ -875,7 +875,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             elif isinstance(value, dict):
                 entries.append(HistoryEntry(value))
             else:
-                entries.append(HistoryEntry({'description': value}))
+                entries.append(HistoryEntry({'description': str(value)}))
 
     def get_fits_wcs(self, hdu_name='SCI', hdu_ver=1, key=' '):
         """
