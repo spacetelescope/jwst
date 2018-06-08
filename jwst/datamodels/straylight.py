@@ -1,10 +1,10 @@
-from .reference import ReferenceFileModel
+from . import model_base
 
 
 __all__ = ['StrayLightModel']
 
 
-class StrayLightModel(ReferenceFileModel):
+class StrayLightModel(model_base.DataModel):
     """
     A data model for 2D straylight mask.
 

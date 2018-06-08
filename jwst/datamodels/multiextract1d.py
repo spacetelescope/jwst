@@ -1,11 +1,11 @@
-from .reference import ReferenceFileModel
+from . import model_base
 from .extract1dimage import Extract1dImageModel
 
 
 __all__ = ['MultiExtract1dImageModel']
 
 
-class MultiExtract1dImageModel(ReferenceFileModel):
+class MultiExtract1dImageModel(model_base.DataModel):
     """
     A data model for extract_1d reference images.
 

@@ -1,9 +1,9 @@
-from .reference import ReferenceFileModel
+from . import model_base
 from .dynamicdq import dynamic_mask
 
 __all__ = ['SaturationModel']
 
-class SaturationModel(ReferenceFileModel):
+class SaturationModel(model_base.DataModel):
     """
     A data model for saturation checking information.
 

@@ -1,10 +1,10 @@
-from .reference import ReferenceFileModel
+from . import model_base
 
 
 __all__ = ['TrapParsModel']
 
 
-class TrapParsModel(ReferenceFileModel):
+class TrapParsModel(model_base.DataModel):
     """
     A data model for trap capture and decay parameters.
 

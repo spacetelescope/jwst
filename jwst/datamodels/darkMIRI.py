@@ -1,10 +1,10 @@
-from .reference import ReferenceFileModel
+from . import model_base
 from .dynamicdq import dynamic_mask
 
 __all__ = ['DarkMIRIModel']
 
 
-class DarkMIRIModel(ReferenceFileModel):
+class DarkMIRIModel(model_base.DataModel):
     """
     A data model for dark MIRI reference files.
 

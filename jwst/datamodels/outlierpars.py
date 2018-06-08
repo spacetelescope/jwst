@@ -1,9 +1,9 @@
-from .reference import ReferenceFileModel
+from . import model_base
 
 __all__ = ['OutlierParsModel']
 
 
-class OutlierParsModel(ReferenceFileModel):
+class OutlierParsModel(model_base.DataModel):
     """
     A data model for outlier detection parameters reference tables.
     """

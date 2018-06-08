@@ -1,11 +1,11 @@
-from .reference import ReferenceFileModel
+from . import model_base
 from .dynamicdq import dynamic_mask
 
 
 __all__ = ['FlatModel']
 
 
-class FlatModel(ReferenceFileModel):
+class FlatModel(model_base.DataModel):
     """
     A data model for 2D flat-field images.
 
