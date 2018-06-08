@@ -27,6 +27,7 @@ class SourceCatalogStep(Step):
         deblend = boolean(default=False)      # deblend sources?
         output_ext = string(default='.ecsv')  # Default type of output
         suffix = string(default='cat')        # Default suffix for output files
+        save_results = boolean(default=True)  # Save the output catalog
     """
 
     def process(self, input):
@@ -50,7 +51,7 @@ class SourceCatalogStep(Step):
             self.log.info('Detected {0} sources'.format(len(catalog)))
 
             if self.save_results:
-                cat_filepath = self.make_output_path()
+                cat_filepath = self.make_output_path(basepath=model.meta.filename)
                 catalog.write(
                     cat_filepath, format='ascii.ecsv', overwrite=True
                 )
