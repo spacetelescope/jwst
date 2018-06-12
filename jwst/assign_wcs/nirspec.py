@@ -722,10 +722,8 @@ def gwa_to_ifuslit(slits, input_model, disperser, reference_files):
     # The wavelength units up to this point are
     # meters as required by the pipeline but the desired output wavelength units is microns.
     # So we are going to Scale the spectral units by 1e6 (meters -> microns)
-    # and by e-6 (microns --> meters) in the inverse transform.
     if input_model.meta.instrument.filter == 'OPAQUE':
         lgreq = lgreq | Scale(1e6)
-        agreq = Scale(1e-6) & Identity(3) | agreq
 
     lam_cen = 0.5 * (input_model.meta.wcsinfo.waverange_end -
                      input_model.meta.wcsinfo.waverange_start
@@ -747,7 +745,7 @@ def gwa_to_ifuslit(slits, input_model, disperser, reference_files):
         msa2gwa = ifuslicer_transform & Const1D(lam_cen) | ifupost_transform | collimator2gwa
         gwa2slit = gwa_to_ymsa(msa2gwa, lam_cen)# TODO: Use model sets here
 
-        # The comments below list the input coordinates.
+        # The commnts below list the input coordinates.
         bgwa2msa = (
             # (alpha_out, beta_out, gamma_out), angles at the GWA, coming from the camera
             # (0, - beta_out, alpha_out, beta_out)
@@ -805,10 +803,8 @@ def gwa_to_slit(open_slits, input_model, disperser, reference_files):
     # The wavelength units up to this point are
     # meters as required by the pipeline but the desired output wavelength units is microns.
     # So we are going to Scale the spectral units by 1e6 (meters -> microns)
-    # and by e-6 (microns --> meters) in the inverse transform
     if input_model.meta.instrument.filter == 'OPAQUE':
         lgreq = lgreq | Scale(1e6)
-        agreq = Scale(1e-6) & Identity(3) | agreq
 
     msa = MSAModel(reference_files['msa'])
     slit_models = []
