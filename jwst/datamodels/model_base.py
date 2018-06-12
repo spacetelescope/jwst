@@ -19,7 +19,6 @@ from asdf import AsdfFile
 from asdf import yamlutil
 from asdf import schema as asdf_schema
 from asdf import extension as asdf_extension
-from asdf.tags.core import HistoryEntry
 
 from . import ndmodel
 from . import filetype
@@ -29,6 +28,7 @@ from . import schema as mschema
 from . import util
 from . import validate
 
+from .history import HistoryList
 from .extension import BaseExtension
 from jwst.transforms.jwextension import JWSTExtension
 from gwcs.extension import GWCSExtension
@@ -845,12 +845,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         Get the history as a list of entries
         """
         # Auto-vivify any part of the hierachy that might be missing
-        tree = self._asdf.tree
-        if 'history' not in tree:
-            tree['history'] = {}
-        if 'entries' not in tree['history']:
-            tree['history']['entries'] = []
-        return tree['history']['entries']
+        return HistoryList(self._asdf)
 
     @history.setter
     def history(self, values):
@@ -865,17 +860,11 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             with `~jwst.datamodels.util.create_history_entry`.
 
         """
-        if not isinstance(values, list):
+        if not hasattr(values, '__iter__'):
             values = [values]
-
         entries = self.history
-        for value in values:
-            if isinstance(value, HistoryEntry):
-                entries.append(value)
-            elif isinstance(value, dict):
-                entries.append(HistoryEntry(value))
-            else:
-                entries.append(HistoryEntry({'description': str(value)}))
+        entries.clear()
+        entries.extend(values)
 
     def get_fits_wcs(self, hdu_name='SCI', hdu_ver=1, key=' '):
         """
