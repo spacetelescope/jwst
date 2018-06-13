@@ -844,7 +844,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         """
         Get the history as a list of entries
         """
-        # Auto-vivify any part of the hierachy that might be missing
         return HistoryList(self._asdf)
 
     @history.setter
