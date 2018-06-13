@@ -25,9 +25,8 @@ class HistoryList:
 
     def __setitem__(self, key, value):
         self.append(value)
-        if key != -1 or key != len(self._entries) - 1:
-            value = self._entries.pop()
-            self._entries[key] = value
+        value = self._entries.pop()
+        self._entries[key] = value
 
     def __delitem__(self, key):
         del self._entries[key]
