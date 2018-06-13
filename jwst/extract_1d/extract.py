@@ -1934,7 +1934,7 @@ class ImageExtractModel(ExtractBase):
         return (mask_target, mask_bkg)
 
 
-def interpolate_response(wavelength, relsens):
+def interpolate_response(wavelength, relsens, verbose):
     """Interpolate within the relative response table.
 
     Parameters
@@ -1944,6 +1944,9 @@ def interpolate_response(wavelength, relsens):
 
     relsens: record array
         Contains two columns, 'wavelength' and 'response'.
+
+    verbose: bool
+        If True, write log messages.
 
     Returns
     -------
@@ -1958,7 +1961,8 @@ def interpolate_response(wavelength, relsens):
     resp_relsens = relsens['response']
     MICRONS_100 = 1.e-4                 # 100 microns, in meters
     if wl_relsens.max() > 0. and wl_relsens.max() < MICRONS_100:
-        log.warning("Converting RELSENS wavelengths to microns.")
+        if verbose:
+            log.warning("Converting RELSENS wavelengths to microns.")
         wl_relsens *= 1.e6
 
     bad = False
@@ -1976,13 +1980,16 @@ def interpolate_response(wavelength, relsens):
     r_factor = np.interp(wavelength, wl_relsens, resp_relsens, -2048., -2048.)
     mask = np.where(r_factor == -2048.)
     if len(mask[0]) > 0:
-        log.warning("Using RELSENS, %d elements were extrapolated; "
-                    "these values will be set to 1.", len(mask[0]))
+        if verbose:
+            log.warning("Using RELSENS, %d elements were extrapolated; "
+                        "these values will be set to 1.", len(mask[0]))
         r_factor[mask] = 1.
     mask = np.where(r_factor <= 0.)
     if len(mask[0]) > 0:
-        log.warning("Using RELSENS, %d interpolated response values "
-                    "were <= 0; these values will be set to 1.", len(mask[0]))
+        if verbose:
+            log.warning("Using RELSENS, %d interpolated response values "
+                        "were <= 0; these values will be set to 1.",
+                        len(mask[0]))
         r_factor[mask] = 1.
 
     return r_factor
@@ -2042,7 +2049,7 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
             if got_relsens and len(relsens) == 0:
                 got_relsens = False
             if got_relsens:
-                r_factor = interpolate_response(wavelength, relsens)
+                r_factor = interpolate_response(wavelength, relsens, True)
                 flux = net / r_factor
             else:
                 log.warning("No relsens for current slit, "
@@ -2124,7 +2131,7 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
                 if got_relsens and len(relsens) == 0:
                     got_relsens = False
                 if got_relsens:
-                    r_factor = interpolate_response(wavelength, relsens)
+                    r_factor = interpolate_response(wavelength, relsens, True)
                     flux = net / r_factor
                 else:
                     log.warning("No relsens for input file, "
@@ -2207,10 +2214,10 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
                     except InvalidSpectralOrderNumberError as e:
                         log.info(str(e) + ", skipping ...")
                         break
-                    verbose = False
                     if got_relsens:
-                        r_factor = interpolate_response(wavelength,
-                                                        input_model.relsens)
+                        r_factor = interpolate_response(
+                                        wavelength, input_model.relsens,
+                                        verbose)
                         flux = net / r_factor
                     else:
                         flux = np.zeros_like(net)
@@ -2251,6 +2258,7 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
                             progress_msg_printed = True
                     else:
                             progress_msg_printed = False
+                    verbose = False
 
                 if not progress_msg_printed:
                     if input_model.data.shape[0] == 1:
