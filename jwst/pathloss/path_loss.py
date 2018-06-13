@@ -236,12 +236,12 @@ def do_correction(input_model, pathloss_model):
                         slit.pathloss_pointsource2d = pathloss_pointsource_2d
                         slit.pathloss_uniformsource2d = pathloss_uniformsource_2d
                     else:
-                        log.warning("Source is outside slitlet")
+                        log.warning("Source is outside slitlet, skipping pathloss correction for this slitlet")
                 else:
-                    log.warning("Cannot find matching pathloss model for slit with size %d" % nshutters)
+                    log.warning("Cannot find matching pathloss model for slit with size %d, skipping pathloss correction for this slitlet" % nshutters)
                     continue
             else:
-                log.warning("Slit has data size = {}".format(size))
+                log.warning("Slit has data size = {}, skipping pathloss correction for this slitlet".format(size))
         input_model.meta.cal_step.pathloss = 'COMPLETE'
     elif exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
         slit_number = 0
@@ -290,9 +290,9 @@ def do_correction(input_model, pathloss_model):
                     slit.pathloss_pointsource2d = pathloss_pointsource_2d
                     slit.pathloss_uniformsource2d = pathloss_uniformsource_2d
                 else:
-                    log.warning("Source is outside slit")
+                    log.warning("Source is outside slit, skipping pathloss correction for this slit")
             else:
-                log.warning("Cannot find matching pathloss model for aperture %s" % slit.name)
+                log.warning("Cannot find matching pathloss model for aperture %s, skipping pathloss correction for this slit" % slit.name)
                 continue
         input_model.meta.cal_step.pathloss = 'COMPLETE'
     elif exp_type == 'NRS_IFU':
