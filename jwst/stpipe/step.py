@@ -279,6 +279,12 @@ class Step():
             Additional parameters to set.  These will be set as member
             variables on the new Step instance.
         """
+
+        # Setup primary input
+        self._reference_files_used = []
+        self._input_filename = None
+        self._input_dir = None
+
         if _validate_kwds:
             spec = self.load_spec_file()
             kws = config_parser.config_from_dict(
@@ -311,6 +317,7 @@ class Step():
         # against it.
         self.config_file = config_file
 
+        # Setup the hooks
         if len(self.pre_hooks) or len(self.post_hooks):
             from . import hooks
             self._pre_hooks = hooks.get_hook_objects(
@@ -322,9 +329,6 @@ class Step():
         else:
             self._pre_hooks = []
             self._post_hooks = []
-
-        self._reference_files_used = []
-        self._input_filename = None
 
     def _check_args(self, args, discouraged_types, msg):
         if discouraged_types is None:
@@ -529,6 +533,14 @@ class Step():
             instance = cls(**kwargs)
         return instance.run(*args)
 
+    @property
+    def input_dir(self):
+        return self.search_attr('_input_dir', '')
+
+    @input_dir.setter
+    def input_dir(self, input_dir):
+        self._input_dir = input_dir
+
     def default_output_file(self, input_file=None):
         """Create a default filename based on the input name"""
         output_file = input_file
@@ -545,7 +557,7 @@ class Step():
         """Return a default suffix based on the step"""
         return self.name.lower()
 
-    def search_attr(self, attribute, parent_first=False, default=None):
+    def search_attr(self, attribute, default=None, parent_first=False):
         """Return first non-None attribute in step heirarchy
 
         Parameters
@@ -553,11 +565,11 @@ class Step():
         attribute: str
             The attribute to retrieve
 
-        parent_first: bool
-            If `True`, allow parent definition to override step version
-
         default: obj
             If attribute is not found, the value to use
+
+        parent_first: bool
+            If `True`, allow parent definition to override step version
 
         Returns
         -------
@@ -959,8 +971,7 @@ class Step():
         if isinstance(file_path, str):
             original_path, file_name = split(file_path)
             if not len(original_path):
-                input_dir = self.search_attr('input_dir', '')
-                full_path = join(input_dir, file_name)
+                full_path = join(self.input_dir, file_name)
 
         return full_path
 
@@ -1020,18 +1031,13 @@ class Step():
             defined by a parent Step. Otherwise, always set.
 
         """
-        parent_input_dir = self.search_attr('input_dir')
-        if not exclusive or parent_input_dir is None:
+        if not exclusive or self.search_attr('_input_dir') is None:
             try:
                 if isfile(input):
                     self.input_dir = split(input)[0]
             except Exception:
                 # Not a file-checkable object. Ignore.
                 pass
-
-        # Ensure that a valid input directory is given.
-        if self.search_attr('input_dir') is None:
-            self.input_dir = ''
 
 
 # #########
