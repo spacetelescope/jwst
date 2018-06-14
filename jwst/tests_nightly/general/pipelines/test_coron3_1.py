@@ -34,12 +34,13 @@ def test_coron3_pipeline1(_bigdata):
     newh = pf.HDUList([h['primary'], h['sci'], h['err'], h['dq']])
     newhref = pf.HDUList([href['primary'], href['sci'],
                          href['err'], href['dq']])
-    kws_to_ignore = ['DATE', 'CAL_VER', 'CAL_VCS', 'CRDS_VER', 'CRDS_CTX']
+    kws_to_ignore = ['DATE', 'CAL_VER', 'CAL_VCS', 'CRDS_VER', 'CRDS_CTX',
+        'TFORM*', 'NAXIS1']
 
     result = pf.diff.FITSDiff(newh,
                               newhref,
                               ignore_keywords=kws_to_ignore,
-                              rtol=0.00001)
+                              rtol=0.001)
     assert result.identical, result.report()
 
     # Compare psfalign product
@@ -55,7 +56,7 @@ def test_coron3_pipeline1(_bigdata):
     result = pf.diff.FITSDiff(newh,
                               newhref,
                               ignore_keywords=kws_to_ignore,
-                              rtol=0.00001)
+                              rtol=0.001)
     assert result.identical, result.report()
 
     # Compare psfsub product
@@ -72,7 +73,7 @@ def test_coron3_pipeline1(_bigdata):
     result = pf.diff.FITSDiff(newh,
                               newhref,
                               ignore_keywords=kws_to_ignore,
-                              rtol=0.00001)
+                              rtol=0.001)
     assert result.identical, result.report()
 
     # Compare level-2c product
@@ -89,7 +90,7 @@ def test_coron3_pipeline1(_bigdata):
     result = pf.diff.FITSDiff(newh,
                               newhref,
                               ignore_keywords=kws_to_ignore,
-                              rtol=0.00001)
+                              rtol=0.001)
     assert result.identical, result.report()
 
     n_cur = 'jw9999947001_02102_00002_nrcb3_a3001_crfints.fits'
@@ -104,7 +105,7 @@ def test_coron3_pipeline1(_bigdata):
     result = pf.diff.FITSDiff(newh,
                               newhref,
                               ignore_keywords=kws_to_ignore,
-                              rtol=0.00001)
+                              rtol=0.001)
     assert result.identical, result.report()
 
     # Compare i2d product
@@ -123,5 +124,5 @@ def test_coron3_pipeline1(_bigdata):
                               newhref,
                               ignore_keywords=kws_to_ignore,
                               ignore_fields=kws_to_ignore,
-                              rtol=0.00001)
+                              rtol=0.001)
     assert result.identical, result.report()
