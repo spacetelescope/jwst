@@ -279,6 +279,12 @@ class Step():
             Additional parameters to set.  These will be set as member
             variables on the new Step instance.
         """
+
+        # Setup primary input
+        self._reference_files_used = []
+        self._input_filename = None
+        self._input_dir = None
+
         if _validate_kwds:
             spec = self.load_spec_file()
             kws = config_parser.config_from_dict(
@@ -311,6 +317,7 @@ class Step():
         # against it.
         self.config_file = config_file
 
+        # Setup the hooks
         if len(self.pre_hooks) or len(self.post_hooks):
             from . import hooks
             self._pre_hooks = hooks.get_hook_objects(
@@ -322,9 +329,6 @@ class Step():
         else:
             self._pre_hooks = []
             self._post_hooks = []
-
-        self._reference_files_used = []
-        self._input_filename = None
 
     def _check_args(self, args, discouraged_types, msg):
         if discouraged_types is None:
@@ -358,7 +362,8 @@ class Step():
             'Step {0} running with args {1}.'.format(
                 self.name, args))
 
-        self._set_input_dir(args)
+        if len(args):
+            self.set_primary_input(args[0])
 
         try:
             # prefetch truly occurs at the Pipeline (or subclass) level.
@@ -528,6 +533,14 @@ class Step():
             instance = cls(**kwargs)
         return instance.run(*args)
 
+    @property
+    def input_dir(self):
+        return self.search_attr('_input_dir', '')
+
+    @input_dir.setter
+    def input_dir(self, input_dir):
+        self._input_dir = input_dir
+
     def default_output_file(self, input_file=None):
         """Create a default filename based on the input name"""
         output_file = input_file
@@ -544,7 +557,7 @@ class Step():
         """Return a default suffix based on the step"""
         return self.name.lower()
 
-    def search_attr(self, attribute, parent_first=False, default=None):
+    def search_attr(self, attribute, default=None, parent_first=False):
         """Return first non-None attribute in step heirarchy
 
         Parameters
@@ -552,11 +565,11 @@ class Step():
         attribute: str
             The attribute to retrieve
 
-        parent_first: bool
-            If `True`, allow parent definition to override step version
-
         default: obj
             If attribute is not found, the value to use
+
+        parent_first: bool
+            If `True`, allow parent definition to override step version
 
         Returns
         -------
@@ -660,12 +673,34 @@ class Step():
         """
         return crds_client.reference_uri_to_cache_path(reference_uri)
 
-    def set_input_filename(self, path):
+    def set_primary_input(self, obj, exclusive=True):
         """
-        Sets the name of the master input file.  Used to generate output
-        file names.
+        Sets the name of the master input file and input directory.
+        Used to generate output file names.
+
+        Parameters
+        ----------
+        obj: str or DataModel
+            The object to base the name on. If a datamodel,
+            use Datamodel.meta.filename.
+
+        exclusive: bool
+            If True, only set if an input name is not already used
+            by a parent Step. Otherwise, always set.
         """
-        self._input_filename = path
+        self._set_input_dir(obj, exclusive=exclusive)
+
+        parent_input_filename = self.search_attr('_input_filename')
+        if not exclusive or parent_input_filename is None:
+            if isinstance(obj, str):
+                self._input_filename = obj
+            elif isinstance(obj, DataModel):
+                self._input_filename = obj.meta.filename
+            else:
+                self.log.debug(
+                    'Cannot set master input file name from object'
+                    ' {}'.format(obj)
+                )
 
     def save_model(self,
                    model,
@@ -881,7 +916,7 @@ class Step():
             try:
                 item.close()
             except Exception as exception:
-                self.logger.debug(
+                self.log.debug(
                     'Could not close "{}"'
                     'Reason:\n{}'.format(item, exception)
                 )
@@ -889,7 +924,7 @@ class Step():
             try:
                 del item
             except Exception as exception:
-                self.logger.debug(
+                self.log.debug(
                     'Could not delete "{}"'
                     'Reason:\n{}'.format(item, exception)
                 )
@@ -980,7 +1015,7 @@ class Step():
         update_key_value(asn, 'expname', (), mod_func=self.make_input_path)
         return asn
 
-    def _set_input_dir(self, args):
+    def _set_input_dir(self, input, exclusive=True):
         """Set the input directory
 
         If sufficient information is at hand, set a value
@@ -988,19 +1023,21 @@ class Step():
 
         Parameters
         ----------
-        args: list
-            The arguments passed.
+        input: str
+            Input to determine path from.
+
+        exclusive: bool
+            If True, only set if an input directory is not already
+            defined by a parent Step. Otherwise, always set.
 
         """
-        if self.input_dir is None:
-            self.input_dir = self.search_attr('input_dir', default='')
-            if len(args):
-                try:
-                    if isfile(args[0]):
-                        self.input_dir = split(args[0])[0]
-                except Exception:
-                    # Not a file-checkable object. Ignore.
-                    pass
+        if not exclusive or self.search_attr('_input_dir') is None:
+            try:
+                if isfile(input):
+                    self.input_dir = split(input)[0]
+            except Exception:
+                # Not a file-checkable object. Ignore.
+                pass
 
 
 # #########
