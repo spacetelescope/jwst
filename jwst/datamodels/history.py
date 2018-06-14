@@ -1,7 +1,9 @@
-from collections import UserList
-
-from asdf import AsdfFile
 from asdf.tags.core import HistoryEntry
+
+def _iterable(values):
+    if isinstance(values, str) or not hasattr(values, '__iter__'):
+        values = (values,)
+    return values
 
 class HistoryList:
     """
@@ -43,8 +45,8 @@ class HistoryList:
     def __eq__(self, other):
         if isinstance(other, HistoryList):
             other = other._entries
-        elif not isinstance(other, list):
-            other = list(other)
+        else:
+            other = _iterable(other)
 
         if len(self) != len(other):
             return False
@@ -69,5 +71,6 @@ class HistoryList:
         self._entries.clear()
 
     def extend(self, values):
+        values = _iterable(values)
         for value in values:
             self.append(value)

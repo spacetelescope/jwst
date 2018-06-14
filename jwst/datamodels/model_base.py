@@ -859,8 +859,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             with `~jwst.datamodels.util.create_history_entry`.
 
         """
-        if not hasattr(values, '__iter__'):
-            values = [values]
         entries = self.history
         entries.clear()
         entries.extend(values)
