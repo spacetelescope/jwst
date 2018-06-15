@@ -28,6 +28,7 @@ from . import schema as mschema
 from . import util
 from . import validate
 
+from .history import HistoryList
 from .extension import BaseExtension
 from jwst.transforms.jwextension import JWSTExtension
 from gwcs.extension import GWCSExtension
@@ -840,22 +841,27 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
     @property
     def history(self):
-        return self._instance.setdefault('history', {})
+        """
+        Get the history as a list of entries
+        """
+        return HistoryList(self._asdf)
 
     @history.setter
-    def history(self, value):
+    def history(self, values):
         """
         Set a history entry.
 
         Parameters
         ----------
-        value : list
+        values : list
             For FITS files this should be a list of strings.
             For ASDF files use a list of ``HistoryEntry`` object. It can be created
             with `~jwst.datamodels.util.create_history_entry`.
 
         """
-        self._instance['history'] = value
+        entries = self.history
+        entries.clear()
+        entries.extend(values)
 
     def get_fits_wcs(self, hdu_name='SCI', hdu_ver=1, key=' '):
         """
