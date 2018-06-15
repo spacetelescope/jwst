@@ -886,7 +886,7 @@ def wavelength_from_disperser(disperser, input_model):
         step = 1e-8
         nsteps = (lmax - lmin) // step
         lam = np.linspace(lmin, lmax, nsteps)
-        lam = np.arange(0.5, 6.005, 0.005) * 1e-6
+        #lam = np.arange(0.5, 6.005, 0.005) * 1e-6
         system_temperature = input_model.meta.instrument.gwa_tilt
         if system_temperature is None:
             message = "Missing reference temperature (keyword GWA_TILT)."
