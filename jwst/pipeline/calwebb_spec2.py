@@ -168,11 +168,18 @@ class Spec2Pipeline(Pipeline):
 
         # If assign_wcs was skipped, abort the rest of processing,
         # because so many downstream steps depend on the WCS
-        if input.meta.cal_step.assign_wcs == 'SKIPPED':
-            self.log.error('Assign_wcs processing was skipped')
-            self.log.error('Aborting remaining processing for this exposure')
-            self.log.error('No output product will be created')
-            return input
+        if input.meta.cal_step.assign_wcs != 'COMPLETE':
+            message = (
+                'Assign_wcs processing was skipped.'
+                '\nAborting remaining processing for this exposure.'
+                '\nNo output product will be created.'
+            )
+            if self.assign_wcs.skip:
+                self.log.warning(message)
+                return
+            else:
+                self.log.error(message)
+                raise RuntimeError('Cannot determine WCS.')
 
         # Apply NIRSpec MSA imprint subtraction
         # Technically there should be just one.

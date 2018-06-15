@@ -22,6 +22,55 @@ DATAPATH = abspath(
 )
 
 
+@require_bigdata
+def test_msa_missing(mk_tmp_dirs):
+    """Test MSA missing failure"""
+    tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
+
+    # Copy necessary data to the tmp_data_path
+    input_file = 'F170LP-G235M_MOS_observation-6-c0e0_001_DN_NRS1_mod.fits'
+    file_copy(
+        path.join(
+            DATAPATH,
+            'level2a_twoslit',
+            input_file
+        ),
+        tmp_data_path
+    )
+    args = [
+        path.join(SCRIPT_DATA_PATH, 'calwebb_spec2_basic.cfg'),
+        path.join(tmp_data_path, input_file)
+    ]
+
+    with pytest.raises(Exception):
+        Step.from_cmdline(args)
+
+
+@require_bigdata
+def test_msa_missing_skip(mk_tmp_dirs):
+    """Test MSA missing failure"""
+    tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
+
+    # Copy necessary data to the tmp_data_path
+    input_file = 'F170LP-G235M_MOS_observation-6-c0e0_001_DN_NRS1_mod.fits'
+    file_copy(
+        path.join(
+            DATAPATH,
+            'level2a_twoslit',
+            input_file
+        ),
+        tmp_data_path
+    )
+    args = [
+        path.join(SCRIPT_DATA_PATH, 'calwebb_spec2_basic.cfg'),
+        path.join(tmp_data_path, input_file),
+        '--steps.assign_wcs.skip=true'
+    ]
+
+    with pytest.raises(Exception):
+        Step.from_cmdline(args)
+
+
 @runslow
 @require_bigdata
 def test_run_msaflagging(mk_tmp_dirs, caplog):
