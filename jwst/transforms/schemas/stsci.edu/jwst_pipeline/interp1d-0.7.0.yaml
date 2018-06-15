@@ -1,0 +1,49 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/yaml-schema/draft-01"
+id: "http://stsci.edu/schemas/jwst_pipeline/interp1d-0.7.0"
+tag: "tag:stsci.edu:jwst_pipeline/interp1d-0.7.0"
+title: >
+  A model which wraps scipy.interpolate.interp1d.
+description: |
+  It computes the interpolated values corresponding to the given
+  inputs. Supported methods of interpolation are:
+  "linear", "nearest" "zero", "slinear", "quadratic", and "cubic".
+
+type: object
+properties:
+  lookup_table:
+    description: >
+      Table values.
+    anyOf:
+      - $ref: ../asdf/core/ndarray-1.0.0
+      - type: array
+  points:
+    anyOf:
+      - $ref: ../asdf/core/ndarray-1.0.0
+      - type: array
+    description: |
+      Grid values - each row in the array corresponds to a dimension
+      in the lookup table. The grid does not have to be regular.
+  method:
+    description: |
+      Method of interpolation. Supported are "linear" and
+      "nearest", and "splinef2d". "splinef2d" is only supported for
+      2-dimensional data.
+    type: string
+    enum: ["linear", "nearest", "zero", "slinear", "quadratic", "cubic"]
+    default: "linear"
+  bounds_error:
+    description: |
+      If True, when interpolated values are requested outside of the
+      domain of the input data, a ValueError is raised.
+      If False, then "fill_value" is used.
+    type: boolean
+    default: true
+  fill_value:
+    description: |
+      If provided, the value to use for points outside of the
+      interpolation domain. If None, values outside the domain are
+      extrapolated.  Extrapolation is not supported by method "splinef2d".
+    type: number
+required: [lookup_table]

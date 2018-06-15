@@ -17,7 +17,7 @@ from gwcs import coordinate_frames as cf
 from ..transforms.models import (Rotation3DToGWA, DirCos2Unitless, Slit2Msa,
                                  AngleFromGratingEquation, WavelengthFromGratingEquation,
                                  Gwa2Slit, Unitless2DirCos, Logical, Slit, Snell,
-                                 RefractionIndexFromPrism)
+                                 RefractionIndexFromPrism, Interp1D)
 from .util import not_implemented_mode
 from . import pointing
 from ..datamodels import (CollimatorModel, CameraModel, DisperserModel, FOREModel,
@@ -371,7 +371,7 @@ def get_msa_metadata(input_model, reference_files):
     """
     try:
         msa_config = reference_files['msametafile']
-    except KeyError as error:
+    except (KeyError, TypeError):
         log.info('MSA metadata file not in reference files dict')
         log.info('Getting MSA metadata file from MSAMETFL keyword')
         msa_config = input_model.meta.instrument.msa_metadata_file
@@ -883,9 +883,10 @@ def wavelength_from_disperser(disperser, input_model):
     else:
         lmin = input_model.meta.wcsinfo.waverange_start
         lmax = input_model.meta.wcsinfo.waverange_end
-        step = 1e-10
+        step = 1e-8
         nsteps = (lmax - lmin) // step
         lam = np.linspace(lmin, lmax, nsteps)
+        lam = np.arange(0.5, 6.005, 0.005) * 1e-6
         system_temperature = input_model.meta.instrument.gwa_tilt
         if system_temperature is None:
             message = "Missing reference temperature (keyword GWA_TILT)."
@@ -903,8 +904,7 @@ def wavelength_from_disperser(disperser, input_model):
         n = np.flipud(n)
         lam = np.flipud(lam)
         n_from_prism = RefractionIndexFromPrism(disperser['angle'], name='n_prism')
-
-        tab = Tabular1D(points=(n,), lookup_table=lam, bounds_error=False)
+        tab = Interp1D(points=n, lookup_table=lam, bounds_error=False)
         return n_from_prism | tab
 
 
@@ -1328,8 +1328,10 @@ def gwa_to_ymsa(msa2gwa_model, lam_cen=None):
         cosin_grating_k = msa2gwa_model(dx, dy)
     beta_in = cosin_grating_k[1]
 
-    tab = Tabular1D(points=(beta_in,),
-                    lookup_table=dy, bounds_error=False, name='tabular')
+    #tab = Tabular1D(points=(beta_in,),
+                    #lookup_table=dy, bounds_error=False, name='tabular')
+    sorted_ind = np.argsort(beta_in)
+    tab = Interp1D(points=beta_in[sorted_ind], lookup_table=dy[sorted_ind], bounds_error=False, name='tabular')
     return tab
 
 
