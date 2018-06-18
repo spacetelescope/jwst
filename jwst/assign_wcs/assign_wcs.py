@@ -50,7 +50,7 @@ def load_wcs(input_model, reference_files={}):
         output_model.meta.cal_step.assign_wcs = 'COMPLETE'
         exclude_types = ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ', 'NRS_IFU',
                          'NRS_MSASPEC', 'NRS_LAMP', 'MIR_MRS', 'NIS_SOSS',
-                         'NRC_WFSS', 'NRC_TSGRISM', 'NIS_WFSS']
+                         'NRC_WFSS', 'NRC_TSGRISM', 'NIS_WFSS', 'NRS_AUTOFLAT']
 
         if output_model.meta.exposure.type not in exclude_types:
             orig_s_region = output_model.meta.wcsinfo.s_region.strip()
