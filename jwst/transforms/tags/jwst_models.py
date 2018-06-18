@@ -8,13 +8,14 @@ from ..models import (WavelengthFromGratingEquation, AngleFromGratingEquation,
                       Slit2Msa, Logical, NirissSOSSModel, V23ToSky, RefractionIndexFromPrism,
                       Snell, NIRCAMForwardRowGrismDispersion, NIRCAMForwardColumnGrismDispersion,
                       NIRISSForwardRowGrismDispersion, NIRISSForwardColumnGrismDispersion,
-                      NIRCAMBackwardGrismDispersion, NIRISSBackwardGrismDispersion, MIRI_AB2Slice)
+                      NIRCAMBackwardGrismDispersion, NIRISSBackwardGrismDispersion, MIRI_AB2Slice,
+                      Interp1D)
 from ..tpcorr import TPCorr
 
 __all__ = ['GratingEquationType', 'CoordsType', 'RotationSequenceType', 'LRSWavelengthType',
            'Gwa2SlitType', 'Slit2MsaType', 'LogicalType', 'NirissSOSSType', 'V23ToSkyType',
            'RefractionIndexType', 'SnellType', 'MIRI_AB2SliceType', 'NIRCAMGrismDispersionType',
-           'NIRISSGrismDispersionType', 'TPCorrType']
+           'NIRISSGrismDispersionType', 'TPCorrType', 'Interp1DType']
 
 
 class NIRCAMGrismDispersionType(JWSTTransformType):
@@ -401,4 +402,31 @@ class TPCorrType(JWSTTransformType):
             'matrix': model.matrix.value.tolist(),
             'shift': model.shift.value.tolist()
         }
+        return yamlutil.custom_tree_to_tagged_tree(node, ctx)
+
+
+class Interp1DType(JWSTTransformType):
+    name = "interp1d"
+    types = [Interp1D]
+    standard = "jwst_pipeline"
+    version = "0.7.0"
+
+    @classmethod
+    def from_tree_transform(cls, node, ctx):
+        lookup_table = node.pop("lookup_table")
+        fill_value = node.pop("fill_value", None)
+        # The copy is necessary because the array is memory mapped.
+        points = node['points']
+        return Interp1D(points=points, lookup_table=lookup_table,
+                        method=node['method'], bounds_error=node['bounds_error'],
+                        fill_value=fill_value)
+
+    @classmethod
+    def to_tree_transform(cls, model, ctx):
+        node = {}
+        node["fill_value"] = model.fill_value
+        node["lookup_table"] = model.lookup_table
+        node["points"] = model.points #[p for p in model.points]
+        node["method"] = str(model.method)
+        node["bounds_error"] = model.bounds_error
         return yamlutil.custom_tree_to_tagged_tree(node, ctx)

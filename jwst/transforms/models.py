@@ -15,6 +15,7 @@ from astropy.modeling.core import Model
 from astropy.modeling.parameters import Parameter, InputParameterError
 from astropy.modeling.models import Rotation2D
 from astropy.utils import isiterable
+from scipy.interpolate import interp1d
 
 
 __all__ = ['AngleFromGratingEquation', 'WavelengthFromGratingEquation',
@@ -1596,3 +1597,34 @@ class NIRISSForwardColumnGrismDispersion(Model):
         wavelength = self.lmodels[iorder](tr)
 
         return (x0, y0, wavelength, order)
+
+
+class Interp1D(Model):
+
+    linear = False
+    fittable = False
+    _separable = True
+
+    standard_broadcasting = False
+
+    inputs = ('x', )
+    outputs = ('y', )
+
+    def __init__(self, points, lookup_table, method='linear',
+                 bounds_error=True, fill_value=np.nan, **kwargs):
+        super().__init__(**kwargs)
+        if lookup_table is None:
+            raise ValueError('Must provide a lookup table.')
+        if method not in ['linear', 'nearest', 'zero', 'slinear', 'quadratic', 'cubic']:
+            raise ValueError("Unknown type of interpolation {}".format(method))
+        self.points = points
+        self.lookup_table = lookup_table
+        self.bounds_error = bounds_error
+        self.method = method
+        self.fill_value = fill_value
+
+    def evaluate(self, x):
+        x = np.asarray(x)
+        func = interp1d(self.points, self.lookup_table, kind=self.method,
+                        bounds_error=self.bounds_error, fill_value=self.fill_value)
+        return func(x)
