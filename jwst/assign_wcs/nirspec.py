@@ -371,7 +371,7 @@ def get_msa_metadata(input_model, reference_files):
     """
     try:
         msa_config = reference_files['msametafile']
-    except KeyError as error:
+    except (KeyError, TypeError) as error:
         log.info('MSA metadata file not in reference files dict')
         log.info('Getting MSA metadata file from MSAMETFL keyword')
         msa_config = input_model.meta.instrument.msa_metadata_file
@@ -655,7 +655,7 @@ def slicer_to_msa(reference_files):
 
 def slit_to_msa(open_slits, msafile):
     """
-    The transform from ``slit_frame`` to ``msa_frame``.
+    The transform from ``slit_frame`` to ``msa_frame`` - FS and MSA pipelines.
 
     Parameters
     ----------
@@ -718,12 +718,6 @@ def gwa_to_ifuslit(slits, input_model, disperser, reference_files):
 
     agreq = angle_from_disperser(disperser, input_model)
     lgreq = wavelength_from_disperser(disperser, input_model)
-
-    # The wavelength units up to this point are
-    # meters as required by the pipeline but the desired output wavelength units is microns.
-    # So we are going to Scale the spectral units by 1e6 (meters -> microns)
-    if input_model.meta.instrument.filter == 'OPAQUE':
-        lgreq = lgreq | Scale(1e6)
 
     lam_cen = 0.5 * (input_model.meta.wcsinfo.waverange_end -
                      input_model.meta.wcsinfo.waverange_start
@@ -799,12 +793,6 @@ def gwa_to_slit(open_slits, input_model, disperser, reference_files):
     agreq = angle_from_disperser(disperser, input_model)
     collimator2gwa = collimator_to_gwa(reference_files, disperser)
     lgreq = wavelength_from_disperser(disperser, input_model)
-
-    # The wavelength units up to this point are
-    # meters as required by the pipeline but the desired output wavelength units is microns.
-    # So we are going to Scale the spectral units by 1e6 (meters -> microns)
-    if input_model.meta.instrument.filter == 'OPAQUE':
-        lgreq = lgreq | Scale(1e6)
 
     msa = MSAModel(reference_files['msa'])
     slit_models = []
@@ -1357,6 +1345,25 @@ def nrs_wcs_set_input(input_model, slit_name, wavelength_range=None):
         _, wrange = spectral_order_wrange_from_model(input_model)
     else:
         wrange = wavelength_range
+
+    """
+    If filter=="OPAQUE" the pipeline ends at the "msa_frame".
+    The wavelength units up to this point are
+    meters as required by the pipeline but the output should be in microns.
+    So we are going to Scale the spectral units by 1e6 (meters -> microns)
+    For MOS and FS this is done in the ``slit_to_msa`` transform.
+    For the IFU it's done in the ``slicer_to_msa`` transform.
+    Doing it in these transforms ensures that when ``slit_to_detector``
+    is called internally in ``compute_bounding_box`` the wavelength passed
+    is always in units of meters, as required by the model.
+    It also ensures that in the case of a limited pipeline calling ``wcs.invert``
+    with inputs in units of microns works.
+    """
+    if input_model.meta.instrument.filter == "OPAQUE":
+        wave_model = Scale(10**6)
+    else:
+        wave_model = Identity(1)
+
     slit_wcs = copy.deepcopy(wcsobj)
     slit_wcs.set_transform('sca', 'gwa', wcsobj.pipeline[1][1][1:])
     # get the open slits from the model
@@ -1367,10 +1374,10 @@ def nrs_wcs_set_input(input_model, slit_name, wavelength_range=None):
     slit_wcs.set_transform('gwa', 'slit_frame', g2s.get_model(slit_name))
     if input_model.meta.exposure.type.lower() == 'nrs_ifu':
         slit_wcs.set_transform('slit_frame', 'slicer',
-                           wcsobj.pipeline[3][1].get_model(slit_name) & Identity(1))
+                           wcsobj.pipeline[3][1].get_model(slit_name) & wave_model)
     else:
         slit_wcs.set_transform('slit_frame', 'msa_frame',
-                           wcsobj.pipeline[3][1].get_model(slit_name) & Identity(1))
+                           wcsobj.pipeline[3][1].get_model(slit_name) & wave_model)
     slit2detector = slit_wcs.get_transform('slit_frame', 'detector')
 
     if input_model.meta.exposure.type.lower() != 'nrs_ifu':
