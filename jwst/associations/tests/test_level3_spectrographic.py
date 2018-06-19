@@ -28,6 +28,11 @@ class TestLevel3Spec(BasePoolRule):
         ),
         PoolParams(
             path=t_path('data/pool_007_spec_miri.csv'),
+            n_asns=3,
+            n_orphaned=0
+        ),
+        PoolParams(
+            path=t_path('data/pool_019_niriss_wfss.csv'),
             n_asns=2,
             n_orphaned=0
         ),

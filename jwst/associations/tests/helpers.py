@@ -164,11 +164,12 @@ class BasePoolRule():
             for asn in asns:
                 for product in asn['products']:
                     for member in product['members']:
-                        match = file_regex.match(member['expname'])
-                        assert match is not None, \
-                            ppars.path + ': No suffix match for {}'.format(member['expname'])
-                        assert match.groupdict()['suffix'] in ppars.valid_suffixes, \
-                            ppars.path + ': Suffix {} not valid'.format(match.groupdict()['suffix'])
+                        if member['exptype'] == 'science':
+                            match = file_regex.match(member['expname'])
+                            assert match is not None, \
+                                ppars.path + ': No suffix match for {}'.format(member['expname'])
+                            assert match.groupdict()['suffix'] in ppars.valid_suffixes, \
+                                ppars.path + ': Suffix {} not valid'.format(match.groupdict()['suffix'])
 
 
 @pytest.fixture(scope='session')
