@@ -35,7 +35,8 @@ def nrs_extract2d(input_model, slit_name=None, apply_wavecorr=False, reference_f
     """
     exp_type = input_model.meta.exposure.type.upper()
 
-    wavecorr_supported_modes = ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_BRIGHTOBJ']
+    wavecorr_supported_modes = ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_BRIGHTOBJ',
+                                'NRS_AUTOFLAT']
 
     if exp_type in wavecorr_supported_modes:
         reffile = reference_files['wavecorr']
@@ -158,7 +159,7 @@ def set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi):
     output_model.xsize = (xhi_ind - xlo_ind) + 1
     output_model.ystart = ylo_ind + 1
     output_model.ysize = (yhi_ind - ylo_ind) + 1
-    if output_model.meta.exposure.type.lower() == 'nrs_msaspec':
+    if output_model.meta.exposure.type.lower() in ['nrs_msaspec', 'nrs_autoflat']:
         output_model.source_id = int(slit.source_id)
         output_model.source_name = slit.source_name
         output_model.source_alias = slit.source_alias

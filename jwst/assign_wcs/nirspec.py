@@ -317,7 +317,7 @@ def get_open_slits(input_model, reference_files=None):
     """Return the opened slits/shutters in a MOS or Fixed Slits exposure.
     """
     exp_type = input_model.meta.exposure.type.lower()
-    if exp_type == "nrs_msaspec":
+    if exp_type in ["nrs_msaspec", "nrs_autoflat"]:
         msa_metadata_file, msa_metadata_id = get_msa_metadata(input_model, reference_files)
         slits = get_open_msa_slits(msa_metadata_file, msa_metadata_id)
     elif exp_type == "nrs_fixedslit":
@@ -1537,7 +1537,7 @@ exp_type2transform = {'nrs_tacq': imaging,
                       'nrs_focus': imaging,
                       'nrs_mimf': imaging,
                       'nrs_bota': imaging,
-                      'nrs_autoflat': not_implemented_mode,
+                      'nrs_autoflat': slits_wcs,
                       'nrs_autowave': not_implemented_mode,
                       'nrs_lamp': slits_wcs,
                       'nrs_brightobj': slits_wcs,
