@@ -113,6 +113,7 @@ SPEC2_SCIENCE_EXP_TYPES = [
     'nrs_msaspec',
     'nrs_brightobj',
     'nis_soss',
+    'nis_wfss',
 ]
 
 SPECIAL_EXPTYPES = {
