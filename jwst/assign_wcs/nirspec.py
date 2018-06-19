@@ -19,7 +19,7 @@ from ..transforms.models import (Rotation3DToGWA, DirCos2Unitless, Slit2Msa,
                                  Gwa2Slit, Unitless2DirCos, Logical, Slit, Snell,
                                  RefractionIndexFromPrism)
 
-from .util import not_implemented_mode
+from .util import not_implemented_mode, MissingMSAFileError
 from . import pointing
 from ..datamodels import (CollimatorModel, CameraModel, DisperserModel, FOREModel,
                           IFUFOREModel, MSAModel, OTEModel, IFUPostModel, IFUSlicerModel,
@@ -379,7 +379,7 @@ def get_msa_metadata(input_model, reference_files):
         if msa_config is None:
             message = "MSA metadata file is not available (keyword MSAMETFL)."
             log.critical(message)
-            raise KeyError(message)
+            raise MissingMSAFileError(message)
     msa_metadata_id = input_model.meta.instrument.msa_metadata_id
     if msa_metadata_id is None:
         message = "MSA metadata ID is not available (keyword MSAMETID)."
@@ -433,8 +433,9 @@ def get_open_msa_slits(msa_file, msa_metadata_id):
     try:
         msa_file = fits.open(msa_file)
     except:
-        log.error("Unable to open MSA FITS file (MSAMETFL) {0}".format(msa_file))
-        return []
+        message = "Unable to open MSA FITS file (MSAMETFL) {0}".format(msa_file)
+        log.error(message)
+        raise MissingMSAFileError(message)
 
     # Get the configuration header from teh _msa.fits file.  The EXTNAME should be 'SHUTTER_INFO'
     msa_conf = msa_file[('SHUTTER_INFO', 1)]

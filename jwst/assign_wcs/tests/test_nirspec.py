@@ -13,6 +13,8 @@ from ...transforms.models import Slit
 from .. import nirspec
 from .. import assign_wcs_step
 from . import data
+from ..util import MissingMSAFileError
+
 import pytest
 
 data_path = os.path.split(os.path.abspath(data.__file__))[0]
@@ -87,7 +89,7 @@ def create_nirspec_imaging_file():
     image[0].header['grating'] = 'MIRROR'
     return image
 
-'''
+
 def create_nirspec_mos_file():
     image = create_hdul()
     image[0].header['exp_type'] = 'NRS_MSASPEC'
@@ -102,7 +104,7 @@ def create_nirspec_mos_file():
     msa_status_file = get_file_path('SPCB-GD-A.msa.fits.gz')
     image[0].header['MSACONFG'] = msa_status_file
     return image
-'''
+
 
 def create_nirspec_ifu_file(filter, grating, lamp='N/A', detector='NRS1'):
     image = create_hdul(detector)
@@ -421,3 +423,16 @@ def test_slit_projection_on_detector():
     assert "S200A2" in names
     assert "S400A1" in names
     assert "S1600A1" in names
+
+
+def test_missing_msa_file():
+    image = create_nirspec_mos_file()
+    model = datamodels.ImageModel(image)
+
+    model.meta.instrument.msa_metafile = ""
+    with pytest.raises(MissingMSAFileError):
+        assign_wcs_step.AssignWcsStep.call(model)
+
+    model.meta.instrument.msa_metafile = "missing.fits"
+    with pytest.raises(MissingMSAFileError):
+        assign_wcs_step.AssignWcsStep.call(model)

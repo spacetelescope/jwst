@@ -26,6 +26,12 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
+class MissingMSAFileError(Exception):
+
+    def __init__(self, message):
+        super(MissingMSAFileError, self).__init__(message)
+
+
 def _domain_to_bounding_box(domain):
     # TODO: remove this when domain is completely removed
     bb = tuple([(item['lower'], item['upper']) for item in domain])
