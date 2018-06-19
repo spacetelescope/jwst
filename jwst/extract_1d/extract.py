@@ -10,6 +10,7 @@ from .. import datamodels
 from ..datamodels import dqflags
 from .. assign_wcs import niriss        # for specifying spectral order number
 from .. transforms import models as trmodels
+from .. lib import pipe_utils
 from . import extract1d
 from . import ifu
 from . import spec_wcs
@@ -1999,12 +2000,13 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
                  log_increment):
 
     output_model = datamodels.MultiSpecModel()
+    if hasattr(input_model, "int_times"):
+        output_model.int_times = input_model.int_times.copy()
     output_model.update(input_model)
 
     # Read and interpret the reference file.
     ref_dict = load_ref_file(refname)
 
-    # More generally, one could use '"Multi" in str(type(input_model))'.
     if isinstance(input_model, datamodels.MultiSlitModel) or \
        isinstance(input_model, datamodels.MultiProductModel):
 
@@ -2281,7 +2283,12 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
 
     # Copy the integration time information from the INT_TIMES table
     # to keywords in the output file.
-    populate_time_keywords(input_model, output_model)
+    if pipe_utils.is_tso(input_model):
+        log.debug("TSO data, so copying times from the INT_TIMES table.")
+        populate_time_keywords(input_model, output_model)
+    else:
+        log.debug("Not copying from the INT_TIMES table because "
+                  "this is not a TSO exposure.")
 
     # See output_model.spec[i].meta.wcs instead.
     output_model.meta.wcs = None
@@ -2387,8 +2394,6 @@ def populate_time_keywords(input_model, output_model):
                         "include rows for all integrations in the data.")
             return
 
-        log.debug("Copying values from the INT_TIMES table.")
-
         if hasattr(input_model, 'data'):
             shape = input_model.data.shape
             if len(shape) == 2:
@@ -2400,43 +2405,28 @@ def populate_time_keywords(input_model, output_model):
 
         n_output_spec = len(output_model.spec)
 
-        # Assumptions about input_model:
-        # If the number of integrations is one, there may be multiple
-        # spectra.  These might be different spectral orders, and different
-        # orders can be in the same image (e.g. NIRISS SOSS data) or in
-        # different 2-D cutouts (e.g. MultiSlit data).  Or these might be
-        # spectra through different slits but projected onto a single
-        # image and subsequently (via extract_2d) separated into different
-        # 2-D cutouts (MultiSlit data, again).  But there could be just
-        # one spectrum, either in a single 2-D image (e.g. MIRI LRS),
-        # subarray, or MultiSlit with just one slit.
-        # If the number of integrations is greater than one (or if the
-        # input is multi-integration format (3-D) but with a length of
-        # 1 for the first axis), we will only extract the spectrum of
-        # one object; the location will be the same for every integration,
-        # and the number of output spectra will be equal to the number
-        # of integrations (unless there was a problem with the extraction).
-
         # num_j is the number of different spectra, e.g. the number of
         # fixed-slit spectra, MSA spectra, or different spectral orders;
-        # num_j = 1 for multi-integration data (meaning there's just one
-        # spectrum in each integration).
+        # num_integ is the number of integrations.
         # The total number of output spectra n_output_spec = num_integ * num_j
-        if num_integ > 1:
-            num_j = 1
+        num_j = n_output_spec // num_integ
+        if n_output_spec != num_j * num_integ:
+            log.warning("populate_time_keywords:  Don't understand "
+                        "n_output_spec = %d, num_j = %d, num_integ = %d",
+                        n_output_spec, num_j, num_integ)
         else:
-            num_j = n_output_spec
-
-        log.debug("Number of integrations = %d; number of spectra for "
-                  "one integration = %d", num_integ, num_j)
+            log.debug("Number of output spectra = %d; "
+                      "number of spectra for each integration = %d; "
+                      "number of integrations = %d",
+                      n_output_spec, num_j, num_integ)
 
         # Note that either num_integ or num_j (or possibly both) will be one.
         # n is a counter for spectra in output_model.
         n = 0
-        for k in range(num_integ):              # for each integration
-            row = k + offset
-            for j in range(num_j):                  # for each input spectrum
-                spec = output_model.spec[n]         # n is incremented in loop
+        for j in range(num_j):                  # for each spectrum or order
+            for k in range(num_integ):              # for each integration
+                row = k + offset
+                spec = output_model.spec[n]         # n is incremented below
                 spec.int_num = int_num[row]
                 spec.start_utc = start_utc[row]
                 spec.mid_utc = mid_utc[row]

@@ -622,7 +622,8 @@ def calc_pedestal(num_int, slope_int, firstf_int, dq_cube, nframes, groupgap,
     return ped
 
 
-def output_integ(model, slope_int, dq_int, effintim, var_p3, var_r3, var_both3):
+def output_integ(model, slope_int, dq_int, effintim, var_p3, var_r3, var_both3,
+                 int_times):
 
     """
     Short Summary
@@ -655,6 +656,9 @@ def output_integ(model, slope_int, dq_int, effintim, var_p3, var_r3, var_both3):
         Cube of integration-specific values for the slope variance due to
         read noise and Poisson noise
 
+    int_times: bintable, or None
+        The INT_TIMES table, if it exists in the input, else None
+
     Returns
     -------
     cubemod: Data Model object
@@ -670,6 +674,8 @@ def output_integ(model, slope_int, dq_int, effintim, var_p3, var_r3, var_both3):
 
     cubemod.var_poisson = var_p3
     cubemod.var_rnoise = var_r3
+
+    cubemod.int_times = int_times
 
     cubemod.update(model) # keys from input needed for photom step
 
