@@ -572,10 +572,10 @@ def update_s_region(model):
 
     s_region = (
         "POLYGON ICRS "
-        " {0} {1}"
-        " {2} {3}"
-        " {4} {5}"
-        " {6} {7}".format(*footprint.flatten()))
+        " {0:.9f} {1:.9f}"
+        " {2:.9f} {3:.9f}"
+        " {4:.9f} {5:.9f}"
+        " {6:.9f} {7:.9f}".format(*footprint.flatten()))
     if "nan" in s_region:
         # do not update s_region if there are NaNs.
         log.info("There are NaNs in s_region")
