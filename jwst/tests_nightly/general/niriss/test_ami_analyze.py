@@ -38,6 +38,6 @@ def test_ami_analyze(_bigdata):
     result = pf.diff.FITSDiff(newh,
                               newhref,
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
-                              rtol = 0.00001
+                              rtol = 0.001
     )
     assert result.identical, result.report()
