@@ -38,8 +38,6 @@ allOf:
       fits_hdu: RELSENS2D
       default: 1.0
       datatype: float32
-    int_times:
-      $ref: int_times.schema.yaml
     var_poisson:
       title: variance due to poisson noise
       fits_hdu: VAR_POISSON

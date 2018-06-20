@@ -28,11 +28,15 @@ class RampModel(model_base.DataModel):
     group : table
         The group parameters table
 
+    int_times : table
+        The int_times table
+
     """
     schema_url = "ramp.schema.yaml"
 
     def __init__(self, init=None, data=None, pixeldq=None, groupdq=None,
-                 err=None, zeroframe=None, group=None, **kwargs):
+                 err=None, zeroframe=None, group=None, int_times=None,
+                 **kwargs):
         super(RampModel, self).__init__(init=init, **kwargs)
 
         if data is not None:
@@ -52,6 +56,9 @@ class RampModel(model_base.DataModel):
 
         if group is not None:
             self.group = group
+
+        if int_times is not None:
+            self.int_times = int_times
 
         # Implicitly create arrays
         self.pixeldq = self.pixeldq

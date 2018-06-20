@@ -26,11 +26,14 @@ class Level1bModel(model_base.DataModel):
     group : table
         The group parameters table
 
+    int_times : table
+        The int_times table
+
     """
     schema_url = "level1b.schema.yaml"
 
     def __init__(self, init=None, data=None, refout=None, zeroframe=None,
-                 group=None, **kwargs):
+                 group=None, int_times=None, **kwargs):
         super(Level1bModel, self).__init__(init=init, **kwargs)
 
         if data is not None:
@@ -44,6 +47,9 @@ class Level1bModel(model_base.DataModel):
 
         if group is not None:
             self.group = group
+
+        if int_times is not None:
+            self.int_times = int_times
 
         # zeroframe is a lower dimensional array than
         # the science data. However, its dimensions are not

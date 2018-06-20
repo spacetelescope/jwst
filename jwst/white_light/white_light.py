@@ -63,21 +63,65 @@ def white_light(input):
     # Create the output table
     tbl = QTable(meta=tbl_meta)
 
-    # Compute the delta time of each integration
-    dt_arr = np.zeros(ntables, dtype=np.float64)
-    dt = (input.meta.exposure.group_time * (input.meta.exposure.ngroups + 1))
-    j0 = 0
-    for k in range(norders):
-        ntables_current = ntables_order[k]
-        j1 = j0 + ntables_current
-        dt_arr[j0 : j1] = np.arange(1, 1 + ntables_current) * dt - (dt / 2.)
-        j0 += ntables_current
-    int_dt = TimeDelta(dt_arr, format='sec')
+    if hasattr(input, 'int_times') and input.int_times is not None:
+        nrows = len(input.int_times)
+    else:
+        nrows = 0
+    if nrows == 0:
+        log.warning("There is no INT_TIMES table in the input file.")
 
-    # Compute the absolute time at the mid-point of each integration
-    # Note that this won't be correct if the input has been segmented and
-    # the current file is not the first segment.
-    int_times = (Time(input.meta.exposure.start_time, format='mjd') + int_dt)
+    if nrows > 0:
+        int_start = input.meta.exposure.integration_start       # one indexed
+        if int_start is None:
+            int_start = 1
+            log.warning("INTSTART not found; assuming a value of %d",
+                        int_start)
+        int_end = input.meta.exposure.integration_end           # one indexed
+        if int_end is None:
+            # Number of tables for the first (possibly only) spectral order.
+            int_end = ntables_order[0]
+            log.warning("INTEND not found; assuming a value of %d", int_end)
+
+        # Columns of integration numbers & times of integration from the
+        # INT_TIMES table.
+        int_num = input.int_times['integration_number']         # one indexed
+        mid_utc = input.int_times['int_mid_MJD_UTC']
+        offset = int_start - int_num[0]
+        if offset < 0 or int_end >= int_num[-1]:
+            log.warning("Range of integration numbers in science data extends "
+                        "outside the range in INT_TIMES table.")
+            log.warning("Can't use INT_TIMES table.")
+            del int_num, mid_utc
+            nrows = 0                   # flag as bad
+        else:
+            log.debug("Times are from the INT_TIMES table.")
+            time_arr = np.zeros(ntables, dtype=np.float64)
+            j0 = 0
+            for k in range(norders):
+                ntables_current = ntables_order[k]
+                j1 = j0 + ntables_current
+                time_arr[j0 : j1] = mid_utc[offset : offset + ntables_current]
+                j0 += ntables_current
+
+            int_times = Time(time_arr, format='mjd', scale='utc')
+
+    if nrows == 0:
+        log.debug("Times were computed from EXPSTART and TGROUP.")
+        # Compute the delta time of each integration
+        dt_arr = np.zeros(ntables, dtype=np.float64)
+        dt = (input.meta.exposure.group_time *
+              (input.meta.exposure.ngroups + 1))
+        j0 = 0
+        for k in range(norders):
+            ntables_current = ntables_order[k]
+            j1 = j0 + ntables_current
+            dt_arr[j0 : j1] = np.arange(1, 1 + ntables_current) * dt - (dt / 2.)
+            j0 += ntables_current
+        int_dt = TimeDelta(dt_arr, format='sec')
+
+        # Compute the absolute time at the mid-point of each integration
+        int_times = (Time(input.meta.exposure.start_time, format='mjd')
+                     + int_dt)
 
     # Store the times and flux sums in the table
     tbl['MJD'] = int_times.mjd
