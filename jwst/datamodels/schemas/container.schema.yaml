@@ -4,10 +4,6 @@ properties:
     title: Level 3 Schema Metadata
     type: object
     properties:
-      date:
-        title: Date this file was created (UTC)
-        type: string
-        fits_keyword: DATE
       table_name:
         title: Name of ASN table 
         type: string
@@ -16,22 +12,6 @@ properties:
         title: Name of ASN pool used to generate this table
         type: string
         fits_keyword: ASNPOOL
-      targname:
-        title: Name of target specified in ASN table
-        type: string
-        fits_keyword: ASNTARG
-      program:
-        title: Program ID for observations in ASN table
-        type: string
-        fits_keyword: ASNPROG
-      asn_type:
-        title: Type of ASN 
-        type: string
-        fits_keyword: ASNTYPE
-      asn_rule:
-        title: Rule used to generate ASN table from ASN Pool
-        type: string
-        fits_keyword: ASNRULE
       resample:
         title: Information needed for Resampling multiple exposures
         type: object

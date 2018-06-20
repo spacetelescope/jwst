@@ -170,11 +170,6 @@ class ResampleData:
                 self.blend_output_metadata(output_model)
                 output_model.meta.model_type = saved_model_type
 
-            # Following 2 lines can probably be removed once ASN dicts
-            # are handled properly
-            output_model.meta.asn.pool_name = self.input_models.meta.pool_name
-            output_model.meta.asn.table_name = self.input_models.meta.table_name
-
             exposure_times = {'start': [], 'end': []}
 
             # Initialize the output with the wcs

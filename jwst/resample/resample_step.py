@@ -48,13 +48,16 @@ class ResampleStep(Step):
             blendheaders=self.blendheaders)
         resamp.do_drizzle()
 
+        for model in resamp.output_models:
+            model.meta.cal_step.resample = "COMPLETE"
+            update_s_region(model)
+            model.meta.asn.pool_name = input_models.meta.pool_name
+            model.meta.asn.table_name = input_models.meta.table_name
+
+
         if len(resamp.output_models) == 1:
             result = resamp.output_models[0]
-            result.meta.cal_step.resample = "COMPLETE"
-            update_s_region(result)
         else:
             result = resamp.output_models
-            for model in result:
-                model.meta.cal_step.resample = "COMPLETE"
-                update_s_region(model)
+
         return result
