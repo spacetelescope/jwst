@@ -355,9 +355,6 @@ class ResampleSpecData:
             output_model.meta.wcs.bounding_box = bb
             output_model.meta.filename = obs_product
 
-            output_model.meta.asn.pool_name = self.input_models.meta.pool_name
-            output_model.meta.asn.table_name = self.input_models.meta.table_name
-
             exposure_times = {'start': [], 'end': []}
 
             outwcs = output_model.meta.wcs
