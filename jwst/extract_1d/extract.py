@@ -263,6 +263,9 @@ def find_dispaxis(input_model, slit, spectral_order, extract_params):
         initial_value = extract_params['dispaxis']
     else:
         initial_value = None
+        # There needs to be a default value for dispaxis.  If this can't be
+        # updated with a valid value, we will not extract the spectrum.
+        extract_params['dispaxis'] = None
 
     if slit == DUMMY:
         shape = input_model.data.shape[-2:]
@@ -438,8 +441,12 @@ def find_dispaxis(input_model, slit, spectral_order, extract_params):
         # reference file, or if there was no reference file.
         extract_params['dispaxis'] = dispaxis
 
-    log.debug("find_dispaxis:  dispaxis from ref file = %s, "
-              "from wavelengths = %s", str(initial_value), str(dispaxis))
+    if initial_value is None or initial_value == dispaxis:
+        log_fcn = log.debug
+    else:
+        log_fcn = log.warning
+    log_fcn("find_dispaxis:  dispaxis from ref file = %s, "
+            "from wavelengths = %s", str(initial_value), str(dispaxis))
 
 
 def log_initial_parameters(extract_params):
@@ -448,7 +455,8 @@ def log_initial_parameters(extract_params):
     if not "xstart" in extract_params:
         return
 
-    log.debug("dispaxis = %d", extract_params["dispaxis"])
+    log.debug("Initial parameters:")
+    log.debug("dispaxis = %s", str(extract_params["dispaxis"]))
     log.debug("spectral order = %d", extract_params["spectral_order"])
     log.debug("independent_var = %s", extract_params["independent_var"])
     log.debug("smoothing_length = %d", extract_params["smoothing_length"])
@@ -1290,6 +1298,7 @@ class ExtractModel(ExtractBase):
     def log_extraction_parameters(self):
         """Log the updated extraction parameters."""
 
+        log.debug("Updated parameters:")
         log.debug("nod_correction = %s", str(self.nod_correction))
         note_x = ""
         note_y = ""
@@ -2004,6 +2013,10 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
         output_model.int_times = input_model.int_times.copy()
     output_model.update(input_model)
 
+    # This will be relevant if we're asked to extract a spectrum and the
+    # spectral order is zero.  That's only OK if the disperser is a prism.
+    prism_mode = is_prism(input_model)
+
     # Read and interpret the reference file.
     ref_dict = load_ref_file(refname)
 
@@ -2023,6 +2036,9 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
                 log.info('No data for slit %s, skipping ...', slit.name)
                 continue
             sp_order = get_spectral_order(slit)
+            if sp_order == 0 and not prism_mode:
+                log.info("Spectral order 0 is a direct image, skipping ...")
+                continue
             extract_params = get_extract_parameters(
                                 ref_dict,
                                 slit, slit.name, sp_order,
@@ -2034,6 +2050,10 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
                 log.info('Spectral order %d not found, skipping ...', sp_order)
                 continue
             find_dispaxis(input_model, slit, sp_order, extract_params)
+            if extract_params['dispaxis'] is None:
+                log.warning("The dispersion direction couldn't be determined, "
+                            "so skipping ...")
+                continue
 
             try:
                 (ra, dec, wavelength, net, background, dq,
@@ -2101,6 +2121,10 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
             for sp_order in spectral_order_list:
                 if sp_order == "not set yet":
                     sp_order = get_spectral_order(input_model)
+                if sp_order == 0 and not prism_mode:
+                    log.info("Spectral order 0 is a direct image, "
+                             "skipping ...")
+                    continue
 
                 extract_params = get_extract_parameters(
                                     ref_dict,
@@ -2110,6 +2134,10 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
                 if extract_params['match'] == EXACT:
                     slit = DUMMY
                     find_dispaxis(input_model, slit, sp_order, extract_params)
+                    if extract_params['dispaxis'] is None:
+                        log.warning("The dispersion direction couldn't be "
+                                    "determined, so skipping ...")
+                        continue
                     try:
                         (ra, dec, wavelength, net, background, dq,
                          prev_offset) = extract_one_slit(
@@ -2173,6 +2201,10 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
             for sp_order in spectral_order_list:
                 if sp_order == "not set yet":
                     sp_order = get_spectral_order(input_model)
+                    if sp_order == 0 and not prism_mode:
+                        log.info("Spectral order 0 is a direct image, "
+                                 "skipping ...")
+                        continue
 
                 extract_params = get_extract_parameters(
                                     ref_dict,
@@ -2187,6 +2219,10 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
                                 sp_order)
                     continue
                 find_dispaxis(input_model, slit, sp_order, extract_params)
+                if extract_params['dispaxis'] is None:
+                    log.warning("The dispersion direction couldn't be "
+                                "determined, so skipping ...")
+                    continue
 
                 got_relsens = True
                 try:
@@ -2453,6 +2489,31 @@ def get_spectral_order(slit):
         sp_order = 1
 
     return sp_order
+
+
+def is_prism(input_model):
+
+    detector = input_model.meta.instrument.detector
+    if detector is None:
+        return False
+
+    filter = input_model.meta.instrument.filter
+    if filter is None:
+        filter = "NONE"
+    else:
+        filter = filter.upper()
+    grating = input_model.meta.instrument.grating
+    if grating is None:
+        grating = "NONE"
+    else:
+        grating = grating.upper()
+
+    prism_mode = False
+    if (detector.startswith("MIR") and filter.find("P750L") >= 0 or
+        detector.startswith("NRS") and grating.find("PRISM") >= 0):
+            prism_mode = True
+
+    return prism_mode
 
 
 def copy_keyword_info(slit, slitname, spec):
