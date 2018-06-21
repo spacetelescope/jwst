@@ -1,4 +1,4 @@
-Reference Files Types
+Reference File Types
 =====================
 
 The Jump step uses two reference files: GAIN and READNOISE. The gain values

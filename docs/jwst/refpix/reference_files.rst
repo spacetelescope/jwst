@@ -15,7 +15,8 @@ Refpix reference files are selected by DETECTOR and READPATT.
 Reference File Format
 ---------------------
 
-A single IRS2 extension provides the complex coefficients for the correction,
+A single extension, with a EXTNAME keyword of 'IRS2', 
+provides the complex coefficients for the correction,
 and contains 8 columns ALPHA_0, ALPHA_1, ALPHA_2, ALPHA_3, BETA_0, BETA_1,
 BETA_2, and BETA_3.  The ALPHA arrays contains correction multipliers to the
 data, and the BETA arrays contains correction multiplier to the reference

@@ -13,17 +13,17 @@ For MIRI Imaging, flat-field reference files are selected based on the values of
 INSTRUME, DETECTOR, FILTER, READPATT, and SUBARRAY in the science data file.
 
 For MIRI MRS, flat-field reference files are selected based on the values of
-INSTRUME, DETECTOR, BAND, READPATT, and SUBARRAY of the science data file.
+INSTRUME, DETECTOR, BAND, READPATT, and SUBARRAY in the science data file.
 
 For NIRCam, flat-field reference files are selected based on the values of
-INSTRUME, DETECTOR, FILTER, and PUPIL of the science data file.
+INSTRUME, DETECTOR, FILTER, and PUPIL in the science data file.
 
 For NIRISS, flat-field reference files are selected based on the values of
-INSTRUME, DETECTOR, and FILTER of the science data file.
+INSTRUME, DETECTOR, and FILTER in the science data file.
 
 For NIRSpec, flat-field reference files are selected based on the values of
 INSTRUME, DETECTOR, FILTER, GRATING, and
-EXP_TYPE of the science data file.
+EXP_TYPE in the science data file.
 
 
 Reference File Formats for MIRI, NIRCAM, and NIRISS
