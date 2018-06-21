@@ -1,17 +1,22 @@
 {
-    "asn_type": "None",
-    "asn_rule": "DMSLevel2bBase",
+    "asn_type": "spec2-nrslamp",
+    "asn_rule": "candidate_Asn_Lv2NRSLAMP",
     "version_id": null,
     "code_version": "0.9.19",
     "degraded_status": "No known degraded exposures in association.",
-    "program": "singleton",
+    "program": "96215",
+    "target": "null",
+    "asn_pool": "jw96215_20180602T170215_pool",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '96215'})\nDMSAttrConstraint({'name': 'is_tso', 'sources': ['tsovisit'], 'value': None})\nDMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '96215'})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'nirspec'})\nDMSAttrConstraint({'name': 'detector', 'sources': ['detector'], 'value': 'nrs1'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'opaque'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['grating'], 'value': 'g395m'})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': 'full'})\nDMSAttrConstraint({'name': 'channel', 'sources': ['channel'], 'value': None})\nDMSAttrConstraint({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'nrs_lamp'})\nSimpleConstraint({'name': 'single_science', 'value': False})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o001\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
+    "asn_id": "o001",
     "products": [
         {
             "name": "jw96215001001_02107_00001_nrs1",
             "members": [
                 {
-                    "expname": "jw96215001001_02107_00001_nrs1_uncal.fits",
-                    "exptype": "science"
+                    "expname": "jw96215001001_02107_00001_nrs1_rate.fits",
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -19,8 +24,9 @@
             "name": "jw96215001001_02105_00001_nrs2",
             "members": [
                 {
-                    "expname": "jw96215001001_02105_00001_nrs2_uncal.fits",
-                    "exptype": "science"
+                    "expname": "jw96215001001_02105_00001_nrs2_rate.fits",
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -28,8 +34,9 @@
             "name": "jw96215001001_02105_00001_nrs1",
             "members": [
                 {
-                    "expname": "jw96215001001_02105_00001_nrs1_uncal.fits",
-                    "exptype": "science"
+                    "expname": "jw96215001001_02105_00001_nrs1_rate.fits",
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -37,8 +44,9 @@
             "name": "jw96215001001_02104_00001_nrs2",
             "members": [
                 {
-                    "expname": "jw96215001001_02104_00001_nrs2_uncal.fits",
-                    "exptype": "science"
+                    "expname": "jw96215001001_02104_00001_nrs2_rate.fits",
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -46,8 +54,9 @@
             "name": "jw96215001001_02104_00001_nrs1",
             "members": [
                 {
-                    "expname": "jw96215001001_02104_00001_nrs1_uncal.fits",
-                    "exptype": "science"
+                    "expname": "jw96215001001_02104_00001_nrs1_rate.fits",
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -55,8 +64,9 @@
             "name": "jw96215001001_02106_00001_nrs2",
             "members": [
                 {
-                    "expname": "jw96215001001_02106_00001_nrs2_uncal.fits",
-                    "exptype": "science"
+                    "expname": "jw96215001001_02106_00001_nrs2_rate.fits",
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -64,8 +74,9 @@
             "name": "jw96215001001_02102_00001_nrs2",
             "members": [
                 {
-                    "expname": "jw96215001001_02102_00001_nrs2_uncal.fits",
-                    "exptype": "science"
+                    "expname": "jw96215001001_02102_00001_nrs2_rate.fits",
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -73,8 +84,9 @@
             "name": "jw96215001001_02103_00001_nrs1",
             "members": [
                 {
-                    "expname": "jw96215001001_02103_00001_nrs1_uncal.fits",
-                    "exptype": "science"
+                    "expname": "jw96215001001_02103_00001_nrs1_rate.fits",
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -82,8 +94,9 @@
             "name": "jw96215001001_02106_00001_nrs1",
             "members": [
                 {
-                    "expname": "jw96215001001_02106_00001_nrs1_uncal.fits",
-                    "exptype": "science"
+                    "expname": "jw96215001001_02106_00001_nrs1_rate.fits",
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -91,8 +104,9 @@
             "name": "jw96215001001_02107_00001_nrs2",
             "members": [
                 {
-                    "expname": "jw96215001001_02107_00001_nrs2_uncal.fits",
-                    "exptype": "science"
+                    "expname": "jw96215001001_02107_00001_nrs2_rate.fits",
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -100,8 +114,9 @@
             "name": "jw96215001001_02103_00001_nrs2",
             "members": [
                 {
-                    "expname": "jw96215001001_02103_00001_nrs2_uncal.fits",
-                    "exptype": "science"
+                    "expname": "jw96215001001_02103_00001_nrs2_rate.fits",
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -109,12 +124,11 @@
             "name": "jw96215001001_02102_00001_nrs1",
             "members": [
                 {
-                    "expname": "jw96215001001_02102_00001_nrs1_uncal.fits",
-                    "exptype": "science"
+                    "expname": "jw96215001001_02102_00001_nrs1_rate.fits",
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         }
-    ],
-    "target": "singleton",
-    "asn_pool": "singleton"
+    ]
 }

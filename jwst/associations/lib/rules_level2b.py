@@ -8,6 +8,14 @@ from jwst.associations.lib.rules_level2_base import *
 from jwst.associations.lib.rules_level3_base import DMS_Level3_Base
 
 __all__ = [
+    'Asn_Lv2FGS',
+    'Asn_Lv2Image',
+    'Asn_Lv2ImageNonScience',
+    'Asn_Lv2ImageSpecial',
+    'Asn_Lv2NRSLAMP',
+    'Asn_Lv2Spec',
+    'Asn_Lv2SpecSpecial',
+    'Asn_Lv2WFSS_NIS',
 ]
 
 # Configure logging
@@ -156,6 +164,37 @@ class Asn_Lv2SpecSpecial(
         super(Asn_Lv2SpecSpecial, self).__init__(*args, **kwargs)
 
 
+class Asn_Lv2NRSLAMP(
+        AsnMixin_Lv2Singleton,
+        AsnMixin_Lv2Special,
+        DMSLevel2bBase
+):
+    """Level2b NIRSpec Lamp calibrations
+
+    NRS_LAMP exposures require specific level 2 processing.
+    """
+
+    def __init__(self, *args, **kwargs):
+
+        self.constraints = Constraint([
+            Constraint_Base(),
+            Constraint_Mode(),
+            DMSAttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+                value='nrs_lamp',
+            )
+        ])
+
+        super(Asn_Lv2NRSLAMP, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        super(Asn_Lv2NRSLAMP, self)._init_hook(item)
+        self.data['asn_type'] = 'spec2-nrslamp'
+
+
 class Asn_Lv2WFSS_NIS(
         AsnMixin_Lv2Singleton,
         AsnMixin_Lv2Spectral,
@@ -171,6 +210,7 @@ class Asn_Lv2WFSS_NIS(
         self.constraints = Constraint([
             Constraint_Base(),
             Constraint_Mode(),
+            Constraint_Target(),
             DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
