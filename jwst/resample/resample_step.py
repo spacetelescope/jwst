@@ -1,7 +1,7 @@
 from ..stpipe import Step
 from .. import datamodels
 from . import resample
-from .. assign_wcs.util import update_s_region
+from ..assign_wcs.util import update_s_region
 
 
 class ResampleStep(Step):
