@@ -55,9 +55,18 @@ class AssociationPool(Table):
         """
         delimiter = kwargs.pop('delimiter', DEFAULT_DELIMITER)
         format = kwargs.pop('format', DEFAULT_FORMAT)
-        super(AssociationPool, self).write(
-            *args, delimiter=delimiter, format=format, **kwargs
-        )
+        try:
+            super(AssociationPool, self).write(
+                *args, delimiter=delimiter, format=format, **kwargs
+            )
+        except TypeError:
+            # Most likely caused by the actual `write` called
+            # does not handle `delimiter`. `jsviewer` is one
+            # such format.
+            # So, try again without a delimiter.
+            super(AssociationPool, self).write(
+                *args, format=format, **kwargs
+            )
 
 
 class _ConvertToStr(dict):
