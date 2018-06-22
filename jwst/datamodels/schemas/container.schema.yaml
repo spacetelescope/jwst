@@ -1,7 +1,6 @@
 type: object
 properties:
   meta:
-    title: Level 3 Schema Metadata
     type: object
     properties:
       table_name:
@@ -19,9 +18,7 @@ properties:
           output:
             title: Name of resampling output file
             type: string
-            fits_keyword: DRIZZOUT
           pointings:
             title: Number of pointings
             type: integer
-            fits_keyword: NDRIZ
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema
