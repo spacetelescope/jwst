@@ -58,7 +58,6 @@ class GWCSDrizzle:
         """
 
         # Initialize the object fields
-
         self.outsci = None
         self.outwht = None
         self.outcon = None
@@ -69,7 +68,7 @@ class GWCSDrizzle:
         self.wt_scl = wt_scl
         self.kernel = kernel
         self.fillval = fillval
-        self.pixfrac = float(pixfrac)
+        self.pixfrac = pixfrac
 
         self.sciext = "SCI"
         self.whtext = "WHT"
@@ -78,19 +77,6 @@ class GWCSDrizzle:
         out_units = "cps"
 
         self.outexptime = product.meta.resample.product_exposure_time or 0.0
-
-        self.uniqid = product.meta.resample.pointings or 0
-
-        self.sciext = product.meta.resample.product_data_extname or "SCI"
-        self.whtext = product.meta.resample.product_weight_extname or "WHT"
-        self.conext = product.meta.resample.product_context_extname or "CON"
-
-        self.wt_scl = product.meta.resample.drizzle_weight_scale or wt_scl
-        self.kernel = product.meta.resample.drizzle_kernel or kernel
-        self.fillval = product.meta.resample.drizzle_fill_value or fillval
-        self.pixfrac = product.meta.resample.drizzle_pixel_fraction or pixfrac
-
-        self.out_units = out_units = product.meta.resample.drizzle_output_units or "cps"
 
         self.outsci = product.data
         if outwcs:
@@ -120,12 +106,12 @@ class GWCSDrizzle:
         if util.is_blank(self.wt_scl):
             self.wt_scl = ''
         elif self.wt_scl != "exptime" and self.wt_scl != "expsq":
-            raise ValueError("Illegal value for wt_scl: %s" % out_units)
+            raise ValueError("Illegal value for wt_scl: %s" % self.wt_scl)
 
         if out_units == "counts":
             np.divide(self.outsci, self.outexptime, self.outsci)
         elif out_units != "cps":
-            raise ValueError("Illegal value for wt_scl: %s" % out_units)
+            raise ValueError("Illegal value for out_units: %s" % out_units)
 
 
     def add_image(self, insci, inwcs, inwht=None,
