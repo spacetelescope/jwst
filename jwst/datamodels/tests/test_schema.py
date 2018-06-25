@@ -622,7 +622,7 @@ def test_multislit_move_from_fits():
 
 def test_validate_transform():
     """
-    Tests that custom types, like transform can be validated.
+    Tests that custom types, like transform, can be validated.
     """
     m = CollimatorModel(model=models.Shift(1) & models.Shift(2),
                         strict_validation=True)
@@ -633,7 +633,15 @@ def test_validate_transform():
     m.meta.reftype = "collimator"
     m.validate()
     m.close()
-                        
+
+
+def test_validate_transform_from_file():
+    """
+    Tests that custom types, like transform, can be validated.
+    """
+    fname = os.path.join(os.path.dirname(__file__), 'data', 'collimator_fake.asdf')
+    m = CollimatorModel(fname, strict_validation=True)
+    m.validate()
 
 
 '''
