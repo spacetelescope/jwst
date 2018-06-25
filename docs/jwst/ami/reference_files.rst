@@ -1,5 +1,6 @@
-Reference File
-==============
+Reference File Types
+====================
+
 The ``ami_analyze`` step uses a THROUGHPUT reference file, which contains
 throughput data for the filter used in the input AMI image. (The ami_average
 and ami_normalize steps do not use any reference files.)
