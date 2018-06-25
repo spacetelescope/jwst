@@ -563,9 +563,6 @@ class Constraint:
         to_reprocess = []
         for constraint in constraints:
             match, reprocess = constraint.check_and_set(item)
-            logger.debug('Constraint {}'.format(constraint))
-            logger.debug('Matched? {}'.format(match))
-            logger.debug('Reprocess {}'.format(reprocess))
 
             if match:
                 if all_match:
