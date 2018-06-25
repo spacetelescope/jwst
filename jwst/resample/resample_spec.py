@@ -84,7 +84,7 @@ class ResampleSpecData:
         elif self.instrument_name in ['MIRI']:
             self.output_wcs = self.build_miri_output_wcs()
 
-        self.data_size = self.build_size_from_bounding_box()
+        self.data_size = resample_utils.shape_from_bounding_box(self.output_wcs.bounding_box)
         self.blank_output = datamodels.DrizProductModel(self.data_size)
 
         self.blank_output.update(datamodels.ImageModel(self.input_models[0]._instance))
@@ -305,18 +305,6 @@ class ResampleSpecData:
             bounding_box.append((axis_min, axis_max))
         wnew.bounding_box = tuple(bounding_box)
         return wnew
-
-
-    def build_size_from_bounding_box(self, refwcs=None):
-        """ Compute the size of the output frame based on the bounding_box
-        """
-        if not refwcs:
-            refwcs = self.output_wcs
-        size = []
-        for axis in refwcs.bounding_box:
-            delta = axis[1] - axis[0]
-            size.append(int(delta + 0.5))
-        return tuple(reversed(size))
 
 
     def do_drizzle(self, **pars):
