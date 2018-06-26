@@ -957,13 +957,17 @@ class ExtractBase:
         pass
 
 
-    def offset_from_offset(self, input_model, verbose):
+    def offset_from_offset(self, input_model, slit, verbose):
         """Get nod/dither pixel offset from [xy]_offset.
 
         Parameters
         ----------
         input_model: data model
             The input science data.
+
+        slit: SlitModel, or "dummy"
+            One slit from a MultiSlitModel (or similar), or "dummy" if
+            there are no slits.
 
         verbose: boolean
             If True, write log messages.
@@ -973,6 +977,8 @@ class ExtractBase:
         offset: float
         """
 
+        instrument = input_model.meta.instrument.name
+
         total_points = input_model.meta.dither.total_points
         if total_points is None or total_points < 2:
             if verbose:
@@ -980,15 +986,21 @@ class ExtractBase:
                          "nod/dither offset", str(total_points))
             return 0.
 
+        missing = False
         if 'detector' not in self.wcs.available_frames:
             if verbose:
-                log.warning("detector frame not available, so "
-                            "can't compute nod/dither offset")
-            return 0.
+                log.warning("detector frame is not available,")
+            missing = True
         if 'v2v3' not in self.wcs.available_frames:
             if verbose:
-                log.warning("v2v3 frame not available, so "
-                            "can't compute nod/dither offset")
+                if missing:
+                    log.warning("and v2v3 frame is not available,")
+                else:
+                    log.warning("v2v3 frame is not available,")
+            missing = True
+        if missing:
+            if verbose:
+                log.warning("so can't compute nod/dither offset")
             return 0.
         v2v3_detector = self.wcs.get_transform('v2v3', 'detector')
 
@@ -1002,32 +1014,53 @@ class ExtractBase:
                             "assuming no nod/dither offset")
             return 0.
 
-        if hasattr(input_model.meta.wcsinfo, "v2_ref"):
-            v2ref = input_model.meta.wcsinfo.v2_ref     # in arcsec
+        v2ref = None
+        v3ref = None
+        v3idlyangle = None
+        vparity = None
+        wl_start = None
+        wl_end = None
+        if slit != DUMMY:
+            if hasattr(slit.meta.wcsinfo, "v2_ref"):
+                v2ref = slit.meta.wcsinfo.v2_ref                # in arcsec
+            if hasattr(slit.meta.wcsinfo, "v3_ref"):
+                v3ref = slit.meta.wcsinfo.v3_ref                # in arcsec
+            if hasattr(slit.meta.wcsinfo, "v3yangle"):
+                v3idlyangle = slit.meta.wcsinfo.v3yangle        # in degrees
+            if hasattr(slit.meta.wcsinfo, "vparity"):
+                vparity = slit.meta.wcsinfo.vparity
+            # These wavelengths are in meters; convert to microns later.
+            if hasattr(slit.meta.wcsinfo, "waverange_start"):
+                wl_start = slit.meta.wcsinfo.waverange_start
+            if hasattr(slit.meta.wcsinfo, "waverange_end"):
+                wl_end = slit.meta.wcsinfo.waverange_end
         else:
-            v2ref = None
-        if hasattr(input_model.meta.wcsinfo, "v3_ref"):
-            v3ref = input_model.meta.wcsinfo.v3_ref     # in arcsec
-        else:
-            v3ref = None
-        if hasattr(input_model.meta.wcsinfo, "v3yangle"):
-            v3idlyangle = input_model.meta.wcsinfo.v3yangle     # in deg
-        else:
-            v3idlyangle = None
-        if hasattr(input_model.meta.wcsinfo, "vparity"):
-            vparity = input_model.meta.wcsinfo.vparity
-        else:
-            vparity = None
-        if hasattr(input_model.meta.wcsinfo, "waverange_start"):
-            wl_start = input_model.meta.wcsinfo.waverange_start
-        else:
-            wl_start = None
-        if hasattr(input_model.meta.wcsinfo, "waverange_end"):
-            wl_end = input_model.meta.wcsinfo.waverange_end
-        else:
-            wl_end = None
+            if hasattr(input_model.meta.wcsinfo, "v2_ref"):
+                v2ref = input_model.meta.wcsinfo.v2_ref         # in arcsec
+            if hasattr(input_model.meta.wcsinfo, "v3_ref"):
+                v3ref = input_model.meta.wcsinfo.v3_ref         # in arcsec
+            if hasattr(input_model.meta.wcsinfo, "v3yangle"):
+                v3idlyangle = input_model.meta.wcsinfo.v3yangle # in degrees
+            if hasattr(input_model.meta.wcsinfo, "vparity"):
+                vparity = input_model.meta.wcsinfo.vparity
+            if hasattr(input_model.meta.wcsinfo, "waverange_start"):
+                wl_start = input_model.meta.wcsinfo.waverange_start
+            if hasattr(input_model.meta.wcsinfo, "waverange_end"):
+                wl_end = input_model.meta.wcsinfo.waverange_end
+
+        if v3idlyangle is None and instrument == "NIRSPEC":
+            v3idlyangle = 138.892975
+            if verbose:
+                log.warning("v3yangle not specified; "
+                            "setting it to %.6f degrees", v3idlyangle)
+        if vparity is None:
+            vparity = -1.
+            if verbose:
+                log.warning("vparity not specified; setting it to %g",
+                            vparity)
+
         if verbose:
-            log.debug("v2ref = %s, v3ref = %s, v3idlyangle = %s, "
+            log.debug("v2ref = %s, v3ref = %s, v3yangle = %s, "
                       "vparity = %s, wl_start = %s, wl_end = %s",
                       str(v2ref), str(v3ref), str(v3idlyangle), str(vparity),
                         str(wl_start), str(wl_end))
@@ -1041,7 +1074,8 @@ class ExtractBase:
 
         idl_v23 = trmodels.IdealToV2V3(v3idlyangle, v2ref, v3ref, vparity)
 
-        wavelength = 0.5 * (wl_end - wl_start) + wl_start
+        # Wavelength at the middle of the range, in microns.
+        wavelength = (0.5 * (wl_end - wl_start) + wl_start) * 1.e6
 
         # Compute the location in V2,V3 [in arcsec]
         xv0, yv0 = idl_v23(0., 0.)
@@ -1065,7 +1099,7 @@ class ExtractBase:
             offset = dx
         if np.isnan(offset):
             if verbose:
-                log.warning("Nod/dither offset is NaN, setting to 0.")
+                log.warning("Nod/dither offset is NaN; setting it to 0.")
             offset = 0.
 
         return offset
@@ -2320,7 +2354,6 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
     # Copy the integration time information from the INT_TIMES table
     # to keywords in the output file.
     if pipe_utils.is_tso(input_model):
-        log.debug("TSO data, so copying times from the INT_TIMES table.")
         populate_time_keywords(input_model, output_model)
     else:
         log.debug("Not copying from the INT_TIMES table because "
@@ -2409,71 +2442,70 @@ def populate_time_keywords(input_model, output_model):
     if skip:
         return
 
-    if nrows > 0:
-        int_num = input_model.int_times['integration_number']
-        start_utc = input_model.int_times['int_start_MJD_UTC']
-        mid_utc = input_model.int_times['int_mid_MJD_UTC']
-        end_utc = input_model.int_times['int_end_MJD_UTC']
-        start_tdb = input_model.int_times['int_start_BJD_TDB']
-        mid_tdb = input_model.int_times['int_mid_BJD_TDB']
-        end_tdb = input_model.int_times['int_end_BJD_TDB']
+    int_num = input_model.int_times['integration_number']
+    start_utc = input_model.int_times['int_start_MJD_UTC']
+    mid_utc = input_model.int_times['int_mid_MJD_UTC']
+    end_utc = input_model.int_times['int_end_MJD_UTC']
+    start_tdb = input_model.int_times['int_start_BJD_TDB']
+    mid_tdb = input_model.int_times['int_mid_BJD_TDB']
+    end_tdb = input_model.int_times['int_end_BJD_TDB']
 
-        # Inclusive range of integration numbers in the input data,
-        # zero indexed.
-        data_range = (int_start, int_end)
-        # Inclusive range of integration numbers in the INT_TIMES table,
-        # zero indexed.
-        table_range = (int_num[0] - 1, int_num[-1] - 1)
-        offset = data_range[0] - table_range[0]
-        if data_range[0] < table_range[0] or data_range[1] > table_range[1]:
-            log.warning("Not using the INT_TIMES table because it does not "
-                        "include rows for all integrations in the data.")
-            return
+    # Inclusive range of integration numbers in the input data,
+    # zero indexed.
+    data_range = (int_start, int_end)
+    # Inclusive range of integration numbers in the INT_TIMES table,
+    # zero indexed.
+    table_range = (int_num[0] - 1, int_num[-1] - 1)
+    offset = data_range[0] - table_range[0]
+    if data_range[0] < table_range[0] or data_range[1] > table_range[1]:
+        log.warning("Not using the INT_TIMES table because it does not "
+                    "include rows for all integrations in the data.")
+        return
 
-        if hasattr(input_model, 'data'):
-            shape = input_model.data.shape
-            if len(shape) == 2:
-                num_integ = 1
-            else:                               # len(shape) == 3
-                num_integ = shape[0]
-        else:                                   # e.g. MultiSlit data
+    log.debug("TSO data, so copying times from the INT_TIMES table.")
+
+    if hasattr(input_model, 'data'):
+        shape = input_model.data.shape
+        if len(shape) == 2:
             num_integ = 1
+        else:                                   # len(shape) == 3
+            num_integ = shape[0]
+    else:                                       # e.g. MultiSlit data
+        num_integ = 1
 
-        n_output_spec = len(output_model.spec)
+    # This assumes that the spec attribute of output_model has already
+    # been created, and spectra have been appended.
+    n_output_spec = len(output_model.spec)
 
-        # num_j is the number of different spectra, e.g. the number of
-        # fixed-slit spectra, MSA spectra, or different spectral orders;
-        # num_integ is the number of integrations.
-        # The total number of output spectra n_output_spec = num_integ * num_j
-        num_j = n_output_spec // num_integ
-        if n_output_spec != num_j * num_integ:
-            log.warning("populate_time_keywords:  Don't understand "
-                        "n_output_spec = %d, num_j = %d, num_integ = %d",
-                        n_output_spec, num_j, num_integ)
-        else:
-            log.debug("Number of output spectra = %d; "
-                      "number of spectra for each integration = %d; "
-                      "number of integrations = %d",
-                      n_output_spec, num_j, num_integ)
-
-        # Note that either num_integ or num_j (or possibly both) will be one.
-        # n is a counter for spectra in output_model.
-        n = 0
-        for j in range(num_j):                  # for each spectrum or order
-            for k in range(num_integ):              # for each integration
-                row = k + offset
-                spec = output_model.spec[n]         # n is incremented below
-                spec.int_num = int_num[row]
-                spec.start_utc = start_utc[row]
-                spec.mid_utc = mid_utc[row]
-                spec.end_utc = end_utc[row]
-                spec.start_tdb = start_tdb[row]
-                spec.mid_tdb = mid_tdb[row]
-                spec.end_tdb = end_tdb[row]
-                n += 1
-
+    # num_j is the number of spectra per integration, e.g. the number of
+    # fixed-slit spectra, MSA spectra, or different spectral orders;
+    # num_integ is the number of integrations.
+    # The total number of output spectra is n_output_spec = num_integ * num_j
+    num_j = n_output_spec // num_integ
+    if n_output_spec != num_j * num_integ:      # sanity check
+        log.warning("populate_time_keywords:  Don't understand "
+                    "n_output_spec = %d, num_j = %d, num_integ = %d",
+                    n_output_spec, num_j, num_integ)
     else:
-        log.warning("There is no INT_TIMES table in the input file.")
+        log.debug("Number of output spectra = %d; "
+                  "number of spectra for each integration = %d; "
+                  "number of integrations = %d",
+                  n_output_spec, num_j, num_integ)
+
+    # n is a counter for spectra in output_model.
+    n = 0
+    for j in range(num_j):                      # for each spectrum or order
+        for k in range(num_integ):                  # for each integration
+            row = k + offset
+            spec = output_model.spec[n]             # n is incremented below
+            spec.int_num = int_num[row]
+            spec.start_utc = start_utc[row]
+            spec.mid_utc = mid_utc[row]
+            spec.end_utc = end_utc[row]
+            spec.start_tdb = start_tdb[row]
+            spec.mid_tdb = mid_tdb[row]
+            spec.end_tdb = end_tdb[row]
+            n += 1
 
 
 def get_spectral_order(slit):
@@ -2655,7 +2687,7 @@ def extract_one_slit(input_model, slit, integ,
 
     # Only call this method for the first integration.
     if prev_offset == OFFSET_NOT_ASSIGNED_YET:
-        offset = extract_model.offset_from_offset(input_model, verbose)
+        offset = extract_model.offset_from_offset(input_model, slit, verbose)
         if offset != 0:                         # xxx should be temporary
             if verbose:
                 log.debug("Computed nod/dither offset = %s, but don't "
