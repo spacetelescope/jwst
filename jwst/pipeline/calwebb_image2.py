@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from collections import defaultdict
+import os.path as op
 
 from .. import datamodels
 from ..associations.load_as_asn import LoadAsLevel2Asn
@@ -108,8 +109,8 @@ class Image2Pipeline(Pipeline):
             input = datamodels.open(science)
 
         # Record ASN pool and table names in output
-        input.meta.asn.pool_name = pool_name
-        input.meta.asn.table_name = asn_file
+        input.meta.asn.pool_name = op.basename(pool_name)
+        input.meta.asn.table_name = op.basename(asn_file)
 
         # Do background processing, if necessary
         if len(members_by_type['background']) > 0:
