@@ -19,6 +19,7 @@ dependencies:
   - pymssql
   - scipy
   - six
+  - stsci.image
   - verhawk
   - sphinx_rtd_theme
   - pip:
