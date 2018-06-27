@@ -5,6 +5,9 @@ from ..stpipe import Step, cmdline
 from .. import datamodels
 from . import stack_refs
 
+__all__ = ["StackRefsStep"]
+
+
 class StackRefsStep(Step):
 
     """

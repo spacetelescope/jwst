@@ -3,6 +3,9 @@ from .. import datamodels
 from . import gain_scale
 
 
+__all__ = ["GainScaleStep"]
+
+
 class GainScaleStep(Step):
     """
     GainScaleStep: Rescales countrate data to account for use of a

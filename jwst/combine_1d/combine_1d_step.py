@@ -5,6 +5,10 @@ import os
 from ..stpipe import Step
 from . import combine1d
 
+
+__all__ = ["Combine1dStep"]
+
+
 class Combine1dStep(Step):
     """
 

@@ -3,7 +3,6 @@ Polygon filling algorithm.
 
 :Authors: Nadezhda Dencheva, Mihai Cara (contact: help@stsci.edu)
 
-:License: :doc:`../LICENSE`
 
 """
 # Original author: Nadezhda Dencheva

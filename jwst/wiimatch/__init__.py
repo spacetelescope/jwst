@@ -2,7 +2,6 @@
 
 :Author: Mihai Cara (contact: help@stsci.edu)
 
-:License: :doc:`../LICENSE`
 
 """
 

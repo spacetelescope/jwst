@@ -4,7 +4,6 @@ N-dimensional image intensity data using (multivariate) polynomials.
 
 :Author: Mihai Cara (contact: help@stsci.edu)
 
-:License: :doc:`../LICENSE`
 
 """
 from __future__ import (absolute_import, division, unicode_literals,

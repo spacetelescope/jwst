@@ -1,8 +1,3 @@
-from os.path import (
-    abspath,
-    dirname,
-    join
-)
 
 __version__ = '0.9.19'
 
@@ -10,7 +5,11 @@ __version__ = '0.9.19'
 # Utility
 def libpath(filepath):
     '''Return the full path to the module library.'''
-
+    from os.path import (
+        abspath,
+        dirname,
+        join
+    )
     return join(dirname(abspath(__file__)),
                 'lib',
                 filepath)

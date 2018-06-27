@@ -123,31 +123,34 @@ class KeywordRules(object):
 
     def interpret_rules(self, hdrs):
         """ Convert specifications for rules from rules file
-            into specific rules for this header(instrument/detector)
+        into specific rules for this header(instrument/detector).
 
-            This allows for expansion rules to be applied to rules
-            from the rules files (such as any wildcards or section titles).
+        Notes
+        -----
+        This allows for expansion rules to be applied to rules
+        from the rules files (such as any wildcards or section titles).
 
-            Output will be 'self.rules' that contains a list of tuples:
-                - a tuple of 2 values for each column in the table
-                - a tuple of 4 values for each attribute identified in metadata
-            Partial sample from HST to show format:
-[('CTYPE1O', 'CTYPE1O'),
-('CTYPE2O', 'CTYPE2O'),
-('CUNIT1O', 'CUNIT1O'),
-('CUNIT2O', 'CUNIT2O'),
-('APERTURE', 'APERTURE', <function fitsblender.blendheaders.multi>, 'ignore'),
-('DETECTOR', 'DETECTOR', <function fitsblender.blender.first>, 'ignore'),
-('EXPEND', 'EXPEND', <function numpy.core.fromnumeric.amax>, 'ignore'),
-('EXPSTART', 'EXPSTART', <function numpy.core.fromnumeric.amin>, 'ignore'),
-('EXPTIME', 'TEXPTIME', <function numpy.core.fromnumeric.sum>, 'ignore'),
-('EXPTIME', 'EXPTIME', <function numpy.core.fromnumeric.sum>, 'ignore')]
+        Output will be 'self.rules' that contains a list of tuples:
+        - a tuple of 2 values for each column in the table
+        - a tuple of 4 values for each attribute identified in metadata
+        Partial sample from HST to show format:
+        [('CTYPE1O', 'CTYPE1O'),
+        ('CTYPE2O', 'CTYPE2O'),
+        ('CUNIT1O', 'CUNIT1O'),
+        ('CUNIT2O', 'CUNIT2O'),
+        ('APERTURE', 'APERTURE', <function fitsblender.blendheaders.multi>, 'ignore'),
+        ('DETECTOR', 'DETECTOR', <function fitsblender.blender.first>, 'ignore'),
+        ('EXPEND', 'EXPEND', <function numpy.core.fromnumeric.amax>, 'ignore'),
+        ('EXPSTART', 'EXPSTART', <function numpy.core.fromnumeric.amin>, 'ignore'),
+        ('EXPTIME', 'TEXPTIME', <function numpy.core.fromnumeric.sum>, 'ignore'),
+        ('EXPTIME', 'EXPTIME', <function numpy.core.fromnumeric.sum>, 'ignore')]
 
-            This rules format will allow the algorithm, logic and code from
-            the original fitsblender to be used with as little change as
-            possible.  It will need to be derived (as with HST) from the
-            input models metadata for expansion of attribute sections or
-            wildcards in attributes specified in the rules.
+        This rules format will allow the algorithm, logic and code from
+        the original fitsblender to be used with as little change as
+        possible.  It will need to be derived (as with HST) from the
+        input models metadata for expansion of attribute sections or
+        wildcards in attributes specified in the rules.
+
         """
         if isinstance(hdrs, tuple):
             hdrs = list(hdrs)
@@ -268,18 +271,20 @@ class KwRule(object):
     This class encapsulates the logic needed for interpreting a single keyword
     rule from a text file.
 
-    The .rules attribute contains the interpreted set of rules that corresponds
+    Notes
+    -----
+    The ``.rules`` attribute contains the interpreted set of rules that corresponds
     to this line.
 
     Example:
-    Interpreting rule from:
-        {'meta.attribute': { 'rule': 'first', 'output': 'meta.attribute'}}
-        --or--
-        {'meta.attribute': 'meta.attribute'}  # Table column specification
+    Interpreting rule from
+    {'meta.attribute': { 'rule': 'first', 'output': 'meta.attribute'}}
+    --or--
+    {'meta.attribute': 'meta.attribute'}  # Table column specification
 
-    into rule: [('meta.attribute', 'meta.attribute',
+    into rule [('meta.attribute', 'meta.attribute',
                 <function first at 0x7fe505db7668>, 'ignore')]
-    and sname: None
+    and sname None
 
     """
 
@@ -356,14 +361,17 @@ def _build_schema_rules_dict(schema):
 
 
 def interpret_entry(line, hdr):
-    """ Generate the rule(s) specified by the entry from the rules file
+    """ Generate the rule(s) specified by the entry from the rules file.
 
+    Notes
+    -----
     The entry should always be a dict with format:
-        {attribute_name : {'rule':'some_rule', 'output':''}}
-        -- or (for table column specification)--
-        {attribute_name: attribute_name}
-        where
-          'output' is assumed to be the same as attribute_name if not present
+    {attribute_name : {'rule':'some_rule', 'output':''}}
+    -- or (for table column specification)--
+    {attribute_name: attribute_name}
+    where
+    'output' is assumed to be the same as attribute_name if not present
+
     """
     # Interpret raw input line
     attr = list(line.keys())[0]

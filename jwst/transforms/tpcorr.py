@@ -5,7 +5,6 @@ JWST instrument's WCS.
 
 :Authors: Mihai Cara (contact: help@stsci.edu)
 
-:License: :doc:`../LICENSE`
 
 """
 

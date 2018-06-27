@@ -9,6 +9,9 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
+__all__ = ["OutlierDetectionSpec"]
+
+
 class OutlierDetectionSpec(OutlierDetection):
     """Class definition for performing outlier detection on spectra.
 

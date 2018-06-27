@@ -17,6 +17,9 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
+__all__ = ["create_pipeline", "imaging", "tsgrism", "wfss"]
+
+
 def create_pipeline(input_model, reference_files):
     """
     Create the WCS pipeline based on EXP_TYPE.
@@ -186,7 +189,7 @@ def wfss(input_model, reference_files):
     The tree in the grism reference file has a section for each order/beam
     not sure if there will be a separate passband reference file needed for
     the wavelength scaling or wedge offsets. This helper is currently in
-    jwreftools/nircam/nircam_reftools
+    jwreftools/nircam/nircam_reftools.
 
     The direct image the catalog has been created from was corrected for
     distortion, but the dispersed images have not. This is OK if the trace and
@@ -225,23 +228,26 @@ def wfss(input_model, reference_files):
     grism reference file as wrange, which can be selected by wrange_selector
     which contains the filter names.
 
+    All the following was moved to the extract_2d stage.
 
-    All the following was moved to the extract_2d stage
     Step 1: Convert the source catalog from the reference frame of the
             uberimage to that of the dispersed image.  For the Vanilla
             Pipeline we assume that the pointing information in the file
             headers is sufficient.  This will be strictly true if all images
             were obtained in a single visit (same guide stars).
+
     Step 2: Record source information for each object in the catalog: position
             (RA and Dec), shape (A_IMAGE, B_IMAGE, THETA_IMAGE), and all
             available magnitudes.
+
     Step 3: Compute the trace and wavelength solutions for each object in the
             catalog and for each spectral order.  Record this information.
+
     Step 4: Compute the WIDTH of each spectral subwindow, which may be fixed or
             variable (see discussion of optimal extraction, below).  Record
             this information.
 
-    catalog and associated steps moved to extract_2d
+    Catalog and associated steps moved to extract_2d.
     """
 
     # The input is the grism image

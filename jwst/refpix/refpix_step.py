@@ -5,6 +5,10 @@ from .. import datamodels
 from . import reference_pixels
 from . import irs2_subtract_reference
 
+
+__all__ = ["RefPixStep", "refpix_correction"]
+
+
 class RefPixStep(Step):
     """
 

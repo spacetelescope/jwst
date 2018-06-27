@@ -13,6 +13,8 @@ from . import cube_build
 from . import ifu_cube
 from . import data_types
 
+__all__ = ["CubeBuildStep", "read_user_input"]
+
 
 class CubeBuildStep (Step):
     """
@@ -31,12 +33,12 @@ SHORT,MEDIUM,LONG, or ALL
          scale1 = float(default=0.0) # cube sample size to use for axis 1, arc seconds
          scale2 = float(default=0.0) # cube sample size to use for axis 2, arc seconds
          scalew = float(default=0.0) # cube sample size to use for axis 3, microns
-         weighting = option('msm','miripsf','area','MSM','MIRIPSF','AREA',default = 'msm') # Type of weighting function, 
+         weighting = option('msm','miripsf','area','MSM','MIRIPSF','AREA',default = 'msm') # Type of weighting function,
          coord_system = option('ra-dec','alpha-beta','ALPHA-BETA',default='ra-dec') # Output Coordinate system. Options: ra-dec or alpha-beta
          rois = float(default=0.0) # region of interest spatial size, arc seconds
          roiw = float(default=0.0) # region of interest wavelength size, microns
          weight_power = float(default=2.0) # Weighting option to use for Modified Shepard Method
-         offset_list = string(default='NA')  # A file for dithered data containing additional ra and dec offsets 
+         offset_list = string(default='NA')  # A file for dithered data containing additional ra and dec offsets
          wavemin = float(default=None)  # Minimum wavelength to be used in the IFUCube
          wavemax = float(default=None)  # Maximum wavelength to be used in the IFUCube
          xdebug = integer(default=None) # debug option, x spaxel value to report information on

@@ -72,7 +72,7 @@ class GrismObject(namedtuple('GrismObject', ("sid",
     GrismObject(order_bounding={"+1":((xmin,xmax),(ymin,ymax)),"+2":((2,3),(2,3))})
 
 
-    sky_bbox_?? contains the ra,dec,frame information for the bbox from the catalog
+    ``sky_bbox_??`` contains the ra,dec,frame information for the bbox from the catalog
 
     """
     __slots__ = ()  # prevent instance dictionary for lower memory
@@ -683,8 +683,8 @@ class Gwa2Slit(Model):
         A list of open slits.
         A slit is a namedtupe of type `~jwst.transforms.models.Slit`
         Slit("name", "shutter_id", "xcen", "ycen", "ymin", "ymax",
-             "quadrant", "source_id", "shutter_state", "source_name",
-             "source_alias", "stellarity", "source_xpos", "source_ypos"])
+        "quadrant", "source_id", "shutter_state", "source_name",
+        "source_alias", "stellarity", "source_xpos", "source_ypos"])
     models : list
         List of models (`~astropy.modeling.core.Model`) corresponding to the
         list of slits.
@@ -733,8 +733,8 @@ class Slit2Msa(Model):
         A list of open slits.
         A slit is a namedtupe, `~jwst.transforms.models.Slit`
         Slit("name", "shutter_id", "xcen", "ycen", "ymin", "ymax",
-             "quadrant", "source_id", "shutter_state", "source_name",
-             "source_alias", "stellarity", "source_xpos", "source_ypos")
+        "quadrant", "source_id", "shutter_state", "source_name",
+        "source_alias", "stellarity", "source_xpos", "source_ypos")
     models : list
         List of models (`~astropy.modeling.core.Model`) corresponding to the
         list of slits.
@@ -1083,13 +1083,13 @@ class NIRCAMForwardRowGrismDispersion(Model):
     ymodels : list [astropy.modeling.Model]
         List of models which givern the y solutions for each order
 
-    Returns:
-    --------
+    Returns
+    -------
     x, y, wavelength, order in the grism image for the pixel at x0,y0 that was
     specified as input using the input delta pix for the specified order
 
-    Notes:
-    ------
+    Notes
+    -----
     The evaluation here is linear currently because higher orders have not yet been
     defined for NIRCAM (NIRCAM polynomials currently do not have any field
     dependence)
@@ -1161,13 +1161,13 @@ class NIRCAMForwardColumnGrismDispersion(Model):
     ymodels : list [astropy.modeling.Model]
         List of models which givern the y solutions
 
-    Returns:
-    --------
+    Returns
+    -------
     x, y, lam, order in the grism image for the pixel at x0,y0 that was
     specified as input using the input delta pix for the specified order
 
-    Notes:
-    ------
+    Notes
+    -----
     The evaluation here is lineaer because higher orders have not yet been
     defined for NIRCAM (NIRCAM polynomials currently do not have any field
     dependence)
@@ -1239,13 +1239,13 @@ class NIRCAMBackwardGrismDispersion(Model):
     ymodels : list [astropy.modeling.Model]
         List of models which givern the y solutions
 
-    Returns:
-    --------
+    Returns
+    -------
     x, y, lam, order in the grism image for the pixel at x0,y0 that was
     specified as input using the wavelength l for the specified order
 
-    Notes:
-    ------
+    Notes
+    -----
     The evaluation here is lineaer because higher orders have not yet been defined for NIRCAM
     (NIRCAM polynomials currently do not have any field dependence)
     """
@@ -1303,8 +1303,8 @@ class NIRISSBackwardGrismDispersion(Model):
 
     The dispersion is relative to the input x,y for a given wavelength.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     xmodels : list[tuple]
         The list of tuple(models) for the polynomial model in x
     ymodels : list[tuple]
@@ -1316,8 +1316,8 @@ class NIRISSBackwardGrismDispersion(Model):
     theta : float
         The rotation to apply
 
-    Notes:
-    ------
+    Notes
+    -----
     Given the x,y, wave, order as known on the direct image,
     it returns the tuple of x, y, wave, order for that wave in the dispersed image.
 
@@ -1354,8 +1354,8 @@ class NIRISSBackwardGrismDispersion(Model):
     def evaluate(self, x, y, wavelength, order):
         """Return the valid pixel(s) and wavelengths given center x,y and lam
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         wavelength : int,float
             Input wavelength you want to know about, will be converted to float
         x :  int,float
@@ -1368,13 +1368,13 @@ class NIRISSBackwardGrismDispersion(Model):
             The order to use
 
 
-        Returns:
-        --------
+        Returns
+        -------
         x, y, wavelength, order in the grism image for the pixel at x,y that was
         specified as input using the wavelength and order specified
 
-        Notes:
-        ------
+        Notes
+        -----
         There's spatial dependence for NIRISS so the forward transform
         dependes on x,y as well as the filter wheel rotation. Theta is
         usu. taken to be the different between fwcpos_ref in the specwcs
@@ -1406,8 +1406,8 @@ class NIRISSForwardRowGrismDispersion(Model):
     The dispersion polynomial is relative to the input x,y pixels
     in the direct image for a given wavelength.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     xmodels : list[tuples]
         The list of tuple(models) for the polynomial model in x
     ymodels : list[tuples]
@@ -1417,8 +1417,8 @@ class NIRISSForwardRowGrismDispersion(Model):
     orders : list
         The list of orders which are available to the model
 
-    Notes:
-    ------
+    Notes
+    -----
     Given the x,y, source location as known on the dispersed image, as well as order,
     it returns the tuple of x,y,wavelength,order.
 
@@ -1453,8 +1453,8 @@ class NIRISSForwardRowGrismDispersion(Model):
     def evaluate(self, x, y, x0, y0, order):
         """Return the valid pixel(s) and wavelengths given center x,y and lam
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         x0: int,float,list
             Source object x-center
 
@@ -1471,13 +1471,13 @@ class NIRISSForwardRowGrismDispersion(Model):
             Spectral order to use
 
 
-        Returns:
-        --------
+        Returns
+        -------
         x, y, lambda, order, theta,  in the direct image for the pixel that was
         specified as input using the wavelength l and spectral order
 
-        Notes:
-        ------
+        Notes
+        -----
         There's spatial dependence for NIRISS as well as dependence on the
         filter wheel rotation during the exposure.
 
@@ -1508,8 +1508,8 @@ class NIRISSForwardColumnGrismDispersion(Model):
     The dispersion polynomial is relative to the input x,y pixels
     in the direct image for a given wavelength.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     xmodels : list[tuple]
         The list of tuple(models) for the polynomial model in x
     ymodels : list[tuple]
@@ -1519,8 +1519,8 @@ class NIRISSForwardColumnGrismDispersion(Model):
     orders : list
         The list of orders which are available to the model
 
-    Notes:
-    ------
+    Notes
+    -----
     Given the x,y, source location, order, it returns the tuple of
     x,y,wavelength,order on the dispersed image. It also requires
     FWCPOS from the image header, this is the filter wheel position
@@ -1554,8 +1554,8 @@ class NIRISSForwardColumnGrismDispersion(Model):
     def evaluate(self, x, y, x0, y0, order):
         """Return the valid pixel(s) and wavelengths given center x,y and lam
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         x0: int,float
             Source object x-center
         y0: int,float
@@ -1569,13 +1569,13 @@ class NIRISSForwardColumnGrismDispersion(Model):
         theta : float
             input filter wheel rotation angle in degrees
 
-        Returns:
-        --------
+        Returns
+        -------
         x, y, lambda, order,  in the direct image for the pixel that was
         specified as input using the wavelength l and spectral order
 
-        Notes:
-        ------
+        Notes
+        -----
         There's spatial dependence for NIRISS as well as rotation for the filter wheel
 
         """

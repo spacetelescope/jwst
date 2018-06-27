@@ -4,6 +4,10 @@ from ..stpipe import Step
 from .. import datamodels
 from . import saturation
 
+
+__all__ = ["SaturationStep"]
+
+
 class SaturationStep(Step):
     """
     This Step sets saturation flags.
