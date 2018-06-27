@@ -36,7 +36,7 @@ to install the dependencies, and then installing from the github repository:
 
     conda create -n jwst_dev --only-deps --override-channels -c http://ssb.stsci.edu/astroconda-dev -c defaults python=3.6 jwst
     source activate jwst_dev
-    git clone https://github.com/STScI-JWST/jwst.git
+    git clone https://github.com/spacetelescope/jwst.git
     cd jwst
     python setup.py develop
 
