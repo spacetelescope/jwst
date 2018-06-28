@@ -55,6 +55,47 @@ class AssociationRegistry(dict):
     include_bases: bool
         If True, include base classes not considered
         rules.
+
+    Attributes
+    ----------
+    rule_set: {rule [, ...]}
+        The rules in the registry.
+
+    Methods
+    -------
+    match(item)
+        Return associations where `item` matches any of the rules.
+
+    validate(association)
+        Determine whether an association is valid, or complete,
+        according to any of the rules in the registry.
+
+    finalize(associations)
+        Validate and execute post-processing hooks to
+        produce a completed and valid set of associations.
+
+    load(serialized)
+        Create an association from a serialized form.
+
+
+    Notes
+    -----
+    The general workflow is as follows:
+
+        * Create the registry
+            >>> registry = AssociationRegistry()
+
+        * Create associations from an item
+            >>> associations, reprocess = registry.match(item)
+
+        * Finalize the associations
+            >>> final_asns = registry.finalize(assocations)
+
+    In practice, this is one step in a larger loop over all items to
+    be associated. This does not account for adding items to already
+    existing associations. See :ref:`generate` for a full example of
+    using the registry.
+
     """
 
     # Callback registry
