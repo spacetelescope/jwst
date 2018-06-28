@@ -54,7 +54,6 @@
 # --> status = aa.add_crs_all_slices()
 #
 
-from __future__ import division, print_function
 import fits, time, random
 import numpy as N
 import sys, os, math

@@ -28,8 +28,6 @@
 # DAMAGE.
 
 # STDLIB
-from __future__ import absolute_import, print_function
-
 from operator import itemgetter
 import os
 import re

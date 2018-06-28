@@ -3,8 +3,6 @@ A module that provides algorithms for initial estimation of shifts
 based on 2D histograms.
 
 """
-from __future__ import (absolute_import, division, unicode_literals,
-                        print_function)
 
 import logging
 import numpy as np

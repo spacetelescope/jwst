@@ -1,6 +1,5 @@
 
 # Routines used for building cubes
-from __future__ import absolute_import, print_function
 import sys
 import time
 import numpy as np
@@ -20,7 +19,7 @@ from . import instrument_defaults
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-class CubeData(object):
+class CubeData():
 # CubeData - holds all the importatn informtion for IFU Cube Building:
 # wcs, data, reference data
 

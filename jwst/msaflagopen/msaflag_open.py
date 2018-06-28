@@ -1,5 +1,3 @@
-from __future__ import division
-
 #
 #  Module for flagging the DQ array of pixels affected by failed
 #  open MSA shutters in nirspec science data sets

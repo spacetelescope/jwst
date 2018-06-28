@@ -26,7 +26,6 @@
 #       these smoothed and scaled values should be subtracted from every pixel
 #       in the corresponding row.
 
-from __future__ import division
 import numpy as np
 from scipy import stats
 import logging
@@ -80,7 +79,7 @@ MIR_reference_sections = {'A': {'left': (0, 1024, 0),
                                'data': (0, 1024, 7, 1028, 4)}
                           }
 
-class Dataset(object):
+class Dataset():
     """Base Class to handle passing stuff from routine to routine
 
     Parameters:

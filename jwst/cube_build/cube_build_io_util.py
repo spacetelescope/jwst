@@ -1,5 +1,4 @@
 # Routines used for building cubes
-from __future__ import absolute_import, print_function
 
 import sys
 import time

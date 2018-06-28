@@ -7,8 +7,6 @@ of image WCS.
 
 
 """
-from __future__ import (absolute_import, division, unicode_literals,
-                        print_function)
 
 # STDLIB
 import logging
@@ -38,7 +36,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-class ImageWCS(object):
+class ImageWCS():
     """ A class for holding JWST GWCS information and for managing
     tangent-plane corrections.
 
@@ -302,7 +300,7 @@ class ImageWCS(object):
         return ra, dec
 
 
-class WCSImageCatalog(object):
+class WCSImageCatalog():
     """
     A class that holds information pertinent to an image WCS and a source
     catalog of the sources found in that image.
@@ -714,7 +712,7 @@ class WCSImageCatalog(object):
         """
         return self._bb_radec
 
-class WCSGroupCatalog(object):
+class WCSGroupCatalog():
     """
     A class that holds together `WCSImageCatalog` image catalog objects
     whose relative positions are fixed and whose source catalogs should be
@@ -1275,7 +1273,7 @@ def _tp2tp(imwcs1, imwcs2):
     return matrix, shift
 
 
-class RefCatalog(object):
+class RefCatalog():
     """
     An object that holds a reference catalog and provides
     tools for coordinate convertions using reference WCS as well as

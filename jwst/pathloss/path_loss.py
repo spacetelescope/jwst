@@ -1,5 +1,3 @@
-from __future__ import division
-
 #
 #  Module for calculating pathloss correction for science data sets
 #
