@@ -99,7 +99,7 @@ Latest regression test results can be found here:
 
 https://boyle.stsci.edu:8081/job/RT/job/JWST/
 
-The test builds start at 10am and 7pm local Baltimore time every day on jwcalibdev.
+The test builds start at 11am and 6pm local Baltimore time every day on jwcalibdev.
 
 To run the regression tests on your local machine, `rsync` or `scp` the input and comparison data locally
 
