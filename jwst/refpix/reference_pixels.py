@@ -32,6 +32,7 @@ from scipy import stats
 import logging
 from .. import datamodels
 from ..datamodels import dqflags
+from ..lib import reffile_utils
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -56,12 +57,7 @@ NIR_reference_sections = {'A': {'top': (2044, 2048, 0, 512),
                           'D': {'top': (2044, 2048, 1536, 2048),
                                'bottom': (0, 4, 1536, 2048),
                                'side': (0, 2048, 2044, 2048),
-                               'data': (0, 2048, 1536, 2048)},
-                          'SUBARRAY': {'top': (2044, 2048, 0, 2048),
-                                       'bottom': (0, 4, 0, 2048),
-                                       'left': (4, 2044, 0, 4),
-                                       'right': (4, 2044, 2044, 2048),
-                                       'data': (0, 2048, 0, 2048)}
+                               'data': (0, 2048, 1536, 2048)}
                           }
 
 #
@@ -116,6 +112,7 @@ class Dataset(object):
 
 """
     def __init__(self, input_model,
+                 is_subarray,
                  odd_even_columns,
                  use_side_ref_pixels,
                  side_smoothing_length,
@@ -140,7 +137,7 @@ class Dataset(object):
         self.side_gain = side_gain
         self.odd_even_rows = odd_even_rows
         self.bad_reference_pixels = False
-        self.is_subarray = False
+        self.is_subarray = is_subarray
 
     def sigma_clip(self, data, dq, low=3.0, high=3.0):
         """Wrap the scipy.stats.sigmaclip so that data with zero variance
@@ -187,6 +184,56 @@ class Dataset(object):
             mean = data[goodpixels].mean(dtype=np.float64)
         return mean
 
+    def transfer_to_model(self, input_model):
+        """
+        Transfer the reference-pixel corrected data arrays from the
+        dataset to the input model
+
+        Parameters:
+        -----------
+
+        input_model: JWST datamodel
+
+        The datamodel the data arrays are to be transferred to
+
+        Returns:
+        --------
+
+        None
+
+        """
+
+        if self.is_subarray:
+            original_size = self.extract_from_embedded()
+            input_model.data = original_size
+            return
+        else:
+            input_model.data = self.data.copy()
+            return
+
+    def extract_from_embedded(self):
+        """
+        Extract the embedded subarray from the full-frame dataset
+        
+        Parameters:
+        -----------
+        
+        None
+        
+        Returns:
+        --------
+        
+        embedded_subarray: nddata array
+        
+        The subarray embedded in the full-frame array
+        
+        """
+        rowstart = self.ystart - 1
+        rowstop = rowstart + self.ysize
+        colstart = self.xstart - 1
+        colstop = colstart + self.xsize
+        embedded_subarray = self.data[:, :, rowstart:rowstop, colstart:colstop]
+        return embedded_subarray
 
 class NIRDataset(Dataset):
     """Generic NIR detector Class.
@@ -215,12 +262,14 @@ class NIRDataset(Dataset):
     """
 
     def __init__(self, input_model,
+                 is_subarray,
                  odd_even_columns,
                  use_side_ref_pixels,
                  side_smoothing_length,
                  side_gain):
 
         super(NIRDataset, self).__init__(input_model,
+                                         is_subarray,
                                          odd_even_columns,
                                          use_side_ref_pixels,
                                          side_smoothing_length,
@@ -729,6 +778,9 @@ class NIRDataset(Dataset):
                 thisgroup = self.data[integration, group].copy()
                 refpixindices = np.where(np.bitwise_and(self.pixeldq, refdq) == refdq)
                 nrefpixels = len(refpixindices[0])
+                if nrefpixels == 0:
+                    self.bad_reference_pixels = True
+                    return
                 if self.odd_even_columns:
                     oddrefpixindices_row = []
                     oddrefpixindices_col = []
@@ -746,9 +798,9 @@ class NIRDataset(Dataset):
                     oddrefpixindices = (np.array(oddrefpixindices_row),
                                         np.array(oddrefpixindices_col))
                     evenrefpixvalue = self.sigma_clip(thisgroup[evenrefpixindices],
-                                                      self.pixeldq[evenrefpixelindices])
+                                                      self.pixeldq[evenrefpixindices])
                     oddrefpixvalue = self.sigma_clip(thisgroup[oddrefpixindices],
-                                                      self.pixeldq[oddrefpixelindices])
+                                                      self.pixeldq[oddrefpixindices])
                     thisgroup[:, 0::2] = thisgroup[:, 0::2] - evenrefpixvalue
                     thisgroup[:, 1::2] = thisgroup[:, 1::2] - oddrefpixvalue
                 else:
@@ -1001,9 +1053,11 @@ class MIRIDataset(Dataset):
     """
 
     def __init__(self, input_model,
+                 is_subarray,
                  odd_even_rows):
 
         super(MIRIDataset, self).__init__(input_model,
+                                          is_subarray,
                                           odd_even_columns=False,
                                           use_side_ref_pixels=False,
                                           side_smoothing_length=False,
@@ -1360,188 +1414,144 @@ def create_dataset(input_model,
         separately (MIR only)
 
     """
-
+    is_subarray = False
     detector = input_model.meta.instrument.detector
+    model_copy = input_model.copy()
+    if reffile_utils.is_subarray(input_model):
+        nints, ngroups, nrows, ncols = model_copy.data.shape
+        colstart = model_copy.meta.subarray.xstart - 1
+        colstop = colstart + model_copy.meta.subarray.xsize
+        rowstart = model_copy.meta.subarray.ystart - 1
+        rowstop = rowstart + model_copy.meta.subarray.ysize
+        if detector[:3] == 'MIR':
+            full_shape = (nints, ngroups, 1024, 1032)
+            dq_shape = (1024, 1032)
+        else:
+            full_shape = (nints, ngroups, 2048, 2048)
+            dq_shape = (2048, 2048)
+        model_copy.data = np.zeros(full_shape, dtype=input_model.data.dtype)
+        model_copy.data[:, :, rowstart:rowstop, colstart:colstop] = input_model.data
+        model_copy.pixeldq = np.ones(dq_shape, dtype=input_model.pixeldq.dtype)
+        model_copy.pixeldq[rowstart:rowstop, colstart:colstop] = input_model.pixeldq
+        is_subarray = True
+
     if detector[:3] == 'MIR':
-        return MIRIDataset(input_model,
+        return MIRIDataset(model_copy,
+                           is_subarray,
                            odd_even_rows)
     elif detector == 'NRS1':
-        return NRS1Dataset(input_model,
+        return NRS1Dataset(model_copy,
+                           is_subarray,
                            odd_even_columns,
                            use_side_ref_pixels,
                            side_smoothing_length,
                            side_gain)
     elif detector == 'NRS2':
-        return NRS2Dataset(input_model,
+        return NRS2Dataset(model_copy,
+                           is_subarray,
                            odd_even_columns,
                            use_side_ref_pixels,
                            side_smoothing_length,
                            side_gain)
     elif detector == 'NRCA1':
-        return NRCA1Dataset(input_model,
+        return NRCA1Dataset(model_copy,
+                            is_subarray,
                             odd_even_columns,
                             use_side_ref_pixels,
                             side_smoothing_length,
                             side_gain)
     elif detector == 'NRCA2':
-        return NRCA2Dataset(input_model,
+        return NRCA2Dataset(model_copy,
+                            is_subarray,
                             odd_even_columns,
                             use_side_ref_pixels,
                             side_smoothing_length,
                             side_gain)
     elif detector == 'NRCA3':
-        return NRCA3Dataset(input_model,
+        return NRCA3Dataset(model_copy,
+                            is_subarray,
                             odd_even_columns,
                             use_side_ref_pixels,
                             side_smoothing_length,
                             side_gain)
     elif detector == 'NRCA4':
-        return NRCA4Dataset(input_model,
+        return NRCA4Dataset(model_copy,
+                            is_subarray,
                             odd_even_columns,
                             use_side_ref_pixels,
                             side_smoothing_length,
                             side_gain)
     elif detector == 'NRCALONG':
-        return NRCALONGDataset(input_model,
+        return NRCALONGDataset(model_copy,
+                               is_subarray,
                                odd_even_columns,
                                use_side_ref_pixels,
                                side_smoothing_length,
                                side_gain)
     elif detector == 'NRCB1':
-        return NRCB1Dataset(input_model,
+        return NRCB1Dataset(model_copy,
+                            is_subarray,
                             odd_even_columns,
                             use_side_ref_pixels,
                             side_smoothing_length,
                             side_gain)
     elif detector == 'NRCB2':
-        return NRCB2Dataset(input_model,
+        return NRCB2Dataset(model_copy,
+                            is_subarray,
                             odd_even_columns,
                             use_side_ref_pixels,
                             side_smoothing_length,
                             side_gain)
     elif detector == 'NRCB3':
-        return NRCB3Dataset(input_model,
+        return NRCB3Dataset(model_copy,
+                            is_subarray,
                             odd_even_columns,
                             use_side_ref_pixels,
                             side_smoothing_length,
                             side_gain)
     elif detector == 'NRCB4':
-        return NRCB4Dataset(input_model,
+        return NRCB4Dataset(model_copy,
+                            is_subarray,
                             odd_even_columns,
                             use_side_ref_pixels,
                             side_smoothing_length,
                             side_gain)
     elif detector == 'NRCBLONG':
-        return NRCBLONGDataset(input_model,
+        return NRCBLONGDataset(model_copy,
+                               is_subarray,
                                odd_even_columns,
                                use_side_ref_pixels,
                                side_smoothing_length,
                                side_gain)
     elif detector == 'NIS':
-        return NIRISSDataset(input_model,
+        return NIRISSDataset(model_copy,
+                             is_subarray,
                              odd_even_columns,
                              use_side_ref_pixels,
                              side_smoothing_length,
                              side_gain)
     elif detector == 'GUIDER1':
-        return GUIDER1Dataset(input_model,
+        return GUIDER1Dataset(model_copy,
+                              is_subarray,
                               odd_even_columns,
                               use_side_ref_pixels,
                               side_smoothing_length,
                               side_gain)
     elif detector == 'GUIDER2':
-        return GUIDER2Dataset(input_model,
+        return GUIDER2Dataset(model_copy,
+                              is_subarray,
                               odd_even_columns,
                               use_side_ref_pixels,
                               side_smoothing_length,
                               side_gain)
     else:
         log.error('Unrecognized detector')
-        return NIRDataset(input_model,
+        return NIRDataset(model_copy,
+                          is_subarray,
                           odd_even_columns,
                           use_side_ref_pixels,
                           side_smoothing_length,
                           side_gain)
-
-def create_embedded(input_model,
-                    odd_even_columns,
-                    use_side_ref_pixels,
-                    side_smoothing_length,
-                    side_gain,
-                    odd_even_rows):
-    """Create a dataset object by embedding the data array
-    from a subarray datamodel in a full frame of zeros, and
-    embedding the dq array from same in a full frame of
-    dqflags.pixel['DO_NOT_USE'].
-
-    Parameters:
-    -----------
-
-    input_model: data model object
-        Science data model to be corrected
-
-    odd_even_columns: booolean
-        flag that controls whether odd and even-numbered columns are
-        processed separately (NIR only)
-
-    use_side_ref_pixels: boolean
-        flag the controls whether the side reference pixels are used in
-        the correction (NIR only)
-
-    side_smoothing_length: integer
-        smoothing length the use in calculating the running median of
-        the side reference pixels (NIR only)
-
-    side_gain: float
-        gain to use in applying the side reference pixel correction
-        (NIR only)
-
-    odd_even_rows: boolean
-        flag that controls whether odd and even-numbered rows are handled
-        separately (MIR only)
-
-    """
-    embedded_model = input_model.copy()
-    nints, ngroups, nrows, ncols = embedded_model.data.shape
-    detector = embedded_model.meta.instrument.detector
-    colstart = embedded_model.meta.subarray.xstart - 1
-    colstop = colstart + embedded_model.meta.subarray.xsize
-    rowstart = embedded_model.meta.subarray.ystart - 1
-    rowstop = rowstart + embedded_model.meta.subarray.ysize
-    if detector[:3] == 'MIR':
-        full_shape = (nints, ngroups, 1024, 1032)
-        dq_shape = (1024, 1032)
-    else:
-        full_shape = (nints, ngroups, 2048, 2048)
-        dq_shape = (2048, 2048)
-    embedded_model.data = np.zeros(full_shape, dtype=input_model.data.dtype)
-    embedded_model.data[:, :, rowstart:rowstop, colstart:colstop] = input_model.data
-    embedded_model.pixeldq = np.ones(dq_shape, dtype=input_model.pixeldq.dtype)
-    embedded_model.pixeldq[rowstart:rowstop, colstart:colstop] = input_model.pixeldq
-    embedded_dataset = create_dataset(embedded_model,
-                                      odd_even_columns,
-                                      use_side_ref_pixels,
-                                      side_smoothing_length,
-                                      side_gain,
-                                      odd_even_rows)
-    embedded_dataset.is_subarray = True
-    return embedded_dataset
-
-def is_subarray(input_model):
-    """Test for whether the data in a model is full-frame or subarray
-
-    Parameters:
-    -----------
-
-    input_model: jwst.datamodels.model
-        Model to be tested
-
-    """
-
-    if input_model.meta.subarray.name == 'FULL':
-        return False
-    else:
-        return True
 
 def correct_model(input_model, odd_even_columns,
                    use_side_ref_pixels,
@@ -1579,28 +1589,19 @@ def correct_model(input_model, odd_even_columns,
 
     """
 
-    if is_subarray(input_model):
-        input_dataset = create_embedded(input_model,
-                                        odd_even_columns,
-                                        use_side_ref_pixels,
-                                        side_smoothing_length,
-                                        side_gain,
-                                        odd_even_rows)
-        input_dataset.is_subarray = True
-    else:
-        input_dataset = create_dataset(input_model,
-                                       odd_even_columns,
-                                       use_side_ref_pixels,
-                                       side_smoothing_length,
-                                       side_gain,
-                                       odd_even_rows)
-        input_dataset.is_subarray = False
+    input_dataset = create_dataset(input_model,
+                                   odd_even_columns,
+                                   use_side_ref_pixels,
+                                   side_smoothing_length,
+                                   side_gain,
+                                   odd_even_rows)
     result_dataset = reference_pixel_correction(input_dataset)
     if result_dataset.bad_reference_pixels:
         return None
     else:
-        input_model.data = result_dataset.data.copy()
+        result_dataset.transfer_to_model(input_model)
         return input_model
+
 
 def reference_pixel_correction(input_dataset):
     """

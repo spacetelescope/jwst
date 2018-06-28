@@ -67,14 +67,10 @@ class RefPixStep(Step):
                 # be the case if the code is unable to calculate the reference value
                 # due to a lack of valid reference pixels
                 if result is not None:
-                    if input_model.meta.subarray.name == 'FULL':
-                        result.meta.cal_step.refpix = 'COMPLETE'
-                    else:
-                        result.meta.cal_step.refpix = 'SKIPPED'
-
+                    result.meta.cal_step.refpix = 'COMPLETE'
                     return result
                 else:
-                    self.log.warning("Invalid reference pixels, refpix step skipped")
+                    self.log.warning("No valid reference pixels, refpix step skipped")
                     input_model.meta.cal_step.refpix = 'SKIPPED'
                     return input_model
 
