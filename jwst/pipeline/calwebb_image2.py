@@ -57,7 +57,7 @@ class Image2Pipeline(Pipeline):
             result = self.process_exposure_product(
                 product,
                 asn['asn_pool'],
-                asn.filename
+                op.basename(asn.filename)
             )
 
             # Save result
@@ -83,6 +83,13 @@ class Image2Pipeline(Pipeline):
         ---------
         exp_product: dict
             A Level2b association product.
+
+        pool_name: str
+            The pool file name. Used for recording purposes only.
+
+        asn_file: str
+            The name of the association file.
+            Used for recording purposes only.
         """
         # Find all the member types in the product
         members_by_type = defaultdict(list)
@@ -109,8 +116,8 @@ class Image2Pipeline(Pipeline):
             input = datamodels.open(science)
 
         # Record ASN pool and table names in output
-        input.meta.asn.pool_name = op.basename(pool_name)
-        input.meta.asn.table_name = op.basename(asn_file)
+        input.meta.asn.pool_name = pool_name
+        input.meta.asn.table_name = asn_file
 
         # Do background processing, if necessary
         if len(members_by_type['background']) > 0:
