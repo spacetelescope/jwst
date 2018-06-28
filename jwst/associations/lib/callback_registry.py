@@ -26,6 +26,9 @@ class CallbackRegistry():
         Returns
         -------
         The filtered results.
+        If no results can be determined,
+        such as if no callbacks were registered,
+        `None` is returned.
 
         Notes
         -----
@@ -35,6 +38,7 @@ class CallbackRegistry():
         then be passed as arguments to the next function.
 
         """
+        result = None
         for callback in self.registry[event]:
             result = callback(*args)
             args = result
