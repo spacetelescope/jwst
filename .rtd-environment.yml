@@ -20,6 +20,7 @@ dependencies:
   - scipy
   - six
   - stsci.image
+  - stsci.imagestats
   - verhawk
   - sphinx_rtd_theme
   - pip:
