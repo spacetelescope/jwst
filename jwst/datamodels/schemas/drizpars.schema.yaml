@@ -3,7 +3,7 @@ allOf:
 - $ref: referencefile.schema.yaml
 - type: object
   properties:
-    drizpars_table:
+    data:
       title: Drizzle parameters table
       fits_hdu: DRIZPARS
       datatype:
