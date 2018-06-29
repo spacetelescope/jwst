@@ -476,11 +476,7 @@ class NIRDataset(Dataset):
         """
 
         refpix = {}
-        if self.is_subarray:
-            amplifiers = ['SUBARRAY']
-        else:
-            amplifiers = ['A', 'B', 'C', 'D']
-        for amplifier in amplifiers:
+        for amplifier in 'ABCD':
             refpix[amplifier] = {}
             refpix[amplifier]['odd'] = {}
             refpix[amplifier]['even'] = {}
