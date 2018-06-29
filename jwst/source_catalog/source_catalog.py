@@ -136,7 +136,7 @@ def make_source_catalog(model, kernel_fwhm, kernel_xsize, kernel_ysize,
                'source_sum', 'source_sum_err', 'semimajor_axis_sigma',
                'semiminor_axis_sigma', 'orientation',
                'sky_bbox_ll', 'sky_bbox_ul', 'sky_bbox_lr', 'sky_bbox_ur']
-    catalog = photutils.properties_table(source_props, columns=columns)
+    catalog = source_props.to_table(columns=columns)
 
     # convert orientation to degrees
     orient_deg = catalog['orientation'].to(u.deg)
