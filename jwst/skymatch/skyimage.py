@@ -8,8 +8,6 @@ computing intersections and statistics in the overlap regions.
 
 
 """
-from __future__ import (absolute_import, division, unicode_literals,
-                        print_function)
 
 # STDLIB
 import numpy as np
@@ -27,7 +25,7 @@ __version__ = '0.9.3'
 __vdate__ = '01-March-2016'
 
 
-class SkyImage(object):
+class SkyImage():
     """
     Container that holds information about properties of a *single*
     image such as:
@@ -583,7 +581,7 @@ None, optional
         return si
 
 
-class SkyGroup(object):
+class SkyGroup():
     """
     Holds multiple :py:class:`SkyImage` objects whose sky background values
     must be adjusted together.

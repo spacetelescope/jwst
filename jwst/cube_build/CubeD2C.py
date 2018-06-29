@@ -1,5 +1,4 @@
 # Routines to read the D2C files
-from __future__ import absolute_import, print_function
 
 import sys
 import numpy as np

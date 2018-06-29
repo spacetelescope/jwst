@@ -4,8 +4,6 @@ This module provides utility functions for use by :py:mod:`wiimatch` module.
 :Author: Mihai Cara (contact: help@stsci.edu)
 
 """
-from __future__ import (absolute_import, division, unicode_literals,
-                        print_function)
 
 import numpy as np
 

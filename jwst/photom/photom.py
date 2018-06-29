@@ -13,7 +13,7 @@ log.setLevel(logging.DEBUG)
 PHOT_TOL = 0.001  # relative tolerance between PIXAR_* keys
 
 
-class DataSet(object):
+class DataSet():
     """
     Input dataset to which the photom information will be attached
 

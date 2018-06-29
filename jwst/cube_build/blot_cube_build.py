@@ -1,6 +1,5 @@
 
 # Routines used for building cubes
-from __future__ import absolute_import, print_function
 import sys
 import time
 import numpy as np
@@ -22,7 +21,7 @@ from . import coord
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-class CubeBlot(object):
+class CubeBlot():
 # CubeBlot - holds all the important information for Blotting an IFU Cube back to detecto:
 
     def __init__(self, median_model,

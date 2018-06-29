@@ -6,7 +6,6 @@ A module that provides functions for matching sky in overlapping images.
 :License: :doc:`../LICENSE`
 
 """
-from __future__ import division, print_function
 
 # STDLIB
 import os

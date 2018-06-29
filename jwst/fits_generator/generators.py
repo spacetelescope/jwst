@@ -32,8 +32,6 @@ Contains a number of helper functions for generating header card
 values.
 """
 
-from __future__ import absolute_import
-
 # STDLIB
 import datetime
 

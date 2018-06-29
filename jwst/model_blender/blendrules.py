@@ -104,7 +104,7 @@ blender_funcs = {'first': first,
 
 
 # Classes for managing keyword rules
-class KeywordRules(object):
+class KeywordRules():
 
     def __init__(self, model):
         """ Read in the rules used to interpret the keywords from the specified
@@ -266,7 +266,7 @@ class KeywordRules(object):
         return indx
 
 
-class KwRule(object):
+class KwRule():
     """
     This class encapsulates the logic needed for interpreting a single keyword
     rule from a text file.
