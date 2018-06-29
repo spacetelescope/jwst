@@ -1,6 +1,6 @@
 from .reference import ReferenceFileModel
 
-__all__ = ['DrizParsModel', 'NircamDrizParsModel', 'MiriImgDrizParsModel']
+__all__ = ['DrizParsModel']
 
 
 class DrizParsModel(ReferenceFileModel):
@@ -9,34 +9,8 @@ class DrizParsModel(ReferenceFileModel):
     """
     schema_url = "drizpars.schema.yaml"
 
-    def __init__(self, init=None, drizpars_table=None, **kwargs):
+    def __init__(self, init=None, data=None, **kwargs):
         super(DrizParsModel, self).__init__(init=init, **kwargs)
 
-        if drizpars_table is not None:
-            self.drizpars_table = drizpars_table
-
-
-class NircamDrizParsModel(DrizParsModel):
-    """
-    A data model for NIRCam drizpars reference files.
-    """
-    schema_url = "nircam_drizpars.schema.yaml"
-
-    def __init__(self, init=None, drizpars_table=None, **kwargs):
-        super(NircamDrizParsModel, self).__init__(init=init, **kwargs)
-
-        if drizpars_table is not None:
-            self.drizpars_table = drizpars_table
-
-
-class MiriImgDrizParsModel(DrizParsModel):
-    """
-    A data model for MIRI imaging drizpars reference files.
-    """
-    schema_url = "mirimg_drizpars.schema.yaml"
-
-    def __init__(self, init=None, drizpars_table=None, **kwargs):
-        super(MiriImgDrizParsModel, self).__init__(init=init, **kwargs)
-
-        if drizpars_table is not None:
-            self.drizpars_table = drizpars_table
+        if data is not None:
+            self.data = data

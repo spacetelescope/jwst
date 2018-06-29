@@ -45,7 +45,7 @@ from .contrast import ContrastModel
 from .cube import CubeModel
 from .dark import DarkModel
 from .darkMIRI import DarkMIRIModel
-from .drizpars import DrizParsModel, NircamDrizParsModel, MiriImgDrizParsModel
+from .drizpars import DrizParsModel
 from .drizproduct import DrizProductModel
 from .extract1dimage import Extract1dImageModel
 from .flat import FlatModel
@@ -112,7 +112,7 @@ __all__ = [
     'DarkModel', 'DarkMIRIModel',
     'DisperserModel', 'DistortionModel', 'DistortionMRSModel',
     'DrizProductModel',
-    'DrizParsModel', 'NircamDrizParsModel', 'MiriImgDrizParsModel',
+    'DrizParsModel',
     'Extract1dImageModel',
     'FilteroffsetModel',
     'FlatModel', 'NRSFlatModel', 'NirspecFlatModel', 'NirspecQuadFlatModel',
