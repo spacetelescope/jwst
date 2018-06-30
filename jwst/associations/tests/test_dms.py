@@ -12,7 +12,7 @@ from .. import AssociationRegistry
 @pytest.fixture(scope='module')
 def dms_registry():
     """Create the registry"""
-    dms_test_rules_path = t_path(path.join('data', 'dms_test_rules.py'))
+    dms_test_rules_path = t_path(path.join('data', 'dms_rules.py'))
     dms_registry = AssociationRegistry(
         [dms_test_rules_path], include_default=False
     )
