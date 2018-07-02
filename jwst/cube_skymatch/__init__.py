@@ -4,8 +4,6 @@ This package provides support for sky background subtraction and equalization
 (matching).
 
 """
-from __future__ import (absolute_import, division, unicode_literals,
-                        print_function)
 import os
 import logging
 

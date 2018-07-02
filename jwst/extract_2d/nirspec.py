@@ -12,6 +12,7 @@ from .. import datamodels
 from ..transforms import models as trmodels
 from ..assign_wcs import nirspec
 from ..assign_wcs import util
+from ..lib import pipe_utils
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -35,7 +36,8 @@ def nrs_extract2d(input_model, slit_name=None, apply_wavecorr=False, reference_f
     """
     exp_type = input_model.meta.exposure.type.upper()
 
-    wavecorr_supported_modes = ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_BRIGHTOBJ']
+    wavecorr_supported_modes = ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_BRIGHTOBJ',
+                                'NRS_AUTOFLAT']
 
     if exp_type in wavecorr_supported_modes:
         reffile = reference_files['wavecorr']
@@ -158,7 +160,7 @@ def set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi):
     output_model.xsize = (xhi_ind - xlo_ind) + 1
     output_model.ystart = ylo_ind + 1
     output_model.ysize = (yhi_ind - ylo_ind) + 1
-    if output_model.meta.exposure.type.lower() == 'nrs_msaspec':
+    if output_model.meta.exposure.type.lower() in ['nrs_msaspec', 'nrs_autoflat']:
         output_model.source_id = int(slit.source_id)
         output_model.source_name = slit.source_name
         output_model.source_alias = slit.source_alias
@@ -228,6 +230,7 @@ def extract_slit(input_model, slit, exp_type):
         bounding_box = ((0, shape[1] - 1), (0, shape[0] - 1))
         ext_var_rnoise = input_model.var_rnoise[ylo: yhi + 1, xlo: xhi + 1].copy()
         ext_var_poisson = input_model.var_poisson[ylo: yhi + 1, xlo: xhi + 1].copy()
+        int_times = None
     elif lenshape == 3:
         ext_data = input_model.data[:, ylo: yhi + 1, xlo: xhi + 1].copy()
         ext_err = input_model.err[:, ylo: yhi + 1, xlo: xhi + 1].copy()
@@ -236,6 +239,12 @@ def extract_slit(input_model, slit, exp_type):
         bounding_box = ((0, shape[2] - 1), (0, shape[1] - 1))
         ext_var_rnoise = input_model.var_rnoise[:, ylo: yhi + 1, xlo: xhi + 1].copy()
         ext_var_poisson = input_model.var_poisson[:, ylo: yhi + 1, xlo: xhi + 1].copy()
+        if (pipe_utils.is_tso(input_model) and
+            hasattr(input_model, 'int_times')):
+                log.debug("TSO data, so copying the INT_TIMES table.")
+                int_times = input_model.int_times.copy()
+        else:
+                int_times = None
     else:
         raise ValueError("extract_2d does not work with "
                          "{0} dimensional data".format(lenshape))
@@ -247,7 +256,8 @@ def extract_slit(input_model, slit, exp_type):
     ra, dec, lam = slit_wcs(x, y)
     lam = lam.astype(np.float32)
     new_model = datamodels.SlitModel(data=ext_data, err=ext_err, dq=ext_dq, wavelength=lam,
-                                         var_rnoise=ext_var_rnoise, var_poisson=ext_var_poisson)
+                                     var_rnoise=ext_var_rnoise, var_poisson=ext_var_poisson,
+                                     int_times=int_times)
     log.info('Input model type is {}'.format(input_model.__class__.__name__))
     new_model.update(input_model)
     new_model.meta.wcs = slit_wcs

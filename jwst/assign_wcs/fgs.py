@@ -15,6 +15,9 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
+__all__ = ["create_pipeline", "imaging"]
+
+
 def create_pipeline(input_model, reference_files):
     """
     Create a ``gWCS.pipeline`` using models from reference files.

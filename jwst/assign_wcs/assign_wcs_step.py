@@ -3,9 +3,13 @@ from ..stpipe import Step
 from .. import datamodels
 import logging
 from .assign_wcs import load_wcs
+from .util import MissingMSAFileError
+
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
+
+__all__ = ["AssignWcsStep"]
 
 
 class AssignWcsStep(Step):
@@ -69,10 +73,9 @@ class AssignWcsStep(Step):
                     msa_metadata_file = self.make_input_path(msa_metadata_file)
                     reference_file_names['msametafile'] = msa_metadata_file
                 else:
-                    log.error("MSA metadata file (MSAMETFL) is required for NRS_MSASPEC exposures.")
-                    input_model.meta.cal_step.assign_wcs = 'SKIPPED'
-                    log.warning("assign_wcs: SKIPPED")
-                    return input_model
+                    message = "MSA metadata file (MSAMETFL) is required for NRS_MSASPEC exposures."
+                    log.error(message)
+                    raise MissingMSAFileError(message)
 
             result = load_wcs(input_model, reference_file_names)
 

@@ -5,6 +5,9 @@ from .. import datamodels
 from . import background_sub
 
 
+__all__ = ["BackgroundStep"]
+
+
 class BackgroundStep(Step):
     """
     BackgroundStep:  Subtract background exposures from target exposures.

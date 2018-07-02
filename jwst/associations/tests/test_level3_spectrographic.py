@@ -3,6 +3,8 @@ import pytest
 import re
 
 from .helpers import (
+    BasePoolRule,
+    PoolParams,
     combine_pools,
     registry_level3_only,
     t_path
@@ -10,6 +12,35 @@ from .helpers import (
 
 from .. import generate
 from ..main import constrain_on_candidates
+
+
+class TestLevel3Spec(BasePoolRule):
+    pools = [
+        PoolParams(
+            path=t_path('data/pool_005_spec_niriss.csv'),
+            n_asns=1,
+            n_orphaned=0
+        ),
+        PoolParams(
+            path=t_path('data/pool_006_spec_nirspec.csv'),
+            n_asns=3,
+            n_orphaned=0
+        ),
+        PoolParams(
+            path=t_path('data/pool_007_spec_miri.csv'),
+            n_asns=3,
+            n_orphaned=0
+        ),
+        PoolParams(
+            path=t_path('data/pool_019_niriss_wfss.csv'),
+            n_asns=2,
+            n_orphaned=0
+        ),
+    ]
+
+    valid_rules = [
+        'Asn_Image',
+    ]
 
 
 @pytest.fixture(

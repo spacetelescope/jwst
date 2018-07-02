@@ -19,6 +19,7 @@ from ..datamodels import (ImageModel, NIRISSGrismModel, DistortionModel,
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+__all__ = ["create_pipeline", "imaging", "niriss_soss", "niriss_soss_set_input", "wfss"]
 
 def create_pipeline(input_model, reference_files):
     """Create the WCS pipeline based on EXP_TYPE.
@@ -201,13 +202,13 @@ def wfss(input_model, reference_files):
     reference_files = {
         "specwcs": 'GR150C_F090W.asdf'
         "distortion": 'NRCA1_FULL_distortion.asdf'
-    }
+        }
 
     The tree in the grism reference file has a section for each order/beam as
     well as the link to the filter data file, not sure if there will be a
     separate passband reference file needed for the wavelength scaling or the
     wedge offsets. This file is currently created in
-    jwreftools/niriss/niriss_reftools
+    jwreftools/niriss/niriss_reftools.
 
     The direct image the catalog has been created from was corrected for
     distortion, but the dispersed images have not. This is OK if the trace and
@@ -240,7 +241,8 @@ def wfss(input_model, reference_files):
     grism reference file as wrange, which can be selected by wrange_selector
     which contains the filter names.
 
-    Source catalog use moved to extract_2d
+    Source catalog use moved to extract_2d.
+
     """
 
     # The input is the grism image

@@ -16,6 +16,8 @@ import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+__all__ = ["OutlierDetectionIFU"]
+
 
 cube_build_config = 'cube_build.cfg'
 

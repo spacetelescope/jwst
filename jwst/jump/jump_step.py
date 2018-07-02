@@ -4,6 +4,8 @@ from ..stpipe import Step, cmdline
 from .. import datamodels
 from .jump import detect_jumps
 
+__all__ = ["JumpStep"]
+
 
 class JumpStep(Step):
     """
@@ -18,9 +20,9 @@ class JumpStep(Step):
     # Prior to 04/26/17, the following were also in the spec above:
     #    do_yintercept = boolean(default=False) # do y-intercept method?
     #    yint_threshold = float(default=1.0,min=0) # y-intercept signal threshold
-    # As of 04/26/17, do_yintercept is not an option. Only the 2-point 
+    # As of 04/26/17, do_yintercept is not an option. Only the 2-point
     #   difference method is allowed for Build 7.1.
-    do_yintercept = False  # do_intercept is no longer an option     
+    do_yintercept = False  # do_intercept is no longer an option
     yint_threshold = 1.0   # placeholder in case algorithm is re-enabled later
 
     reference_file_types = ['gain', 'readnoise']

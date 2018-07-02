@@ -36,4 +36,6 @@ allOf:
       datatype: float32
     group:
       $ref: group.schema.yaml
+    int_times:
+      $ref: int_times.schema.yaml
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

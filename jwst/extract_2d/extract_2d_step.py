@@ -5,6 +5,9 @@ from .. import datamodels
 from . import extract_2d
 
 
+__all__ = ["Extract2dStep"]
+
+
 class Extract2dStep(Step):
     """
     This Step performs a 2D extraction of spectra.

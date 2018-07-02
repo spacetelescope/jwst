@@ -4,19 +4,19 @@ Description
 This step takes  MIRI or NIRSPEC IFU calibrated 2D slope images and produces
 3-D spectral cubes. The IFU slice distorted and disjointed 2D spectra are corrected
 for distortion and put back together into a rectangular cube with three orthogonal axes: two
-spatial and one spectral. The distortion information is  incorporated into the calibrated 
+spatial and one spectral. The distortion information is  incorporated into the calibrated
 images using the  calwebb_spec2 pipeline step ASSIGN_WCS. The detector pixel fluxes have already
-been converted to surface brightness in the calwebb_spec2 pipeline step, PHOTOM. 
+been converted to surface brightness in the calwebb_spec2 pipeline step, PHOTOM.
 
 The cube_build package can take as input either:
 
-  * a single 2D input image 
+  * a single 2D input image
 
   * a model passed in containing 2D slope image
 
   * an association table (in json format) containing the list of exposures to combine
 
-  * a model container holding several 2D slope data models. 
+  * a model container holding several 2D slope data models.
 
 
 There are a number of arguments the user can provide either in a configuration file or
@@ -29,7 +29,7 @@ Assumption
 ----------
 It is assumed the assign_wcs step has been run on the data, attaching the distortion and pointing
 information to the image. It is also assumed the photom step has converted the detector pixels from
-units of flux to surface brightness. This step will only work with  MIRI or NIRSPEC IFU data. 
+units of flux to surface brightness. This step will only work with  MIRI or NIRSPEC IFU data.
 
 
 Background Information
@@ -110,7 +110,7 @@ overview of these coordinate systems:
   the the MIRI IFUs disperse data onto two SCAs.
 
 - *Telescope (V2,V3)* : the V2,V3 coordinates locate points on  a spherical coordinate system. The frame is tied
-  to JWST and applies to the whole field of view, encompassing all the instruments. The coordinates (V2,V3) 
+  to JWST and applies to the whole field of view, encompassing all the instruments. The coordinates (V2,V3)
   are Euler angles in a spherical frame rather than Cartesian coordinates.
 
 - *XAN,YAN*: similar to V2,V3 but flipped and shifted so the origin lies between the NIRCAM detectors instead of
@@ -127,14 +127,14 @@ overview of these coordinate systems:
   (**alpha**) and the other perpendicular (**beta**) to the projection of the long axes of the slices in the FOV.
 
 Options which control what type of IFU cube to build.
-----------------------------------------------------
+-----------------------------------------------------
 The input to cube build can be a single exposure or a set of exposures. There are a number of user options that control the
 type of IFU Cube to create. For standard pipeline processing in calwebb_spec3, default settings are used and the output is a set of single
-band IFU cubes. In the case of MIRI the standard IFU cubes will be single channel, single sub-channel cubes (e.g., 1A) and in 
-the case of NIRSPEC the standard output will be be single grating, single filters cubes. Since a single MIRI exposure 
-always covers two channels, there will at least be two IFU cubes as 
-the standard output.  The calwebb_spec2 pipeline produces intermediate cubes which are single IFU cubes for a single exposure. 
-In these intermediate cubes, the MIRI IFU spectral cube  contains two channels. 
+band IFU cubes. In the case of MIRI the standard IFU cubes will be single channel, single sub-channel cubes (e.g., 1A) and in
+the case of NIRSPEC the standard output will be be single grating, single filters cubes. Since a single MIRI exposure
+always covers two channels, there will at least be two IFU cubes as
+the standard output.  The calwebb_spec2 pipeline produces intermediate cubes which are single IFU cubes for a single exposure.
+In these intermediate cubes, the MIRI IFU spectral cube  contains two channels.
 
 Below is a list of the user options that can be used to select the type of data to be used to create the IFU Cube:
 
@@ -145,7 +145,7 @@ If the ``channel`` argument is given, then only data corresponding to that chann
 constructing the cube.  If the user wants more than one  channel in the output spectral cube, then all the values are
 contained in a comma separated string string. For example, to create a cube with channel 1 and 2 the argument list is
 ``--channel='1, 2'``. If this value is not specified the output will be a set of IFU Cubes for each channel/sub-channel combination
-contained in the input data. 
+contained in the input data.
 
 - ``--band [string]``
 
@@ -172,22 +172,23 @@ To cover the full wavelength range of NIRSPEC the option ALL can be used (provid
 contain all the filters). The user can supply a comma separated string containing the filters to use.
 
 - ``--output_type [string]``
-This parameter has four valid options Band, Channel, Grating and Multi. The parameters can be combined 
-with the options above  [--band, --channel,--grating, and --filter] to fully control the type of IFU 
-cubes to make. 
 
-	 - ``--output_type=Band`` is the default mode and creates IFU cubes containing only one band 
-	 (channel/sub-channel or  grating/filter combination).
+This parameter has four valid options Band, Channel, Grating and Multi. The parameters can be combined
+with the options above  [--band, --channel,--grating, and --filter] to fully control the type of IFU
+cubes to make.
 
-	 - ``--output_type = channel`` combines all the MIRI channels in the data or set by the 
-	 --channel option into a single IFU cube. 
+	 - ``--output_type=Band`` is the default mode and creates IFU cubes containing only one band
+	   (channel/sub-channel or  grating/filter combination).
 
-	 - ``--output_type = grating `` combines all the grating in the NIRSPEC data or set by the 
-	 --grating option into a single IFU cube. 
+	 - ``--output_type = channel`` combines all the MIRI channels in the data or set by the
+	   --channel option into a single IFU cube.
 
-	 - ``--output_type = multi`` combines data  into a single uber IFUCube. If in addition, 
-	 --channel, --band, --grating, or -filter are also set then only the data set by those 
-	 parameters will be combined into an uber cube. 
+	 - ``--output_type = grating `` combines all the grating in the NIRSPEC data or set by the
+	   --grating option into a single IFU cube.
+
+	 - ``--output_type = multi`` combines data  into a single uber IFUCube. If in addition,
+	   --channel, --band, --grating, or -filter are also set then only the data set by those
+	   parameters will be combined into an uber cube.
 
 
 - ``--weighting ['string]``
@@ -199,7 +200,7 @@ the alpha-beta coordinate system of the point cloud member and are normalized by
 
 Output Format
 -------------
-The FITS files of spectral cubes consist of 4 IMAGE extensions and 1 ASDF table. The FITS primary data array is empty and the 
+The FITS files of spectral cubes consist of 4 IMAGE extensions and 1 ASDF table. The FITS primary data array is empty and the
 primary header  holds the basic parameters of the observations by holding values for the first exposure used
 to build the spectral cube. The 4 IMAGE extensions contain the following:
 
@@ -212,7 +213,7 @@ DQ       3      2 spatial and 1 spectral  integer
 WMAP     3      2 spatial and 1 spectral  integer
 =======  =====  ========================  =========
 
-The SCI image hold the surface brightness of the cube spaxel in units of mJy/arcsecond^2. The ERR image contains the 
+The SCI image hold the surface brightness of the cube spaxel in units of mJy/arcsecond^2. The ERR image contains the
 error on the surface brightnesses, the DQ image contains the data quality flag for each spaxel and the WMAP image contains
 the number of point cloud elements contained in the region of interest of the spaxel.
 
@@ -221,7 +222,7 @@ Output Product Name
 ```````````````````
 If the input data is passed as an Image Model then the IFU cube will be passed back as an IFU cube model. The IFU Cube will be
 written to disk at the end of the calspec3  pipeline. In addition, if the user is running the cube_build pipeline
-using the 'strun' pipeline methods the IFUCube will also be written to disk. The output name is based on a rootname plus a 
+using the 'strun' pipeline methods the IFUCube will also be written to disk. The output name is based on a rootname plus a
 string defining the type of IFU cube created plus the string 's3d.fits'.
 If the input data is a single exposure then the rootname
 is formed from the input filename; while if the input is an association table the rootname is defined in the association
@@ -242,15 +243,15 @@ The string defining the type of IFU is created according to the following rules:
 Algorithm
 ---------
 The default IFU Cubes contain data from a single band (channel/sub-channel or grating/filter). There are several
-options which control the type of cubes to create (see description given above). 
+options which control the type of cubes to create (see description given above).
 Based on the arguments defining the type of cubes to create, the program selects the data from
 each exposure that should be included in the spectral cube. The output cube is defined using the WCS information of all
 the included  input data.
 This output cube WCS defines a field-of-view that encompasses the undistorted footprints on
 the sky of all the input images. The output sampling scale in all three dimensions for the cube
 is defined by a 'cubepars' reference file as a function of wavelength, and can also be changed by the user.
-The cubepars reference file contains a predefined scale to use 
-for each dimension for each band. If the output IFU cube contains more than one band, then  for MIRI the 
+The cubepars reference file contains a predefined scale to use
+for each dimension for each band. If the output IFU cube contains more than one band, then  for MIRI the
 output scale corresponds to the channel with the smallest scale. In the case of NIRSPEC only gratings of the
 same resolution are combined together in an IFU cube. The output spatial coordinate system is right ascension-declination.
 
@@ -271,12 +272,12 @@ in Figure 1.
    :scale: 50%
    :align: center
 
-Figure 1: Schematic of two dithered exposures mapped to the IFU output coordinate system (black regular grid). 
+Figure 1: Schematic of two dithered exposures mapped to the IFU output coordinate system (black regular grid).
 The plus symbols represent the point cloud mapping of detector pixels to effective sampling locations
-relative to the output coordinate system at a given wavelength. The black points are from exposure one and the red points 
+relative to the output coordinate system at a given wavelength. The black points are from exposure one and the red points
 are from exposure two.
 
-Each point in the cloud represents a measurement of the specific intensity (with corresponding uncertainty) 
+Each point in the cloud represents a measurement of the specific intensity (with corresponding uncertainty)
 of the astronomical scene at a particular location.  The final data cube is constructed by combining each of the
 irregularly-distributed samples of the scene into a regularly-sampled grid in three dimensions for which each
 **spaxel** (i.e., a spatial pixel in the cube) has a spectrum composed of many spectral elements.
@@ -285,14 +286,14 @@ The best algorithm with which to combine the irregularly-distributed samples of 
 data cube is the subject of ongoing study, and depends on both the optical characteristics of the IFU and
 the science goals of a particular observing program.  At present, the default method uses a flux-conserving
 variant of Shepards method in which the value of a given element of the cube is a distance-weighted average
-of all point-cloud members within a given region of influence.  In order to explain this method we will introduce the follow definitions: 
+of all point-cloud members within a given region of influence.  In order to explain this method we will introduce the follow definitions:
 
 * xdistance = distance between point in the cloud and spaxel center  in units of arc seconds along the x axis
 * ydistance = distance between point in the cloud and spaxel center in units of arc seconds along the y axis
 * zdistance = distance between point cloud and spaxel center in the lambda dimension in units of microns along the wavelength axis
 
 These distances are then normalized by the IFU cube sample size for the appropriate axis:
- 
+
 * xnormalized = xdistance/(cube sample size in x dimension [cdelt1])
 * ynormalized = ydistance/(cube sample size in y dimension [cdelt2])
 * znormalized = zdistance/(cube sample size in z dimension [cdelt3])
@@ -300,7 +301,7 @@ These distances are then normalized by the IFU cube sample size for the appropri
 The final spaxel value at a given wavelength is determined as the weighted sum of the point cloud members with a spatial and
 spectral region of influence centered on the spaxel.
 The default size of the region of influence is defined in the cubepar reference file, but can be changed by the
-user with the options: ``rois`` and ``roiw``. 
+user with the options: ``rois`` and ``roiw``.
 
 If *n* point cloud members are located within the ROI of a spaxel, the  spaxel flux K =
 :math:`\frac{ \sum_{i=1}^n Flux_i w_i}{\sum_{i=1}^n w_i}`
@@ -316,20 +317,20 @@ are also being studied and may provide better performance for some science appli
 
 *Additional constraints for MIRI data if --weighting=MIRIPSF*
 
-For MIRI the weighting function can be adapted to use the  width  of the PSF and LSF in weighting the point cloud members within the ROI 
+For MIRI the weighting function can be adapted to use the  width  of the PSF and LSF in weighting the point cloud members within the ROI
 centered on the spaxel.  The width of the MIRI PSF varies with wavelength, broader for longer wavelengths.
 The resolving power of  the MRS  varies with wavelength and band.  Adjacent point-cloud elements may in fact originate from
 different exposures rotated from one another and even from different spectral bands. In order to properly weight the MIRI data  the
 distances  between the point cloud element and spaxel the distances are determined in the alpha-beta coordinate system and
 then normalized by the width of the PSF and the LSF.  To weight in the alpha-beta coordinates system each cube spaxel center must be
 mapped to the alpha-beta system corresponding to the channel-band of the point cloud member. The xdistance and ydistances are redefined
-to mean: 
+to mean:
 
 * xdistance = distance between point in the cloud and spaxel center along the alpha dimension in units of arc seconds
 * ydistance = distance between point in the cloud and spaxel center along the beta dimension in units of arc seconds
 * zdistance = distance between point cloud and spaxel center in the lambda dimension in units of microns along the wavelength axis
 
-The spatial distances are then normalized by PSF width and the spectral distance is normalized by the LSF: 
+The spatial distances are then normalized by PSF width and the spectral distance is normalized by the LSF:
 
 * xnormalized = xdistance/(width of the PSF in the alpha dimension in units of arc seconds)
 * ynormalized = ydistance/(width of the PSF in the beta dimension  in units of arc seconds)

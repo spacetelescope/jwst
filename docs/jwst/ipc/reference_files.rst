@@ -1,5 +1,5 @@
-Reference File
-==============
+Reference File Types
+====================
 The IPC deconvolution current step uses an IPC reference file.
 
 CRDS Selection Criteria

@@ -4,6 +4,8 @@ from ..stpipe import Step
 from . import photom
 from .. import datamodels
 
+__all__ = ["PhotomStep"]
+
 
 class PhotomStep(Step):
     """

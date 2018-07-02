@@ -11,6 +11,8 @@ from ..model_blender import blendmeta
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+__all__ = ["ResampleData"]
+
 
 class ResampleData:
     """
@@ -170,11 +172,6 @@ class ResampleData:
                 self.blend_output_metadata(output_model)
                 output_model.meta.model_type = saved_model_type
 
-            # Following 2 lines can probably be removed once ASN dicts
-            # are handled properly
-            output_model.meta.asn.pool_name = self.input_models.meta.pool_name
-            output_model.meta.asn.table_name = self.input_models.meta.table_name
-
             exposure_times = {'start': [], 'end': []}
 
             # Initialize the output with the wcs
@@ -208,15 +205,6 @@ class ResampleData:
             output_model.meta.exposure.start_time = min(exposure_times['start'])
             output_model.meta.exposure.end_time = max(exposure_times['end'])
             output_model.meta.resample.product_exposure_time = texptime
-            output_model.meta.resample.product_data_extname = driz.sciext
-            output_model.meta.resample.product_context_extname = driz.conext
-            output_model.meta.resample.product_weight_extname = driz.whtext
-            output_model.meta.resample.drizzle_fill_value = str(driz.fillval)
-            output_model.meta.resample.drizzle_pixel_fraction = driz.pixfrac
-            output_model.meta.resample.drizzle_kernel = driz.kernel
-            output_model.meta.resample.drizzle_output_units = driz.out_units
-            output_model.meta.resample.drizzle_weight_scale = driz.wt_scl
-            output_model.meta.resample.resample_bits = self.drizpars['good_bits']
             output_model.meta.resample.weight_type = self.drizpars['wht_type']
             output_model.meta.resample.pointings = pointings
 

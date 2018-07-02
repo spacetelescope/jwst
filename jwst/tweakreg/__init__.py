@@ -2,7 +2,6 @@
 This package provides support for image alignment.
 
 """
-from __future__ import absolute_import
 
 __docformat__ = 'restructuredtext'
 
