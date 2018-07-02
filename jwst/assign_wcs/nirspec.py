@@ -602,10 +602,10 @@ def get_spectral_order_wrange(input_model, wavelengthrange_file):
             wrange = wave_range_model.wavelengthrange[index]
         log.info("Combination {0} missing in wavelengthrange file, setting "
                  "order to {1} and range to {2}.".format(keyword, order, wrange))
-
-    # Combination of filter_grating is found in wavelengthrange file.
-    order = wave_range_model.order[index]
-    wrange = wave_range_model.wavelengthrange[index]
+    else:
+        # Combination of filter_grating is found in wavelengthrange file.
+        order = wave_range_model.order[index]
+        wrange = wave_range_model.wavelengthrange[index]
 
     wave_range_model.close()
     return order, wrange
