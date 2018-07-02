@@ -594,11 +594,12 @@ def get_spectral_order_wrange(input_model, wavelengthrange_file):
         gratings = [s.split('_')[1] for s in wrange_selector]
         try:
             index = gratings.index(grating)
-            order = wave_range_model.order[index]
-            wrange = wave_range_model.wavelengthrange[index]
         except ValueError: # grating not in list
             order = -1
             wrange = full_range
+        else:
+            order = wave_range_model.order[index]
+            wrange = wave_range_model.wavelengthrange[index]
         log.info("Combination {0} missing in wavelengthrange file, setting "
                  "order to {1} and range to {2}.".format(keyword, order, wrange))
 
