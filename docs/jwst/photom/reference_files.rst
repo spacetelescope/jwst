@@ -45,9 +45,6 @@ dependent. The current row selection criteria are:
 AREA map Reference Files
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Selection criteria for AREA reference files vary a bit from instrument to
-instrument:
-
 For FGS, photom reference files are selected based on the values of INSTRUME and DETECTOR
 in the science data file.
 
