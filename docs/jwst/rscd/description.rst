@@ -80,7 +80,7 @@ The following two additional equations are needed to calculate the :math:`b{1}` 
 
 In equation 2.1, N is the number of groups per integration and :math:`ascale`, :math:`illum_{zpt}`, 
 :math:`illum_{slope}`, and :math:`illum2` are read in from the RSCD reference file. The :math:`Crossover \, Point`
-in equation 2.2 is aslo read in from the RSCD reference file.
+in equation 2.2 is also read in from the RSCD reference file.
 
 If the previous integration saturates, the  :math:`scale` term in Equation 1 is found in the  following manner:
 
