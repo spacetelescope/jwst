@@ -135,10 +135,7 @@ class AssociationRegistry(dict):
         for fname in definition_files:
             module = import_from_file(fname)
             self.populate(module)
-            self.schemas += [
-                schema
-                for schema in find_object(module, 'ASN_SCHEMA')
-            ]
+
             for class_name, class_object in get_classes(module):
                 if include_bases or class_name.startswith(USER_ASN):
                     try:
@@ -326,7 +323,7 @@ class AssociationRegistry(dict):
         self.callback
             Found callbacks are added to the callback registry
         """
-        for name, obj in get_executables(module):
+        for name, obj in get_marked(module):
 
             # Add callbacks
             try:
@@ -336,10 +333,29 @@ class AssociationRegistry(dict):
             else:
                 for event in events:
                     self.callback.add(event, obj)
+                    continue
+
+            # Add schema
+            try:
+                schema = obj._asnreg_schema
+            except AttributeError:
+                pass
+            else:
+                self.schemas.append(schema)
+                continue
 
 
 class RegistryMarker:
     """Mark rules, callbacks, and module"""
+
+    class Schema:
+        def __init__(self, obj):
+            self._asnreg_schema = obj
+            RegistryMarker.mark(self)
+
+        @property
+        def schema(self):
+            return self._asnreg_schema
 
     @staticmethod
     def mark(obj):
@@ -360,6 +376,11 @@ class RegistryMarker:
             func._asnreg_events = events
             return func
         return decorator
+
+    @staticmethod
+    def schema(obj):
+        schema = RegistryMarker.Schema(obj)
+        return schema
 
     @staticmethod
     def is_marked(obj):
@@ -439,7 +460,7 @@ def get_classes(module):
             yield class_name, class_object
 
 
-def get_executables(module, predicate=None):
+def get_marked(module, predicate=None):
     """Recursively get all executable objects
 
     Parameters
@@ -449,35 +470,25 @@ def get_executables(module, predicate=None):
 
     predicate: bool func(object)
         Determinant of what gets returned.
-        If None, all "executable" type objects are returned.
+        If None, all object types are examined
 
     Returns
     -------
     class object: generator
         A generator that will yield all class members in the module.
     """
-    def is_executable(obj):
-        return (isclass(obj) or
-                isfunction(obj) or
-                ismethod(obj) or
-                ismodule(obj)
-        )
-
     def is_method(obj):
         return (isfunction(obj) or
                 ismethod(obj)
         )
 
-    if predicate is None:
-        predicate = is_executable
-
     for name, obj in getmembers(module, predicate):
         if isclass(obj):
-            for sub_name, sub_obj in get_executables(obj, predicate=is_method):
+            for sub_name, sub_obj in get_marked(obj, predicate=is_method):
                 yield sub_name, sub_obj
         if RegistryMarker.is_marked(obj):
             if ismodule(obj):
-                for sub_name, sub_obj in get_executables(obj):
+                for sub_name, sub_obj in get_marked(obj):
                     yield sub_name, sub_obj
             else:
                 yield name, obj

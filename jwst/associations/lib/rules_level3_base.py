@@ -61,7 +61,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 # The schema that these associations must adhere to.
-ASN_SCHEMA = libpath('asn_schema_jw_level3.json')
+ASN_SCHEMA = RegistryMarker.schema(libpath('asn_schema_jw_level3.json'))
 
 # DMS file name templates
 _LEVEL1B_REGEX = '(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
@@ -84,7 +84,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
     """Basic class for DMS Level3 associations."""
 
     # Set the validation schema
-    schema_file = ASN_SCHEMA
+    schema_file = ASN_SCHEMA.schema
 
     # Attribute values that are indicate the
     # attribute is not specified.

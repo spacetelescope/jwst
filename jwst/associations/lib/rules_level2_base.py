@@ -53,7 +53,7 @@ __all__ = [
 ]
 
 # The schema that these associations must adhere to.
-ASN_SCHEMA = libpath('asn_schema_jw_level2b.json')
+ASN_SCHEMA = RegistryMarker.schema(libpath('asn_schema_jw_level2b.json'))
 
 # Flag to exposure type
 FLAG_TO_EXPTYPE = {
@@ -73,7 +73,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
     """Basic class for DMS Level2 associations."""
 
     # Set the validation schema
-    schema_file = ASN_SCHEMA
+    schema_file = ASN_SCHEMA.schema
 
     # Attribute values that are indicate the
     # attribute is not specified.

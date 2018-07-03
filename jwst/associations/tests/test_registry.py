@@ -7,6 +7,7 @@ def test_registry_match(full_pool_rules):
     """Test the match method"""
     pool, rules, pool_fname = full_pool_rules
 
+    assert len(rules.schemas) > 0
     matches = rules.match(pool[1])
     assert isinstance(matches, tuple)
     asns = matches[0]
