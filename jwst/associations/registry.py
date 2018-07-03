@@ -341,9 +341,12 @@ class AssociationRegistry(dict):
 class RegistryMarker:
     """Mark rules, callbacks, and module"""
 
-    @property
-    def contains_rules(self):
-        return True
+    @staticmethod
+    def mark(obj):
+        obj._asnreg_marked = True
+
+        # Return so this method can be used as a decorator.
+        return obj
 
     @staticmethod
     def callback(event):
@@ -353,10 +356,14 @@ class RegistryMarker:
             except AttributeError:
                 events = list()
             events.append(event)
-            func._asnreg_marked = True
+            RegistryMarker.mark(func)
             func._asnreg_events = events
             return func
         return decorator
+
+    @staticmethod
+    def is_marked(obj):
+        return hasattr(obj, '_asnreg_marked')
 
 
 # Utilities
@@ -401,7 +408,7 @@ def find_object(module, obj):
         Iterator that returns all values of the object
     """
     for name, value in getmembers(module):
-        if ismodule(value) and name.startswith('asn_'):
+        if ismodule(value) and RegistryMarker.is_marked(value):
             for inner_value in find_object(value, obj):
                 yield inner_value
         elif name == obj:
@@ -425,7 +432,7 @@ def get_classes(module):
             module,
             lambda o: isclass(o) or ismodule(o)
     ):
-        if ismodule(class_object) and class_name.startswith('asn_'):
+        if ismodule(class_object) and RegistryMarker.is_marked(class_object):
             for sub_name, sub_class in get_classes(class_object):
                 yield sub_name, sub_class
         elif isclass(class_object):
@@ -465,14 +472,15 @@ def get_executables(module, predicate=None):
         predicate = is_executable
 
     for name, obj in getmembers(module, predicate):
-        if ismodule(obj) and name.startswith('asn_'):
-            for sub_name, sub_obj in get_executables(obj):
-                yield sub_name, sub_obj
-        elif isclass(obj):
+        if isclass(obj):
             for sub_name, sub_obj in get_executables(obj, predicate=is_method):
                 yield sub_name, sub_obj
-        elif hasattr(obj, '_asnreg_marked'):
-            yield name, obj
+        if RegistryMarker.is_marked(obj):
+            if ismodule(obj):
+                for sub_name, sub_obj in get_executables(obj):
+                    yield sub_name, sub_obj
+            else:
+                yield name, obj
 
 
 # ##########
