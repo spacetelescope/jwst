@@ -44,11 +44,11 @@ for the equations given after the table.
 In order to explain where these parameters are used in the correction we will go over the correction equations given
 in the Description Section.
 
-The general form of the the correction to be added to the input data is::
+The general form of  the correction to be added to the input data is::
 
    corrected data = input data data + dn_accumulated * scale * exp(-T / tau)  (Equation 1)
 
-where T is the time since the last group in the last integration, tau is the exponential time constant found in the RSCD table
+where T is the time since the last group in the previous integration, tau is the exponential time constant found in the RSCD table
 and  dn_accumulated is the DN level that was accumulated for the pixel from the previous integration.
 In case where the last integration  does not saturate the :math:`scale` term in equation 1 is determined according to the equation:
 
@@ -71,7 +71,6 @@ The parameters for equations 2, 2.1, and 2,2  are:
 	  - Crossover Point in equation 2.2 is CROSSOPT in the RSCD table
 	  
     
-
 If the previous integration saturates, :math:`scale` is no longer calculated using equation 2 - 2.2, instead it is calculated 
 using equations 3 and 3.1.
 
