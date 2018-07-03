@@ -12,6 +12,7 @@ from jwst.associations import (
     AssociationRegistry,
     libpath
 )
+from jwst.associations.registry import RegistryMarker
 from jwst.associations.lib.acid import ACID
 from jwst.associations.lib.constraint import (
     Constraint,
@@ -442,7 +443,7 @@ class Utility():
         return Utility_Level3.resequence(*args, **kwargs)
 
     @staticmethod
-    @AssociationRegistry.callback('finalize')
+    @RegistryMarker.callback('finalize')
     def finalize(associations):
         """Check validity and duplications in an association list
 

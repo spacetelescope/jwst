@@ -10,6 +10,7 @@ from jwst.associations import (
     ProcessList,
     libpath
 )
+from jwst.associations.registry import RegistryMarker
 from jwst.associations.lib.utilities import (
     evaluate,
     is_iterable
@@ -514,7 +515,7 @@ class Utility():
         return result
 
     @staticmethod
-    @AssociationRegistry.callback('finalize')
+    @RegistryMarker.callback('finalize')
     def finalize(associations):
         """Check validity and duplications in an association list
 

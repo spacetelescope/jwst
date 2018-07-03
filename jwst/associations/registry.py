@@ -3,6 +3,8 @@ from importlib import import_module
 from inspect import (
     getmembers,
     isclass,
+    isfunction,
+    ismethod,
     ismodule
 )
 import logging
@@ -98,9 +100,6 @@ class AssociationRegistry(dict):
 
     """
 
-    # Callback registry
-    callback = CallbackRegistry()
-
     def __init__(self,
                  definition_files=None,
                  include_default=True,
@@ -112,6 +111,9 @@ class AssociationRegistry(dict):
         # Generate a UUID for this instance. Used to modify rule
         # names.
         self.name = name
+
+        # Callback registry
+        self.callback = CallbackRegistry()
 
         # Precache the set of rules
         self._rule_set = set()
@@ -132,6 +134,7 @@ class AssociationRegistry(dict):
         Utility = type('Utility', (object,), {})
         for fname in definition_files:
             module = import_from_file(fname)
+            self.populate(module)
             self.schemas += [
                 schema
                 for schema in find_object(module, 'ASN_SCHEMA')
@@ -310,6 +313,52 @@ class AssociationRegistry(dict):
         finalized = self.callback.filter('finalize', associations)
         return finalized
 
+    def populate(self, module):
+        """Parse out all rules and callbacks in a module
+
+        Parameters
+        ----------
+        module: module
+            The module, and all submodules, to be parsed.
+
+        Modifies
+        --------
+        self.callback
+            Found callbacks are added to the callback registry
+        """
+        for name, obj in get_executables(module):
+
+            # Add callbacks
+            try:
+                events = obj._asnreg_events
+            except AttributeError:
+                pass
+            else:
+                for event in events:
+                    self.callback.add(event, obj)
+
+
+class RegistryMarker:
+    """Mark rules, callbacks, and module"""
+
+    @property
+    def contains_rules(self):
+        return True
+
+    @staticmethod
+    def callback(event):
+        def decorator(func):
+            try:
+                events = func._asnreg_events
+            except AttributeError:
+                events = list()
+            events.append(event)
+            func._asnreg_marked = True
+            func._asnreg_events = events
+            return func
+        return decorator
+
+
 # Utilities
 def import_from_file(filename):
     """Import a file as a module
@@ -381,6 +430,49 @@ def get_classes(module):
                 yield sub_name, sub_class
         elif isclass(class_object):
             yield class_name, class_object
+
+
+def get_executables(module, predicate=None):
+    """Recursively get all executable objects
+
+    Parameters
+    ----------
+    module: python module
+        The module to examine
+
+    predicate: bool func(object)
+        Determinant of what gets returned.
+        If None, all "executable" type objects are returned.
+
+    Returns
+    -------
+    class object: generator
+        A generator that will yield all class members in the module.
+    """
+    def is_executable(obj):
+        return (isclass(obj) or
+                isfunction(obj) or
+                ismethod(obj) or
+                ismodule(obj)
+        )
+
+    def is_method(obj):
+        return (isfunction(obj) or
+                ismethod(obj)
+        )
+
+    if predicate is None:
+        predicate = is_executable
+
+    for name, obj in getmembers(module, predicate):
+        if ismodule(obj) and name.startswith('asn_'):
+            for sub_name, sub_obj in get_executables(obj):
+                yield sub_name, sub_obj
+        elif isclass(obj):
+            for sub_name, sub_obj in get_executables(obj, predicate=is_method):
+                yield sub_name, sub_obj
+        elif hasattr(obj, '_asnreg_marked'):
+            yield name, obj
 
 
 # ##########

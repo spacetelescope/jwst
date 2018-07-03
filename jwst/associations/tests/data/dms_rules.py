@@ -3,8 +3,11 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__) + '../../../..'))
 
-from associations import Association, AssociationRegistry
+from associations import Association
+from associations.registry import RegistryMarker
 from associations.lib.dms_base import DMSBaseMixin
+
+contains_rules = RegistryMarker.contains_rules
 
 
 class Asn_DMS_Base(DMSBaseMixin, Association):
@@ -21,7 +24,7 @@ class Asn_DMS_Base(DMSBaseMixin, Association):
         self.data['members'].append(item)
 
 
-@AssociationRegistry.mark_callback('finalize')
+@RegistryMarker.callback('finalize')
 def finalize(asns):
     """Finalize associations by calling their `finalize_hook` method"""
     return asns
