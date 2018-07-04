@@ -2,6 +2,7 @@
 """
 import logging
 
+from jwst.associations.registry import RegistryMarker
 from jwst.associations.lib.constraint import Constraint
 from jwst.associations.lib.dms_base import format_list
 from jwst.associations.lib.rules_level2_base import *
@@ -18,6 +19,7 @@ logger.addHandler(logging.NullHandler())
 # --------------------------------
 # Start of the User-level rules
 # --------------------------------
+@RegistryMarker.rule
 class Asn_Lv2Image(
         AsnMixin_Lv2Singleton,
         AsnMixin_Lv2Image,
@@ -38,6 +40,7 @@ class Asn_Lv2Image(
         super(Asn_Lv2Image, self).__init__(*args, **kwargs)
 
 
+@RegistryMarker.rule
 class Asn_Lv2ImageSpecial(
         AsnMixin_Lv2Special,
         AsnMixin_Lv2Singleton,
@@ -64,6 +67,7 @@ class Asn_Lv2ImageSpecial(
         super(Asn_Lv2ImageSpecial, self).__init__(*args, **kwargs)
 
 
+@RegistryMarker.rule
 class Asn_Lv2ImageNonScience(
         AsnMixin_Lv2Special,
         AsnMixin_Lv2Singleton,
@@ -85,6 +89,7 @@ class Asn_Lv2ImageNonScience(
         super(Asn_Lv2ImageNonScience, self).__init__(*args, **kwargs)
 
 
+@RegistryMarker.rule
 class Asn_Lv2FGS(
         AsnMixin_Lv2Singleton,
         AsnMixin_Lv2Image,
@@ -110,6 +115,7 @@ class Asn_Lv2FGS(
         super(Asn_Lv2FGS, self).__init__(*args, **kwargs)
 
 
+@RegistryMarker.rule
 class Asn_Lv2Spec(
         AsnMixin_Lv2Singleton,
         AsnMixin_Lv2Spectral,
@@ -130,6 +136,7 @@ class Asn_Lv2Spec(
         super(Asn_Lv2Spec, self).__init__(*args, **kwargs)
 
 
+@RegistryMarker.rule
 class Asn_Lv2SpecSpecial(
         AsnMixin_Lv2Special,
         AsnMixin_Lv2Singleton,
@@ -156,6 +163,7 @@ class Asn_Lv2SpecSpecial(
         super(Asn_Lv2SpecSpecial, self).__init__(*args, **kwargs)
 
 
+@RegistryMarker.rule
 class Asn_Lv2WFSS_NIS(
         AsnMixin_Lv2Singleton,
         AsnMixin_Lv2Spectral,

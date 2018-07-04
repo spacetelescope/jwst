@@ -134,19 +134,13 @@ class AssociationRegistry(dict):
         Utility = type('Utility', (object,), {})
         for fname in definition_files:
             module = import_from_file(fname)
-            self.populate(module)
+            self.populate(
+                module,
+                global_constraints=global_constraints,
+                include_bases=include_bases
+            )
 
             for class_name, class_object in get_classes(module):
-                if include_bases or class_name.startswith(USER_ASN):
-                    try:
-                        rule_name = '_'.join([self.name, class_name])
-                    except TypeError:
-                        rule_name = class_name
-                    rule = type(rule_name, (class_object,), {})
-                    rule.GLOBAL_CONSTRAINT = global_constraints
-                    rule.registry = self
-                    self.__setitem__(rule_name, rule)
-                    self._rule_set.add(rule)
                 if class_name == 'Utility':
                     Utility = type('Utility', (class_object, Utility), {})
         self.Utility = Utility
@@ -310,7 +304,11 @@ class AssociationRegistry(dict):
         finalized = self.callback.filter('finalize', associations)
         return finalized
 
-    def populate(self, module):
+    def populate(self,
+                 module,
+                 global_constraints=None,
+                 include_bases=None
+    ):
         """Parse out all rules and callbacks in a module
 
         Parameters
@@ -323,7 +321,13 @@ class AssociationRegistry(dict):
         self.callback
             Found callbacks are added to the callback registry
         """
-        for name, obj in get_marked(module):
+        for name, obj in get_marked(module, include_bases=include_bases):
+
+            # Add rules.
+            if (include_bases and isclass(obj)) or\
+               obj._asnreg_role == 'rule':
+                self.add_rule(name, obj, global_constraints=global_constraints)
+                continue
 
             # Add callbacks
             if obj._asnreg_role == 'callback':
@@ -335,6 +339,30 @@ class AssociationRegistry(dict):
             if obj._asnreg_role == 'schema':
                 self.schemas.append(obj._asnreg_schema)
                 continue
+
+    def add_rule(self, name, obj, global_constraints=None):
+        """Add object as rule to registry
+
+        Parameters
+        ----------
+        name: str
+            Name of the object
+
+        obj: object
+            The object to be considered a rule
+
+        global_constraints: dict
+            The global constraints to attach to the rule.
+        """
+        try:
+            rule_name = '_'.join([self.name, name])
+        except TypeError:
+            rule_name = name
+        rule = type(rule_name, (obj,), {})
+        rule.GLOBAL_CONSTRAINT = global_constraints
+        rule.registry = self
+        self.__setitem__(rule_name, rule)
+        self._rule_set.add(rule)
 
 
 class RegistryMarker:
@@ -528,7 +556,7 @@ def get_classes(module):
             yield class_name, class_object
 
 
-def get_marked(module, predicate=None):
+def get_marked(module, predicate=None, include_bases=False):
     """Recursively get all executable objects
 
     Parameters
@@ -539,6 +567,10 @@ def get_marked(module, predicate=None):
     predicate: bool func(object)
         Determinant of what gets returned.
         If None, all object types are examined
+
+    include_bases: bool
+        If True, include base classes not considered
+        rules.
 
     Returns
     -------
@@ -554,9 +586,13 @@ def get_marked(module, predicate=None):
         if isclass(obj):
             for sub_name, sub_obj in get_marked(obj, predicate=is_method):
                 yield sub_name, sub_obj
-        if RegistryMarker.is_marked(obj):
+            if RegistryMarker.is_marked(obj) or include_bases:
+                yield name, obj
+        elif RegistryMarker.is_marked(obj):
             if ismodule(obj):
-                for sub_name, sub_obj in get_marked(obj):
+                for sub_name, sub_obj in get_marked(
+                        obj, predicate=predicate, include_bases=include_bases
+                ):
                     yield sub_name, sub_obj
             else:
                 yield name, obj

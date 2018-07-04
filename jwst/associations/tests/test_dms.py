@@ -26,8 +26,9 @@ def dms_asns(dms_registry):
     return result
 
 
-def test_dms(dms_registry):
+def test_registry(dms_registry):
     """Test basic registry creation and usage"""
+    assert len(dms_registry) == 1
     assert 'Asn_DMS_Base' in dms_registry
 
 
@@ -45,3 +46,14 @@ def test_finalize(dms_registry, dms_asns):
     finalized = dms_registry.finalize(asns)
 
     assert len(finalized) == 1
+
+
+def test_include_bases():
+    """Test for included bases"""
+    dms_test_rules_path = t_path(path.join('data', 'dms_rules.py'))
+    dms_registry = AssociationRegistry(
+        [dms_test_rules_path], include_default=False, include_bases=True
+    )
+
+    assert len(dms_registry) > 1
+    assert 'DMSBaseMixin' in dms_registry
