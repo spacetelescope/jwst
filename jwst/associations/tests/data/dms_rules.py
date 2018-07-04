@@ -8,6 +8,7 @@ from associations.registry import RegistryMarker
 from associations.lib.dms_base import DMSBaseMixin
 
 
+@RegistryMarker.rule
 class Asn_DMS_Base(DMSBaseMixin, Association):
     """Basic DMS rule"""
 

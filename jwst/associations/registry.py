@@ -326,22 +326,14 @@ class AssociationRegistry(dict):
         for name, obj in get_marked(module):
 
             # Add callbacks
-            try:
-                events = obj._asnreg_events
-            except AttributeError:
-                pass
-            else:
-                for event in events:
+            if obj._asnreg_role == 'callback':
+                for event in obj._asnreg_events:
                     self.callback.add(event, obj)
                     continue
 
             # Add schema
-            try:
-                schema = obj._asnreg_schema
-            except AttributeError:
-                pass
-            else:
-                self.schemas.append(schema)
+            if obj._asnreg_role == 'schema':
+                self.schemas.append(obj._asnreg_schema)
                 continue
 
 
@@ -350,6 +342,7 @@ class RegistryMarker:
 
     class Schema:
         def __init__(self, obj):
+            self._asnreg_role = 'schema'
             self._asnreg_schema = obj
             RegistryMarker.mark(self)
 
@@ -359,13 +352,87 @@ class RegistryMarker:
 
     @staticmethod
     def mark(obj):
-        obj._asnreg_marked = True
+        """Mark that object should be part of the registry
 
-        # Return so this method can be used as a decorator.
+        Parameters
+        ----------
+        obj: object
+            The object to mark
+
+        Modifies
+        --------
+        _asnreg_mark: True
+            Attribute added to object and is set to True
+
+        _asnreg_role: str or None
+            Attribute added to object indicating role this object plays.
+            If None, no particular role is indicated.
+
+        Returns
+        -------
+        obj: object
+            Return object to enable use as a decorator.
+        """
+        obj._asnreg_marked = True
+        obj._asnreg_role = getattr(obj, '_asnreg_role', None)
+        return obj
+
+    @staticmethod
+    def rule(obj):
+        """Mark object as rule
+
+        Parameters
+        ----------
+        obj: object
+            The object that should be treated as a rule
+
+        Modifies
+        --------
+        _asnreg_role: 'rule'
+            Attributed added to object and set to `rule`
+
+        _asnreg_mark: True
+            Attributed added to object and set to True
+
+        Returns
+        -------
+        obj: object
+            Return object to enable use as a decorator.
+        """
+        obj._asnreg_role = 'rule'
+        RegistryMarker.mark(obj)
         return obj
 
     @staticmethod
     def callback(event):
+        """Mark object as a callback for an event
+
+        Parameters
+        ----------
+        event: str
+            Event this is a callback for.
+
+        obj: func
+            Function, or any callable, to be called
+            when the corresponding event is triggered.
+
+        Modifies
+        --------
+        _asnreg_role: 'callback'
+            Attributed added to object and set to `rule`
+
+        _asnreg_events: [event[, ...]]
+            The events this callable object is a callback for.
+
+        _asnreg_mark: True
+            Attributed added to object and set to True
+
+        Returns
+        -------
+        obj: object
+            Return object to enable use as a decorator.
+
+        """
         def decorator(func):
             try:
                 events = func._asnreg_events
@@ -373,6 +440,7 @@ class RegistryMarker:
                 events = list()
             events.append(event)
             RegistryMarker.mark(func)
+            func._asnreg_role = 'callback'
             func._asnreg_events = events
             return func
         return decorator
