@@ -1,6 +1,7 @@
 from ..stpipe import Step, cmdline
 from .. import datamodels
 from . import resample_spec
+from . import ResampleStep
 from ..exp_to_source import multislit_to_container
 from ..assign_wcs.util import update_s_region
 
@@ -8,7 +9,7 @@ from ..assign_wcs.util import update_s_region
 __all__ = ["ResampleSpecStep"]
 
 
-class ResampleSpecStep(Step):
+class ResampleSpecStep(ResampleStep):
     """
     ResampleSpecStep: Resample input data onto a regular grid using the
     drizzle algorithm.
@@ -18,16 +19,18 @@ class ResampleSpecStep(Step):
     input : DataModel, Association
     """
 
-    spec = """
-        single = boolean(default=False)
-        wht_type = option('exptime', 'error', None, default='exptime')
-        pixfrac = float(default=1.0)
-        kernel = string(default='square')
-        fillval = string(default='INDEF')
-        good_bits = integer(default=4)
-        blendheaders = boolean(default=True)
-    """
-    reference_file_types = ['drizpars']
+    # `spec` and `reference_file_types` are defined in ResampleStep
+    # spec = """
+    #     single = boolean(default=False)
+    #     wht_type = option('exptime', 'error', None, default='exptime')
+    #     pixfrac = float(default=1.0)
+    #     kernel = string(default='square')
+    #     fillval = string(default='INDEF')
+    #     good_bits = integer(default=4)
+    #     blendheaders = boolean(default=True)
+    # """
+
+    # reference_file_types = ['drizpars']
 
     def process(self, input):
 
@@ -97,4 +100,3 @@ class ResampleSpecStep(Step):
                 result = resamp.output_models
 
         return result
-

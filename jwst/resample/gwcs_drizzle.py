@@ -443,10 +443,18 @@ def dodrizzle(insci, input_wcs, inwht,
     # Call 'drizzle' to perform image combination
     log.info('Drizzling {} --> {}'.format(insci.shape, outsci.shape))
     _vers, nmiss, nskip = cdrizzle.tdriz(
-        insci, inwht, pixmap, outsci, outwht, outcon,
-        uniqid=uniqid, xmin=xmin, xmax=xmax,
-        ymin=ymin, ymax=ymax, scale=pscale_ratio, pixfrac=pixfrac,
-        kernel=kernel, in_units=in_units, expscale=expscale,
-        wtscale=wt_scl, fillstr=fillval)
+        insci, inwht, pixmap,
+        outsci, outwht, outcon,
+        uniqid=uniqid,
+        xmin=xmin, xmax=xmax,
+        ymin=ymin, ymax=ymax,
+        scale=pscale_ratio,
+        pixfrac=pixfrac,
+        kernel=kernel,
+        in_units=in_units,
+        expscale=expscale,
+        wtscale=wt_scl,
+        fillstr=str(fillval)
+        )
 
     return _vers, nmiss, nskip
