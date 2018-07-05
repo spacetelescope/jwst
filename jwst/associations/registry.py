@@ -33,9 +33,6 @@ logger.addHandler(logging.NullHandler())
 # Library files
 _ASN_RULE = 'association_rules.py'
 
-# User-level association definitions start with...
-USER_ASN = 'Asn_'
-
 
 class AssociationRegistry(dict):
     """The available assocations
@@ -517,54 +514,6 @@ def import_from_file(filename):
     finally:
         sys.path.pop(0)
     return module
-
-
-def find_object(module, obj):
-    """Find all instances of object in module or sub-modules
-
-    Parameters
-    ----------
-    module: module
-        The module to recursively search through.
-
-    obj: str
-        The object to find.
-
-    Returns
-    -------
-    values: iterator
-        Iterator that returns all values of the object
-    """
-    for name, value in getmembers(module):
-        if ismodule(value) and RegistryMarker.is_marked(value):
-            for inner_value in find_object(value, obj):
-                yield inner_value
-        elif name == obj:
-            yield value
-
-
-def get_classes(module):
-    """Recursively get all classes in the module
-
-    Parameters
-    ----------
-    module: python module
-        The module to examine
-
-    Returns
-    -------
-    class object: generator
-        A generator that will yield all class members in the module.
-    """
-    for class_name, class_object in getmembers(
-            module,
-            lambda o: isclass(o) or ismodule(o)
-    ):
-        if ismodule(class_object) and RegistryMarker.is_marked(class_object):
-            for sub_name, sub_class in get_classes(class_object):
-                yield sub_name, sub_class
-        elif isclass(class_object):
-            yield class_name, class_object
 
 
 def get_marked(module, predicate=None, include_bases=False):
