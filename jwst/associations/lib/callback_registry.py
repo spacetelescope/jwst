@@ -60,9 +60,10 @@ class CallbackRegistry():
         event: str
             The name of event to attache the object to.
         """
-        def wrapper(callback):
-            self.add(event, callback)
-        return wrapper
+        def decorator(func):
+            self.add(event, func)
+            return func
+        return decorator
 
 
 # ##########
