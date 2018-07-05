@@ -24,7 +24,7 @@ class ResampleStep(Step):
     spec = """
         pixfrac = float(default=None)
         kernel = string(default=None)
-        fillval = float(default=None)
+        fillval = string(default=None)
         weight_type = option('exptime', default=None)
         good_bits = integer(min=0, default=4)
         single = boolean(default=False)
@@ -134,10 +134,6 @@ class ResampleStep(Step):
             blendheaders=self.blendheaders
             )
         kwargs.update({**reffile_drizpars, **user_drizpars})
-
-        # Convert INDEF in table to float 0.0
-        if kwargs['fillval'] == 'INDEF':
-            kwargs['fillval'] = 0.0
 
         for k,v in kwargs.items():
             self.log.debug('   {}={}'.format(k, v))
