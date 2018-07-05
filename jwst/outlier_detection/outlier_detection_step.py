@@ -46,7 +46,7 @@ class OutlierDetectionStep(Step):
     # by the various versions of the outlier_detection algorithms, and each
     # version will pick and choose what they need while ignoring the rest.
     spec = """
-        wht_type = option('exptime','error',None,default='exptime')
+        weight_type = option('exptime','error',None,default='exptime')
         pixfrac = float(default=1.0)
         kernel = string(default='square') # drizzle kernel
         fillval = string(default='INDEF')
@@ -92,7 +92,7 @@ class OutlierDetectionStep(Step):
 
             # Setup outlier detection parameters
             pars = {
-                'wht_type': self.wht_type,
+                'weight_type': self.weight_type,
                 'pixfrac': self.pixfrac,
                 'kernel': self.kernel,
                 'fillval': self.fillval,

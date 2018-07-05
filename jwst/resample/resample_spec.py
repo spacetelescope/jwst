@@ -48,7 +48,7 @@ class ResampleSpecData:
                 'kernel': 'square',
                 'pixfrac': 1.0,
                 'good_bits': CRBIT,
-                'fillval': 'INDEF',
+                'fillval': 0.0,
                 'wht_type': 'exptime'}
 
     def __init__(self, input_models, output=None, ref_filename=None, **pars):
@@ -92,48 +92,15 @@ class ResampleSpecData:
         self.output_models = datamodels.ModelContainer()
 
 
-    def get_drizpars(self):
-        """ Extract drizzle parameters from reference file
+    def build_interpolated_output_wcs(self, refmodel=None):
         """
-        # start by interpreting input data models to define selection criteria
-        num_groups = len(self.input_models.group_names)
-        input_dm = self.input_models[0]
-        filtname = input_dm.meta.instrument.filter
+        Create a spatial/spectral WCS output frame using interp tabular model
+        """
+        if not refmodel:
+            refmodel = self.input_models[0]
+        refwcs = refmodel.meta.wcs
+        bb = refwcs.bounding_box
 
-        # Create a data model for the reference file
-        ref_model = datamodels.DrizParsModel(self.ref_filename)
-        # look for row that applies to this set of input data models
-        # NOTE:
-        # This logic could be replaced by a method added to the DrizParsModel
-        # object to select the correct row based on a set of selection params
-        row = None
-        drizpars = ref_model.drizpars_table
-
-        # Flag to support wild-card rows in drizpars table
-        filter_match = False
-        for n, filt, num in zip(range(1, drizpars.numimages.shape[0] + 1),
-                drizpars.filter, drizpars.numimages):
-            # only remember this row if no exact match has already been made for
-            # the filter. This allows the wild-card row to be anywhere in the
-            # table; since it may be placed at beginning or end of table.
-
-            if filt == b"ANY" and not filter_match and num_groups >= num:
-                row = n
-            # always go for an exact match if present, though...
-            if filtname == filt and num_groups >= num:
-                row = n
-                filter_match = True
-
-        # With presence of wild-card rows, code should never trigger this logic
-        if row is None:
-            txt = "No row found in {0} that matches input data."
-            log.error(txt.format(self.ref_filename))
-            raise ValueError
-
-        # read in values from that row for each parameter
-        for kw in self.drizpars:
-            if kw in drizpars.names:
-                self.drizpars[kw] = ref_model['drizpars_table.{0}'.format(kw)][row]
 
 
     def build_nirspec_output_wcs(self, refmodel=None):
