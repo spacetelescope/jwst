@@ -19,18 +19,17 @@ class ResampleSpecStep(ResampleStep):
     input : DataModel, Association
     """
 
-    # `spec` and `reference_file_types` are defined in ResampleStep
-    # spec = """
-    #     single = boolean(default=False)
-    #     wht_type = option('exptime', 'error', None, default='exptime')
-    #     pixfrac = float(default=1.0)
-    #     kernel = string(default='square')
-    #     fillval = string(default='INDEF')
-    #     good_bits = integer(default=4)
-    #     blendheaders = boolean(default=True)
-    # """
+    spec = """
+        pixfrac = float(default=1.0)
+        kernel = string(default='square')
+        fillval = string(default='INDEF')
+        weight_type = option('exptime', default='exptime')
+        good_bits = integer(min=0, default=4)
+        single = boolean(default=False)
+        blendheaders = boolean(default=True)
+    """
 
-    # reference_file_types = ['drizpars']
+    reference_file_types = ['drizpars']
 
     def process(self, input):
 
@@ -58,7 +57,7 @@ class ResampleSpecStep(ResampleStep):
                 # Set up the resampling object as part of this step
                 resamp = resample_spec.ResampleSpecData(input_models,
                     ref_filename, single=self.single,
-                    wht_type=self.wht_type, pixfrac=self.pixfrac,
+                    weight_type=self.weight_type, pixfrac=self.pixfrac,
                     kernel=self.kernel, fillval=self.fillval,
                     good_bits=self.good_bits)
                 # Do the resampling
@@ -80,7 +79,7 @@ class ResampleSpecStep(ResampleStep):
         else:
             # Set up the resampling object as part of this step
             resamp = resample_spec.ResampleSpecData(input_models,
-                ref_filename, single=self.single, wht_type=self.wht_type,
+                ref_filename, single=self.single, weight_type=self.weight_type,
                 pixfrac=self.pixfrac, kernel=self.kernel,
                 fillval=self.fillval, good_bits=self.good_bits)
             # Do the resampling
