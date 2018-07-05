@@ -49,7 +49,7 @@ class ResampleSpecData:
                 'pixfrac': 1.0,
                 'good_bits': CRBIT,
                 'fillval': 0.0,
-                'wht_type': 'exptime'}
+                'weight_type': 'exptime'}
 
     def __init__(self, input_models, output=None, ref_filename=None, **pars):
         """
@@ -327,7 +327,7 @@ class ResampleSpecData:
                 exposure_times['end'].append(img.meta.exposure.end_time)
 
                 inwht = resample_utils.build_driz_weight(img,
-                    wht_type=self.drizpars['wht_type'],
+                    weight_type=self.drizpars['weight_type'],
                     good_bits=self.drizpars['good_bits'])
                 if hasattr(img, 'name'):
                     log.info('Resampling slit {} {}'.format(img.name, self.data_size))
@@ -344,7 +344,7 @@ class ResampleSpecData:
             output_model.meta.exposure.start_time = min(exposure_times['start'])
             output_model.meta.exposure.end_time = max(exposure_times['end'])
             output_model.meta.resample.product_exposure_time = texptime
-            output_model.meta.resample.weight_type = self.drizpars['wht_type']
+            output_model.meta.resample.weight_type = self.drizpars['weight_type']
             output_model.meta.resample.pointings = pointings
 
             # Update mutlislit slit info on the output_model
