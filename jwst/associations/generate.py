@@ -75,7 +75,7 @@ def generate(pool, rules, version_id=None):
             pass
 
     # Finalize found associations
-    finalized_asns = rules.finalize(associations)
+    finalized_asns = rules.callback.reduce('finalize', associations)
 
     return finalized_asns
 

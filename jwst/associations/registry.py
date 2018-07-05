@@ -285,17 +285,6 @@ class AssociationRegistry(dict):
         else:
             return results
 
-    def finalize(self, associations):
-        """Finalize newly generated associations
-
-        Parameters
-        ----------
-        assocations: [association[, ...]]
-            The list of associations
-        """
-        finalized = self.callback.reduce('finalize', associations)
-        return finalized
-
     def populate(self,
                  module,
                  global_constraints=None,

@@ -44,7 +44,7 @@ def test_finalize(dms_registry, dms_asns):
     """Test finalization"""
     asns, orphaned = dms_asns
 
-    finalized = dms_registry.finalize(asns)
+    finalized = dms_registry.callback.reduce('finalize', asns)
 
     assert len(finalized) == 1
 
