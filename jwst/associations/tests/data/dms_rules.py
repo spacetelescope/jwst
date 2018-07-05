@@ -27,3 +27,20 @@ class Asn_DMS_Base(DMSBaseMixin, Association):
 def finalize(asns):
     """Finalize associations by calling their `finalize_hook` method"""
     return asns
+
+
+class Utility:
+    """Should not be part of the utilities"""
+
+    @staticmethod
+    def not_valid_function():
+        """Should not be part of the utilities"""
+
+
+@RegistryMarker.utility
+class ValidUtility:
+    """Yea, valid!"""
+
+    @staticmethod
+    def valid_function():
+        "yes, i'm good"

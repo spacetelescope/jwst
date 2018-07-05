@@ -1,4 +1,5 @@
 """Test DMSBaseMixin features"""
+import inspect
 from os import path
 import pytest
 
@@ -57,3 +58,10 @@ def test_include_bases():
 
     assert len(dms_registry) > 1
     assert 'DMSBaseMixin' in dms_registry
+
+
+def test_utility(dms_registry):
+    """Test the utility inclusion marker"""
+
+    names, objs = zip(*inspect.getmembers(dms_registry.Utility))
+    assert 'valid_function' in names

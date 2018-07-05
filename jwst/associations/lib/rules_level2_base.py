@@ -396,6 +396,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         return '\n'.join(result)
 
 
+@RegistryMarker.utility
 class Utility():
     """Utility functions that understand DMS Level 3 associations"""
 

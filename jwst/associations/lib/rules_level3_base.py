@@ -427,6 +427,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         return self.acid.type.lower() not in INVALID_AC_TYPES
 
 
+@RegistryMarker.utility
 class Utility():
     """Utility functions that understand DMS Level 3 associations"""
 
