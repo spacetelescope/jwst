@@ -681,18 +681,6 @@ class Constraint_Spectral_Science(Constraint):
                     name='exp_type',
                     sources=['exp_type'],
                     value='|'.join(science_exp_types)
-                ),
-                Constraint(
-                    [
-                        DMSAttrConstraint(
-                            name='exp_type',
-                            sources=['exp_type'],
-                            value='nrs_msaspec'
-                        ),
-                        DMSAttrConstraint(
-                            sources=['msametfl']
-                        )
-                    ]
                 )
             ],
             reduce=Constraint.any

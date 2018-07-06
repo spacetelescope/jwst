@@ -229,3 +229,38 @@ class Asn_Lv2WFSS_NIS(
         if opt_elem == '':
             opt_elem = 'clear'
         return opt_elem
+
+
+@RegistryMarker.rule
+class Asn_Lv2NRSMSA(
+        AsnMixin_Lv2Spectral,
+        DMSLevel2bBase
+):
+    """Level2b NIRSpec MSA"""
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup constraints
+        self.constraints = Constraint([
+            Constraint_Base(),
+            Constraint_Mode(),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        name='exp_type',
+                        sources=['exp_type'],
+                        value='nrs_msaspec'
+                    ),
+                    DMSAttrConstraint(
+                        sources=['msametfl']
+                    ),
+                    DMSAttrConstraint(
+                        name='expspcin',
+                        sources=['expspcin'],
+                    )
+                ]
+            )
+        ])
+
+        # Now check and continue initialization.
+        super(Asn_Lv2NRSMSA, self).__init__(*args, **kwargs)
