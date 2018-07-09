@@ -26,7 +26,17 @@
 #       these smoothed and scaled values should be subtracted from every pixel
 #       in the corresponding row.
 
-from __future__ import division
+#
+#  Subarray processing added 7/2018
+#
+#  For NIR exposures, calculate the clipped means of odd and even columns
+#  in detector coordinates.  Subtract the odd mean from the odd columns, and
+#  the even mean from the even columns.  If there are no reference pixels in the
+#  subarray, omit the refpix step.
+#
+#  For MIRI subarray exposures, omit the refpix step.
+# 
+
 import numpy as np
 from scipy import stats
 import logging
@@ -69,17 +79,25 @@ NIR_reference_sections = {'A': {'top': (2044, 2048, 0, 512),
 
 MIR_reference_sections = {'A': {'left': (0, 1024, 0),
                                'right': (0, 1024, 1028),
-                               'data': (0, 1024, 4, 1028, 4)},
+                               'data': (0, 1024, 0, 1032, 4)},
                           'B': {'left': (0, 1024, 1),
                                'right': (0, 1024, 1029),
-                               'data': (0, 1024, 5, 1028, 4)},
+                               'data': (0, 1024, 1, 1032, 4)},
                           'C': {'left': (0, 1024, 2),
                                'right': (0, 1024, 1030),
-                               'data': (0, 1024, 6, 1028, 4)},
+                               'data': (0, 1024, 2, 1032, 4)},
                           'D': {'left': (0, 1024, 3),
                                'right': (0, 1024, 1031),
-                               'data': (0, 1024, 7, 1028, 4)}
+                               'data': (0, 1024, 3, 1032, 4)}
                           }
+
+#
+# Status returns
+
+REFPIX_OK = 0
+BAD_REFERENCE_PIXELS = 1
+SUBARRAY_DOESNTFIT = 2
+SUBARRAY_SKIPPED = 3
 
 class Dataset(object):
     """Base Class to handle passing stuff from routine to routine
@@ -89,6 +107,10 @@ class Dataset(object):
 
     input_model: data model object
         Science data model to be corrected
+
+    is_subarray: boolean
+        flag that shows whether the dataset was created from subarray
+        data
 
     odd_even_columns: booolean
         flag that controls whether odd and even-numbered columns are
@@ -194,7 +216,7 @@ class Dataset(object):
 
         input_model: JWST datamodel
 
-        The datamodel the data arrays are to be transferred to
+        The datamodel to which the data arrays are to be transferred
 
         Returns:
         --------
@@ -208,7 +230,7 @@ class Dataset(object):
             input_model.data = original_size
             return
         else:
-            input_model.data = self.data.copy()
+            input_model.data = self.data
             return
 
     def extract_from_embedded(self):
@@ -243,6 +265,10 @@ class NIRDataset(Dataset):
 
     input_model: data model object
         Science data model to be corrected
+
+    is_subarray: boolean
+        flag that shows whether the dataset was created from subarray
+        data
 
     odd_even_columns: booolean
         flag that controls whether odd and even-numbered columns are
@@ -1042,6 +1068,13 @@ class MIRIDataset(Dataset):
     Parameters:
     -----------
 
+    input_model: data model object
+        Science data model to be corrected
+
+    is_subarray: boolean
+        flag that shows whether the dataset was created from subarray
+        data
+
     odd_even_rows: boolean
         Flag that controls whether odd and even-numbered rows are
         handled separately
@@ -1229,7 +1262,12 @@ class MIRIDataset(Dataset):
         if self.odd_even_rows:
             odd = self.get_odd_refvalue(group, amplifier, left_or_right)
             even = self.get_even_refvalue(group, amplifier, left_or_right)
-            if odd is None or even is None: self.bad_reference_pixels = True
+            if odd is None:
+                log.warning("Odd rows for amplifier {} have no good reference pixels".format(amplifier))
+                self.bad_reference_piels = True
+            elif even is None:
+                log.warning("Even rows for amplifier {} have no good reference pixels".format(amplifier))
+                self.bad_reference_pixels = True
             return odd, even
         else:
             rowstart, rowstop, column = MIR_reference_sections[amplifier][left_or_right]
@@ -1327,6 +1365,16 @@ class MIRIDataset(Dataset):
         return
 
     def do_corrections(self):
+        if self.is_subarray:
+            self.do_subarray_corrections()
+        else:
+            self.do_fullframe_corrections()
+
+    def do_subarray_corrections(self):
+        log.warning("Refpix correction skipped for MIRI subarray")
+        return
+
+    def do_fullframe_corrections(self):
         """Do Reference Pixels Corrections for all amplifiers, MIRI detectors"""
         #
         #  First we need to subtract the first read of each integration
@@ -1358,6 +1406,7 @@ class MIRIDataset(Dataset):
                 thisgroup = self.data[integration, group].copy()
                 refvalues = self.get_refvalues(thisgroup)
                 if self.bad_reference_pixels:
+                    log.warning("Group {} has no reference pixels".format(group))
                     break
                 self.do_left_right_correction(thisgroup, refvalues)
                 self.data[integration, group] = thisgroup
@@ -1414,22 +1463,26 @@ def create_dataset(input_model,
     detector = input_model.meta.instrument.detector
     model_copy = input_model.copy()
     if reffile_utils.is_subarray(input_model):
-        nints, ngroups, nrows, ncols = model_copy.data.shape
-        colstart = model_copy.meta.subarray.xstart - 1
-        colstop = colstart + model_copy.meta.subarray.xsize
-        rowstart = model_copy.meta.subarray.ystart - 1
-        rowstop = rowstart + model_copy.meta.subarray.ysize
-        if detector[:3] == 'MIR':
-            full_shape = (nints, ngroups, 1024, 1032)
-            dq_shape = (1024, 1032)
+        nints, ngroups, nrows, ncols = input_model.data.shape
+        colstart = input_model.meta.subarray.xstart - 1
+        colstop = colstart + input_model.meta.subarray.xsize
+        rowstart = input_model.meta.subarray.ystart - 1
+        rowstop = rowstart + input_model.meta.subarray.ysize
+        if rowstart < 0 or colstart < 0 \
+           or rowstop > 2048 or colstop > 2048:
+            return None
         else:
-            full_shape = (nints, ngroups, 2048, 2048)
-            dq_shape = (2048, 2048)
-        model_copy.data = np.zeros(full_shape, dtype=input_model.data.dtype)
-        model_copy.data[:, :, rowstart:rowstop, colstart:colstop] = input_model.data
-        model_copy.pixeldq = np.ones(dq_shape, dtype=input_model.pixeldq.dtype)
-        model_copy.pixeldq[rowstart:rowstop, colstart:colstop] = input_model.pixeldq
-        is_subarray = True
+            if detector[:3] == 'MIR':
+                full_shape = (nints, ngroups, 1024, 1032)
+                dq_shape = (1024, 1032)
+            else:
+                full_shape = (nints, ngroups, 2048, 2048)
+                dq_shape = (2048, 2048)
+            model_copy.data = np.zeros(full_shape, dtype=input_model.data.dtype)
+            model_copy.data[:, :, rowstart:rowstop, colstart:colstop] = input_model.data
+            model_copy.pixeldq = np.ones(dq_shape, dtype=input_model.pixeldq.dtype)
+            model_copy.pixeldq[rowstart:rowstop, colstart:colstop] = input_model.pixeldq
+            is_subarray = True
 
     if detector[:3] == 'MIR':
         return MIRIDataset(model_copy,
@@ -1554,8 +1607,7 @@ def correct_model(input_model, odd_even_columns,
                    side_smoothing_length, side_gain,
                    odd_even_rows):
     """Wrapper to do Reference Pixel Correction on a JWST Model.
-    Performs the correction on the data member.  Only works for full-frame
-    exposures
+    Performs the correction on the datamodel
 
     Parameters:
     -----------
@@ -1584,20 +1636,25 @@ def correct_model(input_model, odd_even_columns,
         separately (MIR only)
 
     """
-
+    if input_model.meta.instrument.name == 'MIRI':
+        if reffile_utils.is_subarray(input_model):
+            log.warning("Refpix correction skipped for MIRI subarrays")
+            return SUBARRAY_SKIPPED
     input_dataset = create_dataset(input_model,
                                    odd_even_columns,
                                    use_side_ref_pixels,
                                    side_smoothing_length,
                                    side_gain,
                                    odd_even_rows)
+    if input_dataset is None:
+        status = SUBARRAY_DOESNTFIT
+        return status
     result_dataset = reference_pixel_correction(input_dataset)
     if result_dataset.bad_reference_pixels:
-        return None
+        return BAD_REFERENCE_PIXELS
     else:
         result_dataset.transfer_to_model(input_model)
-        return input_model
-
+        return REFPIX_OK
 
 def reference_pixel_correction(input_dataset):
     """
