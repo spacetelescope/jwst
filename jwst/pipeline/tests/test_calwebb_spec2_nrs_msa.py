@@ -45,7 +45,7 @@ def test_msa_missing(mk_tmp_dirs, caplog):
     with pytest.raises(Exception):
         Step.from_cmdline(args)
 
-    assert 'failed processing for reason' in caplog.text
+    assert 'Unable to open MSA FITS file (MSAMETFL)' in caplog.text
 
 
 @require_bigdata
@@ -71,7 +71,7 @@ def test_msa_missing_nofail(mk_tmp_dirs, caplog):
 
     Step.from_cmdline(args)
 
-    assert 'failed processing for reason' in caplog.text
+    assert 'Unable to open MSA FITS file (MSAMETFL)' in caplog.text
 
 
 @require_bigdata
