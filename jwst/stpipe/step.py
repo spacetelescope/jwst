@@ -201,18 +201,15 @@ class Step():
         config : configobj.Section instance
             The config file fragment containing parameters for this
             step only.
-
         parent : Step instance, optional
             The parent step of this step.  Used to determine a
             fully-qualified name for this step, and to determine
             the mode in which to run this step.
-
         name : str, optional
             If provided, use that name for the returned instance.
             If not provided, try the following (in order):
-              - The `name` parameter in the config file fragment
-              - The name of returned class
-
+            - The ``name`` parameter in the config file fragment
+            - The name of returned class
         config_file : str, optional
             The path to the config file that created this step, if
             any.  This is used to resolve relative file name

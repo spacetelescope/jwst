@@ -3,6 +3,9 @@ from .. import datamodels
 from . import bar_shadow
 
 
+__all__ = ["BarShadowStep"]
+
+
 class BarShadowStep(Step):
     """
     BarShadowStep: Inserts the bar shadow and wavelength arrays
@@ -10,7 +13,7 @@ class BarShadowStep(Step):
 
     Bar shadow correction depends on the position of a pixel along the slit
     and the wavelength. It is only applied to uniform sources and only for
-    NRS MSA data. 
+    NRS MSA data.
 
     """
 
@@ -43,7 +46,7 @@ class BarShadowStep(Step):
                 # Open the barshadow ref file data model
                 barshadow_model = datamodels.BarshadowModel(self.barshadow_name)
 
-                # Do the bar shadow correction     
+                # Do the bar shadow correction
                 result = bar_shadow.do_correction(input_model, barshadow_model)
 
                 barshadow_model.close()

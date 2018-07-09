@@ -1,5 +1,6 @@
+import warnings
 from .model_base import DataModel
-
+from .validate import ValidationWarning
 
 __all__ = ['ReferenceFileModel']
 
@@ -25,13 +26,19 @@ class ReferenceFileModel(DataModel):
         Convenience function to be run when files are created.
         Checks that required reference file keywords are set.
         """
-        assert self.meta.description is not None
-        assert (self.meta.telescope == 'JWST')
-        assert self.meta.reftype is not None
-        assert self.meta.author is not None
-        assert self.meta.pedigree is not None
-        assert self.meta.useafter is not None
-        assert self.meta.instrument.name is not None
+        try:
+            assert self.meta.description is not None
+            assert (self.meta.telescope == 'JWST')
+            assert self.meta.reftype is not None
+            assert self.meta.author is not None
+            assert self.meta.pedigree is not None
+            assert self.meta.useafter is not None
+            assert self.meta.instrument.name is not None
+        except AssertionError as errmsg:
+            if self._strict_validation:
+                raise AssertionError(errmsg)
+            else:
+                warnings.warn(str(errmsg), ValidationWarning)
 
         super(ReferenceFileModel, self).validate()
 

@@ -2,7 +2,6 @@
 #
 # compare_crs.py - compare true and found cosmic rays
 
-from __future__ import division, print_function
 import sys
 import time
 import numpy as np

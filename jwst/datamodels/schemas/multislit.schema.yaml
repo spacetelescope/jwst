@@ -2,8 +2,6 @@ allOf:
 - $ref: core.schema.yaml
 - type: object
   properties:
-    int_times:
-      $ref: int_times.schema.yaml
     slits:
       type: array
       title: An array of slits

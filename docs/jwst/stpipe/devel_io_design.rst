@@ -11,14 +11,14 @@ API Summary
 ---------------------------
 
 
-    - `--output_dir`: :ref:`Directory <intro_output_directory>` where all output will go. 
+    - `--output_dir`: :ref:`Directory <intro_output_directory>` where all output will go.
     - `--output_file`: :ref:`File name <intro_output_file>` upon which
       output files will be based.
 
 `Step` configuration options
 ----------------------------
 
-    - `output_dir`: :ref:`Directory <intro_output_directory>` where all output will go. 
+    - `output_dir`: :ref:`Directory <intro_output_directory>` where all output will go.
     - `output_file`: :ref:`File name <intro_output_file>` upon which
       output files will be based.
     - `suffix`: :ref:`Suffix <pipeline_step_suffix_definitions>` defining the output of this step.
@@ -28,7 +28,7 @@ API Summary
     - `output_use_model`: True to always base output file names on the
       `DataModel.meta.filename` of the `DataModel` being saved.
     - `input_dir`: Generally defined by the location of the primary
-      input file unless otherwise specified. 
+      input file unless otherwise specified.
 
 Classes, Methods, Functions
 ---------------------------
@@ -105,10 +105,10 @@ environment as follows::
       #
       # when done, the data can be saved with the `DataModel.save`
       # method
-      
+
   >>> result.save('my_final_results.fits')
 
-  
+
 Input and JWST Conventions
 ==========================
 
@@ -293,7 +293,7 @@ associations is::
 
                   except AttributeError:
                       pass
-                      
+
               # Do awesome processing with final result
               # in `result`
               result = final_calculation(input_model)
@@ -370,7 +370,7 @@ results that would have a different suffix::
 
   self.save_model(intermediate_result_datamodel, suffix='intermediate')
 
-See :ref:`jwst.stpipe.step.Step.save_model` for further information.
+See :meth:`jwst.stpipe.step.Step.save_model` for further information.
 
 Make That Filename: Step.make_output_path
 `````````````````````````````````````````

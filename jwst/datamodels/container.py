@@ -7,7 +7,6 @@ import copy
 from functools import partial
 from inspect import signature
 import os.path as op
-import six
 
 from asdf import AsdfFile
 

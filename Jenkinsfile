@@ -70,7 +70,7 @@ def PY_SETUP = "python setup.py"
 // Generate distributions
 dist = new BuildConfig()
 dist.nodetype = 'linux'
-dist.build_mode = 'dist'
+dist.name = 'dist'
 dist.build_cmds = [
     "${CONDA_INST} numpy",
     "${PY_SETUP} sdist",
@@ -83,12 +83,12 @@ matrix += dist
 // Compile documentation
 docs = new BuildConfig()
 docs.nodetype = 'linux'
-docs.build_mode = 'docs'
+docs.name = 'docs'
 docs.build_cmds = [
     "conda config --add channels ${CONDA_CHANNEL}",
-    "${CONDA_CREATE} -n ${docs.build_mode} ${CONDA_DOC_DEPS} ${CONDA_DEPS}",
-    "with_env -n ${docs.build_mode} ${PIP_INST} ${PIP_DOC_DEPS}",
-    "with_env -n ${docs.build_mode} ${PY_SETUP} build_sphinx"
+    "${CONDA_CREATE} -n ${docs.name} ${CONDA_DOC_DEPS} ${CONDA_DEPS}",
+    "with_env -n ${docs.name} ${PIP_INST} ${PIP_DOC_DEPS}",
+    "with_env -n ${docs.name} ${PY_SETUP} build_sphinx"
 ]
 matrix += docs
 
@@ -103,7 +103,7 @@ for (py in PY_VERSIONS) {
             bc = new BuildConfig()
             bc.nodetype = 'linux'
             bc.env_vars = ENV_SETUP
-            bc.build_mode = NAME
+            bc.name = NAME
             bc.build_cmds = [
                 "conda config --add channels ${CONDA_CHANNEL}",
                 "${CONDA_CREATE} -n ${NAME} \

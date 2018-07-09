@@ -4,6 +4,8 @@ from . import hlsp
 from ..stpipe import Step
 from .. import datamodels
 
+__all__ = ["HlspStep"]
+
 
 class HlspStep(Step):
 

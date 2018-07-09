@@ -4,6 +4,9 @@ from ..stpipe import Step, cmdline
 from .. import datamodels
 from . import persistence
 
+__all__ = ["PersistenceStep"]
+
+
 class PersistenceStep(Step):
     """
     PersistenceStep: Correct a science image for persistence.

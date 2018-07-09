@@ -18,6 +18,10 @@ NRS_IMAGING_MODES = ["NRS_IMAGE", "NRS_FOCUS",
 # Supported NIRSpec spectrographic types.
 NRS_SPEC_MODES = ["NRS_BRIGHTOBJ", "NRS_FIXEDSLIT", "NRS_MSASPEC", "NRS_IFU"]
 
+
+__all__ = ["FlatFieldStep"]
+
+
 class FlatFieldStep(Step):
     """
     FlatFieldStep: Flat-field a science image using a flatfield reference image.

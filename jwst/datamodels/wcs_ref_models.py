@@ -1,12 +1,14 @@
 import numpy as np
+import warnings
 from astropy.modeling.core import Model
 from astropy import units as u
 from . import model_base
 
 from .extension import BaseExtension
+from .validate import ValidationWarning
+from .reference import ReferenceFileModel
 from jwst.transforms.jwextension import JWSTExtension
 from gwcs.extension import GWCSExtension
-from .reference import ReferenceFileModel
 
 __all__ = ['DistortionModel', 'DistortionMRSModel', 'SpecwcsModel', 'RegionsModel',
            'WavelengthrangeModel', 'CameraModel', 'CollimatorModel', 'OTEModel',
@@ -51,9 +53,14 @@ class _SimpleModel(ReferenceFileModel):
 
     def validate(self):
         super(_SimpleModel, self).validate()
-        assert isinstance(self.model, Model)
-        assert self.meta.instrument.name in ["NIRCAM", "NIRSPEC", "MIRI", "TFI", "FGS", "NIRISS"]
-
+        try:
+            assert isinstance(self.model, Model)
+            assert self.meta.instrument.name in ["NIRCAM", "NIRSPEC", "MIRI", "TFI", "FGS", "NIRISS"]
+        except AssertionError as errmsg:
+            if self._strict_validation:
+                raise AssertionError(errmsg)
+            else:
+                warnings.warn(str(errmsg), ValidationWarning)
 
 class DistortionModel(_SimpleModel):
     """
@@ -64,13 +71,18 @@ class DistortionModel(_SimpleModel):
 
     def validate(self):
         super(DistortionModel, self).validate()
-        assert isinstance(self.meta.input_units, (str, u.NamedUnit))
-        assert isinstance(self.meta.output_units, (str, u.NamedUnit))
-        if self.meta.instrument.name == 'NIRCAM':
-            assert self.meta.instrument.module is not None
-            assert self.meta.instrument.channel is not None
-            assert self.meta.instrument.p_pupil is not None
-
+        try:
+            assert isinstance(self.meta.input_units, (str, u.NamedUnit))
+            assert isinstance(self.meta.output_units, (str, u.NamedUnit))
+            if self.meta.instrument.name == 'NIRCAM':
+                assert self.meta.instrument.module is not None
+                assert self.meta.instrument.channel is not None
+                assert self.meta.instrument.p_pupil is not None
+        except AssertionError as errmsg:
+            if self._strict_validation:
+                raise AssertionError(errmsg)
+            else:
+                warnings.warn(str(errmsg), ValidationWarning)
 
 class DistortionMRSModel(ReferenceFileModel):
     """
@@ -120,20 +132,25 @@ class DistortionMRSModel(ReferenceFileModel):
 
     def validate(self):
         super(DistortionMRSModel, self).validate()
-        assert isinstance(self.meta.input_units, (str, u.NamedUnit))
-        assert isinstance(self.meta.output_units, (str, u.NamedUnit))
-        assert self.meta.instrument.name == "MIRI"
-        assert self.meta.exposure.type == "MIR_MRS"
-        assert self.meta.instrument.channel in ("12", "34", "1", "2", "3", "4")
-        assert self.meta.instrument.band in ("SHORT", "LONG", "MEDIUM")
-        assert self.meta.instrument.detector in ("MIRIFUSHORT", "MIRIFULONG")
-        assert all([isinstance(m, Model) for m in self.x_model])
-        assert all([isinstance(m, Model) for m in self.y_model])
-        assert all([isinstance(m, Model) for m in self.alpha_model])
-        assert all([isinstance(m, Model) for m in self.beta_model])
-        assert len(self.abv2v3_model.model) == 2
-        assert len(self.abv2v3_model.channel_band) == 2
-
+        try:
+            assert isinstance(self.meta.input_units, (str, u.NamedUnit))
+            assert isinstance(self.meta.output_units, (str, u.NamedUnit))
+            assert self.meta.instrument.name == "MIRI"
+            assert self.meta.exposure.type == "MIR_MRS"
+            assert self.meta.instrument.channel in ("12", "34", "1", "2", "3", "4")
+            assert self.meta.instrument.band in ("SHORT", "LONG", "MEDIUM")
+            assert self.meta.instrument.detector in ("MIRIFUSHORT", "MIRIFULONG")
+            assert all([isinstance(m, Model) for m in self.x_model])
+            assert all([isinstance(m, Model) for m in self.y_model])
+            assert all([isinstance(m, Model) for m in self.alpha_model])
+            assert all([isinstance(m, Model) for m in self.beta_model])
+            assert len(self.abv2v3_model.model) == 2
+            assert len(self.abv2v3_model.channel_band) == 2
+        except AssertionError as errmsg:
+            if self._strict_validation:
+                raise AssertionError(errmsg)
+            else:
+                warnings.warn(str(errmsg), ValidationWarning)
 
 class SpecwcsModel(_SimpleModel):
     """
@@ -143,15 +160,21 @@ class SpecwcsModel(_SimpleModel):
     reftype = "specwcs"
 
     def validate(self):
-        assert isinstance(self.meta.input_units, (str, u.NamedUnit))
-        assert isinstance(self.meta.output_units, (str, u.NamedUnit))
-        assert self.meta.instrument.name in ["NIRCAM",
-                                             "NIRSPEC",
-                                             "MIRI",
-                                             "TFI",
-                                             "FGS",
-                                             "NIRISS"]
-
+        super(SpecwcsModel, self).validate()
+        try:
+            assert isinstance(self.meta.input_units, (str, u.NamedUnit))
+            assert isinstance(self.meta.output_units, (str, u.NamedUnit))
+            assert self.meta.instrument.name in ["NIRCAM",
+                                                 "NIRSPEC",
+                                                 "MIRI",
+                                                 "TFI",
+                                                 "FGS",
+                                                 "NIRISS"]
+        except AssertionError as errmsg:
+            if self._strict_validation:
+                raise AssertionError(errmsg)
+            else:
+                warnings.warn(str(errmsg), ValidationWarning)
 
 class NIRCAMGrismModel(ReferenceFileModel):
     """
@@ -197,11 +220,18 @@ class NIRCAMGrismModel(ReferenceFileModel):
         self.meta.reftype = self.reftype
 
     def validate(self):
-        assert isinstance(self.meta.input_units, (str, u.NamedUnit))
-        assert isinstance(self.meta.output_units, (str, u.NamedUnit))
-        assert self.meta.instrument.name == "NIRCAM"
-        assert self.meta.exposure.type == "NRC_WFSS"
-        assert self.meta.reftype == self.reftype
+        super(NIRCAMGrismModel, self).validate()
+        try:
+            assert isinstance(self.meta.input_units, (str, u.NamedUnit))
+            assert isinstance(self.meta.output_units, (str, u.NamedUnit))
+            assert self.meta.instrument.name == "NIRCAM"
+            assert self.meta.exposure.type == "NRC_WFSS"
+            assert self.meta.reftype == self.reftype
+        except AssertionError as errmsg:
+            if self._strict_validation:
+                raise AssertionError(errmsg)
+            else:
+                warnings.warn(str(errmsg), ValidationWarning)
 
     def to_fits(self):
         raise NotImplementedError("FITS format is not supported for this file.")
@@ -246,12 +276,19 @@ class NIRISSGrismModel(ReferenceFileModel):
         self.meta.reftype = self.reftype
 
     def validate(self):
-        assert isinstance(self.meta.input_units, (str, u.NamedUnit))
-        assert isinstance(self.meta.output_units, (str, u.NamedUnit))
-        assert self.meta.instrument.name == "NIRISS"
-        assert self.meta.exposure.type == "NIS_WFSS"
-        assert self.meta.instrument.detector == "NIS"
-        assert self.meta.reftype == self.reftype
+        super(NIRISSGrismModel, self).validate()
+        try:
+            assert isinstance(self.meta.input_units, (str, u.NamedUnit))
+            assert isinstance(self.meta.output_units, (str, u.NamedUnit))
+            assert self.meta.instrument.name == "NIRISS"
+            assert self.meta.exposure.type == "NIS_WFSS"
+            assert self.meta.instrument.detector == "NIS"
+            assert self.meta.reftype == self.reftype
+        except AssertionError as errmsg:
+            if self._strict_validation:
+                raise AssertionError(errmsg)
+            else:
+                warnings.warn(str(errmsg), ValidationWarning)
 
     def to_fits(self):
         raise NotImplementedError("FITS format is not supported for this file.")
@@ -283,12 +320,18 @@ class RegionsModel(ReferenceFileModel):
 
     def validate(self):
         super(RegionsModel, self).validate()
-        assert isinstance(self.regions.copy(), np.ndarray)
-        assert self.meta.instrument.name == "MIRI"
-        assert self.meta.exposure.type == "MIR_MRS"
-        assert self.meta.instrument.channel in ("12", "34", "1", "2", "3", "4")
-        assert self.meta.instrument.band in ("SHORT", "LONG")
-        assert self.meta.instrument.detector in ("MIRIFUSHORT", "MIRIFULONG")
+        try:
+            assert isinstance(self.regions.copy(), np.ndarray)
+            assert self.meta.instrument.name == "MIRI"
+            assert self.meta.exposure.type == "MIR_MRS"
+            assert self.meta.instrument.channel in ("12", "34", "1", "2", "3", "4")
+            assert self.meta.instrument.band in ("SHORT", "LONG")
+            assert self.meta.instrument.detector in ("MIRIFUSHORT", "MIRIFULONG")
+        except AssertionError as errmsg:
+            if self._strict_validation:
+                raise AssertionError(errmsg)
+            else:
+                warnings.warn(str(errmsg), ValidationWarning)
 
 
 class WavelengthrangeModel(ReferenceFileModel):
@@ -319,7 +362,13 @@ class WavelengthrangeModel(ReferenceFileModel):
 
     def validate(self):
         super(WavelengthrangeModel, self).validate()
-        assert self.meta.instrument.name in ("MIRI", "NIRSPEC", "NIRCAM", "NIRISS")
+        try:
+            assert self.meta.instrument.name in ("MIRI", "NIRSPEC", "NIRCAM", "NIRISS")
+        except AssertionError as errmsg:
+            if self._strict_validation:
+                raise AssertionError(errmsg)
+            else:
+                warnings.warn(str(errmsg), ValidationWarning)
 
 
 class FPAModel(ReferenceFileModel):
@@ -355,8 +404,14 @@ class FPAModel(ReferenceFileModel):
 
     def validate(self):
         super(FPAModel, self).validate()
-        assert isinstance(self.nrs1_model, Model)
-        assert isinstance(self.nrs2_model, Model)
+        try:
+            assert isinstance(self.nrs1_model, Model)
+            assert isinstance(self.nrs2_model, Model)
+        except AssertionError as errmsg:
+            if self._strict_validation:
+                raise AssertionError(errmsg)
+            else:
+                warnings.warn(str(errmsg), ValidationWarning)
 
 
 class IFUPostModel(ReferenceFileModel):
@@ -536,8 +591,14 @@ class DisperserModel(ReferenceFileModel):
 
     def validate(self):
         super(DisperserModel, self).validate()
-        assert self.meta.instrument.grating in ["G140H", "G140M", "G235H", "G235M",
-                                                "G395H", "G395M", "MIRROR", "PRISM"]
+        try:
+            assert self.meta.instrument.grating in ["G140H", "G140M", "G235H", "G235M",
+                                                    "G395H", "G395M", "MIRROR", "PRISM"]
+        except AssertionError as errmsg:
+            if self._strict_validation:
+                raise AssertionError(errmsg)
+            else:
+                warnings.warn(str(errmsg), ValidationWarning)
 
 
 class FilteroffsetModel(ReferenceFileModel):
@@ -562,9 +623,15 @@ class FilteroffsetModel(ReferenceFileModel):
         self.meta.reftype = self.reftype
 
     def validate(self):
-        assert self.meta.instrument.name == "MIRI"
-        assert self.meta.instrument.detector == "MIRIMAGE"
         super(FilteroffsetModel, self).validate()
+        try:
+            assert self.meta.instrument.name == "MIRI"
+            assert self.meta.instrument.detector == "MIRIMAGE"
+        except AssertionError as errmsg:
+            if self._strict_validation:
+                raise AssertionError(errmsg)
+            else:
+                warnings.warn(str(errmsg), ValidationWarning)
 
 
 class IFUFOREModel(_SimpleModel):
@@ -649,8 +716,14 @@ class FOREModel(_SimpleModel):
 
     def validate(self):
         super(FOREModel, self).validate()
-        assert self.meta.instrument.filter in ["CLEAR", "F070LP", "F100LP", "F110W",
-                                               "F140X", "F170LP", "F290LP"]
+        try:
+            assert self.meta.instrument.filter in ["CLEAR", "F070LP", "F100LP", "F110W",
+                                                   "F140X", "F170LP", "F290LP"]
+        except AssertionError as errmsg:
+            if self._strict_validation:
+                raise AssertionError(errmsg)
+            else:
+                warnings.warn(str(errmsg), ValidationWarning)
 
 
 class WaveCorrModel(ReferenceFileModel):
@@ -677,5 +750,11 @@ class WaveCorrModel(ReferenceFileModel):
 
     def validate(self):
         super(WaveCorrModel, self).validate()
-        assert self.aperture_names is not None
-        assert self.apertures is not None
+        try:
+            assert self.aperture_names is not None
+            assert self.apertures is not None
+        except AssertionError as errmsg:
+            if self._strict_validation:
+                raise AssertionError(errmsg)
+            else:
+                warnings.warn(str(errmsg), ValidationWarning)

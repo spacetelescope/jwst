@@ -5,6 +5,9 @@ from .. import datamodels
 from . import extract
 
 
+__all__ = ["Extract1dStep"]
+
+
 class Extract1dStep(Step):
     """
     Extract1dStep: Extract a 1-d spectrum from 2-d data

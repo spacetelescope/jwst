@@ -3,6 +3,10 @@
 from ..stpipe import Step, cmdline
 from . import emission
 
+
+__all__ = ["EmissionStep"]
+
+
 class EmissionStep(Step):
     """
     EmissionStep: This step currently is a no-op; it passes the input file to

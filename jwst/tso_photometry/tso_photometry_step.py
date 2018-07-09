@@ -5,6 +5,8 @@ from ..datamodels import CubeModel
 from ..lib.catalog_utils import replace_suffix_ext
 from .tso_photometry import tso_aperture_photometry
 
+__all__ = ["TSOPhotometryStep"]
+
 
 class TSOPhotometryStep(Step):
     """

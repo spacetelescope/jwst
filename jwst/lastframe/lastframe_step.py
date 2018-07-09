@@ -2,6 +2,8 @@ from ..stpipe import Step
 from .. import datamodels
 from . import lastframe_sub
 
+__all__ = ["LastFrameStep"]
+
 
 class LastFrameStep(Step):
     """

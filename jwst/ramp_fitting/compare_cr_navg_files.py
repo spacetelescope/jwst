@@ -35,7 +35,6 @@
 # --> status = a1.compare()
 #
 
-from __future__ import division, print_function
 import sys, os, time
 from astropy.io import fits
 import numpy as N

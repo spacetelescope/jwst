@@ -10,7 +10,7 @@ import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-class PixelRamp(object):
+class PixelRamp():
     """
     Base class for a PixelRamp object
     """

@@ -1,5 +1,5 @@
-Reference File
-==============
+Reference File Types
+====================
 The superbias subtraction step uses a SUPERBIAS reference file.
 
 CRDS Selection Criteria

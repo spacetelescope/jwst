@@ -12,9 +12,7 @@ pytestmark = [
 
 def test_nrs_msa_spec2(_bigdata):
     """
-
     Regression test of calwebb_spec2 pipeline performed on NIRSpec MSA data.
-
     """
     input = 'F170LP-G235M_MOS_observation-6-c0e0_001_DN_NRS1_mod.fits'
 
@@ -29,16 +27,18 @@ def test_nrs_msa_spec2(_bigdata):
     step.extract_1d.bkg_order = 0
     step.run(os.path.join(_bigdata, 'pipelines', input))
 
+    ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX']
+
     # compare _cal files
     output = 'F170LP-G235M_MOS_observation-6-c0e0_001_DN_NRS1_mod_cal.fits'
     nbname = 'f170lp-g235m_mos_observation-6-c0e0_001_dn_nrs1_mod_cal_ref.fits'
     nb = os.path.join(_bigdata,'pipelines', nbname)
     h = pf.open(output)
     href = pf.open(nb)
-    h = h[:-1]
-    href = href[:-1]
-    result = pf.diff.FITSDiff(h, href,
-                              ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX','FILENAME'],
+    result = pf.diff.FITSDiff(h,
+                              href,
+                              ignore_hdus=['ASDF'],
+                              ignore_keywords=ignore_keywords,
                               rtol = 0.00001)
     assert result.identical, result.report()
 
@@ -48,9 +48,9 @@ def test_nrs_msa_spec2(_bigdata):
     nb = os.path.join(_bigdata, 'pipelines', nbname)
     h = pf.open(output2)
     href = pf.open(nb)
-    h = h[:-1]
-    href = href[:-1]
-    result = pf.diff.FITSDiff(h, href,
-                              ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX','FILENAME'],
+    result = pf.diff.FITSDiff(h,
+                              href,
+                              ignore_hdus=['ASDF'],
+                              ignore_keywords=ignore_keywords,
                               rtol = 0.00001)
     assert result.identical, result.report()

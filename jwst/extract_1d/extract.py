@@ -10,6 +10,7 @@ from .. import datamodels
 from ..datamodels import dqflags
 from .. assign_wcs import niriss        # for specifying spectral order number
 from .. transforms import models as trmodels
+from .. lib import pipe_utils
 from . import extract1d
 from . import ifu
 from . import spec_wcs
@@ -262,6 +263,9 @@ def find_dispaxis(input_model, slit, spectral_order, extract_params):
         initial_value = extract_params['dispaxis']
     else:
         initial_value = None
+        # There needs to be a default value for dispaxis.  If this can't be
+        # updated with a valid value, we will not extract the spectrum.
+        extract_params['dispaxis'] = None
 
     if slit == DUMMY:
         shape = input_model.data.shape[-2:]
@@ -437,8 +441,12 @@ def find_dispaxis(input_model, slit, spectral_order, extract_params):
         # reference file, or if there was no reference file.
         extract_params['dispaxis'] = dispaxis
 
-    log.debug("find_dispaxis:  dispaxis from ref file = %s, "
-              "from wavelengths = %s", str(initial_value), str(dispaxis))
+    if initial_value is None or initial_value == dispaxis:
+        log_fcn = log.debug
+    else:
+        log_fcn = log.warning
+    log_fcn("find_dispaxis:  dispaxis from ref file = %s, "
+            "from wavelengths = %s", str(initial_value), str(dispaxis))
 
 
 def log_initial_parameters(extract_params):
@@ -447,7 +455,8 @@ def log_initial_parameters(extract_params):
     if not "xstart" in extract_params:
         return
 
-    log.debug("dispaxis = %d", extract_params["dispaxis"])
+    log.debug("Initial parameters:")
+    log.debug("dispaxis = %s", str(extract_params["dispaxis"]))
     log.debug("spectral order = %d", extract_params["spectral_order"])
     log.debug("independent_var = %s", extract_params["independent_var"])
     log.debug("smoothing_length = %d", extract_params["smoothing_length"])
@@ -948,13 +957,17 @@ class ExtractBase:
         pass
 
 
-    def offset_from_offset(self, input_model, verbose):
+    def offset_from_offset(self, input_model, slit, verbose):
         """Get nod/dither pixel offset from [xy]_offset.
 
         Parameters
         ----------
         input_model: data model
             The input science data.
+
+        slit: SlitModel, or "dummy"
+            One slit from a MultiSlitModel (or similar), or "dummy" if
+            there are no slits.
 
         verbose: boolean
             If True, write log messages.
@@ -964,6 +977,8 @@ class ExtractBase:
         offset: float
         """
 
+        instrument = input_model.meta.instrument.name
+
         total_points = input_model.meta.dither.total_points
         if total_points is None or total_points < 2:
             if verbose:
@@ -971,15 +986,21 @@ class ExtractBase:
                          "nod/dither offset", str(total_points))
             return 0.
 
+        missing = False
         if 'detector' not in self.wcs.available_frames:
             if verbose:
-                log.warning("detector frame not available, so "
-                            "can't compute nod/dither offset")
-            return 0.
+                log.warning("detector frame is not available,")
+            missing = True
         if 'v2v3' not in self.wcs.available_frames:
             if verbose:
-                log.warning("v2v3 frame not available, so "
-                            "can't compute nod/dither offset")
+                if missing:
+                    log.warning("and v2v3 frame is not available,")
+                else:
+                    log.warning("v2v3 frame is not available,")
+            missing = True
+        if missing:
+            if verbose:
+                log.warning("so can't compute nod/dither offset")
             return 0.
         v2v3_detector = self.wcs.get_transform('v2v3', 'detector')
 
@@ -993,32 +1014,53 @@ class ExtractBase:
                             "assuming no nod/dither offset")
             return 0.
 
-        if hasattr(input_model.meta.wcsinfo, "v2_ref"):
-            v2ref = input_model.meta.wcsinfo.v2_ref     # in arcsec
+        v2ref = None
+        v3ref = None
+        v3idlyangle = None
+        vparity = None
+        wl_start = None
+        wl_end = None
+        if slit != DUMMY:
+            if hasattr(slit.meta.wcsinfo, "v2_ref"):
+                v2ref = slit.meta.wcsinfo.v2_ref                # in arcsec
+            if hasattr(slit.meta.wcsinfo, "v3_ref"):
+                v3ref = slit.meta.wcsinfo.v3_ref                # in arcsec
+            if hasattr(slit.meta.wcsinfo, "v3yangle"):
+                v3idlyangle = slit.meta.wcsinfo.v3yangle        # in degrees
+            if hasattr(slit.meta.wcsinfo, "vparity"):
+                vparity = slit.meta.wcsinfo.vparity
+            # These wavelengths are in meters; convert to microns later.
+            if hasattr(slit.meta.wcsinfo, "waverange_start"):
+                wl_start = slit.meta.wcsinfo.waverange_start
+            if hasattr(slit.meta.wcsinfo, "waverange_end"):
+                wl_end = slit.meta.wcsinfo.waverange_end
         else:
-            v2ref = None
-        if hasattr(input_model.meta.wcsinfo, "v3_ref"):
-            v3ref = input_model.meta.wcsinfo.v3_ref     # in arcsec
-        else:
-            v3ref = None
-        if hasattr(input_model.meta.wcsinfo, "v3yangle"):
-            v3idlyangle = input_model.meta.wcsinfo.v3yangle     # in deg
-        else:
-            v3idlyangle = None
-        if hasattr(input_model.meta.wcsinfo, "vparity"):
-            vparity = input_model.meta.wcsinfo.vparity
-        else:
-            vparity = None
-        if hasattr(input_model.meta.wcsinfo, "waverange_start"):
-            wl_start = input_model.meta.wcsinfo.waverange_start
-        else:
-            wl_start = None
-        if hasattr(input_model.meta.wcsinfo, "waverange_end"):
-            wl_end = input_model.meta.wcsinfo.waverange_end
-        else:
-            wl_end = None
+            if hasattr(input_model.meta.wcsinfo, "v2_ref"):
+                v2ref = input_model.meta.wcsinfo.v2_ref         # in arcsec
+            if hasattr(input_model.meta.wcsinfo, "v3_ref"):
+                v3ref = input_model.meta.wcsinfo.v3_ref         # in arcsec
+            if hasattr(input_model.meta.wcsinfo, "v3yangle"):
+                v3idlyangle = input_model.meta.wcsinfo.v3yangle # in degrees
+            if hasattr(input_model.meta.wcsinfo, "vparity"):
+                vparity = input_model.meta.wcsinfo.vparity
+            if hasattr(input_model.meta.wcsinfo, "waverange_start"):
+                wl_start = input_model.meta.wcsinfo.waverange_start
+            if hasattr(input_model.meta.wcsinfo, "waverange_end"):
+                wl_end = input_model.meta.wcsinfo.waverange_end
+
+        if v3idlyangle is None and instrument == "NIRSPEC":
+            v3idlyangle = 138.892975
+            if verbose:
+                log.warning("v3yangle not specified; "
+                            "setting it to %.6f degrees", v3idlyangle)
+        if vparity is None:
+            vparity = -1.
+            if verbose:
+                log.warning("vparity not specified; setting it to %g",
+                            vparity)
+
         if verbose:
-            log.debug("v2ref = %s, v3ref = %s, v3idlyangle = %s, "
+            log.debug("v2ref = %s, v3ref = %s, v3yangle = %s, "
                       "vparity = %s, wl_start = %s, wl_end = %s",
                       str(v2ref), str(v3ref), str(v3idlyangle), str(vparity),
                         str(wl_start), str(wl_end))
@@ -1032,7 +1074,8 @@ class ExtractBase:
 
         idl_v23 = trmodels.IdealToV2V3(v3idlyangle, v2ref, v3ref, vparity)
 
-        wavelength = 0.5 * (wl_end - wl_start) + wl_start
+        # Wavelength at the middle of the range, in microns.
+        wavelength = (0.5 * (wl_end - wl_start) + wl_start) * 1.e6
 
         # Compute the location in V2,V3 [in arcsec]
         xv0, yv0 = idl_v23(0., 0.)
@@ -1056,7 +1099,7 @@ class ExtractBase:
             offset = dx
         if np.isnan(offset):
             if verbose:
-                log.warning("Nod/dither offset is NaN, setting to 0.")
+                log.warning("Nod/dither offset is NaN; setting it to 0.")
             offset = 0.
 
         return offset
@@ -1289,6 +1332,7 @@ class ExtractModel(ExtractBase):
     def log_extraction_parameters(self):
         """Log the updated extraction parameters."""
 
+        log.debug("Updated parameters:")
         log.debug("nod_correction = %s", str(self.nod_correction))
         note_x = ""
         note_y = ""
@@ -1999,12 +2043,17 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
                  log_increment):
 
     output_model = datamodels.MultiSpecModel()
+    if hasattr(input_model, "int_times"):
+        output_model.int_times = input_model.int_times.copy()
     output_model.update(input_model)
+
+    # This will be relevant if we're asked to extract a spectrum and the
+    # spectral order is zero.  That's only OK if the disperser is a prism.
+    prism_mode = is_prism(input_model)
 
     # Read and interpret the reference file.
     ref_dict = load_ref_file(refname)
 
-    # More generally, one could use '"Multi" in str(type(input_model))'.
     if isinstance(input_model, datamodels.MultiSlitModel) or \
        isinstance(input_model, datamodels.MultiProductModel):
 
@@ -2021,6 +2070,9 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
                 log.info('No data for slit %s, skipping ...', slit.name)
                 continue
             sp_order = get_spectral_order(slit)
+            if sp_order == 0 and not prism_mode:
+                log.info("Spectral order 0 is a direct image, skipping ...")
+                continue
             extract_params = get_extract_parameters(
                                 ref_dict,
                                 slit, slit.name, sp_order,
@@ -2032,6 +2084,10 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
                 log.info('Spectral order %d not found, skipping ...', sp_order)
                 continue
             find_dispaxis(input_model, slit, sp_order, extract_params)
+            if extract_params['dispaxis'] is None:
+                log.warning("The dispersion direction couldn't be determined, "
+                            "so skipping ...")
+                continue
 
             try:
                 (ra, dec, wavelength, net, background, dq,
@@ -2099,6 +2155,10 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
             for sp_order in spectral_order_list:
                 if sp_order == "not set yet":
                     sp_order = get_spectral_order(input_model)
+                if sp_order == 0 and not prism_mode:
+                    log.info("Spectral order 0 is a direct image, "
+                             "skipping ...")
+                    continue
 
                 extract_params = get_extract_parameters(
                                     ref_dict,
@@ -2108,6 +2168,10 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
                 if extract_params['match'] == EXACT:
                     slit = DUMMY
                     find_dispaxis(input_model, slit, sp_order, extract_params)
+                    if extract_params['dispaxis'] is None:
+                        log.warning("The dispersion direction couldn't be "
+                                    "determined, so skipping ...")
+                        continue
                     try:
                         (ra, dec, wavelength, net, background, dq,
                          prev_offset) = extract_one_slit(
@@ -2171,6 +2235,10 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
             for sp_order in spectral_order_list:
                 if sp_order == "not set yet":
                     sp_order = get_spectral_order(input_model)
+                    if sp_order == 0 and not prism_mode:
+                        log.info("Spectral order 0 is a direct image, "
+                                 "skipping ...")
+                        continue
 
                 extract_params = get_extract_parameters(
                                     ref_dict,
@@ -2185,6 +2253,10 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
                                 sp_order)
                     continue
                 find_dispaxis(input_model, slit, sp_order, extract_params)
+                if extract_params['dispaxis'] is None:
+                    log.warning("The dispersion direction couldn't be "
+                                "determined, so skipping ...")
+                    continue
 
                 got_relsens = True
                 try:
@@ -2281,7 +2353,11 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
 
     # Copy the integration time information from the INT_TIMES table
     # to keywords in the output file.
-    populate_time_keywords(input_model, output_model)
+    if pipe_utils.is_tso(input_model):
+        populate_time_keywords(input_model, output_model)
+    else:
+        log.debug("Not copying from the INT_TIMES table because "
+                  "this is not a TSO exposure.")
 
     # See output_model.spec[i].meta.wcs instead.
     output_model.meta.wcs = None
@@ -2366,88 +2442,70 @@ def populate_time_keywords(input_model, output_model):
     if skip:
         return
 
-    if nrows > 0:
-        int_num = input_model.int_times['integration_number']
-        start_utc = input_model.int_times['int_start_MJD_UTC']
-        mid_utc = input_model.int_times['int_mid_MJD_UTC']
-        end_utc = input_model.int_times['int_end_MJD_UTC']
-        start_tdb = input_model.int_times['int_start_BJD_TDB']
-        mid_tdb = input_model.int_times['int_mid_BJD_TDB']
-        end_tdb = input_model.int_times['int_end_BJD_TDB']
+    int_num = input_model.int_times['integration_number']
+    start_utc = input_model.int_times['int_start_MJD_UTC']
+    mid_utc = input_model.int_times['int_mid_MJD_UTC']
+    end_utc = input_model.int_times['int_end_MJD_UTC']
+    start_tdb = input_model.int_times['int_start_BJD_TDB']
+    mid_tdb = input_model.int_times['int_mid_BJD_TDB']
+    end_tdb = input_model.int_times['int_end_BJD_TDB']
 
-        # Inclusive range of integration numbers in the input data,
-        # zero indexed.
-        data_range = (int_start, int_end)
-        # Inclusive range of integration numbers in the INT_TIMES table,
-        # zero indexed.
-        table_range = (int_num[0] - 1, int_num[-1] - 1)
-        offset = data_range[0] - table_range[0]
-        if data_range[0] < table_range[0] or data_range[1] > table_range[1]:
-            log.warning("Not using the INT_TIMES table because it does not "
-                        "include rows for all integrations in the data.")
-            return
+    # Inclusive range of integration numbers in the input data,
+    # zero indexed.
+    data_range = (int_start, int_end)
+    # Inclusive range of integration numbers in the INT_TIMES table,
+    # zero indexed.
+    table_range = (int_num[0] - 1, int_num[-1] - 1)
+    offset = data_range[0] - table_range[0]
+    if data_range[0] < table_range[0] or data_range[1] > table_range[1]:
+        log.warning("Not using the INT_TIMES table because it does not "
+                    "include rows for all integrations in the data.")
+        return
 
-        log.debug("Copying values from the INT_TIMES table.")
+    log.debug("TSO data, so copying times from the INT_TIMES table.")
 
-        if hasattr(input_model, 'data'):
-            shape = input_model.data.shape
-            if len(shape) == 2:
-                num_integ = 1
-            else:                               # len(shape) == 3
-                num_integ = shape[0]
-        else:                                   # e.g. MultiSlit data
+    if hasattr(input_model, 'data'):
+        shape = input_model.data.shape
+        if len(shape) == 2:
             num_integ = 1
+        else:                                   # len(shape) == 3
+            num_integ = shape[0]
+    else:                                       # e.g. MultiSlit data
+        num_integ = 1
 
-        n_output_spec = len(output_model.spec)
+    # This assumes that the spec attribute of output_model has already
+    # been created, and spectra have been appended.
+    n_output_spec = len(output_model.spec)
 
-        # Assumptions about input_model:
-        # If the number of integrations is one, there may be multiple
-        # spectra.  These might be different spectral orders, and different
-        # orders can be in the same image (e.g. NIRISS SOSS data) or in
-        # different 2-D cutouts (e.g. MultiSlit data).  Or these might be
-        # spectra through different slits but projected onto a single
-        # image and subsequently (via extract_2d) separated into different
-        # 2-D cutouts (MultiSlit data, again).  But there could be just
-        # one spectrum, either in a single 2-D image (e.g. MIRI LRS),
-        # subarray, or MultiSlit with just one slit.
-        # If the number of integrations is greater than one (or if the
-        # input is multi-integration format (3-D) but with a length of
-        # 1 for the first axis), we will only extract the spectrum of
-        # one object; the location will be the same for every integration,
-        # and the number of output spectra will be equal to the number
-        # of integrations (unless there was a problem with the extraction).
-
-        # num_j is the number of different spectra, e.g. the number of
-        # fixed-slit spectra, MSA spectra, or different spectral orders;
-        # num_j = 1 for multi-integration data (meaning there's just one
-        # spectrum in each integration).
-        # The total number of output spectra n_output_spec = num_integ * num_j
-        if num_integ > 1:
-            num_j = 1
-        else:
-            num_j = n_output_spec
-
-        log.debug("Number of integrations = %d; number of spectra for "
-                  "one integration = %d", num_integ, num_j)
-
-        # Note that either num_integ or num_j (or possibly both) will be one.
-        # n is a counter for spectra in output_model.
-        n = 0
-        for k in range(num_integ):              # for each integration
-            row = k + offset
-            for j in range(num_j):                  # for each input spectrum
-                spec = output_model.spec[n]         # n is incremented in loop
-                spec.int_num = int_num[row]
-                spec.start_utc = start_utc[row]
-                spec.mid_utc = mid_utc[row]
-                spec.end_utc = end_utc[row]
-                spec.start_tdb = start_tdb[row]
-                spec.mid_tdb = mid_tdb[row]
-                spec.end_tdb = end_tdb[row]
-                n += 1
-
+    # num_j is the number of spectra per integration, e.g. the number of
+    # fixed-slit spectra, MSA spectra, or different spectral orders;
+    # num_integ is the number of integrations.
+    # The total number of output spectra is n_output_spec = num_integ * num_j
+    num_j = n_output_spec // num_integ
+    if n_output_spec != num_j * num_integ:      # sanity check
+        log.warning("populate_time_keywords:  Don't understand "
+                    "n_output_spec = %d, num_j = %d, num_integ = %d",
+                    n_output_spec, num_j, num_integ)
     else:
-        log.warning("There is no INT_TIMES table in the input file.")
+        log.debug("Number of output spectra = %d; "
+                  "number of spectra for each integration = %d; "
+                  "number of integrations = %d",
+                  n_output_spec, num_j, num_integ)
+
+    # n is a counter for spectra in output_model.
+    n = 0
+    for j in range(num_j):                      # for each spectrum or order
+        for k in range(num_integ):                  # for each integration
+            row = k + offset
+            spec = output_model.spec[n]             # n is incremented below
+            spec.int_num = int_num[row]
+            spec.start_utc = start_utc[row]
+            spec.mid_utc = mid_utc[row]
+            spec.end_utc = end_utc[row]
+            spec.start_tdb = start_tdb[row]
+            spec.mid_tdb = mid_tdb[row]
+            spec.end_tdb = end_tdb[row]
+            n += 1
 
 
 def get_spectral_order(slit):
@@ -2463,6 +2521,31 @@ def get_spectral_order(slit):
         sp_order = 1
 
     return sp_order
+
+
+def is_prism(input_model):
+
+    detector = input_model.meta.instrument.detector
+    if detector is None:
+        return False
+
+    filter = input_model.meta.instrument.filter
+    if filter is None:
+        filter = "NONE"
+    else:
+        filter = filter.upper()
+    grating = input_model.meta.instrument.grating
+    if grating is None:
+        grating = "NONE"
+    else:
+        grating = grating.upper()
+
+    prism_mode = False
+    if (detector.startswith("MIR") and filter.find("P750L") >= 0 or
+        detector.startswith("NRS") and grating.find("PRISM") >= 0):
+            prism_mode = True
+
+    return prism_mode
 
 
 def copy_keyword_info(slit, slitname, spec):
@@ -2604,7 +2687,7 @@ def extract_one_slit(input_model, slit, integ,
 
     # Only call this method for the first integration.
     if prev_offset == OFFSET_NOT_ASSIGNED_YET:
-        offset = extract_model.offset_from_offset(input_model, verbose)
+        offset = extract_model.offset_from_offset(input_model, slit, verbose)
         if offset != 0:                         # xxx should be temporary
             if verbose:
                 log.debug("Computed nod/dither offset = %s, but don't "
