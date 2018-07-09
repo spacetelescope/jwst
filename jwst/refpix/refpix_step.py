@@ -60,27 +60,24 @@ class RefPixStep(Step):
                               (self.side_smoothing_length,))
                 self.log.info('side_gain = %f' % (self.side_gain,))
                 self.log.info('odd_even_rows = %s' % (self.odd_even_rows,))
-                result = reference_pixels.correct_model(input_model.copy(),
+                datamodel = input_model.copy()
+                status = reference_pixels.correct_model(datamodel,
                                                         self.odd_even_columns,
                                                         self.use_side_ref_pixels,
                                                         self.side_smoothing_length,
                                                         self.side_gain,
                                                         self.odd_even_rows)
-                #
-                # This returns None if there are NaNs in the output data, as would
-                # be the case if the code is unable to calculate the reference value
-                # due to a lack of valid reference pixels
-                if result is not None:
-                    if input_model.meta.subarray.name == 'FULL':
-                        result.meta.cal_step.refpix = 'COMPLETE'
-                    else:
-                        result.meta.cal_step.refpix = 'SKIPPED'
-
-                    return result
-                else:
-                    self.log.warning("Invalid reference pixels, refpix step skipped")
-                    input_model.meta.cal_step.refpix = 'SKIPPED'
-                    return input_model
+                if status == reference_pixels.REFPIX_OK:
+                    datamodel.meta.cal_step.refpix = 'COMPLETE'
+                elif status == reference_pixels.SUBARRAY_DOESNTFIT:
+                    self.log.warning("Subarray doesn't fit in full-sized array")
+                    datamodel.meta.cal_step.refpix = 'SKIPPED'
+                elif status == reference_pixels.BAD_REFERENCE_PIXELS:
+                    self.log.warning("No valid reference pixels, refpix step skipped")
+                    datamodel.meta.cal_step.refpix = 'SKIPPED'
+                elif status == reference_pixels.SUBARRAY_SKIPPED:
+                    datamodel.meta.cal_step.refpix = 'SKIPPED'
+                return datamodel
 
 def refpix_correction(input):
     a = RefPixStep()
