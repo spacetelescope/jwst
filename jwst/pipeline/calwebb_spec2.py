@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from collections import defaultdict
 import os.path as op
+import traceback
 
 from .. import datamodels
 from ..lib.pipe_utils import is_tso
@@ -78,7 +79,7 @@ class Spec2Pipeline(Pipeline):
 
         # Each exposure is a product in the association.
         # Process each exposure.
-        exceptions = []
+        has_exceptions = False
         for product in asn['products']:
             self.log.info('Processing product {}'.format(product['name']))
             self.output_file = product['name']
@@ -89,21 +90,16 @@ class Spec2Pipeline(Pipeline):
                     asn.filename
                 )
             except Exception as exception:
-                exceptions.append((product['name'], exception))
+                traceback.print_exc()
+                has_exceptions = True
             else:
                 if result is not None:
                     self.save_model(result)
                     self.closeout(to_close=[result])
 
-        # If exceptions occurred, log them.
-        for product_name, exception in exceptions:
-            self.log.error(
-                'Product {product_name} failed processing'
-                ' for reason {exception}'.format(product_name=product_name,
-                                                 exception=exception))
-        if self.fail_on_exception and len(exceptions):
+        if has_exceptions and self.fail_on_exception:
             raise RuntimeError(
-                'One or more products failed to process. Failing calibration'
+                'One or more products failed to process. Failing calibration.'
             )
 
         # We're done
