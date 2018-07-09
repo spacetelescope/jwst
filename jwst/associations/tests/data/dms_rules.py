@@ -22,6 +22,10 @@ class Asn_DMS_Base(DMSBaseMixin, Association):
     def _add(self, item):
         self.data['members'].append(item)
 
+    @RegistryMarker.callback('finalize')
+    def make_new_asns(self):
+        self.data['make_new_asns'] = 'yep, did it'
+
 
 @RegistryMarker.callback('finalize')
 def finalize(asns):
