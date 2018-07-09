@@ -425,6 +425,7 @@ def create_grism_bbox(input_model,
         if not isinstance(mmag_extract, (int, float)):
             raise TypeError("Expected mmag_extract to be an int or float")
 
+    # the reference file specifies this in a list
     if extract_orders is not None:
         if isinstance(extract_orders, list):
             if not all(isinstance(item, int) for item in extract_orders):
@@ -433,27 +434,27 @@ def create_grism_bbox(input_model,
             raise TypeError("Expected extract_orders to be a list of ints")
 
     # figure out the dispersion direction, shouldn't this be in the polynomials already?
-    disperse_row_right = True  # disperse to increasing x
-    disperse_column = False  # column always disperses to increasing y
+    # disperse_row_right = True  # disperse to increasing x
+    # disperse_column = False  # column always disperses to increasing y
 
     instr_name = input_model.meta.instrument.name
     if instr_name == "NIRCAM":
         module, grism, filter_name = (input_model.meta.instrument.module,
                                       input_model.meta.instrument.pupil,
                                       input_model.meta.instrument.filter)
-        if ((module == "B") and (grism == "GRISMR")):
-            disperse_row_right = False
-        elif (grism == "GRISMC"):
-            disperse_column = True
-            disperse_row_right = False
+        # if ((module == "B") and (grism == "GRISMR")):
+        #     disperse_row_right = False
+        # elif (grism == "GRISMC"):
+        #     disperse_column = True
+        #     disperse_row_right = False
 
     elif instr_name == "NIRISS":
         grism, filter_name = (input_model.meta.instrument.filter,
                               input_model.meta.instrument.pupil)
 
-        if "R" == grism[-1]:
-            disperse_column = True
-            disperse_row_right = False
+        # if "R" == grism[-1]:
+        #     disperse_column = True
+        #     disperse_row_right = False
     else:
         raise ValueError("Input model is from unexpected instrument")
 
@@ -461,7 +462,11 @@ def create_grism_bbox(input_model,
     xsize = input_model.meta.subarray.xsize
     ysize = input_model.meta.subarray.ysize
 
-    skyobject_list = get_object_info(input_model.meta.source_catalog.filename)
+    # extract the catalog objects
+    catalog = input_model.meta.source_catalog.filename
+    if catalog is None:
+        raise ValueError("No source catalog listed in datamodel")
+    skyobject_list = get_object_info(catalog)
 
     # get the imaging transform to record the center of the object in the image
     # here, image is in the imaging reference frame, before going through the
@@ -476,44 +481,46 @@ def create_grism_bbox(input_model,
         waverange_selector = f.waverange_selector
         orders = f.order
         if extract_orders is None:
-            extract_orders = f.extract_orders
-        # add logic to deal with extract orders being given a singular list
-        # wihtout a filter specificiation
+            extract_orders = f.extract_orders  # what orders to extract per filter
+        # check logic for specifying order with filter, in the reference file
+        # the list of extraction orders is in sync with the filter list
 
     # All objects in the catalog will use the same filter for translation
     # that filter is the one that was used in front of the grism
     fselect = waverange_selector.index(filter_name)
+    # that filter is the one that was used in front of the grism during the observation
+    # each order has a different wavelength range for a given filer
+    order_extraction_list = extract_orders[:][fselect]  # return the list of orders for that filter
+    log.info("Extracting order(s) {} for {}".format(order_extraction_list, filter_name))
 
     grism_objects = []  # the return list of GrismObjects
     for obj in skyobject_list:
         if obj.abmag < mmag_extract:
-            # could add logic to ignore object if too far off image,
-
-            # save the image frame center of the object
+            # save the detector_frame center of the object
             # takes in ra, dec, wavelength, order but wave and order
             # don't get used until the detector->grism_detector transform
+            # so their values are inconsequential
             xcenter, ycenter, _, _ = sky_to_detector(obj.sky_centroid.icrs.ra.value,
                                                      obj.sky_centroid.icrs.dec.value,
                                                      1, 1)
-
             order_bounding = {}
             waverange = {}
-            for oidx, order in enumerate(orders):
-                if order in extract_orders[:][fselect]:
+            for oidx, order in enumerate(order_extraction_list):
+                wave_min, wave_max = wrange[oidx][fselect]
+                if order in orders:
                     # The orders of the bounding box in the non-dispersed image
                     # drive the extraction extent. The location of the min and
                     # max wavelengths for each order are used to get the
                     # location of the +/- sides of the bounding box in the
                     # grism image
-                    lmin, lmax = wrange[oidx][fselect]
-
+                    # lmin, lmax = wrange[oidx][fselect]
                     # we need to be specific with dispersion direction here?
                     # I think this should be taken care of in the trace polys
-                    wave_min = lmax
-                    wave_max = lmin
-                    if (disperse_row_right or disperse_column):
-                        wave_min = lmin
-                        wave_max = lmax
+                    # wave_min = lmax
+                    # wave_max = lmin
+                    # if (disperse_row_right or disperse_column):
+                    #     wave_min = lmin
+                    #     wave_max = lmax
 
                     xmax, ymax, _, _, _ = sky_to_grism(obj.sky_bbox_ll.ra.value,
                                                        obj.sky_bbox_ll.dec.value,
@@ -521,6 +528,17 @@ def create_grism_bbox(input_model,
                     xmin, ymin, _, _, _ = sky_to_grism(obj.sky_bbox_ur.ra.value,
                                                        obj.sky_bbox_ur.dec.value,
                                                        wave_max, order)
+
+                    # Make sure that we have the correct box corners tagged
+                    # as the min and max extents for the grism, the dispersion
+                    # direction changes with grism
+                    if ((xmax < xmin) or (ymax < ymin)):
+                        txmax = xmin
+                        tymax = ymin
+                        xmin = xmax
+                        ymin = ymax
+                        xmax = xmin
+                        ymax = ymin
 
                     # don't add objects and orders which are entirely off the detector
                     # this could also live in extract_2d
@@ -548,7 +566,7 @@ def create_grism_bbox(input_model,
 
                     if not exclude:
                         order_bounding[order] = ((round(ymin), round(ymax)), (round(xmin), round(xmax)))
-                        waverange[order] = ((lmin, lmax))
+                        waverange[order] = ((wave_min, wave_max))
             # add lmin and lmax used for the orders here?
             # input_model.meta.wcsinfo.waverange_start keys covers the
             # full range of all the orders
@@ -565,6 +583,8 @@ def create_grism_bbox(input_model,
                                                  sky_bbox_ur=obj.sky_bbox_ur,
                                                  xcentroid=xcenter,
                                                  ycentroid=ycenter))
+            else:
+                log.info("No orders were on detector for obj: {}".format(obj.sid))
 
     return grism_objects
 
