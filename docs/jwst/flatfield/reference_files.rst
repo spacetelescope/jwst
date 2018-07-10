@@ -1,8 +1,8 @@
 Reference File 
 ===============
 There are four reference file types for the flat_field step.  Reftype
-FLAT is used for all data except NIRSpec.  NIRSpec data use three
-reftypes:  FFLAT (fore optics), SFLAT (spectrograph optics), and 
+FLAT is used for all exposure types except NIRSpec spectra.  
+NIRSpec spectra use three reftypes:  FFLAT (fore optics), SFLAT (spectrograph optics), and 
 DFLAT (detector).
 
 
@@ -206,20 +206,8 @@ The DQ_DEF table contains the bit assignments used in the DQ array, and contains
 
 *IFU*
 ~~~~~
-The IFU reference files have EXP_TYPE=NRS_IFU.  There are 3 IMAGE extensions,
-a BINTABLE extension labeled FAST_VARIATION, and a BINTABLE labeled DQ_DEF.
-
-The IMAGE extensions have the following characteristics:
-
-=======   =====  =====================  =========
-EXTNAME   NAXIS  Dimensions             Data type
-=======   =====  =====================  =========
-SCI       2      ncols x nrows          float
-ERR       2      ncols x nrows          float
-DQ        2      ncols x nrows          integer
-=======   =====  =====================  =========
-
-
+The IFU reference files have EXP_TYPE=NRS_IFU.  These have one extensions,
+a BINTABLE extension labeled FAST_VARIATION. 
 
 The FAST_VARIATION table contains four columns:
 
