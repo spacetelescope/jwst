@@ -9,11 +9,11 @@ properties:
           readpatt:
             title: Readout pattern
             type: string
-            enum: [ACQ1, ACQ2, ALLIRS2, BRIGHT1, BRIGHT2,
-              DEEP2, DEEP8, FAST, FASTGRPAVG, FASTINTAVG,
+            enum: [ACQ1, ACQ2, BRIGHT1, BRIGHT2,
+              DEEP2, DEEP8, FAST, FASTGRPAVG,
               FGS, FGS60, FGS8370, FGS840, FGSRAPID, FINEGUIDE,
               ID, MEDIUM2, MEDIUM8, NIS, NISRAPID,
               NRS, NRSIRS2, NRSN16R4, NRSN32R8, NRSN8R2,
-              NRSRAPID, NRSIRS2RAPID, ALLIRS2, NRSSLOW, RAPID,
+              NRSRAPID, NRSIRS2RAPID, NRSSLOW, RAPID,
               SHALLOW2, SHALLOW4, SLOW, TRACK, ANY, N/A]
             fits_keyword: READPATT
