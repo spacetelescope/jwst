@@ -10,19 +10,19 @@ CRDS Selection Criteria
 PHOTOM Reference Files
 ^^^^^^^^^^^^^^^^^^^^^^
 
-For FGS, photom reference files are selected based on the values of INSTRUME and DETECTOR
+For FGS, photom reference files are selected based on the values of DETECTOR
 in the science data file.
 
-For MIRI photom reference files are selected based on the values of INSTRUME and DETECTOR
+For MIRI photom reference files are selected based on the values of DETECTOR and BAND
 in the science data file.
 
-For NIRCam, photom reference files are selected based on the values of INSTRUME and DETECTOR
+For NIRCam, photom reference files are selected based on the values DETECTOR
 in the science data file.
 
-For NIRISS, photom reference files are selected based on the values of INSTRUME and DETECTOR
+For NIRISS, photom reference files are selected based on the values of DETECTOR
 in the science data file.
 
-For NIRSpec, photom reference files are selected based on the values of INSTRUME and EXP_TYPE
+For NIRSpec, photom reference files are selected based on the values of EXP_TYPE
 in the science data file.
 
 A row of data within the table that matches the mode of the science exposure
@@ -33,7 +33,6 @@ dependent. The current row selection criteria are:
 * MIRI:
    - Imager (includes LRS): Filter and Subarray
    - MRS: Does not use table-based reference file
-   - IFU: Band
 * NIRCam: Filter and Pupil
 * NIRISS:
    - Imaging: Filter and Pupil
@@ -45,19 +44,19 @@ dependent. The current row selection criteria are:
 AREA map Reference Files
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-For FGS, photom reference files are selected based on the values of INSTRUME and DETECTOR
+For FGS, photom reference files are selected based on the values of DETECTOR
 in the science data file.
 
-For MIRI photom reference files are selected based on the values of INSTRUME, DETECTOR, and EXP_TYPE
+For MIRI photom reference files are selected based on the values of DETECTOR and EXP_TYPE
 in the science data file.
 
-For NIRCam, photom reference files are selected based on the values of INSTRUME, DETECTOR, and EXP_TYPE
+For NIRCam, photom reference files are selected based on the values of DETECTOR and EXP_TYPE
 in the science data file.
 
-For NIRISS, photom reference files are selected based on the values of INSTRUME, DETECTOR, and EXP_TYPE
+For NIRISS, photom reference files are selected based on the values of DETECTOR and EXP_TYPE
 in the science data file.
 
-For NIRSpec, photom reference files are selected based on the values of INSTRUME, DETECTOR, and EXP_TYPE
+For NIRSpec, photom reference files are selected based on the values of DETECTOR and EXP_TYPE
 in the science data file.
 
 Reference File Format
@@ -67,7 +66,7 @@ PHOTOM Reference File Format
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Except for MIRI MRS, photom reference files are FITS format with a single
-BINTABLE extension.  The primary data unit is always empty.  The columns of
+BINTABLE extension.  The primary data array is always empty.  The columns of
 the table vary with instrument according to the selection criteria listed 
 above. The first few columns always correspond to the selection criteria, such
 as Filter and Pupil, or Filter and Grating. The remaining columns contain the
@@ -82,7 +81,6 @@ data types are listed below.
 * GRATING (string) - NIRSpec
 * SLIT (string) - NIRSpec Fixed-Slit
 * SUBARRAY (string) - MIRI Imager/LRS
-* BAND (string) - MIRI MRS
 * PHOTMJSR (float) - all instruments
 * UNCERTAINTY (float) - all instruments
 * NELEM (int) - if NELEM > 0, then NELEM entries are read from each of the
