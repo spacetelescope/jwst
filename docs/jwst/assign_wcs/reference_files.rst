@@ -100,11 +100,15 @@ SPECWCS
 :::::::
 For MIRI, SPECWCS reference files are currently selected based on the values of DETECTOR, CHANNEL, BAND, SUBARRAY, and EXP_TYPE in the input science data set.
 
-For NIRCAM, SPECWCS reference files are currently selected based on the values of EXPT_TYPE, MODULE, and PUPIL in the input science data set.
+For NIRCAM, SPECWCS reference files are currently selected based on the values of EXP_TYPE, MODULE, and PUPIL in the input science data set.
 
-For NIRISS GRISM and TSGRIM modes, SPECWCS reference files are currently selected based on the values of SUBARRAY and EXP_TYPE in the input science data set.
+For NIRCAM WFSS, SPECWCS reference files are currently selected based on the values of EXP_TYPE, MODULE, and PUPIL in the input science data set. 
 
-FOR NIRISS WFSS mode, SPECWCS reference files are currently selected based on the values of EXP_TYPE, FILTER, and PUPIL in the input science data set.
+For NIRCAM TSGRIM, SPECWCS reference files are currently selected based on the values of EXP_TYPE, MODULE, and PUPIL in the input science data set.
+
+FOR NIRISS WFSS, SPECWCS reference files are currently selected based on the values of EXP_TYPE, FILTER, and PUPIL in the input science data set.
+
+
 
 REGIONS (MIRI only)
 :::::::::::::::::::
@@ -138,7 +142,7 @@ DISPERSER
 :::::::::
 
 
-The disperser reference file contains reference data about the NIRSPEC dispersers (gratings or the prism). The reference data is described in the NIRSPEC Interface Control Document.
+The disperser reference file contains reference data about the NIRSPEC dispersers (gratings or the prism). 
 
 The following fields are common for all gratings and the prism:
 
