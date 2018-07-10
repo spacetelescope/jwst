@@ -10,8 +10,8 @@ Updated: December 12, 2011
 License: MIT
 
 """
-from __future__ import print_function
 from collections import namedtuple
+from functools import partial
 import inspect
 import logging
 
@@ -48,74 +48,75 @@ class Signal(object):
         for func in funcs:
             self.connect(func)
 
-    def __call__(self, *args, **kwargs):
-        # Call handler functions
-        logger.debug(
-            'Signal {}: Emitting with args:"{}", kwargs:"{}"'.format(
-                self.__class__.__name__,
-                args,
-                kwargs
-            )
-        )
+    def call(self, *args, **kwargs):
+        """Generator returning result of each slot connected.
 
-        if not self.enabled:
-            logger.debug(
-                'Signal {}: Disabled, exiting...'.format(
-                    self.__class__.__name__
-                )
-            )
-            return
+        Parameters
+        ----------
+        args: (arg[, ...])
+            Positional arguments to pass to the slots.
 
-        # No recursive signalling
-        self.set_enabled(False, push=True)
+        kwargs: {key: value[, ...]}
+            Keyword arguments to pass to the slots.
 
-        # Call the slots.
-        try:
-            to_be_removed = []
-            for slot in self._slots.copy():
-                try:
-                    slot.func(*args, **kwargs)
-                except RuntimeError:
-                    logger.warning(
-                        'Signal {}: Signals func->RuntimeError: '
-                        'func "{}" will be removed.'.format(
-                            self.__class__.__name_,
-                            slot.func
-                        )
+        Returns
+        -------
+        generator
+            A generator returning the result from each slot.
+        """
+        for slot in self.slots:
+            try:
+                yield slot(*args, **kwargs)
+            except Exception as exception:
+                logger.debug(
+                    'Signal {}: Slot {} raised {}'.format(
+                        self.__class__.__name_,
+                        slot,
+                        exception
                     )
-                    to_be_removed.append(slot)
-                finally:
-                    if slot.single_shot:
-                        to_be_removed.append(slot)
+                )
 
-            for remove in to_be_removed:
-                self._slots.discard(remove)
+    def emit(self, *args, **kwargs):
+        """Invoke slots attached to the signal
 
-            # Call handler methods
-            to_be_removed = []
-            emitters = self._methods.copy()
-            for obj, slots in emitters.items():
-                for slot in slots.copy():
-                    try:
-                        slot.func(obj, *args, **kwargs)
-                    except RuntimeError:
-                        logger.warning(
-                            'Signal {}: Signals methods->RuntimeError, '
-                            'obj.func "{}.{}" will be removed'.format(
-                                self.__class__.__new__,
-                                obj,
-                                slot.func
-                            )
-                        )
-                        to_be_removed.append((obj, slot))
-                    finally:
-                        if slot.single_shot:
-                            to_be_removed.append((obj, slot))
+        Parameters
+        ----------
+        args: (arg[, ...])
+            Positional arguments to pass to the slots.
 
-            for obj, slot in to_be_removed:
-                self._methods[obj].discard(slot)
-        finally:
-            self.reset_enabled()
+        kwargs: {key: value[, ...]}
+            Keyword arguments to pass to the slots.
+        """
+        for _ in self.call(*args, **kwargs):
+            pass
+
+    __call__ = emit
+
+    def reduce(self, *args, **kwargs):
+        """Return a reduction of all the slots
+
+        Notes
+        -----
+
+        Each slot is given the results of the previous
+        slot as a new positional argument list. As such, if multiple
+        arguments are required, each slot should return a tuple that
+        can then be passed as arguments to the next function.
+
+        The keywoard arguments are simply passed to each slot unchanged.
+
+        There is no guarantee on order which the slots are made.
+        Currently, the slots are in a list. Hence, the slots
+        will be called in the order registered.
+
+        """
+        result = None
+        for slot in self.slots:
+            result = slot(*args, **kwargs)
+            args = result
+            if not isinstance(args, tuple):
+                args = (args, )
+        return result
 
     @property
     def enabled(self):
@@ -252,6 +253,36 @@ class Signal(object):
             for obj, slot in to_be_removed:
                 self._methods[obj].discard(slot)
 
+    @property
+    def slots(self):
+        """Generator returning slots"""
+        if not self.enabled:
+            return
+
+        # No recursive signalling
+        self.set_enabled(False, push=True)
+
+        try:
+            for slot in self._slots:
+                yield slot.func
+            for obj, slots in self._methods.items():
+                for slot in slots:
+                    yield partial(slot.func, obj)
+        finally:
+            # Clean out single shots
+            self._slots = [
+                slot
+                for slot in self._slots
+                if not slot.single_shot
+            ]
+            for obj in self._methods:
+                self._methods[obj] = [
+                    slot
+                    for slot in self._methods[obj]
+                    if not slot.single_shot
+                ]
+            self.reset_enabled()
+
 
 class SignalsErrorBase(Exception):
     '''Base Signals Error'''
@@ -290,173 +321,3 @@ class Signals(dict):
             self.__setitem__(signal_class, signal_class(*args, **kwargs))
         else:
             raise SignalsNotAClass
-
-# ------
-# Tests
-# ------
-
-
-def test_signal_slot():
-
-    from functools import partial
-
-    def return_args(returns, *args, **kwargs):
-        returns.update({
-            'args': args,
-            'kwargs': kwargs
-        })
-
-    class View(object):
-        def __init__(self):
-            self.clear()
-
-        def clear(self):
-            self.args = None
-            self.kwargs = None
-
-        def set(self, *args, **kwargs):
-            self.args = args
-            self.kwargs = kwargs
-
-    # Basic structures
-    signal_to_func = Signal()
-    assert len(signal_to_func._slots) == 0
-    assert len(signal_to_func._methods) == 0
-
-    # Assign a slot
-    returns = {}
-    slot = partial(return_args, returns)
-    signal_to_func.connect(slot)
-    signal_to_func()
-    assert len(returns) > 0
-    assert len(returns['args']) == 0
-    assert len(returns['kwargs']) == 0
-
-    # Signal with arguments
-    returns.clear()
-    an_arg = 'an arg'
-    signal_to_func(an_arg)
-    assert len(returns['args']) > 0
-    assert returns['args'][0] == an_arg
-    signal_to_func(a_kwarg=an_arg)
-    assert len(returns['kwargs']) > 0
-    assert returns['kwargs']['a_kwarg'] == an_arg
-
-    # Signal with methods
-    signal_to_method = Signal()
-    view = View()
-    signal_to_method.connect(view.set)
-    signal_to_method()
-    assert len(view.args) == 0
-    assert len(view.kwargs) == 0
-
-    # Signal with methods and arguments
-    view.clear()
-    signal_to_method(an_arg)
-    assert view.args[0] == an_arg
-    view.clear()
-    signal_to_method(a_kwarg=an_arg)
-    assert view.kwargs['a_kwarg'] == an_arg
-
-    # Delete some slots
-    returns.clear()
-    signal_to_func.disconnect(slot)
-    signal_to_func(an_arg, a_kwarg=an_arg)
-    assert len(returns) == 0
-    view.clear()
-    signal_to_method.disconnect(view.set)
-    signal_to_method(an_arg, a_kwarg=an_arg)
-    assert view.args is None
-    assert view.kwargs is None
-
-    # Test initialization
-    a_signal = Signal(slot, view.set)
-    returns.clear()
-    view.clear()
-    a_signal(an_arg, a_kwarg=an_arg)
-    assert returns['args'][0] == an_arg
-    assert returns['kwargs']['a_kwarg'] == an_arg
-    assert view.args[0] == an_arg
-    assert view.kwargs['a_kwarg'] == an_arg
-
-    # Clear a signal
-    a_signal.clear()
-    returns.clear()
-    view.clear()
-    a_signal(an_arg, a_kwarg=an_arg)
-    assert len(returns) == 0
-    assert view.args is None
-    assert view.kwargs is None
-
-    # Enable/disable
-    a_signal = Signal(slot, view.set)
-    assert a_signal.enabled
-
-    a_signal.enabled = False
-    assert not a_signal.enabled
-    returns.clear()
-    view.clear()
-    a_signal(an_arg, a_kwarg=an_arg)
-    assert len(returns) == 0
-    assert view.args is None
-    assert view.kwargs is None
-
-    a_signal.enabled = True
-    assert a_signal.enabled
-    a_signal(an_arg, a_kwarg=an_arg)
-    assert returns['args'][0] == an_arg
-    assert returns['kwargs']['a_kwarg'] == an_arg
-    assert view.args[0] == an_arg
-    assert view.kwargs['a_kwarg'] == an_arg
-
-    a_signal.set_enabled(False, push=True)
-    assert not a_signal.enabled
-    returns.clear()
-    view.clear()
-    a_signal(an_arg, a_kwarg=an_arg)
-    assert len(returns) == 0
-    assert view.args is None
-    assert view.kwargs is None
-
-    a_signal.reset_enabled()
-    assert a_signal.enabled
-    a_signal(an_arg, a_kwarg=an_arg)
-    assert returns['args'][0] == an_arg
-    assert returns['kwargs']['a_kwarg'] == an_arg
-    assert view.args[0] == an_arg
-    assert view.kwargs['a_kwarg'] == an_arg
-
-    # Single shots
-    a_signal = Signal()
-    a_signal.connect(slot, single_shot=True)
-    a_signal.connect(view.set, single_shot=True)
-    returns.clear()
-    view.clear()
-    a_signal(an_arg, a_kwarg=an_arg)
-    assert returns['args'][0] == an_arg
-    assert returns['kwargs']['a_kwarg'] == an_arg
-    assert view.args[0] == an_arg
-    assert view.kwargs['a_kwarg'] == an_arg
-
-    returns.clear()
-    view.clear()
-    a_signal(an_arg, a_kwarg=an_arg)
-    assert len(returns) == 0
-    assert view.args is None
-    assert view.kwargs is None
-
-    # Clearing single shots
-    a_signal = Signal()
-    a_signal.connect(slot, single_shot=True)
-    a_signal.connect(view.set, single_shot=True)
-    a_signal.clear(single_shot=True)
-    returns.clear()
-    view.clear()
-    a_signal(an_arg, a_kwarg=an_arg)
-    assert len(returns) == 0
-    assert view.args is None
-    assert view.kwargs is None
-
-
-if __name__ == '__main__':
-    test_signal_slot()
