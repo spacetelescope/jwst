@@ -1,4 +1,4 @@
-Reference Files 
+Reference Files
 ===============
 
 WCS Reference files are in the Advanced Scientific Data Format (ASDF).
@@ -29,31 +29,30 @@ reftype                                     description                         
 **ote**                Transform through the Optical Telescope Element               NIRSPEC
 **specwcs**            Wavelength calibration models                                 MIRI, NIRCAM, NIRISS
 **regions**            Stores location of the regions on the detector                MIRI
-**v2v3**               Transform from MIRI instrument focal plane to V2V3 plane      MIRI
 **wavelengthrange**    Typical wavelength ranges                                     MIRI, NIRSPEC, NIRCAM, NIRISS
 ===================    ==========================================================   ============================
 
 CRDS Selection Criteria
 -----------------------
 
-CAMERA
-::::::
+CAMERA (NIRSPEC only)
+:::::::::::::::::::::
 CAMERA reference files are currently selected based only on the value of EXP_TYPE in the input science data set.
 
 
-COLLIMATOR
-::::::::::
+COLLIMATOR (NIRSPEC only)
+:::::::::::::::::::::::::
 For NIRSPEC, COLLIMATOR reference files are currently selected based only on the value of EXP_TYPE in the input science data set.
 
-DISPERSER
-:::::::::
+DISPERSER (NIRSPEC only)
+::::::::::::::::::::::::
 For NIRSPEC, DISPERSER reference files are currently selected based on the values of EXP_TYPE and GRATING in the input science data set.
 
 
 DISTORTION
 ::::::::::
 
-For MIRI, DISTORTION reference files are currently selected based on the values of EXP_TYPE, DETECTOR, CHANNEL and BAND in the input science data set.
+For MIRI, DISTORTION reference files are currently selected based on the values of EXP_TYPE, DETECTOR, CHANNEL, and BAND in the input science data set.
 
 For FGS, DISTORTION reference files are currently selected based on the values of EXP_TYPE and DETECTOR in the input science data set.
 
@@ -62,74 +61,59 @@ For NIRCAM, DISTORTION reference files are currently selected based on the value
 For NIRISS, DISTORTION reference files are currently selected based only on the value of EXP_TYPE and PUPIL in the input science data set.
 
 
-FILTEROFFSET
-::::::::::::
+FILTEROFFSET (MIRI only)
+::::::::::::::::::::::::
 For MIRI, FILTEROFFSET reference files are currently selected based on the values of EXP_TYPE and DETECTOR in the input science data set.
 
-FORE
-::::
+FORE (NIRSPEC only)
+:::::::::::::::::::
 
 For NIRSPEC, FORE reference files are currently selected based on the values of EXP_TYPE and FILTER in the input science data set.
 
-FPA
-:::
+FPA (NIRSPEC only)
+::::::::::::::::::
 For NIRSPEC, FPA reference files are currently selected based only on the value of EXP_TYPE in the input science data set.
 
-IFUFORE
-:::::::
+IFUFORE (NIRSPEC only)
+::::::::::::::::::::::
 For NIRSPEC, IFUFORE reference files are currently selected based only on the value of EXP_TYPE in the input science data set.
 
 
-IFUPOST
-:::::::
+IFUPOST (NIRSPEC only)
+::::::::::::::::::::::
 For NIRSPEC, IFUPOST reference files are currently selected based only on the value of EXP_TYPE in the input science data set.
 
-IFUSLICER
-:::::::::
+IFUSLICER (NIRSPEC only)
+::::::::::::::::::::::::
 For NIRSPEC, IFUSLICER reference files are currently selected based only on the value of EXP_TYPE in the input science data set.
 
 
-MSA
-:::
+MSA (NIRSPEC only)
+::::::::::::::::::
 For NIRSPEC, MSA reference files are currently selected based only on the value of EXP_TYPE in the input science data set.
 
-OTE
-:::
+OTE (NIRSPEC only)
+::::::::::::::::::
 For NIRSPEC, OTE reference files are currently selected based only on the value of EXP_TYPE in the input science data set.
 
 SPECWCS
 :::::::
 For MIRI, SPECWCS reference files are currently selected based on the values of DETECTOR, CHANNEL, BAND, SUBARRAY, and EXP_TYPE in the input science data set.
 
-For NIRCAM, SPECWCS reference files are currently selected based on teh values of EXPT_TYPE, MODULE, and PUPIL in the input science data set.
+For NIRCAM, SPECWCS reference files are currently selected based on the values of EXPT_TYPE, MODULE, and PUPIL in the input science data set.
 
 For NIRISS GRISM and TSGRIM modes, SPECWCS reference files are currently selected based on the values of SUBARRAY and EXP_TYPE in the input science data set.
 
 FOR NIRISS WFSS mode, SPECWCS reference files are currently selected based on the values of EXP_TYPE, FILTER, and PUPIL in the input science data set.
 
-
-
-
-REGIONS
-:::::::
-For MIRI, REGIONS reference files are currently selected based on the values of DETECTOR, CHANNEL, BAND, EXP_TYPE in the input science data set.
-
-
-V2V3
-::::
-For MIRI, V2V3 reference files are currently selected based on the values of DETECTOR, CHANNEL, BAND, EXP_TYPE in the input science data set.
+REGIONS (MIRI only)
+:::::::::::::::::::
+For MIRI, REGIONS reference files are currently selected based on the values of DETECTOR, CHANNEL, BAND, and EXP_TYPE in the input science data set.
 
 
 WAVELENGTHRANGE
 :::::::::::::::
-For NIRSPEC, WAVELENGTHRANGE reference files are currently selected based only on the value of EXP_TYPE in the input science data set.
-
-For MIRI, WAVELENGTHRANGE reference files are currently selected based only on the value of EXP_TYPE in the input science data set.
-
-For NIRCAM, WAVELENGTHRANGE reference files are currently selected based only on the value of EXP_TYPE in the input science data set.
-
-For NIRISS, WAVELENGTHRANGE reference files are currently selected based only on the value of EXP_TYPE in the input science data set.
-
+For NIRCAM, NIRISS, NIRSPEC, and MIRI, WAVELENGTHRANGE reference files are currently selected based only on the value of EXP_TYPE in the input science data set.
 
 
 Reference File Formats
@@ -139,14 +123,14 @@ Reference File Formats
 CAMERA
 ::::::
 
-The camera reference file contains an astropy compound model made up of a polynomial models, rotation, and translations. The forward direction is from the FPA to the GWA.
+The camera reference file contains an astropy compound model made up of polynomial models, rotations, and translations. The forward direction is from the FPA to the GWA.
 
 :model: Transform through the CAMERA.
 
 COLLIMATOR
 ::::::::::
 
-This collimator reference file contains an astropy compound model made up of a polynomial models, rotation, and translations. The forward direction is from the GWA to the MSA.
+This collimator reference file contains an astropy compound model made up of polynomial models, rotations, and translations. The forward direction is from the GWA to the MSA.
 
 :model: Transform through the COLLIMATOR.
 
@@ -230,7 +214,7 @@ The FORE reference file stores the transform through the Filter Wheel Assembly (
 FPA
 :::
 
-The FPA reference file stores information on the metrology of the Focal Plane Array (FPA) which consists of two single chip arrays (SCA), named NRS1 and NRS2.
+The FPA reference file stores information on the metrology of the Focal Plane Assembly (FPA) which consists of two Sensor Chip Arrays (SCA), named NRS1 and NRS2.
 
 The reference file contains two fields : “NRS1” and “NRS2”. Each of them stores the transform (shift and rotation) to transform positions from the FPA to the respective SCA. The output units are in pixels.
 
@@ -321,7 +305,7 @@ OTE
 
 This reference file contains a combination of astropy models - polynomial, shift, rotation and scaling.
 
-:model: Transform through the Telescope Optical Element (OTE), from the FWA to XAN, YAN telescope frame. The
+:model: Transform through the Optical Telescope Element (OTE), from the FWA to XAN, YAN telescope frame. The
         output units are in arcsec.
 
 SPECWCS
@@ -376,16 +360,6 @@ The IFU takes a region reference file that defines the region over which the WCS
 :channel: The MIRI channels in the observation, e.g. "12".
 :band: The band for the observation (one of "LONG", "MEDIUM", "SHORT").
 :regions: An array with the size of the MIRI MRS image where pixel values map to the MRS slice number. 0 indicates a pixel is not within any slice.
-
-V2V3
-::::
-
-The model field in the tree contains N models, one per channel, that map the spatial coordinates from alpha, beta to XAN, YAN.
-
-:channel: The MIRI channels in the observation, e.g. "12".
-:band: The band for the observation (one of "LONG", "MEDIUM", "SHORT").
-:model:
-        :channel_band: Transform from alpha, beta to XAN, YAN for this channel.
 
 
 WAVELENGTHRANGE
