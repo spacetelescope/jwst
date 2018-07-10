@@ -48,6 +48,24 @@ class Signal(object):
         for func in funcs:
             self.connect(func)
 
+    def emit(self, *args, **kwargs):
+        """Invoke slots attached to the signal
+
+        No return of results is expected.
+
+        Parameters
+        ----------
+        args: (arg[, ...])
+            Positional arguments to pass to the slots.
+
+        kwargs: {key: value[, ...]}
+            Keyword arguments to pass to the slots.
+        """
+        for _ in self.call(*args, **kwargs):
+            pass
+
+    __call__ = emit
+
     def call(self, *args, **kwargs):
         """Generator returning result of each slot connected.
 
@@ -76,8 +94,8 @@ class Signal(object):
                     )
                 )
 
-    def emit(self, *args, **kwargs):
-        """Invoke slots attached to the signal
+    def reduce(self, *args, **kwargs):
+        """Return a reduction of all the slots
 
         Parameters
         ----------
@@ -86,14 +104,12 @@ class Signal(object):
 
         kwargs: {key: value[, ...]}
             Keyword arguments to pass to the slots.
-        """
-        for _ in self.call(*args, **kwargs):
-            pass
 
-    __call__ = emit
+        Returns
+        -------
+        result: object or (object [,...])
+            The result or tuple of results. See `Notes`.
 
-    def reduce(self, *args, **kwargs):
-        """Return a reduction of all the slots
 
         Notes
         -----
@@ -105,9 +121,7 @@ class Signal(object):
 
         The keywoard arguments are simply passed to each slot unchanged.
 
-        There is no guarantee on order which the slots are made.
-        Currently, the slots are in a list. Hence, the slots
-        will be called in the order registered.
+        There is no guarantee on order which the slots are invoked.
 
         """
         result = None
