@@ -104,7 +104,7 @@ For NIRCAM, SPECWCS reference files are currently selected based on the values o
 
 For NIRCAM WFSS, SPECWCS reference files are currently selected based on the values of EXP_TYPE, MODULE, and PUPIL in the input science data set. 
 
-For NIRCAM TSGRIM, SPECWCS reference files are currently selected based on the values of EXP_TYPE, MODULE, and PUPIL in the input science data set.
+For NIRCAM TGRISM, SPECWCS reference files are currently selected based on the values of EXP_TYPE, MODULE, and PUPIL in the input science data set.
 
 FOR NIRISS WFSS, SPECWCS reference files are currently selected based on the values of EXP_TYPE, FILTER, and PUPIL in the input science data set.
 
@@ -335,7 +335,7 @@ For NIRISS SOSS mode the file is in ASDF format with the following structure.
 
 :model: A tabular model with the wavelength solution.
 
-For NIRCAM GRISM and TSGRIM modes the file is in ASDF format with the following structure:
+For NIRCAM WFSS and TSGRIM modes the file is in ASDF format with the following structure:
 
 :displ: The wavelength transform models
 :dispx: The x-dispersion models
@@ -382,7 +382,7 @@ For NIRSPEC the file is a dictionary storing information about default wavelengt
                  :order: Default spectral order
                  :range: Default wavelength range
 
-For NIRCAM GRISM and TSGRIM modes and NIRISS WFSS mode the wavelengthrange file contains the wavelength limits to use when caluclating the minimum and maximum dispersion extents on the detector. The selection of the
+For NIRCAM WFSS and TSGRIM modes and NIRISS WFSS mode the wavelengthrange file contains the wavelength limits to use when caluclating the minimum and maximum dispersion extents on the detector. The selection of the
 correct minimum and maximum wavelength range is done with the following logic, where the index of
 the desired filter is used as the reference into wrange_selector, and the same for the index of the order:
 
