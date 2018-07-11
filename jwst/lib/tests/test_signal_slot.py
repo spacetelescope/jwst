@@ -37,7 +37,6 @@ def test_basic_structure():
     signal = ss.Signal()
 
     assert len(signal._slots) == 0
-    assert len(signal._methods) == 0
 
 
 def test_emit(capsys):

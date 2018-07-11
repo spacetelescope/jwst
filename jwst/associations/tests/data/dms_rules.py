@@ -1,11 +1,11 @@
 # To avoid relative imports and mimic actual usage
 import os
 import sys
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__) + '../../../..'))
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__) + '../../../../..'))
 
-from associations import Association
-from associations.registry import RegistryMarker
-from associations.lib.dms_base import DMSBaseMixin
+from jwst.associations import Association
+from jwst.associations.registry import RegistryMarker
+from jwst.associations.lib.dms_base import DMSBaseMixin
 
 
 @RegistryMarker.rule
@@ -15,6 +15,7 @@ class Asn_DMS_Base(DMSBaseMixin, Association):
     def __init__(self, version_id=None):
         super(Asn_DMS_Base, self).__init__(version_id=version_id)
         self.data['members'] = list()
+        self.registry.callback.add('finalize', self.make_new_asns)
 
     def make_member(self, item):
         return item
@@ -22,9 +23,8 @@ class Asn_DMS_Base(DMSBaseMixin, Association):
     def _add(self, item):
         self.data['members'].append(item)
 
-    @RegistryMarker.callback('finalize')
-    def make_new_asns(self):
-        self.data['make_new_asns'] = 'yep, did it'
+    def make_new_asns(self, asns):
+        return asns
 
 
 @RegistryMarker.callback('finalize')

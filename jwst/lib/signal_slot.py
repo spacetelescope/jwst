@@ -1,17 +1,6 @@
 """ A signal/slot implementation
-
-Original: See below
-File:    signal.py
-Author:  Thiago Marcos P. Santos
-Author:  Christopher S. Case
-Author:  David H. Bronke
-Created: August 28, 2008
-Updated: December 12, 2011
-License: MIT
-
 """
 from collections import namedtuple
-from functools import partial
 import inspect
 import logging
 
@@ -24,26 +13,33 @@ __all__ = ['Signal',
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
+"""Slot data structure
+"""
 Slot = namedtuple('Slot', ['func', 'single_shot'])
 
 
 class Signal(object):
+    """Signal
+
+    A Signal, when triggered, call the connected slots.
+
+    Parameters
+    ----------
+    funcs: func[, ...]
+        Remaining arguments will be functions to connect
+        to this signal.
+
+    Attributes
+    ----------
+    enabled: bool
+        If True, the slots are called. Otherwise, nothing
+        happens when triggered.
+
+    """
     def __init__(self, *funcs):
-        """Setup a signal
-
-        Parameters
-        ----------
-        logger: logging.Logger
-            Logger to use. If None, one will be created.
-
-        *funcs: (func[, ...))
-            Remaining arguments will be functions to connect
-            to this signal.
-        """
-        self._slots = set()
-        self._methods = dict()
+        self._slots = list()
         self._enabled = True
-        self._states = []
+        self._states = list()
 
         for func in funcs:
             self.connect(func)
@@ -168,70 +164,18 @@ class Signal(object):
         single_shot: bool
             If True, the function/method is removed after being called.
         """
-        logger.debug(
-            'Signal {}: Connecting function:"{}"'.format(
-                self.__class__.__name__,
-                func
-            )
+        slot = Slot(
+            func=func,
+            single_shot=single_shot
         )
-        if inspect.ismethod(func):
-            if func.__self__ not in self._methods:
-                self._methods[func.__self__] = set()
-
-            slot = Slot(
-                func=func.__func__,
-                single_shot=single_shot
-            )
-            self._methods[func.__self__].add(slot)
-
-        else:
-            slot = Slot(
-                func=func,
-                single_shot=single_shot
-            )
-            self._slots.add(slot)
+        self._slots.append(slot)
 
     def disconnect(self, func):
-        logger.debug(
-            'Signal {}: Disconnecting func:"{}"'.format(
-                self.__class__.__name__,
-                func
-            )
-        )
-        if inspect.ismethod(func):
-            logger.debug(
-                'func is a method: "{}"'.format(func)
-            )
-            if func.__self__ in self._methods:
-                logger.debug(
-                    'class "{}" is in list'.format(func.__self__)
-                )
-                logger.debug(
-                    'methods="{}"'.format(self._methods[func.__self__])
-                )
-                slots = [
-                    slot
-                    for slot in self._methods[func.__self__]
-                    if slot.func == func.__func__
-                ]
-                logger.debug(
-                    'slots="{}"'.format(slots)
-                )
-                try:
-                    self._methods[func.__self__].remove(slots[0])
-                except IndexError:
-                    logger.debug('slot not found.')
-                    pass
-        else:
-            slots = [
-                slot
-                for slot in self._slots
-                if slot.func == func
-            ]
-            try:
-                self._slots.remove(slots[0])
-            except IndexError:
-                pass
+        self._slots = [
+            slot
+            for slot in self._slots
+            if slot.func != func
+        ]
 
     def clear(self, single_shot=False):
         """Clear slots
@@ -249,23 +193,12 @@ class Signal(object):
         )
         if not single_shot:
             self._slots.clear()
-            self._methods.clear()
         else:
-            to_be_removed = []
-            for slot in self._slots.copy():
-                if slot.single_shot:
-                    to_be_removed.append(slot)
-            for remove in to_be_removed:
-                self._slots.discard(remove)
-
-            to_be_removed = []
-            emitters = self._methods.copy()
-            for obj, slots in emitters.items():
-                for slot in slots.copy():
-                    if slot.single_shot:
-                        to_be_removed.append((obj, slot))
-            for obj, slot in to_be_removed:
-                self._methods[obj].discard(slot)
+            self._slots = [
+                slot
+                for slot in self._slots
+                if not slot.single_shot
+            ]
 
     @property
     def slots(self):
@@ -279,9 +212,6 @@ class Signal(object):
         try:
             for slot in self._slots:
                 yield slot.func
-            for obj, slots in self._methods.items():
-                for slot in slots:
-                    yield partial(slot.func, obj)
         finally:
             # Clean out single shots
             self._slots = [
@@ -289,12 +219,6 @@ class Signal(object):
                 for slot in self._slots
                 if not slot.single_shot
             ]
-            for obj in self._methods:
-                self._methods[obj] = [
-                    slot
-                    for slot in self._methods[obj]
-                    if not slot.single_shot
-                ]
             self.reset_enabled()
 
 
