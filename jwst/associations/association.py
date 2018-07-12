@@ -517,6 +517,26 @@ class Association(MutableMapping):
 # #########
 # Utilities
 # #########
+def finalize(asns):
+    """Finalize associations by calling their `finalize_hook` method
+
+    Notes
+    -----
+    This is a functioning example of a finalize callback, and can be used
+    as the generic callback. Suggested usage is as follows:
+
+    .. code-block:: python
+
+       from jwst.associations.association import finalize as generic_finalize
+       RegistryMarker.callback('finalize')(generic_finalize)
+    """
+    finalized_asns = list(filter(
+        lambda asn: asn is not None,
+        map(lambda asn: asn.finalize(), asns)
+    ))
+    return finalized_asns
+
+
 def make_timestamp():
     timestamp = datetime.utcnow().strftime(
         _TIMESTAMP_TEMPLATE

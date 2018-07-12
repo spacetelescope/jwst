@@ -4,6 +4,7 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__) + '../../../../..'))
 
 from jwst.associations import Association
+from jwst.associations.association import finalize as general_asn_finalize
 from jwst.associations.registry import RegistryMarker
 from jwst.associations.lib.constraint import ConstraintTrue
 from jwst.associations.lib.dms_base import DMSBaseMixin
@@ -29,14 +30,8 @@ class Asn_DMS_Base(DMSBaseMixin, Association):
         return [self]
 
 
-@RegistryMarker.callback('finalize')
-def finalize(asns):
-    """Finalize associations by calling their `finalize_hook` method"""
-    finalized_asns = list(filter(
-        lambda x: x is not None,
-        map(lambda x: x.finalize(), asns)
-    ))
-    return finalized_asns
+# Use the generic finalization
+RegistryMarker.callback('finalize')(general_asn_finalize)
 
 
 class Utility:

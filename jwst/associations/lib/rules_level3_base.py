@@ -530,23 +530,21 @@ class Utility():
         finalized_associations: [association[, ...]]
             The validated list of associations
         """
-        finalized = []
+        finalized_asns = []
         lv3_asns = []
         for asn in associations:
             if isinstance(asn, DMS_Level3_Base):
-
-                # Check validity
-                if asn.is_valid:
-                    lv3_asns.append(asn)
-
+                finalized = asn.finalize()
+                if finalized is not None:
+                    lv3_asns.extend(finalized)
             else:
-                finalized.append(asn)
+                finalized_asns.append(asn)
 
         # Ensure sequencing is correct.
         Utility.resequence(lv3_asns)
 
         # Merge lists and return
-        return finalized + lv3_asns
+        return finalized_asns + lv3_asns
 
 
 # ---------

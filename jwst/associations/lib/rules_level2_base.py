@@ -458,19 +458,17 @@ class Utility():
         finalized_associations: [association[, ...]]
             The validated list of associations
         """
-        finalized = []
+        finalized_asns = []
         lv2_asns = []
         for asn in associations:
             if isinstance(asn, DMSLevel2bBase):
-
-                # Check validity
-                if asn.is_valid:
-                    lv2_asns.append(asn)
-
+                finalized = asn.finalize()
+                if finalized is not None:
+                    lv2_asns.extend(finalized)
             else:
-                finalized.append(asn)
+                finalized_asns.append(asn)
 
-        return finalized + lv2_asns
+        return finalized_asns + lv2_asns
 
     @staticmethod
     def merge_asns(associations):
