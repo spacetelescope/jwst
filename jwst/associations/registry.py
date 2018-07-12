@@ -115,11 +115,6 @@ class AssociationRegistry(dict):
         # Precache the set of rules
         self._rule_set = set()
 
-        # Setup constraints that are to be applied
-        # to every rule.
-        if global_constraints is None:
-            global_constraints = ConstraintTrue()
-
         if definition_files is None:
             definition_files = []
         if include_default:

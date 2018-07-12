@@ -82,7 +82,7 @@ class Association(MutableMapping):
     DEFAULT_EVALUATE = False
 
     # Global constraints
-    GLOBAL_CONSTRAINT = ConstraintTrue()
+    GLOBAL_CONSTRAINT = None
 
     # Attribute values that are indicate the
     # attribute is not specified.
@@ -109,13 +109,15 @@ class Association(MutableMapping):
             'code_version': __version__,
         })
 
-        # Add in the global constraints.
-        constraint_list = []
-        constraint = getattr(self, 'constraints', False)
-        if constraint:
-            constraint_list.append(constraint)
-        constraint_list.append(self.GLOBAL_CONSTRAINT.copy())
-        self.constraints = Constraint(constraint_list)
+        # Setup constraints
+        # These may be predefined by a rule.
+        try:
+            constraints = self.constraints
+        except AttributeError:
+            constraints = Constraint()
+        if self.GLOBAL_CONSTRAINT is not None:
+            constraints.append(self.GLOBAL_CONSTRAINT.copy())
+        self.constraints = constraints
 
     @classmethod
     def create(cls, item, version_id=None):

@@ -205,9 +205,6 @@ class Main():
         except KeyError:
             pass
 
-        # Setup rules.
-        global_constraints = ConstraintTrue()
-
         # Determine mode of operation. Options are
         #  1) Only specified candidates
         #  2) Only discovered assocations that do not match
