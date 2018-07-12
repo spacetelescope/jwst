@@ -5,6 +5,7 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__) + '../../../../..')
 
 from jwst.associations import Association
 from jwst.associations.registry import RegistryMarker
+from jwst.associations.lib.constraint import ConstraintTrue
 from jwst.associations.lib.dms_base import DMSBaseMixin
 
 
@@ -13,6 +14,7 @@ class Asn_DMS_Base(DMSBaseMixin, Association):
     """Basic DMS rule"""
 
     def __init__(self, version_id=None):
+        self.constraints = ConstraintTrue()
         super(Asn_DMS_Base, self).__init__(version_id=version_id)
         self.data['members'] = list()
 
