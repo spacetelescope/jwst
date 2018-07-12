@@ -15,7 +15,6 @@ class Asn_DMS_Base(DMSBaseMixin, Association):
     def __init__(self, version_id=None):
         super(Asn_DMS_Base, self).__init__(version_id=version_id)
         self.data['members'] = list()
-        self.registry.callback.add('finalize', self.make_new_asns)
 
     def make_member(self, item):
         return item
@@ -23,14 +22,19 @@ class Asn_DMS_Base(DMSBaseMixin, Association):
     def _add(self, item):
         self.data['members'].append(item)
 
-    def make_new_asns(self, asns):
-        return asns
+    def finalize(self):
+        """Peform finalization steps"""
+        return [self]
 
 
 @RegistryMarker.callback('finalize')
 def finalize(asns):
     """Finalize associations by calling their `finalize_hook` method"""
-    return asns
+    finalized_asns = list(filter(
+        lambda x: x is not None,
+        map(lambda x: x.finalize(), asns)
+    ))
+    return finalized_asns
 
 
 class Utility:

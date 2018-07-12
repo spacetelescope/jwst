@@ -415,6 +415,26 @@ class Association(MutableMapping):
         # That's all folks
         return True, reprocess
 
+    def finalize(self):
+        """Finalize assocation
+
+        Finalize or close-off this association. Peform validations,
+        modifications, etc. to ensure that the association is
+        complete.
+
+        Returns
+        -------
+        associations: [association[, ...]] or None
+            List of fully-qualified associations that this association
+            represents.
+            `None` if a complete association cannot be produced.
+
+        """
+        if self.is_valid:
+            return [self]
+        else:
+            return None
+
     def is_item_member(self, item):
         """Check if item is already a member of this association
 
