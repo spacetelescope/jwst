@@ -1,7 +1,5 @@
 """Callback registry"""
 
-from collections import defaultdict
-
 from ...lib.signal_slot import Signal
 
 __all__ = ['CallbackRegistry']
@@ -11,11 +9,16 @@ class CallbackRegistry():
     """Callback registry"""
 
     def __init__(self):
-        self.registry = defaultdict(Signal)
+        self.registry = dict()
 
     def add(self, event, callback):
         """Add a callback to an event"""
-        self.registry[event].connect(callback)
+        try:
+            signal = self.registry[event]
+        except KeyError:
+            signal = Signal()
+        signal.connect(callback)
+        self.registry[event] = signal
 
     def reduce(self, event, *args):
         """Peform a reduction on the event args
