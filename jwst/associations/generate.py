@@ -75,7 +75,10 @@ def generate(pool, rules, version_id=None):
             pass
 
     # Finalize found associations
-    finalized_asns = rules.callback.reduce('finalize', associations)
+    try:
+        finalized_asns = rules.callback.reduce('finalize', associations)
+    except KeyError:
+        finalized_asns = associations
 
     return finalized_asns
 
