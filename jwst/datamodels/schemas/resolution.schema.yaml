@@ -1,6 +1,6 @@
-title: Default Resolution Reference file 
+title: Default Resolution Reference file
 allOf:
-- $ref:	referencefile.schema.yaml
+- $ref: referencefile.schema.yaml
 - type: object
   properties:
     data:
