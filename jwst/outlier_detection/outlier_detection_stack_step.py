@@ -28,7 +28,7 @@ class OutlierDetectionStackStep(Step):
     """
 
     spec = """
-        wht_type = option('exptime','error',None,default='exptime')
+        weight_type = option('exptime','error',None,default='exptime')
         pixfrac = float(default=1.0)
         kernel = string(default='square') # drizzle kernel
         fillval = string(default='INDEF')
@@ -62,7 +62,7 @@ class OutlierDetectionStackStep(Step):
             reffiles = {}
 
             pars = {
-                'wht_type': self.wht_type,
+                'weight_type': self.weight_type,
                 'pixfrac': self.pixfrac,
                 'kernel': self.kernel,
                 'fillval': self.fillval,
