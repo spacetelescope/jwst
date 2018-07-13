@@ -14,9 +14,9 @@ try:
 except (NameError, KeyError):
     pass
 
-#pytest_plugins = [
-    #'asdf.tests.schema_tester'
-#]
+pytest_plugins = [
+    'asdf.tests.schema_tester'
+]
 
 # Add option to run slow tests
 def pytest_addoption(parser):
