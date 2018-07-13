@@ -298,7 +298,7 @@ def not_implemented_mode(input_model, ref):
     return None
 
 
-def get_object_info(catalog_name=''):
+def get_object_info(catalog_name=None):
     """Return a list of SkyObjects from the direct image
 
     the source_catalog step are read into a list of  SkyObjects
@@ -318,6 +318,8 @@ def get_object_info(catalog_name=''):
     -----
 
     """
+    if catalog_name is None:
+        raise TypeError("Expected name of the catalog file")
     objects = []
     catalog = QTable.read(catalog_name, format='ascii.ecsv')
 
@@ -359,7 +361,8 @@ def get_object_info(catalog_name=''):
     return objects
 
 
-def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
+def create_grism_bbox(input_model, reference_files,
+                      mmag_extract=99.0):
     """Create bounding boxes for each object in the catalog
 
     The sky coordinates in the catalog image are first related
@@ -379,7 +382,6 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
     mmag_extract : float
         The faintest magnitude to extract from the catalog
 
-
     Returns
     -------
     A list of GrismObject(s) for every source in the catalog
@@ -388,17 +390,17 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
 
     Notes
     -----
-    The wavelengthrange reference file is used to govern the extent of the bounding box
-    for each object. The name of the catalog has been stored in the input models meta
-    information under the source_catalog key.
+    The wavelengthrange reference file is used to govern the extent of the
+    bounding box for each object. The name of the catalog has been stored
+    in the input models meta information under the source_catalog key.
 
-    It's left to the calling routine to cut the bounding boxes at the extent of the
-    detector (for example, extract 2d would only extract the on-detector portion of
-    the bounding box)
+    It's left to the calling routine to cut the bounding boxes at the extent
+    of the detector (for example, extract 2d would only extract the on-detector
+    portion of the bounding box)
 
-    Bounding box dispersion direction is dependent on the filter and module for NIRCAM
-    and changes for GRISMR, but is consistent for GRISMC,
-    see https://jwst-docs.stsci.edu/display/JTI/NIRCam+Wide+Field+Slitless+Spectroscopy
+    Bounding box dispersion direction is dependent on the filter and module for
+    NIRCAM and changes for GRISMR, but is consistent for GRISMC, see
+    https://jwst-docs.stsci.edu/display/JTI/NIRCam+Wide+Field+Slitless+Spectroscopy
 
     NIRISS only has one detector, but GRISMC disperses along rows and GRISMR disperses
     along columns.
@@ -433,9 +435,6 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
     xsize = input_model.meta.subarray.xsize
     ysize = input_model.meta.subarray.ysize
 
-    # extract the catalog objects
-    if input_model.meta.source_catalog.filename is None:
-        raise ValueError("No source catalog listed in datamodel")
     skyobject_list = get_object_info(input_model.meta.source_catalog.filename)
 
     # get the imaging transform to record the center of the object in the image
@@ -482,6 +481,7 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
                 if (disperse_row_right or disperse_column):
                     wave_min = lmin
                     wave_max = lmax
+
 
                 xmin, ymin, _, _, _ = sky_to_grism(obj.sky_bbox_ll.ra.value, obj.sky_bbox_ll.dec.value, lmin, order)
                 xmax, ymax, _, _, _ = sky_to_grism(obj.sky_bbox_ur.ra.value, obj.sky_bbox_ur.dec.value, lmax, order)
