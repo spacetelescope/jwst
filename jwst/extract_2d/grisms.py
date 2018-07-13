@@ -14,9 +14,109 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def extract_grism_objects(input_model, grism_objects=[], reference_files={}):
+def extract_tso_object(input_model,
+                       reference_files=None,
+                       extract_height=None):
     """
-    Extract 2d boxes around each objects spectra per order.
+    Extract the spectrum for a NIRCAM TSO observation.
+
+    Parameters
+    ----------
+    input_model : jwst.datamodels.CubeModel
+
+    reference_files : dict
+        Needs to include the name of the wavelengthrange reference file
+
+    extract_height: int
+        The extraction height, in total, for the spectra in the
+        cross-dispersion direction. If this is other than None,
+        it will override the team default of 64 pixels.
+
+    Returns
+    -------
+    output_model : jwst.datamodels.MultiSlitModel()
+
+
+    Notes
+    -----
+    This method supports NRC_TSGRISM only
+
+    GrismObject is a named tuple which contains distilled
+    information about each catalog object and the bounding
+    boxes that will be used to define the 2d extraction area.
+
+    https://jwst-docs.stsci.edu/display/JTI/NIRCam+Grism+Time+Series
+    """
+
+    if not isinstance(reference_files, dict):
+        raise TypeError("Expected a dictionary for reference_files")
+
+    if not isinstance(input_model, CubeModel):
+        raise TypeError('The input data model must be a CubeModel.')
+
+    log.info("Extracting grism objects into MultiSlitModel")
+    output_model = datamodels.MultiSlitModel()
+    output_model.update(input_model)
+
+    inwcs = input_model.meta.wcs
+    subwcs = copy.deepcopy(inwcs)
+
+    for order in obj.order_bounding.keys():
+        # Add the shift to the lower corner to each subarray WCS object
+        # The shift should just be the lower bounding box corner
+        # also replace the object center location inputs to the GrismDispersion
+        # model with the known object center and order information (in pixels of direct image)
+        # This is changes the user input to the model from (x,y,x0,y0,order) -> (x,y)
+        #
+        # The bounding boxes here are also limited to the size of the detector
+        # The check for boxes entirely off the detector is done in create_grism_bbox right now
+        bb = obj.order_bounding[order]
+        # limit the boxes to the detector
+        ymin, ymax = (max(bb[0][0], 0), min(bb[0][1], input_model.meta.subarray.ysize))
+        xmin, xmax = (max(bb[1][0], 0), min(bb[1][1], input_model.meta.subarray.xsize))
+        # only the first two numbers in the Mapping are used
+        # the order and source position are put directly into
+        # the new wcs for the subarray for the forward transform
+        tr = inwcs.get_transform('grism_detector', 'detector')
+        tr = Identity(2) | Mapping((0, 1, 0, 1, 0)) | (Shift(xmin) & Shift(ymin) &
+                                                       Const1D(obj.xcentroid) &
+                                                       Const1D(obj.ycentroid) &
+                                                       Const1D(order)) | tr
+        subwcs.set_transform('grism_detector', 'detector', tr)
+        log.info("Subarray extracted for obj: {} order: {}:".format(obj.sid, order))
+        log.info("Subarray extents are: (xmin:{}, ymin:{}), (xmax:{}, ymax:{})".format(xmin, ymin, xmax, ymax))
+        ext_data = input_model.data[ymin : ymax + 1, xmin : xmax + 1].copy()
+        ext_err = input_model.err[ymin : ymax + 1, xmin : xmax + 1].copy()
+        ext_dq = input_model.dq[ymin : ymax + 1, xmin : xmax + 1].copy()
+        new_model = datamodels.SlitModel(data=ext_data, err=ext_err, dq=ext_dq)
+        new_model.meta.wcs = subwcs
+
+        new_model.meta.wcsinfo.spectral_order = order
+        # set x/ystart values relative to the image (screen) frame.
+        # The overall subarray offset is recorded in model.meta.subarray.
+        # nslit = obj.sid - 1  # catalog id starts at zero
+        new_model.name = str(obj.sid)
+        new_model.xstart = xmin + 1
+        new_model.xsize = (xmax - xmin) + 1
+        new_model.ystart = ymin + 1
+        new_model.ysize = (ymax - ymin) + 1
+        new_model.source_xpos = obj.xcentroid
+        new_model.source_ypos = obj.ycentroid
+        new_model.source_id = obj.sid
+        new_model.bunit_data = input_model.meta.bunit_data
+        new_model.bunit_err = input_model.meta.bunit_err
+        slits.append(new_model)
+
+    output_model.slits.extend(slits)
+    del subwcs
+    return output_model
+
+
+def extract_grism_objects(input_model,
+                          grism_objects=None,
+                          reference_files=None):
+    """
+    Extract 2d boxes around each objects spectra for each order.
 
     Parameters
     ----------
@@ -25,7 +125,7 @@ def extract_grism_objects(input_model, grism_objects=[], reference_files={}):
     grism_objects : list(GrismObject)
         A list of GrismObjects
 
-    reffile : dict
+    reference_files : dict
         Needs to include the name of the wavelengthrange reference file
 
 
@@ -45,19 +145,22 @@ def extract_grism_objects(input_model, grism_objects=[], reference_files={}):
     boxes that will be used to define the 2d extraction area.
 
     """
-    if not grism_objects:
+    if reference_files is None:
+        raise TypeError("Expected a dictionary for reference_files")
+
+    if grism_objects is None:
         # get the wavelengthrange reference file from the input_model
         if (not reference_files['wavelengthrange'] or reference_files['wavelengthrange'] == 'N/A'):
             raise ValueError("Expected name of wavelengthrange reference file")
         else:
-            grism_objects = util.create_grism_bbox(input_model, reference_files)
+            grism_objects = util.create_grism_bbox(input_model, reference_files, extract_height)
             log.info("Grism object list created from source catalog: {0:s}"
                      .format(input_model.meta.source_catalog.filename))
 
     if not isinstance(grism_objects, list):
             raise ValueError("Expected input grism objects to be a list")
 
-    log.info("Creating output model")
+    log.info("Extracting grism objects into MultiSlitModel")
     output_model = datamodels.MultiSlitModel()
     output_model.update(input_model)
 
@@ -123,7 +226,7 @@ def extract_grism_objects(input_model, grism_objects=[], reference_files={}):
             # subwcs.set_transform('detector', 'grism_detector', tr)
 
             log.info("Subarray extracted for obj: {} order: {}:".format(obj.sid, order))
-            log.info("Subarray extents are: (xmin:{}, ymin:{}), (xmax:{}, ymax:{})".format(xmin,ymin,xmax,ymax))
+            log.info("Subarray extents are: (xmin:{}, ymin:{}), (xmax:{}, ymax:{})".format(xmin, ymin, xmax, ymax))
 
             ext_data = input_model.data[ymin : ymax + 1, xmin : xmax + 1].copy()
             ext_err = input_model.err[ymin : ymax + 1, xmin : xmax + 1].copy()

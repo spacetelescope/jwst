@@ -14,9 +14,10 @@ class Extract2dStep(Step):
     """
 
     spec = """
-        slit_name = string(default = None)
+        slit_name = string(default=None)
         apply_wavecorr = boolean(default=True)
-        grism_objects = list(default=list())
+        grism_objects = list(default=None)
+        extract_height =  int(default=None)
     """
 
     reference_file_types = ['wavecorr', 'wavelengthrange']
@@ -29,6 +30,7 @@ class Extract2dStep(Step):
 
         with datamodels.open(input_model) as dm:
             output_model = extract_2d.extract2d(dm, self.slit_name, self.apply_wavecorr,
-                                                reference_files=reference_file_names)
+                                                reference_files=reference_file_names,
+                                                extract_height=extract_height)
 
         return output_model
