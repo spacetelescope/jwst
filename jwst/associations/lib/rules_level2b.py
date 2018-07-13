@@ -12,6 +12,14 @@ from jwst.associations.lib.rules_level3_base import DMS_Level3_Base
 from jwst.stpipe.suffix import remove_suffix
 
 __all__ = [
+    'Asn_Lv2FGS',
+    'Asn_Lv2Image',
+    'Asn_Lv2ImageNonScience',
+    'Asn_Lv2ImageSpecial',
+    'Asn_Lv2NRSMSA'
+    'Asn_Lv2Spec',
+    'Asn_Lv2SpecSpecial',
+    'Asn_Lv2WFSS_NIS',
 ]
 
 # Configure logging
@@ -342,8 +350,5 @@ class Asn_Lv2NRSMSA(
 
                 new_members += nonscience_exps
                 results.append(asn)
-
-            # Invalidate the current association
-            logger.warning('Invalidation of current assocation not implemented.')
 
             return results
