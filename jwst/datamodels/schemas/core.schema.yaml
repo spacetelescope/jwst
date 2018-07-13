@@ -764,35 +764,47 @@ properties:
           name:
             title: Subarray used
             type: string
-            enum: # Values grouped by instrument:
+            # Values grouped by instrument:
+            anyOf:
               # FGS
-             [8X8, 32X32, 128X128, 2048X64,
-              SUB128CENTER, SUB128DIAGONAL, SUB128LLCORNER, SUB32CENTER,
-              SUB32DIAGONAL, SUB32LLCORNER, SUB8CENTER, SUB8DIAGONAL, SUB8LLCORNER,
+              - enum:
+                 [8X8, 32X32, 128X128, 2048X64, SUB128CENTER, SUB128DIAGONAL,
+                  SUB128LLCORNER, SUB32CENTER, SUB32DIAGONAL, SUB32LLCORNER,
+                  SUB8CENTER, SUB8DIAGONAL, SUB8LLCORNER]
               # MIRI
-              BRIGHTSKY, MASK1065, MASK1140, MASK1550, MASKLYOT, SLITLESSPRISM,
-              SUB128, SUB256, SUB64, SUBPRISM,
+              - enum:
+                 [BRIGHTSKY, MASK1065, MASK1140, MASK1550, MASKLYOT,
+                  SLITLESSPRISM, SUB128, SUB256, SUB64, SUBPRISM]
               # NIRCam
-              SUB160, SUB160P, SUB320, SUB320A335R, SUB320A430R, SUB320ALWB,
-              SUB32TATS, SUB32TATSGRISM, SUB400P, SUB640, SUB640A210R, SUB640ASWB,
-              SUB64FP1A, SUB64FP1B, SUB64P, SUB8FP1A, SUB8FP1B, SUB96DHSPILA,
-              SUB96DHSPILB, SUBFSA210R, SUBFSA335R, SUBFSA430R, SUBFSALWB, SUBFSASWB,
-              SUBGRISM128, SUBGRISM256, SUBGRISM64, SUBNDA210R, SUBNDA335R,
-              SUBNDA430R, SUBNDALWBL, SUBNDALWBS, SUBNDASWBL, SUBNDASWBS,
+              - enum:
+                  [SUB160, SUB160P, SUB320, SUB320A335R, SUB320A430R,
+                   SUB320ALWB, SUB32TATS, SUB32TATSGRISM, SUB400P, SUB640,
+                   SUB640A210R, SUB640ASWB, SUB64FP1A, SUB64FP1B, SUB64P,
+                   SUB8FP1A, SUB8FP1B, SUB96DHSPILA, SUB96DHSPILB, SUBFSA210R,
+                   SUBFSA335R, SUBFSA430R, SUBFSALWB, SUBFSASWB, SUBGRISM128,
+                   SUBGRISM256, SUBGRISM64, SUBNDA210R, SUBNDA335R, SUBNDA430R,
+                   SUBNDALWBL, SUBNDALWBS, SUBNDASWBL, SUBNDASWBS]
               # Obsolete NIRCam
-              MASKA210R, MASKA430R, MASKBLWB, MASKBSWB,
+              - enum:
+                  [MASKA210R, MASKA430R, MASKBLWB, MASKBSWB]
               # NIRISS
-              SUB64, SUB80, SUB128, SUB256, SUBAMPCAL, SUBSTRIP96, SUBSTRIP256,
-              SUBTAAMI, SUBTASOSS, WFSS64C, WFSS64R, WFSS128C, WFSS128R,
+              - enum:
+                  [SUB64, SUB80, SUB128, SUB256, SUBAMPCAL, SUBSTRIP96,
+                   SUBSTRIP256, SUBTAAMI, SUBTASOSS, WFSS64C, WFSS64R,
+                   WFSS128C, WFSS128R]
               # Obsolete NIRISS
-              SUBSTRIP80,
+              - enum:
+                  [SUBSTRIP80]
               # NIRSpec
-              ALLSLITS, SUBS200A1, SUBS200A2, SUBS200B1, SUBS400A1, SUB1024A, SUB1024B,
-              SUB512, SUB32, SUB512S, SUB2048, STRIPE,
+              - enum:
+                  [ALLSLITS, SUBS200A1, SUBS200A2, SUBS200B1, SUBS400A1,
+                   SUB1024A, SUB1024B, SUB512, SUB32, SUB512S, SUB2048, STRIPE]
               # Obsolete NIRSpec
-              FULL_IRS2, S200A1, S200A2, S200B1, S400A1,
+              - enum:
+                  [FULL_IRS2, S200A1, S200A2, S200B1, S400A1]
               # All
-              FULL, GENERIC, N/A]
+              - enum:
+                  [FULL, GENERIC, N/A]
             fits_keyword: SUBARRAY
             blend_table: True
           xstart:
