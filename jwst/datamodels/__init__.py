@@ -97,6 +97,7 @@ from .throughput import ThroughputModel
 from .trapdensity import TrapDensityModel
 from .trappars import TrapParsModel
 from .trapsfilled import TrapsFilledModel
+from .tsophot import TsoPhotModel
 from .wcs_ref_models import *
 from .wfssbkg import WfssBkgModel
 from .util import open
@@ -143,6 +144,7 @@ __all__ = [
     'StrayLightModel', 'SuperBiasModel', 'SpecwcsModel',
     'ThroughputModel',
     'TrapDensityModel', 'TrapParsModel', 'TrapsFilledModel',
+    'TsoPhotModel',
     'WavelengthrangeModel', 'WaveCorrModel', 'WfssBkgModel']
 
 # Initialize the astropy.io registry,
