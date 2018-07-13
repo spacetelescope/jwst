@@ -381,7 +381,7 @@ def dodrizzle(insci, input_wcs, inwht,
     """
 
     # Insure that the fillval parameter gets properly interpreted for use with tdriz
-    if util.is_blank(fillval):
+    if util.is_blank(str(fillval)):
         fillval = 'INDEF'
     else:
         fillval = str(fillval)
