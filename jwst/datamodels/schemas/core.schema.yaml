@@ -1773,6 +1773,15 @@ properties:
                 type: string
                 fits_keyword: R_TRPPAR
                 blend_table: True
+          tso_photometry:
+            title: TSO imaging photometry reference file information
+            type: object
+            properties:
+              name:
+                title: TSO imaging photometry reference file name
+                type: string
+                fits_keyword: R_TSPHOT
+                blend_table: True
           v2v3:
             title: V2_V3 Model reference file information
             type: object
