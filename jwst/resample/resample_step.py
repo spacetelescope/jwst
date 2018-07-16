@@ -3,6 +3,8 @@ import logging
 import numpy as np
 
 from ..stpipe import Step
+from ..extern.configobj.validate import Validator
+from ..extern.configobj.configobj import ConfigObj
 from .. import datamodels
 from . import resample
 from ..assign_wcs.util import update_s_region
@@ -47,9 +49,13 @@ class ResampleStep(Step):
 
         for reftype in self.reference_file_types:
             ref_filename = self.get_reference_file(input_models[0], reftype)
-        if ref_filename is not None:
+
+        if ref_filename != 'N/A':
             self.log.info('Drizpars reference file: {}'.format(ref_filename))
             kwargs = self.get_drizpars(ref_filename, input_models)
+        else:
+            # Deal with NIRSpec which currently has no default drizpars reffile
+            kwargs = self._set_spec_defaults()
 
         # Call the resampling routine
         resamp = resample.ResampleData(input_models, **kwargs)
@@ -73,6 +79,19 @@ class ResampleStep(Step):
     def get_drizpars(self, ref_filename, input_models):
         """
         Extract drizzle parameters from reference file.
+
+        This method extracts parameters from the drizpars reference file and
+        uses those to set defaults on the following ResampleStep configuration
+        parameters:
+
+        pixfrac = float(default=None)
+        kernel = string(default=None)
+        fillval = string(default=None)
+        weight_type = option('exptime', default=None)
+
+        Once the defaults are set from the reference file, if the user has
+        used a resample.cfg file or run ResampleStep using command line args,
+        then these will overwerite the defaults pulled from the reference file.
         """
         drizpars_table = datamodels.DrizParsModel(ref_filename).data
 
@@ -102,8 +121,10 @@ class ResampleStep(Step):
             self.log.error("No row found in %s matching input data.", ref_filename)
             raise ValueError
 
-        # Define the keys to then pull from drizpars reffile table.  Not the
-        # step param 'weight_type' is 'wht_type' in the FITS binary table
+        # Define the keys to pull from drizpars reffile table.  Note the
+        # step param 'weight_type' is 'wht_type' in the FITS binary table.
+        # All values should be None unless the user set them on the command
+        # line or in the call to the step
         drizpars = dict(
             pixfrac=self.pixfrac,
             kernel=self.kernel,
@@ -120,23 +141,56 @@ class ResampleStep(Step):
         for k in reffile_drizpars:
             if k in drizpars_table.names:
                 reffile_drizpars[k] = drizpars_table[k][row]
-        # Convert the 'wht_type' key to a 'weight_type' key
-        reffile_drizpars['weight_type'] = reffile_drizpars.pop('wht_type')
 
         # Convert the strings in the FITS binary table from np.bytes_ to str
         for k,v in reffile_drizpars.items():
             if isinstance(v, np.bytes_):
                 reffile_drizpars[k] = v.decode('UTF-8')
 
+        all_drizpars = {**reffile_drizpars, **user_drizpars}
+
+        # Convert the 'wht_type' key to a 'weight_type' key
+        all_drizpars['weight_type'] = all_drizpars.pop('wht_type')
+
         kwargs = dict(
             good_bits=self.good_bits,
             single=self.single,
             blendheaders=self.blendheaders
             )
-        kwargs.update({**reffile_drizpars, **user_drizpars})
+
+        kwargs.update(all_drizpars)
+
+        if 'wht_type' in kwargs:
+            raise DeprecationWarning('`wht_type` config keyword has changed ' +
+                'to `weight_type`; ' +
+                'please update calls to ResampleStep and resample.cfg files')
+            kwargs.pop('wht_type')
 
         for k,v in kwargs.items():
             self.log.debug('   {}={}'.format(k, v))
 
         return kwargs
 
+
+    @classmethod
+    def _set_spec_defaults(cls):
+        """NIRSpec currently has no default drizpars reference file, so default
+        drizzle parameters are not set properly.  This method sets them.
+
+        Remove this class method when a drizpars reffile is delivered.
+        """
+        configspec = cls.load_spec_file()
+        config = ConfigObj(configspec=configspec)
+        if config.validate(Validator()):
+            kwargs = config.dict()
+
+        if kwargs['pixfrac'] is None:
+            kwargs['pixfrac'] = 1.0
+        if kwargs['kernel'] is None:
+            kwargs['kernel'] = 'square'
+        if kwargs['fillval'] is None:
+            kwargs['fillval'] = 'INDEF'
+        if kwargs['weight_type'] is None:
+            kwargs['weight_type'] = 'exptime'
+
+        return kwargs
