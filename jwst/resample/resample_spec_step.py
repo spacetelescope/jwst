@@ -1,7 +1,6 @@
-from ..stpipe import Step, cmdline
+from ..stpipe import Step
 from .. import datamodels
-from . import resample_spec
-from . import ResampleStep
+from . import resample_spec, ResampleStep
 from ..exp_to_source import multislit_to_container
 from ..assign_wcs.util import update_s_region
 
@@ -19,18 +18,6 @@ class ResampleSpecStep(ResampleStep):
     input : DataModel, Association
     """
 
-    spec = """
-        pixfrac = float(default=1.0)
-        kernel = string(default='square')
-        fillval = string(default='INDEF')
-        weight_type = option('exptime', default='exptime')
-        good_bits = integer(min=0, default=4)
-        single = boolean(default=False)
-        blendheaders = boolean(default=True)
-    """
-
-    reference_file_types = ['drizpars']
-
     def process(self, input):
 
         input = datamodels.open(input)
@@ -46,6 +33,13 @@ class ResampleSpecStep(ResampleStep):
         for reftype in self.reference_file_types:
             ref_filename = self.get_reference_file(input_models[0], reftype)
 
+        if ref_filename != 'N/A':
+            self.log.info('Drizpars reference file: {}'.format(ref_filename))
+            kwargs = self.get_drizpars(ref_filename, input_models)
+        else:
+            # Deal with NIRSpec which currently has no default drizpars reffile
+            kwargs = self._set_spec_defaults()
+
         # Multislits get converted to a ModelContainer per slit
         if all([isinstance(i, datamodels.MultiSlitModel) for i in input_models]):
             container_dict = multislit_to_container(input_models)
@@ -55,11 +49,7 @@ class ResampleSpecStep(ResampleStep):
                 input_models = v
 
                 # Set up the resampling object as part of this step
-                resamp = resample_spec.ResampleSpecData(input_models,
-                    ref_filename, single=self.single,
-                    weight_type=self.weight_type, pixfrac=self.pixfrac,
-                    kernel=self.kernel, fillval=self.fillval,
-                    good_bits=self.good_bits)
+                resamp = resample_spec.ResampleSpecData(input_models, **kwargs)
                 # Do the resampling
                 resamp.do_drizzle()
 

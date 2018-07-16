@@ -44,14 +44,8 @@ class ResampleSpecData:
       5. Updates output data model with output arrays from drizzle, including
          (eventually) a record of metadata from all input models.
     """
-    drizpars = {'single': False,
-                'kernel': 'square',
-                'pixfrac': 1.0,
-                'good_bits': CRBIT,
-                'fillval': 0.0,
-                'weight_type': 'exptime'}
 
-    def __init__(self, input_models, output=None, ref_filename=None, **pars):
+    def __init__(self, input_models, output=None, **pars):
         """
         Parameters
         ----------
@@ -64,16 +58,11 @@ class ResampleSpecData:
         self.input_models = input_models
         if output is None:
             output = input_models.meta.resample.output
-        self.ref_filename = ref_filename
+
+        self.drizpars = pars
 
         self.pscale_ratio = 1.
         self.blank_output = None
-
-        # If user specifies use of drizpars ref file (default for pipeline use)
-        # update input parameters with default values from ref file
-        if self.ref_filename is not None:
-            self.get_drizpars()
-        self.drizpars.update(pars)
 
         # Define output WCS based on all inputs, including a reference WCS
         # wcslist = [m.meta.wcs for m in self.input_models]
@@ -90,17 +79,6 @@ class ResampleSpecData:
         self.blank_output.update(datamodels.ImageModel(self.input_models[0]._instance))
         self.blank_output.meta.wcs = self.output_wcs
         self.output_models = datamodels.ModelContainer()
-
-
-    def build_interpolated_output_wcs(self, refmodel=None):
-        """
-        Create a spatial/spectral WCS output frame using interp tabular model
-        """
-        if not refmodel:
-            refmodel = self.input_models[0]
-        refwcs = refmodel.meta.wcs
-        bb = refwcs.bounding_box
-
 
 
     def build_nirspec_output_wcs(self, refmodel=None):
