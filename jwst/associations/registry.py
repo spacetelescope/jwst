@@ -24,7 +24,10 @@ from .exceptions import (
 from .lib.callback_registry import CallbackRegistry
 from .lib.constraint import ConstraintTrue
 
-__all__ = ['AssociationRegistry']
+__all__ = [
+    'AssociationRegistry',
+    'RegistryMarker'
+]
 
 # Configure logging
 logger = logging.getLogger(__name__)

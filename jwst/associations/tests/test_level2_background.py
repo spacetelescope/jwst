@@ -1,27 +1,16 @@
-"""test_level3_dithers: Test of dither rules."""
-import pytest
-
-
-@pytest.mark.xfail(
-    reason='Not determined yet',
-    run=False
+"""Test Level2 background nods"""
+from .helpers import (
+    combine_pools,
+    registry_level2_only,
+    t_path
 )
-def test_level2_bkgnod():
-    assert False
 
-"""
-class TestLevel2Bkgnod(BasePoolRule):
+from .. import generate
 
-    pools = [
-        PoolParams(
-            path=t_path('data/jw95070_20150615T143412_pool.csv'),
-            n_asns=2,
-            n_orphaned=2,
-            kwargs={'delimiter': ','}
-        ),
-    ]
 
-    valid_rules = [
-        'Asn_MIRI_LRS_BKGNOD',
-    ]
-"""
+def test_nrs_msa_nod():
+    pool = combine_pools(t_path('data/pool_023_nirspec_msa_3nod.csv'))
+    asns = generate(pool, registry_level2_only())
+    assert len(asns) == 12
+    for asn in asns:
+        assert len(asn['products'][0]['members']) == 3
