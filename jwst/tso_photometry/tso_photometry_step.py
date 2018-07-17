@@ -29,19 +29,28 @@ class TSOPhotometryStep(Step):
             xcenter = model.meta.wcsinfo.crpix1 - 1    # 1-based origin
             ycenter = model.meta.wcsinfo.crpix2 - 1    # 1-based origin
 
-            # these aperture definitions are for NIRCam
-            # TODO:  need MIRI aperture definitions
-            # all radii are in pixel units
-            if model.meta.instrument.pupil == 'WLP8':
-                # weak-lens exposure
-                radius = 50
-                radius_inner = 60
-                radius_outer = 70
-            else:
-                # focused exposure
-                radius = 3
-                radius_inner = 4
-                radius_outer = 5
+            # Define the circular aperture and circular annulus for
+            # photometry.  All radii are in pixel units.
+
+            # TODO:  move these instrument/pupil-dependent aperture
+            # definitions to a reference file
+            if model.meta.instrument.name == 'NIRCAM':
+                if model.meta.instrument.pupil == 'WLP8':
+                    # weak-lens exposure
+                    radius = 50
+                    radius_inner = 60
+                    radius_outer = 70
+                else:
+                    # focused exposure
+                    radius = 3
+                    radius_inner = 4
+                    radius_outer = 5
+            elif model.meta.instrument.name == 'MIRI':
+                    # focused exposure
+                    # (there is no weak-lens option for MIRI)
+                    radius = 3.5    # 0.385 arcsec
+                    radius_inner = 9.09    # 1.0 arcsec
+                    radius_outer = 10.91    # 1.2 arcsec
 
             catalog = tso_aperture_photometry(model, xcenter, ycenter,
                                               radius, radius_inner,
