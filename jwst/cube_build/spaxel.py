@@ -14,7 +14,7 @@ log.setLevel(logging.DEBUG)
 
 
 ##################################################################################
-class Spaxel(object):
+class Spaxel():
 
 
     __slots__ = ['flux', 'error','flux_weight','iflux']
@@ -25,7 +25,7 @@ class Spaxel(object):
         self.iflux = 0
         self.error = 0
 
-class SpaxelAB(object):
+class SpaxelAB():
 
     __slots__ = ['flux', 'error', 'flux_weight','iflux']
 

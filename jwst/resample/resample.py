@@ -11,6 +11,8 @@ from ..model_blender import blendmeta
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+__all__ = ["ResampleData"]
+
 
 class ResampleData:
     """
@@ -170,11 +172,6 @@ class ResampleData:
                 self.blend_output_metadata(output_model)
                 output_model.meta.model_type = saved_model_type
 
-            # Following 2 lines can probably be removed once ASN dicts
-            # are handled properly
-            output_model.meta.asn.pool_name = self.input_models.meta.pool_name
-            output_model.meta.asn.table_name = self.input_models.meta.table_name
-
             exposure_times = {'start': [], 'end': []}
 
             # Initialize the output with the wcs
@@ -208,15 +205,6 @@ class ResampleData:
             output_model.meta.exposure.start_time = min(exposure_times['start'])
             output_model.meta.exposure.end_time = max(exposure_times['end'])
             output_model.meta.resample.product_exposure_time = texptime
-            output_model.meta.resample.product_data_extname = driz.sciext
-            output_model.meta.resample.product_context_extname = driz.conext
-            output_model.meta.resample.product_weight_extname = driz.whtext
-            output_model.meta.resample.drizzle_fill_value = str(driz.fillval)
-            output_model.meta.resample.drizzle_pixel_fraction = driz.pixfrac
-            output_model.meta.resample.drizzle_kernel = driz.kernel
-            output_model.meta.resample.drizzle_output_units = driz.out_units
-            output_model.meta.resample.drizzle_weight_scale = driz.wt_scl
-            output_model.meta.resample.resample_bits = self.drizpars['good_bits']
             output_model.meta.resample.weight_type = self.drizpars['wht_type']
             output_model.meta.resample.pointings = pointings
 
@@ -225,18 +213,19 @@ class ResampleData:
             self.output_models.append(output_model)
 
     def update_fits_wcs(self, model):
-        """Update FITS WCS keywords of the resampled image."""
-        if isinstance(model, datamodels.ImageModel):
-            transform = model.meta.wcs.forward_transform
-            model.meta.wcsinfo.crpix1 = -transform[0].offset.value + 1
-            model.meta.wcsinfo.crpix2 = -transform[1].offset.value + 1
-            model.meta.wcsinfo.cdelt1 = transform[3].factor.value
-            model.meta.wcsinfo.cdelt2 = transform[4].factor.value
-            model.meta.wcsinfo.ra_ref = transform[6].lon.value
-            model.meta.wcsinfo.dec_ref = transform[6].lat.value
-            model.meta.wcsinfo.crval1 = model.meta.wcsinfo.ra_ref
-            model.meta.wcsinfo.crval2 = model.meta.wcsinfo.dec_ref
-            model.meta.wcsinfo.pc1_1 = transform[2].matrix.value[0][0]
-            model.meta.wcsinfo.pc1_2 = transform[2].matrix.value[0][1]
-            model.meta.wcsinfo.pc2_1 = transform[2].matrix.value[1][0]
-            model.meta.wcsinfo.pc2_2 = transform[2].matrix.value[1][1]
+        """
+        Update FITS WCS keywords of the resampled image.
+        """
+        transform = model.meta.wcs.forward_transform
+        model.meta.wcsinfo.crpix1 = -transform[0].offset.value + 1
+        model.meta.wcsinfo.crpix2 = -transform[1].offset.value + 1
+        model.meta.wcsinfo.cdelt1 = transform[3].factor.value
+        model.meta.wcsinfo.cdelt2 = transform[4].factor.value
+        model.meta.wcsinfo.ra_ref = transform[6].lon.value
+        model.meta.wcsinfo.dec_ref = transform[6].lat.value
+        model.meta.wcsinfo.crval1 = model.meta.wcsinfo.ra_ref
+        model.meta.wcsinfo.crval2 = model.meta.wcsinfo.dec_ref
+        model.meta.wcsinfo.pc1_1 = transform[2].matrix.value[0][0]
+        model.meta.wcsinfo.pc1_2 = transform[2].matrix.value[0][1]
+        model.meta.wcsinfo.pc2_1 = transform[2].matrix.value[1][0]
+        model.meta.wcsinfo.pc2_2 = transform[2].matrix.value[1][1]

@@ -1,5 +1,3 @@
-from __future__ import division
-
 from ..datamodels import dqflags
 from ..lib import reffile_utils
 from .linearity_func import apply_linearity_func

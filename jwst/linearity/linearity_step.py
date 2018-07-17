@@ -2,6 +2,9 @@ from ..stpipe import Step
 from .. import datamodels
 from . import linearity
 
+__all__ = ["LinearityStep"]
+
+
 class LinearityStep(Step):
     """
     LinearityStep: This step performs a correction for non-linear

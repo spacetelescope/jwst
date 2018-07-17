@@ -25,6 +25,8 @@ from ..datamodels import WavelengthrangeModel, DataModel
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+__all__ = ["reproject", "wcs_from_footprints"]
+
 
 class MissingMSAFileError(Exception):
 
@@ -92,7 +94,7 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
         scaling and rotation transform is created from it. If not supplied
         the first model in the list is used as ``refmodel``.
     transform : `~astropy.modeling.core.Model`, optional
-        A transform, passed to :class_method:`~gwcs.WCS.wcs_from_fiducial`
+        A transform, passed to :meth:`~gwcs.wcstools.wcs_from_fiducial`
         If not supplied Scaling | Rotation is computed from ``refmodel``.
     bounding_box : tuple, optional
         Bounding_box of the new WCS.
@@ -572,10 +574,10 @@ def update_s_region(model):
 
     s_region = (
         "POLYGON ICRS "
-        " {0} {1}"
-        " {2} {3}"
-        " {4} {5}"
-        " {6} {7}".format(*footprint.flatten()))
+        " {0:.9f} {1:.9f}"
+        " {2:.9f} {3:.9f}"
+        " {4:.9f} {5:.9f}"
+        " {6:.9f} {7:.9f}".format(*footprint.flatten()))
     if "nan" in s_region:
         # do not update s_region if there are NaNs.
         log.info("There are NaNs in s_region")

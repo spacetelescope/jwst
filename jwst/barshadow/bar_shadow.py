@@ -1,5 +1,3 @@
-from __future__ import division
-
 #
 #  Module for calculating bar shadow correction for science data sets
 #

@@ -7,8 +7,6 @@ of sources from images.
 
 .. moduleauthor:: Larry Bradley <help@stsci.edu>
 
-:License: :doc:`LICENSE`
-
 .. currentmodule:: jwst.tweakreg.tweakreg_catalog
 
 .. automodule:: jwst.tweakreg.tweakreg_catalog

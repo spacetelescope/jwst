@@ -12,6 +12,7 @@ from jwst.associations import (
     AssociationRegistry,
     libpath
 )
+from jwst.associations.registry import RegistryMarker
 from jwst.associations.lib.acid import ACID
 from jwst.associations.lib.constraint import (
     Constraint,
@@ -53,7 +54,7 @@ __all__ = [
 ]
 
 # The schema that these associations must adhere to.
-ASN_SCHEMA = libpath('asn_schema_jw_level2b.json')
+ASN_SCHEMA = RegistryMarker.schema(libpath('asn_schema_jw_level2b.json'))
 
 # Flag to exposure type
 FLAG_TO_EXPTYPE = {
@@ -73,7 +74,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
     """Basic class for DMS Level2 associations."""
 
     # Set the validation schema
-    schema_file = ASN_SCHEMA
+    schema_file = ASN_SCHEMA.schema
 
     # Attribute values that are indicate the
     # attribute is not specified.
@@ -396,6 +397,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         return '\n'.join(result)
 
 
+@RegistryMarker.utility
 class Utility():
     """Utility functions that understand DMS Level 3 associations"""
 
@@ -443,7 +445,7 @@ class Utility():
         return Utility_Level3.resequence(*args, **kwargs)
 
     @staticmethod
-    @AssociationRegistry.callback('finalize')
+    @RegistryMarker.callback('finalize')
     def finalize(associations):
         """Check validity and duplications in an association list
 
@@ -457,19 +459,17 @@ class Utility():
         finalized_associations: [association[, ...]]
             The validated list of associations
         """
-        finalized = []
+        finalized_asns = []
         lv2_asns = []
         for asn in associations:
             if isinstance(asn, DMSLevel2bBase):
-
-                # Check validity
-                if asn.is_valid:
-                    lv2_asns.append(asn)
-
+                finalized = asn.finalize()
+                if finalized is not None:
+                    lv2_asns.extend(finalized)
             else:
-                finalized.append(asn)
+                finalized_asns.append(asn)
 
-        return finalized + lv2_asns
+        return finalized_asns + lv2_asns
 
     @staticmethod
     def merge_asns(associations):
@@ -676,18 +676,6 @@ class Constraint_Spectral_Science(Constraint):
                     name='exp_type',
                     sources=['exp_type'],
                     value='|'.join(science_exp_types)
-                ),
-                Constraint(
-                    [
-                        DMSAttrConstraint(
-                            name='exp_type',
-                            sources=['exp_type'],
-                            value='nrs_msaspec'
-                        ),
-                        DMSAttrConstraint(
-                            sources=['msametfl']
-                        )
-                    ]
                 )
             ],
             reduce=Constraint.any

@@ -69,7 +69,8 @@ PACKAGE_DATA = {
         '*.cfg',
         '*.csv',
         '*.yaml',
-        '*.json'
+        '*.json',
+        '*.asdf'
     ]
 }
 

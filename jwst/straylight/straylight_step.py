@@ -5,6 +5,9 @@ from .. import datamodels
 from . import straylight
 from ..datamodels import RegionsModel
 
+__all__ = ["StraylightStep"]
+
+
 class StraylightStep (Step):
     """
     StraylightStep: Performs straylight correction image using a Mask file.
@@ -26,8 +29,8 @@ class StraylightStep (Step):
             # check the data is MIRI data
             detector = input_model.meta.instrument.detector
             if detector == 'MIRIFUSHORT':
-                
-                if self.method == 'Nearest': 
+
+                if self.method == 'Nearest':
                 # Get the name of the straylight reference file
                     self.straylight_name = self.get_reference_file(input_model,
                                                                    'straymask')
@@ -61,7 +64,7 @@ class StraylightStep (Step):
                     self.log.info(' Region of influence radius (pixels) %6.2f',self.roi)
                     self.log.info(' Modified Shepard weighting power %5.2f',self.power)
                 # Do the correction
-                    result = straylight.correct_MRS_ModShepard(input_model, 
+                    result = straylight.correct_MRS_ModShepard(input_model,
                                                                slices,
                                                                self.roi,
                                                                self.power)

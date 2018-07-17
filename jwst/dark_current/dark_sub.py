@@ -1,5 +1,3 @@
-from __future__ import division
-
 #
 #  Module for dark subtracting science data sets
 #

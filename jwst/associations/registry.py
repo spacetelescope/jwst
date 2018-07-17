@@ -3,6 +3,8 @@ from importlib import import_module
 from inspect import (
     getmembers,
     isclass,
+    isfunction,
+    ismethod,
     ismodule
 )
 import logging
@@ -22,7 +24,10 @@ from .exceptions import (
 from .lib.callback_registry import CallbackRegistry
 from .lib.constraint import ConstraintTrue
 
-__all__ = ['AssociationRegistry']
+__all__ = [
+    'AssociationRegistry',
+    'RegistryMarker'
+]
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -30,9 +35,6 @@ logger.addHandler(logging.NullHandler())
 
 # Library files
 _ASN_RULE = 'association_rules.py'
-
-# User-level association definitions start with...
-USER_ASN = 'Asn_'
 
 
 class AssociationRegistry(dict):
@@ -55,10 +57,48 @@ class AssociationRegistry(dict):
     include_bases: bool
         If True, include base classes not considered
         rules.
-    """
 
-    # Callback registry
-    callback = CallbackRegistry()
+    Attributes
+    ----------
+    rule_set: {rule [, ...]}
+        The rules in the registry.
+
+    Methods
+    -------
+    match(item)
+        Return associations where `item` matches any of the rules.
+
+    validate(association)
+        Determine whether an association is valid, or complete,
+        according to any of the rules in the registry.
+
+    finalize(associations)
+        Validate and execute post-processing hooks to
+        produce a completed and valid set of associations.
+
+    load(serialized)
+        Create an association from a serialized form.
+
+
+    Notes
+    -----
+    The general workflow is as follows:
+
+        * Create the registry
+            >>> registry = AssociationRegistry()
+
+        * Create associations from an item
+            >>> associations, reprocess = registry.match(item)
+
+        * Finalize the associations
+            >>> final_asns = registry.finalize(assocations)
+
+    In practice, this is one step in a larger loop over all items to
+    be associated. This does not account for adding items to already
+    existing associations. See :ref:`generate` for a full example of
+    using the registry.
+
+    """
 
     def __init__(self,
                  definition_files=None,
@@ -72,13 +112,11 @@ class AssociationRegistry(dict):
         # names.
         self.name = name
 
+        # Callback registry
+        self.callback = CallbackRegistry()
+
         # Precache the set of rules
         self._rule_set = set()
-
-        # Setup constraints that are to be applied
-        # to every rule.
-        if global_constraints is None:
-            global_constraints = ConstraintTrue()
 
         if definition_files is None:
             definition_files = []
@@ -88,27 +126,14 @@ class AssociationRegistry(dict):
             raise AssociationError('No rule definition files specified.')
 
         self.schemas = []
-        Utility = type('Utility', (object,), {})
+        self.Utility = type('Utility', (object,), {})
         for fname in definition_files:
             module = import_from_file(fname)
-            self.schemas += [
-                schema
-                for schema in find_object(module, 'ASN_SCHEMA')
-            ]
-            for class_name, class_object in get_classes(module):
-                if include_bases or class_name.startswith(USER_ASN):
-                    try:
-                        rule_name = '_'.join([self.name, class_name])
-                    except TypeError:
-                        rule_name = class_name
-                    rule = type(rule_name, (class_object,), {})
-                    rule.GLOBAL_CONSTRAINT = global_constraints
-                    rule.registry = self
-                    self.__setitem__(rule_name, rule)
-                    self._rule_set.add(rule)
-                if class_name == 'Utility':
-                    Utility = type('Utility', (class_object, Utility), {})
-        self.Utility = Utility
+            self.populate(
+                module,
+                global_constraints=global_constraints,
+                include_bases=include_bases
+            )
 
     @property
     def rule_set(self):
@@ -258,16 +283,200 @@ class AssociationRegistry(dict):
         else:
             return results
 
-    def finalize(self, associations):
-        """Finalize newly generated associations
+    def populate(self,
+                 module,
+                 global_constraints=None,
+                 include_bases=None
+    ):
+        """Parse out all rules and callbacks in a module
 
         Parameters
         ----------
-        assocations: [association[, ...]]
-            The list of associations
+        module: module
+            The module, and all submodules, to be parsed.
+
+        Modifies
+        --------
+        self.callback
+            Found callbacks are added to the callback registry
         """
-        finalized = self.callback.filter('finalize', associations)
-        return finalized
+        for name, obj in get_marked(module, include_bases=include_bases):
+
+            # Add rules.
+            if (include_bases and isclass(obj)) or\
+               obj._asnreg_role == 'rule':
+                self.add_rule(name, obj, global_constraints=global_constraints)
+                continue
+
+            # Add callbacks
+            if obj._asnreg_role == 'callback':
+                for event in obj._asnreg_events:
+                    self.callback.add(event, obj)
+                    continue
+
+            # Add schema
+            if obj._asnreg_role == 'schema':
+                self.schemas.append(obj._asnreg_schema)
+                continue
+
+            # Add utility classes
+            if obj._asnreg_role == 'utility':
+                self.Utility = type(
+                    'Utility',
+                    (obj, self.Utility),
+                    {}
+                )
+
+    def add_rule(self, name, obj, global_constraints=None):
+        """Add object as rule to registry
+
+        Parameters
+        ----------
+        name: str
+            Name of the object
+
+        obj: object
+            The object to be considered a rule
+
+        global_constraints: dict
+            The global constraints to attach to the rule.
+        """
+        try:
+            rule_name = '_'.join([self.name, name])
+        except TypeError:
+            rule_name = name
+        rule = type(rule_name, (obj,), {})
+        rule.GLOBAL_CONSTRAINT = global_constraints
+        rule.registry = self
+        self.__setitem__(rule_name, rule)
+        self._rule_set.add(rule)
+
+
+class RegistryMarker:
+    """Mark rules, callbacks, and module"""
+
+    class Schema:
+        def __init__(self, obj):
+            self._asnreg_role = 'schema'
+            self._asnreg_schema = obj
+            RegistryMarker.mark(self)
+
+        @property
+        def schema(self):
+            return self._asnreg_schema
+
+    @staticmethod
+    def mark(obj):
+        """Mark that object should be part of the registry
+
+        Parameters
+        ----------
+        obj: object
+            The object to mark
+
+        Modifies
+        --------
+        _asnreg_mark: True
+            Attribute added to object and is set to True
+
+        _asnreg_role: str or None
+            Attribute added to object indicating role this object plays.
+            If None, no particular role is indicated.
+
+        Returns
+        -------
+        obj: object
+            Return object to enable use as a decorator.
+        """
+        obj._asnreg_marked = True
+        obj._asnreg_role = getattr(obj, '_asnreg_role', None)
+        return obj
+
+    @staticmethod
+    def rule(obj):
+        """Mark object as rule
+
+        Parameters
+        ----------
+        obj: object
+            The object that should be treated as a rule
+
+        Modifies
+        --------
+        _asnreg_role: 'rule'
+            Attributed added to object and set to `rule`
+
+        _asnreg_mark: True
+            Attributed added to object and set to True
+
+        Returns
+        -------
+        obj: object
+            Return object to enable use as a decorator.
+        """
+        obj._asnreg_role = 'rule'
+        RegistryMarker.mark(obj)
+        return obj
+
+    @staticmethod
+    def callback(event):
+        """Mark object as a callback for an event
+
+        Parameters
+        ----------
+        event: str
+            Event this is a callback for.
+
+        obj: func
+            Function, or any callable, to be called
+            when the corresponding event is triggered.
+
+        Modifies
+        --------
+        _asnreg_role: 'callback'
+            Attributed added to object and set to `rule`
+
+        _asnreg_events: [event[, ...]]
+            The events this callable object is a callback for.
+
+        _asnreg_mark: True
+            Attributed added to object and set to True
+
+        Returns
+        -------
+        obj: object
+            Return object to enable use as a decorator.
+
+        """
+        def decorator(func):
+            try:
+                events = func._asnreg_events
+            except AttributeError:
+                events = list()
+            events.append(event)
+            RegistryMarker.mark(func)
+            func._asnreg_role = 'callback'
+            func._asnreg_events = events
+            return func
+        return decorator
+
+    @staticmethod
+    def schema(filename):
+        """Mark a file as a schema source"""
+        schema = RegistryMarker.Schema(filename)
+        return schema
+
+    @staticmethod
+    def utility(class_obj):
+        """Mark the class as a Utility class"""
+        class_obj._asnreg_role = 'utility'
+        RegistryMarker.mark(class_obj)
+        return class_obj
+
+    @staticmethod
+    def is_marked(obj):
+        return hasattr(obj, '_asnreg_marked')
+
 
 # Utilities
 def import_from_file(filename):
@@ -294,52 +503,46 @@ def import_from_file(filename):
     return module
 
 
-def find_object(module, obj):
-    """Find all instances of object in module or sub-modules
-
-    Parameters
-    ----------
-    module: module
-        The module to recursively search through.
-
-    obj: str
-        The object to find.
-
-    Returns
-    -------
-    values: iterator
-        Iterator that returns all values of the object
-    """
-    for name, value in getmembers(module):
-        if ismodule(value) and name.startswith('asn_'):
-            for inner_value in find_object(value, obj):
-                yield inner_value
-        elif name == obj:
-            yield value
-
-
-def get_classes(module):
-    """Recursively get all classes in the module
+def get_marked(module, predicate=None, include_bases=False):
+    """Recursively get all executable objects
 
     Parameters
     ----------
     module: python module
         The module to examine
 
+    predicate: bool func(object)
+        Determinant of what gets returned.
+        If None, all object types are examined
+
+    include_bases: bool
+        If True, include base classes not considered
+        rules.
+
     Returns
     -------
     class object: generator
         A generator that will yield all class members in the module.
     """
-    for class_name, class_object in getmembers(
-            module,
-            lambda o: isclass(o) or ismodule(o)
-    ):
-        if ismodule(class_object) and class_name.startswith('asn_'):
-            for sub_name, sub_class in get_classes(class_object):
-                yield sub_name, sub_class
-        elif isclass(class_object):
-            yield class_name, class_object
+    def is_method(obj):
+        return (isfunction(obj) or
+                ismethod(obj)
+        )
+
+    for name, obj in getmembers(module, predicate):
+        if isclass(obj):
+            for sub_name, sub_obj in get_marked(obj, predicate=is_method):
+                yield sub_name, sub_obj
+            if RegistryMarker.is_marked(obj) or include_bases:
+                yield name, obj
+        elif RegistryMarker.is_marked(obj):
+            if ismodule(obj):
+                for sub_name, sub_obj in get_marked(
+                        obj, predicate=predicate, include_bases=include_bases
+                ):
+                    yield sub_name, sub_obj
+            else:
+                yield name, obj
 
 
 # ##########

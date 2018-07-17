@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from collections import defaultdict
+import os.path as op
 
 from .. import datamodels
 from ..associations.load_as_asn import LoadAsLevel2Asn
@@ -56,7 +57,7 @@ class Image2Pipeline(Pipeline):
             result = self.process_exposure_product(
                 product,
                 asn['asn_pool'],
-                asn.filename
+                op.basename(asn.filename)
             )
 
             # Save result
@@ -82,6 +83,13 @@ class Image2Pipeline(Pipeline):
         ---------
         exp_product: dict
             A Level2b association product.
+
+        pool_name: str
+            The pool file name. Used for recording purposes only.
+
+        asn_file: str
+            The name of the association file.
+            Used for recording purposes only.
         """
         # Find all the member types in the product
         members_by_type = defaultdict(list)

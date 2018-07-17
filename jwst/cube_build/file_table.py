@@ -1,5 +1,4 @@
 # Routines used for building cubes
-from __future__ import absolute_import, print_function
 
 import sys
 import time
@@ -16,7 +15,7 @@ log.setLevel(logging.DEBUG)
 
 
 ##################################################################################
-class FileTable(object):
+class FileTable():
     """
     Dictionary that maps the input files to correct:
     MIRI - channel/subchannel

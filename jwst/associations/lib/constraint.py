@@ -547,6 +547,10 @@ class Constraint:
 
         return self.matched, list(chain(*reprocess))
 
+    def append(self, constraint):
+        """Append a new constraint"""
+        self.constraints.append(constraint)
+
     def copy(self):
         """Copy ourselves"""
         return deepcopy(self)
@@ -554,6 +558,11 @@ class Constraint:
     @staticmethod
     def all(item, constraints):
         """Return positive only if all results are positive."""
+
+        # If there are no constraints, there is nothing to match.
+        # Result is false.
+        if len(constraints) == 0:
+            return False, []
 
         # Find all negatives. Note first negative
         # that requires reprocessing and how many
@@ -591,6 +600,11 @@ class Constraint:
     @staticmethod
     def any(item, constraints):
         """Return the first successful constraint."""
+        # If there are no constraints, there is nothing to match.
+        # Result is false.
+        if len(constraints) == 0:
+            return False, []
+
         to_reprocess = []
         for constraint in constraints:
             match, reprocess = constraint.check_and_set(item)

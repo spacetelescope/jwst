@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 import sys
 import argparse
 import inspect
@@ -9,7 +7,7 @@ from .table_to_hdulist import table_to_hdulist
 from .table_to_json import table_to_json
 
 
-class CSVConvertScript(object):
+class CSVConvertScript():
     """Convert a CSV file to other formats
     version of the CSV file.
     """

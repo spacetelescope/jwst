@@ -9,6 +9,8 @@ from .util import MissingMSAFileError
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+__all__ = ["AssignWcsStep"]
+
 
 class AssignWcsStep(Step):
     """

@@ -3,7 +3,7 @@ Assign WCS
 ==========
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    main.rst
    reference_files.rst
@@ -11,4 +11,14 @@ Assign WCS
    exp_types.rst
 
 
-.. automodapi:: jwst.assign_wcs
+=============
+Reference/API
+=============
+
+.. automodapi:: jwst.assign_wcs.fgs
+.. automodapi:: jwst.assign_wcs.miri
+.. automodapi:: jwst.assign_wcs.nircam
+.. automodapi:: jwst.assign_wcs.niriss
+.. automodapi:: jwst.assign_wcs.nirspec
+.. automodapi:: jwst.assign_wcs.pointing
+.. automodapi:: jwst.assign_wcs.util

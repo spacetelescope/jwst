@@ -2,8 +2,7 @@
 import logging
 import numpy as np
 import numpy.linalg as linalg
-import scipy.special
-from scipy.misc import comb
+from scipy.special import comb, jv
 from . import hexee
 
 log = logging.getLogger(__name__)
@@ -209,7 +208,7 @@ def primarybeam(kx, ky):
     R = (primarybeam.d / primarybeam.lam) * primarybeam.pitch *  \
             np.sqrt((kx - primarybeam.offx) * (kx - primarybeam.offx) + \
             (ky - primarybeam.offy) * (ky - primarybeam.offy))
-    pb = replacenan(scipy.special.jv(1, np.pi * R) / (2.0 * R))
+    pb = replacenan(jv(1, np.pi * R) / (2.0 * R))
 
     pb = pb.transpose()
 

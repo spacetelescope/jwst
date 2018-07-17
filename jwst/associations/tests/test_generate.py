@@ -1,7 +1,26 @@
 from . import helpers
 from .helpers import full_pool_rules
 
-from .. import (generate, load_asn)
+from .. import (
+    AssociationPool,
+    AssociationRegistry,
+    generate,
+    load_asn
+)
+
+
+def test_simple():
+    """Test generate on simple registry"""
+    registry = AssociationRegistry(
+        [helpers.t_path('data/rules_basic.py')],
+        include_default=False
+    )
+    pool = AssociationPool()
+    pool['value'] = ['row1', 'row2']
+
+    asns = generate(pool, registry)
+    assert len(asns) == 1
+    assert len(asns[0]['members']) == 2
 
 
 @helpers.runslow

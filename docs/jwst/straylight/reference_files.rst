@@ -1,5 +1,5 @@
-Reference File
-==============
+Reference File Types
+====================
 The default algorithm  in the MIRI MRS stray-light correction step uses information contained
 in the  meta data of the input image which maps each pixels to a slice or the  region between the
 slices, also known as the slice gaps. This information was previously loaded from a reference file into the meta data by the assign_wcs
