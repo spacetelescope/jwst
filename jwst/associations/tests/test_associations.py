@@ -11,7 +11,6 @@ from .. import (
     generate)
 from ..registry import (
     import_from_file,
-    find_object
 )
 from ..lib.dms_base import DMSAttrConstraint
 
@@ -137,11 +136,3 @@ def test_global_constraints(constraints, pool, n_asns):
     pool = helpers.combine_pools(pool)
     asns = generate(pool, rules)
     assert len(asns) == n_asns
-
-
-def test_rulesets():
-    """Test finding objects in a ruleset"""
-    rule_file = helpers.t_path('../lib/association_rules.py')
-    module = import_from_file(rule_file)
-    schemas = [schema for schema in find_object(module, 'ASN_SCHEMA')]
-    assert len(schemas) == 2

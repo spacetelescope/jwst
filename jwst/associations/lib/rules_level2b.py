@@ -1,13 +1,25 @@
 """Association Definitions: DMS Level2b product associations
 """
+from copy import (copy, deepcopy)
 import logging
+from os import path as op
 
+from jwst.associations.registry import RegistryMarker
 from jwst.associations.lib.constraint import Constraint
 from jwst.associations.lib.dms_base import format_list
 from jwst.associations.lib.rules_level2_base import *
 from jwst.associations.lib.rules_level3_base import DMS_Level3_Base
+from jwst.stpipe.suffix import remove_suffix
 
 __all__ = [
+    'Asn_Lv2FGS',
+    'Asn_Lv2Image',
+    'Asn_Lv2ImageNonScience',
+    'Asn_Lv2ImageSpecial',
+    'Asn_Lv2NRSMSA'
+    'Asn_Lv2Spec',
+    'Asn_Lv2SpecSpecial',
+    'Asn_Lv2WFSS_NIS',
 ]
 
 # Configure logging
@@ -18,6 +30,7 @@ logger.addHandler(logging.NullHandler())
 # --------------------------------
 # Start of the User-level rules
 # --------------------------------
+@RegistryMarker.rule
 class Asn_Lv2Image(
         AsnMixin_Lv2Singleton,
         AsnMixin_Lv2Image,
@@ -38,6 +51,7 @@ class Asn_Lv2Image(
         super(Asn_Lv2Image, self).__init__(*args, **kwargs)
 
 
+@RegistryMarker.rule
 class Asn_Lv2ImageSpecial(
         AsnMixin_Lv2Special,
         AsnMixin_Lv2Singleton,
@@ -64,6 +78,7 @@ class Asn_Lv2ImageSpecial(
         super(Asn_Lv2ImageSpecial, self).__init__(*args, **kwargs)
 
 
+@RegistryMarker.rule
 class Asn_Lv2ImageNonScience(
         AsnMixin_Lv2Special,
         AsnMixin_Lv2Singleton,
@@ -85,6 +100,7 @@ class Asn_Lv2ImageNonScience(
         super(Asn_Lv2ImageNonScience, self).__init__(*args, **kwargs)
 
 
+@RegistryMarker.rule
 class Asn_Lv2FGS(
         AsnMixin_Lv2Singleton,
         AsnMixin_Lv2Image,
@@ -110,6 +126,7 @@ class Asn_Lv2FGS(
         super(Asn_Lv2FGS, self).__init__(*args, **kwargs)
 
 
+@RegistryMarker.rule
 class Asn_Lv2Spec(
         AsnMixin_Lv2Singleton,
         AsnMixin_Lv2Spectral,
@@ -130,6 +147,7 @@ class Asn_Lv2Spec(
         super(Asn_Lv2Spec, self).__init__(*args, **kwargs)
 
 
+@RegistryMarker.rule
 class Asn_Lv2SpecSpecial(
         AsnMixin_Lv2Special,
         AsnMixin_Lv2Singleton,
@@ -156,6 +174,7 @@ class Asn_Lv2SpecSpecial(
         super(Asn_Lv2SpecSpecial, self).__init__(*args, **kwargs)
 
 
+@RegistryMarker.rule
 class Asn_Lv2WFSS_NIS(
         AsnMixin_Lv2Singleton,
         AsnMixin_Lv2Spectral,
@@ -221,3 +240,115 @@ class Asn_Lv2WFSS_NIS(
         if opt_elem == '':
             opt_elem = 'clear'
         return opt_elem
+
+
+@RegistryMarker.rule
+class Asn_Lv2NRSMSA(
+        AsnMixin_Lv2Spectral,
+        DMSLevel2bBase
+):
+    """Level2b NIRSpec MSA"""
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup constraints
+        self.constraints = Constraint([
+            Constraint_Base(),
+            Constraint_Mode(),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        name='exp_type',
+                        sources=['exp_type'],
+                        value='nrs_msaspec'
+                    ),
+                    DMSAttrConstraint(
+                        sources=['msametfl']
+                    ),
+                    DMSAttrConstraint(
+                        name='expspcin',
+                        sources=['expspcin'],
+                    )
+                ]
+            )
+        ])
+
+        # Now check and continue initialization.
+        super(Asn_Lv2NRSMSA, self).__init__(*args, **kwargs)
+
+
+    def finalize(self):
+        """Finalize assocation
+
+        For NRS MSA, finalization means creating new associations for
+        background nods.
+
+        Returns
+        -------
+        associations: [association[, ...]] or None
+            List of fully-qualified associations that this association
+            represents.
+            `None` if a complete association cannot be produced.
+
+        """
+        return self.make_nod_asns()
+
+    def make_nod_asns(self):
+        """Make background nod Associations
+
+        NIRSpec MSA can be nodded, such that the object
+        is in a different position in the slitlet.
+        The association creation simply groups these all together
+        as a single association, all exposures marked as `science`.
+        When complete, this method will create separate associations
+        each exposure becoming the single science exposure, and the
+        other exposures then become `background`.
+
+        Returns
+        -------
+        associations: [association[, ...]]
+            List of new associations to be used in place of
+            the current one.
+        """
+
+        for product in self['products']:
+            members = product['members']
+
+            # Split out the science vs. non-science
+            # The non-science exposures will get attached
+            # to every resulting association.
+            science_exps = [
+                member
+                for member in members
+                if member['exptype'] == 'science'
+            ]
+            nonscience_exps = [
+                member
+                for member in members
+                if member['exptype'] != 'science'
+            ]
+
+            # Create new associations for each science, using
+            # the other science as background.
+            results = []
+            for science_exp in science_exps:
+                asn = deepcopy(self)
+                asn.data['products'] = None
+
+                product_name = remove_suffix(
+                    op.splitext(op.split(science_exp['expname'])[1])[0]
+                )[0]
+                asn.new_product(product_name)
+                new_members = asn.current_product['members']
+                new_members.append(science_exp)
+
+                for other_science in science_exps:
+                    if other_science['expname'] != science_exp['expname']:
+                        now_background = copy(other_science)
+                        now_background['exptype'] = 'background'
+                        new_members.append(now_background)
+
+                new_members += nonscience_exps
+                results.append(asn)
+
+            return results
