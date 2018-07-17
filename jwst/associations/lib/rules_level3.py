@@ -2,6 +2,7 @@
 """
 import logging
 
+from jwst.associations.registry import RegistryMarker
 from jwst.associations.lib.dms_base import (ACQ_EXP_TYPES, Constraint_TSO)
 from jwst.associations.lib.rules_level3_base import *
 
@@ -24,6 +25,7 @@ logger.addHandler(logging.NullHandler())
 # --------------------------------
 # Start of the User-level rules
 # --------------------------------
+@RegistryMarker.rule
 class Asn_Image(AsnMixin_Science):
     """Non-Association Candidate Dither Associations"""
 
@@ -52,6 +54,7 @@ class Asn_Image(AsnMixin_Science):
         super(Asn_Image, self)._init_hook(item)
 
 
+@RegistryMarker.rule
 class Asn_WFSCMB(AsnMixin_Science):
     """Wavefront Sensing association
 
@@ -95,6 +98,7 @@ class Asn_WFSCMB(AsnMixin_Science):
         super(Asn_WFSCMB, self)._init_hook(item)
 
 
+@RegistryMarker.rule
 class Asn_Spectral(AsnMixin_Spectrum):
     """All slit-like spectral exposures"""
 
@@ -118,6 +122,7 @@ class Asn_Spectral(AsnMixin_Spectrum):
         super(Asn_Spectral, self).__init__(*args, **kwargs)
 
 
+@RegistryMarker.rule
 class Asn_IFU(AsnMixin_Spectrum):
     """IFU associations"""
 
@@ -148,6 +153,7 @@ class Asn_IFU(AsnMixin_Spectrum):
         return product_name.lower()
 
 
+@RegistryMarker.rule
 class Asn_Coron(AsnMixin_Science):
     """Coronography
     Notes
@@ -202,6 +208,7 @@ class Asn_Coron(AsnMixin_Science):
         super(Asn_Coron, self)._init_hook(item)
 
 
+@RegistryMarker.rule
 class Asn_AMI(AsnMixin_Science):
     """Aperture Mask Interferometry
     Notes
@@ -243,6 +250,7 @@ class Asn_AMI(AsnMixin_Science):
         super(Asn_AMI, self)._init_hook(item)
 
 
+@RegistryMarker.rule
 class Asn_WFSS_NIS(AsnMixin_Spectrum):
     """WFSS/Grism modes"""
 
@@ -272,6 +280,7 @@ class Asn_WFSS_NIS(AsnMixin_Spectrum):
         super(Asn_WFSS_NIS, self).__init__(*args, **kwargs)
 
 
+@RegistryMarker.rule
 class Asn_TSO(AsnMixin_Science):
     """Time-Series observations"""
 
@@ -297,6 +306,7 @@ class Asn_TSO(AsnMixin_Science):
         super(Asn_TSO, self)._init_hook(item)
 
 
+@RegistryMarker.rule
 class Asn_ACQ_Reprocess(DMS_Level3_Base):
     """For first loop, simply send acquisitions and confirms back"""
 

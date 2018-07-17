@@ -232,7 +232,7 @@ If `add()` returns `matches==False`, then `create` returns `None` as the
 new association.
 
 Any override of this method is expected to first call `super`. On
-success, any further initializations may be performed.
+success, any further initialization may be performed.
 
 Implementing `add()`
 ^^^^^^^^^^^^^^^^^^^^
@@ -269,3 +269,28 @@ information, no further overriding of these methods is necessary.
 
 However, if the new rule does not define `data`, then these methods
 will need be overridden.
+
+Rule Registration
+=================
+
+In order for a rule to be used by `generate`, the rule must be loaded
+into an `AssociationRegistry`.  Since a rule is just a class that is
+defined as part of a, most likely, larger module, the registry needs
+to know what classes are rules. Classes to be used as rules are marked
+with the `RegistryMarker.rule` decorator as follows::
+
+  # myrules.py
+  from jwst.associations import (Association, RegistryMarker)
+
+  @RegistryMarker.rule
+  class MyRule(Association):
+      ...
+
+Then, when the rule file is used to create an `AssociationRegistry`,
+the class `MyRule` will be included as one of the available rules::
+
+  >>> from jwst.associations import AssociationRegistry
+  >>> registry = AssociationRegistry('myrules.py', include_default=False)
+  >>> print(registry)
+      {'MyRule': <class 'abc.MyRule'>}
+
