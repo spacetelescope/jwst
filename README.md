@@ -21,7 +21,7 @@ To create a new environment, use:
     conda create -n jwst --file <URL>
     source activate jwst
 
-where <URL> is of the form:
+where `<URL>` is of the form:
 
     Linux: http://ssb.stsci.edu/releases/jwstdp/0.9.6/latest-linux
     OS X: http://ssb.stsci.edu/releases/jwstdp/0.9.6/latest-osx
