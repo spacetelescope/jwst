@@ -576,10 +576,6 @@ class Constraint_Mode(Constraint):
     def __init__(self):
         super(Constraint_Mode, self).__init__([
             DMSAttrConstraint(
-                name='program',
-                sources=['program']
-            ),
-            DMSAttrConstraint(
                 name='instrument',
                 sources=['instrume']
             ),
