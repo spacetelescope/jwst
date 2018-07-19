@@ -190,12 +190,16 @@ class Asn_Lv2NRSLAMP(
 
         self.constraints = Constraint([
             Constraint_Base(),
-            Constraint_Mode(),
             DMSAttrConstraint(
-                name='exp_type',
-                sources=['exp_type'],
-                value='nrs_lamp',
-            )
+                name='instrument',
+                sources=['instrume'],
+                value='nirspec'
+            ),
+            DMSAttrConstraint(
+                name='opt_elem',
+                sources=['filter'],
+                value='opaque'
+            ),
         ])
 
         super(Asn_Lv2NRSLAMP, self).__init__(*args, **kwargs)
