@@ -324,7 +324,10 @@ class Asn_Lv2NRSMSA(
             `None` if a complete association cannot be produced.
 
         """
-        return self.make_nod_asns()
+        if self.is_valid:
+            return self.make_nod_asns()
+        else:
+            return None
 
     def make_nod_asns(self):
         """Make background nod Associations
