@@ -9,7 +9,6 @@ import re
 
 from jwst.associations import (
     Association,
-    AssociationRegistry,
     libpath
 )
 from jwst.associations.registry import RegistryMarker
@@ -355,7 +354,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
     def __repr__(self):
         try:
             file_name, json_repr = self.ioregistry['json'].dump(self)
-        except:
+        except Exception:
             return str(self.__class__)
         return json_repr
 
@@ -601,6 +600,19 @@ class Constraint_Mode(Constraint):
                 name='channel',
                 sources=['channel'],
                 required=False,
+            ),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        sources=['detector'],
+                        value='nirspec'
+                    ),
+                    DMSAttrConstraint(
+                        sources=['filter'],
+                        value='opaque'
+                    ),
+                ],
+                reduce=Constraint.notany
             )
         ])
 
@@ -686,6 +698,7 @@ class Constraint_Target(DMSAttrConstraint):
             name='target',
             sources=['targetid'],
         )
+
 
 # ---------------------------------------------
 # Mixins to define the broad category of rules.
