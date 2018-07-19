@@ -3,6 +3,7 @@ from datetime import datetime
 import json
 import jsonschema
 import logging
+import re
 
 from . import __version__
 from .exceptions import (
@@ -10,7 +11,7 @@ from .exceptions import (
 )
 from .lib.constraint import (
     Constraint,
-    ConstraintTrue,
+    meets_conditions
 )
 from .lib.format_template import FormatTemplate
 from .lib.ioregistry import IORegistry
