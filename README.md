@@ -111,7 +111,7 @@ set the environment variable TEST_BIGDATA to this location
 
 and then run the tests in the repository
 
-    cd ~/path/to/jwst
+    cd /path/to/jwst/jwst/tests_nightly/general
     pytest --bigdata .
 
 
