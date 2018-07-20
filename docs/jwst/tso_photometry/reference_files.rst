@@ -20,7 +20,7 @@ when creating and populating a new reference file.
 
 ========  ====================
 Keyword   Model Name
---------  --------------------
+========  ====================
 AUTHOR    meta.author
 DATAMODL  meta.model_type
 DATE      meta.data
