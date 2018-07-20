@@ -60,7 +60,8 @@ def do_correction(input_model, rscd_model):
 
     # Check for valid parameters
     if sci_ngroups < 2:
-        log.warning('RSCD correction requires at least 2 groups; step will be skipped')
+        log.warning('RSCD correction requires > 1 group per integration')
+        log.warning('Step will be skipped')
         output.meta.cal_step.rscd = 'SKIPPED'
         return output
 
@@ -72,7 +73,7 @@ def do_correction(input_model, rscd_model):
         output.meta.cal_step.rscd = 'SKIPPED'
         return output
 
-    # Determine the parameters that only rely on ngroups
+    # Determine the parameters that rely only on ngroups
     ngroups2 = sci_ngroups * sci_ngroups
     b1_even = param['even']['ascale'] * (
         param['even']['illum_zp'] +
@@ -106,10 +107,12 @@ def do_correction(input_model, rscd_model):
     tau_odd = np.asscalar(param['odd']['tau'])
 
     # loop over all integrations except the first
+    mdelta = int(sci_nints / 10) + 1
     for i in range(1, sci_nints):
-        log.debug(' working on integration %d', i + 1)
+        if ((i+1) % mdelta) == 0:
+            log.info(' Working on integration %d', i+1)
 
-        sat, is_ref, dn_last23, dn_lastfit = \
+        sat, dn_last23, dn_lastfit = \
             get_DNaccumulated_last_int(input_model, i, sci_ngroups)
 
         lastframe_even = dn_last23[1::2, :]
@@ -307,7 +310,6 @@ def get_DNaccumulated_last_int(input_model, i, sci_ngroups):
     dn_lastframe23 = dn_lastframe2.copy() * 0.0
     dn_lastframe_fit = dn_lastframe2.copy() * 0.0
     saturated = np.full((nrows, ncols), False)
-    is_ref = saturated.copy()
 
     diff = dn_lastframe2 - dn_lastframe3
     dn_lastframe23 = dn_lastframe2 + diff
@@ -319,7 +321,6 @@ def get_DNaccumulated_last_int(input_model, i, sci_ngroups):
     # mark the locations of reference pixels
     refpix_2d = np.bitwise_and(input_model.pixeldq, ref_flag)
     dn_lastframe23[np.where(refpix_2d)] = 0.0
-    is_ref[np.where(refpix_2d)] = True
 
     # load the ramp data needed for computing slopes
     ramp3d = input_model.data[i - 1, 1:sci_ngroups - 1]
@@ -340,7 +341,7 @@ def get_DNaccumulated_last_int(input_model, i, sci_ngroups):
     dn_lastframe23[np.where(refpix_2d)] = 0.0
     dn_lastframe_fit[np.where(refpix_2d)] = 0.0
 
-    return saturated, is_ref, dn_lastframe23, dn_lastframe_fit
+    return saturated, dn_lastframe23, dn_lastframe_fit
 
 
 def ols_fit(y, dq):
@@ -355,21 +356,26 @@ def ols_fit(y, dq):
     sat_flag = datamodels.dqflags.group['SATURATED']
     shape = y.shape
 
+    # Find ramp values that are saturated
     x = np.arange(shape[0], dtype=np.float64)[:, np.newaxis, np.newaxis] * \
         np.ones(shape)
     good_data = np.bitwise_and(dq, sat_flag) == 0
     ngood = good_data.sum(axis=0)
 
+    # Compute sums of unsaturated (good) x/y values
     sumx = (x * good_data).sum(axis=0)
     sumy = (y * good_data).sum(axis=0)
     sumxy = (x * y * good_data).sum(axis=0)
     sumxx = (x * x * good_data).sum(axis=0)
     nelem = good_data.sum(axis=0)
 
+    # Compute the slopes and intercepts
     denom = nelem * sumxx - sumx * sumx
-    slope = (nelem * sumxy - sumx * sumy) / denom
-    intercept = (sumxx * sumy - sumx * sumxy) / denom
+    with np.errstate(invalid='ignore'):  # ignore division warnings
+        slope = (nelem * sumxy - sumx * sumy) / denom
+        intercept = (sumxx * sumy - sumx * sumxy) / denom
 
+    # Reset results to zero for pixels having < 3 unsaturated values
     bad = np.where(ngood < 3)
     slope[bad] = 0.0
     intercept[bad] = 0.0
