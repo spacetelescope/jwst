@@ -1,6 +1,6 @@
 //@Library('utils@master') _  // For development only.
 
-if (utils.scm_checkout(skip_disable=true)) return
+if (utils.scm_checkout(['skip_disable':true])) return
 
 def test_env = [
     "HOME=./",
