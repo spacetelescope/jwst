@@ -44,16 +44,16 @@ class SlitDataModel(model_base.DataModel):
             self.err = init.err
             self.relsens = init.relsens
             self.area = init.area
-            if hasattr(init, 'wavelength'):
+            if init.hasattr('wavelength'):
                 self.wavelength = init.wavelength
-            if hasattr(init, 'var_poisson'):
+            if init.hasattr('var_poisson'):
                 self.var_poisson = init.var_poisson
-            if hasattr(init, 'var_rnoise'):
+            if init.hasattr('var_rnoise'):
                 self.var_rnoise = init.var_rnoise
             for key in kwargs:
                 setattr(key, kwargs[key])
 
-            if hasattr(init.meta, 'wcs'):
+            if init.meta.hasattr('wcs'):
                 self.meta.wcs = init.meta.wcs
             else:
                 self.meta.wcs = None
@@ -145,15 +145,15 @@ class SlitModel(model_base.DataModel):
             self.err = init.err
             self.relsens = init.relsens
             self.area = init.area
-            if hasattr(init, 'wavelength'):
+            if init.hasattr('wavelength'):
                 self.wavelength = init.wavelength
-            if hasattr(init, 'var_poisson'):
+            if init.hasattr('var_poisson'):
                 self.var_poisson = init.var_poisson
-            if hasattr(init, 'var_rnoise'):
+            if init.hasattr('var_rnoise'):
                 self.var_rnoise = init.var_rnoise
-            if hasattr(init, 'int_times'):
+            if init.hasattr('int_times'):
                 self.int_times = init.int_times
-            if hasattr(init.meta, 'wcs'):
+            if init.meta.hasattr('wcs'):
                 self.meta.wcs = init.meta.wcs
             else:
                 self.meta.wcs = None
