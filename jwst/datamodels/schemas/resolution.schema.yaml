@@ -1,11 +1,11 @@
-title: Default Resolution Reference file 
+title: Default Resolution Reference file
 allOf:
-- $ref:	referencefile.schema.yaml
+- $ref: referencefile.schema.yaml
 - type: object
   properties:
     data:
-    title: Resolving Power table
-    fits_hdu: SCI
-    default: 1.0
-    datatype: float32
+      title: Resolving Power table
+      fits_hdu: SCI
+      default: 1.0
+      datatype: float32
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema
