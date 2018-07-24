@@ -30,10 +30,10 @@ def blendmodels(product, inputs=None, output=None, verbose=False):
     new metadata instance with a table that contains attribute values from
     all input datamodels.
 
-    The drzfile will be used to determine the names of the input models,
+    The product will be used to determine the names of the input models,
     should no filenames be provided in the 'inputs' parameter.
 
-    The drzfile will be updated 'in-place' with the new metadata attributes
+    The product will be updated 'in-place' with the new metadata attributes
     and FITS BinTableHDU table.  The blended FITS table, with extname=HDRTAB,
     has 1 column for each metadata attribute recorded from the input models,
     one row for each input model, and column names are the FITS keywords for
@@ -62,6 +62,7 @@ def blendmodels(product, inputs=None, output=None, verbose=False):
         the new combined metadata.
 
     inputs : list, optional
+        This can be either a list of filenames or a list of DataModels objects.
         If provided, the filenames provided in this list will be used to get
         the metadata which will be blended into the final output metadata.
 
@@ -72,6 +73,29 @@ def blendmodels(product, inputs=None, output=None, verbose=False):
     verbose : bool, optional [Default: False]
         Print out additional messages during processing when specified.
 
+    Syntax
+    ======
+    This examples shows how to blend the metadata from a set of DataModels
+    already read in memory for the product created by the 'resample' step.
+    This example relies on the Association file used as the input to the
+    `resample` step to specify all the inputs for blending using the
+    following syntax::
+
+    >>> from jwst.model_blender.blender import blendmodels
+    >>> from jwst import datamodels
+    >>> asnfile = "jw99999-a3001_20170327t121212_coron3_001_asn.json"
+    >>> asn = datamodels.open(asnfile)
+    >>> input_models = [asn[3],asn[4]]  # we know the last datasets are SCIENCE
+    >>> blendmodels(asn.meta.resample.output, inputs=input_models)
+
+    Alternatively, the filenames for all the inputs could be provided directly
+    instead using::
+
+    >>> from jwst.associations import load_asn
+    >>> asn = load_asn(open(asnfile))
+    >>> input_names = [i['expname'] for i in asn['products'][0]['members'][3:]]
+    >>> blendmodels(asn['products'][0]['name'], inputs=input_names)
+    
     """
     if inputs in EMPTY_LIST:
         input_filenames = extract_filenames_from_product(product)
@@ -108,12 +132,12 @@ def blendmodels(product, inputs=None, output=None, verbose=False):
 
     # Now assign values from new_hdrs to output_model.meta
     flat_new_metadata = newmeta.to_flat_dict()
-    
+
     for attr in flat_new_metadata:
         attr_use = not [attr.startswith(i) for i in ignore_list].count(True)
         if attr.startswith('meta') and attr_use:
             output_model[attr] = newmeta[attr]
-                
+
     # Apply any user-specified filename for output product
     if output:
         output_model.meta.filename = output
@@ -264,7 +288,7 @@ def convert_dtype(value):
         new_dtype = str(value)
 
     return new_dtype
-    
+
 def _build_schema_ignore_list(schema):
     """ Create a list of metadata that should be ignored when blending.
 
@@ -294,4 +318,3 @@ def _build_schema_ignore_list(schema):
     results = []
     dm_schema.walk_schema(schema, build_rules_list, results)
     return results
-
