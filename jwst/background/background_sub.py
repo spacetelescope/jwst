@@ -4,14 +4,14 @@ import numpy as np
 from .. import datamodels
 from . import subtract_images
 from ..assign_wcs.util import create_grism_bbox
-from ..transforms.models import GrismObject
+from astropy.stats import sigma_clip
 
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def background_sub(input_model, bkg_list):
+def background_sub(input_model, bkg_list, sigma, maxiters):
 
     """
     Short Summary
@@ -36,10 +36,10 @@ def background_sub(input_model, bkg_list):
 
     # Compute the average of the background images associated with
     # the target exposure
-    bkg_model = average_background(bkg_list)
+    bkg_model = average_background(bkg_list, sigma, maxiters)
 
     # Subtract the average background from the member
-    log.debug(' subtracting avg bkg from %s', input_model.meta.filename)
+    log.debug(' subtracting avg bkg from {}'.format(input_model.meta.filename))
     result = subtract_images.subtract(input_model, bkg_model)
 
     # Close the average background image and update the step status
@@ -49,7 +49,7 @@ def background_sub(input_model, bkg_list):
     return result
 
 
-def average_background(bkg_list):
+def average_background(bkg_list, sigma, maxiters):
 
     """
     Average multiple background exposures into a combined data model
@@ -68,28 +68,42 @@ def average_background(bkg_list):
 
     """
 
+    num_bkg = len(bkg_list)
     avg_bkg = None
+    cdata = None
 
     # Loop over the images to be used as background
-    for bkg_file in bkg_list:
-        log.debug(' Accumulate bkg from %s', bkg_file)
+    for i, bkg_file in enumerate(bkg_list):
+        log.debug(' Accumulate bkg from {}'.format(bkg_file))
         bkg_model = datamodels.ImageModel(bkg_file)
 
         # Initialize the avg_bkg model, if necessary
         if avg_bkg is None:
-            avg_bkg = datamodels.ImageModel(bkg_model.data.shape)
+            avg_bkg = datamodels.ImageModel(bkg_model.shape)
+
+        if cdata is None:
+            cdata = np.zeros(((num_bkg,) + bkg_model.shape))
+            cerr = cdata.copy()
 
         # Accumulate the data from this background image
-        avg_bkg.data += bkg_model.data
-        avg_bkg.err += bkg_model.err * bkg_model.err
+        cdata[i] = bkg_model.data
+        cerr[i] = bkg_model.err * bkg_model.err
         avg_bkg.dq = np.bitwise_or(avg_bkg.dq, bkg_model.dq)
 
         bkg_model.close()
 
-    # Average the data in the accumulated background image
-    num_bkg = len(bkg_list)
-    avg_bkg.data = avg_bkg.data / num_bkg  # sci is normal average
-    avg_bkg.err = np.sqrt(avg_bkg.err) / num_bkg  # err is uncertainty in the mean
+    # Clip the background data
+    log.debug(' clip with sigma={} maxiters={}'.format(sigma, maxiters))
+    mdata = sigma_clip(cdata, sigma=sigma, maxiters=maxiters, axis=0)
+
+    # Compute the mean of the non-clipped values
+    avg_bkg.data = mdata.mean(axis=0).data
+
+    # Mask the ERR values using the data mask
+    merr = np.ma.masked_array(cerr, mask=mdata.mask)
+
+    # Compute the combined ERR as the uncertainty in the mean
+    avg_bkg.err = np.sqrt(merr.sum(axis=0)) / (num_bkg - merr.mask.sum(axis=0))
 
     return avg_bkg
 
