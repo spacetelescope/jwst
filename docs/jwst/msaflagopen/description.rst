@@ -5,13 +5,13 @@ Description
 Overview
 --------
 
-The msaflagopen correction flags pixels that are affected by msa shutters
-that are stuck in the open position.
+The msaflagopen step flags pixels in NIRSpec exposures that are affected by
+MSA shutters that are stuck in the open position.
 
 Background
 __________
 
-The correction is applicable to NIRSPEC IFU and MSA exposure types.
+The correction is applicable to NIRSpec IFU and MSA exposure types.
 
 Algorithm
 _________

@@ -28,10 +28,10 @@ The fields are:
 :descrip: Description of reference file
 :msaoper:
     :Q: Quadrant, should be an integer 1-4
-    :x: x location of shutter (integer)
-    :y: y location of shutter (integer)
+    :x: x location of shutter (integer, 1-indexed)
+    :y: y location of shutter (integer, 1-indexed)
     :state: state of shutter, should be "closed" or "open"
-    :TA: state TA state of shutter, should be "closed" or "open"
-    :Internal_state: Internal state of shutter, should be "closed", "normal" or "open"
+    :TA state: TA state of shutter, should be "closed" or "open"
+    :Internal state: Internal state of shutter, should be "closed", "normal" or "open"
     :Vignetted: Is the shutter vignetted?  Should be "yes" or "no"
 :history: Description of the history relevant to this file, might point to documentation
