@@ -669,6 +669,11 @@ class Constraint_Mode(Constraint):
                 name='channel',
                 sources=['channel'],
                 required=False,
+            ),
+            DMSAttrConstraint(
+                name='slit',
+                sources=['fxd_slit'],
+                required=False,
             )
         ])
 
@@ -729,17 +734,20 @@ class Constraint_Special(DMSAttrConstraint):
 
 class Constraint_Spectral_Science(Constraint):
     """Select on spectral science"""
+
+    GENERAL_SCIENCE = set(SPEC2_SCIENCE_EXP_TYPES).symmetric_difference(
+        ['nrs_msaspec', 'nrs_fixedslit']
+    )
+
     def __init__(self):
 
         # Remove NRS_MSASPEC from the science list.
-        science_exp_types = copy.copy(SPEC2_SCIENCE_EXP_TYPES)
-        science_exp_types.remove('nrs_msaspec')
         super(Constraint_Spectral_Science, self).__init__(
             [
                 DMSAttrConstraint(
                     name='exp_type',
                     sources=['exp_type'],
-                    value='|'.join(science_exp_types)
+                    value='|'.join(self.GENERAL_SCIENCE)
                 )
             ],
             reduce=Constraint.any

@@ -292,3 +292,58 @@ class Asn_Lv2NRSMSA(
 
         """
         return self.make_nod_asns()
+
+
+
+
+@RegistryMarker.rule
+class Asn_Lv2NRSFSS(
+        AsnMixin_Lv2Spectral,
+        DMSLevel2bBase
+):
+    """Level2b NIRSpec Fixed-slit"""
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup constraints
+        self.constraints = Constraint([
+            Constraint_Base(),
+            Constraint_Mode(),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        name='exp_type',
+                        sources=['exp_type'],
+                        value='nrs_fixedslit'
+                    ),
+                    DMSAttrConstraint(
+                        name='expspcin',
+                        sources=['expspcin'],
+                    ),
+                    DMSAttrConstraint(
+                        name='nods',
+                        sources=['numdthpt'],
+                    )
+                ]
+            )
+        ])
+
+        # Now check and continue initialization.
+        super(Asn_Lv2NRSFSS, self).__init__(*args, **kwargs)
+
+
+    def finalize(self):
+        """Finalize assocation
+
+        For NRS MSA, finalization means creating new associations for
+        background nods.
+
+        Returns
+        -------
+        associations: [association[, ...]] or None
+            List of fully-qualified associations that this association
+            represents.
+            `None` if a complete association cannot be produced.
+
+        """
+        return self.make_nod_asns()
