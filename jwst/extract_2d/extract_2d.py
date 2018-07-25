@@ -29,14 +29,14 @@ def extract2d(input_model, slit_name=None, apply_wavecorr=False,
     grism_objects : list
         A list of grism objects.
     extract_height: int
-        Cross-dispersion extraction height to use for grisms. This will override
-        the defaults which for WFSS specify the size of the object in the 
-        catalog, for NRC_TSGRISM a set size of 64 pixels is used.
+        Cross-dispersion extraction height to use for time seriesgrisms.
+        This will override the default which for NRC_TSGRISM is a set 
+        size of 64 pixels.
     """
 
     nrs_modes = ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_BRIGHTOBJ',
                  'NRS_LAMP', 'NRS_AUTOFLAT']
-    nrc_modes = ['NIS_WFSS', 'NRC_WFSS', 'NRC_TSGRISM']
+    slitless_modes = ['NIS_WFSS', 'NRC_WFSS', 'NRC_TSGRISM']
 
     if grism_objects is None:
         grism_objects = []
@@ -52,7 +52,7 @@ def extract2d(input_model, slit_name=None, apply_wavecorr=False,
                                      apply_wavecorr=apply_wavecorr,
                                      reference_files=reference_files)
 
-    elif exp_type in nrc_modes:
+    elif exp_type in slitless_modes:
         if exp_type == 'NRC_TSGRISM':
             output_model = extract_tso_object(input_model,
                                               reference_files=reference_files,
@@ -60,8 +60,7 @@ def extract2d(input_model, slit_name=None, apply_wavecorr=False,
         else:
             output_model = extract_grism_objects(input_model,
                                                  grism_objects=grism_objects,
-                                                 reference_files=reference_files,
-                                                 extract_height=extract_height)
+                                                 reference_files=reference_files)
 
     else:
         log.info("'EXP_TYPE {} not supported for extract 2D".format(exp_type))

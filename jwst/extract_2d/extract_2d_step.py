@@ -31,6 +31,7 @@ class Extract2dStep(Step):
         with datamodels.open(input_model) as dm:
             output_model = extract_2d.extract2d(dm, self.slit_name, self.apply_wavecorr,
                                                 reference_files=reference_file_names,
+                                                grism_objects=grism_objects,
                                                 extract_height=extract_height)
 
         return output_model

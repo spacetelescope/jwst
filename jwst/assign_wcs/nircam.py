@@ -160,13 +160,17 @@ def tsgrism(input_model, reference_files):
     # begin at 0,0, so no need to translate the crpix to full frame
     # because they already are in full frame coordinates.
     xc, yc = (input_model.meta.wcsinfo.crpix1, input_model.meta.wcsinfo.crpix2)
+    xcenter = Const1D(xc)
+    xcenter.inverse = Const1D(xc)
+    ycenter = Const1D(yc)
+    ycenter.inverse = Const1D(yc)
 
     # x, y, order in goes to transform to full array location and order
     # get the shift to full frame coordinates
-    subarray2full = subarray_transform(input_model) & Identity(1)
-    sub2direct = (subarray2full | Mapping((0, 1, 0, 1, 2)) |\
-                  (Identity(2) & Const1D(xc) & Const1D(yc) & Identity(1)) |\
-                  det2det).rename('subarray_to_detector')
+    sub2full = subarray_transform(input_model) & Identity(1)
+    sub2direct = (sub2full | Mapping((0, 1, 0, 1, 2)) |
+                  (Identity(2) & xcenter & ycenter & Identity(1)) |
+                  det2det)
 
     # take us from full frame detector to v2v3
     distortion = imaging_distortion(input_model, reference_files) & Identity(2)
@@ -233,7 +237,7 @@ def wfss(input_model, reference_files):
     the direct image to get the min and max wavelengths
     which correspond to t=0 and t=1, this currently has been done by the team
     and the min and max wavelengths to use to calculate t are stored in the
-    grism reference file as wrange, which can be selected by wrange_selector
+    grism reference file as wavelengthrange, which can be selected by waverange_selector
     which contains the filter names.
 
     All the following was moved to the extract_2d stage.
