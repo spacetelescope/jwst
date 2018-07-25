@@ -96,6 +96,7 @@ def extract_tso_object(input_model,
         output_model.update(input_model)
 
     subwcs = copy.deepcopy(input_model.meta.wcs)
+
     for order in available_orders:
         range_select = [(x[2], x[3]) for x in wavelengthrange if (x[0] == order and x[1] == input_model.meta.instrument.filter)]
         # All objects in the catalog will use the same filter for translation
@@ -139,6 +140,7 @@ def extract_tso_object(input_model,
         ymin, ymax = (max(extract_y_min, 0), min(extract_y_max, input_model.meta.subarray.ysize))
         xmin, xmax = (max(xmin, 0), min(xmax, input_model.meta.subarray.xsize))
         log.info("xmin, xmax: {} {}  ymin, ymax: {} {}".format(xmin, xmax, ymin, ymax))
+
         # only the first two numbers in the Mapping are used
         # the order and source position are put directly into
         # the new wcs for the subarray for the forward transform
@@ -147,8 +149,6 @@ def extract_tso_object(input_model,
         tr = input_model.meta.wcs.get_transform('grism_detector', 'full_detector')
         tr = Mapping((0, 1, 0)) | (Shift(xmin) & Shift(ymin) & order_model) | tr
         subwcs.set_transform('grism_detector', 'full_detector', tr)
-        log.info("Subarrays extracted for order: {}:".format(order))
-        log.info("Subarray extents are: (xmin:{}, ymin:{}), (xmax:{}, ymax:{})".format(xmin, ymin, xmax, ymax))
 
         xmin = int(xmin)
         xmax = int(xmax)
@@ -159,6 +159,9 @@ def extract_tso_object(input_model,
         ext_data = input_model.data[:, ymin: ymax + 1, xmin: xmax + 1].copy()
         ext_err = input_model.err[:, ymin: ymax + 1, xmin: xmax + 1].copy()
         ext_dq = input_model.dq[:, ymin: ymax + 1, xmin: xmax + 1].copy()
+
+        log.info("Subarrays extracted for order: {}:".format(order))
+        log.info("Subarray extents are: (xmin:{}, ymin:{}), (xmax:{}, ymax:{})".format(xmin, ymin, xmax, ymax))
 
         if output_model.meta.model_type == "SlitModel":
             output_model.data = ext_data
