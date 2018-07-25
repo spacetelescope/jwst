@@ -165,6 +165,11 @@ def tsgrism(input_model, reference_files):
     ycenter = Const1D(yc)
     ycenter.inverse = Const1D(yc)
 
+    setra = Const1D(input_model.meta.wcsinfo.crval1)
+    setra.inverse = Const1D(input_model.meta.wcsinfo.crval1)
+    setdec = Const1D(input_model.meta.wcsinfo.crval2)
+    setdec.inverse = Const1D(input_model.meta.wcsinfo.crval2)
+
     # x, y, order in goes to transform to full array location and order
     # get the shift to full frame coordinates
     sub2full = subarray_transform(input_model) & Identity(1)
@@ -176,7 +181,15 @@ def tsgrism(input_model, reference_files):
     distortion = imaging_distortion(input_model, reference_files) & Identity(2)
 
     # v2v3 to the sky
+    # remap the tel2sky inverse as well since we can feed it the values of
+    # crval1, crval2 which correspond to crpix1, crpix2. This leaves
+    # us with a calling structure:
+    #  (x, y, order) <-> (wavelength, order)
     tel2sky = pointing.v23tosky(input_model) & Identity(2)
+    t2skyinverse = tel2sky.inverse
+    newinverse = Mapping((0, 1, 0, 1)) | setra & setdec & Identity(2) | t2skyinverse
+    tel2sky.inverse = newinverse
+
     pipeline = [(gdetector, sub2direct),
                 (detector, distortion),
                 (v2v3, tel2sky),
