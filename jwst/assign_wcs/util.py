@@ -246,7 +246,7 @@ def is_fits(input):
         isfits = True in [input.endswith(l) for l in names]
 
     # if input is a fits file determine what kind of fits it is
-    #waiver fits len(shape) == 3
+    # waiver fits len(shape) == 3
     if isfits:
         if not f:
             try:
@@ -445,13 +445,12 @@ def create_grism_bbox(input_model, reference_files,
 
     # Get the disperser parameters which have the wave limits
     with WavelengthrangeModel(reference_files['wavelengthrange']) as f:
-        wrange = f.wrange
-        wrange_selector = f.wrange_selector
+        waverange_selector = f.waverange_selector
         orders = f.order
 
     # All objects in the catalog will use the same filter for translation
     # that filter is the one that was used in front of the grism
-    fselect = wrange_selector.index(filter_name)
+    fselect = waverange_selector.index(filter_name)
 
     grism_objects = []  # the return list of GrismObjects
     for obj in skyobject_list:
@@ -472,7 +471,7 @@ def create_grism_bbox(input_model, reference_files,
                 # drive the extraction extent. The location of the min and
                 # max wavelengths for each order are used to get the location
                 # of the +/- sides of the bounding box in the grism image
-                lmin, lmax = wrange[oidx][fselect]
+                lmin, lmax = waverange[oidx][fselect]
 
                 # we need to be specific with dispersion direction here?
                 # I think this should be taken care of in the trace polys

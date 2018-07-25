@@ -1,4 +1,24 @@
 title: WAVELENGTHRANGE reference file model
+definitions:
+  wfss-wavelengthrange:
+    description: |
+      A tuple consisting of order and filter dependent wavelength ranges
+    properties:
+      type: array
+      items:
+        type: [number, string, number, number]
+    title: Order, Filter, Minwave, Maxwave
+    additionalProperties: False
+  slit-wavelengthrange:
+    description: |
+      An array containing an array of min and max wavelength ranges
+      that can be indexed by waverange_selector
+    properties:
+      type: array
+      items:
+        type: [number, number]
+    title: Minwave, Maxwave
+    additionalProperties: False
 allOf:
 - $ref: referencefile.schema.yaml
 - $ref: keyword_exptype.schema.yaml
@@ -11,20 +31,21 @@ allOf:
         A keyword which is a selector for the different ranges.
         For MIRI MRS this is a <channel><band>, for exmaple, "1SHORT".
         For NirSpec the identifier is <filter>_<grating>, for example F070LP_G140H.
-        For NIRCAM grisms the identifier is [order][filter].
-        For NIRISS grisms the identifier is [order][filter].
+        For WFSS and TSGRISM modes, this is the list of available filters.
       type: array
       items:
         type: string
     wavelengthrange:
+      description: |
+        Wavelength range values 
       type: array
       items:
-        type: array
-        items:
-          type: number
-          minItems: 2
-          maxItems: 2
+        anyOf:    
+          - $ref: "#/definitions/wfss-wavelengthrange"
+          - $ref: "#/definitions/slit-wavelengthrange"
     order:
+      description: |
+        For WFSS, this is the list of orders that are available for this file
       type: array
       items:
         type: integer
