@@ -3,22 +3,36 @@ definitions:
   wfss-wavelengthrange:
     description: |
       A tuple consisting of order and filter dependent wavelength ranges
+    type: object
     properties:
-      type: array
-      items:
-        type: [number, string, number, number]
-    title: Order, Filter, Minwave, Maxwave
-    additionalProperties: False
+      wfss-wavelengthrange:
+        type: array
+        items:
+          type: array
+          items:
+            type:
+              - number
+              - string
+              - number
+              - number
+      title: Order, Filter, Minwave, Maxwave
+    additionalProperties: false
   slit-wavelengthrange:
     description: |
       An array containing an array of min and max wavelength ranges
       that can be indexed by waverange_selector
+    type: object
     properties:
-      type: array
-      items:
-        type: [number, number]
-    title: Minwave, Maxwave
-    additionalProperties: False
+      slit-wavelengthrange:
+        type: array
+        items:
+          type: array
+          items:
+            type:
+              - number
+              - number
+      title: Minwave, Maxwave
+    additionalProperties: false
 allOf:
 - $ref: referencefile.schema.yaml
 - $ref: keyword_exptype.schema.yaml
