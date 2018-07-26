@@ -14,8 +14,6 @@ class AmiNormalizeStep(Step):
 
     def process(self, target, reference):
         """
-        Short Summary
-        ------------- 
         Normalizes the LG results for a science target, using the LG results
         for a reference target.
 

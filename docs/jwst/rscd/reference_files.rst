@@ -1,9 +1,6 @@
 Reference File Types
 ====================
-
 The RSCD correction step uses an RSCD reference file. 
-
-
 
 CRDS Selection Criteria
 -----------------------
@@ -52,25 +49,24 @@ where T is the time since the last group in the previous integration, tau is the
 and  dn_accumulated is the DN level that was accumulated for the pixel from the previous integration.
 In case where the last integration  does not saturate the :math:`scale` term in equation 1 is determined according to the equation:
 
-       :math:`scale = b{1}* [Counts{2}^{b{2}} * [1/exp(Counts{2}/b{3}) -1 ]\; \; (Equation \; 2)`
+  :math:`scale = b{1}* [Counts{2}^{b{2}} * [1/exp(Counts{2}/b{3}) -1 ]\; \; (Equation \; 2)`
 
 The following two additional equations are used in Equation 2:
 
-	  :math:`b{1} = ascale * (illum_{zpt} + illum_{slope}*N + illum2* N^2) \; \; (Equation \; 2.1)`
-	  :math:`Counts{2} = Final \, DN \, in \, the \,  last \, group \, in \; the \, last \, integration 
+  :math:`b{1} = ascale * (illum_{zpt} + illum_{slope}*N + illum2* N^2) \; \; (Equation \; 2.1)`
+  :math:`Counts{2} = Final \, DN \, in \, the \,  last \, group \, in \; the \, last \, integration 
 	  \, - Crossover \, Point \; \; (Equation \; 2.2)`
 	  
 The parameters for equations 2, 2.1, and 2,2  are:
-	  - :math:`b{2}` in equation 2 is table column POW from RSCD table
-          - :math:`b{3}` in equation 2 is table column  PARAM3 from the RSCD table
-	  - ascale  in equation 2.1 is in the RSCD table 
-	  - :math:`illum_{zpt}`  in equation 2.1 is in the RSCD table 
-	  - :math:`illum_{slope}`  in equation 2.1 is in the RSCD table
-	  - :math:`illum2`  in equation 2.1 is in the RSCD table
-	  - N  in equation 2.1 is the number of groups per integration
-	  - Crossover Point in equation 2.2 is CROSSOPT in the RSCD table
-	  
-    
+  - :math:`b{2}` in equation 2 is table column POW from RSCD table
+  - :math:`b{3}` in equation 2 is table column  PARAM3 from the RSCD table
+  - ascale  in equation 2.1 is in the RSCD table 
+  - :math:`illum_{zpt}`  in equation 2.1 is in the RSCD table 
+  - :math:`illum_{slope}`  in equation 2.1 is in the RSCD table
+  - :math:`illum2`  in equation 2.1 is in the RSCD table
+  - N  in equation 2.1 is the number of groups per integration
+  - Crossover Point in equation 2.2 is CROSSOPT in the RSCD table
+
 If the previous integration saturates, :math:`scale` is no longer calculated using equation 2 - 2.2, instead it is calculated 
 using equations 3 and 3.1.
 
@@ -80,15 +76,13 @@ using equations 3 and 3.1.
 
 The parameters in equation 3 and 3.1 are:
 
-    - :math:`Counts{3}`  in equation 3  is an estimate of the what the last group in the previous integration would 
-    have been if saturation did not exist.
+    - :math:`Counts{3}` in equation 3 is an estimate of the what the last group in the
+      previous integration would have been if saturation did not exist
     - :math:`sat_\text{mzp}`  in equation 3 is in the RSCD table
     - :math:`scale_\text{sat}`  in equation 3 is SAT_SCALE in the RSCD table
     - :math:`sat_{zp}` in equation 3.1 is in the RSCD table
     - :math:`sat_{slope}` in equation 3.1 is  in the RSCD table
     - :math:`sat_2` in equation 3.1 is SAT2 in the RSCD table
     - :math:`evenrow_{corrections}` in equation 3.1 is SAT_ROWTERM in the RSCD table
-    - N  is the number of groups per integration
+    - N is the number of groups per integration
  
-   
-

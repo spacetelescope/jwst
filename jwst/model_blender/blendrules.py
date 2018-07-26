@@ -276,15 +276,15 @@ class KwRule():
     The ``.rules`` attribute contains the interpreted set of rules that corresponds
     to this line.
 
-    Example:
-    Interpreting rule from
-    {'meta.attribute': { 'rule': 'first', 'output': 'meta.attribute'}}
-    --or--
-    {'meta.attribute': 'meta.attribute'}  # Table column specification
+    Example::
 
-    into rule [('meta.attribute', 'meta.attribute',
-                <function first at 0x7fe505db7668>, 'ignore')]
-    and sname None
+      Interpreting rule from
+      {'meta.attribute': { 'rule': 'first', 'output': 'meta.attribute'}}
+      --or--
+      {'meta.attribute': 'meta.attribute'}  # Table column specification
+
+      into rule [('meta.attribute', 'meta.attribute', <function first at 0x7fe505db7668>, 'ignore')]
+      and sname None
 
     """
 

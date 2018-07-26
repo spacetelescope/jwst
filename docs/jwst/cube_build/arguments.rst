@@ -1,3 +1,5 @@
+.. _arguments:
+
 Step Arguments
 ==============
 The input data to the cube program can be a
@@ -10,7 +12,7 @@ The arguments controlling the  types of data to use  are:
 * ``--channel [integer]``
 
 The only valid values for # are 1,2,3,4 or ALL .
-This argument is only valid for MIRI data. If the ``--channel`` argument is given, then only data corresponding to that channel
+This argument is only valid for MIRI data. If the ``channel`` argument is given, then only data corresponding to that channel
 will be used in constructing the cube.  If the user wants to construct a cube from more than one channel,
 then all the values are contained in the string with a comma between each channel number. For example,
 to create a cube with channel 1 and 2 the argument list is ``--channel='1, 2'``. If this value is not set then the default is
@@ -19,7 +21,7 @@ to make single channel-single sub-channel IFU Cubes.
 * ``--band [string]``
 
 This is a MIRI option and the  only valid values  are SHORT,MEDIUM,LONG, or ALL.
-If the ``--subchannel`` argument is given, then only data corresponding
+If the ``subchannel`` argument is given, then only data corresponding
 to that subchannel will be used in  constructing the cube. Only one option is possible, so IFU cubes are created either
 per subchannel or using all the subchannels the input data cover.  If this value is not set then the default is
 to make single channel-single sub-channel IFU Cubes.
@@ -42,23 +44,29 @@ contain all the filters). The user can supply a comma separated string containin
 
 The arguments controlling the size of the output IFU cube:
 
-* ``--scale1 #``
+* ``--scale1``
 
-Where the #  is the  size of the output cube's sample size in the naxis1 dimension.
+The size of the output cube's sample size in the naxis1 dimension.
 
-* ``--scale2 #``
+* ``--scale2``
 
-Where the  #  is the size of the output cube's sample size  in the naxis2 dimension.
+The size of the output cube's sample size  in the naxis2 dimension.
 
-* ``--scalew #``
+* ``--scalew``
 
-Where the  #  is size of the output cube's sample size in the naxis3 dimension.
+The size of the output cube's sample size in the naxis3 dimension.
 
-* ``wavemin  # `` is the minimum wavelength in microns to use in constructing the IFU cube.
+* ``wavemin``
 
-* ``wavemax  # `` is the maximum wavelength in microns to use in constructing the IFU cube.
+The minimum wavelength in microns to use in constructing the IFU cube.
 
-* ``coord_system = [string]. Options ra-dec and alpha-beta. The alpha-beta option is a special coordinate system
+* ``wavemax``
+
+The maximum wavelength in microns to use in constructing the IFU cube.
+
+* ``coord_system [string]``
+
+Options ra-dec and alpha-beta. The alpha-beta option is a special coordinate system
 for MIRI data and should only be used by advanced users.
 
 
@@ -67,11 +75,11 @@ flux associated with the output  spaxel flux. The first set defines the the  **r
 boundary centered on the spaxel center of   point cloud members that are used to find the final spaxel flux.
 The arguments related to region of interest and how the fluxes are combines together are:
 
-* ``--rios #``
-The ``rios`` # is the radius of the region of interest in the spatial  dimensions. The value is  real number.
+* ``--rios``
+The radius of the region of interest in the spatial  dimensions. The value is  real number.
 
-* ``--riow #``
-The ``riow`` # is the size of the region of interest in the spectral dimension. The value is a real
+* ``--riow``
+The size of the region of interest in the spectral dimension. The value is a real
 number.
 
 
@@ -86,7 +94,9 @@ For MIRI data is there an addition option, MIRIPSF. If this is used  then the di
 the alpha-beta coordinate system of the point cloud member and are normalized by the PSF and LSF. For more details on
 how the weight of the point cloud members are used in determining the final spaxel flux see the Algorithm description section
 
-* ``weight_power #`` controls the weighting of the distances between the point cloud member and spaxel center.
+* ``weight_power [float]``
+
+Controls the weighting of the distances between the point cloud member and spaxel center.
 
 The weighting function used for determining the spaxel flux was given in the Algorithm description:
 spaxel flux K =
@@ -94,6 +104,7 @@ spaxel flux K =
 
 Where
 * n = the number of point cloud points within the region of interest of spaxel flux K
+
 :math:`w_i =1.0 \sqrt{({xnormalized}^2 + {ynormalized}^2 + {znormalized}^2)}^{p}`
 
 by default currently p=2, but this parameter is controlled by the --weight_power option.
