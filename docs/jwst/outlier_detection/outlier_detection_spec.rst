@@ -9,19 +9,21 @@ basic outlier detection algorithm used with HST data, as adapted to JWST
 spectroscopic observations.
 
 Specifically, this routine performs the following operations (modified from the
-:ref:`outlier-detection-image`):
+:ref:`Default Outlier Detection Algorithm <outlier-detection-imaging>` ):
 
 * Extract parameter settings from input model and merge them with any user-provided values
 
-  - the same set of parameters available to :ref:`outlier-detection-imaging`
+  - the same set of parameters available to :ref:`Default Outlier Detection Algorithm <outlier-detection-imaging>`
     also applies to this code
 
 * Convert input data, as needed, to make sure it is in a format that can be processed
 
-  - A ModelContainer serves as the basic format for all processing performed by
+  - A :py:class:`~jwst.datamodels.ModelContainer` serves as the basic format 
+    for all processing performed by
     this step, as each entry will be treated as an element of a stack of images
     to be processed to identify bad-pixels/cosmic-rays and other artifacts.
-  - If the input data is a CubeModel, convert it into a ModelContainer.
+  - If the input data is a :py:class:`~jwst.datamodels.CubeModel`, convert it into a 
+    :py:class:`~jwst.datamodels.ModelContainer`.
     This allows each plane of the cube to be treated as a separate 2D image
     for resampling (if done at all) and for combining into a median image.
 
