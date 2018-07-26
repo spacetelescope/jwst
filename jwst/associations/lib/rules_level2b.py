@@ -140,7 +140,9 @@ class Asn_Lv2Spec(
         self.constraints = Constraint([
             Constraint_Base(),
             Constraint_Mode(),
-            Constraint_Spectral_Science()
+            Constraint_Spectral_Science(
+                exclude_exp_types=['nrs_msaspec', 'nrs_fixedslit']
+            )
         ])
 
         # Now check and continue initialization.

@@ -735,21 +735,28 @@ class Constraint_Special(DMSAttrConstraint):
 
 
 class Constraint_Spectral_Science(Constraint):
-    """Select on spectral science"""
+    """Select on spectral science
 
-    GENERAL_SCIENCE = set(SPEC2_SCIENCE_EXP_TYPES).symmetric_difference(
-        ['nrs_msaspec', 'nrs_fixedslit']
-    )
+    Parameters
+    exclude_exp_types: [exp_type[, ...]]
+        List of exposure types to not consider from
+        from the general list.
+    """
 
-    def __init__(self):
+    def __init__(self, exclude_exp_types=None):
+        if exclude_exp_types is None:
+            general_science = SPEC2_SCIENCE_EXP_TYPES
+        else:
+            general_science = set(SPEC2_SCIENCE_EXP_TYPES).symmetric_difference(
+                exclude_exp_types
+            )
 
-        # Remove NRS_MSASPEC from the science list.
         super(Constraint_Spectral_Science, self).__init__(
             [
                 DMSAttrConstraint(
                     name='exp_type',
                     sources=['exp_type'],
-                    value='|'.join(self.GENERAL_SCIENCE)
+                    value='|'.join(general_science)
                 )
             ],
             reduce=Constraint.any
