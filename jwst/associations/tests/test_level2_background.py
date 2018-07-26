@@ -11,7 +11,10 @@ from ..main import constrain_on_candidates
 
 def test_nrs_msa_nod():
     pool = combine_pools(t_path('data/pool_023_nirspec_msa_3nod.csv'))
-    asns = generate(pool, registry_level2_only())
+    constraint_all_candidates = constrain_on_candidates(None)
+    asns = generate(pool, registry_level2_only(
+        global_constraints=constraint_all_candidates)
+    )
     assert len(asns) == 12
     for asn in asns:
         assert len(asn['products'][0]['members']) == 3

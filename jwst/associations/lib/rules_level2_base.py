@@ -408,7 +408,9 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
                         new_members.append(now_background)
 
                 new_members += nonscience_exps
-                results.append(asn)
+
+                if asn.is_valid:
+                    results.append(asn)
 
             return results
 
