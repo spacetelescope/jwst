@@ -27,8 +27,7 @@ def test_refpix_nirspec_irs2(_bigdata):
 
 
     RefPixStep.call(_bigdata+'/nirspec/test_bias_drift/jw84600007001_02101_00001_nrs1_superbias.fits',
-                    odd_even_columns=True, use_side_ref_pixels=True, side_smoothing_length=11,
-                    side_gain=1.0, odd_even_rows=True, output_file=output_file_base, name='refpix'
+                    output_file=output_file_base, name='refpix'
                     )
     h = pf.open(output_file)
     href = pf.open(_bigdata+'/nirspec/test_bias_drift/jw84600007001_02101_00001_nrs1_refpix.fits')

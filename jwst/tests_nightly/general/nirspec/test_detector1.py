@@ -19,11 +19,6 @@ def test_detector1pipeline4(_bigdata):
     step = Detector1Pipeline()
     step.save_calibrated_ramp = True
     step.ipc.skip = True
-    step.refpix.odd_even_columns = True
-    step.refpix.use_side_ref_pixels = True
-    step.refpix.side_smoothing_length = 11
-    step.refpix.side_gain = 1.0
-    step.refpix.odd_even_rows = True
     step.persistence.skip = True
     step.jump.rejection_threshold = 4.0
     step.ramp_fit.save_opt = False
