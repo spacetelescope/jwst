@@ -33,21 +33,32 @@ for all unsaturated pixels in that integration will be calculated to be the
 value of the science data in that group divided by the group time.  If the
 input dataset has only two groups per integration, the count rate for all
 unsaturated pixels in each integration will be calculated using the differences 
-of the 2 valid values of the science data.  If any input dataset contains ramps
-saturated in their second group, the count rates for those pixels in that
-integration will be calculated to be the value of the science data in the first 
-group divided by the group time. After computing the slopes for all segments for a
-given pixel, the final slope is determined as a weighted average from all
-segments in all integrations, and is written to a file as the primary output
-product.  In this output product, the 4-D GROUPDQ from all integrations is
-compressed into 2-D, which is then merged (using a bitwise OR) with the input 2-D
-PIXELDQ to create the output DQ array. The 3-D VAR_POISSON and VAR_RNOISE arrays
-from all integrations are averaged into corresponding 2-D output arrays.  If the
-ramp fitting step is run by itself, the output file name will have the suffix
-'_RampFit' or the suffix '_RampFitStep'; if the ramp fitting step is run as part
-of the calwebb_detector1 pipeline, the final output file name will have the suffix
-'_rate'.  In either case, the user can override this name by specifying an output
-file name.
+of the 2 valid values of the science data. If a ramp is saturated in the first
+group in an integration of any input dataset, its slope and variance will not be
+calculated, and the ramp will not contribute to the overall slope or variances.  
+If any input dataset contains ramps saturated in their second group, the count
+rates for those pixels in that integration will be calculated to be the value
+of the science data in the first group divided by the group time.  If a ramp
+has a good first group followed by a cosmic ray ray in the second group, the
+first segment for this ramp will be the single first good group. If that
+segment is the only segment in the ramp, the ramp's slope will be calculated to 
+be the value of the science data in that group divided by the group time. If
+there are other segments in the ramp, the single-group first segment will be
+discarded and only the other segment(s) in the ramp will be used in further
+calculations.
+
+
+After computing the slopes for all segments for a given pixel, the final slope is
+calculated as a weighted average from all segments in all integrations, and is
+written to a file as the primary output product.  In this output product, the 4-D
+GROUPDQ from all integrations is compressed into 2-D, which is then merged (using 
+a bitwise OR) with the input 2-D PIXELDQ to create the output DQ array. The 3-D
+VAR_POISSON and VAR_RNOISE arrays from all integrations are averaged into
+corresponding 2-D output arrays.  If the ramp fitting step is run by itself, the
+output file name will have the suffix '_RampFit' or the suffix '_RampFitStep'; if
+the ramp fitting step is run as part of the calwebb_detector1 pipeline, the final
+output file name will have the suffix '_rate'.  In either case, the user can
+override this name by specifying an output file name.
 
 
 If the input exposure contains more than one integration, the resulting slope
@@ -57,10 +68,12 @@ in this product is the result for a given integration.  In this output product,
 the GROUPDQ data for a given integration is compressed into 2-D, which is then
 merged with the input 2-D PIXELDQ to create the output DQ array for each
 integration. The 3-D VAR_POISSON and VAR_RNOISE from an integration are calculated
-by averaging over the fit segments in the corresponding 4-D arrays.  By default,
-the name of this output product is based on the name of the input file and will
-have the suffix '_rateints'; the user can override this name by specifying a
-name using the parameter int_name.
+by averaging over the fit segments in the corresponding 4-D arrays. If the input
+dataset has a GROUP table (which contains time stamps corresponding to readout
+times at the group level), the table will also be included in the output product
+as the INT_TIMES extension.  By default, the name of this output product is based
+on the name of the input file and will have the suffix '_rateints'; the user can
+override this name by specifying a name using the parameter int_name.
 
 
 A third, optional output product is also available and is produced only when
