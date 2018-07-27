@@ -235,13 +235,7 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
     #   saturated groups have already been flagged. The actual, fit, slopes for
     #   each segment are also calculated here.
     # Loop over data integrations:
-    dq_first_int = np.zeros((gdq_cube_shape[0], gdq_cube_shape[2],
-                             gdq_cube_shape[3]), dtype=np.uint32)
-
     for num_int in range(0, n_int):
-        dq_first_int[ num_int,:,: ] = \
-            model.get_section('groupdq')[num_int, 0, :, :]
-
         # Loop over data sections
         for rlo in range(0, cubeshape[1], nrows):
             rhi = rlo + nrows
@@ -500,10 +494,14 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
 
     # Loop over data integrations to calculate integration-specific pedestal
     if save_opt:
+        dq_slice = np.zeros((gdq_cube_shape[2],gdq_cube_shape[3]),
+                            dtype=np.uint32)
+
         for num_int in range(0, n_int):
+            dq_slice =  model.get_section('groupdq')[num_int, 0, :, :]
             opt_res.ped_int[ num_int, :, : ] = \
-                utils.calc_pedestal(num_int, slope_int, opt_res.firstf_int,\
-                dq_first_int[num_int,:,:], nframes, groupgap, dropframes1)
+                utils.calc_pedestal(num_int, slope_int, opt_res.firstf_int, 
+                    dq_slice, nframes, groupgap, dropframes1)
 
     # Compute 2D 'error' for primary output; this is the standard deviation due
     # to both the Poisson and read noise
@@ -2126,7 +2124,8 @@ def fit_2_group(slope_s, intercept_s, variance_s, sig_intercept_s,
     # length) in this function, but are being included here to explicitly
     # cover all possibilities for pixels in datasets with ngroups=2. Will
     # later consider refactoring.
-    wh_sat1 = np.where((mask_2d[:, :].sum(axis=0) == 1) & mask_2d[0, :] is True)
+    wh_sat1 = np.where((mask_2d[:, :].sum(axis=0) == 1) & mask_2d[0, :])
+
     if (len(wh_sat1[0]) > 0):
         data0_slice = data[0, :, :].reshape(npix)
         slope_s[wh_sat1] = data0_slice[wh_sat1]
@@ -2140,6 +2139,7 @@ def fit_2_group(slope_s, intercept_s, variance_s, sig_intercept_s,
     # which will later be divided by the group exposure time to give the count
     # rate, and recalculate other fit quantities to be benign.
     wh_sat_no = np.where(mask_2d[:, :].sum(axis=0) == 2)
+
     if (len(wh_sat_no[0]) > 0):
         data0_slice = data[0, :, :].reshape(npix)
         data1_slice = data[1, :, :].reshape(npix)
@@ -2365,15 +2365,14 @@ def calc_opt_sums(rn_sect, gain_sect, data_masked, mask_2d, xvalues, good_pix):
     nrd_prime = 0
     power_wt_r = 0
 
-    wh_m2d_f = (np.logical_not(c_mask_2d[0, :])) # ramps where initial group is False
-
     # For all pixels, 'roll' up the leading zeros such that the 0th group of
     #  each pixel is the lowest nonzero group for that pixel
+    wh_m2d_f = np.logical_not(c_mask_2d[0, :]) # ramps where initial group is False
     while (wh_m2d_f.sum() > 0):
         data_masked[:, wh_m2d_f] = np.roll(data_masked[:, wh_m2d_f], -1, axis=0)
         c_mask_2d[:, wh_m2d_f] = np.roll(c_mask_2d[:, wh_m2d_f], -1, axis=0)
         xvalues[:, wh_m2d_f] = np.roll(xvalues[:, wh_m2d_f], -1, axis=0)
-        wh_m2d_f = (c_mask_2d[0, :] == False) # '==' instead of 'is' for sum()
+        wh_m2d_f = np.logical_not(c_mask_2d[0, :])
 
     # Create weighted sums for Poisson noise and read noise
     nreads_wtd = (wt_h * c_mask_2d).sum(axis=0)  # using optimal weights

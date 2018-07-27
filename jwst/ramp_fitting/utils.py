@@ -458,18 +458,18 @@ def alloc_arrays_2(n_int, imshape, max_seg):
     var_p3 = np.zeros((n_int,) + imshape, dtype=np.float32) + LARGE_VARIANCE
     var_r3 = var_p3.copy()
     var_both3 = var_p3.copy()
-    s_inv_var_p3 = var_p3.copy() * 0.
-    s_inv_var_r3 = var_p3.copy() * 0.
-    s_inv_var_both3 = var_p3.copy() * 0.
+    s_inv_var_p3 = np.zeros_like(var_p3)
+    s_inv_var_r3 = np.zeros_like(var_p3)
+    s_inv_var_both3 = np.zeros_like(var_p3)
 
     # Segment-specific:
     var_p4 = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32) + \
                LARGE_VARIANCE
     var_r4 = var_p4.copy()
     var_both4 = var_p4.copy()
-    inv_var_p4 = var_p4.copy() * 0.
-    inv_var_r4 = var_p4.copy() * 0.
-    inv_var_both4 = var_p4.copy() * 0.
+    inv_var_p4 = np.zeros_like(var_p4)
+    inv_var_r4 = np.zeros_like(var_p4)
+    inv_var_both4 = np.zeros_like(var_p4)
 
     # number of segments
     segs_4 = np.zeros((n_int,)+(max_seg,)+imshape, dtype=np.uint8)
@@ -537,7 +537,7 @@ def calc_slope_vars(rn_sect, gain_sect, gdq_sect, group_time, max_seg):
         gdq_2d_nan[ wh_sat ] = np.nan  # set all SAT groups to nan
 
     # Get lengths of semiramps for all pix [number_of_semiramps, number_of_pix]
-    segs = gdq_2d.copy()* 0.
+    segs = np.zeros_like(gdq_2d)
 
     # Counter of semiramp for each pixel
     sr_index = np.zeros( npix, dtype=np.uint8 )
@@ -633,7 +633,7 @@ def calc_pedestal(num_int, slope_int, firstf_int, dq_first, nframes, groupgap,
     firstf_int: float, 3D array
         integration-specific first frame array
 
-    dq_first: int, 3D array
+    dq_first: int, 2D array
         DQ of the initial group for all ramps in the given integration
 
     nframes: int
