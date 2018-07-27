@@ -1,32 +1,30 @@
 Description
 ===========
 
-This step takes MIRI or NIRSpec IFU calibrated 2-D images and produces
+The ``cube_build`` step takes MIRI or NIRSpec IFU calibrated 2-D images and produces
 3-D spectral cubes. The 2-D disjointed IFU slice spectra are corrected
 for distortion and assembled into a rectangular cube with three orthogonal axes: two
-spatial and one spectral. The distortion information is  incorporated into the calibrated
-images using the  ``calwebb_spec2`` pipeline step ``assing_wcs``. The detector pixel fluxes have already
-been converted to surface brightness in the ``calwebb_spec2`` pipeline step ``photom``.
+spatial and one spectral.
 
-The ``cube_build`` package can take as input either:
+The ``cube_build`` step can accept several different forms of input data, including:
 
-  - a single 2-D input image
+  - a single file containing a 2-D slice image
 
-  - a data model passed containing a 2-D slice image
+  - a data model (IFUImageModel) containing a 2-D slice image
 
-  - an association table (in json format) containing the list of exposures to combine
+  - an association table (in json format) containing a list of input files
 
   - a model container with several 2-D slice data models
 
 There are a number of arguments the user can provide either in a configuration file or
-on the command line that control the sampling size of the cube, as well as the type of data that is combined to
-create the cube. See the :ref:`arguments` section for more details.
+on the command line that control the sampling size of the cube, as well as the type of data
+that is combined to create the cube. See the :ref:`arguments` section for more details.
 
 Assumptions
 -----------
-It is assumed the ``assign_wcs`` step has been applied to the data, attaching the distortion and pointing
-information to the image. It is also assumed that the ``photom`` step has converted the pixel values from
-units of countrate to surface brightness. This step will only work with MIRI or NIRSpec IFU data.
+It is assumed that the ``assign_wcs`` step has been applied to the data, attaching the distortion and pointing
+information to the image(s). It is also assumed that the ``photom`` step has been applied to convert the pixel
+values from units of countrate to surface brightness. This step will only work with MIRI or NIRSpec IFU data.
 
 Instrument Information
 ----------------------
@@ -42,8 +40,8 @@ four channels are observed simultaneously, each exposure only records the spectr
 approximately one third of the full wavelength range of each channel. The full 5-28 micron spectrum is
 obtained by making three exposures using three different gratings and three different dichroic sets.
 We refer to a sub-channel as one of the three possible configurations (A/B/C) of the channel where each
-sub-channel covers ~1/3 of the full wavelength range for the channel. Each of the four channels has a different sampling
-of the field, so the FOV, slice width, number of slices, and plate scales are different for each channel.
+sub-channel covers ~1/3 of the full wavelength range for the channel. Each of the four channels has a different
+sampling of the field, so the FOV, slice width, number of slices, and plate scales are different for each channel.
 
 The NIRSpec IFU has a 3 x 3 arcsecond field of view that is sliced into thirty 0.1 arcsecond bands. Each slice is
 dispersed by a prism or one of six diffraction gratings. When using diffraction gratings as dispersive elements, three
@@ -54,12 +52,12 @@ provide high-resolution (R = 1400-3600) and medium resolution (R = 500-1300) spe
 range 0.7-5 microns, while the prism yields lower-resolution (R = 30-300) spectroscopy over the range
 0.6-5 microns.
 
-The NIRSpec detector focal plane consists of two HgCdTe sensor chip assemblies (SCAs). Each SCA is a 2-D array of 2048 x 2048
-pixels. The light-sensitive portions of the two SCAs are separated by a physical gap of 3.144 mm, which
+The NIRSpec detector focal plane consists of two HgCdTe sensor chip assemblies (SCAs). Each SCA is a 2-D array of
+2048 x 2048 pixels. The light-sensitive portions of the two SCAs are separated by a physical gap of 3.144 mm, which
 corresponds to 17.8 arcseconds on the sky.  For low or medium resolution IFU data the 30 slices are imaged on
-a single NIRSpec SCA. In high resolution mode the 30 slices are imaged on the two NIRSpec SCAs. The physical gap between the
-SCAs causes a loss of spectral information over a range in wavelength that depends on the location of the target
-and dispersive element used. The lost information can be recovered by dithering the targets.
+a single NIRSpec SCA. In high resolution mode the 30 slices are imaged on the two NIRSpec SCAs. The physical gap
+between the SCAs causes a loss of spectral information over a range in wavelength that depends on the location of the
+target and dispersive element used. The lost information can be recovered by dithering the targets.
 
 Terminology
 -----------
@@ -75,14 +73,14 @@ We use the following terminology to define the spectral range divisions of MIRI:
   The 3 sub-ranges that a channel is divided into. These are designated as *Short (A)*, *Medium (B)*, and *Long (C)*.
 
 ``Band``
-  For **MIRI**, "band" is one of the 12 contiguous wavelength intervals (four channels times three sub-channels each) into which
-  the spectral range of the MRS is divided.  Each band has a unique channel/sub-channel combination. For example,
-  the shortest wavelength range on MIRI is covered by Band 1-SHORT (aka 1A) and the
+  For **MIRI**, "band" is one of the 12 contiguous wavelength intervals (four channels times three sub-channels each)
+  into which the spectral range of the MRS is divided.  Each band has a unique channel/sub-channel combination. For
+  example, the shortest wavelength range on MIRI is covered by Band 1-SHORT (aka 1A) and the
   longest is covered by Band 4-LONG (aka 4C).
 
 
-NIRSpec IFU Optical Element and Filter Combinations
-+++++++++++++++++++++++++++++++++++++++++++++++++++
+NIRSpec IFU Disperser and Filter Combinations
++++++++++++++++++++++++++++++++++++++++++++++
 
 =======  ======  ====================
 Grating  Filter  Wavelength (microns)
@@ -98,7 +96,7 @@ G235H    F170LP  1.7 - 3.1
 G395H    F290LP  2.9 - 5.2
 =======  ======  ====================
 
-For NIRSpec we have defined a *band*  as a  single grating-filter combination, e.g. G140M-F070LP.
+For NIRSpec we define a *band* as a single grating-filter combination, e.g. G140M-F070LP.
 
 Coordinate Systems
 ++++++++++++++++++
@@ -134,74 +132,34 @@ overview of these coordinate systems:
   for MIRI, because there are twelve bands (1A, 1B, 1C,... 4C). Each system has two orthogonal axes, one parallel
   (**alpha**) and the other perpendicular (**beta**) to the projection of the long axes of the slices in the FOV.
 
-Options that control the type of IFU cube to build
------------------------------------------------------
-The input to ``cube_build`` can be a single exposure or a set of exposures. There are a number of user options that control the
-type of IFU Cube to create. For standard pipeline processing in calwebb_spec3, default settings are used and the output is a set of single
-band IFU cubes. In the case of MIRI the standard IFU cubes will be single channel, single sub-channel cubes (e.g., 1A) and in
-the case of NIRSpec the standard output will be be single grating, single filters cubes. Since a single MIRI exposure
-always covers two channels, there will at least be two IFU cubes as
-the standard output.  By default, the ``calwebb_spec2`` pipeline produces intermediate cubes that are single IFU cubes for a single exposure.
-In these intermediate cubes, the MIRI IFU spectral cube  contains two channels of data.
+Types of Output Cubes
+---------------------
+As mentioned above, the input data to ``cube_build`` can take a variety of forms, including a single file, a data
+model passed from another pipeline step, a list of files in an association table, or a collection of exposures in a
+data model container (ModelContainer) passed in by the user or from a preceding pipeline step. Because the MIRI IFUs
+project data from two channels onto a single detector, choices can or must be made as to which parts of the input data
+to use when constructing the output cube even in the simplest case of a single input image. The default behavior
+varies according to the context in which ``cube_build`` is being run.
 
-The list of the user options that can be used to select the type of data to be used to create the IFU Cube are as follows:
+In the case of the ``calwebb_spec2`` pipeline,
+for example, where the input is a single MIRI or NIRSpec IFU exposure, the default output cube will be built from
+all the data in that single exposure. For MIRI this means using the data from both channels (e.g. 1A and 2A) that
+are recorded in a single exposure. For NIRSpec this means using data from the single grating+filter combination
+contained in the exposure.
 
-``channel [string]``
-  This is a MIRI only option and the valid values are 1, 2, 3, 4, and ALL.
-  If the ``channel`` argument is given, then only data corresponding to that channel  will be used in
-  constructing the cube.  If the user wants more than one  channel in the output cube, then all the values are
-  contained in a comma separated list. For example, to create a cube with data from channels 1 and 2, specify the list as
-  ``--channel='1,2'``. If this value is not specified, the output will be a set of IFU cubes, one for each channel/sub-channel combination
-  contained in the input data.
+In the ``calwebb_spec3`` pipeline, on the other hand, where the input can be a collection of data from multiple
+exposures covering multiple bands, the default behavior is to create a set of single-band cubes. For MIRI, for
+example, this can mean separate cubes for bands 1A, 2A, 3A, 4A, 1B, 2B, ..., 3C, 4C, depending on what's included in
+the input. For NIRSpec this may mean multiple cubes, one for each grating+filter combination contained in the
+input collection.
 
-``band [string]``
-  This is a MIRI only option and the valid values are SHORT, MEDIUM, LONG, and ALL.
-  If the ``band`` argument is given, then only data corresponding
-  to that sub-channel will be used in  constructing the cube. Only one value can be specified, so IFU cubes are created either
-  per sub-channel or using all the sub-channels the input data cover.  If this value is not specified, a set of IFU cubes is created,
-  one for each band. Note we use the name ``band`` for this argument instead of
-  ``subchannel``, because the keyword ``band`` in the input images is used to indicate which MIRI subchannel the data covers.
+Several ``cube_build`` step arguments are available to allow the user to control exactly what combinations of input
+data are used to construct the output cubes. See the :ref:`arguments` section for details.
 
-``grating [string]``
-  This is a NIRSpec option with valid values are PRISM, G140M, G140H, G235M, G235H, G395M, G395H, and ALL.
-  If the option "ALL" is used, then all the gratings in the association are used.
-  Since association tables will only contain exposures of the same resolution, the use of "ALL" will at most combine
-  data from gratings G140M, G235M, and G395M or G140H, G235H, and G395H. The user can supply a comma-separated string
-  containing the names of the gratings to use.
-
-``filter [string]``
-  This is a NIRSpec option with valid of Clear, F100LP, F070LP, F170LP, F290LP, and ALL.
-  To cover the full wavelength range of NIRSpec, the option "ALL" can be used (provided the exposures in the association table
-  contain all the filters). The user can supply a comma-separated string containing the filters to use.
-
-``output_type [string]``
-  This parameter has four valid options of Band, Channel, Grating, and Multi. This parameter can be combined
-  with the options above [band, channel, grating, filter] to fully control the type of IFU
-  cubes to make.
-
- - ``output_type = band`` is the default mode and creates IFU cubes containing only one band
-   (channel/sub-channel or  grating/filter combination).
-
- - ``output_type = channel`` combines all the MIRI channels in the data or set by the
-   channel option into a single IFU cube.
-
- - ``output_type = grating`` combines all the gratings in the NIRSpec data or set by the
-   grating option into a single IFU cube.
-
- - ``output_type = multi`` combines data  into a single "uber" IFU cube. If in addition,
-   channel, band, grating, or filter are also set, then only the data set by those
-   parameters will be combined into an "uber" cube.
-
-``weighting [string]``
-  This is for MIRI data only and the valid values are STANDARD and MIRPSF. This defines
-  how the distances between the point cloud members and spaxel centers are determined. The default value is STANDARD and the distances
-  are determined in the cube output coordinate system. If this parameter is set to MIRIPSF,then the distances are determined in
-  the alpha-beta coordinate system of the point cloud member and are normalized by the PSF and LSF.
-
-Output Format
--------------
-The output spectral cubes are stored in FITS files that contain 4 IMAGE extensions. The primary data array is empty and the
-primary header holds the basic parameters of the observations that went into making the cube.
+Output Cube Format
+------------------
+The output spectral cubes are stored in FITS files that contain 4 IMAGE extensions. The primary data array is empty
+and the primary header holds the basic parameters of the observations that went into making the cube.
 The 4 IMAGE extensions have the following characteristics:
 
 =======  =====  ========================  =========
@@ -214,18 +172,16 @@ WMAP     3      2 spatial and 1 spectral  integer
 =======  =====  ========================  =========
 
 The SCI image contains the surface brightness of cube spaxels in units of mJy/arcsecond^2. The ERR image contains the
-uncertainty on the SCI values, the DQ image contains the data quality flags for each spaxel, and the WMAP image contains
-the number of point cloud elements contained in the region of interest of the spaxel.
+uncertainty on the SCI values, the DQ image contains the data quality flags for each spaxel, and the WMAP image
+contains the number of point cloud elements contained in the region of interest of the spaxel.
 
 Output Product Name
 -------------------
-If the input data is passed in as an ImageModel, then the IFU cube will be passed back as an IFUCubeModel. The cube model will be
-written to disk at the end of processing.
-The file name of the output cube is based on a rootname plus a
-string defining the type of IFU cube, along with the suffix 's3d.fits'.
-If the input data is a single exposure then the rootname
-is taken from the input filename. If the input is an association table, the rootname is defined in the association
-table.
+If the input data is passed in as an ImageModel, then the IFU cube will be passed back as an IFUCubeModel. The cube
+model will be written to disk at the end of processing.  The file name of the output cube is based on a rootname plus
+a string defining the type of IFU cube, along with the suffix 's3d.fits'. If the input data is a single exposure,
+then the rootname is taken from the input filename. If the input is an association table, the rootname is defined in
+the association table.
 The string defining the type of IFU is created according to the following rules:
 
 - For MIRI the output string name  is determined from the  channels and sub-channels used.
@@ -238,6 +194,8 @@ The string defining the type of IFU is created according to the following rules:
   grating G140M and G235M and from filter F070LP and F100LP,  the output name would be,
   rootname_G140M-G225_F070LP-F100LP_s3d.fits
 
+
+.. _algorithm:
 
 Algorithm
 ---------
