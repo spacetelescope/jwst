@@ -6,22 +6,73 @@ Template file format
 File types are described using a simple file format that vaguely
 resembles FITS headers.
 
-Defining a new filetype requires writing two templates: one for
-:ref:`generation <generator_template>` and one for
-:ref:`verification <verifier_template>`.  The generation template is 
-the "driver", defining the order and existence of keywords.  The 
-verification template keywords are considered unordered, and may contain
-definitions of keywords not ultimately used in the file format.  This
-allows each specific format to be defined in a generator template, and
-avoids duplication of effort by including verification definitions
-from the same set of files.
+Since it is necessary to create templates for several different
+flavors of data (FITSWriter, NIRSpec simulations, NIRCam homebrew etc)
+as well as different EXP_TYPEs that share many sections of data header
+but differ in other sections, the templates are divided into sections
+that are included.  So a typical template for a particular flavor of
+data might look like this::
 
-A third form of template also exists that is used as :ref:`input data
-<data_files>`.
+    <<file nirspec_ifu_level1b>>
+    <<header primary>>
+    #include "level1b.gen.inc"
+    #include 'observation_identifiers.gen.inc'
+    #include 'exposure_parameters.gen.inc'
+    #include 'program_information.gen.inc'
+    #include 'observation_information.gen.inc'
+    #include 'visit_information.gen.inc'
+    #include 'exposure_information.gen.inc'
+    #include 'target_information.gen.inc'
+    #include 'exposure_times.gen.inc'
+    #include 'exposure_time_parameters.gen.inc'
+    #include 'subarray_parameters.gen.inc'
+    #include 'nirspec_configuration.gen.inc'
+    #include 'lamp_configuration.gen.inc'
+    #include 'guide_star_information.gen.inc'
+    #include 'jwst_ephemeris_information.gen.inc'
+    #include 'spacecraft_pointing_information.gen.inc'
+    #include 'aperture_pointing_information.gen.inc'
+    #include 'wcs_parameters.gen.inc'
+    #include 'velocity_aberration_correction.gen.inc'
+    #include 'nirspec_ifu_dither_pattern.gen.inc'
+    #include 'time_related.gen.inc'
+    
+    <<data>>
+    
+    <<header science>>
+    #include 'level1b_sci_extension_basic.gen.inc'
+    
+    <<data>>
+    input[0].data.reshape((input[0].header['NINT'], \
+                           input[0].header['NGROUP'], \
+                           input[0].header['NAXIS2'], \
+                           input[0].header['NAXIS1'])). \
+                           astype('uint16')
+    
+    <<header error>>
+    EXTNAME = 'ERR'
+    
+    <<data>>
+    np.ones((input[0].header['NINT'], \
+             input[0].header['NGROUP'], \
+             input[0].header['NAXIS2'], \
+             input[0].header['NAXIS1'])). \
+             astype('float32')
+    
+    <<header data_quality>>
+    EXTNAME = "DQ"
+    
+    <<data>>
+    np.zeros((input[0].header['NINT'], \
+              input[0].header['NGROUP'], \
+              input[0].header['NAXIS2'], \
+              input[0].header['NAXIS1']), dtype='int16')
 
-By convention, generator templates have the extension ``gen.txt``,
-verifier templates have the extension ``val.txt`` and data files have
-the extension ``dat``.
+This has some regular generator syntax, but the bulk of the
+content comes from the ``#include`` directives.
+
+By convention, templates have the extension ``gen.txt``, while
+include files have the extension ``inc``.
 
 Basic syntax
 ------------
@@ -121,16 +172,8 @@ are the following:
 
           TARGET = program()
 
-      If an APT file is provided as input, the ``apt()`` function is
-      available.  It takes as input an `XPath expression
-      <http://effbot.org/zone/element-xpath.htm>`_ to look up an
-      element in the APT XML file.  For example::
-
-          PI = apt("./ProposalInformation/PrincipalInvestigator/InvestigatorAddress/LastName") + ", " + \
-               apt("./ProposalInformation/PrincipalInvestigator/InvestigatorAddress/FirstName")
-
     - **Generator functions:** There are a number of helper functions
-      in the :ref:`generators <generators>` module that help convert
+      in the ``generators`` module that help convert
       and generate values of different kinds.  For example::
 
           END_TIME = date_and_time_to_cds(input('DATE-END'), input('TIME-END'))
@@ -176,6 +219,24 @@ section headings in the output FITS file.  For example::
     DURATION  = 0 / Total duration of exposure
     OBJ_TYPE  = 'FAINT' / Object type
 
+``#include`` files will typically be just lines defining keyword definitions
+as above, for example, the file ``target_information.gen.inc`` looks like this::
+
+    / Target information
+    
+    TARGPROP = input('TARGNAME') / proposer's name for the target
+    TARGNAME = 'NGC 104' / standard astronomical catalog name for target
+    TARGTYPE = 'FIXED' / fixed target, moving target, or generic target
+    TARG_RA  = 0.0 / target RA computed at time of exposure
+    TARGURA  = 0.0 / target RA uncertainty
+    TARG_DEC = 0.0 / target DEC computed at time of exposure
+    TARRUDEC =  0.0  / target Dec uncertainty
+    PROP_RA  =  0.0  / proposer specified RA for the target
+    PROP_DEC =  0.0  / proposer specified Dec for the target
+    PROPEPOC = 2000.0  / proposer specified epoch for RA and Dec
+
+and is used in many of the top-level level1b templates.
+
 Data
 ````
 The data section consists of a single expression that returns a Numpy
@@ -185,10 +246,10 @@ The following are available in the namespace:
 
   - ``np``: ``import numpy as np``
 
-  - ``input``: A pyfits HDUList object containing the content of the
+  - ``input``: A fits HDUList object containing the content of the
     input FITS file.
 
-  - ``output``: A pyfits HDUList object containing the content of the
+  - ``output``: A fits HDUList object containing the content of the
     output FITS file.  Note that the output FITS file may only be
     partially contructed.  Importantly, higher-number HDUs will not
     yet exist.
@@ -263,153 +324,3 @@ A complete example
                          input[0].header['NAXIS2'], \
                          input[0].header['NAXIS1'])). \
                         astype('uint16')
-
-.. _verifier_template:
-
-Verifier template
------------------
-
-The verifier template follows this basic structure:
-
-  - ``file`` line
-
-  - Any number of optional ``inherit`` lines
-
-  - Zero or more HDUs, each of which has
-
-    - a ``header`` section defining how keywords are generated
-
-    - an optional ``data`` section defining how the data is converted
-
-``file`` line
-'''''''''''''
-
-The template must begin with a file line to give the file type a
-name.  The name must be a valid Python identifier.  For example::
-
-    <<file level1b>>
-
-``inherit`` lines
-'''''''''''''''''
-
-The ``inherit`` lines include another file containing keyword
-definitions that this file will inherit from.  For example, the basic
-FITS keywords may be defined in a centrally located file that all of
-the file types inherit from.  The specific file types may override any
-of the inherited definitions.
-
-.. note::
-   ``inherit`` works differently from ``#include``.  ``inherit`` loads
-   in an entire set of keyword definitions that are used as fallbacks
-   for keywords not defined in a given file.  ``#include`` merely
-   includes another file verbatim.
-
-HDUs
-''''
-
-Each HDU is defined in two sections, the header and data.
-
-Header
-``````
-The header begins with a header section line, giving the header a
-name, which must be a valid Python identifier.  For example::
-
-    <<header primary>>
-
-Following that is a list of keyword definitions.  Each line is of the
-form::
-
-    KEYWORD = expression / comment
-
-``KEYWORD`` is a FITS keyword, may be up to 8 characters, and must
-contain only A through Z, ``_`` and ``-``.
-
-The expression section is a Python expression that is evaluated to see
-whether the value is valid.  The expression should be a boolean
-expression returning `True` if the value is valid, otherwise `False`.
-Within the namespace of the expression are the following:
-
-    - **Value variable x:** The variable ``x`` is available in the
-      namespace and stores the value of the keyword.  You can easily
-      test if the value is a particular constant using::
-
-          NAXIS = x == 4
-
-      Or that a value is in a particular range::
-
-          NAXIS = 1 <= x <= 4
-
-      Or ensure a value is a member of a particular set::
-
-          BITPIX = x in (8, 16, 32, 64, -32, -64)
-
-    - **Accessing other keywords:** Keywords can be compared to other
-      keywords by using the ``output`` function.  For example, to
-      ensure that a keyword has the same value as another::
-
-          NINT = x == output('NAXIS4')
-
-    - **Verifier functions:** There are a number of helper functions
-      in the :ref:`verifiers <verifiers>` module that test certain
-      properties of the value.  For example::
-
-          DATE = is_date(x)
-
-Optional comments may be added to the definition line, but they are
-ignored.  Only the comments in the generator template are written to
-the output FITS file.
-
-Data
-````
-
-TODO: The functionality here has not been fleshed out.
-
-.. _data_files:
-
-Data files
-----------
-
-A data file follows this basic structure:
-
-  - ``file`` line
-
-  - Zero or more ``header`` sections containing keyword values.  Note
-    data files do not contain ``data`` sections.
-
-``file`` line
-'''''''''''''
-
-The template must begin with a file line to give the file type a
-name.  The name must be a valid Python identifier.
-
-This name is used to indicate what type of data file this is.  For
-example, if the data file contains the line::
-
-    <<file program>>
-
-then a function ``program`` is available in the generator template to
-pull values from this data file.
-
-Header
-``````
-The header begins with a header section line, giving the header a
-name, which must be a valid Python identifier.  For example::
-
-    <<header primary>>
-
-Following that is a list of keyword definitions.  Each line is of the
-form::
-
-    KEYWORD = expression / comment
-
-``KEYWORD`` is a FITS keyword, may be up to 8 characters, and must
-contain only A through Z, ``_`` and ``-``.
-
-The expression section is a Python literal expression.  It is
-evaluated at file load time.  Here are examples for all of the basic
-FITS datatypes::
-
-    TARGNAME  = "R2-D2"
-    RA_TARG   = 32.19
-    COUNT     = 42
-    LAMPON    = T
