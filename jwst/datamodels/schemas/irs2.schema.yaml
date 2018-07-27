@@ -1,10 +1,12 @@
-title: IRS2 reference file model
+title: IRS2 refpix reference file data model
 allOf:
-- $ref: core.schema.yaml
+- $ref: referencefile.schema.yaml
+- $ref: keyword_readpatt.schema.yaml
+- $ref: keyword_preadpatt.schema.yaml
 - type: object
   properties:
     irs2_table:
-      title: Reference file for IRS2 correction
+      title: Reference file for IRS2 refpix correction
       fits_hdu: IRS2
       datatype:
       - name: alpha_0
