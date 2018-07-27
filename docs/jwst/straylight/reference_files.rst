@@ -12,7 +12,7 @@ If --method = "Nearest" option is used then the  MIRI MRS stray-light reference 
 and BAND values of the input science data set.
 
 MIRI MRS stray-light  Reference File Format
-------------------------------------------
+-------------------------------------------
 The stray-light mask  reference files are FITS files with  and empty primary data
 array and one IMAGE extension. This IMAGE extension is
 a 2-D integer image  mask file of size 

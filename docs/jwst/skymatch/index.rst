@@ -9,11 +9,7 @@ SkyMatch
 
    README.rst
 
-**Also See:**
-
-.. toctree::
-   :maxdepth: 2
-
+   skymatch_step
    skymatch
    skyimage
    skystatistics

@@ -3,7 +3,7 @@ AMI Processing
 ==============
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    main.rst
    reference_files.rst
