@@ -65,6 +65,7 @@ def extract_tso_object(input_model,
 
     if not isinstance(reference_files, dict):
         raise TypeError("Expected a dictionary for reference_files")
+
     if 'wavelengthrange' not in reference_files.keys():
         raise KeyError("No wavelengthrange reference file specified")
 
@@ -72,7 +73,7 @@ def extract_tso_object(input_model,
         raise TypeError('The input data model is not a CubeModel.')
 
     if extract_height is None:
-        extract_height = 64  # set by the teams
+        extract_height = input_model.meta.subarray.ysize
 
     # Get the disperser parameters which have the wave limits
     with WavelengthrangeModel(reference_files['wavelengthrange']) as f:
@@ -86,6 +87,7 @@ def extract_tso_object(input_model,
         extract_orders = ref_extract_orders
 
     available_orders = [x[1] for x in extract_orders if x[0] == input_model.meta.instrument.filter].pop()
+
     if len(available_orders) > 1:
         log.info("Extracting into a MultiSlitModel")
         output_model = datamodels.MultiSlitModel()
@@ -123,7 +125,7 @@ def extract_tso_object(input_model,
         # This is changes the user input to the model from (x,y,x0,y0,order) -> (x,y)
         #
         # The bounding boxes here are also limited to the size of the detector in the
-        # dispersion direction and 64 pixels in the cross-dispersion 
+        # dispersion direction and 64 pixels in the cross-dispersion
         # The check for boxes entirely off the detector is done in create_grism_bbox right now
 
         # The team wants the object to fall near  row 34 for all cutouts,
@@ -141,7 +143,6 @@ def extract_tso_object(input_model,
         xmin, xmax = (max(xmin, 0), min(xmax, input_model.meta.subarray.xsize))
         log.info("xmin, xmax: {} {}  ymin, ymax: {} {}".format(xmin, xmax, ymin, ymax))
 
-        # only the first two numbers in the Mapping are used
         # the order and source position are put directly into
         # the new wcs for the subarray for the forward transform
         order_model = Const1D(order)
@@ -155,19 +156,21 @@ def extract_tso_object(input_model,
         ymin = int(ymin)
         ymax = int(ymax)
 
-        # cut it out
-        ext_data = input_model.data[:, ymin: ymax + 1, xmin: xmax + 1].copy()
-        ext_err = input_model.err[:, ymin: ymax + 1, xmin: xmax + 1].copy()
-        ext_dq = input_model.dq[:, ymin: ymax + 1, xmin: xmax + 1].copy()
+        # cut it out, keep the entire row though
+        ext_data = input_model.data[:, ymin: ymax + 1, :].copy()
+        ext_err = input_model.err[:, ymin: ymax + 1, :].copy()
+        ext_dq = input_model.dq[:, ymin: ymax + 1, :].copy()
 
-        log.info("Subarrays extracted for order: {}:".format(order))
-        log.info("Subarray extents are: (xmin:{}, ymin:{}), (xmax:{}, ymax:{})".format(xmin, ymin, xmax, ymax))
+        log.info("WCS made explicit for order: {}:".format(order))
+        log.info("Trace extents are: (xmin:{}, ymin:{}), (xmax:{}, ymax:{})".format(xmin, ymin, xmax, ymax))
 
         if output_model.meta.model_type == "SlitModel":
             output_model.data = ext_data
             output_model.err = ext_err
             output_model.dq = ext_dq
             output_model.meta.wcs = subwcs
+            output_model.meta.wcs.bounding_box = ((xmin, xmax), (extract_y_center - extract_height,
+                                                                 extract_y_center + extract_height))
             output_model.meta.wcsinfo.spectral_order = order
             output_model.name = str(0)
             output_model.xstart = xmin + 1
@@ -175,7 +178,7 @@ def extract_tso_object(input_model,
             output_model.ystart = ymin + 1
             output_model.ysize = (ymax - ymin) + 1
             output_model.source_xpos = source_xpos
-            output_model.source_ypos = source_ypos
+            output_model.source_ypos = extract_y_center
             output_model.source_id = 1
             output_model.bunit_data = input_model.meta.bunit_data
             output_model.bunit_err = input_model.meta.bunit_err
@@ -198,8 +201,9 @@ def extract_tso_object(input_model,
             new_model.source_id = 1
             new_model.bunit_data = input_model.meta.bunit_data
             new_model.bunit_err = input_model.meta.bunit_err
+            new_model.meta.wcs.bounding_box = ((xmin, xmax), (extract_y_center - extract_height,
+                                                              extract_y_center + extract_height))
             output_model.slits.append(new_model)
-
 
     del subwcs
     log.info("Finished extractions")

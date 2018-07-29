@@ -54,6 +54,8 @@ def extract2d(input_model, slit_name=None, apply_wavecorr=False,
 
     elif exp_type in slitless_modes:
         if exp_type == 'NRC_TSGRISM':
+            if extract_height is None:
+                extract_height = 64
             output_model = extract_tso_object(input_model,
                                               reference_files=reference_files,
                                               extract_height=extract_height,
