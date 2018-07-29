@@ -50,21 +50,17 @@ def match_det2cube(self, input_model,
 #________________________________________________________________________________
     if self.instrument == 'MIRI':
         file_no = file_slice_no
-        det2ab_transform = input_model.meta.wcs.get_transform('detector','alpha_beta')
-        detector2v23 = input_model.meta.wcs.get_transform('detector', 'v2v3')
-        v23toworld = input_model.meta.wcs.get_transform("v2v3","world")
-        worldtov23 = input_model.meta.wcs.get_transform("world","v2v3")
-        v2ab_transform = input_model.meta.wcs.get_transform('v2v3',
-                                                            'alpha_beta')
 
-        alpha, beta, wave = det2ab_transform(x, y)
-        v2, v3, lam23 = detector2v23(x, y)
-        ra,dec,lam = v23toworld(v2,v3,lam23)
-
-        valid1 = np.isfinite(v2)
-        valid2 = np.isfinite(v3)
-
+        ra,dec,lam = input_model.meta.wcs(x,y)
+        valid1 = np.isfinite(ra)
+        valid2 = np.isfinite(dec)
         if self.weighting == 'miripsf':
+            #need alpha beta values
+            det2ab_transform = input_model.meta.wcs.get_transform('detector','alpha_beta')
+            worldtov23 = input_model.meta.wcs.get_transform("world","v2v3")
+            v2ab_transform = input_model.meta.wcs.get_transform('v2v3',
+                                                                'alpha_beta')
+            alpha, beta, wave = det2ab_transform(x, y)            
             wave_resol = self.instrument_info.Get_RP_ave_Wave(this_par1,this_par2)
             alpha_resol = self.instrument_info.Get_psf_alpha_parameters()
             beta_resol = self.instrument_info.Get_psf_beta_parameters()
@@ -76,7 +72,11 @@ def match_det2cube(self, input_model,
             # xi,eta -> ra,dec
             # ra-dec -> v2,v3
             # v2,v3 -> local alpha,beta
-
+            
+        if self.coord_system == 'alpha-beta':
+            det2ab_transform = input_model.meta.wcs.get_transform('detector','alpha_beta')
+            alpha, beta, wave = det2ab_transform(x, y)            
+#________________________________________________________________________________
     elif self.instrument == 'NIRSPEC':
         islice = file_slice_no
         slice_wcs = nirspec.nrs_wcs_set_input(input_model, islice)
@@ -124,8 +124,7 @@ def match_det2cube(self, input_model,
     dec = dec - c2_offset/3600.0
     ra_use = ra[good_data]
     dec_use = dec[good_data]
-    if self.instrument == 'MIRI':
-        # need alpha,beta if weigthing is miripsf or cubes in alpha-beta space
+    if self.instrument == 'MIRI' and self.weighting == 'miripsf':
         alpha_det = alpha[good_data]
         beta_det = beta[good_data]
 # MIRI can make cubes in alpha-beta:
@@ -147,7 +146,7 @@ def match_det2cube(self, input_model,
 # withing the region of interest.
     nn  = coord1.size
 
-#    print('looping over n points mapping to cloud',nn)
+#    print('looping over n points on exposure and mapping to cloud',nn)
 #________________________________________________________________________________
     for ipt in range(0, nn - 1):
 #________________________________________________________________________________        
@@ -163,46 +162,36 @@ def match_det2cube(self, input_model,
         xdistance = (self.Xcenters - coord1[ipt])
         ydistance = (self.Ycenters - coord2[ipt])
         radius = np.sqrt(xdistance * xdistance + ydistance * ydistance)
-
-
         indexr = np.where(radius  <=self.rois)
         indexz = np.where(abs(self.zcoord - wave[ipt]) <= self.roiw)
 
-#        print('indexz',indexz)
-#        print('indexr',indexr)
         zlam = self.zcoord[indexz]        # z Cube values falling in wavelength roi
         xi_cube = self.Xcenters[indexr]   # x Cube values within radius 
         eta_cube = self.Ycenters[indexr]  # y cube values with the radius
 
-#        print('found xi_cube',xi_cube)
-#        print('found eta_cube',eta_cube)
+        d1 = (xi_cube - coord1[ipt])/self.Cdelt1
+        d2 = (eta_cube - coord2[ipt])/self.Cdelt2
+        d3 = (zlam - wave[ipt])/self.Cdelt3
 
+        dxy = d1*d1 + d2*d2
+        wdistance = [xy + z*z for z in d3 for xy in dxy]
+
+#TODO with the CPD 7 delivery of new reference file is this going away ???
+# if it stays then update to use list comprehension
+        if  self.weighting =='miripsf':
+            weights = FindNormalizationWeights(wave[ipt], 
+                                               wave_resol,
+                                               alpha_resol,
+                                               beta_resol)
+            weight_alpha,weight_beta,weight_wave = weights
 #________________________________________________________________________________
 # loop over the points in the ROI
-        for iz, zz in enumerate(indexz[0]):
-            istart = zz * nplane
-            for ir, rr in enumerate(indexr[0]):
-                yy_cube = int(rr/self.naxis1)
-                xx_cube = rr - yy_cube*self.naxis1
-#                print('xx yy cube',rr,self.naxis1,xx_cube,yy_cube)
-#________________________________________________________________________________
-                if self.weighting =='msm':
-
-                    d1 = (xi_cube[ir] - coord1[ipt])/self.Cdelt1
-                    d2 = (eta_cube[ir] - coord2[ipt])/self.Cdelt2
-                    d3 = (zlam[iz] - wave[ipt])/self.Cdelt3
-                    
-                    weight_distance = math.sqrt(d1*d1 + d2*d2 + d3*d3)
-                    weight_distance = math.pow(weight_distance,self.weight_power)
+            for iz, zz in enumerate(indexz[0]):
+                wdistance = []
+                istart = zz * nplane
+                for ir, rr in enumerate(indexr[0]):
 #________________________________________________________________________________
 # if weight is miripsf -distances determined in alpha-beta coordinate system 
-                elif self.weighting =='miripsf':
-                    weights = FindNormalizationWeights(wave[ipt], 
-                                                         wave_resol,
-                                                         alpha_resol,
-                                                         beta_resol)
-
-
                     ra_spaxel,dec_spaxel=coord.std2radec(self.Crval1,
                                                          self.Crval2,
                                                          xi_cube[ir],eta_cube[ir])
@@ -222,36 +211,46 @@ def match_det2cube(self, input_model,
                     yn = beta_distance/weight_beta
                     wn = wave_distance/weight_wave
 
-                        # only included the spatial dimensions
-                    weight_distance = math.sqrt(xn*xn + yn*yn + wn*wn)
-                    weight_distance = math.pow(weight_distance,self.weight_power)
+                    this_wdistance = xn*xn + yn*yn + wn*wn
+                    wdistance.append(this_wdistance)
 #________________________________________________________________________________
-# We have found the weight_distance based on instrument type
-
-                if weight_distance < lower_limit: weight_distance = lower_limit
-                weight_distance = 1.0 / weight_distance
-
-                cube_index = istart + rr
-
-
-#                print('Cube_index',cube_index,istart,rr)
-                spaxel[cube_index].flux = spaxel[cube_index].flux + weight_distance*flux[ipt]
-                spaxel[cube_index].flux_weight = spaxel[cube_index].flux_weight + weight_distance
-                spaxel[cube_index].iflux = spaxel[cube_index].iflux + 1
+#                cube_index = istart + rr
+#                print('d1,d2,d3',d1,d2,d3)
+#                print('Cube_index',cube_index,weight_distance)
+#                spaxel[cube_index].flux = spaxel[cube_index].flux + weight_distance*flux[ipt]
+#                spaxel[cube_index].flux_weight = spaxel[cube_index].flux_weight + weight_distance
+#                spaxel[cube_index].iflux = spaxel[cube_index].iflux + 1
 
 
-                if( self.debug_pixel == 1 and self.xdebug == xx_cube and
-                      self.ydebug == yy_cube and self.zdebug == zz):
+        if self.debug_pixel == 1:
+            yy_cube = [ rr/self.naxis1 for rr in indexr[0]]
+            yy_cube = [ int(x) for x in yy_cube]
+            xx_cube = [rr -yy*self.naxis1 for rr,yy in zip(indexr[0],yy_cube)] 
+            zz_cube = [ zz for zz in indexz[0]]
+            cube_location = [ (xx,yy,zz) for zz in indexz[0] for xx,yy in zip(xx_cube,yy_cube)]
 
-                    log.debug('For spaxel %d %d %d, %d detector x,y,flux %d %d %f %d %f '
-                                  %(self.xdebug+1,self.ydebug+1,
-                                    self.zdebug+1,ipt,xpix[ipt]+1,ypix[ipt]+1,
-                                    flux[ipt],file_slice_no,weight_distance))
-                    self.spaxel_debug.write('For spaxel %d %d %d %d, detector x,y,flux %d %d %f %d %f %f %f %f %f %f '
-                                  %(self.xdebug+1,self.ydebug+1,
-                                    self.zdebug+1,ipt,xpix[ipt]+1,ypix[ipt]+1,
-                                    flux[ipt],file_slice_no,weight_distance,wave[ipt],zlam[iz],
-                                    d1*self.Cdelt1,d2*self.Cdelt2,d3*self.Cdelt3) +' \n')
+        weight_distance = [ math.pow( math.sqrt(x),self.weight_power) for x in wdistance]
+        weight_distance = np.asarray([lower_limit if x < lower_limit else x for x in weight_distance])
+        weight_distance = 1.0/weight_distance
+        cube_index = [ (xy + z*nplane) for z in indexz[0] for xy in indexr[0]] 
+
+        for iz,zz in enumerate(cube_index):
+            spaxel[zz].flux = spaxel[zz].flux + weight_distance[iz]*flux[ipt]
+            spaxel[zz].flux_weight = spaxel[zz].flux_weight + weight_distance[iz]
+            spaxel[zz].iflux = spaxel[zz].iflux + 1
+
+            if( self.debug_pixel == 1 and self.xdebug == cube_location[iz][0] and
+                self.ydebug == cube_location[iz][1] and self.zdebug ==cube_location[iz][2]):
+
+                log.debug('For spaxel %d %d %d, %d detector x,y,flux %d %d %f %d %f '
+                          %(self.xdebug+1,self.ydebug+1,
+                            self.zdebug+1,ipt,xpix[ipt]+1,ypix[ipt]+1,
+                            flux[ipt],file_slice_no,weight_distance[iz]))
+                self.spaxel_debug.write('For spaxel %d %d %d %d, detector x,y,flux %d %d %f %d %f %f %f %f %f '
+                                        %(self.xdebug+1,self.ydebug+1,
+                                          self.zdebug+1,ipt,xpix[ipt]+1,ypix[ipt]+1,
+                                          flux[ipt],file_slice_no,weight_distance[iz],wave[ipt],
+                                          d1*self.Cdelt1,d2*self.Cdelt2,d3*self.Cdelt3) +' \n')
         iprint = iprint +1
         if iprint == 10000:
             log.debug('Mapping point and finding ROI for point cloud # %d %d' %(ipt,nn))
