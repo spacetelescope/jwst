@@ -11,8 +11,6 @@ from ..lib import reffile_utils
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-# Replace zero or negative variances with this:
-LARGE_VARIANCE = 1.e8
 
 class OptRes:
     """
@@ -22,7 +20,7 @@ class OptRes:
     cosmic ray magnitude.
     """
 
-    def __init__(self, n_int, imshape, max_seg, nreads, save_opt):
+    def __init__(self, n_int, imshape, max_seg, nreads):
         """
         Short Summary
         -------------
@@ -46,20 +44,19 @@ class OptRes:
         nreads: int
             number of reads in an integration
         """
+        self.yint_seg = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
         self.slope_seg = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
-        if save_opt:
-            self.yint_seg = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
-            self.sigyint_seg = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
-            self.sigslope_seg = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
-            self.inv_var_seg = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
-            self.firstf_int = np.zeros((n_int,) + imshape, dtype=np.float32)
-            self.ped_int = np.zeros((n_int,) + imshape, dtype=np.float32)
-            self.cr_mag_seg = np.zeros((n_int,)+(nreads,)+imshape, dtype=np.float32)
-            self.var_p_seg = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
-            self.var_r_seg = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
+        self.sigyint_seg = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
+        self.sigslope_seg = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
+        self.inv_var_seg = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
+        self.firstf_int = np.zeros((n_int,) + imshape, dtype=np.float32)
+        self.ped_int = np.zeros((n_int,) + imshape, dtype=np.float32)
+        self.cr_mag_seg = np.zeros((n_int,)+(nreads,)+imshape, dtype=np.float32)
+        self.var_p_seg = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
+        self.var_r_seg = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
 
 
-    def init_2d(self, npix, max_seg, save_opt):
+    def init_2d(self, npix, max_seg):
         """
         Short Summary
         -------------
@@ -75,25 +72,21 @@ class OptRes:
             maximum number of segments that will be fit within an
             integration, calculated over all pixels and all integrations
 
-        save_opt: boolean
-            save optional fitting results
-
         Returns
         -------
         None
         """
+        self.interc_2d = np.zeros((max_seg, npix), dtype=np.float32)
         self.slope_2d = np.zeros((max_seg, npix), dtype=np.float32)
-        if save_opt:
-            self.interc_2d = np.zeros((max_seg, npix), dtype=np.float32)
-            self.siginterc_2d = np.zeros((max_seg, npix), dtype=np.float32)
-            self.sigslope_2d = np.zeros((max_seg, npix), dtype=np.float32)
-            self.inv_var_2d = np.zeros((max_seg, npix), dtype=np.float32)
-            self.firstf_2d = np.zeros((max_seg, npix), dtype=np.float32)
-            self.var_s_2d = np.zeros((max_seg, npix), dtype=np.float32)
-            self.var_r_2d = np.zeros((max_seg, npix), dtype=np.float32)
+        self.siginterc_2d = np.zeros((max_seg, npix), dtype=np.float32)
+        self.sigslope_2d = np.zeros((max_seg, npix), dtype=np.float32)
+        self.inv_var_2d = np.zeros((max_seg, npix), dtype=np.float32)
+        self.firstf_2d = np.zeros((max_seg, npix), dtype=np.float32)
+        self.var_s_2d = np.zeros((max_seg, npix), dtype=np.float32)
+        self.var_r_2d = np.zeros((max_seg, npix), dtype=np.float32)
 
 
-    def reshape_res(self, num_int, rlo, rhi, sect_shape, ff_sect, save_opt):
+    def reshape_res(self, num_int, rlo, rhi, sect_shape, ff_sect):
         """
         Short Summary
         -------------
@@ -117,32 +110,25 @@ class OptRes:
         ff_sect: 2D array
             first frame data
 
-        save_opt: boolean
-            save optional fitting results
-
         Returns
         -------
         """
-        for ii_seg in range(0, self.slope_seg.shape[1]):
-            self.slope_seg[num_int, ii_seg, rlo:rhi, :] = \
-                    self.slope_2d[ii_seg, :].reshape(sect_shape)    
-
-            if save_opt:
-                self.yint_seg[num_int, ii_seg, rlo:rhi, :] = \
+        for ii_seg in range(0, self.yint_seg.shape[1]):
+            self.yint_seg[num_int, ii_seg, rlo:rhi, :] = \
                            self.interc_2d[ii_seg, :].reshape(sect_shape)
-                self.slope_seg[num_int, ii_seg, rlo:rhi, :] = \
+            self.slope_seg[num_int, ii_seg, rlo:rhi, :] = \
                             self.slope_2d[ii_seg, :].reshape(sect_shape)
-                self.sigyint_seg[num_int, ii_seg, rlo:rhi, :] = \
+            self.sigyint_seg[num_int, ii_seg, rlo:rhi, :] = \
                               self.siginterc_2d[ii_seg, :].reshape(sect_shape)
-                self.sigslope_seg[num_int, ii_seg, rlo:rhi, :] = \
+            self.sigslope_seg[num_int, ii_seg, rlo:rhi, :] = \
                                self.sigslope_2d[ii_seg, :].reshape(sect_shape)
-                self.inv_var_seg[num_int, ii_seg, rlo:rhi, :] = \
+            self.inv_var_seg[num_int, ii_seg, rlo:rhi, :] = \
                               self.inv_var_2d[ii_seg, :].reshape(sect_shape)
-                self.firstf_int[num_int, rlo:rhi, :] = ff_sect
+            self.firstf_int[num_int, rlo:rhi, :] = ff_sect
 
 
     def append_arr(self, num_seg, g_pix, intercept, slope, sig_intercept,
-                   sig_slope, inv_var, save_opt):
+                   sig_slope, inv_var):
         """
         Short Summary
         -------------
@@ -174,19 +160,15 @@ class OptRes:
             reciprocals of variances for fits of pixels in current
             segment and section
 
-        save_opt: boolean
-            save optional fitting results
-
         Returns
         -------
         None
         """
+        self.interc_2d[num_seg[g_pix], g_pix] = intercept[g_pix]
         self.slope_2d[num_seg[g_pix], g_pix] = slope[g_pix]
-        if save_opt:
-            self.interc_2d[num_seg[g_pix], g_pix] = intercept[g_pix]
-            self.siginterc_2d[num_seg[g_pix], g_pix] = sig_intercept[g_pix]
-            self.sigslope_2d[num_seg[g_pix], g_pix] = sig_slope[g_pix]
-            self.inv_var_2d[num_seg[g_pix], g_pix] = inv_var[g_pix]
+        self.siginterc_2d[num_seg[g_pix], g_pix] = sig_intercept[g_pix]
+        self.sigslope_2d[num_seg[g_pix], g_pix] = sig_slope[g_pix]
+        self.inv_var_2d[num_seg[g_pix], g_pix] = inv_var[g_pix]
 
 
     def shrink_crmag(self, n_int, dq_cube, imshape, nreads):
@@ -339,48 +321,7 @@ class OptRes:
         print((self.cr_mag_seg))
 
 
-def alloc_arrays_1(n_int, imshape):
-    """
-    Short Summary
-    -------------
-    Allocate arrays for integration-specific results and segment-specific
-    results and variances.
-
-    Parameters
-    ----------
-    n_int: int
-        number of integrations
-
-    imshape: (int, int) tuple
-        shape of a single image
-
-    Returns
-    -------
-    dq_int: int, 3D array
-        Cube of integration-specific group data quality values
-
-    median_diffs_2d: float, 2D array
-        Estimated median slopes
-
-    num_seg_per_int: integer, 3D array
-        Cube of numbers of segments for all integrations and pixels
-
-    sat_0th_group_int - uint8, 3D array
-        Integration-specific slice whose value for a pixel is 1 if the initial
-        group of the ramp is saturated
-    """
-    dq_int = np.zeros((n_int,) + imshape, dtype=np.uint32)
-    num_seg_per_int = np.zeros((n_int,)+imshape, dtype=np.uint8)
-
-    # for estimated median slopes
-    median_diffs_2d = np.zeros(imshape,dtype=np.float32)
-
-    sat_0th_group_int = np.zeros((n_int,)+imshape, dtype=np.uint8)
-
-    return (dq_int, median_diffs_2d, num_seg_per_int, sat_0th_group_int)
-
-
-def alloc_arrays_2(n_int, imshape, max_seg):
+def alloc_arrays(n_int, imshape, max_seg):
     """
     Short Summary
     -------------
@@ -400,6 +341,12 @@ def alloc_arrays_2(n_int, imshape, max_seg):
 
     Returns
     -------
+    slope_int: float, 3D array
+        Cube of integration-specific slopes
+
+    dq_int: int, 3D array
+        Cube of integration-specific group data quality values
+
     var_p3: float, 3D array
         Cube of integration-specific values for the slope variance due to
         Poisson noise only
@@ -407,6 +354,9 @@ def alloc_arrays_2(n_int, imshape, max_seg):
     var_r3: float, 3D array
         Cube of integration-specific values for the slope variance due to
         readnoise only
+
+    median_diffs_2d: float, 2D array
+        Estimated median slopes
 
     var_p4: float, 4D array
         Hypercube of segment- and integration-specific values for the slope
@@ -451,32 +401,39 @@ def alloc_arrays_2(n_int, imshape, max_seg):
 
     segs_4: integer, 4D array
         Hypercube of lengths of segments for all integrations and pixels
-    """
-    # Initialize variances so that non-existing ramps and segments will have
-    #   negligible contributions
-    # Integration-specific:
-    var_p3 = np.zeros((n_int,) + imshape, dtype=np.float32) + LARGE_VARIANCE
-    var_r3 = var_p3.copy()
-    var_both3 = var_p3.copy()
-    s_inv_var_p3 = np.zeros_like(var_p3)
-    s_inv_var_r3 = np.zeros_like(var_p3)
-    s_inv_var_both3 = np.zeros_like(var_p3)
 
-    # Segment-specific:
-    var_p4 = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32) + \
-               LARGE_VARIANCE
-    var_r4 = var_p4.copy()
-    var_both4 = var_p4.copy()
-    inv_var_p4 = np.zeros_like(var_p4)
-    inv_var_r4 = np.zeros_like(var_p4)
-    inv_var_both4 = np.zeros_like(var_p4)
+    num_seg_per_int: integer, 3D array
+        Cube of numbers of segments for all integrations and pixels
+    """
+    slope_int = np.zeros((n_int,) + imshape, dtype=np.float32)
+    dq_int = np.zeros((n_int,) + imshape, dtype=np.uint32)
+
+    # for integration-specific variances
+    var_p3 = np.zeros((n_int,) + imshape, dtype=np.float32)
+    var_r3 = var_p3.copy() * 0.
+    var_both3 = var_r3.copy() * 0.
+    s_inv_var_p3 = var_p3.copy() * 0.
+    s_inv_var_r3 = var_p3.copy() * 0.
+    s_inv_var_both3 = var_p3.copy() * 0.
+
+    # for segment-specific variances
+    var_p4 = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
+    var_r4 = var_p4.copy() * 0.
+    var_both4 = var_p4.copy() * 0.
+    inv_var_p4 = var_p4.copy() * 0.
+    inv_var_r4 = var_p4.copy() * 0.
+    inv_var_both4 = var_p4.copy() * 0.
 
     # number of segments
     segs_4 = np.zeros((n_int,)+(max_seg,)+imshape, dtype=np.uint8)
+    num_seg_per_int = np.zeros((n_int,)+imshape, dtype=np.uint8)
 
-    return ( var_p3, var_r3, var_p4, var_r4,
-             var_both4, var_both3, inv_var_p4, inv_var_r4, inv_var_both4,
-             s_inv_var_p3, s_inv_var_r3, s_inv_var_both3, segs_4)
+    # for estimated median slopes
+    median_diffs_2d = np.zeros(imshape,dtype=np.float32)
+
+    return (slope_int, dq_int, var_p3, var_r3, median_diffs_2d, var_p4, var_r4,
+            var_both4, var_both3, inv_var_p4, inv_var_r4, inv_var_both4,
+            s_inv_var_p3, s_inv_var_r3, s_inv_var_both3, segs_4, num_seg_per_int)
 
 
 def calc_slope_vars(rn_sect, gain_sect, gdq_sect, group_time, max_seg):
@@ -537,7 +494,7 @@ def calc_slope_vars(rn_sect, gain_sect, gdq_sect, group_time, max_seg):
         gdq_2d_nan[ wh_sat ] = np.nan  # set all SAT groups to nan
 
     # Get lengths of semiramps for all pix [number_of_semiramps, number_of_pix]
-    segs = np.zeros_like(gdq_2d)
+    segs = gdq_2d.copy()* 0.
 
     # Counter of semiramp for each pixel
     sr_index = np.zeros( npix, dtype=np.uint8 )
@@ -573,7 +530,6 @@ def calc_slope_vars(rn_sect, gain_sect, gdq_sect, group_time, max_seg):
 
     # Create reshaped version [ segs, y, x ] to simplify computation
     segs_beg_3 = segs_beg.reshape( max_seg, imshape[0], imshape[1] )
-    segs_beg_3 = remove_bad_singles( segs_beg_3)
 
     # Create a version 1 less for later calculations for the variance due to
     #   Poisson, with a floor=1 to handle single-group segments
@@ -589,11 +545,11 @@ def calc_slope_vars(rn_sect, gain_sect, gdq_sect, group_time, max_seg):
     #   Here the denominator of this quantity will be computed, which will be
     #   later multiplied by the estimated median slope.
     den_p3 = 1./(group_time * gain_1d.reshape(imshape) * segs_beg_3_m1 )
+    den_p3 = rem_nan_inf(den_p3)
 
     # For a segment, the variance due to readnoise noise
     # = 12 * readnoise**2 /(ngroups_seg**3. - ngroups_seg)/( tgroup **2.)
     num_r3 = 12. * (rn_sect/group_time)**2.  # always >0
-
     # Reshape for every group, every pixel in section
     num_r3 = np.dstack( [num_r3] * max_seg )
     num_r3 = np.transpose( num_r3, (2, 0, 1))
@@ -608,19 +564,21 @@ def calc_slope_vars(rn_sect, gain_sect, gdq_sect, group_time, max_seg):
     wh_seg_pos = np.where (segs_beg_3 > 1)
     den_r3[ wh_seg_pos ] = 1./(segs_beg_3[ wh_seg_pos ] **3. -
                              segs_beg_3[ wh_seg_pos ]) # overwrite where segs >1
+    den_r3 = rem_nan_inf(den_r3)
 
     return ( den_r3, den_p3, num_r3, segs_beg_3 )
 
 
-def calc_pedestal(num_int, slope_int, firstf_int, dq_first, nframes, groupgap,
+def calc_pedestal(num_int, slope_int, firstf_int, dq_cube, nframes, groupgap,
                   dropframes1):
     """
     Short Summary
     -------------
-    The pedestal is calculated by extrapolating the final slope for each pixel
-    from its value at the first sample in the integration to an exposure time
-    of zero; this calculation accounts for the values of nframes and groupgap.
-    Any pixel that is saturated on the 1st group is given a pedestal value of 0.
+    The pedestal is calculated by extrapolating the final slope for
+    each pixel from its value at the first sample in the integration to
+    an exposure time of zero; this calculation accounts for the values of
+    nframes and groupgap.  Any pixel that is saturated on the 1st
+    group is given a pedestal value of 0.
 
     Parameters
     ----------
@@ -633,8 +591,8 @@ def calc_pedestal(num_int, slope_int, firstf_int, dq_first, nframes, groupgap,
     firstf_int: float, 3D array
         integration-specific first frame array
 
-    dq_first: int, 2D array
-        DQ of the initial group for all ramps in the given integration
+    dq_cube: int, 4D array
+        hypercube of DQ array
 
     nframes: int
         number of frames averaged per group; from the NFRAMES keyword. Does
@@ -653,11 +611,12 @@ def calc_pedestal(num_int, slope_int, firstf_int, dq_first, nframes, groupgap,
         pedestal image
     """
     ff_all = firstf_int[num_int, :, :].astype(np.float32)
+    dq_first = dq_cube[num_int, 0, :, :]
     ped = ff_all - slope_int[num_int, : :] * \
              (((nframes + 1.)/2. + dropframes1)/(nframes+groupgap))
 
     ped[np.bitwise_and(dq_first, dqflags.group['SATURATED']
-                      ) == dqflags.group['SATURATED']] = 0
+                       ) == dqflags.group['SATURATED']]  = 0
     ped[ np.isnan( ped )] = 0.
 
     return ped
@@ -707,10 +666,15 @@ def output_integ(model, slope_int, dq_int, effintim, var_p3, var_r3, var_both3,
     """
     cubemod = datamodels.CubeModel()
     cubemod.data = slope_int / effintim
+
     cubemod.err = np.sqrt(var_both3)
+    cubemod.err = rem_nan_inf(cubemod.err)
+
     cubemod.dq = dq_int
+
     cubemod.var_poisson = var_p3
     cubemod.var_rnoise = var_r3
+
     cubemod.int_times = int_times
 
     cubemod.update(model) # keys from input needed for photom step
@@ -828,8 +792,9 @@ def shift_z(a, off):
     """
     Short Summary
     -------------
-    Shift input 3D array by requested offset in z-direction, padding shifted
-    array (of the same size) by leading or trailing zeros as needed.
+    Shift input 3D array by requested offset in z-direction, padding
+    shifted array (of the same size) by leading or trailing zeros as
+    needed.
 
     Parameters
     ----------
@@ -894,7 +859,7 @@ def get_efftim_ped(model):
     if (dropframes1 is None):    # set to default if missing
         dropframes1 = 0
         log.debug('Missing keyword DRPFRMS1, so setting to default value of 0')
-
+ 
     try:
         effintim = (nframes + groupgap) * frame_time
     except TypeError:
@@ -914,9 +879,9 @@ def get_dataset_info(model):
     """
     Short Summary
     -------------
-    Extract values for the number of groups, the number of pixels, dataset
-    shapes, the number of integrations, the instrument name, the frame time,
-    and the observation time.
+    Extract values for the number of groups, the number of pixels,
+    dataset shapes, the number of integrations, the instrument name,
+    the frame time, and the observation time
 
     Parameters
     ----------
@@ -1124,117 +1089,17 @@ def get_ref_subs(model, readnoise_model, gain_model, nframes):
     return readnoise_2d, gain_2d
 
 
-def remove_bad_singles( segs_beg_3 ):
+def rem_nan_inf( input_arr ):
     """
     Short Summary
     -------------
-    For the current integration and data section, remove all segments having only
-    a single group if there are other segments in the ramp.  This method allows
-    for the possibility that a ramp can have multiple (necessarily consecutive)
-    1-group segments, which in principle could occur if there are consecutive
-    cosmic rays.
+    Remove values of NaN and Inf from array
 
     Parameters
     ----------
-    segs_beg_3: integer, 3D array
-        lengths of all segments for all ramps in the given data section and
-        integration; some of these ramps may contain segments having a single
-        group, and another segment.
-
-    Returns
-    -------
-    segs_beg_3: integer, 3D array
-        lengths of all segments for all ramps in the given data section and
-        integration; segments having a single group, and another segment
-        will be removed.
+    input_arr: float, array
+        input array
     """
-    # Count the number of ramps having a segment of 1 group and a later segment
-    wh_1_1 = np.where( (segs_beg_3 == 1) & (segs_beg_3.sum(axis=0) > 1))
-
-    try:
-        num_wh = len(wh_1_1[0])
-
-        # While there are ramps having a segment of 1 group and a later segment,
-        #   remove the initial 1-group segment from segs_beg_3
-        while ( num_wh > 0):
-            # Get the next segment number, y-coordinate, x-coordinate
-            wh_1seg, wh_1y, wh_1x = np.where(( segs_beg_3 == 1) &
-                                             (segs_beg_3.sum(axis=0) > 1))
-
-            seg_1 = wh_1seg[0]
-            pix_x = wh_1x[0]
-            pix_y = wh_1y[0]
-
-            # Remove the 1-group segment
-            segs_beg_3[seg_1:-1,pix_y,pix_x] = segs_beg_3[seg_1+1:,pix_y,pix_x]
-
-            # Zero the last segment entry for the ramp, which would otherwise
-            #   remain non-zero due to the shift
-            segs_beg_3[ -1, pix_y, pix_x] = 0
-            num_wh -= 1
-    except:
-        pass
-
-    return segs_beg_3
-
-
-def fix_sat_ramps( sat_0th_group_int, var_p3, var_both3, slope_int):
-    """
-    Short Summary
-    -------------
-    For ramps within an integration that are saturated on the initial group,
-    reset the integration-specific variances and slope so they will have no
-    contribution.
-
-    Parameters
-    ----------
-    sat_0th_group_int - uint8, 3D array
-        Integration-specific slice whose value for a pixel is 1 if the initial
-        group of the ramp is saturated
-
-    var_p3: float, 3D array
-        Cube of integration-specific values for the slope variance due to
-        Poisson noise only; some ramps may be saturated in the initial group
-
-    var_both3: float, 3D array
-        Cube of segment- and integration-specific values for the slope
-        variance due to combined Poisson noise and read noise; some ramps may
-        be saturated in the initial group
-
-    slope_int: float, 3D array
-        Cube of integration-specific slopes. Some ramps may be saturated in the
-        initial group
-
-    Returns
-    -------
-    var_p3: float, 3D array
-        Cube of integration-specific values for the slope variance due to
-        Poisson noise only; for ramps that are saturated in the initial group,
-        this variance has been reset to a huge value to minimize the ramps
-        contribution.
-
-    var_both3: float, 3D array
-        Cube of segment- and integration-specific values for the slope
-        variance due to combined Poisson noise and read noise; for ramps that
-        are saturated in the initial group, this variance has been reset to a
-        huge value to minimize the ramps contribution.
-
-    slope_int: float, 3D array
-        Cube of integration-specific slopes; for ramps that are saturated in
-        the initial group, this variance has been reset to a huge value to
-        minimize the ramps contribution.
-    """ 
-    where_all_groups_sat = np.where( sat_0th_group_int != 0)
-    num_of_sats = len(where_all_groups_sat[0])
-
-    if num_of_sats > 0:
-        for ii_sat in range(num_of_sats):
-            ii_integ = where_all_groups_sat[0][ii_sat]
-            ii_y = where_all_groups_sat[1][ii_sat]
-            ii_x = where_all_groups_sat[2][ii_sat]
-
-            var_p3[ ii_integ, ii_y, ii_x ] = LARGE_VARIANCE
-            var_both3[ ii_integ, ii_y, ii_x ] = LARGE_VARIANCE
-            slope_int[ ii_integ, ii_y, ii_x ] = 0.
-
-    return var_p3, var_both3, slope_int
+    input_arr[ np.isinf(input_arr)] = 0.
+    input_arr[ np.isnan(input_arr)] = 0.
+    return input_arr

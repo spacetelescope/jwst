@@ -13,7 +13,7 @@ log.setLevel(logging.DEBUG)
 __all__ = ["RampFitStep"]
 
 
-class RampFitStep(Step):
+class RampFitStep (Step):
 
     """
     This step fits a straight line to the value of counts vs. time to
@@ -42,7 +42,7 @@ class RampFitStep(Step):
         with datamodels.RampModel(input) as input_model:
 
             readnoise_filename = self.get_reference_file(input_model,
-                                                         'readnoise')
+                                                          'readnoise')
             gain_filename = self.get_reference_file(input_model, 'gain')
 
             log.info('Using READNOISE reference file: %s', readnoise_filename)
