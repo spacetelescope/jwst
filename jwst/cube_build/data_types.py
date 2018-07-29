@@ -51,7 +51,7 @@ class DataTypes():
         # if input if an assocation name or ModelContainer then it is openned as a container
 #        print('***input type***',type(input))
         input_try = datamodels.open(input)
-#        print('input_try',type(input_try))
+        print('input_try',type(input_try))
 
         if isinstance(input_try, datamodels.IFUImageModel):
 #            print('this is a single file or Model ')
@@ -62,12 +62,13 @@ class DataTypes():
             self.output_name = self.build_product_name(self.filenames[0])
 
         elif isinstance(input_try, datamodels.ModelContainer):
-#            print('this is a model container type')
+            print('this is a model container type or association read in a ModelContainer')
             self.output_name  = 'Temp'
             if not single:  # find the name of the output file from the association
                 with datamodels.ModelContainer(input_try) as input_model:
                     self.output_name =input_model.meta.asn_table.products[0].name
             for i in range(len(input_try)):
+                print('on file',i)
                 # check if input data is an IFUImageModel
                 if not  isinstance(input_try[i], datamodels.IFUImageModel):
                     serror = str(type(input_try[i]))
@@ -86,9 +87,6 @@ class DataTypes():
 
         if output_file !=None :
             basename,ext = os.path.splitext(os.path.basename(output_file))
-#            print('basename',basename)
-#            root, ext = os.path.splitext(output_file)
-#            default = root.find('cube_build') # the user has not provided a name
             self.output_name = basename
 
 

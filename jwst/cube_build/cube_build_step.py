@@ -153,10 +153,13 @@ SHORT,MEDIUM,LONG, or ALL
 # the cube_build software will attached the needed information on channel, sub-channel
 # grating or filter.
 #________________________________________________________________________________
+        t0 = time.time()
         input_table = data_types.DataTypes(input,self.single,
                                            self.output_file,
                                            self.output_dir)
-
+        t1 = time.time()
+        self.log.info("Time to set up DataTypes = %.1f.s" % (t1 - t0,))
+        
         self.input_models = input_table.input_models
         self.input_filenames = input_table.filenames
         self.output_name_base = input_table.output_name

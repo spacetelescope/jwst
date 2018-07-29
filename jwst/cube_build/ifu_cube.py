@@ -45,7 +45,6 @@ class IFUCubeData():
                  master_table,
                  **pars_cube):
 
-
         self.input_filenames = input_filenames
         self.pipeline = pipeline
 
@@ -56,7 +55,6 @@ class IFUCubeData():
         self.detector = detector
         self.list_par1 = list_par1
         self.list_par2 = list_par2
-
         self.instrument_info = instrument_info
         self.master_table = master_table
         self.output_type = output_type
@@ -189,8 +187,6 @@ class IFUCubeData():
                     newname = self.output_name_base + ch_name+'-'+ b_name + '_ab_s3d.fits'
                 if self.output_type == 'single':
                     newname = self.output_name_base + ch_name+'-'+ b_name + '_single_s3d.fits'
-
-
 #________________________________________________________________________________
             elif self.instrument == 'NIRSPEC':
                 fg_name = '_'
@@ -204,14 +200,11 @@ class IFUCubeData():
                 if self.output_type == 'single':
                     newname = self.output_name_base + fg_name+ 'single_s3d.fits'
 #________________________________________________________________________________
-
         if self.output_type != 'single':
             log.info('Output Name %s',newname)
 
 #        print('*** newname ****',newname)
         return newname
-
-
 #********************************************************************************
     class IncorrectInput(Exception):
         pass
@@ -530,7 +523,6 @@ class IFUCubeData():
                                             spaxel,
                                             c1_offset, c2_offset)
 
-
                         t1 = time.time()
                         log.debug("Time Match one Channel from 1 file  to IFUCube = %.1f.s"
                                   % (t1 - t0,))
@@ -539,7 +531,6 @@ class IFUCubeData():
                     if self.interpolation == 'area':
                         det2ab_transform = input_model.meta.wcs.get_transform('detector',
                                                                               'alpha_beta')
-
 
                         start_region = self.instrument_info.GetStartSlice(this_par1)
                         end_region = self.instrument_info.GetEndSlice(this_par1)
@@ -561,8 +552,6 @@ class IFUCubeData():
                             y = y[index]
                             x = x[index]
                             t0 = time.time()
-
-
                             cube_overlap.match_det2cube(self, x, y, i,
                                                         start_region,
                                                         input_model,
