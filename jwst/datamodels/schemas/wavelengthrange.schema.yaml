@@ -5,17 +5,13 @@ definitions:
       A tuple consisting of order and filter dependent wavelength ranges
     type: object
     properties:
-      wfss-wavelengthrange:
+      type: array
+      items:
         type: array
-        items:
-          type: array
           items:
-            type:
-              - number
-              - string
-              - number
-              - number
-      title: Order, Filter, Minwave, Maxwave
+            type: number
+            type: string
+    title: Order, Filter, Minwave, Maxwave
     additionalProperties: false
   slit-wavelengthrange:
     description: |
@@ -28,10 +24,9 @@ definitions:
         items:
           type: array
           items:
-            type:
-              - number
-              - number
-      title: Minwave, Maxwave
+            type: number
+            type: number
+    title: Minwave, Maxwave
     additionalProperties: false
 allOf:
 - $ref: referencefile.schema.yaml
