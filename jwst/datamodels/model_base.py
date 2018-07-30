@@ -181,9 +181,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         self._instance = asdf.tree
         self._asdf = asdf
 
-        # Initalize class dependent hidden fields
-        self._no_asdf_extension = False
-
         # Instantiate the primary array of the image
         if is_array:
             primary_array = self.get_primary_array_name()
@@ -290,7 +287,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         target._files_to_close = []
         target._shape = source._shape
         target._ctx = target
-        target._no_asdf_extension = source._no_asdf_extension
 
     def copy(self, memo=None):
         """
@@ -467,10 +463,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                                   extensions=self._extensions) as ff:
             with warnings.catch_warnings():
                 warnings.filterwarnings('ignore', message='Card is too long')
-                if self._no_asdf_extension:
-                    ff._hdulist.writeto(init, *args, **kwargs)
-                else:
-                    ff.write_to(init, *args, **kwargs)
+                ff.write_to(init, *args, **kwargs)
 
     @property
     def shape(self):

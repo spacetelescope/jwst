@@ -1,10 +1,10 @@
-from .reference import ReferenceFileModel
+from . import model_base
 
 
 __all__ = ['ReadnoiseModel']
 
 
-class ReadnoiseModel(ReferenceFileModel):
+class ReadnoiseModel(model_base.DataModel):
     """
     A data model for 2D readnoise.
 

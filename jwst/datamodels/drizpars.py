@@ -1,9 +1,9 @@
-from .reference import ReferenceFileModel
+from . import model_base
 
 __all__ = ['DrizParsModel']
 
 
-class DrizParsModel(ReferenceFileModel):
+class DrizParsModel(model_base.DataModel):
     """
     A data model for drizzle parameters reference tables.
     """

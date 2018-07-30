@@ -1,11 +1,11 @@
-from .reference import ReferenceFileModel
+from . import model_base
 from .dynamicdq import dynamic_mask
 
 
 __all__ = ['SuperBiasModel']
 
 
-class SuperBiasModel(ReferenceFileModel):
+class SuperBiasModel(model_base.DataModel):
     """
     A data model for 2D super-bias images.
     """

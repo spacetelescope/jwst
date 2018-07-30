@@ -2,7 +2,8 @@ import warnings
 from .model_base import DataModel
 from .validate import ValidationWarning
 
-__all__ = ['ReferenceFileModel']
+
+__all__ = ['ReferencefileModel']
 
 
 class ReferenceFileModel(DataModel):
@@ -18,7 +19,6 @@ class ReferenceFileModel(DataModel):
 
     def __init__(self, init=None, **kwargs):
         super(ReferenceFileModel, self).__init__(init=init, **kwargs)
-        self._no_asdf_extension = True
         self.meta.telescope = "JWST"
 
     def validate(self):
@@ -40,10 +40,8 @@ class ReferenceFileModel(DataModel):
             else:
                 warnings.warn(str(errmsg), ValidationWarning)
 
-        super(ReferenceFileModel, self).validate()
 
-
-class ReferenceImageModel(ReferenceFileModel):
+class ReferenceImageModel(DataModel):
     """
     A data model for 2D reference images
 
@@ -80,7 +78,7 @@ class ReferenceImageModel(ReferenceFileModel):
         self.err = self.err
 
 
-class ReferenceCubeModel(ReferenceFileModel):
+class ReferenceCubeModel(DataModel):
     """
     A data model for 3D reference images
 
@@ -116,7 +114,7 @@ class ReferenceCubeModel(ReferenceFileModel):
         self.dq = self.dq
         self.err = self.err
 
-class ReferenceQuadModel(ReferenceFileModel):
+class ReferenceQuadModel(DataModel):
     """
     A data model for 4D reference images
 

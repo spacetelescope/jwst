@@ -1,9 +1,9 @@
-from .reference import ReferenceFileModel
+from . import model_base
 from .dynamicdq import dynamic_mask
 
 __all__ = ['PersistenceSatModel']
 
-class PersistenceSatModel(ReferenceFileModel):
+class PersistenceSatModel(model_base.DataModel):
     """
     A data model for the persistence saturation value (full well).
 
