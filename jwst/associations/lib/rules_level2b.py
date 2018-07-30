@@ -1,15 +1,12 @@
 """Association Definitions: DMS Level2b product associations
 """
-from copy import (copy, deepcopy)
 import logging
-from os import path as op
 
 from jwst.associations.registry import RegistryMarker
-from jwst.associations.lib.constraint import Constraint
+from jwst.associations.lib.constraint import (Constraint, SimpleConstraint)
 from jwst.associations.lib.dms_base import format_list
 from jwst.associations.lib.rules_level2_base import *
 from jwst.associations.lib.rules_level3_base import DMS_Level3_Base
-from jwst.lib.suffix import remove_suffix
 
 __all__ = [
     'Asn_Lv2FGS',
@@ -313,20 +310,44 @@ class Asn_Lv2NRSFSS(
             Constraint_Mode(),
             Constraint(
                 [
-                    DMSAttrConstraint(
-                        name='exp_type',
-                        sources=['exp_type'],
-                        value='nrs_fixedslit'
+                    Constraint(
+                        [
+                            DMSAttrConstraint(
+                                name='exp_type',
+                                sources=['exp_type'],
+                                value='nrs_fixedslit'
+                            ),
+                            SimpleConstraint(
+                                value='science',
+                                test=lambda value, item: self.get_exposure_type(item) != value,
+                                force_unique=False
+                            )
+                        ]
                     ),
-                    DMSAttrConstraint(
-                        name='expspcin',
-                        sources=['expspcin'],
+                    Constraint(
+                        [
+                            DMSAttrConstraint(
+                                name='exp_type',
+                                sources=['exp_type'],
+                                value='nrs_fixedslit'
+                            ),
+                            DMSAttrConstraint(
+                                name='expspcin',
+                                sources=['expspcin'],
+                            ),
+                            DMSAttrConstraint(
+                                name='nods',
+                                sources=['numdthpt'],
+                            ),
+                            SimpleConstraint(
+                                value='science',
+                                test=lambda value, item: self.get_exposure_type(item) == value,
+                                force_unique=False
+                            )
+                        ]
                     ),
-                    DMSAttrConstraint(
-                        name='nods',
-                        sources=['numdthpt'],
-                    )
-                ]
+                ],
+                reduce=Constraint.any
             )
         ])
 
