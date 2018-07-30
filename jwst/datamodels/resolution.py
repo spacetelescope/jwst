@@ -1,9 +1,9 @@
-from .reference import ReferenceFileModel
+from . import model_base
 
 __all__ = ['ResolutionModel', 'MiriResolutionModel']
 
 
-class ResolutionModel(ReferenceFileModel):
+class ResolutionModel(model_base.DataModel):
     """
     A data model for Spectral Resolution  parameters reference tables.
     """
@@ -19,7 +19,7 @@ class ResolutionModel(ReferenceFileModel):
 class MiriResolutionModel(ResolutionModel):
     """
     A data model for MIRI Resolution reference files.
-
+    
     Parameters
     ----------
     init : any

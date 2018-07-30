@@ -1,9 +1,9 @@
-from .reference import ReferenceFileModel
+from . import model_base
 
 __all__ = ['IFUCubeParsModel']
 
 
-class IFUCubeParsModel(ReferenceFileModel):
+class IFUCubeParsModel(model_base.DataModel):
     """
     A data model for IFU Cube  parameters reference tables.
     """
@@ -25,7 +25,7 @@ class NirspecIFUCubeParsModel(IFUCubeParsModel):
     """
     schema_url = "nirspec_ifucubepars.schema.yaml"
 
-    def __init__(self, init=None, ifucubepars_table=None,
+    def __init__(self, init=None, ifucubepars_table=None, 
                  ifucubepars_msn_table=None,
                  ifucubepars_prism_wavetable=None,
                  ifucubepars_med_wavetable=None,
@@ -53,7 +53,7 @@ class MiriIFUCubeParsModel(IFUCubeParsModel):
     """
     schema_url = "miri_ifucubepars.schema.yaml"
 
-    def __init__(self, init=None, ifucubepars_table=None,
+    def __init__(self, init=None, ifucubepars_table=None, 
                  ifucubepars_msn_table=None,
                  ifucubepars_multichannel_wavetable=None,**kwargs):
         super(MiriIFUCubeParsModel, self).__init__(init=init, **kwargs)

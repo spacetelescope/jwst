@@ -1,10 +1,10 @@
-from .reference import ReferenceFileModel
+from . import model_base
 
 
 __all__ = ['RSCDModel']
 
 
-class RSCDModel(ReferenceFileModel):
+class RSCDModel(model_base.DataModel):
     """
     A data model for the RSCD reference file.
 
