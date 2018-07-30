@@ -18,7 +18,8 @@ from ..transforms.models import (Rotation3DToGWA, DirCos2Unitless, Slit2Msa,
                                  AngleFromGratingEquation, WavelengthFromGratingEquation,
                                  Gwa2Slit, Unitless2DirCos, Logical, Slit, Snell,
                                  RefractionIndexFromPrism)
-from .util import not_implemented_mode
+
+from .util import not_implemented_mode, MissingMSAFileError
 from . import pointing
 from ..datamodels import (CollimatorModel, CameraModel, DisperserModel, FOREModel,
                           IFUFOREModel, MSAModel, OTEModel, IFUPostModel, IFUSlicerModel,
@@ -26,6 +27,10 @@ from ..datamodels import (CollimatorModel, CameraModel, DisperserModel, FOREMode
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
+
+
+__all__ = ["create_pipeline", "imaging", "ifu", "slits_wcs", "get_open_slits", "nrs_wcs_set_input",
+           "nrs_ifu_wcs", "get_spectral_order_wrange"]
 
 
 def create_pipeline(input_model, reference_files):
@@ -316,7 +321,7 @@ def get_open_slits(input_model, reference_files=None):
     """Return the opened slits/shutters in a MOS or Fixed Slits exposure.
     """
     exp_type = input_model.meta.exposure.type.lower()
-    if exp_type == "nrs_msaspec":
+    if exp_type in ["nrs_msaspec", "nrs_autoflat"]:
         msa_metadata_file, msa_metadata_id = get_msa_metadata(input_model, reference_files)
         slits = get_open_msa_slits(msa_metadata_file, msa_metadata_id)
     elif exp_type == "nrs_fixedslit":
@@ -378,7 +383,7 @@ def get_msa_metadata(input_model, reference_files):
         if msa_config is None:
             message = "MSA metadata file is not available (keyword MSAMETFL)."
             log.critical(message)
-            raise KeyError(message)
+            raise MissingMSAFileError(message)
     msa_metadata_id = input_model.meta.instrument.msa_metadata_id
     if msa_metadata_id is None:
         message = "MSA metadata ID is not available (keyword MSAMETID)."
@@ -432,8 +437,9 @@ def get_open_msa_slits(msa_file, msa_metadata_id):
     try:
         msa_file = fits.open(msa_file)
     except:
-        log.error("Unable to open MSA FITS file (MSAMETFL) {0}".format(msa_file))
-        return []
+        message = "Unable to open MSA FITS file (MSAMETFL) {0}".format(msa_file)
+        log.error(message)
+        raise MissingMSAFileError(message)
 
     # Get the configuration header from teh _msa.fits file.  The EXTNAME should be 'SHUTTER_INFO'
     msa_conf = msa_file[('SHUTTER_INFO', 1)]
@@ -588,17 +594,18 @@ def get_spectral_order_wrange(input_model, wavelengthrange_file):
         gratings = [s.split('_')[1] for s in wrange_selector]
         try:
             index = gratings.index(grating)
-            order = wave_range_model.order[index]
-            wrange = wave_range_model.wavelengthrange[index]
         except ValueError: # grating not in list
             order = -1
             wrange = full_range
+        else:
+            order = wave_range_model.order[index]
+            wrange = wave_range_model.wavelengthrange[index]
         log.info("Combination {0} missing in wavelengthrange file, setting "
                  "order to {1} and range to {2}.".format(keyword, order, wrange))
-
-    # Combination of filter_grating is found in wavelengthrange file.
-    order = wave_range_model.order[index]
-    wrange = wave_range_model.wavelengthrange[index]
+    else:
+        # Combination of filter_grating is found in wavelengthrange file.
+        order = wave_range_model.order[index]
+        wrange = wave_range_model.wavelengthrange[index]
 
     wave_range_model.close()
     return order, wrange
@@ -881,11 +888,7 @@ def wavelength_from_disperser(disperser, input_model):
                                               sporder, name='lambda_from_gratingeq')
         return lgreq
     else:
-        lmin = input_model.meta.wcsinfo.waverange_start
-        lmax = input_model.meta.wcsinfo.waverange_end
-        step = 1e-10
-        nsteps = (lmax - lmin) // step
-        lam = np.linspace(lmin, lmax, nsteps)
+        lam = np.arange(0.5, 6.005, 0.005) * 1e-6
         system_temperature = input_model.meta.instrument.gwa_tilt
         if system_temperature is None:
             message = "Missing reference temperature (keyword GWA_TILT)."
@@ -1539,7 +1542,7 @@ exp_type2transform = {'nrs_tacq': imaging,
                       'nrs_focus': imaging,
                       'nrs_mimf': imaging,
                       'nrs_bota': imaging,
-                      'nrs_autoflat': not_implemented_mode,
+                      'nrs_autoflat': slits_wcs,
                       'nrs_autowave': not_implemented_mode,
                       'nrs_lamp': slits_wcs,
                       'nrs_brightobj': slits_wcs,

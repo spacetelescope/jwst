@@ -2,6 +2,8 @@ from ..stpipe import Step
 from .. import datamodels
 from . import msaflag_open
 
+__all__ = ["MSAFlagOpenStep"]
+
 
 class MSAFlagOpenStep(Step):
     """

@@ -21,7 +21,6 @@ env:
                               crds
                               dask
                               drizzle
-                              fitsblender
                               flake8
                               gwcs
                               jsonschema

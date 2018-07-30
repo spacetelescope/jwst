@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from collections import defaultdict
 import os.path as op
+import traceback
 
 from .. import datamodels
 from ..lib.pipe_utils import is_tso
@@ -39,7 +40,8 @@ class Spec2Pipeline(Pipeline):
     """
 
     spec = """
-        save_bsub = boolean(default=False) # Save background-subracted science
+        save_bsub = boolean(default=False)        # Save background-subracted science
+        fail_on_exception = boolean(default=True) # Fail if any product fails.
     """
 
     # Define aliases to steps
@@ -77,19 +79,28 @@ class Spec2Pipeline(Pipeline):
 
         # Each exposure is a product in the association.
         # Process each exposure.
+        has_exceptions = False
         for product in asn['products']:
             self.log.info('Processing product {}'.format(product['name']))
             self.output_file = product['name']
-            result = self.process_exposure_product(
-                product,
-                asn['asn_pool'],
-                asn.filename
+            try:
+                result = self.process_exposure_product(
+                    product,
+                    asn['asn_pool'],
+                    asn.filename
+                )
+            except Exception as exception:
+                traceback.print_exc()
+                has_exceptions = True
+            else:
+                if result is not None:
+                    self.save_model(result)
+                    self.closeout(to_close=[result])
+
+        if has_exceptions and self.fail_on_exception:
+            raise RuntimeError(
+                'One or more products failed to process. Failing calibration.'
             )
-
-            # Save result
-            self.save_model(result)
-
-            self.closeout(to_close=[result])
 
         # We're done
         self.log.info('Ending calwebb_spec2')
@@ -168,11 +179,18 @@ class Spec2Pipeline(Pipeline):
 
         # If assign_wcs was skipped, abort the rest of processing,
         # because so many downstream steps depend on the WCS
-        if input.meta.cal_step.assign_wcs == 'SKIPPED':
-            self.log.error('Assign_wcs processing was skipped')
-            self.log.error('Aborting remaining processing for this exposure')
-            self.log.error('No output product will be created')
-            return input
+        if input.meta.cal_step.assign_wcs != 'COMPLETE':
+            message = (
+                'Assign_wcs processing was skipped.'
+                '\nAborting remaining processing for this exposure.'
+                '\nNo output product will be created.'
+            )
+            if self.assign_wcs.skip:
+                self.log.warning(message)
+                return
+            else:
+                self.log.error(message)
+                raise RuntimeError('Cannot determine WCS.')
 
         # Apply NIRSpec MSA imprint subtraction
         # Technically there should be just one.

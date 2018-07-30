@@ -4,238 +4,35 @@ properties:
     title: Level 3 Schema Metadata
     type: object
     properties:
-      asn:
-        title: Association Information
-        type: object
-        properties:
-          targname:
-            title: Name of target specified in ASN table
-            type: string
-            fits_keyword: ASNTARG
-          program:
-            title: Name of Program specified in ASN table
-            type: string
-            fits_keyword: ASNPROG
-          asn_type:
-            title: Type of ASN specified in ASN table
-            type: string
-            fits_keyword: ASNTYPE
-          asn_rule:
-            title: Rule used to create ASN table from ASN Pool
-            type: string
-            fits_keyword: ASNRULE 
       resample:
           title: Metadata describing resampling done using this data
           type: object
           properties:
             pointings:
-              title: Number of groups/pointings included in resampled product
+              title: Number of pointings included in resampled product
               type: integer
               fits_keyword:  NDRIZ
             product_exposure_time:
               title: Total exposure time for product
               type: number
               fits_keyword: TEXPTIME
-            product_data_extname:
-              title: Extname of SCI extension
-              type: string
-              fits_keyword: SCIEXT
-            product_context_extname:
-              title: Extname of CON extension
-              type: string
-              fits_keyword: CONEXT
-            product_weight_extname:
-              title: Extname of WHT extension
-              type: string
-              fits_keyword: WHTEXT
-            drizzle_fill_value:
-              title: Value used in pixels without any valid input data
-              type: string
-              fits_keyword: DFVAL
-            drizzle_pixel_fraction:
-              title: Drizzle pixel fraction used to create resampled product
-              type: number
-              fits_keyword: DPIXFR
-            drizzle_kernel:
-              title: Drizzle kernel used to create resampled product
-              type: string
-              fits_keyword: DKERN
-            drizzle_output_units:
-              title: Units for resampled output product as cps or counts
-              type: string
-              fits_keyword: DOUTUN
-            drizzle_weight_scale:
-              title: Drizzle weight scale used to create resampled product
-              type: string
-              fits_keyword: DWTSCL
-            resample_bits:
-              title: Bit values to consider good when interpreting input DQ arrays
-              type: integer
-              fits_keyword: RESBITS
             weight_type:
               title: Type of drizzle weighting to use in resampling input
               type: string
               enum: ['exptime','error']
-              fits_keyword: RESWHT
-      median:
-          title: Parameters used to perform median combination on input data
-          type: object
-          properties:
-            ignore_nlow:
-              title: Number of low pixel values to ignore when performing median
-              type: integer
-              fits_keyword: MEDNLOW
-            ignore_nhigh:
-              title: Number of high pixel values to ignore when performing median
-              type: integer
-              fits_keyword: MEDNHI
-            low_threshold:
-              title: Lower value for pixels included when computing median
-              type: [number, ' ']
-              fits_keyword: MEDLTHR
-            high_threshold:
-              title: Upper value for pixels included when computing median
-              type: [number, ' ']
-              fits_keyword: MEDHTHR
-            mask_percent:
-              title: Lower limit in percent of weight array used for creating weight mask
-              type: number
-              fits_keyword: MEDMSKPT
-            nsigma:
-              title: Sigma limits to apply when computing minimum-median result
-              type: string
-              fits_keyword: MEDNSIG
-      find_cr:
-          title: Parameters used to find bad-pixels/cosmic-rays in input data
-          type: object
-          properties:
-            grow:
-              title: Number of pixels to expand CR to look for neighboring CR pixels
-              type: integer
-              fits_keyword: FCRGROW
-            cte_grow:
-              title: Number of pixels to look for CTE effects
-              type: integer
-              fits_keyword: FCRCGROW
-            signal_noise:
-              title: Signal-to-noise ratios to use in detecting CR pixels
-              type: string
-              fits_keyword: FCRSNR
-            scale:
-              title: scaling factor applied to the derivative when detecting CR pixels
-              type: string
-              fits_keyword: FCRSCL
-            background:
-              title: Background or sky value used to detect CR pixels
-              type: number
-              fits_keyword: FCRBACKG
-      skymatch:
-          title: Parameters used to perform sky matching across all input data
-          type: object
-          properties:
-            skymethod:
-              title: Sky computation method
-              type: string
-              enum: ['local', 'global', 'match', 'global+match']
-              fits_keyword: SKYMETH
-            match_down:
-              title: Flag to specify whether sky values adjusted to lowest measured value
-              type: boolean
-              fits_keyword: SKYDOWN
-            subtract:
-              title: Flag to specify whether sky values subtracted from SCI data
-              type: boolean
-              fits_keyword: SKYSUB
-            stepsize:
-              title: Maximum vertex separation
-              type: number
-              fits_keyword: SKYSTEP
-            skystat:
-              title: Form of statistics to use in computing sky values
-              type: string
-              enum: ['mode', 'median', 'mode', 'midpt']
-              fits_keyword: SKYSTAT
-            dqbits:
-              title: Integer value of DQ bits considered valid
-              type: integer
-              fits_keyword: SKYBITS
-            lower:
-              title: Lower limit of good pixel values
-              type: [number or ' ']
-              fits_keyword: SKYLOW
-            upper:
-              title: Upper limit of good pixel values
-              type: [number or ' ']
-              fits_keyword: SKYUPPER
-            nclip:
-              title: Number of clipping iterations used to compute the sky value
-              type: integer
-              fits_keyword: SKYNCLIP
-            lsigma:
-              title: Lower clipping limit, in sigma
-              type: number
-              fits_keyword: SKYLSIG
-            usigma:
-              title: Upper clipping limit, in sigma
-              type: number
-              fits_keyword: SKYUSIG
-            binwidth:
-              title: Bin width for mode and midpt statistics, in sigma
-              type: number
-              fits_keyword: SKYBINW
+              fits_keyword: WHT_TYPE
       tweakreg_catalog:
-          title: Parameters used in generating tweakreg source catalogs
           type: object
           properties:
             filename:
               title: Output tweakreg catalog filename
               type: string
               fits_keyword: TCATFILE
-            format:
-              title: Format used to write out catalog
-              type: string
-              enum: ['ecsv', 'fits']
-              fits_keyword: TCATFMT
-            kernel_fwhm:
-              title: Gaussian kernel FWHM in pixels
-              type: number
-              fits_keyword: TCATFWHM
-            snr_threshold:
-              title: SNR threshold above the background for source finding
-              type: number
-              fits_keyword: TCATSNR
       source_catalog:
-          title: Parameters used in generating source catalogs
           type: object
           properties:
             filename:
               title: Output source catalog filename
               type: string
               fits_keyword: SCATFILE
-            format:
-              title: Format used to write out catalog
-              type: string
-              enum: ['ecsv', 'fits']
-              fits_keyword: SCATFMT
-            kernel_fwhm:
-              title: Gaussian kernel FWHM in pixels
-              type: number
-              fits_keyword: SCATFWHM
-            kernel_xsize:
-              title: Kernel x size in pixels
-              type: number
-              fits_keyword: SCATXSZ
-            kernel_ysize:
-              title: Kernel y size in pixels
-              type: number
-              fits_keyword: SCATYSZ
-            snr_threshold:
-              title: SNR threshold above the background for source finding
-              type: number
-              fits_keyword: SCATSNR
-            npixels:
-              title: min number of pixels in source
-              type: number
-              fits_keyword: SCATNPIX
-
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

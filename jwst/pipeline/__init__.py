@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 from .calwebb_ami3 import Ami3Pipeline
 from .calwebb_coron3 import Coron3Pipeline
 from .calwebb_dark import DarkPipeline

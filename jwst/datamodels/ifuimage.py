@@ -38,13 +38,13 @@ class IFUImageModel(model_base.DataModel):
             self.data = init.data
             self.dq = init.dq
             self.err = init.err
-            if hasattr(init, 'area'):
+            if init.hasattr('area'):
                 self.area = init.area
-            if hasattr(init, 'relsens2d'):
+            if init.hasattr('relsens2d'):
                 self.relsens2d = init.relsens2d
-            if hasattr(init, 'var_poisson'):
+            if init.hasattr('var_poisson'):
                 self.var_poisson = init.var_poisson
-            if hasattr(init, 'var_rnoise'):
+            if init.hasattr('var_rnoise'):
                 self.var_rnoise = init.var_rnoise
             return
         super(IFUImageModel, self).__init__(init=init, **kwargs)

@@ -34,6 +34,7 @@ Package Index
    linearity/index.rst
    model_blender/index.rst
    mrs_imatch/index.rst
+   msaflagopen/index.rst
    outlier_detection/index.rst
    pathloss/index.rst
    persistence/index.rst
@@ -53,6 +54,7 @@ Package Index
    straylight/index.rst
    superbias/index.rst
    transforms/index.rst
+   tso_photometry/index.rst
    tweakreg/index.rst
    wfs_combine/index.rst
    white_light/index.rst

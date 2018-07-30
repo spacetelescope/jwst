@@ -1,10 +1,10 @@
-from . import model_base
+from .reference import ReferenceFileModel
 
 
 __all__ = ['GainModel']
 
 
-class GainModel(model_base.DataModel):
+class GainModel(ReferenceFileModel):
     """
     A data model for 2D gain.
 

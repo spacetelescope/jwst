@@ -4,6 +4,9 @@ from ..stpipe import Step, cmdline
 from .. import datamodels
 from . import imageregistration
 
+__all__ = ["AlignRefsStep"]
+
+
 class AlignRefsStep(Step):
 
     """

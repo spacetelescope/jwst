@@ -1,10 +1,10 @@
-from . import model_base
+from .reference import ReferenceFileModel
 from .dynamicdq import dynamic_mask
 
 __all__ = ['MaskModel']
 
 
-class MaskModel(model_base.DataModel):
+class MaskModel(ReferenceFileModel):
     """
     A data model for 2D masks.
 

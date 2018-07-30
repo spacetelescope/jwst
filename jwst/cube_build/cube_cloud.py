@@ -1,6 +1,5 @@
 
  # Routines used in Spectral Cube Building
-from __future__ import absolute_import, print_function
 
 import sys
 import numpy as np

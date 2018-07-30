@@ -18,7 +18,8 @@ def test_image3_pipeline1(_bigdata):
     """
 
     subdir = os.path.join(_bigdata, 'pipelines', 'nircam_calimage3')
-    ignore_kws = ['DATE', 'CAL_VER', 'CAL_VCS', 'CRDS_VER', 'CRDS_CTX']
+
+    ignore_keywords = ['DATE', 'CAL_VER', 'CAL_VCS', 'CRDS_VER', 'CRDS_CTX']
 
     asn_file = os.path.join(subdir, "mosaic_long_asn.json")
 
@@ -32,7 +33,7 @@ def test_image3_pipeline1(_bigdata):
     pipe.skymatch.lsigma = 4.0
     pipe.skymatch.usigma = 4.0
     pipe.skymatch.binwidth = 0.1
-    pipe.outlier_detection.wht_type = 'exptime'
+    pipe.outlier_detection.weight_type = 'exptime'
     pipe.outlier_detection.pixfrac = 1.0
     pipe.outlier_detection.kernel = 'square'
     pipe.outlier_detection.fillval = 'INDEF'
@@ -47,7 +48,7 @@ def test_image3_pipeline1(_bigdata):
     pipe.outlier_detection.resample_data = True
     pipe.outlier_detection.good_bits = 4
     pipe.resample.single = False
-    pipe.resample.wht_type = 'exptime'
+    pipe.resample.weight_type = 'exptime'
     pipe.resample.pixfrac = 1.0
     pipe.resample.kernel = 'square'
     pipe.resample.fillval = 'INDEF'
@@ -62,36 +63,35 @@ def test_image3_pipeline1(_bigdata):
 
     pipe.run(asn_file)
 
-    # Compare level-2c product
+    # Compare level-2c crf product
     n_cur = 'nrca5_47Tuc_subpix_dither1_newpos_a3001_crf.fits'
     ref_filename = 'nrca5_47Tuc_subpix_dither1_newpos_cal-a3001_ref.fits'
     n_ref = os.path.join(subdir, ref_filename)
-
     h = pf.open(n_cur)
     href = pf.open(n_ref)
-    newh = pf.HDUList([h['primary'], h['sci'], h['err'], h['dq']])
-    newhref = pf.HDUList([href['primary'], href['sci'],
-                          href['err'], href['dq']])
-    result = pf.diff.FITSDiff(newh,
-                              newhref,
-                              ignore_keywords=ignore_kws,
+    result = pf.diff.FITSDiff(h,
+                              href,
+                              ignore_hdus=['ASDF'],
+                              ignore_keywords=ignore_keywords,
                               rtol=0.00001)
     assert result.identical, result.report()
 
-    # Compare resampled product
+    # Compare i2d product
     n_cur = 'mosaic_long_i2d.fits'
     n_ref = os.path.join(subdir, 'mosaic_long_i2d_ref.fits')
-
-
     h = pf.open(n_cur)
     href = pf.open(n_ref)
-    newh = pf.HDUList([h['primary'], h['sci'], h['con'],
-                       h['wht'], h['hdrtab']])
-    newhref = pf.HDUList([href['primary'], href['sci'],
-                         href['con'], href['wht'], href['hdrtab']])
-    result = pf.diff.FITSDiff(newh,
-                              newhref,
-                              ignore_keywords=ignore_kws,
-                              ignore_fields=ignore_kws,
-                              rtol=0.00001)
+    result = pf.diff.FITSDiff(h,
+                              href,
+                              ignore_hdus=['ASDF', 'HDRTAB'],
+                              ignore_keywords=ignore_keywords,
+                              rtol=0.0001)
+    assert result.identical, result.report()
+
+    # Compare the HDRTAB in the i2d product
+    result = pf.diff.HDUDiff(h['HDRTAB'],
+                              href['HDRTAB'],
+                              ignore_keywords=ignore_keywords+['NAXIS1', 'TFORM*'],
+                              ignore_fields=ignore_keywords,
+                              rtol=0.0001)
     assert result.identical, result.report()

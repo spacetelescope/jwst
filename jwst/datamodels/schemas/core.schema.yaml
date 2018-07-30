@@ -369,10 +369,10 @@ properties:
             enum: [ANY, CLEAR, F070LP, F070W, F090W, F1000W, F100LP, F1065C,
               F110W, F1130W, F1140C, F115W, F1280W, F140M, F140X, F1500W, F150W,
               F150W2, F1550C, F170LP, F1800W, F182M, F187N, F200W, F2100W, F210M,
-              F212N, F227W, F2300C, F250M, F2550W, F2550WR, F277W, F290LP, F300M,
+              F212N, F2300C, F250M, F2550W, F2550WR, F277W, F290LP, F300M,
               F322W2, F335M, F356W, F360M, F380M, F410M, F430M, F444W,
-              F460M, F480M, F560W, F770W, FLENS, FND, FNDP750L, GR150C,
-              GR150R, OPAQUE, P750L, WL3, WLP4, N/A, MULTIPLE]
+              F460M, F480M, F560W, F770W, FLENS, FND, GR150C,
+              GR150R, OPAQUE, P750L, WLP4, N/A, MULTIPLE]
             fits_keyword: FILTER
             blend_table: True
             blend_rule: multi
@@ -380,9 +380,9 @@ properties:
             title: Name of the pupil element used
             type: string
             enum: [ANY, CLEAR, CLEARP, F090W, F115W, F140M, F150W, F158M, F162M, F164N,
-              F200W, F323N, F405N, F466N, F470N, FLAT, GDHS, GDHS0, GDHS60, GR700XD,
+              F200W, F323N, F405N, F466N, F470N, FLAT, GDHS0, GDHS60, GR700XD,
               GRISMC, GRISMR, GRISMV2, GRISMV3, MASKBAR, MASKIPR, MASKRND, NRM, PINHOLES,
-              WLM8, WLP4, WLP8, N/A]
+              WLM8, WLP8, N/A]
             fits_keyword: PUPIL
             blend_table: True
           pupil_imaging_lens:
@@ -534,15 +534,17 @@ properties:
               # FGS guide star
               FGS_ACQ1, FGS_ACQ2, FGS_FINEGUIDE, FGS_ID-IMAGE, FGS_ID-STACK, FGS_TRACK,
               # MIRI
-              MIR_4QPM, MIR_CORONCAL, MIR_DARK, MIR_FLAT-IMAGE, MIR_FLATIMAGE,
-              MIR_FLAT-MRS, MIR_FLATMRS, MIR_IMAGE, MIR_LRS-FIXEDSLIT,
+              MIR_4QPM, MIR_CORONCAL, MIR_DARK, MIR_FLATIMAGE,
+              MIR_FLATMRS, MIR_IMAGE, MIR_LRS-FIXEDSLIT,
               MIR_LRS-SLITLESS, MIR_LYOT, MIR_MRS, MIR_TACQ,
+              # Obsolete MIRI
+              MIR_FLAT-MRS, MIR_FLAT-IMAGE,
               # NIRISS
               NIS_AMI, NIS_DARK, NIS_EXTCAL, NIS_FOCUS, NIS_IMAGE, NIS_LAMP,
               NIS_SOSS, NIS_TACQ, NIS_TACONFIRM, NIS_WFSS,
               # NIRCam
               NRC_CORON, NRC_DARK, NRC_FLAT, NRC_FOCUS, NRC_IMAGE, NRC_WFSS,
-              NRC_LED, NRC_TACONFIRM, NRC_TACQ, NRC_TSGRISM, NRC_TSIMAGE,
+              NRC_LED, NRC_WFSC, NRC_TACONFIRM, NRC_TACQ, NRC_TSGRISM, NRC_TSIMAGE,
               # NIRSpec
               NRS_AUTOFLAT, NRS_AUTOWAVE, NRS_BOTA, NRS_BRIGHTOBJ, NRS_CONFIRM,
               NRS_DARK, NRS_FIXEDSLIT, NRS_FOCUS, NRS_IFU, NRS_IMAGE, NRS_LAMP,
@@ -575,12 +577,12 @@ properties:
           readpatt:
             title: Readout pattern
             type: string
-            enum: [ACQ1, ACQ2, ALLIRS2, BRIGHT1, BRIGHT2,
-              DEEP2, DEEP8, FAST, FASTGRPAVG, FASTINTAVG,
+            enum: [ACQ1, ACQ2, BRIGHT1, BRIGHT2,
+              DEEP2, DEEP8, FAST, FASTGRPAVG,
               FGS, FGS60, FGS8370, FGS840, FGSRAPID, FINEGUIDE,
               ID, MEDIUM2, MEDIUM8, NIS, NISRAPID,
               NRS, NRSIRS2, NRSN16R4, NRSN32R8, NRSN8R2,
-              NRSRAPID, NRSIRS2RAPID, ALLIRS2, NRSSLOW, RAPID,
+              NRSRAPID, NRSIRS2RAPID, NRSSLOW, RAPID,
               SHALLOW2, SHALLOW4, SLOW, TRACK, ANY, N/A]
             fits_keyword: READPATT
             blend_table: True
@@ -762,35 +764,47 @@ properties:
           name:
             title: Subarray used
             type: string
-            enum: # Values grouped by instrument:
+            # Values grouped by instrument:
+            anyOf:
               # FGS
-             [8X8, 32X32, 128X128, 2048X64,
-              SUB128CENTER, SUB128DIAGONAL, SUB128LLCORNER, SUB32CENTER,
-              SUB32DIAGONAL, SUB32LLCORNER, SUB8CENTER, SUB8DIAGONAL, SUB8LLCORNER,
+              - enum:
+                 [8X8, 32X32, 128X128, 2048X64, SUB128CENTER, SUB128DIAGONAL,
+                  SUB128LLCORNER, SUB32CENTER, SUB32DIAGONAL, SUB32LLCORNER,
+                  SUB8CENTER, SUB8DIAGONAL, SUB8LLCORNER]
               # MIRI
-              BRIGHTSKY, MASK1065, MASK1140, MASK1550, MASKLYOT, SLITLESSPRISM,
-              SUB128, SUB256, SUB64, SUBPRISM,
+              - enum:
+                 [BRIGHTSKY, MASK1065, MASK1140, MASK1550, MASKLYOT,
+                  SLITLESSPRISM, SUB128, SUB256, SUB64, SUBPRISM]
               # NIRCam
-              SUB160, SUB160P, SUB320, SUB320A335R, SUB320A430R, SUB320ALWB,
-              SUB32TATS, SUB32TATSGRISM, SUB400P, SUB640, SUB640A210R, SUB640ASWB,
-              SUB64FP1A, SUB64FP1B, SUB64P, SUB8FP1A, SUB8FP1B, SUB96DHSPILA,
-              SUB96DHSPILB, SUBFSA210R, SUBFSA335R, SUBFSA430R, SUBFSALWB, SUBFSASWB,
-              SUBGRISM128, SUBGRISM256, SUBGRISM64, SUBNDA210R, SUBNDA335R,
-              SUBNDA430R, SUBNDALWBL, SUBNDALWBS, SUBNDASWBL, SUBNDASWBS,
+              - enum:
+                  [SUB160, SUB160P, SUB320, SUB320A335R, SUB320A430R,
+                   SUB320ALWB, SUB32TATS, SUB32TATSGRISM, SUB400P, SUB640,
+                   SUB640A210R, SUB640ASWB, SUB64FP1A, SUB64FP1B, SUB64P,
+                   SUB8FP1A, SUB8FP1B, SUB96DHSPILA, SUB96DHSPILB, SUBFSA210R,
+                   SUBFSA335R, SUBFSA430R, SUBFSALWB, SUBFSASWB, SUBGRISM128,
+                   SUBGRISM256, SUBGRISM64, SUBNDA210R, SUBNDA335R, SUBNDA430R,
+                   SUBNDALWBL, SUBNDALWBS, SUBNDASWBL, SUBNDASWBS]
               # Obsolete NIRCam
-              MASKA210R, MASKA430R, MASKBLWB, MASKBSWB,
+              - enum:
+                  [MASKA210R, MASKA430R, MASKBLWB, MASKBSWB]
               # NIRISS
-              SUB64, SUB80, SUB128, SUB256, SUBAMPCAL, SUBSTRIP96, SUBSTRIP256,
-              SUBTAAMI, SUBTASOSS, WFSS64C, WFSS64R, WFSS128C, WFSS128R,
+              - enum:
+                  [SUB64, SUB80, SUB128, SUB256, SUBAMPCAL, SUBSTRIP96,
+                   SUBSTRIP256, SUBTAAMI, SUBTASOSS, WFSS64C, WFSS64R,
+                   WFSS128C, WFSS128R]
               # Obsolete NIRISS
-              SUBSTRIP80,
+              - enum:
+                  [SUBSTRIP80]
               # NIRSpec
-              ALLSLITS, SUBS200A1, SUBS200A2, SUBS200B1, SUBS400A1, SUB1024A, SUB1024B,
-              SUB512, SUB32, SUB512S, SUB2048, STRIPE,
+              - enum:
+                  [ALLSLITS, SUBS200A1, SUBS200A2, SUBS200B1, SUBS400A1,
+                   SUB1024A, SUB1024B, SUB512, SUB32, SUB512S, SUB2048, STRIPE]
               # Obsolete NIRSpec
-              FULL_IRS2, S200A1, S200A2, S200B1, S400A1,
+              - enum:
+                  [FULL_IRS2, S200A1, S200A2, S200B1, S400A1]
               # All
-              FULL, GENERIC, N/A]
+              - enum:
+                  [FULL, GENERIC, N/A]
             fits_keyword: SUBARRAY
             blend_table: True
           xstart:
@@ -1770,6 +1784,15 @@ properties:
                 title: Trap parameters reference file name
                 type: string
                 fits_keyword: R_TRPPAR
+                blend_table: True
+          tso_photometry:
+            title: TSO imaging photometry reference file information
+            type: object
+            properties:
+              name:
+                title: TSO imaging photometry reference file name
+                type: string
+                fits_keyword: R_TSPHOT
                 blend_table: True
           v2v3:
             title: V2_V3 Model reference file information

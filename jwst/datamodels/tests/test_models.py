@@ -448,6 +448,14 @@ def test_object_node_iterator():
     assert 'date' in items
     assert 'model_type' in items
 
+def test_hasattr():
+    model = DataModel()
+
+    has_date = model.meta.hasattr('date')
+    assert has_date, "Check that date exists"
+
+    has_filename = model.meta.hasattr('filename')
+    assert not has_filename, "Check that filename does not exist"
 
 def test_multislit_model():
     data = np.arange(24, dtype=np.float32).reshape((6, 4))

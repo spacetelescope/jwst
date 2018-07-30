@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-class DataSet(object):
+class DataSet():
     """
     Input dataset for emission subtraction
 

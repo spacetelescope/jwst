@@ -3,6 +3,8 @@
 from ..stpipe import Step
 from . import wfs_combine
 
+__all__ = ["WfsCombineStep"]
+
 
 class WfsCombineStep(Step):
 

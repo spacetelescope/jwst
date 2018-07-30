@@ -19,6 +19,9 @@ log.setLevel(logging.DEBUG)
 CRBIT = np.uint32(datamodels.dqflags.pixel['JUMP_DET'])
 
 
+__all__ = ["OutlierDetection", "flag_cr", "abs_deriv"]
+
+
 class OutlierDetection:
     """Main class for performing outlier detection.
 
@@ -105,7 +108,7 @@ class OutlierDetection:
                                               dq=self.inputs.dq[i])
                 image.meta = self.inputs.meta
                 image.wht = build_driz_weight(image,
-                                              wht_type='exptime',
+                                              weight_type='exptime',
                                               good_bits=bits)
                 self.input_models.append(image)
             self.converted = True
@@ -198,7 +201,7 @@ class OutlierDetection:
             for i in range(len(self.input_models)):
                 drizzled_models[i].wht = build_driz_weight(
                     self.input_models[i],
-                    wht_type='exptime',
+                    weight_type='exptime',
                     good_bits=pars['good_bits'])
 
         # Initialize intermediate products used in the outlier detection
@@ -249,14 +252,15 @@ class OutlierDetection:
     def create_median(self, resampled_models):
         """Create a median image from the singly resampled images.
 
-        NOTE: This version is simplified from astrodrizzle's version in the
-            following ways:
-            - type of combination: fixed to 'median'
-            - 'minmed' not implemented as an option
-            - does not use buffers to try to minimize memory usage
-            - astropy.stats.sigma_clipped_stats replaces
-                    stsci.imagestats.ImageStats
-            - stsci.image.median replaces stsci.image.numcombine.numCombine
+        NOTES
+        -----
+        This version is simplified from astrodrizzle's version in the
+        following ways:
+        - type of combination: fixed to 'median'
+        - 'minmed' not implemented as an option
+        - does not use buffers to try to minimize memory usage
+        - `astropy.stats.sigma_clipped_stats` replaces `stsci.imagestats.ImageStats`
+        - `stsci.image.median` replaces `stsci.image.numcombine.numCombine`
         """
         resampled_sci = [i.data for i in resampled_models]
         resampled_wht = [i.wht for i in resampled_models]

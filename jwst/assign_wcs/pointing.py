@@ -9,6 +9,9 @@ from gwcs import wcs
 from ..transforms.models import V23ToSky
 
 
+__all__ = ["compute_roll_ref", "frame_from_model", "fitswcs_transform_from_model"]
+
+
 def v23tosky(input_model):
     v2_ref = input_model.meta.wcsinfo.v2_ref / 3600
     v3_ref = input_model.meta.wcsinfo.v3_ref / 3600

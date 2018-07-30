@@ -238,7 +238,7 @@ def get_jwst_ephemeris():
     )
     conn = pymssql.connect(server=eserver, database=edb)
     cur = conn.cursor()
-    cur.execute('select * from predictephemeris')
+    cur.execute('select ephem_time,jwst_x,jwst_y,jwst_z,jwst_dx,jwst_dy,jwst_dz from predictephemeris')
     etab = np.array(cur.fetchall())
     return etab
 

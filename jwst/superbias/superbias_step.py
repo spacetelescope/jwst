@@ -2,6 +2,8 @@ from ..stpipe import Step
 from .. import datamodels
 from . import bias_sub
 
+__all__ = ["SuperBiasStep"]
+
 
 class SuperBiasStep(Step):
     """

@@ -20,7 +20,7 @@ def test_tso3_pipeline_nrc1(_bigdata):
                             "jw93065-a3001_20170511t111213_tso3_001_asn.json")
     step = Tso3Pipeline()
     step.scale_detection = False
-    step.outlier_detection.wht_type = 'exptime'
+    step.outlier_detection.weight_type = 'exptime'
     step.outlier_detection.pixfrac = 1.0
     step.outlier_detection.kernel = 'square'
     step.outlier_detection.fillval = 'INDEF'
@@ -60,7 +60,7 @@ def test_tso3_pipeline_nrc2(_bigdata):
                             "jw93065-a3002_20170511t111213_tso3_001_asn.json")
     step = Tso3Pipeline()
     step.scale_detection = True
-    step.outlier_detection.wht_type = 'exptime'
+    step.outlier_detection.weight_type = 'exptime'
     step.outlier_detection.pixfrac = 1.0
     step.outlier_detection.kernel = 'square'
     step.outlier_detection.fillval = 'INDEF'

@@ -1,5 +1,3 @@
-from __future__ import division
-
 #
 #  Module for rescaling data for non-standard gain value
 #

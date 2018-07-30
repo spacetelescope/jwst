@@ -21,7 +21,7 @@ Running a Step from a configuration file
 
 A Step configuration file is in the well-known ini-file format.
 stpipe uses the `ConfigObj
-<http://www.voidspace.org.uk/python/configobj.html>`_ library to parse
+<https://configobj.readthedocs.io/en/latest/>`_ library to parse
 them.
 
 Every step configuration file must contain the ``name`` and ``class``

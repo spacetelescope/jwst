@@ -10,6 +10,7 @@ from jwst.associations import (
     ProcessList,
     libpath
 )
+from jwst.associations.registry import RegistryMarker
 from jwst.associations.lib.utilities import (
     evaluate,
     is_iterable
@@ -60,7 +61,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 # The schema that these associations must adhere to.
-ASN_SCHEMA = libpath('asn_schema_jw_level3.json')
+ASN_SCHEMA = RegistryMarker.schema(libpath('asn_schema_jw_level3.json'))
 
 # DMS file name templates
 _LEVEL1B_REGEX = '(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
@@ -83,7 +84,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
     """Basic class for DMS Level3 associations."""
 
     # Set the validation schema
-    schema_file = ASN_SCHEMA
+    schema_file = ASN_SCHEMA.schema
 
     # Attribute values that are indicate the
     # attribute is not specified.
@@ -426,6 +427,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         return self.acid.type.lower() not in INVALID_AC_TYPES
 
 
+@RegistryMarker.utility
 class Utility():
     """Utility functions that understand DMS Level 3 associations"""
 
@@ -514,7 +516,7 @@ class Utility():
         return result
 
     @staticmethod
-    @AssociationRegistry.callback('finalize')
+    @RegistryMarker.callback('finalize')
     def finalize(associations):
         """Check validity and duplications in an association list
 
@@ -528,23 +530,21 @@ class Utility():
         finalized_associations: [association[, ...]]
             The validated list of associations
         """
-        finalized = []
+        finalized_asns = []
         lv3_asns = []
         for asn in associations:
             if isinstance(asn, DMS_Level3_Base):
-
-                # Check validity
-                if asn.is_valid:
-                    lv3_asns.append(asn)
-
+                finalized = asn.finalize()
+                if finalized is not None:
+                    lv3_asns.extend(finalized)
             else:
-                finalized.append(asn)
+                finalized_asns.append(asn)
 
         # Ensure sequencing is correct.
         Utility.resequence(lv3_asns)
 
         # Merge lists and return
-        return finalized + lv3_asns
+        return finalized_asns + lv3_asns
 
 
 # ---------

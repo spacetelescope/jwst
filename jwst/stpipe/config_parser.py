@@ -33,9 +33,9 @@ import os
 import os.path
 import textwrap
 
-from .configobj.configobj import ConfigObj, Section, \
-     flatten_errors, get_extra_values
-from .configobj.validate import Validator, ValidateError
+from ..extern.configobj.configobj import (
+    ConfigObj, Section, flatten_errors, get_extra_values)
+from ..extern.configobj.validate import Validator, ValidateError
 
 from . import utilities
 

@@ -20,8 +20,11 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
+__all__ = ["create_pipeline", "imaging", "lrs", "ifu"]
+
+
 def create_pipeline(input_model, reference_files):
-    '''
+    """
     Create the WCS pipeline for MIRI modes.
 
     Parameters
@@ -31,7 +34,7 @@ def create_pipeline(input_model, reference_files):
     reference_files : dict
         {reftype: reference file name} mapping.
 
-    '''
+    """
     exp_type = input_model.meta.exposure.type.lower()
     pipeline = exp_type2transform[exp_type](input_model, reference_files)
 

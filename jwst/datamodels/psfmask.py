@@ -1,10 +1,10 @@
-from . import model_base
+from .reference import ReferenceFileModel
 
 
 __all__ = ['PsfMaskModel']
 
 
-class PsfMaskModel(model_base.DataModel):
+class PsfMaskModel(ReferenceFileModel):
     """
     A data model for coronagraphic 2D PSF mask reference files
 

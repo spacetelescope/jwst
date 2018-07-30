@@ -1,9 +1,9 @@
-from . import model_base
+from .reference import ReferenceFileModel
 from .dynamicdq import dynamic_mask
 
 __all__ = ['NRSFlatModel']
 
-class NRSFlatModel(model_base.DataModel):
+class NRSFlatModel(ReferenceFileModel):
     """A base class for NIRSpec flat-field reference file models."""
 
     schema_url = "nirspec.flat.schema.yaml"

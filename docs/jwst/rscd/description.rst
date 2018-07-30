@@ -48,21 +48,57 @@ thus has no impact on the slopes determined for each integration.
 
 Algorithm
 _________
-The RSCD correction step applies the exponential decay correction based on coefficients in the  reset switch charge decay reference file. Based on READOUT pattern
-(FAST or SLOW) and  Subarray type (FULL or one of MIRI defined subarray types) the reference file contains
-the scale factor and decay time (tau)  for even and odd rows to corrected for the reset effects. The
-accumulated DN of the pixel  from the previous integration is estimated by extrapolating the ramp using the second to last 
-and third to last groups. For each pixel the group values are corrected according the formula:
+This correction is only applied to integrations > 1. 
+The RSCD correction step applies an exponential decay correction based on coefficients in the  reset switch 
+charge decay reference file. The reference files are selected based on READOUT pattern
+(FAST or SLOW) and  Subarray type (FULL or one of the  MIRI defined subarray types).
+The reference file contains the information necessary to derive the scale factor and decay time 
+to correct for the reset effects. The correction differs for even and odd row numbers. 
 
-    corrected value = input vale + dn_accumulated * scale * exp(-T / tau),
+The correction to be added to the input data has the form::
 
-where T is the time since the last frame in the last integration.
+    corrected data = input data data + dn_accumulated * scale * exp(-T / tau)  (Equation 1) 
 
-The correction algorithm is slightly modified if the previous integration saturated. In this case the scale factor 
-in the above equation is calculated using an estimate of the what the last frame in the previous integration
-would have been if saturation did not exist. This estimated last frame is from a linear fit of the non-saturating
-groups in the ramp. 
- 
+
+where T is the time since the last group in the previous integration, tau is the exponential time constant and 
+dn_accumulated is the DN level that was accumulated for the pixel from the previous integration.
+Because of the last frame effect the value of the last group in an integration is not measured accurately. Therefore,
+the accumulated DN of the pixel from the previous integration (last group value)  is estimated by extrapolating 
+the ramp using the second to last  and third to last groups. 
+
+In the case where the previous integration does not saturate the :math:`scale` term in Equation 1  is determined as follows:
+
+ :math:`scale = b{1}* [Counts{2}^{b{2}} * [1/exp(Counts{2}/b{3}) -1] \; \; Equation \;  2`     
+
+The terms :math:`b{2}` and :math:`b{3}` are read in from the RSCD reference file. 
+The following two additional equations are needed to calculate the :math:`b{1}` and :math:`Counts{2}` terms:
+
+	  :math:`b{1} = ascale * (illum_{zpt} + illum_{slope}*N + illum2* N^2) \; \; (Equation \; 2.1)`
+	  :math:`Counts{2} = Final \, DN \, in \, the \,  last \, group \, in \; the \, last \, integration 
+	  \, - Crossover \, Point \; \; (Equation \; 2.2)`
+
+
+In equation 2.1, N is the number of groups per integration and :math:`ascale`, :math:`illum_{zpt}`, 
+:math:`illum_{slope}`, and :math:`illum2` are read in from the RSCD reference file. The :math:`Crossover \, Point`
+in equation 2.2 is also read in from the RSCD reference file.
+
+If the previous integration saturates, the  :math:`scale` term in Equation 1 is found in the  following manner:
+
+   :math:`scale_\text{sat} = slope * Counts{3} + sat_\text{mzp} \; \; (Equation \; 3)`    
+   
+where :math:`Counts{3}` is an  estimate of what the last group in the previous integration would have been if 
+saturation did not exist. The :math:`slope` in equation 3  is calculated according to the formula:
+
+   :math:`slope = sat_{zp} + sat_{slope} * N + sat_2*N^2 + evenrow_{corrections} \; \; (Equation 3.1)`.
+
+The terms :math:`sat_\text{mzp}`, :math:`sat_{zp}`, :math:`sat_2`, :math:`evenrow_{corrections}`   are read in from the reference file. 
+
+
+
+All fourteen  parameters :math:`tau`, :math:`b{1}`, :math:`b{2}`, :math:`b{3}`, :math:`illum_{zpt}`,
+:math:`illum_{slope}`, :math:`illum2`, :math:`Crossover Point`, :math:`sat_{zp}`, :math:`sat_{slope}`, :math:`sat_2`,
+:math:`sat_{scale}`, :math:`sat_\text{mzp}`, and :math:`evenrow_{corrections}` are found in the RSCD reference files. 
+There is a seperate set for even and odd rows for each  READOUT mode and  SUBARRAY type. 
 
 Subarrays
 ----------

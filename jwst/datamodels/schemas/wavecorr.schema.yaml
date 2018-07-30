@@ -1,30 +1,30 @@
 title: NirSpec WAVECORR (wavelength zero-point correction) reference file model
 definitions:
   zero_point_correction:
-    - type: object
-      properties:
-        aperture_name:
-          type: string
-          enum: [S200A1, S200A2, S400A1, S1600A1, S200B1, MOS]
-        zero_point_offset:
-          $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
-          title: Zero-point offset
-          description: |
-            Zero-point offset (in units of detector pixel) as a function of wavelength (in m)
-            and source offset within the aperture (in units of fraction of the aperture width
-            [SLIT] or pitch [MOS])
-          datatype: float32
-        variance:
-          $ref: http://stsci.edu/schemas/asdf/core/ndarray-1.0.0
-          title: Variance of the zero-point offset
-          description: |
-            Estimated variance on the zero-point offset (in units of detector pixel)
-            as a function of wavelength (in m) and source position within the aperture
-            (in units of fraction of [MOS]
-          datatype: float32
-        width:
-          type: number
-          title: Aperture or pitch width [in m]
+    type: object
+    properties:
+      aperture_name:
+        type: string
+        enum: [S200A1, S200A2, S400A1, S1600A1, S200B1, MOS]
+      zero_point_offset:
+        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+        title: Zero-point offset
+        description: |
+          Zero-point offset (in units of detector pixel) as a function of wavelength (in m)
+          and source offset within the aperture (in units of fraction of the aperture width
+          [SLIT] or pitch [MOS])
+        datatype: float32
+      variance:
+        $ref: http://stsci.edu/schemas/asdf/core/ndarray-1.0.0
+        title: Variance of the zero-point offset
+        description: |
+          Estimated variance on the zero-point offset (in units of detector pixel)
+          as a function of wavelength (in m) and source position within the aperture
+          (in units of fraction of [MOS]
+        datatype: float32
+      width:
+        type: number
+        title: Aperture or pitch width [in m]
 allOf:
 - $ref: referencefile.schema.yaml
 - $ref: keyword_exptype.schema.yaml
@@ -33,4 +33,4 @@ allOf:
     apertures:
       type: array
       items:
-        $ref: "#definitions/zero_point_correction"
+        - $ref: "#definitions/zero_point_correction"

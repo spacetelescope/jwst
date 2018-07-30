@@ -1,10 +1,10 @@
-from . import model_base
+from .reference import ReferenceFileModel
 from .dynamicdq import dynamic_mask
 
 __all__ = ['ResetModel']
 
 
-class ResetModel(model_base.DataModel):
+class ResetModel(ReferenceFileModel):
     """
     A data model for reset correction reference files.
 

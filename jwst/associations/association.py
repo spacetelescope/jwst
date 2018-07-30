@@ -82,7 +82,7 @@ class Association(MutableMapping):
     DEFAULT_EVALUATE = False
 
     # Global constraints
-    GLOBAL_CONSTRAINT = ConstraintTrue()
+    GLOBAL_CONSTRAINT = None
 
     # Attribute values that are indicate the
     # attribute is not specified.
@@ -109,13 +109,15 @@ class Association(MutableMapping):
             'code_version': __version__,
         })
 
-        # Add in the global constraints.
-        constraint_list = []
-        constraint = getattr(self, 'constraints', False)
-        if constraint:
-            constraint_list.append(constraint)
-        constraint_list.append(self.GLOBAL_CONSTRAINT.copy())
-        self.constraints = Constraint(constraint_list)
+        # Setup constraints
+        # These may be predefined by a rule.
+        try:
+            constraints = self.constraints
+        except AttributeError:
+            constraints = Constraint()
+        if self.GLOBAL_CONSTRAINT is not None:
+            constraints.append(self.GLOBAL_CONSTRAINT.copy())
+        self.constraints = constraints
 
     @classmethod
     def create(cls, item, version_id=None):
@@ -415,6 +417,26 @@ class Association(MutableMapping):
         # That's all folks
         return True, reprocess
 
+    def finalize(self):
+        """Finalize assocation
+
+        Finalize or close-off this association. Peform validations,
+        modifications, etc. to ensure that the association is
+        complete.
+
+        Returns
+        -------
+        associations: [association[, ...]] or None
+            List of fully-qualified associations that this association
+            represents.
+            `None` if a complete association cannot be produced.
+
+        """
+        if self.is_valid:
+            return [self]
+        else:
+            return None
+
     def is_item_member(self, item):
         """Check if item is already a member of this association
 
@@ -495,6 +517,26 @@ class Association(MutableMapping):
 # #########
 # Utilities
 # #########
+def finalize(asns):
+    """Finalize associations by calling their `finalize_hook` method
+
+    Notes
+    -----
+    This is a functioning example of a finalize callback, and can be used
+    as the generic callback. Suggested usage is as follows:
+
+    .. code-block:: python
+
+       from jwst.associations.association import finalize as generic_finalize
+       RegistryMarker.callback('finalize')(generic_finalize)
+    """
+    finalized_asns = list(filter(
+        lambda asn: asn is not None,
+        map(lambda asn: asn.finalize(), asns)
+    ))
+    return finalized_asns
+
+
 def make_timestamp():
     timestamp = datetime.utcnow().strftime(
         _TIMESTAMP_TEMPLATE

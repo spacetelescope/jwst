@@ -1,6 +1,6 @@
 //@Library('utils@master') _  // For development only.
 
-if (utils.scm_checkout(skip_disable=true)) return
+if (utils.scm_checkout(['skip_disable':true])) return
 
 def test_env = [
     "HOME=./",
@@ -18,7 +18,6 @@ def CONDA_DEPS = "asdf \
                   crds \
                   dask \
                   drizzle \
-                  fitsblender \
                   flake8 \
                   gwcs \
                   jsonschema \
@@ -59,7 +58,7 @@ node("jwst") {
 bc = new BuildConfig()
 bc.nodetype = 'jwst'
 bc.env_vars = test_env
-bc.build_mode = PY_VER
+bc.name = PY_VER
 
 bc.test_cmds = [
     "conda config --add channels ${CONDA_CHANNEL}",

@@ -1,5 +1,3 @@
-from __future__ import division
-
 #
 #  Module for rescaling grouped data for NFRAME
 #  not equal to a power of 2

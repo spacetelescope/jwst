@@ -1,10 +1,10 @@
-from . import model_base
+from .reference import ReferenceFileModel
 from .dynamicdq import dynamic_mask
 
 __all__ = ['LastFrameModel']
 
 
-class LastFrameModel(model_base.DataModel):
+class LastFrameModel(ReferenceFileModel):
     """
     A data model for Last frame correction reference files.
 

@@ -101,7 +101,7 @@ class OutlierDetectionScaled(OutlierDetection):
         for image in self.input_models:
             image.wht = resample_utils.build_driz_weight(
                 image,
-                wht_type='exptime',
+                weight_type='exptime',
                 good_bits=pars['good_bits']
             )
 
