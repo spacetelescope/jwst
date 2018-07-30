@@ -3,12 +3,12 @@ Reference File
 
 There are two types of reference files used by the cube_build step. The first type holds the default
 cube parameters used in setting up the output IFU Cube. The reftype for this reference file is *cubepars*
-and there is a  reference file of this type for MIRI data and one for NIRSPEC data. These files contain a table 
-for each band of the spatial and spectral 
-size to use to construct the IFU Cube. For build 7.1, if more than one band is used to build the IFU cube,
+and there is a  reference file of this type for MIRI data and one for NIRSPEC data. These files contain  tables 
+for each band of the spatial and spectral size and the size of the region of interest to use to construct the 
+IFU cube. For build 7.1, if more than one band is used to build the IFU cube,
 then the final spatial and spectral size will be the smallest one from the list of input bands. 
-The IFU cubes have a linear spatial and spectral dimension. In build 7.2 we plan to allow a varying spectral
-step with wavelength.
+Build 7.1 can only produce  IFU cubes with a linear spatial and spectral dimension. In build 7.2 we plan 
+to allow a varying spectral step with wavelength.
 
 The other type of reference file pertains only to MIRI data and contains the width of the PSF and LSF per
 band. The reftype for this reference file is *resol*.
@@ -23,15 +23,20 @@ reference file is  also based on Instrument (a N/Q is returned for NIRSPEC data)
 
 Cube Building Parameter Reference File Format
 ---------------------------------------------
-The cube parameter reference files are FITS files with a BINTABLE extension. The FITS primary data array is
-assumed to be empty. The BINTABLE extension contains the information on the default sample sizes of spatial
-and spectral dimension of the output spectral cubes, as well as the size region of interest to use 
-around each spaxel in chosing the detetector pixels to combine. 
-The first two colunms in  reference files defines the which band the row describes. For MIRI column 1 holds
-the channel and column two holds the sub-channel, while for NIRSPEC column 1 holds the grating and column 2
-contains the filter. For each band defined by columns 1 and 2, columns 3-6 contain the  
-spatial size of the output cube, the spectral size of the output cube, spatial region of interest size,
-and wavelength region of interest. 
+The cube parameter reference files are FITS files with  BINTABLE extensions. The FITS primary data array is
+assumed to be empty. The MIRI cube parameter file contains three  BINTABLE extensions, while the NIRSPEC  
+file contains five BINTABLE extensions. In both files the first extension contains
+the spatial and spectral cube sample size for each band. The second extension holds the  Modified Shepard weighting
+values to use for each band. The third extension will be used in Build 7.2 and contains the  wavelengths and associated
+region of interest size to use  if the IFU cubes are created from several bands and the final output is to
+have an IFU cube of  varying spectral scale. In the case of MIRI  the twelve spectral
+bands can be combined into a single IFU cube an all the information to create cubes of varying
+wavelength sampling  is contained in this third BINTABLE extension.   However for NIRSPEC data there are 
+three types of multi-band cubes: PRISM, MEDIUM and HIGH resolution.  The third, forth and fifth BINTABLE
+extensions  in the NIRSPEC 
+reference file contains the wavelength sampling and region of interest size  to use for 
+PRISM, MEDIUM resolution, and HIGH resolution multi-band cubes, respectively.
+
 
 
 MIRI Resolution reference file
