@@ -8,5 +8,6 @@ MIRI MRS Sky Matching
    :maxdepth: 2
 
    README.rst
+   mrs_imatch_step.rst
 
 .. automodapi:: jwst.mrs_imatch

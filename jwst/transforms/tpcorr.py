@@ -77,9 +77,12 @@ class TPCorr(Model):
     _separable = False
     standard_broadcasting = False
 
-    # Radius of the generating sphere. This sets the circumference to 360 deg
-    # so that arc length is measured in deg.
+
     r0 = 3600.0 * np.rad2deg(1.0)
+    """
+    Radius of the generating sphere. This sets the circumference to 360 deg
+    so that arc length is measured in deg.
+    """
 
     def __init__(self, v2ref=v2ref.default, v3ref=v3ref.default,
                  roll=roll.default, matrix=matrix.default,

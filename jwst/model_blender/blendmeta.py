@@ -24,7 +24,8 @@ EMPTY_LIST = [None, '', ' ', 'INDEF', 'None']
 
 # Primary functional interface for the code
 def blendmodels(product, inputs=None, output=None, verbose=False):
-    """Run main interface for blending metatdata from multiple models.
+    """
+    Run main interface for blending metatdata from multiple models.
 
     Blend models that went into creating the original drzfile into a
     new metadata instance with a table that contains attribute values from
@@ -73,10 +74,11 @@ def blendmodels(product, inputs=None, output=None, verbose=False):
     verbose : bool, optional [Default: False]
         Print out additional messages during processing when specified.
 
-    Syntax
-    ======
-    This examples shows how to blend the metadata from a set of DataModels
-    already read in memory for the product created by the 'resample' step.
+
+    Example
+    -------
+    This example shows how to blend the metadata from a set of DataModels
+    already read in memory for the product created by the `resample` step.
     This example relies on the Association file used as the input to the
     `resample` step to specify all the inputs for blending using the
     following syntax::
