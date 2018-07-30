@@ -1,15 +1,13 @@
 channels:
   - http://ssb.stsci.edu/astroconda-dev
-  
+
 dependencies:
   - python>=3
   - setuptools
   - asdf
   - astropy
   - crds
-  - dask
   - drizzle
-  - drizzlepac
   - gwcs
   - jsonschema
   - jplephem
@@ -17,9 +15,13 @@ dependencies:
   - namedlist
   - numpy
   - photutils
-  - pymssql
   - scipy
   - six
+  - spherical-geometry
+  - stsci.image
+  - stsci.imagestats
+  - stsci.stimage
+  - stsci.tools
   - verhawk
   - sphinx_rtd_theme
   - pip:

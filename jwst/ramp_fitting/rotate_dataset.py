@@ -6,7 +6,6 @@
 # to file for input into ramp_fit_arr.py
 #
 
-from __future__ import absolute_import, division, print_function
 import sys
 import os
 from . import rotate_utils

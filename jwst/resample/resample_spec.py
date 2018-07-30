@@ -44,14 +44,8 @@ class ResampleSpecData:
       5. Updates output data model with output arrays from drizzle, including
          (eventually) a record of metadata from all input models.
     """
-    drizpars = {'single': False,
-                'kernel': 'square',
-                'pixfrac': 1.0,
-                'good_bits': CRBIT,
-                'fillval': 'INDEF',
-                'wht_type': 'exptime'}
 
-    def __init__(self, input_models, output=None, ref_filename=None, **pars):
+    def __init__(self, input_models, output=None, **pars):
         """
         Parameters
         ----------
@@ -64,16 +58,11 @@ class ResampleSpecData:
         self.input_models = input_models
         if output is None:
             output = input_models.meta.resample.output
-        self.ref_filename = ref_filename
+
+        self.drizpars = pars
 
         self.pscale_ratio = 1.
         self.blank_output = None
-
-        # If user specifies use of drizpars ref file (default for pipeline use)
-        # update input parameters with default values from ref file
-        if self.ref_filename is not None:
-            self.get_drizpars()
-        self.drizpars.update(pars)
 
         # Define output WCS based on all inputs, including a reference WCS
         # wcslist = [m.meta.wcs for m in self.input_models]
@@ -84,56 +73,12 @@ class ResampleSpecData:
         elif self.instrument_name in ['MIRI']:
             self.output_wcs = self.build_miri_output_wcs()
 
-        self.data_size = self.build_size_from_bounding_box()
+        self.data_size = resample_utils.shape_from_bounding_box(self.output_wcs.bounding_box)
         self.blank_output = datamodels.DrizProductModel(self.data_size)
 
         self.blank_output.update(datamodels.ImageModel(self.input_models[0]._instance))
         self.blank_output.meta.wcs = self.output_wcs
         self.output_models = datamodels.ModelContainer()
-
-
-    def get_drizpars(self):
-        """ Extract drizzle parameters from reference file
-        """
-        # start by interpreting input data models to define selection criteria
-        num_groups = len(self.input_models.group_names)
-        input_dm = self.input_models[0]
-        filtname = input_dm.meta.instrument.filter
-
-        # Create a data model for the reference file
-        ref_model = datamodels.DrizParsModel(self.ref_filename)
-        # look for row that applies to this set of input data models
-        # NOTE:
-        # This logic could be replaced by a method added to the DrizParsModel
-        # object to select the correct row based on a set of selection params
-        row = None
-        drizpars = ref_model.drizpars_table
-
-        # Flag to support wild-card rows in drizpars table
-        filter_match = False
-        for n, filt, num in zip(range(1, drizpars.numimages.shape[0] + 1),
-                drizpars.filter, drizpars.numimages):
-            # only remember this row if no exact match has already been made for
-            # the filter. This allows the wild-card row to be anywhere in the
-            # table; since it may be placed at beginning or end of table.
-
-            if filt == b"ANY" and not filter_match and num_groups >= num:
-                row = n
-            # always go for an exact match if present, though...
-            if filtname == filt and num_groups >= num:
-                row = n
-                filter_match = True
-
-        # With presence of wild-card rows, code should never trigger this logic
-        if row is None:
-            txt = "No row found in {0} that matches input data."
-            log.error(txt.format(self.ref_filename))
-            raise ValueError
-
-        # read in values from that row for each parameter
-        for kw in self.drizpars:
-            if kw in drizpars.names:
-                self.drizpars[kw] = ref_model['drizpars_table.{0}'.format(kw)][row]
 
 
     def build_nirspec_output_wcs(self, refmodel=None):
@@ -307,18 +252,6 @@ class ResampleSpecData:
         return wnew
 
 
-    def build_size_from_bounding_box(self, refwcs=None):
-        """ Compute the size of the output frame based on the bounding_box
-        """
-        if not refwcs:
-            refwcs = self.output_wcs
-        size = []
-        for axis in refwcs.bounding_box:
-            delta = axis[1] - axis[0]
-            size.append(int(delta + 0.5))
-        return tuple(reversed(size))
-
-
     def do_drizzle(self, **pars):
         """ Perform drizzling operation on input images's to create a new output
         """
@@ -355,9 +288,6 @@ class ResampleSpecData:
             output_model.meta.wcs.bounding_box = bb
             output_model.meta.filename = obs_product
 
-            output_model.meta.asn.pool_name = self.input_models.meta.pool_name
-            output_model.meta.asn.table_name = self.input_models.meta.table_name
-
             exposure_times = {'start': [], 'end': []}
 
             outwcs = output_model.meta.wcs
@@ -375,7 +305,7 @@ class ResampleSpecData:
                 exposure_times['end'].append(img.meta.exposure.end_time)
 
                 inwht = resample_utils.build_driz_weight(img,
-                    wht_type=self.drizpars['wht_type'],
+                    weight_type=self.drizpars['weight_type'],
                     good_bits=self.drizpars['good_bits'])
                 if hasattr(img, 'name'):
                     log.info('Resampling slit {} {}'.format(img.name, self.data_size))
@@ -392,16 +322,7 @@ class ResampleSpecData:
             output_model.meta.exposure.start_time = min(exposure_times['start'])
             output_model.meta.exposure.end_time = max(exposure_times['end'])
             output_model.meta.resample.product_exposure_time = texptime
-            output_model.meta.resample.product_data_extname = driz.sciext
-            output_model.meta.resample.product_context_extname = driz.conext
-            output_model.meta.resample.product_weight_extname = driz.whtext
-            output_model.meta.resample.drizzle_fill_value = str(driz.fillval)
-            output_model.meta.resample.drizzle_pixel_fraction = driz.pixfrac
-            output_model.meta.resample.drizzle_kernel = driz.kernel
-            output_model.meta.resample.drizzle_output_units = driz.out_units
-            output_model.meta.resample.drizzle_weight_scale = driz.wt_scl
-            output_model.meta.resample.resample_bits = self.drizpars['good_bits']
-            output_model.meta.resample.weight_type = self.drizpars['wht_type']
+            output_model.meta.resample.weight_type = self.drizpars['weight_type']
             output_model.meta.resample.pointings = pointings
 
             # Update mutlislit slit info on the output_model

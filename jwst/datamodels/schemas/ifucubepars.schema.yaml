@@ -1,6 +1,6 @@
 title: Default IFU CUBE parameters data model
 allOf:
-- $ref:	referencefile.schema.yaml
+- $ref: referencefile.schema.yaml
 - type: object
   properties:
     ifucubepars_table:

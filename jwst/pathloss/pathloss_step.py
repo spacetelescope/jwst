@@ -2,6 +2,8 @@ from ..stpipe import Step
 from .. import datamodels
 from . import path_loss
 
+__all__ = ["PathLossStep"]
+
 
 class PathLossStep(Step):
     """
@@ -18,7 +20,7 @@ class PathLossStep(Step):
 
     - for exposure types NRS_FIXEDSLIT, NRS_BRIGHTOBJ, and NRS_MSASPEC, the
       1-d arrays .slits[n].wavelength_pointsource,
-      .slits[n].pathloss_pointsource, .slits[n].wavelength_uniformsource and 
+      .slits[n].pathloss_pointsource, .slits[n].wavelength_uniformsource and
       .slits[n].pathloss_uniformsource
 
     In all of these `EXP_TYPES`, these arrays are added to each
@@ -53,7 +55,7 @@ class PathLossStep(Step):
             # Open the pathloss ref file data model
             pathloss_model = datamodels.PathlossModel(self.pathloss_name)
 
-            # Do the pathloss correction     
+            # Do the pathloss correction
             result = path_loss.do_correction(input_model, pathloss_model)
 
             pathloss_model.close()

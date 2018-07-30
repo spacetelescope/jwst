@@ -2,6 +2,8 @@ from ..stpipe import Step
 from .. import datamodels
 from ..background import subtract_images
 
+__all__ = ["ImprintStep"]
+
 
 class ImprintStep(Step):
     """

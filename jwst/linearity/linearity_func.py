@@ -1,5 +1,3 @@
-from __future__ import division # confidence high
-
 import logging
 
 log = logging.getLogger(__name__)

@@ -4,6 +4,8 @@ from ..stpipe import Step, cmdline
 from .. import datamodels
 from .srctype import set_source_type
 
+__all__ = ["SourceTypeStep"]
+
 
 class SourceTypeStep(Step):
     """

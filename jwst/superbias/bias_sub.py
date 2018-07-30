@@ -1,5 +1,3 @@
-from __future__ import division
-
 #
 #  Module for subtracting a super-bias image from science data sets
 #

@@ -12,9 +12,11 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal
 
 import jsonschema
 from astropy.io import fits
+from astropy.modeling import models
 
 from .. import util, validate
-from .. import DataModel, ImageModel, RampModel, MaskModel, MultiSlitModel, AsnModel
+from .. import (DataModel, ImageModel, RampModel, MaskModel,
+                MultiSlitModel, AsnModel, CollimatorModel)
 
 from asdf import schema as mschema
 
@@ -616,6 +618,31 @@ def test_multislit_move_from_fits():
         n.slits.append(m.slits[2])
 
         assert len(n.slits) == 1
+
+
+def test_validate_transform():
+    """
+    Tests that custom types, like transform, can be validated.
+    """
+    m = CollimatorModel(model=models.Shift(1) & models.Shift(2),
+                        strict_validation=True)
+    m.meta.description = "Test validate a WCS reference file."
+    m.meta.author = "ND"
+    m.meta.pedigree = "GROUND"
+    m.meta.useafter = "2018/06/18"
+    m.meta.reftype = "collimator"
+    m.validate()
+    m.close()
+
+
+def test_validate_transform_from_file():
+    """
+    Tests that custom types, like transform, can be validated.
+    """
+    fname = os.path.join(os.path.dirname(__file__), 'data', 'collimator_fake.asdf')
+    m = CollimatorModel(fname, strict_validation=True)
+    m.validate()
+
 
 '''
 def test_multislit_garbage():

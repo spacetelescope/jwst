@@ -1,10 +1,14 @@
-from ..stpipe import Step, cmdline
+from ..stpipe import Step
 from .. import datamodels
-from . import resample_spec
+from . import resample_spec, ResampleStep
 from ..exp_to_source import multislit_to_container
+from ..assign_wcs.util import update_s_region
 
 
-class ResampleSpecStep(Step):
+__all__ = ["ResampleSpecStep"]
+
+
+class ResampleSpecStep(ResampleStep):
     """
     ResampleSpecStep: Resample input data onto a regular grid using the
     drizzle algorithm.
@@ -13,17 +17,6 @@ class ResampleSpecStep(Step):
     -----------
     input : DataModel, Association
     """
-
-    spec = """
-        single = boolean(default=False)
-        wht_type = option('exptime', 'error', None, default='exptime')
-        pixfrac = float(default=1.0)
-        kernel = string(default='square')
-        fillval = string(default='INDEF')
-        good_bits = integer(default=4)
-        blendheaders = boolean(default=True)
-    """
-    reference_file_types = ['drizpars']
 
     def process(self, input):
 
@@ -40,37 +33,53 @@ class ResampleSpecStep(Step):
         for reftype in self.reference_file_types:
             ref_filename = self.get_reference_file(input_models[0], reftype)
 
+        if ref_filename != 'N/A':
+            self.log.info('Drizpars reference file: {}'.format(ref_filename))
+            kwargs = self.get_drizpars(ref_filename, input_models)
+        else:
+            # Deal with NIRSpec which currently has no default drizpars reffile
+            kwargs = self._set_spec_defaults()
+
         # Multislits get converted to a ModelContainer per slit
         if all([isinstance(i, datamodels.MultiSlitModel) for i in input_models]):
             container_dict = multislit_to_container(input_models)
-            output_product = datamodels.MultiProductModel()
-            output_product.update(input_models[0])
+            output = datamodels.MultiProductModel()
+            output.update(input_models[0])
             for k, v in container_dict.items():
                 input_models = v
 
                 # Set up the resampling object as part of this step
-                resamp = resample_spec.ResampleSpecData(input_models,
-                    ref_filename, single=self.single,
-                    wht_type=self.wht_type, pixfrac=self.pixfrac,
-                    kernel=self.kernel, fillval=self.fillval,
-                    good_bits=self.good_bits)
+                resamp = resample_spec.ResampleSpecData(input_models, **kwargs)
                 # Do the resampling
                 resamp.do_drizzle()
+
+                for model in resamp.output_models:
+                    update_s_region(model)
+
                 if len(resamp.output_models) == 1:
                     out_slit = resamp.output_models[0]
-                    output_product.products.append(out_slit)
-                    output_product.products[-1].bunit_data = input_models[0].meta.bunit_data
+                    output.products.append(out_slit)
+                    output.products[-1].bunit_data = input_models[0].meta.bunit_data
                 else:
                     out_slit = resamp.output_models
-            result = output_product
+            result = output
+            result.meta.cal_step.resample = "COMPLETE"
+            result.meta.asn.pool_name = input_models.meta.pool_name
+            result.meta.asn.table_name = input_models.meta.table_name
         else:
             # Set up the resampling object as part of this step
             resamp = resample_spec.ResampleSpecData(input_models,
-                ref_filename, single=self.single, wht_type=self.wht_type,
+                ref_filename, single=self.single, weight_type=self.weight_type,
                 pixfrac=self.pixfrac, kernel=self.kernel,
                 fillval=self.fillval, good_bits=self.good_bits)
             # Do the resampling
             resamp.do_drizzle()
+
+            for model in resamp.output_models:
+                model.meta.cal_step.resample = "COMPLETE"
+                update_s_region(model)
+                model.meta.asn.pool_name = input_models.meta.pool_name
+                model.meta.asn.table_name = input_models.meta.table_name
 
             # Return either the single resampled datamodel, or the container
             # of datamodels.
@@ -79,7 +88,4 @@ class ResampleSpecStep(Step):
             else:
                 result = resamp.output_models
 
-        result.meta.cal_step.resample = 'COMPLETE'
-
         return result
-

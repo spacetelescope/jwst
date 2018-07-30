@@ -2,6 +2,8 @@ from ..stpipe import Step
 from .. import datamodels
 from . import ipc_corr
 
+__all__ = ["IPCStep"]
+
 
 class IPCStep(Step):
     """

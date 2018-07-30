@@ -45,7 +45,7 @@ from .contrast import ContrastModel
 from .cube import CubeModel
 from .dark import DarkModel
 from .darkMIRI import DarkMIRIModel
-from .drizpars import DrizParsModel, NircamDrizParsModel, MiriImgDrizParsModel
+from .drizpars import DrizParsModel
 from .drizproduct import DrizProductModel
 from .extract1dimage import Extract1dImageModel
 from .flat import FlatModel
@@ -71,7 +71,7 @@ from .multiprod import MultiProductModel
 from .multislit import MultiSlitModel
 from .multispec import MultiSpecModel
 from .nirspec_flat import NRSFlatModel, NirspecFlatModel, NirspecQuadFlatModel
-from .outlierpars import OutlierParsModel, NircamOutlierParsModel, MiriImgOutlierParsModel
+from .outlierpars import OutlierParsModel
 from .pathloss import PathlossModel
 from .persat import PersistenceSatModel
 from .photom import PhotomModel, FgsPhotomModel, NircamPhotomModel, NirissPhotomModel
@@ -97,6 +97,7 @@ from .throughput import ThroughputModel
 from .trapdensity import TrapDensityModel
 from .trappars import TrapParsModel
 from .trapsfilled import TrapsFilledModel
+from .tsophot import TsoPhotModel
 from .wcs_ref_models import *
 from .wfssbkg import WfssBkgModel
 from .util import open
@@ -111,7 +112,7 @@ __all__ = [
     'DarkModel', 'DarkMIRIModel',
     'DisperserModel', 'DistortionModel', 'DistortionMRSModel',
     'DrizProductModel',
-    'DrizParsModel', 'NircamDrizParsModel', 'MiriImgDrizParsModel',
+    'DrizParsModel',
     'Extract1dImageModel',
     'FilteroffsetModel',
     'FlatModel', 'NRSFlatModel', 'NirspecFlatModel', 'NirspecQuadFlatModel',
@@ -126,7 +127,7 @@ __all__ = [
     'MultiExposureModel', 'MultiExtract1dImageModel', 'MultiProductModel', 'MultiSlitModel',
     'MultiSpecModel', 'OTEModel',
     'NIRCAMGrismModel','NIRISSGrismModel',
-    'OutlierParsModel', 'MiriImgOutlierParsModel', 'NircamOutlierParsModel',
+    'OutlierParsModel',
     'PathlossModel',
     'PersistenceSatModel',
     'PixelAreaModel', 'NirspecSlitAreaModel', 'NirspecMosAreaModel', 'NirspecIfuAreaModel',
@@ -143,6 +144,7 @@ __all__ = [
     'StrayLightModel', 'SuperBiasModel', 'SpecwcsModel',
     'ThroughputModel',
     'TrapDensityModel', 'TrapParsModel', 'TrapsFilledModel',
+    'TsoPhotModel',
     'WavelengthrangeModel', 'WaveCorrModel', 'WfssBkgModel']
 
 # Initialize the astropy.io registry,

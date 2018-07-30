@@ -7,9 +7,12 @@ import jsonschema
 from asdf import AsdfFile
 from asdf import schema as asdf_schema
 from asdf.util import HashableDict
+from asdf import yamlutil
+
 
 class ValidationWarning(Warning):
     pass
+
 
 def value_change(path, value, schema, pass_invalid_values,
                  strict_validation):
@@ -32,6 +35,7 @@ def value_change(path, value, schema, pass_invalid_values,
             warnings.warn(errmsg, ValidationWarning)
     return update
 
+
 def _check_type(validator, types, instance, schema):
     """
     Callback to check data type. Skips over null values.
@@ -43,11 +47,13 @@ def _check_type(validator, types, instance, schema):
                                            instance, schema)
     return errors
 
+
 validator_callbacks = HashableDict(asdf_schema.YAML_VALIDATORS)
 validator_callbacks.update({'type': _check_type})
 
 validator_context = AsdfFile()
 validator_resolver = validator_context.resolver
+
 
 def _check_value(value, schema):
     """
@@ -67,7 +73,10 @@ def _check_value(value, schema):
                                               validator_context,
                                               validator_callbacks,
                                               validator_resolver)
+
+        value = yamlutil.custom_tree_to_tagged_tree(value, validator_context)
         validator.validate(value, _schema=temp_schema)
+
 
 def _error_message(path, error):
     """

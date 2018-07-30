@@ -1,5 +1,5 @@
-Reference File
-==============
+Reference File Types
+====================
 There are four reference file types for the flat_field step.  Reftype
 FLAT is used for all data except NIRSpec.  NIRSpec data use three
 reftypes:  FFLAT (fore optics), SFLAT (spectrograph optics), and 
@@ -8,20 +8,23 @@ DFLAT (detector).
 
 CRDS Selection Criteria
 -----------------------
-Flat-field reference files are selected by the following criteria:
 
-- MIRI Imager: Match INSTRUME, DETECTOR, FILTER, READPATT, and
-  SUBARRAY of the science data file.  
+For MIRI Imaging, flat-field reference files are selected based on the values of
+INSTRUME, DETECTOR, FILTER, READPATT, and SUBARRAY in the science data file.
 
-- MIRI MRS: Match INSTRUME, DETECTOR, BAND, READPATT, and
-  SUBARRAY of the science data file.  
+For MIRI MRS, flat-field reference files are selected based on the values of
+INSTRUME, DETECTOR, BAND, READPATT, and SUBARRAY in the science data file.
 
-- NIRCam: Match INSTRUME, DETECTOR, FILTER, and PUPIL.
+For NIRCam, flat-field reference files are selected based on the values of
+INSTRUME, DETECTOR, FILTER, and PUPIL in the science data file.
 
-- NIRISS: Match INSTRUME, DETECTOR, and FILTER.
+For NIRISS, flat-field reference files are selected based on the values of
+INSTRUME, DETECTOR, and FILTER in the science data file.
 
-- NIRSpec: Match INSTRUME, DETECTOR, FILTER, GRATING, and
-  EXP_TYPE.
+For NIRSpec, flat-field reference files are selected based on the values of
+INSTRUME, DETECTOR, FILTER, GRATING, and
+EXP_TYPE in the science data file.
+
 
 Reference File Formats for MIRI, NIRCAM, and NIRISS
 ---------------------------------------------------
@@ -103,7 +106,7 @@ files.
 For the fore optics, the flat field for fixed-slit data contains just a
 FAST_VARIATION table (i.e. there is no image).  This table has five rows,
 one for each of the fixed slits.  The flat field for IFU data also contains
-just a FAST_VARIATION table, but it has only one row (with the value "ANY"
+just a FAST_VARIATION table, but it has only one row with the value "ANY"
 in the "slit_name" column.  For multi-object spectroscopic data, the flat
 field contains four sets (one for each MSA quadrant) of images, WAVELENGTH
 tables, and FAST_VARIATION tables.  The images are unique to the fore

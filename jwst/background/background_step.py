@@ -5,12 +5,17 @@ from .. import datamodels
 from . import background_sub
 
 
+__all__ = ["BackgroundStep"]
+
+
 class BackgroundStep(Step):
     """
     BackgroundStep:  Subtract background exposures from target exposures.
     """
 
     spec = """
+        sigma = float(default=3.0)  # Clipping threshold
+        maxiters = integer(default=None)  # Number of clipping iterations
     """
 
     # These reference files are only used for WFSS/GRISM data.
@@ -56,7 +61,10 @@ class BackgroundStep(Step):
 
             else:
                 # Do the background subtraction
-                result = background_sub.background_sub(input_model, bkg_list)
+                result = background_sub.background_sub(input_model,
+                                                       bkg_list,
+                                                       self.sigma,
+                                                       self.maxiters)
                 result.meta.cal_step.back_sub = 'COMPLETE'
 
         return result

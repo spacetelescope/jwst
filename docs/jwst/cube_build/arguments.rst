@@ -1,183 +1,114 @@
+.. _arguments:
+
 Step Arguments
 ==============
-The input data to the cube program can be a
-single exposure, a data model passed from another pipeline step,  or a list of exposures contained in an association table.
-The default spectral cubes contain data from a single band. For MIRI a single band covers a single channel and single sub-channel, 
-and for NIRSPEC a single band covers a single grating and single filter. There are options that allow the user to select the 
-type of data to be used in constructing the spectral IFU cube.
-The arguments controlling the  types of data to use  are:
+As discussed earlier, the input to the ``cube_build`` step can take many forms, containing data from one or more
+wavelength bands for each of the MIRI and NIRSpec IFUs. The following step arguments can be used to control which
+subsets of data are used to produce the output cubes. Note that some options will result in multiple cubes being
+created. For example, if the input data span several bands, but single-band cubes are selected, then a cube for
+each band will be created.
 
-* ``--channel [integer]``
+``channel [string]``
+  This is a MIRI only option and the valid values are 1, 2, 3, 4, and ALL.
+  If the ``channel`` argument is given, then only data corresponding to that channel  will be used in
+  constructing the cube.  A comma-separated list can be used to designate multiple channels.
+  For example, to create a cube with data from channels 1 and 2, specify the
+  list as ``--channel='1,2'``. If this argument is not specified, the output will be a set of IFU cubes, one for each
+  channel/sub-channel combination contained in the input data.
 
-The only valid values for # are 1,2,3,4 or ALL .
-This argument is only valid for MIRI data. If the ``--channel`` argument is given, then only data corresponding to that channel
-will be used in constructing the cube.  If the user wants to construct a cube from more than one channel,
-then all the values are contained in the string with a comma between each channel number. For example,
-to create a cube with channel 1 and 2 the argument list is ``--channel='1, 2'``. If this value is not set then the default is
-to make single channel-single sub-channel IFU Cubes. 
+``band [string]``
+  This is a MIRI only option and the valid values are SHORT, MEDIUM, LONG, and ALL.
+  If the ``band`` argument is given, then only data corresponding
+  to that sub-channel will be used in constructing the cube. Only one value can be specified, so IFU cubes are
+  created either per sub-channel or using all the sub-channels of the data.  If this argument is not specified,
+  a set of IFU cubes is created, one for each band. Note we use the name ``band`` for this argument instead of
+  ``subchannel``, because the keyword ``band`` in the input images is used to indicate which MIRI subchannel the
+  data covers.
 
-* ``--band [string]``
+``grating [string]``
+  This is a NIRSpec only option with valid values PRISM, G140M, G140H, G235M, G235H, G395M, G395H, and ALL.
+  If the option "ALL" is used, then all the gratings in the association are used.
+  Because association tables only contain exposures of the same resolution, the use of "ALL" will at most combine
+  data from gratings G140M, G235M, and G395M or G140H, G235H, and G395H. The user can supply a comma-separated string
+  containing the names of multiple gratings to use.
 
-This is a MIRI option and the  only valid values  are SHORT,MEDIUM,LONG, or ALL.
-If the ``--subchannel`` argument is given, then only data corresponding
-to that subchannel will be used in  constructing the cube. Only one option is possible, so IFU cubes are created either
-per subchannel or using all the subchannels the input data cover.  If this value is not set then the default is
-to make single channel-single sub-channel IFU Cubes. 
+``filter [string]``
+  This is a NIRSpec only option with values of Clear, F100LP, F070LP, F170LP, F290LP, and ALL.
+  To cover the full wavelength range of NIRSpec, the option "ALL" can be used (provided the exposures in the
+  association table contain all the filters). The user can supply a comma-separated string containing the names of
+  multiple filters to use.
 
+``output_type [string]``
+  This parameter has four valid options of Band, Channel, Grating, and Multi. This parameter can be combined
+  with the options above [band, channel, grating, filter] to fully control the type of IFU
+  cubes to make.
 
-* ``--grating [string]``
+  - ``output_type = band`` is the default mode and creates IFU cubes containing only one band
+    (channel/sub-channel or  grating/filter combination).
 
-This is a NIRSPEC option and only valid values are PRISM, G140M, G140H, G235M, G235H, G395M, G395H, or ALL.
-If the option ALL is used then all the gratings in the association are used.
-Since association tables will only contain exposures of the same resolution, the use of ALL, will at most combine
-data from grating G140M, G235M & G395M or G140H, G235H & G395H together. The user can supply a comma separated string
-containing the gratings to use.
+  - ``output_type = channel`` combines all the MIRI channels in the data or set by the
+    channel option into a single IFU cube.
 
-* ``--filter [string]``
+  - ``output_type = grating`` combines all the gratings in the NIRSpec data or set by the
+    grating option into a single IFU cube.
 
-This is a NIRSPEC  option and the only valid options are Clear, F100LP, F070LP, F170LP, F290LP, or ALL. To
-cover the full wavelength range of NIRSPEC the option ALL can be used (provided the exposures in the association table
-contain all the filters). The user can supply a comma separated string containing the filters to use.
+  - ``output_type = multi`` combines data  into a single "uber" IFU cube. If in addition,
+    channel, band, grating, or filter are also set, then only the data set by those
+    parameters will be combined into an "uber" cube.
 
+The following arguments control the size and sampling characteristics of the output IFU cube.
 
-The arguments controlling the size of the output IFU cube:
+``scale1``
+  The output cube's spaxel size in axis 1 (spatial).
 
-* ``--scale1 #``
+``scale2``
+  The output cube's spaxel size in axis 2 (spatial).
 
-Where the #  is the  size of the output cube's sample size in the naxis1 dimension.
+``scalew``
+  The output cube's spaxel size in axis 3 (wavelength).
 
-* ``--scale2 #``
+``wavemin``
+  The minimum wavelength, in microns, to use in constructing the IFU cube.
 
-Where the  #  is the size of the output cube's sample size  in the naxis2 dimension.
+``wavemax``
+  The maximum wavelength, in microns, to use in constructing the IFU cube.
 
-* ``--scalew #``
+``coord_system [string]``
+  Options are ra-dec and alpha-beta. The alpha-beta option is a special coordinate system
+  for MIRI data and should only be used by advanced users.
 
-Where the  #  is size of the output cube's sample size in the naxis3 dimension.
+There are a number of arguments that control how the point cloud values are combined together to produce the final
+flux associated with each output spaxel flux. The first set defines the the  **region of interest**,  which defines the
+boundary centered on the spaxel center of   point cloud members that are used to find the final spaxel flux.
+The arguments related to region of interest and how the fluxes are combined together are:
 
-* ``wavemin  # `` is the minimum wavelength in microns to use in constructing the IFU cube. 
+``rios [float]``
+  The radius of the region of interest in the spatial  dimensions.
 
-* ``wavemax  # `` is the maximum wavelength in microns to use in constructing the IFU cube. 
- 
-* ``coord_system = [string]. Options ra-dec and alpha-beta. The alpha-beta option is a special coordinate system 
-for MIRI data and should only be used by advanced users. 
-
-
-There are a number of arguments which control how the point cloud values are combined together to produce the final
-flux associated with the output  spaxel flux. The first set defines the the  **region of interest**  which defines the
-boundary centered on the spaxel center of   point cloud members that are used to find the final spaxel flux. 
-The arguments related to region of interest and how the fluxes are combines together are: 
-
-* ``--rios #``
-The ``rios`` # is the radius of the region of interest in the spatial  dimensions. The value is  real number.
-
-* ``--riow #``
-The ``riow`` # is the size of the region of interest in the spectral dimension. The value is a real
-number.
-
-
-There are two arguments [``--weight`` and ``--weight_power``]  which control how to interpolate the point cloud values.
-
-* ``weighting  [string]``
-
-This is the type of weighting to use when combining point cloud fluxes to represent the spaxel flux.
-The default value is STANDARD and in the method distances
-are determined in the cube output coordinate system. The Standard weighting function is the only option for NIRSPEC data. 
-For MIRI data is there an addition option, MIRIPSF. If this is used  then the distances are determined in
-the alpha-beta coordinate system of the point cloud member and are normalized by the PSF and LSF. For more details on
-how the weight of the point cloud members are used in determining the final spaxel flux see the Algorithm description section  
-
-* ``weight_power #`` controls the weighting of the distances between the point cloud member and spaxel center.  
-
-The weighting function used for determining the spaxel flux was given in the Algorithm description:
-spaxel flux K =
-:math:`\frac{ \sum_{i=1}^n Flux_i w_i}{\sum_{i=1}^n w_i}`
-
-Where
-* n = the number of point cloud points within the region of interest of spaxel flux K
-:math:`w_i =1.0 \sqrt{({xnormalized}^2 + {ynormalized}^2 + {znormalized}^2)}^{p}`
-
-by default currently p=2, but this parameter is controlled by the --weight_power option.
+``riow [float]``
+  The size of the region of interest in the spectral dimension.
 
 
-Example of how to run Cube_Build
-================================
-It is assumed that the input data to the  IFU cube building step has been process through the CALDETECTOR  and
-that assign_wcs has been run on the data.
+There are two arguments that control how to interpolate the point cloud values:
 
-IFU Cube building for MIRI data
--------------------------------
+``weighting [string]``
+  The type of weighting to use when combining points cloud fluxes to represent the spaxel flux. Allowed values are
+  STANDARD and MIRPSF. This defines how the distances between the point cloud members and spaxel centers are
+  determined. The default value is STANDARD and the distances are determined in the cube output coordinate system.
+  STANDARD is the only option available for NIRSpec. If set to MIRIPSF, the distances are
+  determined in the alpha-beta coordinate system of the point cloud member and are normalized by the PSF and LSF.
+  For more details on how the weight of the point cloud members are used in determining the final spaxel flux see
+  the :ref:`algorithm` section.
 
-To run cube_build on a single MIRI exposure (containing channel 1 and 2) but only creating an IFU cube for channel 1::
+``weight_power [float]``
+  Controls the weighting of the distances between the point cloud member and spaxel center.
+  The weighting function used for determining the spaxel flux was given in the :ref:`algorithm` description:
+  spaxel flux K =
+  :math:`\frac{ \sum_{i=1}^n Flux_i w_i}{\sum_{i=1}^n w_i}`
 
-	strun cube_build.cfg MIRM103-Q0-SHORT_495_cal.fits --ch=1 --band=SHORT
+  where n = the number of point cloud points within the region of interest of spaxel flux K
 
-The output 3D spectral cube will be: MIRM103-Q0-SHORT_495_ch1-short_s3d.fits
+  :math:`w_i =1.0 \sqrt{({xnormalized}^2 + {ynormalized}^2 + {znormalized}^2)}^{p}`
 
+  by default currently p=2, but is controlled by the ``weight_power`` argument.
 
-To run cube_build using an association table containing 4 dithered images, which is defined as follows::
-
-	strun cube_build.cfg cube_build_4dither_asn.json
-
-where  cube_build_4dither_asn.json is defined as::
-
-	{"asn_rule": "Asn_MIRIFU_Dither", 
-         "target": "MYTarget",
-         "asn_id": "c3001",
-	 "asn_pool": "jw00024_001_01_pool", 
-         "program": "00024","asn_type":"dither",
-	 "products": [
-                     {"name": "MIRM103-Q0-Q3",
-                     "members":
-                      [{"exptype": "SCIENCE", "expname": "MIRM103-Q0-SHORT_495_cal.fits"},
-                       {"exptype": "SCIENCE", "expname": "MIRM103-Q1-SHORT_495_cal.fits"},
-                       {"exptype": "SCIENCE", "expname": "MIRM103-Q2-SHORT_495_cal.fits"},
-                       {"exptype": "SCIENCE", "expname": "MIRM103-Q3-SHORT_495_cal.fits"}]}
-	              ]
-        }
-
-
-The default output files will two IFU cubes. The first IFU cube will contain the dithered images for
-channel 1 and SHORT data and the second IFU will contain the channel 2 and SHORT data. The files names are defined by
-the association table and are: MIRM103-Q0-Q3_ch1-short_s3d.fits and MIRM103-Q0-Q3_ch2-short_s3d.fits.
-
-
-To use the same association table but  combine all the data together use the output_type=multi option::
-
-	 strun cube_build.cfg cube_build_4dither_asn.json --output_type=multi
-	 
-
-The output  IFU Cube will be: MIRM103-Q0-Q3_ch1-2-short_s3d.fits
-
-
-IFU Cube building for NIRSPEC data
-----------------------------------
-
-To run cube_build on a single NIRSPEC exposure with grating = G140H and filter =F100LP::
-
-	strun cube_build.cfg jwtest1004001_01101_00001_NRS2_cal.fits
-
-The output IFU cube will be jwtest1004001_01101_00001_NRS2_g140h-f100lp_s3d.fits
-
-- To run cube_build using an association table containing data from twos dithers of G140H, F100LP and G140H, F070LP::
-
-	strun cube_build.cfg nirspec_multi_asn.json
-
-Where the association table looks like::
-
-	{"asn_rule": "Asn_NIRSPECFU_Dither", 
-         "target": "MYTarget",
-	 "asn_pool": "jw00024_001_01_pool", 
-	 "program": "00024","asn_type":"NRSIFU",
-	 "asn_id":"a3001",
-	 "products": [
-         {"name": "JW3-6-NIRSPEC",
-         "members":
-         [{"exptype": "SCIENCE", "expname": "jwtest1003001_01101_00001_NRS1_cal.fits"},
-         {"exptype": "SCIENCE", "expname": "jwtest1004001_01101_00001_NRS2_cal.fits"},
-         {"exptype": "SCIENCE", "expname": "jwtest1005001_01101_00001_NRS1_cal.fits"},
-         {"exptype": "SCIENCE", "expname": "jwtest1006001_01101_00001_NRS2_cal.fits"}]}
-         ]
-	 }
-
-The output IFU cube will be two IFU cubes: JW3-6-NIRSPEC_g140h-f070lp_s3d.fits and JW3-6-NIRSPEC_g140h-f100lp_s3d.fits
- 

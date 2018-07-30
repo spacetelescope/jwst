@@ -3,6 +3,9 @@ from .. import datamodels
 from . import dark_sub
 
 
+__all__ = ["DarkCurrentStep"]
+
+
 class DarkCurrentStep(Step):
     """
     DarkCurrentStep: Performs dark current correction by subtracting

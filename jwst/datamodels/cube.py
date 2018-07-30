@@ -28,6 +28,9 @@ class CubeModel(model_base.DataModel):
     relsens: numpy array
         The relative sensitivity array.
 
+    int_times : table
+        The int_times table
+
     area: numpy array
         The pixel area array.  2-D
 
@@ -43,8 +46,8 @@ class CubeModel(model_base.DataModel):
     schema_url = "cube.schema.yaml"
 
     def __init__(self, init=None, data=None, dq=None, err=None, zeroframe=None,
-                 relsens=None, area=None, wavelength=None, var_poisson=None, 
-                 var_rnoise=None, **kwargs):
+                 relsens=None, int_times=None, area=None, wavelength=None,
+                 var_poisson=None, var_rnoise=None, **kwargs):
       
         super(CubeModel, self).__init__(init=init, **kwargs)
 
@@ -62,6 +65,9 @@ class CubeModel(model_base.DataModel):
 
         if relsens is not None:
             self.relsens = relsens
+
+        if int_times is not None:
+            self.int_times = int_times
 
         if area is not None:
             self.area = area

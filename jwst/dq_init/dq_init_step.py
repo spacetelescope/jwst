@@ -5,6 +5,9 @@ from .. import datamodels
 from . import dq_initialization
 
 
+__all__ = ["DQInitStep"]
+
+
 class DQInitStep(Step):
     """
 

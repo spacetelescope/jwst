@@ -14,7 +14,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-class InstrumentInfo(object):
+class InstrumentInfo():
 
     def __init__(self):
 # Wavelength varying parameters

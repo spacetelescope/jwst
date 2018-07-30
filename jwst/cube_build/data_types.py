@@ -1,5 +1,4 @@
 # Routines used for building cubes
-from __future__ import absolute_import, print_function
 
 import sys
 import time
@@ -18,7 +17,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 #********************************************************************************
-class DataTypes(object):
+class DataTypes():
 #********************************************************************************
 
     """

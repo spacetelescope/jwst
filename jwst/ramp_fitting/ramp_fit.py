@@ -19,6 +19,7 @@ import numpy as np
 
 from .. import datamodels
 from ..datamodels import dqflags
+from ..lib import pipe_utils
 
 from . import gls_fit           # used only if algorithm is "GLS"
 from . import utils
@@ -540,8 +541,12 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
     # For multiple-integration datasets, will output integration-specific
     #    results to separate file named <basename> + '_integ.fits'
     if n_int > 1:
+        if pipe_utils.is_tso(model) and hasattr(model, 'int_times'):
+            int_times = model.int_times
+        else:
+            int_times = None
         int_model = utils.output_integ(model, slope_int, dq_int, effintim,
-                                       var_p3, var_r3, var_both3)
+                                       var_p3, var_r3, var_both3, int_times)
     else:
         int_model = None
 

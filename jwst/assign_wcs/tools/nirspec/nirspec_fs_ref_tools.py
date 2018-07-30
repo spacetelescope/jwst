@@ -11,8 +11,6 @@ All ASDF reference files take this into account.
 CDP4 delivery
 """
 
-from __future__ import (absolute_import, unicode_literals, division,
-                        print_function)
 import glob
 import os.path
 import numpy as np

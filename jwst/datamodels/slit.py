@@ -44,16 +44,16 @@ class SlitDataModel(model_base.DataModel):
             self.err = init.err
             self.relsens = init.relsens
             self.area = init.area
-            if hasattr(init, 'wavelength'):
+            if init.hasattr('wavelength'):
                 self.wavelength = init.wavelength
-            if hasattr(init, 'var_poisson'):
+            if init.hasattr('var_poisson'):
                 self.var_poisson = init.var_poisson
-            if hasattr(init, 'var_rnoise'):
+            if init.hasattr('var_rnoise'):
                 self.var_rnoise = init.var_rnoise
             for key in kwargs:
                 setattr(key, kwargs[key])
 
-            if hasattr(init.meta, 'wcs'):
+            if init.meta.hasattr('wcs'):
                 self.meta.wcs = init.meta.wcs
             else:
                 self.meta.wcs = None
@@ -119,6 +119,9 @@ class SlitModel(model_base.DataModel):
     relsens : numpy array
         The relative sensitivity table.
 
+    int_times : table
+        The int_times table
+
     """
     schema_url = "slit.schema.yaml"
 
@@ -128,7 +131,8 @@ class SlitModel(model_base.DataModel):
                  xsize=None, ystart=None, ysize=None, slitlet_id=None,
                  source_id=None, source_name=None, source_alias=None,
                  stellarity=None, source_type=None, source_xpos=None, source_ypos=None,
-                 shutter_state=None, area=None, relsens=None, barshadow=None,
+                 shutter_state=None, area=None, relsens=None,
+                 int_times=None, barshadow=None,
                  wavelength_pointsource=None, pathloss_pointsource=None,
                  wavelength_uniformsource=None, pathloss_uniformsource=None,
                  **kwargs):
@@ -141,13 +145,15 @@ class SlitModel(model_base.DataModel):
             self.err = init.err
             self.relsens = init.relsens
             self.area = init.area
-            if hasattr(init, 'wavelength'):
+            if init.hasattr('wavelength'):
                 self.wavelength = init.wavelength
-            if hasattr(init, 'var_poisson'):
+            if init.hasattr('var_poisson'):
                 self.var_poisson = init.var_poisson
-            if hasattr(init, 'var_rnoise'):
+            if init.hasattr('var_rnoise'):
                 self.var_rnoise = init.var_rnoise
-            if hasattr(init.meta, 'wcs'):
+            if init.hasattr('int_times'):
+                self.int_times = init.int_times
+            if init.meta.hasattr('wcs'):
                 self.meta.wcs = init.meta.wcs
             else:
                 self.meta.wcs = None
@@ -172,6 +178,9 @@ class SlitModel(model_base.DataModel):
 
         if var_rnoise is not None:
             self.var_rnoise = var_rnoise
+
+        if int_times is not None:
+            self.int_times = int_times
 
         if dq is not None:
             self.dq = dq

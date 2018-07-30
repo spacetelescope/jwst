@@ -34,6 +34,6 @@ def test_ami_pipeline(_bigdata):
     result = pf.diff.FITSDiff(newh,
                               newhref,
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
-                              rtol = 0.0001
+                              rtol = 0.001
     )
     assert result.identical, result.report()

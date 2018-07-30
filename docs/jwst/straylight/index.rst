@@ -6,7 +6,7 @@ Stray Light Correction
    :maxdepth: 2
 
    main.rst
-   reference.rst
+   reference_files.rst
    arguments.rst
 
 .. automodapi:: jwst.straylight

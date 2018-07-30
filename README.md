@@ -1,7 +1,7 @@
 JWST Calibration Pipeline
 =========================
 [![Documentation Status](https://readthedocs.org/projects/jwst-pipeline/badge/?version=latest)](http://jwst-pipeline.readthedocs.io/en/latest/?badge=latest)
-[![Build Status](https://travis-ci.org/STScI-JWST/jwst.svg?branch=master)](https://travis-ci.org/STScI-JWST/jwst)
+[![Build Status](https://travis-ci.org/spacetelescope/jwst.svg?branch=master)](https://travis-ci.org/spacetelescope/jwst)
 [![Powered by STScI Badge](https://img.shields.io/badge/powered%20by-STScI-blue.svg?colorA=707170&colorB=3e8ddd&style=flat)](http://www.stsci.edu)
 [![Powered by Astropy Badge](http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](http://www.astropy.org/)
 
@@ -9,24 +9,27 @@ JWST Calibration Pipeline
 
 Note
 ----
-Beginning with version 0.9.0, **JWST requires Python 3.5 and above**.
+Beginning with version 0.9.0, **JWST requires Python 3.5 or above**.
 
 Installing
 ----------
 
-To install the latest released version of the library, we recommend using [conda](https://conda.io/docs/index.html)
-and the [astroconda](https://astroconda.readthedocs.io) channel to install the
-software and using a conda environment for the installation:
+To install a particular released version of the package, and all dependencies, we recommend using
+[conda](https://conda.io/docs/index.html) and a spec file that lists the exact versions of all packages to be installed.
+To create a new environment, use:
 
-    conda create -n jwst --override-channels -c http://ssb.stsci.edu/astroconda-dev -c defaults python=3.6 jwst
+    conda create -n jwst --file <URL>
     source activate jwst
 
-This will install the latest released version of the package, and within the
-`jwst` environment, the pipeline can be run from the command line or imported
-into python programs.   In order to install a specific version, the exact
-version can be supplied, e.g. `jwst=0.9.2`.
+where `<URL>` is of the form:
 
-To update to the latest nightly build
+    Linux: http://ssb.stsci.edu/releases/jwstdp/0.9.6/latest-linux
+    OS X: http://ssb.stsci.edu/releases/jwstdp/0.9.6/latest-osx
+
+Other particular versions can be installed by choosing a different version tag in place of "0.9.6" in the URL path.
+See the "Software vs DMS build version map" table below for a list of tags corresponding to particular releases.
+
+To update to the latest nightly build:
 
     conda update -n jwst --override-channels -c http://ssb.stsci.edu/astroconda-dev -c defaults --all
 
@@ -36,7 +39,7 @@ to install the dependencies, and then installing from the github repository:
 
     conda create -n jwst_dev --only-deps --override-channels -c http://ssb.stsci.edu/astroconda-dev -c defaults python=3.6 jwst
     source activate jwst_dev
-    git clone https://github.com/STScI-JWST/jwst.git
+    git clone https://github.com/spacetelescope/jwst.git
     cd jwst
     python setup.py develop
 
@@ -68,6 +71,8 @@ Software vs DMS build version map
 
 | jwst tag | DMS build |    Date    |          Notes                           |
 | -------- | --------- | ---------- | -----------------------------------------|
+|  0.9.6   | B7.1.3    | 06/08/2018 | Final release candidate for Build 7.1.3  |
+|  0.9.5   | B7.1.3rc3 | 06/06/2018 | Third release candidate for Build 7.1.3  |
 |  0.9.4   | B7.1.3rc2 | 05/29/2018 | Second release candidate for Build 7.1.3 |
 |  0.9.3   | B7.1.3rc1 | 05/11/2018 | First release candidate for Build 7.1.3  |
 |  0.9.2   |           | 03/28/2018 | DMS test, no delivery to I&T             |
@@ -97,7 +102,7 @@ Latest regression test results can be found here:
 
 https://boyle.stsci.edu:8081/job/RT/job/JWST/
 
-The test builds start at 10am and 7pm local Baltimore time every day on jwcalibdev.
+The test builds start at 11am and 6pm local Baltimore time every day on jwcalibdev.
 
 To run the regression tests on your local machine, `rsync` or `scp` the input and comparison data locally
 
@@ -109,7 +114,7 @@ set the environment variable TEST_BIGDATA to this location
 
 and then run the tests in the repository
 
-    cd ~/path/to/jwst
+    cd /path/to/jwst/jwst/tests_nightly/general
     pytest --bigdata .
 
 

@@ -62,7 +62,7 @@ class MultiSlitModel(model_base.DataModel):
             s = SlitModel(**kwargs)
             s.update(self)
 
-            if hasattr(slit.meta, 'wcs'):
+            if slit.meta.hasattr('wcs'):
                 s.meta.wcs = slit.meta.wcs
             return s
         else:

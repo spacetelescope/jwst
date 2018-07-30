@@ -113,6 +113,7 @@ SPEC2_SCIENCE_EXP_TYPES = [
     'nrs_msaspec',
     'nrs_brightobj',
     'nis_soss',
+    'nis_wfss',
 ]
 
 SPECIAL_EXPTYPES = {
@@ -376,7 +377,7 @@ class DMSBaseMixin(ACIDMixin):
         }
         try:
             self.data['products'].append(product)
-        except KeyError:
+        except (AttributeError, KeyError):
             self.data['products'] = [product]
 
     def update_asn(self, item=None, member=None):

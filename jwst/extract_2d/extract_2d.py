@@ -29,7 +29,8 @@ def extract2d(input_model, slit_name=None, apply_wavecorr=False, reference_files
         A list of grism objects.
     """
 
-    nrs_modes = ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_BRIGHTOBJ', 'NRS_LAMP']
+    nrs_modes = ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_BRIGHTOBJ',
+                 'NRS_LAMP', 'NRS_AUTOFLAT']
     grism_modes = ['NIS_WFSS', 'NRC_WFSS']
 
     exp_type = input_model.meta.exposure.type.upper()

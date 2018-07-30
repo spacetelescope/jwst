@@ -1,6 +1,5 @@
 
 # Routines used for building cubes
-from __future__ import absolute_import, print_function
 import sys
 import time
 import numpy as np
@@ -28,7 +27,7 @@ from gwcs import wcstools
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-class IFUCubeData(object):
+class IFUCubeData():
 # CubeData - holds all the importatn informtion for IFU Cube Building:
 # wcs, data, reference data
 

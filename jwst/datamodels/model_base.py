@@ -28,6 +28,7 @@ from . import schema as mschema
 from . import util
 from . import validate
 
+from .history import HistoryList
 from .extension import BaseExtension
 from jwst.transforms.jwextension import JWSTExtension
 from gwcs.extension import GWCSExtension
@@ -208,19 +209,15 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                     self.meta.filename = os.path.basename(filename)
 
         # if the input model doesn't have a date set, use the current date/time
-        if hasattr(self, "meta") and hasattr(self.meta, 'date'):
-            if self.meta.date is None:
-                current_date = Time(datetime.datetime.now())
-                current_date.format = 'isot'
-                self.meta.date = current_date.value
+        if not self.meta.hasattr('date'):
+            current_date = Time(datetime.datetime.now())
+            current_date.format = 'isot'
+            self.meta.date = current_date.value
 
         # store the data model type, if not already set
         klass = self.__class__.__name__
         if klass != 'DataModel':
-            if hasattr(self.meta, 'model_type'):
-                if self.meta.model_type is None:
-                    self.meta.model_type = klass
-            else:
+            if not self.meta.hasattr('model_type'):
                 self.meta.model_type = klass
 
     def __repr__(self):
@@ -833,22 +830,27 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
     @property
     def history(self):
-        return self._instance.setdefault('history', {})
+        """
+        Get the history as a list of entries
+        """
+        return HistoryList(self._asdf)
 
     @history.setter
-    def history(self, value):
+    def history(self, values):
         """
         Set a history entry.
 
         Parameters
         ----------
-        value : list
+        values : list
             For FITS files this should be a list of strings.
             For ASDF files use a list of ``HistoryEntry`` object. It can be created
             with `~jwst.datamodels.util.create_history_entry`.
 
         """
-        self._instance['history'] = value
+        entries = self.history
+        entries.clear()
+        entries.extend(values)
 
     def get_fits_wcs(self, hdu_name='SCI', hdu_ver=1, key=' '):
         """

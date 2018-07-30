@@ -2,6 +2,8 @@ from ..stpipe import Step
 from .. import datamodels
 from . import reset_sub
 
+__all__ = ["ResetStep"]
+
 
 class ResetStep(Step):
     """

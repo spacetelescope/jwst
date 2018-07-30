@@ -5,5 +5,8 @@ Notes
 These associations are specifically defined for use in DMS.
 """
 from jwst.associations import Association
-import jwst.associations.lib.rules_level3 as asn_level3
-import jwst.associations.lib.rules_level2b as asn_level2b
+from jwst.associations.registry import RegistryMarker
+
+from jwst.associations.lib import (rules_level2b, rules_level3)
+RegistryMarker.mark(rules_level2b)
+RegistryMarker.mark(rules_level3)
