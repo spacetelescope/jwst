@@ -8,6 +8,12 @@ from .helpers import (
 from .. import generate
 from ..main import constrain_on_candidates
 
+DITHER_PATTERN_MULTIPLIER = {
+    '0': 1,  # No pattern, 1-to-1 exposure count
+    '2': 2,  # Spatial, 2-to-1 exposure count
+    '3': 2,  # Spectral, 2-to-1 exposure count
+    '4': 4,  # Both, 4-to-1 exposure count
+}
 
 def test_nrs_msa_nod():
     pool = combine_pools(t_path('data/pool_023_nirspec_msa_3nod.csv'))
@@ -27,10 +33,12 @@ def test_nrs_fixedslit_nod():
     asns = generate(pool, registry_level2_only(
         global_constraints=constraint_all_candidates)
     )
-    assert len(asns) == 6
+    assert len(asns) == 30
     for asn in asns:
         nods = int(asn.constraints['nods'].value)
-        assert len(asn['products'][0]['members']) == nods
+        multiplier = DITHER_PATTERN_MULTIPLIER[asn.constraints['subpxpns'].value]
+        n_members = nods * multiplier
+        assert len(asn['products'][0]['members']) == n_members
 
 
 def test_nrs_fixedslit_nod_chop():

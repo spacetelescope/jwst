@@ -339,6 +339,10 @@ class Asn_Lv2NRSFSS(
                                 name='nods',
                                 sources=['numdthpt'],
                             ),
+                            DMSAttrConstraint(
+                                name='subpxpns',
+                                sources=['subpxpns'],
+                            ),
                             SimpleConstraint(
                                 value='science',
                                 test=lambda value, item: self.get_exposure_type(item) == value,
