@@ -149,7 +149,7 @@ setup(
     author_email='help@stsci.edu',
     description='The James Webb Space Telescope Calibration Pipeline',
     long_desctiption=('The JWST Data Reduction Pipeline is a Python '
-                      'software suite that automatically process the '
+                      'software suite that automatically processes the '
                       'data taken by the JWST instruments NIRCam, NIRSpec, '
                       'NIRISS, MIRI, and FGS to remove instrumental signatures '
                       'from the observations.'),
