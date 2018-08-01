@@ -102,7 +102,7 @@ For MIRI, SPECWCS reference files are currently selected based on the values of 
 
 For NIRCAM, SPECWCS reference files are currently selected based on the values of EXP_TYPE, MODULE, and PUPIL in the input science data set.
 
-For NIRCAM WFSS, SPECWCS reference files are currently selected based on the values of EXP_TYPE, MODULE, and PUPIL in the input science data set. 
+For NIRCAM WFSS, SPECWCS reference files are currently selected based on the values of EXP_TYPE, MODULE, and PUPIL in the input science data set.
 
 For NIRCAM TGRISM, SPECWCS reference files are currently selected based on the values of EXP_TYPE, MODULE, and PUPIL in the input science data set.
 
@@ -142,7 +142,7 @@ DISPERSER
 :::::::::
 
 
-The disperser reference file contains reference data about the NIRSPEC dispersers (gratings or the prism). 
+The disperser reference file contains reference data about the NIRSPEC dispersers (gratings or the prism).
 
 The following fields are common for all gratings and the prism:
 
@@ -150,11 +150,11 @@ The following fields are common for all gratings and the prism:
 :gwa_tiltx:
     :temperatures: Temperatures measured where the GWA sensor is
     :zeroreadings: Value of GWA sensor reading which corresponds to disperser model parameters
-    :tilt_model: Model of the relation between THETA_Y vs GWA_X reading
+    :tilt_model: Model of the relation between THETA_Y vs GWA_X sensor reading
 :gwa_tilty:
     :temperatures: Temperatures measured where the GWA sensor is
     :zeroreadings: Value of GWA sensor reading which corresponds to disperser model parameters
-    :tilt_model: Model of the relation between THETA_X vs GWA_Y reading
+    :tilt_model: Model of the relation between THETA_X vs GWA_Y sensor reading
 :tilt_x: Angle (in degrees) between the grating surface and the reference surface (the mirror)
 :tilt_y: Angle (in degrees) between the grating surface and the reference surface (the mirror)
 :theta_x: Element alignment angle in x-axis (in degrees)
@@ -166,8 +166,8 @@ The prism reference file has in addition the following fields:
 :angle: Angle between the front and back surface of the prosm (in degrees)
 :kcoef: K coefficients of Selmeir equation, describing the material
 :lcoef: L coeffficients describing the material
-:tcoef: Thermal coefficients describing the properties of the glass
-:tref: Reference temperature (in K)
+:tcoef: Six constants, describing the thermal behavior of the glass
+:tref: Temperature (in K), used to compute the change in temperature relative to the ref T of the glass
 :pref: Reference pressure (in ATM)
 :wbound: Min and Max wavelength (in meters) for which the model is valid
 
@@ -220,10 +220,10 @@ FPA
 
 The FPA reference file stores information on the metrology of the Focal Plane Assembly (FPA) which consists of two Sensor Chip Arrays (SCA), named NRS1 and NRS2.
 
-The reference file contains two fields : “NRS1” and “NRS2”. Each of them stores the transform (shift and rotation) to transform positions from the FPA to the respective SCA. The output units are in pixels.
+The reference file contains two fields : “nrs1_model” and “nrs2_model”. Each of them stores the transform (shift and rotation) to transform positions from the FPA to the respective SCA. The output units are in pixels.
 
-:NRS1: Transform for the NRS1 detector.
-:NRS2: Transform for the NRS2 detector.
+:nrs1_model: Transform for the NRS1 detector.
+:nrs2_model: Transform for the NRS2 detector.
 
 IFUFORE
 :::::::
@@ -240,7 +240,7 @@ The IFUPOST reference file provides the parameters (Paraxial and distortions coe
 
 The reference file contains models made up based on an offset and a polynomial. There is a model for each of the slits and is indexed by the slit number. The models is used as part of the conversion from the GWA to slit.
 
-:ifu_slice_number:
+:slice_<slice_number>:
     :model: Polynomial and rotation models.
 
 IFUSLICER
