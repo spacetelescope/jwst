@@ -1,7 +1,14 @@
 import logging
 import importlib
 from gwcs.wcs import WCS
-from.util import update_s_region
+from .util import update_s_region_keyword, update_s_region_imaging
+from ..associations.lib.dms_base import (TSO_EXP_TYPES, ACQ_EXP_TYPES,
+                                         IMAGE2_SCIENCE_EXP_TYPES,
+                                         IMAGE2_NONSCIENCE_EXP_TYPES)
+
+IMAGING_TYPES = set(tuple(ACQ_EXP_TYPES) + tuple(IMAGE2_SCIENCE_EXP_TYPES)
+                    + tuple(IMAGE2_NONSCIENCE_EXP_TYPES))
+
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -50,9 +57,11 @@ def load_wcs(input_model, reference_files={}):
         wcs = WCS(pipeline)
         output_model.meta.wcs = wcs
         output_model.meta.cal_step.assign_wcs = 'COMPLETE'
-        exclude_types = ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ', 'NRS_IFU',
-                         'NRS_MSASPEC', 'NRS_LAMP', 'MIR_MRS', 'NIS_SOSS',
-                         'NRC_WFSS', 'NRC_TSGRISM', 'NIS_WFSS', 'NRS_AUTOFLAT']
+        exclude_types = ['nrc_wfss', 'nrc_tsgrism', 'nis_wfss',
+                         'nrs_fixedslit', 'nrs_ifu', 'nrs_msaspec',
+                         'nrs_autowave', 'nrs_autoflat', 'nrs_lamp',
+                         'nrs_brightobj', 'mir_lrs-fixedslit', 'mir_lrs-slitless',
+                         'mir_mrs', 'nis_soss']
 
         if output_model.meta.exposure.type not in exclude_types:
             orig_s_region = output_model.meta.wcsinfo.s_region.strip()
@@ -62,6 +71,24 @@ def load_wcs(input_model, reference_files={}):
         else:
             log.info("assign_wcs did not update S_REGION for type {0}".format(output_model.meta.exposure.type))
         log.info("COMPLETED assign_wcs")
+
+        if output_model.meta.exposure.type.lower() not in exclude_types:
+            if output_model.meta.exposure.type.lower() in IMAGING_TYPES:
+                try:
+                    update_s_region_imaging(output_model)
+                except:
+                    log.error("Unable to update S_REGION for type {}".format(
+                        output_model.meta.exposure.type))
+                else:
+                    log.info("assign_wcs updated S_REGION to {0}".format(
+                        output_model.meta.wcsinfo.s_region))
+            else:
+                try:
+                    update_s_region_spectral(output_model)
+                except:
+                    log.info("Unable to update S_REGION for type {}".format(
+                        output_model.meta.exposure.type))
+    log.info("COMPLETED assign_wcs")
     return output_model
 
 

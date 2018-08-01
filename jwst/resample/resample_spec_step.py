@@ -2,7 +2,7 @@ from ..stpipe import Step
 from .. import datamodels
 from . import resample_spec, ResampleStep
 from ..exp_to_source import multislit_to_container
-from ..assign_wcs.util import update_s_region
+from ..assign_wcs.util import update_s_region_spectral
 
 
 __all__ = ["ResampleSpecStep"]
@@ -53,9 +53,6 @@ class ResampleSpecStep(ResampleStep):
                 # Do the resampling
                 resamp.do_drizzle()
 
-                for model in resamp.output_models:
-                    update_s_region(model)
-
                 if len(resamp.output_models) == 1:
                     out_slit = resamp.output_models[0]
                     output.products.append(out_slit)
@@ -87,5 +84,8 @@ class ResampleSpecStep(ResampleStep):
                 result = resamp.output_models[0]
             else:
                 result = resamp.output_models
+
+        for model in result.products:
+            update_s_region_spectral(model)
 
         return result
