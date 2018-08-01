@@ -429,11 +429,11 @@ def test_missing_msa_file():
     image = create_nirspec_mos_file()
     model = datamodels.ImageModel(image)
 
-    model.meta.instrument.msa_metafile = ""
+    model.meta.instrument.msa_metadata_file = ""
     with pytest.raises(MissingMSAFileError):
         assign_wcs_step.AssignWcsStep.call(model)
 
-    model.meta.instrument.msa_metafile = "missing.fits"
+    model.meta.instrument.msa_metadata_file = "missing.fits"
     with pytest.raises(MissingMSAFileError):
         assign_wcs_step.AssignWcsStep.call(model)
 
@@ -447,7 +447,7 @@ def test_open_slits():
     model = datamodels.ImageModel(image)
     msaconfl = get_file_path('msa_configuration.fits')
 
-    model.meta.instrument.msa_metafile = msaconfl
+    model.meta.instrument.msa_metadata_file = msaconfl
     model.meta.instrument.msa_metadata_id=12
 
     slits = nirspec.get_open_slits(model)
