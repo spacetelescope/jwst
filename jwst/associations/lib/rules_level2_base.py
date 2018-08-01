@@ -355,19 +355,20 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
     def make_nod_asns(self):
         """Make background nod Associations
 
-        NIRSpec MSA can be nodded, such that the object
-        is in a different position in the slitlet.
-        The association creation simply groups these all together
-        as a single association, all exposures marked as `science`.
-        When complete, this method will create separate associations
-        each exposure becoming the single science exposure, and the
-        other exposures then become `background`.
+        For observing modes, such as NIRSpec MSA, exposures can be
+        nodded, such that the object is in a different position in the
+        slitlet. The association creation simply groups these all
+        together as a single association, all exposures marked as
+        `science`. When complete, this method will create separate
+        associations each exposure becoming the single science
+        exposure, and the other exposures then become `background`.
 
         Returns
         -------
         associations: [association[, ...]]
             List of new associations to be used in place of
             the current one.
+
         """
 
         for product in self['products']:

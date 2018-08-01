@@ -275,7 +275,6 @@ class Asn_Lv2NRSMSA(
         # Now check and continue initialization.
         super(Asn_Lv2NRSMSA, self).__init__(*args, **kwargs)
 
-
     def finalize(self):
         """Finalize assocation
 
@@ -358,11 +357,10 @@ class Asn_Lv2NRSFSS(
         # Now check and continue initialization.
         super(Asn_Lv2NRSFSS, self).__init__(*args, **kwargs)
 
-
     def finalize(self):
         """Finalize assocation
 
-        For NRS MSA, finalization means creating new associations for
+        For NRS Fixed-slit, finalization means creating new associations for
         background nods.
 
         Returns
