@@ -750,7 +750,7 @@ def gwa_to_ifuslit(slits, input_model, disperser, reference_files):
         # construct IFU post transform
         ifupost_transform = _create_ifupost_transform(ifupost_sl)
         msa2gwa = ifuslicer_transform & Const1D(lam_cen) | ifupost_transform | collimator2gwa
-        gwa2slit = gwa_to_ymsa(msa2gwa, lam_cen)# TODO: Use model sets here
+        gwa2slit = gwa_to_ymsa(msa2gwa, lam_cen=lam_cen)# TODO: Use model sets here
 
         # The commnts below list the input coordinates.
         bgwa2msa = (
@@ -825,7 +825,7 @@ def gwa_to_slit(open_slits, input_model, disperser, reference_files):
 
             msa_data = msa_quadrant.data
             for slit in slits_in_quadrant:
-                mask = mask_slit(slit.ymin, slit.ymax)
+                #mask = mask_slit(slit.ymin, slit.ymax)
                 slit_id = slit.shutter_id
                 # Shutter IDs are numbered starting from 1
                 # while FS are numbered starting from 0.
@@ -836,12 +836,12 @@ def gwa_to_slit(open_slits, input_model, disperser, reference_files):
                 slitdata_model = get_slit_location_model(slitdata)
                 msa_transform = (slitdata_model | msa_model)
                 msa2gwa = (msa_transform | collimator2gwa)
-                gwa2msa = gwa_to_ymsa(msa2gwa)# TODO: Use model sets here
+                gwa2msa = gwa_to_ymsa(msa2gwa, slit=slit)# TODO: Use model sets here
                 bgwa2msa = Mapping((0, 1, 0, 1), n_inputs=3) | \
                     Const1D(0) * Identity(1) & Const1D(-1) * Identity(1) & Identity(2) | \
                     Identity(1) & gwa2msa & Identity(2) | \
                     Mapping((0, 1, 0, 1, 2, 3)) | Identity(2) & msa2gwa & Identity(2) | \
-                    Mapping((0, 1, 2, 3, 5), n_inputs=7) | Identity(2) & lgreq | mask
+                    Mapping((0, 1, 2, 3, 5), n_inputs=7) | Identity(2) & lgreq #| mask
                     #Mapping((0, 1, 2, 5), n_inputs=7) | Identity(2) & lgreq | mask
                     # and modify lgreq to accept alpha_in, beta_in, alpha_out
                 # msa to before_gwa
@@ -1312,7 +1312,7 @@ def get_slit_location_model(slitdata):
     return model
 
 
-def gwa_to_ymsa(msa2gwa_model, lam_cen=None):
+def gwa_to_ymsa(msa2gwa_model, lam_cen=None, slit=None):
     """
     Determine the linear relation d_y(beta_in) for the aperture on the detector.
 
@@ -1322,7 +1322,12 @@ def gwa_to_ymsa(msa2gwa_model, lam_cen=None):
         The transform from the MSA to the GWA.
     """
     nstep = 1000
-    dy = np.linspace(-.55, .55, nstep)
+    if slit is not None:
+        ymin, ymax = slit.ymin, slit.ymax
+    else:
+        ymin, ymax = (-.55, .55)
+    log.info('ymin, ymax {} {}'.format(ymin, ymax))
+    dy = np.linspace(ymin, ymax, nstep)
     dx = np.zeros(dy.shape)
     if lam_cen is not None:
         # IFU case where IFUPOST has a wavelength dependent distortion
