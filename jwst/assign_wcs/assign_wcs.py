@@ -63,15 +63,6 @@ def load_wcs(input_model, reference_files={}):
                          'nrs_brightobj', 'mir_lrs-fixedslit', 'mir_lrs-slitless',
                          'mir_mrs', 'nis_soss']
 
-        if output_model.meta.exposure.type not in exclude_types:
-            orig_s_region = output_model.meta.wcsinfo.s_region.strip()
-            update_s_region(output_model)
-            if orig_s_region != output_model.meta.wcsinfo.s_region.strip():
-                log.info("assign_wcs updated S_REGION to {0}".format(output_model.meta.wcsinfo.s_region))
-        else:
-            log.info("assign_wcs did not update S_REGION for type {0}".format(output_model.meta.exposure.type))
-        log.info("COMPLETED assign_wcs")
-
         if output_model.meta.exposure.type.lower() not in exclude_types:
             if output_model.meta.exposure.type.lower() in IMAGING_TYPES:
                 try:
