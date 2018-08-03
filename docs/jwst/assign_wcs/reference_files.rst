@@ -147,6 +147,7 @@ The disperser reference file contains reference data about the NIRSPEC disperser
 The following fields are common for all gratings and the prism:
 
 :grating: Name of grating
+: groovedensity: Number of grooves per meter in a grating
 :gwa_tiltx:
     :temperatures: Temperatures measured where the GWA sensor is
     :zeroreadings: Value of GWA sensor reading which corresponds to disperser model parameters
@@ -167,7 +168,7 @@ The prism reference file has in addition the following fields:
 :kcoef: K coefficients of Selmeir equation, describing the material
 :lcoef: L coeffficients describing the material
 :tcoef: Six constants, describing the thermal behavior of the glass
-:tref: Temperature (in K), used to compute the change in temperature relative to the ref T of the glass
+:tref: Temperature (in K), used to compute the change in temperature relative to the reference temperature of the glass
 :pref: Reference pressure (in ATM)
 :wbound: Min and Max wavelength (in meters) for which the model is valid
 
