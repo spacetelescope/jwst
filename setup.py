@@ -4,8 +4,14 @@ import subprocess
 import sys
 from setuptools import setup, find_packages, Extension, Command
 from setuptools.command.test import test as TestCommand
-from numpy import get_include as np_include
 from glob import glob
+
+try:
+    from numpy import get_include as np_include
+except ImportError:
+    print('Unable to import "numpy".\n'
+          'Please install "numpy" and try again.', file=sys.stderr)
+    exit(1)
 
 # hack building the sphinx docs with C source
 from setuptools.command.build_ext import build_ext
@@ -172,8 +178,30 @@ setup(
             define_macros=[('NUMPY', '1')]),
     ],
     install_requires=[
-        'namedlist'
+        'asdf>=2.0.0',
+        'astropy>=3.0',
+        'crds>=7.0.0',
+        'drizzle>=1.12',
+        'gwcs>=0.9.1',
+        'jsonschema>=2.6.0',
+        'namedlist>=1.7',
+        'numpy>=1.13',
+        'scipy>=1.0',
+        'spherical-geometry>=1.2.5',
+        'six',
+        'stsci.tools>=3.4',
+        'stsci.image>=2.3.0',
+        'stsci.imagestats>=1.4.2',
+        'stsci.convolve>=2.2.2',
+        'stsci.stimage>=0.2.2',
+        'photutils>=0.4',
+        'pytest',
+        'pytest-remotedata',
+        'verhawk>=0.0.2',
     ],
+    extras_require={
+        'ephem': ['pymssql>=2.1.3', 'jplephem>=2.8'],
+    },
     tests_require=[
         'pytest',
         'requests_mock',
