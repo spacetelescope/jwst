@@ -144,10 +144,13 @@ DISPERSER
 
 The disperser reference file contains reference data about the NIRSPEC dispersers (gratings or the prism).
 
+Files applicable to gratings have a field:
+
+:groovedensity: Number of grooves per meter in a grating
+
 The following fields are common for all gratings and the prism:
 
 :grating: Name of grating
-: groovedensity: Number of grooves per meter in a grating
 :gwa_tiltx:
     :temperatures: Temperatures measured where the GWA sensor is
     :zeroreadings: Value of GWA sensor reading which corresponds to disperser model parameters
