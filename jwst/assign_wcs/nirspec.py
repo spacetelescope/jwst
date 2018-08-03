@@ -825,7 +825,7 @@ def gwa_to_slit(open_slits, input_model, disperser, reference_files):
 
             msa_data = msa_quadrant.data
             for slit in slits_in_quadrant:
-                #mask = mask_slit(slit.ymin, slit.ymax)
+                mask = mask_slit(slit.ymin, slit.ymax)
                 slit_id = slit.shutter_id
                 # Shutter IDs are numbered starting from 1
                 # while FS are numbered starting from 0.
@@ -841,7 +841,7 @@ def gwa_to_slit(open_slits, input_model, disperser, reference_files):
                     Const1D(0) * Identity(1) & Const1D(-1) * Identity(1) & Identity(2) | \
                     Identity(1) & gwa2msa & Identity(2) | \
                     Mapping((0, 1, 0, 1, 2, 3)) | Identity(2) & msa2gwa & Identity(2) | \
-                    Mapping((0, 1, 2, 3, 5), n_inputs=7) | Identity(2) & lgreq #| mask
+                    Mapping((0, 1, 2, 3, 5), n_inputs=7) | Identity(2) & lgreq | mask
                     #Mapping((0, 1, 2, 5), n_inputs=7) | Identity(2) & lgreq | mask
                     # and modify lgreq to accept alpha_in, beta_in, alpha_out
                 # msa to before_gwa
