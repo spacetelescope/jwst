@@ -1,6 +1,6 @@
 # Global owners
 
-* @hbushouse
+* @hbushouse @stscieisenhamer @stscicrawford
 jwst/ami                 @dmggh             @hbushouse
 jwst/assign_wcs          @nden              @sosey
 jwst/associations        @stscieisenhamer
