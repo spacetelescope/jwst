@@ -75,7 +75,7 @@ CRDS Selection Criteria
 Reference File Formats
 ::::::::::::::::::::::
 
-The disperser file contains reference data about the NIRSPEC dispersers (gratings or the prism). The reference data is described in the NIRSPEC Interface Control Document.
+The disperser file contains reference data about the NIRSPEC dispersers (gratings or the prism).
 
 The following fields are common for all gratings and the prism:
 
@@ -83,7 +83,7 @@ The following fields are common for all gratings and the prism:
 :gwa_tiltx:
     :temperatures: Temperatures measured where the GWA sensor is
     :zeroreadings: Value of GWA sensor reading which corresponds to disperser model parameters
-    :tilt_model: Model of the relation between THETA_Y vs GWA_X reading
+    :tilt_model: Model of the relation between THETA_Y vs GWA_X sensor reading
 :gwa_tilty:
     :temperatures: Temperatures measured where the GWA sensor is
     :zeroreadings: Value of GWA sensor reading which corresponds to disperser model parameters
@@ -99,8 +99,8 @@ The prism reference file has in addition the following fields:
 :angle: Angle between the front and back surface of the prosm (in degrees)
 :kcoef: K coefficients of Selmeir equation, describing the material
 :lcoef: L coeffficients describing the material
-:tcoef: Thermal coefficients describing the properties of the glass
-:tref: Reference temperature (in K)
+:tcoef: Six constants, describing the thermal behavior of the glass
+:tref: Temperature (in K), used to compute the change in temperature relative to the ref T of the glass.
 :pref: Reference pressure (in ATM)
 :wbound: Min and Max wavelength (in meters) for which the model is valid
 
@@ -187,10 +187,10 @@ Reference File Formats
 
 The FPA reference file stores information on the metrology of the Focal Plane Array (FPA) which consists of two single chip arrays (SCA), named NRS1 and NRS2.
 
-The reference file contains two fields : “NRS1” and “NRS2”. Each of them stores the transform (shift and rotation) to transform positions from the FPA to the respective SCA. The output units are in pixels.
+The reference file contains two fields : “nrs1_model” and “nrs2_model”. Each of them stores the transform (shift and rotation) to transform positions from the FPA to the respective SCA. The output units are in pixels.
 
-:NRS1: Transform for the NRS1 detector.
-:NRS2: Transform for the NRS2 detector.
+:nrs1_model: Transform for the NRS1 detector.
+:nrs2_model: Transform for the NRS2 detector.
 
 IFUFORE
 -------
@@ -223,7 +223,7 @@ The IFUPOST reference file provides the parameters (Paraxial and distortions coe
 
 The reference file contains models made up based on an offset and a polynomial. There is a model for each of the slits and is indexed by the slit number. The models is used as part of the conversion from the GWA to slit.
 
-:ifu_slice_number:
+:slice_<number>:
     :model: Polynomial and rotation models.
 
 IFUSLICER
