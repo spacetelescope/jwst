@@ -192,7 +192,6 @@ setup(
         'stsci.tools~=3.4',
         'stsci.image~=2.3',
         'stsci.imagestats~=1.4',
-        'stsci.convolve~=2.2',
         'stsci.stimage~=0.2',
         'photutils~=0.4',
         'pytest',
