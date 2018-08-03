@@ -74,7 +74,6 @@ class ResampleSpecStep(ResampleStep):
 
             for model in resamp.output_models:
                 model.meta.cal_step.resample = "COMPLETE"
-                update_s_region(model)
                 model.meta.asn.pool_name = input_models.meta.pool_name
                 model.meta.asn.table_name = input_models.meta.table_name
 
