@@ -22,7 +22,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 class CubeBlot():
-# CubeBlot - holds all the important information for Blotting an IFU Cube back to detecto:
+# CubeBlot - holds all the important information for Blotting an IFU Cube back to detector:
 
     def __init__(self, median_model,
                  input_models):
@@ -139,7 +139,10 @@ class CubeBlot():
 # determine the ra and dec values for each x,y pixel on the detector.
 
             log.info('Blotting back %s',model.meta.filename)
-            ra_det,dec_det,wave_det = model.meta.wcs(xdet,ydet)
+            ra_det,dec_det,wave_det = model.meta.wcs(xdet,ydet) # for NIRSPEC need 
+                                #to loop over slices 
+                                #want ra_det,dec_det,wave_det formed from looping
+                                #but the same size as xdet,ydet
 
             valid1 = np.isfinite(ra_det)
             valid2 = np.isfinite(dec_det)
