@@ -15,6 +15,7 @@ from gwcs import coordinate_frames as cf
 from .. import datamodels
 from . import gwcs_drizzle
 from . import resample_utils
+from ..assign_wcs.util import bounding_box_from_shape
 
 CRBIT = np.uint32(datamodels.dqflags.pixel['JUMP_DET'])
 
@@ -147,7 +148,7 @@ class ResampleSpecData:
         output_wcs = WCS(pipeline)
 
         self.data_size = (slit_height_pix, len(lookup_table))
-        bounding_box = resample_utils.bounding_box_from_shape(self.data_size)
+        bounding_box = bounding_box_from_shape(self.data_size)
         output_wcs.bounding_box = bounding_box
         return output_wcs
 
@@ -284,7 +285,7 @@ class ResampleSpecData:
             output_model = self.blank_output.copy()
             output_model.meta.wcs = self.output_wcs
 
-            bb = resample_utils.bounding_box_from_shape(output_model.data.shape)
+            bb = bounding_box_from_shape(output_model.data.shape)
             output_model.meta.wcs.bounding_box = bb
             output_model.meta.filename = obs_product
 

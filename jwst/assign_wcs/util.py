@@ -544,21 +544,13 @@ def get_num_msa_open_shutters(shutter_state):
 
 def update_s_region(model):
     """
-    Update the ``S_REGION`` keyword usiong ``WCS.footprint``.
-
+    Update the ``S_REGION`` keyword usiong ``WCS.footprint()``.
     """
     bbox = None
-    def _bbox_from_shape(model):
-        shape = model.data.shape
-        bbox = ((0, shape[1]), (0, shape[0]))
-        return bbox
     try:
         bbox = model.meta.wcs.bounding_box
     except NotImplementedError:
-        bbox = _bbox_from_shape(model)
-
-    if bbox is None:
-        bbox = _bbox_from_shape(model)
+        bbox = bounding_box_from_shape(model.data.shape)
 
     # footprint is an array of shape (2, 2) or (3, 3)
     footprint = model.meta.wcs.footprint(bbox, center=True)
@@ -583,3 +575,22 @@ def update_s_region(model):
         log.info("There are NaNs in s_region")
     else:
         model.meta.wcsinfo.s_region = s_region
+
+
+def bounding_box_from_shape(shape):
+    """ Return a bounding_box for WCS based on a 2D numpy shape
+    """
+    bb = []
+    for s in reversed(shape):
+        bb.append((-0.5, s - 0.5))
+    return tuple(bb)
+
+
+def shape_from_bounding_box(bounding_box):
+    """ Return a 2D numpy shape based on the provided bounding_box
+    """
+    size = []
+    for axs in bounding_box:
+        delta = axs[1] - axs[0]
+        size.append(int(delta + 0.5))
+    return tuple(reversed(size))
