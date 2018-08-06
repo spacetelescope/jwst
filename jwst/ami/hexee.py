@@ -209,7 +209,7 @@ def hex_eeAG(s=(121, 121), c=None, d=0.80, lam=4.3e-6,
     if c is None:
         c = float(s[0]) / 2.0 - 0.5, float(s[1]) / 2.0 - 0.5
 
-    log.debug('hex_eeAG: center: %s, s: %s', c, s)
+    # log.debug('hex_eeAG: center: %s, s: %s', c, s)
 
     h1 = np.fromfunction(g_eeAG, s, d=d, c=c, lam=lam, pixel=pitch, minus=False)
     h2 = np.fromfunction(g_eeAG, s, d=d, c=c, lam=lam, pixel=pitch, minus=True)
@@ -232,12 +232,12 @@ def hex_eeAG(s=(121, 121), c=None, d=0.80, lam=4.3e-6,
     # Replace NaN strip with limiting behavior; the same for both halves
     hex_complex[xnan[:], ynan[:]] = 2.0 * centralpix_limit()
 
-    if (log.getEffectiveLevel() <= logging.DEBUG):
-        hr = hex_complex.real
-        hi = hex_complex.imag
-        log.debug('hex_eeAG: hr.min: %s, hr.mean: %s, hr.max: %s',
-                   hr.min(), hr.mean(), hr.max())
-        log.debug('hex_eeAG: hi.min: %s, hi.mean: %s, hi.max: %s',
-                   hi.min(), hi.mean(), hi.max())
+    # if (log.getEffectiveLevel() <= logging.DEBUG):
+    #     hr = hex_complex.real
+    #     hi = hex_complex.imag
+    #     log.debug('hex_eeAG: hr.min: %s, hr.mean: %s, hr.max: %s',
+    #                hr.min(), hr.mean(), hr.max())
+    #     log.debug('hex_eeAG: hi.min: %s, hi.mean: %s, hi.max: %s',
+    #                hi.min(), hi.mean(), hi.max())
 
     return np.abs(hex_complex)
