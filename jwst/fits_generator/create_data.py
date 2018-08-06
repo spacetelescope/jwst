@@ -26,7 +26,10 @@ def get_proposals(base_directory='.'):
     for dirname, subdirlist, filelist in os.walk(base_directory):
         for name in filelist:
             if name.endswith('.prop'):
-                proposal_list.append((dirname, name))
+                if name.startswith('_'):
+                    pass
+                else:
+                    proposal_list.append((dirname, name))
     return proposal_list
 
 def write_observation_identifiers(id):
@@ -90,11 +93,10 @@ def pre_clean():
 
 def run(base_directory='.', level='1b'):
     '''Do it'''
-
+    absolute_base = os.path.abspath(base_directory)
     proposals = get_proposals(base_directory=base_directory)
 
     for proposal in proposals:
-
         directory = proposal[0]
         proposal_file = proposal[1]
 
@@ -122,3 +124,5 @@ def run(base_directory='.', level='1b'):
                                        subarray=subarray_argument,
                                        exp_type=exp_type)
             remove_observation_identifiers(obsidfile)
+        #
+        os.chdir(absolute_base)
