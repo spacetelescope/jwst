@@ -237,7 +237,6 @@ class IFUCubeData():
         self.output_name = self.define_cubename()
         self.find_output_type()
 
-#        self.spaxel = IFUCubeData.create_spaxel(self)
         self.spaxel = self.create_spaxel()
 
         # now need to loop over every file that covers this channel/subchannel (MIRI)
@@ -305,7 +304,6 @@ class IFUCubeData():
             t0 = time.time()
 # for each new data model create a new spaxel
             spaxel = []
-#            spaxel = IFUCubeData.create_spaxel(self)
             spaxel = self.create_spaxel()
 
             with datamodels.IFUImageModel(self.input_models[j]) as input_model:
@@ -336,11 +334,6 @@ class IFUCubeData():
                         t0a = time.time()
                         slice_wcs = nirspec.nrs_wcs_set_input(input_model, ii)
                         x,y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
-                        #NIRSPEC TEMPORARY FIX FOR WCS 1 BASED and NOT 0 BASED
-                        # NIRSPEC team delivered transforms that are valid for x,y in 1 based system
-                        #x = x + 1
-                        #y = y + 1
-                        # Done NIRSPEC FIX
 
                         cube_cloud.match_det2cube(self,input_model,
                                                   x, y, ii,
@@ -573,11 +566,7 @@ class IFUCubeData():
                         x,y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box,
                                                               step=(1,1), center=True)
                         
-                        #NIRSPEC TEMPORARY FIX FOR WCS 1 BASED and NOT 0 BASED
-                        # NIRSPEC team delivered transforms that are valid for x,y in 1 based system
-                        #x = x + 1
-                        #y = y + 1
-                        # Done NIRSPEC FIX
+
                         t0 = time.time()
                         cube_cloud.match_det2cube(self,input_model,
                                                   x, y, i,

@@ -51,11 +51,11 @@ def match_det2cube(self, input_model,
     if self.instrument == 'MIRI':
         file_no = file_slice_no
 
-        ra,dec,lam = input_model.meta.wcs(x,y)
+        ra,dec,lam = input_model.meta.wcs(x,y) # for entire detector find  ra,dec,lambda
         valid1 = np.isfinite(ra)
         valid2 = np.isfinite(dec)
-        if self.weighting == 'miripsf':
-            #need alpha beta values
+        if self.weighting == 'miripsf': # MIRI PSF weighting uses alpha-beta 
+            # plane weighting
             det2ab_transform = input_model.meta.wcs.get_transform('detector','alpha_beta')
             worldtov23 = input_model.meta.wcs.get_transform("world","v2v3")
             v2ab_transform = input_model.meta.wcs.get_transform('v2v3',
@@ -73,11 +73,12 @@ def match_det2cube(self, input_model,
             # ra-dec -> v2,v3
             # v2,v3 -> local alpha,beta
             
-        if self.coord_system == 'alpha-beta':
+        if self.coord_system == 'alpha-beta': # making Alpha-Beta final Cubes
             det2ab_transform = input_model.meta.wcs.get_transform('detector','alpha_beta')
             alpha, beta, wave = det2ab_transform(x, y)            
 #________________________________________________________________________________
-    elif self.instrument == 'NIRSPEC':
+    elif self.instrument == 'NIRSPEC': # for NIRSPEC need to look over every slice
+        # Slice No are provided by ifu_cube.py
         islice = file_slice_no
         slice_wcs = nirspec.nrs_wcs_set_input(input_model, islice)
 
@@ -124,6 +125,7 @@ def match_det2cube(self, input_model,
     dec = dec - c2_offset/3600.0
     ra_use = ra[good_data]
     dec_use = dec[good_data]
+    # find the Cube Coordinates 
     if self.instrument == 'MIRI' and self.weighting == 'miripsf':
         alpha_det = alpha[good_data]
         beta_det = beta[good_data]
@@ -132,8 +134,8 @@ def match_det2cube(self, input_model,
         coord1 = alpha[good_data]
         coord2 = beta[good_data]
 
-    else:
-# xi,eta in arc seconds
+    else: 
+# xi,eta in arc seconds (works both for MIRI and NIRSPEC)
         xi,eta = coord.radec2std(self.Crval1, self.Crval2,ra_use,dec_use) 
         coord1 = xi
         coord2 = eta
@@ -148,17 +150,13 @@ def match_det2cube(self, input_model,
 
 #    print('looping over n points on exposure and mapping to cloud',nn)
 #________________________________________________________________________________
-    for ipt in range(0, nn - 1):
+    for ipt in range(0, nn - 1): 
 #________________________________________________________________________________        
         # Cube.Xcenters, ycenters is a flattened 1-D array of the 2 X 2 xy plane
         # cube coordinates. 
         # find the spaxels that fall withing ROI of point cloud defined  by
         # coord1,coord2,wave
-#        if(ipt > 2): sys.exit('STOP')
-#        print('For point ',coord1[ipt],coord2[ipt],wave[ipt],ipt)
 
-#        if(ipt == 0):
-#            print('size of Xcenters',self.Xcenters.size)
         xdistance = (self.Xcenters - coord1[ipt])
         ydistance = (self.Ycenters - coord2[ipt])
         radius = np.sqrt(xdistance * xdistance + ydistance * ydistance)
@@ -174,10 +172,14 @@ def match_det2cube(self, input_model,
         d3 = (zlam - wave[ipt])/self.Cdelt3
 
         dxy = d1*d1 + d2*d2
+        # Form weighting factor 
         wdistance = [xy + z*z for z in d3 for xy in dxy]
 
+#**********************************************************************
+# WEIGHTING = MIRPSF 
 #TODO with the CPD 7 delivery of new reference file is this going away ???
 # if it stays then update to use list comprehension
+#**********************************************************************
         if  self.weighting =='miripsf':
             weights = FindNormalizationWeights(wave[ipt], 
                                                wave_resol,
@@ -222,35 +224,44 @@ def match_det2cube(self, input_model,
 #                spaxel[cube_index].iflux = spaxel[cube_index].iflux + 1
 
 
+#________________________________________________________________________________
+# If debug information is wanted find cube Location for later
+#________________________________________________________________________________
         if self.debug_pixel == 1:
             yy_cube = [ rr/self.naxis1 for rr in indexr[0]]
             yy_cube = [ int(x) for x in yy_cube]
             xx_cube = [rr -yy*self.naxis1 for rr,yy in zip(indexr[0],yy_cube)] 
             zz_cube = [ zz for zz in indexz[0]]
             cube_location = [ (xx,yy,zz) for zz in indexz[0] for xx,yy in zip(xx_cube,yy_cube)]
-
+#----------------------------------------------------------------------
         weight_distance = [ math.pow( math.sqrt(x),self.weight_power) for x in wdistance]
         weight_distance = np.asarray([lower_limit if x < lower_limit else x for x in weight_distance])
         weight_distance = 1.0/weight_distance
         cube_index = [ (xy + z*nplane) for z in indexz[0] for xy in indexr[0]] 
 
-        for iz,zz in enumerate(cube_index):
+        for iz,zz in enumerate(cube_index): # loop over all cube spaxels Point 
+            # cloud overlaps with
             spaxel[zz].flux = spaxel[zz].flux + weight_distance[iz]*flux[ipt]
             spaxel[zz].flux_weight = spaxel[zz].flux_weight + weight_distance[iz]
             spaxel[zz].iflux = spaxel[zz].iflux + 1
 
+#----------------------------------------------------------------------
+# debug informatons
             if( self.debug_pixel == 1 and self.xdebug == cube_location[iz][0] and
-                self.ydebug == cube_location[iz][1] and self.zdebug ==cube_location[iz][2]):
+                self.ydebug == cube_location[iz][1] and 
+                self.zdebug ==cube_location[iz][2]):
 
                 log.debug('For spaxel %d %d %d, %d detector x,y,flux %d %d %f %d %f '
                           %(self.xdebug+1,self.ydebug+1,
                             self.zdebug+1,ipt,xpix[ipt]+1,ypix[ipt]+1,
                             flux[ipt],file_slice_no,weight_distance[iz]))
-                self.spaxel_debug.write('For spaxel %d %d %d %d, detector x,y,flux %d %d %f %d %f %f %f %f %f '
-                                        %(self.xdebug+1,self.ydebug+1,
-                                          self.zdebug+1,ipt,xpix[ipt]+1,ypix[ipt]+1,
-                                          flux[ipt],file_slice_no,weight_distance[iz],wave[ipt],
-                                          d1*self.Cdelt1,d2*self.Cdelt2,d3*self.Cdelt3) +' \n')
+                self.spaxel_debug.write(
+                    'For spaxel %d %d %d %d, detector x,y,flux %d %d %f %d %f %f %f %f %f '
+                    %(self.xdebug+1,self.ydebug+1,
+                      self.zdebug+1,ipt,xpix[ipt]+1,ypix[ipt]+1,
+                      flux[ipt],file_slice_no,weight_distance[iz],wave[ipt],
+                      d1*self.Cdelt1,d2*self.Cdelt2,d3*self.Cdelt3) +' \n')
+#----------------------------------------------------------------------
         iprint = iprint +1
         if iprint == 10000:
             log.debug('Mapping point and finding ROI for point cloud # %d %d' %(ipt,nn))
