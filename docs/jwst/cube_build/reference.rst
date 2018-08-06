@@ -5,9 +5,9 @@ There are two types of reference files used by the cube_build step. The first ty
 cube parameters used in setting up the output IFU Cube. The reftype for this reference file is *cubepars*
 and there is a  reference file of this type for MIRI data and one for NIRSPEC data. These files contain  tables 
 for each band of the spatial and spectral size and the size of the region of interest to use to construct the 
-IFU cube. For build 7.1, if more than one band is used to build the IFU cube,
+If more than one band is used to build the IFU cube,
 then the final spatial and spectral size will be the smallest one from the list of input bands. 
-Build 7.1 can only produce  IFU cubes with a linear spatial and spectral dimension. In build 7.2 we plan 
+Currently cube_build can only produce IFU cubes with a linear spatial and spectral dimension. In the future we plan 
 to allow a varying spectral step with wavelength.
 
 The other type of reference file pertains only to MIRI data and contains the width of the PSF and LSF per
