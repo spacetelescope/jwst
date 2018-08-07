@@ -25,8 +25,11 @@ def get_proposals(base_directory='.'):
     proposal_list = []
     for dirname, subdirlist, filelist in os.walk(base_directory):
         for name in filelist:
-            if name.endswith('.prop'):
-                proposal_list.append((dirname, name))
+            if name.startswith('_'):
+                pass
+            else:
+                if name.endswith('.prop'):
+                    proposal_list.append((dirname, name))
     return proposal_list
 
 def write_observation_identifiers(id):
