@@ -30,6 +30,10 @@ allOf:
               title: EXTNAME of the extension containing data quality mask
               type: string
               fits_keyword: MASKEXT
+            wave_extension:
+              title: EXTNAME of the extension containing wavelength slice data
+              type: string
+              fits_keyword: WAVEEXT
             roi_spatial:
               title: "[arcsec] Size of ROI in spatial dimension"
               type: number
@@ -71,5 +75,11 @@ allOf:
       fits_hdu: WMAP
       default: 0.0
       ndim: 3
+      datatype: float32
+    wavetable:
+      title: Wavelength value for slices
+      fits_hdu: WCS-TAB
+      default: 0.0
+      ndim: 1
       datatype: float32
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema
