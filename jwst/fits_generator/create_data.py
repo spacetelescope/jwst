@@ -25,7 +25,7 @@ def get_proposals(base_directory='.'):
     proposal_list = []
     for dirname, subdirlist, filelist in os.walk(base_directory):
         for name in filelist:
-            if name.startswith('_'):
+            if name.startswith('.'):
                 pass
             else:
                 if name.endswith('.prop'):
