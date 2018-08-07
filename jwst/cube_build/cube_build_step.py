@@ -41,14 +41,16 @@ SHORT,MEDIUM,LONG, or ALL
          offset_list = string(default='NA')  # A file for dithered data containing additional ra and dec offsets
          wavemin = float(default=None)  # Minimum wavelength to be used in the IFUCube
          wavemax = float(default=None)  # Maximum wavelength to be used in the IFUCube
+         single = boolean(default=false) # Internal pipeline option used by mrs_imatch and outlier detection
          xdebug = integer(default=None) # debug option, x spaxel value to report information on
          ydebug = integer(default=None) # debug option, y spaxel value to report information on
          zdebug = integer(default=None) # debug option, z spaxel value to report  information on
-         single = boolean(default=false) # Internal pipeline option used by mrs_imatch and outlier detection
          output_type = option('band','channel','grating','multi',default='band') # Type IFUcube to create. Options=band,channel,grating,multi
          search_output_file = boolean(default=false)
          output_use_model = boolean(default=true) # Use filenames in the output models
        """
+
+
     reference_file_types = ['cubepar','resol']
 
     def process(self, input):
@@ -124,6 +126,7 @@ SHORT,MEDIUM,LONG, or ALL
 
         if self.single :
             self.output_type = 'single'
+            self.log.info('Cube Type: Single cubes ')
 
 #________________________________________________________________________________
     # read input parameters - Channel, Band (Subchannel), Grating, Filter
