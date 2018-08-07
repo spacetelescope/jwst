@@ -145,7 +145,7 @@ class FormatTemplate(Formatter):
         self._used_keys = []
 
         # Preformat the values
-        formatted_kwargs = dict()
+        formatted_kwargs = {}
         for key, value in kwargs.items():
             if value is not None:
                 for key_format in self.key_formats[key]:
@@ -153,7 +153,7 @@ class FormatTemplate(Formatter):
                     # Get the formatting type character. Indices are:
                     #  0: The first replacement field. There should only be one.
                     #  2: Get the format spec.
-                    #  3: Get the last character representing the type.
+                    #  -1: Get the last character representing the type.
                     format_type = list(self.parse(key_format))[0][2][-1]
 
                     try:
@@ -169,7 +169,7 @@ class FormatTemplate(Formatter):
                             key=key, value=value, formats=self.key_formats[key]
                         )
                     )
-                formatted_kwargs[key] = value
+            formatted_kwargs[key] = value
         result = super(FormatTemplate, self).format(
             format_string, **formatted_kwargs
         )
