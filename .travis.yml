@@ -69,6 +69,9 @@ matrix:
           env: SETUP_CMD='build_sphinx'
                CONDA_DEPENDENCIES="$CONDA_DEPENDENCIES $CONDA_DOC_DEPENDENCIES"
                PIP_DEPENDENCIES='sphinx_rtd_theme stsci_rtd_theme sphinx-automodapi'
+        - os: linux
+          env: MAIN_CMD='flake8 --count'
+               SETUP_CMD='jwst' TEST_CMD='flake8 --version --select=F401, F402, F841, E722'
 
     allow_failures:
         # PEP8 will fail for numerous reasons. Ignore it.
