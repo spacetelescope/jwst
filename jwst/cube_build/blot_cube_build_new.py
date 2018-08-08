@@ -135,26 +135,32 @@ class CubeBlot():
 
             elif self.instrument =='NIRSPEC':
                 blot.meta.filename = filename[:indx] + '_blot.fits' #set output name
-                ydet,xdet=np.mgrid[:2048,:2048]
-
+                ra_det=np.zeros((2048,2048))
+                dec_det=np.zeros((2048,2048))
+                lam_det=np.zeros((2048,2048))
+                print('ra det shape',ra_det.shape)
+                
                 # for NIRSPEC each file has 30 slices - wcs information access seperately for each slice
                 start_slice = 0
                 end_slice = 29
                 nslices = end_slice - start_slice + 1
                 regions = list(range(start_slice, end_slice + 1))
                 for ii in regions:
-                    slice_wcs = nirspec.nrs_wcs_set_input(input_model, ii)
-                    x = x.astype(np.int)
-                    y = y.astype(np.int)
+                    slice_wcs = nirspec.nrs_wcs_set_input(model, ii)
+                    x,y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
+                    from gwcs.utils import _toindex
+                    xind = _toindex(x)
+                    yind = _toindex(y)
+                    
+                    xdet = x.astype(np.int)
+                    ydet = y.astype(np.int)
+                    
                     ra, dec, lam = slice_wcs(x, y)
-                    if ii == 0:
-                        ra_det = np.append(ra)
-                        dec_det = np.append(dec)
-                        wave_det = np.append(lam)
-                    else:
-                        ra_det = np.append(ra_det)
-                        dec_det = np.append(dec_det)
-                        lam_det = np.append(lam_det)
+                    ra_det[yind,xind] = ra 
+                    dec_det[yind,xind] = dec
+                    lam_det[yind,xind] = lam
+
+#                    print('ra det shape',ra_det.shape)
 # determine the ra and dec values for each x,y pixel on the detector.
 
             log.info('Blotting back %s',model.meta.filename)
@@ -162,18 +168,18 @@ class CubeBlot():
 
             valid1 = np.isfinite(ra_det)
             valid2 = np.isfinite(dec_det)
-            valid3 = np.isfinite(wave_det)
+            valid3 = np.isfinite(lam_det)
             if self.instrument == 'MIRI':
                 value = valid1 & valid2 & valid3 & pixel_mask
-            elif elf.instrument == 'NIRSPEC':
+            elif self.instrument == 'NIRSPEC':
                 value = valid1 & valid2 & valid3
 
             good_data =  np.where( value == True)
             y,x = good_data
-
+            
             ra_blot = ra_det[good_data]
             dec_blot = dec_det[good_data]
-            wave_blot = wave_det[good_data]
+            wave_blot = lam_det[good_data]
                 
             crval1 = model.meta.wcsinfo.crval1
             crval2 = model.meta.wcsinfo.crval2
@@ -187,8 +193,8 @@ class CubeBlot():
             self.eta_centers =np.reshape(eta_cube[0,:,:],nplane)
                 
             num = ra_blot.size
-#                print('Size of pixel detectors looping over',num)
-            iprint = 0 
+            iprint = 0
+            print('Number to loop over',num)
 #________________________________________________________________________________  
                # loop over the valid pixels on the detector
             for ipt in range(0, num - 1):
