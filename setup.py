@@ -147,13 +147,13 @@ setup(
     version=version.pep386,
     author='JWST Pipeline developers',
     author_email='help@stsci.edu',
-    description='The James Webb Space Telescope Calibration Pipeline',
+    description='Python library for science observations from the James Webb Space Telescope',
     long_desctiption=('The JWST Data Reduction Pipeline is a Python '
                       'software suite that automatically processes the '
                       'data taken by the JWST instruments NIRCam, NIRSpec, '
                       'NIRISS, MIRI, and FGS to remove instrumental signatures '
                       'from the observations.'),
-    url='http://ssb.stsci.edu',
+    url='https://github.com/spacetelescope/jwst',
     license='BSD',
     classifiers=[
         'Intended Audience :: Science/Research',
