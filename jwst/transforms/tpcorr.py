@@ -131,8 +131,8 @@ class TPCorr(Model):
 
         """
         h = np.hypot(x, y)
-        alpha = np.rad2deg(np.arctan2(y, x))
-        delta = np.rad2deg(np.arctan2(z, h))
+        alpha = 3600.0 * np.rad2deg(np.arctan2(y, x))
+        delta = 3600.0 * np.rad2deg(np.arctan2(z, h))
         return alpha, delta
 
     @staticmethod
@@ -141,8 +141,8 @@ class TPCorr(Model):
         Convert spherical coordinates (in deg) to cartesian.
 
         """
-        alpha = np.deg2rad(alpha)
-        delta = np.deg2rad(delta)
+        alpha = np.deg2rad(alpha / 3600.0)
+        delta = np.deg2rad(delta / 3600.0)
         x = np.cos(alpha) * np.cos(delta)
         y = np.cos(delta) * np.sin(alpha)
         z = np.sin(delta)
