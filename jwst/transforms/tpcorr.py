@@ -127,7 +127,7 @@ class TPCorr(Model):
     @staticmethod
     def cartesian2spherical(x, y, z):
         """
-        Convert cartesian coordinates to spherical coordinates (in deg).
+        Convert cartesian coordinates to spherical coordinates (in acrsec).
 
         """
         h = np.hypot(x, y)
@@ -138,7 +138,7 @@ class TPCorr(Model):
     @staticmethod
     def spherical2cartesian(alpha, delta):
         """
-        Convert spherical coordinates (in deg) to cartesian.
+        Convert spherical coordinates (in arcsec) to cartesian.
 
         """
         alpha = np.deg2rad(alpha / 3600.0)
