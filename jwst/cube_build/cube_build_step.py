@@ -292,6 +292,10 @@ SHORT,MEDIUM,LONG, or ALL
             if(self.debug_pixel ==1):
                 self.spaxel_debug.close()
 
+        sregion = Final_IFUCube.meta.wcs.footprint(kind="spatial")
+        Final_IFUCube.meta.wcsinfo.s_region = sregion
+        log.info("Updated S_REGION to {}".format(s_region))
+
         return Final_IFUCube
 
 #********************************************************************************
