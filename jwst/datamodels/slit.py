@@ -36,6 +36,8 @@ class SlitDataModel(model_base.DataModel):
                  relsens=None, area=None,
                  wavelength_pointsource=None, pathloss_pointsource=None,
                  wavelength_uniformsource=None, pathloss_uniformsource=None,
+                 wavelength_pointsource2d=None, pathloss_pointsource2d=None,
+                 wavelength_uniformsource2d=None, pathloss_uniformsource2d=None,
                  **kwargs):
         if isinstance(init, (SlitModel, ImageModel)):
             super(SlitDataModel, self).__init__(init=None, **kwargs)
@@ -86,16 +88,33 @@ class SlitDataModel(model_base.DataModel):
 
         if dq is not None:
             self.dq = dq
+
         if err is not None:
             self.err = err
+
         if wavelength_pointsource is not None:
             self.wavelength_poointsource = wavelength_pointsource
+
         if pathloss_pointsource is not None:
             self.pathloss_pointsource = pathloss_pointsource
+
         if wavelength_uniformsource is not None:
             self.wavelength_uniformsource = wavelength_uniformsource
+
         if pathloss_uniformsource is not None:
             self.pathloss_uniform_source = pathloss_uniformsource
+
+        if pathloss_pointsource2d is not None:
+            self.pathloss_pointsource2d = pathloss_pointsource2d
+
+        if pathloss_pointsource2d is not None:
+            self.pathloss_pointsource2d = pathloss_pointsource2d
+
+        if wavelength_uniformsource2d is not None:
+            self.wavelength_uniformsource2d = wavelength_uniformsource2d
+
+        if pathloss_uniformsource2d is not None:
+            self.pathloss_uniform_source2d = pathloss_uniformsource2d
 
 
 class SlitModel(model_base.DataModel):
@@ -135,6 +154,8 @@ class SlitModel(model_base.DataModel):
                  int_times=None, barshadow=None,
                  wavelength_pointsource=None, pathloss_pointsource=None,
                  wavelength_uniformsource=None, pathloss_uniformsource=None,
+                 wavelength_pointsource2d=None, pathloss_pointsource2d=None,
+                 wavelength_uniformsource2d=None, pathloss_uniformsource2d=None,
                  **kwargs):
 
         if isinstance(init, (SlitModel, ImageModel)):
@@ -184,20 +205,39 @@ class SlitModel(model_base.DataModel):
 
         if dq is not None:
             self.dq = dq
+
         if err is not None:
             self.err = err
+
         if bunit_data is not None:
             self.meta.bunit_data = bunit_data
+
         if bunit_err is not None:
             self.meta.bunit_err = bunit_err
+
         if name is not None:
             self.name = name
 
         if wavelength_pointsource is not None:
             self.wavelength_poointsource = wavelength_pointsource
+
         if pathloss_pointsource is not None:
             self.pathloss_pointsource = pathloss_pointsource
+
         if wavelength_uniformsource is not None:
             self.wavelength_uniformsource = wavelength_uniformsource
+
         if pathloss_uniformsource is not None:
             self.pathloss_uniform_source = pathloss_uniformsource
+
+        if pathloss_pointsource2d is not None:
+            self.pathloss_pointsource2d = pathloss_pointsource2d
+
+        if pathloss_pointsource2d is not None:
+            self.pathloss_pointsource2d = pathloss_pointsource2d
+
+        if wavelength_uniformsource2d is not None:
+            self.wavelength_uniformsource2d = wavelength_uniformsource2d
+
+        if pathloss_uniformsource2d is not None:
+            self.pathloss_uniform_source2d = pathloss_uniformsource2d

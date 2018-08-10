@@ -153,7 +153,6 @@ properties:
             fits_keyword: TIME-END
             blend_rule: last
             blend_table: True
-          
           obs_id:
             title: Programmatic observation identifier
             type: string
