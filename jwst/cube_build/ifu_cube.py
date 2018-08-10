@@ -868,6 +868,6 @@ class IFUCubeData():
         # Run fitsblender on output product
         output_file = IFUCube.meta.filename
 
-        log.info('Blending metadata for {}'.format(output_file))
+#        log.info('Blending metadata for {}'.format(output_file))
         blendmeta.blendmodels(IFUCube, inputs=self.input_models,
                               output=output_file)
