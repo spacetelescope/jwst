@@ -1,13 +1,12 @@
 import logging
 import importlib
 from gwcs.wcs import WCS
-from .util import update_s_region_keyword, update_s_region_imaging
-from ..associations.lib.dms_base import (TSO_EXP_TYPES, ACQ_EXP_TYPES,
-                                         IMAGE2_SCIENCE_EXP_TYPES,
+from .util import update_s_region_spectral, update_s_region_imaging
+from ..associations.lib.dms_base import (ACQ_EXP_TYPES, IMAGE2_SCIENCE_EXP_TYPES,
                                          IMAGE2_NONSCIENCE_EXP_TYPES)
 
 IMAGING_TYPES = set(tuple(ACQ_EXP_TYPES) + tuple(IMAGE2_SCIENCE_EXP_TYPES)
-                    + tuple(IMAGE2_NONSCIENCE_EXP_TYPES))
+                    + tuple(IMAGE2_NONSCIENCE_EXP_TYPES) + ('nrc_tsimage',))
 
 
 log = logging.getLogger(__name__)
