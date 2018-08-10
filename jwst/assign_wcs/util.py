@@ -20,7 +20,7 @@ from gwcs import utils as gwutils
 from . import pointing
 from ..lib.catalog_utils import SkyObject
 from ..transforms.models import GrismObject
-from ..datamodels import WavelengthrangeModel, DataModel
+from ..datamodels import WavelengthrangeModel, DataModel, CubeModel, IFUCubeModel
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -548,7 +548,7 @@ def bounding_box_from_shape(model):
     Note: The bounding box of a ``CubeModel`` is the bounding_box of one
     of the stacked images.
     """
-    if isinstance(input_model, (CubeModel, IFUCubeModel)):
+    if isinstance(model, (CubeModel, IFUCubeModel)):
         shape = model.data[0].shape
     else:
         shape = model.data.shape
