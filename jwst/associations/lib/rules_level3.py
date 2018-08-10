@@ -182,6 +182,7 @@ class Asn_IFU(AsnMixin_Spectrum):
         # Check and continue initialization.
         super(Asn_IFU, self).__init__(*args, **kwargs)
 
+    @property
     def dms_product_name(self):
         """Define product name."""
         target = self._get_target()
