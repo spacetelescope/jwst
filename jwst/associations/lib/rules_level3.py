@@ -98,7 +98,7 @@ class Asn_WFSCMB(AsnMixin_Science):
         super(Asn_WFSCMB, self)._init_hook(item)
 
 
-@RegistryMarker.rule
+#@RegistryMarker.rule
 class Asn_Spectral(AsnMixin_Spectrum):
     """All slit-like spectral exposures"""
 
@@ -120,6 +120,74 @@ class Asn_Spectral(AsnMixin_Spectrum):
 
         # Check and continue initialization.
         super(Asn_Spectral, self).__init__(*args, **kwargs)
+
+
+@RegistryMarker.rule
+class Asn_SpectralTarget(AsnMixin_Spectrum):
+    """Slit-like, target-based, or single-object spectrographic modes"""
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup for checking.
+        self.constraints = Constraint([
+            Constraint(
+                [Constraint_TSO()],
+                reduce=Constraint.notany
+            ),
+            Constraint_Optical_Path(),
+            Constraint_Target(),
+            DMSAttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+                value=(
+                    'mir_lrs-fixedslit'
+                    '|mir_lrs_slitless'
+                ),
+                force_unique=False
+            )
+        ])
+
+        # Check and continue initialization.
+        super(Asn_SpectralTarget, self).__init__(*args, **kwargs)
+
+
+@RegistryMarker.rule
+class Asn_SpectralSource(AsnMixin_Spectrum):
+    """Slit-like, multi-object spectrographic modes"""
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup for checking.
+        self.constraints = Constraint([
+            Constraint(
+                [Constraint_TSO()],
+                reduce=Constraint.notany
+            ),
+            Constraint_Optical_Path(),
+            Constraint_Target(),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        name='exp_type',
+                        sources=['exp_type'],
+                        value=(
+                            'nrc_grism'
+                            '|nrc_tsgrism'
+                            '|nrc_wfss'
+                            '|nrs_autoflat'
+                            '|nrs_autowave'
+                            '|nrs_fixedslit'
+                        ),
+                        force_unique=False
+                    ),
+                    Constraint_MSA()
+                ],
+                reduce=Constraint.any
+            )
+        ])
+
+        # Check and continue initialization.
+        super(Asn_SpectralSource, self).__init__(*args, **kwargs)
 
 
 @RegistryMarker.rule
@@ -314,17 +382,17 @@ class Asn_ACQ_Reprocess(DMS_Level3_Base):
 
         # Setup for checking.
         self.constraints = Constraint([
-                DMSAttrConstraint(
-                    sources=['exp_type'],
-                    value='|'.join(ACQ_EXP_TYPES),
-                    force_unique=False
-                ),
-                SimpleConstraint(
-                    name='force_fail',
-                    test=lambda x, y: False,
-                    value='anything but None',
-                    force_reprocess=ProcessList.NONSCIENCE
-                )
-            ])
+            DMSAttrConstraint(
+                sources=['exp_type'],
+                value='|'.join(ACQ_EXP_TYPES),
+                force_unique=False
+            ),
+            SimpleConstraint(
+                name='force_fail',
+                test=lambda x, y: False,
+                value='anything but None',
+                force_reprocess=ProcessList.NONSCIENCE
+            )
+        ])
 
         super(Asn_ACQ_Reprocess, self).__init__(*args, **kwargs)
