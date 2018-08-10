@@ -310,7 +310,7 @@ class IFUCubeData():
         c1_offset = 0
         c2_offset = 0
         for j in range(n):
-            log.info("Working on next Single IFU Cube  = %i" % j+1)
+            log.info("Working on next Single IFU Cube  = %i" %(j+1))
             t0 = time.time()
 # for each new data model create a new spaxel
             spaxel = []
