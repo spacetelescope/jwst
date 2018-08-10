@@ -2,12 +2,12 @@
     "asn_type": "spec2",
     "asn_rule": "candidate_Asn_Lv2Spec",
     "version_id": null,
-    "code_version": "0.9.17",
+    "code_version": "0.9.20",
     "degraded_status": "No known degraded exposures in association.",
     "program": "84600",
     "target": "1",
     "asn_pool": "jw84600_20171108T041344_fixed_pool",
-    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '84600'})\nDMSAttrConstraint({'name': 'is_tso', 'sources': ['tsovisit'], 'value': None})\nDMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '84600'})\nDMSAttrConstraint({'name': 'target', 'sources': ['targetid'], 'value': '1'})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'nirspec'})\nDMSAttrConstraint({'name': 'detector', 'sources': ['detector'], 'value': 'nrs2'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'f170lp'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['grating'], 'value': 'g235h'})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': 'sub1024b'})\nDMSAttrConstraint({'name': 'channel', 'sources': ['channel'], 'value': None})\nDMSAttrConstraint({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'nrs_brightobj'})\nDMSAttrConstraint({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'nrs_msaspec'})\nSimpleConstraint({'name': 'single_science', 'value': False})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o041\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '84600'})\nDMSAttrConstraint({'name': 'is_tso', 'sources': ['tsovisit'], 'value': None})\nDMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '84600'})\nDMSAttrConstraint({'name': 'target', 'sources': ['targetid'], 'value': '1'})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'nirspec'})\nDMSAttrConstraint({'name': 'detector', 'sources': ['detector'], 'value': 'nrs2'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'f170lp'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['grating'], 'value': 'g235h'})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': 'sub1024b'})\nDMSAttrConstraint({'name': 'channel', 'sources': ['channel'], 'value': None})\nDMSAttrConstraint({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'nrs_brightobj'})\nSimpleConstraint({'name': 'single_science', 'value': False})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o041\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
     "asn_id": "o041",
     "products": [
         {
