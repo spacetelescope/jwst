@@ -454,7 +454,7 @@ def dodrizzle(insci, input_wcs, inwht,
         in_units=in_units,
         expscale=expscale,
         wtscale=wt_scl,
-        fillstr=str(fillval)
+        fillstr=fillval
         )
 
     return _vers, nmiss, nskip

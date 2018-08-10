@@ -38,6 +38,7 @@ class ResampleSpecStep(ResampleStep):
             kwargs = self.get_drizpars(ref_filename, input_models)
         else:
             # Deal with NIRSpec which currently has no default drizpars reffile
+            self.log.info("No NIRSpec DIRZPARS reffile")
             kwargs = self._set_spec_defaults()
 
         # Multislits get converted to a ModelContainer per slit
@@ -50,7 +51,6 @@ class ResampleSpecStep(ResampleStep):
 
                 # Set up the resampling object as part of this step
                 resamp = resample_spec.ResampleSpecData(input_models, **kwargs)
-                # Do the resampling
                 resamp.do_drizzle()
 
                 if len(resamp.output_models) == 1:
@@ -63,19 +63,18 @@ class ResampleSpecStep(ResampleStep):
             result.meta.cal_step.resample = "COMPLETE"
             result.meta.asn.pool_name = input_models.meta.pool_name
             result.meta.asn.table_name = input_models.meta.table_name
+            for model in result.products:
+                update_s_region_spectral(model)
         else:
             # Set up the resampling object as part of this step
-            resamp = resample_spec.ResampleSpecData(input_models,
-                ref_filename, single=self.single, weight_type=self.weight_type,
-                pixfrac=self.pixfrac, kernel=self.kernel,
-                fillval=self.fillval, good_bits=self.good_bits)
-            # Do the resampling
+            resamp = resample_spec.ResampleSpecData(input_models, **kwargs)
             resamp.do_drizzle()
 
             for model in resamp.output_models:
                 model.meta.cal_step.resample = "COMPLETE"
                 model.meta.asn.pool_name = input_models.meta.pool_name
                 model.meta.asn.table_name = input_models.meta.table_name
+                update_s_region_spectral(model)
 
             # Return either the single resampled datamodel, or the container
             # of datamodels.
@@ -84,7 +83,5 @@ class ResampleSpecStep(ResampleStep):
             else:
                 result = resamp.output_models
 
-        for model in result.products:
-            update_s_region_spectral(model)
 
         return result

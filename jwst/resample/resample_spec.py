@@ -7,7 +7,9 @@ from astropy.coordinates import SkyCoord
 from astropy import coordinates as coord
 from astropy import units as u
 from astropy.modeling.models import (Shift, Scale, Mapping, Identity,
-    Rotation2D, Pix2Sky_TAN, RotateNative2Celestial, Tabular1D, Const1D)
+    Rotation2D, Pix2Sky_TAN, RotateNative2Celestial, Tabular1D, Const1D,
+    Linear1D)
+from astropy.modeling.fitting import LinearLSQFitter
 from gwcs import wcstools, WCS
 from gwcs.utils import _compute_lon_pole
 from gwcs import coordinate_frames as cf
@@ -66,14 +68,7 @@ class ResampleSpecData:
 
         # Define output WCS based on all inputs, including a reference WCS
         # wcslist = [m.meta.wcs for m in self.input_models]
-
-        self.instrument_name = self.input_models[0].meta.instrument.name
-        if self.instrument_name in ['NIRSPEC']:
-            self.output_wcs = self.build_nirspec_output_wcs()
-        elif self.instrument_name in ['MIRI']:
-            self.output_wcs = self.build_miri_output_wcs()
-
-        self.data_size = resample_utils.shape_from_bounding_box(self.output_wcs.bounding_box)
+        self.output_wcs = self.build_interpolated_output_wcs()
         self.blank_output = datamodels.DrizProductModel(self.data_size)
 
         self.blank_output.update(datamodels.ImageModel(self.input_models[0]._instance))
@@ -81,176 +76,88 @@ class ResampleSpecData:
         self.output_models = datamodels.ModelContainer()
 
 
-    def build_nirspec_output_wcs(self, refmodel=None):
+    def build_interpolated_output_wcs(self, refmodel=None):
         """
-        Create a spatial/spectral WCS covering footprint of the input
+        Create a spatial/spectral WCS output frame using interpolation
         """
-        if not refmodel:
+        if refmodel is None:
             refmodel = self.input_models[0]
         refwcs = refmodel.meta.wcs
         bb = refwcs.bounding_box
 
-        ref_det2slit = refwcs.get_transform('detector', 'slit_frame')
-        ref_slit2world = refwcs.get_transform('slit_frame', 'world')
+        # Find spectral axis.  This would be the longer dimension of the
+        # bounding box.  I.e., vertical dispersion for MIRI FS and horizontal
+        # dispersion for NIRSpec MSA and FS.
+        size_axis0 = bb[0][1] - bb[0][0] + 1
+        size_axis1 = bb[1][1] - bb[1][0] + 1
+        spectral_axis = int(size_axis0 < size_axis1)
+        spatial_axis = int(size_axis0 > size_axis1)
 
-        grid = x, y = wcstools.grid_from_bounding_box(bb, step=(1, 1))
-        Grid = namedtuple('Grid', refwcs.slit_frame.axes_names)
-        grid_slit = Grid(*ref_det2slit(*grid))
+        grid = wcstools.grid_from_bounding_box(bb)
+        ra, dec, lam = np.array(refwcs(*grid))
 
-        # Compute spatial transform from detector to slit
-        ref_wavelength = np.nanmean(grid_slit.wavelength)
+        # Compute the wavelength array, trimming NaNs from the ends
+        wavelength_array = np.nanmedian(lam, axis=spectral_axis)
+        wavelength_array = wavelength_array[~np.isnan(wavelength_array)]
 
-        # find the number of pixels sampled by a single shutter
-        fid = np.array([[0., 0.], [-.5, .5], np.repeat(ref_wavelength, 2)])
-        slit_extents = np.array(ref_det2slit.inverse(*fid)).T
-        pix_per_shutter = np.linalg.norm(slit_extents[0] - slit_extents[1])
+        # Compute RA and Dec up the slit (spatial direction) at the center
+        # of the dispersion.  Use spectral_axis to determine slicing dimension
+        lam_center_index = int((bb[spectral_axis][1] - bb[spectral_axis][0]) / 2)
+        if not spectral_axis:
+            ra_array = ra.T[lam_center_index]
+            dec_array = dec.T[lam_center_index]
+        else:
+            ra_array = ra[lam_center_index]
+            dec_array = dec[lam_center_index]
+        ra_array = ra_array[~np.isnan(ra_array)]
+        dec_array = dec_array[~np.isnan(dec_array)]
 
-        # Get min and max of slit in pixel units
-        ymin = np.nanmin(grid_slit.y_slit) * pix_per_shutter
-        ymax = np.nanmax(grid_slit.y_slit) * pix_per_shutter
-        slit_height_pix = int(abs(ymax - ymin + 0.5))
+        fitter = LinearLSQFitter()
+        fit_model = Linear1D()
+        pix_to_ra = fitter(fit_model, np.arange(ra_array.shape[0]), ra_array)
+        pix_to_dec = fitter(fit_model, np.arange(dec_array.shape[0]), dec_array)
 
-        # Compute grid of wavelengths and make tabular model w/inverse
-        lookup_table = np.nanmean(grid_slit.wavelength, axis=0)
-        wavelength_transform = Tabular1D(lookup_table=lookup_table,
-            bounds_error=False, fill_value=np.nan)
-        wavelength_transform.inverse = Tabular1D(points=lookup_table,
-            lookup_table=np.arange(grid_slit.wavelength.shape[1]),
-            bounds_error=False, fill_value=np.nan)
+        pix_to_wavelength = Tabular1D(lookup_table=wavelength_array,
+            bounds_error=False, fill_value=None)
+        pix_to_wavelength.inverse = Tabular1D(points=wavelength_array,
+            lookup_table=np.arange(wavelength_array.shape[0]),
+            bounds_error=False, fill_value=None)
 
-        # Define detector to slit transforms
-        yslit_transform = Scale(-1 / pix_per_shutter) | Shift(ymax / pix_per_shutter)
-        xslit_transform = Const1D(-0.)
-        xslit_transform.inverse = Const1D(0.)
+        # For the input mapping, duplicate the spatial coordinate
+        mapping = Mapping((spatial_axis, spatial_axis, spectral_axis))
 
-        # Construct the final transform
-        coord_mapping = Mapping((0, 1, 0))
-        coord_mapping.inverse = Mapping((2, 1))
-        the_transform = xslit_transform & yslit_transform & wavelength_transform
-        out_det2slit = coord_mapping | the_transform
+        # Sometimes the slit is perpendicular to the RA or Dec axis.
+        # For example, if the slit is perpendicular to RA, that means
+        # the slope of pix_to_ra will be nearly zero, so make sure
+        # mapping.inverse uses pix_to_dec.inverse.  The auto definition
+        # of mapping.inverse is to use the 2nd spatial coordinate, i.e. Dec.
+        if np.isclose(pix_to_dec.slope, 0, atol=1e-8):
+            mapping_tuple = (0, 1)
+            # Account for vertical or horizontal dispersion on detector
+            if spatial_axis:
+                mapping.inverse = Mapping(mapping_tuple[::-1])
+            else:
+                mapping.inverse = Mapping(mapping_tuple)
 
-        # Create coordinate frames
+        # The final transform
+        transform = mapping | pix_to_ra & pix_to_dec & pix_to_wavelength
+
         det = cf.Frame2D(name='detector', axes_order=(0, 1))
-        slit_spatial = cf.Frame2D(name='slit_spatial', axes_order=(0, 1),
-            unit=("", ""), axes_names=('x_slit', 'y_slit'))
-        spec = cf.SpectralFrame(name='spectral', axes_order=(2,),
-            unit=(u.micron,), axes_names=('wavelength',))
-        slit_frame = cf.CompositeFrame([slit_spatial, spec], name='slit_frame')
         sky = cf.CelestialFrame(name='sky', axes_order=(0, 1),
             reference_frame=coord.ICRS())
+        spec = cf.SpectralFrame(name='spectral', axes_order=(2,),
+            unit=(u.micron,), axes_names=('wavelength',))
         world = cf.CompositeFrame([sky, spec], name='world')
 
-        pipeline = [(det, out_det2slit),
-                    (slit_frame, ref_slit2world),
+        pipeline = [(det, transform),
                     (world, None)]
 
         output_wcs = WCS(pipeline)
 
-        self.data_size = (slit_height_pix, len(lookup_table))
+        self.data_size = (len(ra_array), len(wavelength_array))
         bounding_box = resample_utils.bounding_box_from_shape(self.data_size)
         output_wcs.bounding_box = bounding_box
         return output_wcs
-
-
-    def build_miri_output_wcs(self, refmodel=None):
-        """
-        Create a simple output wcs covering footprint of the input datamodels
-        """
-        # TODO: generalize this for more than one input datamodel
-        # TODO: generalize this for imaging modes with distorted wcs
-        if not refmodel:
-            refmodel = self.input_models[0]
-        refwcs = refmodel.meta.wcs
-
-        x, y = wcstools.grid_from_bounding_box(refwcs.bounding_box, step=(1, 1),
-            center=True)
-        ra, dec, lam = refwcs(x.flatten(), y.flatten())
-        # TODO: once astropy.modeling._Tabular is fixed, take out the
-        # flatten() and reshape() code above and below
-        ra = ra.reshape(x.shape)
-        dec = dec.reshape(x.shape)
-        lam = lam.reshape(x.shape)
-
-        # Find rotation of the slit from y axis from the wcs forward transform
-        # TODO: figure out if angle is necessary for MIRI.  See for discussion
-        # https://github.com/STScI-JWST/jwst/pull/347
-        rotation = [m for m in refwcs.forward_transform
-                    if isinstance(m, Rotation2D)]
-        if rotation:
-            rot_slit = functools.reduce(lambda x, y: x | y, rotation)
-            unrotate = rot_slit.inverse
-            refwcs_minus_rot = refwcs.forward_transform | \
-                unrotate & Identity(1)
-            # Correct for this rotation in the wcs
-            ra, dec, lam = refwcs_minus_rot(x.flatten(), y.flatten())
-            ra = ra.reshape(x.shape)
-            dec = dec.reshape(x.shape)
-            lam = lam.reshape(x.shape)
-
-        # Get the slit size at the center of the dispersion
-        sky_coords = SkyCoord(ra=ra, dec=dec, unit=u.deg)
-        slit_coords = sky_coords[int(sky_coords.shape[0] / 2)]
-        slit_angular_size = slit_coords[0].separation(slit_coords[-1])
-        log.debug('Slit angular size: {0}'.format(slit_angular_size.arcsec))
-
-        # Compute slit center from bounding_box
-        dx0 = refwcs.bounding_box[0][0]
-        dx1 = refwcs.bounding_box[0][1]
-        dy0 = refwcs.bounding_box[1][0]
-        dy1 = refwcs.bounding_box[1][1]
-        slit_center_pix = (dx1 - dx0) / 2
-        dispersion_center_pix = (dy1 - dy0) / 2
-        slit_center = refwcs_minus_rot(dx0 + slit_center_pix, dy0 +
-            dispersion_center_pix)
-        slit_center_sky = SkyCoord(ra=slit_center[0], dec=slit_center[1],
-            unit=u.deg)
-        log.debug('slit center: {0}'.format(slit_center))
-
-        # Compute spatial and spectral scales
-        spatial_scale = slit_angular_size / slit_coords.shape[0]
-        log.debug('Spatial scale: {0}'.format(spatial_scale.arcsec))
-        tcenter = int((dx1 - dx0) / 2)
-        trace = lam[:, tcenter]
-        trace = trace[~np.isnan(trace)]
-        spectral_scale = np.abs((trace[-1] - trace[0]) / trace.shape[0])
-        log.debug('spectral scale: {0}'.format(spectral_scale))
-
-        # Compute transform for output frame
-        log.debug('Slit center %s' % slit_center_pix)
-        # TODO: double-check the signs on the following rotation angles
-        roll_ref = refmodel.meta.wcsinfo.roll_ref * u.deg
-        rot = Rotation2D(roll_ref)
-        tan = Pix2Sky_TAN()
-        lon_pole = _compute_lon_pole(slit_center_sky, tan)
-        skyrot = RotateNative2Celestial(slit_center_sky.ra, slit_center_sky.dec,
-            lon_pole)
-        min_lam = np.nanmin(lam)
-        mapping = Mapping((0, 0, 1))
-
-        transform = Shift(-slit_center_pix) & Identity(1) | \
-            Scale(spatial_scale) & Scale(spectral_scale) | \
-            Identity(1) & Shift(min_lam) | mapping | \
-            (rot | tan | skyrot) & Identity(1)
-
-        transform.inputs = (x, y)
-        transform.outputs = ('ra', 'dec', 'lamda')
-
-        # Build the output wcs
-        input_frame = refwcs.input_frame
-        output_frame = refwcs.output_frame
-        wnew = WCS(output_frame=output_frame, forward_transform=transform)
-
-        # Build the bounding_box in the output frame wcs object
-        bounding_box_grid = wnew.backward_transform(ra, dec, lam)
-
-        bounding_box = []
-        for axis in input_frame.axes_order:
-            axis_min = np.nanmin(bounding_box_grid[axis])
-            axis_max = np.nanmax(bounding_box_grid[axis])
-            bounding_box.append((axis_min, axis_max))
-        wnew.bounding_box = tuple(bounding_box)
-        return wnew
-
 
     def do_drizzle(self, **pars):
         """ Perform drizzling operation on input images's to create a new output
