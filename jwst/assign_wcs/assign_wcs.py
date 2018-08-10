@@ -6,7 +6,8 @@ from ..associations.lib.dms_base import (ACQ_EXP_TYPES, IMAGE2_SCIENCE_EXP_TYPES
                                          IMAGE2_NONSCIENCE_EXP_TYPES)
 
 IMAGING_TYPES = set(tuple(ACQ_EXP_TYPES) + tuple(IMAGE2_SCIENCE_EXP_TYPES)
-                    + tuple(IMAGE2_NONSCIENCE_EXP_TYPES) + ('nrc_tsimage',))
+                    + tuple(IMAGE2_NONSCIENCE_EXP_TYPES) +
+                    ('fgs_image', 'fgs_focus'))
 
 
 log = logging.getLogger(__name__)
