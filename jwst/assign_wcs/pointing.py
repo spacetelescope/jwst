@@ -120,7 +120,7 @@ def wcsinfo_from_model(input_model):
     return wcsinfo
 
 
-def fitswcs_transform_from_model(wcsinfo):
+def fitswcs_transform_from_model(wcsinfo,inp):
     """
     Create a WCS object using from datamodel.meta.wcsinfo.
     Transforms assume 0-based coordinates.
@@ -140,13 +140,16 @@ def fitswcs_transform_from_model(wcsinfo):
     #sp_axis = spectral_axes[0]
 
     transform = gwutils.make_fitswcs_transform(wcsinfo)
-    #if wcsinfo['WCSAXES'] == 3:
     if spectral_axes:
         sp_axis = spectral_axes[0]
+        if wcsinfo['CTYPE'][sp_axis] == 'WAVE-TAB' :
+            wavetable = inp.wavetable
+            spectral_transform = astmodels.Tabular1D(lookup_table=wavetable) 
+        else :
         # Subtract one from CRPIX which is 1-based.
-        spectral_transform = astmodels.Shift(-(wcsinfo['CRPIX'][sp_axis] - 1)) | \
-                           astmodels.Scale(wcsinfo['CDELT'][sp_axis]) | \
-                           astmodels.Shift(wcsinfo['CRVAL'][sp_axis])
+            spectral_transform = astmodels.Shift(-(wcsinfo['CRPIX'][sp_axis] - 1)) | \
+                astmodels.Scale(wcsinfo['CDELT'][sp_axis]) | \
+                astmodels.Shift(wcsinfo['CRVAL'][sp_axis])
         transform = transform & spectral_transform
 
     return transform
@@ -207,7 +210,7 @@ def frame_from_model(wcsinfo):
 def create_fitswcs(inp, input_frame=None):
     if isinstance(inp, DataModel):
         wcsinfo = wcsinfo_from_model(inp)
-        transform = fitswcs_transform_from_model(wcsinfo)
+        transform = fitswcs_transform_from_model(wcsinfo,inp)
         output_frame = frame_from_model(wcsinfo)
     #elif isinstance(inp, six.string_types):
         #transform = create_fitswcs_transform(inp)

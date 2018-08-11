@@ -81,5 +81,5 @@ allOf:
       fits_hdu: WCS-TAB
       default: 0.0
       ndim: 1
-      datatype: float32
+      datatype: float64
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema
