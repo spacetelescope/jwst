@@ -7,7 +7,7 @@ from ..extern.configobj.validate import Validator
 from ..extern.configobj.configobj import ConfigObj
 from .. import datamodels
 from . import resample
-from ..assign_wcs.util import update_s_region
+from ..assign_wcs import util
 
 
 __all__ = ["ResampleStep"]
@@ -63,7 +63,7 @@ class ResampleStep(Step):
 
         for model in resamp.output_models:
             model.meta.cal_step.resample = "COMPLETE"
-            update_s_region(model)
+            util.update_s_region_imaging(model)
             model.meta.asn.pool_name = input_models.meta.pool_name
             model.meta.asn.table_name = input_models.meta.table_name
 

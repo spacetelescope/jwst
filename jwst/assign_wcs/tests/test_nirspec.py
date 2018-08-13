@@ -115,8 +115,8 @@ def create_nirspec_ifu_file(filter, grating, lamp='N/A', detector='NRS1'):
     image[1].header['wcsaxes'] = 3
     image[1].header['ctype3'] = 'WAVE'
     image[0].header['lamp'] = lamp
-    image[0].header['GWA_XTIL'] = 0.35986012
-    image[0].header['GWA_YTIL'] = 0.13448857
+    image[0].header['GWA_XTIL'] = 0.3318742513656616
+    image[0].header['GWA_YTIL'] = 0.1258982867002487
     return image
 
 
@@ -152,16 +152,15 @@ def test_nirspec_imaging():
     im.meta.wcs(1, 2)
 
 
-@pytest.mark.xfail(reason="test needs CV3 update")
 def test_nirspec_ifu_against_esa():
     """
     Test Nirspec IFU mode using CV3 reference files.
     """
-    ref = fits.open(get_file_path('Trace_IFU_Slice_00_MON-COMBO-IFU-06_8410_jlab85.fits.gz'))
+    ref = fits.open(get_file_path('Trace_IFU_Slice_00_SMOS-MOD-G1M-17-5344175105_30192_JLAB88.fits'))
 
     # Test NRS1
-    pyw = wcs.WCS(ref['SLIT1'].header)
-    hdul = create_nirspec_ifu_file("F100LP", "G140H")
+    pyw = astwcs.WCS(ref['SLITY1'].header)
+    hdul = create_nirspec_ifu_file("OPAQUE", "G140M")
     im = datamodels.ImageModel(hdul)
     im.meta.filename = "test_ifu.fits"
     refs = create_reference_files(im)
@@ -173,13 +172,13 @@ def test_nirspec_ifu_against_esa():
     w0 = nirspec.nrs_wcs_set_input(im, 0)
 
     # get positions within the slit and the coresponding lambda
-    slit1 = ref['SLIT1'].data # y offset on the slit
+    slit1 = ref['SLITY1'].data # y offset on the slit
     lam = ref['LAMBDA1'].data
     # filter out locations outside the slit
     cond = np.logical_and(slit1 < .5, slit1 > -.5)
     y, x = cond.nonzero() # 0-based
 
-    x, y = pyw.wcs_pix2sky(x, y, 0)
+    x, y = pyw.wcs_pix2world(x, y, 0)
     # The pipeline accepts 0-based cooridnates
     x -= 1
     y -= 1
@@ -188,51 +187,6 @@ def test_nirspec_ifu_against_esa():
 
     lp *= 10**-6
     assert_allclose(lp, lam[cond], atol=1e-13)
-
-    # Test NRS2
-    pyw = wcs.WCS(ref['SLIT2'].header)
-    hdul = create_nirspec_ifu_file("F100LP", "G140H", detector='NRS2')
-    im = datamodels.ImageModel(hdul)
-    im.meta.filename = "test_ifu.fits"
-    #refs = create_reference_files(im)
-
-    pipe = nirspec.create_pipeline(im, refs)
-    w = wcs.WCS(pipe)
-    im.meta.wcs = w
-    # Test evaluating the WCS (slice 0)
-    w0 = nirspec.nrs_wcs_set_input(im, 0)
-
-    # get positions within the slit and the coresponding lambda
-    slit2 = ref['SLIT2'].data # y offset on the slit
-    lam = ref['LAMBDA2'].data
-    # filter out locations outside the slit
-    cond = np.logical_and(slit1 < .5, slit1 > -.5)
-    y, x = cond.nonzero() # 0-based
-
-    x, y = pyw.wcs_pix2sky(x, y, 0)
-    # The pipeline accepts 0-based cooridnates
-    x -= 1
-    y -= 1
-    sca2world = w0.get_transform('sca', 'msa_frame')
-    _, slit_y, lp = sca2world(x, y)
-
-    lp *= 10**-6
-    assert_allclose(lp, lam[cond], atol=1e-13)
-
-    ref.close()
-
-    """
-    Test transform from y-slit position to MSA-entrance.
-    This is a smoke test - one point using CV3 ESA data.
-    """
-    slit2msa_in=s0.get_transform('slit_frame', 'msa_frame')
-    slit_y = -0.018867269
-    slit_x = 0.0
-    lam = 3.2353666e-06
-    msax = 0.041310534
-    msay = -2.3259752e-05
-    mx, my, _ = slit2msa_in(slit_y, slit_x, lam)
-    assert_allclose([mx, my], [msax, msay], atol=10**-8)
 
 
 def test_nirspec_fs_esa():
@@ -429,10 +383,26 @@ def test_missing_msa_file():
     image = create_nirspec_mos_file()
     model = datamodels.ImageModel(image)
 
-    model.meta.instrument.msa_metafile = ""
+    model.meta.instrument.msa_metadata_file = ""
     with pytest.raises(MissingMSAFileError):
         assign_wcs_step.AssignWcsStep.call(model)
 
-    model.meta.instrument.msa_metafile = "missing.fits"
+    model.meta.instrument.msa_metadata_file = "missing.fits"
     with pytest.raises(MissingMSAFileError):
         assign_wcs_step.AssignWcsStep.call(model)
+
+
+def test_open_slits():
+    """ Test that get_open_slits works with MSA data.
+
+    Issue #2321
+    """
+    image = create_nirspec_mos_file()
+    model = datamodels.ImageModel(image)
+    msaconfl = get_file_path('msa_configuration.fits')
+
+    model.meta.instrument.msa_metadata_file = msaconfl
+    model.meta.instrument.msa_metadata_id=12
+
+    slits = nirspec.get_open_slits(model)
+    assert len(slits) == 1

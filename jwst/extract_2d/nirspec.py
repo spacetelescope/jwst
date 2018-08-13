@@ -72,7 +72,7 @@ def nrs_extract2d(input_model, slit_name=None, apply_wavecorr=False, reference_f
                                                         exp_type, apply_wavecorr, reffile)
         set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi)
         orig_s_region = output_model.meta.wcsinfo.s_region.strip()
-        util.update_s_region(output_model)
+        util.update_s_region_spectral(output_model)
         if orig_s_region != output_model.meta.wcsinfo.s_region.strip():
             log.info('extract_2d updated S_REGION to '
                      '{0}'.format(output_model.meta.wcsinfo.s_region))
@@ -86,7 +86,7 @@ def nrs_extract2d(input_model, slit_name=None, apply_wavecorr=False, reference_f
 
             slits.append(new_model)
             orig_s_region = new_model.meta.wcsinfo.s_region.strip()
-            util.update_s_region(new_model)
+            util.update_s_region_spectral(new_model)
             if orig_s_region != new_model.meta.wcsinfo.s_region.strip():
                 log.info('extract_2d updated S_REGION to {0}'.format(new_model.meta.wcsinfo.s_region))
             # set x/ystart values relative to the image (screen) frame.
