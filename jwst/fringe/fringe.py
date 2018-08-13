@@ -4,8 +4,6 @@
 
 import numpy as np
 import logging
-from .. import datamodels
-from ..datamodels import dqflags
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -64,7 +62,7 @@ def apply_fringe(input_model, fringe):
     output_model = input_model.copy()
 
     fringe_data = fringe.data
-    fringe_dq = fringe.dq
+    # fringe_dq = fringe.dq
 
     # Fringe-correct data and error arrays, applying correction only
     #    to pixels having good reference values
