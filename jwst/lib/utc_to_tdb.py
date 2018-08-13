@@ -24,7 +24,8 @@ log.setLevel(logging.DEBUG)
 # This is an interface to call
 #    timeconversion.compute_bary_helio_time(targetcoord, times)
 
-def utc_tdb(filename):
+def utc_tdb(filename, update_tdb=True, update_velosys=True,
+            delta_t=1000., ndecimals=2):
     """Convert start, mid, end times from UTC to TDB.
 
     Parameters
@@ -32,68 +33,126 @@ def utc_tdb(filename):
     filename: str
         Name of an input FITS file containing an INT_TIMES table.
 
+    update_tdb: bool
+        If True, the UTC times in the INT_TIMES table will be converted
+        to TDB, and the three TDB columns in the INT_TIMES table will be
+        updated with the computed values.
+
+    update_velosys: bool
+        If True, the radial velocity of JWST will be computed at the
+        middle of the exposure, and the value in meters / second will
+        be assigned to keyword VELOSYS in the first SCI extension.
+
+    delta_t: float
+        This is used only if `update_velosys` is True.  The TDB times
+        corresponding to two UTC times (that are centered on the middle
+        of the exposure and separated by `delta_t` seconds) will be
+        computed, and the radial velocity will be computed from the
+        difference between the two TDB times.
+
+    ndecimals: int
+        This is used only if `update_velosys` is True.  The radial
+        velocity will be rounded to `ndecimals` decimal places.
+
     Returns
     -------
     tuple of three numpy arrays
-        The time or times, expressed as MJD and with time scale TDB.
+        If `update_tdb` is True, the returned value will be the TDB time
+        or times, expressed as MJD and with time scale TDB; otherwise,
+        a tuple of three zeros (floats) will be returned.
     """
+
+    if not update_tdb and not update_velosys:
+        log.warning("Both update_tdb and update_velosys are False; "
+                    "there's nothing to do.")
+        return (0., 0., 0.)
 
     log.info("Processing file %s", filename)
     fd = fits.open(filename, mode="update")
 
     targetcoord = (fd[0].header["targ_ra"], fd[0].header["targ_dec"])
 
-    try:
-        hdunum = find_hdu(fd, "int_times")
-    except RuntimeError as e:
-        log.warning(str(e))
-        fd.close()
-        return (0., 0., 0.)
+    if update_velosys:
+        # Compute VELOSYS at the middle of the exposure.
+        expmid = fd[0].header["expmid"]
+        half_dt = delta_t / (86400. * 2.)       # and convert to days
+        tt_rv_times = np.array([to_tt(expmid - half_dt),
+                                to_tt(expmid + half_dt)])
+        if USE_TIMECONVERSION:
+            tdb_rv_times = timeconversion.compute_bary_helio_time(
+                                targetcoord, tt_rv_times)[0]
+        else:
+            (eph_time, jwst_pos, jwst_vel) = get_jwst_keywords(fd)
+            jwstpos_rv = linear_pos(tt_rv_times, eph_time, jwst_pos, jwst_vel)
+            tdb_rv_times = compute_bary_helio_time2(
+                                targetcoord, tt_rv_times, jwstpos_rv)[0]
 
-    # TT, MJD
-    tt_start_times = to_tt(fd[hdunum].data.field("int_start_MJD_UTC"))
-    tt_mid_times = to_tt(fd[hdunum].data.field("int_mid_MJD_UTC"))
-    tt_end_times = to_tt(fd[hdunum].data.field("int_end_MJD_UTC"))
+        # This is almost exactly the same as delta_t, but in units of days.
+        delta_tt = tt_rv_times[1] - tt_rv_times[0]
+        # This will be close to delta_t (in days), but it can differ due to
+        # the motion of the earth along the line of sight to or from the
+        # target.
+        delta_tdb = tdb_rv_times[1] - tdb_rv_times[0]
+        time_diff = (delta_tt - delta_tdb) * 86400.     # seconds
+        radial_velocity = time_diff * astropy.constants.c.value / delta_t
+        radial_velocity = round(radial_velocity, ndecimals)
+        log.info("radial velocity = {}".format(radial_velocity))
 
-    # Function compute_bary_helio_time returns both barycentric and
-    # heliocentric times; the "[0]" extracts the former.
-    if USE_TIMECONVERSION:
-        log.debug("Using the timeconversion module.")
-        tdb_start_times = timeconversion.compute_bary_helio_time(
-                                targetcoord, tt_start_times)[0]
-        tdb_mid_times = timeconversion.compute_bary_helio_time(
-                                targetcoord, tt_mid_times)[0]
-        tdb_end_times = timeconversion.compute_bary_helio_time(
-                                targetcoord, tt_end_times)[0]
+        scihdu = find_hdu(fd, "sci")
+        fd[scihdu].header["velosys"] = \
+                (radial_velocity, "Radial velocity wrt barycenter [m / s]")
+
+    if update_tdb:
+        try:
+            hdunum = find_hdu(fd, "int_times")
+        except RuntimeError as e:
+            log.warning(str(e))
+            fd.close()
+            return (0., 0., 0.)
+
+        # TT, MJD
+        tt_start_times = to_tt(fd[hdunum].data.field("int_start_MJD_UTC"))
+        tt_mid_times = to_tt(fd[hdunum].data.field("int_mid_MJD_UTC"))
+        tt_end_times = to_tt(fd[hdunum].data.field("int_end_MJD_UTC"))
+
+        # Function compute_bary_helio_time returns both barycentric and
+        # heliocentric times; the "[0]" extracts the former.
+        if USE_TIMECONVERSION:
+            log.debug("Using the timeconversion module.")
+            tdb_start_times = timeconversion.compute_bary_helio_time(
+                                    targetcoord, tt_start_times)[0]
+            tdb_mid_times = timeconversion.compute_bary_helio_time(
+                                    targetcoord, tt_mid_times)[0]
+            tdb_end_times = timeconversion.compute_bary_helio_time(
+                                    targetcoord, tt_end_times)[0]
+        else:
+            log.warning("Couldn't import the timeconversion module;")
+            log.warning("using astropy.coordinates, and "
+                        "JWST position and velocity keywords.")
+            (eph_time, jwst_pos, jwst_vel) = get_jwst_keywords(fd)
+            jwstpos = linear_pos(tt_start_times, eph_time, jwst_pos, jwst_vel)
+            tdb_start_times = compute_bary_helio_time2(
+                                    targetcoord, tt_start_times, jwstpos)[0]
+            jwstpos = linear_pos(tt_mid_times, eph_time, jwst_pos, jwst_vel)
+            tdb_mid_times = compute_bary_helio_time2(
+                                    targetcoord, tt_mid_times, jwstpos)[0]
+            jwstpos = linear_pos(tt_end_times, eph_time, jwst_pos, jwst_vel)
+            tdb_end_times = compute_bary_helio_time2(
+                                    targetcoord, tt_end_times, jwstpos)[0]
+
+        try:
+            # TDB, MJD
+            fd[hdunum].data.field("int_start_BJD_TDB")[:] = \
+                        tdb_start_times.copy()
+            fd[hdunum].data.field("int_mid_BJD_TDB")[:] = tdb_mid_times.copy()
+            fd[hdunum].data.field("int_end_BJD_TDB")[:] = tdb_end_times.copy()
+        except KeyError:
+            log.warning("One or more of the *BJD_TDB columns do not exist,")
+            log.warning("so the INT_TIMES table was not updated.")
     else:
-        log.warning("Couldn't import the timeconversion module;")
-        log.warning("using astropy.coordinates, and "
-                    "JWST position and velocity keywords.")
-        (eph_time, jwst_pos, jwst_vel) = get_jwst_keywords(fd)
-        jwstpos = linear_pos(tt_start_times, eph_time, jwst_pos, jwst_vel)
-        tdb_start_times = compute_bary_helio_time2(
-                                targetcoord, tt_start_times, jwstpos)[0]
-        jwstpos = linear_pos(tt_mid_times, eph_time, jwst_pos, jwst_vel)
-        tdb_mid_times = compute_bary_helio_time2(
-                                targetcoord, tt_mid_times, jwstpos)[0]
-        jwstpos = linear_pos(tt_end_times, eph_time, jwst_pos, jwst_vel)
-        tdb_end_times = compute_bary_helio_time2(
-                                targetcoord, tt_end_times, jwstpos)[0]
-
-    missing = False
-    try:
-        # TDB, MJD
-        fd[hdunum].data.field("int_start_BJD_TDB")[:] = tdb_start_times.copy()
-        fd[hdunum].data.field("int_mid_BJD_TDB")[:] = tdb_mid_times.copy()
-        fd[hdunum].data.field("int_end_BJD_TDB")[:] = tdb_end_times.copy()
-    except KeyError:
-        missing = True
+        (tdb_start_times, tdb_mid_times, tdb_end_times) = (0., 0., 0.)
 
     fd.close()
-
-    if missing:
-        log.warning("One or more of the *BJD_TDB columns do not exist,")
-        log.warning("so the INT_TIMES table was not updated.")
 
     return (tdb_start_times, tdb_mid_times, tdb_end_times)
 
@@ -121,15 +180,12 @@ def find_hdu(fd, extname):
     for i in range(1, nhdu):
         hdr = fd[i].header
         if "EXTNAME" in hdr and hdr["EXTNAME"] == extname_uc:
-            if hdunum is not None:
-                fd.close()
-                raise RuntimeError("There are at least two HDUs with "
-                                   "EXTNAME = {}; there should only be one."
-                                   .format(extname_uc))
-            hdunum = i 
+            hdunum = i
+            break
     if hdunum is None or len(fd[hdunum].data) < 1:
         fd.close()
-        raise RuntimeError("An {} table is required.".format(extname))
+        raise RuntimeError("An extension with name {} is required."
+                           .format(extname))
 
     return hdunum
 
