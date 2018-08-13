@@ -6,7 +6,7 @@ __all__ = ['IRS2Model']
 
 class IRS2Model(model_base.DataModel):
     """
-    A data model for the IRS2 refpix reference file.
+    A data model for the IRS2 reference file.
 
     Parameters
     ----------
