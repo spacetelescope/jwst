@@ -5,7 +5,7 @@ import logging
 import numpy as np
 from astropy.table import QTable
 from astropy.time import Time, TimeDelta
-from photutils import aperture_photometry, CircularAperture, CircularAnnulus
+from photutils import CircularAperture, CircularAnnulus
 
 from ..datamodels import CubeModel
 
@@ -78,15 +78,16 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner,
                     'r_outer={2} pixels.'.format(radius, radius_inner,
                                                  radius_outer))
 
-            tbl1 = aperture_photometry(datamodel.data[i, :, :], phot_aper,
-                                       error=datamodel.err[i, :, :])
-            tbl2 = aperture_photometry(datamodel.data[i, :, :], bkg_aper,
-                                       error=datamodel.err[i, :, :])
+            aper_sum, aper_sum_err = phot_aper.do_photometry(
+                datamodel.data[i, :, :], error=datamodel.err[i, :, :])
 
-            aperture_sum.append(tbl1['aperture_sum'][0])
-            aperture_sum_err.append(tbl1['aperture_sum_err'][0])
-            annulus_sum.append(tbl2['aperture_sum'][0])
-            annulus_sum_err.append(tbl2['aperture_sum_err'][0])
+            ann_sum, ann_sum_err = bkg_aper.do_photometry(
+                datamodel.data[i, :, :], error=datamodel.err[i, :, :])
+
+            aperture_sum.append(aper_sum[0])
+            aperture_sum_err.append(aper_sum_err[0])
+            annulus_sum.append(ann_sum[0])
+            annulus_sum_err.append(ann_sum_err[0])
 
     # construct metadata for output table
     meta = OrderedDict()
