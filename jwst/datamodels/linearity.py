@@ -42,3 +42,12 @@ class LinearityModel(ReferenceFileModel):
 
         # Implicitly create arrays
         self.dq = self.dq
+
+    def get_primary_array_name(self):
+        """
+        Returns the name "primary" array for this model, which
+        controls the size of other arrays that are implicitly created.
+        This is intended to be overridden in the subclasses if the
+        primary array's name is not "data".
+        """
+        return 'coeffs'

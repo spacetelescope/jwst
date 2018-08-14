@@ -1,0 +1,19 @@
+<Proposal title="MIRI CV3 IMG_RAD_01_B1">
+  <Observation>
+    <Visit>
+      <VisitGroup>
+        <ParallelSequenceID>
+          <Activity>
+            <Exposure>
+              <Detector>
+                <base>MIRM107-E-6021041029_1_493_SE_2016-01-21T04h22m18.fits</base>
+                <subarray></subarray>
+                <exp_type>MIR_IMAGE</exp_type>
+              </Detector>
+            </Exposure>
+          </Activity>
+        </ParallelSequenceID>
+      </VisitGroup>
+    </Visit>
+  </Observation>
+</Proposal>

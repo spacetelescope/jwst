@@ -50,6 +50,11 @@ pulling the latest version of `master` from the Github repository inside the `jw
     git pull origin master
     python setup.py develop
 
+To run the pipeline outside the STScI network, CRDS must be configured by setting two environment variables:
+
+    export CRDS_PATH=$HOME/crds_cache
+    export CRDS_SERVER_URL=https://jwst-crds.stsci.edu
+
 
 Documentation
 -------------

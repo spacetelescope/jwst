@@ -1,5 +1,5 @@
-Reference File Descriptions - Build 7
-=====================================
+Reference Files
+===============
 
 WCS Reference files are in the Advanced Scientific Data Format (ASDF).
 The best way to create the file is to programmatically create the model and then save it to a file.
@@ -32,50 +32,121 @@ reftype                                     description                         
 **wavelengthrange**    Typical wavelength ranges                                     MIRI, NIRSPEC, NIRCAM, NIRISS
 ===================    ==========================================================   ============================
 
-
-CAMERA
-------
-
 CRDS Selection Criteria
-:::::::::::::::::::::::
+-----------------------
 
-:NIRSPEC: EXP_TYPE
+CAMERA (NIRSPEC only)
+:::::::::::::::::::::
+CAMERA reference files are currently selected based only on the value of EXP_TYPE in the input science data set.
+
+
+COLLIMATOR (NIRSPEC only)
+:::::::::::::::::::::::::
+For NIRSPEC, COLLIMATOR reference files are currently selected based only on the value of EXP_TYPE in the input science data set.
+
+DISPERSER (NIRSPEC only)
+::::::::::::::::::::::::
+For NIRSPEC, DISPERSER reference files are currently selected based on the values of EXP_TYPE and GRATING in the input science data set.
+
+
+DISTORTION
+::::::::::
+
+For MIRI, DISTORTION reference files are currently selected based on the values of EXP_TYPE, DETECTOR, CHANNEL, and BAND in the input science data set.
+
+For FGS, DISTORTION reference files are currently selected based on the values of EXP_TYPE and DETECTOR in the input science data set.
+
+For NIRCAM, DISTORTION reference files are currently selected based on the values of EXP_TYPE, DETECTOR, CHANNEL, and FILTER in the input science data set.
+
+For NIRISS, DISTORTION reference files are currently selected based only on the value of EXP_TYPE and PUPIL in the input science data set.
+
+
+FILTEROFFSET (MIRI only)
+::::::::::::::::::::::::
+For MIRI, FILTEROFFSET reference files are currently selected based on the values of EXP_TYPE and DETECTOR in the input science data set.
+
+FORE (NIRSPEC only)
+:::::::::::::::::::
+
+For NIRSPEC, FORE reference files are currently selected based on the values of EXP_TYPE and FILTER in the input science data set.
+
+FPA (NIRSPEC only)
+::::::::::::::::::
+For NIRSPEC, FPA reference files are currently selected based only on the value of EXP_TYPE in the input science data set.
+
+IFUFORE (NIRSPEC only)
+::::::::::::::::::::::
+For NIRSPEC, IFUFORE reference files are currently selected based only on the value of EXP_TYPE in the input science data set.
+
+
+IFUPOST (NIRSPEC only)
+::::::::::::::::::::::
+For NIRSPEC, IFUPOST reference files are currently selected based only on the value of EXP_TYPE in the input science data set.
+
+IFUSLICER (NIRSPEC only)
+::::::::::::::::::::::::
+For NIRSPEC, IFUSLICER reference files are currently selected based only on the value of EXP_TYPE in the input science data set.
+
+
+MSA (NIRSPEC only)
+::::::::::::::::::
+For NIRSPEC, MSA reference files are currently selected based only on the value of EXP_TYPE in the input science data set.
+
+OTE (NIRSPEC only)
+::::::::::::::::::
+For NIRSPEC, OTE reference files are currently selected based only on the value of EXP_TYPE in the input science data set.
+
+SPECWCS
+:::::::
+For MIRI, SPECWCS reference files are currently selected based on the values of DETECTOR, CHANNEL, BAND, SUBARRAY, and EXP_TYPE in the input science data set.
+
+For NIRCAM, SPECWCS reference files are currently selected based on the values of EXP_TYPE, MODULE, and PUPIL in the input science data set.
+
+For NIRCAM WFSS, SPECWCS reference files are currently selected based on the values of EXP_TYPE, MODULE, and PUPIL in the input science data set.
+
+For NIRCAM TGRISM, SPECWCS reference files are currently selected based on the values of EXP_TYPE, MODULE, and PUPIL in the input science data set.
+
+FOR NIRISS WFSS, SPECWCS reference files are currently selected based on the values of EXP_TYPE, FILTER, and PUPIL in the input science data set.
+
+
+
+REGIONS (MIRI only)
+:::::::::::::::::::
+For MIRI, REGIONS reference files are currently selected based on the values of DETECTOR, CHANNEL, BAND, and EXP_TYPE in the input science data set.
+
+
+WAVELENGTHRANGE
+:::::::::::::::
+For NIRCAM, NIRISS, NIRSPEC, and MIRI, WAVELENGTHRANGE reference files are currently selected based only on the value of EXP_TYPE in the input science data set.
+
 
 Reference File Formats
-::::::::::::::::::::::
+----------------------
 
-The camera reference file contains an astropy compound model made up of a polynomial models, rotation and translations. The forward direction is from the FPA to the GWA.
+
+CAMERA
+::::::
+
+The camera reference file contains an astropy compound model made up of polynomial models, rotations, and translations. The forward direction is from the FPA to the GWA.
 
 :model: Transform through the CAMERA.
 
 COLLIMATOR
-----------
+::::::::::
 
-CRDS Selection Criteria
-:::::::::::::::::::::::
-
-:NIRSPEC: EXP_TYPE
-
-Reference File Formats
-::::::::::::::::::::::
-
-This reference file contains an astropy compound model made up of a polynomial models, rotation and translations. The forward direction is from the GWA to the MSA.
+This collimator reference file contains an astropy compound model made up of polynomial models, rotations, and translations. The forward direction is from the GWA to the MSA.
 
 :model: Transform through the COLLIMATOR.
 
 DISPERSER
----------
-
-CRDS Selection Criteria
-:::::::::::::::::::::::
-
-:NIRSPEC: EXP_TYPE, GRATING
+:::::::::
 
 
-Reference File Formats
-::::::::::::::::::::::
+The disperser reference file contains reference data about the NIRSPEC dispersers (gratings or the prism).
 
-The disperser file contains reference data about the NIRSPEC dispersers (gratings or the prism). The reference data is described in the NIRSPEC Interface Control Document.
+Files applicable to gratings have a field:
+
+:groovedensity: Number of grooves per meter in a grating
 
 The following fields are common for all gratings and the prism:
 
@@ -83,11 +154,11 @@ The following fields are common for all gratings and the prism:
 :gwa_tiltx:
     :temperatures: Temperatures measured where the GWA sensor is
     :zeroreadings: Value of GWA sensor reading which corresponds to disperser model parameters
-    :tilt_model: Model of the relation between THETA_Y vs GWA_X reading
+    :tilt_model: Model of the relation between THETA_Y vs GWA_X sensor reading
 :gwa_tilty:
     :temperatures: Temperatures measured where the GWA sensor is
     :zeroreadings: Value of GWA sensor reading which corresponds to disperser model parameters
-    :tilt_model: Model of the relation between THETA_X vs GWA_Y reading
+    :tilt_model: Model of the relation between THETA_X vs GWA_Y sensor reading
 :tilt_x: Angle (in degrees) between the grating surface and the reference surface (the mirror)
 :tilt_y: Angle (in degrees) between the grating surface and the reference surface (the mirror)
 :theta_x: Element alignment angle in x-axis (in degrees)
@@ -99,24 +170,14 @@ The prism reference file has in addition the following fields:
 :angle: Angle between the front and back surface of the prosm (in degrees)
 :kcoef: K coefficients of Selmeir equation, describing the material
 :lcoef: L coeffficients describing the material
-:tcoef: Thermal coefficients describing the properties of the glass
-:tref: Reference temperature (in K)
+:tcoef: Six constants, describing the thermal behavior of the glass
+:tref: Temperature (in K), used to compute the change in temperature relative to the reference temperature of the glass
 :pref: Reference pressure (in ATM)
 :wbound: Min and Max wavelength (in meters) for which the model is valid
 
 DISTORTION
-----------
+::::::::::
 
-CRDS Selection Criteria
-:::::::::::::::::::::::
-
-:MIRI: DETECTOR, EXP_TYPE, CHANNEL, BAND
-:FGS: DETECTOR, EXP_TYPE
-:NIRCAM: DETECTOR, EXP_TYPE,  CHANNEL, FILTER
-:NIRISS: EXP_TYPE, PUPIL
-
-Reference File Formats
-::::::::::::::::::::::
 
 The distortion reference file contains a combination of astropy models,
 representing the transform from detector to the telescope V2, V3 system.
@@ -142,15 +203,7 @@ The model is a combination of polynomials.
 :model: Transform from detector to an intermediate frame (instrument dependent).
 
 FILTEROFFSET
-------------
-
-CRDS Selection Criteria
-:::::::::::::::::::::::
-
-:MIRI: DETECTOR, EXP_TYPE
-
-Reference File Formats
-::::::::::::::::::::::
+::::::::::::
 
 The filter offset reference file is an ASDF file that contains a dictionary of row and column offsets for the MIRI imaging dataset. The filter offset reference file contains a dictionary in the tree that is indexed by the instrument filter. Each filter points to two fields - row_offset and column_offset. The format is
 
@@ -159,15 +212,7 @@ The filter offset reference file is an ASDF file that contains a dictionary of r
     :row_offset: Offset in y (in arcmin)
 
 FORE
-----
-
-CRDS Selection Criteria
-:::::::::::::::::::::::
-
-:NIRSPEC: EXP_TYPE, FILTER
-
-Reference File Formats
-::::::::::::::::::::::
+::::
 
 The FORE reference file stores the transform through the Filter Wheel Assembly (FWA). It has two fields - “filter” and “model”. The transform through the FWA is chromatic. It is represented as a Polynomial of two variables whose coefficients are wavelength dependent. The compound model takes three inputs - x, y positions and wavelength.
 
@@ -175,33 +220,17 @@ The FORE reference file stores the transform through the Filter Wheel Assembly (
 :model: Transform through the Filter Wheel Assembly (FWA).
 
 FPA
----
+:::
 
-CRDS Selection Criteria
-:::::::::::::::::::::::
+The FPA reference file stores information on the metrology of the Focal Plane Assembly (FPA) which consists of two Sensor Chip Arrays (SCA), named NRS1 and NRS2.
 
-:NIRSPEC: EXP_TYPE
+The reference file contains two fields : “nrs1_model” and “nrs2_model”. Each of them stores the transform (shift and rotation) to transform positions from the FPA to the respective SCA. The output units are in pixels.
 
-Reference File Formats
-::::::::::::::::::::::
-
-The FPA reference file stores information on the metrology of the Focal Plane Array (FPA) which consists of two single chip arrays (SCA), named NRS1 and NRS2.
-
-The reference file contains two fields : “NRS1” and “NRS2”. Each of them stores the transform (shift and rotation) to transform positions from the FPA to the respective SCA. The output units are in pixels.
-
-:NRS1: Transform for the NRS1 detector.
-:NRS2: Transform for the NRS2 detector.
+:nrs1_model: Transform for the NRS1 detector.
+:nrs2_model: Transform for the NRS2 detector.
 
 IFUFORE
--------
-
-CRDS Selection Criteria
-:::::::::::::::::::::::
-
-:NIRSPEC: EXP_TYPE
-
-Reference File Formats
-::::::::::::::::::::::
+:::::::
 
 This file provides the parameters (Paraxial and distortions coefficients)
 for the coordinate transforms from the MSA plane to the plane of the IFU slicer.
@@ -209,34 +238,18 @@ for the coordinate transforms from the MSA plane to the plane of the IFU slicer.
 :model: Compound model, Polynomials
 
 IFUPOST
--------
-
-CRDS Selection Criteria
-:::::::::::::::::::::::
-
-:NIRSPEC: EXP_TYPE
-
-Reference File Formats
-::::::::::::::::::::::
+:::::::
 
 The IFUPOST reference file provides the parameters (Paraxial and distortions coefficients) for the coordinate transforms from the slicer plane to the MSA plane (out), that is the plane of the IFU virtual slits.
 
 The reference file contains models made up based on an offset and a polynomial. There is a model for each of the slits and is indexed by the slit number. The models is used as part of the conversion from the GWA to slit.
 
-:ifu_slice_number:
+:slice_<slice_number>:
     :model: Polynomial and rotation models.
 
 IFUSLICER
----------
+:::::::::
 
-CRDS Selection Criteria
-:::::::::::::::::::::::
-
-:NIRSPEC: EXP_TYPE
-
-
-Reference File Formats
-::::::::::::::::::::::
 
 The IFUSLICER stores information about the metrology of the IFU slicer - relative positioning and size of the aperture of each individual slicer and the absolute reference with respect to the center of the field of view.
 The reference file contains two fields - “data” and “model”.
@@ -258,15 +271,7 @@ The “data” field is an array with 30 rows pertaining to the 30 slices and th
 
 
 MSA
----
-
-CRDS Selection Criteria
-:::::::::::::::::::::::
-
-:NIRSPEC: EXP_TYPE
-
-Reference File Formats
-::::::::::::::::::::::
+:::
 
 The MSA reference file contains information on the metrology of the microshutter array and the associated fixed slits - relative positioning of each individual shutter (assumed to be rectangular)
 And the absolute position of each quadrant within the MSA.
@@ -304,34 +309,16 @@ The MSA reference file has 5 fields, named
 
 
 OTE
----
-
-CRDS Selection Criteria
-:::::::::::::::::::::::
-
-:NIRSPEC:  EXP_TYPE
-
-Reference File Formats
-::::::::::::::::::::::
+:::
 
 This reference file contains a combination of astropy models - polynomial, shift, rotation and scaling.
 
-:model: Transform through the Telescope Optical Element (OTE), from the FWA to XAN, YAN telescope frame. The
+:model: Transform through the Optical Telescope Element (OTE), from the FWA to XAN, YAN telescope frame. The
         output units are in arcsec.
 
 SPECWCS
--------
+:::::::
 
-CRDS Selection Criteria
-:::::::::::::::::::::::
-
-:MIRI: DETECTOR, CHANNEL, BAND, SUBARRAY, EXP_TYPE
-:NIRISS: EXP_TYPE, SUBARRAY
-:NIRCAM: EXP_TYPE, MODULE, PUPIL
-:NIRISS: EXP_TYPE, FILTER, PUPIL
-
-Reference File Formats
-::::::::::::::::::::::
 
 For the MIRI LRS mode the file is in FITS format.
 The reference file contains the zero point offset for the slit relative to the full field of view.
@@ -352,7 +339,7 @@ For NIRISS SOSS mode the file is in ASDF format with the following structure.
 
 :model: A tabular model with the wavelength solution.
 
-For NIRCAM GRISM and TSGRIM modes the file is in ASDF format with the following structure:
+For NIRCAM WFSS and TSGRIM modes the file is in ASDF format with the following structure:
 
 :displ: The wavelength transform models
 :dispx: The x-dispersion models
@@ -374,17 +361,9 @@ For NIRISS WFSS mode the file is in ASDF format with the following structure:
 
 
 Regions
--------
+:::::::
 
-CRDS Selection Criteria
-:::::::::::::::::::::::
-
-:MIRI: DETECTOR, CHANNEL, BAND, EXP_TYPE
-
-Reference File Formats
-::::::::::::::::::::::
-
-The file stores a numpy array mapping each pixel to its corresponding IFU slice.
+The IFU takes a region reference file that defines the region over which the WCS is valid. The reference file should define a polygon and may consist of a set of X,Y coordinates that define the polygon.
 
 :channel: The MIRI channels in the observation, e.g. "12".
 :band: The band for the observation (one of "LONG", "MEDIUM", "SHORT").
@@ -392,19 +371,9 @@ The file stores a numpy array mapping each pixel to its corresponding IFU slice.
 
 
 WAVELENGTHRANGE
----------------
-
-CRDS Selection Criteria
-:::::::::::::::::::::::
-
-:NIRSPEC: Match EXP_TYPE
-:MIRI: Match EXP_TYPE
-:NIRCAM: Match EXP_TYPE
-:NIRISS: Match EXP_TYPE
+:::::::::::::::
 
 
-Reference File Formats
-::::::::::::::::::::::
 
 FOR MIRI MRS the wavelengthrange file consists of two fields which define te wavelength range for each combination of a channel and band.
 
@@ -417,7 +386,7 @@ For NIRSPEC the file is a dictionary storing information about default wavelengt
                  :order: Default spectral order
                  :range: Default wavelength range
 
-For NIRCAM GRISM and TSGRIM modes and NIRISS WFSS mode the wavelengthrange file contains the wavelength limits to use when caluclating the minimum and maximum dispersion extents on the detector. The selection of the
+For NIRCAM WFSS and TSGRIM modes and NIRISS WFSS mode the wavelengthrange file contains the wavelength limits to use when caluclating the minimum and maximum dispersion extents on the detector. The selection of the
 correct minimum and maximum wavelength range is done with the following logic, where the index of
 the desired filter is used as the reference into wrange_selector, and the same for the index of the order:
 

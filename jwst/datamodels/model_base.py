@@ -186,17 +186,15 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         # Instantiate the primary array of the image
         if is_array:
-            primary_array = self.get_primary_array_name()
-            if primary_array is None:
+            primary_array_name = self.get_primary_array_name()
+            if not primary_array_name:
                 raise TypeError(
                     "Array passed to DataModel.__init__, but model has "
                     "no primary array in its schema")
-            setattr(self, primary_array, init)
+            setattr(self, primary_array_name, init)
 
         if is_shape:
-            try:
-                getattr(self, self.get_primary_array_name())
-            except AttributeError:
+            if not self.get_primary_array_name():
                 raise TypeError(
                     "Shape passed to DataModel.__init__, but model has "
                     "no primary array in its schema")
@@ -337,7 +335,11 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         This is intended to be overridden in the subclasses if the
         primary array's name is not "data".
         """
-        return 'data'
+        if properties._find_property(self._schema, 'data'):
+            primary_array_name = 'data'
+        else:
+            primary_array_name = ''
+        return primary_array_name
 
     def on_save(self, path=None):
         """
@@ -492,10 +494,10 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
     @property
     def shape(self):
         if self._shape is None:
-            if self.get_primary_array_name() in self._instance:
-                return getattr(self, self.get_primary_array_name()).shape
-            else:
-                return None
+            primary_array_name = self.get_primary_array_name()
+            if primary_array_name and self.hasattr(primary_array_name):
+                primary_array = getattr(self, primary_array_name)
+                self._shape = primary_array.shape
         return self._shape
 
     def my_attribute(self, attr):
