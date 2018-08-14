@@ -8,9 +8,6 @@ from os.path import basename
 import numpy as np
 from astropy.io import fits
 
-from asdf import AsdfFile
-from asdf import schema as asdf_schema
-
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -111,7 +108,7 @@ def open(init=None, extensions=None, **kwargs):
         init = hdulist
 
         try:
-            hdu = hdulist[(fits_header_name('SCI'), 1)]
+            hdu = hdulist[('SCI', 1)]
         except (KeyError, NameError):
             shape = ()
         else:
@@ -169,7 +166,7 @@ def _class_from_model_type(hdulist):
 
     if hdulist:
         primary = hdulist[0]
-        model_type = primary.header.get(fits_header_name('DATAMODL'))
+        model_type = primary.header.get('DATAMODL')
 
         if model_type is None:
             new_class = None
@@ -190,11 +187,11 @@ def _class_from_ramp_type(hdulist, shape):
     else:
         if len(shape) == 4:
             try:
-                dqhdu = hdulist[fits_header_name('DQ')]
+                hdulist['DQ']
             except KeyError:
                 # It's a RampModel or MIRIRampModel
                 try:
-                    refouthdu = hdulist[fits_header_name('REFOUT')]
+                    hdulist['REFOUT']
                 except KeyError:
                     # It's a RampModel
                     from . import ramp
@@ -220,7 +217,7 @@ def _class_from_reftype(hdulist, shape):
 
     else:
         primary = hdulist[0]
-        reftype = primary.header.get(fits_header_name('REFTYPE'))
+        reftype = primary.header.get('REFTYPE')
         if reftype is None:
             new_class = None
 
@@ -255,7 +252,7 @@ def _class_from_shape(hdulist, shape):
         new_class = cube.CubeModel
     elif len(shape) == 2:
         try:
-            hdu = hdulist[(fits_header_name('SCI'), 2)]
+            hdulist[('SCI', 2)]
         except (KeyError, NameError):
             # It's an ImageModel
             from . import image
@@ -286,16 +283,6 @@ def can_broadcast(a, b):
 
 def to_camelcase(token):
     return ''.join(x.capitalize() for x in token.split('_-'))
-
-
-def fits_header_name(name):
-    """
-    Returns a FITS header name in the correct form for the current
-    version of Python.
-    """
-    if isinstance(name, bytes):
-        return name.decode('ascii')
-    return name
 
 
 def gentle_asarray(a, dtype):

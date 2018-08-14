@@ -13,7 +13,7 @@ class ResolutionModel(ReferenceFileModel):
         super(ResolutionModel, self).__init__(init=init, **kwargs)
 
         if resolution_table is not None:
-            self.resolution_table = ifucubepars_table
+            self.resolution_table = resolution_table
 
 
 class MiriResolutionModel(ResolutionModel):

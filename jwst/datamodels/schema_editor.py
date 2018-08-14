@@ -59,7 +59,6 @@ from asdf import reference
 from asdf import treeutil
 
 from . import model_base
-from . import schema as mschema
 
 
 def enquote(value):
@@ -200,7 +199,7 @@ def save_simple_list(prefix, values, max_length=80):
         line = save_short_line(prefix, value)
     return line
 
-class Keyword_db(object):
+class Keyword_db:
     def __init__(self, directory=""):
         """
         Combine all the top dbs in a directory into a single db
@@ -429,7 +428,7 @@ class Keyword_db(object):
         self.schema = treeutil.walk_and_modify(self.schema, resolve_refs)
 
 
-class Model_db(object):
+class Model_db:
     def __init__(self):
         """
         Load the list of datamodels schema files from the schema directory
@@ -469,7 +468,7 @@ class Model_db(object):
             save_dictionary(fd, schema)
 
 
-class Options(object):
+class Options:
     """
     Get options for running the schema editor from file, command line arguments,
     and interactive user input.
@@ -805,7 +804,7 @@ class Options(object):
                     fd.write("{0} = {1}\n".format(name, value))
 
 
-class Schema_editor(object):
+class Schema_editor:
     def __init__(self, **keywds):
         """
         Initialize the editor options
@@ -1096,24 +1095,24 @@ class Schema_editor(object):
 
                         if keyword_path is None:
                             if not p_name:
-                                done = self.schema_del_value(model_schema,
-                                                             model_name,
-                                                             new_model_path)
+                                self.schema_del_value(model_schema,
+                                                            model_name,
+                                                            new_model_path)
 
                         else:
                             keyword_subschema = self.find_subschema(keyword_schema,
                                                                     keyword_path)
                             if keyword_subschema is not None:
                                 keyword_path = keyword_path.split('.')
-                                done = self.update_schema_fields(keyword_subschema,
-                                                                 model_subschema,
-                                                                 new_model_path)
+                                self.update_schema_fields(keyword_subschema,
+                                                            model_subschema,
+                                                            new_model_path)
 
                                 if not p_name and model_name != keyword_path[-1]:
-                                    done = self.schema_rename_value(model_schema,
-                                                                    keyword_path[-1],
-                                                                    model_name,
-                                                                    new_model_path)
+                                    self.schema_rename_value(model_schema,
+                                                            keyword_path[-1],
+                                                            model_name,
+                                                            new_model_path)
 
                                 if model_fits_name != keyword_fits_name:
                                     fits_dict[keyword_fits_name] = \

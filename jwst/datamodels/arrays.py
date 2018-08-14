@@ -64,11 +64,9 @@ def _parse_column(i, entry):
 
         if 'title' in entry:
             col_title = entry['title']
-            if not isinstance(col_title, basestring):
-                raise ValueError(
+            if not isinstance(col_title, str):
+                raise TypeError(
                     "Invalid title {0} in dtype".format(col_title))
-            if isinstance(col_title, unicode):
-                col_title = col_title.encode('ascii')
             col_name = (col_name, col_title)
 
         if 'shape' in entry:
