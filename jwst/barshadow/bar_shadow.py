@@ -70,8 +70,11 @@ def do_correction(input_model, barshadow_model):
                 det2slit = slitlet.meta.wcs.get_transform('detector', 'slit_frame')
                 #   Use this transformation to calculate x, y and wavelength
                 xslit, yslit, wavelength = det2slit(x, y)
-                #   Scale the yslit values by the ratio of slit spacing to slit height
-                yslit = yslit * SLITRATIO
+                #   The returned y values are scaled to where the slit height is 1
+                # (i.e. a slit goes from -0.5 to 0.5).  The barshadow array is scaled
+                # so that the separation between the slit centers is 1, i.e. slit height
+                # + interslit bar
+                yslit = yslit / SLITRATIO
                 #   Convert the Y and wavelength to a pixel location
                 #   in the  bar shadow array
                 index_of_fiducial = shutter_status.find('x')
@@ -93,7 +96,7 @@ def do_correction(input_model, barshadow_model):
             # Put an array of ones in a correction extension
             slitlet.barshadow = np.ones(slitlet.data.shape)
     return input_model
-#
+    
 def create_shutter_elements(barshadow_model):
     """Create the pieces that will be put together to make the barshadow
     array for the slitlets.  The pieces are:
@@ -399,7 +402,7 @@ def interpolate(rows, columns, array):
     augmented_array[nrows_out, ncols_out] = array[nrows_out-1, ncols_out-1]
     for row in range(nrows):
         for column in range(ncolumns):
-            if ~np.isnan(rows[row, column]):
+            if ~np.isnan(rows[row, column]) and ~np.isnan(columns[row, column]):
                 array_row = rows[row, column]
                 array_column = columns[row, column]
                 #
@@ -418,8 +421,8 @@ def interpolate(rows, columns, array):
                 a12 = augmented_array[iy, ix+1]
                 a21 = augmented_array[iy+1, ix+1]
                 a22 = augmented_array[iy+1, ix+1]
-                dx = array_column%1
-                dy = array_row%1
+                dx = array_column - ix
+                dy = array_row - iy
                 correction[row, column] = a11*(1.0-dx)*(1.0-dy) + a12*dx*(1.0-dy) + \
                     a21*(1.0-dx)*dy + a22*dx*dy
     return correction
