@@ -751,9 +751,7 @@ class Options(object):
         Set a field on the object after validating it
         """
         for name, value in parameters.items():
-            try:
-                current_value = getattr(editor, name)
-            except AttributeError:
+            if not hasattr(editor, name):
                 invalid_msg = "{0} is not a valid parameter"
                 raise ValueError(invalid_msg.format(name))
 
@@ -1096,24 +1094,24 @@ class Schema_editor(object):
 
                         if keyword_path is None:
                             if not p_name:
-                                done = self.schema_del_value(model_schema,
-                                                             model_name,
-                                                             new_model_path)
+                                self.schema_del_value(model_schema,
+                                                      model_name,
+                                                      new_model_path)
 
                         else:
                             keyword_subschema = self.find_subschema(keyword_schema,
                                                                     keyword_path)
                             if keyword_subschema is not None:
                                 keyword_path = keyword_path.split('.')
-                                done = self.update_schema_fields(keyword_subschema,
-                                                                 model_subschema,
-                                                                 new_model_path)
+                                self.update_schema_fields(keyword_subschema,
+                                                          model_subschema,
+                                                          new_model_path)
 
                                 if not p_name and model_name != keyword_path[-1]:
-                                    done = self.schema_rename_value(model_schema,
-                                                                    keyword_path[-1],
-                                                                    model_name,
-                                                                    new_model_path)
+                                    self.schema_rename_value(model_schema,
+                                                             keyword_path[-1],
+                                                             model_name,
+                                                             new_model_path)
 
                                 if model_fits_name != keyword_fits_name:
                                     fits_dict[keyword_fits_name] = \
@@ -1377,12 +1375,10 @@ class Schema_editor(object):
         """
         Add a new keyword to the model schema
         """
-        done = False
         if self.add:
             title = keyword_schema.get('title')
             if self.report_and_query("Add", title, keyword_schema, None,
                                   keyword_path, None):
-                done = True
                 keyword_name = keyword_path[-1]
                 model_schema[keyword_name] = OrderedDict()
 
@@ -1395,26 +1391,20 @@ class Schema_editor(object):
                             model_field = "default"
                         else:
                             model_field = keyword_field
-                        model_schema[keyword_name][keyword_field] = keyword_value
+                        model_schema[keyword_name][model_field] = keyword_value
 
                 if "properties" in keyword_schema:
                     model_schema[keyword_name]["properties"] = OrderedDict()
-
-        return done
-
 
     def schema_del_value(self, model_schema, model_name, path):
         """
         Delete a keyword from the model schema
         """
-        done = False
         if self.delete:
             title = model_schema.get('title')
             if self.report_and_query("Delete", title, None,
                                     model_schema[model_name], path, None):
-                done = True
                 del model_schema[model_name]
-        return done
 
     def schema_edit_value(self, model_schema, keyword_value, model_value,
                           path, field):
@@ -1424,7 +1414,6 @@ class Schema_editor(object):
         """
 
         # Logic for performing updates
-        done = False
         perform = (self.edit and
                    keyword_value is not None and
                    model_value is not None)
@@ -1433,27 +1422,20 @@ class Schema_editor(object):
             title = model_schema.get('title')
             if self.report_and_query("Change", title, keyword_value, model_value,
                                      path, field):
-                done = True
                 if field == "pattern":
                     keyword_value = self.pattern_from_enum(keyword_value)
                 model_schema[field] = keyword_value
-
-        return done
 
     def schema_rename_value(self, model_schema, keyword_name, model_name, path):
         """
         Rename a field in the model schema to match the keyword database
         """
-        done = False
         if self.rename:
             title = model_schema.get('title')
             if self.report_and_query("Rename", title, keyword_name, model_name,
                                      path, "name"):
-                done = True
                 model_schema[keyword_name] = model_schema[model_name]
                 del model_schema[model_name]
-        return done
-
 
     def sort_for_report(self, keyword_value, model_value):
         """
@@ -1503,7 +1485,6 @@ class Schema_editor(object):
         Compare the fields of a sinlgle item bteween the datamodels schema
         and the keyword database and update when they differ
         """
-        done = False
         p_name = path[-1][0:2] == "p_"
         for model_field in ('fits_keyword', 'type', 'enum', 'pattern', 'default'):
             # Skip checking fits keyword for reference file fields
@@ -1532,6 +1513,9 @@ class Schema_editor(object):
             if keyword_value == "float" and model_value == "number":
                 keyword_value = "number"
 
+            if keyword_value == "int" and model_value == "integer":
+                keyword_value = "integer"
+
             if keyword_value == "" and model_value is None:
                 keyword_value = None
 
@@ -1545,7 +1529,5 @@ class Schema_editor(object):
                     valid = True
 
                 if valid:
-                    if self.schema_edit_value(model_schema, keyword_value,
-                                              model_value, path, model_field):
-                        done = True
-        return done
+                    self.schema_edit_value(model_schema, keyword_value,
+                                           model_value, path, model_field)
