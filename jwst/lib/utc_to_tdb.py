@@ -76,37 +76,40 @@ def utc_tdb(filename, update_tdb=True, update_velosys=True,
         # Compute VELOSYS at the middle of the exposure.
         try:
             expmid = fd[0].header["expmid"]
+            update_keyword = True
         except KeyError as e:
             log.warning(str(e))
             log.warning("Can't update VELOSYS without the time.")
-            fd.close()
-            return (0., 0., 0.)
-        half_dt = delta_t / (86400. * 2.)       # and convert to days
-        tt_rv_times = np.array([to_tt(expmid - half_dt),
-                                to_tt(expmid + half_dt)])
-        if USE_TIMECONVERSION:
-            tdb_rv_times = timeconversion.compute_bary_helio_time(
-                                targetcoord, tt_rv_times)[0]
-        else:
-            (eph_time, jwst_pos, jwst_vel) = get_jwst_keywords(fd)
-            jwstpos_rv = linear_pos(tt_rv_times, eph_time, jwst_pos, jwst_vel)
-            tdb_rv_times = compute_bary_helio_time2(
-                                targetcoord, tt_rv_times, jwstpos_rv)[0]
+            update_keyword = False
 
-        # This is almost exactly the same as delta_t, but in units of days.
-        delta_tt = tt_rv_times[1] - tt_rv_times[0]
-        # This will be close to delta_t (in days), but it can differ due to
-        # the motion of the earth along the line of sight to or from the
-        # target.
-        delta_tdb = tdb_rv_times[1] - tdb_rv_times[0]
-        time_diff = (delta_tt - delta_tdb) * 86400.     # seconds
-        radial_velocity = time_diff * astropy.constants.c.value / delta_t
-        radial_velocity = round(radial_velocity, ndecimals)
-        log.info("radial velocity = {}".format(radial_velocity))
+        if update_keyword:
+            half_dt = delta_t / (86400. * 2.)       # and convert to days
+            tt_rv_times = np.array([to_tt(expmid - half_dt),
+                                    to_tt(expmid + half_dt)])
+            if USE_TIMECONVERSION:
+                tdb_rv_times = timeconversion.compute_bary_helio_time(
+                                    targetcoord, tt_rv_times)[0]
+            else:
+                (eph_time, jwst_pos, jwst_vel) = get_jwst_keywords(fd)
+                jwstpos_rv = linear_pos(tt_rv_times, eph_time,
+                                        jwst_pos, jwst_vel)
+                tdb_rv_times = compute_bary_helio_time2(
+                                    targetcoord, tt_rv_times, jwstpos_rv)[0]
 
-        scihdu = find_hdu(fd, "sci")
-        fd[scihdu].header["velosys"] = \
-                (radial_velocity, "Radial velocity wrt barycenter [m / s]")
+            # This is almost exactly the same as delta_t, but in units of days.
+            delta_tt = tt_rv_times[1] - tt_rv_times[0]
+            # This will be close to delta_t (in days), but it can differ due to
+            # the motion of the earth along the line of sight to or from the
+            # target.
+            delta_tdb = tdb_rv_times[1] - tdb_rv_times[0]
+            time_diff = (delta_tt - delta_tdb) * 86400.     # seconds
+            radial_velocity = time_diff * astropy.constants.c.value / delta_t
+            radial_velocity = round(radial_velocity, ndecimals)
+            log.info("radial velocity = {}".format(radial_velocity))
+
+            scihdu = find_hdu(fd, "sci")
+            fd[scihdu].header["velosys"] = \
+                    (radial_velocity, "Radial velocity wrt barycenter [m / s]")
 
     if update_tdb:
         try:
