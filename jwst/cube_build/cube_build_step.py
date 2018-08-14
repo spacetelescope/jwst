@@ -1,13 +1,8 @@
  #! /usr/bin/env python
 
-import sys
+#import sys
 import time
-import math
-import json
-import os
-import numpy as np
-from ..stpipe import Step, cmdline
-
+from ..stpipe import Step
 from .. import datamodels
 from . import cube_build
 from . import ifu_cube
@@ -20,10 +15,18 @@ __all__ = ["CubeBuildStep", "read_user_input"]
 
 class CubeBuildStep (Step):
     """
+    Short Summary
+    ------------
     CubeBuildStep: Creates a 3-D spectral cube from a given association, single model,
-    single input file, or model container.
-    Input parameters allow the spectral cube to be built from a provided
-    channel/subchannel (MIRI) or grating/filer  (NIRSPEC)
+      single input file, or model container.
+      Input parameters allow the spectral cube to be built from a provided
+      channel/subchannel (MIRI) or grating/filer  (NIRSPEC)
+    The default cube sampling size is stored in a cubepars reference file. The user can override the 
+      default sample size in the spatial and spectral dimensions by providing the values
+    The option --single is used by the pipleine to support the imatch_mrs and outlier detection
+      In this case from the list of provided datamodels the footprint on the sky is determined.
+      Each data model is individually mapped to this global footprint. A container of single
+      frame datamodels is returned.
     """
 
     spec = """
@@ -70,27 +73,27 @@ SHORT,MEDIUM,LONG, or ALL
         if(not self.output_type.islower()): self.output_type = self.output_type.lower()
         if(not self.weighting.islower()): self.weighting = self.weighting.lower()
 
-        if(self.scale1 != 0.0): self.log.info('Input Scale of axis 1 %f', self.scale1)
-        if(self.scale2 != 0.0): self.log.info('Input Scale of axis 2 %f', self.scale2)
-        if(self.scalew != 0.0): self.log.info('Input wavelength scale %f  ', self.scalew)
-        if(self.offset_list != 'NA'): self.log.info('Offset Dither list %s', self.offset_list)
+        if self.scale1 != 0.0: self.log.info('Input Scale of axis 1 %f', self.scale1)
+        if self.scale2 != 0.0: self.log.info('Input Scale of axis 2 %f', self.scale2)
+        if self.scalew != 0.0: self.log.info('Input wavelength scale %f  ', self.scalew)
+        if self.offset_list != 'NA': self.log.info('Offset Dither list %s', self.offset_list)
 
-        if(self.wavemin !=None): self.log.info('Setting Minimum wavelength of spectral cube to: %f',
-                                               self.wavemin)
-        if(self.wavemax !=None): self.log.info('Setting Maximum wavelength of spectral cube to: %f',
-                                               self.wavemax)
+        if self.wavemin !=None: self.log.info(
+            'Setting Minimum wavelength of spectral cube to: %f',self.wavemin)
+        if self.wavemax !=None: self.log.info(
+            'Setting Maximum wavelength of spectral cube to: %f',self.wavemax)
 
-        if(self.rois != 0.0): self.log.info('Input Spatial ROI size %f', self.rois)
-        if(self.roiw != 0.0): self.log.info('Input Wave ROI size %f', self.roiw)
+        if self.rois != 0.0: self.log.info('Input Spatial ROI size %f', self.rois)
+        if self.roiw != 0.0: self.log.info('Input Wave ROI size %f', self.roiw)
 
         self.debug_pixel = 0
         self.spaxel_debug = None
-        if(self.xdebug !=None and self.ydebug !=None and self.zdebug !=None):
+        if self.xdebug !=None and self.ydebug !=None and self.zdebug !=None:
             self.debug_pixel = 1
-            self.log.info('Writing debug information for spaxel %i %i %i',self.xdebug,self.ydebug,
-                          self.zdebug)
-            self.log.debug('Writing debug information for spaxel %i %i %i',self.xdebug,self.ydebug,
-                           self.zdebug)
+            self.log.info('Writing debug information for spaxel %i %i %i',
+                          self.xdebug,self.ydebug,self.zdebug)
+            self.log.debug('Writing debug information for spaxel %i %i %i',
+                           self.xdebug,self.ydebug,self.zdebug)
             self.xdebug = self.xdebug -1
             self.ydebug = self.ydebug -1
             self.zdebug = self.zdebug -1
@@ -128,30 +131,37 @@ SHORT,MEDIUM,LONG, or ALL
             self.output_type = 'single'
 
 #________________________________________________________________________________
-    # read input parameters - Channel, Band (Subchannel), Grating, Filter
+# Set up a list for Channel, Band, Grating and Filter
+# These will be filled in either from
+# 1. If user has not set them  the are filled in by what is contained in the 
+#    input data 
+# 2. If the user had set with values to use then these lists are filled in by
+#    the user provided list
 #________________________________________________________________________________
         self.pars_input = {}
-        self.pars_input['channel'] = []     # input parameter or determined from reading in files
-        self.pars_input['subchannel'] = []  # inputparameter or determined from reading in files
+        self.pars_input['channel'] = []    
+        self.pars_input['subchannel'] = [] 
+        self.pars_input['filter'] = []   
+        self.pars_input['grating'] = []
 
-        self.pars_input['filter'] = []   # input parameter
-        self.pars_input['grating'] = []  # input parameter
-        read_user_input(self)  # see if options channel, band,grating filter are set
-                               # is they are then self.output_type = 'user'
-                               # if they are filling par_input with values
+#   Check if any of the  options channel,band, grating or filter have been set
+# by  the user (or calling routine).  I
+# If they have been set then fill in the list the desired values
+# If they have not been set then set to ''
+        read_user_input(self)  
 #________________________________________________________________________________
 #data_types: DataTypes: Read in the input data - 4 formats are allowed:
 # 1. filename
 # 2. single model
 # 3. ASN table
 # 4. model containter
-# figure out what type of data we have an fill in the
-# input_table.input_models - which is used in the rest of IFU Cube Building
+# Figure out what type of data we have an fill in the
+#    input_table.input_models - which is used in the rest of IFU Cube Building
 # We need to do this in cube_build_step because we need to pass the data_model to
-# CRDS to figure out what type of reference files to grab (MIRI or NIRSPEC)
-# if the user has provided the filename - strip out .fits and pull out the base name
-# the cube_build software will attached the needed information on channel, sub-channel
-# grating or filter.
+#    CRDS to figure out what type of reference files to grab (MIRI or NIRSPEC)
+# If the user has provided the filename - strip out .fits and pull out the base name
+#    the cube_build software will attached the needed information on channel, sub-channel
+#    grating or filter.
 #________________________________________________________________________________
         t0 = time.time()
         input_table = data_types.DataTypes(input,self.single,
@@ -163,22 +173,21 @@ SHORT,MEDIUM,LONG, or ALL
         self.input_models = input_table.input_models
         self.input_filenames = input_table.filenames
         self.output_name_base = input_table.output_name
-
         self.pipeline = 3
         if self.output_type =='multi' and len(self.input_filenames) ==1 :
             self.pipeline = 2
         if(len(self.input_filenames)==1): self.offset_list = 'NA'
 #________________________________________________________________________________
 # Read in Cube Parameter Reference file
-        # identify what reference file has been associated with these input
+# Identify what reference file has been associated with these input
         par_filename = self.get_reference_file(self.input_models[0], 'cubepar')
  # Check for a valid reference file
         if par_filename == 'N/A':
             self.log.warning('No default cube parameters reference file found')
             return
 #________________________________________________________________________________
-# If miripsf weight is set then set up reference file
-        # identify what reference file has been associated with these inputs
+# If miripsf weight is set then set up resolution reference file
+# identify what reference file has been associated with these inputs
         resol_filename = None
         if(self.weighting == 'miripsf'):
             resol_filename = self.get_reference_file(self.input_models[0], 'resol')
@@ -188,7 +197,7 @@ SHORT,MEDIUM,LONG, or ALL
                 self.log.warning('Run again and turn off miripsf')
                 return
 #________________________________________________________________________________
-# shove the input parameters in to pars to pull out in general cube_build.py
+# shove the input parameters into pars structure to pull out in general cube_build.py
 
         pars = {
             'channel': self.pars_input['channel'],
@@ -200,7 +209,7 @@ SHORT,MEDIUM,LONG, or ALL
             'output_type':self.output_type,
             'offset_list': self.offset_list}
 
-# shove the input parameters in to pars_cube to pull out ifu_cube.py
+# shove the input parameters in to pars_cube structure to pull out in ifu_cube.py
 # these parameters are related to the IFUCube
         pars_cube = {
             'scale1': self.scale1,
@@ -220,7 +229,8 @@ SHORT,MEDIUM,LONG, or ALL
             'debug_pixel': self.debug_pixel,
             'spaxel_debug':self.spaxel_debug}
 #________________________________________________________________________________
-# create an instance of class CubeData
+# create an instance of class CubeData. This is a the overall Class of the Step
+# It holds the general information of what type of cubes are being created 
 
         cubeinfo = cube_build.CubeData(
             self.input_models,
@@ -249,7 +259,7 @@ SHORT,MEDIUM,LONG, or ALL
         num_cubes,cube_pars= cubeinfo.number_cubes()
         self.log.info('Number of IFUCubes produced by a this run %i',num_cubes)
 
-        Final_IFUCube = datamodels.ModelContainer() # stick IFUcubes in
+        Final_IFUCube = datamodels.ModelContainer() # ModelContainer of ifucubes
 
         for i in range(num_cubes):
             icube = str(i+1)
@@ -278,15 +288,13 @@ SHORT,MEDIUM,LONG, or ALL
 
             thiscube.setup_ifucube_wcs()
 #________________________________________________________________________________
-# build the IFU Cube
-
 # If single = True: map each file to output grid and return single mapped file
-#to output grid
 # this option is used for background matching and outlier rejection
             if self.single:
                 self.output_file = None
                 Final_IFUCube = thiscube.build_ifucube_single()
-                self.log.info("Number of IFUCube models returned from building single IFUCubes %i ",len(Final_IFUCube))
+                self.log.info("Number Single IFUCubes produced  %i ",
+                              len(Final_IFUCube))
 
 # Else standard IFU cube building
             else:
@@ -313,9 +321,9 @@ def read_user_input(self):
     """
     Short Summary
     -------------
-    figure out if any of the input paramters channel,band,filter or grating
+    Figure out if any of the input paramters channel,band,filter or grating
     have been set. If they have been  check that they are valid and fill in
-    input_pars paramters
+    input_pars paramters. If they have not been set then initialize list to ''
 
     Parameters
     ----------
@@ -335,20 +343,15 @@ def read_user_input(self):
                     'F170LP', 'F290LP', 'F290LP', 'CLEAR','ALL']
     ValidGWA = ['G140M', 'G140H', 'G140M', 'G140H', 'G235M', 'G235H',
                     'G395M', 'G395H', 'PRISM','ALL']
-    nchannels = len(ValidChannel)
-    nsubchannels = len(ValidSubChannel)
-
-    nfilter = len(ValidFWA)
-    ngrating = len(ValidGWA)
 
 #________________________________________________________________________________
-    # for MIRI we can set the channel
-# if set to ALL then let the DetermineCubeCoverage figure out the data we have and set
-# self.channel to empty
+# For MIRI we can set the channel
+# If it is set to ALL then let the DetermineCubeCoverage figure out the data we 
+# have and set self.channel to empty
     if self.channel == 'ALL':
         self.channel = ''
 
-    if self.channel:  # self.channel is false if it is empty
+    if self.channel:  # The user has set which channels to use
         if not self.single:
             self.output_type = 'user'
         channellist = self.channel.split(',')
@@ -371,14 +374,14 @@ def read_user_input(self):
         self.pars_input['channel'] = list(set(self.pars_input['channel']))
 
 #________________________________________________________________________________
-    # for MIRI we can set the subchannel
-# if set to ALL then let the DetermineCubeCoverage figure out the data we have and set
-# self.subchannel = empty
+# For MIRI we can set the subchannel
+# If it is  set to ALL then let the DetermineCubeCoverage figure out the data we 
+#have and set  self.subchannel = empty
 
     if self.subchannel == 'ALL':
         self.subchannel = ''
 
-    if self.subchannel : #  not empty it has been set
+    if self.subchannel : #  The user has set which subchannels to use 
         if not self.single:
             self.output_type = 'user'
         subchannellist = self.subchannel.split(',')
@@ -398,19 +401,19 @@ def read_user_input(self):
 # remove duplicates if needed
         self.pars_input['subchannel'] = list(set(self.pars_input['subchannel']))
 #________________________________________________________________________________
-    # for NIRSPEC we can set the filter
-# if set to ALL then let the DetermineCubeCoverage figure out the data we have and set
-# self.filter = empty
+# For NIRSPEC we can set the filter
+# If it is set to ALL then let the DetermineCubeCoverage figure out the data we 
+# have and set self.filter = empty
     if self.filter == 'ALL':
         self.filter = ''
-    if self.filter:
+    if self.filter:            # the user has set which filters to use
         if not self.single:
             self.output_type = 'user'
         filterlist = self.filter.split(',')
         user_flen = len(filterlist)
         for j in range(user_flen):
             f = filterlist[j]
-            if(user_flen > 1) :
+            if user_flen > 1:
                 f = f.strip('[')
                 f = f.strip(']')
                 f = f.strip(' ')
@@ -423,21 +426,20 @@ def read_user_input(self):
 # remove duplicates if needed
         self.pars_input['filter'] = list(set(self.pars_input['filter']))
 #________________________________________________________________________________
-    # for NIRSPEC we can set the grating
-# if set to ALL then let the DetermineCubeCoverage figure out the data we have and set
-# self.grating = empty
+# For NIRSPEC we can set the grating
+# If it is set to ALL then let the DetermineCubeCoverage figure out the data we
+# have and set  self.grating = empty
     if self.grating == 'ALL':
         self.grating = ''
 
-    if self.grating:
+    if self.grating:       # the user has set with grating to use 
         if not self.single:
             self.output_type = 'user'
         gratinglist = self.grating.split(',')
         user_glen = len(gratinglist)
         for j in range(user_glen):
-
             g = gratinglist[j]
-            if(user_glen > 1) :
+            if user_glen > 1:
                 g = g.strip('[')
                 g = g.strip(']')
                 g = g.strip(' ')
@@ -449,7 +451,6 @@ def read_user_input(self):
                 raise ErrorInvalidParameter("Invalid Grating %s",g)
 # remove duplicates if needed
         self.pars_input['grating'] = list(set(self.pars_input['grating']))
-
 #________________________________________________________________________________
 
 class ErrorInvalidParameter(Exception):
