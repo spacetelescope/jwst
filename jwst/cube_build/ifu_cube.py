@@ -314,9 +314,8 @@ class IFUCubeData():
 #________________________________________________________________________________
                     xstart, xend = self.instrument_info.GetMIRISliceEndPts(this_par1)
                     y, x = np.mgrid[:1024, xstart:xend]
-                    y = np.reshape(y, y.size)
-                    x = np.reshape(x, x.size)
-
+#                    y = np.reshape(y, y.size)
+#                    x = np.reshape(x, x.size)
 
                     cube_cloud.match_det2cube(self,input_model,
                                               x, y, j,
@@ -326,11 +325,9 @@ class IFUCubeData():
 
                 elif self.instrument == 'NIRSPEC':
                     # each file, detector has 30 slices - wcs information access seperately for each slice
-                    start_slice = 0
-                    end_slice = 29
-                    nslices = end_slice - start_slice + 1
-                    regions = list(range(start_slice, end_slice + 1))
-                    for ii in regions:
+
+                    nslices = 30 
+                    for ii in range(nslices):
                         t0a = time.time()
                         slice_wcs = nirspec.nrs_wcs_set_input(input_model, ii)
                         x,y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)

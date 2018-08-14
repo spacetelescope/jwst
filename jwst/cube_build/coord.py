@@ -1,20 +1,33 @@
 
-import sys
 import numpy as np
 import math
-
-
 #_______________________________________________________________________
 
 def radec2std(crval1,crval2,ra,dec):
     """
-    Compute the standard coordinates xi,eta from CRVAL1,CRVAL2 & ra,dec
+    Short Summary
+    ____________
+    Compute the tangent projection coordinates (xi,eta) from ra,dec  using 
+    CRVAL1,CRVAL2 and the tangent point
+    
+    Input Values
+    ____________
+    CRVAL1: ra value of tangent point
+    CRVAL2: dec value of tangent point
+    ra: list (or single value) of ra points to convert
+    dec: list (or single value) of ra points to convert
+
+    Return Values
+    _____________
+    xi, eta - rectangular coordinates of tangent plane projected ra,dec
+
     """
 
-    def check_val(ra):
-        ra = np.asarray(ra)
-    def check_val(dec):
-        dec = np.asarray(dec)
+
+    if  np.isscalar(ra): 
+        ra = np.asarray([ra])
+        dec = np.asarray([dec])
+
 
     rad2arcsec = (180.0*3600.0)/math.pi
     deg2rad = math.pi/180.0
@@ -41,22 +54,30 @@ def radec2std(crval1,crval2,ra,dec):
 #________________________________________________________________________________
 def std2radec(crval1,crval2,xi,eta):
 
-# Compute the Ra,dec from CRVAL1,CRVAL2 & xi,eta
+    """
+    Short Summary
+    ____________
+    Compute the ra,dec values of  tangent plane rectangular coordinates using
+    CRVAL1,CRVAL2 and the tangent point. This routine takes the rectangular
+    plane and projects it to the spherical plane using CRVAL1, CRVAL2 as
+    the tangent plane. 
+    
+    Input Values
+    ____________
+    CRVAL1: ra value of tangent point
+    CRVAL2: dec value of tangent point
+    xi, eta - rectangular coordinates of tangent plane projected ra,dec
 
-# This program uses a ONLY tangent (gnomonic projection).
 
-# Inputs:
-#  ra,dec : right acsension and declination
-# CRVAL1: ra value of reference point
-# CRVAL2: dec value of reference point
-# Outputs:
-#  xi     - standard coordinate
-#  eta    - standard coordinate
+    Return Values
+    _____________
+    ra: list (or single value) of ra computed values 
+    dec: list (or single value) of dec computed values  
+    """
 
-
-
-    eta = np.asarray([eta])
-    xi = np.asarray([xi])
+    if  np.isscalar(xi): 
+        eta = np.asarray([eta])
+        xi = np.asarray([xi])
 
     rad2arcsec = (180.0*3600.0)/math.pi
     deg2rad = math.pi/180.0

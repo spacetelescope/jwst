@@ -44,23 +44,25 @@ def match_det2cube(self, input_model,
     spaxel class matched to detector pixels with flux and weighting updated for each
     match
 
-
     """
 
 #________________________________________________________________________________
     if self.instrument == 'MIRI':
-        file_no = file_slice_no
 
-        ra,dec,lam = input_model.meta.wcs(x,y) # for entire detector find  ra,dec,lambda
-        valid1 = np.isfinite(ra)
-        valid2 = np.isfinite(dec)
-        if self.weighting == 'miripsf': # MIRI PSF weighting uses alpha-beta 
-            # plane weighting
+        coord1,coord2,wave = input_model.meta.wcs(x,y) # for entire detector find  ra,dec,lambda
+        valid1 = ~np.isnan(coord1)
+
+# MIRI PSF weighting
+# weighting based on distance in alpha-beta plane
+        if self.weighting == 'miripsf': 
+            # get transforms needed for this weighting
+
             det2ab_transform = input_model.meta.wcs.get_transform('detector','alpha_beta')
             worldtov23 = input_model.meta.wcs.get_transform("world","v2v3")
             v2ab_transform = input_model.meta.wcs.get_transform('v2v3',
                                                                 'alpha_beta')
-            alpha, beta, wave = det2ab_transform(x, y)            
+            coord1, coord2, wave = det2ab_transform(x, y)
+            valid1 = ~np.isnan(coord1)                        
             wave_resol = self.instrument_info.Get_RP_ave_Wave(this_par1,this_par2)
             alpha_resol = self.instrument_info.Get_psf_alpha_parameters()
             beta_resol = self.instrument_info.Get_psf_beta_parameters()
@@ -75,70 +77,77 @@ def match_det2cube(self, input_model,
             
         if self.coord_system == 'alpha-beta': # making Alpha-Beta final Cubes
             det2ab_transform = input_model.meta.wcs.get_transform('detector','alpha_beta')
-            alpha, beta, wave = det2ab_transform(x, y)            
+            coord1, coord2, wave = det2ab_transform(x, y)
+            valid1 = ~np.isnan(coord1)            
 #________________________________________________________________________________
     elif self.instrument == 'NIRSPEC': # for NIRSPEC need to look over every slice
         # Slice No are provided by ifu_cube.py
         islice = file_slice_no
         slice_wcs = nirspec.nrs_wcs_set_input(input_model, islice)
 
-        x = x.astype(np.int)
-        y = y.astype(np.int)
+        coord1, coord2, wave = slice_wcs(x, y) # return v2,v3 are in degrees
+        valid1 = ~np.isnan(coord1)
 
-        ra, dec, lam = slice_wcs(x, y) # return v2,v3 are in degrees
-        valid1 = np.isfinite(ra)
-        valid2 = np.isfinite(dec)
 #________________________________________________________________________________
 #________________________________________________________________________________
 # Slices are curved on detector. A slice region is grabbed by corner regions so
 # the region returned may include pixels not value for slice. There are gaps 
 # between the slices. Pixels not belonging to a slice are assigned NaN values.
 
-    flux_all = input_model.data[y, x]
-    error_all = input_model.err[y, x]
-    dq_all = input_model.dq[y,x]
+    x = x[valid1]
+    y = y[valid1]
+    coord1 = coord1[valid1]
+    coord2 = coord2[valid1]
+    wave = wave[valid1]
 
-    valid3 = np.isfinite(lam)
-    valid4 = np.isfinite(flux_all)
-    valid = valid1 & valid2 & valid3 &valid4
 #________________________________________________________________________________
 # using the DQFlags from the input_image find pixels that should be excluded
 # from the cube mapping
+
+    flux_all = input_model.data[y, x]
+    dq_all = input_model.dq[y,x]
+    valid4 = np.isfinite(flux_all)
+
     all_flags = (dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['DROPOUT'] + 
                  dqflags.pixel['NON_SCIENCE'] +
                  dqflags.pixel['DEAD'] + dqflags.pixel['HOT'] +
                  dqflags.pixel['RC'] + dqflags.pixel['NONLINEAR'])
 
-    # find the location of all the values to reject in cube building
-    good_data = np.where((np.bitwise_and(dq_all, all_flags)==0) & (valid == True))
-
     # good data holds the location of pixels we want to map to cube
-    flux = flux_all[good_data]
-    error = error_all[good_data]
-    wave = lam[good_data]
+    good_data = np.where((np.bitwise_and(dq_all, all_flags)==0) & (valid4 ))
 
-    xpix = x[good_data] # only used for testing
-    ypix = y[good_data] # only used for testing
+#________________________________________________________________________________
+# Now get the final value to use for cube_building 
+    x = x[good_data]
+    y = y[good_data]
+    coord1 = coord1[good_data]
+    coord2 = coord2[good_data]
+    wave = wave[good_data]
 
-    
-    ra = ra - c1_offset/3600.0
-    dec = dec - c2_offset/3600.0
-    ra_use = ra[good_data]
-    dec_use = dec[good_data]
+    flux = input_model.data[y, x]
+#    error = input_model.err[y, x]  - we might use this later 
+
+# for now comment out - check if we are ever going to use c1_offset, c2_offset
+#    ra = ra - c1_offset/3600.0
+#    dec = dec - c2_offset/3600.0
+
     # find the Cube Coordinates 
-    if self.instrument == 'MIRI' and self.weighting == 'miripsf':
-        alpha_det = alpha[good_data]
-        beta_det = beta[good_data]
+#    if self.instrument == 'MIRI' and self.weighting == 'miripsf':
+#        alpha_det = alpha[good_data]
+#        beta_det = beta[good_data]
 # MIRI can make cubes in alpha-beta:
-    if self.coord_system == 'alpha-beta':
-        coord1 = alpha[good_data]
-        coord2 = beta[good_data]
+    if self.coord_system == 'ra-dec':
+#        coord1 = alpha[good_data]
+#        coord2 = beta[good_data]
 
-    else: 
+#    else: 
 # xi,eta in arc seconds (works both for MIRI and NIRSPEC)
-        xi,eta = coord.radec2std(self.Crval1, self.Crval2,ra_use,dec_use) 
+        # need to redefine what coord1 and coord2 is if working
+        # with Ra,Dec (majority of cases) 
+        xi,eta = coord.radec2std(self.Crval1, self.Crval2,coord1,coord2) 
         coord1 = xi
         coord2 = eta
+
 
     nplane = self.naxis1 * self.naxis2
     lower_limit = 0.01
@@ -148,6 +157,7 @@ def match_det2cube(self, input_model,
 # withing the region of interest.
     nn  = coord1.size
 
+
 #    print('looping over n points on exposure and mapping to cloud',nn)
 #________________________________________________________________________________
     for ipt in range(0, nn - 1): 
@@ -156,6 +166,8 @@ def match_det2cube(self, input_model,
         # cube coordinates. 
         # find the spaxels that fall withing ROI of point cloud defined  by
         # coord1,coord2,wave
+#        print('Size of self.Xcenters',self.Xcenters.shape)
+#        print(' coord1',coord1[ipt])
 
         xdistance = (self.Xcenters - coord1[ipt])
         ydistance = (self.Ycenters - coord2[ipt])
@@ -205,8 +217,8 @@ def match_det2cube(self, input_model,
                     alpha_spaxel,beta_spaxel,wave_spaxel=v2ab_transform(v2_spaxel,
                                                                         v3_spaxel,
                                                                         zlam[iz])
-                    alpha_distance =alpha_det[ipt]-alpha_spaxel
-                    beta_distance = beta_det[ipt]-beta_spaxel
+                    alpha_distance =coord1[ipt]-alpha_spaxel
+                    beta_distance = coord2[ipt]-beta_spaxel
                     wave_distance  = abs(wave[ipt]-wave_spaxel)
 
                     xn = alpha_distance/weight_alpha
