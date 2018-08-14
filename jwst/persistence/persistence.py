@@ -137,8 +137,6 @@ class DataSet():
         # Initial value, indicates that processing was done successfully.
         skipped = False
 
-        detector = self.output_obj.meta.instrument.detector
-
         shape = self.output_obj.data.shape
         if len(shape) != 4:
             log.warning("Don't understand shape %s of input data, "
@@ -155,11 +153,7 @@ class DataSet():
         # Note that this might be a subarray.
         persistence = np.zeros((shape[-2], shape[-1]), dtype=np.float64)
         (nints, ngroups, ny, nx) = shape
-        t_frame = self.output_obj.meta.exposure.frame_time
         t_group = self.output_obj.meta.exposure.group_time
-        # Time of one integration, in seconds.  This is the duration,
-        # not necessarily the effective integration time.
-        t_int = t_group * float(ngroups)
 
         # The trap density image is full-frame, so use it to get the shape of
         # a full-frame array.  traps_filled is also full-frame, but we can't
@@ -363,9 +357,6 @@ class DataSet():
             can be used to extract a subarray from the reference file.
         """
 
-        ref_shape = ref.shape
-        ref_nx = ref_shape[-1]
-        ref_ny = ref_shape[-2]
         sci_shape = sci.shape
         sci_nx = sci_shape[-1]
         sci_ny = sci_shape[-2]

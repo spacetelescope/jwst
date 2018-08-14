@@ -820,16 +820,11 @@ def fore_optics_flat(wl, f_flat_model, exposure_type,
         msa_y -= 1              # convert to zero indexed
         msa_x -= 1
         full_array_flat = f_flat_model.quadrants[quadrant].data
-        full_array_dq = f_flat_model.quadrants[quadrant].dq
         # Get the wavelength corresponding to each plane in the "image".
         image_wl = read_image_wl(f_flat_model, quadrant)
         if image_wl.max() < MICRONS_100:
             log.warning("Wavelengths in f_flat image appear to be in meters.")
         one_d_flat = full_array_flat[:, msa_y, msa_x]
-        # This is just a single value, i.e. the shutter can be flagged
-        # as bad.  But if it's bad, why was the shutter used?  And what are
-        # we supposed to do if it is bad, flag the whole slit as bad?
-        # xxx d_dq = full_array_dq[msa_y, msa_x]
 
         # The wavelengths and flat-field values read from the reference
         # table are tab_wl and tab_flat respectively.  We need to combine
@@ -1264,9 +1259,6 @@ def combine_fast_slow(wl, flat_2d, tab_wl, tab_flat):
         dwl[0, :] = dwl[1, :]
         dwl[-1, :] = dwl[-2, :]
     log.debug("dispaxis = %d", dispaxis)
-
-    wl_low = wl - dwl / 2.
-    wl_high = wl + dwl / 2.
 
     # Values averaged within tab_flat.
     values = np.zeros_like(wl)
