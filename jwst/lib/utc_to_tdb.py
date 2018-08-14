@@ -74,7 +74,13 @@ def utc_tdb(filename, update_tdb=True, update_velosys=True,
 
     if update_velosys:
         # Compute VELOSYS at the middle of the exposure.
-        expmid = fd[0].header["expmid"]
+        try:
+            expmid = fd[0].header["expmid"]
+        except KeyError as e:
+            log.warning(str(e))
+            log.warning("Can't update VELOSYS without the time.")
+            fd.close()
+            return (0., 0., 0.)
         half_dt = delta_t / (86400. * 2.)       # and convert to days
         tt_rv_times = np.array([to_tt(expmid - half_dt),
                                 to_tt(expmid + half_dt)])
