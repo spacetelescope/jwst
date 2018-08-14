@@ -678,6 +678,7 @@ def slit_to_msa(open_slits, msafile):
     """
     msa = MSAModel(msafile)
     models = []
+    slits = []
     for quadrant in range(1, 6):
         slits_in_quadrant = [s for s in open_slits if s.quadrant == quadrant]
         msa_quadrant = getattr(msa, 'Q{0}'.format(quadrant))
@@ -694,8 +695,9 @@ def slit_to_msa(open_slits, msafile):
                 slitdata_model = get_slit_location_model(slitdata)
                 msa_transform = slitdata_model | msa_model
                 models.append(msa_transform)
+                slits.append(slit)
     msa.close()
-    return Slit2Msa(open_slits, models)
+    return Slit2Msa(slits, models)
 
 
 def gwa_to_ifuslit(slits, input_model, disperser, reference_files):
