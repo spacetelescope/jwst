@@ -70,8 +70,8 @@ matrix:
                CONDA_DEPENDENCIES="$CONDA_DEPENDENCIES $CONDA_DOC_DEPENDENCIES"
                PIP_DEPENDENCIES='sphinx_rtd_theme stsci_rtd_theme sphinx-automodapi'
         - os: linux
-          env: MAIN_CMD='flake8 --count'
-               SETUP_CMD='jwst' TEST_CMD='flake8 --version --select=F401, F402, F841, E722 --max-line-length=110 '
+          env: MAIN_CMD='flake8 --count --select=F, E101, E111, E112, E113, E401, E402, E711, E722 --max-line-length=110'
+               SETUP_CMD='jwst'
 
     allow_failures:
         # PEP8 will fail for numerous reasons. Ignore it.
