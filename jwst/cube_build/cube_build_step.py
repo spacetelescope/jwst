@@ -12,6 +12,8 @@ from .. import datamodels
 from . import cube_build
 from . import ifu_cube
 from . import data_types
+from ..assign_wcs.util import update_s_region_keyword
+
 
 __all__ = ["CubeBuildStep", "read_user_input"]
 
@@ -278,7 +280,6 @@ SHORT,MEDIUM,LONG, or ALL
 # If single = True: map each file to output grid and return single mapped file
 #to output grid
 # this option is used for background matching and outlier rejection
-
             if self.single:
                 self.output_file = None
                 Final_IFUCube = thiscube.build_ifucube_single()
@@ -291,10 +292,10 @@ SHORT,MEDIUM,LONG, or ALL
 
             if(self.debug_pixel ==1):
                 self.spaxel_debug.close()
-
-        sregion = Final_IFUCube.meta.wcs.footprint(kind="spatial")
-        Final_IFUCube.meta.wcsinfo.s_region = sregion
-        log.info("Updated S_REGION to {}".format(s_region))
+        for cube in Final_IFUCube:
+            footprint = cube.meta.wcs.footprint(axis_type="spatial")
+            update_s_region_keyword(cube, footprint.T)
+            self.log.info("Updated S_REGION to {}".format(cube.meta.wcsinfo.s_region))
 
         return Final_IFUCube
 

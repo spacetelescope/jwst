@@ -4,6 +4,8 @@ Test datamodel.open
 
 import os
 import os.path
+
+import pytest
 import numpy as np
 from astropy.io import fits
 
@@ -34,14 +36,9 @@ def test_open_shape():
     model.close()
 
 def test_open_illegal():
-    init = 5
-    try:
-        model = open(init)
-    except ValueError:
-        fail = 1
-    else:
-        fail = 0
-    assert fail == 1
+    with pytest.raises(ValueError):
+        init = 5
+        open(init)
 
 def test_open_hdulist():
     hdulist = fits.HDUList()

@@ -1,5 +1,4 @@
-import pytest
-from jwst.datamodels import make_header
+from .. import make_header
 
 def test_make_header():
     # This is mostly a "smoke test" to determine the code works

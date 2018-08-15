@@ -2,13 +2,9 @@ import numpy as np
 import warnings
 from astropy.modeling.core import Model
 from astropy import units as u
-from . import model_base
 
-from .extension import BaseExtension
 from .validate import ValidationWarning
 from .reference import ReferenceFileModel
-from jwst.transforms.jwextension import JWSTExtension
-from gwcs.extension import GWCSExtension
 
 __all__ = ['DistortionModel', 'DistortionMRSModel', 'SpecwcsModel', 'RegionsModel',
            'WavelengthrangeModel', 'CameraModel', 'CollimatorModel', 'OTEModel',
@@ -476,7 +472,7 @@ class IFUSlicerModel(ReferenceFileModel):
         if model is not None:
             self.model = model
         if data is not None:
-            seld.data = data
+            self.data = data
         if init is None:
             self.populate_meta()
 

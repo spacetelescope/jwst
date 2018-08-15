@@ -1,5 +1,3 @@
-# Licensed under a 3-clause BSD style license - see LICENSE.rst
-
 import os
 import shutil
 import tempfile
@@ -11,7 +9,8 @@ from numpy.testing import assert_array_equal
 
 from asdf import schema as mschema
 
-from .. import DataModel, ImageModel, RampModel, open
+from .. import DataModel, ImageModel, RampModel
+from ..util import open
 
 ROOT_DIR = None
 FITS_FILE = None
@@ -53,7 +52,7 @@ def test_from_new_hdulist():
         from astropy.io import fits
         hdulist = fits.HDUList()
         with open(hdulist) as dm:
-            sci = dm.data
+            dm.data
 
 
 def test_from_new_hdulist2():
@@ -65,7 +64,6 @@ def test_from_new_hdulist2():
     science = fits.ImageHDU(data=data, name='SCI')
     hdulist.append(science)
     with open(hdulist) as dm:
-        sci = dm.data
         dq = dm.dq
         assert dq is not None
 
@@ -94,7 +92,6 @@ def delete_array():
         with open(hdulist) as dm:
             del dm.data
             assert len(hdulist) == 1
-            x = dm.data
 
 
 def test_from_fits():
@@ -182,7 +179,7 @@ def test_extra_fits():
         dm2 = dm.copy()
         dm2.to_fits(TMP_FITS, overwrite=True)
 
-    with DataModel(TMP_FITS) as dm3:
+    with DataModel(TMP_FITS) as dm:
         assert 'BITPIX' not in _header_to_dict(dm.extra_fits.PRIMARY.header)
         assert _header_to_dict(dm.extra_fits.PRIMARY.header)['SCIYSTRT'] == 705
 
@@ -392,9 +389,7 @@ def test_replace_table():
         assert hdulist[1].data.dtype[1].str == '>f4'
         assert hdulist[1].header['TFORM2'] == 'E'
 
-    with DataModel(TMP_FITS,
-                   schema=schema_wide) as m:
-        foo = m.data
+    with DataModel(TMP_FITS, schema=schema_wide) as m:
         m.to_fits(TMP_FITS2, overwrite=True)
 
     with fits.open(TMP_FITS2) as hdulist:
