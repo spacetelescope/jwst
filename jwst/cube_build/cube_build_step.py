@@ -301,7 +301,7 @@ SHORT,MEDIUM,LONG, or ALL
                 self.spaxel_debug.close()
         for cube in cube_container:
             footprint = cube.meta.wcs.footprint(axis_type="spatial")
-            update_s_region_keyword(cube, footprint.T)
+            update_s_region_keyword(cube, footprint)
             self.log.info("Updated S_REGION to {}".format(cube.meta.wcsinfo.s_region))
 
         return cube_container
