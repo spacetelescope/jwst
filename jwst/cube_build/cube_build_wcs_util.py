@@ -6,7 +6,7 @@ from ..assign_wcs import nirspec
 from . import coord
 from gwcs import wcstools
 from astropy.stats import circmean
-from astropy import units as u 
+from astropy import units as u
 
 import logging
 log = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ def setup_wcs(self):
     Short Summary
     -------------
     Function to determine the min and max coordinates of the spectral
-    cube,given channel & subchannel
+    cube, given channel & subchannel
 
 
     Parameter
@@ -60,12 +60,12 @@ def setup_wcs(self):
     lambda_max = []
 
     self.num_bands = len(self.list_par1)
-    log.info('Number of bands in cube  %i',self.num_bands)
+    log.info('Number of bands in cube  %i', self.num_bands)
 
     for i in range(self.num_bands):
         this_a = parameter1[i]
         this_b = parameter2[i]
-        log.debug('Working on data  from %s,%s',this_a,this_b)
+        log.debug('Working on data  from %s,%s', this_a, this_b)
         n = len(self.master_table.FileMap[self.instrument][this_a][this_b])
         log.debug('number of files %d ', n)
     # each file find the min and max a and lambda (OFFSETS NEED TO BE APPLIED TO THESE VALUES)
@@ -104,11 +104,11 @@ def setup_wcs(self):
 
 # If a dither offset list exists then apply the dither offsets (offsets in arc seconds)
 
-                amin = amin - c1_offset/3600.0
-                amax = amax - c1_offset/3600.0
+                amin = amin - c1_offset / 3600.0
+                amax = amax - c1_offset / 3600.0
 
-                bmin = bmin - c2_offset/3600.0
-                bmax = bmax - c2_offset/3600.0
+                bmin = bmin - c2_offset / 3600.0
+                bmax = bmax - c2_offset / 3600.0
 
                 a_min.append(amin)
                 a_max.append(amax)
@@ -128,20 +128,20 @@ def setup_wcs(self):
 
     if self.wavemin != None and self.wavemin > final_lambda_min:
         final_lambda_min = self.wavemin
-        log.info('Changed min wavelength of cube to %f ',final_lambda_min)
+        log.info('Changed min wavelength of cube to %f ', final_lambda_min)
 
     if self.wavemax != None and self.wavemax < final_lambda_max:
         final_lambda_max = self.wavemax
-        log.info('Changed max wavelength of cube to %f ',final_lambda_max)
+        log.info('Changed max wavelength of cube to %f ', final_lambda_max)
 #________________________________________________________________________________
-    if self.instrument =='MIRI' and self.coord_system=='alpha-beta':
+    if self.instrument == 'MIRI' and self.coord_system == 'alpha-beta':
         #  we have a 1 to 1 mapping in beta dimension.
         nslice = self.instrument_info.GetNSlice(parameter1[0])
-        log.info('Beta Scale %f ',self.Cdelt2)
-        self.Cdelt2 = (final_b_max - final_b_min)/nslice
-        final_b_max = final_b_min + (nslice)*self.Cdelt2
+        log.info('Beta Scale %f ', self.Cdelt2)
+        self.Cdelt2 = (final_b_max - final_b_min) / nslice
+        final_b_max = final_b_min + (nslice) * self.Cdelt2
         log.info('Changed the Beta Scale dimension so we have 1 -1 mapping between beta and slice #')
-        log.info('New Beta Scale %f ',self.Cdelt2)
+        log.info('New Beta Scale %f ', self.Cdelt2)
 #________________________________________________________________________________
 # Test that we have data (NIRSPEC NRS2 only has IFU data for 3 configurations)
     test_a = final_a_max - final_a_min
@@ -150,7 +150,7 @@ def setup_wcs(self):
     tolerance1 = 0.00001
     tolerance2 = 0.1
     if(test_a < tolerance1 or test_b < tolerance1 or test_w < tolerance2):
-        log.info('No Valid IFU slice data found %f %f %f ',test_a,test_b,test_w)
+        log.info('No Valid IFU slice data found %f %f %f ', test_a, test_b, test_w)
 #________________________________________________________________________________
     cube_footprint = (final_a_min, final_a_max, final_b_min, final_b_max,
                       final_lambda_min, final_lambda_max)
@@ -158,10 +158,10 @@ def setup_wcs(self):
     # Based on Scaling and Min and Max values determine naxis1, naxis2, naxis3
     # set cube CRVALs, CRPIXs and xyz coords (center  x,y,z vector spaxel centers)
 
-    if self.coord_system == 'ra-dec' :
-        set_geometry(self,cube_footprint)
+    if self.coord_system == 'ra-dec':
+        set_geometry(self, cube_footprint)
     else:
-        set_geometryAB(self,cube_footprint) # local coordinate system
+        set_geometryAB(self, cube_footprint) # local coordinate system
     print_cube_geometry(self)
 
 #********************************************************************************
@@ -195,7 +195,8 @@ def determine_scale(self):
         for i in range(number_bands):
             this_channel = self.list_par1[i]
             this_sub = self.list_par2[i]
-            a_scale, b_scale, w_scale = self.instrument_info.GetScale(this_channel,this_sub)
+            a_scale, b_scale, w_scale = self.instrument_info.GetScale(this_channel,
+                                                                      this_sub)
             if a_scale < min_a:
                 min_a = a_scale
             if b_scale < min_b:
@@ -213,7 +214,8 @@ def determine_scale(self):
         for i in range(number_gratings):
             this_gwa = self.list_par1[i]
             this_filter = self.list_par2[i]
-            a_scale, b_scale, w_scale = self.instrument_info.GetScale(this_gwa,this_filter)
+            a_scale, b_scale, w_scale = self.instrument_info.GetScale(this_gwa,
+                                                                      this_filter)
             if a_scale < min_a:
                 min_a = a_scale
             if b_scale < min_b:
@@ -236,9 +238,9 @@ def determine_scale(self):
     w_scale = scale[2]
         # temp fix for large cubes - need to change to variable wavelength scale
     if self.scalew == 0 and self.num_bands > 6:
-        w_scale  = w_scale*2
+        w_scale = w_scale * 2
     if self.scalew == 0 and self.num_bands > 9:
-        w_scale  = w_scale*2
+        w_scale = w_scale * 2
     if self.scalew != 0.0:
         w_scale = self.scalew
 
@@ -286,16 +288,16 @@ def find_footprint_MIRI(self, input, this_channel, instrument_info):
         coord1, coord2, lam = detector2alpha_beta(x, y)
     elif self.coord_system == 'ra-dec':
         detector2v23 = input.meta.wcs.get_transform('detector', 'v2v3')
-        v23toworld = input.meta.wcs.get_transform("v2v3","world")
+        v23toworld = input.meta.wcs.get_transform("v2v3", "world")
         v2, v3, lam = detector2v23(x, y)
-        coord1,coord2,lam = v23toworld(v2,v3,lam)
+        coord1, coord2, lam = v23toworld(v2, v3, lam)
 #        coord1,coord2,lam = input.meta.wcs(x,y) # for entire detector find  ra,dec,lambda
     else:
         # error the coordinate system is not defined
         raise NoCoordSystem(" The output cube coordinate system is not definded")
 #________________________________________________________________________________
 # test for 0/360 wrapping in ra. if exists it makes it difficult to determine
-# ra range of IFU cube. 
+# ra range of IFU cube.
 
     coord1_wrap = wrap_ra(coord1)
     a_min = np.nanmin(coord1_wrap)
@@ -310,7 +312,7 @@ def find_footprint_MIRI(self, input, this_channel, instrument_info):
     return a_min, a_max, b_min, b_max, lambda_min, lambda_max
 
 #********************************************************************************
-def find_footprint_NIRSPEC(self, input,flag_data):
+def find_footprint_NIRSPEC(self, input, flag_data):
 #********************************************************************************
     """
     Short Summary
@@ -335,7 +337,7 @@ def find_footprint_NIRSPEC(self, input,flag_data):
     # x,y values for slice. Then convert the x,y values to  v2,v3,lambda
     # return the min & max of spatial coords and wavelength  - these are of the pixel centers
 
-    nslices = 30 
+    nslices = 30
     a_slice = np.zeros(nslices * 2)
     b_slice = np.zeros(nslices * 2)
     lambda_slice = np.zeros(nslices * 2)
@@ -344,12 +346,11 @@ def find_footprint_NIRSPEC(self, input,flag_data):
     log.info('Looping over slices to determine cube size .. this takes a while')
 
     for i in range(nslices):
-
-        slice_wcs = nirspec.nrs_wcs_set_input(input,  i)
-        x,y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box,step=(1,1), center=True)
+        slice_wcs = nirspec.nrs_wcs_set_input(input, i)
+        x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box, step=(1, 1), center=True)
 
         if self.coord_system == 'ra-dec':
-            coord1,coord2,lam = slice_wcs(x,y)
+            coord1, coord2, lam = slice_wcs(x, y)
         elif self.coord_system == 'alpha-beta':
             raise InvalidCoordSystem(" The Alpha-Beta Coordinate system is not valid (at this time) for NIRSPEC data")
 #                detector2slicer = input.meta.wcs.get_transform('detector','slicer')
@@ -358,8 +359,8 @@ def find_footprint_NIRSPEC(self, input,flag_data):
             # error the coordinate system is not defined
             raise NoCoordSystem(" The output cube coordinate system is not definded")
 #________________________________________________________________________________
-# For each slice  test for 0/360 wrapping in ra. 
-# If exists it makes it difficult to determine  ra range of IFU cube. 
+# For each slice  test for 0/360 wrapping in ra.
+# If exists it makes it difficult to determine  ra range of IFU cube.
         coord1_wrap = wrap_ra(coord1)
         a_min = np.nanmin(coord1_wrap)
         a_max = np.nanmax(coord1_wrap)
@@ -375,8 +376,7 @@ def find_footprint_NIRSPEC(self, input,flag_data):
 
         k = k + 2
 #________________________________________________________________________________
-# now test the ra slices for conistency. Adjust if needed.  
-        
+# now test the ra slices for conistency. Adjust if needed.
     a_slice_wrap = wrap_ra(a_slice)
     a_min = np.nanmin(a_slice_wrap)
     a_max = np.nanmax(a_slice_wrap)
@@ -387,11 +387,10 @@ def find_footprint_NIRSPEC(self, input,flag_data):
     lambda_min = min(lambda_slice)
     lambda_max = max(lambda_slice)
 
-    if(a_min == 0.0 and a_max == 0.0 and b_min ==0.0 and b_max == 0.0):
+    if (a_min == 0.0 and a_max == 0.0 and b_min == 0.0 and b_max == 0.0):
         log.info('This NIRSPEC exposure has no IFU data on it - skipping file')
 
     return a_min, a_max, b_min, b_max, lambda_min, lambda_max
-
 #_______________________________________________________________________
 # Footprint values are RA,DEC values on the sky
 # Values are given in degrees
@@ -406,24 +405,25 @@ def set_geometry(self, footprint):
 
     """
 
-    ra_min, ra_max, dec_min, dec_max,lambda_min, lambda_max = footprint # in degrees
-    dec_ave = (dec_min + dec_max)/2.0
+    ra_min, ra_max, dec_min, dec_max, lambda_min, lambda_max = footprint # in degrees
+    dec_ave = (dec_min + dec_max) / 2.0
 
-        # we can not average ra values because of the convergence of hour angles. 
-    ravalues  = np.zeros(2) # we might want to increase the number of ravalues later
+        # we can not average ra values because of the convergence of hour angles.
+    ravalues = np.zeros(2) # we might want to increase the number of ravalues later
                                 # is just taking min and max is not sufficient
     ravalues[0] = ra_min
     ravalues[1] = ra_max
 
         # astropy circmean assumes angles are in radians, we have angles in degrees
-    ra_ave = circmean(ravalues*u.deg).value
+    ra_ave = circmean(ravalues * u.deg).value
     log.info('Ra average %f12.8', ra_ave)
 
     self.Crval1 = ra_ave
     self.Crval2 = dec_ave
-    xi_center,eta_center = coord.radec2std(self.Crval1, self.Crval2,ra_ave,dec_ave)
-    xi_min,eta_min = coord.radec2std(self.Crval1, self.Crval2,ra_min,dec_min)
-    xi_max,eta_max = coord.radec2std(self.Crval1, self.Crval2,ra_max,dec_max)
+    xi_center, eta_center = coord.radec2std(self.Crval1, self.Crval2,
+                                           ra_ave, dec_ave)
+    xi_min, eta_min = coord.radec2std(self.Crval1, self.Crval2, ra_min, dec_min)
+    xi_max, eta_max = coord.radec2std(self.Crval1, self.Crval2, ra_max, dec_max)
 
 #________________________________________________________________________________
 # find the CRPIX1 CRPIX2 - xi and eta centered at 0,0
@@ -435,11 +435,11 @@ def set_geometry(self, footprint):
     n1b = int(math.ceil(math.fabs(xi_max) / self.Cdelt1))
     n2b = int(math.ceil(math.fabs(eta_max) / self.Cdelt2))
 
-    xi_min = 0.0 - (n1a * self.Cdelt1) - self.Cdelt1/2.0
-    xi_max = (n1b * self.Cdelt1) + self.Cdelt1/2.0
+    xi_min = 0.0 - (n1a * self.Cdelt1) - (self.Cdelt1 / 2.0)
+    xi_max = (n1b * self.Cdelt1) + (self.Cdelt1 / 2.0)
 
-    eta_min = 0.0 - (n2a * self.Cdelt2) - self.Cdelt2/2.0
-    eta_max = (n2b * self.Cdelt2) + self.Cdelt2/2.0
+    eta_min = 0.0 - (n2a * self.Cdelt2) - (self.Cdelt2 / 2.0)
+    eta_max = (n2b * self.Cdelt2) + (self.Cdelt2 / 2.0)
 
     self.Crpix1 = float(n1a) + 1.0
     self.Crpix2 = float(n2a) + 1.0
@@ -447,7 +447,7 @@ def set_geometry(self, footprint):
     self.naxis1 = n1a + n1b
     self.naxis2 = n2a + n2b
 
-    self.a_min  = xi_min
+    self.a_min = xi_min
     self.a_max = xi_max
     self.b_min = eta_min
     self.b_max = eta_max
@@ -466,9 +466,8 @@ def set_geometry(self, footprint):
         self.ycoord[i] = ystart
         ystart = ystart + self.Cdelt2
 
-
-    ygrid = np.zeros(self.naxis2*self.naxis1)
-    xgrid = np.zeros(self.naxis2*self.naxis1)
+    ygrid = np.zeros(self.naxis2 * self.naxis1)
+    xgrid = np.zeros(self.naxis2 * self.naxis1)
 
     k = 0
     ystart = self.ycoord[0]
@@ -571,7 +570,7 @@ def set_geometryAB(self, footprint):
 #_______________________________________________________________________
 
 def print_cube_geometry(self):
-    
+
     """
     Print out the general properties of the size of the IFU Cube
     """
@@ -595,7 +594,7 @@ def print_cube_geometry(self):
         for i in range(number_bands):
             this_channel = self.list_par1[i]
             this_subchannel = self.list_par2[i]
-            log.info('Cube covers channel, subchannel: %s %s ', this_channel,this_subchannel)
+            log.info('Cube covers channel, subchannel: %s %s ', this_channel, this_subchannel)
     elif self.instrument == 'NIRSPEC':
             # number of filters and gratings are the same
         number_bands = len(self.list_par1)
@@ -603,8 +602,7 @@ def print_cube_geometry(self):
         for i in range(number_bands):
             this_fwa = self.list_par2[i]
             this_gwa = self.list_par1[i]
-            log.info('Cube covers grating, filter: %s %s ', this_gwa,this_fwa)
-
+            log.info('Cube covers grating, filter: %s %s ', this_gwa, this_fwa)
 #________________________________________________________________________________
 
 def wrap_ra(ravalues):
@@ -612,29 +610,28 @@ def wrap_ra(ravalues):
     Short Summary
     Test for 0/360 wrapping in ra values. If exists it makes it difficult to determine
     ra range of IFU cube. So put them all on "one side" of 0/360 border
-    
-    Input  
+
+    Input
     -----
     ravalues a numpy array of ra values
-    
-    Return 
+
+    Return
     ------
     a numpy array of ra values all on "same side" of 0/360 border
     """
 
     valid = np.isfinite(ravalues)
-    index_good = np.where( valid == True)
+    index_good = np.where(valid == True)
 #    print('number of non nan ra values',index_good[0].size,index_good[0].size/2048)
     ravalues_wrap = ravalues[index_good].copy()
-    
-    median_ra = np.nanmedian(ravalues_wrap) # find the median 
+    median_ra = np.nanmedian(ravalues_wrap) # find the median
 #    print('median_ra',median_ra)
 
     # using median to test if there is any wrapping going on
-    wrap_index = np.where( np.fabs(ravalues_wrap - median_ra) > 180.0)
+    wrap_index = np.where(np.fabs(ravalues_wrap - median_ra) > 180.0)
     nwrap = wrap_index[0].size
 
-    # get all the ra on the same "side" of 0/360 
+    # get all the ra on the same "side" of 0/360
     if(nwrap != 0 and median_ra < 180):
         ravalues_wrap[wrap_index] = ravalues_wrap[wrap_index] - 360.0
 
@@ -643,7 +640,7 @@ def wrap_ra(ravalues):
 
     return ravalues_wrap
 #________________________________________________________________________________
-# Errors 
+# Errors
 class NoCoordSystem(Exception):
     pass
 
