@@ -78,7 +78,8 @@ class ResampleSpecData:
 
     def build_interpolated_output_wcs(self, refmodel=None):
         """
-        Create a spatial/spectral WCS output frame using interpolation
+        Create a spatial/spectral WCS output frame by linearly fitting RA,Dec
+        along the slit and tabular interpolation in the wavelength direction
         """
         if refmodel is None:
             refmodel = self.input_models[0]
@@ -154,9 +155,16 @@ class ResampleSpecData:
 
         output_wcs = WCS(pipeline)
 
-        self.data_size = (len(ra_array), len(wavelength_array))
+        # compute the output array size in WCS axes order, i.e. (x, y)
+        output_array_size = [0, 0]
+        output_array_size[spectral_axis] = len(wavelength_array)
+        output_array_size[spatial_axis] = len(ra_array)
+        # turn the size into a numpy shape in (y, x) order
+        self.data_size = tuple(output_array_size[::-1])
+
         bounding_box = resample_utils.bounding_box_from_shape(self.data_size)
         output_wcs.bounding_box = bounding_box
+
         return output_wcs
 
     def do_drizzle(self, **pars):
