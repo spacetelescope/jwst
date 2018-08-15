@@ -127,7 +127,7 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner,
             nrows = 0                   # flag as bad
         else:
             log.debug("Times are from the INT_TIMES table.")
-            time_arr = mid_utc[offset : offset + num_integ]
+            time_arr = mid_utc[offset: offset + num_integ]
             int_times = Time(time_arr, format='mjd', scale='utc')
     else:
         log.debug("Times were computed from EXPSTART and TGROUP.")

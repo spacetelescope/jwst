@@ -121,8 +121,8 @@ def make_source_catalog(model, kernel_fwhm, kernel_xsize, kernel_ysize,
     # units of electron/s.  Poisson noise is not included for pixels
     # where data < 0.
     exptime = model.meta.resample.product_exposure_time    # total exptime
-    #total_error = np.sqrt(bkg_error**2 +
-    #                      np.maximum(model.data / exptime, 0))
+    # total_error = np.sqrt(bkg_error**2 +
+    #                       np.maximum(model.data / exptime, 0))
     total_error = np.sqrt(data_std**2 + np.maximum(model.data / exptime, 0))
 
     wcs = model.get_fits_wcs()
