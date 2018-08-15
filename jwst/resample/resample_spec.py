@@ -241,10 +241,12 @@ class ResampleSpecData:
                     try:
                         val = getattr(img, attr)
                     except:
-                        val = None
-                    if val is not None:
+                        pass
+                    else:
                         setattr(output_model, attr, val)
             except:
                 pass
 
             self.output_models.append(output_model)
+
+        return self.output_models
