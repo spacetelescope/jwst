@@ -678,6 +678,7 @@ def slit_to_msa(open_slits, msafile):
     """
     msa = MSAModel(msafile)
     models = []
+    slits = []
     for quadrant in range(1, 6):
         slits_in_quadrant = [s for s in open_slits if s.quadrant == quadrant]
         msa_quadrant = getattr(msa, 'Q{0}'.format(quadrant))
@@ -694,8 +695,9 @@ def slit_to_msa(open_slits, msafile):
                 slitdata_model = get_slit_location_model(slitdata)
                 msa_transform = slitdata_model | msa_model
                 models.append(msa_transform)
+                slits.append(slit)
     msa.close()
-    return Slit2Msa(open_slits, models)
+    return Slit2Msa(slits, models)
 
 
 def gwa_to_ifuslit(slits, input_model, disperser, reference_files):
@@ -815,15 +817,16 @@ def gwa_to_slit(open_slits, input_model, disperser, reference_files):
 
     msa = MSAModel(reference_files['msa'])
     slit_models = []
+    slits = []
     for quadrant in range(1, 6):
         slits_in_quadrant = [s for s in open_slits if s.quadrant == quadrant]
         log.info("There are {0} open slits in quadrant {1}".format(len(slits_in_quadrant), quadrant))
         msa_quadrant = getattr(msa, 'Q{0}'.format(quadrant))
+
         if any(slits_in_quadrant):
             msa_model = msa_quadrant.model
-            log.info("Getting slits location for quadrant {0}".format(quadrant))
-
             msa_data = msa_quadrant.data
+
             for slit in slits_in_quadrant:
                 mask = mask_slit(slit.ymin, slit.ymax)
                 slit_id = slit.shutter_id
@@ -848,8 +851,9 @@ def gwa_to_slit(open_slits, input_model, disperser, reference_files):
                 msa2bgwa = msa2gwa & Identity(1) | Mapping((3, 0, 1, 2)) | agreq
                 bgwa2msa.inverse = msa2bgwa
                 slit_models.append(bgwa2msa)
+                slits.append(slit)
     msa.close()
-    return Gwa2Slit(open_slits, slit_models)
+    return Gwa2Slit(slits, slit_models)
 
 
 def angle_from_disperser(disperser, input_model):
