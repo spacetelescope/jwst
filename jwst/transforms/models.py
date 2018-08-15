@@ -1,3 +1,5 @@
+# Licensed under a 3-clause BSD style license - see LICENSE.rst
+# -*- coding: utf-8 -*-
 """
 Models used by the JWST pipeline.
 
@@ -6,7 +8,7 @@ Since they are specific to JWST, the models and their ASDF schemas
 are kept here separately from astropy. An ASDF extension for this package is
 registered with ASDF through entry points.
 """
-# -*- coding: utf-8 -*-
+
 
 import math
 from collections import namedtuple
@@ -47,7 +49,7 @@ class GrismObject(namedtuple('GrismObject', ("sid",
                                              "partial_order",
                                              "waverange",
                                              "sky_bbox_ll",
-                                             "sky_bbox_lr",
+                  # Licensed under a 3-clause BSD style license - see LICENSE.rst                           "sky_bbox_lr",
                                              "sky_bbox_ur",
                                              "sky_bbox_ul",
                                              "xcentroid",
@@ -153,7 +155,6 @@ class MIRI_AB2Slice(Model):
     channel = Parameter("channel", default=1)
     """ MIRI MRS channel: one of 1, 2, 3, 4"""
 
-
     @staticmethod
     def evaluate(beta, beta_zero, beta_del, channel):
         s = channel * 100 + (beta - beta_zero) / beta_del + 1
@@ -191,7 +192,6 @@ class Snell(Model):
 
     inputs = ("lam", "alpha_in", "beta_in", "zin")
     outputs = ("alpha_out", "beta_out", "zout")
-
 
     def __init__(self, angle, kcoef, lcoef, tcoef, tref, pref,
                  temperature, pressure, name=None):
@@ -240,11 +240,10 @@ class Snell(Model):
             # Compute the relative index of the glass at Tref and Pref using Sellmeier equation I.
             lamrel = lam * nair_obs / nair_ref
 
-
             nrel = np.sqrt(1. +
                            K1 * lamrel ** 2 / (lamrel ** 2 - L1) +
                            K2 * lamrel ** 2 / (lamrel ** 2 - L2) +
-                           K3 * lamrel ** 2 / (lamrel ** 2 -L3)
+                           K3 * lamrel ** 2 / (lamrel ** 2 - L3)
                            )
             # Convert the relative index of refraction at the reference temperature and pressure
             # to absolute.

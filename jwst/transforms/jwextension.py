@@ -1,8 +1,19 @@
+# Licensed under a 3-clause BSD style license - see LICENSE.rst
 import os.path
 from asdf.extension import AsdfExtension
 from asdf import util
-from .tags import *
+from .tags import (GratingEquationType, CoordsType, RotationSequenceType, LRSWavelengthType,
+                   Gwa2SlitType, Slit2MsaType, LogicalType, NirissSOSSType, V23ToSkyType,
+                   RefractionIndexType, SnellType, MIRI_AB2SliceType, NIRCAMGrismDispersionType,
+                   NIRISSGrismDispersionType, TPCorrType)
+
 from .jwst_types import _jwst_types
+
+
+__all__ = ['GratingEquationType', 'CoordsType', 'RotationSequenceType', 'LRSWavelengthType',
+           'Gwa2SlitType', 'Slit2MsaType', 'LogicalType', 'NirissSOSSType', 'V23ToSkyType',
+           'RefractionIndexType', 'SnellType', 'MIRI_AB2SliceType', 'NIRCAMGrismDispersionType',
+           'NIRISSGrismDispersionType', 'TPCorrType']
 
 
 SCHEMA_PATH = os.path.abspath(
