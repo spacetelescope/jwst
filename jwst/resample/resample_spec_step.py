@@ -1,4 +1,3 @@
-from ..stpipe import Step
 from .. import datamodels
 from ..datamodels import MultiSlitModel, ModelContainer
 from . import resample_spec, ResampleStep
