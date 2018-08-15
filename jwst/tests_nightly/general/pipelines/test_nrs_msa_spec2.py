@@ -21,7 +21,6 @@ def test_nrs_msa_spec2(_bigdata):
     step.save_bsub = False
     step.output_use_model = True
     step.resample_spec.save_results = True
-    step.resample_spec.skip = True
     step.extract_1d.save_results = True
     step.extract_1d.smoothing_length = 0
     step.extract_1d.bkg_order = 0
@@ -32,6 +31,19 @@ def test_nrs_msa_spec2(_bigdata):
     # compare _cal files
     output = 'F170LP-G235M_MOS_observation-6-c0e0_001_DN_NRS1_mod_cal.fits'
     nbname = 'f170lp-g235m_mos_observation-6-c0e0_001_dn_nrs1_mod_cal_ref.fits'
+    nb = os.path.join(_bigdata,'pipelines', nbname)
+    h = pf.open(output)
+    href = pf.open(nb)
+    result = pf.diff.FITSDiff(h,
+                              href,
+                              ignore_hdus=['ASDF'],
+                              ignore_keywords=ignore_keywords,
+                              rtol = 0.00001)
+    assert result.identical, result.report()
+
+    # compare _s2d files
+    output = 'F170LP-G235M_MOS_observation-6-c0e0_001_DN_NRS1_mod_s2d.fits'
+    nbname = 'f170lp-g235m_mos_observation-6-c0e0_001_dn_nrs1_mod_s2d_ref.fits'
     nb = os.path.join(_bigdata,'pipelines', nbname)
     h = pf.open(output)
     href = pf.open(nb)
