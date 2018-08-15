@@ -3,26 +3,16 @@
 import sys
 import time
 import numpy as np
-import math
-import json
-import os
 import logging
-
-from astropy.io import fits
-from astropy.modeling import models
 from ..model_blender import blendmeta
-from ..associations import Association
 from .. import datamodels
 from ..assign_wcs import nirspec
 from ..assign_wcs import pointing
-from . import cube_build_io_util
 from . import cube_build_wcs_util
 from . import spaxel
 from . import cube_overlap
 from . import cube_cloud
-
 from gwcs import wcstools
-
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -45,7 +35,6 @@ class IFUCubeData():
                  master_table,
                  **pars_cube):
 
-
         self.input_filenames = input_filenames
         self.pipeline = pipeline
 
@@ -56,7 +45,6 @@ class IFUCubeData():
         self.detector = detector
         self.list_par1 = list_par1
         self.list_par2 = list_par2
-
         self.instrument_info = instrument_info
         self.master_table = master_table
         self.output_type = output_type
@@ -189,8 +177,6 @@ class IFUCubeData():
                     newname = self.output_name_base + ch_name+'-'+ b_name + '_ab_s3d.fits'
                 if self.output_type == 'single':
                     newname = self.output_name_base + ch_name+'-'+ b_name + '_single_s3d.fits'
-
-
 #________________________________________________________________________________
             elif self.instrument == 'NIRSPEC':
                 fg_name = '_'
@@ -204,14 +190,11 @@ class IFUCubeData():
                 if self.output_type == 'single':
                     newname = self.output_name_base + fg_name+ 'single_s3d.fits'
 #________________________________________________________________________________
-
         if self.output_type != 'single':
             log.info('Output Name %s',newname)
 
 #        print('*** newname ****',newname)
         return newname
-
-
 #********************************************************************************
     class IncorrectInput(Exception):
         pass
@@ -244,7 +227,6 @@ class IFUCubeData():
         self.output_name = self.define_cubename()
         self.find_output_type()
 
-#        self.spaxel = IFUCubeData.create_spaxel(self)
         self.spaxel = self.create_spaxel()
 
         # now need to loop over every file that covers this channel/subchannel (MIRI)
@@ -312,7 +294,6 @@ class IFUCubeData():
             t0 = time.time()
 # for each new data model create a new spaxel
             spaxel = []
-#            spaxel = IFUCubeData.create_spaxel(self)
             spaxel = self.create_spaxel()
 
             with datamodels.IFUImageModel(self.input_models[j]) as input_model:
@@ -323,9 +304,8 @@ class IFUCubeData():
 #________________________________________________________________________________
                     xstart, xend = self.instrument_info.GetMIRISliceEndPts(this_par1)
                     y, x = np.mgrid[:1024, xstart:xend]
-                    y = np.reshape(y, y.size)
-                    x = np.reshape(x, x.size)
-
+#                    y = np.reshape(y, y.size)
+#                    x = np.reshape(x, x.size)
 
                     cube_cloud.match_det2cube(self,input_model,
                                               x, y, j,
@@ -335,19 +315,12 @@ class IFUCubeData():
 
                 elif self.instrument == 'NIRSPEC':
                     # each file, detector has 30 slices - wcs information access seperately for each slice
-                    start_slice = 0
-                    end_slice = 29
-                    nslices = end_slice - start_slice + 1
-                    regions = list(range(start_slice, end_slice + 1))
-                    for ii in regions:
+
+                    nslices = 30 
+                    for ii in range(nslices):
                         t0a = time.time()
                         slice_wcs = nirspec.nrs_wcs_set_input(input_model, ii)
                         x,y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
-                        #NIRSPEC TEMPORARY FIX FOR WCS 1 BASED and NOT 0 BASED
-                        # NIRSPEC team delivered transforms that are valid for x,y in 1 based system
-                        #x = x + 1
-                        #y = y + 1
-                        # Done NIRSPEC FIX
 
                         cube_cloud.match_det2cube(self,input_model,
                                                   x, y, ii,
@@ -530,7 +503,6 @@ class IFUCubeData():
                                             spaxel,
                                             c1_offset, c2_offset)
 
-
                         t1 = time.time()
                         log.debug("Time Match one Channel from 1 file  to IFUCube = %.1f.s"
                                   % (t1 - t0,))
@@ -539,7 +511,6 @@ class IFUCubeData():
                     if self.interpolation == 'area':
                         det2ab_transform = input_model.meta.wcs.get_transform('detector',
                                                                               'alpha_beta')
-
 
                         start_region = self.instrument_info.GetStartSlice(this_par1)
                         end_region = self.instrument_info.GetEndSlice(this_par1)
@@ -561,8 +532,6 @@ class IFUCubeData():
                             y = y[index]
                             x = x[index]
                             t0 = time.time()
-
-
                             cube_overlap.match_det2cube(self, x, y, i,
                                                         start_region,
                                                         input_model,
@@ -584,11 +553,7 @@ class IFUCubeData():
                         x,y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box,
                                                               step=(1,1), center=True)
                         
-                        #NIRSPEC TEMPORARY FIX FOR WCS 1 BASED and NOT 0 BASED
-                        # NIRSPEC team delivered transforms that are valid for x,y in 1 based system
-                        #x = x + 1
-                        #y = y + 1
-                        # Done NIRSPEC FIX
+
                         t0 = time.time()
                         cube_cloud.match_det2cube(self,input_model,
                                                   x, y, i,

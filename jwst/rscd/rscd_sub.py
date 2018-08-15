@@ -109,8 +109,8 @@ def do_correction(input_model, rscd_model):
     # loop over all integrations except the first
     mdelta = int(sci_nints / 10) + 1
     for i in range(1, sci_nints):
-        if ((i+1) % mdelta) == 0:
-            log.info(' Working on integration %d', i+1)
+        if ((i + 1) % mdelta) == 0:
+            log.info(' Working on integration %d', i + 1)
 
         sat, dn_last23, dn_lastfit = \
             get_DNaccumulated_last_int(input_model, i, sci_ngroups)
