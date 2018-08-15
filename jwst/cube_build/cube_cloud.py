@@ -241,6 +241,8 @@ def match_det2cube(self, input_model,
 
 #----------------------------------------------------------------------
         # loop over all spaxels that overlap with ipt
+        # TODO: can this be done faster using some other method than looping
+        
         for iz, zz in enumerate(icube_index):
             spaxel[zz].flux = spaxel[zz].flux + weight_distance[iz] * flux[ipt]
             spaxel[zz].flux_weight = spaxel[zz].flux_weight + weight_distance[iz]
