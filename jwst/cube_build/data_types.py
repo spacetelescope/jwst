@@ -29,7 +29,7 @@ class DataTypes():
                 ]
               }
 
-    def __init__(self, input,single,output_file,output_dir):
+    def __init__(self, input, single, output_file, output_dir):
 
         self.input_models = []
         self.filenames = []
@@ -52,15 +52,16 @@ class DataTypes():
 
         elif isinstance(input_try, datamodels.ModelContainer):
 #            print('this is a model container type or association read in a ModelContainer')
-            self.output_name  = 'Temp'
+            self.output_name = 'Temp'
             if not single:  # find the name of the output file from the association
                 with datamodels.ModelContainer(input_try) as input_model:
-                    self.output_name =input_model.meta.asn_table.products[0].name
+                    self.output_name = input_model.meta.asn_table.products[0].name
             for i in range(len(input_try)):
                 # check if input data is an IFUImageModel
-                if not  isinstance(input_try[i], datamodels.IFUImageModel):
+                if not isinstance(input_try[i], datamodels.IFUImageModel):
                     serror = str(type(input_try[i]))
-                    raise NotIFUImageModel("Input data is not a IFUImageModel, instead it is %s",serror)
+                    raise NotIFUImageModel(
+                        "Input data is not a IFUImageModel, instead it is %s", serror)
 
                 model = datamodels.IFUImageModel(input_try[i])
                 self.input_models.append(model)
@@ -73,13 +74,13 @@ class DataTypes():
 # later suffixes will be added to this name to designate the
 # channel, subchannel or grating,filter the data is covers.
 
-        if output_file !=None :
-            basename,ext = os.path.splitext(os.path.basename(output_file))
+        if output_file != None:
+            basename, ext = os.path.splitext(os.path.basename(output_file))
             self.output_name = basename
 
 
-        if output_dir !=None :
-            self.output_name= output_dir + '/' + self.output_name
+        if output_dir != None:
+            self.output_name = output_dir + '/' + self.output_name
 
 #        print('*****************',self.output_name)
 
@@ -97,8 +98,6 @@ class DataTypes():
             single_product = filename[:indx]
         return single_product
 
-
-
-# Raise Exceptions 
+# Raise Exceptions
 class NotIFUImageModel(Exception):
     pass

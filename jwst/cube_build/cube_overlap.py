@@ -1,9 +1,6 @@
 # Routines used in Spectral Cube Building
-
-import sys
 import numpy as np
 import math
-from .. import datamodels
 from ..datamodels import dqflags
 #________________________________________________________________________________
 def FindAreaPoly(nVertices, xpixel, ypixel):
@@ -310,7 +307,7 @@ def SH_FindOverlap(xcenter, ycenter, xlength, ylength, xp_corner, yp_corner):
         nVertices2 = addpoint(xnew[0], ynew[0], xnew, ynew, nVertices2)  # close polygon
 
         if nVertices2 > MaxVertices:
-            raise Error2DAreaPolygon(" Failure in finding the clipped polygon, nVertices2 > 9 ")
+            raise Error2DPolygon(" Failure in finding the clipped polygon, nVertices2 > 9 ")
 
 
         nVertices = nVertices2 - 1;
@@ -360,24 +357,24 @@ def match_det2cube(self, x, y, sliceno, start_slice, input_model, transform, spa
     """
     nxc = len(self.xcoord)
     nzc = len(self.zcoord)
-    nyc = len(self.ycoord)
+#    nyc = len(self.ycoord)
 
     sliceno_use = sliceno - start_slice + 1
 # 1-1 mapping in beta
     yy = sliceno_use - 1
 
-    pixel_dq = input_model.dq[y,x]
+    pixel_dq = input_model.dq[y, x]
 
-    all_flags = (dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['DROPOUT'] + 
+    all_flags = (dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['DROPOUT'] +
                  dqflags.pixel['NON_SCIENCE'] +
-                 dqflags.pixel['DEAD'] + dqflags.pixel['HOT'] + 
+                 dqflags.pixel['DEAD'] + dqflags.pixel['HOT'] +
                  dqflags.pixel['RC'] + dqflags.pixel['NONLINEAR'])
-    # find the location of all the values to reject in cube building    
-    good_data = np.where((np.bitwise_and(pixel_dq, all_flags)==0))
+    # find the location of all the values to reject in cube building
+    good_data = np.where((np.bitwise_and(pixel_dq, all_flags) == 0))
 
     # good data holds the location of pixels we want to map to cube
     x = x[good_data]
-    y = y[good_data] 
+    y = y[good_data]
 
     #center of first pixel, x,y = 1 for Adrian's equations
     # but we want the pixel corners, x,y values passed into this routine start at 0
@@ -444,7 +441,7 @@ def match_det2cube(self, x, y, sliceno, start_slice, input_model, transform, spa
             iz2 = nzc - 1
         #_______________________________________________________________________
         # loop over possible overlapping cube pixels
-        noverlap = 0
+#        noverlap = 0
         nplane = self.naxis1 * self.naxis2
 
         for zz in range(iz1, iz2 + 1):
@@ -454,8 +451,8 @@ def match_det2cube(self, x, y, sliceno, start_slice, input_model, transform, spa
             for xx in range(ix1, ix2 + 1):
                 cube_index = istart + yy * self.naxis1 + xx #yy = slice # -1
                 xcenter = self.xcoord[xx]
-                AreaOverlap = SH_FindOverlap(xcenter, zcenter, 
-                                             self.Cdelt1, self.Cdelt3, 
+                AreaOverlap = SH_FindOverlap(xcenter, zcenter,
+                                             self.Cdelt1, self.Cdelt3,
                                              alpha_corner, wave_corner)
 
                 if AreaOverlap > 0.0:
