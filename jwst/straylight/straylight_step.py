@@ -57,12 +57,12 @@ class StraylightStep (Step):
                         self.log.warning('Assign_WCS was not run on file, we  need the information of the slice gap locations')
                         raise ErrorNoAssignWCS("Assign WCS has not been run on file")
 
-                    det2ab = input_model.meta.wcs.get_transform('detector','alpha_beta')
+                    det2ab = input_model.meta.wcs.get_transform('detector', 'alpha_beta')
                     #det2ab is a RegionsSelector model
                     slices = det2ab.label_mapper.mapper
 
-                    self.log.info(' Region of influence radius (pixels) %6.2f',self.roi)
-                    self.log.info(' Modified Shepard weighting power %5.2f',self.power)
+                    self.log.info(' Region of influence radius (pixels) %6.2f', self.roi)
+                    self.log.info(' Modified Shepard weighting power %5.2f', self.power)
                 # Do the correction
                     result = straylight.correct_MRS_ModShepard(input_model,
                                                                slices,

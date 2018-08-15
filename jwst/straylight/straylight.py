@@ -12,8 +12,6 @@
 
 import numpy as np
 import logging
-import math
-from .. import datamodels
 from ..datamodels import dqflags
 from astropy.convolution import convolve, Box2DKernel
 
@@ -44,13 +42,11 @@ def correct_MRS(input_model, straylight_model):
 
     # Save some data parameterss for easy use later
     nrows, ncols = input_model.data.shape
-    # mask is either 1 or 0 
+    # mask is either 1 or 0
     mask = straylight_model.data
-
-
     x = float('nan')
     # The straylight mask has values of 1 and 0. The straylight task uses data
-    # in-between the slices (also called slice gaps) of the MRS data to correct 
+    # in-between the slices (also called slice gaps) of the MRS data to correct
     # the science data in the slices. In the mask the pixels found in the gaps
     # have a value of 1 and the science pixels have a value of 0.
 
@@ -66,17 +62,16 @@ def correct_MRS(input_model, straylight_model):
     index_inf = np.isinf(output.data).nonzero()
     output.data[index_inf] = 0.0
     mask[index_inf] = 0  # flag associated mask so we do not  use any
-                         # slice gaps that are nans, now data=0 . 
+                         # slice gaps that are nans, now data=0.
     #_________________________________________________________________
-    # flag bad pixels 
-    mask_dq = input_model.dq.copy()# * mask # find DQ flags of the gap values 
+    # flag bad pixels
+    mask_dq = input_model.dq.copy()# * mask # find DQ flags of the gap values
     all_flags = (dqflags.pixel['DEAD'] + dqflags.pixel['HOT'])
-    
-    # where are pixels set to any one of the all_flags cases 
-    testflags = np.bitwise_and(mask_dq,all_flags)
+    # where are pixels set to any one of the all_flags cases
+    testflags = np.bitwise_and(mask_dq, all_flags)
     # where are testflags ne 0 and mask == 1
-    bad_flags = np.where(testflags !=0)
-    mask[bad_flags]  = 0 
+    bad_flags = np.where(testflags != 0)
+    mask[bad_flags] = 0
     #_________________________________________________________________
     sci_mask = output.data * mask    #sci_maskcontains 0's in science regions of detector.
     straylight_image = output.data * 0.0
@@ -175,8 +170,7 @@ def correct_MRS(input_model, straylight_model):
     output.data = output.data - simage
     return output
 
-
-def correct_MRS_ModShepard(input_model, sliceMap,roi,power):
+def correct_MRS_ModShepard(input_model, sliceMap, roi, power):
     """
     Short Summary
     -------------
@@ -211,51 +205,48 @@ def correct_MRS_ModShepard(input_model, sliceMap,roi,power):
 
     # The slice mask has values of 0 and nonzero, values of 0 present pixel
     # in a slice gap and non zero values are science pixels.  The straylight task uses data
-    # in-between the slices (also called slice gaps) of the MRS data to correct 
-    # the science data in the slices. 
+    # in-between the slices (also called slice gaps) of the MRS data to correct
+    # the science data in the slices.
 
     # Create output as a copy of the input science data model
     output = input_model.copy() # this is used in algorithm to
 
-    # kernel matrix 
-    w = Shepard2DKernel(roi,power)
-
+    # kernel matrix
+    w = Shepard2DKernel(roi, power)
     #mask is same size as sliceMap - set = 0 everywhere
     mask = np.zeros_like(sliceMap)
     #mask = 1 for slice gaps
-    mask[sliceMap==0] = 1
+    mask[sliceMap == 0] = 1
 
     # find if any of the gap pixels are bad pixels - if so mark them
-    mask_dq = input_model.dq.copy()# * mask # find DQ flags of the gap values 
-
+    mask_dq = input_model.dq.copy()
     all_flags = (dqflags.pixel['DEAD'] + dqflags.pixel['HOT'])
-    
-    # where are pixels set to any one of the all_flags cases 
-    testflags = np.bitwise_and(mask_dq,all_flags)
+    # where are pixels set to any one of the all_flags cases
+    testflags = np.bitwise_and(mask_dq, all_flags)
     # where are testflags ne 0 and mask == 1
-    bad_flags = np.where((testflags !=0) & (mask==1))
-    mask[bad_flags]  = 0 
+    bad_flags = np.where((testflags != 0) & (mask == 1))
+    mask[bad_flags] = 0
 
     # apply mask to the data
-    image_gap = output.data*mask
+    image_gap = output.data * mask
 
     #avoid cosmic ray contamination
     # only using the science data for this cosmic ray test
-    cosmic_ray_test = 0.02 * np.max(output.data[sliceMap>0])
-    image_gap[image_gap>cosmic_ray_test] = 0
+    cosmic_ray_test = 0.02 * np.max(output.data[sliceMap > 0])
+    image_gap[image_gap > cosmic_ray_test] = 0
 
-    image_gap[image_gap<0] = 0 #set pixels less than zero to 0
-    image_gap= convolve(image_gap,Box2DKernel(3)) # smooth gap pixels 
-    image_gap*=mask #reset science pixels to 0
+    image_gap[image_gap < 0] = 0   #set pixels less than zero to 0
+    image_gap = convolve(image_gap, Box2DKernel(3))   #smooth gap pixels
+    image_gap *= mask   #reset science pixels to 0
     #we not not want the reference pixels to be used in the convolution
     image_gap[:, 1028:1032] = 0.0
     image_gap[:, 0:4] = 0.0
 
     #convolve gap pixel image with weight kernel
-    astropy_conv = convolve(image_gap,w)
+    astropy_conv = convolve(image_gap, w)
 
     #normalize straylight flux by weights
-    norm_conv = convolve(mask,w)
+    norm_conv = convolve(mask, w)
     astropy_conv /= norm_conv
 
     # remove the straylight correction for the reference pixels
@@ -263,11 +254,9 @@ def correct_MRS_ModShepard(input_model, sliceMap,roi,power):
     astropy_conv[:, 0:4] = 0.0
     output.data = output.data - astropy_conv
 
-    return output    
-
-#______________________________________________________________________    
-def Shepard2DKernel(roi,power):
-# determine the 2D Modified Shepard Kernel 
+    return output
+#______________________________________________________________________
+def Shepard2DKernel(roi, power):
 
     """
     Calculates the kernel matrix of Shepard's modified algorithm
@@ -276,15 +265,16 @@ def Shepard2DKernel(roi,power):
     """
 
     distance_tolerance = 0.001 # for very small distances set min distance
-                               # so denominator does not -> 0 and make w invalid. 
-    xk,yk = np.meshgrid(np.arange(-roi/2,roi/2+1), np.arange(-roi/2, roi/2+1))
-    d = np.sqrt(xk**2+yk**2)
+                               # so denominator does not -> 0 and make w invalid.
+    half_roi = roi / 2.0
+    xk, yk = np.meshgrid(np.arange(-half_roi, half_roi + 1),
+                         np.arange(-half_roi, half_roi + 1))
+    d = np.sqrt(xk**2 + yk**2)
     dtol = np.where(d < distance_tolerance)
     d[dtol] = distance_tolerance
 
 #    print('number < tolerance',dtol[0])
-    w = (np.maximum(0,roi-d)/(roi*d))**power
-    w[d==0]=0
+    w = (np.maximum(0, roi - d) / (roi * d))**power
+    w[d == 0] = 0
 
     return w
-                                   
