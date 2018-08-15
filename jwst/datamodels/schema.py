@@ -212,53 +212,6 @@ def walk_schema(schema, callback, ctx={}):
     recurse(schema, [], None, ctx)
 
 
-def flatten_combiners(schema):
-    """
-    Flattens the allOf and anyOf operations in a JSON schema.
-
-    TODO: Write caveats -- there's a lot
-    """
-    newschema = OrderedDict()
-
-    def add_entry(path, schema, combiner):
-        # TODO: Simplify?
-        cursor = newschema
-        for i in range(len(path)):
-            part = path[i]
-            if isinstance(part, int):
-                cursor = cursor.setdefault('items', [])
-                while len(cursor) <= part:
-                    cursor.append({})
-                cursor = cursor[part]
-            elif part == 'items':
-                cursor = cursor.setdefault('items', OrderedDict())
-            else:
-                cursor = cursor.setdefault('properties', OrderedDict())
-                if i < len(path) - 1 and isinstance(path[i + 1], int):
-                    cursor = cursor.setdefault(part, [])
-                else:
-                    cursor = cursor.setdefault(part, OrderedDict())
-
-        cursor.update(schema)
-
-    def callback(schema, path, combiner, ctx, recurse):
-        type = schema.get('type')
-        schema = OrderedDict(schema)
-        if type == 'object':
-            del schema['properties']
-        elif type == 'array':
-            del schema['items']
-        if 'allOf' in schema:
-            del schema['allOf']
-        if 'anyOf' in schema:
-            del schema['anyOf']
-
-        add_entry(path, schema, combiner)
-
-    walk_schema(schema, callback)
-
-    return newschema
-
 def read_schema(schema_file, extensions=None):
     """
     Read a schema file from disk in order to pass it as an argument
@@ -288,5 +241,4 @@ def read_schema(schema_file, extensions=None):
                                      resolver=file_resolver,
                                      resolve_references=True)
 
-    schema = flatten_combiners(schema)
     return schema

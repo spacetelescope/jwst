@@ -101,7 +101,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                                              resolver=file_resolver,
                                              resolve_references=True)
 
-        self._schema = mschema.flatten_combiners(schema)
+        self._schema = schema
 
         # Provide the object as context to other classes and functions
         self._ctx = self
@@ -500,7 +500,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         new_schema : schema tree
         """
         schema = {'allOf': [self._schema, new_schema]}
-        self._schema = mschema.flatten_combiners(schema)
+        self._schema = schema
         self.validate()
         return self
 
