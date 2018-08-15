@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 
 from ..stpipe import Step
