@@ -246,29 +246,12 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
 
-    def _drop_arrays(self):
-        def _drop_array(d, p):
-            # Walk tree and delete numpy arrays
-            if isinstance(d, dict):
-                for val in d.values():
-                    _drop_array(val, d)
-            elif isinstance(d, list):
-                for val in d:
-                    _drop_array(val, d)
-            elif isinstance(d, np.ndarray):
-                del d
-            else:
-                pass
-        _drop_array(self._instance, None)
-
     def close(self):
-        if not self._iscopy and self._asdf is not None:
-            self._asdf.close()
-            self._drop_arrays()
-
         for fd in self._files_to_close:
             if fd is not None:
                 fd.close()
+        if not self._iscopy and self._asdf is not None:
+            self._asdf.close()
 
     def get_envar(self, name, value):
         if name in os.environ:
