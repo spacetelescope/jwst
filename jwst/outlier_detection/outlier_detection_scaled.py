@@ -1,7 +1,6 @@
 """Class definition for performing outlier detection with scaling."""
 
 from copy import deepcopy
-from functools import partial
 import numpy as np
 
 from photutils import aperture_photometry, CircularAperture, CircularAnnulus
