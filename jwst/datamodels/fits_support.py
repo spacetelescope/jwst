@@ -1,11 +1,8 @@
 import datetime
 import os
 import re
-import warnings
 
 import numpy as np
-
-import jsonschema
 
 from astropy.io import fits
 from astropy import time
@@ -444,8 +441,6 @@ def _schema_has_fits_hdu(schema):
 def _load_from_schema(hdulist, schema, tree, context):
     known_keywords = {}
     known_datas = set()
-    invalid_values = set()
-    missing_values = set()
 
     def callback(schema, path, combiner, ctx, recurse):
         result = None
