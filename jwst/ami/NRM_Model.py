@@ -562,8 +562,7 @@ class NRM_Model():
 
         self.pixscale_optimal, scal_maxy = utils.findmax(
             mag=self.pixscales, vals=self.pixscl_corr)
-        self.pixscale_factor = self.pixscale_optimal/self.pixel
-        closestpixscale = self.pixscales[self.pixscl_corr==self.pixscl_corr.max()][0]
+        self.pixscale_factor = self.pixscale_optimal / self.pixel
 
         radlist = self.rotlist_rad
         corrlist = np.zeros((len(radlist), reffov, reffov))
