@@ -62,7 +62,6 @@ class ResampleData:
 
         self.output_models = datamodels.ModelContainer()
 
-
     def update_driz_outputs(self):
         """ Define output arrays for use with drizzle operations.
         """

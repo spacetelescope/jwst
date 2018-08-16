@@ -113,7 +113,6 @@ class GWCSDrizzle:
         elif out_units != "cps":
             raise ValueError("Illegal value for out_units: %s" % out_units)
 
-
     def add_image(self, insci, inwcs, inwht=None,
                   xmin=0, xmax=0, ymin=0, ymax=0, pscale_ratio=1.0,
                   expin=1.0, in_units="cps", wt_scl=1.0):
@@ -205,7 +204,6 @@ class GWCSDrizzle:
                             pixfrac=self.pixfrac, kernel=self.kernel,
                             fillval=self.fillval)
 
-
     def blot_image(self, blotwcs, interp='poly5', sinscl=1.0):
         """
         Resample the output image using an input world coordinate system.
@@ -233,7 +231,6 @@ class GWCSDrizzle:
                                     1.0, interp=interp, sinscl=sinscl)
 
         self.outwcs = blotwcs
-
 
     def increment_id(self):
         """

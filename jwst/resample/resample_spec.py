@@ -1,17 +1,13 @@
-import functools
-from collections import OrderedDict, namedtuple
+import logging
+from collections import OrderedDict
 
 import numpy as np
 
-from astropy.coordinates import SkyCoord
 from astropy import coordinates as coord
 from astropy import units as u
-from astropy.modeling.models import (Shift, Scale, Mapping, Identity,
-    Rotation2D, Pix2Sky_TAN, RotateNative2Celestial, Tabular1D, Const1D,
-    Linear1D)
+from astropy.modeling.models import Mapping, Tabular1D, Linear1D
 from astropy.modeling.fitting import LinearLSQFitter
 from gwcs import wcstools, WCS
-from gwcs.utils import _compute_lon_pole
 from gwcs import coordinate_frames as cf
 
 from .. import datamodels
@@ -20,7 +16,6 @@ from . import resample_utils
 
 CRBIT = np.uint32(datamodels.dqflags.pixel['JUMP_DET'])
 
-import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -75,11 +70,24 @@ class ResampleSpecData:
         self.blank_output.meta.wcs = self.output_wcs
         self.output_models = datamodels.ModelContainer()
 
-
     def build_interpolated_output_wcs(self, refmodel=None):
         """
-        Create a spatial/spectral WCS output frame by linearly fitting RA,Dec
-        along the slit and tabular interpolation in the wavelength direction
+        Create a spatial/spectral WCS output frame
+
+        Creates output frame by linearly fitting RA, Dec along the slit and
+        producing a lookup table to interpolate wavelenghts in the dispersion
+        direction.
+
+        Parameters
+        ----------
+        refmodel : `~jwst.datamodels.DataModel`
+            The reference input image from which the fiducial WCS is created.
+            If not specified, the first image in self.input_models is used.
+
+        Returns
+        -------
+        output_wcs : `~gwcs.WCS` object
+            A gwcs WCS object defining the output frame WCS
         """
         if refmodel is None:
             refmodel = self.input_models[0]
@@ -159,6 +167,7 @@ class ResampleSpecData:
         output_array_size = [0, 0]
         output_array_size[spectral_axis] = len(wavelength_array)
         output_array_size[spatial_axis] = len(ra_array)
+
         # turn the size into a numpy shape in (y, x) order
         self.data_size = tuple(output_array_size[::-1])
 
@@ -241,19 +250,16 @@ class ResampleSpecData:
             output_model.meta.resample.pointings = pointings
 
             # Update mutlislit slit info on the output_model
-            try:
-                for attr in ['name', 'xstart', 'xsize', 'ystart', 'ysize',
-                        'slitlet_id', 'source_id', 'source_name', 'source_alias',
-                        'stellarity', 'source_type', 'source_xpos', 'source_ypos',
-                        'shutter_state', 'relsens']:
-                    try:
-                        val = getattr(img, attr)
-                    except:
-                        pass
-                    else:
-                        setattr(output_model, attr, val)
-            except:
-                pass
+            for attr in ['name', 'xstart', 'xsize', 'ystart', 'ysize',
+                    'slitlet_id', 'source_id', 'source_name', 'source_alias',
+                    'stellarity', 'source_type', 'source_xpos', 'source_ypos',
+                    'shutter_state', 'relsens']:
+                try:
+                    val = getattr(img, attr)
+                except AttributeError:
+                    pass
+                else:
+                    setattr(output_model, attr, val)
 
             self.output_models.append(output_model)
 

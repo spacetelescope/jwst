@@ -1,11 +1,10 @@
+__all__ = ["ResampleSpecStep"]
+
 from .. import datamodels
 from ..datamodels import MultiSlitModel, ModelContainer
 from . import resample_spec, ResampleStep
 from ..exp_to_source import multislit_to_container
 from ..assign_wcs.util import update_s_region_spectral
-
-
-__all__ = ["ResampleSpecStep"]
 
 
 class ResampleSpecStep(ResampleStep):
@@ -51,7 +50,6 @@ class ResampleSpecStep(ResampleStep):
             result = self._process_slit(input_models)
         return result
 
-
     def _process_multislit(self, input_models):
         """
         Resample MultiSlit data
@@ -90,7 +88,6 @@ class ResampleSpecStep(ResampleStep):
                     result.products[-1].bunit_data = container[0].meta.bunit_data
 
         return result
-
 
     def _process_slit(self, input_models):
         """

@@ -70,14 +70,12 @@ class ResampleStep(Step):
             model.meta.asn.pool_name = input_models.meta.pool_name
             model.meta.asn.table_name = input_models.meta.table_name
 
-
         if len(resamp.output_models) == 1:
             result = resamp.output_models[0]
         else:
             result = resamp.output_models
 
         return result
-
 
     def get_drizpars(self, ref_filename, input_models):
         """
@@ -173,7 +171,6 @@ class ResampleStep(Step):
             self.log.debug('   {}={}'.format(k, v))
 
         return kwargs
-
 
     @classmethod
     def _set_spec_defaults(cls):
