@@ -76,6 +76,7 @@ def _check_value(value, schema):
 
         value = yamlutil.custom_tree_to_tagged_tree(value, validator_context)
         validator.validate(value, _schema=temp_schema)
+        validator_context.close()
 
 
 def _error_message(path, error):
