@@ -38,8 +38,7 @@ def match_det2cube(self, input_model,
 
     Returns
     -------
-    spaxel class matched to detector pixels with flux and weighting updated for each
-    match
+    spaxel class parameters filled in: spaxel.flux, spaxel.flux_weight, spaxel.iflux
 
     """
 
@@ -271,93 +270,6 @@ def match_det2cube(self, input_model,
 #            log.debug('Mapping point and finding ROI for point cloud # %d %d' %(ipt,nn))
 #            iprint = 0
 #_______________________________________________________________________
-def FindWaveWeights(channel, subchannel):
-    """
-    Short Summary
-    -------------
-    Get the wavelength normalization weights that we will
-    use to normalize wavelengths.
-
-    Parameters
-    ----------
-    channel- channel for point
-    subchannel- subchannel for point
-
-    Returns
-    -------
-    normalized weighting for wavelength for this channel, subchannel
-
-    """
-
-    if channel == '1':
-        if subchannel == 'SHORT':
-            a = 3050.0
-            c = 3340.0
-            wa = 4.91
-            wc = 5.79
-        elif subchannel == 'MEDIUM':
-            a = 2920.0
-            c = 3400.0
-            wa = 5.6
-            wc = 6.62
-        elif subchannel == 'LONG':
-            a = 2800.0
-            c = 3220.0
-            wa = 6.46
-            wc = 7.63
-
-
-    if channel == '2':
-        if subchannel == 'SHORT':
-            a = 2700.0
-            c = 2800.0
-            wa = 7.55
-            wc = 8.91
-        elif subchannel == 'MEDIUM':
-            a = 2600.0
-            c = 2880.0
-            wa = 8.71
-            wc = 10.34
-        elif subchannel == 'LONG':
-            a = 2590.0
-            c = 3000.0
-            wa = 9.89
-            wc = 11.71
-
-    if channel == '3':
-        if subchannel == 'SHORT':
-            a = 2390.0
-            c = 2650.0
-            wa = 11.50
-            wc = 13.59
-        elif subchannel == 'MEDIUM':
-            a = 1600.0
-            c = 2400.0
-            wa = 13.19
-            wc = 15.58
-        elif subchannel == 'LONG':
-            a = 1850.0
-            c = 2550.0
-            wa = 15.40
-            wc = 18.14
-
-    if channel == '4':
-        if subchannel == 'SHORT':
-            a = 1320.0
-            c = 1720.0
-            wa = 17.88
-            wc = 21.34
-        elif subchannel == 'MEDIUM':
-            a = 1550.0
-            c = 1600.0
-            wa = 20.69
-            wc = 24.68
-        elif subchannel == 'LONG':
-            a = 1450.0
-            c = 1200.0
-            wa = 23.83
-            wc = 28.43
-    return a, c, wa, wc
 
 #_______________________________________________________________________
 def FindNormalizationWeights(wavelength,
