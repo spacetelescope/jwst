@@ -17,9 +17,7 @@ from astropy.wcs import WCS
 
 from asdf import AsdfFile
 from asdf import yamlutil
-from asdf import treeutil
 from asdf import schema as asdf_schema
-from asdf import extension as asdf_extension
 
 from . import ndmodel
 from . import filetype
@@ -29,10 +27,9 @@ from . import schema as mschema
 from . import util
 from . import validate
 
+
 from .history import HistoryList
-from .extension import BaseExtension
-from jwst.transforms.jwextension import JWSTExtension
-from gwcs.extension import GWCSExtension
+
 
 class DataModel(properties.ObjectNode, ndmodel.NDModel):
     """
@@ -936,7 +933,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             HDU, pass ``'PRIMARY'``.
         """
         header = wcs.to_header()
-        extensions = self._asdf._extensions
         if hdu_name == 'PRIMARY':
             hdu = fits.PrimaryHDU(header=header)
         else:
