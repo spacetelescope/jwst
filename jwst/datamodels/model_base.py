@@ -24,9 +24,7 @@ from . import filetype
 from . import fits_support
 from . import properties
 from . import schema as mschema
-from . import util
 from . import validate
-
 
 from .history import HistoryList
 
