@@ -51,9 +51,6 @@ def _check_type(validator, types, instance, schema):
 validator_callbacks = HashableDict(asdf_schema.YAML_VALIDATORS)
 validator_callbacks.update({'type': _check_type})
 
-validator_context = AsdfFile()
-validator_resolver = validator_context.resolver
-
 
 def _check_value(value, schema):
     """
@@ -65,6 +62,9 @@ def _check_value(value, schema):
             raise jsonschema.ValidationError("%s is a required value"
                                               % name)
     else:
+        validator_context = AsdfFile()
+        validator_resolver = validator_context.resolver
+
         temp_schema = {
             '$schema':
             'http://stsci.edu/schemas/asdf-schema/0.1.0/asdf-schema'}

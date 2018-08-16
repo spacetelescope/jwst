@@ -17,17 +17,22 @@ from astropy.wcs import WCS
 
 from asdf import AsdfFile
 from asdf import yamlutil
+from asdf import treeutil
 from asdf import schema as asdf_schema
+from asdf import extension as asdf_extension
 
 from . import ndmodel
 from . import filetype
 from . import fits_support
 from . import properties
 from . import schema as mschema
+from . import util
 from . import validate
 
 from .history import HistoryList
-
+from .extension import BaseExtension
+from jwst.transforms.jwextension import JWSTExtension
+from gwcs.extension import GWCSExtension
 
 class DataModel(properties.ObjectNode, ndmodel.NDModel):
     """
@@ -246,12 +251,29 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
 
+    def _drop_arrays(self):
+        def _drop_array(d, p):
+            # Walk tree and delete numpy arrays
+            if isinstance(d, dict):
+                for val in d.values():
+                    _drop_array(val, d)
+            elif isinstance(d, list):
+                for val in d:
+                    _drop_array(val, d)
+            elif isinstance(d, np.ndarray):
+                del d
+            else:
+                pass
+        _drop_array(self._instance, None)
+
     def close(self):
+        if not self._iscopy and self._asdf is not None:
+            self._asdf.close()
+            self._drop_arrays()
+
         for fd in self._files_to_close:
             if fd is not None:
                 fd.close()
-        if not self._iscopy and self._asdf is not None:
-            self._asdf.close()
 
     def get_envar(self, name, value):
         if name in os.environ:
@@ -914,6 +936,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             HDU, pass ``'PRIMARY'``.
         """
         header = wcs.to_header()
+        extensions = self._asdf._extensions
         if hdu_name == 'PRIMARY':
             hdu = fits.PrimaryHDU(header=header)
         else:
