@@ -1,12 +1,12 @@
 #
 #  Module for  applying straylight correction.
-# The routine correct_MRS applues a straylight correction to MRS science
+# The routine correct_mrs applues a straylight correction to MRS science
 # slope images. The straylight mask contains 0's for science regions and
 # 1's for gaps between slices.
 #
 # there are two algorithms in the module
-# the default one that is applied is correct_MRS_ModShepard
-# correct_MRS was retained for testing purposes and can be removed
+# the default one that is applied is correct_mrs_modshepard
+# correct_mrs was retained for testing purposes and can be removed
 # after it is confirmed the new algorithm is better are removing the
 # straylight
 
@@ -19,7 +19,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def correct_MRS(input_model, straylight_model):
+def correct_mrs(input_model, straylight_model):
     """
     Short Summary
     -------------
@@ -165,19 +165,19 @@ def correct_MRS(input_model, straylight_model):
     simage = convolve(straylight_image, Box2DKernel(25))
 
     # remove the straylight correction for the reference pixels
-    simage[:, 1028:1032] = 0.0
-    simage[:, 0:4] = 0.0
+    simage[:,1028:1032] = 0.0
+    simage[:,0:4] = 0.0
     output.data = output.data - simage
     return output
 
-def correct_MRS_ModShepard(input_model, sliceMap, roi, power):
+def correct_mrs_modshepard(input_model, sliceMap, roi, power):
     """
     Short Summary
     -------------
     Corrects the MIRI MRS data for straylight using a Modified version of the
     Shepard algorithm. Straylight is determined using an inverse distance weighting
     function. The inverse distance weighting is determined by module
-    Shepard2DKernel(roi,power):
+    shepard_2d_kernel(roi,power):
 
     Parameter
     ----------
@@ -212,7 +212,7 @@ def correct_MRS_ModShepard(input_model, sliceMap, roi, power):
     output = input_model.copy() # this is used in algorithm to
 
     # kernel matrix
-    w = Shepard2DKernel(roi, power)
+    w = shepard_2d_kernel(roi, power)
     #mask is same size as sliceMap - set = 0 everywhere
     mask = np.zeros_like(sliceMap)
     #mask = 1 for slice gaps
@@ -239,8 +239,8 @@ def correct_MRS_ModShepard(input_model, sliceMap, roi, power):
     image_gap = convolve(image_gap, Box2DKernel(3))   #smooth gap pixels
     image_gap *= mask   #reset science pixels to 0
     #we not not want the reference pixels to be used in the convolution
-    image_gap[:, 1028:1032] = 0.0
-    image_gap[:, 0:4] = 0.0
+    image_gap[:,1028:1032] = 0.0
+    image_gap[:,0:4] = 0.0
 
     #convolve gap pixel image with weight kernel
     astropy_conv = convolve(image_gap, w)
@@ -250,13 +250,13 @@ def correct_MRS_ModShepard(input_model, sliceMap, roi, power):
     astropy_conv /= norm_conv
 
     # remove the straylight correction for the reference pixels
-    astropy_conv[:, 1028:1032] = 0.0
-    astropy_conv[:, 0:4] = 0.0
+    astropy_conv[:,1028:1032] = 0.0
+    astropy_conv[:,0:4] = 0.0
     output.data = output.data - astropy_conv
 
     return output
 #______________________________________________________________________
-def Shepard2DKernel(roi, power):
+def shepard_2d_kernel(roi, power):
 
     """
     Calculates the kernel matrix of Shepard's modified algorithm

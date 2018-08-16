@@ -1,9 +1,8 @@
 #! /usr/bin/env python
 
-from ..stpipe import Step, cmdline
+from ..stpipe import Step
 from .. import datamodels
 from . import straylight
-from ..datamodels import RegionsModel
 
 __all__ = ["StraylightStep"]
 
@@ -64,7 +63,7 @@ class StraylightStep (Step):
                     self.log.info(' Region of influence radius (pixels) %6.2f', self.roi)
                     self.log.info(' Modified Shepard weighting power %5.2f', self.power)
                 # Do the correction
-                    result = straylight.correct_MRS_ModShepard(input_model,
+                    result = straylight.correct_mrs_modshepard(input_model,
                                                                slices,
                                                                self.roi,
                                                                self.power)
