@@ -82,7 +82,7 @@ class ResampleSpecStep(ResampleStep):
                 result.products.append(drizzled_models[0])
                 result.products[-1].bunit_data = container[0].meta.bunit_data
             else:
-                # For singlely-resampled images
+                # When each input is resampled to its own output
                 for model in drizzled_models:
                     result.products.append(model)
                     result.products[-1].bunit_data = container[0].meta.bunit_data

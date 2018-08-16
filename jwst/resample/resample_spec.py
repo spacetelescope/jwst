@@ -75,7 +75,7 @@ class ResampleSpecData:
         Create a spatial/spectral WCS output frame
 
         Creates output frame by linearly fitting RA, Dec along the slit and
-        producing a lookup table to interpolate wavelenghts in the dispersion
+        producing a lookup table to interpolate wavelengths in the dispersion
         direction.
 
         Parameters
