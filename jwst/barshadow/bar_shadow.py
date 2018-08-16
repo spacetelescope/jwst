@@ -51,15 +51,14 @@ def do_correction(input_model, barshadow_model):
     shutter_elements = create_shutter_elements(barshadow_model)
     w0 = barshadow_model.crval1
     wave_increment = barshadow_model.cdelt1
+    y_increment = barshadow_model.cdelt2
+    shutter_height = 1.0 / y_increment
     # For each slitlet
     for slitlet in input_model.slits:
         slitlet_number = slitlet.slitlet_id
         log.info('Working on slitlet %d' % slitlet_number)
         if has_uniform_source(slitlet):
-            #
-            # As Y increases, the pixel row number decreases, so the shutter_state is
-            # 'upside down'
-            shutter_status = slitlet.shutter_state[::-1]
+            shutter_status = slitlet.shutter_state
             if len(shutter_status) > 0:
                 shadow = create_shadow(shutter_elements, shutter_status)
                 #
@@ -78,10 +77,15 @@ def do_correction(input_model, barshadow_model):
                 #   Convert the Y and wavelength to a pixel location
                 #   in the  bar shadow array
                 index_of_fiducial = shutter_status.find('x')
-                index_of_fiducial_in_array = 501 + index_of_fiducial*500
-                yrow = index_of_fiducial_in_array - yslit*500.0
+                #
+                # The shutters go downwards, i.e. the first shutter in shutter_status corresponds to
+                # the last in the shadow array.  So the center of the first shutter referred to in
+                # shutter_status has an index of shadow.shape[0] - shutter_height.  Each subsequent
+                # shutter center has an index shutter_height greater.
+                index_of_fiducial_in_array = shadow.shape[0] - shutter_height * (1 + index_of_fiducial)
+                yrow = index_of_fiducial_in_array - yslit * shutter_height
                 wcol = (wavelength - w0)/wave_increment
-                #   Interpolate the bar shadow correction for non-Nan pixels
+                # Interpolate the bar shadow correction for non-Nan pixels
                 correction = interpolate(yrow, wcol, shadow)
                 # Add the correction array and variance to the datamodel
                 slitlet.barshadow = correction
@@ -376,7 +380,7 @@ def add_last_half_shutter(shadow, shadow_element, first_row):
     shadow[first_row:last_row, :] = shadow_element[1:, :]
     return shadow
 
-def interpolate(rows, columns, array):
+def interpolate(rows, columns, array, default=np.nan):
     """Interpolate row and column vectors in array
 
     Parameters:
@@ -389,9 +393,18 @@ def interpolate(rows, columns, array):
 
     array: nddata array
         array to be interpolated
+
+    default: number
+        value to use in output array when input index is nan (default np.nan)
+
+    Returns:
+
+    correction: nddata array
+        array of correction factors, or default when not calculated
     """
     nrows, ncolumns = rows.shape
     correction = np.ones((nrows, ncolumns))
+    correction.fill(default)
     nrows_out, ncols_out = array.shape
     #
     # Extend the boundary of array by 1 row and column to handle end cases
