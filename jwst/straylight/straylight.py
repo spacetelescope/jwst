@@ -1,6 +1,6 @@
 #
 #  Module for  applying straylight correction.
-# The routine correct_mrs applues a straylight correction to MRS science
+# The routine correct_mrs applies a straylight correction to MRS science
 # slope images. The straylight mask contains 0's for science regions and
 # 1's for gaps between slices.
 #
