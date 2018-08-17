@@ -294,8 +294,7 @@ SHORT,MEDIUM,LONG, or ALL
                 self.spaxel_debug.close()
         for cube in Final_IFUCube:
             footprint = cube.meta.wcs.footprint(axis_type="spatial")
-            update_s_region_keyword(cube, footprint.T)
-            self.log.info("Updated S_REGION to {}".format(cube.meta.wcsinfo.s_region))
+            update_s_region_keyword(cube, footprint)
 
         return Final_IFUCube
 
