@@ -63,8 +63,6 @@ ACQ_EXP_TYPES = (
 
 # Exposures that are always TSO
 TSO_EXP_TYPES = (
-    'mir_lrs-slitless',
-    'nis_soss',
     'nrc_tsimage',
     'nrc_tsgrism',
     'nrs_brightobj'
