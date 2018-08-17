@@ -6,7 +6,6 @@ from . import group_scale
 __all__ = ["GroupScaleStep"]
 
 
-
 class GroupScaleStep(Step):
     """
     GroupScaleStep: Rescales group data to account for on-board

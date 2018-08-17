@@ -1,5 +1,3 @@
-import numpy as np
-from astropy.io import fits
 import logging
 
 log = logging.getLogger(__name__)
