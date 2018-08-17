@@ -251,8 +251,7 @@ class Asn_SpectralSource(AsnMixin_Spectrum):
                         name='exp_type',
                         sources=['exp_type'],
                         value=(
-                            'nrc_grism'
-                            '|nrc_tsgrism'
+                            'nrc_tsgrism'
                             '|nrc_wfss'
                             '|nrs_autoflat'
                             '|nrs_autowave'
