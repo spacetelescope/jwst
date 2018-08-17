@@ -5,7 +5,6 @@
 """
 from collections import OrderedDict
 
-import numpy as np
 from astropy.io import fits
 
 from .. import datamodels
@@ -97,7 +96,7 @@ def blendmodels(product, inputs=None, output=None, verbose=False):
     >>> asn = load_asn(open(asnfile))
     >>> input_names = [i['expname'] for i in asn['products'][0]['members'][3:]]
     >>> blendmodels(asn['products'][0]['name'], inputs=input_names)
-    
+
     """
     if inputs in EMPTY_LIST:
         input_filenames = extract_filenames_from_product(product)

@@ -1,4 +1,3 @@
-import math
 import numpy as np
 
 class WCS:
@@ -83,8 +82,6 @@ class WCS:
             dir = 1.
         else:
             dir = -1.
-
-        dw = self.world[1:] - self.world[0:-1]
 
         if w_has_len:
             w = np.array(w)

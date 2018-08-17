@@ -1,7 +1,5 @@
 #! /usr/bin/env python
 
-import time
-import os
 from ..stpipe import Step
 from . import combine1d
 

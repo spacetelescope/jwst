@@ -1,11 +1,5 @@
-import os.path as op
-import os
 import copy
-import warnings
 from collections import OrderedDict
-import copy
-from functools import partial
-from inspect import signature
 import os.path as op
 
 from asdf import AsdfFile
@@ -110,8 +104,6 @@ class ModelContainer(model_base.DataModel):
                 pass_invalid_values=self._pass_invalid_values
             )
             self._models[index] = model
-
-        return model
 
         return model
 

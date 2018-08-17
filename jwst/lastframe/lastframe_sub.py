@@ -1,10 +1,8 @@
 #
 #  Module for the lastframe correction for MIRI science data sets
 #
-
 import numpy as np
 import logging
-from .. import datamodels
 from ..datamodels import dqflags
 
 log = logging.getLogger(__name__)
@@ -39,7 +37,7 @@ def do_correction(input_model):
     # Update the step status, and if ngroups > 2, set all of the GROUPDQ in
     # the final group to 'DO_NOT_USE'
     if sci_ngroups > 2:
-        output.groupdq[:, -1, :, :] = \
+        output.groupdq[:,-1,:,:] = \
             np.bitwise_or(output.groupdq[:,-1,:,:], dqflags.group['DO_NOT_USE'])
         log.debug("LastFrame Sub: resetting GROUPDQ in last frame to DO_NOT_USE")
         output.meta.cal_step.lastframe = 'COMPLETE'

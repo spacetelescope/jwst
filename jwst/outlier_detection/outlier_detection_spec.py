@@ -1,4 +1,5 @@
 """Class definition for performing outlier detection on spectra."""
+from functools import partial
 
 from .. import datamodels
 from ..resample import resample_spec, resample_utils

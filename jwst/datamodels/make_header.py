@@ -1,5 +1,4 @@
 import re
-import os.path
 import inspect
 import jsonschema
 import numpy as np

@@ -1,13 +1,9 @@
-import os
 import shutil
 import tempfile
 
-import pytest
-
 import numpy as np
 
-from jwst.datamodels import (DataModel, ImageModel, ModelContainer)
-from jwst.datamodels.util import open as open_model
+from jwst.datamodels import ImageModel
 
 from .. import blendmeta
 
@@ -52,5 +48,3 @@ def test_blendmeta():
     newmeta, newtab = blendmeta.get_blended_metadata(TMP_FILES)
     for attr in INPUT_VALUES:
         assert newmeta[attr] == OUTPUT_VALUES[attr]
-
-
