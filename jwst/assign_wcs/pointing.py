@@ -120,7 +120,7 @@ def wcsinfo_from_model(input_model):
     return wcsinfo
 
 
-def fitswcs_transform_from_model(wcsinfo,wavetab=None):
+def fitswcs_transform_from_model(wcsinfo, wavetab=None):
     """
     Create a WCS object using from datamodel.meta.wcsinfo.
     Transforms assume 0-based coordinates.
@@ -216,7 +216,7 @@ def create_fitswcs(inp, input_frame=None):
         sp_axis = spectral_axes[0]
         if wcsinfo['CTYPE'][sp_axis] == 'WAVE-TAB':
             wavetable = inp.wavetable
-        transform = fitswcs_transform_from_model(wcsinfo,wavetable)
+        transform = fitswcs_transform_from_model(wcsinfo, wavetable)
         output_frame = frame_from_model(wcsinfo)
     #elif isinstance(inp, six.string_types):
         #transform = create_fitswcs_transform(inp)
