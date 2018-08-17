@@ -44,7 +44,7 @@ def test_6grps_negative_differences_zeromedian():
     data[0, 5, 100, 100] = 100
     medianDiff = find_CRs(data, gdq, read_noise, rej_threshold, nframes)
     print('shape '+str(medianDiff.shape))
-    print('median differes of 100,100 '+str(medianDiff[0,100,100]))
+    print('median differences of 100,100 '+str(medianDiff[0,100,100]))
     assert(0 == np.max(gdq)) #no CR was found
     assert(0 == medianDiff[0,100,100]) #Median difference is zero
 
@@ -392,7 +392,7 @@ def test_10grps_noCR_2pixels_sigma0():
 #@pytest.mark.skip
 def test_5grps_Satat4_CRat3():
     ngroups = 5
-    crmag = 1000
+    #crmag = 1000
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups, readnoise=5 * np.sqrt(2))
     nframes=1
     data[0, 0, 100, 100] = 10000
@@ -409,7 +409,7 @@ def test_5grps_Satat4_CRat3():
 #@pytest.mark.skip
 def test_6grps_Satat6_CRat1():
     ngroups = 6
-    crmag = 1000
+    #crmag = 1000
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups, readnoise=5 * np.sqrt(2))
     nframes=1
     data[0, 0, 100, 100] = 10000
@@ -433,7 +433,7 @@ def test_6grps_Satat6_CRat1():
 @pytest.mark.xfail
 def test_6grps_Satat6_CRat1_flagadjpixels():
     ngroups = 6
-    crmag = 1000
+    #crmag = 1000
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups, readnoise=5 * np.sqrt(2))
     nframes=1
     data[0, 0, 100, 100] = 10000
@@ -460,7 +460,7 @@ def test_6grps_Satat6_CRat1_flagadjpixels():
 #@pytest.mark.skip
 def test_10grps_Satat8_CRsat3and6():
     ngroups = 10
-    crmag = 1000
+    #crmag = 1000
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups, readnoise=5 * np.sqrt(2))
     nframes=1
     data[0, 0, 100, 100] = 0
@@ -487,7 +487,7 @@ def setup_cube(ngroups,readnoise=10):
     data = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.float32)
     read_noise = np.zeros(shape=(nrows, ncols), dtype=np.float32)
     read_noise[:, :] = readnoise
-    primary_gdq = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.int32)
+    #primary_gdq = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.int32)
     gdq = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.int32)
     return data, gdq, nframes, read_noise, rej_threshold
 
