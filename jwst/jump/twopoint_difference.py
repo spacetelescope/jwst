@@ -13,7 +13,6 @@ import logging
 import numpy as np
 
 from ..datamodels import dqflags
-from .. import datamodels
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -58,7 +57,6 @@ def find_CRs(data, gdq, read_noise, rej_threshold, nframes):
         first_diffs[nans] = 100000.
 
         positive_first_diffs = np.abs(first_diffs)
-        diffsum = positive_first_diffs.sum
 
         # Make all the first diffs for saturated groups be equal to
         # 100,000 to put them above the good values in the sorted index
@@ -116,7 +114,6 @@ def find_CRs(data, gdq, read_noise, rej_threshold, nframes):
             pixel_masked_diffs = first_diffs[row1[j], col1[j]]
             pixel_rn2 = read_noise_2[row1[j], col1[j]]
             pixel_sat_groups = number_sat_groups[row1[j], col1[j]]
-            sorted_index_of_cr = max_index1[row1[j], col1[j]] - pixel_sat_groups
 
             # Create a CR mask and set 1st CR to be found
             # cr_mask=0 designates a CR
@@ -134,7 +131,6 @@ def find_CRs(data, gdq, read_noise, rej_threshold, nframes):
                 poisson_noise = np.sqrt(np.abs(pixel_med_diff))
                 sigma = np.sqrt(poisson_noise * poisson_noise + pixel_rn2 / nframes)
                 ratio = np.abs(pixel_masked_diffs - pixel_med_diff) / sigma
-                pixel_sorted_ratio = ratio[pixel_sorted_index[:]]
 
                 # Check if largest remaining difference is above threshold
                 if ratio[pixel_sorted_index[ndiffs - number_CRs_found - pixel_sat_groups - 1]] > rej_threshold:

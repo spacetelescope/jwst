@@ -1,3 +1,4 @@
+import logging
 import numpy as np
 from math import sqrt
 
@@ -6,7 +7,6 @@ from ..datamodels import dqflags
 import warnings
 warnings.simplefilter('ignore', np.RankWarning)
 
-import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
