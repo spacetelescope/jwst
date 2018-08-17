@@ -10,6 +10,8 @@ from ..assign_wcs import nirspec
 from ..datamodels import dqflags
 from . import coord
 from . import instrument_defaults
+from gwcs import wcstools
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 #________________________________________________________________________________
@@ -80,9 +82,8 @@ def match_det2cube(self, input_model,
     elif self.instrument == 'NIRSPEC':
         islice = file_slice_no
         slice_wcs = nirspec.nrs_wcs_set_input(input_model, islice)
+        x,y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box,step=(1,1), center=True)
 
-        x = x.astype(np.int)
-        y = y.astype(np.int)
 
         ra, dec, lam = slice_wcs(x, y) # return v2,v3 are in degrees
         valid1 = np.isfinite(ra)
@@ -92,6 +93,9 @@ def match_det2cube(self, input_model,
 # Slices are curved on detector. A slice region is grabbed by corner regions so
 # the region returned may include pixels not value for slice. There are gaps 
 # between the slices. Pixels not belonging to a slice are assigned NaN values.
+
+    x = x.astype(np.int)
+    y = y.astype(np.int)
 
     flux_all = input_model.data[y, x]
     error_all = input_model.err[y, x]

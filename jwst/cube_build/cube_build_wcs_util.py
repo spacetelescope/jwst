@@ -367,38 +367,38 @@ def find_footprint_NIRSPEC(self, input,flag_data):
     for i in regions:
 
         slice_wcs = nirspec.nrs_wcs_set_input(input,  i)
-        yrange_slice = slice_wcs.bounding_box[1][0],slice_wcs.bounding_box[1][1]
-        xrange_slice = slice_wcs.bounding_box[0][0],slice_wcs.bounding_box[0][1]
-        if(xrange_slice[0] >= 0 and xrange_slice[1] > 0):
+#        xrange_slice = slice_wcs.bounding_box[0][0],slice_wcs.bounding_box[0][1]
+#        if(xrange_slice[0] >= 0 and xrange_slice[1] > 0):
 
-            x,y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box,step=(1,1), center=True)
+        x,y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box,step=(1,1), center=True)
 
-            if self.coord_system == 'ra-dec':
-                coord1,coord2,lam = slice_wcs(x,y)
-            elif self.coord_system == 'alpha-beta':
-                raise InvalidCoordSystem(" The Alpha-Beta Coordinate system is not valid (at this time) for NIRSPEC data")
+        if self.coord_system == 'ra-dec':
+            coord1,coord2,lam = slice_wcs(x,y)
+        elif self.coord_system == 'alpha-beta':
+            raise InvalidCoordSystem(" The Alpha-Beta Coordinate system is not valid (at this time) for NIRSPEC data")
 #                detector2slicer = input.meta.wcs.get_transform('detector','slicer')
 #                coord1,coord2,lam = detector2slicer(x,y)
-            else:
+
+        else:
             # error the coordinate system is not defined
-                raise NoCoordSystem(" The output cube coordinate system is not definded")
+            raise NoCoordSystem(" The output cube coordinate system is not definded")
             
 #________________________________________________________________________________
 # For each slice  test for 0/360 wrapping in ra. 
 # If exists it makes it difficult to determine  ra range of IFU cube. 
 ##            print(' # ra values',ra.size,ra.size/2048)
-            coord1_wrap = wrap_ra(coord1)
-            a_min = np.nanmin(coord1_wrap)
-            a_max = np.nanmax(coord1_wrap)
+        coord1_wrap = wrap_ra(coord1)
+        a_min = np.nanmin(coord1_wrap)
+        a_max = np.nanmax(coord1_wrap)
 
-            a_slice[k] = a_min
-            a_slice[k + 1] = a_max
+        a_slice[k] = a_min
+        a_slice[k + 1] = a_max
 
-            b_slice[k] = np.nanmin(coord2)
-            b_slice[k + 1] = np.nanmax(coord2)
+        b_slice[k] = np.nanmin(coord2)
+        b_slice[k + 1] = np.nanmax(coord2)
 
-            lambda_slice[k] = np.nanmin(lam)
-            lambda_slice[k + 1] = np.nanmax(lam)
+        lambda_slice[k] = np.nanmin(lam)
+        lambda_slice[k + 1] = np.nanmax(lam)
 
         k = k + 2
 #________________________________________________________________________________
@@ -724,7 +724,6 @@ def wrap_ra(ravalues):
 
     valid = np.isfinite(ravalues)
     index_good = np.where( valid == True)
-#    print('number of non nan ra values',index_good[0].size,index_good[0].size/2048)
     ravalues_wrap = ravalues[index_good].copy()
     
     median_ra = np.nanmedian(ravalues_wrap) # find the median 
