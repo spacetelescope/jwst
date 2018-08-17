@@ -9,6 +9,8 @@ from .. import datamodels
 from . import resample
 from ..assign_wcs import util
 
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 __all__ = ["ResampleStep"]
 
@@ -55,6 +57,7 @@ class ResampleStep(Step):
             kwargs = self.get_drizpars(ref_filename, input_models)
         else:
             # Deal with NIRSpec which currently has no default drizpars reffile
+            self.log.info("No NIRSpec DIRZPARS reffile")
             kwargs = self._set_spec_defaults()
 
         # Call the resampling routine
@@ -67,14 +70,12 @@ class ResampleStep(Step):
             model.meta.asn.pool_name = input_models.meta.pool_name
             model.meta.asn.table_name = input_models.meta.table_name
 
-
         if len(resamp.output_models) == 1:
             result = resamp.output_models[0]
         else:
             result = resamp.output_models
 
         return result
-
 
     def get_drizpars(self, ref_filename, input_models):
         """
@@ -171,7 +172,6 @@ class ResampleStep(Step):
 
         return kwargs
 
-
     @classmethod
     def _set_spec_defaults(cls):
         """NIRSpec currently has no default drizpars reference file, so default
@@ -192,5 +192,9 @@ class ResampleStep(Step):
             kwargs['fillval'] = 'INDEF'
         if kwargs['weight_type'] is None:
             kwargs['weight_type'] = 'exptime'
+
+        for k,v in kwargs.items():
+            if k in ['pixfrac', 'kernel', 'fillval', 'weight_type']:
+                log.info('  setting: %s=%s', k, repr(v))
 
         return kwargs
