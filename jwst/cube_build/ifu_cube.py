@@ -225,7 +225,7 @@ class IFUCubeData():
         """
 
         self.output_name = self.define_cubename()
-        self.find_output_type()
+#        self.find_output_type()
         self.spaxel = self.create_spaxel()
 
         # now need to loop over every file that covers this channel/subchannel (MIRI)
@@ -475,12 +475,12 @@ class IFUCubeData():
                 # mrs_imatch step. THis is only for MRS data at this time
                 # but go head and check it before splitting by instrument
                 # the polynomial should be empty for NIRSPEC
-                do_background_subtraction = False
+                #do_background_subtraction = False
                 num_ch_bgk = len(input_model.meta.background.polynomial_info)
 
                 if(num_ch_bgk > 0):
 
-                    do_background_subtraction = True
+                    #do_background_subtraction = True
                     for ich_num in range(num_ch_bgk):
                         poly = input_model.meta.background.polynomial_info[ich_num]
                         poly_ch = poly.channel
@@ -818,20 +818,20 @@ class IFUCubeData():
 
 #********************************************************************************
 #********************************************************************************
-    def find_output_type(self):
+#    def find_output_type(self):
 
-        ValidChannel = ['1', '2', '3', '4']
-        ValidSubchannel = ['SHORT', 'MEDIUM', 'LONG']
+#        ValidChannel = ['1', '2', '3', '4']
+#        ValidSubchannel = ['SHORT', 'MEDIUM', 'LONG']
 
-        nchannels = len(ValidChannel)
-        nsubchannels = len(ValidSubchannel)
+#        nchannels = len(ValidChannel)
+#        nsubchannels = len(ValidSubchannel)
 
-        ValidGWA = ['G140M', 'G140H', 'G140M', 'G140H', 'G235M', 'G235H',
-                    'G395M', 'G395H', 'PRISM']
-        ValidFWA = ['F070LP', 'F070LP', 'F100LP', 'F100LP', 'F170LP',
-                    'F170LP', 'F290LP', 'F290LP', 'CLEAR']
+#        ValidGWA = ['G140M', 'G140H', 'G140M', 'G140H', 'G235M', 'G235H',
+#                    'G395M', 'G395H', 'PRISM']
+#        ValidFWA = ['F070LP', 'F070LP', 'F100LP', 'F100LP', 'F170LP',
+#                    'F170LP', 'F290LP', 'F290LP', 'CLEAR']
 
-        nbands = len(ValidFWA)
+#        nbands = len(ValidFWA)
 
 #********************************************************************************
     def blend_output_metadata(self, IFUCube):

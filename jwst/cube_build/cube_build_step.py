@@ -241,7 +241,7 @@ SHORT,MEDIUM,LONG, or ALL
         num_cubes, cube_pars = cubeinfo.number_cubes()
         self.log.info('Number of IFUCubes produced by a this run %i', num_cubes)
 
-        Final_IFUCube = datamodels.ModelContainer() # stick IFUcubes in
+        cube_container = datamodels.ModelContainer() # ModelContainer of ifucubes
 
         for i in range(num_cubes):
             icube = str(i + 1)
@@ -277,22 +277,22 @@ SHORT,MEDIUM,LONG, or ALL
 # this option is used for background matching and outlier rejection
             if self.single:
                 self.output_file = None
-                Final_IFUCube = thiscube.build_ifucube_single()
+                cube_container = thiscube.build_ifucube_single()
                 self.log.info("Number of Single IFUCube models returned %i ",
                               len(Final_IFUCube))
 
 # Else standard IFU cube building
             else:
                 result = thiscube.build_ifucube()
-                Final_IFUCube.append(result)
+                cube_container.append(result)
 
             if self.debug_pixel == 1:
                 self.spaxel_debug.close()
-        for cube in Final_IFUCube:
+        for cube in cube_container:
             footprint = cube.meta.wcs.footprint(axis_type="spatial")
             update_s_region_keyword(cube, footprint)
 
-        return Final_IFUCube
+        return cube_container
 
 #********************************************************************************
 class InputFileError(Exception):

@@ -379,7 +379,6 @@ def match_det2cube(self, x, y, sliceno, start_slice, input_model, transform, spa
     #center of first pixel, x,y = 1 for Adrian's equations
     # but we want the pixel corners, x,y values passed into this routine start at 0
     pixel_flux = input_model.data[y, x]
-    pixel_error = input_model.err[y, x]
 
     yy_bot = y
     yy_top = y + 1

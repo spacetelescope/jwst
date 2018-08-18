@@ -234,8 +234,8 @@ class CubeBlot():
             xi_cube, eta_cube = coord.radec2std(crval1, crval2,
                                                self.cube_ra, self.cube_dec)
             nplane = self.naxis1 * self.naxis2
-            self.xi_centers = np.reshape(xi_cube[0,:,:],nplane)
-            self.eta_centers = np.reshape(eta_cube[0,:,:],nplane)
+            self.xi_centers = np.reshape(xi_cube[0, :, :],nplane)
+            self.eta_centers = np.reshape(eta_cube[0, :, :],nplane)
 
             num = ra_blot.size
 #________________________________________________________________________________

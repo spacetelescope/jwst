@@ -5,6 +5,7 @@ import math
 import logging
 from .. import datamodels
 from ..assign_wcs import nirspec
+from ..datamodels import dqflags
 from . import coord
 from gwcs import wcstools
 
@@ -114,7 +115,7 @@ def match_det2cube(self, input_model,
 
     # good data holds the location of pixels we want to map to cube
     flux = flux_all[good_data]
-    error = error_all[good_data]
+#    error = error_all[good_data]
     wave = lam[good_data]
 
     xpix = x[good_data] # only used for testing
