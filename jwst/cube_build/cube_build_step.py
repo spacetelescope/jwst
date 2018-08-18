@@ -1,22 +1,12 @@
  #! /usr/bin/env python
-
-import sys
-import time
-import math
-import json
-import os
-import numpy as np
-from ..stpipe import Step, cmdline
-
+from ..stpipe import Step
 from .. import datamodels
 from . import cube_build
 from . import ifu_cube
 from . import data_types
 from ..assign_wcs.util import update_s_region_keyword
 
-
 __all__ = ["CubeBuildStep", "read_user_input"]
-
 
 class CubeBuildStep (Step):
     """
@@ -51,9 +41,7 @@ SHORT,MEDIUM,LONG, or ALL
          search_output_file = boolean(default=false)
          output_use_model = boolean(default=true) # Use filenames in the output models
        """
-
-
-    reference_file_types = ['cubepar','resol']
+    reference_file_types = ['cubepar', 'resol']
 
     def process(self, input):
         self.log.info('Starting IFU Cube Building Step')
@@ -77,9 +65,9 @@ SHORT,MEDIUM,LONG, or ALL
         if(self.scalew != 0.0): self.log.info('Input wavelength scale %f  ', self.scalew)
         if(self.offset_list != 'NA'): self.log.info('Offset Dither list %s', self.offset_list)
 
-        if(self.wavemin !=None): self.log.info('Setting Minimum wavelength of spectral cube to: %f',
+        if(self.wavemin != None): self.log.info('Setting Minimum wavelength of spectral cube to: %f',
                                                self.wavemin)
-        if(self.wavemax !=None): self.log.info('Setting Maximum wavelength of spectral cube to: %f',
+        if(self.wavemax != None): self.log.info('Setting Maximum wavelength of spectral cube to: %f',
                                                self.wavemax)
 
         if(self.rois != 0.0): self.log.info('Input Spatial ROI size %f', self.rois)
@@ -87,18 +75,22 @@ SHORT,MEDIUM,LONG, or ALL
 
         self.debug_pixel = 0
         self.spaxel_debug = None
-        if(self.xdebug !=None and self.ydebug !=None and self.zdebug !=None):
+        if(self.xdebug !=None and self.ydebug != None and self.zdebug != None):
             self.debug_pixel = 1
-            self.log.info('Writing debug information for spaxel %i %i %i',self.xdebug,self.ydebug,
+            self.log.info('Writing debug information for spaxel %i %i %i',
+                          self.xdebug,
+                          self.ydebug,
                           self.zdebug)
-            self.log.debug('Writing debug information for spaxel %i %i %i',self.xdebug,self.ydebug,
+            self.log.debug('Writing debug information for spaxel %i %i %i',
+                           self.xdebug,
+                           self.ydebug,
                            self.zdebug)
-            self.xdebug = self.xdebug -1
-            self.ydebug = self.ydebug -1
-            self.zdebug = self.zdebug -1
-            self.spaxel_debug = open('cube_spaxel_info.results','w')
+            self.xdebug = self.xdebug - 1
+            self.ydebug = self.ydebug - 1
+            self.zdebug = self.zdebug - 1
+            self.spaxel_debug = open('cube_spaxel_info.results', 'w')
             self.spaxel_debug.write('Writing debug information for spaxel %i %i %i' %
-                                    (self.xdebug,self.ydebug,self.zdebug) + '\n')
+                                    (self.xdebug, self.ydebug, self.zdebug) + '\n')
 
         # valid coord_system:
         # 1. alpha-beta (only valid for MIRI Single Cubes)
@@ -122,11 +114,11 @@ SHORT,MEDIUM,LONG, or ALL
 
         self.log.info('Input interpolation: %s', self.interpolation)
         self.log.info('Coordinate system to use: %s', self.coord_system)
-        if self.interpolation =='pointcloud':
-            self.log.info('Weighting method for point cloud: %s',self.weighting)
-            self.log.info('Power Weighting distance : %f',self.weight_power)
+        if self.interpolation == 'pointcloud':
+            self.log.info('Weighting method for point cloud: %s', self.weighting)
+            self.log.info('Power Weighting distance : %f', self.weight_power)
 
-        if self.single :
+        if self.single:
             self.output_type = 'single'
             self.log.info('Cube Type: Single cubes ')
 
@@ -156,7 +148,7 @@ SHORT,MEDIUM,LONG, or ALL
 # the cube_build software will attached the needed information on channel, sub-channel
 # grating or filter.
 #________________________________________________________________________________
-        input_table = data_types.DataTypes(input,self.single,
+        input_table = data_types.DataTypes(input, self.single,
                                            self.output_file,
                                            self.output_dir)
 
@@ -165,9 +157,9 @@ SHORT,MEDIUM,LONG, or ALL
         self.output_name_base = input_table.output_name
 
         self.pipeline = 3
-        if self.output_type =='multi' and len(self.input_filenames) ==1 :
+        if self.output_type == 'multi' and len(self.input_filenames) == 1:
             self.pipeline = 2
-        if(len(self.input_filenames)==1): self.offset_list = 'NA'
+        if(len(self.input_filenames) == 1): self.offset_list = 'NA'
 #________________________________________________________________________________
 # Read in Cube Parameter Reference file
         # identify what reference file has been associated with these input
@@ -197,7 +189,7 @@ SHORT,MEDIUM,LONG, or ALL
             'filter': self.pars_input['filter'],
             'weighting': self.weighting,
             'single': self.single,
-            'output_type':self.output_type,
+            'output_type': self.output_type,
             'offset_list': self.offset_list}
 
 # shove the input parameters in to pars_cube to pull out ifu_cube.py
@@ -218,7 +210,7 @@ SHORT,MEDIUM,LONG, or ALL
             'ydebug': self.ydebug,
             'zdebug': self.zdebug,
             'debug_pixel': self.debug_pixel,
-            'spaxel_debug':self.spaxel_debug}
+            'spaxel_debug': self.spaxel_debug}
 #________________________________________________________________________________
 # create an instance of class CubeData
 
@@ -246,13 +238,13 @@ SHORT,MEDIUM,LONG, or ALL
 # return number of cubes and for each cube the list_pars1, list_pars2 (channel,subchannel)
 # or (grating,filter)
 
-        num_cubes,cube_pars= cubeinfo.number_cubes()
-        self.log.info('Number of IFUCubes produced by a this run %i',num_cubes)
+        num_cubes, cube_pars = cubeinfo.number_cubes()
+        self.log.info('Number of IFUCubes produced by a this run %i', num_cubes)
 
         Final_IFUCube = datamodels.ModelContainer() # stick IFUcubes in
 
         for i in range(num_cubes):
-            icube = str(i+1)
+            icube = str(i + 1)
             list_par1 = cube_pars[icube]['par1']
             list_par2 = cube_pars[icube]['par2']
             thiscube = ifu_cube.IFUCubeData(
@@ -286,14 +278,15 @@ SHORT,MEDIUM,LONG, or ALL
             if self.single:
                 self.output_file = None
                 Final_IFUCube = thiscube.build_ifucube_single()
-                self.log.info("Number of IFUCube models returned from building single IFUCubes %i ",len(Final_IFUCube))
+                self.log.info("Number of Single IFUCube models returned %i ",
+                              len(Final_IFUCube))
 
 # Else standard IFU cube building
             else:
-                result =  thiscube.build_ifucube()
+                result = thiscube.build_ifucube()
                 Final_IFUCube.append(result)
 
-            if(self.debug_pixel ==1):
+            if self.debug_pixel == 1:
                 self.spaxel_debug.close()
         for cube in Final_IFUCube:
             footprint = cube.meta.wcs.footprint(axis_type="spatial")
@@ -328,17 +321,12 @@ def read_user_input(self):
     self.pars_input['filter']
 
     """
-    ValidChannel = ['1', '2', '3', '4','ALL']
-    ValidSubChannel = ['SHORT', 'MEDIUM', 'LONG','ALL']
+    ValidChannel = ['1', '2', '3', '4', 'ALL']
+    ValidSubChannel = ['SHORT', 'MEDIUM', 'LONG', 'ALL']
     ValidFWA = ['F070LP', 'F100LP', 'F100LP', 'F170LP',
-                    'F170LP', 'F290LP', 'F290LP', 'CLEAR','ALL']
+                    'F170LP', 'F290LP', 'F290LP', 'CLEAR', 'ALL']
     ValidGWA = ['G140M', 'G140H', 'G140M', 'G140H', 'G235M', 'G235H',
-                    'G395M', 'G395H', 'PRISM','ALL']
-    nchannels = len(ValidChannel)
-    nsubchannels = len(ValidSubChannel)
-
-    nfilter = len(ValidFWA)
-    ngrating = len(ValidGWA)
+                    'G395M', 'G395H', 'PRISM', 'ALL']
 
 #________________________________________________________________________________
     # for MIRI we can set the channel
@@ -365,7 +353,7 @@ def read_user_input(self):
             if ch in ValidChannel:
                 self.pars_input['channel'].append(ch)
             else:
-                raise ErrorInvalidParameter("Invalid Channel %s",ch)
+                raise ErrorInvalidParameter("Invalid Channel %s", ch)
 # remove duplicates if needed
         self.pars_input['channel'] = list(set(self.pars_input['channel']))
 
@@ -377,23 +365,23 @@ def read_user_input(self):
     if self.subchannel == 'ALL':
         self.subchannel = ''
 
-    if self.subchannel : #  not empty it has been set
+    if self.subchannel: #  not empty it has been set
         if not self.single:
             self.output_type = 'user'
         subchannellist = self.subchannel.split(',')
         user_blen = len(subchannellist)
         for j in range(user_blen):
             b = subchannellist[j]
-            if(user_blen > 1) :
+            if user_blen > 1:
                 b = b.strip('[')
                 b = b.strip(']')
                 b = b.strip(' ')
                 b = b[1:-1]
-            b  = str(b)
+            b = str(b)
             if b in ValidSubChannel:
                 self.pars_input['subchannel'].append(b)
             else:
-                raise ErrorInvalidParameter("Invalid Subchannel %s",b)
+                raise ErrorInvalidParameter("Invalid Subchannel %s", b)
 # remove duplicates if needed
         self.pars_input['subchannel'] = list(set(self.pars_input['subchannel']))
 #________________________________________________________________________________
@@ -409,12 +397,12 @@ def read_user_input(self):
         user_flen = len(filterlist)
         for j in range(user_flen):
             f = filterlist[j]
-            if(user_flen > 1) :
+            if user_flen > 1:
                 f = f.strip('[')
                 f = f.strip(']')
                 f = f.strip(' ')
                 f = f[1:-1]
-            f  = str(f)
+            f = str(f)
             if f in ValidFWA:
                 self.pars_input['filter'].append(f)
             else:
@@ -436,20 +424,18 @@ def read_user_input(self):
         for j in range(user_glen):
 
             g = gratinglist[j]
-            if(user_glen > 1) :
+            if user_glen > 1:
                 g = g.strip('[')
                 g = g.strip(']')
                 g = g.strip(' ')
                 g = g[1:-1]
-            g  = str(g)
+            g = str(g)
             if g in ValidGWA:
                 self.pars_input['grating'].append(g)
             else:
-                raise ErrorInvalidParameter("Invalid Grating %s",g)
+                raise ErrorInvalidParameter("Invalid Grating %s", g)
 # remove duplicates if needed
         self.pars_input['grating'] = list(set(self.pars_input['grating']))
-
 #________________________________________________________________________________
-
 class ErrorInvalidParameter(Exception):
     pass
