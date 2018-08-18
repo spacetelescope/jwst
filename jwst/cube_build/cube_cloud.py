@@ -80,9 +80,12 @@ def match_det2cube(self, input_model,
         # Slice No are provided by ifu_cube.py
         islice = file_slice_no
         slice_wcs = nirspec.nrs_wcs_set_input(input_model, islice)
+        x,y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box,step=(1,1), center=True)
+
 
         coord1, coord2, wave = slice_wcs(x, y) # return v2,v3 are in degrees
         valid1 = ~np.isnan(coord1)
+
 
 #________________________________________________________________________________
 #________________________________________________________________________________
@@ -95,6 +98,7 @@ def match_det2cube(self, input_model,
     coord1 = coord1[valid1]
     coord2 = coord2[valid1]
     wave = wave[valid1]
+
 
 #________________________________________________________________________________
 # using the DQFlags from the input_image find pixels that should be excluded

@@ -20,7 +20,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 class CubeData():
-# CubeData - holds all the importatn informtion for IFU Cube Building:
+# CubeData - holds all the important informtion for IFU Cube Building:
 # wcs, data, reference data
 
     def __init__(self, 

@@ -1,3 +1,4 @@
+# Licensed under a 3-clause BSD style license - see LICENSE.rst
 """
 A module that provides `TPCorr` class - a `~astropy.modeling.Model` derived
 class that applies linear tangent-plane corrections to V2V3 coordinates of
@@ -15,9 +16,6 @@ import math
 # THIRD PARTY
 import numpy as np
 from astropy.modeling import Model, Parameter, InputParameterError
-
-# LOCAL
-from . import __version__
 
 
 __all__ = ['IncompatibleCorrections', 'rot_mat3D', 'TPCorr']
@@ -76,7 +74,6 @@ class TPCorr(Model):
     # input_units_allow_dimensionless = True
     _separable = False
     standard_broadcasting = False
-
 
     r0 = 3600.0 * np.rad2deg(1.0)
     """

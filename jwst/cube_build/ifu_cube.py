@@ -284,6 +284,7 @@ class IFUCubeData():
 
         single_IFUCube = datamodels.ModelContainer()
         n = len(self.input_models)
+        log.info("Number of Single IFU cubes creating  = %i" % n)
         this_par1 = self.list_par1[0] # only one channel is used in this approach
         this_par2 = None # not important for this type of mapping
 
@@ -291,6 +292,7 @@ class IFUCubeData():
         c1_offset = 0
         c2_offset = 0
         for j in range(n):
+            log.info("Working on next Single IFU Cube  = %i" %(j+1))
             t0 = time.time()
 # for each new data model create a new spaxel
             spaxel = []
@@ -304,8 +306,7 @@ class IFUCubeData():
 #________________________________________________________________________________
                     xstart, xend = self.instrument_info.GetMIRISliceEndPts(this_par1)
                     y, x = np.mgrid[:1024, xstart:xend]
-#                    y = np.reshape(y, y.size)
-#                    x = np.reshape(x, x.size)
+
 
                     cube_cloud.match_det2cube(self,input_model,
                                               x, y, j,
@@ -342,7 +343,6 @@ class IFUCubeData():
             log.info("Time Create Single IFUcube  = %.1f.s" % (t1 - t0,))
 #_______________________________________________________________________
             single_IFUCube.append(IFUCube)
-#            print('Len of single_IFUCube',len(single_IFUCube))
             del spaxel[:]
         return single_IFUCube
 #********************************************************************************
@@ -549,12 +549,14 @@ class IFUCubeData():
                     regions = list(range(start_slice, end_slice + 1))
                     log.info("Mapping each NIRSPEC slice to sky, this takes a while for NIRSPEC data")
                     for i in regions:
-                        slice_wcs = nirspec.nrs_wcs_set_input(input_model, i)
-                        x,y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box,
-                                                              step=(1,1), center=True)
+#                        slice_wcs = nirspec.nrs_wcs_set_input(input_model, i)
+#                        x,y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box,
+#                                                              step=(1,1), center=True)
                         
 
                         t0 = time.time()
+                        x = 0
+                        y = 0 
                         cube_cloud.match_det2cube(self,input_model,
                                                   x, y, i,
                                                   this_par1,this_par2,
@@ -839,6 +841,6 @@ class IFUCubeData():
         # Run fitsblender on output product
         output_file = IFUCube.meta.filename
 
-        log.info('Blending metadata for {}'.format(output_file))
+#        log.info('Blending metadata for {}'.format(output_file))
         blendmeta.blendmodels(IFUCube, inputs=self.input_models,
                               output=output_file)

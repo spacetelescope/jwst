@@ -4,9 +4,8 @@ import logging
 
 import numpy as np
 from astropy.table import QTable
-import astropy.units as u
 from astropy.time import Time, TimeDelta
-from photutils import aperture_photometry, CircularAperture, CircularAnnulus
+from photutils import CircularAperture, CircularAnnulus
 
 from ..datamodels import CubeModel
 
@@ -44,32 +43,51 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner,
     if not isinstance(datamodel, CubeModel):
         raise ValueError('The input data model must be a CubeModel.')
 
-    aper1 = CircularAperture((xcenter, ycenter), r=radius)
-    aper2 = CircularAnnulus((xcenter, ycenter), r_in=radius_inner,
-                            r_out=radius_outer)
+    # For the SUB64P subarray with the WLP8 pupil, the circular aperture
+    # extends beyond the image and the circular annulus does not have any
+    # overlap with the image.  In that case, we simply sum all values
+    # in the array and skip the background subtraction.
+    sub64p_wlp8 = False
+    if (datamodel.meta.instrument.pupil == 'WLP8' and
+            datamodel.meta.subarray.name == 'SUB64P'):
+        sub64p_wlp8 = True
 
-    nimg = datamodel.data.shape[0]
+    if not sub64p_wlp8:
+        phot_aper = CircularAperture((xcenter, ycenter), r=radius)
+        bkg_aper = CircularAnnulus((xcenter, ycenter), r_in=radius_inner,
+                                   r_out=radius_outer)
+
     aperture_sum = []
     aperture_sum_err = []
     annulus_sum = []
     annulus_sum_err = []
 
+    nimg = datamodel.data.shape[0]
     for i in np.arange(nimg):
-        tbl1 = aperture_photometry(datamodel.data[i, :, :], aper1,
-                                   error=datamodel.err[i, :, :])
-        tbl2 = aperture_photometry(datamodel.data[i, :, :], aper2,
-                                   error=datamodel.err[i, :, :])
+        if sub64p_wlp8:
+            info = ('Photometry measured as the sum of all values in the '
+                    'subarray.  No background subtraction was performed.')
 
-        aperture_sum.append(tbl1['aperture_sum'][0])
-        aperture_sum_err.append(tbl1['aperture_sum_err'][0])
-        annulus_sum.append(tbl2['aperture_sum'][0])
-        annulus_sum_err.append(tbl2['aperture_sum_err'][0])
+            aperture_sum.append(np.sum(datamodel.data[i, :, :]))
+            aperture_sum_err.append(
+                np.sqrt(np.sum(datamodel.err[i, :, :]**2)))
+        else:
+            info = ('Photometry measured in a circular aperture of r={0} '
+                    'pixels.  Background calculated as the mean in a '
+                    'circular annulus with r_inner={1} pixels and '
+                    'r_outer={2} pixels.'.format(radius, radius_inner,
+                                                 radius_outer))
 
-    # convert array of Quantities to Quantity arrays
-    aperture_sum = u.Quantity(aperture_sum)
-    aperture_sum_err = u.Quantity(aperture_sum_err)
-    annulus_sum = u.Quantity(annulus_sum)
-    annulus_sum_err = u.Quantity(annulus_sum_err)
+            aper_sum, aper_sum_err = phot_aper.do_photometry(
+                datamodel.data[i, :, :], error=datamodel.err[i, :, :])
+
+            ann_sum, ann_sum_err = bkg_aper.do_photometry(
+                datamodel.data[i, :, :], error=datamodel.err[i, :, :])
+
+            aperture_sum.append(aper_sum[0])
+            aperture_sum_err.append(aper_sum_err[0])
+            annulus_sum.append(ann_sum[0])
+            annulus_sum_err.append(ann_sum_err[0])
 
     # construct metadata for output table
     meta = OrderedDict()
@@ -79,20 +97,15 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner,
     meta['subarray'] = datamodel.meta.subarray.name
     meta['filter'] = datamodel.meta.instrument.filter
     meta['pupil'] = datamodel.meta.instrument.pupil
-
     meta['target_name'] = datamodel.meta.target.catalog_name
     meta['xcenter'] = xcenter
     meta['ycenter'] = ycenter
     ra_icrs, dec_icrs = datamodel.meta.wcs(xcenter, ycenter)
     meta['ra_icrs'] = ra_icrs
     meta['dec_icrs'] = dec_icrs
-
-    info = ('Photometry measured in a circular aperture of r={0} pixels. '
-            'Background calculated as the mean in a circular annulus with '
-            'r_inner={1} pixels and r_outer={2} pixels.'
-            .format(radius, radius_inner, radius_outer))
     meta['apertures'] = info
 
+    # initialize the output table
     tbl = QTable(meta=meta)
 
     if hasattr(datamodel, 'int_times') and datamodel.int_times is not None:
@@ -144,23 +157,33 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner,
 
     tbl['aperture_sum'] = aperture_sum
     tbl['aperture_sum_err'] = aperture_sum_err
-    tbl['annulus_sum'] = annulus_sum
-    tbl['annulus_sum_err'] = annulus_sum_err
 
-    annulus_mean = annulus_sum / aper2.area()
-    annulus_mean_err = annulus_sum_err / aper2.area()
-    tbl['annulus_mean'] = annulus_mean
-    tbl['annulus_mean_err'] = annulus_mean_err
+    if not sub64p_wlp8:
+        tbl['annulus_sum'] = annulus_sum
+        tbl['annulus_sum_err'] = annulus_sum_err
 
-    aperture_bkg = annulus_mean * aper1.area()
-    aperture_bkg_err = annulus_mean_err * aper1.area()
-    tbl['aperture_bkg'] = aperture_bkg
-    tbl['aperture_bkg_err'] = aperture_bkg_err
+        annulus_mean = annulus_sum / bkg_aper.area()
+        annulus_mean_err = annulus_sum_err / bkg_aper.area()
+        tbl['annulus_mean'] = annulus_mean
+        tbl['annulus_mean_err'] = annulus_mean_err
 
-    net_aperture_sum = aperture_sum - aperture_bkg
-    net_aperture_sum_err = np.sqrt(aperture_sum_err ** 2 +
-                                   aperture_bkg_err ** 2)
-    tbl['net_aperture_sum'] = net_aperture_sum
-    tbl['net_aperture_sum_err'] = net_aperture_sum_err
+        aperture_bkg = annulus_mean * phot_aper.area()
+        aperture_bkg_err = annulus_mean_err * phot_aper.area()
+        tbl['aperture_bkg'] = aperture_bkg
+        tbl['aperture_bkg_err'] = aperture_bkg_err
+
+        net_aperture_sum = aperture_sum - aperture_bkg
+        net_aperture_sum_err = np.sqrt(aperture_sum_err ** 2 +
+                                       aperture_bkg_err ** 2)
+        tbl['net_aperture_sum'] = net_aperture_sum
+        tbl['net_aperture_sum_err'] = net_aperture_sum_err
+    else:
+        colnames = ['annulus_sum', 'annulus_sum_err', 'annulus_mean',
+                    'annulus_mean_err', 'aperture_bkg', 'aperture_bkg_err']
+        for col in colnames:
+            tbl[col] = np.full(nimg, np.nan)
+
+        tbl['net_aperture_sum'] = aperture_sum
+        tbl['net_aperture_sum_err'] = aperture_sum_err
 
     return tbl

@@ -23,7 +23,7 @@ def test_nrs_msa_spec2b(_bigdata):
     step.output_file='jw95065_nrs_msaspec_barshadow_cal.fits'
     step.save_bsub = False
     step.save_results = True
-    step.resample_spec.skip = True
+    step.resample_spec.save_results = True
     step.extract_1d.save_results = True
     step.run(input)
 
@@ -33,6 +33,19 @@ def test_nrs_msa_spec2b(_bigdata):
     na = 'jw95065_nrs_msaspec_barshadow_cal.fits'
     nb = os.path.join(_bigdata, 'pipelines',
                       'jw95065_nrs_msaspec_barshadow_cal_ref.fits')
+    h = pf.open(na)
+    href = pf.open(nb)
+    result = pf.diff.FITSDiff(h,
+                              href,
+                              ignore_hdus=['ASDF'],
+                              ignore_keywords=ignore_keywords,
+                              rtol = 0.00001)
+    assert result.identical, result.report()
+
+    # compare _s2d file
+    na = 'jw95065_nrs_msaspec_barshadow_s2d.fits'
+    nb = os.path.join(_bigdata, 'pipelines',
+                      'jw95065_nrs_msaspec_barshadow_s2d_ref.fits')
     h = pf.open(na)
     href = pf.open(nb)
     result = pf.diff.FITSDiff(h,

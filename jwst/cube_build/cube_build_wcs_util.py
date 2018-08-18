@@ -343,6 +343,7 @@ def find_footprint_NIRSPEC(self, input, flag_data):
     lambda_slice = np.zeros(nslices * 2)
     k = 0
     # for NIRSPEC there are 30 regions
+
     log.info('Looping over slices to determine cube size .. this takes a while')
 
     for i in range(nslices):
@@ -351,16 +352,19 @@ def find_footprint_NIRSPEC(self, input, flag_data):
 
         if self.coord_system == 'ra-dec':
             coord1, coord2, lam = slice_wcs(x, y)
+
         elif self.coord_system == 'alpha-beta':
             raise InvalidCoordSystem(" The Alpha-Beta Coordinate system is not valid (at this time) for NIRSPEC data")
 #                detector2slicer = input.meta.wcs.get_transform('detector','slicer')
 #                coord1,coord2,lam = detector2slicer(x,y)
+
         else:
             # error the coordinate system is not defined
             raise NoCoordSystem(" The output cube coordinate system is not definded")
 #________________________________________________________________________________
-# For each slice  test for 0/360 wrapping in ra.
-# If exists it makes it difficult to determine  ra range of IFU cube.
+# For each slice  test for 0/360 wrapping in ra. 
+# If exists it makes it difficult to determine  ra range of IFU cube. 
+##            print(' # ra values',ra.size,ra.size/2048)
         coord1_wrap = wrap_ra(coord1)
         a_min = np.nanmin(coord1_wrap)
         a_max = np.nanmax(coord1_wrap)
@@ -621,8 +625,8 @@ def wrap_ra(ravalues):
     """
 
     valid = np.isfinite(ravalues)
-    index_good = np.where(valid == True)
-#    print('number of non nan ra values',index_good[0].size,index_good[0].size/2048)
+
+    index_good = np.where( valid == True)
     ravalues_wrap = ravalues[index_good].copy()
     median_ra = np.nanmedian(ravalues_wrap) # find the median
 #    print('median_ra',median_ra)

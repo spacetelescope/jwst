@@ -24,6 +24,9 @@ background
 barshadow
 ---------
 
+- Fixed a bug in ``bar_shadow.py`` interpolate() that caused
+  array index to be nan                                        [#2384]
+
 combine_1d
 ----------
 
