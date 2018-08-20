@@ -74,12 +74,12 @@ class DataTypes():
 # later suffixes will be added to this name to designate the
 # channel, subchannel or grating,filter the data is covers.
 
-        if output_file != None:
+        if output_file is not None:
             basename, ext = os.path.splitext(os.path.basename(output_file))
             self.output_name = basename
 
 
-        if output_dir != None:
+        if output_dir is not None:
             self.output_name = output_dir + '/' + self.output_name
 
 #        print('*****************',self.output_name)

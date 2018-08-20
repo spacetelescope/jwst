@@ -35,11 +35,11 @@ def radec2std(crval1, crval2, ra, dec):
     radiff = ra * deg2rad - ra0;
     decr = dec * deg2rad;
 
-    h = np.sin(decr) * math.sin(dec0) + np.cos(decr) * math.cos(dec0) * np.cos(radiff);
+    h = np.sin(decr) * math.sin(dec0) + np.cos(decr) * math.cos(dec0) * np.cos(radiff)
 
-    xi = np.cos(decr) * np.sin(radiff) / h;
+    xi = np.cos(decr) * np.sin(radiff) / h
     eta = (np.sin(decr) * math.cos(dec0) -
-           np.cos(decr) * math.sin(dec0) * np.cos(radiff)) / h;
+           np.cos(decr) * math.sin(dec0) * np.cos(radiff)) / h
 
     xi = xi * rad2arcsec
     xi = -xi # xi is made negative so it increases in the opposite direction of ra

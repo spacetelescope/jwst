@@ -65,9 +65,9 @@ SHORT,MEDIUM,LONG, or ALL
         if(self.scalew != 0.0): self.log.info('Input wavelength scale %f  ', self.scalew)
         if(self.offset_list != 'NA'): self.log.info('Offset Dither list %s', self.offset_list)
 
-        if(self.wavemin != None): self.log.info('Setting Minimum wavelength of spectral cube to: %f',
+        if(self.wavemin is not None): self.log.info('Setting Minimum wavelength of spectral cube to: %f',
                                                self.wavemin)
-        if(self.wavemax != None): self.log.info('Setting Maximum wavelength of spectral cube to: %f',
+        if(self.wavemax is not None): self.log.info('Setting Maximum wavelength of spectral cube to: %f',
                                                self.wavemax)
 
         if(self.rois != 0.0): self.log.info('Input Spatial ROI size %f', self.rois)
@@ -75,7 +75,7 @@ SHORT,MEDIUM,LONG, or ALL
 
         self.debug_pixel = 0
         self.spaxel_debug = None
-        if(self.xdebug !=None and self.ydebug != None and self.zdebug != None):
+        if(self.xdebug is not None and self.ydebug is not None and self.zdebug is not None):
             self.debug_pixel = 1
             self.log.info('Writing debug information for spaxel %i %i %i',
                           self.xdebug,

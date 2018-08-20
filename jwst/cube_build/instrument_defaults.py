@@ -485,7 +485,7 @@ class InstrumentInfo():
         self.high_power.append(power)
         self.high_softrad.append(softrad)
 
-    def SetSpatialSize(self, value, parameter1, parameter2=None):
+    def SetSpatialSize(self, value, parameter1, parameter2 = None):
         if parameter2 is None:
             self.Info[parameter1]['ascale'] = value
             self.Info[parameter1]['bscale'] = value

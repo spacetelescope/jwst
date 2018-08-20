@@ -126,11 +126,11 @@ def setup_wcs(self):
     final_lambda_min = min(lambda_min)
     final_lambda_max = max(lambda_max)
 
-    if self.wavemin != None and self.wavemin > final_lambda_min:
+    if self.wavemin is not None and self.wavemin > final_lambda_min:
         final_lambda_min = self.wavemin
         log.info('Changed min wavelength of cube to %f ', final_lambda_min)
 
-    if self.wavemax != None and self.wavemax < final_lambda_max:
+    if self.wavemax is not None and self.wavemax < final_lambda_max:
         final_lambda_max = self.wavemax
         log.info('Changed max wavelength of cube to %f ', final_lambda_max)
 #________________________________________________________________________________
