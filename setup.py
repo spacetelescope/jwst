@@ -195,7 +195,6 @@ setup(
         'stsci.stimage~=0.2',
         'photutils~=0.4',
         'pytest',
-        'pytest-remotedata',
         'verhawk~=0.0',
     ],
     extras_require={
