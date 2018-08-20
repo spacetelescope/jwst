@@ -18,6 +18,7 @@ from astropy.wcs import WCS
 from asdf import AsdfFile
 from asdf import yamlutil
 from asdf import schema as asdf_schema
+from asdf.tags.core.ndarray import numpy_dtype_to_asdf_datatype
 
 from . import ndmodel
 from . import filetype
@@ -305,6 +306,73 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         validate.value_change(str(self), self._instance, self._schema,
                               self._pass_invalid_values,
                               self._strict_validation)
+
+    def info(self):
+        """
+        Return datatype and dimension for each array or table
+        """
+        def get_field_info(path, instance):
+            field_info = []
+            if isinstance(instance, dict):
+                if path:
+                    path += '.'
+                for name, val in instance.items():
+                    new_path = path + name.lower()
+                    field_info.extend(get_field_info(new_path, val))
+            elif isinstance(instance, list):
+                for index, val in enumerate(instance):
+                    new_path = "%s[%d]" % (path, index)
+                    field_info.extend(get_field_info(new_path, val))
+            elif isinstance(instance, np.ndarray):
+                if instance.shape[0] > 0:
+                    shape_info = get_shape_info(instance)
+                    type_info = get_type_info(instance)
+                    field_info = [(path, shape_info, type_info)]
+            return field_info
+
+        def get_meta_info(meta):
+            meta_info = []
+            for attribute in ('filename', 'date', 'model_type'):
+                if hasattr(meta, attribute):
+                    value = getattr(meta, attribute)
+                    if value is not None:
+                        meta_info.append(attribute + ': ' + value)
+            return meta_info
+
+        def get_shape_info(instance):
+            if hasattr(instance, '_coldefs'):
+                nrows = instance.shape[0]
+                ncols = len(instance._coldefs)
+                shape_info = "{}R x {}C".format(nrows, ncols)
+            else:
+                # Display shape in fits order (reversed)
+                shape = [str(s) for s in reversed(instance.shape)]
+                shape_info = '(' + ','.join(shape) + ')'
+            return shape_info
+
+        def get_type_info(instance):
+            if hasattr(instance, '_coldefs'):
+                col_info = []
+                for coldef in instance._coldefs:
+                    col_info.append(coldef.name + ':' + coldef.format)
+                type_info = '(' + ','.join(col_info) + ')'
+            else:
+                type_info = numpy_dtype_to_asdf_datatype(instance.dtype)[0]
+            return type_info
+
+        meta_info = get_meta_info(self.meta)
+        field_info = get_field_info('', self._instance)
+
+
+        buffer = meta_info
+        format_string = "%-40s%-20s%s"
+        buffer.append(70 * '-')
+        buffer.append(format_string % ('attribute', 'size', 'type'))
+        buffer.append(70 * '-')
+        for field in field_info:
+            buffer.append(format_string % field)
+        return "\n".join(buffer) + "\n"
+
 
     def get_primary_array_name(self):
         """
