@@ -549,12 +549,18 @@ def from_fits_hdu(hdu, schema):
     Read the data from a fits hdu into a numpy ndarray
     """
     data = hdu.data
-    data2 = properties._cast(data, schema)
 
-    # Casting a table loses the listeners, so restore them
+    # Save the column listeners for possible restoration
     if hasattr(data, '_coldefs'):
-        coldefs = data._coldefs
-        coldefs2 = data2._coldefs
-        coldefs2._listeners = coldefs._listeners
+        listeners = data._coldefs._listeners
+    else:
+        listeners = None
 
-    return data2
+    # Cast array to type mentioned in schema
+    data = properties._cast(data, schema)
+
+    # Casting a table loses the column listeners, so restore them
+    if listeners is not None:
+        data._coldefs._listeners = listeners
+
+    return data
