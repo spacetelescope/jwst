@@ -188,7 +188,6 @@ setup(
         'numpy~=1.13',
         'scipy~=1.0',
         'spherical-geometry~=1.2',
-        'six',
         'stsci.tools~=3.4',
         'stsci.image~=2.3',
         'stsci.imagestats~=1.4',
