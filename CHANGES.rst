@@ -79,6 +79,8 @@ firstframe
 fits_generator
 --------------
 
+- updated pyparsing to v 2.2.0 [#2382]
+
 flatfield
 ---------
 

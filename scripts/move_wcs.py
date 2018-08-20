@@ -2,7 +2,6 @@ import glob
 from astropy.io import fits
 from astropy import wcs
 from astropy.wcs import InvalidTransformError
-import six
 from jwst import datamodels
 
 
@@ -31,8 +30,8 @@ def move_wcs(files, remove_asdf=False):
                     continue
             del f[i]
         f.close()
-    
-    
+
+
 def _collect_wcs_keywords(f):
     # Get keywords to go in SCI header from the datamodels schema
     dm = datamodels.open(f, pass_invalid_values=True)
@@ -67,7 +66,7 @@ def _collect_wcs_keywords(f):
             pass
     new_hdr = add_default_keywords(new_hdr)
     return new_hdr
-        
+
 
 def clean_primary_header(f, new_hdr):
     # f is a fits file opened in 'update' mode.
@@ -108,7 +107,7 @@ def add_default_keywords(new_hdr):
                      }
         default_cunit = {"CUNIT1": "deg", "CUNIT2": "deg"}
         default_ctype = {"CTYPE1": "RA---TAN", "CTYPE2": "DEC--TAN"}
-    
+
     if "PC1_1" not in new_hdr:
         new_hdr.update(default_pc)
     if "CUNIT1" not in new_hdr:
@@ -122,7 +121,6 @@ def add_default_keywords(new_hdr):
 if __name__ == '__main__':
     import argparse
     import os
-    import six
     parser = argparse.ArgumentParser(description="Move WCS keywords "
                                      "from Primary to SCI extension.")
     parser.add_argument('files', help="A list of FITS filenames or a path "
@@ -130,7 +128,7 @@ if __name__ == '__main__':
     res = parser.parse_args()
     files = res.files
 
-    if isinstance(files, six.string_types):
+    if isinstance(files, str):
         files = os.path.abspath(files)
         if os.path.isdir(files):
             files = glob.glob("files/*.fits")
@@ -138,5 +136,5 @@ if __name__ == '__main__':
             files = glob.glob(files)
 
     move_wcs(files)
-        
+
 
