@@ -36,7 +36,6 @@ import textwrap
 
 # THIRD-PARTY
 from astropy.io import fits as pyfits
-import six
 from astropy.time import Time
 
 def get_templates_dir():
@@ -52,7 +51,7 @@ def get_fitsfile(fitsfile):
     pyfits.HDUList, opened) triple.
     """
     from . import input_file_types
-    if isinstance(fitsfile, six.string_types):
+    if isinstance(fitsfile, str):
         return (fitsfile, pyfits.open(fitsfile), True)
     elif isinstance(fitsfile, pyfits.HDUList):
         return (fitsfile.filename, fitsfile, False)

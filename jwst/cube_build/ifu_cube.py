@@ -1,27 +1,16 @@
 
 # Routines used for building cubes
-import sys
+#import sys
 import time
 import numpy as np
-import math
-import json
-import os
 import logging
-
-from astropy.io import fits
-from astropy.modeling import models
 from ..model_blender import blendmeta
-from ..associations import Association
 from .. import datamodels
-from ..assign_wcs import nirspec
 from ..assign_wcs import pointing
-from . import cube_build_io_util
 from . import cube_build_wcs_util
 from . import spaxel
 from . import cube_overlap
 from . import cube_cloud
-
-from gwcs import wcstools
 
 
 log = logging.getLogger(__name__)
@@ -52,7 +41,7 @@ class IFUCubeData():
         self.input_models = input_models # needed when building single mode IFU cubes
         self.output_name_base = output_name_base
 
-        self.instrument  = instrument
+        self.instrument = instrument
         self.detector = detector
         self.list_par1 = list_par1
         self.list_par2 = list_par2
@@ -113,7 +102,7 @@ class IFUCubeData():
 # find the ROI size
 
     def setup_cube(self):
-        num1= len(self.list_par1)
+        num1 = len(self.list_par1)
         num_files = 0
         for i in range(num1):
             this_a = self.list_par1[i]
@@ -129,7 +118,7 @@ class IFUCubeData():
             if(len(self.list_par1) > 1):
                 raise IncorrectInput("For interpolation = area, only a single channel" +
                                      " can be used to created the cube. Use --channel=# option")
-            if(self.scale2 !=0):
+            if(self.scale2 != 0):
                 raise AreaInterpolation("When using interpolation = area, the output" +
                                         " coordinate system is alpha-beta" +
                                         " The beta dimension (naxis2) has a one to one" +
@@ -150,21 +139,19 @@ class IFUCubeData():
         if self.rois == 0.0:  # user did not set so use defaults
             self.rois = roi[1]
             if self.output_type == 'single' or num_files < 4:
-               self.rois = self.rois * 1.5
-               log.info('Increasing spatial region of interest' + \
-                            ' default value set for 4 dithers %f', self.rois)
+                self.rois = self.rois * 1.5
+                log.info('Increasing spatial region of interest' +
+                        'default value set for 4 dithers %f', self.rois)
         if self.interpolation == 'pointcloud':
-            log.info('Region of interest spatial, wavelength  %f %f',self.rois,self.roiw)
-
+            log.info('Region of interest spatial, wavelength  %f %f', self.rois, self.roiw)
 #________________________________________________________________________________
 
 # update the output name
     def define_cubename(self):
 
 #        print ('ifu_cube:define_cubename basename ',self.output_name_base)
-
         if self.pipeline == 2:
-            newname  = self.output_name_base + '_s3d.fits'
+            newname = self.output_name_base + '_s3d.fits'
         else:
             if self.instrument == 'MIRI':
                 channels = []
@@ -175,48 +162,44 @@ class IFUCubeData():
                     ch_name = '_ch'
                     for i in range(number_channels):
                         ch_name = ch_name + channels[i]
-                        if i < number_channels-1: ch_name = ch_name + '-'
+                        if i < number_channels - 1: ch_name = ch_name + '-'
 
                 subchannels = list(set(self.list_par2))
                 number_subchannels = len(subchannels)
                 b_name = ''
                 for i in range(number_subchannels):
                     b_name = b_name + subchannels[i]
-                    if i > 1 : b_name = b_name + '-'
-                b_name  = b_name.lower()
-                newname = self.output_name_base + ch_name+'-'+ b_name + '_s3d.fits'
+                    if i > 1: b_name = b_name + '-'
+                b_name = b_name.lower()
+                newname = self.output_name_base + ch_name + '-' + b_name + '_s3d.fits'
                 if self.coord_system == 'alpha-beta':
-                    newname = self.output_name_base + ch_name+'-'+ b_name + '_ab_s3d.fits'
+                    newname = self.output_name_base + ch_name + '-' + b_name + '_ab_s3d.fits'
                 if self.output_type == 'single':
-                    newname = self.output_name_base + ch_name+'-'+ b_name + '_single_s3d.fits'
-
-
+                    newname = self.output_name_base + ch_name + '-' + b_name + '_single_s3d.fits'
 #________________________________________________________________________________
             elif self.instrument == 'NIRSPEC':
                 fg_name = '_'
 
-                for i in range( len(self.list_par1)):
-                    fg_name = fg_name + self.list_par1[i] + '-'+ self.list_par2[i]
-                    if(i < self.num_bands -1):
+                for i in range(len(self.list_par1)):
+                    fg_name = fg_name + self.list_par1[i] + '-' + self.list_par2[i]
+                    if(i < self.num_bands - 1):
                         fg_name = fg_name + '-'
                 fg_name = fg_name.lower()
-                newname = self.output_name_base + fg_name+ '_s3d.fits'
+                newname = self.output_name_base + fg_name + '_s3d.fits'
                 if self.output_type == 'single':
-                    newname = self.output_name_base + fg_name+ 'single_s3d.fits'
+                    newname = self.output_name_base + fg_name + 'single_s3d.fits'
 #________________________________________________________________________________
 
         if self.output_type != 'single':
-            log.info('Output Name %s',newname)
+            log.info('Output Name %s', newname)
 
 #        print('*** newname ****',newname)
         return newname
 
 
 #********************************************************************************
-    class IncorrectInput(Exception):
-        pass
-    class AreaInterpolation(Exception):
-        pass
+
+
 #********************************************************************************
     def setup_ifucube_wcs(self):
 
@@ -242,9 +225,7 @@ class IFUCubeData():
         """
 
         self.output_name = self.define_cubename()
-        self.find_output_type()
-
-#        self.spaxel = IFUCubeData.create_spaxel(self)
+#        self.find_output_type()
         self.spaxel = self.create_spaxel()
 
         # now need to loop over every file that covers this channel/subchannel (MIRI)
@@ -257,8 +238,8 @@ class IFUCubeData():
             this_par1 = self.list_par1[i]
             this_par2 = self.list_par2[i]
 
-            log.debug("Working on Band defined by:%s %s " ,this_par1,this_par2)
-            self.map_detector_to_spaxel(this_par1, this_par2,self.spaxel)
+            log.debug("Working on Band defined by:%s %s ", this_par1, this_par2)
+            self.map_detector_to_spaxel(this_par1, this_par2, self.spaxel)
 
         t1 = time.time()
         log.info("Time Map All slices on Detector to Cube = %.1f.s" % (t1 - t0,))
@@ -302,17 +283,18 @@ class IFUCubeData():
 
         single_IFUCube = datamodels.ModelContainer()
         n = len(self.input_models)
+        log.info("Number of Single IFU cubes creating  = %i" % n)
         this_par1 = self.list_par1[0] # only one channel is used in this approach
         this_par2 = None # not important for this type of mapping
 
-        self.weighting =='msm'
+        self.weighting == 'msm'
         c1_offset = 0
         c2_offset = 0
         for j in range(n):
+            log.info("Working on next Single IFU Cube  = %i" % (j + 1))
             t0 = time.time()
 # for each new data model create a new spaxel
             spaxel = []
-#            spaxel = IFUCubeData.create_spaxel(self)
             spaxel = self.create_spaxel()
 
             with datamodels.IFUImageModel(self.input_models[j]) as input_model:
@@ -326,32 +308,25 @@ class IFUCubeData():
                     y = np.reshape(y, y.size)
                     x = np.reshape(x, x.size)
 
-
-                    cube_cloud.match_det2cube(self,input_model,
+                    cube_cloud.match_det2cube(self, input_model,
                                               x, y, j,
-                                              this_par1,this_par2,
+                                              this_par1, this_par2,
                                               spaxel,
                                               c1_offset, c2_offset)
 
                 elif self.instrument == 'NIRSPEC':
                     # each file, detector has 30 slices - wcs information access seperately for each slice
-                    start_slice = 0
-                    end_slice = 29
-                    nslices = end_slice - start_slice + 1
-                    regions = list(range(start_slice, end_slice + 1))
-                    for ii in regions:
+                    nslices = 30
+                    for ii in range(nslices):
                         t0a = time.time()
-                        slice_wcs = nirspec.nrs_wcs_set_input(input_model, ii)
-                        x,y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
-                        #NIRSPEC TEMPORARY FIX FOR WCS 1 BASED and NOT 0 BASED
-                        # NIRSPEC team delivered transforms that are valid for x,y in 1 based system
-                        #x = x + 1
-                        #y = y + 1
-                        # Done NIRSPEC FIX
+                        #slice_wcs = nirspec.nrs_wcs_set_input(input_model, ii)
+                        #x,y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
+                        x = None
+                        y = None
 
-                        cube_cloud.match_det2cube(self,input_model,
+                        cube_cloud.match_det2cube(self, input_model,
                                                   x, y, ii,
-                                                  this_par1,this_par2,
+                                                  this_par1, this_par2,
                                                   spaxel,
                                                   c1_offset, c2_offset)
 
@@ -369,7 +344,6 @@ class IFUCubeData():
             log.info("Time Create Single IFUcube  = %.1f.s" % (t1 - t0,))
 #_______________________________________________________________________
             single_IFUCube.append(IFUCube)
-#            print('Len of single_IFUCube',len(single_IFUCube))
             del spaxel[:]
         return single_IFUCube
 #********************************************************************************
@@ -388,7 +362,7 @@ class IFUCubeData():
         list of classes contained in spaxel
         """
 #________________________________________________________________________________
-        total_num = self.naxis1*self.naxis2*self.naxis3
+        total_num = self.naxis1 * self.naxis2 * self.naxis3
 
         if(self.interpolation == 'pointcloud'):
             for t in range(total_num):
@@ -430,10 +404,10 @@ class IFUCubeData():
             for i in range(number_bands):
                 this_channel = self.list_par1[i]
                 this_sub = self.list_par2[i]
-                wroi = self.instrument_info.GetWaveRoi(this_channel,this_sub)
+                wroi = self.instrument_info.GetWaveRoi(this_channel, this_sub)
                 if wroi < min_w:
                     min_w = wroi
-                sroi = self.instrument_info.GetSpatialRoi(this_channel,this_sub)
+                sroi = self.instrument_info.GetSpatialRoi(this_channel, this_sub)
                 if sroi < min_s:
                     min_s = sroi
             roi = [min_w, min_s]
@@ -446,19 +420,18 @@ class IFUCubeData():
             for i in range(number_gratings):
                 this_gwa = self.list_par1[i]
                 this_filter = self.list_par2[i]
-#                print('Grating and Filter',this_gwa,this_filter)
 
-                wroi = self.instrument_info.GetWaveRoi(this_gwa,this_filter)
+                wroi = self.instrument_info.GetWaveRoi(this_gwa, this_filter)
                 if wroi < min_w:
                     min_w = wroi
-                sroi = self.instrument_info.GetSpatialRoi(this_gwa,this_filter)
+                sroi = self.instrument_info.GetSpatialRoi(this_gwa, this_filter)
                 if sroi < min_s:
                     min_s = sroi
             roi = [min_w, min_s]
         return roi
 
 #********************************************************************************
-    def map_detector_to_spaxel(self,this_par1, this_par2,spaxel):
+    def map_detector_to_spaxel(self, this_par1, this_par2, spaxel):
         from ..mrs_imatch.mrs_imatch_step import apply_background_2d
 #********************************************************************************
         """
@@ -478,7 +451,7 @@ class IFUCubeData():
         if(interpolation = pointcloud
         """
 
-        instrument  = self.instrument
+        instrument = self.instrument
         nfiles = len(self.master_table.FileMap[instrument][this_par1][this_par2])
 
     # loop over the files that cover the spectral range the cube is for
@@ -502,17 +475,17 @@ class IFUCubeData():
                 # mrs_imatch step. THis is only for MRS data at this time
                 # but go head and check it before splitting by instrument
                 # the polynomial should be empty for NIRSPEC
-                do_background_subtraction = False
+                #do_background_subtraction = False
                 num_ch_bgk = len(input_model.meta.background.polynomial_info)
 
-                if(num_ch_bgk> 0):
+                if(num_ch_bgk > 0):
 
-                    do_background_subtraction = True
+                    #do_background_subtraction = True
                     for ich_num in range(num_ch_bgk):
                         poly = input_model.meta.background.polynomial_info[ich_num]
                         poly_ch = poly.channel
                         if(poly_ch == this_par1):
-                            apply_background_2d(input_model,poly_ch,subtract=True)
+                            apply_background_2d(input_model, poly_ch, subtract=True)
 
 #********************************************************************************
                 if self.instrument == 'MIRI':
@@ -524,9 +497,9 @@ class IFUCubeData():
                         y = np.reshape(y, y.size)
                         x = np.reshape(x, x.size)
                         t0 = time.time()
-                        cube_cloud.match_det2cube(self,input_model,
+                        cube_cloud.match_det2cube(self, input_model,
                                             x, y, k,
-                                            this_par1,this_par2,
+                                            this_par1, this_par2,
                                             spaxel,
                                             c1_offset, c2_offset)
 
@@ -574,25 +547,19 @@ class IFUCubeData():
 #********************************************************************************
                 elif instrument == 'NIRSPEC':
                     # each file, detector has 30 slices - wcs information access seperately for each slice
-                    start_slice = 0
-                    end_slice = 29
-                    nslices = end_slice - start_slice + 1
-                    regions = list(range(start_slice, end_slice + 1))
+                    nslices = 30 
                     log.info("Mapping each NIRSPEC slice to sky, this takes a while for NIRSPEC data")
-                    for i in regions:
-                        slice_wcs = nirspec.nrs_wcs_set_input(input_model, i)
-                        x,y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box,
-                                                              step=(1,1), center=True)
-                        
-                        #NIRSPEC TEMPORARY FIX FOR WCS 1 BASED and NOT 0 BASED
-                        # NIRSPEC team delivered transforms that are valid for x,y in 1 based system
-                        #x = x + 1
-                        #y = y + 1
-                        # Done NIRSPEC FIX
+                    for i in range(nslices):
+#                        slice_wcs = nirspec.nrs_wcs_set_input(input_model, i)
+#                        x,y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box,
+#                                                              step=(1,1), center=True)
+
                         t0 = time.time()
-                        cube_cloud.match_det2cube(self,input_model,
+                        x = 0
+                        y = 0
+                        cube_cloud.match_det2cube(self, input_model,
                                                   x, y, i,
-                                                  this_par1,this_par2,
+                                                  this_par1, this_par2,
                                                   spaxel,
                                                   c1_offset, c2_offset)
 
@@ -625,7 +592,7 @@ class IFUCubeData():
 
             for i in range(nspaxel):
                 if(spaxel[i].iflux > 0):
-                    spaxel[i].flux = spaxel[i].flux/spaxel[i].flux_weight
+                    spaxel[i].flux = spaxel[i].flux / spaxel[i].flux_weight
 
         elif self.interpolation == 'pointcloud':
             icube = 0
@@ -635,23 +602,22 @@ class IFUCubeData():
                     for ix, x in enumerate(self.xcoord):
 
                         if(spaxel[icube].iflux > 0):
-                            spaxel[icube].flux = spaxel[icube].flux/spaxel[icube].flux_weight
+                            spaxel[icube].flux = spaxel[icube].flux / spaxel[icube].flux_weight
 
-                            if(self.debug_pixel == 1 and self.xdebug == ix and
-                               self.ydebug == iy and self.zdebug == iz ):
-
-                                log.debug('For spaxel %d %d %d final flux %f '
-                                          %(self.xdebug+1,self.ydebug+1,
-                                            self.zdebug+1,spaxel[icube].flux))
-                                self.spaxel_debug.write('For spaxel %d %d %d, final flux %f '
-                                                        %(self.xdebug+1,self.ydebug+1,
-                                                          self.zdebug+1,spaxel[icube].flux) +' \n')
+#                            if(self.debug_pixel == 1 and self.xdebug == ix and
+#                               self.ydebug == iy and self.zdebug == iz ):
+#                                log.debug('For spaxel %d %d %d final flux %f '
+#                                          %(self.xdebug + 1,self.ydebug + 1,
+#                                            self.zdebug + 1,spaxel[icube].flux))
+#                                self.spaxel_debug.write('For spaxel %d %d %d, final flux %f '
+#                                                        %(self.xdebug + 1,self.ydebug + 1,
+#                                                          self.zdebug + 1,spaxel[icube].flux) +' \n')
                         icube = icube + 1
             t1 = time.time()
             log.info("Time to interpolate at spaxel values = %.1f.s" % (t1 - t0,))
 
 #********************************************************************************
-    def setup_IFUCube(self,j):
+    def setup_IFUCube(self, j):
 
         """
         Short Summary
@@ -682,7 +648,7 @@ class IFUCubeData():
         IFUCube = datamodels.IFUCubeModel(data=data, dq=dq_cube, err=err_cube, weightmap=idata)
         IFUCube.update(self.input_models[j])
         IFUCube.meta.filename = self.output_name
-        
+
         # Call model_blender if there are multiple inputs
         if len(self.input_models) > 1:
             saved_model_type = IFUCube.meta.model_type
@@ -697,7 +663,7 @@ class IFUCubeData():
                 indx = filename.rfind('.fits')
                 self.output_name_base = filename[:indx]
                 self.output_file = None
-                newname  = self.define_cubename()
+                newname = self.define_cubename()
                 IFUCube.meta.filename = newname
 
 #______________________________________________________________________
@@ -707,8 +673,9 @@ class IFUCubeData():
             num_ch = len(self.list_par1)
             IFUCube.meta.instrument.channel = self.list_par1[0]
             num_ch = len(self.list_par1)
-            for m in range (1, num_ch):
-                IFUCube.meta.instrument.channel =  IFUCube.meta.instrument.channel + str(self.list_par1[m])
+            for m in range(1, num_ch):
+                IFUCube.meta.instrument.channel = (
+                IFUCube.meta.instrument.channel + str(self.list_par1[m]))
 
 #______________________________________________________________________
         IFUCube.meta.wcsinfo.crval1 = self.Crval1
@@ -717,8 +684,8 @@ class IFUCubeData():
         IFUCube.meta.wcsinfo.crpix1 = self.Crpix1
         IFUCube.meta.wcsinfo.crpix2 = self.Crpix2
         IFUCube.meta.wcsinfo.crpix3 = self.Crpix3
-        IFUCube.meta.wcsinfo.cdelt1 = self.Cdelt1/3600.0
-        IFUCube.meta.wcsinfo.cdelt2 = self.Cdelt2/3600.0
+        IFUCube.meta.wcsinfo.cdelt1 = self.Cdelt1 / 3600.0
+        IFUCube.meta.wcsinfo.cdelt2 = self.Cdelt2 / 3600.0
         IFUCube.meta.wcsinfo.cdelt3 = self.Cdelt3
 
         IFUCube.meta.wcsinfo.ctype1 = 'RA---TAN'
@@ -754,14 +721,14 @@ class IFUCubeData():
             IFUCube.meta.bunit_data = input.meta.bunit_data
             IFUCube.meta.bunit_err = input.meta.bunit_err
 
-        if self.coord_system == 'alpha-beta' :
+        if self.coord_system == 'alpha-beta':
             IFUCube.meta.wcsinfo.cunit1 = 'arcsec'
             IFUCube.meta.wcsinfo.cunit2 = 'arcsec'
 
 # we only need to check list_par1[0] and list_par2[0] because these types
 # of cubes are made from 1 exposures (setup_cube checks this at the start
 # of cube_build).
-            if self.list_par1[0] == '1' and self.list_par2[0] == 'SHORT' :
+            if self.list_par1[0] == '1' and self.list_par2[0] == 'SHORT':
                 IFUCube.meta.wcsinfo.ctype1 = 'MRSAL1A'
                 IFUCube.meta.wcsinfo.ctype2 = 'MRSBE1A'
             if self.list_par1[0] == '2' and self.list_par2[0] == 'SHORT':
@@ -803,13 +770,13 @@ class IFUCubeData():
 
         wcsobj = pointing.create_fitswcs(IFUCube)
         IFUCube.meta.wcs = wcsobj
-        IFUCube.meta.wcs.bounding_box = ((0,naxis1-1),(0,naxis2-1),(0,naxis3-1))
+        IFUCube.meta.wcs.bounding_box = ((0, naxis1 - 1),
+                                         (0, naxis2 - 1),
+                                         (0, naxis3 - 1))
         return IFUCube
 
 #********************************************************************************
-
-    def update_IFUCube(self,IFUCube, spaxel):
-
+    def update_IFUCube(self, IFUCube, spaxel):
 #********************************************************************************
         """
         Short Summary
@@ -828,10 +795,10 @@ class IFUCubeData():
 
         """
     #pull out data into array
-        temp_flux =np.reshape(np.array([s.flux for s in spaxel]),
-                          [self.naxis3,self.naxis2,self.naxis1])
-        temp_wmap =np.reshape(np.array([s.iflux for s in spaxel]),
-                          [self.naxis3,self.naxis2,self.naxis1])
+        temp_flux = np.reshape(np.array([s.flux for s in spaxel]),
+                          [self.naxis3, self.naxis2, self.naxis1])
+        temp_wmap = np.reshape(np.array([s.iflux for s in spaxel]),
+                          [self.naxis3, self.naxis2, self.naxis1])
 
 
         IFUCube.data = temp_flux
@@ -851,21 +818,20 @@ class IFUCubeData():
 
 #********************************************************************************
 #********************************************************************************
-    def find_output_type(self):
+#    def find_output_type(self):
 
-        ValidChannel = ['1', '2', '3', '4']
-        ValidSubchannel = ['SHORT', 'MEDIUM', 'LONG']
+#        ValidChannel = ['1', '2', '3', '4']
+#        ValidSubchannel = ['SHORT', 'MEDIUM', 'LONG']
 
-        nchannels = len(ValidChannel)
-        nsubchannels = len(ValidSubchannel)
+#        nchannels = len(ValidChannel)
+#        nsubchannels = len(ValidSubchannel)
 
+#        ValidGWA = ['G140M', 'G140H', 'G140M', 'G140H', 'G235M', 'G235H',
+#                    'G395M', 'G395H', 'PRISM']
+#        ValidFWA = ['F070LP', 'F070LP', 'F100LP', 'F100LP', 'F170LP',
+#                    'F170LP', 'F290LP', 'F290LP', 'CLEAR']
 
-        ValidGWA = ['G140M', 'G140H', 'G140M', 'G140H', 'G235M', 'G235H',
-                    'G395M', 'G395H', 'PRISM']
-        ValidFWA = ['F070LP', 'F070LP', 'F100LP', 'F100LP', 'F170LP',
-                    'F170LP', 'F290LP', 'F290LP', 'CLEAR']
-
-        nbands = len(ValidFWA)
+#        nbands = len(ValidFWA)
 
 #********************************************************************************
     def blend_output_metadata(self, IFUCube):
@@ -873,7 +839,11 @@ class IFUCubeData():
         """Create new output metadata based on blending all input metadata."""
         # Run fitsblender on output product
         output_file = IFUCube.meta.filename
-
-        log.info('Blending metadata for {}'.format(output_file))
+#        log.info('Blending metadata for {}'.format(output_file))
         blendmeta.blendmodels(IFUCube, inputs=self.input_models,
                               output=output_file)
+class IncorrectInput(Exception):
+    pass
+
+class AreaInterpolation(Exception):
+    pass

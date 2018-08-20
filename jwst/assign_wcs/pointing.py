@@ -209,7 +209,7 @@ def create_fitswcs(inp, input_frame=None):
         wcsinfo = wcsinfo_from_model(inp)
         transform = fitswcs_transform_from_model(wcsinfo)
         output_frame = frame_from_model(wcsinfo)
-    #elif isinstance(inp, six.string_types):
+    #elif isinstance(inp, str):
         #transform = create_fitswcs_transform(inp)
         #output_frame = frame_from_fits(inp)
     else:

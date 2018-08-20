@@ -1,6 +1,4 @@
-#! /usr/bin/env python
-
-from ..stpipe import Step, cmdline
+from ..stpipe import Step
 from . import emission
 
 
@@ -21,4 +19,3 @@ class EmissionStep(Step):
         output_obj.meta.cal_step.emission = 'SKIPPED' # no-op
 
         return output_obj
-

@@ -47,8 +47,6 @@ class ResampleData:
         """
         self.input_models = input_models
         self.drizpars = pars
-        for k,v in self.drizpars.items():
-            log.info('ResampleData - {}={}'.format(k, v))
         if output is None:
             output = input_models.meta.resample.output
         self.output_filename = output
@@ -63,7 +61,6 @@ class ResampleData:
         self.blank_output.meta.wcs = self.output_wcs
 
         self.output_models = datamodels.ModelContainer()
-
 
     def update_driz_outputs(self):
         """ Define output arrays for use with drizzle operations.
