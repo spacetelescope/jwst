@@ -1,18 +1,8 @@
 # Routines used for building cubes
-
-import sys
-import time
-import numpy as np
-import math
-import json
-import os
 from .. import datamodels
-
-
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
-
 
 ##################################################################################
 class FileTable():
@@ -191,7 +181,6 @@ class FileTable():
         """
         num = 0
         num = len(input_filenames)
-
 #________________________________________________________________________________
 # Loop over input list of files and assign fill in the MasterTable with filename
 # for the correct (channel-subchannel) or (grating-subchannel)
@@ -228,7 +217,7 @@ class FileTable():
                             self.FileOffset[channel[k]][subchannel]['C1'].append(ra_offset)
                             self.FileOffset[channel[k]][subchannel]['C2'].append(dec_offset)
             #________________________________________________________________________________
-                elif instrument== 'NIRSPEC':
+                elif instrument == 'NIRSPEC':
                     fwa = input_model.meta.instrument.filter
                     gwa = input_model.meta.instrument.grating
 
@@ -237,7 +226,7 @@ class FileTable():
 
                     log.info('Instrument not valid for cube')
 
-        return instrument,detector
+        return instrument, detector
 
 class ErrorNoAssignWCS(Exception):
     pass
