@@ -186,6 +186,7 @@ setup(
         'jsonschema~=2.6',
         'namedlist~=1.7',
         'numpy~=1.13',
+        'requests_mock',
         'scipy~=1.0',
         'spherical-geometry~=1.2',
         'stsci.tools~=3.4',
