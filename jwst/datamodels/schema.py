@@ -195,7 +195,7 @@ def walk_schema(schema, callback, ctx={}):
 
         for c in ['anyOf', 'oneOf']:
             for i, sub in enumerate(schema.get(c, [])):
-                recurse(sub, path + [i], c, ctx)
+                recurse(sub, path + [c], c, ctx)
 
         if schema.get('type') == 'object':
             for key, val in schema.get('properties', {}).items():
@@ -225,7 +225,10 @@ def flatten_combiners(schema):
         cursor = newschema
         for i in range(len(path)):
             part = path[i]
-            if isinstance(part, int):
+            if part == combiner:
+                cursor = cursor.setdefault(combiner, [])
+                return
+            elif isinstance(part, int):
                 cursor = cursor.setdefault('items', [])
                 while len(cursor) <= part:
                     cursor.append({})
@@ -250,8 +253,6 @@ def flatten_combiners(schema):
             del schema['items']
         if 'allOf' in schema:
             del schema['allOf']
-        if 'anyOf' in schema:
-            del schema['anyOf']
 
         add_entry(path, schema, combiner)
 
