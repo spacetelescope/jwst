@@ -18,6 +18,7 @@ from astropy import time
 from .. import util, validate
 from .. import (DataModel, ImageModel, RampModel, MaskModel,
                 MultiSlitModel, AsnModel, CollimatorModel)
+from ..schema import flatten_combiners
 
 from asdf import schema as mschema
 
@@ -582,3 +583,36 @@ def test_multislit_append_string():
     with pytest.raises(jsonschema.ValidationError):
         m = MultiSlitModel(strict_validation=True)
         m.slits.append('junk')
+
+
+def test_flatten_combiners():
+
+    s = {
+         'type': 'object',
+         'properties': {
+             'foobar': {
+                 'anyOf': [
+                     {
+                         'type': 'array',
+                         'items': [ {'type': 'string'}, {'type': 'number'} ],
+                         'minItems': 2,
+                         'maxItems': 2,
+                     },
+                     {
+                         'type': 'array',
+                         'items': [
+                             {'type': 'number'},
+                             {'type': 'string'},
+                             {'type': 'number'}
+                         ],
+                         'minItems': 3,
+                         'maxItems': 3,
+                     }
+                 ]
+             }
+         }
+    }
+
+    # Make sure that flatten_combiners does not destructively modify schemas
+    f = flatten_combiners(s)
+    assert f == s
