@@ -7,7 +7,8 @@ from astropy.modeling.models import Const1D, Mapping, Identity
 import gwcs.coordinate_frames as cf
 from gwcs import wcs
 
-from .util import not_implemented_mode, subarray_transform
+from .util import (not_implemented_mode, subarray_transform,
+                   velocity_correction)
 from . import pointing
 from ..transforms.models import (NirissSOSSModel,
                                  NIRISSForwardRowGrismDispersion,
@@ -95,6 +96,7 @@ def niriss_soss(input_model, reference_files):
                             axes_names=('ra', 'dec'),
                             axes_order=(0, 1), unit=(u.deg, u.deg), name='sky')
     world = cf.CompositeFrame([sky, spec], name='world')
+
     try:
         with AsdfFile.open(reference_files['specwcs']) as wl:
             wl1 = wl.tree[1].copy()
@@ -102,6 +104,18 @@ def niriss_soss(input_model, reference_files):
             wl3 = wl.tree[3].copy()
     except Exception as e:
         raise IOError('Error reading wavelength correction from {}'.format(reference_files['specwcs']))
+        
+    try:
+        velosys = input_model.meta.wcsinfo.velosys
+    except AttributeError:
+        pass
+    else:
+        if velosys is not None:
+            velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
+            wl1 = wl1 | velocity_corr
+            wl2 = wl2 | velocity_corr
+            wl2 = wl3 | velocity_corr
+            log.info("Applied Barycentric velocity correction: {}".format(velocity_corr[1].amplitude.value))
 
     subarray2full = subarray_transform(input_model)
 

@@ -11,7 +11,8 @@ from gwcs import selector
 from gwcs.utils import _toindex
 from . import pointing
 from ..transforms import models as jwmodels
-from .util import not_implemented_mode, subarray_transform
+from .util import (not_implemented_mode, subarray_transform,
+                   velocity_correction)
 from ..datamodels import (DistortionModel, FilteroffsetModel,
                           DistortionMRSModel, WavelengthrangeModel,
                           RegionsModel, SpecwcsModel)
@@ -190,6 +191,9 @@ def lrs(input_model, reference_files):
     # Create the model transforms.
     lrs_wav_model = jwmodels.LRSWavelength(lrsdata, zero_point)
 
+    velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosy)
+    lrs_wav_model = lrs_wav_mode | velocity_corr
+
     # Incorporate the small rotation
     angle = np.arctan(0.00421924)
     rot = models.Rotation2D(angle)
@@ -237,6 +241,10 @@ def ifu(input_model, reference_files):
     det2abl = (detector_to_abl(input_model, reference_files)).rename(
         "detector_to_abl")
     abl2v2v3l = (abl_to_v2v3l(input_model, reference_files)).rename("abl_to_v2v3l")
+
+    velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
+    abl2v2v3l = abl2v2v3l | velocity_corr
+
     tel2sky = pointing.v23tosky(input_model) & models.Identity(1)
 
     # Put the transforms together into a single transform
