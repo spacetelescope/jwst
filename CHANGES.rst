@@ -193,6 +193,8 @@ tso_photometry
 tweakreg
 --------
 
+- Fixed the coordinate frames in the output of tweakreg. [#2404]
+
 wfs_combine
 -----------
 
