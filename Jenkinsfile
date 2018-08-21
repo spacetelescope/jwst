@@ -54,7 +54,6 @@ dist.build_cmds = [
 ]
 matrix += dist
 
-/*
 // Compile documentation
 docs = new BuildConfig()
 docs.nodetype = 'linux'
@@ -66,7 +65,6 @@ docs.build_cmds = [
     "python setup.py build_sphinx"
 ]
 matrix += docs
-*/
 
 
 // Generate the build and test matrix
