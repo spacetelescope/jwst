@@ -3,6 +3,7 @@ Various utility functions and data types
 """
 
 import sys
+import warnings
 from os.path import basename
 
 import numpy as np
@@ -12,6 +13,9 @@ import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 log.addHandler(logging.NullHandler())
+
+class NoTypeWarning(Warning):
+    pass
 
 def open(init=None, extensions=None, **kwargs):
     """
@@ -54,6 +58,7 @@ def open(init=None, extensions=None, **kwargs):
 
     hdulist = {}
     shape = ()
+    file_name = None
     file_to_close = None
 
     # Get special cases for opening a model out of the way
@@ -73,6 +78,7 @@ def open(init=None, extensions=None, **kwargs):
         if isinstance(init, bytes):
             init = init.decode(sys.getfilesystemencoding())
 
+        file_name = basename(init)
         file_type = filetype.check(init)
 
         if file_type == "fits":
@@ -138,13 +144,24 @@ def open(init=None, extensions=None, **kwargs):
         raise TypeError("Can't determine datamodel class from argument to open")
 
     # Log a message about how the model was opened
-    if isinstance(init, str):
-        log.debug('Opening {0} as {1}'.format(basename(init), new_class))
+    if file_name:
+        log.debug('Opening {0} as {1}'.format(file_name, new_class))
     else:
         log.debug('Opening as {0}'.format(new_class))
 
     # Actually open the model
+    if not has_model_type:
+        class_name = new_class.__name__.split('.')[-1]
+        if file_name:
+            errmsg = \
+                "model_type not found. Opening {} as a {}".format(file_name, class_name)
+        else:
+            errmsg = \
+                "model_type not found. Opening model as a {}".format(class_name)
+        warnings.warn(errmsg, NoTypeWarning)
+
     model = new_class(init, extensions=extensions, **kwargs)
+
     if not has_model_type:
         try:
             delattr(model.meta, 'model_type')
