@@ -63,24 +63,24 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner,
     annulus_sum_err = []
 
     nimg = datamodel.data.shape[0]
-    for i in np.arange(nimg):
-        if sub64p_wlp8:
-            info = ('Photometry measured as the sum of all values in the '
-                    'subarray.  No background subtraction was performed.')
 
+    if sub64p_wlp8:
+        info = ('Photometry measured as the sum of all values in the '
+               'subarray.  No background subtraction was performed.')
+
+        for i in np.arange(nimg):
             aperture_sum.append(np.sum(datamodel.data[i, :, :]))
             aperture_sum_err.append(
                 np.sqrt(np.sum(datamodel.err[i, :, :]**2)))
-        else:
-            info = ('Photometry measured in a circular aperture of r={0} '
-                    'pixels.  Background calculated as the mean in a '
-                    'circular annulus with r_inner={1} pixels and '
-                    'r_outer={2} pixels.'.format(radius, radius_inner,
-                                                 radius_outer))
-
+    else:
+        info = ('Photometry measured in a circular aperture of r={0} '
+                'pixels.  Background calculated as the mean in a '
+                'circular annulus with r_inner={1} pixels and '
+                'r_outer={2} pixels.'.format(radius, radius_inner,
+                                                radius_outer))
+        for i in np.arange(nimg):
             aper_sum, aper_sum_err = phot_aper.do_photometry(
                 datamodel.data[i, :, :], error=datamodel.err[i, :, :])
-
             ann_sum, ann_sum_err = bkg_aper.do_photometry(
                 datamodel.data[i, :, :], error=datamodel.err[i, :, :])
 
@@ -88,6 +88,11 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner,
             aperture_sum_err.append(aper_sum_err[0])
             annulus_sum.append(ann_sum[0])
             annulus_sum_err.append(ann_sum_err[0])
+
+    aperture_sum = np.array(aperture_sum)
+    aperture_sum_err = np.array(aperture_sum_err)
+    annulus_sum = np.array(annulus_sum)
+    annulus_sum_err = np.array(annulus_sum_err)
 
     # construct metadata for output table
     meta = OrderedDict()
