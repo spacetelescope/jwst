@@ -279,7 +279,7 @@ SHORT,MEDIUM,LONG, or ALL
                 self.output_file = None
                 cube_container = thiscube.build_ifucube_single()
                 self.log.info("Number of Single IFUCube models returned %i ",
-                              len(Final_IFUCube))
+                              len(cube_containter))
 
 # Else standard IFU cube building
             else:
