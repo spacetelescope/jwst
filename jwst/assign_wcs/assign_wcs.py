@@ -3,12 +3,14 @@ import importlib
 from gwcs.wcs import WCS
 from .util import update_s_region_spectral, update_s_region_imaging
 from ..associations.lib.dms_base import (ACQ_EXP_TYPES, IMAGE2_SCIENCE_EXP_TYPES,
-                                         IMAGE2_NONSCIENCE_EXP_TYPES)
+                                         IMAGE2_NONSCIENCE_EXP_TYPES,
+                                         SPEC2_SCIENCE_EXP_TYPES)
 
 IMAGING_TYPES = set(tuple(ACQ_EXP_TYPES) + tuple(IMAGE2_SCIENCE_EXP_TYPES)
                     + tuple(IMAGE2_NONSCIENCE_EXP_TYPES) +
                     ('fgs_image', 'fgs_focus'))
 
+SPEC_TYPES = SPEC2_SCIENCE_EXP_TYPES
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -43,6 +45,9 @@ def load_wcs(input_model, reference_files={}):
     # Add WCS keywords for the spectral axis.
     if input_model.meta.wcsinfo.wcsaxes == 3:
         _add_3rd_axis(input_model)
+
+    if input_model.meta.exposure.type.lower() in SPEC2_SCIENCE_EXP_TYPES:
+        input_model.meta.wcsinfo.specsys = "BARYCENT"
 
     pipeline = mod.create_pipeline(input_model, reference_files)
 

@@ -38,7 +38,9 @@ def create_pipeline(input_model, reference_files):
     """
     exp_type = input_model.meta.exposure.type.lower()
     pipeline = exp_type2transform[exp_type](input_model, reference_files)
-
+    if pipeline:
+        log.info("Created a MIRI {0} pipeline with references {1}".format(
+            exp_type, reference_files))
     return pipeline
 
 
@@ -191,8 +193,15 @@ def lrs(input_model, reference_files):
     # Create the model transforms.
     lrs_wav_model = jwmodels.LRSWavelength(lrsdata, zero_point)
 
-    velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosy)
-    lrs_wav_model = lrs_wav_mode | velocity_corr
+    try:
+        velosys = input_model.meta.wcsinfo.velosys
+    except AttributeError:
+        pass
+    else:
+        if velosys is not None:
+            velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
+            lrs_wav_model = lrs_wav_model | velocity_corr
+            log.info("Applied Barycentric velocity correction : {}".format(velocity_corr[1].amplitude.value))
 
     # Incorporate the small rotation
     angle = np.arctan(0.00421924)
@@ -242,9 +251,6 @@ def ifu(input_model, reference_files):
         "detector_to_abl")
     abl2v2v3l = (abl_to_v2v3l(input_model, reference_files)).rename("abl_to_v2v3l")
 
-    velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
-    abl2v2v3l = abl2v2v3l | velocity_corr
-
     tel2sky = pointing.v23tosky(input_model) & models.Identity(1)
 
     # Put the transforms together into a single transform
@@ -288,6 +294,16 @@ def detector_to_abl(input_model, reference_files):
 
     with SpecwcsModel(reference_files['specwcs']) as f:
         lambda_model = f.model
+
+    try:
+        velosys = input_model.meta.wcsinfo.velosys
+    except AttributeError:
+        pass
+    else:
+        if velosys is not None:
+            velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
+            lambda_model = [m | velocity_corr for m in lambda_model]
+            log.info("Applied Barycentric velocity correction : {}".format(velocity_corr[1].amplitude.value))
 
     with RegionsModel(reference_files['regions']) as f:
         regions = f.regions.copy()
