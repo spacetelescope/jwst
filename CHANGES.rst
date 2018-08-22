@@ -55,6 +55,8 @@ datamodels
 
 - Improved error messaging when loading fits files into data models. [#2298]
 
+- New warning message when opening a file without DATAMODL keyword. [#2248]
+
 - New info method, similar to the method in astropy fits [#2268]
 
 dq_init
