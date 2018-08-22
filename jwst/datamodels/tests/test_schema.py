@@ -136,13 +136,11 @@ def test_invalid_fits():
     hdulist.writeto(TMP_FITS)
     hdulist.close()
 
-    with pytest.raises(validate.ValidationWarning):
-        with warnings.catch_warnings():
-            os.environ['PASS_INVALID_VALUES'] = '0'
-            os.environ['STRICT_VALIDATION'] = '0'
-            warnings.simplefilter('error')
-            model = util.open(TMP_FITS)
-            model.close()
+    with pytest.warns(util.NoTypeWarning):
+        os.environ['PASS_INVALID_VALUES'] = '0'
+        os.environ['STRICT_VALIDATION'] = '0'
+        model = util.open(TMP_FITS)
+        model.close()
 
     with pytest.raises(jsonschema.ValidationError):
         os.environ['STRICT_VALIDATION'] = '1'
@@ -167,13 +165,11 @@ def test_invalid_fits():
     del os.environ['PASS_INVALID_VALUES']
     del os.environ['STRICT_VALIDATION']
 
-    with pytest.raises(validate.ValidationWarning):
-        with warnings.catch_warnings():
-            warnings.simplefilter('error')
-            model = util.open(TMP_FITS,
-                              pass_invalid_values=False,
-                              strict_validation=False)
-            model.close()
+    with pytest.warns(util.NoTypeWarning):
+        model = util.open(TMP_FITS,
+                          pass_invalid_values=False,
+                          strict_validation=False)
+        model.close()
 
     with pytest.raises(jsonschema.ValidationError):
         model = util.open(TMP_FITS,
