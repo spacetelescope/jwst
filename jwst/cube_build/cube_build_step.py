@@ -139,7 +139,7 @@ SHORT,MEDIUM,LONG, or ALL
 # 1. filename
 # 2. single model
 # 3. ASN table
-# 4. model containter
+# 4. model container
 # figure out what type of data we have an fill in the
 # input_table.input_models - which is used in the rest of IFU Cube Building
 # We need to do this in cube_build_step because we need to pass the data_model to
@@ -279,7 +279,7 @@ SHORT,MEDIUM,LONG, or ALL
                 self.output_file = None
                 cube_container = thiscube.build_ifucube_single()
                 self.log.info("Number of Single IFUCube models returned %i ",
-                              len(Final_IFUCube))
+                              len(cube_container))
 
 # Else standard IFU cube building
             else:
