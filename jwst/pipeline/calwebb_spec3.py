@@ -103,7 +103,7 @@ class Spec3Pipeline(Pipeline):
             if isinstance(source, tuple):
                 source_id, result = source
                 self.output_file = format_product(
-                    output_file, source_id=int(source_id)
+                    output_file, source_id=source_id.lower()
                 )
             else:
                 result = source

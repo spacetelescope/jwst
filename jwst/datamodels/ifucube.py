@@ -13,22 +13,26 @@ class IFUCubeModel(model_base.DataModel):
     init : any
         Any of the initializers supported by `~jwst.datamodels.DataModel`.
 
-    data : numpy array
+    data: numpy array
         The science data.  3-D.
 
-    dq : numpy array
+    dq: numpy array
         The data quality array.  3-D.
 
-    err : numpy array
+    err: numpy array
         The error array.  3-D
 
-    weightmap : numpy array
+    weightmap: numpy array
         The weight map array.  3-D
+
+    wavetable:  1-D table 
+        Optional table of  wavelengths of IFUCube slices
+     
     """
     schema_url = "ifucube.schema.yaml"
 
     def __init__(self, init=None, data=None, dq=None, err=None, 
-                 weightmap=None, hdrtab=None,  **kwargs):
+                 weightmap=None, wavetable=None, hdrtab=None,  **kwargs):
         super(IFUCubeModel, self).__init__(init=init, **kwargs)
 
         if data is not None:
@@ -42,6 +46,9 @@ class IFUCubeModel(model_base.DataModel):
 
         if weightmap is not None:
             self.weightmap = weightmap
+
+        if wavetable is not None:
+            self.wavetable = wavetable
 
         if hdrtab is not None:
             self.hdrtab = hdrtab

@@ -63,8 +63,6 @@ ACQ_EXP_TYPES = (
 
 # Exposures that are always TSO
 TSO_EXP_TYPES = (
-    'mir_lrs-slitless',
-    'nis_soss',
     'nrc_tsimage',
     'nrc_tsgrism',
     'nrs_brightobj'
@@ -102,7 +100,6 @@ IMAGE2_NONSCIENCE_EXP_TYPES = [
 ]
 
 SPEC2_SCIENCE_EXP_TYPES = [
-    'nrc_grism',
     'nrc_tsgrism',
     'nrc_wfss',
     'mir_lrs-fixedslit',

@@ -17,6 +17,8 @@ associations
 ------------
 
 - Implemented Rule for Level 2 Nirspec Fixed Slit background. [#2307]
+- Handle both numeric and named slits for Level3 products. [#2330]
+- Remove MIR_LRS-SLITLESS and NIS_SOSS from the permanent TSO list. [#2330]
 
 background
 ----------
@@ -48,12 +50,12 @@ dark_current
 datamodels
 ----------
 
-- The ``DataModel`` ``__hasattr__`` mehtod has been replaced by ``hasattr``.
-  The latter creates the attribute when it is accessed.                       [#2275]
+- The ``DataModel`` ``__hasattr__`` method has been replaced by ``hasattr``.
+  The former created the attribute when it was accessed. [#2275]
 
 - Improved error messaging when loading fits files into data models. [#2298]
 
--
+- New info method, similar to the method in astropy fits [#2268]
 
 dq_init
 -------

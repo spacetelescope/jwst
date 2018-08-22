@@ -211,6 +211,16 @@ properties:
             fits_keyword: PC3_3
             fits_hdu: SCI
             blend_table: True
+          ps3_0:
+            title: Coordinate table extension name
+            type: string
+            fits_keyword: PS3_0
+            fits_hdu: SCI
+          ps3_1:
+            title: Coordinate table column name
+            type: string
+            fits_keyword: PS3_1
+            fits_hdu: SCI
           s_region:
             title: spatial extent of the observation
             type: string

@@ -434,6 +434,27 @@ def test_hasattr():
     has_filename = model.meta.hasattr('filename')
     assert not has_filename, "Check that filename does not exist"
 
+def test_info():
+    with open_model(FITS_FILE) as model:
+        info = model.info()
+    matches = 0
+    for line in info.split("\n"):
+        words = line.split()
+        if len(words) > 0:
+            if words[0] == "data":
+                matches += 1
+                assert words[1] == "(32,40,35,5)", "Correct size for data"
+                assert words[2] == "float32", "Correct type for data"
+            elif words[0] == "dq":
+                matches += 1
+                assert words[1] == "(32,40,35,5)", "Correct size for dq"
+                assert words[2] == "uint32", "Correct type for dq"
+            elif words[0] == "err":
+                matches += 1
+                assert words[1] == "(32,40,35,5)", "Correct size for err"
+                assert words[2] == "float32", "Correct type for err"
+    assert matches== 3, "Check all extensions are described"
+
 def test_multislit_model():
     data = np.arange(24, dtype=np.float32).reshape((6, 4))
     err = np.arange(24, dtype=np.float32).reshape((6, 4)) + 2

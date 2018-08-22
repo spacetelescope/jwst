@@ -2,7 +2,7 @@
     "asn_type": "image2",
     "asn_rule": "candidate_Asn_Lv2ImageNonScience",
     "version_id": null,
-    "code_version": "0.9.17",
+    "code_version": "0.9.20",
     "degraded_status": "No known degraded exposures in association.",
     "program": "84600",
     "target": "1",
