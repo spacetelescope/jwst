@@ -623,7 +623,7 @@ def velocity_correction(velosys):
     Parameters
     ----------
     velosys : float
-        Radial velocity wrt Barycenter.
+        Radial velocity wrt Barycenter [m / s].
     """
     correction = (1 / (1 + velosys / c.value))
     model =  astmodels.Identity(1) * astmodels.Const1D(correction, name="velocity_correction")
