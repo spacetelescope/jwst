@@ -150,6 +150,8 @@ def open(init=None, extensions=None, **kwargs):
         log.debug('Opening as {0}'.format(new_class))
 
     # Actually open the model
+    model = new_class(init, extensions=extensions, **kwargs)
+
     if not has_model_type:
         class_name = new_class.__name__.split('.')[-1]
         if file_name:
@@ -160,9 +162,6 @@ def open(init=None, extensions=None, **kwargs):
                 "model_type not found. Opening model as a {}".format(class_name)
         warnings.warn(errmsg, NoTypeWarning)
 
-    model = new_class(init, extensions=extensions, **kwargs)
-
-    if not has_model_type:
         try:
             delattr(model.meta, 'model_type')
         except AttributeError:
