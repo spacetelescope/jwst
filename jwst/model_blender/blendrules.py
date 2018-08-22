@@ -338,6 +338,8 @@ def _build_schema_rules_dict(schema):
     def build_rules_dict(subschema, path, combiner, ctx, recurse):
         # Only interpret elements of the meta component of the model
         if len(path) > 1 and path[0] == 'meta' and 'items' not in path:
+            if 'anyOf' in path:
+                path = path[:path.index('anyOf')]
             attr = '.'.join(path)
             if subschema.get('properties'):
                 return # Ignore ObjectNodes
