@@ -4,7 +4,6 @@
 
 import numpy as np
 import logging
-from .. import datamodels
 from ..datamodels import dqflags
 
 log = logging.getLogger(__name__)
