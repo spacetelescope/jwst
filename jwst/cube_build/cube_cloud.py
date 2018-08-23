@@ -1,9 +1,7 @@
-
  # Routines used in Spectral Cube Building
 import numpy as np
 import math
 import logging
-from .. import datamodels
 from ..assign_wcs import nirspec
 from ..datamodels import dqflags
 from . import coord
@@ -33,7 +31,7 @@ def match_det2cube(self, input_model,
     input_model: slope image
     file_slice_no: the index on the files that are used to construct the Cube
     v2v32radec: temporary (until information is contained in assign_wcs)
-                holds the information to do the transformation from v2-v3 to ra-dec
+                holds the information to do the transformation from v2-v3 to world
     c1_offset, c2_offset: dither offsets for each file (default = 0)
     provided by the user
     islice : a NIRSPEC parameter - slice number
@@ -73,7 +71,7 @@ def match_det2cube(self, input_model,
             # alpha-beta coord system
             # transform the cube coordinate values to alpha and beta values
             # xi,eta -> ra,dec
-            # ra-dec -> v2,v3
+            # world -> v2,v3
             # v2,v3 -> local alpha,beta
 
     elif self.instrument == 'NIRSPEC':
@@ -118,8 +116,8 @@ def match_det2cube(self, input_model,
 #    error = error_all[good_data]
     wave = lam[good_data]
 
-    xpix = x[good_data] # only used for testing
-    ypix = y[good_data] # only used for testing
+#    xpix = x[good_data] # only used for testing
+#    ypix = y[good_data] # only used for testing
 
     ra = ra - c1_offset / 3600.0
     dec = dec - c2_offset / 3600.0
@@ -143,7 +141,7 @@ def match_det2cube(self, input_model,
     nplane = self.naxis1 * self.naxis2
     lower_limit = 0.01
 
-    iprint = 0
+#    iprint = 0
 # now loop over the pixel values for this region and find the spaxels that fall
 # withing the region of interest.
     nn = coord1.size
@@ -182,7 +180,7 @@ def match_det2cube(self, input_model,
             istart = zz * nplane
             for ir, rr in enumerate(indexr[0]):
                 yy_cube = int(rr / self.naxis1)
-                xx_cube = rr - yy_cube * self.naxis1
+#                xx_cube = rr - yy_cube * self.naxis1
 #                print('xx yy cube',rr,self.naxis1,xx_cube,yy_cube)
 #________________________________________________________________________________
                 if self.weighting == 'msm':

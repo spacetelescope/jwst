@@ -170,7 +170,7 @@ class CubeData():
 
         if self.instrument == 'MIRI':
             valid_channel = ['1', '2', '3', '4']
-            valid_subchannel = ['SHORT', 'MEDIUM', 'LONG']
+            valid_subchannel = ['short', 'medium', 'long']
 
             nchannels = len(valid_channel)
             nsubchannels = len(valid_subchannel)

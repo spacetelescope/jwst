@@ -14,7 +14,7 @@ log.setLevel(logging.DEBUG)
 
 
 #********************************************************************************
-def find_footprint_MIRI(input, this_channel, instrument_info,coord_system):
+def find_footprint_MIRI(input, this_channel, instrument_info, coord_system):
 #********************************************************************************
 
     """
@@ -50,7 +50,7 @@ def find_footprint_MIRI(input, this_channel, instrument_info,coord_system):
     if coord_system == 'alpha-beta':
         detector2alpha_beta = input.meta.wcs.get_transform('detector', 'alpha_beta')
         coord1, coord2, lam = detector2alpha_beta(x, y)
-    elif coord_system == 'ra-dec':
+    elif coord_system == 'world':
         detector2v23 = input.meta.wcs.get_transform('detector', 'v2v3')
         v23toworld = input.meta.wcs.get_transform("v2v3", "world")
         v2, v3, lam = detector2v23(x, y)
@@ -76,7 +76,7 @@ def find_footprint_MIRI(input, this_channel, instrument_info,coord_system):
     return a_min, a_max, b_min, b_max, lambda_min, lambda_max
 
 #********************************************************************************
-def find_footprint_NIRSPEC(input, flag_data,coord_system):
+def find_footprint_NIRSPEC(input, flag_data, coord_system):
 #********************************************************************************
     """
     Short Summary
@@ -113,7 +113,7 @@ def find_footprint_NIRSPEC(input, flag_data,coord_system):
         slice_wcs = nirspec.nrs_wcs_set_input(input, i)
         x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box, step=(1, 1), center=True)
 
-        if coord_system == 'ra-dec':
+        if coord_system == 'world':
             coord1, coord2, lam = slice_wcs(x, y)
         elif coord_system == 'alpha-beta':
             raise InvalidCoordSystem(" The Alpha-Beta Coordinate system is not valid (at this time) for NIRSPEC data")

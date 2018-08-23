@@ -77,7 +77,7 @@ def read_cubepars(par_filename,
             # find the table entries for this combination
             for tabdata in ptab.ifucubepars_table:
                 table_channel = tabdata['channel']
-                table_band = tabdata['band']
+                table_band = tabdata['band'].lower()
                 table_spaxelsize = tabdata['SPAXELSIZE']
                 table_spectralstep = tabdata['SPECTRALSTEP']
                 table_wavemin = tabdata['WAVEMIN']
@@ -91,7 +91,7 @@ def read_cubepars(par_filename,
 
             for tabdata in ptab.ifucubepars_msn_table:
                 table_channel = tabdata['channel']
-                table_band = tabdata['band']
+                table_band = tabdata['band'].lower()
                 table_sroi = tabdata['ROISPATIAL']
                 table_wroi = tabdata['ROISPECTRAL']
                 table_power = tabdata['POWER']

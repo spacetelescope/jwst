@@ -18,15 +18,15 @@ class CubeBuildStep (Step):
     """
 
     spec = """
-         channel = option('1','2','3','4','ALL','all',default='ALL') # Options: 1,2,3,4,or All
-         band = option('SHORT','MEDIUM','LONG','ALL','short','medium','long','all',default='ALL') # Options: SHORT,MEDIUM,LONG, or ALL
-         grating   = option('PRISM','G140M','G140H','G235M','G235H',G395M','G395H','ALL','all',default='ALL') # Options: PRISM,G140M,G140H,G235M,G235H,G395M,G395H, or ALL
-         filter   = option('CLEAR','F100LP','F070LP','F170LP','F290LP','ALL','all',default='ALL') # Options: CLEAR,F100LP,F070LP,F170LP,F290LP, or ALL
+         channel = option('1','2','3','4','all',default='all') # Options: 1,2,3,4, or all
+         band = option('short','medium','long','all',default='all') # Options: short, medium, long, all 
+         grating   = option('PRISM','G140M','G140H','G235M','G235H',G395M','G395H','ALL',default='ALL') # Options: PRISM,G140M,G140H,G235M,G235H,G395M,G395H, or all
+         filter   = option('CLEAR','F100LP','F070LP','F170LP','F290LP','ALL',default='ALL') # Options: CLEAR,F100LP,F070LP,F170LP,F290LP, or all
          scale1 = float(default=0.0) # cube sample size to use for axis 1, arc seconds
          scale2 = float(default=0.0) # cube sample size to use for axis 2, arc seconds
          scalew = float(default=0.0) # cube sample size to use for axis 3, microns
-         weighting = option('msm','miripsf','area','MSM','MIRIPSF','AREA',default = 'msm') # Type of weighting function,
-         coord_system = option('ra-dec','alpha-beta','ALPHA-BETA',default='ra-dec') # Output Coordinate system. Options: ra-dec or alpha-beta
+         weighting = option('msm','miripsf','area',default = 'msm') # Type of weighting function,
+         coord_system = option('world','alpha-beta',default='world') # Output Coordinate system. Options: world or alpha-beta
          rois = float(default=0.0) # region of interest spatial size, arc seconds
          roiw = float(default=0.0) # region of interest wavelength size, microns
          weight_power = float(default=2.0) # Weighting option to use for Modified Shepard Method
@@ -53,7 +53,7 @@ class CubeBuildStep (Step):
         # print('self suffix',self.suffix)
         self.suffix = 's3d' # override suffix = cube_build
 
-        if(not self.subchannel.isupper()): self.subchannel = self.subchannel.upper()
+        if(not self.subchannel.islower()): self.subchannel = self.subchannel.lower()
         if(not self.filter.isupper()): self.filter = self.filter.upper()
         if(not self.grating.isupper()): self.grating = self.grating.upper()
         if(not self.coord_system.islower()): self.coord_system = self.coord_system.lower()
@@ -94,7 +94,7 @@ class CubeBuildStep (Step):
 
         # valid coord_system:
         # 1. alpha-beta (only valid for MIRI Single Cubes)
-        # 2. ra-dec
+        # 2. world
         self.interpolation = 'pointcloud' # true for self.weighting  = 'msm' or 'miripsf'
 
         # if the weighting is area then interpolation is area
@@ -109,7 +109,7 @@ class CubeBuildStep (Step):
         # if interpolation is point cloud then weighting can be
         # 1. MSM: modified shepard method
         # 2. miripsf - weighting for MIRI based on PSF and LSF
-        if self.coord_system == 'ra-dec':
+        if self.coord_system == 'world':
             self.interpolation = 'pointcloud'  # can not be area
 
         self.log.info('Input interpolation: %s', self.interpolation)
@@ -239,7 +239,7 @@ class CubeBuildStep (Step):
 # or (grating,filter)
 
         num_cubes, cube_pars = cubeinfo.number_cubes()
-        self.log.info('Number of IFUCubes produced by a this run %i', num_cubes)
+        self.log.info('Number of ifucubes produced by a this run %i', num_cubes)
 
         cube_container = datamodels.ModelContainer() # ModelContainer of ifucubes
 
@@ -318,8 +318,8 @@ class CubeBuildStep (Step):
         self.pars_input['filter']
 
         """
-        valid_channel = ['1', '2', '3', '4', 'ALL']
-        valid_subchannel = ['SHORT', 'MEDIUM', 'LONG', 'ALL']
+        valid_channel = ['1', '2', '3', '4', 'all']
+        valid_subchannel = ['short', 'medium', 'long', 'all']
         valid_fwa = ['F070LP', 'F100LP', 'F100LP', 'F170LP',
                     'F170LP', 'F290LP', 'F290LP', 'CLEAR', 'ALL']
         valid_gwa = ['G140M', 'G140H', 'G140M', 'G140H', 'G235M', 'G235H',
@@ -327,9 +327,9 @@ class CubeBuildStep (Step):
 
 #________________________________________________________________________________
 # for MIRI we can set the channel
-# if set to ALL then let the DetermineCubeCoverage figure out the data we have and set
+# if set to all then let the DetermineCubeCoverage figure out the data we have and set
 # self.channel to empty
-        if self.channel == 'ALL':
+        if self.channel == 'all':
             self.channel = ''
 
         if self.channel:  # self.channel is false if it is empty
@@ -356,10 +356,11 @@ class CubeBuildStep (Step):
 
 #________________________________________________________________________________
 # for MIRI we can set the subchannel
-# if set to ALL then let the DetermineCubeCoverage figure out the data we have and set
+# if set to all then let the DetermineCubeCoverage figure out the data we have and set
 # self.subchannel = empty
 
-        if self.subchannel == 'ALL':
+
+        if self.subchannel == 'all':
             self.subchannel = ''
 
         if self.subchannel: #  not empty it has been set
@@ -383,7 +384,7 @@ class CubeBuildStep (Step):
             self.pars_input['subchannel'] = list(set(self.pars_input['subchannel']))
 #________________________________________________________________________________
 # for NIRSPEC we can set the filter
-# if set to ALL then let the DetermineCubeCoverage figure out the data we have and set
+# if set to all then let the DetermineCubeCoverage figure out the data we have and set
 # self.filter = empty
         if self.filter == 'ALL':
             self.filter = ''
@@ -408,7 +409,7 @@ class CubeBuildStep (Step):
             self.pars_input['filter'] = list(set(self.pars_input['filter']))
 #________________________________________________________________________________
 # for NIRSPEC we can set the grating
-# if set to ALL then let the DetermineCubeCoverage figure out the data we have and set
+# if set to all then let the DetermineCubeCoverage figure out the data we have and set
 # self.grating = empty
         if self.grating == 'ALL':
             self.grating = ''

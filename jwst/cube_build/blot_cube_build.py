@@ -57,7 +57,7 @@ class CubeBlot():
 
         if self.instrument == 'MIRI':
             self.channel = median_model.meta.instrument.channel
-            self.subchannel = median_model.meta.instrument.band
+            self.subchannel = median_model.meta.instrument.band.lower()
         elif self.instrument == 'NIRSPEC':
             self.grating = median_model.meta.instrument.grating
             self.filter = median_model.meta.instrument.filter

@@ -229,7 +229,7 @@ class IFUCubeData():
         If an offset list is provided then these values are applied.
         If the coordinate system is alpha-beta (MIRI) then min and max
         coordinates of alpha (arc sec), beta (arc sec) and lambda (microns)
-        If the coordinate system is ra-dec then the min and max of
+        If the coordinate system is world then the min and max of
         ra(degress), dec (degrees) and lambda (microns) is returned.
         """
 #________________________________________________________________________________
@@ -345,7 +345,7 @@ class IFUCubeData():
     # Based on Scaling and Min and Max values determine naxis1, naxis2, naxis3
     # set cube CRVALs, CRPIXs and xyz coords (center  x,y,z vector spaxel centers)
 
-        if self.coord_system == 'ra-dec':
+        if self.coord_system == 'world':
             self.set_geometry(cube_footprint)
         else:
             self.set_geometryAB(cube_footprint) # local coordinate system
@@ -1163,42 +1163,42 @@ class IFUCubeData():
 # we only need to check list_par1[0] and list_par2[0] because these types
 # of cubes are made from 1 exposures (setup_cube checks this at the start
 # of cube_build).
-            if self.list_par1[0] == '1' and self.list_par2[0] == 'SHORT':
+            if self.list_par1[0] == '1' and self.list_par2[0] == 'short':
                 ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL1A'
                 ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE1A'
-            if self.list_par1[0] == '2' and self.list_par2[0] == 'SHORT':
+            if self.list_par1[0] == '2' and self.list_par2[0] == 'short':
                 ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL2A'
                 ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE2A'
-            if self.list_par1[0] == '3' and self.list_par2[0] == 'SHORT':
+            if self.list_par1[0] == '3' and self.list_par2[0] == 'short':
                 ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL3A'
                 ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE3A'
-            if self.list_par1[0] == '4' and self.list_par2[0] == 'SHORT':
+            if self.list_par1[0] == '4' and self.list_par2[0] == 'short':
                 ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL4A'
                 ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE4A'
 
-            if self.list_par1[0] == '1' and self.list_par2[0] == 'MEDIUM':
+            if self.list_par1[0] == '1' and self.list_par2[0] == 'medium':
                 ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL1B'
                 ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE1B'
-            if self.list_par1[0] == '2' and self.list_par2[0] == 'MEDIUM':
+            if self.list_par1[0] == '2' and self.list_par2[0] == 'medium':
                 ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL2B'
                 ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE2B'
-            if self.list_par1[0] == '3' and self.list_par2[0] == 'MEDIUM':
+            if self.list_par1[0] == '3' and self.list_par2[0] == 'medium':
                 ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL3B'
                 ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE3B'
-            if self.list_par1[0] == '4' and self.list_par2[0] == 'MEDIUM':
+            if self.list_par1[0] == '4' and self.list_par2[0] == 'medium':
                 ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL4B'
                 ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE4B'
 
-            if self.list_par1[0] == '1' and self.list_par2[0] == 'LONG':
+            if self.list_par1[0] == '1' and self.list_par2[0] == 'long':
                 ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL1C'
                 ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE1C'
-            if self.list_par1[0] == '2' and self.list_par2[0] == 'LONG':
+            if self.list_par1[0] == '2' and self.list_par2[0] == 'long':
                 ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL2C'
                 ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE2C'
-            if self.list_par1[0] == '3' and self.list_par2[0] == 'LONG':
+            if self.list_par1[0] == '3' and self.list_par2[0] == 'long':
                 ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL3C'
                 ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE3C'
-            if self.list_par1[0] == '4' and self.list_par2[0] == 'LONG':
+            if self.list_par1[0] == '4' and self.list_par2[0] == 'long':
                 ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL4C'
                 ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE4C'
 
