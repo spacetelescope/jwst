@@ -241,7 +241,6 @@ stsci_python_sphinxdocs_2.13/drizzlepac/astrodrizzle.html>`_\ .
     log.info(" ")
     log.info("***** {:s}.{:s}() started on {}"
              .format(__name__, function_name, runtime_begin))
-    log.info("      Version {} ({})".format(__version__, __vdate__))
     log.info(" ")
 
     # check sky method:

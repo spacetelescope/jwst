@@ -134,7 +134,6 @@ def align(imcat, refcat=None, enforce_user_order=True,
     log.info(" ")
     log.info("***** {:s}.{:s}() started on {}"
              .format(__name__, function_name, runtime_begin))
-    log.info("      Version {} ({})".format(__version__, __vdate__))
     log.info(" ")
 
     # check fitgeom:
