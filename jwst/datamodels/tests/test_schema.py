@@ -585,13 +585,14 @@ def test_multislit_append_string():
         m.slits.append('junk')
 
 
-def test_flatten_combiners():
+@pytest.mark.parametrize('combiner', ['anyOf', 'oneOf'])
+def test_flatten_combiners(combiner):
 
     s = {
          'type': 'object',
          'properties': {
              'foobar': {
-                 'anyOf': [
+                 combiner: [
                      {
                          'type': 'array',
                          'items': [ {'type': 'string'}, {'type': 'number'} ],
