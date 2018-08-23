@@ -14,7 +14,6 @@ import numpy as np
 from copy import deepcopy
 
 # THIRD-PARTY
-import numpy as np
 import gwcs
 from astropy import table
 from spherical_geometry.polygon import SphericalPolygon
@@ -24,8 +23,6 @@ from stsci.stimage import xyxymatch
 from ..transforms.tpcorr import TPCorr, rot_mat3D
 from . import linearfit
 from . import matchutils
-from . import __version__
-from . import __vdate__
 
 
 __all__ = ['convex_hull', 'ImageWCS', 'RefCatalog', 'WCSImageCatalog',
@@ -458,9 +455,6 @@ class WCSImageCatalog():
         else:
             self._catalog = table.Table(catalog.copy(), masked=True)
             self._catalog.meta['name'] = self._name
-
-        colnames = self._catalog.colnames
-        catlen = len(catalog)
 
         # create spherical polygon bounding the image
         self.calc_bounding_polygon()

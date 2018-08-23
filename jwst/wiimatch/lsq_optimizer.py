@@ -6,9 +6,6 @@ N-dimensional images using (multi-variate) polynomials.
 
 
 """
-
-import copy
-
 import numpy as np
 
 from .utils import create_coordinate_arrays
@@ -255,7 +252,6 @@ c_{1,0,\\ldots}^2,\\ldots).
             )
 
     # now compute coefficients of array 'a' for l==m:
-    zero_deg = tuple(len(degree) * [0])
     for i in range(sys_eq_array_size):
         # decompose first (row, or eq) flat index into "original" indices:
         lp = np.unravel_index(i, gshape)

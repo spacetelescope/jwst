@@ -8,10 +8,7 @@ N-dimensional image intensity data using (multivariate) polynomials.
 """
 
 # STDLIB
-import copy
-
 import numpy as np
-from stsci.tools.bitmask import interpret_bit_flags
 
 from .lsq_optimizer import build_lsq_eqs, pinv_solve, rlu_solve
 

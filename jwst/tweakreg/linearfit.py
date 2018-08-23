@@ -8,9 +8,7 @@ sets of 2D points.
 """
 import logging
 import numpy as np
-# LOCAL
-from . import __version__
-from . import __vdate__
+
 
 __all__ = ['iter_linear_fit', 'build_fit_matrix']
 
