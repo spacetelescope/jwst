@@ -1,10 +1,7 @@
-from __future__ import (absolute_import, unicode_literals,
-                        division, print_function)
-
 import numpy as np
 # import pytest
 
-from jwst.datamodels.miri_ramp import MIRIRampModel
+from jwst.datamodels import MIRIRampModel
 from jwst.datamodels import dqflags
 from jwst.lastframe.lastframe_sub import do_correction
 
@@ -149,10 +146,3 @@ def test_lastframe_add1_groupdq():
 
     # test if pixels in groupdq were incremented in value by 1
     assert(dm_ramp_lastframe.groupdq[0, ngroups-1, 505, 505] == 5)
-
-
-if __name__ == '__main__':
-    test_lastframe_set_groupdq()
-    test_lastframe_ngroup2()
-    test_lastframe_single_group()
-    test_lastframe_add1_groupdq()
