@@ -241,8 +241,8 @@ properties:
             fits_hdu: SCI
             blend_table: True
           spectral_order:
-            title: default spectral order
-            type: number
+            title: Spectral order number
+            type: integer
             fits_keyword: SPORDER
             fits_hdu: SCI
             blend_table: True

@@ -261,8 +261,13 @@ properties:
           tsovisit:
             title: Time Series Observation visit indicator
             type: boolean
-            blend_table: True
             fits_keyword: TSOVISIT
+            blend_table: True
+          exp_only:
+            title: Special commanding without SI configuration
+            type: boolean
+            fits_keyword: EXP_ONLY
+            blend_table: True
       target:
         title: Target information
         type: object
@@ -346,9 +351,8 @@ properties:
             title: Name of detector used to acquire the data
             type: string
             enum: [NRCA1, NRCA2, NRCA3, NRCA4, NRCALONG, NRCB1, NRCB2, NRCB3, NRCB4,
-              NRCBLONG, NRS1, NRS2, ANY, MIRIMAGE, MIRIFULONG, MIRIFUSHORT, NIRISS,
+              NRCBLONG, NRS1, NRS2, ANY, MIRIMAGE, MIRIFULONG, MIRIFUSHORT,
               NIS, GUIDER1, GUIDER2, N/A]
-            description: '''NIRISS'' is deprecated in favor of ''NIS'''
             fits_keyword: DETECTOR
             blend_table: True
           module:
@@ -392,7 +396,7 @@ properties:
           grating:
             title: Name of the grating element used
             type: string
-            enum: [G140M, G235M, G395M, G140H, G235H, G395H, PRISM, MIRROR, N/A, ANY, NULL, MULTIPLE]
+            enum: [G140M, G235M, G395M, G140H, G235H, G395H, PRISM, MIRROR, N/A, ANY, UNKNOWN, MULTIPLE]
             fits_keyword: GRATING
             blend_table: True
             blend_rule: multi
@@ -421,7 +425,7 @@ properties:
           ccc_state:
             title: Contamination control cover state
             type: string
-            enum: [OPEN, CLOSED, LOCKED]
+            enum: [OPEN, CLOSED, LOCKED, UNKNOWN]
             fits_keyword: CCCSTATE
             blend_table: True
           coronagraph:
@@ -508,11 +512,6 @@ properties:
         title: Exposure parameters
         type: object
         properties:
-          pointing_sequence:
-            title: Pointing sequence number
-            type: integer
-            fits_keyword: PNTG_SEQ
-            blend_table: True
           count:
             title: Running count of exposures in visit
             type: integer
@@ -536,8 +535,6 @@ properties:
               MIR_4QPM, MIR_CORONCAL, MIR_DARK, MIR_FLATIMAGE,
               MIR_FLATMRS, MIR_IMAGE, MIR_LRS-FIXEDSLIT,
               MIR_LRS-SLITLESS, MIR_LYOT, MIR_MRS, MIR_TACQ,
-              # Obsolete MIRI
-              MIR_FLAT-MRS, MIR_FLAT-IMAGE,
               # NIRISS
               NIS_AMI, NIS_DARK, NIS_EXTCAL, NIS_FOCUS, NIS_IMAGE, NIS_LAMP,
               NIS_SOSS, NIS_TACQ, NIS_TACONFIRM, NIS_WFSS,
@@ -725,11 +722,6 @@ properties:
             title: Number of reference pixels in IRS2 readout
             type: integer
             fits_keyword: NRS_REF
-            blend_table: True
-          comprssd:
-            title: data compressed on-board (T/F)
-            type: boolean
-            fits_keyword: COMPRSSD
             blend_table: True
           clock_adjust_rate:
             title: Spacecraft Clock Time Adjust RATE
@@ -1174,7 +1166,7 @@ properties:
             blend_table: True
           rma_step:
             title: Refocus Mechanism Assembly relative position
-            type: string
+            type: integer
             fits_keyword: FCSRLPOS
             blend_table: True
       guidestar:

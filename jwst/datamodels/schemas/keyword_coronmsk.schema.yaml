@@ -9,6 +9,9 @@ properties:
           coronagraph:
             title: coronagraph mask used
             type: string
-            enum: [4QPM, LYOT, MASK210R, MASKSWB, MASK335R, MASK430R, MASKLWB, NONE]
+            enum: [4QPM, 4QPM_1065, 4QPM_1140, 4QPM_1550,
+                   LYOT, LYOT_2300,
+                   MASK210R, MASKSWB, MASK335R, MASK430R, MASKLWB,
+                   NONE]
             fits_keyword: CORONMSK
 
