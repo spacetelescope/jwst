@@ -126,11 +126,22 @@ class ResampleSpecData:
         pix_to_ra = fitter(fit_model, np.arange(ra_array.shape[0]), ra_array)
         pix_to_dec = fitter(fit_model, np.arange(dec_array.shape[0]), dec_array)
 
+        # Tabular interpolation model, pixels -> lambda
         pix_to_wavelength = Tabular1D(lookup_table=wavelength_array,
-            bounds_error=False, fill_value=None)
-        pix_to_wavelength.inverse = Tabular1D(points=wavelength_array,
-            lookup_table=np.arange(wavelength_array.shape[0]),
-            bounds_error=False, fill_value=None)
+            bounds_error=False, fill_value=None, name='pix2wavelength')
+
+        # Tabular models need an inverse explicitly defined.
+        # If the wavelength array is decending instead of ascending, both
+        # points and lookup_table need to be reversed in the inverse transform
+        # for scipy.interpolate to work properly
+        points = wavelength_array
+        lookup_table = np.arange(wavelength_array.shape[0])
+        if not np.all(np.diff(wavelength_array) > 0):
+            points = points[::-1]
+            lookup_table = lookup_table[::-1]
+        pix_to_wavelength.inverse = Tabular1D(points=points,
+            lookup_table=lookup_table,
+            bounds_error=False, fill_value=None, name='wavelength2pix')
 
         # For the input mapping, duplicate the spatial coordinate
         mapping = Mapping((spatial_axis, spatial_axis, spectral_axis))
