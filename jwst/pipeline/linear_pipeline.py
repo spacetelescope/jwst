@@ -19,6 +19,7 @@ from ..straylight.straylight_step import StraylightStep
 from ..fringe.fringe_step import FringeStep
 from ..photom.photom_step import PhotomStep
 
+
 class TestLinearPipeline(LinearPipeline):
 
     pipeline_steps = [
@@ -30,7 +31,7 @@ class TestLinearPipeline(LinearPipeline):
         ('linearity', LinearityStep),
         ('jump', JumpStep),
         ('ramp_fit', RampFitStep),
-#        ('assign_wcs', AssignWcsStep),
+        ('assign_wcs', AssignWcsStep),
         ('extract_2d', Extract2dStep),
         ('flat_field', FlatFieldStep),
         ('persistence', PersistenceStep),
