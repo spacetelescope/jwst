@@ -1,4 +1,4 @@
- #! /usr/bin/env python
+#! /usr/bin/env python 
 from ..stpipe import Step
 from .. import datamodels
 from . import cube_build
@@ -19,9 +19,9 @@ class CubeBuildStep (Step):
 
     spec = """
          channel = option('1','2','3','4','all',default='all') # Options: 1,2,3,4, or all
-         band = option('short','medium','long','all',default='all') # Options: short, medium, long, all 
-         grating   = option('PRISM','G140M','G140H','G235M','G235H',G395M','G395H','ALL',default='ALL') # Options: PRISM,G140M,G140H,G235M,G235H,G395M,G395H, or all
-         filter   = option('CLEAR','F100LP','F070LP','F170LP','F290LP','ALL',default='ALL') # Options: CLEAR,F100LP,F070LP,F170LP,F290LP, or all
+         band = option('short','medium','long','all',default='all') # Options: short, medium, long, all
+         grating   = option('prism','g140m','g140h','g235m','g235h',g395m','g395h','all',default='all') # Options: prism,g140m,g140h,g235m,g235h,g395m,g395h, or all
+         filter   = option('clear','f100lp','f070lp','g170lp','f290lp','all',default='all') # Options: clear,f100lp,f070lp,g170lp,f290lp, or all
          scale1 = float(default=0.0) # cube sample size to use for axis 1, arc seconds
          scale2 = float(default=0.0) # cube sample size to use for axis 2, arc seconds
          scalew = float(default=0.0) # cube sample size to use for axis 3, microns
@@ -54,8 +54,8 @@ class CubeBuildStep (Step):
         self.suffix = 's3d' # override suffix = cube_build
 
         if(not self.subchannel.islower()): self.subchannel = self.subchannel.lower()
-        if(not self.filter.isupper()): self.filter = self.filter.upper()
-        if(not self.grating.isupper()): self.grating = self.grating.upper()
+        if(not self.filter.islower()): self.filter = self.filter.lower()
+        if(not self.grating.islower()): self.grating = self.grating.lower()
         if(not self.coord_system.islower()): self.coord_system = self.coord_system.lower()
         if(not self.output_type.islower()): self.output_type = self.output_type.lower()
         if(not self.weighting.islower()): self.weighting = self.weighting.lower()
@@ -320,10 +320,15 @@ class CubeBuildStep (Step):
         """
         valid_channel = ['1', '2', '3', '4', 'all']
         valid_subchannel = ['short', 'medium', 'long', 'all']
-        valid_fwa = ['F070LP', 'F100LP', 'F100LP', 'F170LP',
-                    'F170LP', 'F290LP', 'F290LP', 'CLEAR', 'ALL']
-        valid_gwa = ['G140M', 'G140H', 'G140M', 'G140H', 'G235M', 'G235H',
-                    'G395M', 'G395H', 'PRISM', 'ALL']
+#        valid_fwa = ['f070lp', 'f100lp', 'f100lp', 'g170lp',
+#                    'g170lp', 'f290lp', 'f290lp', 'clear', 'all']
+#        valid_gwa = ['g140m', 'g140h', 'G140M', 'g140h', 'g235m', 'g235h',
+#                    'g395m', 'g395h', 'prism', 'all']
+
+        valid_fwa = ['f070lp', 'f100lp', 'g170lp',
+                    'g170lp', 'f290lp', 'clear', 'all']
+        valid_gwa = ['g140m', 'g140h', 'g235m', 'g235h',
+                     'g395m', 'g395h', 'prism', 'all']
 
 #________________________________________________________________________________
 # for MIRI we can set the channel
@@ -386,7 +391,7 @@ class CubeBuildStep (Step):
 # for NIRSPEC we can set the filter
 # if set to all then let the DetermineCubeCoverage figure out the data we have and set
 # self.filter = empty
-        if self.filter == 'ALL':
+        if self.filter == 'all':
             self.filter = ''
         if self.filter:
             if not self.single:
@@ -411,7 +416,7 @@ class CubeBuildStep (Step):
 # for NIRSPEC we can set the grating
 # if set to all then let the DetermineCubeCoverage figure out the data we have and set
 # self.grating = empty
-        if self.grating == 'ALL':
+        if self.grating == 'all':
             self.grating = ''
 
         if self.grating:

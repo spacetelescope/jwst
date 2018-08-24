@@ -112,7 +112,6 @@ def read_cubepars(par_filename,
                                               table_wroi, table_power,
                                               table_softrad)
 
-#        print('Done reading cubepar reference file')
     elif instrument == 'NIRSPEC':
         ptab = datamodels.NirspecIFUCubeParsModel(par_filename)
         number_gratings = len(all_grating)
@@ -121,14 +120,12 @@ def read_cubepars(par_filename,
             this_gwa = all_grating[i]
             this_filter = all_filter[i]
             for tabdata in ptab.ifucubepars_table:
-                table_grating = tabdata['DISPERSER']
-                table_filter = tabdata['FILTER']
+                table_grating = tabdata['DISPERSER'].lower()
+                table_filter = tabdata['FILTER'].lower()
                 table_spaxelsize = tabdata['SPAXELSIZE']
                 table_spectralstep = tabdata['SPECTRALSTEP']
                 table_wavemin = tabdata['WAVEMIN']
                 table_wavemax = tabdata['WAVEMAX']
-#                print(table_grating,table_filter,table_spaxelsize,table_spectralstep,
-#                      table_wavemin,table_wavemax)
 
                 if(this_gwa == table_grating and this_filter == table_filter):
                     instrument_info.SetSpatialSize(table_spaxelsize, this_gwa, this_filter)
@@ -137,8 +134,8 @@ def read_cubepars(par_filename,
                     instrument_info.SetWaveMax(table_wavemax, this_gwa, this_filter)
 
             for tabdata in ptab.ifucubepars_msn_table:
-                table_grating = tabdata['DISPERSER']
-                table_filter = tabdata['FILTER']
+                table_grating = tabdata['DISPERSER'].lower()
+                table_filter = tabdata['FILTER'].lower()
                 table_sroi = tabdata['ROISPATIAL']
                 table_wroi = tabdata['ROISPECTRAL']
                 table_power = tabdata['POWER']
@@ -179,7 +176,7 @@ def read_cubepars(par_filename,
             instrument_info.SetHighTable(table_wave, table_sroi,
                                           table_wroi, table_power,
                                           table_softrad)
-#        print('Done reading cubepar reference file')
+
 #_______________________________________________________________________
 # Read MIRI Resolution reference file
 #********************************************************************************

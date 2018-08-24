@@ -78,9 +78,8 @@ def match_det2cube(self, input_model,
         islice = file_slice_no
         slice_wcs = nirspec.nrs_wcs_set_input(input_model, islice)
 
-        x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box,step=(1,1),center=True)
-
-
+        x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box, 
+                                               step=(1, 1), center=True)
         ra, dec, lam = slice_wcs(x, y) # return v2,v3 are in degrees
         valid1 = np.isfinite(ra)
         valid2 = np.isfinite(dec)
@@ -179,7 +178,7 @@ def match_det2cube(self, input_model,
         for iz, zz in enumerate(indexz[0]):
             istart = zz * nplane
             for ir, rr in enumerate(indexr[0]):
-                yy_cube = int(rr / self.naxis1)
+#                yy_cube = int(rr / self.naxis1)
 #                xx_cube = rr - yy_cube * self.naxis1
 #                print('xx yy cube',rr,self.naxis1,xx_cube,yy_cube)
 #________________________________________________________________________________

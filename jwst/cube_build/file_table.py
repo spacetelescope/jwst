@@ -41,28 +41,28 @@ class FileTable():
         self.FileMap['MIRI']['4']['long'] = []
 
         self.FileMap['NIRSPEC'] = {}
-        self.FileMap['NIRSPEC']['PRISM'] = {}
-        self.FileMap['NIRSPEC']['PRISM']['CLEAR'] = []
+        self.FileMap['NIRSPEC']['prism'] = {}
+        self.FileMap['NIRSPEC']['prism']['clear'] = []
 
-        self.FileMap['NIRSPEC']['G140M'] = {}
-        self.FileMap['NIRSPEC']['G140M']['F070LP'] = []
-        self.FileMap['NIRSPEC']['G140M']['F100LP'] = []
+        self.FileMap['NIRSPEC']['g140m'] = {}
+        self.FileMap['NIRSPEC']['g140m']['f070lp'] = []
+        self.FileMap['NIRSPEC']['g140m']['f100lp'] = []
 
-        self.FileMap['NIRSPEC']['G140H'] = {}
-        self.FileMap['NIRSPEC']['G140H']['F070LP'] = []
-        self.FileMap['NIRSPEC']['G140H']['F100LP'] = []
+        self.FileMap['NIRSPEC']['g140h'] = {}
+        self.FileMap['NIRSPEC']['g140h']['f070lp'] = []
+        self.FileMap['NIRSPEC']['g140h']['f100lp'] = []
 
-        self.FileMap['NIRSPEC']['G235M'] = {}
-        self.FileMap['NIRSPEC']['G235M']['F170LP'] = []
+        self.FileMap['NIRSPEC']['g235m'] = {}
+        self.FileMap['NIRSPEC']['g235m']['f170lp'] = []
 
-        self.FileMap['NIRSPEC']['G235H'] = {}
-        self.FileMap['NIRSPEC']['G235H']['F170LP'] = []
+        self.FileMap['NIRSPEC']['g235h'] = {}
+        self.FileMap['NIRSPEC']['g235h']['f170lp'] = []
 
-        self.FileMap['NIRSPEC']['G395M'] = {}
-        self.FileMap['NIRSPEC']['G395M']['F290LP'] = []
+        self.FileMap['NIRSPEC']['g395m'] = {}
+        self.FileMap['NIRSPEC']['g395m']['f290lp'] = []
 
-        self.FileMap['NIRSPEC']['G395H'] = {}
-        self.FileMap['NIRSPEC']['G395H']['F290LP'] = []
+        self.FileMap['NIRSPEC']['g395h'] = {}
+        self.FileMap['NIRSPEC']['g395h']['f290lp'] = []
 
         self.FileOffset = {}
         self.FileOffset['1'] = {}
@@ -109,46 +109,46 @@ class FileTable():
         self.FileOffset['4']['long']['C1'] = []
         self.FileOffset['4']['long']['C2'] = []
 
-        self.FileOffset['PRISM'] = {}
-        self.FileOffset['PRISM']['CLEAR'] = {}
-        self.FileOffset['PRISM']['CLEAR']['C1'] = []
-        self.FileOffset['PRISM']['CLEAR']['C2'] = []
+        self.FileOffset['prism'] = {}
+        self.FileOffset['prism']['clear'] = {}
+        self.FileOffset['prism']['clear']['C1'] = []
+        self.FileOffset['prism']['clear']['C2'] = []
 
-        self.FileOffset['G140M'] = {}
-        self.FileOffset['G140M']['F070LP'] = {}
-        self.FileOffset['G140M']['F070LP']['C1'] = []
-        self.FileOffset['G140M']['F070LP']['C2'] = []
-        self.FileOffset['G140M']['F100LP'] = {}
-        self.FileOffset['G140M']['F100LP']['C1'] = []
-        self.FileOffset['G140M']['F100LP']['C2'] = []
+        self.FileOffset['g140m'] = {}
+        self.FileOffset['g140m']['f070lp'] = {}
+        self.FileOffset['g140m']['f070lp']['C1'] = []
+        self.FileOffset['g140m']['f070lp']['C2'] = []
+        self.FileOffset['g140m']['f100lp'] = {}
+        self.FileOffset['g140m']['f100lp']['C1'] = []
+        self.FileOffset['g140m']['f100lp']['C2'] = []
 
-        self.FileOffset['G140H'] = {}
-        self.FileOffset['G140H']['F070LP'] = {}
-        self.FileOffset['G140H']['F070LP']['C1'] = []
-        self.FileOffset['G140H']['F070LP']['C2'] = []
-        self.FileOffset['G140H']['F100LP'] = {}
-        self.FileOffset['G140H']['F100LP']['C1'] = []
-        self.FileOffset['G140H']['F100LP']['C2'] = []
+        self.FileOffset['g140h'] = {}
+        self.FileOffset['g140h']['f070lp'] = {}
+        self.FileOffset['g140h']['f070lp']['C1'] = []
+        self.FileOffset['g140h']['f070lp']['C2'] = []
+        self.FileOffset['g140h']['f100lp'] = {}
+        self.FileOffset['g140h']['f100lp']['C1'] = []
+        self.FileOffset['g140h']['f100lp']['C2'] = []
 
-        self.FileOffset['G235M'] = {}
-        self.FileOffset['G235M']['F170LP'] = {}
-        self.FileOffset['G235M']['F170LP']['C1'] = []
-        self.FileOffset['G235M']['F170LP']['C2'] = []
+        self.FileOffset['g235m'] = {}
+        self.FileOffset['g235m']['f170lp'] = {}
+        self.FileOffset['g235m']['f170lp']['C1'] = []
+        self.FileOffset['g235m']['f170lp']['C2'] = []
 
-        self.FileOffset['G235H'] = {}
-        self.FileOffset['G235H']['F170LP'] = {}
-        self.FileOffset['G235H']['F170LP']['C1'] = []
-        self.FileOffset['G235H']['F170LP']['C2'] = []
+        self.FileOffset['g235h'] = {}
+        self.FileOffset['g235h']['f170lp'] = {}
+        self.FileOffset['g235h']['f170lp']['C1'] = []
+        self.FileOffset['g235h']['f170lp']['C2'] = []
 
-        self.FileOffset['G395M'] = {}
-        self.FileOffset['G395M']['F290LP'] = {}
-        self.FileOffset['G395M']['F290LP']['C1'] = []
-        self.FileOffset['G395M']['F290LP']['C2'] = []
+        self.FileOffset['g395m'] = {}
+        self.FileOffset['g395m']['f290lp'] = {}
+        self.FileOffset['g395m']['f290lp']['C1'] = []
+        self.FileOffset['g395m']['f290lp']['C2'] = []
 
-        self.FileOffset['G395H'] = {}
-        self.FileOffset['G395H']['F290LP'] = {}
-        self.FileOffset['G395H']['F290LP']['C1'] = []
-        self.FileOffset['G395H']['F290LP']['C2'] = []
+        self.FileOffset['g395h'] = {}
+        self.FileOffset['g395h']['f290lp'] = {}
+        self.FileOffset['g395h']['f290lp']['C1'] = []
+        self.FileOffset['g395h']['f290lp']['C2'] = []
 
 
 #********************************************************************************
@@ -206,7 +206,7 @@ class FileTable():
                 if instrument == 'MIRI':
                     channel = input_model.meta.instrument.channel
                     subchannel = input_model.meta.instrument.band.lower()
-                    print('subchannel',subchannel)
+
             #________________________________________________________________________________
                     clenf = len(channel)
                     for k in range(clenf):
@@ -219,8 +219,8 @@ class FileTable():
                             self.FileOffset[channel[k]][subchannel]['C2'].append(dec_offset)
             #________________________________________________________________________________
                 elif instrument == 'NIRSPEC':
-                    fwa = input_model.meta.instrument.filter
-                    gwa = input_model.meta.instrument.grating
+                    fwa = input_model.meta.instrument.filter.lower()
+                    gwa = input_model.meta.instrument.grating.lower()
 
                     self.FileMap['NIRSPEC'][gwa][fwa].append(input_model)
                 else:
