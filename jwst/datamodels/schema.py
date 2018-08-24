@@ -212,11 +212,17 @@ def walk_schema(schema, callback, ctx={}):
     recurse(schema, [], None, ctx)
 
 
-def flatten_combiners(schema):
+def merge_property_trees(schema):
     """
-    Flattens the allOf and anyOf operations in a JSON schema.
+    Recursively merges property trees that are governed by the "allOf" combiner.
 
-    TODO: Write caveats -- there's a lot
+    The main purpose of this function is to allow multiple subschemas to be
+    combined into a single schema. All of the properties at each level of each
+    subschema are merged together to form a single coherent tree.
+
+    This allows datamodel schemas to be more modular, since various components
+    can be represented in individual files and then referenced elsewhere. They
+    are then combined by this function into a single schema data structure.
     """
     newschema = OrderedDict()
 
@@ -289,5 +295,5 @@ def read_schema(schema_file, extensions=None):
                                      resolver=file_resolver,
                                      resolve_references=True)
 
-    schema = flatten_combiners(schema)
+    schema = merge_property_trees(schema)
     return schema
