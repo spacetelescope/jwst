@@ -19,7 +19,7 @@ from ..transforms.models import (Rotation3DToGWA, DirCos2Unitless, Slit2Msa,
                                  Gwa2Slit, Unitless2DirCos, Logical, Slit, Snell,
                                  RefractionIndexFromPrism)
 
-from .util import not_implemented_mode, MissingMSAFileError
+from .util import (not_implemented_mode, MissingMSAFileError, velocity_correction)
 from . import pointing
 from ..datamodels import (CollimatorModel, CameraModel, DisperserModel, FOREModel,
                           IFUFOREModel, MSAModel, OTEModel, IFUPostModel, IFUSlicerModel,
@@ -728,6 +728,15 @@ def gwa_to_ifuslit(slits, input_model, disperser, reference_files):
     agreq = angle_from_disperser(disperser, input_model)
     lgreq = wavelength_from_disperser(disperser, input_model)
 
+    try:
+        velosys = input_model.meta.wcsinfo.velosys
+    except AttributeError:
+        pass
+    else:
+        if velosys is not None:
+            velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
+            lgreq = lgreq | velocity_corr
+            log.info("Applied Barycentric velocity correction : {}".format(velocity_corr[1].amplitude.value))
     # The wavelength units up to this point are
     # meters as required by the pipeline but the desired output wavelength units is microns.
     # So we are going to Scale the spectral units by 1e6 (meters -> microns)
@@ -808,6 +817,16 @@ def gwa_to_slit(open_slits, input_model, disperser, reference_files):
     agreq = angle_from_disperser(disperser, input_model)
     collimator2gwa = collimator_to_gwa(reference_files, disperser)
     lgreq = wavelength_from_disperser(disperser, input_model)
+
+    try:
+        velosys = input_model.meta.wcsinfo.velosys
+    except AttributeError:
+        pass
+    else:
+        if velosys is not None:
+            velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
+            lgreq = lgreq | velocity_corr
+            log.info("Applied Barycentric velocity correction : {}".format(velocity_corr[1].amplitude.value))
 
     # The wavelength units up to this point are
     # meters as required by the pipeline but the desired output wavelength units is microns.
@@ -1330,7 +1349,6 @@ def gwa_to_ymsa(msa2gwa_model, lam_cen=None, slit=None):
         ymin, ymax = slit.ymin, slit.ymax
     else:
         ymin, ymax = (-.55, .55)
-    log.info('ymin, ymax {} {}'.format(ymin, ymax))
     dy = np.linspace(ymin, ymax, nstep)
     dx = np.zeros(dy.shape)
     if lam_cen is not None:

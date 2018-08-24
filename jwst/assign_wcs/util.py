@@ -11,7 +11,7 @@ from astropy.utils.misc import isiterable
 from astropy.io import fits
 from astropy.modeling import models as astmodels
 from astropy.table import QTable
-
+from astropy.constants import c
 
 from gwcs import WCS
 from gwcs.wcstools import wcs_from_fiducial, grid_from_bounding_box
@@ -25,7 +25,7 @@ from ..datamodels import WavelengthrangeModel, DataModel, CubeModel, IFUCubeMode
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-__all__ = ["reproject", "wcs_from_footprints"]
+__all__ = ["reproject", "wcs_from_footprints", "velocity_correction"]
 
 
 class MissingMSAFileError(Exception):
@@ -614,3 +614,19 @@ def update_s_region_keyword(model, footprint):
     else:
         model.meta.wcsinfo.s_region = s_region
         log.info("Update S_REGION to {}".format(model.meta.wcsinfo.s_region))
+
+
+def velocity_correction(velosys):
+    """
+    Compute wavelength correction to Barycentric reference frame.
+
+    Parameters
+    ----------
+    velosys : float
+        Radial velocity wrt Barycenter [m / s].
+    """
+    correction = (1 / (1 + velosys / c.value))
+    model =  astmodels.Identity(1) * astmodels.Const1D(correction, name="velocity_correction")
+    model.inverse = astmodels.Identity(1) / astmodels.Const1D(correction, name="inv_vel_correciton")
+
+    return model

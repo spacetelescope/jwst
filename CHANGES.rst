@@ -13,6 +13,9 @@ assign_wcs
 - Fixed a bug in computing the slit_y locations for Nirspec MSA
   slitlets with more than one shutter.                           [#2325]
 
+- Added a wavelength correction for the effective velocity of JWST
+  relative to the barycenter.                                  [#2359, #2406]
+
 associations
 ------------
 
@@ -195,6 +198,8 @@ tso_photometry
 
 tweakreg
 --------
+
+- Fixed the coordinate frames in the output of tweakreg. [#2404]
 
 wfs_combine
 -----------
