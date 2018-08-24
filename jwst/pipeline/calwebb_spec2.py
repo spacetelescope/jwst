@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 from collections import defaultdict
 import os.path as op
 import traceback
@@ -245,29 +244,26 @@ class Spec2Pipeline(Pipeline):
             input = self.barshadow(input)
 
         # Apply flux calibration
-        input = self.photom(input)
+        result = self.photom(input)
 
         # Record ASN pool and table names in output
-        input.meta.asn.pool_name = pool_name
-        input.meta.asn.table_name = op.basename(asn_file)
+        result.meta.asn.pool_name = pool_name
+        result.meta.asn.table_name = op.basename(asn_file)
 
         # Setup to save the calibrated exposure at end of step.
-        self.suffix = 'cal'
         if tso_mode:
             self.suffix = 'calints'
+        else:
+            self.suffix = 'cal'
 
         # Produce a resampled product, either via resample_spec for
         # "regular" spectra or cube_build for IFU data. No resampled
         # product is produced for time-series modes.
-        if input.meta.exposure.type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC']:
+        if exp_type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'MIR_LRS-FIXEDSLIT']:
 
-            # Call the resample_spec step
+            # Call the resample_spec step for slit data
             self.resample_spec.suffix = 's2d'
-            resamp = self.resample_spec(input)
-
-            # Pass the resampled data to 1D extraction
-            x1d_input = resamp.copy()
-            resamp.close()
+            rectified_result = self.resample_spec(result)
 
         elif exp_type in ['MIR_MRS', 'NRS_IFU']:
 
@@ -277,29 +273,22 @@ class Spec2Pipeline(Pipeline):
             self.cube_build.output_type = 'multi'
             self.cube_build.suffix = 's3d'
             self.cube_build.save_results = False
-            cube = self.cube_build(input)
-            self.save_model(cube[0], 's3d')
-
-            # Pass the cube along for input to 1D extraction
-            x1d_input = cube.copy()
-            cube.close()
-
-        else:
-            # Pass the unresampled cal product to 1D extraction
-            x1d_input = input
+            rectified_result = self.cube_build(result)
+            self.save_model(rectified_result[0], 's3d')
 
         # Extract a 1D spectrum from the 2D/3D data
-        self.extract_1d.suffix = 'x1d'
         if tso_mode:
             self.extract_1d.suffix = 'x1dints'
-        x1d_output = self.extract_1d(x1d_input)
+        else:
+            self.extract_1d.suffix = 'x1d'
+        x1d_result = self.extract_1d(rectified_result)
 
-        x1d_input.close()
-        input.close()
-        x1d_output.close()
+        rectified_result.close()
+        x1d_result.close()
 
         # That's all folks
         self.log.info(
             'Finished processing product {}'.format(exp_product['name'])
         )
-        return input
+
+        return result
