@@ -18,7 +18,7 @@ from astropy import time
 from .. import util, validate
 from .. import (DataModel, ImageModel, RampModel, MaskModel,
                 MultiSlitModel, AsnModel, CollimatorModel)
-from ..schema import flatten_combiners
+from ..schema import merge_property_trees
 
 from asdf import schema as mschema
 
@@ -586,7 +586,7 @@ def test_multislit_append_string():
 
 
 @pytest.mark.parametrize('combiner', ['anyOf', 'oneOf'])
-def test_flatten_combiners(combiner):
+def test_merge_property_trees(combiner):
 
     s = {
          'type': 'object',
@@ -614,6 +614,6 @@ def test_flatten_combiners(combiner):
          }
     }
 
-    # Make sure that flatten_combiners does not destructively modify schemas
-    f = flatten_combiners(s)
+    # Make sure that merge_property_trees does not destructively modify schemas
+    f = merge_property_trees(s)
     assert f == s
