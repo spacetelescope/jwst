@@ -160,6 +160,13 @@ refpix
 resample
 --------
 
+- Fixed spectral resampling so the 2D output for MIRI LRS and NIRSpec MSA
+  has the correct orientation and a dispersion that matches the input, i.e.
+  non-linear if a prism is in the optical path. [#2348]
+
+- Fixed bug in spectral resampling of MIRI LRS where the interpolation of the
+  dispersion was failing. [#2422]
+
 reset
 -----
 
