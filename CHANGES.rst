@@ -151,6 +151,8 @@ pipeline
 - Fixed a typo in calspec2 which prevented the srctype
   step from running. [#2318]
 
+- Enable resample_spec to run on MIRI fixed slit data in calspec2 [#2424]
+
 ramp_fitting
 ------------
 
