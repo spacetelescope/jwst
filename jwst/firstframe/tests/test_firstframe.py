@@ -1,5 +1,4 @@
 import numpy as np
-import pytest
 
 from jwst.datamodels.miri_ramp import MIRIRampModel
 from jwst.datamodels import dqflags
