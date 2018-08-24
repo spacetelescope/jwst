@@ -16,9 +16,7 @@ from datetime import datetime
 import numpy as np
 
 # LOCAL
-from . wcsimage import *
-from . import __version__
-from . import __vdate__
+from . wcsimage import (WCSGroupCatalog, WCSImageCatalog, RefCatalog)
 
 
 __all__ = ['align', 'overlap_matrix', 'max_overlap_pair', 'max_overlap_image']
@@ -136,7 +134,6 @@ def align(imcat, refcat=None, enforce_user_order=True,
     log.info(" ")
     log.info("***** {:s}.{:s}() started on {}"
              .format(__name__, function_name, runtime_begin))
-    log.info("      Version {} ({})".format(__version__, __vdate__))
     log.info(" ")
 
     # check fitgeom:
@@ -325,7 +322,6 @@ def max_overlap_pair(images, enforce_user_order):
         return (im1, im2)
 
     m = overlap_matrix(images)
-    imgs = [f.name for f in images]
     n = m.shape[0]
     index = m.argmax()
     i = index / n
@@ -386,7 +382,6 @@ def max_overlap_image(refimage, images, enforce_user_order):
         empty - `None` is returned.
 
     """
-    nimg = len(images)
     if len(images) < 1:
         return None
 

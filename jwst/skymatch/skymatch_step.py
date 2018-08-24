@@ -11,7 +11,7 @@ import collections
 import numpy as np
 import logging
 
-from ..stpipe import Step, cmdline
+from ..stpipe import Step
 from .. import datamodels
 
 try:

@@ -3,28 +3,18 @@ A module that provides functions for matching sky in overlapping images.
 
 :Authors: Mihai Cara
 
-:License: :doc:`../LICENSE`
-
 """
-
-# STDLIB
-import os
-import sys
 import logging
 from datetime import datetime
-
-# THIRD PARTY
 import numpy as np
 
 # LOCAL
-from . skystatistics import SkyStats
-from . skyimage import *
+from . skyimage import SkyImage, SkyGroup
 
 
 __all__ = ['match']
 
-__version__ = '0.9.3'
-__vdate__ = '07-April-2017'
+
 __author__ = 'Mihai Cara'
 
 
@@ -251,7 +241,6 @@ stsci_python_sphinxdocs_2.13/drizzlepac/astrodrizzle.html>`_\ .
     log.info(" ")
     log.info("***** {:s}.{:s}() started on {}"
              .format(__name__, function_name, runtime_begin))
-    log.info("      Version {} ({})".format(__version__, __vdate__))
     log.info(" ")
 
     # check sky method:

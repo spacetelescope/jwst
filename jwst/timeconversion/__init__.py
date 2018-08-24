@@ -78,7 +78,6 @@ def read_jwst_ephemeris(times):
     start = f.tell()
     time1, position1 = parse_jwst_ephem_line(f.readline())
     time2, position2 = parse_jwst_ephem_line(f.readline())
-    l1 = f.readline()
     f.seek(1, os.SEEK_END)
     end = f.tell()
     starttime = atime.Time(mdict['START_TIME']).jd
