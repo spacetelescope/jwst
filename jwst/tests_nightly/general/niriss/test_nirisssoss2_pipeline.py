@@ -30,7 +30,7 @@ def test_nirisssoss2pipeline1(_bigdata):
 
     # Compare the _calints products
     n_cr = 'jw10003001002_03101_00001-seg003_nis_calints.fits'
-    n_ref = _bigdata+'pipelines/jw10003001002_03101_00001-seg003_nis_calints_ref.fits'
+    n_ref = _bigdata+'/pipelines/jw10003001002_03101_00001-seg003_nis_calints_ref.fits'
     h = pf.open(n_cr)
     href = pf.open(n_ref)
     result = pf.diff.FITSDiff(
