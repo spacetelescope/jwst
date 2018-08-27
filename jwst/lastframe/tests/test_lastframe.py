@@ -25,7 +25,7 @@ def test_lastframe_set_groupdq():
     # create a JWST datamodel for MIRI data
     dm_ramp = MIRIRampModel(data=data, groupdq=groupdq)
 
-    # run the first frame correction step
+    # run the last frame correction step
     dm_ramp_lastframe = do_correction(dm_ramp)
 
     # check that the difference in the groupdq flags is equal to
@@ -69,11 +69,11 @@ def test_lastframe_ngroup2():
     # create a JWST datamodel for MIRI data
     dm_ramp = MIRIRampModel(data=data, groupdq=groupdq)
 
-    # run the first frame correction step
+    # run the last frame correction step
     dm_ramp_lastframe = do_correction(dm_ramp)
 
     # check that the difference in the groupdq flags is equal to
-    #   the 'do_not_use' flag
+    #   zero
     dq_diff = dm_ramp_lastframe.groupdq[0, ngroups - 1, :, :] - dm_ramp.groupdq[0, ngroups - 1, :, :]
 
     np.testing.assert_array_equal(np.full((ysize, xsize),
@@ -103,11 +103,11 @@ def test_lastframe_single_group():
     # create a JWST datamodel for MIRI data
     dm_ramp = MIRIRampModel(data=data, groupdq=groupdq)
 
-    # run the first frame correction step
+    # run the last frame correction step
     dm_ramp_lastframe = do_correction(dm_ramp)
 
     # check that the difference in the groupdq flags is equal to
-    #   the 'do_not_use' flag
+    #   zero
 
     dq_diff = dm_ramp_lastframe.groupdq[0, 0, :, :] - dm_ramp.groupdq[0, 0, :, :]
     
@@ -141,7 +141,7 @@ def test_lastframe_add1_groupdq():
     # set a flag in the groupdq, first frame
     dm_ramp.groupdq[0, ngroups-1, 500:510, 500:510] = 4
 
-    # run the first frame correction step
+    # run the last frame correction step
     dm_ramp_lastframe = do_correction(dm_ramp)
 
     # test if pixels in groupdq were incremented in value by 1
