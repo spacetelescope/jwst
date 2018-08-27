@@ -1,4 +1,4 @@
- #! /usr/bin/env python
+#! /usr/bin/env python 
 from ..stpipe import Step
 from .. import datamodels
 from . import cube_build
@@ -6,7 +6,8 @@ from . import ifu_cube
 from . import data_types
 from ..assign_wcs.util import update_s_region_keyword
 
-__all__ = ["CubeBuildStep", "read_user_input"]
+
+__all__ = ["CubeBuildStep"]
 
 class CubeBuildStep (Step):
     """
@@ -17,16 +18,15 @@ class CubeBuildStep (Step):
     """
 
     spec = """
-         channel = option('1','2','3','4','ALL','all',default='ALL') # Options: 1,2,3,4,or All
-         band = option('SHORT','MEDIUM','LONG','ALL','short','medium','long','all',default='ALL') # Options: \
-SHORT,MEDIUM,LONG, or ALL
-         grating   = option('PRISM','G140M','G140H','G235M','G235H',G395M','G395H','ALL','all',default='ALL')  # Options: PRISM,G140M,G140H,G235M,G235H,G395M,G395H, or ALL
-         filter   = option('CLEAR','F100LP','F070LP','F170LP','F290LP','ALL','all',default='ALL') # Options: CLEAR,F100LP,F070LP,F170LP,F290LP, or ALL
+         channel = option('1','2','3','4','all',default='all') # Options: 1,2,3,4, or all
+         band = option('short','medium','long','all',default='all') # Options: short, medium, long, all
+         grating   = option('prism','g140m','g140h','g235m','g235h',g395m','g395h','all',default='all') # Options: prism,g140m,g140h,g235m,g235h,g395m,g395h, or all
+         filter   = option('clear','f100lp','f070lp','g170lp','f290lp','all',default='all') # Options: clear,f100lp,f070lp,g170lp,f290lp, or all
          scale1 = float(default=0.0) # cube sample size to use for axis 1, arc seconds
          scale2 = float(default=0.0) # cube sample size to use for axis 2, arc seconds
          scalew = float(default=0.0) # cube sample size to use for axis 3, microns
-         weighting = option('msm','miripsf','area','MSM','MIRIPSF','AREA',default = 'msm') # Type of weighting function,
-         coord_system = option('ra-dec','alpha-beta','ALPHA-BETA',default='ra-dec') # Output Coordinate system. Options: ra-dec or alpha-beta
+         weighting = option('msm','miripsf','area',default = 'msm') # Type of weighting function,
+         coord_system = option('world','alpha-beta',default='world') # Output Coordinate system. Options: world or alpha-beta
          rois = float(default=0.0) # region of interest spatial size, arc seconds
          roiw = float(default=0.0) # region of interest wavelength size, microns
          weight_power = float(default=2.0) # Weighting option to use for Modified Shepard Method
@@ -53,9 +53,9 @@ SHORT,MEDIUM,LONG, or ALL
         # print('self suffix',self.suffix)
         self.suffix = 's3d' # override suffix = cube_build
 
-        if(not self.subchannel.isupper()): self.subchannel = self.subchannel.upper()
-        if(not self.filter.isupper()): self.filter = self.filter.upper()
-        if(not self.grating.isupper()): self.grating = self.grating.upper()
+        if(not self.subchannel.islower()): self.subchannel = self.subchannel.lower()
+        if(not self.filter.islower()): self.filter = self.filter.lower()
+        if(not self.grating.islower()): self.grating = self.grating.lower()
         if(not self.coord_system.islower()): self.coord_system = self.coord_system.lower()
         if(not self.output_type.islower()): self.output_type = self.output_type.lower()
         if(not self.weighting.islower()): self.weighting = self.weighting.lower()
@@ -94,7 +94,7 @@ SHORT,MEDIUM,LONG, or ALL
 
         # valid coord_system:
         # 1. alpha-beta (only valid for MIRI Single Cubes)
-        # 2. ra-dec
+        # 2. world
         self.interpolation = 'pointcloud' # true for self.weighting  = 'msm' or 'miripsf'
 
         # if the weighting is area then interpolation is area
@@ -109,7 +109,7 @@ SHORT,MEDIUM,LONG, or ALL
         # if interpolation is point cloud then weighting can be
         # 1. MSM: modified shepard method
         # 2. miripsf - weighting for MIRI based on PSF and LSF
-        if self.coord_system == 'ra-dec':
+        if self.coord_system == 'world':
             self.interpolation = 'pointcloud'  # can not be area
 
         self.log.info('Input interpolation: %s', self.interpolation)
@@ -131,7 +131,7 @@ SHORT,MEDIUM,LONG, or ALL
 
         self.pars_input['filter'] = []   # input parameter
         self.pars_input['grating'] = []  # input parameter
-        read_user_input(self)  # see if options channel, band,grating filter are set
+        self.read_user_input()  # see if options channel, band,grating filter are set
                                # is they are then self.output_type = 'user'
                                # if they are filling par_input with values
 #________________________________________________________________________________
@@ -193,7 +193,7 @@ SHORT,MEDIUM,LONG, or ALL
             'offset_list': self.offset_list}
 
 # shove the input parameters in to pars_cube to pull out ifu_cube.py
-# these parameters are related to the IFUCube
+# these parameters are related to the building a single ifucube_model
         pars_cube = {
             'scale1': self.scale1,
             'scale2': self.scale2,
@@ -239,7 +239,7 @@ SHORT,MEDIUM,LONG, or ALL
 # or (grating,filter)
 
         num_cubes, cube_pars = cubeinfo.number_cubes()
-        self.log.info('Number of IFUCubes produced by a this run %i', num_cubes)
+        self.log.info('Number of ifucubes produced by a this run %i', num_cubes)
 
         cube_container = datamodels.ModelContainer() # ModelContainer of ifucubes
 
@@ -263,7 +263,7 @@ SHORT,MEDIUM,LONG, or ALL
 
 #________________________________________________________________________________
 
-            thiscube.setup_cube() # basic checks and get roi size
+            thiscube.check_ifucube() # basic checks and get roi size
 
 # find the min & max final coordinates of cube: map each slice to cube
 # add any dither offsets, then find the min & max value in each dimension
@@ -295,147 +295,150 @@ SHORT,MEDIUM,LONG, or ALL
         return cube_container
 
 #********************************************************************************
-class InputFileError(Exception):
-    pass
 
-#********************************************************************************
 # Read in the User input options for Channel, Subchannel, Filter, Grating
 
-def read_user_input(self):
-    """
-    Short Summary
-    -------------
-    figure out if any of the input paramters channel,band,filter or grating
-    have been set. If they have been  check that they are valid and fill in
-    input_pars paramters
+    def read_user_input(self):
+        """
+        Short Summary
+        -------------
+        figure out if any of the input paramters channel,band,filter or grating
+        have been set. If they have been  check that they are valid and fill in
+        input_pars paramters
 
-    Parameters
-    ----------
-    none
+        Parameters
+        ----------
+        none
 
-    Returns
-    -------
-    self.pars_input['channel']
-    self.pars_input['sub_channel']
-    self.pars_input['grating']
-    self.pars_input['filter']
+        Returns
+        -------
+        self.pars_input['channel']
+        self.pars_input['sub_channel']
+        self.pars_input['grating']
+        self.pars_input['filter']
 
-    """
-    ValidChannel = ['1', '2', '3', '4', 'ALL']
-    ValidSubChannel = ['SHORT', 'MEDIUM', 'LONG', 'ALL']
-    ValidFWA = ['F070LP', 'F100LP', 'F100LP', 'F170LP',
-                    'F170LP', 'F290LP', 'F290LP', 'CLEAR', 'ALL']
-    ValidGWA = ['G140M', 'G140H', 'G140M', 'G140H', 'G235M', 'G235H',
-                    'G395M', 'G395H', 'PRISM', 'ALL']
+        """
+        valid_channel = ['1', '2', '3', '4', 'all']
+        valid_subchannel = ['short', 'medium', 'long', 'all']
+#        valid_fwa = ['f070lp', 'f100lp', 'f100lp', 'g170lp',
+#                    'g170lp', 'f290lp', 'f290lp', 'clear', 'all']
+#        valid_gwa = ['g140m', 'g140h', 'G140M', 'g140h', 'g235m', 'g235h',
+#                    'g395m', 'g395h', 'prism', 'all']
+
+        valid_fwa = ['f070lp', 'f100lp', 'g170lp',
+                    'g170lp', 'f290lp', 'clear', 'all']
+        valid_gwa = ['g140m', 'g140h', 'g235m', 'g235h',
+                     'g395m', 'g395h', 'prism', 'all']
 
 #________________________________________________________________________________
-    # for MIRI we can set the channel
-# if set to ALL then let the DetermineCubeCoverage figure out the data we have and set
+# for MIRI we can set the channel
+# if set to all then let the DetermineCubeCoverage figure out the data we have and set
 # self.channel to empty
-    if self.channel == 'ALL':
-        self.channel = ''
+        if self.channel == 'all':
+            self.channel = ''
 
-    if self.channel:  # self.channel is false if it is empty
-        if not self.single:
-            self.output_type = 'user'
-        channellist = self.channel.split(',')
-        user_clen = len(channellist)
+        if self.channel:  # self.channel is false if it is empty
+            if not self.single:
+                self.output_type = 'user'
+            channellist = self.channel.split(',')
+            user_clen = len(channellist)
 
-        for j in range(user_clen):
-            ch = channellist[j]
-            if(user_clen > 1):
-                ch = ch.strip('[')
-                ch = ch.strip(']')
-                ch = ch.strip(' ')
-                ch = ch[1:-1]
-            ch = str(ch)
+            for j in range(user_clen):
+                ch = channellist[j]
+                if(user_clen > 1):
+                    ch = ch.strip('[')
+                    ch = ch.strip(']')
+                    ch = ch.strip(' ')
+                    ch = ch[1:-1]
+                ch = str(ch)
 
-            if ch in ValidChannel:
-                self.pars_input['channel'].append(ch)
-            else:
-                raise ErrorInvalidParameter("Invalid Channel %s", ch)
+                if ch in valid_channel:
+                    self.pars_input['channel'].append(ch)
+                else:
+                    raise ErrorInvalidParameter("Invalid Channel %s", ch)
 # remove duplicates if needed
-        self.pars_input['channel'] = list(set(self.pars_input['channel']))
+            self.pars_input['channel'] = list(set(self.pars_input['channel']))
 
 #________________________________________________________________________________
-    # for MIRI we can set the subchannel
-# if set to ALL then let the DetermineCubeCoverage figure out the data we have and set
+# for MIRI we can set the subchannel
+# if set to all then let the DetermineCubeCoverage figure out the data we have and set
 # self.subchannel = empty
 
-    if self.subchannel == 'ALL':
-        self.subchannel = ''
 
-    if self.subchannel: #  not empty it has been set
-        if not self.single:
-            self.output_type = 'user'
-        subchannellist = self.subchannel.split(',')
-        user_blen = len(subchannellist)
-        for j in range(user_blen):
-            b = subchannellist[j]
-            if user_blen > 1:
-                b = b.strip('[')
-                b = b.strip(']')
-                b = b.strip(' ')
-                b = b[1:-1]
-            b = str(b)
-            if b in ValidSubChannel:
-                self.pars_input['subchannel'].append(b)
-            else:
-                raise ErrorInvalidParameter("Invalid Subchannel %s", b)
+        if self.subchannel == 'all':
+            self.subchannel = ''
+
+        if self.subchannel: #  not empty it has been set
+            if not self.single:
+                self.output_type = 'user'
+            subchannellist = self.subchannel.split(',')
+            user_blen = len(subchannellist)
+            for j in range(user_blen):
+                b = subchannellist[j]
+                if user_blen > 1:
+                    b = b.strip('[')
+                    b = b.strip(']')
+                    b = b.strip(' ')
+                    b = b[1:-1]
+                b = str(b)
+                if b in valid_subchannel:
+                    self.pars_input['subchannel'].append(b)
+                else:
+                    raise ErrorInvalidParameter("Invalid Subchannel %s", b)
 # remove duplicates if needed
-        self.pars_input['subchannel'] = list(set(self.pars_input['subchannel']))
+            self.pars_input['subchannel'] = list(set(self.pars_input['subchannel']))
 #________________________________________________________________________________
-    # for NIRSPEC we can set the filter
-# if set to ALL then let the DetermineCubeCoverage figure out the data we have and set
+# for NIRSPEC we can set the filter
+# if set to all then let the DetermineCubeCoverage figure out the data we have and set
 # self.filter = empty
-    if self.filter == 'ALL':
-        self.filter = ''
-    if self.filter:
-        if not self.single:
-            self.output_type = 'user'
-        filterlist = self.filter.split(',')
-        user_flen = len(filterlist)
-        for j in range(user_flen):
-            f = filterlist[j]
-            if user_flen > 1:
-                f = f.strip('[')
-                f = f.strip(']')
-                f = f.strip(' ')
-                f = f[1:-1]
-            f = str(f)
-            if f in ValidFWA:
-                self.pars_input['filter'].append(f)
-            else:
-                raise ErrorInvalidParameter("Invalid Filter %s", f)
+        if self.filter == 'all':
+            self.filter = ''
+        if self.filter:
+            if not self.single:
+                self.output_type = 'user'
+            filterlist = self.filter.split(',')
+            user_flen = len(filterlist)
+            for j in range(user_flen):
+                f = filterlist[j]
+                if user_flen > 1:
+                    f = f.strip('[')
+                    f = f.strip(']')
+                    f = f.strip(' ')
+                    f = f[1:-1]
+                f = str(f)
+                if f in valid_fwa:
+                    self.pars_input['filter'].append(f)
+                else:
+                    raise ErrorInvalidParameter("Invalid Filter %s", f)
 # remove duplicates if needed
-        self.pars_input['filter'] = list(set(self.pars_input['filter']))
+            self.pars_input['filter'] = list(set(self.pars_input['filter']))
 #________________________________________________________________________________
-    # for NIRSPEC we can set the grating
-# if set to ALL then let the DetermineCubeCoverage figure out the data we have and set
+# for NIRSPEC we can set the grating
+# if set to all then let the DetermineCubeCoverage figure out the data we have and set
 # self.grating = empty
-    if self.grating == 'ALL':
-        self.grating = ''
+        if self.grating == 'all':
+            self.grating = ''
 
-    if self.grating:
-        if not self.single:
-            self.output_type = 'user'
-        gratinglist = self.grating.split(',')
-        user_glen = len(gratinglist)
-        for j in range(user_glen):
+        if self.grating:
+            if not self.single:
+                self.output_type = 'user'
+            gratinglist = self.grating.split(',')
+            user_glen = len(gratinglist)
+            for j in range(user_glen):
 
-            g = gratinglist[j]
-            if user_glen > 1:
-                g = g.strip('[')
-                g = g.strip(']')
-                g = g.strip(' ')
-                g = g[1:-1]
-            g = str(g)
-            if g in ValidGWA:
-                self.pars_input['grating'].append(g)
-            else:
-                raise ErrorInvalidParameter("Invalid Grating %s", g)
+                g = gratinglist[j]
+                if user_glen > 1:
+                    g = g.strip('[')
+                    g = g.strip(']')
+                    g = g.strip(' ')
+                    g = g[1:-1]
+                g = str(g)
+                if g in valid_gwa:
+                    self.pars_input['grating'].append(g)
+                else:
+                    raise ErrorInvalidParameter("Invalid Grating %s", g)
 # remove duplicates if needed
-        self.pars_input['grating'] = list(set(self.pars_input['grating']))
+            self.pars_input['grating'] = list(set(self.pars_input['grating']))
 #________________________________________________________________________________
 class ErrorInvalidParameter(Exception):
     pass

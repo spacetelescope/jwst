@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 class CubeData():
-# CubeData - holds all the important informtion for IFU Cube Building:
+# CubeData - holds all the important information for IFU Cube Building:
 # wcs, data, reference data
 
     def __init__(self,
@@ -50,7 +50,7 @@ class CubeData():
         """
         Short Summary
         -------------
-        Set up the IFU cube
+        Set up overall structure of the cubes to be created
         Read in the input_models and fill in the dictionary master_table that stores
         the files for each channel/subchannel or grating/filter
 
@@ -77,7 +77,8 @@ class CubeData():
 
         if self.offset_list != 'NA':
             log.info('Going to read in dither offset list')
-            cube_build_io_util.read_offset_file(self)
+            self.ra_offset, self.dec_offset = \
+                cube_build_io_util.read_offset_file(self.offset_list)
 #________________________________________________________________________________
 # Read in the input data (association table or single file)
 # Fill in MasterTable   based on Channel/Subchannel  or filter/grating
@@ -111,14 +112,24 @@ class CubeData():
         # fill in the appropriate fields in InstrumentInfo
         # with the cube parameters
         log.info('Reading  cube parameter file %s', self.par_filename)
-        cube_build_io_util.read_cubepars(self, instrument_info)
+        cube_build_io_util.read_cubepars(self.par_filename,
+                                         self.instrument,
+                                         self.all_channel,
+                                         self.all_subchannel,
+                                         self.all_grating,
+                                         self.all_filter,
+                                         instrument_info)
 #--------------------------------------------------------------------------------
         # Load the miri resolution ref file data model -
         # fill in the appropriate fields in instrument_info
         # with the cube parameters
         if(self.weighting == 'miripsf'):
             log.info('Reading default MIRI cube resolution file %s', self.resol_filename)
-            cube_build_io_util.read_resolution_file(self, instrument_info)
+            cube_build_io_util.read_resolution_file(self.resol_filename,
+                                                    self.channel,
+                                                    self.all_channel,
+                                                    self.all_subchannel,
+                                                    instrument_info)
 #________________________________________________________________________________
         self.instrument_info = instrument_info
 #________________________________________________________________________________
@@ -158,11 +169,11 @@ class CubeData():
 # loop over the file names
 
         if self.instrument == 'MIRI':
-            ValidChannel = ['1', '2', '3', '4']
-            ValidSubchannel = ['SHORT', 'MEDIUM', 'LONG']
+            valid_channel = ['1', '2', '3', '4']
+            valid_subchannel = ['short', 'medium', 'long']
 
-            nchannels = len(ValidChannel)
-            nsubchannels = len(ValidSubchannel)
+            nchannels = len(valid_channel)
+            nsubchannels = len(valid_subchannel)
 #________________________________________________________________________________
         # for MIRI we can set the channel and subchannel
             user_clen = len(self.channel)
@@ -170,34 +181,34 @@ class CubeData():
 #________________________________________________________________________________
             for i in range(nchannels):
                 for j in range(nsubchannels):
-                    nfiles = len(master_table.FileMap['MIRI'][ValidChannel[i]][ValidSubchannel[j]])
+                    nfiles = len(master_table.FileMap['MIRI'][valid_channel[i]][valid_subchannel[j]])
                     if nfiles > 0:
 #________________________________________________________________________________
         # neither parameters not set
                         if user_clen == 0 and user_slen == 0:
-                            self.all_channel.append(ValidChannel[i])
-                            self.all_subchannel.append(ValidSubchannel[j])
+                            self.all_channel.append(valid_channel[i])
+                            self.all_subchannel.append(valid_subchannel[j])
 #________________________________________________________________________________
 # channel was set by user but not sub-channel
                         elif user_clen != 0 and user_slen == 0:
                         # now check if this channel was set by user
-                            if (ValidChannel[i] in self.channel):
-                                self.all_channel.append(ValidChannel[i])
-                                self.all_subchannel.append(ValidSubchannel[j])
+                            if (valid_channel[i] in self.channel):
+                                self.all_channel.append(valid_channel[i])
+                                self.all_subchannel.append(valid_subchannel[j])
 #________________________________________________________________________________
 # sub-channel was set by user but not channel
                         elif user_clen == 0 and user_slen != 0:
-                            if (ValidSubchannel[j] in self.subchannel):
-                                self.all_channel.append(ValidChannel[i])
-                                self.all_subchannel.append(ValidSubchannel[j])
+                            if (valid_subchannel[j] in self.subchannel):
+                                self.all_channel.append(valid_channel[i])
+                                self.all_subchannel.append(valid_subchannel[j])
 #________________________________________________________________________________
 # both parameters set
                         else:
-                            if (ValidChannel[i] in self.channel and
-                                ValidSubchannel[j] in self.subchannel):
+                            if (valid_channel[i] in self.channel and
+                                valid_subchannel[j] in self.subchannel):
 
-                                self.all_channel.append(ValidChannel[i])
-                                self.all_subchannel.append(ValidSubchannel[j])
+                                self.all_channel.append(valid_channel[i])
+                                self.all_subchannel.append(valid_subchannel[j])
 
             log.info('The desired cubes covers the MIRI Channels: %s',
                      self.all_channel)
@@ -209,20 +220,20 @@ class CubeData():
 
             if number_channels == 0:
                 raise ErrorNoChannels(
-                    "The cube  does not cover any channels, change parameter channel")
+                    "The cube  does not cover any channels, change channel parameter")
             if number_subchannels == 0:
                 raise ErrorNoSubchannels(
-                    "The cube  does not cover any subchannels, change parameter subchannel")
+                    "The cube does not cover any subchannels, change band parameter")
 
 #______________________________________________________________________
         if self.instrument == 'NIRSPEC':
-        # 1 to 1 mapping VALIDGWA[i] -> VALIDFWA[i]
-            ValidGWA = ['G140M', 'G140H', 'G140M', 'G140H', 'G235M', 'G235H',
-                        'G395M', 'G395H', 'PRISM']
-            ValidFWA = ['F070LP', 'F070LP', 'F100LP', 'F100LP', 'F170LP',
-                        'F170LP', 'F290LP', 'F290LP', 'CLEAR']
+        # 1 to 1 mapping valid_gwa[i] -> valid_fwa[i]
+            valid_gwa = ['g140m', 'g140h', 'g140m', 'g140h', 'g235m', 'g235h',
+                        'g395m', 'g395h', 'prism']
+            valid_fwa = ['f070lp', 'f070lp', 'f100lp', 'f100lp', 'f170lp',
+                        'f170lp', 'f290lp', 'f290lp', 'clear']
 
-            nbands = len(ValidFWA)
+            nbands = len(valid_fwa)
 #________________________________________________________________________________
         # check if input filter or grating has been set
             user_glen = len(self.grating)
@@ -238,31 +249,31 @@ class CubeData():
             if user_glen == 0 and user_flen == 0:
                 for i in range(nbands):
 
-                    nfiles = len(master_table.FileMap['NIRSPEC'][ValidGWA[i]][ValidFWA[i]])
+                    nfiles = len(master_table.FileMap['NIRSPEC'][valid_gwa[i]][valid_fwa[i]])
                     if nfiles > 0:
-                        self.all_grating.append(ValidGWA[i])
-                        self.all_filter.append(ValidFWA[i])
+                        self.all_grating.append(valid_gwa[i])
+                        self.all_filter.append(valid_fwa[i])
 
         # Both filter and grating input parameter have been set
         # Find the files that have these parameters set
 
             else:
                 for i in range(nbands):
-                    nfiles = len(master_table.FileMap['NIRSPEC'][ValidGWA[i]][ValidFWA[i]])
+                    nfiles = len(master_table.FileMap['NIRSPEC'][valid_gwa[i]][valid_fwa[i]])
                     if nfiles > 0:
                         # now check if THESE Filter and Grating input parameters were set
-                        if (ValidFWA[i] in self.filter and
-                            ValidGWA[i] in self.grating):
-                            self.all_grating.append(ValidGWA[i])
-                            self.all_filter.append(ValidFWA[i])
+                        if (valid_fwa[i] in self.filter and
+                            valid_gwa[i] in self.grating):
+                            self.all_grating.append(valid_gwa[i])
+                            self.all_filter.append(valid_fwa[i])
 
             number_filters = len(self.all_filter)
             number_gratings = len(self.all_grating)
 
             if number_filters == 0:
-                raise ErrorNoFilters("The cube  does not cover any filters")
+                raise ErrorNoFilters("The cube does not cover any filters")
             if number_gratings == 0:
-                raise ErrorNoGratings("The cube  does not cover any gratings")
+                raise ErrorNoGratings("The cube does not cover any gratings")
 
 #______________________________________________________________________
 # Determine the number of cubes going to create based on:
