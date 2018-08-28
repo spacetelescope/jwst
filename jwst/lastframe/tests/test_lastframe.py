@@ -138,7 +138,7 @@ def test_lastframe_add1_groupdq():
     # create a JWST datamodel for MIRI data
     dm_ramp = MIRIRampModel(data=data, groupdq=groupdq)
 
-    # set a flag in the groupdq, first frame
+    # set a flag in the groupdq, last frame
     dm_ramp.groupdq[0, ngroups-1, 500:510, 500:510] = 4
 
     # run the last frame correction step
