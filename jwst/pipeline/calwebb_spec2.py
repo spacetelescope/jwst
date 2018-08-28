@@ -263,7 +263,7 @@ class Spec2Pipeline(Pipeline):
 
             # Call the resample_spec step for slit data
             self.resample_spec.suffix = 's2d'
-            rectified_result = self.resample_spec(result)
+            result_extra = self.resample_spec(result)
 
         elif exp_type in ['MIR_MRS', 'NRS_IFU']:
 
@@ -273,17 +273,19 @@ class Spec2Pipeline(Pipeline):
             self.cube_build.output_type = 'multi'
             self.cube_build.suffix = 's3d'
             self.cube_build.save_results = False
-            rectified_result = self.cube_build(result)
-            self.save_model(rectified_result[0], 's3d')
+            result_extra = self.cube_build(result)
+            self.save_model(result_extra[0], 's3d')
+        else:
+            result_extra = result
 
         # Extract a 1D spectrum from the 2D/3D data
         if tso_mode:
             self.extract_1d.suffix = 'x1dints'
         else:
             self.extract_1d.suffix = 'x1d'
-        x1d_result = self.extract_1d(rectified_result)
+        x1d_result = self.extract_1d(result_extra)
 
-        rectified_result.close()
+        result_extra.close()
         x1d_result.close()
 
         # That's all folks
