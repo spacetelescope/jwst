@@ -62,6 +62,8 @@ datamodels
 
 - New info method, similar to the method in astropy fits [#2268]
 
+- Removed BaseExtension class, it was not being used [#2003]
+
 dq_init
 -------
 
