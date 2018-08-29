@@ -30,7 +30,6 @@ class CubeBuildStep (Step):
          rois = float(default=0.0) # region of interest spatial size, arc seconds
          roiw = float(default=0.0) # region of interest wavelength size, microns
          weight_power = float(default=2.0) # Weighting option to use for Modified Shepard Method
-         offset_list = string(default='NA')  # A file for dithered data containing additional ra and dec offsets
          wavemin = float(default=None)  # Minimum wavelength to be used in the IFUCube
          wavemax = float(default=None)  # Maximum wavelength to be used in the IFUCube
          single = boolean(default=false) # Internal pipeline option used by mrs_imatch and outlier detection
@@ -63,7 +62,6 @@ class CubeBuildStep (Step):
         if(self.scale1 != 0.0): self.log.info('Input Scale of axis 1 %f', self.scale1)
         if(self.scale2 != 0.0): self.log.info('Input Scale of axis 2 %f', self.scale2)
         if(self.scalew != 0.0): self.log.info('Input wavelength scale %f  ', self.scalew)
-        if(self.offset_list != 'NA'): self.log.info('Offset Dither list %s', self.offset_list)
 
         if(self.wavemin is not None): self.log.info('Setting Minimum wavelength of spectral cube to: %f',
                                                self.wavemin)
@@ -121,6 +119,9 @@ class CubeBuildStep (Step):
         if self.single:
             self.output_type = 'single'
             self.log.info('Cube Type: Single cubes ')
+            self.coord_system = 'world'
+            self.interpolation = 'pointcloud'
+            self.weighting = 'msm'
 
 #________________________________________________________________________________
     # read input parameters - Channel, Band (Subchannel), Grating, Filter
@@ -159,7 +160,7 @@ class CubeBuildStep (Step):
         self.pipeline = 3
         if self.output_type == 'multi' and len(self.input_filenames) == 1:
             self.pipeline = 2
-        if(len(self.input_filenames) == 1): self.offset_list = 'NA'
+
 #________________________________________________________________________________
 # Read in Cube Parameter Reference file
         # identify what reference file has been associated with these input
@@ -189,8 +190,7 @@ class CubeBuildStep (Step):
             'filter': self.pars_input['filter'],
             'weighting': self.weighting,
             'single': self.single,
-            'output_type': self.output_type,
-            'offset_list': self.offset_list}
+            'output_type': self.output_type}
 
 # shove the input parameters in to pars_cube to pull out ifu_cube.py
 # these parameters are related to the building a single ifucube_model
@@ -239,7 +239,7 @@ class CubeBuildStep (Step):
 # or (grating,filter)
 
         num_cubes, cube_pars = cubeinfo.number_cubes()
-        self.log.info('Number of ifucubes produced by a this run %i', num_cubes)
+        if not self.single: self.log.info('Number of ifucubes produced by a this run %i', num_cubes)
 
         cube_container = datamodels.ModelContainer() # ModelContainer of ifucubes
 
@@ -266,7 +266,7 @@ class CubeBuildStep (Step):
             thiscube.check_ifucube() # basic checks and get roi size
 
 # find the min & max final coordinates of cube: map each slice to cube
-# add any dither offsets, then find the min & max value in each dimension
+# find the min & max value in each dimension
 
             thiscube.setup_ifucube_wcs()
 #________________________________________________________________________________

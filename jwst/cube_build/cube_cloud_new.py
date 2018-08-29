@@ -46,38 +46,60 @@ def match_det2cube_msm(naxis1,naxis2,naxis3,
     nplane = naxis1 * naxis2
     lower_limit = 0.01
 
+# loop over the spatial dimensions of the ifucube first
+
 #    iprint = 0
 # now loop over the pixel values for this region and find the spaxels that fall
 # withing the region of interest.
     nn = coord1.size
 
-#    print('looping over n points mapping to cloud',nn)
+    print('looping over n points',nn)
 #________________________________________________________________________________
     for ipt in range(0, nn - 1):
 #________________________________________________________________________________
-        # Cube.Xcenters, ycenters is a flattened 1-D array of the 2 X 2 xy plane
+        # xcenters, ycenters is a flattened 1-D array of the 2 X 2 xy plane
         # cube coordinates.
-        # find the spaxels that fall withing ROI of point cloud defined  by
-        # coord1,coord2,wave
-#        if(ipt > 2): sys.exit('STOP')
-#        print('For point ',coord1[ipt],coord2[ipt],wave[ipt],ipt)
+        # find the point cloud members falling on within ROIS of this spaxel
+        # The coordinates of the point cloud are defined by coord1,coord2,wave
 
-#        if(ipt == 0):
-#            print('size of Xcenters',self.Xcenters.size)
-        xdistance = (xcenters - coord1[ipt])
-        ydistance = (ycenters - coord2[ipt])
+        xdistance = (xcenters[ispaxel] - coord1)
+        ydistance = (ycenters[ispaxel] - coord2)
         radius = np.sqrt(xdistance * xdistance + ydistance * ydistance)
         indexr = np.where(radius <= rois)
-        indexz = np.where(abs(zcoord - wave[ipt]) <= roiw)
+
+        # 
+        indexz = np.where(abs(zcoord[ispaxel] - wave) <= roiw)
 
 #        print('indexz',indexz)
 #        print('indexr',indexr)
-        zlam = zcoord[indexz]        # z Cube values falling in wavelength roi
-        xi_cube = xcenters[indexr]   # x Cube values within radius
-        eta_cube = ycenters[indexr]  # y cube values with the radius
+        wave_found = wave[indexz]        # z Cube values falling in wavelength roi
+        xi_found = coord1[indexr]   # x Cube values within radius
+        eta_found = coord2[indexr]  # y cube values with the radius
+#________________________________________________________________________________
+        # form the arrays to be used in calculating the weighting. 
+        
+        d1 = np.array(xi_found - xcenter[ispaxel]) / cdelt1
+        d2 = np.array(eta_found - ycenter[ispaxel]) / cdelt2
+        d3 = np.array(wave_found - wave[ispaxel]) / cdelt3
 
-#        print('found xi_cube',xi_cube)
-#        print('found eta_cube',eta_cube)
+        dxy = (d1 * d1) + (d2 * d2)
+        dxy_matrix = np.tile(dxy[np.newaxis].T,[1,d3.shape[0]])
+        d3_matrix = np.tile(d3 * d3,[dxy_matrix.shape[0],1])
+
+        wdistance = dxy_matrix + d3_matrix
+        weight_distance = np.power(np.sqrt(wdistance), msm_weight_power)
+        weight_distance[weight_distance < lower_limit] = lower_limit
+        weight_distance = 1.0 / weight_distance
+
+
+        # determine the spaxel xx_cube,yy_cube values of these spaxels in
+        # the ROI so they can be used to pull out the flux of the median
+        # sky cube.
+                yy_cube = (indexr[0] / self.naxis1).astype(np.int)
+                xx_cube = indexr[0] - yy_cube * self.naxis1
+                scf = np.array([self.cube_flux[zz, yy_cube[ir], xx_cube[ir]]
+                                for ir, rr in enumerate(indexr[0]) for zz in indexz[0]])
+                scf = np.reshape(scf, weight_distance.shape)
 
 #________________________________________________________________________________
 # loop over the points in the ROI
@@ -88,12 +110,7 @@ def match_det2cube_msm(naxis1,naxis2,naxis3,
 #                xx_cube = rr - yy_cube * self.naxis1
 #                print('xx yy cube',rr,self.naxis1,xx_cube,yy_cube)
 #________________________________________________________________________________
-                d1 = (xi_cube[ir] - coord1[ipt]) / cdelt1
-                d2 = (eta_cube[ir] - coord2[ipt]) / cdelt2
-                d3 = (zlam[iz] - wave[ipt]) / cdelt3
 
-                weight_distance = math.sqrt(d1 * d1 + d2 * d2 + d3 * d3)
-                weight_distance = math.pow(weight_distance, msm_weight_power)
 #________________________________________________________________________________
 # We have found the weight_distance based on instrument type
                 if weight_distance < lower_limit: weight_distance = lower_limit

@@ -329,7 +329,9 @@ def SH_FindOverlap(xcenter, ycenter, xlength, ylength, xp_corner, yp_corner):
 #________________________________________________________________________________
 
 
-def match_det2cube(self, x, y, sliceno, start_slice, input_model, transform, spaxel):
+def match_det2cube(x, y, sliceno, start_slice, input_model, transform, spaxel,
+                   xcoord, zcoord,
+                   Crval1, Crval3, Cdelt1, Cdelt3, naxis1, naxis3):
     """
     Short Summary
     -------------
@@ -357,7 +359,7 @@ def match_det2cube(self, x, y, sliceno, start_slice, input_model, transform, spa
     """
     nxc = len(self.xcoord)
     nzc = len(self.zcoord)
-#    nyc = len(self.ycoord)
+
 
     sliceno_use = sliceno - start_slice + 1
 # 1-1 mapping in beta

@@ -8,11 +8,16 @@ import math
 from ..model_blender import blendmeta
 from .. import datamodels
 from ..assign_wcs import pointing
+from jwst.transforms.models import _toindex
 from astropy.stats import circmean
 from astropy import units as u
+from gwcs import wcstools
+from ..assign_wcs import nirspec
+from ..datamodels import dqflags
 from . import cube_build_wcs_util
 from . import spaxel
 from . import cube_overlap
+#from . import cube_cloud_new
 from . import cube_cloud
 from . import coord
 
@@ -60,7 +65,7 @@ class IFUCubeData():
 
         self.interpolation = pars_cube.get('interpolation')
         self.coord_system = pars_cube.get('coord_system')
-        self.offset_list = pars_cube.get('offset_list')
+
         self.wavemin = pars_cube.get('wavemin')
         self.wavemax = pars_cube.get('wavemax')
         self.weighting = pars_cube.get('weighting')
@@ -226,7 +231,7 @@ class IFUCubeData():
         -------
         Cube Dimension Information:
         Footprint of cube: min and max of coordinates of cube.
-        If an offset list is provided then these values are applied.
+
         If the coordinate system is alpha-beta (MIRI) then min and max
         coordinates of alpha (arc sec), beta (arc sec) and lambda (microns)
         If the coordinate system is world then the min and max of
@@ -257,7 +262,6 @@ class IFUCubeData():
             log.debug('Working on data  from %s,%s', this_a, this_b)
             n = len(self.master_table.FileMap[self.instrument][this_a][this_b])
             log.debug('number of files %d ', n)
-    # each file find the min and max a and lambda (OFFSETS NEED TO BE APPLIED TO THESE VALUES)
             for k in range(n):
                 amin = 0.0
                 amax = 0.0
@@ -265,17 +269,11 @@ class IFUCubeData():
                 bmax = 0.0
                 lmin = 0.0
                 lmax = 0.0
-                c1_offset = 0.0
-                c2_offset = 0.0
+
                 ifile = self.master_table.FileMap[self.instrument][this_a][this_b][k]
-                ioffset = len(self.master_table.FileOffset[this_a][this_b]['C1'])
-                if ioffset == n:
-                    c1_offset = self.master_table.FileOffset[this_a][this_b]['C1'][k]
-                    c2_offset = self.master_table.FileOffset[this_a][this_b]['C2'][k]
 #________________________________________________________________________________
 # Open the input data model
 # Find the footprint of the image
-
                 with datamodels.IFUImageModel(ifile) as input_model:
                     if self.instrument == 'NIRSPEC':
                         flag_data = 0
@@ -292,11 +290,7 @@ class IFUCubeData():
                             self.instrument_info,
                             self.coord_system)
                         amin, amax, bmin, bmax, lmin, lmax = ch_footprint
-# If a dither offset list exists then apply the dither offsets (offsets in arc seconds)
-                    amin = amin - c1_offset / 3600.0
-                    amax = amax - c1_offset / 3600.0
-                    bmin = bmin - c2_offset / 3600.0
-                    bmax = bmax - c2_offset / 3600.0
+
                     a_min.append(amin)
                     a_max.append(amax)
                     b_min.append(bmin)
@@ -502,6 +496,8 @@ class IFUCubeData():
         ygrid = np.zeros(self.naxis2 * self.naxis1)
         xgrid = np.zeros(self.naxis2 * self.naxis1)
 
+        ycube,xcube = np.mgrid(self.naxis2,self.naxis1)
+
         k = 0
         ystart = self.ycoord[0]
         for i in range(self.naxis2):
@@ -509,16 +505,22 @@ class IFUCubeData():
             for j in range(self.naxis1):
                 xgrid[k] = xstart
                 ygrid[k] = ystart
+                xcube[i,j] = xstart
+                ycube[i,j] = ystart
                 xstart = xstart + self.Cdelt1
                 k = k + 1
             ystart = ystart + self.Cdelt2
 
-
         self.Xcenters = xgrid
         self.Ycenters = ygrid
+        self.xcube = xcube
+        self.ycube = ycube
+
+        print(xcube.shape)
+        print(ycube.shape)
+        
 #_______________________________________________________________________
         #set up the lambda (z) coordinate of the cube
-
         self.lambda_min = lambda_min
         self.lambda_max = lambda_max
         range_lambda = self.lambda_max - self.lambda_min
@@ -537,7 +539,6 @@ class IFUCubeData():
             self.zcoord[i] = zstart
             zstart = zstart + self.Cdelt3
 #_______________________________________________________________________
-
     def set_geometryAB(self, footprint):
         """
         Short Summary
@@ -565,10 +566,8 @@ class IFUCubeData():
         for i in range(self.naxis1):
             self.xcoord[i] = xstart
             xstart = xstart + self.Cdelt1
-
 #_______________________________________________________________________
         #set up the lambda (z) coordinate of the cube
-
         range_lambda = self.lambda_max - self.lambda_min
         self.naxis3 = int(math.ceil(range_lambda / self.Cdelt3))
 
@@ -665,22 +664,101 @@ class IFUCubeData():
 
         self.output_name = self.define_cubename()
         self.spaxel = self.create_spaxel()
+        subtract_background = True
 
         # now need to loop over every file that covers this channel/subchannel (MIRI)
         # or Grating/filter(NIRSPEC)
-        #and map the detector pixels to the cube spaxel.
+        #and map the detector pixels to the cube spaxel
 
         number_bands = len(self.list_par1)
         t0 = time.time()
         for i in range(number_bands):
             this_par1 = self.list_par1[i]
             this_par2 = self.list_par2[i]
+            nfiles = len(self.master_table.FileMap[self.instrument][this_par1][this_par2])
+#________________________________________________________________________________
+# loop over the files that cover the spectral range the cube is for
+            for k in range(nfiles):
+                ifile = self.master_table.FileMap[self.instrument][this_par1][this_par2][k]
+                self.this_cube_filenames.append(ifile)
+                    
+                log.debug("Working on Band defined by:%s %s ", this_par1, this_par2)
 
-            log.debug("Working on Band defined by:%s %s ", this_par1, this_par2)
-            self.map_detector_to_spaxel(this_par1, this_par2, self.spaxel)
+#--------------------------------------------------------------------------------
+                if self.interpolation == 'pointcloud':
 
-        t1 = time.time()
-        log.info("Time Map All slices on Detector to Cube = %.1f.s" % (t1 - t0,))
+                    pixelresult = self.map_detector_to_outputframe(this_par1, 
+                                                                   this_par2, 
+                                                                   subtract_background,
+                                                                   ifile)
+                
+                    coord1,coord2,wave,flux,alpha_det,beta_det = pixelresult
+
+                    if self.weighting == 'msm':
+                        t0 = time.time()
+                        cube_cloud.match_det2cube_msm(self.naxis1,self.naxis2,self.naxis3,
+                                                          self.Cdelt1,self.Cdelt2,self.Cdelt3,
+                                                          self.rois,self.roiw,self.weight_power,
+                                                          self.Xcenters,self.Ycenters,self.zcoord,
+                                                          self.spaxel,flux,
+                                                          coord1,coord2,wave)
+
+                        t1 = time.time()
+                        log.debug("Time Match one NIRSPEC slice to ifucube = %.1f.s" % (t1 - t0,))
+
+                    elif self.weighting == 'miripsf':
+                        wave_resol = self.instrument_info.Get_RP_ave_Wave(this_par1, this_par2)
+                        alpha_resol = self.instrument_info.Get_psf_alpha_parameters()
+                        beta_resol = self.instrument_info.Get_psf_beta_parameters()
+                        
+                        worldtov23 = input_model.meta.wcs.get_transform("world", "v2v3")
+                        v2ab_transform = input_model.meta.wcs.get_transform('v2v3',
+                                                                'alpha_beta')
+
+                        cube_cloud_new.match_det2cube_miripsf(alpha_resol,beta_resol,wave_resol,
+                                                              worldtov23,
+                                                              v2ab_tranform,
+                                                              self.naxis1,self.naxis2,self.naxis3,
+                                                              self.Cdelt1,self.Cdelt2,self.Cdelt3,
+                                                              self.Crval1,self.Crval2,
+                                                              self.rois,self.roiw,self.weight_power,
+                                                              self.Xcenters,self.Ycenters,self.zcoord,
+                                                              self.spaxel,
+                                                              coord1,coord2,wave,alpha_det,beta_det)
+#--------------------------------------------------------------------------------
+#2D area method - only works for single files and coord_system = 'alpha-beta'
+#--------------------------------------------------------------------------------
+                elif self.interpolation == 'area':
+                    with datamodels.IFUImageModel(ifile) as input_model:
+                        det2ab_transform = input_model.meta.wcs.get_transform('detector',
+                                                                              'alpha_beta')
+                        start_region = self.instrument_info.GetStartSlice(this_par1)
+                        end_region = self.instrument_info.GetEndSlice(this_par1)
+                        regions = list(range(start_region, end_region + 1))
+                        t0 = time.time()
+                        for i in regions:
+                            log.info('Working on Slice # %d', i)
+                    
+                            y, x = (det2ab_transform.label_mapper.mapper == i).nonzero()
+
+# getting pixel corner - ytop = y + 1 (routine fails for y = 1024)
+                            index = np.where(y < 1023)
+                            y = y[index]
+                            x = x[index]
+
+
+                            cube_overlap.match_det2cube(x, y, i,
+                                                        start_region,
+                                                        input_model,
+                                                        det2ab_transform,
+                                                        spaxel,
+                                                        self.xcoord, self.zcoord,
+                                                        self.Crval1, self.Crval3, 
+                                                        self.Cdelt1, self.Cdelt3, 
+                                                        self.naxis1, self.naxis3)
+                        t1 = time.time()
+
+                        log.info("Time Map All slices on Detector to Cube = %.1f.s" % (t1 - t0,))
 #_______________________________________________________________________
 # Mapped all data to cube or Point Cloud
 # now determine Cube Spaxel flux
@@ -726,48 +804,27 @@ class IFUCubeData():
         this_par2 = None # not important for this type of mapping
 
         self.weighting == 'msm'
-        c1_offset = 0
-        c2_offset = 0
+
         for j in range(n):
             log.info("Working on next Single IFU Cube  = %i" % (j + 1))
             t0 = time.time()
 # for each new data model create a new spaxel
             spaxel = []
             spaxel = self.create_spaxel()
-            with datamodels.IFUImageModel(self.input_models[j]) as input_model:
-#********************************************************************************
-# pulled necessary routines from   CubeData.map_detector_to_spaxel
-                if self.instrument == 'MIRI':
-#________________________________________________________________________________
-                    xstart, xend = self.instrument_info.GetMIRISliceEndPts(this_par1)
-                    y, x = np.mgrid[:1024, xstart:xend]
-                    y = np.reshape(y, y.size)
-                    x = np.reshape(x, x.size)
+            subtract_background = False
 
-                    cube_cloud.match_det2cube(self, input_model,
-                                              x, y, j,
-                                              this_par1, this_par2,
-                                              spaxel,
-                                              c1_offset, c2_offset)
+            pixelresult = self.map_detector_to_outputframe(this_par1, this_par2, 
+                                                           subtract_background,
+                                                           self.input_models[j])
+                
+            coord1,coord2,wave,flux,alpha_det,beta_det = pixelresult
 
-                elif self.instrument == 'NIRSPEC':
-                    # each file, detector has 30 slices - wcs information access seperately for each slice
-                    nslices = 30
-                    for ii in range(nslices):
-                        t0a = time.time()
-                        #slice_wcs = nirspec.nrs_wcs_set_input(input_model, ii)
-                        #x,y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
-                        x = None
-                        y = None
-
-                        cube_cloud.match_det2cube(self, input_model,
-                                                  x, y, ii,
-                                                  this_par1, this_par2,
-                                                  spaxel,
-                                                  c1_offset, c2_offset)
-
-                        t1a = time.time()
-                        log.debug("Time Match one NIRSPEC slice to ifucube = %.1f.s" % (t1a - t0a,))
+            cube_cloud_new.match_det2cube_msm(self.naxis1,self.naxis2,self.naxis3,
+                                              self.Cdelt1,self.Cdelt2,self.Cdelt3,
+                                              self.rois,self.roiw,self.weight_power,
+                                              self.Xcenters,self.Ycenters,self.zcoord,
+                                              spaxel,flux,
+                                              coord1,coord2,wave)
 #_______________________________________________________________________
 # shove Flux and iflux in the  final ifucube
 
@@ -867,18 +924,22 @@ class IFUCubeData():
         return roi
 
 #********************************************************************************
-    def map_detector_to_spaxel(self, this_par1, this_par2, spaxel):
+    def map_detector_to_outputframe(self, this_par1, this_par2, 
+                                    subtract_background,
+                                    ifile):
         from ..mrs_imatch.mrs_imatch_step import apply_background_2d
 #********************************************************************************
         """
         Short Summary
         -------------
-        Loop over files that cover the cube and map the detector pixel to Cube spaxels
-        If dither offsets have been supplied then apply those values to the data
+        Loop over a file and map the detector pixels to the output frame of the ifcube
+
+        Return the coordinates of the pixel in the output frame as well as the associatied
+        flux for those pixels. 
 
         Parameter
         ----------
-        spaxel: List of Spaxels
+        
 
         Returns
         -------
@@ -887,120 +948,133 @@ class IFUCubeData():
         if(interpolation = pointcloud
         """
 
-        instrument = self.instrument
-        nfiles = len(self.master_table.FileMap[instrument][this_par1][this_par2])
+# intitalize alpha_det and beta_det to None. These are filled in if the instrument
+# is MIRI and the weighting is miripsf
 
-    # loop over the files that cover the spectral range the cube is for
-
-        for k in range(nfiles):
-            ifile = self.master_table.FileMap[instrument][this_par1][this_par2][k]
-            ioffset = len(self.master_table.FileOffset[this_par1][this_par2]['C1'])
-
-            self.this_cube_filenames.append(ifile)
-
-            c1_offset = 0.0
-            c2_offset = 0.0
-        # c1_offset and c2_offset are the dither offset sets (in arc seconds)
-        # by default these are zer0. The user has to supply these
-            if ioffset == nfiles:
-                c1_offset = self.master_table.FileOffset[this_par1][this_par2]['C1'][k]
-                c2_offset = self.master_table.FileOffset[this_par1][this_par2]['C2'][k]
+        alpha_det = None
+        beta_det = None
+        coord1 = None
+        coord2 = None
+        flux = None
+        wave = None
 # Open the input data model
-            with datamodels.IFUImageModel(ifile) as input_model:
-                # check if background sky matching as been done
-                # mrs_imatch step. THis is only for MRS data at this time
-                # but go head and check it before splitting by instrument
-                # the polynomial should be empty for NIRSPEC
-                #do_background_subtraction = False
-                num_ch_bgk = len(input_model.meta.background.polynomial_info)
+        with datamodels.IFUImageModel(ifile) as input_model:
+            # check if background sky matching as been done
+            # mrs_imatch step. THis is only for MRS data at this time
+            # but go head and check it before splitting by instrument
+            # the polynomial should be empty for NIRSPEC
 
-                if(num_ch_bgk > 0):
-
-                    #do_background_subtraction = True
-                    for ich_num in range(num_ch_bgk):
-                        poly = input_model.meta.background.polynomial_info[ich_num]
-                        poly_ch = poly.channel
-                        if(poly_ch == this_par1):
-                            apply_background_2d(input_model, poly_ch, subtract=True)
+            num_ch_bgk = len(input_model.meta.background.polynomial_info)
+            if(num_ch_bgk > 0 and subtract_background):
+                for ich_num in range(num_ch_bgk):
+                    poly = input_model.meta.background.polynomial_info[ich_num]
+                    poly_ch = poly.channel
+                    if(poly_ch == this_par1):
+                        apply_background_2d(input_model, poly_ch, subtract=True)
 
 #********************************************************************************
-                if self.instrument == 'MIRI':
+#--------------------------------------------------------------------------------
+            if self.instrument == 'MIRI':
+                xstart, xend = self.instrument_info.GetMIRISliceEndPts(this_par1)
+                y, x = np.mgrid[:1024, xstart:xend]
+                y = np.reshape(y, y.size)
+                x = np.reshape(x, x.size)
+                if self.coord_system == 'world':
+                    ra, dec, wave = input_model.meta.wcs(x, y) 
+                    valid1 = ~np.isnan(ra)
+                    ra = ra[valid1]
+                    dec = dec[valid1]
+                    wave = wave[valid1]
+                    x = x[valid1]
+                    y = y[valid1]
+                elif self.coord_system == 'alpha-beta':
+                    det2ab_transform = input_model.meta.wcs.get_transform('detector',
+                                                                          'alpha_beta')
+                    coord1, coord2, wave = det2ab_transform(x, y)
+                    valid1 = ~np.isnan(coord1)
+                    coord1 = coord1[valid1]
+                    coord2 = coord2[valid1]
+                    wave = wave[valid1]
+                    x = x[valid1]
+                    y = y[valid1]
 #________________________________________________________________________________
-# Standard method
-                    if self.interpolation == 'pointcloud':
-                        xstart, xend = self.instrument_info.GetMIRISliceEndPts(this_par1)
-                        y, x = np.mgrid[:1024, xstart:xend]
-                        y = np.reshape(y, y.size)
-                        x = np.reshape(x, x.size)
-                        t0 = time.time()
-                        cube_cloud.match_det2cube(self, input_model,
-                                            x, y, k,
-                                            this_par1, this_par2,
-                                            spaxel,
-                                            c1_offset, c2_offset)
+            elif self.instrument == 'NIRSPEC':
+                # initialize the ra,dec, and wavelength arrays
+                # we will loop over slices and fill in values
+                # the flag_det will be set when a slice pixel is filled in
+                #   at the end we will use this flag to pull out valid data
+                ra_det = np.zeros((2048, 2048))
+                dec_det = np.zeros((2048, 2048))
+                lam_det = np.zeros((2048, 2048))
+                flag_det = np.zeros((2048, 2048))
+                # for NIRSPEC each file has 30 slices
+                # wcs information access seperately for each slice
+                nslices = 30
+                log.info("Mapping each NIRSPEC slice to sky, this takes a while for NIRSPEC data")
+                for ii in range(nslices):
+                    slice_wcs = nirspec.nrs_wcs_set_input(input_model, ii)
+                    x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
+                    ra, dec, lam = slice_wcs(x, y)
 
+                    # the slices are curved on detector so a rectangular region
+                    # returns NaNs
+                    valid = ~np.isnan(lam)
+                    ra = ra[valid]
+                    dec = dec[valid]
+                    lam = lam[valid]
+                    x = x[valid]
+                    y = y[valid]
 
-                        t1 = time.time()
-                        log.debug("Time Match one Channel from 1 file to ifucube = %.1f.s"
-                                  % (t1 - t0,))
+                    xind = _toindex(x)
+                    yind = _toindex(y)
+                    xind = np.ndarray.flatten(xind)
+                    yind = np.ndarray.flatten(yind)
+                    ra = np.ndarray.flatten(ra)
+                    dec = np.ndarray.flatten(dec)
+                    lam = np.ndarray.flatten(lam)
+                    ra_det[yind, xind] = ra
+                    dec_det[yind, xind] = dec
+                    lam_det[yind, xind] = lam
+                    flag_det[yind, xind] = 1
+                    # done looping  - pull out valid values
+                valid_data = np.where(flag_det == 1)
+                y,x = valid_data
+                ra = ra_det[valid_data]
+                dec = dec_det[valid_data]
+                wave = lam_det[valid_data]  
+# ________________________________________________________________________________
+# The following is for both MIRI and NIRSPEC
+# grab the flux and DQ values for these pixles 
+            flux_all = input_model.data[y, x]
+            dq_all = input_model.dq[y, x]
+            valid2 = np.isfinite(flux_all)
 #________________________________________________________________________________
-#2D area method - only works for single files and coord_system = 'alpha-beta'
-                    if self.interpolation == 'area':
-                        det2ab_transform = input_model.meta.wcs.get_transform('detector',
-                                                                              'alpha_beta')
+# using the DQFlags from the input_image find pixels that should be excluded
+# from the cube mapping
+            all_flags = (dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['DROPOUT'] +
+                         dqflags.pixel['NON_SCIENCE'] +
+                         dqflags.pixel['DEAD'] + dqflags.pixel['HOT'] +
+                         dqflags.pixel['RC'] + dqflags.pixel['NONLINEAR'])
+            # find the location of all the values to reject in cube building
+            good_data = np.where((np.bitwise_and(dq_all, all_flags) == 0) & (valid2 == True))
+                    # good data holds the location of pixels we want to map to cube
+            flux = flux_all[good_data]
+            wave = wave[good_data]
 
+            if self.coord_system == 'world':
+                ra_use = ra[good_data]
+                dec_use = dec[good_data]
+                coord1, coord2 = coord.radec2std(self.Crval1, self.Crval2, ra_use, dec_use)
+                if self.weighting == 'miripsf':
+                    alpha_det = alpha[good_data]
+                    beta_det = beta[good_data]
+                
+            elif self.coord_system == 'alpha-beta':
+                coord1 = alpha[good_data]
+                coord2 = beta[good_data]
 
-                        start_region = self.instrument_info.GetStartSlice(this_par1)
-                        end_region = self.instrument_info.GetEndSlice(this_par1)
-                        regions = list(range(start_region, end_region + 1))
+        return coord1,coord2,wave,flux,alpha_det,beta_det
 
-                        for i in regions:
-                            log.info('Working on Slice # %d', i)
-
-                            y, x = (det2ab_transform.label_mapper.mapper == i).nonzero()
-
-                    # spaxel object holds all needed information in a set of lists
-                    #    flux (of overlapping detector pixel)
-                    #    error (of overlapping detector pixel)
-                    #    overlap ratio
-                    #    beta distance
-
-# getting pixel corner - ytop = y + 1 (routine fails for y = 1024)
-                            index = np.where(y < 1023)
-                            y = y[index]
-                            x = x[index]
-                            t0 = time.time()
-
-                            cube_overlap.match_det2cube(self, x, y, i,
-                                                        start_region,
-                                                        input_model,
-                                                        det2ab_transform,
-                                                        spaxel)
-                            t1 = time.time()
-                            log.debug("Time Map one Slice  to Cube = %.1f.s" % (t1 - t0,))
-
-#********************************************************************************
-                elif instrument == 'NIRSPEC':
-                    # each file, detector has 30 slices - wcs information access seperately for each slice
-                    nslices = 30
-                    log.info("Mapping each NIRSPEC slice to sky, this takes a while for NIRSPEC data")
-                    for i in range(nslices):
-#                        slice_wcs = nirspec.nrs_wcs_set_input(input_model, i)
-#                        x,y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box,
-#                                                              step=(1,1), center=True)
-
-                        t0 = time.time()
-                        x = 0
-                        y = 0
-                        cube_cloud.match_det2cube(self, input_model,
-                                                  x, y, i,
-                                                  this_par1, this_par2,
-                                                  spaxel,
-                                                  c1_offset, c2_offset)
-
-
-                        t1 = time.time()
-                        log.debug("Time Match one NIRSPEC slice to ifucube = %.1f.s" % (t1 - t0,))
 #********************************************************************************
     def find_spaxel_flux(self, spaxel):
 #********************************************************************************

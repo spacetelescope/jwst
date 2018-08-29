@@ -43,19 +43,11 @@ def find_footprint_MIRI(input, this_channel, instrument_info, coord_system):
     xstart, xend = instrument_info.GetMIRISliceEndPts(this_channel)
     y, x = np.mgrid[:1024, xstart:xend]
 
-    coord1 = np.zeros(y.shape)
-    coord2 = np.zeros(y.shape)
-    lam = np.zeros(y.shape)
-
     if coord_system == 'alpha-beta':
         detector2alpha_beta = input.meta.wcs.get_transform('detector', 'alpha_beta')
         coord1, coord2, lam = detector2alpha_beta(x, y)
     elif coord_system == 'world':
-        detector2v23 = input.meta.wcs.get_transform('detector', 'v2v3')
-        v23toworld = input.meta.wcs.get_transform("v2v3", "world")
-        v2, v3, lam = detector2v23(x, y)
-        coord1, coord2, lam = v23toworld(v2, v3, lam)
-#        coord1,coord2,lam = input.meta.wcs(x,y) # for entire detector find  ra,dec,lambda
+        coord1,coord2,lam = input.meta.wcs(x,y) # for entire detector find  ra,dec,lambda
     else:
         # error the coordinate system is not defined
         raise NoCoordSystem(" The output cube coordinate system is not definded")
@@ -112,7 +104,6 @@ def find_footprint_NIRSPEC(input, flag_data, coord_system):
     for i in range(nslices):
         slice_wcs = nirspec.nrs_wcs_set_input(input, i)
         x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box, step=(1, 1), center=True)
-
         if coord_system == 'world':
             coord1, coord2, lam = slice_wcs(x, y)
         elif coord_system == 'alpha-beta':

@@ -264,7 +264,7 @@ class CubeBlot():
                 xi_found = self.xi_centers[indexr]
                 eta_found = self.eta_centers[indexr]
 #________________________________________________________________________________
-                # form the arrays to be used calculated the wegithing
+                # form the arrays to be used calculated the weighting
                 d1 = np.array(xi_found - xi_blot[ipt]) / self.cdelt1
                 d2 = np.array(eta_found - eta_blot[ipt]) / self.cdelt2
                 d3 = np.array(wave_found - wave_blot[ipt]) / self.cdelt3
