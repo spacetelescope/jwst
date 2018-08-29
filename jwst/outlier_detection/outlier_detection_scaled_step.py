@@ -19,7 +19,7 @@ class OutlierDetectionScaledStep(Step):
     """
 
     spec = """
-        wht_type = option('exptime','error',None,default='exptime')
+        weight_type = option('exptime','error',None,default='exptime')
         pixfrac = float(default=1.0)
         kernel = string(default='square') # drizzle kernel
         fillval = string(default='INDEF')
@@ -33,8 +33,6 @@ class OutlierDetectionScaledStep(Step):
         save_intermediate_results = boolean(default=False)
         good_bits = integer(default=4)
     """
-    reference_file_types = ['gain', 'readnoise']
-    prefetch_references = False
 
     def process(self, input):
         """Step interface to running outlier_detection."""
@@ -50,11 +48,9 @@ class OutlierDetectionScaledStep(Step):
             self.input_models = input_models
 
             reffiles = {}
-            reffiles['gain'] = self._build_reffile_container('gain')
-            reffiles['readnoise'] = self._build_reffile_container('readnoise')
 
             pars = {
-                'wht_type': self.wht_type,
+                'weight_type': self.weight_type,
                 'pixfrac': self.pixfrac,
                 'kernel': self.kernel,
                 'fillval': self.fillval,
@@ -68,6 +64,9 @@ class OutlierDetectionScaledStep(Step):
                 'save_intermediate_results': self.save_intermediate_results,
                 'good_bits': self.good_bits
                 }
+
+            # Setup for creating file names
+            pars['make_output_path'] = self.make_output_path
 
             # Set up outlier detection, then do detection
             step = outlier_detection_scaled.OutlierDetectionScaled(

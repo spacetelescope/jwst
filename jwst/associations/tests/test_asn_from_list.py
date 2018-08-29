@@ -23,6 +23,9 @@ def test_level2():
         member = members[0]
         assert member['expname'] == product['name']
         assert member['exptype'] == 'science'
+    name, serialized = asn.dump()
+    assert name.startswith('jwnoprogram-o999_none')
+    assert isinstance(serialized, str)
 
 
 def test_level2_from_cmdline(tmpdir):

@@ -11,6 +11,7 @@ from ..ipc import ipc_step
 from ..superbias import superbias_step
 from ..refpix import refpix_step
 from ..rscd import rscd_step
+from ..firstframe import firstframe_step
 from ..lastframe import lastframe_step
 from ..linearity import linearity_step
 from ..dark_current import dark_current_step
@@ -20,7 +21,7 @@ from ..ramp_fitting import ramp_fit_step
 from ..gain_scale import gain_scale_step
 
 
-__version__ = '0.8.0'
+__version__ = '0.9.3'
 
 # Define logging
 import logging
@@ -50,6 +51,7 @@ class Detector1Pipeline(Pipeline):
                  'superbias': superbias_step.SuperBiasStep,
                  'refpix': refpix_step.RefPixStep,
                  'rscd': rscd_step.RSCD_Step,
+                 'firstframe': firstframe_step.FirstFrameStep,
                  'lastframe': lastframe_step.LastFrameStep,
                  'linearity': linearity_step.LinearityStep,
                  'dark_current': dark_current_step.DarkCurrentStep,
@@ -84,6 +86,7 @@ class Detector1Pipeline(Pipeline):
             input = self.ipc(input)
             input = self.linearity(input)
             input = self.rscd(input)
+            input = self.firstframe(input)
             input = self.lastframe(input)
             input = self.dark_current(input)
             input = self.refpix(input)
@@ -129,11 +132,13 @@ class Detector1Pipeline(Pipeline):
             input, ints_model = self.ramp_fit(input)
 
         # apply the gain_scale step to the exposure-level product
+        self.gain_scale.suffix = 'gain_scale'
         input = self.gain_scale(input)
 
         # apply the gain scale step to the multi-integration product,
         # if it exists, and then save it
         if ints_model is not None:
+            self.gain_scale.suffix = 'gain_scaleints'
             ints_model = self.gain_scale(ints_model)
             self.save_model(ints_model, 'rateints')
 

@@ -2,37 +2,21 @@
     "asn_type": "image2",
     "asn_rule": "candidate_Asn_Lv2ImageNonScience",
     "version_id": null,
-    "code_version": "0.9.4",
+    "code_version": "0.9.20",
+    "degraded_status": "No known degraded exposures in association.",
     "program": "99009",
     "target": "2",
     "asn_pool": "pool_006_spec_nirspec",
-    "constraints": "Constraints:\n    single_science: {'False'}\n    non_science: {'nrs_taslit'}\n    program: {'99009'}\n    target: {'2'}\n    instrument: {'nirspec'}\n    detector: {'nrs2'}\n    opt_elem: {'f170lp'}\n    opt_elem2: {'g235h'}\n    subarray: {'full'}\n    channel: set()\n    asn_candidate: {\"\\\\(\\\\'o003\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}\n    is_tso: set()",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '99009'})\nDMSAttrConstraint({'name': 'is_tso', 'sources': ['tsovisit'], 'value': None})\nDMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '99009'})\nDMSAttrConstraint({'name': 'target', 'sources': ['targetid'], 'value': '2'})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'nirspec'})\nDMSAttrConstraint({'name': 'detector', 'sources': ['detector'], 'value': 'nrs2'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'f170lp'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['grating'], 'value': 'g235h'})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': 'full'})\nDMSAttrConstraint({'name': 'channel', 'sources': ['channel'], 'value': None})\nDMSAttrConstraint({'name': 'non_science', 'sources': ['exp_type'], 'value': 'nrs_taslit'})\nDMSAttrConstraint({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'nrs_msaspec'})\nSimpleConstraint({'name': 'single_science', 'value': False})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o003\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
     "asn_id": "o003",
     "products": [
-        {
-            "name": "jw_00018",
-            "members": [
-                {
-                    "expname": "jw_00018_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw_00019",
-            "members": [
-                {
-                    "expname": "jw_00019_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
         {
             "name": "jw_00020",
             "members": [
                 {
                     "expname": "jw_00020_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": null
                 }
             ]
         },
@@ -41,7 +25,28 @@
             "members": [
                 {
                     "expname": "jw_00021_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": null
+                }
+            ]
+        },
+        {
+            "name": "jw_00022",
+            "members": [
+                {
+                    "expname": "jw_00022_rate.fits",
+                    "exptype": "science",
+                    "exposerr": null
+                }
+            ]
+        },
+        {
+            "name": "jw_00023",
+            "members": [
+                {
+                    "expname": "jw_00023_rate.fits",
+                    "exptype": "science",
+                    "exposerr": null
                 }
             ]
         }

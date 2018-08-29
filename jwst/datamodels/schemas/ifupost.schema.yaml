@@ -1,67 +1,100 @@
-title: NirSpec IFUPOST reference file model
+title: Nirspec IFUPOST reference file model
+definitions:
+  slice_transforms:
+    type: object
+    description: |
+      The Nirspec IFUPOST transform for one slice.
+    properties:
+      linear:
+        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+        description: |
+          The linear part of the transform per slice.
+          It has an analytical inverse.
+      xpoly:
+        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+        description: |
+          The forward polynomial in X.
+          The backward polynomial should be assigned when creating the model.
+      xpoly_distortion:
+        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+        description: |
+          The wavelength dependent distortion polynomial in X.
+          The backward polynomial is assigned as inverse.
+      ypoly:
+        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+        description: |
+          The forward polynomial in Y.
+          The backward polynomial should be assigned when creating the model.
+      ypoly_distortion:
+        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+        description: |
+          The wavelength dependent distortion polynomial in X.
+          The backward polynomial is assigned as inverse.
 allOf:
 - $ref: referencefile.schema.yaml
 - $ref: keyword_exptype.schema.yaml
 - type: object
   properties:
     slice_0:
-      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+      $ref: "#definitions/slice_transforms"
     slice_1:
-      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+      $ref: "#definitions/slice_transforms"
     slice_2:
-      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+      $ref: "#definitions/slice_transforms"
     slice_3:
-      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+      $ref: "#definitions/slice_transforms"
     slice_4:
-      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+      $ref: "#definitions/slice_transforms"
     slice_5:
-      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+      $ref: "#definitions/slice_transforms"
     slice_6:
-      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+      $ref: "#definitions/slice_transforms"
     slice_7:
-      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+      $ref: "#definitions/slice_transforms"
     slice_8:
-      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+      $ref: "#definitions/slice_transforms"
     slice_9:
-      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+      $ref: "#definitions/slice_transforms"
     slice_10:
-      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+      $ref: "#definitions/slice_transforms"
     slice_11:
-      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+      $ref: "#definitions/slice_transforms"
     slice_12:
-      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+      $ref: "#definitions/slice_transforms"
     slice_13:
-      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+      $ref: "#definitions/slice_transforms"
     slice_14:
-      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+      $ref: "#definitions/slice_transforms"
     slice_15:
-      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+      $ref: "#definitions/slice_transforms"
     slice_16:
-      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+      $ref: "#definitions/slice_transforms"
     slice_17:
-      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+      $ref: "#definitions/slice_transforms"
     slice_18:
-      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+      $ref: "#definitions/slice_transforms"
     slice_19:
-      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+      $ref: "#definitions/slice_transforms"
     slice_20:
-      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+      $ref: "#definitions/slice_transforms"
     slice_21:
-      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+      $ref: "#definitions/slice_transforms"
     slice_22:
-      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+      $ref: "#definitions/slice_transforms"
     slice_23:
-      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+      $ref: "#definitions/slice_transforms"
     slice_24:
-      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+      $ref: "#definitions/slice_transforms"
     slice_25:
-      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+      $ref: "#definitions/slice_transforms"
     slice_26:
-      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+      $ref: "#definitions/slice_transforms"
     slice_27:
-      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+      $ref: "#definitions/slice_transforms"
     slice_28:
-      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+      $ref: "#definitions/slice_transforms"
+    slice_29:
+      $ref: "#definitions/slice_transforms"
     meta:
       type: object
       properties:

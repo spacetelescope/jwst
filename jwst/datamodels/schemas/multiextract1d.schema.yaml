@@ -1,0 +1,35 @@
+allOf:
+- $ref: referencefile.schema.yaml
+- type: object
+  properties:
+    images:
+      type: array
+      title: An array of 1-D extraction regions arrays
+      items:
+        type: object
+        properties:
+          data:
+            fits_hdu: SCI
+            default: 0.0
+            datatype: float32
+          name:
+            title: Name of the slit
+            type: string
+            fits_keyword: SLTNAME 
+            fits_hdu: SCI
+          spectral_order:
+            title: Spectral order number
+            type: integer
+            fits_keyword: SPORDER
+            fits_hdu: SCI
+          dispersion_axis:
+            title: Dispersion direction
+            type: integer
+            fits_keyword: DISPAXIS
+            fits_hdu: SCI
+          smoothing_length:
+            title: Background smoothing length
+            type: integer
+            fits_keyword: SMOOTH_L
+            fits_hdu: SCI
+$schema: http://stsci.edu/schemas/fits-schema/fits-schema

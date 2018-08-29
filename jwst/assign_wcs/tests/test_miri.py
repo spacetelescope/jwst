@@ -89,7 +89,7 @@ def run_test(model):
         detector_to_alpha_beta = wcsobj.get_transform('detector', 'alpha_beta')
         #ab_to_xan_yan = wcsobj.get_transform('alpha_beta', 'Xan_Yan').set_input(int(ch))
         ab_to_v2v3 = wcsobj.get_transform('alpha_beta', 'v2v3').set_input(int(ch))
-        ab_to_xan_yan = ab_to_v2v3 | Scale(60) & Scale(60) & Identity(1)| Identity(1) & (Scale(-1) |Shift(-7.8)) & Identity(1)
+        ab_to_xan_yan = ab_to_v2v3 | Scale(1/60) & Scale(1/60) & Identity(1)| Identity(1) & (Scale(-1) |Shift(-7.8)) & Identity(1)
         ref_alpha = ref_data['alpha']
         ref_beta = ref_data['beta']
         ref_lam = ref_data['lam']

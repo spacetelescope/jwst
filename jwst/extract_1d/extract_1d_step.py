@@ -1,9 +1,12 @@
 #! /usr/bin/env python
 
-import os
 from ..stpipe import Step
 from .. import datamodels
 from . import extract
+
+
+__all__ = ["Extract1dStep"]
+
 
 class Extract1dStep(Step):
     """
@@ -16,6 +19,8 @@ class Extract1dStep(Step):
     # Order of polynomial fit to one column (or row if the dispersion
     # direction is vertical) of background regions.
     bkg_order = integer(default=None, min=0)
+    # Log a progress message when processing multi-integration data.
+    log_increment = integer(default=50)
     """
 
     reference_file_types = ['extract1d']
@@ -42,6 +47,9 @@ class Extract1dStep(Step):
         elif isinstance(input_model, datamodels.DrizProductModel):
             # Resampled 2-D data
             self.log.debug('Input is a DrizProductModel')
+        elif isinstance(input_model, datamodels.SlitModel):
+            # NRS_BRIGHTOBJ mode
+            self.log.debug('Input is a SlitModel')
         else:
             self.log.error('Input is a %s,', str(type(input_model)))
             self.log.error('which was not expected for extract_1d.')
@@ -55,7 +63,7 @@ class Extract1dStep(Step):
                 self.log.debug("Input contains %d items", len(input_model))
                 result = datamodels.ModelContainer()
                 for model in input_model:
-                    if model.meta.exposure.type in ['NIS_WFSS', 'NRC_GRISM']:
+                    if model.meta.exposure.type in extract.WFSS_EXPTYPES:
                         self.ref_file = 'N/A'
                         self.log.info('No EXTRACT1D reference file '
                                       'will be used')
@@ -67,14 +75,14 @@ class Extract1dStep(Step):
                                       self.ref_file)
                     temp = extract.do_extract1d(model, self.ref_file,
                                                 self.smoothing_length,
-                                                self.bkg_order)
+                                                self.bkg_order,
+                                                self.log_increment)
                     # Set the step flag to complete in each MultiSpecModel
                     temp.meta.cal_step.extract_1d = 'COMPLETE'
                     result.append(temp)
                     del temp
             elif len(input_model) == 1:
-                if input_model[0].meta.exposure.type in ['NIS_WFSS',
-                                                         'NRC_GRISM']:
+                if input_model[0].meta.exposure.type in extract.WFSS_EXPTYPES:
                     self.ref_file = 'N/A'
                     self.log.info('No EXTRACT1D reference file will be used')
                 else:
@@ -85,7 +93,8 @@ class Extract1dStep(Step):
                                   self.ref_file)
                 result = extract.do_extract1d(input_model[0], self.ref_file,
                                               self.smoothing_length,
-                                              self.bkg_order)
+                                              self.bkg_order,
+                                              self.log_increment)
                 # Set the step flag to complete
                 result.meta.cal_step.extract_1d = 'COMPLETE'
             else:
@@ -94,7 +103,7 @@ class Extract1dStep(Step):
                 return input_model
         else:
             # Get the reference file name
-            if input_model.meta.exposure.type in ['NIS_WFSS', 'NRC_GRISM']:
+            if input_model.meta.exposure.type in extract.WFSS_EXPTYPES:
                 self.ref_file = 'N/A'
                 self.log.info('No EXTRACT1D reference file will be used')
             else:
@@ -104,13 +113,15 @@ class Extract1dStep(Step):
                               self.ref_file)
             result = extract.do_extract1d(input_model, self.ref_file,
                                           self.smoothing_length,
-                                          self.bkg_order)
+                                          self.bkg_order,
+                                          self.log_increment)
             # Set the step flag to complete
             result.meta.cal_step.extract_1d = 'COMPLETE'
 
         input_model.close()
 
         return result
+
 
 def extract_1d_correction(input):
     a = Extract1dStep()

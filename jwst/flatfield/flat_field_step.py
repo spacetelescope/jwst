@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-from ..stpipe import Step, cmdline
+from ..stpipe import Step
 from .. import datamodels
 from . import flat_field
 
@@ -17,6 +17,10 @@ NRS_IMAGING_MODES = ["NRS_IMAGE", "NRS_FOCUS",
                      "NRS_MIMF"]
 # Supported NIRSpec spectrographic types.
 NRS_SPEC_MODES = ["NRS_BRIGHTOBJ", "NRS_FIXEDSLIT", "NRS_MSASPEC", "NRS_IFU"]
+
+
+__all__ = ["FlatFieldStep"]
+
 
 class FlatFieldStep(Step):
     """
@@ -41,15 +45,7 @@ class FlatFieldStep(Step):
         exposure_type = input_model.meta.exposure.type.upper()
 
         # Figure out what kind of input data model is in use.
-        if isinstance(input_model, datamodels.CubeModel):
-            # multi-integration dataset
-            self.log.debug('Input is a CubeModel')
-        elif isinstance(input_model, datamodels.ImageModel):
-            self.log.debug('Input is an ImageModel')
-        elif isinstance(input_model, datamodels.MultiSlitModel):
-            self.log.debug('Input is a MultiSlitModel')
-        elif isinstance(input_model, datamodels.GuiderCalModel):
-            self.log.debug('Input is a GuiderCalModel')
+        self.log.debug("Input is {}".format(input_model.__class__.__name__))
 
         if input_model.meta.instrument.name.upper() == "NIRSPEC":
             if (exposure_type not in NRS_SPEC_MODES and
@@ -86,12 +82,21 @@ class FlatFieldStep(Step):
                                         'sflat')
             self.d_flat_filename = self.get_reference_file(input_model,
                                         'dflat')
-            self.log.debug('Using FFLAT reference file: %s',
-                           self.f_flat_filename)
-            self.log.debug('Using SFLAT reference file: %s',
-                           self.s_flat_filename)
-            self.log.debug('Using DFLAT reference file: %s',
-                           self.d_flat_filename)
+            if self.f_flat_filename == 'N/A':
+                self.log.info('There is no FFLAT reference file.')
+            else:
+                self.log.debug('Using FFLAT reference file: %s',
+                               self.f_flat_filename)
+            if self.s_flat_filename == 'N/A':
+                self.log.info('There is no SFLAT reference file.')
+            else:
+                self.log.debug('Using SFLAT reference file: %s',
+                               self.s_flat_filename)
+            if self.d_flat_filename == 'N/A':
+                self.log.info('There is no DFLAT reference file.')
+            else:
+                self.log.debug('Using DFLAT reference file: %s',
+                               self.d_flat_filename)
         else:
             self.flat_filename = self.get_reference_file(input_model, 'flat')
             self.f_flat_filename = 'N/A'
@@ -102,11 +107,11 @@ class FlatFieldStep(Step):
         # Check for a valid reference file
         missing = False
         if is_NRS_spectrographic:
-            if (self.f_flat_filename == 'N/A' or
-                self.s_flat_filename == 'N/A' or
+            if (self.f_flat_filename == 'N/A' and
+                self.s_flat_filename == 'N/A' and
                 self.d_flat_filename == 'N/A'):
-                self.log.warning('One or more flat-field reference files '
-                                 'were missing')
+                self.log.warning('None of the three flat-field reference '
+                                 'files was found')
                 missing = True
         else:
             if self.flat_filename == 'N/A':
@@ -119,14 +124,22 @@ class FlatFieldStep(Step):
         # Find out what model to use for the flat field reference file(s).
         if is_NRS_spectrographic:
             flat_model = None
-            if exposure_type == "NRS_MSASPEC":
+            if self.f_flat_filename == 'N/A':
+                f_flat_model = None
+            elif exposure_type == "NRS_MSASPEC":
                 f_flat_model = \
                     datamodels.NirspecQuadFlatModel(self.f_flat_filename)
             else:
                 f_flat_model = \
                     datamodels.NirspecFlatModel(self.f_flat_filename)
-            s_flat_model = datamodels.NirspecFlatModel(self.s_flat_filename)
-            d_flat_model = datamodels.NirspecFlatModel(self.d_flat_filename)
+            if self.s_flat_filename == 'N/A':
+                s_flat_model = None
+            else:
+                s_flat_model = datamodels.NirspecFlatModel(self.s_flat_filename)
+            if self.d_flat_filename == 'N/A':
+                d_flat_model = None
+            else:
+                d_flat_model = datamodels.NirspecFlatModel(self.d_flat_filename)
         else:
             self.log.debug('Opening flat as FlatModel')
             flat_model = datamodels.FlatModel(self.flat_filename)
@@ -144,9 +157,12 @@ class FlatFieldStep(Step):
         # Close the inputs
         input_model.close()
         if is_NRS_spectrographic:
-            f_flat_model.close()
-            s_flat_model.close()
-            d_flat_model.close()
+            if f_flat_model is not None:
+                f_flat_model.close()
+            if s_flat_model is not None:
+                s_flat_model.close()
+            if d_flat_model is not None:
+                d_flat_model.close()
         else:
             flat_model.close()
 
@@ -169,4 +185,3 @@ class FlatFieldStep(Step):
         result.meta.cal_step.flat_field = "SKIPPED"
         input_model.close()
         return result
-

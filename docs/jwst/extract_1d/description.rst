@@ -1,4 +1,3 @@
-
 Description
 ===========
 The extract_1d step extracts a 1-d signal from a 2-d or 3-d dataset and
@@ -7,9 +6,11 @@ data through any one or more of the fixed slits, MIRI LRS data through
 the slit or in the slitless region, and NIRISS slitless data) as well as
 IFU data and NIRSpec MOS (micro-shutter array) data.
 
-For GRISM data (NIS_WFSS or NRC_GRISM), no reference file is used.
+For GRISM data (NIS_WFSS or NRC_WFSS), no reference file is used.
 The extraction region is taken to be the full size of the input subarray
-or cutout, and the dispersion direction is assumed to be the longer axis.
+or cutout, or it could be restricted to the region within which the
+world coordinate system is defined.  The dispersion direction is the one
+along which the wavelengths change more rapidly.
 
 For IFU data, the extraction options differ depending on
 whether the target is a point source or an extended source.  For a point
@@ -27,7 +28,7 @@ subsampled N x N, and the "center" option will be used for each sub-pixel.
 Input
 =====
 Level 2-b countrate data, or level-3 data.  The format should be a
-CubeModel, an IFUCubeModel, an ImageModel, a DrizProductModel,
+CubeModel, a SlitModel, an IFUCubeModel, an ImageModel, a DrizProductModel,
 a MultiSlitModel, a MultiProductModel, or a ModelContainer.
 The SCI extensions should
 have keyword SLTNAME to specify which slit was extracted, though if there

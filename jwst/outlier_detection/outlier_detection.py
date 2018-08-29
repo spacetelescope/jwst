@@ -1,21 +1,25 @@
 """Primary code for performing outlier detection on JWST observations."""
 
+from functools import partial
 import numpy as np
 
 from stsci.image import median
-from stsci.tools import bitmask
 from astropy.stats import sigma_clipped_stats
 from scipy import ndimage
 
 from .. import datamodels
 from ..resample import resample, gwcs_blot
 from ..resample.resample_utils import build_driz_weight
+from ..stpipe.step import Step
 
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 CRBIT = np.uint32(datamodels.dqflags.pixel['JUMP_DET'])
+
+
+__all__ = ["OutlierDetection", "flag_cr", "abs_deriv"]
 
 
 class OutlierDetection:
@@ -53,9 +57,6 @@ class OutlierDetection:
             list of data models as ModelContainer or ASN file,
             one data model for each input image
 
-        reffiles : dict of `jwst.datamodels.DataModel`
-            Dictionary of datamodels.  Keys are reffile_types.
-
         pars : dict, optional
             Optional user-specified parameters to modify how outlier_detection
             will operate.  Valid parameters include:
@@ -71,6 +72,12 @@ class OutlierDetection:
         self.outlierpars.update(pars)
         # Insure that self.input_models always refers to a ModelContainer
         # representation of the inputs
+
+        # Define how file names are created
+        self.make_output_path = pars.get(
+            'make_output_path',
+            partial(Step._make_output_path, None)
+        )
 
     def _convert_inputs(self):
         """Convert input into datamodel required for processing.
@@ -101,7 +108,7 @@ class OutlierDetection:
                                               dq=self.inputs.dq[i])
                 image.meta = self.inputs.meta
                 image.wht = build_driz_weight(image,
-                                              wht_type='exptime',
+                                              weight_type='exptime',
                                               good_bits=bits)
                 self.input_models.append(image)
             self.converted = True
@@ -161,12 +168,11 @@ class OutlierDetection:
         """
         # Parse any user-provided filename suffix for resampled products
         self.resample_suffix = '_outlier_{}.fits'.format(
-                                pars.get('resample_suffix',
-                                         self.default_suffix))
+            pars.get('resample_suffix', self.default_suffix))
         if 'resample_suffix' in pars:
             del pars['resample_suffix']
         log.debug("Defined output product suffix as: {}".format(
-                                                        self.resample_suffix))
+            self.resample_suffix))
 
     def do_detection(self):
         """Flag outlier pixels in DQ of input images."""
@@ -183,44 +189,52 @@ class OutlierDetection:
             sdriz.do_drizzle()
             drizzled_models = sdriz.output_models
             for model in drizzled_models:
-                model.meta.filename = update_filename(model.meta.filename,
-                                                      self.resample_suffix)
                 if save_intermediate_results:
                     log.info("Writing out resampled exposures...")
-                    model.save(model.meta.filename)
+                    self.save_model(
+                        model,
+                        output_file=model.meta.filename,
+                        suffix=self.resample_suffix
+                    )
         else:
             drizzled_models = self.input_models
             for i in range(len(self.input_models)):
                 drizzled_models[i].wht = build_driz_weight(
-                                        self.input_models[i],
-                                        wht_type='exptime',
-                                        good_bits=pars['good_bits'])
+                    self.input_models[i],
+                    weight_type='exptime',
+                    good_bits=pars['good_bits'])
 
         # Initialize intermediate products used in the outlier detection
         median_model = datamodels.ImageModel(
                                         init=drizzled_models[0].data.shape)
         median_model.update(drizzled_models[0])
         median_model.meta.wcs = drizzled_models[0].meta.wcs
-        base_filename = self.input_models[0].meta.filename
-        median_model.meta.filename = '_'.join(
-                        base_filename.split('_')[:2] + ['median.fits'])
 
         # Perform median combination on set of drizzled mosaics
         median_model.data = self.create_median(drizzled_models)
 
         if save_intermediate_results:
+            median_output_path = self.make_output_path(
+                basepath=self.input_models[0].meta.filename,
+                suffix='median'
+            )
             log.info("Writing out MEDIAN image to: {}".format(
-                                                median_model.meta.filename))
-            median_model.save(median_model.meta.filename)
+                median_output_path
+            ))
+            median_model.save(median_output_path)
 
         if pars['resample_data']:
             # Blot the median image back to recreate each input image specified
             # in the original input list/ASN/ModelContainer
             blot_models = self.blot_median(median_model)
             if save_intermediate_results:
+                log.info("Writing out BLOT images...")
                 for model in blot_models:
-                    log.info("Writing out BLOT images...")
-                    model.save(model.meta.filename)
+                    model_path = self.make_output_path(
+                        basename=model.meta.filename,
+                        suffix='blot'
+                    )
+                    model.save(model_path)
         else:
             # Median image will serve as blot image
             blot_models = datamodels.ModelContainer()
@@ -238,14 +252,15 @@ class OutlierDetection:
     def create_median(self, resampled_models):
         """Create a median image from the singly resampled images.
 
-        NOTE: This version is simplified from astrodrizzle's version in the
-            following ways:
-            - type of combination: fixed to 'median'
-            - 'minmed' not implemented as an option
-            - does not use buffers to try to minimize memory usage
-            - astropy.stats.sigma_clipped_stats replaces
-                    stsci.imagestats.ImageStats
-            - stsci.image.median replaces stsci.image.numcombine.numCombine
+        NOTES
+        -----
+        This version is simplified from astrodrizzle's version in the
+        following ways:
+        - type of combination: fixed to 'median'
+        - 'minmed' not implemented as an option
+        - does not use buffers to try to minimize memory usage
+        - `astropy.stats.sigma_clipped_stats` replaces `stsci.imagestats.ImageStats`
+        - `stsci.image.median` replaces `stsci.image.numcombine.numCombine`
         """
         resampled_sci = [i.data for i in resampled_models]
         resampled_wht = [i.wht for i in resampled_models]
@@ -263,7 +278,7 @@ class OutlierDetection:
             #   MASKPT percent of the mean weight
             mask = np.less(w, weight_threshold)
             log.debug("Number of pixels with low weight: {}".format(
-                                                                np.sum(mask)))
+                np.sum(mask)))
             badmasks.append(mask)
 
         # Compute median of stack os images using BADMASKS to remove low weight
@@ -287,7 +302,7 @@ class OutlierDetection:
         for model in self.input_models:
             blotted_median = model.copy()
             blot_root = '_'.join(model.meta.filename.replace(
-                                '.fits', '').split('_')[:-1])
+                '.fits', '').split('_')[:-1])
             blotted_median.meta.filename = '{}_blot.fits'.format(blot_root)
 
             # clean out extra data not related to blot result
@@ -317,22 +332,15 @@ class OutlierDetection:
             blotted back to the wcs and frame of the ImageModels in
             input_models
 
-        reffiles : dict
-            Contains JWST ModelContainers for
-            'gain' and 'readnoise' reference files
-
         Returns
         -------
         None
             The dq array in each input model is modified in place
 
         """
-        gain_models = self.reffiles['gain']
-        rn_models = self.reffiles['readnoise']
 
-        for image, blot, gain, rn in zip(self.input_models, blot_models,
-                                         gain_models, rn_models):
-            flag_cr(image, blot, gain, rn, **self.outlierpars)
+        for image, blot in zip(self.input_models, blot_models):
+            flag_cr(image, blot, **self.outlierpars)
 
         if self.converted:
             # Make sure actual input gets updated with new results
@@ -340,7 +348,7 @@ class OutlierDetection:
                 self.inputs.dq[i, :, :] = self.input_models[i].dq
 
 
-def flag_cr(sci_image, blot_image, gain_image, readnoise_image, **pars):
+def flag_cr(sci_image, blot_image, **pars):
     """Masks outliers in science image.
 
     Mask blemishes in dithered data by comparing a science image
@@ -353,12 +361,6 @@ def flag_cr(sci_image, blot_image, gain_image, readnoise_image, **pars):
 
     blot_image : ImageModel
         the blotted median image of the dithered science frames
-
-    gain_image : GainModel
-        the 2-D gain array
-
-    readnoise_image : ReadnoiseModel
-        the 2-D read noise array
 
     pars : dict
         the user parameters for Outlier Detection
@@ -378,13 +380,12 @@ def flag_cr(sci_image, blot_image, gain_image, readnoise_image, **pars):
     snr1, snr2 = [float(val) for val in pars.get('snr', '5.0 4.0').split()]
     scl1, scl2 = [float(val) for val in pars.get('scale', '1.2 0.7').split()]
 
-    if sci_image.meta.background.subtracted:
+    if not sci_image.meta.background.subtracted:
+        # Include background back into blotted image for comparison
         subtracted_background = sci_image.meta.background.level
         log.debug("Subtracted background: {}".format(subtracted_background))
-    else:
+    if subtracted_background is None:
         subtracted_background = backg
-        log.debug("No subtracted background found. "
-                  "Using default value from outlierpars: {}".format(backg))
 
     exptime = sci_image.meta.exposure.exposure_time
 
@@ -392,39 +393,7 @@ def flag_cr(sci_image, blot_image, gain_image, readnoise_image, **pars):
     blot_data = blot_image.data * exptime
     blot_deriv = abs_deriv(blot_data)
 
-    # This mask can take into account any crbits values
-    # specified by the user to be ignored.
-    # dq_mask = build_mask(sci_image.dq, CRBIT)
-
-    # This logic trims these reference files down to match
-    # input file shape to allow this step to apply to subarray readout
-    # modes such as CORONOGRAPHIC data
-    # logic copied from jwst.jump step...
-    # Get subarray limits from metadata of input model
-    xstart = blot_image.meta.subarray.xstart
-    xsize = blot_image.data.shape[1]
-    xstop = xstart + xsize - 1
-    ystart = blot_image.meta.subarray.ystart
-    ysize = blot_image.data.shape[0]
-    ystop = ystart + ysize - 1
-    if (readnoise_image.meta.subarray.xstart == xstart and
-            readnoise_image.meta.subarray.xsize == xsize and
-            readnoise_image.meta.subarray.ystart == ystart and
-            readnoise_image.meta.subarray.ysize == ysize):
-
-        log.debug('Readnoise and gain subarrays match science data')
-        rn = readnoise_image.data
-        # gain = gain_image.data
-
-    else:
-        log.debug('Extracting readnoise and gain subarrays to \
-                    match science data')
-        rn = readnoise_image.data[ystart - 1:ystop, xstart - 1:xstop]
-        # gain = gain_image.data[ystart - 1:ystop, xstart - 1:xstop]
-
-    # TODO: for JWST, the actual readnoise at a given pixel depends on the
-    # number of reads going into that pixel.  So we need to account for that
-    # using the meta.exposure.nints, ngroups and nframes keywords.
+    err_data = np.nan_to_num(sci_image.err)
 
     # Define output cosmic ray mask to populate
     cr_mask = np.zeros(sci_image.shape, dtype=np.uint8)
@@ -436,7 +405,8 @@ def flag_cr(sci_image, blot_image, gain_image, readnoise_image, **pars):
     #
     # Model the noise and create a CR mask
     diff_noise = np.abs(sci_data - blot_data)
-    ta = np.sqrt(np.abs(blot_data + subtracted_background) + rn ** 2)
+    # ta = np.sqrt(np.abs(blot_data + subtracted_background) + rn ** 2)
+    ta = np.sqrt(np.abs(blot_data + subtracted_background) + err_data ** 2)
     t2 = scl1 * blot_deriv + snr1 * ta
 
     tmp1 = np.logical_not(np.greater(diff_noise, t2))
@@ -520,14 +490,6 @@ def flag_cr(sci_image, blot_image, gain_image, readnoise_image, **pars):
     np.bitwise_or(sci_image.dq, np.invert(cr_mask) * CRBIT, sci_image.dq)
 
 
-def build_mask(dqarr, bitvalue):
-    """Build a bit-mask from an input DQ array and a bitvalue flag."""
-    bitvalue = bitmask.interpret_bit_flags(bitvalue)
-    if bitvalue is None:
-        return (np.ones(dqarr.shape, dtype=np.uint32))
-    return np.logical_not(np.bitwise_and(dqarr, ~bitvalue)).astype(np.uint32)
-
-
 def abs_deriv(array):
     """Take the absolute derivate of a numpy array."""
     tmp = np.zeros(array.shape, dtype=np.float64)
@@ -551,24 +513,3 @@ def _absolute_subtract(array, tmp, out):
     out = np.maximum(tmp, out)
     tmp = tmp * 0.
     return tmp, out
-
-
-def update_filename(filename, suffix):
-    """Update filename for datamodel with user-specified suffix.
-
-    Parameters
-    ==========
-    filename : str
-        Filename from datamodels metadata
-
-    suffix : str
-        Suffix (such as default 'i2d') to append to filename to define output
-        filename for product
-
-    """
-    if filename.endswith('.fits'):
-        # remove last suffix (prior to .fits)
-        filename = '_'.join(filename[:-5].split("-")[:-1])
-
-    filename += suffix
-    return filename

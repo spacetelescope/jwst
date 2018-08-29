@@ -1,8 +1,9 @@
-#!/usr/bin/env python
 from collections import defaultdict
+import os.path as op
+import traceback
 
 from .. import datamodels
-from ..associations.load_as_asn import LoadAsLevel2Asn
+from ..lib.pipe_utils import is_tso
 from ..stpipe import Pipeline
 
 # step imports
@@ -22,7 +23,7 @@ from ..cube_build import cube_build_step
 from ..extract_1d import extract_1d_step
 from ..resample import resample_spec_step
 
-__version__ = '0.8.0'
+__version__ = '0.9.3'
 
 
 class Spec2Pipeline(Pipeline):
@@ -38,7 +39,8 @@ class Spec2Pipeline(Pipeline):
     """
 
     spec = """
-        save_bsub = boolean(default=False) # Save background-subracted science
+        save_bsub = boolean(default=False)        # Save background-subracted science
+        fail_on_exception = boolean(default=True) # Fail if any product fails.
     """
 
     # Define aliases to steps
@@ -72,26 +74,32 @@ class Spec2Pipeline(Pipeline):
         self.log.info('Starting calwebb_spec2 ...')
 
         # Retrieve the input(s)
-        asn = LoadAsLevel2Asn.load(input, basename=self.output_file)
+        asn = self.load_as_level2_asn(input)
 
         # Each exposure is a product in the association.
         # Process each exposure.
+        has_exceptions = False
         for product in asn['products']:
             self.log.info('Processing product {}'.format(product['name']))
-            self.output_basename = product['name']
-            result = self.process_exposure_product(
-                product,
-                asn['asn_pool'],
-                asn.filename
+            self.output_file = product['name']
+            try:
+                result = self.process_exposure_product(
+                    product,
+                    asn['asn_pool'],
+                    asn.filename
+                )
+            except Exception as exception:
+                traceback.print_exc()
+                has_exceptions = True
+            else:
+                if result is not None:
+                    self.save_model(result)
+                    self.closeout(to_close=[result])
+
+        if has_exceptions and self.fail_on_exception:
+            raise RuntimeError(
+                'One or more products failed to process. Failing calibration.'
             )
-
-            # Save result
-            suffix = 'cal'
-            if isinstance(result, datamodels.CubeModel):
-                suffix = 'calints'
-            self.save_model(result, suffix)
-
-            self.closeout(to_close=[result])
 
         # We're done
         self.log.info('Ending calwebb_spec2')
@@ -129,20 +137,23 @@ class Spec2Pipeline(Pipeline):
         science = science[0]
 
         self.log.info('Working on input %s ...', science)
-        if isinstance(science, datamodels.DataModel):
-            input = science
-        else:
-            input = datamodels.open(science)
+        input = self.open_model(science)
         exp_type = input.meta.exposure.type
+        tso_mode = is_tso(input)
 
-        WFSS_TYPES = ["NIS_WFSS", "NRC_GRISM"]
+        WFSS_TYPES = ["NIS_WFSS", "NRC_WFSS"]
 
         # Apply WCS info
         # check the datamodel to see if it's
         # a grism image, if so get the catalog
         # name from the asn and record it to the meta
         if exp_type in WFSS_TYPES:
-            input.meta.source_catalog.filename = members_by_type['sourcecat'][0]
+            try:
+                input.meta.source_catalog.filename = members_by_type['sourcecat'][0]
+            except IndexError:
+                if input.meta.source_catalog.filename is None:
+                    raise IndexError("No source catalog specified in association or datamodel")
+
         input = self.assign_wcs(input)
 
         # Do background processing, if necessary
@@ -167,11 +178,18 @@ class Spec2Pipeline(Pipeline):
 
         # If assign_wcs was skipped, abort the rest of processing,
         # because so many downstream steps depend on the WCS
-        if input.meta.cal_step.assign_wcs == 'SKIPPED':
-            self.log.error('Assign_wcs processing was skipped')
-            self.log.error('Aborting remaining processing for this exposure')
-            self.log.error('No output product will be created')
-            return input
+        if input.meta.cal_step.assign_wcs != 'COMPLETE':
+            message = (
+                'Assign_wcs processing was skipped.'
+                '\nAborting remaining processing for this exposure.'
+                '\nNo output product will be created.'
+            )
+            if self.assign_wcs.skip:
+                self.log.warning(message)
+                return
+            else:
+                self.log.error(message)
+                raise RuntimeError('Cannot determine WCS.')
 
         # Apply NIRSpec MSA imprint subtraction
         # Technically there should be just one.
@@ -191,7 +209,7 @@ class Spec2Pipeline(Pipeline):
         # It isn't really necessary to include 'NRC_TSGRISM' in this list,
         # but it doesn't hurt, and it makes it clear that flat_field
         # should be done before extract_2d for all WFSS/GRISM data.
-        if exp_type in ['NRC_GRISM', 'NIS_WFSS', 'NRC_TSGRISM']:
+        if exp_type in ['NRC_WFSS', 'NIS_WFSS', 'NRC_TSGRISM']:
             # Apply flat-field correction
             input = self.flat_field(input)
 
@@ -226,29 +244,26 @@ class Spec2Pipeline(Pipeline):
             input = self.barshadow(input)
 
         # Apply flux calibration
-        input = self.photom(input)
+        result = self.photom(input)
 
         # Record ASN pool and table names in output
-        input.meta.asn.pool_name = pool_name
-        input.meta.asn.table_name = asn_file
+        result.meta.asn.pool_name = pool_name
+        result.meta.asn.table_name = op.basename(asn_file)
 
         # Setup to save the calibrated exposure at end of step.
-        self.suffix = 'cal'
-        if isinstance(input, datamodels.CubeModel):
+        if tso_mode:
             self.suffix = 'calints'
+        else:
+            self.suffix = 'cal'
 
         # Produce a resampled product, either via resample_spec for
         # "regular" spectra or cube_build for IFU data. No resampled
         # product is produced for time-series modes.
-        if input.meta.exposure.type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC']:
+        if exp_type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'MIR_LRS-FIXEDSLIT']:
 
-            # Call the resample_spec step
+            # Call the resample_spec step for slit data
             self.resample_spec.suffix = 's2d'
-            resamp = self.resample_spec(input)
-
-            # Pass the resampled data to 1D extraction
-            x1d_input = resamp.copy()
-            resamp.close()
+            result_extra = self.resample_spec(result)
 
         elif exp_type in ['MIR_MRS', 'NRS_IFU']:
 
@@ -258,29 +273,24 @@ class Spec2Pipeline(Pipeline):
             self.cube_build.output_type = 'multi'
             self.cube_build.suffix = 's3d'
             self.cube_build.save_results = False
-            cube = self.cube_build(input)
-            self.save_model(cube[0], 's3d')
-
-            # Pass the cube along for input to 1D extraction
-            x1d_input = cube.copy()
-            cube.close()
-
+            result_extra = self.cube_build(result)
+            self.save_model(result_extra[0], 's3d')
         else:
-            # Pass the unresampled cal product to 1D extraction
-            x1d_input = input
+            result_extra = result
 
         # Extract a 1D spectrum from the 2D/3D data
-        self.extract_1d.suffix = 'x1d'
-        if isinstance(input, datamodels.CubeModel):
+        if tso_mode:
             self.extract_1d.suffix = 'x1dints'
-        x1d_output = self.extract_1d(x1d_input)
+        else:
+            self.extract_1d.suffix = 'x1d'
+        x1d_result = self.extract_1d(result_extra)
 
-        x1d_input.close()
-        input.close()
-        x1d_output.close()
+        result_extra.close()
+        x1d_result.close()
 
         # That's all folks
         self.log.info(
             'Finished processing product {}'.format(exp_product['name'])
         )
-        return input
+
+        return result

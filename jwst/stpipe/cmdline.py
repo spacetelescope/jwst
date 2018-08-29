@@ -250,12 +250,10 @@ def just_the_step_from_cmdline(args, cls=None):
         raise ValueError(str(e))
 
     # Define the primary input file.
-    if len(positional):
-        step.set_input_filename(positional[0])
-
     # Always have an output_file set on the outermost step
-    if step.output_file is None:
-        step.save_results = len(positional) > 0
+    if len(positional):
+        step.set_primary_input(positional[0])
+        step.save_results = True
 
     log.log.info("Hostname: {0}".format(os.uname()[1]))
     log.log.info("OS: {0}".format(os.uname()[0]))

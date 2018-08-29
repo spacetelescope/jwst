@@ -5,7 +5,6 @@ and :py:class:`~jwst.skymatch.skyimage.SkyImage`.
 
 :Authors: Mihai Cara (contact: help@stsci.edu)
 
-:License: :doc:`../LICENSE`
 
 """
 # THIRD PARTY
@@ -14,11 +13,11 @@ from copy import deepcopy
 
 __all__ = ['SkyStats']
 __taskname__ = 'skystatistics'
-__version__ = '0.8.0'
+__version__ = '0.9.3'
 __vdate__ = '12-May-2016'
 __author__ = 'Mihai Cara'
 
-class SkyStats(object):
+class SkyStats():
     """
     This is a superclass build on top of
     :py:class:`stsci.imagestats.ImageStats`. Compared to

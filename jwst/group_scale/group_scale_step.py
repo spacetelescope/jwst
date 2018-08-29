@@ -3,6 +3,9 @@ from .. import datamodels
 from . import group_scale
 
 
+__all__ = ["GroupScaleStep"]
+
+
 class GroupScaleStep(Step):
     """
     GroupScaleStep: Rescales group data to account for on-board
@@ -32,16 +35,18 @@ class GroupScaleStep(Step):
             # is a power of 2. If it is, rescaling isn't needed.
             if frame_divisor is None:
                 if (nframes & (nframes - 1) == 0):
-                    self.log.warning('NFRAMES={} is a power of 2'.format(nframes))
-                    self.log.warning('Step will be skipped')
+                    self.log.info('NFRAMES={} is a power of 2; ' +
+                                  'correction not needed'.format(nframes))
+                    self.log.info('Step will be skipped')
                     input_model.meta.cal_step.group_scale = 'SKIPPED'
                     return input_model
 
             # Compare NFRAMES and FRMDIVSR. If they're equal,
             # rescaling isn't needed.
             elif (nframes == frame_divisor):
-                self.log.warning('NFRAMES and FRMDIVSR are equal')
-                self.log.warning('Step will be skipped')
+                self.log.info('NFRAMES and FRMDIVSR are equal; ' +
+                              'correction not needed')
+                self.log.info('Step will be skipped')
                 input_model.meta.cal_step.group_scale = 'SKIPPED'
                 return input_model
 

@@ -2,16 +2,16 @@
     "asn_type": "image3",
     "asn_rule": "candidate_Asn_Image",
     "version_id": null,
-    "code_version": "0.9.4",
-    "program": "87600",
+    "code_version": "0.9.18",
     "degraded_status": "No known degraded exposures in association.",
-    "constraints": "Constraints:\n    wfsvisit: {'prime_targeted_fixed'}\n    exp_type: {'nis_image'}\n    is_not_tso: set()\n    opt_elem: {'clear'}\n    opt_elem2: {'f140m'}\n    target: {'1'}\n    program: {'87600'}\n    instrument: {'niriss'}\n    asn_candidate: {\"\\\\(\\\\'o014\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}",
+    "program": "87600",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '87600'})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'niriss'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'clear'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['pupil'], 'value': 'f140m'})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': 'sub128'})\nConstraint_Target({'name': 'target', 'sources': ['targetid'], 'value': '1'})\nConstraint_Image({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'nis_image'})\nDMSAttrConstraint({'name': 'wfsvisit', 'sources': ['visitype'], 'value': 'prime_targeted_fixed'})\nConstraint_Obsnum({'name': 'obs_num', 'sources': ['obs_num'], 'value': None})\nDMSAttrConstraint({'name': 'acq_exp', 'sources': ['exp_type'], 'value': 'mir_tacq|nis_taconfirm|nis_tacq|nrc_taconfirm|nrc_tacq|nrs_confirm|nrs_taconfirm|nrs_tacq|nrs_taslit'})\nDMSAttrConstraint({'name': 'acq_obsnum', 'sources': ['obs_num'], 'value': <function AsnMixin_Science.__init__.<locals>.<lambda> at 0x81b22a7b8>})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o014\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
     "asn_id": "o014",
     "target": "t001",
     "asn_pool": "jw87600_20171108T042226_pool",
     "products": [
         {
-            "name": "jw87600-o014_t001_niriss_f140m",
+            "name": "jw87600-o014_t001_niriss_f140m-sub128",
             "members": [
                 {
                     "expname": "jw87600014001_02101_00001_nis_cal.fits",

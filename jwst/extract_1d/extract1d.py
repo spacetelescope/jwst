@@ -9,7 +9,6 @@
 
 # STDLIB
 import logging
-import os
 import math
 import copy
 
@@ -19,7 +18,7 @@ from astropy.modeling import models, fitting
 
 __all__ = ['extract1d']
 __taskname__ = 'extract1d'
-__version__ = '0.8.0'
+__version__ = '0.9.3'
 __vdate__ = '22-December-2015'
 __author__ = 'Mihai Cara'
 
@@ -107,7 +106,7 @@ def extract1d(image, lambdas, disp_range,
     # Sanity check:  check for extraction limits that are out of bounds,
     # or a lower limit that's above the upper limit (limit curves just
     # swapped, or crossing each other).
-    # Truncate extraction limits that are out of bounds, but log an error.
+    # Truncate extraction limits that are out of bounds, but log a warning.
     shape = image.shape
     for i in range(n_srclim):
         lower = srclim[i][0]
@@ -126,12 +125,12 @@ def extract1d(image, lambdas, disp_range,
                                  " cross each other.")
         del diff
         if np.any(lower < -0.5) or np.any(upper < -0.5):
-            log.error("Source extraction limit extends below -0.5")
+            log.warning("Source extraction limit extends below -0.5")
             srclim[i][0][:] = np.where(lower < -0.5, -0.5, lower)
             srclim[i][1][:] = np.where(upper < -0.5, -0.5, upper)
         upper_limit = float(shape[0]) - 0.5
         if np.any(lower > upper_limit) or np.any(upper > upper_limit):
-            log.error("Source extraction limit extends above %g", upper_limit)
+            log.warning("Source extraction limit extends above %g", upper_limit)
             srclim[i][0][:] = np.where(lower > upper_limit, upper_limit, lower)
             srclim[i][1][:] = np.where(upper > upper_limit, upper_limit, upper)
     for i in range(nbkglim):
@@ -151,12 +150,12 @@ def extract1d(image, lambdas, disp_range,
                                  " cross each other.")
         del diff
         if np.any(lower < -0.5) or np.any(upper < -0.5):
-            log.error("Background limit extends below -0.5")
+            log.warning("Background limit extends below -0.5")
             bkglim[i][0][:] = np.where(lower < -0.5, -0.5, lower)
             bkglim[i][1][:] = np.where(upper < -0.5, -0.5, upper)
         upper_limit = float(shape[0]) - 0.5
         if np.any(lower > upper_limit) or np.any(upper > upper_limit):
-            log.error("Background limit extends above %g", upper_limit)
+            log.warning("Background limit extends above %g", upper_limit)
             bkglim[i][0][:] = np.where(lower > upper_limit, upper_limit, lower)
             bkglim[i][1][:] = np.where(upper > upper_limit, upper_limit, upper)
 
@@ -332,6 +331,7 @@ def _extract_colpix(image_data, x, j, limits):
     npts = sum(map(lambda x: min(ns, int(math.floor(x[1] + 0.5))) - \
                    max(0, int(math.floor(x[0] + 0.5))) + 1,
                    intervals))
+    npts = max(npts, 1)
 
     # pre-allocate data arrays:
     y = np.empty(npts, dtype=np.float32)
@@ -345,6 +345,7 @@ def _extract_colpix(image_data, x, j, limits):
         i2 = i[1] if i[1] <= ns12 else ns12
 
         ii1 = max(0, int(math.floor(i1 + 0.5)))
+        ii1 = min(ii1, ns)
         ii2 = min(ns, int(math.floor(i2 + 0.5)))
 
         # special case: ii1 == ii2:

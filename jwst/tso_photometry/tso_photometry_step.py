@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 
-from ..stpipe import Step, cmdline
+from ..stpipe import Step
 from ..datamodels import CubeModel
+from ..datamodels import TsoPhotModel
 from ..lib.catalog_utils import replace_suffix_ext
 from .tso_photometry import tso_aperture_photometry
+
+__all__ = ['TSOPhotometryStep']
 
 
 class TSOPhotometryStep(Step):
@@ -22,25 +25,27 @@ class TSOPhotometryStep(Step):
         save_catalog = boolean(default=False)  # save exposure-level catalog
     """
 
+    reference_file_types = ['tsophot']
+
     def process(self, input):
         with CubeModel(input) as model:
-            # TODO:  need information about the actual source position in
-            # TSO imaging mode (for all subarrays).
-            # Meanwhile, this is a placeholder representing the geometric
-            # center of the image.
-            nint, ny, nx = model.data.shape
-            xcenter = (ny - 1) / 2.
-            ycenter = (ny - 1) / 2.
 
-            # all radii are in pixel units
-            if model.meta.instrument.pupil == 'WLP8':
-                radius = 50
-                radius_inner = 60
-                radius_outer = 70
-            else:
-                radius = 3
-                radius_inner = 4
-                radius_outer = 5
+            xcenter = model.meta.wcsinfo.crpix1 - 1    # 1-based origin
+            ycenter = model.meta.wcsinfo.crpix2 - 1    # 1-based origin
+
+            tsophot_filename = self.get_reference_file(model, 'tsophot')
+            self.log.debug('Reference file name = {}'.format(tsophot_filename))
+            if tsophot_filename == 'N/A':
+                self.log.warning('No TSOPHOT reference file found;')
+                self.log.warning('the tso_photometry step will be skipped.')
+                return None
+
+            (radius, radius_inner, radius_outer) = get_ref_data(
+                        tsophot_filename, pupil=model.meta.instrument.pupil)
+            self.log.debug('Using reference file {}'.format(tsophot_filename))
+            self.log.debug('radius = {}'.format(radius))
+            self.log.debug('radius_inner = {}'.format(radius_inner))
+            self.log.debug('radius_outer = {}'.format(radius_outer))
 
             catalog = tso_aperture_photometry(model, xcenter, ycenter,
                                               radius, radius_inner,
@@ -60,3 +65,31 @@ class TSOPhotometryStep(Step):
 
         return catalog
 
+
+def get_ref_data(reffile, pupil='ANY'):
+
+    ref_model = TsoPhotModel(reffile)
+    radii = ref_model.radii
+    value = None
+    val_any_pupil = None
+    for item in radii:
+        if item.pupil == pupil.upper():
+            value = (item.radius,
+                     item.radius_inner, item.radius_outer)
+            break
+        elif item.pupil == 'ANY' and val_any_pupil is None:
+            # Save this value as a fallback, in case we don't find a match
+            # to an actual pupil name.
+            val_any_pupil = (item.radius,
+                             item.radius_inner, item.radius_outer)
+
+    if value is not None:
+        (radius, radius_inner, radius_outer) = value
+    elif val_any_pupil is not None:
+        (radius, radius_inner, radius_outer) = val_any_pupil
+    else:
+        (radius, radius_inner, radius_outer) = (0., 0., 0.)
+
+    ref_model.close()
+
+    return (radius, radius_inner, radius_outer)

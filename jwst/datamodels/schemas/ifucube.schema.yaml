@@ -1,41 +1,51 @@
 allOf:
 - $ref: core.schema.yaml
-- $ref: wcsinfo.schema.yaml
 - $ref: bunit.schema.yaml
+- $ref: photometry.schema.yaml
+- $ref: wcsinfo.schema.yaml
 - type: object
   properties:
     meta:
       type: object
       properties:
-        flux_extension:
-          title: EXTNAME of the extension containing flux data
-          type: string
-          fits_keyword: FLUXEXT
-        error_extension:
-          title: EXTNAME of the extension containing error data
-          type: string
-          fits_keyword: ERREXT
-        dq_extension:
-          title: EXTNAME of the extension containing data quality mask
-          type: string
-          fits_keyword: MASKEXT
-        roi_spatial:
-          title: Size of ROI in spatial dimension arcs seconds
-          type: number
-          fits_keyword: ROIS
-        roi_wave:
-          title: Size of ROI in wavelength dimension microns
-          type: number
-          fits_keyword: ROIW
-        weighting:
-          title: Type of weighting type (MSM,MIRIPSF,AREA)
-          type: string
-          fits_keyword: WTYPE
-        weight_power:
-          title: Weighting power for Modified Shepard Method
-          type: number
-          fits_keyword: WPOWER
-
+        ifu:
+          title: IFU cube parameters
+          type: object
+          properties:
+            flux_extension:
+              title: EXTNAME of the extension containing flux data
+              type: string
+              fits_keyword: FLUXEXT
+            error_extension:
+              title: EXTNAME of the extension containing error data
+              type: string
+              fits_keyword: ERREXT
+            error_type:
+              title: Type of errors stored here
+              type: string
+              enum: [ERR, IERR, VAR, IVAR]
+              fits_keyword: ERRTYPE
+              fits_hdu: ERR
+            dq_extension:
+              title: EXTNAME of the extension containing data quality mask
+              type: string
+              fits_keyword: MASKEXT
+            roi_spatial:
+              title: "[arcsec] Size of ROI in spatial dimension"
+              type: number
+              fits_keyword: ROIS
+            roi_wave:
+              title: "[um] Size of ROI in wavelength dimension"
+              type: number
+              fits_keyword: ROIW
+            weighting:
+              title: Weighting type (MSM,MIRIPSF,AREA)
+              type: string
+              fits_keyword: WTYPE
+            weight_power:
+              title: Weighting power for Modified Shepard Method
+              type: number
+              fits_keyword: WPOWER
 - type: object
   properties:
     data:
@@ -62,10 +72,10 @@ allOf:
       default: 0.0
       ndim: 3
       datatype: float32
-    error_type:
-      title: Type of errors stored here
-      type: string
-      enum: [ERR, IERR, VAR, IVAR]
-      fits_keyword: ERRTYPE
-      fits_hdu: ERR
+    wavetable:
+      title: Wavelength value for slices
+      fits_hdu: WCS-TABLE
+      datatype:
+      - name: wavelength
+        datatype: float64
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

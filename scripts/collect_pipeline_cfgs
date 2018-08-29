@@ -1,54 +1,50 @@
 #!/usr/bin/env python
 
-import os, sys, shutil
+import os
+import sys
 
-if len(sys.argv) < 2:
-    print('ERROR: missing argument (destination directory')
-    sys.exit(1)
+from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 
-if len(sys.argv) > 2:
-    print('ERROR: too many arguments')
-    sys.exit(1)
+if __name__ == '__main__':
 
-dst = sys.argv[1]
+    if len(sys.argv) < 2:
+        print('ERROR: missing argument (destination directory')
+        sys.exit(1)
 
+    if len(sys.argv) > 2:
+        print('ERROR: too many arguments')
+        sys.exit(1)
 
-if not os.path.exists(dst):
-    os.makedirs(dst)
-else:
-    # if the destination directory already exists, make sure the user wants to
-    # overwrite it's contents
-    overwrite = False
-    count = 0
-    ok = False
-    while not ok:
-        msg = '''WARNING: %s already exists, do you want to overwrite the
-contents of this directory?  Enter yes or no [yes]: ''' % dst
-
-        sys_vrs = sys.version[:3]
-        if sys_vrs == '2.7':
-            answer = raw_input(msg).strip().lower()
-        else:
-            answer = input(msg).strip().lower()
-        if answer not in ['yes', 'no', '']:
-            print('%s is not a valid response\n' % answer)
-        else:
-            ok = True
-            print('')
-            if answer in ['yes', '']:
-                overwrite = True
-
-        # exit after 10 tries
-        count += 1
-        if count > 10:
-            print()
-            sys.exit(1)
+    dst = sys.argv[1]
 
 
-# find installed pipeline *.cfg files
-import jwst.pipeline as p
-cfg_dir = p.__path__[0]
-for i in os.listdir(cfg_dir):
-    if i.endswith('.cfg'):
-        cfg = os.path.join(cfg_dir, i)
-        shutil.copy(cfg, dst)
+    if os.path.exists(dst):
+        # if the destination directory already exists, make sure the user wants to
+        # overwrite it's contents
+        count = 0
+        ok = False
+        while True:
+            msg = '''WARNING: %s already exists, do you want to overwrite the
+    contents of this directory?  Enter yes or no [yes]: ''' % dst
+
+            sys_vrs = sys.version[:3]
+            if sys_vrs == '2.7':
+                answer = raw_input(msg).strip().lower()
+            else:
+                answer = input(msg).strip().lower()
+            if answer not in ['yes', 'no', '']:
+                print('%s is not a valid response\n' % answer)
+            else:
+                print('')
+                if answer in ['yes', '']:
+                    break
+                else:
+                    sys.exit(1)
+
+            # exit after 10 tries
+            count += 1
+            if count > 10:
+                print()
+                sys.exit(1)
+
+    collect_pipeline_cfgs(dst)

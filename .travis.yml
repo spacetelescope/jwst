@@ -10,22 +10,40 @@ sudo: false
 addons:
     apt:
         packages:
-            - graphviz
             - texlive-latex-extra
             - dvipng
 
 env:
     global:
-        - MAIN_CMD='python setup.py'
-        - CONDA_CHANNELS='http://ssb.stsci.edu/conda-dev'
-        - CONDA_DEPENDENCIES='pytest jwst sphinx'
-        - CONDA_JWST_DEPENDENCIES='pytest jwst sphinx'
-        - PIP_DEPENDENCIES=''
+        - CONDA_CHANNELS='http://ssb.stsci.edu/astroconda-dev'
+        - CONDA_DEPENDENCIES="asdf
+                              astropy
+                              crds
+                              dask
+                              drizzle
+                              flake8
+                              gwcs
+                              jsonschema
+                              jplephem
+                              matplotlib
+                              namedlist
+                              numpy
+                              photutils
+                              scipy
+                              six
+                              spherical-geometry
+                              stsci.image
+                              stsci.imagestats
+                              stsci.stimage
+                              stsci.tools
+                              verhawk"
+        - CONDA_DOCS_DEPENDENCIES='sphinx graphviz'
         - CRDS_SERVER_URL='https://jwst-crds.stsci.edu'
         - CRDS_PATH='/tmp/crds_cache'
+        - MAIN_CMD='python setup.py'
+        - MC_URL=https://repo.continuum.io/miniconda
+        - PIP_DEPENDENCIES=''
         - PYTHON_VERSION=3.6
-        - NUMPY_VERSION=stable
-        - ASTROPY_VERSION=development
 
     matrix:
         - SETUP_CMD='install'
@@ -45,26 +63,33 @@ matrix:
         - os: linux
           env: MAIN_CMD='flake8 --count'
                SETUP_CMD='jwst' TEST_CMD='flake8 --version'
-               CONDA_DEPENDENCIES=$CONDA_JWST_DEPENDENCIES
 
         # build sphinx documentation with warnings
         - os: linux
           env: SETUP_CMD='build_sphinx'
-               CONDA_DEPENDENCIES=$CONDA_JWST_DEPENDENCIES
-               PIP_DEPENDENCIES='sphinx_rtd_theme sphinx-automodapi'
+               CONDA_DEPENDENCIES="$CONDA_DEPENDENCIES $CONDA_DOC_DEPENDENCIES"
+               PIP_DEPENDENCIES='sphinx_rtd_theme stsci_rtd_theme sphinx-automodapi'
 
     allow_failures:
         # PEP8 will fail for numerous reasons. Ignore it.
         - env: MAIN_CMD='flake8 --count'
                SETUP_CMD='jwst' TEST_CMD='flake8 --version'
-               CONDA_DEPENDENCIES=$CONDA_JWST_DEPENDENCIES
 
-install:
-    - git clone git://github.com/astropy/ci-helpers.git
-    - source ci-helpers/travis/setup_conda_$TRAVIS_OS_NAME.sh
+before_install:
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then MC_INST=Miniconda3-4.4.10-Linux-x86_64.sh; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then MC_INST=Miniconda3-4.4.10-MacOSX-x86_64.sh; fi
+  - curl -LO "$MC_URL/$MC_INST"
+  - bash $MC_INST -b -p $HOME/miniconda
+  - export PATH=$HOME/miniconda/bin:$PATH
+  - conda config --set always_yes yes --set changeps1 no
+  - conda config --set auto_update_conda false
+  - for channel in $CONDA_CHANNELS; do conda config --add channels "$channel"; done
+  - conda create -n test -q python=$PYTHON_VERSION $CONDA_DEPENDENCIES
+  - source activate test
+  - if [[ -n $PIP_DEPENDENCIES ]]; then pip install -q $PIP_DEPENDENCIES; fi
 
 after_install:
-    - conda list astropy
+  - conda list astropy
 
 script:
-    - $MAIN_CMD $SETUP_CMD
+  - $MAIN_CMD $SETUP_CMD

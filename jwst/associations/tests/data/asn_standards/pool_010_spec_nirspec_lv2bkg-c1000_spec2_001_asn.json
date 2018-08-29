@@ -1,0 +1,44 @@
+{
+    "asn_type": "spec2",
+    "asn_rule": "candidate_Asn_Lv2Spec",
+    "version_id": null,
+    "code_version": "0.9.20",
+    "degraded_status": "No known degraded exposures in association.",
+    "program": "99009",
+    "target": "1",
+    "asn_pool": "pool_010_spec_nirspec_lv2bkg",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '99009'})\nDMSAttrConstraint({'name': 'is_tso', 'sources': ['tsovisit'], 'value': None})\nDMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '99009'})\nDMSAttrConstraint({'name': 'target', 'sources': ['targetid'], 'value': '1'})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'nirspec'})\nDMSAttrConstraint({'name': 'detector', 'sources': ['detector'], 'value': 'nrs1'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'f100lp'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['grating'], 'value': 'g140m'})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': 's200a2'})\nDMSAttrConstraint({'name': 'channel', 'sources': ['channel'], 'value': None})\nDMSAttrConstraint({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'nrs_fixedslit'})\nSimpleConstraint({'name': 'single_science', 'value': False})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'c1000\\\\'\\\\,\\\\ \\\\'background\\\\'\\\\)\"})",
+    "asn_id": "c1000",
+    "products": [
+        {
+            "name": "jw_00005",
+            "members": [
+                {
+                    "expname": "jw_00001_rate.fits",
+                    "exptype": "background",
+                    "exposerr": null
+                },
+                {
+                    "expname": "jw_00005_rate.fits",
+                    "exptype": "science",
+                    "exposerr": null
+                }
+            ]
+        },
+        {
+            "name": "jw_00006",
+            "members": [
+                {
+                    "expname": "jw_00002_rate.fits",
+                    "exptype": "background",
+                    "exposerr": null
+                },
+                {
+                    "expname": "jw_00006_rate.fits",
+                    "exptype": "science",
+                    "exposerr": null
+                }
+            ]
+        }
+    ]
+}

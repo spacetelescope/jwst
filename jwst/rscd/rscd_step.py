@@ -3,6 +3,9 @@ from .. import datamodels
 from . import rscd_sub
 
 
+__all__ = ["RSCD_Step"]
+
+
 class RSCD_Step(Step):
     """
     RSCD_Step: Performs an RSCD correction to MIRI data by adding a function
@@ -28,9 +31,17 @@ class RSCD_Step(Step):
                 if self.rscd_name == 'N/A':
                     self.log.warning('No RSCD reference file found')
                     self.log.warning('RSCD step will be skipped')
-                    result = input_model.copy()
-                    result.meta.cal_step.rscd = 'SKIPPED'
-                    return result
+                    input_model.meta.cal_step.rscd = 'SKIPPED'
+                    return input_model
+                # Check that data has the minimum number of groups/int
+                sci_ngroups = input_model.data.shape[1]     # number of groups
+                min_number = 4
+                if sci_ngroups < min_number:
+                    self.log.warning('Input file does not contain enough groups '
+                                     'for RSCD correction to be applied')
+                    self.log.warning('RSCD step will be skipped')
+                    input_model.meta.cal_step.rscd = 'SKIPPED'
+                    return input_model
 
                 # Load the rscd ref file data model
                 rscd_model = datamodels.RSCDModel(self.rscd_name)

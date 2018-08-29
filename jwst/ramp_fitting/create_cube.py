@@ -30,7 +30,6 @@
 #  ... which specifies the values:
 #  readmode = 'deep8', nread = 4, array size = 100, image to sample = 'sim_100.fits', noisy = True, verbosity = 1
 #
-from __future__ import division, print_function
 
 import time, random
 import numpy as N

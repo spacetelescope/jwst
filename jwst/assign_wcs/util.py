@@ -1,5 +1,5 @@
 """
-Utility function for WCS
+Utility function for assign_wcs.
 
 """
 import warnings
@@ -11,19 +11,27 @@ from astropy.utils.misc import isiterable
 from astropy.io import fits
 from astropy.modeling import models as astmodels
 from astropy.table import QTable
-
+from astropy.constants import c
 
 from gwcs import WCS
-from gwcs.wcstools import wcs_from_fiducial
+from gwcs.wcstools import wcs_from_fiducial, grid_from_bounding_box
 from gwcs import utils as gwutils
 
 from . import pointing
 from ..lib.catalog_utils import SkyObject
 from ..transforms.models import GrismObject
-from ..datamodels import WavelengthrangeModel, DataModel
+from ..datamodels import WavelengthrangeModel, DataModel, CubeModel, IFUCubeModel
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
+
+__all__ = ["reproject", "wcs_from_footprints", "velocity_correction"]
+
+
+class MissingMSAFileError(Exception):
+
+    def __init__(self, message):
+        super(MissingMSAFileError, self).__init__(message)
 
 
 def _domain_to_bounding_box(domain):
@@ -86,7 +94,7 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
         scaling and rotation transform is created from it. If not supplied
         the first model in the list is used as ``refmodel``.
     transform : `~astropy.modeling.core.Model`, optional
-        A transform, passed to :class_method:`~gwcs.WCS.wcs_from_fiducial`
+        A transform, passed to :meth:`~gwcs.wcstools.wcs_from_fiducial`
         If not supplied Scaling | Rotation is computed from ``refmodel``.
     bounding_box : tuple, optional
         Bounding_box of the new WCS.
@@ -117,7 +125,7 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
         transform = []
         wcsinfo = pointing.wcsinfo_from_model(refmodel)
         sky_axes, spec, other = gwutils.get_axes(wcsinfo)
-        rotation = astmodels.AffineTransformation2D(np.array(wcsinfo['PC']))
+        rotation = astmodels.AffineTransformation2D(wcsinfo['PC'])
         transform.append(rotation)
         if sky_axes:
             cdelt1, cdelt2 = wcsinfo['CDELT'][sky_axes]
@@ -132,7 +140,7 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
     wnew = wcs_from_fiducial(fiducial, coordinate_frame=out_frame,
                              projection=prj, transform=transform)
 
-    footprints = [w.footprint() for w in wcslist]
+    footprints = [w.footprint().T for w in wcslist]
     domain_bounds = np.hstack([wnew.backward_transform(*f) for f in footprints])
     for axs in domain_bounds:
         axs -= axs.min()
@@ -164,7 +172,7 @@ def compute_fiducial(wcslist, bounding_box=None, domain=None):
     axes_types = wcslist[0].output_frame.axes_type
     spatial_axes = np.array(axes_types) == 'SPATIAL'
     spectral_axes = np.array(axes_types) == 'SPECTRAL'
-    footprints = np.hstack([w.footprint(bounding_box=bounding_box) for w in wcslist])
+    footprints = np.hstack([w.footprint(bounding_box=bounding_box).T for w in wcslist])
     spatial_footprint = footprints[spatial_axes]
     spectral_footprint = footprints[spectral_axes]
 
@@ -262,10 +270,12 @@ def subarray_transform(input_model):
 
 
 def not_implemented_mode(input_model, ref):
+    """
+    Return ``None`` if assign_wcs has not been implemented for a mode.
+    """
     exp_type = input_model.meta.exposure.type
     message = "WCS for EXP_TYPE of {0} is not implemented.".format(exp_type)
     log.critical(message)
-    # raise AttributeError(message)
     return None
 
 
@@ -367,7 +377,7 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
     detector (for example, extract 2d would only extract the on-detector portion of
     the bounding box)
 
-    Bounding box dispersion direction is dependent on the filter and module for NIRCAM 
+    Bounding box dispersion direction is dependent on the filter and module for NIRCAM
     and changes for GRISMR, but is consistent for GRISMC,
     see https://jwst-docs.stsci.edu/display/JTI/NIRCam+Wide+Field+Slitless+Spectroscopy
 
@@ -399,12 +409,14 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
             disperse_row_right = False
     else:
         raise ValueError("Input model is from unexpected instrument")
-    
+
     # get the array extent to exclude boxes not contained on the detector
     xsize = input_model.meta.subarray.xsize
     ysize = input_model.meta.subarray.ysize
 
     # extract the catalog objects
+    if input_model.meta.source_catalog.filename is None:
+        raise ValueError("No source catalog listed in datamodel")
     skyobject_list = get_object_info(input_model.meta.source_catalog.filename)
 
     # get the imaging transform to record the center of the object in the image
@@ -448,10 +460,10 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
                 # I think this should be taken care of in the trace polys
                 wave_min = lmax
                 wave_max = lmin
-                if (disperse_row_right or  disperse_column):
+                if (disperse_row_right or disperse_column):
                     wave_min = lmin
                     wave_max = lmax
-                 
+
                 xmin, ymin, _, _, _ = sky_to_grism(obj.sky_bbox_ll.ra.value, obj.sky_bbox_ll.dec.value, lmin, order)
                 xmax, ymax, _, _, _ = sky_to_grism(obj.sky_bbox_ur.ra.value, obj.sky_bbox_ur.dec.value, lmax, order)
 
@@ -462,14 +474,14 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
                 # else:
                 #     cdisp = abs(round(bymax)-round(bymin)) // 2
                 #     xmin, ymin, xmax, ymax = map(round,[xmin-cdisp, ymin, xmax+cdisp, ymax])
-                
+
 
                 # don't add objects and orders which are entirely off the detector
                 # this could also live in extract_2d
                 # partial_order marks partial off-detector objects which are near enough to cause
                 # spectra to be observed on the detector. This is usefull because the catalog often is
                 # created from a resampled direct image that is bigger than the detector FOV for a single
-                # grism exposure. 
+                # grism exposure.
                 exclude = False
                 partial_order = False
 
@@ -486,7 +498,7 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
                     exclude = True
                 if (xmin > xsize):
                     exclude = True
-                
+
                 if partial_order:
                     log.info("Partial order on detector for obj: {} order: {}".format(obj.sid, order))
                 if exclude:
@@ -510,7 +522,7 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
                                                  sky_bbox_ur=obj.sky_bbox_ur,
                                                  xcentroid=xcenter,
                                                  ycentroid=ycenter))
-            
+
     return grism_objects
 
 
@@ -530,33 +542,91 @@ def get_num_msa_open_shutters(shutter_state):
     return num
 
 
-def update_s_region(model):
-    """
-    Update the ``S_REGION`` keyword usiong ``WCS.footprint``.
+def bounding_box_from_shape(model):
+    """Create a bounding box from the shape of the data.
 
+    Note: The bounding box of a ``CubeModel`` is the bounding_box of one
+    of the stacked images.
     """
-    bbox = None
-    def _bbox_from_shape(model):
+    if isinstance(model, (CubeModel, IFUCubeModel)):
+        shape = model.data[0].shape
+    else:
         shape = model.data.shape
-        bbox = ((0, shape[1]), (0, shape[0]))
-        return bbox
-    try:
-        bbox = model.meta.wcs.bounding_box
-    except NotImplementedError:
-        bbox = _bbox_from_shape(model)
+
+    bbox = ((-0.5, shape[1] - 0.5),
+            (-0.5, shape[0] - 0.5))
+    return bbox
+
+
+def update_s_region_imaging(model):
+    """
+    Update the ``S_REGION`` keyword using ``WCS.footprint``.
+    """
+
+    bbox = model.meta.wcs.bounding_box
 
     if bbox is None:
-        bbox = _bbox_from_shape(model)
+        bbox = bounding_box_from_shape(model)
 
-    footprint = model.meta.wcs.footprint(bbox, center=True).T
+    # footprint is an array of shape (2, 4) as we
+    # are interested only in the footprint on the sky
+    footprint = model.meta.wcs.footprint(bbox, center=True, axis_type="spatial").T
+    # take only imaging footprint
+    footprint = footprint[:2, :]
+
+    # Make sure RA values are all positive
+    negative_ind = footprint[0] < 0
+    if negative_ind.any():
+        footprint[0][negative_ind] = 360 + footprint[0][negative_ind]
+
+    footprint = footprint.T
+    update_s_region_keyword(model, footprint)
+
+
+def update_s_region_spectral(model):
+    swcs = model.meta.wcs
+
+    bbox = swcs.bounding_box
+    if bbox is None:
+        bbox = bounding_box_from_shape(model)
+
+    x, y = grid_from_bounding_box(bbox)
+    ra, dec, lam = swcs(x, y)
+    footprint = np.array([[np.nanmin(ra), np.nanmin(dec)],
+                 [np.nanmax(ra), np.nanmin(dec)],
+                 [np.nanmax(ra), np.nanmax(dec)],
+                 [np.nanmin(ra), np.nanmax(dec)]])
+    update_s_region_keyword(model, footprint)
+
+
+def update_s_region_keyword(model, footprint):
+    """ Update the S_REGION keyword.
+    """
     s_region = (
         "POLYGON ICRS "
-        " {0} {1}"
-        " {2} {3}"
-        " {4} {5}"
-        " {6} {7}".format(*footprint.flatten()))
+        " {0:.9f} {1:.9f}"
+        " {2:.9f} {3:.9f}"
+        " {4:.9f} {5:.9f}"
+        " {6:.9f} {7:.9f}".format(*footprint.flatten()))
     if "nan" in s_region:
         # do not update s_region if there are NaNs.
-        log.info("There NaNs in s_region")
+        log.info("There are NaNs in s_region, S_REGION not updated.")
     else:
         model.meta.wcsinfo.s_region = s_region
+        log.info("Update S_REGION to {}".format(model.meta.wcsinfo.s_region))
+
+
+def velocity_correction(velosys):
+    """
+    Compute wavelength correction to Barycentric reference frame.
+
+    Parameters
+    ----------
+    velosys : float
+        Radial velocity wrt Barycenter [m / s].
+    """
+    correction = (1 / (1 + velosys / c.value))
+    model =  astmodels.Identity(1) * astmodels.Const1D(correction, name="velocity_correction")
+    model.inverse = astmodels.Identity(1) / astmodels.Const1D(correction, name="inv_vel_correciton")
+
+    return model

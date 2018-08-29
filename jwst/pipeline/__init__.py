@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 from .calwebb_ami3 import Ami3Pipeline
 from .calwebb_coron3 import Coron3Pipeline
 from .calwebb_dark import DarkPipeline
@@ -12,4 +10,4 @@ from .calwebb_spec3 import Spec3Pipeline
 from .linear_pipeline import TestLinearPipeline
 from .calwebb_tso3 import Tso3Pipeline
 
-__version__ = '0.8.0'
+__version__ = '0.9.3'

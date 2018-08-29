@@ -1,5 +1,3 @@
-from __future__ import division
-
 #
 #  Module for flagging the DQ array of pixels affected by failed
 #  open MSA shutters in nirspec science data sets
@@ -90,8 +88,12 @@ def flag(input_datamodel, failed_slitlets, wcs_refnames):
     wcs = WCS(pipeline)
     # Create output as a copy of the input science data model so we can overwrite
     # the wcs with the wcs for the failed open shutters
+    # Have to make sure the EXP_TYPE is NRS_MSASPEC so that nrs_wcs_set_input works,
+    # We need to use the slit WCS for this even if the EXP_TYPE is NRS_IFU because we
+    # are calculating where stuck open slits affect the data
     temporary_copy = input_datamodel.copy()
     temporary_copy.meta.wcs = wcs
+    temporary_copy.meta.exposure.type = 'NRS_MSASPEC'
     dq_array = input_datamodel.dq
     for slitlet in failed_slitlets:
         #

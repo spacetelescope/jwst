@@ -9,6 +9,7 @@ allOf:
           type: string
           fits_hdu: SCI
           fits_keyword: BUNIT
+          blend_table: True
         bunit_err:
           title: physical units of the array values
           type: string

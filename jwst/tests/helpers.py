@@ -20,7 +20,10 @@ try:
         reason="need --runslow option to run"
     )
 except AttributeError:
-    runslow = lambda func: func
+    runslow = pytest.mark.skipif(
+        True,
+        reason="No reason, just a dummy"
+    )
 
 # Decorator to indicate TEST_BIGDATA required
 require_bigdata = pytest.mark.skipif(

@@ -1,11 +1,11 @@
 #! /usr/bin/env python
 
-import os
-
-from ..stpipe import Step, cmdline
+from . import hlsp
+from ..stpipe import Step
 from .. import datamodels
 
-from . import hlsp
+__all__ = ["HlspStep"]
+
 
 class HlspStep(Step):
 
@@ -16,6 +16,7 @@ class HlspStep(Step):
 
     spec = """
         annuli_width = integer(default=2, min=1) # Width of contrast annuli
+        save_results = boolean(default=true) # Save results
     """
 
     def process(self, target):
@@ -34,17 +35,15 @@ class HlspStep(Step):
             contrast = hlsp.contrast_curve(target_model, width)
 
         # Save the SNR output file
-        root = os.path.abspath(os.path.splitext(snr.meta.filename)[0])
+        if self.output_file is None:
+            self.output_file = target_model.meta.filename
         snr.meta.cal_step.hlsp = 'COMPLETE'
-        snr_file = root + "_snr.fits"
-        snr.save(snr_file)
+        self.save_model(snr, suffix='snr')
         snr.close()
 
         # Save the Contrast curve file
         contrast.meta.cal_step.hlsp = 'COMPLETE'
-        contrast_file = root + "_contrast.fits"
-        contrast.save(contrast_file)
+        self.save_model(contrast, 'constrast')
         contrast.close()
 
         return
-

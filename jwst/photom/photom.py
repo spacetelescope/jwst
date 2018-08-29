@@ -12,7 +12,8 @@ log.setLevel(logging.DEBUG)
 
 PHOT_TOL = 0.001  # relative tolerance between PIXAR_* keys
 
-class DataSet(object):
+
+class DataSet():
     """
     Input dataset to which the photom information will be attached
 
@@ -20,11 +21,11 @@ class DataSet(object):
     ----------
 
     """
-    def __init__(self, model, phot_file=None, area_file=None):
+    def __init__(self, model):
         """
         Short Summary
         -------------
-        Set file name of input file, photom ref file, area ref file,
+        Store vital params in DataSet object, such as
         instrument, detector, filter, pupil, and exposure type.
 
         Parameters
@@ -32,16 +33,8 @@ class DataSet(object):
         model: data model object
             input Data Model object
 
-        phot_file: string
-           name of photom reference file
-
-        area_file: string
-           name of pixel area reference file
-
         """
         self.input = model
-        self.phot_file = phot_file
-        self.area_file = area_file
 
         self.instrument = model.meta.instrument.name.upper()
         self.detector = model.meta.instrument.detector.upper()
@@ -72,8 +65,7 @@ class DataSet(object):
         if self.band is not None:
             log.info(' band: %s', self.band)
 
-
-    def calc_nirspec(self, ftab):
+    def calc_nirspec(self, ftab, area_fname):
         """
         Extended Summary
         -------------
@@ -88,15 +80,15 @@ class DataSet(object):
         Parameters
         ----------
         ftab: fits HDUList
-            HDUList for NIRSPEC reference file
+            HDUList for NIRSPEC photom reference file
+
+        area_fname: string
+            Pixel area map reference file name
 
         Returns
         -------
-        conv_factor: float
-            photometric conversion factor written as PHOTMJSR
 
         """
-        conv_factor = None
 
         # Get the GRATING value from the input data model
         grating = self.input.meta.instrument.grating.upper()
@@ -109,7 +101,7 @@ class DataSet(object):
             for slit in self.input.slits:
 
                 log.info('Working on slit %s' % slit.name)
-                conv_factor = None
+                match = False
                 self.slitnum += 1
 
                 # Loop through reference table to find matching row
@@ -122,21 +114,18 @@ class DataSet(object):
 
                     # Match on filter, grating, and slit name
                     if (self.filter == ref_filter and
-                        grating == ref_grating and
-                        slit.name == ref_slit):
-                        conv_factor = self.photom_io(tabdata)
+                            grating == ref_grating and slit.name == ref_slit):
+                        self.photom_io(tabdata)
+                        match = True
                         break
 
-                if conv_factor is None:
-                    log.warning('Did not find a match in the ref file')
-
-            if conv_factor is not None:
-                return float(conv_factor)
-            else:
-                return 0.0
+                if not match:
+                    log.warning('No match in reference file')
 
         # Bright object fixed-slit exposures use a CubeModel
         elif self.exptype == 'NRS_BRIGHTOBJ':
+
+            match = False
 
             # Bright object always uses S1600A1 slit
             slit_name = 'S1600A1'
@@ -152,21 +141,18 @@ class DataSet(object):
 
                 # Match on filter, grating, and slit name
                 if (self.filter == ref_filter and
-                    grating == ref_grating and
-                    slit_name == ref_slit):
-                    conv_factor = self.photom_io(tabdata)
+                        grating == ref_grating and slit_name == ref_slit):
+                    self.photom_io(tabdata)
+                    match = True
                     break
 
-            if conv_factor is None:
-                log.warning('Did not find a match in the ref file')
-
-            if conv_factor is not None:
-                return float(conv_factor)
-            else:
-                return 0.0
+            if not match:
+                log.warning('No match in reference file')
 
         # IFU and MSA exposures use one set of flux cal data
         else:
+
+            match = False
 
             # Loop through the reference table to find matching row
             for tabdata in ftab.phot_table:
@@ -177,16 +163,18 @@ class DataSet(object):
                 # Match on filter and grating only
                 if self.filter == ref_filter and grating == ref_grating:
 
+                    match = True
+
                     # MSA data
                     if (isinstance(self.input, datamodels.MultiSlitModel) and
-                        self.exptype == 'NRS_MSASPEC'):
+                            self.exptype == 'NRS_MSASPEC'):
 
                         # Loop over the MSA slits, applying the same photom
                         # ref data to all slits
                         for slit in self.input.slits:
                             log.info('Working on slit %s' % slit.name)
                             self.slitnum += 1
-                            conv_factor = self.photom_io(tabdata)
+                            self.photom_io(tabdata)
 
                     # IFU data
                     else:
@@ -194,28 +182,40 @@ class DataSet(object):
                         # Get the conversion factor from the PHOTMJSR column
                         conv_factor = tabdata['photmjsr']
 
-                        # Get the length of the relative response arrays in this row
+                        # Populate the photometry keywords
+                        self.input.meta.photometry.conversion_megajanskys = \
+                            conv_factor
+                        self.input.meta.photometry.conversion_microjanskys = \
+                            23.50443 * conv_factor
+
+                        # Get the length of the relative response arrays in
+                        # this table row
                         nelem = tabdata['nelem']
 
-                        # If the relative response arrays have length > 0, copy them into the
-                        # relsens table of the data model
+                        # If the relative response arrays have length > 0,
+                        # copy them into the relsens table of the data model
                         if nelem > 0:
                             waves = tabdata['wavelength'][:nelem]
                             relresps = tabdata['relresponse'][:nelem]
 
-                            # Convert wavelengths from meters to microns, if necessary
-                            MICRONS_100 = 1.e-4         # 100 microns, in meters
-                            if waves.max() > 0. and waves.max() < MICRONS_100:
+                            # Convert wavelengths from meters to microns,
+                            # if necessary
+                            microns_100 = 1.e-4    # 100 microns, in meters
+                            if waves.max() > 0. and waves.max() < microns_100:
                                 waves *= 1.e+6
 
                         # Load the pixel area table for the IFU slices
-                        area_model = datamodels.NirspecIfuAreaModel(self.area_file)
+                        area_model = \
+                            datamodels.NirspecIfuAreaModel(area_fname)
                         area_data = area_model.area_table
 
-                        # Compute 2D wavelength and pixel area arrays for the whole image
-                        wave2d, area2d, dqmap = self.calc_nrs_ifu_sens2d(area_data)
+                        # Compute 2D wavelength and pixel area arrays for the
+                        # whole image
+                        wave2d, area2d, dqmap = \
+                            self.calc_nrs_ifu_sens2d(area_data)
 
-                        # Compute relative sensitivity for each pixel based on wavelength
+                        # Compute relative sensitivity for each pixel based
+                        # on its wavelength
                         sens2d = np.interp(wave2d, waves, relresps)
 
                         # Include the scalar conversion factor
@@ -226,16 +226,13 @@ class DataSet(object):
 
                         # Reset NON_SCIENCE pixels to 1 in sens2d array and in
                         # science data dq array
-                        where_dq = np.bitwise_and(dqmap, dqflags.pixel['NON_SCIENCE'])
+                        where_dq = \
+                            np.bitwise_and(dqmap, dqflags.pixel['NON_SCIENCE'])
                         sens2d[where_dq > 0] = 1.
                         self.input.dq = np.bitwise_or(self.input.dq, dqmap)
 
-                        # FOR DEBUGGING ONLY #
-                        #datamodels.ImageModel(data=wave2d).save('phot_wave2d.fits')
-                        #datamodels.ImageModel(data=area2d).save('phot_area2d.fits')
-                        #datamodels.ImageModel(data=sens2d).save('phot_sens2d2.fits')
-
-                        # Divide the science data and err by the conversion factors
+                        # Divide the science data and err by the
+                        # conversion factors
                         self.input.data /= sens2d
                         self.input.err /= sens2d
 
@@ -250,13 +247,10 @@ class DataSet(object):
 
                     break
 
-            if conv_factor is not None:
-                return float(conv_factor)
-            else:
-                log.warning('Did not find a match in the ref file, so returning'
-                            ' conversion factor 0.0')
-                return 0.0
+            if not match:
+                log.warning('No match in reference file')
 
+        return
 
     def calc_niriss(self, ftab):
         """
@@ -280,10 +274,7 @@ class DataSet(object):
 
         Returns
         -------
-        conv_factor: float
-            photometric conversion factor written as PHOTMJSR
         """
-        conv_factor = None
 
         # Handle MultiSlit models separately
         if isinstance(self.input, datamodels.MultiSlitModel):
@@ -292,14 +283,16 @@ class DataSet(object):
             # data for each of the slits/orders in the input
             for slit in self.input.slits:
 
-                log.info('Working on slit %s' % slit.name)
-                conv_factor = None
+                # Initialize the output conversion factor and
+                # increment slit number
+                match = False
                 self.slitnum += 1
 
-                # Set the input data order number.
-                # This is a hack for now; eventually the order number
-                # should be specified in the input data model
-                order = self.slitnum + 1
+                # Get the spectral order number for this slit
+                order = slit.meta.wcsinfo.spectral_order
+
+                log.info("Working on slit: {} order: {}".format(slit.name,
+                         order))
 
                 # Locate matching row in reference file
                 for tabdata in ftab.phot_table:
@@ -310,24 +303,20 @@ class DataSet(object):
 
                     # Find matching values of FILTER, PUPIL, ORDER
                     if (self.filter == ref_filter and
-                        self.pupil == ref_pupil and
-                        order == ref_order):
-                        conv_factor = self.photom_io(tabdata)
+                            self.pupil == ref_pupil and order == ref_order):
+                        self.photom_io(tabdata)
+                        match = True
                         break
 
-                if conv_factor is None:
-                    log.warning('Did not find a match in the ref file')
-
-            if conv_factor is not None:
-                return float(conv_factor)
-            else:
-                return 0.0
+                if not match:
+                    log.warning('No match in reference file')
 
         # Simple ImageModels
         else:
 
             # Hardwire the science data order number to 1 for now
             order = 1
+            match = False
 
             # Locate matching row in reference file
             for tabdata in ftab.phot_table:
@@ -339,9 +328,10 @@ class DataSet(object):
                 if self.exptype in ['NIS_SOSS', 'NIS_WFSS']:
 
                     # Find matching values of FILTER, PUPIL, and ORDER
-                    if (self.filter == ref_filter and self.pupil == ref_pupil
-                        and order == ref_order):
-                        conv_factor = self.photom_io(tabdata)
+                    if (self.filter == ref_filter and
+                            self.pupil == ref_pupil and order == ref_order):
+                        self.photom_io(tabdata)
+                        match = True
                         break
 
                 # Imaging mode
@@ -349,16 +339,14 @@ class DataSet(object):
 
                     # Find matching values of FILTER and PUPIL
                     if (self.filter == ref_filter and self.pupil == ref_pupil):
-                        conv_factor = self.photom_io(tabdata)
+                        self.photom_io(tabdata)
+                        match = True
                         break
 
-            if conv_factor is not None:
-                return float(conv_factor)
-            else:
-                log.warning('Did not find a match in the ref file, so returning'
-                            ' conversion factor 0.0')
-                return 0.0
+            if not match:
+                log.warning('No match in reference file')
 
+        return
 
     def calc_miri(self, ftab):
         """
@@ -383,10 +371,9 @@ class DataSet(object):
 
         Returns
         -------
-        conv_factor: float
-            photometric conversion factor written as PHOTMJSR
         """
-        conv_factor = None
+
+        match = False
 
         # Imaging detector
         if self.detector == 'MIRIMAGE':
@@ -408,8 +395,12 @@ class DataSet(object):
 
                 # Find matching FILTER and SUBARRAY values
                 if self.filter == ref_filter and subarray == ref_subarray:
-                    conv_factor = self.photom_io(tabdata)
+                    self.photom_io(tabdata)
+                    match = True
                     break
+
+            if not match:
+                log.warning('No match in reference file')
 
         # MRS detectors
         elif self.detector == 'MIRIFUSHORT' or self.detector == 'MIRIFULONG':
@@ -447,17 +438,17 @@ class DataSet(object):
             # Retrieve the scalar conversion factor from the reference data
             conv_factor = ftab.meta.photometry.conversion_megajanskys
 
+            # Store the conversion factors in the meta data
+            self.input.meta.photometry.conversion_megajanskys = \
+                conv_factor
+            self.input.meta.photometry.conversion_microjanskys = \
+                23.50443 * conv_factor
+
             # Update BUNIT values for the science data and err
             self.input.meta.bunit_data = 'mJy/arcsec^2'
             self.input.meta.bunit_err = 'mJy/arcsec^2'
 
-        if conv_factor is not None:
-            return float(conv_factor)
-        else:
-            log.warning('Did not find a match in the ref file, so returning'
-                        ' conversion factor 0.0')
-            return 0.0
-
+        return
 
     def calc_nircam(self, ftab):
         """
@@ -471,6 +462,9 @@ class DataSet(object):
         will also check if there is a wavelength-dependent response table; if
         there is it will be written to the output model.
 
+        For WFSS (grism) mode, the calibration information extracted from the
+        reference file is attached to each slit instance in the science data.
+
         Parameters
         ----------
         ftab: fits HDUList
@@ -478,10 +472,9 @@ class DataSet(object):
 
         Returns
         -------
-        conv_factor: float
-            photometric conversion factor written as PHOTMJSR
         """
-        conv_factor = None
+
+        match = False
 
         # Locate relevant information in reference file
         for tabdata in ftab.phot_table:
@@ -491,16 +484,30 @@ class DataSet(object):
 
             # Finding matching FILTER and PUPIL values
             if self.filter == ref_filter and self.pupil == ref_pupil:
-                conv_factor = self.photom_io(tabdata)
+                match = True
+
+                # Handle WFSS data separately from regular imaging
+                if (isinstance(self.input, datamodels.MultiSlitModel) and
+                        self.exptype == 'NRC_WFSS'):
+
+                    # Loop over the WFSS slits, applying the same photom
+                    # ref data to all slits
+                    for slit in self.input.slits:
+                        log.info('Working on slit %s' % slit.name)
+                        self.slitnum += 1
+                        self.photom_io(tabdata)
+
+                else:
+
+                    # Regular imaging data only requires 1 call
+                    self.photom_io(tabdata)
+
                 break
 
-        if conv_factor is not None:
-            return float(conv_factor)
-        else:
-            log.warning('Did not find a match in the ref file, so returning'
-                        ' conversion factor 0.0')
-            return 0.0
+        if not match:
+            log.warning('No match in reference file')
 
+        return
 
     def calc_fgs(self, ftab):
         """
@@ -523,32 +530,22 @@ class DataSet(object):
 
         Returns
         -------
-        conv_factor: float
-            photometric conversion factor written as PHOTMJSR
         """
-        conv_factor = None
 
         # Read the first (and only) row in the reference file
         for tabdata in ftab.phot_table:
-            conv_factor = self.photom_io(tabdata)
+            self.photom_io(tabdata)
             break
 
-        if conv_factor is not None:
-            return float(conv_factor)
-        else:
-            log.warning('Did not find a match in the ref file, so returning'
-                        ' conversion factor 0.0')
-            return 0.0
-
+        return
 
     def calc_nrs_ifu_sens2d(self, area_data):
 
-        import math
         import numpy as np
         from .. assign_wcs import nirspec       # for NIRSpec IFU data
         import gwcs
 
-        MICRONS_100 = 1.e-4                     # 100 microns, in meters
+        microns_100 = 1.e-4                     # 100 microns, in meters
 
         # Create empty 2D arrays for the wavelengths and pixel areas
         wave2d = np.zeros_like(self.input.data)
@@ -567,10 +564,11 @@ class DataSet(object):
 
             # Construct array indexes for pixels in this slice
             x, y = gwcs.wcstools.grid_from_bounding_box(ifu_wcs.bounding_box,
-                    step=(1, 1), center=True)
+                                                        step=(1, 1),
+                                                        center=True)
 
             log.debug("Slice %d: %g %g %g %g" %
-                    (k, x[0][0], x[-1][-1], y[0][0], y[-1][-1]))
+                      (k, x[0][0], x[-1][-1], y[0][0], y[-1][-1]))
 
             # Get the world coords for all pixels in this slice
             coords = ifu_wcs(x, y)
@@ -579,7 +577,7 @@ class DataSet(object):
             wl = coords[2]
             nan_flag = np.isnan(wl)
             good_flag = np.logical_not(nan_flag)
-            if wl[good_flag].max() < MICRONS_100:
+            if wl[good_flag].max() < microns_100:
                 log.info("Wavelengths in WCS table appear to be in meters")
 
             # Set NaNs to a harmless value, but don't modify nan_flag.
@@ -604,7 +602,6 @@ class DataSet(object):
 
         return wave2d, area2d, dqmap
 
-
     def photom_io(self, tabdata):
         """
         Short Summary
@@ -619,12 +616,23 @@ class DataSet(object):
 
         Returns
         -------
-        conv_factor: float
-            photometric conversion factor
 
         """
         # Get the conversion factor from the PHOTMJSR column of the table row
         conv_factor = tabdata['photmjsr']
+
+        # Store the conversion factors in the meta data
+        log.info('PHOTMJSR value: %g', conv_factor)
+        if isinstance(self.input, datamodels.MultiSlitModel):
+            self.input.slits[self.slitnum].meta.photometry.conversion_megajanskys = \
+                conv_factor
+            self.input.slits[self.slitnum].meta.photometry.conversion_microjanskys = \
+                23.50443 * conv_factor
+        else:
+            self.input.meta.photometry.conversion_megajanskys = \
+                conv_factor
+            self.input.meta.photometry.conversion_microjanskys = \
+                23.50443 * conv_factor
 
         # Get the length of the relative response arrays in this row
         nelem = tabdata['nelem']
@@ -636,26 +644,26 @@ class DataSet(object):
             relresps = tabdata['relresponse'][:nelem]
 
             # Convert wavelengths from meters to microns, if necessary
-            MICRONS_100 = 1.e-4         # 100 microns, in meters
-            if waves.max() > 0. and waves.max() < MICRONS_100:
+            microns_100 = 1.e-4         # 100 microns, in meters
+            if waves.max() > 0. and waves.max() < microns_100:
                 waves *= 1.e+6
-            wl_unit = 'microns'
+            wl_unit = 'um'
 
             # Set the relative sensitivity table for the correct Model type
+            log.info('Storing relative response table')
             if isinstance(self.input, datamodels.MultiSlitModel):
                 otab = np.array(list(zip(waves, relresps)),
                        dtype=self.input.slits[self.slitnum].relsens.dtype)
                 self.input.slits[self.slitnum].relsens = otab
+                self.input.slits[self.slitnum].relsens.columns['wavelength'].unit = wl_unit
 
             else:
                 otab = np.array(list(zip(waves, relresps)),
                                 dtype=self.input.relsens.dtype)
                 self.input.relsens = otab
+                self.input.relsens.columns['wavelength'].unit= wl_unit
 
-            log.info('Relative response table written.')
-
-        return conv_factor
-
+        return
 
     def save_area_info(self, ftab, area_fname):
         """
@@ -663,10 +671,10 @@ class DataSet(object):
         -------------
         Read the pixel area values in the PIXAR_A2 and PIXAR_SR keys from the
         meta data in the photom reference file and the pixel area reference
-        file. Copy the values from the pixel area reference file header keywords
-        to the output product. If the difference between the values of the pixel
-        area (in units of arc seconds) between the two reference files exceeds a
-        defined threshold, issue a warning.
+        file. Copy the values from the pixel area reference file header
+        keywords to the output product. If the difference between the values
+        of the pixel area (in units of arc seconds) between the two reference
+        files exceeds a defined threshold, issue a warning.
 
         Also copy the pixel area data array from the pixel area reference file
         to the area extension of the output product.
@@ -681,7 +689,6 @@ class DataSet(object):
 
         Returns
         -------
-        None
 
         """
 
@@ -698,14 +705,14 @@ class DataSet(object):
 
         # Load the average pixel area values from the photom reference file
         try:
-            tab_ster = None
+            #tab_ster = None
             tab_a2 = None
-            tab_ster = ftab.meta.photometry.pixelarea_steradians
+            #tab_ster = ftab.meta.photometry.pixelarea_steradians
             tab_a2 = ftab.meta.photometry.pixelarea_arcsecsq
         except:
             # If one or both of them are missing, issue a warning, but carry on
-            log.warning('At least one of the PIXAR_nn keyword values in missing')
-            log.warning('from the photom reference file')
+            log.warning('At least one of the PIXAR_nn keyword values is')
+            log.warning('missing from the photom reference file')
 
         # Load the average pixel area values from the pixel area reference file
         try:
@@ -715,20 +722,20 @@ class DataSet(object):
             area_a2 = pix_area.meta.photometry.pixelarea_arcsecsq
         except:
             # If one or both of them are missing, issue a warning
-            log.warning('At least one of the PIXAR_nn keyword values is missing')
-            log.warning('from the reference file %s', area_fname)
-            log.warning('Pixel area keyword values will not be set in the output')
+            log.warning('At least one of the PIXAR_nn keyword values is')
+            log.warning('missing from the reference file %s', area_fname)
+            log.warning('Pixel area keyword values will not be set in output')
 
-        # Compute the relative difference between the pixel area values from the
-        # two different sources, if they exist
+        # Compute the relative difference between the pixel area values from
+        # the two different sources, if they exist
         if (tab_a2 is not None) and (area_a2 is not None):
             a2_tol = abs(tab_a2 - area_a2) / (tab_a2 + area_a2)
 
             # If the difference is greater than the defined tolerance,
             # issue a warning
             if (a2_tol > PHOT_TOL):
-                log.warning('The relative difference between the values for the')
-                log.warning('pixel area in sq arcsec (%s)', a2_tol)
+                log.warning('The relative difference between the values for')
+                log.warning('the pixel area in sq arcsec (%s)', a2_tol)
                 log.warning('exceeds the defined tolerance (%s)', PHOT_TOL)
 
         # Copy the pixel area values to the output
@@ -739,8 +746,7 @@ class DataSet(object):
         if area_ster is not None:
             self.input.meta.photometry.pixelarea_steradians = float(area_ster)
 
-        return None
-
+        return
 
     def apply_photom(self, photom_fname, area_fname):
         """
@@ -751,21 +757,22 @@ class DataSet(object):
         for each instrument has its own dependence on detector- and
         observation-specific parameters.  The corresponding conversion factor
         from the reference file is written as PHOTMJSR to the model. The table
-        of relative response vs wavelength will be read from the reference file,
-        and if it contains >0 rows, it will be attached to the model. If this
-        is an imaging mode, there will be a pixel area map file, from which the
-        pixel area array will be copied to the area extension of the output
-        product. The keywords having the pixel area values are read from the
-        map file and compared to their values in the table reference file. If
-        these values agree, these keywords will be written to the output.
+        of relative response vs wavelength will be read from the reference
+        file, and if it contains >0 rows, it will be attached to the model. If
+        this is an imaging mode, there will be a pixel area map file, from
+        which the pixel area array will be copied to the area extension of the
+        output product. The keywords having the pixel area values are read
+        from the map file and compared to their values in the table reference
+        file. If these values agree, these keywords will be written to the
+        output.
 
         Parameters
         ----------
         photom_fname: string
-            photom file name of FITS table
+            photom reference file name
 
         area_fname: string
-            pixel area map file name
+            pixel area map reference file name
 
         Returns
         -------
@@ -773,63 +780,34 @@ class DataSet(object):
         """
         if self.instrument == 'NIRISS':
             ftab = datamodels.NirissPhotomModel(photom_fname)
-            conv_factor = self.calc_niriss(ftab)
+            self.calc_niriss(ftab)
 
         if self.instrument == 'NIRSPEC':
             if self.exptype in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
                 ftab = datamodels.NirspecFSPhotomModel(photom_fname)
             else:
                 ftab = datamodels.NirspecPhotomModel(photom_fname)
-            conv_factor = self.calc_nirspec(ftab)
+            self.calc_nirspec(ftab, area_fname)
 
         if self.instrument == 'NIRCAM':
             ftab = datamodels.NircamPhotomModel(photom_fname)
-            conv_factor = self.calc_nircam(ftab)
+            self.calc_nircam(ftab)
 
         if self.instrument == 'MIRI':
             if self.detector == 'MIRIMAGE':
                 ftab = datamodels.MiriImgPhotomModel(photom_fname)
             else:
                 ftab = datamodels.MiriMrsPhotomModel(photom_fname)
-            conv_factor = self.calc_miri(ftab)
+            self.calc_miri(ftab)
 
         if self.instrument == 'FGS':
             ftab = datamodels.FgsPhotomModel(photom_fname)
-            conv_factor = self.calc_fgs(ftab)
+            self.calc_fgs(ftab)
 
-        if conv_factor is None:
-            log.warning('Scale factor not found in reference file.')
-            conv_factor = 0.0
-
-        if area_fname is not None: # Load and save the pixel area info
+        if area_fname is not None:   # Load and save the pixel area info
             if 'IMAGE' in self.exptype and area_fname != 'N/A':
-                result = self.save_area_info(ftab, area_fname)
-
-        # Store the conversion factors in the meta data
-        log.info('Writing PHOTMJSR with value: %g', conv_factor)
-        self.input.meta.photometry.conversion_megajanskys = conv_factor
-        self.input.meta.photometry.conversion_microjanskys = 23.50443 * conv_factor
+                self.save_area_info(ftab, area_fname)
 
         ftab.close()
-
-
-    def do_all(self):
-        """
-        Short Summary
-        -------------
-        Execute all tasks for Photom Correction
-
-        Parameters
-        ----------
-
-        Returns
-        -------
-        self.input: DM object
-            input DM object with conversion factors attached/applied
-
-        """
-        photom_fname = self.phot_file
-        area_fname = self.area_file
-        self.apply_photom(photom_fname, area_fname)
 
         return self.input

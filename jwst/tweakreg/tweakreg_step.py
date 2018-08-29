@@ -4,26 +4,16 @@ JWST pipeline step for image alignment.
 
 :Authors: Mihai Cara
 
-:License: :doc:`../LICENSE`
 
 """
-from __future__ import (absolute_import, division, unicode_literals,
-                        print_function)
-
-import os
-import logging
-
-import numpy as np
 from astropy.table import Table
 
 # LOCAL
-from . import __version__
-from . import __vdate__
 from ..stpipe import Step
 from .. import datamodels
 
 from .imalign import align
-from .wcsimage import *
+from .wcsimage import (WCSImageCatalog, WCSGroupCatalog)
 from .tweakreg_catalog import make_tweakreg_catalog
 
 
@@ -51,7 +41,7 @@ class TweakRegStep(Step):
 
         # Object matching parameters:
         minobj = integer(default=15) # Minimum number of objects acceptable for matching
-        searchrad = float(default=1.0) # The search radius in arcsec for a match
+        searchrad = float(default=10.0) # The search radius in arcsec for a match
         use2dhist = boolean(default=True) # Use 2d histogram to find initial offset?
         separation = float(default=0.5) # Minimum object separation in arcsec
         tolerance = float(default=1.0) # Matching tolerance for xyxymatch in arcsec
@@ -150,7 +140,6 @@ class TweakRegStep(Step):
 
         return images
 
-
     def _imodel2wcsim(self, image_model):
         # make sure that we have a catalog:
         if hasattr(image_model, 'catalog'):
@@ -184,4 +173,3 @@ class TweakRegStep(Step):
         )
 
         return im
-

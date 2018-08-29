@@ -8,8 +8,6 @@ generalized step: ``cube_skymatch``.
 :License: :doc:`../LICENSE`
 
 """
-from __future__ import (absolute_import, division, unicode_literals,
-                        print_function)
 
 import numpy as np
 
@@ -17,7 +15,7 @@ import numpy as np
 __all__ = ['SkyCube']
 
 
-class SkyCube(object):
+class SkyCube():
     """
     Container that holds information about properties of a *single*
     image such as:

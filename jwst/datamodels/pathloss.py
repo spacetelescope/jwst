@@ -1,11 +1,10 @@
-from . import model_base
-from .dynamicdq import dynamic_mask
+from .reference import ReferenceFileModel
 
 
 __all__ = ['PathlossModel']
 
 
-class PathlossModel(model_base.DataModel):
+class PathlossModel(ReferenceFileModel):
     """
     A data model for pathloss correction information.
 

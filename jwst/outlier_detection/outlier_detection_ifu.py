@@ -1,19 +1,22 @@
 """Class definition for performing outlier detection on IFU data."""
 
+from functools import partial
 import numpy as np
 
 from stsci.image import median
 from astropy.stats import sigma_clipped_stats
 
-from .. import datamodels
-from .outlier_detection import OutlierDetection, update_filename
+from .outlier_detection import OutlierDetection
 from ..cube_build.cube_build_step import CubeBuildStep
 from ..cube_build import blot_cube_build
+from .. import datamodels
 
 
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
+
+__all__ = ["OutlierDetectionIFU"]
 
 
 cube_build_config = 'cube_build.cfg'
@@ -106,8 +109,10 @@ class OutlierDetectionIFU(OutlierDetection):
             single_IFUCube_result = cubestep.process(self.input_models)
 
             for model in single_IFUCube_result:
-                model.meta.filename = update_filename(model.meta.filename,
-                                                      self.resample_suffix)
+                model.meta.filename = self.make_output_path(
+                    basepath=model.meta.filename,
+                    suffix=self.resample_suffix
+                )
                 if save_intermediate_results:
                     log.info("Writing out resampled IFU cubes...")
                     model.save(model.meta.filename)
@@ -116,10 +121,10 @@ class OutlierDetectionIFU(OutlierDetection):
             median_model = datamodels.IFUCubeModel(
                             init=single_IFUCube_result[0].data.shape)
             median_model.meta = single_IFUCube_result[0].meta
-            base_filename = self.input_models[0].meta.filename
-            median_model.meta.filename = '_'.join(base_filename.split('_')[:2]
-                                                  + ["ch{}".format(ch),
-                                                     'median.fits'])
+            median_model.meta.filename = self.make_output_path(
+                basepath=self.input_models[0].meta.filename,
+                suffix='ch{}_median'.format(ch)
+            )
 
             # Perform median combination on set of drizzled mosaics
             median_model.data = self.create_median(single_IFUCube_result)
@@ -137,9 +142,10 @@ class OutlierDetectionIFU(OutlierDetection):
             # of data into a single frame to match the original input...
             self.blot_median(median_model)
             if save_intermediate_results:
-                for model in self.blot_models:
-                    log.info("Writing out BLOT images...")
-                    model.save(model.meta.filename)
+                log.info("Writing out BLOT images...")
+                self.blot_models.save(
+                    partial(self.make_output_path, suffix='blot')
+                )
 
         # Perform outlier detection using statistical comparisons between
         # each original input image and the blotted version of the

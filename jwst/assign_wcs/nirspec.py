@@ -1,14 +1,14 @@
 """
-Tools to create a WCS pipeline list of steps for NIRSPEC modes.
+Tools to create the WCS pipeline NIRSPEC modes.
 
-Call create_pipeline() which redirects based on EXP_TYPE
+Calls create_pipeline() which redirects based on EXP_TYPE.
 
 """
 import logging
 import numpy as np
 
-from astropy.modeling import models, fitting
-from astropy.modeling.models import Mapping, Identity, Const1D, Scale
+from astropy.modeling import models
+from astropy.modeling.models import Mapping, Identity, Const1D, Scale, Tabular1D
 from astropy import units as u
 from astropy import coordinates as coord
 from astropy.io import fits
@@ -18,7 +18,8 @@ from ..transforms.models import (Rotation3DToGWA, DirCos2Unitless, Slit2Msa,
                                  AngleFromGratingEquation, WavelengthFromGratingEquation,
                                  Gwa2Slit, Unitless2DirCos, Logical, Slit, Snell,
                                  RefractionIndexFromPrism)
-from .util import not_implemented_mode
+
+from .util import (not_implemented_mode, MissingMSAFileError, velocity_correction)
 from . import pointing
 from ..datamodels import (CollimatorModel, CameraModel, DisperserModel, FOREModel,
                           IFUFOREModel, MSAModel, OTEModel, IFUPostModel, IFUSlicerModel,
@@ -28,17 +29,20 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
+__all__ = ["create_pipeline", "imaging", "ifu", "slits_wcs", "get_open_slits", "nrs_wcs_set_input",
+           "nrs_ifu_wcs", "get_spectral_order_wrange"]
+
+
 def create_pipeline(input_model, reference_files):
     """
     Create a pipeline list based on EXP_TYPE.
 
     Parameters
     ----------
-    input_model : jwst.datamodels.DataModel
-        Either an ImageModel or a CubeModel
+    input_model : `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`, `~jwst.datamodels.CubeModel`
+        The input exposure.
     reference_files : dict
-        {reftype: file_name} mapping
-        In the pipeline it's returned by CRDS.
+        {reftype: reference_file_name} mapping.
     """
     exp_type = input_model.meta.exposure.type.lower()
     pipeline = exp_type2transform[exp_type](input_model, reference_files)
@@ -50,15 +54,23 @@ def create_pipeline(input_model, reference_files):
 
 def imaging(input_model, reference_files):
     """
-    Imaging pipeline
+    Imaging pipeline.
 
-    frames : detector, gwa, msa, sky
+    It has the following coordinate frames:
+    "detector" : the science frame
+    "sca" : frame associated with the SCA
+    "gwa" " just before the GWA going from detector to sky
+    "msa_frame" : at the MSA
+    "oteip" : after the FWA
+    "v2v3" and "world"
+
     """
     # Get the corrected disperser model
     disperser = get_disperser(input_model, reference_files['disperser'])
 
     # DMS to SCA transform
     dms2detector = dms_to_sca(input_model)
+
     # DETECTOR to GWA transform
     det2gwa = detector_to_gwa(reference_files, input_model.meta.instrument.detector, disperser)
 
@@ -121,15 +133,27 @@ def imaging(input_model, reference_files):
 
 def ifu(input_model, reference_files):
     """
-    IFU pipeline
+    The Nirspec IFU WCS pipeline.
+
+    The coordinate frames are:
+    "detector" : the science frame
+    "sca" : frame associated with the SCA
+    "gwa" " just before the GWA going from detector to sky
+    "slit_frame" : frame associated with the virtual slit
+    "slicer' : frame associated with the slicer
+    "msa_frame" : at the MSA
+    "oteip" : after the FWA
+    "v2v3" and "world"
     """
     detector = input_model.meta.instrument.detector
     grating = input_model.meta.instrument.grating
     filter = input_model.meta.instrument.filter
     if detector == "NRS2" and grating.endswith('M'):
+        # Mid-resolution gratings do not project on NRS2.
         log.critical("No IFU slices fall on detector {0}".format(detector))
         return None
     if detector == "NRS2" and grating == "G140H" and filter == "F070LP":
+        # This combination of grating and filter does not project on NRS2.
         log.critical("No IFU slices fall on detector {0}".format(detector))
         return None
 
@@ -152,13 +176,16 @@ def ifu(input_model, reference_files):
     gwa2slit = gwa_to_ifuslit(slits, input_model, disperser, reference_files)
 
     # SLIT to MSA transform
-    slit2msa = ifuslit_to_msa(slits, reference_files)
+    slit2slicer = ifuslit_to_slicer(slits, reference_files, input_model)
+
+    # SLICER to MSA Entrance
+    slicer2msa = slicer_to_msa(reference_files)
 
     det, sca, gwa, slit_frame, msa_frame, oteip, v2v3, world = create_frames()
+
     if input_model.meta.instrument.filter != 'OPAQUE':
         # MSA to OTEIP transform
         msa2oteip = ifu_msa_to_oteip(reference_files)
-
         # OTEIP to V2,V3 transform
         # This includes a wavelength unit conversion from meters to microns.
         oteip2v23 = oteip_to_v23(reference_files)
@@ -176,18 +203,19 @@ def ifu(input_model, reference_files):
         pipeline = [(det, dms2detector),
                     (sca, det2gwa.rename('detector2gwa')),
                     (gwa, gwa2slit.rename('gwa2slit')),
-                    (slit_frame, (Mapping((0, 1, 2, 3)) | slit2msa).rename('slit2msa')),
+                    (slit_frame, slit2slicer),
+                    ('slicer', slicer2msa),
                     (msa_frame, msa2oteip.rename('msa2oteip')),
                     (oteip, oteip2v23.rename('oteip2v23')),
                     (v2v3, tel2sky),
                     (world, None)]
     else:
-        # convert to microns if the pipeline ends earlier
-        slit2msa = (Mapping((0, 1, 2, 3)) | slit2msa).rename('slit2msa')
+        # If filter is "OPAQUE" the pipeline stops at the MSA.
         pipeline = [(det, dms2detector),
                     (sca, det2gwa.rename('detector2gwa')),
                     (gwa, gwa2slit.rename('gwa2slit')),
-                    (slit_frame, slit2msa),
+                    (slit_frame, slit2slicer),
+                    ('slicer', slicer2msa),
                     (msa_frame, None)]
 
     return pipeline
@@ -195,14 +223,17 @@ def ifu(input_model, reference_files):
 
 def slits_wcs(input_model, reference_files):
     """
-    Create the WCS pipeline for observations using the MSA shutter array or fixed slits.
+    The WCS pipeline for MOS and fixed slits.
 
-    Parameters
-    ----------
-    input_model : `~jwst.datamodels.ImageModel`
-        The input data model.
-    reference_files : dict
-        Dictionary with reference files supplied by CRDS.
+    The coordinate frames are:
+    "detector" : the science frame
+    "sca" : frame associated with the SCA
+    "gwa" " just before the GWA going from detector to sky
+    "slit_frame" : frame associated with the virtual slit
+    "msa_frame" : at the MSA
+    "oteip" : after the FWA
+    "v2v3" : at V2V3
+    "world" : sky and spectral
 
     """
     open_slits_id = get_open_slits(input_model, reference_files)
@@ -215,7 +246,14 @@ def slits_wcs(input_model, reference_files):
 
     return msa_pipeline
 
+
 def slitlets_wcs(input_model, reference_files, open_slits_id):
+    """
+    Create The WCS piepline for MOS and Fixed slits for the
+    specific opened shutters/slits.
+
+    Note: This function is also used bby the ``msaflagopen`` step.
+    """
     # Get the corrected disperser model
     disperser = get_disperser(input_model, reference_files['disperser'])
 
@@ -227,15 +265,21 @@ def slitlets_wcs(input_model, reference_files, open_slits_id):
     input_model.meta.wcsinfo.spectral_order = sporder
 
     # DMS to SCA transform
-    dms2detector = dms_to_sca(input_model).rename('dms2sca')
+    dms2detector = dms_to_sca(input_model)
+    dms2detector.name = 'dms2sca'
     # DETECTOR to GWA transform
-    det2gwa = Identity(2) & detector_to_gwa(reference_files, input_model.meta.instrument.detector, disperser)
+    det2gwa = Identity(2) & detector_to_gwa(reference_files,
+                                            input_model.meta.instrument.detector,
+                                            disperser)
+    det2gwa.name = "det2gwa"
 
     # GWA to SLIT
     gwa2slit = gwa_to_slit(open_slits_id, input_model, disperser, reference_files)
+    gwa2slit.name = "gwa2slit"
 
     # SLIT to MSA transform
     slit2msa = slit_to_msa(open_slits_id, reference_files['msa'])
+    slit2msa.name = "slit2msa"
 
     # Create coordinate frames in the NIRSPEC WCS pipeline"
     # "detector", "gwa", "slit_frame", "msa_frame", "oteip", "v2v3", "world"
@@ -243,38 +287,42 @@ def slitlets_wcs(input_model, reference_files, open_slits_id):
     if input_model.meta.instrument.filter != 'OPAQUE':
         # MSA to OTEIP transform
         msa2oteip = msa_to_oteip(reference_files)
+        msa2oteip.name = "msa2oteip"
 
         # OTEIP to V2,V3 transform
         # This includes a wavelength unit conversion from meters to microns.
         oteip2v23 = oteip_to_v23(reference_files)
+        oteip2v23.name = "oteip2v23"
 
         # V2, V3 to sky
         tel2sky = pointing.v23tosky(input_model) & Identity(1)
+        tel2sky.name = "v2v3_to_sky"
 
         msa_pipeline = [(det, dms2detector),
-                        (sca, det2gwa.rename('det2gwa')),
-                        (gwa, gwa2slit.rename('gwa2slit')),
-                        (slit_frame, (Mapping((0, 1, 2, 3)) | slit2msa).rename('slit2msa')),
-                        (msa_frame, msa2oteip.rename('msa2oteip')),
-                        (oteip, oteip2v23.rename('oteip2v23')),
+                        (sca, det2gwa),
+                        (gwa, gwa2slit),
+                        (slit_frame, slit2msa),
+                        (msa_frame, msa2oteip),
+                        (oteip, oteip2v23),
                         (v2v3, tel2sky),
                         (world, None)]
     else:
         # convert to microns if the pipeline ends earlier
-        gwa2slit = (gwa2slit).rename('gwa2slit')
         msa_pipeline = [(det, dms2detector),
                         (sca, det2gwa),
                         (gwa, gwa2slit),
-                        (slit_frame, Mapping((0, 1, 2, 3)) | slit2msa),
+                        (slit_frame, slit2msa),
                         (msa_frame, None)]
 
     return msa_pipeline
 
 
 def get_open_slits(input_model, reference_files=None):
+    """Return the opened slits/shutters in a MOS or Fixed Slits exposure.
+    """
     exp_type = input_model.meta.exposure.type.lower()
-    if exp_type == "nrs_msaspec":
-        msa_metadata_file, msa_metadata_id = get_msa_metadata(input_model)
+    if exp_type in ["nrs_msaspec", "nrs_autoflat"]:
+        msa_metadata_file, msa_metadata_id = get_msa_metadata(input_model, reference_files)
         slits = get_open_msa_slits(msa_metadata_file, msa_metadata_id)
     elif exp_type == "nrs_fixedslit":
         slits = get_open_fixed_slits(input_model)
@@ -294,6 +342,7 @@ def get_open_slits(input_model, reference_files=None):
 
 
 def get_open_fixed_slits(input_model):
+    """ Return the opened fixed slits."""
     if input_model.meta.subarray.name is None:
         raise ValueError("Input file is missing SUBARRAY value/keyword.")
     slits = []
@@ -320,16 +369,21 @@ def get_open_fixed_slits(input_model):
     return slits
 
 
-def get_msa_metadata(input_model):
+def get_msa_metadata(input_model, reference_files):
     """
-    Get the MSA metadata file (MSAMTFL) and the msa metadata id (MSAMETID).
+    Get the MSA metadata file (MSAMTFL) and the msa metadata ID (MSAMETID).
 
     """
-    msa_config = input_model.meta.instrument.msa_metadata_file
-    if msa_config is None:
-        message = "MSA metadata file is not available (keyword MSAMETFL)."
-        log.critical(message)
-        raise KeyError(message)
+    try:
+        msa_config = reference_files['msametafile']
+    except (KeyError, TypeError) as error:
+        log.info('MSA metadata file not in reference files dict')
+        log.info('Getting MSA metadata file from MSAMETFL keyword')
+        msa_config = input_model.meta.instrument.msa_metadata_file
+        if msa_config is None:
+            message = "MSA metadata file is not available (keyword MSAMETFL)."
+            log.critical(message)
+            raise MissingMSAFileError(message)
     msa_metadata_id = input_model.meta.instrument.msa_metadata_id
     if msa_metadata_id is None:
         message = "MSA metadata ID is not available (keyword MSAMETID)."
@@ -339,7 +393,9 @@ def get_msa_metadata(input_model):
 
 def get_open_msa_slits(msa_file, msa_metadata_id):
     """
-    Computes (ymin, ymax) of open slitlets.
+    Return the opened MOS slitlets.
+
+    Computes (ymin, ymax) for each open slitlet.
 
     The msa_file is expected to contain data (tuples) with the following fields:
 
@@ -369,105 +425,113 @@ def get_open_msa_slits(msa_file, msa_metadata_id):
     Returns
     -------
     slitlets : list
-        A list of slitlets. Each slitlet is a tuple with
-        ("name", "shutter_id", "xcen", "ycen", "ymin", "ymax", "quadrant", "source_id", "shutter_state")
+        A list of `~jwst.transforms.models.Slit` objects. Each slitlet is a tuple with
+        ("name", "shutter_id", "xcen", "ycen", "ymin", "ymax",
+        "quadrant", "source_id", "shutter_state")
 
     """
     slitlets = []
 
     # If they passed in a string then we shall assume it is the filename
     # of the configuration file.
-    with fits.open(msa_file) as msa_file:
-        # Get the configuration header from teh _msa.fits file.  The EXTNAME should be 'SHUTTER_INFO'
-        msa_conf = msa_file[('SHUTTER_INFO', 1)]
-        msa_source = msa_file[("SOURCE_INFO", 1)].data
+    try:
+        msa_file = fits.open(msa_file)
+    except:
+        message = "Unable to open MSA FITS file (MSAMETFL) {0}".format(msa_file)
+        log.error(message)
+        raise MissingMSAFileError(message)
 
-        # First we are going to filter the msa_file data on the msa_metadata_id
-        # as that is all we are interested in for this function.
-        msa_data = [x for x in msa_conf.data if x['msa_metadata_id'] == msa_metadata_id]
+    # Get the configuration header from teh _msa.fits file.  The EXTNAME should be 'SHUTTER_INFO'
+    msa_conf = msa_file[('SHUTTER_INFO', 1)]
+    msa_source = msa_file[("SOURCE_INFO", 1)].data
 
-        log.debug('msa_data with msa_metadata_id = {}   {}'.format(msa_metadata_id, msa_data))
-        log.info('Retrieving open slitlets for msa_metadata_id = {}'.format(msa_metadata_id))
+    # First we are going to filter the msa_file data on the msa_metadata_id
+    # as that is all we are interested in for this function.
+    msa_data = [x for x in msa_conf.data if x['msa_metadata_id'] == msa_metadata_id]
 
-        # First thing to do is to get the unique slitlet_ids
-        slitlet_ids_unique = list(set([x['slitlet_id'] for x in msa_data]))
+    log.debug('msa_data with msa_metadata_id = {}   {}'.format(msa_metadata_id, msa_data))
+    log.info('Retrieving open slitlets for msa_metadata_id = {}'.format(msa_metadata_id))
 
-        # Now lets look at each unique slitlet id
-        for slitlet_id in slitlet_ids_unique:
+    # First thing to do is to get the unique slitlet_ids
+    slitlet_ids_unique = list(set([x['slitlet_id'] for x in msa_data]))
 
-            # Get the rows for the current slitlet_id
-            slitlets_sid = [x for x in msa_data if x['slitlet_id'] == slitlet_id]
-            open_shutters = [x['shutter_column'] for x in slitlets_sid]
+    # Now lets look at each unique slitlet id
+    for slitlet_id in slitlet_ids_unique:
 
-            # Count the number of backgrounds that have an 'N' (meaning main shutter)
-            # This needs to be 0 or 1 and we will have to deal with those differently
-            # See: https://github.com/STScI-JWST/jwst/commit/7588668b44b77486cdafb35f7e2eb2dcfa7d1b63#commitcomment-18987564
+        # Get the rows for the current slitlet_id
+        slitlets_sid = [x for x in msa_data if x['slitlet_id'] == slitlet_id]
+        open_shutters = [x['shutter_column'] for x in slitlets_sid]
 
-            n_main_shutter = len([s for s in slitlets_sid if s['background'] == 'N'])
+        # Count the number of backgrounds that have an 'N' (meaning main shutter)
+        # This needs to be 0 or 1 and we will have to deal with those differently
+        # See: https://github.com/STScI-JWST/jwst/commit/7588668b44b77486cdafb35f7e2eb2dcfa7d1b63#commitcomment-18987564
 
-            # In the next part we need to calculate, find, determine 5 things:
-            #    quadrant,  xcen, ycen,  ymin, max
+        n_main_shutter = len([s for s in slitlets_sid if s['background'] == 'N'])
 
-            margin = 0.05
+        # In the next part we need to calculate, find, determine 5 things:
+        #    quadrant,  xcen, ycen,  ymin, max
 
-            # There are no main shutters, all are background
-            if n_main_shutter == 0:
-                jmin = min([s['shutter_column'] for s in slitlets_sid])
-                jmax = max([s['shutter_column'] for s in slitlets_sid])
-                j = jmin + (jmax - jmin) // 2 + 1
-                ymax = 0.5 + margin + (jmax - j) * 1.15
-                ## TODO: check this formula - it is different (assuming it's incorrect in the report).
-                ymin = -(0.5 + margin) + (jmin - j) * 1.15
-                quadrant = slitlets_sid[0]['shutter_quadrant']
-                ycen = j
-                xcen = slitlets_sid[0]['shutter_row']  # grab the first as they are all the same
-                source_xpos = 0.0
-                source_ypos = 0.0
-            # There is 1 main shutter, phew, that makes it easier.
-            elif n_main_shutter == 1:
-                xcen, ycen, quadrant, source_xpos, source_ypos = [
-                    (s['shutter_row'], s['shutter_column'], s['shutter_quadrant'],
-                     s['estimated_source_in_shutter_x'],
-                     s['estimated_source_in_shutter_y'])
-                    for s in slitlets_sid if s['background'] == 'N'][0]
+        margin = 0.05
 
-                # y-size
-                jmin = min([s['shutter_column'] for s in slitlets_sid])
-                jmax = max([s['shutter_column'] for s in slitlets_sid])
-                j = ycen
-                ymax = 0.5 + margin + (jmax - j) * 1.15
-                ymin = -(0.5 + margin) + (jmin - j) * 1.15
+        # There are no main shutters, all are background
+        if n_main_shutter == 0:
+            jmin = min([s['shutter_column'] for s in slitlets_sid])
+            jmax = max([s['shutter_column'] for s in slitlets_sid])
+            j = jmin + (jmax - jmin) // 2 + 1
+            ymax = 0.5 + margin + (jmax - j) * 1.15
+            ## TODO: check this formula - it is different (assuming it's incorrect in the report).
+            ymin = -(0.5 + margin) + (jmin - j) * 1.15
+            quadrant = slitlets_sid[0]['shutter_quadrant']
+            ycen = j
+            xcen = slitlets_sid[0]['shutter_row']  # grab the first as they are all the same
+            source_xpos = 0.0
+            source_ypos = 0.0
+        # There is 1 main shutter, phew, that makes it easier.
+        elif n_main_shutter == 1:
+            xcen, ycen, quadrant, source_xpos, source_ypos = [
+                (s['shutter_row'], s['shutter_column'], s['shutter_quadrant'],
+                 s['estimated_source_in_shutter_x'],
+                 s['estimated_source_in_shutter_y'])
+                for s in slitlets_sid if s['background'] == 'N'][0]
 
-            # Not allowed....
-            else:
-                raise ValueError("MSA configuration file has more than 1 shutter with "
-                                 "sources for metadata_id = {}".format(msa_metadata_id))
+            # y-size
+            jmin = min([s['shutter_column'] for s in slitlets_sid])
+            jmax = max([s['shutter_column'] for s in slitlets_sid])
+            j = ycen
+            ymax = 0.5 + margin + (jmax - j) * 1.15
+            ymin = -(0.5 + margin) + (jmin - j) * 1.15
 
-            shutter_id = xcen + (ycen - 1) * 365
-            source_id = slitlets_sid[0]['source_id']
-            source_name, source_alias, stellarity = [
-                (s['source_name'], s['alias'], s['stellarity']) \
-                for s in msa_source if s['source_id'] == source_id][0]
-            # Create the output list of tuples that contain the required
-            # data for further computations
-            """
-            Convert source positions from PPS to Model coordinate frame.
-            The source x,y position in the shutter is given in the msa configuration file,
-            columns "estimated_source_in_shutter_x" and "estimated_source_in_shutter_y".
-            The source position is in a coordinate system associated with each shutter whose
-            origin is the upper left corner of the shutter, positive x is to the right
-            and positive y is downwards. To convert to the coordinate frame associated with the
-            slit, where (0, 0) is in the center of the slit, we subtract 0.5 in both directions.
-            """
-            source_xpos = source_xpos - 0.5
-            source_ypos = source_ypos - 0.5
+        # Not allowed....
+        else:
+            raise ValueError("MSA configuration file has more than 1 shutter with "
+                             "sources for metadata_id = {}".format(msa_metadata_id))
 
-            # Create the shutter_state string
-            all_shutters = _shutter_id_to_str(open_shutters, ycen)
+        # subtract 1 because shutter numbers in the MSA reference file are 1-based.
+        shutter_id = xcen + (ycen - 1) * 365
+        source_id = slitlets_sid[0]['source_id']
+        source_name, source_alias, stellarity = [
+            (s['source_name'], s['alias'], s['stellarity']) \
+            for s in msa_source if s['source_id'] == source_id][0]
+        # Create the output list of tuples that contain the required
+        # data for further computations
+        """
+        Convert source positions from PPS to Model coordinate frame.
+        The source x,y position in the shutter is given in the msa configuration file,
+        columns "estimated_source_in_shutter_x" and "estimated_source_in_shutter_y".
+        The source position is in a coordinate system associated with each shutter whose
+        origin is the upper left corner of the shutter, positive x is to the right
+        and positive y is downwards.
+        """
+        source_xpos = source_xpos - 0.5
+        source_ypos = -source_ypos + 0.5
 
-            slitlets.append(Slit(slitlet_id, shutter_id, xcen, ycen, ymin, ymax,
-                                 quadrant, source_id, all_shutters, source_name, source_alias,
-                                 stellarity, source_xpos, source_ypos))
+        # Create the shutter_state string
+        all_shutters = _shutter_id_to_str(open_shutters, ycen)
+
+        slitlets.append(Slit(slitlet_id, shutter_id, xcen, ycen, ymin, ymax,
+                             quadrant, source_id, all_shutters, source_name, source_alias,
+                             stellarity, source_xpos, source_ypos))
+    msa_file.close()
     return slitlets
 
 
@@ -496,7 +560,7 @@ def _shutter_id_to_str(open_shutters, ycen):
     all_shutters[all_shutters != 1] = 0
     all_shutters = all_shutters.astype(np.str)
     all_shutters[cen_ind] = 'x'
-    return  "".join(all_shutters)
+    return "".join(all_shutters)
 
 
 def get_spectral_order_wrange(input_model, wavelengthrange_file):
@@ -505,20 +569,18 @@ def get_spectral_order_wrange(input_model, wavelengthrange_file):
 
     Parameters
     ----------
-    filter : str
-        The filter used.
-    grating : str
-        The grating used in the observation.
-    wavelength_range_file : str
+    input_model : `~jwst.datamodels.DataModel`
+        The input data model.
+    wavelengthrange_file : str
         Reference file of type "wavelengthrange".
     """
+    # Nirspec full spectral range
     full_range = [.6e-6, 5.3e-6]
 
     filter = input_model.meta.instrument.filter
     lamp = input_model.meta.instrument.lamp_state
     grating = input_model.meta.instrument.grating
 
-    #wave_range = AsdfFile.open(wavelengthrange_file)
     wave_range_model = WavelengthrangeModel(wavelengthrange_file)
     wrange_selector = wave_range_model.waverange_selector
     if filter == "OPAQUE":
@@ -527,59 +589,80 @@ def get_spectral_order_wrange(input_model, wavelengthrange_file):
         keyword = filter + '_' + grating
     try:
         index = wrange_selector.index(keyword)
-        #order = wave_range.tree['filter_grating'][keyword]['order']
-        #wrange = wave_range.tree['filter_grating'][keyword]['range']
     except (KeyError, ValueError):
-        index = None
-    if index is not None:
+        # Combination of filter_grating is not in wavelengthrange file.
+        gratings = [s.split('_')[1] for s in wrange_selector]
+        try:
+            index = gratings.index(grating)
+        except ValueError: # grating not in list
+            order = -1
+            wrange = full_range
+        else:
+            order = wave_range_model.order[index]
+            wrange = wave_range_model.wavelengthrange[index]
+        log.info("Combination {0} missing in wavelengthrange file, setting "
+                 "order to {1} and range to {2}.".format(keyword, order, wrange))
+    else:
+        # Combination of filter_grating is found in wavelengthrange file.
         order = wave_range_model.order[index]
         wrange = wave_range_model.wavelengthrange[index]
-    else:
-        order = -1
-        wrange = full_range
-        log.warning("Combination {0} missing in wavelengthrange file, setting order to -1 and range to {1}.".format(keyword, full_range))
 
     wave_range_model.close()
     return order, wrange
 
 
-def ifuslit_to_msa(slits, reference_files):
+def ifuslit_to_slicer(slits, reference_files, input_model):
     """
-    The transform from slit_frame to msa_frame.
+    The transform from ``slit_frame`` to ``slicer`` frame.
 
     Parameters
     ----------
-    slits_id : list
-        A list of slit IDs for all open shutters/slitlets.
-    msafile : str
-        The name of the msa reference file.
+    slits : list
+        A list of slit IDs for all slices.
+    reference_files : dict
+        {reference_type: reference_file_name}
+    input_model : `~jwst.datamodels.IFUImageModel`
 
     Returns
     -------
     model : `~jwst.transforms.Slit2Msa` model.
-        Transform from slit_frame to msa_frame.
+        Transform from ``slit_frame`` to ``slicer`` frame.
     """
-
-    #ifuslicer = AsdfFile.open(reference_files['ifuslicer'])
     ifuslicer = IFUSlicerModel(reference_files['ifuslicer'])
     models = []
-    #ifuslicer_model = (ifuslicer.tree['model']).rename('ifuslicer_model')
     ifuslicer_model = ifuslicer.model
     for slit in slits:
-        #slitdata = ifuslicer.tree['data'][slit]
         slitdata = ifuslicer.data[slit]
         slitdata_model = (get_slit_location_model(slitdata)).rename('slitdata_model')
+        slicer_model = slitdata_model | ifuslicer_model
 
-        msa_transform = slitdata_model | ifuslicer_model
+        msa_transform = slicer_model
         models.append(msa_transform)
     ifuslicer.close()
 
     return Slit2Msa(slits, models)
 
 
+def slicer_to_msa(reference_files):
+    """
+    Trasform from slicer coordinates to MSA entrance.
+
+    Applies the IFUFORE transform.
+
+    """
+    with IFUFOREModel(reference_files['ifufore']) as f:
+        ifufore = f.model
+    slicer2fore_mapping = Mapping((0, 1, 2, 2))
+    slicer2fore_mapping.inverse = Identity(3)
+    ifufore2fore_mapping = Identity(1)
+    ifufore2fore_mapping.inverse = Mapping((0, 1, 2, 2))
+    ifu_fore_transform = slicer2fore_mapping | ifufore & Identity(1)
+    return ifu_fore_transform
+
+
 def slit_to_msa(open_slits, msafile):
     """
-    The transform from slit_frame to msa_frame.
+    The transform from ``slit_frame`` to ``msa_frame``.
 
     Parameters
     ----------
@@ -591,11 +674,11 @@ def slit_to_msa(open_slits, msafile):
     Returns
     -------
     model : `~jwst.transforms.Slit2Msa` model.
-        Transform from slit_frame to msa_frame.
+        Transform from ``slit_frame`` to ``msa_frame``.
     """
-    #msa = AsdfFile.open(msafile)
     msa = MSAModel(msafile)
     models = []
+    slits = []
     for quadrant in range(1, 6):
         slits_in_quadrant = [s for s in open_slits if s.quadrant == quadrant]
         msa_quadrant = getattr(msa, 'Q{0}'.format(quadrant))
@@ -604,24 +687,29 @@ def slit_to_msa(open_slits, msafile):
             msa_model = msa_quadrant.model
             for slit in slits_in_quadrant:
                 slit_id = slit.shutter_id
+                # Shutters are numbered starting from 1.
+                # Fixed slits (Quadrant 5) are mapped starting from 0.
+                if quadrant != 5:
+                    slit_id = slit_id - 1
                 slitdata = msa_data[slit_id]
                 slitdata_model = get_slit_location_model(slitdata)
                 msa_transform = slitdata_model | msa_model
                 models.append(msa_transform)
+                slits.append(slit)
     msa.close()
-    return Slit2Msa(open_slits, models)
+    return Slit2Msa(slits, models)
 
 
 def gwa_to_ifuslit(slits, input_model, disperser, reference_files):
     """
-    GWA to SLIT transform.
+    The transform from ``gwa`` to ``slit_frame``.
 
     Parameters
     ----------
     slits : list
         A list of slit IDs for all IFU slits 0-29.
-    disperser : dict
-        A corrected disperser ASDF object.
+    disperser : `~jwst.datamodels.DisperserModel`
+        A disperser model with the GWA correction applied to it.
     filter : str
         The filter used.
     grating : str
@@ -632,7 +720,7 @@ def gwa_to_ifuslit(slits, input_model, disperser, reference_files):
     Returns
     -------
     model : `~jwst.transforms.Gwa2Slit` model.
-        Transform from GWA frame to SLIT frame.
+        Transform from ``gwa`` frame to ``slit_frame``.
    """
     ymin = -.55
     ymax = .55
@@ -640,39 +728,62 @@ def gwa_to_ifuslit(slits, input_model, disperser, reference_files):
     agreq = angle_from_disperser(disperser, input_model)
     lgreq = wavelength_from_disperser(disperser, input_model)
 
+    try:
+        velosys = input_model.meta.wcsinfo.velosys
+    except AttributeError:
+        pass
+    else:
+        if velosys is not None:
+            velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
+            lgreq = lgreq | velocity_corr
+            log.info("Applied Barycentric velocity correction : {}".format(velocity_corr[1].amplitude.value))
     # The wavelength units up to this point are
     # meters as required by the pipeline but the desired output wavelength units is microns.
     # So we are going to Scale the spectral units by 1e6 (meters -> microns)
     if input_model.meta.instrument.filter == 'OPAQUE':
         lgreq = lgreq | Scale(1e6)
 
+    lam_cen = 0.5 * (input_model.meta.wcsinfo.waverange_end -
+                     input_model.meta.wcsinfo.waverange_start
+                     ) + input_model.meta.wcsinfo.waverange_start
     collimator2gwa = collimator_to_gwa(reference_files, disperser)
     mask = mask_slit(ymin, ymax)
 
-    #ifuslicer = AsdfFile.open(reference_files['ifuslicer'])
-    #ifupost = AsdfFile.open(reference_files['ifupost'])
     ifuslicer = IFUSlicerModel(reference_files['ifuslicer'])
     ifupost = IFUPostModel(reference_files['ifupost'])
     slit_models = []
-    #ifuslicer_model = ifuslicer.tree['model']
     ifuslicer_model = ifuslicer.model
     for slit in slits:
-        #slitdata = ifuslicer.tree['data'][slit]
         slitdata = ifuslicer.data[slit]
         slitdata_model = get_slit_location_model(slitdata)
         ifuslicer_transform = (slitdata_model | ifuslicer_model)
-        #ifupost_transform = ifupost.tree[slit]['model']
-        ifupost_transform = getattr(ifupost, "slice_{0}".format(slit))
-        msa2gwa = ifuslicer_transform | ifupost_transform | collimator2gwa
-        gwa2msa = gwa_to_ymsa(msa2gwa)# TODO: Use model sets here
-        bgwa2msa = Mapping((0, 1, 0, 1), n_inputs=3) | \
-                 Const1D(0) * Identity(1) & Const1D(-1) * Identity(1) & Identity(2) | \
-                 Identity(1) & gwa2msa & Identity(2) | \
-                 Mapping((0, 1, 0, 1, 2, 3)) | Identity(2) & msa2gwa & Identity(2) | \
-                 Mapping((0, 1, 2, 3, 5), n_inputs=7) | Identity(2) & lgreq | mask
+        ifupost_sl = getattr(ifupost, "slice_{0}".format(slit))
+        # construct IFU post transform
+        ifupost_transform = _create_ifupost_transform(ifupost_sl)
+        msa2gwa = ifuslicer_transform & Const1D(lam_cen) | ifupost_transform | collimator2gwa
+        gwa2slit = gwa_to_ymsa(msa2gwa, lam_cen=lam_cen)# TODO: Use model sets here
 
-        # msa to before_gwa
-        msa2bgwa = msa2gwa & Identity(1) | Mapping((3, 0, 1, 2)) | agreq
+        # The commnts below list the input coordinates.
+        bgwa2msa = (
+            # (alpha_out, beta_out, gamma_out), angles at the GWA, coming from the camera
+            # (0, - beta_out, alpha_out, beta_out)
+            # (0, sy, alpha_out, beta_out)
+            # (0, sy, 0, sy, sy, alpha_out, beta_out)
+            # ( 0, sy, alpha_in, beta_in, gamma_in, alpha_out, beta_out)
+            # (0, sy, alpha_in, beta_in,alpha_out)
+            # (0, sy, lambda_computed)
+            Mapping((0, 1, 0, 1), n_inputs=3) |
+            Const1D(0) * Identity(1) & Const1D(-1) * Identity(1) & Identity(2) | \
+            Identity(1) & gwa2slit & Identity(2) | \
+            Mapping((0, 1, 0, 1, 1, 2, 3)) | \
+            Identity(2) & msa2gwa & Identity(2) | \
+            Mapping((0, 1, 2, 3, 5), n_inputs=7) | \
+            Identity(2) & lgreq | mask
+        )
+
+        # transform from ``msa_frame`` to ``gwa`` frame (before the GWA going from detector to sky).
+        msa2gwa_out = ifuslicer_transform & Identity(1) | ifupost_transform | collimator2gwa
+        msa2bgwa = Mapping((0, 1, 2, 2)) | msa2gwa_out & Identity(1) | Mapping((3, 0, 1, 2)) | agreq
         bgwa2msa.inverse = msa2bgwa
         slit_models.append(bgwa2msa)
 
@@ -683,7 +794,7 @@ def gwa_to_ifuslit(slits, input_model, disperser, reference_files):
 
 def gwa_to_slit(open_slits, input_model, disperser, reference_files):
     """
-    GWA to SLIT transform.
+    The transform from ``gwa`` to ``slit_frame``.
 
     Parameters
     ----------
@@ -701,11 +812,21 @@ def gwa_to_slit(open_slits, input_model, disperser, reference_files):
     Returns
     -------
     model : `~jwst.transforms.Gwa2Slit` model.
-        Transform from GWA frame to SLIT frame.
+        Transform from ``gwa`` frame to ``slit_frame``.
     """
     agreq = angle_from_disperser(disperser, input_model)
     collimator2gwa = collimator_to_gwa(reference_files, disperser)
     lgreq = wavelength_from_disperser(disperser, input_model)
+
+    try:
+        velosys = input_model.meta.wcsinfo.velosys
+    except AttributeError:
+        pass
+    else:
+        if velosys is not None:
+            velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
+            lgreq = lgreq | velocity_corr
+            log.info("Applied Barycentric velocity correction : {}".format(velocity_corr[1].amplitude.value))
 
     # The wavelength units up to this point are
     # meters as required by the pipeline but the desired output wavelength units is microns.
@@ -713,27 +834,31 @@ def gwa_to_slit(open_slits, input_model, disperser, reference_files):
     if input_model.meta.instrument.filter == 'OPAQUE':
         lgreq = lgreq | Scale(1e6)
 
-    #msa = AsdfFile.open(reference_files['msa'])
     msa = MSAModel(reference_files['msa'])
     slit_models = []
+    slits = []
     for quadrant in range(1, 6):
         slits_in_quadrant = [s for s in open_slits if s.quadrant == quadrant]
         log.info("There are {0} open slits in quadrant {1}".format(len(slits_in_quadrant), quadrant))
         msa_quadrant = getattr(msa, 'Q{0}'.format(quadrant))
+
         if any(slits_in_quadrant):
-            #msa_model = msa.tree[quadrant]['model']
             msa_model = msa_quadrant.model
-            log.info("Getting slits location for quadrant {0}".format(quadrant))
-            #msa_data = msa.tree[quadrant]['data']
             msa_data = msa_quadrant.data
+
             for slit in slits_in_quadrant:
                 mask = mask_slit(slit.ymin, slit.ymax)
                 slit_id = slit.shutter_id
+                # Shutter IDs are numbered starting from 1
+                # while FS are numbered starting from 0.
+                # "Quadrant 5 is for fixed slits.
+                if quadrant != 5:
+                    slit_id -= 1
                 slitdata = msa_data[slit_id]
                 slitdata_model = get_slit_location_model(slitdata)
-                msa_transform = slitdata_model | msa_model
+                msa_transform = (slitdata_model | msa_model)
                 msa2gwa = (msa_transform | collimator2gwa)
-                gwa2msa = gwa_to_ymsa(msa2gwa)# TODO: Use model sets here
+                gwa2msa = gwa_to_ymsa(msa2gwa, slit=slit)# TODO: Use model sets here
                 bgwa2msa = Mapping((0, 1, 0, 1), n_inputs=3) | \
                     Const1D(0) * Identity(1) & Const1D(-1) * Identity(1) & Identity(2) | \
                     Identity(1) & gwa2msa & Identity(2) | \
@@ -745,11 +870,18 @@ def gwa_to_slit(open_slits, input_model, disperser, reference_files):
                 msa2bgwa = msa2gwa & Identity(1) | Mapping((3, 0, 1, 2)) | agreq
                 bgwa2msa.inverse = msa2bgwa
                 slit_models.append(bgwa2msa)
+                slits.append(slit)
     msa.close()
-    return Gwa2Slit(open_slits, slit_models)
+    return Gwa2Slit(slits, slit_models)
 
 
 def angle_from_disperser(disperser, input_model):
+    """
+    For gratings this returns a form of the grating equation
+    which computes the angle when lambda is known.
+
+    For prism data this returns the Snell model.
+    """
     sporder = input_model.meta.wcsinfo.spectral_order
     if input_model.meta.instrument.grating.lower() != 'prism':
         agreq = AngleFromGratingEquation(disperser.groovedensity,
@@ -766,15 +898,20 @@ def angle_from_disperser(disperser, input_model):
 
 
 def wavelength_from_disperser(disperser, input_model):
+    """
+    For gratings this returns a form of the grating equation
+    which computes lambda when all angles are known.
+
+    For prism data this returns a lookup table model
+    computing lambda from a known refraction index.
+    """
     sporder = input_model.meta.wcsinfo.spectral_order
     if input_model.meta.instrument.grating.lower() != 'prism':
         lgreq = WavelengthFromGratingEquation(disperser.groovedensity,
                                               sporder, name='lambda_from_gratingeq')
         return lgreq
     else:
-        lmin = input_model.meta.wcsinfo.waverange_start
-        lmax = input_model.meta.wcsinfo.waverange_end
-        lam = np.linspace(lmin, lmax, 10000)
+        lam = np.arange(0.5, 6.005, 0.005) * 1e-6
         system_temperature = input_model.meta.instrument.gwa_tilt
         if system_temperature is None:
             message = "Missing reference temperature (keyword GWA_TILT)."
@@ -789,17 +926,17 @@ def wavelength_from_disperser(disperser, input_model):
         n = Snell.compute_refraction_index(lam, system_temperature, tref, pref,
                                            system_pressure, kcoef, lcoef, tcoef
                                            )
-        poly = models.Polynomial1D(1)
-        fitter = fitting.LinearLSQFitter()
-        lam_of_n = fitter(poly, n, lam)
-        lam_of_n = lam_of_n.rename('n_interpolate')
+        n = np.flipud(n)
+        lam = np.flipud(lam)
         n_from_prism = RefractionIndexFromPrism(disperser['angle'], name='n_prism')
-        return n_from_prism | lam_of_n
+
+        tab = Tabular1D(points=(n,), lookup_table=lam, bounds_error=False)
+        return n_from_prism | tab
 
 
 def detector_to_gwa(reference_files, detector, disperser):
     """
-    Transform from DETECTOR frame to GWA frame.
+    Transform from ``sca`` frame to ``gwa`` frame.
 
     Parameters
     ----------
@@ -825,13 +962,34 @@ def detector_to_gwa(reference_files, detector, disperser):
                disperser['theta_z'], disperser['tilt_y']]
     rotation = Rotation3DToGWA(angles, axes_order="xyzy", name='rotation')
     u2dircos = Unitless2DirCos(name='unitless2directional_cosines')
+    ## NIRSPEC 1- vs 0- based pixel coordinates issue #1781
+    '''
+    The pipeline works with 0-based pixel coordinates. The Nirspec model,
+    stored in reference files, is also 0-based. However, the algorithm specified
+    by the IDT team specifies that pixel coordinates are 1-based. This is
+    implemented below as a Shift(-1) & Shift(-1) transform. This makes the Nirspec
+    instrument WCS pipeline "special" as it requires 1-based inputs.
+    As a consequence many steps have to be modified to provide 1-based coordinates
+    to the WCS call if the instrument is Nirspec. This is not always easy, especially
+    when the step has no knowledge of the instrument.
+    This is the reason the algorithm is modified to acccept 0-based coordinates.
+    This will be discussed in the future with the INS and IDT teams and may be solved
+    by changing the algorithm but for now
+
     model = (models.Shift(-1) & models.Shift(-1) | fpa | camera | u2dircos | rotation)
+
+    is changed to
+
+    model = models.Shift(1) & models.Shift(1) | \
+            models.Shift(-1) & models.Shift(-1) | fpa | camera | u2dircos | rotation
+    '''
+    model = fpa | camera | u2dircos | rotation
     return model
 
 
 def dms_to_sca(input_model):
     """
-    Transforms from DMS to SCA coordinates.
+    Transforms from ``detector`` to ``sca`` coordinates.
     """
     detector = input_model.meta.instrument.detector
     xstart = input_model.meta.subarray.xstart
@@ -883,7 +1041,7 @@ def mask_slit(ymin=-.5, ymax=.5):
 
 def compute_bounding_box(slit2detector, wavelength_range, slit_ymin=-.5, slit_ymax=.5):
     """
-    Compute the projection of a slit/slice on the detector.
+    Compute the bounding box of the projection of a slit/slice on the detector.
 
     The edges of the slit are used to determine the location
     of the projection of the slit on the detector.
@@ -922,7 +1080,12 @@ def compute_bounding_box(slit2detector, wavelength_range, slit_ymin=-.5, slit_ym
 
 def collimator_to_gwa(reference_files, disperser):
     """
-    Transform from COLLIMATOR to GWA frame.
+    Transform from collimator to ``gwa`` frame.
+
+    Includes the transforms:
+    - through the collimator (going from sky to detector)
+    - converting from unitless to directional cosines
+    - a 3D rotation before the GWA using th ecorrected disperser angles.
 
     Parameters
     ----------
@@ -934,7 +1097,7 @@ def collimator_to_gwa(reference_files, disperser):
     Returns
     -------
     model : `~astropy.modeling.core.Model` model.
-        Transform from COLLIMATOR to GWA frame.
+        Transform from collimator to ``gwa`` frame.
 
     """
     with CollimatorModel(reference_files['collimator']) as f:
@@ -949,7 +1112,8 @@ def collimator_to_gwa(reference_files, disperser):
 
 def get_disperser(input_model, disperserfile):
     """
-    Return the disperser information corrected for the uncertainty in the GWA position.
+    Return the disperser data model with the GWA
+    correction applied.
 
     Parameters
     ----------
@@ -963,8 +1127,6 @@ def get_disperser(input_model, disperserfile):
     disperser : dict
         The corrected disperser information.
     """
-    #with DisperserModel(disperserfile) as f:
-    #    disperser = f.tree
     disperser = DisperserModel(disperserfile)
     xtilt = input_model.meta.instrument.gwa_xtilt
     ytilt = input_model.meta.instrument.gwa_ytilt
@@ -985,6 +1147,11 @@ def correct_tilt(disperser, xtilt, ytilt):
     disperser : `~jwst.datamodels.DisperserModel`
         Disperser information.
 
+    Notes
+    -----
+    The GWA_XTILT keyword is used to correct the THETA_Y angle.
+    The GWA_YTILT keyword is used to correct the THETA_X angle.
+
     Returns
     -------
     disp : `~jwst.datamodels.DisperserModel`
@@ -998,19 +1165,20 @@ def correct_tilt(disperser, xtilt, ytilt):
         return del_theta
 
     disp = disperser.copy()
-    log.info("gwa_ytilt is {0}".format(ytilt))
-    log.info("gwa_xtilt is {0}".format(xtilt))
+    disperser.close()
+    log.info("gwa_ytilt is {0} deg".format(ytilt))
+    log.info("gwa_xtilt is {0} deg".format(xtilt))
 
     if xtilt is not None:
-        theta_y_correction = _get_correction(disperser.gwa_tiltx, xtilt)
-        log.info('theta_y correction: {0}'.format(theta_y_correction))
-        disp['theta_y'] = disperser.theta_y + theta_y_correction
+        theta_y_correction = _get_correction(disp.gwa_tiltx, xtilt)
+        log.info('theta_y correction: {0} deg'.format(theta_y_correction))
+        disp['theta_y'] = disp.theta_y + theta_y_correction
     else:
         log.info('gwa_xtilt not applied')
     if ytilt is not None:
-        theta_x_correction = _get_correction(disperser.gwa_tilty, ytilt)
-        log.info('theta_x correction: {0}'.format(theta_x_correction))
-        disp.theta_x = disperser.theta_x + theta_x_correction
+        theta_x_correction = _get_correction(disp.gwa_tilty, ytilt)
+        log.info('theta_x correction: {0} deg'.format(theta_x_correction))
+        disp.theta_x = disp.theta_x + theta_x_correction
     else:
         log.info('gwa_ytilt not applied')
     return disp
@@ -1018,7 +1186,7 @@ def correct_tilt(disperser, xtilt, ytilt):
 
 def ifu_msa_to_oteip(reference_files):
     """
-    Transform from the MSA frame to the OTEIP frame.
+    Transform from ``msa_frame`` to ``oteip`` for IFU exposures.
 
     Parameters
     ----------
@@ -1031,22 +1199,17 @@ def ifu_msa_to_oteip(reference_files):
         Transform from MSA to OTEIP.
     """
     with FOREModel(reference_files['fore']) as f:
-        #fore = f.tree['model'].copy()
         fore = f.model
-    with IFUFOREModel(reference_files['ifufore']) as f:
-        ifufore = f.model
 
-    msa2fore_mapping = Mapping((0, 1, 2, 2))
-    msa2fore_mapping.inverse = Identity(3)
-    ifu_fore_transform = ifufore & Identity(1)
-    ifu_fore_transform.inverse = Mapping((0, 1, 2, 2)) | ifufore.inverse & Identity(1)
+    msa2fore_mapping = Mapping((0, 1, 2, 2), name='msa2fore_mapping')
+    msa2fore_mapping.inverse = Mapping((0, 1, 2, 2), name='fore2msa')
     fore_transform = msa2fore_mapping | fore & Identity(1)
-    return msa2fore_mapping | ifu_fore_transform | fore_transform
+    return fore_transform
 
 
 def msa_to_oteip(reference_files):
     """
-    Transform from the MSA frame to the OTEIP frame.
+    Transform from ``msa_frame`` to ``oteip`` for non IFU exposures.
 
     Parameters
     ----------
@@ -1068,7 +1231,7 @@ def msa_to_oteip(reference_files):
 
 def oteip_to_v23(reference_files):
     """
-    Transform from the OTEIP frame to the V2V3 frame.
+    Transform from ``oteip`` frame to ``v2v3`` frame.
 
     Parameters
     ----------
@@ -1078,7 +1241,7 @@ def oteip_to_v23(reference_files):
     Returns
     -------
     model : `~astropy.modeling.core.Model` model.
-        Transform from OTEIP to V2V3.
+        Transform from ``oteip`` to ``v2v3`` frame.
 
     """
     with OTEModel(reference_files['ote']) as f:
@@ -1089,10 +1252,7 @@ def oteip_to_v23(reference_files):
     # meters as required by the pipeline but the desired output wavelength units is microns.
     # So we are going to Scale the spectral units by 1e6 (meters -> microns)
     # The spatial units are currently in deg. Convertin to arcsec.
-    oteip_to_xyan = fore2ote_mapping | (ote & Scale(1e6))
-    # TODO: The scaling arcsec --> deg should be added with the next CDP delivery.
-    # In CDP3 the units are still deg.
-    oteip2v23 = oteip_to_xyan #| Scale(1 / 3600) & Scale(1 / 3600)  & Identity(1)
+    oteip2v23 = fore2ote_mapping | (ote & Scale(1e6))
 
     return oteip2v23
 
@@ -1113,7 +1273,7 @@ def create_frames():
     slit_spatial = cf.Frame2D(name='slit_spatial', axes_order=(0, 1), unit=("", ""),
                              axes_names=('x_slit', 'y_slit'))
     sky = cf.CelestialFrame(name='sky', axes_order=(0, 1), reference_frame=coord.ICRS())
-    v2v3_spatial = cf.Frame2D(name='v2v3_spatial', axes_order=(0, 1), unit=(u.deg, u.deg),
+    v2v3_spatial = cf.Frame2D(name='v2v3_spatial', axes_order=(0, 1), unit=(u.arcsec, u.arcsec),
                              axes_names=('V2', 'V3'))
 
     # The oteip_to_v23 incorporates a scale to convert the spectral units from
@@ -1142,7 +1302,7 @@ def create_imaging_frames():
                       axes_names=('alpha_in', 'beta_in'))
     msa = cf.Frame2D(name='msa', axes_order=(0, 1), unit=(u.m, u.m),
                              axes_names=('x_msa', 'y_msa'))
-    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.deg, u.deg),
+    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.arcsec, u.arcsec),
                               axes_names=('v2', 'v3'))
     oteip = cf.Frame2D(name='oteip', axes_order=(0, 1), unit=(u.deg, u.deg),
                                axes_names=('x_oteip', 'y_oteip'))
@@ -1152,7 +1312,7 @@ def create_imaging_frames():
 
 def get_slit_location_model(slitdata):
     """
-    Compute the transform for the absolute position of a slit.
+    The transform for the absolute position of a slit on the MSA.
 
     Parameters
     ----------
@@ -1175,7 +1335,7 @@ def get_slit_location_model(slitdata):
     return model
 
 
-def gwa_to_ymsa(msa2gwa_model):
+def gwa_to_ymsa(msa2gwa_model, lam_cen=None, slit=None):
     """
     Determine the linear relation d_y(beta_in) for the aperture on the detector.
 
@@ -1184,19 +1344,28 @@ def gwa_to_ymsa(msa2gwa_model):
     msa2gwa_model : `astropy.modeling.core.Model`
         The transform from the MSA to the GWA.
     """
-    dy = np.linspace(-.55, .55, 1000)
+    nstep = 1000
+    if slit is not None:
+        ymin, ymax = slit.ymin, slit.ymax
+    else:
+        ymin, ymax = (-.55, .55)
+    dy = np.linspace(ymin, ymax, nstep)
     dx = np.zeros(dy.shape)
-    cosin_grating_k = msa2gwa_model(dx, dy)
-    fitter = fitting.LinearLSQFitter()
-    model = models.Polynomial1D(1)
-    poly1d_model = fitter(model, cosin_grating_k[1], dy)
-    poly_model = poly1d_model.rename('interpolation')
-    return poly_model
+    if lam_cen is not None:
+        # IFU case where IFUPOST has a wavelength dependent distortion
+        cosin_grating_k = msa2gwa_model(dx, dy, [lam_cen] * nstep)
+    else:
+        cosin_grating_k = msa2gwa_model(dx, dy)
+    beta_in = cosin_grating_k[1]
+
+    tab = Tabular1D(points=(beta_in,),
+                    lookup_table=dy, bounds_error=False, name='tabular')
+    return tab
 
 
 def nrs_wcs_set_input(input_model, slit_name, wavelength_range=None):
     """
-    Returns a WCS object for this slit.
+    Returns a WCS object for a specific slit, slice or shutter.
 
     Parameters
     ----------
@@ -1226,12 +1395,18 @@ def nrs_wcs_set_input(input_model, slit_name, wavelength_range=None):
     open_slits = g2s.slits
 
     slit_wcs.set_transform('gwa', 'slit_frame', g2s.get_model(slit_name))
-    slit_wcs.set_transform('slit_frame', 'msa_frame', wcsobj.pipeline[3][1][1].get_model(slit_name) & Identity(1))
+    if input_model.meta.exposure.type.lower() == 'nrs_ifu':
+        slit_wcs.set_transform('slit_frame', 'slicer',
+                           wcsobj.pipeline[3][1].get_model(slit_name) & Identity(1))
+    else:
+        slit_wcs.set_transform('slit_frame', 'msa_frame',
+                           wcsobj.pipeline[3][1].get_model(slit_name) & Identity(1))
     slit2detector = slit_wcs.get_transform('slit_frame', 'detector')
 
     if input_model.meta.exposure.type.lower() != 'nrs_ifu':
         slit = [s for s in open_slits if s.name == slit_name][0]
-        bb = compute_bounding_box(slit2detector, wrange, slit_ymin=slit.ymin, slit_ymax=slit.ymax)
+        bb = compute_bounding_box(slit2detector, wrange,
+                                  slit_ymin=slit.ymin, slit_ymax=slit.ymax)
     else:
         bb = compute_bounding_box(slit2detector, wrange)
     slit_wcs.bounding_box = bb
@@ -1240,7 +1415,9 @@ def nrs_wcs_set_input(input_model, slit_name, wavelength_range=None):
 
 def validate_open_slits(input_model, open_slits, reference_files):
     """
-    For each slit computes the transform from the slit to the detector.
+    Remove slits which do not project on the detector from the list of open slits.
+    For each slit computes the transform from the slit to the detector and
+    determines the bounding box.
 
     Parameters
     ----------
@@ -1263,30 +1440,22 @@ def validate_open_slits(input_model, open_slits, reference_files):
             return True
 
     det2dms = dms_to_sca(input_model).inverse
-    # read models from reference files
-    with FPAModel(reference_files['fpa']) as f:
-        fpa = getattr(f, input_model.meta.instrument.detector.lower() + '_model')
-    with CameraModel(reference_files['camera']) as f:
-        camera = f.model
-
+    # read models from reference file
     disperser = DisperserModel(reference_files['disperser'])
     disperser = correct_tilt(disperser, input_model.meta.instrument.gwa_xtilt,
                              input_model.meta.instrument.gwa_ytilt)
 
-    dircos2u = DirCos2Unitless(name='directional2unitless_cosines')
-
-    angles = [disperser['theta_x'], disperser['theta_y'],
-              disperser['theta_z'], disperser['tilt_y']]
-    rotation = Rotation3DToGWA(angles, axes_order="xyzy", name='rotation')
-
-    order, wrange = get_spectral_order_wrange(input_model, reference_files['wavelengthrange'])
+    order, wrange = get_spectral_order_wrange(input_model,
+                                              reference_files['wavelengthrange'])
 
     input_model.meta.wcsinfo.waverange_start = wrange[0]
     input_model.meta.wcsinfo.waverange_end = wrange[1]
     input_model.meta.wcsinfo.spectral_order = order
     agreq = angle_from_disperser(disperser, input_model)
     # GWA to detector
-    det2gwa = detector_to_gwa(reference_files, input_model.meta.instrument.detector, disperser)
+    det2gwa = detector_to_gwa(reference_files,
+                              input_model.meta.instrument.detector,
+                              disperser)
     gwa2det = det2gwa.inverse
     # collimator to GWA
     collimator2gwa = collimator_to_gwa(reference_files, disperser)
@@ -1298,8 +1467,6 @@ def validate_open_slits(input_model, open_slits, reference_files):
         slits_in_quadrant = [s for s in open_slits if s.quadrant == quadrant]
         if any(slits_in_quadrant):
             msa_quadrant = getattr(msa, "Q{0}".format(quadrant))
-            #msa_model = msa.tree[quadrant]['model']
-            #msa_data = msa.tree[quadrant]['data']
             msa_model = msa_quadrant.model
             msa_data = msa_quadrant.data
             for slit in slits_in_quadrant:
@@ -1338,7 +1505,7 @@ def spectral_order_wrange_from_model(input_model):
 
 def nrs_ifu_wcs(input_model):
     """
-    Return a list of WCS for all NIRSPEC IFU slits.
+    Return a list of WCSs for all NIRSPEC IFU slits.
 
     Parameters
     ----------
@@ -1353,6 +1520,44 @@ def nrs_ifu_wcs(input_model):
     return wcs_list
 
 
+def _create_ifupost_transform(ifupost_slice):
+    """
+    Create an IFUPOST transform for a specific slice.
+
+    Parameters
+    ----------
+    ifupost_slice : `jwst.datamodels.properties.ObjectNode`
+        IFUPost transform for a specific slice
+
+    """
+    linear = ifupost_slice.linear
+    polyx = ifupost_slice.xpoly
+    polyx_dist = ifupost_slice.xpoly_distortion
+    polyy = ifupost_slice.ypoly
+    polyy_dist = ifupost_slice.ypoly_distortion
+
+    # the chromatic correction is done here
+    # the input is Xslicer, Yslicer, lam
+    # The wavelength dependent polynomial is
+    # expressed as
+    # poly_independent(x, y) + poly_dependent(x, y) * lambda
+    model_x = ((Mapping((0, 1), n_inputs=3) | polyx) +
+                       ((Mapping((0, 1), n_inputs=3) | polyx_dist) *
+                        (Mapping((2,)) | Identity(1))))
+    model_y = ((Mapping((0, 1), n_inputs=3) | polyy) +
+                       ((Mapping((0, 1), n_inputs=3) | polyy_dist) *
+                        (Mapping((2,)) | Identity(1))))
+
+    output2poly_mapping = Identity(2, name="{0}_outmap".format('ifupost'))
+    output2poly_mapping.inverse = Mapping([0, 1, 2, 0, 1, 2])
+    input2poly_mapping = Mapping([0, 1, 2, 0, 1, 2], name="{0}_inmap".format('ifupost'))
+    input2poly_mapping.inverse = Identity(2)
+
+    model_poly = input2poly_mapping | (model_x & model_y) | output2poly_mapping
+    model = linear & Identity(1) | model_poly
+    return model
+
+
 exp_type2transform = {'nrs_tacq': imaging,
                       'nrs_taslit': imaging,
                       'nrs_taconfirm': imaging,
@@ -1364,7 +1569,7 @@ exp_type2transform = {'nrs_tacq': imaging,
                       'nrs_focus': imaging,
                       'nrs_mimf': imaging,
                       'nrs_bota': imaging,
-                      'nrs_autoflat': not_implemented_mode,
+                      'nrs_autoflat': slits_wcs,
                       'nrs_autowave': not_implemented_mode,
                       'nrs_lamp': slits_wcs,
                       'nrs_brightobj': slits_wcs,

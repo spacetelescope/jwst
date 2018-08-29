@@ -1,11 +1,11 @@
-from . import model_base
+from .reference import ReferenceFileModel
 from .dynamicdq import dynamic_mask
 
 
 __all__ = ['FringeModel']
 
 
-class FringeModel(model_base.DataModel):
+class FringeModel(ReferenceFileModel):
     """
     A data model for 2D fringe correction images.
 

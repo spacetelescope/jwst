@@ -1,17 +1,24 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import datetime
+from datetime import datetime
 import os
 import shutil
 import tempfile
+import warnings
 
 import pytest
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 
 import jsonschema
+from astropy.io import fits
+from astropy.modeling import models
+from astropy import time
 
-from .. import DataModel, ImageModel, RampModel, MaskModel, MultiSlitModel, AsnModel
+from .. import util, validate
+from .. import (DataModel, ImageModel, RampModel, MaskModel,
+                MultiSlitModel, AsnModel, CollimatorModel)
+from ..schema import merge_property_trees
 
 from asdf import schema as mschema
 
@@ -42,32 +49,27 @@ def teardown():
 
 def test_choice():
     with pytest.raises(jsonschema.ValidationError):
-        with DataModel(FITS_FILE) as dm:
+        with DataModel(FITS_FILE, strict_validation=True) as dm:
             assert dm.meta.instrument.name == 'MIRI'
             dm.meta.instrument.name = 'FOO'
 
 
 def test_set_na_ra():
     with pytest.raises(jsonschema.ValidationError):
-        with DataModel(FITS_FILE) as dm:
+        with DataModel(FITS_FILE, strict_validation=True) as dm:
             # Setting an invalid value should raise a ValueError
             dm.meta.target.ra = "FOO"
 
-'''
-def test_date():
-    with pytest.raises(jsonschema.ValidationError):
-        with ImageModel((50, 50)) as dm:
-            dm.meta.date = 'Not an acceptable date'
-
 
 def test_date2():
-    from astropy import time
+    with ImageModel((50, 50), strict_validation=True) as dm:
+        time_obj = time.Time(dm.meta.date)
+        assert isinstance(time_obj, time.Time)
+        date_obj = datetime.strptime(dm.meta.date, '%Y-%m-%dT%H:%M:%S.%f')
+        assert isinstance(date_obj, datetime)
 
-    with ImageModel((50, 50)) as dm:
-        assert isinstance(dm.meta.date, (time.Time, datetime.datetime))
-'''
 
-transformation_schema = {
+TRANSFORMATION_SCHEMA = {
     "allOf": [
         mschema.load_schema(
             os.path.join(os.path.dirname(__file__),
@@ -108,23 +110,96 @@ transformation_schema = {
 
 def test_list():
     with pytest.raises(jsonschema.ValidationError):
-        with ImageModel((50, 50), schema=transformation_schema) as dm:
+        with ImageModel((50, 50), schema=TRANSFORMATION_SCHEMA,
+                        strict_validation=True) as dm:
             dm.meta.transformations = []
-            object = dm.meta.transformations.item(
-                transformation="SIN",
-                coeff=2.0)
+            dm.meta.transformations.item(transformation="SIN", coeff=2.0)
 
-'''
+
 def test_list2():
     with pytest.raises(jsonschema.ValidationError):
         with ImageModel(
             (50, 50),
-            schema=transformation_schema) as dm:
+            schema=TRANSFORMATION_SCHEMA,
+            strict_validation=True) as dm:
             dm.meta.transformations = []
-            object = dm.meta.transformations.append(
-                {'transformation': 'FOO',
-                 'coeff': 2.0})
-'''
+            dm.meta.transformations.append({'transformation': 'FOO', 'coeff': 2.0})
+
+
+def test_invalid_fits():
+    hdulist = fits.open(FITS_FILE)
+    header = hdulist[0].header
+    header['INSTRUME'] = 'FOO'
+
+    if os.path.exists(TMP_FITS):
+        os.remove(TMP_FITS)
+
+    hdulist.writeto(TMP_FITS)
+    hdulist.close()
+
+    with pytest.raises(validate.ValidationWarning):
+        with warnings.catch_warnings():
+            os.environ['PASS_INVALID_VALUES'] = '0'
+            os.environ['STRICT_VALIDATION'] = '0'
+            warnings.simplefilter('error')
+            model = util.open(TMP_FITS)
+            model.close()
+
+    with pytest.raises(jsonschema.ValidationError):
+        os.environ['STRICT_VALIDATION'] = '1'
+        model = util.open(TMP_FITS)
+        model.close()
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        os.environ['PASS_INVALID_VALUES'] = '0'
+        os.environ['STRICT_VALIDATION'] = '0'
+        model = util.open(TMP_FITS)
+        assert model.meta.instrument.name is None
+        model.close()
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        os.environ['PASS_INVALID_VALUES'] = '1'
+        model = util.open(TMP_FITS)
+        assert model.meta.instrument.name == 'FOO'
+        model.close()
+
+    del os.environ['PASS_INVALID_VALUES']
+    del os.environ['STRICT_VALIDATION']
+
+    with pytest.raises(validate.ValidationWarning):
+        with warnings.catch_warnings():
+            warnings.simplefilter('error')
+            model = util.open(TMP_FITS,
+                              pass_invalid_values=False,
+                              strict_validation=False)
+            model.close()
+
+    with pytest.raises(jsonschema.ValidationError):
+        model = util.open(TMP_FITS,
+                          pass_invalid_values=False,
+                          strict_validation=True)
+        model.close()
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        model = util.open(TMP_FITS,
+                          pass_invalid_values=False,
+                          strict_validation=False)
+        assert model.meta.instrument.name is None
+        model.close()
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        model = util.open(TMP_FITS,
+                          pass_invalid_values=True,
+                          strict_validation=False)
+        assert model.meta.instrument.name == 'FOO'
+        model.close()
+
+    if os.path.exists(TMP_FITS):
+        os.remove(TMP_FITS)
 
 def test_ad_hoc_json():
     with DataModel() as dm:
@@ -161,74 +236,16 @@ def test_search_schema():
     assert 'meta.target.ra' in results
 
 
-schema_extra = {
-    "type": "object",
-    "properties": {
-        "meta": {
-            "type": "object",
-            "properties": {
-                "foo": {
-                    'title': 'Custom type',
-                    'type': 'string',
-                    'default': 'bar',
-                    'fits_keyword': 'FOO'
-                },
-                "restricted": {
-                    'title': 'Custom type',
-                    'type': 'object',
-                    'additionalProperties': False,
-                    'properties': {
-                        'allowed': {
-                            'type': 'number'
-                        }
-                    }
-                },
-                "bar": {
-                    "type": "object",
-                    "properties": {
-                        "baz": {
-                            "type": "string"
-                        }
-                    }
-                },
-                "subarray": {
-                    "type": "object",
-                    "properties": {
-                        "size": {
-                            'title': 'Subarray size',
-                            'type': 'number'
-                        },
-                        'xstart': {
-                            'type': 'string',
-                            'default': 'fubar'
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-
-
 def test_dictionary_like():
-    with DataModel() as x:
+    with DataModel(strict_validation=True) as x:
         x.meta.origin = 'FOO'
         assert x['meta.origin'] == 'FOO'
 
-        try:
-            x['meta.subarray.xsize'] = 'string'
-        except:
-            pass
-        else:
-            raise AssertionError()
+        with pytest.raises(jsonschema.ValidationError):
+            x['meta.subarray.xsize'] = 'FOO'
 
-        try:
-            y = x['meta.FOO.BAR.BAZ']
-        except KeyError:
-            pass
-        else:
-            raise AssertionError()
+        with pytest.raises(KeyError):
+            x['meta.FOO.BAR.BAZ']
 
 
 def test_to_flat_dict():
@@ -341,7 +358,7 @@ def test_table_array_convert():
 
     with DataModel(schema=table_schema) as x:
         x.table = table
-        assert x.table is table
+        assert x.table is not table
 
     table = np.array(
         [(42, 32000, 'foo')],
@@ -354,7 +371,7 @@ def test_table_array_convert():
     with DataModel(schema=table_schema) as x:
         x.table = table
         assert x.table is not table
-        assert x.table['my_string'][0] == table['my_string'][0]
+        assert x.table['my_string'][0] != table['my_string'][0]
 
 
 def test_mask_model():
@@ -478,7 +495,7 @@ def test_implicit_creation_lower_dimensionality():
 
 
 def test_add_schema_entry():
-    with DataModel() as dm:
+    with DataModel(strict_validation=True) as dm:
         dm.add_schema_entry('meta.foo.bar', {'enum': ['foo', 'bar', 'baz']})
         dm.meta.foo.bar
         dm.meta.foo.bar = 'bar'
@@ -537,9 +554,66 @@ def test_multislit_move_from_fits():
 
         assert len(n.slits) == 1
 
-'''
-def test_multislit_garbage():
+
+def test_validate_transform():
+    """
+    Tests that custom types, like transform, can be validated.
+    """
+    m = CollimatorModel(model=models.Shift(1) & models.Shift(2),
+                        strict_validation=True)
+    m.meta.description = "Test validate a WCS reference file."
+    m.meta.author = "ND"
+    m.meta.pedigree = "GROUND"
+    m.meta.useafter = "2018/06/18"
+    m.meta.reftype = "collimator"
+    m.validate()
+    m.close()
+
+
+def test_validate_transform_from_file():
+    """
+    Tests that custom types, like transform, can be validated.
+    """
+    fname = os.path.join(os.path.dirname(__file__), 'data', 'collimator_fake.asdf')
+    m = CollimatorModel(fname, strict_validation=True)
+    m.validate()
+
+
+def test_multislit_append_string():
     with pytest.raises(jsonschema.ValidationError):
-        m = MultiSlitModel()
+        m = MultiSlitModel(strict_validation=True)
         m.slits.append('junk')
-'''
+
+
+@pytest.mark.parametrize('combiner', ['anyOf', 'oneOf'])
+def test_merge_property_trees(combiner):
+
+    s = {
+         'type': 'object',
+         'properties': {
+             'foobar': {
+                 combiner: [
+                     {
+                         'type': 'array',
+                         'items': [ {'type': 'string'}, {'type': 'number'} ],
+                         'minItems': 2,
+                         'maxItems': 2,
+                     },
+                     {
+                         'type': 'array',
+                         'items': [
+                             {'type': 'number'},
+                             {'type': 'string'},
+                             {'type': 'number'}
+                         ],
+                         'minItems': 3,
+                         'maxItems': 3,
+                     }
+                 ]
+             }
+         }
+    }
+
+    # Make sure that merge_property_trees does not destructively modify schemas
+    f = merge_property_trees(s)
+    assert f == s

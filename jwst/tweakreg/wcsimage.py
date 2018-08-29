@@ -5,11 +5,8 @@ of image WCS.
 
 :Authors: Mihai Cara (contact: help@stsci.edu)
 
-:License: :doc:`../LICENSE`
 
 """
-from __future__ import (absolute_import, division, unicode_literals,
-                        print_function)
 
 # STDLIB
 import logging
@@ -17,18 +14,15 @@ import numpy as np
 from copy import deepcopy
 
 # THIRD-PARTY
-import numpy as np
 import gwcs
 from astropy import table
-from stsci.sphere.polygon import SphericalPolygon
+from spherical_geometry.polygon import SphericalPolygon
 from stsci.stimage import xyxymatch
 
 # LOCAL
 from ..transforms.tpcorr import TPCorr, rot_mat3D
 from . import linearfit
 from . import matchutils
-from . import __version__
-from . import __vdate__
 
 
 __all__ = ['convex_hull', 'ImageWCS', 'RefCatalog', 'WCSImageCatalog',
@@ -39,7 +33,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-class ImageWCS(object):
+class ImageWCS():
     """ A class for holding JWST GWCS information and for managing
     tangent-plane corrections.
 
@@ -189,6 +183,15 @@ class ImageWCS(object):
             pf, pt = pipeline[idx_v2v3]
             pipeline[idx_v2v3] = (pf, deepcopy(self._tpcorr))
             pipeline.insert(idx_v2v3 + 1, ('v2v3corr', pt))
+
+            # The following is a hack around the fact that gwcs does not
+            # currently provide support for inserting a step.
+            for i in range(len(pipeline)):
+                try:
+                    frame = getattr(self._wcs, pipeline[i][0])
+                except AttributeError:
+                    continue
+                pipeline[i] = (frame, pipeline[i][1])
             self._wcs = gwcs.WCS(pipeline, name=self._owcs.name)
             self._v23name = 'v2v3corr'
 
@@ -303,7 +306,7 @@ class ImageWCS(object):
         return ra, dec
 
 
-class WCSImageCatalog(object):
+class WCSImageCatalog():
     """
     A class that holds information pertinent to an image WCS and a source
     catalog of the sources found in that image.
@@ -453,9 +456,6 @@ class WCSImageCatalog(object):
             self._catalog = table.Table(catalog.copy(), masked=True)
             self._catalog.meta['name'] = self._name
 
-        colnames = self._catalog.colnames
-        catlen = len(catalog)
-
         # create spherical polygon bounding the image
         self.calc_bounding_polygon()
 
@@ -525,7 +525,7 @@ class WCSImageCatalog(object):
         """
         Compute intersection of this `WCSImageCatalog` object and another
         `WCSImageCatalog`, `WCSGroupCatalog`, or
-        :py:class:`~stsci.sphere.polygon.SphericalPolygon`
+        :py:class:`~spherical_geometry.polygon.SphericalPolygon`
         object.
 
         Parameters
@@ -537,7 +537,7 @@ class WCSImageCatalog(object):
         Returns
         -------
         polygon : SphericalPolygon
-            A :py:class:`~stsci.sphere.polygon.SphericalPolygon` that is
+            A :py:class:`~spherical_geometry.polygon.SphericalPolygon` that is
             the intersection of this `WCSImageCatalog` and `wcsim`.
 
         """
@@ -715,7 +715,7 @@ class WCSImageCatalog(object):
         """
         return self._bb_radec
 
-class WCSGroupCatalog(object):
+class WCSGroupCatalog():
     """
     A class that holds together `WCSImageCatalog` image catalog objects
     whose relative positions are fixed and whose source catalogs should be
@@ -776,7 +776,7 @@ class WCSGroupCatalog(object):
         """
         Compute intersection of this `WCSGroupCatalog` object and another
         `WCSImageCatalog`, `WCSGroupCatalog`, or
-        :py:class:`~stsci.sphere.polygon.SphericalPolygon`
+        :py:class:`~spherical_geometry.polygon.SphericalPolygon`
         object.
 
         Parameters
@@ -788,7 +788,7 @@ class WCSGroupCatalog(object):
         Returns
         -------
         polygon : SphericalPolygon
-            A :py:class:`~stsci.sphere.polygon.SphericalPolygon` that is
+            A :py:class:`~spherical_geometry.polygon.SphericalPolygon` that is
             the intersection of this `WCSGroupCatalog` and `wcsim`.
 
         """
@@ -1167,7 +1167,7 @@ class WCSGroupCatalog(object):
             # alignment to the tangent plane of another image in the group:
             if imcat.imwcs == tanplane_wcs:
                 m = matrix.copy()
-                s = s.copy()
+                s = shift.copy()
             else:
                 r1, t1 = _tp2tp(imcat.imwcs, tanplane_wcs)
                 r2, t2 = _tp2tp(tanplane_wcs, imcat.imwcs)
@@ -1177,6 +1177,7 @@ class WCSGroupCatalog(object):
 
             imcat.imwcs.set_correction(m, s)
             imcat.meta['image_model'].meta.wcs = imcat.wcs
+
 
     def align_to_ref(self, refcat, minobj=15, searchrad=1.0, separation=0.5,
                      use2dhist=True, xoffset=0.0, yoffset=0.0, tolerance=1.0,
@@ -1276,7 +1277,7 @@ def _tp2tp(imwcs1, imwcs2):
     return matrix, shift
 
 
-class RefCatalog(object):
+class RefCatalog():
     """
     An object that holds a reference catalog and provides
     tools for coordinate convertions using reference WCS as well as
@@ -1357,7 +1358,7 @@ class RefCatalog(object):
         """
         Compute intersection of this `WCSImageCatalog` object and another
         `WCSImageCatalog`, `WCSGroupCatalog`, `RefCatalog`, or
-        :py:class:`~stsci.sphere.polygon.SphericalPolygon`
+        :py:class:`~spherical_geometry.polygon.SphericalPolygon`
         object.
 
         Parameters
@@ -1369,7 +1370,7 @@ class RefCatalog(object):
         Returns
         -------
         polygon : SphericalPolygon
-            A :py:class:`~stsci.sphere.polygon.SphericalPolygon` that is
+            A :py:class:`~spherical_geometry.polygon.SphericalPolygon` that is
             the intersection of this `WCSImageCatalog` and `wcsim`.
 
         """

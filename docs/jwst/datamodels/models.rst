@@ -1,3 +1,5 @@
+.. _datamodels:
+
 About models
 ============
 

@@ -1,9 +1,10 @@
-#! /usr/bin/env python
-
-from ..stpipe import Step, cmdline
+from ..stpipe import Step
 
 from .. import datamodels
 from . import stack_refs
+
+__all__ = ["StackRefsStep"]
+
 
 class StackRefsStep(Step):
 
@@ -26,4 +27,3 @@ class StackRefsStep(Step):
             output_model.meta.cal_step.stack_psfs = 'COMPLETE'
 
         return output_model
-

@@ -5,17 +5,21 @@ from .. import datamodels
 from . import background_sub
 
 
+__all__ = ["BackgroundStep"]
+
+
 class BackgroundStep(Step):
     """
     BackgroundStep:  Subtract background exposures from target exposures.
     """
 
     spec = """
+        sigma = float(default=3.0)  # Clipping threshold
+        maxiters = integer(default=None)  # Number of clipping iterations
     """
 
     # These reference files are only used for WFSS/GRISM data.
-    # xxx can't be used yet:
-    # xxx reference_file_types = ["wfssbkg", "wavelengthrange"]
+    reference_file_types = ["wfssbkg", "wavelengthrange"]
 
     def process(self, input, bkg_list):
 
@@ -40,25 +44,27 @@ class BackgroundStep(Step):
         # Load the input data model
         with datamodels.open(input) as input_model:
 
-            if input_model.meta.exposure.type in ["NIS_WFSS", "NRC_GRISM"]:
-                # Delete these four lines when reference files are available.
-                self.log.info("No 'wfssbkg' reference file available; "
-                              "skipping background subtraction.")
-                result = input_model.copy()
-                result.meta.cal_step.back_sub = 'SKIPPED'
+            if input_model.meta.exposure.type in ["NIS_WFSS", "NRC_WFSS"]:
 
-                # Uncomment this block when reference files are available.
-                # bkg_filename = self.get_reference_file(
-                #                 input_model, "wfssbkg")
-                # wl_range_name = self.get_reference_file(
-                #                 input_model, "wavelengthrange")
+                # Get the reference file names
+                bkg_name = self.get_reference_file(input_model, "wfssbkg")
+                wlrange_name = self.get_reference_file(input_model,
+                                                       "wavelengthrange")
+                self.log.info('Using WFSSBKG reference file %s', bkg_name)
+                self.log.info('Using WavelengthRange reference file %s',
+                              wlrange_name)
+
                 # Do the background subtraction for WFSS/GRISM data
-                # result = background_sub.subtract_wfss_bkg(
-                #                 input_model, bkg_filename, wl_range_name)
-                # result.meta.cal_step.back_sub = 'COMPLETE'
+                result = background_sub.subtract_wfss_bkg(
+                                input_model, bkg_name, wlrange_name)
+                result.meta.cal_step.back_sub = 'COMPLETE'
+
             else:
                 # Do the background subtraction
-                result = background_sub.background_sub(input_model, bkg_list)
+                result = background_sub.background_sub(input_model,
+                                                       bkg_list,
+                                                       self.sigma,
+                                                       self.maxiters)
                 result.meta.cal_step.back_sub = 'COMPLETE'
 
         return result

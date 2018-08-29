@@ -81,9 +81,11 @@ def ifu_extract1d(input_model, refname, source_type):
         flux = net.copy()
         net[:] = 0.
         log.info("Data have been flux calibrated; setting net to 0.")
+        data_units = 'mJy'
     else:
         flux = np.zeros_like(net)
         log.info("Data have NOT been flux calibrated; setting flux to 0.")
+        data_units = 'DN/s'
 
     fl_error = np.ones_like(net)
     nerror = np.ones_like(net)
@@ -94,6 +96,13 @@ def ifu_extract1d(input_model, refname, source_type):
                     dtype=spec.spec_table.dtype)
     spec = datamodels.SpecModel(spec_table=otab)
     spec.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec, wavelength)
+    spec.spec_table.columns['wavelength'].unit = 'um'
+    spec.spec_table.columns['flux'].unit = data_units
+    spec.spec_table.columns['error'].unit = data_units
+    spec.spec_table.columns['net'].unit = data_units
+    spec.spec_table.columns['nerror'].unit = data_units
+    spec.spec_table.columns['background'].unit = data_units
+    spec.spec_table.columns['berror'].unit = data_units
     spec.slit_ra = ra
     spec.slit_dec = dec
     if slitname is not None and slitname != "ANY":
@@ -299,5 +308,28 @@ def extract_ifu(input_model, source_type, extract_params):
                                             method=method, subpixels=subpixels)
             background[k] = float(bkg_table['aperture_sum'][0])
             net[k] = net[k] - background[k] * normalization
+
+    # Check for NaNs in the wavelength array, flag them in the dq array,
+    # and truncate the arrays if NaNs are found at endpoints (unless the
+    # entire array is NaN).
+    nan_mask = np.isnan(wavelength)
+    n_nan = nan_mask.sum(dtype=np.intp)
+    if n_nan > 0:
+        log.warning("%d NaNs in wavelength array.", n_nan)
+        dq[nan_mask] = np.bitwise_or(dq[nan_mask], dqflags.pixel['DO_NOT_USE'])
+        not_nan = np.logical_not(nan_mask)
+        flag = np.where(not_nan)
+        if len(flag[0]) > 0:
+            n_trimmed = flag[0][0] + nelem - (flag[0][-1] + 1)
+            if n_trimmed > 0:
+                log.info("Output arrays have been trimmed by %d elements",
+                         n_trimmed)
+                slc = slice(flag[0][0], flag[0][-1] + 1)
+                wavelength = wavelength[slc]
+                net = net[slc]
+                background = background[slc]
+                dq = dq[slc]
+        else:
+            dq |= dqflags.pixel['DO_NOT_USE']
 
     return (ra, dec, wavelength, net, background, dq)

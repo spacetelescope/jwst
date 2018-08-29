@@ -1,7 +1,5 @@
-from __future__ import division, print_function
-
 import os
-import numpy
+import numpy as np
 from astropy.io import fits
 from jwst import datamodels
 from . import input_file_types
@@ -111,7 +109,7 @@ def get_subarray_name(instrument, colstart, colstop, rowstart, rowstop):
         if rowstart == subarray[2] and rowstop == subarray[3] and colstart == subarray[0] \
                 and colstop == subarray[1]:
             return subarray[4]
-    return 'UNKNOWN'
+    return 'GENERIC'
 
 def sanitize(header, keyword, type=float, default=0.0):
     """Sometimes the input headers aren't what are wanted in the output,
@@ -324,7 +322,7 @@ def flip_rotate(input_hdulist):
         #
         # NIRSpec NRS1
         #
-        rcube = numpy.swapaxes(cube, 1, 2)
+        rcube = np.swapaxes(cube, 1, 2)
         if input_file_types.is_nirspec_ips(input_hdulist):
             #
             # IPS data is all full-frame
@@ -377,7 +375,7 @@ def flip_rotate(input_hdulist):
         #
         # NIRSpec NRS2
         #
-        rcube = numpy.swapaxes(cube, 1, 2)[:, ::-1, ::-1]
+        rcube = np.swapaxes(cube, 1, 2)[:, ::-1, ::-1]
         if input_file_types.is_nirspec_ips(input_hdulist):
             #
             # IPS data is all full-frame
@@ -434,7 +432,7 @@ def flip_rotate(input_hdulist):
         #
         # TFI/NIRISS is like NRS2: flipped across the line X=Y and then
         # rotated 180 degrees
-        rcube = numpy.swapaxes(cube, 1, 2)[:, ::-1, ::-1]
+        rcube = np.swapaxes(cube, 1, 2)[:, ::-1, ::-1]
         #
         # TFI and NIRISS data have different keywords
         if input_file_types.is_tfi(input_hdulist):
@@ -484,7 +482,7 @@ def flip_rotate(input_hdulist):
         #
         # GUIDER1 is like NIRISS, equivalent
         # to a flip across X=Y and 180 degree rotation
-        rcube = numpy.swapaxes(cube, 1, 2)[:, ::-1, ::-1]
+        rcube = np.swapaxes(cube, 1, 2)[:, ::-1, ::-1]
         detector_rowstart = header['ROWCORNR']
         detector_rowstop = detector_rowstart + header['NAXIS2'] - 1
         detector_colstart = header['COLCORNR']
@@ -504,18 +502,17 @@ def flip_rotate(input_hdulist):
         header['INSTRUME'] = 'FGS'
     elif sca == 498:
         #
-        # GUIDER2 is flipped across X=Y, then flipped in Y
-        rcube = numpy.swapaxes(cube, 1, 2)[:, ::-1]
-        detector_rowstart = header['ROWCORNR']
+        # GUIDER2 is rotated 90 degrees anticlockwise
+        rcube = np.rot90(cube, 1, (2,1))
+        detector_rowstart = header['ACROWCOR']
         detector_rowstop = detector_rowstart + header['NAXIS2'] - 1
-        detector_colstart = header['COLCORNR']
+        detector_colstart = header['ACCOLCOR']
         detector_colstop = detector_colstart + header['NAXIS1'] - 1
         #
-        # Flip across X=Y and then flip across Y
-        rowstart = 2049 - detector_colstop
-        rowstop = 2049 - detector_colstart
-        colstart = detector_rowstart
-        colstop = detector_rowstop
+        colstart = 2049 - detector_rowstop
+        colstop = 2049 - detector_rowstart
+        rowstart = detector_colstart
+        rowstop = detector_colstop
         fastaxis = 2
         slowaxis = -1
         nrows = header['NAXIS2']
@@ -596,7 +593,7 @@ def create_single_subarray(input_hdulist, subarray):
 ##                                                        refout_subarray.shape[1]/4,
 ##                                                        refout_subarray.shape[2]*4)
 ##        out_shape = (cube.shape[0], ((ystop-ystart+1)/4)*5, xstop-xstart+1)
-##        out_data = numpy.zeros(out_shape)
+##        out_data = np.zeros(out_shape)
 ##        print("Shape of output array is ", out_data.shape)
 ##        out_data[:, :(ystop-ystart+1),:(xstop-xstart+1)] = subarray_data
 ##        out_data[:, (ystop-ystart+1):, :] = reshaped_refout_subarray

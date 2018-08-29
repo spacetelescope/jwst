@@ -9,6 +9,9 @@ from gwcs import wcs
 from ..transforms.models import V23ToSky
 
 
+__all__ = ["compute_roll_ref", "frame_from_model", "fitswcs_transform_from_model"]
+
+
 def v23tosky(input_model):
     v2_ref = input_model.meta.wcsinfo.v2_ref / 3600
     v3_ref = input_model.meta.wcsinfo.v3_ref / 3600
@@ -19,7 +22,9 @@ def v23tosky(input_model):
     angles = [-v2_ref, v3_ref, -roll_ref, -dec_ref, ra_ref]
     axes = "zyxyz"
     sky_rotation = V23ToSky(angles, axes_order=axes, name="v23tosky")
-    return sky_rotation
+    # The sky rotation expects values in deg.
+    # This should be removed when models work with quantities.
+    return astmodels.Scale(1/3600) & astmodels.Scale(1/3600) | sky_rotation
 
 
 def compute_roll_ref(v2_ref, v3_ref, roll_ref, ra_ref, dec_ref, new_v2_ref, new_v3_ref):
@@ -115,7 +120,7 @@ def wcsinfo_from_model(input_model):
     return wcsinfo
 
 
-def fitswcs_transform_from_model(wcsinfo):
+def fitswcs_transform_from_model(wcsinfo, wavetab=None):
     """
     Create a WCS object using from datamodel.meta.wcsinfo.
     Transforms assume 0-based coordinates.
@@ -135,13 +140,17 @@ def fitswcs_transform_from_model(wcsinfo):
     #sp_axis = spectral_axes[0]
 
     transform = gwutils.make_fitswcs_transform(wcsinfo)
-    #if wcsinfo['WCSAXES'] == 3:
     if spectral_axes:
         sp_axis = spectral_axes[0]
-        # Subtract one from CRPIX which is 1-based.
-        spectral_transform = astmodels.Shift(-(wcsinfo['CRPIX'][sp_axis] - 1)) | \
-                           astmodels.Scale(wcsinfo['CDELT'][sp_axis]) | \
-                           astmodels.Shift(wcsinfo['CRVAL'][sp_axis])
+        if wavetab is None :
+            # Subtract one from CRPIX which is 1-based.
+            spectral_transform = astmodels.Shift(-(wcsinfo['CRPIX'][sp_axis] - 1)) | \
+                astmodels.Scale(wcsinfo['CDELT'][sp_axis]) | \
+                astmodels.Shift(wcsinfo['CRVAL'][sp_axis])
+        else :
+            # Wave dimension is an array that needs to be converted to a table
+            spectral_transform = astmodels.Tabular1D(lookup_table=wavetab) 
+
         transform = transform & spectral_transform
 
     return transform
@@ -184,9 +193,11 @@ def frame_from_model(wcsinfo):
                                 axes_names=('wavelength',))
         frames.append(spec)
     if other:
+        # Make sure these are strings and not np.str_ objects.
+        axes_names = tuple([str(name) for name in wcsinfo['CTYPE'][other]])
         name = "_".join(wcsinfo['CTYPE'][other])
         spatial = cf.Frame2D(name=name, axes_order=tuple(other), unit=cunit[other],
-                             axes_names=tuple(wcsinfo['CTYPE'][other]))
+                             axes_names=axes_names)
         frames.append(spatial)
     if wcsaxes == 2:
         return frames[0]
@@ -200,9 +211,14 @@ def frame_from_model(wcsinfo):
 def create_fitswcs(inp, input_frame=None):
     if isinstance(inp, DataModel):
         wcsinfo = wcsinfo_from_model(inp)
-        transform = fitswcs_transform_from_model(wcsinfo)
+        wavetable = None
+        spatial_axes, spectral_axes, unknown = gwutils.get_axes(wcsinfo)
+        sp_axis = spectral_axes[0]
+        if wcsinfo['CTYPE'][sp_axis] == 'WAVE-TAB':
+            wavetable = inp.wavetable
+        transform = fitswcs_transform_from_model(wcsinfo, wavetable)
         output_frame = frame_from_model(wcsinfo)
-    #elif isinstance(inp, six.string_types):
+    #elif isinstance(inp, str):
         #transform = create_fitswcs_transform(inp)
         #output_frame = frame_from_fits(inp)
     else:

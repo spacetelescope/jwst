@@ -32,11 +32,11 @@ Pipeline
 """
 from os.path import dirname, join
 
-from .configobj.configobj import Section
+from ..extern.configobj.configobj import Section
 
 from . import config_parser
 from . import Step
-
+from . import crds_client
 
 class Pipeline(Step):
     """
@@ -45,10 +45,6 @@ class Pipeline(Step):
 
     # Configuration
     spec = """
-    output_basename = string(default=None)    # Output base name
-    output_ext = string(default=".fits")      # Output extension
-    suffix = string(default=None)             # Suffix for output file name
-    output_use_model = boolean(default=False) # force use `meta.filename` as the output name
     """
     # A set of steps used in the Pipeline.  Should be overridden by
     # the subclass.
@@ -79,7 +75,7 @@ class Pipeline(Step):
     def _collect_active_reftypes(self):
         """Collect the list of all reftypes for child Steps that are not skipped.
         Overridden reftypes are included but handled normally later by the Pipeline
-        version of the _get_ref_override() method defined below.
+        version of the get_ref_override() method defined below.
         """
         return [reftype for step in self._unskipped_steps
                 for reftype in step.reference_file_types]
@@ -87,10 +83,10 @@ class Pipeline(Step):
     @property
     def _unskipped_steps(self):
         """Return a list of the unskipped Step objects launched by `self`."""
-        return [getattr(self, name) for name in self.step_defs.keys()
+        return [getattr(self, name) for name in self.step_defs
                 if not getattr(self, name).skip]
 
-    def _get_ref_override(self, reference_file_type):
+    def get_ref_override(self, reference_file_type):
         """Return any override for `reference_file_type` for any of the steps in
         Pipeline `self`.  OVERRIDES Step.
 
@@ -100,7 +96,7 @@ class Pipeline(Step):
 
         """
         for step in self._unskipped_steps:
-            override = step._get_ref_override(reference_file_type)
+            override = step.get_ref_override(reference_file_type)
             if override is not None:
                 return override
         return None
@@ -110,7 +106,7 @@ class Pipeline(Step):
         steps = config.get('steps', {})
 
         # Configure all of the steps
-        for key, val in cls.step_defs.items():
+        for key in cls.step_defs:
             cfg = steps.get(key)
             if cfg is not None:
                 # If a config_file is specified, load those values and
@@ -152,5 +148,87 @@ class Pipeline(Step):
 
     def set_input_filename(self, path):
         self._input_filename = path
-        for key, val in self.step_defs.items():
+        for key in self.step_defs:
             getattr(self, key).set_input_filename(path)
+
+    def _precache_references(self, input_file):
+        """
+        Precache all of the expected reference files before the Step's
+        process method is called.
+
+        Handles opening `input_file` as a model if it is a filename.
+
+        input_file:  filename, model container, or model
+
+        returns:  None
+        """
+        from .. import datamodels
+        try:
+            with datamodels.open(input_file) as model:
+                self._precache_references_opened(model)
+        except (ValueError, TypeError, IOError):
+            self.log.info(
+                'First argument {0} does not appear to be a '
+                'model'.format(input_file))
+
+    def _precache_references_opened(self, model_or_container):
+        """Pre-fetches references for `model_or_container`.
+
+        Handles recursive pre-fetches for any models inside a container,
+        or just a single model.
+
+        Assumes model_or_container is an open model or container object,
+        not a filename.
+
+        No garbage collection.
+        """
+        if self._is_container(model_or_container):
+            # recurse on each contained model
+            for contained_model in model_or_container:
+                self._precache_references_opened(contained_model)
+        else:
+            # precache a single model object
+            self._precache_references_impl(model_or_container)
+
+    def _precache_references_impl(self, model):
+        """Given open data `model`,  determine and cache reference files for
+        any reference types which are not overridden on the command line.
+
+        Verify that all CRDS and overridden reference files are readable.
+
+        model:  An open Model object;  not a filename, ModelContainer, etc.
+        """
+        ovr_refs = {
+            reftype: self.get_ref_override(reftype)
+            for reftype in self.reference_file_types
+            if self.get_ref_override(reftype) is not None
+            }
+
+        fetch_types = sorted(set(self.reference_file_types) - set(ovr_refs.keys()))
+
+        self.log.info("Prefetching reference files for dataset: " + repr(model.meta.filename) + 
+                      " reftypes = " + repr(fetch_types))
+        crds_refs = crds_client.get_multiple_reference_paths(model, fetch_types)
+
+        ref_path_map = dict(list(crds_refs.items()) + list(ovr_refs.items()))
+
+        for (reftype, refpath) in sorted(ref_path_map.items()):
+            how = "Override" if reftype in ovr_refs else "Prefetch"
+            self.log.info("{0} for {1} reference file is '{2}'.".format(how, reftype.upper(), refpath))
+            crds_client.check_reference_open(refpath)
+
+    @classmethod
+    def _is_container(cls, input_file):
+        """Return True IFF `input_file` is a ModelContainer or successfully
+        loads as an association.
+        """
+        from ..associations import load_asn
+        from .. import datamodels
+        if isinstance(input_file, datamodels.ModelContainer):
+            return True
+        try:
+            with open(input_file, 'r') as input_file_fh:
+                _asn = load_asn(input_file_fh)
+        except Exception:
+            return False
+        return True

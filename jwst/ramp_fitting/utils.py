@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 #
 # utils.py: utility functions
-import numpy as np
 import logging
+import numpy as np
 
 from .. import datamodels
 from ..datamodels import dqflags
@@ -44,7 +44,6 @@ class OptRes:
         nreads: int
             number of reads in an integration
         """
-
         self.yint_seg = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
         self.slope_seg = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
         self.sigyint_seg = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
@@ -52,7 +51,7 @@ class OptRes:
         self.inv_var_seg = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
         self.firstf_int = np.zeros((n_int,) + imshape, dtype=np.float32)
         self.ped_int = np.zeros((n_int,) + imshape, dtype=np.float32)
-        self.cr_mag_seg = np.zeros((n_int,) + (nreads,) + imshape, dtype=np.int16)
+        self.cr_mag_seg = np.zeros((n_int,)+(nreads,)+imshape, dtype=np.float32)
         self.var_p_seg = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
         self.var_r_seg = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
 
@@ -76,7 +75,6 @@ class OptRes:
         Returns
         -------
         None
-
         """
         self.interc_2d = np.zeros((max_seg, npix), dtype=np.float32)
         self.slope_2d = np.zeros((max_seg, npix), dtype=np.float32)
@@ -84,6 +82,8 @@ class OptRes:
         self.sigslope_2d = np.zeros((max_seg, npix), dtype=np.float32)
         self.inv_var_2d = np.zeros((max_seg, npix), dtype=np.float32)
         self.firstf_2d = np.zeros((max_seg, npix), dtype=np.float32)
+        self.var_s_2d = np.zeros((max_seg, npix), dtype=np.float32)
+        self.var_r_2d = np.zeros((max_seg, npix), dtype=np.float32)
 
 
     def reshape_res(self, num_int, rlo, rhi, sect_shape, ff_sect):
@@ -107,13 +107,12 @@ class OptRes:
         sect_sect: (int,int) tuple
             shape of section image
 
-        ff_sect: (int,int) tuple
-            shape of first frame image
+        ff_sect: 2D array
+            first frame data
 
         Returns
         -------
         """
-
         for ii_seg in range(0, self.yint_seg.shape[1]):
             self.yint_seg[num_int, ii_seg, rlo:rhi, :] = \
                            self.interc_2d[ii_seg, :].reshape(sect_shape)
@@ -129,7 +128,7 @@ class OptRes:
 
 
     def append_arr(self, num_seg, g_pix, intercept, slope, sig_intercept,
-                    sig_slope, inv_var):
+                   sig_slope, inv_var):
         """
         Short Summary
         -------------
@@ -164,7 +163,6 @@ class OptRes:
         Returns
         -------
         None
-
         """
         self.interc_2d[num_seg[g_pix], g_pix] = intercept[g_pix]
         self.slope_2d[num_seg[g_pix], g_pix] = slope[g_pix]
@@ -178,12 +176,12 @@ class OptRes:
         Extended Summary
         ----------------
         Compress the 4D cosmic ray magnitude array for the current
-        integration, removing all reads whose cr magnitude is 0 for
-        pixels having at least one read with a non-zero magnitude. For
+        integration, removing all groups whose cr magnitude is 0 for
+        pixels having at least one group with a non-zero magnitude. For
         every integration, the depth of the array is equal to the
         maximum number of cosmic rays flagged in all pixels in all
         integrations.  This routine currently involves a loop over all
-        pixels having at least 1 read flagged; if this algorithm takes
+        pixels having at least 1 group flagged; if this algorithm takes
         too long for datasets having an overabundance of cosmic rays,
         this routine will require further optimization.
 
@@ -218,7 +216,7 @@ class OptRes:
         # Allocate compressed array based on max number of crs
         cr_com = np.zeros((n_int,) + (max_cr,) + imshape, dtype=np.int16)
 
-        # Loop over integrations and reads: for those pix having a cr, add
+        # Loop over integrations and groups: for those pix having a cr, add
         #    the magnitude to the compressed array
         for ii_int in range(0, n_int):
             cr_mag_int = self.cr_mag_seg[ii_int, :, :, :]
@@ -259,7 +257,7 @@ class OptRes:
             DM object for input
 
         effintim: float
-            effective integration time for a single read
+            effective integration time for a single group
 
         Returns
         -------
@@ -291,6 +289,7 @@ class OptRes:
 
         Parameters
         ----------
+        None
 
         Returns
         -------
@@ -322,11 +321,12 @@ class OptRes:
         print((self.cr_mag_seg))
 
 
-def alloc_int(n_int, imshape):
+def alloc_arrays(n_int, imshape, max_seg):
     """
     Short Summary
     -------------
-    Allocate arrays for integration-specific results.
+    Allocate arrays for integration-specific results and segment-specific
+    results and variances.
 
     Parameters
     ----------
@@ -336,197 +336,237 @@ def alloc_int(n_int, imshape):
     imshape: (int, int) tuple
         shape of a single image
 
+    max_seg: int
+        maximum number of segments fit
+
     Returns
     -------
     slope_int: float, 3D array
         Cube of integration-specific slopes
 
-    err_int: float, 3D array
-        Cube of integration-specific uncertainties
-
     dq_int: int, 3D array
         Cube of integration-specific group data quality values
 
-    m_by_var_int: float, 3D array
-        Cube of integration-specific values of the slope divided by
-        variance
-
-    inv_var_int: float, 3D array
-        Cube of integration-specific inverse variance values
-
-    var_p_int: float, 3D array
-        Cube of integration-specific values for the slope variance due to 
+    var_p3: float, 3D array
+        Cube of integration-specific values for the slope variance due to
         Poisson noise only
 
-    var_r_int: float, 3D array
-        Cube of integration-specific values for the slope variance due to 
-        read noise only
+    var_r3: float, 3D array
+        Cube of integration-specific values for the slope variance due to
+        readnoise only
+
+    median_diffs_2d: float, 2D array
+        Estimated median slopes
+
+    var_p4: float, 4D array
+        Hypercube of segment- and integration-specific values for the slope
+        variance due to Poisson noise only
+
+    var_r4: float, 4D array
+        Hypercube of segment- and integration-specific values for the slope
+        variance due to read noise only
+
+    var_both4: float, 4D array
+        Hypercube of segment- and integration-specific values for the slope
+        variance due to combined Poisson noise and read noise
+
+    var_both3: float, 3D array
+        Cube of segment- and integration-specific values for the slope
+        variance due to combined Poisson noise and read noise
+
+    inv_var_p4: float, 4D array
+        Hypercube of reciprocals of segment- and integration-specific values for
+        the slope variance due to Poisson noise only
+
+    inv_var_r4: float, 4D array
+        Hypercube of reciprocal of segment- and integration-specific values for
+        the slope variance due to read noise only
+
+    inv_var_both4: float, 4D array
+        Hypercube of reciprocals of segment- and integration-specific values for
+        the slope variance due to combined Poisson noise and read noise
+
+    s_inv_var_p3: float, 3D array
+        Cube of reciprocals of segment- and integration-specific values for
+        the slope variance due to Poisson noise only, summed over segments
+
+    s_inv_var_r3: float, 3D array
+        Cube of reciprocals of segment- and integration-specific values for
+        the slope variance due to read noise only, summed over segments
+
+    s_inv_var_both3: float, 3D array
+        Cube of reciprocals of segment- and integration-specific values for
+        the slope variance due to combined Poisson noise and read noise, summed
+        over segments
+
+    segs_4: integer, 4D array
+        Hypercube of lengths of segments for all integrations and pixels
+
+    num_seg_per_int: integer, 3D array
+        Cube of numbers of segments for all integrations and pixels
     """
-
-    slope_int = np.zeros((n_int,) + imshape, dtype=np.float64)
-    err_int = np.zeros((n_int,) + imshape, dtype=np.float64)
+    slope_int = np.zeros((n_int,) + imshape, dtype=np.float32)
     dq_int = np.zeros((n_int,) + imshape, dtype=np.uint32)
-    m_by_var_int = np.zeros((n_int,) + imshape, dtype=np.float64)
-    inv_var_int = np.zeros((n_int,) + imshape, dtype=np.float64)
 
-    var_p_int = np.zeros((n_int,) + imshape, dtype=np.float64)
-    var_r_int = np.zeros((n_int,) + imshape, dtype=np.float64)
+    # for integration-specific variances
+    var_p3 = np.zeros((n_int,) + imshape, dtype=np.float32)
+    var_r3 = var_p3.copy() * 0.
+    var_both3 = var_r3.copy() * 0.
+    s_inv_var_p3 = var_p3.copy() * 0.
+    s_inv_var_r3 = var_p3.copy() * 0.
+    s_inv_var_both3 = var_p3.copy() * 0.
 
-    return slope_int, err_int, dq_int, m_by_var_int, inv_var_int, \
-           var_p_int, var_r_int
+    # for segment-specific variances
+    var_p4 = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
+    var_r4 = var_p4.copy() * 0.
+    var_both4 = var_p4.copy() * 0.
+    inv_var_p4 = var_p4.copy() * 0.
+    inv_var_r4 = var_p4.copy() * 0.
+    inv_var_both4 = var_p4.copy() * 0.
+
+    # number of segments
+    segs_4 = np.zeros((n_int,)+(max_seg,)+imshape, dtype=np.uint8)
+    num_seg_per_int = np.zeros((n_int,)+imshape, dtype=np.uint8)
+
+    # for estimated median slopes
+    median_diffs_2d = np.zeros(imshape,dtype=np.float32)
+
+    return (slope_int, dq_int, var_p3, var_r3, median_diffs_2d, var_p4, var_r4,
+            var_both4, var_both3, inv_var_p4, inv_var_r4, inv_var_both4,
+            s_inv_var_p3, s_inv_var_r3, s_inv_var_both3, segs_4, num_seg_per_int)
 
 
-def calc_vars_int(slope_int, readnoise_2d, gdq_4d, ii_int, var_p_int, \
-                   var_r_int):
+def calc_slope_vars(rn_sect, gain_sect, gdq_sect, group_time, max_seg):
     """
     Short Summary
     -------------
-    Calculate the integration-specific variance arrays for the given
+    Calculate the segment-specific variance arrays for the given
     integration.
 
     Parameters
     ----------
-    slope_int: float, 3D array
-        cube of integration-specific slopes
+    rn_sect: float, 2D array
+        read noise values for all pixels in data section
 
-    readnoise_2d: float, 2D array; multiplied by gain
-        readnoise subarray
+    gain_sect: float, 2D array
+        gain values for all pixels in data section
 
-    gdq_4d: 4-D ndarray
-        The group data quality array.
+    gdq_sect: int, 3D array
+        data quality flags for pixels in section
 
-    ii_int: int
-        integration number
+    group_time: float
+        Time increment between groups, in seconds.
 
-    var_p_int: float, 3D array
-        Cube of integration-specific values for the slope variance due to 
-        Poisson noise only
-
-    var_r_int: float, 3D array
-        Cube of integration-specific values for the slope variance due to 
-        read noise only
+    max_seg: int
+        maximum number of segments fit
 
     Returns
     -------
-    var_poisson: float, 2D array
-        Slice (corresponding to the given integration) of the slope
-        variance array due to Poisson noise only
+    den_r3: float, 3D array
+        for a given integration, the reciprocal of the denominator of the
+        segment-specific variance of the segment's slope due to read noise
 
-    var_readnoise: float, 2D array
-        Slice (corresponding to the given integration) of the slope
-        variance array due to read noise only
+    den_p3: float, 3D array
+        for a given integration, the reciprocal of the denominator of the
+        segment-specific variance of the segment's slope due to Poisson noise
+
+    num_r3: float, 3D array
+        numerator of the segment-specific variance of the segment's slope
+        due to read noise
+ 
+    segs_beg_3: integer, 3D array
+        lengths of segments for all pixels in the given data section and
+        integration
     """
-    (nint, nreads, asize2, asize1) = gdq_4d.shape
+    (nreads, asize2, asize1) = gdq_sect.shape
     npix = asize1 * asize2
     imshape = (asize2, asize1)
 
-    # create int-specific chunks of input arrays
-    gdq_2d = gdq_4d[ii_int,:,:,:].reshape(( nreads, npix ))
-    slope_1d = slope_int[ii_int,:,:].reshape( npix )
-    rn_1d = readnoise_2d.reshape( npix )
-
+    # Create integration-specific sections of input arrays for determination
+    #   of the variances.
+    gdq_2d = gdq_sect[:,:,:].reshape(( nreads, npix ))
+    gain_1d = gain_sect.reshape( npix )
     gdq_2d_nan = gdq_2d.copy()  # group dq with SATS will be replaced by nans
     gdq_2d_nan = gdq_2d_nan.astype(np.float32)
 
-    wh_sat = np.where(np.bitwise_and(gdq_2d, dqflags.group['SATURATED']))
-    if (len( wh_sat[0]) > 0):
-        gdq_2d_nan[ wh_sat ] = np.nan  # set all SAT reads to nan
+    wh_sat = np.where(np.bitwise_and( gdq_2d, dqflags.group['SATURATED'] ))
+    if len( wh_sat[0]) > 0:
+        gdq_2d_nan[ wh_sat ] = np.nan  # set all SAT groups to nan
 
-    # get lengths of semiramps for all pix [number_of_semiramps, number_of_pix]
-    segments = gdq_2d.copy()* 0.
+    # Get lengths of semiramps for all pix [number_of_semiramps, number_of_pix]
+    segs = gdq_2d.copy()* 0.
 
-    # counter of semiramp for each pixel
+    # Counter of semiramp for each pixel
     sr_index = np.zeros( npix, dtype=np.uint8 )
     pix_not_done = np.ones( npix, dtype=np.bool)  # initialize to True
 
     i_read = 0
-    # loop over reads for all pixels
-    while (i_read < nreads and np.any(pix_not_done)): 
+    # Loop over reads for all pixels to get segments (segments per pixel)
+    while (i_read < nreads and np.any(pix_not_done)):
         gdq_1d = gdq_2d_nan[ i_read, :]
+        wh_good = np.where( gdq_1d == 0) # good groups
 
-        wh_good = np.where( gdq_1d == 0) # good reads
-        # if this read is good, increment that pixel's SR's length
-        if ( len( wh_good[0] > 0 )):
-            segments[ sr_index[ wh_good], wh_good ] += 1
+        # if this group is good, increment those pixels' segments' lengths
+        if len( wh_good[0] ) > 0:
+            segs[ sr_index[ wh_good], wh_good ] += 1
 
-        # Locate any CRs that appear before the first SAT read...
-        wh_cr = np.where( gdq_2d_nan[ i_read, :] == dqflags.group['JUMP_DET'])
+        # Locate any CRs that appear before the first SAT group...
+        wh_cr = np.where( gdq_2d_nan[i_read, :] == dqflags.group['JUMP_DET'])
 
         # ... but not on final read:
-        if (len(wh_cr[0] > 0 ) and (i_read < nreads-1) ):
+        if (len(wh_cr[0]) > 0 and (i_read < nreads-1) ):
             sr_index[ wh_cr[0] ] += 1
-            segments[ sr_index[wh_cr], wh_cr ] += 1
+            segs[ sr_index[wh_cr], wh_cr ] += 1
 
+        # If current group is a NaN, this pixel is done (pix_not_done is False)
         wh_nan = np.where( np.isnan(gdq_2d_nan[ i_read, :]))
-        if ( len( wh_nan[0] > 0 )):
+        if len( wh_nan[0]) > 0:
             pix_not_done[ wh_nan[0]] = False
 
         i_read += 1
 
-    segments = segments.astype(np.uint8)
+    segs = segs.astype(np.uint8)
+    segs_beg = segs[:max_seg, :] # the leading nonzero lengths
 
-    ngroups_pix = segments.sum(0) # total number of groups per pixel
-    nsegs_pix = (segments != 0).sum(0) #  number of segments per pixel
-    sum_wgt_p = ngroups_pix - nsegs_pix # weight sum for poisson
+    # Create reshaped version [ segs, y, x ] to simplify computation
+    segs_beg_3 = segs_beg.reshape( max_seg, imshape[0], imshape[1] )
 
-    # calculate variance due to poisson noise only
-    sum_p = nsegs_pix * slope_1d
+    # Create a version 1 less for later calculations for the variance due to
+    #   Poisson, with a floor=1 to handle single-group segments
+    wh_pos_3 = np.where(segs_beg_3 > 1)
+    segs_beg_3_m1 = segs_beg_3.copy()
+    segs_beg_3_m1[wh_pos_3] -= 1
+    segs_beg_3_m1[ segs_beg_3_m1 < 1 ] = 1
 
-    var_poisson = sum_p / (sum_wgt_p * nsegs_pix)
-    var_poisson[ np.isnan( var_poisson )] = 0.
-    var_poisson[ np.isinf( var_poisson )] = 0.
-    var_poisson = var_poisson.reshape( imshape )
+    # For a segment, the variance due to Poisson noise
+    # = slope/(tgroup * gain * (ngroups-1)),
+    #   where slope is the estimated median slope, tgroup is the group time,
+    #   and ngroups is the number of groups in the segment.
+    #   Here the denominator of this quantity will be computed, which will be
+    #   later multiplied by the estimated median slope.
+    den_p3 = 1./(group_time * gain_1d.reshape(imshape) * segs_beg_3_m1 )
+    den_p3 = rem_nan_inf(den_p3)
 
-    # calculate variance due to readnoise only
-    var_r = rn_1d**2 * 12./(segments**3. - segments)
-    var_r[ np.isinf(var_r)] = 0.
-    var_r[ np.isnan(var_r)] = 0.
+    # For a segment, the variance due to readnoise noise
+    # = 12 * readnoise**2 /(ngroups_seg**3. - ngroups_seg)/( tgroup **2.)
+    num_r3 = 12. * (rn_sect/group_time)**2.  # always >0
+    # Reshape for every group, every pixel in section
+    num_r3 = np.dstack( [num_r3] * max_seg )
+    num_r3 = np.transpose( num_r3, (2, 0, 1))
 
-    sum_r = (segments*var_r[:]/((nsegs_pix)**3.)).sum(axis=0)
-    sum_r[ np.isnan( sum_r )] = 0.
-    sum_r[ np.isinf( sum_r )] = 0.
+    # Denominator den_r3 = 1./(segs_beg_3 **3. -segs_beg_3). The minimum number
+    #   of allowed groups is 2, which will apply if there is actually only 1
+    #   group; in this case den_r3 = 1/6. This covers the case in which there is
+    #   only one good group at the beginning of the integration, so it will be
+    #   be compared to the plane of (near) zeros resulting from the reset. For
+    #   longer segments, this value is overwritten below.
+    den_r3 = num_r3.copy() * 0. + 1./6
+    wh_seg_pos = np.where (segs_beg_3 > 1)
+    den_r3[ wh_seg_pos ] = 1./(segs_beg_3[ wh_seg_pos ] **3. -
+                             segs_beg_3[ wh_seg_pos ]) # overwrite where segs >1
+    den_r3 = rem_nan_inf(den_r3)
 
-    var_readnoise = sum_r/nsegs_pix
-    var_readnoise[ np.isnan( var_readnoise )] = 0.
-    var_readnoise[ np.isinf( var_readnoise )] = 0.
-    var_readnoise = var_readnoise.reshape( imshape )
-
-    return (var_poisson, var_readnoise)
-
-
-def calc_slope_int(slope_int, m_by_var_int, inv_var_int, num_int):
-    """
-    Short Summary
-    -------------
-    Calculate the integration-specific slope array for the given
-    integration
-
-    Parameters
-    ----------
-    slope_int: float, 3D array
-        cube of integration-specific slopes
-
-    m_by_var_int: float, 3D array
-        cube of integration-specific slopes divided by variance
-
-    inv_var_int: float, 3D array
-        cube of integration-specific inverse variances
-
-    num_int: int
-        integration number
-
-    Returns
-    -------
-    slope_slice: float, 2D array
-        slope image for given integration
-    """
-    slope_slice = slope_int[num_int, :, :].copy()
-    m_slice = m_by_var_int[num_int, :, :]
-    v_slice = inv_var_int[num_int, :, :]
-    wh_v = (v_slice != 0.0)
-    slope_slice[wh_v] = m_slice[wh_v] / v_slice[wh_v]
-
-    return slope_slice
+    return ( den_r3, den_p3, num_r3, segs_beg_3 )
 
 
 def calc_pedestal(num_int, slope_int, firstf_int, dq_cube, nframes, groupgap,
@@ -538,7 +578,7 @@ def calc_pedestal(num_int, slope_int, firstf_int, dq_cube, nframes, groupgap,
     each pixel from its value at the first sample in the integration to
     an exposure time of zero; this calculation accounts for the values of
     nframes and groupgap.  Any pixel that is saturated on the 1st
-    read is given a pedestal value of 0.
+    group is given a pedestal value of 0.
 
     Parameters
     ----------
@@ -548,7 +588,7 @@ def calc_pedestal(num_int, slope_int, firstf_int, dq_cube, nframes, groupgap,
     slope_int: float, 3D array
         cube of integration-specific slopes
 
-    firstf_int: float, 2D array
+    firstf_int: float, 3D array
         integration-specific first frame array
 
     dq_cube: int, 4D array
@@ -562,9 +602,8 @@ def calc_pedestal(num_int, slope_int, firstf_int, dq_cube, nframes, groupgap,
         number of frames dropped between groups, from the GROUPGAP keyword.
 
     dropframes1: int
-        number of frames dropped at the beginning of every integration.
-        Currently this is not stored as an available keyword, so the value
-        is hardcoded to be 0.
+        number of frames dropped at the beginning of every integration, from
+        the DRPFRMS1 keyword.
 
     Returns
     -------
@@ -576,12 +615,15 @@ def calc_pedestal(num_int, slope_int, firstf_int, dq_cube, nframes, groupgap,
     ped = ff_all - slope_int[num_int, : :] * \
              (((nframes + 1.)/2. + dropframes1)/(nframes+groupgap))
 
-    ped[dq_first == dqflags.group['SATURATED']] = 0
+    ped[np.bitwise_and(dq_first, dqflags.group['SATURATED']
+                       ) == dqflags.group['SATURATED']]  = 0
+    ped[ np.isnan( ped )] = 0.
 
     return ped
 
 
-def output_integ(model, slope_int, dq_int, effintim, var_p_int, var_r_int):
+def output_integ(model, slope_int, dq_int, effintim, var_p3, var_r3, var_both3,
+                 int_times):
 
     """
     Short Summary
@@ -602,13 +644,20 @@ def output_integ(model, slope_int, dq_int, effintim, var_p_int, var_r_int):
     effintim: float
        Effective integration time per integration
 
-    var_p_int: float, 3D array
+    var_p3: float, 3D array
         Cube of integration-specific values for the slope variance due to
         Poisson noise only
 
-    var_r_int: float, 3D array
+    var_r3: float, 3D array
         Cube of integration-specific values for the slope variance due to
         read noise only
+
+    var_both3: float, 3D array
+        Cube of integration-specific values for the slope variance due to
+        read noise and Poisson noise
+
+    int_times: bintable, or None
+        The INT_TIMES table, if it exists in the input, else None
 
     Returns
     -------
@@ -617,10 +666,16 @@ def output_integ(model, slope_int, dq_int, effintim, var_p_int, var_r_int):
     """
     cubemod = datamodels.CubeModel()
     cubemod.data = slope_int / effintim
-    cubemod.err = np.sqrt(var_p_int + var_r_int)
+
+    cubemod.err = np.sqrt(var_both3)
+    cubemod.err = rem_nan_inf(cubemod.err)
+
     cubemod.dq = dq_int
-    cubemod.var_poisson = var_p_int
-    cubemod.var_rnoise = var_r_int
+
+    cubemod.var_poisson = var_p3
+    cubemod.var_rnoise = var_r3
+
+    cubemod.int_times = int_times
 
     cubemod.update(model) # keys from input needed for photom step
 
@@ -773,7 +828,7 @@ def get_efftim_ped(model):
     """
     Short Summary
     -------------
-    Calculate the effective integration time for a single read, and return the
+    Calculate the effective integration time for a single group, and return the
     number of frames per group, and the number of frames dropped between groups.
 
     Parameters
@@ -784,7 +839,7 @@ def get_efftim_ped(model):
     Returns
     -------
     effintim: float
-        effective integration time for a single read
+        effective integration time for a single group
 
     nframes: int
         number of frames averaged per group; from the NFRAMES keyword.
@@ -793,18 +848,21 @@ def get_efftim_ped(model):
         number of frames dropped between groups; from the GROUPGAP keyword.
 
     dropframes1: int
-        number of frames dropped at the beginning of every integration. 
-        Currently this is not stored as an available keyword, so the value
-        returned is 0.
+        number of frames dropped at the beginning of every integration; from
+        the DRPFRMS1 keyword, or 0 if the keyword is missing
     """
     groupgap = model.meta.exposure.groupgap
     nframes = model.meta.exposure.nframes
     frame_time = model.meta.exposure.frame_time
-    dropframes1 = 0
+    dropframes1 = model.meta.exposure.drop_frames1
 
+    if (dropframes1 is None):    # set to default if missing
+        dropframes1 = 0
+        log.debug('Missing keyword DRPFRMS1, so setting to default value of 0')
+ 
     try:
         effintim = (nframes + groupgap) * frame_time
-    except ValueError:
+    except TypeError:
         log.error('Can not retrieve values needed to calculate integ. time')
 
     log.debug('Calculating effective integration time for a single group using:')
@@ -821,7 +879,7 @@ def get_dataset_info(model):
     """
     Short Summary
     -------------
-    Extract values for the number of reads, the number of pixels,
+    Extract values for the number of groups, the number of pixels,
     dataset shapes, the number of integrations, the instrument name,
     the frame time, and the observation time
 
@@ -855,22 +913,36 @@ def get_dataset_info(model):
 
     ngroups: int
         number of groups per integration
+
+    group_time: float
+        Time increment between groups, in seconds.
     """
 
     instrume = model.meta.instrument.name
     frame_time = model.meta.exposure.frame_time
     ngroups = model.meta.exposure.ngroups
+    group_time = model.meta.exposure.group_time
 
     n_int = model.data.shape[0]
     nreads = model.data.shape[1]
     asize2 = model.data.shape[2]
     asize1 = model.data.shape[3]
 
+    # If nreads and ngroups are not the same, override the value of ngroups
+    #   with nreads, which is more likely to be correct, since it's based on
+    #   the image shape.
+    if nreads != ngroups:
+        log.warning('The value from the key NGROUPS does not (but should) match')
+        log.warning('  the value of nreads from the data; will use value of')
+        log.warning('  nreads: %s' % (nreads ))
+        ngroups = nreads
+
     npix = asize2 * asize1  # number of pixels in 2D array
     imshape = (asize2, asize1)
     cubeshape = (nreads,) + imshape
 
-    return nreads, npix, imshape, cubeshape, n_int, instrume, frame_time, ngroups
+    return nreads, npix, imshape, cubeshape, n_int, instrume, frame_time, \
+           ngroups, group_time
 
 
 def get_more_info(model):
@@ -956,19 +1028,19 @@ def reset_bad_gain(pdq, gain):
         for pixels in the gain array that are either non-positive or NaN.
     """
     wh_g = np.where( gain <= 0.)
-    if len(wh_g[0] > 0):
+    if len(wh_g[0]) > 0:
         pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['NO_GAIN_VALUE'] )
         pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['DO_NOT_USE'] )
 
     wh_g = np.where( np.isnan( gain ))
-    if len(wh_g[0] > 0):
+    if len(wh_g[0]) > 0:
         pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['NO_GAIN_VALUE'] )
         pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['DO_NOT_USE'] )
 
     return pdq
 
 
-def get_ref_subs(model, readnoise_model, gain_model):
+def get_ref_subs(model, readnoise_model, gain_model, nframes):
     """
     Short Summary
     -------------
@@ -985,6 +1057,10 @@ def get_ref_subs(model, readnoise_model, gain_model):
 
     gain_model: instance of gain Model
         gain for all pixels
+
+    nframes: int
+        number of frames averaged per group; from the NFRAMES keyword. Does
+        not contain the groupgap.
 
     Returns
     -------
@@ -1006,6 +1082,24 @@ def get_ref_subs(model, readnoise_model, gain_model):
         log.info('Extracting readnoise subarray to match science data')
         readnoise_2d = reffile_utils.get_subarray_data(model, readnoise_model)
 
-    readnoise_2d *= gain_2d # convert read noise to correct units
+    # convert read noise to correct units & scale down for single groups,
+    #   and account for the number of frames per group
+    readnoise_2d *= gain_2d/np.sqrt(2. * nframes)
 
     return readnoise_2d, gain_2d
+
+
+def rem_nan_inf( input_arr ):
+    """
+    Short Summary
+    -------------
+    Remove values of NaN and Inf from array
+
+    Parameters
+    ----------
+    input_arr: float, array
+        input array
+    """
+    input_arr[ np.isinf(input_arr)] = 0.
+    input_arr[ np.isnan(input_arr)] = 0.
+    return input_arr

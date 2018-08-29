@@ -1,5 +1,4 @@
 #! /usr/bin/env python
-from __future__ import absolute_import, print_function
 
 import sys
 import os
@@ -9,18 +8,11 @@ import types
 import numpy as np
 import math
 from astropy.io import fits as pyfits
-import six
 
-if six.PY2:
-    from Tkinter import *
-    import tkSimpleDialog
-    import tkFileDialog
-    import tkMessageBox
-else:
-    from tkinter import *
-    import tkinter.simpledialog as tkSimpleDialog
-    import tkinter.filedialog as tkFileDialog
-    import tkinter.messagebox as tkMessageBox
+from tkinter import *
+import tkinter.simpledialog as tkSimpleDialog
+import tkinter.filedialog as tkFileDialog
+import tkinter.messagebox as tkMessageBox
 
 from . import makepsf
 

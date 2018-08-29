@@ -2,11 +2,12 @@
     "asn_type": "image2",
     "asn_rule": "candidate_Asn_Lv2FGS",
     "version_id": null,
-    "code_version": "0.9.4",
+    "code_version": "0.9.6",
+    "degraded_status": "No known degraded exposures in association.",
     "program": "97012",
     "target": "1",
     "asn_pool": "jw97012_20171108T064939_pool",
-    "constraints": "Constraints:\n    exp_type: {'fgs_image'}\n    single_science: {'False'}\n    asn_candidate: {\"\\\\(\\\\'o001\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}\n    program: {'97012'}\n    is_tso: set()",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '97012'})\nDMSAttrConstraint({'name': 'is_tso', 'sources': ['tsovisit'], 'value': None})\nDMSAttrConstraint({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'fgs_image'})\nSimpleConstraint({'name': 'single_science', 'value': False})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o001\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
     "asn_id": "o001",
     "products": [
         {
@@ -14,7 +15,8 @@
             "members": [
                 {
                     "expname": "jw97012001003_02101_00001_guider1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -23,7 +25,8 @@
             "members": [
                 {
                     "expname": "jw97012001002_02101_00001_guider1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -32,7 +35,8 @@
             "members": [
                 {
                     "expname": "jw97012001001_02101_00001_guider1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -41,7 +45,8 @@
             "members": [
                 {
                     "expname": "jw97012001004_02101_00001_guider1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         }

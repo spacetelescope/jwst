@@ -4,17 +4,14 @@ JWST pipeline step for sky matching.
 
 :Authors: Mihai Cara
 
-:License: :doc:`../LICENSE`
 
 """
-from __future__ import (absolute_import, division, unicode_literals,
-                        print_function)
 
 import collections
 import numpy as np
 import logging
 
-from ..stpipe import Step, cmdline
+from ..stpipe import Step
 from .. import datamodels
 
 try:
@@ -48,7 +45,7 @@ class SkyMatchStep(Step):
 
         # Sky statistics parameters:
         skystat = option('median', 'midpt', 'mean', 'mode', default='mode') # sky statistics
-        dqbits = string(default=None) # "good" DQ bits
+        dqbits = string(default=0) # "good" DQ bits
         lower = float(default=None) # Lower limit of "good" pixel values
         upper = float(default=None) # Upper limit of "good" pixel values
         nclip = integer(min=0, default=5) # number of sky clipping iterations
@@ -132,14 +129,14 @@ class SkyMatchStep(Step):
 
         # create
         if self._dqbits is None:
-            dqmask = None
+            dqmask = np.isfinite(image_model.data).astype(dtype=np.uint8)
         else:
             dqmask = bitfield_to_boolean_mask(
                 image_model.dq,
                 self._dqbits,
                 good_mask_value=1,
                 dtype=np.uint8
-            )
+            ) * np.isfinite(image_model.data)
 
         # see if 'skymatch' was previously run and raise an exception
         # if 'subtract' mode has changed compared to the previous pass:

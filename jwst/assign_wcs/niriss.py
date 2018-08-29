@@ -1,30 +1,30 @@
 import logging
-from copy import deepcopy
 
 from asdf import AsdfFile
 from astropy import coordinates as coord
 from astropy import units as u
-from astropy.modeling.models import Const1D, Mapping, Scale, Identity
+from astropy.modeling.models import Const1D, Mapping, Identity
 import gwcs.coordinate_frames as cf
 from gwcs import wcs
 
-from .util import not_implemented_mode, subarray_transform
+from .util import (not_implemented_mode, subarray_transform,
+                   velocity_correction)
 from . import pointing
 from ..transforms.models import (NirissSOSSModel,
                                  NIRISSForwardRowGrismDispersion,
                                  NIRISSBackwardGrismDispersion,
                                  NIRISSForwardColumnGrismDispersion)
-from ..datamodels import ImageModel, NIRISSGrismModel
+from ..datamodels import (ImageModel, NIRISSGrismModel, DistortionModel,
+                          CubeModel)
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+__all__ = ["create_pipeline", "imaging", "niriss_soss", "niriss_soss_set_input", "wfss"]
 
 def create_pipeline(input_model, reference_files):
-    '''
-    get reference files from crds
-
-    '''
+    """Create the WCS pipeline based on EXP_TYPE.
+    """
 
     exp_type = input_model.meta.exposure.type.lower()
     pipeline = exp_type2transform[exp_type](input_model, reference_files)
@@ -34,27 +34,27 @@ def create_pipeline(input_model, reference_files):
 
 def niriss_soss_set_input(model, order_number):
     """
-    Get the right model given the order number.
+    Extract a WCS fr a specific spectral order.
 
     Parameters
     ----------
-    model - Input model
-    order_number - the, well, order number desired
+    model - `~jwst.datamodels.ImageModel`
+    order_number - the spectral order
 
     Returns
     -------
-    WCS - the WCS corresponding to the order_number
+    WCS - the WCS corresponding to the spectral order.
 
     """
 
-    # Make sure the order number is correct.
+    # Make sure the spectral order is available.
     if order_number < 1 or order_number > 3:
         raise ValueError('Order must be between 1 and 3')
 
     # Return the correct transform based on the order_number
     obj = model.meta.wcs.forward_transform.get_model(order_number)
 
-    # use the size of the input subarray7
+    # use the size of the input subarray
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
     spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.micron,),
                             axes_names=('wavelength',))
@@ -71,14 +71,16 @@ def niriss_soss_set_input(model, order_number):
 
 def niriss_soss(input_model, reference_files):
     """
-    The NIRISS SOSS pipeline includes 3 coordinate frames -
-    detector, focal plane and sky
+    The NIRISS SOSS WCS pipeline.
 
-    reference_files={'specwcs': 'soss_wavelengths_configuration.asdf'}
+    It includes tWO coordinate frames -
+    "detector" and "world".
+
+    It uses the "specwcs" reference file.
     """
 
-    # Get the target RA and DEC, they will be used for setting the WCS RA and DEC based on a conversation
-    # with Kevin Volk.
+    # Get the target RA and DEC, they will be used for setting the WCS RA
+    # and DEC based on a conversation with Kevin Volk.
     try:
         target_ra = float(input_model['meta.target.ra'])
         target_dec = float(input_model['meta.target.dec'])
@@ -94,6 +96,7 @@ def niriss_soss(input_model, reference_files):
                             axes_names=('ra', 'dec'),
                             axes_order=(0, 1), unit=(u.deg, u.deg), name='sky')
     world = cf.CompositeFrame([sky, spec], name='world')
+
     try:
         with AsdfFile.open(reference_files['specwcs']) as wl:
             wl1 = wl.tree[1].copy()
@@ -101,6 +104,18 @@ def niriss_soss(input_model, reference_files):
             wl3 = wl.tree[3].copy()
     except Exception as e:
         raise IOError('Error reading wavelength correction from {}'.format(reference_files['specwcs']))
+        
+    try:
+        velosys = input_model.meta.wcsinfo.velosys
+    except AttributeError:
+        pass
+    else:
+        if velosys is not None:
+            velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
+            wl1 = wl1 | velocity_corr
+            wl2 = wl2 | velocity_corr
+            wl2 = wl3 | velocity_corr
+            log.info("Applied Barycentric velocity correction: {}".format(velocity_corr[1].amplitude.value))
 
     subarray2full = subarray_transform(input_model)
 
@@ -131,13 +146,15 @@ def niriss_soss(input_model, reference_files):
 
 def imaging(input_model, reference_files):
     """
-    The NIRISS imaging pipeline includes 3 coordinate frames -
-    detector, focal plane and sky
+    The NIRISS imaging WCS pipeline.
 
-    reference_files={'distortion': 'jwst_niriss_distortioon_0001.asdf'}
+    It includes three coordinate frames -
+    "detector" "v2v3" and "world".
+
+    It uses the "distortion" reference file.
     """
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
-    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.deg, u.deg))
+    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.arcsec, u.arcsec))
     world = cf.CelestialFrame(reference_frame=coord.ICRS(), name='world')
 
     subarray2full = subarray_transform(input_model)
@@ -153,19 +170,34 @@ def imaging(input_model, reference_files):
 
 
 def imaging_distortion(input_model, reference_files):
-    distortion = AsdfFile.open(reference_files['distortion']).tree['model']
-    # Convert to deg.  Output of distortion model is in arcsec.
-    transform = distortion | Scale(1 / 3600) & Scale(1 / 3600)
-
+    """ Create the transform from "detector" to "v2v3".
+    """
+    dist = DistortionModel(reference_files['distortion'])
+    distortion = dist.model
     try:
-        # assign the bounding box to the entire compound model
-        transform.bounding_box = distortion.bounding_box
+        # Check if the model has a bounding box.
+        distortion.bounding_box
     except NotImplementedError:
         shape = input_model.data.shape
-        # Note: Since bounding_box is attached to the model here it's in reverse order.
-        transform.bounding_box = ((-0.5, shape[0] - 0.5),
-                                   (-0.5, shape[1] - 0.5))
-    return transform
+        # Note: Since bounding_box is attached to the model here
+        # it's in reverse order.
+        """
+        A CubeModel is always treated as a stack (in dimension 1)
+        of 2D images, as opposed to actual 3D data. In this case
+        the bounding box is set to the 2nd and 3rd dimension.
+        """
+        if isinstance(input_model, CubeModel):
+            bb = ((-0.5, shape[1] - 0.5),
+                  (-0.5, shape[2] - 0.5))
+        elif isinstance(input_model, ImageModel):
+            bb = ((-0.5, shape[0] - 0.5),
+                  (-0.5, shape[1] - 0.5))
+        else:
+            raise TypeError("Input is not an ImageModel or CubeModel")
+        distortion.bounding_box = bb
+
+    dist.close()
+    return distortion
 
 
 def wfss(input_model, reference_files):
@@ -184,13 +216,13 @@ def wfss(input_model, reference_files):
     reference_files = {
         "specwcs": 'GR150C_F090W.asdf'
         "distortion": 'NRCA1_FULL_distortion.asdf'
-    }
+        }
 
     The tree in the grism reference file has a section for each order/beam as
     well as the link to the filter data file, not sure if there will be a
     separate passband reference file needed for the wavelength scaling or the
     wedge offsets. This file is currently created in
-    jwreftools/niriss/niriss_reftools
+    jwreftools/niriss/niriss_reftools.
 
     The direct image the catalog has been created from was corrected for
     distortion, but the dispersed images have not. This is OK if the trace and
@@ -223,7 +255,8 @@ def wfss(input_model, reference_files):
     grism reference file as wrange, which can be selected by wrange_selector
     which contains the filter names.
 
-    Source catalog use moved to extract_2d
+    Source catalog use moved to extract_2d.
+
     """
 
     # The input is the grism image
@@ -259,19 +292,19 @@ def wfss(input_model, reference_files):
                                                   lmodels=displ,
                                                   xmodels=dispx,
                                                   ymodels=dispy,
-                                                  theta=fwcpos_ref-fwcpos)
+                                                  theta=fwcpos_ref - fwcpos)
     else:
         det2det = NIRISSForwardColumnGrismDispersion(orders,
                                                      lmodels=displ,
                                                      xmodels=dispx,
                                                      ymodels=dispy,
-                                                     theta=fwcpos_ref-fwcpos)
+                                                     theta=fwcpos_ref - fwcpos)
 
     backward = NIRISSBackwardGrismDispersion(orders,
                                              lmodels=invdispl,
                                              xmodels=dispx,
                                              ymodels=dispy,
-                                             theta=fwcpos_ref-fwcpos)
+                                             theta=fwcpos_ref - fwcpos)
     det2det.inverse = backward
 
     # create the pipeline to construct a WCS object for the whole image

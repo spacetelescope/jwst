@@ -16,7 +16,7 @@ from . import properties
 #---------------------------------------
 # astropy.io.registry compatibility
 #---------------------------------------
- 
+
 def identify(origin, path, fileobj, *args, **kwargs):
     """
     Identify if file is a DataModel for astropy.io.registry
@@ -38,12 +38,12 @@ def read(data, *args, **kwargs):
     """
     Astropy.io registry compatibility function to wrap util.open
     """
-    
+
     # Translate keyword arguments to those expected by ImageModel
     xargs = {}
     if kwargs.get("mask"):
         xargs["dq"] = kwargs["mask"]
-        
+
     uncertainty = kwargs.get("uncertainty")
     if uncertainty:
         if isinstance(uncertainty, Quantity):
@@ -64,7 +64,7 @@ def read(data, *args, **kwargs):
         data = data.value
     else:
         unit = kwargs.get("unit")
-        
+
     # Create the model using the transformed arguments
     model = util.open(data, **xargs)
 
@@ -78,7 +78,7 @@ def read(data, *args, **kwargs):
 
     if uncertainty_type:
         model.meta.bunit_err = uncertainty_type
-    
+
     return model
 
 def write(data, path, *args, **kwargs):
@@ -91,8 +91,8 @@ def write(data, path, *args, **kwargs):
         model = DataModel(data)
     else:
         model = data
-    
-    if isinstance(path, str): 
+
+    if isinstance(path, str):
         model.save(path, *args, **kwargs)
     else:
         raise ValueError("Path to write DataModel was not found")
@@ -114,15 +114,23 @@ class NDModel(nddata_base.NDDataBase):
         """
         Read the stored dataset.
         """
-        return self.__getattr__('data')
+        primary_array_name = self.get_primary_array_name()
+        if primary_array_name:
+            primary_array = self.__getattr__(primary_array_name)
+        else:
+            raise AttributeError("No attribute 'data'")
+        return primary_array
 
     @data.setter
     def data(self, value):
         """
         Write the stored dataset.
         """
-        properties.ObjectNode.__setattr__(self, 'data', value)
-    
+        primary_array_name = self.get_primary_array_name()
+        if not primary_array_name:
+            primary_array_name = 'data'
+        properties.ObjectNode.__setattr__(self, primary_array_name, value)
+
     @property
     def mask(self):
         """
@@ -207,13 +215,13 @@ class MetaNode(properties.ObjectNode, collections.MutableMapping):
     """
     NDData compatibility class for meta node
     """
-    def __init__(self, instance, schema, ctx):
-        properties.ObjectNode.__init__(self, instance, schema, ctx)
+    def __init__(self, name, instance, schema, ctx):
+        properties.ObjectNode.__init__(self, name, instance, schema, ctx)
 
     def _find(self, path):
         if not path:
             return self
-        
+
         cursor = self._instance
         schema = self._schema
         for attr in path:
@@ -222,8 +230,9 @@ class MetaNode(properties.ObjectNode, collections.MutableMapping):
             except KeyError:
                 raise KeyError("'%s'" % '.'.join(path))
             schema = properties._get_schema_for_property(schema, attr)
-            
-        return properties._make_node(cursor, schema, self._ctx)
+
+        key = '.'.join(path)
+        return properties._make_node(key, cursor, schema, self._ctx)
 
     def __delitem__(self, key):
         path = key.split('.')
@@ -236,7 +245,7 @@ class MetaNode(properties.ObjectNode, collections.MutableMapping):
     def __getitem__(self, key):
         path = key.split('.')
         return self._find(path)
-    
+
     def __len__(self):
         def recurse(val):
             n = 0

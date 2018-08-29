@@ -13,8 +13,8 @@ from ...tests.helpers import runslow
 from astropy.table import (Table, vstack)
 
 from .. import (AssociationRegistry, AssociationPool, generate)
-from ..association import is_iterable
 from ..lib.counter import Counter
+from ..lib.utilities import is_iterable
 
 
 # Compare associations
@@ -99,6 +99,7 @@ class PoolParams(
                 'n_asns',
                 'n_orphaned',
                 'candidates',
+                'valid_suffixes',
                 'kwargs'
             ]
         )
@@ -107,17 +108,21 @@ class PoolParams(
                 n_asns=0,
                 n_orphaned=0,
                 candidates=None,
+                valid_suffixes=None,
                 kwargs=None):
         if not kwargs:
             kwargs = {}
         if candidates is None:
             candidates = []
+            if valid_suffixes is None:
+                valid_suffixes = ['cal', 'calints', 'cat']
         return super(PoolParams, cls).__new__(
             cls,
             path,
             n_asns,
             n_orphaned,
             candidates,
+            valid_suffixes,
             kwargs
         )
 
@@ -151,9 +156,20 @@ class BasePoolRule():
         for ppars in self.pools:
             pool = combine_pools(ppars.path, **ppars.kwargs)
             asns = generate(pool, rules)
-            assert len(asns) == ppars.n_asns
+            assert len(asns) == ppars.n_asns, \
+                ppars.path + ': n_asns not expected {} {}'.format(len(asns), ppars.n_asns)
             for asn, candidates in zip(asns, ppars.candidates):
                 assert set(asn.candidates) == set(candidates)
+            file_regex = re.compile('.+_(?P<suffix>.+)\..+')
+            for asn in asns:
+                for product in asn['products']:
+                    for member in product['members']:
+                        if member['exptype'] == 'science':
+                            match = file_regex.match(member['expname'])
+                            assert match is not None, \
+                                ppars.path + ': No suffix match for {}'.format(member['expname'])
+                            assert match.groupdict()['suffix'] in ppars.valid_suffixes, \
+                                ppars.path + ': Suffix {} not valid'.format(match.groupdict()['suffix'])
 
 
 @pytest.fixture(scope='session')

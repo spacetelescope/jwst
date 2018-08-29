@@ -137,8 +137,6 @@ class DataSet():
         # Initial value, indicates that processing was done successfully.
         skipped = False
 
-        detector = self.output_obj.meta.instrument.detector
-
         shape = self.output_obj.data.shape
         if len(shape) != 4:
             log.warning("Don't understand shape %s of input data, "
@@ -155,11 +153,7 @@ class DataSet():
         # Note that this might be a subarray.
         persistence = np.zeros((shape[-2], shape[-1]), dtype=np.float64)
         (nints, ngroups, ny, nx) = shape
-        t_frame = self.output_obj.meta.exposure.frame_time
         t_group = self.output_obj.meta.exposure.group_time
-        # Time of one integration, in seconds.  This is the duration,
-        # not necessarily the effective integration time.
-        t_int = t_group * float(ngroups)
 
         # The trap density image is full-frame, so use it to get the shape of
         # a full-frame array.  traps_filled is also full-frame, but we can't
@@ -240,6 +234,16 @@ class DataSet():
         slc = self.get_slice(self.trap_density, self.output_obj)
         if not self.ref_matches_sci(self.trap_density, slc):
             self.trap_density = self.get_subarray(self.trap_density, slc)
+
+        # Trap density is used for computing the number of traps that
+        # capture a charge.  If some pixels in the trap_density reference
+        # file are flagged as bad, set the corresponding data values to
+        # zero, so the computed number of traps will also be zero.
+        if hasattr(self.trap_density, "dq"):
+            mask = (np.bitwise_and(self.trap_density.dq,
+                                   dqflags.pixel["DO_NOT_USE"]) > 0)
+            self.trap_density.data[mask] = 0.
+            del mask
 
         slc = self.get_slice(self.persistencesat, self.output_obj)
         if not self.ref_matches_sci(self.persistencesat, slc):
@@ -353,9 +357,6 @@ class DataSet():
             can be used to extract a subarray from the reference file.
         """
 
-        ref_shape = ref.shape
-        ref_nx = ref_shape[-1]
-        ref_ny = ref_shape[-2]
         sci_shape = sci.shape
         sci_nx = sci_shape[-1]
         sci_ny = sci_shape[-2]
@@ -500,8 +501,20 @@ class DataSet():
         if ngroups == 1:
             # This won't be accurate, because there's only one group.
             grp_slope = self.output_obj.data[integ, 0, :, :]
-            slope = grp_slope / (self.persistencesat.data
-                                 * self.output_obj.meta.exposure.group_time)
+            if hasattr(self.persistencesat, "dq"):
+                mask = (np.bitwise_and(self.persistencesat.dq,
+                                       dqflags.pixel["DO_NOT_USE"]) > 0)
+                if mask.sum() == 0:
+                    mask = None
+            else:
+                mask = None
+            if mask is None:
+                slope = grp_slope / (self.persistencesat.data * self.tgroup)
+            else:
+                # Set to 1 so we don't divide by 0.
+                persat = np.where(mask, 1., self.persistencesat.data)
+                slope = np.where(mask, 0.,
+                                 grp_slope / (persat * self.tgroup))
             return (grp_slope, slope)
 
         gdqflags = dqflags.group
@@ -552,10 +565,22 @@ class DataSet():
         grp_slope[bad] = 0.
         del bad
 
-        # units = (DN / persistence_saturation_limit) / second,
+        # slope will have units (DN / persistence_saturation_limit) / second,
         # where persistence_saturation_limit is in units of DN.
-        slope = grp_slope / (self.persistencesat.data
-                             * self.output_obj.meta.exposure.group_time)
+        if hasattr(self.persistencesat, "dq"):
+            mask = (np.bitwise_and(self.persistencesat.dq,
+                                   dqflags.pixel["DO_NOT_USE"]) > 0)
+            if mask.sum() == 0:
+                mask = None
+        else:
+            mask = None
+        if mask is None:
+            slope = grp_slope / (self.persistencesat.data * self.tgroup)
+        else:
+            # Set to 1 so we don't divide by 0.
+            persat = np.where(mask, 1., self.persistencesat.data)
+            slope = np.where(mask, 0.,
+                             grp_slope / (persat * self.tgroup))
 
         return (grp_slope, slope)
 
@@ -703,6 +728,14 @@ class DataSet():
 
         # Find pixels exceeding the persistence saturation limit (full well).
         pflag = (data > self.persistencesat.data)
+        if hasattr(self.persistencesat, "dq"):
+            mask = (np.bitwise_and(self.persistencesat.dq,
+                                   dqflags.pixel["DO_NOT_USE"]) > 0)
+            mshape = mask.shape
+            mask = mask.reshape((1,) + mshape)
+            m3 = np.repeat(mask, ngroups, 0)
+            pflag[m3] = False
+            del mask, m3
 
         # All of these are 2-D arrays.
         sat_count = pflag.sum(axis=0, dtype=np.intp)
@@ -715,12 +748,17 @@ class DataSet():
                                 capture_param_k,
                                 trap_density, slope, dt)
 
-        # Traps that were filled due to the saturated portion of the ramp.
-        filled = self.predict_saturation_capture(
+        filled = ramp_traps_filled.copy()
+        mask = (sat_count > 0)
+        any_saturated = np.any(mask)
+        if any_saturated:
+            # Traps that were filled due to the saturated portion of the ramp.
+            filled[mask] = self.predict_saturation_capture(
                                 capture_param_k,
-                                trap_density, ramp_traps_filled,
-                                sattime, sat_count, ngroups)
-        del sat_count, sattime, ramp_traps_filled
+                                trap_density[mask],
+                                ramp_traps_filled[mask],
+                                sattime[mask], sat_count[mask], ngroups)
+        del sat_count, sattime, ramp_traps_filled, mask
 
         # Traps that were filled due to cosmic-ray jumps.
         cr_filled = self.delta_fcn_capture(
@@ -756,8 +794,8 @@ class DataSet():
             per second.
 
         dt: float
-            The time interval (unit = second) over which the charge
-            capture is to be computed.
+            The time interval (unit = second) over which the charge capture
+            is to be computed.  This does not include saturated groups.
 
         Returns
         -------
@@ -789,6 +827,16 @@ class DataSet():
 
         This is based on Michael Regan's predictsaturationcapture.pro.
 
+        This should not be called for ramps that do not have any groups
+        that exceed the persistence saturation limit.  One reason is that
+        incoming_filled_traps can be so small that exp_filled_traps
+        would be negative.
+
+        trap_density, incoming_filled_traps, sattime, and sat_count were
+        all 2-D arrays in the calling function predict_capture(), but
+        these arrays were masked to select only ramps with at least one
+        saturated group, so in this function these arrays are 1-D.
+
         Parameters
         ----------
         capture_param_k: tuple
@@ -797,18 +845,19 @@ class DataSet():
             to the current trap family.  (The _k in the variable name
             refers to the index of the trap family.)
 
-        trap_density: 2-D ndarray
+        trap_density: ndarray
             Image of the total number of traps per pixel.
 
-        incoming_filled_traps: 2-D ndarray
+        incoming_filled_traps: ndarray
             Traps filled due to linear portion of the ramp.
             This may be modified in-place.
 
-        sattime: 2-D ndarray
+        sattime: ndarray
             Time (seconds) during which each pixel was saturated.
 
-        sat_count: 2-D array, int
-            The 
+        sat_count: array, int
+            For each pixel, the number of groups with value exceeding the
+            persistence saturation limit.
 
         ngroups: int
             The number of groups in the ramp

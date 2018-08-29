@@ -1,9 +1,9 @@
-from . import model_base
+from .reference import ReferenceFileModel
 
 __all__ = ['BarshadowModel']
 
 
-class BarshadowModel(model_base.DataModel):
+class BarshadowModel(ReferenceFileModel):
     """
     A data model for Bar Shadow correction information.
 

@@ -13,12 +13,32 @@ allOf:
         datatype: [ascii, 4]
       - name: rowtype
         datatype: [ascii, 4]
-      - name: tau1
+      - name: tau
         datatype: float32
-      - name: scale1
+      - name: ascale
         datatype: float32
-      - name: tau2
+      - name: pow
         datatype: float32
-      - name: scale2
+      - name: illum_zp
+        datatype: float32
+      - name: illum_slope
+        datatype: float32
+      - name: illum2
+        datatype: float32
+      - name: param3
+        datatype: float32
+      - name: crossopt
+        datatype: float32
+      - name: sat_zp
+        datatype: float32
+      - name: sat_slope
+        datatype: float32
+      - name: sat_2
+        datatype: float32
+      - name: sat_mzp
+        datatype: float32
+      - name: sat_rowterm
+        datatype: float32
+      - name:  sat_scale
         datatype: float32
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

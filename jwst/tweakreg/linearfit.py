@@ -4,16 +4,11 @@ sets of 2D points.
 
 :Authors: Mihai Cara, Warren Hack (contact: help@stsci.edu)
 
-:License: :doc:`../LICENSE`
 
 """
-from __future__ import (absolute_import, division, unicode_literals,
-                        print_function)
 import logging
 import numpy as np
-# LOCAL
-from . import __version__
-from . import __vdate__
+
 
 __all__ = ['iter_linear_fit', 'build_fit_matrix']
 

@@ -27,19 +27,13 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 # DAMAGE.
 
-from __future__ import absolute_import, print_function, with_statement
-
 # THIRD-PARTY
 from astropy.io import fits as pyfits
-import six
 
 # STDLIB
 import glob
 import os
-if six.PY2:
-    from StringIO import StringIO
-else:
-    from io import StringIO
+from io import StringIO
 
 # LOCAL
 from . import input_file_types
@@ -375,7 +369,3 @@ def guess_filename(hdulist):
         raise ValueError("Could not automatically generate output filename")
     return filename
 
-
-def test(*args, **kwds):
-    from stsci.tools import tester
-    return tester.test(modname=__name__, *args, **kwds)

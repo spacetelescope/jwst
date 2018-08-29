@@ -1,18 +1,15 @@
-from ast import literal_eval
 from collections import MutableMapping
 from copy import deepcopy
 from datetime import datetime
 import json
 import jsonschema
 import logging
-import re
-
-from numpy.ma import masked
 
 from . import __version__
 from .exceptions import (
     AssociationNotValidError
 )
+from .lib.constraint import Constraint
 from .lib.format_template import FormatTemplate
 from .lib.ioregistry import IORegistry
 
@@ -83,7 +80,7 @@ class Association(MutableMapping):
     DEFAULT_EVALUATE = False
 
     # Global constraints
-    GLOBAL_CONSTRAINTS = {}
+    GLOBAL_CONSTRAINT = None
 
     # Attribute values that are indicate the
     # attribute is not specified.
@@ -98,10 +95,8 @@ class Association(MutableMapping):
     ):
 
         self.data = dict()
-        self.add_constraints(deepcopy(self.GLOBAL_CONSTRAINTS))
         self.run_init_hook = True
         self.meta = {}
-        self.force_reprocess = False
 
         self.version_id = version_id
 
@@ -111,6 +106,16 @@ class Association(MutableMapping):
             'version_id': self.version_id,
             'code_version': __version__,
         })
+
+        # Setup constraints
+        # These may be predefined by a rule.
+        try:
+            constraints = self.constraints
+        except AttributeError:
+            constraints = Constraint()
+        if self.GLOBAL_CONSTRAINT is not None:
+            constraints.append(self.GLOBAL_CONSTRAINT.copy())
+        self.constraints = constraints
 
     @classmethod
     def create(cls, item, version_id=None):
@@ -321,26 +326,25 @@ class Association(MutableMapping):
 
         Returns
         -------
-        (matches, reprocess_list)
+        (matching_constraint, reprocess_list)
             2-tuple consisting of:
-            - bool: True if the all constraints are satisfied
+            - bool: True if match
             - [ProcessList[, ...]]: List of items to process again.
         """
-
         if self.is_item_member(item):
             return False, []
 
-        matches = True
+        match = False
         if check_constraints:
-            matches, reprocess = self.check_and_set_constraints(item)
+            match, reprocess = self.check_and_set_constraints(item)
 
-        if matches:
+        if match:
             if self.run_init_hook:
                 self._init_hook(item)
+                self.run_init_hook = False
             self._add(item)
-            self.run_init_hook = False
 
-        return matches, reprocess
+        return match, reprocess
 
     def check_and_set_constraints(self, item):
         """Check whether the given dictionaries match parameters for
@@ -354,122 +358,24 @@ class Association(MutableMapping):
 
         Returns
         -------
-        (matches, reprocess_list)
+        (match, reprocess)
             2-tuple consisting of:
-            - bool: True if the all constraints are satisfied
+            - Constraint or False: The successfully matching constraint
+              or False if not matching.
             - [ProcessItem[, ...]]: List of items to process again.
 
-        Notes
-        -----
-        If a constraint is present, but does not have a value,
-        that constraint is set, and, by definition, matches.
         """
+        cached_constraints = deepcopy(self.constraints)
+        match, reprocess = cached_constraints.check_and_set(item)
+        if match:
+            self.constraints = cached_constraints
 
-        # If there are no conditions, the default is a
-        # successful test
-        matches = True
+        # Set the association type for all reprocessed items.
+        for process_list in reprocess:
+            if process_list.rules is None:
+                process_list.rules = [type(self)]
 
-        reprocess = []
-        constraints = deepcopy(self.constraints)
-        for constraint, conditions in constraints.items():
-            test = conditions.get('test', self.match_item)
-            matches, new_reprocess = test(item, constraint, conditions)
-            reprocess.extend(new_reprocess)
-            if not matches:
-                break
-        else:
-            self.constraints = constraints
-            if self.force_reprocess:
-                reprocess.append(ProcessList(
-                    [item], [type(self)], work_over=self.force_reprocess
-                ))
-        return matches, reprocess
-
-    def match_item(self, item, constraint, conditions):
-        """Use item info to match to the conditions
-
-        Parameters
-        ----------
-        item: dict
-            The item to retrieve the values from
-
-        constraint: str
-            The name of the constraint
-
-        conditions: dict
-            The conditions structure
-
-        Returns
-        -------
-        (matches, reprocess_list)
-            2-tuple consisting of:
-            - bool: True if the all constraints are satisfied
-            - [ProcessList[, ...]]: List of items to process again.
-        """
-        reprocess = []
-
-        # Only perform check on specified `onlyif` condition
-        onlyif = conditions.get('onlyif', lambda item: True)
-        if not onlyif(item):
-            self.force_reprocess = conditions.get('force_reprocess', False)
-            return (True, reprocess)
-
-        # Get whether condition is require to exist and be true.
-        required = conditions.get(
-            'required',
-            self.DEFAULT_REQUIRE_CONSTRAINT
-        )
-
-        # Get the condition information.
-        try:
-            input, value = self.item_getattr(
-                item,
-                conditions['inputs'],
-            )
-        except KeyError:
-            if required and not conditions.get('force_undefined', False):
-                return False, reprocess
-            else:
-                return True, reprocess
-        else:
-            if conditions.get('force_undefined', False):
-                return False, reprocess
-
-        # If the value is a list, build the reprocess list
-        if conditions.get('evaluate', self.DEFAULT_EVALUATE):
-            evaled = evaluate(value)
-            if is_iterable(evaled):
-                process_items = []
-                for avalue in evaled:
-                    new_item = deepcopy(item)
-                    new_item[input] = str(avalue)
-                    process_items.append(new_item)
-                reprocess.append(ProcessList(
-                    process_items,
-                    [type(self)]
-                ))
-                return False, reprocess
-            value = str(evaled)
-
-        # Check condition
-        if conditions['value'] is not None:
-            if not meets_conditions(
-                    value, conditions['value']
-            ):
-                return False, reprocess
-
-        # At this point, the constraint has passed.
-        # Fix the conditions.
-        escaped_value = re.escape(value)
-        conditions['found_values'].add(escaped_value)
-        if conditions['value'] is None or \
-           conditions.get('force_unique', self.DEFAULT_FORCE_UNIQUE):
-            conditions['value'] = escaped_value
-            conditions['inputs'] = [input]
-            conditions['force_unique'] = False
-
-        # That's all folks
-        return True, reprocess
+        return match, reprocess
 
     def match_constraint(self, item, constraint, conditions):
         """Generic constraint checking
@@ -512,25 +418,25 @@ class Association(MutableMapping):
         # That's all folks
         return True, reprocess
 
-    def add_constraints(self, new_constraints):
-        """Add a set of constraints to the current constraints."""
+    def finalize(self):
+        """Finalize assocation
 
-        try:
-            constraints = self.constraints
-        except AttributeError:
-            constraints = {}
-            self.constraints = constraints
-        for constraint, conditions in new_constraints.items():
-            conditions['found_values'] = set()
-            constraints[constraint] = constraints.get(constraint, conditions)
+        Finalize or close-off this association. Peform validations,
+        modifications, etc. to ensure that the association is
+        complete.
 
-    def constraints_to_text(self):
-        yield 'Constraints:'
-        for name, conditions in self.constraints.items():
-            if conditions.get('force_undefined', False):
-                yield '    {:s}: Is Invalid'.format(name)
-            else:
-                yield '    {:s}: {}'.format(name, conditions['found_values'])
+        Returns
+        -------
+        associations: [association[, ...]] or None
+            List of fully-qualified associations that this association
+            represents.
+            `None` if a complete association cannot be produced.
+
+        """
+        if self.is_valid:
+            return [self]
+        else:
+            return None
 
     def is_item_member(self, item):
         """Check if item is already a member of this association
@@ -609,67 +515,27 @@ class Association(MutableMapping):
         return self.data.values()
 
 
-class ProcessList():
-    """A Process list
-
-    Parameters
-    ----------
-    items: [item[, ...]]
-        The list of items to process
-
-    rules: [Association[, ...]]
-        List of rules to process the items against.
-
-    work_over: int
-        What the reprocessing should work on:
-        - `ProcessList.EXISTING`: Only existing associations
-        - `ProcessList.RULES`: Only on the rules to create new associations
-        - `ProcessList.BOTH`: Compare to both existing and rules
-    """
-
-    (
-        BOTH,
-        EXISTING,
-        RULES
-    ) = range(1, 4)
-
-    def __init__(self, items, rules, work_over=BOTH):
-        self.items = items
-        self.rules = rules
-        self.work_over = work_over
-
-
 # #########
 # Utilities
 # #########
-def meets_conditions(value, conditions):
-    """Check whether value meets any of the provided conditions
+def finalize(asns):
+    """Finalize associations by calling their `finalize_hook` method
 
-    Parameters
-    ----------
-    values: str
-        The value to be check with.
+    Notes
+    -----
+    This is a functioning example of a finalize callback, and can be used
+    as the generic callback. Suggested usage is as follows:
 
-    condition: regex,
-        Regular expressions to match against.
+    .. code-block:: python
 
-    Returns
-    -------
-    True if any condition is meant.
+       from jwst.associations.association import finalize as generic_finalize
+       RegistryMarker.callback('finalize')(generic_finalize)
     """
-
-    if not is_iterable(conditions):
-        conditions = [conditions]
-    for condition in conditions:
-        condition = ''.join([
-            '^',
-            condition,
-            '$'
-        ])
-        match = re.match(condition, value, flags=re.IGNORECASE)
-        if match:
-            return True
-    return False
+    finalized_asns = list(filter(
+        lambda asn: asn is not None,
+        map(lambda asn: asn.finalize(), asns)
+    ))
+    return finalized_asns
 
 
 def make_timestamp():
@@ -677,78 +543,6 @@ def make_timestamp():
         _TIMESTAMP_TEMPLATE
     )
     return timestamp
-
-
-def getattr_from_list(adict, attributes, invalid_values=None):
-    """Retrieve value from dict using a list of attributes
-
-    Parameters
-    ----------
-    adict: dict
-        dict to retrieve from
-
-    attributes: list
-        List of attributes
-
-    invalid_values: set
-        A set of values that essentially mean the
-        attribute does not exist.
-
-    Returns
-    -------
-    (attribute, value)
-        Returns the value and the attribute from
-        which the value was taken.
-
-    Raises
-    ------
-    KeyError
-        None of the attributes are found in the dict.
-    """
-    if invalid_values is None:
-        invalid_values = set()
-
-    for attribute in attributes:
-        try:
-            result = adict[attribute]
-        except KeyError:
-            continue
-        else:
-            if result is masked:
-                continue
-            if result not in invalid_values:
-                return attribute, result
-            else:
-                continue
-    else:
-        raise KeyError('Object has no attributes in {}'.format(attributes))
-
-
-def evaluate(value):
-    """Evaluate a value
-
-    Parameters
-    ----------
-    value: str
-        The string to evaluate.
-
-    Returns
-    -------
-    type or str
-        The evaluation. If the value cannot be
-        evaluated, the value is simply returned
-    """
-    try:
-        evaled = literal_eval(value)
-    except (ValueError, SyntaxError):
-        evaled = value
-    return evaled
-
-
-def is_iterable(obj):
-    return not isinstance(obj, str) and \
-        not isinstance(obj, tuple) and \
-        hasattr(obj, '__iter__')
 
 
 # Define default product name filling

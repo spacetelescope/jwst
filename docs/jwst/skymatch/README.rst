@@ -1,70 +1,85 @@
 Description
 ============
 
-
 Overview
 --------
-The ``skymatch`` step can be used to compute sky values of input images or
-it can be used to compute corrections that need to be applied to images such
-as to "equalize" (match) sky background in input images.
-When running ``skymatch`` step in a matching mode, ``skymatch`` compares
-*total* signal levels in *the overlap regions*
-(instead of doing this comparison on a per-pixel basis,
-cf. :doc:`mrs_imatch step <../mrs_imatch/README>`) of a set of input images
-and computes the signal offsets for each image that will minimize
-the residuals across the entire set in the least squares sence. This comparison
-is performed directly on input images without resampling them onto a common
-grid. By default the sky value computed for each image is recorded, but
-not actually subtracted from the images.
-
+The skymatch step can be used to compute sky values in a collection of input
+images that contain both sky and source signal. The sky values can be computed
+for each image separately or in a way that matches the sky levels amongst the
+collection of images so as to minimize their differences. This operation is
+typically applied before combining multiple images into a mosaic. When running
+the ``skymatch`` step in a matching mode, it compares *total* signal
+levels in *the overlap regions* (instead of doing this comparison on a
+per-pixel basis, cf. :doc:`mrs_imatch step <../mrs_imatch/README>`)
+of a set of input images and computes the signal offsets for each image
+that will minimize the residuals across the entire set in the least squares
+sence. This comparison is performed directly on input images without resampling
+them onto a common grid. The overlap regions are computed directly on the sky
+(celestial sphere) for each pair of input images. By default the sky value
+computed for each image is recorded, but not actually subtracted from the
+images. Also note that the meaning of "sky background" depends on the chosen
+sky computation method.
 
 Assumptions
 -----------
-
-When matching sky background code needs to compute bounding polygon
-intersections in world coordinates. Therefore, input images need to have
-valid WCS.
-
+When matching sky background, the code needs to compute bounding polygon
+intersections in world coordinates. The input images, therefore, need to have
+a valid WCS.
 
 Algorithm
 ---------
 The ``skymatch`` step provides several methods for constant sky background
 value computations.
 
-First method, called ``'localmin'`` essentially is an enhanced version of the
+The first method, called ``localmin``, essentially is an enhanced version of the
 original sky subtraction method used in older
-`astrodrizzle <http://stsdas.stsci.edu/\
-stsci_python_sphinxdocs_2.13/drizzlepac/astrodrizzle.html>`_\ versions. This
+`astrodrizzle <https://drizzlepac.readthedocs.io/en/latest/astrodrizzle.html>`_
+versions. This
 method simply computes the mean/median/mode/etc. value of the "sky" separately
 in each input image. This method was upgraded to be able to use
-DQ flags and user supplied masks to remove "bad" pixels from being
+DQ flags and user-supplied masks to remove "bad" pixels from being
 used for sky statistics computations. Values different from zero in
 user-supplied masks indicate "good" data pixels.
 
-In addition to the classical ``'localmin'``,
-two other methods have been introduced: ``'globalmin'`` and
-``'match'``, as well as a combination of the two -- ``'globalmin+match'``.
+In addition to the classical ``localmin`` method,
+two other methods have been introduced: ``globalmin`` and
+``match``, as well as a combination of the two -- ``globalmin+match``.
 
-- The ``'globalmin'`` method computes the minimum sky value across *all*
-  input images. That *single sky value* is then considered to be
+- The ``globalmin`` method computes the minimum sky value across *all*
+  input images. The resulting *single sky value* is then considered to be
   the background in *all input images*.
 
-- The ``'match'`` algorithm computes constant (within an image) value
-  corrections to be applied to input images such that the mismatch in computed
-  background values between *all* pairs of images is minimized in the least
-  squares sence. For each pair of images background mismatch is computed
-  *only* in the regions in which the two images intersect.
+- The ``match`` algorithm computes constant (within an image) value
+  corrections to be applied to each input image such that the mismatch in computed
+  backgrounds between *all* pairs of images is minimized in the least
+  squares sense. For each pair of images, the background mismatch is computed
+  *only* in the regions in which the two images overlap on the sky.
 
-  This makes ``'match'`` sky computation algorithm particularly useful
+  This makes the ``match`` algorithm particularly useful
   for "equalizing" sky values in large mosaics in which one may have
   only (at least) pair-wise intersection of images without having
   a common intersection region (on the sky) in all images.
 
-- The ``'globalmin+match'`` algorithm combines ``'match'`` and
-  ``'globalmin'`` methods. It uses ``'globalmin'``
+- The ``globalmin+match`` algorithm combines the ``match`` and
+  ``globalmin`` methods. It uses the ``globalmin``
   algorithm to find a baseline sky value common to all input images
-  and the ``'match'`` algorithm to "equalize" sky values among images.
+  and the ``match`` algorithm to "equalize" sky values among images.
 
+In methods that find sky background levels in each image (``localmin``) or
+a single level for all images (``globalmin``), image statistics are usually
+computed using sigma clipping. If the input images contain vast swaths of empty
+sky, then the sigma clipping algorithm should be able to automatically
+exclude (clip) contributions from bright compact sources.
+In this case the measured "sky background" is the
+measured signal level from the "empty sky". On the other hand, the
+``match`` method compares the *total* signal levels integrated over those regions
+in the images that correspond to common ("overlap") regions on the celestial
+sphere for both images being compared (comparison is pair-wise).
+This method is often used when there are no large
+"empty sky" regions in the images, such as when a large nebula occupies most
+of the view. This method cannot measure "true background", but
+rather additive corrections that need to be applied to the input images so that
+the total signal from the same part of the sky is equal in all images.
 
 Step Arguments
 --------------
@@ -72,54 +87,59 @@ The ``skymatch`` step has the following optional arguments:
 
 **General sky matching parameters:**
 
-* ``skymethod``: A `str` value indicating sky computation algorithm to be used.
-  Allowed values: {``'local'``, ``'global'``, ``'match'``, ``'global+match'``}
-  (Default = ``'global+match'``)
+* ``skymethod`` (str):
+  The sky computation algorithm to be used.
+  Allowed values: {``local``, ``global``, ``match``, ``global+match``}
+  (Default = ``global+match``)
 
-* ``match_down``: A boolean that specifies whether the sky *differences* should
+* ``match_down`` (boolean):
+  Specifies whether the sky *differences* should
   be subtracted from images with higher sky values (``match_down`` = `True`)
-  to match the image with the lowest sky or sky differences should be added
+  in order to match the image with the lowest sky or sky differences should be added
   to the images with lower sky values to match the sky of the image with the
   highest sky value (``match_down`` = `False`). (Default = `True`)
 
   .. note::
-     This setting applies *only* when `skymethod` parameter is
-     either `'match'` or `'global+match'`.
+    This setting applies *only* when ``skymethod`` is
+    either ``match`` or ``global+match``.
 
-* ``subtract``: A boolean indicating whether computed sky background values
-    be subtracted from image data. (Default = `False`)
+* ``subtract`` (boolean):
+  Specifies whether the computed sky background values
+  are to be subtracted from the images. (Default = `False`)
 
-**Image's bounding polygon parameters:**
+**Image bounding polygon parameters:**
 
-* ``stepsize``: An integer number indicating spacing between vertices of the
-  image's bounding polygon. Default value of `None` creates bounding polygons
+* ``stepsize`` (int):
+  Spacing between vertices of the
+  images bounding polygon. Default value of `None` creates bounding polygons
   with four vertices corresponding to the corners of the image.
 
 **Sky statistics parameters:**
 
-* ``skystat``: A string describing statistics to be used for sky background
+* ``skystat`` (str):
+  Statistic to be used for sky background
   value computations. Supported values are: 'mean', 'mode', 'midpt',
-  and 'median' (Default = 'mode')
+  and 'median'. (Default = 'mode')
 
-* ``dqbits``: A string or `None`. Integer sum of all the DQ bit values
-  from the input image's
-  DQ array that should be considered "good" when building masks for
-  sky computations. For example, if pixels in the DQ array can be
-  combinations of 1, 2, 4, and 8 flags and one wants to consider DQ
-  "defects" having flags 2 and 4 as being acceptable for sky
-  computations, then ``dqbits`` should be set to 2+4=6. Then a DQ pixel
-  having values 2,4, or 6 will be considered a good pixel, while a
-  DQ pixel with a value, e.g., 1+2=3, 4+8=12, etc. will be flagged as
+* ``dqbits`` (str): 
+  Integer sum of all the DQ bit values from the input images
+  DQ arrays that should be considered "good" when building masks for
+  sky computations. For example, if pixels in the DQ array can have
+  combinations of 1, 2, 4, and 8 and one wants to consider DQ
+  flags 2 and 4 as being acceptable for sky
+  computations, then ``dqbits`` should be set to 6 (2+4). In this
+  case a pixel having DQ values 2, 4, or 6 will be considered a good pixel,
+  while a pixel with a DQ value, e.g., 1+2=3, 4+8=12, etc. will be flagged as
   a "bad" pixel.
 
-  Alternatively, one can enter a comma- or '+'-separated list
-  of integer bit flags that should be added to obtain the
+  Alternatively, one can enter a comma-separated or '+' separated list
+  of integer bit flags that should be summed to obtain the
   final "good" bits. For example, both ``4,8`` and ``4+8``
   are equivalent to setting ``dqbits`` to 12.
 
   .. note::
-    - Default value (0) will make *all* non-zero
-      pixels in the DQ mask to be considered "bad" pixels, and the
+    - The default value (0) will make *all* non-zero
+      pixels in the DQ mask be considered "bad" pixels and the
       corresponding image pixels will not be used for sky computations.
 
     - Set ``dqbits`` to `None` to turn off the use of image's DQ array
@@ -128,71 +148,78 @@ The ``skymatch`` step has the following optional arguments:
     - In order to reverse the meaning of the ``dqbits``
       parameter from indicating values of the "good" DQ flags
       to indicating the "bad" DQ flags, prepend '~' to the string
-      value. For example, in order not to use pixels with
+      value. For example, in order to exclude pixels with
       DQ flags 4 and 8 for sky computations and to consider
       as "good" all other pixels (regardless of their DQ flag),
       set ``dqbits`` to ``~4+8``, or ``~4,8``. A ``dqbits`` string value of
-      ``'~0'`` would be equivalent to setting ``dqbits=None``.
+      ``~0`` would be equivalent to setting ``dqbits=None``.
 
-* ``lower``: An optional `float` value indicating lower limit of usable pixel
+* ``lower`` (float):
+  An optional value indicating the lower limit of usable pixel
   values for computing the sky. This value should be specified in the units
-  of the input image(s). (Default = `None`)
+  of the input images. (Default = `None`)
 
-* ``upper``: An optional `float` value indicating upper limit of usable pixel
+* ``upper`` (float):
+  An optional value indicating the upper limit of usable pixel
   values for computing the sky. This value should be specified in the units
-  of the input image(s). (Default = `None`)
+  of the input images. (Default = `None`)
 
-* ``nclip``: A non-negative integer number of clipping iterations
+* ``nclip`` (int):
+  A non-negative number of clipping iterations
   to use when computing the sky value. (Default = 5)
 
-* ``lsig``: Lower clipping limit, in sigma, used when computing the sky value.
+* ``lsig`` (float):
+  Lower clipping limit, in sigma, used when computing the sky value.
   (Default = 4.0)
 
-* ``usig``: Upper clipping limit, in sigma, used when computing the sky value.
+* ``usig`` (float):
+  Upper clipping limit, in sigma, used when computing the sky value.
   (Default = 4.0)
 
-* ``binwidth``: Bin width, in sigma, used to sample the distribution of pixel
-  brightness values in order to compute the sky background statistics.
+* ``binwidth`` (float):
+  Bin width, in sigma, used to sample the distribution of pixel
+  values in order to compute the sky background using statistics
+  that require binning such as `mode` and `midpt`.
   (Default = 0.1)
 
 
 Limitations and Discussions
 ---------------------------
-Primary reason for introducing "sky match" algorithm was to try to
+The primary reason for introducing the ``skymatch`` algorithm was to try to
 equalize the sky in large mosaics in which computation of the
-"absolute" sky is difficult due to the presence of large diffuse
-sources in the image. As discussed above, the skymatch step
-accomplishes this by comparing "sky values" in input images in the
+"absolute" sky is difficult, due to the presence of large diffuse
+sources in the image. As discussed above, the ``skymatch`` step
+accomplishes this by comparing "sky values" in input images in their
 overlap regions (that is common to a pair of images). Quite obviously the
 quality of sky "matching" will depend on how well these "sky values"
 can be estimated. We use quotation marks around *sky values* because
-for some image "true" background may not be present at all and the
-measured sky may be the surface brightness of large galaxy, nebula, etc.
+for some images "true" background may not be present at all and the
+measured sky may be the surface brightness of a large galaxy, nebula, etc.
 
 Here is a brief list of possible limitations/factors that can affect
 the outcome of the matching (sky subtraction in general) algorithm:
 
-* Since sky subtraction is performed on *flat-fielded* but
+* Because sky subtraction is performed on *flat-fielded* but
   *not distortion corrected* images, it is important to keep in mind
   that flat-fielding is performed to obtain uniform surface brightness
   and not flux. This distinction is important for images that have
   not been distortion corrected. As a consequence, it is advisable that
   point-like sources be masked through the user-supplied mask files.
   Values different from zero in user-supplied masks indicate "good" data
-  pixels. Alternatively, one can use `upper` parameter to limit the use of
-  bright objects in sky computations.
+  pixels. Alternatively, one can use the `upper` parameter to limit the use of
+  bright objects in the sky computations.
 
-* Normally, distorted flat-fielded images contain cosmic rays. This
+* The input images may contain cosmic rays. This
   algorithm does not perform CR cleaning. A possible way of minimizing
   the effect of the cosmic rays on sky computations is to use
-  clipping (\ `nclip` > 0) and/or set `upper` parameter to a value
-  larger than most of the sky background (or extended source) but
-  lower than the values of most CR pixels.
+  clipping (\ `nclip` > 0) and/or set the `upper` parameter to a value
+  larger than most of the sky background (or extended sources) but
+  lower than the values of most CR-affected pixels.
 
 * In general, clipping is a good way of eliminating "bad" pixels:
   pixels affected by CR, hot/dead pixels, etc. However, for
   images with complicated backgrounds (extended galaxies, nebulae,
-  etc.), affected by CR and noise, clipping process may mask different
+  etc.), affected by CR and noise, the clipping process may mask different
   pixels in different images. If variations in the background are
   too strong, clipping may converge to different sky values in
   different images even when factoring in the "true" difference

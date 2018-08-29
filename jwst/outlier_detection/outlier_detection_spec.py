@@ -1,4 +1,5 @@
 """Class definition for performing outlier detection on spectra."""
+from functools import partial
 
 from .. import datamodels
 from ..resample import resample_spec, resample_utils
@@ -7,6 +8,9 @@ from .outlier_detection import OutlierDetection
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
+
+
+__all__ = ["OutlierDetectionSpec"]
 
 
 class OutlierDetectionSpec(OutlierDetection):
@@ -71,7 +75,10 @@ class OutlierDetectionSpec(OutlierDetection):
             sdriz.do_drizzle()
             drizzled_models = sdriz.output_models
             for model in drizzled_models:
-                model.meta.filename += self.resample_suffix
+                model.meta.filename = self.make_output_path(
+                    basepath=model.meta.filename,
+                    suffix=self.resample_suffix
+                )
                 if save_intermediate_results:
                     log.info("Writing out resampled spectra...")
                     model.save(model.meta.filename)
@@ -80,16 +87,17 @@ class OutlierDetectionSpec(OutlierDetection):
             for i in range(len(self.input_models)):
                 drizzled_models[i].wht = resample_utils.build_driz_weight(
                                             self.input_models[i],
-                                            wht_type='exptime',
+                                            weight_type='exptime',
                                             good_bits=pars['good_bits'])
 
         # Initialize intermediate products used in the outlier detection
         median_model = datamodels.ImageModel(
                                         init=drizzled_models[0].data.shape)
         median_model.meta = drizzled_models[0].meta
-        base_filename = self.input_models[0].meta.filename
-        median_model.meta.filename = '_'.join(base_filename.split('_')[:2] +
-                                              ['median.fits'])
+        median_model.meta.filename = self.make_output_path(
+            basepath=self.input_models[0].meta.filename,
+            suffix='median'
+        )
 
         # Perform median combination on set of drizzled mosaics
         # create_median should be called as a method from parent class
@@ -105,9 +113,10 @@ class OutlierDetectionSpec(OutlierDetection):
             # in the original input list/ASN/ModelContainer
             blot_models = self.blot_median(median_model)
             if save_intermediate_results:
-                for model in blot_models:
-                    log.info("Writing out BLOT images...")
-                    model.save(model.meta.filename)
+                log.info("Writing out BLOT images...")
+                blot_models.save(
+                    partial(self.make_output_path, suffix='blot')
+                )
         else:
             # Median image will serve as blot image
             blot_models = datamodels.ModelContainer()

@@ -2,17 +2,15 @@
 
 import copy
 import numpy as np
-import jsonschema
-import warnings
+from astropy.io import fits
 
 from astropy.utils.compat.misc import override__dir__
 
-from asdf import schema
 from asdf import yamlutil
 from asdf.tags.core import ndarray
-from asdf import tagged
 
 from . import util
+from . import validate
 
 import logging
 log = logging.getLogger(__name__)
@@ -28,19 +26,38 @@ def _cast(val, schema):
             # Handle lazy array
             if isinstance(val, ndarray.NDArrayType):
                 val = val._make_array()
-            val = util.gentle_asarray(
-                val, ndarray.asdf_datatype_to_numpy_dtype(schema['datatype']))
+
+            dtype = ndarray.asdf_datatype_to_numpy_dtype(schema['datatype'])
+            val = util.gentle_asarray(val, dtype)
+            if dtype.fields is not None:
+                val = _as_fitsrec(val)
+
         if 'ndim' in schema and len(val.shape) != schema['ndim']:
             raise ValueError(
                 "Array has wrong number of dimensions.  Expected {0}, got {1}".format(
                     schema['ndim'], len(val.shape)))
+
         if 'max_ndim' in schema and len(val.shape) > schema['max_ndim']:
             raise ValueError(
                 "Array has wrong number of dimensions.  Expected <= {0}, got {1}".format(
                     schema['max_ndim'], len(val.shape)))
+
         if isinstance(val, np.generic) and np.isscalar(val):
             val = np.asscalar(val)
     return val
+
+
+def _as_fitsrec(val):
+    """
+    Convert a numpy record into a fits record if it is not one already
+    """
+    if isinstance(val, fits.FITS_rec):
+        return val
+    else:
+        coldefs = fits.ColDefs(val)
+        fits_rec = fits.FITS_rec(val)
+        fits_rec._coldefs = coldefs
+        return fits_rec
 
 
 def _make_default_array(attr, schema, ctx):
@@ -98,14 +115,14 @@ def _make_default(attr, schema, ctx):
         return {}
     elif schema.get('type') == 'array':
         return []
-    return copy.deepcopy(schema.get('default'))
+    return None
 
 
-def _make_node(instance, schema, ctx):
+def _make_node(attr, instance, schema, ctx):
     if isinstance(instance, dict):
-        return ObjectNode(instance, schema, ctx)
+        return ObjectNode(attr, instance, schema, ctx)
     elif isinstance(instance, list):
-        return ListNode(instance, schema, ctx)
+        return ListNode(attr, instance, schema, ctx)
     else:
         return instance
 
@@ -146,39 +163,19 @@ def _find_property(schema, attr):
         find = 'default' in subschema
     return find
 
-class ValidationWarning(Warning):
-    pass
-
 class Node(object):
-    def __init__(self, instance, schema, ctx):
+    def __init__(self, attr, instance, schema, ctx):
+        self._name = attr
         self._instance = instance
         self._schema = schema
         self._schema['$schema'] = 'http://stsci.edu/schemas/asdf-schema/0.1.0/asdf-schema'
         self._ctx = ctx
 
-    def _report(self, errmsg):
-        try:
-            filename = self._ctx.meta.filename
-            errmsg = "In {0} {1}".format(filename, errmsg)
-        except AttributeError:
-            pass
-
-        if self._ctx._pass_invalid_values:
-            warnings.warn(errmsg, ValidationWarning)
-        else:
-            raise jsonschema.ValidationError(errmsg)
-
-
     def _validate(self):
-        instance = yamlutil.custom_tree_to_tagged_tree(
-            self._instance, self._ctx._asdf)
-        try:
-            schema.validate(instance, schema=self._schema)
-            valid = True
-        except jsonschema.ValidationError as errmsg:
-            self._report(str(errmsg))
-            valid = False
-        return valid
+        instance = yamlutil.custom_tree_to_tagged_tree(self._instance,
+                                                       self._ctx._asdf)
+        return validate.value_change(self._name, instance, self._schema,
+                                      False, self._ctx._strict_validation)
 
     @property
     def instance(self):
@@ -208,16 +205,17 @@ class ObjectNode(Node):
             if schema == {}:
                 raise AttributeError("No attribute '{0}'".format(attr))
             val = _make_default(attr, schema, self._ctx)
-            self._instance[attr] = val
+            if val is not None:
+                self._instance[attr] = val
 
         if isinstance(val, dict):
             # Meta is special cased to support NDData interface
             if attr == 'meta':
-                node = ndmodel.MetaNode(val, schema, self._ctx)
+                node = ndmodel.MetaNode(attr, val, schema, self._ctx)
             else:
-                node = ObjectNode(val, schema, self._ctx)
+                node = ObjectNode(attr, val, schema, self._ctx)
         elif isinstance(val, list):
-            node = ListNode(val, schema, self._ctx)
+            node = ListNode(attr, val, schema, self._ctx)
         else:
             node = val
 
@@ -231,47 +229,31 @@ class ObjectNode(Node):
             if val is None:
                 val = _make_default(attr, schema, self._ctx)
             val = _cast(val, schema)
-            old_val = self._instance.get(attr, None)
 
-            self._instance[attr] = val
-            try:
-                if not self._validate():
-                    self._revert(attr, old_val)
-            except jsonschema.ValidationError:
-                self._revert(attr, old_val)
-                raise
+            node = ObjectNode(attr, val, schema, self._ctx)
+            if node._validate():
+                self._instance[attr] = val
 
     def __delattr__(self, attr):
         if attr.startswith('_'):
             del self.__dict__[attr]
         else:
-            old_val = self._instance.get(attr, None)
+            schema = _get_schema_for_property(self._schema, attr)
+            if not validate.value_change(attr, None, schema, False,
+                                          self._ctx._strict_validation):
+                return
 
             try:
                 del self._instance[attr]
             except KeyError:
                 raise AttributeError(
                     "Attribute '{0}' missing".format(attr))
-            try:
-                if not self._validate():
-                    self._revert(attr, old_val)
-            except jsonschema.ValidationError:
-                self._revert(attr, old_val)
-                raise
-
-    def __hasattr__(self, attr):
-        return (attr in self._instance or
-                _find_property(self._schema, attr))
 
     def __iter__(self):
         return NodeIterator(self)
-    
-    def _revert(self, attr, old_val):
-        # Revert the change
-        if old_val is None:
-            del self._instance[attr]
-        else:
-            self._instance[attr] = old_val
+
+    def hasattr(self, attr):
+        return attr in self._instance
 
     def items(self):
         # Return a (key, value) tuple for the node
@@ -280,7 +262,7 @@ class ObjectNode(Node):
             for field in key.split('.'):
                 val = getattr(val, field)
             yield (key, val)
-        
+
 class ListNode(Node):
     def __cast(self, other):
         if isinstance(other, ListNode):
@@ -304,12 +286,14 @@ class ListNode(Node):
 
     def __getitem__(self, i):
         schema = _get_schema_for_index(self._schema, i)
-        return _make_node(self._instance[i], schema, self._ctx)
+        return _make_node(self._name, self._instance[i], schema, self._ctx)
 
     def __setitem__(self, i, val):
         schema = _get_schema_for_index(self._schema, i)
-        self._instance[i] = _cast(val, schema)
-        self._validate()
+        val =  _cast(val, schema)
+        node = ObjectNode(self._name, val, schema, self._ctx)
+        if node._validate():
+            self._instance[i] = val
 
     def __delitem__(self, i):
         del self._instance[i]
@@ -324,7 +308,7 @@ class ListNode(Node):
         else:
             schema_parts = self._schema['items']
         schema = {'type': 'array', 'items': schema_parts}
-        return _make_node(self._instance[i:j], schema, self._ctx)
+        return _make_node(self._name, self._instance[i:j], schema, self._ctx)
 
     def __setslice__(self, i, j, other):
         parts = _unmake_node(other)
@@ -339,23 +323,25 @@ class ListNode(Node):
 
     def append(self, item):
         schema = _get_schema_for_index(self._schema, len(self._instance))
-        self._instance.append(_cast(item, schema))
-        self._validate()
+        item = _cast(item, schema)
+        node = ObjectNode(self._name, item, schema, self._ctx)
+        if node._validate():
+            self._instance.append(item)
 
     def insert(self, i, item):
         schema = _get_schema_for_index(self._schema, i)
-        self._instance.insert(i, _cast(item, schema))
-        self._validate()
+        item = _cast(item, schema)
+        node = ObjectNode(self._name, item, schema, self._ctx)
+        if node._validate():
+            self._instance.insert(i, item)
 
     def pop(self, i=-1):
         schema = _get_schema_for_index(self._schema, 0)
         x = self._instance.pop(i)
-        self._validate()
-        return _make_node(x, schema, self._ctx)
+        return _make_node(self._name, x, schema, self._ctx)
 
     def remove(self, item):
         self._instance.remove(item)
-        self._validate()
 
     def count(self, item):
         return self._instance.count(item)
@@ -365,22 +351,21 @@ class ListNode(Node):
 
     def reverse(self):
         self._instance.reverse()
-        self._validate()
 
     def sort(self, *args, **kwargs):
         self._instance.sort(*args, **kwargs)
-        self._validate()
 
     def extend(self, other):
         for part in _unmake_node(other):
             self.append(part)
-        self._validate()
 
     def item(self, **kwargs):
         assert isinstance(self._schema['items'], dict)
-        obj = ObjectNode(kwargs, self._schema['items'], self._ctx)
-        obj._validate()
-        return obj
+        node = ObjectNode(self._name, kwargs, self._schema['items'],
+                          self._ctx)
+        if not node._validate():
+            node = None
+        return node
 
 class NodeIterator:
     """
@@ -388,11 +373,11 @@ class NodeIterator:
     """
     def __init__(self, node):
         self.key_stack = []
-        self.iter_stack = [node._instance.items()]
+        self.iter_stack = [iter(node._instance.items())]
 
     def __iter__(self):
         return self
-    
+
     def __next__(self):
         while self.iter_stack:
             try:
@@ -402,13 +387,13 @@ class NodeIterator:
                 if self.iter_stack:
                     self.key_stack.pop()
                 continue
-                
+
             if isinstance(val, dict):
                 self.key_stack.append(key)
-                self.iter_stack.append(val.items())
+                self.iter_stack.append(iter(val.items()))
             else:
                 return '.'.join(self.key_stack + [key])
-                
+
         raise StopIteration
 
 def put_value(path, value, tree):

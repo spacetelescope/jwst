@@ -2,11 +2,12 @@
     "asn_type": "spec2",
     "asn_rule": "candidate_Asn_Lv2Spec",
     "version_id": null,
-    "code_version": "0.9.4",
+    "code_version": "0.9.22",
+    "degraded_status": "No known degraded exposures in association.",
     "program": "99009",
     "target": "1",
     "asn_pool": "pool_018_all_exptypes",
-    "constraints": "Constraints:\n    single_science: {'False'}\n    exp_type: {'nrs_brightobj'}\n    program: {'99009'}\n    target: {'1'}\n    instrument: {'nirspec'}\n    detector: {'nrs1'}\n    opt_elem: {'f100lp'}\n    opt_elem2: {'g140m'}\n    subarray: {'s200a2'}\n    channel: set()\n    asn_candidate: {\"\\\\(\\\\'o047\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}\n    is_tso: set()",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '99009'})\nDMSAttrConstraint({'name': 'is_tso', 'sources': ['tsovisit'], 'value': None})\nDMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '99009'})\nDMSAttrConstraint({'name': 'target', 'sources': ['targetid'], 'value': '1'})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'nirspec'})\nDMSAttrConstraint({'name': 'detector', 'sources': ['detector'], 'value': 'nrs1'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'f100lp'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['grating'], 'value': 'g140m'})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': 's200a2'})\nDMSAttrConstraint({'name': 'channel', 'sources': ['channel'], 'value': None})\nDMSAttrConstraint({'name': 'slit', 'sources': ['fxd_slit'], 'value': 's200a2'})\nDMSAttrConstraint({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'nrs_brightobj'})\nSimpleConstraint({'name': 'single_science', 'value': False})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o047\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
     "asn_id": "o047",
     "products": [
         {
@@ -14,7 +15,8 @@
             "members": [
                 {
                     "expname": "jw_00047_rateints.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": null
                 }
             ]
         }

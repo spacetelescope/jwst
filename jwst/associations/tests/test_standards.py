@@ -14,6 +14,7 @@ import pytest
 from .helpers import (
     combine_pools,
     compare_asns,
+    runslow,
     t_path,
 )
 
@@ -50,13 +51,15 @@ class MakePars():
             main_args=DEF_ARGS,
             source=None,
             outdir=None,
-            execute=True
+            execute=True,
+            xfail=None
     ):
         self.pool_root = pool_root
         self.main_args = main_args
         self.source = source
         self.outdir = outdir
         self.execute = execute
+        self.xfail = xfail
 
 
 standards = [
@@ -65,26 +68,49 @@ standards = [
     MakePars('pool_005_spec_niriss'),
     MakePars('pool_006_spec_nirspec'),
     MakePars('pool_007_spec_miri'),
-    MakePars('pool_009_spec_miri_lv2bkg', main_args=LV2_ONLY_ARGS),
-    MakePars('pool_010_spec_nirspec_lv2bkg', main_args=LV2_ONLY_ARGS),
-    MakePars('pool_011_spec_miri_lv2bkg_lrs', main_args=LV2_ONLY_ARGS),
+    MakePars('pool_009_spec_miri_lv2bkg'),
+    MakePars('pool_010_spec_nirspec_lv2bkg'),
+    MakePars('pool_011_spec_miri_lv2bkg_lrs'),
     MakePars('pool_013_coron_nircam'),
     MakePars('pool_014_ami_niriss'),
     MakePars('pool_015_spec_nirspec_lv2bkg_reversed', main_args=LV2_ONLY_ARGS),
     MakePars('pool_016_spec_nirspec_lv2bkg_double', main_args=LV2_ONLY_ARGS),
-    MakePars('pool_017_spec_nirspec_lv2imprint', main_args=LV2_ONLY_ARGS),
+    MakePars('pool_017_spec_nirspec_lv2imprint'),
     MakePars('pool_018_all_exptypes', main_args=LV2_ONLY_ARGS),
     MakePars('pool_019_niriss_wfss'),
     MakePars('pool_021_tso'),
     MakePars('pool_022_tso_noflag'),
+    MakePars('pool_023_nirspec_msa_3nod', main_args=LV2_ONLY_ARGS),
 ]
 
 
-@pytest.fixture(params=standards)
-def generate_asns(request):
-    """Test exp_type inclusion based on standard associations"""
-    standard = request.param
+@runslow
+@pytest.mark.parametrize(
+    'standard_pars',
+    standards
+)
+def test_against_standard(standard_pars):
+    """Compare a generated assocaition against a standard
+    """
+    if standard_pars.xfail is not None:
+        pytest.xfail(reason=standard_pars.xfail)
 
+    generated, standards = generate_asns(standard_pars)
+    for asn in generated:
+        for idx, standard in enumerate(standards):
+            try:
+                compare_asns(asn, standard)
+            except AssertionError as e:
+                last_err = e
+            else:
+                del standards[idx]
+                break
+        else:
+            raise last_err
+
+
+def generate_asns(standard):
+    """Test exp_type inclusion based on standard associations"""
     standards_paths = glob(t_path(path.join(
         'data',
         'asn_standards',
@@ -103,21 +129,4 @@ def generate_asns(request):
 
     asns = results.associations
     assert len(asns) == len(standards)
-    yield asns, standards
-
-
-def test_against_standard(generate_asns):
-    """Compare a generated assocaition against a standard
-    """
-    generated, standards = generate_asns
-    for asn in generated:
-        for idx, standard in enumerate(standards):
-            try:
-                compare_asns(asn, standard)
-            except AssertionError as e:
-                last_err = e
-            else:
-                del standards[idx]
-                break
-        else:
-            raise last_err
+    return asns, standards

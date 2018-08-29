@@ -42,7 +42,7 @@ import pymssql
 import scipy.interpolate as sciint
 import logging
 
-__version__ = '0.8.0'
+__version__ = '0.9.3'
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -78,7 +78,6 @@ def read_jwst_ephemeris(times):
     start = f.tell()
     time1, position1 = parse_jwst_ephem_line(f.readline())
     time2, position2 = parse_jwst_ephem_line(f.readline())
-    l1 = f.readline()
     f.seek(1, os.SEEK_END)
     end = f.tell()
     starttime = atime.Time(mdict['START_TIME']).jd
@@ -238,7 +237,7 @@ def get_jwst_ephemeris():
     )
     conn = pymssql.connect(server=eserver, database=edb)
     cur = conn.cursor()
-    cur.execute('select * from predictephemeris')
+    cur.execute('select ephem_time,jwst_x,jwst_y,jwst_z,jwst_dx,jwst_dy,jwst_dz from predictephemeris')
     etab = np.array(cur.fetchall())
     return etab
 

@@ -2,11 +2,12 @@
     "asn_type": "spec2",
     "asn_rule": "candidate_Asn_Lv2Spec",
     "version_id": null,
-    "code_version": "0.9.4",
+    "code_version": "0.9.20",
+    "degraded_status": "No known degraded exposures in association.",
     "program": "84600",
     "target": "1",
     "asn_pool": "jw84600_20171108T041344_fixed_pool",
-    "constraints": "Constraints:\n    single_science: {'False'}\n    exp_type: {'nrs_ifu'}\n    program: {'84600'}\n    target: {'1'}\n    instrument: {'nirspec'}\n    detector: {'nrs1'}\n    opt_elem: {'f290lp'}\n    opt_elem2: {'g395h'}\n    subarray: {'full'}\n    channel: set()\n    asn_candidate: {\"\\\\(\\\\'o007\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}\n    is_tso: set()",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '84600'})\nDMSAttrConstraint({'name': 'is_tso', 'sources': ['tsovisit'], 'value': None})\nDMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '84600'})\nDMSAttrConstraint({'name': 'target', 'sources': ['targetid'], 'value': '1'})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'nirspec'})\nDMSAttrConstraint({'name': 'detector', 'sources': ['detector'], 'value': 'nrs1'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'f290lp'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['grating'], 'value': 'g395h'})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': 'full'})\nDMSAttrConstraint({'name': 'channel', 'sources': ['channel'], 'value': None})\nDMSAttrConstraint({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'nrs_ifu'})\nSimpleConstraint({'name': 'single_science', 'value': False})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o007\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
     "asn_id": "o007",
     "products": [
         {
@@ -14,7 +15,8 @@
             "members": [
                 {
                     "expname": "jw84600007001_02101_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -23,7 +25,8 @@
             "members": [
                 {
                     "expname": "jw84600007001_02101_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -32,7 +35,8 @@
             "members": [
                 {
                     "expname": "jw84600007001_02102_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -41,7 +45,8 @@
             "members": [
                 {
                     "expname": "jw84600007001_02102_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         }

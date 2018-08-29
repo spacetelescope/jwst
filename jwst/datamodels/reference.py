@@ -1,10 +1,11 @@
-from . import model_base
+import warnings
+from .model_base import DataModel
+from .validate import ValidationWarning
+
+__all__ = ['ReferenceFileModel']
 
 
-__all__ = ['ReferencefileModel']
-
-
-class ReferenceFileModel(model_base.DataModel):
+class ReferenceFileModel(DataModel):
     """
     A data model for reference tables
 
@@ -17,6 +18,7 @@ class ReferenceFileModel(model_base.DataModel):
 
     def __init__(self, init=None, **kwargs):
         super(ReferenceFileModel, self).__init__(init=init, **kwargs)
+        self._no_asdf_extension = True
         self.meta.telescope = "JWST"
 
     def validate(self):
@@ -24,16 +26,24 @@ class ReferenceFileModel(model_base.DataModel):
         Convenience function to be run when files are created.
         Checks that required reference file keywords are set.
         """
-        assert self.meta.description is not None
-        assert (self.meta.telescope == 'JWST')
-        assert self.meta.reftype is not None
-        assert self.meta.author is not None
-        assert self.meta.pedigree is not None
-        assert self.meta.useafter is not None
-        assert self.meta.instrument.name is not None
+        try:
+            assert self.meta.description is not None
+            assert (self.meta.telescope == 'JWST')
+            assert self.meta.reftype is not None
+            assert self.meta.author is not None
+            assert self.meta.pedigree is not None
+            assert self.meta.useafter is not None
+            assert self.meta.instrument.name is not None
+        except AssertionError as errmsg:
+            if self._strict_validation:
+                raise AssertionError(errmsg)
+            else:
+                warnings.warn(str(errmsg), ValidationWarning)
+
+        super(ReferenceFileModel, self).validate()
 
 
-class ReferenceImageModel(model_base.DataModel):
+class ReferenceImageModel(ReferenceFileModel):
     """
     A data model for 2D reference images
 
@@ -70,7 +80,7 @@ class ReferenceImageModel(model_base.DataModel):
         self.err = self.err
 
 
-class ReferenceCubeModel(model_base.DataModel):
+class ReferenceCubeModel(ReferenceFileModel):
     """
     A data model for 3D reference images
 
@@ -106,7 +116,7 @@ class ReferenceCubeModel(model_base.DataModel):
         self.dq = self.dq
         self.err = self.err
 
-class ReferenceQuadModel(model_base.DataModel):
+class ReferenceQuadModel(ReferenceFileModel):
     """
     A data model for 4D reference images
 

@@ -1,8 +1,4 @@
-from . import (
-    ImageModel,
-    ModelContainer,
-    MultiExposureModel
-)
+from . import ModelContainer, MultiExposureModel
 
 __all__ = ['SourceModelContainer']
 
@@ -32,6 +28,18 @@ class SourceModelContainer(ModelContainer):
             self._models = init.exposures
             self._multiexposure = init
 
-    def save(self, *args, **kwargs):
+    def save(self,
+             path=None,
+             dir_path=None,
+             save_model_func=None,
+             *args, **kwargs):
         """Save out the container as a MultiExposureModel"""
-        self._multiexposure.save(*args, **kwargs)
+
+        if save_model_func is None:
+            self._multiexposure.save(
+                path=path,
+                dir_path=dir_path,
+                *args, **kwargs
+            )
+        else:
+            save_model_func(self._multiexposure, output_file=path)

@@ -1,3 +1,5 @@
+import os.path as op
+
 from astropy.table import vstack
 
 from ..stpipe import Pipeline
@@ -8,7 +10,7 @@ from ..tso_photometry import tso_photometry_step
 from ..extract_1d import extract_1d_step
 from ..white_light import white_light_step
 
-__version__ = '0.8.0'
+__version__ = '0.9.3'
 
 
 class Tso3Pipeline(Pipeline):
@@ -50,7 +52,10 @@ class Tso3Pipeline(Pipeline):
 
         self.log.info('Starting calwebb_tso3...')
         input_models = datamodels.open(input)
-        self.output_basename = input_models.meta.asn_table.products[0].name
+
+        if self.output_file is None:
+            self.output_file = input_models.meta.asn_table.products[0].name
+        self.asn_id = input_models.meta.asn_table.asn_id
 
         input_exptype = None
         # Input may consist of multiple exposures, so loop over each of them
@@ -91,7 +96,10 @@ class Tso3Pipeline(Pipeline):
             for cube in input_models:
                 # preserve output filename
                 original_filename = cube.meta.filename
-                self.save_model(cube, suffix='crfints')
+                self.save_model(
+                    cube, output_file=original_filename, suffix='crfints',
+                    asn_id=input_models.meta.asn_table.asn_id
+                )
                 cube.meta.filename = original_filename
 
         # Create final photometry results as a single output
@@ -99,14 +107,14 @@ class Tso3Pipeline(Pipeline):
         phot_result_list = []
         if input_exptype in self.image_exptypes:
             # Create name for extracted photometry (Level 3) product
-            phot_tab_name = "{}_phot.ecsv".format(self.output_basename)
+            phot_tab_suffix = 'phot'
 
             for cube in input_models:
                 # Extract Photometry from imaging data
                 phot_result_list.append(self.tso_photometry(cube))
         else:
             # Create name for extracted white-light (Level 3) product
-            phot_tab_name = "{}_whtlt.ecsv".format(self.output_basename)
+            phot_tab_suffix = 'whtlt'
 
             # Working with spectroscopic TSO data...
             # define output for x1d (level 3) products
@@ -129,12 +137,13 @@ class Tso3Pipeline(Pipeline):
             # Update some metadata from the association
             x1d_result.meta.asn.pool_name = \
                 input_models.meta.asn_table.asn_pool
-            x1d_result.meta.asn.table_name = input
+            x1d_result.meta.asn.table_name = op.basename(input)
 
             # Save the final x1d Multispec model
             self.save_model(x1d_result, suffix='x1dints')
 
         phot_results = vstack(phot_result_list)
+        phot_tab_name = self.make_output_path(suffix=phot_tab_suffix, ext='ecsv')
         self.log.info("Writing Level 3 photometry catalog {}...".format(
                       phot_tab_name))
         phot_results.write(phot_tab_name, format='ascii.ecsv')

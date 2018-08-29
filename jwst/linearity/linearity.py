@@ -1,5 +1,3 @@
-from __future__ import division
-
 from ..datamodels import dqflags
 from ..lib import reffile_utils
 from .linearity_func import apply_linearity_func
@@ -157,9 +155,9 @@ def correct_for_NaN(lin_coeffs, input):
 
     # If there are NaNs as the correction coefficients, update those
     # coefficients so that those SCI values will be unchanged.
-    if len(wh_nan[0]) > 0:
+    if len(znan) > 0:
         ben_cor = ben_coeffs(lin_coeffs) # get benign coefficients
-        num_nan = len(wh_nan[0])
+        num_nan = len(znan)
 
         for ii in range(num_nan):
             lin_coeffs[:, ynan[ii], xnan[ii]] = ben_cor

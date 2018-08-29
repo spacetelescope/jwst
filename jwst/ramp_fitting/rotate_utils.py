@@ -2,7 +2,6 @@
 # rotate_utils.py
 # utility functions for creating a rotated dataset
 
-from __future__ import division, print_function
 import os
 import shutil
 import numpy as np

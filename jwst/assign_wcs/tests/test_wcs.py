@@ -1,9 +1,9 @@
-from __future__ import (absolute_import, unicode_literals, division,
-                        print_function)
 from numpy.testing import utils
 from astropy import units as u
 from astropy import wcs
 from astropy.tests.helper import  assert_quantity_allclose
+from asdf.tests import helpers
+
 from .. import pointing
 from ...transforms import models
 from ...datamodels import ImageModel, fits_support
@@ -83,7 +83,7 @@ def test_v23_to_sky():
     utils.assert_allclose(radec, expected_ra_dec, atol=1e-10)
 
 
-def test_frame_from_model():
+def test_frame_from_model(tmpdir):
     """ Tests creating a frame from a data model. """
     # Test CompositeFrame initialization (celestial and spectral)
     im = _create_model_3d()
@@ -100,14 +100,19 @@ def test_frame_from_model():
     assert frame.frames[1].name == 'ALPHA1A_BETA1A'
     assert frame.frames[1].axes_names == ('ALPHA1A', 'BETA1A')
 
+    tree = {'frame': frame}
+    helpers.assert_roundtrip_tree(tree, tmpdir)
+
     # Test 2D spatial custom frame
     im = _create_model_2d()
     frame = pointing.frame_from_model(im)
     assert frame.name == "sky"
     assert frame.axes_names == ("RA", "DEC")
+    tree = {'frame': frame}
+    helpers.assert_roundtrip_tree(tree, tmpdir)
 
 
-def test_create_fitwcs():
+def test_create_fitwcs(tmpdir):
     """ Test GWCS vs FITS WCS results. """
     im = _create_model_3d()
     w3d = pointing.create_fitswcs(im)
@@ -119,3 +124,7 @@ def test_create_fitwcs():
     wcel = w.sub(['celestial'])
     ra, dec = wcel.all_pix2world(1, 1, 1)
     utils.assert_allclose((ra, dec), (gra, gdec))
+
+    # test serialization
+    tree = {'wcs': w3d}
+    helpers.assert_roundtrip_tree(tree, tmpdir)

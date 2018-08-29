@@ -1,25 +1,17 @@
-import datetime
 import os
 import shutil
 import tempfile
+import warnings
 
 import pytest
-try:
-    import yaml
-    has_yaml = True
-except ImportError:
-    has_yaml = False
-
 from astropy.time import Time
-
 import numpy as np
-from numpy.testing.decorators import knownfailureif
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_allclose
 
-from .. import (DataModel, ImageModel, QuadModel, MultiSlitModel,
-                ModelContainer)
+from .. import (DataModel, ImageModel, MaskModel, QuadModel,
+                MultiSlitModel, ModelContainer, SlitModel,
+                SlitDataModel, IFUImageModel)
 from ..util import open as open_model
-from .. import schema
 
 
 ROOT_DIR = os.path.join(os.path.dirname(__file__), 'data')
@@ -76,7 +68,7 @@ def test_from_hdulist():
     from astropy.io import fits
     with fits.open(FITS_FILE) as hdulist:
         with open_model(hdulist) as dm:
-            pass
+            dm.data
         assert hdulist.fileinfo(0)['file'].closed == False
 
 
@@ -87,7 +79,7 @@ def delete_array():
 
 def test_subarray():
     with DataModel(FITS_FILE) as dm:
-        x = dm.meta.subarray.xstart
+        dm.meta.subarray.xstart
 
 
 def roundtrip(func):
@@ -120,19 +112,6 @@ def test_from_fits_write(dm):
     return DataModel.from_fits(TMP_FITS)
 
 
-# @knownfailureif(not has_yaml)
-# @roundtrip
-# def test_from_fits_to_yaml(dm):
-#     dm.to_yaml(TMP_YAML)
-#     return DataModel.from_yaml(TMP_YAML)
-
-
-# @roundtrip
-# def test_from_fits_to_json(dm):
-#     dm.to_json(TMP_JSON)
-#     return DataModel.from_json(TMP_JSON)
-
-
 def test_delete():
     with DataModel() as dm:
         dm.meta.instrument.name = 'NIRCAM'
@@ -151,6 +130,14 @@ def test_open():
     with open_model(FITS_FILE) as dm:
         assert isinstance(dm, QuadModel)
 
+def test_open_warning():
+    with warnings.catch_warnings(record=True) as w:
+        # Cause all warnings to always be triggered.
+        warnings.simplefilter("always")
+        with open_model(FITS_FILE) as model:
+            class_name = model.__class__.__name__
+            assert class_name in str(w[0].message)
+
 
 def test_copy():
     with ImageModel((50, 50)) as dm:
@@ -168,6 +155,19 @@ def test_copy():
             dm2.meta.observation.obs_id = "FOO"
             assert dm.meta.observation.obs_id is None
 
+def test_stringify():
+    im = DataModel()
+    assert str(im) == '<DataModel>'
+    im.close()
+
+    im = ImageModel((10,100))
+    assert str(im) == '<ImageModel(10, 100)>'
+    im.close()
+
+    image = ROOT_DIR + "/nircam_mask.fits"
+    im = MaskModel(image)
+    assert str(im) ==  '<MaskModel(2048, 2048) from nircam_mask.fits>'
+    im.close()
 
 def test_section():
     with QuadModel((5, 35, 40, 32)) as dm:
@@ -192,7 +192,7 @@ def test_init_with_array3():
     with pytest.raises(ValueError):
         array = np.empty((50,))
         with ImageModel(array) as dm:
-            pass
+            dm.data
 
 
 def test_set_array():
@@ -274,11 +274,11 @@ def test_multislit_metadata():
             ms.slits.append(ms.slits.item())
             ms.slits[-1].data = im.data
         im = ms.slits[0]
-        im.subarray.name = "FULL"
-        assert ms.slits[0].subarray.name == "FULL"
+        im.name = "FOO"
+        assert ms.slits[0].name == "FOO"
 
 
-def test_multislit_metadata():
+def test_multislit_metadata2():
     with MultiSlitModel() as ms:
         ms.slits.append(ms.slits.item())
         for key, val in ms.iteritems():
@@ -423,3 +423,100 @@ def test_modelcontainer_group_names(container):
     container[0].meta.observation.exposure_number = '2'
     assert len(container.group_names) == 2
     container[0].meta.observation.exposure_number = '1'
+
+
+def test_object_node_iterator():
+    im = ImageModel()
+    items = []
+    for i in im.meta.items():
+        items.append(i[0])
+
+    assert 'date' in items
+    assert 'model_type' in items
+
+def test_hasattr():
+    model = DataModel()
+
+    has_date = model.meta.hasattr('date')
+    assert has_date, "Check that date exists"
+
+    has_filename = model.meta.hasattr('filename')
+    assert not has_filename, "Check that filename does not exist"
+
+def test_info():
+    with open_model(FITS_FILE) as model:
+        info = model.info()
+    matches = 0
+    for line in info.split("\n"):
+        words = line.split()
+        if len(words) > 0:
+            if words[0] == "data":
+                matches += 1
+                assert words[1] == "(32,40,35,5)", "Correct size for data"
+                assert words[2] == "float32", "Correct type for data"
+            elif words[0] == "dq":
+                matches += 1
+                assert words[1] == "(32,40,35,5)", "Correct size for dq"
+                assert words[2] == "uint32", "Correct type for dq"
+            elif words[0] == "err":
+                matches += 1
+                assert words[1] == "(32,40,35,5)", "Correct size for err"
+                assert words[2] == "float32", "Correct type for err"
+    assert matches== 3, "Check all extensions are described"
+
+def test_multislit_model():
+    data = np.arange(24, dtype=np.float32).reshape((6, 4))
+    err = np.arange(24, dtype=np.float32).reshape((6, 4)) + 2
+    wav = np.arange(24, dtype=np.float32).reshape((6, 4)) + 3
+    dq = np.arange(24,dtype=np.uint32).reshape((6, 4)) + 1
+    s0 = SlitDataModel(data=data, err=err, dq=dq, wavelength=wav)
+    s1 = SlitDataModel(data=data+1, err=err+1, dq=dq+1, wavelength=wav+1)
+
+    ms = MultiSlitModel()
+    ms.slits.append(s0)
+    ms.slits.append(s1)
+    ms.meta.instrument.name = 'NIRSPEC'
+    ms.meta.exposure.type = 'NRS_IMAGE'
+    slit1 = ms[1]
+    assert isinstance(slit1, SlitModel)
+    assert slit1.meta.instrument.name == 'NIRSPEC'
+    assert slit1.meta.exposure.type == 'NRS_IMAGE'
+    assert_allclose(slit1.data, data + 1)
+
+
+def test_slit_from_image():
+    data = np.arange(24, dtype=np.float32).reshape((6, 4))
+    im = ImageModel(data=data, err=data/2, dq=data)
+    im.meta.instrument.name = "MIRI"
+    slit_dm = SlitDataModel(im)
+    assert_allclose(im.data, slit_dm.data)
+    assert hasattr(slit_dm, 'pathloss_pointsource')
+    # this should be enabled after gwcs starts using non-coordinate inputs
+    #assert not hasattr(slit_dm, 'meta')
+
+    slit = SlitModel(im)
+    assert_allclose(im.data, slit.data)
+    assert_allclose(im.err, slit.err)
+    assert hasattr(slit, 'pathloss_pointsource')
+    assert slit.meta.instrument.name == "MIRI"
+
+    im = ImageModel(slit)
+    assert type(im) == ImageModel
+    im.close()
+
+    im = ImageModel(slit_dm)
+    assert type(im) == ImageModel
+    im.close()
+
+
+def test_ifuimage():
+    data = np.arange(24, dtype=np.float32).reshape((6, 4))
+    im = ImageModel(data=data, err=data/2, dq=data)
+    ifuimage = IFUImageModel(im)
+    assert_allclose(im.data, ifuimage.data)
+    assert_allclose(im.err, ifuimage.err)
+    assert_allclose(im.dq, ifuimage.dq)
+
+    im = ImageModel(ifuimage)
+    assert type(im) == ImageModel
+    im.close()

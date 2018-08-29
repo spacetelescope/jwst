@@ -2,6 +2,12 @@
 
 from collections import OrderedDict
 
+from asdf import AsdfFile
+from asdf import schema as asdf_schema
+
+from .extension import BaseExtension
+from jwst.transforms.jwextension import JWSTExtension
+from gwcs.extension import GWCSExtension
 
 # return_result included for backward compatibility
 def find_fits_keyword(schema, keyword, return_result=False):
@@ -36,19 +42,19 @@ def find_fits_keyword(schema, keyword, return_result=False):
 def build_fits_dict(schema):
     """
     Utility function to create a dict that maps FITS keywords to their
-    metadata attribute in a input schema.  
-    
+    metadata attribute in a input schema.
+
     Parameters
     ----------
     schema : JSON schema fragment
         The schema in which to search.
- 
+
     Returns
     -------
     results : dict
-        Dictionary with FITS keywords as keys and schema metadata 
+        Dictionary with FITS keywords as keys and schema metadata
         attributes as values
-   
+
     """
     def build_fits_dict(subschema, path, combiner, ctx, recurse):
         if len(path) and path[0] == 'extra_fits':
@@ -189,7 +195,7 @@ def walk_schema(schema, callback, ctx={}):
 
         for c in ['anyOf', 'oneOf']:
             for i, sub in enumerate(schema.get(c, [])):
-                recurse(sub, path + [i], c, ctx)
+                recurse(sub, path + [c], c, ctx)
 
         if schema.get('type') == 'object':
             for key, val in schema.get('properties', {}).items():
@@ -206,11 +212,17 @@ def walk_schema(schema, callback, ctx={}):
     recurse(schema, [], None, ctx)
 
 
-def flatten_combiners(schema):
+def merge_property_trees(schema):
     """
-    Flattens the allOf and anyOf operations in a JSON schema.
+    Recursively merges property trees that are governed by the "allOf" combiner.
 
-    TODO: Write caveats -- there's a lot
+    The main purpose of this function is to allow multiple subschemas to be
+    combined into a single schema. All of the properties at each level of each
+    subschema are merged together to form a single coherent tree.
+
+    This allows datamodel schemas to be more modular, since various components
+    can be represented in individual files and then referenced elsewhere. They
+    are then combined by this function into a single schema data structure.
     """
     newschema = OrderedDict()
 
@@ -219,7 +231,10 @@ def flatten_combiners(schema):
         cursor = newschema
         for i in range(len(path)):
             part = path[i]
-            if isinstance(part, int):
+            if part == combiner:
+                cursor = cursor.setdefault(combiner, [])
+                return
+            elif isinstance(part, int):
                 cursor = cursor.setdefault('items', [])
                 while len(cursor) <= part:
                     cursor.append({})
@@ -244,11 +259,41 @@ def flatten_combiners(schema):
             del schema['items']
         if 'allOf' in schema:
             del schema['allOf']
-        if 'anyOf' in schema:
-            del schema['anyOf']
 
         add_entry(path, schema, combiner)
 
     walk_schema(schema, callback)
 
     return newschema
+
+def read_schema(schema_file, extensions=None):
+    """
+    Read a schema file from disk in order to pass it as an argument
+    to a new datamodel.
+    """
+    def get_resolver(asdf_file):
+        extensions = asdf_file._extensions
+        def asdf_file_resolver(uri):
+            return extensions._url_mapping(extensions._tag_mapping(uri))
+        return asdf_file_resolver
+
+    default_extensions = [GWCSExtension(), JWSTExtension(),
+                          BaseExtension()]
+
+    if extensions is None:
+        extensions = default_extensions[:]
+    else:
+        extensions.extend(default_extensions)
+    asdf_file = AsdfFile(extensions=extensions)
+
+    if hasattr(asdf_file, 'resolver'):
+        file_resolver = asdf_file.resolver
+    else:
+        file_resolver = get_resolver(asdf_file)
+
+    schema = asdf_schema.load_schema(schema_file,
+                                     resolver=file_resolver,
+                                     resolve_references=True)
+
+    schema = merge_property_trees(schema)
+    return schema

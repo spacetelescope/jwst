@@ -2,11 +2,12 @@
     "asn_type": "image2",
     "asn_rule": "candidate_Asn_Lv2ImageNonScience",
     "version_id": null,
-    "code_version": "0.9.4",
+    "code_version": "0.9.16",
+    "degraded_status": "No known degraded exposures in association.",
     "program": "99009",
     "target": "1",
     "asn_pool": "pool_009_spec_miri_lv2bkg",
-    "constraints": "Constraints:\n    single_science: {'False'}\n    non_science: {'mir_tacq'}\n    program: {'99009'}\n    target: {'1'}\n    instrument: {'miri'}\n    detector: {'mirifushort'}\n    opt_elem: {'short'}\n    opt_elem2: set()\n    subarray: {'full'}\n    channel: {'12'}\n    asn_candidate: {\"\\\\(\\\\'o004\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}\n    is_tso: set()",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '99009'})\nDMSAttrConstraint({'name': 'is_tso', 'sources': ['tsovisit'], 'value': None})\nDMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '99009'})\nDMSAttrConstraint({'name': 'target', 'sources': ['targetid'], 'value': '1'})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'miri'})\nDMSAttrConstraint({'name': 'detector', 'sources': ['detector'], 'value': 'mirifushort'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['band'], 'value': 'short'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['pupil', 'grating'], 'value': None})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': 'full'})\nDMSAttrConstraint({'name': 'channel', 'sources': ['channel'], 'value': '12'})\nConstraint_Image_Nonscience({'name': 'non_science', 'sources': ['exp_type'], 'value': 'mir_tacq'})\nSimpleConstraint({'name': 'single_science', 'value': False})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o004\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
     "asn_id": "o004",
     "products": [
         {
@@ -14,7 +15,8 @@
             "members": [
                 {
                     "expname": "jw_00010_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": null
                 }
             ]
         }

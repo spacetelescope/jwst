@@ -1,14 +1,12 @@
 """Set Telescope Pointing from quaternions"""
 import logging
-import sqlite3
+from math import (cos, sin)
 import os.path
-import inspect
+import sqlite3
 
 import numpy as np
-from numpy import (cos, sin)
 
 from namedlist import namedlist
-from asdf import schema as asdf_schema
 
 from ..datamodels import Level1bModel
 from ..lib.engdb_tools import (
@@ -21,9 +19,7 @@ from ..lib.engdb_tools import (
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-# ################################
 # Default transformation matricies
-# ################################
 FGS12SIFOV_DEFAULT = np.array(
     [[0.9999994955442, 0.0000000000000, 0.0010044457459],
      [0.0000011174826, 0.9999993811310, -0.0011125359826],
@@ -41,6 +37,17 @@ SIFOV2V_DEFAULT = np.array(
      [0., 1., 0.],
      [-0.00226892608, 0., 0.99999742598]]
 )
+
+# JWST Exposures that are Fine Guidance exposures that actually
+# define the pointing.
+FGS_GUIDE_EXP_TYPES = [
+    'fgs_acq1',
+    'fgs_acq2',
+    'fgs_fineguide',
+    'fgs_id-image',
+    'fgs_id-stack',
+    'fgs_track',
+]
 
 # Degree, radian, angle transformations
 R2D = 180./np.pi
@@ -118,7 +125,7 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, **kwargs):
     )
     try:
         _add_axis_3(model)
-    except:
+    except Exception:
         pass
     model.meta.model_type = None
     model.save(filename)
@@ -147,6 +154,101 @@ def update_wcs(model, default_pa_v3=0., siaf_path=None, **kwargs):
     kwargs: dict
         Keyword arguments used by matrix calculation routines.
     """
+
+    # If the type of exposure is not FGS, then attempt to get pointing
+    # from telemetry.
+    try:
+        exp_type = model.meta.exposure.type.lower()
+    except AttributeError:
+        exp_type = None
+    if exp_type in FGS_GUIDE_EXP_TYPES:
+        update_wcs_from_fgs_guiding(
+            model, default_pa_v3=default_pa_v3
+        )
+    else:
+        update_wcs_from_telem(
+            model, default_pa_v3=default_pa_v3, siaf_path=siaf_path, **kwargs
+        )
+
+
+def update_wcs_from_fgs_guiding(model, default_pa_v3=0.0, default_vparity=1):
+    """ Update WCS pointing from header information
+
+    For Fine Guidance guiding observations, nearly everything
+    in the `wcsinfo` meta information is already populated,
+    except for the PC matrix. This function updates the PC
+    matrix based on the rest of the `wcsinfo`.
+
+    Parameters
+    ----------
+    model : `~jwst.datamodels.DataModel`
+        The model to update.
+
+    default_pa_v3 : float
+        If pointing information cannot be retrieved,
+        use this as the V3 position angle.
+
+    default_vparity: int
+        The default `VIdlParity` to use and should
+        be either "1" or "-1". "1" is the
+        default since FGS guiding will be using the
+        OSS aperture.
+    """
+
+    logger.info('Updating WCS for Fine Guidance.')
+
+    # Get position angle
+    try:
+        pa = model.meta.wcsinfo.pa_v3
+    except AttributeError:
+        logger.warn(
+            'Keyword `PA_V3` not found. Using {} as default value'.format(
+                default_pa_v3
+            )
+        )
+        pa = default_pa_v3
+    pa_rad = pa * D2R
+
+    # Get VIdlParity
+    try:
+        vparity = model.meta.wcsinfo.vparity
+    except AttributeError:
+        logger.warn(
+            'Keyword "VPARITY" not found. Using {} as default value'.format(
+                default_vparity
+            )
+        )
+        vparity = default_vparity
+
+    (model.meta.wcsinfo.pc1_1,
+     model.meta.wcsinfo.pc1_2,
+     model.meta.wcsinfo.pc2_1,
+     model.meta.wcsinfo.pc2_2) = calc_rotation_matrix(pa_rad, vparity=vparity)
+
+
+def update_wcs_from_telem(model, default_pa_v3=0., siaf_path=None, **kwargs):
+    """Update WCS pointing information
+
+    Given a `jwst.datamodels.DataModel`, determine the simple WCS parameters
+    from the SIAF keywords in the model and the engineering parameters
+    that contain information about the telescope pointing.
+
+    It presumes all the accessed keywords are present (see first block).
+
+    Parameters
+    ----------
+    model : `~jwst.datamodels.DataModel`
+        The model to update.
+    default_pa_v3 : float
+        If pointing information cannot be retrieved,
+        use this as the V3 position angle.
+    siaf_path : str
+        The path to the SIAF file, i.e. ``XML_DATA`` env variable.
+    kwargs: dict
+        Keyword arguments used by matrix calculation routines.
+    """
+
+    logger.info('Updating wcs from telemetry.')
 
     # Get the SIAF and observation parameters
     obsstart = model.meta.exposure.start_time
@@ -201,15 +303,18 @@ def update_wcs(model, default_pa_v3=0., siaf_path=None, **kwargs):
     model.meta.aperture.position_angle = wcsinfo.pa
     model.meta.wcsinfo.crval1 = wcsinfo.ra
     model.meta.wcsinfo.crval2 = wcsinfo.dec
-    model.meta.wcsinfo.pc1_1 = -np.cos(wcsinfo.pa * D2R)
-    model.meta.wcsinfo.pc1_2 = np.sin(wcsinfo.pa * D2R)
-    model.meta.wcsinfo.pc2_1 = np.sin(wcsinfo.pa * D2R)
-    model.meta.wcsinfo.pc2_2 = np.cos(wcsinfo.pa * D2R)
     model.meta.wcsinfo.ra_ref = wcsinfo.ra
     model.meta.wcsinfo.dec_ref = wcsinfo.dec
     model.meta.wcsinfo.roll_ref = compute_local_roll(
         vinfo.pa, wcsinfo.ra, wcsinfo.dec, siaf.v2ref, siaf.v3ref
     )
+    (model.meta.wcsinfo.pc1_1,
+     model.meta.wcsinfo.pc1_2,
+     model.meta.wcsinfo.pc2_1,
+     model.meta.wcsinfo.pc2_2) = calc_rotation_matrix(
+         wcsinfo.pa * D2R, vparity=siaf.vparity
+     )
+
     wcsaxes = model.meta.wcsinfo.wcsaxes
     if wcsaxes is None:
         wcsaxes = 2
@@ -251,15 +356,19 @@ def update_s_region(model, prd_db_filepath=None):
         return
     aperture_name = model.meta.aperture.name
     useafter = model.meta.observation.date
-    vertices = _get_vertices_idl(aperture_name, useafter, prd_db_filepath=prd_db_filepath)
+    vertices = _get_vertices_idl(
+        aperture_name, useafter, prd_db_filepath=prd_db_filepath
+    )
     vertices = list(vertices.values())[0]
     xvert = vertices[:4]
     yvert = vertices[4:]
-    logger.info("Vertices for aperture {0}: {1}".format(aperture_name, vertices))
+    logger.info(
+        "Vertices for aperture {0}: {1}".format(aperture_name, vertices)
+    )
     # Execute IdealToV2V3, followed by V23ToSky
     from ..transforms.models import IdealToV2V3, V23ToSky
-    v2_ref_deg = model.meta.wcsinfo.v2_ref / 3600
-    v3_ref_deg = model.meta.wcsinfo.v3_ref / 3600
+    v2_ref_deg = model.meta.wcsinfo.v2_ref / 3600 # in deg
+    v3_ref_deg = model.meta.wcsinfo.v3_ref / 3600 # in deg
     roll_ref = model.meta.wcsinfo.roll_ref
     ra_ref = model.meta.wcsinfo.ra_ref
     dec_ref = model.meta.wcsinfo.dec_ref
@@ -267,13 +376,16 @@ def update_s_region(model, prd_db_filepath=None):
     v3yangle = model.meta.wcsinfo.v3yangle
 
     # V2_ref and v3_ref should be in arcsec
-    idltov23 = IdealToV2V3(v3yangle,
-                           model.meta.wcsinfo.v2_ref, model.meta.wcsinfo.v2_ref,
-                           vparity)
-    v2, v3 = idltov23(xvert, yvert) # in arcsec
+    idltov23 = IdealToV2V3(
+        v3yangle,
+        model.meta.wcsinfo.v2_ref, model.meta.wcsinfo.v2_ref,
+        vparity
+    )
+    v2, v3 = idltov23(xvert, yvert)  # in arcsec
+
     # Convert to deg
-    v2 = v2 / 3600
-    v3 = v3 / 3600
+    v2 = v2 / 3600 # in deg
+    v3 = v3 / 3600 # in deg
     angles = [-v2_ref_deg, v3_ref_deg, -roll_ref, -dec_ref, ra_ref]
     axes = "zyxyz"
     v23tosky = V23ToSky(angles, axes_order=axes)
@@ -818,7 +930,8 @@ def get_pointing(obsstart, obsend, result_type='first'):
     for param in params:
         try:
             params[param] = engdb.get_values(
-                param, obsstart, obsend, time_format='mjd', include_obstime=True
+                param, obsstart, obsend,
+                time_format='mjd', include_obstime=True
             )
         except Exception as exception:
             raise ValueError(
@@ -993,3 +1106,45 @@ def _add_axis_3(model):
     if wcsaxes is not None and wcsaxes == 3:
         model.meta.wcsinfo.ctype3 = "WAVE"
         model.meta.wcsinfo.cunit3 = "um"
+
+
+def calc_rotation_matrix(angle, vparity=1):
+    """ Calculate the rotation matrix
+
+    Parameters
+    ----------
+    angle: float in radians
+        The angle to create the matrix
+
+    vparity: int
+        The x-axis parity, usually taken from
+        the JWST SIAF parameter VIdlParity.
+        Value should be "1" or "-1".
+
+    Returns
+    -------
+    matrix: [pc1_1, pc1_2, pc2_1, pc2_2]
+        The rotation matrix
+
+    Notes
+    -----
+    The rotation is
+
+       ----------------
+       | pc1_1  pc2_1 |
+       | pc1_2  pc2_2 |
+       ----------------
+
+    where:
+        pc1_1 = vparity * cos(angle)
+        pc1_2 = sin(angle)
+        pc2_1 = -1 * vparity * sin(angle)
+        pc2_2 = cos(angle)
+    """
+
+    pc1_1 = vparity * cos(angle)
+    pc1_2 = sin(angle)
+    pc2_1 = vparity * -sin(angle)
+    pc2_2 = cos(angle)
+
+    return [pc1_1, pc1_2, pc2_1, pc2_2]

@@ -95,7 +95,7 @@ def make_source_catalog(model, kernel_fwhm, kernel_xsize, kernel_ysize,
     # does not yet contain an IVM map
     mask = (model.wht == 0)
     data_mean, data_median, data_std = sigma_clipped_stats(
-        model.data, mask=mask, sigma=3.0, iters=10)
+        model.data, mask=mask, sigma=3.0, maxiters=10)
     threshold = data_median + (data_std * snr_threshold)
 
     sigma = kernel_fwhm * gaussian_fwhm_to_sigma
@@ -121,8 +121,8 @@ def make_source_catalog(model, kernel_fwhm, kernel_xsize, kernel_ysize,
     # units of electron/s.  Poisson noise is not included for pixels
     # where data < 0.
     exptime = model.meta.resample.product_exposure_time    # total exptime
-    #total_error = np.sqrt(bkg_error**2 +
-    #                      np.maximum(model.data / exptime, 0))
+    # total_error = np.sqrt(bkg_error**2 +
+    #                       np.maximum(model.data / exptime, 0))
     total_error = np.sqrt(data_std**2 + np.maximum(model.data / exptime, 0))
 
     wcs = model.get_fits_wcs()
@@ -136,7 +136,7 @@ def make_source_catalog(model, kernel_fwhm, kernel_xsize, kernel_ysize,
                'source_sum', 'source_sum_err', 'semimajor_axis_sigma',
                'semiminor_axis_sigma', 'orientation',
                'sky_bbox_ll', 'sky_bbox_ul', 'sky_bbox_lr', 'sky_bbox_ur']
-    catalog = photutils.properties_table(source_props, columns=columns)
+    catalog = source_props.to_table(columns=columns)
 
     # convert orientation to degrees
     orient_deg = catalog['orientation'].to(u.deg)

@@ -1,12 +1,9 @@
-from __future__ import division
-
 #
 #  Module for subtracting a super-bias image from science data sets
 #
 
 import numpy as np
 import logging
-from .. import datamodels
 from ..lib import reffile_utils
 
 log = logging.getLogger(__name__)

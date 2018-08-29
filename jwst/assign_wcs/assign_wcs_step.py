@@ -1,23 +1,21 @@
 #! /usr/bin/env python
-from ..stpipe import Step, cmdline
+from ..stpipe import Step
 from .. import datamodels
 import logging
 from .assign_wcs import load_wcs
+from .util import MissingMSAFileError
+
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+__all__ = ["AssignWcsStep"]
+
 
 class AssignWcsStep(Step):
     """
-    AssignWcsStep: Loads all WCS and distortion information for an exposure
-    and stores it in the model meta data.
-    """
+    AssignWcsStep: Create a gWCS object and store it in ``Model.meta``.
 
-    spec = """
-    """
-
-    """
     Reference file types:
 
     camera             Camera model (NIRSPEC)
@@ -35,7 +33,16 @@ class AssignWcsStep(Step):
     specwcs            Wavelength calibration models (MIRI, NIRCAM, NIRISS)
     regions            Stores location of the regions on the detector (MIRI)
     wavelengthrange    Typical wavelength ranges (MIRI, NIRCAM, NIRISS, NIRSPEC)
+
+    Parameters
+    ----------
+    input : `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`, `~jwst.datamodels.CubeModel`
+        Input exposure.
     """
+
+    spec = """
+    """
+
     reference_file_types = ['distortion', 'filteroffset', 'specwcs', 'regions',
                             'wavelengthrange', 'camera', 'collimator', 'disperser',
                             'fore', 'fpa', 'msa', 'ote', 'ifupost',
@@ -46,9 +53,11 @@ class AssignWcsStep(Step):
         with datamodels.open(input) as input_model:
             # If input type is not supported, log warning, set to 'skipped', exit
             if not (isinstance(input_model, datamodels.ImageModel) or
-                    isinstance(input_model, datamodels.CubeModel)):
-                log.warning("Input dataset type is not supported, as it is")
-                log.warning("neither ImageModel or CubeModel, so skipping step.")
+                    isinstance(input_model, datamodels.CubeModel) or
+                    isinstance(input_model, datamodels.IFUImageModel)):
+                log.warning("Input dataset type is not supported.")
+                log.warning("assign_wcs expects ImageModel, IFUImageModel or CubeModel as input.")
+                log.warning("Skipping assign_wcs step.")
                 result = input_model.copy()
                 result.meta.cal_step.assign_wcs = 'SKIPPED'
                 return result
@@ -57,7 +66,17 @@ class AssignWcsStep(Step):
                 reffile = self.get_reference_file(input_model, reftype)
                 reference_file_names[reftype] = reffile if reffile else ""
 
+            # Get the MSA metadata file if needed and add to reffiles
+            if input_model.meta.exposure.type == "NRS_MSASPEC":
+                msa_metadata_file = input_model.meta.instrument.msa_metadata_file
+                if msa_metadata_file is not None and msa_metadata_file.strip() not in ["", "N/A"]:
+                    msa_metadata_file = self.make_input_path(msa_metadata_file)
+                    reference_file_names['msametafile'] = msa_metadata_file
+                else:
+                    message = "MSA metadata file (MSAMETFL) is required for NRS_MSASPEC exposures."
+                    log.error(message)
+                    raise MissingMSAFileError(message)
+
             result = load_wcs(input_model, reference_file_names)
 
         return result
-

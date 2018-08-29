@@ -14,97 +14,97 @@
 # Filters: F090W/F227W
 # Notes: detectors within ACT_ID witin VISIT
 # 
-FILENAME|PROGRAM|OBS_NUM|VISITYPE|EXP_TYPE|INSTRUME|DETECTOR|TARGETID|PNTGTYPE|FILTER|PUPIL|GRATING|ASN_CANDIDATE|TSOVISIT
+FILENAME|PROGRAM|OBS_NUM|VISITYPE|EXP_TYPE|INSTRUME|DETECTOR|TARGETID|PNTGTYPE|FILTER|PUPIL|GRATING|ASN_CANDIDATE|TSOVISIT|SUBARRAY
 #
 # Initialize ACID. This is done with a dummy exposure that will not match any association
-set acid|PROGRAM|OBS_NUM|VISITYPE|EXP_TYPE|INSTRUME|DETECTOR|TARGETID|PNTGTYPE|FILTER|PUPIL|GRATING|@!next(acid)|TSOVISIT
+set acid|PROGRAM|OBS_NUM|VISITYPE|EXP_TYPE|INSTRUME|DETECTOR|TARGETID|PNTGTYPE|FILTER|PUPIL|GRATING|@!next(acid)|TSOVISIT|SUBARRAY
 #
 # There are 2 AC's defined. Set ACID to reflect this as a last dummy exposure
 #
 # Base exposure set.
 # First observation, type==OBSERVATION
-@!fmt_fname(next(expnum))|99009|@!next(obsnum)|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA1|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA2|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA3|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA4|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCALONG|1|SCIENCE|F277W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB1|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB2|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB3|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB4|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCBLONG|1|SCIENCE|F277W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION')])|F
+@!fmt_fname(next(expnum))|99009|@!next(obsnum)|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA1|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA2|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA3|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA4|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCALONG|1|SCIENCE|F277W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB1|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB2|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB3|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB4|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCBLONG|1|SCIENCE|F277W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION')])|F|FULL
 #
 # Second observation, type=OBSERVATION
-@!fmt_fname(next(expnum))|99009|@!next(obsnum)|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA1|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA2|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA3|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA4|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCALONG|1|SCIENCE|F277W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB1|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB2|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB3|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB4|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCBLONG|1|SCIENCE|F277W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION')])|F
+@!fmt_fname(next(expnum))|99009|@!next(obsnum)|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA1|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA2|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA3|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA4|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCALONG|1|SCIENCE|F277W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB1|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB2|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB3|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB4|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCBLONG|1|SCIENCE|F277W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION')])|F|FULL
 #
 # Third observation, First, Second AC==MOSAIC
-@!fmt_fname(next(expnum))|99009|@!next(obsnum)|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA1|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value, 'MOSAIC'), (acid.value + 1, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA2|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value, 'MOSAIC'), (acid.value + 1, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA3|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value, 'MOSAIC'), (acid.value + 1, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA4|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value, 'MOSAIC'), (acid.value + 1, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCALONG|1|SCIENCE|F277W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value, 'MOSAIC'), (acid.value + 1, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB1|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value, 'MOSAIC'), (acid.value + 1, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB2|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value, 'MOSAIC'), (acid.value + 1, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB3|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value, 'MOSAIC'), (acid.value + 1, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB4|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value, 'MOSAIC'), (acid.value + 1, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCBLONG|1|SCIENCE|F277W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value, 'MOSAIC'), (acid.value + 1, 'MOSAIC')])|F
+@!fmt_fname(next(expnum))|99009|@!next(obsnum)|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA1|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value, 'MOSAIC'), (acid.value + 1, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA2|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value, 'MOSAIC'), (acid.value + 1, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA3|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value, 'MOSAIC'), (acid.value + 1, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA4|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value, 'MOSAIC'), (acid.value + 1, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCALONG|1|SCIENCE|F277W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value, 'MOSAIC'), (acid.value + 1, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB1|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value, 'MOSAIC'), (acid.value + 1, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB2|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value, 'MOSAIC'), (acid.value + 1, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB3|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value, 'MOSAIC'), (acid.value + 1, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB4|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value, 'MOSAIC'), (acid.value + 1, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCBLONG|1|SCIENCE|F277W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value, 'MOSAIC'), (acid.value + 1, 'MOSAIC')])|F|FULL
 #
 # Forth observation, First, Second AC==MOSAIC
-@!fmt_fname(next(expnum))|99009|@!next(obsnum)|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA1|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value, 'MOSAIC'), (acid.value + 1, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA2|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value, 'MOSAIC'), (acid.value + 1, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA3|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value, 'MOSAIC'), (acid.value + 1, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA4|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value, 'MOSAIC'), (acid.value + 1, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCALONG|1|SCIENCE|F277W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value, 'MOSAIC'), (acid.value + 1, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB1|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value, 'MOSAIC'), (acid.value + 1, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB2|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value, 'MOSAIC'), (acid.value + 1, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB3|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value, 'MOSAIC'), (acid.value + 1, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB4|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value, 'MOSAIC'), (acid.value + 1, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCBLONG|1|SCIENCE|F277W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value, 'MOSAIC'), (acid.value + 1, 'MOSAIC')])|F
+@!fmt_fname(next(expnum))|99009|@!next(obsnum)|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA1|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value, 'MOSAIC'), (acid.value + 1, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA2|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value, 'MOSAIC'), (acid.value + 1, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA3|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value, 'MOSAIC'), (acid.value + 1, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA4|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value, 'MOSAIC'), (acid.value + 1, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCALONG|1|SCIENCE|F277W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value, 'MOSAIC'), (acid.value + 1, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB1|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value, 'MOSAIC'), (acid.value + 1, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB2|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value, 'MOSAIC'), (acid.value + 1, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB3|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value, 'MOSAIC'), (acid.value + 1, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB4|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value, 'MOSAIC'), (acid.value + 1, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCBLONG|1|SCIENCE|F277W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value, 'MOSAIC'), (acid.value + 1, 'MOSAIC')])|F|FULL
 #
 # Fifth observation, Second AC==MOSAIC
-@!fmt_fname(next(expnum))|99009|@!next(obsnum)|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA1|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 1, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA2|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 1, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA3|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 1, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA4|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 1, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCALONG|1|SCIENCE|F277W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 1, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB1|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 1, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB2|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 1, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB3|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 1, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB4|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 1, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCBLONG|1|SCIENCE|F277W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 1, 'MOSAIC')])|F
+@!fmt_fname(next(expnum))|99009|@!next(obsnum)|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA1|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 1, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA2|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 1, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA3|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 1, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA4|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 1, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCALONG|1|SCIENCE|F277W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 1, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB1|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 1, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB2|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 1, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB3|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 1, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB4|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 1, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCBLONG|1|SCIENCE|F277W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 1, 'MOSAIC')])|F|FULL
 #
 # Sixth observation, Third AC==MOSAIC
-@!fmt_fname(next(expnum))|99009|@!next(obsnum)|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA1|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 2, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA2|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 2, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA3|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 2, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA4|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 2, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCALONG|1|SCIENCE|F277W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 2, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB1|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 2, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB2|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 2, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB3|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 2, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB4|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 2, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCBLONG|1|SCIENCE|F277W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 2, 'MOSAIC')])|F
+@!fmt_fname(next(expnum))|99009|@!next(obsnum)|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA1|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 2, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA2|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 2, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA3|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 2, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA4|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 2, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCALONG|1|SCIENCE|F277W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 2, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB1|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 2, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB2|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 2, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB3|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 2, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB4|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 2, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCBLONG|1|SCIENCE|F277W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 2, 'MOSAIC')])|F|FULL
 #
 # Seventh observation, Third AC==MOSAIC
-@!fmt_fname(next(expnum))|99009|@!next(obsnum)|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA1|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 2, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA2|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 2, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA3|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 2, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA4|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 2, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCALONG|1|SCIENCE|F277W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 2, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB1|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 2, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB2|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 2, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB3|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 2, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB4|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 2, 'MOSAIC')])|F
-@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCBLONG|1|SCIENCE|F277W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 2, 'MOSAIC')])|F
+@!fmt_fname(next(expnum))|99009|@!next(obsnum)|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA1|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 2, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA2|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 2, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA3|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 2, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCA4|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 2, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCALONG|1|SCIENCE|F277W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 2, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB1|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 2, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB2|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 2, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB3|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 2, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCB4|1|SCIENCE|F090W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 2, 'MOSAIC')])|F|FULL
+@!fmt_fname(next(expnum))|99009|@!obsnum.value|PRIME_TARGETED_FIXED|NRC_IMAGE|NIRCAM|NRCBLONG|1|SCIENCE|F277W|CLEAR|NULL|@!fmt_cand([(obsnum.value, 'OBSERVATION'), (acid.value + 2, 'MOSAIC')])|F|FULL
 #
 # Set ACID to how many have been used.
-set acid|PROGRAM|OBS_NUM|PRIME_TARGETED_FIXED|EXP_TYPE|INSTRUME|DETECTOR|TARGETID|PNTGTYPE|FILTER|PUPIL|GRATING|@!acid.set(acid.value + 2)|TSOVISIT
+set acid|PROGRAM|OBS_NUM|PRIME_TARGETED_FIXED|EXP_TYPE|INSTRUME|DETECTOR|TARGETID|PNTGTYPE|FILTER|PUPIL|GRATING|@!acid.set(acid.value + 2)|TSOVISIT|SUBARRAY

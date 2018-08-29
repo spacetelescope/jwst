@@ -6,8 +6,6 @@ A module that provides functions for matching sky in overlapping cubes.
 :License: :doc:`../LICENSE`
 
 """
-from __future__ import absolute_import, division, unicode_literals,\
-     print_function
 
 import logging
 import copy
@@ -21,7 +19,7 @@ from ..skymatch.skyimage import *
 
 __all__ = ['match']
 
-__version__ = '0.8.0'
+__version__ = '0.9.3'
 __vdate__ = '21-Sept-2016'
 __author__ = 'Mihai Cara'
 

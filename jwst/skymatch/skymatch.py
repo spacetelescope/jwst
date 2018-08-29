@@ -3,29 +3,18 @@ A module that provides functions for matching sky in overlapping images.
 
 :Authors: Mihai Cara
 
-:License: :doc:`../LICENSE`
-
 """
-from __future__ import division, print_function
-
-# STDLIB
-import os
-import sys
 import logging
 from datetime import datetime
-
-# THIRD PARTY
 import numpy as np
 
 # LOCAL
-from . skystatistics import SkyStats
-from . skyimage import *
+from . skyimage import SkyImage, SkyGroup
 
 
 __all__ = ['match']
 
-__version__ = '0.8.0'
-__vdate__ = '07-April-2017'
+
 __author__ = 'Mihai Cara'
 
 
@@ -252,7 +241,6 @@ stsci_python_sphinxdocs_2.13/drizzlepac/astrodrizzle.html>`_\ .
     log.info(" ")
     log.info("***** {:s}.{:s}() started on {}"
              .format(__name__, function_name, runtime_begin))
-    log.info("      Version {} ({})".format(__version__, __vdate__))
     log.info(" ")
 
     # check sky method:
@@ -543,7 +531,14 @@ def _find_optimum_sky_deltas(images, apply_sky=True):
                 invalid[j] = False
                 ieq += 1
 
-    rank = np.linalg.matrix_rank(K, 1.0e-12)
+    try:
+        rank = np.linalg.matrix_rank(K, 1.0e-12)
+    except np.linalg.LinAlgError:
+        log.warning("Unable to compute sky: No valid data in common "
+                    "image areas")
+        deltas = np.full(ns, np.nan, dtype=np.float)
+        return deltas
+
     if rank < ns - 1:
         log.warning("There are more unknown sky values ({}) to be solved for"
                     .format(ns))

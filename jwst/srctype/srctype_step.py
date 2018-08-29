@@ -1,8 +1,10 @@
 #! /usr/bin/env python
 
-from ..stpipe import Step, cmdline
+from ..stpipe import Step
 from .. import datamodels
 from .srctype import set_source_type
+
+__all__ = ["SourceTypeStep"]
 
 
 class SourceTypeStep(Step):

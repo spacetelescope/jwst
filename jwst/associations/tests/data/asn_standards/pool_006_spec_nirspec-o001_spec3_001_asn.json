@@ -1,17 +1,17 @@
 {
     "asn_type": "spec3",
-    "asn_rule": "candidate_Asn_NRS_FIXEDSLIT",
+    "asn_rule": "candidate_Asn_SpectralSource",
     "version_id": null,
-    "code_version": "0.9.4",
-    "program": "99009",
+    "code_version": "0.9.20",
     "degraded_status": "No known degraded exposures in association.",
-    "constraints": "Constraints:\n    exp_type: {'nrs_tacq', 'nrs_fixedslit', 'nrs_autowave', 'nrs_taconfirm', 'nrs_taslit', 'nrs_confirm'}\n    fixed_slit: {'s200a2'}\n    subarray: {'s200a2'}\n    is_not_tso: set()\n    instrument: {'nirspec'}\n    opt_elem: {'f100lp'}\n    opt_elem2: {'g140m'}\n    target: {'1'}\n    program: {'99009'}\n    asn_candidate: {\"\\\\(\\\\'o001\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}",
+    "program": "99009",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '99009'})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'nirspec'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'f100lp'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['grating'], 'value': 'g140m'})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': 's200a2'})\nConstraint_Target({'name': 'target', 'sources': ['targetid'], 'value': '1'})\nDMSAttrConstraint({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'nrc_grism|nrc_tsgrism|nrc_wfss|nrs_autoflat|nrs_autowave|nrs_fixedslit'})\nDMSAttrConstraint({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'nrs_autoflat|nrs_autowave|nrs_msaspec'})\nDMSAttrConstraint({'name': 'is_msa', 'sources': ['msametfl'], 'value': None})\nConstraint_Obsnum({'name': 'obs_num', 'sources': ['obs_num'], 'value': None})\nDMSAttrConstraint({'name': 'acq_exp', 'sources': ['exp_type'], 'value': 'mir_tacq|nis_taconfirm|nis_tacq|nrc_taconfirm|nrc_tacq|nrs_confirm|nrs_taconfirm|nrs_tacq|nrs_taslit'})\nDMSAttrConstraint({'name': 'acq_obsnum', 'sources': ['obs_num'], 'value': <function AsnMixin_Science.__init__.<locals>.<lambda> at 0xb18ddf1e0>})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o001\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
     "asn_id": "o001",
     "target": "t001",
     "asn_pool": "pool_006_spec_nirspec",
     "products": [
         {
-            "name": "jw99009-o001_t001_nirspec_f100lp-g140m",
+            "name": "jw99009-o001_{source_id}_nirspec_f100lp-g140m-s200a2",
             "members": [
                 {
                     "expname": "jw_00001_cal.fits",
@@ -22,6 +22,12 @@
                 {
                     "expname": "jw_00002_cal.fits",
                     "exptype": "science",
+                    "exposerr": null,
+                    "asn_candidate": "('o001', 'observation')"
+                },
+                {
+                    "expname": "jw_00007_rate.fits",
+                    "exptype": "autowave",
                     "exposerr": null,
                     "asn_candidate": "('o001', 'observation')"
                 },
@@ -46,12 +52,6 @@
                 {
                     "expname": "jw_00006_cal.fits",
                     "exptype": "target_acquistion",
-                    "exposerr": null,
-                    "asn_candidate": "('o001', 'observation')"
-                },
-                {
-                    "expname": "jw_00007_rate.fits",
-                    "exptype": "autowave",
                     "exposerr": null,
                     "asn_candidate": "('o001', 'observation')"
                 }

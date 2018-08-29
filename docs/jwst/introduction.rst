@@ -37,8 +37,18 @@ of each are available at
 The remainder of this document discusses pipeline configuration files and
 gives examples of running pipelines as a whole or in individual steps.
 
-CRDS Reference Files
-====================
+Reference Files
+===============
+
+Many pipeline steps rely on the use of a set of reference files essential to ensure the correct and accurate process of the data. The reference files are instrument-specific, and are periodically updated as the data process evolves and the understanding of the instruments improves. They are created, tested and validated by the JWST Instrument Teams. They ensure all the files are in the correct format and have all required header keywords. The files are then delivered to the Reference Data for Calibration and Tools (ReDCaT) Management Team. The result of this process is the files being ingested into CRDS (the JWST Calibration Reference Data System), and made available to the pipeline team and any other ground-subsystem that needs access to them.
+
+Information about all the reference files used by the Calibration Pipeline can be found at
+:ref:`reference-file-formats-documentation`
+as well as in the documentation for the Calibration Step using them.
+ 
+CRDS
+====
+
 CRDS reference file mappings are usually set by default to always give access
 to the most recent reference file deliveries and selection rules. On
 occasion it might be necessary or desirable to use one of the non-default
@@ -175,6 +185,33 @@ then supply the cfg file as a keyword argument:
 Universal Parameters
 ====================
 
+.. _intro_output_directory:
+
+Output Directory
+----------------
+
+By default, all pipeline and step outputs will drop into the current
+working directory, i.e., the directory in which the process is
+running. To change this, use the `output_dir` argument. For example, to
+have all output from `calwebb_detector1`, including any saved
+intermediate steps, appear in the sub-directory `calibrated`, use
+::
+
+    $ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
+        --output_dir=calibrated
+
+`output_dir` can be specified at the step level, overriding what was
+specified for the pipeline. From the example above, to change the name
+and location of the `dark_current` step, use the following
+::
+
+    $ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
+        --output_dir=calibrated
+        --steps.dark_current.output_file='dark_sub.fits'
+        --steps.dark_current.output_dir='dark_calibrated'
+
+.. _intro_output_file:
+
 Output File
 -----------
 
@@ -210,35 +247,19 @@ the entire pipeline using the `--output_file` argument also
 Output File and Associations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The stage 2 pipelines can take an individual file or an
-:ref:`association <associations>` as input. When given an association, `output_file` is
-ignored, in favor of using the product names defined in the
-associations. Stage 3 pipelines always require an association, hence
-`output_file` is never used for them.
+Stage 2 pipelines can take an individual file or an
+:ref:`association <associations>` as input. Nearly all Stage 3
+pipelines require an associaiton as input. Normally, the output file
+is defined in each association's `product_name`.
 
-Output Directory
-----------------
-
-By default, all pipeline and step outputs will drop into the current
-working directory, i.e., the directory in which the process is
-running. To change this, use the `output_dir` argument. For example, to
-have all output from `calwebb_detector1`, including any saved
-intermediate steps, appear in the sub-directory `calibrated`, use
-::
-
-    $ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
-        --output_dir=calibrated
-
-`output_dir` can be specified at the step level, overriding what was
-specified for the pipeline. From the example above, to change the name
-and location of the `dark_current` step, use the following
-::
-
-    $ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
-        --output_dir=calibrated
-        --steps.dark_current.output_file='dark_sub.fits'
-        --steps.dark_current.output_dir='dark_calibrated'
-
+If there is need to produce multiple versions of a calibration based
+on an association, it is highly suggested to use `output_dir` to place
+the results in a different directory instead of using `output_file` to
+rename the output files. Stage 2 pipelines do not allow the override
+of the output using `output_file`. Stage 3 pipelines do. However,
+since Stage 3 pipelines generally produce many files per association,
+using different directories via `output_dir` will make file keeping
+simpler.
 
 Override Reference File
 -----------------------
@@ -309,23 +330,44 @@ logging level designations of `DEBUG`, `INFO`, `WARNING`, `ERROR`, and
 will be displayed.
 
 
+Input Files
+===========
+
+There are two general types of input to any stage: references files
+and data files.  The references files, unless explicitly
+overridden, are provided through CRDS.
+
+The input data files - the exposure FITS files, association JSON files
+and input catalogs - are presumed to all be in the same directory as
+the primary input file. Sometimes the primary input is an association
+JSON file, and sometimes it is an exposure FITS file.
+
 Output File Names
 =================
 
-Pipelines and steps will use default output file names or names provided by
-the user via the `output_file` argument. In the absence of a user-specified
-output file name, pipelines and steps use different schemes for setting a
-default output name, which are explained below.
+File names for the outputs from pipelines and steps come from
+three different sources:
 
-Pipeline Outputs
-----------------
+- The name of the input file
+- The product name defined in an association
+- As specified by the `output_file` argument
 
-In the absence of a user-specified output file name, the various stage 1,
-2, and 3 pipeline modules will use the input root file name along with a set
-of predetermined suffixes to compose output file names. The output file name
-suffix will always replace the suffix of the input file name. Each pipeline
-module uses the appropriate suffix for the product(s) it is creating. The
-list of suffixes is shown in the following table.
+Regardless of the source, each pipeline/step uses the name as a "base
+name", on to which several different suffixes are appended, which
+indicate the type of data in that particular file.
+
+.. _pipeline_step_suffix_definitions:
+
+Pipeline/Step Suffix Definitions
+--------------------------------
+
+However the file name is determined (see above), the various stage 1,
+2, and 3 pipeline modules will use that file name, along with a set of
+predetermined suffixes, to compose output file names. The output file
+name suffix will always replace any existing suffix of the input file
+name. Each pipeline module uses the appropriate suffix for the
+product(s) it is creating. The list of suffixes is shown in the
+following table.
 
 =============================================  ========
 Product                                        Suffix
@@ -339,11 +381,22 @@ Background-subtracted image                    bsub
 Per integration background-subtracted image    bsubints
 Calibrated image                               cal
 Calibrated per integration images              calints
+CR-flagged image                               crf
+CR-flagged per integration images              crfints
 1D extracted spectrum                          x1d
 1D extracted spectra per integration           x1dints
 Resampled 2D image                             i2d
 Resampled 2D spectrum                          s2d
 Resampled 3D IFU cube                          s3d
+Source catalog                                 cat
+Time Series photometric catalog                phot
+Time Series white-light catalog                whtlt
+Coronagraphic PSF image stack                  psfstack
+Coronagraphic PSF-aligned images               psfalign
+Coronagraphic PSF-subtracted images            psfsub
+AMI fringe and closure phases                  ami
+AMI averaged fringe and closure phases         amiavg
+AMI normalized fringe and closure phases       aminorm
 =============================================  ========
 
 Individual Step Outputs
@@ -353,13 +406,14 @@ If individual steps are executed without an output file name specified via
 the `output_file` argument, the `stpipe` infrastructure
 automatically uses the input file name as the root of the output file name
 and appends the name of the step as an additional suffix to the input file
-name. For example:
+name. If the input file name already has a known suffix, that suffix
+will be replaced. For example:
 ::
 
  $ strun dq_init.cfg jw00017001001_01101_00001_nrca1_uncal.fits
 
 produces an output file named
-"jw00017001001_01101_00001_nrca1_uncal_dq_init.fits."
+`jw00017001001_01101_00001_nrca1_dq_init.fits`.
 
 Configuration Files
 ===================
@@ -407,8 +461,6 @@ jump detection step is:
     name = "jump"
     class = "jwst.jump.JumpStep"
     rejection_threshold = 4.0
-    do_yintercept = False
-    yint_threshold = 1.0
 
 You can list all of the parameters for this step using:
 ::
@@ -421,9 +473,9 @@ Guide at :ref:`stpipe-user-steps`.
 
 Available Pipelines
 ===================
-There are currently several pre-defined pipelines available for processing
-the data from different instrument observing modes. For all of the details
-see :ref:`pipelines`.
+There are many pre-defined pipeline modules for processing
+data from different instrument observing modes through each of the 3 stages
+of calibration. For all of the details see :ref:`pipelines`.
 
 
 For More Information

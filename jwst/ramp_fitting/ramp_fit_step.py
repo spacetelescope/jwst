@@ -10,6 +10,9 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
+__all__ = ["RampFitStep"]
+
+
 class RampFitStep (Step):
 
     """
@@ -27,7 +30,7 @@ class RampFitStep (Step):
     #      algorithm = option('OLS', 'GLS', default='OLS') # 'OLS' or 'GLS'
     #      weighting = option('unweighted', 'optimal', default='unweighted') \
     #      # 'unweighted' or 'optimal'
-    # As of 04/26/17, the only allowed algorithm is 'ols', and the 
+    # As of 04/26/17, the only allowed algorithm is 'ols', and the
     #      only allowed weighting is 'optimal'.
     algorithm = 'ols'      # Only algorithm allowed for Build 7.1
     weighting = 'optimal'  # Only weighting allowed for Build 7.1
@@ -51,10 +54,9 @@ class RampFitStep (Step):
             # If found, store it in the science model meta data, so that it's
             # available later in the gain_scale step, which avoids having to
             # load the gain ref file again in that step.
-            input_model.meta.exposure.gain_factor = None
-            if gain_model.meta.gain_factor is not None:
+            if gain_model.meta.exposure.gain_factor is not None:
                 input_model.meta.exposure.gain_factor = \
-                    gain_model.meta.gain_factor
+                    gain_model.meta.exposure.gain_factor
 
             log.info('Using algorithm = %s' % self.algorithm)
             log.info('Using weighting = %s' % self.weighting)
@@ -63,31 +65,30 @@ class RampFitStep (Step):
             if self.algorithm == "GLS":
                 buffsize //= 10
 
-            out_model, int_model, opt_model, gls_opt_model =\
-                ramp_fit.ramp_fit(input_model, buffsize, \
-                self.save_opt, readnoise_model, gain_model, self.algorithm, \
-                self.weighting)
+            out_model, int_model, opt_model, gls_opt_model = ramp_fit.ramp_fit(
+                input_model, buffsize,
+                self.save_opt, readnoise_model, gain_model, self.algorithm,
+                self.weighting
+            )
 
             readnoise_model.close()
             gain_model.close()
 
         # Save the OLS optional fit product, if it exists
         if opt_model is not None:
-            if self.opt_name != '':
-                opt_model.save(self.opt_name)
-            else:
-                self.save_model(opt_model, 'fitopt')
+            self.save_model(opt_model, 'fitopt', output_file=self.opt_name)
 
         # Save the GLS optional fit product, if it exists
         if gls_opt_model is not None:
-            if self.opt_name != '':
-                gls_opt_model.save(self.opt_name)
-            else:
-                self.save_model(gls_opt_model, 'fitoptgls')
+            self.save_model(
+                gls_opt_model, 'fitoptgls', output_file=self.opt_name
+            )
 
         out_model.meta.cal_step.ramp_fit = 'COMPLETE'
         if int_model is not None:
             int_model.meta.cal_step.ramp_fit = 'COMPLETE'
 
-        return out_model, int_model
+        if input_model.meta.exposure.type in ('NRS_IFU', 'MIR_MRS'):
+            out_model = datamodels.IFUImageModel(out_model)
 
+        return out_model, int_model

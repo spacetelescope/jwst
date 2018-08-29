@@ -4,17 +4,11 @@ N-dimensional image intensity data using (multivariate) polynomials.
 
 :Author: Mihai Cara (contact: help@stsci.edu)
 
-:License: :doc:`../LICENSE`
 
 """
-from __future__ import (absolute_import, division, unicode_literals,
-                        print_function)
 
 # STDLIB
-import copy
-
 import numpy as np
-from stsci.tools.bitmask import interpret_bit_flags
 
 from .lsq_optimizer import build_lsq_eqs, pinv_solve, rlu_solve
 

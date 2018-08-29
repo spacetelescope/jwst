@@ -12,6 +12,10 @@ from jwst.associations import (
     AssociationRegistry,
     generate,
 )
+from jwst.associations.lib.dms_base import DMSAttrConstraint
+from jwst.associations.lib.constraint import (
+    ConstraintTrue,
+)
 from jwst.associations.lib.log_config import (log_config, DMS_config)
 
 # Configure logging
@@ -201,9 +205,6 @@ class Main():
         except KeyError:
             pass
 
-        # Setup rules.
-        global_constraints = {}
-
         # Determine mode of operation. Options are
         #  1) Only specified candidates
         #  2) Only discovered assocations that do not match
@@ -216,11 +217,11 @@ class Main():
             parsed.discover = True
             parsed.all_candidates = True
         if parsed.discover or parsed.all_candidates:
-            global_constraints['asn_candidate'] = constrain_on_candidates(
+            global_constraints = constrain_on_candidates(
                 None
             )
         elif parsed.asn_candidate_ids is not None:
-            global_constraints['asn_candidate'] = constrain_on_candidates(
+            global_constraints = constrain_on_candidates(
                 parsed.asn_candidate_ids
             )
 
@@ -340,7 +341,6 @@ def constrain_on_candidates(candidates):
         List of candidate id's.
         If None, then all candidates are matched.
     """
-    constraint = {}
     if candidates is not None and len(candidates):
         c_list = '|'.join(candidates)
         values = ''.join([
@@ -348,13 +348,14 @@ def constrain_on_candidates(candidates):
         ])
     else:
         values = None
-    constraint = {
-        'value': values,
-        'inputs': ['asn_candidate'],
-        'force_unique': True,
-        'is_acid': True,
-        'evaluate': True,
-    }
+    constraint = DMSAttrConstraint(
+        name='asn_candidate',
+        sources=['asn_candidate'],
+        value=values,
+        force_unique=True,
+        is_acid=True,
+        evaluate=True,
+    )
 
     return constraint
 
@@ -419,8 +420,6 @@ def filter_discovered_only(
     if keep_candidates:
         discover_list.extend(candidate_list)
     return discover_list
-
-
 
 
 if __name__ == '__main__':

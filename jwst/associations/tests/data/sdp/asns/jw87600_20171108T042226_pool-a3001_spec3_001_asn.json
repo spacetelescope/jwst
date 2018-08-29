@@ -1,20 +1,32 @@
 {
     "asn_type": "spec3",
-    "asn_rule": "discover_Asn_NIR_SO_SLITLESS",
+    "asn_rule": "discover_Asn_WFSS_NIS",
     "version_id": null,
-    "code_version": "0.9.4",
-    "program": "87600",
+    "code_version": "0.9.18",
     "degraded_status": "No known degraded exposures in association.",
-    "constraints": "Constraints:\n    detector: {'nis'}\n    exp_type: {'nis_soss'}\n    opt_elem: {'gr700xd'}\n    subarray: {'substrip256'}\n    is_not_tso: set()\n    instrument: {'niriss'}\n    target: {'1'}\n    program: {'87600'}",
+    "program": "87600",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '87600'})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'niriss'})\nConstraint_Target({'name': 'target', 'sources': ['targetid'], 'value': '1'})\nDMSAttrConstraint({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'nis_wfss'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'gr150r|gr150c'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['pupil'], 'value': 'f200w'})\nConstraint_Obsnum({'name': 'obs_num', 'sources': ['obs_num'], 'value': None})\nDMSAttrConstraint({'name': 'acq_exp', 'sources': ['exp_type'], 'value': 'mir_tacq|nis_taconfirm|nis_tacq|nrc_taconfirm|nrc_tacq|nrs_confirm|nrs_taconfirm|nrs_tacq|nrs_taslit'})\nDMSAttrConstraint({'name': 'acq_obsnum', 'sources': ['obs_num'], 'value': <function AsnMixin_Science.__init__.<locals>.<lambda> at 0x81afdee18>})",
     "asn_id": "a3001",
     "target": "t001",
     "asn_pool": "jw87600_20171108T042226_pool",
     "products": [
         {
-            "name": "jw87600-a3001_t001_niriss_gr700xd",
+            "name": "jw87600-a3001_t001_niriss_gr150c-gr150r-f200w",
             "members": [
                 {
-                    "expname": "jw87600024001_02101_00001_nis_calints.fits",
+                    "expname": "jw87600019001_02101_00003_nis_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "null"
+                },
+                {
+                    "expname": "jw87600017001_02101_00002_nis_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "null"
+                },
+                {
+                    "expname": "jw87600019001_02101_00002_nis_cal.fits",
                     "exptype": "science",
                     "exposerr": "null",
                     "asn_candidate": "null"

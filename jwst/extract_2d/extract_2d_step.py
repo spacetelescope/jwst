@@ -1,8 +1,11 @@
 #! /usr/bin/env python
 
-from ..stpipe import Step, cmdline
+from ..stpipe import Step
 from .. import datamodels
 from . import extract_2d
+
+
+__all__ = ["Extract2dStep"]
 
 
 class Extract2dStep(Step):
@@ -29,4 +32,3 @@ class Extract2dStep(Step):
                                                 reference_files=reference_file_names)
 
         return output_model
-

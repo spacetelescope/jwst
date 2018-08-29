@@ -11,7 +11,8 @@ from gwcs import selector
 from gwcs.utils import _toindex
 from . import pointing
 from ..transforms import models as jwmodels
-from .util import not_implemented_mode, subarray_transform
+from .util import (not_implemented_mode, subarray_transform,
+                   velocity_correction)
 from ..datamodels import (DistortionModel, FilteroffsetModel,
                           DistortionMRSModel, WavelengthrangeModel,
                           RegionsModel, SpecwcsModel)
@@ -20,27 +21,35 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
+__all__ = ["create_pipeline", "imaging", "lrs", "ifu"]
+
+
 def create_pipeline(input_model, reference_files):
-    '''
+    """
     Create the WCS pipeline for MIRI modes.
 
     Parameters
     ----------
-    input_model : `jwst.datamodels.ImagingModel`
+    input_model : `jwst.datamodels.ImagingModel`, `~jwst.datamodels.IFUImageModel`, `~jwst.datamodels.CubeModel`
         Data model.
     reference_files : dict
-        Dictionary {reftype: reference file name}.
+        {reftype: reference file name} mapping.
 
-    '''
+    """
     exp_type = input_model.meta.exposure.type.lower()
     pipeline = exp_type2transform[exp_type](input_model, reference_files)
-
+    if pipeline:
+        log.info("Created a MIRI {0} pipeline with references {1}".format(
+            exp_type, reference_files))
     return pipeline
 
 
 def imaging(input_model, reference_files):
     """
-    Create MIRI Imagng WCS.
+    The MIRI Imaging WCS pipeline.
+
+    It includes three coordinate frames -
+    "detector", "v2v3" and "world".
 
     Parameters
     ----------
@@ -48,16 +57,13 @@ def imaging(input_model, reference_files):
         Data model.
     reference_files : dict
         Dictionary {reftype: reference file name}.
+        Uses "distortion" and "filteroffset" reference files.
 
-    The MIRI imaging pipeline includes 3 coordinate frames - detector,
-    focal plane and sky
-
-    reference_files={'distortion': 'test.asdf', 'filter_offsets': 'filter_offsets.asdf'}
     """
 
     # Create the Frames
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
-    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.deg, u.deg))
+    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.arcsec, u.arcsec))
     world = cf.CelestialFrame(reference_frame=coord.ICRS(), name='world')
 
     # Create the transforms
@@ -85,31 +91,22 @@ def imaging(input_model, reference_files):
 
 def imaging_distortion(input_model, reference_files):
     """
-    Create pixe2sky and sky2pixel transformation for the MIRI imager.
+    Create the "detector" to "v2v3" transform for the MIRI Imager.
 
-    Parameters
-    ----------
-    input_model : `jwst.datamodels.ImagingModel`
-        Data model.
-    reference_files : dict
-        Dictionary {reftype: reference file name}.
-
-    1. Filter dependent shift in (x,y) (!with an oposite sign to that delivered by the IT)
-    2. Apply MI
-    3. Apply Ai and BI matrices
-    4. Apply the TI matrix (this gives Xan/Yan coordinates)
-    5. Aply the XanYan --> V2V3 transform
+    1. Filter dependent shift in (x,y) (!with an oposite
+       sign to that delivered by the IT) (uses the "filteroffset" ref file)
+    2. Apply MI (uses "distortion" ref file)
+    3. Apply Ai and BI matrices (uses "distortion" ref file)
+    4. Apply the TI matrix (this gives Xan/Yan coordinates) (uses "distortion" ref file)
+    5. Aply the XanYan --> V2V3 transform (uses "distortion" ref file)
     6. Apply V2V3 --> sky transform
 
-    ref_file: filter_offset.asdf - (1)
-    ref_file: distortion.asdf -(2,3,4)
     """
     # Read in the distortion.
     with DistortionModel(reference_files['distortion']) as dist:
         distortion = dist.model
     obsfilter = input_model.meta.instrument.filter
 
-    # Add an offset for the filter
     # Add an offset for the filter
     with FilteroffsetModel(reference_files['filteroffset']) as filter_offset:
         filters = filter_offset.filters
@@ -124,25 +121,16 @@ def imaging_distortion(input_model, reference_files):
     if (col_offset is not None) and (row_offset is not None):
         distortion = models.Shift(col_offset) & models.Shift(row_offset) | distortion
 
-    # scale to degrees (remove this once pipeline can handle v2,v3 in arcsec)
-    distortion = distortion | models.Scale(1 / 3600) & models.Scale(1 / 3600)
     return distortion
 
 
 def lrs(input_model, reference_files):
     """
-    Create the WCS pipeline for a MIRI fixed slit observation.
+    The LRS-FIXEDSLIT and LRS-SLITLESS WCS pipeline.
 
-    Parameters
-    ----------
-    input_model : `jwst.datamodels.ImagingModel`
-        Data model.
-    reference_files : dict
-        Dictionary {reftype: reference file name}.
+    It has two coordinate frames: "detecor" and "world".
+    Uses the "specwcs" and "distortion" reference files.
 
-    reference_files = {
-        "specwcs": 'MIRI_FM_MIRIMAGE_P750L_DISTORTION_04.02.00.fits'
-    }
     """
 
     # Setup the frames.
@@ -157,8 +145,8 @@ def lrs(input_model, reference_files):
     subarray2full = subarray_transform(input_model)
     with DistortionModel(reference_files['distortion']) as dist:
         distortion = dist.model
-    # Distortion is in arcsec.  Convert to degrees
-    full_distortion = subarray2full | distortion | models.Scale(1 / 3600.) & models.Scale(1 / 3600.)
+
+    full_distortion = subarray2full | distortion
 
     # Load and process the reference data.
     with fits.open(reference_files['specwcs']) as ref:
@@ -205,6 +193,16 @@ def lrs(input_model, reference_files):
     # Create the model transforms.
     lrs_wav_model = jwmodels.LRSWavelength(lrsdata, zero_point)
 
+    try:
+        velosys = input_model.meta.wcsinfo.velosys
+    except AttributeError:
+        pass
+    else:
+        if velosys is not None:
+            velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
+            lrs_wav_model = lrs_wav_model | velocity_corr
+            log.info("Applied Barycentric velocity correction : {}".format(velocity_corr[1].amplitude.value))
+
     # Incorporate the small rotation
     angle = np.arctan(0.00421924)
     rot = models.Rotation2D(angle)
@@ -228,28 +226,20 @@ def lrs(input_model, reference_files):
 
 def ifu(input_model, reference_files):
     """
-    Create the WCS pipeline for a MIRI IFU observation.
-    Goes from 0-indexed detector pixels (0,0) middle of lower left reference pixel
-    to V2,V3 in arcsec.
+    The MIRI MRS WCS pipeline.
 
-    Parameters
-    ----------
-    input_model : `jwst.datamodels.ImagingModel`
-        Data model.
-    reference_files : dict
-        Dictionary {reftype: reference file name}.
+    It has the following coordinate frames:
+    "detector", "alpha_beta", "v2v3", "world".
+
+    It uses the "distortion", "regions", "specwcs"
+    and "wavelengthrange" reference files.
     """
-
-    #reference_files = {'distortion': 'jwst_miri_distortion_00001.asdf', #files must hold 2 channels each
-                        #'specwcs': 'jwst_miri_specwcs_00001.asdf',
-                        #'regions': 'jwst_miri_regions_00001.asdf',
-                        #'wavelengthrange': 'jwst_miri_wavelengthrange_0001.asdf'}
-    # Define reference frames
+    # Define coordinate frames.
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
     alpha_beta = cf.Frame2D(name='alpha_beta_spatial', axes_order=(0, 1), unit=(u.arcsec, u.arcsec), axes_names=('alpha', 'beta'))
     spec_local = cf.SpectralFrame(name='alpha_beta_spectral', axes_order=(2,), unit=(u.micron,), axes_names=('lambda',))
     miri_focal = cf.CompositeFrame([alpha_beta, spec_local], name='alpha_beta')
-    v23_spatial = cf.Frame2D(name='V2_V3_spatial', axes_order=(0, 1), unit=(u.deg, u.deg), axes_names=('v2', 'v3'))
+    v23_spatial = cf.Frame2D(name='V2_V3_spatial', axes_order=(0, 1), unit=(u.arcsec, u.arcsec), axes_names=('v2', 'v3'))
     spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.micron,), axes_names=('lambda',))
     v2v3 = cf.CompositeFrame([v23_spatial, spec], name='v2v3')
     icrs = cf.CelestialFrame(name='icrs', reference_frame=coord.ICRS(),
@@ -260,6 +250,7 @@ def ifu(input_model, reference_files):
     det2abl = (detector_to_abl(input_model, reference_files)).rename(
         "detector_to_abl")
     abl2v2v3l = (abl_to_v2v3l(input_model, reference_files)).rename("abl_to_v2v3l")
+
     tel2sky = pointing.v23tosky(input_model) & models.Identity(1)
 
     # Put the transforms together into a single transform
@@ -271,22 +262,17 @@ def ifu(input_model, reference_files):
                 (world, None)]
     return pipeline
 
+
 def detector_to_abl(input_model, reference_files):
     """
-    Create the transform from detector to alpha, beta frame.
+    Create the transform from "detector" to "alpha_beta" frame.
 
-    Parameters
-    ----------
-    input_model : `jwst.datamodels.ImagingModel`
-        Data model.
-    reference_files : dict
-        Dictionary {reftype: reference file name}.
-
-    forward transform:
+    Transform description:
+    forward transform
       RegionsSelector
         label_mapper is the regions array
-        selector is {slice_number: alphs_model & beta_model & lambda_model}
-    backward transform:
+        selector is {slice_number: alpha_model & beta_model & lambda_model}
+    backward transform
       RegionsSelector
         label_mapper is LabelMapperDict
            {channel_wave_range (): LabelMapperDict}
@@ -308,6 +294,16 @@ def detector_to_abl(input_model, reference_files):
 
     with SpecwcsModel(reference_files['specwcs']) as f:
         lambda_model = f.model
+
+    try:
+        velosys = input_model.meta.wcsinfo.velosys
+    except AttributeError:
+        pass
+    else:
+        if velosys is not None:
+            velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
+            lambda_model = [m | velocity_corr for m in lambda_model]
+            log.info("Applied Barycentric velocity correction : {}".format(velocity_corr[1].amplitude.value))
 
     with RegionsModel(reference_files['regions']) as f:
         regions = f.regions.copy()
@@ -346,16 +342,10 @@ def detector_to_abl(input_model, reference_files):
 
 def abl_to_v2v3l(input_model, reference_files):
     """
-    Create the transform from (alpha,beta,lambda) to (V2,V3,lambda) frame.
+    Create the transform from "alpha_beta" to "v2v3" frame.
 
-    Parameters
-    ----------
-    input_model : `jwst.datamodels.ImagingModel`
-        Data model.
-    reference_files : dict
-        Dictionary {reftype: reference file name}.
-
-    forward transform:
+    Transform description:
+    forward transform
       RegionsSelector
         label_mapper is LabelMapperDict()
         {channel_wave_range (): channel_number}
@@ -389,10 +379,8 @@ def abl_to_v2v3l(input_model, reference_files):
         chan_v23 = v23[c]
         v23chan_backward = chan_v23.inverse
         del chan_v23.inverse
-        # This is the spatial part of the transform; tack on additional conversion to degrees
-        # Remove this degrees conversion once pipeline can handle v2,v3 in arcsec
-        v23_spatial = chan_v23 | models.Scale(1 / 3600) & models.Scale(1 / 3600)
-        v23_spatial.inverse = models.Scale(3600) & models.Scale(3600) | v23chan_backward
+        v23_spatial = chan_v23
+        v23_spatial.inverse = v23chan_backward
         # Tack on passing the third wavelength component
         v23c = v23_spatial & ident1
         sel[ch] = v23c

@@ -2,16 +2,16 @@
     "asn_type": "tso3",
     "asn_rule": "candidate_Asn_TSO_EXPTYPE",
     "version_id": null,
-    "code_version": "0.9.4",
-    "program": "80600",
+    "code_version": "0.9.12",
     "degraded_status": "No known degraded exposures in association.",
-    "constraints": "Constraints:\n    exp_type: {'mir_lrs\\\\-slitless'}\n    no_tso_flag: Is Invalid\n    opt_elem: {'p750l'}\n    opt_elem2: set()\n    target: {'1'}\n    program: {'80600'}\n    instrument: {'miri'}\n    asn_candidate: {\"\\\\(\\\\'o012\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}",
+    "program": "80600",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '80600'})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'miri'})\nConstraint_Target({'name': 'target', 'sources': ['targetid'], 'value': '1'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'p750l'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['pupil', 'grating'], 'value': None})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': 'subprism'})\nDMSAttrConstraint({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'mir_lrs\\\\-slitless'})\nDMSAttrConstraint({'name': 'no_tso_flag', 'sources': ['tsovisit'], 'value': None})\nConstraint_Obsnum({'name': 'obs_num', 'sources': ['obs_num'], 'value': None})\nDMSAttrConstraint({'name': 'acq_exp', 'sources': ['exp_type'], 'value': 'mir_tacq|nis_taconfirm|nis_tacq|nrc_taconfirm|nrc_tacq|nrs_confirm|nrs_taconfirm|nrs_tacq|nrs_taslit'})\nDMSAttrConstraint({'name': 'acq_obsnum', 'sources': ['obs_num'], 'value': <function AsnMixin_Science.__init__.<locals>.<lambda> at 0x10cef8ae8>})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o012\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
     "asn_id": "o012",
     "target": "t001",
     "asn_pool": "jw80600_20171108T041522_pool",
     "products": [
         {
-            "name": "jw80600-o012_t001_miri_p750l",
+            "name": "jw80600-o012_t001_miri_p750l-subprism",
             "members": [
                 {
                     "expname": "jw80600012001_02101_00002_mirimage_calints.fits",

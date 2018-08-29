@@ -7,7 +7,7 @@ from asdf import treeutil
 
 from . import model_base
 from .image import ImageModel
-
+from .slit import SlitModel, SlitDataModel
 
 __all__ = ['MultiExposureModel']
 
@@ -42,7 +42,7 @@ class MultiExposureModel(model_base.DataModel):
         # Lets create a schema
         schema = self._build_schema()
 
-        if isinstance(init, ImageModel):
+        if isinstance(init, (SlitModel, SlitDataModel, ImageModel)):
             super(MultiExposureModel, self).__init__(
                 init=None,
                 schema=schema,

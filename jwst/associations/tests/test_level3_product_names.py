@@ -10,6 +10,7 @@ from .helpers import (
 )
 
 from .. import (AssociationPool, generate)
+from ..lib.dms_base import DMSAttrConstraint
 
 # Temporarily skip if running under Travis
 # pytestmark = pytest.mark.skipif(
@@ -21,7 +22,7 @@ LEVEL3_PRODUCT_NAME_REGEX = (
     'jw'
     '(?P<program>\d{5})'
     '-(?P<acid>[a-z]\d{3,4})'
-    '_(?P<target>(?:t\d{3})|(?:s\d{5}))'
+    '_(?P<target>(?:t\d{3})|(?:\{source_id\}))'
     '(?:-(?P<epoch>epoch\d+))?'
     '_(?P<instrument>.+?)'
     '_(?P<opt_elem>.+)'
@@ -53,15 +54,14 @@ global_constraints = func_fixture(
     generate_params,
     scope='module',
     params=[
-        {
-            'asn_candidate': {
-                'value': ['.+o002.+'],
-                'inputs': ['asn_candidate'],
-                'force_unique': True,
-                'is_acid': True,
-                'evaluate': True,
-            }
-        },
+        DMSAttrConstraint(
+            name='asn_candidate',
+            value=['.+o002.+'],
+            sources=['asn_candidate'],
+            force_unique=True,
+            is_acid=True,
+            evaluate=True,
+        ),
     ]
 )
 
@@ -82,14 +82,14 @@ def test_level3_productname_components_discovered():
 
 
 def test_level3_productname_components_acid():
-    global_constraints = {}
-    global_constraints['asn_candidate_ids'] = {
-        'value': '.+o001.+',
-        'inputs': ['asn_candidate'],
-        'force_unique': True,
-        'is_acid': True,
-        'evaluate': True,
-    }
+    global_constraints = DMSAttrConstraint(
+        name='asn_candidate_ids',
+        value='.+o001.+',
+        sources=['asn_candidate'],
+        force_unique=True,
+        is_acid=True,
+        evaluate=True,
+    )
     rules = registry_level3_only(global_constraints=global_constraints)
     pool = combine_pools(t_path('data/pool_002_image_miri.csv'))
     asns = generate(pool, rules)
@@ -110,7 +110,7 @@ def test_level35_names(pool_file):
     asns = generate(pool, rules)
     for asn in asns:
         product_name = asn['products'][0]['name']
-        if asn['asn_rule'] == 'Asn_MIRI_IFU':
+        if asn['asn_rule'] == 'Asn_IFU':
             m = re.match(LEVEL3_PRODUCT_NAME_NO_OPTELEM_REGEX, product_name)
         else:
             m = re.match(LEVEL3_PRODUCT_NAME_REGEX, product_name)
@@ -125,7 +125,7 @@ def test_level3_names(pool_file, global_constraints):
     asns = generate(pool, rules)
     for asn in asns:
         product_name = asn['products'][0]['name']
-        if asn['asn_rule'] == 'Asn_MIRI_IFU':
+        if asn['asn_rule'] == 'Asn_IFU':
             m = re.match(LEVEL3_PRODUCT_NAME_NO_OPTELEM_REGEX, product_name)
         else:
             m = re.match(LEVEL3_PRODUCT_NAME_REGEX, product_name)
@@ -143,7 +143,7 @@ def test_multiple_optelems(pool_file):
     asns = generate(pool, rules)
     for asn in asns:
         product_name = asn['products'][0]['name']
-        if asn['asn_rule'] != 'Asn_MIRI_IFU':
+        if asn['asn_rule'] != 'Asn_IFU':
             m = re.match(LEVEL3_PRODUCT_NAME_REGEX, product_name)
             assert m is not None
             try:

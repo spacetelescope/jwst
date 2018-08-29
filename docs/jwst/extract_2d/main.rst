@@ -16,7 +16,7 @@ This step uses the ``bounding_box`` attribute of the WCS stored in the data mode
 which is populated by the ``assign_wcs`` step. Hence the ``assign_wcs`` step
 must be applied to the science exposure before running this step.
 
-For GRISM/WFSS modes in NIRCAM and NIRSS, no ``bounding_box`` has been attached
+For WFSS modes in NIRCAM and NIRSS, no ``bounding_box`` has been attached
 to the datamodel. This is to keep the WCS flexible enough to be used with any
 source catalog that may be associated with the dispersed image. Instead, there
 is a helper method that is used to calculate the bounding boxes that contain
@@ -27,8 +27,8 @@ the 2D cutouts from the dispersed image.
 
 Algorithm
 ---------
-The step is currently applied only to NIRSpec Fixed Slit, NIRSPEC MSA,
-NIRCAM GRISM and NIRISS WFSS observations.
+The step is currently applied only to NIRSpec Fixed Slit, NIRSPEC MSA, NIRSPEC TSO,
+NIRCAM WFSS and NIRISS WFSS observations.
 
 For NIRSPEC:
 
@@ -55,7 +55,7 @@ corresponding to the FITS keywords ``SLTNAME``, ``SLTSTRT1``, ``SLTSIZE1``,
 ``SLTSTRT2``, and ``SLTSIZE2``.
 
 
-For NIRCAM GRISM and NIRISS WFSS :
+For NIRCAM WFSS and NIRISS WFSS :
 
 If the step parameter ``grism_objects`` is left unspecified, the default behavior
 is to use the source catalog that is specified in the input model's meta information,
@@ -94,9 +94,6 @@ with EXP_TYPE of "NRS_FIXEDSLT", "NRS_BRIGHTOBJ" or "NRS_MSASPEC". This is an op
 correction (on by default). It can be turned off by specifying ``apply_wavecorr=False``
 when running the step.
 
-NIRCAM GRISM and NIRISS WFSS observations use the wavelengthrange reference file in order
+NIRCAM WFSS and NIRISS WFSS observations use the wavelengthrange reference file in order
 to construct the bounding boxes around each objects orders. If a list of ``GrismObject``
 is supplied, then no reference file is neccessary.
-
-
-

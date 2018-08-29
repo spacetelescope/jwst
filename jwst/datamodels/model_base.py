@@ -10,30 +10,24 @@ import sys
 import warnings
 
 import numpy as np
-import jsonschema
 
 from astropy.io import fits
 from astropy.time import Time
 from astropy.wcs import WCS
-from astropy.nddata import nddata_base
 
 from asdf import AsdfFile
 from asdf import yamlutil
 from asdf import schema as asdf_schema
-from asdf import extension as asdf_extension
+from asdf.tags.core.ndarray import numpy_dtype_to_asdf_datatype
 
 from . import ndmodel
 from . import filetype
 from . import fits_support
 from . import properties
 from . import schema as mschema
+from . import validate
 
-from .extension import BaseExtension
-from jwst.transforms.jwextension import JWSTExtension
-from gwcs.extension import GWCSExtension
-
-
-jwst_extensions = [GWCSExtension(), JWSTExtension(), BaseExtension()]
+from .history import HistoryList
 
 
 class DataModel(properties.ObjectNode, ndmodel.NDModel):
@@ -43,7 +37,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
     schema_url = "core.schema.yaml"
 
     def __init__(self, init=None, schema=None, extensions=None,
-                 pass_invalid_values=False):
+                 pass_invalid_values=False, strict_validation=False):
         """
         Parameters
         ----------
@@ -74,25 +68,21 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         extensions: classes extending the standard set of extensions, optional.
             If an extension is defined, the prefix used should be 'url'.
 
-        pass_invalid_values: If true, values that do not validate the schema can
-            be read and written and only a warning will be generated
+        pass_invalid_values: If true, values that do not validate the schema
+            will be added to the metadata. If false, they will be set to None
+
+        strict_validation: if true, an schema validation errors will generate
+            an excption. If false, they will generate a warning.
         """
         # Set the extensions
-        if extensions is None:
-            extensions = jwst_extensions[:]
-        else:
-            extensions.extend(jwst_extensions)
         self._extensions = extensions
 
-        # Override value of pass_invalid value if environment value set
-        if "PASS_INVALID_VALUES" in os.environ:
-            pass_invalid_values = os.environ["PASS_INVALID_VALUES"]
-            try:
-                pass_invalid_values = bool(int(pass_invalid_values))
-            except ValueError:
-                pass_invalid_values = False
-
-        self._pass_invalid_values = pass_invalid_values
+        # Override value of validation parameters
+        # if environment value set
+        self._pass_invalid_values = self.get_envar("PASS_INVALID_VALUES",
+                                                    pass_invalid_values)
+        self._strict_validation = self.get_envar("STRICT_VALIDATION",
+                                                 strict_validation)
 
         # Construct the path to the schema files
         filename = os.path.abspath(inspect.getfile(self.__class__))
@@ -112,43 +102,51 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                                              resolver=file_resolver,
                                              resolve_references=True)
 
-        self._schema = mschema.flatten_combiners(schema)
+        self._schema = mschema.merge_property_trees(schema)
+
+        # Provide the object as context to other classes and functions
+        self._ctx = self
+
         # Determine what kind of input we have (init) and execute the
         # proper code to intiailize the model
         self._files_to_close = []
         self._iscopy = False
-
         is_array = False
         is_shape = False
         shape = None
 
         if init is None:
             asdf = AsdfFile(extensions=extensions)
+
         elif isinstance(init, dict):
-            asdf = AsdfFile(init, extensions=extensions)
+            asdf = AsdfFile(init, extensions=self._extensions)
+
         elif isinstance(init, np.ndarray):
-            asdf = AsdfFile(extensions=extensions)
+            asdf = AsdfFile(extensions=self._extensions)
             shape = init.shape
             is_array = True
-        elif isinstance(init, self.__class__):
-            self.clone(self, init)
-            return
-        elif isinstance(init, DataModel):
-            raise TypeError(
-                "Passed in {0!r} is not of the expected subclass {1!r}".format(
-                    init.__class__.__name__, self.__class__.__name__))
-        elif isinstance(init, AsdfFile):
-            asdf = init
+
         elif isinstance(init, tuple):
             for item in init:
                 if not isinstance(item, int):
                     raise ValueError("shape must be a tuple of ints")
+
             shape = init
             asdf = AsdfFile()
             is_shape = True
+
+        elif isinstance(init, DataModel):
+            self.clone(self, init)
+            if not isinstance(init, self.__class__):
+                self.validate()
+            return
+
+        elif isinstance(init, AsdfFile):
+            asdf = init
+
         elif isinstance(init, fits.HDUList):
-            asdf = fits_support.from_fits(init, self._schema, extensions,
-                                          pass_invalid_values)
+            asdf = fits_support.from_fits(init, self._schema,
+                                          self._extensions, self._ctx)
 
         elif isinstance(init, (str, bytes)):
             if isinstance(init, bytes):
@@ -158,11 +156,12 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             if file_type == "fits":
                 hdulist = fits.open(init)
                 asdf = fits_support.from_fits(hdulist, self._schema,
-                                              extensions, pass_invalid_values)
+                                              self._extensions, self._ctx)
+
                 self._files_to_close.append(hdulist)
 
             elif file_type == "asdf":
-                asdf = AsdfFile.open(init, extensions=extensions)
+                asdf = AsdfFile.open(init, extensions=self._extensions)
 
             else:
                 # TODO handle json files as well
@@ -173,12 +172,28 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             raise ValueError(
                 "Can't initialize datamodel using {0}".format(str(type(init))))
 
-        # Initialize object fields as determined fro the code above
-
+        # Initialize object fields as determined from the code above
         self._shape = shape
         self._instance = asdf.tree
         self._asdf = asdf
-        self._ctx = self
+
+        # Initalize class dependent hidden fields
+        self._no_asdf_extension = False
+
+        # Instantiate the primary array of the image
+        if is_array:
+            primary_array_name = self.get_primary_array_name()
+            if not primary_array_name:
+                raise TypeError(
+                    "Array passed to DataModel.__init__, but model has "
+                    "no primary array in its schema")
+            setattr(self, primary_array_name, init)
+
+        if is_shape:
+            if not self.get_primary_array_name():
+                raise TypeError(
+                    "Shape passed to DataModel.__init__, but model has "
+                    "no primary array in its schema")
 
         # if the input is from a file, set the filename attribute
         if isinstance(init, str):
@@ -191,33 +206,40 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                     self.meta.filename = os.path.basename(filename)
 
         # if the input model doesn't have a date set, use the current date/time
-        if self.meta.date is None:
+        if not self.meta.hasattr('date'):
             current_date = Time(datetime.datetime.now())
             current_date.format = 'isot'
             self.meta.date = current_date.value
 
         # store the data model type, if not already set
         klass = self.__class__.__name__
-        if klass == 'DataModel':
-            klass = None
-
-        if hasattr(self.meta, 'model_type'):
-            if self.meta.model_type is None:
+        if klass != 'DataModel':
+            if not self.meta.hasattr('model_type'):
                 self.meta.model_type = klass
+
+    def __repr__(self):
+        import re
+
+        buf = ['<']
+        match = re.search(r"(\w+)'", str(type(self)))
+        if match:
+            buf.append(match.group(1))
         else:
-            self.meta.model_type = klass
+            buf.append("DataModel")
 
-        if is_array:
-            primary_array_name = self.get_primary_array_name()
-            if primary_array_name is None:
-                raise TypeError(
-                    "Array passed to DataModel.__init__, but model has "
-                    "no primary array in its schema")
-            setattr(self, primary_array_name, init)
+        if self.shape:
+            buf.append(str(self.shape))
 
-        # TODO this code looks useless
-        if is_shape:
-            getattr(self, self.get_primary_array_name())
+        try:
+            filename = self.meta.filename
+        except AttributeError:
+            filename = None
+        if filename:
+            buf.append(" from ")
+            buf.append(filename)
+        buf.append('>')
+
+        return "".join(buf)
 
     def __enter__(self):
         return self
@@ -225,12 +247,38 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
 
+    def _drop_arrays(self):
+        def _drop_array(d):
+            # Walk tree and delete numpy arrays
+            if isinstance(d, dict):
+                for val in d.values():
+                    _drop_array(val)
+            elif isinstance(d, list):
+                for val in d:
+                    _drop_array(val)
+            elif isinstance(d, np.ndarray):
+                del d
+            else:
+                pass
+        _drop_array(self._instance)
+
     def close(self):
+        if not self._iscopy and self._asdf is not None:
+            self._asdf.close()
+            self._drop_arrays()
+
         for fd in self._files_to_close:
             if fd is not None:
                 fd.close()
-        if not self._iscopy and self._asdf is not None:
-            self._asdf.close()
+
+    def get_envar(self, name, value):
+        if name in os.environ:
+            value = os.environ[name]
+            try:
+                value = bool(int(value))
+            except ValueError:
+                value = True
+        return value
 
     def get_resolver(self, asdf_file):
         extensions = asdf_file._extensions
@@ -251,9 +299,9 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             target._iscopy = True
 
         target._files_to_close = []
-        target._schema = source._schema
         target._shape = source._shape
         target._ctx = target
+        target._no_asdf_extension = source._no_asdf_extension
 
     def copy(self, memo=None):
         """
@@ -261,11 +309,87 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         """
         result = self.__class__(init=None,
                                 extensions=self._extensions,
-                                pass_invalid_values=self._pass_invalid_values)
+                                pass_invalid_values=self._pass_invalid_values,
+                                strict_validation=self._strict_validation)
         self.clone(result, self, deepcopy=True, memo=memo)
         return result
 
     __copy__ = __deepcopy__ = copy
+
+    def validate(self):
+        """
+        Re-validate the model instance againsst its schema
+        """
+        validate.value_change(str(self), self._instance, self._schema,
+                              self._pass_invalid_values,
+                              self._strict_validation)
+
+    def info(self):
+        """
+        Return datatype and dimension for each array or table
+        """
+        def get_field_info(path, instance):
+            field_info = []
+            if isinstance(instance, dict):
+                if path:
+                    path += '.'
+                for name, val in instance.items():
+                    new_path = path + name.lower()
+                    field_info.extend(get_field_info(new_path, val))
+            elif isinstance(instance, list):
+                for index, val in enumerate(instance):
+                    new_path = "%s[%d]" % (path, index)
+                    field_info.extend(get_field_info(new_path, val))
+            elif isinstance(instance, np.ndarray):
+                if instance.shape[0] > 0:
+                    shape_info = get_shape_info(instance)
+                    type_info = get_type_info(instance)
+                    field_info = [(path, shape_info, type_info)]
+            return field_info
+
+        def get_meta_info(meta):
+            meta_info = []
+            for attribute in ('filename', 'date', 'model_type'):
+                if hasattr(meta, attribute):
+                    value = getattr(meta, attribute)
+                    if value is not None:
+                        meta_info.append(attribute + ': ' + value)
+            return meta_info
+
+        def get_shape_info(instance):
+            if hasattr(instance, '_coldefs'):
+                nrows = instance.shape[0]
+                ncols = len(instance._coldefs)
+                shape_info = "{}R x {}C".format(nrows, ncols)
+            else:
+                # Display shape in fits order (reversed)
+                shape = [str(s) for s in reversed(instance.shape)]
+                shape_info = '(' + ','.join(shape) + ')'
+            return shape_info
+
+        def get_type_info(instance):
+            if hasattr(instance, '_coldefs'):
+                col_info = []
+                for coldef in instance._coldefs:
+                    col_info.append(coldef.name + ':' + coldef.format)
+                type_info = '(' + ','.join(col_info) + ')'
+            else:
+                type_info = numpy_dtype_to_asdf_datatype(instance.dtype)[0]
+            return type_info
+
+        meta_info = get_meta_info(self.meta)
+        field_info = get_field_info('', self._instance)
+
+
+        buffer = meta_info
+        format_string = "%-40s%-20s%s"
+        buffer.append(70 * '-')
+        buffer.append(format_string % ('attribute', 'size', 'type'))
+        buffer.append(70 * '-')
+        for field in field_info:
+            buffer.append(format_string % field)
+        return "\n".join(buffer) + "\n"
+
 
     def get_primary_array_name(self):
         """
@@ -274,7 +398,11 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         This is intended to be overridden in the subclasses if the
         primary array's name is not "data".
         """
-        return 'data'
+        if properties._find_property(self._schema, 'data'):
+            primary_array_name = 'data'
+        else:
+            primary_array_name = ''
+        return primary_array_name
 
     def on_save(self, path=None):
         """
@@ -298,33 +426,50 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         current_date.format = 'isot'
         self.meta.date = current_date.value
 
-        if not hasattr(self.meta, 'model_type'):
-            klass = self.__class__.__name__
-            if klass != 'DataModel':
-                self.meta.model_type = klass
-
-    def save(self, path, *args, **kwargs):
+    def save(self, path, dir_path=None, *args, **kwargs):
         """
         Save to either a FITS or ASDF file, depending on the path.
 
         Parameters
         ----------
-        path : string
+        path : string or func
+            File path to save to.
+            If function, it takes one argument with is
+            model.meta.filename and returns the full path string.
+
+        dir_path: string
+            Directory to save to. If not None, this will override
+            any directory information in the `path`
+
+        Returns
+        -------
+        output_path: str
+            The file path the model was saved in.
         """
-        base, ext = os.path.splitext(path)
+        if callable(path):
+            path_head, path_tail = os.path.split(path(self.meta.filename))
+        else:
+            path_head, path_tail = os.path.split(path)
+        base, ext = os.path.splitext(path_tail)
         if isinstance(ext, bytes):
             ext = ext.decode(sys.getfilesystemencoding())
+
+        if dir_path:
+            path_head = dir_path
+        output_path = os.path.join(path_head, path_tail)
 
         # TODO: Support gzip-compressed fits
         if ext == '.fits':
             # TODO: remove 'clobber' check once depreciated fully in astropy
             if 'clobber' not in kwargs:
                 kwargs.setdefault('overwrite', True)
-            self.to_fits(path, *args, **kwargs)
+            self.to_fits(output_path, *args, **kwargs)
         elif ext == '.asdf':
-            self.to_asdf(path, *args, **kwargs)
+            self.to_asdf(output_path, *args, **kwargs)
         else:
             raise ValueError("unknown filetype {0}".format(ext))
+
+        return output_path
 
     @classmethod
     def from_asdf(cls, init, schema=None):
@@ -346,7 +491,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         -------
         model : DataModel instance
         """
-        return cls(init, schema=schema, extensions=jwst_extensions)
+        return cls(init, schema=schema)
 
     def to_asdf(self, init, *args, **kwargs):
         """
@@ -404,15 +549,18 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                                   extensions=self._extensions) as ff:
             with warnings.catch_warnings():
                 warnings.filterwarnings('ignore', message='Card is too long')
-                ff.write_to(init, *args, **kwargs)
+                if self._no_asdf_extension:
+                    ff._hdulist.writeto(init, *args, **kwargs)
+                else:
+                    ff.write_to(init, *args, **kwargs)
 
     @property
     def shape(self):
         if self._shape is None:
-            if self.get_primary_array_name() in self._instance:
-                return getattr(self, self.get_primary_array_name()).shape
-            else:
-                return None
+            primary_array_name = self.get_primary_array_name()
+            if primary_array_name and self.hasattr(primary_array_name):
+                primary_array = getattr(self, primary_array_name)
+                self._shape = primary_array.shape
         return self._shape
 
     def my_attribute(self, attr):
@@ -437,8 +585,8 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         new_schema : schema tree
         """
         schema = {'allOf': [self._schema, new_schema]}
-        self._schema = mschema.flatten_combiners(schema)
-        self._validate()
+        self._schema = mschema.merge_property_trees(schema)
+        self.validate()
         return self
 
     def add_schema_entry(self, position, new_schema):
@@ -590,7 +738,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
     # We are just going to define the items to return the iteritems
     items = iteritems
 
-
     def iterkeys(self):
         """
         Iterates over all of the schema keys in a flat way.
@@ -728,6 +875,8 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             path = ['extra_fits', hdu_name, 'header']
             set_hdu_keyword(self._instance, d, path)
 
+        self.validate()
+
     def to_flat_dict(self, include_arrays=True):
         """
         Returns a dictionary of all of the schema items as a flat dictionary.
@@ -770,22 +919,27 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
     @property
     def history(self):
-        return self._instance.setdefault('history', [])
+        """
+        Get the history as a list of entries
+        """
+        return HistoryList(self._asdf)
 
     @history.setter
-    def history(self, value):
+    def history(self, values):
         """
         Set a history entry.
 
         Parameters
         ----------
-        value : list
+        values : list
             For FITS files this should be a list of strings.
             For ASDF files use a list of ``HistoryEntry`` object. It can be created
             with `~jwst.datamodels.util.create_history_entry`.
 
         """
-        self._instance['history'] = value
+        entries = self.history
+        entries.clear()
+        entries.extend(values)
 
     def get_fits_wcs(self, hdu_name='SCI', hdu_ver=1, key=' '):
         """
@@ -826,7 +980,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         header = hdu.header
         return WCS(header, key=key, relax=True, fix=True)
 
-
     def set_fits_wcs(self, wcs, hdu_name='SCI'):
         """
         Sets the FITS WCS information on the model using the given
@@ -846,22 +999,23 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             HDU, pass ``'PRIMARY'``.
         """
         header = wcs.to_header()
-        extensions = self._asdf._extensions
         if hdu_name == 'PRIMARY':
             hdu = fits.PrimaryHDU(header=header)
         else:
             hdu = fits.ImageHDU(name=hdu_name, header=header)
         hdulist = fits.HDUList([hdu])
 
-        ff = fits_support.from_fits(hdulist, self._schema, extensions=extensions,
-            pass_invalid_values=self._pass_invalid_values)
+        ff = fits_support.from_fits(hdulist, self._schema,
+                                    self._extensions, self._ctx)
 
         self._instance = properties.merge_tree(self._instance, ff.tree)
 
-    #--------------------------------------------------------
+    # --------------------------------------------------------
     # These two method aliases are here for astropy.registry
     # compatibility and should not be called directly
-    #--------------------------------------------------------
+    # --------------------------------------------------------
 
     read = __init__
-    write = save
+
+    def write(self, path, *args, **kwargs):
+        self.save(path, *args, **kwargs)

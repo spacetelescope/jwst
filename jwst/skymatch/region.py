@@ -3,7 +3,6 @@ Polygon filling algorithm.
 
 :Authors: Nadezhda Dencheva, Mihai Cara (contact: help@stsci.edu)
 
-:License: :doc:`../LICENSE`
 
 """
 # Original author: Nadezhda Dencheva
@@ -21,13 +20,12 @@ Polygon filling algorithm.
 #    http://www.cs.rit.edu/~icss571/filling/how_to.html
 #    http://www.cs.uic.edu/~jbell/CourseNotes/ComputerGraphics/PolygonFilling.html
 #
-from __future__ import division
 from collections import OrderedDict
 import numpy as np
 
 __all__ = ['Region', 'Edge', 'Polygon']
 __taskname__ = 'region'
-__version__ = '0.8.0'
+__version__ = '0.9.3'
 __vdate__ = '07-April-2017'
 __author__ = 'Nadezhda Dencheva, Mihai Cara'
 
@@ -39,7 +37,7 @@ class ValidationError(Exception):
     def __str__(self):
         return self._message
 
-class Region(object):
+class Region():
     """
     Base class for regions.
 
@@ -276,7 +274,7 @@ class Polygon(Region):
         return px[0] >= self._bbox[0] and px[0] <= self._bbox[0] + self._bbox[2] and \
                px[1] >= self._bbox[1] and px[1] <= self._bbox[1] + self._bbox[3]
 
-class Edge(object):
+class Edge():
     """
     Edge representation
 

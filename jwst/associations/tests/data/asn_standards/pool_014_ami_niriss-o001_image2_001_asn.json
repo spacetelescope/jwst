@@ -2,11 +2,12 @@
     "asn_type": "image2",
     "asn_rule": "candidate_Asn_Lv2ImageSpecial",
     "version_id": null,
-    "code_version": "0.9.4",
+    "code_version": "0.9.12",
+    "degraded_status": "No known degraded exposures in association.",
     "program": "10005",
     "target": "2",
     "asn_pool": "pool_014_ami_niriss",
-    "constraints": "Constraints:\n    is_special: {'true'}\n    single_science: {'False'}\n    exp_type: {'nis_ami'}\n    program: {'10005'}\n    target: {'2'}\n    instrument: {'nircam'}\n    detector: {'nrca2'}\n    opt_elem: {'f210m'}\n    opt_elem2: {'maskrnd'}\n    subarray: {'maska210r'}\n    channel: {'short'}\n    asn_candidate: {\"\\\\(\\\\'o001\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}\n    is_tso: set()",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '10005'})\nDMSAttrConstraint({'name': 'is_tso', 'sources': ['tsovisit'], 'value': None})\nDMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '10005'})\nDMSAttrConstraint({'name': 'target', 'sources': ['targetid'], 'value': '2'})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'nircam'})\nDMSAttrConstraint({'name': 'detector', 'sources': ['detector'], 'value': 'nrca2'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'f210m'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['pupil'], 'value': 'maskrnd'})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': 'maska210r'})\nDMSAttrConstraint({'name': 'channel', 'sources': ['channel'], 'value': 'short'})\nConstraint_Image_Science({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'nis_ami'})\nConstraint_Special({'name': 'is_special', 'sources': ['is_psf'], 'value': 'true'})\nSimpleConstraint({'name': 'single_science', 'value': False})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o001\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
     "asn_id": "o001",
     "products": [
         {
@@ -14,7 +15,8 @@
             "members": [
                 {
                     "expname": "jw10005007001_02102_00001_nrca2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         }

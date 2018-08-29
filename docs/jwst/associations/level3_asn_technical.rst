@@ -59,46 +59,6 @@ The following example will be used to explain the contents of an association::
         ]
     }
 
-JSON Format
-^^^^^^^^^^^
-
-As with any JSON file, the basic unit of information is the key/value
-pair::
-
-  "key": "value"
-
-Values can be nested, either by specifying a list, using `[]`
-notation, or a dictionary (object in JSON nomenclature), using the `{}` notations::
-
-  "key_with_an_array": [
-    value,
-    value,
-    value
-  ],
-  "key_with_dictionary": {
-    "key": value,
-    "key": value
-  }
-
-The `json.org <http://www.json.org/>`_ website has a full description
-of the format.
-
-Ordering and Indention
-""""""""""""""""""""""
-
-Neither JSON or the logical layout of the associations themselves
-define or require that key/values appear in a particular order. It is
-entirely possible that the `products` keyword may appear in the middle
-of the file, surround by the other top-level keywords. This is
-perfectly acceptable. However, it may be disconcerting at first if one is
-editing an association.
-
-What is important is the indention of the nested values. Indention
-should be done only with spaces, to ensure that visual inspection is
-correct. How much indentation to use is arbitrary, but must be
-consistent: All nested information for a key must lie at the same
-indentation.
-
 .. _asn-association-meta-keywords:
 
 Association Meta Keywords
@@ -170,8 +130,17 @@ expname *required*
 exptype *required*
   Type of information represented by the exposure. Possible values are
 
-  * `science`
-  * `target_aquisition`
+  * `science` *required*
+
+    The primary science expsoures. There is usually more than one
+    since Level3 calibration involves combining multiple science
+    exposures. However, at least one exposure in an association needs
+    to be `science`.
+    
+  * `psf` *optional*
+
+    Exposures that should be considered PSF references for
+    coronagraphic and AMI calibration.
 
 exposerr *optional*
   If there was some issue the occured on the observatory that may have

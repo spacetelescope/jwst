@@ -2,28 +2,21 @@
     "asn_type": "spec2",
     "asn_rule": "candidate_Asn_Lv2Spec",
     "version_id": null,
-    "code_version": "0.9.4",
+    "code_version": "0.9.12",
+    "degraded_status": "No known degraded exposures in association.",
     "program": "99009",
     "target": "1",
     "asn_pool": "pool_007_spec_miri",
-    "constraints": "Constraints:\n    single_science: {'False'}\n    exp_type: {'mir_mrs'}\n    program: {'99009'}\n    target: {'1'}\n    instrument: {'miri'}\n    detector: {'mirifushort'}\n    opt_elem: {'medium'}\n    opt_elem2: set()\n    subarray: {'full'}\n    channel: {'12'}\n    asn_candidate: {\"\\\\(\\\\'o008\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}\n    is_tso: set()",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '99009'})\nDMSAttrConstraint({'name': 'is_tso', 'sources': ['tsovisit'], 'value': None})\nDMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '99009'})\nDMSAttrConstraint({'name': 'target', 'sources': ['targetid'], 'value': '1'})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'miri'})\nDMSAttrConstraint({'name': 'detector', 'sources': ['detector'], 'value': 'mirifushort'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['band'], 'value': 'short'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['pupil', 'grating'], 'value': None})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': 'full'})\nDMSAttrConstraint({'name': 'channel', 'sources': ['channel'], 'value': '12'})\nConstraint_Spectral_Science({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'mir_mrs'})\nSimpleConstraint({'name': 'single_science', 'value': False})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o008\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
     "asn_id": "o008",
     "products": [
         {
-            "name": "jw99009018001_02101_00002_mirifushort",
+            "name": "jw_00035",
             "members": [
                 {
-                    "expname": "jw99009018001_02101_00002_mirifushort_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw99009018001_02101_00001_mirifushort",
-            "members": [
-                {
-                    "expname": "jw99009018001_02101_00001_mirifushort_rate.fits",
-                    "exptype": "science"
+                    "expname": "jw_00035_rate.fits",
+                    "exptype": "science",
+                    "exposerr": null
                 }
             ]
         }

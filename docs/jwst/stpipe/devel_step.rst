@@ -15,6 +15,10 @@ separate `spec` file).
 Inputs and outputs
 ------------------
 
+A `Step` provides a full framework for handling I/O. Below is a short
+description. A more detailed discussion can be found in
+:ref:`step_io_design`.
+
 Steps get their inputs from two sources:
 
     - Configuration parameters come from the configuration file or
@@ -31,14 +35,31 @@ as part of a larger pipeline.  Another way to think about this is: if
 the user would want to examine or change the value, use a
 configuration parameter.
 
-The step will generally return its output as a data model.  Every step
-has the implicitly created configuration parameter `output_file`, that
-the user can use to specify the file to save this model to.  The
-saving is handled by the framework -- steps generally do not need to
-explicitly save their results.
+The configuration parameters are defined by the
+:ref:`Step.spec <the-spec-member>` member. 
 
-Output Configuration
---------------------
+Input Files, Associations, and Directories
+``````````````````````````````````````````
+
+It is presumed that all input files are co-resident in the same
+directory. This directory is whichever directory the first input file
+is found in. This is particularly important for associations. It is
+assumed that all files referenced by an association are in the same
+directory as the association file itself.
+
+Output Files and Directories
+````````````````````````````
+
+The step will generally return its output as a data model. Every step
+has implicitly created configuration parameters `output_dir` and
+`output_file` which the user can use to specify the directory and file
+to save this model to. Since the `stpipe` architecture generally
+creates output file names, in general, it is expected that `output_file`
+be rarely specified, and that different sets of outputs be separated
+using `output_dir`.
+
+Output Suffix
+-------------
 
 There are three ways a step's results can be written to a file:
 
@@ -142,6 +163,8 @@ The Python Step subclass may be installed anywhere that your Python
 installation can find it.  It does not need to be installed in the
 `stpipe` package.
 
+.. _the-spec-member:
+
 The spec member
 ---------------
 
@@ -184,7 +207,7 @@ keyword argument::
 While the most commonly useful parts of the configspec format are
 discussed here, greater detail can be found in the `configspec
 documentation
-<http://www.voidspace.org.uk/python/configobj.html#validation>`_.
+<https://configobj.readthedocs.io/en/latest/>`_.
 
 Configspec types
 ````````````````

@@ -442,8 +442,6 @@ class OutputSpectrumModel:
         else:
             dir = -1.
 
-        dwl = out_wl[1:] - out_wl[0:-1]
-
         if not wl_has_len:
             in_wl = np.array([in_wl], dtype=np.float)
 
@@ -631,6 +629,7 @@ def do_correction(asn_file, exptime_key, interpolation):
         ms = datamodels.open(file)
         try:
             dummy = len(ms.spec)
+            del dummy
         except AttributeError:
             log.error("Input file {} is a {}; skipping ..."
                       .format(file, type(ms)))

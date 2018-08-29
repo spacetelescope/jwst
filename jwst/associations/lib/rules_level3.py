@@ -2,49 +2,49 @@
 """
 import logging
 
+from jwst.associations.registry import RegistryMarker
+from jwst.associations.lib.dms_base import (ACQ_EXP_TYPES, Constraint_TSO)
 from jwst.associations.lib.rules_level3_base import *
+from jwst.associations.lib.rules_level3_base import format_product
 
 __all__ = [
-    'Asn_Image',
-    'Asn_MIRI_IFU',
-    'Asn_MIRI_LRS_FIXEDSLIT',
-    'Asn_MIRI_LRS_SLITLESS',
-    'Asn_NRS_FIXEDSLIT',
-    'Asn_NRS_IFU',
-    'Asn_NRS_MSA',
-    'Asn_NIR_SO_SLITLESS',
-    'Asn_WFSCMB',
+    'Asn_AMI',
     'Asn_Coron',
+    'Asn_IFU',
+    'Asn_Image',
+    'Asn_SpectralSource',
+    'Asn_SpectralTarget',
+    'Asn_TSO',
+    'Asn_WFSCMB',
+    'Asn_WFSS_NIS',
 ]
 
 # Configure logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
+
 # --------------------------------
 # Start of the User-level rules
 # --------------------------------
-
-
-# ----------------------------------
-# Image associations
-class Asn_Image(
-        AsnMixin_Image,
-        AsnMixin_OpticalPath,
-        AsnMixin_Target,
-        AsnMixin_Base
-):
+@RegistryMarker.rule
+class Asn_Image(AsnMixin_Science):
     """Non-Association Candidate Dither Associations"""
 
     def __init__(self, *args, **kwargs):
 
-        # Setup for checking.
-        self.add_constraints({
-            'wfsvisit': {
-                'inputs': ['visitype'],
-                'value': '((?!wfsc).)*'
-            },
-        })
+        # Setup constraints
+        self.constraints = Constraint([
+            Constraint_Optical_Path(),
+            Constraint_Target(),
+            Constraint_Image(),
+            DMSAttrConstraint(
+                name='wfsvisit',
+                sources=['visitype'],
+                value='((?!wfsc).)*',
+                required=False
+            ),
+        ])
 
         # Now check and continue initialization.
         super(Asn_Image, self).__init__(*args, **kwargs)
@@ -56,40 +56,41 @@ class Asn_Image(
         super(Asn_Image, self)._init_hook(item)
 
 
-class Asn_WFSCMB(
-        AsnMixin_Image,
-        AsnMixin_OpticalPath,
-        AsnMixin_Target,
-        AsnMixin_Base
-):
+@RegistryMarker.rule
+class Asn_WFSCMB(AsnMixin_Science):
     """Wavefront Sensing association
 
     Notes
     -----
     Defined by `TRAC issue #269 <https://aeon.stsci.edu/ssb/trac/jwst/ticket/269>`_
     """
+
     def __init__(self, *args, **kwargs):
 
-        # Setup for checking.
-        self.add_constraints({
-            'wfsvisit': {
-                'value': '.+wfsc.+',
-                'inputs': ['visitype'],
-            },
-            'asn_candidate_wfs': {
-                'value': '.+mosaic.+',
-                'inputs': ['asn_candidate'],
-                'force_unique': True,
-                'is_acid': True,
-                'evaluate': True,
-            },
-            'activity_id': {
-                'value': None,
-                'inputs': ['act_id']
-            }
-        })
+        # Setup constraints
+        self.constraints = Constraint([
+            Constraint_Optical_Path(),
+            Constraint_Target(),
+            Constraint_Image(),
+            DMSAttrConstraint(
+                name='wfsvisit',
+                sources=['visitype'],
+                value='.+wfsc.+',
+            ),
+            DMSAttrConstraint(
+                name='asn_candidate_wfs',
+                sources=['asn_candidate'],
+                value='.+mosaic.+',
+                force_unique=True,
+                is_acid=True,
+                evaluate=True,
+            ),
+            DMSAttrConstraint(
+                name='activity_id',
+                sources=['act_id']
+            )
+        ])
 
-        # Now check and continue initialization.
         super(Asn_WFSCMB, self).__init__(*args, **kwargs)
 
     def _init_hook(self, item):
@@ -99,207 +100,225 @@ class Asn_WFSCMB(
         super(Asn_WFSCMB, self)._init_hook(item)
 
 
-# Spectrographic Associations
-class Asn_MIRI_LRS_FIXEDSLIT(
-        AsnMixin_Spectrum,
-        AsnMixin_MIRI,
-        AsnMixin_Target,
-        AsnMixin_Base
-):
-    """MIRI LRS Fixed slit"""
+@RegistryMarker.rule
+class Asn_SpectralTarget(AsnMixin_Spectrum):
+    """Slit-like, target-based, or single-object spectrographic modes"""
 
     def __init__(self, *args, **kwargs):
 
         # Setup for checking.
-        self.add_constraints({
-            'exp_type': {
-                'value': (
+        self.constraints = Constraint([
+            Constraint(
+                [Constraint_TSO()],
+                reduce=Constraint.notany
+            ),
+            Constraint_Optical_Path(),
+            Constraint_Target(),
+            DMSAttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+                value=(
                     'mir_lrs-fixedslit'
-                    '|mir_tacq'
+                    '|mir_lrs_slitless'
                 ),
-                'inputs': ['exp_type']
-            },
-            'opt_elem': {
-                'value': 'p750l',
-                'inputs': ['filter']
-            },
-            'subarray': {
-                'value': 'full',
-                'inputs': ['subarray']
-            }
-        })
+                force_unique=False
+            )
+        ])
 
         # Check and continue initialization.
-        super(Asn_MIRI_LRS_FIXEDSLIT, self).__init__(*args, **kwargs)
+        super(Asn_SpectralTarget, self).__init__(*args, **kwargs)
 
 
-class Asn_MIRI_LRS_SLITLESS(
-        AsnMixin_Spectrum,
-        AsnMixin_MIRI,
-        AsnMixin_Target,
-        AsnMixin_Base
-):
-    """MIRI LRS Slitless"""
+@RegistryMarker.rule
+class Asn_SpectralSource(AsnMixin_Spectrum):
+    """Slit-like, multi-object spectrographic modes"""
 
     def __init__(self, *args, **kwargs):
 
         # Setup for checking.
-        self.add_constraints({
-            'exp_type': {
-                'value': (
-                    'mir_lrs-slitless'
-                    '|mir_tacq'
-                ),
-                'inputs': ['exp_type']
-            },
-            'opt_elem': {
-                'value': 'p750l',
-                'inputs': ['filter']
-            },
-            'subarray': {
-                'value': 'subprism',
-                'inputs': ['subarray']
-            }
-        })
+        self.constraints = Constraint([
+            Constraint(
+                [Constraint_TSO()],
+                reduce=Constraint.notany
+            ),
+            Constraint_Optical_Path(),
+            Constraint_Target(),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        name='exp_type',
+                        sources=['exp_type'],
+                        value=(
+                            'nrc_grism'
+                            '|nrc_tsgrism'
+                            '|nrc_wfss'
+                            '|nrs_autoflat'
+                            '|nrs_autowave'
+                            '|nrs_fixedslit'
+                        ),
+                        force_unique=False
+                    ),
+                    Constraint_MSA()
+                ],
+                reduce=Constraint.any
+            )
+        ])
 
         # Check and continue initialization.
-        super(Asn_MIRI_LRS_SLITLESS, self).__init__(*args, **kwargs)
+        super(Asn_SpectralSource, self).__init__(*args, **kwargs)
+
+    @property
+    def dms_product_name(self):
+        """Define product name.
+
+        Returns
+        -------
+        product_name: str
+            The product name
+        """
+        instrument = self._get_instrument()
+
+        opt_elem = self._get_opt_element()
+
+        subarray = self._get_subarray()
+        if len(subarray):
+            subarray = '-' + subarray
+
+        product_name_format = (
+            'jw{program}-{acid}'
+            '_{source_id}'
+            '_{instrument}'
+            '_{opt_elem}{subarray}'
+        )
+        product_name = format_product(
+            product_name_format,
+            program=self.data['program'],
+            acid=self.acid.id,
+            instrument=instrument,
+            opt_elem=opt_elem,
+            subarray=subarray,
+        )
+
+        return product_name.lower()
 
 
-class Asn_NIR_SO_SLITLESS(
-        AsnMixin_Spectrum,
-        AsnMixin_NIRISS,
-        AsnMixin_Target,
-        AsnMixin_Base
-):
-    """NIRISS Single-Object Slitless"""
+@RegistryMarker.rule
+class Asn_SpectralTarget(AsnMixin_Spectrum):
+    """Slit-like, target-based, or single-object spectrographic modes"""
 
     def __init__(self, *args, **kwargs):
 
         # Setup for checking.
-        self.add_constraints({
-            'detector': {
-                'value': 'nis',
-                'inputs': ['detector']
-            },
-            'exp_type': {
-                'value': (
-                    'nis_soss'
-                    '|nis_tacq'
-                    '|nis_tacnfrm'
+        self.constraints = Constraint([
+            Constraint(
+                [Constraint_TSO()],
+                reduce=Constraint.notany
+            ),
+            Constraint_Optical_Path(),
+            Constraint_Target(),
+            DMSAttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+                value=(
+                    'mir_lrs-fixedslit'
+                    '|mir_lrs_slitless'
+                    '|nis_soss'
                 ),
-                'inputs': ['exp_type']
-            },
-            'opt_elem': {
-                'value': 'gr700xd',
-                'inputs': ['pupil']
-            },
-            'subarray': {
-                'value': 'full|substrip256|substrip80',
-                'inputs': ['subarray'],
-                'force_unique': True
-            }
-        })
+                force_unique=False
+            )
+        ])
 
         # Check and continue initialization.
-        super(Asn_NIR_SO_SLITLESS, self).__init__(*args, **kwargs)
+        super(Asn_SpectralTarget, self).__init__(*args, **kwargs)
 
 
-class Asn_NRS_FIXEDSLIT(
-        AsnMixin_Spectrum,
-        AsnMixin_NIRSPEC,
-        AsnMixin_OpticalPath,
-        AsnMixin_Target,
-        AsnMixin_Base
-):
-    """NIRSPEC Fixed Slit"""
+@RegistryMarker.rule
+class Asn_SpectralSource(AsnMixin_Spectrum):
+    """Slit-like, multi-object spectrographic modes"""
 
     def __init__(self, *args, **kwargs):
 
         # Setup for checking.
-        self.add_constraints({
-            'exp_type': {
-                'value': (
-                    'nrs_fixedslit'
-                    '|nrs_autowave'
-                    '|nrs_confirm'
-                    '|nrs_taconfirm'
-                    '|nrs_tacq'
-                    '|nrs_taslit'
-                ),
-                'inputs': ['exp_type']
-            },
-            'fixed_slit': {
-                'value': None,
-                'inputs': ['fxd_slit']
-            },
-            'subarray': {
-                'value': None,
-                'inputs': ['subarray']
-            },
-        })
+        self.constraints = Constraint([
+            Constraint(
+                [Constraint_TSO()],
+                reduce=Constraint.notany
+            ),
+            Constraint_Optical_Path(),
+            Constraint_Target(),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        name='exp_type',
+                        sources=['exp_type'],
+                        value=(
+                            'nrc_wfss'
+                            '|nrs_autoflat'
+                            '|nrs_autowave'
+                            '|nrs_fixedslit'
+                        ),
+                        force_unique=False
+                    ),
+                    Constraint_MSA()
+                ],
+                reduce=Constraint.any
+            )
+        ])
 
         # Check and continue initialization.
-        super(Asn_NRS_FIXEDSLIT, self).__init__(*args, **kwargs)
+        super(Asn_SpectralSource, self).__init__(*args, **kwargs)
+
+    @property
+    def dms_product_name(self):
+        """Define product name.
+
+        Returns
+        -------
+        product_name: str
+            The product name
+        """
+        instrument = self._get_instrument()
+
+        opt_elem = self._get_opt_element()
+
+        subarray = self._get_subarray()
+        if len(subarray):
+            subarray = '-' + subarray
+
+        product_name_format = (
+            'jw{program}-{acid}'
+            '_{source_id}'
+            '_{instrument}'
+            '_{opt_elem}{subarray}'
+        )
+        product_name = format_product(
+            product_name_format,
+            program=self.data['program'],
+            acid=self.acid.id,
+            instrument=instrument,
+            opt_elem=opt_elem,
+            subarray=subarray,
+        )
+
+        return product_name.lower()
 
 
-class Asn_NRS_MSA(
-        AsnMixin_Spectrum,
-        AsnMixin_NIRSPEC,
-        AsnMixin_OpticalPath,
-        AsnMixin_Target,
-        AsnMixin_Base
-):
-    """NIRSPEC MSA"""
+@RegistryMarker.rule
+class Asn_IFU(AsnMixin_Spectrum):
+    """IFU associations"""
 
     def __init__(self, *args, **kwargs):
 
         # Setup for checking.
-        self.add_constraints({
-            'exp_type': {
-                'value': (
-                    'nrs_msaspec'
-                    '|nrs_autoflat'
-                    '|nrs_autowave'
-                    '|nrs_confirm'
-                    '|nrs_taslit'
-                    '|nrs_taconfirm'
-                    '|nrs_tacq'
-                ),
-                'inputs': ['exp_type']
-            },
-        })
+        self.constraints = Constraint([
+            Constraint_Target(),
+            Constraint_IFU(),
+        ])
 
         # Check and continue initialization.
-        super(Asn_NRS_MSA, self).__init__(*args, **kwargs)
+        super(Asn_IFU, self).__init__(*args, **kwargs)
 
-
-class Asn_MIRI_IFU(
-        AsnMixin_Spectrum,
-        AsnMixin_MIRI,
-        AsnMixin_Target,
-        AsnMixin_Base
-):
-    """MIRI MRS (IFU)"""
-
-    def __init__(self, *args, **kwargs):
-
-        # Setup for checking.
-        self.add_constraints({
-            'exp_type': {
-                'value': (
-                    'mir_mrs'
-                    '|mir_flatmrs'
-                    '|mir_tacq'
-                ),
-                'inputs': ['exp_type'],
-                'force_unique': False,
-            },
-        })
-
-        # Check and continue initialization.
-        super(Asn_MIRI_IFU, self).__init__(*args, **kwargs)
-
+    @property
     def dms_product_name(self):
         """Define product name."""
         target = self._get_target()
@@ -316,75 +335,42 @@ class Asn_MIRI_IFU(
         return product_name.lower()
 
 
-class Asn_NRS_IFU(
-        AsnMixin_Spectrum,
-        AsnMixin_NIRSPEC,
-        AsnMixin_Target,
-        AsnMixin_Base
-):
-    """NIRSPEC IFU"""
-
-    def __init__(self, *args, **kwargs):
-
-        # Setup for checking.
-        self.add_constraints({
-            'exp_type': {
-                'value': (
-                    'nrs_ifu'
-                    '|nrs_autowave'
-                    '|nrs_confirm'
-                    '|nrs_taconfirm'
-                    '|nrs_tacq'
-                    '|nrs_taslit'
-                ),
-                'inputs': ['exp_type']
-            },
-        })
-
-        # Check and continue initialization.
-        super(Asn_NRS_IFU, self).__init__(*args, **kwargs)
-
-
-class Asn_Coron(
-        AsnMixin_OpticalPath,
-        AsnMixin_Base
-):
+@RegistryMarker.rule
+class Asn_Coron(AsnMixin_Science):
     """Coronography
-
     Notes
     -----
-
     Coronography is nearly completely defined by the association candidates
     produced by APT.
-
     Tracking Issues:
-
     - `github #311 <https://github.com/STScI-JWST/jwst/issues/311>`
     """
 
     def __init__(self, *args, **kwargs):
 
         # Setup for checking.
-        self.add_constraints({
-            'exp_type': {
-                'value': (
-                    'nrc_coron'
-                    '|nrc_taconfirm'
-                    '|nrc_tacq'
-                    '|mir_lyot'
-                    '|mir_4qpm'
-                    '|mir_tacq'
+        self.constraints = Constraint(
+            [
+                Constraint_Optical_Path(),
+                DMSAttrConstraint(
+                    name='exp_type',
+                    sources=['exp_type'],
+                    value=(
+                        'nrc_coron'
+                        '|mir_lyot'
+                        '|mir_4qpm'
+                    ),
                 ),
-                'inputs': ['exp_type'],
-                'force_unique': True,
-            },
-            'target': {
-                'value': None,
-                'inputs': ['targetid'],
-                'onlyif': lambda item: self.get_exposure_type(item) == 'science',
-                'force_reprocess': ProcessList.EXISTING,
-            }
-        })
+                DMSAttrConstraint(
+                    name='target',
+                    sources=['targetid'],
+                    onlyif=lambda item: self.get_exposure_type(item) == 'science',
+                    force_reprocess=ProcessList.EXISTING,
+                    only_on_match=True,
+                ),
+            ],
+            name='asn_coron'
+        )
 
         # PSF is required
         self.validity.update({
@@ -404,42 +390,37 @@ class Asn_Coron(
         super(Asn_Coron, self)._init_hook(item)
 
 
-class Asn_AMI(
-        AsnMixin_OpticalPath,
-        AsnMixin_Base
-):
+@RegistryMarker.rule
+class Asn_AMI(AsnMixin_Science):
     """Aperture Mask Interferometry
-
     Notes
     -----
-
     AMI is nearly completely defined by the association candidates
     produced by APT.
-
     Tracking Issues:
-
     - `github #310 <https://github.com/STScI-JWST/jwst/issues/310>`
     """
 
     def __init__(self, *args, **kwargs):
 
         # Setup for checking.
-        self.add_constraints({
-            'exp_type': {
-                'value': (
+        self.constraints = Constraint([
+            Constraint_Optical_Path(),
+            DMSAttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+                value=(
                     'nis_ami'
-                    '|nis_taconfirm'
-                    '|nis_tacq'
                 ),
-                'inputs': ['exp_type'],
-            },
-            'target': {
-                'value': None,
-                'inputs': ['targetid'],
-                'onlyif': lambda item: self.get_exposure_type(item) == 'science',
-                'force_reprocess': ProcessList.EXISTING,
-            }
-        })
+            ),
+            DMSAttrConstraint(
+                name='target',
+                sources=['targetid'],
+                onlyif=lambda item: self.get_exposure_type(item) == 'science',
+                force_reprocess=ProcessList.EXISTING,
+                only_on_match=True,
+            ),
+        ])
 
         # Check and continue initialization.
         super(Asn_AMI, self).__init__(*args, **kwargs)
@@ -451,95 +432,81 @@ class Asn_AMI(
         super(Asn_AMI, self)._init_hook(item)
 
 
-class Asn_WFSS(
-        AsnMixin_Spectrum,
-        AsnMixin_OpticalPath,
-        AsnMixin_Target,
-        AsnMixin_Base
-):
+@RegistryMarker.rule
+class Asn_WFSS_NIS(AsnMixin_Spectrum):
     """WFSS/Grism modes"""
 
     def __init__(self, *args, **kwargs):
 
         # Setup for checking.
-        self.add_constraints({
-            'exp_type': {
-                'value': 'nis_wfss',
-                'inputs': ['exp_type']
-            },
-            'opt_elem2': {
-                'value': 'gr150r|gr150c',
-                'inputs': ['grating'],
-                'force_unique': False,
-            },
-        })
+        self.constraints = Constraint([
+            Constraint_Target(),
+            DMSAttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+                value='nis_wfss',
+            ),
+            DMSAttrConstraint(
+                name='opt_elem',
+                sources=['filter'],
+                value='gr150r|gr150c',
+                force_unique=False,
+            ),
+            DMSAttrConstraint(
+                name='opt_elem2',
+                sources=['pupil'],
+            ),
+        ])
 
         # Check and continue initialization.
-        super(Asn_WFSS, self).__init__(*args, **kwargs)
+        super(Asn_WFSS_NIS, self).__init__(*args, **kwargs)
 
 
-class Asn_TSO_Flag(
-        AsnMixin_OpticalPath,
-        AsnMixin_Target,
-        AsnMixin_Base
-):
+@RegistryMarker.rule
+class Asn_TSO(AsnMixin_Science):
     """Time-Series observations"""
-    def __init__(self, *args, **kwargs):
-        self.add_constraints({
-            'is_tso': {
-                'value': 't',
-                'inputs': ['tsovisit']
-            },
-            'exp_type': {
-                'value': None,
-                'inputs': ['exp_type']
-            }
-        })
 
-        super(Asn_TSO_Flag, self).__init__(*args, **kwargs)
+    def __init__(self, *args, **kwargs):
+
+        # Setup for checking.
+        self.constraints = Constraint([
+            Constraint_Target(),
+            Constraint_Optical_Path(),
+            Constraint_TSO(),
+            DMSAttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+            ),
+        ])
+
+        super(Asn_TSO, self).__init__(*args, **kwargs)
 
     def _init_hook(self, item):
         """Post-check and pre-add initialization"""
 
         self.data['asn_type'] = 'tso3'
-        super(Asn_TSO_Flag, self)._init_hook(item)
+        super(Asn_TSO, self)._init_hook(item)
 
 
-class Asn_TSO_EXPTYPE(
-        AsnMixin_OpticalPath,
-        AsnMixin_Target,
-        AsnMixin_Base
-):
-    """Time-Series observations"""
+@RegistryMarker.rule
+class Asn_ACQ_Reprocess(DMS_Level3_Base):
+    """For first loop, simply send acquisitions and confirms back"""
+
     def __init__(self, *args, **kwargs):
-        self.add_constraints({
-            'exp_type': {
-                'value': (
-                    'mir_lrs-slitless'
-                    '|nis_soss'
-                    '|nis_taconfirm'
-                    '|nis_tacq'
-                    '|nrc_tsimage'
-                    '|nrc_tsgrism'
-                    '|nrs_bota'
-                    '|nrs_brightobj'
-                    '|nrs_taconfirm'
-                ),
-                'inputs': ['exp_type'],
-                'force_unique': True
-            },
-            'no_tso_flag': {
-                'value': None,
-                'inputs': ['tsovisit'],
-                'required': False,
-                'force_undefined': True
-            }
-        })
 
-        super(Asn_TSO_EXPTYPE, self).__init__(*args, **kwargs)
+        # Setup for checking.
+        self.constraints = Constraint([
+            DMSAttrConstraint(
+                sources=['exp_type'],
+                value='|'.join(ACQ_EXP_TYPES),
+                force_unique=False
+            ),
+            SimpleConstraint(
+                name='force_fail',
+                test=lambda x, y: False,
+                value='anything but None',
+                force_reprocess=ProcessList.NONSCIENCE
+            )
+        ])
 
-    def _init_hook(self, item):
-        """Post-check and pre-add initialization"""
-
-        self.data['asn_type'] = 'tso3'
-        super(Asn_TSO_EXPTYPE, self)._init_hook(item)
+        super(Asn_ACQ_Reprocess, self).__init__(*args, **kwargs)

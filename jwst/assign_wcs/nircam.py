@@ -2,12 +2,13 @@ import logging
 
 from astropy import coordinates as coord
 from astropy import units as u
-from astropy.modeling.models import Scale, Identity
+from astropy.modeling.models import Identity
 import gwcs.coordinate_frames as cf
 
 from . import pointing
 from .util import not_implemented_mode, subarray_transform
-from ..datamodels import ImageModel, NIRCAMGrismModel, DistortionModel
+from ..datamodels import (ImageModel, NIRCAMGrismModel, DistortionModel,
+                          CubeModel)
 from ..transforms.models import (NIRCAMForwardRowGrismDispersion,
                                  NIRCAMForwardColumnGrismDispersion,
                                  NIRCAMBackwardGrismDispersion)
@@ -16,11 +17,14 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def create_pipeline(input_model, reference_files):
-    '''
-    get reference files from crds
+__all__ = ["create_pipeline", "imaging", "tsgrism", "wfss"]
 
-    '''
+
+def create_pipeline(input_model, reference_files):
+    """
+    Create the WCS pipeline based on EXP_TYPE.
+
+    """
     exp_type = input_model.meta.exposure.type.lower()
     pipeline = exp_type2transform[exp_type](input_model, reference_files)
 
@@ -29,13 +33,15 @@ def create_pipeline(input_model, reference_files):
 
 def imaging(input_model, reference_files):
     """
-    The NIRCAM imaging pipeline includes 3 coordinate frames -
-    detector, focal plane and sky
+    The NIRCAM imaging WCS pipeline.
 
-    reference_files={'distortion': 'test.asdf', 'filter_offsets': 'filter_offsets.asdf'}
+    It includes three coordinate frames -
+    "detector", "v2v3" and "world".
+
+    It uses the "distortion" reference file.
     """
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
-    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.deg, u.deg))
+    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.arcsec, u.arcsec))
     world = cf.CelestialFrame(reference_frame=coord.ICRS(), name='world')
 
     subarray2full = subarray_transform(input_model)
@@ -51,20 +57,35 @@ def imaging(input_model, reference_files):
 
 
 def imaging_distortion(input_model, reference_files):
-    distortion = DistortionModel(reference_files['distortion']).model
-    # Convert to deg - output of distortion models is in arcsec.
-    transform = distortion | Scale(1 / 3600) & Scale(1 / 3600)
+    """
+    Create the "detector" to "v2v3" transform.
+    """
+    dist = DistortionModel(reference_files['distortion'])
+    transform = dist.model
 
     try:
         bb = transform.bounding_box
     except NotImplementedError:
         shape = input_model.data.shape
-        # Note: Since bounding_box is attached to the model here it's in reverse order.
-        bb = ((-0.5, shape[0] - 0.5),
-              (-0.5, shape[1] - 0.5))
-    transform.bounding_box = bb
-    return transform
+        # Note: Since bounding_box is attached to the model here
+        # it's in reverse order.
+        """
+        A CubeModel is always treated as a stack (in dimension 1)
+        of 2D images, as opposed to actual 3D data. In this case
+        the bounding box is set to the 2nd and 3rd dimension.
+        """
+        if isinstance(input_model, CubeModel):
+            bb = ((-0.5, shape[1] - 0.5),
+                  (-0.5, shape[2] - 0.5))
+        elif isinstance(input_model, ImageModel):
+            bb = ((-0.5, shape[0] - 0.5),
+                  (-0.5, shape[1] - 0.5))
+        else:
+            raise TypeError("Input is not an ImageModel or CubeModel")
 
+        transform.bounding_box = bb
+    dist.close()
+    return transform
 
 
 def tsgrism(input_model, reference_files):
@@ -96,12 +117,11 @@ def tsgrism(input_model, reference_files):
     if "NRC_TSGRISM" != input_model.meta.exposure.type:
         raise TypeError('The input exposure is not a NIRCAM time series grism')
 
-    if input_model.meta.instrument.module  != "A":
+    if input_model.meta.instrument.module != "A":
         raise ValueError('TSGRISM mode only supports module A')
 
     if input_model.meta.instrument.pupil != "GRISMR":
         raise ValueError('TSGRIM mode only supports GRISMR')
-
 
     gdetector = cf.Frame2D(name='grism_detector', axes_order=(0, 1), unit=(u.pix, u.pix))
     detector = cf.Frame2D(name='full_detector', axes_order=(0, 1), unit=(u.pix, u.pix))
@@ -111,7 +131,6 @@ def tsgrism(input_model, reference_files):
     # get the shift to full frame coordinates
     subarray2full = subarray_transform(input_model)
 
-
     # translate the x,y detector-in to x,y detector out coordinates
     # Get the disperser parameters which are defined as a model for each
     # spectral order
@@ -120,7 +139,6 @@ def tsgrism(input_model, reference_files):
         dispx = f.dispx
         dispy = f.dispy
         invdispx = f.invdispx
-        invdispy = f.invdispy
         invdispl = f.invdispl
         orders = f.orders
 
@@ -139,7 +157,6 @@ def tsgrism(input_model, reference_files):
                                                     xmodels=dispx,
                                                     ymodels=dispy)
 
-
     # input into the forward transform is x,y,x0,y0,order
     #
     sub2direct = (subarray2full & Identity(3)) | det2det
@@ -152,10 +169,10 @@ def tsgrism(input_model, reference_files):
                 (v2v3, tel2sky),
                 (world, None)]
 
-
     return pipeline
 
-def grism(input_model, reference_files):
+
+def wfss(input_model, reference_files):
     """
     Create the WCS pipeline for a NIRCAM grism observation.
 
@@ -171,7 +188,7 @@ def grism(input_model, reference_files):
     The tree in the grism reference file has a section for each order/beam
     not sure if there will be a separate passband reference file needed for
     the wavelength scaling or wedge offsets. This helper is currently in
-    jwreftools/nircam/nircam_reftools
+    jwreftools/nircam/nircam_reftools.
 
     The direct image the catalog has been created from was corrected for
     distortion, but the dispersed images have not. This is OK if the trace and
@@ -210,23 +227,26 @@ def grism(input_model, reference_files):
     grism reference file as wrange, which can be selected by wrange_selector
     which contains the filter names.
 
+    All the following was moved to the extract_2d stage.
 
-    All the following was moved to the extract_2d stage
     Step 1: Convert the source catalog from the reference frame of the
             uberimage to that of the dispersed image.  For the Vanilla
             Pipeline we assume that the pointing information in the file
             headers is sufficient.  This will be strictly true if all images
             were obtained in a single visit (same guide stars).
+
     Step 2: Record source information for each object in the catalog: position
             (RA and Dec), shape (A_IMAGE, B_IMAGE, THETA_IMAGE), and all
             available magnitudes.
+
     Step 3: Compute the trace and wavelength solutions for each object in the
             catalog and for each spectral order.  Record this information.
+
     Step 4: Compute the WIDTH of each spectral subwindow, which may be fixed or
             variable (see discussion of optimal extraction, below).  Record
             this information.
 
-    catalog and associated steps moved to extract_2d
+    Catalog and associated steps moved to extract_2d.
     """
 
     # The input is the grism image
@@ -234,9 +254,8 @@ def grism(input_model, reference_files):
         raise TypeError('The input data model must be an ImageModel.')
 
     # make sure this is a grism image
-    if "NRC_GRISM" not in input_model.meta.exposure.type:
+    if "NRC_WFSS" not in input_model.meta.exposure.type:
             raise TypeError('The input exposure is not a NIRCAM grism')
-
 
     # Create the empty detector as a 2D coordinate frame in pixel units
     gdetector = cf.Frame2D(name='grism_detector',
@@ -273,7 +292,6 @@ def grism(input_model, reference_files):
                                                     xmodels=dispx,
                                                     ymodels=dispy)
 
-
     # create the pipeline to construct a WCS object for the whole image
     # which can translate ra,dec to image frame reference pixels
     # it also needs to be part of the grism image wcs pipeline to
@@ -301,7 +319,7 @@ def grism(input_model, reference_files):
 
 
 exp_type2transform = {'nrc_image': imaging,
-                      'nrc_grism': grism,
+                      'nrc_wfss': wfss,
                       'nrc_tacq': imaging,
                       'nrc_taconfirm': imaging,
                       'nrc_coron': imaging,

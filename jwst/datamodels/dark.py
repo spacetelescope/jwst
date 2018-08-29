@@ -1,10 +1,10 @@
-from . import model_base
+from .reference import ReferenceFileModel
 from .dynamicdq import dynamic_mask
 
 __all__ = ['DarkModel']
 
 
-class DarkModel(model_base.DataModel):
+class DarkModel(ReferenceFileModel):
     """
     A data model for dark reference files.
 

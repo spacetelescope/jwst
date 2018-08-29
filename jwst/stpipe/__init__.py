@@ -7,4 +7,4 @@ from .step import Step
 from .pipeline import Pipeline
 from .linear_pipeline import LinearPipeline
 
-__version__ = '0.8.0'
+__version__ = '0.9.3'

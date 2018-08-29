@@ -1,8 +1,11 @@
 #! /usr/bin/env python
-
-from ..stpipe import Step, cmdline
+from ..stpipe import Step
 from .. import datamodels
 from . import fringe
+
+
+__all__ = ["FringeStep"]
+
 
 class FringeStep(Step):
     """
@@ -13,7 +16,7 @@ class FringeStep(Step):
     reference_file_types = ['fringe']
 
     def process(self, input):
-        with datamodels.ImageModel(input) as input_model:
+        with datamodels.IFUImageModel(input) as input_model:
 
             # Open the reference file
             self.fringe_filename = self.get_reference_file(input_model,
@@ -38,4 +41,3 @@ class FringeStep(Step):
             fringe_model.close()
 
         return output_model
-

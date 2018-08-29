@@ -1,6 +1,9 @@
 from ... import (Pipeline, Step)
 from .... import datamodels
-from ....datamodels import ImageModel
+from ....datamodels import (
+    ImageModel,
+    ModelContainer,
+)
 
 
 class AnotherDummyStep(Step):
@@ -53,9 +56,30 @@ class StepWithModel(Step):
     def process(self, *args):
         from ....datamodels import ImageModel
 
-        model = ImageModel(args[0])
+        input_path = self.open_model(args[0])
+        model = ImageModel(input_path)
 
         return model
+
+
+class StepWithContainer(Step):
+    """A step with a model"""
+
+    spec = """
+    """
+
+    def process(self, *args):
+        from ....datamodels import ImageModel
+
+        container = ModelContainer()
+        model1 = ImageModel(args[0]).copy()
+        model2 = ImageModel(args[0]).copy()
+        model1.meta.filename = 'swc_model1.fits'
+        model2.meta.filename = 'swc_model2.fits'
+        container.append(model1)
+        container.append(model2)
+
+        return container
 
 
 class SaveStep(Step):
@@ -104,11 +128,11 @@ class ProperPipeline(Pipeline):
     step_defs = {
         'stepwithmodel': StepWithModel,
         'another_stepwithmodel': StepWithModel,
+        'stepwithcontainer': StepWithContainer,
     }
 
     def process(self, *args):
 
-        self.output_basename = 'ppbase'
         self.suffix = 'pp'
 
         model = ImageModel(args[0])
@@ -117,6 +141,8 @@ class ProperPipeline(Pipeline):
         r = self.stepwithmodel(model)
         self.another_stepwithmodel.suffix = 'aswm'
         r = self.another_stepwithmodel(r)
+        self.stepwithcontainer.suffix = 'swc'
+        r = self.stepwithcontainer(r)
 
         return r
 

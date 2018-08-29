@@ -28,10 +28,30 @@ pool_paths = glob(t_path(path.join(
 )))
 
 
-@pytest.fixture(params=pool_paths)
-def generate_asns(request):
-    pool_path = request.param
+@runslow
+@pytest.mark.parametrize(
+    'pool_path',
+    pool_paths
+)
+def test_against_standard(pool_path):
+    """Compare a generated assocaition against a standard
+    """
+    generated, standards = generate_asns(pool_path)
+    assert len(generated) == len(standards)
+    for asn in generated:
+        for idx, standard in enumerate(standards):
+            try:
+                compare_asns(asn, standard)
+            except AssertionError as e:
+                last_err = e
+            else:
+                del standards[idx]
+                break
+        else:
+            raise last_err
 
+
+def generate_asns(pool_path):
     pool_dir, pool_root = path.split(pool_path)
     pool_root, pool_ext = path.splitext(pool_root)
     pool = AssociationPool.read(pool_path)
@@ -47,23 +67,4 @@ def generate_asns(request):
 
     results = Main(TEST_ARGS, pool=pool)
 
-    yield results.associations, standards
-
-
-@runslow
-def test_against_standard(generate_asns):
-    """Compare a generated assocaition against a standard
-    """
-    generated, standards = generate_asns
-    assert len(generated) == len(standards)
-    for asn in generated:
-        for idx, standard in enumerate(standards):
-            try:
-                compare_asns(asn, standard)
-            except AssertionError as e:
-                last_err = e
-            else:
-                del standards[idx]
-                break
-        else:
-            raise last_err
+    return results.associations, standards

@@ -1,16 +1,14 @@
 """Test calwebb_spec2"""
 
-import os
+from glob import glob
 from os import path
 import pytest
-import tempfile
+from shutil import copyfile
 
 from .helpers import (
-    SCRIPT_PATH,
     SCRIPT_DATA_PATH,
     abspath,
     mk_tmp_dirs,
-    update_asn_basedir,
 )
 
 from ...associations.asn_from_list import asn_from_list
@@ -51,27 +49,42 @@ def test_full_run(mk_tmp_dirs):
 
 def test_asn_with_bkg(mk_tmp_dirs):
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
-    exppath = path.join(DATAPATH, EXPFILE)
+
+    # Setup input folder
+    copyfile(
+        path.join(DATAPATH, EXPFILE),
+        path.join(tmp_data_path, EXPFILE)
+    )
+
+    # Setup the association
     lv2_meta = {
         'program': 'test',
         'target': 'test',
         'asn_pool': 'test',
     }
-    asn = asn_from_list([exppath], rule=DMSLevel2bBase, meta=lv2_meta)
+    asn = asn_from_list([EXPFILE], rule=DMSLevel2bBase, meta=lv2_meta)
     asn['products'][0]['members'].append({
-        'expname': exppath, 'exptype': 'BACKGROUND'
+        'expname': EXPFILE, 'exptype': 'BACKGROUND'
     })
     asn_file, serialized = asn.dump()
-    with open(asn_file, 'w') as fp:
+    asn_path = path.join(tmp_data_path, asn_file)
+    with open(asn_path, 'w') as fp:
         fp.write(serialized)
 
     args = [
         path.join(SCRIPT_DATA_PATH, 'calwebb_spec2_basic.cfg'),
-        asn_file,
+        asn_path,
         '--steps.bkg_subtract.save_results=true'
     ]
 
     Step.from_cmdline(args)
+
+    output_files = [
+        path.split(result_path)[1]
+        for result_path in
+        glob('*')
+    ]
+    print('Created files are: {}'.format(output_files))
 
     assert path.isfile(CALFILE)
     assert path.isfile(BSUBFILE)

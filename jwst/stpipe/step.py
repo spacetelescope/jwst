@@ -1,9 +1,19 @@
 """
 Step
 """
+from functools import partial
 import gc
-from os.path import dirname, join, basename, splitext, abspath, split
-import re
+from os.path import (
+    abspath,
+    basename,
+    dirname,
+    expanduser,
+    expandvars,
+    isfile,
+    join,
+    split,
+    splitext,
+)
 import sys
 
 try:
@@ -17,14 +27,12 @@ from . import crds_client
 from . import log
 from . import utilities
 from .. import __version_commit__, __version__
-
-SUFFIX_LIST = [
-    'rate', 'cal', 'uncal', 'i2d', 's2d', 's3d',
-    'jump', 'ramp', 'x1d', 'x1dints', 'calints', 'rateints',
-    'crf', 'crfints', 'psfsub', 'psfalign', 'psfstack'
-]
-REMOVE_SUFFIX = '^(?P<root>.+?)((?P<separator>_|-)(' \
-                + '|'.join(SUFFIX_LIST) + '))?$'
+from ..associations.load_as_asn import (LoadAsAssociation, LoadAsLevel2Asn)
+from ..associations.lib.format_template import FormatTemplate
+from ..associations.lib.update_path import update_key_value
+from ..datamodels import (DataModel, ModelContainer)
+from ..datamodels import open as dm_open
+from ..lib.suffix import remove_suffix
 
 
 class Step():
@@ -32,19 +40,26 @@ class Step():
     Step
     """
     spec = """
-    pre_hooks = string_list(default=list())
-    post_hooks = string_list(default=list())
-    output_dir = string(default=None)       # Directory path for output files
-    output_file = output_file(default=None) # File to save output to.
-    skip = boolean(default=False)           # Skip this step
-    save_results = boolean(default=False)   # Force save results
-    suffix = string(default=None)           # Default suffix for output files
+    pre_hooks          = string_list(default=list())
+    post_hooks         = string_list(default=list())
+    output_file        = output_file(default=None)   # File to save output to.
+    output_dir         = string(default=None)        # Directory path for output files
+    output_ext         = string(default='.fits')     # Default type of output
+    output_use_model   = boolean(default=False)      # When saving use `DataModel.meta.filename`
+    output_use_index   = boolean(default=True)       # Append index.
+    save_results       = boolean(default=False)      # Force save results
+    skip               = boolean(default=False)      # Skip this step
+    suffix             = string(default=None)        # Default suffix for output files
+    search_output_file = boolean(default=True)       # Use outputfile define in parent step
+    input_dir          = string(default=None)        # Input directory
     """
 
-    # Reference types for both command line override definition and reference prefetch
+    # Reference types for both command line override
+    # definition and reference prefetch
     reference_file_types = []
 
-    # Set to False in subclasses to skip prefetch,  but by default attempt to prefetch
+    # Set to False in subclasses to skip prefetch,
+    # but by default attempt to prefetch
     prefetch_references = True
 
     @classmethod
@@ -186,18 +201,15 @@ class Step():
         config : configobj.Section instance
             The config file fragment containing parameters for this
             step only.
-
         parent : Step instance, optional
             The parent step of this step.  Used to determine a
             fully-qualified name for this step, and to determine
             the mode in which to run this step.
-
         name : str, optional
             If provided, use that name for the returned instance.
             If not provided, try the following (in order):
-              - The `name` parameter in the config file fragment
-              - The name of returned class
-
+            - The ``name`` parameter in the config file fragment
+            - The name of returned class
         config_file : str, optional
             The path to the config file that created this step, if
             any.  This is used to resolve relative file name
@@ -264,6 +276,12 @@ class Step():
             Additional parameters to set.  These will be set as member
             variables on the new Step instance.
         """
+
+        # Setup primary input
+        self._reference_files_used = []
+        self._input_filename = None
+        self._input_dir = None
+
         if _validate_kwds:
             spec = self.load_spec_file()
             kws = config_parser.config_from_dict(
@@ -296,16 +314,18 @@ class Step():
         # against it.
         self.config_file = config_file
 
+        # Setup the hooks
         if len(self.pre_hooks) or len(self.post_hooks):
             from . import hooks
-            self._pre_hooks = hooks.get_hook_objects(self, 'pre', self.pre_hooks)
-            self._post_hooks = hooks.get_hook_objects(self, 'post', self.post_hooks)
+            self._pre_hooks = hooks.get_hook_objects(
+                self, 'pre', self.pre_hooks
+            )
+            self._post_hooks = hooks.get_hook_objects(
+                self, 'post', self.post_hooks
+            )
         else:
             self._pre_hooks = []
             self._post_hooks = []
-
-        self._reference_files_used = []
-        self._input_filename = None
 
     def _check_args(self, args, discouraged_types, msg):
         if discouraged_types is None:
@@ -335,14 +355,28 @@ class Step():
 
         step_result = None
 
-        try:
-            if (len(args) and len(self.reference_file_types) and not self.skip
-                and self.prefetch_references):
-                self._precache_reference_files(args[0])
+        self.log.info(
+            'Step {0} running with args {1}.'.format(
+                self.name, args))
 
-            self.log.info(
-                'Step {0} running with args {1}.'.format(
-                    self.name, args))
+        if len(args):
+            self.set_primary_input(args[0])
+
+        try:
+            # prefetch truly occurs at the Pipeline (or subclass) level.
+            if (
+                    len(args) and len(self.reference_file_types) and
+                    not self.skip and
+                    self.prefetch_references
+            ):
+                self._precache_references(args[0])
+
+            # Default output file configuration
+            if self.output_file is not None:
+                self.save_results = True
+
+            if self.suffix is None:
+                self.suffix = self.default_suffix()
 
             hook_args = args
             for pre_hook in self._pre_hooks:
@@ -366,7 +400,9 @@ class Step():
                     step_result = self.process(*args)
                 except TypeError as e:
                     if "process() takes exactly" in str(e):
-                        raise TypeError("Incorrect number of arguments to step")
+                        raise TypeError(
+                            "Incorrect number of arguments to step"
+                        )
                     raise
 
             # Warn if returning a discouraged object
@@ -379,7 +415,9 @@ class Step():
                     step_result = hook_results
 
             # Update meta information
-            if not isinstance(step_result, (list, tuple, datamodels.ModelContainer)):
+            if not isinstance(
+                    step_result, (list, tuple, datamodels.ModelContainer)
+            ):
                 results = [step_result]
             else:
                 results = step_result
@@ -401,29 +439,22 @@ class Step():
                     result.meta.calibration_software_version = __version__
 
             # Save the output file if one was specified
-            if not self.skip and (
-                    self.save_results or self.output_file is not None
-            ):
+            if not self.skip and self.save_results:
+
                 # Setup the save list.
                 if not isinstance(step_result, (list, tuple)):
                     results_to_save = [step_result]
                 else:
                     results_to_save = step_result
 
-                result_id = _make_result_id(
-                    self.output_file, len(results_to_save), self.name
-                )
-                make_output_path = self.search_attr(
-                    'make_output_path', parent_first=True
-                )
                 for idx, result in enumerate(results_to_save):
-                    if hasattr(result, 'save'):
+                    if len(results_to_save) <= 1:
+                        idx = None
+                    if isinstance(result, DataModel):
+                        self.save_model(result, idx=idx)
+                    elif hasattr(result, 'save'):
                         try:
-                            output_path = make_output_path(
-                                self, result,
-                                basepath=self.output_file,
-                                result_id=result_id(idx)
-                            )
+                            output_path = self.make_output_path(idx=idx)
                         except AttributeError:
                             self.log.warning(
                                 '`save_results` has been requested,'
@@ -499,7 +530,31 @@ class Step():
             instance = cls(**kwargs)
         return instance.run(*args)
 
-    def search_attr(self, attribute, parent_first=False):
+    @property
+    def input_dir(self):
+        return self.search_attr('_input_dir', '')
+
+    @input_dir.setter
+    def input_dir(self, input_dir):
+        self._input_dir = input_dir
+
+    def default_output_file(self, input_file=None):
+        """Create a default filename based on the input name"""
+        output_file = input_file
+        if output_file is None or not isinstance(output_file, str):
+                output_file = self.search_attr('_input_filename')
+        if output_file is None:
+            output_file = 'step_{}{}'.format(
+                self.name,
+                self.output_ext
+            )
+        return output_file
+
+    def default_suffix(self):
+        """Return a default suffix based on the step"""
+        return self.name.lower()
+
+    def search_attr(self, attribute, default=None, parent_first=False):
         """Return first non-None attribute in step heirarchy
 
         Parameters
@@ -507,13 +562,16 @@ class Step():
         attribute: str
             The attribute to retrieve
 
+        default: obj
+            If attribute is not found, the value to use
+
         parent_first: bool
             If `True`, allow parent definition to override step version
 
         Returns
         -------
         value: obj
-            Attribute value or None if not found
+            Attribute value or `default` if not found
         """
         if parent_first:
             try:
@@ -523,7 +581,7 @@ class Step():
             except AttributeError:
                 value = None
             if value is None:
-                value = getattr(self, attribute, None)
+                value = getattr(self, attribute, default)
             return value
         else:
             value = getattr(self, attribute, None)
@@ -532,93 +590,21 @@ class Step():
                     value = self.parent.search_attr(attribute)
                 except AttributeError:
                     pass
+            if value is None:
+                value = default
             return value
 
-    @classmethod
-    def _is_container(cls, input_file):
-        """Return True IFF `input_file` is a ModelContainer or successfully
-        loads as an association.
+    def _precache_references(self, input_file):
+        """Because Step precaching precedes calls to get_reference_file() almost
+        immediately, true precaching has been moved to Pipeline where the
+        interleaving of precaching and Step processing is more of an
+        issue. This null method is intended to be overridden in Pipeline by
+        true precache operations and avoids having to override the more complex
+        Step.run() instead.
         """
-        from ..associations import load_asn
-        from .. import datamodels
-        if isinstance(input_file, datamodels.ModelContainer):
-            return True
-        try:
-            with open(input_file, 'r') as input_file_fh:
-                asn = load_asn(input_file_fh)
-        except:
-            return False
-        return True
+        pass
 
-    def _precache_reference_files(self, input_file):
-        """
-        Precache all of the expected reference files before the Step's
-        process method is called.
-
-        Perform's garbage collection before and after prefetching.
-
-        Handles opening `input_file` as a model if it is a filename.
-
-        input_file:  filename, model container, or model
-
-        returns:  None
-        """
-        gc.collect()
-        from .. import datamodels
-        try:
-            with datamodels.open(input_file) as model:
-                self._precache_reference_files_opened(model)
-        except (ValueError, TypeError, IOError):
-            self.log.info(
-                'First argument {0} does not appear to be a '
-                'model'.format(input_file))
-        gc.collect()
-
-    def _precache_reference_files_opened(self, model_or_container):
-        """Pre-fetches references for `model_or_container`.
-
-        Handles recursive pre-fetches for any models inside a container,
-        or just a single model.
-
-        Assumes model_or_container is an open model or container object,
-        not a filename.
-
-        No garbage collection.
-        """
-        if self._is_container(model_or_container):
-            # recurse on each contained model
-            for contained_model in model_or_container:
-                self._precache_reference_files_opened(contained_model)
-        else:
-            # precache a single model object
-            self._precache_reference_files_impl(model_or_container)
-
-    def _precache_reference_files_impl(self, model):
-        """Given open data `model`,  determine and cache reference files for
-        any reference types which are not overridden on the command line.
-
-        Verify that all CRDS and overridden reference files are readable.
-
-        model:  An open Model object;  not a filename, ModelContainer, etc.
-        """
-        ovr_refs = {
-            reftype: self._get_ref_override(reftype)
-            for reftype in self.reference_file_types
-            if self._get_ref_override(reftype) is not None
-            }
-
-        fetch_types = sorted(set(self.reference_file_types) - set(ovr_refs.keys()))
-
-        crds_refs = crds_client.get_multiple_reference_paths(model, fetch_types)
-
-        ref_path_map = dict(list(crds_refs.items()) + list(ovr_refs.items()))
-
-        for (reftype, refpath) in sorted(ref_path_map.items()):
-            how = "Override" if reftype in ovr_refs else "Prefetch"
-            self.log.info("{0} for {1} reference file is '{2}'.".format(how, reftype.upper(), refpath))
-            crds_client.check_reference_open(refpath)
-
-    def _get_ref_override(self, reference_file_type):
+    def get_ref_override(self, reference_file_type):
         """Determine and return any override for `reference_file_type`.
 
         Returns
@@ -652,18 +638,17 @@ class Step():
         -------
         reference_file : path of reference file,  a string
         """
-        override = self._get_ref_override(reference_file_type)
+        override = self.get_ref_override(reference_file_type)
         if override is not None:
             if override.strip() != "":
                 self._reference_files_used.append(
-                    (reference_file_type, abspath(override)))
+                    (reference_file_type, basename(override)))
                 reference_name = override
             else:
                 return ""
         else:
             reference_name = crds_client.get_reference_file(
                 input_file, reference_file_type)
-            gc.collect()
             if reference_name != "N/A":
                 hdr_name = "crds://" + basename(reference_name)
             else:
@@ -685,14 +670,43 @@ class Step():
         """
         return crds_client.reference_uri_to_cache_path(reference_uri)
 
-    def set_input_filename(self, path):
+    def set_primary_input(self, obj, exclusive=True):
         """
-        Sets the name of the master input file.  Used to generate output
-        file names.
-        """
-        self._input_filename = path
+        Sets the name of the master input file and input directory.
+        Used to generate output file names.
 
-    def save_model(self, model, suffix, *args, **kwargs):
+        Parameters
+        ----------
+        obj: str or DataModel
+            The object to base the name on. If a datamodel,
+            use Datamodel.meta.filename.
+
+        exclusive: bool
+            If True, only set if an input name is not already used
+            by a parent Step. Otherwise, always set.
+        """
+        self._set_input_dir(obj, exclusive=exclusive)
+
+        parent_input_filename = self.search_attr('_input_filename')
+        if not exclusive or parent_input_filename is None:
+            if isinstance(obj, str):
+                self._input_filename = obj
+            elif isinstance(obj, DataModel):
+                self._input_filename = obj.meta.filename
+            else:
+                self.log.debug(
+                    'Cannot set master input file name from object'
+                    ' {}'.format(obj)
+                )
+
+    def save_model(self,
+                   model,
+                   suffix=None,
+                   idx=None,
+                   output_file=None,
+                   force=False,
+                   format=None,
+                   **components):
         """
         Saves the given model using the step/pipeline's naming scheme
 
@@ -704,133 +718,174 @@ class Step():
         suffix : str
             The suffix to add to the filename.
 
-        Notes
-        -----
-        This routine is used to save data outside of the normal step
-        cycle, where results are saved at the end of a step.
+        idx: object
+            Index identifier.
 
-        Serious consideration should be given to the step design
-        if this call is needed. In particular, if such data
-        is important to save, consider making the producing code
-        its own step, such that it is subject to the output controls
-        of the step infrastructure.
+        output_file: str
+            Use this file name instead of what the Step
+            default would be.
+
+        force: bool
+            Regardless of whether `save_results` is `False`
+            and no `output_file` is specified, try saving.
+
+        format: str
+            The format of the file name.  This is a format
+            string that defines where `suffix` and the other
+            components go in the file name.
+
+        components: dict
+            Other components to add to the file name.
+
+        Returns
+        -------
+        output_paths: [str[, ...]]
+            List of output file paths the model(s) were saved in.
         """
+        if output_file is None or output_file == '':
+            output_file = self.output_file
 
-        # Get the output path as defined by the current step.
+        # Check if saving is even specified.
+        if not force and \
+           not self.save_results and \
+           not output_file:
+            return
+
+        if isinstance(model, ModelContainer):
+            save_model_func = partial(
+                self.save_model,
+                suffix=suffix,
+                force=force,
+                format=format,
+                **components
+            )
+            output_path = model.save(
+                path=output_file,
+                save_model_func=save_model_func)
+        else:
+            if (
+                    self.output_use_model or
+                    (output_file is None and not self.search_output_file)
+            ):
+                output_file = model.meta.filename
+                idx = None
+            output_path = model.save(
+                self.make_output_path(
+                    basepath=output_file,
+                    suffix=suffix,
+                    idx=idx,
+                    name_format=format,
+                    **components
+                )
+            )
+            self.log.info('Saved model in {}'.format(output_path))
+
+        return output_path
+
+    @property
+    def make_output_path(self):
+        """Return function that creates the output path"""
         make_output_path = self.search_attr(
-            'make_output_path', parent_first=True
+            '_make_output_path'
         )
-        output_path = make_output_path(
-            self, model, suffix=suffix, ignore_use_model=True
-        )
-
-        self.log.info('Step.save_model {}'.format(output_path))
-        model.save(output_path, *args, **kwargs)
+        return partial(make_output_path, self)
 
     @staticmethod
-    def make_output_path(
-            step, data,
-            basepath=None, suffix=None, ext=None,
-            result_id=None, ignore_use_model=False
+    def _make_output_path(
+            step,
+            basepath=None,
+            ext=None,
+            suffix=None,
+            name_format=None,
+            component_format='',
+            separator='_',
+            **components
     ):
-        """Make up a path based on data and user specification
+        """Create the output path
 
         Parameters
         ----------
         step: Step
-            The step which produced the data
-
-        data: obj
-            Unused by this routine
+            The `Step` in question.
 
         basepath: str or None
-            The output file name. If `None` or empty string, create
-            a filename based on the data.
-
-        suffix: str or None
-            The suffix to append to the basename.
+            The basepath to use. If None, `output_file`
+            is used. Only the basename component of the path
+            is used.
 
         ext: str or None
-            The file format extension
+            The extension to use. If none, `output_ext` is used.
+            Can include the leading period or not.
 
-        result_id: str or None
-            If a suffix cannot be determined, use this as the suffix.
-            If the result is still None, raise ValueError
+        name_format: str or None
+            The format string to use to form the base name.
 
-        ignore_use_model: bool
-            Ignore configuration parameter `output_use_model`
+        component_format: str
+            Format to use for the components
+
+        separator: str
+            Separator to use between replacement components
+
+        components: dict
+            dict of string replacements.
 
         Returns
         -------
-        output_path: str
-            The fully qualified output path
+        The fully qualified path name.
+
+        Notes
+        -----
+        The values found in the `components` dict are placed in the string
+        where the "{components}" replacement field is specified. If there are
+        more than one component, the components are separated by the `separator`
+        string.
         """
-        from ..datamodels import DataModel
+        if basepath is None and step.search_output_file:
+            basepath = step.search_attr('output_file')
+        if basepath is None:
+            basepath = step.default_output_file()
 
-        has_basepath = basepath is not None and len(basepath) > 0
-        use_model_name = not ignore_use_model and getattr(step, 'output_use_model', False)
-        output_path = basepath
+        if name_format is None:
+            name_format = '{basename}{components}{suffix_sep}{suffix}.{ext}'
+        formatter = FormatTemplate(
+            separator=separator,
+            remove_unused=True
+        )
 
-        # If a basepath was specified, use that, but adding the
-        # result_id if necessary
-        if has_basepath:
-            path, filename = split(output_path)
-            name, filename_ext = splitext(filename)
-            output_name = [name]
-            suffix = _get_suffix(suffix, default_suffix=result_id)
-            if suffix is not None:
-                output_name.append('_' + suffix)
-            output_name.append(filename_ext)
-            output_name = ''.join(output_name)
+        basename, basepath_ext = splitext(split(basepath)[1])
+        if ext is None:
+            ext = step.output_ext
+        if ext is None and len(basepath_ext):
+            ext = basepath_ext
+        if ext.startswith('.'):
+            ext = ext[1:]
 
-        # Otherwise, construct a name
+        suffix = _get_suffix(suffix, step=step)
+        suffix_sep = None
+        if suffix is not None:
+            basename, suffix_sep = remove_suffix(basename)
+        if suffix_sep is None:
+            suffix_sep = separator
+
+        if len(components):
+            component_str = formatter(component_format, **components)
         else:
+            component_str = ''
 
-            # Make names based on DataModels
-            if isinstance(data, DataModel):
+        basename = formatter(
+            name_format,
+            basename=basename,
+            suffix=suffix,
+            suffix_sep=suffix_sep,
+            ext=ext,
+            components=component_str
+        )
 
-                # If using what is in the model, just retrieve that.
-                if use_model_name:
-                    basepath = data.meta.filename
-                    path, output_name = split(basepath)
+        output_dir = step.search_attr('output_dir', default='')
+        output_dir = expandvars(expanduser(output_dir))
+        full_output_path = join(output_dir, basename)
 
-                # Otherwise, create a fully qualified pipeline outputname
-                else:
-                    basepath = step.search_attr('output_basename')
-                    if basepath is None:
-                        basepath = data.meta.filename
-
-                    # Breakdown the components
-                    path, filename = split(basepath)
-                    name, filename_ext = splitext(filename)
-
-                    # Remove any known, previous suffixes.
-                    match = re.match(REMOVE_SUFFIX, name)
-                    name = match.group('root')
-                    separator = match.group('separator')
-                    if separator is None:
-                        separator = '_'
-
-                    # Rebuild the path.
-                    output_name = [name]
-                    suffix = _get_suffix(
-                        suffix, step=step, default_suffix=result_id
-                    )
-                    if suffix is not None:
-                        output_name.append(separator + suffix)
-                    if ext is None:
-                        ext = step.search_attr('output_ext')
-                        if ext is None:
-                            ext = filename_ext
-                    if ext is not None:
-                        output_name.append(ext)
-                    output_name = ''.join(output_name)
-
-        output_path = output_name
-        output_dir = step.search_attr('output_dir')
-        if output_dir is not None:
-            output_path = join(output_dir, output_path)
-        return output_path
+        return full_output_path
 
     def closeout(self, to_close=None, to_del=None):
         """Close out step processing
@@ -858,7 +913,7 @@ class Step():
             try:
                 item.close()
             except Exception as exception:
-                self.logger.debug(
+                self.log.debug(
                     'Could not close "{}"'
                     'Reason:\n{}'.format(item, exception)
                 )
@@ -866,48 +921,125 @@ class Step():
             try:
                 del item
             except Exception as exception:
-                self.logger.debug(
+                self.log.debug(
                     'Could not delete "{}"'
                     'Reason:\n{}'.format(item, exception)
                 )
         gc.collect()
 
+    def open_model(self, obj):
+        """Open a datamodel
+
+        Primarily a wrapper around `DataModel.open` to
+        handle `Step` peculiarities
+
+        Parameters
+        ----------
+        obj: object
+            The object to open
+
+        Returns
+        -------
+        datamodel: DataModel
+            Object opened as a datamodel
+        """
+        return dm_open(self.make_input_path(obj))
+
+    def make_input_path(self, file_path):
+        """Create an input path for a given file path
+
+        If `file_path` has no directory path, use `self.input_dir`
+        as the directory path.
+
+        Parameters
+        ----------
+        file_path: str or obj
+            The supplied file path to check and modify.
+            If anything other than `str`, the object
+            is simply passed back.
+
+        Returns
+        -------
+        full_path: str or obj
+            File path using `input_dir` if the input
+            had no directory path.
+        """
+        full_path = file_path
+        if isinstance(file_path, str):
+            original_path, file_name = split(file_path)
+            if not len(original_path):
+                full_path = join(self.input_dir, file_name)
+
+        return full_path
+
+    def load_as_level2_asn(self, obj):
+        """Load object as an association
+
+        Loads the specified object into a Level2 association.
+        If necessary, prepend `Step.input_dir` to all members.
+
+        Parameters
+        ----------
+        obj: object
+            Object to load as a Level2 association
+
+        Returns
+        -------
+        association: jwst.associations.lib.rules_level2_base.DMSLevel2bBase
+            Association
+        """
+        asn = LoadAsLevel2Asn.load(obj, basename=self.output_file)
+        update_key_value(asn, 'expname', (), mod_func=self.make_input_path)
+        return asn
+
+    def load_as_level3_asn(self, obj):
+        """Load object as an association
+
+        Loads the specified object into a Level3 association.
+        If necessary, prepend `Step.input_dir` to all members.
+
+        Parameters
+        ----------
+        obj: object
+            Object to load as a Level3 association
+
+        Returns
+        -------
+        association: jwst.associations.lib.rules_level3_base.DMS_Level3_Base
+            Association
+        """
+        asn = LoadAsAssociation.load(obj)
+        update_key_value(asn, 'expname', (), mod_func=self.make_input_path)
+        return asn
+
+    def _set_input_dir(self, input, exclusive=True):
+        """Set the input directory
+
+        If sufficient information is at hand, set a value
+        for the attribute `input_dir`.
+
+        Parameters
+        ----------
+        input: str
+            Input to determine path from.
+
+        exclusive: bool
+            If True, only set if an input directory is not already
+            defined by a parent Step. Otherwise, always set.
+
+        """
+        if not exclusive or self.search_attr('_input_dir') is None:
+            try:
+                if isfile(input):
+                    self.input_dir = split(input)[0]
+            except Exception:
+                # Not a file-checkable object. Ignore.
+                pass
+
 
 # #########
 # Utilities
 # #########
-def _make_result_id(output_file, n_results, default_name):
-    """Create function the constructs a result identifier
-
-    Parameters
-    ----------
-    output_file: str or None
-        output file name
-
-    n_results: int
-        The number of results to be saved.
-
-    default_name: str
-        The name to use if `output_file` is not defined
-
-    Returns
-    -------
-    result_id: func
-        A function that takes an int and produces a str
-        the represents a result identifier
-    """
-    id_format = []
-    if output_file is None:
-        id_format.append(default_name.lower())
-    if n_results > 1:
-        id_format.append('{idx}')
-    if len(id_format):
-        id_format = '_'.join(id_format)
-        result_id = lambda idx: id_format.format(idx=str(idx))
-    else:
-        result_id = lambda idx: None
-    return result_id
-
 def _get_suffix(suffix, step=None, default_suffix=None):
     """Retrieve either specified or pipeline-supplied suffix
 
@@ -932,4 +1064,6 @@ def _get_suffix(suffix, step=None, default_suffix=None):
         suffix = step.search_attr('suffix')
     if suffix is None:
         suffix = default_suffix
+    if suffix is None and step is not None:
+        suffix = step.name.lower()
     return suffix

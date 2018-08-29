@@ -26,12 +26,23 @@
 #       these smoothed and scaled values should be subtracted from every pixel
 #       in the corresponding row.
 
-from __future__ import division
+#
+#  Subarray processing added 7/2018
+#
+#  For NIR exposures, calculate the clipped means of odd and even columns
+#  in detector coordinates.  Subtract the odd mean from the odd columns, and
+#  the even mean from the even columns.  If there are no reference pixels in the
+#  subarray, omit the refpix step.
+#
+#  For MIRI subarray exposures, omit the refpix step.
+# 
+
 import numpy as np
 from scipy import stats
 import logging
 from .. import datamodels
 from ..datamodels import dqflags
+from ..lib import reffile_utils
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -68,17 +79,25 @@ NIR_reference_sections = {'A': {'top': (2044, 2048, 0, 512),
 
 MIR_reference_sections = {'A': {'left': (0, 1024, 0),
                                'right': (0, 1024, 1028),
-                               'data': (0, 1024, 4, 1028, 4)},
+                               'data': (0, 1024, 0, 1032, 4)},
                           'B': {'left': (0, 1024, 1),
                                'right': (0, 1024, 1029),
-                               'data': (0, 1024, 5, 1028, 4)},
+                               'data': (0, 1024, 1, 1032, 4)},
                           'C': {'left': (0, 1024, 2),
                                'right': (0, 1024, 1030),
-                               'data': (0, 1024, 6, 1028, 4)},
+                               'data': (0, 1024, 2, 1032, 4)},
                           'D': {'left': (0, 1024, 3),
                                'right': (0, 1024, 1031),
-                               'data': (0, 1024, 7, 1028, 4)}
+                               'data': (0, 1024, 3, 1032, 4)}
                           }
+
+#
+# Status returns
+
+REFPIX_OK = 0
+BAD_REFERENCE_PIXELS = 1
+SUBARRAY_DOESNTFIT = 2
+SUBARRAY_SKIPPED = 3
 
 class Dataset(object):
     """Base Class to handle passing stuff from routine to routine
@@ -88,6 +107,10 @@ class Dataset(object):
 
     input_model: data model object
         Science data model to be corrected
+
+    is_subarray: boolean
+        flag that shows whether the dataset was created from subarray
+        data
 
     odd_even_columns: booolean
         flag that controls whether odd and even-numbered columns are
@@ -111,6 +134,7 @@ class Dataset(object):
 
 """
     def __init__(self, input_model,
+                 is_subarray,
                  odd_even_columns,
                  use_side_ref_pixels,
                  side_smoothing_length,
@@ -135,6 +159,7 @@ class Dataset(object):
         self.side_gain = side_gain
         self.odd_even_rows = odd_even_rows
         self.bad_reference_pixels = False
+        self.is_subarray = is_subarray
 
     def sigma_clip(self, data, dq, low=3.0, high=3.0):
         """Wrap the scipy.stats.sigmaclip so that data with zero variance
@@ -181,6 +206,56 @@ class Dataset(object):
             mean = data[goodpixels].mean(dtype=np.float64)
         return mean
 
+    def transfer_to_model(self, input_model):
+        """
+        Transfer the reference-pixel corrected data arrays from the
+        dataset to the input model
+
+        Parameters:
+        -----------
+
+        input_model: JWST datamodel
+
+        The datamodel to which the data arrays are to be transferred
+
+        Returns:
+        --------
+
+        None
+
+        """
+
+        if self.is_subarray:
+            original_size = self.extract_from_embedded()
+            input_model.data = original_size
+            return
+        else:
+            input_model.data = self.data
+            return
+
+    def extract_from_embedded(self):
+        """
+        Extract the embedded subarray from the full-frame dataset
+        
+        Parameters:
+        -----------
+        
+        None
+        
+        Returns:
+        --------
+        
+        embedded_subarray: nddata array
+        
+        The subarray embedded in the full-frame array
+        
+        """
+        rowstart = self.ystart - 1
+        rowstop = rowstart + self.ysize
+        colstart = self.xstart - 1
+        colstop = colstart + self.xsize
+        embedded_subarray = self.data[:, :, rowstart:rowstop, colstart:colstop]
+        return embedded_subarray
 
 class NIRDataset(Dataset):
     """Generic NIR detector Class.
@@ -190,6 +265,10 @@ class NIRDataset(Dataset):
 
     input_model: data model object
         Science data model to be corrected
+
+    is_subarray: boolean
+        flag that shows whether the dataset was created from subarray
+        data
 
     odd_even_columns: booolean
         flag that controls whether odd and even-numbered columns are
@@ -209,12 +288,14 @@ class NIRDataset(Dataset):
     """
 
     def __init__(self, input_model,
+                 is_subarray,
                  odd_even_columns,
                  use_side_ref_pixels,
                  side_smoothing_length,
                  side_gain):
 
         super(NIRDataset, self).__init__(input_model,
+                                         is_subarray,
                                          odd_even_columns,
                                          use_side_ref_pixels,
                                          side_smoothing_length,
@@ -521,7 +602,7 @@ class NIRDataset(Dataset):
         bufsize = smoothing_length // 2
         reflected[bufsize:bufsize + nrows] = data[:]
         reflected[:bufsize] = data[bufsize:0:-1]
-        reflected[nrows + bufsize:] = data[-1:nrows - 1 - bufsize:-1]
+        reflected[-(bufsize):] = data[-2:-(bufsize+2):-1]
         return reflected
 
     def median_filter(self, data, dq, smoothing_length):
@@ -554,7 +635,7 @@ class NIRDataset(Dataset):
         for i in range(nrows):
             rowstart = i
             rowstop = rowstart + smoothing_length
-            goodpixels = np.where(np.bitwise_and(dq[rowstart:rowstop],
+            goodpixels = np.where(np.bitwise_and(augmented_dq[rowstart:rowstop],
                                                  dqflags.pixel['DO_NOT_USE']) == 0)
             window = augmented_data[rowstart:rowstop][goodpixels]
             result[i] = np.median(window)
@@ -664,10 +745,15 @@ class NIRDataset(Dataset):
         return corrected_group
 
     def do_corrections(self):
+        if self.is_subarray:
+            self.do_subarray_corrections()
+        else:
+            self.do_fullframe_corrections()
+
+    def do_fullframe_corrections(self):
         """Do Reference Pixels Corrections for all amplifiers, NIR detectors
         First read of each integration is NOT subtracted, as the signal is removed
         in the superbias subtraction step"""
-
         #
         #  First transform to detector coordinates
         #
@@ -694,6 +780,61 @@ class NIRDataset(Dataset):
         self.detector_to_DMS()
         log.setLevel(logging.INFO)
         return
+
+    def do_subarray_corrections(self):
+        """Do corrections for subarray.  Reference pixel value calculated
+        separately for odd and even columns if odd_even_columns is True,
+        otherwise a single number calculated from all reference pixels"""
+        #
+        #  First transform to detector coordinates
+        #
+        self.DMS_to_detector()
+        refdq = dqflags.pixel['REFERENCE_PIXEL']
+        (nints, ngroups, nrows, ncols) = self.data.shape
+        for integration in range(nints):
+            for group in range(ngroups):
+                #
+                # Get the reference values from the top and bottom reference
+                # pixels
+                #
+                thisgroup = self.data[integration, group].copy()
+                refpixindices = np.where(np.bitwise_and(self.pixeldq, refdq) == refdq)
+                nrefpixels = len(refpixindices[0])
+                if nrefpixels == 0:
+                    self.bad_reference_pixels = True
+                    return
+                if self.odd_even_columns:
+                    oddrefpixindices_row = []
+                    oddrefpixindices_col = []
+                    evenrefpixindices_row = []
+                    evenrefpixindices_col = []
+                    for i in range(nrefpixels):
+                        if (refpixindices[1][i] % 2) == 0:
+                            evenrefpixindices_row.append(refpixindices[0][i])
+                            evenrefpixindices_col.append(refpixindices[1][i])
+                        else:
+                            oddrefpixindices_row.append(refpixindices[0][i])
+                            oddrefpixindices_col.append(refpixindices[1][i])
+                    evenrefpixindices = (np.array(evenrefpixindices_row),
+                                         np.array(evenrefpixindices_col))
+                    oddrefpixindices = (np.array(oddrefpixindices_row),
+                                        np.array(oddrefpixindices_col))
+                    evenrefpixvalue = self.sigma_clip(thisgroup[evenrefpixindices],
+                                                      self.pixeldq[evenrefpixindices])
+                    oddrefpixvalue = self.sigma_clip(thisgroup[oddrefpixindices],
+                                                      self.pixeldq[oddrefpixindices])
+                    thisgroup[:, 0::2] = thisgroup[:, 0::2] - evenrefpixvalue
+                    thisgroup[:, 1::2] = thisgroup[:, 1::2] - oddrefpixvalue
+                else:
+                    refpixvalue = self.sigma_clip(thisgroup[refpixindices],
+                                                  self.pixeldq[refpixindices])
+                    thisgroup = thisgroup - refpixvalue
+                self.data[integration, group] = thisgroup
+        #
+        #  Now transform back from detector to DMS coordinates.
+        self.detector_to_DMS()
+        log.setLevel(logging.INFO)
+        return 
 
 class NRS1Dataset(NIRDataset):
     """For NRS1 data"""
@@ -927,6 +1068,13 @@ class MIRIDataset(Dataset):
     Parameters:
     -----------
 
+    input_model: data model object
+        Science data model to be corrected
+
+    is_subarray: boolean
+        flag that shows whether the dataset was created from subarray
+        data
+
     odd_even_rows: boolean
         Flag that controls whether odd and even-numbered rows are
         handled separately
@@ -934,9 +1082,11 @@ class MIRIDataset(Dataset):
     """
 
     def __init__(self, input_model,
+                 is_subarray,
                  odd_even_rows):
 
         super(MIRIDataset, self).__init__(input_model,
+                                          is_subarray,
                                           odd_even_columns=False,
                                           use_side_ref_pixels=False,
                                           side_smoothing_length=False,
@@ -1112,7 +1262,12 @@ class MIRIDataset(Dataset):
         if self.odd_even_rows:
             odd = self.get_odd_refvalue(group, amplifier, left_or_right)
             even = self.get_even_refvalue(group, amplifier, left_or_right)
-            if odd is None or even is None: self.bad_reference_pixels = True
+            if odd is None:
+                log.warning("Odd rows for amplifier {} have no good reference pixels".format(amplifier))
+                self.bad_reference_piels = True
+            elif even is None:
+                log.warning("Even rows for amplifier {} have no good reference pixels".format(amplifier))
+                self.bad_reference_pixels = True
             return odd, even
         else:
             rowstart, rowstop, column = MIR_reference_sections[amplifier][left_or_right]
@@ -1210,6 +1365,16 @@ class MIRIDataset(Dataset):
         return
 
     def do_corrections(self):
+        if self.is_subarray:
+            self.do_subarray_corrections()
+        else:
+            self.do_fullframe_corrections()
+
+    def do_subarray_corrections(self):
+        log.warning("Refpix correction skipped for MIRI subarray")
+        return
+
+    def do_fullframe_corrections(self):
         """Do Reference Pixels Corrections for all amplifiers, MIRI detectors"""
         #
         #  First we need to subtract the first read of each integration
@@ -1241,6 +1406,7 @@ class MIRIDataset(Dataset):
                 thisgroup = self.data[integration, group].copy()
                 refvalues = self.get_refvalues(thisgroup)
                 if self.bad_reference_pixels:
+                    log.warning("Group {} has no reference pixels".format(group))
                     break
                 self.do_left_right_correction(thisgroup, refvalues)
                 self.data[integration, group] = thisgroup
@@ -1293,132 +1459,155 @@ def create_dataset(input_model,
         separately (MIR only)
 
     """
-
+    is_subarray = False
     detector = input_model.meta.instrument.detector
+    model_copy = input_model.copy()
+    if reffile_utils.is_subarray(input_model):
+        nints, ngroups, nrows, ncols = input_model.data.shape
+        colstart = input_model.meta.subarray.xstart - 1
+        colstop = colstart + input_model.meta.subarray.xsize
+        rowstart = input_model.meta.subarray.ystart - 1
+        rowstop = rowstart + input_model.meta.subarray.ysize
+        if rowstart < 0 or colstart < 0 \
+           or rowstop > 2048 or colstop > 2048:
+            return None
+        else:
+            if detector[:3] == 'MIR':
+                full_shape = (nints, ngroups, 1024, 1032)
+                dq_shape = (1024, 1032)
+            else:
+                full_shape = (nints, ngroups, 2048, 2048)
+                dq_shape = (2048, 2048)
+            model_copy.data = np.zeros(full_shape, dtype=input_model.data.dtype)
+            model_copy.data[:, :, rowstart:rowstop, colstart:colstop] = input_model.data
+            model_copy.pixeldq = np.ones(dq_shape, dtype=input_model.pixeldq.dtype)
+            model_copy.pixeldq[rowstart:rowstop, colstart:colstop] = input_model.pixeldq
+            is_subarray = True
+
     if detector[:3] == 'MIR':
-        return MIRIDataset(input_model,
+        return MIRIDataset(model_copy,
+                           is_subarray,
                            odd_even_rows)
     elif detector == 'NRS1':
-        return NRS1Dataset(input_model,
+        return NRS1Dataset(model_copy,
+                           is_subarray,
                            odd_even_columns,
                            use_side_ref_pixels,
                            side_smoothing_length,
                            side_gain)
     elif detector == 'NRS2':
-        return NRS2Dataset(input_model,
+        return NRS2Dataset(model_copy,
+                           is_subarray,
                            odd_even_columns,
                            use_side_ref_pixels,
                            side_smoothing_length,
                            side_gain)
     elif detector == 'NRCA1':
-        return NRCA1Dataset(input_model,
+        return NRCA1Dataset(model_copy,
+                            is_subarray,
                             odd_even_columns,
                             use_side_ref_pixels,
                             side_smoothing_length,
                             side_gain)
     elif detector == 'NRCA2':
-        return NRCA2Dataset(input_model,
+        return NRCA2Dataset(model_copy,
+                            is_subarray,
                             odd_even_columns,
                             use_side_ref_pixels,
                             side_smoothing_length,
                             side_gain)
     elif detector == 'NRCA3':
-        return NRCA3Dataset(input_model,
+        return NRCA3Dataset(model_copy,
+                            is_subarray,
                             odd_even_columns,
                             use_side_ref_pixels,
                             side_smoothing_length,
                             side_gain)
     elif detector == 'NRCA4':
-        return NRCA4Dataset(input_model,
+        return NRCA4Dataset(model_copy,
+                            is_subarray,
                             odd_even_columns,
                             use_side_ref_pixels,
                             side_smoothing_length,
                             side_gain)
     elif detector == 'NRCALONG':
-        return NRCALONGDataset(input_model,
+        return NRCALONGDataset(model_copy,
+                               is_subarray,
                                odd_even_columns,
                                use_side_ref_pixels,
                                side_smoothing_length,
                                side_gain)
     elif detector == 'NRCB1':
-        return NRCB1Dataset(input_model,
+        return NRCB1Dataset(model_copy,
+                            is_subarray,
                             odd_even_columns,
                             use_side_ref_pixels,
                             side_smoothing_length,
                             side_gain)
     elif detector == 'NRCB2':
-        return NRCB2Dataset(input_model,
+        return NRCB2Dataset(model_copy,
+                            is_subarray,
                             odd_even_columns,
                             use_side_ref_pixels,
                             side_smoothing_length,
                             side_gain)
     elif detector == 'NRCB3':
-        return NRCB3Dataset(input_model,
+        return NRCB3Dataset(model_copy,
+                            is_subarray,
                             odd_even_columns,
                             use_side_ref_pixels,
                             side_smoothing_length,
                             side_gain)
     elif detector == 'NRCB4':
-        return NRCB4Dataset(input_model,
+        return NRCB4Dataset(model_copy,
+                            is_subarray,
                             odd_even_columns,
                             use_side_ref_pixels,
                             side_smoothing_length,
                             side_gain)
     elif detector == 'NRCBLONG':
-        return NRCBLONGDataset(input_model,
+        return NRCBLONGDataset(model_copy,
+                               is_subarray,
                                odd_even_columns,
                                use_side_ref_pixels,
                                side_smoothing_length,
                                side_gain)
     elif detector == 'NIS':
-        return NIRISSDataset(input_model,
+        return NIRISSDataset(model_copy,
+                             is_subarray,
                              odd_even_columns,
                              use_side_ref_pixels,
                              side_smoothing_length,
                              side_gain)
     elif detector == 'GUIDER1':
-        return GUIDER1Dataset(input_model,
+        return GUIDER1Dataset(model_copy,
+                              is_subarray,
                               odd_even_columns,
                               use_side_ref_pixels,
                               side_smoothing_length,
                               side_gain)
     elif detector == 'GUIDER2':
-        return GUIDER2Dataset(input_model,
+        return GUIDER2Dataset(model_copy,
+                              is_subarray,
                               odd_even_columns,
                               use_side_ref_pixels,
                               side_smoothing_length,
                               side_gain)
     else:
         log.error('Unrecognized detector')
-        return NIRDataset(input_model,
+        return NIRDataset(model_copy,
+                          is_subarray,
                           odd_even_columns,
                           use_side_ref_pixels,
                           side_smoothing_length,
                           side_gain)
-
-def is_subarray(input_model):
-    """Test for whether the data in a model is full-frame or subarray
-
-    Parameters:
-    -----------
-
-    input_model: jwst.datamodels.model
-        Model to be tested
-
-    """
-
-    if input_model.meta.subarray.name == 'FULL':
-        return False
-    else:
-        return True
 
 def correct_model(input_model, odd_even_columns,
                    use_side_ref_pixels,
                    side_smoothing_length, side_gain,
                    odd_even_rows):
     """Wrapper to do Reference Pixel Correction on a JWST Model.
-    Performs the correction on the data member.  Only works for full-frame
-    exposures
+    Performs the correction on the datamodel
 
     Parameters:
     -----------
@@ -1447,23 +1636,25 @@ def correct_model(input_model, odd_even_columns,
         separately (MIR only)
 
     """
-
-    if is_subarray(input_model):
-        log.info('Reference pixel correction disabled for subarray exposures')
-        return input_model.copy()
-
+    if input_model.meta.instrument.name == 'MIRI':
+        if reffile_utils.is_subarray(input_model):
+            log.warning("Refpix correction skipped for MIRI subarrays")
+            return SUBARRAY_SKIPPED
     input_dataset = create_dataset(input_model,
                                    odd_even_columns,
                                    use_side_ref_pixels,
                                    side_smoothing_length,
                                    side_gain,
                                    odd_even_rows)
+    if input_dataset is None:
+        status = SUBARRAY_DOESNTFIT
+        return status
     result_dataset = reference_pixel_correction(input_dataset)
     if result_dataset.bad_reference_pixels:
-        return None
+        return BAD_REFERENCE_PIXELS
     else:
-        input_model.data = result_dataset.data.copy()
-        return input_model
+        result_dataset.transfer_to_model(input_model)
+        return REFPIX_OK
 
 def reference_pixel_correction(input_dataset):
     """

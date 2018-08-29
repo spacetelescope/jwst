@@ -12,7 +12,7 @@ from ..mrs_imatch import mrs_imatch_step
 from ..outlier_detection import outlier_detection_step
 from ..resample import resample_spec_step
 
-__version__ = '0.8.0'
+__version__ = '0.9.3'
 
 # Group exposure types
 MULTISOURCE_MODELS = ['MultiSlitModel']
@@ -69,13 +69,8 @@ class Spec3Pipeline(Pipeline):
         # products until the individual tasks work and do it themselves
         exptype = input_models[0].meta.exposure.type
         model_type = input_models[0].meta.model_type
-        output_basename = input_models.meta.asn_table.products[0].name
-        self.output_basename = output_basename
-
-        pool_name = input_models.meta.asn_table.asn_pool
-        asn_file = input
-        prog = input_models.meta.asn_table.program
-        acid = input_models.meta.asn_table.asn_id
+        output_file = input_models.meta.asn_table.products[0].name
+        self.output_file = output_file
 
         # `sources` is the list of astronomical sources that need be
         # processed. Each element is a ModelContainer, which contains
@@ -107,8 +102,8 @@ class Spec3Pipeline(Pipeline):
             # the output name needs to be updated with the source name.
             if isinstance(source, tuple):
                 source_id, result = source
-                self.output_basename = format_product(
-                    output_basename, source_id=int(source_id)
+                self.output_file = format_product(
+                    output_file, source_id=source_id.lower()
                 )
             else:
                 result = source
@@ -141,7 +136,10 @@ class Spec3Pipeline(Pipeline):
                     pass
 
             # Do 1-D spectral extraction
-            if resample_complete is not None and resample_complete.upper() == 'COMPLETE':
+            if resample_complete is not None and \
+               resample_complete.upper() == 'COMPLETE':
+                if exptype in IFU_EXPTYPES:
+                    self.extract_1d.search_output_file = False
                 result = self.extract_1d(result)
             else:
                 self.log.warn(

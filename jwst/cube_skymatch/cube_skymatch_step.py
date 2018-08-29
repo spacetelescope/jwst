@@ -7,8 +7,6 @@ JWST pipeline step for sky matching.
 :License: :doc:`../LICENSE`
 
 """
-from __future__ import (absolute_import, division, unicode_literals,
-                        print_function)
 
 import numpy as np
 

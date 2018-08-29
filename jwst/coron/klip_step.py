@@ -4,6 +4,10 @@ from ..stpipe import Step
 from .. import datamodels
 from . import klip
 
+
+__all__ = ["KlipStep"]
+
+
 class KlipStep(Step):
 
     """

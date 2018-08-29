@@ -58,7 +58,6 @@ class GWCSDrizzle:
         """
 
         # Initialize the object fields
-
         self.outsci = None
         self.outwht = None
         self.outcon = None
@@ -69,7 +68,7 @@ class GWCSDrizzle:
         self.wt_scl = wt_scl
         self.kernel = kernel
         self.fillval = fillval
-        self.pixfrac = float(pixfrac)
+        self.pixfrac = pixfrac
 
         self.sciext = "SCI"
         self.whtext = "WHT"
@@ -78,19 +77,6 @@ class GWCSDrizzle:
         out_units = "cps"
 
         self.outexptime = product.meta.resample.product_exposure_time or 0.0
-
-        self.uniqid = product.meta.resample.pointings or 0
-
-        self.sciext = product.meta.resample.product_data_extname or "SCI"
-        self.whtext = product.meta.resample.product_weight_extname or "WHT"
-        self.conext = product.meta.resample.product_context_extname or "CON"
-
-        self.wt_scl = product.meta.resample.drizzle_weight_scale or wt_scl
-        self.kernel = product.meta.resample.drizzle_kernel or kernel
-        self.fillval = product.meta.resample.drizzle_fill_value or fillval
-        self.pixfrac = product.meta.resample.drizzle_pixel_fraction or pixfrac
-
-        self.out_units = out_units = product.meta.resample.drizzle_output_units or "cps"
 
         self.outsci = product.data
         if outwcs:
@@ -120,13 +106,12 @@ class GWCSDrizzle:
         if util.is_blank(self.wt_scl):
             self.wt_scl = ''
         elif self.wt_scl != "exptime" and self.wt_scl != "expsq":
-            raise ValueError("Illegal value for wt_scl: %s" % out_units)
+            raise ValueError("Illegal value for wt_scl: %s" % self.wt_scl)
 
         if out_units == "counts":
             np.divide(self.outsci, self.outexptime, self.outsci)
         elif out_units != "cps":
-            raise ValueError("Illegal value for wt_scl: %s" % out_units)
-
+            raise ValueError("Illegal value for out_units: %s" % out_units)
 
     def add_image(self, insci, inwcs, inwht=None,
                   xmin=0, xmax=0, ymin=0, ymax=0, pscale_ratio=1.0,
@@ -219,7 +204,6 @@ class GWCSDrizzle:
                             pixfrac=self.pixfrac, kernel=self.kernel,
                             fillval=self.fillval)
 
-
     def blot_image(self, blotwcs, interp='poly5', sinscl=1.0):
         """
         Resample the output image using an input world coordinate system.
@@ -248,7 +232,6 @@ class GWCSDrizzle:
 
         self.outwcs = blotwcs
 
-
     def increment_id(self):
         """
         Increment the id count and add a plane to the context image if needed
@@ -268,7 +251,8 @@ class GWCSDrizzle:
 
         if self.outcon.shape[0] == planeid:
             plane = np.zeros_like(self.outcon[0])
-            self.outcon = np.append(self.outcon, plane, axis=0)
+            plane = plane.reshape((1, plane.shape[0], plane.shape[1]))
+            self.outcon = np.concatenate((self.outcon, plane))
 
         # Increment the id
         self.uniqid += 1
@@ -394,7 +378,7 @@ def dodrizzle(insci, input_wcs, inwht,
     """
 
     # Insure that the fillval parameter gets properly interpreted for use with tdriz
-    if util.is_blank(fillval):
+    if util.is_blank(str(fillval)):
         fillval = 'INDEF'
     else:
         fillval = str(fillval)
@@ -456,10 +440,18 @@ def dodrizzle(insci, input_wcs, inwht,
     # Call 'drizzle' to perform image combination
     log.info('Drizzling {} --> {}'.format(insci.shape, outsci.shape))
     _vers, nmiss, nskip = cdrizzle.tdriz(
-        insci, inwht, pixmap, outsci, outwht, outcon,
-        uniqid=uniqid, xmin=xmin, xmax=xmax,
-        ymin=ymin, ymax=ymax, scale=pscale_ratio, pixfrac=pixfrac,
-        kernel=kernel, in_units=in_units, expscale=expscale,
-        wtscale=wt_scl, fillstr=fillval)
+        insci, inwht, pixmap,
+        outsci, outwht, outcon,
+        uniqid=uniqid,
+        xmin=xmin, xmax=xmax,
+        ymin=ymin, ymax=ymax,
+        scale=pscale_ratio,
+        pixfrac=pixfrac,
+        kernel=kernel,
+        in_units=in_units,
+        expscale=expscale,
+        wtscale=wt_scl,
+        fillstr=fillval
+        )
 
     return _vers, nmiss, nskip

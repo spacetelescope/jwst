@@ -1,8 +1,11 @@
 #! /usr/bin/env python
 
-from ..stpipe import Step, cmdline
+from ..stpipe import Step
 from .. import datamodels
 from . import persistence
+
+__all__ = ["PersistenceStep"]
+
 
 class PersistenceStep(Step):
     """
@@ -21,6 +24,7 @@ class PersistenceStep(Step):
         input_trapsfilled = string(default="")
         flag_pers_cutoff = float(default=40.)
         save_persistence = boolean(default=False)
+        save_trapsfilled = boolean(default=True)
     """
 
     reference_file_types = ["trapdensity", "trappars", "persat"]
@@ -87,13 +91,14 @@ class PersistenceStep(Step):
         if traps_filled_model is not None:      # input traps_filled
             traps_filled_model.close()
         if traps_filled is not None:            # output traps_filled
-            # Save the traps_filled image, using the input file name but
-            # with suffix 'trapsfilled'.
-            self.save_model(traps_filled, 'trapsfilled')
+            # Save the traps_filled image with suffix 'trapsfilled'.
+            self.save_model(
+                traps_filled, suffix='trapsfilled', force=self.save_trapsfilled
+            )
             traps_filled.close()
 
         if output_pers is not None:             # output file of persistence
-            self.save_model(output_pers, 'output_pers')
+            self.save_model(output_pers, suffix='output_pers')
             output_pers.close()
 
         # Close reference files.
@@ -102,4 +107,3 @@ class PersistenceStep(Step):
         persat_model.close()
 
         return output_obj
-

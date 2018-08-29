@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
-from ..stpipe import Step, cmdline
+from ..stpipe import Step
 from ..datamodels import DrizProductModel
-from ..lib.catalog_utils import replace_suffix_ext
 from . import source_catalog
+
+__all__ = ["SourceCatalogStep"]
 
 
 class SourceCatalogStep(Step):
@@ -18,12 +19,14 @@ class SourceCatalogStep(Step):
     """
 
     spec = """
-        kernel_fwhm = float(default=2.0)    # Gaussian kernel FWHM in pixels
-        kernel_xsize = float(default=5)     # Kernel x size in pixels
-        kernel_ysize = float(default=5)     # Kernel y size in pixels
-        snr_threshold = float(default=3.0)  # SNR threshold above the bkg
-        npixels = float(default=5.0)        # min number of pixels in source
-        deblend = boolean(default=False)    # deblend sources?
+        kernel_fwhm = float(default=2.0)      # Gaussian kernel FWHM in pixels
+        kernel_xsize = float(default=5)       # Kernel x size in pixels
+        kernel_ysize = float(default=5)       # Kernel y size in pixels
+        snr_threshold = float(default=3.0)    # SNR threshold above the bkg
+        npixels = float(default=5.0)          # min number of pixels in source
+        deblend = boolean(default=False)      # deblend sources?
+        output_ext = string(default='.ecsv')  # Default type of output
+        suffix = string(default='cat')        # Default suffix for output files
     """
 
     def process(self, input):
@@ -46,17 +49,14 @@ class SourceCatalogStep(Step):
 
             self.log.info('Detected {0} sources'.format(len(catalog)))
 
-            old_suffixes = ['i2d']
-            output_dir = self.search_attr('output_dir')
-            cat_filepath = replace_suffix_ext(model.meta.filename,
-                                              old_suffixes, 'cat',
-                                              output_ext='ecsv',
-                                              output_dir=output_dir)
-            catalog.write(cat_filepath, format='ascii.ecsv', overwrite=True)
-            self.log.info('Wrote source catalog: {0}'
-                          .format(cat_filepath))
-            model.meta.source_catalog.filename = cat_filepath
+            if self.save_results:
+                cat_filepath = self.make_output_path()
+                catalog.write(
+                    cat_filepath, format='ascii.ecsv', overwrite=True
+                )
+                self.log.info('Wrote source catalog: {0}'
+                              .format(cat_filepath))
+                model.meta.source_catalog.filename = cat_filepath
 
         # nothing is returned because this is the last step
         return
-

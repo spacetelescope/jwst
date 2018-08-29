@@ -1,5 +1,7 @@
-.. _resample_:
+.. resample_:
 
 
 Python Interface to Drizzle: ResampleData()
 ===========================================
+
+.. automodapi:: jwst.resample.resample

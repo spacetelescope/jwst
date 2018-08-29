@@ -8,4 +8,4 @@ Transforms
    tpcorr
 
 .. automodapi:: jwst.transforms
-
+.. automodapi:: jwst.transforms.models

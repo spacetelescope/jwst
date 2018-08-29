@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from collections import defaultdict
+import os.path as op
 
 from .. import datamodels
 from ..associations.load_as_asn import LoadAsLevel2Asn
@@ -13,7 +14,7 @@ from ..photom import photom_step
 from ..resample import resample_step
 
 
-__version__ = '0.8.0'
+__version__ = '0.9.3'
 
 
 class Image2Pipeline(Pipeline):
@@ -52,11 +53,11 @@ class Image2Pipeline(Pipeline):
         # Process each exposure.
         for product in asn['products']:
             self.log.info('Processing product {}'.format(product['name']))
-            self.output_basename = product['name']
+            self.output_file = product['name']
             result = self.process_exposure_product(
                 product,
                 asn['asn_pool'],
-                asn.filename
+                op.basename(asn.filename)
             )
 
             # Save result
@@ -82,6 +83,13 @@ class Image2Pipeline(Pipeline):
         ---------
         exp_product: dict
             A Level2b association product.
+
+        pool_name: str
+            The pool file name. Used for recording purposes only.
+
+        asn_file: str
+            The name of the association file.
+            Used for recording purposes only.
         """
         # Find all the member types in the product
         members_by_type = defaultdict(list)
@@ -130,7 +138,7 @@ class Image2Pipeline(Pipeline):
         input = self.assign_wcs(input)
         input = self.flat_field(input)
         input = self.photom(input)
-        
+
         # Resample individual exposures, but only if it's one of the
         # regular science image types.
         if input.meta.exposure.type.upper() in self.image_exptypes:
@@ -139,7 +147,7 @@ class Image2Pipeline(Pipeline):
                 # write out resampled exposure
                 self.save_model(result, suffix='i2d')
                 result.close()
-        
+
         # That's all folks
         self.log.info(
             'Finished processing product {}'.format(exp_product['name'])

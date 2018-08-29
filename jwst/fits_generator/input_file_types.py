@@ -46,7 +46,6 @@ import zipfile
 
 # THIRD-PARTY
 from astropy.io import fits as pyfits
-import six
 
 # LOCAL
 from ..fits_generator import objects
@@ -239,7 +238,7 @@ def get_inputfiles(input_files):
 
     for f in input_files:
         obj = None
-        if isinstance(f, (six.string_types)):
+        if isinstance(f, str):
             with open(f, 'rb') as fd:
                 file_id = fd.read(6)
             for file_type in input_file_types:

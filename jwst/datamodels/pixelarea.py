@@ -1,11 +1,11 @@
-from . import model_base
+from .reference import ReferenceFileModel
 
 
 __all__ = ['PixelAreaModel', 'NirspecSlitAreaModel', 'NirspecMosAreaModel',
            'NirspecIfuAreaModel']
 
 
-class PixelAreaModel(model_base.DataModel):
+class PixelAreaModel(ReferenceFileModel):
     """
     A data model for the pixel area map
     """
@@ -18,7 +18,7 @@ class PixelAreaModel(model_base.DataModel):
             self.data = data
 
 
-class NirspecSlitAreaModel(model_base.DataModel):
+class NirspecSlitAreaModel(ReferenceFileModel):
     """
     A data model for the NIRSpec fixed-slit pixel area reference file
 
@@ -43,7 +43,7 @@ class NirspecSlitAreaModel(model_base.DataModel):
         if area_table is not None:
             self.area_table = area_table
 
-class NirspecMosAreaModel(model_base.DataModel):
+class NirspecMosAreaModel(ReferenceFileModel):
     """
     A data model for the NIRSpec MOS pixel area reference file
 
@@ -70,7 +70,7 @@ class NirspecMosAreaModel(model_base.DataModel):
         if area_table is not None:
             self.area_table = area_table
 
-class NirspecIfuAreaModel(model_base.DataModel):
+class NirspecIfuAreaModel(ReferenceFileModel):
     """
     A data model for the NIRSpec IFU pixel area reference file
 

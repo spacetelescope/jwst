@@ -38,6 +38,7 @@ Reference
    :maxdepth: 2
 
    asn_generate.rst
+   asn_from_list.rst
    association_reference.rst
 
 .. automodapi:: jwst.associations

@@ -1,3 +1,4 @@
+# Licensed under a 3-clause BSD style license - see LICENSE.rst
 import numpy as np
 from numpy.testing import assert_array_equal
 from asdf import yamlutil
@@ -141,9 +142,9 @@ class CoordsType(JWSTTransformType):
     @classmethod
     def from_tree_transform(cls, node, ctx):
         model_type = node['model_type']
-        if model_type == 'to_dircos':
+        if model_type in ('to_dircos', 'unitless2directional') :
             return Unitless2DirCos()
-        elif model_type == 'from_dircos':
+        elif model_type in ('from_dircos', 'directional2unitless'):
             return DirCos2Unitless()
         else:
             raise TypeError("Unknown model_type")
@@ -151,9 +152,9 @@ class CoordsType(JWSTTransformType):
     @classmethod
     def to_tree_transform(cls, model, ctx):
         if isinstance(model, DirCos2Unitless):
-            model_type = 'from_dircos'
+            model_type = 'directional2unitless'
         elif isinstance(model, Unitless2DirCos):
-            model_type = 'to_dircos'
+            model_type = 'unitless2directional'
         else:
             raise TypeError("Model of type {0} i snot supported."
                             .format(model.__class__))

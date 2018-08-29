@@ -28,15 +28,12 @@
 # DAMAGE.
 
 # STDLIB
-from __future__ import absolute_import, print_function
-
 from operator import itemgetter
 import os
 import re
 
 # THIRD-PARTY
 import numpy as np
-import six
 
 # LOCAL
 from . import objects
@@ -181,14 +178,14 @@ class TemplateParserBase:
         lines = self._line_iter(filename)
 
         # <<file>> line
-        line = six.advance_iterator(lines)
+        line = next(lines)
         try:
             _, name = self._file_section_line.parseString(line, True)
         except ParseException:
             raise self._raise("file does not begin with <<file>> line")
         self._parse_file(name)
 
-        line = six.advance_iterator(lines)
+        line = next(lines)
         if isinstance(self, VerificationTemplateParser):
             while True:
                 try:
@@ -198,7 +195,7 @@ class TemplateParserBase:
                 else:
                     inherit = os.path.join(os.path.dirname(filename), inherit)
                     self._parse_inherit(inherit)
-                    line = six.advance_iterator(lines)
+                    line = next(lines)
 
         stop = False
         while True:
@@ -212,7 +209,7 @@ class TemplateParserBase:
             # keyword definition lines
             while True:
                 try:
-                    line = six.advance_iterator(lines)
+                    line = next(lines)
                 except StopIteration:
                     stop = True
                     break
@@ -244,7 +241,7 @@ class TemplateParserBase:
             # data function lines
             while True:
                 try:
-                    line = six.advance_iterator(lines)
+                    line = next(lines)
                 except StopIteration:
                     stop = True
                     break

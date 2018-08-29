@@ -26,9 +26,12 @@
 # TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 # DAMAGE.
+
+"""This module defines functions that connect the core CRDS package to the
+JWST CAL code and STPIPE, tailoring it to work with DATAMODELS as inputs 
+and provide results in the forms required by STPIPE.
 """
-A client library for CRDS
-"""
+
 import re
 
 # ----------------------------------------------------------------------
@@ -55,8 +58,6 @@ def get_refpaths_from_filename(filename, reference_file_types):
 
 # ......................
     
-_BESTREFS_CACHE = {}   # { model_filename : bestref_path or 'N/A', ... }
-
 # import memory_profiler
 # @memory_profiler.profile
 def get_multiple_reference_paths(dataset_model, reference_file_types):
@@ -66,50 +67,22 @@ def get_multiple_reference_paths(dataset_model, reference_file_types):
 
     Returns best references dict { filetype : filepath or "N/A", ... }
     """
-    filename = dataset_model.meta.filename
-    
-    try:
-
-        refpaths = { reftype:_BESTREFS_CACHE[(filename, reftype)]
-                     for reftype in reference_file_types }
-        log.verbose("Using cached bestrefs for", repr(filename), "with types", repr(reference_file_types))
-        return refpaths
-    except KeyError:
-        pass
-        
-    data_dict = _get_data_dict(filename, dataset_model)
-
-    # Cache prefetch-like results
+    data_dict = _get_data_dict(dataset_model)
     refpaths = _get_refpaths(data_dict, tuple(reference_file_types))
-    
-    # Cache results for each individual reftype, as-in get_reference_file().
-    for reftype, path in refpaths.items():
-        _BESTREFS_CACHE[(filename, reftype)] = path
-        
     return refpaths
 
 # ......................
     
-_HEADER_CACHE = {}   #  { model_filename : flat_model_pseudo_header, ... }
-
-def _get_data_dict(filename, dataset_model):
-    """Return the data models header dictionary based on open data `dataset_model`.
-
+def _get_data_dict(dataset_model):
+    """Return the data models header dictionary based on open data 
+    `dataset_model`.
     Returns a flat parameter dictionary used for CRDS bestrefs matching.
     """
-    try:
-        header = _HEADER_CACHE[filename]
-        log.verbose("Using cached CRDS matching header for", repr(filename))
-        return header
-    except KeyError:
-        pass
-    log.verbose("Caching CRDS matching header for", repr(filename))
-    _HEADER_CACHE[filename] = header = _clean_flat_dict(dataset_model)
-    return header
-
-def _clean_flat_dict(dataset_model):
-    """Make sure all header items returned are simple, no complex objects."""
     header = dataset_model.to_flat_dict(include_arrays=False)
+    return _clean_flat_dict(header)
+
+def _clean_flat_dict(header):
+    """Make sure all header items returned are simple, no complex objects."""
     return { key: val for (key,val) in header.items()
              if isinstance(val, (python23.string_types,python23.long,int,float,complex,bool)) }
 
@@ -123,13 +96,15 @@ def _get_refpaths(data_dict, reference_file_types):
     """
     if not reference_file_types:   # [] interpreted as *all types*.
         return {}
-    try:
+    try: # catch exceptions to truncate expected tracebacks
         with crds_cache_locking.get_cache_lock():
             bestrefs = crds.getreferences(data_dict, reftypes=reference_file_types, observatory="jwst")
     except crds.CrdsBadRulesError as exc:
         raise crds.CrdsBadRulesError(str(exc))
     except crds.CrdsBadReferenceError as exc:
-        raise crds.CrdsBadReferenceError(str(exc))    
+        raise crds.CrdsBadReferenceError(str(exc))
+    except crds.CrdsLookupError as exc:
+        raise crds.CrdsLookupError(str(exc))
     refpaths = {filetype: filepath if "N/A" not in filepath.upper() else "N/A"
                 for (filetype, filepath) in bestrefs.items()}
     return refpaths

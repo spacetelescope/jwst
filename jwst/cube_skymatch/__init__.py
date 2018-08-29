@@ -4,8 +4,6 @@ This package provides support for sky background subtraction and equalization
 (matching).
 
 """
-from __future__ import (absolute_import, division, unicode_literals,
-                        print_function)
 import os
 import logging
 
@@ -17,7 +15,7 @@ from . import skycube
 from . import cube_skymatch_step
 
 __taskname__ = 'cube_skymatch'
-__version__ = '0.8.0'
+__version__ = '0.9.3'
 __vdate__ = '21-Sept-2016'
 __author__ = 'Mihai Cara'
 

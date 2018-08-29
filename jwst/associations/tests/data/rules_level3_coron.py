@@ -2,6 +2,7 @@
 """
 import logging
 
+from jwst.associations.registry import RegistryMarker
 from jwst.associations.lib.rules_level3_base import *
 
 __all__ = [
@@ -12,10 +13,12 @@ __all__ = [
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
+
 # --------------------------------
 # Start of the User-level rules
 # --------------------------------
 
+@RegistryMarker.rule
 class Asn_Coron(
         AsnMixin_OpticalPath,
         AsnMixin_Base

@@ -4,7 +4,6 @@
 
 import logging
 import copy
-import numpy as np
 from astropy.modeling.models import Shift, Const1D, Mapping, Identity
 
 from .. import datamodels
@@ -37,7 +36,7 @@ def extract_grism_objects(input_model, grism_objects=[], reference_files={}):
 
     Notes
     -----
-    This method supports NRC_GRISM and NIS_WFSS only
+    This method supports NRC_WFSS and NIS_WFSS only
 
     GrismObject is a named tuple which contains distilled
     information about each catalog object. It can be created
@@ -81,6 +80,7 @@ def extract_grism_objects(input_model, grism_objects=[], reference_files={}):
     # sky_bbox_ :lower and upper bounding box in SkyCoord
     # sid: catalog ID of the object
 
+    slits = []
     for obj in grism_objects:
         for order in obj.order_bounding.keys():
 
@@ -130,7 +130,8 @@ def extract_grism_objects(input_model, grism_objects=[], reference_files={}):
             ext_dq = input_model.dq[ymin : ymax + 1, xmin : xmax + 1].copy()
 
 
-            new_model = datamodels.ImageModel(data=ext_data, err=ext_err, dq=ext_dq)
+            #new_model = datamodels.ImageModel(data=ext_data, err=ext_err, dq=ext_dq)
+            new_model = datamodels.SlitModel(data=ext_data, err=ext_err, dq=ext_dq)
             new_model.meta.wcs = subwcs
             # Not sure this makes sense for grism exposures since the trace
             # doesn't really have a footprint itself, it relates back to the
@@ -138,22 +139,21 @@ def extract_grism_objects(input_model, grism_objects=[], reference_files={}):
             # here?
             # util.update_s_region(new_model)
             new_model.meta.wcsinfo.spectral_order = order
-            output_model.slits.append(new_model)
-
             # set x/ystart values relative to the image (screen) frame.
             # The overall subarray offset is recorded in model.meta.subarray.
             # nslit = obj.sid - 1  # catalog id starts at zero
-            output_model.slits[-1].name = str(obj.sid)
-            output_model.slits[-1].xstart = xmin + 1
-            output_model.slits[-1].xsize = (xmax - xmin) + 1
-            output_model.slits[-1].ystart = ymin + 1
-            output_model.slits[-1].ysize = (ymax - ymin) + 1
-            output_model.slits[-1].source_xpos = obj.xcentroid
-            output_model.slits[-1].source_ypos = obj.ycentroid
-            output_model.slits[-1].source_id = obj.sid
-            output_model.slits[-1].bunit_data = input_model.meta.bunit_data
-            output_model.slits[-1].bunit_err = input_model.meta.bunit_err
-
+            new_model.name = str(obj.sid)
+            new_model.xstart = xmin + 1
+            new_model.xsize = (xmax - xmin) + 1
+            new_model.ystart = ymin + 1
+            new_model.ysize = (ymax - ymin) + 1
+            new_model.source_xpos = obj.xcentroid
+            new_model.source_ypos = obj.ycentroid
+            new_model.source_id = obj.sid
+            new_model.bunit_data = input_model.meta.bunit_data
+            new_model.bunit_err = input_model.meta.bunit_err
+            slits.append(new_model)
+    output_model.slits.extend(slits)
     del subwcs
     return output_model
 

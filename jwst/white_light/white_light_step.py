@@ -1,9 +1,10 @@
 #! /usr/bin/env python
 
-from ..stpipe import Step, cmdline
+from ..stpipe import Step
 from .. import datamodels
-from ..lib.catalog_utils import replace_suffix_ext
 from .white_light import white_light
+
+__all__ = ["WhiteLightStep"]
 
 
 class WhiteLightStep(Step):
@@ -13,6 +14,8 @@ class WhiteLightStep(Step):
     """
 
     spec = """
+    output_ext         = string(default='.ecsv')  # Default type of output
+    suffix             = string(default='whtlt')  # Default suffix for output files
     """
 
     def process(self, input):
@@ -24,13 +27,8 @@ class WhiteLightStep(Step):
             result = white_light(input_model)
 
             # Write the output catalog
-
-            old_suffixes = ['x1dints']
-            output_dir = self.search_attr('output_dir')
-            cat_filepath = replace_suffix_ext(input_model.meta.filename,
-                                              old_suffixes, 'whtlt',
-                                              output_ext='ecsv',
-                                              output_dir=output_dir)
-            result.write(cat_filepath, format='ascii.ecsv', overwrite=True)
+            if self.save_results:
+                output_path = self.make_output_path()
+                result.write(output_path, format='ascii.ecsv', overwrite=True)
 
         return result

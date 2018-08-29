@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# 
+#
 #  ramp_fit.py - calculate weighted mean of slope, based on Massimo
 #                Robberto's "On the Optimal Strategy to fit MULTIACCUM
 #                ramps in the presence of cosmic rays."
@@ -10,14 +10,16 @@
 #                determined from the input data quality arrays.
 #
 # Note:
-# In this module, comments on the 'first read','second read', etc are 1-based.
+# In this module, comments on the 'first group','second group', etc are
+#    1-based, unless noted otherwise.
 
 import time
-import numpy as np
 import logging
+import numpy as np
 
 from .. import datamodels
 from ..datamodels import dqflags
+from ..lib import pipe_utils
 
 from . import gls_fit           # used only if algorithm is "GLS"
 from . import utils
@@ -26,7 +28,6 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 BUFSIZE = 1024 * 30000  # 30Mb cache size for data section
-MIN_ERR = 1.E-10 # minimum allowed value for error cube
 
 # Replace zero or negative variances with this.
 LARGE_VARIANCE = 1.e8
@@ -40,9 +41,9 @@ def ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
     Calculate the count rate for each pixel in all data cube sections and all
     integrations, equal to the slope for all sections (intervals between
     cosmic rays) of the pixel's ramp divided by the effective integration time.
-    If the weighting parameter is set to 'optim', the optimal weighting from a
-    pere by Fixsen (ref. TBA) will be used in the fitting; otherwise the
-    fitting will be unweighted.
+    The weighting parameter must currently be set to 'optim', to use the optimal
+    weighting (paper by Fixsen, ref. TBA) will be used in the fitting; this is
+    currently the only supported weighting scheme.   
 
     Parameters
     ----------
@@ -66,8 +67,8 @@ def ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
         'GLS' specifies that generalized least squares should be used.
 
     weighting: string
-        'unweighted' specifies that no weighting should be used (default)
-        'optimal' specifies that optimal weighting should be used
+        'optimal' specifies that optimal weighting should be used;
+         currently the only weighting supported.
 
     Returns
     -------
@@ -108,7 +109,7 @@ def ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
 
 
 def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
-                  weighting):
+                 weighting):
     """
     Extended Summary
     ----------------
@@ -135,8 +136,8 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
         gain for all pixels
 
     weighting: string
-        'unweighted' specifies that no weighting should be used
-        'optimal' specifies that optimal weighting should be used
+        'optimal' specifies that optimal weighting should be used; currently 
+        the only weighting supported.
 
     Returns
     -------
@@ -153,20 +154,19 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
         exposure; this will be None if save_opt is False
     """
     tstart = time.time()
- 
+
     # get needed sizes and shapes
-    nreads, npix, imshape, cubeshape, n_int, instrume, frame_time, ngroups = \
-        utils.get_dataset_info(model)
+    nreads, npix, imshape, cubeshape, n_int, instrume, frame_time, ngroups, \
+        group_time = utils.get_dataset_info(model)
 
     # Save original shapes for writing to log file, as these may change for MIRI
     orig_nreads = nreads
     orig_cubeshape = cubeshape
 
-    # For MIRI datasets having >1 reads, if all final reads are flagged
+    # For MIRI datasets having >1 groups, if all final groups are flagged
     # as DO_NOT_USE, resize the input model arrays to exclude the final group.
     if (instrume == 'MIRI' and nreads > 1):
         last_gdq = model.groupdq[:,-1,:,:]
-        gdq_shape = last_gdq.shape
 
         if np.all(np.bitwise_and( last_gdq, dqflags.group['DO_NOT_USE'] )):
             model.data = model.data[:,:-1,:,:]
@@ -175,23 +175,19 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
             nreads -= 1
             ngroups -= 1
             cubeshape = (nreads,)+imshape
-            log.info('MIRI dataset has all final reads flagged as DO_NOT_USE.')
+            log.info('MIRI dataset has all final groups flagged as DO_NOT_USE.')
+
+        # Next block is to satisfy github issue 1681:
+        # "MIRI FirstFrame and LastFrame minimum number of groups #1681"
+        if (ngroups < 2):
+            log.warning('MIRI datasets require at least 2 groups/integration')
+            log.warning('(NGROUPS), so will not process this dataset.')
+            return None, None, None
 
     if (ngroups == 1):
-        log.warn('Dataset has NGROUPS=1, so count rates for each integration')
-        log.warn('will be calculated as the value of that 1 group divided by')
-        log.warn('the group exposure time.')
-
-    slopes = np.zeros(imshape, dtype=np.float32)
-
-    slope_wtd = np.zeros(imshape, dtype=np.float64)
-    m_sum_2d = np.zeros(imshape, dtype=np.float64)
-    var_sum_2d = np.zeros(imshape, dtype=np.float64)
-
-    # For multiple-integration datasets, will output integration-specific
-    #    results to separate file named <basename> + '_integ.fits'
-    slope_int, err_int, dq_int, m_by_var_int, inv_var_int, \
-            var_p_int, var_r_int = utils.alloc_int(n_int, imshape)
+        log.warning('Dataset has NGROUPS=1, so count rates for each integration')
+        log.warning('will be calculated as the value of that 1 group divided by')
+        log.warning('the group exposure time.')
 
     # Calculate effective integration time (once EFFINTIM has been populated
     #   and accessible, will use that instead), and other keywords that will
@@ -203,18 +199,17 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
 
     # Get GROUP DQ and ERR arrays from input file
     gdq_cube = model.groupdq
-    err_cube = model.err
 
     # get max number of segments fit in all integrations
     max_seg = calc_num_seg(gdq_cube, n_int)
     f_max_seg = 0  # final number to use, usually overwritten by actual value
 
-    opt_res = utils.OptRes(n_int, imshape, max_seg, nreads)
+    (slope_int, dq_int, var_p3, var_r3, median_diffs_2d, var_p4, var_r4,
+        var_both4, var_both3, inv_var_p4, inv_var_r4, inv_var_both4,
+        s_inv_var_p3, s_inv_var_r3, s_inv_var_both3, segs_4, num_seg_per_int) =\
+        utils.alloc_arrays(n_int, imshape, max_seg)
 
-    # Allocate for the various types of variances of the_slope:
-    # Poisson noise only (per segment); Read noise only, per segment
-    var_p_s_4d = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
-    var_r_s_4d = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
+    opt_res = utils.OptRes(n_int, imshape, max_seg, nreads)
 
     # Get Pixel DQ array from input file. The incoming RampModel has uint8
     #   PIXELDQ, but ramp fitting will update this array here by flagging
@@ -229,16 +224,22 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
 
     # Get readnoise array for calculation of variance of noiseless ramps, and
     #   gain array in case optimal weighting is to be done
-    readnoise_2d, gain_2d = utils.get_ref_subs(model, readnoise_model, 
-                            gain_model)
+    readnoise_2d, gain_2d = utils.get_ref_subs(model, readnoise_model,
+                                               gain_model, nframes)
 
     # Flag any bad pixels in the gain
     pixeldq = utils.reset_bad_gain( pixeldq, gain_2d )
 
-    # loop over data integrations
+    # In this 'First Pass' over the data, loop over integrations and data
+    #   sections to calculate the estimated median slopes, which will be used
+    #   to calculate the variances. This is the same method to estimate slopes
+    #   as is done in the jump detection step, except here CR-affected and
+    #   saturated groups have already been flagged. The actual, fit, slopes for 
+    #   each segment are also calculated here.
+    # Loop over data integrations:
     for num_int in range(0, n_int):
 
-        # loop over data sections
+        # Loop over data sections
         for rlo in range(0, cubeshape[1], nrows):
             rhi = rlo + nrows
 
@@ -247,53 +248,84 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
 
             data_sect = model.get_section('data')[num_int, :, rlo:rhi, :]
 
-            # skip data section if it is all NaNs
+            # Skip data section if it is all NaNs
             if  np.all(np.isnan( data_sect)):
                 log.error('Current data section is all nans, so not processing the section.')
-                break   
+                continue
 
-            # Poisson noise only; read noise only
-            var_p_2d = np.zeros((max_seg, (rhi - rlo) * imshape[-1]),
-                                dtype=np.float32)
-            var_r_2d = np.zeros((max_seg, (rhi - rlo) * imshape[-1]),
-                                dtype=np.float32)
-
-            # first frame section for 1st read of current integration
+            # first frame section for 1st group of current integration
             ff_sect = model.get_section('data')[ num_int, 0, rlo:rhi, :].\
                 astype(np.float32)
-            # get appropriate sections
+
+            # Get appropriate sections
             gdq_sect = gdq_cube[num_int, :, rlo:rhi, :]
             rn_sect = readnoise_2d[rlo:rhi, :]
             gain_sect = gain_2d[rlo:rhi, :]
 
-            t_err_cube, t_dq_cube, m_by_var, inv_var, opt_res, f_max_seg = \
-                 calc_slope(data_sect, gdq_sect, frame_time, opt_res,
-                     rn_sect, gain_sect, max_seg, ngroups, weighting, f_max_seg,
-                     var_p_2d, var_r_2d)
+            # Reset all saturated groups in the input data array to NaN
+            where_sat = np.where( np.bitwise_and(gdq_sect,
+                                  dqflags.group['SATURATED']) != 0)
 
-            err_cube[num_int, :, rlo:rhi, :] += t_err_cube
+            data_sect[ where_sat ] = np.NaN
+
+            # Compute the first differences of all groups
+            first_diffs_sect = np.diff(data_sect, axis=0)
+
+            # If the dataset has only 1 group/integ, assume the 'previous group'
+            #   is all zeros, so just use data as the difference
+            if (first_diffs_sect.shape[0] == 0):
+                first_diffs_sect = data_sect.copy()
+            else:
+                # Similarly, for datasets having >1 group/integ and having
+                #  single-group segments, just use the data as the difference
+                wh_nan = np.where( np.isnan( first_diffs_sect[0,:,:]) )
+
+                if (len(wh_nan[0]) > 0):
+                    first_diffs_sect[0,:,:][ wh_nan ] = data_sect[0,:,:][ wh_nan ]
+
+                i_group, i_yy, i_xx, = np.where( np.bitwise_and(gdq_sect[1:,:,:],
+                                              dqflags.group['JUMP_DET']) != 0)
+
+                # Mask all the first differences that are affected by a CR,
+                #   starting at group 1.  The purpose of starting at index 1 is
+                #   to shift all the indices down by 1, so they line up with the
+                #   indices in first_diffs.
+                first_diffs_sect[ i_group-1, i_yy, i_xx ] = np.NaN 
+
+                # Check for pixels in which there is good data in 0th group, but
+                #   all first_diffs for this ramp are NaN because there are too
+                #   few good groups past the 0th. Due to the shortage of good
+                #   data, the first_diffs will be set here equal to the data in
+                #   the 0th group.
+                wh_min = np.where( np.logical_and(np.isnan(first_diffs_sect)
+                              .all(axis=0), np.isfinite( data_sect[0,:,:])))
+                if len (wh_min[0] > 0 ):
+                    first_diffs_sect[0,:,:][ wh_min ] = data_sect[0,:,:][ wh_min ]
+
+            # All first differences affected by saturation and CRs have been set
+            #  to NaN, so compute the median of all non-NaN first differences.
+            median_diffs_2d[ rlo:rhi, : ] += np.nanmedian(first_diffs_sect, axis=0 )
+
+            # Calculate the slope of each segment
+            t_dq_cube, inv_var, opt_res, f_max_seg, num_seg = \
+                 calc_slope(data_sect, gdq_sect, frame_time, opt_res, rn_sect,
+                            gain_sect, max_seg, ngroups, weighting, f_max_seg,
+                            group_time)
+
+            # Populate 3D num_seg { integ, y, x } with 2D num_seg for this data
+            #  section (y,x) and integration (num_int)
+            sect_shape = data_sect.shape[-2:]
+            num_seg_per_int[num_int, rlo:rhi, :] = num_seg.reshape(sect_shape)
+
             gdq_cube[num_int, :, rlo:rhi, :] = t_dq_cube
 
-            # Compress 4D->2D dq arrays for saturated and jump-detected pixels
             pixeldq_sect = pixeldq[rlo:rhi, :].copy()
             dq_int[num_int, rlo:rhi, :] = \
                   dq_compress_sect(t_dq_cube, pixeldq_sect).copy()
 
-            sect_shape = data_sect.shape[-2:]
-            m_sum_2d[rlo:rhi, :] += m_by_var.reshape(sect_shape)
-            var_sum_2d[rlo:rhi, :] += inv_var.reshape(sect_shape)
-
             # Loop over the segments and copy the reshaped 2D segment-specific
             #  results for the current data section to the 4D output arrays.
             opt_res.reshape_res(num_int, rlo, rhi, sect_shape, ff_sect)
-   
-            # Populate the segment- and instrument-specific variances for the 
-            #  recent section results
-            for ii_seg in range(0, max_seg):
-                var_p_s_4d[num_int, ii_seg, rlo:rhi, :] = \
-                     var_p_2d[ii_seg, :].reshape(sect_shape)
-                var_r_s_4d[num_int, ii_seg, rlo:rhi, :] = \
-                     var_r_2d[ii_seg, :].reshape(sect_shape)
 
             # Calculate difference between each slice and the previous slice
             #   as approximation to cosmic ray amplitude for those pixels
@@ -303,65 +335,218 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
 
             opt_res.cr_mag_seg[num_int, :, rlo:rhi, :] = \
                        data_diff * (dq_cr != 0)
- 
-            m_by_var_int[num_int, rlo:rhi, :] = m_by_var.reshape(sect_shape)
-            inv_var_int[num_int, rlo:rhi, :] = inv_var.reshape(sect_shape)
 
-        slope_int[num_int, :, :] = \
-            utils.calc_slope_int(slope_int, m_by_var_int, inv_var_int, num_int)
+    # Compute the final 2D array of differences; create rate array
+    median_diffs_2d /= n_int
+    med_rates = median_diffs_2d/group_time
 
-        opt_res.ped_int[num_int, :, :] = \
+    del median_diffs_2d
+
+    # In this 'Second Pass' over the data, loop over integrations and data
+    #   sections to calculate the variances of the slope using the estimated
+    #   median slopes from the 'First Pass'. These variances are due to Poisson
+    #   noise only, read noise only, and the combination of Poisson noise and
+    #   read noise. The integration-specific variances are 3D arrays, and
+    #   the segment-specific variances are 4D arrays . The naming convention for
+    #   the arrays:
+    #     'var': a variance
+    #     'p3': intermediate 3D array for variance due to Poisson noise
+    #     'r4': intermediate 4D array for variance due to read noise
+    #     'both4': intermediate 4D array for combined variance due to both
+    #               Poisson and read noise
+    #     'inv_<X>': intermediate array = 1/<X>
+    #     's_inv_<X>': intermediate array = 1/<X>, summed over integrations
+
+    # Loop over data integrations
+    for num_int in range(n_int):
+
+        # loop over data sections
+        for rlo in range(0, cubeshape[1], nrows):
+            rhi = rlo + nrows
+
+            if rhi > cubeshape[1]:
+                rhi = cubeshape[1]
+
+            # data_sect and gdq_sect are: [ groups, y, x ]
+            data_sect = model.get_section('data')[num_int, :, rlo:rhi, :]
+            gdq_sect = gdq_cube[num_int, :, rlo:rhi, :]
+
+            rn_sect = readnoise_2d[rlo:rhi, :]
+            gain_sect = gain_2d[rlo:rhi, :]
+
+            #  Calculate results needed to compute the variance arrays
+            den_r3, den_p3, num_r3, segs_beg_3 = \
+                utils.calc_slope_vars( rn_sect, gain_sect, gdq_sect,
+                                       group_time, max_seg )
+
+            segs_4[num_int, :, rlo:rhi, :] = segs_beg_3
+            var_p4[num_int, :, rlo:rhi, :] = den_p3 * med_rates[ rlo:rhi, :]
+            var_r4[num_int, :, rlo:rhi, :] = num_r3 * den_r3
+
+        var_p4[var_p4 < 0.] = 0. # ignore contributions from negative slopes
+        var_p4 = utils.rem_nan_inf(var_p4)
+
+        var_r4[var_r4 < 0.] = 0.
+        var_r4 = utils.rem_nan_inf(var_r4)
+
+        inv_var_p4[num_int, :, :, :] = 1./var_p4[num_int, :, :, :]
+        inv_var_p4 = utils.rem_nan_inf(inv_var_p4)
+        s_inv_var_p3[num_int, :, :] = (inv_var_p4[num_int, :, :, :]).sum(axis=0)
+
+        var_p3[num_int, :, :] = 1./ s_inv_var_p3[num_int, :, :]
+        var_p3 = utils.rem_nan_inf(var_p3)
+
+        inv_var_r4[num_int, :, :, :] = 1./var_r4[num_int, :, :, :]
+        inv_var_r4 = utils.rem_nan_inf(inv_var_r4)
+
+        s_inv_var_r3[num_int, :, :] = (inv_var_r4[num_int, :, :, :]).sum(axis=0)
+        var_r3[num_int, :, :] = 1./ s_inv_var_r3[num_int, :, :]
+        var_r3 = utils.rem_nan_inf(var_r3)
+
+        var_both4[ num_int,:,:,:] = var_r4[num_int,:,:,:] + var_p4[num_int,:,:,:]
+        inv_var_both4[num_int, :, :, :] = 1./var_both4[num_int, :, :, :]
+        inv_var_both4 = utils.rem_nan_inf(inv_var_both4)
+
+        # Want to retain values in the 4D arrays only for the segments that each
+        #   pixel has, so will zero out values for the higher indices. Creating
+        #   and manipulating intermediate arrays (views, such as var_p4_int
+        #   will zero out the appropriate indices in var_p4 and var_r4.)
+        # Extract the slice of 4D arrays for the current integration
+        # 
+        var_p4_int = var_p4[ num_int,:,:,:]   # [ segment, y, x ]
+        var_r4_int = var_r4[ num_int,:,:,:]
+        inv_var_both4_int = inv_var_both4[ num_int,:,:,:]
+
+        # reshape these arrays to simplify masking [ segment, 1D pixel ]
+        var_p4_int2 = var_p4_int.reshape(( var_p4_int.shape[0],
+                            var_p4_int.shape[1]*var_p4_int.shape[2]))
+        var_r4_int2 = var_r4_int.reshape(( var_r4_int.shape[0],
+                            var_r4_int.shape[1]*var_r4_int.shape[2]))
+        inv_var_both4_int2 = inv_var_both4_int.reshape(
+                           ( inv_var_both4_int.shape[0],
+                             inv_var_both4_int.shape[1] *
+                             inv_var_both4_int.shape[2]))
+
+        num_seg_int = num_seg_per_int[num_int,:, :] # number of segs per pixel
+        num_pix = num_seg_int.shape[0] * num_seg_int.shape[1]
+        num_seg_int1 = num_seg_int.reshape(num_pix) # [ seg, 1D pixel ]
+
+        arr_ind_all = np.array([np.arange( var_p4_int2.shape[0] ),] *
+                                num_pix).transpose()
+
+        var_p4_int2[ arr_ind_all >= num_seg_int1 ] = 0
+        var_r4_int2[ arr_ind_all >= num_seg_int1 ] = 0
+        inv_var_both4_int2[ arr_ind_all >= num_seg_int1 ] = 0
+
+        var_p4_int = var_p4_int2.reshape((var_p4_int.shape[0],
+                                          var_p4_int.shape[1],
+                                          var_p4_int.shape[2]))
+
+        var_r4_int = var_r4_int2.reshape((var_r4_int.shape[0],
+                                          var_r4_int.shape[1],
+                                          var_r4_int.shape[2]))
+
+        inv_var_both4_int = inv_var_both4_int2.reshape((inv_var_both4_int.shape[0],
+                        inv_var_both4_int.shape[1], inv_var_both4_int.shape[2]))
+
+        # Zero out non-existing segments
+        var_p4_int *= ( segs_4[num_int,:,:,:] > 0)
+        var_r4_int *= ( segs_4[num_int,:,:,:] > 0)
+        inv_var_both4_int *= ( segs_4[num_int,:,:,:] > 0)
+
+        s_inv_var_both3[num_int,:,:] = (inv_var_both4[num_int,:,:,:]).sum(axis=0)
+        var_both3[num_int, :, :] = 1./s_inv_var_both3[num_int, :, :]
+
+    var_p3 = utils.rem_nan_inf(var_p3)
+    var_p3[var_p3 < 0.] = 0.   # ignore contributions from negative slopes
+
+    var_r3 = utils.rem_nan_inf(var_r3)
+
+    var_both3 = utils.rem_nan_inf(var_both3)
+    var_both3[ var_both3 < 0.] = 0.
+
+    # Now that the segment-specific and integration-specific variances have
+    #   been calculated, the segment-specific, integration-specific, and
+    #   overall slopes will be calculated. The integration-specific slope is
+    #   calculated as a weighted average of the segments in the integration:
+    #     slope_int = sum_over_segs(slope_seg/var_seg)/ sum_over_segs(1/var_seg)
+    #  The overall slope is calculated as a weighted average of the segments in
+    #     all integrations:
+    #     slope = sum_over_integs_and_segs(slope_seg/var_seg)/
+    #                    sum_over_integs_and_segs(1/var_seg)
+
+    slope_seg = opt_res.slope_seg.copy()
+    slope_by_var4 = slope_seg / var_both4
+    slope_by_var4 = utils.rem_nan_inf(slope_by_var4)
+
+    s_slope_by_var3 = slope_by_var4.sum(axis=1) # sum over SEGMENTS (not integs)
+    s_slope_by_var2 = s_slope_by_var3.sum(axis=0) # sum over integrations
+
+    s_inv_var_both2 = s_inv_var_both3.sum(axis=0)
+
+    # Compute the 'dataset-averaged' slope
+    slope_dataset2 = s_slope_by_var2/s_inv_var_both2
+    slope_dataset2 = utils.rem_nan_inf(slope_dataset2)
+
+    # Compute the integration-specific slope
+    the_num = (slope_seg * inv_var_both4).sum(axis = 1) # sum over all segments
+    the_den = (inv_var_both4).sum(axis=1)
+
+    slope_int = the_num/the_den
+    slope_int = utils.rem_nan_inf(slope_int)
+
+    # Loop over data integrations to calculate integration-specific pedestal
+    for num_int in range(0, n_int):
+        opt_res.ped_int[ num_int, :, : ] = \
             utils.calc_pedestal(num_int, slope_int, opt_res.firstf_int,\
             gdq_cube, nframes, groupgap, dropframes1)
 
-        var_p_int[num_int, :, :], var_r_int[num_int, :, :] = \
-            utils.calc_vars_int( slope_int, readnoise_2d, gdq_cube, num_int, \
-            var_p_int, var_r_int)
+    # Compute 2D 'error' for primary output; this is the standard deviation due
+    # to both the Poisson and read noise
+    var_p2 = 1/(s_inv_var_p3.sum(axis=0))
+    var_p2 = utils.rem_nan_inf(var_p2)
+    var_p2[ var_p2 < 0.] = 0.
 
-    # Average integration-specific variances 
-    var_p_2d_all = var_p_int.mean( axis=0 ) 
-    var_r_2d_all = var_r_int.mean( axis=0 )
-    err_2d_all = np.sqrt( var_p_2d_all + var_r_2d_all )  
+    var_r2 = 1/(s_inv_var_r3.sum(axis=0))
+    var_r2 = utils.rem_nan_inf(var_r2)
+    var_r2[ var_r2 < 0.] = 0.
 
-    wh_non_zero = (var_sum_2d != 0.0)
-    slope_wtd[wh_non_zero] = (m_sum_2d[wh_non_zero] /
-                                var_sum_2d[wh_non_zero])
-    slopes = slope_wtd.reshape(imshape)
+    err_2d = np.sqrt( var_p2 + var_r2 )
 
-    # collect optional results for output
+    # Collect optional results for output
     opt_res.shrink_crmag(n_int, gdq_cube, imshape, nreads)
+
+    # Truncate results at the maximum number of segments found
     opt_res.slope_seg = opt_res.slope_seg[:,:f_max_seg,:,:]
     opt_res.sigslope_seg = opt_res.sigslope_seg[:,:f_max_seg,:,:]
     opt_res.yint_seg = opt_res.yint_seg[:,:f_max_seg,:,:]
     opt_res.sigyint_seg = opt_res.sigyint_seg[:,:f_max_seg,:,:]
-    opt_res.weights = (opt_res.inv_var_seg[:,:f_max_seg,:,:])**2.
+    opt_res.weights = (inv_var_both4[:,:f_max_seg,:,:])**2.
+    opt_res.var_p_seg = var_p4[:,:f_max_seg,:,:]
+    opt_res.var_r_seg = var_r4[:,:f_max_seg,:,:]
 
-    var_p_s_4d[ var_p_s_4d < 0.] = 0.
-    var_r_s_4d[ var_r_s_4d < 0.] = 0.
-
-    opt_res.var_p_seg = var_p_s_4d
-    opt_res.var_r_seg = var_r_s_4d
-
-    if save_opt: 
+    if save_opt:
         opt_model = opt_res.output_optional(model, effintim)
     else:
         opt_model = None
 
     # Divide slopes by total (summed over all integrations) effective
     #   integration time to give count rates.
-    c_rates = slopes / effintim
-
-    # Values in err_cube have been 1./variance, so take reciprocal
-    #    of non-zero values to write
-    err_cube[err_cube <= 0.] = MIN_ERR  # for pixels having no signal
-    err_cube = 1. / err_cube # has no zero values
+    c_rates = slope_dataset2 / effintim
 
     # Compress all integration's dq arrays to create 2D PIXELDDQ array for
     #   primary output
     final_pixeldq = dq_compress_final(dq_int, n_int)
 
+    # For multiple-integration datasets, will output integration-specific
+    #    results to separate file named <basename> + '_integ.fits'
     if n_int > 1:
-        int_model = utils.output_integ(model, slope_int, dq_int, effintim, var_p_int, var_r_int)
+        if pipe_utils.is_tso(model) and hasattr(model, 'int_times'):
+            int_times = model.int_times
+        else:
+            int_times = None
+        int_model = utils.output_integ(model, slope_int, dq_int, effintim,
+                                       var_p3, var_r3, var_both3, int_times)
     else:
         int_model = None
 
@@ -369,25 +554,26 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
 
     log_stats(c_rates)
 
-    log.debug('Instrument: %s' % (instrume))
-    log.debug('Number of pixels in 2D array: %d' % (npix))
-    log.debug('Shape of 2D image: (%d, %d)' % (imshape))
-    log.debug('Shape of data cube: (%d, %d, %d)' % (orig_cubeshape))
-    log.debug('Buffer size (bytes): %d' % (buffsize))
-    log.debug('Number of rows per buffer: %d' % (nrows))
-    log.info('Number of groups per integration: %d' % (orig_nreads))
-    log.info('Number of integrations: %d' % (n_int))
-    log.debug('The execution time in seconds: %f' % (tstop - tstart))
+    log.debug('Instrument: %s', instrume)
+    log.debug('Number of pixels in 2D array: %d', npix)
+    log.debug('Shape of 2D image: (%d, %d)' %(imshape))
+    log.debug('Shape of data cube: (%d, %d, %d)' %(orig_cubeshape))
+    log.debug('Buffer size (bytes): %d', buffsize)
+    log.debug('Number of rows per buffer: %d', nrows)
+    log.info('Number of groups per integration: %d', orig_nreads)
+    log.info('Number of integrations: %d', n_int)
+    log.debug('The execution time in seconds: %f', tstop - tstart)
 
     # Create new model...
     new_model = datamodels.ImageModel(data=c_rates.astype(np.float32),
-            dq=final_pixeldq.astype(np.uint32), 
-            var_poisson=var_p_2d_all.astype(np.float32),
-            var_rnoise=var_r_2d_all.astype(np.float32), err=err_2d_all.copy())
+            dq=final_pixeldq.astype(np.uint32),
+            var_poisson=var_p2.astype(np.float32),
+            var_rnoise=var_r2.astype(np.float32), err=err_2d)
 
     new_model.update(model)  # ... and add all keys from input
 
     return new_model, int_model, opt_model
+
 
 def gls_ramp_fit(model,
                  buffsize, save_opt,
@@ -447,11 +633,11 @@ def gls_ramp_fit(model,
             utils.get_more_info(model)
     if n_int > 1:
         # `slopes` will be used for accumulating the sum of weighted slopes.
-        slopes = np.zeros(imshape, dtype=np.float64)
+        med_slopes = np.zeros(imshape, dtype=np.float64)
         sum_weight = np.zeros(imshape, dtype=np.float64)
 
     # For multiple-integration datasets, will output integration-specific
-    # results to separate file named <basename> + '_integ.fits'.
+    # results to separate file named <basename> + '_rateints.fits'.
     # Even if there's only one integration, the output results will be
     # saved in these arrays.
     slope_int = np.zeros((n_int,) + imshape, dtype=np.float32)
@@ -497,10 +683,9 @@ def gls_ramp_fit(model,
     # calculate number of (contiguous) rows per data section
     nrows = calc_nrows(model, buffsize, cubeshape, nreads)
 
-    # Get readnoise array for calculation of variance of noiseless ramps, and
-    #   gain array in case optimal weighting is to be done
+    # Get readnoise array and gain array
     readnoise_2d, gain_2d = utils.get_ref_subs(model, readnoise_model,
-                            gain_model)
+                                               gain_model)
 
     # Flag any bad pixels in the gain
     pixeldq = utils.reset_bad_gain( pixeldq, gain_2d )
@@ -646,7 +831,7 @@ def gls_ramp_fit(model,
         log_stats(slope_int[0])
 
     log.info('Instrument: %s' % instrume)
-    log.info('Number of reads per integration: %d' % nreads)
+    log.info('Number of groups per integration: %d' % nreads)
     log.info('Number of pixels in 2D array: %d' % npix)
     log.info('Shape of 2D image: (%d, %d)' % imshape)
     log.info('Shape of data cube: (%d, %d, %d)' % cubeshape)
@@ -658,12 +843,10 @@ def gls_ramp_fit(model,
     # Create new model...
     if n_int > 1:
         new_model = datamodels.ImageModel(data=slopes.astype(np.float32),
-                                      dq=final_pixeldq,
-                                      err=gls_err.astype(np.float32))
+                           dq=final_pixeldq, err=gls_err.astype(np.float32))
     else:
-        new_model = datamodels.ImageModel(data=slope_int[0],
-                                      dq=final_pixeldq,
-                                      err=slope_err_int[0])
+        new_model = datamodels.ImageModel(data=slope_int[0], dq=final_pixeldq,
+                                          err=slope_err_int[0])
 
     new_model.update(model)     # ... and add all keys from input
 
@@ -733,13 +916,15 @@ def dq_compress_sect(gdq_sect, pixeldq_sect):
     """
     Extended Summary
     ----------------
-    Get ramp locations where the data has been flagged as saturated in the
-    4D GROUPDQ array for the current data section, find the corresponding image
-    locations, and set the SATURATED flag in those locations in the
-    PIXELDQ array. Similarly, get the ramp locations where the data has been
-    flagged as a jump detection in the 4D GROUPDQ array, find the corresponding
-    image locations, and set the COSMIC_BEFORE flag in those locations in the
-    PIXELDQ array
+    Get ramp locations where the data has been flagged as saturated in the 4D
+    GROUPDQ array for the current data section, find the corresponding image
+    locations, and set the SATURATED flag in those locations in the PIXELDQ
+    array. Similarly, get the ramp locations where the data has been flagged as
+    a jump detection in the 4D GROUPDQ array, find the corresponding image
+    locations, and set the COSMIC_BEFORE flag in those locations in the PIXELDQ
+    array. These modifications to the section of the PIXELDQ array are not used
+    to flag groups for any computations; they are used only in the integration-
+    specific output.
 
     Parameters
     ----------
@@ -758,12 +943,12 @@ def dq_compress_sect(gdq_sect, pixeldq_sect):
     sat_loc_r = np.bitwise_and(gdq_sect, dqflags.group['SATURATED'])
     sat_loc_im = np.where(sat_loc_r.sum(axis=0) > 0)
     pixeldq_sect[sat_loc_im] = np.bitwise_or(pixeldq_sect[sat_loc_im],
-                                                dqflags.pixel['SATURATED'])
+                                             dqflags.pixel['SATURATED'])
 
     cr_loc_r = np.bitwise_and(gdq_sect, dqflags.group['JUMP_DET'])
     cr_loc_im = np.where(cr_loc_r.sum(axis=0) > 0)
     pixeldq_sect[cr_loc_im] = np.bitwise_or(pixeldq_sect[cr_loc_im],
-                                               dqflags.pixel['JUMP_DET'])
+                                            dqflags.pixel['JUMP_DET'])
 
     return pixeldq_sect
 
@@ -809,13 +994,15 @@ def calc_nrows(model, buffsize, cubeshape, nreads):
 
 
 def calc_slope(data_sect, gdq_sect, frame_time, opt_res, rn_sect, gain_sect,
-                i_max_seg, ngroups, weighting, f_max_seg, var_p_2d, var_r_2d):
+               i_max_seg, ngroups, weighting, f_max_seg, group_time):
     """
     Short Summary
     -------------
-    Calculate the count rate for each pixel in the data cube section
-    for the current integration, equal to the weighted slope for all
-    segments (intervals between cosmic rays) of the pixel's ramp.
+    Compute the slope of each segment for each pixel in the data cube section
+    for the current integration. Each segment has its slope fit in fit_lines();
+    that slope and other quantities from the fit are added to the 'optional
+    result' object by append_arr() from the appropriate 'CASE' (type of segment)
+    in fit_next_segment().
 
     Parameters
     ----------
@@ -838,7 +1025,7 @@ def calc_slope(data_sect, gdq_sect, frame_time, opt_res, rn_sect, gain_sect,
         gain values for all pixels in data section
 
     i_max_seg: int
-        used for size of initial allocation of arrays for optional results; 
+        used for size of initial allocation of arrays for optional results;
         maximum possible number of segments within the ramp, based on the
         number of CR flags
 
@@ -846,23 +1033,20 @@ def calc_slope(data_sect, gdq_sect, frame_time, opt_res, rn_sect, gain_sect,
         number of groups per integration
 
     weighting: string
-        'unweighted' specifies that no weighting should be used (default)
-        'optimal' specifies that optimal weighting should be used
+        'optimal' specifies that optimal weighting should be used; currently
+        the only weighting supported.
 
     f_max_seg: int
         actual maximum number of segments within a ramp, based on the fitting
         of all ramps; later used when truncating arrays before output.
 
+    group_time: float
+        Time increment between groups, in seconds.
+
     Returns
     -------
-    err_sect: float, 3D array
-        fitting error estimate for pixels in section
-
     gdq_sect: int, 3D array
         data quality flags for pixels in section
-
-    m_by_var: float, 1D array
-        values of slope/variance for good pixels
 
     inv_var: float, 1D array
         values of 1/variance for good pixels
@@ -872,18 +1056,17 @@ def calc_slope(data_sect, gdq_sect, frame_time, opt_res, rn_sect, gain_sect,
 
     f_max_seg: int
         actual maximum number of segments within a ramp, updated here based on
-        fitting ramps in the currret data section; later used when truncating
+        fitting ramps in the current data section; later used when truncating
         arrays before output.
+
+    num_seg: int, 1D array
+        numbers of segments for good pixels
     """
     nreads, asize2, asize1 = data_sect.shape
     npix = asize2 * asize1  # number of pixels in section of 2D array
-    imshape = data_sect.shape[-2:]
-    cubeshape = (nreads,) + imshape  # cube section shape
 
     all_pix = np.arange(npix)
-
     arange_nreads_col = np.arange(nreads)[:, np.newaxis]
-
     start = np.zeros(npix, dtype=np.int32) # lowest channel in fit
 
     # Highest channel in fit initialized to last read
@@ -891,12 +1074,8 @@ def calc_slope(data_sect, gdq_sect, frame_time, opt_res, rn_sect, gain_sect,
 
     pixel_done = (end < 0) # False until processing is done
 
-    # Weighted average for slopes, equal to sum(m/v)/sum(1/v)
-    #    for the pixels in which the variance v is nonzero
-    inv_var = np.zeros(npix, dtype=np.float64)
-    m_by_var = np.zeros(npix, dtype=np.float64)
-
-    num_seg = np.zeros(npix, dtype=np.int32)
+    inv_var = np.zeros(npix, dtype=np.float32) # inverse of fit variance
+    num_seg = np.zeros(npix, dtype=np.int32) # number of segments per pixel
 
     # End stack array - endpoints for each pixel
     # initialize with nreads for each pixel; set 1st channel to 0
@@ -925,21 +1104,21 @@ def calc_slope(data_sect, gdq_sect, frame_time, opt_res, rn_sect, gain_sect,
 
     # Section of GROUPDQ dq section, excluding bad dq values in mask
     gdq_sect_r = np.reshape(gdq_sect, (nreads, npix))
-
     mask_2d[gdq_sect_r != 0] = False  # saturated or CR-affected
+    mask_2d_init = mask_2d.copy() # initial flags for entire ramp
 
-    wh_f = np.where(mask_2d == False)
+    wh_f = np.where(np.logical_not(mask_2d))
+
     these_p = wh_f[1] # coordinates of pixels flagged as False
     these_r = wh_f[0] # reads of pixels flagged as False
-    total_mask_sum = mask_2d.sum(axis=0) # initial number of good reads
 
     # Populate end_st to contain the set of end points for each pixel.
     # Populate end_heads to initially include every pixel that is either
-    # saturated or contains a cosmic ray. Skips the duplicated final read
+    # saturated or contains a cosmic ray. Skips the duplicated final group
     # for saturated pixels. Saturated pixels resulting in a contiguous set
     # of intervals of length 1 will later be flagged as too short
     # to fit well.
-    for ii in range(len(these_p)):
+    for ii, val in enumerate(these_p):
         if (these_r[ii] != (nreads - 1)):
             end_st[end_heads[these_p[ii]], these_p[ii]] = these_r[ii]
             end_heads[these_p[ii]] += 1
@@ -950,7 +1129,7 @@ def calc_slope(data_sect, gdq_sect, frame_time, opt_res, rn_sect, gain_sect,
     end_st = end_st[::-1]
 
     # Reformat to designate the number of endpoints per pixel; compress
-    # to specify number of reads per pixel
+    # to specify number of groups per pixel
     end_heads = (end_st > 0).sum(axis=0)
 
     # Create object to hold optional results
@@ -967,14 +1146,13 @@ def calc_slope(data_sect, gdq_sect, frame_time, opt_res, rn_sect, gain_sect,
                    (arange_nreads_col <
                     (end_st[end_heads[all_pix] - 1, all_pix] + 1)))
 
-        mask_2d[gdq_sect_r != 0] = False # exclude bad group dq values
+        mask_2d[gdq_sect_r != 0] = False # RE-exclude bad group dq values
 
         # for all pixels, update arrays, summing slope and variance
-        f_max_seg = \
-              fit_next_segment(start, end_st, end_heads, pixel_done, \
-              data_sect, mask_2d, inv_var, m_by_var, num_seg, opt_res, rn_sect,\
-              gain_sect, ngroups, weighting, total_mask_sum, f_max_seg, \
-              var_p_2d, var_r_2d)
+        f_max_seg, num_seg = \
+              fit_next_segment(start, end_st, end_heads, pixel_done, data_sect,
+                      mask_2d, mask_2d_init, inv_var, num_seg, opt_res, rn_sect,
+                      gain_sect, ngroups, weighting, f_max_seg, group_time)
 
         if f_max_seg is None:
             f_max_seg = 1
@@ -982,31 +1160,25 @@ def calc_slope(data_sect, gdq_sect, frame_time, opt_res, rn_sect, gain_sect,
     arange_nreads_col = 0
     all_pix = 0
 
-    err_sect = np.zeros(cubeshape, dtype=np.float32)
-    # For now, making all error array slices within an integration and
-    #  section identical. Update later when use of error array has been decided
-    for ii in range(cubeshape[0]):
-        err_sect[ii, :, :] = err_2d_array
-
-    return err_sect, gdq_sect, m_by_var, inv_var, opt_res, f_max_seg
+    return gdq_sect, inv_var, opt_res, f_max_seg, num_seg
+    # end of calc_slope()
 
 
 def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
-                      inv_var, m_by_var, num_seg, opt_res, rn_sect, gain_sect,
-                      ngroups, weighting, total_mask_sum, f_max_seg, \
-                      var_p_2d, var_r_2d):
+                     mask_2d_init, inv_var, num_seg, opt_res, rn_sect, gain_sect,
+                     ngroups, weighting, f_max_seg, group_time):
     """
     Extended Summary
     ----------------
-    Call routine to LS fit masked data for a single segment for all
-    pixels in data section. Then categorize each pixel's fitting
-    interval based on interval length, and whether the interval is at
-    the end of the array.  Update the start array, the end stack array,
-    the end_heads array which contains the number of endpoints. For
-    pixels in which the fitting intervals are long enough, the
-    resulting slope and variance are added to the appropriate stack
-    arrays.  The first channel to fit in a segment is either the first
-    read in the ramp, or a read in which a cosmic ray has been flagged.
+    Call routine to LS fit masked data for a single segment for all pixels in
+    data section. Then categorize each pixel's fitting interval based on
+    interval length, and whether the interval is at the end of the array.
+    Update the start array, the end stack array, the end_heads array which
+    contains the number of endpoints. For pixels in which the fitting intervals
+    are long enough, the resulting slope and variance are added to the
+    appropriate stack arrays.  The first channel to fit in a segment is either
+    the first group in the ramp, or a group in which a cosmic ray has been
+    flagged.
 
     Parameters
     ----------
@@ -1025,14 +1197,14 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
     data_sect: float, 3D array
         data cube section
 
-    mask_2d: int, 2D array
+    mask_2d: bool, 2D array
         delineates which channels to fit for each pixel
+
+    mask_2d_init: bool, 2D array
+        copy of intial mask_2d
 
     inv_var: float, 1D array
         values of 1/variance for good pixels
-
-    m_by_var: float, 1D array
-        values of slope/variance for good pixels
 
     num_seg: int, 1D array
         numbers of segments for good pixels
@@ -1050,31 +1222,35 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
         number of groups per integration
 
     weighting: string
-        'unweighted' specifies that no weighting should be used (default)
-        'optimal' specifies that optimal weighting should be used
-
-    total_mask_sum: int, 1D arrays
-        initial number of good reads along ramp, used to distinguish between
-        cosmic rays and saturated pixels
+        'optimal' specifies that optimal weighting should be used; currently
+        the only weighting supported.
 
     f_max_seg: int
         actual maximum number of segments within a ramp, updated here based on
-        fitting ramps in the currret data section; later used when truncating 
+        fitting ramps in the current data section; later used when truncating
         arrays before output.
+
+    group_time: float
+        Time increment between groups, in seconds.
 
     Returns
     -------
     f_max_seg: int
         actual maximum number of segments within a ramp, updated here based on
-        fitting ramps in the currret data section; later used when truncating
+        fitting ramps in the current data section; later used when truncating
         arrays before output.
+
+    num_seg: int, 1D array
+        numbers of segments for good pixels
     """
     nreads, asize2, asize1 = data_sect.shape # Note: nreads is a scalar here
     all_pix = np.arange(asize2 * asize1)
 
-    slope, intercept, variance, sig_intercept, sig_slope, sig_slope_p, \
-        sig_slope_r = fit_lines(data_sect, mask_2d, rn_sect, gain_sect, \
-            ngroups, weighting)
+    ramp_mask_sum = mask_2d_init.sum(axis=0)
+
+    # Each returned array below is 1D, for all npix pixels for current segment
+    slope, intercept, variance, sig_intercept, sig_slope = fit_lines(data_sect,
+              mask_2d, rn_sect, gain_sect, ngroups, weighting, group_time)
 
     end_locs = end_st[end_heads[all_pix] - 1, all_pix]
     l_interval = end_locs - start # fitting interval length
@@ -1086,13 +1262,12 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
     #   semiramp (to enable unclassified pixels to have their arrays updated)
     got_case = np.zeros((asize1*asize2), dtype=np.bool)
 
-    # CASE A) Long enough (semiramp has >2 reads), at end of ramp
+    # CASE A) Long enough (semiramp has >2 groups), at end of ramp
     #    - set start to -1 to designate all fitting done
     #    - remove current end from end stack
     #    - set number of ends to 0
     #    - add slopes and variances to running sums
-    mask_sum = mask_2d.sum(axis=0)
-    wh_check = np.where((l_interval>2) & (end_locs==nreads - 1) & (mask_sum>0))
+    wh_check = np.where((l_interval>2) & (end_locs==nreads - 1) & (~pixel_done))
 
     if(len(wh_check[0]) > 0):
         these_pix = wh_check[0]
@@ -1100,32 +1275,27 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
         end_st[end_heads[these_pix] - 1, these_pix] = 0
         end_heads[these_pix] = 0
         pixel_done[these_pix] = True # all processing for pixel is completed
-
         got_case[ these_pix ] = True
 
         g_pix = these_pix[variance[these_pix] > 0.] # good pixels
         if (len(g_pix) > 0):
             inv_var[g_pix] += 1.0 / variance[g_pix]
-            m_by_var[g_pix] += slope[g_pix] / variance[g_pix]
 
             # Append results to arrays
             opt_res.append_arr(num_seg, g_pix, intercept, slope,\
                 sig_intercept, sig_slope, inv_var)
 
-            var_p_2d[num_seg[g_pix], g_pix] = sig_slope_p[g_pix]
-            var_r_2d[num_seg[g_pix], g_pix] = sig_slope_r[g_pix]  
-
             num_seg[g_pix] += 1
             f_max_seg = max(f_max_seg, num_seg.max())
 
-    # CASE B) Long enough (semiramp has >2 reads), not at array end (meaning final
-    #    read for this semiramp is not final read of the whole ramp)
+
+    # CASE B) Long enough (semiramp has >2 ), not at array end (meaning final
+    #    group for this semiramp is not final group of the whole ramp)
     #    - remove current end from end stack
     #    - decrement number of ends
     #    - add slopes and variances to running sums
-    wh_check = np.where((l_interval > 2) & (end_locs != nreads - 1))
-    mask_sum = mask_2d.sum(axis=0)
 
+    wh_check = np.where((l_interval > 2) & (end_locs != nreads - 1) & ~pixel_done)
     if(len(wh_check[0]) > 0):
         these_pix = wh_check[0]
         got_case[ these_pix ] = True
@@ -1133,24 +1303,42 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
         start[these_pix] = end_locs[these_pix]
         end_st[end_heads[these_pix] - 1, these_pix] = 0
         end_heads[these_pix] -= 1
-        wh_neg = (end_heads < 0.)
-        end_heads[wh_neg] = 0.
+        end_heads[end_heads < 0.] = 0.
 
         g_pix = these_pix[variance[these_pix] > 0.] # good pixels
 
         if (len(g_pix) > 0):
             inv_var[g_pix] += 1.0 / variance[g_pix]
-            m_by_var[g_pix] += slope[g_pix] / variance[g_pix]
 
             # Append results to arrays
             opt_res.append_arr(num_seg, g_pix, intercept, slope, \
                 sig_intercept, sig_slope, inv_var)
 
-            var_p_2d[num_seg[g_pix], g_pix] = sig_slope_p[g_pix]
-            var_r_2d[num_seg[g_pix], g_pix] = sig_slope_r[g_pix]
-
             num_seg[g_pix] += 1
             f_max_seg = max(f_max_seg, num_seg.max())
+
+            # If there are pixels with no later good groups, update stack
+            #   arrays accordingly
+            c_mask_2d_init = mask_2d_init.copy()
+
+            # create array: 0...nreads-1 in a column for each pixel
+            arr_ind_all = np.array( [np.arange(nreads),] *
+                                    c_mask_2d_init.shape[1]).transpose()
+            wh_c_start_all = np.zeros( c_mask_2d_init.shape[1], dtype=np.uint8)
+            wh_c_start_all[ g_pix ]= start[ g_pix]
+
+            # set to False all groups before start group
+            c_mask_2d_init[ arr_ind_all < wh_c_start_all ] = False
+
+            # select pixels having all groups False from start to ramp end
+            wh_rest_false = np.where( c_mask_2d_init.sum(axis=0) == 0)
+            if(len(wh_rest_false[0]) > 0):
+                pix_rest_false = wh_rest_false[0]
+                start[ pix_rest_false ] = -1
+                end_st[ end_heads[ pix_rest_false ] - 1, pix_rest_false ] = 0
+                end_heads[ pix_rest_false ] = 0
+                pixel_done[ pix_rest_false ] = True # all processing is complete
+
 
     # CASE C) - dataset has NGROUPS=1 ; so special fitting is done for all pixels
     #    and all intervals are at the end of the array.
@@ -1164,28 +1352,26 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
         end_st[end_heads[all_pix] - 1, all_pix] = 0
         end_heads[all_pix] = 0
         pixel_done[all_pix] = True
-        g_pix = all_pix[variance[all_pix] > 0.]
 
-        # Ignore all pixels having no good reads, meaning the single read is bad
-        g_pix = g_pix[ total_mask_sum != 0]
+        wh_check = np.where(mask_2d_init[0, :] & (ramp_mask_sum == 1))
+        if(len(wh_check[0]) > 0):
+            g_pix = wh_check[0]
 
+        # Ignore all pixels having no good groups, meaning the single group is bad
         if (len(g_pix) > 0):
             inv_var[g_pix] += 1.0 / variance[g_pix]
-            m_by_var[g_pix] += slope[g_pix] / variance[g_pix]
 
             # Append results to arrays
             opt_res.append_arr(num_seg, g_pix, intercept, slope,\
                 sig_intercept, sig_slope, inv_var)
 
-            var_p_2d[num_seg[g_pix], g_pix] = sig_slope_p[g_pix]
-            var_r_2d[num_seg[g_pix], g_pix] = sig_slope_r[g_pix]
-
             num_seg[g_pix] = 1
 
-        return 1        # 1, for f_max_seg 
+        return 1, num_seg
 
-    # CASE D) - dataset has NGROUPS=2; so special fitting is done for all pixels,
-    #    and all intervals are at the end of the array.
+
+    # CASE D) - dataset has NGROUPS=2, so special fitting is done for all pixels.
+    #    All segments are at the end of the array.
     #    - set start to -1 to designate all fitting done
     #    - remove current end from end stack
     #    - set number of ends to 0
@@ -1198,32 +1384,27 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
         pixel_done[all_pix] = True
 
         g_pix = all_pix[variance[all_pix] > 0.]
-
         if (len(g_pix) > 0):
             inv_var[g_pix] += 1.0 / variance[g_pix]
-            m_by_var[g_pix] += slope[g_pix] / variance[g_pix]
 
-            opt_res.append_arr(num_seg, g_pix, intercept, slope,\
+            opt_res.append_arr(num_seg, g_pix, intercept, slope,
                 sig_intercept, sig_slope, inv_var)
 
-            var_p_2d[num_seg[g_pix], g_pix] = sig_slope_p[g_pix]
-            var_r_2d[num_seg[g_pix], g_pix] = sig_slope_r[g_pix]
-
             num_seg[g_pix] = 1
-        
-            return 1        # 1, for f_max_seg 
 
-    # CASE E) - interval too short to fit normally (only 2 good read)
-    #    at end of array, NGROUPS>1, but exclude NGROUPS==2 datasets
+            return 1, num_seg
+
+
+    # CASE E) - interval too short to fit normally (only 2 good groups)
+    #    At end of array, NGROUPS>1, but exclude NGROUPS==2 datasets
     #    as they are covered in CASE D
     #    - set start to -1 to designate all fitting done
     #    - remove current end from end stack
     #    - set number of ends to 0
     #    - add slopes and variances to running sums
     #    - set pixel_done to True to designate all fitting done
-    mask_sum = mask_2d.sum(axis=0)
-    wh_check = np.where((l_interval == 1) & (end_locs == nreads - 1) &\
-                        (nreads > 1) & (ngroups != 2) & ( mask_sum > 0 ))
+    wh_check = np.where((l_interval == 1) & (end_locs == nreads - 1) &
+                        (nreads > 1) & (ngroups != 2) & (~pixel_done))
 
     if(len(wh_check[0]) > 0):
         these_pix = wh_check[0]
@@ -1238,27 +1419,82 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
 
         if (len(g_pix) > 0):
             inv_var[g_pix] += 1.0 / variance[g_pix]
-            m_by_var[g_pix] += slope[g_pix] / variance[g_pix]
 
             # Append results to arrays
             opt_res.append_arr(num_seg, g_pix, intercept, slope,\
                sig_intercept, sig_slope, inv_var)
 
-            var_p_2d[num_seg[g_pix], g_pix] = sig_slope_p[g_pix]
-            var_r_2d[num_seg[g_pix], g_pix] = sig_slope_r[g_pix]
-
             num_seg[g_pix] += 1
             f_max_seg = max(f_max_seg, num_seg.max())
 
 
-    # CASE F) - full-length ramp has 2 good reads not at array end, followed
-    #    by all bad reads to the end; use these 2 good reads to get the slope
+    # CASE F) - full-length ramp has 2 good groups not at array end, is now 2 cases:
+    #  F_MORE - has additional later good groups
+    #  F_ONLY - has NO later good groups
+    #    - for both of the above, use the 2 good groups to get the slope
     #    - set start to -1 to designate all fitting done
     #    - remove current end from end stack
     #    - set number of end to 0
     #    - add slopes and variances to running sums
     #    - set pixel_done to True to designate all fitting done
-    wh_check = np.where((total_mask_sum == 2) & (l_interval == 2) & ( ngroups >2 ))
+
+    # Copy mask, as will modify when calculating the number of later good groups
+    c_mask_2d_init = mask_2d_init.copy()
+
+    wh_check = np.where((l_interval == 2) & ( ngroups >2 ) &
+                        (end_locs != nreads - 1) & ~pixel_done)
+    if(len(wh_check[0]) > 0):
+        these_pix = wh_check[0]
+        got_case[ these_pix ] = True
+        inv_var[these_pix] += 1.0 / variance[these_pix]
+
+        # create array: 0...nreads-1 in a column for each pixel
+        arr_ind_all = np.array([np.arange(nreads),] *
+                               c_mask_2d_init.shape[1]).transpose()
+        wh_c_start_all = np.zeros( mask_2d_init.shape[1], dtype=np.uint8)
+        wh_c_start_all[ these_pix ]= start[ these_pix]
+
+        # set to False all groups before start group
+        c_mask_2d_init[ arr_ind_all < wh_c_start_all ] = 0
+
+        tot_good_groups = c_mask_2d_init.sum(axis=0 )
+
+        # Select pixels having at least 2 later good groups (these later good
+        #   groups are a segment whose slope will be calculated)
+        wh_more = np.where( tot_good_groups[these_pix] > 1 )
+        pix_more = these_pix[ wh_more ]
+        start[ pix_more ] = end_locs[ pix_more ]
+        end_st[ end_heads[ pix_more ] - 1, pix_more ] = 0
+        end_heads[ pix_more ] -= 1
+
+        # Select pixels having less than 2 later good groups (these later good
+        #   groups will not be used)
+        wh_only = np.where( tot_good_groups[these_pix] <= 1 )
+        pix_only = these_pix[ wh_only ]
+        start[ pix_only ] = -1
+        end_st[ end_heads[ pix_only ] - 1, pix_only ] = 0
+        end_heads[ pix_only ] = 0
+        pixel_done[ pix_only ] = True # all processing for pixel is completed
+
+        end_heads[(end_heads < 0.)] = 0.
+
+        # Append results to arrays
+        opt_res.append_arr(num_seg, these_pix, intercept, slope,\
+            sig_intercept, sig_slope, inv_var)
+
+        num_seg[these_pix] += 1
+        f_max_seg = max(f_max_seg, num_seg.max())
+
+
+    # CASE G) - full-length ramp has a good group on 0th group of the entire ramp,
+    #    and no later good groups. Will use single good group data as the slope
+    #    - set start to -1 to designate all fitting done
+    #    - remove current end from end stack
+    #    - set number of end to 0
+    #    - add slopes and variances to running sums
+    #    - set pixel_done to True to designate all fitting done
+    wh_check = np.where(mask_2d_init[0, :] & ~mask_2d_init[1, :] & 
+                   (ramp_mask_sum == 1) & ~pixel_done)
 
     if(len(wh_check[0]) > 0):
         these_pix = wh_check[0]
@@ -1269,149 +1505,72 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
         end_heads[these_pix] = 0
         pixel_done[these_pix] = True # all processing for pixel is completed
         inv_var[these_pix] += 1.0 / variance[these_pix]
-        m_by_var[these_pix] += slope[these_pix] / variance[these_pix]
 
         # Append results to arrays
-        opt_res.append_arr(num_seg, these_pix, intercept, slope,\
-            sig_intercept, sig_slope, inv_var)
-
-        var_p_2d[num_seg[these_pix], these_pix] = sig_slope_p[these_pix]
-        var_r_2d[num_seg[these_pix], these_pix] = sig_slope_r[these_pix]
+        opt_res.append_arr(num_seg, these_pix, intercept, slope,
+             sig_intercept, sig_slope, inv_var)
 
         num_seg[these_pix] += 1
         f_max_seg = max(f_max_seg, num_seg.max())
 
-    # CASE G) - number of good reads=2, not at array end (so the final read
-    #    for this SR is not necessarily the final read of whole ramp), followed
-    #    by CR, so there may be later good reads along the ramp.
-    #    - set start to 1 beyond end of current interval
-    #    - remove current end from end stack
-    #    - decrement number of end
-    #    - add slopes and variances to running sums
-    wh_check = np.where(((l_interval == 2) & (end_locs != nreads - 1) & \
-               ( total_mask_sum >2 )))
+    # CASE H) - the segment has a good 0th group and a bad 1st group. For the
+    #  data from the 0th good group of this segment to possibly be used as a
+    #  slope, that group must necessarily be the 0th group of the entire ramp.
+    #  It is possible to have a single 'good' group segment after the 0th group
+    #  of the ramp; in that case the 0th group and the 1st group would both have
+    #  to be CRs, and the data of the 0th group would not be included as a slope.
+    #  For a good 0th group in a ramp followed by a bad 1st group there must be
+    #  good groups later in the segment because if there were not, the segment
+    #  would already have be classified as CASE G. In this situation, since
+    #  there are later good groups in the segment, those later good groups will
+    #  be used in the slope computation, and the 0th good group will not be.
+    #  As a result, for all instances of these types of segments, the data in the
+    #  initial good group will not be used in the slope calculation, but the
+    #  arrays for the indices for the ramp (end_st, etc) are appropriately
+    #  adjusted.
+    #   - increment start array
+    #   - remove current end from end stack
+    #   - decrement number of ends
+    wh_check = np.where(mask_2d_init[0, :] & ~mask_2d_init[1, :] & ~pixel_done)
 
     if(len(wh_check[0]) > 0):
         these_pix = wh_check[0]
         got_case[ these_pix ] = True
-
-        start[these_pix] = end_locs[these_pix]
-        end_st[end_heads[these_pix] - 1, these_pix] = 0
-        end_heads[these_pix] -= 1
-        wh_neg = (end_heads < 0.)
-        end_heads[wh_neg] = 0.
-
-        g_pix = these_pix[variance[these_pix] > 0.] # good pixels
-
-        if (len(g_pix) > 0):
-            inv_var[g_pix] += 1.0 / variance[g_pix]
-            m_by_var[g_pix] += slope[g_pix] / variance[g_pix]
-
-            # Append results to arrays
-            opt_res.append_arr(num_seg, g_pix, intercept, slope, \
-              sig_intercept, sig_slope, inv_var) 
-
-            var_p_2d[num_seg[g_pix], g_pix] = sig_slope_p[g_pix]
-            var_r_2d[num_seg[g_pix], g_pix] = sig_slope_r[g_pix]
-
-            num_seg[g_pix] += 1
-            f_max_seg = max(f_max_seg, num_seg.max())
-
-    # CASE H) - full-length ramp has 1 good read on 0th read, and saturation on
-    #    next read (so the only data it has is the 0th read, might as well use
-    #    it). Will use single good read data as the slope
-    #    - set start to -1 to designate all fitting done
-    #    - remove current end from end stack
-    #    - set number of end to 0
-    #    - add slopes and variances to running sums
-    #    - set pixel_done to True to designate all fitting done
-    wh_check = np.where((total_mask_sum == 1) & (l_interval == 1) &
-              (end_locs != nreads - 1) & (mask_2d[:, :].sum(axis=0) == 1))
-
-    if(len(wh_check[0]) > 0):
-        these_pix = wh_check[0]
-        got_case[ these_pix ] = True
-
-        start[these_pix] = -1
-        end_st[end_heads[these_pix] - 1, these_pix] = 0
-        end_heads[these_pix] = 0
-        pixel_done[these_pix] = True # all processing for pixel is completed
-        inv_var[these_pix] += 1.0 / variance[these_pix]
-        m_by_var[these_pix] += slope[these_pix] / variance[these_pix]
-
-        # Append results to arrays
-        opt_res.append_arr(num_seg, these_pix, intercept, slope,\
-             sig_intercept, sig_slope, inv_var) 
-
-        var_p_2d[num_seg[these_pix], these_pix] = sig_slope_p[these_pix]
-        var_r_2d[num_seg[these_pix], these_pix] = sig_slope_r[these_pix]
-
-        num_seg[these_pix] += 1
-        f_max_seg = max(f_max_seg, num_seg.max())
+        start[ these_pix ] += 1
+        start[ start > nreads-1 ] = nreads -1  # to keep at max level
+        end_st[ end_heads[ these_pix ] - 1, these_pix ] = 0
+        end_heads[ these_pix ] -= 1
+        end_heads [end_heads < 0. ] = 0.
 
 
-    # CASE I) Long enough at end of ramp; same as CASE A except for l_interval=2
-    #    - set start to -1 to designate all fitting done
-    #    - remove current end from end stack
-    #    - set number of ends to 0
-    #    - add slopes and variances to running sums
-    #    - set pixel_done to True to designate all fitting done
-    mask_sum = mask_2d.sum(axis=0)
-    wh_check = np.where((l_interval == 2) & (end_locs == nreads - 1) & \
-               (mask_sum > 0))
-
-    if(len(wh_check[0]) > 0):
-        these_pix = wh_check[0]
-        start[these_pix] = -1   # all processing for this pixel is completed
-        end_st[end_heads[these_pix] - 1, these_pix] = 0
-        end_heads[these_pix] = 0
-        pixel_done[these_pix] = True # all processing for pixel is completed
-        got_case[ these_pix ] = True
-
-        inv_var[these_pix] += 1.0 / variance[these_pix]
-        m_by_var[these_pix] += slope[these_pix] / variance[these_pix]
-
-        # Append results to arrays
-        opt_res.append_arr(num_seg, these_pix, intercept, slope,\
-            sig_intercept, sig_slope, inv_var)
-
-        var_p_2d[num_seg[these_pix], these_pix] = sig_slope_p[these_pix]
-        var_r_2d[num_seg[these_pix], these_pix] = sig_slope_r[these_pix]
-
-        num_seg[these_pix] += 1
-        f_max_seg = max(f_max_seg, num_seg.max())
-
-    # CASE J) - Update arrays for all semiramps that are not covered by the
-    #    previous cases. This includes semiramps that are a (bad) single read
-    #    (either saturated or flagged as a cosmic ray)..
-    #    - increment start
-    #    - remove current end from end stack
+    # CASE OTHER) - all other types of segments not covered earlier. No segments
+    #   handled here have adequate data, but the stack arrays are updated.
+    #   - increment start array
+    #   - remove current end from end stack
+    #   - decrement number of ends
     wh_check = np.asarray( np.where( ~pixel_done & ~got_case ))
 
     if(len(wh_check[0]) > 0):
         these_pix = wh_check[0]
-
         start[ these_pix ] += 1
         start[ start > nreads-1 ] = nreads -1  # to keep at max level
         end_st[end_heads[these_pix] - 1, these_pix] = 0
         end_heads[these_pix] -= 1
-        wh_neg = (end_heads < 0.)
-        end_heads[wh_neg] = 0.
+        end_heads[end_heads < 0.] = 0.
 
-    return f_max_seg
+    return f_max_seg, num_seg
+    # end of fit_next_segment()
 
 
-def fit_lines(data, mask_2d, rn_sect, gain_sect, ngroups, weighting):
+def fit_lines(data, mask_2d, rn_sect, gain_sect, ngroups, weighting, group_time):
     """
     Extended Summary
     ----------------
-    Do linear least squares fit to data cube in this integration.  This
-    function will later be generalized to accept input data of arbitrary
-    dimensionality. In addition to applying the mask due to identified
-    cosmic rays, the data is also masked to exclude intervals that are
-    too short to fit well. The first channel to fit in a segment is either
-    the first read in the ramp, or a read in which a cosmic ray has been
-    flagged.
+    Do linear least squares fit to data cube in this integration for a single
+    segment for all pixels.  In addition to applying the mask due to identified
+    cosmic rays, the data is also masked to exclude intervals that are too short
+    to fit well. The first channel to fit in a segment is either the first group
+    in the ramp, or a group in which a cosmic ray has been flagged.
 
     Parameters
     ----------
@@ -1431,11 +1590,16 @@ def fit_lines(data, mask_2d, rn_sect, gain_sect, ngroups, weighting):
         number of groups per integration
 
     weighting: string
-        'unweighted' specifies that no weighting should be used (default)
-        'optimal' specifies that optimal weighting should be used
+        'optimal' specifies that optimal weighting should be used; currently
+        the only weighting supported.
+
+    group_time: float
+        Time increment between groups, in seconds.
 
     Returns
     -------
+    Note: all of these pertain to a single segment (hence '_s')
+
     slope_s: float, 1D array
        weighted slope for current iteration's pixels for data section
 
@@ -1449,7 +1613,7 @@ def fit_lines(data, mask_2d, rn_sect, gain_sect, ngroups, weighting):
        sigma of y-intercepts from fit for data section
 
     sig_slope_s: float, 1D array
-       sigma of slopes from fit for data section
+       sigma of slopes from fit for data section (for a single segment)
 
     """
     # verify that incoming data is either 2 or 3-dimensional
@@ -1459,78 +1623,70 @@ def fit_lines(data, mask_2d, rn_sect, gain_sect, ngroups, weighting):
         log.error('FATAL ERROR: Data input to fit_lines must be 2 or 3 dimensions')
 
     # To ensure that the first channel to be fit is the cosmic-ray-affected
-    #   read, the channel previous to each channel masked as good is
+    #   group, the channel previous to each channel masked as good is
     #   also masked as good. This is only for the local purpose of setting
     #   the first channel, and will not propagate beyond this current function
     #   call.
 
-    c_mask_2d = mask_2d.copy() # copy the mask to prevent propagation beyond this function
+    c_mask_2d = mask_2d.copy()
     wh_mask_2d = np.where(c_mask_2d)
     c_mask_2d[np.maximum(wh_mask_2d[0] - 1, 0), wh_mask_2d[1]] = True
 
     # num of reads/pixel unmasked
-    nreads_1d = c_mask_2d.astype(np.int16).sum(axis=0) 
-
+    nreads_1d = c_mask_2d.astype(np.int16).sum(axis=0)
     npix = c_mask_2d.shape[1]
 
-    slope_s = np.zeros(npix, dtype=np.float64)
-    variance_s = np.zeros(npix, dtype=np.float64) + MIN_ERR
-    intercept_s = np.zeros(npix, dtype=np.float64)
-    sig_intercept_s = np.zeros(npix, dtype=np.float64) + MIN_ERR
-    sig_slope_s = np.zeros(npix, dtype=np.float64) + MIN_ERR
-
-    # Poisson only and Readnoise only, for section ('_s')
-    sig_slope_p_s = np.zeros(npix, dtype=np.float64)
-    sig_slope_r_s = np.zeros(npix, dtype=np.float64)
+    slope_s = np.zeros(npix, dtype=np.float32)
+    variance_s = np.zeros(npix, dtype=np.float32)
+    intercept_s = np.zeros(npix, dtype=np.float32)
+    sig_intercept_s = np.zeros(npix, dtype=np.float32)
+    sig_slope_s = np.zeros(npix, dtype=np.float32)
 
     # Calculate slopes etc. for datasets having either 1 or 2 groups per
     #   integration, and return
     if (ngroups == 1): # process all pixels in 1 group/integration dataset
-        slope_s, intercept_s, variance_s, sig_intercept_s, \
-        sig_slope_s = fit_1_group(slope_s, intercept_s, \
-        variance_s, sig_intercept_s, sig_slope_s, npix, data, c_mask_2d)
+        slope_s, intercept_s, variance_s, sig_intercept_s, sig_slope_s = \
+           fit_1_group(slope_s, intercept_s, variance_s, sig_intercept_s,
+                       sig_slope_s, npix, data, c_mask_2d)
 
-        return slope_s, intercept_s, variance_s,  \
-               sig_intercept_s, sig_slope_s, sig_slope_p_s, sig_slope_r_s
+        return slope_s, intercept_s, variance_s, sig_intercept_s, sig_slope_s
 
     if (ngroups == 2): # process all pixels in 2 group/integration dataset
-        slope_s, intercept_s, variance_s, sig_intercept_s, \
-        sig_slope_s = fit_2_group(slope_s, intercept_s, \
-        variance_s, sig_intercept_s, sig_slope_s, npix, data, c_mask_2d)
-
         rn_sect_1d = rn_sect.reshape(npix)
-        sig_slope_r_s = 2*(rn_sect_1d**2.)
-        sig_slope_p_s = slope_s
+        slope_s, intercept_s, variance_s, sig_intercept_s, sig_slope_s = \
+           fit_2_group(slope_s, intercept_s, variance_s, sig_intercept_s,
+               sig_slope_s, npix, data, c_mask_2d, rn_sect_1d)
 
-        return slope_s, intercept_s, variance_s,  \
-              sig_intercept_s, sig_slope_s, sig_slope_p_s, sig_slope_r_s
+        return slope_s, intercept_s, variance_s, sig_intercept_s, sig_slope_s
 
     # reshape data_masked
     data_masked = data * np.reshape(c_mask_2d, data.shape)
     data_masked = np.reshape(data_masked, (data_masked.shape[0], npix))
 
-   # For datasets having >2 groups/integrations, for any semiramp in which the
-   #   0th read is good and the 1st read is either SAT or CR, set slope, etc 
-    wh_pix_1r = np.where((c_mask_2d[:,:].sum(axis=0) == 1) & \
-                (c_mask_2d[0,:] == True) & (c_mask_2d[1,:] == False))
-    slope_s, intercept_s, variance_s, sig_intercept_s, \
-        sig_slope_s = fit_single_read(slope_s, intercept_s, \
-        variance_s, sig_intercept_s, sig_slope_s, npix, data, wh_pix_1r)
+   # For datasets having >2 groups/integration, for any semiramp in which the
+   #   0th group is good and the 1st group is bad, determine whether or not to
+   #   use the 0th group.
+    wh_pix_1r = np.where(c_mask_2d[0,:] & (np.logical_not(c_mask_2d[1,:])))
+
+    if (len(wh_pix_1r[0]) > 0 ):
+        slope_s, intercept_s, variance_s, sig_intercept_s, \
+            sig_slope_s = fit_single_read(slope_s, intercept_s,
+            variance_s, sig_intercept_s, sig_slope_s, npix, data, wh_pix_1r)
 
    # For datasets having >2 groups/integrations, for any semiramp in which only
-   #   the 0th and 1st read are good, set slope, etc 
-    wh_pix_2r = np.where( c_mask_2d.sum(axis=0) ==2) # ramps with 2 good reads
-
+   #   the 0th and 1st group are good, set slope, etc
+    wh_pix_2r = np.where( c_mask_2d.sum(axis=0) ==2) # ramps with 2 good groups
     slope_s, intercept_s, variance_s, sig_slope_s, sig_intercept_s = \
-        fit_double_read( c_mask_2d, wh_pix_2r, data_masked, slope_s, intercept_s,\
-        variance_s, sig_slope_s, sig_intercept_s, rn_sect )
+        fit_double_read( c_mask_2d, wh_pix_2r, data_masked, slope_s, intercept_s,
+        variance_s, sig_slope_s, sig_intercept_s, rn_sect)
 
-    # Select ramps having >2 good reads
+    # Select ramps having >2 good groups
     wh_pix_to_use = np.where(c_mask_2d.sum(axis=0) > 2)
-    good_pix = wh_pix_to_use[0]  # Ramps with >2 good reads
+
+    good_pix = wh_pix_to_use[0]  # Ramps with >2 good groups
     data_masked = data_masked[:, good_pix]
 
-    xvalues = np.arange(data_masked.shape[0])[:, np.newaxis] * c_mask_2d 
+    xvalues = np.arange(data_masked.shape[0])[:, np.newaxis] * c_mask_2d
     xvalues = xvalues[:, good_pix]  # set to those pixels to be used
 
     c_mask_2d = c_mask_2d[:, good_pix]
@@ -1538,22 +1694,13 @@ def fit_lines(data, mask_2d, rn_sect, gain_sect, ngroups, weighting):
 
     if weighting.lower() == 'optimal': # fit using optimal weighting
         # get sums from optimal weighting
-        sumx, sumxx, sumxy, sumy, nreads_wtd, nreads_wtd_RN, xvalues =\
-           calc_opt_sums(rn_sect, gain_sect, data_masked, c_mask_2d, xvalues, \
-           good_pix) 
+        sumx, sumxx, sumxy, sumy, nreads_wtd, xvalues = calc_opt_sums( rn_sect,
+                gain_sect, data_masked, c_mask_2d, xvalues, good_pix )
 
-        slope, intercept, sig_slope, sig_intercept, sig_slope_p, sig_slope_r =\
-               calc_opt_fit(nreads_wtd, nreads_wtd_RN, sumxx, sumx, sumxy, \
-               sumy, c_mask_2d)
+        slope, intercept, sig_slope, sig_intercept = calc_opt_fit( nreads_wtd, 
+                      sumxx, sumx, sumxy, sumy)
 
-        denominator = nreads_wtd * sumxx - sumx**2
-
-        # Total variance of slope is the sum of the variance of the slope due 
-        # to Poisson noise only and the variance of the slope due to Read 
-        # noise only
-        variance = sig_slope_p + sig_slope_r 
-  
-        denominator = 0
+        variance = sig_slope**2.  # variance due to fit values
 
     elif weighting.lower() == 'unweighted': # fit using unweighted weighting
         # get sums from unweighted weighting
@@ -1578,20 +1725,18 @@ def fit_lines(data, mask_2d, rn_sect, gain_sect, ngroups, weighting):
     intercept_s[good_pix] = intercept
     sig_intercept_s[good_pix] = sig_intercept
     sig_slope_s[good_pix] = sig_slope
-    sig_slope_p_s[good_pix] = sig_slope_p 
-    sig_slope_r_s[good_pix] = sig_slope_r
 
     return slope_s, intercept_s, variance_s,  \
-           sig_intercept_s, sig_slope_s, sig_slope_p_s, sig_slope_r_s
+           sig_intercept_s, sig_slope_s
 
 
 def fit_single_read(slope_s, intercept_s, variance_s, sig_intercept_s,
-               sig_slope_s, npix, data, wh_pix_1r):
+                    sig_slope_s, npix, data, wh_pix_1r):
     """
     Short Summary
     -------------
     For datasets having >2 groups/integrations, for any semiramp in which the
-    0th read is good and the 1st read is either SAT or CR, set slope, etc.
+    0th group is good and the 1st group is either SAT or CR, set slope, etc.
 
     Parameters
     ----------
@@ -1617,7 +1762,7 @@ def fit_single_read(slope_s, intercept_s, variance_s, sig_intercept_s,
         array of values for current data section
 
     wh_pix_1r: tuple
-        locations of pixels whose only good read is the 0th read
+        locations of pixels whose only good group is the 0th group
 
     Returns
     -------
@@ -1636,32 +1781,36 @@ def fit_single_read(slope_s, intercept_s, variance_s, sig_intercept_s,
     sig_intercept_s: float, 1D array
         sigma of y-intercepts from fit for data section
     """
-    if (len(wh_pix_1r[0]) > 0 ):
-        data0_slice = data[0, :, :].reshape(npix)
-        slope_s[wh_pix_1r] = data0_slice[wh_pix_1r]
-        variance_s[wh_pix_1r] = MIN_ERR
-        sig_slope_s[wh_pix_1r] = MIN_ERR
-        intercept_s[wh_pix_1r] = 0.
-        sig_intercept_s[wh_pix_1r] = MIN_ERR
+
+    data0_slice = data[0, :, :].reshape(npix)
+    slope_s[wh_pix_1r] = data0_slice[wh_pix_1r]
+
+    # The following arrays will have values correctly calculated later; for
+    #    now they are just place-holders
+    variance_s[wh_pix_1r] = 0.
+    sig_slope_s[wh_pix_1r] = 0.
+    intercept_s[wh_pix_1r] = 0.
+    sig_intercept_s[wh_pix_1r] = 0.
 
     return slope_s, intercept_s, variance_s, sig_slope_s, \
            sig_intercept_s
 
 
-def fit_double_read(mask_2d, wh_pix_2r, data_masked, slope_s, intercept_s, \
-                     variance_s, sig_slope_s, sig_intercept_s, rn_sect ):
+def fit_double_read(mask_2d, wh_pix_2r, data_masked, slope_s, intercept_s,
+              variance_s, sig_slope_s, sig_intercept_s, rn_sect):
     """
     Short Summary
     -------------
-    Process all semi-ramps having exactly 2 good reads.
+    Process all semi-ramps having exactly 2 good groups. May need to optimize
+    later to remove loop over pixels.
 
     Parameters
     ----------
-    mask_2d: int, 2D array
+    mask_2d: bool, 2D array
         delineates which channels to fit for each pixel
 
     wh_pix_2r: tuple
-        locations of pixels whose only good reads are the 0th and the 1st
+        locations of pixels whose only good groups are the 0th and the 1st
 
     data_masked: float, 2D array
         masked values for all pixels in data section
@@ -1701,14 +1850,11 @@ def fit_double_read(mask_2d, wh_pix_2r, data_masked, slope_s, intercept_s, \
     sig_intercept_s: float, 1D array
         sigma of y-intercepts from fit for data section
     """
-    good_short_pix = wh_pix_2r[0]
-
-    for ff in range(len(wh_pix_2r[0])):
+    for ff in range(len(wh_pix_2r[0])): # loop over the pixels
         pixel_ff = wh_pix_2r[0][ff] # pixel index (1d)
-        rn = rn_sect.flatten()[pixel_ff]     # Read noise for this pixel
+        rn = rn_sect.flatten()[pixel_ff] # read noise for this pixel
 
         read_nums = np.where( mask_2d[:,pixel_ff])
-        first_read = read_nums[0][0]
         second_read = read_nums[0][1]
         data_ramp = data_masked[:, pixel_ff] * mask_2d[:, pixel_ff]
         data_semi = data_ramp[ mask_2d[:, pixel_ff]] # picks only the 2
@@ -1717,12 +1863,11 @@ def fit_double_read(mask_2d, wh_pix_2r, data_masked, slope_s, intercept_s, \
         slope_s[ pixel_ff ] = diff_data
         intercept_s[ pixel_ff ] = data_semi[1]*(1.- second_read) + \
             data_semi[0]*second_read # by geometry
-        variance_s[ pixel_ff ] = 2.0 * rn * rn  
-        sig_slope_s[pixel_ff] = np.sqrt(2) * rn 
-        sig_intercept_s[ pixel_ff ] = np.sqrt(2) * rn 
+        variance_s[ pixel_ff ] = 2.0 * rn * rn
+        sig_slope_s[pixel_ff] = np.sqrt(2) * rn
+        sig_intercept_s[ pixel_ff ] = np.sqrt(2) * rn
 
-    return slope_s, intercept_s, variance_s, sig_slope_s, \
-           sig_intercept_s
+    return slope_s, intercept_s, variance_s, sig_slope_s, sig_intercept_s
 
 
 def calc_unwtd_fit(xvalues, nreads_1d, sumxx, sumx, sumxy, sumy):
@@ -1730,12 +1875,12 @@ def calc_unwtd_fit(xvalues, nreads_1d, sumxx, sumx, sumxy, sumy):
     Extended Summary
     ----------------
     Do linear least squares fit to data cube in this integration, using
-    unweighted fits to the segments.
+    unweighted fits to the segments. Currently not supported.
 
     Parameters
     ----------
     xvalues: int, 1D array
-        indices of valid pixel values for all reads
+        indices of valid pixel values for all groups
 
     nreads_1d: int, 1D array
         number of reads in an integration
@@ -1781,18 +1926,20 @@ def calc_unwtd_fit(xvalues, nreads_1d, sumxx, sumx, sumxy, sumy):
     return slope, intercept, sig_slope, sig_intercept, line_fit
 
 
-def calc_opt_fit(nreads_wtd, nreads_wtd_RN, sumxx, sumx, sumxy, sumy, mask_2d):
+def calc_opt_fit(nreads_wtd, sumxx, sumx, sumxy, sumy):
     """
     Extended Summary
     ----------------
-    Do linear least squares fit to data cube in this integration, using
-    optimally weighted fits to the segments.  The weighting uses the formulation
-    by Fixsen (Fixsen et al, PASP, 112, 1350).
+    Do linear least squares fit to data cube in this integration for a single
+    semi-ramp for all pixels, using optimally weighted fits to the semi_ramps.
+    The weighting uses the formulation by Fixsen (Fixsen et al, PASP, 112, 1350).
+    Note - these weights, sigmas, and variances pertain only to the fitting, and
+    the variances are *NOT* the variances of the slope due to noise.
 
     Parameters
     ----------
     nreads_wtd: float, 1D array
-        sum of product of data and weight
+        sum of product of data and optimal weight
 
     sumxx: float
         sum of squares of xvalues
@@ -1820,30 +1967,20 @@ def calc_opt_fit(nreads_wtd, nreads_wtd_RN, sumxx, sumx, sumxy, sumy, mask_2d):
     sig_intercept: float, 1D array
        sigma of y-intercepts from fit for data section
     """
-
     denominator = nreads_wtd * sumxx - sumx**2
     slope = (nreads_wtd * sumxy - sumx * sumy) / denominator
     intercept = (sumxx * sumy - sumx * sumxy) / denominator
     sig_intercept = (sumxx / denominator)**0.5
     sig_slope = (nreads_wtd / denominator)**0.5 # STD of the slope's fit
 
-    # Calculate variance of slope due to Poisson noise only
-    sig_slope_p = slope/(mask_2d.sum(axis=0) - 1.)
-
-    # Calculate variance due to readnoise
-    denominator_RN = nreads_wtd_RN * sumxx - sumx**2
-    sig_slope_r = nreads_wtd_RN/denominator_RN
-
     # Set to 0 those values that are NaN or Inf just in case these were not
     # properly handled earlier
-    slope[np.isnan(slope)] = 0.
-    intercept[np.isnan(intercept)] = 0.
-    sig_slope[np.isnan(sig_slope)] = 0.
-    sig_intercept[np.isnan(sig_intercept)] = 0.
-    sig_slope_p[np.isnan(sig_slope_p)] = 0.
-    sig_slope_r[np.isnan(sig_slope_r)] = 0.
+    slope = utils.rem_nan_inf(slope)
+    sig_slope = utils.rem_nan_inf(sig_slope)
+    intercept = utils.rem_nan_inf(intercept)
+    sig_intercept = utils.rem_nan_inf(sig_intercept)
 
-    return slope, intercept, sig_slope, sig_intercept, sig_slope_p, sig_slope_r 
+    return slope, intercept, sig_slope, sig_intercept
 
 
 def fit_1_group(slope_s, intercept_s, variance_s, sig_intercept_s,
@@ -1877,7 +2014,7 @@ def fit_1_group(slope_s, intercept_s, variance_s, sig_intercept_s,
     data: float
         array of values for current data section
 
-    mask_2d: int, 2D array
+    mask_2d: bool, 2D array
         delineates which channels to fit for each pixel
 
     Returns
@@ -1902,27 +2039,27 @@ def fit_1_group(slope_s, intercept_s, variance_s, sig_intercept_s,
     # time to give the count rate. Recalculate other fit quantities to be
     # benign.
     slope_s = data[0, :, :].reshape(npix)
-    variance_s = np.zeros(npix, dtype=np.float64) + MIN_ERR
-    sig_slope_s = slope_s * 0. + MIN_ERR
-    intercept_s = slope_s * 0.
-    sig_intercept_s = slope_s * 0. + MIN_ERR
 
-    # For saturated pixels, overwrite fit values with benign values.
-    wh_sat0 = np.where(mask_2d[0, :] == False)
+    # The following arrays will have values correctly calculated later; for
+    #    now they are just place-holders
+    variance_s = np.zeros(npix, dtype=np.float32)
+    sig_slope_s = slope_s * 0.
+    intercept_s = slope_s * 0.
+    sig_intercept_s = slope_s * 0.
+
+    # For saturated pixels, overwrite slope with benign values.
+    wh_sat0 = np.where(np.logical_not(mask_2d[0, :]))
+
     if (len(wh_sat0[0]) > 0):
         sat_pix = wh_sat0[0]
         slope_s[sat_pix] = 0.
-        variance_s[sat_pix] = MIN_ERR
-        sig_slope_s[sat_pix] = MIN_ERR
-        intercept_s[sat_pix] = 0.
-        sig_intercept_s[sat_pix] = MIN_ERR
 
     return slope_s, intercept_s, variance_s, sig_intercept_s, \
            sig_slope_s
 
 
 def fit_2_group(slope_s, intercept_s, variance_s, sig_intercept_s,
-                 sig_slope_s, npix, data, mask_2d):
+                sig_slope_s, npix, data, mask_2d, rn_sect_1d):
     """
     Extended Summary
     ----------------
@@ -1952,8 +2089,11 @@ def fit_2_group(slope_s, intercept_s, variance_s, sig_intercept_s,
     data: float
         array of values for current data section
 
-    mask_2d: int, 2D array
+    mask_2d: bool, 2D array
         delineates which channels to fit for each pixel
+
+    rn_sect_1d: float, 1D array
+        read noise values for all pixels in data section
 
     Returns
     -------
@@ -1972,48 +2112,49 @@ def fit_2_group(slope_s, intercept_s, variance_s, sig_intercept_s,
     sig_slope_s: float, 1D array
         sigma of slopes from fit for data section
     """
-    # For pixels saturated on the first read, overwrite fit values with
-    # benign values.
-    wh_sat0 = np.where(mask_2d[0, :] == False)
+    # For pixels saturated on the first group, overwrite fit values with
+    # benign values to be recalculated later.
+    wh_sat0 = np.where(np.logical_not(mask_2d[0, :]))
+
     if (len(wh_sat0[0]) > 0):
         sat_pix = wh_sat0[0]
         slope_s[sat_pix] = 0.
-        variance_s[sat_pix] = MIN_ERR
-        sig_slope_s[sat_pix] = MIN_ERR
+        variance_s[sat_pix] = 0.
+        sig_slope_s[sat_pix] = 0.
         intercept_s[sat_pix] = 0.
         sig_intercept_s[sat_pix] = 0.
 
-    # For pixels saturated on the second read, recalculate the slope as
-    # the value of the SCI data in the first read, which will later be
+    # For pixels saturated on the second group, recalculate the slope as
+    # the value of the SCI data in the first group, which will later be
     # divided by the group exposure time to give the count rate, and
     # recalculate the other fit quantities to be benign. Note: these pixels
     # will already have been handled earlier (for intervals of arbitrary
     # length) in this function, but are being included here to explicitly
     # cover all possibilities for pixels in datasets with ngroups=2. Will
     # later consider refactoring.
-    wh_sat1 = np.where((mask_2d[:, :].sum(axis=0) == 1) & (mask_2d[0, :] == True))
+    wh_sat1 = np.where((mask_2d[:, :].sum(axis=0) == 1) & mask_2d[0, :] == True)
     if (len(wh_sat1[0]) > 0):
         data0_slice = data[0, :, :].reshape(npix)
         slope_s[wh_sat1] = data0_slice[wh_sat1]
-        variance_s[wh_sat1] = MIN_ERR
-        sig_slope_s[wh_sat1] = MIN_ERR
+        variance_s[wh_sat1] = 0.
+        sig_slope_s[wh_sat1] = 0.
         intercept_s[wh_sat1] = 0.
         sig_intercept_s[wh_sat1] = 0.
 
     # For pixels with no saturated values, recalculate the slope as the
-    # difference between the values of the second and first reads, which will
-    # later be divided by the group exposure time to give the count rate, and
-    # recalculate other fit quantities to be benign.
+    # difference between the values of the second and first groups (1-based),
+    # which will later be divided by the group exposure time to give the count
+    # rate, and recalculate other fit quantities to be benign.
     wh_sat_no = np.where(mask_2d[:, :].sum(axis=0) == 2)
     if (len(wh_sat_no[0]) > 0):
         data0_slice = data[0, :, :].reshape(npix)
         data1_slice = data[1, :, :].reshape(npix)
         slope_s[wh_sat_no] = data1_slice[wh_sat_no] - data0_slice[wh_sat_no]
-        ## variance_s - already been correctly calculated
-        sig_slope_s[wh_sat_no] = MIN_ERR
+        sig_slope_s[wh_sat_no] = np.sqrt(2) * rn_sect_1d[wh_sat_no]
         intercept_s[wh_sat_no] = data0_slice[wh_sat_no] -\
-            data1_slice[wh_sat_no] # by geometry
-        sig_intercept_s[wh_sat_no] = MIN_ERR
+                data1_slice[wh_sat_no] # by geometry
+        sig_intercept_s[wh_sat_no] = np.sqrt(2) * rn_sect_1d[wh_sat_no]
+        variance_s[wh_sat_no] = np.sqrt(2) * rn_sect_1d[wh_sat_no]
 
     return slope_s, intercept_s, variance_s, sig_intercept_s, \
            sig_slope_s
@@ -2025,9 +2166,8 @@ def calc_num_seg(gdq, n_int):
     ----------------
     Calculate the maximum number of segments that will be be fit within an
     integration, calculated over all pixels and all integrations.  This value
-    is based on the locations of cosmic ray-affected pixels in all of the
-    ramps, and will be used to allocate arrays used for the optional output
-    product.
+    is based on the locations of cosmic ray-affected pixels in all of the ramps,
+    and will be used to allocate arrays used for the optional output product.
 
     Parameters
     ----------
@@ -2060,7 +2200,8 @@ def calc_unwtd_sums(data_masked, xvalues):
     Short Summary
     -------------
     Calculate the sums needed to determine the slope and intercept (and sigma
-    of each) using an unweighted fit.
+    of each) using an unweighted fit. Unweighted fitting currently not 
+    supported.
 
     Parameters
     ----------
@@ -2068,7 +2209,7 @@ def calc_unwtd_sums(data_masked, xvalues):
         masked values for all pixels in data section
 
     xvalues: int, 1D array
-        indices of valid pixel values for all reads
+        indices of valid pixel values for all groups
 
     Return:
     -------
@@ -2097,13 +2238,13 @@ def calc_opt_sums(rn_sect, gain_sect, data_masked, mask_2d, xvalues, good_pix):
     """
     Short Summary
     -------------
-    Calculate the sums needed to determine the slope and intercept (and
-    sigma of each) using the optimal weights.  For each good pixel's
-    semiramp, from the initial and final indices and the corresponding
-    number of counts, calculate the SNR. From the SNR, calculate the
-    weighting exponent using the formulation by Fixsen (Fixsen et al, PASP,
-    112, 1350). Using this exponent and the gain and the readnoise, the weights
-    are calculated from which the sums are calculated.
+    Calculate the sums needed to determine the slope and intercept (and sigma of
+    each) using the optimal weights.  For each good pixel's segment, from the
+    initial and final indices and the corresponding number of counts, calculate
+    the SNR. From the SNR, calculate the weighting exponent using the formulation
+    by Fixsen (Fixsen et al, PASP, 112, 1350). Using this exponent and the gain
+    and the readnoise, the weights are calculated from which the sums are
+    calculated.
 
     Parameters
     ----------
@@ -2116,14 +2257,14 @@ def calc_opt_sums(rn_sect, gain_sect, data_masked, mask_2d, xvalues, good_pix):
     data_masked: float, 2D array
         masked values for all pixels in data section
 
-    mask_2d: int, 2D array
+    mask_2d: bool, 2D array
         delineates which channels to fit for each pixel
 
     xvalues: int, 2D array
-        indices of valid pixel values for all reads
+        indices of valid pixel values for all groups
 
     good_pix: int, 1D array
-        indices of pixels having valid data for all reads
+        indices of pixels having valid data for all groups
 
     Return:
     -------
@@ -2140,52 +2281,53 @@ def calc_opt_sums(rn_sect, gain_sect, data_masked, mask_2d, xvalues, good_pix):
         sum of data
 
     nreads_wtd: float, 1D array
-        sum of weights
+        sum of optimal weights
 
     xvalues: int, 2D array
-        rolled up indices of valid pixel values for all reads
+        rolled up indices of valid pixel values for all groups
     """
+    c_mask_2d = mask_2d.copy() # copy the mask to prevent propagation
+
     # Return 'empty' sums if there is no more data to fit
     if (data_masked.size == 0):
         return np.array([]), np.array([]), np.array([]), np.array([]),\
-               np.array([]), np.array([]), np.array([])
+               np.array([]), np.array([])
 
-    # get initial read for each good pixel for this semiramp
-    fnz = np.argmax(mask_2d, axis=0)
+    # get initial group for each good pixel for this semiramp
+    fnz = np.argmax(c_mask_2d, axis=0)
 
     # For those pixels that are all False, set to sentinel value of -1
-    fnz[mask_2d.sum(axis=0) == 0] = -1
+    fnz[c_mask_2d.sum(axis=0) == 0] = -1
 
-    mask_2d_sum = mask_2d.sum(axis=0)   # number of valid reads/pixel
+    mask_2d_sum = c_mask_2d.sum(axis=0)   # number of valid groups/pixel
 
-    # get final valid read for each pixel for this semiramp
+    # get final valid group for each pixel for this semiramp
     ind_lastnz = fnz + mask_2d_sum - 1
 
-    # get SCI value of initial good read for semiramp
+    # get SCI value of initial good group for semiramp
     data_zero = data_masked[fnz, range(data_masked.shape[1])]
 
-    # get SCI value of final good read for semiramp
+    # get SCI value of final good group for semiramp
     data_final = data_masked[(ind_lastnz), range(data_masked.shape[1])]
-
-    data_diff = data_final - data_zero
+    data_diff = data_final - data_zero # correctly does *NOT* have nans
 
     ind_lastnz = 0
     data_zero = 0
 
-   # Use the readnoise and gain for good pixels only
+    # Use the readnoise and gain for good pixels only
     rn_sect_rav = rn_sect.flatten()[ good_pix ]
     rn_2_r = rn_sect_rav * rn_sect_rav
 
     gain_sect_r = gain_sect.flatten()[ good_pix ]
 
-   # Calculate the sigma for nonzero gain values
+    # Calculate the sigma for nonzero gain values
     sigma_ir = data_final.copy() * 0.0
     numer_ir = data_final.copy() * 0.0
     data_final = 0
 
-   # Calculate the SNR for pixels from the readnoise, the gain, and the
-   # difference between the last and first reads for pixels where this results
-   # in a positive SNR. Otherwise set the SNR to 0.
+    # Calculate the SNR for pixels from the readnoise, the gain, and the
+    # difference between the last and first reads for pixels where this results
+    # in a positive SNR. Otherwise set the SNR to 0.
     sqrt_arg = rn_2_r + data_diff * gain_sect_r
     wh_pos = np.where((sqrt_arg >= 0.) & (gain_sect_r != 0.))
     numer_ir[wh_pos] = np.sqrt(rn_2_r[wh_pos] + \
@@ -2202,8 +2344,8 @@ def calc_opt_sums(rn_sect, gain_sect, data_masked, mask_2d, xvalues, good_pix):
 
     power_wt_r = calc_power(snr)  # get the weighting exponent for this SNR
 
-   # Make array of number of good reads, and exponents for each pixel
-    num_nz = (data_masked != 0.).sum(0) # number of nonzero reads per pixel
+    # Make array of number of good groups, and exponents for each pixel
+    num_nz = (data_masked != 0.).sum(0) # number of nonzero groups per pixel
     nrd_data_a = num_nz.copy()
     num_nz = 0
 
@@ -2215,8 +2357,8 @@ def calc_opt_sums(rn_sect, gain_sect, data_masked, mask_2d, xvalues, good_pix):
     rn_sect = 0
     fnz = 0
 
-    # Set optimal weights for each read of each pixel;
-    #    for all pixels at once, loop over the reads
+    # Set optimal weights for each group of each pixel;
+    #    for all pixels at once, loop over the groups
     wt_h = np.zeros(data_masked.shape, dtype=np.float32)
 
     for jj_rd in range(data_masked.shape[0]):
@@ -2229,26 +2371,28 @@ def calc_opt_sums(rn_sect, gain_sect, data_masked, mask_2d, xvalues, good_pix):
     nrd_prime = 0
     power_wt_r = 0
 
-    wh_m2d_f = (mask_2d[0, :] == False) # where initial read is False
+    wh_m2d_f = (np.logical_not(c_mask_2d[0, :])) # ramps where initial group is False
 
-    # For all pixels, 'roll' up the leading zeros such that the 0th read of
-    #  each pixel is the lowest nonzero read for that pixel
+    # For all pixels, 'roll' up the leading zeros such that the 0th group of
+    #  each pixel is the lowest nonzero group for that pixel
     while (wh_m2d_f.sum() > 0):
         data_masked[:, wh_m2d_f] = np.roll(data_masked[:, wh_m2d_f], -1, axis=0)
-        mask_2d[:, wh_m2d_f] = np.roll(mask_2d[:, wh_m2d_f], -1, axis=0)
+        c_mask_2d[:, wh_m2d_f] = np.roll(c_mask_2d[:, wh_m2d_f], -1, axis=0)
         xvalues[:, wh_m2d_f] = np.roll(xvalues[:, wh_m2d_f], -1, axis=0)
-        wh_m2d_f = (mask_2d[0, :] == False)
+        wh_m2d_f = (c_mask_2d[0, :] == False)
 
     # Create weighted sums for Poisson noise and read noise
-    nreads_wtd = (wt_h * mask_2d).sum(axis=0)
-    nreads_wtd_RN = (invrdns2_r * mask_2d).sum(axis=0)
+    nreads_wtd = (wt_h * c_mask_2d).sum(axis=0)  # using optimal weights
 
     sumx = (xvalues * wt_h).sum(axis=0)
     sumxx = (xvalues**2 * wt_h).sum(axis=0)
-    sumy = (np.reshape((data_masked * wt_h).sum(axis=0), sumx.shape))
-    sumxy = (xvalues * wt_h * np.reshape(data_masked, xvalues.shape)).sum(axis=0)
 
-    return sumx, sumxx, sumxy, sumy, nreads_wtd, nreads_wtd_RN, xvalues
+    c_data_masked = data_masked.copy()
+    c_data_masked[np.isnan(c_data_masked)] = 0.
+    sumy = (np.reshape((c_data_masked * wt_h).sum(axis=0), sumx.shape))
+    sumxy = (xvalues * wt_h * np.reshape(c_data_masked, xvalues.shape)).sum(axis=0)
+
+    return sumx, sumxx, sumxy, sumy, nreads_wtd, xvalues
 
 
 def log_stats(c_rates):
@@ -2269,7 +2413,8 @@ def log_stats(c_rates):
 
     wh_c_0 = np.where(c_rates == 0.) # insuff data or no signal
 
-    log.debug('The number of pixels having insufficient data'),
-    log.debug('due to excessive CRs or saturation %d:' % (len(wh_c_0[0])))
+    log.debug('The number of pixels having insufficient data')
+    log.debug('due to excessive CRs or saturation %d:', len(wh_c_0[0]))
     log.debug('Count rates - min, mean, max, std: %f, %f, %f, %f'
-               % (c_rates.min(), c_rates.mean(), c_rates.max(), c_rates.std()))
+             % (c_rates.min(), c_rates.mean(), c_rates.max(), c_rates.std()))
+

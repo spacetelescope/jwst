@@ -1,4 +1,5 @@
 """Public common step definition for OutlierDetection processing."""
+from functools import partial
 
 from ..stpipe import Step
 from .. import datamodels
@@ -17,13 +18,15 @@ outlier_registry = {'imaging': outlier_detection.OutlierDetection,
 
 # Categorize all supported modes
 IMAGE_MODES = ['NRC_IMAGE', 'MIR_IMAGE', 'NRS_IMAGE', 'NIS_IMAGE', 'FGS_IMAGE']
-SLIT_SPEC_MODES = ['NRC_GRISM', 'MIR_LRS-FIXEDSLIT', 'NRS_FIXEDSLIT',
+SLIT_SPEC_MODES = ['NRC_WFSS', 'MIR_LRS-FIXEDSLIT', 'NRS_FIXEDSLIT',
                    'NRS_MSASPEC', 'NIS_WFSS']
 TSO_SPEC_MODES = ['NIS_SOSS', 'MIR_LRS-SLITLESS', 'NRC_TSGRISM',
                   'NRS_BRIGHTOBJ']
 IFU_SPEC_MODES = ['NRS_IFU', 'MIR_MRS']
 TSO_IMAGE_MODES = ['NRC_TSIMAGE']
 CORON_IMAGE_MODES = ['NRC_CORON', 'MIR_LYOT', 'MIR_4QPM']
+
+__all__ = ["OutlierDetectionStep"]
 
 
 class OutlierDetectionStep(Step):
@@ -43,7 +46,7 @@ class OutlierDetectionStep(Step):
     # by the various versions of the outlier_detection algorithms, and each
     # version will pick and choose what they need while ignoring the rest.
     spec = """
-        wht_type = option('exptime','error',None,default='exptime')
+        weight_type = option('exptime','error',None,default='exptime')
         pixfrac = float(default=1.0)
         kernel = string(default='square') # drizzle kernel
         fillval = string(default='INDEF')
@@ -58,9 +61,8 @@ class OutlierDetectionStep(Step):
         resample_data = boolean(default=True)
         good_bits = integer(default=4)
         scale_detection = boolean(default=False)
+        search_output_file = boolean(default=False)
     """
-    reference_file_types = ['gain', 'readnoise']
-    prefetch_references = False
 
     def process(self, input):
         """Perform outlier detection processing on input data."""
@@ -71,8 +73,26 @@ class OutlierDetectionStep(Step):
             else:
                 self.input_container = True
 
+            # Setup output path naming if associations are involved.
+            asn_id = None
+            try:
+                asn_id = self.input_models.meta.asn_table.asn_id
+            except (AttributeError, KeyError):
+                pass
+            if asn_id is None:
+                asn_id = self.search_attr('asn_id')
+            if asn_id is not None:
+                _make_output_path = self.search_attr(
+                    '_make_output_path', parent_first=True
+                )
+                self._make_output_path = partial(
+                    _make_output_path,
+                    asn_id=asn_id
+                )
+
+            # Setup outlier detection parameters
             pars = {
-                'wht_type': self.wht_type,
+                'weight_type': self.weight_type,
                 'pixfrac': self.pixfrac,
                 'kernel': self.kernel,
                 'fillval': self.fillval,
@@ -85,8 +105,9 @@ class OutlierDetectionStep(Step):
                 'backg': self.backg,
                 'save_intermediate_results': self.save_intermediate_results,
                 'resample_data': self.resample_data,
-                'good_bits': self.good_bits
-                }
+                'good_bits': self.good_bits,
+                'make_output_path': self.make_output_path,
+            }
 
             # Add logic here to select which version of OutlierDetection
             # needs to be used depending on the input data
@@ -129,16 +150,16 @@ class OutlierDetectionStep(Step):
                 self.valid_input = False
 
             if not self.valid_input:
-                result = input_models.copy()
-                result.meta.cal_step.outlier_detection = "SKIPPED"
+                result = input_models
+                for input in result:
+                    input.meta.cal_step.outlier_detection = "SKIPPED"
+                    self.skip = True
                 return result
 
             self.log.debug("Using {} class for outlier_detection".format(
                            detection_step.__name__))
 
             reffiles = {}
-            reffiles['gain'] = self._build_reffile_container('gain')
-            reffiles['readnoise'] = self._build_reffile_container('readnoise')
 
             # Set up outlier detection, then do detection
             step = detection_step(self.input_models, reffiles=reffiles, **pars)
@@ -203,22 +224,32 @@ class OutlierDetectionStep(Step):
 
     def _check_input_container(self):
         """Check to see whether input is the expected ModelContainer object."""
+        ninputs = len(self.input_models)
         if not isinstance(self.input_models, datamodels.ModelContainer):
             self.log.warning("Input is not a ModelContainer.")
             self.log.warning("Outlier detection step will be skipped.")
             self.valid_input = False
-        else:
-            self.valid_input = True
-            self.log.info("Performing outlier detection on {} inputs".format(
-                          len(self.input_models)))
-
-    def _check_input_cube(self):
-        """Check to see whether input is the expected CubeModel object."""
-        if not isinstance(self.input_models, datamodels.CubeModel):
-            self.log.warning("Input is not the expected CubeModel.")
+        elif ninputs < 2:
+            self.log.warning("Input only contains %d exposures." % (ninputs))
             self.log.warning("Outlier detection step will be skipped.")
             self.valid_input = False
         else:
             self.valid_input = True
-            self.log.info("Performing outlier detection with {} inputs".
-                          format(self.input_models.shape[0]))
+            self.log.info("Performing outlier detection on %d inputs" %
+                          (ninputs))
+
+    def _check_input_cube(self):
+        """Check to see whether input is the expected CubeModel object."""
+        ninputs = self.input_models.shape[0]
+        if not isinstance(self.input_models, datamodels.CubeModel):
+            self.log.warning("Input is not the expected CubeModel.")
+            self.log.warning("Outlier detection step will be skipped.")
+            self.valid_input = False
+        elif ninputs < 2:
+            self.log.warning("Input only contains %d exposures." % (ninputs))
+            self.log.warning("Outlier detection step will be skipped.")
+            self.valid_input = False
+        else:
+            self.valid_input = True
+            self.log.info("Performing outlier detection with %d inputs" %
+                          (ninputs))

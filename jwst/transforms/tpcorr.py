@@ -1,3 +1,4 @@
+# Licensed under a 3-clause BSD style license - see LICENSE.rst
 """
 A module that provides `TPCorr` class - a `~astropy.modeling.Model` derived
 class that applies linear tangent-plane corrections to V2V3 coordinates of
@@ -5,7 +6,6 @@ JWST instrument's WCS.
 
 :Authors: Mihai Cara (contact: help@stsci.edu)
 
-:License: :doc:`../LICENSE`
 
 """
 
@@ -16,9 +16,6 @@ import math
 # THIRD PARTY
 import numpy as np
 from astropy.modeling import Model, Parameter, InputParameterError
-
-# LOCAL
-from . import __version__
 
 
 __all__ = ['IncompatibleCorrections', 'rot_mat3D', 'TPCorr']
@@ -75,12 +72,14 @@ class TPCorr(Model):
 
     # input_units_strict = False
     # input_units_allow_dimensionless = True
-    separable = False
+    _separable = False
     standard_broadcasting = False
 
-    # Radius of the generating sphere. This sets the circumference to 360 deg
-    # so that arc length is measured in deg.
     r0 = 3600.0 * np.rad2deg(1.0)
+    """
+    Radius of the generating sphere. This sets the circumference to 360 deg
+    so that arc length is measured in deg.
+    """
 
     def __init__(self, v2ref=v2ref.default, v3ref=v3ref.default,
                  roll=roll.default, matrix=matrix.default,
@@ -125,22 +124,22 @@ class TPCorr(Model):
     @staticmethod
     def cartesian2spherical(x, y, z):
         """
-        Convert cartesian coordinates to spherical coordinates (in deg).
+        Convert cartesian coordinates to spherical coordinates (in acrsec).
 
         """
         h = np.hypot(x, y)
-        alpha = np.rad2deg(np.arctan2(y, x))
-        delta = np.rad2deg(np.arctan2(z, h))
+        alpha = 3600.0 * np.rad2deg(np.arctan2(y, x))
+        delta = 3600.0 * np.rad2deg(np.arctan2(z, h))
         return alpha, delta
 
     @staticmethod
     def spherical2cartesian(alpha, delta):
         """
-        Convert spherical coordinates (in deg) to cartesian.
+        Convert spherical coordinates (in arcsec) to cartesian.
 
         """
-        alpha = np.deg2rad(alpha)
-        delta = np.deg2rad(delta)
+        alpha = np.deg2rad(alpha / 3600.0)
+        delta = np.deg2rad(delta / 3600.0)
         x = np.cos(alpha) * np.cos(delta)
         y = np.cos(delta) * np.sin(alpha)
         z = np.sin(delta)

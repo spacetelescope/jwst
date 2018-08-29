@@ -26,7 +26,7 @@ From a configuration file
 
 A Pipeline configuration file follows the same format as a Step
 configuration file: the ini-file format used by the `ConfigObj
-<http://www.voidspace.org.uk/python/configobj.html>`_ library.
+<https://configobj.readthedocs.io/en/latest/>`_ library.
 
 Here is an example pipeline configuration file for a `TestPipeline`
 class:

@@ -1,7 +1,8 @@
 allOf:
 - $ref: core.schema.yaml
-- $ref: wcsinfo.schema.yaml
 - $ref: bunit.schema.yaml
+- $ref: photometry.schema.yaml
+- $ref: wcsinfo.schema.yaml
 - type: object
   properties:
     data:
@@ -33,6 +34,8 @@ allOf:
       datatype: float32
     relsens:
       $ref: relsens.schema.yaml
+    int_times:
+      $ref: int_times.schema.yaml
     wavelength:
       title: Wavelength array
       fits_hdu: WAVELENGTH

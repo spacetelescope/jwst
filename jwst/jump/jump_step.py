@@ -1,8 +1,10 @@
 #! /usr/bin/env python
 
-from ..stpipe import Step, cmdline
+from ..stpipe import Step
 from .. import datamodels
 from .jump import detect_jumps
+
+__all__ = ["JumpStep"]
 
 
 class JumpStep(Step):
@@ -18,9 +20,9 @@ class JumpStep(Step):
     # Prior to 04/26/17, the following were also in the spec above:
     #    do_yintercept = boolean(default=False) # do y-intercept method?
     #    yint_threshold = float(default=1.0,min=0) # y-intercept signal threshold
-    # As of 04/26/17, do_yintercept is not an option. Only the 2-point 
+    # As of 04/26/17, do_yintercept is not an option. Only the 2-point
     #   difference method is allowed for Build 7.1.
-    do_yintercept = False  # do_intercept is no longer an option     
+    do_yintercept = False  # do_intercept is no longer an option
     yint_threshold = 1.0   # placeholder in case algorithm is re-enabled later
 
     reference_file_types = ['gain', 'readnoise']
@@ -29,14 +31,8 @@ class JumpStep(Step):
 
         with datamodels.RampModel(input) as input_model:
 
-            # Check for consistency between keyword values and data shape
-            ngroups = input_model.data.shape[1]
-            ngroups_kwd = input_model.meta.exposure.ngroups
-            if ngroups != ngroups_kwd:
-                self.log.error("Keyword 'NGROUPS' value of '{0}' does not match data array size of '{1}'".format(ngroups_kwd,ngroups))
-                raise ValueError("Bad data dimensions")
-
             # Check for an input model with NGROUPS<=2
+            ngroups = input_model.data.shape[1]
             if ngroups <= 2:
                 self.log.warn('Can not apply jump detection when NGROUPS<=2;')
                 self.log.warn('Jump step will be skipped')
