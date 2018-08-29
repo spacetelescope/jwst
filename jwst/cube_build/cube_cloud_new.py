@@ -3,6 +3,8 @@ import numpy as np
 import math
 import logging
 from . import coord
+from scipy import spatial
+import sys
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -52,6 +54,13 @@ def match_det2cube_msm(naxis1,naxis2,naxis3,
 # now loop over the pixel values for this region and find the spaxels that fall
 # withing the region of interest.
     nn = coord1.size
+    points = list(zip(ycenters, xcenters))
+#    print('ycenters',ycenters[0:100])
+#    print('xcenters',xcenters[0:100])
+#    print(points)
+    tree = spatial.KDTree(points)
+
+    tree_wave = spatial.KDTree(zcoord)
 
     print('looping over n points',nn)
 #________________________________________________________________________________
@@ -62,10 +71,22 @@ def match_det2cube_msm(naxis1,naxis2,naxis3,
         # find the point cloud members falling on within ROIS of this spaxel
         # The coordinates of the point cloud are defined by coord1,coord2,wave
 
-        xdistance = (xcenters[ispaxel] - coord1)
-        ydistance = (ycenters[ispaxel] - coord2)
+        xpt = coord1[ipt]
+        ypt = coord2[ipt]
+    
+ 
+        pc = [ypt,xpt]
+        print('point',pc) 
+        found = tree.query(pc)
+        print('found',found)
+        print('rois',rois)
+        found = tree.query_ball_point(pc,rois)
+        print('found 2',found)
+        sys.exit('STOP')
+
         radius = np.sqrt(xdistance * xdistance + ydistance * ydistance)
         indexr = np.where(radius <= rois)
+
 
         # 
         indexz = np.where(abs(zcoord[ispaxel] - wave) <= roiw)
@@ -95,11 +116,11 @@ def match_det2cube_msm(naxis1,naxis2,naxis3,
         # determine the spaxel xx_cube,yy_cube values of these spaxels in
         # the ROI so they can be used to pull out the flux of the median
         # sky cube.
-                yy_cube = (indexr[0] / self.naxis1).astype(np.int)
-                xx_cube = indexr[0] - yy_cube * self.naxis1
-                scf = np.array([self.cube_flux[zz, yy_cube[ir], xx_cube[ir]]
-                                for ir, rr in enumerate(indexr[0]) for zz in indexz[0]])
-                scf = np.reshape(scf, weight_distance.shape)
+        #yy_cube = (indexr[0] / self.naxis1).astype(np.int)
+        #xx_cube = indexr[0] - yy_cube * self.naxis1
+        #scf = np.array([self.cube_flux[zz, yy_cube[ir], xx_cube[ir]]
+        #                        for ir, rr in enumerate(indexr[0]) for zz in indexz[0]])
+        #scf = np.reshape(scf, weight_distance.shape)
 
 #________________________________________________________________________________
 # loop over the points in the ROI

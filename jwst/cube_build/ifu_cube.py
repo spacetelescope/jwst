@@ -17,7 +17,7 @@ from ..datamodels import dqflags
 from . import cube_build_wcs_util
 from . import spaxel
 from . import cube_overlap
-#from . import cube_cloud_new
+from . import cube_cloud_new
 from . import cube_cloud
 from . import coord
 
@@ -496,29 +496,24 @@ class IFUCubeData():
         ygrid = np.zeros(self.naxis2 * self.naxis1)
         xgrid = np.zeros(self.naxis2 * self.naxis1)
 
-        ycube,xcube = np.mgrid(self.naxis2,self.naxis1)
+        ycube,xcube = np.mgrid[0:self.naxis2,0:self.naxis1]
 
         k = 0
-        ystart = self.ycoord[0]
+
+        xstart = self.xcoord[0]
         for i in range(self.naxis2):
-            xstart = self.xcoord[0]
+            ystart = self.ycoord[0]
             for j in range(self.naxis1):
                 xgrid[k] = xstart
                 ygrid[k] = ystart
-                xcube[i,j] = xstart
-                ycube[i,j] = ystart
-                xstart = xstart + self.Cdelt1
+
+                ystart = ystart + self.Cdelt2
                 k = k + 1
-            ystart = ystart + self.Cdelt2
+            xstart = xstart + self.Cdelt1
 
-        self.Xcenters = xgrid
-        self.Ycenters = ygrid
-        self.xcube = xcube
-        self.ycube = ycube
+        self.xcenters = xgrid
+        self.ycenters = ygrid
 
-        print(xcube.shape)
-        print(ycube.shape)
-        
 #_______________________________________________________________________
         #set up the lambda (z) coordinate of the cube
         self.lambda_min = lambda_min
@@ -696,10 +691,10 @@ class IFUCubeData():
 
                     if self.weighting == 'msm':
                         t0 = time.time()
-                        cube_cloud.match_det2cube_msm(self.naxis1,self.naxis2,self.naxis3,
+                        cube_cloud_new.match_det2cube_msm(self.naxis1,self.naxis2,self.naxis3,
                                                           self.Cdelt1,self.Cdelt2,self.Cdelt3,
                                                           self.rois,self.roiw,self.weight_power,
-                                                          self.Xcenters,self.Ycenters,self.zcoord,
+                                                          self.xcenters,self.ycenters,self.zcoord,
                                                           self.spaxel,flux,
                                                           coord1,coord2,wave)
 
@@ -722,7 +717,7 @@ class IFUCubeData():
                                                               self.Cdelt1,self.Cdelt2,self.Cdelt3,
                                                               self.Crval1,self.Crval2,
                                                               self.rois,self.roiw,self.weight_power,
-                                                              self.Xcenters,self.Ycenters,self.zcoord,
+                                                              self.xcenters,self.ycenters,self.zcoord,
                                                               self.spaxel,
                                                               coord1,coord2,wave,alpha_det,beta_det)
 #--------------------------------------------------------------------------------
@@ -822,7 +817,7 @@ class IFUCubeData():
             cube_cloud_new.match_det2cube_msm(self.naxis1,self.naxis2,self.naxis3,
                                               self.Cdelt1,self.Cdelt2,self.Cdelt3,
                                               self.rois,self.roiw,self.weight_power,
-                                              self.Xcenters,self.Ycenters,self.zcoord,
+                                              self.xcenters,self.ycenters,self.zcoord,
                                               spaxel,flux,
                                               coord1,coord2,wave)
 #_______________________________________________________________________
