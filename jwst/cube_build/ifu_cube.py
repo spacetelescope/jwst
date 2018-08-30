@@ -1092,6 +1092,9 @@ class IFUCubeData():
                 coord1 = alpha[good_data]
                 coord2 = beta[good_data]
 
+        print('Coord 1',coord1[0:50])
+        print('Coord 2',coord2[0:50])
+        print('Coord 3',wave[0:50])
         return coord1,coord2,wave,flux,alpha_det,beta_det
 
 #********************************************************************************
