@@ -33,7 +33,7 @@ def test_image3_pipeline1(_bigdata):
     pipe.skymatch.lsigma = 4.0
     pipe.skymatch.usigma = 4.0
     pipe.skymatch.binwidth = 0.1
-    pipe.outlier_detection.wht_type = 'exptime'
+    pipe.outlier_detection.weight_type = 'exptime'
     pipe.outlier_detection.pixfrac = 1.0
     pipe.outlier_detection.kernel = 'square'
     pipe.outlier_detection.fillval = 'INDEF'
@@ -48,7 +48,7 @@ def test_image3_pipeline1(_bigdata):
     pipe.outlier_detection.resample_data = True
     pipe.outlier_detection.good_bits = 4
     pipe.resample.single = False
-    pipe.resample.wht_type = 'exptime'
+    pipe.resample.weight_type = 'exptime'
     pipe.resample.pixfrac = 1.0
     pipe.resample.kernel = 'square'
     pipe.resample.fillval = 'INDEF'

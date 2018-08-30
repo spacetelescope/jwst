@@ -6,21 +6,14 @@ JWST pipeline step for image alignment.
 
 
 """
-
-import os
-import logging
-
-import numpy as np
 from astropy.table import Table
 
 # LOCAL
-from . import __version__
-from . import __vdate__
 from ..stpipe import Step
 from .. import datamodels
 
 from .imalign import align
-from .wcsimage import *
+from .wcsimage import (WCSImageCatalog, WCSGroupCatalog)
 from .tweakreg_catalog import make_tweakreg_catalog
 
 
@@ -146,7 +139,6 @@ class TweakRegStep(Step):
             model.meta.cal_step.tweakreg = "COMPLETE"
 
         return images
-
 
     def _imodel2wcsim(self, image_model):
         # make sure that we have a catalog:

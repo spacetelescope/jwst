@@ -62,8 +62,34 @@ MIR Detector Data
     #. Subtract each mean from all pixels that the mean is representative of, i.e. by amplifier and using the odd mean for the odd row pixels and even mean for even row pixels if this option is selected.
     #. Add the first group of each integration back to each group.
 
+At the end of the refpix step, the S_REFPIX keyword is set to 'COMPLETE'.
+
 Subarrays
 ---------
 
-Currently there haven't been any investigations into how to do refpix
-corrections for subarray data, so this step is not performed on subarray data.
+Subarrays are treated slightly differently.  Once again, the data are flipped
+and/or rotated to convert to the detector frame
+
+NIR Data
+--------
+
+If the odd_even_columns flag is set to True, then the clipped means of all
+reference pixels in odd-numbered columns and those in even numbered columns
+are calculated separately, and subtracted from their respective data columns.
+If the flag is False, then a single clipped mean is calculated from all of
+the reference pixels in each group and subtracted from each pixel.
+
+.. note::
+
+  In subarray data, reference pixels are identified by the dq array having the
+  value of REFERENCE_PIXEL (defined in datamodels/dqflags.py).  These values
+  are populated when the dq_init step is run, so it is important to run this
+  step before running the refpix step on subarray data.
+
+If the science dataset has at least 1 group with no valid reference pixels,
+the refpix step is skipped and the S_REFPIX header keyword is set to 'SKIPPED'.
+
+MIR Data
+--------
+
+The refpix correction is skipped for MIRI subarray data.

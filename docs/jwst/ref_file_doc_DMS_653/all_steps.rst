@@ -13,6 +13,7 @@ Calibration Steps Using Reference Files
    dark_current
    dq_init
    extract_1d
+   extract_2d
    flatfield
    fringe
    jump

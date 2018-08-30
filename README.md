@@ -9,24 +9,27 @@ JWST Calibration Pipeline
 
 Note
 ----
-Beginning with version 0.9.0, **JWST requires Python 3.5 and above**.
+Beginning with version 0.9.0, **JWST requires Python 3.5 or above**.
 
 Installing
 ----------
 
-To install the latest released version of the library, we recommend using [conda](https://conda.io/docs/index.html)
-and the [astroconda](https://astroconda.readthedocs.io) channel to install the
-software and using a conda environment for the installation:
+To install a particular released version of the package, and all dependencies, we recommend using
+[conda](https://conda.io/docs/index.html) and a spec file that lists the exact versions of all packages to be installed.
+To create a new environment, use:
 
-    conda create -n jwst --override-channels -c http://ssb.stsci.edu/astroconda-dev -c defaults python=3.6 jwst
+    conda create -n jwst --file <URL>
     source activate jwst
 
-This will install the latest released version of the package, and within the
-`jwst` environment, the pipeline can be run from the command line or imported
-into python programs.   In order to install a specific version, the exact
-version can be supplied, e.g. `jwst=0.9.2`.
+where `<URL>` is of the form:
 
-To update to the latest nightly build
+    Linux: http://ssb.stsci.edu/releases/jwstdp/0.9.6/latest-linux
+    OS X: http://ssb.stsci.edu/releases/jwstdp/0.9.6/latest-osx
+
+Other particular versions can be installed by choosing a different version tag in place of "0.9.6" in the URL path.
+See the "Software vs DMS build version map" table below for a list of tags corresponding to particular releases.
+
+To update to the latest nightly build:
 
     conda update -n jwst --override-channels -c http://ssb.stsci.edu/astroconda-dev -c defaults --all
 
@@ -46,6 +49,11 @@ pulling the latest version of `master` from the Github repository inside the `jw
     conda update -n jwst_dev --override-channels -c http://ssb.stsci.edu/astroconda-dev -c defaults --all
     git pull origin master
     python setup.py develop
+
+To run the pipeline outside the STScI network, CRDS must be configured by setting two environment variables:
+
+    export CRDS_PATH=$HOME/crds_cache
+    export CRDS_SERVER_URL=https://jwst-crds.stsci.edu
 
 
 Documentation
@@ -68,7 +76,8 @@ Software vs DMS build version map
 
 | jwst tag | DMS build |    Date    |          Notes                           |
 | -------- | --------- | ---------- | -----------------------------------------|
-|  0.9.6   | B7.1.3rc4 | 06/08/2018 | Fourth release candidate for Build 7.1.3 |
+|  0.10.0  |           | 07/31/2018 | DMS test, no delivery to I&T             |
+|  0.9.6   | B7.1.3    | 06/08/2018 | Final release candidate for Build 7.1.3  |
 |  0.9.5   | B7.1.3rc3 | 06/06/2018 | Third release candidate for Build 7.1.3  |
 |  0.9.4   | B7.1.3rc2 | 05/29/2018 | Second release candidate for Build 7.1.3 |
 |  0.9.3   | B7.1.3rc1 | 05/11/2018 | First release candidate for Build 7.1.3  |
@@ -111,7 +120,7 @@ set the environment variable TEST_BIGDATA to this location
 
 and then run the tests in the repository
 
-    cd ~/path/to/jwst
+    cd /path/to/jwst/jwst/tests_nightly/general
     pytest --bigdata .
 
 

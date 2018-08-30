@@ -276,15 +276,15 @@ class KwRule():
     The ``.rules`` attribute contains the interpreted set of rules that corresponds
     to this line.
 
-    Example:
-    Interpreting rule from
-    {'meta.attribute': { 'rule': 'first', 'output': 'meta.attribute'}}
-    --or--
-    {'meta.attribute': 'meta.attribute'}  # Table column specification
+    Example::
 
-    into rule [('meta.attribute', 'meta.attribute',
-                <function first at 0x7fe505db7668>, 'ignore')]
-    and sname None
+      Interpreting rule from
+      {'meta.attribute': { 'rule': 'first', 'output': 'meta.attribute'}}
+      --or--
+      {'meta.attribute': 'meta.attribute'}  # Table column specification
+
+      into rule [('meta.attribute', 'meta.attribute', <function first at 0x7fe505db7668>, 'ignore')]
+      and sname None
 
     """
 
@@ -338,6 +338,10 @@ def _build_schema_rules_dict(schema):
     def build_rules_dict(subschema, path, combiner, ctx, recurse):
         # Only interpret elements of the meta component of the model
         if len(path) > 1 and path[0] == 'meta' and 'items' not in path:
+            for combiner in ['anyOf', 'oneOf']:
+                if combiner in path:
+                    path = path[:path.index(combiner)]
+                    break
             attr = '.'.join(path)
             if subschema.get('properties'):
                 return # Ignore ObjectNodes

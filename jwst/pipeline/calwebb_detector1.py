@@ -132,11 +132,13 @@ class Detector1Pipeline(Pipeline):
             input, ints_model = self.ramp_fit(input)
 
         # apply the gain_scale step to the exposure-level product
+        self.gain_scale.suffix = 'gain_scale'
         input = self.gain_scale(input)
 
         # apply the gain scale step to the multi-integration product,
         # if it exists, and then save it
         if ints_model is not None:
+            self.gain_scale.suffix = 'gain_scaleints'
             ints_model = self.gain_scale(ints_model)
             self.save_model(ints_model, 'rateints')
 

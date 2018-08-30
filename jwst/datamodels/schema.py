@@ -195,7 +195,7 @@ def walk_schema(schema, callback, ctx={}):
 
         for c in ['anyOf', 'oneOf']:
             for i, sub in enumerate(schema.get(c, [])):
-                recurse(sub, path + [i], c, ctx)
+                recurse(sub, path + [c], c, ctx)
 
         if schema.get('type') == 'object':
             for key, val in schema.get('properties', {}).items():
@@ -212,11 +212,17 @@ def walk_schema(schema, callback, ctx={}):
     recurse(schema, [], None, ctx)
 
 
-def flatten_combiners(schema):
+def merge_property_trees(schema):
     """
-    Flattens the allOf and anyOf operations in a JSON schema.
+    Recursively merges property trees that are governed by the "allOf" combiner.
 
-    TODO: Write caveats -- there's a lot
+    The main purpose of this function is to allow multiple subschemas to be
+    combined into a single schema. All of the properties at each level of each
+    subschema are merged together to form a single coherent tree.
+
+    This allows datamodel schemas to be more modular, since various components
+    can be represented in individual files and then referenced elsewhere. They
+    are then combined by this function into a single schema data structure.
     """
     newschema = OrderedDict()
 
@@ -225,7 +231,10 @@ def flatten_combiners(schema):
         cursor = newschema
         for i in range(len(path)):
             part = path[i]
-            if isinstance(part, int):
+            if part == combiner:
+                cursor = cursor.setdefault(combiner, [])
+                return
+            elif isinstance(part, int):
                 cursor = cursor.setdefault('items', [])
                 while len(cursor) <= part:
                     cursor.append({})
@@ -250,8 +259,6 @@ def flatten_combiners(schema):
             del schema['items']
         if 'allOf' in schema:
             del schema['allOf']
-        if 'anyOf' in schema:
-            del schema['anyOf']
 
         add_entry(path, schema, combiner)
 
@@ -288,5 +295,5 @@ def read_schema(schema_file, extensions=None):
                                      resolver=file_resolver,
                                      resolve_references=True)
 
-    schema = flatten_combiners(schema)
+    schema = merge_property_trees(schema)
     return schema

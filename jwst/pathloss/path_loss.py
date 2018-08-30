@@ -350,7 +350,8 @@ def interpolate_onto_grid(wavelength_grid, wavelength_vector, pathloss_vector):
     """
     Get the value of pathloss by interpolating each non-NaN element of
     wavelength_grid into pathloss_vector using the index lookup of
-    wavelength_vector.
+    wavelength_vector.  Pixels with wavelengths outside the range of the
+    reference file should have a correction of NaN.
 
     Parameters:
     -----------
@@ -373,22 +374,47 @@ def interpolate_onto_grid(wavelength_grid, wavelength_vector, pathloss_vector):
     grid of pathloss corrections for each non-Nan pixel
 
     """
+    #
+    # Need to set the pathloss correction of pixels whose wavelength is outside
+    # the wavelength range of the reference file to NaN.  This trick will acomplish
+    # that while still allowing the use of array linear interpolation
+    #
+    # Pad out the wavelength and pathloss vectors by adding another element
+    # at the beginning and end, and put NaN in the new first and last elements
+    # of the extended pathloss vector
+    extended_pathloss_vector = np.zeros(len(pathloss_vector) + 2)
+    extended_pathloss_vector[1:-1] = pathloss_vector
+    extended_pathloss_vector[0] = np.nan
+    extended_pathloss_vector[-1] = np.nan
+    extended_wavelength_vector = np.zeros(len(wavelength_vector) + 2)
+    extended_wavelength_vector[1:-1] = wavelength_vector
+    extended_wavelength_vector[0] = wavelength_vector[0] - 0.1
+    extended_wavelength_vector[-1] = wavelength_vector[-1] + 0.1
 
-    valid_pixels = np.where(~np.isnan(wavelength_grid))
-
+    #
+    # Find the indices in the original wavelength array that correspond
+    # to the lower of 2 adjacent wavelength values spanning the wavelength
+    # values in the wavelength grid.  NaNs and values > max wavelength will
+    # return an index to an element 1 past the array, values below min wavelength
+    # will return 0
     upper_indices = np.searchsorted(wavelength_vector,
-                                    wavelength_grid[valid_pixels])
-    lower_indices = upper_indices - 1
-
-    numerator = wavelength_grid[valid_pixels] - wavelength_vector[lower_indices]
-    denominator = (wavelength_vector[upper_indices]
-                   - wavelength_vector[lower_indices])
+                                    wavelength_grid)
+    #
+    # Move these indices so they correspond to the extended arrays
+    lower_indices = upper_indices
+    upper_indices = upper_indices + 1
+    #
+    # Now we can just proceed without worrying about values outside the wavelength
+    # array
+    numerator = wavelength_grid - extended_wavelength_vector[lower_indices]
+    denominator = (extended_wavelength_vector[upper_indices]
+                   - extended_wavelength_vector[lower_indices])
     fraction = numerator / denominator
 
     pathloss_grid = wavelength_grid * 0.0
 
-    pathloss_grid[valid_pixels] = (pathloss_vector[lower_indices]
-                                   + fraction*(pathloss_vector[upper_indices]
-                                               - pathloss_vector[lower_indices]))
+    pathloss_grid = (extended_pathloss_vector[lower_indices]
+                     + fraction*(extended_pathloss_vector[upper_indices]
+                                 - extended_pathloss_vector[lower_indices]))
 
     return pathloss_grid

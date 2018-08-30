@@ -95,7 +95,7 @@ def make_source_catalog(model, kernel_fwhm, kernel_xsize, kernel_ysize,
     # does not yet contain an IVM map
     mask = (model.wht == 0)
     data_mean, data_median, data_std = sigma_clipped_stats(
-        model.data, mask=mask, sigma=3.0, iters=10)
+        model.data, mask=mask, sigma=3.0, maxiters=10)
     threshold = data_median + (data_std * snr_threshold)
 
     sigma = kernel_fwhm * gaussian_fwhm_to_sigma
@@ -121,8 +121,8 @@ def make_source_catalog(model, kernel_fwhm, kernel_xsize, kernel_ysize,
     # units of electron/s.  Poisson noise is not included for pixels
     # where data < 0.
     exptime = model.meta.resample.product_exposure_time    # total exptime
-    #total_error = np.sqrt(bkg_error**2 +
-    #                      np.maximum(model.data / exptime, 0))
+    # total_error = np.sqrt(bkg_error**2 +
+    #                       np.maximum(model.data / exptime, 0))
     total_error = np.sqrt(data_std**2 + np.maximum(model.data / exptime, 0))
 
     wcs = model.get_fits_wcs()

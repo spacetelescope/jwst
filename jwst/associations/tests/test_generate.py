@@ -27,7 +27,7 @@ def test_simple():
 def test_generate(full_pool_rules):
     pool, rules, pool_fname = full_pool_rules
     asns = generate(pool, rules)
-    assert len(asns) == 37
+    assert len(asns) == 35
     for asn in asns:
         asn_name, asn_store = asn.dump()
         asn_table = load_asn(asn_store)

@@ -1,8 +1,8 @@
-Reference File Types
-====================
+Reference File 
+===============
 There are four reference file types for the flat_field step.  Reftype
-FLAT is used for all data except NIRSpec.  NIRSpec data use three
-reftypes:  FFLAT (fore optics), SFLAT (spectrograph optics), and 
+FLAT is used for all exposure types except NIRSpec spectra.  
+NIRSpec spectra use three reftypes:  FFLAT (fore optics), SFLAT (spectrograph optics), and 
 DFLAT (detector).
 
 
@@ -206,8 +206,8 @@ The DQ_DEF table contains the bit assignments used in the DQ array, and contains
 
 *IFU*
 ~~~~~
-The IFU reference files have EXP_TYPE=NRS_IFU, a BINTABLE
-extension labeled FAST_VARIATION, and a BINTABLE labeled DQ_DEF.
+The IFU reference files have EXP_TYPE=NRS_IFU.  These have one extensions,
+a BINTABLE extension labeled FAST_VARIATION. 
 
 The FAST_VARIATION table contains four columns:
 
@@ -216,7 +216,12 @@ The FAST_VARIATION table contains four columns:
 * wavelength: float 1-D array, values of wavelength
 * data: float 1-D array, flat field values for each wavelength
 
-There is a single row in the table.
+The flat field values in this table are used to account for a 
+wavelength-dependence on a much finer scale than given by the values in the SCI 
+array. For each pixel in the science data, the wavelength of the light that fell
+on that pixel will be determined by using the WCS interface. The flat-field 
+value for that pixel will then be obtained by interpolating within the 
+wavelength and data arrays from the FAST_VARIATION table.
 
 The DQ_DEF table contains the bit assignments used in the DQ arrays. The table contains the 4 columns:
 

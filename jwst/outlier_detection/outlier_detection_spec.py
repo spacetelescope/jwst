@@ -1,4 +1,5 @@
 """Class definition for performing outlier detection on spectra."""
+from functools import partial
 
 from .. import datamodels
 from ..resample import resample_spec, resample_utils
@@ -75,7 +76,8 @@ class OutlierDetectionSpec(OutlierDetection):
             drizzled_models = sdriz.output_models
             for model in drizzled_models:
                 model.meta.filename = self.make_output_path(
-                    model, suffix=self.resample_suffix
+                    basepath=model.meta.filename,
+                    suffix=self.resample_suffix
                 )
                 if save_intermediate_results:
                     log.info("Writing out resampled spectra...")
@@ -85,7 +87,7 @@ class OutlierDetectionSpec(OutlierDetection):
             for i in range(len(self.input_models)):
                 drizzled_models[i].wht = resample_utils.build_driz_weight(
                                             self.input_models[i],
-                                            wht_type='exptime',
+                                            weight_type='exptime',
                                             good_bits=pars['good_bits'])
 
         # Initialize intermediate products used in the outlier detection
@@ -93,7 +95,8 @@ class OutlierDetectionSpec(OutlierDetection):
                                         init=drizzled_models[0].data.shape)
         median_model.meta = drizzled_models[0].meta
         median_model.meta.filename = self.make_output_path(
-            self.input_models[0], suffix='median'
+            basepath=self.input_models[0].meta.filename,
+            suffix='median'
         )
 
         # Perform median combination on set of drizzled mosaics

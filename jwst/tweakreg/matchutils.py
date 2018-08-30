@@ -13,8 +13,7 @@ try:
     from . import chelp
 except ImportError:
     chelp = None
-from . import __version__
-from . import __vdate__
+
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

@@ -369,7 +369,3 @@ def guess_filename(hdulist):
         raise ValueError("Could not automatically generate output filename")
     return filename
 
-
-def test(*args, **kwds):
-    from stsci.tools import tester
-    return tester.test(modname=__name__, *args, **kwds)

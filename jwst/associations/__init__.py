@@ -1,5 +1,4 @@
-
-__version__ = '0.9.21'
+__version__ = '0.11.0'
 
 
 # Utility

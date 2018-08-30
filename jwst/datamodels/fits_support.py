@@ -1,11 +1,8 @@
 import datetime
 import os
 import re
-import warnings
 
 import numpy as np
-
-import jsonschema
 
 from astropy.io import fits
 from astropy import time
@@ -444,8 +441,6 @@ def _schema_has_fits_hdu(schema):
 def _load_from_schema(hdulist, schema, tree, context):
     known_keywords = {}
     known_datas = set()
-    invalid_values = set()
-    missing_values = set()
 
     def callback(schema, path, combiner, ctx, recurse):
         result = None
@@ -537,7 +532,10 @@ def _load_history(hdulist, tree):
 
 
 def from_fits(hdulist, schema, extensions, context):
-    ff = fits_embed.AsdfInFits.open(hdulist, extensions=extensions)
+    try:
+        ff = fits_embed.AsdfInFits.open(hdulist, extensions=extensions)
+    except Exception as exc:
+        raise exc.__class__("ERROR loading embedded ASDF: " + str(exc)) from exc
 
     known_keywords, known_datas = _load_from_schema(hdulist, schema,
                                                     ff.tree, context)
@@ -551,12 +549,18 @@ def from_fits_hdu(hdu, schema):
     Read the data from a fits hdu into a numpy ndarray
     """
     data = hdu.data
-    data2 = properties._cast(data, schema)
 
-    # Casting a table loses the listeners, so restore them
+    # Save the column listeners for possible restoration
     if hasattr(data, '_coldefs'):
-        coldefs = data._coldefs
-        coldefs2 = data2._coldefs
-        coldefs2._listeners = coldefs._listeners
+        listeners = data._coldefs._listeners
+    else:
+        listeners = None
 
-    return data2
+    # Cast array to type mentioned in schema
+    data = properties._cast(data, schema)
+
+    # Casting a table loses the column listeners, so restore them
+    if listeners is not None:
+        data._coldefs._listeners = listeners
+
+    return data

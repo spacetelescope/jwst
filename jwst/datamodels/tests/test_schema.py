@@ -1,6 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import datetime
+from datetime import datetime
 import os
 import shutil
 import tempfile
@@ -13,10 +13,12 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal
 import jsonschema
 from astropy.io import fits
 from astropy.modeling import models
+from astropy import time
 
 from .. import util, validate
 from .. import (DataModel, ImageModel, RampModel, MaskModel,
                 MultiSlitModel, AsnModel, CollimatorModel)
+from ..schema import merge_property_trees
 
 from asdf import schema as mschema
 
@@ -58,21 +60,16 @@ def test_set_na_ra():
             # Setting an invalid value should raise a ValueError
             dm.meta.target.ra = "FOO"
 
-'''
-def test_date():
-    with pytest.raises(jsonschema.ValidationError):
-        with ImageModel((50, 50), strict_validation=True) as dm:
-            dm.meta.date = 'Not an acceptable date'
-
 
 def test_date2():
-    from astropy import time
-
     with ImageModel((50, 50), strict_validation=True) as dm:
-        assert isinstance(dm.meta.date, (time.Time, datetime.datetime))
-'''
+        time_obj = time.Time(dm.meta.date)
+        assert isinstance(time_obj, time.Time)
+        date_obj = datetime.strptime(dm.meta.date, '%Y-%m-%dT%H:%M:%S.%f')
+        assert isinstance(date_obj, datetime)
 
-transformation_schema = {
+
+TRANSFORMATION_SCHEMA = {
     "allOf": [
         mschema.load_schema(
             os.path.join(os.path.dirname(__file__),
@@ -113,25 +110,21 @@ transformation_schema = {
 
 def test_list():
     with pytest.raises(jsonschema.ValidationError):
-        with ImageModel((50, 50), schema=transformation_schema,
+        with ImageModel((50, 50), schema=TRANSFORMATION_SCHEMA,
                         strict_validation=True) as dm:
             dm.meta.transformations = []
-            object = dm.meta.transformations.item(
-                transformation="SIN",
-                coeff=2.0)
+            dm.meta.transformations.item(transformation="SIN", coeff=2.0)
 
-'''
+
 def test_list2():
     with pytest.raises(jsonschema.ValidationError):
         with ImageModel(
             (50, 50),
-            schema=transformation_schema,
+            schema=TRANSFORMATION_SCHEMA,
             strict_validation=True) as dm:
             dm.meta.transformations = []
-            object = dm.meta.transformations.append(
-                {'transformation': 'FOO',
-                 'coeff': 2.0})
-'''
+            dm.meta.transformations.append({'transformation': 'FOO', 'coeff': 2.0})
+
 
 def test_invalid_fits():
     hdulist = fits.open(FITS_FILE)
@@ -243,74 +236,16 @@ def test_search_schema():
     assert 'meta.target.ra' in results
 
 
-schema_extra = {
-    "type": "object",
-    "properties": {
-        "meta": {
-            "type": "object",
-            "properties": {
-                "foo": {
-                    'title': 'Custom type',
-                    'type': 'string',
-                    'default': 'bar',
-                    'fits_keyword': 'FOO'
-                },
-                "restricted": {
-                    'title': 'Custom type',
-                    'type': 'object',
-                    'additionalProperties': False,
-                    'properties': {
-                        'allowed': {
-                            'type': 'number'
-                        }
-                    }
-                },
-                "bar": {
-                    "type": "object",
-                    "properties": {
-                        "baz": {
-                            "type": "string"
-                        }
-                    }
-                },
-                "subarray": {
-                    "type": "object",
-                    "properties": {
-                        "size": {
-                            'title': 'Subarray size',
-                            'type': 'number'
-                        },
-                        'xstart': {
-                            'type': 'string',
-                            'default': 'fubar'
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-
-
 def test_dictionary_like():
     with DataModel(strict_validation=True) as x:
         x.meta.origin = 'FOO'
         assert x['meta.origin'] == 'FOO'
 
-        try:
-            x['meta.subarray.xsize'] = 'string'
-        except:
-            pass
-        else:
-            raise AssertionError()
+        with pytest.raises(jsonschema.ValidationError):
+            x['meta.subarray.xsize'] = 'FOO'
 
-        try:
-            y = x['meta.FOO.BAR.BAZ']
-        except KeyError:
-            pass
-        else:
-            raise AssertionError()
+        with pytest.raises(KeyError):
+            x['meta.FOO.BAR.BAZ']
 
 
 def test_to_flat_dict():
@@ -644,9 +579,41 @@ def test_validate_transform_from_file():
     m.validate()
 
 
-'''
-def test_multislit_garbage():
+def test_multislit_append_string():
     with pytest.raises(jsonschema.ValidationError):
         m = MultiSlitModel(strict_validation=True)
         m.slits.append('junk')
-'''
+
+
+@pytest.mark.parametrize('combiner', ['anyOf', 'oneOf'])
+def test_merge_property_trees(combiner):
+
+    s = {
+         'type': 'object',
+         'properties': {
+             'foobar': {
+                 combiner: [
+                     {
+                         'type': 'array',
+                         'items': [ {'type': 'string'}, {'type': 'number'} ],
+                         'minItems': 2,
+                         'maxItems': 2,
+                     },
+                     {
+                         'type': 'array',
+                         'items': [
+                             {'type': 'number'},
+                             {'type': 'string'},
+                             {'type': 'number'}
+                         ],
+                         'minItems': 3,
+                         'maxItems': 3,
+                     }
+                 ]
+             }
+         }
+    }
+
+    # Make sure that merge_property_trees does not destructively modify schemas
+    f = merge_property_trees(s)
+    assert f == s

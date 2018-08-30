@@ -11,21 +11,21 @@ from astropy.utils.misc import isiterable
 from astropy.io import fits
 from astropy.modeling import models as astmodels
 from astropy.table import QTable
-
+from astropy.constants import c
 
 from gwcs import WCS
-from gwcs.wcstools import wcs_from_fiducial
+from gwcs.wcstools import wcs_from_fiducial, grid_from_bounding_box
 from gwcs import utils as gwutils
 
 from . import pointing
 from ..lib.catalog_utils import SkyObject
 from ..transforms.models import GrismObject
-from ..datamodels import WavelengthrangeModel, DataModel
+from ..datamodels import WavelengthrangeModel, DataModel, CubeModel, IFUCubeModel
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-__all__ = ["reproject", "wcs_from_footprints"]
+__all__ = ["reproject", "wcs_from_footprints", "velocity_correction"]
 
 
 class MissingMSAFileError(Exception):
@@ -140,7 +140,7 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
     wnew = wcs_from_fiducial(fiducial, coordinate_frame=out_frame,
                              projection=prj, transform=transform)
 
-    footprints = [w.footprint() for w in wcslist]
+    footprints = [w.footprint().T for w in wcslist]
     domain_bounds = np.hstack([wnew.backward_transform(*f) for f in footprints])
     for axs in domain_bounds:
         axs -= axs.min()
@@ -172,7 +172,7 @@ def compute_fiducial(wcslist, bounding_box=None, domain=None):
     axes_types = wcslist[0].output_frame.axes_type
     spatial_axes = np.array(axes_types) == 'SPATIAL'
     spectral_axes = np.array(axes_types) == 'SPECTRAL'
-    footprints = np.hstack([w.footprint(bounding_box=bounding_box) for w in wcslist])
+    footprints = np.hstack([w.footprint(bounding_box=bounding_box).T for w in wcslist])
     spatial_footprint = footprints[spatial_axes]
     spectral_footprint = footprints[spectral_axes]
 
@@ -542,26 +542,35 @@ def get_num_msa_open_shutters(shutter_state):
     return num
 
 
-def update_s_region(model):
-    """
-    Update the ``S_REGION`` keyword usiong ``WCS.footprint``.
+def bounding_box_from_shape(model):
+    """Create a bounding box from the shape of the data.
 
+    Note: The bounding box of a ``CubeModel`` is the bounding_box of one
+    of the stacked images.
     """
-    bbox = None
-    def _bbox_from_shape(model):
+    if isinstance(model, (CubeModel, IFUCubeModel)):
+        shape = model.data[0].shape
+    else:
         shape = model.data.shape
-        bbox = ((0, shape[1]), (0, shape[0]))
-        return bbox
-    try:
-        bbox = model.meta.wcs.bounding_box
-    except NotImplementedError:
-        bbox = _bbox_from_shape(model)
+
+    bbox = ((-0.5, shape[1] - 0.5),
+            (-0.5, shape[0] - 0.5))
+    return bbox
+
+
+def update_s_region_imaging(model):
+    """
+    Update the ``S_REGION`` keyword using ``WCS.footprint``.
+    """
+
+    bbox = model.meta.wcs.bounding_box
 
     if bbox is None:
-        bbox = _bbox_from_shape(model)
+        bbox = bounding_box_from_shape(model)
 
-    # footprint is an array of shape (2, 2) or (3, 3)
-    footprint = model.meta.wcs.footprint(bbox, center=True)
+    # footprint is an array of shape (2, 4) as we
+    # are interested only in the footprint on the sky
+    footprint = model.meta.wcs.footprint(bbox, center=True, axis_type="spatial").T
     # take only imaging footprint
     footprint = footprint[:2, :]
 
@@ -571,7 +580,28 @@ def update_s_region(model):
         footprint[0][negative_ind] = 360 + footprint[0][negative_ind]
 
     footprint = footprint.T
+    update_s_region_keyword(model, footprint)
 
+
+def update_s_region_spectral(model):
+    swcs = model.meta.wcs
+
+    bbox = swcs.bounding_box
+    if bbox is None:
+        bbox = bounding_box_from_shape(model)
+
+    x, y = grid_from_bounding_box(bbox)
+    ra, dec, lam = swcs(x, y)
+    footprint = np.array([[np.nanmin(ra), np.nanmin(dec)],
+                 [np.nanmax(ra), np.nanmin(dec)],
+                 [np.nanmax(ra), np.nanmax(dec)],
+                 [np.nanmin(ra), np.nanmax(dec)]])
+    update_s_region_keyword(model, footprint)
+
+
+def update_s_region_keyword(model, footprint):
+    """ Update the S_REGION keyword.
+    """
     s_region = (
         "POLYGON ICRS "
         " {0:.9f} {1:.9f}"
@@ -580,6 +610,23 @@ def update_s_region(model):
         " {6:.9f} {7:.9f}".format(*footprint.flatten()))
     if "nan" in s_region:
         # do not update s_region if there are NaNs.
-        log.info("There are NaNs in s_region")
+        log.info("There are NaNs in s_region, S_REGION not updated.")
     else:
         model.meta.wcsinfo.s_region = s_region
+        log.info("Update S_REGION to {}".format(model.meta.wcsinfo.s_region))
+
+
+def velocity_correction(velosys):
+    """
+    Compute wavelength correction to Barycentric reference frame.
+
+    Parameters
+    ----------
+    velosys : float
+        Radial velocity wrt Barycenter [m / s].
+    """
+    correction = (1 / (1 + velosys / c.value))
+    model =  astmodels.Identity(1) * astmodels.Const1D(correction, name="velocity_correction")
+    model.inverse = astmodels.Identity(1) / astmodels.Const1D(correction, name="inv_vel_correciton")
+
+    return model

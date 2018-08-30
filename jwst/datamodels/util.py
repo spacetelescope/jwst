@@ -3,18 +3,19 @@ Various utility functions and data types
 """
 
 import sys
+import warnings
 from os.path import basename
 
 import numpy as np
 from astropy.io import fits
 
-from asdf import AsdfFile
-from asdf import schema as asdf_schema
-
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 log.addHandler(logging.NullHandler())
+
+class NoTypeWarning(Warning):
+    pass
 
 def open(init=None, extensions=None, **kwargs):
     """
@@ -57,6 +58,7 @@ def open(init=None, extensions=None, **kwargs):
 
     hdulist = {}
     shape = ()
+    file_name = None
     file_to_close = None
 
     # Get special cases for opening a model out of the way
@@ -76,6 +78,7 @@ def open(init=None, extensions=None, **kwargs):
         if isinstance(init, bytes):
             init = init.decode(sys.getfilesystemencoding())
 
+        file_name = basename(init)
         file_type = filetype.check(init)
 
         if file_type == "fits":
@@ -111,7 +114,7 @@ def open(init=None, extensions=None, **kwargs):
         init = hdulist
 
         try:
-            hdu = hdulist[(fits_header_name('SCI'), 1)]
+            hdu = hdulist[('SCI', 1)]
         except (KeyError, NameError):
             shape = ()
         else:
@@ -141,14 +144,24 @@ def open(init=None, extensions=None, **kwargs):
         raise TypeError("Can't determine datamodel class from argument to open")
 
     # Log a message about how the model was opened
-    if isinstance(init, str):
-        log.debug('Opening {0} as {1}'.format(basename(init), new_class))
+    if file_name:
+        log.debug('Opening {0} as {1}'.format(file_name, new_class))
     else:
         log.debug('Opening as {0}'.format(new_class))
 
     # Actually open the model
     model = new_class(init, extensions=extensions, **kwargs)
+
     if not has_model_type:
+        class_name = new_class.__name__.split('.')[-1]
+        if file_name:
+            errmsg = \
+                "model_type not found. Opening {} as a {}".format(file_name, class_name)
+        else:
+            errmsg = \
+                "model_type not found. Opening model as a {}".format(class_name)
+        warnings.warn(errmsg, NoTypeWarning)
+
         try:
             delattr(model.meta, 'model_type')
         except AttributeError:
@@ -169,7 +182,7 @@ def _class_from_model_type(hdulist):
 
     if hdulist:
         primary = hdulist[0]
-        model_type = primary.header.get(fits_header_name('DATAMODL'))
+        model_type = primary.header.get('DATAMODL')
 
         if model_type is None:
             new_class = None
@@ -190,11 +203,11 @@ def _class_from_ramp_type(hdulist, shape):
     else:
         if len(shape) == 4:
             try:
-                dqhdu = hdulist[fits_header_name('DQ')]
+                hdulist['DQ']
             except KeyError:
                 # It's a RampModel or MIRIRampModel
                 try:
-                    refouthdu = hdulist[fits_header_name('REFOUT')]
+                    hdulist['REFOUT']
                 except KeyError:
                     # It's a RampModel
                     from . import ramp
@@ -220,7 +233,7 @@ def _class_from_reftype(hdulist, shape):
 
     else:
         primary = hdulist[0]
-        reftype = primary.header.get(fits_header_name('REFTYPE'))
+        reftype = primary.header.get('REFTYPE')
         if reftype is None:
             new_class = None
 
@@ -255,7 +268,7 @@ def _class_from_shape(hdulist, shape):
         new_class = cube.CubeModel
     elif len(shape) == 2:
         try:
-            hdu = hdulist[(fits_header_name('SCI'), 2)]
+            hdulist[('SCI', 2)]
         except (KeyError, NameError):
             # It's an ImageModel
             from . import image
@@ -286,16 +299,6 @@ def can_broadcast(a, b):
 
 def to_camelcase(token):
     return ''.join(x.capitalize() for x in token.split('_-'))
-
-
-def fits_header_name(name):
-    """
-    Returns a FITS header name in the correct form for the current
-    version of Python.
-    """
-    if isinstance(name, bytes):
-        return name.decode('ascii')
-    return name
 
 
 def gentle_asarray(a, dtype):

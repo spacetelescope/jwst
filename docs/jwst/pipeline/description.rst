@@ -81,7 +81,7 @@ applied to each `EXP_TYPE` instance.
 +---------------------+-------------------+------------------+------------------+
 | | NRC_CORON         | calwebb_detector1 | calwebb_image2   | calwebb_coron3   |
 +---------------------+-------------------+------------------+------------------+
-| | NRC_WFSS         | calwebb_detector1 | calwebb_spec2    | calwebb_spec3    |
+| | NRC_WFSS          | calwebb_detector1 | calwebb_spec2    | calwebb_spec3    |
 +---------------------+-------------------+------------------+------------------+
 | | NRC_TSIMAGE       | calwebb_tso1      | calwebb_image2   | calwebb_tso3     |
 +---------------------+-------------------+------------------+------------------+

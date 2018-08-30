@@ -2,13 +2,13 @@
 #  Module for applying the RSCD correction to science data
 #
 
-import sys
 import numpy as np
 import logging
 from .. import datamodels
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
+
 
 def do_correction(input_model, rscd_model):
     """
@@ -18,17 +18,20 @@ def do_correction(input_model, rscd_model):
     The last frame value from the previous integration is calculated two ways:
     1. using second and third to last frames to extrapolated to the last frame
     2. using the non saturating data, fit the data and expolate to last frame
-    Because of the uncertainity of how well effects in th early part of the integration
-    are corrected in the previous integration (reset anomaly, rscd effects, persistence)
-    the lastframe determined from the second and third to last frames is considered
-    a better estimate than that derived from a fit to the ramp.
-    The last frame derived from fitting the non-saturating data is used in the correction
-    if the previous integration saturated. This fit is expolated past saturation to estimate
-    what the total number of electrons would of been collected was. 
+    Because of the uncertainity of how well effects in th early part of the
+    integration are corrected in the previous integration (reset anomaly, rscd
+    effects, persistence) the lastframe determined from the second and third to
+    last frames is considered a better estimate than that derived from a fit to
+    the ramp.
+    The last frame derived from fitting the non-saturating data is used in the
+    correction if the previous integration saturated. This fit is expolated
+    past saturation to estimate what the total number of electrons would have
+    been.
 
-    This correction has different correction parameters depending on if the pixel is from an
-    even row or odd row. The first row is define as an odd row. This even/odd row effect is
-    likely a result of the reset electronics (MIRI resets in row pairs).
+    This correction has different correction parameters depending on whether
+    the pixel is from an even row or odd row. The first row is define as an odd
+    row. This even/odd row effect is likely a result of the reset electronics
+    (MIRI resets in row pairs).
 
     Parameters
     ----------
@@ -48,7 +51,6 @@ def do_correction(input_model, rscd_model):
     # Save some data params for easy use later
     sci_nints = input_model.data.shape[0]       # number of integrations
     sci_ngroups = input_model.data.shape[1]     # number of groups
-    frame_time = input_model.meta.exposure.frame_time
 
     log.debug("RSCD correction using: nints=%d, ngroups=%d" %
               (sci_nints, sci_ngroups))
@@ -58,7 +60,8 @@ def do_correction(input_model, rscd_model):
 
     # Check for valid parameters
     if sci_ngroups < 2:
-        log.warning('RSCD correction will be skipped, only 1 Group need at least 2')
+        log.warning('RSCD correction requires > 1 group per integration')
+        log.warning('Step will be skipped')
         output.meta.cal_step.rscd = 'SKIPPED'
         return output
 
@@ -70,25 +73,27 @@ def do_correction(input_model, rscd_model):
         output.meta.cal_step.rscd = 'SKIPPED'
         return output
 
-    # Determine the parameters that only rely on ngroups
-    
+    # Determine the parameters that rely only on ngroups
     ngroups2 = sci_ngroups * sci_ngroups
-    b1_even = param['even']['ascale'] * (param['even']['illum_zp'] +
-                                         param['even']['illum_slope']*sci_ngroups +
-                                         param['even']['illum2']*ngroups2)
+    b1_even = param['even']['ascale'] * (
+        param['even']['illum_zp'] +
+        param['even']['illum_slope'] * sci_ngroups +
+        param['even']['illum2'] * ngroups2)
 
-    b1_odd = param['odd']['ascale'] * (param['odd']['illum_zp'] +
-                                         param['odd']['illum_slope']*sci_ngroups +
-                                         param['odd']['illum2']*ngroups2)
+    b1_odd = param['odd']['ascale'] * (
+        param['odd']['illum_zp'] +
+        param['odd']['illum_slope'] * sci_ngroups +
+        param['odd']['illum2'] * ngroups2)
 
-    sat_final_slope_even = (param['even']['sat_zp'] + param['even']['sat_slope']*sci_ngroups +
-                            param['even']['sat2']*ngroups2 + param['even']['sat_rowterm'])
+    sat_final_slope_even = (
+        param['even']['sat_zp'] + param['even']['sat_slope'] * sci_ngroups +
+        param['even']['sat2'] * ngroups2 + param['even']['sat_rowterm'])
 
-    sat_final_slope_odd = (param['odd']['sat_zp'] + param['odd']['sat_slope']*sci_ngroups +
-                            param['odd']['sat2']*ngroups2 + param['odd']['sat_rowterm'])
+    sat_final_slope_odd = (
+        param['odd']['sat_zp'] + param['odd']['sat_slope'] * sci_ngroups +
+        param['odd']['sat2'] * ngroups2 + param['odd']['sat_rowterm'])
 
-
-    b2_even = np.asscalar(param['even']['pow'])   
+    b2_even = np.asscalar(param['even']['pow'])
     b2_odd = np.asscalar(param['odd']['pow'])
     b3_even = np.asscalar(param['even']['param3'])
     b3_odd = np.asscalar(param['odd']['param3'])
@@ -100,68 +105,79 @@ def do_correction(input_model, rscd_model):
     sat_scale_odd = np.asscalar(param['odd']['sat_scale'])
     tau_even = np.asscalar(param['even']['tau'])
     tau_odd = np.asscalar(param['odd']['tau'])
+
     # loop over all integrations except the first
+    mdelta = int(sci_nints / 10) + 1
     for i in range(1, sci_nints):
-        sat,is_ref,dn_last23,dn_lastfit = get_DNaccumulated_last_int(input_model, i, sci_ngroups)
-        lastframe_even = dn_last23[1::2,:]
-        lastframe_odd = dn_last23[0::2,:]
+        if ((i + 1) % mdelta) == 0:
+            log.info(' Working on integration %d', i + 1)
+
+        sat, dn_last23, dn_lastfit = \
+            get_DNaccumulated_last_int(input_model, i, sci_ngroups)
+
+        lastframe_even = dn_last23[1::2, :]
+        lastframe_odd = dn_last23[0::2, :]
 
         correction_even = lastframe_even.copy() * 0.0
-        correction_odd = lastframe_odd.copy ()* 0.0
-        factor2_even = lastframe_even.copy ()* 0.0
-        factor2_odd = lastframe_odd.copy ()* 0.0
-        a1_even = lastframe_even.copy ()* 0.0
-        a1_odd = lastframe_odd.copy ()* 0.0
+        correction_odd = lastframe_odd.copy() * 0.0
+        factor2_even = lastframe_even.copy() * 0.0
+        factor2_odd = lastframe_odd.copy() * 0.0
+        a1_even = lastframe_even.copy() * 0.0
+        a1_odd = lastframe_odd.copy() * 0.0
 
         counts2_even = lastframe_even - crossopt_even
-        counts2_odd =  lastframe_odd - crossopt_odd
+        counts2_odd = lastframe_odd - crossopt_odd
 
-        counts2_even[np.where(counts2_even< 0)] = 0.0
-        counts2_odd[ np.where(counts2_odd< 0)] = 0.0
+        counts2_even[np.where(counts2_even < 0)] = 0.0
+        counts2_odd[np.where(counts2_odd < 0)] = 0.0
 
         # Find where counts2 > 0 and is finite
-        good_even = np.where(counts2_even >  0 & np.isfinite(counts2_even))
-        good_odd = np.where(counts2_odd  > 0 & np.isfinite(counts2_odd))
-        #______________________________________________________________________
+        good_even = np.where((counts2_even > 0) & np.isfinite(counts2_even))
+        good_odd = np.where((counts2_odd > 0) & np.isfinite(counts2_odd))
+        #__________________________________________________________________
         # even row values
-        factor2_even[good_even] = 1.0/(np.exp(counts2_even[good_even]/b3_even) -1)
-        a1_even = b1_even *(np.power(counts2_even,b2_even)) * factor2_even
-        #______________________________________________________________________
+        factor2_even[good_even] = 1.0 / \
+            (np.exp(counts2_even[good_even] / b3_even) - 1)
+        a1_even = b1_even * (np.power(counts2_even, b2_even)) * factor2_even
+        #___________________________________________________________________
         # odd row values
-        factor2_odd[good_odd] = 1.0/(np.exp(counts2_odd[good_odd]/b3_odd) -1)
-        a1_odd = b1_odd *(np.power(counts2_odd,b2_odd)) * factor2_odd
-        #______________________________________________________________________
-        # SATURATED DATA 
-        counts3_even = dn_lastfit[1::2,:] * sat_scale_even                    
-        counts3_odd = dn_lastfit[0::2,:] * sat_scale_odd
+        factor2_odd[good_odd] = 1.0 / \
+            (np.exp(counts2_odd[good_odd] / b3_odd) - 1)
+        a1_odd = b1_odd * (np.power(counts2_odd, b2_odd)) * factor2_odd
+        #___________________________________________________________________
+        # SATURATED DATA
+        counts3_even = dn_lastfit[1::2, :] * sat_scale_even
+        counts3_odd = dn_lastfit[0::2, :] * sat_scale_odd
 
-        a1_sat_even =sat_final_slope_even*counts3_even + sat_mzp_even
-        a1_sat_odd =sat_final_slope_odd*counts3_odd + sat_mzp_odd
+        a1_sat_even = sat_final_slope_even * counts3_even + sat_mzp_even
+        a1_sat_odd = sat_final_slope_odd * counts3_odd + sat_mzp_odd
 
-        sat_even = sat[1::2,:]
-        sat_odd = sat[0::2,:]
+        sat_even = sat[1::2, :]
+        sat_odd = sat[0::2, :]
+
         # loop over groups in input science data:
         for j in range(sci_ngroups):
-                                
+
             # Compute the correction factors for even and odd rows
-            T = (j + 1) 
+            T = (j + 1)
             eterm_even = np.exp(-T / tau_even)
             eterm_odd = np.exp(-T / tau_odd)
 
             # Apply the corrections to even and odd rows:
             # the first row is defined as odd (python index 0)
             # the second row is the first even row (python index of 1)
-            correction_odd = lastframe_odd * a1_odd * 0.01*eterm_odd
-            correction_even = lastframe_even * a1_even * 0.01* eterm_even
-            correction_sat_odd = lastframe_odd *  a1_sat_odd * 0.01*  eterm_odd
-            correction_sat_even = lastframe_even * a1_sat_even* 0.01 * eterm_even
-            sat_index_even  = np.where(sat_even)
-            sat_index_odd  = np.where(sat_odd)
-            correction_even[sat_index_even] = correction_sat_even[sat_index_even]
+            correction_odd = lastframe_odd * a1_odd * 0.01 * eterm_odd
+            correction_even = lastframe_even * a1_even * 0.01 * eterm_even
+            correction_sat_odd = lastframe_odd * a1_sat_odd * 0.01 * eterm_odd
+            correction_sat_even = lastframe_even * a1_sat_even * 0.01 * \
+                eterm_even
+            sat_index_even = np.where(sat_even)
+            sat_index_odd = np.where(sat_odd)
+            correction_even[sat_index_even] = \
+                correction_sat_even[sat_index_even]
             correction_odd[sat_index_odd] = correction_sat_odd[sat_index_odd]
             output.data[i, j, 0::2, :] += correction_odd
             output.data[i, j, 1::2, :] += correction_even
-
 
     output.meta.cal_step.rscd = 'COMPLETE'
 
@@ -169,11 +185,11 @@ def do_correction(input_model, rscd_model):
 
 
 def get_rscd_parameters(input_model, rscd_model):
-    
+
     """
     Read in the parameters from the reference file
     Seperate these parameters based on even and odd rows
-    
+
     Store the parameters in a param dictionary
     """
     # read in the type of data from the input model (FAST,SLOW,FULL,SUBARRAY)
@@ -200,11 +216,11 @@ def get_rscd_parameters(input_model, rscd_model):
     sat_rowterm_table = rscd_model.rscd_table['SAT_ROWTERM']
     sat_scale_table = rscd_model.rscd_table['SAT_SCALE']
 
-
     # Find the matching table row index for even row parameters:
     # the match is based on READPATT, SUBARRAY, and row type (even/odd)
     index = np.asarray(np.where(np.logical_and(readpatt_table == readpatt,
-                       np.logical_and(subarray_table == subarray, rowtype == 'EVEN'))))
+                       np.logical_and(subarray_table == subarray,
+                                      rowtype == 'EVEN'))))
 
     # Check for no match found for EVEN
     if len(index[0]) == 0:
@@ -217,10 +233,10 @@ def get_rscd_parameters(input_model, rscd_model):
     param = {}
     param['even'] = {}
     param['odd'] = {}
-    
+
     param['even']['tau'] = tau_table[index]
     param['even']['ascale'] = ascale_table[index]
-    param['even']['pow']  = pow_table[index]
+    param['even']['pow'] = pow_table[index]
     param['even']['illum_zp'] = illum_zp_table[index]
     param['even']['illum_slope'] = illum_slope_table[index]
     param['even']['illum2'] = illum2_table[index]
@@ -235,20 +251,20 @@ def get_rscd_parameters(input_model, rscd_model):
 
     # Find the matching table row index for ODD row
     index2 = np.asarray(np.where(np.logical_and(readpatt_table == readpatt,
-                        np.logical_and(subarray_table == subarray, rowtype == 'ODD'))))
+                        np.logical_and(subarray_table == subarray,
+                                       rowtype == 'ODD'))))
 
     # Check for no match found ODD row
     if len(index[0]) == 0:
         log.warning('No matching row found in RSCD reference table for')
         log.warning('READPATT=%s, SUBARRAY=%s, Row type=ODD',
                     readpatt, subarray)
-
         return None
 
     # Load the params from the matching table row
     param['odd']['tau'] = tau_table[index2]
     param['odd']['ascale'] = ascale_table[index2]
-    param['odd']['pow']  = pow_table[index2]
+    param['odd']['pow'] = pow_table[index2]
     param['odd']['illum_zp'] = illum_zp_table[index2]
     param['odd']['illum_slope'] = illum_slope_table[index2]
     param['odd']['illum2'] = illum2_table[index2]
@@ -269,107 +285,99 @@ def get_DNaccumulated_last_int(input_model, i, sci_ngroups):
     """
     Find the accumulated DN from the last integration
     This data should already have the Reset Anomaly correction
-    applied (if not - should we skip frames at the beginning ?) 
+    applied (if not - should we skip frames at the beginning ?)
 
-    a Check has already been made to make sure we have at least 
-    4 frames 
+    a Check has already been made to make sure we have at least
+    4 frames
 
     Parameters
     ----------
     input_model: input ramp data
     i: integration #
     sci_ngroups: number of frames/integration
-    
+
     return values
     -------------
-    sat: is the previous integration for this pixel saturated: yes/no
-    is_ref: boolean if pixel is a reference pixel. Do not apply correction to these pixels
-            we set lastframe = 0 for these pixels 
-    dn_lastframe_23: the extrapolated last frame using second and third to last frames
-    dn_lastfrane_fit: the extrapolated last frame using the fit to the entire ramp
-   
+    sat: the previous integration for this pixel saturated: yes/no
+    dn_lastframe_23: extrapolated last frame using 2nd and 3rd to last frames
+    dn_lastfrane_fit: extrapolated last frame using the fit to the entire ramp
     """
- 
+
     nrows = input_model.data.shape[2]
     ncols = input_model.data.shape[3]
     dn_lastframe2 = input_model.data[i - 1][sci_ngroups - 2]
     dn_lastframe3 = input_model.data[i - 1][sci_ngroups - 3]
     dn_lastframe23 = dn_lastframe2.copy() * 0.0
     dn_lastframe_fit = dn_lastframe2.copy() * 0.0
-    saturated = np.full((nrows,ncols),False)
-    is_ref = saturated.copy()
+    saturated = np.full((nrows, ncols), False)
 
     diff = dn_lastframe2 - dn_lastframe3
     dn_lastframe23 = dn_lastframe2 + diff
-    # check if pixel is saturated
-    saturated_flag = datamodels.dqflags.group['SATURATED']
+
+    # get saturation and reference pixel DQ flag values
+    sat_flag = datamodels.dqflags.group['SATURATED']
     ref_flag = datamodels.dqflags.pixel['REFERENCE_PIXEL']
-#TODO make this section more efficient by not looping over each
-# pixel
-    for j in range(nrows):
-        for k in range(ncols):
-            pixeldq = input_model.pixeldq[j,k]
-            ref = np.bitwise_and(pixeldq,ref_flag) 
-            if ref !=0 :
-                is_ref[j,k] = True
-                dn_lastframe23[j,k] = 0.0
-            else : # pixel is not a reference pixels. Make a correction
-                is_ref[j,k] = False
-                # starting on second frame and going to second to last frame
-                # pull out the pixel ramp. The first and last frame are
-                # heavily effected by detector effects and may not be
-                # adequately corrected for this simple ols fit.
 
-                ramp = input_model.data[i-1, 1:sci_ngroups - 1, j, k]
-                groupdq = input_model.groupdq[i-1,1:sci_ngroups-1,j,k]
-                satmask = (groupdq == saturated_flag)
-                yessat = satmask.any()
-                saturated[j,k] = yessat
-            
-                slope, intercept,ngood = ols_fit(ramp,groupdq)
-                if slope !=0: 
-                    dn_lastframe_fit[j,k] = slope*sci_ngroups + intercept
-                else: 
-                    dn_lastframe_fit[j,k] = dn_lastframe23[j,k]
-    return saturated, is_ref,dn_lastframe23,dn_lastframe_fit
+    # mark the locations of reference pixels
+    refpix_2d = np.bitwise_and(input_model.pixeldq, ref_flag)
+    dn_lastframe23[np.where(refpix_2d)] = 0.0
+
+    # load the ramp data needed for computing slopes
+    ramp3d = input_model.data[i - 1, 1:sci_ngroups - 1]
+    groupdq3d = input_model.groupdq[i - 1, 1:sci_ngroups - 1]
+    satmask3d = (groupdq3d == sat_flag)
+    saturated = satmask3d.any(axis=0)
+
+    # compute the slopes
+    slope, intercept, ngood = ols_fit(ramp3d, groupdq3d)
+
+    dn_lastframe_fit = slope * sci_ngroups + intercept
+
+    # reset the results for pixels with zero slope
+    slope0 = np.where(slope == 0)
+    dn_lastframe_fit[slope0] = dn_lastframe23[slope0]
+
+    # reset the results for reference pixels
+    dn_lastframe23[np.where(refpix_2d)] = 0.0
+    dn_lastframe_fit[np.where(refpix_2d)] = 0.0
+
+    return saturated, dn_lastframe23, dn_lastframe_fit
 
 
-def ols_fit(y,dq):
+def ols_fit(y, dq):
 
     """
-    An estimation of the lastframe Value from the previous integration is needed
-    for the RSCD correction.
-    This routine does a simple ordinary least squares fit to non-saturating data
+    An estimation of the lastframe value from the previous integration is
+    needed for the RSCD correction.
+    This routine does a simple ordinary least squares fit to
+    non-saturating data.
     """
 
-    saturated_flag = datamodels.dqflags.group['SATURATED']
+    sat_flag = datamodels.dqflags.group['SATURATED']
     shape = y.shape
-    ngood = 0
 
-    x = np.arange(shape[0], dtype=np.float64)
-    xshape = list(shape)
+    # Find ramp values that are saturated
+    x = np.arange(shape[0], dtype=np.float64)[:, np.newaxis, np.newaxis] * \
+        np.ones(shape)
+    good_data = np.bitwise_and(dq, sat_flag) == 0
+    ngood = good_data.sum(axis=0)
 
-    for i in range(1, len(shape)):
-        xshape[i] = 1
-    x = x.reshape(xshape)
+    # Compute sums of unsaturated (good) x/y values
+    sumx = (x * good_data).sum(axis=0)
+    sumy = (y * good_data).sum(axis=0)
+    sumxy = (x * y * good_data).sum(axis=0)
+    sumxx = (x * x * good_data).sum(axis=0)
+    nelem = good_data.sum(axis=0)
 
-    good_data = np.where(np.bitwise_and(dq,saturated_flag)==0)
-    ngood = len(good_data[0])
-    slope = 0.0
-    intercept = 0.0 
+    # Compute the slopes and intercepts
+    denom = nelem * sumxx - sumx * sumx
+    with np.errstate(invalid='ignore'):  # ignore division warnings
+        slope = (nelem * sumxy - sumx * sumy) / denom
+        intercept = (sumxx * sumy - sumx * sumxy) / denom
 
-    if ngood >= 3:
-        xuse = x[good_data]
-        yuse = y[good_data]
-        nelem = float(len(yuse))
-        mean_y = yuse.mean(axis=0)
-        mean_x = xuse[-1] / 2.
-        sum_x2 = (xuse**2).sum(axis=0)
-        sum_xy = (xuse * yuse).sum(axis=0)
-        slope = (sum_xy - nelem * mean_x * mean_y) / \
-            (sum_x2 - nelem * mean_x**2)
-        intercept = mean_y - slope * mean_x
-        
-    return (slope, intercept,ngood)
+    # Reset results to zero for pixels having < 3 unsaturated values
+    bad = np.where(ngood < 3)
+    slope[bad] = 0.0
+    intercept[bad] = 0.0
 
-
+    return (slope, intercept, ngood)

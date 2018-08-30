@@ -18,8 +18,6 @@ properties:
               MIR_4QPM, MIR_CORONCAL, MIR_DARK, MIR_FLATIMAGE,
               MIR_FLATMRS, MIR_IMAGE, MIR_LRS-FIXEDSLIT,
               MIR_LRS-SLITLESS, MIR_LYOT, MIR_MRS, MIR_TACQ,
-              # Obsolete MIRI
-              MIR_FLAT-MRS, MIR_FLAT-IMAGE,
               # NIRISS
               NIS_AMI, NIS_DARK, NIS_EXTCAL, NIS_FOCUS, NIS_IMAGE, NIS_LAMP,
               NIS_SOSS, NIS_TACQ, NIS_TACONFIRM, NIS_WFSS,

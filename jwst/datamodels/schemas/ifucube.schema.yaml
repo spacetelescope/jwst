@@ -72,4 +72,10 @@ allOf:
       default: 0.0
       ndim: 3
       datatype: float32
+    wavetable:
+      title: Wavelength value for slices
+      fits_hdu: WCS-TABLE
+      datatype:
+      - name: wavelength
+        datatype: float64
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

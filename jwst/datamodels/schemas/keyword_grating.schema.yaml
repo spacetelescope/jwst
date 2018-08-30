@@ -9,5 +9,5 @@ properties:
           grating:
             title: Name of the grating element used
             type: string
-            enum: [G140M, G235M, G395M, G140H, G235H, G395H, PRISM, MIRROR, N/A, ANY, MULTIPLE]
+            enum: [G140M, G235M, G395M, G140H, G235H, G395H, PRISM, MIRROR, N/A, ANY, UNKNOWN, MULTIPLE]
             fits_keyword: GRATING

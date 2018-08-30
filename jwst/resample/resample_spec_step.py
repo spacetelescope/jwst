@@ -1,40 +1,28 @@
-from ..stpipe import Step, cmdline
-from .. import datamodels
-from . import resample_spec
-from ..exp_to_source import multislit_to_container
-from ..assign_wcs.util import update_s_region
-
-
 __all__ = ["ResampleSpecStep"]
 
+from .. import datamodels
+from ..datamodels import MultiSlitModel, ModelContainer
+from . import resample_spec, ResampleStep
+from ..exp_to_source import multislit_to_container
+from ..assign_wcs.util import update_s_region_spectral
 
-class ResampleSpecStep(Step):
+
+class ResampleSpecStep(ResampleStep):
     """
     ResampleSpecStep: Resample input data onto a regular grid using the
     drizzle algorithm.
 
     Parameters
     -----------
-    input : DataModel, Association
+    input : `~jwst.datamodels.MultSlitModel`, `~jwst.datamodels.ModelContainer`, Association
+        A singe datamodel, a container of datamodels, or an association file
     """
-
-    spec = """
-        single = boolean(default=False)
-        wht_type = option('exptime', 'error', None, default='exptime')
-        pixfrac = float(default=1.0)
-        kernel = string(default='square')
-        fillval = string(default='INDEF')
-        good_bits = integer(default=4)
-        blendheaders = boolean(default=True)
-    """
-    reference_file_types = ['drizpars']
 
     def process(self, input):
-
         input = datamodels.open(input)
 
-        # If single input, wrap in a ModelContainer
-        if not isinstance(input, datamodels.ModelContainer):
+        # If single DataModel input, wrap in a ModelContainer
+        if not isinstance(input, ModelContainer):
             input_models = datamodels.ModelContainer([input])
             input_models.meta.resample.output = input.meta.filename
             self.blendheaders = False
@@ -44,57 +32,92 @@ class ResampleSpecStep(Step):
         for reftype in self.reference_file_types:
             ref_filename = self.get_reference_file(input_models[0], reftype)
 
-        # Multislits get converted to a ModelContainer per slit
-        if all([isinstance(i, datamodels.MultiSlitModel) for i in input_models]):
-            container_dict = multislit_to_container(input_models)
-            output = datamodels.MultiProductModel()
-            output.update(input_models[0])
-            for k, v in container_dict.items():
-                input_models = v
-
-                # Set up the resampling object as part of this step
-                resamp = resample_spec.ResampleSpecData(input_models,
-                    ref_filename, single=self.single,
-                    wht_type=self.wht_type, pixfrac=self.pixfrac,
-                    kernel=self.kernel, fillval=self.fillval,
-                    good_bits=self.good_bits)
-                # Do the resampling
-                resamp.do_drizzle()
-
-                for model in resamp.output_models:
-                    update_s_region(model)
-
-                if len(resamp.output_models) == 1:
-                    out_slit = resamp.output_models[0]
-                    output.products.append(out_slit)
-                    output.products[-1].bunit_data = input_models[0].meta.bunit_data
-                else:
-                    out_slit = resamp.output_models
-            result = output
-            result.meta.cal_step.resample = "COMPLETE"
-            result.meta.asn.pool_name = input_models.meta.pool_name
-            result.meta.asn.table_name = input_models.meta.table_name
+        if ref_filename != 'N/A':
+            self.log.info('Drizpars reference file: {}'.format(ref_filename))
+            kwargs = self.get_drizpars(ref_filename, input_models)
         else:
-            # Set up the resampling object as part of this step
-            resamp = resample_spec.ResampleSpecData(input_models,
-                ref_filename, single=self.single, wht_type=self.wht_type,
-                pixfrac=self.pixfrac, kernel=self.kernel,
-                fillval=self.fillval, good_bits=self.good_bits)
-            # Do the resampling
-            resamp.do_drizzle()
+            # Deal with NIRSpec which currently has no default drizpars reffile
+            self.log.info("No NIRSpec DIRZPARS reffile")
+            kwargs = self._set_spec_defaults()
 
-            for model in resamp.output_models:
+        self.drizpars = kwargs
+
+        if isinstance(input_models[0], MultiSlitModel):
+            # result is a MultiProductModel
+            result = self._process_multislit(input_models)
+        else:
+            # result is a DrizProductModel
+            result = self._process_slit(input_models)
+        return result
+
+    def _process_multislit(self, input_models):
+        """
+        Resample MultiSlit data
+
+        Parameters
+        ----------
+        input : `~jwst.datamodels.ModelContainer`
+            A container of `~jwst.datamodels.MultiSlitModel`
+
+        Returns
+        -------
+        result : `~jwst.datamodels.MultiProductModel`
+            The resampled output, one per source
+        """
+        containers = multislit_to_container(input_models)
+        result = datamodels.MultiProductModel()
+        result.update(input_models[0])
+        for container in containers.values():
+            resamp = resample_spec.ResampleSpecData(container, **self.drizpars)
+            drizzled_models = resamp.do_drizzle()
+
+            for model in drizzled_models:
                 model.meta.cal_step.resample = "COMPLETE"
-                update_s_region(model)
                 model.meta.asn.pool_name = input_models.meta.pool_name
                 model.meta.asn.table_name = input_models.meta.table_name
+                update_s_region_spectral(model)
 
-            # Return either the single resampled datamodel, or the container
-            # of datamodels.
-            if len(resamp.output_models) == 1:
-                result = resamp.output_models[0]
+            # Everything resampled to single output model
+            if len(drizzled_models) == 1:
+                result.products.append(drizzled_models[0])
+                result.products[-1].bunit_data = container[0].meta.bunit_data
             else:
-                result = resamp.output_models
+                # When each input is resampled to its own output
+                for model in drizzled_models:
+                    result.products.append(model)
+                    result.products[-1].bunit_data = container[0].meta.bunit_data
 
         return result
 
+    def _process_slit(self, input_models):
+        """
+        Resample Slit data
+
+        Parameters
+        ----------
+        input : `~jwst.datamodels.ModelContainer`
+            A container of `~jwst.datamodels.ImageModel`
+            or `~jwst.datamodels.SlitModel`
+
+        Returns
+        -------
+        result : `~jwst.datamodels.DrizProductModel`
+            The resampled output, one per source
+        """
+        resamp = resample_spec.ResampleSpecData(input_models, **self.drizpars)
+        drizzled_models = resamp.do_drizzle()
+
+        for model in drizzled_models:
+            model.meta.cal_step.resample = "COMPLETE"
+            model.meta.asn.pool_name = input_models.meta.pool_name
+            model.meta.asn.table_name = input_models.meta.table_name
+            update_s_region_spectral(model)
+
+        # Return either the single resampled datamodel, or the container
+        # of datamodels.
+        if len(drizzled_models) == 1:
+            result = drizzled_models[0]
+        else:
+            result = drizzled_models
+
+        return result

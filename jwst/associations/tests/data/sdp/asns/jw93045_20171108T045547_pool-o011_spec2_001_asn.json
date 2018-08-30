@@ -2,12 +2,12 @@
     "asn_type": "spec2",
     "asn_rule": "candidate_Asn_Lv2Spec",
     "version_id": null,
-    "code_version": "0.9.12",
+    "code_version": "0.9.20",
     "degraded_status": "No known degraded exposures in association.",
     "program": "93045",
     "target": "1",
     "asn_pool": "jw93045_20171108T045547_pool",
-    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '93045'})\nDMSAttrConstraint({'name': 'is_tso', 'sources': ['tsovisit'], 'value': None})\nDMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '93045'})\nDMSAttrConstraint({'name': 'target', 'sources': ['targetid'], 'value': '1'})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'nirspec'})\nDMSAttrConstraint({'name': 'detector', 'sources': ['detector'], 'value': 'nrs2'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'f290lp'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['grating'], 'value': 'g395h'})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': 's400a1'})\nDMSAttrConstraint({'name': 'channel', 'sources': ['channel'], 'value': None})\nConstraint_Spectral_Science({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'nrs_fixedslit'})\nSimpleConstraint({'name': 'single_science', 'value': False})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o011\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '93045'})\nDMSAttrConstraint({'name': 'is_tso', 'sources': ['tsovisit'], 'value': None})\nDMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '93045'})\nDMSAttrConstraint({'name': 'target', 'sources': ['targetid'], 'value': '1'})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'nirspec'})\nDMSAttrConstraint({'name': 'detector', 'sources': ['detector'], 'value': 'nrs2'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'f290lp'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['grating'], 'value': 'g395h'})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': 's400a1'})\nDMSAttrConstraint({'name': 'channel', 'sources': ['channel'], 'value': None})\nDMSAttrConstraint({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'nrs_fixedslit'})\nSimpleConstraint({'name': 'single_science', 'value': False})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o011\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
     "asn_id": "o011",
     "products": [
         {

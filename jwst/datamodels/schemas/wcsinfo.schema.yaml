@@ -211,6 +211,16 @@ properties:
             fits_keyword: PC3_3
             fits_hdu: SCI
             blend_table: True
+          ps3_0:
+            title: Coordinate table extension name
+            type: string
+            fits_keyword: PS3_0
+            fits_hdu: SCI
+          ps3_1:
+            title: Coordinate table column name
+            type: string
+            fits_keyword: PS3_1
+            fits_hdu: SCI
           s_region:
             title: spatial extent of the observation
             type: string
@@ -231,8 +241,8 @@ properties:
             fits_hdu: SCI
             blend_table: True
           spectral_order:
-            title: default spectral order
-            type: number
+            title: Spectral order number
+            type: integer
             fits_keyword: SPORDER
             fits_hdu: SCI
             blend_table: True
@@ -278,3 +288,13 @@ properties:
             fits_keyword: ROLL_REF
             fits_hdu: SCI
             blend_table: True
+          velosys:
+            title: Radial velocity wrt Barycenter [m / s]
+            type: number
+            fits_keyword: VELOSYS
+            fits_hdu: SCI
+          specsys:
+            title: Spectral reference frame
+            type: string
+            fits_keyword: SPECSYS
+            fits_hdu: SCI

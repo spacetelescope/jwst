@@ -25,7 +25,6 @@ except ImportError:
 from . import config_parser
 from . import crds_client
 from . import log
-from .suffix import remove_suffix
 from . import utilities
 from .. import __version_commit__, __version__
 from ..associations.load_as_asn import (LoadAsAssociation, LoadAsLevel2Asn)
@@ -33,6 +32,7 @@ from ..associations.lib.format_template import FormatTemplate
 from ..associations.lib.update_path import update_key_value
 from ..datamodels import (DataModel, ModelContainer)
 from ..datamodels import open as dm_open
+from ..lib.suffix import remove_suffix
 
 
 class Step():

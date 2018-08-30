@@ -705,9 +705,9 @@ class DataSet():
 
         # Load the average pixel area values from the photom reference file
         try:
-            tab_ster = None
+            #tab_ster = None
             tab_a2 = None
-            tab_ster = ftab.meta.photometry.pixelarea_steradians
+            #tab_ster = ftab.meta.photometry.pixelarea_steradians
             tab_a2 = ftab.meta.photometry.pixelarea_arcsecsq
         except:
             # If one or both of them are missing, issue a warning, but carry on

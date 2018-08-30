@@ -139,7 +139,6 @@ def tsgrism(input_model, reference_files):
         dispx = f.dispx
         dispy = f.dispy
         invdispx = f.invdispx
-        invdispy = f.invdispy
         invdispl = f.invdispl
         orders = f.orders
 

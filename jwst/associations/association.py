@@ -1,4 +1,5 @@
 from collections import MutableMapping
+from copy import deepcopy
 from datetime import datetime
 import json
 import jsonschema
@@ -368,7 +369,10 @@ class Association(MutableMapping):
             - [ProcessItem[, ...]]: List of items to process again.
 
         """
-        match, reprocess = self.constraints.check_and_set(item)
+        cached_constraints = deepcopy(self.constraints)
+        match, reprocess = cached_constraints.check_and_set(item)
+        if match:
+            self.constraints = cached_constraints
 
         # Set the association type for all reprocessed items.
         for process_list in reprocess:

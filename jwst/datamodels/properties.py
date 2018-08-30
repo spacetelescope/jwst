@@ -2,15 +2,12 @@
 
 import copy
 import numpy as np
-import jsonschema
 from astropy.io import fits
 
 from astropy.utils.compat.misc import override__dir__
 
-from asdf import schema
 from asdf import yamlutil
 from asdf.tags.core import ndarray
-from asdf import tagged
 
 from . import util
 from . import validate
@@ -252,12 +249,11 @@ class ObjectNode(Node):
                 raise AttributeError(
                     "Attribute '{0}' missing".format(attr))
 
-    def __hasattr__(self, attr):
-        return (attr in self._instance or
-                _find_property(self._schema, attr))
-
     def __iter__(self):
         return NodeIterator(self)
+
+    def hasattr(self, attr):
+        return attr in self._instance
 
     def items(self):
         # Return a (key, value) tuple for the node

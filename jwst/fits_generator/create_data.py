@@ -25,7 +25,7 @@ def get_proposals(base_directory='.'):
     proposal_list = []
     for dirname, subdirlist, filelist in os.walk(base_directory):
         for name in filelist:
-            if name.endswith('.prop'):
+            if name.endswith('.prop') and not name.startswith('.'):
                 proposal_list.append((dirname, name))
     return proposal_list
 

@@ -8,6 +8,26 @@ from string import Formatter
 __all__ = ['FormatTemplate']
 
 
+# Define conversion based on format type
+CONVERSION = {
+    '%': float,
+    'b': int,
+    'c': int,
+    'd': int,
+    'e': float,
+    'E': float,
+    'f': float,
+    'F': float,
+    'g': float,
+    'G': float,
+    'n': int,
+    'o': int,
+    's': str,
+    'x': int,
+    'X': int,
+}
+
+
 class FormatTemplate(Formatter):
     """Format a template
 
@@ -23,7 +43,7 @@ class FormatTemplate(Formatter):
     key_formats: dict or None
         A dict of key-specific formatting where the value will
         be pre-formatted before being passed to the final format
-        string.
+        string. Each format will be tried until success.
 
     remove_unused: bool
         By default, unused replacement fields are left in the
@@ -100,8 +120,9 @@ class FormatTemplate(Formatter):
         super(FormatTemplate, self).__init__()
         self.separator = separator
         self.remove_unused = remove_unused
+        self._used_keys = []
 
-        self.key_formats = defaultdict(lambda: '{}')
+        self.key_formats = defaultdict(lambda: ['{:s}'])
         if key_formats:
             self.key_formats.update(key_formats)
 
@@ -124,10 +145,30 @@ class FormatTemplate(Formatter):
         self._used_keys = []
 
         # Preformat the values
-        formatted_kwargs = dict()
+        formatted_kwargs = {}
         for key, value in kwargs.items():
             if value is not None:
-                value = self.key_formats[key].format(value)
+                for key_format in self.key_formats[key]:
+
+                    # Get the formatting type character. Indices are:
+                    #  0: The first replacement field. There should only be one.
+                    #  2: Get the format spec.
+                    #  -1: Get the last character representing the type.
+                    format_type = list(self.parse(key_format))[0][2][-1]
+
+                    try:
+                        value = key_format.format(CONVERSION[format_type](value))
+                    except ValueError:
+                        pass
+                    else:
+                        break
+                else:
+                    raise RuntimeError(
+                        'No suitable formatting for {key}: {value} found. Given formatting options:'
+                        '\n\t{formats}'.format(
+                            key=key, value=value, formats=self.key_formats[key]
+                        )
+                    )
             formatted_kwargs[key] = value
         result = super(FormatTemplate, self).format(
             format_string, **formatted_kwargs

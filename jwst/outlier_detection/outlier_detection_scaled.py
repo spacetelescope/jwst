@@ -1,7 +1,6 @@
 """Class definition for performing outlier detection with scaling."""
 
 from copy import deepcopy
-from functools import partial
 import numpy as np
 
 from photutils import aperture_photometry, CircularAperture, CircularAnnulus
@@ -101,7 +100,7 @@ class OutlierDetectionScaled(OutlierDetection):
         for image in self.input_models:
             image.wht = resample_utils.build_driz_weight(
                 image,
-                wht_type='exptime',
+                weight_type='exptime',
                 good_bits=pars['good_bits']
             )
 

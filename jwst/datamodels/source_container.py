@@ -1,8 +1,4 @@
-from . import (
-    ImageModel,
-    ModelContainer,
-    MultiExposureModel
-)
+from . import ModelContainer, MultiExposureModel
 
 __all__ = ['SourceModelContainer']
 

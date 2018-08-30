@@ -1,3 +1,4 @@
+# Licensed under a 3-clause BSD style license - see LICENSE.rst
 # -*- coding: utf-8 -*-
 
 """
@@ -5,8 +6,6 @@ Defines a ``JWSTTransformType`` used by jwst pipeine transform types.
 All types are added automatically to ``_jwst_types`` and the JWSTExtension.
 
 """
-import six
-
 from astropy.io.misc.asdf.tags.transform.basic import TransformType
 from astropy.io.misc.asdf.types import AstropyTypeMeta
 
@@ -31,8 +30,7 @@ class JWSTTypeMeta(AstropyTypeMeta):
         return cls
 
 
-@six.add_metaclass(JWSTTypeMeta)
-class JWSTTransformType(TransformType):
+class JWSTTransformType(TransformType, metaclass=JWSTTypeMeta):
     """
     This class represents types that have schemas and tags implemented within
     the jwst pipeline.

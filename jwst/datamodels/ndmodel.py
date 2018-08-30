@@ -114,14 +114,22 @@ class NDModel(nddata_base.NDDataBase):
         """
         Read the stored dataset.
         """
-        return self.__getattr__('data')
+        primary_array_name = self.get_primary_array_name()
+        if primary_array_name:
+            primary_array = self.__getattr__(primary_array_name)
+        else:
+            raise AttributeError("No attribute 'data'")
+        return primary_array
 
     @data.setter
     def data(self, value):
         """
         Write the stored dataset.
         """
-        properties.ObjectNode.__setattr__(self, 'data', value)
+        primary_array_name = self.get_primary_array_name()
+        if not primary_array_name:
+            primary_array_name = 'data'
+        properties.ObjectNode.__setattr__(self, primary_array_name, value)
 
     @property
     def mask(self):

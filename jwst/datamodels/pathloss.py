@@ -1,5 +1,4 @@
 from .reference import ReferenceFileModel
-from .dynamicdq import dynamic_mask
 
 
 __all__ = ['PathlossModel']

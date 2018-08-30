@@ -1,5 +1,3 @@
-import numpy as np
-
 from . import model_base
 
 __all__ = ['Level1bModel']
