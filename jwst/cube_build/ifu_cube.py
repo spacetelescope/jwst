@@ -1,10 +1,10 @@
 
 # Routines used for building cubes
-#import sys
 import time
 import numpy as np
 import logging
 import math
+from scipy import spatial
 from ..model_blender import blendmeta
 from .. import datamodels
 from ..assign_wcs import pointing
@@ -42,6 +42,7 @@ class IFUCubeData():
                  master_table,
                  **pars_cube):
 
+        self.new_code  = 0
 
         self.input_filenames = input_filenames
         self.pipeline = pipeline
@@ -514,6 +515,17 @@ class IFUCubeData():
         self.xcenters = xgrid
         self.ycenters = ygrid
 
+# set up a KDtree to use to search ifu spatial plane
+        points = list(zip(self.ycenters, self.xcenters))
+        self.tree = spatial.KDTree(points)
+        print(self.ycenters.shape)
+        print(self.xcenters.shape)
+        print(len(points))
+        print(self.tree.data.shape)
+
+#    print('ycenters',ycenters[0:100])
+#    print('xcenters',xcenters[0:100])
+#    print(points)
 #_______________________________________________________________________
         #set up the lambda (z) coordinate of the cube
         self.lambda_min = lambda_min
@@ -691,15 +703,27 @@ class IFUCubeData():
 
                     if self.weighting == 'msm':
                         t0 = time.time()
-                        cube_cloud_new.match_det2cube_msm(self.naxis1,self.naxis2,self.naxis3,
+                        if self.new_code: 
+                            print('calling new cube_cloud')
+                            cube_cloud_new.match_det2cube_msm(self.naxis1,self.naxis2,self.naxis3,
+                                                              self.Cdelt1,self.Cdelt2,self.Cdelt3,
+                                                              self.rois,self.roiw,self.weight_power,
+                                                              self.zcoord,
+                                                              self.tree,
+                                                              self.spaxel,flux,
+                                                              coord1,coord2,wave)
+                        else:
+                            print('calling old cube_cloud')
+                            cube_cloud.match_det2cube_msm(self.naxis1,self.naxis2,self.naxis3,
                                                           self.Cdelt1,self.Cdelt2,self.Cdelt3,
                                                           self.rois,self.roiw,self.weight_power,
-                                                          self.xcenters,self.ycenters,self.zcoord,
+                                                          self.xcenters,self.ycenters, self.zcoord,
                                                           self.spaxel,flux,
                                                           coord1,coord2,wave)
 
+
                         t1 = time.time()
-                        log.debug("Time Match one NIRSPEC slice to ifucube = %.1f.s" % (t1 - t0,))
+                        log.info("Time match point cloud to ifucube = %.1f.s" % (t1 - t0,))
 
                     elif self.weighting == 'miripsf':
                         wave_resol = self.instrument_info.Get_RP_ave_Wave(this_par1, this_par2)
