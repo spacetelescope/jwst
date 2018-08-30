@@ -10,12 +10,10 @@ the top of the example data tree.
 from collections import defaultdict
 from glob import glob
 from os import path
-import pytest
 
 from .helpers import (
     SCRIPT_DATA_PATH,
     abspath,
-    mk_tmp_dirs,
     require_bigdata,
     runslow,
     update_asn_basedir,
@@ -227,7 +225,6 @@ def test_run_outlier_only(mk_tmp_dirs):
         asn = load_asn(fh)
     acid = asn['asn_id']
     product = asn['products'][0]
-    product_name = product['name']
     members_by_type = defaultdict(list)
     for member in product['members']:
         expname = path.split(member['expname'])[1]
