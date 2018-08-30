@@ -1,33 +1,17 @@
 title: WAVELENGTHRANGE reference file model
 definitions:
   wfss-wavelengthrange:
-    description: |
-      A tuple consisting of order and filter dependent wavelength ranges
-    type: object
-    properties:
-      type: array
-      items:
-        type: array
-          items:
-            type: number
-            type: string
-    title: Order, Filter, Minwave, Maxwave
-    additionalProperties: false
+    type: array
+    items:
+      - type: number
+      - type: string
+      - type: number
+      - type: number
   slit-wavelengthrange:
-    description: |
-      An array containing an array of min and max wavelength ranges
-      that can be indexed by waverange_selector
-    type: object
-    properties:
-      slit-wavelengthrange:
-        type: array
-        items:
-          type: array
-          items:
-            type: number
-            type: number
-    title: Minwave, Maxwave
-    additionalProperties: false
+    type: array
+    items:
+      - type: number
+      - type: number
 allOf:
 - $ref: referencefile.schema.yaml
 - $ref: keyword_exptype.schema.yaml
@@ -46,14 +30,16 @@ allOf:
         type: string
     wavelengthrange:
       description: |
-        Wavelength range values 
-      type: array
-      items:
-        anyOf:    
+        Wavelength range values
+      anyOf:
+        - type: array
+          items:
           - $ref: "#/definitions/wfss-wavelengthrange"
+        - type: array
+          items:
           - $ref: "#/definitions/slit-wavelengthrange"
     order:
-      description: |
+      desrription: |
         For WFSS, this is the list of orders that are available for this file
       type: array
       items:

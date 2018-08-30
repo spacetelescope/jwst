@@ -35,14 +35,14 @@ def extract_tso_object(input_model,
         wants the source centered near row 34, so the extraction
         height is not the same on either size of the central pixel.
 
-    extract_orders: list[ints]
+    extract_orders: list[tuples]
         This is an optional parameter that will override the
         orders specified for extraction in the wavelengthrange
         reference file.
 
     Returns
     -------
-    output_model : jwst.datamodels.MultiSlitModel()
+    output_model : jwst.datamodels.SlitModel()
 
 
     Notes
@@ -82,23 +82,26 @@ def extract_tso_object(input_model,
         wavelengthrange = f.wavelengthrange
         ref_extract_orders = f.extract_orders
 
-    # this supports the user override
+    # this supports the user override and overriding the WFSS order extraction
+    # when called from the pipeline only the first order is extracted
     if extract_orders is None:
+        log.info("Using default order extraction from reference file")
         extract_orders = ref_extract_orders
 
     available_orders = [x[1] for x in extract_orders if x[0] == input_model.meta.instrument.filter].pop()
 
-    if len(available_orders) > 1:
-        log.info("Extracting into a MultiSlitModel")
-        output_model = datamodels.MultiSlitModel()
-        output_model.update(input_model)
-    else:
-        log.info("Extracting into a SlitModel")
-        output_model = datamodels.SlitModel()
-        output_model.update(input_model)
+    # team currently wants only a slit model
+    # if len(available_orders) > 1:
+    #     log.info("Extracting into a MultiSlitModel")
+    #     output_model = datamodels.MultiSlitModel()
+    # else:
+    # log.info("Extracting into a SlitModel")
+    output_model = datamodels.SlitModel()
 
+    output_model.update(input_model)
     subwcs = copy.deepcopy(input_model.meta.wcs)
 
+    slits = []
     for order in available_orders:
         range_select = [(x[2], x[3]) for x in wavelengthrange if (x[0] == order and x[1] == input_model.meta.instrument.filter)]
         # All objects in the catalog will use the same filter for translation
@@ -148,7 +151,7 @@ def extract_tso_object(input_model,
         order_model = Const1D(order)
         order_model.inverse = Const1D(order)
         tr = input_model.meta.wcs.get_transform('grism_detector', 'full_detector')
-        tr = Mapping((0, 1, 0)) | (Shift(xmin) & Shift(ymin) & order_model) | tr
+        tr = Mapping((0, 1, 0)) | Shift(xmin) & Shift(ymin) & order_model | tr
         subwcs.set_transform('grism_detector', 'full_detector', tr)
 
         xmin = int(xmin)
@@ -161,7 +164,7 @@ def extract_tso_object(input_model,
         ext_err = input_model.err[:, ymin: ymax + 1, :].copy()
         ext_dq = input_model.dq[:, ymin: ymax + 1, :].copy()
 
-        log.info("WCS made explicit for order: {}:".format(order))
+        log.info("WCS made explicit for order: {}".format(order))
         log.info("Trace extents are: (xmin:{}, ymin:{}), (xmax:{}, ymax:{})".format(xmin, ymin, xmax, ymax))
 
         if output_model.meta.model_type == "SlitModel":
@@ -183,27 +186,27 @@ def extract_tso_object(input_model,
             output_model.bunit_data = input_model.meta.bunit_data
             output_model.bunit_err = input_model.meta.bunit_err
 
-        elif output_model.meta.model_type == "MultiSlitModel":
-            new_model = datamodels.SlitModel(data=ext_data, err=ext_err, dq=ext_dq)
-            new_model.meta.wcs = subwcs
-            new_model.meta.wcsinfo.spectral_order = order
-
-            # set x/ystart values relative to the image (screen) frame.
-            # The overall subarray offset is recorded in model.meta.subarray.
-            # nslit = obj.sid - 1  # catalog id starts at zero
-            new_model.name = str(0)
-            new_model.xstart = xmin + 1
-            new_model.xsize = (xmax - xmin) + 1
-            new_model.ystart = ymin + 1
-            new_model.ysize = (ymax - ymin) + 1
-            new_model.source_xpos = source_xpos
-            new_model.source_ypos = source_ypos
-            new_model.source_id = 1
-            new_model.bunit_data = input_model.meta.bunit_data
-            new_model.bunit_err = input_model.meta.bunit_err
-            new_model.meta.wcs.bounding_box = ((xmin, xmax), (extract_y_center - extract_height,
-                                                              extract_y_center + extract_height))
-            output_model.slits.append(new_model)
+        # team currently only wants 1 order extracted
+        # elif output_model.meta.model_type == "MultiSlitModel":
+        #     new_model = datamodels.SlitModel(data=ext_data, err=ext_err, dq=ext_dq)
+        #     new_model.meta.wcs = subwcs
+        #     new_model.meta.wcsinfo.spectral_order = order
+        #     new_model.meta.wcs.bounding_box = ((xmin, xmax), (extract_y_center - extract_height,
+        #                                                       extract_y_center + extract_height))
+        #     # set x/ystart values relative to the image (screen) frame.
+        #     # The overall subarray offset is recorded in model.meta.subarray.
+        #     # nslit = obj.sid - 1  # catalog id starts at zero
+        #     new_model.name = str(0)
+        #     new_model.xstart = xmin + 1
+        #     new_model.xsize = (xmax - xmin) + 1
+        #     new_model.ystart = ymin + 1
+        #     new_model.ysize = (ymax - ymin) + 1
+        #     new_model.source_xpos = source_xpos
+        #     new_model.source_ypos = extract_y_center
+        #     new_model.source_id = 1
+        #     new_model.bunit_data = input_model.meta.bunit_data
+        #     new_model.bunit_err = input_model.meta.bunit_err
+        #     slits.append(new_model)
 
     del subwcs
     log.info("Finished extractions")
@@ -349,6 +352,7 @@ def extract_grism_objects(input_model,
             new_model.bunit_data = input_model.meta.bunit_data
             new_model.bunit_err = input_model.meta.bunit_err
             slits.append(new_model)
+            
     output_model.slits.extend(slits)
     del subwcs
     return output_model
