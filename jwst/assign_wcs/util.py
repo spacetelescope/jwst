@@ -445,6 +445,8 @@ def create_grism_bbox(input_model, reference_files,
 
     # Get the disperser parameters which have the wave limits
     with WavelengthrangeModel(reference_files['wavelengthrange']) as f:
+        if (f.meta.exposure.type == "NRC_TSGRISM"):
+            raise ValueError("Wavelengthrange reference file not meant for WFSS mode")
         waverange_selector = f.waverange_selector
         orders = f.order
 

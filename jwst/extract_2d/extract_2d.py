@@ -59,10 +59,7 @@ def extract2d(input_model, slit_name=None, apply_wavecorr=False,
             output_model = extract_tso_object(input_model,
                                               reference_files=reference_files,
                                               extract_height=extract_height,
-                                              extract_orders=[("F277W", [1]),
-                                                              ("F322W2", [1]),
-                                                              ("F356W", [1]),
-                                                              ("F444W", [1])])
+                                              extract_orders=None)
         else:
             output_model = extract_grism_objects(input_model,
                                                  grism_objects=grism_objects,
