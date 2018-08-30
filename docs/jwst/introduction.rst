@@ -161,6 +161,20 @@ where `my_dark_current.cfg` contains:
  override_dark = 'my_dark.fits'
 
 
+Exit Status
+-----------
+``strun`` produces the following exit status codes:
+
+- 0: Successful completion of the step/pipeline
+- 1: General error occurred
+- 64: No science data found
+
+The "No science data found" condition is returned by the ``assign_wcs`` step of
+``calwebb_spec2`` when, after successfully determining the WCS solution for a
+file, the WCS indicates that no science data will be found. This condition is
+most often found with NIRSpec's NRS2 detector. There are certain optical and MSA
+configurations in which dispersion will not cross to the NRS2 detector.
+
 Running From Within Python
 ==========================
 
