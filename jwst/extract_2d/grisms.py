@@ -79,6 +79,8 @@ def extract_tso_object(input_model,
     with WavelengthrangeModel(reference_files['wavelengthrange']) as f:
         if (f.meta.instrument.name != 'NIRCAM'):
             raise ValueError("Wavelengthrange reference file not for NIRCAM!")
+        if (f.meta.exposure.type != 'NRC_TSGRISM'):
+            raise ValueError("Wavelengthrange reference file not for TSGRISM")
         wavelengthrange = f.wavelengthrange
         ref_extract_orders = f.extract_orders
 
@@ -87,6 +89,8 @@ def extract_tso_object(input_model,
     if extract_orders is None:
         log.info("Using default order extraction from reference file")
         extract_orders = ref_extract_orders
+    else:
+        raise NotImplementedError("Multiple order extraction for TSO not currently implemented")
 
     available_orders = [x[1] for x in extract_orders if x[0] == input_model.meta.instrument.filter].pop()
 
@@ -101,7 +105,6 @@ def extract_tso_object(input_model,
     output_model.update(input_model)
     subwcs = copy.deepcopy(input_model.meta.wcs)
 
-    slits = []
     for order in available_orders:
         range_select = [(x[2], x[3]) for x in wavelengthrange if (x[0] == order and x[1] == input_model.meta.instrument.filter)]
         # All objects in the catalog will use the same filter for translation
