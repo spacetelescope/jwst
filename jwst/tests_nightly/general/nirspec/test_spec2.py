@@ -1,8 +1,12 @@
 """Test aspects of Spec2Pipline"""
 import os
+import subprocess
+
 import pytest
 
+from jwst.assign_wcs.util import NoDataOnDetectorError
 from jwst.pipeline import Spec2Pipeline
+from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 
 pytestmark = [
     pytest.mark.usefixtures('_jail'),
@@ -11,7 +15,7 @@ pytestmark = [
 ]
 
 
-def test_nrs2_nodata(_bigdata):
+def test_nrs2_nodata_api(_bigdata):
     """
 
     Regression test of handling NRS2 detector that has no data.
@@ -23,8 +27,25 @@ def test_nrs2_nodata(_bigdata):
     step = Spec2Pipeline()
     step.assign_wcs.skip = False
 
-    step.run(os.path.join(
-        _bigdata, 'nirspec', 'test_assignwcs', 'jw84700006001_02101_00001_nrs2_rate.fits'
-    ))
+    with pytest.raises(NoDataOnDetectorError):
+        step.run(os.path.join(
+            _bigdata, 'nirspec', 'test_assignwcs', 'jw84700006001_02101_00001_nrs2_rate.fits'
+        ))
 
-    assert False
+
+def test_nrs2_nodata_strun(_bigdata):
+    """Ensure that the appropriate exit status is returned from strun"""
+
+    data_file = os.path.join(
+        _bigdata, 'nirspec', 'test_assignwcs', 'jw84700006001_02101_00001_nrs2_rate.fits'
+    )
+
+    cmd = [
+        'strun',
+        'jwst.pipeline.Spec2Pipeline',
+        data_file,
+        '--steps.assign_wcs.skip=false'
+    ]
+    status = subprocess.run(cmd)
+
+    assert status.returncode == 64
