@@ -99,7 +99,18 @@ def match_det2cube_msm(naxis1,naxis2,naxis3,
                 if weight_distance < lower_limit: weight_distance = lower_limit
                 weight_distance = 1.0 / weight_distance
 
+
+            
                 cube_index = istart + rr
+
+                if(ipt < 10):
+                    print(ipt)
+                    print('weight',weight_distance)
+                    print('flux pt',flux[ipt])
+                    print('cube index',cube_index)
+                    print(istart,rr,zz)
+                    print(indexr[0])
+                    print(indexz[0])
                 spaxel[cube_index].flux = spaxel[cube_index].flux + weight_distance * flux[ipt]
                 spaxel[cube_index].flux_weight = spaxel[cube_index].flux_weight + weight_distance
                 spaxel[cube_index].iflux = spaxel[cube_index].iflux + 1
