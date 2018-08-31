@@ -15,8 +15,7 @@ from ..rscd import rscd_step
 from ..lastframe import lastframe_step
 from ..linearity import linearity_step
 
-
-__version__ = '0.9.3'
+__all__ = ['DarkPipeline']
 
 # Define logging
 log = logging.getLogger()

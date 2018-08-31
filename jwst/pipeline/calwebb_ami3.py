@@ -3,9 +3,7 @@ import logging
 import os.path as op
 
 from .. import datamodels
-from ..associations.load_as_asn import LoadAsAssociation
 from ..stpipe import Pipeline
-
 
 # step imports
 from ..ami import ami_analyze_step
@@ -13,7 +11,7 @@ from ..ami import ami_average_step
 from ..ami import ami_normalize_step
 from ..model_blender import blendmeta
 
-__version__ = '0.9.3'
+__all__ = ['Ami3Pipeline']
 
 # Define logging
 log = logging.getLogger()
