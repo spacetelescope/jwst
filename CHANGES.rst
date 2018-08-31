@@ -22,6 +22,7 @@ associations
 - Implemented Rule for Level 2 Nirspec Fixed Slit background. [#2307]
 - Handle both numeric and named slits for Level3 products. [#2330]
 - Remove MIR_LRS-SLITLESS and NIS_SOSS from the permanent TSO list. [#2330]
+- Allow "N/A" as a valid, but False, value in association pools. [#2334]
 
 background
 ----------
