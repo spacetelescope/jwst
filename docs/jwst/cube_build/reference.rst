@@ -17,9 +17,11 @@ This information is used if the weight function incorporates the size of the psf
 
 CRDS Selection Criteria
 -----------------------
-The cube parameter reference file selection is based on Instrument. CRDS selection criteria for the MIRI resolution 
-reference file is  also based on Instrument (a N/Q is returned for NIRSPEC data).
+CRDS selection criteria for the cube parameter reference file (cubepar)
+selection is based on Instrument.
 
+CRDS selection criteria for the MIRI spectral resolution reference file (resol)
+is also based on Instrument. (an N/A is returned for NIRSPEC data).
 
 Cube Building Parameter Reference File Format
 ---------------------------------------------
@@ -37,7 +39,9 @@ extensions  in the NIRSPEC
 reference file contains the wavelength sampling and region of interest size  to use for 
 PRISM, MEDIUM resolution, and HIGH resolution multi-band cubes, respectively.
 
+.. include:: cubepar_selection.rst
 
+.. include:: cubepar_format.rst
 
 MIRI Resolution reference file
 ------------------------------
@@ -52,3 +56,6 @@ The third BINTABLE extension, PSF_FWHM_BETA,
 has a format of 1 row and 5 columns. The 5 columns hold the polynomial coefficients for determining the beta PSF
 size. 
 
+.. include:: resol_selection.rst
+
+.. include:: resol_format.rst

@@ -20,7 +20,9 @@ dispersed background produced by a particular filter+grism combination.
 
 Type Specific Keywords for WFSSBKG
 ++++++++++++++++++++++++++++++++++
-             
+The following additional keywords are required for the WFSSBKG reference
+type:
+
 =========  ========================
 Keyword    Model Name
 =========  ========================
@@ -28,7 +30,7 @@ DETECTOR   meta.instrument.detector
 EXP_TYPE   meta.exposure.type
 FILTER     meta.instrument.filter
 PUPIL      meta.instrument.pupil
--=========  ========================
+=========  ========================
 
 Reference File Format
 +++++++++++++++++++++
@@ -45,7 +47,7 @@ DQ       IMAGE       2    ncols x nrows   integer
 DQ_DEF   BINTABLE    2    TFIELDS = 4     N/A
 =======  ========  =====  ==============  =========
 
-.. include:: ../dq_def.rst
+.. include:: ../includes/dq_def.rst
 
 Wavelength Range reference file
 -------------------------------
