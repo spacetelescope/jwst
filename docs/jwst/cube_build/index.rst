@@ -9,5 +9,5 @@ Cube Building
    arguments.rst
    examples.rst
    reference.rst
-
+   
 .. automodapi:: jwst.cube_build
