@@ -8,6 +8,8 @@ CRDS Selection Criteria
 The Barshadow reference file is selected only for exposures with
 EXP_TYPE=NRS_MSASPEC.  All other EXP_TYPEs should return N/A.
 
+.. include:: ../includes/standard_keywords.rst
+
 Reference File Format
 ---------------------
 
