@@ -345,7 +345,9 @@ def get_open_slits(input_model, reference_files=None):
         log.info("Slits projected on detector {0}: {1}".format(input_model.meta.instrument.detector,
                                                                [sl.name for sl in slits]))
     if not slits:
-        log.critical("No open slits fall on detector {0}.".format(input_model.meta.instrument.detector))
+        log_message = "No open slits fall on detector {0}.".format(input_model.meta.instrument.detector) 
+        log.critical(log_message)
+        raise NoDataOnDetectorError(log_message)
     return slits
 
 
