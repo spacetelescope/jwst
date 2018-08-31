@@ -793,6 +793,7 @@ class NIRDataset(Dataset):
         #
         #  First transform to detector coordinates
         #
+        self.DMS_to_detector(0,0)
         for integration in range(self.nints):
             for group in range(self.ngroups):
                 #
