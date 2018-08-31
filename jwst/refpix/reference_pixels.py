@@ -825,6 +825,7 @@ class NIRDataset(Dataset):
         #
         refdq = dqflags.pixel['REFERENCE_PIXEL']
 
+        self.DMS_to_detector(0,0)
         # Determined refpix indices to use on each group
         refpixindices = np.where(np.bitwise_and(self.pixeldq, refdq) == refdq)
         nrefpixels = len(refpixindices[0])
