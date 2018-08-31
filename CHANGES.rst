@@ -156,6 +156,8 @@ pipeline
 
 - Implement new `Spec2Pipeline` configuration for NIRSpec LAMP exposures [#2174]
 
+- Implement specific exit status for "no science on detector" [#2336]
+
 ramp_fitting
 ------------
 
