@@ -22,6 +22,7 @@ associations
 - Implemented Rule for Level 2 Nirspec Fixed Slit background. [#2307]
 - Handle both numeric and named slits for Level3 products. [#2330]
 - Remove MIR_LRS-SLITLESS and NIS_SOSS from the permanent TSO list. [#2330]
+- Implement new Level2a rule `Asn_Lv2NRSLAMP`. [#2177]
 
 background
 ----------
@@ -152,6 +153,8 @@ pipeline
   step from running. [#2318]
 
 - Enable resample_spec to run on MIRI fixed slit data in calspec2 [#2424]
+
+- Implement new `Spec2Pipeline` configuration for NIRSpec LAMP exposures [#2174]
 
 ramp_fitting
 ------------
