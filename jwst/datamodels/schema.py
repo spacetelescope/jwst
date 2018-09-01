@@ -5,7 +5,6 @@ from collections import OrderedDict
 from asdf import AsdfFile
 from asdf import schema as asdf_schema
 
-from .extension import BaseExtension
 from jwst.transforms.jwextension import JWSTExtension
 from gwcs.extension import GWCSExtension
 

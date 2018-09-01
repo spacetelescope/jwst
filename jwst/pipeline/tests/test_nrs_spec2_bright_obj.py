@@ -1,21 +1,15 @@
 """Test calwebb_spec2 with NIRSpec Bright Object"""
 
-from collections import defaultdict
-from copy import copy
 from glob import glob
 from os import path
 
 from .helpers import (
-    SCRIPT_PATH,
     SCRIPT_DATA_PATH,
     abspath,
-    mk_tmp_dirs,
     require_bigdata,
     runslow,
-    update_asn_basedir,
 )
 
-from ...associations import load_asn
 from ...stpipe.step import (Step, remove_suffix)
 
 DATAPATH = abspath(

@@ -8,7 +8,6 @@ from shutil import copyfile
 from .helpers import (
     SCRIPT_DATA_PATH,
     abspath,
-    mk_tmp_dirs,
 )
 
 from ...associations.asn_from_list import asn_from_list

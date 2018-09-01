@@ -19,7 +19,12 @@ from ..transforms.models import (Rotation3DToGWA, DirCos2Unitless, Slit2Msa,
                                  Gwa2Slit, Unitless2DirCos, Logical, Slit, Snell,
                                  RefractionIndexFromPrism)
 
-from .util import (not_implemented_mode, MissingMSAFileError, velocity_correction)
+from .util import (
+    MissingMSAFileError,
+    NoDataOnDetectorError,
+    not_implemented_mode,
+    velocity_correction
+)
 from . import pointing
 from ..datamodels import (CollimatorModel, CameraModel, DisperserModel, FOREModel,
                           IFUFOREModel, MSAModel, OTEModel, IFUPostModel, IFUSlicerModel,
@@ -148,14 +153,17 @@ def ifu(input_model, reference_files):
     detector = input_model.meta.instrument.detector
     grating = input_model.meta.instrument.grating
     filter = input_model.meta.instrument.filter
+
+    # Check for data actually being present on NRS2
+    log_message = "No IFU slices fall on detector {0}".format(detector)
     if detector == "NRS2" and grating.endswith('M'):
         # Mid-resolution gratings do not project on NRS2.
-        log.critical("No IFU slices fall on detector {0}".format(detector))
-        return None
+        log.critical(log_message)
+        raise NoDataOnDetectorError(log_message)
     if detector == "NRS2" and grating == "G140H" and filter == "F070LP":
         # This combination of grating and filter does not project on NRS2.
-        log.critical("No IFU slices fall on detector {0}".format(detector))
-        return None
+        log.critical(log_message)
+        raise NoDataOnDetectorError(log_message)
 
     slits = np.arange(30)
     # Get the corrected disperser model
@@ -337,7 +345,9 @@ def get_open_slits(input_model, reference_files=None):
         log.info("Slits projected on detector {0}: {1}".format(input_model.meta.instrument.detector,
                                                                [sl.name for sl in slits]))
     if not slits:
-        log.critical("No open slits fall on detector {0}.".format(input_model.meta.instrument.detector))
+        log_message = "No open slits fall on detector {0}.".format(input_model.meta.instrument.detector) 
+        log.critical(log_message)
+        raise NoDataOnDetectorError(log_message)
     return slits
 
 
