@@ -48,6 +48,7 @@ __all__ = [
     'Constraint_Mode',
     'Constraint_Special',
     'Constraint_Spectral_Science',
+    'Constraint_Target',
     'DMSLevel2bBase',
     'DMSAttrConstraint',
     'Utility'
@@ -639,14 +640,6 @@ class Constraint_Mode(Constraint):
     def __init__(self):
         super(Constraint_Mode, self).__init__([
             DMSAttrConstraint(
-                name='program',
-                sources=['program']
-            ),
-            DMSAttrConstraint(
-                name='target',
-                sources=['targetid'],
-            ),
-            DMSAttrConstraint(
                 name='instrument',
                 sources=['instrume']
             ),
@@ -672,6 +665,19 @@ class Constraint_Mode(Constraint):
                 name='channel',
                 sources=['channel'],
                 required=False,
+            ),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        sources=['detector'],
+                        value='nirspec'
+                    ),
+                    DMSAttrConstraint(
+                        sources=['filter'],
+                        value='opaque'
+                    ),
+                ],
+                reduce=Constraint.notany
             ),
             DMSAttrConstraint(
                 name='slit',
@@ -761,6 +767,16 @@ class Constraint_Spectral_Science(Constraint):
                 )
             ],
             reduce=Constraint.any
+        )
+
+
+class Constraint_Target(DMSAttrConstraint):
+    """Select on target id"""
+
+    def __init__(self):
+        super(Constraint_Target, self).__init__(
+            name='target',
+            sources=['targetid'],
         )
 
 
