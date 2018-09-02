@@ -5,7 +5,7 @@ FLAT is used for all exposure types except NIRSpec spectra.
 NIRSpec spectra use three reftypes:  FFLAT (fore optics), SFLAT (spectrograph optics), and 
 DFLAT (detector).
 
-.. include:: standard_keywords.rst
+.. include:: ../includes/standard_keywords.rst
 
 .. include:: flat_selection.rst
 
@@ -36,7 +36,7 @@ For slit spectroscopy, a set of SCI, ERR and DQ extensions can be provided
 for each aperture (identified by the detector subarray onto which the spectrum
 is projected).  
 
-.. includes:: includes/dq_def.rst
+.. include:: ../includes/dq_def.rst
 
 
 Reference File Formats for NIRSpec
