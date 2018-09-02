@@ -3,9 +3,11 @@ Reference File
 There are three reference file types for the persistence step:
 TRAPDENSITY, PERSAT, and TRAPPARS.
 
-CRDS Selection Criteria
------------------------
-Persistence reference files are selected by INSTRUME and DETECTOR.
+.. include:: ../includes/standard_keywords.rst
+
+.. include:: persat_selection.rst
+.. include:: trapdensity_selection.rst
+.. include:: trappars_selection.rst
 
 At the present time, there are no reference files for MIRI, and CRDS
 will return "N/A" for the names of the files if the persistence step
@@ -28,3 +30,4 @@ float (double precision) columns:
 * capture1: minus the reciprocal of the capture e-folding time
 * capture2: the "instantaneous" capture coefficient
 * decay_param: minus the reciprocal of the decay e-folding time
+
