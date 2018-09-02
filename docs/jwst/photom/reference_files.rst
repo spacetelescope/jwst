@@ -4,26 +4,13 @@ The photom step uses a photom reference file and a pixel area map reference
 file. The pixel area map reference file is only used when processing
 imaging and NIRSpec IFU observations.
 
-CRDS Selection Criteria
------------------------
+.. include:: ../includes/standard_keywords.rst
 
-PHOTOM Reference Files
-^^^^^^^^^^^^^^^^^^^^^^
+.. include:: photom_selection.rst
+             
 
-For FGS, photom reference files are selected based on the values of DETECTOR
-in the science data file.
-
-For MIRI photom reference files are selected based on the values of DETECTOR and BAND
-in the science data file.
-
-For NIRCam, photom reference files are selected based on the values DETECTOR
-in the science data file.
-
-For NIRISS, photom reference files are selected based on the values of DETECTOR
-in the science data file.
-
-For NIRSpec, photom reference files are selected based on the values of EXP_TYPE
-in the science data file.
+PHOTOM Row Selection
+^^^^^^^^^^^^^^^^^^^^
 
 A row of data within the table that matches the mode of the science exposure
 is selected by the photom step based on criteria that are instrument mode
@@ -41,24 +28,8 @@ dependent. The current row selection criteria are:
    - Fixed Slits: Filter, Grating, and Slit name
    - IFU and MOS: Filter and Grating
 
-AREA map Reference Files
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-For FGS, photom reference files are selected based on the values of DETECTOR
-in the science data file.
-
-For MIRI photom reference files are selected based on the values of DETECTOR and EXP_TYPE
-in the science data file.
-
-For NIRCam, photom reference files are selected based on the values of DETECTOR and EXP_TYPE
-in the science data file.
-
-For NIRISS, photom reference files are selected based on the values of DETECTOR and EXP_TYPE
-in the science data file.
-
-For NIRSpec, photom reference files are selected based on the values of DETECTOR and EXP_TYPE
-in the science data file.
-
+.. include:: area_selection.rst
+     
 Reference File Format
 ---------------------
 

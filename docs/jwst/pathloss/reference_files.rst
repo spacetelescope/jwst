@@ -2,7 +2,7 @@ Reference File
 ==============
 The pathloss correction step uses a pathloss reference file.
 
-.. include:: standard_keywords.rst
+.. include:: ../includes/standard_keywords.rst
 
 .. include:: pathloss_selection.rst
              
