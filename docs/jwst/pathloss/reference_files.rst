@@ -2,11 +2,12 @@ Reference File
 ==============
 The pathloss correction step uses a pathloss reference file.
 
-CRDS Selection Criteria
------------------------
-Pathloss reference files are selected on the basis of EXP_TYPE
-values for the input science data set.  Only NIRSPEC IFU, FIXEDSLIT and
-MSA data, and NIRISS SOSS data perform a pathloss correction.
+.. include:: standard_keywords.rst
+
+.. include:: pathloss_selection.rst
+             
+Only NIRSPEC IFU, FIXEDSLIT and MSA data, and NIRISS SOSS data perform a
+pathloss correction.
 
 Pathloss Reference File Format
 ------------------------------
@@ -23,24 +24,27 @@ on this measurement (currently estimated).
 
 The NIRSPEC FIXEDSLIT reference file has this FITS structure:
 
-No.    Name         Type      Cards   Dimensions   Format
+==== =======     ==========   ====== =============  ==========
+No.    Name         Type      Cards   Dimensions    Format
+==== =======     ==========   ====== =============  ==========
 0    PRIMARY     PrimaryHDU      15   ()              
-1    PS          ImageHDU        29   (21, 21, 21)   float64   
-2    PSVAR       ImageHDU        29   (21, 21, 21)   float64   
-3    UNI         ImageHDU        19   (21,)        float64   
-4    UNIVAR      ImageHDU        19   (21,)        float64   
-5    PS          ImageHDU        29   (21, 21, 21)   float64   
-6    PSVAR       ImageHDU        29   (21, 21, 21)   float64   
-7    UNI         ImageHDU        19   (21,)        float64   
-8    UNIVAR      ImageHDU        19   (21,)        float64   
-9    PS          ImageHDU        29   (21, 21, 21)   float64   
-10   PSVAR       ImageHDU        29   (21, 21, 21)   float64   
-11   UNI         ImageHDU        19   (21,)        float64   
-12   UNIVAR      ImageHDU        19   (21,)        float64   
-13   PS          ImageHDU        29   (21, 21, 21)   float64   
-14   PSVAR       ImageHDU        29   (21, 21, 21)   float64   
-15   UNI         ImageHDU        19   (21,)        float64   
-16   UNIVAR      ImageHDU        19   (21,)        float64   
+1    PS          ImageHDU        29   (21, 21, 21)  float64   
+2    PSVAR       ImageHDU        29   (21, 21, 21)  float64   
+3    UNI         ImageHDU        19   (21,)         float64   
+4    UNIVAR      ImageHDU        19   (21,)         float64   
+5    PS          ImageHDU        29   (21, 21, 21)  float64   
+6    PSVAR       ImageHDU        29   (21, 21, 21)  float64   
+7    UNI         ImageHDU        19   (21,)         float64   
+8    UNIVAR      ImageHDU        19   (21,)         float64   
+9    PS          ImageHDU        29   (21, 21, 21)  float64   
+10   PSVAR       ImageHDU        29   (21, 21, 21)  float64   
+11   UNI         ImageHDU        19   (21,)         float64   
+12   UNIVAR      ImageHDU        19   (21,)         float64   
+13   PS          ImageHDU        29   (21, 21, 21)  float64   
+14   PSVAR       ImageHDU        29   (21, 21, 21)  float64   
+15   UNI         ImageHDU        19   (21,)         float64   
+16   UNIVAR      ImageHDU        19   (21,)         float64   
+==== =======     ==========   ====== =============  ==========
 
 HDU #1-4 are for the S200A1 aperture, while #5-8 are for S200A2,
 #9-12 are for S200B1 and #13-16 are for S1600A1.  Currently there is

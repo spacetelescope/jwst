@@ -6,18 +6,11 @@ are used to temporarily convert the pixel values from units of DN to
 electrons. The read noise values are used as part of the noise estimate for
 each pixel. Both are necessary for proper computation of noise estimates.
 
-CRDS Selection Criteria
------------------------
+.. include:: ../includes/standard_keywords.rst
 
-GAIN Reference Files
-^^^^^^^^^^^^^^^^^^^^
-The GAIN reference file is selected based on instrument, detector and,
-where necessary, subarray.
+.. include:: gain_selection.rst
 
-READNOISE Reference Files
-^^^^^^^^^^^^^^^^^^^^^^^^^
-The READNOISE reference file is selected by instrument, detector and, where
-necessary, subarray.
+.. include:: readnoise_selection.rst
 
 
 Reference File Formats
