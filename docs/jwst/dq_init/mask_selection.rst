@@ -2,6 +2,7 @@ Reference Selection Keywords for MASK
 -------------------------------------
 CRDS selects appropriate MASK references based on the following keywords.
 MASK is not applicable for instruments not in the table.
+Non-standard keywords used for file selection are *required*.
 
 ========== ==========================================================
 Instrument Keywords                                                   

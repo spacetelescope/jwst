@@ -5,26 +5,9 @@ FLAT is used for all exposure types except NIRSpec spectra.
 NIRSpec spectra use three reftypes:  FFLAT (fore optics), SFLAT (spectrograph optics), and 
 DFLAT (detector).
 
+.. include:: standard_keywords.rst
 
-CRDS Selection Criteria
------------------------
-
-For MIRI Imaging, flat-field reference files are selected based on the values of
-INSTRUME, DETECTOR, FILTER, READPATT, and SUBARRAY in the science data file.
-
-For MIRI MRS, flat-field reference files are selected based on the values of
-INSTRUME, DETECTOR, BAND, READPATT, and SUBARRAY in the science data file.
-
-For NIRCam, flat-field reference files are selected based on the values of
-INSTRUME, DETECTOR, FILTER, and PUPIL in the science data file.
-
-For NIRISS, flat-field reference files are selected based on the values of
-INSTRUME, DETECTOR, and FILTER in the science data file.
-
-For NIRSpec, flat-field reference files are selected based on the values of
-INSTRUME, DETECTOR, FILTER, GRATING, and
-EXP_TYPE in the science data file.
-
+.. include:: flat_selection.rst
 
 Reference File Formats for MIRI, NIRCAM, and NIRISS
 ---------------------------------------------------
@@ -53,15 +36,7 @@ For slit spectroscopy, a set of SCI, ERR and DQ extensions can be provided
 for each aperture (identified by the detector subarray onto which the spectrum
 is projected).  
 
-
-A single DQ_DEF extension provides the data-quality definitions for all of the 
-DQ arrays, which must use the same coding scheme.  The DQ_DEF table contains 
-the bit assignments used in the DQ array, and contains 4 columns:
-
-* BIT: integer value giving the bit number, starting at zero
-* VALUE: the equivalent base-10 integer value of BIT
-* NAME: the string mnemonic name of the data quality condition
-* DESCRIPTION: a string description of the condition
+.. includes:: includes/dq_def.rst
 
 
 Reference File Formats for NIRSpec
@@ -137,6 +112,7 @@ Fore Optics (FFLAT)
 There are 3 types of FFLAT reference files: fixed slit, msa spec, and IFU. For each type
 the primary data array is assumed to be empty.
 
+.. include:: fflat_selection.rst
 
 *Fixed Slit*
 ~~~~~~~~~~~~
@@ -195,14 +171,7 @@ The flat field values in this table are used to account for a wavelength-depende
 finer scale than given by the values in the SCI array.  There is a single row in this table, 
 as the same wavelength-dependent value is applied to all pixels in the quadrant.
 
- 
-The DQ_DEF table contains the bit assignments used in the DQ array, and contains 4 columns:
-
-* BIT: integer value giving the bit number, starting at zero
-* VALUE: the equivalent base-10 integer value of BIT
-* NAME: the string mnemonic name of the data quality condition
-* DESCRIPTION: a string description of the condition
-
+.. include:: ../includes/dq_def.rst
 
 *IFU*
 ~~~~~
@@ -223,13 +192,7 @@ on that pixel will be determined by using the WCS interface. The flat-field
 value for that pixel will then be obtained by interpolating within the 
 wavelength and data arrays from the FAST_VARIATION table.
 
-The DQ_DEF table contains the bit assignments used in the DQ arrays. The table contains the 4 columns:
-
-* BIT: integer value giving the bit number, starting at zero
-* VALUE: the equivalent base-10 integer value of BIT
-* NAME: the string mnemonic name of the data quality condition
-* DESCRIPTION: a string description of the condition
-
+.. include:: ../includes/dq_def.rst
 
 Spectrograph (SFLAT)
 ::::::::::::::::::::
@@ -237,6 +200,7 @@ Spectrograph (SFLAT)
 There are 3 types of SFLAT reference files: fixed slit, msa spec, and IFU. For each type
 the primary data array is assumed to be empty.
 
+.. include:: sflat_selection.rst
 
 *Fixed Slit*
 ~~~~~~~~~~~~
@@ -292,20 +256,17 @@ interface.  The flat-field value for that pixel will then be obtained by
 interpolating within the wavelength and data arrays from the FAST_VARIATION
 table.
 
- 
-The DQ_DEF table contains the bit assignments used in the DQ array, and contains 4 columns:
-
-* BIT: integer value giving the bit number, starting at zero
-* VALUE: the equivalent base-10 integer value of BIT
-* NAME: the string mnemonic name of the data quality condition
-* DESCRIPTION: a string description of the condition
+.. include:: ../includes/dq_def.rst
 
 
 Detector (DFLAT)
 ::::::::::::::::
 
+.. include:: dflat_selection.rst
+
 There is only one type of DFLAT reference file, and it contains 3 IMAGE extensions, a BINTABLE extension 
-labeled WAVELENGTH, a BINTABLE extension labeled FAST_VARIATION, and a BINTABLE labeled DQ_DEF.
+labeled WAVELENGTH, a BINTABLE extension labeled FAST_VARIATION, and a BINTABLE
+labeled DQ_DEF.
 
 The IMAGE extensions have the following characteristics:
 
@@ -316,7 +277,6 @@ SCI       3      ncols x nrows x n_wl  float
 ERR       3      ncols x nrows         float
 DQ        3      ncols x nrows         integer
 =======   =====  ====================  =========
-
 
 The keyword NAXIS3 in the SCI IMAGE extension specifies the number n_wl of monochromatic slices, 
 each of which gives the flat_field value for every pixel for the corresponding wavelength, which is 
@@ -340,9 +300,5 @@ The flat field values in this table are used to account for a wavelength-depende
 finer scale than given by the values in the SCI array.  There is a single row in this table, 
 as the same wavelength-dependent value is applied to all pixels.
 
-The DQ_DEF table contains the bit assignments used in the DQ array, and contains 4 columns:
+.. include:: ../includes/dq_def.rst
 
-* BIT: integer value giving the bit number, starting at zero
-* VALUE: the equivalent base-10 integer value of BIT
-* NAME: the string mnemonic name of the data quality condition
-* DESCRIPTION: a string description of the condition
