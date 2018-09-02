@@ -4,6 +4,8 @@ The Data Quality Initialization step uses a MASK reference file.
 
 .. include:: mask_selection.rst
 
+.. include:: ../includes/standard_keywords.rst
+
 MASK Reference File Format
 --------------------------
 The MASK reference file is a FITS file with a primary HDU, 1 IMAGE extension
@@ -19,10 +21,4 @@ output for MIRI detectors.
 The BINTABLE extension contains the bit assignments used in the DQ array.
 
 .. include:: ../includes/dq_def.rst
-
-.. include:: fgs_mask.rst
-.. include:: miri_mask.rst
-.. include:: nircam_mask.rst
-.. include:: niriss_mask.rst
-.. include:: nirspec_mask.rst
 

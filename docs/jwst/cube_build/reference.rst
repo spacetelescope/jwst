@@ -14,15 +14,6 @@ The other type of reference file pertains only to MIRI data and contains the wid
 band. The reftype for this reference file is *resol*.
 This information is used if the weight function incorporates the size of the psf and lsf, i.e.  --weighting = miripsf 
 
-
-CRDS Selection Criteria
------------------------
-CRDS selection criteria for the cube parameter reference file (cubepar)
-selection is based on Instrument.
-
-CRDS selection criteria for the MIRI spectral resolution reference file (resol)
-is also based on Instrument. (an N/A is returned for NIRSPEC data).
-
 Cube Building Parameter Reference File Format
 ---------------------------------------------
 The cube parameter reference files are FITS files with  BINTABLE extensions. The FITS primary data array is
@@ -38,6 +29,8 @@ three types of multi-band cubes: PRISM, MEDIUM and HIGH resolution.  The third, 
 extensions  in the NIRSPEC 
 reference file contains the wavelength sampling and region of interest size  to use for 
 PRISM, MEDIUM resolution, and HIGH resolution multi-band cubes, respectively.
+
+.. include:: ../includes/standard_keywords.rst
 
 .. include:: cubepar_selection.rst
 

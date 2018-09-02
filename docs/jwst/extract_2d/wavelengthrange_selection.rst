@@ -2,6 +2,7 @@ Reference Selection Keywords for WAVELENGTHRANGE
 ------------------------------------------------
 CRDS selects appropriate WAVELENGTHRANGE references based on the following keywords.
 WAVELENGTHRANGE is not applicable for instruments not in the table.
+Non-standard keywords used for file selection are *required*.
 
 ========== ======================================
 Instrument Keywords                               

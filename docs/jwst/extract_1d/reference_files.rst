@@ -189,6 +189,8 @@ value.  The polynomial will then be evaluated at each pixel within the
 source extraction region for that column (row), and the fitted values will
 be subtracted (pixel by pixel) from the source count rate.
 
+.. include:: ../includes/standard_keywords.rst
+
 Example EXTRACT1D Reference
 ---------------------------
 The following JSON was taken as an example from reference

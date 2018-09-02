@@ -1,6 +1,8 @@
 Reference Files
 ===============
 
+.. include:: ../includes/standard_keywords.rst
+
 WAVECORR Reference
 ------------------
 
