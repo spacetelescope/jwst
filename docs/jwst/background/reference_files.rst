@@ -13,7 +13,7 @@ WFSS Background reference file
 The WFSS background reference file contains a "master" image of the
 dispersed background produced by a particular filter+grism combination.
 
-.. include:: selection_criteria.rst
+.. include:: wfssbkg_selection.rst
  
 .. include:: ../includes/standard_keywords.rst
 
@@ -60,9 +60,22 @@ wavelengths in the exposure. It is used, together with a source catalog,
 to create a mask giving the locations of source spectra in the target image
 and hence where the background regions are.
 
-CRDS Selection Criteria
-+++++++++++++++++++++++
-Wavelengthrange reference files are selected by:
+.. include:: wavelengthrange_selection.rst
 
-  INSTRUME, EXP_TYPE, PUPIL (NIRCam only), and MODULE (NIRCam only)
+Standard Keywords
++++++++++++++++++
+**NOTE:** WAVELENGTHRANGE also requires the standard keywords shown above.
+
+
+Type Specific Keywords for WAVELENGTHRANGE
+++++++++++++++++++++++++++++++++++++++++++
+
+The following additional keywords are required for the WAVELENGTHRANGE
+reference type:
+
+=========  ========================
+Keyword    Model Name
+=========  ========================
+EXP_TYPE   meta.exposure.type
+=========  ========================
 
