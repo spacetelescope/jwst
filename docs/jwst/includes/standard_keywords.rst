@@ -1,7 +1,9 @@
 Standard Keywords
 +++++++++++++++++
 The following table lists the keywords that are *required* to be present in all
-reference files:
+reference files.  The first column gives the FITS keyword names (although these
+reference files are ASDF).  The second column gives the model name, which is
+needed when creating and populating a new reference file.
 
 =========  ========================
 Keyword    Model Name

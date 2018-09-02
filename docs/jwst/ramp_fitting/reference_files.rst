@@ -1,21 +1,16 @@
 Reference Files
 ===============
-The Ramp Fitting step uses two reference files: GAIN and READNOISE. The gain values
-are used to temporarily convert the pixel values from units of DN to
-electrons, and convert the results of ramp fitting back to DN.
-The read noise values are used as part of the noise estimate for
-each pixel. Both are necessary for proper computation of noise estimates.
+The Ramp Fitting step uses two reference files: GAIN and READNOISE. The gain
+values are used to temporarily convert the pixel values from units of DN to
+electrons, and convert the results of ramp fitting back to DN.  The read noise
+values are used as part of the noise estimate for each pixel. Both are
+necessary for proper computation of noise estimates.
 
-GAIN Reference Files
-^^^^^^^^^^^^^^^^^^^^
-The GAIN reference file is selected based on instrument, detector and,
-where necessary, subarray.
+.. include:: ../includes/standard_keywords.rst
 
-READNOISE Reference Files
-^^^^^^^^^^^^^^^^^^^^^^^^^
-The READNOISE reference file is selected by instrument, detector and, where
-necessary, subarray.
+.. include:: gain_selection.rst
 
+.. include:: readnoise_selection.rst
 
 Reference File Formats
 ----------------------
