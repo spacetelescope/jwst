@@ -10,6 +10,10 @@ The dark current step uses a DARK reference file.
              
 DARK Reference File Format
 --------------------------
+
+NIR Detectors
++++++++++++++
+
 Dark reference files are FITS files with 3 IMAGE extensions and 1 BINTABLE
 extension. The FITS primary data array is assumed to be empty. The 
 characteristics of the three image extensions for darks used with the
@@ -25,6 +29,9 @@ DQ_DEF   2      TFIELDS = 4              N/A
 =======  =====  =======================  =========
 
 .. include:: ../includes/dq_def.rst
+
+MIRI Detectors
+++++++++++++++
 
 The dark reference files for the MIRI detectors depend on the integration number,  
 because the first integration of MIRI exposures contains effects from the detector
@@ -43,10 +50,4 @@ DQ       4      ncols x nrows x 1 x nints        integer
 DQ_DEF   2      TFIELDS = 4                      N/A
 =======  =====  ===============================  =========
 
-.. The BINTABLE extension in dark reference files contains the bit assignments used
-.. in the DQ array. It uses ``EXTNAME=DQ_DEF`` and contains 4 columns:
-
-.. * BIT: integer value giving the bit number, starting at zero
-.. * VALUE: the equivalent base-10 integer value of BIT
-.. * NAME: the string mnemonic name of the data quality condition
-.. * DESCRIPTION: a string description of the condition
+.. include:: ../includes/dq_def.rst
