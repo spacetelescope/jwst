@@ -2,7 +2,7 @@ Reference File
 ==============
 
 There are two types of reference files used by the cube_build step. The first type holds the default
-cube parameters used in setting up the output IFU Cube. The reftype for this reference file is *cubepars*
+cube parameters used in setting up the output IFU Cube. The reftype for this reference file is *cubepar*
 and there is a  reference file of this type for MIRI data and one for NIRSPEC data. These files contain tables 
 for each band of the spatial and spectral size and the size of the region of interest to use to construct the
 IFU cube.  If more than one band is used to build the IFU cube,
