@@ -8,7 +8,7 @@ WAVECORR Reference
 
 To apply the Nirspec wavelength zero-point correction, this step uses the
 WAVECORR reference file. The zero-point correction is applied to observations
-with EXP_TYPE of "NRS_FIXEDSLT", "NRS_BRIGHTOBJ" or "NRS_MSASPEC". This is an
+with EXP_TYPE of "NRS_FIXEDSLIT", "NRS_BRIGHTOBJ" or "NRS_MSASPEC". This is an
 optional correction (on by default). It can be turned off by specifying
 ``apply_wavecorr=False`` when running the step.
 
