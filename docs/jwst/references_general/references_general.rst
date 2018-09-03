@@ -353,6 +353,8 @@ Currently all ``P_`` keywords correspond to basic keywords found only in the pri
 The traslation from these ``P_`` pattern keywords are completely generic in CRDS and can apply to any reference file type so they should be assumed to 
 be reserved whether a particular type uses them or not. Defining non-pattern keywords with the prefix ``P_`` is strongly discouraged.
 
+.. _`Data Quality Flags`:
+
 Data Quality Flags
 ==================
 
