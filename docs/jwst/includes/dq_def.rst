@@ -9,3 +9,7 @@ VALUE        integer  The equivalent base-10 value of BIT
 NAME         string   The mnemonic name of the data quality condition
 DESCRIPTION  string   A description of the data quality condition
 ===========  =======  ===============================================
+
+**NOTE:** For more information on standard bit definitions see: :ref:`Data Quality Flags`.
+
+
