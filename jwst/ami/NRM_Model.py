@@ -179,7 +179,7 @@ class NRM_Model():
                 return None
             else:
                 self.fov_sim = self.fov
-                # log.debug('Using predefined FOV size: %s', self.fov)
+                log.debug('Using predefined FOV size: %s', self.fov)
         else:
             self.fov_sim = fov
 
@@ -219,7 +219,7 @@ class NRM_Model():
 
         # The polychromatic case:
         if hasattr(self.bandpass, '__iter__'):
-            # log.debug("------Simulating Polychromatic------")
+            log.debug("------Simulating Polychromatic------")
             self.psf_over = np.zeros((self.over*self.fov_sim,
                                       self.over*self.fov_sim))
             for w,l in self.bandpass: # w: weight, l: lambda (wavelength)
@@ -227,13 +227,13 @@ class NRM_Model():
                             self.fov_sim, self.over, self.rotctrs, self.d, l,
                             self.phi, centering = centering, shape=self.holeshape)
 
-            # log.debug("BINNING UP TO PIXEL SCALE")
+            log.debug("BINNING UP TO PIXEL SCALE")
 
         # The monochromatic case if bandpass input is a single wavelength
         else:
             self.lam = bandpass
 
-            # log.debug("Calculating Oversampled PSF")
+            log.debug("Calculating Oversampled PSF")
             self.psf_over = analyticnrm2.PSF(self.pixel_sim, self.fov_sim,
                             self.over, self.rotctrs, self.d, self.lam,
                             self.phi, centering=centering,
@@ -321,9 +321,9 @@ class NRM_Model():
                      self.modelctrs, self.lam, self.over, self.modelpix,
                      self.fov, self.d, shape=self.holeshape, centering=centering)
 
-            # log.debug("centering: {0}".format(centering))
-            # log.debug("what primary beam has the model created?"+
-            #                     " {0}".format(self.model_beam))
+            log.debug("centering: {0}".format(centering))
+            log.debug("what primary beam has the model created?"+
+                                " {0}".format(self.model_beam))
 
             # this routine multiplies the envelope by each fringe "image"
             self.model_over = leastsqnrm.multiplyenv(self.model_beam, self.fringes)
@@ -354,8 +354,8 @@ class NRM_Model():
                     self.modelctrs, l, self.over, self.modelpix, self.fov,
                     self.d, shape=self.holeshape, centering=centering)
 
-                # log.debug("centering: {0}".format(centering))
-                # log.debug("what primary beam has the model created? {0}".format(pb))
+                log.debug("centering: {0}".format(centering))
+                log.debug("what primary beam has the model created? {0}".format(pb))
 
                 self.model_beam += pb
                 self.fringes += ff
@@ -686,7 +686,7 @@ def run_data_correlate(data, model):
 
     """
     sci = data
-    # log.debug('shape sci: %s', np.shape(sci))
+    log.debug('shape sci: %s', np.shape(sci))
 
     cor = utils.rcrosscorrelate(sci, model)
 

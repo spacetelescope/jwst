@@ -81,8 +81,8 @@ def makeA(nh):
     matrixA: 2D float array
          nh columns, nh(nh-1)/2 rows (eg 21 for nh=7)
     """
-    # log.debug('-------')
-    # log.debug(' makeA:')
+    log.debug('-------')
+    log.debug(' makeA:')
 
     ncols = (nh * (nh - 1)) // 2
     nrows = nh
@@ -237,19 +237,19 @@ def crosscorrelate(a=None, b=None):
     B = fft.fft2(b) / fac
     c = fft.ifft2(A * B.conj()) * fac * fac
 
-    # log.debug('----------------')
-    # log.debug(' crosscorrelate:')
-    # log.debug(' a: %s:', a)
-    # log.debug(' A: %s:', A)
-    # log.debug(' b: %s:', b)
-    # log.debug(' B: %s:', B)
-    # log.debug(' c: %s:', c)
-    # log.debug(' a.sum(): %s:', a.sum())
-    # log.debug(' b.sum(): %s:', b.sum())
-    # log.debug(' c.sum(): %s:', c.sum())
-    # log.debug(' a.sum()*b.sum(): %s:', a.sum() * b.sum())
-    # log.debug(' c.sum().real: %s:', c.sum().real)
-    # log.debug(' a.sum()*b.sum()/c.sum().real: %s:', a.sum()*b.sum()/c.sum().real)
+    log.debug('----------------')
+    log.debug(' crosscorrelate:')
+    log.debug(' a: %s:', a)
+    log.debug(' A: %s:', A)
+    log.debug(' b: %s:', b)
+    log.debug(' B: %s:', B)
+    log.debug(' c: %s:', c)
+    log.debug(' a.sum(): %s:', a.sum())
+    log.debug(' b.sum(): %s:', b.sum())
+    log.debug(' c.sum(): %s:', c.sum())
+    log.debug(' a.sum()*b.sum(): %s:', a.sum() * b.sum())
+    log.debug(' c.sum().real: %s:', c.sum().real)
+    log.debug(' a.sum()*b.sum()/c.sum().real: %s:', a.sum()*b.sum()/c.sum().real)
 
     return fft.fftshift(c)
 

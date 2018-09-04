@@ -335,13 +335,13 @@ def model_array(ctrs, lam, oversample, pitch, fov, d,
     else:
         off = centering
 
-    # log.debug('------------------')
-    # log.debug('Model Parameters:')
-    # log.debug('------------------')
-    # log.debug('pitch:%s fov:%s oversampling:%s ', pitch, fov, oversample)
-    # log.debug('centers:%s', ctrs)
-    # log.debug('wavelength:%s  centering:%s off:%s ', lam, centering, off)
-    # log.debug('shape:%s d:%s ', shape, d)
+    log.debug('------------------')
+    log.debug('Model Parameters:')
+    log.debug('------------------')
+    log.debug('pitch:%s fov:%s oversampling:%s ', pitch, fov, oversample)
+    log.debug('centers:%s', ctrs)
+    log.debug('wavelength:%s  centering:%s off:%s ', lam, centering, off)
+    log.debug('shape:%s d:%s ', shape, d)
 
     # primary beam parameters:
     primarybeam.shape = shape
@@ -516,8 +516,8 @@ def matrix_operations(img, model, flux=None):
 
     flatmodel = np.zeros((len(flatimg), np.shape(model)[2]))
 
-    # log.debug('Matrix_opers - flat model dimensions: %s', np.shape(flatmodel))
-    # log.debug('Matrix_opers - flat image dimensions: %s', np.shape(flatimg))
+    log.debug('Matrix_opers - flat model dimensions: %s', np.shape(flatmodel))
+    log.debug('Matrix_opers - flat image dimensions: %s', np.shape(flatimg))
 
     for fringe in range(np.shape(model)[2]):
         flatmodel[:, fringe] = np.delete(flatmodel_nan[:, fringe], nanlist)
@@ -538,15 +538,15 @@ def matrix_operations(img, model, flux=None):
     res = np.insert(res, naninsert, np.nan)
     res = res.reshape(img.shape[0], img.shape[1])
 
-    # log.debug('------------------')
-    # log.debug('Matrix Operations:')
-    # log.debug('------------------')
-    # log.debug('model flux:%s data flux:%s flat model dimensions:%s ', flux,
-    #           flatimg.sum(), np.shape(flatmodel))
-    # log.debug('flat image dimensions:%s model transpose dimensions:%s ',
-    #           np.shape(flatimg), np.shape(flatmodeltransp))
-    # log.debug('transpose * image data dimensions:%s flatimg * transpose'+ 
-    #           'dimensions:%s ', np.shape(data_vector), np.shape(inverse))
+    log.debug('------------------')
+    log.debug('Matrix Operations:')
+    log.debug('------------------')
+    log.debug('model flux:%s data flux:%s flat model dimensions:%s ', flux,
+              flatimg.sum(), np.shape(flatmodel))
+    log.debug('flat image dimensions:%s model transpose dimensions:%s ',
+              np.shape(flatimg), np.shape(flatmodeltransp))
+    log.debug('transpose * image data dimensions:%s flatimg * transpose'+ 
+              'dimensions:%s ', np.shape(data_vector), np.shape(inverse))
 
     return x, res, cond
 
@@ -578,7 +578,7 @@ def multiplyenv(env, fringeterms):
     for i, val in enumerate(fringeterms):
         full[:, :, i] = env * fringeterms[i]
 
-    # log.debug('Total number of fringe terms: %s', len(fringeterms) - 1)
+    log.debug('Total number of fringe terms: %s', len(fringeterms) - 1)
 
     return full
 
@@ -616,8 +616,8 @@ def tan2visibilities(coeffs):
         delta[q] = (np.arctan2(coeffs[2 * q + 2], coeffs[2 * q + 1]))
         amp[q] = np.sqrt(coeffs[2 * q + 2]**2 + coeffs[2 * q + 1]**2)
 
-    # log.debug('tan2visibilities: shape coeffs:%s shape delta:%s ',
-    #           np.shape(coeffs), np.shape(delta))
+    log.debug('tan2visibilities: shape coeffs:%s shape delta:%s ',
+              np.shape(coeffs), np.shape(delta))
 
     return amp, delta
 

@@ -145,8 +145,8 @@ def ASF(pixel, fov, oversample, ctrs, d, lam, phi, centering=(0.5, 0.5)):
     else:
         off_x, off_y = centering
 
-    # log.debug('ASF centering %s:', centering)
-    # log.debug('ASF offsets %s %s:', off_x, off_y)
+    log.debug('ASF centering %s:', centering)
+    log.debug('ASF offsets %s %s:', off_x, off_y)
 
     # Jinc parameters
     Jinc.lam = lam
@@ -226,8 +226,8 @@ def ASFfringe(pixel, fov, oversample, ctrs, d, lam, phi, centering=(0.5, 0.5)):
     else:
         off_x, off_y = centering
 
-    # log.debug('ASFfringe centering %s:', centering)
-    # log.debug('ASFfringe offsets %s %s:', off_x, off_y)
+    log.debug('ASFfringe centering %s:', centering)
+    log.debug('ASFfringe offsets %s %s:', off_x, off_y)
 
     # Jinc parameters
     Jinc.lam = lam
@@ -290,7 +290,7 @@ def ASFhex(pixel, fov, oversample, ctrs, d, lam, phi, centering='PIXELCENTERED')
         Amplitude Spread Function (a.k.a. image plane complex amplitude) for
         a hexagonal aperture
     """
-    # log.debug('centering: %s', centering)
+    log.debug('centering: %s', centering)
 
     if centering == 'PIXELCENTERED':
         off_x = 0.5
@@ -305,8 +305,8 @@ def ASFhex(pixel, fov, oversample, ctrs, d, lam, phi, centering='PIXELCENTERED')
     offx = (float(oversample * fov) / 2.0) - off_x # in pixels
     offy = (float(oversample * fov) / 2.0) - off_y
 
-    # log.debug('ASF offsets for x and y in pixels: %s %s', offx, offy)
-    # log.debug('ASF centering:%s', centering)
+    log.debug('ASF offsets for x and y in pixels: %s %s', offx, offy)
+    log.debug('ASF centering:%s', centering)
 
     pitch = pixel / float(oversample)
 
@@ -379,12 +379,12 @@ def PSF(pixel, fov, oversample, ctrs, d, lam, phi, centering='PIXELCENTERED',
     else:
         log.critical('Pupil shape %s not supported', shape)
 
-    # log.debug('-----------------')
-    # log.debug(' PSF Parameters: ')
-    # log.debug('-----------------')
-    # log.debug('pixel: %s, fov: %s, oversampling: %s', pixel, fov, oversample)
-    # log.debug('d: %s, wavelength: %s, pistons: %s, shape: %s', d, lam, phi,
-    #           shape)
+    log.debug('-----------------')
+    log.debug(' PSF Parameters: ')
+    log.debug('-----------------')
+    log.debug('pixel: %s, fov: %s, oversampling: %s', pixel, fov, oversample)
+    log.debug('d: %s, wavelength: %s, pistons: %s, shape: %s', d, lam, phi,
+              shape)
 
     PSF_ = asf * asf.conj()
 
