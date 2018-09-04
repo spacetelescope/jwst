@@ -1,0 +1,37 @@
+{
+    "asn_type": "image3",
+    "asn_rule": "candidate_Asn_Image",
+    "version_id": null,
+    "code_version": "0.10.1",
+    "degraded_status": "No known degraded exposures in association.",
+    "program": "87600",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '87600'})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'niriss'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'f380m'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['pupil'], 'value': 'clearp'})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': 'sub256'})\nConstraint_Target({'name': 'target', 'sources': ['targetid'], 'value': '1'})\nConstraint_Image({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'nis_image'})\nDMSAttrConstraint({'name': 'wfsvisit', 'sources': ['visitype'], 'value': 'prime_targeted_fixed'})\nConstraint_Obsnum({'name': 'obs_num', 'sources': ['obs_num'], 'value': None})\nDMSAttrConstraint({'name': 'acq_exp', 'sources': ['exp_type'], 'value': 'mir_tacq|nis_taconfirm|nis_tacq|nrc_taconfirm|nrc_tacq|nrs_confirm|nrs_taconfirm|nrs_tacq|nrs_taslit'})\nDMSAttrConstraint({'name': 'acq_obsnum', 'sources': ['obs_num'], 'value': <function AsnMixin_Science.__init__.<locals>.<lambda> at 0xb20e649d8>})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o008\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
+    "asn_id": "o008",
+    "target": "t001",
+    "asn_pool": "jw87600_20180824T213416_pool",
+    "products": [
+        {
+            "name": "jw87600-o008_t001_niriss_f380m-clearp-sub256",
+            "members": [
+                {
+                    "expname": "jw87600008001_02101_00001_nis_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "('o008', 'observation')"
+                },
+                {
+                    "expname": "jw87600008001_02103_00001_nis_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "('o008', 'observation')"
+                },
+                {
+                    "expname": "jw87600008001_02102_00001_nis_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "('o008', 'observation')"
+                }
+            ]
+        }
+    ]
+}
