@@ -207,7 +207,7 @@ class Asn_Lv2NRSLAMP(
         """Post-check and pre-add initialization"""
 
         super(Asn_Lv2NRSLAMP, self)._init_hook(item)
-        self.data['asn_type'] = 'spec2-nrslamp'
+        self.data['asn_type'] = 'nrslamp-spec2'
 
 
 @RegistryMarker.rule
