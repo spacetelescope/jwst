@@ -16,6 +16,7 @@ assign_wcs
 - Added a wavelength correction for the effective velocity of JWST
   relative to the barycenter.                                  [#2359, #2406]
 
+- NRC_TSGRISM assigns source location to set pixel [#1235]
 associations
 ------------
 
@@ -83,6 +84,7 @@ extract_1d
 
 extract_2d
 ----------
+- NRC_TSGRISM implemented with set source location and extraction options [#1710, #1235]
 
 firstframe
 ----------
