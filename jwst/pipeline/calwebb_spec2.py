@@ -273,7 +273,7 @@ class Spec2Pipeline(Pipeline):
         # Produce a resampled product, either via resample_spec for
         # "regular" spectra or cube_build for IFU data. No resampled
         # product is produced for time-series modes.
-        if exp_type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'MIR_LRS-FIXEDSLIT']:
+        if exp_type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'MIR_LRS-FIXEDSLIT'] and not tso_mode:
 
             # Call the resample_spec step for slit data
             self.resample_spec.suffix = 's2d'
