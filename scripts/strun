@@ -1,6 +1,18 @@
 #!/usr/bin/env python
 
+"""
+Run Steps from the command line
+
+Exit Status
+-----------
+    0:  Step completed satisfactorally
+    1:  General error occurred
+    64: No science exists
+"""
+
 import sys
+
+from jwst.assign_wcs.util import NoDataOnDetectorError
 import jwst.stpipe as stpipe
 from jwst.stpipe import Step
 
@@ -12,6 +24,10 @@ if __name__ == '__main__':
 
     try:
         step = Step.from_cmdline(sys.argv[1:])
+    except NoDataOnDetectorError:
+        import traceback
+        traceback.print_exc()
+        sys.exit(64)
     except Exception as e:
         import traceback
         traceback.print_exc()

@@ -3,6 +3,7 @@ import os.path as op
 import traceback
 
 from .. import datamodels
+from ..assign_wcs.util import NoDataOnDetectorError
 from ..lib.pipe_utils import is_tso
 from ..stpipe import Pipeline
 
@@ -88,6 +89,11 @@ class Spec2Pipeline(Pipeline):
                     asn['asn_pool'],
                     asn.filename
                 )
+            except NoDataOnDetectorError as exception:
+                # This error merits a special return
+                # status if run from the command line.
+                # Bump it up now.
+                raise exception
             except Exception as exception:
                 traceback.print_exc()
                 has_exceptions = True
@@ -154,7 +160,11 @@ class Spec2Pipeline(Pipeline):
                 if input.meta.source_catalog.filename is None:
                     raise IndexError("No source catalog specified in association or datamodel")
 
-        input = self.assign_wcs(input)
+        assign_wcs_exception = None
+        try:
+            input = self.assign_wcs(input)
+        except Exception as exception:
+            assign_wcs_exception = exception
 
         # Do background processing, if necessary
         if exp_type in WFSS_TYPES or len(members_by_type['background']) > 0:
@@ -178,7 +188,8 @@ class Spec2Pipeline(Pipeline):
 
         # If assign_wcs was skipped, abort the rest of processing,
         # because so many downstream steps depend on the WCS
-        if input.meta.cal_step.assign_wcs != 'COMPLETE':
+        if assign_wcs_exception is not None or \
+           input.meta.cal_step.assign_wcs != 'COMPLETE':
             message = (
                 'Assign_wcs processing was skipped.'
                 '\nAborting remaining processing for this exposure.'
@@ -189,7 +200,10 @@ class Spec2Pipeline(Pipeline):
                 return
             else:
                 self.log.error(message)
-                raise RuntimeError('Cannot determine WCS.')
+                if assign_wcs_exception is not None:
+                    raise assign_wcs_exception
+                else:
+                    raise RuntimeError('Cannot determine WCS.')
 
         # Apply NIRSpec MSA imprint subtraction
         # Technically there should be just one.

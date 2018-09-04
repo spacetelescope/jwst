@@ -61,6 +61,7 @@ SUFFIXES_TO_DISCARD = ['functionwrapper', 'systemcall']
 # Calculated suffixes.
 # This is produces by the `find_suffixes` function.
 _calculated_suffixes = set([
+    'spec2nrslamp',
     'linearpipeline',
     'spec3pipeline',
     'outlierdetectionstackstep',

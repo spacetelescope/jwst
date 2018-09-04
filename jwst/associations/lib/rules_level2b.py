@@ -13,6 +13,7 @@ __all__ = [
     'Asn_Lv2Image',
     'Asn_Lv2ImageNonScience',
     'Asn_Lv2ImageSpecial',
+    'Asn_Lv2NRSLAMP',
     'Asn_Lv2NRSMSA'
     'Asn_Lv2Spec',
     'Asn_Lv2SpecSpecial',
@@ -174,6 +175,42 @@ class Asn_Lv2SpecSpecial(
 
 
 @RegistryMarker.rule
+class Asn_Lv2NRSLAMP(
+        AsnMixin_Lv2Singleton,
+        AsnMixin_Lv2Special,
+        DMSLevel2bBase
+):
+    """Level2b NIRSpec Lamp calibrations
+
+    NRS_LAMP exposures require specific level 2 processing.
+    """
+
+    def __init__(self, *args, **kwargs):
+
+        self.constraints = Constraint([
+            Constraint_Base(),
+            DMSAttrConstraint(
+                name='instrument',
+                sources=['instrume'],
+                value='nirspec'
+            ),
+            DMSAttrConstraint(
+                name='opt_elem',
+                sources=['filter'],
+                value='opaque'
+            ),
+        ])
+
+        super(Asn_Lv2NRSLAMP, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        super(Asn_Lv2NRSLAMP, self)._init_hook(item)
+        self.data['asn_type'] = 'nrslamp-spec2'
+
+
+@RegistryMarker.rule
 class Asn_Lv2WFSS_NIS(
         AsnMixin_Lv2Singleton,
         AsnMixin_Lv2Spectral,
@@ -189,6 +226,7 @@ class Asn_Lv2WFSS_NIS(
         self.constraints = Constraint([
             Constraint_Base(),
             Constraint_Mode(),
+            Constraint_Target(),
             DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
@@ -289,7 +327,10 @@ class Asn_Lv2NRSMSA(
             `None` if a complete association cannot be produced.
 
         """
-        return self.make_nod_asns()
+        if self.is_valid:
+            return self.make_nod_asns()
+        else:
+            return None
 
 
 
