@@ -87,7 +87,7 @@ class Ami3Pipeline(Pipeline):
             # Save the LG analysis results to a file
             result.meta.asn.pool_name = asn['asn_pool']
             result.meta.asn.table_name = op.basename(asn.filename)
-            self.save_model(result, output_file=input_file, suffix='ami')
+            self.save_model(result, output_file=input_file, suffix='ami', asn_id=asn_id)
 
             # Save the result file name for input to ami_average
             if member['exptype'].upper() == 'PSF':
