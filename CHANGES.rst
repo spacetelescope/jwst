@@ -163,6 +163,8 @@ pipeline
 
 - Implement specific exit status for "no science on detector" [#2336]
 
+- Enabled `extract_2d` for NRC_TSGRISM [#2460]
+
 ramp_fitting
 ------------
 
