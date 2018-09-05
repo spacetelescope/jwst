@@ -163,6 +163,8 @@ pipeline
 
 - Implement specific exit status for "no science on detector" [#2336]
 
+- Turn off `resample` in `Spec2Pipeline` for multi-integration cube data [#2456]
+
 ramp_fitting
 ------------
 
