@@ -1,4 +1,4 @@
-#! /usr/bin/env python 
+#! /usr/bin/env python
 from ..stpipe import Step
 from .. import datamodels
 from . import cube_build
@@ -25,7 +25,7 @@ class CubeBuildStep (Step):
          scale1 = float(default=0.0) # cube sample size to use for axis 1, arc seconds
          scale2 = float(default=0.0) # cube sample size to use for axis 2, arc seconds
          scalew = float(default=0.0) # cube sample size to use for axis 3, microns
-         weighting = option('msm','miripsf','area',default = 'msm') # Type of weighting function,
+         weighting = option('msm','miripsf','area',default = 'msm') # Type of weighting function
          coord_system = option('world','alpha-beta',default='world') # Output Coordinate system. Options: world or alpha-beta
          rois = float(default=0.0) # region of interest spatial size, arc seconds
          roiw = float(default=0.0) # region of interest wavelength size, microns

@@ -7,14 +7,16 @@ from . import coord
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 #________________________________________________________________________________
-def match_det2cube_msm(naxis1,naxis2,naxis3,
-                       cdelt1,cdelt2,cdelt3,
-                       rois,roiw,
+def match_det2cube_msm(naxis1, naxis2, naxis3,
+                       cdelt1, cdelt2, cdelt3,
+                       rois, roiw,
                        msm_weight_power,
-                       xcenters,ycenters,zcoord,
-                       spaxel,flux,
-                       coord1,coord2,wave):
-                       
+                       xcenters, ycenters, zcoord,
+                       spaxel_flux,
+                       spaxel_weight,
+                       spaxel_iflux,
+                       flux,
+                       coord1, coord2, wave):
 
     """
     Short Summary
@@ -22,7 +24,7 @@ def match_det2cube_msm(naxis1,naxis2,naxis3,
     Match the Point Cloud members to the spaxel centers that fall in the ROI.
     For each spaxel the coord1,coord1 and wave point cloud members are weighting
     according to modified shepard method of inverse weighting based on the distance between
-    the point cloud member and the spaxel center. 
+    the point cloud member and the spaxel center.
 
     Parameters
     ----------
@@ -30,132 +32,93 @@ def match_det2cube_msm(naxis1,naxis2,naxis3,
     cdelt1,cdelt2,cdelt3: ifucube spaxel size in the 3 dimensions
     rois, roiw: region of influence size in spatial and spectral dimension
     weight_power: msm weighting parameter
-    xcenter,ycenter: spaxel center locations  in 1st and 2nd dimensions. These values are 2 X 2 grid
-    spaxel centers. 
+    xcenter,ycenter: spaxel center locations in 1st and 2nd dimensions. These values are 2 X 2 grid
+    spaxel centers.
     zcoord: spaxel center locations in 3rd dimensions
-    spaxel: class holding ifucube spaxel values
-
+    spaxel_flux: contains the weighted summed detector fluxes that fall withi the roi
+    spaxel_weight:  contains the summed weights assocated with the detector fluxes
+    spaxel_iflux: number of detector pixels falling with roi of spaxel center
+    flux: array of detector fluxes associated with each position in  coorr1, coord2, wave
+    coord1, coord2, wave
     Returns
     -------
-    spaxel class matched to detector pixels with flux and weighting updated for each
-    match
-
-
+    spaxel_flux, spaxel_weight, and spaxel_ifux updated with the information from the
+    detector pixels that fall within the roi if the spaxel center.
     """
 
     nplane = naxis1 * naxis2
     lower_limit = 0.01
 
-#    iprint = 0
 # now loop over the pixel values for this region and find the spaxels that fall
 # withing the region of interest.
     nn = coord1.size
-
 #    print('looping over n points mapping to cloud',nn)
 #________________________________________________________________________________
     for ipt in range(0, nn - 1):
 #________________________________________________________________________________
-        # Cube.Xcenters, ycenters is a flattened 1-D array of the 2 X 2 xy plane
+        # xcenters, ycenters is a flattened 1-D array of the 2 X 2 xy plane
         # cube coordinates.
         # find the spaxels that fall withing ROI of point cloud defined  by
         # coord1,coord2,wave
-#        if(ipt > 2): sys.exit('STOP')
-#        print('For point ',coord1[ipt],coord2[ipt],wave[ipt],ipt)
 
-#        if(ipt == 0):
-#            print('size of Xcenters',self.Xcenters.size)
         xdistance = (xcenters - coord1[ipt])
         ydistance = (ycenters - coord2[ipt])
         radius = np.sqrt(xdistance * xdistance + ydistance * ydistance)
         indexr = np.where(radius <= rois)
         indexz = np.where(abs(zcoord - wave[ipt]) <= roiw)
 
-#        print('indexz',indexz)
-#        print('indexr',indexr)
-        zlam = zcoord[indexz]        # z Cube values falling in wavelength roi
-        xi_cube = xcenters[indexr]   # x Cube values within radius
-        eta_cube = ycenters[indexr]  # y cube values with the radius
+        d1 = np.array(coord1[ipt] - xcenters[indexr]) / cdelt1
+        d2 = np.array(coord2[ipt] - ycenters[indexr]) / cdelt2
+        d3 = np.array(wave[ipt] - zcoord[indexz]) / cdelt3
+        dxy = (d1 * d1) + (d2 * d2)
 
-#        print('found xi_cube',xi_cube)
-#        print('found eta_cube',eta_cube)
+        # shape of dxy is #indexr or number of overlaps in spatial plane
+        # shape of d3 is #indexz or number of overlaps in spectral plane
+        # shape of dxy_matrix & d3_matrix  (#indexr, #indexz)
+        # rows = number of overlaps in spatial plane
+        # cols = number of overlaps in spectral plane
+        dxy_matrix = np.tile(dxy[np.newaxis].T, [1, d3.shape[0]])
+        d3_matrix = np.tile(d3 * d3, [dxy_matrix.shape[0], 1])
 
-#________________________________________________________________________________
-# loop over the points in the ROI
-        for iz, zz in enumerate(indexz[0]):
-            istart = zz * nplane
-            for ir, rr in enumerate(indexr[0]):
-#                yy_cube = int(rr / self.naxis1)
-#                xx_cube = rr - yy_cube * self.naxis1
-#                print('xx yy cube',rr,self.naxis1,xx_cube,yy_cube)
-#________________________________________________________________________________
-                d1 = (xi_cube[ir] - coord1[ipt]) / cdelt1
-                d2 = (eta_cube[ir] - coord2[ipt]) / cdelt2
-                d3 = (zlam[iz] - wave[ipt]) / cdelt3
+        wdistance = dxy_matrix + d3_matrix
+        weight_distance = np.power(np.sqrt(wdistance), msm_weight_power)
+        weight_distance[weight_distance < lower_limit] = lower_limit
+        weight_distance = 1.0 / weight_distance
+        weight_distance = weight_distance.flatten('F')
+        weighted_flux = weight_distance * flux[ipt]
 
-                weight_distance = math.sqrt(d1 * d1 + d2 * d2 + d3 * d3)
-                weight_distance = math.pow(weight_distance, msm_weight_power)
-#________________________________________________________________________________
-# We have found the weight_distance based on instrument type
-                if weight_distance < lower_limit: weight_distance = lower_limit
-                weight_distance = 1.0 / weight_distance
+        icube_index = [iz * nplane + ir for iz in indexz[0] for ir in indexr[0]]
+        spaxel_flux[icube_index] = spaxel_flux[icube_index] + weighted_flux
+        spaxel_weight[icube_index] = spaxel_weight[icube_index] + weight_distance
+        spaxel_iflux[icube_index] = spaxel_iflux[icube_index] + 1
 
-
-            
-                cube_index = istart + rr
-
-                if(ipt < 10):
-                    print(ipt)
-                    print('weight',weight_distance)
-                    print('flux pt',flux[ipt])
-                    print('cube index',cube_index)
-                    print(istart,rr,zz)
-                    print(indexr[0])
-                    print(indexz[0])
-                spaxel[cube_index].flux = spaxel[cube_index].flux + weight_distance * flux[ipt]
-                spaxel[cube_index].flux_weight = spaxel[cube_index].flux_weight + weight_distance
-                spaxel[cube_index].iflux = spaxel[cube_index].iflux + 1
-#                if( self.debug_pixel == 1 and self.xdebug == xx_cube and
-#                      self.ydebug == yy_cube and self.zdebug == zz):
-
-#                    log.debug('For spaxel %d %d %d, %d detector x,y,flux %d %d %f %d %f '
-#                                  %(self.xdebug+1,self.ydebug+1,
-#                                    self.zdebug+1,ipt,xpix[ipt]+1,ypix[ipt]+1,
-#                                    flux[ipt],file_slice_no,weight_distance))
-#                    self.spaxel_debug.write('For spaxel %d %d %d %d, detector x,y,flux %d %d %f %d %f %f %f %f %f %f '
-#                                  %(self.xdebug+1,self.ydebug+1,
-#                                    self.zdebug+1,ipt,xpix[ipt]+1,ypix[ipt]+1,
-#                                    flux[ipt],file_slice_no,weight_distance,wave[ipt],zlam[iz],
-#                                    d1*self.Cdelt1,d2*self.Cdelt2,d3*self.Cdelt3) +' \n')
-#        iprint = iprint + 1
-#        if iprint == 10000:
-#            log.debug('Finding ROI for point cloud # %d %d' % (ipt , nn))
-#            iprint = 0
 #_______________________________________________________________________
-
-def match_det2cube_miripsf(alpha_resol,beta_resol,wave_resol,
+def match_det2cube_miripsf(alpha_resol, beta_resol, wave_resol,
                            worldtov23,
-                           v2ab_tranform,
-                           naxis1,naxis2,naxis3,
-                           cdelt1,cdelt2,cdelt3,
-                           crval1,crval2,
-                           rois,roiw,
+                           v2ab_transform,
+                           naxis1, naxis2, naxis3,
+                           cdelt1, cdelt2, cdelt3,
+                           crval1, crval2,
+                           rois, roiw,
                            weight_power,
-                           xcenters,ycenters,zcoord,
-                           spaxel,
-                           coord1,coord2,wave,alpha_det,beta_det):
+                           xcenters, ycenters, zcoord,
+                           spaxel_flux,
+                           spaxel_weight,
+                           spaxel_iflux,
+                           flux,
+                           coord1, coord2, wave, alpha_det, beta_det):
     """
     Short Summary
-
     -------------
     Map coordinates coord1,coord2, and wave of the point cloud to which spaxels they
     overlap with in the ifucube.
     For each spaxel the coord1,coord1 and wave point cloud members are weighting
-    according to the miri psf and lsf. 
+    according to the miri psf and lsf.
     The weighting function is based on the distance the point cloud member and spaxel
     center in the alph-beta coordinate system.
     The alpha and beta value of each point cloud member is passed to this routine
     The alpha and beta value of the spaxel center is determined from the passed
-    in transforms: worldtov23 and v2ab_transform 
+    in transforms: worldtov23 and v2ab_transform
 
     Parameters
     ----------
@@ -170,21 +133,23 @@ def match_det2cube_miripsf(alpha_resol,beta_resol,wave_resol,
     xcenter,ycenter: spaxel center locations in 1st and 2nd dimension. These values are 2 X2 grid
     of spaxel center locations.
     zcoord: spaxel center locations in 3rd dimension
-    spaxel: class holding ifucube spaxel values
+    spaxel_flux: contains the weighted summed detector fluxes that fall withi the roi
+    spaxel_weight:  contains the summed weights assocated with the detector fluxes
+    spaxel_iflux: number of detector pixels falling with roi of spaxel center
     coord1,coord2,wave pixel coordinates mapped to output frame
     alpha_det,beta_det alpha,beta values of pixel coordinates:
 
     Returns
     -------
-    spaxel class matched to detector pixels with flux and weighting updated for each
-    match
+    spaxel_flux, spaxel_weight, and spaxel_ifux updated with the information from the
+    detector pixels that fall within the roi if the spaxel center.
 
     """
 
     nplane = naxis1 * naxis2
     lower_limit = 0.01
 
-#    iprint = 0
+
 # now loop over the pixel values for this region and find the spaxels that fall
 # withing the region of interest.
     nn = coord1.size
@@ -197,34 +162,21 @@ def match_det2cube_miripsf(alpha_resol,beta_resol,wave_resol,
         # cube coordinates.
         # find the spaxels that fall withing ROI of point cloud defined  by
         # coord1,coord2,wave
-#        if(ipt > 2): sys.exit('STOP')
-#        print('For point ',coord1[ipt],coord2[ipt],wave[ipt],ipt)
 
-#        if(ipt == 0):
-#            print('size of Xcenters',self.Xcenters.size)
         xdistance = (xcenters - coord1[ipt])
         ydistance = (ycenters - coord2[ipt])
         radius = np.sqrt(xdistance * xdistance + ydistance * ydistance)
         indexr = np.where(radius <= rois)
         indexz = np.where(abs(zcoord - wave[ipt]) <= roiw)
 
-#        print('indexz',indexz)
-#        print('indexr',indexr)
         zlam = zcoord[indexz]        # z Cube values falling in wavelength roi
         xi_cube = xcenters[indexr]   # x Cube values within radius
         eta_cube = ycenters[indexr]  # y cube values with the radius
-
-#        print('found xi_cube',xi_cube)
-#        print('found eta_cube',eta_cube)
-
 #________________________________________________________________________________
 # loop over the points in the ROI
         for iz, zz in enumerate(indexz[0]):
             istart = zz * nplane
             for ir, rr in enumerate(indexr[0]):
-#                yy_cube = int(rr / self.naxis1)
-#                xx_cube = rr - yy_cube * self.naxis1
-#                print('xx yy cube',rr,self.naxis1,xx_cube,yy_cube)
 #________________________________________________________________________________
 #________________________________________________________________________________
 # if weight is miripsf -distances determined in alpha-beta coordinate system
@@ -234,7 +186,7 @@ def match_det2cube_miripsf(alpha_resol,beta_resol,wave_resol,
                                                    alpha_resol,
                                                    beta_resol)
 
-                
+
                 ra_spaxel, dec_spaxel = coord.std2radec(crval1,
                                                         crval2,
                                                         xi_cube[ir],
@@ -243,7 +195,7 @@ def match_det2cube_miripsf(alpha_resol,beta_resol,wave_resol,
                 v2_spaxel, v3_spaxel, zl = worldtov23(ra_spaxel,
                                                       dec_spaxel,
                                                       zlam[iz])
-                
+
                 alpha_spaxel, beta_spaxel, wave_spaxel = v2ab_transform(v2_spaxel,
                                                                         v3_spaxel,
                                                                         zlam[iz])
@@ -265,27 +217,9 @@ def match_det2cube_miripsf(alpha_resol,beta_resol,wave_resol,
                 weight_distance = 1.0 / weight_distance
 
                 cube_index = istart + rr
-                spaxel[cube_index].flux = spaxel[cube_index].flux + weight_distance * flux[ipt]
-                spaxel[cube_index].flux_weight = spaxel[cube_index].flux_weight + weight_distance
-                spaxel[cube_index].iflux = spaxel[cube_index].iflux + 1
-
-
-#                if( self.debug_pixel == 1 and self.xdebug == xx_cube and
-#                      self.ydebug == yy_cube and self.zdebug == zz):
-
-#                    log.debug('For spaxel %d %d %d, %d detector x,y,flux %d %d %f %d %f '
-#                                  %(self.xdebug+1,self.ydebug+1,
-#                                    self.zdebug+1,ipt,xpix[ipt]+1,ypix[ipt]+1,
-#                                    flux[ipt],file_slice_no,weight_distance))
-#                    self.spaxel_debug.write('For spaxel %d %d %d %d, detector x,y,flux %d %d %f %d %f %f %f %f %f %f '
-#                                  %(self.xdebug+1,self.ydebug+1,
-#                                    self.zdebug+1,ipt,xpix[ipt]+1,ypix[ipt]+1,
-#                                    flux[ipt],file_slice_no,weight_distance,wave[ipt],zlam[iz],
-#                                    d1*self.Cdelt1,d2*self.Cdelt2,d3*self.Cdelt3) +' \n')
-#        iprint = iprint + 1
-#        if iprint == 10000:
-#            log.debug('Finding ROI for point cloud # %d %d' % (ipt , nn))
-#            iprint = 0
+                spaxel_flux[cube_index] = spaxel_flux[cube_index] + weight_distance * flux[ipt]
+                spaxel_weight[cube_index] = spaxel_weight[cube_index] + weight_distance
+                spaxel_iflux[cube_index] = spaxel_iflux[cube_index] + 1
 #_______________________________________________________________________
 def FindNormalizationWeights(wavelength,
                               wave_resol,

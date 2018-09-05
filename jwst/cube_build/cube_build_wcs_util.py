@@ -47,7 +47,7 @@ def find_footprint_MIRI(input, this_channel, instrument_info, coord_system):
         detector2alpha_beta = input.meta.wcs.get_transform('detector', 'alpha_beta')
         coord1, coord2, lam = detector2alpha_beta(x, y)
     elif coord_system == 'world':
-        coord1,coord2,lam = input.meta.wcs(x,y) # for entire detector find  ra,dec,lambda
+        coord1, coord2, lam = input.meta.wcs(x, y) # for entire detector find  ra,dec,lambda
     else:
         # error the coordinate system is not defined
         raise NoCoordSystem(" The output cube coordinate system is not definded")

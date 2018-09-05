@@ -4,7 +4,6 @@ import time
 import numpy as np
 import logging
 import math
-from scipy import spatial
 from ..model_blender import blendmeta
 from .. import datamodels
 from ..assign_wcs import pointing
@@ -15,9 +14,8 @@ from gwcs import wcstools
 from ..assign_wcs import nirspec
 from ..datamodels import dqflags
 from . import cube_build_wcs_util
-from . import spaxel
 from . import cube_overlap
-from . import cube_cloud_new
+#from . import cube_cloud_quick
 from . import cube_cloud
 from . import coord
 
@@ -42,7 +40,7 @@ class IFUCubeData():
                  master_table,
                  **pars_cube):
 
-        self.new_code  = 0
+        self.new_code = 0
 
         self.input_filenames = input_filenames
         self.pipeline = pipeline
@@ -104,7 +102,6 @@ class IFUCubeData():
         self.ycoord = None
         self.zcoord = None
 
-        self.spaxel = []        # list of spaxel classes
 #********************************************************************************
     def check_ifucube(self):
 
@@ -447,7 +444,7 @@ class IFUCubeData():
 
         # astropy circmean assumes angles are in radians, we have angles in degrees
         ra_ave = circmean(ravalues * u.deg).value
-        log.info('Ra average %f12.8', ra_ave)
+#        log.info('Ra average %f12.8', ra_ave)
 
         self.Crval1 = ra_ave
         self.Crval2 = dec_ave
@@ -496,36 +493,33 @@ class IFUCubeData():
 
         ygrid = np.zeros(self.naxis2 * self.naxis1)
         xgrid = np.zeros(self.naxis2 * self.naxis1)
-
-        ycube,xcube = np.mgrid[0:self.naxis2,0:self.naxis1]
+#        ycube,xcube = np.mgrid[0:self.naxis2,0:self.naxis1]
 
         k = 0
+#        xstart = self.xcoord[0]
+#        for i in range(self.naxis1):
+#            ystart = self.ycoord[0]
+#            for j in range(self.naxis2):
+#                xgrid[k] = xstart
+#                ygrid[k] = ystart
+#                ystart = ystart + self.Cdelt2
+#                k = k + 1
+#            xstart = xstart + self.Cdelt1
 
-        xstart = self.xcoord[0]
+        ystart = self.ycoord[0]
         for i in range(self.naxis2):
-            ystart = self.ycoord[0]
+            xstart = self.xcoord[0]
             for j in range(self.naxis1):
                 xgrid[k] = xstart
                 ygrid[k] = ystart
-
-                ystart = ystart + self.Cdelt2
+                xstart = xstart + self.Cdelt1
                 k = k + 1
-            xstart = xstart + self.Cdelt1
+            ystart = ystart + self.Cdelt2
+
 
         self.xcenters = xgrid
         self.ycenters = ygrid
 
-# set up a KDtree to use to search ifu spatial plane
-        points = list(zip(self.ycenters, self.xcenters))
-        self.tree = spatial.KDTree(points)
-        print(self.ycenters.shape)
-        print(self.xcenters.shape)
-        print(len(points))
-        print(self.tree.data.shape)
-
-#    print('ycenters',ycenters[0:100])
-#    print('xcenters',xcenters[0:100])
-#    print(points)
 #_______________________________________________________________________
         #set up the lambda (z) coordinate of the cube
         self.lambda_min = lambda_min
@@ -545,6 +539,7 @@ class IFUCubeData():
         for i in range(self.naxis3):
             self.zcoord[i] = zstart
             zstart = zstart + self.Cdelt3
+
 #_______________________________________________________________________
     def set_geometryAB(self, footprint):
         """
@@ -656,21 +651,38 @@ class IFUCubeData():
         """
         Short Summary
         -------------
-        Loop over every band contained in the IFU cube and read in the data associated with the band
-        Map the detector data to the cube output coordinate system
-
-        Parameter
-        ----------
-        spaxel - a list of spaxel members holding the detector flux information
+        1. Loop over every band contained in the IFU cube and read in the data
+        associated with the band
+        2. map_detector_to_output_frame: Maps the detector data to the cube output coordinate system
+        3. For each mapped detector pixel the ifu cube spaxel located in the region of
+        interest. There are three different routines to do this step each of them use
+        a slighly different weighting function in how to combine the detector fluxs that
+        fall within a region of influence from the spaxel center
+        a. cube_cloud:match_det2_cube_msm: This routine uses the modified
+        shepard method to determing the weighting function, which weights the detector
+        fluxes based on the distance between the detector center and spaxel center.
+        b. cube_cloud:match_det2_cube_miripsf the weighting function based  width of the
+        psf and lsf.
+        c. cube_overlap.match_det2cube is only for single exposure, single band cubes and
+        the ifucube in created in the detector plane. The weighting function is based on
+        the overlap of between the detector pixel and spaxel. This method is simplified
+        to determine the overlap in the alpha-wavelength plane.
+        4. find_spaxel_flux: find the final flux assoicated with each spaxel
+        5. setup_ifucube
+        6. output_ifucube
 
         Returns
         -------
-        each spaxel element with the mapped detector values associated with it
+        Returns an ifu cube
 
         """
 
         self.output_name = self.define_cubename()
-        self.spaxel = self.create_spaxel()
+        total_num = self.naxis1 * self.naxis2 * self.naxis3
+        self.spaxel_flux = np.zeros(total_num)
+        self.spaxel_weight = np.zeros(total_num)
+        self.spaxel_iflux = np.zeros(total_num)
+
         subtract_background = True
 
         # now need to loop over every file that covers this channel/subchannel (MIRI)
@@ -688,62 +700,71 @@ class IFUCubeData():
             for k in range(nfiles):
                 ifile = self.master_table.FileMap[self.instrument][this_par1][this_par2][k]
                 self.this_cube_filenames.append(ifile)
-                    
                 log.debug("Working on Band defined by:%s %s ", this_par1, this_par2)
-
 #--------------------------------------------------------------------------------
                 if self.interpolation == 'pointcloud':
-
-                    pixelresult = self.map_detector_to_outputframe(this_par1, 
-                                                                   this_par2, 
+                    pixelresult = self.map_detector_to_outputframe(this_par1,
+                                                                   this_par2,
                                                                    subtract_background,
                                                                    ifile)
-                
-                    coord1,coord2,wave,flux,alpha_det,beta_det = pixelresult
 
+                    coord1, coord2, wave, flux, alpha_det, beta_det = pixelresult
                     if self.weighting == 'msm':
                         t0 = time.time()
-                        if self.new_code: 
-                            print('calling new cube_cloud')
-                            cube_cloud_new.match_det2cube_msm(self.naxis1,self.naxis2,self.naxis3,
-                                                              self.Cdelt1,self.Cdelt2,self.Cdelt3,
-                                                              self.rois,self.roiw,self.weight_power,
-                                                              self.zcoord,
-                                                              self.tree,
-                                                              self.spaxel,flux,
-                                                              coord1,coord2,wave)
-                        else:
-                            print('calling old cube_cloud')
-                            cube_cloud.match_det2cube_msm(self.naxis1,self.naxis2,self.naxis3,
-                                                          self.Cdelt1,self.Cdelt2,self.Cdelt3,
-                                                          self.rois,self.roiw,self.weight_power,
-                                                          self.xcenters,self.ycenters, self.zcoord,
-                                                          self.spaxel,flux,
-                                                          coord1,coord2,wave)
+#                        if self.new_code:
+#                            print('calling new cube_cloud')
+#                            cube_cloud_quick.match_det2cube_msm(self.naxis1,self.naxis2,self.naxis3,
+#                                                              self.Cdelt1,self.Cdelt2,self.Cdelt3,
+#                                                              self.rois,self.roiw,self.weight_power,
+#                                                              self.xcoord,self.ycoord,self.zcoord,
+#                                                              self.spaxel_flux,
+#                                                              self.spaxel_weight,
+#                                                              self.spaxel_iflux,
+#                                                              flux,
+#                                                              coord1,coord2,wave)
+#                        else:
+#                            print('calling old cube_cloud')
+                        cube_cloud.match_det2cube_msm(self.naxis1, self.naxis2, self.naxis3,
+                                                      self.Cdelt1, self.Cdelt2, self.Cdelt3,
+                                                      self.rois, self.roiw, self.weight_power,
+                                                      self.xcenters, self.ycenters, self.zcoord,
+                                                      self.spaxel_flux,
+                                                      self.spaxel_weight,
+                                                      self.spaxel_iflux,
+                                                      flux,
+                                                      coord1, coord2, wave)
 
 
                         t1 = time.time()
                         log.info("Time match point cloud to ifucube = %.1f.s" % (t1 - t0,))
-
+#________________________________________________________________________________
                     elif self.weighting == 'miripsf':
-                        wave_resol = self.instrument_info.Get_RP_ave_Wave(this_par1, this_par2)
-                        alpha_resol = self.instrument_info.Get_psf_alpha_parameters()
-                        beta_resol = self.instrument_info.Get_psf_beta_parameters()
-                        
-                        worldtov23 = input_model.meta.wcs.get_transform("world", "v2v3")
-                        v2ab_transform = input_model.meta.wcs.get_transform('v2v3',
+                        with datamodels.IFUImageModel(ifile) as input_model:
+                            wave_resol = self.instrument_info.Get_RP_ave_Wave(this_par1,
+                                                                              this_par2)
+                            alpha_resol = self.instrument_info.Get_psf_alpha_parameters()
+                            beta_resol = self.instrument_info.Get_psf_beta_parameters()
+                            worldtov23 = input_model.meta.wcs.get_transform("world", "v2v3")
+                            v2ab_transform = input_model.meta.wcs.get_transform('v2v3',
                                                                 'alpha_beta')
 
-                        cube_cloud_new.match_det2cube_miripsf(alpha_resol,beta_resol,wave_resol,
+                            cube_cloud.match_det2cube_miripsf(alpha_resol,
+                                                              beta_resol,
+                                                              wave_resol,
                                                               worldtov23,
-                                                              v2ab_tranform,
-                                                              self.naxis1,self.naxis2,self.naxis3,
-                                                              self.Cdelt1,self.Cdelt2,self.Cdelt3,
-                                                              self.Crval1,self.Crval2,
-                                                              self.rois,self.roiw,self.weight_power,
-                                                              self.xcenters,self.ycenters,self.zcoord,
-                                                              self.spaxel,
-                                                              coord1,coord2,wave,alpha_det,beta_det)
+                                                              v2ab_transform,
+                                                              self.naxis1, self.naxis2, self.naxis3,
+                                                              self.Cdelt1, self.Cdelt2, self.Cdelt3,
+                                                              self.Crval1, self.Crval2,
+                                                              self.rois, self.roiw,
+                                                              self.weight_power,
+                                                              self.xcenters, self.ycenters, self.zcoord,
+                                                              self.spaxel_flux,
+                                                              self.spaxel_weight,
+                                                              self.spaxel_iflux,
+                                                              flux,
+                                                              coord1, coord2, wave,
+                                                              alpha_det, beta_det)
 #--------------------------------------------------------------------------------
 #2D area method - only works for single files and coord_system = 'alpha-beta'
 #--------------------------------------------------------------------------------
@@ -757,24 +778,23 @@ class IFUCubeData():
                         t0 = time.time()
                         for i in regions:
                             log.info('Working on Slice # %d', i)
-                    
                             y, x = (det2ab_transform.label_mapper.mapper == i).nonzero()
 
 # getting pixel corner - ytop = y + 1 (routine fails for y = 1024)
                             index = np.where(y < 1023)
                             y = y[index]
                             x = x[index]
-
-
                             cube_overlap.match_det2cube(x, y, i,
                                                         start_region,
                                                         input_model,
                                                         det2ab_transform,
-                                                        spaxel,
+                                                        self.spaxe_flux,
+                                                        self.spaxel_weight,
+                                                        self.spaxel_iflux,
                                                         self.xcoord, self.zcoord,
-                                                        self.Crval1, self.Crval3, 
-                                                        self.Cdelt1, self.Cdelt3, 
-                                                        self.naxis1, self.naxis3)
+                                                        self.Crval1, self.Crval3,
+                                                        self.Cdelt1, self.Cdelt3,
+                                                        self.naxis1, self.naxis2)
                         t1 = time.time()
 
                         log.info("Time Map All slices on Detector to Cube = %.1f.s" % (t1 - t0,))
@@ -783,7 +803,7 @@ class IFUCubeData():
 # now determine Cube Spaxel flux
 
         t0 = time.time()
-        self.find_spaxel_flux(self.spaxel)
+        self.find_spaxel_flux()
 
         t1 = time.time()
         log.info("Time to find Cube Flux= %.1f.s" % (t1 - t0,))
@@ -791,7 +811,7 @@ class IFUCubeData():
         ifucube_model = self.setup_ifucube(0)
 #_______________________________________________________________________
 # shove Flux and iflux in the  final IFU cube
-        self.update_ifucube(ifucube_model, self.spaxel)
+        self.update_ifucube(ifucube_model)
         return ifucube_model
 
 #********************************************************************************
@@ -828,64 +848,43 @@ class IFUCubeData():
             log.info("Working on next Single IFU Cube  = %i" % (j + 1))
             t0 = time.time()
 # for each new data model create a new spaxel
-            spaxel = []
-            spaxel = self.create_spaxel()
+            total_num = self.naxis1 * self.naxis2 * self.naxis3
+            self.spaxel_flux = np.zeros(total_num)
+            self.spaxel_weight = np.zeros(total_num)
+            self.spaxel_iflux = np.zeros(total_num)
+
             subtract_background = False
 
-            pixelresult = self.map_detector_to_outputframe(this_par1, this_par2, 
+            pixelresult = self.map_detector_to_outputframe(this_par1, this_par2,
                                                            subtract_background,
                                                            self.input_models[j])
-                
-            coord1,coord2,wave,flux,alpha_det,beta_det = pixelresult
 
-            cube_cloud_new.match_det2cube_msm(self.naxis1,self.naxis2,self.naxis3,
-                                              self.Cdelt1,self.Cdelt2,self.Cdelt3,
-                                              self.rois,self.roiw,self.weight_power,
-                                              self.xcenters,self.ycenters,self.zcoord,
-                                              spaxel,flux,
-                                              coord1,coord2,wave)
+            coord1, coord2, wave, flux, alpha_det, beta_det = pixelresult
+
+            cube_cloud.match_det2cube_msm(self.naxis1, self.naxis2, self.naxis3,
+                                              self.Cdelt1, self.Cdelt2, self.Cdelt3,
+                                              self.rois, self.roiw, self.weight_power,
+                                              self.xcenters, self.ycenters, self.zcoord,
+                                              self.spaxel_flux,
+                                              self.spaxel_weight,
+                                              self.spaxel_iflux,
+                                              flux,
+                                              coord1, coord2, wave)
 #_______________________________________________________________________
 # shove Flux and iflux in the  final ifucube
-
-            self.find_spaxel_flux(spaxel)
+            self.find_spaxel_flux()
 # now determine Cube Spaxel flux
 
             ifucube_model = self.setup_ifucube(j)
-            self.update_ifucube(ifucube_model, spaxel)
+            self.update_ifucube(ifucube_model)
             t1 = time.time()
             log.info("Time Create Single ifucube  = %.1f.s" % (t1 - t0,))
 #_______________________________________________________________________
             single_ifucube_container.append(ifucube_model)
-            del spaxel[:]
+
         return single_ifucube_container
 #********************************************************************************
-    def create_spaxel(self):
-        """
-        Short Summary
-        -------------
-        # now you have the size of cube - create an instance for each spaxel
-        # create an empty spaxel list - this will become a list of Spaxel classses
 
-        Parameter
-        ----------
-
-        Returns
-        -------
-        list of classes contained in spaxel
-        """
-#________________________________________________________________________________
-        total_num = self.naxis1 * self.naxis2 * self.naxis3
-
-        if(self.interpolation == 'pointcloud'):
-            for t in range(total_num):
-                self.spaxel.append(spaxel.Spaxel())
-        else:
-            for t in range(total_num):
-                self.spaxel.append(spaxel.SpaxelAB())
-
-        return self.spaxel
-
-#********************************************************************************
     def determine_roi_size(self):
         """
         Short Summary
@@ -943,7 +942,7 @@ class IFUCubeData():
         return roi
 
 #********************************************************************************
-    def map_detector_to_outputframe(self, this_par1, this_par2, 
+    def map_detector_to_outputframe(self, this_par1, this_par2,
                                     subtract_background,
                                     ifile):
         from ..mrs_imatch.mrs_imatch_step import apply_background_2d
@@ -954,11 +953,10 @@ class IFUCubeData():
         Loop over a file and map the detector pixels to the output frame of the ifcube
 
         Return the coordinates of the pixel in the output frame as well as the associatied
-        flux for those pixels. 
+        flux for those pixels.
 
         Parameter
         ----------
-        
 
         Returns
         -------
@@ -999,20 +997,26 @@ class IFUCubeData():
                 y = np.reshape(y, y.size)
                 x = np.reshape(x, x.size)
                 if self.coord_system == 'world':
-                    ra, dec, wave = input_model.meta.wcs(x, y) 
+                    ra, dec, wave = input_model.meta.wcs(x, y)
                     valid1 = ~np.isnan(ra)
                     ra = ra[valid1]
                     dec = dec[valid1]
                     wave = wave[valid1]
                     x = x[valid1]
                     y = y[valid1]
+                    if self.weighting == 'miripsf':
+                        det2ab_transform = input_model.meta.wcs.get_transform('detector',
+                                                                          'alpha_beta')
+                        alpha, beta, lam = det2ab_transform(x, y)
+                        alpha = alpha[valid1]
+                        beta = beta[valid1]
                 elif self.coord_system == 'alpha-beta':
                     det2ab_transform = input_model.meta.wcs.get_transform('detector',
                                                                           'alpha_beta')
-                    coord1, coord2, wave = det2ab_transform(x, y)
+                    alpha, beta, wave = det2ab_transform(x, y)
                     valid1 = ~np.isnan(coord1)
-                    coord1 = coord1[valid1]
-                    coord2 = coord2[valid1]
+                    alpha = alpha[valid1]
+                    beta = beta[valid1]
                     wave = wave[valid1]
                     x = x[valid1]
                     y = y[valid1]
@@ -1057,13 +1061,13 @@ class IFUCubeData():
                     flag_det[yind, xind] = 1
                     # done looping  - pull out valid values
                 valid_data = np.where(flag_det == 1)
-                y,x = valid_data
+                y, x = valid_data
                 ra = ra_det[valid_data]
                 dec = dec_det[valid_data]
-                wave = lam_det[valid_data]  
+                wave = lam_det[valid_data]
 # ________________________________________________________________________________
 # The following is for both MIRI and NIRSPEC
-# grab the flux and DQ values for these pixles 
+# grab the flux and DQ values for these pixles
             flux_all = input_model.data[y, x]
             dq_all = input_model.dq[y, x]
             valid2 = np.isfinite(flux_all)
@@ -1087,18 +1091,14 @@ class IFUCubeData():
                 if self.weighting == 'miripsf':
                     alpha_det = alpha[good_data]
                     beta_det = beta[good_data]
-                
             elif self.coord_system == 'alpha-beta':
                 coord1 = alpha[good_data]
                 coord2 = beta[good_data]
 
-        print('Coord 1',coord1[0:50])
-        print('Coord 2',coord2[0:50])
-        print('Coord 3',wave[0:50])
-        return coord1,coord2,wave,flux,alpha_det,beta_det
+        return coord1, coord2, wave, flux, alpha_det, beta_det
 
 #********************************************************************************
-    def find_spaxel_flux(self, spaxel):
+    def find_spaxel_flux(self):
 #********************************************************************************
         """
         Short Summary
@@ -1116,36 +1116,15 @@ class IFUCubeData():
         or
         if(interpolation = pointcloud) flux determined for each spaxel based on interpolation of PixelCloud
         """
-
+# currently these are the same but in the future there could be a difference in
+# how the spaxel flux is determined according to self.interpolation.
 
         if self.interpolation == 'area':
-            nspaxel = len(spaxel)
-
-            for i in range(nspaxel):
-                if(spaxel[i].iflux > 0):
-                    spaxel[i].flux = spaxel[i].flux / spaxel[i].flux_weight
-
+            good = self.spaxel_iflux > 0
+            self.spaxel_flux[good] = self.spaxel_flux[good] / self.spaxel_weight[good]
         elif self.interpolation == 'pointcloud':
-            icube = 0
-            t0 = time.time()
-            for iz, z in enumerate(self.zcoord):
-                for iy, y in enumerate(self.ycoord):
-                    for ix, x in enumerate(self.xcoord):
-
-                        if(spaxel[icube].iflux > 0):
-                            spaxel[icube].flux = spaxel[icube].flux / spaxel[icube].flux_weight
-
-#                            if(self.debug_pixel == 1 and self.xdebug == ix and
-#                               self.ydebug == iy and self.zdebug == iz ):
-#                                log.debug('For spaxel %d %d %d final flux %f '
-#                                          %(self.xdebug + 1,self.ydebug + 1,
-#                                            self.zdebug + 1,spaxel[icube].flux))
-#                                self.spaxel_debug.write('For spaxel %d %d %d, final flux %f '
-#                                                        %(self.xdebug + 1,self.ydebug + 1,
-#                                                          self.zdebug + 1,spaxel[icube].flux) +' \n')
-                        icube = icube + 1
-            t1 = time.time()
-            log.info("Time to interpolate at spaxel values = %.1f.s" % (t1 - t0,))
+            good = self.spaxel_iflux > 0
+            self.spaxel_flux[good] = self.spaxel_flux[good] / self.spaxel_weight[good]
 
 #********************************************************************************
     def setup_ifucube(self, j):
@@ -1160,7 +1139,6 @@ class IFUCubeData():
         Cube: holds meta data of cube
         spaxel: list of spaxels in cube
 
-
         Returns
         -------
         return IFUCube model
@@ -1172,7 +1150,6 @@ class IFUCubeData():
 
         data = np.zeros((naxis3, naxis2, naxis1))
         idata = np.zeros((naxis3, naxis2, naxis1))
-
         dq_cube = np.zeros((naxis3, naxis2, naxis1))
         err_cube = np.zeros((naxis3, naxis2, naxis1))
 
@@ -1307,7 +1284,7 @@ class IFUCubeData():
         return ifucube_model
 
 #********************************************************************************
-    def update_ifucube(self, ifucube_model, spaxel):
+    def update_ifucube(self, ifucube_model):
 #********************************************************************************
         """
         Short Summary
@@ -1319,29 +1296,18 @@ class IFUCubeData():
         Cube: holds meta data of cube
         spaxel: list of spaxels in cube
 
-
         Returns
         -------
         fills in IFUdata arrays with spaxel
 
         """
-    #pull out data into array
-        temp_flux = np.reshape(np.array([s.flux for s in spaxel]),
-                          [self.naxis3, self.naxis2, self.naxis1])
-        temp_wmap = np.reshape(np.array([s.iflux for s in spaxel]),
-                          [self.naxis3, self.naxis2, self.naxis1])
-
+    #pull out data into array and assign to ifucube data model
+        temp_flux = self.spaxel_flux.reshape((self.naxis3, self.naxis2, self.naxis1))
+        temp_wmap = self.spaxel_iflux.reshape((self.naxis3, self.naxis2, self.naxis1))
 
         ifucube_model.data = temp_flux
         ifucube_model.weightmap = temp_wmap
         ifucube_model.meta.cal_step.cube_build = 'COMPLETE'
-#    icube = 0
-#    for z in range(Cube.naxis3):
-#        for y in range(Cube.naxis2):
-#            for x in range(Cube.naxis1):
-#                IFUCube.data[z, y, x] = spaxel[icube].flux
-#                IFUCube.weightmap[z, y, x] = len(spaxel[icube].ipointcloud)
-#                icube = icube + 1
 
 #********************************************************************************
     def blend_output_metadata(self, IFUCube):
