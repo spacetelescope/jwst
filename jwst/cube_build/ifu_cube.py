@@ -788,7 +788,7 @@ class IFUCubeData():
                                                         start_region,
                                                         input_model,
                                                         det2ab_transform,
-                                                        self.spaxe_flux,
+                                                        self.spaxel_flux,
                                                         self.spaxel_weight,
                                                         self.spaxel_iflux,
                                                         self.xcoord, self.zcoord,
@@ -1008,8 +1008,7 @@ class IFUCubeData():
                         det2ab_transform = input_model.meta.wcs.get_transform('detector',
                                                                           'alpha_beta')
                         alpha, beta, lam = det2ab_transform(x, y)
-                        alpha = alpha[valid1]
-                        beta = beta[valid1]
+                        
                 elif self.coord_system == 'alpha-beta':
                     det2ab_transform = input_model.meta.wcs.get_transform('detector',
                                                                           'alpha_beta')

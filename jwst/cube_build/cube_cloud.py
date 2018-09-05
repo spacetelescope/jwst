@@ -274,6 +274,7 @@ def FindNormalizationWeights(wavelength,
     a_ave = wave_resol[1]
     b_ave = wave_resol[2]
     c_ave = wave_resol[3]
+    print('wavelength,wavecenter',wavelength,wavecenter)
     wave_diff = wavelength - wavecenter
     resolution = a_ave + b_ave * wave_diff + c_ave * wave_diff * wave_diff
     lambda_weight = wavelength / resolution
