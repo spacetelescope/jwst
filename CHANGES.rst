@@ -17,6 +17,7 @@ assign_wcs
   relative to the barycenter.                                  [#2359, #2406]
 
 - NRC_TSGRISM assigns source location to set pixel [#1235]
+
 associations
 ------------
 
@@ -25,6 +26,7 @@ associations
 - Remove MIR_LRS-SLITLESS and NIS_SOSS from the permanent TSO list. [#2330]
 - Implement new Level2a rule `Asn_Lv2NRSLAMP`. [#2177]
 - Allow "N/A" as a valid, but False, value in association pools. [#2334]
+- Implement new association types tso_image2 and tso_spec2. [#2431]
 
 background
 ----------
