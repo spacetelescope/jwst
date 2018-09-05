@@ -200,6 +200,8 @@ srctype
 stpipe
 ------
 
+- Bug fix: Allow not being able to find a default input file name [#2461]
+
 straylight
 ----------
 
