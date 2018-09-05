@@ -94,14 +94,14 @@ def makeA(nh):
             if h1 >= nh:
                 break
             else:
-                # log.debug(' row: %s, h1: %s, h2: %s', row, h1, h2)
+                log.debug(' row: %s, h1: %s, h2: %s', row, h1, h2)
 
                 matrixA[row, h2] = -1
                 matrixA[row, h1] = +1
                 row += 1
 
-    # log.debug('matrixA:')
-    # log.debug(' %s', matrixA)
+    log.debug('matrixA:')
+    log.debug(' %s', matrixA)
 
     return matrixA
 
