@@ -4,6 +4,7 @@ from os import path
 
 from .helpers import (
     abspath,
+    mk_tmp_dirs,
     require_bigdata,
     runslow,
 )
