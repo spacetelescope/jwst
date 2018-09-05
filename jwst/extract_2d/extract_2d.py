@@ -12,7 +12,8 @@ log.setLevel(logging.DEBUG)
 
 
 def extract2d(input_model, slit_name=None, apply_wavecorr=False,
-              reference_files={}, grism_objects=None, extract_height=None):
+              reference_files={}, grism_objects=None, extract_height=None,
+              extract_orders=None):
     """
     The main extract_2d function
 
@@ -59,7 +60,7 @@ def extract2d(input_model, slit_name=None, apply_wavecorr=False,
             output_model = extract_tso_object(input_model,
                                               reference_files=reference_files,
                                               extract_height=extract_height,
-                                              extract_orders=None)
+                                              extract_orders=extract_orders)
         else:
             output_model = extract_grism_objects(input_model,
                                                  grism_objects=grism_objects,

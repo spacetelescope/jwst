@@ -86,6 +86,7 @@ extract_1d
 extract_2d
 ----------
 - NRC_TSGRISM implemented with set source location and extraction options [#1710, #1235]
+- Fixed step calling error for unreferenced attribute [#2463]
 
 firstframe
 ----------
