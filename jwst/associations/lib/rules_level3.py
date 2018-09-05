@@ -44,6 +44,10 @@ class Asn_Image(AsnMixin_Science):
                 value='((?!wfsc).)*',
                 required=False
             ),
+            Constraint(
+                [Constraint_TSO()],
+                reduce=Constraint.notany
+            )
         ])
 
         # Now check and continue initialization.
