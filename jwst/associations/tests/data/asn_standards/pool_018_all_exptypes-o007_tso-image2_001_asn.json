@@ -1,6 +1,6 @@
 {
-    "asn_type": "image2",
-    "asn_rule": "candidate_Asn_Lv2Image",
+    "asn_type": "tso-image2",
+    "asn_rule": "candidate_Asn_Lv2ImageTSO",
     "version_id": null,
     "code_version": "0.11.0",
     "degraded_status": "No known degraded exposures in association.",

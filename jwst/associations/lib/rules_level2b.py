@@ -47,9 +47,7 @@ class Asn_Lv2Image(
             Constraint_Mode(),
             Constraint_Image_Science(),
             Constraint(
-                [
-                    Constraint_TSO()
-                ],
+                [Constraint_TSO()],
                 reduce=Constraint.notany
             )
         ])
@@ -177,6 +175,10 @@ class Asn_Lv2Spec(
             Constraint_Mode(),
             Constraint_Spectral_Science(
                 exclude_exp_types=['nrs_msaspec', 'nrs_fixedslit']
+            ),
+            Constraint(
+                [Constraint_TSO()],
+                reduce=Constraint.notany
             )
         ])
 
