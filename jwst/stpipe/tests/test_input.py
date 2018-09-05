@@ -21,7 +21,7 @@ def test_default_input_with_container(mk_tmp_dirs):
     step = StepWithModel()
     step.run(container)
 
-    assert step._input_filename == model.meta.filename
+    assert step._input_filename is None
 
 
 def test_default_input_with_full_model():
