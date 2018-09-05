@@ -214,6 +214,36 @@ class Asn_Lv2SpecSpecial(
 
 
 @RegistryMarker.rule
+class Asn_Lv2SpecTSO(
+        AsnMixin_Lv2Singleton,
+        AsnMixin_Lv2Spectral,
+        DMSLevel2bBase
+):
+    """Level2b Time Series Spectra"""
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup constraints
+        self.constraints = Constraint([
+            Constraint_Base(),
+            Constraint_Mode(),
+            Constraint_Spectral_Science(
+                exclude_exp_types=['nrs_msaspec', 'nrs_fixedslit']
+            ),
+            Constraint_TSO(),
+        ])
+
+        # Now check and continue initialization.
+        super(Asn_Lv2SpecTSO, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        super(Asn_Lv2SpecTSO, self)._init_hook(item)
+        self.data['asn_type'] = 'tso-spec2'
+
+
+@RegistryMarker.rule
 class Asn_Lv2NRSLAMP(
         AsnMixin_Lv2Singleton,
         AsnMixin_Lv2Special,

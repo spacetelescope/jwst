@@ -2,12 +2,12 @@
     "asn_type": "image2",
     "asn_rule": "candidate_Asn_Lv2ImageNonScience",
     "version_id": null,
-    "code_version": "0.9.12",
+    "code_version": "0.11.0",
     "degraded_status": "No known degraded exposures in association.",
     "program": "99009",
     "target": "1",
     "asn_pool": "pool_007_spec_miri",
-    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '99009'})\nDMSAttrConstraint({'name': 'is_tso', 'sources': ['tsovisit'], 'value': None})\nDMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '99009'})\nDMSAttrConstraint({'name': 'target', 'sources': ['targetid'], 'value': '1'})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'miri'})\nDMSAttrConstraint({'name': 'detector', 'sources': ['detector'], 'value': 'mirifulong'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['band'], 'value': 'medium'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['pupil', 'grating'], 'value': None})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': 'full'})\nDMSAttrConstraint({'name': 'channel', 'sources': ['channel'], 'value': '34'})\nConstraint_Image_Nonscience({'name': 'non_science', 'sources': ['exp_type'], 'value': 'mir_tacq'})\nSimpleConstraint({'name': 'single_science', 'value': False})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o008\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '99009'})\nDMSAttrConstraint({'name': 'is_tso', 'sources': ['tsovisit'], 'value': None})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'miri'})\nDMSAttrConstraint({'name': 'detector', 'sources': ['detector'], 'value': 'mirifulong'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['band'], 'value': 'medium'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['pupil', 'grating'], 'value': None})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': 'full'})\nDMSAttrConstraint({'name': 'channel', 'sources': ['channel'], 'value': '34'})\nDMSAttrConstraint({'name': 'slit', 'sources': ['fxd_slit'], 'value': None})\nDMSAttrConstraint({'name': 'non_science', 'sources': ['exp_type'], 'value': 'mir_tacq'})\nDMSAttrConstraint({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'nrs_msaspec'})\nSimpleConstraint({'name': 'single_science', 'value': False})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o008\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
     "asn_id": "o008",
     "products": [
         {
