@@ -196,8 +196,9 @@ def _lookup(asn, filename, ignore_suffix=False):
     found = []
     path = _path(filename)
     basename = op.basename(path)
+    (root, ext) = op.splitext(basename)
     if ignore_suffix:
-        search_key, separator = suffix.remove_suffix(basename)
+        search_key, separator = suffix.remove_suffix(root)
     else:
         search_key = basename
 
@@ -206,8 +207,11 @@ def _lookup(asn, filename, ignore_suffix=False):
             expname = member.get('expname')
             if expname:
                 if ignore_suffix:
-                    expname, separator = suffix.remove_suffix(expname)
-                if search_key == expname:
+                    (root, ext) = op.splitext(expname)
+                    match_key, separator = suffix.remove_suffix(root)
+                else:
+                    match_key = expname
+                if search_key == match_key:
                     found.append((i, j))
 
     return found
