@@ -38,6 +38,8 @@ import pytest
 import re
 import tempfile
 
+from ...tests.helpers import mk_tmp_dirs
+
 
 class ListHandler(logging.Handler):
     def __init__(self):
@@ -122,20 +124,6 @@ def t_path(partial_path):
     """Construction the full path for test files"""
     test_dir = os.path.dirname(__file__)
     return os.path.join(test_dir, partial_path)
-
-
-@pytest.fixture
-def mk_tmp_dirs():
-    tmp_current_path = tempfile.mkdtemp()
-    tmp_data_path = tempfile.mkdtemp()
-    tmp_config_path = tempfile.mkdtemp()
-
-    old_path = os.getcwd()
-    try:
-        os.chdir(tmp_current_path)
-        yield (tmp_current_path, tmp_data_path, tmp_config_path)
-    finally:
-        os.chdir(old_path)
 
 
 @contextlib.contextmanager
