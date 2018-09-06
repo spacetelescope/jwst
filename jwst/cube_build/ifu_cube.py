@@ -275,10 +275,13 @@ class IFUCubeData():
                 with datamodels.IFUImageModel(ifile) as input_model:
                     if self.instrument == 'NIRSPEC':
                         flag_data = 0
+#                        t0 = time.time()
                         ch_footprint = cube_build_wcs_util.find_footprint_NIRSPEC(
                             input_model,
                             flag_data,
                             self.coord_system)
+#                        t1 = time.time()
+#                        print('time to find footprint',t1-t0) 
                         amin, amax, bmin, bmax, lmin, lmax = ch_footprint
 #________________________________________________________________________________
                     if self.instrument == 'MIRI':
