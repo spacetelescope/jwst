@@ -1,4 +1,7 @@
-__version__ = '0.11.0'
+"""Setup default and environment """
+
+# Take version from the upstream package
+from .. import __version__
 
 
 # Utility

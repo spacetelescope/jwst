@@ -5,7 +5,10 @@ import logging
 from jwst.associations.registry import RegistryMarker
 from jwst.associations.lib.dms_base import (ACQ_EXP_TYPES, Constraint_TSO)
 from jwst.associations.lib.rules_level3_base import *
-from jwst.associations.lib.rules_level3_base import format_product
+from jwst.associations.lib.rules_level3_base import (
+    dms_product_name_sources,
+    format_product
+)
 
 __all__ = [
     'Asn_AMI',
@@ -274,37 +277,7 @@ class Asn_SpectralSource(AsnMixin_Spectrum):
 
     @property
     def dms_product_name(self):
-        """Define product name.
-
-        Returns
-        -------
-        product_name: str
-            The product name
-        """
-        instrument = self._get_instrument()
-
-        opt_elem = self._get_opt_element()
-
-        subarray = self._get_subarray()
-        if len(subarray):
-            subarray = '-' + subarray
-
-        product_name_format = (
-            'jw{program}-{acid}'
-            '_{source_id}'
-            '_{instrument}'
-            '_{opt_elem}{subarray}'
-        )
-        product_name = format_product(
-            product_name_format,
-            program=self.data['program'],
-            acid=self.acid.id,
-            instrument=instrument,
-            opt_elem=opt_elem,
-            subarray=subarray,
-        )
-
-        return product_name.lower()
+        return dms_product_name_sources(self)
 
 
 @RegistryMarker.rule
@@ -464,6 +437,10 @@ class Asn_WFSS_NIS(AsnMixin_Spectrum):
 
         # Check and continue initialization.
         super(Asn_WFSS_NIS, self).__init__(*args, **kwargs)
+
+    @property
+    def dms_product_name(self):
+        return dms_product_name_sources(self)
 
 
 @RegistryMarker.rule

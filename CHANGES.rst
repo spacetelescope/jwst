@@ -27,6 +27,7 @@ associations
 - Implement new Level2a rule `Asn_Lv2NRSLAMP`. [#2177]
 - Allow "N/A" as a valid, but False, value in association pools. [#2334]
 - Implement new association types tso_image2 and tso_spec2. [#2431]
+- Sync code version with jwst package version. [#2458]
 
 background
 ----------
@@ -87,6 +88,7 @@ extract_1d
 extract_2d
 ----------
 - NRC_TSGRISM implemented with set source location and extraction options [#1710, #1235]
+- Fixed step calling error for unreferenced attribute [#2463]
 
 firstframe
 ----------
@@ -165,6 +167,8 @@ pipeline
 
 - Implement specific exit status for "no science on detector" [#2336]
 
+- Enabled `extract_2d` for NRC_TSGRISM [#2460]
+
 ramp_fitting
 ------------
 
@@ -201,6 +205,8 @@ srctype
 
 stpipe
 ------
+
+- Bug fix: Allow not being able to find a default input file name [#2461]
 
 straylight
 ----------
