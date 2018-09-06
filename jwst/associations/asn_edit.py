@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import warnings
 import os.path as op
 
 from ..lib import suffix
@@ -8,6 +9,9 @@ from . import Association, AssociationNotValidError
 
 #-----------------------------------------------------------------------
 # Externally callable functions
+
+class AsnFileWarning(Warning):
+    pass
 
 def add(asn, filenames, exptype):
     """
@@ -37,16 +41,6 @@ def add(asn, filenames, exptype):
 
 
      """
-    not_found = []
-    for filename in filenames:
-        path = _path(filename)
-        if not op.exists(path):
-            not_found.append(filename)
-
-    if len(not_found) > 0:
-        filename = ','.join(not_found)
-        raise ValueError("Filenames not found: " + filename)
-
     for filename in filenames:
         path = _path(filename)
         expname = op.basename(path)
@@ -137,8 +131,8 @@ def remove(asn, filenames, ignore):
 
 
     if len(not_found) > 0:
-        filename = ','.join(not_found)
-        raise ValueError("Filenames not found: " + filename)
+        errmsg = "Filenames not found: " + ','.join(not_found)
+        warnings.warn(errmsg, AsnFileWarning)
 
     return asn
 
