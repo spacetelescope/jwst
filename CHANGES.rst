@@ -43,6 +43,11 @@ csv_tools
 
 cube_build
 ----------
+- Removed spaxel.py and replace class with set of arrays [#2472] 
+- reworked in mapping of the detector pixel to the sky spaxel so that consistent
+  code can be used for both MIRI and NIRSPEC data [#2472] 
+- Removed some loops in cube_cloud.py for finding which pixels fall in roi 
+  of spaxels [#2472] 
 
 cube_skymatch
 -------------
