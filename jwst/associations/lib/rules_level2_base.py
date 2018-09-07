@@ -159,11 +159,8 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         except Exception:
             return PRODUCT_NAME_DEFAULT
 
-        match = re.match(_REGEX_LEVEL2A, science_path)
-        if match:
-            return match.groupdict()['path']
-        else:
-            return science_path
+        no_suffix_path, separator = remove_suffix(science_path)
+        return no_suffix_path
 
     def make_member(self, item):
         """Create a member from the item
