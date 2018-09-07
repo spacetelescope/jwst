@@ -28,6 +28,7 @@ associations
 - Allow "N/A" as a valid, but False, value in association pools. [#2334]
 - Implement new association types tso_image2 and tso_spec2. [#2431]
 - Sync code version with jwst package version. [#2458]
+- Bug fix: Update Level2 product naming to use pipeline remove_suffix [#2481]
 
 background
 ----------
