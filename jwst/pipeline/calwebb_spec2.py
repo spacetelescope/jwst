@@ -270,7 +270,7 @@ class Spec2Pipeline(Pipeline):
         # "regular" spectra or cube_build for IFU data. No resampled
         # product is produced for time-series modes.
         if exp_type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'MIR_LRS-FIXEDSLIT'] \
-        and len(result.data.shape) == 2:
+        and not isinstance(result, datamodels.CubeModel):
 
             # Call the resample_spec step for 2D slit data
             self.resample_spec.suffix = 's2d'
