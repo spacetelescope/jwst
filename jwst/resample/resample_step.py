@@ -49,6 +49,12 @@ class ResampleStep(Step):
         else:
             input_models = input
 
+        # Check that input models are 2D images
+        if len(input_models[0].data.shape) != 2:
+            # resample can only handle 2D images, not 3D cubes, etc
+            raise RuntimeError("Input {} is not a 2D image.".format(input_models[0]))
+
+        # Get drizzle parameters reference file
         for reftype in self.reference_file_types:
             ref_filename = self.get_reference_file(input_models[0], reftype)
 

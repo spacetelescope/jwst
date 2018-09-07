@@ -170,6 +170,8 @@ pipeline
 
 - Enabled `extract_2d` for NRC_TSGRISM [#2460]
 
+- Turn off `resample` in `Spec2Pipeline` for multi-integration cube data [#2456]
+
 ramp_fitting
 ------------
 
