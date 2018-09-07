@@ -65,7 +65,6 @@ FLAG_TO_EXPTYPE = {
 # File templates
 _DMS_POOLNAME_REGEX = 'jw(\d{5})_(\d{3})_(\d{8}[Tt]\d{6})_pool'
 _LEVEL1B_REGEX = '(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
-_REGEX_LEVEL2A = '(?P<path>.+)(?P<type>_rate(ints)?)'
 
 # Key that uniquely identfies items.
 KEY = 'expname'

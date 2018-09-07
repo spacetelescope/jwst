@@ -7,7 +7,7 @@ import logging
 import os.path as path
 import re
 
-from .rules_level2_base import _REGEX_LEVEL2A
+from ...lib.suffix import remove_suffix
 
 logger = logging.getLogger(__name__)
 handler = logging.StreamHandler()
@@ -69,12 +69,11 @@ def lv2_v1_to_v2(asn_v1):
 
 
 def product_name(expname):
-    name = path.basename(expname.lower())
-    match = re.match(_REGEX_LEVEL2A, name)
-    if match:
-        return match.groupdict()['path']
-    else:
-        return name
+    name = path.splitext(
+        path.basename(expname.lower())
+    )[0]
+    name_nosuffix = remove_suffix(name)
+    return name_nosuffix
 
 
 # ################
