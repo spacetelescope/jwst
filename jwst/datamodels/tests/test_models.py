@@ -66,6 +66,7 @@ def test_broadcast2():
 
 def test_from_hdulist():
     from astropy.io import fits
+    warnings.simplefilter("ignore")
     with fits.open(FITS_FILE) as hdulist:
         with open_model(hdulist) as dm:
             dm.data
@@ -127,6 +128,7 @@ def test_open():
     with open_model((50, 50)) as dm:
         pass
 
+    warnings.simplefilter("ignore")
     with open_model(FITS_FILE) as dm:
         assert isinstance(dm, QuadModel)
 
@@ -375,6 +377,7 @@ def test_image_with_extra_keyword_to_multislit():
 
 @pytest.fixture(scope="module")
 def container():
+    warnings.simplefilter("ignore")
     with ModelContainer(ASN_FILE, persist=True) as c:
         for m in c:
             m.meta.observation.program_number = '0001'
@@ -444,6 +447,7 @@ def test_hasattr():
     assert not has_filename, "Check that filename does not exist"
 
 def test_info():
+    warnings.simplefilter("ignore")
     with open_model(FITS_FILE) as model:
         info = model.info()
     matches = 0

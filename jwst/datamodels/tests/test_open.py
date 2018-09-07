@@ -4,6 +4,7 @@ Test datamodel.open
 
 import os
 import os.path
+import warnings
 
 import pytest
 import numpy as np
@@ -18,6 +19,7 @@ from .. import (DataModel, ModelContainer, ImageModel, ReferenceFileModel,
 def test_open_fits():
     """Test opening a model from a FITS file"""
 
+    warnings.simplefilter("ignore")
     fits_file = t_path('test.fits')
     m = open(fits_file)
     assert isinstance(m, DataModel)
@@ -53,6 +55,7 @@ def test_open_hdulist():
     model.close()
 
 def test_open_image():
+    warnings.simplefilter("ignore")
     image_name = t_path('jwst_image.fits')
     model = open(image_name)
     assert type(model) == ImageModel
@@ -65,7 +68,8 @@ def test_open_reference_files():
              'nircam_photom.fits' : NircamPhotomModel,
              'nircam_gain.fits' : GainModel,
              'nircam_readnoise.fits' : ReadnoiseModel}
-    
+
+    warnings.simplefilter("ignore")
     for base_name, klass in files.items():
         file = t_path(base_name)
         model = open(file)
@@ -73,7 +77,7 @@ def test_open_reference_files():
             ndim = len(model.shape)
         else:
             ndim = 0
-            
+
         if ndim == 0:
             my_klass = ReferenceFileModel
         elif ndim == 2:
@@ -84,10 +88,10 @@ def test_open_reference_files():
             my_klass = ReferenceQuadModel
         else:
             my_klass = None
-            
+
         assert isinstance(model, my_klass)
         model.close()
-        
+
         model = klass(file)
         assert isinstance(model, klass)
         model.close()
