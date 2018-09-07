@@ -5,7 +5,6 @@ from ..datamodels import MultiSlitModel, ModelContainer
 from . import resample_spec, ResampleStep
 from ..exp_to_source import multislit_to_container
 from ..assign_wcs.util import update_s_region_spectral
-from ..lib.pipe_utils import is_tso
 
 
 class ResampleSpecStep(ResampleStep):
@@ -46,9 +45,9 @@ class ResampleSpecStep(ResampleStep):
         if isinstance(input_models[0], MultiSlitModel):
             # result is a MultiProductModel
             result = self._process_multislit(input_models)
-        elif is_tso(input_models[0]):
-            # resample can't handle TSO cubes
-            raise RuntimeError("Input {} appears to be a 3D cube.".format(input_models[0]))
+        elif len(input_models[0].data.shape) != 2:
+            # resample can only handle 2D images, not 3D cubes, etc
+            raise RuntimeError("Input {} is not a 2D image.".format(input_models[0]))
         else:
             # result is a DrizProductModel
             result = self._process_slit(input_models)
