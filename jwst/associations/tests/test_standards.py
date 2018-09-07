@@ -81,6 +81,7 @@ standards = [
     MakePars('pool_021_tso'),
     MakePars('pool_022_tso_noflag'),
     MakePars('pool_023_nirspec_msa_3nod', main_args=LV2_ONLY_ARGS),
+    MakePars('pool_026_mir_image_tso'),
 ]
 
 

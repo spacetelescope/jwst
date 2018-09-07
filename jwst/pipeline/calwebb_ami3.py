@@ -46,7 +46,7 @@ class Ami3Pipeline(Pipeline):
 
         # We assume there's one final product defined by the
         # association
-        acid = asn['asn_id']
+        asn_id = asn['asn_id']
         prod = asn['products'][0]
         self.output_file = prod.get('name', self.output_file)
 
@@ -87,16 +87,13 @@ class Ami3Pipeline(Pipeline):
             # Save the LG analysis results to a file
             result.meta.asn.pool_name = asn['asn_pool']
             result.meta.asn.table_name = op.basename(asn.filename)
-            output_file = self.save_model(
-                result, output_file=input_file, suffix='ami', acid=acid,
-            )
-            self.log.info('LG results saved to %s', output_file)
+            self.save_model(result, output_file=input_file, suffix='ami', asn_id=asn_id)
 
             # Save the result file name for input to ami_average
             if member['exptype'].upper() == 'PSF':
-                psf_files.append(output_file)
+                psf_files.append(result)
             if member['exptype'].upper() == 'SCIENCE':
-                targ_files.append(output_file)
+                targ_files.append(result)
 
         # Average the reference PSF image results
         psf_avg = None
@@ -119,20 +116,14 @@ class Ami3Pipeline(Pipeline):
                         hasattr(datamodels.open(psf_files[0]), 'meta.wcs')
                     )
                 )
-                self.log.info("PSF_AVG type: {}".format(type(psf_avg)))
+                self.log.info("PSF_AVG type: {}".format(psf_avg.meta.model_type))
                 self.log.info(
                     "PSF_AVG WCS: {}".format(
                         hasattr(psf_avg, 'meta.wcs')
                     )
                 )
                 blendmeta.blendmodels(psf_avg, inputs=psf_files)
-                output_file = self.save_model(
-                    psf_avg, suffix='psf-amiavg'
-                )
-                self.log.info(
-                    'Averaged PSF results saved to %s',
-                    output_file
-                )
+                self.save_model(psf_avg, suffix='psf-amiavg')
 
         # Average the science target image results
         if len(targ_files) > 0:
@@ -151,13 +142,7 @@ class Ami3Pipeline(Pipeline):
                 )
                 blendmeta.blendmodels(targ_avg, inputs=targ_files)
 
-                output_file = self.save_model(
-                    targ_avg, suffix='amiavg'
-                )
-                self.log.info(
-                    'Averaged target results saved to %s',
-                    output_file
-                )
+                self.save_model(targ_avg, suffix='amiavg')
 
         # Now that all LGAVG products have been produced, do
         # normalization of the target results by the reference
@@ -176,12 +161,7 @@ class Ami3Pipeline(Pipeline):
             )
             input_list = [targ_avg, psf_avg]
             blendmeta.blendmodels(result, inputs=input_list)
-            output_file = self.save_model(result, suffix='aminorm')
-            self.log.info(
-                'Normalized result saved to %s',
-                output_file
-            )
-            result.close()
+            self.save_model(result, suffix='aminorm')
 
         # We're done
         log.info('... ending calwebb_ami3')

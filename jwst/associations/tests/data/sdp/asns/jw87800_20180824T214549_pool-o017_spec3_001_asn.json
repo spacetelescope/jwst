@@ -11,7 +11,7 @@
     "asn_pool": "jw87800_20180824T214549_pool",
     "products": [
         {
-            "name": "jw87800-o017_t002_niriss_gr150r-f200w",
+            "name": "jw87800-o017_{source_id}_niriss_gr150r-f200w",
             "members": [
                 {
                     "expname": "jw87800017001_02102_00008_nis_cal.fits",

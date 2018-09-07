@@ -1,6 +1,6 @@
 {
-    "asn_type": "spec2",
-    "asn_rule": "candidate_Asn_Lv2Spec",
+    "asn_type": "tso-spec2",
+    "asn_rule": "candidate_Asn_Lv2SpecTSO",
     "version_id": null,
     "code_version": "0.11.0",
     "degraded_status": "No known degraded exposures in association.",
