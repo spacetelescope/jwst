@@ -636,6 +636,33 @@ def update_s_region_keyword(model, footprint):
         log.info("Update S_REGION to {}".format(model.meta.wcsinfo.s_region))
 
 
+def update_s_region_nrs_ifu(output_model, mod):
+    """
+    Update S_REGION for NRS_IFU observations using the instrument model.
+
+    Parameters
+    ----------
+    output_model : `~jwst.datamodels.IFUImageModel`
+        The output of assign_wcs.
+    mod : module
+        The imported ``nirspec`` module.
+    """
+    wcs_list = mod.nrs_ifu_wcs(output_model)
+    ra_total = []
+    dec_total = []
+    for wcs in wcs_list:
+        x, y = grid_from_bounding_box(wcs.bounding_box)
+        ra, dec, lam = wcs(x, y)
+        ra_total.append((np.nanmax(ra), np.nanmin(ra)))
+        dec_total.append((np.nanmax(dec), np.nanmin(dec)))
+    ra_max = np.asarray(ra_total)[:,0].max()
+    ra_min = np.asarray(ra_total)[:,1].min()
+    dec_max = np.asarray(dec_total)[:,0].max()
+    dec_min = np.asarray(dec_total)[:,0].min()
+    footprint = np.array([ra_min, dec_min, ra_max, dec_min, ra_max, dec_max, ra_min, dec_max])
+    update_s_region_keyword(output_model, footprint)
+
+    
 def velocity_correction(velosys):
     """
     Compute wavelength correction to Barycentric reference frame.
