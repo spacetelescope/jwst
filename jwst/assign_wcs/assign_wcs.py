@@ -2,7 +2,7 @@ import logging
 import importlib
 from gwcs.wcs import WCS
 from .util import (update_s_region_spectral, update_s_region_imaging,
-                   update_s_region_nrs_ifu)
+                   update_s_region_nrs_ifu, update_s_region_mrs)
 from ..associations.lib.dms_base import (ACQ_EXP_TYPES, IMAGE2_SCIENCE_EXP_TYPES,
                                          IMAGE2_NONSCIENCE_EXP_TYPES,
                                          SPEC2_SCIENCE_EXP_TYPES)
@@ -67,7 +67,7 @@ def load_wcs(input_model, reference_files={}):
                          'nrs_fixedslit', 'nrs_msaspec',
                          'nrs_autowave', 'nrs_autoflat', 'nrs_lamp',
                          'nrs_brightobj', 'mir_lrs-fixedslit', 'mir_lrs-slitless',
-                         'mir_mrs', 'nis_soss']
+                         'nis_soss']
 
         if output_model.meta.exposure.type.lower() not in exclude_types:
             if output_model.meta.exposure.type.lower() in IMAGING_TYPES:
@@ -81,6 +81,8 @@ def load_wcs(input_model, reference_files={}):
                         output_model.meta.wcsinfo.s_region))
             elif  output_model.meta.exposure.type.lower() == "nrs_ifu":
                 update_s_region_nrs_ifu(output_model, mod)
+            elif output_model.meta.exposure.type.lower() == 'mir_mrs':
+                update_s_region_mrs(output_model)
             else:
                 try:
                     update_s_region_spectral(output_model)
