@@ -193,10 +193,6 @@ wiimatch
 
 0.11.0 (2018-09-10)
 ===================
-=======
-0.11.0
-======
->>>>>>> 516140f8986e2f848b3e224e51ce56d592937491
 
 The 0.11.0 release is highlighted by the inclusion of steps for resampling
 spectral images and time series grism observations.   In addition, this
@@ -414,11 +410,7 @@ ramp_fitting
 refpix
 ------
 
-<<<<<<< HEAD
 - The memory performance of refpix was improved [#2315]
-=======
-* The memory performance of refpix was improved [#2315]
->>>>>>> 516140f8986e2f848b3e224e51ce56d592937491
 
 resample
 --------
