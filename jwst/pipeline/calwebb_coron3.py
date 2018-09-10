@@ -1,9 +1,7 @@
-"""Interface for running CALCORON3 pipeline."""
 #!/usr/bin/env python
 import os.path as op
 
 from ..stpipe import Pipeline
-from ..associations import load_asn
 from .. import datamodels
 from ..model_blender import blendmeta
 
@@ -14,8 +12,7 @@ from ..coron import klip_step
 from ..outlier_detection import outlier_detection_step
 from ..resample import resample_step
 
-
-__version__ = '0.9.3'
+__all__ = ['Coron3Pipeline']
 
 
 class Coron3Pipeline(Pipeline):

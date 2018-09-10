@@ -9,9 +9,7 @@ from .helpers import (
     abspath,
     mk_tmp_dirs,
     require_bigdata,
-    require_crds_context,
     runslow,
-    update_asn_basedir,
 )
 
 from ...associations import load_asn

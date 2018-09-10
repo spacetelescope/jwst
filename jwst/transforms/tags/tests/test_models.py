@@ -4,7 +4,9 @@ import numpy as np
 from astropy.modeling.models import Shift, Rotation2D
 from asdf.tests import helpers
 from ...import jwextension
-from ...models import *
+from ...models import (AngleFromGratingEquation, WavelengthFromGratingEquation,
+                       Unitless2DirCos, DirCos2Unitless, Rotation3DToGWA, Gwa2Slit,
+                       Snell, Logical, V23ToSky, Slit)
 import pytest
 
 

@@ -1,11 +1,9 @@
-import time
 import logging
 
 import numpy as np
 from collections import OrderedDict
 from astropy.table import QTable
 from astropy.time import Time, TimeDelta
-from ..datamodels import dqflags
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -14,7 +12,6 @@ def white_light(input):
 
     ntables = len(input.spec)
     fluxsums = []
-    times = []
 
     # The input should contain one row per integration for each spectral
     # order.  NIRISS SOSS data can contain up to three orders.

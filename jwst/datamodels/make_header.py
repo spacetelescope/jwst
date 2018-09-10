@@ -1,8 +1,8 @@
 import re
-import os.path
 import inspect
 import jsonschema
 import numpy as np
+from os import path as os_path
 from asdf.tags.core import ndarray
 
 from . import validate
@@ -283,7 +283,13 @@ def get_package(obj):
     else:
         path = ''
     path = path.split('.')
-    path.pop()
+
+    # Do not pop the module name if the source
+    # comes from an `_init_.py` file.
+    source_file = inspect.getfile(obj)
+    if os_path.basename(source_file) != '__init__.py':
+        path.pop()
+
     return '.'.join(path)
 
 def get_shape(im, defaults):

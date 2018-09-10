@@ -60,4 +60,6 @@ The current association types are:
   * `tso3`: Intended for `calwebb_tso3` processing
   * `image2`: Intended for `calwebb_image2` processing
   * `spec2`: Intended for `calwebb_spec2` processing
-
+  * `nrslamp-spec2`: Intended for `calwebb_nrslamp_spec2` processing
+  * `tso-image2`: Intended for `calwebb_tso_image2` processing
+  * `tso-spec2`: Intended for `calwebb_tso_spec2` processing

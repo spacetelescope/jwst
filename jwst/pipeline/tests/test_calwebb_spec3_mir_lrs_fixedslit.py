@@ -12,7 +12,6 @@ from os import path
 import pytest
 
 from .helpers import (
-    SCRIPT_PATH,
     SCRIPT_DATA_PATH,
     abspath,
     mk_tmp_dirs,

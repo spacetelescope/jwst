@@ -10,4 +10,4 @@ if sys.version_info < (3, 5):
                       "Beginning with JWST 0.9, Python 3.5 and above is required.")
 
 from .transforms.jwextension import JWSTExtension
-from .datamodels.extension import BaseExtension
+

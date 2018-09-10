@@ -1,13 +1,10 @@
 """Test calwebb_tso3 with NIRISS SOSS"""
 
 from collections import defaultdict
-from copy import copy
 from glob import glob
 from os import path
-import pytest
 
 from .helpers import (
-    SCRIPT_PATH,
     SCRIPT_DATA_PATH,
     abspath,
     mk_tmp_dirs,
@@ -111,7 +108,6 @@ def test_run_whitelight(mk_tmp_dirs):
     # Now test for file existence. Get the association
     with open(asn_path) as fh:
         asn = load_asn(fh)
-    acid = asn['asn_id']
     product = asn['products'][0]
     product_name = product['name']
     members_by_type = defaultdict(list)

@@ -11,27 +11,46 @@ from astropy.utils.misc import isiterable
 from astropy.io import fits
 from astropy.modeling import models as astmodels
 from astropy.table import QTable
-
+from astropy.constants import c
 
 from gwcs import WCS
-from gwcs.wcstools import wcs_from_fiducial
+from gwcs.wcstools import wcs_from_fiducial, grid_from_bounding_box
 from gwcs import utils as gwutils
 
 from . import pointing
 from ..lib.catalog_utils import SkyObject
 from ..transforms.models import GrismObject
-from ..datamodels import WavelengthrangeModel, DataModel
+from ..datamodels import WavelengthrangeModel, DataModel, CubeModel, IFUCubeModel
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-__all__ = ["reproject", "wcs_from_footprints"]
+__all__ = ["reproject", "wcs_from_footprints", "velocity_correction"]
 
 
 class MissingMSAFileError(Exception):
 
     def __init__(self, message):
         super(MissingMSAFileError, self).__init__(message)
+
+
+class NoDataOnDetectorError(Exception):
+    """WCS solution indicates no data on detector
+
+    When WCS solutions are available, the solutions indicate that no data
+    will be present, raise this exception.
+
+    Specific example is for NIRSpec and the NRS2 detector. For various
+    configurations of the MSA, it is possible that no dispersed spectra will
+    appear on NRS2. This is not a failure of calibration, but needs to be
+    called out in order for the calling architecture to be aware of this.
+
+    """
+
+    def __init__(self, message=None):
+        if message is None:
+            message = 'WCS solution indicate that no science is in the data.'
+        super(NoDataOnDetectorError, self).__init__(message)
 
 
 def _domain_to_bounding_box(domain):
@@ -140,7 +159,7 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
     wnew = wcs_from_fiducial(fiducial, coordinate_frame=out_frame,
                              projection=prj, transform=transform)
 
-    footprints = [w.footprint() for w in wcslist]
+    footprints = [w.footprint().T for w in wcslist]
     domain_bounds = np.hstack([wnew.backward_transform(*f) for f in footprints])
     for axs in domain_bounds:
         axs -= axs.min()
@@ -172,7 +191,7 @@ def compute_fiducial(wcslist, bounding_box=None, domain=None):
     axes_types = wcslist[0].output_frame.axes_type
     spatial_axes = np.array(axes_types) == 'SPATIAL'
     spectral_axes = np.array(axes_types) == 'SPECTRAL'
-    footprints = np.hstack([w.footprint(bounding_box=bounding_box) for w in wcslist])
+    footprints = np.hstack([w.footprint(bounding_box=bounding_box).T for w in wcslist])
     spatial_footprint = footprints[spatial_axes]
     spectral_footprint = footprints[spectral_axes]
 
@@ -227,7 +246,7 @@ def is_fits(input):
         isfits = True in [input.endswith(l) for l in names]
 
     # if input is a fits file determine what kind of fits it is
-    #waiver fits len(shape) == 3
+    # waiver fits len(shape) == 3
     if isfits:
         if not f:
             try:
@@ -279,7 +298,7 @@ def not_implemented_mode(input_model, ref):
     return None
 
 
-def get_object_info(catalog_name=''):
+def get_object_info(catalog_name=None):
     """Return a list of SkyObjects from the direct image
 
     the source_catalog step are read into a list of  SkyObjects
@@ -299,6 +318,8 @@ def get_object_info(catalog_name=''):
     -----
 
     """
+    if catalog_name is None:
+        raise TypeError("Expected name of the catalog file")
     objects = []
     catalog = QTable.read(catalog_name, format='ascii.ecsv')
 
@@ -340,7 +361,8 @@ def get_object_info(catalog_name=''):
     return objects
 
 
-def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
+def create_grism_bbox(input_model, reference_files,
+                      mmag_extract=99.0):
     """Create bounding boxes for each object in the catalog
 
     The sky coordinates in the catalog image are first related
@@ -360,7 +382,6 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
     mmag_extract : float
         The faintest magnitude to extract from the catalog
 
-
     Returns
     -------
     A list of GrismObject(s) for every source in the catalog
@@ -369,17 +390,17 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
 
     Notes
     -----
-    The wavelengthrange reference file is used to govern the extent of the bounding box
-    for each object. The name of the catalog has been stored in the input models meta
-    information under the source_catalog key.
+    The wavelengthrange reference file is used to govern the extent of the
+    bounding box for each object. The name of the catalog has been stored
+    in the input models meta information under the source_catalog key.
 
-    It's left to the calling routine to cut the bounding boxes at the extent of the
-    detector (for example, extract 2d would only extract the on-detector portion of
-    the bounding box)
+    It's left to the calling routine to cut the bounding boxes at the extent
+    of the detector (for example, extract 2d would only extract the on-detector
+    portion of the bounding box)
 
-    Bounding box dispersion direction is dependent on the filter and module for NIRCAM
-    and changes for GRISMR, but is consistent for GRISMC,
-    see https://jwst-docs.stsci.edu/display/JTI/NIRCam+Wide+Field+Slitless+Spectroscopy
+    Bounding box dispersion direction is dependent on the filter and module for
+    NIRCAM and changes for GRISMR, but is consistent for GRISMC, see
+    https://jwst-docs.stsci.edu/display/JTI/NIRCam+Wide+Field+Slitless+Spectroscopy
 
     NIRISS only has one detector, but GRISMC disperses along rows and GRISMR disperses
     along columns.
@@ -414,9 +435,6 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
     xsize = input_model.meta.subarray.xsize
     ysize = input_model.meta.subarray.ysize
 
-    # extract the catalog objects
-    if input_model.meta.source_catalog.filename is None:
-        raise ValueError("No source catalog listed in datamodel")
     skyobject_list = get_object_info(input_model.meta.source_catalog.filename)
 
     # get the imaging transform to record the center of the object in the image
@@ -427,13 +445,14 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
 
     # Get the disperser parameters which have the wave limits
     with WavelengthrangeModel(reference_files['wavelengthrange']) as f:
-        wrange = f.wrange
-        wrange_selector = f.wrange_selector
+        if (f.meta.exposure.type == "NRC_TSGRISM"):
+            raise ValueError("Wavelengthrange reference file not meant for WFSS mode")
+        waverange_selector = f.waverange_selector
         orders = f.order
 
     # All objects in the catalog will use the same filter for translation
     # that filter is the one that was used in front of the grism
-    fselect = wrange_selector.index(filter_name)
+    fselect = waverange_selector.index(filter_name)
 
     grism_objects = []  # the return list of GrismObjects
     for obj in skyobject_list:
@@ -454,7 +473,7 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
                 # drive the extraction extent. The location of the min and
                 # max wavelengths for each order are used to get the location
                 # of the +/- sides of the bounding box in the grism image
-                lmin, lmax = wrange[oidx][fselect]
+                lmin, lmax = waverange[oidx][fselect]
 
                 # we need to be specific with dispersion direction here?
                 # I think this should be taken care of in the trace polys
@@ -463,6 +482,7 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
                 if (disperse_row_right or disperse_column):
                     wave_min = lmin
                     wave_max = lmax
+
 
                 xmin, ymin, _, _, _ = sky_to_grism(obj.sky_bbox_ll.ra.value, obj.sky_bbox_ll.dec.value, lmin, order)
                 xmax, ymax, _, _, _ = sky_to_grism(obj.sky_bbox_ur.ra.value, obj.sky_bbox_ur.dec.value, lmax, order)
@@ -542,26 +562,35 @@ def get_num_msa_open_shutters(shutter_state):
     return num
 
 
-def update_s_region(model):
-    """
-    Update the ``S_REGION`` keyword usiong ``WCS.footprint``.
+def bounding_box_from_shape(model):
+    """Create a bounding box from the shape of the data.
 
+    Note: The bounding box of a ``CubeModel`` is the bounding_box of one
+    of the stacked images.
     """
-    bbox = None
-    def _bbox_from_shape(model):
+    if isinstance(model, (CubeModel, IFUCubeModel)):
+        shape = model.data[0].shape
+    else:
         shape = model.data.shape
-        bbox = ((0, shape[1]), (0, shape[0]))
-        return bbox
-    try:
-        bbox = model.meta.wcs.bounding_box
-    except NotImplementedError:
-        bbox = _bbox_from_shape(model)
+
+    bbox = ((-0.5, shape[1] - 0.5),
+            (-0.5, shape[0] - 0.5))
+    return bbox
+
+
+def update_s_region_imaging(model):
+    """
+    Update the ``S_REGION`` keyword using ``WCS.footprint``.
+    """
+
+    bbox = model.meta.wcs.bounding_box
 
     if bbox is None:
-        bbox = _bbox_from_shape(model)
+        bbox = bounding_box_from_shape(model)
 
-    # footprint is an array of shape (2, 2) or (3, 3)
-    footprint = model.meta.wcs.footprint(bbox, center=True)
+    # footprint is an array of shape (2, 4) as we
+    # are interested only in the footprint on the sky
+    footprint = model.meta.wcs.footprint(bbox, center=True, axis_type="spatial").T
     # take only imaging footprint
     footprint = footprint[:2, :]
 
@@ -571,7 +600,28 @@ def update_s_region(model):
         footprint[0][negative_ind] = 360 + footprint[0][negative_ind]
 
     footprint = footprint.T
+    update_s_region_keyword(model, footprint)
 
+
+def update_s_region_spectral(model):
+    swcs = model.meta.wcs
+
+    bbox = swcs.bounding_box
+    if bbox is None:
+        bbox = bounding_box_from_shape(model)
+
+    x, y = grid_from_bounding_box(bbox)
+    ra, dec, lam = swcs(x, y)
+    footprint = np.array([[np.nanmin(ra), np.nanmin(dec)],
+                 [np.nanmax(ra), np.nanmin(dec)],
+                 [np.nanmax(ra), np.nanmax(dec)],
+                 [np.nanmin(ra), np.nanmax(dec)]])
+    update_s_region_keyword(model, footprint)
+
+
+def update_s_region_keyword(model, footprint):
+    """ Update the S_REGION keyword.
+    """
     s_region = (
         "POLYGON ICRS "
         " {0:.9f} {1:.9f}"
@@ -580,6 +630,23 @@ def update_s_region(model):
         " {6:.9f} {7:.9f}".format(*footprint.flatten()))
     if "nan" in s_region:
         # do not update s_region if there are NaNs.
-        log.info("There are NaNs in s_region")
+        log.info("There are NaNs in s_region, S_REGION not updated.")
     else:
         model.meta.wcsinfo.s_region = s_region
+        log.info("Update S_REGION to {}".format(model.meta.wcsinfo.s_region))
+
+
+def velocity_correction(velosys):
+    """
+    Compute wavelength correction to Barycentric reference frame.
+
+    Parameters
+    ----------
+    velosys : float
+        Radial velocity wrt Barycenter [m / s].
+    """
+    correction = (1 / (1 + velosys / c.value))
+    model =  astmodels.Identity(1) * astmodels.Const1D(correction, name="velocity_correction")
+    model.inverse = astmodels.Identity(1) / astmodels.Const1D(correction, name="inv_vel_correciton")
+
+    return model

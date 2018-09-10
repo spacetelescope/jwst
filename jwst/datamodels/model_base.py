@@ -18,20 +18,16 @@ from astropy.wcs import WCS
 from asdf import AsdfFile
 from asdf import yamlutil
 from asdf import schema as asdf_schema
-from asdf import extension as asdf_extension
+from asdf.tags.core.ndarray import numpy_dtype_to_asdf_datatype
 
 from . import ndmodel
 from . import filetype
 from . import fits_support
 from . import properties
 from . import schema as mschema
-from . import util
 from . import validate
 
 from .history import HistoryList
-from .extension import BaseExtension
-from jwst.transforms.jwextension import JWSTExtension
-from gwcs.extension import GWCSExtension
 
 
 class DataModel(properties.ObjectNode, ndmodel.NDModel):
@@ -106,7 +102,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                                              resolver=file_resolver,
                                              resolve_references=True)
 
-        self._schema = mschema.flatten_combiners(schema)
+        self._schema = mschema.merge_property_trees(schema)
 
         # Provide the object as context to other classes and functions
         self._ctx = self
@@ -186,17 +182,15 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         # Instantiate the primary array of the image
         if is_array:
-            primary_array = self.get_primary_array_name()
-            if primary_array is None:
+            primary_array_name = self.get_primary_array_name()
+            if not primary_array_name:
                 raise TypeError(
                     "Array passed to DataModel.__init__, but model has "
                     "no primary array in its schema")
-            setattr(self, primary_array, init)
+            setattr(self, primary_array_name, init)
 
         if is_shape:
-            try:
-                getattr(self, self.get_primary_array_name())
-            except AttributeError:
+            if not self.get_primary_array_name():
                 raise TypeError(
                     "Shape passed to DataModel.__init__, but model has "
                     "no primary array in its schema")
@@ -253,12 +247,29 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
 
+    def _drop_arrays(self):
+        def _drop_array(d):
+            # Walk tree and delete numpy arrays
+            if isinstance(d, dict):
+                for val in d.values():
+                    _drop_array(val)
+            elif isinstance(d, list):
+                for val in d:
+                    _drop_array(val)
+            elif isinstance(d, np.ndarray):
+                del d
+            else:
+                pass
+        _drop_array(self._instance)
+
     def close(self):
+        if not self._iscopy and self._asdf is not None:
+            self._asdf.close()
+            self._drop_arrays()
+
         for fd in self._files_to_close:
             if fd is not None:
                 fd.close()
-        if not self._iscopy and self._asdf is not None:
-            self._asdf.close()
 
     def get_envar(self, name, value):
         if name in os.environ:
@@ -313,6 +324,73 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                               self._pass_invalid_values,
                               self._strict_validation)
 
+    def info(self):
+        """
+        Return datatype and dimension for each array or table
+        """
+        def get_field_info(path, instance):
+            field_info = []
+            if isinstance(instance, dict):
+                if path:
+                    path += '.'
+                for name, val in instance.items():
+                    new_path = path + name.lower()
+                    field_info.extend(get_field_info(new_path, val))
+            elif isinstance(instance, list):
+                for index, val in enumerate(instance):
+                    new_path = "%s[%d]" % (path, index)
+                    field_info.extend(get_field_info(new_path, val))
+            elif isinstance(instance, np.ndarray):
+                if instance.shape[0] > 0:
+                    shape_info = get_shape_info(instance)
+                    type_info = get_type_info(instance)
+                    field_info = [(path, shape_info, type_info)]
+            return field_info
+
+        def get_meta_info(meta):
+            meta_info = []
+            for attribute in ('filename', 'date', 'model_type'):
+                if hasattr(meta, attribute):
+                    value = getattr(meta, attribute)
+                    if value is not None:
+                        meta_info.append(attribute + ': ' + value)
+            return meta_info
+
+        def get_shape_info(instance):
+            if hasattr(instance, '_coldefs'):
+                nrows = instance.shape[0]
+                ncols = len(instance._coldefs)
+                shape_info = "{}R x {}C".format(nrows, ncols)
+            else:
+                # Display shape in fits order (reversed)
+                shape = [str(s) for s in reversed(instance.shape)]
+                shape_info = '(' + ','.join(shape) + ')'
+            return shape_info
+
+        def get_type_info(instance):
+            if hasattr(instance, '_coldefs'):
+                col_info = []
+                for coldef in instance._coldefs:
+                    col_info.append(coldef.name + ':' + coldef.format)
+                type_info = '(' + ','.join(col_info) + ')'
+            else:
+                type_info = numpy_dtype_to_asdf_datatype(instance.dtype)[0]
+            return type_info
+
+        meta_info = get_meta_info(self.meta)
+        field_info = get_field_info('', self._instance)
+
+
+        buffer = meta_info
+        format_string = "%-40s%-20s%s"
+        buffer.append(70 * '-')
+        buffer.append(format_string % ('attribute', 'size', 'type'))
+        buffer.append(70 * '-')
+        for field in field_info:
+            buffer.append(format_string % field)
+        return "\n".join(buffer) + "\n"
+
+
     def get_primary_array_name(self):
         """
         Returns the name "primary" array for this model, which
@@ -320,7 +398,11 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         This is intended to be overridden in the subclasses if the
         primary array's name is not "data".
         """
-        return 'data'
+        if properties._find_property(self._schema, 'data'):
+            primary_array_name = 'data'
+        else:
+            primary_array_name = ''
+        return primary_array_name
 
     def on_save(self, path=None):
         """
@@ -475,10 +557,10 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
     @property
     def shape(self):
         if self._shape is None:
-            if self.get_primary_array_name() in self._instance:
-                return getattr(self, self.get_primary_array_name()).shape
-            else:
-                return None
+            primary_array_name = self.get_primary_array_name()
+            if primary_array_name and self.hasattr(primary_array_name):
+                primary_array = getattr(self, primary_array_name)
+                self._shape = primary_array.shape
         return self._shape
 
     def my_attribute(self, attr):
@@ -503,7 +585,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         new_schema : schema tree
         """
         schema = {'allOf': [self._schema, new_schema]}
-        self._schema = mschema.flatten_combiners(schema)
+        self._schema = mschema.merge_property_trees(schema)
         self.validate()
         return self
 
@@ -917,7 +999,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             HDU, pass ``'PRIMARY'``.
         """
         header = wcs.to_header()
-        extensions = self._asdf._extensions
         if hdu_name == 'PRIMARY':
             hdu = fits.PrimaryHDU(header=header)
         else:

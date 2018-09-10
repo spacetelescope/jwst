@@ -9,7 +9,6 @@
 
 # STDLIB
 import logging
-import os
 import math
 import copy
 

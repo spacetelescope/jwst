@@ -1,17 +1,17 @@
 {
     "asn_type": "spec3",
-    "asn_rule": "candidate_Asn_Spectral",
+    "asn_rule": "candidate_Asn_SpectralSource",
     "version_id": null,
-    "code_version": "0.9.12",
+    "code_version": "0.9.20",
     "degraded_status": "No known degraded exposures in association.",
     "program": "93045",
-    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '93045'})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'nirspec'})\nConstraint_NotTSO({'name': 'is_not_tso', 'sources': ['tsovisit'], 'value': '[^t]'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'f290lp'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['grating'], 'value': 'g395h'})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': 's400a1'})\nConstraint_Target({'name': 'target', 'sources': ['targetid'], 'value': '1'})\nConstraint_Spectral({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'mir_lrs-fixedslit|nrs_autoflat|nrs_autowave|nrs_fixedslit|nrc_grism|nrs_msaspec'})\nConstraint_Obsnum({'name': 'obs_num', 'sources': ['obs_num'], 'value': None})\nDMSAttrConstraint({'name': 'acq_exp', 'sources': ['exp_type'], 'value': 'mir_tacq|nis_taconfirm|nis_tacq|nrc_taconfirm|nrc_tacq|nrs_confirm|nrs_taconfirm|nrs_tacq|nrs_taslit'})\nDMSAttrConstraint({'name': 'acq_obsnum', 'sources': ['obs_num'], 'value': <function AsnMixin_Science.__init__.<locals>.<lambda> at 0x10c900b70>})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o010\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '93045'})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'nirspec'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'f290lp'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['grating'], 'value': 'g395h'})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': 's400a1'})\nConstraint_Target({'name': 'target', 'sources': ['targetid'], 'value': '1'})\nDMSAttrConstraint({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'nrc_grism|nrc_tsgrism|nrc_wfss|nrs_autoflat|nrs_autowave|nrs_fixedslit'})\nDMSAttrConstraint({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'nrs_autoflat|nrs_autowave|nrs_msaspec'})\nDMSAttrConstraint({'name': 'is_msa', 'sources': ['msametfl'], 'value': None})\nConstraint_Obsnum({'name': 'obs_num', 'sources': ['obs_num'], 'value': None})\nDMSAttrConstraint({'name': 'acq_exp', 'sources': ['exp_type'], 'value': 'mir_tacq|nis_taconfirm|nis_tacq|nrc_taconfirm|nrc_tacq|nrs_confirm|nrs_taconfirm|nrs_tacq|nrs_taslit'})\nDMSAttrConstraint({'name': 'acq_obsnum', 'sources': ['obs_num'], 'value': <function AsnMixin_Science.__init__.<locals>.<lambda> at 0xb18ab59d8>})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o010\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
     "asn_id": "o010",
     "target": "t001",
     "asn_pool": "jw93045_20171108T045547_pool",
     "products": [
         {
-            "name": "jw93045-o010_t001_nirspec_f290lp-g395h-s400a1",
+            "name": "jw93045-o010_{source_id}_nirspec_f290lp-g395h-s400a1",
             "members": [
                 {
                     "expname": "jw93045010001_02101_00001_nrs2_cal.fits",

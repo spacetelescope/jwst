@@ -37,8 +37,18 @@ of each are available at
 The remainder of this document discusses pipeline configuration files and
 gives examples of running pipelines as a whole or in individual steps.
 
-CRDS Reference Files
-====================
+Reference Files
+===============
+
+Many pipeline steps rely on the use of a set of reference files essential to ensure the correct and accurate process of the data. The reference files are instrument-specific, and are periodically updated as the data process evolves and the understanding of the instruments improves. They are created, tested and validated by the JWST Instrument Teams. They ensure all the files are in the correct format and have all required header keywords. The files are then delivered to the Reference Data for Calibration and Tools (ReDCaT) Management Team. The result of this process is the files being ingested into CRDS (the JWST Calibration Reference Data System), and made available to the pipeline team and any other ground-subsystem that needs access to them.
+
+Information about all the reference files used by the Calibration Pipeline can be found at
+:ref:`reference-file-formats-documentation`
+as well as in the documentation for the Calibration Step using them.
+ 
+CRDS
+====
+
 CRDS reference file mappings are usually set by default to always give access
 to the most recent reference file deliveries and selection rules. On
 occasion it might be necessary or desirable to use one of the non-default
@@ -150,6 +160,20 @@ where `my_dark_current.cfg` contains:
  class = "jwst.dark_current.DarkCurrentStep"
  override_dark = 'my_dark.fits'
 
+
+Exit Status
+-----------
+``strun`` produces the following exit status codes:
+
+- 0: Successful completion of the step/pipeline
+- 1: General error occurred
+- 64: No science data found
+
+The "No science data found" condition is returned by the ``assign_wcs`` step of
+``calwebb_spec2`` when, after successfully determining the WCS solution for a
+file, the WCS indicates that no science data will be found. This condition is
+most often found with NIRSpec's NRS2 detector. There are certain optical and MSA
+configurations in which dispersion will not cross to the NRS2 detector.
 
 Running From Within Python
 ==========================

@@ -21,11 +21,9 @@ from . import region
 
 
 __all__ = ['SkyImage', 'SkyGroup']
-__version__ = '0.9.3'
-__vdate__ = '01-March-2016'
 
 
-class SkyImage():
+class SkyImage:
     """
     Container that holds information about properties of a *single*
     image such as:
@@ -581,7 +579,7 @@ None, optional
         return si
 
 
-class SkyGroup():
+class SkyGroup:
     """
     Holds multiple :py:class:`SkyImage` objects whose sky background values
     must be adjusted together.

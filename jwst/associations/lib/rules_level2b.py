@@ -1,22 +1,23 @@
 """Association Definitions: DMS Level2b product associations
 """
-from copy import (copy, deepcopy)
 import logging
-from os import path as op
 
 from jwst.associations.registry import RegistryMarker
-from jwst.associations.lib.constraint import Constraint
-from jwst.associations.lib.dms_base import format_list
+from jwst.associations.lib.constraint import (Constraint, SimpleConstraint)
+from jwst.associations.lib.dms_base import (
+    Constraint_TSO,
+    format_list
+)
 from jwst.associations.lib.rules_level2_base import *
 from jwst.associations.lib.rules_level3_base import DMS_Level3_Base
-from jwst.stpipe.suffix import remove_suffix
 
 __all__ = [
     'Asn_Lv2FGS',
     'Asn_Lv2Image',
     'Asn_Lv2ImageNonScience',
     'Asn_Lv2ImageSpecial',
-    'Asn_Lv2NRSMSA'
+    'Asn_Lv2NRSLAMP',
+    'Asn_Lv2NRSMSA',
     'Asn_Lv2Spec',
     'Asn_Lv2SpecSpecial',
     'Asn_Lv2WFSS_NIS',
@@ -45,10 +46,36 @@ class Asn_Lv2Image(
             Constraint_Base(),
             Constraint_Mode(),
             Constraint_Image_Science(),
+            Constraint(
+                [Constraint_TSO()],
+                reduce=Constraint.notany
+            )
         ])
 
         # Now check and continue initialization.
         super(Asn_Lv2Image, self).__init__(*args, **kwargs)
+
+
+@RegistryMarker.rule
+class Asn_Lv2ImageNonScience(
+        AsnMixin_Lv2Special,
+        AsnMixin_Lv2Singleton,
+        AsnMixin_Lv2Image,
+        DMSLevel2bBase
+):
+    """Level2b Image that are not science but get Level 2b processing"""
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup constraints
+        self.constraints = Constraint([
+            Constraint_Base(),
+            Constraint_Mode(),
+            Constraint_Image_Nonscience(),
+        ])
+
+        # Now check and continue initialization.
+        super(Asn_Lv2ImageNonScience, self).__init__(*args, **kwargs)
 
 
 @RegistryMarker.rule
@@ -79,13 +106,12 @@ class Asn_Lv2ImageSpecial(
 
 
 @RegistryMarker.rule
-class Asn_Lv2ImageNonScience(
-        AsnMixin_Lv2Special,
+class Asn_Lv2ImageTSO(
         AsnMixin_Lv2Singleton,
         AsnMixin_Lv2Image,
         DMSLevel2bBase
 ):
-    """Level2b Image that are not science but get Level 2b processing"""
+    """Level2b Time Series Image"""
 
     def __init__(self, *args, **kwargs):
 
@@ -93,11 +119,18 @@ class Asn_Lv2ImageNonScience(
         self.constraints = Constraint([
             Constraint_Base(),
             Constraint_Mode(),
-            Constraint_Image_Nonscience(),
+            Constraint_Image_Science(),
+            Constraint_TSO(),
         ])
 
         # Now check and continue initialization.
-        super(Asn_Lv2ImageNonScience, self).__init__(*args, **kwargs)
+        super(Asn_Lv2ImageTSO, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        super(Asn_Lv2ImageTSO, self)._init_hook(item)
+        self.data['asn_type'] = 'tso-image2'
 
 
 @RegistryMarker.rule
@@ -140,7 +173,13 @@ class Asn_Lv2Spec(
         self.constraints = Constraint([
             Constraint_Base(),
             Constraint_Mode(),
-            Constraint_Spectral_Science()
+            Constraint_Spectral_Science(
+                exclude_exp_types=['nrs_msaspec', 'nrs_fixedslit']
+            ),
+            Constraint(
+                [Constraint_TSO()],
+                reduce=Constraint.notany
+            )
         ])
 
         # Now check and continue initialization.
@@ -175,6 +214,72 @@ class Asn_Lv2SpecSpecial(
 
 
 @RegistryMarker.rule
+class Asn_Lv2SpecTSO(
+        AsnMixin_Lv2Singleton,
+        AsnMixin_Lv2Spectral,
+        DMSLevel2bBase
+):
+    """Level2b Time Series Spectra"""
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup constraints
+        self.constraints = Constraint([
+            Constraint_Base(),
+            Constraint_Mode(),
+            Constraint_Spectral_Science(
+                exclude_exp_types=['nrs_msaspec', 'nrs_fixedslit']
+            ),
+            Constraint_TSO(),
+        ])
+
+        # Now check and continue initialization.
+        super(Asn_Lv2SpecTSO, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        super(Asn_Lv2SpecTSO, self)._init_hook(item)
+        self.data['asn_type'] = 'tso-spec2'
+
+
+@RegistryMarker.rule
+class Asn_Lv2NRSLAMP(
+        AsnMixin_Lv2Singleton,
+        AsnMixin_Lv2Special,
+        DMSLevel2bBase
+):
+    """Level2b NIRSpec Lamp calibrations
+
+    NRS_LAMP exposures require specific level 2 processing.
+    """
+
+    def __init__(self, *args, **kwargs):
+
+        self.constraints = Constraint([
+            Constraint_Base(),
+            DMSAttrConstraint(
+                name='instrument',
+                sources=['instrume'],
+                value='nirspec'
+            ),
+            DMSAttrConstraint(
+                name='opt_elem',
+                sources=['filter'],
+                value='opaque'
+            ),
+        ])
+
+        super(Asn_Lv2NRSLAMP, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        super(Asn_Lv2NRSLAMP, self)._init_hook(item)
+        self.data['asn_type'] = 'nrslamp-spec2'
+
+
+@RegistryMarker.rule
 class Asn_Lv2WFSS_NIS(
         AsnMixin_Lv2Singleton,
         AsnMixin_Lv2Spectral,
@@ -190,6 +295,7 @@ class Asn_Lv2WFSS_NIS(
         self.constraints = Constraint([
             Constraint_Base(),
             Constraint_Mode(),
+            Constraint_Target(),
             DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
@@ -276,7 +382,6 @@ class Asn_Lv2NRSMSA(
         # Now check and continue initialization.
         super(Asn_Lv2NRSMSA, self).__init__(*args, **kwargs)
 
-
     def finalize(self):
         """Finalize assocation
 
@@ -291,64 +396,89 @@ class Asn_Lv2NRSMSA(
             `None` if a complete association cannot be produced.
 
         """
-        return self.make_nod_asns()
+        if self.is_valid:
+            return self.make_nod_asns()
+        else:
+            return None
 
-    def make_nod_asns(self):
-        """Make background nod Associations
 
-        NIRSpec MSA can be nodded, such that the object
-        is in a different position in the slitlet.
-        The association creation simply groups these all together
-        as a single association, all exposures marked as `science`.
-        When complete, this method will create separate associations
-        each exposure becoming the single science exposure, and the
-        other exposures then become `background`.
+
+
+@RegistryMarker.rule
+class Asn_Lv2NRSFSS(
+        AsnMixin_Lv2Spectral,
+        DMSLevel2bBase
+):
+    """Level2b NIRSpec Fixed-slit"""
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup constraints
+        self.constraints = Constraint([
+            Constraint_Base(),
+            Constraint_Mode(),
+            Constraint(
+                [
+                    Constraint(
+                        [
+                            DMSAttrConstraint(
+                                name='exp_type',
+                                sources=['exp_type'],
+                                value='nrs_fixedslit'
+                            ),
+                            SimpleConstraint(
+                                value='science',
+                                test=lambda value, item: self.get_exposure_type(item) != value,
+                                force_unique=False
+                            )
+                        ]
+                    ),
+                    Constraint(
+                        [
+                            DMSAttrConstraint(
+                                name='exp_type',
+                                sources=['exp_type'],
+                                value='nrs_fixedslit'
+                            ),
+                            DMSAttrConstraint(
+                                name='expspcin',
+                                sources=['expspcin'],
+                            ),
+                            DMSAttrConstraint(
+                                name='nods',
+                                sources=['numdthpt'],
+                            ),
+                            DMSAttrConstraint(
+                                name='subpxpns',
+                                sources=['subpxpns'],
+                            ),
+                            SimpleConstraint(
+                                value='science',
+                                test=lambda value, item: self.get_exposure_type(item) == value,
+                                force_unique=False
+                            )
+                        ]
+                    ),
+                ],
+                reduce=Constraint.any
+            )
+        ])
+
+        # Now check and continue initialization.
+        super(Asn_Lv2NRSFSS, self).__init__(*args, **kwargs)
+
+    def finalize(self):
+        """Finalize assocation
+
+        For NRS Fixed-slit, finalization means creating new associations for
+        background nods.
 
         Returns
         -------
-        associations: [association[, ...]]
-            List of new associations to be used in place of
-            the current one.
+        associations: [association[, ...]] or None
+            List of fully-qualified associations that this association
+            represents.
+            `None` if a complete association cannot be produced.
+
         """
-
-        for product in self['products']:
-            members = product['members']
-
-            # Split out the science vs. non-science
-            # The non-science exposures will get attached
-            # to every resulting association.
-            science_exps = [
-                member
-                for member in members
-                if member['exptype'] == 'science'
-            ]
-            nonscience_exps = [
-                member
-                for member in members
-                if member['exptype'] != 'science'
-            ]
-
-            # Create new associations for each science, using
-            # the other science as background.
-            results = []
-            for science_exp in science_exps:
-                asn = deepcopy(self)
-                asn.data['products'] = None
-
-                product_name = remove_suffix(
-                    op.splitext(op.split(science_exp['expname'])[1])[0]
-                )[0]
-                asn.new_product(product_name)
-                new_members = asn.current_product['members']
-                new_members.append(science_exp)
-
-                for other_science in science_exps:
-                    if other_science['expname'] != science_exp['expname']:
-                        now_background = copy(other_science)
-                        now_background['exptype'] = 'background'
-                        new_members.append(now_background)
-
-                new_members += nonscience_exps
-                results.append(asn)
-
-            return results
+        return self.make_nod_asns()

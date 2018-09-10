@@ -1,3 +1,3 @@
 from .ipc_step import IPCStep
 
-__version__ = '0.9.3'
+__all__ = ['IPCStep']

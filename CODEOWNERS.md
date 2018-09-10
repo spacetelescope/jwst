@@ -1,0 +1,47 @@
+# Global owners
+
+* @hbushouse @stscieisenhamer @stscicrawford
+jwst/ami                 @dmggh             @hbushouse
+jwst/assign_wcs          @nden              @sosey
+jwst/associations        @stscieisenhamer
+jwst/background          @hbushouse         @sosey
+jwst/barshadow           @stscirij
+jwst/combine_1d          @philhodge         @stscirij
+jwst/coron               @hbushouse         @mcara
+jwst/cube_build          @jemorrison        @stsci-hack
+jwst/cube_skymatch       @mcara
+jwst/dark_current        @dmggh             @hbushouse
+jwst/dq_init             @stscirij          @philhodge
+jwst/emission            @dmggh             @stscirij
+jwst/engdblog            @stscieisenhamer
+jwst/extract_1d          @philhodge         @mcara
+jwst/extract_2d          @nden              @philhodge
+jwst/fits_generator      @stscirij          @philhodge
+jwst/flatfield           @dmggh             @philhodge
+jwst/fringe              @jemorrison        @dmggh
+jwst/imprint             @hbushouse         @sosey
+jwst/ipc                 @philhodge         @stscirij
+jwst/jump                @dmggh             @hbushouse
+jwst/lastframe           @jemorrison        @dmggh
+jwst/linearity           @hbushouse         @stscirij
+jwst/outlier_detection   @stsci-hack        @jdavies-st
+jwst/persistence         @philhodge         @stscirij
+jwst/photom              @hbushouse         @dmggh
+jwst/pipeline            @stscieisenhamer   @stsci-hack
+jwst/ramp_fitting        @dmggh             @philhodge
+jwst/refpix              @stscirij          @philhodge
+jwst/resample            @stsci-hack        @jdavies-st
+jwst/reset               @jemorrison        @philhodge
+jwst/rscd                @jemorrison        @philhodge
+jwst/saturation          @dmggh             @hbushouse
+jwst/lib                 @stscieisenhamer   @nden
+jwst/skymatch            @mcara             @stsci-hack
+jwst/source_catalog      @larrybradley      @jdavies-st
+jwst/straylight          @jemorrison        @sosey
+jwst/superbias           @hbushouse         @dmggh
+jwst/timeconversion      @perrygreenfield   @philhodge
+jwst/tweakreg            @mcara             @larrybradley
+jwst/tweakreg_catalog    @larrybradley      @jdavies-st
+jwst/wfs_combine         @dmggh             @perrygreenfield
+jwst/datamodels          @bernie-simon
+jwst/stpipe              @bernie-simon

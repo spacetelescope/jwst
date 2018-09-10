@@ -93,6 +93,8 @@ allOf:
       $ref: "#definitions/slice_transforms"
     slice_28:
       $ref: "#definitions/slice_transforms"
+    slice_29:
+      $ref: "#definitions/slice_transforms"
     meta:
       type: object
       properties:
@@ -108,4 +110,3 @@ allOf:
           anyOf:
             - type: string
             - $ref: http://stsci.edu/schemas/asdf/unit/unit-1.0.0
-additionalProperties: false

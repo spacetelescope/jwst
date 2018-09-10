@@ -3,13 +3,13 @@ import copy
 import logging
 from os.path import (
     basename,
+    split,
     splitext
 )
 import re
 
 from jwst.associations import (
     Association,
-    AssociationRegistry,
     libpath
 )
 from jwst.associations.registry import RegistryMarker
@@ -29,6 +29,7 @@ from jwst.associations.lib.dms_base import (
 )
 from jwst.associations.lib.rules_level3_base import _EMPTY
 from jwst.associations.lib.rules_level3_base import Utility as Utility_Level3
+from jwst.lib.suffix import remove_suffix
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -47,6 +48,7 @@ __all__ = [
     'Constraint_Mode',
     'Constraint_Special',
     'Constraint_Spectral_Science',
+    'Constraint_Target',
     'DMSLevel2bBase',
     'DMSAttrConstraint',
     'Utility'
@@ -351,10 +353,73 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         # fail.
         return False
 
+    def make_nod_asns(self):
+        """Make background nod Associations
+
+        For observing modes, such as NIRSpec MSA, exposures can be
+        nodded, such that the object is in a different position in the
+        slitlet. The association creation simply groups these all
+        together as a single association, all exposures marked as
+        `science`. When complete, this method will create separate
+        associations each exposure becoming the single science
+        exposure, and the other exposures then become `background`.
+
+        Returns
+        -------
+        associations: [association[, ...]]
+            List of new associations to be used in place of
+            the current one.
+
+        """
+
+        for product in self['products']:
+            members = product['members']
+
+            # Split out the science vs. non-science
+            # The non-science exposures will get attached
+            # to every resulting association.
+            science_exps = [
+                member
+                for member in members
+                if member['exptype'] == 'science'
+            ]
+            nonscience_exps = [
+                member
+                for member in members
+                if member['exptype'] != 'science'
+            ]
+
+            # Create new associations for each science, using
+            # the other science as background.
+            results = []
+            for science_exp in science_exps:
+                asn = copy.deepcopy(self)
+                asn.data['products'] = None
+
+                product_name = remove_suffix(
+                    splitext(split(science_exp['expname'])[1])[0]
+                )[0]
+                asn.new_product(product_name)
+                new_members = asn.current_product['members']
+                new_members.append(science_exp)
+
+                for other_science in science_exps:
+                    if other_science['expname'] != science_exp['expname']:
+                        now_background = copy.copy(other_science)
+                        now_background['exptype'] = 'background'
+                        new_members.append(now_background)
+
+                new_members += nonscience_exps
+
+                if asn.is_valid:
+                    results.append(asn)
+
+            return results
+
     def __repr__(self):
         try:
             file_name, json_repr = self.ioregistry['json'].dump(self)
-        except:
+        except Exception:
             return str(self.__class__)
         return json_repr
 
@@ -575,14 +640,6 @@ class Constraint_Mode(Constraint):
     def __init__(self):
         super(Constraint_Mode, self).__init__([
             DMSAttrConstraint(
-                name='program',
-                sources=['program']
-            ),
-            DMSAttrConstraint(
-                name='target',
-                sources=['targetid'],
-            ),
-            DMSAttrConstraint(
                 name='instrument',
                 sources=['instrume']
             ),
@@ -607,6 +664,24 @@ class Constraint_Mode(Constraint):
             DMSAttrConstraint(
                 name='channel',
                 sources=['channel'],
+                required=False,
+            ),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        sources=['detector'],
+                        value='nirspec'
+                    ),
+                    DMSAttrConstraint(
+                        sources=['filter'],
+                        value='opaque'
+                    ),
+                ],
+                reduce=Constraint.notany
+            ),
+            DMSAttrConstraint(
+                name='slit',
+                sources=['fxd_slit'],
                 required=False,
             )
         ])
@@ -667,21 +742,41 @@ class Constraint_Special(DMSAttrConstraint):
 
 
 class Constraint_Spectral_Science(Constraint):
-    """Select on spectral science"""
-    def __init__(self):
+    """Select on spectral science
 
-        # Remove NRS_MSASPEC from the science list.
-        science_exp_types = copy.copy(SPEC2_SCIENCE_EXP_TYPES)
-        science_exp_types.remove('nrs_msaspec')
+    Parameters
+    exclude_exp_types: [exp_type[, ...]]
+        List of exposure types to not consider from
+        from the general list.
+    """
+
+    def __init__(self, exclude_exp_types=None):
+        if exclude_exp_types is None:
+            general_science = SPEC2_SCIENCE_EXP_TYPES
+        else:
+            general_science = set(SPEC2_SCIENCE_EXP_TYPES).symmetric_difference(
+                exclude_exp_types
+            )
+
         super(Constraint_Spectral_Science, self).__init__(
             [
                 DMSAttrConstraint(
                     name='exp_type',
                     sources=['exp_type'],
-                    value='|'.join(science_exp_types)
+                    value='|'.join(general_science)
                 )
             ],
             reduce=Constraint.any
+        )
+
+
+class Constraint_Target(DMSAttrConstraint):
+    """Select on target id"""
+
+    def __init__(self):
+        super(Constraint_Target, self).__init__(
+            name='target',
+            sources=['targetid'],
         )
 
 

@@ -572,6 +572,7 @@ class Constraint:
         to_reprocess = []
         for constraint in constraints:
             match, reprocess = constraint.check_and_set(item)
+
             if match:
                 if all_match:
                     to_reprocess.append(reprocess)

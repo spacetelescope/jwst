@@ -12,7 +12,7 @@ from ..mrs_imatch import mrs_imatch_step
 from ..outlier_detection import outlier_detection_step
 from ..resample import resample_spec_step
 
-__version__ = '0.9.3'
+__all__ = ['Spec3Pipeline']
 
 # Group exposure types
 MULTISOURCE_MODELS = ['MultiSlitModel']
@@ -103,7 +103,7 @@ class Spec3Pipeline(Pipeline):
             if isinstance(source, tuple):
                 source_id, result = source
                 self.output_file = format_product(
-                    output_file, source_id=int(source_id)
+                    output_file, source_id=source_id.lower()
                 )
             else:
                 result = source

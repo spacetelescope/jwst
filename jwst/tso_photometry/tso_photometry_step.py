@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-import asdf
-from ..stpipe import Step, cmdline
+from ..stpipe import Step
 from ..datamodels import CubeModel
 from ..datamodels import TsoPhotModel
 from ..lib.catalog_utils import replace_suffix_ext
@@ -85,11 +84,11 @@ def get_ref_data(reffile, pupil='ANY'):
                              item.radius_inner, item.radius_outer)
 
     if value is not None:
-         (radius, radius_inner, radius_outer) = value
+        (radius, radius_inner, radius_outer) = value
     elif val_any_pupil is not None:
-         (radius, radius_inner, radius_outer) = val_any_pupil
+        (radius, radius_inner, radius_outer) = val_any_pupil
     else:
-         (radius, radius_inner, radius_outer) = (0., 0., 0.)
+        (radius, radius_inner, radius_outer) = (0., 0., 0.)
 
     ref_model.close()
 

@@ -1,10 +1,8 @@
 #
 #  Module for  subtracting reset correction from  science data sets
 #
-
 import numpy as np
 import logging
-from jwst import datamodels
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

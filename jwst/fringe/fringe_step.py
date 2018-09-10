@@ -1,6 +1,5 @@
 #! /usr/bin/env python
-
-from ..stpipe import Step, cmdline
+from ..stpipe import Step
 from .. import datamodels
 from . import fringe
 
@@ -42,4 +41,3 @@ class FringeStep(Step):
             fringe_model.close()
 
         return output_model
-

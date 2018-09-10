@@ -25,7 +25,6 @@ except ImportError:
 from . import config_parser
 from . import crds_client
 from . import log
-from .suffix import remove_suffix
 from . import utilities
 from .. import __version_commit__, __version__
 from ..associations.load_as_asn import (LoadAsAssociation, LoadAsLevel2Asn)
@@ -33,6 +32,7 @@ from ..associations.lib.format_template import FormatTemplate
 from ..associations.lib.update_path import update_key_value
 from ..datamodels import (DataModel, ModelContainer)
 from ..datamodels import open as dm_open
+from ..lib.suffix import remove_suffix
 
 
 class Step():
@@ -687,17 +687,21 @@ class Step():
         """
         self._set_input_dir(obj, exclusive=exclusive)
 
+        err_message = (
+            'Cannot set master input file name from object'
+            ' {}'.format(obj)
+        )
         parent_input_filename = self.search_attr('_input_filename')
         if not exclusive or parent_input_filename is None:
             if isinstance(obj, str):
                 self._input_filename = obj
             elif isinstance(obj, DataModel):
-                self._input_filename = obj.meta.filename
+                try:
+                    self._input_filename = obj.meta.filename
+                except AttributeError:
+                    self.log.debug(err_message)
             else:
-                self.log.debug(
-                    'Cannot set master input file name from object'
-                    ' {}'.format(obj)
-                )
+                self.log.debug(err_message)
 
     def save_model(self,
                    model,
