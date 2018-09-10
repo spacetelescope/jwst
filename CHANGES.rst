@@ -49,7 +49,9 @@ associations
 
 - Synced code version with jwst package version. [#2458]
 
-- Implemented source naming for NIRISS WFSS Level3 associations [#2443]
+- Implemented source naming for NIRISS WFSS Level3 associations. [#2443]
+
+- Updated Level2 product naming to use pipeline's remove_suffix. [#2481]
 
 background
 ----------

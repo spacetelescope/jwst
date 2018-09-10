@@ -2,7 +2,7 @@
     "asn_type": "spec2",
     "asn_rule": "candidate_Asn_Lv2NRSMSA",
     "version_id": null,
-    "code_version": "0.11.0",
+    "code_version": "0.10.1a.dev237",
     "degraded_status": "No known degraded exposures in association.",
     "program": "84600",
     "target": "1",
