@@ -89,10 +89,15 @@ def extract_tso_object(input_model,
     if extract_orders is None:
         log.info("Using default order extraction from reference file")
         extract_orders = ref_extract_orders
+        available_orders = [x[1] for x in extract_orders if x[0] == input_model.meta.instrument.filter].pop()
     else:
-        raise NotImplementedError("Multiple order extraction for TSO not currently implemented")
+        if not isinstance(extract_orders, list):
+            raise TypeError('Expected extract_orders to be a list of integers')
+        print(extract_orders)
+        available_orders = extract_orders
 
-    available_orders = [x[1] for x in extract_orders if x[0] == input_model.meta.instrument.filter].pop()
+    if len(available_orders) > 1:
+        raise NotImplementedError("Multiple order extraction for TSO not currently implemented")
 
     # team currently wants only a slit model
     # if len(available_orders) > 1:

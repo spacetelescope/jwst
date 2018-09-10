@@ -15,6 +15,10 @@ pytestmark = [
 ]
 
 
+@pytest.mark.xfail(
+    reason='Input data not available',
+    run=False
+)
 def test_nrs2_nodata_api(_bigdata):
     """
 
@@ -33,6 +37,10 @@ def test_nrs2_nodata_api(_bigdata):
         ))
 
 
+@pytest.mark.xfail(
+    reason='Input data not available',
+    run=False
+)
 def test_nrs2_nodata_strun(_bigdata):
     """Ensure that the appropriate exit status is returned from strun"""
 

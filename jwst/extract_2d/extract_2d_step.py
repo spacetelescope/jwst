@@ -16,9 +16,9 @@ class Extract2dStep(Step):
     spec = """
         slit_name = string(default=None)
         apply_wavecorr = boolean(default=True)
-        extract_orders = list(default=None)
-        extract_height =  int(default=None)
-        grism_objects = list(default=None)
+        extract_orders = int_list(default=None)  # list of orders to extract
+        extract_height =  integer(default=None)  # extraction height in pixels
+        grism_objects = list(default=None)  # list of grism objects to use
     """
 
     reference_file_types = ['wavecorr', 'wavelengthrange']
