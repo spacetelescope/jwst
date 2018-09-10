@@ -23,7 +23,7 @@ assign_wcs
 - Added a wavelength correction for the effective velocity of JWST
   relative to the barycenter.                                  [#2359, #2406]
 
-- UPdated NRC_TSGRISM to assign source location to set pixel [#2286]
+- Updated NRC_TSGRISM to assign source location to set pixel [#2286]
 
 - Fixed bug in assign_wcs for ordering of slits for NIRSPEC MSA data [#2366]
 
