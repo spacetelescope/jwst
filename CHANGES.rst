@@ -1,5 +1,5 @@
-0.11.0(Unreleased)
-==================
+0.11.0
+======
 
 The 0.11.0 release is highlighted by the inclusion of steps for resampling
 spectral images and time series grism observations.   In addition, this
