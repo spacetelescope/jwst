@@ -1,5 +1,5 @@
-0.11.0
-======
+0.11.0 (2018-09-10)
+===================
 
 The 0.11.0 release is highlighted by the inclusion of steps for resampling
 spectral images and time series grism observations.   In addition, this
