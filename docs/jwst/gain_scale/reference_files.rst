@@ -21,4 +21,4 @@ Keyword     Data models
 GAINFACT    meta.exposure.gain_factor
 ==========  =========================
 
-The value of GAINFACT is expected to be in the range 1..10.
+The value of GAINFACT is expected to be in the range 1..10 for NIRSPEC.
