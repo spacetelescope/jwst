@@ -1,5 +1,12 @@
-0.11.0(Unreleased)
-==================
+0.11.0
+======
+
+The 0.11.0 release is highlighted by the inclusion of steps for resampling
+spectral images and time series grism observations.   In addition, this
+release had 39 issues closed and a number of pull requests to improve PEP8
+compliance, improve performance, and enhance the testing.  The release also
+included updated documentation for acessing CRDS when running the JWST 
+pipeline and updates to the reference file documentation. 
 
 ami
 ---
@@ -16,18 +23,33 @@ assign_wcs
 - Added a wavelength correction for the effective velocity of JWST
   relative to the barycenter.                                  [#2359, #2406]
 
-- NRC_TSGRISM assigns source location to set pixel [#1235]
+- Updated NRC_TSGRISM to assign source location to set pixel [#2286]
+
+- Fixed bug in assign_wcs for ordering of slits for NIRSPEC MSA data [#2366]
+
+- Implemented support for reading and writing WCS information in the 
+  WAVE-TAB format [#2350]
+
+- Fixed bug in the ording of cube footprint [#2371]
 
 associations
 ------------
 
 - Implemented Rule for Level 2 Nirspec Fixed Slit background. [#2307]
-- Handle both numeric and named slits for Level3 products. [#2330]
-- Remove MIR_LRS-SLITLESS and NIS_SOSS from the permanent TSO list. [#2330]
-- Implement new Level2a rule `Asn_Lv2NRSLAMP`. [#2177]
-- Allow "N/A" as a valid, but False, value in association pools. [#2334]
-- Implement new association types tso_image2 and tso_spec2. [#2431]
-- Sync code version with jwst package version. [#2458]
+
+- Included Handling of both numeric and named slits for Level3 products. [#2330]
+
+- Removed MIR_LRS-SLITLESS and NIS_SOSS from the permanent TSO list. [#2330]
+
+- Implemented new Level2a rule `Asn_Lv2NRSLAMP`. [#2177]
+
+- Allowed "N/A" as a valid, but False, value in association pools. [#2334]
+
+- Implemented new association types tso_image2 and tso_spec2. [#2431]
+
+- Synced code version with jwst package version. [#2458]
+
+- Implemented source naming for NIRISS WFSS Level3 associations [#2443]
 
 background
 ----------
@@ -50,6 +72,11 @@ csv_tools
 cube_build
 ----------
 
+- Fixed bug in cube_build.blot_images that was failing for  NIRSPEC IFU images
+  with the slide position defined in the WCS [#2345]
+
+- Updated the construction of cube footprint [#2371, #2364, #2327]
+
 cube_skymatch
 -------------
 
@@ -59,6 +86,8 @@ dark_current
 datamodels
 ----------
 
+- Added a new info method, similar to the method in astropy fits [#2268]
+
 - The ``DataModel`` ``__hasattr__`` method has been replaced by ``hasattr``.
   The former created the attribute when it was accessed. [#2275]
 
@@ -66,9 +95,10 @@ datamodels
 
 - New warning message when opening a file without DATAMODL keyword. [#2248]
 
-- New info method, similar to the method in astropy fits [#2268]
+- Included the ability to handle 'allOf' when reading in  schemas [#2407]
 
-- Removed BaseExtension class, it was not being used [#2003]
+- Removed BaseExtension class, it was not being used [#2430]
+
 
 dq_init
 -------
@@ -87,17 +117,24 @@ extract_1d
 
 extract_2d
 ----------
+
 - NRC_TSGRISM implemented with set source location and extraction options [#1710, #1235]
+
 - Fixed step calling error for unreferenced attribute [#2463]
+
 - Fixed type specification for optional grism mode inputs [#2467]
 
 firstframe
 ----------
 
+- Unit tests added to the first frame step [#2365]
+
 fits_generator
 --------------
 
-- updated pyparsing to v 2.2.0 [#2382]
+- Updated pyparsing to v 2.2.0 [#2382]
+
+- Updated fits_generator to ignore files begining with '.' [#2333]
 
 flatfield
 ---------
@@ -128,6 +165,8 @@ jwpsf
 
 lastframe
 ---------
+
+- Unit tests added for lastframe [#2412]
 
 lib
 ---
@@ -162,11 +201,11 @@ pipeline
 - Fixed a typo in calspec2 which prevented the srctype
   step from running. [#2318]
 
-- Enable resample_spec to run on MIRI fixed slit data in calspec2 [#2424]
+- Enabled resample_spec to run on MIRI fixed slit data in calspec2 [#2424]
 
-- Implement new `Spec2Pipeline` configuration for NIRSpec LAMP exposures [#2174]
+- Implemented new `Spec2Pipeline` configuration for NIRSpec LAMP exposures [#2174]
 
-- Implement specific exit status for "no science on detector" [#2336]
+- Implemented specific exit status for "no science on detector" [#2336]
 
 - Enabled `extract_2d` for NRC_TSGRISM [#2460]
 
@@ -177,6 +216,8 @@ ramp_fitting
 
 refpix
 ------
+
+* The memory performance of refpix was improved [#2315]
 
 resample
 --------
@@ -203,13 +244,19 @@ skymatch
 source_catalog
 --------------
 
+
 srctype
 -------
+
+scripts
+-------
+
+- Added a new script for adding or removing files from an association [#2468]
 
 stpipe
 ------
 
-- Bug fix: Allow not being able to find a default input file name [#2461]
+- Fixed bug to allow not being able to find a default input file name [#2461]
 
 straylight
 ----------
@@ -220,16 +267,23 @@ superbias
 timeconversion
 --------------
 
+- Updated the utc_to_tdb module to compute the radial velocity (m / s) of JWST with respect to the solar-system barycenter, and to assign that value to keyword VELOSYS in the SCI header of the specified FITS file. [#2359]
+
 transforms
 ----------
 
 tso_photometry
 --------------
 
+- Updated tso_photometry step for SUB64P/WLP8 mode #2358
+
+
 tweakreg
 --------
 
 - Fixed the coordinate frames in the output of tweakreg. [#2404]
+
+- Updated TPCorr to work with V2, V3 in arcseconds instead of degrees [#2342]
 
 wfs_combine
 -----------
