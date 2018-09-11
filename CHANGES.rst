@@ -7,6 +7,9 @@ ami
 assign_wcs
 ----------
 
+- The bounding box for Nirspec WCS objects was modified to include the
+  edges of the pixels. [#2491]
+  
 associations
 ------------
 
