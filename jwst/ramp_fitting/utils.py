@@ -1244,14 +1244,13 @@ def fix_sat_ramps( sat_0th_group_int, var_p3, var_both3, slope_int):
     where_all_groups_sat = np.where( sat_0th_group_int != 0)
     num_of_sats = len(where_all_groups_sat[0])
 
-    if num_of_sats > 0:
-        for ii_sat in range(num_of_sats):
-            ii_integ = where_all_groups_sat[0][ii_sat]
-            ii_y = where_all_groups_sat[1][ii_sat]
-            ii_x = where_all_groups_sat[2][ii_sat]
+    for ii_sat in range(num_of_sats):
+        ii_integ = where_all_groups_sat[0][ii_sat]
+        ii_y = where_all_groups_sat[1][ii_sat]
+        ii_x = where_all_groups_sat[2][ii_sat]
 
-            var_p3[ ii_integ, ii_y, ii_x ] = LARGE_VARIANCE
-            var_both3[ ii_integ, ii_y, ii_x ] = LARGE_VARIANCE
-            slope_int[ ii_integ, ii_y, ii_x ] = 0.
+        var_p3[ ii_integ, ii_y, ii_x ] = LARGE_VARIANCE
+        var_both3[ ii_integ, ii_y, ii_x ] = LARGE_VARIANCE
+        slope_int[ ii_integ, ii_y, ii_x ] = 0.
 
     return var_p3, var_both3, slope_int

@@ -432,9 +432,9 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
         var_r4[var_r4 <= 0.] = utils.LARGE_VARIANCE
 
         s_inv_var_p3[num_int, :, :] = (1./var_p4[num_int, :, :, :]).sum(axis=0)
-        var_p3[num_int, :, :] = 1./ (1./var_p4[num_int, :, :, :]).sum(axis=0)
+        var_p3[num_int, :, :] = 1./ s_inv_var_p3[num_int, :, :]
         s_inv_var_r3[num_int, :, :] = (1./var_r4[num_int, :, :, :]).sum(axis=0)
-        var_r3[num_int, :, :] = 1./ (1./var_r4[num_int, :, :, :]).sum(axis=0)
+        var_r3[num_int, :, :] = 1./ s_inv_var_r3[num_int, :, :]
 
         var_both4[ num_int,:,:,:] = var_r4[num_int,:,:,:] + var_p4[num_int,:,:,:]
         inv_var_both4[num_int, :, :, :] = 1./var_both4[num_int, :, :, :]
@@ -457,7 +457,6 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
                             var_p4_int.shape[1]*var_p4_int.shape[2]))
 
         num_seg_int = num_seg_per_int[num_int,:, :] # number of segs per pixel
-        num_pix = num_seg_int.shape[0] * num_seg_int.shape[1]
 
         s_inv_var_both3[num_int,:,:] = (inv_var_both4[num_int,:,:,:]).sum(axis=0)
         var_both3[num_int, :, :] = 1./s_inv_var_both3[num_int, :, :]
@@ -516,7 +515,8 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
     slope_dataset2[np.isnan(slope_dataset2)] = 0.
 
     # Compute the integration-specific slope
-    the_num = (opt_res.slope_seg.copy() * inv_var_both4).sum(axis = 1) 
+    the_num = (opt_res.slope_seg * inv_var_both4).sum(axis = 1)
+
     the_den = (inv_var_both4).sum(axis=1)
     slope_int = the_num/the_den
 
@@ -579,6 +579,7 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
 
     # For multiple-integration datasets, will output integration-specific
     #    results to separate file named <basename> + '_integ.fits'
+    int_times = None
     if n_int > 1:
         if pipe_utils.is_tso(model) and hasattr(model, 'int_times'):
             int_times = model.int_times
@@ -1660,9 +1661,6 @@ def fit_lines(data, mask_2d, rn_sect, gain_sect, ngroups, weighting):
     weighting: string
         'optimal' specifies that optimal weighting should be used; currently
         the only weighting supported.
-
-    group_time: float
-        Time increment between groups, in seconds.
 
     Returns
     -------
