@@ -1084,7 +1084,7 @@ def compute_bounding_box(slit2detector, wavelength_range, slit_ymin=-.5, slit_ym
     y0 = max(0, y_range.min() - 1 - 2)
     y1 = min(2047, y_range.max() - 1 + 2)
 
-    bounding_box = ((x0, x1), (y0, y1))
+    bounding_box = ((x0 - 0.5, x1 + 0.5), (y0 - 0.5, y1 + 0.5))
     return bounding_box
 
 
