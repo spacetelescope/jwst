@@ -10,6 +10,9 @@ assign_wcs
 - The bounding box for Nirspec WCS objects was modified to include the
   edges of the pixels. [#2491]
   
+- Updated assign_wcs to compute the sky footprint of MIRI MRS and Nirspec
+  IFU observations. [#2472]
+
 associations
 ------------
 
