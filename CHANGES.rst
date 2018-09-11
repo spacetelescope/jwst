@@ -74,7 +74,7 @@ fits_generator
 flatfield
 ---------
 
-- Modified the code to find the dispersion direction. [#xxx]
+- Modified the code to find the dispersion direction. [#2492]
 
 fringe
 ------
