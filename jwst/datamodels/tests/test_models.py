@@ -346,6 +346,14 @@ def test_model_with_nonstandard_primary_array():
     m = NonstandardPrimaryArrayModel()
     list(m.keys())
 
+def test_initialize_arrays_with_arglist():
+    shape = (10,10)
+    thirteen = np.full(shape, 13.0)
+    bitz = np.full(shape, 7)
+
+    im = ImageModel(shape, zeroframe=thirteen, dq=bitz)
+    assert np.array_equal(im.zeroframe, thirteen)
+    assert np.array_equal(im.dq, bitz)
 
 def test_relsens():
     with ImageModel() as im:

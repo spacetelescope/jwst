@@ -23,18 +23,3 @@ class PathlossModel(ReferenceFileModel):
         Pathloss parameter for uniform illumination
     """
     schema_url = "pathloss.schema.yaml"
-
-    def __init__(self, init=None, pointsource=None, psvar=None, uniform=None,
-                 **kwargs):
-        super(PathlossModel, self).__init__(init=init, **kwargs)
-
-        if pointsource is not None:
-            self.pointsource = pointsource
-
-        if psvar is not None:
-            self.psvar = psvar
-
-        if uniform is not None:
-            self.uniform = uniform
-
-        # Implicitly create arrays

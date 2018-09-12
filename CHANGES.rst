@@ -59,6 +59,8 @@ dark_current
 datamodels
 ----------
 
+- Initialize arrays and tables from function args in model_base [#2351]
+
 - The ``DataModel`` ``__hasattr__`` method has been replaced by ``hasattr``.
   The former created the attribute when it was accessed. [#2275]
 

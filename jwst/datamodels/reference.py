@@ -1,5 +1,6 @@
 import warnings
 from .model_base import DataModel
+from .dynamicdq import dynamic_mask
 from .validate import ValidationWarning
 
 __all__ = ['ReferenceFileModel']
@@ -63,24 +64,18 @@ class ReferenceImageModel(ReferenceFileModel):
     """
     schema_url = "referenceimage.schema.yaml"
 
-    def __init__(self, init=None, data=None, dq=None, err=None, **kwargs):
+    def __init__(self, init=None, **kwargs):
         super(ReferenceImageModel, self).__init__(init=init, **kwargs)
-
-        if data is not None:
-            self.data = data
-
-        if dq is not None:
-            self.dq = dq
-
-        if err is not None:
-            self.err = err
 
         # Implicitly create arrays
         self.dq = self.dq
         self.err = self.err
 
+        if self.hasattr('dq_def'):
+            self.dq = dynamic_mask(self)
 
-class ReferenceCubeModel(ReferenceFileModel):
+
+class ReferenceCubeModel(ReferenceImageModel):
     """
     A data model for 3D reference images
 
@@ -100,23 +95,7 @@ class ReferenceCubeModel(ReferenceFileModel):
     """
     schema_url = "referencecube.schema.yaml"
 
-    def __init__(self, init=None, data=None, dq=None, err=None, **kwargs):
-        super(ReferenceCubeModel, self).__init__(init=init, **kwargs)
-
-        if data is not None:
-            self.data = data
-
-        if dq is not None:
-            self.dq = dq
-
-        if err is not None:
-            self.err = err
-
-        # Implicitly create arrays
-        self.dq = self.dq
-        self.err = self.err
-
-class ReferenceQuadModel(ReferenceFileModel):
+class ReferenceQuadModel(ReferenceImageModel):
     """
     A data model for 4D reference images
 
@@ -135,19 +114,3 @@ class ReferenceQuadModel(ReferenceFileModel):
         The error array.
     """
     schema_url = "referencequad.schema.yaml"
-
-    def __init__(self, init=None, data=None, dq=None, err=None, **kwargs):
-        super(ReferenceQuadModel, self).__init__(init=init, **kwargs)
-
-        if data is not None:
-            self.data = data
-
-        if dq is not None:
-            self.dq = dq
-
-        if err is not None:
-            self.err = err
-
-        # Implicitly create arrays
-        self.dq = self.dq
-        self.err = self.err

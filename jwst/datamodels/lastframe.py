@@ -1,10 +1,10 @@
-from .reference import ReferenceFileModel
-from .dynamicdq import dynamic_mask
+from .reference import ReferenceImageModel
+
 
 __all__ = ['LastFrameModel']
 
 
-class LastFrameModel(ReferenceFileModel):
+class LastFrameModel(ReferenceImageModel):
     """
     A data model for Last frame correction reference files.
 
@@ -26,25 +26,3 @@ class LastFrameModel(ReferenceFileModel):
         The data quality definitions table.
     """
     schema_url = "lastframe.schema.yaml"
-
-    def __init__(self, init=None, data=None, dq=None, err=None,
-                 dq_def=None, **kwargs):
-        super(LastFrameModel, self).__init__(init=init, **kwargs)
-
-        if data is not None:
-            self.data = data
-
-        if dq is not None:
-            self.dq = dq
-
-        if err is not None:
-            self.err = err
-
-        if dq_def is not None:
-            self.dq_def = dq_def
-
-        self.dq = dynamic_mask(self)
-
-        # Implicitly create arrays
-        self.dq = self.dq
-        self.err = self.err
