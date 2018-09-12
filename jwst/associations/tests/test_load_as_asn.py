@@ -1,5 +1,7 @@
 """Test LoadAsAssociation"""
 
+import pytest
+
 from . import helpers
 from ...datamodels import ImageModel
 from ..load_as_asn import (
@@ -7,6 +9,20 @@ from ..load_as_asn import (
 )
 
 DEFAULT_NAME = 'singleton'
+
+
+@pytest.mark.parametrize(
+    'test_input, expected',
+    [
+        ('file_rate.fits', 'file'),
+        ('file_rate_ref.fits', 'file_rate_ref')
+    ]
+)
+def test_suffix_removal(test_input, expected):
+    """Ensure appropriate suffix removal is occurring"""
+
+    asn = LoadAsLevel2Asn.load([test_input])
+    assert asn['products'][0]['name'] == expected
 
 
 def test_lv2_datamodel():
