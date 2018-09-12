@@ -73,6 +73,8 @@ firstframe
 fits_generator
 --------------
 
+- NIRSpec data now automatically sanitizes the GWA_TILT keyword. [#2494]
+
 
 flatfield
 ---------
