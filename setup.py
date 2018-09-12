@@ -147,7 +147,7 @@ setup(
     author='JWST Pipeline developers',
     author_email='help@stsci.edu',
     description='Python library for science observations from the James Webb Space Telescope',
-    long_desctiption=('The JWST Data Reduction Pipeline is a Python '
+    long_description=('The JWST Data Reduction Pipeline is a Python '
                       'software suite that automatically processes the '
                       'data taken by the JWST instruments NIRCam, NIRSpec, '
                       'NIRISS, MIRI, and FGS to remove instrumental signatures '
