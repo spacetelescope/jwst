@@ -4,6 +4,7 @@ import sys
 
 import numpy as np
 from numpy.testing import assert_allclose
+import pytest
 
 from .. import Step, Pipeline, LinearPipeline
 # TODO: Test system call steps
@@ -206,20 +207,10 @@ def test_pipeline_commandline_invalid_args():
         '--steps.flat_field.threshold=47'
         ]
 
-    __stdout = sys.stdout
     sys.stdout = buffer = StringIO()
 
-    try:
-        pipe = Step.from_cmdline(args)
-    except ValueError:
-        pass
-    else:
-        raise AssertionError("Wanted a ValueError")
-    finally:
-        sys.stdout = __stdout
+    with pytest.raises(ValueError):
+        Step.from_cmdline(args)
 
     help = buffer.getvalue()
-    print(help)
-
-    # Make sure the comments made it into the help message
     assert "Multiply by this number" in help
