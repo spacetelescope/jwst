@@ -559,6 +559,46 @@ format_product = FormatTemplate(
 )
 
 
+def dms_product_name_sources(asn):
+    """Produce source-based product names
+
+    Parameters
+    ---------
+    asn: Association
+        The association for which the product
+        name is to be created.
+
+    Returns
+    -------
+    product_name: str
+        The product name
+    """
+    instrument = asn._get_instrument()
+
+    opt_elem = asn._get_opt_element()
+
+    subarray = asn._get_subarray()
+    if len(subarray):
+        subarray = '-' + subarray
+
+    product_name_format = (
+        'jw{program}-{acid}'
+        '_{source_id}'
+        '_{instrument}'
+        '_{opt_elem}{subarray}'
+    )
+    product_name = format_product(
+        product_name_format,
+        program=asn.data['program'],
+        acid=asn.acid.id,
+        instrument=instrument,
+        opt_elem=opt_elem,
+        subarray=subarray,
+    )
+
+    return product_name.lower()
+
+
 # -----------------
 # Basic constraints
 # -----------------

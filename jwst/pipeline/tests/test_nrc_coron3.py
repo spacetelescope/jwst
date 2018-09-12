@@ -5,7 +5,6 @@ from glob import glob
 from os import path
 
 from .helpers import (
-    SCRIPT_PATH,
     SCRIPT_DATA_PATH,
     abspath,
     mk_tmp_dirs,

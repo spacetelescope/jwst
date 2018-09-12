@@ -3,6 +3,7 @@ import os.path as op
 import traceback
 
 from .. import datamodels
+from ..assign_wcs.util import NoDataOnDetectorError
 from ..lib.pipe_utils import is_tso
 from ..stpipe import Pipeline
 
@@ -23,7 +24,7 @@ from ..cube_build import cube_build_step
 from ..extract_1d import extract_1d_step
 from ..resample import resample_spec_step
 
-__version__ = '0.9.3'
+__all__ = ['Spec2Pipeline']
 
 
 class Spec2Pipeline(Pipeline):
@@ -88,6 +89,11 @@ class Spec2Pipeline(Pipeline):
                     asn['asn_pool'],
                     asn.filename
                 )
+            except NoDataOnDetectorError as exception:
+                # This error merits a special return
+                # status if run from the command line.
+                # Bump it up now.
+                raise exception
             except Exception as exception:
                 traceback.print_exc()
                 has_exceptions = True
@@ -154,7 +160,11 @@ class Spec2Pipeline(Pipeline):
                 if input.meta.source_catalog.filename is None:
                     raise IndexError("No source catalog specified in association or datamodel")
 
-        input = self.assign_wcs(input)
+        assign_wcs_exception = None
+        try:
+            input = self.assign_wcs(input)
+        except Exception as exception:
+            assign_wcs_exception = exception
 
         # Do background processing, if necessary
         if exp_type in WFSS_TYPES or len(members_by_type['background']) > 0:
@@ -178,7 +188,8 @@ class Spec2Pipeline(Pipeline):
 
         # If assign_wcs was skipped, abort the rest of processing,
         # because so many downstream steps depend on the WCS
-        if input.meta.cal_step.assign_wcs != 'COMPLETE':
+        if assign_wcs_exception is not None or \
+           input.meta.cal_step.assign_wcs != 'COMPLETE':
             message = (
                 'Assign_wcs processing was skipped.'
                 '\nAborting remaining processing for this exposure.'
@@ -189,7 +200,10 @@ class Spec2Pipeline(Pipeline):
                 return
             else:
                 self.log.error(message)
-                raise RuntimeError('Cannot determine WCS.')
+                if assign_wcs_exception is not None:
+                    raise assign_wcs_exception
+                else:
+                    raise RuntimeError('Cannot determine WCS.')
 
         # Apply NIRSpec MSA imprint subtraction
         # Technically there should be just one.
@@ -206,16 +220,12 @@ class Spec2Pipeline(Pipeline):
         if exp_type in ['NRS_MSASPEC', 'NRS_IFU']:
             input = self.msa_flagging(input)
 
-        # It isn't really necessary to include 'NRC_TSGRISM' in this list,
-        # but it doesn't hurt, and it makes it clear that flat_field
+        # This makes it clear that flat_field
         # should be done before extract_2d for all WFSS/GRISM data.
         if exp_type in ['NRC_WFSS', 'NIS_WFSS', 'NRC_TSGRISM']:
             # Apply flat-field correction
             input = self.flat_field(input)
-
-            if exp_type != 'NRC_TSGRISM':
-                input = self.extract_2d(input)
-
+            input = self.extract_2d(input)
         else:
             # Extract 2D sub-windows for NIRSpec slit and MSA
             if exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ', 'NRS_MSASPEC']:
@@ -259,9 +269,10 @@ class Spec2Pipeline(Pipeline):
         # Produce a resampled product, either via resample_spec for
         # "regular" spectra or cube_build for IFU data. No resampled
         # product is produced for time-series modes.
-        if exp_type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'MIR_LRS-FIXEDSLIT']:
+        if exp_type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'MIR_LRS-FIXEDSLIT'] \
+        and not isinstance(result, datamodels.CubeModel):
 
-            # Call the resample_spec step for slit data
+            # Call the resample_spec step for 2D slit data
             self.resample_spec.suffix = 's2d'
             result_extra = self.resample_spec(result)
 

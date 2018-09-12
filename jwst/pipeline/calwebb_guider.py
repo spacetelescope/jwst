@@ -8,7 +8,7 @@ from ..dq_init import dq_init_step
 from ..flatfield import flat_field_step
 from ..guider_cds import guider_cds_step
 
-__version__ = '0.9.3'
+__all__ = ['GuiderPipeline']
 
 # Define logging
 log = logging.getLogger()

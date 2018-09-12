@@ -4,12 +4,16 @@ from datetime import datetime
 import json
 import jsonschema
 import logging
+import re
 
 from . import __version__
 from .exceptions import (
     AssociationNotValidError
 )
-from .lib.constraint import Constraint
+from .lib.constraint import (
+    Constraint,
+    meets_conditions
+)
 from .lib.format_template import FormatTemplate
 from .lib.ioregistry import IORegistry
 

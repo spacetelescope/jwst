@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 from ..stpipe import Pipeline
 from .. import datamodels
-import os
 
 # step imports
 from ..group_scale import group_scale_step
@@ -20,23 +19,21 @@ from ..jump import jump_step
 from ..ramp_fitting import ramp_fit_step
 from ..gain_scale import gain_scale_step
 
-
-__version__ = '0.9.3'
+__all__ = ['Detector1Pipeline']
 
 # Define logging
 import logging
 log = logging.getLogger()
 log.setLevel(logging.DEBUG)
 
+
 class Detector1Pipeline(Pipeline):
     """
-
     Detector1Pipeline: Apply all calibration steps to raw JWST
     ramps to produce a 2-D slope product. Included steps are:
     group_scale, dq_init, saturation, ipc, superbias, refpix, rscd,
     lastframe, linearity, dark_current, persistence, jump detection,
     ramp_fit, and gain_scale.
-
     """
 
     spec = """
@@ -60,7 +57,6 @@ class Detector1Pipeline(Pipeline):
                  'ramp_fit': ramp_fit_step.RampFitStep,
                  'gain_scale': gain_scale_step.GainScaleStep,
                  }
-
 
     # start the actual processing
     def process(self, input):

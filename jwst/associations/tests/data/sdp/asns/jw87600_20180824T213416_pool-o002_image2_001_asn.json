@@ -1,0 +1,54 @@
+{
+    "asn_type": "image2",
+    "asn_rule": "candidate_Asn_Lv2ImageNonScience",
+    "version_id": null,
+    "code_version": "0.11.0",
+    "degraded_status": "No known degraded exposures in association.",
+    "program": "87600",
+    "target": "1",
+    "asn_pool": "jw87600_20180824T213416_pool",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '87600'})\nDMSAttrConstraint({'name': 'is_tso', 'sources': ['tsovisit'], 'value': None})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'niriss'})\nDMSAttrConstraint({'name': 'detector', 'sources': ['detector'], 'value': 'nis'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'f277w'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['pupil'], 'value': 'clearp'})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': 'full'})\nDMSAttrConstraint({'name': 'channel', 'sources': ['channel'], 'value': None})\nDMSAttrConstraint({'name': 'slit', 'sources': ['fxd_slit'], 'value': None})\nDMSAttrConstraint({'name': 'non_science', 'sources': ['exp_type'], 'value': 'nis_focus'})\nDMSAttrConstraint({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'nrs_msaspec'})\nSimpleConstraint({'name': 'single_science', 'value': False})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o002\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
+    "asn_id": "o002",
+    "products": [
+        {
+            "name": "jw87600002001_02101_00001_nis",
+            "members": [
+                {
+                    "expname": "jw87600002001_02101_00001_nis_rate.fits",
+                    "exptype": "science",
+                    "exposerr": "null"
+                }
+            ]
+        },
+        {
+            "name": "jw87600002001_02101_00004_nis",
+            "members": [
+                {
+                    "expname": "jw87600002001_02101_00004_nis_rate.fits",
+                    "exptype": "science",
+                    "exposerr": "null"
+                }
+            ]
+        },
+        {
+            "name": "jw87600002001_02101_00003_nis",
+            "members": [
+                {
+                    "expname": "jw87600002001_02101_00003_nis_rate.fits",
+                    "exptype": "science",
+                    "exposerr": "null"
+                }
+            ]
+        },
+        {
+            "name": "jw87600002001_02101_00002_nis",
+            "members": [
+                {
+                    "expname": "jw87600002001_02101_00002_nis_rate.fits",
+                    "exptype": "science",
+                    "exposerr": "null"
+                }
+            ]
+        }
+    ]
+}

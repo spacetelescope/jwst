@@ -48,6 +48,7 @@ __all__ = [
     'Constraint_Mode',
     'Constraint_Special',
     'Constraint_Spectral_Science',
+    'Constraint_Target',
     'DMSLevel2bBase',
     'DMSAttrConstraint',
     'Utility'
@@ -64,7 +65,6 @@ FLAG_TO_EXPTYPE = {
 # File templates
 _DMS_POOLNAME_REGEX = 'jw(\d{5})_(\d{3})_(\d{8}[Tt]\d{6})_pool'
 _LEVEL1B_REGEX = '(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
-_REGEX_LEVEL2A = '(?P<path>.+)(?P<type>_rate(ints)?)'
 
 # Key that uniquely identfies items.
 KEY = 'expname'
@@ -158,11 +158,8 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         except Exception:
             return PRODUCT_NAME_DEFAULT
 
-        match = re.match(_REGEX_LEVEL2A, science_path)
-        if match:
-            return match.groupdict()['path']
-        else:
-            return science_path
+        no_suffix_path, separator = remove_suffix(science_path)
+        return no_suffix_path
 
     def make_member(self, item):
         """Create a member from the item
@@ -639,14 +636,6 @@ class Constraint_Mode(Constraint):
     def __init__(self):
         super(Constraint_Mode, self).__init__([
             DMSAttrConstraint(
-                name='program',
-                sources=['program']
-            ),
-            DMSAttrConstraint(
-                name='target',
-                sources=['targetid'],
-            ),
-            DMSAttrConstraint(
                 name='instrument',
                 sources=['instrume']
             ),
@@ -672,6 +661,19 @@ class Constraint_Mode(Constraint):
                 name='channel',
                 sources=['channel'],
                 required=False,
+            ),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        sources=['detector'],
+                        value='nirspec'
+                    ),
+                    DMSAttrConstraint(
+                        sources=['filter'],
+                        value='opaque'
+                    ),
+                ],
+                reduce=Constraint.notany
             ),
             DMSAttrConstraint(
                 name='slit',
@@ -761,6 +763,16 @@ class Constraint_Spectral_Science(Constraint):
                 )
             ],
             reduce=Constraint.any
+        )
+
+
+class Constraint_Target(DMSAttrConstraint):
+    """Select on target id"""
+
+    def __init__(self):
+        super(Constraint_Target, self).__init__(
+            name='target',
+            sources=['targetid'],
         )
 
 

@@ -369,8 +369,10 @@ def flip_rotate(input_hdulist):
         slowaxis = 1
         gwaxtilt = sanitize(header, 'GWA_XTIL', type=float)
         gwaytilt = sanitize(header, 'GWA_YTIL', type=float)
+        gwa_tilt = sanitize(header, 'GWA_TTIL', type=float)
         header['GWA_XTIL'] = gwaxtilt
         header['GWA_YTIL'] = gwaytilt
+        header['GWA_TTIL'] = gwa_tilt
     elif sca == 492:
         #
         # NIRSpec NRS2
@@ -426,8 +428,10 @@ def flip_rotate(input_hdulist):
         slowaxis = -1
         gwaxtilt = sanitize(header, 'GWA_XTIL', type=float)
         gwaytilt = sanitize(header, 'GWA_YTIL', type=float)
+        gwa_tilt = sanitize(header, 'GWA_TTIL', type=float)
         header['GWA_XTIL'] = gwaxtilt
         header['GWA_YTIL'] = gwaytilt
+        header['GWA_TTIL'] = gwa_tilt
     elif sca == 496:
         #
         # TFI/NIRISS is like NRS2: flipped across the line X=Y and then
