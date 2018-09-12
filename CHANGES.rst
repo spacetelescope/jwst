@@ -48,7 +48,8 @@ cube_build
   code can be used for both MIRI and NIRSPEC data [#2472] 
 - Removed some loops in cube_cloud.py for finding which pixels fall in roi 
   of spaxels [#2472] 
-
+- In a test with MIRI data there was a 13% improvement in the speed of making IFUcubes. In the
+  NIRSPEC case there was a 40% improvment in the speed of creating IFUCubes.  
 cube_skymatch
 -------------
 
