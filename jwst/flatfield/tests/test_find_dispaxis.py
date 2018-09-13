@@ -1,8 +1,6 @@
 """
 Test for flat_field.find_dispaxis
 """
-import pytest
-
 import numpy as np
 
 from jwst.flatfield import flat_field
