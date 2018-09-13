@@ -792,11 +792,8 @@ def find_dispaxis(wl):
         indicates that the dispersion direction could not be determined.
     """
 
-    mask = (wl == 0.)
     wl_array = wl.copy()
-    if np.any(mask):
-        wl_array[mask] = np.nan
-    del mask
+    wl_array[wl==0.] = np.nan
     delta_wl_x = wl_array[:, 1:] - wl_array[:, 0:-1]
     delta_wl_y = wl_array[1:, :] - wl_array[0:-1, :]
     dwlx = np.nanmedian(delta_wl_x)
