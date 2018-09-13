@@ -95,7 +95,11 @@ class CubeBuildStep (Step):
         # 2. world
         self.interpolation = 'pointcloud' # true for self.weighting  = 'msm' or 'miripsf'
 
+
         # if the weighting is area then interpolation is area
+        # if the weighting is area then interpolation is area. Weighting of area or interpolation
+        # of area is only for single band data.
+
         if self.weighting == 'area':
             self.interpolation = 'area'
             self.coord_system = 'alpha-beta'
@@ -262,11 +266,16 @@ class CubeBuildStep (Step):
                 **pars_cube)
 
 #________________________________________________________________________________
+            thiscube.check_ifucube() # basic checks
 
-            thiscube.check_ifucube() # basic checks and get roi size
+# Based on channel/subchannel or grating/prism find
+# spatial spaxel size, min wave, max wave
+# set linear_wavelength to true or false depending on which type of IFU cube creating
+# if linear wavelength (single band) single values for rois, roiw, weight_power, softrad
+# if not linear wavelength (multi bands) an array based on wavelength for:
+#  rois, roiw, weight_power, softrad
 
-# find the min & max final coordinates of cube: map each slice to cube
-# find the min & max value in each dimension
+            thiscube.determine_cube_parameters()
 
             thiscube.setup_ifucube_wcs()
 #________________________________________________________________________________

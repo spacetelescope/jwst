@@ -9,14 +9,15 @@ log.setLevel(logging.DEBUG)
 #________________________________________________________________________________
 def match_det2cube_msm(naxis1, naxis2, naxis3,
                        cdelt1, cdelt2, cdelt3,
-                       rois, roiw,
-                       msm_weight_power,
+                       zcdelt3,
+                       roiw,
                        xcenters, ycenters, zcoord,
                        spaxel_flux,
                        spaxel_weight,
                        spaxel_iflux,
                        flux,
-                       coord1, coord2, wave):
+                       coord1, coord2, wave,
+                       rois_pixel, roiw_pixel, weight_pixel, softrad_pixel):
 
     """
     Short Summary
@@ -47,11 +48,14 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
     """
 
     nplane = naxis1 * naxis2
-    lower_limit = 0.01
-
+    
 # now loop over the pixel values for this region and find the spaxels that fall
 # withing the region of interest.
     nn = coord1.size
+
+    ilow = 0 
+    ihigh = 0 
+    imatch  = 0 
 #    print('looping over n points mapping to cloud',nn)
 #________________________________________________________________________________
     for ipt in range(0, nn - 1):
@@ -60,38 +64,60 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
         # cube coordinates.
         # find the spaxels that fall withing ROI of point cloud defined  by
         # coord1,coord2,wave
-
+        lower_limit = softrad_pixel[ipt]
         xdistance = (xcenters - coord1[ipt])
         ydistance = (ycenters - coord2[ipt])
         radius = np.sqrt(xdistance * xdistance + ydistance * ydistance)
-        indexr = np.where(radius <= rois)
-        indexz = np.where(abs(zcoord - wave[ipt]) <= roiw)
+        indexr = np.where(radius <= rois_pixel[ipt])
+        indexz = np.where(abs(zcoord - wave[ipt]) <= roiw_pixel[ipt])
 
-        d1 = np.array(coord1[ipt] - xcenters[indexr]) / cdelt1
-        d2 = np.array(coord2[ipt] - ycenters[indexr]) / cdelt2
-        d3 = np.array(wave[ipt] - zcoord[indexz]) / cdelt3
-        dxy = (d1 * d1) + (d2 * d2)
+        # on the wavelength boundaries the point cloud may not be in the IFUCube
+        # the edge cases are skipped and not included in final IFUcube. 
+        if len(indexz[0]) == 0:
+            if wave[ipt] < zcoord[0]: 
+               ilow = ilow + 1
+
+            elif wave[ipt] > zcoord[-1]: 
+               ihigh = ihigh + 1
+            else:
+                imatch = imatch + 1
+#                print(' no z match found ',wave[ipt],roiw_pixel[ipt],roiw)
+#                print(zcoord[0:10])
+#                print(zcoord[naxis3-11:naxis3])
+#                print(zcoord[-1])
+#                diff = abs(zcoord[naxis3-11:naxis3] - wave[ipt])
+#                print(diff)
+#                exit()
+        else:
+            d1 = np.array(coord1[ipt] - xcenters[indexr]) / cdelt1
+            d2 = np.array(coord2[ipt] - ycenters[indexr]) / cdelt2
+            d3 = np.array(wave[ipt] - zcoord[indexz]) / zcdelt3[indexz]
+        
+            dxy = (d1 * d1) + (d2 * d2)
 
         # shape of dxy is #indexr or number of overlaps in spatial plane
         # shape of d3 is #indexz or number of overlaps in spectral plane
         # shape of dxy_matrix & d3_matrix  (#indexr, #indexz)
         # rows = number of overlaps in spatial plane
         # cols = number of overlaps in spectral plane
-        dxy_matrix = np.tile(dxy[np.newaxis].T, [1, d3.shape[0]])
-        d3_matrix = np.tile(d3 * d3, [dxy_matrix.shape[0], 1])
+            dxy_matrix = np.tile(dxy[np.newaxis].T, [1, d3.shape[0]])
+            d3_matrix = np.tile(d3 * d3, [dxy_matrix.shape[0], 1])
 
-        wdistance = dxy_matrix + d3_matrix
-        weight_distance = np.power(np.sqrt(wdistance), msm_weight_power)
-        weight_distance[weight_distance < lower_limit] = lower_limit
-        weight_distance = 1.0 / weight_distance
-        weight_distance = weight_distance.flatten('F')
-        weighted_flux = weight_distance * flux[ipt]
+            wdistance = dxy_matrix + d3_matrix
+            weight_distance = np.power(np.sqrt(wdistance), weight_pixel[ipt])
+            weight_distance[weight_distance < lower_limit] = lower_limit
+            weight_distance = 1.0 / weight_distance
+            weight_distance = weight_distance.flatten('F')
+            weighted_flux = weight_distance * flux[ipt]
 
-        icube_index = [iz * nplane + ir for iz in indexz[0] for ir in indexr[0]]
-        spaxel_flux[icube_index] = spaxel_flux[icube_index] + weighted_flux
-        spaxel_weight[icube_index] = spaxel_weight[icube_index] + weight_distance
-        spaxel_iflux[icube_index] = spaxel_iflux[icube_index] + 1
+            icube_index = [iz * nplane + ir for iz in indexz[0] for ir in indexr[0]]
+            spaxel_flux[icube_index] = spaxel_flux[icube_index] + weighted_flux
+            spaxel_weight[icube_index] = spaxel_weight[icube_index] + weight_distance
+            spaxel_iflux[icube_index] = spaxel_iflux[icube_index] + 1
 
+    print('Number of pixels not in ifu cube too low wavelength', ilow)
+    print('Number of pixels not in ifu cube too high wavelength', ihigh)
+    print('Number of pixels not in ifu cube not match', imatch)
 #_______________________________________________________________________
 def match_det2cube_miripsf(alpha_resol, beta_resol, wave_resol,
                            worldtov23,
