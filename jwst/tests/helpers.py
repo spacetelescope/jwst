@@ -108,18 +108,3 @@ def test_word_precision_check():
     assert word_precision_check(s1, s2, length=1)
     assert not word_precision_check(s2, s3)
     assert word_precision_check(s2, s4, length=2)
-
-
-@pytest.fixture
-def mk_tmp_dirs():
-    """Create a set of temporary directorys and change to one of them."""
-    tmp_current_path = tempfile.mkdtemp()
-    tmp_data_path = tempfile.mkdtemp()
-    tmp_config_path = tempfile.mkdtemp()
-
-    old_path = os.getcwd()
-    try:
-        os.chdir(tmp_current_path)
-        yield (tmp_current_path, tmp_data_path, tmp_config_path)
-    finally:
-        os.chdir(old_path)

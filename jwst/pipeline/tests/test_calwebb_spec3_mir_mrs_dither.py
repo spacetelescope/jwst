@@ -12,7 +12,6 @@ from os import path
 from .helpers import (
     SCRIPT_DATA_PATH,
     abspath,
-    mk_tmp_dirs,
     require_bigdata,
     runslow,
 )
