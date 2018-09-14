@@ -274,9 +274,8 @@ def update_wcs_from_telem(model, default_pa_v3=0., siaf_path=None, **kwargs):
     except ValueError as exception:
         logger.warning(
             'Cannot retrieve telescope pointing.'
-            'Default pointing parameters will be used.'
-            '\nException is {}'
-            'to set pointing.'.format(exception)
+            ' Default pointing parameters will be used.'
+            '\nException is {}'.format(exception)
         )
     else:
         # compute relevant WCS information
