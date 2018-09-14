@@ -1,6 +1,6 @@
 import pytest
 from astropy.io import fits
-from jwst.ramp_fitting.ramp_fit_step import RamfitsitStep
+from jwst.ramp_fitting import RampFitStep
 
 from ..helpers import add_suffix
 
@@ -18,12 +18,12 @@ def test_ramp_fit_nirspec(_bigdata):
     integration dataset.
 
     """
-    output_file_base, output_files = add_suffix('ramfitsit_output.fits', 'ramfitsit', list(range(1)))
+    output_file_base, output_files = add_suffix('rampfit_output.fits', 'rampfit', list(range(1)))
 
-    RamfitsitStep.call(_bigdata+'/nirspec/test_ramp_fit/jw00023001001_01101_00001_NRS1_jump.fits',
+    RampFitStep.call(_bigdata+'/nirspec/test_ramp_fit/jw00023001001_01101_00001_NRS1_jump.fits',
                       output_file=output_file_base,
                       save_opt=True,
-                      opt_name='ramfitsit_opt_out.fits', name='Ramfitsit'
+                      opt_name='rampfit_opt_out.fits', name='RampFit'
                       )
 
     # compare primary output
@@ -44,7 +44,7 @@ def test_ramp_fit_nirspec(_bigdata):
 
 
     # compare optional output
-    n_optout = 'ramfitsit_opt_out_fitopt.fits'
+    n_optout = 'rampfit_opt_out_fitopt.fits'
     h = fits.open( n_optout )
     n_optref = _bigdata+'/nirspec/test_ramp_fit/jw00023001001_01101_00001_NRS1_opt.fits'
     href = fits.open( n_optref )
