@@ -1,6 +1,6 @@
 from os import path as op
 import pytest
-from astropy.io import fits as pf
+from astropy.io import fits
 
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
@@ -36,9 +36,9 @@ def test_nrs_fs_brightobj_spec2(_bigdata):
         _bigdata,
         'pipelines/jw84600042001_02101_00001_nrs2_calints_ref.fits'
     )
-    h = pf.open(na)
-    href = pf.open(nb)
-    result = pf.diff.FITSDiff(h,
+    h = fits.open(na)
+    href = fits.open(nb)
+    result = fits.diff.FITSDiff(h,
                               href,
                               ignore_hdus=['ASDF'],
                               ignore_keywords=ignore_keywords,
@@ -50,9 +50,9 @@ def test_nrs_fs_brightobj_spec2(_bigdata):
         _bigdata,
         'pipelines/jw84600042001_02101_00001_nrs2_x1dints_ref.fits'
     )
-    h = pf.open(na)
-    href = pf.open(nb)
-    result = pf.diff.FITSDiff(h,
+    h = fits.open(na)
+    href = fits.open(nb)
+    result = fits.diff.FITSDiff(h,
                               href,
                               ignore_hdus=['ASDF'],
                               ignore_keywords=ignore_keywords,
