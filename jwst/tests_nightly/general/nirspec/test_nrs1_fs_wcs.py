@@ -22,10 +22,7 @@ def test_nirspec_nrs1_wcs(_bigdata):
     input_file = os.path.join(_bigdata, 'nirspec', 'test_wcs', 'nrs1-fs', 'jw00023001001_01101_00001_NRS1_ramp_fit.fits')
     ref_file = os.path.join(_bigdata, 'nirspec', 'test_wcs', 'nrs1-fs', 'jw00023001001_01101_00001_NRS1_ramp_fit_assign_wcs.fits')
 
-    result = AssignWcsStep.call(input_file,
-                       save_results=True,
-                       suffix='assign_wcs'
-                       )
+    result = AssignWcsStep.call(input_file, save_results=True, suffix='assign_wcs')
     result.close()
 
     im = ImageModel(result.meta.filename)
