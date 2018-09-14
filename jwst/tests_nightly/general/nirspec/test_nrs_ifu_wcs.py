@@ -29,10 +29,7 @@ def test_nirspec_ifu_wcs(_bigdata, test_id, input_file, truth_file):
     input_file = os.path.join(_bigdata, 'nirspec', 'test_wcs', 'nrs1-ifu', input_file)
     truth_file = os.path.join(_bigdata, 'nirspec', 'test_wcs', 'nrs1-ifu', truth_file)
 
-    result = AssignWcsStep.call(input_file,
-                       save_results=True,
-                       suffix='assign_wcs'
-                       )
+    result = AssignWcsStep.call(input_file, save_results=True, suffix='assign_wcs')
     result.close()
 
     im = ImageModel(result.meta.filename)
