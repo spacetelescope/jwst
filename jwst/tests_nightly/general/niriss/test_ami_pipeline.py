@@ -1,4 +1,3 @@
-import os
 import pytest
 from astropy.io import fits
 from jwst.pipeline.calwebb_ami3 import Ami3Pipeline

@@ -17,15 +17,8 @@ pytestmark = [
 
 def test_miri_ifu_wcs(_bigdata):
     """
-
     Regression test of creating a WCS object and doing pixel to sky transformation.
-
     """
-    try:
-        os.remove("miri_ifu_wcs_output.fits")
-    except:
-        pass
-
     input_file = os.path.join(_bigdata, 'miri', 'test_wcs', 'ifu', 'jw00024001001_01101_00001_MIRIFUSHORT_uncal_MiriSloperPipeline.fits')
     ref_file = os.path.join(_bigdata, 'miri', 'test_wcs', 'ifu', 'jw00024001001_01101_00001_MIRIFUSHORT_assign_wcs.fits')
 

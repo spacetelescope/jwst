@@ -1,6 +1,5 @@
-import os
 import pytest
-from astropy.io import fits as pf
+from astropy.io import fits
 from jwst.pipeline.calwebb_spec2 import Spec2Pipeline
 
 pytestmark = [
@@ -24,11 +23,11 @@ def test_miri_lrs_slit_1b(_bigdata):
 
     n_cr = 'jw00035001001_01101_00001_MIRIMAGE_calints.fits'
     n_ref = _bigdata+'/pipelines/jw00035001001_01101_00001_MIRIMAGE_calints_ref.fits'
-    h = pf.open(n_cr)
-    href = pf.open(n_ref)
-    newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['dq'],h['relsens']])
-    newhref = pf.HDUList([href['primary'],href['sci'],href['err'],href['dq'],href['relsens']])
-    result = pf.diff.FITSDiff(newh,
+    h = fits.open(n_cr)
+    href = fits.open(n_ref)
+    newh = fits.HDUList([h['primary'],h['sci'],h['err'],h['dq'],h['relsens']])
+    newhref = fits.HDUList([href['primary'],href['sci'],href['err'],href['dq'],href['relsens']])
+    result = fits.diff.FITSDiff(newh,
                               newhref,
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
                               rtol = 0.00001
@@ -38,11 +37,11 @@ def test_miri_lrs_slit_1b(_bigdata):
 
     n_cr = 'jw00035001001_01101_00001_MIRIMAGE_x1dints.fits'
     n_ref = _bigdata+'/pipelines/jw00035001001_01101_00001_MIRIMAGE_x1dints_ref.fits'
-    h = pf.open(n_cr)
-    href = pf.open(n_ref)
-    newh = pf.HDUList([h['primary'],h['extract1d',1],h['extract1d',2],h['extract1d',3],h['extract1d',4]])
-    newhref = pf.HDUList([href['primary'],href['extract1d',1],href['extract1d',2],href['extract1d',3],href['extract1d',4]])
-    result = pf.diff.FITSDiff(newh,
+    h = fits.open(n_cr)
+    href = fits.open(n_ref)
+    newh = fits.HDUList([h['primary'],h['extract1d',1],h['extract1d',2],h['extract1d',3],h['extract1d',4]])
+    newhref = fits.HDUList([href['primary'],href['extract1d',1],href['extract1d',2],href['extract1d',3],href['extract1d',4]])
+    result = fits.diff.FITSDiff(newh,
                               newhref,
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
                               rtol = 0.00001
