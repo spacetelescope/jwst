@@ -12,6 +12,7 @@ from astropy.io import fits
 from astropy.modeling import models as astmodels
 from astropy.table import QTable
 from astropy.constants import c
+from astropy.wcs.utils import skycoord_to_pixel
 
 from gwcs import WCS
 from gwcs.wcstools import wcs_from_fiducial, grid_from_bounding_box
@@ -319,14 +320,18 @@ def get_object_info(catalog_name=None):
 
     """
     if catalog_name is None:
-        raise TypeError("Expected name of the catalog file")
+        err_text = "Expected name of the catalog file"
+        log.error(err_text)
+        raise TypeError(err_text)
     objects = []
     if isinstance(catalog_name, (str)):
         catalog = QTable.read(catalog_name, format='ascii.ecsv')
     elif isinstance(catalog_name, QTable):
         pass
     else:
-        raise TypeError("Need to input name of catalog or astropy.table.table.QTable instance")
+        err_text = "Need to input name of catalog or astropy.table.table.QTable instance"
+        log.error(err_text)
+        raise TypeError(err_text)
 
     # validate that the expected columns are there
     # id is just a bad name for a param, but it's used in the catalog
@@ -337,11 +342,13 @@ def get_object_info(catalog_name=None):
     try:
         if not set(required_fields).issubset(set(catalog.colnames)):
             difference = set(catalog.colnames).difference(required_fields)
-            raise KeyError("Missing required columns in source catalog: {0}"
-                           .format(difference))
+            err_text = "Missing required columns in source catalog: {0}".format(difference)
+            log.error(err_text)
+            raise KeyError(err_text)
     except AttributeError as e:
-        print("Problem validating object catalog columns: {0}"
-              .format(e))
+        err_text = "Problem validating object catalog columns: {0}".format(e)
+        log.error(err_text)
+        raise AttributeError
 
     # The columns are named sky_bbox_ll, sky_bbox_ul, sky_bbox_lr, and sky_bbox_ur, each of
     # which is a SkyCoord (i.e. RA & Dec & frame) at one corner of the minimal bounding box.
@@ -369,7 +376,8 @@ def get_object_info(catalog_name=None):
 def create_grism_bbox(input_model,
                       reference_files,
                       mmag_extract=99.0,
-                      extract_orders=None):
+                      extract_orders=None,
+                      use_fits_wcs=True):
     """Create bounding boxes for each object in the catalog
 
     The sky coordinates in the catalog image are first related
@@ -391,6 +399,13 @@ def create_grism_bbox(input_model,
     extract_orders : list
         The list of orders to extract, if specified this will
         override the orders listed in the wavelengthrange reference file
+    use_fits_wcs: bool
+        Use the fits_wcs to translate the object centers in source catalog.
+        In early pipeline testing the source catalog step is not using GWCS
+        to translate detector<->sky locations. This will allow for part of the
+        transform to get the correct detector pointing to send the correct
+        object centers in the trace polynomial transforms that live in the
+        gwcs object.
 
     Returns
     -------
@@ -400,17 +415,17 @@ def create_grism_bbox(input_model,
 
     Notes
     -----
-    The wavelengthrange reference file is used to govern the extent of the
-    bounding box for each object. The name of the catalog has been stored
-    in the input models meta information under the source_catalog key.
+    The wavelengthrange reference file is used to govern the extent of the bounding box
+    for each object. The name of the catalog has been stored in the input models meta
+    information under the source_catalog key.
 
-    It's left to the calling routine to cut the bounding boxes at the extent
-    of the detector (for example, extract 2d would only extract the on-detector
-    portion of the bounding box)
+    It's left to the calling routine to cut the bounding boxes at the extent of the
+    detector (for example, extract 2d would only extract the on-detector portion of
+    the bounding box)
 
-    Bounding box dispersion direction is dependent on the filter and module for
-    NIRCAM and changes for GRISMR, but is consistent for GRISMC, see
-    https://jwst-docs.stsci.edu/display/JTI/NIRCam+Wide+Field+Slitless+Spectroscopy
+    Bounding box dispersion direction is dependent on the filter and module for NIRCAM
+    and changes for GRISMR, but is consistent for GRISMC,
+    see https://jwst-docs.stsci.edu/display/JTI/NIRCam+Wide+Field+Slitless+Spectroscopy
 
     NIRISS only has one detector, but GRISMC disperses along rows and GRISMR disperses
     along columns.
@@ -421,11 +436,13 @@ def create_grism_bbox(input_model,
     pipeline.
 
     """
-    if mmag_extract is not None:
-        if not isinstance(mmag_extract, (int, float)):
-            raise TypeError("Expected mmag_extract to be an int or float")
+    if use_fits_wcs:
+        log.info("Using fits_wcs object for sky->detector translations")
 
-    # the reference file specifies this in a list
+    if not isinstance(mmag_extract, (int, float)):
+        raise TypeError("Expected mmag_extract to be an int or float")
+    log.info("Extracting objects < abmag = {0}".format(mmag_extract))
+
     if extract_orders is not None:
         if isinstance(extract_orders, list):
             if not all(isinstance(item, int) for item in extract_orders):
@@ -433,115 +450,138 @@ def create_grism_bbox(input_model,
         else:
             raise TypeError("Expected extract_orders to be a list of ints")
 
-    # figure out the dispersion direction, shouldn't this be in the polynomials already?
-    # disperse_row_right = True  # disperse to increasing x
-    # disperse_column = False  # column always disperses to increasing y
-
     instr_name = input_model.meta.instrument.name
     if instr_name == "NIRCAM":
-        module, grism, filter_name = (input_model.meta.instrument.module,
-                                      input_model.meta.instrument.pupil,
-                                      input_model.meta.instrument.filter)
-        # if ((module == "B") and (grism == "GRISMR")):
-        #     disperse_row_right = False
-        # elif (grism == "GRISMC"):
-        #     disperse_column = True
-        #     disperse_row_right = False
-
+        filter_name = input_model.meta.instrument.filter
     elif instr_name == "NIRISS":
-        grism, filter_name = (input_model.meta.instrument.filter,
-                              input_model.meta.instrument.pupil)
-
-        # if "R" == grism[-1]:
-        #     disperse_column = True
-        #     disperse_row_right = False
+        filter_name = input_model.meta.instrument.pupil
     else:
         raise ValueError("Input model is from unexpected instrument")
 
-    # get the array extent to exclude boxes not contained on the detector
-    xsize = input_model.meta.subarray.xsize
-    ysize = input_model.meta.subarray.ysize
-
     # extract the catalog objects
-    catalog = input_model.meta.source_catalog.filename
-    if catalog is None:
-        raise ValueError("No source catalog listed in datamodel")
-    skyobject_list = get_object_info(catalog)
+    if input_model.meta.source_catalog.filename is None:
+        err_text = "No source catalog listed in datamodel"
+        log.error(err_text)
+        raise ValueError(err_text)
+
+    log.info("Getting objects from {}".format(input_model.meta.source_catalog.filename))
+
+    # this contains the pure information from the catalog with no translations
+    skyobject_list = get_object_info(input_model.meta.source_catalog.filename)
 
     # get the imaging transform to record the center of the object in the image
     # here, image is in the imaging reference frame, before going through the
     # dispersion coefficients
-    sky_to_detector = input_model.meta.wcs.get_transform('world', 'detector')
-    sky_to_grism = input_model.meta.wcs.get_transform('world', 'grism_detector')
+    if use_fits_wcs:
+        # use the fits wcs to get the source and box positions
+        fits_wcs = input_model.get_fits_wcs()
+        # but use the gwcs to translate the trace
+        detector_to_grism = input_model.meta.wcs.get_transform('detector', 'grism_detector')
+    else:
+        # this only uses the gwcs object and is preferred
+        sky_to_detector = input_model.meta.wcs.get_transform('world', 'detector')
+        sky_to_grism = input_model.meta.wcs.get_transform('world', 'grism_detector')
 
     # Get the disperser parameters which have the wave limits
     with WavelengthrangeModel(reference_files['wavelengthrange']) as f:
-        if (f.meta.exposure.type == "NRC_TSGRISM"):
-            raise ValueError("Wavelengthrange reference file not meant for WFSS mode")
+        if ('WFSS' not in f.meta.exposure.type):
+            err_text = "Wavelengthrange reference file not for WFSS"
+            log.error(err_text)
+            raise ValueError(err_text)
+        wavelengthrange = f.wavelengthrange
         waverange_selector = f.waverange_selector
-        orders = f.order
-        if extract_orders is None:
-            extract_orders = f.extract_orders  # what orders to extract per filter
-        # check logic for specifying order with filter, in the reference file
-        # the list of extraction orders is in sync with the filter list
+        ref_extract_orders = f.extract_orders
 
-    # All objects in the catalog will use the same filter for translation
-    # that filter is the one that was used in front of the grism
-    fselect = waverange_selector.index(filter_name)
-    # that filter is the one that was used in front of the grism during the observation
-    # each order has a different wavelength range for a given filer
-    order_extraction_list = extract_orders[:][fselect]  # return the list of orders for that filter
-    log.info("Extracting order(s) {} for {}".format(order_extraction_list, filter_name))
+    # this supports the user override and overriding the WFSS order extraction
+    # when called from the pipeline only the first order is extracted
+    if extract_orders is None:
+        log.info("Using default order extraction from reference file")
+        extract_orders = ref_extract_orders
+        available_orders = [x[1] for x in extract_orders if x[0] == filter_name].pop()
+    else:
+        if isinstance(extract_orders, list):
+            if not all(isinstance(item, int) for item in extract_orders):
+                raise TypeError("Expected extract_orders to be a list of ints")
+        else:
+            err_text = 'Expected extract_orders to be a list of integers'
+            log.error(err_text)
+            raise TypeError(err_text)
+        available_orders = extract_orders
 
     grism_objects = []  # the return list of GrismObjects
     for obj in skyobject_list:
-        if obj.abmag < mmag_extract:
-            # save the detector_frame center of the object
-            # takes in ra, dec, wavelength, order but wave and order
-            # don't get used until the detector->grism_detector transform
-            # so their values are inconsequential
-            xcenter, ycenter, _, _ = sky_to_detector(obj.sky_centroid.icrs.ra.value,
-                                                     obj.sky_centroid.icrs.dec.value,
-                                                     1, 1)
-            order_bounding = {}
-            waverange = {}
-            for oidx, order in enumerate(order_extraction_list):
-                wave_min, wave_max = wrange[oidx][fselect]
-                if order in orders:
+        if obj.abmag is not None:
+            if obj.abmag < mmag_extract:
+                # could add logic to ignore object if too far off image,
+
+                # save the image frame center of the object
+                # takes in ra, dec, wavelength, order but wave and order
+                # don't get used until the detector->grism_detector transform
+                ##
+                ## temp to check fits_wcs catalog use
+                ##
+                if use_fits_wcs:
+                    xcenter, ycenter = skycoord_to_pixel(obj.sky_centroid.icrs, fits_wcs, origin=0)
+                else:
+                    xcenter, ycenter, _, _ = sky_to_detector(obj.sky_centroid.icrs.ra.value,
+                                                             obj.sky_centroid.icrs.dec.value,
+                                                             1, 1)
+
+                order_bounding = {}
+                waverange = {}
+                for order in available_orders:
+                    range_select = [(x[2], x[3]) for x in wavelengthrange if (x[0] == order and x[1] == filter_name)]
                     # The orders of the bounding box in the non-dispersed image
                     # drive the extraction extent. The location of the min and
                     # max wavelengths for each order are used to get the
                     # location of the +/- sides of the bounding box in the
                     # grism image
-                    # lmin, lmax = wrange[oidx][fselect]
-                    # we need to be specific with dispersion direction here?
-                    # I think this should be taken care of in the trace polys
-                    # wave_min = lmax
-                    # wave_max = lmin
-                    # if (disperse_row_right or disperse_column):
-                    #     wave_min = lmin
-                    #     wave_max = lmax
+                    lmin, lmax = range_select.pop()
 
-                    xmax, ymax, _, _, _ = sky_to_grism(obj.sky_bbox_ll.ra.value,
-                                                       obj.sky_bbox_ll.dec.value,
-                                                       wave_min, order)
-                    xmin, ymin, _, _, _ = sky_to_grism(obj.sky_bbox_ur.ra.value,
-                                                       obj.sky_bbox_ur.dec.value,
-                                                       wave_max, order)
+                    if use_fits_wcs:
+                        # translate the boxes using fits wcs
+                        dxmax, dymax = skycoord_to_pixel(obj.sky_bbox_ur, fits_wcs, origin=1)
+                        dxmin, dymin = skycoord_to_pixel(obj.sky_bbox_ll, fits_wcs, origin=1)
+                        # if ((dxmax < dxmin) or (dymax < dymin)):
+                        #     tdxmax = dxmax
+                        #     dxmax = dxmin
+                        #     dxmin = tdxmax
+                        #     tdymax = dymax
+                        #     dymax = dymin
+                        #     dymin = tdymax
+                        # if ((dxmax < dxmin) or (dymax < dymin)):
+                        #     mintemp = lmin
+                        #     lmin = lmax
+                        #     lmax = mintemp
+
+                        # now translate through the grism transforms
+                        xmin, ymin, _, _, _ = detector_to_grism(dxmin, dymin, lmin, order)
+                        xmax, ymax, _, _, _ = detector_to_grism(dxmax, dymax, lmax, order)
+                    else:
+                        xmax, ymax, _, _, _ = sky_to_grism(obj.sky_bbox_ll.ra.value,
+                                                           obj.sky_bbox_ll.dec.value,
+                                                           lmin, order)
+                        xmin, ymin, _, _, _ = sky_to_grism(obj.sky_bbox_ur.ra.value,
+                                                           obj.sky_bbox_ur.dec.value,
+                                                           lmax, order)
 
                     # Make sure that we have the correct box corners tagged
                     # as the min and max extents for the grism, the dispersion
-                    # direction changes with grism
+                    # direction changes with grism and detector
                     if ((xmax < xmin) or (ymax < ymin)):
-                        txmax = xmin
-                        tymax = ymin
-                        xmin = xmax
-                        ymin = ymax
+                        txmax = xmax
                         xmax = xmin
+                        xmin = txmax
+                        tymax = ymax
                         ymax = ymin
+                        ymin = tymax
+
+                    xmin = int(xmin)
+                    xmax = int(xmax)
+                    ymin = int(ymin)
+                    ymax = int(ymax)
 
                     # don't add objects and orders which are entirely off the detector
-                    # this could also live in extract_2d
                     # partial_order marks partial off-detector objects which are near enough to cause
                     # spectra to be observed on the detector. This is usefull because the catalog often is
                     # created from a resampled direct image that is bigger than the detector FOV for a single
@@ -549,14 +589,12 @@ def create_grism_bbox(input_model,
                     exclude = False
                     partial_order = False
 
-                    # Exclusion of traces completely outside
-                    # the detector limits
-                    pts = np.array([[xmin, ymin], [xmax, ymax]])
+                    pts = np.array([[ymin, xmin], [ymax, xmax]])
                     ll = np.array([0, 0])  # lower-left
-                    ur = np.array([xsize, ysize])  # upper-right
-                    inidx = np.all(np.logical_and(ll <= pts, pts <= ur), axis=1)
-
+                    ur = np.array([input_model.meta.subarray.ysize, input_model.meta.subarray.xsize])  # upper-right
+                    inidx = np.any(np.logical_and(ll <= pts, pts <= ur), axis=1)
                     contained = len(pts[inidx])
+
                     if contained == 0:
                         exclude = True
                         log.info("Excluding off-image object: {}, order {}".format(obj.sid, order))
@@ -566,26 +604,20 @@ def create_grism_bbox(input_model,
 
                     if not exclude:
                         order_bounding[order] = ((round(ymin), round(ymax)), (round(xmin), round(xmax)))
-                        waverange[order] = ((wave_min, wave_max))
-            # add lmin and lmax used for the orders here?
-            # input_model.meta.wcsinfo.waverange_start keys covers the
-            # full range of all the orders
+                        waverange[order] = ((lmin, lmax))
 
-            if len(order_bounding) > 0:
-                grism_objects.append(GrismObject(sid=obj.sid,
-                                                 order_bounding=order_bounding,
-                                                 sky_centroid=obj.sky_centroid,
-                                                 partial_order=partial_order,
-                                                 waverange=waverange,
-                                                 sky_bbox_ll=obj.sky_bbox_ll,
-                                                 sky_bbox_lr=obj.sky_bbox_lr,
-                                                 sky_bbox_ul=obj.sky_bbox_ul,
-                                                 sky_bbox_ur=obj.sky_bbox_ur,
-                                                 xcentroid=xcenter,
-                                                 ycentroid=ycenter))
-            else:
-                log.info("No orders were on detector for obj: {}".format(obj.sid))
-
+                if len(order_bounding) > 0:
+                    grism_objects.append(GrismObject(sid=obj.sid,
+                                                     order_bounding=order_bounding,
+                                                     sky_centroid=obj.sky_centroid,
+                                                     partial_order=partial_order,
+                                                     waverange=waverange,
+                                                     sky_bbox_ll=obj.sky_bbox_ll,
+                                                     sky_bbox_lr=obj.sky_bbox_lr,
+                                                     sky_bbox_ul=obj.sky_bbox_ul,
+                                                     sky_bbox_ur=obj.sky_bbox_ur,
+                                                     xcentroid=xcenter,
+                                                     ycentroid=ycenter))
     return grism_objects
 
 

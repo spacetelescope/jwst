@@ -35,7 +35,7 @@ def extract_tso_object(input_model,
         wants the source centered near row 34, so the extraction
         height is not the same on either size of the central pixel.
 
-    extract_orders: list[tuples]
+    extract_orders: list[ints]
         This is an optional parameter that will override the
         orders specified for extraction in the wavelengthrange
         reference file.
@@ -91,9 +91,11 @@ def extract_tso_object(input_model,
         extract_orders = ref_extract_orders
         available_orders = [x[1] for x in extract_orders if x[0] == input_model.meta.instrument.filter].pop()
     else:
-        if not isinstance(extract_orders, list):
-            raise TypeError('Expected extract_orders to be a list of integers')
-        print(extract_orders)
+        if isinstance(extract_orders, list):
+            if not all(isinstance(item, int) for item in extract_orders):
+                raise TypeError("Expected extract_orders to be a list of ints")
+        else:
+            raise TypeError("Expected extract_orders to be a list of ints")
         available_orders = extract_orders
 
     if len(available_orders) > 1:
@@ -223,7 +225,10 @@ def extract_tso_object(input_model,
 
 def extract_grism_objects(input_model,
                           grism_objects=None,
-                          reference_files=None):
+                          reference_files=None,
+                          extract_orders=None,
+                          use_fits_wcs=False,
+                          mmag_extract=99.):
     """
     Extract 2d boxes around each objects spectra for each order.
 
@@ -261,10 +266,15 @@ def extract_grism_objects(input_model,
         # get the wavelengthrange reference file from the input_model
         if reference_files is None:
             raise ValueError("Need at least the dictionary of reference files")
+
         if (not reference_files['wavelengthrange'] or reference_files['wavelengthrange'] == 'N/A'):
             raise ValueError("Expected name of wavelengthrange reference file")
         else:
-            grism_objects = util.create_grism_bbox(input_model, reference_files, extract_orders)
+            # TODO: remove/reset the use_fits_wcs when source_catalog uses GWCS to make the catalog
+            grism_objects = util.create_grism_bbox(input_model, reference_files,
+                                                   extract_orders=extract_orders,
+                                                   use_fits_wcs=use_fits_wcs,
+                                                   mmag_extract=mmag_extract)
             log.info("Grism object list created from source catalog: {0:s}"
                      .format(input_model.meta.source_catalog.filename))
 
@@ -298,6 +308,7 @@ def extract_grism_objects(input_model,
 
     slits = []
     for obj in grism_objects:
+        print(obj.xcentroid, obj.ycentroid)
         for order in obj.order_bounding.keys():
 
             # Add the shift to the lower corner to each subarray WCS object
@@ -317,29 +328,22 @@ def extract_grism_objects(input_model,
             # only the first two numbers in the Mapping are used
             # the order and source position are put directly into
             # the new wcs for the subarray for the forward transform
+            xcenter_model = Const1D(obj.xcentroid)
+            xcenter_model.inverse = Const1D(obj.xcentroid)
+            ycenter_model = Const1D(obj.ycentroid)
+            ycenter_model.inverse = Const1D(obj.ycentroid)
+            order_model = Const1D(order)
+            order_model.inverse = Const1D(order)
             tr = inwcs.get_transform('grism_detector', 'detector')
             tr = Identity(2) | Mapping((0, 1, 0, 1, 0)) | (Shift(xmin) & Shift(ymin) &
-                                                           Const1D(obj.xcentroid) &
-                                                           Const1D(obj.ycentroid) &
-                                                           Const1D(order)) | tr
+                                                           xcenter_model &
+                                                           ycenter_model &
+                                                           order_model) | tr
 
             subwcs.set_transform('grism_detector', 'detector', tr)
 
-            # now do the same thing for the backwards transform
-            # this sends wavelength along with known x0, y0, order
-            # This needs to update the distortion, v2v3 transforms as well?
-            # figure out how to match the inputs and outputs correctly
-            # going this direction
-            # tr = inwcs.get_transform('detector', 'grism_detector')
-            # tr = Identity(4) | Mapping((0, 1, 2, 3)) | (Const1D(obj.xcentroid) &
-            #                                             Const1D(obj.ycentroid) &
-            #                                             Identity(1) &
-            #                                             Const1D(order)) | tr
-
-            # subwcs.set_transform('detector', 'grism_detector', tr)
-
             log.info("Subarray extracted for obj: {} order: {}:".format(obj.sid, order))
-            log.info("Subarray extents are: (xmin:{}, ymin:{}), (xmax:{}, ymax:{})".format(xmin, ymin, xmax, ymax))
+            log.info("Subarray extents are: (xmin:{}, xmax:{}), (ymin:{}, ymax:{})".format(xmin, xmax, ymin, ymax))
 
             ext_data = input_model.data[ymin: ymax + 1, xmin: xmax + 1].copy()
             ext_err = input_model.err[ymin: ymax + 1, xmin: xmax + 1].copy()
@@ -358,6 +362,7 @@ def extract_grism_objects(input_model,
             new_model.xsize = (xmax - xmin)
             new_model.ystart = ymin + 1
             new_model.ysize = (ymax - ymin)
+            print(obj.xcentroid, obj.ycentroid)
             new_model.source_xpos = obj.xcentroid
             new_model.source_ypos = obj.ycentroid
             new_model.source_id = obj.sid
