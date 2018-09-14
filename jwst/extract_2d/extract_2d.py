@@ -17,7 +17,8 @@ def extract2d(input_model,
               reference_files={},
               grism_objects=None,
               extract_height=None,
-              extract_orders=None):
+              extract_orders=None,
+              mmag_extract=99.):
     """
     The main extract_2d function
 
@@ -67,7 +68,9 @@ def extract2d(input_model,
             output_model = extract_grism_objects(input_model,
                                                  grism_objects=grism_objects,
                                                  reference_files=reference_files,
-                                                 extract_orders=extract_orders)
+                                                 extract_orders=extract_orders,
+                                                 use_fits_wcs=True,
+                                                 mmag_extract=99.)
 
     else:
         log.info("'EXP_TYPE {} not supported for extract 2D".format(exp_type))
