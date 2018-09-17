@@ -2,6 +2,8 @@
 import os
 import tempfile
 import pytest
+import re
+import requests
 
 from astropy.tests.plugins.display import PYTEST_HEADER_MODULES
 from astropy.tests.helper import enable_deprecations_as_exceptions
@@ -20,13 +22,58 @@ pytest_plugins = [
     'asdf.tests.schema_tester'
 ]
 
-# Add option to run slow tests
+RE_URL = re.compile('\w+://\S+')
+
+def check_url(url):
+    """ Determine if `url` can be resolved without error
+    """
+    if RE_URL.match(url) is None:
+        return False
+
+    r = requests.head(url, allow_redirects=True)
+    if r.status_code >= 400:
+        return False
+    return True
+
+
+# Add option to run slow tests access test data
 def pytest_addoption(parser):
     parser.addoption(
         "--runslow",
         action="store_true",
         help="run slow tests"
     )
+    parser.addoption(
+        "--bigdata",
+        action="store_true",
+        help="Big local datasets"
+    )
+
+
+@pytest.fixture
+def _bigdata():
+    """ Return path to large data sets
+
+    Note: Support for URLs added for future integrations
+    """
+    origins = [
+        os.environ.get('TEST_BIGDATA', ''),
+        '/data4/jwst_test_data'
+    ]
+
+    for path in origins:
+        if os.path.exists(path) or check_url(path):
+            return path
+
+    raise BigdataError('Data files are not available.')
+
+
+@pytest.fixture(scope='function')
+def _jail(tmpdir):
+    path = str(tmpdir)
+    os.chdir(path)
+    yield
+
 
 @pytest.fixture
 def mk_tmp_dirs():
@@ -41,3 +88,7 @@ def mk_tmp_dirs():
         yield (tmp_current_path, tmp_data_path, tmp_config_path)
     finally:
         os.chdir(old_path)
+
+
+class BigdataError(Exception):
+    pass
