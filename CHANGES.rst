@@ -18,6 +18,8 @@ associations
 
 - Updated Level2 product naming to use pipeline's remove_suffix. [#2481]
 
+- Changed deprecated logger.warn to logger.warning. [#2519]
+
 
 background
 ----------

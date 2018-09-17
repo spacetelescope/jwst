@@ -201,7 +201,7 @@ def update_wcs_from_fgs_guiding(model, default_pa_v3=0.0, default_vparity=1):
     try:
         pa = model.meta.wcsinfo.pa_v3
     except AttributeError:
-        logger.warn(
+        logger.warning(
             'Keyword `PA_V3` not found. Using {} as default value'.format(
                 default_pa_v3
             )
@@ -213,7 +213,7 @@ def update_wcs_from_fgs_guiding(model, default_pa_v3=0.0, default_vparity=1):
     try:
         vparity = model.meta.wcsinfo.vparity
     except AttributeError:
-        logger.warn(
+        logger.warning(
             'Keyword "VPARITY" not found. Using {} as default value'.format(
                 default_vparity
             )
