@@ -171,10 +171,10 @@ srctype
 scripts
 -------
 
+- Fixed bug in logging configuration for `set_telescope_pointing.py`. [#2521]
+
 stpipe
 ------
-
-- Fixed bug in logging configuration for `set_telescope_pointing.py`
 
 straylight
 ----------
