@@ -493,6 +493,33 @@ class IFUCubeData():
         self.spaxel_weight = np.zeros(total_num)
         self.spaxel_iflux = np.zeros(total_num)
 
+        spaxel_ra = None
+        spaxel_dec = None
+        spaxel_wave = None
+#________________________________________________________________________________
+# Only preformed if weighting = MIRIPSF, first convert xi,eta cube to
+# v2,v3,wave. This information if past to cube_cloud and for each
+# input_model the v2,v3, wave is converted to alpha,beta in detector plane
+# ra,dec, wave is independent of input_model
+# v2,v3, alpha,beta depends on the input_model
+        if self.weighting == 'miripsf':
+            spaxel_ra = np.zeros(total_num)
+            spaxel_dec = np.zeros(total_num)
+            spaxel_wave = np.zeros(total_num)
+
+            nxy = self.xcenters.size
+            nz = self.zcoord.size
+            for iz in range(nz):
+                istart = iz * nxy
+                for ixy in range(nxy):
+                    ii = istart + ixy
+                    spaxel_ra[ii], spaxel_dec[ii] = coord.std2radec(self.crval1,
+                                                                    self.crval2,
+                                                                    self.xcenters[ixy],
+                                                                    self.ycenters[ixy])
+                    spaxel_wave[ii] = self.zcoord[iz]
+#________________________________________________________________________________
+
         subtract_background = True
 
         # now need to loop over every file that covers this channel/subchannel (MIRI)
@@ -536,8 +563,8 @@ class IFUCubeData():
 #                        else:
 #                            print('calling old cube_cloud')
                         cube_cloud.match_det2cube_msm(self.naxis1, self.naxis2, self.naxis3,
-                                                      self.cdelt1, self.cdelt2, self.cdelt3,
-                                                      self.cdelt3_normal,self.roiw,
+                                                      self.cdelt1, self.cdelt2,
+                                                      self.cdelt3_normal,
                                                       self.xcenters, self.ycenters, self.zcoord,
                                                       self.spaxel_flux,
                                                       self.spaxel_weight,
@@ -555,29 +582,37 @@ class IFUCubeData():
                         with datamodels.IFUImageModel(ifile) as input_model:
                             wave_resol = self.instrument_info.Get_RP_ave_Wave(this_par1,
                                                                               this_par2)
+
                             alpha_resol = self.instrument_info.Get_psf_alpha_parameters()
                             beta_resol = self.instrument_info.Get_psf_beta_parameters()
+
                             worldtov23 = input_model.meta.wcs.get_transform("world", "v2v3")
                             v2ab_transform = input_model.meta.wcs.get_transform('v2v3',
                                                                 'alpha_beta')
+                            
+                            spaxel_v2, spaxel_v3, zl = worldtov23(spaxel_ra,
+                                                                  spaxel_dec,
+                                                                  spaxel_wave)
+
+                            spaxel_alpha, spaxel_beta, spaxel_wave = v2ab_transform(spaxel_v2,
+                                                                                    spaxel_v3,
+                                                                                    zl)                            
+
 
                             cube_cloud.match_det2cube_miripsf(alpha_resol,
                                                               beta_resol,
                                                               wave_resol,
-                                                              worldtov23,
-                                                              v2ab_transform,
                                                               self.naxis1, self.naxis2, self.naxis3,
-                                                              self.cdelt1, self.cdelt2, self.cdelt3,
-                                                              self.crval1, self.crval2,
-                                                              self.rois, self.roiw,
-                                                              self.weight_power,
                                                               self.xcenters, self.ycenters, self.zcoord,
                                                               self.spaxel_flux,
                                                               self.spaxel_weight,
                                                               self.spaxel_iflux,
+                                                              spaxel_alpha,spaxel_beta,spaxel_wave,
                                                               flux,
                                                               coord1, coord2, wave,
-                                                              alpha_det, beta_det)
+                                                              alpha_det, beta_det,
+                                                              rois_pixel, roiw_pixel, weight_pixel,
+                                                              softrad_pixel)
 #--------------------------------------------------------------------------------
 #2D area method - only works for single files and coord_system = 'alpha-beta'
 #--------------------------------------------------------------------------------
@@ -930,10 +965,10 @@ class IFUCubeData():
 #                        print('time to find footprint',t1-t0)
  
                         amin, amax, bmin, bmax, lmin, lmax = ch_footprint
-                        print(amin, amax, bmin ,bmax)
-                        amin, bmin, amax, bmin2, amax2, bmax, amin2, bmax2 = \
-                            input_model.meta.wcsinfo.s_region
-                        print(amin, amax, bmin, bmax, amin2, amax2, bmin2, bmax2)
+#                        print(amin, amax, bmin ,bmax)
+#                        amin, bmin, amax, bmin2, amax2, bmax, amin2, bmax2 = \
+#                            input_model.meta.wcsinfo.s_region
+#                        print(amin, amax, bmin, bmax, amin2, amax2, bmin2, bmax2)
 #________________________________________________________________________________
                     if self.instrument == 'MIRI':
                         ch_footprint = cube_build_wcs_util.find_footprint_MIRI(
@@ -943,15 +978,13 @@ class IFUCubeData():
                             self.coord_system)
                         amin, amax, bmin, bmax, lmin, lmax = ch_footprint
 
-                        print(amin, amax, bmin ,bmax)
-
-                        footprint = input_model.meta.wcs.footprint
+#                        print(amin, amax, bmin ,bmax)
+#                        footprint = input_model.meta.wcs.footprint()
                         
-                        print(footprint)
-                        print(type(footprint))
-
-                        amin, bmin, amax, bmin2, amax2, bmax, amin2, bmax2 = fp
-                        print(amin, amax, bmin, bmax, amin2, amax2, bmin2, bmax2)
+#                        print(footprint)
+#                        print(type(footprint))
+#                        amin, bmin, amax, bmin2, amax2, bmax, amin2, bmax2 = fp
+#                        print(amin, amax, bmin, bmax, amin2, amax2, bmin2, bmax2)
                     a_min.append(amin)
                     a_max.append(amax)
                     b_min.append(bmin)
@@ -1235,7 +1268,6 @@ class IFUCubeData():
         idata = np.zeros((naxis3, naxis2, naxis1))
         dq_cube = np.zeros((naxis3, naxis2, naxis1))
         err_cube = np.zeros((naxis3, naxis2, naxis1))
-
         
         if self.linear_wavelength:
             ifucube_model = datamodels.IFUCubeModel(data=data, dq=dq_cube, 
@@ -1243,15 +1275,23 @@ class IFUCubeData():
                                                     weightmap=idata)
         else:
 
+#            wave = np.zeros((1,2000))
             wave = np.zeros(2000)
             nelements = len(self.wavelength_table)
+
             for i in range(nelements):
                 wave[i] = self.wavelength_table[i]
+            print(type(wave)) 
+            print(wave.shape)
+            print(wave[0:10])
+
             ifucube_model = datamodels.IFUCubeModel(data=data, dq=dq_cube, 
                                                     err=err_cube, 
                                                     weightmap=idata,
                                                     wavetable=wave)
-#                                                    wavetable=self.wavelength_table)
+            print(ifucube_model.wavetable.shape)
+            test2 = ifucube_model.wavetable
+            print(test2[0])
 
         ifucube_model.update(self.input_models[j])
         ifucube_model.meta.filename = self.output_name
@@ -1329,7 +1369,10 @@ class IFUCubeData():
         ifucube_model.meta.ifu.roi_spatial = self.rois
         ifucube_model.meta.ifu.roi_wave = self.roiw
         ifucube_model.meta.ifu.weighting = self.weighting
-        ifucube_model.meta.ifu.weight_power = self.weight_power
+
+        print('ifucube_model.meta.ifu.weighting',self.weighting)
+#        ifucube_model.meta.ifu.weighting = 'msm'
+#        ifucube_model.meta.ifu.weight_power = self.weight_power
 
         with datamodels.open(self.input_models[j]) as input:
             ifucube_model.meta.bunit_data = input.meta.bunit_data
@@ -1387,6 +1430,7 @@ class IFUCubeData():
         ifucube_model.meta.wcs.bounding_box = ((0, naxis1 - 1),
                                          (0, naxis2 - 1),
                                          (0, naxis3 - 1))
+
         return ifucube_model
 
 #********************************************************************************

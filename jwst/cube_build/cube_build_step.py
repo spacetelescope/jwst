@@ -95,7 +95,6 @@ class CubeBuildStep (Step):
         # 2. world
         self.interpolation = 'pointcloud' # true for self.weighting  = 'msm' or 'miripsf'
 
-
         # if the weighting is area then interpolation is area
         # if the weighting is area then interpolation is area. Weighting of area or interpolation
         # of area is only for single band data.
@@ -294,13 +293,13 @@ class CubeBuildStep (Step):
             else:
                 result = thiscube.build_ifucube()
                 cube_container.append(result)
-
             if self.debug_pixel == 1:
                 self.spaxel_debug.close()
         for cube in cube_container:
             footprint = cube.meta.wcs.footprint(axis_type="spatial")
             update_s_region_keyword(cube, footprint)
 
+        
         return cube_container
 
 #********************************************************************************
@@ -329,10 +328,6 @@ class CubeBuildStep (Step):
         """
         valid_channel = ['1', '2', '3', '4', 'all']
         valid_subchannel = ['short', 'medium', 'long', 'all']
-#        valid_fwa = ['f070lp', 'f100lp', 'f100lp', 'g170lp',
-#                    'g170lp', 'f290lp', 'f290lp', 'clear', 'all']
-#        valid_gwa = ['g140m', 'g140h', 'G140M', 'g140h', 'g235m', 'g235h',
-#                    'g395m', 'g395h', 'prism', 'all']
 
         valid_fwa = ['f070lp', 'f100lp', 'g170lp',
                     'g170lp', 'f290lp', 'clear', 'all']

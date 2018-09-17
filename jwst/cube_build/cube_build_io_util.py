@@ -217,6 +217,7 @@ def read_resolution_file(resol_filename,
         compare_band = this_channel + this_sub
         for tabdata in ptab.resolving_power_table:
             table_sub_band = tabdata['SUB_BAND']
+            table_sub_band = table_sub_band.lower()
             table_wave_center = tabdata['R_CENTRE']
             table_res_a_low = tabdata['R_A_LOW']
             table_res_b_low = tabdata['R_B_LOW']
