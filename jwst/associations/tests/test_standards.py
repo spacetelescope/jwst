@@ -39,6 +39,11 @@ LV3_ONLY_ARGS = [
     '--ignore-default'
 ]
 
+# Do not merge Level2b
+LV2_NOMERGE_ARGS = [
+    '--no-merge'
+]
+
 # Produce general associations
 DEF_ARGS = []
 
@@ -82,7 +87,7 @@ standards = [
     MakePars('pool_022_tso_noflag'),
     MakePars('pool_023_nirspec_msa_3nod', main_args=LV2_ONLY_ARGS),
     MakePars('pool_026_mir_image_tso'),
-    MakePars('pool_027_nirspec_ifu_nods'),
+    MakePars('pool_027_nirspec_ifu_nods', main_args=LV2_NOMERGE_ARGS),
 ]
 
 

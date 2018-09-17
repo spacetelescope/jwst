@@ -174,7 +174,7 @@ class Asn_Lv2Spec(
             Constraint_Base(),
             Constraint_Mode(),
             Constraint_Spectral_Science(
-                exclude_exp_types=['nrs_msaspec', 'nrs_fixedslit']
+                exclude_exp_types=['nrs_msaspec', 'nrs_fixedslit', 'nrs_ifu']
             ),
             Constraint(
                 [Constraint_TSO()],
@@ -402,8 +402,6 @@ class Asn_Lv2NRSMSA(
             return None
 
 
-
-
 @RegistryMarker.rule
 class Asn_Lv2NRSFSS(
         AsnMixin_Lv2Spectral,
@@ -471,6 +469,54 @@ class Asn_Lv2NRSFSS(
         """Finalize assocation
 
         For NRS Fixed-slit, finalization means creating new associations for
+        background nods.
+
+        Returns
+        -------
+        associations: [association[, ...]] or None
+            List of fully-qualified associations that this association
+            represents.
+            `None` if a complete association cannot be produced.
+
+        """
+        return self.make_nod_asns()
+
+
+@RegistryMarker.rule
+class Asn_Lv2NRSIFU(
+        AsnMixin_Lv2Spectral,
+        DMSLevel2bBase
+):
+    """Level2b NIRSpec IFU"""
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup constraints
+        self.constraints = Constraint([
+            Constraint_Base(),
+            Constraint_Mode(),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        name='exp_type',
+                        sources=['exp_type'],
+                        value='nrs_ifu'
+                    ),
+                    DMSAttrConstraint(
+                        name='expspcin',
+                        sources=['expspcin'],
+                    ),
+                ]
+            ),
+        ])
+
+        # Now check and continue initialization.
+        super(Asn_Lv2NRSIFU, self).__init__(*args, **kwargs)
+
+    def finalize(self):
+        """Finalize assocation
+
+        For NRS IFU, finalization means creating new associations for
         background nods.
 
         Returns

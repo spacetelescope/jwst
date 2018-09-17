@@ -5,7 +5,7 @@
     "code_version": "0.10.1a.dev237",
     "degraded_status": "No known degraded exposures in association.",
     "program": "93125",
-    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '93125'})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'nirspec'})\nConstraint_Target({'name': 'target', 'sources': ['targetid'], 'value': '1'})\nConstraint_IFU({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'mir_mrs|mir_flatmrs|nrs_autowave|nrs_ifu'})\nConstraint_Obsnum({'name': 'obs_num', 'sources': ['obs_num'], 'value': None})\nDMSAttrConstraint({'name': 'acq_exp', 'sources': ['exp_type'], 'value': 'mir_tacq|nis_taconfirm|nis_tacq|nrc_taconfirm|nrc_tacq|nrs_confirm|nrs_taconfirm|nrs_tacq|nrs_taslit'})\nDMSAttrConstraint({'name': 'acq_obsnum', 'sources': ['obs_num'], 'value': <function AsnMixin_Science.__init__.<locals>.<lambda> at 0xb17858f28>})",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '93125'})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'nirspec'})\nConstraint_Target({'name': 'target', 'sources': ['targetid'], 'value': '1'})\nConstraint_IFU({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'mir_mrs|mir_flatmrs|nrs_autowave|nrs_ifu'})\nConstraint_Obsnum({'name': 'obs_num', 'sources': ['obs_num'], 'value': None})\nDMSAttrConstraint({'name': 'acq_exp', 'sources': ['exp_type'], 'value': 'mir_tacq|nis_taconfirm|nis_tacq|nrc_taconfirm|nrc_tacq|nrs_confirm|nrs_taconfirm|nrs_tacq|nrs_taslit'})\nDMSAttrConstraint({'name': 'acq_obsnum', 'sources': ['obs_num'], 'value': <function AsnMixin_Science.__init__.<locals>.<lambda> at 0xb1b554ea0>})",
     "asn_id": "a3001",
     "target": "t001",
     "asn_pool": "pool_027_nirspec_ifu_nods",
@@ -36,6 +36,66 @@
                     "exptype": "science",
                     "exposerr": "null",
                     "asn_candidate": "[('o002', 'observation')]"
+                },
+                {
+                    "expname": "jw_00005_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "[('o002', 'observation')]"
+                },
+                {
+                    "expname": "jw_00006_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "[('o002', 'observation')]"
+                },
+                {
+                    "expname": "jw_00007_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "[('o003', 'observation')]"
+                },
+                {
+                    "expname": "jw_00008_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "[('o003', 'observation')]"
+                },
+                {
+                    "expname": "jw_00009_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "[('o003', 'observation')]"
+                },
+                {
+                    "expname": "jw_00010_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "[('o003', 'observation')]"
+                },
+                {
+                    "expname": "jw_00011_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "[('o003', 'observation')]"
+                },
+                {
+                    "expname": "jw_00012_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "[('o003', 'observation')]"
+                },
+                {
+                    "expname": "jw_00013_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "[('o003', 'observation')]"
+                },
+                {
+                    "expname": "jw_00014_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "[('o003', 'observation')]"
                 }
             ]
         }
