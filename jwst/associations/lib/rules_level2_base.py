@@ -46,6 +46,7 @@ __all__ = [
     'Constraint_Image_Nonscience',
     'Constraint_Image_Science',
     'Constraint_Mode',
+    'Constraint_Single_Science',
     'Constraint_Special',
     'Constraint_Spectral_Science',
     'Constraint_Target',
@@ -722,6 +723,32 @@ class Constraint_Image_Nonscience(Constraint):
                 )
             ],
             reduce=Constraint.any
+        )
+
+
+class Constraint_Single_Science(SimpleConstraint):
+    """Allow only single science exposure
+
+    Parameters
+    ----------
+    has_science_fn: func
+        Function to determine whether the association
+        has a science member already. A single argument
+        of `item` must be provided.
+
+    Notes
+    -----
+    The `has_science_fn` is further wrapped in a lambda function
+    to provide a closure. Otherwise if the function is a bound method,
+    that method may end up pointing to an instance that is not calling
+    this constraint.
+    """
+
+    def __init__(self, has_science_fn):
+        super(Constraint_Single_Science, self).__init__(
+            name='single_science',
+            value=False,
+            sources=lambda item: has_science_fn(item)
         )
 
 
