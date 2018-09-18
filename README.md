@@ -14,7 +14,7 @@ Beginning with version 0.9.0, **JWST requires Python 3.5 or above**.
 Installing
 ----------
 
-### A release ###
+### Installing a release version ###
 
 To install a particular released version of the package, and all dependencies, we recommend using
 [conda](https://conda.io/docs/index.html) and a spec file that lists the exact versions of all packages to be installed.
@@ -35,7 +35,7 @@ To update to the latest nightly build:
 
     conda update -n jwst --override-channels -c http://ssb.stsci.edu/astroconda-dev -c defaults --all
 
-### Latest dev ###
+### Installing the latest development version ###
 
 To install the development version of the repository, we recommend creating a new
 environment, using the [astroconda](https://astroconda.readthedocs.io) channel
@@ -56,7 +56,7 @@ pulling the latest version of `master` from the Github repository inside the `jw
 
 ### CRDS Setup ###
 
-To run the pipeline outside the STScI network, CRDS must be configured by setting two environment variables:
+Within the STScI network, CRDS is set up by default.  To run the pipeline outside the STScI network, CRDS must be configured by setting two environment variables:
 
     export CRDS_PATH=$HOME/crds_cache
     export CRDS_SERVER_URL=https://jwst-crds.stsci.edu
