@@ -39,7 +39,7 @@ def check_url(url):
 # Add option to run slow tests access test data
 def pytest_addoption(parser):
     parser.addoption(
-        "--runslow",
+        "--slow",
         action="store_true",
         help="run slow tests"
     )

@@ -16,8 +16,8 @@ def abspath(filepath):
 
 # Decorator to indicate slow test
 runslow = pytest.mark.skipif(
-    not pytest.config.getoption("--runslow"),
-    reason="need --runslow option to run"
+    not pytest.config.getoption("--slow"),
+    reason="need --slow option to run"
 )
 
 
