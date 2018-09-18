@@ -1,8 +1,7 @@
 import os
 import pytest
-import shutil
+from astropy.io import fits
 
-from astropy.io import fits as pf
 from jwst.pipeline.calwebb_spec2 import Spec2Pipeline
 
 pytestmark = [
@@ -33,9 +32,9 @@ def test_nrs_msa_spec2b(_bigdata):
     na = 'jw95065_nrs_msaspec_barshadow_cal.fits'
     nb = os.path.join(_bigdata, 'pipelines',
                       'jw95065_nrs_msaspec_barshadow_cal_ref.fits')
-    h = pf.open(na)
-    href = pf.open(nb)
-    result = pf.diff.FITSDiff(h,
+    h = fits.open(na)
+    href = fits.open(nb)
+    result = fits.diff.FITSDiff(h,
                               href,
                               ignore_hdus=['ASDF'],
                               ignore_keywords=ignore_keywords,
@@ -46,9 +45,9 @@ def test_nrs_msa_spec2b(_bigdata):
     na = 'jw95065_nrs_msaspec_barshadow_s2d.fits'
     nb = os.path.join(_bigdata, 'pipelines',
                       'jw95065_nrs_msaspec_barshadow_s2d_ref.fits')
-    h = pf.open(na)
-    href = pf.open(nb)
-    result = pf.diff.FITSDiff(h,
+    h = fits.open(na)
+    href = fits.open(nb)
+    result = fits.diff.FITSDiff(h,
                               href,
                               ignore_hdus=['ASDF'],
                               ignore_keywords=ignore_keywords,
@@ -59,9 +58,9 @@ def test_nrs_msa_spec2b(_bigdata):
     na = 'jw95065_nrs_msaspec_barshadow_x1d.fits'
     nb = os.path.join(_bigdata, 'pipelines',
                       'jw95065_nrs_msaspec_barshadow_x1d_ref.fits')
-    h = pf.open(na)
-    href = pf.open(nb)
-    result = pf.diff.FITSDiff(h,
+    h = fits.open(na)
+    href = fits.open(nb)
+    result = fits.diff.FITSDiff(h,
                               href,
                               ignore_hdus=['ASDF'],
                               ignore_keywords=ignore_keywords,

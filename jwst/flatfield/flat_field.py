@@ -2,9 +2,13 @@
 #  Module for applying flat fielding
 #
 
-import math
-import numpy as np
 import logging
+import math
+
+import numpy as np
+import numpy.ma as ma
+from astropy.stats import sigma_clip    # for combine_fast_slow()
+
 from .. import datamodels
 from .. datamodels import dqflags
 from .. lib import reffile_utils
@@ -17,6 +21,11 @@ MICRONS_100 = 1.e-4                     # 100 microns, in meters
 
 # This is for NIRSpec.  These exposure types are all fixed-slit modes.
 FIXED_SLIT_TYPES = ["NRS_LAMP", "NRS_BRIGHTOBJ", "NRS_FIXEDSLIT"]
+
+# Dispersion direction, predominantly horizontal or vertical.  These values
+# are to be compared with keyword DISPAXIS from the input header.
+HORIZONTAL = 1
+VERTICAL = 2
 
 
 def do_correction(input_model, flat_model,
@@ -310,7 +319,7 @@ def do_NIRSpec_flat_field(output_model,
         # The default value is 0, so all 0 values means that the
         # wavelength attribute was not populated.  We need either a
         # wavelength array or a meta.wcs.
-        if not got_wl_attribute or wl.min() == 0. and wl.max() == 0.:
+        if not got_wl_attribute or np.nanmin(wl) == 0. and np.nanmax(wl) == 0.:
             got_wl_attribute = False
             log.warning("The wavelength array for slit %s has not "
                         "been populated,", slit.name)
@@ -345,9 +354,10 @@ def do_NIRSpec_flat_field(output_model,
                       sum_nan_mask, sum_nan_mask + sum_good_mask)
             if sum_good_mask < 1:
                 log.warning("(all are NaN)")
-            # Replace NaNs with a harmless but out-of-bounds value.
-            wl[nan_mask] = -1000.
-        if wl.max() > 0. and wl.max() < MICRONS_100:
+            # Replace NaNs with a relatively harmless but out-of-bounds value.
+            wl[nan_mask] = 0.
+        max_wavelength = np.nanmax(wl)
+        if max_wavelength > 0. and max_wavelength < MICRONS_100:
             log.warning("Wavelengths in science data appear to be in meters.")
 
         # Combine the three flat fields for the current subarray.
@@ -476,7 +486,7 @@ def NIRSpec_brightobj(output_model,
         got_wl_attribute = False
 
     # There must be either a wavelength array or a meta.wcs.
-    if not got_wl_attribute or wl.min() == 0. and wl.max() == 0.:
+    if not got_wl_attribute or np.nanmin(wl) == 0. and np.nanmax(wl) == 0.:
         log.warning("The wavelength array has not been populated,")
         if got_wcs:
             log.warning("so using wcs instead of the wavelength array.")
@@ -504,8 +514,8 @@ def NIRSpec_brightobj(output_model,
                   sum_nan_mask, sum_nan_mask + sum_good_mask)
         if sum_good_mask < 1:
             log.warning("(all are NaN)")
-        # Replace NaNs with a harmless but out-of-bounds value.
-        wl[nan_mask] = -1000.
+        # Replace NaNs with a relatively harmless but out-of-bounds value.
+        wl[nan_mask] = 0.
 
     # Combine the three flat fields.  The same flat will be applied to
     # each plane (integration) in the cube.
@@ -652,8 +662,8 @@ def NIRSpec_IFU(output_model,
         good_flag = np.logical_not(nan_flag)
         if wl[good_flag].max() < MICRONS_100:
             log.warning("Wavelengths in WCS table appear to be in meters")
-        # Set NaNs to a harmless value, but don't modify nan_flag.
-        wl[nan_flag] = 1.
+        # Set NaNs to a relatively harmless value, but don't modify nan_flag.
+        wl[nan_flag] = 0.
 
         (flat_2d, flat_dq_2d) = create_flat_field(wl,
                         f_flat_model, s_flat_model, d_flat_model,
@@ -741,16 +751,23 @@ def create_flat_field(wl, f_flat_model, s_flat_model, d_flat_model,
             The data quality array corresponding to flat_2d.
     """
 
+    dispaxis = find_dispaxis(wl)
+    if dispaxis is None:
+        log.warning("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+        log.warning("Can't determine dispaxis, assuming horizontal.")
+        log.warning("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+        dispaxis = HORIZONTAL
+
     (f_flat, f_flat_dq) = fore_optics_flat(wl, f_flat_model, exposure_type,
-                                           slit_name, slit_nt)
+                                           slit_name, slit_nt, dispaxis)
 
     (s_flat, s_flat_dq) = spectrograph_flat(wl, s_flat_model,
                                             xstart, xstop, ystart, ystop,
-                                            exposure_type, slit_name)
+                                            exposure_type, slit_name, dispaxis)
 
     (d_flat, d_flat_dq) = detector_flat(wl, d_flat_model,
                                         xstart, xstop, ystart, ystop,
-                                        exposure_type, slit_name)
+                                        exposure_type, slit_name, dispaxis)
 
     flat_2d = f_flat * s_flat * d_flat
 
@@ -760,8 +777,44 @@ def create_flat_field(wl, f_flat_model, s_flat_model, d_flat_model,
     return (flat_2d, flat_dq)
 
 
+def find_dispaxis(wl):
+    """Find which axis is the dispersion direction
+
+    Parameters
+    ----------
+    wl: 2-D ndarray
+        Wavelength at each pixel of the 2-D slit array.
+
+    Returns
+    -------
+    dispaxis: int
+        1 is horizontal, 2 is vertical.  The value might be None, which
+        indicates that the dispersion direction could not be determined.
+    """
+
+    wl_array = wl.copy()
+    wl_array[wl==0.] = np.nan
+    delta_wl_x = wl_array[:, 1:] - wl_array[:, 0:-1]
+    delta_wl_y = wl_array[1:, :] - wl_array[0:-1, :]
+    dwlx = np.nanmedian(delta_wl_x)
+    dwly = np.nanmedian(delta_wl_y)
+    log.debug("find_dispaxis:  dwlx = %s dwly = %s", str(dwlx), str(dwly))
+
+    dwlx = np.abs(dwlx)
+    dwly = np.abs(dwly)
+    if dwlx > dwly:
+        dispaxis = HORIZONTAL
+    elif dwlx < dwly:
+        dispaxis = VERTICAL
+    else:
+        dispaxis = None
+    log.debug("dispaxis = %s", str(dispaxis))
+
+    return dispaxis
+
+
 def fore_optics_flat(wl, f_flat_model, exposure_type,
-                     slit_name, slit_nt):
+                     slit_name, slit_nt, dispaxis):
     """Extract the flat for the fore optics part.
 
     Parameters
@@ -782,6 +835,9 @@ def fore_optics_flat(wl, f_flat_model, exposure_type,
     slit_nt: namedtuple or None
         For MOS data (only), this is used to get the quadrant number and
         the indices of the current shutter in the Y and X directions.
+
+    dispaxis: int
+        1 is horizontal, 2 is vertical.
 
     Returns
     -------
@@ -841,14 +897,14 @@ def fore_optics_flat(wl, f_flat_model, exposure_type,
     f_flat_dq = None
 
     # The shape of the output array is obtained from `wl`.
-    f_flat = combine_fast_slow(wl, flat_2d, tab_wl, tab_flat)
+    f_flat = combine_fast_slow(wl, flat_2d, tab_wl, tab_flat, dispaxis)
 
     return (f_flat, f_flat_dq)
 
 
 def spectrograph_flat(wl, s_flat_model,
                       xstart, xstop, ystart, ystop,
-                      exposure_type, slit_name):
+                      exposure_type, slit_name, dispaxis):
     """Extract the flat for the spectrograph part.
 
     Parameters
@@ -874,6 +930,9 @@ def spectrograph_flat(wl, s_flat_model,
 
     slit_name: str
         The name of the slit currently being processed.
+
+    dispaxis: int
+        1 is horizontal, 2 is vertical.
 
     Returns
     -------
@@ -914,14 +973,14 @@ def spectrograph_flat(wl, s_flat_model,
         flat_2d = full_array_flat[ystart:ystop, xstart:xstop]
         s_flat_dq = full_array_dq[ystart:ystop, xstart:xstop]
 
-    s_flat = combine_fast_slow(wl, flat_2d, tab_wl, tab_flat)
+    s_flat = combine_fast_slow(wl, flat_2d, tab_wl, tab_flat, dispaxis)
 
     return (s_flat, s_flat_dq)
 
 
 def detector_flat(wl, d_flat_model,
                   xstart, xstop, ystart, ystop,
-                  exposure_type, slit_name):
+                  exposure_type, slit_name, dispaxis):
     """Extract the flat for the detector part.
 
     Parameters
@@ -947,6 +1006,9 @@ def detector_flat(wl, d_flat_model,
 
     slit_name: str
         The name of the slit currently being processed.
+
+    dispaxis: int
+        1 is horizontal, 2 is vertical.
 
     Returns
     -------
@@ -985,7 +1047,7 @@ def detector_flat(wl, d_flat_model,
     (flat_2d, d_flat_dq) = interpolate_flat(image_flat, image_dq,
                                             image_wl, wl)
 
-    d_flat = combine_fast_slow(wl, flat_2d, tab_wl, tab_flat)
+    d_flat = combine_fast_slow(wl, flat_2d, tab_wl, tab_flat, dispaxis)
 
     return (d_flat, d_flat_dq)
 
@@ -1207,7 +1269,7 @@ def read_flat_table(flat_model, exposure_type,
     return (tab_wl, tab_flat)
 
 
-def combine_fast_slow(wl, flat_2d, tab_wl, tab_flat):
+def combine_fast_slow(wl, flat_2d, tab_wl, tab_flat, dispaxis):
     """Multiply the image by the tabular values.
 
     Parameters
@@ -1228,6 +1290,9 @@ def combine_fast_slow(wl, flat_2d, tab_wl, tab_flat):
         is the "fast" variation of the flat, i.e. fast with respect to
         wavelength.
 
+    dispaxis: int
+        1 is horizontal, 2 is vertical.
+
     Returns
     -------
     2-D ndarray
@@ -1239,26 +1304,28 @@ def combine_fast_slow(wl, flat_2d, tab_wl, tab_flat):
 
     dwl = np.zeros_like(wl)
 
-    # Determine which axis is the dispersion direction (this test is
-    # not foolproof).
-    mid_x = nx // 2
-    mid_y = ny // 2
-    dwlx = abs(wl[mid_y, mid_x+1] - wl[mid_y, mid_x-1])
-    dwly = abs(wl[mid_y+1, mid_x] - wl[mid_y-1, mid_x])
-    if dwlx >= dwly:
-        dispaxis = 1                            # only used for log info
+    if dispaxis == HORIZONTAL:
         # The wavelength span of pixel i is (wl[i+1] - wl[i-1]) / 2.
         temp = (wl[:, 2:] - wl[:, 0:-2]) / 2.
         dwl[:, 1:-1] = temp
         dwl[:, 0] = dwl[:, 1]
         dwl[:, -1] = dwl[:, -2]
-    else:
-        dispaxis = 2
+    elif dispaxis == VERTICAL:
         temp = (wl[2:, :] - wl[0:-2, :]) / 2.
         dwl[1:-1, :] = temp
         dwl[0, :] = dwl[1, :]
         dwl[-1, :] = dwl[-2, :]
-    log.debug("dispaxis = %d", dispaxis)
+
+    # Elements of dwl may be zero, due to values in the original
+    # wavelength array being either zero or NaN.  Create a masked array
+    # so sigma_clip will ignore those elements, and also so that the
+    # returned array will have a mask that flags outliers as well as
+    # the originally masked elements.
+    mask = (dwl == 0.)                  # NaN wavelengths were set to 0
+    dwl_ma = ma.array(dwl, mask=mask)
+    temp = sigma_clip(dwl, cenfunc="median", axis=None, masked=True)
+    replacement_value = temp.mean()
+    dwl[dwl_ma.mask] = replacement_value
 
     # Values averaged within tab_flat.
     values = np.zeros_like(wl)

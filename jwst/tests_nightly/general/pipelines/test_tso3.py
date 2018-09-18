@@ -1,6 +1,6 @@
 import os
 import pytest
-from astropy.io import fits as pf
+from astropy.io import fits
 from jwst.pipeline.calwebb_tso3 import Tso3Pipeline
 
 pytestmark = [
@@ -170,11 +170,11 @@ def perform_fits_comparison(filename, refname, **pars):
     rtol = pars.get('rtol', 0.00001)
 
     # Compare resampled product
-    h = pf.open(filename)
-    href = pf.open(refname)
-    newh = pf.HDUList([h[extn] for extn in extn_list])
-    newhref = pf.HDUList([href[extn] for extn in extn_list])
-    result = pf.diff.FITSDiff(newh,
+    h = fits.open(filename)
+    href = fits.open(refname)
+    newh = fits.HDUList([h[extn] for extn in extn_list])
+    newhref = fits.HDUList([href[extn] for extn in extn_list])
+    result = fits.diff.FITSDiff(newh,
                               newhref,
                               ignore_keywords=ignore_kws,
                               ignore_fields=ignore_fields,

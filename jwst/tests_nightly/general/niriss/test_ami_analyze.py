@@ -1,7 +1,6 @@
-import os
 import pytest
-from astropy.io import fits as pf
-from jwst.ami.ami_analyze_step import AmiAnalyzeStep
+from astropy.io import fits
+from jwst.ami import AmiAnalyzeStep
 
 from ..helpers import add_suffix
 
@@ -26,16 +25,16 @@ def test_ami_analyze(_bigdata):
                         output_file=output_file_base, suffix=suffix
                         )
 
-    h = pf.open(output_file)
-    href = pf.open(_bigdata+'/niriss/test_ami_analyze/ami_analyze_ref_output_16.fits')
-    newh = pf.HDUList([h['primary'],h['fit'],h['resid'],h['closure_amp'],
+    h = fits.open(output_file)
+    href = fits.open(_bigdata+'/niriss/test_ami_analyze/ami_analyze_ref_output_16.fits')
+    newh = fits.HDUList([h['primary'],h['fit'],h['resid'],h['closure_amp'],
                        h['closure_pha'],h['fringe_amp'],h['fringe_pha'],
                        h['pupil_pha'],h['solns']])
-    newhref = pf.HDUList([href['primary'],href['fit'],href['resid'],href['closure_amp'],
+    newhref = fits.HDUList([href['primary'],href['fit'],href['resid'],href['closure_amp'],
                           href['closure_pha'],href['fringe_amp'],href['fringe_pha'],
                           href['pupil_pha'],href['solns']])
 
-    result = pf.diff.FITSDiff(newh,
+    result = fits.diff.FITSDiff(newh,
                               newhref,
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
                               rtol = 0.001
