@@ -56,7 +56,7 @@ pulling the latest version of `master` from the Github repository inside the `jw
 
 ### CRDS Setup ###
 
-Within the STScI network, CRDS is set up by default.  To run the pipeline outside the STScI network, CRDS must be configured by setting two environment variables:
+Inside the STScI network, the pipeline works with default CRDS setup with no modifications.  To run the pipeline outside the STScI network, CRDS must be configured by setting two environment variables:
 
     export CRDS_PATH=$HOME/crds_cache
     export CRDS_SERVER_URL=https://jwst-crds.stsci.edu
