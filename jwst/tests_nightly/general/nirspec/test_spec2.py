@@ -6,7 +6,6 @@ import pytest
 
 from jwst.assign_wcs.util import NoDataOnDetectorError
 from jwst.pipeline import Spec2Pipeline
-from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 
 pytestmark = [
     pytest.mark.usefixtures('_jail'),

@@ -327,9 +327,12 @@ def SH_FindOverlap(xcenter, ycenter, xlength, ylength, xp_corner, yp_corner):
     return areaClipped;
 
 #________________________________________________________________________________
-
-
-def match_det2cube(self, x, y, sliceno, start_slice, input_model, transform, spaxel):
+def match_det2cube(x, y, sliceno, start_slice, input_model, transform,
+                   spaxel_flux,
+                   spaxel_weight,
+                   spaxel_iflux,
+                   xcoord, zcoord,
+                   crval1, crval3, cdelt1, cdelt3, naxis1, naxis2):
     """
     Short Summary
     -------------
@@ -339,7 +342,7 @@ def match_det2cube(self, x, y, sliceno, start_slice, input_model, transform, spa
     Map the corners of the x,y detector values to a cube defined by alpha,beta, lambda
     In the alpha,lambda plane find the % area of the detector pixel which it overlaps with
     in the cube.  For each spaxel record the detector pixels that overlap with it - store flux,
-    flux error, % overlap, beta_distance.
+     % overlap, beta_distance.
 
     Parameters
     ----------
@@ -355,9 +358,9 @@ def match_det2cube(self, x, y, sliceno, start_slice, input_model, transform, spa
 
 
     """
-    nxc = len(self.xcoord)
-    nzc = len(self.zcoord)
-#    nyc = len(self.ycoord)
+    nxc = len(xcoord)
+    nzc = len(zcoord)
+
 
     sliceno_use = sliceno - start_slice + 1
 # 1-1 mapping in beta
@@ -425,15 +428,15 @@ def match_det2cube(self, x, y, sliceno, start_slice, input_model, transform, spa
         # estimate the where the pixel overlaps in the cube
         # find the min and max values in the cube xcoord,ycoord and zcoord
 
-        MinA = (alpha_min - self.Crval1) / self.Cdelt1
-        MaxA = (alpha_max - self.Crval1) / self.Cdelt1
+        MinA = (alpha_min - crval1) / cdelt1
+        MaxA = (alpha_max - crval1) / cdelt1
         ix1 = max(0, int(math.trunc(MinA)))
         ix2 = int(math.ceil(MaxA))
         if ix2 >= nxc:
             ix2 = nxc - 1
 
-        MinW = (wave_min - self.Crval3) / self.Cdelt3
-        MaxW = (wave_max - self.Crval3) / self.Cdelt3
+        MinW = (wave_min - crval3) / cdelt3
+        MaxW = (wave_max - crval3) / cdelt3
         iz1 = int(math.trunc(MinW))
         iz2 = int(math.ceil(MaxW))
         if iz2 >= nzc:
@@ -441,27 +444,24 @@ def match_det2cube(self, x, y, sliceno, start_slice, input_model, transform, spa
         #_______________________________________________________________________
         # loop over possible overlapping cube pixels
 #        noverlap = 0
-        nplane = self.naxis1 * self.naxis2
+        nplane = naxis1 * naxis2
 
         for zz in range(iz1, iz2 + 1):
-            zcenter = self.zcoord[zz]
+            zcenter = zcoord[zz]
             istart = zz * nplane
 
             for xx in range(ix1, ix2 + 1):
-                cube_index = istart + yy * self.naxis1 + xx #yy = slice # -1
-                xcenter = self.xcoord[xx]
+                cube_index = istart + yy * naxis1 + xx #yy = slice # -1
+                xcenter = xcoord[xx]
                 AreaOverlap = SH_FindOverlap(xcenter, zcenter,
-                                             self.Cdelt1, self.Cdelt3,
+                                             cdelt1, cdelt3,
                                              alpha_corner, wave_corner)
 
                 if AreaOverlap > 0.0:
                     AreaRatio = AreaOverlap / Area
-                    spaxel[cube_index].flux = spaxel[cube_index].flux + (AreaRatio * pixel_flux[ipixel])
-                    spaxel[cube_index].flux_weight = spaxel[cube_index].flux_weight + AreaRatio
-                    spaxel[cube_index].iflux = spaxel[cube_index].iflux + 1
+                    spaxel_flux[cube_index] = spaxel_flux[cube_index] + (AreaRatio * pixel_flux[ipixel])
+                    spaxel_weight[cube_index] = spaxel_weight[cube_index] + AreaRatio
+                    spaxel_iflux[cube_index] = spaxel_iflux[cube_index] + 1
 #________________________________________________________________________________
-
-
-
 class Error2DPolygon(Exception):
     pass

@@ -76,8 +76,8 @@ def detect_jumps (input_model, gain_model, readnoise_model,
     log.info('Executing two-point difference method')
     start = time.time()
 
-    median_slopes = twopt.find_CRs( data, gdq, readnoise_2d,
-                                    rejection_threshold, nframes)
+    median_slopes = twopt.find_crs(data, gdq, readnoise_2d,
+                                           rejection_threshold, nframes)
 
     elapsed = time.time() - start
     log.debug('Elapsed time = %g sec' %elapsed)
@@ -93,8 +93,8 @@ def detect_jumps (input_model, gain_model, readnoise_model,
         # Now apply the y-intercept method
         log.info('Executing yintercept method')
         start = time.time()
-        yint.find_CRs( data, err, gdq, times, readnoise_2d,
-                       rejection_threshold, signal_threshold, median_slopes)
+        yint.find_crs(data, err, gdq, times, readnoise_2d,
+                        rejection_threshold, signal_threshold, median_slopes)
         elapsed = time.time() - start
         log.debug('Elapsed time = %g sec' %elapsed)
 

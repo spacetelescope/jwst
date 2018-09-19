@@ -1,9 +1,7 @@
-#! /usr/bin/env python
 """
 JWST pipeline step for image alignment.
 
 :Authors: Mihai Cara
-
 
 """
 from astropy.table import Table
@@ -31,7 +29,7 @@ class TweakRegStep(Step):
         save_catalogs = boolean(default=False) # Write out catalogs?
         catalog_format = string(default='ecsv')   # Catalog output file format
         kernel_fwhm = float(default=2.5)    # Gaussian kernel FWHM in pixels
-        snr_threshold = float(default=5.0)  # SNR threshold above the bkg
+        snr_threshold = float(default=10.0)  # SNR threshold above the bkg
 
         # Optimize alignment order:
         enforce_user_order = boolean(default=False) # Align images in user specified order?
@@ -41,7 +39,7 @@ class TweakRegStep(Step):
 
         # Object matching parameters:
         minobj = integer(default=15) # Minimum number of objects acceptable for matching
-        searchrad = float(default=10.0) # The search radius in arcsec for a match
+        searchrad = float(default=1.0) # The search radius in arcsec for a match
         use2dhist = boolean(default=True) # Use 2d histogram to find initial offset?
         separation = float(default=0.5) # Minimum object separation in arcsec
         tolerance = float(default=1.0) # Matching tolerance for xyxymatch in arcsec

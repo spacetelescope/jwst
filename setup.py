@@ -128,7 +128,7 @@ else:
     except ImportError:
         try:
             subprocess.check_call(['git', 'clone',
-                'https://github.com/jhunkeler/relic.git'])
+                'https://github.com/spacetelescope/relic.git'])
             sys.path.insert(1, 'relic')
             import relic.release
         except subprocess.CalledProcessError as e:
@@ -147,7 +147,7 @@ setup(
     author='JWST Pipeline developers',
     author_email='help@stsci.edu',
     description='Python library for science observations from the James Webb Space Telescope',
-    long_desctiption=('The JWST Data Reduction Pipeline is a Python '
+    long_description=('The JWST Data Reduction Pipeline is a Python '
                       'software suite that automatically processes the '
                       'data taken by the JWST instruments NIRCam, NIRSpec, '
                       'NIRISS, MIRI, and FGS to remove instrumental signatures '
@@ -159,7 +159,7 @@ setup(
         'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 3',
-         'Programming Language :: C',
+        'Programming Language :: C',
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
     python_requires='>=3.5',

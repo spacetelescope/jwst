@@ -45,6 +45,9 @@ class ResampleSpecStep(ResampleStep):
         if isinstance(input_models[0], MultiSlitModel):
             # result is a MultiProductModel
             result = self._process_multislit(input_models)
+        elif len(input_models[0].data.shape) != 2:
+            # resample can only handle 2D images, not 3D cubes, etc
+            raise RuntimeError("Input {} is not a 2D image.".format(input_models[0]))
         else:
             # result is a DrizProductModel
             result = self._process_slit(input_models)

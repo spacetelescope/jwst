@@ -65,7 +65,6 @@ FLAG_TO_EXPTYPE = {
 # File templates
 _DMS_POOLNAME_REGEX = 'jw(\d{5})_(\d{3})_(\d{8}[Tt]\d{6})_pool'
 _LEVEL1B_REGEX = '(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
-_REGEX_LEVEL2A = '(?P<path>.+)(?P<type>_rate(ints)?)'
 
 # Key that uniquely identfies items.
 KEY = 'expname'
@@ -159,11 +158,8 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         except Exception:
             return PRODUCT_NAME_DEFAULT
 
-        match = re.match(_REGEX_LEVEL2A, science_path)
-        if match:
-            return match.groupdict()['path']
-        else:
-            return science_path
+        no_suffix_path, separator = remove_suffix(science_path)
+        return no_suffix_path
 
     def make_member(self, item):
         """Create a member from the item
@@ -485,7 +481,7 @@ class Utility():
         """
         match = re.match(_LEVEL1B_REGEX, level1b_name)
         if match is None or match.group('type') != '_uncal':
-            logger.warn((
+            logger.warning((
                 'Item FILENAME="{}" is not a Level 1b name. '
                 'Cannot transform to Level 2a.'
             ).format(

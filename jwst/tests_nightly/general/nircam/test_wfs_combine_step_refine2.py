@@ -1,6 +1,5 @@
-import os
 import pytest
-from astropy.io import fits as pf
+from astropy.io import fits
 from jwst.wfs_combine.wfs_combine_step import WfsCombineStep
 
 pytestmark = [
@@ -19,12 +18,12 @@ def test_wfs_combine(_bigdata):
         do_refine=True)
 
     # compare 1st pair of output files
-    h = pf.open('test_wfscom3_wfscmb.fits')
-    href = pf.open(_bigdata+'/nircam/test_wfs_combine/test_wfscom_do_ref.fits')
-    newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['dq']])
-    newhref = pf.HDUList([href['primary'],href['sci'],href['err'],href['dq']])
+    h = fits.open('test_wfscom3_wfscmb.fits')
+    href = fits.open(_bigdata+'/nircam/test_wfs_combine/test_wfscom_do_ref.fits')
+    newh = fits.HDUList([h['primary'],h['sci'],h['err'],h['dq']])
+    newhref = fits.HDUList([href['primary'],href['sci'],href['err'],href['dq']])
 
-    result = pf.diff.FITSDiff(newh,
+    result = fits.diff.FITSDiff(newh,
                               newhref,
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX','FILENAME'],
                               rtol = 0.00001
@@ -32,12 +31,12 @@ def test_wfs_combine(_bigdata):
     assert result.identical, result.report()
 
     # compare 2nd pair of output files
-    h = pf.open('test_wfscom3a_wfscmb.fits')
-    href = pf.open(_bigdata+'/nircam/test_wfs_combine/test_wfscoma_do_ref.fits')
-    newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['dq']])
-    newhref = pf.HDUList([href['primary'],href['sci'],href['err'],href['dq']])
+    h = fits.open('test_wfscom3a_wfscmb.fits')
+    href = fits.open(_bigdata+'/nircam/test_wfs_combine/test_wfscoma_do_ref.fits')
+    newh = fits.HDUList([h['primary'],h['sci'],h['err'],h['dq']])
+    newhref = fits.HDUList([href['primary'],href['sci'],href['err'],href['dq']])
 
-    result = pf.diff.FITSDiff(newh,
+    result = fits.diff.FITSDiff(newh,
                               newhref,
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX','FILENAME'],
                               rtol = 0.00001
@@ -45,12 +44,12 @@ def test_wfs_combine(_bigdata):
     assert result.identical, result.report()
 
     # compare 3rd pair of output files
-    h = pf.open('test_wfscom3b_wfscmb.fits')
-    href = pf.open(_bigdata+'/nircam/test_wfs_combine/test_wfscomb_do_ref.fits')
-    newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['dq']])
-    newhref = pf.HDUList([href['primary'],href['sci'],href['err'],href['dq']])
+    h = fits.open('test_wfscom3b_wfscmb.fits')
+    href = fits.open(_bigdata+'/nircam/test_wfs_combine/test_wfscomb_do_ref.fits')
+    newh = fits.HDUList([h['primary'],h['sci'],h['err'],h['dq']])
+    newhref = fits.HDUList([href['primary'],href['sci'],href['err'],href['dq']])
 
-    result = pf.diff.FITSDiff(newh,
+    result = fits.diff.FITSDiff(newh,
                               newhref,
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX','FILENAME'],
                               rtol = 0.00001

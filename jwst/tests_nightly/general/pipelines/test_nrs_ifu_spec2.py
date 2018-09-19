@@ -1,6 +1,5 @@
-import os
 import pytest
-from astropy.io import fits as pf
+from astropy.io import fits
 from jwst.pipeline.calwebb_spec2 import Spec2Pipeline
 
 pytestmark = [
@@ -25,37 +24,37 @@ def test_nrs_ifu_spec2(_bigdata):
 
     na = 'jw95175001001_02104_00001_nrs1_cal.fits'
     nb = _bigdata+'/pipelines/jw95175001001_02104_00001_nrs1_cal_ref.fits'
-    h = pf.open(na)
-    href = pf.open(nb)
-    newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['dq'],h['relsens2d'],
+    h = fits.open(na)
+    href = fits.open(nb)
+    newh = fits.HDUList([h['primary'],h['sci'],h['err'],h['dq'],h['relsens2d'],
                                     h['pathloss_pointsource'],h['wavelength_pointsource'],
                                     h['pathloss_uniformsource'],h['wavelength_uniformsource']])
-    newhref = pf.HDUList([href['primary'],href['sci'],href['err'],href['dq'],href['relsens2d'],
+    newhref = fits.HDUList([href['primary'],href['sci'],href['err'],href['dq'],href['relsens2d'],
                                     href['pathloss_pointsource'],href['wavelength_pointsource'],
                                     href['pathloss_uniformsource'],href['wavelength_uniformsource']])
-    result = pf.diff.FITSDiff(newh, newhref,
+    result = fits.diff.FITSDiff(newh, newhref,
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
                               rtol = 0.00001)
     assert result.identical, result.report()
 
     na = 'jw95175001001_02104_00001_nrs1_s3d.fits'
     nb = _bigdata+'/pipelines/jw95175001001_02104_00001_nrs1_s3d_ref.fits'
-    h = pf.open(na)
-    href = pf.open(nb)
-    newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['dq'],h['wmap']])
-    newhref = pf.HDUList([href['primary'],href['sci'],href['err'],href['dq'],href['wmap']])
-    result = pf.diff.FITSDiff(newh, newhref,
+    h = fits.open(na)
+    href = fits.open(nb)
+    newh = fits.HDUList([h['primary'],h['sci'],h['err'],h['dq'],h['wmap']])
+    newhref = fits.HDUList([href['primary'],href['sci'],href['err'],href['dq'],href['wmap']])
+    result = fits.diff.FITSDiff(newh, newhref,
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
                               rtol = 0.00001)
     assert result.identical, result.report()
 
     na = 'jw95175001001_02104_00001_nrs1_x1d.fits'
     nb = _bigdata+'/pipelines/jw95175001001_02104_00001_nrs1_x1d_ref.fits'
-    h = pf.open(na)
-    href = pf.open(nb)
-    newh = pf.HDUList([h['primary'],h['extract1d']])
-    newhref = pf.HDUList([href['primary'],href['extract1d']])
-    result = pf.diff.FITSDiff(newh, newhref,
+    h = fits.open(na)
+    href = fits.open(nb)
+    newh = fits.HDUList([h['primary'],h['extract1d']])
+    newhref = fits.HDUList([href['primary'],href['extract1d']])
+    result = fits.diff.FITSDiff(newh, newhref,
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
                               rtol = 0.00001)
     assert result.identical, result.report()

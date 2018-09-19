@@ -182,7 +182,7 @@ class CubeBlot():
                 # wcs information access seperately for each slice
 
                 nslices = 30
-#                log.info('Looping over 30 slices on NIRSPEC detector, this takes a little while')
+                log.info('Looping over 30 slices on NIRSPEC detector, this takes a little while')
                 for ii in range(nslices):
                     slice_wcs = nirspec.nrs_wcs_set_input(model, ii)
                     x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
@@ -222,7 +222,7 @@ class CubeBlot():
             ra_blot = ra_det[good_data]
             dec_blot = dec_det[good_data]
             wave_blot = lam_det[good_data]
-
+            
             crval1 = model.meta.wcsinfo.crval1
             crval2 = model.meta.wcsinfo.crval2
 
@@ -244,7 +244,6 @@ class CubeBlot():
 # in the tangent plane is flagged as an overlapping pixel
 
             for ipt in range(0, num - 1):
-
                 # xx,yy are the index value of the orginal detector frame -
                 # blot image
                 yy = y[ipt]
@@ -260,11 +259,12 @@ class CubeBlot():
                 # the spectral ROI of wave length assocation with xx,yy
                 indexz = np.where(abs(self.lam_centers - wave_blot[ipt]) <= self.roiw)
                 # Pull out the Cube spaxels falling with ROI regions
+
                 wave_found = self.lam_centers[indexz]
                 xi_found = self.xi_centers[indexr]
                 eta_found = self.eta_centers[indexr]
 #________________________________________________________________________________
-                # form the arrays to be used calculated the wegithing
+                # form the arrays to be used calculated the weighting
                 d1 = np.array(xi_found - xi_blot[ipt]) / self.cdelt1
                 d2 = np.array(eta_found - eta_blot[ipt]) / self.cdelt2
                 d3 = np.array(wave_found - wave_blot[ipt]) / self.cdelt3
@@ -286,7 +286,6 @@ class CubeBlot():
                 scf = np.array([self.cube_flux[zz, yy_cube[ir], xx_cube[ir]]
                                 for ir, rr in enumerate(indexr[0]) for zz in indexz[0]])
                 scf = np.reshape(scf, weight_distance.shape)
-
                 blot_flux[yy, xx] = np.sum(weight_distance * scf)
                 blot_weight = np.sum(weight_distance)
 
@@ -296,7 +295,7 @@ class CubeBlot():
                 else:
                     blot_flux[yy, xx] = blot_flux[yy, xx] / blot_weight
 #________________________________________________________________________________
-                blot.data = blot_flux
+            blot.data = blot_flux
             blot_models.append(blot)
         t1 = time.time()
         log.info("Time Blot images = %.1f.s" % (t1 - t0,))

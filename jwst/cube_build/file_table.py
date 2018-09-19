@@ -64,99 +64,10 @@ class FileTable():
         self.FileMap['NIRSPEC']['g395h'] = {}
         self.FileMap['NIRSPEC']['g395h']['f290lp'] = []
 
-        self.FileOffset = {}
-        self.FileOffset['1'] = {}
-        self.FileOffset['1']['short'] = {}
-        self.FileOffset['1']['short']['C1'] = []
-        self.FileOffset['1']['short']['C2'] = []
-        self.FileOffset['1']['medium'] = {}
-        self.FileOffset['1']['medium']['C1'] = []
-        self.FileOffset['1']['medium']['C2'] = []
-        self.FileOffset['1']['long'] = {}
-        self.FileOffset['1']['long']['C1'] = []
-        self.FileOffset['1']['long']['C2'] = []
-
-        self.FileOffset['2'] = {}
-        self.FileOffset['2']['short'] = {}
-        self.FileOffset['2']['short']['C1'] = []
-        self.FileOffset['2']['short']['C2'] = []
-        self.FileOffset['2']['medium'] = {}
-        self.FileOffset['2']['medium']['C1'] = []
-        self.FileOffset['2']['medium']['C2'] = []
-        self.FileOffset['2']['long'] = {}
-        self.FileOffset['2']['long']['C1'] = []
-        self.FileOffset['2']['long']['C2'] = []
-
-        self.FileOffset['3'] = {}
-        self.FileOffset['3']['short'] = {}
-        self.FileOffset['3']['short']['C1'] = []
-        self.FileOffset['3']['short']['C2'] = []
-        self.FileOffset['3']['medium'] = {}
-        self.FileOffset['3']['medium']['C1'] = []
-        self.FileOffset['3']['medium']['C2'] = []
-        self.FileOffset['3']['long'] = {}
-        self.FileOffset['3']['long']['C1'] = []
-        self.FileOffset['3']['long']['C2'] = []
-
-        self.FileOffset['4'] = {}
-        self.FileOffset['4']['short'] = {}
-        self.FileOffset['4']['short']['C1'] = []
-        self.FileOffset['4']['short']['C2'] = []
-        self.FileOffset['4']['medium'] = {}
-        self.FileOffset['4']['medium']['C1'] = []
-        self.FileOffset['4']['medium']['C2'] = []
-        self.FileOffset['4']['long'] = {}
-        self.FileOffset['4']['long']['C1'] = []
-        self.FileOffset['4']['long']['C2'] = []
-
-        self.FileOffset['prism'] = {}
-        self.FileOffset['prism']['clear'] = {}
-        self.FileOffset['prism']['clear']['C1'] = []
-        self.FileOffset['prism']['clear']['C2'] = []
-
-        self.FileOffset['g140m'] = {}
-        self.FileOffset['g140m']['f070lp'] = {}
-        self.FileOffset['g140m']['f070lp']['C1'] = []
-        self.FileOffset['g140m']['f070lp']['C2'] = []
-        self.FileOffset['g140m']['f100lp'] = {}
-        self.FileOffset['g140m']['f100lp']['C1'] = []
-        self.FileOffset['g140m']['f100lp']['C2'] = []
-
-        self.FileOffset['g140h'] = {}
-        self.FileOffset['g140h']['f070lp'] = {}
-        self.FileOffset['g140h']['f070lp']['C1'] = []
-        self.FileOffset['g140h']['f070lp']['C2'] = []
-        self.FileOffset['g140h']['f100lp'] = {}
-        self.FileOffset['g140h']['f100lp']['C1'] = []
-        self.FileOffset['g140h']['f100lp']['C2'] = []
-
-        self.FileOffset['g235m'] = {}
-        self.FileOffset['g235m']['f170lp'] = {}
-        self.FileOffset['g235m']['f170lp']['C1'] = []
-        self.FileOffset['g235m']['f170lp']['C2'] = []
-
-        self.FileOffset['g235h'] = {}
-        self.FileOffset['g235h']['f170lp'] = {}
-        self.FileOffset['g235h']['f170lp']['C1'] = []
-        self.FileOffset['g235h']['f170lp']['C2'] = []
-
-        self.FileOffset['g395m'] = {}
-        self.FileOffset['g395m']['f290lp'] = {}
-        self.FileOffset['g395m']['f290lp']['C1'] = []
-        self.FileOffset['g395m']['f290lp']['C2'] = []
-
-        self.FileOffset['g395h'] = {}
-        self.FileOffset['g395h']['f290lp'] = {}
-        self.FileOffset['g395h']['f290lp']['C1'] = []
-        self.FileOffset['g395h']['f290lp']['C2'] = []
-
-
 #********************************************************************************
     def set_file_table(self,
                        input_models,
-                       input_filenames,
-                       input_ra_offset,
-                       input_dec_offset):
+                       input_filenames):
 #********************************************************************************
         """
         Short Summary
@@ -167,9 +78,6 @@ class FileTable():
         THe MasterTable for MIRI is broken down by channel and subchannel.
         For each channel/subchannel combination - a file is listed that covers those options
         For NIRSPEC the table contains the Grating and Filter for each file.
-
-        If there is a dither offet file then the master table also holds the ra,dec offset for
-        each file.
 
 
         Returns
@@ -206,17 +114,12 @@ class FileTable():
                 if instrument == 'MIRI':
                     channel = input_model.meta.instrument.channel
                     subchannel = input_model.meta.instrument.band.lower()
-
             #________________________________________________________________________________
                     clenf = len(channel)
                     for k in range(clenf):
                         self.FileMap['MIRI'][channel[k]][subchannel].append(input_model)
-                        ioffset = len(input_ra_offset)
-                        if (ioffset > 0):
-                            ra_offset = input_ra_offset[i]
-                            dec_offset = input_dec_offset[i]
-                            self.FileOffset[channel[k]][subchannel]['C1'].append(ra_offset)
-                            self.FileOffset[channel[k]][subchannel]['C2'].append(dec_offset)
+            #________________________________________________________________________________
+            #NIRSPEC instrument
             #________________________________________________________________________________
                 elif instrument == 'NIRSPEC':
                     fwa = input_model.meta.instrument.filter.lower()
