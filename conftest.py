@@ -36,20 +36,6 @@ def check_url(url):
     return True
 
 
-# Add option to run slow tests access test data
-def pytest_addoption(parser):
-    parser.addoption(
-        "--slow",
-        action="store_true",
-        help="run slow tests"
-    )
-    parser.addoption(
-        "--bigdata",
-        action="store_true",
-        help="Big local datasets"
-    )
-
-
 @pytest.fixture
 def _bigdata():
     """ Return path to large data sets
@@ -66,13 +52,6 @@ def _bigdata():
             return path
 
     raise BigdataError('Data files are not available.')
-
-
-@pytest.fixture(scope='function')
-def _jail(tmpdir):
-    path = str(tmpdir)
-    os.chdir(path)
-    yield
 
 
 @pytest.fixture
