@@ -5,6 +5,7 @@ class BaseJWSTTest(BaseTest):
     ignore_keywords = ['DATE', 'CAL_VER', 'CAL_VCS', 'CRDS_VER', 'CRDS_CTX']
     input_repo = 'scsb-jwst-pipeline'
     copy_local = False  # Do not make additional copy by default
+    rtol = 0.00001
 
     def set_environ(self):
         self.tree = ''
