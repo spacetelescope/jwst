@@ -272,6 +272,15 @@ class ModelContainer(model_base.DataModel):
         return output_paths
 
     @property
+    def collection(self):
+        """
+        ModelContainers are both models and lists of models. This method
+        allows containers to be treated as collections, the same as
+        ordinary models are treated.
+        """
+        return self
+
+    @property
     def models_grouped(self):
         """
         Returns a list of a list of datamodels grouped by exposure.

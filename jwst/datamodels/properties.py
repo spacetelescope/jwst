@@ -11,6 +11,7 @@ from asdf.tags.core import ndarray
 
 from . import util
 from . import validate
+from . import _defined_models as defined_models
 
 import logging
 log = logging.getLogger(__name__)
@@ -263,6 +264,43 @@ class ObjectNode(Node):
                 val = getattr(val, field)
             yield (key, val)
 
+    def to_model(self):
+        # Convert a mode with a model_type to a model
+        def add_node_to_model(model, node):
+            value = _unmake_node(node)
+            if isinstance(value, dict):
+                for attr, subnode in value.items():
+                    if model.hasattr(attr):
+                        setattr(model, attr, add_node_to_model(model[attr],
+                                                               subnode))
+                    else:
+                        setattr(model, attr, subnode)
+            elif isinstance(value, list):
+                for subnode in value:
+                    model.append(subnode.instance)
+            else:
+                model = value
+            return model
+
+        # Create an empty model of the right class
+        try:
+            model_type = self.meta.model_type
+        except AttributeError:
+            model_type = None
+
+        new_class = None
+        if model_type:
+            new_class = defined_models.get(model_type)
+
+        if new_class:
+            model = new_class(init=None)
+        else:
+            raise ValueError("Cannot convert node to datamodel")
+
+        ##return add_node_to_model(model, self)
+        # Recursively copy node to the new, empty model
+        return merge_tree(model, self)
+
 class ListNode(Node):
     def __cast(self, other):
         if isinstance(other, ListNode):
@@ -366,6 +404,9 @@ class ListNode(Node):
         if not node._validate():
             node = None
         return node
+
+    def to_model(self):
+        return [x.to_model() for x in self]
 
 class NodeIterator:
     """

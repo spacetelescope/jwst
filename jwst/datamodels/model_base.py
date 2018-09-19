@@ -14,6 +14,7 @@ import numpy as np
 from astropy.io import fits
 from astropy.time import Time
 from astropy.wcs import WCS
+from astropy.utils import lazyproperty
 
 from asdf import AsdfFile
 from asdf import yamlutil
@@ -760,6 +761,42 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             yield val
 
     values = itervalues
+
+    @lazyproperty
+    def collection(self):
+        """
+        Check the schema for a top level array of nodes. If one exists,
+        return it as the collection, which is iterated over to retrieve
+        the data in a multi-model. If no such array exists, or there is
+        more than one array, raise an error.
+        """
+        schema = self._schema['properties']
+        collection_name = None
+        for subschema_name, subschema in schema.items():
+            subschema_type = subschema.get('type')
+            if subschema_type == 'array':
+                if collection_name is None:
+                    collection_name = subschema_name
+                else:
+                    collection_name = None
+                    break
+
+        if collection_name is None:
+            collection_list = None
+        else:
+            collection_list = getattr(self, collection_name)
+
+        if collection_list is None:
+            raise AttributeError("No attribute 'collection'")
+
+        return collection_list
+
+    def to_model(self):
+        """
+        Models are also nodes. This function is to prevent to_model
+        from trying to convert what is already a model to a model.
+        """
+        return self
 
     def update(self, d, only=''):
         """
