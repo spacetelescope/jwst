@@ -1,10 +1,10 @@
-from .image import ImageModel
+from .model_base import DataModel
 
 
 __all__ = ['IFUCubeModel']
 
 
-class IFUCubeModel(ImageModel):
+class IFUCubeModel(DataModel):
     """
     A data model for 3D IFU  cubes.
 
@@ -30,3 +30,10 @@ class IFUCubeModel(ImageModel):
 
     """
     schema_url = "ifucube.schema.yaml"
+
+    def __init__(self, init=None, **kwargs):
+        super(IFUCubeModel, self).__init__(init=init, **kwargs)
+
+       # Implicitly create arrays
+        self.dq = self.dq
+        self.err = self.err

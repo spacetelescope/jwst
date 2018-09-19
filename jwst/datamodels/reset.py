@@ -1,10 +1,10 @@
-from .reference import ReferenceImageModel
-
+from .reference import ReferenceFileModel
+from .dynamicdq import dynamic_mask
 
 __all__ = ['ResetModel']
 
 
-class ResetModel(ReferenceImageModel):
+class ResetModel(ReferenceFileModel):
     """
     A data model for reset correction reference files.
 
@@ -26,3 +26,12 @@ class ResetModel(ReferenceImageModel):
         The data quality definitions table.
     """
     schema_url = "reset.schema.yaml"
+
+    def __init__(self, init=None, **kwargs):
+        super(ResetModel, self).__init__(init=init, **kwargs)
+
+        self.dq = dynamic_mask(self)
+
+        # Implicitly create arrays
+        self.dq = self.dq
+        self.err = self.err

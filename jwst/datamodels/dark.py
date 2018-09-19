@@ -1,9 +1,10 @@
-from .reference import ReferenceImageModel
+from .reference import ReferenceFileModel
+from .dynamicdq import dynamic_mask
 
 __all__ = ['DarkModel']
 
 
-class DarkModel(ReferenceImageModel):
+class DarkModel(ReferenceFileModel):
     """
     A data model for dark reference files.
 
@@ -25,3 +26,12 @@ class DarkModel(ReferenceImageModel):
         The data quality definitions table.
     """
     schema_url = "dark.schema.yaml"
+
+    def __init__(self, init=None, **kwargs):
+        super(DarkModel, self).__init__(init=init, **kwargs)
+
+        self.dq = dynamic_mask(self)
+
+        # Implicitly create arrays
+        self.dq = self.dq
+        self.err = self.err

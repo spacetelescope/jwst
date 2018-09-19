@@ -1,11 +1,11 @@
-from .reference import ReferenceImageModel
+from .reference import ReferenceFileModel
 from .dynamicdq import dynamic_mask
 
 
 __all__ = ['WfssBkgModel']
 
 
-class WfssBkgModel(ReferenceImageModel):
+class WfssBkgModel(ReferenceFileModel):
     """
     A data model for 2D WFSS master background reference files.
 
@@ -27,3 +27,12 @@ class WfssBkgModel(ReferenceImageModel):
         The data quality definitions table.
     """
     schema_url = "wfssbkg.schema.yaml"
+
+    def __init__(self, init=None, **kwargs):
+        super(WfssBkgModel, self).__init__(init=init, **kwargs)
+
+        self.dq = dynamic_mask(self)
+
+        # Implicitly create arrays
+        self.dq = self.dq
+        self.err = self.err

@@ -1,10 +1,10 @@
-from .image import ImageModel
+from .model_base import DataModel
 
 
 __all__ = ['CubeModel']
 
 
-class CubeModel(ImageModel):
+class CubeModel(DataModel):
     """
     A data model for 3D image cubes.
 
@@ -44,3 +44,12 @@ class CubeModel(ImageModel):
         The variance due to read noise array.  3-D
     """
     schema_url = "cube.schema.yaml"
+
+    def __init__(self, init=None, **kwargs):
+
+        super(CubeModel, self).__init__(init=init, **kwargs)
+
+        # Implicitly create arrays
+        self.dq = self.dq
+        self.err = self.err
+

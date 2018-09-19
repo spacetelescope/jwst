@@ -1,9 +1,10 @@
-from .reference import ReferenceImageModel
+from .reference import ReferenceFileModel
+from .dynamicdq import dynamic_mask
 
 __all__ = ['DarkMIRIModel']
 
 
-class DarkMIRIModel(ReferenceImageModel):
+class DarkMIRIModel(ReferenceFileModel):
     """
     A data model for dark MIRI reference files.
 
@@ -25,3 +26,12 @@ class DarkMIRIModel(ReferenceImageModel):
         The data quality definitions table.
     """
     schema_url = "darkMIRI.schema.yaml"
+
+    def __init__(self, init=None, **kwargs):
+        super(DarkMIRIModel, self).__init__(init=init, **kwargs)
+
+        self.dq = dynamic_mask(self)
+
+        # Implicitly create arrays
+        self.dq = self.dq
+        self.err = self.err

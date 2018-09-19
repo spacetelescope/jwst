@@ -1,9 +1,9 @@
-from .image import ImageModel
+from .model_base import DataModel
 
 __all__ = ['GuiderRawModel']
 
 
-class GuiderRawModel(ImageModel):
+class GuiderRawModel(DataModel):
     """
     A data model for FGS pipeline input files
 
@@ -38,3 +38,11 @@ class GuiderRawModel(ImageModel):
     """
 
     schema_url = "guider_raw.schema.yaml"
+
+    def __init__(self, init=None, **kwargs):
+
+        super(GuiderRawModel, self).__init__(init=init, **kwargs)
+
+        # Implicitly create arrays
+        self.dq = self.dq
+        self.err = self.err

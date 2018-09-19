@@ -75,7 +75,7 @@ class ReferenceImageModel(ReferenceFileModel):
             self.dq = dynamic_mask(self)
 
 
-class ReferenceCubeModel(ReferenceImageModel):
+class ReferenceCubeModel(ReferenceFileModel):
     """
     A data model for 3D reference images
 
@@ -95,7 +95,14 @@ class ReferenceCubeModel(ReferenceImageModel):
     """
     schema_url = "referencecube.schema.yaml"
 
-class ReferenceQuadModel(ReferenceImageModel):
+    def __init__(self, init=None, **kwargs):
+        super(ReferenceCubeModel, self).__init__(init=init, **kwargs)
+
+        # Implicitly create arrays
+        self.dq = self.dq
+        self.err = self.err
+
+class ReferenceQuadModel(ReferenceFileModel):
     """
     A data model for 4D reference images
 
@@ -114,3 +121,10 @@ class ReferenceQuadModel(ReferenceImageModel):
         The error array.
     """
     schema_url = "referencequad.schema.yaml"
+
+    def __init__(self, init=None, **kwargs):
+        super(ReferenceQuadModel, self).__init__(init=init, **kwargs)
+
+        # Implicitly create arrays
+        self.dq = self.dq
+        self.err = self.err

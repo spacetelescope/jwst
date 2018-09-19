@@ -26,7 +26,3 @@ class ImageModel(DataModel):
         # Implicitly create arrays
         self.dq = self.dq
         self.err = self.err
-
-        if self.hasattr('dq') and self.hasattr('dq_def'):
-            self.dq = dynamic_mask(self)
-
