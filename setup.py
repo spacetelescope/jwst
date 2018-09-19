@@ -177,7 +177,8 @@ setup(
     ],
     tests_require=[
         'pytest',
-        'requests_mock'
+        'requests_mock',
+        'ci_watson'
     ],
     cmdclass={
         'test': PyTest,
