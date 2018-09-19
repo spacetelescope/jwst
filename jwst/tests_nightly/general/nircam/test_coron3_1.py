@@ -5,8 +5,6 @@ from jwst.pipeline.calwebb_coron3 import Coron3Pipeline
 
 
 class TestCoron3Pipeline(NIRCamTest):
-    ignore_keywords = ['DATE', 'CAL_VER', 'CAL_VCS', 'CRDS_VER', 'CRDS_CTX']
-    ignore_hdus = ['ASDF']
     rtol = 0.001
     ref_loc = ['test_coron3']#, 'truth']
 
