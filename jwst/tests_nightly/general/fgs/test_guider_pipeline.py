@@ -4,19 +4,15 @@ from jwst.pipeline.calwebb_guider import GuiderPipeline
 
 from ..resources import FGSTest
 
-pytestmark = [
-    pytest.mark.usefixtures('_jail'),
-    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
-                       reason='requires --bigdata')
-]
 
+@pytest.mark.bigdata
 class TestGuiderPipeline(FGSTest):
     ref_loc = ['test_guiderpipeline']
     test_dir = 'test_guiderpipeline'
 
     rtol = 0.000001
 
-    def test_guider_pipeline1(self):
+    def test_guider_pipeline1(self, _jail):
         """
         Regression test of calwebb_guider pipeline performed on ID-image data.
         """
@@ -34,7 +30,7 @@ class TestGuiderPipeline(FGSTest):
         self.compare_outputs(outputs)
 
 
-    def test_guider_pipeline2(self):
+    def test_guider_pipeline2(self, _jail):
         """
         Regression test of calwebb_guider pipeline performed on ACQ-1 data.
         """
@@ -53,7 +49,7 @@ class TestGuiderPipeline(FGSTest):
         self.compare_outputs(outputs)
 
 
-    def test_guider_pipeline3(self):
+    def test_guider_pipeline3(self, _jail):
         """
 
         Regression test of calwebb_guider pipeline performed on ID STACKED data.

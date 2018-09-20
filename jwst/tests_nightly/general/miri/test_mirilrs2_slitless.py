@@ -4,16 +4,12 @@ from jwst.stpipe import Step
 
 from ..resources import MIRITest
 
-pytestmark = [
-    pytest.mark.usefixtures('_jail'),
-    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
-                       reason='requires --bigdata')
-]
 
+@pytest.mark.bigdata
 class TestSpec2Pipeline(MIRITest):
     ref_loc = ['test_spec2pipeline']
 
-    def test_mirilrs2pipeline1(self):
+    def test_mirilrs2pipeline1(self, _jail):
         """
         Regression test of calwebb_spec2 pipeline performed on
         MIRI LRS slitless data.

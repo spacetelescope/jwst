@@ -3,16 +3,12 @@ from jwst.pipeline.calwebb_image2 import Image2Pipeline
 
 from ..resources import MIRITest
 
-pytestmark = [
-    pytest.mark.usefixtures('_jail'),
-    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
-                       reason='requires --bigdata')
-]
 
+@pytest.mark.bigdata
 class TestImage2Pipeline(MIRITest):
     ref_loc = ['test_image2pipeline']#, 'truth']
 
-    def test_image2pipeline1(self):
+    def test_image2pipeline1(self, _jail):
         """
         Regression test of calwebb_image2 pipeline performed on MIRI data.
         """

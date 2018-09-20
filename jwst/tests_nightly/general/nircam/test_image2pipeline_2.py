@@ -3,17 +3,13 @@ from jwst.pipeline.calwebb_image2 import Image2Pipeline
 
 from ..resources import NIRCamTest
 
-pytestmark = [
-    pytest.mark.usefixtures('_jail'),
-    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
-                       reason='requires --bigdata')
-]
 
+@pytest.mark.bigdata
 class TestImage2Pipeline(NIRCamTest):
 
     ref_loc = ['test_image2pipeline']
 
-    def test_image2pipeline2_cal(self):
+    def test_image2pipeline2_cal(self, _jail):
         """
         Regression test of calwebb_image2 pipeline performed on NIRCam data.
         """

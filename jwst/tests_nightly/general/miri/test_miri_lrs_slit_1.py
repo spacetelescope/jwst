@@ -3,17 +3,12 @@ from jwst.pipeline.calwebb_spec2 import Spec2Pipeline
 
 from ..resources import MIRITest
 
-pytestmark = [
-    pytest.mark.usefixtures('_jail'),
-    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
-                       reason='requires --bigdata')
-]
 
-
+@pytest.mark.bigdata
 class TestSpec2Pipeline(MIRITest):
     ref_loc = ['test_lrs_slit']#, 'truth']
 
-    def test_miri_lrs_slit_1(self):
+    def test_miri_lrs_slit_1(self, _jail):
         """
         Regression test of calwebb_spec2 pipeline performed on a single
         MIRI LRS fixed-slit exposure.
