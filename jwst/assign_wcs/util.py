@@ -350,12 +350,11 @@ def get_object_info(catalog_name=None):
         log.error(err_text)
         raise AttributeError
 
-    # The columns are named sky_bbox_ll, sky_bbox_ul, sky_bbox_lr, and sky_bbox_ur, each of
-    # which is a SkyCoord (i.e. RA & Dec & frame) at one corner of the minimal bounding box.
-    # There will also be a sky_bbox property as a 4-tuple of SkyCoord, but that is not
-    # serializable (hence, the four separate columns). This is not yet merged in photutils
-    # -- I discovered some bugs with SkyCoord and serialization, some of which have just been
-    # fixed in astropy.
+    # The columns are named sky_bbox_ll, sky_bbox_ul, sky_bbox_lr,
+    # and sky_bbox_ur, each of which is a SkyCoord (i.e. RA & Dec & frame) at
+    # one corner of the minimal bounding box. There will also be a sky_bbox
+    # property as a 4-tuple of SkyCoord, but that is not serializable
+    # (hence, the four separate columns).
 
     for row in catalog:
         objects.append(SkyObject(sid=row['id'],
@@ -377,7 +376,7 @@ def create_grism_bbox(input_model,
                       reference_files,
                       mmag_extract=99.0,
                       extract_orders=None,
-                      use_fits_wcs=True):
+                      use_fits_wcs=False):
     """Create bounding boxes for each object in the catalog
 
     The sky coordinates in the catalog image are first related
@@ -415,24 +414,27 @@ def create_grism_bbox(input_model,
 
     Notes
     -----
-    The wavelengthrange reference file is used to govern the extent of the bounding box
-    for each object. The name of the catalog has been stored in the input models meta
-    information under the source_catalog key.
+    The wavelengthrange reference file is used to govern
+    the extent of the bounding box for each object. The name of the
+    catalog has been stored in the input models meta information under
+    the source_catalog key.
 
-    It's left to the calling routine to cut the bounding boxes at the extent of the
-    detector (for example, extract 2d would only extract the on-detector portion of
-    the bounding box)
+    It's left to the calling routine to cut the bounding boxes at the
+    extent of the detector (for example, extract 2d would only extract
+    the on-detector portion of the bounding box)
 
-    Bounding box dispersion direction is dependent on the filter and module for NIRCAM
-    and changes for GRISMR, but is consistent for GRISMC,
-    see https://jwst-docs.stsci.edu/display/JTI/NIRCam+Wide+Field+Slitless+Spectroscopy
+    Bounding box dispersion direction is dependent on the filter and
+    module for NIRCAM and changes for GRISMR, but is consistent for
+    GRISMC, see https://jwst-
+    docs.stsci.edu/display/JTI/NIRCam+Wide+Field+Slitless+Spectroscopy
 
-    NIRISS only has one detector, but GRISMC disperses along rows and GRISMR disperses
-    along columns.
+    NIRISS only has one detector, but GRISMC disperses along rows and
+    GRISMR disperses along columns.
 
-    photutils is used to create the source catalog in the pipeline, it's currently using the
-    fits wcs for it's sky translation, it grabs the fits wcs from the data model using
-    get_fits_wcs(). Until GWCS is fully implemented, this translation may be off in the
+    photutils is used to create the source catalog in the pipeline,
+    it's currently using the fits wcs for it's sky translation, it
+    grabs the fits wcs from the data model using get_fits_wcs(). Until
+    GWCS is fully implemented, this translation may be off in the
     pipeline.
 
     """
@@ -476,7 +478,8 @@ def create_grism_bbox(input_model,
         # use the fits wcs to get the source and box positions
         fits_wcs = input_model.get_fits_wcs()
         # but use the gwcs to translate the trace
-        detector_to_grism = input_model.meta.wcs.get_transform('detector', 'grism_detector')
+        detector_to_grism = input_model.meta.wcs.get_transform('detector',
+                                                               'grism_detector')
     else:
         # this only uses the gwcs object and is preferred
         sky_to_detector = input_model.meta.wcs.get_transform('world', 'detector')
@@ -489,7 +492,6 @@ def create_grism_bbox(input_model,
             log.error(err_text)
             raise ValueError(err_text)
         wavelengthrange = f.wavelengthrange
-        waverange_selector = f.waverange_selector
         ref_extract_orders = f.extract_orders
 
     # this supports the user override and overriding the WFSS order extraction
@@ -521,7 +523,8 @@ def create_grism_bbox(input_model,
                 ## temp to check fits_wcs catalog use
                 ##
                 if use_fits_wcs:
-                    xcenter, ycenter = skycoord_to_pixel(obj.sky_centroid.icrs, fits_wcs, origin=0)
+                    xcenter, ycenter = skycoord_to_pixel(obj.sky_centroid.icrs,
+                                                         fits_wcs, origin=0)
                 else:
                     xcenter, ycenter, _, _ = sky_to_detector(obj.sky_centroid.icrs.ra.value,
                                                              obj.sky_centroid.icrs.dec.value,
@@ -540,19 +543,10 @@ def create_grism_bbox(input_model,
 
                     if use_fits_wcs:
                         # translate the boxes using fits wcs
-                        dxmax, dymax = skycoord_to_pixel(obj.sky_bbox_ur, fits_wcs, origin=1)
-                        dxmin, dymin = skycoord_to_pixel(obj.sky_bbox_ll, fits_wcs, origin=1)
-                        # if ((dxmax < dxmin) or (dymax < dymin)):
-                        #     tdxmax = dxmax
-                        #     dxmax = dxmin
-                        #     dxmin = tdxmax
-                        #     tdymax = dymax
-                        #     dymax = dymin
-                        #     dymin = tdymax
-                        # if ((dxmax < dxmin) or (dymax < dymin)):
-                        #     mintemp = lmin
-                        #     lmin = lmax
-                        #     lmax = mintemp
+                        dxmax, dymax = skycoord_to_pixel(obj.sky_bbox_ur,
+                                                         fits_wcs, origin=1)
+                        dxmin, dymin = skycoord_to_pixel(obj.sky_bbox_ll,
+                                                         fits_wcs, origin=1)
 
                         # now translate through the grism transforms
                         xmin, ymin, _, _, _ = detector_to_grism(dxmin, dymin, lmin, order)
@@ -568,10 +562,11 @@ def create_grism_bbox(input_model,
                     # Make sure that we have the correct box corners tagged
                     # as the min and max extents for the grism, the dispersion
                     # direction changes with grism and detector
-                    if ((xmax < xmin) or (ymax < ymin)):
+                    if (xmax < xmin):
                         txmax = xmax
                         xmax = xmin
                         xmin = txmax
+                    if (ymax < ymin):
                         tymax = ymax
                         ymax = ymin
                         ymin = tymax
@@ -581,17 +576,20 @@ def create_grism_bbox(input_model,
                     ymin = int(ymin)
                     ymax = int(ymax)
 
-                    # don't add objects and orders which are entirely off the detector
-                    # partial_order marks partial off-detector objects which are near enough to cause
-                    # spectra to be observed on the detector. This is usefull because the catalog often is
-                    # created from a resampled direct image that is bigger than the detector FOV for a single
-                    # grism exposure.
+                    # don't add objects and orders which are entirely
+                    # off the detector partial_order marks partial
+                    # off-detector objects which are near enough to
+                    # cause spectra to be observed on the detector.
+                    # This is usefull because the catalog often is
+                    # created from a resampled direct image that is
+                    # bigger than the detector FOV for a single grism
+                    # exposure.
                     exclude = False
                     partial_order = False
 
                     pts = np.array([[ymin, xmin], [ymax, xmax]])
-                    ll = np.array([0, 0])  # lower-left
-                    ur = np.array([input_model.meta.subarray.ysize, input_model.meta.subarray.xsize])  # upper-right
+                    ll = np.array([0, 0])
+                    ur = np.array([input_model.meta.subarray.ysize, input_model.meta.subarray.xsize])
                     inidx = np.any(np.logical_and(ll <= pts, pts <= ur), axis=1)
                     contained = len(pts[inidx])
 
@@ -618,6 +616,8 @@ def create_grism_bbox(input_model,
                                                      sky_bbox_ur=obj.sky_bbox_ur,
                                                      xcentroid=xcenter,
                                                      ycentroid=ycenter))
+    if len(grism_objects) == 0:
+        log.warning("No grism objects saved, check catalog")
     return grism_objects
 
 
