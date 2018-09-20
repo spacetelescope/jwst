@@ -3,18 +3,13 @@ import pytest
 from ..resources import NIRCamTest
 from jwst.pipeline.calwebb_coron3 import Coron3Pipeline
 
-pytestmark = [
-    pytest.mark.usefixtures('_jail'),
-    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
-                       reason='requires --bigdata')
-]
 
-
+@pytest.mark.bigdata
 class TestCoron3Pipeline(NIRCamTest):
     rtol = 0.001
     ref_loc = ['test_coron3']#, 'truth']
 
-    def test_coron3_1(self):
+    def test_coron3_1(self, _jail):
         """Regression test of calwebb_coron3 pipeline.
 
         Test will be performed on NIRCam simulated data.

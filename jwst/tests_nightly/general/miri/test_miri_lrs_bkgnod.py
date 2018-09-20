@@ -3,18 +3,14 @@ from jwst.pipeline.calwebb_spec2 import Spec2Pipeline
 
 from ..resources import MIRITest
 
-pytestmark = [
-    pytest.mark.usefixtures('_jail'),
-    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
-                       reason='requires --bigdata')
-]
 
+@pytest.mark.bigdata
 class TestSpec2Pipeline(MIRITest):
     ref_loc = ['test_spec2pipeline']
 
     test_dir = 'test_spec2pipeline'
 
-    def test_miri_lrs_bkgnod(self):
+    def test_miri_lrs_bkgnod(self, _jail):
         """
 
         Regression test of calwebb_spec2 pipeline performed on an association
@@ -51,10 +47,9 @@ class TestSpec2Pipeline(MIRITest):
                    ('test_lrs4_cal.fits', 'test_lrs4_cal_ref.fits',
                     ['primary','sci','err','dq','relsens'])
         ]
-
         self.compare_outputs(outputs)
 
-    def test_miri_lrs_slit_1(self):
+    def test_miri_lrs_slit_1(self, _jail):
         """
 
         Regression test of calwebb_spec2 pipeline performed on a single
@@ -79,7 +74,9 @@ class TestSpec2Pipeline(MIRITest):
                     'jw00035001001_01101_00001_MIRIMAGE_x1d_ref.fits',
                     ['primary','extract1d'])
                    ]
-    def test_miri_lrs_slit_1b(self):
+        self.compare_outputs(outputs)
+
+    def test_miri_lrs_slit_1b(self, _jail):
         """
         Regression test of calwebb_spec2 pipeline performed on a single
         MIRI LRS fixed-slit exposure with multiple integrations.  Compare _calints.
@@ -101,7 +98,9 @@ class TestSpec2Pipeline(MIRITest):
                      ['primary', ('extract1d', 1), ('extract1d', 2), ('extract1d', 3), ('extract1d', 4)]
                     )
                    ]
-    def test_mrs2pipeline1(self):
+        self.compare_outputs(outputs)
+
+    def test_mrs2pipeline1(self, _jail):
         """
 
         Regression test of calwebb_spec2 pipeline performed on MIRI MRS data.
@@ -132,7 +131,7 @@ class TestSpec2Pipeline(MIRITest):
                    ]
         self.compare_outputs(outputs)
 
-    def test_mrs_spec2(self):
+    def test_mrs_spec2(self, _jail):
         """
 
         Regression test of calwebb_spec2 pipeline performed on MIRI MRS data.

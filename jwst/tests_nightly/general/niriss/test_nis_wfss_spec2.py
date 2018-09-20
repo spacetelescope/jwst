@@ -4,19 +4,14 @@ from jwst.pipeline.calwebb_spec2 import Spec2Pipeline
 
 from ..resources import NIRISSTest
 
-pytestmark = [
-    pytest.mark.usefixtures('_jail'),
-    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
-                       reason='requires --bigdata')
-]
 
-
+@pytest.mark.bigdata
 class TestSpec2Pipeline(NIRISSTest):
     ref_loc = ['test_spec2pipeline']
     test_dir = 'test_spec2pipeline'
 
     @pytest.mark.xfail(reason='https://github.com/STScI-JWST/jwst/issues/2007')
-    def test_nis_wfss_spec2(self):
+    def test_nis_wfss_spec2(self, _jail):
         """
         Regression test of calwebb_spec2 pipeline performed on NIRISS WFSS data.
         """

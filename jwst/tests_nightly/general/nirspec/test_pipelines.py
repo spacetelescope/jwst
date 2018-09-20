@@ -7,18 +7,13 @@ from jwst.pipeline.calwebb_spec2 import Spec2Pipeline
 
 from ..resources import NIRSpecTest
 
-pytestmark = [
-    pytest.mark.usefixtures('_jail'),
-    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
-                       reason='requires --bigdata')
-]
 
-
+@pytest.mark.bigdata
 class TestNIRSpecPipelines(NIRSpecTest):
     ref_loc = ['test_pipelines']
     test_dir = 'test_pipelines'
 
-    def test_nirspec_dark_pipeline(self):
+    def test_nirspec_dark_pipeline(self, _jail):
         """
         Regression test of calwebb_dark pipeline performed on NIRSpec raw data.
         """
@@ -42,7 +37,7 @@ class TestNIRSpecPipelines(NIRSpecTest):
                     ['primary','sci','err','pixeldq','groupdq'])]
         self.compare_outputs(outputs)
 
-    def test_nrs_fs_brightobj_spec2(self):
+    def test_nrs_fs_brightobj_spec2(self, _jail):
         """
         Regression test of calwebb_spec2 pipeline performed on NIRSpec
         fixed-slit data that uses the NRS_BRIGHTOBJ mode (S1600A1 slit).
@@ -63,7 +58,7 @@ class TestNIRSpecPipelines(NIRSpecTest):
                   ]
         self.compare_outputs(outputs)
 
-    def test_nrs_msa_spec2(self):
+    def test_nrs_msa_spec2(self, _jail):
         """
         Regression test of calwebb_spec2 pipeline performed on NIRSpec MSA data.
         """
@@ -90,7 +85,7 @@ class TestNIRSpecPipelines(NIRSpecTest):
                   ]
         self.compare_outputs(outputs)
 
-    def test_nrs_msa_spec2b(self):
+    def test_nrs_msa_spec2b(self, _jail):
         """
         Regression test of calwebb_spec2 pipeline performed on NIRSpec MSA data,
         including barshadow correction.

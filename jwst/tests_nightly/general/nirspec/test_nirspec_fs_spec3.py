@@ -10,20 +10,15 @@ from jwst.stpipe import Step
 
 from ..resources import NIRSpecTest
 
-pytestmark = [
-    pytest.mark.usefixtures('_jail'),
-    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
-                       reason='requires --bigdata')
-]
 
-
+@pytest.mark.bigdata
 class TestSpec3Pipeline(NIRSpecTest):
 
     @pytest.mark.xfail(
         reason='Input data not available',
         run=False
     )
-    def test_save_source_only(self):
+    def test_save_source_only(self, _jail):
         """Test saving the source-based files only"""
         datapath = ['test_datasets', 'fss', '93045', 'level2b']
 
@@ -60,7 +55,7 @@ class TestSpec3Pipeline(NIRSpecTest):
         reason='Dataset fails at resample',
         run=False
     )
-    def test_nrs_fs_spec3(self):
+    def test_nrs_fs_spec3(self, _jail):
         """
         Regression test of calwebb_spec3 pipeline performed on
         NIRSpec fixed-slit data.
