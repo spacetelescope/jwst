@@ -36,7 +36,7 @@ def extract2d(input_model,
         A list of grism objects.
     extract_height: int
         Cross-dispersion extraction height to use for time series grisms.
-        This will override the default which for NRC_TSGRISM is a set 
+        This will override the default which for NRC_TSGRISM is a set
         size of 64 pixels.
     """
     nrs_modes = ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_BRIGHTOBJ',
