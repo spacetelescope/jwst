@@ -3,12 +3,6 @@ from jwst.pipeline.calwebb_spec2 import Spec2Pipeline
 
 from ..resources import NIRSpecTest
 
-pytestmark = [
-    pytest.mark.usefixtures('_jail'),
-    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
-                       reason='requires --bigdata')
-]
-
 
 def pytest_generate_tests(metafunc):
     # called once per each test function
@@ -18,6 +12,7 @@ def pytest_generate_tests(metafunc):
             for funcargs in funcarglist])
 
 
+@pytest.mark.bigdata
 class TestSpec2Pipeline(NIRSpecTest):
     ref_loc = ['test_pipelines']
     test_dir = 'test_pipelines'
@@ -74,7 +69,7 @@ class TestSpec2Pipeline(NIRSpecTest):
                 ]
             }
 
-    def test_nrs_fs_multi_spec2(self, input, outputs):
+    def test_nrs_fs_multi_spec2(self, input, outputs, _jail):
         """
         Regression test of calwebb_spec2 pipeline performed on NIRSpec data.
         """

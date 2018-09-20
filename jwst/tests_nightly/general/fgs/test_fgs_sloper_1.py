@@ -3,17 +3,11 @@ from jwst.pipeline.calwebb_detector1 import Detector1Pipeline
 
 from ..resources import FGSTest
 
-pytestmark = [
-    pytest.mark.usefixtures('_jail'),
-    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
-                       reason='requires --bigdata')
-]
-
-
+@pytest.mark.bigdata
 class TestSloperPipeline(FGSTest):
     ref_loc = ['test_sloperpipeline']#, 'truth']
 
-    def test_fgs_detector1_1(self):
+    def test_fgs_detector1_1(self, _jail):
         """
         Regression test of calwebb_detector1 pipeline performed on FGS imaging mode data.
         """

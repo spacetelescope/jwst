@@ -3,13 +3,8 @@ from ..resources import NIRCamTest
 
 from jwst.pipeline.calwebb_image3 import Image3Pipeline
 
-pytestmark = [
-    pytest.mark.usefixtures('_jail'),
-    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
-                       reason='requires --bigdata')
-]
 
-
+@pytest.mark.bigdata
 class TestImage3Pipeline1(NIRCamTest):
     """Regression test definitions for CALIMAGE3 pipeline.
 
@@ -18,7 +13,7 @@ class TestImage3Pipeline1(NIRCamTest):
     """
     ref_loc = ['test_calimage3']
 
-    def test_image3_pipeline1(self):
+    def test_image3_pipeline1(self, _jail):
 
         asn_name = "mosaic_long_asn.json"
         asn_file = self.get_data('test_calimage3', asn_name)
@@ -84,7 +79,7 @@ class TestImage3Pipeline1(NIRCamTest):
                   ]
         self.compare_outputs(outputs)
 
-    def test_image3_pipeline2(self):
+    def test_image3_pipeline2(self, _jail):
         """Regression test definitions for CALIMAGE3 pipeline.
 
         Regression test of calwebb_image3 pipeline on NIRCam
