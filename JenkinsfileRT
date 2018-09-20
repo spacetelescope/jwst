@@ -7,14 +7,27 @@ def test_env = [
     "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
     "CRDS_CONTEXT=jwst-edit",
 ]
-def PYTEST = "pytest -r s --bigdata --basetemp=test_outputs --junit-xml=results.xml"
+
+// Pip related setup
+def PIP_ARGS = "-q"
+def PIP_INST = "pip install ${PIP_ARGS}"
+def PIP_DEPS = ""
+def PIP_TEST_DEPS = "requests_mock ci_watson"
+
+// Pytest wrapper
+def PYTEST = "pytest \
+              -r s \
+              --bigdata \
+              --basetemp=test_outputs \
+              --junit-xml=results.xml"
+
 def TEST_ROOT = "jwst/tests_nightly/general"
 
 bc = new BuildConfig()
 bc.nodetype = 'jwst'
 bc.env_vars = test_env
 bc.name = '3.6'
-bc.conda_channels = ['http://ssb.stsci.edu/conda-dev']
+bc.conda_channels = ['http://ssb.stsci.edu/astroconda-dev']
 bc.conda_packages = ['asdf',
                      'astropy',
                      'crds',
@@ -39,6 +52,7 @@ bc.conda_packages = ['asdf',
 ]
 bc.test_cmds = ["printenv | sort",
                 "python setup.py develop",
+                "${PIP_INST} ${PIP_TEST_DEPS}",
                 "${PYTEST} ${TEST_ROOT}"
 ]
 

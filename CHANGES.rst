@@ -51,6 +51,7 @@ dark_current
 datamodels
 ----------
 
+- Initialize arrays and tables from function args in model_base [#2502]
 
 dq_init
 -------
