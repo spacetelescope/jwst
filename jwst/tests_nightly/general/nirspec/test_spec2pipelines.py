@@ -1,6 +1,14 @@
+import pytest
 from jwst.pipeline.calwebb_spec2 import Spec2Pipeline
 
 from ..resources import NIRSpecTest
+
+pytestmark = [
+    pytest.mark.usefixtures('_jail'),
+    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
+                       reason='requires --bigdata')
+]
+
 
 def pytest_generate_tests(metafunc):
     # called once per each test function

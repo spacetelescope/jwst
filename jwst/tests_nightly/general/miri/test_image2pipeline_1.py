@@ -1,7 +1,13 @@
+import pytest
 from jwst.pipeline.calwebb_image2 import Image2Pipeline
 
 from ..resources import MIRITest
 
+pytestmark = [
+    pytest.mark.usefixtures('_jail'),
+    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
+                       reason='requires --bigdata')
+]
 
 class TestImage2Pipeline(MIRITest):
     ref_loc = ['test_image2pipeline']#, 'truth']

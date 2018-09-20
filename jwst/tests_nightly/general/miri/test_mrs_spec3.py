@@ -1,6 +1,13 @@
+import pytest
 from jwst.pipeline.calwebb_spec3 import Spec3Pipeline
 
 from ..resources import MIRITest
+
+pytestmark = [
+    pytest.mark.usefixtures('_jail'),
+    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
+                       reason='requires --bigdata')
+]
 
 
 class TestSpec3Pipeline(MIRITest):
