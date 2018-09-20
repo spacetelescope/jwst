@@ -1,11 +1,11 @@
-from . import model_base
+from .model_base import DataModel
 from .image import ImageModel
 
 
 __all__ = ['SlitModel', 'SlitDataModel']
 
 
-class SlitDataModel(model_base.DataModel):
+class SlitDataModel(DataModel):
     """
     A data model for 2D images.
 
@@ -30,13 +30,7 @@ class SlitDataModel(model_base.DataModel):
 
     schema_url = "slitdata.schema.yaml"
 
-
-    def __init__(self, init=None, data=None, dq=None, err=None,
-                 wavelength=None, var_poisson=None, var_rnoise=None,
-                 relsens=None, area=None,
-                 wavelength_pointsource=None, pathloss_pointsource=None,
-                 wavelength_uniformsource=None, pathloss_uniformsource=None,
-                 **kwargs):
+    def __init__(self, init=None, **kwargs):
         if isinstance(init, (SlitModel, ImageModel)):
             super(SlitDataModel, self).__init__(init=None, **kwargs)
             self.data = init.data
@@ -51,54 +45,20 @@ class SlitDataModel(model_base.DataModel):
             if init.hasattr('var_rnoise'):
                 self.var_rnoise = init.var_rnoise
             for key in kwargs:
-                setattr(key, kwargs[key])
+                setattr(self, key, kwargs[key])
 
             if init.meta.hasattr('wcs'):
                 self.meta.wcs = init.meta.wcs
             else:
                 self.meta.wcs = None
-            return
-        super(SlitDataModel, self).__init__(init=init, **kwargs)
-
-        if data is not None:
-            self.data = data
-
-        if dq is not None:
-            self.dq = dq
-
-        if err is not None:
-            self.err = err
-
-        if wavelength is not None:
-            self.wavelength = wavelength
-
-        if var_poisson is not None:
-            self.var_poisson = var_poisson
-
-        if var_rnoise is not None:
-            self.var_rnoise = var_rnoise
-
-        if relsens is not None:
-            self.relsens = relsens
-
-        if area is not None:
-            self.area = area
-
-        if dq is not None:
-            self.dq = dq
-        if err is not None:
-            self.err = err
-        if wavelength_pointsource is not None:
-            self.wavelength_poointsource = wavelength_pointsource
-        if pathloss_pointsource is not None:
-            self.pathloss_pointsource = pathloss_pointsource
-        if wavelength_uniformsource is not None:
-            self.wavelength_uniformsource = wavelength_uniformsource
-        if pathloss_uniformsource is not None:
-            self.pathloss_uniform_source = pathloss_uniformsource
+        else:
+            super(SlitDataModel, self).__init__(init=init, **kwargs)
+            if kwargs:
+                for key in kwargs:
+                    setattr(self, key, kwargs[key])
 
 
-class SlitModel(model_base.DataModel):
+class SlitModel(DataModel):
     """
     A data model for 2D images.
 
@@ -125,18 +85,7 @@ class SlitModel(model_base.DataModel):
     """
     schema_url = "slit.schema.yaml"
 
-    def __init__(self, init=None, data=None, dq=None, err=None,
-                 wavelength=None, var_poisson=None, var_rnoise=None,
-                 bunit_data=None, bunit_err=None, name=None, xstart=None,
-                 xsize=None, ystart=None, ysize=None, slitlet_id=None,
-                 source_id=None, source_name=None, source_alias=None,
-                 stellarity=None, source_type=None, source_xpos=None, source_ypos=None,
-                 shutter_state=None, area=None, relsens=None,
-                 int_times=None, barshadow=None,
-                 wavelength_pointsource=None, pathloss_pointsource=None,
-                 wavelength_uniformsource=None, pathloss_uniformsource=None,
-                 **kwargs):
-
+    def __init__(self, init=None, **kwargs):
         if isinstance(init, (SlitModel, ImageModel)):
             super(SlitModel, self).__init__(init=None, **kwargs)
             self.update(init)
@@ -157,47 +106,8 @@ class SlitModel(model_base.DataModel):
                 self.meta.wcs = init.meta.wcs
             else:
                 self.meta.wcs = None
-            return
-
-        super(SlitModel, self).__init__(init=init, **kwargs)
-
-        if data is not None:
-            self.data = data
-        if dq is not None:
-            self.dq = dq
-        if err is not None:
-            self.err = err
-        if wavelength is not None:
-            self.wavelength = wavelength
-        if kwargs:
-            for key in kwargs:
-                setattr(self, key, kwargs[key])
-
-        if var_poisson is not None:
-            self.var_poisson = var_poisson
-
-        if var_rnoise is not None:
-            self.var_rnoise = var_rnoise
-
-        if int_times is not None:
-            self.int_times = int_times
-
-        if dq is not None:
-            self.dq = dq
-        if err is not None:
-            self.err = err
-        if bunit_data is not None:
-            self.meta.bunit_data = bunit_data
-        if bunit_err is not None:
-            self.meta.bunit_err = bunit_err
-        if name is not None:
-            self.name = name
-
-        if wavelength_pointsource is not None:
-            self.wavelength_poointsource = wavelength_pointsource
-        if pathloss_pointsource is not None:
-            self.pathloss_pointsource = pathloss_pointsource
-        if wavelength_uniformsource is not None:
-            self.wavelength_uniformsource = wavelength_uniformsource
-        if pathloss_uniformsource is not None:
-            self.pathloss_uniform_source = pathloss_uniformsource
+        else:
+            super(SlitModel, self).__init__(init=init, **kwargs)
+            if kwargs:
+                for key in kwargs:
+                    setattr(self, key, kwargs[key])

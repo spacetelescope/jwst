@@ -37,7 +37,8 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
     schema_url = "core.schema.yaml"
 
     def __init__(self, init=None, schema=None, extensions=None,
-                 pass_invalid_values=False, strict_validation=False):
+                 pass_invalid_values=False, strict_validation=False,
+                 **kwargs):
         """
         Parameters
         ----------
@@ -217,6 +218,16 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             if not self.meta.hasattr('model_type'):
                 self.meta.model_type = klass
 
+        # initialize arrays from keyword arguments when they are present
+
+        for attr, value in kwargs.items():
+            if value is not None:
+                subschema = properties._get_schema_for_property(self._schema,
+                                                                attr)
+                if 'datatype' in subschema:
+                    setattr(self, attr, value)
+
+
     def __repr__(self):
         import re
 
@@ -389,7 +400,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         for field in field_info:
             buffer.append(format_string % field)
         return "\n".join(buffer) + "\n"
-
 
     def get_primary_array_name(self):
         """

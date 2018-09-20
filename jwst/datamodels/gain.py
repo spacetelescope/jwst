@@ -17,9 +17,3 @@ class GainModel(ReferenceFileModel):
         The 2-D gain array
     """
     schema_url = "gain.schema.yaml"
-
-    def __init__(self, init=None, data=None, **kwargs):
-        super(GainModel, self).__init__(init=init, **kwargs)
-
-        if data is not None:
-            self.data = data
