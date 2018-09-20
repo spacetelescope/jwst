@@ -23,7 +23,7 @@ class SaturationModel(ReferenceFileModel):
     """
     schema_url = "saturation.schema.yaml"
 
-    def __init__(self, init=None, data=None, **kwargs):
+    def __init__(self, init=None, **kwargs):
         super(SaturationModel, self).__init__(init=init, **kwargs)
 
         self.dq = dynamic_mask(self)
