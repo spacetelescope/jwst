@@ -506,6 +506,12 @@ class Asn_Lv2NRSIFU(
                         name='expspcin',
                         sources=['expspcin'],
                     ),
+                    DMSAttrConstraint(
+                        name='patttype',
+                        sources=['patttype'],
+                        value=['2_point_nod|4_point_nod'],
+                        force_unique=True
+                    )
                 ]
             ),
         ])
