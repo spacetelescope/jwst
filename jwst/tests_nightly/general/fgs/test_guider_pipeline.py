@@ -2,7 +2,7 @@ import pytest
 
 from jwst.pipeline.calwebb_guider import GuiderPipeline
 
-from jwst.tests_nightly.resources import FGSTest
+from ..resources import FGSTest
 
 pytestmark = [
     pytest.mark.usefixtures('_jail'),
