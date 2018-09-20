@@ -308,7 +308,6 @@ def extract_grism_objects(input_model,
 
     slits = []
     for obj in grism_objects:
-        print(obj.xcentroid, obj.ycentroid)
         for order in obj.order_bounding.keys():
 
             # Add the shift to the lower corner to each subarray WCS object
@@ -319,60 +318,87 @@ def extract_grism_objects(input_model,
             #
             # The bounding boxes here are also limited to the size of the detector
             # The check for boxes entirely off the detector is done in create_grism_bbox right now
-            bb = obj.order_bounding[order]
+            y, x = obj.order_bounding[order]
 
             # limit the boxes to the detector
-            ymin, ymax = (max(bb[0][0], 0), min(bb[0][1], input_model.meta.subarray.ysize))
-            xmin, xmax = (max(bb[1][0], 0), min(bb[1][1], input_model.meta.subarray.xsize))
+            ymin = clamp(y[0], 0, input_model.meta.subarray.ysize)
+            ymax = clamp(y[1], 0, input_model.meta.subarray.ysize)
+            xmin = clamp(x[0], 0, input_model.meta.subarray.xsize)
+            xmax = clamp(x[1], 0, input_model.meta.subarray.xsize)
 
-            # only the first two numbers in the Mapping are used
-            # the order and source position are put directly into
-            # the new wcs for the subarray for the forward transform
-            xcenter_model = Const1D(obj.xcentroid)
-            xcenter_model.inverse = Const1D(obj.xcentroid)
-            ycenter_model = Const1D(obj.ycentroid)
-            ycenter_model.inverse = Const1D(obj.ycentroid)
-            order_model = Const1D(order)
-            order_model.inverse = Const1D(order)
-            tr = inwcs.get_transform('grism_detector', 'detector')
-            tr = Identity(2) | Mapping((0, 1, 0, 1, 0)) | (Shift(xmin) & Shift(ymin) &
-                                                           xcenter_model &
-                                                           ycenter_model &
-                                                           order_model) | tr
+            # don't extract anything that ended up with zero dimensions in one axis
+            # this means that it was identified as a partial order but only on one 
+            # row or column of the detector
+            if (((ymax - ymin) > 0) and ((xmax - xmin) > 0)):
+                # only the first two numbers in the Mapping are used
+                # the order and source position are put directly into
+                # the new wcs for the subarray for the forward transform
+                xcenter_model = Const1D(obj.xcentroid)
+                xcenter_model.inverse = Const1D(obj.xcentroid)
+                ycenter_model = Const1D(obj.ycentroid)
+                ycenter_model.inverse = Const1D(obj.ycentroid)
+                order_model = Const1D(order)
+                order_model.inverse = Const1D(order)
+                tr = inwcs.get_transform('grism_detector', 'detector')
+                tr = Identity(2) | Mapping((0, 1, 0, 1, 0)) | (Shift(xmin) & Shift(ymin) &
+                                                               xcenter_model &
+                                                               ycenter_model &
+                                                               order_model) | tr
 
-            subwcs.set_transform('grism_detector', 'detector', tr)
+                subwcs.set_transform('grism_detector', 'detector', tr)
 
-            log.info("Subarray extracted for obj: {} order: {}:".format(obj.sid, order))
-            log.info("Subarray extents are: (xmin:{}, xmax:{}), (ymin:{}, ymax:{})".format(xmin, xmax, ymin, ymax))
+                log.info("Subarray extracted for obj: {} order: {}:".format(obj.sid, order))
+                log.info("Subarray extents are: (xmin:{}, xmax:{}), (ymin:{}, ymax:{})".format(xmin, xmax, ymin, ymax))
 
-            ext_data = input_model.data[ymin: ymax + 1, xmin: xmax + 1].copy()
-            ext_err = input_model.err[ymin: ymax + 1, xmin: xmax + 1].copy()
-            ext_dq = input_model.dq[ymin: ymax + 1, xmin: xmax + 1].copy()
+                ext_data = input_model.data[ymin: ymax + 1, xmin: xmax + 1].copy()
+                ext_err = input_model.err[ymin: ymax + 1, xmin: xmax + 1].copy()
+                ext_dq = input_model.dq[ymin: ymax + 1, xmin: xmax + 1].copy()
 
-            # new_model = datamodels.ImageModel(data=ext_data, err=ext_err, dq=ext_dq)
-            new_model = datamodels.SlitModel(data=ext_data, err=ext_err, dq=ext_dq)
-            new_model.meta.wcs = subwcs
-            new_model.meta.wcsinfo.spectral_order = order
+                # new_model = datamodels.ImageModel(data=ext_data, err=ext_err, dq=ext_dq)
+                new_model = datamodels.SlitModel(data=ext_data, err=ext_err, dq=ext_dq)
+                new_model.meta.wcs = subwcs
+                new_model.meta.wcsinfo.spectral_order = order
 
-            # set x/ystart values relative to the image (screen) frame.
-            # The overall subarray offset is recorded in model.meta.subarray.
-            # nslit = obj.sid - 1  # catalog id starts at zero
-            new_model.name = str(obj.sid)
-            new_model.xstart = xmin + 1
-            new_model.xsize = (xmax - xmin)
-            new_model.ystart = ymin + 1
-            new_model.ysize = (ymax - ymin)
-            print(obj.xcentroid, obj.ycentroid)
-            new_model.source_xpos = obj.xcentroid
-            new_model.source_ypos = obj.ycentroid
-            new_model.source_id = obj.sid
-            new_model.bunit_data = input_model.meta.bunit_data
-            new_model.bunit_err = input_model.meta.bunit_err
-            slits.append(new_model)
+                # set x/ystart values relative to the image (screen) frame.
+                # The overall subarray offset is recorded in model.meta.subarray.
+                # nslit = obj.sid - 1  # catalog id starts at zero
+                log.debug("sid {} xcen {}  ycen {}".format(obj.sid, obj.xcentroid, obj.ycentroid))
+                new_model.name = str(obj.sid)
+                new_model.xstart = xmin + 1
+                new_model.xsize = (xmax - xmin)
+                new_model.ystart = ymin + 1
+                new_model.ysize = (ymax - ymin)
+                new_model.source_xpos = float(obj.xcentroid)
+                new_model.source_ypos = float(obj.ycentroid)
+                new_model.source_id = obj.sid
+                new_model.bunit_data = input_model.meta.bunit_data
+                new_model.bunit_err = input_model.meta.bunit_err
+                slits.append(new_model)
 
     output_model.slits.extend(slits)
     del subwcs
     return output_model
+
+
+def clamp(value, minval, maxval):
+    """
+    Return the value clipped between minval and maxval
+
+    Parameters
+    ----------
+    value: float
+        The value to limit
+    minval: float
+        The minimal acceptable value
+    maxval: float
+        The maximum acceptable value
+
+    Returns
+    -------
+    value: float
+        The value that falls within the min-max range or the minimum limit
+    """
+    return max(minval, min(value, maxval))
 
 
 def compute_dispersion(wcs):

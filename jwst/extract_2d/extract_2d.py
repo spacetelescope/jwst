@@ -65,11 +65,16 @@ def extract2d(input_model,
                                               extract_height=extract_height,
                                               extract_orders=extract_orders)
         else:
+            if exp_type is 'NRC_WFSS':
+                use_fits_wcs = True
+            else:
+                use_fits_wcs = False
+
             output_model = extract_grism_objects(input_model,
                                                  grism_objects=grism_objects,
                                                  reference_files=reference_files,
                                                  extract_orders=extract_orders,
-                                                 use_fits_wcs=True,
+                                                 use_fits_wcs=use_fits_wcs,
                                                  mmag_extract=99.)
 
     else:
