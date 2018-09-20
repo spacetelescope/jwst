@@ -5,14 +5,14 @@ import os
 from asdf import schema as asdf_schema
 from asdf import treeutil
 
-from . import model_base
+from .model_base import DataModel
 from .image import ImageModel
 from .slit import SlitModel, SlitDataModel
 
 __all__ = ['MultiExposureModel']
 
 
-class MultiExposureModel(model_base.DataModel):
+class MultiExposureModel(DataModel):
     """
     A data model for multi-slit images derived from
     numerous exposures. The intent is that all slits

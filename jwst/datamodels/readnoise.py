@@ -17,9 +17,3 @@ class ReadnoiseModel(ReferenceFileModel):
         Read noise for all pixels.  2-D.
     """
     schema_url = "readnoise.schema.yaml"
-
-    def __init__(self, init=None, data=None, **kwargs):
-        super(ReadnoiseModel, self).__init__(init=init, **kwargs)
-
-        if data is not None:
-            self.data = data

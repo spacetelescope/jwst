@@ -11,11 +11,6 @@ class PixelAreaModel(ReferenceFileModel):
     """
     schema_url = "pixelarea.schema.yaml"
 
-    def __init__(self, init=None, data=None, **kwargs):
-        super(PixelAreaModel, self).__init__(init=init, **kwargs)
-
-        if data is not None:
-            self.data = data
 
 
 class NirspecSlitAreaModel(ReferenceFileModel):
@@ -37,11 +32,6 @@ class NirspecSlitAreaModel(ReferenceFileModel):
     """
     schema_url = "nirspec_area_slit.schema.yaml"
 
-    def __init__(self, init=None, area_table=None, **kwargs):
-        super(NirspecSlitAreaModel, self).__init__(init=init, **kwargs)
-
-        if area_table is not None:
-            self.area_table = area_table
 
 class NirspecMosAreaModel(ReferenceFileModel):
     """
@@ -64,11 +54,6 @@ class NirspecMosAreaModel(ReferenceFileModel):
     """
     schema_url = "nirspec_area_mos.schema.yaml"
 
-    def __init__(self, init=None, area_table=None, **kwargs):
-        super(NirspecMosAreaModel, self).__init__(init=init, **kwargs)
-
-        if area_table is not None:
-            self.area_table = area_table
 
 class NirspecIfuAreaModel(ReferenceFileModel):
     """
@@ -88,10 +73,4 @@ class NirspecIfuAreaModel(ReferenceFileModel):
         - pixarea: float32
     """
     schema_url = "nirspec_area_ifu.schema.yaml"
-
-    def __init__(self, init=None, area_table=None, **kwargs):
-        super(NirspecIfuAreaModel, self).__init__(init=init, **kwargs)
-
-        if area_table is not None:
-            self.area_table = area_table
 
