@@ -1,6 +1,13 @@
+import pytest
 from jwst.pipeline.calwebb_image2 import Image2Pipeline
 
 from ..resources import FGSTest
+
+pytestmark = [
+    pytest.mark.usefixtures('_jail'),
+    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
+                       reason='requires --bigdata')
+]
 
 
 class TestImage2Pipeline(FGSTest):

@@ -1,7 +1,14 @@
+import pytest
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
 from ..resources import MIRITest
+
+pytestmark = [
+    pytest.mark.usefixtures('_jail'),
+    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
+                       reason='requires --bigdata')
+]
 
 class TestSpec2Pipeline(MIRITest):
     ref_loc = ['test_spec2pipeline']

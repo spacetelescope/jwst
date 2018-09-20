@@ -1,7 +1,13 @@
-from ci_watson.jwst_helpers import raw_from_asn
+import pytest
 
 from ..resources import NIRCamTest
 from jwst.pipeline.calwebb_coron3 import Coron3Pipeline
+
+pytestmark = [
+    pytest.mark.usefixtures('_jail'),
+    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
+                       reason='requires --bigdata')
+]
 
 
 class TestCoron3Pipeline(NIRCamTest):
@@ -19,8 +25,8 @@ class TestCoron3Pipeline(NIRCamTest):
         # get a local copy of the inputs
         asn_file = self.get_data('test_coron3', asn_name)
         psfmask_file = self.get_data('test_coron3', override_psfmask)
-        for file in raw_from_asn(asn_file):
-            input_file = self.get_data('test_coron3', file)
+        for file in self.raw_from_asn(asn_file):
+            self.get_data('test_coron3', file)
 
         pipe = Coron3Pipeline()
         pipe.align_refs.override_psfmask = psfmask_file

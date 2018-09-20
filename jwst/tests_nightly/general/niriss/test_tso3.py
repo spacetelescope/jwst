@@ -1,6 +1,13 @@
+import pytest
 from jwst.pipeline.calwebb_tso3 import Tso3Pipeline
 
 from ..resources import NIRISSTest
+
+pytestmark = [
+    pytest.mark.usefixtures('_jail'),
+    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
+                       reason='requires --bigdata')
+]
 
 
 class TestTso3Pipeline(NIRISSTest):
@@ -10,7 +17,7 @@ class TestTso3Pipeline(NIRISSTest):
     def test_tso3_pipeline_nis(self):
         """Regression test of calwebb_tso3 on NIRISS SOSS simulated data.
         """
-        asn_file = self.get_data(self.test_dir, 
+        asn_file = self.get_data(self.test_dir,
                                 "jw87600-a3001_20170527t111213_tso3_001_asn.json")
         for file in self.raw_from_asn(asn_file):
             self.get_data(self.test_dir, file)
