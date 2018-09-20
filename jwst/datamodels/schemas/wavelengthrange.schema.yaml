@@ -44,17 +44,6 @@ allOf:
       type: array
       items:
         type: integer
-    extract_orders:
-        description: |
-          Orders that should be extracted by default. This is
-          a list of lists, following the same order as the
-          waverange_selector
-        type: array
-        items:
-          type: array
-          items:
-            type: number
-            minItems: 1
     meta:
       type: object
       properties:
