@@ -10,6 +10,12 @@ from jwst.stpipe import Step
 
 from ..resources import NIRSpecTest
 
+pytestmark = [
+    pytest.mark.usefixtures('_jail'),
+    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
+                       reason='requires --bigdata')
+]
+
 
 class TestSpec3Pipeline(NIRSpecTest):
 

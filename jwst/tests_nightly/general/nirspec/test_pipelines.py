@@ -1,10 +1,18 @@
+import pytest
+
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 from jwst.pipeline.calwebb_dark import DarkPipeline
 from jwst.pipeline.calwebb_spec2 import Spec2Pipeline
 
-
 from ..resources import NIRSpecTest
+
+pytestmark = [
+    pytest.mark.usefixtures('_jail'),
+    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
+                       reason='requires --bigdata')
+]
+
 
 class TestNIRSpecPipelines(NIRSpecTest):
     ref_loc = ['test_pipelines']

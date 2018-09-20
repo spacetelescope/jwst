@@ -1,6 +1,14 @@
+import pytest
 from jwst.pipeline.calwebb_tso3 import Tso3Pipeline
 
 from ..resources import NIRCamTest
+
+pytestmark = [
+    pytest.mark.usefixtures('_jail'),
+    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
+                       reason='requires --bigdata')
+]
+
 
 class TestTso3Pipeline(NIRCamTest):
     ref_loc = ['test_caltso3']
