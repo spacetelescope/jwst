@@ -924,11 +924,8 @@ class Step():
         for item in to_del:
             try:
                 del item
-            except Exception as exception:
-                self.log.debug(
-                    'Could not delete "{}"'
-                    'Reason:\n{}'.format(item, exception)
-                )
+            except NameError as error:
+                self.log.debug("An error has occurred: %s", error)
         gc.collect()
 
     def open_model(self, obj):

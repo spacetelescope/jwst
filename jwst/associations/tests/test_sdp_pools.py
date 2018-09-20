@@ -48,7 +48,7 @@ def test_against_standard(pool_path):
                 del standards[idx]
                 break
         else:
-            raise last_err
+            assert False, '{}'.format(last_err)
 
 
 def generate_asns(pool_path):

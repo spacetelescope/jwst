@@ -10,7 +10,6 @@ import tempfile
 # simply to make available from this module.
 from ...tests.helpers import (
     abspath,
-    mk_tmp_dirs,
     require_bigdata,
     runslow,
 )

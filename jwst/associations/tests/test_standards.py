@@ -107,7 +107,7 @@ def test_against_standard(standard_pars):
                 del standards[idx]
                 break
         else:
-            raise last_err
+            assert False, '{}'.format(last_err)
 
 
 def generate_asns(standard):

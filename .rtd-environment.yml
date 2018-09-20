@@ -1,29 +1,28 @@
-channels:
-  - http://ssb.stsci.edu/astroconda-dev
 
 dependencies:
   - python>=3
   - setuptools
-  - asdf
   - astropy
-  - crds
-  - drizzle
-  - gwcs
-  - jsonschema
-  - jplephem
   - matplotlib
-  - namedlist
   - numpy
-  - photutils
   - scipy
-  - six
-  - spherical-geometry
-  - stsci.image
-  - stsci.imagestats
-  - stsci.stimage
-  - stsci.tools
-  - verhawk
-  - sphinx_rtd_theme
   - pip:
     - sphinx-automodapi
     - stsci_rtd_theme
+    - asdf
+    - crds
+    - drizzle
+    - gwcs
+    - jsonschema
+    - jplephem
+    - namedlist
+    - photutils
+    - spherical-geometry
+    - stsci.image
+    - stsci.imagestats
+    - stsci.stimage
+    - stsci.tools
+    - six
+    - verhawk
+    - sphinx_rtd_theme
+

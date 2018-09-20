@@ -1,7 +1,6 @@
 import os
-import shutil
 import pytest
-from astropy.io import fits as pf
+from astropy.io import fits
 from jwst.pipeline.calwebb_spec2 import Spec2Pipeline
 
 pytestmark = [
@@ -32,9 +31,9 @@ def test_nrs_msa_spec2(_bigdata):
     output = 'F170LP-G235M_MOS_observation-6-c0e0_001_DN_NRS1_mod_cal.fits'
     nbname = 'f170lp-g235m_mos_observation-6-c0e0_001_dn_nrs1_mod_cal_ref.fits'
     nb = os.path.join(_bigdata,'pipelines', nbname)
-    h = pf.open(output)
-    href = pf.open(nb)
-    result = pf.diff.FITSDiff(h,
+    h = fits.open(output)
+    href = fits.open(nb)
+    result = fits.diff.FITSDiff(h,
                               href,
                               ignore_hdus=['ASDF'],
                               ignore_keywords=ignore_keywords,
@@ -45,9 +44,9 @@ def test_nrs_msa_spec2(_bigdata):
     output = 'F170LP-G235M_MOS_observation-6-c0e0_001_DN_NRS1_mod_s2d.fits'
     nbname = 'f170lp-g235m_mos_observation-6-c0e0_001_dn_nrs1_mod_s2d_ref.fits'
     nb = os.path.join(_bigdata,'pipelines', nbname)
-    h = pf.open(output)
-    href = pf.open(nb)
-    result = pf.diff.FITSDiff(h,
+    h = fits.open(output)
+    href = fits.open(nb)
+    result = fits.diff.FITSDiff(h,
                               href,
                               ignore_hdus=['ASDF'],
                               ignore_keywords=ignore_keywords,
@@ -58,9 +57,9 @@ def test_nrs_msa_spec2(_bigdata):
     output2 = 'F170LP-G235M_MOS_observation-6-c0e0_001_DN_NRS1_mod_x1d.fits'
     nbname = 'f170lp-g235m_mos_observation-6-c0e0_001_dn_nrs1_mod_x1d_ref.fits'
     nb = os.path.join(_bigdata, 'pipelines', nbname)
-    h = pf.open(output2)
-    href = pf.open(nb)
-    result = pf.diff.FITSDiff(h,
+    h = fits.open(output2)
+    href = fits.open(nb)
+    result = fits.diff.FITSDiff(h,
                               href,
                               ignore_hdus=['ASDF'],
                               ignore_keywords=ignore_keywords,

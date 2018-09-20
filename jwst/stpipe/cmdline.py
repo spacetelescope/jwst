@@ -99,7 +99,7 @@ def _build_arg_parser_from_spec(spec, step_class, parent=None):
     return parser
 
 
-class FromCommandLine(unicode):
+class FromCommandLine(str):
     """
     We need a way to distinguish between config values that come from
     a config file and those that come from the commandline.  For

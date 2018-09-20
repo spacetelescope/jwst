@@ -17,17 +17,10 @@ pytestmark = [
 
 def test_miri_image_wcs(_bigdata):
     """
-
     Regression test of creating a WCS object and doing pixel to sky transformation.
-
     """
     suffix = 'assignwcsstep'
     output_file_base, output_file = add_suffix('miri_image_wcs_output.fits', suffix)
-
-    try:
-        os.remove(output_file)
-    except:
-        pass
 
     input_file = os.path.join(_bigdata, 'miri', 'test_wcs', 'image', 'jw00001001001_01101_00001_MIRIMAGE_ramp_fit.fits')
     ref_file = os.path.join(_bigdata, 'miri', 'test_wcs', 'image', 'jw00001001001_01101_00001_MIRIMAGE_assign_wcs.fits')

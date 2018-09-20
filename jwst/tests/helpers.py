@@ -14,22 +14,17 @@ def abspath(filepath):
     return path.abspath(path.expanduser(path.expandvars(filepath)))
 
 
-# Decorator to indicate slow tests
-try:
-    runslow = pytest.mark.skipif(
-        not pytest.config.getoption("--runslow"),
-        reason="need --runslow option to run"
-    )
-except AttributeError:
-    runslow = pytest.mark.skipif(
-        True,
-        reason="No reason, just a dummy"
-    )
+# Decorator to indicate slow test
+runslow = pytest.mark.skipif(
+    not pytest.config.getoption("--slow"),
+    reason="need --slow option to run"
+)
+
 
 # Decorator to indicate TEST_BIGDATA required
 require_bigdata = pytest.mark.skipif(
-    'TEST_BIGDATA' not in os.environ,
-    reason='"TEST_BIGDATA" environmental not defined. Cannot access test data.'
+    not pytest.config.getoption('bigdata'),
+    reason='requires --bigdata'
 )
 
 
@@ -108,18 +103,3 @@ def test_word_precision_check():
     assert word_precision_check(s1, s2, length=1)
     assert not word_precision_check(s2, s3)
     assert word_precision_check(s2, s4, length=2)
-
-
-@pytest.fixture
-def mk_tmp_dirs():
-    """Create a set of temporary directorys and change to one of them."""
-    tmp_current_path = tempfile.mkdtemp()
-    tmp_data_path = tempfile.mkdtemp()
-    tmp_config_path = tempfile.mkdtemp()
-
-    old_path = os.getcwd()
-    try:
-        os.chdir(tmp_current_path)
-        yield (tmp_current_path, tmp_data_path, tmp_config_path)
-    finally:
-        os.chdir(old_path)

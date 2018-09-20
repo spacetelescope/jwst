@@ -7,32 +7,8 @@ log.setLevel(logging.DEBUG)
 #********************************************************************************
 # HELPER ROUTINES for CubeData class defined in cube_build.py
 # these methods relate to I/O type procedures.
-# read_offset_file
 # read_cubepars
 # read_resolution_file
-#********************************************************************************
-# Read in dither offset file
-# For testing this is useful but possibily this might be useful during flight if the
-# images need an additional offset applied to them
-def read_offset_file(offset_list):
-
-    ra_offset = []
-    dec_offset = []
-    f = open(offset_list, 'r')
-    i = 0
-    for line in f:
-        offset_str = line.split()
-        offset = [float(xy) for xy in offset_str]
-        ra_off = offset[0]
-        dec_off = offset[1]
-
-        ra_offset.append(ra_off)
-        dec_offset.append(dec_off)
-        i = i + 1
-    f.close()
-    return ra_offset, dec_offset
-
-
 #********************************************************************************
 def read_cubepars(par_filename,
                   instrument,
