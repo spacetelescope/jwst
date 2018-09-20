@@ -173,11 +173,18 @@ class Asn_Lv2Spec(
             Constraint_Base(),
             Constraint_Mode(),
             Constraint_Spectral_Science(
-                exclude_exp_types=['nrs_msaspec', 'nrs_fixedslit', 'nrs_ifu']
+                exclude_exp_types=['nrs_msaspec', 'nrs_fixedslit']
             ),
             Constraint_Single_Science(self.has_science),
             Constraint(
-                [Constraint_TSO()],
+                [
+                    Constraint_TSO(),
+                    DMSAttrConstraint(
+                        name='patttype',
+                        sources=['patttype'],
+                        value=['2_point_nod|4_point_nod'],
+                    )
+                ],
                 reduce=Constraint.notany
             )
         ])
@@ -483,7 +490,7 @@ class Asn_Lv2NRSFSS(
 
 
 @RegistryMarker.rule
-class Asn_Lv2NRSIFU(
+class Asn_Lv2NRSIFUNod(
         AsnMixin_Lv2Spectral,
         DMSLevel2bBase
 ):
@@ -517,7 +524,7 @@ class Asn_Lv2NRSIFU(
         ])
 
         # Now check and continue initialization.
-        super(Asn_Lv2NRSIFU, self).__init__(*args, **kwargs)
+        super(Asn_Lv2NRSIFUNod, self).__init__(*args, **kwargs)
 
     def finalize(self):
         """Finalize assocation

@@ -1,13 +1,13 @@
 {
     "asn_type": "spec2",
-    "asn_rule": "candidate_Asn_Lv2NRSIFU",
+    "asn_rule": "candidate_Asn_Lv2NRSIFUNod",
     "version_id": null,
     "code_version": "0.10.1a.dev237",
     "degraded_status": "No known degraded exposures in association.",
     "program": "93125",
     "target": "1",
     "asn_pool": "pool_027_nirspec_ifu_nods",
-    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '93125'})\nDMSAttrConstraint({'name': 'is_tso', 'sources': ['tsovisit'], 'value': None})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'nirspec'})\nDMSAttrConstraint({'name': 'detector', 'sources': ['detector'], 'value': 'nrs1'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'f070lp'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['grating'], 'value': 'g140m'})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': 'sub200a1'})\nDMSAttrConstraint({'name': 'channel', 'sources': ['channel'], 'value': None})\nDMSAttrConstraint({'name': 'slit', 'sources': ['fxd_slit'], 'value': 's200a1'})\nDMSAttrConstraint({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'nrs_ifu'})\nDMSAttrConstraint({'name': 'expspcin', 'sources': ['expspcin'], 'value': '1'})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o003\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '93125'})\nDMSAttrConstraint({'name': 'is_tso', 'sources': ['tsovisit'], 'value': None})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'nirspec'})\nDMSAttrConstraint({'name': 'detector', 'sources': ['detector'], 'value': 'nrs1'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'f070lp'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['grating'], 'value': 'g140m'})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': 'sub200a1'})\nDMSAttrConstraint({'name': 'channel', 'sources': ['channel'], 'value': None})\nDMSAttrConstraint({'name': 'slit', 'sources': ['fxd_slit'], 'value': 's200a1'})\nDMSAttrConstraint({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'nrs_ifu'})\nDMSAttrConstraint({'name': 'expspcin', 'sources': ['expspcin'], 'value': '1'})\nDMSAttrConstraint({'name': 'patttype', 'sources': ['patttype'], 'value': '2_point_nod'})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o003\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
     "asn_id": "o003",
     "products": [
         {
@@ -20,16 +20,6 @@
                 },
                 {
                     "expname": "jw_00007_rate.fits",
-                    "exptype": "background",
-                    "exposerr": "null"
-                },
-                {
-                    "expname": "jw_00011_rate.fits",
-                    "exptype": "background",
-                    "exposerr": "null"
-                },
-                {
-                    "expname": "jw_00013_rate.fits",
                     "exptype": "background",
                     "exposerr": "null"
                 }
