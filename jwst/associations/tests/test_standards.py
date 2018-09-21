@@ -29,7 +29,8 @@ TEST_ARGS = ['--dry-run']
 LV2_ONLY_ARGS = [
     '-r',
     t_path('../lib/rules_level2b.py'),
-    '--ignore-default'
+    '--ignore-default',
+    '--no-merge'
 ]
 
 # Produce Level3 only associations
