@@ -415,39 +415,3 @@ def create_history_entry(description, software=None):
     if software is not None:
         entry['software'] = software
     return entry
-
-
-def from_asn(filename, **kwargs):
-    """
-    Load fits files from a JWST association file into a single model.
-
-    Parameters
-    ----------
-    filename : str
-        The name of an association file.
-    """
-    filepath = op.abspath(op.expanduser(op.expandvars(filename)))
-    try:
-        with open(filepath) as asn_file:
-            asn_data = load_asn(asn_file)
-    except AssociationNotValidError:
-        raise IOError("Cannot read ASN file.")
-
-    model = DataModel(init=None)
-    model.meta.resample.output = asn_data['products'][0]['name']
-    model.meta.table_name = op.basename(op.dirname(filepath))
-    model.meta.pool_name = asn_data['asn_pool']
-
-    ##subschema = []
-    collection_list = []
-    basedir = op.diranme(filepath)
-
-    for member in asn_data['products'][0]['members']:
-        infile = op.join(basedir, member['expname'])
-        collection_list.append(submodel.instance)
-
-        ##submodel = open(infile, **kwargs)
-        ##subschema.append(submodel._schema)
-
-    model.exposures = collection_list
-

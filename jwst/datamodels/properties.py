@@ -11,7 +11,6 @@ from asdf.tags.core import ndarray
 
 from . import util
 from . import validate
-from . import _defined_models as defined_models
 
 import logging
 log = logging.getLogger(__name__)
@@ -264,23 +263,8 @@ class ObjectNode(Node):
                 val = getattr(val, field)
             yield (key, val)
 
-    def to_model(self):
-        # Convert a mode with a model_type to a model
-        def add_node_to_model(model, node):
-            value = _unmake_node(node)
-            if isinstance(value, dict):
-                for attr, subnode in value.items():
-                    if model.hasattr(attr):
-                        setattr(model, attr, add_node_to_model(model[attr],
-                                                               subnode))
-                    else:
-                        setattr(model, attr, subnode)
-            elif isinstance(value, list):
-                for subnode in value:
-                    model.append(subnode.instance)
-            else:
-                model = value
-            return model
+    def to_model(self, **kwargs):
+        from . import _defined_models as defined_models
 
         # Create an empty model of the right class
         try:
@@ -293,13 +277,13 @@ class ObjectNode(Node):
             new_class = defined_models.get(model_type)
 
         if new_class:
-            model = new_class(init=None)
+            model = new_class(init=None, **kwargs)
         else:
             raise ValueError("Cannot convert node to datamodel")
 
-        ##return add_node_to_model(model, self)
         # Recursively copy node to the new, empty model
-        return merge_tree(model, self)
+        model._instance = merge_tree(model.instance, self.instance)
+        return model
 
 class ListNode(Node):
     def __cast(self, other):
@@ -405,8 +389,8 @@ class ListNode(Node):
             node = None
         return node
 
-    def to_model(self):
-        return [x.to_model() for x in self]
+    def to_model(self, **kwargs):
+        return [x.to_model(**kwargs) for x in self]
 
 class NodeIterator:
     """

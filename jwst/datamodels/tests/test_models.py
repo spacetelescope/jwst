@@ -321,6 +321,19 @@ def test_multislit_copy():
         output = input.copy()
         assert len(output.slits) == 4
 
+def  test_multislit_collection():
+    with ImageModel((64, 64)) as im:
+        with MultiSlitModel(im) as ms:
+            node_list = ms.collection
+            assert type(node_list).__name__ == 'ListNode'
+            for node in node_list:
+                submodel = node.to_model()
+                assert type(submodel).__name__ == 'SlitDataModel'
+
+            submodels = ms.collection.to_model()
+            for submodel in submodels:
+                assert type(submodel).__name__ == 'SlitDataModel'
+
 
 def test_model_with_nonstandard_primary_array():
     ROOT_DIR = os.path.join(os.path.dirname(__file__), 'data')
@@ -426,6 +439,19 @@ def test_modelcontainer_group_names(container):
     container[0].meta.observation.exposure_number = '2'
     assert len(container.group_names) == 2
     container[0].meta.observation.exposure_number = '1'
+
+
+def test_modelcontainer_collection():
+    warnings.simplefilter("ignore")
+    with ModelContainer(ASN_FILE, persist=True) as asn:
+        model_list = asn.collection
+        for model in model_list:
+            submodel = model.to_model()
+            assert type(submodel).__name__ == 'QuadModel'
+
+        submodels = asn.collection.to_model()
+        for submodel in submodels:
+            assert type(submodel).__name__ == 'QuadModel'
 
 
 def test_object_node_iterator():

@@ -565,7 +565,8 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         return self._shape
 
     def my_attribute(self, attr):
-        properties = frozenset(("shape", "history", "_extra_fits", "schema"))
+        properties = frozenset(("shape", "history", "_extra_fits",
+                                "schema", "collection"))
         return attr in properties
 
     def __setattr__(self, attr, value):
@@ -791,12 +792,16 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         return collection_list
 
-    def to_model(self):
+    def to_model(self, **kwargs):
         """
         Models are also nodes. This function is to prevent to_model
         from trying to convert what is already a model to a model.
         """
-        return self
+        if kwargs:
+            new_class = self.__class__
+            return new_class(init=self, **kwargs)
+        else:
+            return self
 
     def update(self, d, only=''):
         """

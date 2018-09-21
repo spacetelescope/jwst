@@ -280,6 +280,12 @@ class ModelContainer(model_base.DataModel):
         """
         return self
 
+    def to_model(self, **kwargs):
+        """
+        Convert all contained models into possibly different models
+        """
+        return [x.to_model(**kwargs) for x in self]
+
     @property
     def models_grouped(self):
         """
