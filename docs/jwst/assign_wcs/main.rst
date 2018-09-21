@@ -45,8 +45,7 @@ associated with the telescope, and a standard celestial system.
 Using the WCS interactively
 ---------------------------
 
-Once a FITS file is opened as a `DataModel` the WCS can be accessed as an attribute of the meta object.
-Calling it as a function with detector positions as inputs returns the
+Once a FITS file is opened as a `DataModel` the WCS can be accessed as an attribute of the meta object. Calling it as a function with detector positions as inputs returns the
 corresponding world coordinates. Using MIRI LRS fixed slit as an example:
 
 >>> from jwst.datamodels import ImageModel
@@ -55,7 +54,7 @@ corresponding world coordinates. Using MIRI LRS fixed slit as an example:
 >>> print(ra, dec, lam)
     (329.97260532549336, 372.0242999250267, 5.4176100046836675)
 
-The GRISM modes for NIRCAM and NIRISS have a slightly different calling structure,
+The WFSS modes for NIRCAM and NIRISS have a slightly different calling structure,
 in addition to the (x, y) coordinate, they need to know other information about the
 spectrum or source object. In the JWST backward direction (going from the sky to
 the detector) the WCS model also looks for the wavelength and order and returns
@@ -63,7 +62,7 @@ the (x,y) location of that wavelength+order on the dispersed image and the origi
 source pixel location, as entered, along with the order that was specified:
 
 >>> form jwst.datamodels import ImageModel
->>> exp = ImageModel('nircam_grism_assign_wcs.fits')
+>>> exp = ImageModel('nircam_wfss_assign_wcs.fits')
 >>> x, y, x0, y0, order = exp.meta.wcs(x0, y0, wavelength, order)
 >>> print(x0, y0, wavelength, order)
     (365.523884327, 11.6539963919, 2.557881113, 2)
