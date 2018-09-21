@@ -9,7 +9,7 @@ assign_wcs
 
 - The bounding box for Nirspec WCS objects was modified to include the
   edges of the pixels. [#2491]
-  
+
 - Updated assign_wcs to compute the sky footprint of MIRI MRS and Nirspec
   IFU observations. [#2472]
 
@@ -50,6 +50,8 @@ dark_current
 
 datamodels
 ----------
+
+- Datamodels containing submodels have a standard iteration procedure [#2266]
 
 
 dq_init
@@ -212,8 +214,8 @@ The 0.11.0 release is highlighted by the inclusion of steps for resampling
 spectral images and time series grism observations.   In addition, this
 release had 39 issues closed and a number of pull requests to improve PEP8
 compliance, improve performance, and enhance the testing.  The release also
-included updated documentation for acessing CRDS when running the JWST 
-pipeline and updates to the reference file documentation. 
+included updated documentation for acessing CRDS when running the JWST
+pipeline and updates to the reference file documentation.
 
 ami
 ---
@@ -234,7 +236,7 @@ assign_wcs
 
 - Fixed bug in assign_wcs for ordering of slits for NIRSPEC MSA data [#2366]
 
-- Implemented support for reading and writing WCS information in the 
+- Implemented support for reading and writing WCS information in the
   WAVE-TAB format [#2350]
 
 - Fixed bug in the ording of cube footprint [#2371]
@@ -278,13 +280,13 @@ csv_tools
 
 cube_build
 ---------
-- Removed spaxel.py and replace class with set of arrays [#2472] 
+- Removed spaxel.py and replace class with set of arrays [#2472]
 - reworked in mapping of the detector pixel to the sky spaxel so that consistent
-  code can be used for both MIRI and NIRSPEC data [#2472] 
-- Removed some loops in cube_cloud.py for finding which pixels fall in roi 
-  of spaxels [#2472] 
+  code can be used for both MIRI and NIRSPEC data [#2472]
+- Removed some loops in cube_cloud.py for finding which pixels fall in roi
+  of spaxels [#2472]
 - In a test with MIRI data there was a 13% improvement in the speed of making IFUcubes. In the
-  NIRSPEC case there was a 40% improvment in the speed of creating IFUCubes.  
+  NIRSPEC case there was a 40% improvment in the speed of creating IFUCubes.
 
 - Fixed bug in cube_build.blot_images that was failing for  NIRSPEC IFU images
   with the slide position defined in the WCS [#2345]
