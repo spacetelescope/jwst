@@ -1,0 +1,27 @@
+# NIRSpec Fixed-slit with various nods and dithers and off-target backgrounds
+# 
+# This examples works thourgh a number of the Nod/Sub-pixel patterns
+# 
+# 
+# Initialize ACID. This is done with a dummy exposure that will not match any association
+# 
+# There are two AC's defined. Set ACID to reflect this as a last dummy exposure
+# 
+# Background exposures: Fixed Slit
+# 
+# Primary Dither=None, Sub-pixel Pattern=None, F290LP/G140M, using the background
+# 
+# Primary Dither=2, Sub-pixel Pattern=None, F290LP/G140M
+# 
+# Set ACID to how many have been used.
+filename|obs_id|program|obs_num|visit|visit_id|visitgrp|visitype|seq_id|act_id|exposure|exp_type|nexposur|expcount|instrume|detector|channel|targetid|targprop|targname|targtype|template|pntgtype|pntg_seq|targordn|expspcin|dithptin|mostilno|module|filter|pupil|ditherid|patttype|pattstrt|numdthpt|pattsize|subpxpns|patt_num|subpxnum|subpixel|apername|sdp_ver|subarray|grating|fxd_slit|band|gwa_xtil|gwa_ytil|asn_candidate|exposerr|is_psf|is_imprt|bkgdtarg|tsovisit|msametfl
+set acid|obs_id|program|obs_num|visit|visit_id|visitgrp|visitype|seq_id|act_id|exposure|exp_type|nexposur|expcount|instrume|detector|channel|targetid|targprop|targname|targtype|template|pntgtype|pntg_seq|targordn|expspcin|dithptin|mostilno|module|filter|pupil|ditherid|patttype|pattstrt|numdthpt|pattsize|subpxpns|patt_num|subpxnum|subpixel|apername|sdp_ver|subarray|grating|fxd_slit|band|gwa_xtil|gwa_ytil|1000|exposerr|is_psf|is_imprt|bkgdtarg|tsovisit|msametfl
+jw_00001_uncal.fits|v99009003001p0000000002102|93125|1|1|99009003001|2|prime_targeted_fixed|1|2|1|nrs_fixedslit|null|null|nirspec|nrs1|null|1|m-33|null|fixed|nirspec fixed slit spectroscopy|science|2|1|1|1|1|null|f290lp|null|null|null|null|1|null|0|null|null|null|s200a1|2015_1|sub200a1|g140m|s200a1|null|0.2866025270000001f|0.17855911|[('o001', 'observation'), ('c1000', 'background'), ('c1001', 'background')]|null|null|f|t|f|f
+jw_00002_uncal.fits|v99009003001p0000000002102|93125|1|1|99009003001|2|prime_targeted_fixed|1|2|1|nrs_fixedslit|null|null|nirspec|nrs2|null|1|m-33|null|fixed|nirspec fixed slit spectroscopy|science|2|1|1|1|1|null|f290lp|null|null|null|null|1|null|0|null|null|null|s200a1|2015_1|sub200a1|g140m|s200a1|null|0.2866025270000001f|0.17855911|[('o001', 'observation'), ('c1000', 'background'), ('c1001', 'background')]|null|null|f|t|f|f
+jw_00003_uncal.fits|v93125002001p0000000002106|93125|2|1|93125002001|2|prime_targeted_fixed|1|06|1|nrs_fixedslit|6|6|nirspec|nrs1|null|1|target-observation-2|null|fixed|nirspec fixed-slit spectroscopy|science|6|1|1|1|1|null|f290lp|null|null|null|null|1|null|0|null|null|null|s200a1|2017_1|sub200a1|g140m|s200a1|null|0.2866025270000001f|0.17855911|[('o002', 'observation'), ('c1000', 'background')]|null|null|f|f|f|f
+jw_00004_uncal.fits|v93125002001p0000000002106|93125|2|1|93125002001|2|prime_targeted_fixed|1|06|1|nrs_fixedslit|6|6|nirspec|nrs2|null|1|target-observation-2|null|fixed|nirspec fixed-slit spectroscopy|science|6|1|1|1|1|null|f290lp|null|null|null|null|1|null|0|null|null|null|s200a1|2017_1|sub200a1|g140m|s200a1|null|0.2866025270000001|0.17855911|[('o002', 'observation'), ('c1000', 'background')]|null|null|f|f|f|f
+jw_00005_uncal.fits|v93125002001p0000000002106|93125|3|1|93125002001|2|prime_targeted_fixed|1|06|1|nrs_fixedslit|6|6|nirspec|nrs1|null|1|target-observation-2|null|fixed|nirspec fixed-slit spectroscopy|science|6|1|1|1|1|null|f290lp|null|null|null|null|2|null|0|null|null|null|s200a1|2017_1|sub200a1|g140m|s200a1|null|0.2866025270000001|0.17855911|[('o003', 'observation'), ('c1001', 'background')]|null|null|f|f|f|f
+jw_00006_uncal.fits|v93125002001p0000000002106|93125|3|1|93125002001|2|prime_targeted_fixed|1|06|1|nrs_fixedslit|6|6|nirspec|nrs2|null|1|target-observation-2|null|fixed|nirspec fixed-slit spectroscopy|science|6|1|1|1|1|null|f290lp|null|null|null|null|2|null|0|null|null|null|s200a1|2017_1|sub200a1|g140m|s200a1|null|0.2866025270000001|0.17855911|[('o003', 'observation'), ('c1001', 'background')]|null|null|f|f|f|f
+jw_00007_uncal.fits|v93125002001p0000000002106|93125|3|1|93125002001|2|prime_targeted_fixed|1|06|1|nrs_fixedslit|6|6|nirspec|nrs1|null|1|target-observation-2|null|fixed|nirspec fixed-slit spectroscopy|science|6|1|1|1|1|null|f290lp|null|null|null|null|2|null|0|null|null|null|s200a1|2017_1|sub200a1|g140m|s200a1|null|0.2866025270000001|0.17855911|[('o003', 'observation'), ('c1001', 'background')]|null|null|f|f|f|f
+jw_00008_uncal.fits|v93125002001p0000000002106|93125|3|1|93125002001|2|prime_targeted_fixed|1|06|1|nrs_fixedslit|6|6|nirspec|nrs2|null|1|target-observation-2|null|fixed|nirspec fixed-slit spectroscopy|science|6|1|1|1|1|null|f290lp|null|null|null|null|2|null|0|null|null|null|s200a1|2017_1|sub200a1|g140m|s200a1|null|0.2866025270000001|0.17855911|[('o003', 'observation'), ('c1001', 'background')]|null|null|f|f|f|f
+set acid|obs_id|program|obs_num|visit|visit_id|visitgrp|visitype|seq_id|act_id|exposure|exp_type|nexposur|expcount|instrume|detector|channel|targetid|targprop|targname|targtype|template|pntgtype|pntg_seq|targordn|expspcin|dithptin|mostilno|module|filter|pupil|ditherid|patttype|pattstrt|numdthpt|pattsize|subpxpns|patt_num|subpxnum|subpixel|apername|sdp_ver|subarray|grating|fxd_slit|band|gwa_xtil|gwa_ytil|1001|exposerr|is_psf|is_imprt|bkgdtarg|tsovisit|msametfl
