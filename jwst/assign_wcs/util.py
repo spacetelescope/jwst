@@ -320,12 +320,21 @@ def get_object_info(catalog_name=None):
 
     """
     if catalog_name is None:
-        err_text = "Expected name of the catalog file"
+        err_text = "Expected string name for the catalog file"
         log.error(err_text)
         raise TypeError(err_text)
+
     objects = []
     if isinstance(catalog_name, (str)):
-        catalog = QTable.read(catalog_name, format='ascii.ecsv')
+        if len(catalog_name) == 0:
+            err_text = "Empty catalog filename"
+            log.error(err_text)
+            raise ValueError(err_text)
+        try:
+            catalog = QTable.read(catalog_name, format='ascii.ecsv')
+        except FileNotFoundError as e:
+            log.error("Could not find catalog file: {0}".format(e))
+            raise FileNotFoundError("Could not find catalog: {0}".format(e))
     elif isinstance(catalog_name, QTable):
         pass
     else:

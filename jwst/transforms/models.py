@@ -1392,7 +1392,7 @@ class NIRISSBackwardGrismDispersion(Model):
         dx = self.xmodels[iorder][0](x, y) + t * self.xmodels[iorder][1](x, y)
         dy = self.ymodels[iorder][0](x, y) + t * self.ymodels[iorder][1](x, y)
         # rotate by theta
-        if self.theta > 0.0:
+        if self.theta != 0.0:
             rotate = Rotation2D(self.theta)
             dx, dy = rotate(dx, dy)
 
@@ -1486,12 +1486,12 @@ class NIRISSForwardRowGrismDispersion(Model):
         except KeyError:
             raise ValueError("Specified order is not available")
 
-        dxr = x-x0  # delta x in rotated trace coordinates
+        dxr = x - x0  # delta x in rotated trace coordinates
 
         t = np.linspace(0, 1, 10)  #sample t
         dx = self.xmodels[iorder][0](x0, y0) + t * self.xmodels[iorder][1](x0, y0)
         dy = self.ymodels[iorder][0](x0, y0) + t * self.ymodels[iorder][1](x0, y0)
-        if self.theta > 0.0:
+        if self.theta != 0.0:
             rotate = Rotation2D(self.theta)
             dx, dy = rotate(dx, dy)
         so = np.argsort(dx)
@@ -1587,7 +1587,7 @@ class NIRISSForwardColumnGrismDispersion(Model):
         t = np.linspace(0, 1, 10)
         dx = self.xmodels[iorder][0](x0, y0) + t * self.xmodels[iorder][1](x0, y0)
         dy = self.ymodels[iorder][0](x0, y0) + t * self.ymodels[iorder][1](x0, y0)
-        if self.theta > 0.0:
+        if self.theta != 0.0:
             rotate = Rotation2D(self.theta)
             dx, dy = rotate(dx, dy)
         so = np.argsort(dy)
