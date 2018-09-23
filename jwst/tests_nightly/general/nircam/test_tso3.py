@@ -1,7 +1,7 @@
 import pytest
 from jwst.pipeline.calwebb_tso3 import Tso3Pipeline
 
-from ..resources import NIRCamTest
+from jwst.tests.base_test import NIRCamTest
 
 
 @pytest.mark.bigdata
@@ -9,7 +9,7 @@ class TestTso3Pipeline(NIRCamTest):
     ref_loc = ['test_caltso3']
     test_dir = 'test_caltso3'
 
-    def test_tso3_pipeline_nrc1(self, _jail):
+    def test_tso3_pipeline_nrc1(self):
         """Regression test of calwebb_tso3 pipeline on NIRCam simulated data.
 
         Default imaging mode outlier_detection will be tested here.
