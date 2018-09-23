@@ -1,6 +1,6 @@
 import pytest
 
-from ..resources import NIRCamTest
+from jwst.tests.base_test import NIRCamTest
 from jwst.pipeline.calwebb_coron3 import Coron3Pipeline
 
 
@@ -9,7 +9,7 @@ class TestCoron3Pipeline(NIRCamTest):
     rtol = 0.001
     ref_loc = ['test_coron3']#, 'truth']
 
-    def test_coron3_1(self, _jail):
+    def test_coron3_1(self):
         """Regression test of calwebb_coron3 pipeline.
 
         Test will be performed on NIRCam simulated data.

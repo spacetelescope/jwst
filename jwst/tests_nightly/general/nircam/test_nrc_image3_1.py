@@ -1,5 +1,5 @@
 import pytest
-from ..resources import NIRCamTest
+from jwst.tests.base_test import NIRCamTest
 
 from jwst.pipeline.calwebb_image3 import Image3Pipeline
 
@@ -13,7 +13,7 @@ class TestImage3Pipeline1(NIRCamTest):
     """
     ref_loc = ['test_calimage3']
 
-    def test_image3_pipeline1(self, _jail):
+    def test_image3_pipeline1(self):
 
         asn_name = "mosaic_long_asn.json"
         asn_file = self.get_data('test_calimage3', asn_name)
