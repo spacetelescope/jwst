@@ -1,3 +1,5 @@
+import pytest
+
 from jwst.tests.base_test import MIRITestSteps
 from jwst.tests.base_test import pytest_generate_tests
 
@@ -21,6 +23,7 @@ from jwst.straylight.straylight_step import StraylightStep
 # All tests in this set run with 1 input file and 
 #  only generate 1 output for comparison.
 #
+@pytest.mark.bigdata
 class TestMIRISteps(MIRITestSteps):
 
     params = {'test_steps': 

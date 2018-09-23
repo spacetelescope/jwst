@@ -1,9 +1,11 @@
+import pytest
 from glob import glob
 
 from jwst.pipeline.calwebb_detector1 import Detector1Pipeline
 from jwst.tests.base_test import MIRITest
 
 
+@pytest.mark.bigdata
 class TestMIRISloperPipeline(MIRITest):
     ref_loc = ['test_sloperpipeline','truth']
     test_dir = 'test_sloperpipeline'

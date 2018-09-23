@@ -1,6 +1,7 @@
 import os
 import numpy as np
 from numpy.testing import utils
+import pytest
 
 from jwst import datamodels
 from jwst.datamodels import ImageModel, RegionsModel, CubeModel
@@ -14,7 +15,7 @@ from jwst.cube_build.cube_build_step import CubeBuildStep
 from jwst.linearity.linearity_step import LinearityStep
 
 
-
+@pytest.mark.bigdata
 class TestMIRICube(MIRITest):
     ref_loc = ['test_cube_build', 'truth']
     test_dir = 'test_cube_build'
@@ -39,6 +40,7 @@ class TestMIRICube(MIRITest):
         self.compare_outputs(outputs)
     
 
+@pytest.mark.bigdata
 class TestMIRILinearity(MIRITest):
     ref_loc = ['test_linearity','truth']
     test_dir ='test_linearity'
@@ -64,6 +66,8 @@ class TestMIRILinearity(MIRITest):
                     'jw00001001001_01109_00001_MIRIMAGE_linearity.fits') ]
         self.compare_outputs(outputs)
                 
+
+@pytest.mark.bigdata
 class TestMIRIWCSFixed(MIRITest):
     ref_loc = ['test_wcs','fixed','truth']
     test_dir = os.path.join('test_wcs','fixed')
@@ -91,6 +95,8 @@ class TestMIRIWCSFixed(MIRITest):
         utils.assert_allclose(dec, decref)
         utils.assert_allclose(lam, lamref)    
 
+
+@pytest.mark.bigdata
 class TestMIRIWCSIFU(MIRITest):
     ref_loc = ['test_wcs', 'ifu', 'truth']
     test_dir = os.path.join('test_wcs', 'ifu')
@@ -147,6 +153,8 @@ class TestMIRIWCSIFU(MIRITest):
         assert np.isnan(x2[100][200])
         assert np.isnan(x2[100][200])  
         
+
+@pytest.mark.bigdata
 class TestMIRIWCSImage(MIRITest):
     ref_loc = ['test_wcs','image','truth']
     test_dir = os.path.join('test_wcs','image')
@@ -174,7 +182,8 @@ class TestMIRIWCSImage(MIRITest):
         utils.assert_allclose(ra, raref)
         utils.assert_allclose(dec, decref)
   
-  
+
+@pytest.mark.bigdata
 class TestMIRIWCSSlitless(MIRITest):
     ref_loc = ['test_wcs','slitless','truth']
     test_dir = os.path.join('test_wcs','slitless')
@@ -204,6 +213,8 @@ class TestMIRIWCSSlitless(MIRITest):
         utils.assert_allclose(dec, decref)
         utils.assert_allclose(lam, lamref)
     
+
+@pytest.mark.bigdata
 class TESTMIRISetPointing(MIRITest):
     ref_loc = ['test_pointing', 'truth']
     test_dir = 'test_pointing'
