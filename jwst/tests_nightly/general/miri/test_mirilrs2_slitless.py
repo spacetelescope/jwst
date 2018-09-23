@@ -2,14 +2,14 @@ import pytest
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
-from ..resources import MIRITest
+from jwst.tests.base_test import MIRITest
 
 
 @pytest.mark.bigdata
 class TestSpec2Pipeline(MIRITest):
-    ref_loc = ['test_spec2pipeline']
+    ref_loc = ['test_spec2pipeline', 'truth']
 
-    def test_mirilrs2pipeline1(self, _jail):
+    def test_mirilrs2pipeline1(self):
         """
         Regression test of calwebb_spec2 pipeline performed on
         MIRI LRS slitless data.

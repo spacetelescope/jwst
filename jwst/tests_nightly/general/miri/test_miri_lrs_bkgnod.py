@@ -1,16 +1,16 @@
 import pytest
 from jwst.pipeline.calwebb_spec2 import Spec2Pipeline
 
-from ..resources import MIRITest
+from jwst.tests.base_test import MIRITest
 
 
 @pytest.mark.bigdata
 class TestSpec2Pipeline(MIRITest):
-    ref_loc = ['test_spec2pipeline']
+    ref_loc = ['test_spec2pipeline', 'truth']
 
     test_dir = 'test_spec2pipeline'
 
-    def test_miri_lrs_bkgnod(self, _jail):
+    def test_miri_lrs_bkgnod(self):
         """
 
         Regression test of calwebb_spec2 pipeline performed on an association
@@ -49,7 +49,7 @@ class TestSpec2Pipeline(MIRITest):
         ]
         self.compare_outputs(outputs)
 
-    def test_miri_lrs_slit_1(self, _jail):
+    def test_miri_lrs_slit_1(self):
         """
 
         Regression test of calwebb_spec2 pipeline performed on a single
@@ -76,7 +76,7 @@ class TestSpec2Pipeline(MIRITest):
                    ]
         self.compare_outputs(outputs)
 
-    def test_miri_lrs_slit_1b(self, _jail):
+    def test_miri_lrs_slit_1b(self):
         """
         Regression test of calwebb_spec2 pipeline performed on a single
         MIRI LRS fixed-slit exposure with multiple integrations.  Compare _calints.
@@ -100,7 +100,7 @@ class TestSpec2Pipeline(MIRITest):
                    ]
         self.compare_outputs(outputs)
 
-    def test_mrs2pipeline1(self, _jail):
+    def test_mrs2pipeline1(self):
         """
 
         Regression test of calwebb_spec2 pipeline performed on MIRI MRS data.
@@ -131,7 +131,7 @@ class TestSpec2Pipeline(MIRITest):
                    ]
         self.compare_outputs(outputs)
 
-    def test_mrs_spec2(self, _jail):
+    def test_mrs_spec2(self):
         """
 
         Regression test of calwebb_spec2 pipeline performed on MIRI MRS data.

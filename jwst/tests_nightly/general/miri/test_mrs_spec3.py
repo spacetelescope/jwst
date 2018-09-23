@@ -1,16 +1,15 @@
 import pytest
 from jwst.pipeline.calwebb_spec3 import Spec3Pipeline
 
-from ..resources import MIRITest
-
+from jwst.tests.base_test import MIRITest
 
 @pytest.mark.bigdata
 class TestSpec3Pipeline(MIRITest):
-    ref_loc = ['mrs_calspec3']
+    ref_loc = ['mrs_calspec3', 'truth']
     test_dir = 'mrs_calspec3'
     rtol = 0.000001
 
-    def test_spec3_pipeline1(self, _jail):
+    def test_spec3_pipeline1(self):
         """
         Regression test of calwebb_spec3 pipeline on simulated
         MIRI MRS dithered data.
