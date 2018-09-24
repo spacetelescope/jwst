@@ -302,8 +302,9 @@ def not_implemented_mode(input_model, ref):
 def get_object_info(catalog_name=None):
     """Return a list of SkyObjects from the direct image
 
-    the source_catalog step are read into a list of  SkyObjects
-    which can be referenced by catalog id.
+    The source_catalog step catalog items are read into a list
+    of  SkyObjects which can be referenced by catalog id. Only
+    the columns needed by the WFSS code are saved.
 
     Parameters
     ----------
@@ -319,12 +320,6 @@ def get_object_info(catalog_name=None):
     -----
 
     """
-    if catalog_name is None:
-        err_text = "Expected string name for the catalog file"
-        log.error(err_text)
-        raise TypeError(err_text)
-
-    objects = []
     if isinstance(catalog_name, (str)):
         if len(catalog_name) == 0:
             err_text = "Empty catalog filename"
@@ -338,9 +333,11 @@ def get_object_info(catalog_name=None):
     elif isinstance(catalog_name, QTable):
         pass
     else:
-        err_text = "Need to input name of catalog or astropy.table.table.QTable instance"
+        err_text = "Need to input string name of catalog or astropy.table.table.QTable instance"
         log.error(err_text)
         raise TypeError(err_text)
+
+    objects = []
 
     # validate that the expected columns are there
     # id is just a bad name for a param, but it's used in the catalog
