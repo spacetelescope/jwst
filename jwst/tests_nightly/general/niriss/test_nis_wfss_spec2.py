@@ -2,12 +2,13 @@ import pytest
 
 from jwst.pipeline.calwebb_spec2 import Spec2Pipeline
 
-from ..resources import NIRISSTest
+from jwst.tests.base_test import BaseJWSTTest
 
 
 @pytest.mark.bigdata
-class TestSpec2Pipeline(NIRISSTest):
-    ref_loc = ['test_spec2pipeline']
+class TestSpec2Pipeline(BaseJWSTTest):
+    input_loc = 'niriss'
+    ref_loc = ['test_spec2pipeline', 'truth']
     test_dir = 'test_spec2pipeline'
 
     @pytest.mark.xfail(reason='https://github.com/STScI-JWST/jwst/issues/2007')

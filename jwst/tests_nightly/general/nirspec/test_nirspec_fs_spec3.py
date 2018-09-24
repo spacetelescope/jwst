@@ -8,12 +8,13 @@ from jwst.pipeline import Spec3Pipeline
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
-from ..resources import NIRSpecTest
+from jwst.tests.base_test import BaseJWSTTest
 
 
 @pytest.mark.bigdata
-class TestSpec3Pipeline(NIRSpecTest):
-
+class TestSpec3Pipeline(BaseJWSTTest):
+    input_loc = 'nirspec'
+    
     @pytest.mark.xfail(
         reason='Input data not available',
         run=False

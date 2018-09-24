@@ -1,13 +1,13 @@
 import pytest
 from jwst.pipeline.calwebb_image2 import Image2Pipeline
 
-from jwst.tests.base_test import NIRCamTest
+from jwst.tests.base_test import BaseJWSTTest
 
 
 @pytest.mark.bigdata
-class TestImage2Pipeline(NIRCamTest):
-
-    ref_loc = ['test_image2pipeline']
+class TestImage2Pipeline(BaseJWSTTest):
+    input_loc = 'nircam'
+    ref_loc = ['test_image2pipeline', 'truth']
 
     def test_image2pipeline2_cal(self):
         """

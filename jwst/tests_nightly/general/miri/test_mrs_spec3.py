@@ -1,10 +1,11 @@
 import pytest
 from jwst.pipeline.calwebb_spec3 import Spec3Pipeline
 
-from jwst.tests.base_test import MIRITest
+from jwst.tests.base_test import BaseJWSTTest
 
 @pytest.mark.bigdata
-class TestSpec3Pipeline(MIRITest):
+class TestSpec3Pipeline(BaseJWSTTest):
+    input_loc = 'miri'
     ref_loc = ['mrs_calspec3', 'truth']
     test_dir = 'mrs_calspec3'
     rtol = 0.000001

@@ -1,12 +1,13 @@
 import pytest
 from jwst.pipeline.calwebb_tso3 import Tso3Pipeline
 
-from ..resources import NIRISSTest
+from jwst.tests.base_test import BaseJWSTTest
 
 
 @pytest.mark.bigdata
-class TestTso3Pipeline(NIRISSTest):
-    ref_loc = ['test_caltso3']
+class TestTso3Pipeline(BaseJWSTTest):
+    input_loc = 'niriss'
+    ref_loc = ['test_caltso3', 'truth']
     test_dir = 'test_caltso3'
 
     def test_tso3_pipeline_nis(self, _jail):

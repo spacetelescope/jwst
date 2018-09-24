@@ -2,14 +2,15 @@ import pytest
 from glob import glob
 
 from jwst.pipeline.calwebb_detector1 import Detector1Pipeline
-from jwst.tests.base_test import MIRITest
+from jwst.tests.base_test import BaseJWSTTest
 
 
 @pytest.mark.bigdata
-class TestMIRISloperPipeline(MIRITest):
+class TestMIRISloperPipeline(BaseJWSTTest):
+    input_loc = 'miri'
     ref_loc = ['test_sloperpipeline','truth']
     test_dir = 'test_sloperpipeline'
-    
+
     def test_gain_scale_naming(self):
         """
         Regression test for gain_scale naming when results are requested to
@@ -50,15 +51,15 @@ class TestMIRISloperPipeline(MIRITest):
         assert output_file in files
         files.remove(output_file)
 
-        assert not len(files)     
-        
+        assert not len(files)
+
     def test_detector1pipeline1(self):
         """
         Regression test of calwebb_detector1 pipeline performed on MIRI data.
         """
         input_file = self.get_data(self.test_dir,
                                    'jw00001001001_01101_00001_MIRIMAGE_uncal.fits')
-                                   
+
         step = Detector1Pipeline()
         step.save_calibrated_ramp = True
         step.ipc.skip = True
@@ -74,7 +75,7 @@ class TestMIRISloperPipeline(MIRITest):
         step.suffix='rate'
 
         step.run(input_file)
-   
+
         outputs = [('jw00001001001_01101_00001_MIRIMAGE_ramp.fits',
                     'jw00001001001_01101_00001_MIRIMAGE_uncal_jump.fits'),
                    ('jw00001001001_01101_00001_MIRIMAGE_rateints.fits',
@@ -90,7 +91,7 @@ class TestMIRISloperPipeline(MIRITest):
         """
         input_file = self.get_data(self.test_dir,
                                    'jw80600012001_02101_00003_mirimage_uncal.fits')
-                                   
+
         step = Detector1Pipeline()
         step.save_calibrated_ramp = True
         step.ipc.skip = True
@@ -106,7 +107,7 @@ class TestMIRISloperPipeline(MIRITest):
         step.suffix='rate'
 
         step.run(input_file)
-        
+
         outputs = [('jw80600012001_02101_00003_mirimage_ramp.fits',
                     'jw80600012001_02101_00003_mirimage_ramp.fits'),
                    ('jw80600012001_02101_00003_mirimage_rateints.fits',
@@ -115,4 +116,3 @@ class TestMIRISloperPipeline(MIRITest):
                     'jw80600012001_02101_00003_mirimage_rate.fits')
                    ]
         self.compare_outputs(outputs)
-
