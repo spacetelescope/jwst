@@ -152,10 +152,12 @@ class TestImage3Pipeline1(BaseJWSTTest):
                    {'files':('jw10002-o001_t002_nircam_f444w_i2d.fits',
                     'jw10002-o001_t002_nircam_f444w_i2d_ref.fits'),
                     'pars':{'ignore_hdus':self.ignore_hdus+['HDRTAB'],
-                            'rtol':0.0001},
+                            'rtol':0.0001}
+                    },
                    {'files':('jw10002-o001_t002_nircam_f444w_i2d.fits[hdrtab]',
                     'jw10002-o001_t002_nircam_f444w_i2d_ref.fits[hdrtab]'),
                     'pars':{'ignore_keywords':self.ignore_keywords+['NAXIS1','TFORM*'],
                             'rtol':0.0001}
+                   }
                   ]
         self.compare_outputs(outputs)
