@@ -189,7 +189,6 @@ class CubeSkyMatchStep(Step):
             model.meta.background.polynomial_info[0] = pinfo
 
     def _set_model2d_bkg_meta(self, model3d, model2d, channel):
-        # _extend_2d_schema(model2d)
         channel = str(channel)
 
         # see if meta for this channel exist and
