@@ -39,13 +39,13 @@ __all__ = [
     '_EMPTY',
     'ASN_SCHEMA',
     'AsnMixin_Lv2Image',
-    'AsnMixin_Lv2Singleton',
     'AsnMixin_Lv2Special',
     'AsnMixin_Lv2Spectral',
     'Constraint_Base',
     'Constraint_Image_Nonscience',
     'Constraint_Image_Science',
     'Constraint_Mode',
+    'Constraint_Single_Science',
     'Constraint_Special',
     'Constraint_Spectral_Science',
     'Constraint_Target',
@@ -725,6 +725,32 @@ class Constraint_Image_Nonscience(Constraint):
         )
 
 
+class Constraint_Single_Science(SimpleConstraint):
+    """Allow only single science exposure
+
+    Parameters
+    ----------
+    has_science_fn: func
+        Function to determine whether the association
+        has a science member already. A single argument
+        of `item` must be provided.
+
+    Notes
+    -----
+    The `has_science_fn` is further wrapped in a lambda function
+    to provide a closure. Otherwise if the function is a bound method,
+    that method may end up pointing to an instance that is not calling
+    this constraint.
+    """
+
+    def __init__(self, has_science_fn):
+        super(Constraint_Single_Science, self).__init__(
+            name='single_science',
+            value=False,
+            sources=lambda item: has_science_fn(item)
+        )
+
+
 class Constraint_Special(DMSAttrConstraint):
     """Select on backgrounds and other auxilliary images"""
     def __init__(self):
@@ -787,28 +813,6 @@ class AsnMixin_Lv2Image:
 
         super(AsnMixin_Lv2Image, self)._init_hook(item)
         self.data['asn_type'] = 'image2'
-
-
-class AsnMixin_Lv2Singleton(DMSLevel2bBase):
-    """Allow only single science exposure"""
-
-    def __init__(self, *args, **kwargs):
-
-        constraints = SimpleConstraint(
-            name='single_science',
-            value=False,
-            sources=lambda item: self.has_science(item)
-        )
-        if self.constraints is None:
-            self.constraints = constraints
-        else:
-            self.constraints = Constraint([
-                self.constraints,
-                constraints
-            ])
-
-        # Now, lets see if item belongs to us.
-        super(AsnMixin_Lv2Singleton, self).__init__(*args, **kwargs)
 
 
 class AsnMixin_Lv2Spectral(DMSLevel2bBase):
