@@ -175,7 +175,7 @@ def set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi):
     log.info('set slit_attributes completed')
 
 
-def offset_wcs(slit_wcs, slit_name):
+def offset_wcs(slit_wcs):
     """
     Prepend a Shift transform to the slit WCS to account for subarrays.
 
@@ -194,9 +194,6 @@ def offset_wcs(slit_wcs, slit_name):
     tr = Shift(xlo) & Shift(ylo) | tr
     slit_wcs.set_transform('detector', 'sca', tr.rename('dms2sca'))
 
-    log.info('Name of subarray extracted: %s', slit_name)
-    log.info('Subarray x-extents are: %s %s', xlo, xhi)
-    log.info('Subarray y-extents are: %s %s', ylo, yhi)
     return xlo, xhi, ylo, yhi
 
 
@@ -219,7 +216,10 @@ def extract_slit(input_model, slit, exp_type):
         The slit data model with WCS attached to it.
     """
     slit_wcs = nirspec.nrs_wcs_set_input(input_model, slit.name)
-    xlo, xhi, ylo, yhi = offset_wcs(slit_wcs, slit.name)
+    xlo, xhi, ylo, yhi = offset_wcs(slit_wcs)
+    log.info('Name of subarray extracted: %s', slit.name)
+    log.info('Subarray x-extents are: %s %s', xlo, xhi)
+    log.info('Subarray y-extents are: %s %s', ylo, yhi)
     ndim = len(input_model.data.shape)
     if ndim == 2:
         slit_slice = np.s_[ylo: yhi, xlo: xhi]
