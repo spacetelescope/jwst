@@ -5,8 +5,6 @@ generalized step: ``cube_skymatch``.
 
 :Authors: Mihai Cara (contact: help@stsci.edu)
 
-:License: :doc:`../LICENSE`
-
 """
 
 import numpy as np
@@ -387,6 +385,7 @@ class SkyCube():
     def skystat(self, skystat):
         self._skystat = skystat
 
+    '''
     def set_builtin_skystat(self, skystat='median', lower=None, upper=None,
                             nclip=5, lsigma=4.0, usigma=4.0, binwidth=0.1):
         """
@@ -406,6 +405,7 @@ class SkyCube():
             usig=usigma,
             binwidth=binwidth
         )
+    '''
 
     def combine_with_other(self, other):
         """
@@ -417,6 +417,6 @@ class SkyCube():
         w1 = self.cube_weight * self.weights[m]
         w2 = other.cube_weight * other.weights[m]
         tw = w1 + w2
-        d = (w1 * self.data[m] + w2 * other.skysub_data[m]) / tw
+        # d = (w1 * self.data[m] + w2 * other.skysub_data[m]) / tw
         self._data[m] = (w1 * self.data[m] + w2 * other.skysub_data[m]) / tw
         self.weights[m] = tw

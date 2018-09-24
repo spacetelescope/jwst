@@ -4,13 +4,11 @@ JWST pipeline step for sky matching.
 
 :Authors: Mihai Cara
 
-:License: :doc:`../LICENSE`
-
 """
 
 import numpy as np
 
-from ..stpipe import Step, cmdline
+from ..stpipe import Step
 from .. import datamodels
 
 try:
@@ -169,10 +167,10 @@ class CubeSkyMatchStep(Step):
             del m.meta.background
 
     def _set_cube_bkg_meta(self, model, sky_cube):
-        np = len(meta.background.polynomial_info)
-        if np > 1 or (np == 1 and meta.background.polynomial_info[0].channel):
+        np = len(model.meta.background.polynomial_info)
+        if np > 1 or (np == 1 and model.meta.background.polynomial_info[0].channel):
             raise ValueError("Cube's 'polynomial_info' must be empty or "
-                             "containt at most one element with a 'channel' "
+                             "contain at most one element with a 'channel' "
                              "property set to None.")
 
         pinfo = {
@@ -186,12 +184,12 @@ class CubeSkyMatchStep(Step):
         model.meta.background.subtract = self.subtract
         model.meta.background.level = None
         if np == 0:
-            meta.background.polynomial_info.append(pinfo)
+            model.meta.background.polynomial_info.append(pinfo)
         else:
-            meta.background.polynomial_info[0] = pinfo
+            model.meta.background.polynomial_info[0] = pinfo
 
     def _set_model2d_bkg_meta(self, model3d, model2d, channel):
-        _extend_2d_schema(model2d)
+        # _extend_2d_schema(model2d)
         channel = str(channel)
 
         # see if meta for this channel exist and
