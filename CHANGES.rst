@@ -13,7 +13,6 @@ assign_wcs
 - Updated assign_wcs to compute the sky footprint of MIRI MRS and Nirspec
   IFU observations. [#2472]
 
-- NIRISS models updated to allow for negative filter wheel rotations [#1801]
 
 associations
 ------------
@@ -194,6 +193,9 @@ timeconversion
 
 transforms
 ----------
+
+- NIRISS models updated to allow for negative filter wheel rotations [#1801]
+
 
 tso_photometry
 --------------

@@ -65,7 +65,8 @@ def extract2d(input_model,
                                               extract_height=extract_height,
                                               extract_orders=extract_orders)
         else:
-            if exp_type is 'NRC_WFSS':
+            # TODO: temp to check fits_wcs catalog use, remove with #2533
+            if exp_type == 'NRC_WFSS':
                 use_fits_wcs = True
             else:
                 use_fits_wcs = False
