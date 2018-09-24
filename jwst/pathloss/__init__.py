@@ -1,3 +1,3 @@
 from .pathloss_step import PathLossStep
 
-__version__ = '0.9.3'
+__all__ = ["PathLossStep"]

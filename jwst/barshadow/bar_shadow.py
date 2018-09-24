@@ -4,8 +4,6 @@
 
 import numpy as np
 import logging
-from .. import datamodels
-from jwst.assign_wcs import nirspec
 from gwcs import wcstools
 
 log = logging.getLogger(__name__)
