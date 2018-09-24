@@ -1,10 +1,10 @@
-from . import model_base
+from .model_base import DataModel
 
 
 __all__ = ['IRS2Model']
 
 
-class IRS2Model(model_base.DataModel):
+class IRS2Model(DataModel):
     """
     A data model for the IRS2 refpix reference file.
 
@@ -21,8 +21,3 @@ class IRS2Model(model_base.DataModel):
     """
     schema_url = "irs2.schema.yaml"
 
-    def __init__(self, init=None, irs2_table=None, **kwargs):
-        super(IRS2Model, self).__init__(init=init, **kwargs)
-
-        if irs2_table is not None:
-            self.irs2_table = irs2_table

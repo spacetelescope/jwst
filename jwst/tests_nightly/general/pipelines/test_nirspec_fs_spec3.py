@@ -17,10 +17,6 @@ pytestmark = [
 ]
 
 
-@pytest.mark.xfail(
-    reason='Input data not available',
-    run=False
-)
 def test_save_source_only(_bigdata):
     """Test saving the source-based files only"""
     datapath = path.join(

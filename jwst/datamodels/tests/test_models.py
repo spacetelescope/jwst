@@ -66,6 +66,7 @@ def test_broadcast2():
 
 def test_from_hdulist():
     from astropy.io import fits
+    warnings.simplefilter("ignore")
     with fits.open(FITS_FILE) as hdulist:
         with open_model(hdulist) as dm:
             dm.data
@@ -127,6 +128,7 @@ def test_open():
     with open_model((50, 50)) as dm:
         pass
 
+    warnings.simplefilter("ignore")
     with open_model(FITS_FILE) as dm:
         assert isinstance(dm, QuadModel)
 
@@ -344,6 +346,14 @@ def test_model_with_nonstandard_primary_array():
     m = NonstandardPrimaryArrayModel()
     list(m.keys())
 
+def test_initialize_arrays_with_arglist():
+    shape = (10,10)
+    thirteen = np.full(shape, 13.0)
+    bitz = np.full(shape, 7)
+
+    im = ImageModel(shape, zeroframe=thirteen, dq=bitz)
+    assert np.array_equal(im.zeroframe, thirteen)
+    assert np.array_equal(im.dq, bitz)
 
 def test_relsens():
     with ImageModel() as im:
@@ -375,6 +385,7 @@ def test_image_with_extra_keyword_to_multislit():
 
 @pytest.fixture(scope="module")
 def container():
+    warnings.simplefilter("ignore")
     with ModelContainer(ASN_FILE, persist=True) as c:
         for m in c:
             m.meta.observation.program_number = '0001'
@@ -444,6 +455,7 @@ def test_hasattr():
     assert not has_filename, "Check that filename does not exist"
 
 def test_info():
+    warnings.simplefilter("ignore")
     with open_model(FITS_FILE) as model:
         info = model.info()
     matches = 0

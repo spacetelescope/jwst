@@ -128,7 +128,7 @@ else:
     except ImportError:
         try:
             subprocess.check_call(['git', 'clone',
-                'https://github.com/jhunkeler/relic.git'])
+                'https://github.com/spacetelescope/relic.git'])
             sys.path.insert(1, 'relic')
             import relic.release
         except subprocess.CalledProcessError as e:
@@ -159,7 +159,7 @@ setup(
         'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 3',
-         'Programming Language :: C',
+        'Programming Language :: C',
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
     python_requires='>=3.5',
@@ -177,7 +177,8 @@ setup(
     ],
     tests_require=[
         'pytest',
-        'requests_mock'
+        'requests_mock',
+        'ci_watson'
     ],
     cmdclass={
         'test': PyTest,

@@ -311,7 +311,7 @@ class ModelContainer(model_base.DataModel):
             except TypeError:
                 params_dict = dict(zip(unique_exposure_parameters, params))
                 bad_params = {'meta.observation.'+k:v for k, v in params_dict.items() if not v}
-                log.warn(
+                log.warning(
                     'Cannot determine grouping of exposures: '
                     '{}'.format(bad_params)
                     )

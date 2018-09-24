@@ -20,6 +20,7 @@ associations
 
 - Added rule Asn_Lv2NRSIFUNod to handle nod backgrounds for NIRspec IFU [#2532]
 
+- Changed deprecated logger.warn to logger.warning. [#2519]
 
 background
 ----------
@@ -51,6 +52,7 @@ dark_current
 datamodels
 ----------
 
+- Initialize arrays and tables from function args in model_base [#2502]
 
 dq_init
 -------
@@ -172,6 +174,8 @@ srctype
 
 scripts
 -------
+
+- Fixed bug in logging configuration for `set_telescope_pointing.py`. [#2521]
 
 stpipe
 ------

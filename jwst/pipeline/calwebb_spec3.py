@@ -142,7 +142,7 @@ class Spec3Pipeline(Pipeline):
                     self.extract_1d.search_output_file = False
                 result = self.extract_1d(result)
             else:
-                self.log.warn(
+                self.log.warning(
                     'Resampling was not completed. Skipping extract_1d.'
                 )
 

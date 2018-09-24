@@ -24,7 +24,7 @@ format = '%(message)s'
     log = stpipe_log.getLogger(stpipe_log.STPIPE_ROOT_LOGGER)
 
     log.info("Hidden")
-    log.warn("Shown")
+    log.warning("Shown")
 
     with pytest.raises(stpipe_log.LoggedException):
         log.critical("Breaking")
