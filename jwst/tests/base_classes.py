@@ -81,6 +81,14 @@ class BaseTest(object):
         """
         pass
 
+    def get_data_path(self, *args):
+        """
+        Return path to remote source of input data
+        """
+        path = os.path.join(self.input_repo, self.tree, self.input_loc, *args)
+
+        return path
+    
     def get_data(self, *args, **kwargs):
         """
         Download `filename` into working directory using
