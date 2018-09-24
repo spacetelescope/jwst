@@ -7,6 +7,8 @@ class BaseJWSTTest(BaseTest):
     ignore_hdus = ['ASDF']
     ignore_keywords = ['DATE', 'CAL_VER', 'CAL_VCS', 'CRDS_VER', 'CRDS_CTX', 'FILENAME']
     input_repo = 'jwst-pipeline'
+    results_root = 'jwst-pipeline-results'
+
     copy_local = False  # Do not make additional copy by default
     rtol = 0.00001
 
@@ -16,20 +18,6 @@ class BaseJWSTTest(BaseTest):
     def raw_from_asn(self, asn_file):
         return raw_from_asn(asn_file)
 
-class NIRCamTest(BaseJWSTTest):
-    input_loc = 'nircam'
-
-class MIRITest(BaseJWSTTest):
-    input_loc = 'miri'
-
-class NIRISSTest(BaseJWSTTest):
-    input_loc = 'niriss'
-
-class NIRSpecTest(BaseJWSTTest):
-    input_loc = 'nirspec'
-
-class FGSTest(BaseJWSTTest):
-    input_loc = 'fgs'
 
 # Pytest function to support the parameterization of these classes
 def pytest_generate_tests(metafunc):
@@ -83,22 +71,6 @@ class BaseJWSTTestSteps(BaseJWSTTest):
             output_spec = (output_file, output_truth)
         outputs = [output_spec]
         self.compare_outputs(outputs)
-
-
-class NIRCamTestSteps(BaseJWSTTestSteps):
-    input_loc = 'nircam'
-
-class MIRITestSteps(BaseJWSTTestSteps):
-    input_loc = 'miri'
-
-class NIRISSTestSteps(BaseJWSTTestSteps):
-    input_loc = 'niriss'
-
-class NIRSpecTestSteps(BaseJWSTTestSteps):
-    input_loc = 'nirspec'
-
-class FGSTestSteps(BaseJWSTTestSteps):
-    input_loc = 'fgs'
 
 
 # function(s) for tests written using functional form, not as BaseTest class tests

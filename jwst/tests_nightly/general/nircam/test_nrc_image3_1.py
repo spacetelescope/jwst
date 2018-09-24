@@ -1,19 +1,20 @@
 import pytest
-from jwst.tests.base_test import NIRCamTest
+from jwst.tests.base_test import BaseJWSTTest
 
 from jwst.pipeline.calwebb_image3 import Image3Pipeline
 
 
 @pytest.mark.bigdata
-class TestImage3Pipeline1(NIRCamTest):
+class TestImage3Pipeline1(BaseJWSTTest):
     """Regression test definitions for CALIMAGE3 pipeline.
 
     Regression test of calwebb_image3 pipeline on NIRCam
     simulated long-wave data.
     """
-    ref_loc = ['test_calimage3']
+    input_loc = 'nircam'
+    ref_loc = ['test_calimage3', 'truth']
 
-    def test_image3_pipeline1(self):
+    def test_image3_pipeline1(self, _jail):
 
         asn_name = "mosaic_long_asn.json"
         asn_file = self.get_data('test_calimage3', asn_name)

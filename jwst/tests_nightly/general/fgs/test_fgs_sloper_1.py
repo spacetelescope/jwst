@@ -1,11 +1,12 @@
 import pytest
 from jwst.pipeline.calwebb_detector1 import Detector1Pipeline
 
-from ..resources import FGSTest
+from jwst.tests.base_test import BaseJWSTTest
 
 @pytest.mark.bigdata
-class TestSloperPipeline(FGSTest):
-    ref_loc = ['test_sloperpipeline']#, 'truth']
+class TestSloperPipeline(BaseJWSTTest):
+    input_loc = 'fgs'
+    ref_loc = ['test_sloperpipeline', 'truth']
 
     def test_fgs_detector1_1(self, _jail):
         """

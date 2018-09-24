@@ -2,12 +2,13 @@ import pytest
 
 from jwst.pipeline.calwebb_guider import GuiderPipeline
 
-from ..resources import FGSTest
+from jwst.tests.base_test import BaseJWSTTest
 
 
 @pytest.mark.bigdata
-class TestGuiderPipeline(FGSTest):
-    ref_loc = ['test_guiderpipeline']
+class TestGuiderPipeline(BaseJWSTTest):
+    input_loc = 'fgs'
+    ref_loc = ['test_guiderpipeline', 'truth']
     test_dir = 'test_guiderpipeline'
 
     rtol = 0.000001
