@@ -6,7 +6,7 @@ from .base_classes import BaseTest
 class BaseJWSTTest(BaseTest):
     ignore_hdus = ['ASDF']
     ignore_keywords = ['DATE', 'CAL_VER', 'CAL_VCS', 'CRDS_VER', 'CRDS_CTX', 'FILENAME']
-    input_repo = 'scsb-jwst-pipeline'
+    input_repo = 'jwst-pipeline'
     copy_local = False  # Do not make additional copy by default
     rtol = 0.00001
 
