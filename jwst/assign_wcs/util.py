@@ -454,13 +454,6 @@ def create_grism_bbox(input_model,
         raise TypeError("Expected mmag_extract to be an int or float")
     log.info("Extracting objects < abmag = {0}".format(mmag_extract))
 
-    if extract_orders is not None:
-        if isinstance(extract_orders, list):
-            if not all(isinstance(item, int) for item in extract_orders):
-                raise TypeError("Expected extract_orders to be a list of ints")
-        else:
-            raise TypeError("Expected extract_orders to be a list of ints")
-
     instr_name = input_model.meta.instrument.name
     if instr_name == "NIRCAM":
         filter_name = input_model.meta.instrument.filter
@@ -529,7 +522,7 @@ def create_grism_bbox(input_model,
                 # takes in ra, dec, wavelength, order but wave and order
                 # don't get used until the detector->grism_detector transform
                 ##
-                ## temp to check fits_wcs catalog use
+                ## TODO: temp to check fits_wcs catalog use, remove with #2533
                 ##
                 if use_fits_wcs:
                     xcenter, ycenter = skycoord_to_pixel(obj.sky_centroid.icrs,
@@ -550,6 +543,7 @@ def create_grism_bbox(input_model,
                     # grism image
                     lmin, lmax = range_select.pop()
 
+                    # TODO: temp to check fits_wcs catalog use, remove with #2533
                     if use_fits_wcs:
                         # translate the boxes using fits wcs
                         dxmax, dymax = skycoord_to_pixel(obj.sky_bbox_ur,
