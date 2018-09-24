@@ -1,5 +1,6 @@
 import pytest
-from ci_watson.base_classes import BaseTest
+#from ci_watson.base_classes import BaseTest
+from .base_classes import BaseTest
 
 @pytest.mark.usefixtures('_jail')
 class BaseJWSTTest(BaseTest):
@@ -34,7 +35,7 @@ class FGSTest(BaseJWSTTest):
 def pytest_generate_tests(metafunc):
     # called once per each test function
     funcarglist = metafunc.cls.params[metafunc.function.__name__]
-    argnames = sorted(funcarglist[0])   
+    argnames = sorted(funcarglist[0])
     idlist = [funcargs['id'] for funcargs in funcarglist]
     del argnames[argnames.index('id')]
     metafunc.parametrize(argnames, [[funcargs[name] for name in argnames]
@@ -43,17 +44,17 @@ def pytest_generate_tests(metafunc):
 
 @pytest.mark.usefixtures('_jail')
 class BaseJWSTTestSteps(BaseJWSTTest):
-    
-    params = {'test_steps':[dict(input="", 
-                                 test_dir=None, 
-                                 step_class=None, 
-                                 step_pars=dict(), 
+
+    params = {'test_steps':[dict(input="",
+                                 test_dir=None,
+                                 step_class=None,
+                                 step_pars=dict(),
                                  output_truth="",
                                  output_hdus=[])
                             ]
              }
-        
-    def test_steps(self, input, test_dir, step_class, step_pars, 
+
+    def test_steps(self, input, test_dir, step_class, step_pars,
                    output_truth, output_hdus):
         """
         Template method for parameterizing all the tests of MIRI pipeline
@@ -61,25 +62,25 @@ class BaseJWSTTestSteps(BaseJWSTTest):
         """
         if test_dir is None:
             return
-            
+
         self.test_dir = test_dir
         self.ref_loc = [self.test_dir, 'truth']
-        
+
         # can be removed once all truth files have been updated
-        self.ignore_keywords += ['FILENAME']  
-        
+        self.ignore_keywords += ['FILENAME']
+
         input_file = self.get_data(self.test_dir, input)
-        
+
         result = step_class.call(input_file, **step_pars)
 
         output_file = result.meta.filename
         result.save(output_file)
         result.close()
-        
+
         if output_hdus:
             output_spec = (output_file, output_truth, output_hdus)
         else:
-            output_spec = (output_file, output_truth) 
+            output_spec = (output_file, output_truth)
         outputs = [output_spec]
         self.compare_outputs(outputs)
 
