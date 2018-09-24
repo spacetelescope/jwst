@@ -1,12 +1,13 @@
 import pytest
 from jwst.pipeline.calwebb_image2 import Image2Pipeline
 
-from ..resources import FGSTest
+from jwst.tests.base_test import BaseJWSTTest
 
 
 @pytest.mark.bigdata
-class TestImage2Pipeline(FGSTest):
-    ref_loc = ['test_image2pipeline']#, 'truth']
+class TestImage2Pipeline(BaseJWSTTest):
+    input_loc = 'fgs'
+    ref_loc = ['test_image2pipeline', 'truth']
 
     def test_fgs_image2pipeline1(self, _jail):
         """

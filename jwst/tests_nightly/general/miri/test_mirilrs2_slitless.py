@@ -2,11 +2,12 @@ import pytest
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
-from jwst.tests.base_test import MIRITest
+from jwst.tests.base_test import BaseJWSTTest
 
 
 @pytest.mark.bigdata
-class TestSpec2Pipeline(MIRITest):
+class TestSpec2Pipeline(BaseJWSTTest):
+    input_loc = 'miri'
     ref_loc = ['test_spec2pipeline', 'truth']
 
     def test_mirilrs2pipeline1(self):

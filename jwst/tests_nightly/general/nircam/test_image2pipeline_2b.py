@@ -1,15 +1,15 @@
 import pytest
 from jwst.pipeline.calwebb_image2 import Image2Pipeline
 
-from jwst.tests.base_test import NIRCamTest
+from jwst.tests.base_test import BaseJWSTTest
 
 
 @pytest.mark.bigdata
-class TestImage2Pipeline(NIRCamTest):
+class TestImage2Pipeline(BaseJWSTTest):
+    input_loc = 'nircam'
+    ref_loc = ['test_image2pipeline', 'truth']
 
-    ref_loc = ['test_image2pipeline']
-
-    def test_image2pipeline2b(self):
+    def test_image2pipeline2b(self, _jail):
         """
         Regression test of calwebb_image2 pipeline performed on NIRCam data,
         using a multiple integration rate (rateints) file as input.

@@ -5,12 +5,13 @@ from jwst.stpipe import Step
 from jwst.pipeline.calwebb_dark import DarkPipeline
 from jwst.pipeline.calwebb_spec2 import Spec2Pipeline
 
-from ..resources import NIRSpecTest
+from jwst.tests.base_test import BaseJWSTTest
 
 
 @pytest.mark.bigdata
-class TestNIRSpecPipelines(NIRSpecTest):
-    ref_loc = ['test_pipelines']
+class TestNIRSpecPipelines(BaseJWSTTest):
+    input_loc = 'nirspec'
+    ref_loc = ['test_pipelines', 'truth']
     test_dir = 'test_pipelines'
 
     def test_nirspec_dark_pipeline(self, _jail):

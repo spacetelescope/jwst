@@ -1,20 +1,14 @@
 import pytest
 from jwst.pipeline.calwebb_spec2 import Spec2Pipeline
 
-from ..resources import NIRSpecTest
-
-
-def pytest_generate_tests(metafunc):
-    # called once per each test function
-    funcarglist = metafunc.cls.params[metafunc.function.__name__]
-    argnames = sorted(funcarglist[0])
-    metafunc.parametrize(argnames, [[funcargs[name] for name in argnames]
-            for funcargs in funcarglist])
+from jwst.tests.base_test import BaseJWSTTest
+from jwst.tests.base_test import pytest_generate_tests
 
 
 @pytest.mark.bigdata
-class TestSpec2Pipeline(NIRSpecTest):
-    ref_loc = ['test_pipelines']
+class TestSpec2Pipeline(BaseJWSTTest):
+    input_loc = 'nirspec'
+    ref_loc = ['test_pipelines', 'truth']
     test_dir = 'test_pipelines'
 
     # Specification of parameters for Spec2Pipeline tests
@@ -27,7 +21,8 @@ class TestSpec2Pipeline(NIRSpecTest):
                                   'jw00023001001_01101_00001_NRS1_s2d_ref.fits'),
                                  ('jw00023001001_01101_00001_NRS1_x1d.fits',
                                   'jw00023001001_01101_00001_NRS1_x1d_ref.fits')
-                                 ]
+                                 ],
+                       id="test_nrs_fs_multi_spec2_1"
                       ),
                 # test_nrs_fs_multi_spec2_2: NIRSpec fixed-slit data
                  dict(input= 'jwtest1013001_01101_00001_NRS1_rate.fits',
@@ -37,7 +32,8 @@ class TestSpec2Pipeline(NIRSpecTest):
                                 'jwtest1013001_01101_00001_NRS1_s2d_ref.fits'),
                                ('jwtest1013001_01101_00001_NRS1_x1d.fits',
                                 'jwtest1013001_01101_00001_NRS1_x1d_ref.fits')
-                              ]
+                              ],
+                      id="test_nrs_fs_multi_spec2_2"
                      ),
                 # test_nrs_fs_multi_spec2_3:
                 # NIRSpec fixed-slit data using the ALLSLITS subarray and detector NRS2
@@ -49,7 +45,8 @@ class TestSpec2Pipeline(NIRSpecTest):
                                 'jw84600002001_02101_00001_nrs2_s2d_ref.fits'),
                                ('jw84600002001_02101_00001_nrs2_x1d.fits',
                                 'jw84600002001_02101_00001_nrs2_x1d_ref.fits')
-                              ]
+                              ],
+                      id="test_nrs_fs_multi_spec2_3"
                      ),
                 # test_nrs_ifu_spec2: NIRSpec IFU data
                  dict(input= 'jw95175001001_02104_00001_nrs1_rate.fits',
@@ -64,7 +61,8 @@ class TestSpec2Pipeline(NIRSpecTest):
                                ('jw95175001001_02104_00001_nrs1_x1d.fits',
                                 'jw95175001001_02104_00001_nrs1_x1d_ref.fits',
                                 ['primary','extract1d'])
-                              ]
+                              ],
+                      id = "test_nrs_ifu_spec2"
                       )
                 ]
             }

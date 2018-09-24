@@ -1,11 +1,12 @@
 import pytest
 from jwst.pipeline.calwebb_spec2 import Spec2Pipeline
 
-from jwst.tests.base_test import MIRITest
+from jwst.tests.base_test import BaseJWSTTest
 
 
 @pytest.mark.bigdata
-class TestSpec2Pipeline(MIRITest):
+class TestSpec2Pipeline(BaseJWSTTest):
+    input_loc = 'miri'
     ref_loc = ['test_spec2pipeline', 'truth']
 
     test_dir = 'test_spec2pipeline'
@@ -107,7 +108,7 @@ class TestSpec2Pipeline(MIRITest):
 
         """
         test_dir = 'test_mrs2pipeline'
-        self.ref_loc = ['test_mrs2pipeline']
+        self.ref_loc = ['test_mrs2pipeline', 'truth']
 
         input_file = self.get_data(test_dir,
                                    'jw80500018001_02101_00002_MIRIFUSHORT_rate.fits')

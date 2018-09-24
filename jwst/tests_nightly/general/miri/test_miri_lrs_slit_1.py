@@ -1,11 +1,12 @@
 import pytest
 from jwst.pipeline.calwebb_spec2 import Spec2Pipeline
 
-from jwst.tests.base_test import MIRITest
+from jwst.tests.base_test import BaseJWSTTest
 
 
 @pytest.mark.bigdata
-class TestSpec2Pipeline(MIRITest):
+class TestSpec2Pipeline(BaseJWSTTest):
+    input_loc = 'miri'
     ref_loc = ['test_lrs_slit', 'truth']
 
     def test_miri_lrs_slit_1(self):
