@@ -155,6 +155,10 @@ def open(init=None, extensions=None, **kwargs):
     # Actually open the model
     model = new_class(init, extensions=extensions, **kwargs)
 
+    # Close the hdulist if we opened it
+    if file_to_close is not None:
+        model._files_to_close.append(file_to_close)
+
     if not has_model_type:
         class_name = new_class.__name__.split('.')[-1]
         if file_name:
@@ -166,10 +170,6 @@ def open(init=None, extensions=None, **kwargs):
             delattr(model.meta, 'model_type')
         except AttributeError:
             pass
-
-    # Close the hdulist if we opened it
-    if file_to_close is not None:
-        model._files_to_close.append(file_to_close)
 
     return model
 
