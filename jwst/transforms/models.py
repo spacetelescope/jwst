@@ -1486,7 +1486,7 @@ class NIRISSForwardRowGrismDispersion(Model):
         except KeyError:
             raise ValueError("Specified order is not available")
 
-        dxr = x-x0  # delta x in rotated trace coordinates
+        dxr = x - x0  # delta x in rotated trace coordinates
 
         t = np.linspace(0, 1, 10)  #sample t
         dx = self.xmodels[iorder][0](x0, y0) + t * self.xmodels[iorder][1](x0, y0)

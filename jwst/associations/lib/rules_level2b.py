@@ -33,7 +33,6 @@ logger.addHandler(logging.NullHandler())
 # --------------------------------
 @RegistryMarker.rule
 class Asn_Lv2Image(
-        AsnMixin_Lv2Singleton,
         AsnMixin_Lv2Image,
         DMSLevel2bBase
 ):
@@ -46,6 +45,7 @@ class Asn_Lv2Image(
             Constraint_Base(),
             Constraint_Mode(),
             Constraint_Image_Science(),
+            Constraint_Single_Science(self.has_science),
             Constraint(
                 [Constraint_TSO()],
                 reduce=Constraint.notany
@@ -59,7 +59,6 @@ class Asn_Lv2Image(
 @RegistryMarker.rule
 class Asn_Lv2ImageNonScience(
         AsnMixin_Lv2Special,
-        AsnMixin_Lv2Singleton,
         AsnMixin_Lv2Image,
         DMSLevel2bBase
 ):
@@ -72,6 +71,7 @@ class Asn_Lv2ImageNonScience(
             Constraint_Base(),
             Constraint_Mode(),
             Constraint_Image_Nonscience(),
+            Constraint_Single_Science(self.has_science),
         ])
 
         # Now check and continue initialization.
@@ -81,7 +81,6 @@ class Asn_Lv2ImageNonScience(
 @RegistryMarker.rule
 class Asn_Lv2ImageSpecial(
         AsnMixin_Lv2Special,
-        AsnMixin_Lv2Singleton,
         AsnMixin_Lv2Image,
         DMSLevel2bBase
 ):
@@ -98,6 +97,7 @@ class Asn_Lv2ImageSpecial(
             Constraint_Base(),
             Constraint_Mode(),
             Constraint_Image_Science(),
+            Constraint_Single_Science(self.has_science),
             Constraint_Special(),
         ])
 
@@ -107,7 +107,6 @@ class Asn_Lv2ImageSpecial(
 
 @RegistryMarker.rule
 class Asn_Lv2ImageTSO(
-        AsnMixin_Lv2Singleton,
         AsnMixin_Lv2Image,
         DMSLevel2bBase
 ):
@@ -120,6 +119,7 @@ class Asn_Lv2ImageTSO(
             Constraint_Base(),
             Constraint_Mode(),
             Constraint_Image_Science(),
+            Constraint_Single_Science(self.has_science),
             Constraint_TSO(),
         ])
 
@@ -135,7 +135,6 @@ class Asn_Lv2ImageTSO(
 
 @RegistryMarker.rule
 class Asn_Lv2FGS(
-        AsnMixin_Lv2Singleton,
         AsnMixin_Lv2Image,
         DMSLevel2bBase
 ):
@@ -146,6 +145,7 @@ class Asn_Lv2FGS(
         # Setup constraints
         self.constraints = Constraint([
             Constraint_Base(),
+            Constraint_Single_Science(self.has_science),
             DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
@@ -161,7 +161,6 @@ class Asn_Lv2FGS(
 
 @RegistryMarker.rule
 class Asn_Lv2Spec(
-        AsnMixin_Lv2Singleton,
         AsnMixin_Lv2Spectral,
         DMSLevel2bBase
 ):
@@ -176,8 +175,16 @@ class Asn_Lv2Spec(
             Constraint_Spectral_Science(
                 exclude_exp_types=['nrs_msaspec', 'nrs_fixedslit']
             ),
+            Constraint_Single_Science(self.has_science),
             Constraint(
-                [Constraint_TSO()],
+                [
+                    Constraint_TSO(),
+                    DMSAttrConstraint(
+                        name='patttype',
+                        sources=['patttype'],
+                        value=['2_point_nod|4_point_nod'],
+                    )
+                ],
                 reduce=Constraint.notany
             )
         ])
@@ -189,7 +196,6 @@ class Asn_Lv2Spec(
 @RegistryMarker.rule
 class Asn_Lv2SpecSpecial(
         AsnMixin_Lv2Special,
-        AsnMixin_Lv2Singleton,
         AsnMixin_Lv2Spectral,
         DMSLevel2bBase
 ):
@@ -206,6 +212,7 @@ class Asn_Lv2SpecSpecial(
             Constraint_Base(),
             Constraint_Mode(),
             Constraint_Spectral_Science(),
+            Constraint_Single_Science(self.has_science),
             Constraint_Special(),
         ])
 
@@ -215,7 +222,6 @@ class Asn_Lv2SpecSpecial(
 
 @RegistryMarker.rule
 class Asn_Lv2SpecTSO(
-        AsnMixin_Lv2Singleton,
         AsnMixin_Lv2Spectral,
         DMSLevel2bBase
 ):
@@ -230,6 +236,7 @@ class Asn_Lv2SpecTSO(
             Constraint_Spectral_Science(
                 exclude_exp_types=['nrs_msaspec', 'nrs_fixedslit']
             ),
+            Constraint_Single_Science(self.has_science),
             Constraint_TSO(),
         ])
 
@@ -245,7 +252,6 @@ class Asn_Lv2SpecTSO(
 
 @RegistryMarker.rule
 class Asn_Lv2NRSLAMP(
-        AsnMixin_Lv2Singleton,
         AsnMixin_Lv2Special,
         DMSLevel2bBase
 ):
@@ -258,6 +264,7 @@ class Asn_Lv2NRSLAMP(
 
         self.constraints = Constraint([
             Constraint_Base(),
+            Constraint_Single_Science(self.has_science),
             DMSAttrConstraint(
                 name='instrument',
                 sources=['instrume'],
@@ -281,7 +288,6 @@ class Asn_Lv2NRSLAMP(
 
 @RegistryMarker.rule
 class Asn_Lv2WFSS_NIS(
-        AsnMixin_Lv2Singleton,
         AsnMixin_Lv2Spectral,
         DMSLevel2bBase
 ):
@@ -296,6 +302,7 @@ class Asn_Lv2WFSS_NIS(
             Constraint_Base(),
             Constraint_Mode(),
             Constraint_Target(),
+            Constraint_Single_Science(self.has_science),
             DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
@@ -402,8 +409,6 @@ class Asn_Lv2NRSMSA(
             return None
 
 
-
-
 @RegistryMarker.rule
 class Asn_Lv2NRSFSS(
         AsnMixin_Lv2Spectral,
@@ -471,6 +476,60 @@ class Asn_Lv2NRSFSS(
         """Finalize assocation
 
         For NRS Fixed-slit, finalization means creating new associations for
+        background nods.
+
+        Returns
+        -------
+        associations: [association[, ...]] or None
+            List of fully-qualified associations that this association
+            represents.
+            `None` if a complete association cannot be produced.
+
+        """
+        return self.make_nod_asns()
+
+
+@RegistryMarker.rule
+class Asn_Lv2NRSIFUNod(
+        AsnMixin_Lv2Spectral,
+        DMSLevel2bBase
+):
+    """Level2b NIRSpec IFU"""
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup constraints
+        self.constraints = Constraint([
+            Constraint_Base(),
+            Constraint_Mode(),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        name='exp_type',
+                        sources=['exp_type'],
+                        value='nrs_ifu'
+                    ),
+                    DMSAttrConstraint(
+                        name='expspcin',
+                        sources=['expspcin'],
+                    ),
+                    DMSAttrConstraint(
+                        name='patttype',
+                        sources=['patttype'],
+                        value=['2_point_nod|4_point_nod'],
+                        force_unique=True
+                    )
+                ]
+            ),
+        ])
+
+        # Now check and continue initialization.
+        super(Asn_Lv2NRSIFUNod, self).__init__(*args, **kwargs)
+
+    def finalize(self):
+        """Finalize assocation
+
+        For NRS IFU, finalization means creating new associations for
         background nods.
 
         Returns

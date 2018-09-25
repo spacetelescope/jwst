@@ -13,13 +13,15 @@ assign_wcs
 - Updated assign_wcs to compute the sky footprint of MIRI MRS and Nirspec
   IFU observations. [#2472]
 
+
 associations
 ------------
 
 - Updated Level2 product naming to use pipeline's remove_suffix. [#2481]
 
-- Changed deprecated logger.warn to logger.warning. [#2519]
+- Added rule Asn_Lv2NRSIFUNod to handle nod backgrounds for NIRspec IFU [#2532]
 
+- Changed deprecated logger.warn to logger.warning. [#2519]
 
 background
 ----------
@@ -53,6 +55,7 @@ datamodels
 
 - Initialize arrays and tables from function args in model_base [#2502]
 
+
 dq_init
 -------
 
@@ -70,6 +73,8 @@ extract_1d
 
 extract_2d
 ----------
+
+- WFSS modes updated to allow specific order extraction, updated wavelengthrange reference file delivered as part of these changes [#1801]
 
 
 firstframe
@@ -123,11 +128,13 @@ linearity
 model_blender
 -------------
 
+
 mrs_imatch
 ----------
 
 msaflagopen
 -----------
+
 
 outlier_detection
 -----------------
@@ -144,14 +151,18 @@ photom
 pipeline
 --------
 
+
 ramp_fitting
 ------------
+
 
 refpix
 ------
 
 resample
 --------
+
+
 
 reset
 -----
@@ -188,8 +199,12 @@ superbias
 timeconversion
 --------------
 
+
 transforms
 ----------
+
+- NIRISS models updated to allow for negative filter wheel rotations [#1801]
+
 
 tso_photometry
 --------------
@@ -501,6 +516,260 @@ tweakreg
 - Fixed the coordinate frames in the output of tweakreg. [#2404]
 
 - Updated TPCorr to work with V2, V3 in arcseconds instead of degrees [#2342]
+
+wfs_combine
+-----------
+
+white_light
+-----------
+
+wiimatch
+--------
+
+0.10.0 (2018-07-30)
+===================
+
+The 0.10.0 release is a snapshot release for DMS testing.   The release
+is highlighted by the inclusion of steps for time series observations.
+This release had 39 closed issues included a number of improvements
+to the wavelength calibration for NIRSPEC observations. 
+
+
+ami
+---
+
+assign_wcs
+----------
+
+- Improved the error handling for missing entries in the wavelengthrange reference file [#2213]
+
+- Fix to correctly calculate the wavelength for NIRSPEC Prism observations [#2163]
+
+- process NRS_AUTOFLAT as a MOS observation [#2166]
+
+- fix wavelength units of inverse transform [#2158]
+
+- fix input units to meters when filter=OPAQUE [#2134]
+
+associations
+------------
+
+- Implement NIRSpec MSA Background Nod rules #2249
+
+
+background
+----------
+
+barshadow
+---------
+
+
+combine_1d
+----------
+
+coron
+-----
+
+csv_tools
+---------
+
+cube_build
+---------
+
+
+cube_skymatch
+-------------
+
+dark_current
+------------
+
+datamodels
+----------
+
+- When reference files are validated, they can either throw a warning or an
+  error if strict validation is set. [#2210]
+
+- Update schema enum lists for keywords FILTER, PUPIL, READPATT, and EXP_TYPE [#2226]
+
+- Enable and improved tests for datamodel schemas using the ASDF schema checker [#2240, #2241]
+
+- Update IRS2 data model and add regredssion tests [#2295] 
+
+
+dq_init
+-------
+
+emission
+--------
+
+engdblog
+--------
+
+exp_to_source
+-------------
+
+extract_1d
+----------
+
+extract_2d
+----------
+
+
+firstframe
+----------
+
+
+fits_generator
+--------------
+
+
+flatfield
+---------
+
+fringe
+------
+
+gain_scale
+----------
+
+group_scale
+-----------
+
+guider_cds
+----------
+
+imprint
+-------
+
+ipc
+---
+
+jump
+----
+
+jwpsf
+-----
+
+lastframe
+---------
+
+
+lib
+---
+
+linearity
+---------
+
+model_blender
+-------------
+- An example has been added to the model_blener documentation for how to blend meta information [#2206]
+
+mrs_imatch
+----------
+
+msaflagopen
+-----------
+
+- Added documentation for the msaflagopen step [#2283]
+
+outlier_detection
+-----------------
+
+pathloss
+--------
+
+persistence
+-----------
+
+photom
+------
+
+pipeline
+--------
+
+-Update the calwebb_tso1 cfg file to skip the firstframe step and save the corrected ramp product. [#2280]
+
+
+- Implement TSO-specific Level2 configurations [#2297]
+
+ramp_fitting
+------------
+- Corrected handling of ramps whose first differences are all NaNs (such as ramps with all groups saturated) [#2289]
+
+refpix
+------
+
+- Refpix has been updated to handle subarray exposures [#2207]
+
+
+resample
+--------
+- Fixed update_fits_wcs() to work on DrizProductModels [#2222]
+
+- A major re-factoring of the resampling code to allow for spectroscopic resampling [#2245]
+
+reset
+-----
+
+rscd
+----
+
+- The performance of the RSCD step was improved by a factor of 20 [#2247]
+
+- Update to the RSCD documentation [#2211]
+
+
+saturation
+----------
+
+skymatch
+--------
+
+source_catalog
+--------------
+
+
+srctype
+-------
+
+scripts
+-------
+
+
+stpipe
+------
+
+
+straylight
+----------
+
+superbias
+---------
+
+timeconversion
+--------------
+
+- A script was written to read the UTC columns (at the start, middle, and end of each integration) from the INT_TIMES table, call the timeconversion module to compute the corresponding times at the solar-system barycenter (TDB), and update the columns in the INT_TIMES table.  [#2285] 
+
+- Fix the problem in timeconversion that was caused by a recent addition of a new field to the ephemeris by retrieving only the fields needed. [#2296]
+
+
+transforms
+----------
+
+tso_photometry
+--------------
+
+- MIRI aperture photometry was added to the TSO photometry [#2215]
+
+- Added a new model for setting parameters for TSO photometry [#2239]
+
+- Add a  reference file for use with tso_photometry [#2254, #2264]
+
+
+
+tweakreg
+--------
 
 wfs_combine
 -----------
