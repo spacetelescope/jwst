@@ -13,6 +13,7 @@ assign_wcs
 - Updated assign_wcs to compute the sky footprint of MIRI MRS and Nirspec
   IFU observations. [#2472]
 
+- Fix minor bug in catalog.utl.get_object_info()
 
 associations
 ------------
