@@ -65,10 +65,19 @@ class BaseJWSTTestSteps(BaseJWSTTest):
         result.save(output_file)
         result.close()
 
-        if output_hdus:
-            output_spec = (output_file, output_truth, output_hdus)
+        output_pars = None
+        if isinstance(output_truth, tuple):
+            output_pars = output_truth[1]
+            output_truth = output_truth[0]
+
+        if not output_pars:
+            if output_hdus:
+                output_spec = (output_file, output_truth, output_hdus)
+            else:
+                output_spec = (output_file, output_truth)
         else:
-            output_spec = (output_file, output_truth)
+            output_spec = {'files':(output_file, output_truth),
+                           'pars':output_pars}
         outputs = [output_spec]
         self.compare_outputs(outputs)
 
