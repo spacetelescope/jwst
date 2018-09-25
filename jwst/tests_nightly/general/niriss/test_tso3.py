@@ -10,7 +10,7 @@ class TestTso3Pipeline(BaseJWSTTest):
     ref_loc = ['test_caltso3', 'truth']
     test_dir = 'test_caltso3'
 
-    def test_tso3_pipeline_nis(self, _jail):
+    def test_tso3_pipeline_nis(self):
         """Regression test of calwebb_tso3 on NIRISS SOSS simulated data.
         """
         asn_file = self.get_data(self.test_dir,
