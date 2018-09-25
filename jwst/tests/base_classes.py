@@ -88,7 +88,7 @@ class BaseTest(object):
         path = os.path.join(self.input_repo, self.tree, self.input_loc, *args)
 
         return path
-    
+
     def get_data(self, *args, **kwargs):
         """
         Download `filename` into working directory using
@@ -372,12 +372,14 @@ class BaseTest(object):
         if not all_okay and self.results_root is not None:
             tree = os.path.join(self.results_root, self.input_loc,
                             dt, testdir) + os.sep
+            test_cwd = os.getcwd()
             # Write out JSON file to enable retention of different results
-            new_truths = [os.path.abspath(i[1]) for i in updated_outputs]
-            for files in updated_outputs:
+            new_truths = [os.path.join(test_cwd, os.path.basename(i[1])) for i in updated_outputs]
+
+            for actual_files,new_truth in zip(updated_outputs, new_truths):
                 print("Renaming {} as new 'truth' file: {}".format(
-                      files[0], files[1]))
-                shutil.move(files[0], files[1])
+                      actual_files[0], new_truth))
+                shutil.move(actual_files[0], new_truth)
             log_pattern = [os.path.join(os.path.dirname(x), '*.log') for x in new_truths]
             generate_upload_schema(pattern=new_truths + log_pattern,
                            testname=testname,
