@@ -3,7 +3,7 @@ if (utils.scm_checkout(['skip_disable':true])) return
 
 def test_env = [
     "HOME=./",
-    "TEST_BIGDATA=/data4/jwst_test_data",
+    "TEST_BIGDATA=/grp/jwst/ssb/jwst_test_data",
     "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
     "CRDS_CONTEXT=jwst-edit",
 ]
