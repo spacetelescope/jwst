@@ -3,6 +3,7 @@ import pytest
 from numpy.testing import assert_allclose
 from gwcs.wcstools import grid_from_bounding_box
 
+from ci_watson.artifactory_helpers import get_bigdata
 from jwst.assign_wcs import AssignWcsStep, nirspec
 
 from jwst.datamodels import ImageModel
@@ -26,8 +27,8 @@ def test_nirspec_ifu_wcs(_bigdata, test_id, input_file, truth_file):
     """
     del test_id
 
-    input_file = os.path.join(_bigdata, 'nirspec', 'test_wcs', 'nrs1-ifu', input_file)
-    truth_file = os.path.join(_bigdata, 'nirspec', 'test_wcs', 'nrs1-ifu', truth_file)
+    input_file = get_bigdata(_bigdata, 'nirspec', 'test_wcs', 'nrs1-ifu', input_file)
+    truth_file = get_bigdata(_bigdata, 'nirspec', 'test_wcs', 'nrs1-ifu', 'truth', truth_file)
 
     result = AssignWcsStep.call(input_file, save_results=True, suffix='assign_wcs')
     result.close()
