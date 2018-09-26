@@ -100,10 +100,15 @@ class BaseTest(object):
         copy_local = kwargs.get('copy_local', self.copy_local)
         local_file = get_bigdata(self.tree,
                                  self.input_loc,
+                                 *args)
+        """
+        local_file = get_bigdata(self.tree,
+                                 self.input_loc,
                                  *args,
                                  repo=self.input_repo,
                                  copy_local=copy_local)
 
+        """
         return local_file
 
     def raw_from_asn(self, asn_file):
