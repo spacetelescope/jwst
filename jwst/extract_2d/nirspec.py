@@ -244,7 +244,7 @@ def extract_slit(input_model, slit, exp_type):
                 int_times = None
     else:
         raise ValueError("extract_2d does not work with "
-                         "{0} dimensional data".format(lenshape))
+                         "{0} dimensional data".format(ndim))
 
     slit_wcs.bounding_box = util.bounding_box_from_shape(
         datamodels.SlitModel(data=ext_data)
