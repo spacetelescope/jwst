@@ -349,6 +349,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
             # Get the value pointed at by the path to the node,
             # or None in case there is no entry for the node
+
             node = ctx
             for attr in path:
                 node = getattr(node, attr)
