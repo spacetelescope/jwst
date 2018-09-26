@@ -19,56 +19,6 @@
                     "exposerr": "null"
                 }
             ]
-        },
-        {
-            "name": "jw84600012001_02102_00001_nrs1",
-            "members": [
-                {
-                    "expname": "jw84600012001_02102_00001_nrs1_rate.fits",
-                    "exptype": "science",
-                    "exposerr": "null"
-                }
-            ]
-        },
-        {
-            "name": "jw84600012001_02103_00001_nrs1",
-            "members": [
-                {
-                    "expname": "jw84600012001_02103_00001_nrs1_rate.fits",
-                    "exptype": "science",
-                    "exposerr": "null"
-                }
-            ]
-        },
-        {
-            "name": "jw84600012001_02103_00001_nrs2",
-            "members": [
-                {
-                    "expname": "jw84600012001_02103_00001_nrs2_rate.fits",
-                    "exptype": "science",
-                    "exposerr": "null"
-                }
-            ]
-        },
-        {
-            "name": "jw84600012001_02101_00001_nrs2",
-            "members": [
-                {
-                    "expname": "jw84600012001_02101_00001_nrs2_rate.fits",
-                    "exptype": "science",
-                    "exposerr": "null"
-                }
-            ]
-        },
-        {
-            "name": "jw84600012001_02102_00001_nrs2",
-            "members": [
-                {
-                    "expname": "jw84600012001_02102_00001_nrs2_rate.fits",
-                    "exptype": "science",
-                    "exposerr": "null"
-                }
-            ]
         }
     ]
 }
