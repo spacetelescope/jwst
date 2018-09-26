@@ -149,10 +149,8 @@ def fitswcs_transform_from_model(wcsinfo, wavetable=None):
                 astmodels.Shift(wcsinfo['CRVAL'][sp_axis])
         else :
             # Wave dimension is an array that needs to be converted to a table
-            waves = wavetable['wavelength'][0,0]
-            print('in pointing',waves[0:15])
-            print(waves.shape)
-            print(type(waves))
+            waves = wavetable['wavelength']
+            waves = waves.flatten()
             spectral_transform = astmodels.Tabular1D(lookup_table=waves) 
 
         transform = transform & spectral_transform

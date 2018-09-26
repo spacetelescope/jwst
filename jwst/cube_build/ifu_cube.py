@@ -1278,55 +1278,33 @@ class IFUCubeData():
                                                     weightmap=idata)
         else:
             
+            nelem = np.array([])
             wave = np.asarray(self.wavelength_table,dtype=np.float32)
             # for now we need to pad wavelength to fix datamodel size
-            nelem = len(wave)
-            wave = np.pad(wave,(0,2000-nelem),'constant')
-#            wave = np.expand_dims(wave, axis=0)
-#            nelements = np.array([])
-#            nelements = np.append(nelements,nelem)
- 
-            print(wave.shape)
-            ifu = datamodels.IFUCubeModel()
+            num = len(wave)
+            nn = 2000 # This number needs to match the shape of the 
+            # wavetable['wavelength'] value in the ifucube.schema.
+            # In the future it would be good to remove that we have to
+            # set the size of this value in the schema.
 
-#            alldata = np.array(zip(nelements,wave))
-            allwave = np.zeros((1,1,2000))
-            allwave[0,0] = wave
+            wave = np.pad(wave,(0,nn-num),'constant')
+            newnum = len(wave)
+            print('new num',newnum)
+            allwave = np.zeros((1,1,newnum))
+            allwave[0,0,:] = wave
             print('allwave shape',allwave.shape)
 
-#            print(wave.shape)
-#            exit()
-
-#            print('data',data.shape)
-#            ifu.wavetable = allwave
-#            print(ifu.wavetable.wavelength.shape)
-#            ifu.data = data
-            
-#            test = ifu.wavetable.wavelength
-#            print('test',test[0:10])
-
-#            print(wavetest.shape)
-#            wavetest = allwave
-#            exit()
-
-            wavetab = np.array(allwave,
+            nelem = np.append(nelem,num)
+            alldata = np.array(list(zip(np.array(nelem),np.array(allwave))),
                                dtype=datamodels.IFUCubeModel().wavetable.dtype)
 
-
-#            print('wavetab',wavetab[0,0,0:10])
+            
             ifucube_model = datamodels.IFUCubeModel(data=data, dq=dq_cube, 
                                                     err=err_cube, 
                                                     weightmap=idata,
-                                                    wavetable=wavetab)
+                                                    wavetable=alldata)
 
-#            ifucube_model.to_fits('test.fits')
-            print('wavetable',ifucube_model.wavetable.shape)
-            print('wavetable.wavelength shape',ifucube_model.wavetable.wavelength.shape)
 
-            test3 = ifucube_model.wavetable.wavelength
-            print('test3 shape',test3.shape)
-            print('test3',test3[0,0,0:10])
-            print('test3',np.min(test3),np.max(test3))
 
         ifucube_model.update(self.input_models[j])
         ifucube_model.meta.filename = self.output_name
@@ -1336,8 +1314,6 @@ class IFUCubeData():
             saved_model_type = ifucube_model.meta.model_type
             self.blend_output_metadata(ifucube_model)
             ifucube_model.meta.model_type = saved_model_type  # Reset to original
-
-
 #______________________________________________________________________
         if self.output_type == 'single':
             with datamodels.open(self.input_models[j]) as input:
@@ -1366,19 +1342,20 @@ class IFUCubeData():
 #______________________________________________________________________
         ifucube_model.meta.wcsinfo.crval1 = self.crval1
         ifucube_model.meta.wcsinfo.crval2 = self.crval2
-        ifucube_model.meta.wcsinfo.crval3 = self.crval3
         ifucube_model.meta.wcsinfo.crpix1 = self.crpix1
         ifucube_model.meta.wcsinfo.crpix2 = self.crpix2
-        ifucube_model.meta.wcsinfo.crpix3 = self.crpix3
+
         ifucube_model.meta.wcsinfo.cdelt1 = self.cdelt1 / 3600.0
         ifucube_model.meta.wcsinfo.cdelt2 = self.cdelt2 / 3600.0
         if self.linear_wavelength:
+            ifucube_model.meta.wcsinfo.crval3 = self.crval3
             ifucube_model.meta.wcsinfo.cdelt3 = self.cdelt3
             ifucube_model.meta.wcsinfo.ctype3 = 'WAVE'
+            ifucube_model.meta.wcsinfo.crpix3 = self.crpix3
         else:
             ifucube_model.meta.wcsinfo.ctype3 = 'WAVE-TAB'
             ifucube_model.meta.wcsinfo.ps3_0 = 'WSC-TABLE'
-            ifucube_model.meta.wcsinfo.ps3_1 = 'Wavelength'
+            ifucube_model.meta.wcsinfo.ps3_1 = 'wavelength'
 
         ifucube_model.meta.wcsinfo.ctype1 = 'RA---TAN'
         ifucube_model.meta.wcsinfo.ctype2 = 'DEC--TAN'

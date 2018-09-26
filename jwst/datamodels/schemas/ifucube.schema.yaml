@@ -76,6 +76,9 @@ allOf:
       title: Wavelength value for slices
       fits_hdu: WCS-TABLE
       datatype:
+      - name: nelem
+        datatype: int16
       - name: wavelength
         datatype: float32
+        shape: [2000]
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema
