@@ -146,7 +146,7 @@ def set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi):
 
     Parameters
     ----------
-    output_model : `~jwst.datamodels.multislit.MultiSlitModel`
+    output_model : `~jwst.datamodels.SlitModel`
         The output model representing a slit.
     slit : namedtuple
         A `~jwst.transforms.models.Slit` object representing a slit.
@@ -154,12 +154,11 @@ def set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi):
         Indices into the data array where extraction should be done.
         These are converted to "pixel indices" - the center of a pixel.
     """
-    xlo_ind, xhi_ind, ylo_ind, yhi_ind = _toindex((xlo, xhi, ylo, yhi)).astype(np.int16)
     output_model.name = str(slit.name)
-    output_model.xstart = xlo_ind + 1
-    output_model.xsize = (xhi_ind - xlo_ind) + 1
-    output_model.ystart = ylo_ind + 1
-    output_model.ysize = (yhi_ind - ylo_ind) + 1
+    output_model.xstart = xlo + 1 # FITS 1-indexed
+    output_model.xsize = (xhi - xlo)
+    output_model.ystart = ylo + 1 # FITS 1-indexed
+    output_model.ysize = (yhi - ylo)
     if output_model.meta.exposure.type.lower() in ['nrs_msaspec', 'nrs_autoflat']:
         output_model.source_id = int(slit.source_id)
         output_model.source_name = slit.source_name
@@ -176,7 +175,7 @@ def set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi):
     log.info('set slit_attributes completed')
 
 
-def offset_wcs(slit_wcs, slit_name):
+def offset_wcs(slit_wcs):
     """
     Prepend a Shift transform to the slit WCS to account for subarrays.
 
@@ -195,9 +194,6 @@ def offset_wcs(slit_wcs, slit_name):
     tr = Shift(xlo) & Shift(ylo) | tr
     slit_wcs.set_transform('detector', 'sca', tr.rename('dms2sca'))
 
-    log.info('Name of subarray extracted: %s', slit_name)
-    log.info('Subarray x-extents are: %s %s', xlo, xhi)
-    log.info('Subarray y-extents are: %s %s', ylo, yhi)
     return xlo, xhi, ylo, yhi
 
 
@@ -220,25 +216,26 @@ def extract_slit(input_model, slit, exp_type):
         The slit data model with WCS attached to it.
     """
     slit_wcs = nirspec.nrs_wcs_set_input(input_model, slit.name)
-    xlo, xhi, ylo, yhi = offset_wcs(slit_wcs, slit.name)
-    lenshape = len(input_model.data.shape)
-    if lenshape == 2:
-        ext_data = input_model.data[ylo: yhi + 1, xlo: xhi + 1].copy()
-        ext_err = input_model.err[ylo: yhi + 1, xlo: xhi + 1].copy()
-        ext_dq = input_model.dq[ylo: yhi + 1, xlo: xhi + 1].copy()
-        shape = ext_data.shape
-        bounding_box = ((0, shape[1] - 1), (0, shape[0] - 1))
-        ext_var_rnoise = input_model.var_rnoise[ylo: yhi + 1, xlo: xhi + 1].copy()
-        ext_var_poisson = input_model.var_poisson[ylo: yhi + 1, xlo: xhi + 1].copy()
+    xlo, xhi, ylo, yhi = offset_wcs(slit_wcs)
+    log.info('Name of subarray extracted: %s', slit.name)
+    log.info('Subarray x-extents are: %s %s', xlo, xhi)
+    log.info('Subarray y-extents are: %s %s', ylo, yhi)
+    ndim = len(input_model.data.shape)
+    if ndim == 2:
+        slit_slice = np.s_[ylo: yhi, xlo: xhi]
+        ext_data = input_model.data[slit_slice].copy()
+        ext_err = input_model.err[slit_slice].copy()
+        ext_dq = input_model.dq[slit_slice].copy()
+        ext_var_rnoise = input_model.var_rnoise[slit_slice].copy()
+        ext_var_poisson = input_model.var_poisson[slit_slice].copy()
         int_times = None
-    elif lenshape == 3:
-        ext_data = input_model.data[:, ylo: yhi + 1, xlo: xhi + 1].copy()
-        ext_err = input_model.err[:, ylo: yhi + 1, xlo: xhi + 1].copy()
-        ext_dq = input_model.dq[:, ylo: yhi + 1, xlo: xhi + 1].copy()
-        shape = ext_data.shape
-        bounding_box = ((0, shape[2] - 1), (0, shape[1] - 1))
-        ext_var_rnoise = input_model.var_rnoise[:, ylo: yhi + 1, xlo: xhi + 1].copy()
-        ext_var_poisson = input_model.var_poisson[:, ylo: yhi + 1, xlo: xhi + 1].copy()
+    elif ndim == 3:
+        slit_slice = np.s_[:, ylo: yhi, xlo: xhi]
+        ext_data = input_model.data[slit_slice].copy()
+        ext_err = input_model.err[slit_slice].copy()
+        ext_dq = input_model.dq[slit_slice].copy()
+        ext_var_rnoise = input_model.var_rnoise[slit_slice].copy()
+        ext_var_poisson = input_model.var_poisson[slit_slice].copy()
         if (pipe_utils.is_tso(input_model) and
             hasattr(input_model, 'int_times')):
                 log.debug("TSO data, so copying the INT_TIMES table.")
@@ -247,9 +244,11 @@ def extract_slit(input_model, slit, exp_type):
                 int_times = None
     else:
         raise ValueError("extract_2d does not work with "
-                         "{0} dimensional data".format(lenshape))
+                         "{0} dimensional data".format(ndim))
 
-    slit_wcs.bounding_box = bounding_box
+    slit_wcs.bounding_box = util.bounding_box_from_shape(
+        datamodels.SlitModel(data=ext_data)
+        )
 
     # compute wavelengths
     x, y = wcstools.grid_from_bounding_box(slit_wcs.bounding_box, step=(1, 1))

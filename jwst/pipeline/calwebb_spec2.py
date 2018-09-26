@@ -134,12 +134,12 @@ class Spec2Pipeline(Pipeline):
         # one. We'll just get the first one found.
         science = members_by_type['science']
         if len(science) != 1:
-            self.log.warn(
+            self.log.warning(
                 'Wrong number of science exposures found in {}'.format(
                     exp_product['name']
                 )
             )
-            self.log.warn('    Using only first one.')
+            self.log.warning('    Using only first one.')
         science = science[0]
 
         self.log.info('Working on input %s ...', science)
@@ -212,7 +212,7 @@ class Spec2Pipeline(Pipeline):
         if exp_type in ['NRS_MSASPEC', 'NRS_IFU'] and \
            len(imprint) > 0:
             if len(imprint) > 1:
-                self.log.warn('Wrong number of imprint members')
+                self.log.warning('Wrong number of imprint members')
             imprint = imprint[0]
             input = self.imprint_subtract(input, imprint)
 

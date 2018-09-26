@@ -1,17 +1,10 @@
-from . import model_base
-
+from .model_base import DataModel
 
 __all__ = ['CombinedSpecModel']
 
 
-class CombinedSpecModel(model_base.DataModel):
+class CombinedSpecModel(DataModel):
     """
     A data model for combined 1D spectra.
     """
     schema_url = "combinedspec.schema.yaml"
-
-    def __init__(self, init=None, spec_table=None, **kwargs):
-        super(CombinedSpecModel, self).__init__(init=init, **kwargs)
-
-        if spec_table is not None:
-            self.spec_table = spec_table

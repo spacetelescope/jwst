@@ -4,20 +4,14 @@ This package provides support for sky background subtraction and equalization
 (matching).
 
 """
-import os
 import logging
 
+from .cube_skymatch_step import CubeSkyMatchStep
 
-__docformat__ = 'restructuredtext'
-
-from . import skymatch
-from . import skycube
-from . import cube_skymatch_step
-
-__taskname__ = 'cube_skymatch'
-__version__ = '0.9.3'
-__vdate__ = '21-Sept-2016'
 __author__ = 'Mihai Cara'
+
+
+__all__ = ["CubeSkyMatchStep"]
 
 
 log = logging.getLogger(__name__)

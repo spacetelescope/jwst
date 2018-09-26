@@ -4,7 +4,6 @@ import os
 from os import path
 import pytest
 import re
-import tempfile
 
 import crds
 
@@ -14,22 +13,17 @@ def abspath(filepath):
     return path.abspath(path.expanduser(path.expandvars(filepath)))
 
 
-# Decorator to indicate slow tests
-try:
-    runslow = pytest.mark.skipif(
-        not pytest.config.getoption("--runslow"),
-        reason="need --runslow option to run"
-    )
-except AttributeError:
-    runslow = pytest.mark.skipif(
-        True,
-        reason="No reason, just a dummy"
-    )
+# Decorator to indicate slow test
+runslow = pytest.mark.skipif(
+    not pytest.config.getoption("--slow"),
+    reason="need --slow option to run"
+)
+
 
 # Decorator to indicate TEST_BIGDATA required
 require_bigdata = pytest.mark.skipif(
-    'TEST_BIGDATA' not in os.environ,
-    reason='"TEST_BIGDATA" environmental not defined. Cannot access test data.'
+    not pytest.config.getoption('bigdata'),
+    reason='requires --bigdata'
 )
 
 

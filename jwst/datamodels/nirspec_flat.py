@@ -8,12 +8,6 @@ class NRSFlatModel(ReferenceFileModel):
 
     schema_url = "nirspec.flat.schema.yaml"
 
-    def __init__(self, init=None, flat_table=None, **kwargs):
-        super(NRSFlatModel, self).__init__(init=init, **kwargs)
-
-        if flat_table is not None:
-            self.flat_table = flat_table
-
 
 class NirspecFlatModel(NRSFlatModel):
     """A data model for NIRSpec flat-field reference files.
@@ -44,28 +38,8 @@ class NirspecFlatModel(NRSFlatModel):
 
     schema_url = "nirspec_flat.schema.yaml"
 
-    def __init__(self, init=None, data=None, dq=None, err=None,
-                 wavelength=None, flat_table=None, dq_def=None,
-                 **kwargs):
+    def __init__(self, init=None, **kwargs):
         super(NirspecFlatModel, self).__init__(init=init, **kwargs)
-
-        if data is not None:
-            self.data = data
-
-        if dq is not None:
-            self.dq = dq
-
-        if err is not None:
-            self.err = err
-
-        if wavelength is not None:
-            self.wavelength = wavelength
-
-        if flat_table is not None:
-            self.flat_table = flat_table
-
-        if dq_def is not None:
-            self.dq_def = dq_def
 
         if self.dq is not None or self.dq_def is not None:
             self.dq = dynamic_mask(self)

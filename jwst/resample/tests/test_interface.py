@@ -13,4 +13,4 @@ def test_multi_integration_input(resample_class):
 
     # Resample can't handle cubes, so it should fail
     with pytest.raises(RuntimeError):
-        result = resample_class().call(cube)
+        resample_class().call(cube)

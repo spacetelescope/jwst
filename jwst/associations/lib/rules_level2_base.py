@@ -39,7 +39,6 @@ __all__ = [
     '_EMPTY',
     'ASN_SCHEMA',
     'AsnMixin_Lv2Image',
-    'AsnMixin_Lv2Singleton',
     'AsnMixin_Lv2Special',
     'AsnMixin_Lv2Spectral',
     'Constraint_Base',
@@ -482,7 +481,7 @@ class Utility():
         """
         match = re.match(_LEVEL1B_REGEX, level1b_name)
         if match is None or match.group('type') != '_uncal':
-            logger.warn((
+            logger.warning((
                 'Item FILENAME="{}" is not a Level 1b name. '
                 'Cannot transform to Level 2a.'
             ).format(
@@ -814,28 +813,6 @@ class AsnMixin_Lv2Image:
 
         super(AsnMixin_Lv2Image, self)._init_hook(item)
         self.data['asn_type'] = 'image2'
-
-
-class AsnMixin_Lv2Singleton(DMSLevel2bBase):
-    """Allow only single science exposure"""
-
-    def __init__(self, *args, **kwargs):
-
-        constraints = SimpleConstraint(
-            name='single_science',
-            value=False,
-            sources=lambda item: self.has_science(item)
-        )
-        if self.constraints is None:
-            self.constraints = constraints
-        else:
-            self.constraints = Constraint([
-                self.constraints,
-                constraints
-            ])
-
-        # Now, lets see if item belongs to us.
-        super(AsnMixin_Lv2Singleton, self).__init__(*args, **kwargs)
 
 
 class AsnMixin_Lv2Spectral(DMSLevel2bBase):

@@ -3,14 +3,12 @@
 #  open MSA shutters in nirspec science data sets
 #
 import json
-import math
 import numpy as np
 import logging
 from .. import datamodels
 from ..assign_wcs.nirspec import slitlets_wcs, nrs_wcs_set_input
 from ..transforms.models import Slit
 from gwcs.wcs import WCS
-from gwcs import wcstools
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

@@ -17,9 +17,3 @@ class StrayLightModel(ReferenceFileModel):
         2-D straylight mask array.
     """
     schema_url = "straylight.schema.yaml"
-
-    def __init__(self, init=None, data=None, **kwargs):
-        super(StrayLightModel, self).__init__(init=init, **kwargs)
-
-        if data is not None:
-            self.data = data

@@ -1,10 +1,10 @@
-from . import model_base
+from .model_base import DataModel
 
 
 __all__ = ['SpecModel']
 
 
-class SpecModel(model_base.DataModel):
+class SpecModel(DataModel):
     """
     A data model for 1D spectra.
 
@@ -18,9 +18,3 @@ class SpecModel(model_base.DataModel):
         estimate for the flux, and data quality flags.
     """
     schema_url = "spec.schema.yaml"
-
-    def __init__(self, init=None, spec_table=None, **kwargs):
-        super(SpecModel, self).__init__(init=init, **kwargs)
-
-        if spec_table is not None:
-            self.spec_table = spec_table

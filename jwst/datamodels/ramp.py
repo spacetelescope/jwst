@@ -1,10 +1,10 @@
-from . import model_base
+from .model_base import DataModel
 
 
 __all__ = ['RampModel']
 
 
-class RampModel(model_base.DataModel):
+class RampModel(DataModel):
     """
     A data model for 4D ramps.
 
@@ -34,31 +34,8 @@ class RampModel(model_base.DataModel):
     """
     schema_url = "ramp.schema.yaml"
 
-    def __init__(self, init=None, data=None, pixeldq=None, groupdq=None,
-                 err=None, zeroframe=None, group=None, int_times=None,
-                 **kwargs):
+    def __init__(self, init=None, **kwargs):
         super(RampModel, self).__init__(init=init, **kwargs)
-
-        if data is not None:
-            self.data = data
-
-        if pixeldq is not None:
-            self.pixeldq = pixeldq
-
-        if groupdq is not None:
-            self.groupdq = groupdq
-
-        if err is not None:
-            self.err = err
-
-        if zeroframe is not None:
-            self.zeroframe = zeroframe
-
-        if group is not None:
-            self.group = group
-
-        if int_times is not None:
-            self.int_times = int_times
 
         # Implicitly create arrays
         self.pixeldq = self.pixeldq

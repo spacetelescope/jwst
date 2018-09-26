@@ -11,9 +11,14 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def extract2d(input_model, slit_name=None, apply_wavecorr=False,
-              reference_files={}, grism_objects=None, extract_height=None,
-              extract_orders=None):
+def extract2d(input_model,
+              slit_name=None,
+              apply_wavecorr=False,
+              reference_files={},
+              grism_objects=None,
+              extract_height=None,
+              extract_orders=None,
+              mmag_extract=99.):
     """
     The main extract_2d function
 
@@ -31,10 +36,9 @@ def extract2d(input_model, slit_name=None, apply_wavecorr=False,
         A list of grism objects.
     extract_height: int
         Cross-dispersion extraction height to use for time series grisms.
-        This will override the default which for NRC_TSGRISM is a set 
+        This will override the default which for NRC_TSGRISM is a set
         size of 64 pixels.
     """
-
     nrs_modes = ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_BRIGHTOBJ',
                  'NRS_LAMP', 'NRS_AUTOFLAT']
     slitless_modes = ['NIS_WFSS', 'NRC_WFSS', 'NRC_TSGRISM']
@@ -52,7 +56,6 @@ def extract2d(input_model, slit_name=None, apply_wavecorr=False,
                                      slit_name=slit_name,
                                      apply_wavecorr=apply_wavecorr,
                                      reference_files=reference_files)
-
     elif exp_type in slitless_modes:
         if exp_type == 'NRC_TSGRISM':
             if extract_height is None:
@@ -62,9 +65,18 @@ def extract2d(input_model, slit_name=None, apply_wavecorr=False,
                                               extract_height=extract_height,
                                               extract_orders=extract_orders)
         else:
+            # TODO: temp to check fits_wcs catalog use, remove with #2533
+            if exp_type == 'NRC_WFSS':
+                use_fits_wcs = True
+            else:
+                use_fits_wcs = False
+
             output_model = extract_grism_objects(input_model,
                                                  grism_objects=grism_objects,
-                                                 reference_files=reference_files)
+                                                 reference_files=reference_files,
+                                                 extract_orders=extract_orders,
+                                                 use_fits_wcs=use_fits_wcs,
+                                                 mmag_extract=99.)
 
     else:
         log.info("'EXP_TYPE {} not supported for extract 2D".format(exp_type))

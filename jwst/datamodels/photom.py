@@ -10,12 +10,6 @@ class PhotomModel(ReferenceFileModel):
     """
     schema_url = "photom.schema.yaml"
 
-    def __init__(self, init=None, phot_table=None, **kwargs):
-        super(PhotomModel, self).__init__(init=init, **kwargs)
-
-        if phot_table is not None:
-            self.phot_table = phot_table
-
 
 class NircamPhotomModel(PhotomModel):
     """
@@ -42,12 +36,6 @@ class NircamPhotomModel(PhotomModel):
 
     """
     schema_url = "nircam_photom.schema.yaml"
-
-    def __init__(self, init=None, phot_table=None, **kwargs):
-        super(NircamPhotomModel, self).__init__(init=init, **kwargs)
-
-        if phot_table is not None:
-            self.phot_table = phot_table
 
 
 class NirissPhotomModel(PhotomModel):
@@ -76,12 +64,6 @@ class NirissPhotomModel(PhotomModel):
     """
     schema_url = "niriss_photom.schema.yaml"
 
-    def __init__(self, init=None, phot_table=None, **kwargs):
-        super(NirissPhotomModel, self).__init__(init=init, **kwargs)
-
-        if phot_table is not None:
-            self.phot_table = phot_table
-
 
 class NirspecPhotomModel(PhotomModel):
     """
@@ -108,12 +90,6 @@ class NirspecPhotomModel(PhotomModel):
 
     """
     schema_url = "nirspec_photom.schema.yaml"
-
-    def __init__(self, init=None, phot_table=None, **kwargs):
-        super(NirspecPhotomModel, self).__init__(init=init, **kwargs)
-
-        if phot_table is not None:
-            self.phot_table = phot_table
 
 
 class NirspecFSPhotomModel(PhotomModel):
@@ -143,11 +119,8 @@ class NirspecFSPhotomModel(PhotomModel):
     """
     schema_url = "nirspecfs_photom.schema.yaml"
 
-    def __init__(self, init=None, phot_table=None, **kwargs):
+    def __init__(self, init=None, **kwargs):
         super(NirspecFSPhotomModel, self).__init__(init=init, **kwargs)
-
-        if phot_table is not None:
-            self.phot_table = phot_table
 
 
 class MiriImgPhotomModel(PhotomModel):
@@ -174,12 +147,6 @@ class MiriImgPhotomModel(PhotomModel):
 
     """
     schema_url = "mirimg_photom.schema.yaml"
-
-    def __init__(self, init=None, phot_table=None, **kwargs):
-        super(MiriImgPhotomModel, self).__init__(init=init, **kwargs)
-
-        if phot_table is not None:
-            self.phot_table = phot_table
 
 
 class MiriMrsPhotomModel(PhotomModel):
@@ -212,24 +179,8 @@ class MiriMrsPhotomModel(PhotomModel):
     """
     schema_url = "mirmrs_photom.schema.yaml"
 
-    def __init__(self, init=None, data=None, err=None, dq=None, dq_def=None,
-                 pixsiz=None, **kwargs):
+    def __init__(self, init=None, **kwargs):
         super(MiriMrsPhotomModel, self).__init__(init=init, **kwargs)
-
-        if data is not None:
-            self.data = data
-
-        if err is not None:
-            self.err = err
-
-        if dq is not None:
-            self.dq = dq
-
-        if dq_def is not None:
-            self.dq_def = dq_def
-
-        if pixsiz is not None:
-            self.pixsiz = pixsiz
 
         self.dq = dynamic_mask(self)
 
@@ -255,9 +206,3 @@ class FgsPhotomModel(PhotomModel):
 
     """
     schema_url = "fgs_photom.schema.yaml"
-
-    def __init__(self, init=None, phot_table=None, **kwargs):
-        super(FgsPhotomModel, self).__init__(init=init, **kwargs)
-
-        if phot_table is not None:
-            self.phot_table = phot_table

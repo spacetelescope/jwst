@@ -15,9 +15,3 @@ class IPCModel(ReferenceFileModel):
         The deconvolution kernel (a very small image).
     """
     schema_url = "ipc.schema.yaml"
-
-    def __init__(self, init=None, data=None, **kwargs):
-        super(IPCModel, self).__init__(init=init, **kwargs)
-
-        if data is not None:
-            self.data = data

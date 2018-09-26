@@ -21,14 +21,8 @@ class MaskModel(ReferenceFileModel):
     """
     schema_url = "mask.schema.yaml"
 
-    def __init__(self, init=None, dq=None, dq_def=None, **kwargs):
+    def __init__(self, init=None, **kwargs):
         super(MaskModel, self).__init__(init=init, **kwargs)
-
-        if dq is not None:
-            self.dq = dq
-
-        if dq_def is not None:
-            self.dq_def = dq_def
 
         if self.dq is not None or self.dq_def is not None:
             self.dq = dynamic_mask(self)

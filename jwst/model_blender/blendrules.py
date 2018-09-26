@@ -2,11 +2,6 @@
                    a new metadata instance and table
 
 """
-import os
-import glob
-import copy
-import json
-from io import StringIO
 from collections import OrderedDict
 
 import numpy as np
@@ -16,7 +11,6 @@ from jwst import __version__
 from .. import datamodels
 from ..datamodels import schema as dm_schema
 from . import blender
-from . import textutil
 
 # Version of rules file format supported by this version of the code
 # All changes should be backwards compatible to older rules versions
