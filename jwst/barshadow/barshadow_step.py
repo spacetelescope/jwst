@@ -42,7 +42,6 @@ class BarShadowStep(Step):
                     result.meta.cal_step.barshadow = 'SKIPPED'
                     return result
 
-                instrument = input_model.meta.instrument.name
                 # Open the barshadow ref file data model
                 barshadow_model = datamodels.BarshadowModel(self.barshadow_name)
 

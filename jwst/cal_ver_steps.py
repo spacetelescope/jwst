@@ -2,18 +2,15 @@
 JWST calibration processing steps.
 
 """
-from __future__ import print_function
-
 import os, sys, inspect
 import imp
 import json
 
-from datetime import datetime as dtime
-
 from verhawk.scanner import Scanner
 
 from . import version
-from . import steps  # REQUIRED: in order to load all packages for inspect
+# REQUIRED: in order to load all packages for inspect
+from . import steps  # noqa: F401
 
 from . import __name__ as jwst_pkg_name
 from . import __file__ as jwst_pkg_file
@@ -99,7 +96,6 @@ class StepVersions(object):
             for mod in self.steps[s]:
                 step_name = mod[0]
                 step_module = mod[1]
-                classname = None
                 step_version = self.pkg_versions[s]
                 if '_step' in step_name:
                     # Return all classes defined by step
