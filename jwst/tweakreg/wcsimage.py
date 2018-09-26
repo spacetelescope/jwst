@@ -183,15 +183,6 @@ class ImageWCS():
             pf, pt = pipeline[idx_v2v3]
             pipeline[idx_v2v3] = (pf, deepcopy(self._tpcorr))
             pipeline.insert(idx_v2v3 + 1, ('v2v3corr', pt))
-
-            # The following is a hack around the fact that gwcs does not
-            # currently provide support for inserting a step.
-            for i in range(len(pipeline)):
-                try:
-                    frame = getattr(self._wcs, pipeline[i][0])
-                except AttributeError:
-                    continue
-                pipeline[i] = (frame, pipeline[i][1])
             self._wcs = gwcs.WCS(pipeline, name=self._owcs.name)
             self._v23name = 'v2v3corr'
 
@@ -1154,7 +1145,6 @@ class WCSGroupCatalog():
 
         return fit
 
-
     def apply_affine_to_wcs(self, tanplane_wcs, matrix, shift):
         """ Applies a general affine transformation to the WCS.
         """
@@ -1177,7 +1167,6 @@ class WCSGroupCatalog():
 
             imcat.imwcs.set_correction(m, s)
             imcat.meta['image_model'].meta.wcs = imcat.wcs
-
 
     def align_to_ref(self, refcat, minobj=15, searchrad=1.0, separation=0.5,
                      use2dhist=True, xoffset=0.0, yoffset=0.0, tolerance=1.0,
