@@ -42,6 +42,8 @@ def read_cubepars(par_filename,
     The correct elements of instrument_info are filled in
 
     """
+
+
     if instrument == 'MIRI':
         ptab = datamodels.MiriIFUCubeParsModel(par_filename)
         number_bands = len(all_channel)

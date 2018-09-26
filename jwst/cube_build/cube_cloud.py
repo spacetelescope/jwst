@@ -53,9 +53,9 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
 # withing the region of interest.
     nn = coord1.size
 
-    ilow = 0 
-    ihigh = 0 
-    imatch  = 0 
+#    ilow = 0 
+#    ihigh = 0 
+#    imatch  = 0 
 #    print('looping over n points mapping to cloud',nn)
 #________________________________________________________________________________
     for ipt in range(0, nn - 1):
@@ -73,14 +73,14 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
 
         # on the wavelength boundaries the point cloud may not be in the IFUCube
         # the edge cases are skipped and not included in final IFUcube. 
-        if len(indexz[0]) == 0:
-            if wave[ipt] < zcoord[0]: 
-               ilow = ilow + 1
+#        if len(indexz[0]) == 0:
+#            if wave[ipt] < zcoord[0]: 
+#               ilow = ilow + 1
 
-            elif wave[ipt] > zcoord[-1]: 
-               ihigh = ihigh + 1
-            else:
-                imatch = imatch + 1
+#            elif wave[ipt] > zcoord[-1]: 
+#               ihigh = ihigh + 1
+#            else:
+#                imatch = imatch + 1
 #                print(' no z match found ',wave[ipt],roiw_pixel[ipt])
 #                print(zcoord[0:10])
 #                print(zcoord[naxis3-11:naxis3])
@@ -88,7 +88,7 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
 #                diff = abs(zcoord[naxis3-11:naxis3] - wave[ipt])
 #                print(diff)
 #                exit()
-        else:
+        if len(indexz[0]) > 0:
             d1 = np.array(coord1[ipt] - xcenters[indexr]) / cdelt1
             d2 = np.array(coord2[ipt] - ycenters[indexr]) / cdelt2
             d3 = np.array(wave[ipt] - zcoord[indexz]) / zcdelt3[indexz]
@@ -115,9 +115,9 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
             spaxel_weight[icube_index] = spaxel_weight[icube_index] + weight_distance
             spaxel_iflux[icube_index] = spaxel_iflux[icube_index] + 1
 
-    print('Number of pixels not in ifu cube too low wavelength', ilow)
-    print('Number of pixels not in ifu cube too high wavelength', ihigh)
-    print('Number of pixels not in ifu cube not match', imatch)
+#    print('Number of pixels not in ifu cube too low wavelength', ilow)
+#    print('Number of pixels not in ifu cube too high wavelength', ihigh)
+#    print('Number of pixels not in ifu cube not match', imatch)
 #_______________________________________________________________________
 def match_det2cube_miripsf(alpha_resol, beta_resol, wave_resol,
                            naxis1, naxis2, naxis3,

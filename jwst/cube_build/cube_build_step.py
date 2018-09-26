@@ -273,7 +273,7 @@ class CubeBuildStep (Step):
 # if linear wavelength (single band) single values for rois, roiw, weight_power, softrad
 # if not linear wavelength (multi bands) an array based on wavelength for:
 #  rois, roiw, weight_power, softrad
-
+ 
             thiscube.determine_cube_parameters()
 
             thiscube.setup_ifucube_wcs()
@@ -298,6 +298,7 @@ class CubeBuildStep (Step):
         for cube in cube_container:
             footprint = cube.meta.wcs.footprint(axis_type="spatial")
             update_s_region_keyword(cube, footprint)
+
 
         
         return cube_container

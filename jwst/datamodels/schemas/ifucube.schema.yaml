@@ -76,7 +76,6 @@ allOf:
       title: Wavelength value for slices
       fits_hdu: WCS-TABLE
       datatype:
-      - name: Wavelength
-        shape: [2000]
-        datatype: float64
+      - name: wavelength
+        datatype: float32
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

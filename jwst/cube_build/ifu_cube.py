@@ -540,6 +540,7 @@ class IFUCubeData():
                 log.debug("Working on Band defined by:%s %s ", this_par1, this_par2)
 #--------------------------------------------------------------------------------
                 if self.interpolation == 'pointcloud':
+                    t0 = time.time()
                     pixelresult = self.map_detector_to_outputframe(this_par1,
                                                                    this_par2,
                                                                    subtract_background,
@@ -547,6 +548,8 @@ class IFUCubeData():
 
                     coord1, coord2, wave, flux, rois_pixel, roiw_pixel, weight_pixel,\
                         softrad_pixel, alpha_det, beta_det = pixelresult
+                    t1 = time.time()
+                    log.info("Time to transform pixels to output frame = %.1f.s" % (t1 - t0,))
                     if self.weighting == 'msm':
                         t0 = time.time()
 #                        if self.new_code:
@@ -576,7 +579,7 @@ class IFUCubeData():
 
 
                         t1 = time.time()
-                        log.info("Time match point cloud to ifucube = %.1f.s" % (t1 - t0,))
+                        log.info("Time to match file to ifucube = %.1f.s" % (t1 - t0,))
 #________________________________________________________________________________
                     elif self.weighting == 'miripsf':
                         with datamodels.IFUImageModel(ifile) as input_model:
@@ -771,7 +774,7 @@ class IFUCubeData():
         softrad =  np.zeros(number_bands)
         minwave =  np.zeros(number_bands)
         maxwave =  np.zeros(number_bands)
-        print('number of bands for ifu',number_bands)
+
         for i in range(number_bands):
             if self.instrument == 'MIRI':
                 par1 = self.list_par1[i]
@@ -787,7 +790,7 @@ class IFUCubeData():
                                                                       par2)
             spaxelsize[i] = a_scale
             spectralsize[i] = w_scale
-            print('scales',a_scale,b_scale,w_scale,par1,par2)
+#            print('scales',a_scale,b_scale,w_scale,par1,par2)
 
             power[i] = self.instrument_info.GetMSMPower(par1, par2)
             softrad[i] = self.instrument_info.GetSoftRad(par1, par2)
@@ -846,14 +849,14 @@ class IFUCubeData():
                         table = self.instrument_info.Get_high_table()
                     table_wavelength,table_sroi,table_wroi,table_power,table_softrad = table
 # based on Min and Max wavelength - pull out the tables values that fall in this range
-            print('wave range',self.wavemin,self.wavemax)
+#            print('wave range',self.wavemin,self.wavemax)
             # find the closest
             imin = (np.abs(table_wavelength - self.wavemin)).argmin()
             imax = (np.abs(table_wavelength - self.wavemax)).argmin()
             if imin > 1 and  table_wavelength[imin] > self.wavemin: imin = imin - 1
             if (imax < len(table_wavelength) and  
                 self.wavemax > table_wavelength[imax]): imax = imax  + 1
-            print('index of wavelength values',imin,imax)
+#            print('index of wavelength values',imin,imax)
 
             self.roiw_table = table_wroi[imin:imax]
             self.rois_table = table_sroi[imin:imax]
@@ -965,7 +968,6 @@ class IFUCubeData():
 #                        print('time to find footprint',t1-t0)
  
                         amin, amax, bmin, bmax, lmin, lmax = ch_footprint
-#                        print(amin, amax, bmin ,bmax)
 #                        amin, bmin, amax, bmin2, amax2, bmax, amin2, bmax2 = \
 #                            input_model.meta.wcsinfo.s_region
 #                        print(amin, amax, bmin, bmax, amin2, amax2, bmin2, bmax2)
@@ -977,13 +979,14 @@ class IFUCubeData():
                             self.instrument_info,
                             self.coord_system)
                         amin, amax, bmin, bmax, lmin, lmax = ch_footprint
-
-#                        print(amin, amax, bmin ,bmax)
-#                        footprint = input_model.meta.wcs.footprint()
-                        
-#                        print(footprint)
-#                        print(type(footprint))
-#                        amin, bmin, amax, bmin2, amax2, bmax, amin2, bmax2 = fp
+#                        print(amin,amax,bmin,bmax)
+#                        test = input_model.meta.wcs.footprint()
+#                        print('test',test)
+#                        exit()
+#                        region_footprint = input_model.meta.wcsinfo.s_region
+#                        print('region footprint', region_footprint)
+#                        print(type(region_footprint))
+#                        amin, bmin, amax, bmin2, amax2, bmax, amin2, bmax2 = region_footprint
 #                        print(amin, amax, bmin, bmax, amin2, amax2, bmin2, bmax2)
                     a_min.append(amin)
                     a_max.append(amax)
@@ -1001,7 +1004,7 @@ class IFUCubeData():
         final_lambda_min = min(lambda_min)
         final_lambda_max = max(lambda_max)
 
-        print('wavelengths',final_lambda_min,final_lambda_max,self.wavemin,self.wavemax)
+#        print('wavelengths',final_lambda_min,final_lambda_max,self.wavemin,self.wavemax)
 
         final_lambda_min = self.wavemin
         final_lambda_max = self.wavemax
@@ -1024,7 +1027,7 @@ class IFUCubeData():
             log.info('No Valid IFU slice data found %f %f ', test_a, test_b)
 #________________________________________________________________________________
         cube_footprint = (final_a_min, final_a_max, final_b_min, final_b_max,
-                      final_lambda_min, final_lambda_max)
+                          final_lambda_min, final_lambda_max)
 #________________________________________________________________________________
     # Based on Scaling and Min and Max values determine naxis1, naxis2, naxis3
     # set cube CRVALs, CRPIXs and xyz coords (center  x,y,z vector spaxel centers)
@@ -1274,24 +1277,56 @@ class IFUCubeData():
                                                     err=err_cube, 
                                                     weightmap=idata)
         else:
-
-#            wave = np.zeros((1,2000))
-            wave = np.zeros(2000)
-            nelements = len(self.wavelength_table)
-
-            for i in range(nelements):
-                wave[i] = self.wavelength_table[i]
-            print(type(wave)) 
+            
+            wave = np.asarray(self.wavelength_table,dtype=np.float32)
+            # for now we need to pad wavelength to fix datamodel size
+            nelem = len(wave)
+            wave = np.pad(wave,(0,2000-nelem),'constant')
+#            wave = np.expand_dims(wave, axis=0)
+#            nelements = np.array([])
+#            nelements = np.append(nelements,nelem)
+ 
             print(wave.shape)
-            print(wave[0:10])
+            ifu = datamodels.IFUCubeModel()
 
+#            alldata = np.array(zip(nelements,wave))
+            allwave = np.zeros((1,1,2000))
+            allwave[0,0] = wave
+            print('allwave shape',allwave.shape)
+
+#            print(wave.shape)
+#            exit()
+
+#            print('data',data.shape)
+#            ifu.wavetable = allwave
+#            print(ifu.wavetable.wavelength.shape)
+#            ifu.data = data
+            
+#            test = ifu.wavetable.wavelength
+#            print('test',test[0:10])
+
+#            print(wavetest.shape)
+#            wavetest = allwave
+#            exit()
+
+            wavetab = np.array(allwave,
+                               dtype=datamodels.IFUCubeModel().wavetable.dtype)
+
+
+#            print('wavetab',wavetab[0,0,0:10])
             ifucube_model = datamodels.IFUCubeModel(data=data, dq=dq_cube, 
                                                     err=err_cube, 
                                                     weightmap=idata,
-                                                    wavetable=wave)
-            print(ifucube_model.wavetable.shape)
-            test2 = ifucube_model.wavetable
-            print(test2[0])
+                                                    wavetable=wavetab)
+
+#            ifucube_model.to_fits('test.fits')
+            print('wavetable',ifucube_model.wavetable.shape)
+            print('wavetable.wavelength shape',ifucube_model.wavetable.wavelength.shape)
+
+            test3 = ifucube_model.wavetable.wavelength
+            print('test3 shape',test3.shape)
+            print('test3',test3[0,0,0:10])
+            print('test3',np.min(test3),np.max(test3))
 
         ifucube_model.update(self.input_models[j])
         ifucube_model.meta.filename = self.output_name
@@ -1301,6 +1336,7 @@ class IFUCubeData():
             saved_model_type = ifucube_model.meta.model_type
             self.blend_output_metadata(ifucube_model)
             ifucube_model.meta.model_type = saved_model_type  # Reset to original
+
 
 #______________________________________________________________________
         if self.output_type == 'single':
@@ -1314,15 +1350,18 @@ class IFUCubeData():
                 ifucube_model.meta.filename = newname
 
 #______________________________________________________________________
-# fill in Channel, Band for MIRI
+# fill in Channel for MIRI
         if self.instrument == 'MIRI':
             # fill in Channel output meta data
             num_ch = len(self.list_par1)
-            ifucube_model.meta.instrument.channel = self.list_par1[0]
-            num_ch = len(self.list_par1)
+            outchannel = self.list_par1[0]
             for m in range(1, num_ch):
-                ifucube_model.meta.instrument.channel = (
-                ifucube_model.meta.instrument.channel + str(self.list_par1[m]))
+                outchannel = outchannel + str(self.list_par1[m])
+
+            outchannel = "".join(set(outchannel))
+            outchannel = "".join(sorted(outchannel))
+            ifucube_model.meta.instrument.channel = outchannel
+            log.info('IFUChannel %s', ifucube_model.meta.instrument.channel)
 
 #______________________________________________________________________
         ifucube_model.meta.wcsinfo.crval1 = self.crval1
@@ -1337,7 +1376,6 @@ class IFUCubeData():
             ifucube_model.meta.wcsinfo.cdelt3 = self.cdelt3
             ifucube_model.meta.wcsinfo.ctype3 = 'WAVE'
         else:
-
             ifucube_model.meta.wcsinfo.ctype3 = 'WAVE-TAB'
             ifucube_model.meta.wcsinfo.ps3_0 = 'WSC-TABLE'
             ifucube_model.meta.wcsinfo.ps3_1 = 'Wavelength'
@@ -1346,7 +1384,6 @@ class IFUCubeData():
         ifucube_model.meta.wcsinfo.ctype2 = 'DEC--TAN'
         ifucube_model.meta.wcsinfo.cunit1 = 'deg'
         ifucube_model.meta.wcsinfo.cunit2 = 'deg'
-
 
         ifucube_model.meta.wcsinfo.cunit3 = 'um'
         ifucube_model.meta.wcsinfo.wcsaxes = 3
@@ -1370,7 +1407,7 @@ class IFUCubeData():
         ifucube_model.meta.ifu.roi_wave = self.roiw
         ifucube_model.meta.ifu.weighting = self.weighting
 
-        print('ifucube_model.meta.ifu.weighting',self.weighting)
+#        print('ifucube_model.meta.ifu.weighting',self.weighting)
 #        ifucube_model.meta.ifu.weighting = 'msm'
 #        ifucube_model.meta.ifu.weight_power = self.weight_power
 
@@ -1424,7 +1461,6 @@ class IFUCubeData():
                 ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL4C'
                 ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE4C'
 
-
         wcsobj = pointing.create_fitswcs(ifucube_model)
         ifucube_model.meta.wcs = wcsobj
         ifucube_model.meta.wcs.bounding_box = ((0, naxis1 - 1),
@@ -1465,7 +1501,6 @@ class IFUCubeData():
         """Create new output metadata based on blending all input metadata."""
         # Run fitsblender on output product
         output_file = IFUCube.meta.filename
-#        log.info('Blending metadata for {}'.format(output_file))
         blendmeta.blendmodels(IFUCube, inputs=self.input_models,
                               output=output_file)
 class IncorrectInput(Exception):
