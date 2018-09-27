@@ -1,5 +1,5 @@
 import pytest
-#from ci_watson.base_classes import BaseTest
+from ci_watson.artifactory_helpers import _is_url, get_bigdata_root
 from .base_classes import BaseTest
 
 @pytest.mark.usefixtures('_jail')
@@ -9,11 +9,15 @@ class BaseJWSTTest(BaseTest):
     input_repo = 'jwst-pipeline'
     results_root = 'jwst-pipeline-results'
 
-    copy_local = False  # Do not make additional copy by default
+    docopy = False  # Do not make additional copy by default
     rtol = 0.00001
 
     def set_environ(self):
-        self.tree = ''
+        # Enforce copies of data when TEST_BIGDATA is URL
+        input_dir = get_bigdata_root(repo=self.input_repo)
+
+        if input_dir and _is_url(input_dir):
+            self.docopy = True
 
     def raw_from_asn(self, asn_file):
         return raw_from_asn(asn_file)
