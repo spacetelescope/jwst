@@ -495,8 +495,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             path_head = dir_path
         output_path = os.path.join(path_head, path_tail)
 
-        self.validate_required_fields()
-
         # TODO: Support gzip-compressed fits
         if ext == '.fits':
             # TODO: remove 'clobber' check once depreciated fully in astropy
