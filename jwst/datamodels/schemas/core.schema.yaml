@@ -75,6 +75,16 @@ properties:
         type: string
         fits_keyword: HGA_STOP
         blend_table: True
+      pwfseet:
+        title: Previous WFS exposure end time
+        type: number
+        fits_keyword: PWFSEET
+        blend_table: True
+      nwfsest:
+        title: Next WFS exposure start time
+        type: number
+        fits_keyword: NWFSEST
+        blend_table: True
       asn:
         title: Association information
         type: object
@@ -139,6 +149,14 @@ properties:
             title: "[hh:mm:ss.sss] UTC time at start of exposure"
             type: string
             fits_keyword: TIME-OBS
+            blend_table: True
+            blend_rule: first
+          date_beg:
+            anyOf:
+              - $ref: http://stsci.edu/schemas/asdf/time/time-1.0.0
+              - type: string
+            title: "Date-time start of data acquisition"
+            fits_keyword: DATE-BEG
             blend_table: True
             blend_rule: first
           date_end:
@@ -363,7 +381,17 @@ properties:
           channel:
             title: 'NIRCam channel: long or short'
             type: string
-            enum: [LONG, SHORT, '12', '34', '1', '2', '3', '4', ANY, N/A, '1234', '123', '234']
+            # Values grouped by instrument:
+            anyOf:
+              # MIRI
+              - enum:
+                 ['1', '2', '3', '4', '12', '34', '123', '234', '1234']
+              # NIRCam
+              - enum:
+                  [LONG, SHORT]
+              # All
+              - enum:
+                  [ANY, N/A]
             fits_keyword: CHANNEL
             blend_table: True
           filter:
@@ -495,7 +523,7 @@ properties:
             fits_keyword: GWA_PYAV
             blend_table: True
           gwa_tilt:
-            title: GWA TILT (avg/calib) temperature [K]
+            title: "[K] GWA TILT (avg/calib) temperature"
             type: number
             fits_keyword: GWA_TILT
             blend_table: True
@@ -658,28 +686,28 @@ properties:
             fits_keyword: TSAMPLE
             blend_table: True
           frame_time:
-            title: Time between frames (sec)
+            title: "[s] Time between frames"
             type: number
             fits_keyword: TFRAME
             blend_table: True
           group_time:
-            title: Time between groups (sec)
+            title: "[s] Time between groups"     
             type: number
             fits_keyword: TGROUP
             blend_table: True
           integration_time:
-            title: Effective integration time (sec)
+            title: "[s] Effective integration time"
             type: number
             fits_keyword: EFFINTTM
             blend_table: True
           exposure_time:
-            title: Effective exposure time (sec)
+            title: "[s] Effective exposure time"
             type: number
             fits_keyword: EFFEXPTM
             blend_rule: sum
             blend_table: True
           duration:
-            title: Total duration of exposure (sec)
+            title: "[s] Total duration of exposure"
             type: number
             fits_keyword: DURATION
             blend_rule: sum
@@ -876,7 +904,7 @@ properties:
             fits_keyword: NUMDTHPT
             blend_table: True
           pattern_size:
-            title: Primary dither pattern size (arcsec)
+            title: "[arcsec] Primary dither pattern size"
             type: number
             fits_keyword: PATTSIZE
             blend_table: True
@@ -917,7 +945,7 @@ properties:
             fits_keyword: SPECSTEP
             blend_table: True
           spectral_offset:
-            title: Spectral offset from pattern start (arcsec)
+            title: "[arcsec] Spectral offset from pattern start"
             type: number
             fits_keyword: SPCOFFST
             blend_table: True
@@ -937,7 +965,7 @@ properties:
             fits_keyword: SPATSTEP
             blend_table: True
           spatial_offset:
-            title: Spatial offset from pattern start (arcsec)
+            title: "[arcsec] Spatial offset from pattern start"
             type: number
             fits_keyword: SPTOFFST
             blend_table: True
@@ -976,32 +1004,32 @@ properties:
             fits_keyword: EPH_TIME
             blend_table: True
           spatial_x:
-            title: X spatial coordinate of JWST (km)
+            title: "[km] X spatial coordinate of JWST"
             type: number
             fits_keyword: JWST_X
             blend_table: True
           spatial_y:
-            title: Y spatial coordinate of JWST (km)
+            title: "[km] Y spatial coordinate of JWST"
             type: number
             fits_keyword: JWST_Y
             blend_table: True
           spatial_z:
-            title: Z spatial coordinate of JWST (km)
+            title: "[km] Z spatial coordinate of JWST"
             type: number
             fits_keyword: JWST_Z
             blend_table: True
           velocity_x:
-            title: X component of JWST velocity (km/sec)
+            title: "[km/s] X component of JWST velocity"
             type: number
             fits_keyword: JWST_DX
             blend_table: True
           velocity_y:
-            title: Y component of JWST velocity (km/sec)
+            title: "[km/s] Y component of JWST velocity"
             type: number
             fits_keyword: JWST_DY
             blend_table: True
           velocity_z:
-            title: Z component of JWST velocity (km/sec)
+            title: "[km/s] Z component of JWST velocity"
             type: number
             fits_keyword: JWST_DZ
             blend_table: True
@@ -1024,12 +1052,12 @@ properties:
         type: object
         properties:
           ra_offset:
-            title: Velocity aberration correction RA offset (rad)
+            title: "[rad] Velocity aberration correction RA offset"
             type: number
             fits_keyword: DVA_RA
             blend_table: True
           dec_offset:
-            title: Velocity aberration correction Dec offset (rad)
+            title: "[rad] Velocity aberration correction Dec offset"
             type: number
             fits_keyword: DVA_DEC
             blend_table: True
@@ -1257,12 +1285,12 @@ properties:
             fits_keyword: GSACSTAT
             blend_table: True
           gs_ctd_x:
-            title: guide star centroid x position in FGS ideal frame (arcsec)
+            title: "[arcsec] guide star centroid x position in FGS ideal frame"
             type: number
             fits_keyword: GSCENTX
             blend_table: True
           gs_ctd_y:
-            title: guide star centroid y position in FGS ideal frame (arcsec)
+            title: "[arcsec] guide star centroid y position in FGS ideal frame"
             type: number
             fits_keyword: GSCENTY
             blend_table: True
@@ -1287,7 +1315,7 @@ properties:
             fits_keyword: GS_KMAG
             blend_table: True
           gs_jitter_rms:
-            title: RMS jitter over the exposure (arcsec)
+            title: "[arcsec] RMS jitter over the exposure"
             type: number
             fits_keyword: JITTERMS
             blend_table: True
