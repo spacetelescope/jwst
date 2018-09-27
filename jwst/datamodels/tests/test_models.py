@@ -476,46 +476,6 @@ def test_info():
                 assert words[2] == "float32", "Correct type for err"
     assert matches== 3, "Check all extensions are described"
 
-def test_validate_on_read():
-    im1 = ImageModel((10,10))
-    schema = im1.meta._schema
-    schema['properties']['calibration_software_version']['fits_required'] = True
-
-    try:
-        im2 = ImageModel(FITS_FILE,
-                          schema=im1._schema,
-                          strict_validation=True)
-    except jsonschema.ValidationError:
-        caught = True
-    else:
-        caught = False
-        im2.close()
-
-    im1.close()
-    assert caught, "Test of validation while reading image"
-
-def test_validate_required_field():
-    im = ImageModel((10,10), strict_validation=True)
-    schema = im.meta._schema
-    schema['properties']['telescope']['fits_required'] = True
-
-    try:
-        im.validate_required_fields()
-    except jsonschema.ValidationError:
-        caught = True
-    else:
-        caught = False
-    assert caught, "Test of validate_required_fields"
-
-    im.meta.telescope = 'JWST'
-    try:
-        im.validate_required_fields()
-    except jsonschema.ValidationError:
-        caught = True
-    else:
-        caught = False
-    assert not caught, "Test of validate_required_fields"
-
 def test_multislit_model():
     data = np.arange(24, dtype=np.float32).reshape((6, 4))
     err = np.arange(24, dtype=np.float32).reshape((6, 4)) + 2
