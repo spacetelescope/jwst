@@ -2,6 +2,7 @@ import os
 import shutil
 import tempfile
 import warnings
+import jsonschema
 
 import pytest
 from astropy.time import Time
