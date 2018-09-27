@@ -14,17 +14,36 @@ def abspath(filepath):
 
 
 # Decorator to indicate slow test
-runslow = pytest.mark.skipif(
-    not pytest.config.getoption("--slow"),
-    reason="need --slow option to run"
-)
-
+try:
+    runslow = pytest.mark.skipif(
+        not pytest.config.getoption("--slow"),
+        reason="need --slow option to run"
+    )
+except AttributeError:
+    runslow = pytest.mark.skipif(
+        True,
+        reason=(
+            'Dummy mark. Needs to be defined this way'
+            ' when importing this module not under'
+            ' a pytest run.'
+        )
+    )
 
 # Decorator to indicate TEST_BIGDATA required
-require_bigdata = pytest.mark.skipif(
-    not pytest.config.getoption('bigdata'),
-    reason='requires --bigdata'
-)
+try:
+    require_bigdata = pytest.mark.skipif(
+        not pytest.config.getoption('bigdata'),
+        reason='requires --bigdata'
+    )
+except AttributeError:
+    require_bigdata = pytest.mark.skipif(
+        True,
+        reason=(
+            'Dummy mark. Needs to be defined this way'
+            ' when importing this module not under'
+            ' a pytest run.'
+        )
+    )
 
 
 # Decorator to skip test if running under a TravisCI
