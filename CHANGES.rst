@@ -212,6 +212,8 @@ tso_photometry
 tweakreg
 --------
 
+- Updated tweakreg to use `wcs.available_frames` to get the names of the frames in 
+  a WCS pipeline. [#2590]
 wfs_combine
 -----------
 
