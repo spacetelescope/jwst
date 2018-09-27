@@ -169,7 +169,7 @@ class ImageWCS():
             *before* ``matrix`` transformations are applied.
 
         """
-        frms = wcs.available_frames
+        frms = self._wcs.available_frames
 
         # if original WCS did not have tangent-plane corrections, create
         # new correction and add it to the WCs pipeline:
