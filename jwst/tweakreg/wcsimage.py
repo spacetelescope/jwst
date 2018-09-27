@@ -62,8 +62,9 @@ class ImageWCS():
             DEC of the reference point in degrees.
 
         """
-        if not self._check_wcs_structure(wcs):
-            raise ValueError("Unsupported WCS structure.")
+        valid, message =  self._check_wcs_structure(wcs)
+        if not valid:
+            raise ValueError(message)
 
         self._ra_ref = ra_ref
         self._dec_ref = dec_ref
@@ -208,35 +209,43 @@ class ImageWCS():
         self._update_transformations()
 
     def _check_wcs_structure(self, wcs):
+        valid = True
+        message = ""
         if wcs is None or wcs.pipeline is None:
-            return False
+            message = "WCS is None."
+            valid = False
 
-        frms = [f[0] for f in wcs.pipeline]
+        frms = wcs.available_frames
         nframes = len(frms)
         if nframes < 3:
-            return False
+            message = "There are more than 3 frames in this WCS pipeline."
+            valid = False
 
         if frms.count(frms[0]) > 1 or frms.count(frms[-1]) > 1:
-            return False
-
+            valid = False
+            message = "One or more frames in the WCS pipeline are not unique."
+            
         if frms.count('v2v3') != 1:
-            return False
-
+            valid = False
+            message = "More than 1 'v2v3' frames in the WCS pipeline."
+            
         idx_v2v3 = frms.index('v2v3')
         if idx_v2v3 == 0 or idx_v2v3 == (nframes - 1):
-            return False
-
+            valid = False
+            message = "'v2v3' frame is either first or last in the WCS pipeline."
+            
         nv2v3corr = frms.count('v2v3corr')
         if nv2v3corr == 0:
-            return True
+            valid = True
         elif nv2v3corr > 1:
-            return False
-
+            valid = False
+            message = "There are more than 1 'nv2v3corr' frames in the WCS pipeline."
+            
         idx_v2v3corr = frms.index('v2v3corr')
         if idx_v2v3corr != (idx_v2v3 + 1) or idx_v2v3corr == (nframes - 1):
-            return False
-
-        return True
+            valid = False
+            message = "'v2v3corr' frame is not in the correct position in the WCS pipeline."
+        return valid, message
 
     def det_to_world(self, x, y):
         """
