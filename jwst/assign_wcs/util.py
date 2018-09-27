@@ -21,7 +21,7 @@ from gwcs import utils as gwutils
 from . import pointing
 from ..lib.catalog_utils import SkyObject
 from ..transforms.models import GrismObject
-from ..datamodels import WavelengthrangeModel, DataModel, CubeModel, IFUCubeModel
+from ..datamodels import WavelengthrangeModel, DataModel
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -637,19 +637,19 @@ def get_num_msa_open_shutters(shutter_state):
     return num
 
 
-def bounding_box_from_shape(model):
+def bounding_box_from_shape(shape):
     """Create a bounding box from the shape of the data.
+
+    Parameters
+    ----------
+    shape : tuple
+        The shape attribute from a `numpy.ndarray` array
 
     Note: The bounding box of a ``CubeModel`` is the bounding_box of one
     of the stacked images.
     """
-    if isinstance(model, (CubeModel, IFUCubeModel)):
-        shape = model.data[0].shape
-    else:
-        shape = model.data.shape
-
-    bbox = ((-0.5, shape[1] - 0.5),
-            (-0.5, shape[0] - 0.5))
+    bbox = ((-0.5, shape[-1] - 0.5),
+            (-0.5, shape[-2] - 0.5))
     return bbox
 
 
@@ -661,7 +661,7 @@ def update_s_region_imaging(model):
     bbox = model.meta.wcs.bounding_box
 
     if bbox is None:
-        bbox = bounding_box_from_shape(model)
+        bbox = bounding_box_from_shape(model.data.shape)
 
     # footprint is an array of shape (2, 4) as we
     # are interested only in the footprint on the sky
@@ -683,7 +683,7 @@ def update_s_region_spectral(model):
 
     bbox = swcs.bounding_box
     if bbox is None:
-        bbox = bounding_box_from_shape(model)
+        bbox = bounding_box_from_shape(model.data.shape)
 
     x, y = grid_from_bounding_box(bbox)
     ra, dec, lam = swcs(x, y)
