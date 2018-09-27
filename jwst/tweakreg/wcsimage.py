@@ -74,7 +74,7 @@ class ImageWCS():
         # perform additional check that if tangent plane correction is already
         # present in the WCS pipeline, it is of TPCorr class and that
         # its parameters are consistent with reference angles:
-        frms = [f[0] for f in wcs.pipeline]
+        frms = wcs.available_frames
         if 'v2v3corr' in frms:
             self._v23name = 'v2v3corr'
             self._tpcorr = deepcopy(wcs.pipeline[frms.index('v2v3corr')-1][1])
@@ -168,7 +168,7 @@ class ImageWCS():
             *before* ``matrix`` transformations are applied.
 
         """
-        frms = [f[0] for f in self._wcs.pipeline]
+        frms = self._wcs.available_frames
 
         # if original WCS did not have tangent-plane corrections, create
         # new correction and add it to the WCs pipeline:
@@ -211,7 +211,7 @@ class ImageWCS():
         if wcs is None or wcs.pipeline is None:
             return False
 
-        frms = [f[0] for f in wcs.pipeline]
+        frms = wcs.available_frames
         nframes = len(frms)
         if nframes < 3:
             return False

@@ -212,6 +212,8 @@ tso_photometry
 tweakreg
 --------
 
+- Use wcs.available_frames instead of indexes to find coordinate frames [#2594]
+
 wfs_combine
 -----------
 
