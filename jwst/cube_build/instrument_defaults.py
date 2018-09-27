@@ -592,11 +592,11 @@ class InstrumentInfo():
         return wavemax
 
     def GetMSMPower(self, parameter1, parameter2):
-        weight_power = self.Info[parameter1][parameter2]['msm_power'] 
+        weight_power = self.Info[parameter1][parameter2]['msm_power']
         return weight_power
 
     def GetSoftRad(self, parameter1, parameter2):
-        softrad = self.Info[parameter1][parameter2]['softrad'] 
+        softrad = self.Info[parameter1][parameter2]['softrad']
         return softrad
 
     def GetScale(self, parameter1, parameter2):
@@ -605,10 +605,9 @@ class InstrumentInfo():
                  self.Info[parameter1][parameter2]['wscale'])
         return scale
 
-
     def Get_multichannel_table(self):
-        table = (self.multich_wavelength, 
-                 self.multich_sroi, 
+        table = (self.multich_wavelength,
+                 self.multich_sroi,
                  self.multich_wroi,
                  self.multich_power,
                  self.multich_softrad)
@@ -620,15 +619,15 @@ class InstrumentInfo():
                  self.prism_wroi,
                  self.prism_power,
                  self.prism_softrad)
-        return table 
-    
+        return table
+
     def Get_med_table(self):
         table = (self.med_wavelength,
                  self.med_sroi,
                  self.med_wroi,
                  self.med_power,
                  self.med_softrad)
-        return table 
+        return table
 
     def Get_high_table(self):
         table = (self.high_wavelength,
@@ -636,9 +635,9 @@ class InstrumentInfo():
                  self.high_wroi,
                  self.high_power,
                  self.high_softrad)
-        return table 
+        return table
 
- 
+
     def GetMIRISliceEndPts(self, parameter1):
         slice_xstart = self.Info[parameter1]['xstart']
         slice_xend = self.Info[parameter1]['xend']

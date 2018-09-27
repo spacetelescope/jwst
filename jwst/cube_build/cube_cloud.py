@@ -1,14 +1,12 @@
  # Routines used in Spectral Cube Building
 import numpy as np
-import math
 import logging
-from . import coord
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 #________________________________________________________________________________
 def match_det2cube_msm(naxis1, naxis2, naxis3,
-                       cdelt1, cdelt2, 
+                       cdelt1, cdelt2,
                        zcdelt3,
                        xcenters, ycenters, zcoord,
                        spaxel_flux,
@@ -29,7 +27,7 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
     Parameters
     ----------
     naxis1,naxis2,naxis3: size of the ifucube
-    cdelt1,cdelt2 : ifucube spaxel size 
+    cdelt1,cdelt2 : ifucube spaxel size
     cdelt3_normal: ifu spectral size at wavelength
     rois_pixel, roiw_pixel: region of influence size in spatial and spectral dimension
     weight_power: msm weighting parameter
@@ -48,14 +46,14 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
     """
 
     nplane = naxis1 * naxis2
-    
+
 # now loop over the pixel values for this region and find the spaxels that fall
 # withing the region of interest.
     nn = coord1.size
 
-#    ilow = 0 
-#    ihigh = 0 
-#    imatch  = 0 
+#    ilow = 0
+#    ihigh = 0
+#    imatch  = 0
 #    print('looping over n points mapping to cloud',nn)
 #________________________________________________________________________________
     for ipt in range(0, nn - 1):
@@ -72,19 +70,18 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
         indexz = np.where(abs(zcoord - wave[ipt]) <= roiw_pixel[ipt])
 
         # on the wavelength boundaries the point cloud may not be in the IFUCube
-        # the edge cases are skipped and not included in final IFUcube. 
+        # the edge cases are skipped and not included in final IFUcube.
+        # Left commented code for checking later for NIRSPEC the spectral size
+        # in the reference file may be too small
 #        if len(indexz[0]) == 0:
-#            if wave[ipt] < zcoord[0]: 
+#            if wave[ipt] < zcoord[0]:
 #               ilow = ilow + 1
-
 #            elif wave[ipt] > zcoord[-1]: 
 #               ihigh = ihigh + 1
 #            else:
 #                imatch = imatch + 1
 #                print(' no z match found ',wave[ipt],roiw_pixel[ipt])
-#                print(zcoord[0:10])
 #                print(zcoord[naxis3-11:naxis3])
-#                print(zcoord[-1])
 #                diff = abs(zcoord[naxis3-11:naxis3] - wave[ipt])
 #                print(diff)
 #                exit()
@@ -92,7 +89,7 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
             d1 = np.array(coord1[ipt] - xcenters[indexr]) / cdelt1
             d2 = np.array(coord2[ipt] - ycenters[indexr]) / cdelt2
             d3 = np.array(wave[ipt] - zcoord[indexz]) / zcdelt3[indexz]
-        
+
             dxy = (d1 * d1) + (d2 * d2)
 
         # shape of dxy is #indexr or number of overlaps in spatial plane
@@ -125,7 +122,7 @@ def match_det2cube_miripsf(alpha_resol, beta_resol, wave_resol,
                            spaxel_flux,
                            spaxel_weight,
                            spaxel_iflux,
-                           spaxel_alpha,spaxel_beta,spaxel_wave,
+                           spaxel_alpha, spaxel_beta, spaxel_wave,
                            flux,
                            coord1, coord2, wave, alpha_det, beta_det,
                            rois_pixel, roiw_pixel, weight_pixel, softrad_pixel):
@@ -157,7 +154,7 @@ def match_det2cube_miripsf(alpha_resol, beta_resol, wave_resol,
 
     rois_pixel, roiw_pixel: region of influence size in spatial and spectral dimension
     weight_pixel: msm weighting parameter
-    softrad_pxiel: weighting paramter 
+    softrad_pxiel: weighting paramter
 
     Returns
     -------
@@ -174,7 +171,6 @@ def match_det2cube_miripsf(alpha_resol, beta_resol, wave_resol,
 #________________________________________________________________________________
     for ipt in range(0, nn - 1):
         lower_limit = softrad_pixel[ipt]
-
 #________________________________________________________________________________
         # xcenters, ycenters is a flattened 1-D array of the 2 X 2 xy plane
         # cube coordinates.
@@ -188,9 +184,6 @@ def match_det2cube_miripsf(alpha_resol, beta_resol, wave_resol,
         indexr = np.where(radius <= rois_pixel[ipt])
         indexz = np.where(abs(zcoord - wave[ipt]) <= roiw_pixel[ipt])
 
-        zlam = zcoord[indexz]        # z Cube values falling in wavelength roi
-        xi_cube = xcenters[indexr]   # x Cube values within radius
-        eta_cube = ycenters[indexr]  # y cube values with the radius
 #________________________________________________________________________________
 # loop over the points in the ROI
         for iz, zz in enumerate(indexz[0]):
