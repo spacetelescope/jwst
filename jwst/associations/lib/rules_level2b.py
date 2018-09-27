@@ -541,3 +541,33 @@ class Asn_Lv2NRSIFUNod(
 
         """
         return self.make_nod_asns()
+
+
+@RegistryMarker.rule
+class Asn_Lv2WFSC(
+        DMSLevel2bBase
+):
+    """Level2b Wavefront Sensing & Controle"""
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup constraints
+        self.constraints = Constraint([
+            Constraint_Base(),
+            Constraint_Single_Science(self.has_science),
+            DMSAttrConstraint(
+                name='wfsc',
+                sources=['visitype'],
+                value='.+wfsc.+',
+                force_unique=True
+            )
+        ])
+
+        # Now check and continue initialization.
+        super(Asn_Lv2WFSC, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        super(Asn_Lv2WFSC, self)._init_hook(item)
+        self.data['asn_type'] = 'wfs-image2'
