@@ -13,6 +13,7 @@ class TestImage3Pipeline1(BaseJWSTTest):
     """
     input_loc = 'nircam'
     ref_loc = ['test_calimage3', 'truth']
+    test_dir = 'test_calimage3'
 
     def test_image3_pipeline1(self, _jail):
 
@@ -68,6 +69,7 @@ class TestImage3Pipeline1(BaseJWSTTest):
                              'mosaic_long_i2d.fits',
                              'mosaic_long_i2d_ref.fits'),
                     'pars': {'ignore_hdus':self.ignore_hdus+['HDRTAB'],
+                             'ignore_keywords':self.ignore_keywords,
                               'rtol': 0.0001}
                    },
                    {'files':(# Compare the HDRTAB in the i2d product
@@ -75,6 +77,7 @@ class TestImage3Pipeline1(BaseJWSTTest):
                              'mosaic_long_i2d_ref.fits[HDRTAB]'),
                     'pars': {'ignore_keywords':
                              self.ignore_keywords+['NAXIS1', 'TFORM*'],
+                             'ignore_fields':self.ignore_keywords,
                              'rtol': 0.0001}
                    }
                   ]
@@ -157,6 +160,7 @@ class TestImage3Pipeline1(BaseJWSTTest):
                    {'files':('jw10002-o001_t002_nircam_f444w_i2d.fits[hdrtab]',
                     'jw10002-o001_t002_nircam_f444w_i2d_ref.fits[hdrtab]'),
                     'pars':{'ignore_keywords':self.ignore_keywords+['NAXIS1','TFORM*'],
+                            'ignore_fields':self.ignore_keywords,
                             'rtol':0.0001}
                    }
                   ]
