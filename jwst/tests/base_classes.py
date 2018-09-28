@@ -52,7 +52,7 @@ class BaseTest(object):
 
         # Update tree to point to correct environment
         self.tree = envopt
-
+        
         # Configure environment for tests
         self.set_environ()
 
@@ -72,11 +72,11 @@ class BaseTest(object):
         """
         pass
 
-    def get_data_path(self, *args):
+    def get_input_path(self):
         """
-        Return path to remote source of input data
+        Return path within repository to remote source of input data
         """
-        path = os.path.join(self.input_repo, self.tree, self.input_loc, *args)
+        path = [self.input_repo, self.tree, self.input_loc]
 
         return path
 
@@ -94,10 +94,8 @@ class BaseTest(object):
                                  self.input_loc,
                                  *args)
         """
-        local_file = get_bigdata(self.tree,
-                                 self.input_loc,
+        local_file = get_bigdata(*self.get_input_path(),
                                  *args,
-                                 repo=self.input_repo,
                                  docopy=docopy)
 
         return local_file
@@ -141,11 +139,9 @@ class BaseTest(object):
                         ignore_keywords=ignore_keywords,
                         rtol=rtol, atol=atol)
 
+        input_path = [self.input_repo, self.tree, self.input_loc, *self.ref_loc]
         return compare_outputs(outputs, raise_error=True,
-                               input_repo=self.input_repo,
-                               input_loc=self.input_loc,
-                               ref_loc=self.ref_loc,
-                               tree = self.tree,
+                               input_path=input_path,
                                docopy = self.docopy,
                                results_root = self.results_root,
                                **compare_kws)

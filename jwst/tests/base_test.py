@@ -1,5 +1,5 @@
 import pytest
-from ci_watson.artifactory_helpers import _is_url, get_bigdata_root
+from ci_watson.artifactory_helpers import check_url, get_bigdata_root
 from .base_classes import BaseTest
 
 @pytest.mark.usefixtures('_jail')
@@ -14,9 +14,9 @@ class BaseJWSTTest(BaseTest):
 
     def set_environ(self):
         # Enforce copies of data when TEST_BIGDATA is URL
-        input_dir = get_bigdata_root(repo=self.input_repo)
+        input_dir = get_bigdata_root()
 
-        if input_dir and _is_url(input_dir):
+        if input_dir and check_url(input_dir):
             self.docopy = True
 
     def raw_from_asn(self, asn_file):
