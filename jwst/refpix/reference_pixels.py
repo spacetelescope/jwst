@@ -40,7 +40,6 @@
 import numpy as np
 from scipy import stats
 import logging
-from .. import datamodels
 from ..datamodels import dqflags
 from ..lib import reffile_utils
 

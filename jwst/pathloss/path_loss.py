@@ -4,7 +4,6 @@
 
 import numpy as np
 import logging
-from .. import datamodels
 from jwst.assign_wcs import nirspec, util
 from gwcs import wcstools
 
