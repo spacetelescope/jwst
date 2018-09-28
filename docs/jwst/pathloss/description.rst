@@ -8,9 +8,9 @@ Overview
 The pathloss correction step calculates the correction to apply to spectra
 when the 1-d extraction is performed.  The motivation behind the correction
 is different for NIRSPEC and NIRISS, while that for MIRI has not been
-implemented in Build 7.3.  For NIRSPEC, this correction accounts for losses
+implemented yet.  For NIRSPEC, this correction accounts for losses
 in the optical system due to light being scattered outside the grating, and
-to light not passing through the aperture, while for NIRISS_SOSS data it
+to light not passing through the aperture, while for NIRISS SOSS data it
 corrects for the flux that falls outside the subarray.
 
 Background
@@ -18,7 +18,7 @@ __________
 
 The correction is applicable to NIRSPEC IFU, MSA and FIXEDSLIT exposure types,
 to NIRISS SOSS data, and to MIRI LRS and MRS data, although the MIRI
-correction has not been implemented prior to Build 7.3.
+correction has not been implemented yet.
 The description of how the NIRSPEC reference files were created and how they are to be
 applied to NIRSPEC data is given in ESA-JWST-SCI-NRS-TN-2016-004 (P. Ferruit:
 The correction of path losses for uniform and point sources).  The NIRISS algorithm

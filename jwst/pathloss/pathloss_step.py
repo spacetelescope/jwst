@@ -51,7 +51,6 @@ class PathLossStep(Step):
                 result.meta.cal_step.pathloss = 'SKIPPED'
                 return result
 
-            instrument = input_model.meta.instrument.name
             # Open the pathloss ref file data model
             pathloss_model = datamodels.PathlossModel(self.pathloss_name)
 

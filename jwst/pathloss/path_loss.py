@@ -358,7 +358,7 @@ def do_correction(input_model, pathloss_model):
 
         # Omit correction if this is a TSO observation
         if input_model.meta.visit.tsovisit:
-            log.warning("NIRISS_SOSS TSO observations skip the pathloss step")
+            log.warning("NIRISS SOSS TSO observations skip the pathloss step")
             return input_model.copy()
         pupil_wheel_position = input_model.meta.instrument.pupil_position
         subarray = input_model.meta.subarray.name

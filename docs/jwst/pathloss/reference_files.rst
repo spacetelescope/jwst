@@ -59,7 +59,7 @@ aperture sizes.
 
 The NIRISS SOSS reference file has 1 extension in addition to the primary
 header unit.  It contains a 3-dimensional array of float32 correction values.
-The dimensions of the array are 1x2048x17.  The first dimension is a dummy to
+The dimensions of the array are 1x2040x17.  The first dimension is a dummy to
 force the array dimensionality to be the same as the NIRSPEC reference file
 arrays.  The other 2 dimensions refer to the number of columns in the correction
 (the same as the number of columns in the science data) and the range of
@@ -101,7 +101,7 @@ CTYPE3  'Meter'    Type of physical coordinate in this dimension (should be 'WAV
 
 This dimension expresses the change of correction with wavelength
 
-The NIRISS_SOSS reference file should also have WCS components, but their
+The NIRISS SOSS reference file should also have WCS components, but their
 interpretation is different from those in the NIRSPEC reference file:
 
 ======= ===================== =========================================================================================

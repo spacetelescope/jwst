@@ -33,7 +33,7 @@ allOf:
       datatype: float32
     pathloss_pointsource:
       title: Pathloss correction
-      fits_hdu: PS
+      fits_hdu: PATHLOSS_POINTSOURCE
       default: 1.0
       datatype: float32
     relsens:
