@@ -25,6 +25,8 @@ associations
 
 - Made NIRISS WFSS Level2 associations exclusive. [#2555]
 
+- Added new rule Asn_Lv2WFSC and new association type wfs-image2 [#2599]
+
 
 background
 ----------
@@ -154,6 +156,7 @@ photom
 pipeline
 --------
 
+- Added new Image2Pipeline configuration calwebb_wfs-image2.cfg for WFS&C processing [#2599]
 
 ramp_fitting
 ------------
