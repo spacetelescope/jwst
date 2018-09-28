@@ -183,7 +183,9 @@ class ImageWCS():
             pipeline = deepcopy(self._wcs.pipeline)
             pf, pt = pipeline[idx_v2v3]
             pipeline[idx_v2v3] = (pf, deepcopy(self._tpcorr))
-            pipeline.insert(idx_v2v3 + 1, ('v2v3corr', pt))
+            frm_v2v3corr = deepcopy(pf)
+            frm_v2v3corr.name = 'v2v3corr'
+            pipeline.insert(idx_v2v3 + 1, (frm_v2v3corr, pt))
             self._wcs = gwcs.WCS(pipeline, name=self._owcs.name)
             self._v23name = 'v2v3corr'
 
@@ -209,51 +211,41 @@ class ImageWCS():
         self._update_transformations()
 
     def _check_wcs_structure(self, wcs):
-        valid = True
-        message = ""
         if wcs is None or wcs.pipeline is None:
-            message = "WCS is None."
-            valid = False
-            return valid, message
+            return False, "Either WCS or its pipeline is None."
 
         frms = wcs.available_frames
         nframes = len(frms)
+
         if nframes < 3:
-            message = "There are fewer than 3 frames in the WCS pipeline."
-            valid = False
-            return valid, message
+            return False, "There are fewer than 3 frames in the WCS pipeline."
 
         if frms.count(frms[0]) > 1 or frms.count(frms[-1]) > 1:
-            valid = False
-            message = "One or more frames in the WCS pipeline are not unique."
-            return valid, message
+            return (False, "First and last frames in the WCS pipeline must "
+                    "be unique.")
 
         if frms.count('v2v3') != 1:
-            valid = False
-            message = "More than 1 'v2v3' frames in the WCS pipeline."
-            return valid, message
-            
+            return (False, "Only one 'v2v3' frame is allowed in the WCS "
+                    "pipeline.")
+
         idx_v2v3 = frms.index('v2v3')
         if idx_v2v3 == 0 or idx_v2v3 == (nframes - 1):
-            valid = False
-            message = "'v2v3' frame is either first or last in the WCS pipeline."
-            return valid, message
-            
+            return (False, "'v2v3' frame cannot be first or last in the WCS "
+                    "pipeline.")
+
         nv2v3corr = frms.count('v2v3corr')
         if nv2v3corr == 0:
-            valid = True
-            return valid, message
+            return True, ''
         elif nv2v3corr > 1:
-            valid = False
-            message = "There are more than one 'v2v3corr' correction frames in the WCS pipeline."
-            return valid, message
-            
+            return (False, "Only one 'v2v3corr' correction frame is allowed "
+                    "in the WCS pipeline.")
+
         idx_v2v3corr = frms.index('v2v3corr')
         if idx_v2v3corr != (idx_v2v3 + 1) or idx_v2v3corr == (nframes - 1):
-            valid = False
-            message = "'v2v3corr' frame is not in the correct position in the WCS pipeline."
-            return valid, message
-        return valid, message
+            return (False, "'v2v3corr' frame is not in the correct position "
+                    "in the WCS pipeline.")
+
+        return True, ''
 
     def det_to_world(self, x, y):
         """
