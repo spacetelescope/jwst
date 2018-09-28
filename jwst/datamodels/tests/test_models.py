@@ -133,12 +133,18 @@ def test_open():
         assert isinstance(dm, QuadModel)
 
 def test_open_warning():
-    with warnings.catch_warnings(record=True) as w:
+    with warnings.catch_warnings(record=True) as warners:
         # Cause all warnings to always be triggered.
         warnings.simplefilter("always")
         with open_model(FITS_FILE) as model:
-            class_name = model.__class__.__name__
-            assert class_name in str(w[0].message)
+            pass
+
+        class_name = model.__class__.__name__
+        j = None
+        for i, w in enumerate(warners):
+            if class_name in str(w.message):
+                j = i
+        assert j is not None
 
 
 def test_copy():
