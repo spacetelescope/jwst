@@ -119,13 +119,17 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         asdf_kwargs = dict(inline_threshold=kwargs.pop('inline_threshold', 0))
 
         if init is None:
-            asdf = AsdfFile(extensions=extensions, **asdf_kwargs)
+            asdf = self.open_asdf(init=None, extensions=self._extensions,
+                                  **kwargs)
 
         elif isinstance(init, dict):
-            asdf = AsdfFile(init, extensions=self._extensions, **asdf_kwargs)
+            asdf = self.open_asdf(init=init, extensions=self._extensions,
+                                 **kwargs)
 
         elif isinstance(init, np.ndarray):
-            asdf = AsdfFile(extensions=self._extensions, **asdf_kwargs)
+            asdf = self.open_asdf(init=None, extensions=self._extensions,
+                                 **kwargs)
+
             shape = init.shape
             is_array = True
 
@@ -135,7 +139,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                     raise ValueError("shape must be a tuple of ints")
 
             shape = init
-            asdf = AsdfFile(**asdf_kwargs)
+            asdf = self.open_asdf(init=None)
             is_shape = True
 
         elif isinstance(init, DataModel):
@@ -158,13 +162,16 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
             if file_type == "fits":
                 hdulist = fits.open(init)
-                asdf = fits_support.from_fits(hdulist, self._schema,
-                                              self._extensions, self._ctx)
-
+                asdf = fits_support.from_fits(hdulist,
+                                              self._schema,
+                                              self._extensions,
+                                              self._ctx,
+                                              **kwargs)
                 self._files_to_close.append(hdulist)
 
             elif file_type == "asdf":
-                asdf = AsdfFile.open(init, extensions=self._extensions)
+                asdf = self.open_asdf(init=init, extensions=self._extensions,
+                                      **kwargs)
 
             else:
                 # TODO handle json files as well
@@ -507,6 +514,25 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             raise ValueError("unknown filetype {0}".format(ext))
 
         return output_path
+
+    @staticmethod
+    def open_asdf(init=None, extensions=None,
+                  ignore_version_mismatch=True,
+                  ignore_unrecognized_tag=False,
+                  **kwargs):
+        """
+        Open an asdf object from a filename or create a new asdf object
+        """
+        if isinstance(init, str):
+            asdf = AsdfFile.open(init, extensions=extensions,
+                                 ignore_version_mismatch=ignore_version_mismatch,
+                                 ignore_unrecognized_tag=ignore_unrecognized_tag)
+
+        else:
+            asdf = AsdfFile(init, extensions=extensions,
+                            ignore_version_mismatch=ignore_version_mismatch,
+                            ignore_unrecognized_tag=ignore_unrecognized_tag)
+        return asdf
 
     @classmethod
     def from_asdf(cls, init, schema=None):
