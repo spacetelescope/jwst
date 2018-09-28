@@ -236,8 +236,8 @@ class Spec2Pipeline(Pipeline):
         if exp_type == 'MIR_MRS':
             input = self.fringe(input)
 
-        # Apply pathloss correction to NIRSpec exposures
-        if exp_type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_IFU']:
+        # Apply pathloss correction to NIRSpec and NIRISS SOSS exposures
+        if exp_type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_IFU', 'NIS_SOSS']:
             input = self.pathloss(input)
 
         # Apply barshadow correction to NIRSPEC MSA exposures
