@@ -533,7 +533,6 @@ def _load_history(hdulist, tree):
 
 def from_fits(hdulist, schema, extensions, context, **kwargs):
     try:
-        ##ff = fits_embed.AsdfInFits.open(hdulist, extensions=extensions, **kwargs)
         ff = from_fits_asdf(hdulist, extensions=extensions, **kwargs)
     except Exception as exc:
         raise exc.__class__("ERROR loading embedded ASDF: " + str(exc)) from exc
