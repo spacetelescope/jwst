@@ -124,18 +124,18 @@ def test_nircam_wfss_available_frames():
     for p in ['GRISMR', 'GRISMC']:
         wcsobj = create_wfss_wcs(p)
         available_frames = wcsobj.available_frames
-        assert all([a == b for a, b in zip(nircam_wfss_frames, available_frames)]), "available frame mismatch"
+        assert all([a == b for a, b in zip(nircam_wfss_frames, available_frames)])
 
 
 def test_nircam_tso_available_frames():
     """Make sure that the expected GWCS reference frames for TSO are created."""
     wcsobj = create_tso_wcs()
     available_frames = wcsobj.available_frames
-    assert all([a == b for a, b in zip(nircam_tsgrism_frames, available_frames)]), "available frame mismatch"
+    assert all([a == b for a, b in zip(nircam_tsgrism_frames, available_frames)])
 
 
 def traverse_wfss_trace(pupil):
-    """Make sure that the WFSS dispersion polynomials are reversable.""" 
+    """Make sure that the WFSS dispersion polynomials are reversable."""
     wcsobj = create_wfss_wcs(pupil)
     detector_to_grism = wcsobj.get_transform('detector', 'grism_detector')
     grism_to_detector = wcsobj.get_transform('grism_detector', 'detector')
@@ -145,12 +145,12 @@ def traverse_wfss_trace(pupil):
     x0, y0, lam, order = grism_to_detector(xgrism, ygrism, xsource, ysource, orderin)
     x, y, xdet, ydet, orderdet = detector_to_grism(x0, y0, lam, order)
 
-    assert x0 == xsource, "Output grism x-source location changed"
-    assert y0 == ysource, "Output grism y-source location changed"
-    assert order == orderin, "Output order differs from input grism order"
-    assert xdet == xsource, "Grism x-detector pixel changed"
-    assert ydet == ysource, "Grism y-detector pixel changed"
-    assert orderdet == orderin, "Grism order out doesn't match order in"
+    assert x0 == xsource
+    assert y0 == ysource
+    assert order == orderin
+    assert xdet == xsource
+    assert ydet == ysource
+    assert orderdet == orderin
 
 
 def test_traverse_wfss_grisms():
@@ -172,18 +172,18 @@ def test_traverse_tso_grism():
     x0, y0, lam, orderdet = grism_to_detector(xin, yin, order)
     x, y, orderdet = detector_to_grism(x0, y0, lam, order)
 
-    assert x0 == wcs_tso_kw['crpix1'], "x-source location not equal to crpix1"
-    assert y0 == wcs_tso_kw['crpix2'], "y-source location not equal to crpix2"
-    assert order == orderdet, "grism order not equal to detector order in"
-    assert_allclose(x, xin), "x grism location changed"
-    assert y == wcs_tso_kw['crpix2'], "y grism location not equal to crpix2"
+    assert x0 == wcs_tso_kw['crpix1']
+    assert y0 == wcs_tso_kw['crpix2']
+    assert order == orderdet
+    assert_allclose(x, xin)
+    assert y == wcs_tso_kw['crpix2']
 
 
 def test_imaging_frames():
     """Verify the available imaging mode reference frames."""
     wcsobj = create_imaging_wcs()
     available_frames = wcsobj.available_frames
-    assert all([a == b for a, b in zip(nircam_imaging_frames, available_frames)]), "available frame mismatch"
+    assert all([a == b for a, b in zip(nircam_imaging_frames, available_frames)])
 
 
 @pytest.mark.xfail
@@ -202,5 +202,5 @@ def test_imaging_distortion():
 
     assert_allclose(x, wcs_wfss_kw['crpix1'])
     assert_allclose(y, wcs_wfss_kw['crpix2'])
-    assert_allclose(raout, ra), "RA position did not roundtrip distortion"
-    assert_allclose(decout, dec), "DEC position did not roundtrip distortion"
+    assert_allclose(raout, ra)
+    assert_allclose(decout, dec)
