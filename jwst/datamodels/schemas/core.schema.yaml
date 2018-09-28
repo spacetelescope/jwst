@@ -160,17 +160,19 @@ properties:
             blend_table: True
             blend_rule: first
           date_end:
+            anyOf:
+              - $ref: http://stsci.edu/schemas/asdf/time/time-1.0.0
+              - type: string
             title: "[yyyy-mm-dd] UTC date at end of exposure"
-            type: string
             fits_keyword: DATE-END
-            blend_rule: last
             blend_table: True
+            blend_rule: last
           time_end:
             title: "[hh:mm:ss.sss] UTC time at end of exposure"
             type: string
             fits_keyword: TIME-END
-            blend_rule: last
             blend_table: True
+            blend_rule: last
           obs_id:
             title: Programmatic observation identifier
             type: string
@@ -691,7 +693,7 @@ properties:
             fits_keyword: TFRAME
             blend_table: True
           group_time:
-            title: "[s] Time between groups"     
+            title: "[s] Time between groups"
             type: number
             fits_keyword: TGROUP
             blend_table: True
