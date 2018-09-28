@@ -531,9 +531,10 @@ def _load_history(hdulist, tree):
         history['entries'].append(HistoryEntry({'description': entry}))
 
 
-def from_fits(hdulist, schema, extensions, context):
+def from_fits(hdulist, schema, extensions, context, **kwargs):
     try:
-        ff = fits_embed.AsdfInFits.open(hdulist, extensions=extensions)
+        ##ff = fits_embed.AsdfInFits.open(hdulist, extensions=extensions, **kwargs)
+        ff = from_fits_asdf(hdulist, extensions=extensions, **kwargs)
     except Exception as exc:
         raise exc.__class__("ERROR loading embedded ASDF: " + str(exc)) from exc
 
@@ -543,6 +544,17 @@ def from_fits(hdulist, schema, extensions, context):
     _load_history(hdulist, ff.tree)
 
     return ff
+
+def from_fits_asdf(hdulist, extensions=None,
+                  ignore_version_mismatch=True,
+                  ignore_unrecognized_tag=False,
+                  **kwargs):
+    kwargs = None
+    return fits_embed.AsdfInFits.open(hdulist,
+                                      extensions=extensions,
+                                      ignore_version_mismatch=ignore_version_mismatch,
+                                      ignore_unrecognized_tag=ignore_unrecognized_tag)
+
 
 def from_fits_hdu(hdu, schema):
     """
