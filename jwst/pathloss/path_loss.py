@@ -359,7 +359,7 @@ def do_correction(input_model, pathloss_model):
         # Omit correction if this is a TSO observation
         if input_model.meta.visit.tsovisit:
             log.warning("NIRISS SOSS TSO observations skip the pathloss step")
-            return input_model.copy()
+            return input_model
         pupil_wheel_position = input_model.meta.instrument.pupil_position
         subarray = input_model.meta.subarray.name
         # Get the aperture from the reference file that matches the subarray
@@ -367,7 +367,9 @@ def do_correction(input_model, pathloss_model):
         if aperture is None:
             log.warning("Unable to get Aperture from reference file for subarray {}".format(subarray))
             log.warning("Pathloss correction skipped")
-            return input_model.copy()
+            return input_model
+        else:
+            log.info("Aperture {} selected from reference file".format(aperture.name))
         pathloss_array = aperture.pointsource_data[0]
         nrows, ncols = pathloss_array.shape
         correction = np.ones(2048, dtype=np.float32)
