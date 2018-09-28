@@ -64,7 +64,7 @@ data has shape (1, 2040, 17).
 The algorithm simply calculates the correction for each column by interpolating
 along the Pupil Wheel position dimension of the reference file using linear
 interpolation.  The 1-d vector of correction vs. column number is attached to the
-science data in the PS extension, and can be obtained from the
+science data in the PATHLOSS_POINTSOURCE extension, and can be obtained from the
 ImageModel using the .pathloss_pointsource attribute.  This is a vector of length
 2048 which gives the correction to be applied to each column of the science data,
 in the sense that the correction should be divided into the data to correct it.
