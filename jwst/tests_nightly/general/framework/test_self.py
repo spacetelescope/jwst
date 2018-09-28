@@ -1,18 +1,12 @@
 import pytest
 
 
-pytestmark = [
-    pytest.mark.usefixtures('_jail'),
-    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
-                       reason='requires --bigdata')
-]
-
-
-def test_bigdata(_bigdata):
+@pytest.mark.bigdata
+def test_bigdata():
     with open('bigdata.txt', 'w+') as fp:
-        fp.write(_bigdata + '\n')
+        fp.write("bigdata defined" + '\n')
 
 
-def test_jail(_bigdata):
+def test_jail(_jail):
     with open('output.txt', 'w+') as fp:
         fp.write('hello world!\n')
