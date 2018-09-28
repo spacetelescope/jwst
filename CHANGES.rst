@@ -132,6 +132,8 @@ outlier_detection
 pathloss
 --------
 
+- added support for NIRISS SOSS [#2588]
+
 persistence
 -----------
 
