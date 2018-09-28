@@ -23,6 +23,7 @@ from .. import niriss
 # Allowed settings for niriss
 niriss_wfss_frames = ['grism_detector', 'detector', 'v2v3', 'world']
 niriss_imaging_frames = ['detector', 'v2v3', 'world']
+niriss_grisms = ['GR150R', 'GR150C']
 
 # default wcs information
 wcs_kw = {'wcsaxes': 2, 'ra_ref': 53.16255, 'dec_ref': -27.791461111111,
@@ -97,7 +98,7 @@ def test_niriss_wfss_available_frames():
     for f in ['GR150R', 'GR150C']:
         wcsobj = create_wfss_wcs(f)
         available_frames = wcsobj.available_frames
-        assert all([a == b for a, b in zip(niriss_wfss_frames, available_frames)]), "available frame mismatch"
+        assert all([a == b for a, b in zip(niriss_wfss_frames, available_frames)])
 
 
 def traverse_wfss_trace(filtername):
@@ -110,24 +111,42 @@ def traverse_wfss_trace(filtername):
     x0, y0, lam, order = grism_to_detector(xgrism, ygrism, xsource, ysource, orderin)
     x, y, xdet, ydet, orderdet = detector_to_grism(x0, y0, lam, order)
 
-    assert x0 == xsource, "Output grism x-source location changed"
-    assert y0 == ysource, "Output grism y-source location changed"
-    assert order == orderin, "Output order differs from input grism order"
-    assert xdet == xsource, "Grism x-detector pixel changed"
-    assert ydet == ysource, "Grism y-detector pixel changed"
-    assert orderdet == orderin, "Grism order out doesn't match order in"
-
+    assert x0 == xsource
+    assert y0 == ysource
+    assert order == orderin
+    assert xdet == xsource
+    assert ydet == ysource
+    assert orderdet == orderin
 
 def test_traverse_wfss_grisms():
-    for f in ['GR150R', 'GR150C']:
+    """Make sure the trace polynomials roundtrip for both grisms."""
+    for f in niriss_grisms:
         traverse_wfss_trace(f)
+
+
+def test_fiter_rotation(theta=[-0.1, 0, 0.5, 20]):
+    """Make sure that the filter rotation is reversable."""
+    for f in niriss_grisms:
+        wcsobj = create_wfss_wcs(f)
+        g2d = wcsobj.get_transform('grism_detector', 'detector')
+        d2g = wcsobj.get_transform('detector', 'grism_detector')
+        for angle in theta:
+            d2g.theta = 0.
+            g2d.theta = 0.
+            xsource, ysource, wave, order = (110, 110, 2.3, 1)
+            xgrism, ygrism, xs, ys, orderout = d2g(xsource, ysource, wave, order)
+            xsdet, ysdet, wavedet, orderdet = g2d(xgrism, ygrism, xs, ys, orderout)
+            assert_allclose(xsdet, xsource)
+            assert_allclose(ysdet, ysource)
+            assert_allclose(wavedet, wave)
+            assert orderdet == order
 
 
 def test_imaging_frames():
     """Verify the available imaging mode reference frames."""
     wcsobj = create_imaging_wcs('F200W')
     available_frames = wcsobj.available_frames
-    assert all([a == b for a, b in zip(niriss_imaging_frames, available_frames)]), "available frame mismatch"
+    assert all([a == b for a, b in zip(niriss_imaging_frames, available_frames)])
 
 
 @pytest.mark.xfail
@@ -146,5 +165,5 @@ def test_imaging_distortion():
 
     assert_allclose(x, wcs_kw['crpix1'])
     assert_allclose(y, wcs_kw['crpix2'])
-    assert_allclose(raout, ra), "RA position did not roundtrip distortion"
-    assert_allclose(decout, dec), "DEC position did not roundtrip distortion"
+    assert_allclose(raout, ra)
+    assert_allclose(decout, dec)
