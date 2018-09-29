@@ -76,7 +76,7 @@ class BaseTest(object):
         """
         Return path within repository to remote source of input data
         """
-        path = [self.input_repo, self.tree, self.input_loc]
+        path = [self.tree, self.input_loc]
 
         return path
 
@@ -94,8 +94,12 @@ class BaseTest(object):
                                  self.input_loc,
                                  *args)
         """
+        print("[get_data] input_path: {}".format(self.get_input_path()))
+        print("[get_data] args: {}".format(args))
+        print("[get_data] docopy: {}".format(docopy))
         local_file = get_bigdata(*self.get_input_path(),
                                  *args,
+                                 repo=self.input_repo,
                                  docopy=docopy)
 
         return local_file
@@ -139,10 +143,11 @@ class BaseTest(object):
                         ignore_keywords=ignore_keywords,
                         rtol=rtol, atol=atol)
 
-        input_path = [self.input_repo, self.tree, self.input_loc, *self.ref_loc]
+        input_path = [self.tree, self.input_loc, *self.ref_loc]
         return compare_outputs(outputs, raise_error=True,
                                input_path=input_path,
                                docopy = self.docopy,
+                               input_repo = self.input_repo, 
                                results_root = self.results_root,
                                **compare_kws)
 
