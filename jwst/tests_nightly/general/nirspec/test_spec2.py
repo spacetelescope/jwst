@@ -7,6 +7,7 @@ from ci_watson.artifactory_helpers import get_bigdata
 from jwst.assign_wcs.util import NoDataOnDetectorError
 from jwst.pipeline import Spec2Pipeline
 
+input_repo = 'jwst-pipeline'
 
 @pytest.mark.bigdata
 def test_nrs2_nodata_api(envopt, _jail):
@@ -22,9 +23,10 @@ def test_nrs2_nodata_api(envopt, _jail):
     step.assign_wcs.skip = False
 
     with pytest.raises(NoDataOnDetectorError):
-        step.run(get_bigdata('jwst-pipeline', envopt, 
+        step.run(get_bigdata( envopt, 
                              'nirspec', 'test_assignwcs', 
-                             'jw84700006001_02101_00001_nrs2_rate.fits'
+                             'jw84700006001_02101_00001_nrs2_rate.fits',
+                             repo=input_repo
         ))
 
 
@@ -32,9 +34,10 @@ def test_nrs2_nodata_api(envopt, _jail):
 def test_nrs2_nodata_strun(envopt, _jail):
     """Ensure that the appropriate exit status is returned from strun"""
 
-    data_file = get_bigdata('jwst-pipeline', envopt, 
+    data_file = get_bigdata(envopt, 
                             'nirspec', 'test_assignwcs', 
-                            'jw84700006001_02101_00001_nrs2_rate.fits'
+                            'jw84700006001_02101_00001_nrs2_rate.fits',
+                            repo=input_repo
     )
 
     cmd = [

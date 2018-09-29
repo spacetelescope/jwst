@@ -14,9 +14,9 @@ class BaseJWSTTest(BaseTest):
 
     def set_environ(self):
         # Enforce copies of data when TEST_BIGDATA is URL
-        input_dir = get_bigdata_root()
-
-        if input_dir and check_url(input_dir):
+        bigdata_root = get_bigdata_root(repo=self.input_repo)
+        print('[base_test.set_environ] bigdata_root: {}'.format(bigdata_root))
+        if bigdata_root and check_url(bigdata_root):
             self.docopy = True
 
     def raw_from_asn(self, asn_file):
