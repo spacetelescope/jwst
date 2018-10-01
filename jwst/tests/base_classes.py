@@ -94,6 +94,9 @@ class BaseTest(object):
                                  self.input_loc,
                                  *args)
         """
+        print("[get_data] input_path: {}".format(self.get_input_path()))
+        print("[get_data] args: {}".format(args))
+        print("[get_data] docopy: {}".format(docopy))
         local_file = get_bigdata(*self.get_input_path(),
                                  *args,
                                  repo=self.input_repo,
@@ -143,7 +146,6 @@ class BaseTest(object):
         input_path = [self.tree, self.input_loc, *self.ref_loc]
         return compare_outputs(outputs, raise_error=True,
                                input_path=input_path,
-                               input_loc=self.input_loc,
                                docopy = self.docopy,
                                input_repo = self.input_repo, 
                                results_root = self.results_root,
