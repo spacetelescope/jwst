@@ -8,7 +8,6 @@ from jwst.assign_wcs import AssignWcsStep, nirspec
 
 from jwst.datamodels import ImageModel
 
-input_repo = 'jwst-pipeline'
 
 testdata = [
     ('nrs1', 'jw00011001001_01120_00001_NRS1_rate.fits', 'jw00011001001_01120_00001_NRS1_assign_wcs.fits'),
@@ -24,12 +23,10 @@ def test_nirspec_ifu_wcs(envopt, _jail, test_id, input_file, truth_file):
     """
     del test_id
 
-    input_file = get_bigdata(envopt,
-                             'nirspec', 'test_wcs', 'nrs1-ifu', input_file,
-                             repo=input_repo)
-    truth_file = get_bigdata(envopt, 
-                             'nirspec', 'test_wcs', 'nrs1-ifu', 'truth', truth_file,
-                             repo=input_repo)
+    input_file = get_bigdata('jwst-pipeline', envopt,
+                             'nirspec', 'test_wcs', 'nrs1-ifu', input_file)
+    truth_file = get_bigdata('jwst-pipeline', envopt, 
+                             'nirspec', 'test_wcs', 'nrs1-ifu', 'truth', truth_file)
 
     result = AssignWcsStep.call(input_file, save_results=True, suffix='assign_wcs')
     result.close()
