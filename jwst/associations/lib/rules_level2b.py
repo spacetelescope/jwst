@@ -547,7 +547,7 @@ class Asn_Lv2NRSIFUNod(
 class Asn_Lv2WFSC(
         DMSLevel2bBase
 ):
-    """Level2b Wavefront Sensing & Controle"""
+    """Level2b Wavefront Sensing & Control"""
 
     def __init__(self, *args, **kwargs):
 
