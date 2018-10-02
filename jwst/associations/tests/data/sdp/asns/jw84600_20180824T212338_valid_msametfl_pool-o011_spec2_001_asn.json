@@ -19,16 +19,6 @@
                     "exposerr": "null"
                 }
             ]
-        },
-        {
-            "name": "jw84600011001_02101_00001_nrs1",
-            "members": [
-                {
-                    "expname": "jw84600011001_02101_00001_nrs1_rate.fits",
-                    "exptype": "science",
-                    "exposerr": "null"
-                }
-            ]
         }
     ]
 }

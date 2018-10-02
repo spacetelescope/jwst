@@ -29,7 +29,8 @@ TEST_ARGS = ['--dry-run']
 LV2_ONLY_ARGS = [
     '-r',
     t_path('../lib/rules_level2b.py'),
-    '--ignore-default'
+    '--ignore-default',
+    '--no-merge'
 ]
 
 # Produce Level3 only associations
@@ -83,9 +84,12 @@ standards = [
     MakePars('pool_017_spec_nirspec_lv2imprint'),
     MakePars('pool_018_all_exptypes', main_args=LV2_ONLY_ARGS),
     MakePars('pool_019_niriss_wfss'),
+    MakePars('pool_020_00009_image_miri'),
     MakePars('pool_021_tso'),
     MakePars('pool_022_tso_noflag'),
     MakePars('pool_023_nirspec_msa_3nod', main_args=LV2_ONLY_ARGS),
+    MakePars('pool_024_nirspec_fss_nods'),
+    MakePars('pool_025_nirspec_fss_nod_chop'),
     MakePars('pool_026_mir_image_tso'),
     MakePars('pool_027_nirspec_ifu_nods', main_args=LV2_NOMERGE_ARGS),
 ]

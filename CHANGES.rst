@@ -24,6 +24,9 @@ associations
 
 - Changed deprecated logger.warn to logger.warning. [#2519]
 
+- Made NIRISS WFSS Level2 associations exclusive. [#2555]
+
+
 background
 ----------
 

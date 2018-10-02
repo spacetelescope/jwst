@@ -19,36 +19,6 @@
                     "exposerr": "null"
                 }
             ]
-        },
-        {
-            "name": "jw84600010001_02102_00002_nrs2",
-            "members": [
-                {
-                    "expname": "jw84600010001_02102_00002_nrs2_rate.fits",
-                    "exptype": "science",
-                    "exposerr": "null"
-                }
-            ]
-        },
-        {
-            "name": "jw84600010001_02101_00002_nrs2",
-            "members": [
-                {
-                    "expname": "jw84600010001_02101_00002_nrs2_rate.fits",
-                    "exptype": "science",
-                    "exposerr": "null"
-                }
-            ]
-        },
-        {
-            "name": "jw84600010001_02102_00002_nrs1",
-            "members": [
-                {
-                    "expname": "jw84600010001_02102_00002_nrs1_rate.fits",
-                    "exptype": "science",
-                    "exposerr": "null"
-                }
-            ]
         }
     ]
 }

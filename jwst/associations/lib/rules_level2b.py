@@ -173,7 +173,7 @@ class Asn_Lv2Spec(
             Constraint_Base(),
             Constraint_Mode(),
             Constraint_Spectral_Science(
-                exclude_exp_types=['nrs_msaspec', 'nrs_fixedslit']
+                exclude_exp_types=['nrs_msaspec', 'nrs_fixedslit', 'nis_wfss']
             ),
             Constraint_Single_Science(self.has_science),
             Constraint(
