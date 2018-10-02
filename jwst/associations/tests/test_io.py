@@ -13,21 +13,15 @@ from .helpers import (
 from ..main import Main
 from .. import load_asn
 
-# Temporarily skip if running under Travis
-# pytestmark = pytest.mark.skipif(
-#     "TRAVIS" in os.environ and os.environ["TRAVIS"] == "true",
-#     reason='Temporarily disable due to performance issues'
-# )
-
 
 @runslow
 @pytest.yield_fixture(
     scope='module',
     params=['yaml', 'json']
 )
-def make_asns(request):
+def make_asns(request, full_pool_rules):
     asn_format = request.param
-    pool, rules, pool_fname = full_pool_rules(None)
+    pool, rules, pool_fname = full_pool_rules
     with TemporaryDirectory() as path:
         generated = Main([
             pool_fname,
