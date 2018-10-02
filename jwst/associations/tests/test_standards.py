@@ -92,6 +92,7 @@ standards = [
     MakePars('pool_025_nirspec_fss_nod_chop'),
     MakePars('pool_026_mir_image_tso'),
     MakePars('pool_027_nirspec_ifu_nods', main_args=LV2_NOMERGE_ARGS),
+    MakePars('pool_028_mir_lrsfs_nods3', main_args=LV2_NOMERGE_ARGS),
 ]
 
 
