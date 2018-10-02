@@ -285,3 +285,6 @@ def find_dispersion_axis(wavelength_array):
         return 0
     elif dwlx < dwly:
         return 1
+    else:
+        raise RuntimeError("Can't find dispersion axis.  dx: {}, dy: {}".format(
+            dwlx, dwly))
