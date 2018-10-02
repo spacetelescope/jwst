@@ -163,7 +163,7 @@ refpix
 resample
 --------
 
-
+- Make finding dispersion axis more robust in resample [#2644]
 
 reset
 -----
