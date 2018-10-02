@@ -212,6 +212,7 @@ transforms
 ----------
 
 - NIRISS models updated to allow for negative filter wheel rotations [#1801]
+
 - make partial_order attribute of GrismObject as lookup dict on order
 
 tso_photometry
@@ -365,6 +366,8 @@ extract_2d
 - Fixed step calling error for unreferenced attribute [#2463]
 
 - Fixed type specification for optional grism mode inputs [#2467]
+
+- NRC_TSGRISM extract_height honored, bounding box fixed
 
 firstframe
 ----------
