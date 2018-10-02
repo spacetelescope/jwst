@@ -44,24 +44,6 @@ cube_build
 ----------
 This version supports creating IFU Cubes with non-linear wavelength dimension.
 
-IFU cubes made from multiple band may have a non-linear wavelength dimension. 
-The wavelength ranges, spectral size, spectral roi size to use to build the
-IFU Cube  are read in from the CUBEPAR reference files for each band. If the 
-spectral size is not the same for all the bands then the IFU cubes will have
-a nonlinear wavelength dimension. The wavelength to use for the output IFU 
-are found in additional table extensions in the CUBEPAR reference file. 
-In addition, the spectral region of influence can also vary as a function
-of wavelength for these type IFU cubes. The spectral region of influence
-is also found in the additional tables in the CUBEPAR reference file.
-The output of these non-linear IFU cubes contain the wavelength planes of
-the IFU cube in the extension table 'WCS-TABLE' 
-
-This version also uses the minimum and maximum wavelengths defined in the 
-first extension of the CUBEPAR reference file to set the wavelength range
-of the IFU Cube for a linear wavelength dimension. Before the wavelength range
-was calculated from the data. The values found in the CUBEPAR reference file
-clips the wavelength ranges so that the boundaries of the IFU cube do not
-contain sparse data.  
 
 cube_skymatch
 -------------
