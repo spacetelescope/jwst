@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from jwst.resample.resample_spec import find_dispersion_axis
 
@@ -26,3 +27,8 @@ def test_find_dispersion_axis():
 
     wavelengths_vertical[:,0] = np.nan
     assert find_dispersion_axis(wavelengths_vertical) == 1
+
+    # Make sure if wavelengths don't change it produces an error
+    wavelengths_zeros = np.zeros((15, 100))
+    with pytest.raises(RuntimeError):
+        find_dispersion_axis(wavelengths_zeros)
