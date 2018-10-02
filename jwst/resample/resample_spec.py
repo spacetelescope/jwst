@@ -14,6 +14,7 @@ from .. import datamodels
 from . import gwcs_drizzle
 from . import resample_utils
 
+
 CRBIT = np.uint32(datamodels.dqflags.pixel['JUMP_DET'])
 
 log = logging.getLogger(__name__)
@@ -94,16 +95,11 @@ class ResampleSpecData:
         refwcs = refmodel.meta.wcs
         bb = refwcs.bounding_box
 
-        # Find spectral axis.  This would be the longer dimension of the
-        # bounding box.  I.e., vertical dispersion for MIRI FS and horizontal
-        # dispersion for NIRSpec MSA and FS.
-        size_axis0 = bb[0][1] - bb[0][0] + 1
-        size_axis1 = bb[1][1] - bb[1][0] + 1
-        spectral_axis = int(size_axis0 < size_axis1)
-        spatial_axis = int(size_axis0 > size_axis1)
-
         grid = wcstools.grid_from_bounding_box(bb)
         ra, dec, lam = np.array(refwcs(*grid))
+
+        spectral_axis = find_dispersion_axis(lam)
+        spatial_axis = spectral_axis ^ 1
 
         # Compute the wavelength array, trimming NaNs from the ends
         wavelength_array = np.nanmedian(lam, axis=spectral_axis)
@@ -275,3 +271,17 @@ class ResampleSpecData:
             self.output_models.append(output_model)
 
         return self.output_models
+
+
+def find_dispersion_axis(wavelength_array):
+    """
+    Find the dispersion axis (0-indexed) of the given 2D wavelength array
+    """
+    diffx = wavelength_array[:, 1:] - wavelength_array[:, 0:-1]
+    diffy = wavelength_array[1:, :] - wavelength_array[0:-1, :]
+    dwlx = np.abs(np.nanmean(diffx))
+    dwly = np.abs(np.nanmean(diffy))
+    if dwlx > dwly:
+        return 0
+    elif dwlx < dwly:
+        return 1
