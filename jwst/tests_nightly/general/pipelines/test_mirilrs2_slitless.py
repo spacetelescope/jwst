@@ -19,7 +19,7 @@ def test_mirilrs2pipeline1(_bigdata):
     """
     collect_pipeline_cfgs()
     args = [
-        'calwebb_tso_spec2.cfg',
+        'calwebb_tso-spec2.cfg',
         op.join(
             _bigdata,
             'pipelines/jw80600012001_02101_00003_mirimage_rateints.fits'
