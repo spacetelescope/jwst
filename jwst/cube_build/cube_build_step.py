@@ -330,7 +330,7 @@ class CubeBuildStep (Step):
         valid_channel = ['1', '2', '3', '4', 'all']
         valid_subchannel = ['short', 'medium', 'long', 'all']
 
-        valid_fwa = ['f070lp', 'f100lp', 'g170lp',
+        valid_fwa = ['f070lp', 'f100lp',
                     'g170lp', 'f290lp', 'clear', 'all']
         valid_gwa = ['g140m', 'g140h', 'g235m', 'g235h',
                      'g395m', 'g395h', 'prism', 'all']

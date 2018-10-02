@@ -136,7 +136,7 @@ def match_det2cube_miripsf(alpha_resol, beta_resol, wave_resol,
     The weighting function is based on the distance the point cloud member and spaxel
     center in the alph-beta coordinate system.
     The alpha and beta value of each point cloud member is passed to this routine
-    The alpha and beta value of the spaxel center is also past in.
+    The alpha and beta value of the spaxel center is also passed in.
 
     Parameters
     ----------

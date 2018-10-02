@@ -1,4 +1,3 @@
-
 # Routines used for building cubes
 import time
 import numpy as np
@@ -15,16 +14,17 @@ from ..assign_wcs import nirspec
 from ..datamodels import dqflags
 from . import cube_build_wcs_util
 from . import cube_overlap
-#from . import cube_cloud_quick
+# from . import cube_cloud_quick
 from . import cube_cloud
 from . import coord
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+
 class IFUCubeData():
-# IFUCubeData - holds all the important information for IFU Cube Building:
-# wcs, data, reference data
+    # IFUCubeData - holds all the important information for IFU Cube Building:
+    # wcs, data, reference data
 
     def __init__(self,
                  pipeline,
@@ -126,7 +126,8 @@ class IFUCubeData():
 
         Returns
         -------
-        major problems - cube_build is  being run incorrectly.
+        none
+        but if cube_build is  being run incorrectly and exception is raised
 
         """
         num1 = len(self.list_par1)
@@ -179,7 +180,8 @@ class IFUCubeData():
                     ch_name = '_ch'
                     for i in range(number_channels):
                         ch_name = ch_name + channels[i]
-                        if i < number_channels - 1: ch_name = ch_name + '-'
+                        if i < number_channels - 1:
+                            ch_name = ch_name + '-'
 
                 subchannels = list(set(self.list_par2))
                 number_subchannels = len(subchannels)
@@ -820,7 +822,7 @@ class IFUCubeData():
                 table = self.instrument_info.Get_multichannel_table()
                 table_wavelength, table_sroi, table_wroi, table_power, table_softrad = table
 
-# getting MIRI Table Values
+# getting NIRSPEC Table Values
             elif self.instrument == 'NIRSPEC':
 # determine if have Prism, Medium or High resolution
                 med = ['g140m', 'g235m', 'g395m']
@@ -985,7 +987,7 @@ class IFUCubeData():
         final_lambda_min = min(lambda_min)
         final_lambda_max = max(lambda_max)
 
-        print('wavelengths', final_lambda_min, final_lambda_max, self.wavemin, self.wavemax)
+#        print('wavelengths', final_lambda_min, final_lambda_max, self.wavemin, self.wavemax)
 
         final_lambda_min = self.wavemin
         final_lambda_max = self.wavemax
