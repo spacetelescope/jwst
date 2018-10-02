@@ -115,7 +115,7 @@ def tsgrism(input_model, reference_files):
 
     # make sure this is a grism image
     if "NRC_TSGRISM" != input_model.meta.exposure.type:
-        raise TypeError('The input exposure is not a NIRCAM time series grism')
+        raise ValueError('The input exposure is not a NIRCAM time series grism')
 
     if input_model.meta.instrument.module != "A":
         raise ValueError('NRC_TSGRISM mode only supports module A')
@@ -281,7 +281,7 @@ def wfss(input_model, reference_files):
 
     # make sure this is a grism image
     if "NRC_WFSS" not in input_model.meta.exposure.type:
-            raise TypeError('The input exposure is not a NIRCAM grism')
+            raise ValueError('The input exposure is not a NIRCAM grism')
 
     # Create the empty detector as a 2D coordinate frame in pixel units
     gdetector = cf.Frame2D(name='grism_detector',

@@ -13,6 +13,7 @@ assign_wcs
 - Updated assign_wcs to compute the sky footprint of MIRI MRS and Nirspec
   IFU observations. [#2472]
 
+- Fix minor bug in catalog.utl.get_object_info()[#2550]
 
 associations
 ------------
@@ -26,7 +27,6 @@ associations
 - Made NIRISS WFSS Level2 associations exclusive. [#2555]
 
 - Added new rule Asn_Lv2WFSC and new association type wfs-image2 [#2599]
-
 
 background
 ----------
@@ -168,7 +168,7 @@ refpix
 resample
 --------
 
-
+- Make finding dispersion axis more robust in resample [#2644]
 
 reset
 -----
@@ -218,6 +218,8 @@ tso_photometry
 tweakreg
 --------
 
+- Updated tweakreg to use `wcs.available_frames` to get the names of the frames in 
+  a WCS pipeline. [#2590]
 wfs_combine
 -----------
 
@@ -426,6 +428,8 @@ outlier_detection
 
 pathloss
 --------
+
+- added support for NIRISS SOSS [#2588]
 
 persistence
 -----------
