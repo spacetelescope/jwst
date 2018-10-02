@@ -53,7 +53,8 @@ class Image2Pipeline(Pipeline):
         # Process each exposure.
         for product in asn['products']:
             self.log.info('Processing product {}'.format(product['name']))
-            self.output_file = product['name']
+            if self.save_results:
+                self.output_file = product['name']
             result = self.process_exposure_product(
                 product,
                 asn['asn_pool'],
@@ -142,11 +143,7 @@ class Image2Pipeline(Pipeline):
         # Resample individual exposures, but only if it's one of the
         # regular science image types.
         if input.meta.exposure.type.upper() in self.image_exptypes:
-            result = self.resample(input)
-            if result:
-                # write out resampled exposure
-                self.save_model(result, suffix='i2d')
-                result.close()
+            self.resample(input)
 
         # That's all folks
         self.log.info(
