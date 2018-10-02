@@ -83,6 +83,8 @@ extract_2d
 
 - WFSS modes updated to allow specific order extraction, updated wavelengthrange reference file delivered as part of these changes [#1801]
 
+- add bounding box to wfss output SlitModel
+
 
 firstframe
 ----------

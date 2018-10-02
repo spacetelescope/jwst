@@ -192,6 +192,7 @@ def extract_tso_object(input_model,
             output_model.dq = ext_dq
             output_model.meta.wcs = subwcs
             output_model.meta.wcs.bounding_box = ((xmin, xmax), (ymin, ymax))
+            output_model.meta.wcs.crpix2 = 34  # update for the move, vals are the same
             output_model.meta.wcsinfo.spectral_order = order
             output_model.name = str('TSO object')
             output_model.xstart = 1  # fits pixels
@@ -199,7 +200,7 @@ def extract_tso_object(input_model,
             output_model.ystart = 1  # fits pixels
             output_model.ysize = ext_data.shape[1]
             output_model.source_xpos = source_xpos
-            output_model.source_ypos = source_ypos
+            output_model.source_ypos = 34
             output_model.source_id = 1
             output_model.bunit_data = input_model.meta.bunit_data
             output_model.bunit_err = input_model.meta.bunit_err
@@ -359,6 +360,7 @@ def extract_grism_objects(input_model,
                 new_model.source_id = obj.sid
                 new_model.bunit_data = input_model.meta.bunit_data
                 new_model.bunit_err = input_model.meta.bunit_err
+                new_model.meta.wcs.bounding_box = ((xmin, xmax), (ymin, ymax))
                 slits.append(new_model)
 
     output_model.slits.extend(slits)
