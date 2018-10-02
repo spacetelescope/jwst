@@ -15,6 +15,8 @@ assign_wcs
 
 - Fix minor bug in catalog.utl.get_object_info()[#2550]
 
+- Make GrismObject.partial_order a lookup dict on order and fix partial_order logic
+
 associations
 ------------
 
@@ -210,7 +212,7 @@ transforms
 ----------
 
 - NIRISS models updated to allow for negative filter wheel rotations [#1801]
-
+- make partial_order attribute of GrismObject as lookup dict on order
 
 tso_photometry
 --------------
