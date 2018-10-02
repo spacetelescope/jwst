@@ -74,8 +74,7 @@ def _check_value(value, schema):
                                               validator_callbacks,
                                               validator_resolver)
 
-        value = yamlutil.custom_tree_to_tagged_tree(value,
-                                                    validator_context)
+        value = yamlutil.custom_tree_to_tagged_tree(value, validator_context)
         validator.validate(value, _schema=temp_schema)
         validator_context.close()
 
@@ -91,9 +90,6 @@ def _error_message(path, error):
         name = str(path)
 
     errfmt = "While validating {} the following error occurred:\n{}"
-    error = str(error)
-    if len(error) > 2000:
-        error = error[0:1096] + ' ...'
-    errmsg = errfmt.format(name, error)
+    errmsg = errfmt.format(name, str(error))
     return errmsg
 
