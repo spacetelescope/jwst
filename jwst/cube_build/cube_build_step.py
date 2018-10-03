@@ -21,7 +21,7 @@ class CubeBuildStep (Step):
          channel = option('1','2','3','4','all',default='all') # Options: 1,2,3,4, or all
          band = option('short','medium','long','all',default='all') # Options: short, medium, long, all
          grating   = option('prism','g140m','g140h','g235m','g235h',g395m','g395h','all',default='all') # Options: prism,g140m,g140h,g235m,g235h,g395m,g395h, or all
-         filter   = option('clear','f100lp','f070lp','g170lp','f290lp','all',default='all') # Options: clear,f100lp,f070lp,g170lp,f290lp, or all
+         filter   = option('clear','f100lp','f070lp','f170lp','f290lp','all',default='all') # Options: clear,f100lp,f070lp,f170lp,f290lp, or all
          scale1 = float(default=0.0) # cube sample size to use for axis 1, arc seconds
          scale2 = float(default=0.0) # cube sample size to use for axis 2, arc seconds
          scalew = float(default=0.0) # cube sample size to use for axis 3, microns
