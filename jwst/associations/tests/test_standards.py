@@ -9,12 +9,12 @@ against are built in the jupyter notebook
 """
 from glob import glob
 from os import path
+
 import pytest
 
 from .helpers import (
     combine_pools,
     compare_asns,
-    runslow,
     t_path,
 )
 
@@ -95,7 +95,7 @@ standards = [
 ]
 
 
-@runslow
+@pytest.mark.slow
 @pytest.mark.parametrize(
     'standard_pars',
     standards
