@@ -60,6 +60,8 @@ datamodels
 
 - Initialize arrays and tables from function args in model_base [#2502]
 
+- Truncate long schema validation errors to 2000 characters
+
 
 dq_init
 -------
@@ -218,7 +220,7 @@ tso_photometry
 tweakreg
 --------
 
-- Updated tweakreg to use `wcs.available_frames` to get the names of the frames in 
+- Updated tweakreg to use `wcs.available_frames` to get the names of the frames in
   a WCS pipeline. [#2590]
 wfs_combine
 -----------
@@ -542,7 +544,7 @@ wiimatch
 The 0.10.0 release is a snapshot release for DMS testing.   The release
 is highlighted by the inclusion of steps for time series observations.
 This release had 39 closed issues included a number of improvements
-to the wavelength calibration for NIRSPEC observations. 
+to the wavelength calibration for NIRSPEC observations.
 
 
 ami
@@ -603,7 +605,7 @@ datamodels
 
 - Enable and improved tests for datamodel schemas using the ASDF schema checker [#2240, #2241]
 
-- Update IRS2 data model and add regredssion tests [#2295] 
+- Update IRS2 data model and add regredssion tests [#2295]
 
 
 dq_init
@@ -759,7 +761,7 @@ superbias
 timeconversion
 --------------
 
-- A script was written to read the UTC columns (at the start, middle, and end of each integration) from the INT_TIMES table, call the timeconversion module to compute the corresponding times at the solar-system barycenter (TDB), and update the columns in the INT_TIMES table.  [#2285] 
+- A script was written to read the UTC columns (at the start, middle, and end of each integration) from the INT_TIMES table, call the timeconversion module to compute the corresponding times at the solar-system barycenter (TDB), and update the columns in the INT_TIMES table.  [#2285]
 
 - Fix the problem in timeconversion that was caused by a recent addition of a new field to the ephemeris by retrieving only the fields needed. [#2296]
 
