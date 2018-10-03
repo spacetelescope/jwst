@@ -338,7 +338,7 @@ class Association(MutableMapping):
         if self.is_item_member(item):
             return False, []
 
-        match = False
+        match = not check_constraints
         if check_constraints:
             match, reprocess = self.check_and_set_constraints(item)
 
