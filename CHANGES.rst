@@ -15,7 +15,7 @@ assign_wcs
 
 - Fix minor bug in catalog.utl.get_object_info()[#2550]
 
-- Make GrismObject.partial_order a lookup dict on order and fix partial_order logic
+- Make GrismObject.partial_order a lookup dict on order and fix partial_order logic [#2643]
 
 associations
 ------------
@@ -85,7 +85,7 @@ extract_2d
 
 - WFSS modes updated to allow specific order extraction, updated wavelengthrange reference file delivered as part of these changes [#1801]
 
-- add bounding box to wfss output SlitModel
+- add bounding box to wfss output SlitModel [#2643]
 
 
 firstframe
@@ -217,7 +217,7 @@ transforms
 
 - NIRISS models updated to allow for negative filter wheel rotations [#1801]
 
-- make partial_order attribute of GrismObject as lookup dict on order
+- make partial_order attribute of GrismObject as lookup dict on order [#2643]
 
 tso_photometry
 --------------
@@ -371,7 +371,7 @@ extract_2d
 
 - Fixed type specification for optional grism mode inputs [#2467]
 
-- NRC_TSGRISM extract_height honored, bounding box fixed
+- NRC_TSGRISM extract_height honored, bounding box fixed [#2643]
 
 firstframe
 ----------
