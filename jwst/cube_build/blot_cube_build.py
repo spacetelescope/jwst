@@ -214,7 +214,8 @@ class CubeBlot():
 
             if self.instrument == 'MIRI':
                 valid3 = np.isfinite(lam_det)
-                good_data = valid3 & pixel_mask
+                good_data1 = valid3 & pixel_mask
+                good_data = np.where(good_data1)
             elif self.instrument == 'NIRSPEC':
                 good_data = np.where(flag_det == 1)
 
@@ -222,7 +223,6 @@ class CubeBlot():
             ra_blot = ra_det[good_data]
             dec_blot = dec_det[good_data]
             wave_blot = lam_det[good_data]
-            
             crval1 = model.meta.wcsinfo.crval1
             crval2 = model.meta.wcsinfo.crval2
 
