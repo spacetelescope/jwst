@@ -42,7 +42,7 @@ csv_tools
 
 cube_build
 ----------
-This version supports creating IFU Cubes with non-linear wavelength dimension.
+This version supports creating IFU Cubes with non-linear wavelength dimension. [#2598]
 
 
 cube_skymatch
