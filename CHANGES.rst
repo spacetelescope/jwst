@@ -17,7 +17,7 @@ assign_wcs
 
 - Make GrismObject.partial_order a lookup dict on order and fix partial_order logic [#2643]
 
-- Add tests for grism modes
+- Add tests for grism modes [#2649]
 
 associations
 ------------
@@ -89,7 +89,7 @@ extract_2d
 
 - add bounding box to wfss output SlitModel [#2643]
 
-- add tests for grism modes
+- add tests for grism modes [#2649]
 
 firstframe
 ----------
