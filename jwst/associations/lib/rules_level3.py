@@ -82,7 +82,7 @@ class Asn_WFSCMB(AsnMixin_Science):
             DMSAttrConstraint(
                 name='wfsvisit',
                 sources=['visitype'],
-                value='.+wfsc.+',
+                value='prime_wfsc_sensing_control',
             ),
             DMSAttrConstraint(
                 name='asn_candidate_wfs',

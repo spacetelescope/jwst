@@ -1,5 +1,8 @@
 import pytest
+
 from astropy.io import fits
+
+from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.pipeline.calwebb_image2 import Image2Pipeline
 
 pytestmark = [
@@ -14,7 +17,9 @@ def test_image2pipeline2_cal(_bigdata):
     Regression test of calwebb_image2 pipeline performed on NIRCam data.
     """
 
+    collect_pipeline_cfgs('cfgs')
     Image2Pipeline.call(_bigdata+'/pipelines/jw82500001003_02101_00001_NRCALONG_rate_ref.fits',
+                        config_file='cfgs/calwebb_image2.cfg',
                         output_file='jw82500001003_02101_00001_NRCALONG_cal.fits')
 
     na = 'jw82500001003_02101_00001_NRCALONG_cal.fits'

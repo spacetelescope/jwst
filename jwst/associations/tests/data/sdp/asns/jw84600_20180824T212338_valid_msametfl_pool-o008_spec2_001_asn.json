@@ -2,7 +2,7 @@
     "asn_type": "spec2",
     "asn_rule": "candidate_Asn_Lv2NRSMSA",
     "version_id": null,
-    "code_version": "0.10.1a.dev237",
+    "code_version": "0.12.0a.dev115",
     "degraded_status": "No known degraded exposures in association.",
     "program": "84600",
     "target": "1",
@@ -15,16 +15,6 @@
             "members": [
                 {
                     "expname": "jw84600008001_02101_00002_nrs2_rate.fits",
-                    "exptype": "science",
-                    "exposerr": "null"
-                }
-            ]
-        },
-        {
-            "name": "jw84600008001_02101_00002_nrs1",
-            "members": [
-                {
-                    "expname": "jw84600008001_02101_00002_nrs1_rate.fits",
                     "exptype": "science",
                     "exposerr": "null"
                 }

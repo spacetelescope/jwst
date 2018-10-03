@@ -309,7 +309,7 @@ def get_object_info(catalog_name=None):
     Parameters
     ----------
     catalog_name : str, astropy.table.table.Qtable
-        The name of the photutils catalog or its quantities table 
+        The name of the photutils catalog or its quantities table
 
     Returns
     -------
@@ -331,7 +331,7 @@ def get_object_info(catalog_name=None):
             log.error("Could not find catalog file: {0}".format(e))
             raise FileNotFoundError("Could not find catalog: {0}".format(e))
     elif isinstance(catalog_name, QTable):
-        pass
+        catalog = catalog_name
     else:
         err_text = "Need to input string name of catalog or astropy.table.table.QTable instance"
         log.error(err_text)
@@ -716,7 +716,7 @@ def _nanminmax(wcsobj):
     ra, dec, lam = wcsobj(x, y)
     return np.nanmin(ra), np.nanmax(ra), np.nanmin(dec), np.nanmax(dec)
 
-    
+
 def update_s_region_nrs_ifu(output_model, mod):
     """
     Update S_REGION for NRS_IFU observations using the instrument model.
@@ -751,12 +751,12 @@ def update_s_region_mrs(output_model):
     ----------
     output_model : `~jwst.datamodels.IFUImageModel`
         The output of assign_wcs.
-    """                         
+    """
     rmin, rmax, dmin, dmax = _nanminmax(output_model.meta.wcs)
     footprint = np.array([rmin, dmin, rmax, dmin, rmax, dmax, rmin, dmax])
     update_s_region_keyword(output_model, footprint)
-    
-    
+
+
 def velocity_correction(velosys):
     """
     Compute wavelength correction to Barycentric reference frame.

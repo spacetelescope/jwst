@@ -2,10 +2,10 @@
     "asn_type": "ami3",
     "asn_rule": "candidate_Asn_AMI",
     "version_id": null,
-    "code_version": "0.9.12",
+    "code_version": "0.10.1a.dev237",
     "degraded_status": "No known degraded exposures in association.",
     "program": "10005",
-    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '10005'})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'nircam'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'f210m'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['pupil'], 'value': 'maskrnd'})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': 'maska210r'})\nDMSAttrConstraint({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'nis_ami'})\nDMSAttrConstraint({'name': 'target', 'sources': ['targetid'], 'value': '3'})\nConstraint_Obsnum({'name': 'obs_num', 'sources': ['obs_num'], 'value': None})\nDMSAttrConstraint({'name': 'acq_exp', 'sources': ['exp_type'], 'value': 'mir_tacq|nis_taconfirm|nis_tacq|nrc_taconfirm|nrc_tacq|nrs_confirm|nrs_taconfirm|nrs_tacq|nrs_taslit'})\nDMSAttrConstraint({'name': 'acq_obsnum', 'sources': ['obs_num'], 'value': <function AsnMixin_Science.__init__.<locals>.<lambda> at 0x10e6fc730>})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'c1014\\\\'\\\\,\\\\ \\\\'coronagraphy\\\\'\\\\)\"})",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '10005'})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'nircam'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'f210m'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['pupil'], 'value': 'maskrnd'})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': 'maska210r'})\nDMSAttrConstraint({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'nis_ami'})\nDMSAttrConstraint({'name': 'target', 'sources': ['targetid'], 'value': '3'})\nConstraint_Obsnum({'name': 'obs_num', 'sources': ['obs_num'], 'value': None})\nDMSAttrConstraint({'name': 'acq_exp', 'sources': ['exp_type'], 'value': 'mir_tacq|nis_taconfirm|nis_tacq|nrc_taconfirm|nrc_tacq|nrs_confirm|nrs_taconfirm|nrs_tacq|nrs_taslit'})\nDMSAttrConstraint({'name': 'acq_obsnum', 'sources': ['obs_num'], 'value': <function AsnMixin_Science.__init__.<locals>.<lambda> at 0xb204516a8>})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'c1014\\\\'\\\\,\\\\ \\\\'coronagraphy\\\\'\\\\)\"})",
     "asn_id": "c1014",
     "target": "t003",
     "asn_pool": "pool_014_ami_niriss",
@@ -14,14 +14,14 @@
             "name": "jw10005-c1014_t003_nircam_f210m-maskrnd-maska210r",
             "members": [
                 {
-                    "expname": "jw10005011001_02102_00001_nrca2_cal.fits",
-                    "exptype": "science",
+                    "expname": "jw10005007001_02102_00001_nrca2_cal.fits",
+                    "exptype": "psf",
                     "exposerr": "null",
                     "asn_candidate": "('c1014', 'coronagraphy')"
                 },
                 {
-                    "expname": "jw10005007001_02102_00001_nrca2_cal.fits",
-                    "exptype": "psf",
+                    "expname": "jw10005011001_02102_00001_nrca2_cal.fits",
+                    "exptype": "science",
                     "exposerr": "null",
                     "asn_candidate": "('c1014', 'coronagraphy')"
                 }

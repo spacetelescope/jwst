@@ -1,6 +1,9 @@
 import pytest
+
 from astropy.io import fits
+
 from jwst.pipeline.calwebb_image2 import Image2Pipeline
+from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 
 pytestmark = [
     pytest.mark.usefixtures('_jail'),
@@ -14,8 +17,10 @@ def test_image2pipeline1(_bigdata):
     Regression test of calwebb_image2 pipeline performed on MIRI data.
     """
 
-    Image2Pipeline.call(_bigdata+'/miri/test_image2pipeline/jw00001001001_01101_00001_mirimage_rate.fits'
-                        )
+    collect_pipeline_cfgs('cfgs')
+    Image2Pipeline.call(_bigdata+'/miri/test_image2pipeline/jw00001001001_01101_00001_mirimage_rate.fits',
+                        config_file='cfgs/calwebb_image2.cfg'
+    )
 
     h = fits.open('jw00001001001_01101_00001_mirimage_cal.fits')
     href = fits.open(_bigdata+'/miri/test_image2pipeline/jw00001001001_01101_00001_mirimage_cal_ref.fits')

@@ -21,7 +21,7 @@ from .. import (AssociationPool, load_asn)
 from ..main import Main
 
 # Main test args
-TEST_ARGS = ['--dry-run']
+TEST_ARGS = ['--dry-run', '--no-merge']
 
 pool_paths = glob(t_path(path.join(
     'data', 'sdp', 'pools', '*.csv'

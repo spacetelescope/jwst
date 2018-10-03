@@ -52,14 +52,15 @@ Level 3 pipeline module to use to process this association.
 
 The current association types are:
 
+  * `image2`: Intended for `calwebb_image2` processing
   * `image3`: Intended for `calwebb_image3` processing
-  * `spec3`: Intended for `calwebb_spec3` processing
-  * `wfs`: Wave front sensing data, used by `wfs_combine`
   * `ami3`: Intended for `calwebb_ami3` processing
   * `coron3`: Intended for `calwebb_coron3` processing
-  * `tso3`: Intended for `calwebb_tso3` processing
-  * `image2`: Intended for `calwebb_image2` processing
-  * `spec2`: Intended for `calwebb_spec2` processing
-  * `nrslamp-spec2`: Intended for `calwebb_nrslamp_spec2` processing
   * `tso-image2`: Intended for `calwebb_tso_image2` processing
   * `tso-spec2`: Intended for `calwebb_tso_spec2` processing
+  * `tso3`: Intended for `calwebb_tso3` processing
+  * `spec2`: Intended for `calwebb_spec2` processing
+  * `spec3`: Intended for `calwebb_spec3` processing
+  * `nrslamp-spec2`: Intended for `calwebb_nrslamp_spec2` processing
+  * `wfs-image2`: Intended for `calwebb_wfs_image2` processing
+  * `wfs`: Wave front sensing data, used by `wfs_combine`

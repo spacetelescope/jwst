@@ -675,6 +675,15 @@ class Constraint_Mode(Constraint):
                 ],
                 reduce=Constraint.notany
             ),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        sources=['visitype'],
+                        value='.+wfsc.+',
+                    ),
+                ],
+                reduce=Constraint.notany
+            ),
             DMSAttrConstraint(
                 name='slit',
                 sources=['fxd_slit'],
