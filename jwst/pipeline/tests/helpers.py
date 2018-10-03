@@ -10,8 +10,6 @@ import tempfile
 # simply to make available from this module.
 from ...tests.helpers import ( # noqa: F401
     abspath,
-    require_bigdata,
-    runslow,
 ) 
 
 from ...associations import load_asn

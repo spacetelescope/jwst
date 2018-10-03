@@ -1,8 +1,6 @@
 """Handy helpful pytest helpers helping pytest test"""
 from os import path
 
-import pytest
-
 
 def abspath(filepath):
     """Get the absolute file path"""

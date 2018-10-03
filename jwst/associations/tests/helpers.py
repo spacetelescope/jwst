@@ -8,8 +8,6 @@ import pytest
 import re
 from tempfile import TemporaryDirectory
 
-from ...tests.helpers import runslow
-
 from astropy.table import (Table, vstack)
 
 from .. import (AssociationRegistry, AssociationPool, generate)

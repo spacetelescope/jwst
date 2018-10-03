@@ -10,7 +10,6 @@ from os import path as op
 import pytest
 
 from .helpers import (
-    runslow,
     t_path,
 )
 
@@ -26,7 +25,7 @@ SDP_POOL_PATHS = glob(t_path(op.join(
 )))
 
 
-@runslow
+@pytest.mark.slow
 @pytest.mark.parametrize(
     'pool_path',
     SDP_POOL_PATHS
