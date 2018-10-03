@@ -744,6 +744,9 @@ class Constraint_Single_Science(SimpleConstraint):
         has a science member already. A single argument
         of `item` must be provided.
 
+    sc_kwargs: dict
+        Keyword arguments to pass to the parent class `SimpleConstraint`
+
     Notes
     -----
     The `has_science_fn` is further wrapped in a lambda function
@@ -752,11 +755,12 @@ class Constraint_Single_Science(SimpleConstraint):
     this constraint.
     """
 
-    def __init__(self, has_science_fn):
+    def __init__(self, has_science_fn, **sc_kwargs):
         super(Constraint_Single_Science, self).__init__(
             name='single_science',
             value=False,
-            sources=lambda item: has_science_fn(item)
+            sources=lambda item: has_science_fn(item),
+            **sc_kwargs
         )
 
 
