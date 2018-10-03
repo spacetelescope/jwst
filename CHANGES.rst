@@ -60,7 +60,7 @@ datamodels
 
 - Initialize arrays and tables from function args in model_base [#2502]
 
-- Truncate long schema validation errors to 2000 characters
+- Truncate long schema validation errors to 2000 characters [#2657]
 
 
 dq_init
