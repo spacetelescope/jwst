@@ -177,7 +177,16 @@ class Asn_Lv2Spec(
             Constraint_Spectral_Science(
                 exclude_exp_types=['nrs_msaspec', 'nrs_fixedslit', 'nis_wfss']
             ),
-            Constraint_Single_Science(self.has_science),
+            Constraint(
+                [
+                    Constraint_Single_Science(self.has_science),
+                    SimpleConstraint(
+                        value='science',
+                        test=lambda value, item: self.get_exposure_type(item) != value,
+                    )
+                ],
+                reduce=Constraint.any
+            ),
             Constraint(
                 [
                     Constraint_TSO(),
