@@ -79,7 +79,7 @@ def ref_matches_sci(sci_model, ref_model):
         # If the ref file is full-frame, set the missing params to
         # default values
         if ref_model.meta.instrument.name.upper() == 'MIRI':
-            if (ref_model.data.shape[-1] == 1032 and \
+            if (ref_model.data.shape[-1] == 1032 and
                 ref_model.data.shape[-2] == 1024):
                 log.warning('Missing subarray corner/size keywords in reference file')
                 log.warning('Setting them to full-frame default values')
@@ -95,8 +95,8 @@ def ref_matches_sci(sci_model, ref_model):
                 log.error('Missing subarray corner/size keywords in reference file')
                 raise ValueError("Can't determine ref file subarray properties")
         else:
-            if (ref_model.data.shape[-1] == 2048) and \
-               (ref_model.data.shape[-2] == 2048):
+            if (ref_model.data.shape[-1] == 2048 and
+                ref_model.data.shape[-2] == 2048):
                 log.warning('Missing subarray corner/size keywords in reference file')
                 log.warning('Setting them to full-frame default values')
                 xstart_ref = 1
@@ -111,8 +111,8 @@ def ref_matches_sci(sci_model, ref_model):
                 log.error('Missing subarray corner/size keywords in reference file')
                 raise ValueError("Can't determine ref file subarray properties")
 
-    log.debug(" ref xstart=%d, xsize=%d, ystart=%d, ysize=%d" % \
-        (xstart_ref, xsize_ref, ystart_ref, ysize_ref))
+    log.debug(" ref xstart=%d, xsize=%d, ystart=%d, ysize=%d" %
+              (xstart_ref, xsize_ref, ystart_ref, ysize_ref))
 
     # Make sure the starting corners are valid
     if (xstart_ref < 1) or (ystart_ref < 1):
@@ -158,8 +158,8 @@ def ref_matches_sci(sci_model, ref_model):
         log.error('Missing subarray corner/size keywords in science file')
         raise ValueError("Can't determine science file subarray properties")
     else:
-        log.debug(" sci xstart=%d, xsize=%d, ystart=%d, ysize=%d" % \
-            (xstart_sci, xsize_sci, ystart_sci, ysize_sci))
+        log.debug(" sci xstart=%d, xsize=%d, ystart=%d, ysize=%d" %
+                  (xstart_sci, xsize_sci, ystart_sci, ysize_sci))
 
     # Make sure the starting corners are valid
     if (xstart_sci < 1) or (ystart_sci < 1):
@@ -221,8 +221,8 @@ def get_subarray_data(sci_model, ref_model):
             sci_model.meta.subarray.xsize = 2048
             sci_model.meta.subarray.ysize = 2048
         else:
-            raise ValueError('xstart or ystart metadata values ' \
-                             + 'not found in input model')
+            raise ValueError('xstart or ystart metadata values ' +
+                             'not found in input model')
 
     # Make sure xstart/ystart exist in reference data model
     if (ref_model.meta.subarray.xstart is None or
@@ -231,25 +231,25 @@ def get_subarray_data(sci_model, ref_model):
         # If the ref file is full-frame, set the missing params to
         # default values
         if ref_model.meta.instrument.name.upper() == 'MIRI':
-            if (ref_model.data.shape[-1] == 1032 and \
+            if (ref_model.data.shape[-1] == 1032 and
                 ref_model.data.shape[-2] == 1024):
                 ref_model.meta.subarray.xstart = 1
                 ref_model.meta.subarray.ystart = 1
                 ref_model.meta.subarray.xsize = 1032
                 ref_model.meta.subarray.ysize = 1024
             else:
-                raise ValueError('xstart or ystart metadata values ' \
-                                 + 'not found in reference model')
+                raise ValueError('xstart or ystart metadata values ' +
+                                 'not found in reference model')
         else:
-            if (ref_model.data.shape[-1] == 2048) and \
-               (ref_model.data.shape[-2] == 2048):
+            if (ref_model.data.shape[-1] == 2048 and
+                ref_model.data.shape[-2] == 2048):
                 ref_model.meta.subarray.xstart = 1
                 ref_model.meta.subarray.ystart = 1
                 ref_model.meta.subarray.xsize = 2048
                 ref_model.meta.subarray.ysize = 2048
             else:
-                raise ValueError('xstart or ystart metadata values ' \
-                                 + 'not found in reference model')
+                raise ValueError('xstart or ystart metadata values ' +
+                                 'not found in reference model')
 
     # Get subarray limits from metadata of input model
     xstart_sci = sci_model.meta.subarray.xstart
@@ -284,8 +284,8 @@ def get_subarray_data(sci_model, ref_model):
     if (xstart < 0 or ystart < 0 or
         xstop > ref_model.meta.subarray.xsize or
         ystop > ref_model.meta.subarray.ysize):
-        log.error('Computed reference file slice indexes are ' \
-                  + 'incompatible with size of reference data array')
+        log.error('Computed reference file slice indexes are ' +
+                  'incompatible with size of reference data array')
         log.error('xstart=%d, xstop=%d, ystart=%d, ystop=%d',
                    xstart, xstop, ystart, ystop)
         log.error('Reference xsize=%d, ysize=%d',
@@ -326,9 +326,7 @@ def get_subarray_model(sci_model, ref_model):
 
     # Get the reference model subarray params
     xstart_ref = ref_model.meta.subarray.xstart
-    xsize_ref = ref_model.meta.subarray.xsize
     ystart_ref = ref_model.meta.subarray.ystart
-    ysize_ref = ref_model.meta.subarray.ysize
 
     # Compute the slice indexes, in 0-indexed python frame
     xstart = xstart_sci - xstart_ref
@@ -343,8 +341,8 @@ def get_subarray_model(sci_model, ref_model):
     if (xstart < 0 or ystart < 0 or
         xstop > ref_model.meta.subarray.xsize or
         ystop > ref_model.meta.subarray.ysize):
-        log.error('Computed reference file slice indexes are ' \
-                  + 'incompatible with size of reference data array')
+        log.error('Computed reference file slice indexes are ' +
+                  'incompatible with size of reference data array')
         log.error('xstart=%d, xstop=%d, ystart=%d, ystop=%d',
                    xstart, xstop, ystart, ystop)
         log.error('Reference xsize=%d, ysize=%d',
