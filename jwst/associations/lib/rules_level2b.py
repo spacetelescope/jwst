@@ -302,6 +302,7 @@ class Asn_Lv2MIRLRSFixedSlitNod(
                     Constraint(
                         [
                             DMSAttrConstraint(
+                                name='is_current_dithptin',
                                 sources=['dithptin'],
                                 value=lambda: '((?!{}).)*'.format(self.constraints['dithptin'].value),
                             ),
@@ -321,6 +322,21 @@ class Asn_Lv2MIRLRSFixedSlitNod(
 
         # Now check and continue initialization.
         super(Asn_Lv2MIRLRSFixedSlitNod, self).__init__(*args, **kwargs)
+
+    def get_exposure_type(self, item, default='science'):
+        """Modify exposure type depending on dither pointing index
+
+        Behaves as the superclass method. However, if the constraint
+        `is_current_dithptin` is True, mark the exposure type as
+        `background`.
+        """
+        exp_type = super(Asn_Lv2MIRLRSFixedSlitNod, self).get_exposure_type(
+            item, default
+        )
+        if exp_type == 'science' and self.constraints['is_current_dithptin'].matched:
+            exp_type = 'background'
+
+        return exp_type
 
 
 @RegistryMarker.rule
