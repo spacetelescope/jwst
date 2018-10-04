@@ -132,8 +132,7 @@ def ref_matches_sci(sci_model, ref_model):
     # a mismatch in the y-size.
     if (ysize_ref == 2048) and (ysize_data == 3200):
         ysize_ref = ysize_data
-
-    elif (xsize_ref != xsize_data) or (ysize_ref != ysize_data):
+    if (xsize_ref != xsize_data) or (ysize_ref != ysize_data):
         log.warning("Reference file data array size doesn't match subarray params")
         log.warning("Using actual array size")
         xsize_ref = xsize_data
@@ -173,9 +172,8 @@ def ref_matches_sci(sci_model, ref_model):
     # a mismatch in the y-size.
     if (ysize_sci == 2048) and (sci_model.shape[-2] == 3200):
         ysize_sci = sci_model.shape[-2]
-
-    elif (xsize_sci != sci_model.shape[-1]) or \
-         (ysize_sci != sci_model.shape[-2]):
+    if (xsize_sci != sci_model.shape[-1]) or \
+       (ysize_sci != sci_model.shape[-2]):
         log.warning("Science file data array size doesn't match subarray params")
         log.warning("Using actual array size")
         xsize_sci = sci_model.shape[-1]
