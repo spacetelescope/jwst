@@ -14,11 +14,11 @@ pytestmark = [
 
 def test_nirisssoss2pipeline1(_bigdata):
     """
-    Regression test of calwebb_tso_spec2 pipeline performed on NIRISS SOSS data.
+    Regression test of calwebb_tso-spec2 pipeline performed on NIRISS SOSS data.
     """
     collect_pipeline_cfgs()
     args = [
-        'calwebb_tso_spec2.cfg',
+        'calwebb_tso-spec2.cfg',
         op.join(
             _bigdata,
             'pipelines/jw10003001002_03101_00001-seg003_nis_rateints.fits'

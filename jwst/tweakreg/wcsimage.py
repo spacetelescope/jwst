@@ -62,8 +62,9 @@ class ImageWCS():
             DEC of the reference point in degrees.
 
         """
-        if not self._check_wcs_structure(wcs):
-            raise ValueError("Unsupported WCS structure.")
+        valid, message =  self._check_wcs_structure(wcs)
+        if not valid:
+            raise ValueError("Unsupported WCS structure." + message)
 
         self._ra_ref = ra_ref
         self._dec_ref = dec_ref
@@ -74,7 +75,7 @@ class ImageWCS():
         # perform additional check that if tangent plane correction is already
         # present in the WCS pipeline, it is of TPCorr class and that
         # its parameters are consistent with reference angles:
-        frms = [f[0] for f in wcs.pipeline]
+        frms = wcs.available_frames
         if 'v2v3corr' in frms:
             self._v23name = 'v2v3corr'
             self._tpcorr = deepcopy(wcs.pipeline[frms.index('v2v3corr')-1][1])
@@ -115,8 +116,8 @@ class ImageWCS():
     def _update_transformations(self):
         # define transformations from detector/world coordinates to
         # the tangent plane:
-        detname = self._wcs.pipeline[0][0]
-        worldname = self._wcs.pipeline[-1][0]
+        detname = self._wcs.pipeline[0][0].name
+        worldname = self._wcs.pipeline[-1][0].name
 
         self._world_to_v23 = self._wcs.get_transform(worldname, self._v23name)
         self._v23_to_world = self._wcs.get_transform(self._v23name, worldname)
@@ -168,7 +169,7 @@ class ImageWCS():
             *before* ``matrix`` transformations are applied.
 
         """
-        frms = [f[0] for f in self._wcs.pipeline]
+        frms = self._wcs.available_frames
 
         # if original WCS did not have tangent-plane corrections, create
         # new correction and add it to the WCs pipeline:
@@ -208,35 +209,51 @@ class ImageWCS():
         self._update_transformations()
 
     def _check_wcs_structure(self, wcs):
+        valid = True
+        message = ""
         if wcs is None or wcs.pipeline is None:
-            return False
+            message = "WCS is None."
+            valid = False
+            return valid, message
 
-        frms = [f[0] for f in wcs.pipeline]
+        frms = wcs.available_frames
         nframes = len(frms)
         if nframes < 3:
-            return False
+            message = "There are fewer than 3 frames in the WCS pipeline."
+            valid = False
+            return valid, message
 
         if frms.count(frms[0]) > 1 or frms.count(frms[-1]) > 1:
-            return False
+            valid = False
+            message = "One or more frames in the WCS pipeline are not unique."
+            return valid, message
 
         if frms.count('v2v3') != 1:
-            return False
-
+            valid = False
+            message = "More than 1 'v2v3' frames in the WCS pipeline."
+            return valid, message
+            
         idx_v2v3 = frms.index('v2v3')
         if idx_v2v3 == 0 or idx_v2v3 == (nframes - 1):
-            return False
-
+            valid = False
+            message = "'v2v3' frame is either first or last in the WCS pipeline."
+            return valid, message
+            
         nv2v3corr = frms.count('v2v3corr')
         if nv2v3corr == 0:
-            return True
+            valid = True
+            return valid, message
         elif nv2v3corr > 1:
-            return False
-
+            valid = False
+            message = "There are more than one 'v2v3corr' correction frames in the WCS pipeline."
+            return valid, message
+            
         idx_v2v3corr = frms.index('v2v3corr')
         if idx_v2v3corr != (idx_v2v3 + 1) or idx_v2v3corr == (nframes - 1):
-            return False
-
-        return True
+            valid = False
+            message = "'v2v3corr' frame is not in the correct position in the WCS pipeline."
+            return valid, message
+        return valid, message
 
     def det_to_world(self, x, y):
         """

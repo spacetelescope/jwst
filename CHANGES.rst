@@ -13,6 +13,11 @@ assign_wcs
 - Updated assign_wcs to compute the sky footprint of MIRI MRS and Nirspec
   IFU observations. [#2472]
 
+- Fix minor bug in catalog.utl.get_object_info()[#2550]
+
+- Make GrismObject.partial_order a lookup dict on order and fix partial_order logic [#2643]
+
+- Add tests for grism modes [#2649]
 
 associations
 ------------
@@ -28,7 +33,6 @@ associations
 - Added new rule Asn_Lv2WFSC and new association type wfs-image2 [#2599]
 
 - Added new rule Asn_Lv2MIRLRSFixedSlitNod to handle LRS Fixed-slit nodding. [#2663]
-
 
 background
 ----------
@@ -48,7 +52,7 @@ csv_tools
 
 cube_build
 ----------
-
+This version supports creating IFU Cubes with non-linear wavelength dimension. [#2598]
 
 
 cube_skymatch
@@ -61,6 +65,8 @@ datamodels
 ----------
 
 - Initialize arrays and tables from function args in model_base [#2502]
+
+- Truncate long schema validation errors to 2000 characters [#2657]
 
 
 dq_init
@@ -83,6 +89,9 @@ extract_2d
 
 - WFSS modes updated to allow specific order extraction, updated wavelengthrange reference file delivered as part of these changes [#1801]
 
+- add bounding box to wfss output SlitModel [#2643]
+
+- add tests for grism modes [#2649]
 
 firstframe
 ----------
@@ -170,7 +179,7 @@ refpix
 resample
 --------
 
-
+- Make finding dispersion axis more robust in resample [#2644]
 
 reset
 -----
@@ -213,6 +222,7 @@ transforms
 
 - NIRISS models updated to allow for negative filter wheel rotations [#1801]
 
+- make partial_order attribute of GrismObject as lookup dict on order [#2643]
 
 tso_photometry
 --------------
@@ -220,6 +230,8 @@ tso_photometry
 tweakreg
 --------
 
+- Updated tweakreg to use `wcs.available_frames` to get the names of the frames in
+  a WCS pipeline. [#2590]
 wfs_combine
 -----------
 
@@ -364,6 +376,8 @@ extract_2d
 
 - Fixed type specification for optional grism mode inputs [#2467]
 
+- NRC_TSGRISM extract_height honored, bounding box fixed [#2643]
+
 firstframe
 ----------
 
@@ -428,6 +442,8 @@ outlier_detection
 
 pathloss
 --------
+
+- added support for NIRISS SOSS [#2588]
 
 persistence
 -----------
@@ -540,7 +556,7 @@ wiimatch
 The 0.10.0 release is a snapshot release for DMS testing.   The release
 is highlighted by the inclusion of steps for time series observations.
 This release had 39 closed issues included a number of improvements
-to the wavelength calibration for NIRSPEC observations. 
+to the wavelength calibration for NIRSPEC observations.
 
 
 ami
@@ -601,7 +617,7 @@ datamodels
 
 - Enable and improved tests for datamodel schemas using the ASDF schema checker [#2240, #2241]
 
-- Update IRS2 data model and add regredssion tests [#2295] 
+- Update IRS2 data model and add regredssion tests [#2295]
 
 
 dq_init
@@ -757,7 +773,7 @@ superbias
 timeconversion
 --------------
 
-- A script was written to read the UTC columns (at the start, middle, and end of each integration) from the INT_TIMES table, call the timeconversion module to compute the corresponding times at the solar-system barycenter (TDB), and update the columns in the INT_TIMES table.  [#2285] 
+- A script was written to read the UTC columns (at the start, middle, and end of each integration) from the INT_TIMES table, call the timeconversion module to compute the corresponding times at the solar-system barycenter (TDB), and update the columns in the INT_TIMES table.  [#2285]
 
 - Fix the problem in timeconversion that was caused by a recent addition of a new field to the ephemeris by retrieving only the fields needed. [#2296]
 

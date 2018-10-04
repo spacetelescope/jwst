@@ -2,7 +2,7 @@
     "asn_type": "wfs-image2",
     "asn_rule": "candidate_Asn_Lv2WFSC",
     "version_id": null,
-    "code_version": "0.12.0a.dev107",
+    "code_version": "0.12.0a.dev115",
     "degraded_status": "One or more members have an error associated with them.\nDetails can be found in the member.exposerr attribute.",
     "program": "10009",
     "target": "1",

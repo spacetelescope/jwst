@@ -2,8 +2,9 @@
 #  Module for 2d extraction of grism spectra
 #
 
-import logging
 import copy
+import logging
+
 from astropy.modeling.models import Shift, Const1D, Mapping, Identity
 
 from .. import datamodels
@@ -74,6 +75,7 @@ def extract_tso_object(input_model,
 
     if extract_height is None:
         extract_height = input_model.meta.subarray.ysize
+    log.info("Setting extraction height to {}".format(extract_height))
 
     # Get the disperser parameters which have the wave limits
     with WavelengthrangeModel(reference_files['wavelengthrange']) as f:
@@ -101,14 +103,8 @@ def extract_tso_object(input_model,
     if len(available_orders) > 1:
         raise NotImplementedError("Multiple order extraction for TSO not currently implemented")
 
-    # team currently wants only a slit model
-    # if len(available_orders) > 1:
-    #     log.info("Extracting into a MultiSlitModel")
-    #     output_model = datamodels.MultiSlitModel()
-    # else:
-    # log.info("Extracting into a SlitModel")
+    log.info("Extracting order: {}".format(available_orders))
     output_model = datamodels.SlitModel()
-
     output_model.update(input_model)
     subwcs = copy.deepcopy(input_model.meta.wcs)
 
@@ -119,8 +115,8 @@ def extract_tso_object(input_model,
         lmin, lmax = range_select.pop()
 
         # create the order bounding box
-        source_xpos = input_model.meta.wcsinfo.crpix1
-        source_ypos = input_model.meta.wcsinfo.crpix2
+        source_xpos = input_model.meta.wcsinfo.crpix1 - 1  # remove fits 
+        source_ypos = input_model.meta.wcsinfo.crpix2 - 1  # remove fits
         transform = input_model.meta.wcs.get_transform('full_detector', 'grism_detector')
         xmin, ymin, _ = transform(source_xpos,
                                   source_ypos,
@@ -144,14 +140,26 @@ def extract_tso_object(input_model,
         # The team wants the object to fall near  row 34 for all cutouts,
         # but the default cutout height is 64pixel (32 on either side)
         # so use crpix2 when it equals 34, but  bump the ycenter by 2 pixel
-        # in other cases  so that the height is 30 above and 34 below (in full frame)
-        extract_y_center = source_ypos
-        if input_model.meta.wcsinfo.crpix2 != 34:
-            extract_y_center = extract_y_center - 2
-        extract_y_min = extract_y_center - 34
-        extract_y_max = extract_y_center + 30
+        # in the case that it's 32 so that the height is 30 above and 34 below (in full frame)
+        bump = source_ypos - 34
+        extract_y_center = source_ypos - bump
 
-        # limit the boxes to the detector
+        splitheight = int(extract_height / 2)
+        below = extract_y_center - splitheight
+        if below == 34:
+            extract_y_min = 0
+            extract_y_max = extract_y_center + splitheight
+        elif below < 0:
+            extract_y_min = 0
+            extract_y_max = extract_height - 1
+        else:
+            extract_y_min = extract_y_center - 34  # always return source at pixel 34 in cutout.
+            extract_y_max = extract_y_center + extract_height - 34 - 1
+
+        if (extract_y_min > extract_y_max):
+            raise ValueError("Something bad happened calculating extraction y-size")
+          
+        # limit the bounding boxto the detector
         ymin, ymax = (max(extract_y_min, 0), min(extract_y_max, input_model.meta.subarray.ysize))
         xmin, xmax = (max(xmin, 0), min(xmax, input_model.meta.subarray.xsize))
         log.info("xmin, xmax: {} {}  ymin, ymax: {} {}".format(xmin, xmax, ymin, ymax))
@@ -182,41 +190,19 @@ def extract_tso_object(input_model,
             output_model.err = ext_err
             output_model.dq = ext_dq
             output_model.meta.wcs = subwcs
-            output_model.meta.wcs.bounding_box = ((xmin, xmax), (extract_y_center - extract_height,
-                                                                 extract_y_center + extract_height))
+            output_model.meta.wcs.bounding_box = ((xmin, xmax), (ymin, ymax))
+            output_model.meta.wcs.crpix2 = 34  # update for the move, vals are the same
             output_model.meta.wcsinfo.spectral_order = order
-            output_model.name = str(0)
-            output_model.xstart = xmin + 1
-            output_model.xsize = (xmax - xmin) + 1
-            output_model.ystart = ymin + 1
-            output_model.ysize = (ymax - ymin) + 1
+            output_model.name = str('TSO object')
+            output_model.xstart = 1  # fits pixels
+            output_model.xsize = ext_data.shape[2]
+            output_model.ystart = 1  # fits pixels
+            output_model.ysize = ext_data.shape[1]
             output_model.source_xpos = source_xpos
-            output_model.source_ypos = extract_y_center
+            output_model.source_ypos = 34
             output_model.source_id = 1
             output_model.bunit_data = input_model.meta.bunit_data
             output_model.bunit_err = input_model.meta.bunit_err
-
-        # team currently only wants 1 order extracted
-        # elif output_model.meta.model_type == "MultiSlitModel":
-        #     new_model = datamodels.SlitModel(data=ext_data, err=ext_err, dq=ext_dq)
-        #     new_model.meta.wcs = subwcs
-        #     new_model.meta.wcsinfo.spectral_order = order
-        #     new_model.meta.wcs.bounding_box = ((xmin, xmax), (extract_y_center - extract_height,
-        #                                                       extract_y_center + extract_height))
-        #     # set x/ystart values relative to the image (screen) frame.
-        #     # The overall subarray offset is recorded in model.meta.subarray.
-        #     # nslit = obj.sid - 1  # catalog id starts at zero
-        #     new_model.name = str(0)
-        #     new_model.xstart = xmin + 1
-        #     new_model.xsize = (xmax - xmin) + 1
-        #     new_model.ystart = ymin + 1
-        #     new_model.ysize = (ymax - ymin) + 1
-        #     new_model.source_xpos = source_xpos
-        #     new_model.source_ypos = extract_y_center
-        #     new_model.source_id = 1
-        #     new_model.bunit_data = input_model.meta.bunit_data
-        #     new_model.bunit_err = input_model.meta.bunit_err
-        #     slits.append(new_model)
 
     del subwcs
     log.info("Finished extractions")
@@ -373,6 +359,7 @@ def extract_grism_objects(input_model,
                 new_model.source_id = obj.sid
                 new_model.bunit_data = input_model.meta.bunit_data
                 new_model.bunit_err = input_model.meta.bunit_err
+                new_model.meta.wcs.bounding_box = ((xmin, xmax), (ymin, ymax))
                 slits.append(new_model)
 
     output_model.slits.extend(slits)

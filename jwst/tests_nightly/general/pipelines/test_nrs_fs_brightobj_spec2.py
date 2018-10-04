@@ -19,7 +19,7 @@ def test_nrs_fs_brightobj_spec2(_bigdata):
     """
     collect_pipeline_cfgs()
     args = [
-        'calwebb_tso_spec2.cfg',
+        'calwebb_tso-spec2.cfg',
         op.join(
             _bigdata,
             'pipelines/jw84600042001_02101_00001_nrs2_rateints.fits'
