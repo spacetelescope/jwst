@@ -8,6 +8,46 @@ from ..lib.constraint import (
 )
 
 
+def test_simpleconstraint_reprocess_match():
+    """Test options for reprocessing"""
+    sc = SimpleConstraint(
+        value='my_value',
+        reprocess_on_match=True
+    )
+    match, reprocess = sc.check_and_set('my_value')
+    assert match
+    assert len(reprocess)
+
+
+def test_simpleconstraint_reprocess_nomatch():
+    """Test options for reprocessing"""
+    sc = SimpleConstraint(
+        value='my_value',
+        reprocess_on_fail=True
+    )
+    match, reprocess = sc.check_and_set('bad_value')
+    assert not match
+    assert len(reprocess)
+
+
+def test_constraint_reprocess_match():
+    """Test options for reprocessing"""
+    sc = SimpleConstraint(value='my_value')
+    c = Constraint([sc], reprocess_on_match=True)
+    match, reprocess = c.check_and_set('my_value')
+    assert match
+    assert len(reprocess)
+
+
+def test_constraint_reprocess_nomatch():
+    """Test options for reprocessing"""
+    sc = SimpleConstraint(value='my_value')
+    c = Constraint([sc], reprocess_on_fail=True)
+    match, reprocess = c.check_and_set('bad_value')
+    assert not match
+    assert len(reprocess)
+
+
 def test_abc():
     """Test ABC istelf"""
     with pytest.raises(TypeError):

@@ -32,6 +32,8 @@ associations
 
 - Added new rule Asn_Lv2WFSC and new association type wfs-image2 [#2599]
 
+- Added new rule Asn_Lv2MIRLRSFixedSlitNod to handle LRS Fixed-slit nodding. [#2663]
+
 background
 ----------
 
