@@ -50,7 +50,7 @@ def PIP_ARGS = "-q"
 def PIP_INST = "pip install ${PIP_ARGS}"
 def PIP_DEPS = ""
 def PIP_DOC_DEPS = "sphinx-automodapi"
-def PIP_TEST_DEPS = "requests_mock git+https://github.com/stsci-hack/ci_watson.git@make_gen_classes"
+def PIP_TEST_DEPS = "requests_mock git+https://github.com/spacetelescope/ci_watson.git"
 
 // Pytest wrapper
 def PYTEST = "pytest \
