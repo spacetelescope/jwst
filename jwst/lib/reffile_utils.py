@@ -127,15 +127,17 @@ def ref_matches_sci(sci_model, ref_model):
         xsize_data = ref_model.shape[-1]
         ysize_data = ref_model.shape[-2]
 
-    if (xsize_ref != xsize_data) or (ysize_ref != ysize_data):
-        # Check for NIRSpec IRS2 mode, which is allowed to have a mismatch
-        if (ysize_ref == 2048) and (ysize_data == 3200):
-            ysize_ref = ysize_data
-        else:
-            log.warning("Reference file data array size doesn't match subarray params")
-            log.warning("Using actual array size")
-            xsize_ref = xsize_data
-            ysize_ref = ysize_data
+    # Make sure the size attributes are consistent with data array.
+    # NIRSpec IRS2 is a special mode, where it's allowed to have
+    # a mismatch in the y-size.
+    if (ysize_ref == 2048) and (ysize_data == 3200):
+        ysize_ref = ysize_data
+
+    elif (xsize_ref != xsize_data) or (ysize_ref != ysize_data):
+        log.warning("Reference file data array size doesn't match subarray params")
+        log.warning("Using actual array size")
+        xsize_ref = xsize_data
+        ysize_ref = ysize_data
 
     # Get the science model subarray parameters
     try:
@@ -166,18 +168,18 @@ def ref_matches_sci(sci_model, ref_model):
         log.error("Science file subarray corners are invalid")
         raise ValueError("Bad subarray corners")
 
-    # Make sure the size attributes are consistent with data array
-    if (xsize_sci != sci_model.shape[-1]) or \
-       (ysize_sci != sci_model.shape[-2]):
+    # Make sure the size attributes are consistent with data array.
+    # NIRSpec IRS2 is a special mode, where it's allowed to have
+    # a mismatch in the y-size.
+    if (ysize_sci == 2048) and (sci_model.shape[-2] == 3200):
+        ysize_sci = sci_model.shape[-2]
 
-        # Check for NIRSpec IRS2 mode, which is allowed to have a mismatch
-        if (ysize_sci == 2048) and (sci_model.shape[-2] == 3200):
-            ysize_sci = sci_model.shape[-2]
-        else:
-            log.warning("Science file data array size doesn't match subarray params")
-            log.warning("Using actual array size")
-            xsize_sci = sci_model.shape[-1]
-            ysize_sci = sci_model.shape[-2]
+    elif (xsize_sci != sci_model.shape[-1]) or \
+         (ysize_sci != sci_model.shape[-2]):
+        log.warning("Science file data array size doesn't match subarray params")
+        log.warning("Using actual array size")
+        xsize_sci = sci_model.shape[-1]
+        ysize_sci = sci_model.shape[-2]
 
     # Finally, see if all of the science file subarray params match those
     # of the reference file
@@ -214,8 +216,8 @@ def get_subarray_data(sci_model, ref_model):
 
         # If the science file is full-frame, set the missing params to
         # default values
-        if (sci_model.data.shape[-1] == 2048) and \
-           (sci_model.data.shape[-2] == 2048):
+        if (sci_model.data.shape[-1] == 2048 and
+            sci_model.data.shape[-2] == 2048):
             sci_model.meta.subarray.xstart = 1
             sci_model.meta.subarray.ystart = 1
             sci_model.meta.subarray.xsize = 2048
