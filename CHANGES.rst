@@ -107,6 +107,7 @@ flatfield
 ---------
 
 - Modified the code to find the dispersion direction. [#2492]
+- Changed the handling of zero wavelengths for NIRSpec data. [#2659]
 
 fringe
 ------
