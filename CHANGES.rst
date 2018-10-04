@@ -139,6 +139,9 @@ lastframe
 lib
 ---
 
+- Updated reffiles_utils to no longer issue warnings about mismatch in 
+  data array size params for NIRSpec IRS2 readouts. [#2664]
+
 linearity
 ---------
 
