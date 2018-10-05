@@ -13,6 +13,62 @@ from jwst.tests.base_test import BaseJWSTTest
 from jwst.assign_wcs import AssignWcsStep
 from jwst.cube_build.cube_build_step import CubeBuildStep
 from jwst.linearity.linearity_step import LinearityStep
+from jwst.ramp_fitting.ramp_fit_step import RampFitStep
+
+
+@pytest.mark.bigdata
+class TestMIRIRampFit(BaseJWSTTest):
+    input_loc = 'miri'
+    ref_loc = ['test_ramp_fit', 'truth']
+    test_dir = 'test_ramp_fit'
+
+    def test_ramp_fit_miri1(self):
+        """
+        Regression test of ramp_fit step performed on MIRI data.
+        """
+        input_file = self.get_data(self.test_dir, 'jw00001001001_01101_00001_MIRIMAGE_jump.fits')
+
+        result = RampFitStep.call(input_file,
+                         save_opt=True,
+                         opt_name='rampfit1_opt_out.fits')
+        output_file = result[0].save(path=result[0].meta.filename.replace('jump','rampfit'))
+        int_output = result[1].save(path=result[1].meta.filename.replace('jump','rampfit_int'))
+        result[0].close()
+        result[1].close()
+        
+        outputs = [(output_file, 
+                    'jw00001001001_01101_00001_MIRIMAGE_ramp_fit.fits'),
+                   (int_output,
+                    'jw00001001001_01101_00001_MIRIMAGE_int.fits'),
+                   ('rampfit1_opt_out_fitopt.fits',
+                    'jw00001001001_01101_00001_MIRIMAGE_opt.fits')
+                  ]
+        self.compare_outputs(outputs)
+
+    def test_ramp_fit_miri2(self):
+        """
+        Regression test of ramp_fit step performed on MIRI data.
+        """
+        input_file = self.get_data(self.test_dir, 
+                                   'jw80600012001_02101_00003_mirimage_jump.fits')
+
+        result = RampFitStep.call(input_file,
+                          save_opt=True,
+                          opt_name='rampfit2_opt_out.fits')
+             
+        output_file = result[0].save(path=result[0].meta.filename.replace('jump','rampfit'))
+        int_output = result[1].save(path=result[1].meta.filename.replace('jump','rampfit_int'))
+        result[0].close()
+        result[1].close()
+        
+        outputs = [(output_file, 
+                    'jw80600012001_02101_00003_mirimage_ramp.fits'),
+                   (int_output,
+                    'jw80600012001_02101_00003_mirimage_int.fits'),
+                   ('rampfit2_opt_out_fitopt.fits',
+                    'jw80600012001_02101_00003_mirimage_opt.fits')
+                  ]
+        self.compare_outputs(outputs)
 
 
 @pytest.mark.bigdata
@@ -47,7 +103,7 @@ class TestMIRILinearity(BaseJWSTTest):
     ref_loc = ['test_linearity','truth']
     test_dir ='test_linearity'
 
-    def test_liniearity_miri3(self):
+    def test_linearity_miri3(self):
         """
         Regression test of linearity step performed on MIRI data.
         """
@@ -233,12 +289,12 @@ class TESTMIRISetPointing(BaseJWSTTest):
         """
 
         # Copy original version of file to test file, which will get overwritten by test
-        input = self.get_data(self.test_dir,
+        orig_file = self.get_data(self.test_dir,
                                     'jw80600010001_02101_00001_mirimage_uncal_orig.fits',
-                                    copy_local=True  # always produce local copy
+                                    docopy=True  # always produce local copy
                               )
-        input_file = input.replace('_orig.fits','.fits')
-        move(input, input_file)  # rename local copy
+        input_file = orig_file.replace('_orig.fits','.fits')
+        os.rename(orig_file, input_file)  # rename local copy
 
         add_wcs(input_file)
 
