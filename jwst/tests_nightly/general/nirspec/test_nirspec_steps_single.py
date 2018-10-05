@@ -69,6 +69,7 @@ class TestNIRSpecImprint(BaseJWSTTest):
         self.compare_outputs(outputs)
 
 
+@pytest.mark.bigdata
 class TestNIRSpecRampFit(BaseJWSTTest):
     input_loc = 'nirspec'
     ref_loc = ['test_ramp_fit', 'truth']
