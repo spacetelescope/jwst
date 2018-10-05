@@ -2,7 +2,7 @@ import pytest
 from jwst.pipeline.calwebb_spec2 import Spec2Pipeline
 
 from jwst.tests.base_test import BaseJWSTTest
-from jwst.tests.base_test import pytest_generate_tests
+from jwst.tests.base_test import pytest_generate_tests # noqa: F401
 
 
 @pytest.mark.bigdata

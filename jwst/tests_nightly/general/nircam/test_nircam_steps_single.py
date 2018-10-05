@@ -86,8 +86,8 @@ class TestWFSCombine(BaseJWSTTest):
         """
         asn_file = self.get_data(self.test_dir,
                                    'wfs_3sets_asn.json')
-        for file in self.raw_from_asn(asn_file):
-            input_file = self.get_data(self.test_dir, file)
+        for filename in self.raw_from_asn(asn_file):
+            self.get_data(self.test_dir, filename)
 
         WfsCombineStep.call(asn_file)
 
@@ -106,8 +106,8 @@ class TestWFSCombine(BaseJWSTTest):
         """
         asn_file = self.get_data(self.test_dir,
                                    'wfs_3sets_asn2.json')
-        for file in self.raw_from_asn(asn_file):
-            input_file = self.get_data(self.test_dir, file)
+        for filename in self.raw_from_asn(asn_file):
+            self.get_data(self.test_dir, filename)
 
         WfsCombineStep.call(asn_file,
                             do_refine=True )
@@ -127,8 +127,8 @@ class TestWFSCombine(BaseJWSTTest):
         """
         asn_file = self.get_data(self.test_dir,
                                    'wfs_3sets_asn3.json')
-        for file in self.raw_from_asn(asn_file):
-            input_file = self.get_data(self.test_dir, file)
+        for filename in self.raw_from_asn(asn_file):
+            self.get_data(self.test_dir, filename)
 
         WfsCombineStep.call(asn_file,
                             do_refine=True)

@@ -37,6 +37,24 @@ def check_url(url):
 
 
 @pytest.fixture
+def _bigdata():
+    """ Return path to large data sets
+
+    Note: Support for URLs added for future integrations
+    """
+    origins = [
+        os.environ.get('TEST_BIGDATA', ''),
+        '/data4/jwst_test_data'
+    ]
+
+    for path in origins:
+        if os.path.exists(path) or check_url(path):
+            return path
+
+    raise BigdataError('Data files are not available.')
+
+
+@pytest.fixture
 def mk_tmp_dirs():
     """Create a set of temporary directorys and change to one of them."""
     tmp_current_path = tempfile.mkdtemp()

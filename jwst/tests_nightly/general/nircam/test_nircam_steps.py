@@ -1,7 +1,7 @@
 import pytest
 
 from jwst.tests.base_test import BaseJWSTTestSteps
-from jwst.tests.base_test import pytest_generate_tests
+from jwst.tests.base_test import pytest_generate_tests # noqa: F401
 
 from jwst.refpix.refpix_step import RefPixStep
 from jwst.dark_current.dark_current_step import DarkCurrentStep

@@ -1,7 +1,7 @@
 import pytest
 
 from jwst.tests.base_test import BaseJWSTTestSteps
-from jwst.tests.base_test import pytest_generate_tests
+from jwst.tests.base_test import pytest_generate_tests # noqa: F401
 
 from jwst.ami import AmiAnalyzeStep
 

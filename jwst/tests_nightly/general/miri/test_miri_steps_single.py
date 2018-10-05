@@ -233,13 +233,10 @@ class TESTMIRISetPointing(BaseJWSTTest):
         """
 
         # Copy original version of file to test file, which will get overwritten by test
-        input = self.get_data(self.test_dir,
+        input_file = self.get_data(self.test_dir,
                                     'jw80600010001_02101_00001_mirimage_uncal_orig.fits',
                                     copy_local=True  # always produce local copy
                               )
-        input_file = input.replace('_orig.fits','.fits')
-        move(input, input_file)  # rename local copy
-
         add_wcs(input_file)
 
         outputs = [(input_file,
