@@ -8,6 +8,7 @@ from jwst.associations.lib.dms_base import (
     Constraint_TSO,
     format_list
 )
+from jwst.associations.lib.process_list import ProcessList
 from jwst.associations.lib.rules_level2_base import *
 from jwst.associations.lib.rules_level3_base import DMS_Level3_Base
 
@@ -16,6 +17,7 @@ __all__ = [
     'Asn_Lv2Image',
     'Asn_Lv2ImageNonScience',
     'Asn_Lv2ImageSpecial',
+    'Asn_Lv2MIRLRSFixedSlitNod',
     'Asn_Lv2NRSLAMP',
     'Asn_Lv2NRSMSA',
     'Asn_Lv2Spec',
@@ -175,14 +177,23 @@ class Asn_Lv2Spec(
             Constraint_Spectral_Science(
                 exclude_exp_types=['nrs_msaspec', 'nrs_fixedslit', 'nis_wfss']
             ),
-            Constraint_Single_Science(self.has_science),
+            Constraint(
+                [
+                    Constraint_Single_Science(self.has_science),
+                    SimpleConstraint(
+                        value='science',
+                        test=lambda value, item: self.get_exposure_type(item) != value,
+                    )
+                ],
+                reduce=Constraint.any
+            ),
             Constraint(
                 [
                     Constraint_TSO(),
                     DMSAttrConstraint(
                         name='patttype',
                         sources=['patttype'],
-                        value=['2_point_nod|4_point_nod'],
+                        value=['2_point_nod|4_point_nod|along_slit_nod'],
                     )
                 ],
                 reduce=Constraint.notany
@@ -248,6 +259,84 @@ class Asn_Lv2SpecTSO(
 
         super(Asn_Lv2SpecTSO, self)._init_hook(item)
         self.data['asn_type'] = 'tso-spec2'
+
+
+@RegistryMarker.rule
+class Asn_Lv2MIRLRSFixedSlitNod(
+        AsnMixin_Lv2Spectral,
+        DMSLevel2bBase
+):
+    """Level2b MIRI LRS Fixed Slit background nods"""
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup constraints
+        self.constraints = Constraint([
+            Constraint_Base(),
+            Constraint_Mode(),
+            DMSAttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+                value='mir_lrs-fixedslit'
+            ),
+            DMSAttrConstraint(
+                name='patttype',
+                sources=['patttype'],
+                value=['along_slit_nod'],
+            ),
+            Constraint(
+                [
+                    Constraint(
+                        [
+                            DMSAttrConstraint(
+                                name='dithptin',
+                                sources=['dithptin'],
+                            ),
+                            Constraint_Single_Science(
+                                self.has_science,
+                                reprocess_on_match=True,
+                                work_over=ProcessList.EXISTING
+                            )
+                        ]
+                    ),
+                    Constraint(
+                        [
+                            DMSAttrConstraint(
+                                name='is_current_dithptin',
+                                sources=['dithptin'],
+                                value=lambda: '((?!{}).)*'.format(self.constraints['dithptin'].value),
+                            ),
+                            SimpleConstraint(
+                                name='force_match',
+                                value=None,
+                                sources=lambda item: False,
+                                test=lambda constraint, obj: True,
+                                force_unique=True,
+                            )
+                        ]
+                    )
+                ],
+                reduce=Constraint.any
+            )
+        ])
+
+        # Now check and continue initialization.
+        super(Asn_Lv2MIRLRSFixedSlitNod, self).__init__(*args, **kwargs)
+
+    def get_exposure_type(self, item, default='science'):
+        """Modify exposure type depending on dither pointing index
+
+        Behaves as the superclass method. However, if the constraint
+        `is_current_dithptin` is True, mark the exposure type as
+        `background`.
+        """
+        exp_type = super(Asn_Lv2MIRLRSFixedSlitNod, self).get_exposure_type(
+            item, default
+        )
+        if exp_type == 'science' and self.constraints['is_current_dithptin'].matched:
+            exp_type = 'background'
+
+        return exp_type
 
 
 @RegistryMarker.rule
@@ -529,7 +618,7 @@ class Asn_Lv2NRSIFUNod(
     def finalize(self):
         """Finalize assocation
 
-        For NRS IFU, finalization means creating new associations for
+        Finalization means creating new associations for
         background nods.
 
         Returns

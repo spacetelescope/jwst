@@ -15,6 +15,10 @@ assign_wcs
 
 - Fix minor bug in catalog.utl.get_object_info()[#2550]
 
+- Make GrismObject.partial_order a lookup dict on order and fix partial_order logic [#2643]
+
+- Add tests for grism modes [#2649]
+
 associations
 ------------
 
@@ -27,6 +31,8 @@ associations
 - Made NIRISS WFSS Level2 associations exclusive. [#2555]
 
 - Added new rule Asn_Lv2WFSC and new association type wfs-image2 [#2599]
+
+- Added new rule Asn_Lv2MIRLRSFixedSlitNod to handle LRS Fixed-slit nodding. [#2663]
 
 background
 ----------
@@ -46,7 +52,7 @@ csv_tools
 
 cube_build
 ----------
-
+This version supports creating IFU Cubes with non-linear wavelength dimension. [#2598]
 
 
 cube_skymatch
@@ -83,6 +89,9 @@ extract_2d
 
 - WFSS modes updated to allow specific order extraction, updated wavelengthrange reference file delivered as part of these changes [#1801]
 
+- add bounding box to wfss output SlitModel [#2643]
+
+- add tests for grism modes [#2649]
 
 firstframe
 ----------
@@ -98,6 +107,7 @@ flatfield
 ---------
 
 - Modified the code to find the dispersion direction. [#2492]
+- Changed the handling of zero wavelengths for NIRSpec data. [#2659]
 
 fringe
 ------
@@ -128,6 +138,9 @@ lastframe
 
 lib
 ---
+
+- Updated reffiles_utils to no longer issue warnings about mismatch in 
+  data array size params for NIRSpec IRS2 readouts. [#2664]
 
 linearity
 ---------
@@ -213,6 +226,7 @@ transforms
 
 - NIRISS models updated to allow for negative filter wheel rotations [#1801]
 
+- make partial_order attribute of GrismObject as lookup dict on order [#2643]
 
 tso_photometry
 --------------
@@ -365,6 +379,8 @@ extract_2d
 - Fixed step calling error for unreferenced attribute [#2463]
 
 - Fixed type specification for optional grism mode inputs [#2467]
+
+- NRC_TSGRISM extract_height honored, bounding box fixed [#2643]
 
 firstframe
 ----------

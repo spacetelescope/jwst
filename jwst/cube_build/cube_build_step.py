@@ -21,7 +21,7 @@ class CubeBuildStep (Step):
          channel = option('1','2','3','4','all',default='all') # Options: 1,2,3,4, or all
          band = option('short','medium','long','all',default='all') # Options: short, medium, long, all
          grating   = option('prism','g140m','g140h','g235m','g235h',g395m','g395h','all',default='all') # Options: prism,g140m,g140h,g235m,g235h,g395m,g395h, or all
-         filter   = option('clear','f100lp','f070lp','g170lp','f290lp','all',default='all') # Options: clear,f100lp,f070lp,g170lp,f290lp, or all
+         filter   = option('clear','f100lp','f070lp','f170lp','f290lp','all',default='all') # Options: clear,f100lp,f070lp,f170lp,f290lp, or all
          scale1 = float(default=0.0) # cube sample size to use for axis 1, arc seconds
          scale2 = float(default=0.0) # cube sample size to use for axis 2, arc seconds
          scalew = float(default=0.0) # cube sample size to use for axis 3, microns
@@ -96,6 +96,9 @@ class CubeBuildStep (Step):
         self.interpolation = 'pointcloud' # true for self.weighting  = 'msm' or 'miripsf'
 
         # if the weighting is area then interpolation is area
+        # if the weighting is area then interpolation is area. Weighting of area or interpolation
+        # of area is only for single band data.
+
         if self.weighting == 'area':
             self.interpolation = 'area'
             self.coord_system = 'alpha-beta'
@@ -239,7 +242,9 @@ class CubeBuildStep (Step):
 # or (grating,filter)
 
         num_cubes, cube_pars = cubeinfo.number_cubes()
-        if not self.single: self.log.info('Number of ifucubes produced by a this run %i', num_cubes)
+        if not self.single: 
+            self.log.info('Number of ifucubes produced by a this run %i',
+                                          num_cubes)
 
         cube_container = datamodels.ModelContainer() # ModelContainer of ifucubes
 
@@ -262,11 +267,16 @@ class CubeBuildStep (Step):
                 **pars_cube)
 
 #________________________________________________________________________________
+            thiscube.check_ifucube() # basic checks
 
-            thiscube.check_ifucube() # basic checks and get roi size
-
-# find the min & max final coordinates of cube: map each slice to cube
-# find the min & max value in each dimension
+# Based on channel/subchannel or grating/prism find
+# spatial spaxel size, min wave, max wave
+# set linear_wavelength to true or false depending on which type of IFU cube creating
+# if linear wavelength (single band) single values for rois, roiw, weight_power, softrad
+# if not linear wavelength (multi bands) an array based on wavelength for:
+#  rois, roiw, weight_power, softrad
+ 
+            thiscube.determine_cube_parameters()
 
             thiscube.setup_ifucube_wcs()
 #________________________________________________________________________________
@@ -285,13 +295,13 @@ class CubeBuildStep (Step):
             else:
                 result = thiscube.build_ifucube()
                 cube_container.append(result)
-
             if self.debug_pixel == 1:
                 self.spaxel_debug.close()
         for cube in cube_container:
             footprint = cube.meta.wcs.footprint(axis_type="spatial")
             update_s_region_keyword(cube, footprint)
 
+        
         return cube_container
 
 #********************************************************************************
@@ -320,12 +330,8 @@ class CubeBuildStep (Step):
         """
         valid_channel = ['1', '2', '3', '4', 'all']
         valid_subchannel = ['short', 'medium', 'long', 'all']
-#        valid_fwa = ['f070lp', 'f100lp', 'f100lp', 'g170lp',
-#                    'g170lp', 'f290lp', 'f290lp', 'clear', 'all']
-#        valid_gwa = ['g140m', 'g140h', 'G140M', 'g140h', 'g235m', 'g235h',
-#                    'g395m', 'g395h', 'prism', 'all']
 
-        valid_fwa = ['f070lp', 'f100lp', 'g170lp',
+        valid_fwa = ['f070lp', 'f100lp',
                     'g170lp', 'f290lp', 'clear', 'all']
         valid_gwa = ['g140m', 'g140h', 'g235m', 'g235h',
                      'g395m', 'g395h', 'prism', 'all']

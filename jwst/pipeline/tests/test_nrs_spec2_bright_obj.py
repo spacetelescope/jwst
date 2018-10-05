@@ -3,11 +3,11 @@
 from glob import glob
 from os import path
 
+import pytest
+
 from .helpers import (
     SCRIPT_DATA_PATH,
     abspath,
-    require_bigdata,
-    runslow,
 )
 
 from ...stpipe.step import (Step, remove_suffix)
@@ -17,8 +17,8 @@ DATAPATH = abspath(
 )
 
 
-@runslow
-@require_bigdata
+@pytest.mark.slow
+@pytest.mark.bigdata
 def test_run_full(mk_tmp_dirs):
     """Test a full run"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs

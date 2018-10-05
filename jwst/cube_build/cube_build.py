@@ -88,7 +88,7 @@ class CubeData():
 #________________________________________________________________________________
         self.determine_band_coverage(master_table)
 #________________________________________________________________________________
-# InstrumentDefaults is an  dictionary that holds default parameters for
+# instrument_defaults is an  dictionary class that holds default parameters for
 # difference instruments and for each band
 #________________________________________________________________________________
         instrument_info = instrument_defaults.InstrumentInfo()

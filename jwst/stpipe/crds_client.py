@@ -38,7 +38,7 @@ import re
 
 import crds
 from crds.core import config, exceptions, heavy_client
-from crds.core import crds_cache_locking, python23
+from crds.core import crds_cache_locking
 
 # ----------------------------------------------------------------------
 
@@ -84,7 +84,7 @@ def _get_data_dict(dataset_model):
 def _clean_flat_dict(header):
     """Make sure all header items returned are simple, no complex objects."""
     return { key: val for (key,val) in header.items()
-             if isinstance(val, (python23.string_types,python23.long,int,float,complex,bool)) }
+             if isinstance(val, (str,int,float,complex,bool)) }
 
 # ......................
 
@@ -142,7 +142,7 @@ def get_reference_file(dataset, reference_file_type):
     reference_filepath : string
         The path of the reference in the CRDS file cache.
     """
-    if isinstance(dataset, python23.string_types):
+    if isinstance(dataset, str):
         from jwst import datamodels
         with datamodels.open(dataset) as model:
             return get_multiple_reference_paths(model, [reference_file_type])[reference_file_type]

@@ -2,14 +2,13 @@
 
 from glob import glob
 from os import path
-import pytest
 from shutil import copy as file_copy
+
+import pytest
 
 from .helpers import (
     SCRIPT_DATA_PATH,
     abspath,
-    require_bigdata,
-    runslow,
 )
 
 from ...associations import load_asn
@@ -24,8 +23,8 @@ DATAPATH = abspath(
     reason='Fails due to issue #947',
     run=False,
 )
-@runslow
-@require_bigdata
+@pytest.mark.slow
+@pytest.mark.bigdata
 def test_run_outlier_only(mk_tmp_dirs):
     """Test a basic run"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -60,7 +59,7 @@ def test_run_outlier_only(mk_tmp_dirs):
     assert False
 
 
-@require_bigdata
+@pytest.mark.bigdata
 def test_run_outlier_only_mock(mk_tmp_dirs):
     """Test a basic run"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -112,8 +111,8 @@ def test_run_outlier_only_mock(mk_tmp_dirs):
     reason='Fails as documented in issue #1005',
     run=False,
 )
-@runslow
-@require_bigdata
+@pytest.mark.slow
+@pytest.mark.bigdata
 def test_run_resample_only(mk_tmp_dirs):
     """Test resample step only."""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -160,8 +159,8 @@ def test_run_resample_only(mk_tmp_dirs):
     assert len(glob(product_name_glob)) == 2
 
 
-@runslow
-@require_bigdata
+@pytest.mark.slow
+@pytest.mark.bigdata
 def test_run_resample_mock_only(mk_tmp_dirs):
     """Test resample step only."""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -208,7 +207,7 @@ def test_run_resample_mock_only(mk_tmp_dirs):
     assert len(glob(product_name_glob)) == 2
 
 
-@require_bigdata
+@pytest.mark.bigdata
 def test_run_cube_build(mk_tmp_dirs):
     """NRS MSA data is not cube data. Nothing should happen"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -253,7 +252,7 @@ def test_run_cube_build(mk_tmp_dirs):
     cube_files = glob('*s3d*')
     assert not cube_files
 
-@require_bigdata
+@pytest.mark.bigdata
 def test_run_extract_1d_only(mk_tmp_dirs):
     """Test only the extraction step. Should produce nothing
     because extraction requires resampling
@@ -304,7 +303,7 @@ def test_run_extract_1d_only(mk_tmp_dirs):
     assert not files
 
 
-@require_bigdata
+@pytest.mark.bigdata
 def test_run_extract_1d_resample_mock(mk_tmp_dirs):
     """Test only the extraction step. Should produce nothing
     because extraction requires resampling
@@ -358,7 +357,7 @@ def test_run_extract_1d_resample_mock(mk_tmp_dirs):
     assert len(glob(product_name_glob)) == 2
 
 
-@require_bigdata
+@pytest.mark.bigdata
 def test_run_nosteps(mk_tmp_dirs):
     """Test where no steps execute"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -410,8 +409,8 @@ def test_run_nosteps(mk_tmp_dirs):
     reason='Many individual steps have failures',
     run=False,
 )
-@runslow
-@require_bigdata
+@pytest.mark.slow
+@pytest.mark.bigdata
 def test_run_full(mk_tmp_dirs):
     """Test a full run"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs

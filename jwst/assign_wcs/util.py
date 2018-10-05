@@ -531,6 +531,7 @@ def create_grism_bbox(input_model,
 
                 order_bounding = {}
                 waverange = {}
+                partial_order = {}
                 for order in available_orders:
                     range_select = [(x[2], x[3]) for x in wavelengthrange if (x[0] == order and x[1] == filter_name)]
                     # The orders of the bounding box in the non-dispersed image
@@ -585,24 +586,27 @@ def create_grism_bbox(input_model,
                     # bigger than the detector FOV for a single grism
                     # exposure.
                     exclude = False
-                    partial_order = False
+                    ispartial = False
 
                     pts = np.array([[ymin, xmin], [ymax, xmax]])
                     ll = np.array([0, 0])
                     ur = np.array([input_model.meta.subarray.ysize, input_model.meta.subarray.xsize])
-                    inidx = np.any(np.logical_and(ll <= pts, pts <= ur), axis=1)
+                    inidx = np.all(np.logical_and(ll <= pts, pts <= ur), axis=1)
                     contained = len(pts[inidx])
 
                     if contained == 0:
                         exclude = True
                         log.info("Excluding off-image object: {}, order {}".format(obj.sid, order))
-                    elif contained == 1:
-                        partial_order = True
-                        log.info("Partial order on detector for obj: {} order: {}".format(obj.sid, order))
+                    elif contained >= 1:
+                        outbox = pts[np.logical_not(inidx)]
+                        if len(outbox) > 0:
+                            ispartial = True
+                            log.info("Partial order on detector for obj: {} order: {}".format(obj.sid, order))
 
                     if not exclude:
                         order_bounding[order] = ((round(ymin), round(ymax)), (round(xmin), round(xmax)))
                         waverange[order] = ((lmin, lmax))
+                        partial_order[order] = ispartial
 
                 if len(order_bounding) > 0:
                     grism_objects.append(GrismObject(sid=obj.sid,

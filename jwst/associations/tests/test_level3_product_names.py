@@ -12,11 +12,6 @@ from .helpers import (
 from .. import (AssociationPool, generate)
 from ..lib.dms_base import DMSAttrConstraint
 
-# Temporarily skip if running under Travis
-# pytestmark = pytest.mark.skipif(
-#     "TRAVIS" in os.environ and os.environ["TRAVIS"] == "true",
-#     reason='Temporarily disable due to performance issues'
-# )
 
 LEVEL3_PRODUCT_NAME_REGEX = (
     'jw'

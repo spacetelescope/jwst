@@ -42,6 +42,8 @@ def read_cubepars(par_filename,
     The correct elements of instrument_info are filled in
 
     """
+
+
     if instrument == 'MIRI':
         ptab = datamodels.MiriIFUCubeParsModel(par_filename)
         number_bands = len(all_channel)
@@ -216,7 +218,7 @@ def read_resolution_file(resol_filename,
         this_sub = all_subchannel[i]
         compare_band = this_channel + this_sub
         for tabdata in ptab.resolving_power_table:
-            table_sub_band = tabdata['SUB_BAND']
+            table_sub_band = tabdata['SUB_BAND'].lower()
             table_wave_center = tabdata['R_CENTRE']
             table_res_a_low = tabdata['R_A_LOW']
             table_res_b_low = tabdata['R_B_LOW']

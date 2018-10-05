@@ -112,22 +112,14 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
         return result
 
-    def has_science(self, item):
-        """Only allow a single science in the association
+    def has_science(self):
+        """Does association have a science member
 
-        Parameters
-        ----------
-        item: dict
-            The item in question
-
-        Returns
         -------
         bool
-            True if item can be added
+            True if it does.
         """
-        exptype = self.get_exposure_type(item)
         limit_reached = len(self.members_by_type('science')) >= 1
-        limit_reached = limit_reached and exptype == 'science'
         return limit_reached
 
     def __eq__(self, other):
@@ -741,8 +733,10 @@ class Constraint_Single_Science(SimpleConstraint):
     ----------
     has_science_fn: func
         Function to determine whether the association
-        has a science member already. A single argument
-        of `item` must be provided.
+        has a science member already. No arguments are provided.
+
+    sc_kwargs: dict
+        Keyword arguments to pass to the parent class `SimpleConstraint`
 
     Notes
     -----
@@ -752,11 +746,12 @@ class Constraint_Single_Science(SimpleConstraint):
     this constraint.
     """
 
-    def __init__(self, has_science_fn):
+    def __init__(self, has_science_fn, **sc_kwargs):
         super(Constraint_Single_Science, self).__init__(
             name='single_science',
             value=False,
-            sources=lambda item: has_science_fn(item)
+            sources=lambda item: has_science_fn(),
+            **sc_kwargs
         )
 
 

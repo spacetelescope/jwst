@@ -9,11 +9,11 @@ against are built in the jupyter notebook
 """
 from glob import glob
 from os import path
+
 import pytest
 
 from .helpers import (
     compare_asns,
-    runslow,
     t_path,
 )
 
@@ -28,7 +28,7 @@ pool_paths = glob(t_path(path.join(
 )))
 
 
-@runslow
+@pytest.mark.slow
 @pytest.mark.parametrize(
     'pool_path',
     pool_paths
