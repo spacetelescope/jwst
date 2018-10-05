@@ -173,6 +173,8 @@ pipeline
 
 - Added new Image2Pipeline configuration calwebb_wfs-image2.cfg for WFS&C processing [#2599]
 
+- Updated the order of MIRI steps in calwebb_detector1 and calwebb_dark. [#2669]
+
 ramp_fitting
 ------------
 
