@@ -47,7 +47,7 @@ class TestNIRSpecPipelines(BaseJWSTTest):
                                    'jw84600042001_02101_00001_nrs2_rateints.fits')
         collect_pipeline_cfgs()
         args = [
-            'calwebb_tso_spec2.cfg',
+            'calwebb_tso-spec2.cfg',
             input_file
         ]
         Step.from_cmdline(args)

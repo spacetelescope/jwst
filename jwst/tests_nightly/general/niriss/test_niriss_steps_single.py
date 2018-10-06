@@ -88,7 +88,7 @@ class TestNIRISSSOSS2Pipeline(BaseJWSTTest):
                                    'jw10003001002_03101_00001-seg003_nis_rateints.fits')
         collect_pipeline_cfgs()
         args = [
-            'calwebb_tso_spec2.cfg',
+            'calwebb_tso-spec2.cfg',
             input_file
         ]
         Step.from_cmdline(args)
