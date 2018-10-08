@@ -33,8 +33,8 @@ def test_result_return(mk_tmp_dirs):
     """Ensure that a result is returned programmatically"""
     exppath = path.join(DATAPATH, EXPFILE)
     cfg = path.join(SCRIPT_DATA_PATH, 'calwebb_image2_save.cfg')
-    result = Image2Pipeline.call(exppath, config_file=cfg)
-    assert isinstance(result, DataModel)
+    results = Image2Pipeline.call(exppath, config_file=cfg)
+    assert isinstance(results[0], DataModel)
 
 
 @pytest.mark.bigdata
