@@ -181,6 +181,9 @@ pipeline
 
 - Updated the order of MIRI steps in calwebb_detector1 and calwebb_dark. [#2669]
 
+- Update Image2Pipeline and Spec2Pipeline to properly return results. [#2676]
+
+
 ramp_fitting
 ------------
 
