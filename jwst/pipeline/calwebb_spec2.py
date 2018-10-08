@@ -79,6 +79,7 @@ class Spec2Pipeline(Pipeline):
 
         # Each exposure is a product in the association.
         # Process each exposure.
+        results = []
         has_exceptions = False
         for product in asn['products']:
             self.log.info('Processing product {}'.format(product['name']))
@@ -99,8 +100,7 @@ class Spec2Pipeline(Pipeline):
                 has_exceptions = True
             else:
                 if result is not None:
-                    self.save_model(result)
-                    self.closeout(to_close=[result])
+                    results.append(result)
 
         if has_exceptions and self.fail_on_exception:
             raise RuntimeError(
@@ -109,6 +109,10 @@ class Spec2Pipeline(Pipeline):
 
         # We're done
         self.log.info('Ending calwebb_spec2')
+
+        self.output_use_model = True
+        self.suffix = False
+        return results
 
     # Process each exposure
     def process_exposure_product(
@@ -262,9 +266,10 @@ class Spec2Pipeline(Pipeline):
 
         # Setup to save the calibrated exposure at end of step.
         if tso_mode:
-            self.suffix = 'calints'
+            suffix = 'calints'
         else:
-            self.suffix = 'cal'
+            suffix = 'cal'
+        result.meta.filename = self.make_output_path(suffix=suffix)
 
         # Produce a resampled product, either via resample_spec for
         # "regular" spectra or cube_build for IFU data. No resampled

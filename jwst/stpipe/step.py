@@ -821,6 +821,11 @@ class Step():
             The extension to use. If none, `output_ext` is used.
             Can include the leading period or not.
 
+        suffix: str or None or False
+            Suffix to append to the filename.
+            If None, the `Step` default will be used.
+            If False, no suffix replacement will be done.
+
         name_format: str or None
             The format string to use to form the base name.
 
@@ -864,26 +869,37 @@ class Step():
         if ext.startswith('.'):
             ext = ext[1:]
 
-        suffix = _get_suffix(suffix, step=step)
-        suffix_sep = None
-        if suffix is not None:
-            basename, suffix_sep = remove_suffix(basename)
-        if suffix_sep is None:
-            suffix_sep = separator
-
         if len(components):
             component_str = formatter(component_format, **components)
         else:
             component_str = ''
 
-        basename = formatter(
-            name_format,
-            basename=basename,
-            suffix=suffix,
-            suffix_sep=suffix_sep,
-            ext=ext,
-            components=component_str
-        )
+        # Suffix check. An explicit check on `False` is necessary
+        # because `None` is also allowed.
+        suffix = _get_suffix(suffix, step=step)
+        if suffix is not False:
+            suffix_sep = None
+            if suffix is not None:
+                basename, suffix_sep = remove_suffix(basename)
+            if suffix_sep is None:
+                suffix_sep = separator
+
+            basename = formatter(
+                name_format,
+                basename=basename,
+                suffix=suffix,
+                suffix_sep=suffix_sep,
+                ext=ext,
+                components=component_str
+            )
+
+        else:
+            basename = formatter(
+                name_format,
+                basename=basename,
+                ext=ext,
+                components=component_str
+            )
 
         output_dir = step.search_attr('output_dir', default='')
         output_dir = expandvars(expanduser(output_dir))
