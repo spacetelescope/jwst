@@ -169,7 +169,7 @@ def _xml_escape(data):
         data = data.replace(from_, to_)
     return data
 
-class _Constants():
+class _Constants(object):
     pass
 
 alphas     = string.ascii_uppercase + string.ascii_lowercase
@@ -288,7 +288,7 @@ class RecursiveGrammarException(Exception):
     def __str__( self ):
         return "RecursiveGrammarException: %s" % self.parseElementTrace
 
-class _ParseResultsWithOffset():
+class _ParseResultsWithOffset(object):
     def __init__(self,p1,p2):
         self.tup = (p1,p2)
     def __getitem__(self,i):
@@ -298,7 +298,7 @@ class _ParseResultsWithOffset():
     def setOffset(self,i):
         self.tup = (self.tup[0],i)
 
-class ParseResults():
+class ParseResults(object):
     """
     Structured parse results, to provide multiple means of access to the parsed data:
        - as a list (C{len(results)})
@@ -1077,7 +1077,7 @@ def _trim_arity(func, maxargs=2):
 
     return wrapper
 
-class ParserElement():
+class ParserElement(object):
     """Abstract base level parser element class."""
     DEFAULT_WHITE_CHARS = " \n\t\r"
     verbose_stacktrace = False
@@ -1430,7 +1430,7 @@ class ParserElement():
         else:
             return True
 
-    class _UnboundedCache():
+    class _UnboundedCache(object):
         def __init__(self):
             cache = {}
             self.not_in_cache = not_in_cache = object()
@@ -1453,7 +1453,7 @@ class ParserElement():
             self.__len__ = types.MethodType(cache_len, self)
 
     if _OrderedDict is not None:
-        class _FifoCache():
+        class _FifoCache(object):
             def __init__(self, size):
                 self.not_in_cache = not_in_cache = object()
 
@@ -1482,7 +1482,7 @@ class ParserElement():
                 self.__len__ = types.MethodType(cache_len, self)
 
     else:
-        class _FifoCache():
+        class _FifoCache(object):
             def __init__(self, size):
                 self.not_in_cache = not_in_cache = object()
 
@@ -3929,7 +3929,7 @@ class ZeroOrMore(_MultipleMatch):
 
         return self.strRepr
 
-class _NullToken():
+class _NullToken(object):
     def __bool__(self):
         return False
     __nonzero__ = __bool__
@@ -4365,7 +4365,7 @@ class Suppress(TokenConverter):
         return self
 
 
-class OnlyOnce():
+class OnlyOnce(object):
     """
     Wrapper for parse actions, to ensure they are only called once.
     """
