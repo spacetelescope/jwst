@@ -85,16 +85,17 @@ class Asn_WFSCMB(AsnMixin_Science):
                 value='prime_wfsc_sensing_control',
             ),
             DMSAttrConstraint(
-                name='asn_candidate_wfs',
-                sources=['asn_candidate'],
-                value='.+mosaic.+',
-                force_unique=True,
-                is_acid=True,
-                evaluate=True,
+                name='patttype',
+                sources=['patttype'],
+                value='wfsc'
             ),
             DMSAttrConstraint(
-                name='activity_id',
-                sources=['act_id']
+                name='obsnum',
+                sources=['obs_num'],
+            ),
+            DMSAttrConstraint(
+                name='detector',
+                sources=['detector']
             )
         ])
 
