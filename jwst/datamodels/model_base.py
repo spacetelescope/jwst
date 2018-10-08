@@ -74,6 +74,8 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         strict_validation: if true, an schema validation errors will generate
             an excption. If false, they will generate a warning.
+
+        kwargs: Aadditional arguments passed to lower level functions
         """
         # Set the extensions
         self._extensions = extensions
@@ -511,7 +513,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         return asdf
 
     @classmethod
-    def from_asdf(cls, init, schema=None):
+    def from_asdf(cls, init, schema=None, **kwargs):
         """
         Load a data model from a ASDF file.
 
@@ -526,11 +528,15 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         schema :
             Same as for `__init__`
 
+
+        kwargs:
+            Aadditional arguments passed to lower level functions
+
         Returns
         -------
         model : DataModel instance
         """
-        return cls(init, schema=schema)
+        return cls(init, schema=schema, **kwargs)
 
     def to_asdf(self, init, *args, **kwargs):
         """
@@ -549,7 +555,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         AsdfFile(self._instance, extensions=self._extensions).write_to(init, *args, **kwargs)
 
     @classmethod
-    def from_fits(cls, init, schema=None):
+    def from_fits(cls, init, schema=None, **kwargs):
         """
         Load a model from a FITS file.
 
@@ -564,11 +570,14 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         schema :
             Same as for `__init__`
 
+        kwargs:
+            Aadditional arguments passed to lower level functions
+
         Returns
         -------
         model : DataModel instance
         """
-        return cls(init, schema=schema)
+        return cls(init, schema=schema, **kwargs)
 
     def to_fits(self, init, *args, **kwargs):
         """
