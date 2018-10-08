@@ -17,10 +17,6 @@ from jwst.saturation.saturation_step import SaturationStep
 from jwst.superbias import SuperBiasStep
 
 
-# Parameterized regression tests for NIRISS processing
-# All tests in this set run with 1 input file and
-#  only generate 1 output for comparison.
-#
 @pytest.mark.bigdata
 class TestNIRSpecSteps(BaseJWSTTestSteps):
     input_loc = 'nirspec'

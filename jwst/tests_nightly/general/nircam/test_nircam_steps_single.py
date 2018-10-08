@@ -1,9 +1,46 @@
+import os
+import glob
+
 import pytest
 
 from jwst.tests.base_test import BaseJWSTTest
 from jwst.ramp_fitting.ramp_fit_step import RampFitStep
 from jwst.wfs_combine.wfs_combine_step import WfsCombineStep
 from jwst.pipeline.calwebb_detector1 import Detector1Pipeline
+
+from jwst.stpipe import Step
+
+
+@pytest.mark.bigdata
+class TestWFSImage2(BaseJWSTTest):
+    input_loc = 'nircam'
+    ref_loc = ['test_datasets', 'sdp_jw82600_wfs', 'level2a', 'truth']
+    test_dir = 'test_datasets'
+
+    def test_wfs_image2(self):
+        """
+        Regression test of the WFS&C `calwebb_wfs-image2.cfg` pipeline
+        """
+        data_base = 'jw82600026001_02101_00001_nrca1_rate'
+        ext = '.fits'
+        input_name = '{}{}'.format(data_base, ext)
+        input_file = self.get_data(self.test_dir, 'sdp_jw82600_wfs', 'level2a',
+                                   input_name)
+
+        self.get_custom_cfgs(self.test_dir, 'sdp_jw82600_wfs', 'cfgs')
+        Step.from_cmdline([os.path.join('cfgs', 'calwebb_wfs-image2.cfg'), input_file])
+
+        output_files = glob.glob('*')
+        output_files.remove('cfgs')
+        
+        cal_name = input_name.replace('rate', 'cal')
+        output_name = input_name.replace('rate','cal_ref')
+        outputs = [(cal_name, output_name)]
+        self.compare_outputs(outputs)
+
+        assert cal_name in output_files
+        output_files.remove(cal_name)
+        assert not output_files, 'Unexpected output files {}'.format(output_files)
 
 
 @pytest.mark.bigdata
@@ -39,7 +76,6 @@ class TestDetector1Pipeline(BaseJWSTTest):
                     'jw82500001003_02101_00001_NRCALONG_rateints_ref.fits')
                   ]
         self.compare_outputs(outputs)
-
 
 
 @pytest.mark.bigdata

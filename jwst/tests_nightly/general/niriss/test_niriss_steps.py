@@ -14,10 +14,6 @@ from jwst.linearity.linearity_step import LinearityStep
 from jwst.saturation.saturation_step import SaturationStep
 
 
-# Parameterized regression tests for NIRISS processing
-# All tests in this set run with 1 input file and
-#  only generate 1 output for comparison.
-#
 @pytest.mark.bigdata
 class TestNIRISSSteps(BaseJWSTTestSteps):
     input_loc = 'niriss'

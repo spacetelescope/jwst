@@ -1,4 +1,9 @@
+import os
+import glob
+
 import pytest
+import requests
+
 from ci_watson.artifactory_helpers import check_url, get_bigdata_root
 from .base_classes import BaseTest
 
@@ -21,6 +26,41 @@ class BaseJWSTTest(BaseTest):
 
     def raw_from_asn(self, asn_file):
         return raw_from_asn(asn_file)
+
+    def get_custom_cfgs(self, *args):
+        """ Make a local copy of all custom cfgs associated with this test"""
+
+        test_dir = os.getcwd()
+        new_dir = args[-1]
+        os.mkdir(new_dir)
+        os.chdir(new_dir)
+        
+        input_dir = get_bigdata_root()
+        input_path = self.get_input_path()
+        cfg_dir = os.path.join(input_dir,*input_path,*args)
+        print("cfg_dir: {}".format(cfg_dir))
+
+        if check_url(input_dir):        
+            # Make copy from Artifactory repo
+            r = requests.get('{}?list&deep=1&listFolders=1&mdTimestamps=1'.format(cfg_dir))
+
+            for item in r.iter_lines():
+                line = str(item)
+                if 'href' in line and '..' not in line: 
+                    start = line.index('"')+1
+                    end = line.rindex('"')
+                    fname = line[start:end]
+                    
+                    self.get_data(*args,fname, docopy=True)
+        else:
+            # Make copy from local cache
+            cfg_names = glob.glob(os.path.join(cfg_dir,'*'))
+            for name in cfg_names:
+                filename = os.path.basename(name)
+                self.get_data(*args,filename, docopy=True)
+
+        # Move back to original directory
+        os.chdir(test_dir)
 
 
 # Pytest function to support the parameterization of these classes
