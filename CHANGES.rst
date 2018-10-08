@@ -68,6 +68,8 @@ datamodels
 
 - Truncate long schema validation errors to 2000 characters [#2657]
 
+- Fixed bug in default value when schema contains combiner [#2668]
+
 
 dq_init
 -------
@@ -139,7 +141,7 @@ lastframe
 lib
 ---
 
-- Updated reffiles_utils to no longer issue warnings about mismatch in 
+- Updated reffiles_utils to no longer issue warnings about mismatch in
   data array size params for NIRSpec IRS2 readouts. [#2664]
 
 linearity
