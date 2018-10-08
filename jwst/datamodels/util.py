@@ -9,6 +9,8 @@ from os.path import basename
 import numpy as np
 from astropy.io import fits
 
+from ..associations import Association
+
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -70,6 +72,11 @@ def open(init=None, extensions=None, **kwargs):
     elif isinstance(init, model_base.DataModel):
         # Copy the object so it knows not to close here
         return init.__class__(init)
+
+    elif isinstance(init, Association):
+        from . import container
+        return container.ModelContainer(init, extensions=extensions,
+                                        **kwargs)
 
     elif isinstance(init, (str, bytes)) or hasattr(init, "read"):
         # If given a string, presume its a file path.
