@@ -28,7 +28,7 @@ Pipeline Step        Name (*)
 ==================  ========================================  
 **ami_analyze**      jwst_niriss_throughput_xxxx.fits
 **assign_wcs**       jwst_nirspec_camera_xxx.rmap
-..          	     jwst_nirspec_camera_xxx.rmap
+..                   jwst_nirspec_camera_xxx.rmap
 ..                   jwst_nirspec_collimator_xxxx.rmap
 ..                   jwst_nirspec_disperser_xxxx.rmap
 ..                   jwst_niriss_distortion_xxxx.rmap
@@ -65,7 +65,7 @@ Pipeline Step        Name (*)
 ..                   jwst_nirspec_dflat_xxxx.fits
 ..                   jwst_nirspec_fflat_xxxx.fits
 ..                   jwst_nirspec_sflat_xxxx.fits
-**fringe**		     jwst_miri_fringe_xxxx.fits
+**fringe**           jwst_miri_fringe_xxxx.fits
 **jump**             jwst_miri_gain_xxxx.fits
 ..                   jwst_miri_readnoise_xxxx.fits
 ..                   jwst_nircam_gain_xxxx.fits
@@ -109,8 +109,11 @@ Pipeline Step        Name (*)
 
 (*) xxx indicates different version numbers for the reference files.
 
-Common Keywords to All Reference Files
---------------------------------------
+
+.. _`Standard Required Keywords`:
+
+Standard Required Keywords
+==========================
 
 At present, most JWST science and reference files are FITS files with image or table extensions. 
 The FITS primary data unit is always empty. The primary header contains all keywords not specific to individual extensions. Keywords specific to a particular extension are contained in the header of that extension.
@@ -120,27 +123,46 @@ The required Keywords Documenting Contents of Reference Files are:
 ========  =========================================================================
 Keyword   Comment
 ========  =========================================================================
-REFTYPE   Required values are listed in the discussion of each pipeline step.
-DESCRIP   Summary of file content and/or reason for delivery
-AUTHOR    Person(s) who created the file
-USEAFTER  YYYY-MM-DDThh:mm:ss Date and time after the reference files will be used. 
-          The T is required. Time string may NOT be omitted; use T00:00:00 if no 
-          meaningful value is available.
-PEDIGREE  Options are
+REFTYPE   `WFSSBKG    Required values are listed in the discussion of each pipeline step.`
+DESCRIP   `Summary of file content and/or reason for delivery`
+AUTHOR    `Fred Jones     Person(s) who created the file`
+USEAFTER  `YYYY-MM-DDThh:mm:ss Date and time after the reference files will
+          be used. The T is required. Time string may NOT be omitted;
+          use T00:00:00 if no meaningful value is available.`
+PEDIGREE  `Options are
           'SIMULATION'
           'GROUND'
           'DUMMY'
-          'INFLIGHT YYYY-MM-DD YYYY-MM-DD'
-HISTORY   'Description of Reference File Creation'
-HISTORY   DOCUMENT: Name of document describing the strategy and algorithms used to 
-          create file
-HISTORY   SOFTWARE: Description, version number, location of software used to create 
-          file
-HISTORY   DATA USED: Data used to create file
-HISTORY   DIFFERENCES: How is this version different from the one that it replaces?
-HISTORY   If your text spills over to the next line,
-HISTORY   begin it with another HISTORY keyword, as in this example.
+          'INFLIGHT YYYY-MM-DD YYYY-MM-DD'`
+HISTORY   `Description of Reference File Creation`
+HISTORY   `DOCUMENT: Name of document describing the strategy and algorithms
+          used to create file.`
+HISTORY   `SOFTWARE: Description, version number, location of software used
+          to create file.`
+HISTORY   `DATA USED: Data used to create file`
+HISTORY   `DIFFERENCES: How is this version different from the one that
+          it replaces?`
+HISTORY   `If your text spills over to the next line,
+          begin it with another HISTORY keyword, as in this example.`
+TELESCOP  `JWST   Name of the telescope/project.`
+INSTRUME  `FGS   Instrument name. Allowed values: FGS, NIRCAM, NIRISS,
+          NIRSPEC, MIRI`
+SUBARRAY  `FULL, GENERIC, SUBS200A1, ...   (XXX abstract technical description
+          of SUBARRAY)`
+SUBSTRT1  `1        Starting pixel index along axis 1 (1-indexed)`
+SUBSIZE1  `2048     Size of subarray along axis 1`
+SUBSTRT2  `1        Starting pixel index along axis 2 (1-indexed)`
+SUBSIZE2  `2048     Size of subarray along axis 2`
+FASTAXIS  `1        Fast readout direction relative to image axes for
+          Amplifier #1 (1 = +x axis, 2 = +y axis, -1 = -x axis, -2 = -y axis)
+          SEE NOTE BELOW.`
+SLOWAXIS  `2        Slow readout direction relative to image axes for
+          all amplifiers (1 = +x axis, 2 = +y axis, -1 = -x axis, -2 = -y axis)`
 ========  =========================================================================
+
+
+Observing Mode Keywords
+=======================
 
 A pipeline module may require separate reference files for each instrument, detector, 
 filter, observation date, etc.  The values of these parameters must be included in the 
@@ -149,14 +171,13 @@ ingesting reference files into CRDS, as they are used to establish the mapping b
 observing modes and specific reference files. Some observing-mode keywords are also 
 used in the pipeline processing steps.  If an observing-mode keyword is irrelevant to a 
 particular observing mode (such as GRATING for the MIRI imager mode or the NIRCam and NIRISS 
-instruments), then it may be omitted from the file header. The Keywords Documenting the Observing 
-Mode are:
+instruments), then it may be omitted from the file header.
+
+The Keywords Documenting the Observing Mode are:
 
 ========  ==================  =============================================================================================
 Keyword   Sample Value        Comment
 ========  ==================  =============================================================================================
-TELESCOP  JWST     
-INSTRUME  MIRI                Instrument name. Allowed values: FGS, NIRCAM, NIRISS, NIRSPEC, MIRI
 PUPIL     NRM                 Pupil wheel element. Required only for NIRCam and NIRISS.
                               NIRCam allowed values: CLEAR, F162M, F164N, F323N, F405N, F466N, F470N, GRISMV2, GRISMV3
                               NIRISS allowed values: CLEARP, F090W, F115W, F140M, F150W, F158M, F200W, GR700XD, NRM
@@ -212,19 +233,9 @@ READPATT  FAST                Name of the readout pattern used for the exposure.
                               FGS allowed values: ID, ACQ1, ACQ2, TRACK, FINEGUIDE, FGS60, FGS840, FGS7850, FGSRAPID, FGS
 NRS_NORM  16                  Required only for NIRSpec.
 NRS_REF   4                   Required only for NIRSpec.
-SUBARRAY  FULL                MIRI allowed values: FULL, GENERIC, MASK1140, MASK1550, MASK1065, MASKLYOT, BRIGHTSKY, SUB256, 
-                              SUB128, SUB64, SLITLESSPRISM
 P_XXXXXX  P_READPA            pattern keywords used by CRDS for JWST to describe the intended uses of a reference file 
                               using or'ed combinations of values. Only a subset of :ref:`p-patterns` 
                               are supported.
-SUBSTRT1  1                   Starting pixel index along axis 1 (1-indexed)
-SUBSIZE1  2048                Size of subarray along axis 1
-SUBSTRT2  1                   Starting pixel index along axis 2 (1-indexed)
-SUBSIZE2  2048                Size of subarray along axis 2
-FASTAXIS  1                   Fast readout direction relative to image axes for Amplifier #1 (1 = +x axis, 2 = +y axis,
-                              -1 = -x axis, -2 = -y axis) SEE NOTE BELOW.
-SLOWAXIS  2                   Slow readout direction relative to image axes for all amplifiers (1 = +x axis, 2 = +y axis,
-                               -1 = -x axis, -2 = -y axis)
 ========  ==================  =============================================================================================
 
 Note: For the NIR detectors, the fast readout direction changes sign from one amplifier to the next.  It is +1, -1, +1, and -1, for amps 1, 2, 3, and 4, respectively.  The keyword FASTAXIS refers specifically to amp 1.  That way, it is entirely correct for single-amp readouts and correct at the origin for 4-amp readouts.  For MIRI, FASTAXIS is always +1.
@@ -275,6 +286,7 @@ Orientation of Detector Image
 All steps in the pipeline assume the data are in the DMS (science) orientation, not the native readout orientation. The pipeline does NOT check or correct for the orientation of the reference data. It assumes that all files ingested into CRDS have been put into the science orientation.  All header keywords documenting the observing mode (Table 2) should likewise be transformed into the DMS orientation.   For square data array dimensions it's not possible to infer the actual orientation directly so reference file authors must manage orientation carefully.   
 
     Correct values for FASTAXIS and SLOWAXIS for each detector are:
+
 =========== ======== ========
 DETECTOR    FASTAXIS SLOWAXIS
 =========== ======== ========
@@ -304,7 +316,8 @@ Differing values for these keywords will be taken as an indicator that neither t
 
 P_pattern keywords
 ------------------
-P_ pattern keywords used by CRDS for JWST to describe the intended uses of a reference file using or’ed combinations
+
+``P_`` pattern keywords used by CRDS for JWST to describe the intended uses of a reference file using or’ed combinations
 
 For example, if the same NIRISS SUPERBIAS should be used for
 
@@ -316,19 +329,19 @@ or
 
 the definition of READPATT in the calibration s/w datamodels schema does not allow it. READPATT can specify one or the other but not both.
 
-To support expressing combinations of values, CRDS and the CAL s/w have added “pattern keywords” which nominally begin with P_ followed by the ordinary keyword, truncated as needed to 8 characters. In this case, P_READPA corresponds to READPATT.
+To support expressing combinations of values, CRDS and the CAL s/w have added “pattern keywords” which nominally begin with ``P_`` followed by the ordinary keyword, truncated as needed to 8 characters. In this case, P_READPA corresponds to READPATT.
 
 Pattern keywords override the corresponding ordinary keyword for the purposes of automatically updating CRDS rmaps. Pattern keywords describe intended use.
 
 In this example, the pattern keyword:
 
-    P_READPA = ‘NIS | NISRAPID |‘
+  P_READPA = NIS | NISRAPID |
 
 can be used to specify the intent “use for NIS or for NISRAPID”.
 
 Only or-ed combinations of the values used in ordinary keywords are valid for pattern keywords.
 
-Patterns appear in a slightly different form in rmaps than they do in P_ keywords. The value of a P_ keyword always ends with a trailing or-bar. In rmaps, no trailing or-bar is used so the equivalient of the above in an rmap is:
+Patterns appear in a slightly different form in rmaps than they do in ``P_`` keywords. The value of a ``P_ keyword`` always ends with a trailing or-bar. In rmaps, no trailing or-bar is used so the equivalient of the above in an rmap is:
 
     ‘NIS|NISRAPID’
     
@@ -337,8 +350,10 @@ Patterns appear in a slightly different form in rmaps than they do in P_ keyword
 
 Currently all ``P_`` keywords correspond to basic keywords found only in the primary headers of reference files and are typically only valid for FITS format..
 
-The traslation from these ``P_pattern`` keywords are completely generic in CRDS and can apply to any reference file type so they should be assumed to 
+The traslation from these ``P_`` pattern keywords are completely generic in CRDS and can apply to any reference file type so they should be assumed to 
 be reserved whether a particular type uses them or not. Defining non-pattern keywords with the prefix ``P_`` is strongly discouraged.
+
+.. _`Data Quality Flags`:
 
 Data Quality Flags
 ==================
@@ -366,14 +381,14 @@ Table 1. Flags for the PIXELDQ and GROUPDQ Arrays (Format of DQ_DEF Extension)
 ===  ==========    ================  ===========================================
 Bit  Value         Name              Description
 ===  ==========    ================  ===========================================
-0    1	           DO_NOT_USE        Bad pixel. Do not use.
+0    1             DO_NOT_USE        Bad pixel. Do not use.
 1    2             SATURATED         Pixel saturated during exposure
 2    4             JUMP_DET          Jump detected during exposure
 3    8             DROPOUT           Data lost in transmission
-4    16            RESERVED	 
-5    32	           RESERVED	 
-6    64            RESERVED	 
-7    128           RESERVED	 
+4    16            RESERVED  
+5    32            RESERVED  
+6    64            RESERVED  
+7    128           RESERVED  
 8    256           UNRELIABLE_ERROR  Uncertainty exceeds quoted error
 9    512           NON_SCIENCE       Pixel not on science portion of detector
 10   1024          DEAD              Dead pixel

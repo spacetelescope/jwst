@@ -2,13 +2,10 @@ Reference File
 ==============
 The msaflagopen correction step uses a MSAOPER reference file.
 
-CRDS Selection Criteria
-:::::::::::::::::::::::
+.. include:: ../includes/standard_keywords.rst
 
-:NIRSPEC: USEAFTER
+.. include:: msaoper_selection.rst
 
-Msaoper reference files are selected on the basis of USEAFTER date only.
-They are valid for NIRSpec only.
 
 MSAOPER Reference File Format
 :::::::::::::::::::::::::::::

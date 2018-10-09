@@ -5,9 +5,9 @@ The fringe correction step uses a FRINGE reference file, which has the same
 format as the FLAT reference file.  This correction is applied only to MIRI 
 MRS (IFU) mode exposures, which are always single full-frame 2-D images.
 
-CRDS Selection Criteria
------------------------
-Fringe reference files are selected by DETECTOR and GRATNG14.
+.. include:: ../includes/standard_keywords.rst
+
+.. include:: fringe_selection.rst
 
 Reference File Format
 ---------------------
@@ -25,6 +25,5 @@ DQ       2      ncols x nrows  integer
 
 Image dimensions should be 1032 x 1024.
 
-The BINTABLE extension uses ``EXTNAME=DQ_DEF`` and contains the bit assignments
-of the conditions flagged in the DQ array.
+.. include:: ../includes/dq_def.rst
 
