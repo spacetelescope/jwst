@@ -2,7 +2,7 @@ Reference File
 ==============
 
 There are two types of reference files used by the cube_build step. The first type holds the default
-cube parameters used in setting up the output IFU Cube. The reftype for this reference file is *cubepars*
+cube parameters used in setting up the output IFU Cube. The reftype for this reference file is *cubepar*
 and there is a  reference file of this type for MIRI data and one for NIRSPEC data. These files contain tables 
 for each band of the spatial and spectral size and the size of the region of interest to use to construct the
 IFU cube.  If more than one band is used to build the IFU cube,
@@ -13,13 +13,6 @@ to allow a varying spectral step with wavelength.
 The other type of reference file pertains only to MIRI data and contains the width of the PSF and LSF per
 band. The reftype for this reference file is *resol*.
 This information is used if the weight function incorporates the size of the psf and lsf, i.e.  --weighting = miripsf 
-
-
-CRDS Selection Criteria
------------------------
-The cube parameter reference file selection is based on Instrument. CRDS selection criteria for the MIRI resolution 
-reference file is  also based on Instrument (a N/Q is returned for NIRSPEC data).
-
 
 Cube Building Parameter Reference File Format
 ---------------------------------------------
@@ -37,7 +30,11 @@ extensions  in the NIRSPEC
 reference file contains the wavelength sampling and region of interest size  to use for 
 PRISM, MEDIUM resolution, and HIGH resolution multi-band cubes, respectively.
 
+.. include:: ../includes/standard_keywords.rst
 
+.. include:: cubepar_selection.rst
+
+.. include:: cubepar_format.rst
 
 MIRI Resolution reference file
 ------------------------------
@@ -52,3 +49,6 @@ The third BINTABLE extension, PSF_FWHM_BETA,
 has a format of 1 row and 5 columns. The 5 columns hold the polynomial coefficients for determining the beta PSF
 size. 
 
+.. include:: resol_selection.rst
+
+.. include:: resol_format.rst

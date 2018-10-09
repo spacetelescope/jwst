@@ -43,7 +43,7 @@ class MultiSpecModel(model_base.DataModel):
     """
     schema_url = "multispec.schema.yaml"
 
-    def __init__(self, init=None, int_times=None, **kwargs):
+    def __init__(self, init=None, **kwargs):
 
         if isinstance(init, SpecModel):
             super(MultiSpecModel, self).__init__(init=None, **kwargs)
@@ -52,6 +52,3 @@ class MultiSpecModel(model_base.DataModel):
             return
 
         super(MultiSpecModel, self).__init__(init=init, **kwargs)
-
-        if int_times is not None:
-            self.int_times = int_times

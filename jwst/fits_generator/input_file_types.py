@@ -82,7 +82,7 @@ class FITSGetter:
             use_hdu = hdu
         return self._mapping[use_hdu].header.get(use_key, default)
 
-class InputFileType(object):
+class InputFileType():
     """
     Base class for an input file type.
     """

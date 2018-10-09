@@ -79,6 +79,7 @@ class Spec2Pipeline(Pipeline):
 
         # Each exposure is a product in the association.
         # Process each exposure.
+        results = []
         has_exceptions = False
         for product in asn['products']:
             self.log.info('Processing product {}'.format(product['name']))
@@ -99,8 +100,7 @@ class Spec2Pipeline(Pipeline):
                 has_exceptions = True
             else:
                 if result is not None:
-                    self.save_model(result)
-                    self.closeout(to_close=[result])
+                    results.append(result)
 
         if has_exceptions and self.fail_on_exception:
             raise RuntimeError(
@@ -109,6 +109,10 @@ class Spec2Pipeline(Pipeline):
 
         # We're done
         self.log.info('Ending calwebb_spec2')
+
+        self.output_use_model = True
+        self.suffix = False
+        return results
 
     # Process each exposure
     def process_exposure_product(
@@ -134,12 +138,12 @@ class Spec2Pipeline(Pipeline):
         # one. We'll just get the first one found.
         science = members_by_type['science']
         if len(science) != 1:
-            self.log.warn(
+            self.log.warning(
                 'Wrong number of science exposures found in {}'.format(
                     exp_product['name']
                 )
             )
-            self.log.warn('    Using only first one.')
+            self.log.warning('    Using only first one.')
         science = science[0]
 
         self.log.info('Working on input %s ...', science)
@@ -212,7 +216,7 @@ class Spec2Pipeline(Pipeline):
         if exp_type in ['NRS_MSASPEC', 'NRS_IFU'] and \
            len(imprint) > 0:
             if len(imprint) > 1:
-                self.log.warn('Wrong number of imprint members')
+                self.log.warning('Wrong number of imprint members')
             imprint = imprint[0]
             input = self.imprint_subtract(input, imprint)
 
@@ -245,8 +249,8 @@ class Spec2Pipeline(Pipeline):
         if exp_type == 'MIR_MRS':
             input = self.fringe(input)
 
-        # Apply pathloss correction to NIRSpec exposures
-        if exp_type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_IFU']:
+        # Apply pathloss correction to NIRSpec and NIRISS SOSS exposures
+        if exp_type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_IFU', 'NIS_SOSS']:
             input = self.pathloss(input)
 
         # Apply barshadow correction to NIRSPEC MSA exposures
@@ -262,9 +266,10 @@ class Spec2Pipeline(Pipeline):
 
         # Setup to save the calibrated exposure at end of step.
         if tso_mode:
-            self.suffix = 'calints'
+            suffix = 'calints'
         else:
-            self.suffix = 'cal'
+            suffix = 'cal'
+        result.meta.filename = self.make_output_path(suffix=suffix)
 
         # Produce a resampled product, either via resample_spec for
         # "regular" spectra or cube_build for IFU data. No resampled

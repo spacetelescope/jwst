@@ -28,21 +28,8 @@ class FringeModel(ReferenceFileModel):
     """
     schema_url = "fringe.schema.yaml"
 
-    def __init__(self, init=None, data=None, dq=None, err=None,
-                 dq_def=None, **kwargs):
+    def __init__(self, init=None, **kwargs):
         super(FringeModel, self).__init__(init=init, **kwargs)
-
-        if data is not None:
-            self.data = data
-
-        if dq is not None:
-            self.dq = dq
-
-        if err is not None:
-            self.err = err
-
-        if dq_def is not None:
-            self.dq_def = dq_def
 
         self.dq = dynamic_mask(self)
 

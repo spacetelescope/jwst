@@ -182,7 +182,7 @@ def jwst_ephem_interp(t, padding=3):
     last_idx += padding
     fit_type = 'cubic'
     if first_idx < 0 or last_idx >= len(mask):
-        logger.warn('Times extend outside range of ephemeris.'
+        logger.warning('Times extend outside range of ephemeris.'
                     ' Extrapolation will be used.')
         fit_type = 'linear'
         first_idx = max(first_idx, 0)

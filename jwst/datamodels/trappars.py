@@ -19,9 +19,3 @@ class TrapParsModel(ReferenceFileModel):
         for a different trap family.
     """
     schema_url = "trappars.schema.yaml"
-
-    def __init__(self, init=None, trappars_table=None, **kwargs):
-        super(TrapParsModel, self).__init__(init=init, **kwargs)
-
-        if trappars_table is not None:
-            self.trappars_table = trappars_table

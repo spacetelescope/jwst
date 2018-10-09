@@ -1,3 +1,4 @@
 from .engdblog import EngDBLogStep
 
-__version__ = '0.9.3'
+__all__ = ["EngDBLogStep"]
+

@@ -2,13 +2,17 @@ Reference File Types
 ====================
 The RSCD correction step uses an RSCD reference file. 
 
-CRDS Selection Criteria
------------------------
-RSCD reference files are selected on the basis of INSTRUME and DETECTOR
-values for the input science data set.  The reference file for each detector is a table of values based on
-READPATT (FAST, SLOW) , SUBARRAY (FULL or one the various subarray types) , and ROWS type (even or odd row).
-The fourteen correction values are read in separately for even and odd rows for the readout pattern and  
-if it is for the full array or one of the imager subarrays. 
+.. include:: ../includes/standard_keywords.rst
+
+.. include:: rscd_selection.rst
+
+RSCD Row Selection
+------------------
+The reference file for each detector is a table of values based on READPATT
+(FAST, SLOW) , SUBARRAY (FULL or one the various subarray types) , and ROWS
+type (even or odd row).  The fourteen correction values are read in separately
+for even and odd rows for the readout pattern and if it is for the full array
+or one of the imager subarrays.
 
 RSCD Reference File Format
 ---------------------------
@@ -55,8 +59,8 @@ The following two additional equations are used in Equation 2:
 
   :math:`b{1} = ascale * (illum_{zpt} + illum_{slope}*N + illum2* N^2) \; \; (Equation \; 2.1)`
   :math:`Counts{2} = Final \, DN \, in \, the \,  last \, group \, in \; the \, last \, integration 
-	  \, - Crossover \, Point \; \; (Equation \; 2.2)`
-	  
+      \, - Crossover \, Point \; \; (Equation \; 2.2)`
+      
 The parameters for equations 2, 2.1, and 2,2  are:
   - :math:`b{2}` in equation 2 is table column POW from RSCD table
   - :math:`b{3}` in equation 2 is table column  PARAM3 from the RSCD table

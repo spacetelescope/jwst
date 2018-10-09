@@ -1,10 +1,10 @@
-from . import model_base
+from .model_base import DataModel
 
 
 __all__ = ['RampFitOutputModel']
 
 
-class RampFitOutputModel(model_base.DataModel):
+class RampFitOutputModel(DataModel):
     """
     A data model for the optional output of the ramp fitting step.
 
@@ -37,43 +37,3 @@ class RampFitOutputModel(model_base.DataModel):
     crmag : numpy array (n_int, max_seg, ny, nx)
     """
     schema_url = "rampfitoutput.schema.yaml"
-
-    def __init__(self, init=None,
-                 slope=None,
-                 sigslope=None,
-                 var_poisson=None,
-                 var_rnoise=None,
-                 yint=None,
-                 sigyint=None,
-                 pedestal=None,
-                 weights=None,
-                 crmag=None,
-                 **kwargs):
-        super(RampFitOutputModel, self).__init__(init=init, **kwargs)
-
-        if slope is not None:
-            self.slope = slope
-
-        if sigslope is not None:
-            self.sigslope = sigslope
-
-        if var_poisson is not None:
-            self.var_poisson = var_poisson
-
-        if var_rnoise is not None:
-            self.var_rnoise = var_rnoise
-
-        if yint is not None:
-            self.yint = yint
-
-        if sigyint is not None:
-            self.sigyint = sigyint
-
-        if pedestal is not None:
-            self.pedestal = pedestal
-
-        if weights is not None:
-            self.weights = weights
-
-        if crmag is not None:
-            self.crmag = crmag

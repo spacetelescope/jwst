@@ -5,12 +5,11 @@ from copy import copy
 from glob import glob
 from os import path
 
+import pytest
+
 from .helpers import (
     SCRIPT_DATA_PATH,
     abspath,
-    mk_tmp_dirs,
-    require_bigdata,
-    runslow,
     update_asn_basedir,
 )
 
@@ -22,8 +21,8 @@ DATAPATH = abspath(
 )
 
 
-@runslow
-@require_bigdata
+@pytest.mark.slow
+@pytest.mark.bigdata
 def test_run_full_noscale(mk_tmp_dirs):
     """Test a full run"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -82,8 +81,8 @@ def test_run_full_noscale(mk_tmp_dirs):
     assert len(output_files) == 0
 
 
-@runslow
-@require_bigdata
+@pytest.mark.slow
+@pytest.mark.bigdata
 def test_run_full_scale(mk_tmp_dirs):
     """Test a full run"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs

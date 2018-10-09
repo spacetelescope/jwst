@@ -1,8 +1,8 @@
-from . import model_base
+from .model_base import DataModel
 
 __all__ = ['TrapsFilledModel']
 
-class TrapsFilledModel(model_base.DataModel):
+class TrapsFilledModel(DataModel):
     """
     A data model for the number of traps filled for a detector, for
     persistence.
@@ -17,9 +17,3 @@ class TrapsFilledModel(model_base.DataModel):
         one plane for each "trap family."
     """
     schema_url = "trapsfilled.schema.yaml"
-
-    def __init__(self, init=None, data=None, **kwargs):
-        super(TrapsFilledModel, self).__init__(init=init, **kwargs)
-
-        if data is not None:
-            self.data = data

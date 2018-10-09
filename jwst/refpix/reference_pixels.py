@@ -40,7 +40,6 @@
 import numpy as np
 from scipy import stats
 import logging
-from .. import datamodels
 from ..datamodels import dqflags
 from ..lib import reffile_utils
 
@@ -99,7 +98,7 @@ BAD_REFERENCE_PIXELS = 1
 SUBARRAY_DOESNTFIT = 2
 SUBARRAY_SKIPPED = 3
 
-class Dataset(object):
+class Dataset():
     """Base Class to handle passing stuff from routine to routine
 
     Parameters:

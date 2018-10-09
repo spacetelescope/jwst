@@ -2,12 +2,12 @@
     "asn_type": "spec2",
     "asn_rule": "candidate_Asn_Lv2Spec",
     "version_id": null,
-    "code_version": "0.9.6",
+    "code_version": "0.12.0a.dev115",
     "degraded_status": "No known degraded exposures in association.",
     "program": "98010",
     "target": "1",
     "asn_pool": "jw98010_20171108T062332_pool",
-    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '98010'})\nDMSAttrConstraint({'name': 'is_tso', 'sources': ['tsovisit'], 'value': None})\nDMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '98010'})\nDMSAttrConstraint({'name': 'target', 'sources': ['targetid'], 'value': '1'})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'miri'})\nDMSAttrConstraint({'name': 'detector', 'sources': ['detector'], 'value': 'mirimage'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'p750l'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['pupil', 'grating'], 'value': None})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': 'full'})\nDMSAttrConstraint({'name': 'channel', 'sources': ['channel'], 'value': None})\nDMSAttrConstraint({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'mir_lrs\\\\-fixedslit'})\nSimpleConstraint({'name': 'single_science', 'value': False})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o001\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '98010'})\nDMSAttrConstraint({'name': 'is_tso', 'sources': ['tsovisit'], 'value': None})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'miri'})\nDMSAttrConstraint({'name': 'detector', 'sources': ['detector'], 'value': 'mirimage'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'p750l'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['pupil', 'grating'], 'value': None})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': 'full'})\nDMSAttrConstraint({'name': 'channel', 'sources': ['channel'], 'value': None})\nDMSAttrConstraint({'name': 'slit', 'sources': ['fxd_slit'], 'value': None})\nDMSAttrConstraint({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'mir_lrs\\\\-fixedslit'})\nConstraint_Single_Science({'name': 'single_science', 'value': False})\nDMSAttrConstraint({'name': 'patttype', 'sources': ['patttype'], 'value': ['2_point_nod|4_point_nod|along_slit_nod']})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o001\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
     "asn_id": "o001",
     "products": [
         {
@@ -15,36 +15,6 @@
             "members": [
                 {
                     "expname": "jw98010001001_02104_00001_mirimage_rate.fits",
-                    "exptype": "science",
-                    "exposerr": "null"
-                }
-            ]
-        },
-        {
-            "name": "jw98010001001_02103_00001_mirimage",
-            "members": [
-                {
-                    "expname": "jw98010001001_02103_00001_mirimage_rate.fits",
-                    "exptype": "science",
-                    "exposerr": "null"
-                }
-            ]
-        },
-        {
-            "name": "jw98010001001_02101_00001_mirimage",
-            "members": [
-                {
-                    "expname": "jw98010001001_02101_00001_mirimage_rate.fits",
-                    "exptype": "science",
-                    "exposerr": "null"
-                }
-            ]
-        },
-        {
-            "name": "jw98010001001_02102_00001_mirimage",
-            "members": [
-                {
-                    "expname": "jw98010001001_02102_00001_mirimage_rate.fits",
                     "exptype": "science",
                     "exposerr": "null"
                 }

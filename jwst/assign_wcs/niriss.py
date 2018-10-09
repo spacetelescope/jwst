@@ -265,7 +265,7 @@ def wfss(input_model, reference_files):
 
     # make sure this is a grism image
     if "NIS_WFSS" != input_model.meta.exposure.type:
-            raise TypeError('The input exposure is not NIRISS grism')
+            raise ValueError('The input exposure is not NIRISS grism')
 
     # Create the empty detector as a 2D coordinate frame in pixel units
     gdetector = cf.Frame2D(name='grism_detector',

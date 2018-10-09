@@ -63,11 +63,11 @@ import sys
 
 from jwst.lib.set_telescope_pointing import add_wcs
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger = logging.getLogger('jwst')
 handler = logging.StreamHandler()
 handler.setLevel(logging.DEBUG)
 logger.addHandler(handler)
+logger.setLevel(logging.INFO)
 
 
 if __name__ == '__main__':

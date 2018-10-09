@@ -1,4 +1,3 @@
-import os
 import pytest
 from astropy.io import fits
 from jwst.extract_1d.extract_1d_step import Extract1dStep
@@ -13,14 +12,10 @@ pytestmark = [
 
 
 def test_extract1d_nirspec(_bigdata):
-    """Regression test of extract_1d step performed on NIRSpec fixed slit data.
+    """
+    Regression test of extract_1d step performed on NIRSpec fixed slit data.
     """
     output_file_base, output_file = add_suffix('extract1d1_output.fits', 'extract_1d')
-
-    try:
-        os.remove(output_file)
-    except:
-        pass
 
     Extract1dStep.call(_bigdata + '/nirspec/test_extract_1d/jw00023001001_01101_00001_NRS1_cal.fits',
                        smoothing_length=0, bkg_order=0,

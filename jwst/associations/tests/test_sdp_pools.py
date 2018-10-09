@@ -9,11 +9,11 @@ against are built in the jupyter notebook
 """
 from glob import glob
 from os import path
+
 import pytest
 
 from .helpers import (
     compare_asns,
-    runslow,
     t_path,
 )
 
@@ -21,14 +21,14 @@ from .. import (AssociationPool, load_asn)
 from ..main import Main
 
 # Main test args
-TEST_ARGS = ['--dry-run']
+TEST_ARGS = ['--dry-run', '--no-merge']
 
 pool_paths = glob(t_path(path.join(
     'data', 'sdp', 'pools', '*.csv'
 )))
 
 
-@runslow
+@pytest.mark.slow
 @pytest.mark.parametrize(
     'pool_path',
     pool_paths
@@ -48,7 +48,7 @@ def test_against_standard(pool_path):
                 del standards[idx]
                 break
         else:
-            raise last_err
+            assert False, '{}'.format(last_err)
 
 
 def generate_asns(pool_path):

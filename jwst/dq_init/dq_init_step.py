@@ -31,13 +31,13 @@ class DQInitStep(Step):
                 input_model = datamodels.GuiderRawModel(input)
                 self.log.info("Input opened as GuiderRawModel")
 
-        except TypeError:
+        except (TypeError, ValueError):
             # If the initial open attempt fails,
             # try to open as a GuiderRawModel
             try:
                 input_model = datamodels.GuiderRawModel(input)
                 self.log.info("Input opened as GuiderRawModel")
-            except TypeError:
+            except (TypeError, ValueError):
                 self.log.error("Unexpected or unknown input model type")
         except:
             self.log.error("Can't open input")

@@ -82,7 +82,7 @@ class Asn_WFSCMB(AsnMixin_Science):
             DMSAttrConstraint(
                 name='wfsvisit',
                 sources=['visitype'],
-                value='.+wfsc.+',
+                value='prime_wfsc_sensing_control',
             ),
             DMSAttrConstraint(
                 name='asn_candidate_wfs',
@@ -486,7 +486,9 @@ class Asn_ACQ_Reprocess(DMS_Level3_Base):
                 name='force_fail',
                 test=lambda x, y: False,
                 value='anything but None',
-                force_reprocess=ProcessList.NONSCIENCE
+                reprocess_on_fail=True,
+                work_over=ProcessList.NONSCIENCE,
+                reprocess_rules=[]
             )
         ])
 

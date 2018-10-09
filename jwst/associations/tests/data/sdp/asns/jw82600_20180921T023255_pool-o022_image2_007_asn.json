@@ -1,0 +1,24 @@
+{
+    "asn_type": "image2",
+    "asn_rule": "candidate_Asn_Lv2Image",
+    "version_id": null,
+    "code_version": "0.12.0a.dev115",
+    "degraded_status": "No known degraded exposures in association.",
+    "program": "82600",
+    "target": "1",
+    "asn_pool": "jw82600_20180921T023255_pool",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '82600'})\nDMSAttrConstraint({'name': 'is_tso', 'sources': ['tsovisit'], 'value': None})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'nircam'})\nDMSAttrConstraint({'name': 'detector', 'sources': ['detector'], 'value': 'nrca3'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'f150w'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['pupil'], 'value': 'maskrnd'})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': 'full'})\nDMSAttrConstraint({'name': 'channel', 'sources': ['channel'], 'value': 'short'})\nDMSAttrConstraint({'name': 'slit', 'sources': ['fxd_slit'], 'value': None})\nConstraint_Image_Science({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'nrc_image'})\nConstraint_Single_Science({'name': 'single_science', 'value': False})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o022\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
+    "asn_id": "o022",
+    "products": [
+        {
+            "name": "jw82600022001_02102_00001_nrca3",
+            "members": [
+                {
+                    "expname": "jw82600022001_02102_00001_nrca3_rate.fits",
+                    "exptype": "science",
+                    "exposerr": "null"
+                }
+            ]
+        }
+    ]
+}
