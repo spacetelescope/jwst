@@ -17,8 +17,8 @@ def test_nrs_msa_spec2(_bigdata):
 
     # define step for use in test
     step = Spec2Pipeline()
+    step.output_file = 'F170LP-G235M_MOS_observation-6-c0e0_001_DN_NRS1_mod_cal.fits'
     step.save_bsub = False
-    step.output_use_model = True
     step.resample_spec.save_results = True
     step.extract_1d.save_results = True
     step.extract_1d.smoothing_length = 0
