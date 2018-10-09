@@ -96,6 +96,10 @@ class Asn_WFSCMB(AsnMixin_Science):
             DMSAttrConstraint(
                 name='detector',
                 sources=['detector']
+            ),
+            DMSAttrConstraint(
+                name='expspcin',
+                sources=['expspcin']
             )
         ])
 
