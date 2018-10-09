@@ -11,12 +11,11 @@ from collections import defaultdict
 from glob import glob
 from os import path
 
+import pytest
+
 from .helpers import (
     SCRIPT_DATA_PATH,
     abspath,
-    mk_tmp_dirs,
-    require_bigdata,
-    runslow,
     update_asn_basedir,
 )
 
@@ -28,7 +27,7 @@ DATAPATH = abspath(
 )
 
 
-@require_bigdata
+@pytest.mark.bigdata
 def test_run_nothing(mk_tmp_dirs):
     """Run no steps. There should be no output."""
 
@@ -53,8 +52,8 @@ def test_run_nothing(mk_tmp_dirs):
     assert len(glob('*')) == 0
 
 
-@runslow
-@require_bigdata
+@pytest.mark.slow
+@pytest.mark.bigdata
 def test_run_extract_1d_only(mk_tmp_dirs):
     """Test only the extraction step.
     """
@@ -81,8 +80,8 @@ def test_run_extract_1d_only(mk_tmp_dirs):
     product_name_glob = product_name_base + '_ch[34]-long_x1d.fits'
     assert len(glob(product_name_glob)) == 2
 
-@runslow
-@require_bigdata
+@pytest.mark.slow
+@pytest.mark.bigdata
 def test_run_resample_only(mk_tmp_dirs):
     """Test resample step only."""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -108,8 +107,8 @@ def test_run_resample_only(mk_tmp_dirs):
     assert len(glob(product_name_glob)) == 2
 
 
-@runslow
-@require_bigdata
+@pytest.mark.slow
+@pytest.mark.bigdata
 def test_run_mrs_imatch_only(mk_tmp_dirs):
     """Test a basic run"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -137,8 +136,8 @@ def test_run_mrs_imatch_only(mk_tmp_dirs):
     assert path.isfile(product_name)
 
 
-@runslow
-@require_bigdata
+@pytest.mark.slow
+@pytest.mark.bigdata
 def test_run_full(mk_tmp_dirs):
     """Test a basic run"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -201,8 +200,8 @@ def test_run_full(mk_tmp_dirs):
     assert len(output_files) == 0
 
 
-@runslow
-@require_bigdata
+@pytest.mark.slow
+@pytest.mark.bigdata
 def test_run_outlier_only(mk_tmp_dirs):
     """Test a basic run"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs

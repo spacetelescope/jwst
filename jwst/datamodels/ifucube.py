@@ -1,10 +1,10 @@
-from . import model_base
+from .model_base import DataModel
 
 
 __all__ = ['IFUCubeModel']
 
 
-class IFUCubeModel(model_base.DataModel):
+class IFUCubeModel(DataModel):
     """
     A data model for 3D IFU  cubes.
 
@@ -25,33 +25,15 @@ class IFUCubeModel(model_base.DataModel):
     weightmap: numpy array
         The weight map array.  3-D
 
-    wavetable:  1-D table 
+    wavetable:  1-D table
         Optional table of  wavelengths of IFUCube slices
-     
+
     """
     schema_url = "ifucube.schema.yaml"
 
-    def __init__(self, init=None, data=None, dq=None, err=None, 
-                 weightmap=None, wavetable=None, hdrtab=None,  **kwargs):
+    def __init__(self, init=None, **kwargs):
         super(IFUCubeModel, self).__init__(init=init, **kwargs)
 
-        if data is not None:
-            self.data = data
-
-        if dq is not None:
-            self.dq = dq
-
-        if err is not None:
-            self.err = err
-
-        if weightmap is not None:
-            self.weightmap = weightmap
-
-        if wavetable is not None:
-            self.wavetable = wavetable
-
-        if hdrtab is not None:
-            self.hdrtab = hdrtab
-        # Implicitly create arrays
+       # Implicitly create arrays
         self.dq = self.dq
         self.err = self.err

@@ -9,12 +9,11 @@ the top of the example data tree.
 
 from os import path
 
+import pytest
+
 from .helpers import (
     SCRIPT_DATA_PATH,
     abspath,
-    mk_tmp_dirs,
-    require_bigdata,
-    runslow,
 )
 
 from ...associations import load_asn
@@ -25,8 +24,8 @@ DATAPATH = abspath(
 )
 
 
-@runslow
-@require_bigdata
+@pytest.mark.slow
+@pytest.mark.bigdata
 def test_run_cube_build_only(mk_tmp_dirs):
     """Test only the extraction step.
     """
@@ -57,8 +56,8 @@ def test_run_cube_build_only(mk_tmp_dirs):
     assert path.isfile(product_name)
 
 
-@runslow
-@require_bigdata
+@pytest.mark.slow
+@pytest.mark.bigdata
 def test_run_extract_1d_only(mk_tmp_dirs):
     """Test only the extraction step.
     """

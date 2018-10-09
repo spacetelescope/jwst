@@ -25,18 +25,8 @@ class LinearityModel(ReferenceFileModel):
     """
     schema_url = "linearity.schema.yaml"
 
-    def __init__(self, init=None, coeffs=None, dq=None, dq_def=None,
-                 **kwargs):
+    def __init__(self, init=None, **kwargs):
         super(LinearityModel, self).__init__(init=init, **kwargs)
-
-        if coeffs is not None:
-            self.coeffs = coeffs
-
-        if dq is not None:
-            self.dq = dq
-
-        if dq_def is not None:
-            self.dq_def = dq_def
 
         self.dq = dynamic_mask(self)
 

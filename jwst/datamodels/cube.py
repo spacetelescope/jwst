@@ -1,10 +1,10 @@
-from . import model_base
+from .model_base import DataModel
 
 
 __all__ = ['CubeModel']
 
 
-class CubeModel(model_base.DataModel):
+class CubeModel(DataModel):
     """
     A data model for 3D image cubes.
 
@@ -45,42 +45,11 @@ class CubeModel(model_base.DataModel):
     """
     schema_url = "cube.schema.yaml"
 
-    def __init__(self, init=None, data=None, dq=None, err=None, zeroframe=None,
-                 relsens=None, int_times=None, area=None, wavelength=None,
-                 var_poisson=None, var_rnoise=None, **kwargs):
-      
+    def __init__(self, init=None, **kwargs):
+
         super(CubeModel, self).__init__(init=init, **kwargs)
 
-        if data is not None:
-            self.data = data
-
-        if dq is not None:
-            self.dq = dq
-
-        if err is not None:
-            self.err = err
-
-        if zeroframe is not None:
-            self.zeroframe = zeroframe
-
-        if relsens is not None:
-            self.relsens = relsens
-
-        if int_times is not None:
-            self.int_times = int_times
-
-        if area is not None:
-            self.area = area
-
-        if wavelength is not None:
-            self.wavelength = wavelength
-
-        if var_poisson is not None:
-            self.var_poisson = var_poisson
-
-        if var_rnoise is not None:
-            self.var_rnoise = var_rnoise
-   
         # Implicitly create arrays
         self.dq = self.dq
         self.err = self.err
+

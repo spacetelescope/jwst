@@ -22,13 +22,13 @@ source catalog that may be associated with the dispersed image. Instead, there
 is a helper method that is used to calculate the bounding boxes that contain
 the dispersed spectra for each object. One box is made for each order. ``extract2d``
 uses the source catalog referenced in the input models meta information to create
-the list of objects and their corresponding bounding box, this list is used to make
+the list of objects and their corresponding bounding box. This list is used to make
 the 2D cutouts from the dispersed image.
 
 Algorithm
 ---------
 The step is currently applied only to NIRSpec Fixed Slit, NIRSPEC MSA, NIRSPEC TSO,
-NIRCAM WFSS and NIRISS WFSS observations.
+NIRCAM and NIRISS WFSS, and NIRCAM TSGRISM observations.
 
 For NIRSPEC:
 
@@ -68,21 +68,68 @@ of ``GrismObjects`` outside of these, the ``GrismObject`` itself can be imported
 ``jwst.transforms.models``.
 
 
+For NIRCAM TSGRISM:
+
+There is no source catalog created for TSO observations because the source is always
+placed on the same pixel, the user can only vary the size of the subarray. All of the
+subarrays have their "bottom" edge located at the physical bottom edge of the detector
+and grow in size vertically. The source spectrum trace will always be centered
+somewhere near row 34 in the vertical direction (dispersion running parallel to rows).
+So the larger subarrays will just result in larger amount of sky above the spectrum.
+
+`extract_2d` will always produce a cutout that is 64 pixels in height
+(cross-dispersion direction) for all subarrays and full frame exposures,
+which is equal to the height of the smallest available subarray (2048 x 64).
+This is to allow area within the cutout for sampling the background in later steps,
+such as `extract_1d`. The slit height is a parameter that a user can set
+(during reprocessing) to tailor their results. 
+
+
 Step Arguments
 ==============
-The extract_2d step has two optional arguments for NIRSPEC observations:
+The `extract_2d` step has two optional arguments for NIRSPEC observations:
 
 * ``--slit_name``: name (string value) of a specific slit region to
   extract. The default value of None will cause all known slits for the
   instrument mode to be extracted. Currently only used for NIRspec fixed slit
   exposures.
 
-* ``--apply_wavecorr``: bool (default is True). Flag indicating whether to apply the
-   Nirspec wavelength zero-point correction.
+* ``--apply_wavecorr``: bool (default is True). Flag indicating whether to apply the Nirspec wavelength zero-point correction.
 
 
-For NIRCAM and NIRISS, the extract_2d step has only one optional argument:
+For NIRCAM and NIRISS WFSS, the `extract_2d` step has three optional arguments:
 
 * ``--grism_objects``: list (default is empty). A list of ``jwst.transforms.models.GrismObject``.
 
+* ``--mmag_extract``: float. (default is 99.) the minimum magnitude object to extract
+
+* ``--extract_orders``: list. The list of orders to extract. The default is taken from the `wavelengthrange` reference file.
+
+
+For NIRCAM TSGRISM, the `extract_2d` step has two optional arguments:
+
+* ``--extract_orders``: list. The list of orders to extract. The default is taken from the `wavelengthrange` reference file.
+
+* ``--extract_height``: int. The cross-dispersion size to extract
+
+
+Reference Files
+===============
+To apply the Nirspec wavelength zero-point correction, this step uses the
+WAVECORR reference file. The zero-point correction is applied to observations
+with EXP_TYPE of "NRS_FIXEDSLT", "NRS_BRIGHTOBJ" or "NRS_MSASPEC". This is an optional
+correction (on by default). It can be turned off by specifying ``apply_wavecorr=False``
+when running the step.
+
+NIRCAM WFSS and NIRISS WFSS observations use the `wavelengthrange` reference file in order
+to construct the bounding boxes around each objects orders. If a list of ``GrismObject``s
+is supplied, then no reference file is neccessary.
+
+For NIRCAM WFSS and TSGRIM modes and NIRISS WFSS mode the `wavelengthrange` file contains the wavelength limits to use when caluclating the minimum and maximum dispersion extents on the detector. It also contains the default list of orders that should be extracted for each filter.
+To be consistent with other modes, and for conveniance,it also lists the orders and filters that are valid  with the file.
+
+:order: A list of orders this file covers
+:wavelengthrange: A list containing the list of [order, filter, wavelength min, wavelength max] 
+:waverange_selector: The list of FILTER names available
+:extract_orders: A list containing the list of orders to extract for each filter
 

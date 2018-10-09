@@ -4,7 +4,7 @@ from os import path
 
 import pytest
 from .steps import StepWithModel
-from .util import (mk_tmp_dirs, t_path)
+from .util import t_path
 
 from ..step import Step
 from ...datamodels import (DataModel, ModelContainer)
@@ -94,7 +94,7 @@ def test_fail_input_dir(mk_tmp_dirs):
     input_file = 'flat.fits'
 
     with pytest.raises(FileNotFoundError):
-        step = Step.from_cmdline([
+        Step.from_cmdline([
             'jwst.stpipe.tests.steps.StepWithModel',
             input_file,
         ])

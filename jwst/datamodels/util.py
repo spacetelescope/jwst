@@ -112,6 +112,9 @@ def open(init=None, extensions=None, **kwargs):
     if hdulist:
         # So we don't need to open the image twice
         init = hdulist
+        info = init.fileinfo(0)
+        if info is not None:
+            file_name = info.get('filename')
 
         try:
             hdu = hdulist[('SCI', 1)]
@@ -152,24 +155,21 @@ def open(init=None, extensions=None, **kwargs):
     # Actually open the model
     model = new_class(init, extensions=extensions, **kwargs)
 
+    # Close the hdulist if we opened it
+    if file_to_close is not None:
+        model._files_to_close.append(file_to_close)
+
     if not has_model_type:
         class_name = new_class.__name__.split('.')[-1]
         if file_name:
             errmsg = \
                 "model_type not found. Opening {} as a {}".format(file_name, class_name)
-        else:
-            errmsg = \
-                "model_type not found. Opening model as a {}".format(class_name)
-        warnings.warn(errmsg, NoTypeWarning)
+            warnings.warn(errmsg, NoTypeWarning)
 
         try:
             delattr(model.meta, 'model_type')
         except AttributeError:
             pass
-
-    # Close the hdulist if we opened it
-    if file_to_close is not None:
-        model._files_to_close.append(file_to_close)
 
     return model
 

@@ -19,7 +19,7 @@ log.setLevel(logging.DEBUG)
 
 HUGE_NUM = np.finfo(np.float32).max
 
-def find_CRs(data, gdq, read_noise, rej_threshold, nframes):
+def find_crs(data, gdq, read_noise, rej_threshold, nframes):
 
     """
     Find CRs/Jumps in each integration within the input data array.

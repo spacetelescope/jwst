@@ -23,17 +23,8 @@ class TrapDensityModel(ReferenceFileModel):
     """
     schema_url = "trapdensity.schema.yaml"
 
-    def __init__(self, init=None, data=None, dq=None, dq_def=None, **kwargs):
+    def __init__(self, init=None, **kwargs):
         super(TrapDensityModel, self).__init__(init=init, **kwargs)
-
-        if data is not None:
-            self.data = data
-
-        if dq is not None:
-            self.dq = dq
-
-        if dq_def is not None:
-            self.dq_def = dq_def
 
         self.dq = dynamic_mask(self)
 

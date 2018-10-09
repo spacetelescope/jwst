@@ -321,7 +321,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         members = self.current_product['members']
         members.append(member)
         if member['exposerr'] not in _EMPTY:
-            logger.warn('Member {} has exposure error "{}"'.format(
+            logger.warning('Member {} has exposure error "{}"'.format(
                 item['filename'],
                 member['exposerr']
             ))
@@ -469,7 +469,7 @@ class Utility():
         """
         match = re.match(_LEVEL1B_REGEX, level1b_name)
         if match is None or match.group('type') != '_uncal':
-            logger.warn((
+            logger.warning((
                 'Item FILENAME="{}" is not a Level 1b name. '
                 'Cannot transform to Level 2b.'
             ).format(

@@ -2,11 +2,10 @@
 
 from os import path
 
+import pytest
+
 from .helpers import (
     abspath,
-    mk_tmp_dirs,
-    require_bigdata,
-    runslow,
 )
 
 from ...associations import load_asn
@@ -18,8 +17,8 @@ DATAPATH = abspath(
 )
 
 
-@runslow
-@require_bigdata
+@pytest.mark.slow
+@pytest.mark.bigdata
 def test_run_full(mk_tmp_dirs):
     """Test a full run"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -55,8 +54,8 @@ def test_run_full(mk_tmp_dirs):
     assert path.isfile(product_name + '_i2d.fits')
 
 
-@runslow
-@require_bigdata
+@pytest.mark.slow
+@pytest.mark.bigdata
 def test_single_image(mk_tmp_dirs):
     """Test a full run"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs

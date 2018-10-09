@@ -16,7 +16,7 @@ There are currently 2 storage backends implemented:
     ``astropy.io.fits``, such as mmap'ing of array data.
 """
 
-class Storage(object):
+class Storage():
     def close(self):
         raise NotImplementedError()
 
@@ -192,7 +192,7 @@ class TreeStorage(Storage):
         return self.tree
 
 
-class HasStorage(object):
+class HasStorage():
     def __init__(self, storage=None):
         if storage is None:
             storage = TreeStorage()

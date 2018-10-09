@@ -201,7 +201,7 @@ def update_wcs_from_fgs_guiding(model, default_pa_v3=0.0, default_vparity=1):
     try:
         pa = model.meta.wcsinfo.pa_v3
     except AttributeError:
-        logger.warn(
+        logger.warning(
             'Keyword `PA_V3` not found. Using {} as default value'.format(
                 default_pa_v3
             )
@@ -213,7 +213,7 @@ def update_wcs_from_fgs_guiding(model, default_pa_v3=0.0, default_vparity=1):
     try:
         vparity = model.meta.wcsinfo.vparity
     except AttributeError:
-        logger.warn(
+        logger.warning(
             'Keyword "VPARITY" not found. Using {} as default value'.format(
                 default_vparity
             )
@@ -274,9 +274,8 @@ def update_wcs_from_telem(model, default_pa_v3=0., siaf_path=None, **kwargs):
     except ValueError as exception:
         logger.warning(
             'Cannot retrieve telescope pointing.'
-            'Default pointing parameters will be used.'
-            '\nException is {}'
-            'to set pointing.'.format(exception)
+            ' Default pointing parameters will be used.'
+            '\nException is {}'.format(exception)
         )
     else:
         # compute relevant WCS information

@@ -132,7 +132,7 @@ def test_step_from_commandline_invalid():
         ]
 
     with pytest.raises(ValueError):
-        step = Step.from_cmdline(args)
+        Step.from_cmdline(args)
 
 
 def test_step_from_commandline_invalid2():
@@ -142,7 +142,7 @@ def test_step_from_commandline_invalid2():
         '__foo__.__bar__'
         ]
     with pytest.raises(ValueError):
-        step = Step.from_cmdline(args)
+        Step.from_cmdline(args)
 
 
 def test_step_from_commandline_invalid3():
@@ -152,7 +152,7 @@ def test_step_from_commandline_invalid3():
         'sys.foo'
         ]
     with pytest.raises(ValueError):
-        step = Step.from_cmdline(args)
+        Step.from_cmdline(args)
 
 
 def test_step_from_commandline_invalid4():
@@ -162,9 +162,10 @@ def test_step_from_commandline_invalid4():
         'sys.argv'
         ]
     with pytest.raises(ValueError):
-        step = Step.from_cmdline(args)
+        Step.from_cmdline(args)
 
 
+@pytest.mark.skip(reason="No test here")
 def test_step_print_spec():
     import io
     buf = io.BytesIO()
@@ -173,8 +174,7 @@ def test_step_print_spec():
 
     subproc.SystemCall.print_configspec(buf)
 
-    content = buf.getvalue()
-
+    # content = buf.getvalue()
     # TODO: Assert some things
 
 
@@ -190,7 +190,7 @@ def test_step_with_local_class():
 def test_extra_parameter():
     from .steps import AnotherDummyStep
     with pytest.raises(ValidationError):
-        step = AnotherDummyStep("SomeOtherStepOriginal", par5='foo')
+        AnotherDummyStep("SomeOtherStepOriginal", par5='foo')
 
 
 def test_crds_override():

@@ -2,6 +2,7 @@ import os
 import shutil
 import tempfile
 import warnings
+import jsonschema
 
 import pytest
 from astropy.time import Time
@@ -66,6 +67,7 @@ def test_broadcast2():
 
 def test_from_hdulist():
     from astropy.io import fits
+    warnings.simplefilter("ignore")
     with fits.open(FITS_FILE) as hdulist:
         with open_model(hdulist) as dm:
             dm.data
@@ -127,16 +129,23 @@ def test_open():
     with open_model((50, 50)) as dm:
         pass
 
+    warnings.simplefilter("ignore")
     with open_model(FITS_FILE) as dm:
         assert isinstance(dm, QuadModel)
 
 def test_open_warning():
-    with warnings.catch_warnings(record=True) as w:
+    with warnings.catch_warnings(record=True) as warners:
         # Cause all warnings to always be triggered.
         warnings.simplefilter("always")
         with open_model(FITS_FILE) as model:
-            class_name = model.__class__.__name__
-            assert class_name in str(w[0].message)
+            pass
+
+        class_name = model.__class__.__name__
+        j = None
+        for i, w in enumerate(warners):
+            if class_name in str(w.message):
+                j = i
+        assert j is not None
 
 
 def test_copy():
@@ -344,6 +353,14 @@ def test_model_with_nonstandard_primary_array():
     m = NonstandardPrimaryArrayModel()
     list(m.keys())
 
+def test_initialize_arrays_with_arglist():
+    shape = (10,10)
+    thirteen = np.full(shape, 13.0)
+    bitz = np.full(shape, 7)
+
+    im = ImageModel(shape, zeroframe=thirteen, dq=bitz)
+    assert np.array_equal(im.zeroframe, thirteen)
+    assert np.array_equal(im.dq, bitz)
 
 def test_relsens():
     with ImageModel() as im:
@@ -375,6 +392,7 @@ def test_image_with_extra_keyword_to_multislit():
 
 @pytest.fixture(scope="module")
 def container():
+    warnings.simplefilter("ignore")
     with ModelContainer(ASN_FILE, persist=True) as c:
         for m in c:
             m.meta.observation.program_number = '0001'
@@ -444,6 +462,7 @@ def test_hasattr():
     assert not has_filename, "Check that filename does not exist"
 
 def test_info():
+    warnings.simplefilter("ignore")
     with open_model(FITS_FILE) as model:
         info = model.info()
     matches = 0
@@ -463,6 +482,46 @@ def test_info():
                 assert words[1] == "(32,40,35,5)", "Correct size for err"
                 assert words[2] == "float32", "Correct type for err"
     assert matches== 3, "Check all extensions are described"
+
+def test_validate_on_read():
+    im1 = ImageModel((10,10))
+    schema = im1.meta._schema
+    schema['properties']['calibration_software_version']['fits_required'] = True
+
+    try:
+        im2 = ImageModel(FITS_FILE,
+                          schema=im1._schema,
+                          strict_validation=True)
+    except jsonschema.ValidationError:
+        caught = True
+    else:
+        caught = False
+        im2.close()
+
+    im1.close()
+    assert caught, "Test of validation while reading image"
+
+def test_validate_required_field():
+    im = ImageModel((10,10), strict_validation=True)
+    schema = im.meta._schema
+    schema['properties']['telescope']['fits_required'] = True
+
+    try:
+        im.validate_required_fields()
+    except jsonschema.ValidationError:
+        caught = True
+    else:
+        caught = False
+    assert caught, "Test of validate_required_fields"
+
+    im.meta.telescope = 'JWST'
+    try:
+        im.validate_required_fields()
+    except jsonschema.ValidationError:
+        caught = True
+    else:
+        caught = False
+    assert not caught, "Test of validate_required_fields"
 
 def test_multislit_model():
     data = np.arange(24, dtype=np.float32).reshape((6, 4))

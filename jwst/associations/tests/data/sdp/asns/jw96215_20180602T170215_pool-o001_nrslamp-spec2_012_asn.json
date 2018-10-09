@@ -1,0 +1,24 @@
+{
+    "asn_type": "nrslamp-spec2",
+    "asn_rule": "candidate_Asn_Lv2NRSLAMP",
+    "version_id": null,
+    "code_version": "0.12.0a.dev115",
+    "degraded_status": "No known degraded exposures in association.",
+    "program": "96215",
+    "target": "null",
+    "asn_pool": "jw96215_20180602T170215_pool",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '96215'})\nDMSAttrConstraint({'name': 'is_tso', 'sources': ['tsovisit'], 'value': None})\nConstraint_Single_Science({'name': 'single_science', 'value': False})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'nirspec'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'opaque'})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o001\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
+    "asn_id": "o001",
+    "products": [
+        {
+            "name": "jw96215001001_02102_00001_nrs1",
+            "members": [
+                {
+                    "expname": "jw96215001001_02102_00001_nrs1_rate.fits",
+                    "exptype": "science",
+                    "exposerr": "null"
+                }
+            ]
+        }
+    ]
+}

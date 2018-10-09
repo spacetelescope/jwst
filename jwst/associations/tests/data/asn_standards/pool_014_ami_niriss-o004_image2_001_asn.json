@@ -2,12 +2,12 @@
     "asn_type": "image2",
     "asn_rule": "candidate_Asn_Lv2ImageSpecial",
     "version_id": null,
-    "code_version": "0.9.12",
+    "code_version": "0.10.1a.dev237",
     "degraded_status": "No known degraded exposures in association.",
     "program": "10005",
     "target": "5",
     "asn_pool": "pool_014_ami_niriss",
-    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '10005'})\nDMSAttrConstraint({'name': 'is_tso', 'sources': ['tsovisit'], 'value': None})\nDMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '10005'})\nDMSAttrConstraint({'name': 'target', 'sources': ['targetid'], 'value': '5'})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'nircam'})\nDMSAttrConstraint({'name': 'detector', 'sources': ['detector'], 'value': 'nrcalong'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'f430m'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['pupil'], 'value': 'maskrnd'})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': 'maska430r'})\nDMSAttrConstraint({'name': 'channel', 'sources': ['channel'], 'value': 'long'})\nConstraint_Image_Science({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'nis_ami'})\nConstraint_Special({'name': 'is_special', 'sources': ['is_psf'], 'value': 'true'})\nSimpleConstraint({'name': 'single_science', 'value': False})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o004\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '10005'})\nDMSAttrConstraint({'name': 'is_tso', 'sources': ['tsovisit'], 'value': None})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'nircam'})\nDMSAttrConstraint({'name': 'detector', 'sources': ['detector'], 'value': 'nrcalong'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'f430m'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['pupil'], 'value': 'maskrnd'})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': 'maska430r'})\nDMSAttrConstraint({'name': 'channel', 'sources': ['channel'], 'value': 'long'})\nDMSAttrConstraint({'name': 'slit', 'sources': ['fxd_slit'], 'value': None})\nConstraint_Image_Science({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'nis_ami'})\nConstraint_Single_Science({'name': 'single_science', 'value': False})\nConstraint_Special({'name': 'is_special', 'sources': ['is_psf'], 'value': 'true'})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o004\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
     "asn_id": "o004",
     "products": [
         {

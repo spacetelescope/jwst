@@ -742,7 +742,7 @@ def gls_fit(ramp_data, input_var_data,
             try:
                 dummy = la.solve(temp_var[z], I_2)
             except la.LinAlgError as msg2:
-                log.warn("singular matrix, z = %d" % z)
+                log.warning("singular matrix, z = %d" % z)
                 raise la.LinAlgError(msg2)
     del I_2
 

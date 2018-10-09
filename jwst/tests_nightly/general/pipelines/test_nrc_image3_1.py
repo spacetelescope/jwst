@@ -1,6 +1,6 @@
 import os
 import pytest
-from astropy.io import fits as pf
+from astropy.io import fits
 from jwst.pipeline.calwebb_image3 import Image3Pipeline
 
 pytestmark = [
@@ -67,9 +67,9 @@ def test_image3_pipeline1(_bigdata):
     n_cur = 'nrca5_47Tuc_subpix_dither1_newpos_a3001_crf.fits'
     ref_filename = 'nrca5_47Tuc_subpix_dither1_newpos_cal-a3001_ref.fits'
     n_ref = os.path.join(subdir, ref_filename)
-    h = pf.open(n_cur)
-    href = pf.open(n_ref)
-    result = pf.diff.FITSDiff(h,
+    h = fits.open(n_cur)
+    href = fits.open(n_ref)
+    result = fits.diff.FITSDiff(h,
                               href,
                               ignore_hdus=['ASDF'],
                               ignore_keywords=ignore_keywords,
@@ -79,9 +79,9 @@ def test_image3_pipeline1(_bigdata):
     # Compare i2d product
     n_cur = 'mosaic_long_i2d.fits'
     n_ref = os.path.join(subdir, 'mosaic_long_i2d_ref.fits')
-    h = pf.open(n_cur)
-    href = pf.open(n_ref)
-    result = pf.diff.FITSDiff(h,
+    h = fits.open(n_cur)
+    href = fits.open(n_ref)
+    result = fits.diff.FITSDiff(h,
                               href,
                               ignore_hdus=['ASDF', 'HDRTAB'],
                               ignore_keywords=ignore_keywords,
@@ -89,7 +89,7 @@ def test_image3_pipeline1(_bigdata):
     assert result.identical, result.report()
 
     # Compare the HDRTAB in the i2d product
-    result = pf.diff.HDUDiff(h['HDRTAB'],
+    result = fits.diff.HDUDiff(h['HDRTAB'],
                               href['HDRTAB'],
                               ignore_keywords=ignore_keywords+['NAXIS1', 'TFORM*'],
                               ignore_fields=ignore_keywords,

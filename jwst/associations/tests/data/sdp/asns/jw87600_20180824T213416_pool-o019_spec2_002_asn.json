@@ -1,0 +1,28 @@
+{
+    "asn_type": "spec2",
+    "asn_rule": "candidate_Asn_Lv2WFSS_NIS",
+    "version_id": null,
+    "code_version": "0.12.0a.dev115",
+    "degraded_status": "No known degraded exposures in association.",
+    "program": "87600",
+    "target": "1",
+    "asn_pool": "jw87600_20180824T213416_pool",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '87600'})\nDMSAttrConstraint({'name': 'is_tso', 'sources': ['tsovisit'], 'value': None})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'niriss'})\nDMSAttrConstraint({'name': 'detector', 'sources': ['detector'], 'value': 'nis'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'gr150r'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['pupil'], 'value': 'f200w'})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': 'full'})\nDMSAttrConstraint({'name': 'channel', 'sources': ['channel'], 'value': None})\nDMSAttrConstraint({'name': 'slit', 'sources': ['fxd_slit'], 'value': None})\nConstraint_Target({'name': 'target', 'sources': ['targetid'], 'value': '1'})\nConstraint_Single_Science({'name': 'single_science', 'value': False})\nDMSAttrConstraint({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'nis_wfss'})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o019\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
+    "asn_id": "o019",
+    "products": [
+        {
+            "name": "jw87600019001_02101_00002_nis",
+            "members": [
+                {
+                    "expname": "jw87600-o019_t001_niriss_f200w_cat.ecsv",
+                    "exptype": "sourcecat"
+                },
+                {
+                    "expname": "jw87600019001_02101_00002_nis_rate.fits",
+                    "exptype": "science",
+                    "exposerr": "null"
+                }
+            ]
+        }
+    ]
+}

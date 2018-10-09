@@ -226,9 +226,11 @@ class Pipeline(Step):
         from .. import datamodels
         if isinstance(input_file, datamodels.ModelContainer):
             return True
+
         try:
             with open(input_file, 'r') as input_file_fh:
-                _asn = load_asn(input_file_fh)
+                load_asn(input_file_fh)
         except Exception:
             return False
-        return True
+        else:
+            return True

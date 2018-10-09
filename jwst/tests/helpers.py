@@ -1,67 +1,10 @@
 """Handy helpful pytest helpers helping pytest test"""
-
-import os
 from os import path
-import pytest
-import re
-import tempfile
-
-import crds
 
 
 def abspath(filepath):
     """Get the absolute file path"""
     return path.abspath(path.expanduser(path.expandvars(filepath)))
-
-
-# Decorator to indicate slow tests
-try:
-    runslow = pytest.mark.skipif(
-        not pytest.config.getoption("--runslow"),
-        reason="need --runslow option to run"
-    )
-except AttributeError:
-    runslow = pytest.mark.skipif(
-        True,
-        reason="No reason, just a dummy"
-    )
-
-# Decorator to indicate TEST_BIGDATA required
-require_bigdata = pytest.mark.skipif(
-    'TEST_BIGDATA' not in os.environ,
-    reason='"TEST_BIGDATA" environmental not defined. Cannot access test data.'
-)
-
-
-# Decorator to skip test if running under a TravisCI
-not_under_travis = pytest.mark.skipif(
-    "TRAVIS" in os.environ and os.environ["TRAVIS"] == "true",
-    reason='Temporarily disable due to performance issues'
-)
-
-
-# Decorator to skip if CRDS_CONTEXT is not at lest a certain level.
-def require_crds_context(required_context):
-    """Ensure CRDS context is a certain level
-
-    Parameters
-    ----------
-    level: int
-        The minimal level required
-
-    Returns
-    -------
-    pytest.mark.skipif decorator
-    """
-    current_context_string = crds.get_context_name('jwst')
-    match = re.match('jwst_(\d\d\d\d)\.pmap', current_context_string)
-    current_context = int(match.group(1))
-    return pytest.mark.skipif(
-        current_context < required_context,
-        reason='CRDS context {} less than required context {}'.format(
-            current_context_string, required_context
-        )
-    )
 
 
 # Check strings based on words using length precision
@@ -94,32 +37,3 @@ def word_precision_check(str1, str2, length=5):
     else:
         return True
     return False
-
-
-def test_word_precision_check():
-    """Test word_precision_check"""
-    s1 = "a b c"
-    s2 = "aa bb cc"
-    s3 = "aa bb cc dd"
-    s4 = "aazz bbzz cczz"
-
-    assert word_precision_check(s1, s1)
-    assert not word_precision_check(s1, s2)
-    assert word_precision_check(s1, s2, length=1)
-    assert not word_precision_check(s2, s3)
-    assert word_precision_check(s2, s4, length=2)
-
-
-@pytest.fixture
-def mk_tmp_dirs():
-    """Create a set of temporary directorys and change to one of them."""
-    tmp_current_path = tempfile.mkdtemp()
-    tmp_data_path = tempfile.mkdtemp()
-    tmp_config_path = tempfile.mkdtemp()
-
-    old_path = os.getcwd()
-    try:
-        os.chdir(tmp_current_path)
-        yield (tmp_current_path, tmp_data_path, tmp_config_path)
-    finally:
-        os.chdir(old_path)

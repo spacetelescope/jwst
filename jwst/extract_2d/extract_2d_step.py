@@ -19,6 +19,7 @@ class Extract2dStep(Step):
         extract_orders = int_list(default=None)  # list of orders to extract
         extract_height =  integer(default=None)  # extraction height in pixels
         grism_objects = list(default=None)  # list of grism objects to use
+        mmag_extract = float(default=99.)  # minimum abmag to extract
     """
 
     reference_file_types = ['wavecorr', 'wavelengthrange']
