@@ -32,6 +32,12 @@ class TestWFSImage2(BaseJWSTTest):
 
         output_files = glob.glob('*')
         output_files.remove('cfgs')
+        try:
+            # TEST_BIGDATA set to artifactory will copy it to working dir
+            output_files.remove(input_name)
+        except ValueError:
+            # File won't exist if local cache is used
+            pass
         
         cal_name = input_name.replace('rate', 'cal')
         output_name = input_name.replace('rate','cal_ref')
