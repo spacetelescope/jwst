@@ -19,8 +19,7 @@ class TestSpec2Pipeline(BaseJWSTTest):
                                    'jw80600012001_02101_00003_mirimage_rateints.fits')
 
         collect_pipeline_cfgs()
-        args = [
-            'calwebb_tso_spec2.cfg',
+        args = [ 'calwebb_tso-spec2.cfg',
             input_file,
         ]
         Step.from_cmdline(args)
