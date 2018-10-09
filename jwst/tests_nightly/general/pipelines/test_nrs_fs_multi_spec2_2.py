@@ -1,6 +1,5 @@
-import os
 import pytest
-from astropy.io import fits as pf
+from astropy.io import fits
 from jwst.pipeline.calwebb_spec2 import Spec2Pipeline
 
 pytestmark = [
@@ -25,9 +24,9 @@ def test_nrs_fs_multi_spec2_2(_bigdata):
 
     na = 'jwtest1013001_01101_00001_NRS1_cal.fits'
     nb = _bigdata+'/pipelines/jwtest1013001_01101_00001_NRS1_cal_ref.fits'
-    h = pf.open(na)
-    href = pf.open(nb)
-    result = pf.diff.FITSDiff(h,
+    h = fits.open(na)
+    href = fits.open(nb)
+    result = fits.diff.FITSDiff(h,
                               href,
                               ignore_hdus=['ASDF'],
                               ignore_keywords=ignore_keywords,
@@ -36,9 +35,9 @@ def test_nrs_fs_multi_spec2_2(_bigdata):
 
     na = 'jwtest1013001_01101_00001_NRS1_s2d.fits'
     nb = _bigdata+'/pipelines/jwtest1013001_01101_00001_NRS1_s2d_ref.fits'
-    h = pf.open(na)
-    href = pf.open(nb)
-    result = pf.diff.FITSDiff(h,
+    h = fits.open(na)
+    href = fits.open(nb)
+    result = fits.diff.FITSDiff(h,
                               href,
                               ignore_hdus=['ASDF'],
                               ignore_keywords=ignore_keywords,
@@ -47,9 +46,9 @@ def test_nrs_fs_multi_spec2_2(_bigdata):
 
     na = 'jwtest1013001_01101_00001_NRS1_x1d.fits'
     nb = _bigdata+'/pipelines/jwtest1013001_01101_00001_NRS1_x1d_ref.fits'
-    h = pf.open(na)
-    href = pf.open(nb)
-    result = pf.diff.FITSDiff(h,
+    h = fits.open(na)
+    href = fits.open(nb)
+    result = fits.diff.FITSDiff(h,
                               href,
                               ignore_hdus=['ASDF'],
                               ignore_keywords=ignore_keywords,

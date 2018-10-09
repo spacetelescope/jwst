@@ -1,5 +1,9 @@
-from . import helpers
-from .helpers import full_pool_rules
+import pytest
+
+from .helpers import (
+    full_pool_rules,
+    t_path
+)
 
 from .. import (
     AssociationPool,
@@ -12,7 +16,7 @@ from .. import (
 def test_simple():
     """Test generate on simple registry"""
     registry = AssociationRegistry(
-        [helpers.t_path('data/rules_basic.py')],
+        [t_path('data/rules_basic.py')],
         include_default=False
     )
     pool = AssociationPool()
@@ -23,7 +27,7 @@ def test_simple():
     assert len(asns[0]['members']) == 2
 
 
-@helpers.runslow
+@pytest.mark.slow
 def test_generate(full_pool_rules):
     pool, rules, pool_fname = full_pool_rules
     asns = generate(pool, rules)
@@ -35,7 +39,7 @@ def test_generate(full_pool_rules):
         assert len(schemas) > 0
 
 
-@helpers.runslow
+@pytest.mark.slow
 def test_serialize(full_pool_rules):
     pool, rules, pool_fname = full_pool_rules
     asns = generate(pool, rules)
@@ -48,7 +52,7 @@ def test_serialize(full_pool_rules):
 
 
 def test_unserialize():
-    asn_file = helpers.t_path(
+    asn_file = t_path(
         'data/asn_mosaic.json'
     )
     with open(asn_file, 'r') as asn_fp:

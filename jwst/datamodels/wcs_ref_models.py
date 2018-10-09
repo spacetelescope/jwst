@@ -209,7 +209,7 @@ class NIRCAMGrismModel(ReferenceFileModel):
             self.invdispy = invdispy
         if orders is not None:
             self.orders = orders
-
+        
     def populate_meta(self):
         self.meta.instrument.name = "NIRCAM"
         self.meta.exposure.type = "NRC_WFSS"
@@ -338,7 +338,8 @@ class WavelengthrangeModel(ReferenceFileModel):
     schema_url = "wavelengthrange.schema.yaml"
     reftype = "wavelengthrange"
 
-    def __init__(self, init=None, wrange_selector=None, wrange=None, order=None, wunits=None, **kwargs):
+    def __init__(self, init=None, wrange_selector=None, wrange=None,
+                 order=None, extract_orders=None, wunits=None, **kwargs):
 
         super(WavelengthrangeModel, self).__init__(init=init, **kwargs)
         if wrange_selector is not None:
@@ -347,6 +348,8 @@ class WavelengthrangeModel(ReferenceFileModel):
             self.wavelengthrange = wrange
         if order is not None:
             self.order = order
+        if extract_orders is not None:
+            self.extract_orders = extract_orders
         if wunits is not None:
             self.meta.wavelength_units = wunits
 

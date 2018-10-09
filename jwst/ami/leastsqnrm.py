@@ -461,7 +461,6 @@ def weighted_operations(img, model, weights):
     data_vector = np.dot(flatmodeltransp, Cdotb)
     # inv(At.C.A)
     inverse = linalg.inv(modelproduct)
-    cond = np.linalg.cond(inverse)
 
     x = np.dot(inverse, data_vector)
     res = np.dot(flatmodel, x) - flatimg

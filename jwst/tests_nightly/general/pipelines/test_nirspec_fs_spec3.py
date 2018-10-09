@@ -3,7 +3,7 @@ from glob import glob
 from os import path
 import pytest
 
-from astropy.io import fits as pf
+from astropy.io import fits
 
 from jwst.associations import load_asn
 from jwst.pipeline import Spec3Pipeline
@@ -75,9 +75,9 @@ def test_nrs_fs_spec3(_bigdata):
 
     na = 'jw00023001001_01101_00001_NRS1_cal.fits'
     nb = _bigdata+'/pipelines/jw00023001001_01101_00001_NRS1_cal_ref.fits'
-    h = pf.open(na)
-    href = pf.open(nb)
-    result = pf.diff.FITSDiff(h,
+    h = fits.open(na)
+    href = fits.open(nb)
+    result = fits.diff.FITSDiff(h,
                               href,
                               ignore_hdus=['ASDF'],
                               ignore_keywords=ignore_keywords,
@@ -86,9 +86,9 @@ def test_nrs_fs_spec3(_bigdata):
 
     na = 'jw00023001001_01101_00001_NRS1_s2d.fits'
     nb = _bigdata+'/pipelines/jw00023001001_01101_00001_NRS1_s2d_ref.fits'
-    h = pf.open(na)
-    href = pf.open(nb)
-    result = pf.diff.FITSDiff(h,
+    h = fits.open(na)
+    href = fits.open(nb)
+    result = fits.diff.FITSDiff(h,
                               href,
                               ignore_hdus=['ASDF'],
                               ignore_keywords=ignore_keywords,
@@ -97,9 +97,9 @@ def test_nrs_fs_spec3(_bigdata):
 
     na = 'jw00023001001_01101_00001_NRS1_x1d.fits'
     nb = _bigdata+'/pipelines/jw00023001001_01101_00001_NRS1_x1d_ref.fits'
-    h = pf.open(na)
-    href = pf.open(nb)
-    result = pf.diff.FITSDiff(h,
+    h = fits.open(na)
+    href = fits.open(nb)
+    result = fits.diff.FITSDiff(h,
                               href,
                               ignore_hdus=['ASDF'],
                               ignore_keywords=ignore_keywords,

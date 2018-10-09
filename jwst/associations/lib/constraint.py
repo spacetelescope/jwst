@@ -145,9 +145,19 @@ class SimpleConstraint(SimpleConstraintABC):
     name: str or None
         Option name for constraint
 
-    force_reprocess: False or ProcessList.[BOTH, EXISTING, RULES]
-        If set, put the item on the reprocess list with the given
-        setting.
+    reprocess_on_match: bool
+        Reprocess the item if the constraint is satisfied.
+
+    reprocess_on_fail: bool
+        Reprocess the item if the constraint is not satisfied.
+
+    work_over: ProcessList.[BOTH, EXISTING, RULES]
+        The condition on which this constraint should operate.
+
+    reprocess_rules: [rule[,..]] or None
+        List of rules to be applied to.
+        If None, calling function will determine the ruleset.
+        If empty, [], all rules will be used.
 
     Attributes
     ----------
@@ -204,7 +214,10 @@ class SimpleConstraint(SimpleConstraintABC):
             sources=None,
             force_unique=True,
             test=None,
-            force_reprocess=False,
+            reprocess_on_match=False,
+            reprocess_on_fail=False,
+            work_over=ProcessList.BOTH,
+            reprocess_rules=None,
             **kwargs
     ):
 
@@ -212,7 +225,10 @@ class SimpleConstraint(SimpleConstraintABC):
         self.sources = sources
         self.force_unique = force_unique
         self.test = test
-        self.force_reprocess = force_reprocess
+        self.reprocess_on_match = reprocess_on_match
+        self.reprocess_on_fail = reprocess_on_fail
+        self.work_over = work_over
+        self.reprocess_rules = reprocess_rules
         super(SimpleConstraint, self).__init__(init=init, **kwargs)
 
         # Give defaults some real meaning.
@@ -235,20 +251,22 @@ class SimpleConstraint(SimpleConstraintABC):
         satisfied = True
         if self.value is not None:
             satisfied = self.test(self.value, source_value)
+        self.matched = satisfied
 
-        if satisfied:
+        if self.matched:
             if self.force_unique:
                 self.value = source_value
 
+        # Determine reprocessing
         reprocess = []
-        if self.force_reprocess:
+        if (self.matched and self.reprocess_on_match) or \
+           (not self.matched and self.reprocess_on_fail):
             reprocess.append(ProcessList(
                 items=[item],
-                work_over=self.force_reprocess,
-                rules=[]
+                work_over=self.work_over,
+                rules=self.reprocess_rules
             ))
 
-        self.matched = satisfied
         return self.matched, reprocess
 
     def eq(self, value1, value2):
@@ -462,12 +480,19 @@ class Constraint:
     name: str or None
         Optional name for constraint.
 
-    force_reprocess: bool
-        Regardless of outcome, put the item on the
-        reprocess list.
+    reprocess_on_match: bool
+        Reprocess the item if the constraint is satisfied.
+
+    reprocess_on_fail: bool
+        Reprocess the item if the constraint is not satisfied.
 
     work_over: ProcessList.[BOTH, EXISTING, RULES]
         The condition on which this constraint should operate.
+
+    reprocess_rules: [rule[,..]] or None
+        List of rules to be applied to.
+        If None, calling function will determine the ruleset.
+        If empty, [], all rules will be used.
 
     Attributes
     ----------
@@ -499,14 +524,20 @@ class Constraint:
             init=None,
             reduce=None,
             name=None,
+            reprocess_on_match=False,
+            reprocess_on_fail=False,
             work_over=ProcessList.BOTH,
+            reprocess_rules=None
     ):
         self.constraints = []
 
         # Initialize from named parameters
         self.reduce = reduce
         self.name = name
+        self.reprocess_on_match = reprocess_on_match
+        self.reprocess_on_fail = reprocess_on_fail
         self.work_over = work_over
+        self.reprocess_rules = reprocess_rules
 
         # Initialize from a structure.
         if init is None:
@@ -516,7 +547,10 @@ class Constraint:
         elif isinstance(init, Constraint):
             self.reduce = init.reduce
             self.name = init.name
+            self.reprocess_on_match = init.reprocess_on_match
+            self.reprocess_on_fail = init.reprocess_on_fail
             self.work_over = init.work_over
+            self.reprocess_rules = init.reprocess_rules
             self.constraints = deepcopy(init.constraints)
         elif isinstance(init, SimpleConstraintABC):
             self.constraints = [init]
@@ -545,6 +579,15 @@ class Constraint:
         # Do we have positive?
         self.matched, reprocess = self.reduce(item, self.constraints)
 
+        # Determine reprocessing
+        if (self.matched and self.reprocess_on_match) or \
+           (not self.matched and self.reprocess_on_fail):
+            reprocess.append([ProcessList(
+                items=[item],
+                work_over=self.work_over,
+                rules=self.reprocess_rules
+            )])
+
         return self.matched, list(chain(*reprocess))
 
     def append(self, constraint):
@@ -572,6 +615,7 @@ class Constraint:
         to_reprocess = []
         for constraint in constraints:
             match, reprocess = constraint.check_and_set(item)
+
             if match:
                 if all_match:
                     to_reprocess.append(reprocess)

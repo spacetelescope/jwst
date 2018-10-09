@@ -6,7 +6,7 @@ from astropy.modeling.models import Scale, AffineTransformation2D
 from astropy.modeling import Model
 from gwcs import WCS, wcstools
 
-from ..assign_wcs.util import wcs_from_footprints
+from ..assign_wcs.util import wcs_from_footprints, bounding_box_from_shape
 
 from . import bitmask
 
@@ -83,15 +83,6 @@ def compute_output_transform(refwcs, filename, fiducial):
     cdelt = Scale(scale) & Scale(scale)
 
     return pc_matrix | cdelt
-
-
-def bounding_box_from_shape(shape):
-    """ Return a bounding_box for WCS based on a numpy shape
-    """
-    bb = []
-    for s in reversed(shape):
-        bb.append((-0.5, s - 0.5))
-    return tuple(bb)
 
 
 def shape_from_bounding_box(bounding_box):

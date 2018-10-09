@@ -4,12 +4,16 @@ from datetime import datetime
 import json
 import jsonschema
 import logging
+import re
 
 from . import __version__
 from .exceptions import (
     AssociationNotValidError
 )
-from .lib.constraint import Constraint
+from .lib.constraint import (
+    Constraint,
+    meets_conditions
+)
 from .lib.format_template import FormatTemplate
 from .lib.ioregistry import IORegistry
 
@@ -334,7 +338,7 @@ class Association(MutableMapping):
         if self.is_item_member(item):
             return False, []
 
-        match = False
+        match = not check_constraints
         if check_constraints:
             match, reprocess = self.check_and_set_constraints(item)
 
@@ -343,6 +347,16 @@ class Association(MutableMapping):
                 self._init_hook(item)
                 self.run_init_hook = False
             self._add(item)
+
+        # If a constraint `force_match` exists, set the `match`
+        # result to the value of the constraint.
+        try:
+            force_match = self.constraints['force_match'].value
+        except (KeyError, TypeError):
+            pass
+        else:
+            if force_match is not None:
+                match = force_match
 
         return match, reprocess
 

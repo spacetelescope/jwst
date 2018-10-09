@@ -2,7 +2,7 @@ import logging
 
 from astropy import coordinates as coord
 from astropy import units as u
-from astropy.modeling.models import Identity
+from astropy.modeling.models import Identity, Const1D, Mapping
 import gwcs.coordinate_frames as cf
 
 from . import pointing
@@ -110,26 +110,23 @@ def tsgrism(input_model, reference_files):
     """
 
     # The input is the grism image
-    if not isinstance(input_model, ImageModel):
-        raise TypeError('The input data model must be an ImageModel.')
+    if not isinstance(input_model, CubeModel):
+        raise TypeError('The input data model must be a CubeModel.')
 
     # make sure this is a grism image
     if "NRC_TSGRISM" != input_model.meta.exposure.type:
-        raise TypeError('The input exposure is not a NIRCAM time series grism')
+        raise ValueError('The input exposure is not a NIRCAM time series grism')
 
     if input_model.meta.instrument.module != "A":
-        raise ValueError('TSGRISM mode only supports module A')
+        raise ValueError('NRC_TSGRISM mode only supports module A')
 
     if input_model.meta.instrument.pupil != "GRISMR":
-        raise ValueError('TSGRIM mode only supports GRISMR')
+        raise ValueError('NRC_TSGRIM mode only supports GRISMR')
 
     gdetector = cf.Frame2D(name='grism_detector', axes_order=(0, 1), unit=(u.pix, u.pix))
     detector = cf.Frame2D(name='full_detector', axes_order=(0, 1), unit=(u.pix, u.pix))
     v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.deg, u.deg))
     world = cf.CelestialFrame(reference_frame=coord.ICRS(), name='world')
-
-    # get the shift to full frame coordinates
-    subarray2full = subarray_transform(input_model)
 
     # translate the x,y detector-in to x,y detector out coordinates
     # Get the disperser parameters which are defined as a model for each
@@ -142,15 +139,11 @@ def tsgrism(input_model, reference_files):
         invdispl = f.invdispl
         orders = f.orders
 
-    # now create the appropriate model for the grism[R/C]
-    if input_model.meta.instrument.pupil == "GRISMR":
-        det2det = NIRCAMForwardRowGrismDispersion(orders,
-                                                  lmodels=displ,
-                                                  xmodels=invdispx,
-                                                  ymodels=dispy)
-
-    else:
-        raise ValueError('TSGRISM mode only supports GRISMR')
+    # now create the appropriate model for the grismr
+    det2det = NIRCAMForwardRowGrismDispersion(orders,
+                                              lmodels=displ,
+                                              xmodels=invdispx,
+                                              ymodels=dispy)
 
     det2det.inverse = NIRCAMBackwardGrismDispersion(orders,
                                                     lmodels=invdispl,
@@ -158,11 +151,44 @@ def tsgrism(input_model, reference_files):
                                                     ymodels=dispy)
 
     # input into the forward transform is x,y,x0,y0,order
-    #
-    sub2direct = (subarray2full & Identity(3)) | det2det
-    imdistortion = imaging_distortion(input_model, reference_files)
-    distortion = imdistortion & Identity(2)
+    # where x,y is the pixel location in the grism image
+    # and x0,y0 is the source location in the "direct" image
+    # For this mode, the source is always at crpix1,crpis2
+    # discussion with nadia that wcsinfo might not be available
+    # here but crpix info could be in wcs.source_location or similar
+    # TSGRISM mode places the sources at crpix, and all subarrays
+    # begin at 0,0, so no need to translate the crpix to full frame
+    # because they already are in full frame coordinates.
+    xc, yc = (input_model.meta.wcsinfo.crpix1, input_model.meta.wcsinfo.crpix2)
+    xcenter = Const1D(xc)
+    xcenter.inverse = Const1D(xc)
+    ycenter = Const1D(yc)
+    ycenter.inverse = Const1D(yc)
+
+    setra = Const1D(input_model.meta.wcsinfo.crval1)
+    setra.inverse = Const1D(input_model.meta.wcsinfo.crval1)
+    setdec = Const1D(input_model.meta.wcsinfo.crval2)
+    setdec.inverse = Const1D(input_model.meta.wcsinfo.crval2)
+
+    # x, y, order in goes to transform to full array location and order
+    # get the shift to full frame coordinates
+    sub2full = subarray_transform(input_model) & Identity(1)
+    sub2direct = (sub2full | Mapping((0, 1, 0, 1, 2)) |
+                  (Identity(2) & xcenter & ycenter & Identity(1)) |
+                  det2det)
+
+    # take us from full frame detector to v2v3
+    distortion = imaging_distortion(input_model, reference_files) & Identity(2)
+
+    # v2v3 to the sky
+    # remap the tel2sky inverse as well since we can feed it the values of
+    # crval1, crval2 which correspond to crpix1, crpix2. This leaves
+    # us with a calling structure:
+    #  (x, y, order) <-> (wavelength, order)
     tel2sky = pointing.v23tosky(input_model) & Identity(2)
+    t2skyinverse = tel2sky.inverse
+    newinverse = Mapping((0, 1, 0, 1)) | setra & setdec & Identity(2) | t2skyinverse
+    tel2sky.inverse = newinverse
 
     pipeline = [(gdetector, sub2direct),
                 (detector, distortion),
@@ -224,7 +250,7 @@ def wfss(input_model, reference_files):
     the direct image to get the min and max wavelengths
     which correspond to t=0 and t=1, this currently has been done by the team
     and the min and max wavelengths to use to calculate t are stored in the
-    grism reference file as wrange, which can be selected by wrange_selector
+    grism reference file as wavelengthrange, which can be selected by waverange_selector
     which contains the filter names.
 
     All the following was moved to the extract_2d stage.
@@ -255,7 +281,7 @@ def wfss(input_model, reference_files):
 
     # make sure this is a grism image
     if "NRC_WFSS" not in input_model.meta.exposure.type:
-            raise TypeError('The input exposure is not a NIRCAM grism')
+            raise ValueError('The input exposure is not a NIRCAM grism')
 
     # Create the empty detector as a 2D coordinate frame in pixel units
     gdetector = cf.Frame2D(name='grism_detector',

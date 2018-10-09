@@ -3,24 +3,16 @@ A module that provides functions for matching sky in overlapping cubes.
 
 :Authors: Mihai Cara
 
-:License: :doc:`../LICENSE`
-
 """
 
 import logging
 import copy
 from datetime import datetime
 
-import numpy as np
-
-from ..skymatch.skystatistics import SkyStats
-from ..skymatch.skyimage import *
-
 
 __all__ = ['match']
 
-__version__ = '0.9.3'
-__vdate__ = '21-Sept-2016'
+
 __author__ = 'Mihai Cara'
 
 
@@ -73,12 +65,6 @@ def match(skycubes, subtract=False):
 
     # Time it
     runtime_begin = datetime.now()
-
-    log.info(" ")
-    log.info("***** {:s}.{:s}() started on {}"
-             .format(__name__, function_name, runtime_begin))
-    log.info("      Version {} ({})".format(__version__, __vdate__))
-    log.info(" ")
 
     # deep-copy input so that input is not affected by changes:
     # skycubes = copy.deepcopy(skycubes)

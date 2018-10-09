@@ -10,7 +10,7 @@ from ..tso_photometry import tso_photometry_step
 from ..extract_1d import extract_1d_step
 from ..white_light import white_light_step
 
-__version__ = '0.9.3'
+__all__ = ['Tso3Pipeline']
 
 
 class Tso3Pipeline(Pipeline):
@@ -74,8 +74,8 @@ class Tso3Pipeline(Pipeline):
                 input_2dmodels.append(image)
 
             if not self.scale_detection:
-                l = "Performing outlier detection on input images..."
-                self.log.info(l)
+                msg = "Performing outlier detection on input images..."
+                self.log.info(msg)
                 input_2dmodels = self.outlier_detection(input_2dmodels)
 
                 # Transfer updated DQ values to original input observation
@@ -86,8 +86,8 @@ class Tso3Pipeline(Pipeline):
                     input_2dmodels[0].meta.cal_step.outlier_detection
 
             else:
-                l = "Performing scaled outlier detection on input images..."
-                self.log.info(l)
+                msg = "Performing scaled outlier detection on input images..."
+                self.log.info(msg)
                 self.outlier_detection.scale_detection = True
                 cube = self.outlier_detection(cube)
 

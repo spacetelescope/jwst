@@ -188,3 +188,45 @@ specified, a value of 0 will be used, i.e. a constant function, the mean
 value.  The polynomial will then be evaluated at each pixel within the
 source extraction region for that column (row), and the fitted values will
 be subtracted (pixel by pixel) from the source count rate.
+
+.. include:: ../includes/standard_keywords.rst
+
+Example EXTRACT1D Reference
+---------------------------
+The following JSON was taken as an example from reference
+jwst_nirspec_extract1d_0006.json::
+  {
+      "reftype": "EXTRACT1D",
+      "instrument": "NIRSPEC",
+      "telescope": "JWST",
+      "exp_type": "NRS_BRIGHTOBJ",
+      "pedigree": "GROUND",
+      "descrip": "NIRSpec NRS_BRIGHTOBJ extraction params for ground testing",
+      "author": "H.Bushouse",
+      "history": "Second draft 2016-Dec-07",
+      "useafter": "2001-01-01T00:00:00",
+      "apertures": [
+        {
+        "id": "S1600A1",
+        "region_type": "target",
+        "bkg_order": 0,
+        "dispaxis": 1,
+        "extract_width": 7,
+        "nod2_offset": 9,
+        "nod3_offset": 9,
+        "nod5_offset": 6
+        },
+
+        {
+        "id": "NRS_BRIGHTOBJ",
+        "region_type": "target",
+        "bkg_order": 0,
+        "dispaxis": 1,
+        "extract_width": 32,
+        "nod2_offset": 9,
+        "nod3_offset": 9,
+        "nod5_offset": 6
+        }
+      ]
+  }
+

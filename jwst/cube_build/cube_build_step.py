@@ -1,4 +1,4 @@
-#! /usr/bin/env python 
+#! /usr/bin/env python
 from ..stpipe import Step
 from .. import datamodels
 from . import cube_build
@@ -21,16 +21,15 @@ class CubeBuildStep (Step):
          channel = option('1','2','3','4','all',default='all') # Options: 1,2,3,4, or all
          band = option('short','medium','long','all',default='all') # Options: short, medium, long, all
          grating   = option('prism','g140m','g140h','g235m','g235h',g395m','g395h','all',default='all') # Options: prism,g140m,g140h,g235m,g235h,g395m,g395h, or all
-         filter   = option('clear','f100lp','f070lp','g170lp','f290lp','all',default='all') # Options: clear,f100lp,f070lp,g170lp,f290lp, or all
+         filter   = option('clear','f100lp','f070lp','f170lp','f290lp','all',default='all') # Options: clear,f100lp,f070lp,f170lp,f290lp, or all
          scale1 = float(default=0.0) # cube sample size to use for axis 1, arc seconds
          scale2 = float(default=0.0) # cube sample size to use for axis 2, arc seconds
          scalew = float(default=0.0) # cube sample size to use for axis 3, microns
-         weighting = option('msm','miripsf','area',default = 'msm') # Type of weighting function,
+         weighting = option('msm','miripsf','area',default = 'msm') # Type of weighting function
          coord_system = option('world','alpha-beta',default='world') # Output Coordinate system. Options: world or alpha-beta
          rois = float(default=0.0) # region of interest spatial size, arc seconds
          roiw = float(default=0.0) # region of interest wavelength size, microns
          weight_power = float(default=2.0) # Weighting option to use for Modified Shepard Method
-         offset_list = string(default='NA')  # A file for dithered data containing additional ra and dec offsets
          wavemin = float(default=None)  # Minimum wavelength to be used in the IFUCube
          wavemax = float(default=None)  # Maximum wavelength to be used in the IFUCube
          single = boolean(default=false) # Internal pipeline option used by mrs_imatch and outlier detection
@@ -63,7 +62,6 @@ class CubeBuildStep (Step):
         if(self.scale1 != 0.0): self.log.info('Input Scale of axis 1 %f', self.scale1)
         if(self.scale2 != 0.0): self.log.info('Input Scale of axis 2 %f', self.scale2)
         if(self.scalew != 0.0): self.log.info('Input wavelength scale %f  ', self.scalew)
-        if(self.offset_list != 'NA'): self.log.info('Offset Dither list %s', self.offset_list)
 
         if(self.wavemin is not None): self.log.info('Setting Minimum wavelength of spectral cube to: %f',
                                                self.wavemin)
@@ -98,6 +96,9 @@ class CubeBuildStep (Step):
         self.interpolation = 'pointcloud' # true for self.weighting  = 'msm' or 'miripsf'
 
         # if the weighting is area then interpolation is area
+        # if the weighting is area then interpolation is area. Weighting of area or interpolation
+        # of area is only for single band data.
+
         if self.weighting == 'area':
             self.interpolation = 'area'
             self.coord_system = 'alpha-beta'
@@ -121,6 +122,9 @@ class CubeBuildStep (Step):
         if self.single:
             self.output_type = 'single'
             self.log.info('Cube Type: Single cubes ')
+            self.coord_system = 'world'
+            self.interpolation = 'pointcloud'
+            self.weighting = 'msm'
 
 #________________________________________________________________________________
     # read input parameters - Channel, Band (Subchannel), Grating, Filter
@@ -159,7 +163,7 @@ class CubeBuildStep (Step):
         self.pipeline = 3
         if self.output_type == 'multi' and len(self.input_filenames) == 1:
             self.pipeline = 2
-        if(len(self.input_filenames) == 1): self.offset_list = 'NA'
+
 #________________________________________________________________________________
 # Read in Cube Parameter Reference file
         # identify what reference file has been associated with these input
@@ -189,8 +193,7 @@ class CubeBuildStep (Step):
             'filter': self.pars_input['filter'],
             'weighting': self.weighting,
             'single': self.single,
-            'output_type': self.output_type,
-            'offset_list': self.offset_list}
+            'output_type': self.output_type}
 
 # shove the input parameters in to pars_cube to pull out ifu_cube.py
 # these parameters are related to the building a single ifucube_model
@@ -239,7 +242,9 @@ class CubeBuildStep (Step):
 # or (grating,filter)
 
         num_cubes, cube_pars = cubeinfo.number_cubes()
-        self.log.info('Number of ifucubes produced by a this run %i', num_cubes)
+        if not self.single: 
+            self.log.info('Number of ifucubes produced by a this run %i',
+                                          num_cubes)
 
         cube_container = datamodels.ModelContainer() # ModelContainer of ifucubes
 
@@ -262,11 +267,16 @@ class CubeBuildStep (Step):
                 **pars_cube)
 
 #________________________________________________________________________________
+            thiscube.check_ifucube() # basic checks
 
-            thiscube.check_ifucube() # basic checks and get roi size
-
-# find the min & max final coordinates of cube: map each slice to cube
-# add any dither offsets, then find the min & max value in each dimension
+# Based on channel/subchannel or grating/prism find
+# spatial spaxel size, min wave, max wave
+# set linear_wavelength to true or false depending on which type of IFU cube creating
+# if linear wavelength (single band) single values for rois, roiw, weight_power, softrad
+# if not linear wavelength (multi bands) an array based on wavelength for:
+#  rois, roiw, weight_power, softrad
+ 
+            thiscube.determine_cube_parameters()
 
             thiscube.setup_ifucube_wcs()
 #________________________________________________________________________________
@@ -285,13 +295,13 @@ class CubeBuildStep (Step):
             else:
                 result = thiscube.build_ifucube()
                 cube_container.append(result)
-
             if self.debug_pixel == 1:
                 self.spaxel_debug.close()
         for cube in cube_container:
             footprint = cube.meta.wcs.footprint(axis_type="spatial")
             update_s_region_keyword(cube, footprint)
 
+        
         return cube_container
 
 #********************************************************************************
@@ -320,12 +330,8 @@ class CubeBuildStep (Step):
         """
         valid_channel = ['1', '2', '3', '4', 'all']
         valid_subchannel = ['short', 'medium', 'long', 'all']
-#        valid_fwa = ['f070lp', 'f100lp', 'f100lp', 'g170lp',
-#                    'g170lp', 'f290lp', 'f290lp', 'clear', 'all']
-#        valid_gwa = ['g140m', 'g140h', 'G140M', 'g140h', 'g235m', 'g235h',
-#                    'g395m', 'g395h', 'prism', 'all']
 
-        valid_fwa = ['f070lp', 'f100lp', 'g170lp',
+        valid_fwa = ['f070lp', 'f100lp',
                     'g170lp', 'f290lp', 'clear', 'all']
         valid_gwa = ['g140m', 'g140h', 'g235m', 'g235h',
                      'g395m', 'g395h', 'prism', 'all']

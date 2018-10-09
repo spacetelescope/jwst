@@ -9,16 +9,9 @@ JWST pipeline step for image intensity matching for MIRI images.
 
 import numpy as np
 
-from .. stpipe import Step, cmdline
+from .. stpipe import Step
 from .. import datamodels
-from .. wiimatch.match import *
-
-try:
-    from stsci.tools.bitmask import bitfield_to_boolean_mask
-    from stsci.tools.bitmask import interpret_bit_flags
-except ImportError:
-    from stsci.tools.bitmask import bitmask2mask as bitfield_to_boolean_mask
-    from stsci.tools.bitmask import interpret_bits_value as interpret_bit_flags
+from .. wiimatch.match import match_lsq
 
 
 __all__ = ['MRSIMatchStep', 'apply_background_2d']
@@ -87,8 +80,7 @@ class MRSIMatchStep(Step):
 
         # match background for images from a single channel
         for c in sorted(single_ch.keys()):
-            matched_models = _match_models(single_ch[c], channel=str(c),
-                                           degree=degree)
+            _match_models(single_ch[c], channel=str(c), degree=degree)
 
         # subtract the background, if requested
         if self.subtract:

@@ -1,9 +1,9 @@
-from . import model_base
+from .model_base import DataModel
 
 __all__ = ['Level1bModel']
 
 
-class Level1bModel(model_base.DataModel):
+class Level1bModel(DataModel):
     """
     A data model for raw 4D ramps level-1b products.
 
@@ -30,24 +30,8 @@ class Level1bModel(model_base.DataModel):
     """
     schema_url = "level1b.schema.yaml"
 
-    def __init__(self, init=None, data=None, refout=None, zeroframe=None,
-                 group=None, int_times=None, **kwargs):
+    def __init__(self, init=None, **kwargs):
         super(Level1bModel, self).__init__(init=init, **kwargs)
-
-        if data is not None:
-            self.data = data
-
-        if refout is not None:
-            self.refout = refout
-
-        if zeroframe is not None:
-            self.zeroframe = zeroframe
-
-        if group is not None:
-            self.group = group
-
-        if int_times is not None:
-            self.int_times = int_times
 
         # zeroframe is a lower dimensional array than
         # the science data. However, its dimensions are not

@@ -29,12 +29,8 @@ class CubeData():
         self.subchannel = pars.get('subchannel')
         self.grating = pars.get('grating')
         self.filter = pars.get('filter')
-        self.offset_list = pars.get('offset_list')
         self.weighting = pars.get('weighting')
         self.output_type = pars.get('output_type')
-
-        self.ra_offset = []  # units arc seconds
-        self.dec_offset = [] # units arc seconds
         self.detector = None
         self.instrument = None
 
@@ -58,7 +54,6 @@ class CubeData():
         ones are found in the data
 
         Read in necessary reference data:
-        * ra dec offset list
         * cube parameter reference file
         * if miripsf weighting paramter is set then read in resolution file
 
@@ -71,24 +66,14 @@ class CubeData():
         -------
         self with necessary files filled in
         """
-#________________________________________________________________________________
-# Check if there is an offset list (this ra,dec dither offset list will probably
-# only be used in testing)
 
-        if self.offset_list != 'NA':
-            log.info('Going to read in dither offset list')
-            self.ra_offset, self.dec_offset = \
-                cube_build_io_util.read_offset_file(self.offset_list)
 #________________________________________________________________________________
 # Read in the input data (association table or single file)
 # Fill in MasterTable   based on Channel/Subchannel  or filter/grating
-# Also if there is an Offset list - fill in MasterTable.FileOffset
 #________________________________________________________________________________
         master_table = file_table.FileTable()
         instrument, detector = master_table.set_file_table(self.input_models,
-                                                           self.input_filenames,
-                                                           self.ra_offset,
-                                                           self.dec_offset)
+                                                           self.input_filenames)
 #________________________________________________________________________________
 # find out how many files are in the association table or if it is an single file
 # store the input_filenames and input_models
@@ -103,7 +88,7 @@ class CubeData():
 #________________________________________________________________________________
         self.determine_band_coverage(master_table)
 #________________________________________________________________________________
-# InstrumentDefaults is an  dictionary that holds default parameters for
+# instrument_defaults is an  dictionary class that holds default parameters for
 # difference instruments and for each band
 #________________________________________________________________________________
         instrument_info = instrument_defaults.InstrumentInfo()
@@ -276,15 +261,18 @@ class CubeData():
                 raise ErrorNoGratings("The cube does not cover any gratings")
 
 #______________________________________________________________________
-# Determine the number of cubes going to create based on:
-# self.output_type
-# MIRI: self.band_channel, self.band_subchannel
-# NIRSPEC: self.band_grating, self.band_filter
+
 
     def number_cubes(self):
 
-# check which type of cubes to create: A user selected one, single, or default set
+        """
+        Short Summary
+        -------------
+        Determine the number of IFUcubes to created based on:
+        Type of cube (single band, multiple bands, or Single mode)
 
+        # check which type of cubes to create: A user selected one, single, or default set
+        """
         num_cubes = 0
         cube_pars = {}
 #______________________________________________________________________

@@ -37,7 +37,8 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
     schema_url = "core.schema.yaml"
 
     def __init__(self, init=None, schema=None, extensions=None,
-                 pass_invalid_values=False, strict_validation=False):
+                 pass_invalid_values=False, strict_validation=False,
+                 **kwargs):
         """
         Parameters
         ----------
@@ -217,6 +218,16 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             if not self.meta.hasattr('model_type'):
                 self.meta.model_type = klass
 
+        # initialize arrays from keyword arguments when they are present
+
+        for attr, value in kwargs.items():
+            if value is not None:
+                subschema = properties._get_schema_for_property(self._schema,
+                                                                attr)
+                if 'datatype' in subschema:
+                    setattr(self, attr, value)
+
+
     def __repr__(self):
         import re
 
@@ -324,6 +335,29 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                               self._pass_invalid_values,
                               self._strict_validation)
 
+    def validate_required_fields(self):
+        """
+        Walk the schema and make sure all required fields are
+        in the model
+        """
+        def callback(schema, path, combiner, ctx, recurse):
+            if 'fits_required' not in schema:
+                return
+
+            # Get the value pointed at by the path to the node,
+            # or None in case there is no entry for the node
+            node = ctx
+            for attr in path:
+                node = getattr(node, attr)
+                if node is None:
+                    break
+
+            validate.value_change(path, node, schema,
+                                  ctx._pass_invalid_values,
+                                  ctx._strict_validation)
+
+        mschema.walk_schema(self._schema, callback, ctx=self)
+
     def info(self):
         """
         Return datatype and dimension for each array or table
@@ -389,7 +423,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         for field in field_info:
             buffer.append(format_string % field)
         return "\n".join(buffer) + "\n"
-
 
     def get_primary_array_name(self):
         """
@@ -457,6 +490,8 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         if dir_path:
             path_head = dir_path
         output_path = os.path.join(path_head, path_tail)
+
+        self.validate_required_fields()
 
         # TODO: Support gzip-compressed fits
         if ext == '.fits':

@@ -71,13 +71,14 @@ For WFSS data, at least two observations are made, one consisting of a
 direct image of the field-of-view (FOV), and a second where the FOV is
 dispersed using a grism. The direct image is first processed through
 level 3. At the level 3 stage, a source catalog of objects found in
-the image, and a segment map, are generated. These files are then used
+the image, and a segment map, used to record the minimum bounding
+box sizes for each object, are generated. The source catalog is then used
 as input to the level 2 processing of the spectral data. This extra
 link between the two major stages is represented by the `Segment &
 Catalog` file set, show in red in the diagram. The level 2 association
 `grism_spec2_asn` not only lists the needed countrate exposures, but
-also the catalog and segment map files produced by the level 3 image
-processing. Hence, the workflow knows to wait for these files before
+also the catalog file produced by the level 3 image
+processing. Hence, the workflow knows to wait for this file before
 continuing the spectral processing.
 
 Field Guide to File Names

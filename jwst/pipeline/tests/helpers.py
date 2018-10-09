@@ -8,12 +8,9 @@ import tempfile
 
 # Import from the common helpers module
 # simply to make available from this module.
-from ...tests.helpers import (
+from ...tests.helpers import ( # noqa: F401
     abspath,
-    require_bigdata,
-    require_crds_context,
-    runslow,
-)
+) 
 
 from ...associations import load_asn
 
@@ -22,20 +19,6 @@ SCRIPT_DATA_PATH = path.join(SCRIPT_PATH, 'data')
 
 
 @pytest.fixture
-def mk_tmp_dirs():
-    """Setup testing directories"""
-    tmp_current_path = tempfile.mkdtemp()
-    tmp_data_path = tempfile.mkdtemp()
-    tmp_config_path = tempfile.mkdtemp()
-
-    old_path = os.getcwd()
-    try:
-        os.chdir(tmp_current_path)
-        yield (tmp_current_path, tmp_data_path, tmp_config_path)
-    finally:
-        os.chdir(old_path)
-
-
 def update_asn_basedir(asn_file, root=None):
     """Create an association with filenames update
     for a different directory

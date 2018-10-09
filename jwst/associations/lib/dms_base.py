@@ -123,7 +123,7 @@ SPECIAL_EXPTYPES = {
 MEMBER_KEY = 'expname'
 
 # Non-specified values found in DMS Association Pools
-_EMPTY = (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f')
+_EMPTY = (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f', 'N/A', 'n/a')
 
 # Degraded status information
 _DEGRADED_STATUS_OK = (

@@ -1,6 +1,5 @@
-import os
 import pytest
-from astropy.io import fits as pf
+from astropy.io import fits
 from jwst.pipeline.calwebb_spec2 import Spec2Pipeline
 
 pytestmark = [
@@ -24,34 +23,34 @@ def test_mrs2pipeline1(_bigdata):
     step.run(_bigdata+'/miri/test_mrs2pipeline/jw80500018001_02101_00002_MIRIFUSHORT_rate.fits')
 
     n_h = 'jw80500018001_02101_00002_MIRIFUSHORT_cal.fits'
-    h = pf.open(n_h)
+    h = fits.open(n_h)
     n_href = _bigdata+'/miri/test_mrs2pipeline/jw80500018001_02101_00002_MIRIFUSHORT_cal.fits'
-    href = pf.open(n_href)
-    newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['dq']])
-    newhref = pf.HDUList([href['primary'],href['sci'],href['err'],href['dq']])
-    result = pf.diff.FITSDiff(newh, newhref,
+    href = fits.open(n_href)
+    newh = fits.HDUList([h['primary'],h['sci'],h['err'],h['dq']])
+    newhref = fits.HDUList([href['primary'],href['sci'],href['err'],href['dq']])
+    result = fits.diff.FITSDiff(newh, newhref,
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
                               rtol = 0.00001)
     assert result.identical, result.report()
 
     n_h = 'jw80500018001_02101_00002_MIRIFUSHORT_s3d.fits'
-    h = pf.open(n_h)
+    h = fits.open(n_h)
     n_href = _bigdata+'/miri/test_mrs2pipeline/jw80500018001_02101_00002_MIRIFUSHORT_s3d.fits'
-    href = pf.open(n_href)
-    newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['dq'],h['wmap']])
-    newhref = pf.HDUList([href['primary'],href['sci'],href['err'],href['dq'],href['wmap']])
-    result = pf.diff.FITSDiff(newh, newhref,
+    href = fits.open(n_href)
+    newh = fits.HDUList([h['primary'],h['sci'],h['err'],h['dq'],h['wmap']])
+    newhref = fits.HDUList([href['primary'],href['sci'],href['err'],href['dq'],href['wmap']])
+    result = fits.diff.FITSDiff(newh, newhref,
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
                               rtol = 0.00001)
     assert result.identical, result.report()
 
     n_h = 'jw80500018001_02101_00002_MIRIFUSHORT_x1d.fits'
-    h = pf.open(n_h)
+    h = fits.open(n_h)
     n_href = _bigdata+'/miri/test_mrs2pipeline/jw80500018001_02101_00002_MIRIFUSHORT_x1d.fits'
-    href = pf.open(n_href)
-    newh = pf.HDUList([h['primary'],h['extract1d']])
-    newhref = pf.HDUList([href['primary'],href['extract1d']])
-    result = pf.diff.FITSDiff(newh, newhref,
+    href = fits.open(n_href)
+    newh = fits.HDUList([h['primary'],h['extract1d']])
+    newhref = fits.HDUList([href['primary'],href['extract1d']])
+    result = fits.diff.FITSDiff(newh, newhref,
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
                               rtol = 0.00001)
     assert result.identical, result.report()

@@ -10,4 +10,6 @@ from .calwebb_spec3 import Spec3Pipeline
 from .linear_pipeline import TestLinearPipeline
 from .calwebb_tso3 import Tso3Pipeline
 
-__version__ = '0.9.3'
+__all__ = ['Ami3Pipeline', 'Coron3Pipeline', 'DarkPipeline', 'Detector1Pipeline', 'GuiderPipeline',
+           'Image2Pipeline', 'Image3Pipeline', 'Spec2Pipeline', 'Spec3Pipeline', 'TestLinearPipeline',
+           'Tso3Pipeline']

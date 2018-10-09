@@ -1,72 +1,59 @@
-//@Library('utils@master') _  // For development only.
-
+// [skip ci] and [ci skip] have no effect here.
 if (utils.scm_checkout(['skip_disable':true])) return
 
 def test_env = [
     "HOME=./",
-    "PATH=./miniconda/bin:/bin:/usr/bin",
     "TEST_BIGDATA=/data4/jwst_test_data",
     "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
     "CRDS_CONTEXT=jwst-edit",
 ]
 
-//def python_version = ['3.5', '3.6']
-//def numpy_version = ['1.13', '1.14']
+// Pip related setup
+def PIP_ARGS = "-q"
+def PIP_INST = "pip install ${PIP_ARGS}"
+def PIP_DEPS = ""
+def PIP_TEST_DEPS = "requests_mock ci_watson"
 
-def CONDA_DEPS = "asdf \
-                  astropy \
-                  crds \
-                  dask \
-                  drizzle \
-                  flake8 \
-                  gwcs \
-                  jsonschema \
-                  jplephem \
-                  matplotlib \
-                  namedlist \
-                  numpy \
-                  photutils \
-                  scipy \
-                  six \
-                  spherical-geometry \
-                  stsci.image \
-                  stsci.imagestats \
-                  stsci.stimage \
-                  stsci.tools \
-                  verhawk"
-def CONDA_CHANNEL = "http://ssb.stsci.edu/conda-dev"
-def PY_SETUP = "python setup.py"
-def PYTEST = "pytest -r s --bigdata --basetemp=test_outputs --junit-xml=results.xml"
-def PY_VER = '3.6'
-def CONDA_ENV = 'py${PY_VER}'
-def CONDA_CREATE = "conda create -y -q"
-def WRAPPER = "with_env -n ${CONDA_ENV}"
+// Pytest wrapper
+def PYTEST = "pytest \
+              -r s \
+              --bigdata \
+              --basetemp=test_outputs \
+              --junit-xml=results.xml"
+
 def TEST_ROOT = "jwst/tests_nightly/general"
-def matrix = []
-
-conda.CONDA_INSTALLER_VERSION = '4.4.10'
-node("jwst") {
-    stage("Conda") {
-        deleteDir()
-        conda.install()
-        sh "curl -L https://raw.githubusercontent.com/astroconda/docker-buildsys/master/with_env >miniconda/bin/with_env"
-        sh "chmod 755 miniconda/bin/with_env"
-        sh "printenv | sort"
-    }
-}
 
 bc = new BuildConfig()
 bc.nodetype = 'jwst'
 bc.env_vars = test_env
-bc.name = PY_VER
-
-bc.test_cmds = [
-    "conda config --add channels ${CONDA_CHANNEL}",
-    "${CONDA_CREATE} -n ${CONDA_ENV} python=${PY_VER} ${CONDA_DEPS}",
-    "${WRAPPER} printenv | sort",
-    "${WRAPPER} ${PY_SETUP} develop",
-    "${WRAPPER} ${PYTEST} ${TEST_ROOT}",
+bc.name = '3.6'
+bc.conda_channels = ['http://ssb.stsci.edu/astroconda-dev']
+bc.conda_packages = ['asdf',
+                     'astropy',
+                     'crds',
+                     'dask',
+                     'drizzle',
+                     'flake8',
+                     'gwcs',
+                     'jsonschema',
+                     'jplephem',
+                     'matplotlib',
+                     'namedlist',
+                     'numpy',
+                     'photutils',
+                     'scipy',
+                     'six',
+                     'spherical-geometry',
+                     'stsci.image',
+                     'stsci.imagestats',
+                     'stsci.stimage',
+                     'stsci.tools',
+                     'verhawk'
 ]
-matrix += bc
+bc.test_cmds = ["printenv | sort",
+                "python setup.py develop",
+                "${PIP_INST} ${PIP_TEST_DEPS}",
+                "${PYTEST} ${TEST_ROOT}"
+]
 
-utils.run(matrix)
+utils.run([bc])

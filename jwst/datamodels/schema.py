@@ -5,7 +5,6 @@ from collections import OrderedDict
 from asdf import AsdfFile
 from asdf import schema as asdf_schema
 
-from .extension import BaseExtension
 from jwst.transforms.jwextension import JWSTExtension
 from gwcs.extension import GWCSExtension
 
@@ -277,8 +276,7 @@ def read_schema(schema_file, extensions=None):
             return extensions._url_mapping(extensions._tag_mapping(uri))
         return asdf_file_resolver
 
-    default_extensions = [GWCSExtension(), JWSTExtension(),
-                          BaseExtension()]
+    default_extensions = [GWCSExtension(), JWSTExtension()]
 
     if extensions is None:
         extensions = default_extensions[:]

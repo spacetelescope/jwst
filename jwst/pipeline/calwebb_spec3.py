@@ -12,7 +12,7 @@ from ..mrs_imatch import mrs_imatch_step
 from ..outlier_detection import outlier_detection_step
 from ..resample import resample_spec_step
 
-__version__ = '0.9.3'
+__all__ = ['Spec3Pipeline']
 
 # Group exposure types
 MULTISOURCE_MODELS = ['MultiSlitModel']
@@ -142,7 +142,7 @@ class Spec3Pipeline(Pipeline):
                     self.extract_1d.search_output_file = False
                 result = self.extract_1d(result)
             else:
-                self.log.warn(
+                self.log.warning(
                     'Resampling was not completed. Skipping extract_1d.'
                 )
 

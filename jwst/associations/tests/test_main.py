@@ -1,23 +1,20 @@
 """test_associations: Test of general Association functionality."""
-import pytest
 import re
 
-from .helpers import (
-    full_pool_rules,
-    runslow,
-)
+import pytest
 
+from .helpers import full_pool_rules
 from ..main import Main
 
 
-@runslow
+@pytest.mark.slow
 def test_script(full_pool_rules):
     pool, rules, pool_fname = full_pool_rules
 
     generated = Main([pool_fname, '--dry-run'])
     asns = generated.associations
-    assert len(asns) == 289
-    assert len(generated.orphaned) == 202
+    assert len(asns) == 286
+    assert len(generated.orphaned) == 203
     found_rules = set(
         asn['asn_rule']
         for asn in asns
@@ -26,7 +23,7 @@ def test_script(full_pool_rules):
     assert 'candidate_Asn_WFSCMB' in found_rules
 
 
-@runslow
+@pytest.mark.slow
 def test_asn_candidates(full_pool_rules):
     pool, rules, pool_fname = full_pool_rules
 
@@ -83,7 +80,7 @@ def test_discovered(full_pool_rules):
     assert len(full.associations) == len(candidates.associations) + len(discovered.associations)
 
 
-@runslow
+@pytest.mark.slow
 def test_version_id(full_pool_rules):
     pool, rules, pool_fname = full_pool_rules
 
@@ -98,7 +95,7 @@ def test_version_id(full_pool_rules):
         assert version_id in asn.asn_name
 
 
-@runslow
+@pytest.mark.slow
 def test_pool_as_parameter(full_pool_rules):
     pool, rules, pool_fname = full_pool_rules
 

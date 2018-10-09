@@ -26,3 +26,14 @@ def test_suffix_removal(suffix):
     removed_path, separator = s.remove_suffix(full_fpath)
     assert removed_path == basename
     assert separator == '_'
+
+
+@pytest.mark.parametrize(
+    'suffix',
+    s.KNOW_SUFFIXES
+)
+def test_suffix_replacement(suffix, base='file', new='junk', sep='_'):
+    """Test suffix replacement"""
+    full_path = base + sep + suffix
+    replaced = s.replace_suffix(full_path, new)
+    assert replaced == base + sep + new

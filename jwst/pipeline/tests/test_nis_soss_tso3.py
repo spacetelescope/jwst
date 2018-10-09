@@ -1,18 +1,14 @@
 """Test calwebb_tso3 with NIRISS SOSS"""
 
 from collections import defaultdict
-from copy import copy
 from glob import glob
 from os import path
+
 import pytest
 
 from .helpers import (
-    SCRIPT_PATH,
     SCRIPT_DATA_PATH,
     abspath,
-    mk_tmp_dirs,
-    require_bigdata,
-    runslow,
     update_asn_basedir,
 )
 
@@ -25,8 +21,8 @@ DATAPATH = abspath(
 )
 
 
-@runslow
-@require_bigdata
+@pytest.mark.slow
+@pytest.mark.bigdata
 def test_run_full_noscale(mk_tmp_dirs):
     """Test a full run"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -89,8 +85,8 @@ def test_run_full_noscale(mk_tmp_dirs):
     assert len(output_files) == 0
 
 
-@runslow
-@require_bigdata
+@pytest.mark.slow
+@pytest.mark.bigdata
 def test_run_whitelight(mk_tmp_dirs):
     """Test a full run"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -111,7 +107,6 @@ def test_run_whitelight(mk_tmp_dirs):
     # Now test for file existence. Get the association
     with open(asn_path) as fh:
         asn = load_asn(fh)
-    acid = asn['asn_id']
     product = asn['products'][0]
     product_name = product['name']
     members_by_type = defaultdict(list)
@@ -139,8 +134,8 @@ def test_run_whitelight(mk_tmp_dirs):
     assert len(output_files) == 0
 
 
-@runslow
-@require_bigdata
+@pytest.mark.slow
+@pytest.mark.bigdata
 def test_whitelight_output(mk_tmp_dirs):
     """Test default file output from white_light_step"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -171,8 +166,8 @@ def test_whitelight_output(mk_tmp_dirs):
     assert len(output_files) == 0
 
 
-@runslow
-@require_bigdata
+@pytest.mark.slow
+@pytest.mark.bigdata
 def test_whitelight_nooutput(mk_tmp_dirs):
     """Test for no output from white_light_step"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs

@@ -1,6 +1,5 @@
-import os
 import pytest
-from astropy.io import fits as pf
+from astropy.io import fits
 from jwst.pipeline.calwebb_ami3 import Ami3Pipeline
 
 pytestmark = [
@@ -12,9 +11,7 @@ pytestmark = [
 
 def test_ami_pipeline(_bigdata):
     """
-
     Regression test of the AMI pipeline performed on NIRISS AMI data.
-
     """
     pipe = Ami3Pipeline()
     pipe.save_averages = True
@@ -22,18 +19,13 @@ def test_ami_pipeline(_bigdata):
     pipe.ami_analyze.rotation = 1.49
     pipe.run(_bigdata + '/niriss/test_ami_pipeline/test_lg1_asn.json')
 
-    h = pf.open('test_targ_aminorm.fits')
-    href = pf.open(_bigdata+'/niriss/test_ami_pipeline/ami_pipeline_targ_lgnorm.fits')
-    newh = pf.HDUList([h['primary'],h['fit'],h['resid'],h['closure_amp'],
-                       h['closure_pha'],h['fringe_amp'],h['fringe_pha'],
-                       h['pupil_pha'],h['solns']])
-    newhref = pf.HDUList([href['primary'],href['fit'],href['resid'],href['closure_amp'],
-                          href['closure_pha'],href['fringe_amp'],href['fringe_pha'],
-                          href['pupil_pha'],href['solns']])
+    h = fits.open('test_targ_aminorm.fits')
+    href = fits.open(_bigdata+'/niriss/test_ami_pipeline/ami_pipeline_targ_lgnorm.fits')
 
-    result = pf.diff.FITSDiff(newh,
-                              newhref,
-                              ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
+    result = fits.diff.FITSDiff(h, href,
+                              ignore_hdus=['ASDF', 'HDRTAB'],
+                              ignore_keywords=['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
                               rtol = 0.001
     )
+
     assert result.identical, result.report()

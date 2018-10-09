@@ -39,15 +39,16 @@ __all__ = [
     '_EMPTY',
     'ASN_SCHEMA',
     'AsnMixin_Lv2Image',
-    'AsnMixin_Lv2Singleton',
     'AsnMixin_Lv2Special',
     'AsnMixin_Lv2Spectral',
     'Constraint_Base',
     'Constraint_Image_Nonscience',
     'Constraint_Image_Science',
     'Constraint_Mode',
+    'Constraint_Single_Science',
     'Constraint_Special',
     'Constraint_Spectral_Science',
+    'Constraint_Target',
     'DMSLevel2bBase',
     'DMSAttrConstraint',
     'Utility'
@@ -64,7 +65,6 @@ FLAG_TO_EXPTYPE = {
 # File templates
 _DMS_POOLNAME_REGEX = 'jw(\d{5})_(\d{3})_(\d{8}[Tt]\d{6})_pool'
 _LEVEL1B_REGEX = '(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
-_REGEX_LEVEL2A = '(?P<path>.+)(?P<type>_rate(ints)?)'
 
 # Key that uniquely identfies items.
 KEY = 'expname'
@@ -112,22 +112,14 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
         return result
 
-    def has_science(self, item):
-        """Only allow a single science in the association
+    def has_science(self):
+        """Does association have a science member
 
-        Parameters
-        ----------
-        item: dict
-            The item in question
-
-        Returns
         -------
         bool
-            True if item can be added
+            True if it does.
         """
-        exptype = self.get_exposure_type(item)
         limit_reached = len(self.members_by_type('science')) >= 1
-        limit_reached = limit_reached and exptype == 'science'
         return limit_reached
 
     def __eq__(self, other):
@@ -158,11 +150,8 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         except Exception:
             return PRODUCT_NAME_DEFAULT
 
-        match = re.match(_REGEX_LEVEL2A, science_path)
-        if match:
-            return match.groupdict()['path']
-        else:
-            return science_path
+        no_suffix_path, separator = remove_suffix(science_path)
+        return no_suffix_path
 
     def make_member(self, item):
         """Create a member from the item
@@ -484,7 +473,7 @@ class Utility():
         """
         match = re.match(_LEVEL1B_REGEX, level1b_name)
         if match is None or match.group('type') != '_uncal':
-            logger.warn((
+            logger.warning((
                 'Item FILENAME="{}" is not a Level 1b name. '
                 'Cannot transform to Level 2a.'
             ).format(
@@ -639,14 +628,6 @@ class Constraint_Mode(Constraint):
     def __init__(self):
         super(Constraint_Mode, self).__init__([
             DMSAttrConstraint(
-                name='program',
-                sources=['program']
-            ),
-            DMSAttrConstraint(
-                name='target',
-                sources=['targetid'],
-            ),
-            DMSAttrConstraint(
                 name='instrument',
                 sources=['instrume']
             ),
@@ -672,6 +653,28 @@ class Constraint_Mode(Constraint):
                 name='channel',
                 sources=['channel'],
                 required=False,
+            ),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        sources=['detector'],
+                        value='nirspec'
+                    ),
+                    DMSAttrConstraint(
+                        sources=['filter'],
+                        value='opaque'
+                    ),
+                ],
+                reduce=Constraint.notany
+            ),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        sources=['visitype'],
+                        value='.+wfsc.+',
+                    ),
+                ],
+                reduce=Constraint.notany
             ),
             DMSAttrConstraint(
                 name='slit',
@@ -723,6 +726,35 @@ class Constraint_Image_Nonscience(Constraint):
         )
 
 
+class Constraint_Single_Science(SimpleConstraint):
+    """Allow only single science exposure
+
+    Parameters
+    ----------
+    has_science_fn: func
+        Function to determine whether the association
+        has a science member already. No arguments are provided.
+
+    sc_kwargs: dict
+        Keyword arguments to pass to the parent class `SimpleConstraint`
+
+    Notes
+    -----
+    The `has_science_fn` is further wrapped in a lambda function
+    to provide a closure. Otherwise if the function is a bound method,
+    that method may end up pointing to an instance that is not calling
+    this constraint.
+    """
+
+    def __init__(self, has_science_fn, **sc_kwargs):
+        super(Constraint_Single_Science, self).__init__(
+            name='single_science',
+            value=False,
+            sources=lambda item: has_science_fn(),
+            **sc_kwargs
+        )
+
+
 class Constraint_Special(DMSAttrConstraint):
     """Select on backgrounds and other auxilliary images"""
     def __init__(self):
@@ -764,6 +796,16 @@ class Constraint_Spectral_Science(Constraint):
         )
 
 
+class Constraint_Target(DMSAttrConstraint):
+    """Select on target id"""
+
+    def __init__(self):
+        super(Constraint_Target, self).__init__(
+            name='target',
+            sources=['targetid'],
+        )
+
+
 # ---------------------------------------------
 # Mixins to define the broad category of rules.
 # ---------------------------------------------
@@ -775,28 +817,6 @@ class AsnMixin_Lv2Image:
 
         super(AsnMixin_Lv2Image, self)._init_hook(item)
         self.data['asn_type'] = 'image2'
-
-
-class AsnMixin_Lv2Singleton(DMSLevel2bBase):
-    """Allow only single science exposure"""
-
-    def __init__(self, *args, **kwargs):
-
-        constraints = SimpleConstraint(
-            name='single_science',
-            value=False,
-            sources=lambda item: self.has_science(item)
-        )
-        if self.constraints is None:
-            self.constraints = constraints
-        else:
-            self.constraints = Constraint([
-                self.constraints,
-                constraints
-            ])
-
-        # Now, lets see if item belongs to us.
-        super(AsnMixin_Lv2Singleton, self).__init__(*args, **kwargs)
 
 
 class AsnMixin_Lv2Spectral(DMSLevel2bBase):

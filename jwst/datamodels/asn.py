@@ -1,21 +1,18 @@
 import os
-from . import model_base
+from .model_base import DataModel
 
 __all__ = ['AsnModel']
 
 
-class AsnModel(model_base.DataModel):
+class AsnModel(DataModel):
     """
     A data model for association tables.
     """
     schema_url = "asn.schema.yaml"
     supported_formats = ['yaml', 'json', 'fits']
 
-    def __init__(self, init=None, asn_table=None, **kwargs):
+    def __init__(self, init=None, **kwargs):
         super(AsnModel, self).__init__(init=init, **kwargs)
-
-        if asn_table is not None:
-            self.asn_table = asn_table
 
         # apply logic to identify output product
         self.parse_table()

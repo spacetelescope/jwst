@@ -12,11 +12,11 @@ from ..ipc import ipc_step
 from ..superbias import superbias_step
 from ..refpix import refpix_step
 from ..rscd import rscd_step
+from ..firstframe import firstframe_step
 from ..lastframe import lastframe_step
 from ..linearity import linearity_step
 
-
-__version__ = '0.9.3'
+__all__ = ['DarkPipeline']
 
 # Define logging
 log = logging.getLogger()
@@ -41,6 +41,7 @@ class DarkPipeline(Pipeline):
                  'superbias': superbias_step.SuperBiasStep,
                  'refpix': refpix_step.RefPixStep,
                  'rscd': rscd_step.RSCD_Step,
+                 'firstframe': firstframe_step.FirstFrameStep,
                  'lastframe': lastframe_step.LastFrameStep,
                  'linearity': linearity_step.LinearityStep,
                  }
@@ -63,9 +64,10 @@ class DarkPipeline(Pipeline):
             input = self.dq_init(input)
             input = self.saturation(input)
             input = self.ipc(input)
+            input = self.firstframe(input)
+            input = self.lastframe(input)
             input = self.linearity(input)
             input = self.rscd(input)
-            input = self.lastframe(input)
 
         else:
 

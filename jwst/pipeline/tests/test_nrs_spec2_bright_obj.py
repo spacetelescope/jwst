@@ -1,21 +1,15 @@
 """Test calwebb_spec2 with NIRSpec Bright Object"""
 
-from collections import defaultdict
-from copy import copy
 from glob import glob
 from os import path
 
+import pytest
+
 from .helpers import (
-    SCRIPT_PATH,
     SCRIPT_DATA_PATH,
     abspath,
-    mk_tmp_dirs,
-    require_bigdata,
-    runslow,
-    update_asn_basedir,
 )
 
-from ...associations import load_asn
 from ...stpipe.step import (Step, remove_suffix)
 
 DATAPATH = abspath(
@@ -23,8 +17,8 @@ DATAPATH = abspath(
 )
 
 
-@runslow
-@require_bigdata
+@pytest.mark.slow
+@pytest.mark.bigdata
 def test_run_full(mk_tmp_dirs):
     """Test a full run"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs

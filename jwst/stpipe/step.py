@@ -687,17 +687,21 @@ class Step():
         """
         self._set_input_dir(obj, exclusive=exclusive)
 
+        err_message = (
+            'Cannot set master input file name from object'
+            ' {}'.format(obj)
+        )
         parent_input_filename = self.search_attr('_input_filename')
         if not exclusive or parent_input_filename is None:
             if isinstance(obj, str):
                 self._input_filename = obj
             elif isinstance(obj, DataModel):
-                self._input_filename = obj.meta.filename
+                try:
+                    self._input_filename = obj.meta.filename
+                except AttributeError:
+                    self.log.debug(err_message)
             else:
-                self.log.debug(
-                    'Cannot set master input file name from object'
-                    ' {}'.format(obj)
-                )
+                self.log.debug(err_message)
 
     def save_model(self,
                    model,
@@ -817,6 +821,11 @@ class Step():
             The extension to use. If none, `output_ext` is used.
             Can include the leading period or not.
 
+        suffix: str or None or False
+            Suffix to append to the filename.
+            If None, the `Step` default will be used.
+            If False, no suffix replacement will be done.
+
         name_format: str or None
             The format string to use to form the base name.
 
@@ -860,26 +869,37 @@ class Step():
         if ext.startswith('.'):
             ext = ext[1:]
 
-        suffix = _get_suffix(suffix, step=step)
-        suffix_sep = None
-        if suffix is not None:
-            basename, suffix_sep = remove_suffix(basename)
-        if suffix_sep is None:
-            suffix_sep = separator
-
         if len(components):
             component_str = formatter(component_format, **components)
         else:
             component_str = ''
 
-        basename = formatter(
-            name_format,
-            basename=basename,
-            suffix=suffix,
-            suffix_sep=suffix_sep,
-            ext=ext,
-            components=component_str
-        )
+        # Suffix check. An explicit check on `False` is necessary
+        # because `None` is also allowed.
+        suffix = _get_suffix(suffix, step=step)
+        if suffix is not False:
+            suffix_sep = None
+            if suffix is not None:
+                basename, suffix_sep = remove_suffix(basename)
+            if suffix_sep is None:
+                suffix_sep = separator
+
+            basename = formatter(
+                name_format,
+                basename=basename,
+                suffix=suffix,
+                suffix_sep=suffix_sep,
+                ext=ext,
+                components=component_str
+            )
+
+        else:
+            basename = formatter(
+                name_format,
+                basename=basename,
+                ext=ext,
+                components=component_str
+            )
 
         output_dir = step.search_attr('output_dir', default='')
         output_dir = expandvars(expanduser(output_dir))
@@ -920,11 +940,8 @@ class Step():
         for item in to_del:
             try:
                 del item
-            except Exception as exception:
-                self.log.debug(
-                    'Could not delete "{}"'
-                    'Reason:\n{}'.format(item, exception)
-                )
+            except NameError as error:
+                self.log.debug("An error has occurred: %s", error)
         gc.collect()
 
     def open_model(self, obj):

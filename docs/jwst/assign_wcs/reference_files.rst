@@ -339,7 +339,7 @@ For NIRISS SOSS mode the file is in ASDF format with the following structure.
 
 :model: A tabular model with the wavelength solution.
 
-For NIRCAM WFSS and TSGRIM modes the file is in ASDF format with the following structure:
+For NIRCAM WFSS and TSGRISM modes the file is in ASDF format with the following structure:
 
 :displ: The wavelength transform models
 :dispx: The x-dispersion models
@@ -385,14 +385,4 @@ For NIRSPEC the file is a dictionary storing information about default wavelengt
 :filter_grating:
                  :order: Default spectral order
                  :range: Default wavelength range
-
-For NIRCAM WFSS and TSGRIM modes and NIRISS WFSS mode the wavelengthrange file contains the wavelength limits to use when caluclating the minimum and maximum dispersion extents on the detector. The selection of the
-correct minimum and maximum wavelength range is done with the following logic, where the index of
-the desired filter is used as the reference into wrange_selector, and the same for the index of the order:
-
-wave_min, wave_max = wrange[order][wrange_selector[filter name]]
-
-:order: a list of orders
-:wrange: a 2D list of wavelength ranges, ordered in the same way as the orders
-:wrange_selector: The list of FILTER names, these are used to select the correct wavelength range
-
+                 

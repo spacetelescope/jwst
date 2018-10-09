@@ -1,0 +1,39 @@
+{
+    "asn_type": "spec2",
+    "asn_rule": "candidate_Asn_Lv2NRSFSS",
+    "version_id": null,
+    "code_version": "0.12.0a.dev115",
+    "degraded_status": "No known degraded exposures in association.",
+    "program": "98005",
+    "target": "1",
+    "asn_pool": "jw98005_20171108T041409_pool",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '98005'})\nDMSAttrConstraint({'name': 'is_tso', 'sources': ['tsovisit'], 'value': None})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'nirspec'})\nDMSAttrConstraint({'name': 'detector', 'sources': ['detector'], 'value': 'nrs1'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'f170lp'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['grating'], 'value': 'g235m'})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': 's200a1'})\nDMSAttrConstraint({'name': 'channel', 'sources': ['channel'], 'value': None})\nDMSAttrConstraint({'name': 'slit', 'sources': ['fxd_slit'], 'value': None})\nDMSAttrConstraint({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'nrs_fixedslit'})\nDMSAttrConstraint({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'nrs_fixedslit'})\nDMSAttrConstraint({'name': 'expspcin', 'sources': ['expspcin'], 'value': '15'})\nDMSAttrConstraint({'name': 'nods', 'sources': ['numdthpt'], 'value': '0'})\nDMSAttrConstraint({'name': 'subpxpns', 'sources': ['subpxpns'], 'value': '0'})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o001\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
+    "asn_id": "o001",
+    "products": [
+        {
+            "name": "jw98005001001_0210f_00001_nrs1",
+            "members": [
+                {
+                    "expname": "jw98005001001_0210f_00001_nrs1_rate.fits",
+                    "exptype": "science",
+                    "exposerr": "null"
+                },
+                {
+                    "expname": "jw98005001001_02113_00001_nrs1_rate.fits",
+                    "exptype": "background",
+                    "exposerr": "null"
+                },
+                {
+                    "expname": "jw98005001001_0212f_00001_nrs1_rate.fits",
+                    "exptype": "background",
+                    "exposerr": "null"
+                },
+                {
+                    "expname": "jw98005001001_0211r_00001_nrs1_rate.fits",
+                    "exptype": "background",
+                    "exposerr": "null"
+                }
+            ]
+        }
+    ]
+}

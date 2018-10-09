@@ -1,7 +1,6 @@
 type: object
 properties:
   meta:
-    title: Level 3 Schema Metadata
     type: object
     properties:
       resample:

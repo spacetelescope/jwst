@@ -1,21 +1,16 @@
 """Test calwebb_image2"""
-
-import os
 from os import path
+
 import pytest
-import tempfile
 
 from .helpers import (
-    SCRIPT_PATH,
     SCRIPT_DATA_PATH,
     abspath,
-    mk_tmp_dirs,
-    require_bigdata,
-    update_asn_basedir,
 )
 
 from ...associations.asn_from_list import asn_from_list
 from ...associations.lib.rules_level2_base import DMSLevel2bBase
+from ...datamodels import DataModel
 from ...datamodels import open as dm_open
 from ...stpipe.step import Step
 from ..calwebb_image2 import Image2Pipeline
@@ -33,7 +28,16 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-@require_bigdata
+@pytest.mark.bigdata
+def test_result_return(mk_tmp_dirs):
+    """Ensure that a result is returned programmatically"""
+    exppath = path.join(DATAPATH, EXPFILE)
+    cfg = path.join(SCRIPT_DATA_PATH, 'calwebb_image2_save.cfg')
+    results = Image2Pipeline.call(exppath, config_file=cfg)
+    assert isinstance(results[0], DataModel)
+
+
+@pytest.mark.bigdata
 def test_no_cfg(mk_tmp_dirs):
     """What happens when the pipeline is run without a config"""
     exppath = path.join(DATAPATH, EXPFILE)
@@ -46,7 +50,7 @@ def test_no_cfg(mk_tmp_dirs):
     assert path.isfile(CALFILE)
 
 
-@require_bigdata
+@pytest.mark.bigdata
 def test_asn(mk_tmp_dirs):
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
     exppath = path.join(DATAPATH, EXPFILE)
@@ -69,7 +73,7 @@ def test_asn(mk_tmp_dirs):
     assert path.isfile(CALFILE)
 
 
-@require_bigdata
+@pytest.mark.bigdata
 def test_datamodel(mk_tmp_dirs):
     model = dm_open(path.join(DATAPATH, EXPFILE))
     cfg = path.join(SCRIPT_DATA_PATH, 'calwebb_image2_save.cfg')
@@ -77,7 +81,7 @@ def test_datamodel(mk_tmp_dirs):
     assert path.isfile(CALFILE)
 
 
-@require_bigdata
+@pytest.mark.bigdata
 def test_file(mk_tmp_dirs):
     exppath = path.join(DATAPATH, EXPFILE)
     cfg = path.join(SCRIPT_DATA_PATH, 'calwebb_image2_save.cfg')
@@ -85,7 +89,7 @@ def test_file(mk_tmp_dirs):
     assert path.isfile(CALFILE)
 
 
-@require_bigdata
+@pytest.mark.bigdata
 def test_file_outputdir(mk_tmp_dirs):
     """Test putting results in another folder"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs

@@ -61,6 +61,7 @@ SUFFIXES_TO_DISCARD = ['functionwrapper', 'systemcall']
 # Calculated suffixes.
 # This is produces by the `find_suffixes` function.
 _calculated_suffixes = set([
+    'spec2nrslamp',
     'linearpipeline',
     'spec3pipeline',
     'outlierdetectionstackstep',
@@ -203,6 +204,22 @@ def remove_suffix(name):
     if separator is None:
         separator = '_'
     return name, separator
+
+
+def replace_suffix(name, new_suffix):
+    """Replace suffix on name
+
+    Parameters
+    ----------
+    name: str
+        The name to replace the suffix of.
+        Expected to be only the basename; no extensions.
+
+    new_suffix:
+        The new suffix to use.
+    """
+    no_suffix, separator = remove_suffix(name)
+    return no_suffix + separator + new_suffix
 
 
 # #####################################

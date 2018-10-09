@@ -7,32 +7,8 @@ log.setLevel(logging.DEBUG)
 #********************************************************************************
 # HELPER ROUTINES for CubeData class defined in cube_build.py
 # these methods relate to I/O type procedures.
-# read_offset_file
 # read_cubepars
 # read_resolution_file
-#********************************************************************************
-# Read in dither offset file
-# For testing this is useful but possibily this might be useful during flight if the
-# images need an additional offset applied to them
-def read_offset_file(offset_list):
-
-    ra_offset = []
-    dec_offset = []
-    f = open(offset_list, 'r')
-    i = 0
-    for line in f:
-        offset_str = line.split()
-        offset = [float(xy) for xy in offset_str]
-        ra_off = offset[0]
-        dec_off = offset[1]
-
-        ra_offset.append(ra_off)
-        dec_offset.append(dec_off)
-        i = i + 1
-    f.close()
-    return ra_offset, dec_offset
-
-
 #********************************************************************************
 def read_cubepars(par_filename,
                   instrument,
@@ -66,6 +42,8 @@ def read_cubepars(par_filename,
     The correct elements of instrument_info are filled in
 
     """
+
+
     if instrument == 'MIRI':
         ptab = datamodels.MiriIFUCubeParsModel(par_filename)
         number_bands = len(all_channel)
@@ -240,7 +218,7 @@ def read_resolution_file(resol_filename,
         this_sub = all_subchannel[i]
         compare_band = this_channel + this_sub
         for tabdata in ptab.resolving_power_table:
-            table_sub_band = tabdata['SUB_BAND']
+            table_sub_band = tabdata['SUB_BAND'].lower()
             table_wave_center = tabdata['R_CENTRE']
             table_res_a_low = tabdata['R_A_LOW']
             table_res_b_low = tabdata['R_B_LOW']

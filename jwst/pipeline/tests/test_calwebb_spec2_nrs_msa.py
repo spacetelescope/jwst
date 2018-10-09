@@ -1,17 +1,13 @@
 """Test calwebb_spec2 for NIRSpec MSA"""
 
 from os import path
-import pytest
 from shutil import copy as file_copy
+
+import pytest
 
 from .helpers import (
     SCRIPT_DATA_PATH,
     abspath,
-    mk_tmp_dirs,
-    require_bigdata,
-    require_crds_context,
-    runslow,
-    update_asn_basedir,
 )
 
 from ...associations import load_asn
@@ -22,7 +18,7 @@ DATAPATH = abspath(
 )
 
 
-@require_bigdata
+@pytest.mark.bigdata
 def test_msa_missing(mk_tmp_dirs, caplog):
     """Test MSA missing failure"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -48,7 +44,7 @@ def test_msa_missing(mk_tmp_dirs, caplog):
     assert 'Unable to open MSA FITS file (MSAMETFL)' in caplog.text
 
 
-@require_bigdata
+@pytest.mark.bigdata
 def test_msa_missing_nofail(mk_tmp_dirs, caplog):
     """Test MSA missing failure"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -74,7 +70,7 @@ def test_msa_missing_nofail(mk_tmp_dirs, caplog):
     assert 'Unable to open MSA FITS file (MSAMETFL)' in caplog.text
 
 
-@require_bigdata
+@pytest.mark.bigdata
 def test_msa_missing_skip(mk_tmp_dirs, caplog):
     """Test MSA missing failure"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -100,8 +96,8 @@ def test_msa_missing_skip(mk_tmp_dirs, caplog):
     assert 'Aborting remaining processing for this exposure.' in caplog.text
 
 
-@runslow
-@require_bigdata
+@pytest.mark.slow
+@pytest.mark.bigdata
 def test_run_msaflagging(mk_tmp_dirs, caplog):
     """Test msa flagging operation"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs

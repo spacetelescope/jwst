@@ -1,0 +1,67 @@
+{
+    "asn_type": "spec3",
+    "asn_rule": "candidate_Asn_WFSS_NIS",
+    "version_id": null,
+    "code_version": "0.12.0a.dev115",
+    "degraded_status": "No known degraded exposures in association.",
+    "program": "87800",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '87800'})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'niriss'})\nConstraint_Target({'name': 'target', 'sources': ['targetid'], 'value': '2'})\nDMSAttrConstraint({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'nis_wfss'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'gr150r|gr150c'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['pupil'], 'value': 'f200w'})\nConstraint_Obsnum({'name': 'obs_num', 'sources': ['obs_num'], 'value': None})\nDMSAttrConstraint({'name': 'acq_exp', 'sources': ['exp_type'], 'value': 'mir_tacq|nis_taconfirm|nis_tacq|nrc_taconfirm|nrc_tacq|nrs_confirm|nrs_taconfirm|nrs_tacq|nrs_taslit'})\nDMSAttrConstraint({'name': 'acq_obsnum', 'sources': ['obs_num'], 'value': <function AsnMixin_Science.__init__.<locals>.<lambda> at 0x11c47de18>})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o017\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
+    "asn_id": "o017",
+    "target": "t002",
+    "asn_pool": "jw87800_20180824T214549_pool",
+    "products": [
+        {
+            "name": "jw87800-o017_{source_id}_niriss_gr150r-f200w",
+            "members": [
+                {
+                    "expname": "jw87800017001_02102_00008_nis_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "('o017', 'observation')"
+                },
+                {
+                    "expname": "jw87800017001_02102_00004_nis_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "('o017', 'observation')"
+                },
+                {
+                    "expname": "jw87800017001_02102_00006_nis_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "('o017', 'observation')"
+                },
+                {
+                    "expname": "jw87800017001_02102_00003_nis_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "('o017', 'observation')"
+                },
+                {
+                    "expname": "jw87800017001_02102_00005_nis_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "('o017', 'observation')"
+                },
+                {
+                    "expname": "jw87800017001_02102_00007_nis_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "('o017', 'observation')"
+                },
+                {
+                    "expname": "jw87800017001_02102_00002_nis_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "('o017', 'observation')"
+                },
+                {
+                    "expname": "jw87800017001_02102_00001_nis_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "('o017', 'observation')"
+                }
+            ]
+        }
+    ]
+}

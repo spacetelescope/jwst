@@ -2,16 +2,12 @@
 (matching) for MIRI images.
 
 """
-import os
 import logging
 
+from .mrs_imatch_step import MRSIMatchStep
 
-__docformat__ = 'restructuredtext'
+__all__ = ["MRSIMatchStep"]
 
-from . mrs_imatch_step import MRSIMatchStep
-
-__version__ = '0.9.3'
-__vdate__ = '1-June-2017'
 __author__ = 'Mihai Cara'
 
 

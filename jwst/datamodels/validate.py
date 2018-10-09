@@ -89,7 +89,10 @@ def _error_message(path, error):
     else:
         name = str(path)
 
+    error = str(error)
+    if len(error) > 2000:
+        error = error[0:1996] + " ..."
     errfmt = "While validating {} the following error occurred:\n{}"
-    errmsg = errfmt.format(name, str(error))
+    errmsg = errfmt.format(name, error)
     return errmsg
 
