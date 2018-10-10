@@ -1,7 +1,7 @@
 Reference File Types
 =====================
 
-The Jump step uses two reference files: GAIN and READNOISE. The gain values
+The jump step uses two reference files: GAIN and READNOISE. The gain values
 are used to temporarily convert the pixel values from units of DN to
 electrons. The read noise values are used as part of the noise estimate for
 each pixel. Both are necessary for proper computation of noise estimates.
