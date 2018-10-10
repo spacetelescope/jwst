@@ -1,23 +1,24 @@
 Standard Keywords
 +++++++++++++++++
 The following table lists the keywords that are *required* to be present in all
-reference files.  The first column gives the FITS keyword names (although these
-reference files are ASDF).  The second column gives the model name, which is
-needed when creating and populating a new reference file.
+reference files.  The first column gives the FITS keyword names (note that some
+reference files are in ASDF format).  The second column gives the jwst data model
+name for each keyword, which is useful when using data models in creating and
+populating a new reference file.
 
 =========  ========================
-Keyword    Model Name
+Keyword    Data Model Name
 =========  ========================
-AUTHOR     meta.author
-DATAMODL   meta.model_type
-DATE       meta.date
-DESCRIP    meta.description
-FILENAME   meta.filename
-INSTRUME   meta.instrument.name
-PEDIGREE   meta.pedigree
-REFTYPE    meta.reftype
-TELESCOP   meta.telescope
-USEAFTER   meta.useafter
+AUTHOR     model.meta.author
+DATAMODL   model.meta.model_type
+DATE       model.meta.date
+DESCRIP    model.meta.description
+FILENAME   model.meta.filename
+INSTRUME   model.meta.instrument.name
+PEDIGREE   model.meta.pedigree
+REFTYPE    model.meta.reftype
+TELESCOP   model.meta.telescope
+USEAFTER   model.meta.useafter
 =========  ========================
 
 **NOTE:** More information on standard required keywords can be found here:

@@ -17,20 +17,21 @@ dispersed background produced by a particular filter+grism combination.
  
 .. include:: ../includes/standard_keywords.rst
 
-
 Type Specific Keywords for WFSSBKG
 ++++++++++++++++++++++++++++++++++
-The following additional keywords are required for the WFSSBKG reference
-type:
+In addition to the standard reference file keywords listed above,
+the following keywords are *required* in WFSSBKG reference files,
+because they are used as CRDS selectors
+(see :ref:`wfssbkg_selectors`):
 
-=========  ========================
-Keyword    Model Name
-=========  ========================
-DETECTOR   meta.instrument.detector
-EXP_TYPE   meta.exposure.type
-FILTER     meta.instrument.filter
-PUPIL      meta.instrument.pupil
-=========  ========================
+=========  ==============================
+Keyword    Data Model Name
+=========  ==============================
+DETECTOR   model.meta.instrument.detector
+EXP_TYPE   model.meta.exposure.type
+FILTER     model.meta.instrument.filter
+PUPIL      model.meta.instrument.pupil
+=========  ==============================
 
 Reference File Format
 +++++++++++++++++++++
@@ -64,18 +65,19 @@ and hence where the background regions are.
 
 Standard Keywords
 +++++++++++++++++
-**NOTE:** WAVELENGTHRANGE also requires the standard keywords shown above.
+**NOTE:** WAVELENGTHRANGE requires the standard keywords shown above.
 
 
 Type Specific Keywords for WAVELENGTHRANGE
 ++++++++++++++++++++++++++++++++++++++++++
-
-The following additional keywords are required for the WAVELENGTHRANGE
-reference type:
+In addition to the standard reference file keywords listed above,
+the following additional keywords are *required* in WAVELENGTHRANGE
+reference files, because they are used as CRDS selectors
+(see :ref:`wavelengthrange_selectors`):
 
 =========  ========================
-Keyword    Model Name
+Keyword    Data Model Name
 =========  ========================
-EXP_TYPE   meta.exposure.type
+EXP_TYPE   model.meta.exposure.type
 =========  ========================
 
