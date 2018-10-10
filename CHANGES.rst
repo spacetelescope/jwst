@@ -162,6 +162,8 @@ ipc
 jump
 ----
 
+- Updated step docs, as well as gain and readnoise reference file docs [#2689]
+
 jwpsf
 -----
 
@@ -220,6 +222,8 @@ ramp_fitting
   insufficient data for a first difference; Corrected handling of ramps whose initial group
   is saturated; Corrected handling of ramps whose single good segment is a single group. [#2464]
 
+- Updated gain and readnoise reference file docs [#2689]
+
 refpix
 ------
 
@@ -236,6 +240,8 @@ rscd
 
 saturation
 ----------
+
+- Updated step docs, as well as saturation reference file docs [#2689]
 
 skymatch
 --------
