@@ -70,7 +70,7 @@ class MakePars():
 
 standards = [
     MakePars('pool_002_image_miri', main_args=LV3_ONLY_ARGS),
-    MakePars('pool_004_wfs'),
+    MakePars('pool_004_wfs', main_args=LV2_NOMERGE_ARGS),
     MakePars('pool_005_spec_niriss'),
     MakePars('pool_006_spec_nirspec', main_args=LV2_NOMERGE_ARGS),
     MakePars('pool_007_spec_miri'),

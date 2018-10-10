@@ -11,10 +11,10 @@
     "asn_id": "o001",
     "products": [
         {
-            "name": "jw_00001",
+            "name": "jw_00042",
             "members": [
                 {
-                    "expname": "jw_00001_rate.fits",
+                    "expname": "jw_00042_rate.fits",
                     "exptype": "science",
                     "exposerr": "null"
                 }
