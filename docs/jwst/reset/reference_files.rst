@@ -2,10 +2,7 @@ Reference File Types
 ====================
 The reset correction step uses a RESET reference file.
 
-CRDS Selection Criteria
------------------------
-Reset reference files are selected on the basis of INSTRUME, DETECTOR,
-READPATT and SUBARRAY values for the input science data set.
+.. include:: ../includes/standard_keywords.rst
 
 RESET Reference File Format
 ---------------------------
@@ -21,14 +18,7 @@ ERR      4      ncols x nrows x ngroups x nint float
 DQ       2      ncols x nrows                  integer
 =======  =====  ============================== =========
 
-The BINTABLE extension contains the bit assignments used in the DQ array.
-It uses ``EXTNAME=DQ_DEF`` and contains 4 columns:
-
-* BIT: integer value giving the bit number, starting at zero
-* VALUE: the equivalent base-10 integer value of BIT
-* NAME: the string mnemonic name of the data quality condition
-* DESCRIPTION: a string description of the condition
-
+.. include:: ../includes/dq_def.rst
 
 The SCI and ERR data arrays are 4-D, with dimensions of ncols x nrows x 
 ngroups X nints, where ncols x nrows matches the dimensions of the raw detector

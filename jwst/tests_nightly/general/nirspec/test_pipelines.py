@@ -2,8 +2,8 @@ import pytest
 
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
-from jwst.pipeline.calwebb_dark import DarkPipeline
-from jwst.pipeline.calwebb_spec2 import Spec2Pipeline
+from jwst.pipeline import DarkPipeline
+from jwst.pipeline import Spec2Pipeline
 
 from jwst.tests.base_test import BaseJWSTTest
 

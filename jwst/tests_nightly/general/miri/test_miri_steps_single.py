@@ -35,8 +35,8 @@ class TestMIRIRampFit(BaseJWSTTest):
         int_output = result[1].save(path=result[1].meta.filename.replace('jump','rampfit_int'))
         result[0].close()
         result[1].close()
-        
-        outputs = [(output_file, 
+
+        outputs = [(output_file,
                     'jw00001001001_01101_00001_MIRIMAGE_ramp_fit.fits'),
                    (int_output,
                     'jw00001001001_01101_00001_MIRIMAGE_int.fits'),
@@ -49,19 +49,19 @@ class TestMIRIRampFit(BaseJWSTTest):
         """
         Regression test of ramp_fit step performed on MIRI data.
         """
-        input_file = self.get_data(self.test_dir, 
+        input_file = self.get_data(self.test_dir,
                                    'jw80600012001_02101_00003_mirimage_jump.fits')
 
         result = RampFitStep.call(input_file,
                           save_opt=True,
                           opt_name='rampfit2_opt_out.fits')
-             
+
         output_file = result[0].save(path=result[0].meta.filename.replace('jump','rampfit'))
         int_output = result[1].save(path=result[1].meta.filename.replace('jump','rampfit_int'))
         result[0].close()
         result[1].close()
-        
-        outputs = [(output_file, 
+
+        outputs = [(output_file,
                     'jw80600012001_02101_00003_mirimage_ramp.fits'),
                    (int_output,
                     'jw80600012001_02101_00003_mirimage_int.fits'),
@@ -76,6 +76,7 @@ class TestMIRICube(BaseJWSTTest):
     input_loc = 'miri'
     ref_loc = ['test_cube_build', 'truth']
     test_dir = 'test_cube_build'
+    rtol = 0.000001
 
     def test_cubebuild_miri(self):
         """
@@ -85,13 +86,9 @@ class TestMIRICube(BaseJWSTTest):
                                    'jw10001001001_01101_00001_mirifushort_cal.fits')
 
         input_model = datamodels.IFUImageModel(input_file)
-        result = CubeBuildStep.call(input_model, output_type='multi', save_results=True)
+        CubeBuildStep.call(input_model, output_type='multi', save_results=True)
 
-        paths = result.save()
-        result.close()
-        output_file = paths[0]
-
-        outputs = [(output_file,
+        outputs = [('jw10001001001_01101_00001_mirifushort_s3d.fits',
                     'jw10001001001_01101_00001_mirifushort_s3d_ref.fits',
                     ['primary','sci','err','dq','wmap']) ]
         self.compare_outputs(outputs)
@@ -277,7 +274,7 @@ class TestMIRIWCSSlitless(BaseJWSTTest):
 
 
 @pytest.mark.bigdata
-class TESTMIRISetPointing(BaseJWSTTest):
+class TestMIRISetPointing(BaseJWSTTest):
     input_loc = 'miri'
     ref_loc = ['test_pointing', 'truth']
     test_dir = 'test_pointing'

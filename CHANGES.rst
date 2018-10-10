@@ -68,6 +68,12 @@ datamodels
 
 - Truncate long schema validation errors to 2000 characters [#2657]
 
+- Various keyword changes, including new EXP_ONLY keyword [#2414]
+
+- Added new keywords PWFSEET, NWFSEST, DATE-BEG and made updates to conform to
+  FITS convention for units included in keyword comments [#2595]
+
+- Updated allowed SUBARRAY names for FGS and NIRCam [#2667]
 
 dq_init
 -------
@@ -172,6 +178,11 @@ pipeline
 --------
 
 - Added new Image2Pipeline configuration calwebb_wfs-image2.cfg for WFS&C processing [#2599]
+
+- Updated the order of MIRI steps in calwebb_detector1 and calwebb_dark. [#2669]
+
+- Update Image2Pipeline and Spec2Pipeline to properly return results. [#2676]
+
 
 ramp_fitting
 ------------

@@ -2,10 +2,9 @@ Reference File Types
 ====================
 The IPC deconvolution current step uses an IPC reference file.
 
-CRDS Selection Criteria
------------------------
-IPC reference files are selected on the basis of INSTRUME and DETECTOR
-values for the input science data set.
+.. include:: ../includes/standard_keywords.rst
+
+.. include:: ipc_selection.rst
 
 IPC Reference File Format
 --------------------------

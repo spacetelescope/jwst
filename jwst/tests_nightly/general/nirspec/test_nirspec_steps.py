@@ -3,20 +3,24 @@ import pytest
 from jwst.tests.base_test import BaseJWSTTestSteps
 from jwst.tests.base_test import pytest_generate_tests # noqa: F401
 
-from jwst.refpix.refpix_step import RefPixStep
-from jwst.dark_current.dark_current_step import DarkCurrentStep
-from jwst.dq_init.dq_init_step import DQInitStep
-from jwst.extract_1d.extract_1d_step import Extract1dStep
-from jwst.extract_2d.extract_2d_step import Extract2dStep
-from jwst.flatfield.flat_field_step import FlatFieldStep
-from jwst.group_scale.group_scale_step import GroupScaleStep
-from jwst.jump.jump_step import JumpStep
-from jwst.linearity.linearity_step import LinearityStep
-from jwst.photom.photom_step import PhotomStep
-from jwst.saturation.saturation_step import SaturationStep
+from jwst.refpix import RefPixStep
+from jwst.dark_current import DarkCurrentStep
+from jwst.dq_init import DQInitStep
+from jwst.extract_1d import Extract1dStep
+from jwst.extract_2d import Extract2dStep
+from jwst.flatfield import FlatFieldStep
+from jwst.group_scale import GroupScaleStep
+from jwst.jump import JumpStep
+from jwst.linearity import LinearityStep
+from jwst.photom import PhotomStep
+from jwst.saturation import SaturationStep
 from jwst.superbias import SuperBiasStep
 
 
+# Parameterized regression tests for NIRISS processing
+# All tests in this set run with 1 input file and
+#  only generate 1 output for comparison.
+#
 @pytest.mark.bigdata
 class TestNIRSpecSteps(BaseJWSTTestSteps):
     input_loc = 'nirspec'

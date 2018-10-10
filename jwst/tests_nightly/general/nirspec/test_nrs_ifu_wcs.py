@@ -3,6 +3,7 @@ from numpy.testing import assert_allclose
 from gwcs.wcstools import grid_from_bounding_box
 from ci_watson.artifactory_helpers import get_bigdata
 
+from ci_watson.artifactory_helpers import get_bigdata
 from jwst.assign_wcs import AssignWcsStep, nirspec
 from jwst.datamodels import ImageModel
 

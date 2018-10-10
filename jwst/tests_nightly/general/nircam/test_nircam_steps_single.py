@@ -30,19 +30,16 @@ class TestWFSImage2(BaseJWSTTest):
         self.get_custom_cfgs(self.test_dir, 'sdp_jw82600_wfs', 'cfgs')
         Step.from_cmdline([os.path.join('cfgs', 'calwebb_wfs-image2.cfg'), input_file])
 
-        output_files = glob.glob('*')
-        output_files.remove('cfgs')
-        try:
-            # TEST_BIGDATA set to artifactory will copy it to working dir
-            output_files.remove(input_name)
-        except ValueError:
-            # File won't exist if local cache is used
-            pass
-        
         cal_name = input_name.replace('rate', 'cal')
         output_name = input_name.replace('rate','cal_ref')
         outputs = [(cal_name, output_name)]
         self.compare_outputs(outputs)
+
+        output_files = glob.glob('*')
+        output_files.remove('cfgs')
+
+        if input_name in output_files: # this would happen when docopy=True
+            output_files.remove(input_name)
 
         assert cal_name in output_files
         output_files.remove(cal_name)
@@ -128,8 +125,8 @@ class TestWFSCombine(BaseJWSTTest):
         """
         asn_file = self.get_data(self.test_dir,
                                    'wfs_3sets_asn.json')
-        for filename in self.raw_from_asn(asn_file):
-            self.get_data(self.test_dir, filename)
+        for file in self.raw_from_asn(asn_file):
+            self.get_data(self.test_dir, file)
 
         WfsCombineStep.call(asn_file)
 
@@ -148,8 +145,8 @@ class TestWFSCombine(BaseJWSTTest):
         """
         asn_file = self.get_data(self.test_dir,
                                    'wfs_3sets_asn2.json')
-        for filename in self.raw_from_asn(asn_file):
-            self.get_data(self.test_dir, filename)
+        for file in self.raw_from_asn(asn_file):
+            self.get_data(self.test_dir, file)
 
         WfsCombineStep.call(asn_file,
                             do_refine=True )
@@ -169,8 +166,8 @@ class TestWFSCombine(BaseJWSTTest):
         """
         asn_file = self.get_data(self.test_dir,
                                    'wfs_3sets_asn3.json')
-        for filename in self.raw_from_asn(asn_file):
-            self.get_data(self.test_dir, filename)
+        for file in self.raw_from_asn(asn_file):
+            self.get_data(self.test_dir, file)
 
         WfsCombineStep.call(asn_file,
                             do_refine=True)

@@ -18,7 +18,7 @@ logger.addHandler(logging.NullHandler())
 Slot = namedtuple('Slot', ['func', 'single_shot'])
 
 
-class Signal(object):
+class Signal():
     """Signal
 
     A Signal, when triggered, call the connected slots.

@@ -1,8 +1,7 @@
-import os
-import glob
-
 import pytest
 import requests
+import os
+import glob
 
 from ci_watson.artifactory_helpers import check_url, get_bigdata_root
 from .base_classes import BaseTest

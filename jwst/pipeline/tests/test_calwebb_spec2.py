@@ -12,9 +12,11 @@ from .helpers import (
 
 from ...associations.asn_from_list import asn_from_list
 from ...associations.lib.rules_level2_base import DMSLevel2bBase
+from ...datamodels import DataModel
 from ...datamodels import open as dm_open
-from ..calwebb_spec2 import Spec2Pipeline
 from ...stpipe.step import Step
+from ..calwebb_spec2 import Spec2Pipeline
+from ..collect_pipeline_cfgs import collect_pipeline_cfgs
 
 DATAPATH = abspath(
     '$TEST_BIGDATA/pipelines'
@@ -29,6 +31,15 @@ pytestmark = pytest.mark.skipif(
     not path.exists(DATAPATH),
     reason='Test data not accessible'
 )
+
+
+@pytest.mark.bigdata
+def test_result_return(mk_tmp_dirs):
+    """Ensure that a result is returned programmatically"""
+    exppath = path.join(DATAPATH, EXPFILE)
+    collect_pipeline_cfgs('./cfgs')
+    results = Spec2Pipeline.call(exppath, config_file='./cfgs/calwebb_spec2.cfg')
+    assert isinstance(results[0], DataModel)
 
 
 def test_full_run(mk_tmp_dirs):

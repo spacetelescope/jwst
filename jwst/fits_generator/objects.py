@@ -43,7 +43,7 @@ from ..fits_generator import util
 # the type definitions themselves.
 DEBUG_TYPES = True
 
-class ParseState(object):
+class ParseState():
     """
     Keeps track of the current state of the parser -- that is which
     HDU and card is currently being examined.  Used to give detailed
@@ -62,7 +62,7 @@ class ParseState(object):
         return val
 
 
-class Object(object):
+class Object():
     """
     The base class of all objects that form the FITS file heirarchy.
     """

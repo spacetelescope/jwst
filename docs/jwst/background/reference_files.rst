@@ -13,36 +13,23 @@ WFSS Background reference file
 The WFSS background reference file contains a "master" image of the
 dispersed background produced by a particular filter+grism combination.
 
-CRDS Selection Criteria
-+++++++++++++++++++++++
-WFSSBKG reference files are selected by:
+.. include:: wfssbkg_selection.rst
+ 
+.. include:: ../includes/standard_keywords.rst
 
-  INSTRUME, DETECTOR, EXP_TYPE, FILTER, and PUPIL
 
-Required Keywords
-+++++++++++++++++
-The following table lists the keywords that are required to be present in
-a WFSSBKG reference file. An asterisk following a keyword name indicates a
-standard keyword that is required in all reference files, regardless of
-type.
+Type Specific Keywords for WFSSBKG
+++++++++++++++++++++++++++++++++++
+The following additional keywords are required for the WFSSBKG reference
+type:
 
 =========  ========================
 Keyword    Model Name
 =========  ========================
-AUTHOR*    meta.author
-DATAMODL*  meta.model_type
-DATE*      meta.date
-DESCRIP*   meta.description
 DETECTOR   meta.instrument.detector
 EXP_TYPE   meta.exposure.type
-FILENAME*  meta.filename
 FILTER     meta.instrument.filter
-INSTRUME*  meta.instrument.name
-PEDIGREE*  meta.pedigree
 PUPIL      meta.instrument.pupil
-REFTYPE*   meta.reftype
-TELESCOP*  meta.telescope
-USEAFTER*  meta.useafter
 =========  ========================
 
 Reference File Format
@@ -60,17 +47,7 @@ DQ       IMAGE       2    ncols x nrows   integer
 DQ_DEF   BINTABLE    2    TFIELDS = 4     N/A
 =======  ========  =====  ==============  =========
 
-The DQ_DEF extension contains the bit assignments used in the DQ array.
-It contains the following 4 columns:
-
-===========  =======  ===============================================
-TTYPE        TFORM    Description
-===========  =======  ===============================================
-BIT          integer  The bit number, starting at zero
-VALUE        integer  The equivalent base-10 value of BIT
-NAME         string   The mnemonic name of the data quality condition
-DESCRIPTION  string   A description of the data quality condition
-===========  =======  ===============================================
+.. include:: ../includes/dq_def.rst
 
 Wavelength Range reference file
 -------------------------------
@@ -83,9 +60,22 @@ wavelengths in the exposure. It is used, together with a source catalog,
 to create a mask giving the locations of source spectra in the target image
 and hence where the background regions are.
 
-CRDS Selection Criteria
-+++++++++++++++++++++++
-Wavelengthrange reference files are selected by:
+.. include:: wavelengthrange_selection.rst
 
-  INSTRUME, EXP_TYPE, PUPIL (NIRCam only), and MODULE (NIRCam only)
+Standard Keywords
++++++++++++++++++
+**NOTE:** WAVELENGTHRANGE also requires the standard keywords shown above.
+
+
+Type Specific Keywords for WAVELENGTHRANGE
+++++++++++++++++++++++++++++++++++++++++++
+
+The following additional keywords are required for the WAVELENGTHRANGE
+reference type:
+
+=========  ========================
+Keyword    Model Name
+=========  ========================
+EXP_TYPE   meta.exposure.type
+=========  ========================
 

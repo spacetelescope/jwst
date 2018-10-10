@@ -1,15 +1,14 @@
 Reference File Types
 ====================
 
-The refpix step only uses the refpix reference file when processing
+The refpix step only uses the REFPIX reference file when processing
 NIRSpec exposures that have been acquired using an IRS2 readout
 pattern. No other instruments or exposure modes require a reference
 file for this step.
 
+.. include:: ../includes/standard_keywords.rst
 
-CRDS Selection Criteria
------------------------
-Refpix reference files are selected by DETECTOR and READPATT.
+.. include:: refpix_selection.rst
 
 
 Reference File Format

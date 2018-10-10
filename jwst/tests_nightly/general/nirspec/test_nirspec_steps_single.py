@@ -6,8 +6,8 @@ from jwst.tests.base_test import BaseJWSTTest
 
 from jwst.assign_wcs import AssignWcsStep, nirspec
 from jwst.datamodels import ImageModel
-from jwst.pipeline.calwebb_detector1 import Detector1Pipeline
-from jwst.imprint.imprint_step import ImprintStep
+from jwst.pipeline import Detector1Pipeline
+from jwst.imprint import ImprintStep
 from jwst.ramp_fitting import RampFitStep
 
 

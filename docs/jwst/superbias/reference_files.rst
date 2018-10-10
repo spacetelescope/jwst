@@ -2,10 +2,9 @@ Reference File Types
 ====================
 The superbias subtraction step uses a SUPERBIAS reference file.
 
-CRDS Selection Criteria
------------------------
-Superbias reference files are selected on the basis of the INSTRUME, DETECTOR,
-READPATT and SUBARRAY values of the input science data set.
+.. include:: ../includes/standard_keywords.rst
+
+.. include:: superbias_selection.rst
 
 SUPERBIAS Reference File Format
 -------------------------------
@@ -21,10 +20,4 @@ ERR      2      ncols x nrows  float
 DQ       2      ncols x nrows  integer
 =======  =====  =============  =========
 
-The BINTABLE extension contains the bit assignments used in the DQ array.
-It uses ``EXTNAME=DQ_DEF`` and contains 4 columns:
-
-* BIT: integer value giving the bit number, starting at zero
-* VALUE: the equivalent base-10 integer value of BIT
-* NAME: the string mnemonic name of the data quality condition
-* DESCRIPTION: a string description of the condition
+.. include:: ../includes/dq_def.rst

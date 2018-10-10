@@ -2,11 +2,13 @@ import pytest
 
 from jwst.tests.base_test import BaseJWSTTest
 
-from jwst.pipeline.calwebb_ami3 import Ami3Pipeline
-from jwst.pipeline.calwebb_detector1 import Detector1Pipeline
-from jwst.ramp_fitting.ramp_fit_step import RampFitStep
-from jwst.photom.photom_step import PhotomStep
-from jwst.pipeline.calwebb_spec2 import Spec2Pipeline
+from jwst.pipeline import (
+    Ami3Pipeline,
+    Detector1Pipeline,
+    Spec2Pipeline
+)
+from jwst.ramp_fitting import RampFitStep
+from jwst.photom import PhotomStep
 
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
@@ -24,8 +26,8 @@ class TestAMIPipeline(BaseJWSTTest):
         """
         asn_file = self.get_data(self.test_dir,
                                  'test_lg1_asn.json')
-        for filename in self.raw_from_asn(asn_file):
-            self.get_data(self.test_dir, filename)
+        for file in self.raw_from_asn(asn_file):
+            input_file = self.get_data(self.test_dir, file)
 
         pipe = Ami3Pipeline()
         pipe.save_averages = True
@@ -104,6 +106,7 @@ class TestNIRISSSOSS2Pipeline(BaseJWSTTest):
                   ]
         self.compare_outputs(outputs)
 
+
 @pytest.mark.bigdata
 class TestNIRISSPhotom(BaseJWSTTest):
     input_loc = 'niriss'
@@ -130,6 +133,7 @@ class TestNIRISSPhotom(BaseJWSTTest):
                     'jw00034001001_01101_00001_NIRISS_photom.fits')
                   ]
         self.compare_outputs(outputs)
+
 
 @pytest.mark.bigdata
 class TestNIRISSRampFit(BaseJWSTTest):

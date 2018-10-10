@@ -10,6 +10,7 @@ from .helpers import (
 
 from ...associations.asn_from_list import asn_from_list
 from ...associations.lib.rules_level2_base import DMSLevel2bBase
+from ...datamodels import DataModel
 from ...datamodels import open as dm_open
 from ...stpipe.step import Step
 from ..calwebb_image2 import Image2Pipeline
@@ -25,6 +26,15 @@ pytestmark = pytest.mark.skipif(
     not path.exists(DATAPATH),
     reason='Test data not accessible'
 )
+
+
+@pytest.mark.bigdata
+def test_result_return(mk_tmp_dirs):
+    """Ensure that a result is returned programmatically"""
+    exppath = path.join(DATAPATH, EXPFILE)
+    cfg = path.join(SCRIPT_DATA_PATH, 'calwebb_image2_save.cfg')
+    results = Image2Pipeline.call(exppath, config_file=cfg)
+    assert isinstance(results[0], DataModel)
 
 
 @pytest.mark.bigdata
