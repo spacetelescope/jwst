@@ -67,9 +67,8 @@ class Asn_Image(AsnMixin_Science):
 class Asn_WFSCMB(AsnMixin_Science):
     """Wavefront Sensing association
 
-    Notes
-    -----
-    Defined by `TRAC issue #269 <https://aeon.stsci.edu/ssb/trac/jwst/ticket/269>`_
+    For coarse and fine phasing, dither pairs need
+    be associated to be combined.
     """
 
     def __init__(self, *args, **kwargs):
