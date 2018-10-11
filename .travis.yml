@@ -16,8 +16,7 @@ addons:
 env:
     global:
         - CONDA_CHANNELS='http://ssb.stsci.edu/astroconda-dev'
-        - CONDA_DEPENDENCIES="asdf
-                              astropy
+        - CONDA_DEPENDENCIES="astropy
                               crds
                               dask
                               drizzle
@@ -42,7 +41,7 @@ env:
         - CRDS_PATH='/tmp/crds_cache'
         - MAIN_CMD='python setup.py'
         - MC_URL=https://repo.continuum.io/miniconda
-        - PIP_DEPENDENCIES=''
+        - PIP_DEPENDENCIES='git+git://github.com/drdavella/asdf@inline-threshold'
         - PYTHON_VERSION=3.6
 
     matrix:
@@ -87,9 +86,11 @@ before_install:
   - conda config --set always_yes yes --set changeps1 no
   - conda config --set auto_update_conda false
   - for channel in $CONDA_CHANNELS; do conda config --add channels "$channel"; done
-  - conda create -n test -q python=$PYTHON_VERSION $CONDA_DEPENDENCIES
+  - conda create -n test -q python=$PYTHON_VERSION
   - source activate test
+  - pip install "git+git://github.com/drdavella/asdf@inline-threshold"
   - if [[ -n $PIP_DEPENDENCIES ]]; then pip install -q $PIP_DEPENDENCIES; fi
+  - conda install $CONDA_DEPENDENCIES
 
 after_install:
   - conda list astropy
