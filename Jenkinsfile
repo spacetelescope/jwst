@@ -19,8 +19,7 @@ def CONDA_ARGS = "-q -y"
 def CONDA_CREATE = "conda create ${CONDA_ARGS}"
 def CONDA_INST = "conda install ${CONDA_ARGS}"
 def CONDA_CHANNEL = "http://ssb.stsci.edu/astroconda-dev"
-def CONDA_DEPS = "asdf \
-                  astropy \
+def CONDA_DEPS = "astropy \
                   crds \
                   dask \
                   drizzle \
@@ -48,7 +47,7 @@ def CONDA_TEST_DEPS = "pytest"
 // Pip related setup
 def PIP_ARGS = "-q"
 def PIP_INST = "pip install ${PIP_ARGS}"
-def PIP_DEPS = ""
+def PIP_DEPS = "git+git://github.com/drdavella/asdf@inline-threshold"
 def PIP_DOC_DEPS = "sphinx-automodapi"
 def PIP_TEST_DEPS = "requests_mock ci_watson"
 
@@ -107,7 +106,9 @@ for (py in PY_VERSIONS) {
             bc.build_cmds = [
                 "conda config --add channels ${CONDA_CHANNEL}",
                 "${CONDA_CREATE} -n ${NAME} \
-                    python=${py} numpy=${npy} astropy=${apy} ${CONDA_DEPS}",
+                    python=${py} numpy=${npy} astropy=${apy}",
+                "${WRAPPER} ${PIP_INST} ${PIP_DEPS}",
+                "${WRAPPER} ${CONDA_INSTALL} ${CONDA_DEPS}",
                 "${WRAPPER} ${PY_SETUP} install"
             ]
             bc.test_cmds = [
