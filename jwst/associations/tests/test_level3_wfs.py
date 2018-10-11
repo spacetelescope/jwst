@@ -3,9 +3,11 @@
 from . import helpers
 
 from .. import generate
+from ..main import constrain_on_candidates
 
 # Generate Level3 assocations
-rules = helpers.registry_level3_only()
+all_candidates = constrain_on_candidates(None)
+rules = helpers.registry_level3_only(global_constraints=all_candidates)
 pool = helpers.combine_pools(
     helpers.t_path('data/pool_004_wfs.csv')
 )
@@ -17,7 +19,7 @@ class TestLevel3WFS(helpers.BasePoolRule):
     pools = [
         helpers.PoolParams(
             path=helpers.t_path('data/pool_004_wfs.csv'),
-            n_asns=35,
+            n_asns=85,
             n_orphaned=0
         ),
     ]
