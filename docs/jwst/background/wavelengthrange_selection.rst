@@ -1,7 +1,7 @@
 .. _wavelengthrage_selectors:
 
 Reference Selection Keywords for WAVELENGTHRANGE
-------------------------------------------------
+++++++++++++++++++++++++++++++++++++++++++++++++
 CRDS selects appropriate WAVELENGTHRANGE references based on the following
 keywords.
 WAVELENGTHRANGE is not applicable for instruments not in the table.

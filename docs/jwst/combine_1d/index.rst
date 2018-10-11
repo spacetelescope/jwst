@@ -6,8 +6,8 @@ Combine 1D Spectra
    :maxdepth: 2
 
    description.rst
-   reference_files.rst
    arguments.rst
+   reference_files.rst
 
 
 .. automodapi:: jwst.combine_1d

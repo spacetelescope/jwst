@@ -1,7 +1,7 @@
 .. _gain_selectors:
 
 Reference Selection Keywords for GAIN
--------------------------------------
++++++++++++++++++++++++++++++++++++++
 CRDS selects appropriate GAIN references based on the following keywords.
 GAIN is not applicable for instruments not in the table.
 Keywords used for file selection are *required*.

@@ -2,10 +2,6 @@ Reference Files
 ===============
 The saturation step uses a SATURATION reference file.
 
-.. include:: ../includes/standard_keywords.rst
-
-.. include:: saturation_selection.rst
-
 SATURATION Reference File
 -------------------------
 
