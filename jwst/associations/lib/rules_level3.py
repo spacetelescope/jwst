@@ -111,6 +111,26 @@ class Asn_WFSCMB(AsnMixin_Science):
         self.data['asn_type'] = 'wfs'
         super(Asn_WFSCMB, self)._init_hook(item)
 
+    @property
+    def dms_product_name(self):
+        """Define product name
+
+        Modification is to append the `expspcin` value
+        after the calibration suffix.
+        """
+        product_name_format = '{existing}-{detector}_{suffix}-{expspcin}'
+
+        existing = super().dms_product_name
+        
+        product_name = format_product(
+            product_name_format,
+            existing=existing,
+            detector=self.constraints['detector'].value,
+            expspcin=self.constraints['expspcin'].value
+        )
+
+        return product_name.lower()
+
 
 @RegistryMarker.rule
 class Asn_SpectralTarget(AsnMixin_Spectrum):

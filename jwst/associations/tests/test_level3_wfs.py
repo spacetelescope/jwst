@@ -4,6 +4,13 @@ from . import helpers
 
 from .. import generate
 
+# Generate Level3 assocations
+rules = helpers.registry_level3_only()
+pool = helpers.combine_pools(
+    helpers.t_path('data/pool_004_wfs.csv')
+)
+level3_asns = generate(pool, rules)
+
 
 class TestLevel3WFS(helpers.BasePoolRule):
 
@@ -20,12 +27,15 @@ class TestLevel3WFS(helpers.BasePoolRule):
     ]
 
 
-def test_wfs_product_name():
-    rules = helpers.registry_level3_only()
-    pool = helpers.combine_pools(
-        helpers.t_path('data/pool_004_wfs.csv')
-    )
-    asns = generate(pool, rules)
-    name = asns[0]['products'][0]['name']
-    assert name == 'jw99009-c1000_t001_nircam_f150w2'
-    assert asns[0]['asn_type'] == 'wfs'
+def test_wfs_duplicate_product_names():
+    """Test for duplicate product names"""
+    global level3_asns
+
+    name_list = [
+        product['name']
+        for asn in level3_asns
+        for product in asn['products']
+    ]
+    assert len(name_list)
+    name_set = set(name_list)
+    assert len(name_set) == len(name_list)
