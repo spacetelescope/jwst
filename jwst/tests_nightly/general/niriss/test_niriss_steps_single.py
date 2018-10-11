@@ -27,7 +27,7 @@ class TestAMIPipeline(BaseJWSTTest):
         asn_file = self.get_data(self.test_dir,
                                  'test_lg1_asn.json')
         for file in self.raw_from_asn(asn_file):
-            input_file = self.get_data(self.test_dir, file)
+            self.get_data(self.test_dir, file)
 
         pipe = Ami3Pipeline()
         pipe.save_averages = True
