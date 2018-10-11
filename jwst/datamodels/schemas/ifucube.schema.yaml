@@ -80,5 +80,5 @@ allOf:
         datatype: int16
       - name: wavelength
         datatype: float32
-        shape: [1,10420]
+        shape: [10420,1]
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema
