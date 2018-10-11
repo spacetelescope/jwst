@@ -103,6 +103,14 @@ class Asn_WFSCMB(AsnMixin_Science):
             )
         ])
 
+        # Only valid if two members exist.
+        self.validity.update({
+            'has_pair': {
+                'validated': False,
+                'check': self._has_pair
+            }
+        })
+
         super(Asn_WFSCMB, self).__init__(*args, **kwargs)
 
     def _init_hook(self, item):
@@ -130,6 +138,30 @@ class Asn_WFSCMB(AsnMixin_Science):
         )
 
         return product_name.lower()
+
+    def _has_pair(self, entry=None):
+        """Check if current product has two members
+
+        If `entry` is given, it is counted as one of the
+        members. If not, the existing member list is only
+        accounted for.
+
+        Parameters
+        ----------
+        entry: dict or None
+            New entry to add to member list.
+
+        Returns
+        -------
+        bool
+            True if there are two members.
+        """
+        if entry is None:
+            count = 2
+        else:
+            count = 1
+
+        return len(self.current_product['members']) == count
 
 
 @RegistryMarker.rule
