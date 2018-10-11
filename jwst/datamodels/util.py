@@ -73,7 +73,7 @@ def open(init=None, extensions=None, **kwargs):
         # Copy the object so it knows not to close here
         return init.__class__(init)
 
-    elif isinstance(init, Association):
+    elif is_association(init):
         from . import container
         return container.ModelContainer(init, extensions=extensions,
                                         **kwargs)
@@ -306,6 +306,16 @@ def can_broadcast(a, b):
 
 def to_camelcase(token):
     return ''.join(x.capitalize() for x in token.split('_-'))
+
+
+def is_association(asn_data):
+    """
+    Test if an object is an association by checking for required fields
+    """
+    if isinstance(asn_data, dict):
+        if 'asn_id' in asn_data and 'asn_pool' in asn_data:
+            return True
+    return False
 
 
 def gentle_asarray(a, dtype):

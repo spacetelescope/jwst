@@ -7,8 +7,10 @@ from asdf import AsdfFile
 from ..associations import (
     Association, AssociationError,
     AssociationNotValidError, load_asn)
+
 from . import model_base
 from .util import open as datamodel_open
+from .util import is_association
 
 import logging
 log = logging.getLogger(__name__)
@@ -84,7 +86,7 @@ class ModelContainer(model_base.DataModel):
             self._ctx = self
             self.__class__ = init.__class__
             self._models = init._models
-        elif isinstance(init, Association):
+        elif is_association(init):
             self.from_asn(init, **kwargs)
         elif isinstance(init, str):
             try:
@@ -179,7 +181,6 @@ class ModelContainer(model_base.DataModel):
                 result.append(m)
         return result
 
-
     def read_asn(self, filepath):
         """
         Load fits files from a JWST association file.
@@ -200,7 +201,6 @@ class ModelContainer(model_base.DataModel):
             raise IOError("Cannot read ASN file.")
         return asn_data
 
-
     def from_asn(self, asn_data, **kwargs):
         """
         Load fits files from a JWST association file.
@@ -208,7 +208,7 @@ class ModelContainer(model_base.DataModel):
         Parameters
         ----------
         asn_data : Association
-            An association object
+            An association dictionary
 
         kwargs: Optional arguments in DataModel initialization
         """
