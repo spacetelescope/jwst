@@ -21,7 +21,9 @@ _ASN_NAME_TEMPLATE = 'jw{program}-{acid}_{type}_{sequence:03d}_asn'
 
 # Exposure EXP_TYPE to Association EXPTYPE mapping
 EXPTYPE_MAP = {
-    'mir_dark':          'dark',
+    'mir_darkall':       'dark',
+    'mir_darkimg':       'dark',
+    'mir_darkmrs':       'dark',
     'mir_flatimage':     'flat',
     'mir_flatmrs':       'flat',
     'mir_image-extflat': 'flat',
