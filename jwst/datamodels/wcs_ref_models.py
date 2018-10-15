@@ -174,10 +174,29 @@ class SpecwcsModel(_SimpleModel):
 
 class NIRCAMGrismModel(ReferenceFileModel):
     """
-    A model for a reference file of type "specwcs" for NIRCAM grisms.
+    A model for a reference file of type "specwcs" for NIRCAM WFSS.
 
     This reference file contains the models for wave, x, and y polynomial
-    solutions that describe dispersion through the grism
+    solutions that describe dispersion through the grism.
+
+    Attributes
+    ----------
+    displ: astropy.modeling.Model
+          Nircam Grism wavelength dispersion model
+    dispx : astropy.modeling.Model
+          Nircam Grism row dispersion model
+    dispy : astropy.modeling.Model
+          Nircam Grism column dispersion model
+    invdispl : astropy.modeling.Model
+          Nircam Grism inverse wavelength dispersion model
+    invdispx : astropy.modeling.Model
+          Nircam Grism inverse row dispersion model
+    invdispy : astropy.modeling.Model
+          Nircam Grism inverse column dispersion model
+    orders : astropy.modeling.Model
+          NIRCAM Grism orders, matched to the array locations of the
+          dispersion models
+
     """
     schema_url = "specwcs_nircam_grism.schema.yaml"
     reftype = "specwcs"
