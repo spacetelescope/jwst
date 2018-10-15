@@ -24,6 +24,19 @@ def create_pipeline(input_model, reference_files):
     """
     Create the WCS pipeline based on EXP_TYPE.
 
+    Parameters
+    ----------
+    input_model : jwst.datamodel.DataModel
+        Input datamodel for processing
+    reference_files : dict
+        The dictionary of reference file names and their associated files
+        {reftype: reference file name}.
+
+    Returns
+    -------
+    pipeline : list
+        The pipeline list that is returned is suitable for
+        input into  gwcs.wcs.WCS to create a GWCS object.
     """
     exp_type = input_model.meta.exposure.type.lower()
     pipeline = exp_type2transform[exp_type](input_model, reference_files)
@@ -35,10 +48,24 @@ def imaging(input_model, reference_files):
     """
     The NIRCAM imaging WCS pipeline.
 
-    It includes three coordinate frames -
-    "detector", "v2v3" and "world".
+    Parameters
+    ----------
+    input_model : jwst.datamodel.DataModel
+        Input datamodel for processing
+    reference_files : dict
+        The dictionary of reference file names and their associated files
+        {reftype: reference file name}.
 
-    It uses the "distortion" reference file.
+    Returns
+    -------
+    pipeline : list
+        The pipeline list that is returned is suitable for
+        input into  gwcs.wcs.WCS to create a GWCS object.
+
+    Notes
+    -----
+    It includes three coordinate frames - "detector", "v2v3", and "world",
+    and uses the "distortion" reference file.
     """
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
     v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.arcsec, u.arcsec))
@@ -58,7 +85,20 @@ def imaging(input_model, reference_files):
 
 def imaging_distortion(input_model, reference_files):
     """
-    Create the "detector" to "v2v3" transform.
+    Create the "detector" to "v2v3" transform for imaging mode.
+
+
+    Parameters
+    ----------
+    input_model : jwst.datamodel.DataModel
+        Input datamodel for processing
+    reference_files : dict
+        The dictionary of reference file names and their associated files.
+
+    Returns
+    -------
+    The transform model
+
     """
     dist = DistortionModel(reference_files['distortion'])
     transform = dist.model
@@ -96,7 +136,13 @@ def tsgrism(input_model, reference_files):
     input_model: jwst.datamodels.ImagingModel
         The input datamodel, derived from datamodels
     reference_files: dict
-        Dictionary {reftype: reference file name}.
+        Dictionary of reference file names {reftype: reference file name}.
+
+    Returns
+    -------
+    pipeline : list
+        The pipeline list that is returned is suitable for
+        input into  gwcs.wcs.WCS to create a GWCS object.
 
     Notes
     -----
@@ -209,6 +255,12 @@ def wfss(input_model, reference_files):
     reference_files: dict
         Dictionary {reftype: reference file name}.
 
+    Returns
+    -------
+    pipeline : list
+        The pipeline list that is returned is suitable for
+        input into  gwcs.wcs.WCS to create a GWCS object.
+        
     Notes
     -----
     The tree in the grism reference file has a section for each order/beam
