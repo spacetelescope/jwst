@@ -2,7 +2,7 @@ from astropy.table import Table
 import numpy as np
 from photutils import detect_threshold, DAOStarFinder
 
-from ..datamodels import ImageModel
+from ..datamodels import dqflags, ImageModel
 
 
 def make_tweakreg_catalog(model, kernel_fwhm, snr_threshold, sharplo=0.2,
@@ -71,7 +71,11 @@ def make_tweakreg_catalog(model, kernel_fwhm, snr_threshold, sharplo=0.2,
                             sharplo=sharplo, sharphi=sharphi, roundlo=roundlo,
                             roundhi=roundhi, brightest=brightest,
                             peakmax=peakmax)
-    sources = daofind(model.data)
+
+    # Mask the non-imaging area (e.g. MIRI)
+    mask = (dqflags.pixel['NON_SCIENCE'] & model.dq).astype(np.bool)
+
+    sources = daofind(model.data, mask=mask)
 
     columns = ['id', 'xcentroid', 'ycentroid', 'flux']
     if sources:
