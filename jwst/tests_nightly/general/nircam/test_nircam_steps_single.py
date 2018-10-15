@@ -37,8 +37,11 @@ class TestWFSImage2(BaseJWSTTest):
         output_files = glob.glob('*')
         output_files.remove('cfgs')
 
-        if input_name in output_files: # this would happen when docopy=True
+        # these would happen when docopy=True
+        if input_name in output_files:
             output_files.remove(input_name)
+        if output_name in output_files:
+            output_files.remove(output_name)
 
         assert cal_name in output_files
         output_files.remove(cal_name)

@@ -1,5 +1,6 @@
 import pytest
 from jwst.pipeline.calwebb_image2 import Image2Pipeline
+from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 
 from jwst.tests.base_test import BaseJWSTTest
 
@@ -16,7 +17,10 @@ class TestImage2Pipeline(BaseJWSTTest):
         input_file = self.get_data('test_image2pipeline',
                                    'jw82500001003_02101_00001_NRCALONG_rate.fits')
         output_file = 'jw82500001003_02101_00001_NRCALONG_cal.fits'
+
+        collect_pipeline_cfgs('cfgs')
         Image2Pipeline.call(input_file,
+                            config_file='cfgs/calwebb_image2.cfg',
                             output_file=output_file)
 
         outputs = [(output_file,

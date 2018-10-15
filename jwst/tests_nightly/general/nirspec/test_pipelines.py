@@ -69,6 +69,7 @@ class TestNIRSpecPipelines(BaseJWSTTest):
 
         # define step for use in test
         step = Spec2Pipeline()
+        step.save_results = True
         step.save_bsub = False
         step.output_use_model = True
         step.resample_spec.save_results = True
