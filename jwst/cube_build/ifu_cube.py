@@ -1263,6 +1263,7 @@ class IFUCubeData():
             # for now we need to pad wavelength to fix datamodel size
             num = len(wave)
             nn = 10420 # This number needs to match the shape of the
+            nn = 1782
             # wavetable['wavelength'] value in the ifucube.schema.
             # In the future it would be good to remove that we have to
             # set the size of this value in the schema.
@@ -1339,7 +1340,8 @@ class IFUCubeData():
             ifucube_model.meta.wcsinfo.crval3 = 1.0
             ifucube_model.meta.wcsinfo.crpix3 = 1.0
             ifucube_model.meta.wcsinfo.cdelt3 = None
-            ifucube_model.meta.wcsinfo.wavedim = '(1,10420)'
+#            ifucube_model.wavedim = '(1,10420)'
+            ifucube_model.wavedim = '(1,1782)'
             #print('wrote',ifucube_model.meta.wcsinfo.wavedim)
 
         ifucube_model.meta.wcsinfo.ctype1 = 'RA---TAN'
