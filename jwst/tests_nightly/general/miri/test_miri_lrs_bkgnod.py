@@ -11,7 +11,7 @@ class TestSpec2Pipeline(BaseJWSTTest):
 
     test_dir = 'test_spec2pipeline'
 
-    def test_miri_lrs_bkgnod(self):
+    def Xtest_miri_lrs_bkgnod(self):
         """
 
         Regression test of calwebb_spec2 pipeline performed on an association
@@ -50,7 +50,7 @@ class TestSpec2Pipeline(BaseJWSTTest):
         ]
         self.compare_outputs(outputs)
 
-    def test_miri_lrs_slit_1(self):
+    def Xtest_miri_lrs_slit_1(self):
         """
 
         Regression test of calwebb_spec2 pipeline performed on a single
@@ -77,7 +77,7 @@ class TestSpec2Pipeline(BaseJWSTTest):
                    ]
         self.compare_outputs(outputs)
 
-    def test_miri_lrs_slit_1b(self):
+    def Xtest_miri_lrs_slit_1b(self):
         """
         Regression test of calwebb_spec2 pipeline performed on a single
         MIRI LRS fixed-slit exposure with multiple integrations.  Compare _calints.
@@ -101,7 +101,7 @@ class TestSpec2Pipeline(BaseJWSTTest):
                    ]
         self.compare_outputs(outputs)
 
-    def test_mrs2pipeline1(self):
+    def Xtest_mrs2pipeline1(self):
         """
 
         Regression test of calwebb_spec2 pipeline performed on MIRI MRS data.
@@ -138,6 +138,7 @@ class TestSpec2Pipeline(BaseJWSTTest):
         Regression test of calwebb_spec2 pipeline performed on MIRI MRS data.
 
         """
+        self.rtol = 0.000001
         input_file = self.get_data(self.test_dir,
                                    'jw10001001001_01101_00001_mirifushort_rate.fits')
         step = Spec2Pipeline()
@@ -148,20 +149,14 @@ class TestSpec2Pipeline(BaseJWSTTest):
         step.extract_1d.save_results = True
         step.run(input_file)
 
-        outputs = [{'files':('jw10001001001_01101_00001_mirifushort_cal.fits',
+        outputs = [('jw10001001001_01101_00001_mirifushort_cal.fits',
                     'jw10001001001_01101_00001_mirifushort_cal_ref.fits',
                     ['primary','sci','err','dq','relsens2d']),
-                     'pars':{'rtol':0.000001}
-                    },
-                    {'files':('jw10001001001_01101_00001_mirifushort_s3d.fits',
-                                'jw10001001001_01101_00001_mirifushort_s3d_ref.fits',
-                                ['primary','sci','err','dq','wmap']),
-                     'pars':{'rtol':0.000001}
-                    },
-                    {'files':('jw10001001001_01101_00001_mirifushort_x1d.fits',
-                                'jw10001001001_01101_00001_mirifushort_x1d_ref.fits',
-                                ['primary','extract1d']),
-                     'pars':{'rtol':0.000001}
-                    }
-        ]
+                    ('jw10001001001_01101_00001_mirifushort_s3d.fits',
+                     'jw10001001001_01101_00001_mirifushort_s3d_ref.fits',
+                     ['primary','sci','err','dq','wmap']),
+                    ('jw10001001001_01101_00001_mirifushort_x1d.fits',
+                     'jw10001001001_01101_00001_mirifushort_x1d_ref.fits',
+                     ['primary','extract1d'])
+                  ]
         self.compare_outputs(outputs)
