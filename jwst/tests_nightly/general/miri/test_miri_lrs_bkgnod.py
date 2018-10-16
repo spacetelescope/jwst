@@ -11,7 +11,7 @@ class TestSpec2Pipeline(BaseJWSTTest):
 
     test_dir = 'test_spec2pipeline'
 
-    def Xtest_miri_lrs_bkgnod(self):
+    def test_miri_lrs_bkgnod(self):
         """
 
         Regression test of calwebb_spec2 pipeline performed on an association
@@ -50,7 +50,7 @@ class TestSpec2Pipeline(BaseJWSTTest):
         ]
         self.compare_outputs(outputs)
 
-    def Xtest_miri_lrs_slit_1(self):
+    def test_miri_lrs_slit_1(self):
         """
 
         Regression test of calwebb_spec2 pipeline performed on a single
@@ -77,7 +77,7 @@ class TestSpec2Pipeline(BaseJWSTTest):
                    ]
         self.compare_outputs(outputs)
 
-    def Xtest_miri_lrs_slit_1b(self):
+    def test_miri_lrs_slit_1b(self):
         """
         Regression test of calwebb_spec2 pipeline performed on a single
         MIRI LRS fixed-slit exposure with multiple integrations.  Compare _calints.
@@ -101,7 +101,7 @@ class TestSpec2Pipeline(BaseJWSTTest):
                    ]
         self.compare_outputs(outputs)
 
-    def Xtest_mrs2pipeline1(self):
+    def test_mrs2pipeline1(self):
         """
 
         Regression test of calwebb_spec2 pipeline performed on MIRI MRS data.
