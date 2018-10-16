@@ -1,27 +1,3 @@
-RESOLVING_POWER SUB_BAND S16
-                R_CENTRE f8
-                R_A_LOW f8
-                R_B_LOW f8
-                R_C_LOW f8
-                R_A_HIGH f8
-                R_B_HIGH f8
-                R_C_HIGH f8
-                R_A_AVG f8
-                R_B_AVG f8
-                R_C_AVG f8
-
-PSF_FWHM_ALPHA  A_CUTOFF f8
-                A_A_SHORT f8
-                A_B_SHORT f8
-                A_A_LONG f8
-                A_B_LONG f8
-
-PSF_FWHM_BETA   B_CUTOFF f8
-                B_A_SHORT f8
-                B_B_SHORT f8
-                B_A_LONG f8
-                B_B_LONG f8
-
 +------------------+-----------+-----------+---------------------+
 | Table            | Column    | Data type | Units               |
 +==================+===========+===========+=====================+
