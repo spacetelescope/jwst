@@ -44,6 +44,8 @@ associations
 
 - Added new rule Asn_Lv2MIRLRSFixedSlitNod to handle LRS Fixed-slit nodding. [#2663]
 
+- Updated MIRI Dark and Flat exposure keywords. [#2698, #2710]
+
 background
 ----------
 
@@ -94,6 +96,9 @@ datamodels
 - Updated allowed SUBARRAY names for FGS and NIRCam [#2667]
 
 - Updates for python 2 to 3 conversion [#2678]
+
+- Updated EXP_TYPE allowed values to include "MIR_DARKALL", "MIR_DARKIMG",
+  "MIR_DARKMRS", "MIR_FLATALL", "MIR_FLATIMAGE-EXT", and "MIR_FLATMRS-EXT" [#2709]
 
 dq_init
 -------
