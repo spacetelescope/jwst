@@ -317,7 +317,7 @@ class RegionsModel(ReferenceFileModel):
     def validate(self):
         super(RegionsModel, self).validate()
         try:
-            assert isinstance(self.regions.copy(), np.ndarray)
+            assert isinstance(self.regions, np.ndarray)
             assert self.meta.instrument.name == "MIRI"
             assert self.meta.exposure.type == "MIR_MRS"
             assert self.meta.instrument.channel in ("12", "34", "1", "2", "3", "4")
