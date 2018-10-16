@@ -44,7 +44,7 @@ associations
 
 - Added new rule Asn_Lv2MIRLRSFixedSlitNod to handle LRS Fixed-slit nodding. [#2663]
 
-- Updated MIRI Dark and Flat exposure keywords. [#2698]
+- Updated MIRI Dark and Flat exposure keywords. [#2698, #2710]
 
 background
 ----------
