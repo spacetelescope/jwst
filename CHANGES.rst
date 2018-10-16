@@ -97,6 +97,9 @@ datamodels
 
 - Updates for python 2 to 3 conversion [#2678]
 
+- Updated EXP_TYPE allowed values to include "MIR_DARKALL", "MIR_DARKIMG",
+  "MIR_DARKMRS", "MIR_FLATALL", "MIR_FLATIMAGE-EXT", and "MIR_FLATMRS-EXT" [#2709]
+
 dq_init
 -------
 
