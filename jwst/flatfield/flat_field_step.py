@@ -23,8 +23,7 @@ __all__ = ["FlatFieldStep"]
 
 
 class FlatFieldStep(Step):
-    """
-    FlatFieldStep: Flat-field a science image using a flatfield reference image.
+    """Flat-field a science image using a flatfield reference image.
     """
 
     spec = """
