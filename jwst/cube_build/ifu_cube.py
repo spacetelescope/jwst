@@ -1263,7 +1263,6 @@ class IFUCubeData():
             # for now we need to pad wavelength to fix datamodel size
             num = len(wave)
             nn = 10420 # This number needs to match the shape of the
-            nn = 1782
             # wavetable['wavelength'] value in the ifucube.schema.
             # In the future it would be good to remove that we have to
             # set the size of this value in the schema.
@@ -1340,9 +1339,8 @@ class IFUCubeData():
             ifucube_model.meta.wcsinfo.crval3 = 1.0
             ifucube_model.meta.wcsinfo.crpix3 = 1.0
             ifucube_model.meta.wcsinfo.cdelt3 = None
-#            ifucube_model.wavedim = '(1,10420)'
-            ifucube_model.wavedim = '(1,1782)'
-            #print('wrote',ifucube_model.meta.wcsinfo.wavedim)
+            ifucube_model.wavedim = '(1,10420)'
+
 
         ifucube_model.meta.wcsinfo.ctype1 = 'RA---TAN'
         ifucube_model.meta.wcsinfo.ctype2 = 'DEC--TAN'
@@ -1369,7 +1367,13 @@ class IFUCubeData():
         ifucube_model.meta.ifu.dq_extension = 'DQ'
         ifucube_model.meta.ifu.roi_spatial = self.rois
         ifucube_model.meta.ifu.roi_wave = self.roiw
-        ifucube_model.meta.ifu.weighting = self.weighting
+        if self.weighting == 'msm':
+            ifucube_model.meta.ifu.weighting = 'area'
+        elif self.weighting =='miripsf':
+            ifucube_model.meta.ifu.weighting = 'miripsf'
+        else: #default
+            ifucube_model.meta.ifu.weighting = 'msm'
+
         # weight_power is needed for single cubes. Linear Wavelengths
         # if non-linear wavelengths then this will be None
         ifucube_model.meta.ifu.weight_power = self.weight_power
@@ -1424,6 +1428,17 @@ class IFUCubeData():
                 ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL4C'
                 ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE4C'
 
+#TODO
+# remove any axis4 keywords left over from other steps. These keywords interfere with
+# DS9 in understanding the wavelength planes
+# This did not work - but I left it because maybe it is something similar
+#        ifucube_model.meta.wcsinfo.ctype4 = None
+#        ifucube_model.meta.wcsinfo.crval4 = None
+#        ifucube_model.meta.wcsinfo.crpix4 = None
+#        ifucube_model.meta.wcsinfo.cdelt4 = None
+#        ifucube_model.meta.wcsinfo.cunit4 = None
+
+# set WCS information
         wcsobj = pointing.create_fitswcs(ifucube_model)
         ifucube_model.meta.wcs = wcsobj
         ifucube_model.meta.wcs.bounding_box = ((0, naxis1 - 1),

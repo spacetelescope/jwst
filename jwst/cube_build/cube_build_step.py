@@ -9,6 +9,7 @@ from ..assign_wcs.util import update_s_region_keyword
 
 __all__ = ["CubeBuildStep"]
 
+
 class CubeBuildStep (Step):
     """
     CubeBuildStep: Creates a 3-D spectral cube from a given association, single model,
@@ -242,7 +243,7 @@ class CubeBuildStep (Step):
 # or (grating,filter)
 
         num_cubes, cube_pars = cubeinfo.number_cubes()
-        if not self.single: 
+        if not self.single:
             self.log.info('Number of ifucubes produced by a this run %i',
                                           num_cubes)
 
@@ -301,7 +302,7 @@ class CubeBuildStep (Step):
             footprint = cube.meta.wcs.footprint(axis_type="spatial")
             update_s_region_keyword(cube, footprint)
 
-        
+
         return cube_container
 
 #********************************************************************************

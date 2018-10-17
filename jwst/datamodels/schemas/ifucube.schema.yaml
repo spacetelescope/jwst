@@ -80,10 +80,10 @@ allOf:
         datatype: int16
       - name: wavelength
         datatype: float32
-        shape: [1782]
+        shape: [10420]
     wavedim:
       title: Wavetable dimension
       type: string
-      fits_keyword: TMIM2
+      fits_keyword: TDIM2
       fits_hdu: WCS-TABLE
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema
