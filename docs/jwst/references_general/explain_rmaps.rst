@@ -103,6 +103,9 @@ and FITS keyword::
 Using e.g. 'META.INSTRUMENT.NAME' permits consistent naming regardless of the
 underlying file format (.fits vs. .asdf vs. .json).
 
+When creating or accessing reference files, Python code uses the lower case
+object path to populate an attribute corresponding to the upper case string.
+
 Example .pmap contents
 ----------------------
 
