@@ -1,4 +1,3 @@
-
 Description
 ============
 
@@ -16,7 +15,7 @@ This step uses the ``bounding_box`` attribute of the WCS stored in the data mode
 which is populated by the ``assign_wcs`` step. Hence the ``assign_wcs`` step
 must be applied to the science exposure before running this step.
 
-For WFSS modes in NIRCAM and NIRSS, no ``bounding_box`` has been attached
+For WFSS modes in NIRCam and NIRSS, no ``bounding_box`` has been attached
 to the datamodel. This is to keep the WCS flexible enough to be used with any
 source catalog that may be associated with the dispersed image. Instead, there
 is a helper method that is used to calculate the bounding boxes that contain
@@ -27,16 +26,16 @@ the 2D cutouts from the dispersed image.
 
 Algorithm
 ---------
-The step is currently applied only to NIRSpec Fixed Slit, NIRSPEC MSA, NIRSPEC TSO,
-NIRCAM and NIRISS WFSS, and NIRCAM TSGRISM observations.
+The step is currently applied only to NIRSpec Fixed Slit, NIRSpec MSA, NIRSpec TSO,
+NIRCam and NIRISS WFSS, and NIRCam TSGRISM observations.
 
-For NIRSPEC:
+For NIRSpec:
 
 If the step parameter ``slit_name`` is left unspecified, the default behavior is
 to extract all slits which project on the detector. Only one slit may be extracted by
 specifying the slit name with the ``slit_name`` argument, using one of the following
 accepted names: ``S1600A1``, ``S200A1``, ``S200A2``, ``S200B1`` or ``S400A1``
-in the case of NIRSPEC FS exposure or any of the slitlet names in the case of the MSA.
+in the case of NIRSpec FS exposure or any of the slitlet names in the case of the MSA.
 
 To find out what slits are available for extraction:
 
@@ -55,7 +54,7 @@ corresponding to the FITS keywords ``SLTNAME``, ``SLTSTRT1``, ``SLTSIZE1``,
 ``SLTSTRT2``, and ``SLTSIZE2``.
 
 
-For NIRCAM WFSS and NIRISS WFSS :
+For NIRCam WFSS and NIRISS WFSS :
 
 If the step parameter ``grism_objects`` is left unspecified, the default behavior
 is to use the source catalog that is specified in the input model's meta information,
@@ -68,7 +67,7 @@ of ``GrismObjects`` outside of these, the ``GrismObject`` itself can be imported
 ``jwst.transforms.models``.
 
 
-For NIRCAM TSGRISM:
+For NIRCam TSGRISM:
 
 There is no source catalog created for TSO observations because the source is always
 placed on the same pixel, the user can only vary the size of the subarray. All of the
@@ -87,7 +86,7 @@ such as `extract_1d`. The slit height is a parameter that a user can set
 
 Step Arguments
 ==============
-The `extract_2d` step has two optional arguments for NIRSPEC observations:
+The `extract_2d` step has two optional arguments for NIRSpec observations:
 
 * ``--slit_name``: name (string value) of a specific slit region to
   extract. The default value of None will cause all known slits for the
@@ -97,7 +96,7 @@ The `extract_2d` step has two optional arguments for NIRSPEC observations:
 * ``--apply_wavecorr``: bool (default is True). Flag indicating whether to apply the Nirspec wavelength zero-point correction.
 
 
-For NIRCAM and NIRISS WFSS, the `extract_2d` step has three optional arguments:
+For NIRCam and NIRISS WFSS, the `extract_2d` step has three optional arguments:
 
 * ``--grism_objects``: list (default is empty). A list of ``jwst.transforms.models.GrismObject``.
 
@@ -106,30 +105,9 @@ For NIRCAM and NIRISS WFSS, the `extract_2d` step has three optional arguments:
 * ``--extract_orders``: list. The list of orders to extract. The default is taken from the `wavelengthrange` reference file.
 
 
-For NIRCAM TSGRISM, the `extract_2d` step has two optional arguments:
+For NIRCam TSGRISM, the `extract_2d` step has two optional arguments:
 
 * ``--extract_orders``: list. The list of orders to extract. The default is taken from the `wavelengthrange` reference file.
 
 * ``--extract_height``: int. The cross-dispersion size to extract
-
-
-Reference Files
-===============
-To apply the Nirspec wavelength zero-point correction, this step uses the
-WAVECORR reference file. The zero-point correction is applied to observations
-with EXP_TYPE of "NRS_FIXEDSLT", "NRS_BRIGHTOBJ" or "NRS_MSASPEC". This is an optional
-correction (on by default). It can be turned off by specifying ``apply_wavecorr=False``
-when running the step.
-
-NIRCAM WFSS and NIRISS WFSS observations use the `wavelengthrange` reference file in order
-to construct the bounding boxes around each objects orders. If a list of ``GrismObject``s
-is supplied, then no reference file is neccessary.
-
-For NIRCAM WFSS and TSGRIM modes and NIRISS WFSS mode the `wavelengthrange` file contains the wavelength limits to use when caluclating the minimum and maximum dispersion extents on the detector. It also contains the default list of orders that should be extracted for each filter.
-To be consistent with other modes, and for conveniance,it also lists the orders and filters that are valid  with the file.
-
-:order: A list of orders this file covers
-:wavelengthrange: A list containing the list of [order, filter, wavelength min, wavelength max] 
-:waverange_selector: The list of FILTER names available
-:extract_orders: A list containing the list of orders to extract for each filter
 
