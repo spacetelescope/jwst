@@ -1367,12 +1367,7 @@ class IFUCubeData():
         ifucube_model.meta.ifu.dq_extension = 'DQ'
         ifucube_model.meta.ifu.roi_spatial = self.rois
         ifucube_model.meta.ifu.roi_wave = self.roiw
-        if self.weighting == 'msm':
-            ifucube_model.meta.ifu.weighting = 'area'
-        elif self.weighting =='miripsf':
-            ifucube_model.meta.ifu.weighting = 'miripsf'
-        else: #default
-            ifucube_model.meta.ifu.weighting = 'msm'
+        ifucube_model.meta.ifu.weighting = str(self.weighting)
 
         # weight_power is needed for single cubes. Linear Wavelengths
         # if non-linear wavelengths then this will be None
