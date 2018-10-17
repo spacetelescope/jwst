@@ -31,11 +31,12 @@ network.
 
 The pre-fetch also enables CRDS to report on all reference file assignment and
 availability problems a pipeline will encounter in a single CAL run.  This is
-required in I&T scenarios where the cadence of testing is roughly once per week
-and there is a need to
+required in I&T scenarios where the total number of pipeline runs is very
+limited (often weekly) so solving as many reference file issues per run as
+possible is needed. 
 
 While the prefetch runs for onsite users,  since the default CRDS configuration
-points to a complete CRDS cache,  no downloads will occurr.
+points to a complete CRDS cache,  no downloads will occur.
 
 Step Method .get_reference_file()
 ---------------------------------
@@ -64,10 +65,10 @@ plain text CRDS rules files.
 CRDS rules and references are organized into a 4 tiered hierarchical network of
 versioned files consisting of:
 
-  * .pmap  - The overall context for the pipeline (i.e. all instruments)
-  * .imap  - The rules for all reference types of one instrument
-  * .rmap  - The rules for all references files of one type of one instrument
-  * .fits,.asdf,.json - Individual reference files assigned by .rmaps
+* .pmap  - The overall context for the pipeline (i.e. all instruments)
+* .imap  - The rules for all reference types of one instrument
+* .rmap  - The rules for all reference files of one type of one instrument
+* .fits,.asdf,.json - Individual reference files assigned by .rmaps
 
 Based on dataset parameters, CRDS traverses the hierarchy of rules files,
 generally starting from the .pmap and descending until a particular reference
@@ -75,7 +76,7 @@ file is assigned.
 
 Visiting the JWST operational website here:
 
-   https://jwst-crds.stsci.edu/
+https://jwst-crds.stsci.edu/
 
 and opening up instrument panes of the *Operational References* display can
 rapidly give an idea about how reference files should be assigned.
@@ -300,9 +301,9 @@ When CRDS adds a reference file to a .rmap, it uses literal matching between
 the value defined in the reference file and the existing values shown in the
 .rmap.  This enables CRDS to:
 
-  * add files to existing categories
-  * replace files in existing categories
-  * create new categories of files.
+* add files to existing categories
+* replace files in existing categories
+* create new categories of files.
 
 Because creating new categories is an unusual event which should be carefully
 reviewed,  CRDS issues a warning when a reference file defines a new category.
