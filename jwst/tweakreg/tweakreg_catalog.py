@@ -5,7 +5,7 @@ from ..datamodels import ImageModel
 
 def make_tweakreg_catalog(model, kernel_fwhm, snr_threshold, sharplo=0.2,
                           sharphi=1.0, roundlo=-1.0, roundhi=1.0,
-                          brightest=None):
+                          brightest=None, peakmax=None):
     """
     Create a catalog of point-line sources to be used for image
     alignment in tweakreg.

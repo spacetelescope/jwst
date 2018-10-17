@@ -31,7 +31,7 @@ class TweakRegStep(Step):
         kernel_fwhm = float(default=2.5) # Gaussian kernel FWHM in pixels
         snr_threshold = float(default=10.0) # SNR threshold above the bkg
         brightest = int(default=None) # Keep top ``brightest`` objects
-        peakmax = float(default=None) # Filter out objects with pixel values >= ``pixmax``
+        peakmax = float(default=None) # Filter out objects with pixel values >= ``peakmax``
 
         # Optimize alignment order:
         enforce_user_order = boolean(default=False) # Align images in user specified order?
