@@ -65,6 +65,8 @@ cube_build
 
 - Added support for creating IFU Cubes with non-linear wavelength sampling,
   including use of FITS WCS "WAVE-TAB" standard. [#2598]
+- Correctly writing TDIM2 to WCS-TABLE extension [#2719]
+- Fixed error when making IFUCubes with weighting='miripsf' [#2719]
 
 cube_skymatch
 -------------
