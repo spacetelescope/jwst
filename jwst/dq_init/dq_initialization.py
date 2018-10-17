@@ -20,7 +20,7 @@ def correct_model(input_model, mask_model):
     Parameters
     ----------
     input_model : input JWST datamodel
-        The jwst datamodel to the corrected
+        The jwst datamodel to be corrected
 
     mask_model : mask datamodel
         The mask model to use in the correction
@@ -42,7 +42,7 @@ def do_dqinit(input_model, mask_model):
     Parameters
     ----------
     input_model : input JWST datamodel
-        The jwst datamodel to the corrected
+        The jwst datamodel to be corrected
 
     mask_model : mask datamodel
         The mask model to use in the correction
