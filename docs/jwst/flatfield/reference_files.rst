@@ -1,6 +1,6 @@
 Reference Files
 ===============
-The `flat_field` step uses four different types of reference files, depending on the
+The ``flat_field`` step uses four different types of reference files, depending on the
 type of data being processed. Most cases just use the FLAT reference file, while NIRSpec
 spectroscopic exposures use the three reference files FFLAT (fore optics),
 SFLAT (spectrograph optics), and DFLAT (detector).
@@ -9,7 +9,7 @@ FLAT Reference File
 -------------------
 
 :REFTYPE: FLAT
-:Data model: `FlatModel`
+:Data model: `~jwst.datamodels.FlatModel`
 
 The FLAT reference file contains pixel-by-pixel detector response values.
 It is used for all instrument modes except the NIRSpec spectroscopic modes.
@@ -91,7 +91,7 @@ For some reference files there will not be any image array, in which case
 all the flat field information will be taken from the FAST_VARIATION table.
 
 The SCI extension of the reference files may contain NaNs.  If so, the
-`flat_field` step will replace these values with 1 and will flag the
+``flat_field`` step will replace these values with 1 and will flag the
 corresponding pixel in the DQ extension with NO_FLAT_FIELD. The WAVELENGTH
 extension is not expected to contain NaNs.
 
@@ -141,7 +141,7 @@ the primary data array is assumed to be empty.
 
 *Fixed Slit*
 ++++++++++++
-:Data model: `NirspecFlatModel`
+:Data model: `~jwst.datamodels.NirspecFlatModel`
 
 The fixed slit FFLAT files have EXP_TYPE=NRS_FIXEDSLIT, and have a single BINTABLE
 extension, labeled FAST_VARIATION. 
@@ -158,7 +158,7 @@ separate slit.
 
 *MSA Spec*
 ++++++++++++
-:Data model: `NirspecQuadFlatModel`
+:Data model: `~jwst.datamodels.NirspecQuadFlatModel`
 
 The MSA Spec FFLAT files have EXP_TYPE=NRS_MSASPEC, and contain data pertaining
 to each of the 4 quadrants.  For each quadrant, there is a set of 5 extensions -
@@ -205,7 +205,7 @@ quadrant.
 
 *IFU*
 +++++
-:Data model: `NirspecFlatModel`
+:Data model: `~jwst.datamodels.NirspecFlatModel`
 
 The IFU FFLAT files have EXP_TYPE=NRS_IFU.  These have one extension,
 a BINTABLE extension labeled FAST_VARIATION. 
@@ -228,7 +228,7 @@ SFLAT Reference File
 --------------------
 
 :REFTYPE: SFLAT
-:Data model: `NirspecFlatModel`
+:Data model: `~jwst.datamodels.NirspecFlatModel`
 
 There are 3 types of SFLAT reference files: fixed slit, MSA spec, and IFU. For each type
 the primary data array is assumed to be empty.
@@ -294,7 +294,7 @@ DFLAT Reference File
 --------------------
 
 :REFTYPE: DFLAT
-:Data model: `NirspecFlatModel`
+:Data model: `~jwst.datamodels.NirspecFlatModel`
 
 .. include:: dflat_selection.rst
 
