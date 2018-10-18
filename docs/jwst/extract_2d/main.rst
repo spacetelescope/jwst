@@ -1,5 +1,5 @@
 Description
-============
+===========
 
 Overview
 --------
@@ -29,7 +29,8 @@ Algorithm
 The step is currently applied only to NIRSpec Fixed Slit, NIRSpec MSA, NIRSpec TSO,
 NIRCam and NIRISS WFSS, and NIRCam TSGRISM observations.
 
-For NIRSpec:
+NIRSpec
++++++++
 
 If the step parameter ``slit_name`` is left unspecified, the default behavior is
 to extract all slits which project on the detector. Only one slit may be extracted by
@@ -54,7 +55,8 @@ corresponding to the FITS keywords ``SLTNAME``, ``SLTSTRT1``, ``SLTSIZE1``,
 ``SLTSTRT2``, and ``SLTSIZE2``.
 
 
-For NIRCam WFSS and NIRISS WFSS :
+NIRCam WFSS and NIRISS WFSS
++++++++++++++++++++++++++++
 
 If the step parameter ``grism_objects`` is left unspecified, the default behavior
 is to use the source catalog that is specified in the input model's meta information,
@@ -67,7 +69,8 @@ of ``GrismObjects`` outside of these, the ``GrismObject`` itself can be imported
 ``jwst.transforms.models``.
 
 
-For NIRCam TSGRISM:
+NIRCam TSGRISM
+++++++++++++++
 
 There is no source catalog created for TSO observations because the source is always
 placed on the same pixel, the user can only vary the size of the subarray. All of the

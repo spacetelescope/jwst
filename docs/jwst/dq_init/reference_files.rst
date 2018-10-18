@@ -1,12 +1,12 @@
 Reference Files
 ===============
-The `dq_init` step uses a MASK reference file.
+The ``dq_init`` step uses a MASK reference file.
 
 MASK Reference File
 -------------------
 
 :REFTYPE: MASK
-:Data model: `MaskModel`
+:Data model: `~jwst.datamodels.MaskModel`
 
 The MASK reference file contains pixel-by-pixel DQ flag values that indicate
 problem conditions.
