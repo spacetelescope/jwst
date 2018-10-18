@@ -1365,13 +1365,13 @@ class IFUCubeData():
         ifucube_model.meta.ifu.error_extension = 'ERR'
         ifucube_model.meta.ifu.error_type = 'ERR'
         ifucube_model.meta.ifu.dq_extension = 'DQ'
-        ifucube_model.meta.ifu.roi_spatial = self.rois
-        ifucube_model.meta.ifu.roi_wave = self.roiw
+        ifucube_model.meta.ifu.roi_spatial = float(self.rois)
+        ifucube_model.meta.ifu.roi_wave = float(self.roiw)
         ifucube_model.meta.ifu.weighting = str(self.weighting)
 
         # weight_power is needed for single cubes. Linear Wavelengths
         # if non-linear wavelengths then this will be None
-        ifucube_model.meta.ifu.weight_power = self.weight_power
+        ifucube_model.meta.ifu.weight_power = float(self.weight_power)
 
         with datamodels.open(self.input_models[j]) as input:
             ifucube_model.meta.bunit_data = input.meta.bunit_data
@@ -1423,15 +1423,6 @@ class IFUCubeData():
                 ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL4C'
                 ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE4C'
 
-#TODO
-# remove any axis4 keywords left over from other steps. These keywords interfere with
-# DS9 in understanding the wavelength planes
-# This did not work - but I left it because maybe it is something similar
-#        ifucube_model.meta.wcsinfo.ctype4 = None
-#        ifucube_model.meta.wcsinfo.crval4 = None
-#        ifucube_model.meta.wcsinfo.crpix4 = None
-#        ifucube_model.meta.wcsinfo.cdelt4 = None
-#        ifucube_model.meta.wcsinfo.cunit4 = None
 
 # set WCS information
         wcsobj = pointing.create_fitswcs(ifucube_model)
