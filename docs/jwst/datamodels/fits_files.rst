@@ -3,7 +3,16 @@ FITS file structures and contents
 
 Here we describe the structure and content of the most frequently used
 forms of FITS files for JWST science data products. Each type of FITS
-file is the result of serialization of a corresponding data model.
+file is the result of serialization of a corresponding data model. All
+JWST pipeline input and output images, with the exception of a few
+reference files, are serialized as FITS files. The asdf representation
+of the datamodel is serialized as the final extension of the FITS
+file, in the ASDF extension, as eight bit unsigned ints, essentialy a
+text charavter serialization in yaml format.  The asdf representation
+is read from the extension when the FITS file is read to provide the
+initial datamodel. Values in the other FiTS extensions then either
+override this initial model or are adde to it.
+
 
 Common Features
 ---------------
@@ -22,6 +31,8 @@ and organization:
    Image or Table extensions. The header of each extension may contain
    keywords that pertain uniquely to that extension.
 
+ 3.
+ 
 Level-1 and Level-2 exposure-based products, which contain the data
 from an individual exposure on an individual detector, use the
 following file naming scheme::
