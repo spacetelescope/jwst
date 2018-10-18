@@ -111,7 +111,6 @@ class CubeData():
         if(self.weighting == 'miripsf'):
             log.info('Reading default MIRI cube resolution file %s', self.resol_filename)
             cube_build_io_util.read_resolution_file(self.resol_filename,
-                                                    self.channel,
                                                     self.all_channel,
                                                     self.all_subchannel,
                                                     instrument_info)
