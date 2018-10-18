@@ -144,6 +144,7 @@ class MiriImgPhotomModel(PhotomModel):
         - nelem: int16
         - wavelength: float32[500]
         - relresponse: float32[500]
+        - relresperror: float32[500]
 
     """
     schema_url = "mirimg_photom.schema.yaml"

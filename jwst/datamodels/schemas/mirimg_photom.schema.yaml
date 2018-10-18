@@ -24,4 +24,7 @@ allOf:
       - name: relresponse
         shape: [500]
         datatype: float32
+      - name: relresperror
+        shape: [500]
+        datatype: float32
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema
