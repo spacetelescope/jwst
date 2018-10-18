@@ -28,65 +28,95 @@ using the array-based functionality of numpy.  The size of the block depends
 on the image size and the number of groups.
 
 
+Each of the next 4 paragraphs describes how special cases are handled.
+
+
 If the input dataset has only a single group in each integration, the count rate
 for all unsaturated pixels in that integration will be calculated to be the
 value of the science data in that group divided by the group time.  If the
 input dataset has only two groups per integration, the count rate for all
 unsaturated pixels in each integration will be calculated using the differences 
-of the 2 valid values of the science data.  If any input dataset contains ramps
-saturated in their second group, the count rates for those pixels in that
-integration will be calculated to be the value of the science data in the first 
-group divided by the group time. After computing the slopes for all segments for a
-given pixel, the final slope is determined as a weighted average from all
-segments in all integrations, and is written to a file as the primary output
-product.  In this output product, the 4-D GROUPDQ from all integrations is
-compressed into 2-D, which is then merged (using a bitwise OR) with the input 2-D
-PIXELDQ to create the output DQ array. The 3-D VAR_POISSON and VAR_RNOISE arrays
-from all integrations are averaged into corresponding 2-D output arrays.  If the
-ramp fitting step is run by itself, the output file name will have the suffix
-'_RampFit' or the suffix '_RampFitStep'; if the ramp fitting step is run as part
-of the calwebb_detector1 pipeline, the final output file name will have the suffix
-'_rate'.  In either case, the user can override this name by specifying an output
-file name.
+of the 2 valid values of the science data.
+
+
+For datasets having more than a single group in each integration, a ramp having 
+a segment with only a single group is processed differently depending on the 
+number and size of the other segments in the ramp. If a ramp has only a single
+segment having only a single group, the count rate will be calculated to be the
+value of the science data in that group divided by the group time.  If a ramp
+has a segment having a single group, and at least one other segment having more
+than one good group, only data from the segment(s) having more than a single 
+good group will be used to calculate the count rate.
+
+
+The data is checked for ramps in which there is good data in the first group, 
+but all first differences for the ramp are undefined because there are too few
+good groups past the first. For such ramps the first differences will be set to
+equal the data in the first group.  The first difference is used to estimate
+the slope of the ramp, as explained in the 'segment-specific computations' 
+section below.
+
+
+If any input dataset contains ramps saturated in their second group, the count
+rates for those pixels in that integration will be calculated to be the value
+of the science data in the first group divided by the group time. 
+
+
+For all input datasets, including those special cases just described,
+arrays for the primary output product are computed as follows.
+
+
+After computing the slopes for all segments for a given pixel, the final slope is
+determined as a weighted average from all segments in all integrations, and is
+written to a file as the primary output product.  In this output product, the
+4-D GROUPDQ from all integrations is compressed into 2-D, which is then merged
+(using a bitwise OR) with the input 2-D PIXELDQ to create the output DQ array. 
+The 3-D VAR_POISSON and VAR_RNOISE arrays from all integrations are averaged
+into corresponding 2-D output arrays.  If the ramp fitting step is run by
+itself, the output file name will have the suffix '_RampFit' or the suffix
+'_RampFitStep'; if the ramp fitting step is run as part of the calwebb_detector1
+pipeline, the final output file name will have the suffix '_rate'.  In either
+case, the user can override this name by specifying an output file name.
 
 
 If the input exposure contains more than one integration, the resulting slope
 images from each integration are stored as a data cube in a second output data
-product.  Each plane of the 3-D SCI, ERR, DQ, VAR_POISSON, and VAR_RNOISE arrays 
-in this product is the result for a given integration.  In this output product, 
-the GROUPDQ data for a given integration is compressed into 2-D, which is then
-merged with the input 2-D PIXELDQ to create the output DQ array for each
-integration. The 3-D VAR_POISSON and VAR_RNOISE from an integration are calculated
-by averaging over the fit segments in the corresponding 4-D arrays.  By default,
-the name of this output product is based on the name of the input file and will
-have the suffix '_rateints'; the user can override this name by specifying a
-name using the parameter int_name.
+product.  Each plane of the 3-D SCI, ERR, DQ, VAR_POISSON, and VAR_RNOISE
+arrays in this product is the result for a given integration.  In this output
+product, the GROUPDQ data for a given integration is compressed into 2-D, which
+is then merged with the input 2-D PIXELDQ to create the output DQ array for each
+integration. The 3-D VAR_POISSON and VAR_RNOISE from an integration are
+calculated by averaging over the fit segments in the corresponding 4-D arrays.
+By default, the name of this output product is based on the name of the input
+file and will have the suffix '_rateints'; the user can override this name by
+specifying a name using the parameter int_name.
 
 
 A third, optional output product is also available and is produced only when
 the step parameter 'save_opt' is True (the default is False).  This optional
 product contains 4-D arrays called SLOPE, SIGSLOPE, YINT, SIGYINT, WEIGHTS,
-VAR_POISSON, and VAR_RNOISE which contain the slopes, uncertainties in the slopes, 
-y-intercept, uncertainty in the y-intercept, fitting weights, the variance of the 
-slope due to poisson noise only, and the variance of the slope due to read noise 
-only for each segment of each pixel. (Calculaton of the two variance arrays
-requires retrieving readnoise and gain values from their respective reference
-files.)  The y-intercept refers to the result of the fit at an exposure time of
-zero.  This product also contains a 3-D array called PEDESTAL, which gives the
-signal at zero exposure time for each pixel, and the 4-D CRMAG array, which
-contains the magnitude of each group that was flagged as having a CR hit.  By
-default, the name of this output file is based on the name of the input file and
-will have the suffix '_fitopt'; the user can override this name by specifying a
-name using the parameter opt_name.  In this optional output product, the pedestal
-array is calculated for each integration by extrapolating the final slope (the
-weighted average of the slopes of all of ramp segments in the integration) for
-each pixel from its value at the first group to an exposure time of zero. Any
-pixel that is saturated on the first group is given a pedestal value of 0. Before
-compression, the cosmic ray magnitude array is equivalent to the input SCI array
-but with the only nonzero values being those whose pixel locations are flagged in
-the input GROUPDQ as cosmic ray hits. The array is compressed, removing all
-groups in which all the values are 0 for pixels having at least one group with a
-non-zero magnitude. The order of the cosmic rays within the ramp is preserved.
+VAR_POISSON, and VAR_RNOISE which contain the slopes, uncertainties in the
+slopes, y-intercept, uncertainty in the y-intercept, fitting weights, the
+variance of the slope due to poisson noise only, and the variance of the slope
+due to read noise only for each segment of each pixel. (Calculation of the two
+variance arrays requires retrieving readnoise and gain values from their
+respective reference files.)  The y-intercept refers to the result of the fit
+at an exposure time of zero.  This product also contains a 3-D array called
+PEDESTAL, which gives the signal at zero exposure time for each pixel, and the
+4-D CRMAG array, which contains the magnitude of each group that was flagged as
+having a CR hit.  By default, the name of this output file is based on the name
+of the input file and will have the suffix '_fitopt'; the user can override 
+this name by specifying a name using the parameter opt_name.  In this optional
+output product, the pedestal array is calculated for each integration by
+extrapolating the final slope (the weighted average of the slopes of all of
+ramp segments in the integration) for each pixel from its value at the first
+group to an exposure time of zero. Any pixel that is saturated on the first
+group is given a pedestal value of 0. Before compression, the cosmic ray
+magnitude array is equivalent to the input SCI array but with the only nonzero
+values being those whose pixel locations are flagged in the input GROUPDQ as
+cosmic ray hits. The array is compressed, removing all groups in which all the
+values are 0 for pixels having at least one group with a non-zero magnitude.
+The order of the cosmic rays within the ramp is preserved.
 
 
 Slopes and their variances are calculated for each segment, for each integration,
@@ -217,3 +247,28 @@ The ramp fitting step has three optional arguments that can be set by the user:
 * ``--int_name``: A string that can be used to override the default name
   for the integration-by-integration slopes, for the case that the input
   file contains more than one integration.
+
+
+Error Propagation
+=================
+
+Error propagation in the ramp fitting step is implemented by storing the square
+root of the exposure-level combined variance in the ERR array of the primary
+output product. This combined variance of the exposure-level slope is the sum
+of the variance of the slope due to the Poisson noise and the variance of the 
+slope due to the read noise. These two variances are also separately written
+to the extensions VAR_POISSON and VAR_RNOISE in the primary output.
+
+
+At the integration-level, the variance of the integration-level slope due to
+Poisson noise is written to the VAR_POISSON extension in the
+integration-specific product, and the variance of the integration-level slope
+due to read noise noise is written to the VAR_RNOISE extension.  The combined
+variance of the slope is due to both the Poisson noise and the read noise, and
+its square root is written to the ERR extension. 
+
+
+For the optional output product, the variance of the slope due to the Poisson
+noise of the segment-specific slope is written to the VAR_POISSON extension.
+Similarly, the variance of the slope due to the read noise of the
+segment-specific slope  is written to the VAR_RNOISE extension.
