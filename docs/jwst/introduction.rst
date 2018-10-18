@@ -196,6 +196,81 @@ then supply the cfg file as a keyword argument:
  Detector1Pipeline.call('jw00017001001_01101_00001_nrca1_uncal.fits', config_file='calwebb_detector1.cfg')
 
 
+.. _intro_file_conventions:
+
+Input and Output File Conventions
+=================================
+
+.. _intro_input_file_discussion:
+
+Input Files
+-----------
+
+There are two general types of input to any step or pipeline: references files
+and data files.  The references files, unless explicitly
+overridden, are provided through CRDS.
+
+Data files are the science input, such as exposure FITS files and association
+files. All data is assumed to be co-resident in the directory where the primary
+input file is located. This is particularly important for associations: JWST
+associations contain file names only. All files referred to by an association
+are expected to be located in the directory the association file is located.
+
+.. _intro_output_file_discussion:
+
+Output Files
+------------
+
+Output files will be created either in the current working directory, or where
+specified by the :ref:`output_dir <intro_output_directory>` configuration
+parameter.
+
+File names for the outputs from pipelines and steps come from
+three different sources:
+
+- The name of the input file
+- The product name defined in an association
+- As specified by the :ref:`output_file <intro_output_file>` argument
+
+Regardless of the source, each pipeline/step uses the name as a "base
+name", on to which several different suffixes are appended, which
+indicate the type of data in that particular file. A list of the main suffixes
+can be :ref:`found below <pipeline_step_suffix_definitions>`.
+
+Output File and Associations
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Stage 2 pipelines can take an individual file or an
+:ref:`association <associations>` as input. Nearly all Stage 3
+pipelines require an associaiton as input. Normally, the output file
+is defined in each association's `product_name`.
+
+If there is need to produce multiple versions of a calibration based
+on an association, it is highly suggested to use `output_dir` to place
+the results in a different directory instead of using `output_file` to
+rename the output files. Stage 2 pipelines do not allow the override
+of the output using `output_file`. Stage 3 pipelines do. However,
+since Stage 3 pipelines generally produce many files per association,
+using different directories via `output_dir` will make file keeping
+simpler.
+
+Individual Step Outputs
+^^^^^^^^^^^^^^^^^^^^^^^
+
+If individual steps are executed without an output file name specified via
+the `output_file` argument, the `stpipe` infrastructure
+automatically uses the input file name as the root of the output file name
+and appends the name of the step as an additional suffix to the input file
+name. If the input file name already has a known suffix, that suffix
+will be replaced. For example:
+::
+
+ $ strun dq_init.cfg jw00017001001_01101_00001_nrca1_uncal.fits
+
+produces an output file named
+`jw00017001001_01101_00001_nrca1_dq_init.fits`.
+
+
 Universal Parameters
 ====================
 
@@ -257,23 +332,6 @@ the entire pipeline using the `--output_file` argument also
    
     $ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
         --output_file='detector1_processed.fits'
-
-Output File and Associations
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Stage 2 pipelines can take an individual file or an
-:ref:`association <associations>` as input. Nearly all Stage 3
-pipelines require an associaiton as input. Normally, the output file
-is defined in each association's `product_name`.
-
-If there is need to produce multiple versions of a calibration based
-on an association, it is highly suggested to use `output_dir` to place
-the results in a different directory instead of using `output_file` to
-rename the output files. Stage 2 pipelines do not allow the override
-of the output using `output_file`. Stage 3 pipelines do. However,
-since Stage 3 pipelines generally produce many files per association,
-using different directories via `output_dir` will make file keeping
-simpler.
 
 Override Reference File
 -----------------------
@@ -344,91 +402,6 @@ logging level designations of `DEBUG`, `INFO`, `WARNING`, `ERROR`, and
 will be displayed.
 
 
-Input Files
-===========
-
-There are two general types of input to any stage: references files
-and data files.  The references files, unless explicitly
-overridden, are provided through CRDS.
-
-The input data files - the exposure FITS files, association JSON files
-and input catalogs - are presumed to all be in the same directory as
-the primary input file. Sometimes the primary input is an association
-JSON file, and sometimes it is an exposure FITS file.
-
-Output File Names
-=================
-
-File names for the outputs from pipelines and steps come from
-three different sources:
-
-- The name of the input file
-- The product name defined in an association
-- As specified by the `output_file` argument
-
-Regardless of the source, each pipeline/step uses the name as a "base
-name", on to which several different suffixes are appended, which
-indicate the type of data in that particular file.
-
-.. _pipeline_step_suffix_definitions:
-
-Pipeline/Step Suffix Definitions
---------------------------------
-
-However the file name is determined (see above), the various stage 1,
-2, and 3 pipeline modules will use that file name, along with a set of
-predetermined suffixes, to compose output file names. The output file
-name suffix will always replace any existing suffix of the input file
-name. Each pipeline module uses the appropriate suffix for the
-product(s) it is creating. The list of suffixes is shown in the
-following table.
-
-=============================================  ========
-Product                                        Suffix
-=============================================  ========
-Uncalibrated raw input                         uncal
-Corrected ramp data                            ramp
-Corrected countrate image                      rate
-Corrected countrate per integration            rateints
-Optional fitting results from ramp_fit step    fitopt
-Background-subtracted image                    bsub
-Per integration background-subtracted image    bsubints
-Calibrated image                               cal
-Calibrated per integration images              calints
-CR-flagged image                               crf
-CR-flagged per integration images              crfints
-1D extracted spectrum                          x1d
-1D extracted spectra per integration           x1dints
-Resampled 2D image                             i2d
-Resampled 2D spectrum                          s2d
-Resampled 3D IFU cube                          s3d
-Source catalog                                 cat
-Time Series photometric catalog                phot
-Time Series white-light catalog                whtlt
-Coronagraphic PSF image stack                  psfstack
-Coronagraphic PSF-aligned images               psfalign
-Coronagraphic PSF-subtracted images            psfsub
-AMI fringe and closure phases                  ami
-AMI averaged fringe and closure phases         amiavg
-AMI normalized fringe and closure phases       aminorm
-=============================================  ========
-
-Individual Step Outputs
------------------------
-
-If individual steps are executed without an output file name specified via
-the `output_file` argument, the `stpipe` infrastructure
-automatically uses the input file name as the root of the output file name
-and appends the name of the step as an additional suffix to the input file
-name. If the input file name already has a known suffix, that suffix
-will be replaced. For example:
-::
-
- $ strun dq_init.cfg jw00017001001_01101_00001_nrca1_uncal.fits
-
-produces an output file named
-`jw00017001001_01101_00001_nrca1_dq_init.fits`.
-
 Configuration Files
 ===================
 
@@ -490,6 +463,49 @@ Available Pipelines
 There are many pre-defined pipeline modules for processing
 data from different instrument observing modes through each of the 3 stages
 of calibration. For all of the details see :ref:`pipelines`.
+
+.. _pipeline_step_suffix_definitions:
+
+Pipeline/Step Suffix Definitions
+--------------------------------
+
+However the output file name is determined (:ref:`see above
+<intro_output_file_discussion>`), the various stage 1, 2, and 3 pipeline modules
+will use that file name, along with a set of predetermined suffixes, to compose
+output file names. The output file name suffix will always replace any existing
+suffix of the input file name. Each pipeline module uses the appropriate suffix
+for the product(s) it is creating. The list of suffixes is shown in the
+following table.
+
+=============================================  ========
+Product                                        Suffix
+=============================================  ========
+Uncalibrated raw input                         uncal
+Corrected ramp data                            ramp
+Corrected countrate image                      rate
+Corrected countrate per integration            rateints
+Optional fitting results from ramp_fit step    fitopt
+Background-subtracted image                    bsub
+Per integration background-subtracted image    bsubints
+Calibrated image                               cal
+Calibrated per integration images              calints
+CR-flagged image                               crf
+CR-flagged per integration images              crfints
+1D extracted spectrum                          x1d
+1D extracted spectra per integration           x1dints
+Resampled 2D image                             i2d
+Resampled 2D spectrum                          s2d
+Resampled 3D IFU cube                          s3d
+Source catalog                                 cat
+Time Series photometric catalog                phot
+Time Series white-light catalog                whtlt
+Coronagraphic PSF image stack                  psfstack
+Coronagraphic PSF-aligned images               psfalign
+Coronagraphic PSF-subtracted images            psfsub
+AMI fringe and closure phases                  ami
+AMI averaged fringe and closure phases         amiavg
+AMI normalized fringe and closure phases       aminorm
+=============================================  ========
 
 
 For More Information
