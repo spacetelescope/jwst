@@ -88,7 +88,7 @@ class AssociationRegistry(dict):
             >>> registry = AssociationRegistry()
 
         * Create associations from an item
-            >>> associations, reprocess = registry.match(item)
+            >>> associations, reprocess = registry.match(item) # doctest: +SKIP
 
         * Finalize the associations
             >>> final_asns = registry.finalize(assocations)
