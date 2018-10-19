@@ -298,8 +298,3 @@ properties:
             type: string
             fits_keyword: SPECSYS
             fits_hdu: SCI
-          wavedim:
-            title: Wavetable dimension
-            type: string
-            fits_keyword: TDIM2
-            fits_hdu: WCS-TABLE
