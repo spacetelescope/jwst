@@ -41,7 +41,7 @@ GRATING    model.meta.instrument.grating   NIRSpec
 Reference File Format
 +++++++++++++++++++++
 FLAT reference files are FITS format, with 3 IMAGE extensions
-and 1 BINTABLE extension. The FITS primary data array is assumed to be empty.
+and 1 BINTABLE extension. The FITS primary HDU does not contain a data array.
 The format and content of the file is as follows:
 
 =======  ========  =====  ==============  =========
@@ -109,8 +109,8 @@ in the "slit_name" column.  For multi-object spectroscopic data, the FFLAT
 contains four sets of images (one for each MSA quadrant), WAVELENGTH
 tables, and FAST_VARIATION tables.  The images are unique to the FFLATs,
 however.  The image "pixels" correspond to micro-shutter array slits, rather
-than to detector pixels.  The array size is 365 rows
-by 171 columns, and there are multiple planes to handle the slow variation
+than to detector pixels.  The array size is 365 columns by 171 rows,
+and there are multiple planes to handle the slow variation
 of flat field with wavelength.
 
 For the spectrograph optics (SFLAT), the flat-field files have nearly the same
@@ -135,7 +135,7 @@ FFLAT Reference File
 :REFTYPE: FFLAT
 
 There are 3 forms of FFLAT reference files: fixed slit, MSA spec, and IFU. For each type
-the primary data array is assumed to be empty.
+the primary HDU does not contain a data array.
 
 .. include:: fflat_selection.rst
 
@@ -182,8 +182,11 @@ DQ_DEF         BINTABLE   2   TFIELDS = 4           N/A
 
 For the 5 extensions that appear multiple times, the EXTVER keyword indicates the
 quadrant number, 1 to 4.
-Each plane of the SCI array gives the flat_field value for every pixel in the quadrant for
-the corresponding wavelength, which is specified in the WAVELENGTH table.
+Each plane of the SCI array gives the throughput value for every shutter in the
+MSA quadrant for the corresponding wavelength, which is specified in the
+WAVELENGTH table. These wavelength-dependent values are combined with the
+FAST_VARIATION array, and are then applied to the science spectrum based on the
+wavelength of each pixel.
 
 The WAVELENGTH table contains a single column:
 
@@ -200,8 +203,8 @@ The FAST_VARIATION table contains four columns:
 
 The flat field values in this table are used to account for a wavelength-dependence on a
 much finer scale than given by the values in the SCI array.  There is a single row in
-this table, as the same wavelength-dependent value is applied to all pixels in the
-quadrant.
+this table, which contains 1-D arrays of wavelength and flat-field values.
+The same wavelength-dependent value is applied to all pixels in a quadrant.
 
 *IFU*
 +++++
@@ -217,11 +220,10 @@ The FAST_VARIATION table contains four columns:
 * wavelength: float 1-D array, values of wavelength
 * data: float 1-D array, flat field values for each wavelength
 
-The flat field values in this table are used to account for a 
-wavelength-dependence on a much finer scale than given by the values in the SCI 
-array. For each pixel in the science data, the wavelength of the light that fell
-on that pixel will be determined by using the WCS interface. The flat-field 
-value for that pixel will then be obtained by interpolating within the 
+For each pixel in the science data, the wavelength of the light that fell
+on that pixel will be determined from the WAVELENGTH array in the science exposure
+(in the absence of that array, it will be computed using the WCS interface).
+The flat-field value for that pixel will then be obtained by interpolating within the 
 wavelength and data arrays from the FAST_VARIATION table.
 
 SFLAT Reference File
@@ -231,7 +233,7 @@ SFLAT Reference File
 :Data model: `~jwst.datamodels.NirspecFlatModel`
 
 There are 3 types of SFLAT reference files: fixed slit, MSA spec, and IFU. For each type
-the primary data array is assumed to be empty.
+the primary HDU does not contain a data array.
 
 .. include:: sflat_selection.rst
 
@@ -285,8 +287,10 @@ The FAST_VARIATION table contains four columns:
 
 The flat field values in this table are used to account for a wavelength-dependence on a
 much finer scale than given by the values in the SCI array.  For each pixel in the
-science data, the wavelength of the light that fell on that pixel will be determined by
-using the WCS interface.  The flat-field value for that pixel will then be obtained by
+science data, the wavelength of the light that fell on that pixel will be read from the
+WAVELENGTH array in the science exposure (if that array is absent, it will be computed
+using the WCS interface).
+The flat-field value for that pixel will then be obtained by
 interpolating within the wavelength and data arrays from the FAST_VARIATION
 table.
 
@@ -333,5 +337,6 @@ The FAST_VARIATION table contains four columns:
 
 The flat field values in this table are used to account for a wavelength-dependence on a
 much finer scale than given by the values in the SCI array.  There is a single row in
-this table, because the same wavelength-dependent value is applied to all pixels.
+this table, which contains 1-D arrays of wavelength and flat-field values.
+The same wavelength-dependent value is applied to all pixels in a quadrant.
 
