@@ -17,8 +17,7 @@ class MultiSlitModel(model_base.DataModel):
        >>> from .slit import SlitModel
        >>> multislit_model = MultiSlitModel()
        >>> multislit_model.slits.append(SlitModel())
-       >>> multislit_model.slits[0]
-       >>> multislit[0]
+       >>> multislit_model[0]
        <SlitModel>
 
     If ``init`` is a file name or an ``ImageModel`` or a ``SlitModel``instance,

@@ -15,7 +15,7 @@ class MultiSpecModel(model_base.DataModel):
        >>> from . import SpecModel
        >>> multispec_model = MultiSpecModel()
        >>> multispec_model.spec.append(SpecModel())
-       >>> multispec_model.spec[0]
+       >>> multispec_model.spec[0] # doctest: +SKIP
        <SpecModel>
 
     If `init` is a `SpecModel` instance, an empty `SpecModel` will be
@@ -31,17 +31,17 @@ class MultiSpecModel(model_base.DataModel):
 
     Examples
     --------
-    >>> output_model = datamodels.MultiSpecModel()
-    >>> spec = datamodels.SpecModel()       # for the default data type
-    >>> for slit in input_model.slits:
-    >>>     slitname = slit.name
-    >>>     slitmodel = ExtractModel()
-    >>>     slitmodel.fromJSONFile(extref, slitname)
-    >>>     column, wavelength, countrate = slitmodel.extract(slit.data)
-    >>>     otab = np.array(zip(column, wavelength, countrate),
-    >>>                     dtype=spec.spec_table.dtype)
-    >>>     spec = datamodels.SpecModel(spec_table=otab)
-    >>>     output_model.spec.append(spec)
+    >>> output_model = MultiSpecModel()
+    >>> spec = SpecModel()       # for the default data type
+    >>> for slit in input_model.slits:  # doctest: +SKIP
+    ...     slitname = slit.name
+    ...     slitmodel = ExtractModel()
+    ...     slitmodel.fromJSONFile(extref, slitname)
+    ...     column, wavelength, countrate = slitmodel.extract(slit.data)
+    ...     otab = np.array(zip(column, wavelength, countrate),
+    ...                     dtype=spec.spec_table.dtype)
+    ...     spec = datamodels.SpecModel(spec_table=otab)
+    ...     output_model.spec.append(spec)
     """
     schema_url = "multispec.schema.yaml"
 

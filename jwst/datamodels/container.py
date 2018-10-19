@@ -39,12 +39,14 @@ class ModelContainer(model_base.DataModel):
         - None: initializes an empty `ModelContainer` instance, to which
           DataModels can be added via the ``append()`` method.
 
-    persist: boolean. If True, do not close model after opening it
+    persist : bool
+        If True, do not close model after opening it.
+
 
     Examples
     --------
-    >>> container = ModelContainer('example_asn.json')
-    >>> for dm in container:
+    >>> container = ModelContainer('example_asn.json') # doctest: +SKIP
+    >>> for dm in container:  # doctest: +SKIP
     ...     print(dm.meta.filename)
 
     Say the association was a NIRCam dithered dataset. The `models_grouped`
@@ -53,12 +55,12 @@ class ModelContainer(model_base.DataModel):
     each detector in the exposure (2 or 8 in the case of NIRCam).
 
     >>> total_exposure_time = 0.0
-    >>> for group in container.models_grouped:
-    ...     total_exposure_time += group[0].meta.exposure.exposure_time
+    >>> for group in container.models_grouped: # doctest: +SKIP
+    ...     total_exposure_time += group[0].meta.exposure.exposure_time  # doctest: +SKIP
 
-    >>> c = datamodels.ModelContainer()
-    >>> m = datamodels.open('myfile.fits')
-    >>> c.append(m)
+    >>> c = ModelContainer()  # doctest: +SKIP
+    >>> m = datamodels.open('myfile.fits')  # doctest: +SKIP
+    >>> c.append(m)  # doctest: +SKIP
     """
 
     # This schema merely extends the 'meta' part of the datamodel, and

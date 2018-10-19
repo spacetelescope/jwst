@@ -25,7 +25,7 @@ class MultiExposureModel(DataModel):
        >>> from .image import ImageModel
        >>> multiexposure_model = MultiExposureModel()
        >>> multiexposure_model.exposures.append(ImageModel())
-       >>> multiexposure_model.exposures[0]
+       >>> multiexposure_model.exposures[0]      # doctest: +SKIP
        <ImageModel>
 
     Also, there is an extra attribute, `meta`. This will

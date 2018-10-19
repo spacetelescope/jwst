@@ -15,7 +15,7 @@ class MultiExtract1dImageModel(ReferenceFileModel):
        >>> from . import Extract1dImageModel
        >>> multiextr1d_img_model = MultiExtract1dImageModel()
        >>> multiextr1d_img_model.images.append(Extract1dImageModel())
-       >>> multiextr1d_img_model.images[0]
+       >>> multiextr1d_img_model.images[0]  # doctest: +SKIP
        <Extract1dImageModelModel>
 
     If `init` is a file name or an `Extract1dImageModel` instance, an empty
