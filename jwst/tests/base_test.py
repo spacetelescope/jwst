@@ -33,19 +33,19 @@ class BaseJWSTTest(BaseTest):
         new_dir = args[-1]
         os.mkdir(new_dir)
         os.chdir(new_dir)
-        
+
         input_dir = get_bigdata_root()
         input_path = self.get_input_path()
         cfg_dir = os.path.join(input_dir,*input_path,*args)
         print("cfg_dir: {}".format(cfg_dir))
 
-        if check_url(input_dir):        
+        if check_url(input_dir):
             # Make copy from Artifactory repo
             r = requests.get('{}?list&deep=1&listFolders=1&mdTimestamps=1'.format(cfg_dir))
 
             for item in r.iter_lines():
                 line = str(item)
-                if 'href' in line and '..' not in line: 
+                if 'href' in line and '..' not in line:
                     start = line.index('"')+1
                     end = line.rindex('"')
                     fname = line[start:end]

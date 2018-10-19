@@ -164,14 +164,14 @@ class TestNIRISSRampFit(BaseJWSTTest):
                       'pedestal','weights','crmag'])
                   ]
         self.compare_outputs(outputs)
-        
+
 
 @pytest.mark.bigdata
 class TestNIRISSSpec2(BaseJWSTTest):
     input_loc = 'niriss'
     ref_loc = ['test_spec2pipeline', 'truth']
     test_dir = 'test_spec2pipeline'
-    
+
     def test_nrs_fs_single_spec2(self):
         """
         Regression test of calwebb_spec2 pipeline performed on NIRSpec fixed-slit data
@@ -186,7 +186,7 @@ class TestNIRISSSpec2(BaseJWSTTest):
         step.cube_build.save_results = True
         step.extract_1d.save_results = True
         step.run(input_file)
-        
+
         outputs = [('jw84600002001_02101_00001_nrs2_cal.fits',
                     'jw84600002001_02101_00001_nrs2_cal_ref.fits'),
                    ('jw84600002001_02101_00001_nrs2_s2d.fits',

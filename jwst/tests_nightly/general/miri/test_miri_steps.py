@@ -26,7 +26,7 @@ from jwst.straylight.straylight_step import StraylightStep
 @pytest.mark.bigdata
 class TestMIRISteps(BaseJWSTTestSteps):
     input_loc = 'miri'
-    
+
     params = {'test_steps':
                 [
                 # test_refpix_miri: refpix step performed on MIRI data

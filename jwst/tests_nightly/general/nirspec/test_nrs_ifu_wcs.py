@@ -23,7 +23,7 @@ def test_nirspec_ifu_wcs(envopt, _jail, test_id, input_file, truth_file):
 
     input_file = get_bigdata('jwst-pipeline', envopt,
                              'nirspec', 'test_wcs', 'nrs1-ifu', input_file)
-    truth_file = get_bigdata('jwst-pipeline', envopt, 
+    truth_file = get_bigdata('jwst-pipeline', envopt,
                              'nirspec', 'test_wcs', 'nrs1-ifu', 'truth', truth_file)
 
     result = AssignWcsStep.call(input_file, save_results=True, suffix='assign_wcs')

@@ -22,8 +22,8 @@ def test_nrs2_nodata_api(envopt, _jail):
     step.assign_wcs.skip = False
 
     with pytest.raises(NoDataOnDetectorError):
-        step.run(get_bigdata('jwst-pipeline', envopt, 
-                             'nirspec', 'test_assignwcs', 
+        step.run(get_bigdata('jwst-pipeline', envopt,
+                             'nirspec', 'test_assignwcs',
                              'jw84700006001_02101_00001_nrs2_rate.fits'
         ))
 
@@ -32,8 +32,8 @@ def test_nrs2_nodata_api(envopt, _jail):
 def test_nrs2_nodata_strun(envopt, _jail):
     """Ensure that the appropriate exit status is returned from strun"""
 
-    data_file = get_bigdata('jwst-pipeline', envopt, 
-                            'nirspec', 'test_assignwcs', 
+    data_file = get_bigdata('jwst-pipeline', envopt,
+                            'nirspec', 'test_assignwcs',
                             'jw84700006001_02101_00001_nrs2_rate.fits'
     )
 

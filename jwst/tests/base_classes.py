@@ -52,7 +52,7 @@ class BaseTest(object):
 
         # Update tree to point to correct environment
         self.tree = envopt
-        
+
         # Configure environment for tests
         self.set_environ()
 

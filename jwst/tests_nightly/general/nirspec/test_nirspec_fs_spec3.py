@@ -14,11 +14,7 @@ from jwst.tests.base_test import BaseJWSTTest
 @pytest.mark.bigdata
 class TestSpec3Pipeline(BaseJWSTTest):
     input_loc = 'nirspec'
-    
-    @pytest.mark.xfail(
-        reason='Input data not available',
-        run=False
-    )
+
     def test_save_source_only(self, _jail):
         """Test saving the source-based files only"""
         datapath = ['test_datasets', 'fss', '93045', 'level2b']
@@ -49,11 +45,9 @@ class TestSpec3Pipeline(BaseJWSTTest):
         else:
             assert False
 
-        assert len(output_files) == 0
-
 
     @pytest.mark.xfail(
-        reason='Dataset fails at resample',
+        reason='Dataset fails at outlier_detection',
         run=False
     )
     def test_nrs_fs_spec3(self, _jail):
@@ -78,8 +72,6 @@ class TestSpec3Pipeline(BaseJWSTTest):
         Step.from_cmdline(args)
 
         # Compare results
-        assert False
-
         outputs = [('jw00023001001_01101_00001_NRS1_cal.fits',
                     'jw00023001001_01101_00001_NRS1_cal_ref.fits'),
                    ('jw00023001001_01101_00001_NRS1_s2d.fits',
