@@ -100,6 +100,11 @@ datamodels
 - Updated EXP_TYPE allowed values to include "MIR_DARKALL", "MIR_DARKIMG",
   "MIR_DARKMRS", "MIR_FLATALL", "MIR_FLATIMAGE-EXT", and "MIR_FLATMRS-EXT" [#2709]
 
+documentation
+-------------
+
+- Clarifications of input and output file naming. [#2727]
+
 dq_init
 -------
 
