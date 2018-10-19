@@ -11,7 +11,9 @@ class MultiProductModel(model_base.DataModel):
     This model has a special member `products` that can be used to
     deal with each DrizProduct at a time.  It behaves like a list::
 
-       >>> multiprod_model.products.append(image_model)
+       >>> from .image import ImageModel
+       >>> multiprod_model = MultiProductModel()
+       >>> multiprod_model.products.append(ImageModel())
        >>> multislit_model.products[0]
        <DrizProductModel>
 

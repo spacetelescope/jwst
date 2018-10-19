@@ -17,11 +17,15 @@ logger.addHandler(logging.NullHandler())
 # --------------------------------
 # Start of the User-level rules
 # --------------------------------
-
+'''
 @RegistryMarker.rule
 class Asn_Coron(
         AsnMixin_OpticalPath,
         AsnMixin_Base
+):
+'''
+@RegistryMarker.rule
+class Asn_Coron(
 ):
     """Coronography
 

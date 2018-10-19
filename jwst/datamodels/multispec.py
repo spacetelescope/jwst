@@ -12,7 +12,9 @@ class MultiSpecModel(model_base.DataModel):
     This model has a special member `spec` that can be used to
     deal with an entire spectrum at a time.  It behaves like a list::
 
-       >>> multispec_model.spec.append(spec_model)
+       >>> from . import SpecModel
+       >>> multispec_model = MultiSpecModel()
+       >>> multispec_model.spec.append(SpecModel())
        >>> multispec_model.spec[0]
        <SpecModel>
 

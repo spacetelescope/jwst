@@ -43,7 +43,7 @@ class ModelContainer(model_base.DataModel):
 
     Examples
     --------
-    >>> container = datamodels.ModelContainer('example_asn.json')
+    >>> container = ModelContainer('example_asn.json')
     >>> for dm in container:
     ...     print(dm.meta.filename)
 

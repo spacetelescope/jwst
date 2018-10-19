@@ -12,7 +12,9 @@ class MultiExtract1dImageModel(ReferenceFileModel):
     This model has a special member `images` that can be used to
     deal with each image separately.  It behaves like a list::
 
-       >>> multiextr1d_img_model.images.append(ref_image_model)
+       >>> from . import Extract1dImageModel
+       >>> multiextr1d_img_model = MultiExtract1dImageModel()
+       >>> multiextr1d_img_model.images.append(Extract1dImageModel())
        >>> multiextr1d_img_model.images[0]
        <Extract1dImageModelModel>
 

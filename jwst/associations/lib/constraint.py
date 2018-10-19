@@ -169,7 +169,6 @@ class SimpleConstraint(SimpleConstraintABC):
     Create a constraint where the attribute `attr` of an object
     matches the value `my_value`:
 
-    >>> from jwst.associations.lib.constraint import SimpleConstraint
     >>> c = SimpleConstraint(value='my_value')
     >>> print(c)
     SimpleConstraint({'value': 'my_value' })
@@ -515,7 +514,7 @@ class Constraint:
     -----
     Named constraints can be accessed directly through indexing:
 
-    >>> c = Constraint(SimpleConstaint(name='simple', value='a_value'))
+    >>> c = Constraint(SimpleConstraint(name='simple', value='a_value'))
     >>> c['simple']
     SimpleConstraint('value': 'a_value')
     """
