@@ -1,12 +1,12 @@
 Reference File
 ==============
-The `dark` step uses a DARK reference file.
+The ``dark`` step uses a DARK reference file.
 
 DARK Reference File
 -------------------
 
 :RETYPE: DARK
-:Data model: `DarkModel`, `DarkMIRIModel`
+:Data models: `~jwst.datamodels.DarkModel`, `~jwst.datamodels.DarkMIRIModel`
 
 The DARK reference file contains pixel-by-pixel and frame-by-frame
 dark current values for a given detector readout mode.
@@ -27,7 +27,7 @@ near-IR instruments, as shown below.
 Near-IR Detectors
 ~~~~~~~~~~~~~~~~~
 Characteristics of the three IMAGE extensions for DARK files used with
-the Near-IR instruments are as follows:
+the Near-IR instruments are as follows (see `~jwst.datamodels.DarkModel`):
 
 =======  =====  =======================  =========
 EXTNAME  NAXIS  Dimensions               Data type
@@ -46,7 +46,8 @@ reset and are slightly different from subsequent integrations. Currently the MIR
 DARK reference files contain a correction for only two integrations: the first
 integration of the DARK is subtracted from the first integration of the science data,
 while the second DARK integration is subtracted from all subsequent science integrations.
-The format of the MIRI DARK reference files is as follows:
+The format of the MIRI DARK reference files is as follows
+(see `~jwst.datamodels.DarkMIRIModel`):
 
 =======  =====  ===============================  =========
 EXTNAME  NAXIS  Dimensions                       Data type

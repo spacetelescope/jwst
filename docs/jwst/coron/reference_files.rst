@@ -1,13 +1,13 @@
 Reference Files
 ===============
-The `align_refs` step uses a PSFMASK reference file. None of the other
-steps in the `coron` package uses a reference file.
+The ``align_refs`` step uses a PSFMASK reference file. None of the other
+steps in the ``coron`` package uses a reference file.
 
 PSFMASK Reference File
 -------------------------
 
 :RETYPE: PSFMASK
-:Data model: `PsfMaskModel`
+:Data model: `~jwst.datamodels.PsfMaskModel`
 
 The PSFMASK reference file contains a 2-D mask that's used as a weight
 function when computing shifts between images.
@@ -34,7 +34,7 @@ SUBARRAY   model.meta.subarray.name
 Reference File Format
 +++++++++++++++++++++
 PSFMASK reference files are FITS format, with 1 IMAGE extension.
-The FITS primary data array is assumed to be empty.
+The FITS primary HDU does not contain a data array.
 The format and content of the file is as follows:
 
 =======  ========  =====  ==============  =========

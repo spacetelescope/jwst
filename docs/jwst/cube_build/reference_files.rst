@@ -1,7 +1,7 @@
 Reference Files
 ===============
 
-The `cube_build` step uses two reference files: CUBEPAR and RESOL.
+The ``cube_build`` step uses two reference files: CUBEPAR and RESOL.
 The RESOL reference file is only used for processing MIRI IFU data.
 CUBEPAR is used for both NIRSpec and MIRI IFU data.
 
@@ -9,7 +9,7 @@ CUBEPAR reference file
 ----------------------
 
 :RETYPE: CUBEPAR
-:Data model: `MiriIFUCubeParsModel`, `NirspecIFUCubeParsModel`
+:Data models: `~jwst.datamodels.MiriIFUCubeParsModel`, `~jwst.datamodels.NirspecIFUCubeParsModel`
 
 The CUBEPAR reference file contains parameter values used to construct
 the output IFU cubes.
@@ -79,11 +79,11 @@ RESOL reference file
 --------------------
 
 :RETYPE: RESOL
-:Data model: `MiriResolutionModel`
+:Data model: `~jwst.datamodels.MiriResolutionModel`
 
 The RESOL reference file contains the MIRI MRS PSF and LSF widths, per
 wavelength band.
-This information is used if the `cube_build` weight function incorporates the
+This information is used if the ``cube_build`` weight function incorporates the
 size of the PSF and LSF, i.e. when using the parameter setting
 "--weighting = miripsf".
 
