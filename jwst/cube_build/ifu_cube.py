@@ -1332,6 +1332,8 @@ class IFUCubeData():
             ifucube_model.meta.wcsinfo.cdelt3 = self.cdelt3
             ifucube_model.meta.wcsinfo.ctype3 = 'WAVE'
             ifucube_model.meta.wcsinfo.crpix3 = self.crpix3
+            ifucube_model.meta.ifu.roi_spatial = float(self.rois)
+            ifucube_model.meta.ifu.roi_wave = float(self.roiw)
         else:
             ifucube_model.meta.wcsinfo.ctype3 = 'WAVE-TAB'
             ifucube_model.meta.wcsinfo.ps3_0 = 'WCS-TABLE'
@@ -1339,6 +1341,7 @@ class IFUCubeData():
             ifucube_model.meta.wcsinfo.crval3 = 1.0
             ifucube_model.meta.wcsinfo.crpix3 = 1.0
             ifucube_model.meta.wcsinfo.cdelt3 = None
+            ifucube_model.meta.ifu.roi_wave = np.mean(self.roiw_table)
             ifucube_model.wavedim = '(1,10420)'
 
 
@@ -1365,8 +1368,9 @@ class IFUCubeData():
         ifucube_model.meta.ifu.error_extension = 'ERR'
         ifucube_model.meta.ifu.error_type = 'ERR'
         ifucube_model.meta.ifu.dq_extension = 'DQ'
-        ifucube_model.meta.ifu.roi_spatial = float(self.rois)
-        ifucube_model.meta.ifu.roi_wave = float(self.roiw)
+
+
+
         ifucube_model.meta.ifu.weighting = str(self.weighting)
 
         # weight_power is needed for single cubes. Linear Wavelengths

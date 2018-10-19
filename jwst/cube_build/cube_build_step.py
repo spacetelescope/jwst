@@ -69,8 +69,12 @@ class CubeBuildStep (Step):
         if(self.wavemax is not None): self.log.info('Setting Maximum wavelength of spectral cube to: %f',
                                                self.wavemax)
 
-        if(self.rois != 0.0): self.log.info('Input Spatial ROI size %f', self.rois)
-        if(self.roiw != 0.0): self.log.info('Input Wave ROI size %f', self.roiw)
+        if(self.rois != 0.0): 
+            self.log.info('Input Spatial ROI size %f', self.rois)
+            self.rois = float(self.rois)
+        if(self.roiw != 0.0): 
+            self.log.info('Input Wave ROI size %f', self.roiw)
+            self.roiw = float(self.roiw)
 
         self.debug_pixel = 0
         self.spaxel_debug = None
