@@ -211,7 +211,7 @@ def test_add_wcs_default(data_file):
             '\nException={}'.format(e)
         )
 
-    model = datamodels.open(data_file)
+    model = datamodels.Level1bModel(data_file)
     assert model.meta.pointing.ra_v1 == TARG_RA
     assert model.meta.pointing.dec_v1 == TARG_DEC
     assert model.meta.pointing.pa_v3 == 0.
@@ -249,7 +249,7 @@ def test_add_wcs_fsmcorr_v1(data_file):
             '\nException={}'.format(e)
         )
 
-    model = datamodels.open(data_file)
+    model = datamodels.Level1bModel(data_file)
     assert model.meta.pointing.ra_v1 == TARG_RA
     assert model.meta.pointing.dec_v1 == TARG_DEC
     assert model.meta.pointing.pa_v3 == 0.
@@ -281,7 +281,7 @@ def test_add_wcs_with_db(eng_db, data_file, siaf_file=siaf_db):
     """Test using the database"""
     stp.add_wcs(data_file, siaf_path=siaf_db)
 
-    model = datamodels.open(data_file)
+    model = datamodels.Level1bModel(data_file)
     assert np.isclose(model.meta.pointing.ra_v1, 348.9278669)
     assert np.isclose(model.meta.pointing.dec_v1, -38.749239)
     assert np.isclose(model.meta.pointing.pa_v3, 50.1767077)
@@ -313,7 +313,7 @@ def test_add_wcs_with_db_fsmcorr_v1(eng_db, data_file):
     """Test using the database with original FSM correction"""
     stp.add_wcs(data_file, fsmcorr_version='v1', siaf_path=siaf_db)
 
-    model = datamodels.open(data_file)
+    model = datamodels.Level1bModel(data_file)
     assert np.isclose(model.meta.pointing.ra_v1, 348.9278669)
     assert np.isclose(model.meta.pointing.dec_v1, -38.749239)
     assert np.isclose(model.meta.pointing.pa_v3, 50.1767077)
