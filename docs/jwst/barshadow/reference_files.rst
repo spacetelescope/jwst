@@ -1,9 +1,9 @@
 Reference Files
 ===============
-The `barshadow` step uses a BARSHADOW reference file.
+The ``barshadow`` step uses a BARSHADOW reference file.
 
 :REFTYPE: BARSHADOW
-:Data model: `BarshadowModel`
+:Data model: `~jwst.datamodels.BarshadowModel`
 
 .. include:: barshadow_selection.rst
 
@@ -43,8 +43,8 @@ fast direction has 101 rows and gives the dependence of the bar shadow
 correction of wavelength.  The WCS keywords CRPIX1/2, CRVAL1/2 and CDELT1/2
 tell how to convert the pixel location in the reference file into a Y location
 and wavelength.  The initial version of the reference file has Y varying from
--1.0 for row 1 to +1.0 at row 1001, and the wavelength varying from 0.6x10^-6m
-to 5.3x10^-6m.
+-1.0 for row 1 to +1.0 at row 1001, and the wavelength varying from
+0.6x10\ :sup:`-6` m to 5.3x10\ :sup:`-6` m.
 
 An example extension header is as follows:
 
