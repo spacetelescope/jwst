@@ -34,7 +34,8 @@ READPATT   model.meta.exposure.readpatt    NIRSpec only
 Reference File Format
 +++++++++++++++++++++
 MASK reference files are FITS format, with one IMAGE extension
-and 1 BINTABLE extension. The FITS primary array is assumed to be empty.
+and 1 BINTABLE extension. The FITS primary HDU does not contain a
+data array.
 The format and content of the file is as follows:
 
 =======  ========  =====  ==============  =========
