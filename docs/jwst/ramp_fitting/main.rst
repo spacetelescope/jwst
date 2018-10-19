@@ -50,11 +50,11 @@ good group will be used to calculate the count rate.
 
 
 The data is checked for ramps in which there is good data in the first group, 
-but all first differences for the ramp are undefined because there are too few
-good groups past the first. For such ramps the first differences will be set to
-equal the data in the first group.  The first difference is used to estimate
-the slope of the ramp, as explained in the 'segment-specific computations' 
-section below.
+but all first differences for the ramp are undefined because the remainder of
+the groups are either saturated or affected by cosmic rays.  For such ramps
+the first differences will be set to equal the data in the first group.  The
+first difference is used to estimate the slope of the ramp, as explained in the
+'segment-specific computations' section below.
 
 
 If any input dataset contains ramps saturated in their second group, the count
@@ -62,8 +62,8 @@ rates for those pixels in that integration will be calculated to be the value
 of the science data in the first group divided by the group time. 
 
 
-For all input datasets, including those special cases just described,
-arrays for the primary output product are computed as follows.
+For all input datasets, including those special cases just described, arrays for
+the primary output product (the _rate product) are computed as follows.
 
 
 After computing the slopes for all segments for a given pixel, the final slope is
@@ -98,25 +98,23 @@ product contains 4-D arrays called SLOPE, SIGSLOPE, YINT, SIGYINT, WEIGHTS,
 VAR_POISSON, and VAR_RNOISE which contain the slopes, uncertainties in the
 slopes, y-intercept, uncertainty in the y-intercept, fitting weights, the
 variance of the slope due to poisson noise only, and the variance of the slope
-due to read noise only for each segment of each pixel. (Calculation of the two
-variance arrays requires retrieving readnoise and gain values from their
-respective reference files.)  The y-intercept refers to the result of the fit
-at an exposure time of zero.  This product also contains a 3-D array called
-PEDESTAL, which gives the signal at zero exposure time for each pixel, and the
-4-D CRMAG array, which contains the magnitude of each group that was flagged as
-having a CR hit.  By default, the name of this output file is based on the name
-of the input file and will have the suffix '_fitopt'; the user can override 
-this name by specifying a name using the parameter opt_name.  In this optional
-output product, the pedestal array is calculated for each integration by
-extrapolating the final slope (the weighted average of the slopes of all of
-ramp segments in the integration) for each pixel from its value at the first
-group to an exposure time of zero. Any pixel that is saturated on the first
-group is given a pedestal value of 0. Before compression, the cosmic ray
-magnitude array is equivalent to the input SCI array but with the only nonzero
-values being those whose pixel locations are flagged in the input GROUPDQ as
-cosmic ray hits. The array is compressed, removing all groups in which all the
-values are 0 for pixels having at least one group with a non-zero magnitude.
-The order of the cosmic rays within the ramp is preserved.
+due to read noise only for each segment of each pixel. The y-intercept refers
+to the result of the fit at an exposure time of zero.  This product also
+contains a 3-D array called PEDESTAL, which gives the signal at zero exposure
+time for each pixel, and the 4-D CRMAG array, which contains the magnitude of
+each group that was flagged as having a CR hit.  By default, the name of this 
+output file is based on the name of the input file and will have the suffix 
+'_fitopt'; the user can override this name by specifying a name using the
+parameter opt_name.  In this optional output product, the pedestal array is
+calculated for each integration by extrapolating the final slope (the weighted
+average of the slopes of all of ramp segments in the integration) for each pixel
+from its value at the first group to an exposure time of zero. Any pixel that is
+saturated on the first group is given a pedestal value of 0. Before compression,
+the cosmic ray magnitude array is equivalent to the input SCI array but with the
+only nonzero values being those whose pixel locations are flagged in the input
+GROUPDQ as cosmic ray hits. The array is compressed, removing all groups in
+which all the values are 0 for pixels having at least one group with a non-zero
+magnitude. The order of the cosmic rays within the ramp is preserved.
 
 
 Slopes and their variances are calculated for each segment, for each integration,
@@ -263,7 +261,7 @@ to the extensions VAR_POISSON and VAR_RNOISE in the primary output.
 At the integration-level, the variance of the integration-level slope due to
 Poisson noise is written to the VAR_POISSON extension in the
 integration-specific product, and the variance of the integration-level slope
-due to read noise noise is written to the VAR_RNOISE extension.  The combined
+due to read noise is written to the VAR_RNOISE extension.  The combined
 variance of the slope is due to both the Poisson noise and the read noise, and
 its square root is written to the ERR extension. 
 
