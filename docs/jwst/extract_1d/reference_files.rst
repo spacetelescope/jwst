@@ -234,7 +234,7 @@ jwst_niriss_extract1d_0003.json::
         "ystart": 1792,
         "ystop":  1972,
         "dispaxis": 1,
-        "extract_width": 201
+        "extract_width": 181
         },
 
         {
