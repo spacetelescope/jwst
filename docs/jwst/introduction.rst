@@ -54,7 +54,7 @@ to the most recent reference file deliveries and selection rules. On
 occasion it might be necessary or desirable to use one of the non-default
 mappings in order to, for example, run different versions of the pipeline
 software or use older versions of the reference files. This can be
-accomplished by setting the environment variable `CRDS_CONTEXT` to the
+accomplished by setting the environment variable ``CRDS_CONTEXT`` to the
 desired project mapping version, e.g.
 ::
 
@@ -68,7 +68,7 @@ The current storage location for all JWST CRDS reference files is:
 Each pipeline step records the reference file that it used in the value of
 a header keyword in the output data file. The keyword names use the syntax
 "R_<ref>", where <ref> corresponds to a 6-character version of the reference
-file type, such as `R_DARK`, `R_LINEAR`, and `R_PHOTOM`.
+file type, such as ``R_DARK``, ``R_LINEAR``, and ``R_PHOTOM``.
 
 Running From the Command Line
 =============================
@@ -81,7 +81,7 @@ from the command line using the ``strun`` command:
 The first argument to ``strun`` must be either the python class name of the
 step or pipeline to be run, or the name of a configuration (.cfg) file for the
 desired step or pipeline (see `Configuration Files`_ below for more details).
-The second argument to `strun` is the name of the input data file to be processed.
+The second argument to ``strun`` is the name of the input data file to be processed.
 
 For example, running the full stage 1 pipeline or an individual step by
 referencing their class names is done as follows:
@@ -103,7 +103,7 @@ If you want to use non-default parameter values, you can specify them as
 keyword arguments on the command line or set them in the appropriate
 cfg file.
 To specify parameter values for an individual step when running a pipeline
-use the syntax `--steps.<step_name>.<parameter>=value`.
+use the syntax ``--steps.<step_name>.<parameter>=value``.
 For example, to override the default selection of a dark current reference
 file from CRDS when running a pipeline:
 ::
@@ -125,7 +125,7 @@ and don't want to specify them on the command line every time you
 execute ``strun``, you can specify them in the configuration (.cfg) file for
 the pipeline or the individual step.
 For example, to always run ``Detector1Pipeline`` using the override in the
-previous example, you could edit your `calwebb_detector1.cfg` file to
+previous example, you could edit your ``calwebb_detector1.cfg`` file to
 contain the following:
 ::
 
@@ -139,7 +139,7 @@ contain the following:
 Note that simply removing the entry for a step from a pipeline cfg file will
 **NOT** cause that step to be skipped when you run the pipeline (it will simply
 run the step with all default parameters). In order to skip a step you must
-use the `skip = True` argument for that step (see `Skip`_ below).
+use the ``skip = True`` argument for that step (see `Skip`_ below).
 
 Alternatively, you can specify arguments for individual steps within the
 step's configuration file and then reference those step cfg files in the pipeline
@@ -153,7 +153,7 @@ cfg file, such as:
       [[dark_current]]
         config_file = my_dark_current.cfg
 
-where `my_dark_current.cfg` contains:
+where ``my_dark_current.cfg`` contains:
 ::
 
  name = "dark_current"
@@ -211,10 +211,10 @@ and data files.  The references files, unless explicitly
 overridden, are provided through CRDS.
 
 Data files are the science input, such as exposure FITS files and association
-files. All data is assumed to be co-resident in the directory where the primary
+files. All files are assumed to be co-resident in the directory where the primary
 input file is located. This is particularly important for associations: JWST
 associations contain file names only. All files referred to by an association
-are expected to be located in the directory the association file is located.
+are expected to be located in the directory in which the association file is located.
 
 .. _intro_output_file_discussion:
 
@@ -233,32 +233,35 @@ three different sources:
 - As specified by the :ref:`output_file <intro_output_file>` argument
 
 Regardless of the source, each pipeline/step uses the name as a "base
-name", on to which several different suffixes are appended, which
+name", onto which several different suffixes are appended, which
 indicate the type of data in that particular file. A list of the main suffixes
 can be :ref:`found below <pipeline_step_suffix_definitions>`.
+
+The pipelines do not manage versions. When re-running a pipeline, previous files
+will be overwritten.
+
 
 Output File and Associations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Stage 2 pipelines can take an individual file or an
-:ref:`association <associations>` as input. Nearly all Stage 3
-pipelines require an associaiton as input. Normally, the output file
-is defined in each association's "product name".
+Stage 2 pipelines can take an individual file or an :ref:`association
+<associations>` as input. Nearly all Stage 3 pipelines require an associaiton as
+input. Normally, the output file is defined in each association's "product name"
+which defines the basename that will be used for output file naming.
 
-If there is need to produce multiple versions of a calibration based
-on an association, it is highly suggested to use `output_dir` to place
-the results in a different directory instead of using `output_file` to
-rename the output files. Stage 2 pipelines do not allow the override
-of the output using `output_file`. Stage 3 pipelines do. However,
-since Stage 3 pipelines generally produce many files per association,
-using different directories via `output_dir` will make file keeping
-simpler.
+Often, one may reprocess the same set of data multiple times, such as to change
+reference files or parameters in configuration parameters.
+When doing so, it is highly suggested to use ``output_dir`` to place
+the results in a different directory instead of using ``output_file`` to
+rename the output files. Most pipelines and steps create a set of output files.
+Separating runs by directory may be much easier to manage.
+
 
 Individual Step Outputs
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 If individual steps are executed without an output file name specified via
-the `output_file` argument, the `stpipe` infrastructure
+the ``output_file`` argument, the ``stpipe`` infrastructure
 automatically uses the input file name as the root of the output file name
 and appends the name of the step as an additional suffix to the input file
 name. If the input file name already has a known suffix, that suffix
@@ -268,8 +271,10 @@ will be replaced. For example:
  $ strun dq_init.cfg jw00017001001_01101_00001_nrca1_uncal.fits
 
 produces an output file named
-`jw00017001001_01101_00001_nrca1_dq_init.fits`.
+``jw00017001001_01101_00001_nrca1_dq_init.fits``.
 
+See :ref:`pipeline_step_suffix_definitions` for a list of the more common
+suffixes used.
 
 Universal Parameters
 ====================
@@ -281,17 +286,17 @@ Output Directory
 
 By default, all pipeline and step outputs will drop into the current
 working directory, i.e., the directory in which the process is
-running. To change this, use the `output_dir` argument. For example, to
-have all output from `calwebb_detector1`, including any saved
-intermediate steps, appear in the sub-directory `calibrated`, use
+running. To change this, use the ``output_dir`` argument. For example, to
+have all output from ``calwebb_detector1``, including any saved
+intermediate steps, appear in the sub-directory ``calibrated``, use
 ::
 
     $ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
         --output_dir=calibrated
 
-`output_dir` can be specified at the step level, overriding what was
+``output_dir`` can be specified at the step level, overriding what was
 specified for the pipeline. From the example above, to change the name
-and location of the `dark_current` step, use the following
+and location of the ``dark_current`` step, use the following
 ::
 
     $ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
@@ -309,29 +314,39 @@ output data model from one step to the input of the next step, without
 saving any intermediate results to disk. If you want to save the results from
 individual steps, you have two options:
 
-  - Specify `save_results`
+  - Specify ``save_results``
 
     This option will save the results of the step, using a filename
     created by the step.
 
-  - Specify a file name using `output_file <filename>`
+  - Specify a file name using ``output_file <basename>``
 
     This option will save the step results using the name specified.
 
 For example, to save the result from the dark current step of
-`calwebb_detector1` in a file named `dark_sub.fits`, use
+``calwebb_detector1`` in a file named based on ``intermediate``, use
 
 ::
 
     $ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
-        --steps.dark_current.output_file='dark_sub.fits'
+        --steps.dark_current.output_file='intermediate'
+
+A file, ``intermediate_dark_current.fits``, will then be created. Note that the
+suffix of the step is always appended to any given name.
 
 You can also specify a particular file name for saving the end result of
-the entire pipeline using the `--output_file` argument also
+the entire pipeline using the ``--output_file`` argument also
 ::
    
     $ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
-        --output_file='detector1_processed.fits'
+        --output_file='stage1_processed'
+
+In this situation, using the default configuration, three files are created:
+
+  - ``stage1_processed_trapsfilled.fits``
+  - ``stage1_processed_rate.fits``
+  - ``stage1_processed_rateints.fits``
+
 
 Override Reference File
 -----------------------
@@ -339,9 +354,9 @@ Override Reference File
 For any step that uses a calibration reference file you always have the
 option to override the automatic selection of a reference file from CRDS and
 specify your own file to use. Arguments for this are of the form
-`--override_\<ref_type\>`, where `ref_type` is the name of the reference file
-type, such as `mask`, `dark`, `gain`, or `linearity`. When in doubt as to
-the correct name, just use the `-h` argument to ``strun`` to show you the list
+``--override_<ref_type>``, where ``ref_type`` is the name of the reference file
+type, such as ``mask``, ``dark``, ``gain``, or ``linearity``. When in doubt as to
+the correct name, just use the ``-h`` argument to ``strun`` to show you the list
 of available override arguments.
 
 To override the use of the default linearity file selection, for example,
@@ -354,8 +369,8 @@ you would use:
 Skip
 ----
 
-Another argument available to all steps in a pipeline is `skip`.
-If `skip=True` is set for any step, that step will be skipped, with the
+Another argument available to all steps in a pipeline is ``skip``.
+If ``skip=True`` is set for any step, that step will be skipped, with the
 output of the previous step being automatically passed directly to the input
 of the step following the one that was skipped. For example, if you want to
 skip the linearity correction step, edit the calwebb_detector1.cfg file to
@@ -367,7 +382,7 @@ contain:
         skip = True
       ...
 
-Alternatively you can specify the `skip` argument on the command line:
+Alternatively you can specify the ``skip`` argument on the command line:
 ::
 
     $ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
@@ -376,7 +391,7 @@ Alternatively you can specify the `skip` argument on the command line:
 Logging Configuration
 ---------------------
 
-If there's no `stpipe-log.cfg` file in the working directory, which specifies
+If there's no ``stpipe-log.cfg`` file in the working directory, which specifies
 how to handle process log information, the default is to display log messages
 to stdout. If you want log information saved to a file, you can specify the
 name of a logging configuration file either on the command line or in the
@@ -388,17 +403,17 @@ For example:
     $ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
         --logcfg=pipeline-log.cfg
 
-and the file `pipeline-log.cfg` contains:
+and the file ``pipeline-log.cfg`` contains:
 ::
 
     [*]
     handler = file:pipeline.log
     level = INFO
 
-In this example log information is written to a file called `pipeline.log`.
-The `level` argument in the log cfg file can be set to one of the standard
-logging level designations of `DEBUG`, `INFO`, `WARNING`, `ERROR`, and
-`CRITICAL`. Only messages at or above the specified level
+In this example log information is written to a file called ``pipeline.log``.
+The ``level`` argument in the log cfg file can be set to one of the standard
+logging level designations of ``DEBUG``, ``INFO``, ``WARNING``, ``ERROR``, and
+``CRITICAL``. Only messages at or above the specified level
 will be displayed.
 
 
@@ -472,10 +487,12 @@ Pipeline/Step Suffix Definitions
 However the output file name is determined (:ref:`see above
 <intro_output_file_discussion>`), the various stage 1, 2, and 3 pipeline modules
 will use that file name, along with a set of predetermined suffixes, to compose
-output file names. The output file name suffix will always replace any existing
+output file names. The output file name suffix will always replace any known
 suffix of the input file name. Each pipeline module uses the appropriate suffix
 for the product(s) it is creating. The list of suffixes is shown in the
-following table.
+following table. Replacement occurs only if the suffix is one known to the
+calibration code. Otherwise, the new suffix will simply be appended to the
+basename of the file.
 
 =============================================  ========
 Product                                        Suffix
