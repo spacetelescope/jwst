@@ -243,7 +243,7 @@ Output File and Associations
 Stage 2 pipelines can take an individual file or an
 :ref:`association <associations>` as input. Nearly all Stage 3
 pipelines require an associaiton as input. Normally, the output file
-is defined in each association's `product_name`.
+is defined in each association's "product name".
 
 If there is need to produce multiple versions of a calibration based
 on an association, it is highly suggested to use `output_dir` to place
