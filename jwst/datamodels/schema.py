@@ -1,5 +1,7 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
+import re
+import textwrap
 from collections import OrderedDict
 
 from asdf import AsdfFile
@@ -7,6 +9,8 @@ from asdf import schema as asdf_schema
 
 from jwst.transforms.jwextension import JWSTExtension
 from gwcs.extension import GWCSExtension
+
+from . import model_base
 
 # return_result included for backward compatibility
 def find_fits_keyword(schema, keyword, return_result=False):
@@ -295,3 +299,109 @@ def read_schema(schema_file, extensions=None):
 
     schema = merge_property_trees(schema)
     return schema
+
+
+def build_docstring(klass, template, header="", footer="", width=78,
+                    initial_indent=0, subsequent_indent=8):
+    """
+    Build a docstring for the specified DataModel class from its schema.
+
+
+    Parameters
+    ----------
+
+    klass : Python class
+        A class instance of a datamodel
+    template: str
+        A string format template to be applied to each schema item
+    header: str
+        A line which precedes the result
+    footer: str
+        A line which follows the result
+    width: int
+        The maximum width of the line
+    initial_indent: int
+        The number of blanks preceding each initial line
+    subsequent_indent: int
+        The number of blanks before each wrapped line
+    """
+
+    def get_field_info(subschema, path, combiner, info, recurse):
+        # Return all schema fields representing fits hdus
+        if 'fits_hdu' in subschema and not 'fits_keyword' in subschema:
+            attr = '.'.join(path)
+            info[attr] = subschema
+        return 'fits_hdu' in subschema or 'fits_keyword' in subschema
+
+    # Set formatting parameters
+    wrapper = textwrap.TextWrapper(width=width,
+                                   initial_indent =(' '*initial_indent),
+                                   subsequent_indent=(' '*subsequent_indent))
+
+    # Silly rabbit, only datamodels have schemas
+    if not (klass == model_base.DataModel or
+            issubclass(klass, model_base.DataModel)):
+        raise ValueError("Class must be a subclass of DataModel: %s",
+                          klass.__name__)
+
+    # Create a new model just to get its shape
+    null_object = klass(init=None)
+    shape = null_object.shape
+    if shape is None:
+        shaped_object = null_object
+    else:
+        # Instantiate an object with correctly dimensioned shape
+        null_object.close()
+        shape = tuple([1 for i in range(len(shape))])
+        shaped_object = klass(init=shape)
+
+    # Get schema fields which have an associated hdu
+    info = {}
+    walk_schema(shaped_object._schema, get_field_info, ctx=info)
+
+    # Extract field names from template to set defaults
+    # so format won't crash while using them when they aren't there
+    default_schema = {}
+    fields = re.findall(r'\{([^\\:}]*)[\:\}]', template)
+    for field in fields:
+        default_schema[field] = ''
+
+    buffer = []
+    if header:
+        buffer.append(header)
+
+    for attr, subschema in info.items():
+        schema = {}
+        schema.update(default_schema)
+        schema.update(subschema)
+        schema['path'] = attr
+
+        # Determine if attribute has a default value
+        instance = shaped_object.instance
+        for field in attr.split('.'):
+            try:
+                instance = instance.get(field)
+            except:
+                instance = None
+            if instance is None:
+                break
+        schema['default'] = instance is not None
+
+        # Extract table field names from datatype
+        if type(schema['datatype']) != str:
+            fields = []
+            for field_info in schema['datatype']:
+                fields.append(field_info['name'])
+            schema['datatype'] = ', '.join(fields)
+
+        # Convert boolean fields to their field names
+        for field, value in schema.items():
+            if type(value) == bool:
+                schema[field] = field
+
+        buffer.extend(wrapper.wrap(template.format(**schema)))
+
+    if footer:
+        buffer.append(footer)
+    return "\n".join(buffer) + "\n"
+

@@ -18,7 +18,7 @@ from astropy import time
 from .. import util, validate
 from .. import (DataModel, ImageModel, RampModel, MaskModel,
                 MultiSlitModel, AsnModel, CollimatorModel)
-from ..schema import merge_property_trees
+from ..schema import merge_property_trees, build_docstring
 
 from asdf import schema as mschema
 
@@ -617,3 +617,10 @@ def test_merge_property_trees(combiner):
     # Make sure that merge_property_trees does not destructively modify schemas
     f = merge_property_trees(s)
     assert f == s
+
+
+def test_schema_docstring():
+    template = "{fits_hdu} {title}"
+    docstring = build_docstring(ImageModel, template).split("\n")
+    for i, hdu in enumerate(('SCI', 'DQ', 'ERR', 'ZEROFRAME')):
+        assert docstring[i].startswith(hdu)
