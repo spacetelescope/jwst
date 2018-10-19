@@ -1,5 +1,5 @@
 Reference Selection Keywords for SFLAT
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+++++++++++++++++++++++++++++++++++++++
 CRDS selects appropriate SFLAT references based on the following keywords.
 SFLAT is not applicable for instruments not in the table.
 Non-standard keywords used for file selection are *required*.
@@ -7,6 +7,6 @@ Non-standard keywords used for file selection are *required*.
 ========== =================================================================
 Instrument Keywords                                                          
 ========== =================================================================
-NIRSPEC    INSTRUME, DETECTOR, FILTER, GRATING, EXP_TYPE, DATE-OBS, TIME-OBS 
+NIRSpec    INSTRUME, DETECTOR, FILTER, GRATING, EXP_TYPE, DATE-OBS, TIME-OBS 
 ========== =================================================================
 

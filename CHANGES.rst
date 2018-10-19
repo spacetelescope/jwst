@@ -67,6 +67,8 @@ cube_build
 
 - Added support for creating IFU Cubes with non-linear wavelength sampling,
   including use of FITS WCS "WAVE-TAB" standard. [#2598]
+- Correctly writing TDIM2 to WCS-TABLE extension [#2719]
+- Fixed error when making IFUCubes with weighting='miripsf' [#2719]
 
 cube_skymatch
 -------------
@@ -99,6 +101,10 @@ datamodels
 
 - Updated EXP_TYPE allowed values to include "MIR_DARKALL", "MIR_DARKIMG",
   "MIR_DARKMRS", "MIR_FLATALL", "MIR_FLATIMAGE-EXT", and "MIR_FLATMRS-EXT" [#2709]
+
+- Added the new column "relresperror" to the MIRI Imager/LRS photom reference
+  file schema for data model "MiriImgPhotomModel", to allow for uncertainty
+  in the relative response values [#2721]
 
 documentation
 -------------

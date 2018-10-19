@@ -6,7 +6,7 @@ DARK Reference File
 -------------------
 
 :RETYPE: DARK
-:Data model: `DarkModel', `DarkMIRIModel`
+:Data model: `DarkModel`, `DarkMIRIModel`
 
 The DARK reference file contains pixel-by-pixel and frame-by-frame
 dark current values for a given detector readout mode.

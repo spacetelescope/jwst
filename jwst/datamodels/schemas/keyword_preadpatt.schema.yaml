@@ -10,11 +10,10 @@ properties:
             title: Readout pattern
             type: string
             pattern: "\
-              ^((ACQ1|ACQ2|BRIGHT1|BRIGHT2|\
-              DEEP2|DEEP8|FAST|FASTGRPAVG|\
-              FGS|FGS60|FGS8370|FGS840|FGSRAPID|FINEGUIDE|\
-              ID|MEDIUM2|MEDIUM8|NIS|NISRAPID|\
-              NRS|NRSIRS2|NRSN16R4|NRSN32R8|NRSN8R2|\
-              NRSRAPID|NRSIRS2RAPID|NRSSLOW|RAPID|\
-              SHALLOW2|HALLOW4|SLOW|TRACK|ANY|N/A)\\s*\\|\\s*)+$"
+              ^((ACQ1|ACQ2|BRIGHT1|BRIGHT2|DEEP2|DEEP8|FAST|\
+                 FASTGRPAVG|FGS|FGS60|FGS8370|FGS840|FGSRAPID|\
+                 FINEGUIDE|ID|MEDIUM2|MEDIUM8|NIS|NISRAPID|\
+                 NRS|NRSIRS2|NRSN16R4|NRSN32R8|NRSN8R2|NRSRAPID|\
+                 NRSIRS2RAPID|NRSSLOW|RAPID|SHALLOW2|SHALLOW4|\
+                 SLOW|TRACK|ANY|N/A)\\s*\\|\\s*)+$"
             fits_keyword: P_READPA
