@@ -171,7 +171,7 @@ class SimpleConstraint(SimpleConstraintABC):
 
     >>> c = SimpleConstraint(value='my_value')
     >>> print(c)
-    SimpleConstraint({'value': 'my_value' })
+    SimpleConstraint({'name': None, 'value': 'my_value'})
 
     To check a constraint, call `check_and_set`. A successful match
     will return a `SimpleConstraint` and a reprocess list.
@@ -515,8 +515,17 @@ class Constraint:
     Named constraints can be accessed directly through indexing:
 
     >>> c = Constraint(SimpleConstraint(name='simple', value='a_value'))
-    >>> c['simple']
-    SimpleConstraint('value': 'a_value')
+    >>> c['simple']  # doctest: +SKIP
+    SimpleConstraint({'sources': <function SimpleConstraint.__init__.<locals>.<lambda> at 0x7f8be05f5730>,
+                      'force_unique': True,
+                      'test': <bound method SimpleConstraint.eq of SimpleConstraint({...})>,
+                      'reprocess_on_match': False,
+                      'reprocess_on_fail': False,
+                      'work_over': 1,
+                      'reprocess_rules': None,
+                      'value': 'a_value',
+                      'name': 'simple',
+                      'matched': False})
     """
     def __init__(
             self,
