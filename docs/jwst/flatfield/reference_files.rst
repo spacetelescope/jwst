@@ -167,9 +167,9 @@ The file also contains a single DQ_DEF extension.
 
 The extensions have the following characteristics:
 
-============   ======== ===== ===================== =========
+============== ======== ===== ===================== =========
 EXTNAME        XTENSION NAXIS Dimensions            Data type
-=============  ======== ===== ===================== =========
+============== ======== ===== ===================== =========
 SCI            IMAGE      3   ncols x nrows x nelem float
 ERR            IMAGE      3   ncols x nrows x nelem float
 DQ             IMAGE      3   ncols x nrows x nelem integer
@@ -255,9 +255,9 @@ separate slit.
 The MSA Spec SFLAT files have EXP_TYPE=NRS_MSASPEC.
 They contain 6 extensions, with the following characteristics:
 
-============   ======== ===== ===================== =========
+============== ======== ===== ===================== =========
 EXTNAME        XTENSION NAXIS Dimensions            Data type
-=============  ======== ===== ===================== =========
+============== ======== ===== ===================== =========
 SCI            IMAGE      3   ncols x nrows x n_wl  float
 ERR            IMAGE      3   ncols x nrows x n_wl  float
 DQ             IMAGE      3   ncols x nrows x n_wl  integer
@@ -305,9 +305,9 @@ DFLAT Reference File
 There is only one type of DFLAT reference file, containing 6 extensions with the following
 characteristics:
 
-============   ======== ===== ===================== =========
+============== ======== ===== ===================== =========
 EXTNAME        XTENSION NAXIS Dimensions            Data type
-=============  ======== ===== ===================== =========
+============== ======== ===== ===================== =========
 SCI            IMAGE      3   ncols x nrows x n_wl  float
 ERR            IMAGE      2   ncols x nrows         float
 DQ             IMAGE      2   ncols x nrows         integer
