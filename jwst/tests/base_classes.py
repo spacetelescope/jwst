@@ -145,23 +145,3 @@ class BaseTest(object):
                                docopy = self.docopy,
                                results_root = self.results_root,
                                **compare_kws)
-
-def get_hdu(filename):
-    """Return the HDU for the file and extension specified in the filename.
-
-       This routine expects the filename to be of the format:
-           <filename>.fits[extn]
-
-        For example, "jw99999-a3001_t1_nircam_f140m-maskbar_i2d.fits[hdrtab]"
-    """
-    froot, fextn = filename.split('[')
-    fextn = fextn.replace(']','')
-    fits_file = fits.open(froot)
-    return fits_file[fextn]
-
-def build_hdulist(filename, extn_list):
-    """Create a new HDUList object based on extensions specified in extn_list"""
-    f = fits.open(filename)
-    fhdu = [f[extn] for extn in extn_list]
-
-    return fhdu
