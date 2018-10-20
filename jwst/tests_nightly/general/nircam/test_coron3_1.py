@@ -1,6 +1,6 @@
 import pytest
 
-from jwst.tests.base_test import BaseJWSTTest
+from jwst.tests.base_test import BaseJWSTTest, raw_from_asn
 from jwst.pipeline.calwebb_coron3 import Coron3Pipeline
 
 
@@ -21,7 +21,7 @@ class TestCoron3Pipeline(BaseJWSTTest):
         # get a local copy of the inputs
         asn_file = self.get_data('test_coron3', asn_name)
         psfmask_file = self.get_data('test_coron3', override_psfmask)
-        for file in self.raw_from_asn(asn_file):
+        for file in raw_from_asn(asn_file):
             self.get_data('test_coron3', file)
 
         pipe = Coron3Pipeline()

@@ -1,7 +1,7 @@
 import pytest
 from jwst.pipeline.calwebb_spec3 import Spec3Pipeline
 
-from jwst.tests.base_test import BaseJWSTTest
+from jwst.tests.base_test import BaseJWSTTest, raw_from_asn
 
 @pytest.mark.bigdata
 class TestSpec3Pipeline(BaseJWSTTest):
@@ -17,7 +17,7 @@ class TestSpec3Pipeline(BaseJWSTTest):
         """
 
         asn_file = self.get_data(self.test_dir, 'test_asn4.json')
-        for file in self.raw_from_asn(asn_file):
+        for file in raw_from_asn(asn_file):
             self.get_data(self.test_dir, file)
 
         step = Spec3Pipeline()

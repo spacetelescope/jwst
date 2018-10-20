@@ -1,5 +1,5 @@
 import pytest
-from jwst.tests.base_test import BaseJWSTTest
+from jwst.tests.base_test import BaseJWSTTest, raw_from_asn
 
 from jwst.pipeline.calwebb_image3 import Image3Pipeline
 
@@ -19,7 +19,7 @@ class TestImage3Pipeline1(BaseJWSTTest):
 
         asn_name = "mosaic_long_asn.json"
         asn_file = self.get_data('test_calimage3', asn_name)
-        for file in self.raw_from_asn(asn_file):
+        for file in raw_from_asn(asn_file):
             self.get_data('test_calimage3', file)
 
         pipe = Image3Pipeline()
@@ -91,7 +91,7 @@ class TestImage3Pipeline1(BaseJWSTTest):
         """
         asn_file = self.get_data(self.test_dir,
                                  "jw10002-o001_20171116t191235_image3_002_asn.json")
-        for file in self.raw_from_asn(asn_file):
+        for file in raw_from_asn(asn_file):
             self.get_data(self.test_dir, file)
 
         pipe = Image3Pipeline()

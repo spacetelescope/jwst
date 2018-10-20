@@ -23,9 +23,6 @@ class BaseJWSTTest(BaseTest):
         if input_dir and check_url(input_dir):
             self.docopy = True
 
-    def raw_from_asn(self, asn_file):
-        return raw_from_asn(asn_file)
-
     def get_custom_cfgs(self, *args):
         """ Make a local copy of all custom cfgs associated with this test"""
 
@@ -88,7 +85,7 @@ class BaseJWSTTestSteps(BaseJWSTTest):
     def test_steps(self, input, test_dir, step_class, step_pars,
                    output_truth, output_hdus):
         """
-        Template method for parameterizing all the tests of MIRI pipeline
+        Template method for parameterizing all the tests of JWST pipeline
         processing steps.
         """
         if test_dir is None:
@@ -125,7 +122,6 @@ class BaseJWSTTestSteps(BaseJWSTTest):
         self.compare_outputs(outputs)
 
 
-# function(s) for tests written using functional form, not as BaseTest class tests
 def raw_from_asn(asn_file):
     """
     Return a list of all MEMBER input files from a given ASN.

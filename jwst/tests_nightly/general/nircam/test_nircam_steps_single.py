@@ -3,7 +3,7 @@ import glob
 
 import pytest
 
-from jwst.tests.base_test import BaseJWSTTest
+from jwst.tests.base_test import BaseJWSTTest, raw_from_asn
 from jwst.ramp_fitting.ramp_fit_step import RampFitStep
 from jwst.wfs_combine.wfs_combine_step import WfsCombineStep
 from jwst.pipeline.calwebb_detector1 import Detector1Pipeline
@@ -128,7 +128,7 @@ class TestWFSCombine(BaseJWSTTest):
         """
         asn_file = self.get_data(self.test_dir,
                                    'wfs_3sets_asn.json')
-        for file in self.raw_from_asn(asn_file):
+        for file in raw_from_asn(asn_file):
             self.get_data(self.test_dir, file)
 
         WfsCombineStep.call(asn_file)
@@ -148,7 +148,7 @@ class TestWFSCombine(BaseJWSTTest):
         """
         asn_file = self.get_data(self.test_dir,
                                    'wfs_3sets_asn2.json')
-        for file in self.raw_from_asn(asn_file):
+        for file in raw_from_asn(asn_file):
             self.get_data(self.test_dir, file)
 
         WfsCombineStep.call(asn_file,
@@ -169,7 +169,7 @@ class TestWFSCombine(BaseJWSTTest):
         """
         asn_file = self.get_data(self.test_dir,
                                    'wfs_3sets_asn3.json')
-        for file in self.raw_from_asn(asn_file):
+        for file in raw_from_asn(asn_file):
             self.get_data(self.test_dir, file)
 
         WfsCombineStep.call(asn_file,

@@ -100,18 +100,6 @@ class BaseTest(object):
 
         return local_file
 
-    def raw_from_asn(self, asn_file):
-        """
-        Return the list of  member exposures specified in the
-        association file.
-
-        .. WARNING::
-        This method needs to be defined by each subclass.
-        """
-        msg = "Sub-class needs to define this method."
-        raise NotImplementedError(msg)
-
-
     def get_input_file(self, *args, refsep='$', **kwargs):
         """
         Download or copy input file (e.g., RAW) into the working directory.

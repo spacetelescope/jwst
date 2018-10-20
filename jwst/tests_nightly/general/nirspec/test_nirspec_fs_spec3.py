@@ -8,7 +8,7 @@ from jwst.pipeline import Spec3Pipeline
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
-from jwst.tests.base_test import BaseJWSTTest
+from jwst.tests.base_test import BaseJWSTTest, raw_from_asn
 
 
 @pytest.mark.bigdata
@@ -21,7 +21,7 @@ class TestSpec3Pipeline(BaseJWSTTest):
 
         asn_file = self.get_data(*datapath,
                                     'jw93045-o010_20180725t035735_spec3_001_asn.json')
-        for file in self.raw_from_asn(asn_file):
+        for file in raw_from_asn(asn_file):
             self.get_data(*datapath, file)
 
         pipe = Spec3Pipeline()
@@ -61,7 +61,7 @@ class TestSpec3Pipeline(BaseJWSTTest):
         asn_file = self.get_data(*datapath,
                                  'jw93045-o010_20180725t035735_spec3_001_asn.json')
 
-        for file in self.raw_from_asn(asn_file):
+        for file in raw_from_asn(asn_file):
             self.get_data(*datapath, file)
 
         args = [
