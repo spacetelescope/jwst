@@ -59,8 +59,7 @@ class TestCoron3Pipeline(BaseJWSTTest):
                     'jw99999-a3001_t1_nircam_f140m-maskbar_i2d.fits[hdrtab]',
                     'jw99999-a3001_t1_nircam_f140m-maskbar_i2d_ref.fits[hdrtab]'
                    ),
-                    'pars': {'ignore_keywords':
-                             self.ignore_keywords+['NAXIS1', 'TFORM*'],
+                    'pars': {'ignore_keywords':self.ignore_keywords+['NAXIS1', 'TFORM*'],
                              'ignore_fields':self.ignore_keywords}
                    }
                   ]

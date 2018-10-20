@@ -1,65 +1,83 @@
 import pytest
-import requests
-import os
-import glob
 
-from ci_watson.artifactory_helpers import check_url, get_bigdata_root
-from .base_classes import BaseTest
+from ci_watson.artifactory_helpers import (
+    check_url,
+    get_bigdata_root,
+    get_bigdata,
+    compare_outputs,
+)
+
 
 @pytest.mark.usefixtures('_jail')
-class BaseJWSTTest(BaseTest):
+@pytest.mark.bigdata
+class BaseJWSTTest:
+    '''Base test class from which to derive JWST regression tests
+    '''
+    rtol = 0.00001
+    atol = 0
+
+    input_loc = ''  # root directory for 'input' files
+    ref_loc = []    # root path for 'truth' files: ['test1','truth'] or ['test3']
+
+    ignore_table_keywords = []
+    ignore_fields = []
     ignore_hdus = ['ASDF']
     ignore_keywords = ['DATE', 'CAL_VER', 'CAL_VCS', 'CRDS_VER', 'CRDS_CTX', 'FILENAME']
+
     input_repo = 'jwst-pipeline'
     results_root = 'jwst-pipeline-results'
+    env = 'dev'
 
-    docopy = False  # Do not make additional copy by default
-    rtol = 0.00001
+    bigdata_root = get_bigdata_root()
+    if bigdata_root and check_url(bigdata_root):
+        docopy = True
+    else:
+        docopy = False
 
-    def set_environ(self):
-        # Enforce copies of data when TEST_BIGDATA is URL
-        input_dir = get_bigdata_root()
+    @property
+    def repo_path(self):
+        return [self.input_repo, self.env, self.input_loc]
 
-        if input_dir and check_url(input_dir):
-            self.docopy = True
+    def get_data(self, *pathargs, docopy=True):
+        """
+        Download `filename` into working directory using
+        `artifactory_helpers/get_bigdata()`.
+        This will then return the full path to the local copy of the file.
+        """
+        # If user has specified action for no_copy, apply it with
+        # default behavior being whatever was defined in the base class.
+        repo_path = [
+            self.input_repo,
+            self.env,
+            self.input_loc
+        ]
+        local_file = get_bigdata(*self.repo_path, *pathargs, docopy=self.docopy)
 
-    def get_custom_cfgs(self, *args):
-        """ Make a local copy of all custom cfgs associated with this test"""
+        return local_file
 
-        test_dir = os.getcwd()
-        new_dir = args[-1]
-        os.mkdir(new_dir)
-        os.chdir(new_dir)
+    def compare_outputs(self, outputs, raise_error=True, **kwargs):
 
-        input_dir = get_bigdata_root()
-        input_path = self.get_input_path()
-        cfg_dir = os.path.join(input_dir,*input_path,*args)
-        print("cfg_dir: {}".format(cfg_dir))
+        # Parse any user-specified kwargs
+        ignore_keywords = kwargs.get('ignore_keywords', self.ignore_keywords)
+        ignore_hdus = kwargs.get('ignore_hdus', self.ignore_hdus)
+        ignore_fields = kwargs.get('ignore_fields', self.ignore_fields)
+        rtol = kwargs.get('rtol', self.rtol)
+        atol = kwargs.get('atol', self.atol)
 
-        if check_url(input_dir):
-            # Make copy from Artifactory repo
-            r = requests.get('{}?list&deep=1&listFolders=1&mdTimestamps=1'.format(cfg_dir))
+        compare_kws = dict(ignore_fields=ignore_fields, ignore_hdus=ignore_hdus,
+                        ignore_keywords=ignore_keywords,
+                        rtol=rtol, atol=atol)
 
-            for item in r.iter_lines():
-                line = str(item)
-                if 'href' in line and '..' not in line:
-                    start = line.index('"')+1
-                    end = line.rindex('"')
-                    fname = line[start:end]
-                    
-                    self.get_data(*args,fname, docopy=True)
-        else:
-            # Make copy from local cache
-            cfg_names = glob.glob(os.path.join(cfg_dir,'*'))
-            for name in cfg_names:
-                filename = os.path.basename(name)
-                self.get_data(*args,filename, docopy=True)
+        input_path = [self.input_repo, self.env, self.input_loc, *self.ref_loc]
 
-        # Move back to original directory
-        os.chdir(test_dir)
+        return compare_outputs(outputs, raise_error=True,
+                               input_path=input_path,
+                               docopy=self.docopy,
+                               results_root=self.results_root,
+                               **compare_kws)
 
 
-# Pytest function to support the parameterization of these classes
+# Pytest function to support the parameterization of BaseJWSTTestSteps
 def pytest_generate_tests(metafunc):
     # called once per each test function
     funcarglist = metafunc.cls.params[metafunc.function.__name__]

@@ -7,6 +7,7 @@ from jwst.tests.base_test import BaseJWSTTest, raw_from_asn
 from jwst.ramp_fitting.ramp_fit_step import RampFitStep
 from jwst.wfs_combine.wfs_combine_step import WfsCombineStep
 from jwst.pipeline.calwebb_detector1 import Detector1Pipeline
+from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 
 from jwst.stpipe import Step
 
@@ -27,7 +28,7 @@ class TestWFSImage2(BaseJWSTTest):
         input_file = self.get_data(self.test_dir, 'sdp_jw82600_wfs', 'level2a',
                                    input_name)
 
-        self.get_custom_cfgs(self.test_dir, 'sdp_jw82600_wfs', 'cfgs')
+        collect_pipeline_cfgs('cfgs')
         Step.from_cmdline([os.path.join('cfgs', 'calwebb_wfs-image2.cfg'), input_file])
 
         cal_name = input_name.replace('rate', 'cal')

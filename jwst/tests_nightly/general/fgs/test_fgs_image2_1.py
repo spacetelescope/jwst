@@ -19,9 +19,7 @@ class TestImage2Pipeline(BaseJWSTTest):
                                    'jw86500007001_02101_00001_GUIDER2_rate.fits')
         output_file = 'jw86500007001_02101_00001_GUIDER2_cal.fits'
 
-        Image2Pipeline.call(input_file,output_file = output_file)
+        Image2Pipeline.call(input_file, save_results=True)
 
-        outputs = [(output_file, 'jw86500007001_02101_00001_GUIDER2_cal_ref.fits',
-                    ['primary','sci','err','dq','area'])
-                  ]
+        outputs = [(output_file, 'jw86500007001_02101_00001_GUIDER2_cal_ref.fits')]
         self.compare_outputs(outputs)
