@@ -155,7 +155,7 @@ c_{1,0,\\ldots}^2,\\ldots).
 
     Examples
     --------
->>> from jwst.wiimatch import match_lsq
+>>> from jwst.wiimatch.match import match_lsq
 >>> import numpy as np
 >>> im1 = np.zeros((5, 5, 4), dtype=np.float)
 >>> cbg = 1.32 * np.ones_like(im1)

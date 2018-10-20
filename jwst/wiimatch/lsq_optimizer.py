@@ -367,7 +367,7 @@ def rlu_solve(matrix, free_term, nimages):
 
     Examples
     --------
->>> from jwst.wiimatch.lsq_optimizer import build_lsq_eqs, lu_solve
+>>> from jwst.wiimatch.lsq_optimizer import build_lsq_eqs, rlu_solve
 >>> import numpy as np
 >>> im1 = np.zeros((5, 5, 4), dtype=np.float)
 >>> cbg = 1.32 * np.ones_like(im1)
