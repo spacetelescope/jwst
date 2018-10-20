@@ -2,8 +2,6 @@
 import os
 import tempfile
 import pytest
-import re
-import requests
 
 from astropy.tests.plugins.display import PYTEST_HEADER_MODULES
 from astropy.tests.helper import enable_deprecations_as_exceptions
@@ -22,19 +20,6 @@ pytest_plugins = [
     'asdf.tests.schema_tester'
 ]
 
-RE_URL = re.compile('\w+://\S+')
-
-def check_url(url):
-    """ Determine if `url` can be resolved without error
-    """
-    if RE_URL.match(url) is None:
-        return False
-
-    r = requests.head(url, allow_redirects=True)
-    if r.status_code >= 400:
-        return False
-    return True
-
 
 @pytest.fixture
 def mk_tmp_dirs():
@@ -49,7 +34,3 @@ def mk_tmp_dirs():
         yield (tmp_current_path, tmp_data_path, tmp_config_path)
     finally:
         os.chdir(old_path)
-
-
-class BigdataError(Exception):
-    pass
