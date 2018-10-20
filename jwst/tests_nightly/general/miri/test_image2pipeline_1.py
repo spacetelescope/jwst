@@ -10,7 +10,7 @@ class TestImage2Pipeline(BaseJWSTTest):
     input_loc = 'miri'
     ref_loc = ['test_image2pipeline', 'truth']
 
-    def test_image2pipeline1(self, _jail):
+    def test_image2pipeline1(self):
         """
         Regression test of calwebb_image2 pipeline performed on MIRI data.
         """

@@ -10,7 +10,7 @@ class TestTso3Pipeline(BaseJWSTTest):
     ref_loc = ['test_caltso3', 'truth']
     test_dir = 'test_caltso3'
 
-    def test_tso3_pipeline_nrc1(self, _jail):
+    def test_tso3_pipeline_nrc1(self):
         """Regression test of calwebb_tso3 pipeline on NIRCam simulated data.
 
         Default imaging mode outlier_detection will be tested here.
@@ -48,7 +48,7 @@ class TestTso3Pipeline(BaseJWSTTest):
         self.compare_outputs(outputs)
 
 
-    def test_tso3_pipeline_nrc2(self, _jail):
+    def test_tso3_pipeline_nrc2(self):
         """Regression test of calwebb_tso3 pipeline on NIRCam simulated data.
 
         Scaled imaging mode outlier_detection will be tested here.

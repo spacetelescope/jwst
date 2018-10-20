@@ -9,7 +9,7 @@ class TestImage2Pipeline(BaseJWSTTest):
     input_loc = 'fgs'
     ref_loc = ['test_image2pipeline', 'truth']
 
-    def test_fgs_image2pipeline1(self, _jail):
+    def test_fgs_image2pipeline1(self):
         """
 
         Regression test of calwebb_image2 pipeline performed on FGS imaging mode data.

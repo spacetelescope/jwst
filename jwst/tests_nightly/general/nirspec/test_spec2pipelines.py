@@ -67,7 +67,7 @@ class TestSpec2Pipeline(BaseJWSTTest):
                 ]
             }
 
-    def test_nrs_fs_multi_spec2(self, input, outputs, _jail):
+    def test_nrs_fs_multi_spec2(self, input, outputs):
         """
         Regression test of calwebb_spec2 pipeline performed on NIRSpec data.
         """

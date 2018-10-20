@@ -8,7 +8,7 @@ class TestSloperPipeline(BaseJWSTTest):
     input_loc = 'fgs'
     ref_loc = ['test_sloperpipeline', 'truth']
 
-    def test_fgs_detector1_1(self, _jail):
+    def test_fgs_detector1_1(self):
         """
         Regression test of calwebb_detector1 pipeline performed on FGS imaging mode data.
         """

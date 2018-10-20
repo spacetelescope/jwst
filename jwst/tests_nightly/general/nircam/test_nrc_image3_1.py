@@ -15,7 +15,7 @@ class TestImage3Pipeline1(BaseJWSTTest):
     ref_loc = ['test_calimage3', 'truth']
     test_dir = 'test_calimage3'
 
-    def test_image3_pipeline1(self, _jail):
+    def test_image3_pipeline1(self):
 
         asn_name = "mosaic_long_asn.json"
         asn_file = self.get_data('test_calimage3', asn_name)
@@ -83,7 +83,7 @@ class TestImage3Pipeline1(BaseJWSTTest):
                   ]
         self.compare_outputs(outputs)
 
-    def test_image3_pipeline2(self, _jail):
+    def test_image3_pipeline2(self):
         """Regression test definitions for CALIMAGE3 pipeline.
 
         Regression test of calwebb_image3 pipeline on NIRCam

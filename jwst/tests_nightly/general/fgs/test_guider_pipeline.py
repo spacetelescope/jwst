@@ -13,7 +13,7 @@ class TestGuiderPipeline(BaseJWSTTest):
 
     rtol = 0.000001
 
-    def test_guider_pipeline1(self, _jail):
+    def test_guider_pipeline1(self):
         """
         Regression test of calwebb_guider pipeline performed on ID-image data.
         """
@@ -31,7 +31,7 @@ class TestGuiderPipeline(BaseJWSTTest):
         self.compare_outputs(outputs)
 
 
-    def test_guider_pipeline2(self, _jail):
+    def test_guider_pipeline2(self):
         """
         Regression test of calwebb_guider pipeline performed on ACQ-1 data.
         """
@@ -50,7 +50,7 @@ class TestGuiderPipeline(BaseJWSTTest):
         self.compare_outputs(outputs)
 
 
-    def test_guider_pipeline3(self, _jail):
+    def test_guider_pipeline3(self):
         """
 
         Regression test of calwebb_guider pipeline performed on ID STACKED data.

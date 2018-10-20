@@ -70,7 +70,6 @@ def pytest_generate_tests(metafunc):
             for funcargs in funcarglist], ids=idlist)
 
 
-@pytest.mark.usefixtures('_jail')
 class BaseJWSTTestSteps(BaseJWSTTest):
 
     params = {'test_steps':[dict(input="",

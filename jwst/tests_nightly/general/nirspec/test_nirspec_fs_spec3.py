@@ -15,7 +15,7 @@ from jwst.tests.base_test import BaseJWSTTest, raw_from_asn
 class TestSpec3Pipeline(BaseJWSTTest):
     input_loc = 'nirspec'
 
-    def test_save_source_only(self, _jail):
+    def test_save_source_only(self):
         """Test saving the source-based files only"""
         datapath = ['test_datasets', 'fss', '93045', 'level2b']
 
@@ -50,7 +50,7 @@ class TestSpec3Pipeline(BaseJWSTTest):
         reason='Dataset fails at outlier_detection',
         run=False
     )
-    def test_nrs_fs_spec3(self, _jail):
+    def test_nrs_fs_spec3(self):
         """
         Regression test of calwebb_spec3 pipeline performed on
         NIRSpec fixed-slit data.

@@ -9,7 +9,7 @@ class TestImage2Pipeline(BaseJWSTTest):
     input_loc = 'nircam'
     ref_loc = ['test_image2pipeline', 'truth']
 
-    def test_image2pipeline2b(self, _jail):
+    def test_image2pipeline2b(self):
         """
         Regression test of calwebb_image2 pipeline performed on NIRCam data,
         using a multiple integration rate (rateints) file as input.

@@ -14,7 +14,7 @@ class TestNIRSpecPipelines(BaseJWSTTest):
     ref_loc = ['test_pipelines', 'truth']
     test_dir = 'test_pipelines'
 
-    def test_nirspec_dark_pipeline(self, _jail):
+    def test_nirspec_dark_pipeline(self):
         """
         Regression test of calwebb_dark pipeline performed on NIRSpec raw data.
         """
@@ -38,7 +38,7 @@ class TestNIRSpecPipelines(BaseJWSTTest):
                     ['primary','sci','err','pixeldq','groupdq'])]
         self.compare_outputs(outputs)
 
-    def test_nrs_fs_brightobj_spec2(self, _jail):
+    def test_nrs_fs_brightobj_spec2(self):
         """
         Regression test of calwebb_spec2 pipeline performed on NIRSpec
         fixed-slit data that uses the NRS_BRIGHTOBJ mode (S1600A1 slit).
@@ -59,7 +59,7 @@ class TestNIRSpecPipelines(BaseJWSTTest):
                   ]
         self.compare_outputs(outputs)
 
-    def test_nrs_msa_spec2(self, _jail):
+    def test_nrs_msa_spec2(self):
         """
         Regression test of calwebb_spec2 pipeline performed on NIRSpec MSA data.
         """
@@ -87,7 +87,7 @@ class TestNIRSpecPipelines(BaseJWSTTest):
                   ]
         self.compare_outputs(outputs)
 
-    def test_nrs_msa_spec2b(self, _jail):
+    def test_nrs_msa_spec2b(self):
         """
         Regression test of calwebb_spec2 pipeline performed on NIRSpec MSA data,
         including barshadow correction.
