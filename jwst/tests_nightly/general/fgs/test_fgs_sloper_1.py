@@ -1,7 +1,8 @@
 import pytest
 from jwst.pipeline.calwebb_detector1 import Detector1Pipeline
 
-from jwst.tests.base_test import BaseJWSTTest
+from jwst.tests.base_classes import BaseJWSTTest
+
 
 @pytest.mark.bigdata
 class TestSloperPipeline(BaseJWSTTest):

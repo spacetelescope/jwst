@@ -1,6 +1,6 @@
 import pytest
 
-from jwst.tests.base_test import BaseJWSTTest, raw_from_asn
+from jwst.tests.base_classes import BaseJWSTTest, raw_from_asn
 
 from jwst.pipeline import (
     Ami3Pipeline,
@@ -9,7 +9,6 @@ from jwst.pipeline import (
 )
 from jwst.ramp_fitting import RampFitStep
 from jwst.photom import PhotomStep
-
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
@@ -76,6 +75,7 @@ class TestDetector1Pipeline(BaseJWSTTest):
                     'jw00034001001_01101_00001_NIRISS_rate_ref.fits')
                   ]
         self.compare_outputs(outputs)
+
 
 @pytest.mark.bigdata
 class TestNIRISSSOSS2Pipeline(BaseJWSTTest):

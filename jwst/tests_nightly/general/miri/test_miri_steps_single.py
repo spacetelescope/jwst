@@ -8,12 +8,12 @@ from jwst.datamodels import ImageModel, RegionsModel, CubeModel
 from jwst.stpipe import crds_client
 from jwst.lib.set_telescope_pointing import add_wcs
 
-from jwst.tests.base_test import BaseJWSTTest
+from jwst.tests.base_classes import BaseJWSTTest
 
 from jwst.assign_wcs import AssignWcsStep
-from jwst.cube_build.cube_build_step import CubeBuildStep
-from jwst.linearity.linearity_step import LinearityStep
-from jwst.ramp_fitting.ramp_fit_step import RampFitStep
+from jwst.cube_build import CubeBuildStep
+from jwst.linearity import LinearityStep
+from jwst.ramp_fitting import RampFitStep
 
 
 @pytest.mark.bigdata

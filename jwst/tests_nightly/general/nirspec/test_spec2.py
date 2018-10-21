@@ -11,9 +11,7 @@ from jwst.pipeline import Spec2Pipeline
 @pytest.mark.bigdata
 def test_nrs2_nodata_api(envopt, _jail):
     """
-
-    Regression test of handling NRS2 detector that has no data.
-
+    Regression test of handling NRS2 detector that has no data.\
     """
 
     # Only need to ensure that assing_wcs is run.

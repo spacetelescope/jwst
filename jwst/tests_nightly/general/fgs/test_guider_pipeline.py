@@ -2,7 +2,7 @@ import pytest
 
 from jwst.pipeline.calwebb_guider import GuiderPipeline
 
-from jwst.tests.base_test import BaseJWSTTest
+from jwst.tests.base_classes import BaseJWSTTest
 
 
 @pytest.mark.bigdata

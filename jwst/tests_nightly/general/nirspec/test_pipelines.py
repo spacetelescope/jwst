@@ -5,7 +5,7 @@ from jwst.stpipe import Step
 from jwst.pipeline import DarkPipeline
 from jwst.pipeline import Spec2Pipeline
 
-from jwst.tests.base_test import BaseJWSTTest
+from jwst.tests.base_classes import BaseJWSTTest
 
 
 @pytest.mark.bigdata

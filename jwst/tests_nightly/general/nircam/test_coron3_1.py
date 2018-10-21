@@ -1,7 +1,7 @@
 import pytest
 
-from jwst.tests.base_test import BaseJWSTTest, raw_from_asn
-from jwst.pipeline.calwebb_coron3 import Coron3Pipeline
+from jwst.tests.base_classes import BaseJWSTTest, raw_from_asn
+from jwst.pipeline import Coron3Pipeline
 
 
 @pytest.mark.bigdata

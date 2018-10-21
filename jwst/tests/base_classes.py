@@ -7,11 +7,13 @@ from ci_watson.artifactory_helpers import (
     compare_outputs,
 )
 
+from jwst.associations import load_asn
 
 @pytest.mark.usefixtures('_jail')
 @pytest.mark.bigdata
 class BaseJWSTTest:
-    '''Base test class from which to derive JWST regression tests
+    '''
+    Base test class from which to derive JWST regression tests
     '''
     rtol = 0.00001
     atol = 0
@@ -28,11 +30,13 @@ class BaseJWSTTest:
     results_root = 'jwst-pipeline-results'
     env = 'dev'
 
-    bigdata_root = get_bigdata_root()
-    if bigdata_root and check_url(bigdata_root):
-        docopy = True
-    else:
-        docopy = False
+    @pytest.fixture(autouse=True)
+    def auto_toggle_docopy(self):
+        bigdata_root = get_bigdata_root()
+        if bigdata_root and check_url(bigdata_root):
+            self.docopy = True
+        else:
+            self.docopy = False
 
     @property
     def repo_path(self):
@@ -46,11 +50,6 @@ class BaseJWSTTest:
         """
         # If user has specified action for no_copy, apply it with
         # default behavior being whatever was defined in the base class.
-        repo_path = [
-            self.input_repo,
-            self.env,
-            self.input_loc
-        ]
         local_file = get_bigdata(*self.repo_path, *pathargs, docopy=self.docopy)
 
         return local_file
@@ -141,7 +140,7 @@ class BaseJWSTTestSteps(BaseJWSTTest):
 
 def raw_from_asn(asn_file):
     """
-    Return a list of all MEMBER input files from a given ASN.
+    Return a list of all input files from a given association.
 
     Parameters
     ----------
@@ -150,17 +149,17 @@ def raw_from_asn(asn_file):
 
     Returns
     -------
-    raw_files : list of str
-        A list of input files to process.
+    members : list of str
+        A list of all input files in the association
 
     """
-    import json
 
-    raw_files = []
-    tab = json.load(open(asn_file))
+    members = []
+    with open(asn_file) as f:
+        asn = load_asn(f)
 
-    for product in tab['products']:
+    for product in asn['products']:
         for member in product['members']:
-            raw_files.append(member['expname'])
+            members.append(member['expname'])
 
-    return raw_files
+    return members

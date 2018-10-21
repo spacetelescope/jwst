@@ -1,23 +1,23 @@
 import pytest
 
-from jwst.tests.base_test import BaseJWSTTestSteps
-from jwst.tests.base_test import pytest_generate_tests # noqa: F401
+from jwst.tests.base_classes import BaseJWSTTestSteps
+from jwst.tests.base_classes import pytest_generate_tests # noqa: F401
 
-from jwst.refpix.refpix_step import RefPixStep
-from jwst.dark_current.dark_current_step import DarkCurrentStep
-from jwst.dq_init.dq_init_step import DQInitStep
-from jwst.emission.emission_step import EmissionStep
-from jwst.extract_1d.extract_1d_step import Extract1dStep
-from jwst.flatfield.flat_field_step import FlatFieldStep
-from jwst.fringe.fringe_step import FringeStep
-from jwst.jump.jump_step import JumpStep
-from jwst.lastframe.lastframe_step import LastFrameStep
-from jwst.linearity.linearity_step import LinearityStep
-from jwst.photom.photom_step import PhotomStep
-from jwst.rscd.rscd_step import RSCD_Step
-from jwst.saturation.saturation_step import SaturationStep
-from jwst.srctype.srctype_step import SourceTypeStep
-from jwst.straylight.straylight_step import StraylightStep
+from jwst.refpix import RefPixStep
+from jwst.dark_current import DarkCurrentStep
+from jwst.dq_init import DQInitStep
+from jwst.emission import EmissionStep
+from jwst.extract_1d import Extract1dStep
+from jwst.flatfield import FlatFieldStep
+from jwst.fringe import FringeStep
+from jwst.jump import JumpStep
+from jwst.lastframe import LastFrameStep
+from jwst.linearity import LinearityStep
+from jwst.photom import PhotomStep
+from jwst.rscd import RSCD_Step
+from jwst.saturation import SaturationStep
+from jwst.srctype import SourceTypeStep
+from jwst.straylight import StraylightStep
 
 # Parameterized regression tests for MIRI processing
 # All tests in this set run with 1 input file and

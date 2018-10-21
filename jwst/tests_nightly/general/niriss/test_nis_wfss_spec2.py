@@ -2,7 +2,7 @@ import pytest
 
 from jwst.pipeline.calwebb_spec2 import Spec2Pipeline
 
-from jwst.tests.base_test import BaseJWSTTest, raw_from_asn
+from jwst.tests.base_classes import BaseJWSTTest, raw_from_asn
 
 
 @pytest.mark.bigdata

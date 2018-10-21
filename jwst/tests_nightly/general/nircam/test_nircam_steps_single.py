@@ -3,10 +3,10 @@ import glob
 
 import pytest
 
-from jwst.tests.base_test import BaseJWSTTest, raw_from_asn
-from jwst.ramp_fitting.ramp_fit_step import RampFitStep
-from jwst.wfs_combine.wfs_combine_step import WfsCombineStep
-from jwst.pipeline.calwebb_detector1 import Detector1Pipeline
+from jwst.tests.base_classes import BaseJWSTTest, raw_from_asn
+from jwst.ramp_fitting import RampFitStep
+from jwst.wfs_combine import WfsCombineStep
+from jwst.pipeline import Detector1Pipeline
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 
 from jwst.stpipe import Step

@@ -1,7 +1,8 @@
 import pytest
 from jwst.pipeline.calwebb_spec3 import Spec3Pipeline
 
-from jwst.tests.base_test import BaseJWSTTest, raw_from_asn
+from jwst.tests.base_classes import BaseJWSTTest, raw_from_asn
+
 
 @pytest.mark.bigdata
 class TestSpec3Pipeline(BaseJWSTTest):

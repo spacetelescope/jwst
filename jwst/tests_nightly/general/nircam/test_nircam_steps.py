@@ -1,19 +1,19 @@
 import pytest
 
-from jwst.tests.base_test import BaseJWSTTestSteps
-from jwst.tests.base_test import pytest_generate_tests # noqa: F401
+from jwst.tests.base_classes import BaseJWSTTestSteps
+from jwst.tests.base_classes import pytest_generate_tests # noqa: F401
 
-from jwst.refpix.refpix_step import RefPixStep
-from jwst.dark_current.dark_current_step import DarkCurrentStep
-from jwst.dq_init.dq_init_step import DQInitStep
-from jwst.emission.emission_step import EmissionStep
-from jwst.flatfield.flat_field_step import FlatFieldStep
-from jwst.ipc.ipc_step import IPCStep
-from jwst.jump.jump_step import JumpStep
-from jwst.linearity.linearity_step import LinearityStep
-from jwst.persistence.persistence_step import PersistenceStep
-from jwst.photom.photom_step import PhotomStep
-from jwst.saturation.saturation_step import SaturationStep
+from jwst.refpix import RefPixStep
+from jwst.dark_current import DarkCurrentStep
+from jwst.dq_init import DQInitStep
+from jwst.emission import EmissionStep
+from jwst.flatfield import FlatFieldStep
+from jwst.ipc import IPCStep
+from jwst.jump import JumpStep
+from jwst.linearity import LinearityStep
+from jwst.persistence import PersistenceStep
+from jwst.photom import PhotomStep
+from jwst.saturation import SaturationStep
 
 
 # Parameterized regression tests for NIRCAM processing

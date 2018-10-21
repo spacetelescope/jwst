@@ -2,7 +2,7 @@ import pytest
 from numpy.testing import assert_allclose
 from gwcs.wcstools import grid_from_bounding_box
 
-from jwst.tests.base_test import BaseJWSTTest
+from jwst.tests.base_classes import BaseJWSTTest
 
 from jwst.assign_wcs import AssignWcsStep, nirspec
 from jwst.datamodels import ImageModel
@@ -40,6 +40,7 @@ class TestDetector1Pipeline(BaseJWSTTest):
                     'jw84600007001_02101_00001_nrs1_rate_ref.fits')
                   ]
         self.compare_outputs(outputs)
+
 
 @pytest.mark.bigdata
 class TestNIRSpecImprint(BaseJWSTTest):

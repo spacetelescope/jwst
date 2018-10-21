@@ -1,8 +1,9 @@
 import pytest
-from jwst.pipeline.calwebb_image2 import Image2Pipeline
+
+from jwst.pipeline import Image2Pipeline
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 
-from jwst.tests.base_test import BaseJWSTTest
+from jwst.tests.base_classes import BaseJWSTTest
 
 
 @pytest.mark.bigdata
