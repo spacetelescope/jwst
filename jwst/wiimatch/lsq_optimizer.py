@@ -168,7 +168,6 @@ def build_lsq_eqs(images, masks, sigmas, degree, center=None,
     >>> print(b)
     [ -198.5  -412.   -459.   -948.   -344.   -710.5  -781.  -1607.    198.5
        412.    459.    948.    344.    710.5   781.   1607. ]
-
     """
     nimages = len(images)
 
@@ -305,25 +304,7 @@ def pinv_solve(matrix, free_term, nimages, tol=None):
 
     Examples
     --------
-<<<<<<< HEAD
->>> from jwst.wiimatch.lsq_optimizer import build_lsq_eqs, pinv_solve
->>> import numpy as np
->>> im1 = np.zeros((5, 5, 4), dtype=np.float)
->>> cbg = 1.32 * np.ones_like(im1)
->>> ind = np.indices(im1.shape, dtype=np.float)
->>> im3 = cbg + 0.15 * ind[0] + 0.62 * ind[1] + 0.74 * ind[2]
->>> mask = np.ones_like(im1, dtype=np.int8)
->>> sigma = np.ones_like(im1, dtype=np.float)
->>> a, b, _, _, _ = build_lsq_eqs([im1, im3], [mask, mask],
-... [sigma, sigma], degree=(1,1,1), center=(0,0,0))
->>> pinv_solve(a, b, 2)
-array([[-6.60000000e-01, -7.50000000e-02, -3.10000000e-01,
-         7.10542736e-15, -3.70000000e-01,  8.88178420e-15,
-         9.21485110e-15, -2.77555756e-15],
-       [ 6.60000000e-01,  7.50000000e-02,  3.10000000e-01,
-        -6.43929354e-15,  3.70000000e-01, -7.77156117e-15,
-        -9.32587341e-15,  2.99760217e-15]])
-=======
+    >>> from jwst.wiimatch.lsq_optimizer import build_lsq_eqs, pinv_solve
     >>> import numpy as np
     >>> im1 = np.zeros((5, 5, 4), dtype=np.float)
     >>> cbg = 1.32 * np.ones_like(im1)
@@ -331,16 +312,15 @@ array([[-6.60000000e-01, -7.50000000e-02, -3.10000000e-01,
     >>> im3 = cbg + 0.15 * ind[0] + 0.62 * ind[1] + 0.74 * ind[2]
     >>> mask = np.ones_like(im1, dtype=np.int8)
     >>> sigma = np.ones_like(im1, dtype=np.float)
-    >>> a, b = build_lsq_eqs([im1, im3], [mask, mask],
+    >>> a, b, _, _, _ = build_lsq_eqs([im1, im3], [mask, mask],
     ... [sigma, sigma], degree=(1,1,1), center=(0,0,0))
     >>> pinv_solve(a, b, 2)
-    array([[ -6.60000000e-01,  -7.50000000e-02,  -3.10000000e-01,
-              3.33066907e-15,  -3.70000000e-01,   5.44009282e-15,
-              7.88258347e-15,  -2.33146835e-15],
-           [  6.60000000e-01,   7.50000000e-02,   3.10000000e-01,
-             -4.44089210e-15,   3.70000000e-01,  -4.21884749e-15,
-             -7.43849426e-15,   1.77635684e-15]])
->>>>>>> fix docstrings
+    array([[-6.60000000e-01, -7.50000000e-02, -3.10000000e-01,
+             7.10542736e-15, -3.70000000e-01,  8.88178420e-15,
+             9.21485110e-15, -2.77555756e-15],
+           [ 6.60000000e-01,  7.50000000e-02,  3.10000000e-01,
+            -6.43929354e-15,  3.70000000e-01, -7.77156117e-15,
+            -9.32587341e-15,  2.99760217e-15]])
 
     """
     if tol is None:
@@ -385,25 +365,7 @@ def rlu_solve(matrix, free_term, nimages):
 
     Examples
     --------
-<<<<<<< HEAD
->>> from jwst.wiimatch.lsq_optimizer import build_lsq_eqs, rlu_solve
->>> import numpy as np
->>> im1 = np.zeros((5, 5, 4), dtype=np.float)
->>> cbg = 1.32 * np.ones_like(im1)
->>> ind = np.indices(im1.shape, dtype=np.float)
->>> im3 = cbg + 0.15 * ind[0] + 0.62 * ind[1] + 0.74 * ind[2]
->>> mask = np.ones_like(im1, dtype=np.int8)
->>> sigma = np.ones_like(im1, dtype=np.float)
->>> a, b, _, _, _ = build_lsq_eqs([im1, im3], [mask, mask],
-... [sigma, sigma], degree=(1, 1, 1), center=(0, 0, 0))
->>> rlu_solve(a, b, 2)
-array([[-6.60000000e-01, -7.50000000e-02, -3.10000000e-01,
-        -1.19371180e-15, -3.70000000e-01, -1.62003744e-15,
-        -1.10844667e-15,  5.11590770e-16],
-       [ 6.60000000e-01,  7.50000000e-02,  3.10000000e-01,
-         1.19371180e-15,  3.70000000e-01,  1.62003744e-15,
-         1.10844667e-15, -5.11590770e-16]])
-=======
+    >>> from jwst.wiimatch.lsq_optimizer import build_lsq_eqs, rlu_solve
     >>> import numpy as np
     >>> im1 = np.zeros((5, 5, 4), dtype=np.float)
     >>> cbg = 1.32 * np.ones_like(im1)
@@ -411,16 +373,15 @@ array([[-6.60000000e-01, -7.50000000e-02, -3.10000000e-01,
     >>> im3 = cbg + 0.15 * ind[0] + 0.62 * ind[1] + 0.74 * ind[2]
     >>> mask = np.ones_like(im1, dtype=np.int8)
     >>> sigma = np.ones_like(im1, dtype=np.float)
-    >>> a, b = build_lsq_eqs([im1, im3], [mask, mask],
+    >>> a, b, _, _, _ = build_lsq_eqs([im1, im3], [mask, mask],
     ... [sigma, sigma], degree=(1, 1, 1), center=(0, 0, 0))
-    >>> lu_solve(a, b, 2)
-    array([[ -6.60000000e-01,  -7.50000000e-02,  -3.10000000e-01,
-             -1.19371180e-15,  -3.70000000e-01,  -1.62003744e-15,
-             -1.10844667e-15,   5.11590770e-16],
-           [  6.60000000e-01,   7.50000000e-02,   3.10000000e-01,
-              1.19371180e-15,   3.70000000e-01,   1.62003744e-15,
-              1.10844667e-15,  -5.11590770e-16]])
->>>>>>> fix docstrings
+    >>> rlu_solve(a, b, 2)
+    array([[-6.60000000e-01, -7.50000000e-02, -3.10000000e-01,
+            -1.19371180e-15, -3.70000000e-01, -1.62003744e-15,
+            -1.10844667e-15,  5.11590770e-16],
+           [ 6.60000000e-01,  7.50000000e-02,  3.10000000e-01,
+             1.19371180e-15,  3.70000000e-01,  1.62003744e-15,
+             1.10844667e-15, -5.11590770e-16]])
 
     """
     drop =  free_term.size // nimages
