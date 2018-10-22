@@ -2,13 +2,13 @@ Reference Files
 ===============
 The background image subtraction step uses reference files only when
 processing Wide-Field Slitless Spectroscopy (WFSS) exposures. Two reference
-files are used for WFSS mode.
+files are used for WFSS mode: WFSSBKG and WAVELENGTHRANGE.
 
 WFSS Background reference file
 ------------------------------
 
 :REFTYPE: WFSSBKG
-:Data model: `WfssBkgModel`
+:Data model: `~jwst.datamodels.WfssBkgModel`
 
 The WFSS background reference file contains a "master" image of the
 dispersed background produced by a particular filter+grism combination.
@@ -36,7 +36,7 @@ PUPIL      model.meta.instrument.pupil
 Reference File Format
 +++++++++++++++++++++
 WFSSBKG reference files are FITS files with 3 IMAGE extensions and
-1 BINTABLE extension. The FITS primary data array is assumed to be empty.
+1 BINTABLE extension. The FITS primary HDU does not contain a data array.
 The characteristics of the FITS extensions are as follows:
 
 =======  ========  =====  ==============  =========
@@ -54,7 +54,7 @@ Wavelength Range reference file
 -------------------------------
 
 :REFTYPE: WAVELENGTHRANGE
-:Data model: `WavelengthrangeModel`
+:Data model: `~jwst.datamodels.WavelengthrangeModel`
 
 The wavelength range reference file contains information about the range of
 wavelengths in the exposure. It is used, together with a source catalog,
