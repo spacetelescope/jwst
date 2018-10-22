@@ -42,7 +42,7 @@ env:
         - CRDS_PATH='/tmp/crds_cache'
         - MAIN_CMD='python setup.py'
         - MC_URL=https://repo.continuum.io/miniconda
-        - PIP_DEPENDENCIES=''
+        - PIP_DEPENDENCIES='git+https://github.com/spacetelescope/ci_watson.git'
         - PYTHON_VERSION=3.6
 
     matrix:

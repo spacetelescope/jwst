@@ -155,7 +155,7 @@ c_{1,0,\\ldots}^2,\\ldots).
 
     Examples
     --------
->>> import wiimatch
+>>> from jwst.wiimatch.match import match_lsq
 >>> import numpy as np
 >>> im1 = np.zeros((5, 5, 4), dtype=np.float)
 >>> cbg = 1.32 * np.ones_like(im1)
@@ -163,14 +163,14 @@ c_{1,0,\\ldots}^2,\\ldots).
 >>> im3 = cbg + 0.15 * ind[0] + 0.62 * ind[1] + 0.74 * ind[2]
 >>> mask = np.ones_like(im1, dtype=np.int8)
 >>> sigma = np.ones_like(im1, dtype=np.float)
->>> wiimatch.match.match_lsq([im1, im3], [mask, mask], [sigma, sigma],
+>>> match_lsq([im1, im3], [mask, mask], [sigma, sigma],
 ... degree=(1, 1, 1), center=(0, 0, 0))
-array([[ -6.60000000e-01,  -7.50000000e-02,  -3.10000000e-01,
-          3.33066907e-15,  -3.70000000e-01,   5.44009282e-15,
-          7.88258347e-15,  -2.33146835e-15],
-       [  6.60000000e-01,   7.50000000e-02,   3.10000000e-01,
-         -4.44089210e-15,   3.70000000e-01,  -4.21884749e-15,
-         -7.43849426e-15,   1.77635684e-15]])
+array([[-6.60000000e-01, -7.50000000e-02, -3.10000000e-01,
+        -1.19371180e-15, -3.70000000e-01, -1.62003744e-15,
+        -1.10844667e-15,  5.11590770e-16],
+       [ 6.60000000e-01,  7.50000000e-02,  3.10000000e-01,
+         1.19371180e-15,  3.70000000e-01,  1.62003744e-15,
+         1.10844667e-15, -5.11590770e-16]])
 
     """
     solver = solver.upper()
