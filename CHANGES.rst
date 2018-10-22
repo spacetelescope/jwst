@@ -102,6 +102,15 @@ datamodels
 - Updated EXP_TYPE allowed values to include "MIR_DARKALL", "MIR_DARKIMG",
   "MIR_DARKMRS", "MIR_FLATALL", "MIR_FLATIMAGE-EXT", and "MIR_FLATMRS-EXT" [#2709]
 
+- Added the new column "relresperror" to the MIRI Imager/LRS photom reference
+  file schema for data model "MiriImgPhotomModel", to allow for uncertainty
+  in the relative response values [#2721]
+
+documentation
+-------------
+
+- Clarifications of input and output file naming. [#2727]
+
 dq_init
 -------
 
