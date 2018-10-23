@@ -30,14 +30,14 @@ def extract_tso_object(input_model,
     reference_files : dict
         Needs to include the name of the wavelengthrange reference file
 
-    extract_height: int
+    extract_height : int
         The extraction height, in total, for the spectra in the
         cross-dispersion direction. If this is other than None,
         it will override the team default of 64 pixels. The team
         wants the source centered near row 34, so the extraction
         height is not the same on either size of the central pixel.
 
-    extract_orders: list[ints]
+    extract_orders : list[ints]
         This is an optional parameter that will override the
         orders specified for extraction in the wavelengthrange
         reference file.
@@ -160,7 +160,7 @@ def extract_tso_object(input_model,
         if (extract_y_min > extract_y_max):
             raise ValueError("Something bad happened calculating extraction y-size")
 
-        # limit the bounding boxto the detector
+        # limit the bounding box to the detector
         ymin, ymax = (max(extract_y_min, 0), min(extract_y_max, input_model.meta.subarray.ysize))
         xmin, xmax = (max(xmin, 0), min(xmax, input_model.meta.subarray.xsize))
         log.info("xmin, xmax: {} {}  ymin, ymax: {} {}".format(xmin, xmax, ymin, ymax))
@@ -273,8 +273,8 @@ def extract_grism_objects(input_model,
             catalog and for each spectral order.  Record this information.
 
     Step 4: Compute the WIDTH of each spectral subwindow, which may be fixed or
-            variable. The cross-dispersion size is taken from the minum bounding
-            box
+            variable. The cross-dispersion size is taken from the minimum
+            bounding box.
 
     """
     if reference_files is None:
@@ -405,11 +405,11 @@ def clamp(value, minval, maxval):
 
     Parameters
     ----------
-    value: float
+    value : float
         The value to limit
-    minval: float
+    minval : float
         The minimal acceptable value
-    maxval: float
+    maxval : float
         The maximum acceptable value
 
     Returns

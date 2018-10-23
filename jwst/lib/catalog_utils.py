@@ -104,19 +104,19 @@ class SkyObject(namedtuple('SkyObject', ("sid",
         x center of object in pixels
     ycentroid : float
         y center of object in pixels
-    sky_centroid: `~astropy.coordinates.SkyCorrd`
+    sky_centroid: `~astropy.coordinates.SkyCoord`
         ra and dec of the center of the object
-    abmag : float64
+    abmag : float
         AB Magnitude of object
-    abmag_error : float32
+    abmag_error : float
         Error on the AB magnitude
-    sky_bbox_ll : `~astropy.coordinates.SkyCorrd`
+    sky_bbox_ll : `~astropy.coordinates.SkyCoord`
         Lower left corner of the minimum bounding box
-    sky_bbox_lr : `~astropy.coordinates.SkyCorrd`
+    sky_bbox_lr : `~astropy.coordinates.SkyCoord`
         Lower right corder of the minimum bounding box
-    sky_bbox_ul : `~astropy.coordinates.SkyCorrd`
+    sky_bbox_ul : `~astropy.coordinates.SkyCoord`
         Upper left corner of the minimum bounding box
-    sky_bbox_ur : `~astropy.coordinates.SkyCorrd`
+    sky_bbox_ur : `~astropy.coordinates.SkyCoord`
         Upper right corner of the minimum bounding box
     """
 

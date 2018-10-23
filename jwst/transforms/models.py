@@ -65,21 +65,22 @@ class GrismObject(namedtuple('GrismObject', ("sid",
         x center of object in pixels
     ycentroid : float
         y center of object in pixels
-    order_bounding : dict
-        Contains the object x,y bounding location on the image
+    order_bounding : dict{order: tuple}
+        Contains the object x,y bounding locations on the image
+        keyed on spectral order
     partial_order : bool
         True if the order is only partially contained on the image
     waverange : list
         wavelength range for the order
-    sky_centroid: `~astropy.coordinates.SkyCorrd`
+    sky_centroid: `~astropy.coordinates.SkyCoord`
         ra and dec of the center of the object
-    sky_bbox_ll : `~astropy.coordinates.SkyCorrd`
+    sky_bbox_ll : `~astropy.coordinates.SkyCoord`
         Lower left corner of the minimum bounding box
-    sky_bbox_lr : `~astropy.coordinates.SkyCorrd`
+    sky_bbox_lr : `~astropy.coordinates.SkyCoord`
         Lower right corder of the minimum bounding box
-    sky_bbox_ul : `~astropy.coordinates.SkyCorrd`
+    sky_bbox_ul : `~astropy.coordinates.SkyCoord`
         Upper left corner of the minimum bounding box
-    sky_bbox_ur : `~astropy.coordinates.SkyCorrd`
+    sky_bbox_ur : `~astropy.coordinates.SkyCoord`
         Upper right corner of the minimum bounding box
 
     Notes
