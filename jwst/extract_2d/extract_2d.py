@@ -38,6 +38,12 @@ def extract2d(input_model,
         Cross-dispersion extraction height to use for time series grisms.
         This will override the default which for NRC_TSGRISM is a set
         size of 64 pixels.
+
+    Returns
+    -------
+    output_model : `~jwst.datamodels.ImageModel` or `~jwst.datamodelsCubeModel`
+      A copy of the input_model that has been processed.
+
     """
     nrs_modes = ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_BRIGHTOBJ',
                  'NRS_LAMP', 'NRS_AUTOFLAT']

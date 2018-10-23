@@ -75,7 +75,6 @@ def replace_suffix_ext(filename, old_suffix_list, new_suffix,
     return output_path
 
 
-
 class SkyObject(namedtuple('SkyObject', ("sid",
                                          "xcentroid",
                                          "ycentroid",
@@ -88,13 +87,37 @@ class SkyObject(namedtuple('SkyObject', ("sid",
                                          "sky_bbox_ur",
                                          ), rename=False)):
 
-    """ Sky Object
+    """
+    Sky Object container for WFSS catalog information.
 
     This is a convenience object for storing the catalog information
-    as a named tuple. The object has explicit fields to guard for changing column
-    locations in the catalog file that's read. Callers should
-    validate for the minimum fields they require. This is currently populated for
-    the minimum information needed by the WFSS modes in nircam and niriss.
+    as a named tuple. The object has explicit fields to guard for changing
+    column locations in the catalog file that's read. Callers should
+    validate for the minimum fields they require. This is currently populated
+    for the minimum information needed by the WFSS modes in nircam and niriss.
+
+    Parameters
+    ----------
+    sid : int
+        source identifed
+    xcentroid : float
+        x center of object in pixels
+    ycentroid : float
+        y center of object in pixels
+    sky_centroid: `~astropy.coordinates.SkyCorrd`
+        ra and dec of the center of the object
+    abmag : float64
+        AB Magnitude of object
+    abmag_error : float32
+        Error on the AB magnitude
+    sky_bbox_ll : `~astropy.coordinates.SkyCorrd`
+        Lower left corner of the minimum bounding box
+    sky_bbox_lr : `~astropy.coordinates.SkyCorrd`
+        Lower right corder of the minimum bounding box
+    sky_bbox_ul : `~astropy.coordinates.SkyCorrd`
+        Upper left corner of the minimum bounding box
+    sky_bbox_ur : `~astropy.coordinates.SkyCorrd`
+        Upper right corner of the minimum bounding box
     """
 
     __slots__ = ()  # prevent instance dictionary creation for lower mem
@@ -144,4 +167,3 @@ class SkyObject(namedtuple('SkyObject', ("sid",
                         str(self.sky_bbox_lr),
                         str(self.sky_bbox_ul),
                         str(self.sky_bbox_ur)))
-        

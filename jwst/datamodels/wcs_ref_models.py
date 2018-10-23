@@ -151,6 +151,12 @@ class DistortionMRSModel(ReferenceFileModel):
 class SpecwcsModel(_SimpleModel):
     """
     A model for a reference file of type "specwcs".
+
+    Notes
+    -----
+    For NIRISS and NIRCAM WFSS modes the specwcs file is
+    used during extract_2D. See NIRCAMGrismModel and
+    NIRISSGrismModel.
     """
     schema_url = "specwcs.schema.yaml"
     reftype = "specwcs"
@@ -179,21 +185,21 @@ class NIRCAMGrismModel(ReferenceFileModel):
     This reference file contains the models for wave, x, and y polynomial
     solutions that describe dispersion through the grism.
 
-    Attributes
+    Parameters
     ----------
-    displ: astropy.modeling.Model
+    displ: `~astropy.modeling.Model`
           Nircam Grism wavelength dispersion model
-    dispx : astropy.modeling.Model
+    dispx : `~astropy.modeling.Model`
           Nircam Grism row dispersion model
-    dispy : astropy.modeling.Model
+    dispy : `~astropy.modeling.Model`
           Nircam Grism column dispersion model
-    invdispl : astropy.modeling.Model
+    invdispl : `~astropy.modeling.Model`
           Nircam Grism inverse wavelength dispersion model
-    invdispx : astropy.modeling.Model
+    invdispx : `~astropy.modeling.Model`
           Nircam Grism inverse row dispersion model
-    invdispy : astropy.modeling.Model
+    invdispy : `~astropy.modeling.Model`
           Nircam Grism inverse column dispersion model
-    orders : astropy.modeling.Model
+    orders : `~astropy.modeling.Model`
           NIRCAM Grism orders, matched to the array locations of the
           dispersion models
 
@@ -228,7 +234,7 @@ class NIRCAMGrismModel(ReferenceFileModel):
             self.invdispy = invdispy
         if orders is not None:
             self.orders = orders
-        
+
     def populate_meta(self):
         self.meta.instrument.name = "NIRCAM"
         self.meta.exposure.type = "NRC_WFSS"
@@ -255,6 +261,26 @@ class NIRCAMGrismModel(ReferenceFileModel):
 class NIRISSGrismModel(ReferenceFileModel):
     """
     A model for a reference file of type "specwcs" for NIRISS grisms.
+
+    Parameters
+    ----------
+    displ: `~astropy.modeling.Model`
+          NIRISS Grism wavelength dispersion model
+    dispx : `~astropy.modeling.Model`
+          NIRISS Grism row dispersion model
+    dispy : `~astropy.modeling.Model`
+          NIRISS Grism column dispersion model
+    invdispl : `~astropy.modeling.Model`
+          NIRISS Grism inverse wavelength dispersion model
+    invdispx : `~astropy.modeling.Model`
+          NIRISS Grism inverse row dispersion model
+    invdispy : `~astropy.modeling.Model`
+          NIRISS Grism inverse column dispersion model
+    orders : `~astropy.modeling.Model`
+          NIRISS Grism orders, matched to the array locations of the
+          dispersion models
+    fwcpos_ref : float
+        The reference value for the filter wheel position
     """
     schema_url = "specwcs_niriss_grism.schema.yaml"
     reftype = "specwcs"
@@ -352,7 +378,21 @@ class RegionsModel(ReferenceFileModel):
 class WavelengthrangeModel(ReferenceFileModel):
     """
     A model for a reference file of type "wavelengthrange".
+
     The model is used by MIRI, NIRSPEC, NIRCAM, and NIRISS
+
+
+    Parameters
+    ----------
+    wrange : list
+        Contains a list of [order, filter, min wave, max wave]
+    order : list
+        A list of orders that are available and described in the file
+    extract_orders : list
+        A list of filters and the orders that should be extracted by default    
+    wunits : `~astropy.units`
+        The units for the wavelength data
+
     """
     schema_url = "wavelengthrange.schema.yaml"
     reftype = "wavelengthrange"
