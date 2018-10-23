@@ -28,9 +28,8 @@ def create_pipeline(input_model, reference_files):
     ----------
     input_model : `~jwst.datamodel.DataModel`
         Input datamodel for processing
-    reference_files : dict
-        The dictionary of reference file names and their associated files
-        {reftype: reference file name}.
+    reference_files : dict {reftype: reference file name}
+        The dictionary of reference file names and their associated files.
 
     Returns
     -------
@@ -133,9 +132,9 @@ def tsgrism(input_model, reference_files):
 
     Parameters
     ----------
-    input_model: `~jwst.datamodels.ImagingModel`
+    input_model : `~jwst.datamodels.ImagingModel`
         The input datamodel, derived from datamodels
-    reference_files: dict
+    reference_files : dict
         Dictionary of reference file names {reftype: reference file name}.
 
     Returns
@@ -260,19 +259,19 @@ def wfss(input_model, reference_files):
     pipeline : list
         The pipeline list that is returned is suitable for
         input into  gwcs.wcs.WCS to create a GWCS object.
-        
+
     Notes
     -----
-    The tree in the grism reference file has a section for each order/beam
-    not sure if there will be a separate passband reference file needed for
-    the wavelength scaling or wedge offsets. This helper is currently in
-    jwreftools/nircam/nircam_reftools.
+    The tree in the grism reference file has a section for each order.
+    Not sure if there will be a separate passband reference file needed for
+    the wavelength scaling or wedge offsets.
 
     The direct image the catalog has been created from was processed through
-    resampe, but the dispersed images have not. This is OK if the trace and
-    dispersion solutions are defined with respect to the distortion-corrected
-    image. The catalog from the combined direct image has object locations in
-    in detector space and the RA DEC of the object on sky.
+    resample, but the dispersed images have not been resampled. This is OK if
+    the trace and dispersion solutions are defined with respect to the
+    distortion-corrected image. The catalog from the combined direct image
+    has object locations in in detector space and the RA DEC of the object on
+    the sky.
 
     The WCS information for the grism image  plus the observed filter will be
     used to translate these to pixel locations for each of the objects.

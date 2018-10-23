@@ -99,7 +99,7 @@ def _add_3rd_axis(input_model):
 
     Parameters
     ----------
-    input_model: `~jwst.datamodels.DataModel`
+    input_model : `~jwst.datamodels.DataModel`
         An instance of a datamodel
 
     Notes
