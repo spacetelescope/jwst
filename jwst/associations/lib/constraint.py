@@ -177,7 +177,6 @@ class SimpleConstraint(SimpleConstraintABC):
     will return a `SimpleConstraint` and a reprocess list.
     >>> item = 'my_value'
     >>> new_c, reprocess = c.check_and_set(item)
-    SimpleConstraint, []
 
     If it doesn't match, `False` will be returned.
     >>> bad_item = 'not_my_value'
