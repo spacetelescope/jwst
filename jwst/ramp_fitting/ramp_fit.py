@@ -167,7 +167,7 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
     # model arrays to exclude the first group.
 
     if (instrume == 'MIRI' and nreads > 1):
-        first_gdq = model.groupdq[:,1,:,:]
+        first_gdq = model.groupdq[:,0,:,:]
 
         if np.all(np.bitwise_and( first_gdq, dqflags.group['DO_NOT_USE'] )):
             model.data = model.data[:,1:,:,:]
