@@ -183,6 +183,9 @@ lib
 - Updated reffiles_utils to no longer issue warnings about mismatch in 
   data array size params for NIRSpec IRS2 readouts. [#2664]
 
+- Updated reffiles_utils to regard IRS2 science exposures as a match with normal
+  sized reference files. [#2755]
+
 linearity
 ---------
 
