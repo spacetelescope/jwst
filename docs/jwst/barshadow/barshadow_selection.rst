@@ -1,3 +1,5 @@
+.. _barshadow_selectors:
+
 Reference Selection Keywords for BARSHADOW
 ++++++++++++++++++++++++++++++++++++++++++
 CRDS selects appropriate BARSHADOW references based on the following keywords.

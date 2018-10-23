@@ -47,7 +47,7 @@ MULTICHANNEL_MSM     BINTABLE  TFIELDS = 5  MIRI only
 MULTICHAN_PRISM_MSM  BINTABLE  TFIELDS = 5  NIRSpec only
 MULTICHAN_MED_MSM    BINTABLE  TFIELDS = 5  NIRSpec only
 MULTICHAN_HIGH_MSM   BINTABLE  TFIELDS = 5  NIRSpec only
-===================  ========  ===========  ============
+===================  ========  ===========  =============
 
 The formats of the individual table extensions are listed below,
 first for the MIRI form of the reference file and then for NIRSpec.

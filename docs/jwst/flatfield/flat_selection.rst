@@ -1,3 +1,5 @@
+.. _flat_selectors:
+
 Reference Selection Keywords for FLAT
 +++++++++++++++++++++++++++++++++++++
 CRDS selects appropriate FLAT references based on the following keywords.
