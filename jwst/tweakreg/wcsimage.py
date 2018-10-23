@@ -1448,7 +1448,7 @@ class RefCatalog():
             xv = [x[0] - 0.5, x[0] - 0.5, x[0] + 0.5, x[0] + 0.5, x[0] - 0.5]
             yv = [y[0] - 0.5, y[0] + 0.5, y[0] + 0.5, y[0] - 0.5, y[0] - 0.5]
 
-        elif len(xv) == 3:
+        elif len(xv) == 2:
             # two points. build a small box around them:
             x, y = convex_hull(x, y, wcs=None)
 
