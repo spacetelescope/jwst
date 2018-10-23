@@ -52,7 +52,7 @@ def extract2d(input_model,
     log.info('EXP_TYPE is {0}'.format(exp_type))
 
     if exp_type in nrs_modes:
-        if input_model.meta.grating.lower() == "mirror":
+        if input_model.meta.instrument.grating.lower() == "mirror":
             # Catch the case of EXP_TYPE=NRS_LAMP and grating=MIRROR
             log.info("'EXP_TYPE {} with grating=MIRROR not supported for extract 2D".format(exp_type))
             input_model.meta.cal_step.extract_2d = 'SKIPPED'

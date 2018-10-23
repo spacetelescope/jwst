@@ -49,7 +49,7 @@ def create_pipeline(input_model, reference_files):
     reference_files : dict
         {reftype: reference_file_name} mapping.
     """
-    if input_model.meta.grating.lower() == "mirror":
+    if input_model.meta.instrument.grating.lower() == "mirror":
         pipeline = imaging(input_model, reference_files)
     else:
         exp_type = input_model.meta.exposure.type.lower()
