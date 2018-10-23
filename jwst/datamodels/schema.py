@@ -1,7 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 import re
-import textwrap
 from collections import OrderedDict
 
 from asdf import AsdfFile
@@ -301,8 +300,7 @@ def read_schema(schema_file, extensions=None):
     return schema
 
 
-def build_docstring(klass, template, header="", footer="", width=78,
-                    initial_indent=0, subsequent_indent=8):
+def build_docstring(klass, template):
     """
     Build a docstring for the specified DataModel class from its schema.
 
@@ -314,16 +312,6 @@ def build_docstring(klass, template, header="", footer="", width=78,
         A class instance of a datamodel
     template: str
         A string format template to be applied to each schema item
-    header: str
-        A line which precedes the result
-    footer: str
-        A line which follows the result
-    width: int
-        The maximum width of the line
-    initial_indent: int
-        The number of blanks preceding each initial line
-    subsequent_indent: int
-        The number of blanks before each wrapped line
     """
 
     def get_field_info(subschema, path, combiner, info, recurse):
@@ -332,11 +320,6 @@ def build_docstring(klass, template, header="", footer="", width=78,
             attr = '.'.join(path)
             info[attr] = subschema
         return 'fits_hdu' in subschema or 'fits_keyword' in subschema
-
-    # Set formatting parameters
-    wrapper = textwrap.TextWrapper(width=width,
-                                   initial_indent =(' '*initial_indent),
-                                   subsequent_indent=(' '*subsequent_indent))
 
     # Silly rabbit, only datamodels have schemas
     if not (klass == model_base.DataModel or
@@ -355,6 +338,9 @@ def build_docstring(klass, template, header="", footer="", width=78,
         shape = tuple([1 for i in range(len(shape))])
         shaped_object = klass(init=shape)
 
+    # Get the title of the schema
+    title = shaped_object._schema.get('title')
+
     # Get schema fields which have an associated hdu
     info = {}
     walk_schema(shaped_object._schema, get_field_info, ctx=info)
@@ -367,8 +353,9 @@ def build_docstring(klass, template, header="", footer="", width=78,
         default_schema[field] = ''
 
     buffer = []
-    if header:
-        buffer.append(header)
+    if title:
+        buffer.append(title + "\n\n")
+    buffer.append("Attributes\n__________\n")
 
     for attr, subschema in info.items():
         schema = {}
@@ -388,20 +375,22 @@ def build_docstring(klass, template, header="", footer="", width=78,
         schema['default'] = instance is not None
 
         # Extract table field names from datatype
-        if type(schema['datatype']) != str:
+        if type(schema['datatype']) == str:
+            schema['array'] = True
+        else:
+            schema['records'] = True
             fields = []
             for field_info in schema['datatype']:
                 fields.append(field_info['name'])
-            schema['datatype'] = ', '.join(fields)
+            schema['fields'] = ', '.join(fields)
+            schema['datatype'] = 'table'
 
         # Convert boolean fields to their field names
         for field, value in schema.items():
             if type(value) == bool:
                 schema[field] = field
 
-        buffer.extend(wrapper.wrap(template.format(**schema)))
+        buffer.append(template.format(**schema))
 
-    if footer:
-        buffer.append(footer)
-    return "\n".join(buffer) + "\n"
+    return ''.join(buffer)
 
