@@ -162,7 +162,7 @@ c_{1,0,\\ldots}^2,\\ldots).
     >>> im3 = cbg + 0.15 * ind[0] + 0.62 * ind[1] + 0.74 * ind[2]
     >>> mask = np.ones_like(im1, dtype=np.int8)
     >>> sigma = np.ones_like(im1, dtype=np.float)
-    >>> match_lsq([im1, im3], [mask, mask], [sigma, sigma],
+    >>> match_lsq([im1, im3], [mask, mask], [sigma, sigma],   #doctest: +FLOAT_CMP
     ... degree=(1, 1, 1), center=(0, 0, 0))
     array([[-6.60000000e-01, -7.50000000e-02, -3.10000000e-01,
             -1.19371180e-15, -3.70000000e-01, -1.62003744e-15,

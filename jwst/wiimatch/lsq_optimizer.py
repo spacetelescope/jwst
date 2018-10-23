@@ -314,7 +314,7 @@ def pinv_solve(matrix, free_term, nimages, tol=None):
     >>> sigma = np.ones_like(im1, dtype=np.float)
     >>> a, b, _, _, _ = build_lsq_eqs([im1, im3], [mask, mask],
     ... [sigma, sigma], degree=(1,1,1), center=(0,0,0))
-    >>> pinv_solve(a, b, 2)
+    >>> pinv_solve(a, b, 2) # doctest: +FLOAT_CMP
     array([[-6.60000000e-01, -7.50000000e-02, -3.10000000e-01,
              7.10542736e-15, -3.70000000e-01,  8.88178420e-15,
              9.21485110e-15, -2.77555756e-15],
@@ -375,7 +375,7 @@ def rlu_solve(matrix, free_term, nimages):
     >>> sigma = np.ones_like(im1, dtype=np.float)
     >>> a, b, _, _, _ = build_lsq_eqs([im1, im3], [mask, mask],
     ... [sigma, sigma], degree=(1, 1, 1), center=(0, 0, 0))
-    >>> rlu_solve(a, b, 2)
+    >>> rlu_solve(a, b, 2)   # doctest: +FLOAT_CMP
     array([[-6.60000000e-01, -7.50000000e-02, -3.10000000e-01,
             -1.19371180e-15, -3.70000000e-01, -1.62003744e-15,
             -1.10844667e-15,  5.11590770e-16],
