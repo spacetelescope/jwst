@@ -378,8 +378,6 @@ class CubeBuildStep (Step):
 
                 if ch in valid_channel:
                     self.pars_input['channel'].append(ch)
-                else:
-                    raise ErrorInvalidParameter("Invalid Channel %s", ch)
 # remove duplicates if needed
             self.pars_input['channel'] = list(set(self.pars_input['channel']))
 
@@ -406,8 +404,6 @@ class CubeBuildStep (Step):
                 b = str(b)
                 if b in valid_subchannel:
                     self.pars_input['subchannel'].append(b)
-                else:
-                    raise ErrorInvalidParameter("Invalid Subchannel %s", b)
 # remove duplicates if needed
             self.pars_input['subchannel'] = list(set(self.pars_input['subchannel']))
 # ________________________________________________________________________________
@@ -432,13 +428,11 @@ class CubeBuildStep (Step):
                 f = str(f)
                 if f in valid_fwa:
                     self.pars_input['filter'].append(f)
-                else:
-                    raise ErrorInvalidParameter("Invalid Filter %s", f)
 # remove duplicates if needed
             self.pars_input['filter'] = list(set(self.pars_input['filter']))
 # ________________________________________________________________________________
 # For NIRSPEC we can set the grating
-# Ff set to all then let the DetermineCubeCoverage figure out what gratings are
+# If set to all then let the DetermineCubeCoverage figure out what gratings are
 # covered by the data
         if self.grating == 'all':
             self.grating = ''
@@ -459,10 +453,7 @@ class CubeBuildStep (Step):
                 g = str(g)
                 if g in valid_gwa:
                     self.pars_input['grating'].append(g)
-                else:
-                    raise ErrorInvalidParameter("Invalid Grating %s", g)
 # remove duplicates if needed
             self.pars_input['grating'] = list(set(self.pars_input['grating']))
 # ________________________________________________________________________________
-class ErrorInvalidParameter(Exception):
     pass
