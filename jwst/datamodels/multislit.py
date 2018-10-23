@@ -53,8 +53,12 @@ class MultiSlitModel(model_base.DataModel):
             return res
         elif isinstance(key, int):
             # Return an instance of a SlitModel
-            slit = self.slits[key]  # returns an ObjectNode instance
-
+            # This only executes when the top object level
+            # is called: object[1].key not object.slits[key]
+            try:
+                slit = self.slits[key]  # returns an ObjectNode instance
+            except IndexError:
+                raise("Slit {0} doesn't exist".format(key))
             kwargs = {}
             items = dict(slit.items())
             for key in items:
