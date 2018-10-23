@@ -24,7 +24,8 @@ def extract_tso_object(input_model,
 
     Parameters
     ----------
-    input_model : jwst.datamodels.CubeModel
+    input_model : `~jwst.datamodels.CubeModel`
+        The input TSO image as an instance of a CubeModel
 
     reference_files : dict
         Needs to include the name of the wavelengthrange reference file
@@ -43,7 +44,7 @@ def extract_tso_object(input_model,
 
     Returns
     -------
-    output_model : jwst.datamodels.SlitModel()
+    output_model : `~jwst.datamodels.SlitModel`
 
 
     Notes
@@ -158,7 +159,7 @@ def extract_tso_object(input_model,
 
         if (extract_y_min > extract_y_max):
             raise ValueError("Something bad happened calculating extraction y-size")
-          
+
         # limit the bounding boxto the detector
         ymin, ymax = (max(extract_y_min, 0), min(extract_y_max, input_model.meta.subarray.ysize))
         xmin, xmax = (max(xmin, 0), min(xmax, input_model.meta.subarray.xsize))
@@ -220,7 +221,8 @@ def extract_grism_objects(input_model,
 
     Parameters
     ----------
-    input_model : jwst.datamodels.ImageModel
+    input_model : `~jwst.datamodels.ImageModel`
+        An instance of an ImageModel, this is the grism image
 
     grism_objects : list(GrismObject)
         A list of GrismObjects
@@ -231,7 +233,7 @@ def extract_grism_objects(input_model,
 
     Returns
     -------
-    output_model : jwst.datamodels.MultiSlitModel()
+    output_model : `~jwst.datamodels.MultiSlitModel`
 
 
     Notes
@@ -243,6 +245,36 @@ def extract_grism_objects(input_model,
     by calling jwst.assign_wcs.util.create_grism_bbox() which
     will return a list of GrismObjects that countain the bounding
     boxes that will be used to define the 2d extraction area.
+
+    For each spectral order, the configuration file contains a
+    magnitude-cutoff value. Sources with magnitudes fainter than the
+    extraction cutoff (MMAG_EXTRACT)  will not be extracted, but are
+    accounted for when computing the spectral contamination and background
+    estimates. The default extraction value is 99 right now.
+
+    The sensitivity information from the original aXe style configuration
+    file needs to be modified by the passband of the filter used for
+    the direct image to get the min and max wavelengths
+    which correspond to t=0 and t=1, this currently has been done by the team
+    and the min and max wavelengths to use to calculate t are stored in the
+    grism reference file as wavelengthrange.
+
+    Step 1: Convert the source catalog from the reference frame of the
+            uberimage to that of the dispersed image.  For the Vanilla
+            Pipeline we assume that the pointing information in the file
+            headers is sufficient.  This will be strictly true if all images
+            were obtained in a single visit (same guide stars).
+
+    Step 2: Record source information for each object in the catalog: position
+            (RA and Dec), shape (A_IMAGE, B_IMAGE, THETA_IMAGE), and all
+            available magnitudes, and minimum bounding boxes
+
+    Step 3: Compute the trace and wavelength solutions for each object in the
+            catalog and for each spectral order.  Record this information.
+
+    Step 4: Compute the WIDTH of each spectral subwindow, which may be fixed or
+            variable. The cross-dispersion size is taken from the minum bounding
+            box
 
     """
     if reference_files is None:
@@ -369,7 +401,7 @@ def extract_grism_objects(input_model,
 
 def clamp(value, minval, maxval):
     """
-    Return the value clipped between minval and maxval
+    Return the value clipped between minval and maxval.
 
     Parameters
     ----------
@@ -391,6 +423,7 @@ def clamp(value, minval, maxval):
 def compute_dispersion(wcs):
     """
     Compute the pixel dispersion.
+    
     Make a model for the pixel dispersion from the grismconf specs
 
     Parameters

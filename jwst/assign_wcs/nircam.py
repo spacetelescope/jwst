@@ -26,7 +26,7 @@ def create_pipeline(input_model, reference_files):
 
     Parameters
     ----------
-    input_model : jwst.datamodel.DataModel
+    input_model : `~jwst.datamodel.DataModel`
         Input datamodel for processing
     reference_files : dict
         The dictionary of reference file names and their associated files
@@ -50,7 +50,7 @@ def imaging(input_model, reference_files):
 
     Parameters
     ----------
-    input_model : jwst.datamodel.DataModel
+    input_model : `~jwst.datamodel.DataModel`
         Input datamodel for processing
     reference_files : dict
         The dictionary of reference file names and their associated files
@@ -90,7 +90,7 @@ def imaging_distortion(input_model, reference_files):
 
     Parameters
     ----------
-    input_model : jwst.datamodel.DataModel
+    input_model : `~jwst.datamodel.DataModel`
         Input datamodel for processing
     reference_files : dict
         The dictionary of reference file names and their associated files.
@@ -133,7 +133,7 @@ def tsgrism(input_model, reference_files):
 
     Parameters
     ----------
-    input_model: jwst.datamodels.ImagingModel
+    input_model: `~jwst.datamodels.ImagingModel`
         The input datamodel, derived from datamodels
     reference_files: dict
         Dictionary of reference file names {reftype: reference file name}.
@@ -250,7 +250,7 @@ def wfss(input_model, reference_files):
 
     Parameters
     ----------
-    input_model: jwst.datamodels.ImagingModel
+    input_model: `~jwst.datamodels.ImagingModel`
         The input datamodel, derived from datamodels
     reference_files: dict
         Dictionary {reftype: reference file name}.
@@ -268,8 +268,8 @@ def wfss(input_model, reference_files):
     the wavelength scaling or wedge offsets. This helper is currently in
     jwreftools/nircam/nircam_reftools.
 
-    The direct image the catalog has been created from was corrected for
-    distortion, but the dispersed images have not. This is OK if the trace and
+    The direct image the catalog has been created from was processed through
+    resampe, but the dispersed images have not. This is OK if the trace and
     dispersion solutions are defined with respect to the distortion-corrected
     image. The catalog from the combined direct image has object locations in
     in detector space and the RA DEC of the object on sky.
@@ -283,48 +283,13 @@ def wfss(input_model, reference_files):
     The extent of the trace for each object can then be calculated based on
     the grism in use (row or column). Where the left/bottom of the trace starts
     at t = 0 and the right/top of the trace ends at t = 1, as long as they
-    have been defined as such by th team.
+    have been defined as such by the team.
 
     The extraction box is calculated to be the minimum bounding box of the
     object extent in the segmentation map associated with the direct image.
-    The values of the min and max corners are saved in the photometry
-    catalog in units of RA,DEC so they can be translated to pixels by
-    the dispersed image's imaging wcs.
-
-    For each spectral order, the configuration file contains a
-    magnitude-cutoff value. Sources with magnitudes fainter than the
-    extraction cutoff (MMAG_EXTRACT)  will not be extracted, but are
-    accounted for when computing the spectral contamination and background
-    estimates. The default extraction value is 99 right now.
-
-    The sensitivity information from the original aXe style configuration
-    file needs to be modified by the passband of the filter used for
-    the direct image to get the min and max wavelengths
-    which correspond to t=0 and t=1, this currently has been done by the team
-    and the min and max wavelengths to use to calculate t are stored in the
-    grism reference file as wavelengthrange, which can be selected by waverange_selector
-    which contains the filter names.
-
-    All the following was moved to the extract_2d stage.
-
-    Step 1: Convert the source catalog from the reference frame of the
-            uberimage to that of the dispersed image.  For the Vanilla
-            Pipeline we assume that the pointing information in the file
-            headers is sufficient.  This will be strictly true if all images
-            were obtained in a single visit (same guide stars).
-
-    Step 2: Record source information for each object in the catalog: position
-            (RA and Dec), shape (A_IMAGE, B_IMAGE, THETA_IMAGE), and all
-            available magnitudes.
-
-    Step 3: Compute the trace and wavelength solutions for each object in the
-            catalog and for each spectral order.  Record this information.
-
-    Step 4: Compute the WIDTH of each spectral subwindow, which may be fixed or
-            variable (see discussion of optimal extraction, below).  Record
-            this information.
-
-    Catalog and associated steps moved to extract_2d.
+    The values of the min and max corners, taken from the computed minimum
+    bounding box are saved in the photometry catalog in units of RA, DEC
+    so they can be translated to pixels by the dispersed image's imaging-wcs.
     """
 
     # The input is the grism image

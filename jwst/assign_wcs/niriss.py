@@ -22,12 +22,13 @@ log.setLevel(logging.DEBUG)
 
 __all__ = ["create_pipeline", "imaging", "niriss_soss", "niriss_soss_set_input", "wfss"]
 
+
 def create_pipeline(input_model, reference_files):
     """Create the WCS pipeline based on EXP_TYPE.
 
     Parameters
     ----------
-    input_model : jwst.datamodel.DataModel
+    input_model : `~jwst.datamodel.DataModel`
         Input datamodel for processing
     reference_files : dict
         The dictionary of reference file names and their associated files
@@ -52,8 +53,10 @@ def niriss_soss_set_input(model, order_number):
 
     Parameters
     ----------
-    model - `~jwst.datamodels.ImageModel`
-    order_number - the spectral order
+    model : `~jwst.datamodels.ImageModel`
+        An instance of an ImageModel
+    order_number : int
+        the spectral order
 
     Returns
     -------
@@ -89,7 +92,7 @@ def niriss_soss(input_model, reference_files):
 
     Parameters
     ----------
-    input_model : jwst.datamodel.DataModel
+    input_model : `~jwst.datamodel.DataModel`
         Input datamodel for processing
     reference_files : dict
         The dictionary of reference file names and their associated files
@@ -134,7 +137,7 @@ def niriss_soss(input_model, reference_files):
             wl3 = wl.tree[3].copy()
     except Exception as e:
         raise IOError('Error reading wavelength correction from {}'.format(reference_files['specwcs']))
-        
+
     try:
         velosys = input_model.meta.wcsinfo.velosys
     except AttributeError:
@@ -180,7 +183,7 @@ def imaging(input_model, reference_files):
 
     Parameters
     ----------
-    input_model : jwst.datamodel.DataModel
+    input_model : `~jwst.datamodel.DataModel`
         Input datamodel for processing
     reference_files : dict
         The dictionary of reference file names and their associated files
@@ -220,7 +223,7 @@ def imaging_distortion(input_model, reference_files):
 
     Parameters
     ----------
-    input_model : jwst.datamodel.DataModel
+    input_model : `~jwst.datamodel.DataModel`
         Input datamodel for processing
     reference_files : dict
         The dictionary of reference file names and their associated files.
@@ -264,7 +267,7 @@ def wfss(input_model, reference_files):
 
     Parameters
     ----------
-    input_model: jwst.datamodels.ImagingModel
+    input_model: `~jwst.datamodels.ImagingModel`
         The input datamodel, derived from datamodels
     reference_files: dict
         Dictionary specifying reference file names

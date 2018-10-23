@@ -97,6 +97,13 @@ def _add_3rd_axis(input_model):
     """
     Add WCS keywords and their default values for the spectral axis.
 
+    Parameters
+    ----------
+    input_model: `~jwst.datamodels.DataModel`
+        An instance of a datamodel
+
+    Notes
+    -----
     SDP adds CTYPE3 and CUNIT3.
 
     """
