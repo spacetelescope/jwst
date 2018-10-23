@@ -7,19 +7,16 @@ class QuadModel(DataModel):
     """
     A data model for 4D image arrays.
 
-    Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    Attributes
+    __________
+    data : numpy float32 array
+         The science data
 
-    data : numpy array
-        The science data.  4-D.
+    dq : numpy uint32 array
+         Data quality array
 
-    dq : numpy array
-        The data quality array.  4-D.
-
-    err : numpy array
-        The error array.  4-D
+    err : numpy float32 array
+         Error array
     """
     schema_url = "quad.schema.yaml"
 

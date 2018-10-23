@@ -21,10 +21,19 @@ class MultiProductModel(model_base.DataModel):
     input file or `DrizProductModel` will be copied to the first element of
     `products`.
 
-    Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    Attributes
+    __________
+    products.items.data : numpy float32 array
+         resampled science data
+
+    products.items.wht : numpy float32 array
+         drizzle algorithm weight array
+
+    products.items.con : numpy int32 array
+         drizzle algorithm context array
+
+    products.items.relsens : numpy table
+         relative sensitivity table
     """
     schema_url = "multiproduct.schema.yaml"
 

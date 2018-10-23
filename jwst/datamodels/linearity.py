@@ -9,19 +9,16 @@ class LinearityModel(ReferenceFileModel):
     """
     A data model for linearity correction information.
 
-    Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    Attributes
+    __________
+    coeffs : numpy float32 array
+         Linearity coefficients
 
-    coeffs : numpy array
-        Coefficients defining the nonlinearity function.
+    dq : numpy uint32 array
+         Data quality flags
 
-    dq : numpy array
-        The data quality array.
-
-    dq_def : numpy array
-        The data quality definitions table.
+    dq_def : numpy table
+         DQ flag definitions
     """
     schema_url = "linearity.schema.yaml"
 

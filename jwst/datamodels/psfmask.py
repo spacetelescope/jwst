@@ -8,12 +8,9 @@ class PsfMaskModel(ReferenceFileModel):
     """
     A data model for coronagraphic 2D PSF mask reference files
 
-    Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
-
-    data : numpy array
-        The 2-D mask array
+    Attributes
+    __________
+    data : numpy float32 array
+         The PSF mask
     """
     schema_url = "psfmask.schema.yaml"

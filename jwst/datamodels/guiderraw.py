@@ -7,34 +7,31 @@ class GuiderRawModel(DataModel):
     """
     A data model for FGS pipeline input files
 
-    Parameters
-    ----------
-    init: any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    Attributes
+    __________
+    data : numpy float32 array
+         The science data
 
-    data: numpy array
-        The science data. 4-D
+    err : numpy float32 array
+         Error array
 
-    dq: numpy array
-        The data quality array. 2-D.
+    dq : numpy uint32 array
+         Data quality array
 
-    err: numpy array
-        The error array. 4-D.
+    planned_star_table : numpy table
+         Planned reference star table
 
-    plan_star_table: table
-        The planned reference star table
+    flight_star_table : numpy table
+         Flight reference star table
 
-    flight_star_table: table
-        The flight reference star table
+    pointing_table : numpy table
+         Pointing table
 
-    pointing_table: table
-        The pointing table
+    centroid_table : numpy table
+         Centroid packet table
 
-    centroid_table: table
-        The centroid packet table
-
-    track_sub_table: table
-        The track subarray table
+    track_sub_table : numpy table
+         Track subarray data table
     """
 
     schema_url = "guider_raw.schema.yaml"

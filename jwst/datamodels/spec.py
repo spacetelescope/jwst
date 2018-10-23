@@ -8,12 +8,10 @@ class SpecModel(DataModel):
     """
     A data model for 1D spectra.
 
-    Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
-
-    spec_table : numpy array
+    Attributes
+    __________
+    spec_table : numpy table
+        Extracted spectral data table
         A table with at least four columns:  wavelength, flux, an error
         estimate for the flux, and data quality flags.
     """

@@ -8,28 +8,28 @@ class RampModel(DataModel):
     """
     A data model for 4D ramps.
 
-    Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    Attributes
+    __________
+    data : numpy float32 array
+         The science data
 
-    data : numpy array
-        The science data.
+    pixeldq : numpy uint32 array
+         2-D data quality array for all planes
 
-    pixeldq : numpy array
-        2-D data quality array.
+    groupdq : numpy uint8 array
+         4-D data quality array for each plane
 
-    groupdq : numpy array
-        3-D or 4-D data quality array.
+    err : numpy float32 array
+         Error array
 
-    err : numpy array
-        The error array.
+    zeroframe : numpy float32 array
+         Zeroframe array
 
-    group : table
-        The group parameters table
+    group : numpy table
+         group parameters table
 
-    int_times : table
-        The int_times table
+    int_times : numpy table
+         table of times for each integration
 
     """
     schema_url = "ramp.schema.yaml"
