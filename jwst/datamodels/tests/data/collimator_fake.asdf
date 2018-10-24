@@ -23,7 +23,7 @@ meta:
   author: p_FM2_08F_fitCOL_back.py.py v. 1.0
   date: '2017-07-11T13:02:23.370'
   description: Cold asbuilt COL transform, distortion fitted with FM2 CAL phase data
-  exposure: {p_exptype: NRS_TACQ|NRS_TASLIT|NRS_TACONFIRM|        NRS_CONFIRM|NRS_FIXEDSLIT|NRS_IFU|NRS_MSASPEC|NRS_IMAGE|NRS_FOCUS|        NRS_MIMF|NRS_BOTA|NRS_LAMP|NRS_BRIGHTOBJ|,
+  exposure: {p_exptype: NRS_TACQ|NRS_TASLIT|NRS_TACONFIRM|NRS_CONFIRM|NRS_FIXEDSLIT|NRS_IFU|NRS_MSASPEC|NRS_IMAGE|NRS_FOCUS|NRS_MIMF|NRS_MSATA|NRS_LAMP|NRS_BRIGHTOBJ|NRS_WATA|,
     type: N/A}
   filename: jwst_nirspec_collimator_0004.asdf
   instrument: {name: NIRSPEC, p_detector: NRS1|NRS2|}
