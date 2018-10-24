@@ -131,7 +131,7 @@ exp_to_source
 extract_1d
 ----------
 
-- Added or modified docstrings [#2768]
+- Added or modified docstrings [#2769]
 
 extract_2d
 ----------
