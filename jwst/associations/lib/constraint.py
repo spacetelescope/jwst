@@ -174,9 +174,10 @@ class SimpleConstraint(SimpleConstraintABC):
     SimpleConstraint({'name': None, 'value': 'my_value'})
 
     To check a constraint, call `check_and_set`. A successful match
-    will return a `SimpleConstraint` and a reprocess list.
+    will return a tuple of `True` and a reprocess list.
     >>> item = 'my_value'
-    >>> new_c, reprocess = c.check_and_set(item)
+    >>> c.check_and_set(item)
+    (True, [])
 
     If it doesn't match, `False` will be returned.
     >>> bad_item = 'not_my_value'
@@ -194,16 +195,17 @@ class SimpleConstraint(SimpleConstraintABC):
     succesfully match whatever object given. However, a new `SimpleConstraint`
     will be returned where the `value` is now set to whatever the attribute
     was of the object.
-    >>> c = SimpleConstraint(value=None, sources=['attr'])
-    >>> new_c, reprocess = c.check_and_set(item)
-    >>> print(result)
-    SimpleConstraint({'value': 'my_value'})
+    >>> c = SimpleConstraint(value=None)
+    >>> matched, reprocess = c.check_and_set(item)
+    >>> print(c)
+    SimpleConstraint({'name': None, 'value': 'my_value'})
 
     This behavior can be overriden by the `force_unique` paramter:
-    >>> c = SimpleConstraint(value=None, sources=['attr'], force_unique=False)
-    >>> result, reprocess = c.check_and_set(item)
-    >>> print(result)
-    SimpleConstraint({'value': None})
+    >>> c = SimpleConstraint(value=None, force_unique=False)
+    >>> matched, reprocess = c.check_and_set(item)
+    >>> print(c)
+    SimpleConstraint({'name': None, 'value': None})
+
     """
 
     def __init__(
