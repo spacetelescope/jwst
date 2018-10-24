@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-
 from ..stpipe import Step
 from .. import datamodels
 from . import extract
@@ -9,8 +7,36 @@ __all__ = ["Extract1dStep"]
 
 
 class Extract1dStep(Step):
-    """
-    Extract1dStep: Extract a 1-d spectrum from 2-d data
+    """Extract a 1-d spectrum from 2-d data
+
+    Attributes
+    ----------
+    ref_file : str
+        Name of the reference file.  This can be "N/A" if there is no
+        reference file for the current instrument mode.
+
+    smoothing_length : int or None
+        If not None, the background regions (if any) will be smoothed
+        with a boxcar function of this width along the dispersion
+        direction.  This should be an odd integer.
+
+    bkg_order : int or None
+        If not None, a polynomial with order `bkg_order` will be fit to
+        each column (or row if the dispersion direction is horizontal)
+        of the background region or regions.  For a given column (row),
+        one polynomial will be fit to all background regions.  The
+        polynomial will be evaluated at each pixel of the source
+        extraction region(s) along the column (row), and the fitted value
+        will be subtracted from the data value at that pixel.
+        If both `smoothing_length` and `bkg_order` are not None, the
+        boxcar smoothing will be done first.
+
+    log_increment : int
+        if `log_increment` is greater than 0 (the default is 50) and the
+        input data are multi-integration (which can be CubeModel or
+        SlitModel), a message will be written to the log with log level
+        INFO every `log_increment` integrations.  This is intended to
+        provide progress information when invoking the step interactively.
     """
 
     spec = """
@@ -26,6 +52,18 @@ class Extract1dStep(Step):
     reference_file_types = ['extract1d']
 
     def process(self, input):
+        """Execute the step.
+
+        Parameters
+        ----------
+        input: JWST data model
+
+        Returns
+        -------
+        JWST data model
+            This will be `input_model` if the step was skipped; otherwise,
+            it will be a model containing 1-D extracted spectra.
+        """
 
         # Open the input and figure out what type of model it is
         input_model = datamodels.open(input)
@@ -121,9 +159,3 @@ class Extract1dStep(Step):
         input_model.close()
 
         return result
-
-
-def extract_1d_correction(input):
-    a = Extract1dStep()
-    result = a.process(input)
-    return result
