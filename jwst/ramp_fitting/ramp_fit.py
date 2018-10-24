@@ -464,7 +464,7 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
         del var_p4_int
         del var_p4_int2
 
-    del gain_2d
+#    del gain_2d  we still need this to convert back to DN 
 
     var_p4 *= ( segs_4[:,:,:,:] > 0) # Zero out non-existing segments
     var_r4 *= ( segs_4[:,:,:,:] > 0)
@@ -633,6 +633,9 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
     var_p2 = 1/(s_inv_var_p3.sum(axis=0))
     var_r2 = 1/(s_inv_var_r3.sum(axis=0))
 
+    # convert the read noise variance back to (DN/S)**2
+    var_r2 /= gain_2d**2
+    
     del s_inv_var_p3
     del s_inv_var_r3
 
