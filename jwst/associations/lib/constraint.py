@@ -181,14 +181,14 @@ class SimpleConstraint(SimpleConstraintABC):
     If it doesn't match, `False` will be returned.
     >>> bad_item = 'not_my_value'
     >>> c.check_and_set(bad_item)
-    False, []
+    (False, [])
 
     A `SimpleConstraint` can also be initialized by a `dict`
     of the relevant parameters:
     >>> init = {'value': 'my_value'}
     >>> c = SimpleConstraint(init)
     >>> print(c)
-    SimpleConstraint({'value': 'my_value'})
+    SimpleConstraint({'name': None, 'value': 'my_value'})
 
     If the value to check is `None`, the `SimpleConstraint` will
     succesfully match whatever object given. However, a new `SimpleConstraint`
