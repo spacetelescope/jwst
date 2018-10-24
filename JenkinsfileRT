@@ -15,10 +15,11 @@ def PIP_DEPS = ""
 def PIP_TEST_DEPS = "requests_mock git+https://github.com/spacetelescope/ci_watson.git"
 
 // Pytest wrapper
+def PYTEST_BASETEMP = "test_outputs"
 def PYTEST = "pytest \
               -r s \
               --bigdata \
-              --basetemp=test_outputs \
+              --basetemp=${PYTEST_BASETEMP} \
               --junit-xml=results.xml"
 
 def TEST_ROOT = "jwst/tests_nightly/general"
@@ -26,7 +27,7 @@ def TEST_ROOT = "jwst/tests_nightly/general"
 // Configure artifactory ingest
 data_config = new DataConfig()
 data_config.server_id = 'bytesalad'
-data_config.root = 'tests_output'
+data_config.root = '${PYTEST_BASETEMP}'
 data_config.match_prefix = '(.*)_result' // .json is appended automatically
 
 bc = new BuildConfig()
