@@ -12,9 +12,9 @@ EXTRACT_2D_IS_OK = ["NRS_LAMP", "NRS_BRIGHTOBJ", "NRS_FIXEDSLIT",
 
 # NIRSpec imaging types (see exp_type2transform in assign_wcs/nirspec.py).
 NRS_IMAGING_MODES = ["NRS_IMAGE", "NRS_FOCUS",
-                     "NRS_TACQ", "NRS_BOTA", "NRS_TASLIT",
+                     "NRS_TACQ", "NRS_MSATA", "NRS_TASLIT",
                      "NRS_CONFIRM", "NRS_TACONFIRM",
-                     "NRS_MIMF"]
+                     "NRS_MIMF", "NRS_WATA"]
 # Supported NIRSpec spectrographic types.
 NRS_SPEC_MODES = ["NRS_BRIGHTOBJ", "NRS_FIXEDSLIT", "NRS_MSASPEC", "NRS_IFU"]
 

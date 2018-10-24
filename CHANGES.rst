@@ -105,9 +105,11 @@ datamodels
 - Updated EXP_TYPE allowed values to include "MIR_DARKALL", "MIR_DARKIMG",
   "MIR_DARKMRS", "MIR_FLATALL", "MIR_FLATIMAGE-EXT", and "MIR_FLATMRS-EXT" [#2709]
 
-- Added the new column "relresperror" to the MIRI Imager/LRS photom reference
-  file schema for data model "MiriImgPhotomModel", to allow for uncertainty
-  in the relative response values [#2721]
+- Updated the MiriResolutionModel schema to have column names match the actual
+  reference files [#2757]
+
+- Updated EXP_TYPE allowed values to remove NRS_BOTA and replace with NRS_MSATA
+  and NRS_WATA [#2772]
 
 documentation
 -------------
@@ -245,6 +247,9 @@ ramp_fitting
   is saturated; Corrected handling of ramps whose single good segment is a single group. [#2464]
 
 - Updated gain and readnoise reference file docs [#2689]
+
+- Fixed bug so that an integration-specific (_rateints) product is only created when
+  NINTS>1; Skip MIRI first and/or last groups when flagged as DO_NOT_USE. [#2760]
 
 refpix
 ------
