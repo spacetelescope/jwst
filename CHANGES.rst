@@ -28,6 +28,9 @@ assign_wcs
 
 - Added unit tests for grism modes [#2649]
 
+- Augmented the logic for choosing a Nirspec WCS mode to include a check for the value
+  of ``GRATING``. If ``GRATING=MIRROR`` imaging mode is chosen reegardless of ``EXP_TYPE``. [#2761]
+
 associations
 ------------
 
