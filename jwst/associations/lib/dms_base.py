@@ -72,6 +72,9 @@ TSO_EXP_TYPES = (
     'nrs_brightobj'
 )
 
+# Coronographic exposures that require integration processing
+CORON_EXP_TYPES = ['nrc_coron']
+
 # Exposures that get Level2b processing
 IMAGE2_SCIENCE_EXP_TYPES = [
     'mir_image',
