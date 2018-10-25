@@ -66,11 +66,18 @@ ACQ_EXP_TYPES = (
 )
 
 # Exposures that are always TSO
-TSO_EXP_TYPES = (
+TSO_EXP_TYPES = [
     'nrc_tsimage',
     'nrc_tsgrism',
     'nrs_brightobj'
-)
+]
+
+# Coronographic exposures that require integration processing
+CORON_EXP_TYPES = [
+    'mir_lyot',
+    'mir_4qpm',
+    'nrc_coron'
+]
 
 # Exposures that get Level2b processing
 IMAGE2_SCIENCE_EXP_TYPES = [
