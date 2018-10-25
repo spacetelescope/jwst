@@ -77,7 +77,7 @@ standards = [
     MakePars('pool_009_spec_miri_lv2bkg'),
     MakePars('pool_010_spec_nirspec_lv2bkg'),
     MakePars('pool_011_spec_miri_lv2bkg_lrs'),
-    MakePars('pool_013_coron_nircam'),
+    MakePars('pool_013_coron_nircam', main_args=LV2_NOMERGE_ARGS),
     MakePars('pool_014_ami_niriss'),
     MakePars('pool_015_spec_nirspec_lv2bkg_reversed', main_args=LV2_ONLY_ARGS),
     MakePars('pool_016_spec_nirspec_lv2bkg_double', main_args=LV2_ONLY_ARGS),
