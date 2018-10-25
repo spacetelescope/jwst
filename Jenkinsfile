@@ -14,7 +14,6 @@ def conda_packages = [
     "asdf",
     "astropy",
     "crds",
-    "dask",
     "drizzle",
     "flake8",
     "gwcs",
