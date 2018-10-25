@@ -19,6 +19,7 @@ from jwst.associations.lib.constraint import (
     SimpleConstraint,
 )
 from jwst.associations.lib.dms_base import (
+    CORON_EXP_TYPES,
     DMSAttrConstraint,
     DMSBaseMixin,
     IMAGE2_NONSCIENCE_EXP_TYPES,
@@ -176,7 +177,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         # Handle time-series file naming
         is_tso = self.constraints['is_tso'].value == 't'
         if not is_tso:
-            is_tso = item['exp_type'] in TSO_EXP_TYPES
+            is_tso = item['exp_type'] in TSO_EXP_TYPES + CORON_EXP_TYPES
 
         # Create the member.
         member = {
