@@ -340,11 +340,11 @@ class Asn_Lv2MIRLRSFixedSlitNod(
 
 
 @RegistryMarker.rule
-class Asn_Lv2NRSLAMP(
+class Asn_Lv2NRSLAMPSpectral(
         AsnMixin_Lv2Special,
         DMSLevel2bBase
 ):
-    """Level2b NIRSpec Lamp calibrations
+    """Level2b NIRSpec spectral Lamp calibrations
 
     NRS_LAMP exposures require specific level 2 processing.
     """
@@ -354,6 +354,16 @@ class Asn_Lv2NRSLAMP(
         self.constraints = Constraint([
             Constraint_Base(),
             Constraint_Single_Science(self.has_science),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        name='opt_elem2',
+                        sources=['grating'],
+                        value='mirror'
+                    )
+                ],
+                reduce=Constraint.notany
+            ),
             DMSAttrConstraint(
                 name='instrument',
                 sources=['instrume'],
@@ -366,12 +376,12 @@ class Asn_Lv2NRSLAMP(
             ),
         ])
 
-        super(Asn_Lv2NRSLAMP, self).__init__(*args, **kwargs)
+        super(Asn_Lv2NRSLAMPSpectral, self).__init__(*args, **kwargs)
 
     def _init_hook(self, item):
         """Post-check and pre-add initialization"""
 
-        super(Asn_Lv2NRSLAMP, self)._init_hook(item)
+        super(Asn_Lv2NRSLAMPSpect, self)._init_hook(item)
         self.data['asn_type'] = 'nrslamp-spec2'
 
 
