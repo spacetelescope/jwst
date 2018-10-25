@@ -668,8 +668,9 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         Example
         -------
+        >>> model = DataModel()
         >>> model.find_fits_keyword('DATE-OBS')
-        ['observation.date']
+        ['meta.observation.date']
         """
         from . import schema
         return schema.find_fits_keyword(self.schema, keyword)

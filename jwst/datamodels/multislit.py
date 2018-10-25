@@ -14,9 +14,10 @@ class MultiSlitModel(model_base.DataModel):
     This model has a special member `slits` that can be used to
     deal with an entire slit at a time.  It behaves like a list::
 
-       >>> multislit_model.slits.append(image_model)
-       >>> multislit_model.slits[0]
-       >>> multislit[0]
+       >>> from .slit import SlitModel
+       >>> multislit_model = MultiSlitModel()
+       >>> multislit_model.slits.append(SlitModel())
+       >>> multislit_model[0]
        <SlitModel>
 
     If ``init`` is a file name or an ``ImageModel`` or a ``SlitModel``instance,

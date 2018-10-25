@@ -391,7 +391,7 @@ def create_history_entry(description, software=None):
 
     Examples
     --------
-    >>> soft = {'name': 'jwreftools', 'author': 'STSCI',
+    >>> soft = {'name': 'jwreftools', 'author': 'STSCI', \
                 'homepage': 'https://github.com/spacetelescope/jwreftools', 'version': "0.7"}
     >>> entry = create_history_entry(description="HISTORY of this file", software=soft)
 

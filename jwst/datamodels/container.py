@@ -14,6 +14,7 @@ import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+__doctest_skip__ = ['ModelContainer']
 
 __all__ = ['ModelContainer']
 
@@ -39,11 +40,13 @@ class ModelContainer(model_base.DataModel):
         - None: initializes an empty `ModelContainer` instance, to which
           DataModels can be added via the ``append()`` method.
 
-    persist: boolean. If True, do not close model after opening it
+    persist : bool
+        If True, do not close model after opening it.
+
 
     Examples
     --------
-    >>> container = datamodels.ModelContainer('example_asn.json')
+    >>> container = ModelContainer('example_asn.json')
     >>> for dm in container:
     ...     print(dm.meta.filename)
 
@@ -56,7 +59,7 @@ class ModelContainer(model_base.DataModel):
     >>> for group in container.models_grouped:
     ...     total_exposure_time += group[0].meta.exposure.exposure_time
 
-    >>> c = datamodels.ModelContainer()
+    >>> c = ModelContainer()
     >>> m = datamodels.open('myfile.fits')
     >>> c.append(m)
     """
