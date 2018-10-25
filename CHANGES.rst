@@ -64,6 +64,9 @@ fits_generator
 
 flatfield
 ---------
+- Updated to not extrapolate for wavelengths that are out of bounds,
+  either due to the WCS, or the wavelengths for a flat-field image cube,
+  or the wavelengths for the fast-variation component. [#2775]
 
 fringe
 ------
