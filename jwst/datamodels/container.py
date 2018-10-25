@@ -14,6 +14,7 @@ import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+__doctest_skip__ = ['ModelContainer']
 
 __all__ = ['ModelContainer']
 
@@ -45,8 +46,8 @@ class ModelContainer(model_base.DataModel):
 
     Examples
     --------
-    >>> container = ModelContainer('example_asn.json') # doctest: +SKIP
-    >>> for dm in container:  # doctest: +SKIP
+    >>> container = ModelContainer('example_asn.json')
+    >>> for dm in container:
     ...     print(dm.meta.filename)
 
     Say the association was a NIRCam dithered dataset. The `models_grouped`
@@ -55,12 +56,12 @@ class ModelContainer(model_base.DataModel):
     each detector in the exposure (2 or 8 in the case of NIRCam).
 
     >>> total_exposure_time = 0.0
-    >>> for group in container.models_grouped: # doctest: +SKIP
-    ...     total_exposure_time += group[0].meta.exposure.exposure_time  # doctest: +SKIP
+    >>> for group in container.models_grouped:
+    ...     total_exposure_time += group[0].meta.exposure.exposure_time
 
-    >>> c = ModelContainer()  # doctest: +SKIP
-    >>> m = datamodels.open('myfile.fits')  # doctest: +SKIP
-    >>> c.append(m)  # doctest: +SKIP
+    >>> c = ModelContainer()
+    >>> m = datamodels.open('myfile.fits')
+    >>> c.append(m)
     """
 
     # This schema merely extends the 'meta' part of the datamodel, and
