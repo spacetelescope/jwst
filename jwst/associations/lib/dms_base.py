@@ -73,7 +73,11 @@ TSO_EXP_TYPES = [
 ]
 
 # Coronographic exposures that require integration processing
-CORON_EXP_TYPES = ['nrc_coron']
+CORON_EXP_TYPES = [
+    'mir_lyot',
+    'mir_4qpm',
+    'nrc_coron'
+]
 
 # Exposures that get Level2b processing
 IMAGE2_SCIENCE_EXP_TYPES = [
