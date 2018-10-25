@@ -49,6 +49,8 @@ associations
 
 - Updated MIRI Dark and Flat exposure keywords. [#2698, #2710]
 
+- Use integrations for coronagraphy associations [#2773]
+
 background
 ----------
 
