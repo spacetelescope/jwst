@@ -38,7 +38,6 @@ bc.conda_channels = ['http://ssb.stsci.edu/astroconda-dev']
 bc.conda_packages = ['asdf',
                      'astropy',
                      'crds',
-                     'dask',
                      'drizzle',
                      'flake8',
                      'gwcs',

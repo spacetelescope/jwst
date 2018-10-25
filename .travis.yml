@@ -19,7 +19,6 @@ env:
         - CONDA_DEPENDENCIES="asdf
                               astropy
                               crds
-                              dask
                               drizzle
                               flake8
                               gwcs
