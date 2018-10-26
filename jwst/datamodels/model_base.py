@@ -498,8 +498,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         """
         Open an asdf object from a filename or create a new asdf object
         """
-        # Drop arguments not explicitly mentioned in the arg list
-        kwargs = None
 
         if isinstance(init, str):
             asdf = AsdfFile.open(init, extensions=extensions,
