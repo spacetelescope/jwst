@@ -8,7 +8,7 @@ CUBEPAR is used for both NIRSpec and MIRI IFU data.
 CUBEPAR reference file
 ----------------------
 
-:RETYPE: CUBEPAR
+:REFTYPE: CUBEPAR
 :Data models: `~jwst.datamodels.MiriIFUCubeParsModel`, `~jwst.datamodels.NirspecIFUCubeParsModel`
 
 The CUBEPAR reference file contains parameter values used to construct
@@ -78,7 +78,7 @@ information to use with each of these types of multi-band cubes.
 RESOL reference file
 --------------------
 
-:RETYPE: RESOL
+:REFTYPE: RESOL
 :Data model: `~jwst.datamodels.MiriResolutionModel`
 
 The RESOL reference file contains the MIRI MRS PSF and LSF widths, per

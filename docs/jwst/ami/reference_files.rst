@@ -6,7 +6,7 @@ and ``ami_normalize`` steps do not use any reference files.
 THROUGHPUT Reference File
 -------------------------
 
-:RETYPE: THROUGHPUT
+:REFTYPE: THROUGHPUT
 :Data model: `~jwst.datamodels.ThroughputModel`
 
 The THROUGHPUT reference file contains throughput data for the filter used
