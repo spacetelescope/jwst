@@ -31,6 +31,9 @@ assign_wcs
 - Augmented the logic for choosing a Nirspec WCS mode to include a check for the value
   of ``GRATING``. If ``GRATING=MIRROR`` imaging mode is chosen reegardless of ``EXP_TYPE``. [#2761]
 
+- Added new NIRSpec target acq exposure types NRS_WATA and NRS_MSATA to be
+  assigned an imaging WCS. Removed NRS_BOTA. [#2781]
+
 associations
 ------------
 
