@@ -5,7 +5,7 @@ The saturation step uses a SATURATION reference file.
 SATURATION Reference File
 -------------------------
 
-:RETYPE: SATURATION
+:REFTYPE: SATURATION
 :Data model: `SaturationModel`
 
 The SATURATION reference file contains pixel-by-pixel saturation threshold
@@ -47,7 +47,5 @@ DQ_DEF   BINTABLE    2    TFIELDS = 4     N/A
 
 The values in the ``SCI`` array give the saturation threshold in units of DN
 for each pixel.
-The ``DQ_DEF`` table extension lists the bit assignments for the flag conditions
-used in the DQ array.
 
 .. include:: ../includes/dq_def.rst

@@ -5,7 +5,7 @@ The IPC deconvolution step uses an IPC reference file.
 IPC Reference File
 ------------------
 
-:RETYPE: IPC
+:REFTYPE: IPC
 :Data model: `~jwst.datamodels.IPCModel`
 
 The IPC reference file contains a deconvolution kernel.

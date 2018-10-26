@@ -6,7 +6,7 @@ The ``linearity`` step uses a LINEARITY reference file.
 LINEARITY Reference File
 -------------------------
 
-:RETYPE: LINEARITY
+:REFTYPE: LINEARITY
 :Data model: `~jwst.datamodels.LinearityModel`
 
 The LINEARITY reference file contains pixel-by-pixel polynomial correction
