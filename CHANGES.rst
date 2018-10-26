@@ -53,7 +53,7 @@ associations
 
 - Updated NIRSpec Lamp calibrations to be grating-specific. [#2780]
 
-- Added new NIRSpec target acq exposure types NRS_WATA and NRS_MSATA. [#2780]
+- Added new NIRSpec target acq exposure types NRS_WATA and NRS_MSATA. [#2780, #2781]
 
 background
 ----------
