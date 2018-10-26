@@ -1,15 +1,11 @@
-# Routines used for building cubes
+""" Read in reference files for the cube_build setp
+"""
 from .. import datamodels
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-#********************************************************************************
-# HELPER ROUTINES for CubeData class defined in cube_build.py
-# these methods relate to I/O type procedures.
-# read_cubepars
-# read_resolution_file
-#********************************************************************************
+
 def read_cubepars(par_filename,
                   instrument,
                   all_channel,
@@ -17,40 +13,47 @@ def read_cubepars(par_filename,
                   all_grating,
                   all_filter,
                   instrument_info):
-#********************************************************************************
-    """
-    Short Summary
-    -------------
-    Based on the instrument and channel/subchannels (MIRI) or grating/filter(NIRSPEC)
-    that covers the full range of the data, read in the appropriate columns in the
+
+    """ Read in cube parameter reference file
+
+    Based on the instrument and channel/subchannels (MIRI) or
+    grating/filter(NIRSPEC), read in the appropriate columns in the
     cube parameter reference file and fill in the cooresponding dicitionary in
     instrument_info
 
     Parameters
     ----------
-    par_filename: cube parameter reference table
-    instrument: Either MIRI or NIRSPEC
-    all_channel: all the channels contained in input data
-    all_subchannel: all subchannels contained in input data
-    all_grating: all the gratings contained in the input data
-    all_filter: all the filters contained in the input data
-    instrument_info holds the defaults spatial scales, spectral scales, roi size,
-    weighting parametes, and min and max wavelengths for each for each band
+    par_filename : str
+       cube parameter reference filename
+    instrument : str
+        Either MIRI or NIRSPEC
+    all_channel : list
+        all the channels contained in input data
+    all_subchannel : list
+        all subchannels contained in input data
+    all_grating: list
+        all the gratings contained in the input data
+    all_filter: list
+        all the filters contained in the input data
+    instrument_info : dictionary
+        holds the defaults spatial scales, spectral scales, roi size,
+        weighting parameters, and min and max wavelengths for each
+        for each band
 
     Returns
     -------
-    The correct elements of instrument_info are filled in
+    The dictionary, instrument_info, is filled in for each band covered
+    by the input data
 
     """
-
 
     if instrument == 'MIRI':
         ptab = datamodels.MiriIFUCubeParsModel(par_filename)
         number_bands = len(all_channel)
-        # pull out the channels and subcahnnels that cover the data making up the cube
+        # pull out the channels and subchannels that cover the cube
         for i in range(number_bands):
             this_channel = all_channel[i]
-            #compare_channel = 'CH'+this_channel
+            # compare_channel = 'CH'+this_channel
             this_sub = all_subchannel[i]
             # find the table entries for this combination
             for tabdata in ptab.ifucubepars_table:
@@ -60,7 +63,7 @@ def read_cubepars(par_filename,
                 table_spectralstep = tabdata['SPECTRALSTEP']
                 table_wavemin = tabdata['WAVEMIN']
                 table_wavemax = tabdata['WAVEMAX']
-                #match on this_channel and this_sub
+                # match on this_channel and this_sub
                 if(this_channel == table_channel and this_sub == table_band):
                     instrument_info.SetSpatialSize(table_spaxelsize, this_channel, this_sub)
                     instrument_info.SetSpectralStep(table_spectralstep, this_channel, this_sub)
@@ -74,7 +77,7 @@ def read_cubepars(par_filename,
                 table_wroi = tabdata['ROISPECTRAL']
                 table_power = tabdata['POWER']
                 table_softrad = tabdata['SOFTRAD']
-                #match on this_channel and this_sub
+                # match on this_channel and this_sub
                 if(this_channel == table_channel and this_sub == table_band):
                     instrument_info.SetSpatialROI(table_sroi, this_channel, this_sub)
                     instrument_info.SetWaveROI(table_wroi, this_channel, this_sub)
@@ -152,33 +155,38 @@ def read_cubepars(par_filename,
             table_power = tabdata['POWER']
             table_softrad = tabdata['SOFTRAD']
             instrument_info.SetHighTable(table_wave, table_sroi,
-                                          table_wroi, table_power,
-                                          table_softrad)
+                                         table_wroi, table_power,
+                                         table_softrad)
+# _____________________________________________________________________________
 
-#_______________________________________________________________________
-# Read MIRI Resolution reference file
-#********************************************************************************
+
 def read_resolution_file(resol_filename,
                          all_channel,
                          all_subchannel,
                          instrument_info):
-    """
-    Short Summary
-    -------------
-    If this is MIRI data and the weighting is miripsf then read in the MIRI resolition
-    file. Read weighting parameters based on which channel and subchannel we are working
-    with. Fill in the appropriated values into instrument_info
+
+    """ Read in the MIRI Resolution reference file
+
+    If this is MIRI data and the weighting is miripsf then read in the
+    MIRI resolition file. Read weighting parameters based on which channel
+    and subchannel we are working with and fill in the appropriated values
+    into instrument_info.
 
     Parameters
     ----------
-    resol_filename: MIRI resolution reference table
-    all_channel: all the channels contained in input data
-    all_subchannel: all subchannels contained in input data
-    instrument_info holds the  MIRI psf weighting parameters
+    resol_filename : str
+        MIRI resolution reference table
+    all_channel : list
+        all the channels contained in input data
+    all_subchannel : list
+        all subchannels contained in input data
+    instrument_info : dictionary
+        holds the  MIRI psf weighting parameters
 
     Returns
     -------
-    The correct elements of instrument_info are filled in
+    Resolution parameters are filled in in the instrumeent_info
+    dectionary
 
     """
 
@@ -195,7 +203,6 @@ def read_resolution_file(resol_filename,
     table_beta_a_long = ptab.psf_fwhm_beta_table['B_A_LONG']
     table_beta_b_long = ptab.psf_fwhm_beta_table['B_B_LONG']
 
-
     instrument_info.Set_psf_alpha_parameters(table_alpha_cutoff,
                                             table_alpha_a_short,
                                             table_alpha_b_short,
@@ -209,7 +216,7 @@ def read_resolution_file(resol_filename,
                                             table_beta_b_long)
 
     number_bands = len(all_channel)
-        # pull out the channels and subcahnnels that cover the data making up the cube
+    # pull out the channels and subcahnnels that the cube is make from
     for i in range(number_bands):
         this_channel = all_channel[i]
         this_sub = all_subchannel[i]
@@ -226,7 +233,7 @@ def read_resolution_file(resol_filename,
             table_res_a_ave = tabdata['R_A_AVG']
             table_res_b_ave = tabdata['R_B_AVG']
             table_res_c_ave = tabdata['R_C_AVG']
-            #match on this_channel and this_sub
+            # match on this_channel and this_sub
             if compare_band == table_sub_band:
                 instrument_info.Set_RP_Wave_Cutoff(table_wave_center,
                                                   this_channel, this_sub)
@@ -245,4 +252,3 @@ def read_resolution_file(resol_filename,
                                           table_res_b_ave,
                                           table_res_c_ave,
                                           this_channel, this_sub)
-#********************************************************************************

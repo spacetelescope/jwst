@@ -1,10 +1,12 @@
- # Routines used in Spectral Cube Building
+""" Map the detector pixels to the cube coordinate system
+"""
 import numpy as np
 import logging
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
-#________________________________________________________________________________
+
+
 def match_det2cube_msm(naxis1, naxis2, naxis3,
                        cdelt1, cdelt2,
                        zcdelt3,
@@ -16,33 +18,63 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
                        coord1, coord2, wave,
                        rois_pixel, roiw_pixel, weight_pixel, softrad_pixel):
 
-    """
-    Short Summary
-    -------------
+    """ Map the detector pixels to the cube spaxels using the MSM parameters
+
+
     Match the Point Cloud members to the spaxel centers that fall in the ROI.
-    For each spaxel the coord1,coord1 and wave point cloud members are weighting
-    according to modified shepard method of inverse weighting based on the distance between
-    the point cloud member and the spaxel center.
+    For each spaxel the coord1,coord1 and wave point cloud members are weighed
+    according to modified shepard method of inverse weighting based on the
+    distance between the point cloud member and the spaxel center.
 
     Parameters
     ----------
-    naxis1,naxis2,naxis3: size of the ifucube
-    cdelt1,cdelt2 : ifucube spaxel size
-    cdelt3_normal: ifu spectral size at wavelength
-    rois_pixel, roiw_pixel: region of influence size in spatial and spectral dimension
-    weight_power: msm weighting parameter
-    xcenter,ycenter: spaxel center locations in 1st and 2nd dimensions. These values are 2 X 2 grid
-    spaxel centers.
-    zcoord: spaxel center locations in 3rd dimensions
-    spaxel_flux: contains the weighted summed detector fluxes that fall withi the roi
-    spaxel_weight:  contains the summed weights assocated with the detector fluxes
-    spaxel_iflux: number of detector pixels falling with roi of spaxel center
-    flux: array of detector fluxes associated with each position in  coorr1, coord2, wave
-    coord1, coord2, wave
+    naxis1 : int
+       size of the ifucube in 1st axis
+    naxis2 : int
+       size of the ifucube in 2nd axis
+    naxis3 : int
+       size of the ifucube in 3rd axis
+    cdelt1 : float
+       ifucube spaxel size in axis 1 dimension
+    cdelt2 : float
+       ifucube spaxel size in axis 2 dimension
+    cdelt3_normal :float
+       ifu spectral size at wavelength
+    rois_pixel : float
+       region of influence size in spatial dimension
+    roiw_pixel : float
+       region of influence size in spectral dimension
+    weight_power : float
+       msm weighting parameter
+    xcenter : numpy array
+       spaxel center locations 1st dimensions.
+    ycenter : numpy array
+       spaxel center locations 2nd dimensions.
+    zcoord : numpy array
+        spaxel center locations in 3rd dimensions
+    spaxel_flux : numpy array
+       contains the weighted summed detector fluxes that fall
+       within the roi
+    spaxel_weight : numpy array
+       contains the summed weights assocated with the detector fluxes
+    spaxel_iflux : numpy array
+       number of detector pixels falling with roi of spaxel center
+    flux : numpy array
+       array of detector fluxes associated with each position in
+       coorr1, coord2, wave
+    coord1 : numpy array
+       contains the spatial coordinate for 1st dimension for the mapped
+       detector pixel
+    coord2 : numpy array
+       contains the spatial coordinate for 2nd dimension for the mapped
+       detector pixel
+    wave : numpy array
+       contains the spectral coordinate  for the mapped detector pixel
+
     Returns
     -------
-    spaxel_flux, spaxel_weight, and spaxel_ifux updated with the information from the
-    detector pixels that fall within the roi if the spaxel center.
+    spaxel_flux, spaxel_weight, and spaxel_ifux updated with the information
+    from the detector pixels that fall within the roi if the spaxel center.
     """
 
     nplane = naxis1 * naxis2
@@ -50,14 +82,15 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
 # now loop over the pixel values for this region and find the spaxels that fall
 # withing the region of interest.
     nn = coord1.size
-
+# Left this commented code in to check when we get new cube par reference files
+# The roi size was too small at long wavelength that may pixels did not match
+# to a spaxel.
 #    ilow = 0
 #    ihigh = 0
 #    imatch  = 0
 #    print('looping over n points mapping to cloud',nn)
-#________________________________________________________________________________
+# ________________________________________________________________________________
     for ipt in range(0, nn - 1):
-#________________________________________________________________________________
         # xcenters, ycenters is a flattened 1-D array of the 2 X 2 xy plane
         # cube coordinates.
         # find the spaxels that fall withing ROI of point cloud defined  by
@@ -76,7 +109,7 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
 #        if len(indexz[0]) == 0:
 #            if wave[ipt] < zcoord[0]:
 #               ilow = ilow + 1
-#            elif wave[ipt] > zcoord[-1]: 
+#            elif wave[ipt] > zcoord[-1]:
 #               ihigh = ihigh + 1
 #            else:
 #                imatch = imatch + 1
@@ -115,7 +148,9 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
 #    print('Number of pixels not in ifu cube too low wavelength', ilow)
 #    print('Number of pixels not in ifu cube too high wavelength', ihigh)
 #    print('Number of pixels not in ifu cube not match', imatch)
-#_______________________________________________________________________
+# _______________________________________________________________________
+
+
 def match_det2cube_miripsf(alpha_resol, beta_resol, wave_resol,
                            naxis1, naxis2, naxis3,
                            xcenters, ycenters, zcoord,
@@ -125,41 +160,78 @@ def match_det2cube_miripsf(alpha_resol, beta_resol, wave_resol,
                            spaxel_alpha, spaxel_beta, spaxel_wave,
                            flux,
                            coord1, coord2, wave, alpha_det, beta_det,
-                           rois_pixel, roiw_pixel, weight_pixel, softrad_pixel):
-    """
-    Short Summary
-    -------------
-    Map coordinates coord1,coord2, and wave of the point cloud to which spaxels they
-    overlap with in the ifucube.
-    For each spaxel the coord1,coord1 and wave point cloud members are weighting
-    according to the miri psf and lsf.
-    The weighting function is based on the distance the point cloud member and spaxel
-    center in the alph-beta coordinate system.
-    The alpha and beta value of each point cloud member is passed to this routine
-    The alpha and beta value of the spaxel center is also passed in.
+                           rois_pixel, roiw_pixel, weight_pixel,
+                           softrad_pixel):
+    """ Map the detector pixels to the cube spaxels using miri PSF weighting
+
+    Map coordinates coord1,coord2, and wave of the point cloud to which
+    spaxels they overlap with in the ifucube. For each spaxel the coord1,coord2
+    and wave point cloud members are weighting according to the miri psf and lsf.
+    The weighting function is based on the distance the point cloud member
+    and spaxel center in the alph-beta coordinate system. The alpha and beta
+    value of each point cloud member  and spaxel center is passed to this
+    routine.
 
     Parameters
     ----------
-    alpha_resol,beta_resol,wave_resol: alpha,beta and wavelength resolution table
-    naxis1,naxis2,naxis3: size of the ifucube
-    xcenter,ycenter: spaxel center locations in 1st and 2nd dimension. These values are 2 X2 grid
-    of spaxel center locations.
-    zcoord: spaxel center locations in 3rd dimension
-    spaxel_flux: contains the weighted summed detector fluxes that fall withi the roi
-    spaxel_weight:  contains the summed weights assocated with the detector fluxes
-    spaxel_iflux: number of detector pixels falling with roi of spaxel center
-    spaxel_alpha, spaxel_beta,spaxel_wave: the spaxel ra,dec --> detector plane alpha,beta system
-    coord1,coord2,wave pixel coordinates mapped to output frame
-    alpha_det,beta_det alpha,beta values of pixel coordinates:
-
-    rois_pixel, roiw_pixel: region of influence size in spatial and spectral dimension
-    weight_pixel: msm weighting parameter
-    softrad_pxiel: weighting paramter
+    alpha_resol : numpy array
+      alpha resolution table
+    beta_resol : numpy array
+      beta resolution table
+    wave_resol : numpy array
+      wavelength resolution table
+    naxis1 : int
+       size of the ifucube in 1st axis
+    naxis2 : int
+       size of the ifucube in 2nd axis
+    naxis3 : int
+       size of the ifucube in 3rd axis
+    xcenter : numpy array
+       spaxel center locations 1st dimensions.
+    ycenter : numpy array
+       spaxel center locations 2nd dimensions.
+    zcoord : numpy array
+        spaxel center locations in 3rd dimensions
+    spaxel_flux : numpy array
+       contains the weighted summed detector fluxes that fall withi the roi
+    spaxel_weight : numpy array
+       contains the summed weights assocated with the detector fluxes
+    spaxel_iflux : numpy array
+       number of detector pixels falling with roi of spaxel center
+    flux : numpy array
+       array of detector fluxes associated with each position in
+       coorr1, coord2, wave
+    spaxel_alpha : numpy array
+       alpha value of spaxel centers
+    spaxel_beta : numpy array
+       beta value of spaxel centers
+    spaxel_wave : numpy array
+       alpha value of spaxel centers
+    coord1 : numpy array
+       contains the spatial coordinate for 1st dimension for the mapped
+       detector pixel
+    coord2 : numpy array
+       contains the spatial coordinate for 2nd dimension for the mapped
+       detector pixel
+    wave : numpy array
+       contains the spectral coordinate  for the mapped detector pixel
+    alpha_det : numpy array
+       alpha coordinate of mapped detector pixels
+    beta_det :  numpy array
+       beta coordinate of mapped detector pixels
+    rois_pixel : flaot
+       region of influence size in spatial dimension
+    roiw_pixel : float
+       region of influence size in spectral dimension
+    weight_power : float
+       msm weighting parameter
+    softrad_pxiel :float
+       weighting paramter
 
     Returns
     -------
-    spaxel_flux, spaxel_weight, and spaxel_ifux updated with the information from the
-    detector pixels that fall within the roi if the spaxel center.
+    spaxel_flux, spaxel_weight, and spaxel_ifux updated with the information
+    from the detector pixels that fall within the roi if the spaxel center.
 
     """
 
@@ -168,10 +240,10 @@ def match_det2cube_miripsf(alpha_resol, beta_resol, wave_resol,
 # withing the region of interest.
     nn = coord1.size
 #    print('looping over n points mapping to cloud',nn)
-#________________________________________________________________________________
+# ______________________________________________________________________________
     for ipt in range(0, nn - 1):
         lower_limit = softrad_pixel[ipt]
-#________________________________________________________________________________
+# ______________________________________________________________________________
         # xcenters, ycenters is a flattened 1-D array of the 2 X 2 xy plane
         # cube coordinates.
         # find the spaxels that fall withing ROI of point cloud defined  by
@@ -184,20 +256,19 @@ def match_det2cube_miripsf(alpha_resol, beta_resol, wave_resol,
         indexr = np.where(radius <= rois_pixel[ipt])
         indexz = np.where(abs(zcoord - wave[ipt]) <= roiw_pixel[ipt])
 
-#________________________________________________________________________________
+# ______________________________________________________________________________
 # loop over the points in the ROI
         for iz, zz in enumerate(indexz[0]):
             istart = zz * nplane
             for ir, rr in enumerate(indexr[0]):
-#________________________________________________________________________________
-#________________________________________________________________________________
+# ______________________________________________________________________________
+# ______________________________________________________________________________
 # if weight is miripsf -distances determined in alpha-beta coordinate system
 
                 weights = FindNormalizationWeights(wave[ipt],
                                                    wave_resol,
                                                    alpha_resol,
                                                    beta_resol)
-
 
                 cube_index = istart + rr
 
@@ -209,42 +280,45 @@ def match_det2cube_miripsf(alpha_resol, beta_resol, wave_resol,
                 yn = beta_distance / weights[1]
                 wn = wave_distance / weights[2]
 
-                        # only included the spatial dimensions
+                # only included the spatial dimensions
                 wdistance = (xn * xn + yn * yn + wn * wn)
                 weight_distance = np.power(np.sqrt(wdistance), weight_pixel[ipt])
-#________________________________________________________________________________
+# ________________________________________________________________________________
 # We have found the weight_distance based on instrument type
 
-                if weight_distance < lower_limit: weight_distance = lower_limit
+                if weight_distance < lower_limit:
+                    weight_distance = lower_limit
                 weight_distance = 1.0 / weight_distance
-
 
                 spaxel_flux[cube_index] = spaxel_flux[cube_index] + weight_distance * flux[ipt]
                 spaxel_weight[cube_index] = spaxel_weight[cube_index] + weight_distance
                 spaxel_iflux[cube_index] = spaxel_iflux[cube_index] + 1
+# _______________________________________________________________________
 
-#_______________________________________________________________________
+
 def FindNormalizationWeights(wavelength,
                               wave_resol,
                               alpha_resol,
                               beta_resol):
-    """
-    Short Summary
-    -------------
-    we need to normalize how to each point cloud in the spaxel. The
-    normalization of weighting is determined from width of PSF as well
-    as wavelength resolution
+    """ Routine used in MIRI PSF weighting to normalize data
+
+
+    Normalize weighting to each point cloud that contributes to the
+    ROI of a spaxel. The normalization of weighting is determined from
+    width of PSF as wellas wavelength resolution
 
     Parameters
     ----------
-    wave_resol:
-    alpha_resol:
-    beta_resol:
+    wave_resol : numpy array
+      wavelength resolution array
+    alpha_resol : numpy array
+      alpha psf resolution array
+    beta_resol : numpy array
+      beta psf resolution array
 
     Returns
     -------
     normalized weighting for 3 dimension
-
     """
     alpha_weight = 1.0
     beta_weight = 1.0

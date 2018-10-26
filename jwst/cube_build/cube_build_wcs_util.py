@@ -1,36 +1,32 @@
-# Routines used for building cubes
+""" Routines related to WCS procedures of cube_build
+"""
 import numpy as np
 from ..assign_wcs import nirspec
 from gwcs import wcstools
-
-
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-#********************************************************************************
-# HELPER ROUTINES for IFUCubeData class defined in ifu_cube.py
-# These methods relate to wcs type procedures.
 
-
-#********************************************************************************
 def find_footprint_MIRI(input, this_channel, instrument_info, coord_system):
-#********************************************************************************
 
-    """
-    Short Summary
-    -------------
-    For each channel find:
-    a. the min and max spatial coordinates (alpha,beta) or (V2-v3) depending on coordinate system.
-      axis a = naxis 1, axis b = naxis2
-    b. min and max wavelength is also determined. , beta and lambda for those slices
+    """ For MIRI channel data find the foot of this data on the sky
 
+    For a specific channel on an exposure find the min and max of the
+    spatial coordinates, either in  alpha,beta or ra,dec dedpending
+    on the type of cube being build. Also find the min and max of
+    wavelength this channel covers.
 
     Parameters
     ----------
-    input: input model (or file)
-    this_channel: channel working with
-
+    input : data model
+       input model (or file)
+    this_channel : str
+       channel working with
+    instrument_info : dictionary
+       dictionary holding x pixel min and max values for each channel
+    coord_system : str
+       coordinate system of output cube, either alpha-beta or world
 
     Returns
     -------
@@ -38,20 +34,18 @@ def find_footprint_MIRI(input, this_channel, instrument_info, coord_system):
     spaxial coordinates are in units of arc seconds.
     """
     # x,y values for channel - convert to output coordinate system
-    # return the min & max of spatial coords and wavelength  - these are of the pixel centers
+    # return the min & max of spatial coords and wavelength
 
     xstart, xend = instrument_info.GetMIRISliceEndPts(this_channel)
     y, x = np.mgrid[:1024, xstart:xend]
 
     if coord_system == 'alpha-beta':
-        detector2alpha_beta = input.meta.wcs.get_transform('detector', 'alpha_beta')
+        detector2alpha_beta = input.meta.wcs.get_transform('detector',
+                                                           'alpha_beta')
         coord1, coord2, lam = detector2alpha_beta(x, y)
-    elif coord_system == 'world':
-        coord1, coord2, lam = input.meta.wcs(x, y) # for entire detector find  ra,dec,lambda
-    else:
-        # error the coordinate system is not defined
-        raise NoCoordSystem(" The output cube coordinate system is not definded")
-#________________________________________________________________________________
+    else:  # coord_system == 'world'
+        coord1, coord2, lam = input.meta.wcs(x, y)
+# ________________________________________________________________________________
 # test for 0/360 wrapping in ra. if exists it makes it difficult to determine
 # ra range of IFU cube.
 
@@ -66,26 +60,31 @@ def find_footprint_MIRI(input, this_channel, instrument_info, coord_system):
     lambda_max = np.nanmax(lam)
 
     return a_min, a_max, b_min, b_max, lambda_min, lambda_max
+# ********************************************************************************
 
-#********************************************************************************
-def find_footprint_NIRSPEC(input, flag_data, coord_system):
-#********************************************************************************
-    """
-    Short Summary
-    -------------
+
+def find_footprint_NIRSPEC(input, coord_system):
+
+    """For a NIRSPEC slice on an exposure find the foot of this data on the sky
+
     For each slice find:
-    a. the min and max spatial coordinates (alpha,beta) or (V2-v3) depending on coordinate system.
-      axis a = naxis 1, axis b = naxis2
-    b. min and max wavelength is also determined. , beta and lambda for those slices
-
+    a. the min and max spatial coordinates (alpha,beta) or (ra,dec) depending
+       on coordinate system of the output cube.
+    b. min and max wavelength is also determined.
 
     Parameters
     ----------
-    input: input model (or file)
+    input: data model
+       input model (or file)
+    coord_system : str
+       coordinate system of output cube, either alpha-beta or world
 
+    Notes
+    -----
+    The coordinate system of alpha-beta is not yet implemented for NIRSPEC
     Returns
     -------
-    min and max spaxial coordinates  and wavelength for channel.
+    min and max spaxial coordinates and wavelength for slice.
 
     """
     # loop over all the region (Slices) in the Channel
@@ -106,14 +105,11 @@ def find_footprint_NIRSPEC(input, flag_data, coord_system):
         x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box, step=(1, 1), center=True)
         if coord_system == 'world':
             coord1, coord2, lam = slice_wcs(x, y)
-        elif coord_system == 'alpha-beta':
+        else:  # coord_system == 'alpha-beta':
             raise InvalidCoordSystem(" The Alpha-Beta Coordinate system is not valid (at this time) for NIRSPEC data")
 #                detector2slicer = input.meta.wcs.get_transform('detector','slicer')
 #                coord1,coord2,lam = detector2slicer(x,y)
-        else:
-            # error the coordinate system is not defined
-            raise NoCoordSystem(" The output cube coordinate system is not definded")
-#________________________________________________________________________________
+# ________________________________________________________________________________
 # For each slice  test for 0/360 wrapping in ra.
 # If exists it makes it difficult to determine  ra range of IFU cube.
         coord1_wrap = wrap_ra(coord1)
@@ -130,7 +126,7 @@ def find_footprint_NIRSPEC(input, flag_data, coord_system):
         lambda_slice[k + 1] = np.nanmax(lam)
 
         k = k + 2
-#________________________________________________________________________________
+# ________________________________________________________________________________
 # now test the ra slices for conistency. Adjust if needed.
     a_slice_wrap = wrap_ra(a_slice)
     a_min = np.nanmin(a_slice_wrap)
@@ -146,17 +142,19 @@ def find_footprint_NIRSPEC(input, flag_data, coord_system):
         log.info('This NIRSPEC exposure has no IFU data on it - skipping file')
 
     return a_min, a_max, b_min, b_max, lambda_min, lambda_max
+# _______________________________________________________________________________
 
-#________________________________________________________________________________
+
 def wrap_ra(ravalues):
-    """
-    Short Summary
-    Test for 0/360 wrapping in ra values. If exists it makes it difficult to determine
+    """Test for 0/360 wrapping in ra values.
+
+    If exists it makes it difficult to determine
     ra range of IFU cube. So put them all on "one side" of 0/360 border
 
     Input
     -----
-    ravalues a numpy array of ra values
+    ravalues : a numpy array
+      ra values
 
     Return
     ------
@@ -165,9 +163,8 @@ def wrap_ra(ravalues):
 
     valid = np.isfinite(ravalues)
     index_good = np.where(valid == True)
-#    print('number of non nan ra values',index_good[0].size,index_good[0].size/2048)
     ravalues_wrap = ravalues[index_good].copy()
-    median_ra = np.nanmedian(ravalues_wrap) # find the median
+    median_ra = np.nanmedian(ravalues_wrap)
 #    print('median_ra',median_ra)
 
     # using median to test if there is any wrapping going on
@@ -182,13 +179,12 @@ def wrap_ra(ravalues):
         ravalues_wrap[wrap_index] = ravalues_wrap[wrap_index] + 360.0
 
     return ravalues_wrap
-#________________________________________________________________________________
+
+# ________________________________________________________________________________
 # Errors
-class NoCoordSystem(Exception):
-    pass
+
 
 class InvalidCoordSystem(Exception):
-    pass
-
-class RaAveError(Exception):
+    """ Raise exeception when alpha-beta coordinate system is use for NIRSPEC
+    """
     pass

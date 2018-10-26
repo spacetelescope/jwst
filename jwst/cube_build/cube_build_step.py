@@ -1,5 +1,5 @@
-#! /usr/bin/env python
-
+""" This is the main ifu spectral cube building routine.
+"""
 from ..stpipe import Step
 from .. import datamodels
 from . import cube_build
@@ -13,6 +13,23 @@ __all__ = ["CubeBuildStep"]
 
 class CubeBuildStep (Step):
     """CubeBuildStep: Creates a 3-D spectral cube
+
+    Notes
+    -----
+    This is the controlling routine for building IFU Spectral Cubes.
+    It loads and sets the various input data and parameters need by
+    the cube_build_step.
+
+    This routine does the following operations:
+
+       1. Extracts the input parameters from the cubepars reference file and
+       merges them with any user-provided values.
+       2. Creates the output WCS from the input images and defines the mapping
+       between all the input arrays and the output array
+       3. Passes the input data to the function to map all thei input data
+       to the output array.
+       4. Updates the output data model with correct meta data
+
     """
 
     spec = """
@@ -43,7 +60,13 @@ class CubeBuildStep (Step):
 
 # ________________________________________________________________________________
     def process(self, input):
-        """This is the main routine for IFUCube Building"""
+        """This is the main routine for IFU spectral cube building.
+
+        Parameters
+        ----------
+        input : list of objects or str
+           list of datamodels or string name of input fits file or association.
+        """
 
         self.log.info('Starting IFU Cube Building Step')
 # ________________________________________________________________________________
@@ -266,7 +289,8 @@ class CubeBuildStep (Step):
             self.log.info('Number of ifucubes produced by a this run %i',
                           num_cubes)
 
-        cube_container = datamodels.ModelContainer()  # ModelContainer of ifucubes
+        # ModelContainer of ifucubes
+        cube_container = datamodels.ModelContainer()
 
         for i in range(num_cubes):
             icube = str(i + 1)
@@ -324,30 +348,27 @@ class CubeBuildStep (Step):
             update_s_region_keyword(cube, footprint)
 
         return cube_container
-# ********************************************************************************
+# ******************************************************************************
 
     def read_user_input(self):
-        """Read in any user input options for channel, subchannel, filter,
-        or grating
+        """Read user input options for channel, subchannel, filter, or grating
 
-        Short Summary
-        -------------
-        Figure out if any of the input paramters channel,band,filter or grating
-        have been set. If they have been check that they are valid and fill in
-        input_pars paramters
+        Determine if any of the input paramters channel, band, filter or
+        grating have been set. If they have been check fill in input_pars
+        dictionary.
 
         Parameters
         ----------
         none
 
-        Returns
-        -------
-        self.pars_input['channel']
-        self.pars_input['sub_channel']
-        self.pars_input['grating']
-        self.pars_input['filter']
-
+        Notes
+        ------
+        This routine updates the dictionary self.pars_input with any user
+        provided inputs. In particular it sets pars_input['channel'],
+        pars_input['sub_channel'], pars_input['grating'], and
+        pars_input['filter'] with user provided values.
         """
+
         valid_channel = ['1', '2', '3', '4', 'all']
         valid_subchannel = ['short', 'medium', 'long', 'all']
 
@@ -380,7 +401,6 @@ class CubeBuildStep (Step):
                     self.pars_input['channel'].append(ch)
 # remove duplicates if needed
             self.pars_input['channel'] = list(set(self.pars_input['channel']))
-
 # ________________________________________________________________________________
 # For MIRI we can set the subchannel
 # if set to all then let the DetermineCubeCoverage figure out what subchannels
@@ -409,7 +429,7 @@ class CubeBuildStep (Step):
 # ________________________________________________________________________________
 # For NIRSPEC we can set the filter
 # If set to all then let the DetermineCubeCoverage figure out what filters are
-# covered by the data. 
+# covered by the data.
 
         if self.filter == 'all':
             self.filter = ''
@@ -456,4 +476,3 @@ class CubeBuildStep (Step):
 # remove duplicates if needed
             self.pars_input['grating'] = list(set(self.pars_input['grating']))
 # ________________________________________________________________________________
-    pass
