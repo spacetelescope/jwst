@@ -49,7 +49,11 @@ associations
 
 - Updated MIRI Dark and Flat exposure keywords. [#2698, #2710]
 
-- Use integrations for coronagraphy associations [#2773]
+- Updated coronagraphy associations to be integrations-based. [#2773]
+
+- Updated NIRSpec Lamp calibrations to be grating-specific. [#2780]
+
+- Added new NIRSpec target acq exposure types NRS_WATA and NRS_MSATA. [#2780]
 
 background
 ----------
