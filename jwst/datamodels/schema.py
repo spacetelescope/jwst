@@ -338,9 +338,6 @@ def build_docstring(klass, template):
         shape = tuple([1 for i in range(len(shape))])
         shaped_object = klass(init=shape)
 
-    # Get the title of the schema
-    title = shaped_object._schema.get('title')
-
     # Get schema fields which have an associated hdu
     info = {}
     walk_schema(shaped_object._schema, get_field_info, ctx=info)
@@ -353,10 +350,6 @@ def build_docstring(klass, template):
         default_schema[field] = ''
 
     buffer = []
-    if title:
-        buffer.append(title + "\n\n")
-    buffer.append("Attributes\n__________\n")
-
     for attr, subschema in info.items():
         schema = {}
         schema.update(default_schema)
@@ -390,7 +383,12 @@ def build_docstring(klass, template):
             if type(value) == bool:
                 schema[field] = field
 
-        buffer.append(template.format(**schema))
+        # Apply format to svhema fields
+        # Delete blank lines
+        lines = template.format(**schema)
+        for line in lines.split("\n"):
+            if line and not line.isspace():
+                buffer.append(line)
 
-    return ''.join(buffer)
+    return "\n".join(buffer) + "\n"
 

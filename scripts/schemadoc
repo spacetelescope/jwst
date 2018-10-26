@@ -51,7 +51,7 @@ def get_docstrings(template, model_names, all=False):
             print(klassname, ':', str(err), file=sys.stderr)
         else:
             print(".. " + klassname + " ..")
-            print(docstring)
+            print(docstring, end='')
 
 long_description = """
 Create documentation from the schema file of a datamodel class
