@@ -69,6 +69,11 @@ Documentation (built daily from `master`) is available here:
 
 https://jwst-pipeline.readthedocs.io/en/latest/
 
+One can clone this repository and build the documentation with
+
+    pip install sphinx_rtd_theme stsci_rtd_theme sphinx_automodapi
+    python setup.py build_sphinx
+
 
 Contributions and Feedback
 --------------------------
