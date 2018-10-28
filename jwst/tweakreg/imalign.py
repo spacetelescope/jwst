@@ -17,15 +17,22 @@ import numpy as np
 
 # LOCAL
 from . wcsimage import (WCSGroupCatalog, WCSImageCatalog, RefCatalog)
+from . linearfit import SingularMatrixError, NotEnoughPointsError
 
 
-__all__ = ['align', 'overlap_matrix', 'max_overlap_pair', 'max_overlap_image']
+__all__ = ['align', 'overlap_matrix', 'max_overlap_pair', 'max_overlap_image',
+           'NotEnoughCatalogsError']
 
 __author__ = 'Mihai Cara'
 
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
+
+
+class NotEnoughCatalogsError(Exception):
+    """ An error class used to report when there are too few catalogs. """
+    pass
 
 
 def align(imcat, refcat=None, enforce_user_order=True,
@@ -153,24 +160,60 @@ def align(imcat, refcat=None, enforce_user_order=True,
     # check that we have enough input images:
     if refcat is None or refcat.catalog is None:
         if len(imcat) < 2:
-            raise ValueError("Too few input catalogs")
+            raise NotEnoughCatalogsError(
+                "At least two catalogs are needed for alignment."
+            )
     else:
         if len(imcat) == 0:
-            raise ValueError("Too few input catalogs")
+            raise NotEnoughCatalogsError(
+                "No catalogs provided for alignment."
+            )
 
     # make sure each input item is a WCSGroupCatalog:
     old_imcat = imcat
     imcat = []
+    skipped_imcat = []
     for img in old_imcat:
         if img.catalog is None:
             raise ValueError("Each image/catalog must have a valid catalog")
+
         if isinstance(img, WCSImageCatalog):
-            imcat.append(WCSGroupCatalog(img, name=img.name))
+            group = WCSGroupCatalog(img, name=img.name)
         elif isinstance(img, WCSGroupCatalog):
-            imcat.append(img)
+            group = img
         else:
-            raise TypeError("Each input element of 'images' must be a "
-                            "'WCSGroupCatalog'")
+            raise TypeError("Each input element of 'images' must be either a"
+                            "'WCSImageCatalog' or a 'WCSGroupCatalog'.")
+
+        if len(group.catalog) < minobj:
+            for i in group:
+                log.warning("Not enough sources to align image {:s}. "
+                            "This image will not be aligned."
+                            .format(i.meta['image_model'].meta.filename))
+                i.meta['image_model'].meta.cal_step.tweakreg = "SKIPPED"
+                i.meta['skip_alignment'] = True
+            skipped_imcat.append(group)
+
+        else:
+            i.meta['skip_alignment'] = False
+            imcat.append(group)
+
+    if len(imcat) < 2:
+        log.warning(
+            "Not enough catalogs containing minimum required number of "
+            "sources. Stopping image alignment."
+        )
+        skipped_imcat += imcat
+        # log running time:
+        runtime_end = datetime.now()
+        log.info(" ")
+        log.info("***** {:s}.{:s}() ended on {}"
+                 .format(__name__, function_name, runtime_end))
+        log.info("***** {:s}.{:s}() TOTAL RUN TIME: {}"
+                 .format(__name__, function_name, runtime_end - runtime_begin))
+        log.info(" ")
+
+        return [], skipped_imcat
 
     # get the first image to be aligned and
     # create reference catalog if needed:
@@ -198,26 +241,41 @@ def align(imcat, refcat=None, enforce_user_order=True,
         log.info("Aligning image catalog '{}' to the reference catalog."
                  .format(current_imcat.name))
 
-        current_imcat.align_to_ref(
-            refcat=refcat,
-            minobj=minobj,
-            searchrad=searchrad,
-            separation=separation,
-            use2dhist=use2dhist,
-            xoffset=xoffset,
-            yoffset=yoffset,
-            tolerance=tolerance,
-            fitgeom=fitgeom,
-            nclip=nclip,
-            sigma=sigma
-        )
-        aligned_imcat.append(current_imcat)
+        try:
+            current_imcat.align_to_ref(
+                refcat=refcat,
+                minobj=minobj,
+                searchrad=searchrad,
+                separation=separation,
+                use2dhist=use2dhist,
+                xoffset=xoffset,
+                yoffset=yoffset,
+                tolerance=tolerance,
+                fitgeom=fitgeom,
+                nclip=nclip,
+                sigma=sigma
+            )
 
-        # add unmatched sources to the reference catalog:
-        if expand_refcat:
-            refcat.expand_catalog(current_imcat.get_unmatched_cat())
-            log.info("Added unmatched sources from '{}' to the reference "
-                     "catalog.".format(current_imcat.name))
+            aligned_imcat.append(current_imcat)
+
+            for i in current_imcat:
+                i.meta['image_model'].meta.cal_step.tweakreg = "COMPLETE"
+
+            # add unmatched sources to the reference catalog:
+            if expand_refcat:
+                refcat.expand_catalog(current_imcat.get_unmatched_cat())
+                log.info("Added unmatched sources from '{}' to the reference "
+                         "catalog.".format(current_imcat.name))
+
+        except (SingularMatrixError, NotEnoughPointsError) as e:
+            for i in current_imcat:
+                log.warning(
+                    "Image {:s} was not aligned. Reported exception: {:s}"
+                    .format(i.meta['image_model'].meta.filename, e.args[0])
+                )
+                i.meta['image_model'].meta.cal_step.tweakreg = "SKIPPED"
+                i.meta['skip_alignment'] = True
+            skipped_imcat.append(current_imcat)
 
         # find the next image to be aligned:
         current_imcat = max_overlap_image(
@@ -235,7 +293,7 @@ def align(imcat, refcat=None, enforce_user_order=True,
              .format(__name__, function_name, runtime_end - runtime_begin))
     log.info(" ")
 
-    return aligned_imcat
+    return aligned_imcat, skipped_imcat
 
 
 def overlap_matrix(images):

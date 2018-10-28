@@ -1,3 +1,5 @@
+from astropy.table import Table, Column
+import numpy as np
 from photutils import detect_threshold, DAOStarFinder
 
 from ..datamodels import ImageModel
@@ -56,6 +58,10 @@ def make_tweakreg_catalog(model, kernel_fwhm, snr_threshold, sharplo=0.2,
     sources = daofind(model.data)
 
     columns = ['id', 'xcentroid', 'ycentroid', 'flux']
-    catalog = sources[columns]
+    if len(sources) > 0:
+        catalog = sources[columns]
+    else:
+        catalog = Table(names=columns, dtype=(np.int_, np.float_, np.float_, np.float_))
+        catalog.add_row([1, 0.5, 0.5, 100.])
 
     return catalog

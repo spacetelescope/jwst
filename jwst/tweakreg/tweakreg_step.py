@@ -98,7 +98,7 @@ class TweakRegStep(Step):
         if len(grp_img) == 1:
             # we need at least two exposures to perform image alignment
             self.log.info("At least two exposures are required for image "
-                     "alignment.")
+                          "alignment.")
             self.log.info("Nothing to do. Skipping 'TweakRegStep'...")
             self.skip = True
             for model in images:
@@ -132,9 +132,6 @@ class TweakRegStep(Step):
             nclip=self.nclip,
             sigma=self.sigma
         )
-
-        for model in images:
-            model.meta.cal_step.tweakreg = "COMPLETE"
 
         return images
 
