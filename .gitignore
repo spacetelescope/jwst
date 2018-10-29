@@ -19,6 +19,3 @@ relic/
 *wpu
 .pytest_cache
 results.xml
-*json
-*.rst
-*.fits
