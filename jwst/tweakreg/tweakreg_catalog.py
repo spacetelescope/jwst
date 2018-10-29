@@ -1,4 +1,4 @@
-from astropy.table import Table, Column
+from astropy.table import Table
 import numpy as np
 from photutils import detect_threshold, DAOStarFinder
 
