@@ -242,6 +242,8 @@ assign_wcs
 - Added new NIRSpec target acq exposure types NRS_WATA and NRS_MSATA to be
   assigned an imaging WCS. Removed NRS_BOTA. [#2781]
 
+- Added velocity correction model to the WFSS and TSGRISM wcs pipelines [#2801]
+
 associations
 ------------
 
