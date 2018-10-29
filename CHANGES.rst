@@ -286,6 +286,8 @@ saturation
 skymatch
 --------
 
+- Made skymatch to not fail in 'match' mode when images do not overlap [#2803]
+
 source_catalog
 --------------
 
