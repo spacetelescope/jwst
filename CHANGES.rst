@@ -205,7 +205,7 @@ lastframe
 lib
 ---
 
-- Updated reffiles_utils to no longer issue warnings about mismatch in 
+- Updated reffiles_utils to no longer issue warnings about mismatch in
   data array size params for NIRSpec IRS2 readouts. [#2664]
 
 - Updated reffiles_utils to regard IRS2 science exposures as a match with normal
@@ -327,6 +327,10 @@ tweakreg
 
 - Updated tweakreg to use `wcs.available_frames` to get the names of the frames in
   a WCS pipeline. [#2590, #2594, #2629]
+
+- Made the logic for computations of footprints more reliable for the
+  case of 1 or 2 sources in a catalog. [#2797]
+
 
 wfs_combine
 -----------
