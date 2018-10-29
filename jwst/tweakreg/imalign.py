@@ -96,16 +96,16 @@ def align(imcat, refcat=None, enforce_user_order=True,
     separation : float, optional
         The  minimum  separation for sources in the input and reference
         catalogs in order to be considered to be disctinct sources.
-        Objects closer together than 'separation' pixels
+        Objects closer together than 'separation' *in arcseconds*
         are removed from the input and reference coordinate lists prior
         to matching. This parameter gets passed directly to
         :py:func:`~stsci.stimage.xyxymatch` for use in matching the object
         lists from each image with the reference image's object list.
 
     tolerance : float, optional
-        The matching tolerance in pixels after applying an initial solution
-        derived from the 'triangles' algorithm.  This parameter gets passed
-        directly to :py:func:`~stsci.stimage.xyxymatch` for use in
+        The matching tolerance *in arcseconds* after applying an initial
+        solution derived from the 'triangles' algorithm.  This parameter gets
+        passed directly to :py:func:`~stsci.stimage.xyxymatch` for use in
         matching the object lists from each image with the reference image's
         object list.
 
