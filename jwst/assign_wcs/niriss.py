@@ -374,6 +374,16 @@ def wfss(input_model, reference_files):
                                              theta=fwcpos_ref - fwcpos)
     det2det.inverse = backward
 
+    # Add in the wavelength shift from the velocity dispersion
+    try:
+        velosys = input_model.meta.wcsinfo.velosys
+    except AttributeError:
+        pass
+    if velosys is not None:
+        velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
+        log.info("Added Barycentric velocity correction: {}".format(velocity_corr[1].amplitude.value))
+        det2det = det2det | Mapping((0, 1, 2, 3)) | Identity(2) & velocity_corr & Identity(1)
+
     # create the pipeline to construct a WCS object for the whole image
     # which can translate ra,dec to image frame reference pixels
     # it also needs to be part of the grism image wcs pipeline to
