@@ -70,14 +70,14 @@ class TweakRegStep(Step):
             filename = image_model.meta.filename
             nsources = len(catalog)
             if nsources == 0:
-                self.log.warning('No sources found in {1}.'.format(filename))
+                self.log.warning('No sources found in {}.'.format(filename))
             else:
-                self.log.info('Detected {0} sources in {1}.'
+                self.log.info('Detected {} sources in {}.'
                               .format(len(catalog), filename))
 
             if self.save_catalogs:
                 catalog_filename = filename.replace(
-                    '.fits', '_cat.{0}'.format(self.catalog_format)
+                    '.fits', '_cat.{}'.format(self.catalog_format)
                 )
                 if self.catalog_format == 'ecsv':
                     fmt = 'ascii.ecsv'
@@ -90,8 +90,8 @@ class TweakRegStep(Step):
                         '\'catalog_format\' must be "ecsv" or "fits".'
                     )
                 catalog.write(catalog_filename, format=fmt, overwrite=True)
-                self.log.info('Wrote source catalog: {0}'.
-                              format(catalog_filename))
+                self.log.info('Wrote source catalog: {}'
+                              .format(catalog_filename))
                 image_model.meta.tweakreg_catalog.filename = catalog_filename
 
             image_model.catalog = catalog
