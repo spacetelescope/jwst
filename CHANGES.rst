@@ -156,6 +156,8 @@ extract_2d
 
 - Added unit tests for grism modes [#2649]
 
+- Bounding box sizes in extracted WFSS exposures now correctly cover entire extraction [#2799]
+
 firstframe
 ----------
 
