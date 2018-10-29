@@ -1333,7 +1333,7 @@ class RefCatalog():
         self._check_catalog(catalog)
 
         if len(catalog) == 0:
-            raise ValueError("Catalog must contain at least one source.")
+            raise ValueError("Reference catalog must contain at least one source.")
 
         self._catalog = catalog.copy()
 
