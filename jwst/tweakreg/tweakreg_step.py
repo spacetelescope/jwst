@@ -68,11 +68,17 @@ class TweakRegStep(Step):
             catalog = make_tweakreg_catalog(image_model, self.kernel_fwhm,
                                             self.snr_threshold)
             filename = image_model.meta.filename
-            self.log.info('Detected {0} sources in {1}.'.format(len(catalog), filename))
+            nsources = len(catalog)
+            if nsources == 0:
+                self.log.warning('No sources found in {1}.'.format(filename))
+            else:
+                self.log.info('Detected {0} sources in {1}.'
+                              .format(len(catalog), filename))
 
             if self.save_catalogs:
-                catalog_filename = filename.replace('.fits', '_cat.{0}'.
-                                                    format(self.catalog_format))
+                catalog_filename = filename.replace(
+                    '.fits', '_cat.{0}'.format(self.catalog_format)
+                )
                 if self.catalog_format == 'ecsv':
                     fmt = 'ascii.ecsv'
                 elif self.catalog_format == 'fits':
@@ -80,7 +86,9 @@ class TweakRegStep(Step):
                     #       FITS will also not clobber existing files.
                     fmt = 'fits'
                 else:
-                    raise ValueError('catalog_format must be "ecsv" or "fits".')
+                    raise ValueError(
+                        '\'catalog_format\' must be "ecsv" or "fits".'
+                    )
                 catalog.write(catalog_filename, format=fmt, overwrite=True)
                 self.log.info('Wrote source catalog: {0}'.
                               format(catalog_filename))
