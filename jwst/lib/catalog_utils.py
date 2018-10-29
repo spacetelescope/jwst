@@ -43,23 +43,23 @@ def replace_suffix_ext(filename, old_suffix_list, new_suffix,
     --------
     >>> from jwst.lib.catalog_utils import replace_suffix_ext
     >>> replace_suffix_ext('jw12345_nrca_i2d.fits', ['i2d'], 'cat')
-    >>> 'jw12345_nrca_cat.ecsv'
+        'jw12345_nrca_cat.ecsv'
 
     >>> replace_suffix_ext('jw12345_nrca_cal.fits', ['i2d'], 'cat')
-    >>> 'jw12345_nrca_cal_cat.ecsv'
+        'jw12345_nrca_cal_cat.ecsv'
 
     >>> replace_suffix_ext('my_custom_file.fits', ['i2d'], 'cat')
-    'my_custom_file_cat.ecsv'
+        'my_custom_file_cat.ecsv'
 
     >>> old_suffixes = ['calints', 'crfints']
     >>> replace_suffix_ext('jw12345_nrca_calints.fits', old_suffixes, 'phot')
-    >>> 'jw12345_nrca_phot.ecsv'
+        'jw12345_nrca_phot.ecsv'
     >>> replace_suffix_ext('jw12345_nrca_crfints.fits', old_suffixes, 'phot')
-    >>> 'jw12345_nrca_phot.ecsv'
+        'jw12345_nrca_phot.ecsv'
 
     >>> replace_suffix_ext('jw12345_nrca_i2d.fits', ['i2d'], 'cat',
     ...                    output_dir='/jwst/my_catalogs')
-    >>> '/jwst/my_catalogs/jw12345_nrca_cat.ecsv'
+        '/jwst/my_catalogs/jw12345_nrca_cat.ecsv'
     """
 
     path, filename = split(filename)
