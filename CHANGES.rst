@@ -332,6 +332,10 @@ tweakreg
 
 - Made the code more robust with images without sources [#2796]
 
+- Made the logic for computations of footprints more reliable for the
+  case of 1 or 2 sources in a catalog. [#2797]
+
+
 wfs_combine
 -----------
 

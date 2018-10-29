@@ -225,7 +225,8 @@ def align(imcat, refcat=None, enforce_user_order=True,
         )
         log.info("Selected image '{}' as reference image"
                  .format(ref_imcat.name))
-        refcat = RefCatalog(ref_imcat.catalog, name=ref_imcat.name)
+        refcat = RefCatalog(ref_imcat.catalog, name=ref_imcat.name,
+                            footprint_tol=tolerance)
 
     else:
         # find the first image to be aligned:
