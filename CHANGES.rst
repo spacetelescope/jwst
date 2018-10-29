@@ -205,7 +205,7 @@ lastframe
 lib
 ---
 
-- Updated reffiles_utils to no longer issue warnings about mismatch in 
+- Updated reffiles_utils to no longer issue warnings about mismatch in
   data array size params for NIRSpec IRS2 readouts. [#2664]
 
 - Updated reffiles_utils to regard IRS2 science exposures as a match with normal
@@ -321,12 +321,14 @@ tso_photometry
 tweakreg
 --------
 
-- Modified default configuration settings: increased "kernel_fwhm" from 2.0 to 2.5,
-  increased "snr_threshold" from 3 to 10,
+- Modified default configuration settings: increased "kernel_fwhm" from 2.0
+  to 2.5, increased "snr_threshold" from 3 to 10,
   and changed "enforce_user_order" from True to False. [#2510]
 
-- Updated tweakreg to use `wcs.available_frames` to get the names of the frames in
-  a WCS pipeline. [#2590, #2594, #2629]
+- Updated tweakreg to use ``wcs.available_frames`` to get the names of the
+  frames in a WCS pipeline. [#2590, #2594, #2629]
+
+- Made the code more robust with images without sources [#2796]
 
 wfs_combine
 -----------
