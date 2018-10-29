@@ -1,4 +1,4 @@
--import pytest
+import pytest
 import numpy as np
 
 from jwst.ramp_fitting.ramp_fit import ramp_fit
@@ -82,7 +82,7 @@ def test_two_groups_fit():
     assert_almost_equals(slopes[0].data[500, 500]/cds_slope, 1.0, places=2)
 
 #ramp_fit_step hardcodes the input to be OLS. So you can't get to the GLS code.
-@pytest.mark.skip(reason="Fails")
+@pytest.mark.xfail(reason="Fails, not implemented")
 def test_simple_gls_ramp():
     #Here given a 10 group ramp with an exact slope of 20/group. The output slope should be 20.
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=10)
@@ -106,8 +106,9 @@ def test_two_groups_unc():
     grouptime=3.0
     deltaDN = 5
     ingain = 2
-    inreadnoise =10 
-    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=2, gain=ingain, readnoise=inreadnoise,deltatime=grouptime)
+    inreadnoise =10
+    ngroups=2
+    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups, gain=ingain, readnoise=inreadnoise,deltatime=grouptime)
     model1.data[0, 0, 500, 500] = 10.0
     model1.data[0, 1, 500, 500] = 10.0 + deltaDN
     slopes = ramp_fit(model1, 64000, True, rnModel, gain, 'OLS', 'optimal')
@@ -116,12 +117,140 @@ def test_two_groups_unc():
     print(' Read Variance ',slopes[0].var_rnoise[500,500])
     print(' Total Sigma ',slopes[0].err[500,500])
     delta_electrons = deltaDN * ingain
+    single_sample_readnoise = inreadnoise/np.sqrt(2)
+    print('CDS/ SS Readnoise',inreadnoise/single_sample_readnoise)
+    print('CDS variance',(inreadnoise**2/grouptime**2))
+    print('Slope Variance',(12 * single_sample_readnoise**2)/(ngroups*(ngroups**2 - 1)*grouptime**2))
     
     assert_almost_equals(slopes[0].var_poisson[500,500]/((deltaDN/ingain)/grouptime**2), 1.0, places=7)
     assert_almost_equals(slopes[0].var_rnoise[500,500]/(inreadnoise**2/grouptime**2), 1.0, places=7)
+    assert_almost_equals(slopes[0].var_rnoise[500,500]/(12*single_sample_readnoise**2/(ngroups*(ngroups**2 - 1)*grouptime**2)), 1.0, places=7)
     assert_almost_equals(slopes[0].err[500,500]/(np.sqrt((deltaDN/ingain)/grouptime**2+(inreadnoise**2/grouptime**2))), 1.0, places=7)
-   
 
+#@pytest.mark.skip(reason="not using now")
+def test_five_groups_unc():
+    grouptime=3.0
+    deltaDN = 5
+    ingain = 2
+    inreadnoise =7
+    ngroups=5
+    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
+                                                          gain=ingain, readnoise=inreadnoise,deltatime=grouptime)
+    model1.data[0, 0, 500, 500] = 10.0
+    model1.data[0, 1, 500, 500] = 15.0
+    model1.data[0, 2, 500, 500] = 25.0
+    model1.data[0, 3, 500, 500] = 33.0
+    model1.data[0, 4, 500, 500] = 60.0
+    slopes = ramp_fit(model1, 64000, True, rnModel, gain, 'OLS', 'optimal')
+    print('Slope ',slopes[0].data[500, 500])
+    print(' Poisson Variance ',slopes[0].var_poisson[500,500])
+    print(' Read Variance ',slopes[0].var_rnoise[500,500])
+    print(' Total Sigma ',slopes[0].err[500,500])
+    out_slope=slopes[0].data[500, 500]
+    median_slope=np.median(np.diff(model1.data[0,:,500,500]))/grouptime
+    print('median slope',median_slope)
+    deltaDN = 50
+    delta_time = (ngroups - 1) * grouptime
+    delta_electrons = median_slope * ingain *delta_time
+    print('delta electons',delta_electrons)
+    print('delta time', delta_time)
+    single_sample_readnoise = np.float64(inreadnoise/np.sqrt(2))
+    assert_almost_equals(slopes[0].var_poisson[500,500]/((median_slope)/(ingain*delta_time)), 1.0, places=6)
+    assert_almost_equals(slopes[0].var_rnoise[500,500]/(12 * single_sample_readnoise**2/(ngroups * (ngroups**2 - 1) * grouptime**2)), 1.0, places=7)
+    assert_almost_equals(slopes[0].err[500,500]/np.sqrt(slopes[0].var_poisson[500,500]  + slopes[0].var_rnoise[500,500] ), 1.0, places=6)
+
+##@pytest.mark.skip(reason="not using now")
+def test_oneCR_10_groups_combination():
+    grouptime=3.0
+    deltaDN = 5
+    ingain = 200 # use large gain to show that Poisson noise doesn't affect the recombination
+    inreadnoise = np.float64(7)
+    ngroups=10
+    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
+                                                          gain=ingain, readnoise=inreadnoise,deltatime=grouptime)
+    # two segments perfect fit, second segment has twice the slope
+    model1.data[0, 0, 500, 500] = 15.0
+    model1.data[0, 1, 500, 500] = 20.0
+    model1.data[0, 2, 500, 500] = 25.0
+    model1.data[0, 3, 500, 500] = 30.0
+    model1.data[0, 4, 500, 500] = 35.0
+    model1.data[0, 5, 500, 500] = 140.0
+    model1.data[0, 6, 500, 500] = 150.0
+    model1.data[0, 7, 500, 500] = 160.0
+    model1.data[0, 8, 500, 500] = 170.0
+    model1.data[0, 9, 500, 500] = 180.0
+    model1.groupdq[0,5,500,500]=dqflags.group['JUMP_DET']
+    slopes, int_model, opt_model, gls_opt_model= ramp_fit(model1, 64000,  True, rnModel, gain, 'OLS', 'optimal')
+    print("slopes shape",type(slopes))
+    print("opt_model shape",type(opt_model))
+    print("int_model shape",type(int_model))
+    print("gls_model shape",type(gls_opt_model))
+    print('Slope ',slopes.data[500, 500])
+    print(' Poisson Variance ',slopes.var_poisson[500,500])
+    print(' Read Variance ',slopes.var_rnoise[500,500])
+    print(' Total Sigma ',slopes.err[500,500])
+    print(' int model   exposure slope',int_model.data[0,500,500])
+    print(' int model  seg 0 slope',opt_model.slope[0,0,500,500])
+    print(' int model  seg 1 slope',opt_model.slope[0,1,500,500])
+    print(' int model   seg 0 RN var',opt_model.var_rnoise[0,0,500,500])
+    print(' int model   seg 1 RN var',opt_model.var_rnoise[0,1,500,500])
+    print(' int model   crmag',opt_model.crmag[0,0,500,500])
+    print(' int model  time type',type(int_model.int_times))
+
+    segment_groups  = 5
+    single_sample_readnoise = np.float64( inreadnoise/np.sqrt(2))
+    #check that the segment variance is as expected
+    np.testing.assert_allclose(opt_model.var_rnoise[0,0,500,500],(12.0 * single_sample_readnoise**2/(segment_groups * (segment_groups**2 - 1) * grouptime**2)), rtol=1e-6)
+    # check the combined slope is the average of the two segments since they have the same number of groups 
+    np.testing.assert_allclose(slopes.data[500, 500], 2.5,rtol=1e-5)
+    #check that the slopes of the two segments are correct
+    np.testing.assert_allclose(opt_model.slope[0,0,500, 500], 5/3.0,rtol=1e-5)
+    np.testing.assert_allclose(opt_model.slope[0,1,500, 500], 10/3.0,rtol=1e-5)
+
+#@pytest.mark.skip(reason="not using now")    
+def test_oneCR_10_groups_combination_noisy2ndSegment():
+    grouptime=3.0
+    deltaDN = 5
+    ingain = 200 # use large gain to show that Poisson noise doesn't affect the recombination
+    inreadnoise =7
+    ngroups=10
+    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
+                                                          gain=ingain, readnoise=inreadnoise,deltatime=grouptime)
+    # two segments perfect fit, second segment has twice the slope
+    model1.data[0, 0, 500, 500] = 15.0
+    model1.data[0, 1, 500, 500] = 20.0
+    model1.data[0, 2, 500, 500] = 25.0
+    model1.data[0, 3, 500, 500] = 30.0
+    model1.data[0, 4, 500, 500] = 35.0
+    model1.data[0, 5, 500, 500] = 135.0
+    model1.data[0, 6, 500, 500] = 155.0
+    model1.data[0, 7, 500, 500] = 160.0
+    model1.data[0, 8, 500, 500] = 168.0
+    model1.data[0, 9, 500, 500] = 180.0
+    model1.groupdq[0,5,500,500]=dqflags.group['JUMP_DET']
+    slopes, int_model, opt_model, gls_opt_model= ramp_fit(model1, 64000,  True, rnModel, gain, 'OLS', 'optimal')
+    print("slopes shape",type(slopes))
+    print("opt_model shape",type(opt_model))
+    print("int_model shape",type(int_model))
+    print("gls_model shape",type(gls_opt_model))
+    print('Slope ',slopes.data[500, 500])
+    print(' Poisson Variance ',slopes.var_poisson[500,500])
+    print(' Read Variance ',slopes.var_rnoise[500,500])
+    print(' Total Sigma ',slopes.err[500,500])
+    print(' int model   exposure slope',int_model.data[0,500,500])
+    print(' int model  seg 0 slope',opt_model.slope[0,0,500,500])
+    print(' int model  seg 1 slope',opt_model.slope[0,1,500,500])
+    print(' int model   seg 0 RN var',opt_model.var_rnoise[0,0,500,500])
+    print(' int model   seg 1 RN var',opt_model.var_rnoise[0,1,500,500])
+    print(' int model   crmag',opt_model.crmag[0,0,500,500])
+    print(' int model  time type',type(int_model.int_times))
+
+    avg_slope = (opt_model.slope[0,0,500, 500] + opt_model.slope[0,1,500, 500])/2.0
+        #even with noiser second segment, final slope should be just the average since they have the same number of groups
+    np.testing.assert_allclose(slopes.data[500, 500], avg_slope,rtol=1e-5)
+
+
+    
 #Need test for multi-ints near zero with positive and negative slopes
 
 def setup_inputs(ngroups=10, readnoise=10, nints=1,
@@ -142,6 +271,7 @@ def setup_inputs(ngroups=10, readnoise=10, nints=1,
         model1.meta.instrument.filter='F480M'
         model1.meta.observation.date='2015-10-13'
         model1.meta.exposure.type='MIR_IMAGE'
+        model1.meta.exposure.group_time = deltatime
         model1.meta.subarray.name='FULL'
         model1.meta.subarray.xstart=1
         model1.meta.subarray.ystart = 1
