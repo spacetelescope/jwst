@@ -362,7 +362,7 @@ lastframe
 lib
 ---
 
-- Updated reffiles_utils to no longer issue warnings about mismatch in 
+- Updated reffiles_utils to no longer issue warnings about mismatch in
   data array size params for NIRSpec IRS2 readouts. [#2664]
 
 linearity
@@ -474,6 +474,13 @@ tweakreg
 
 - Updated tweakreg to use `wcs.available_frames` to get the names of the frames in
   a WCS pipeline. [#2590, #2594, #2629]
+
+- Added two new parameters: ``brightest`` to keep the top ``brightest``
+  (based on the flux) objects in the object catalog *after all other
+  filtering has been applied* and ``peakmax`` to exclude sources with
+  peak pixel values larger or equal to ``peakmax``. ``brightest`` can be used
+  to eliminate false detections and ``peakmax`` can be used to filter out
+  saturated sources (instrument-specific value).[#2706]
 
 wfs_combine
 -----------
