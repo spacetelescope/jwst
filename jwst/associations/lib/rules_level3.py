@@ -68,7 +68,8 @@ class Asn_WFSCMB(AsnMixin_Science):
     """Wavefront Sensing association
 
     For coarse and fine phasing, dither pairs need
-    be associated to be combined.
+    be associated to be combined.  The optical path
+    is assumed to be equivalent within an activity.
     """
 
     def __init__(self, *args, **kwargs):
@@ -79,26 +80,21 @@ class Asn_WFSCMB(AsnMixin_Science):
             Constraint_Target(),
             Constraint_Image(),
             DMSAttrConstraint(
-                name='wfsvisit',
-                sources=['visitype'],
-                value='prime_wfsc_sensing_control',
-            ),
-            DMSAttrConstraint(
                 name='patttype',
                 sources=['patttype'],
                 value='wfsc'
-            ),
-            DMSAttrConstraint(
-                name='obsnum',
-                sources=['obs_num'],
             ),
             DMSAttrConstraint(
                 name='detector',
                 sources=['detector']
             ),
             DMSAttrConstraint(
-                name='expspcin',
-                sources=['expspcin']
+                name='obs_id',
+                sources=['obs_id']
+            ),
+            DMSAttrConstraint(
+                name='act_id',
+                sources=['act_id']
             )
         ])
 
@@ -128,12 +124,12 @@ class Asn_WFSCMB(AsnMixin_Science):
         product_name_format = '{existing}-{detector}_{suffix}-{expspcin}'
 
         existing = super().dms_product_name
-        
+
         product_name = format_product(
             product_name_format,
             existing=existing,
             detector=self.constraints['detector'].value,
-            expspcin=self.constraints['expspcin'].value
+            expspcin=self.constraints['act_id'].value
         )
 
         return product_name.lower()
