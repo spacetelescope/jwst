@@ -111,7 +111,7 @@ class Asn_WFSCMB(AsnMixin_Science):
     def _init_hook(self, item):
         """Post-check and pre-add initialization"""
 
-        self.data['asn_type'] = 'wfs'
+        self.data['asn_type'] = 'wfs-image3'
         super(Asn_WFSCMB, self)._init_hook(item)
 
     @property
