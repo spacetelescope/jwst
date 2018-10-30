@@ -191,11 +191,9 @@ def align(imcat, refcat=None, enforce_user_order=True,
                             "This image will not be aligned."
                             .format(i.meta['image_model'].meta.filename))
                 i.meta['image_model'].meta.cal_step.tweakreg = "SKIPPED"
-                i.meta['skip_alignment'] = True
             skipped_imcat.append(group)
 
         else:
-            i.meta['skip_alignment'] = False
             imcat.append(group)
 
     if len(imcat) < 2:
@@ -203,6 +201,9 @@ def align(imcat, refcat=None, enforce_user_order=True,
             "Not enough catalogs containing minimum required number of "
             "sources. Stopping image alignment."
         )
+        if len(imcat) == 1:
+            for i in imcat[0]:
+                i.meta['image_model'].meta.cal_step.tweakreg = "SKIPPED"
         skipped_imcat += imcat
         # log running time:
         runtime_end = datetime.now()
@@ -275,7 +276,6 @@ def align(imcat, refcat=None, enforce_user_order=True,
                     .format(i.meta['image_model'].meta.filename, e.args[0])
                 )
                 i.meta['image_model'].meta.cal_step.tweakreg = "SKIPPED"
-                i.meta['skip_alignment'] = True
             skipped_imcat.append(current_imcat)
 
         # find the next image to be aligned:
