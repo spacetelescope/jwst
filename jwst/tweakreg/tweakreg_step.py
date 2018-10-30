@@ -27,9 +27,11 @@ class TweakRegStep(Step):
     spec = """
         # Source finding parameters:
         save_catalogs = boolean(default=False) # Write out catalogs?
-        catalog_format = string(default='ecsv')   # Catalog output file format
-        kernel_fwhm = float(default=2.5)    # Gaussian kernel FWHM in pixels
-        snr_threshold = float(default=10.0)  # SNR threshold above the bkg
+        catalog_format = string(default='ecsv') # Catalog output file format
+        kernel_fwhm = float(default=2.5) # Gaussian kernel FWHM in pixels
+        snr_threshold = float(default=10.0) # SNR threshold above the bkg
+        brightest = int(default=None) # Keep top ``brightest`` objects
+        peakmax = float(default=None) # Filter out objects with pixel values >= ``peakmax``
 
         # Optimize alignment order:
         enforce_user_order = boolean(default=False) # Align images in user specified order?
@@ -65,8 +67,10 @@ class TweakRegStep(Step):
 
         # Build the catalogs for input images
         for image_model in images:
-            catalog = make_tweakreg_catalog(image_model, self.kernel_fwhm,
-                                            self.snr_threshold)
+            catalog = make_tweakreg_catalog(
+                image_model, self.kernel_fwhm, self.snr_threshold,
+                brightest=self.brightest, peakmax=self.peakmax
+            )
             filename = image_model.meta.filename
             nsources = len(catalog)
             if nsources == 0:

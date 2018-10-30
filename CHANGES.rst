@@ -527,6 +527,13 @@ tweakreg
   case of 1 or 2 sources in a catalog. [#2797]
 
 
+- Added two new parameters: ``brightest`` to keep the top ``brightest``
+  (based on the flux) objects in the object catalog *after all other
+  filtering has been applied* and ``peakmax`` to exclude sources with
+  peak pixel values larger or equal to ``peakmax``. ``brightest`` can be used
+  to eliminate false detections and ``peakmax`` can be used to filter out
+  saturated sources (instrument-specific value).[#2706]
+
 wfs_combine
 -----------
 
