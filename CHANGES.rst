@@ -1,4 +1,4 @@
-0.12.0 (2018-10-10)
+0.12.1 (2018-10-30)
 ===================
 
 The 0.12.0 release is highlighted by the completion of updates for level-2b WFSS
