@@ -9,6 +9,7 @@ from ..assign_wcs.util import update_s_region_keyword
 
 __all__ = ["CubeBuildStep"]
 
+
 class CubeBuildStep (Step):
     """
     CubeBuildStep: Creates a 3-D spectral cube from a given association, single model,
@@ -68,8 +69,12 @@ class CubeBuildStep (Step):
         if(self.wavemax is not None): self.log.info('Setting Maximum wavelength of spectral cube to: %f',
                                                self.wavemax)
 
-        if(self.rois != 0.0): self.log.info('Input Spatial ROI size %f', self.rois)
-        if(self.roiw != 0.0): self.log.info('Input Wave ROI size %f', self.roiw)
+        if(self.rois != 0.0): 
+            self.log.info('Input Spatial ROI size %f', self.rois)
+            self.rois = float(self.rois)
+        if(self.roiw != 0.0): 
+            self.log.info('Input Wave ROI size %f', self.roiw)
+            self.roiw = float(self.roiw)
 
         self.debug_pixel = 0
         self.spaxel_debug = None
@@ -242,7 +247,7 @@ class CubeBuildStep (Step):
 # or (grating,filter)
 
         num_cubes, cube_pars = cubeinfo.number_cubes()
-        if not self.single: 
+        if not self.single:
             self.log.info('Number of ifucubes produced by a this run %i',
                                           num_cubes)
 
@@ -301,7 +306,7 @@ class CubeBuildStep (Step):
             footprint = cube.meta.wcs.footprint(axis_type="spatial")
             update_s_region_keyword(cube, footprint)
 
-        
+
         return cube_container
 
 #********************************************************************************

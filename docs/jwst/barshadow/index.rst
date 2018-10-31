@@ -6,7 +6,7 @@ Barshadow Correction
    :maxdepth: 2
 
    description.rst
-   reference_files.rst
    arguments.rst
+   reference_files.rst
 
 .. automodapi:: jwst.barshadow

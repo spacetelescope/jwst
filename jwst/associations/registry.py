@@ -72,10 +72,6 @@ class AssociationRegistry(dict):
         Determine whether an association is valid, or complete,
         according to any of the rules in the registry.
 
-    finalize(associations)
-        Validate and execute post-processing hooks to
-        produce a completed and valid set of associations.
-
     load(serialized)
         Create an association from a serialized form.
 
@@ -88,10 +84,10 @@ class AssociationRegistry(dict):
             >>> registry = AssociationRegistry()
 
         * Create associations from an item
-            >>> associations, reprocess = registry.match(item)
+            >>> associations, reprocess = registry.match(item) # doctest: +SKIP
 
         * Finalize the associations
-            >>> final_asns = registry.finalize(assocations)
+            >>> final_asns = registry.callback.reduce('finalize', associations) # doctest: +SKIP
 
     In practice, this is one step in a larger loop over all items to
     be associated. This does not account for adding items to already

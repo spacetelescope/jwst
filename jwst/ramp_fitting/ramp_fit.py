@@ -161,11 +161,24 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
     orig_nreads = nreads
     orig_cubeshape = cubeshape
 
-    # For MIRI datasets having >1 groups, if all final groups are flagged
-    # as DO_NOT_USE, resize the input model arrays to exclude the final group.
-    if (instrume == 'MIRI' and nreads > 1):
-        last_gdq = model.groupdq[:,-1,:,:]
+    # For MIRI datasets having >1 groups, if all final groups are flagged as 
+    # DO_NOT_USE, resize the input model arrays to exclude the final group.
+    # Similarly, if all first groups are flagged as DO_NOT_USE, resize the input 
+    # model arrays to exclude the first group.
 
+    if (instrume == 'MIRI' and nreads > 1):
+        first_gdq = model.groupdq[:,0,:,:]
+
+        if np.all(np.bitwise_and( first_gdq, dqflags.group['DO_NOT_USE'] )):
+            model.data = model.data[:,1:,:,:]
+            model.err = model.err[:,1:,:,:]
+            model.groupdq = model.groupdq[:,1:,:,:]
+            nreads -= 1
+            ngroups -= 1
+            cubeshape = (nreads,)+imshape
+            log.info('MIRI dataset has all first groups flagged as DO_NOT_USE.')
+
+        last_gdq = model.groupdq[:,-1,:,:]
         if np.all(np.bitwise_and( last_gdq, dqflags.group['DO_NOT_USE'] )):
             model.data = model.data[:,:-1,:,:]
             model.err = model.err[:,:-1,:,:]
@@ -585,8 +598,6 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
             int_times = model.int_times
         else:
             int_times = None
-
-    if opt_res.slope_seg is not None:
         int_model = utils.output_integ(model, slope_int, dq_int, effintim,
                                        var_p3, var_r3, var_both3, int_times)
     else:

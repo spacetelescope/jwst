@@ -1,11 +1,3 @@
-#
-# Module for handling Data Quality Initialization
-#
-# This version applies an IRS2-format mask reference file to an IRS2-format
-# (3200, 2048) pixeldq array.  Only minor changes were made to the original
-# code, in functions is_subarray (use < rather than !=) and check_dimensions
-# (pixeldq data type should be uint32).
-
 import logging
 
 import numpy as np
@@ -23,14 +15,43 @@ guider_list = ['FGS_ID-IMAGE', 'FGS_ID-STACK', 'FGS_ACQ1', 'FGS_ACQ2',
 
 
 def correct_model(input_model, mask_model):
-    """DQ Initialize a JWST Model"""
+    """Perform the dq_init step on a JWST datamodel
+
+    Parameters
+    ----------
+    input_model : input JWST datamodel
+        The jwst datamodel to be corrected
+
+    mask_model : mask datamodel
+        The mask model to use in the correction
+
+    Returns
+    -------
+    output_model : JWST datamodel
+        The corrected JWST datamodel
+    """
+
     output_model = do_dqinit(input_model, mask_model)
 
     return output_model
 
 
 def do_dqinit(input_model, mask_model):
-    """Do the DQ initialization"""
+    """Perform the dq_init step on a JWST datamodel
+
+    Parameters
+    ----------
+    input_model : input JWST datamodel
+        The jwst datamodel to be corrected
+
+    mask_model : mask datamodel
+        The mask model to use in the correction
+
+    Returns
+    -------
+    output_model : JWST datamodel
+        The corrected JWST datamodel
+    """
 
     # Inflate empty DQ array, if necessary
     check_dimensions(input_model)
@@ -62,12 +83,21 @@ def do_dqinit(input_model, mask_model):
 
 
 def check_dimensions(input_model):
-    #
-    # Check that the input model pixeldq attribute has the same dimensions as
-    # the image plane of the input model science data
-    # If it has dimensions (0,0), create an array of zeros with the same shape
-    # as the image plane of the input model. For the FGS modes, the
-    # GuiderRawModel has only a regular dq array (no pixeldq or groupdq)
+    """Check that the input model pixeldq attribute has the same dimensions as
+    the image plane of the input model science data
+    If it has dimensions (0,0), create an array of zeros with the same shape
+    as the image plane of the input model. For the FGS modes, the
+    GuiderRawModel has only a regular dq array (no pixeldq or groupdq)
+
+    Parameters
+    ----------
+    input_model : JWST datamodel
+        input datamodel
+
+    Returns
+    -------
+    None
+    """
 
     input_shape = input_model.data.shape
 
