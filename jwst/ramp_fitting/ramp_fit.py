@@ -178,7 +178,7 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
             #   remove the JUMP_DET flag from the group dq for those pixels so
             #   that those groups will be included in the fit.
             wh_cr = np.where( np.bitwise_and(model.groupdq[:,0,:,:],
-                              dqflags.group['JUMP_DET']) != 0 ) 
+                              dqflags.group['JUMP_DET']) != 0 )
             num_cr_1st = len(wh_cr[0])
 
             for ii in range(num_cr_1st):
@@ -226,7 +226,7 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
     #   a ramp is saturated, it is assumed that all groups are saturated.
     first_gdq = model.groupdq[:,0,:,:]
     if np.all(np.bitwise_and( first_gdq, dqflags.group['SATURATED'] )):
-        new_model, int_model, opt_model = utils.do_all_sat( model, imshape, 
+        new_model, int_model, opt_model = utils.do_all_sat( model, imshape,
                                                             n_int, save_opt )
 
         return new_model, int_model, opt_model
@@ -348,7 +348,7 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
             t_dq_cube, inv_var, opt_res, f_max_seg, num_seg = \
                  calc_slope(data_sect, gdq_sect, frame_time, opt_res, save_opt,
                             rn_sect, gain_sect, max_seg, ngroups, weighting,
-                            f_max_seg)
+                            f_max_seg, group_time)
 
             del gain_sect
 
@@ -444,7 +444,7 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
 
             segs_4[num_int, :, rlo:rhi, :] = segs_beg_3
             var_p4[num_int, :, rlo:rhi, :] = den_p3 * med_rates[ rlo:rhi, :]
-            
+
             #find the segment variance due to read noise and convert back to DN
             var_r4[num_int, :, rlo:rhi, :] = num_r3 * den_r3/gain_sect**2
 
@@ -733,9 +733,9 @@ def gls_ramp_fit(model,
 
     tstart = time.time()
 
-    # get needed sizes and shapes
-    nreads, npix, imshape, cubeshape, n_int, instrume, frame_time, ngroups = \
-            utils.get_dataset_info(model)
+    # Get needed sizes and shapes
+    nreads, npix, imshape, cubeshape, n_int, instrume, frame_time, ngroups, \
+        group_time = utils.get_dataset_info(model)
 
     (group_time, nframes_used, saturated_flag, jump_flag) = \
             utils.get_more_info(model)
@@ -779,6 +779,14 @@ def gls_ramp_fit(model,
     # Used for flagging pixels with UNRELIABLE_SLOPE.
     temp_dq = np.zeros(imshape, dtype=np.uint32)
 
+    # Calculate effective integration time (once EFFINTIM has been populated
+    #   and accessible, will use that instead), and other keywords that will
+    #   needed if the pedestal calculation is requested. Note 'nframes'
+    #   is the number of given by the NFRAMES keyword, and is the number of
+    #   frames averaged on-board for a group, i.e., it does not include the
+    #   groupgap.
+    effintim, nframes, groupgap, dropframes1= utils.get_efftim_ped(model)
+
     # Get Pixel DQ array from input file. The incoming RampModel has uint8
     # PIXELDQ, but ramp fitting will update this array here by flagging
     # the 2D PIXELDQ locations where the ramp data has been previously
@@ -790,9 +798,10 @@ def gls_ramp_fit(model,
     # calculate number of (contiguous) rows per data section
     nrows = calc_nrows(model, buffsize, cubeshape, nreads)
 
-    # Get readnoise array and gain array
+    # Get readnoise array for calculation of variance of noiseless ramps, and
+    #   gain array in case optimal weighting is to be done
     readnoise_2d, gain_2d = utils.get_ref_subs(model, readnoise_model,
-                                               gain_model)
+                                               gain_model, nframes)
 
     # Flag any bad pixels in the gain
     pixeldq = utils.reset_bad_gain( pixeldq, gain_2d )
@@ -1349,7 +1358,7 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
 
     # Set the fitting interval length; for a segment having >1 groups, this is
     #   the number of groups-1
-    l_interval = end_locs - start 
+    l_interval = end_locs - start
 
     wh_done = (start == -1) # done pixels
     l_interval[wh_done] = 0  # set interval lengths for done pixels to 0
@@ -1393,7 +1402,7 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
     #    - decrement number of ends
     #    - add slopes and variances to running sums
     #  For segments of this type, the final good group in the segment is a CR
-    #  and/or SAT and is not the final group in the ramp, and the variable 
+    #  and/or SAT and is not the final group in the ramp, and the variable
     #  `l_interval` used below is equal to the number of the segment's groups.
     wh_check = np.where((l_interval > 2) & (end_locs != nreads - 1) & ~pixel_done)
     if(len(wh_check[0]) > 0):
@@ -2284,11 +2293,11 @@ def calc_num_seg(gdq, n_int):
         temp_max_cr = int((gdq_cr.sum(axis=0)).max()/dqflags.group['JUMP_DET'])
         max_cr = max( max_cr, temp_max_cr )
 
-    # Do not want to return a value > the number of groups, which can occur if 
-    #  this is a MIRI dataset in which the first or last group was flagged as 
-    #  DO_NOT_USE and also flagged as a jump. 
-    max_num_seg = int(max_cr) + 1  # n CRS implies n+1 segments  
-    if (max_num_seg > gdq.shape[1]): 
+    # Do not want to return a value > the number of groups, which can occur if
+    #  this is a MIRI dataset in which the first or last group was flagged as
+    #  DO_NOT_USE and also flagged as a jump.
+    max_num_seg = int(max_cr) + 1  # n CRS implies n+1 segments
+    if (max_num_seg > gdq.shape[1]):
         max_num_seg = gdq.shape[1]
 
     return max_num_seg
@@ -2510,5 +2519,3 @@ def log_stats(c_rates):
     log.debug('due to excessive CRs or saturation %d:', len(wh_c_0[0]))
     log.debug('Count rates - min, mean, max, std: %f, %f, %f, %f'
              % (c_rates.min(), c_rates.mean(), c_rates.max(), c_rates.std()))
-
-
