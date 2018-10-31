@@ -25,7 +25,7 @@ def textbox(text, width=78, boxchar='#', indent=0):
 
     For example:
 
-        >>> textbox('Text to wrap', width=16)
+        >>> print(textbox('Text to wrap', width=16))
         ################
         #              #
         # Text to wrap #

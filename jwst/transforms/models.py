@@ -57,6 +57,32 @@ class GrismObject(namedtuple('GrismObject', ("sid",
                                              ), rename=False)):
     """ Grism Objects identified from a direct image catalog and segment map.
 
+    Parameters
+    ----------
+    sid : int
+        source identifed
+    xcentroid : float
+        x center of object in pixels
+    ycentroid : float
+        y center of object in pixels
+    order_bounding : dict{order: tuple}
+        Contains the object x,y bounding locations on the image
+        keyed on spectral order
+    partial_order : bool
+        True if the order is only partially contained on the image
+    waverange : list
+        wavelength range for the order
+    sky_centroid: `~astropy.coordinates.SkyCoord`
+        ra and dec of the center of the object
+    sky_bbox_ll : `~astropy.coordinates.SkyCoord`
+        Lower left corner of the minimum bounding box
+    sky_bbox_lr : `~astropy.coordinates.SkyCoord`
+        Lower right corder of the minimum bounding box
+    sky_bbox_ul : `~astropy.coordinates.SkyCoord`
+        Upper left corner of the minimum bounding box
+    sky_bbox_ur : `~astropy.coordinates.SkyCoord`
+        Upper right corner of the minimum bounding box
+
     Notes
     -----
     The object bounding box is computed from the segementation map,
@@ -67,14 +93,9 @@ class GrismObject(namedtuple('GrismObject', ("sid",
     ra and dec are the sky ra and dec of the center of the object as measured
     from the non-dispersed image.
 
-    the segment_[ra/dec][min/max] are also as measured on the direct image
-
     order_bounding is stored as a lookup dictionary per order and contains
     the object x,y bounding location on the grism image
     GrismObject(order_bounding={"+1":((xmin,xmax),(ymin,ymax)),"+2":((2,3),(2,3))})
-
-
-    ``sky_bbox_??`` contains the ra,dec,frame information for the bbox from the catalog
 
     """
     __slots__ = ()  # prevent instance dictionary for lower memory
@@ -644,7 +665,7 @@ class LRSWavelength(Model):
         return self._zero_point
 
     def evaluate(self, x, y):
-        slitsize = 1.00076751 # The MIRI LRS slit size.
+        slitsize = 1.00076751  # The MIRI LRS slit size.
         imx, imy = self.zero_point
         dx = x - imx
         dy = y - imy

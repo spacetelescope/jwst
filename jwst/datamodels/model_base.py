@@ -115,15 +115,17 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         is_array = False
         is_shape = False
         shape = None
+        # Set threshold size for inlining data arrays to 0 by default
+        asdf_kwargs = dict(inline_threshold=kwargs.pop('inline_threshold', 0))
 
         if init is None:
-            asdf = AsdfFile(extensions=extensions)
+            asdf = AsdfFile(extensions=extensions, **asdf_kwargs)
 
         elif isinstance(init, dict):
-            asdf = AsdfFile(init, extensions=self._extensions)
+            asdf = AsdfFile(init, extensions=self._extensions, **asdf_kwargs)
 
         elif isinstance(init, np.ndarray):
-            asdf = AsdfFile(extensions=self._extensions)
+            asdf = AsdfFile(extensions=self._extensions, **asdf_kwargs)
             shape = init.shape
             is_array = True
 
@@ -133,7 +135,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                     raise ValueError("shape must be a tuple of ints")
 
             shape = init
-            asdf = AsdfFile()
+            asdf = AsdfFile(**asdf_kwargs)
             is_shape = True
 
         elif isinstance(init, DataModel):
@@ -298,10 +300,11 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         return asdf_file_resolver
 
     @staticmethod
-    def clone(target, source, deepcopy=False, memo=None):
+    def clone(target, source, deepcopy=False, memo=None, inline_threshold=0):
         if deepcopy:
             instance = copy.deepcopy(source._instance, memo=memo)
-            target._asdf = AsdfFile(instance, extensions=source._extensions)
+            target._asdf = AsdfFile(instance, extensions=source._extensions,
+                                    inline_threshold=inline_threshold)
             target._instance = instance
             target._iscopy = source._iscopy
         else:
@@ -542,7 +545,9 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         """
         self.on_save(init)
 
-        AsdfFile(self._instance, extensions=self._extensions).write_to(init, *args, **kwargs)
+        inline_threshold = kwargs.pop('inline_threshold', 0)
+        AsdfFile(self._instance, extensions=self._extensions,
+                 inline_threshold=inline_threshold).write_to(init, *args, **kwargs)
 
     @classmethod
     def from_fits(cls, init, schema=None):
@@ -663,8 +668,9 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         Example
         -------
+        >>> model = DataModel()
         >>> model.find_fits_keyword('DATE-OBS')
-        ['observation.date']
+        ['meta.observation.date']
         """
         from . import schema
         return schema.find_fits_keyword(self.schema, keyword)

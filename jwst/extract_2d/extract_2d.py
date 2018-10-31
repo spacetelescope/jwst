@@ -38,6 +38,12 @@ def extract2d(input_model,
         Cross-dispersion extraction height to use for time series grisms.
         This will override the default which for NRC_TSGRISM is a set
         size of 64 pixels.
+
+    Returns
+    -------
+    output_model : `~jwst.datamodels.ImageModel` or `~jwst.datamodelsCubeModel`
+      A copy of the input_model that has been processed.
+
     """
     nrs_modes = ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_BRIGHTOBJ',
                  'NRS_LAMP', 'NRS_AUTOFLAT']
@@ -52,6 +58,11 @@ def extract2d(input_model,
     log.info('EXP_TYPE is {0}'.format(exp_type))
 
     if exp_type in nrs_modes:
+        if input_model.meta.instrument.grating.lower() == "mirror":
+            # Catch the case of EXP_TYPE=NRS_LAMP and grating=MIRROR
+            log.info("'EXP_TYPE {} with grating=MIRROR not supported for extract 2D".format(exp_type))
+            input_model.meta.cal_step.extract_2d = 'SKIPPED'
+            return input_model
         output_model = nrs_extract2d(input_model,
                                      slit_name=slit_name,
                                      apply_wavecorr=apply_wavecorr,

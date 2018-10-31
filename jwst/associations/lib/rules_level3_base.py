@@ -28,6 +28,7 @@ from jwst.associations.lib.counter import Counter
 from jwst.associations.lib.dms_base import (
     _EMPTY,
     ACQ_EXP_TYPES,
+    CORON_EXP_TYPES,
     DMSAttrConstraint,
     DMSBaseMixin,
     IMAGE2_SCIENCE_EXP_TYPES,
@@ -481,7 +482,7 @@ class Utility():
             suffix = 'cal'
         else:
             suffix = 'rate'
-        if is_tso:
+        if is_tso or exp_type in CORON_EXP_TYPES:
             suffix += 'ints'
 
         level2_name = ''.join([

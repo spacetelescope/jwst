@@ -1,4 +1,4 @@
-0.12.0 (2018-10-10)
+0.12.1 (2018-10-30)
 ===================
 
 The 0.12.0 release is highlighted by the completion of updates for level-2b WFSS
@@ -28,6 +28,12 @@ assign_wcs
 
 - Added unit tests for grism modes [#2649]
 
+- Augmented the logic for choosing a Nirspec WCS mode to include a check for the value
+  of ``GRATING``. If ``GRATING=MIRROR`` imaging mode is chosen reegardless of ``EXP_TYPE``. [#2761]
+
+- Added new NIRSpec target acq exposure types NRS_WATA and NRS_MSATA to be
+  assigned an imaging WCS. Removed NRS_BOTA. [#2781]
+
 associations
 ------------
 
@@ -43,6 +49,14 @@ associations
   configuration file "calwebb_wfs-image2.cfg" [#2599]
 
 - Added new rule Asn_Lv2MIRLRSFixedSlitNod to handle LRS Fixed-slit nodding. [#2663]
+
+- Updated MIRI Dark and Flat exposure keywords. [#2698, #2710]
+
+- Updated coronagraphy associations to be integrations-based. [#2773]
+
+- Updated NIRSpec Lamp calibrations to be grating-specific. [#2780]
+
+- Added new NIRSpec target acq exposure types NRS_WATA and NRS_MSATA. [#2780]
 
 background
 ----------
@@ -65,6 +79,8 @@ cube_build
 
 - Added support for creating IFU Cubes with non-linear wavelength sampling,
   including use of FITS WCS "WAVE-TAB" standard. [#2598]
+- Correctly writing TDIM2 to WCS-TABLE extension [#2719]
+- Fixed error when making IFUCubes with weighting='miripsf' [#2719]
 
 cube_skymatch
 -------------
@@ -95,6 +111,20 @@ datamodels
 
 - Updates for python 2 to 3 conversion [#2678]
 
+- Updated EXP_TYPE allowed values to include "MIR_DARKALL", "MIR_DARKIMG",
+  "MIR_DARKMRS", "MIR_FLATALL", "MIR_FLATIMAGE-EXT", and "MIR_FLATMRS-EXT" [#2709]
+
+- Updated the MiriResolutionModel schema to have column names match the actual
+  reference files [#2757]
+
+- Updated EXP_TYPE allowed values to remove NRS_BOTA and replace with NRS_MSATA
+  and NRS_WATA [#2772]
+
+documentation
+-------------
+
+- Clarifications of input and output file naming. [#2727]
+
 dq_init
 -------
 
@@ -112,6 +142,8 @@ exp_to_source
 extract_1d
 ----------
 
+- Added or modified docstrings [#2769]
+
 extract_2d
 ----------
 
@@ -123,6 +155,8 @@ extract_2d
 - Added bounding box to WFSS output SlitModel [#2643]
 
 - Added unit tests for grism modes [#2649]
+
+- Bounding box sizes in extracted WFSS exposures now correctly cover entire extraction [#2799]
 
 firstframe
 ----------
@@ -162,6 +196,8 @@ ipc
 jump
 ----
 
+- Updated step docs, as well as gain and readnoise reference file docs [#2689]
+
 jwpsf
 -----
 
@@ -171,8 +207,11 @@ lastframe
 lib
 ---
 
-- Updated reffiles_utils to no longer issue warnings about mismatch in 
+- Updated reffiles_utils to no longer issue warnings about mismatch in
   data array size params for NIRSpec IRS2 readouts. [#2664]
+
+- Updated reffiles_utils to regard IRS2 science exposures as a match with normal
+  sized reference files. [#2755]
 
 linearity
 ---------
@@ -220,6 +259,11 @@ ramp_fitting
   insufficient data for a first difference; Corrected handling of ramps whose initial group
   is saturated; Corrected handling of ramps whose single good segment is a single group. [#2464]
 
+- Updated gain and readnoise reference file docs [#2689]
+
+- Fixed bug so that an integration-specific (_rateints) product is only created when
+  NINTS>1; Skip MIRI first and/or last groups when flagged as DO_NOT_USE. [#2760]
+
 refpix
 ------
 
@@ -236,6 +280,8 @@ rscd
 
 saturation
 ----------
+
+- Updated step docs, as well as saturation reference file docs [#2689]
 
 skymatch
 --------
@@ -277,12 +323,18 @@ tso_photometry
 tweakreg
 --------
 
-- Modified default configuration settings: increased "kernel_fwhm" from 2.0 to 2.5,
-  increased "snr_threshold" from 3 to 10,
+- Modified default configuration settings: increased "kernel_fwhm" from 2.0
+  to 2.5, increased "snr_threshold" from 3 to 10,
   and changed "enforce_user_order" from True to False. [#2510]
 
-- Updated tweakreg to use `wcs.available_frames` to get the names of the frames in
-  a WCS pipeline. [#2590, #2594, #2629]
+- Updated tweakreg to use ``wcs.available_frames`` to get the names of the
+  frames in a WCS pipeline. [#2590, #2594, #2629]
+
+- Made the code more robust with images without sources [#2796]
+
+- Made the logic for computations of footprints more reliable for the
+  case of 1 or 2 sources in a catalog. [#2797]
+
 
 wfs_combine
 -----------

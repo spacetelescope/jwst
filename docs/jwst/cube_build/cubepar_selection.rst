@@ -1,5 +1,7 @@
+.. _cubepar_selectors:
+
 Reference Selection Keywords for CUBEPAR
-----------------------------------------
+++++++++++++++++++++++++++++++++++++++++
 CRDS selects appropriate CUBEPAR references based on the following keywords.
 CUBEPAR is not applicable for instruments not in the table.
 

@@ -345,7 +345,7 @@ class WCSImageCatalog():
             stored (for convenience) within `WCSImageCatalog` object.
 
         """
-        self._shape = shape
+        self.imshape = shape
         self._name = name
         self._catalog = None
         self._bb_radec = None
@@ -438,6 +438,9 @@ class WCSImageCatalog():
 
     @imshape.setter
     def imshape(self, shape):
+        if not all(npix > 0 for npix in shape):
+            raise ValueError("Null image: Image dimension must be positive.")
+
         self._shape = shape
 
     @property
@@ -655,43 +658,19 @@ class WCSImageCatalog():
             # no points
             raise RuntimeError("Unexpected error: Contact sofware developer")
 
-        elif len(x) == 1:
-            # one point. build a small box around it:
-            x, y = convex_hull(x, y, wcs=self.det_to_tanp)
-
-            xv = [x[0] - 0.5, x[0] - 0.5, x[0] + 0.5, x[0] + 0.5, x[0] - 0.5]
-            yv = [y[0] - 0.5, y[0] + 0.5, y[0] + 0.5, y[0] - 0.5, y[0] - 0.5]
-
-            ra, dec = self.tanp_to_world(xv, yv)
-
-        elif len(x) == 3:
-            # two points. build a small box around them:
-            x, y = convex_hull(x, y, wcs=self.det_to_tanp)
-
-            vx = -(y[1] - y[0])
-            vy = x[1] - x[0]
-            norm = 2.0 * np.sqrt(vx * vx + vy * vy)
-            vx /= norm
-            vy /= norm
-
-            xv = [x[0] + vx, x[1] + vx, x[1] + vx, x[0] - vx, x[0] + vx]
-            yv = [y[0] + vy, y[1] + vy, y[1] + vy, x[0] - vx, x[0] + vx]
-
-            ra, dec = self.tanp_to_world(xv, yv)
-
-        else:
+        if len(x) > 2:
             ra, dec = convex_hull(x, y, wcs=self.det_to_world)
 
-        # TODO: for strange reasons, occasionally ra[0] != ra[-1] and/or
-        #       dec[0] != dec[-1] (even though we close the polygon in the
-        #       previous two lines). Then SphericalPolygon fails because
-        #       points are not closed. Threfore we force it to be closed:
-        ra[-1] = ra[0]
-        dec[-1] = dec[0]
+            # TODO: for strange reasons, occasionally ra[0] != ra[-1] and/or
+            #       dec[0] != dec[-1] (even though we close the polygon in the
+            #       previous two lines). Then SphericalPolygon fails because
+            #       points are not closed. Threfore we force it to be closed:
+            ra[-1] = ra[0]
+            dec[-1] = dec[0]
 
-        self._bb_radec = (ra, dec)
-        self._polygon = SphericalPolygon.from_radec(ra, dec)
-        self._poly_area = np.fabs(self._polygon.area())
+            self._bb_radec = (ra, dec)
+            self._polygon = SphericalPolygon.from_radec(ra, dec)
+            self._poly_area = np.fabs(self._polygon.area())
 
     def calc_bounding_polygon(self):
         """
@@ -1282,7 +1261,7 @@ class RefCatalog():
     catalog manipulation and expansion.
 
     """
-    def __init__(self, catalog, name=None):
+    def __init__(self, catalog, name=None, footprint_tol=1.0):
         """
         Parameters
         ----------
@@ -1296,9 +1275,14 @@ class RefCatalog():
         name : str, None, optional
             Name of the reference catalog.
 
+        footprint_tol : float, optional
+            Matching tolerance in arcsec. This is used to estimate catalog's
+            footprint when catalog contains only one or two sources.
+
         """
         self._name = name
         self._catalog = None
+        self._footprint_tol = footprint_tol
 
         # make sure catalog has RA & DEC
         if catalog is not None:
@@ -1333,7 +1317,7 @@ class RefCatalog():
         self._check_catalog(catalog)
 
         if len(catalog) == 0:
-            raise ValueError("Catalog must contain at least one source.")
+            raise ValueError("Reference catalog must contain at least one source.")
 
         self._catalog = catalog.copy()
 
@@ -1444,22 +1428,36 @@ class RefCatalog():
         elif len(xv) == 1:
             # one point. build a small box around it:
             x, y = convex_hull(x, y, wcs=None)
+            tol = 0.5 * self._footprint_tol
 
-            xv = [x[0] - 0.5, x[0] - 0.5, x[0] + 0.5, x[0] + 0.5, x[0] - 0.5]
-            yv = [y[0] - 0.5, y[0] + 0.5, y[0] + 0.5, y[0] - 0.5, y[0] - 0.5]
+            xv = [x[0] - tol, x[0] - tol, x[0] + tol, x[0] + tol, x[0] - tol]
+            yv = [y[0] - tol, y[0] + tol, y[0] + tol, y[0] - tol, y[0] - tol]
 
-        elif len(xv) == 3:
+        elif len(xv) == 2:
             # two points. build a small box around them:
             x, y = convex_hull(x, y, wcs=None)
+            tol = 0.5 * self._footprint_tol
 
-            vx = -(y[1] - y[0])
+            vx = y[1] - y[0]
             vy = x[1] - x[0]
-            norm = 2.0 * np.sqrt(vx * vx + vy * vy)
+            norm = np.sqrt(vx * vx + vy * vy)
             vx /= norm
             vy /= norm
 
-            xv = [x[0] + vx, x[1] + vx, x[1] + vx, x[0] - vx, x[0] + vx]
-            yv = [y[0] + vy, y[1] + vy, y[1] + vy, x[0] - vx, x[0] + vx]
+            xv = [
+                x[0] - (vx - vy) * tol,
+                x[0] - (vx + vy) * tol,
+                x[1] + (vx - vy) * tol,
+                x[1] + (vx + vy) * tol,
+                x[0] - (vx - vy) * tol
+            ]
+            yv = [
+                y[0] - (vy + vx) * tol,
+                y[0] - (vy - vx) * tol,
+                y[1] + (vy + vx) * tol,
+                y[1] + (vy - vx) * tol,
+                y[0] - (vy + vx) * tol
+            ]
 
         # "unrotate" cartezian coordinates back to their original
         # ra_ref and dec_ref "positions":
@@ -1620,3 +1618,7 @@ Convex_hull/Monotone_chain>`_
         return (ra.tolist(), dec.tolist())
     else:
         return (ra, dec)
+
+
+def _planar_polygon_area(xv, yv):
+    return np.abs(0.5 * (np.dot(xv[:-1], yv[1:]) - np.dot(xv[1:], yv[:-1])))

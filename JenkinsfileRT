@@ -3,7 +3,7 @@ if (utils.scm_checkout(['skip_disable':true])) return
 
 def test_env = [
     "HOME=./",
-    "TEST_BIGDATA=/data4/jwst_test_data",
+    "TEST_BIGDATA=https://bytesalad.stsci.edu/artifactory",
     "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
     "CRDS_CONTEXT=jwst-edit",
 ]
@@ -12,16 +12,23 @@ def test_env = [
 def PIP_ARGS = "-q"
 def PIP_INST = "pip install ${PIP_ARGS}"
 def PIP_DEPS = ""
-def PIP_TEST_DEPS = "requests_mock ci_watson"
+def PIP_TEST_DEPS = "requests_mock git+https://github.com/spacetelescope/ci_watson.git"
 
 // Pytest wrapper
+def PYTEST_BASETEMP = "test_outputs"
 def PYTEST = "pytest \
               -r s \
               --bigdata \
-              --basetemp=test_outputs \
+              --basetemp=${PYTEST_BASETEMP} \
               --junit-xml=results.xml"
 
 def TEST_ROOT = "jwst/tests_nightly/general"
+
+// Configure artifactory ingest
+data_config = new DataConfig()
+data_config.server_id = 'bytesalad'
+data_config.root = '${PYTEST_BASETEMP}'
+data_config.match_prefix = '(.*)_result' // .json is appended automatically
 
 bc = new BuildConfig()
 bc.nodetype = 'jwst'
@@ -34,6 +41,7 @@ bc.conda_packages = ['asdf',
                      'dask',
                      'drizzle',
                      'flake8',
+                     'pytest=3.8.2',
                      'gwcs',
                      'jsonschema',
                      'jplephem',
@@ -50,10 +58,13 @@ bc.conda_packages = ['asdf',
                      'stsci.tools',
                      'verhawk'
 ]
+
 bc.test_cmds = ["printenv | sort",
                 "python setup.py develop",
                 "${PIP_INST} ${PIP_TEST_DEPS}",
                 "${PYTEST} ${TEST_ROOT}"
 ]
+
+bc.test_configs = [data_config]
 
 utils.run([bc])

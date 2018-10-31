@@ -169,43 +169,43 @@ class SimpleConstraint(SimpleConstraintABC):
     Create a constraint where the attribute `attr` of an object
     matches the value `my_value`:
 
-    >>> from jwst.associations.lib.constraint import SimpleConstraint
     >>> c = SimpleConstraint(value='my_value')
     >>> print(c)
-    SimpleConstraint({'value': 'my_value' })
+    SimpleConstraint({'name': None, 'value': 'my_value'})
 
     To check a constraint, call `check_and_set`. A successful match
-    will return a `SimpleConstraint` and a reprocess list.
+    will return a tuple of `True` and a reprocess list.
     >>> item = 'my_value'
-    >>> new_c, reprocess = c.check_and_set(item)
-    SimpleConstraint, []
+    >>> c.check_and_set(item)
+    (True, [])
 
     If it doesn't match, `False` will be returned.
     >>> bad_item = 'not_my_value'
     >>> c.check_and_set(bad_item)
-    False, []
+    (False, [])
 
     A `SimpleConstraint` can also be initialized by a `dict`
     of the relevant parameters:
     >>> init = {'value': 'my_value'}
     >>> c = SimpleConstraint(init)
     >>> print(c)
-    SimpleConstraint({'value': 'my_value'})
+    SimpleConstraint({'name': None, 'value': 'my_value'})
 
     If the value to check is `None`, the `SimpleConstraint` will
     succesfully match whatever object given. However, a new `SimpleConstraint`
     will be returned where the `value` is now set to whatever the attribute
     was of the object.
-    >>> c = SimpleConstraint(value=None, sources=['attr'])
-    >>> new_c, reprocess = c.check_and_set(item)
-    >>> print(result)
-    SimpleConstraint({'value': 'my_value'})
+    >>> c = SimpleConstraint(value=None)
+    >>> matched, reprocess = c.check_and_set(item)
+    >>> print(c)
+    SimpleConstraint({'name': None, 'value': 'my_value'})
 
     This behavior can be overriden by the `force_unique` paramter:
-    >>> c = SimpleConstraint(value=None, sources=['attr'], force_unique=False)
-    >>> result, reprocess = c.check_and_set(item)
-    >>> print(result)
-    SimpleConstraint({'value': None})
+    >>> c = SimpleConstraint(value=None, force_unique=False)
+    >>> matched, reprocess = c.check_and_set(item)
+    >>> print(c)
+    SimpleConstraint({'name': None, 'value': None})
+
     """
 
     def __init__(
@@ -515,9 +515,18 @@ class Constraint:
     -----
     Named constraints can be accessed directly through indexing:
 
-    >>> c = Constraint(SimpleConstaint(name='simple', value='a_value'))
-    >>> c['simple']
-    SimpleConstraint('value': 'a_value')
+    >>> c = Constraint(SimpleConstraint(name='simple', value='a_value'))
+    >>> c['simple']  # doctest: +SKIP
+    SimpleConstraint({'sources': <function SimpleConstraint.__init__.<locals>.<lambda> at 0x7f8be05f5730>,
+                      'force_unique': True,
+                      'test': <bound method SimpleConstraint.eq of SimpleConstraint({...})>,
+                      'reprocess_on_match': False,
+                      'reprocess_on_fail': False,
+                      'work_over': 1,
+                      'reprocess_rules': None,
+                      'value': 'a_value',
+                      'name': 'simple',
+                      'matched': False})
     """
     def __init__(
             self,
