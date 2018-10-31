@@ -8,10 +8,11 @@ import pytest
 from .helpers import (
     SCRIPT_DATA_PATH,
     abspath,
-    update_asn_basedir,
 )
 
 from ...associations import load_asn
+from ...associations.lib.rules_level3_base import format_product
+from ...pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from ...stpipe.step import Step
 
 DATAPATH = abspath(
@@ -25,13 +26,13 @@ def test_run_full(mk_tmp_dirs):
     """Test a full run"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
-    asn_path = update_asn_basedir(
-        path.join(DATAPATH, 'wfs_3sets_asn.json'),
-        root=DATAPATH
-    )
+    collect_pipeline_cfgs(tmp_config_path)
+
+    asn_path = path.join(DATAPATH, 'wfs_3sets_asn.json')
+
     args = [
-        path.join(SCRIPT_DATA_PATH, 'cfgs', 'wfs_combine.cfg'),
-        asn_path,
+        path.join(tmp_config_path, 'calwebb_wfs-image3.cfg'),
+        asn_path
     ]
 
     Step.from_cmdline(args)
@@ -42,8 +43,11 @@ def test_run_full(mk_tmp_dirs):
 
     # Check for file existenc
     output_files = glob('*')
+    print('output_files = {}'.format(output_files))
+
     for product in asn['products']:
-        prod_name = path.splitext(product['name'])[0] + '_wfscmb.fits'
+        prod_name = product['name']
+        prod_name = format_product(prod_name, suffix = 'wfscmb')
         assert prod_name in output_files
         output_files.remove(prod_name)
 
