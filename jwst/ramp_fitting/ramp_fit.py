@@ -72,7 +72,7 @@ def ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
         DM object containing a rate image averaged over all integrations in
         the exposure
 
-    int_model : Data Model object
+    int_model : Data Model object or None
         DM object containing rate images for each integration in the exposure
 
     opt_model : RampFitOutputModel object or None
@@ -939,12 +939,12 @@ def calc_power(snr):
 
     Parameters
     ----------
-    snr : float, 1D
+    snr : float, 1D array
         signal-to-noise for the ramp segments
 
     Returns
     -------
-    pow_wt.ravel(): float, 1D
+    pow_wt.ravel() : float, 1D array
         weighting exponent
     """
     pow_wt = snr.copy() * 0.0
@@ -973,7 +973,7 @@ def dq_compress_final(dq_int, n_int):
 
     Returns
     -------
-    f_dq : float, 2D array
+    f_dq : uint16, 2D array
         combination of all integration's pixeldq arrays
 
     """
@@ -1002,12 +1002,12 @@ def dq_compress_sect(gdq_sect, pixeldq_sect):
     gdq_sect : int (uint8), 3D array
         cube of GROUPDQ array for a data section
 
-    pixeldq_sect : int (uint16), 2D array
+    pixeldq_sect : int, 2D array
         dq array of data section of input model
 
     Returns
     -------
-    pixeldq_sect : int (uint16), 2D array
+    pixeldq_sect : int, 2D array
         dq array of data section updated with saturated and jump-detected flags
 
     """
@@ -1072,10 +1072,10 @@ def calc_slope(data_sect, gdq_sect, frame_time, opt_res, save_opt, rn_sect,
 
     Parameters
     ----------
-    data_sect : float
+    data_sect : float, 3D array
         section of input data cube array
 
-    gdq_sect : float
+    gdq_sect : int, 3D array
         section of GROUPDQ data quality array
 
     frame_time : float
@@ -1636,7 +1636,7 @@ def fit_lines(data, mask_2d, rn_sect, gain_sect, ngroups, weighting):
 
     Parameters
     ----------
-    data : float
+    data : float, 3D array
        array of values for current data section
 
     mask_2d : boolean, 2D array
@@ -1996,16 +1996,16 @@ def calc_opt_fit(nreads_wtd, sumxx, sumx, sumxy, sumy):
     nreads_wtd : float, 1D array
         sum of product of data and optimal weight
 
-    sumxx : float
+    sumxx : float, 1D array
         sum of squares of xvalues
 
-    sumx : float
+    sumx : float, 1D array
         sum of xvalues
 
-    sumxy : float
+    sumxy : float, 1D array
         sum of product of xvalues and data
 
-    sumy : float
+    sumy : float, 1D array
         sum of data
 
     Returns

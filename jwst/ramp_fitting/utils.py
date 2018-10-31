@@ -273,7 +273,7 @@ class OptRes:
 
         Returns
         -------
-        rfo_model: Data Model object
+        rfo_model : Data Model object
         """
         self.var_p_seg[self.var_p_seg > 0.4 * LARGE_VARIANCE ] = 0.
         self.var_r_seg[self.var_r_seg > 0.4 * LARGE_VARIANCE ] = 0.
@@ -1050,7 +1050,8 @@ def reset_bad_gain(pdq, gain):
 def get_ref_subs(model, readnoise_model, gain_model, nframes):
     """
     Get readnoise array for calculation of variance of noiseless ramps, and
-    the gain array in case optimal weighting is to be done.
+    the gain array in case optimal weighting is to be done. The returned
+    readnoise has been multiplied by the gain.
 
     Parameters
     ----------
@@ -1069,7 +1070,7 @@ def get_ref_subs(model, readnoise_model, gain_model, nframes):
 
     Returns
     -------
-    readnoise_2d : float, 2D array; multiplied by gain
+    readnoise_2d : float, 2D array
         readnoise subarray
 
     gain_2d : float, 2D array
