@@ -160,7 +160,7 @@ CTYPE3  'METER'    Type of physical coordinate in this dimension
 
 The NIRISS SOSS reference file should also have WCS components, but their
 interpretation is different from those in the NIRSpec reference file.
-Dimension 1 expresses the decenter along the dispersion direction for a point source:
+Dimension 1 expresses the column number in the science data:
 
 ======= ===================== ===================================================================
 Keyword Value                 Comment
@@ -171,8 +171,7 @@ CDELT1  1.0                   Change in coordinate value for unit change in inde
 CTYPE1  'PIXEL'               Type of physical coordinate in this dimension
 ======= ===================== ===================================================================
 
-Dimension 2 expresses the decenter along the direction perpendicular to the dispersion
-for a point source:
+Dimension 2 expresses the value of the PWCPOS keyword:
 
 ======= ===================== ===================================================================
 CRPIX2  9.0                   Reference pixel in fastest dimension
