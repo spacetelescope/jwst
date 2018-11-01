@@ -30,7 +30,7 @@ class TweakRegStep(Step):
         catalog_format = string(default='ecsv') # Catalog output file format
         kernel_fwhm = float(default=2.5) # Gaussian kernel FWHM in pixels
         snr_threshold = float(default=10.0) # SNR threshold above the bkg
-        brightest = integer(default=None) # Keep top ``brightest`` objects
+        brightest = integer(default=100) # Keep top ``brightest`` objects
         peakmax = float(default=None) # Filter out objects with pixel values >= ``peakmax``
 
         # Optimize alignment order:
