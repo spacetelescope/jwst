@@ -307,7 +307,7 @@ class OptRes:
         return rfo_model
 
 
-    def print_full(self):
+    def print_full(self):# pragma: no cover
         """
         Short Summary
         -------------
@@ -728,7 +728,7 @@ def output_integ(model, slope_int, dq_int, effintim, var_p3, var_r3, var_both3,
 
 def gls_output_optional(model, intercept_int, intercept_err_int,
                         pedestal_int,
-                        ampl_int, ampl_err_int):
+                        ampl_int, ampl_err_int):# pragma: no cover
     """Construct the optional results for the GLS algorithm.
 
     Short Summary
@@ -780,7 +780,7 @@ def gls_output_optional(model, intercept_int, intercept_err_int,
 
 
 def gls_pedestal(first_group, slope_int, s_mask,
-                 frame_time, nframes_used):
+                 frame_time, nframes_used):# pragma: no cover
 
     """Calculate the pedestal for the GLS case.
 
@@ -987,7 +987,7 @@ def get_dataset_info(model):
            ngroups, group_time
 
 
-def get_more_info(model):
+def get_more_info(model):# pragma: no cover
     """Get information used by GLS algorithm.
 
     Parameters
@@ -1019,7 +1019,7 @@ def get_more_info(model):
     return (group_time, nframes_used, saturated_flag, jump_flag)
 
 
-def get_max_num_cr(gdq_cube, jump_flag):
+def get_max_num_cr(gdq_cube, jump_flag): # pragma: no cover
     """
     Short Summary
     -------------
