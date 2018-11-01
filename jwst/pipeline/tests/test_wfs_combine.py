@@ -41,13 +41,14 @@ def test_run_full(mk_tmp_dirs):
     with open(asn_path) as fh:
         asn = load_asn(fh)
 
-    # Check for file existenc
+    # Check for file existence
     output_files = glob('*')
     print('output_files = {}'.format(output_files))
 
     for product in asn['products']:
         prod_name = product['name']
-        prod_name = format_product(prod_name, suffix = 'wfscmb')
+        prod_name = format_product(prod_name, suffix='wfscmb')
+        prod_name += '.fits'
         assert prod_name in output_files
         output_files.remove(prod_name)
 
