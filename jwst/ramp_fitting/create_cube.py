@@ -30,7 +30,7 @@
 #  ... which specifies the values:
 #  readmode = 'deep8', nread = 4, array size = 100, image to sample = 'sim_100.fits', noisy = True, verbosity = 1
 #
-
+# pragma: no cover
 import time, random
 import numpy as N
 import sys, os
@@ -41,7 +41,7 @@ DELTA_T = 10.6 #  time per single readout in seconds
 ELECTRON_PER_ADU = 1.3 # for NIRCAM, is 2.2 for MIRI
 READ_NOISE = 10. # electrons
 
-class create_cube:
+class create_cube: # pragma: no cover
     """ Create a noisy or noiseless data cube.
     """
     def __init__(self, mode, nread, asize, sample_image, noisy=False, verb=0):
@@ -235,7 +235,7 @@ class create_cube:
 
         print(' Wrote to output_fname = ', output_fname)
 
-def check_pars(mode, nread, asize, sample_image, ngroup, noisy):
+def check_pars(mode, nread, asize, sample_image, ngroup, noisy): # pragma: no cover
     """ Verify that the input values are valid.
 
     @param mode: mode

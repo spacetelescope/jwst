@@ -1,0 +1,11 @@
+#This controls coverage.py's execution
+[run]
+omit = create_cube.py
+     compare_cr_files.py
+     compare_cr_navg_files.py
+     mc_2d.py
+     mc_3d.py
+     rotate_dataset.py
+     rotate_utils.py
+     compare_crs.py
+

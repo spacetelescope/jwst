@@ -34,7 +34,7 @@ SINGLE_READOUT_RN_FACTOR = 1. / math.sqrt(2.)
 def determine_slope(data_sect, input_var_sect,
                     gdq_sect, readnoise_sect, gain_sect,
                     frame_time, group_time, nframes_used,
-                    max_num_cr, saturated_flag, jump_flag):
+                    max_num_cr, saturated_flag, jump_flag): # pragma: no cover
     """Iteratively fit a slope, intercept, and cosmic rays to a ramp.
 
     This function fits a ramp, possibly with discontinuities (cosmic-ray
@@ -233,7 +233,7 @@ def determine_slope(data_sect, input_var_sect,
 
 def evaluate_fit(intercept_sect, slope_sect, cr_sect,
                  frame_time, group_time,
-                 gdq_sect, jump_flag):
+                 gdq_sect, jump_flag): # pragma: no cover
     """Evaluate the fit (intercept, slope, cosmic-ray amplitudes).
 
     Parameters
@@ -308,7 +308,7 @@ def evaluate_fit(intercept_sect, slope_sect, cr_sect,
 
     return fit_model
 
-def positive_fit(current_fit):
+def positive_fit(current_fit): # pragma: no cover
     """Replace zero and negative values with a positive number.
 
     Ramp data should be positive, since they are based on counts.  The
@@ -332,12 +332,12 @@ def positive_fit(current_fit):
 
     return np.where(current_fit <= 0., FIT_MUST_BE_POSITIVE, current_fit)
 
-def compute_slope(data_sect, input_var_sect,
+def compute_slope(data_sect, input_var_sect, 
                   gdq_sect, readnoise_sect, gain_sect,
                   prev_fit, prev_slope_sect,
                   frame_time, group_time, nframes_used,
                   max_num_cr, saturated_flag, jump_flag,
-                  use_extra_terms):
+                  use_extra_terms): # pragma: no cover
     """Set up the call to fit a slope to ramp data.
 
     This loops over the number of cosmic rays (jumps).  That is, all the
@@ -547,7 +547,7 @@ def gls_fit(ramp_data, input_var_data,
              readnoise, gain,
              frame_time, group_time, nframes_used,
              num_cr, cr_flagged_2d, saturated_data,
-             use_extra_terms=True):
+             use_extra_terms=True): # pragma: no cover
     """Generalized least squares linear fit.
 
     It is assumed that every input pixel has num_cr cosmic-ray hits
@@ -576,7 +576,7 @@ def gls_fit(ramp_data, input_var_data,
         pixel, in electrons per second.
 
     readnoise: 1-D ndarray, length nz.
-        The read noise in electrons at each detector pixel.
+        The read noise in electrons at each deector pixel.
 
     gain: 1-D ndarray, shape (nz,)
         The analog-to-digital gain (electrons per dn) at each detector

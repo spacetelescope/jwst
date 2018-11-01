@@ -34,7 +34,7 @@
 # --> a1 = compare_cr_navg_files.compare_cr_navg_files("cr_and_sp.fits","foundcr.fits","sim_2k_30.fits","fslopes.fits",4)
 # --> status = a1.compare()
 #
-
+# pragma: no cover
 import sys, os, time
 from astropy.io import fits
 import numpy as N
@@ -42,7 +42,7 @@ import numpy as N
 
 ERROR_RETURN = 2
 
-class compare_cr_navg_files:
+class compare_cr_navg_files: # pragma: no cover
 
     def __init__(self, created_file, found_file, sim_file, slope_file, navg, verb=1):
         """ Constructor
@@ -290,7 +290,7 @@ class compare_cr_navg_files:
         print('The elapsed time: ', tstop - tstart, ' seconds')
         print('The current time (start): ', time.asctime())
 
-def write_to_file(data, filename):
+def write_to_file(data, filename): # pragma: no cover
     """ Write the specified data to the specified file name
     @param data: output array
     @type data: float
@@ -305,7 +305,7 @@ def write_to_file(data, filename):
     fimg.writeto(filename)
     print(' output data to: ', filename)
 
-def open_file(filename):
+def open_file(filename): # pragma: no cover
     """ Open the specified file
     @param filename: file being output
     @type filename: string
@@ -320,7 +320,7 @@ def open_file(filename):
     return fh
 
 
-if __name__ == "__main__":
+if __name__ == "__main__": # pragma: no cover
     """Get input file and other arguments, and call calc_slope.
 
             @param cmdline: command-line arguments
