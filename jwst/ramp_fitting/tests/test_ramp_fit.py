@@ -308,6 +308,7 @@ def test_four_groups_two_CRs_at_end():
 
     np.testing.assert_allclose(slopes[0].data[500, 500], cds_slope, 1e-6)
 
+
 @pytest.mark.skip(reason="not using now")
 def test_four_groups_four_CRs():
         #
