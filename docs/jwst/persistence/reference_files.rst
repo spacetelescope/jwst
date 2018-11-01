@@ -143,7 +143,7 @@ The format and contents of the table extension is as follows:
 +--------------+-----------+------------------------------------------------+
 | capture1     | float     | Minus the reciprocal of capture e-folding time |
 +--------------+-----------+------------------------------------------------+
-| capture2     | float     | The "instaneous" capture coefficient           |
+| capture2     | float     | The "instantaneous" capture coefficient        |
 +--------------+-----------+------------------------------------------------+
 | decay_param  | float     | Minus the reciprocal of decay e-folding time   |
 +--------------+-----------+------------------------------------------------+
