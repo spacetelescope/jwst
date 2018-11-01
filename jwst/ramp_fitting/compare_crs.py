@@ -8,7 +8,7 @@ import numpy as np
 from astropy.io import fits
 import os
 
-def do_comparison(found_file, created_file): # pragma: no cover
+def do_comparison(found_file, created_file):
     """
     Brief Summary
     ---------
@@ -93,7 +93,7 @@ def do_comparison(found_file, created_file): # pragma: no cover
 
     write_files(neither, both, c_only, f_only, fh_c, data_c_start)
 
-def get_data(found_file, created_file): # pragma: no cover
+def get_data(found_file, created_file):
     """
     Brief Summary
     ---------
@@ -149,7 +149,7 @@ def get_data(found_file, created_file): # pragma: no cover
 
     return fh_f, fh_c, data_f, data_c
 
-def write_files(neither, both, c_only, f_only, fh_c, data_c_start): # pragma: no cover
+def write_files(neither, both, c_only, f_only, fh_c, data_c_start):
     """
     Brief Summary
     ---------
@@ -205,7 +205,7 @@ def write_files(neither, both, c_only, f_only, fh_c, data_c_start): # pragma: no
     else:
         print('FATAL ERROR - unexpected case in write_file()')
 
-def write_to_file(data, filename): # pragma: no cover
+def write_to_file(data, filename):
     """
     Brief Summary
     ---------
@@ -236,7 +236,7 @@ def write_to_file(data, filename): # pragma: no cover
     print(' wrote output data to: ', filename)
 
 
-if __name__ == "__main__": # pragma: no cover
+if __name__ == "__main__":
     """Get found and created files, and call compare_crs.
     """
     usage = "usage: ./compare_crs.py found_file created_file"

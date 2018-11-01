@@ -42,7 +42,7 @@ import numpy as N
 
 ERROR_RETURN = 2
 
-class compare_cr_navg_files: # pragma: no cover
+class compare_cr_navg_files:
 
     def __init__(self, created_file, found_file, sim_file, slope_file, navg, verb=1):
         """ Constructor
@@ -290,7 +290,7 @@ class compare_cr_navg_files: # pragma: no cover
         print('The elapsed time: ', tstop - tstart, ' seconds')
         print('The current time (start): ', time.asctime())
 
-def write_to_file(data, filename): # pragma: no cover
+def write_to_file(data, filename):
     """ Write the specified data to the specified file name
     @param data: output array
     @type data: float
@@ -305,7 +305,7 @@ def write_to_file(data, filename): # pragma: no cover
     fimg.writeto(filename)
     print(' output data to: ', filename)
 
-def open_file(filename): # pragma: no cover
+def open_file(filename):
     """ Open the specified file
     @param filename: file being output
     @type filename: string
@@ -320,7 +320,7 @@ def open_file(filename): # pragma: no cover
     return fh
 
 
-if __name__ == "__main__": # pragma: no cover
+if __name__ == "__main__":
     """Get input file and other arguments, and call calc_slope.
 
             @param cmdline: command-line arguments
