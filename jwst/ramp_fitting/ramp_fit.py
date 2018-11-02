@@ -2226,7 +2226,7 @@ def calc_num_seg(gdq, n_int):
     Return:
     -------
     max_num_seg : int
-        maxmimum number of segments which can not exceed thenumber of groups
+        maxmimum number of segments which can not exceed the number of groups
     """
     max_cr = 0  # max number of CRS for all integrations
 
