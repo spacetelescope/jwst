@@ -1,4 +1,7 @@
 import warnings
+import sys
+import traceback
+
 from .model_base import DataModel
 from .dynamicdq import dynamic_mask
 from .validate import ValidationWarning
@@ -29,17 +32,20 @@ class ReferenceFileModel(DataModel):
         """
         try:
             assert self.meta.description is not None
-            assert (self.meta.telescope == 'JWST')
+            assert self.meta.telescope == 'JWST'
             assert self.meta.reftype is not None
             assert self.meta.author is not None
             assert self.meta.pedigree is not None
             assert self.meta.useafter is not None
             assert self.meta.instrument.name is not None
-        except AssertionError as errmsg:
+        except AssertionError:
             if self._strict_validation:
-                raise AssertionError(errmsg)
+                raise
             else:
-                warnings.warn(str(errmsg), ValidationWarning)
+                tb = sys.exc_info()[-1]
+                tb_info = traceback.extract_tb(tb)
+                text = tb_info[-1][-1]
+                warnings.warn(text, ValidationWarning)
 
         super(ReferenceFileModel, self).validate()
 
