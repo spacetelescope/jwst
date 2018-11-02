@@ -201,8 +201,10 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
 
     # Get max number of segments fit in all integrations
     max_seg = calc_num_seg(gdq_cube, n_int)
+
     #max_seg should not be greater than the number of frames
-    max_seg = np.minimum(max_seg, nframes) 
+    max_seg = np.minimum(max_seg, ngroups)
+
     del gdq_cube
 
     f_max_seg = 0  # final number to use, usually overwritten by actual value
