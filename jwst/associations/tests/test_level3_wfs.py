@@ -19,7 +19,7 @@ class TestLevel3WFS(helpers.BasePoolRule):
     pools = [
         helpers.PoolParams(
             path=helpers.t_path('data/pool_004_wfs.csv'),
-            n_asns=85,
+            n_asns=42,
             n_orphaned=0
         ),
     ]

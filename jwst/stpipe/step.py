@@ -868,16 +868,24 @@ class Step():
         if ext.startswith('.'):
             ext = ext[1:]
 
+        # Suffix check. An explicit check on `False` is necessary
+        # because `None` is also allowed.
         suffix = _get_suffix(suffix, step=step)
-        suffix_sep = None
-        if suffix is not None:
-            basename, suffix_sep = remove_suffix(basename)
-        if suffix_sep is None:
-            suffix_sep = separator
+        if suffix is not False:
+            default_name_format = '{basename}{components}{suffix_sep}{suffix}.{ext}'
+            suffix_sep = None
+            if suffix is not None:
+                basename, suffix_sep = remove_suffix(basename)
+            if suffix_sep is None:
+                suffix_sep = separator
+        else:
+            default_name_format = '{basename}{components}.{ext}'
+            suffix = None
+            suffix_sep = None
 
         # Setup formatting
         if name_format is None:
-            name_format = '{basename}{components}{suffix_sep}{suffix}.{ext}'
+            name_format = default_name_format
         elif not name_format:
             name_format = basename + '.{ext}'
             basename = ''
@@ -893,32 +901,14 @@ class Step():
         else:
             component_str = ''
 
-        # Suffix check. An explicit check on `False` is necessary
-        # because `None` is also allowed.
-        suffix = _get_suffix(suffix, step=step)
-        if suffix is not False:
-            suffix_sep = None
-            if suffix is not None:
-                basename, suffix_sep = remove_suffix(basename)
-            if suffix_sep is None:
-                suffix_sep = separator
-
-            basename = formatter(
-                name_format,
-                basename=basename,
-                suffix=suffix,
-                suffix_sep=suffix_sep,
-                ext=ext,
-                components=component_str
-            )
-
-        else:
-            basename = formatter(
-                name_format,
-                basename=basename,
-                ext=ext,
-                components=component_str
-            )
+        basename = formatter(
+            name_format,
+            basename=basename,
+            suffix=suffix,
+            suffix_sep=suffix_sep,
+            ext=ext,
+            components=component_str
+        )
 
         output_dir = step.search_attr('output_dir', default='')
         output_dir = expandvars(expanduser(output_dir))
