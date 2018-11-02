@@ -31,7 +31,7 @@ class TsoPhotModel(ReferenceFileModel):
             assert len(self.radii) > 0
             assert self.meta.instrument.name in ["MIRI", "NIRCAM"]
             assert self.meta.exposure.type in ["MIR_IMAGE", "NRC_TSIMAGE"]
-        except AssertionError as errmsg:
+        except AssertionError:
             if self._strict_validation:
                 raise
             else:

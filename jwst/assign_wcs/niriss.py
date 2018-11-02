@@ -135,7 +135,7 @@ def niriss_soss(input_model, reference_files):
             wl1 = wl.tree[1].copy()
             wl2 = wl.tree[2].copy()
             wl3 = wl.tree[3].copy()
-    except Exception as e:
+    except Exception:
         raise IOError('Error reading wavelength correction from {}'.format(reference_files['specwcs']))
 
     try:

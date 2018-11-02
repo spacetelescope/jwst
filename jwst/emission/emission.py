@@ -34,7 +34,7 @@ class DataSet():
 
         try:
             model = datamodels.open(input_dm)
-        except Exception as errmess:
+        except Exception:
             log.info('Error opening: %s ', input_dm)
             model = None
 
