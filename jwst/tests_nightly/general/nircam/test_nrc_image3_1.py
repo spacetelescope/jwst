@@ -1,7 +1,6 @@
 import pytest
 
 from jwst.tests.base_classes import BaseJWSTTest, raw_from_asn
-from jwst.pipeline import Image3Pipeline
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 

@@ -95,7 +95,7 @@ class Spec2Pipeline(Pipeline):
                 # status if run from the command line.
                 # Bump it up now.
                 raise exception
-            except Exception as exception:
+            except Exception:
                 traceback.print_exc()
                 has_exceptions = True
             else:
