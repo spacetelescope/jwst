@@ -2225,8 +2225,8 @@ def calc_num_seg(gdq, n_int):
 
     Return:
     -------
-    int(max_cr) +1 : int
-        maxmimum number of segments; n CRS implies n+1 segments
+    max_num_seg : int
+        maxmimum number of segments which can not exceed thenumber of groups
     """
     max_cr = 0  # max number of CRS for all integrations
 
@@ -2237,7 +2237,14 @@ def calc_num_seg(gdq, n_int):
         temp_max_cr = int((gdq_cr.sum(axis=0)).max()/dqflags.group['JUMP_DET'])
         max_cr = max( max_cr, temp_max_cr )
 
-    return int(max_cr) +1 # n CRS implies n+1 segments
+    # Do not want to return a value > the number of groups, which can occur if 
+    #  this is a MIRI dataset in which the first or last group was flagged as 
+    #  DO_NOT_USE and also flagged as a jump. 
+    max_num_seg = int(max_cr) +1 
+    if (max_num_seg > gdq.shape[1]): 
+        max_num_seg = gdq.shape[1]
+
+    return max_num_seg
 
 
 def calc_unwtd_sums(data_masked, xvalues):
