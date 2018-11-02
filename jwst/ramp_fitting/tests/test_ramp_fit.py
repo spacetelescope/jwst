@@ -309,7 +309,7 @@ def test_four_groups_two_CRs_at_end():
     np.testing.assert_allclose(slopes[0].data[500, 500], cds_slope, 1e-6)
 
 
-@pytest.mark.skip(reason="not using now")
+##@pytest.mark.skip(reason="not using now")
 def test_four_groups_four_CRs():
         #
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=4,gain=1,readnoise=10)
@@ -342,7 +342,7 @@ def test_four_groups_three_CRs_at_end():
 
     np.testing.assert_allclose(slopes[0].data[500, 500],expected_slope, 1e-6)
     
-@pytest.mark.skip(reason="not using now")
+#@pytest.mark.skip(reason="not using now")
 def test_four_groups_CR_causes_orphan_1st_group():
         #
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=4,gain=.01,readnoise=10000)

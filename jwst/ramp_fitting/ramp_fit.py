@@ -1482,7 +1482,7 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
     #    - set number of ends to 0
     #    - add slopes and variances to running sums
     #    - set pixel_done to True to designate all fitting done
-    wh_check = np.where((l_interval == 1) & (end_locs == nreads - 1) &
+    wh_check = np.where((l_interval == 2) & (end_locs == nreads - 1) &
                         (nreads > 1) & (ngroups != 2) & (~pixel_done))
 
     if(len(wh_check[0]) > 0):
