@@ -12,7 +12,7 @@ def test_env = [
 def PIP_ARGS = "-q"
 def PIP_INST = "pip install ${PIP_ARGS}"
 def PIP_DEPS = ""
-def PIP_TEST_DEPS = "requests_mock git+https://github.com/spacetelescope/ci_watson.git"
+def PIP_TEST_DEPS = "requests_mock ci_watson"
 
 // Pytest wrapper
 def PYTEST_BASETEMP = "test_outputs"
@@ -41,14 +41,15 @@ bc.conda_packages = ['asdf',
                      'dask',
                      'drizzle',
                      'flake8',
-                     'pytest=3.8.2',
                      'gwcs',
                      'jsonschema',
                      'jplephem',
                      'matplotlib',
                      'namedlist',
-                     'numpy',
+                     'numpy=1.15.2',
                      'photutils',
+                     'python=3.6',
+                     'pytest=3.8.2',
                      'scipy',
                      'six',
                      'spherical-geometry',
