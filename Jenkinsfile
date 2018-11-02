@@ -1,7 +1,7 @@
 if (utils.scm_checkout()) return
 
 matrix_python = ['3.6']
-matrix_numpy = ['1.14']
+matrix_numpy = ['1.15.2']
 matrix_astropy = ['4']
 matrix = []
 
@@ -48,7 +48,7 @@ def pip_packages_tests = "requests_mock ci_watson"
 dist = new BuildConfig()
 dist.nodetype = 'linux'
 dist.name = 'dist'
-dist.conda_packages = ["numpy=${matrix_numpy[0]}"]
+dist.conda_packages = ["numpy=${matrix_numpy[0]}"] + ["python=${matrix_python[0]}"]
 dist.build_cmds = [
     "python setup.py sdist",
     "python setup.py bdist_egg",
@@ -62,7 +62,7 @@ docs = new BuildConfig()
 docs.nodetype = 'linux'
 docs.name = 'docs'
 docs.conda_channels = ['http://ssb.stsci.edu/astroconda-dev']
-docs.conda_packages = conda_packages + conda_packages_docs + ["numpy=${matrix_numpy[0]}"]
+docs.conda_packages = conda_packages + conda_packages_docs + ["numpy=${matrix_numpy[0]}"] + ["python=${matrix_python[0]}"]
 docs.build_cmds = [
     "pip install -q ${pip_packages_docs}",
     "python setup.py build_sphinx"
