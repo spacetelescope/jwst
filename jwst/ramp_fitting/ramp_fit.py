@@ -161,9 +161,9 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
     orig_nreads = nreads
     orig_cubeshape = cubeshape
 
-    # For MIRI datasets having >1 groups, if all final groups are flagged as 
+    # For MIRI datasets having >1 groups, if all final groups are flagged as
     # DO_NOT_USE, resize the input model arrays to exclude the final group.
-    # Similarly, if all first groups are flagged as DO_NOT_USE, resize the input 
+    # Similarly, if all first groups are flagged as DO_NOT_USE, resize the input
     # model arrays to exclude the first group.
 
     if (instrume == 'MIRI' and nreads > 1):
@@ -333,7 +333,7 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
                  calc_slope(data_sect, gdq_sect, frame_time, opt_res, save_opt,
                             rn_sect, gain_sect, max_seg, ngroups, weighting,
                             f_max_seg, group_time)
-           
+
             del gain_sect
 
             # Populate 3D num_seg { integ, y, x } with 2D num_seg for this data
@@ -342,7 +342,7 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
             num_seg_per_int[num_int, rlo:rhi, :] = num_seg.reshape(sect_shape)
 
             # Populate integ-spec slice which is set if 0th group has SAT
-            wh_sat0 = np.where( np.bitwise_and(gdq_sect[0,:,:], 
+            wh_sat0 = np.where( np.bitwise_and(gdq_sect[0,:,:],
                                 dqflags.group['SATURATED']))
             if ( len(wh_sat0[0] ) > 0):
                 sat_0th_group_int[num_int, rlo:rhi, :][ wh_sat0 ] = 1
@@ -370,11 +370,11 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
                        data_diff * (dq_cr != 0)
 
                 del data_diff
-                
+
             del data_sect
             del ff_sect
             del gdq_sect
-  
+
     if pixeldq_sect is not None:
         del pixeldq_sect
 
@@ -510,7 +510,7 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
     #     all integrations:
     #     slope = sum_over_integs_and_segs(slope_seg/var_seg)/
     #                    sum_over_integs_and_segs(1/var_seg)
-    slope_by_var4 = opt_res.slope_seg.copy()/var_both4 
+    slope_by_var4 = opt_res.slope_seg.copy()/var_both4
 
     del var_both4
 
@@ -558,9 +558,9 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
 
     # Collect optional results for output
     if save_opt:
-        gdq_cube = model.groupdq  
+        gdq_cube = model.groupdq
         opt_res.shrink_crmag(n_int, gdq_cube, imshape, nreads)
-        del gdq_cube 
+        del gdq_cube
 
         # Truncate results at the maximum number of segments found
         opt_res.slope_seg = opt_res.slope_seg[:,:f_max_seg,:,:]
@@ -587,7 +587,7 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
     if inv_var is not None:
         del inv_var
 
-    if pixeldq is not None:  
+    if pixeldq is not None:
         del pixeldq
 
     # For multiple-integration datasets, will output integration-specific
@@ -1249,7 +1249,7 @@ def calc_slope(data_sect, gdq_sect, frame_time, opt_res, save_opt, rn_sect,
 
 
 def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
-                     mask_2d_init, inv_var, num_seg, opt_res, save_opt, rn_sect, 
+                     mask_2d_init, inv_var, num_seg, opt_res, save_opt, rn_sect,
                      gain_sect, ngroups, weighting, f_max_seg):
     """
     Extended Summary
@@ -2257,8 +2257,8 @@ def calc_num_seg(gdq, n_int):
 
     Return:
     -------
-    int(max_cr) +1; int
-        maxmimum number of segments; n CRS implies n+1 segments
+    max_num_seg : int
+        maxmimum number of segments which can not exceed the number of groups
     """
     max_cr = 0  # max number of CRS for all integrations
 
@@ -2269,7 +2269,14 @@ def calc_num_seg(gdq, n_int):
         temp_max_cr = int((gdq_cr.sum(axis=0)).max()/dqflags.group['JUMP_DET'])
         max_cr = max( max_cr, temp_max_cr )
 
-    return int(max_cr) +1 # n CRS implies n+1 segments
+    # Do not want to return a value > the number of groups, which can occur if
+    #  this is a MIRI dataset in which the first or last group was flagged as
+    #  DO_NOT_USE and also flagged as a jump.
+    max_num_seg = int(max_cr) +1
+    if (max_num_seg > gdq.shape[1]):
+        max_num_seg = gdq.shape[1]
+
+    return max_num_seg
 
 
 def calc_unwtd_sums(data_masked, xvalues):
