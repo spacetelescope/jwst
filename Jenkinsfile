@@ -31,7 +31,7 @@ def conda_packages = [
     "stsci.stimage",
     "stsci.tools",
     "verhawk",
-    "pytest=3.8.2"
+    "pytest"
 ]
 def conda_packages_docs = [
     "sphinx",

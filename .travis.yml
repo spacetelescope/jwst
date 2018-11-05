@@ -28,7 +28,7 @@ env:
                               matplotlib
                               namedlist
                               photutils
-                              pytest=3.8.2
+                              pytest
                               scipy
                               six
                               spherical-geometry
