@@ -153,8 +153,8 @@ def wrap_ra(ravalues):
 
     Input
     -----
-    ravalues : a numpy array
-      ra values
+    ravalues : numpy.ndarray
+      RA values
 
     Return
     ------

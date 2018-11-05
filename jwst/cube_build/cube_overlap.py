@@ -13,9 +13,9 @@ def find_area_poly(nvertices, xpixel, ypixel):
     ----------
     nvertices : int
         number of Vertices of polygon
-    xpixel : numpy array
+    xpixel : numpy.ndarray
       x coordinate of vertices
-    ypixel : numpy array
+    ypixel : numpy.ndarray
       y coordinate of vertices
 
     Returns
@@ -45,9 +45,9 @@ def find_area_quad(MinX, MinY, Xcorner, Ycorner):
        Minimum X value
     MinY : float
        Minimum Y value
-    Xcorners : numpy array
+    Xcorners : numpy.ndarray
        x corner values (use first 4 corners)
-    YCorners : numpy array
+    YCorners : numpy.ndarray
        y corner values (use first 4 corners)
 
     Returns
@@ -238,9 +238,9 @@ def addpoint(x, y, xnew, ynew, nvertices2):
      x value to add
     y : float
      y value  to add
-    xnew : numpy array
+    xnew : numpy.ndarray
       new x vertices
-    ynew : numpy array
+    ynew : numpy.ndarray
       new y vertices
     nvertices2 : int
       number of vertices
@@ -384,9 +384,9 @@ def match_det2cube(x, y, sliceno, start_slice, input_model, transform,
 
     Parameters
     ----------
-    x : numpy array
+    x : numpy.ndarray
        x values of pixels in slice
-    y : numpy array
+    y : numpy.ndarray
        y values of pixels in slice
     sliceno : int
       slice number

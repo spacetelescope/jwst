@@ -1035,25 +1035,25 @@ class IFUCubeData():
 
         Returns
         -------
-        coord1 : numpy array
+        coord1 : numpy.ndarray
            coordinate for axis1 in output cube for mapped pixel
-        coord2: numpy array
+        coord2: numpy.ndarray
            coordinate for axis2 in output cube for mapped pixel
-        wave: numpy array
+        wave: numpy.ndarray
            wavelength associated with coord1,coord2
-        flux: numpy array
+        flux: numpy.ndarray
            flux associated with coord1, coord2
         rois_det: float
            spatial roi size to use
-        roiw_det: numpy array
+        roiw_det: numpy.ndarray
            spectral roi size associated with coord1,coord2
-        weight_det : numpy array
+        weight_det : numpy.ndarray
             weighting parameter assocation with coord1,coord2
-        softrad_det : numpy array
+        softrad_det : numpy.ndarray
             weighting parameter assocation with coord1,coord2
-        alpha_det : numpy array
+        alpha_det : numpy.ndarray
            alpha coordinate of pixels
-        beta_det : numpy array
+        beta_det : numpy.ndarray
            beta coordinate of pixel
         """
 # intitalize alpha_det and beta_det to None. These are filled in
