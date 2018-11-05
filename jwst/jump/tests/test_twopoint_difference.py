@@ -284,6 +284,7 @@ def test_6grps_1cr(setup_cube):
     data[0, 5, 100, 100] = 1146
     median_diff = find_crs(data, gdq, read_noise, rej_threshold, nframes)
     print("calculated median diff of pixel is ", median_diff[0, 100, 100])
+    assert (4 == gdq[0, 5, 100, 100])
     assert(11 == median_diff[0, 100, 100])
 
 
@@ -300,8 +301,8 @@ def test_7grps_1cr(setup_cube):
     data[0, 6, 100, 100] = 1160
     median_diff = find_crs(data, gdq, read_noise, rej_threshold, nframes)
     print("calculated median diff of pixel is ", median_diff[0, 100, 100])
+    assert(4 == gdq[0, 6,100,100])
     assert(11.5 == median_diff[0, 100, 100])
-
 
 def test_5grps_nocr(setup_cube):
     ngroups = 6
