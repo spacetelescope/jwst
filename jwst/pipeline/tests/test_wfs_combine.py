@@ -5,10 +5,7 @@ from os import path
 
 import pytest
 
-from .helpers import (
-    SCRIPT_DATA_PATH,
-    abspath,
-)
+from .helpers import abspath
 
 from ...associations import load_asn
 from ...associations.lib.rules_level3_base import format_product
