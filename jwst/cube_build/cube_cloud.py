@@ -46,29 +46,29 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
        region of influence size in spectral dimension
     weight_power : float
        msm weighting parameter
-    xcenter : numpy array
+    xcenter : numpy.ndarray
        spaxel center locations 1st dimensions.
-    ycenter : numpy array
+    ycenter : numpy.ndarray
        spaxel center locations 2nd dimensions.
-    zcoord : numpy array
+    zcoord : numpy.ndarray
         spaxel center locations in 3rd dimensions
-    spaxel_flux : numpy array
+    spaxel_flux : numpy.ndarray
        contains the weighted summed detector fluxes that fall
        within the roi
-    spaxel_weight : numpy array
+    spaxel_weight : numpy.ndarray
        contains the summed weights assocated with the detector fluxes
-    spaxel_iflux : numpy array
+    spaxel_iflux : numpy.ndarray
        number of detector pixels falling with roi of spaxel center
-    flux : numpy array
+    flux : numpy.ndarray
        array of detector fluxes associated with each position in
        coorr1, coord2, wave
-    coord1 : numpy array
+    coord1 : numpy.ndarray
        contains the spatial coordinate for 1st dimension for the mapped
        detector pixel
-    coord2 : numpy array
+    coord2 : numpy.ndarray
        contains the spatial coordinate for 2nd dimension for the mapped
        detector pixel
-    wave : numpy array
+    wave : numpy.ndarray
        contains the spectral coordinate  for the mapped detector pixel
 
     Returns
@@ -174,11 +174,11 @@ def match_det2cube_miripsf(alpha_resol, beta_resol, wave_resol,
 
     Parameters
     ----------
-    alpha_resol : numpy array
+    alpha_resol : numpy.ndarray
       alpha resolution table
-    beta_resol : numpy array
+    beta_resol : numpy.ndarray
       beta resolution table
-    wave_resol : numpy array
+    wave_resol : numpy.ndarray
       wavelength resolution table
     naxis1 : int
        size of the ifucube in 1st axis
@@ -186,38 +186,38 @@ def match_det2cube_miripsf(alpha_resol, beta_resol, wave_resol,
        size of the ifucube in 2nd axis
     naxis3 : int
        size of the ifucube in 3rd axis
-    xcenter : numpy array
+    xcenter : numpy.ndarray
        spaxel center locations 1st dimensions.
-    ycenter : numpy array
+    ycenter : numpy.ndarray
        spaxel center locations 2nd dimensions.
-    zcoord : numpy array
+    zcoord : numpy.ndarray
         spaxel center locations in 3rd dimensions
-    spaxel_flux : numpy array
+    spaxel_flux : numpy.ndarray
        contains the weighted summed detector fluxes that fall withi the roi
-    spaxel_weight : numpy array
+    spaxel_weight : numpy.ndarray
        contains the summed weights assocated with the detector fluxes
-    spaxel_iflux : numpy array
+    spaxel_iflux : numpy.ndarray
        number of detector pixels falling with roi of spaxel center
-    flux : numpy array
+    flux : numpy.ndarray
        array of detector fluxes associated with each position in
        coorr1, coord2, wave
-    spaxel_alpha : numpy array
+    spaxel_alpha : numpy.ndarray
        alpha value of spaxel centers
-    spaxel_beta : numpy array
+    spaxel_beta : numpy.ndarray
        beta value of spaxel centers
-    spaxel_wave : numpy array
+    spaxel_wave : numpy.ndarray
        alpha value of spaxel centers
-    coord1 : numpy array
+    coord1 : numpy.ndarray
        contains the spatial coordinate for 1st dimension for the mapped
        detector pixel
-    coord2 : numpy array
+    coord2 : numpy.ndarray
        contains the spatial coordinate for 2nd dimension for the mapped
        detector pixel
-    wave : numpy array
+    wave : numpy.ndarray
        contains the spectral coordinate  for the mapped detector pixel
-    alpha_det : numpy array
+    alpha_det : numpy.ndarray
        alpha coordinate of mapped detector pixels
-    beta_det :  numpy array
+    beta_det :  numpy.ndarray
        beta coordinate of mapped detector pixels
     rois_pixel : flaot
        region of influence size in spatial dimension
@@ -309,11 +309,11 @@ def FindNormalizationWeights(wavelength,
 
     Parameters
     ----------
-    wave_resol : numpy array
+    wave_resol : numpy.ndarray
       wavelength resolution array
-    alpha_resol : numpy array
+    alpha_resol : numpy.ndarray
       alpha psf resolution array
-    beta_resol : numpy array
+    beta_resol : numpy.ndarray
       beta psf resolution array
 
     Returns

@@ -68,7 +68,7 @@ def std2radec(crval1, crval2, xi, eta):
     crval1 : float
       RA value of tangent point
     crval2 : float
-      RA value of tangent point
+      DEC value of tangent point
     xi : float
       xi rectangular coordinates of tangent plane projected ra,dec
     eta  : float
