@@ -261,7 +261,7 @@ class DataSet():
         xcen = int(self.input_1.data.shape[1]/2)
         ycen = int(self.input_1.data.shape[0]/2)
 
-        radec = tr1(ycen, xcen)
+        radec = tr1(xcen, ycen)
         pixels = tr2(radec[0], radec[1])
         off_x = pixels[0] - xcen
         off_y = pixels[1] - ycen
