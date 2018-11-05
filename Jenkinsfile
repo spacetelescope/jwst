@@ -8,6 +8,7 @@ matrix = []
 def test_env = [
     "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
     "CRDS_PATH=./crds_cache",
+    "CRDS_LOCKING_MODE=filelock",
 ]
 
 def conda_packages = [
@@ -31,6 +32,7 @@ def conda_packages = [
     "stsci.tools",
     "verhawk",
     "pytest"
+    "pytest-xdist"
 ]
 def conda_packages_docs = [
     "sphinx",
@@ -83,7 +85,7 @@ for (python_ver in matrix_python) {
                 "pip install -q ${pip_packages_tests}",
                 "python setup.py install"
             ]
-            bc.test_cmds = ["pytest -r s --basetemp=test_results --junitxml=results.xml"]
+            bc.test_cmds = ["pytest -n 8 -r s --basetemp=test_results --junitxml=results.xml"]
             matrix += bc
         }
     }
