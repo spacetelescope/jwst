@@ -389,7 +389,7 @@ def get_msa_metadata(input_model, reference_files):
     """
     try:
         msa_config = reference_files['msametafile']
-    except (KeyError, TypeError) as error:
+    except (KeyError, TypeError):
         log.info('MSA metadata file not in reference files dict')
         log.info('Getting MSA metadata file from MSAMETFL keyword')
         msa_config = input_model.meta.instrument.msa_metadata_file

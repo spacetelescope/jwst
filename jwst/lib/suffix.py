@@ -81,6 +81,7 @@ _calculated_suffixes = set([
     'groupscalestep',
     'resamplestep',
     'assign_wcs',
+    'tweakreg',
     'resetstep',
     'klip',
     'straylightstep',

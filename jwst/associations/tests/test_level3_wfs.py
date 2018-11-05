@@ -3,6 +3,15 @@
 from . import helpers
 
 from .. import generate
+from ..main import constrain_on_candidates
+
+# Generate Level3 assocations
+all_candidates = constrain_on_candidates(None)
+rules = helpers.registry_level3_only(global_constraints=all_candidates)
+pool = helpers.combine_pools(
+    helpers.t_path('data/pool_004_wfs.csv')
+)
+level3_asns = generate(pool, rules)
 
 
 class TestLevel3WFS(helpers.BasePoolRule):
@@ -10,7 +19,7 @@ class TestLevel3WFS(helpers.BasePoolRule):
     pools = [
         helpers.PoolParams(
             path=helpers.t_path('data/pool_004_wfs.csv'),
-            n_asns=1,
+            n_asns=42,
             n_orphaned=0
         ),
     ]
@@ -19,12 +28,16 @@ class TestLevel3WFS(helpers.BasePoolRule):
         'Asn_WFSCMB',
     ]
 
-    def test_wfs_product_name(self):
-        rules = helpers.registry_level3_only()
-        pool = helpers.combine_pools(
-            helpers.t_path('data/pool_004_wfs.csv')
-        )
-        asns = generate(pool, rules)
-        name = asns[0]['products'][0]['name']
-        assert name == 'jw99009-c1000_t001_nircam_f150w2'
-        assert asns[0]['asn_type'] == 'wfs'
+
+def test_wfs_duplicate_product_names():
+    """Test for duplicate product names"""
+    global level3_asns
+
+    name_list = [
+        product['name']
+        for asn in level3_asns
+        for product in asn['products']
+    ]
+    assert len(name_list)
+    name_set = set(name_list)
+    assert len(name_set) == len(name_list)
