@@ -1,3 +1,16 @@
+0.12.2 (2018-11-06)
+===================
+
+associations
+------------
+
+- Updated rules based on actual OTB phasing data. [#2831]
+
+wfs_combine
+-----------
+
+- Renamed the configuration from `wfs_combine` to `calwebb_wfs-image3`. [#2831]
+
 0.12.1 (2018-10-30)
 ===================
 

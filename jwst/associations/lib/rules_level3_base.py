@@ -555,7 +555,8 @@ class Utility():
 # Define default product name filling
 format_product = FormatTemplate(
     key_formats={
-        'source_id': ['s{:05d}', 's{:s}']
+        'source_id': ['s{:05d}', 's{:s}'],
+        'expspcin': ['{:02d}']
     }
 )
 
