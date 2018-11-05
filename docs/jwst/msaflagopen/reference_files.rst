@@ -1,16 +1,36 @@
 Reference File
 ==============
-The msaflagopen correction step uses a MSAOPER reference file.
+The ``msaflagopen`` step uses a MSAOPER reference file.
 
-.. include:: ../includes/standard_keywords.rst
+MSAOPER Reference File
+----------------------
+
+:REFTYPE: MSAOPER
+:Data model: N/A
+
+The MSAOPER reference file contains a list of failed MSA shutters and their
+failure state (stuck open, stuck closed, etc.)
 
 .. include:: msaoper_selection.rst
 
+.. include:: ../includes/standard_keywords.rst
 
-MSAOPER Reference File Format
-:::::::::::::::::::::::::::::
+Type Specific Keywords for MSAOPER
+++++++++++++++++++++++++++++++++++
+In addition to the standard reference file keywords listed above,
+the following keywords are *required* in MSAOPER reference files,
+because they are used as CRDS selectors
+(see :ref:`msaoper_selectors`):
 
-The MSAOPER reference files are json files.
+=========  ==============================
+Keyword    Data Model Name
+=========  ==============================
+EXP_TYPE   model.meta.exposure.type
+=========  ==============================
+
+Reference File Format
++++++++++++++++++++++
+The MSAOPER reference files are json format.
 
 The fields are:
 
@@ -18,17 +38,17 @@ The fields are:
 :reftype: Should be "MSAOPER"
 :pedigree: Should be one of "DUMMY", "GROUND" or "INFLIGHT"
 :author: Creator of the file
-:instrument: JWST Instrument, should be "NIRSPEC"
-:exp_type: EXP_TYPEs this file should be used with, should be "NRS_IFU|NRS_MSASPEC"
+:instrument: JWST Instrument; should be "NIRSPEC"
+:exp_type: EXP_TYPEs this file should be used with; should be "NRS_IFU|NRS_MSASPEC"
 :telescope: Should be "JWST"
 :useafter: Exposure datetime after which this file is applicable
 :descrip: Description of reference file
 :msaoper:
-    :Q: Quadrant, should be an integer 1-4
+    :Q: Quadrant; should be an integer 1-4
     :x: x location of shutter (integer, 1-indexed)
     :y: y location of shutter (integer, 1-indexed)
-    :state: state of shutter, should be "closed" or "open"
-    :TA state: TA state of shutter, should be "closed" or "open"
-    :Internal state: Internal state of shutter, should be "closed", "normal" or "open"
+    :state: state of shutter; should be "closed" or "open"
+    :TA state: TA state of shutter; should be "closed" or "open"
+    :Internal state: Internal state of shutter; should be "closed", "normal" or "open"
     :Vignetted: Is the shutter vignetted?  Should be "yes" or "no"
-:history: Description of the history relevant to this file, might point to documentation
+:history: Description of the history relevant to this file; might point to documentation

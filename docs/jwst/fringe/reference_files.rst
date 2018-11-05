@@ -6,7 +6,7 @@ The ``fringe`` step uses a FRINGE reference file.
 FRINGE Reference File
 ---------------------
 
-:RETYPE: FRINGE
+:REFTYPE: FRINGE
 :Data model: `~jwst.datamodels.FringeModel`
 
 The FRINGE reference file contains pixel-by-pixel fringing correction

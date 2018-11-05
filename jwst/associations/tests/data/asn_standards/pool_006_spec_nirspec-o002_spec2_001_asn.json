@@ -2,7 +2,7 @@
     "asn_type": "spec2",
     "asn_rule": "candidate_Asn_Lv2NRSMSA",
     "version_id": null,
-    "code_version": "0.10.1a.dev237",
+    "code_version": "0.12.0a.dev181",
     "degraded_status": "No known degraded exposures in association.",
     "program": "99009",
     "target": "3",
@@ -11,20 +11,10 @@
     "asn_id": "o002",
     "products": [
         {
-            "name": "jw_00008",
+            "name": "jw_00010",
             "members": [
                 {
-                    "expname": "jw_00008_rate.fits",
-                    "exptype": "science",
-                    "exposerr": null
-                }
-            ]
-        },
-        {
-            "name": "jw_00009",
-            "members": [
-                {
-                    "expname": "jw_00009_rate.fits",
+                    "expname": "jw_00010_rate.fits",
                     "exptype": "science",
                     "exposerr": null
                 }

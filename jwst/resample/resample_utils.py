@@ -6,9 +6,9 @@ from astropy.modeling.models import Scale, AffineTransformation2D
 from astropy.modeling import Model
 from gwcs import WCS, wcstools
 
-from ..assign_wcs.util import wcs_from_footprints, bounding_box_from_shape
+from stsci.tools.bitmask import interpret_bit_flags
 
-from . import bitmask
+from ..assign_wcs.util import wcs_from_footprints, bounding_box_from_shape
 
 import logging
 log = logging.getLogger(__name__)
@@ -184,8 +184,7 @@ def build_driz_weight(model, weight_type=None, good_bits=None):
 def build_mask(dqarr, bitvalue):
     """ Builds a bit-mask from an input DQ array and a bitvalue flag
     """
-
-    bitvalue = bitmask.interpret_bits_value(bitvalue)
+    bitvalue = interpret_bit_flags(bitvalue)
 
     if bitvalue is None:
         return (np.ones(dqarr.shape, dtype=np.uint8))

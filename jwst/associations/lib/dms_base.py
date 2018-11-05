@@ -47,9 +47,11 @@ EXPTYPE_MAP = {
     'nrs_focus':         'engineering',
     'nrs_image':         'engineering',
     'nrs_lamp':          'engineering',
+    'nrs_msata':         'target_acquistion',
     'nrs_tacq':          'target_acquistion',
     'nrs_taconfirm':     'target_acquistion',
     'nrs_taslit':        'target_acquistion',
+    'nrs_wata':          'target_acquistion',
 }
 
 # Acquistions and Confirmation images
@@ -60,17 +62,26 @@ ACQ_EXP_TYPES = (
     'nrc_taconfirm',
     'nrc_tacq',
     'nrs_confirm',
+    'nrs_msata',
     'nrs_taconfirm',
     'nrs_tacq',
     'nrs_taslit',
+    'nrs_wata',
 )
 
 # Exposures that are always TSO
-TSO_EXP_TYPES = (
+TSO_EXP_TYPES = [
     'nrc_tsimage',
     'nrc_tsgrism',
     'nrs_brightobj'
-)
+]
+
+# Coronographic exposures that require integration processing
+CORON_EXP_TYPES = [
+    'mir_lyot',
+    'mir_4qpm',
+    'nrc_coron'
+]
 
 # Exposures that get Level2b processing
 IMAGE2_SCIENCE_EXP_TYPES = [

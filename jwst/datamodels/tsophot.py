@@ -1,4 +1,6 @@
 import warnings
+import sys
+import traceback
 
 from .reference import ReferenceFileModel
 from .validate import ValidationWarning
@@ -16,15 +18,9 @@ class TsoPhotModel(ReferenceFileModel):
         super(TsoPhotModel, self).__init__(init=init, **kwargs)
         if radii is not None:
             self.radii = radii
-        if init is None:
-            self.populate_meta()
 
     def on_save(self, path=None):
         self.meta.reftype = self.reftype
-
-    def populate_meta(self):
-        self.meta.instrument.name = "MIRI|NIRCAM|"
-        self.meta.exposure.type = "MIR_IMAGE|NRC_TSIMAGE|"
 
     def to_fits(self):
         raise NotImplementedError("FITS format is not supported for this file.")
@@ -35,8 +31,11 @@ class TsoPhotModel(ReferenceFileModel):
             assert len(self.radii) > 0
             assert self.meta.instrument.name in ["MIRI", "NIRCAM"]
             assert self.meta.exposure.type in ["MIR_IMAGE", "NRC_TSIMAGE"]
-        except AssertionError as errmsg:
+        except AssertionError:
             if self._strict_validation:
-                raise AssertionError(errmsg)
+                raise
             else:
-                warnings.warn(str(errmsg), ValidationWarning)
+                tb = sys.exc_info()[-1]
+                tb_info = traceback.extract_tb(tb)
+                text = tb_info[-1][-1]
+                warnings.warn(text, ValidationWarning)

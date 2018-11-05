@@ -5,7 +5,7 @@ The ``dark`` step uses a DARK reference file.
 DARK Reference File
 -------------------
 
-:RETYPE: DARK
+:REFTYPE: DARK
 :Data models: `~jwst.datamodels.DarkModel`, `~jwst.datamodels.DarkMIRIModel`
 
 The DARK reference file contains pixel-by-pixel and frame-by-frame

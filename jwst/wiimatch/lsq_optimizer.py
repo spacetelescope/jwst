@@ -100,8 +100,8 @@ def build_lsq_eqs(images, masks, sigmas, degree, center=None,
 
     .. math::
         L = \sum^N_{n,m=1,n \\neq m} \sum_k\
-\\frac{\\left[I_n(k) - I_m(k) - P_n(k) + P_m(k)\\right]^2}\
-{\sigma^2_n(k) + \sigma^2_m(k)}.
+        \\frac{\\left[I_n(k) - I_m(k) - P_n(k) + P_m(k)\\right]^2}\
+        {\sigma^2_n(k) + \sigma^2_m(k)}.
 
     In the above equation, index :math:`k=(k_1,k_2,...)` labels a position
     in input image's pixel grid [NOTE: all input images share a common
@@ -112,64 +112,62 @@ def build_lsq_eqs(images, masks, sigmas, degree, center=None,
 
     .. math::
         P_n(k_1,k_2,...) = \sum_{d_1=0,d_2=0,...}^{D_1,D_2,...} \
-c_{d_1,d_2,...}^n \\cdot k_1^{d_1} \\cdot k_2^{d_2}  \\cdot \\ldots .
+        c_{d_1,d_2,...}^n \\cdot k_1^{d_1} \\cdot k_2^{d_2}  \\cdot \\ldots .
 
     Coefficients :math:`c_{d_1,d_2,...}^n` are arranged in the vector :math:`c`
     in the following order:
 
     .. math::
         (c_{0,0,\\ldots}^1,c_{1,0,\\ldots}^1,\\ldots,c_{0,0,\\ldots}^2,\
-c_{1,0,\\ldots}^2,\\ldots).
+        c_{1,0,\\ldots}^2,\\ldots).
 
     Examples
     --------
->>> from jwst.wiimatch.lsq_optimizer import build_lsq_eqs
->>> import numpy as np
->>> im1 = np.zeros((5, 5, 4), dtype=np.float)
->>> cbg = 1.32 * np.ones_like(im1)
->>> ind = np.indices(im1.shape, dtype=np.float)
->>> im3 = cbg + 0.15 * ind[0] + 0.62 * ind[1] + 0.74 * ind[2]
->>> mask = np.ones_like(im1, dtype=np.int8)
->>> sigma = np.ones_like(im1, dtype=np.float)
->>> a, b, ca, ef, cs = build_lsq_eqs([im1, im3],
-... [mask, mask], [sigma, sigma], degree=(1,1,1), center=(0,0,0))
->>> print(a)
-[[   50.   100.   100.   200.    75.   150.   150.   300.   -50.  -100.
-   -100.  -200.   -75.  -150.  -150.  -300.]
- [  100.   300.   200.   600.   150.   450.   300.   900.  -100.  -300.
-   -200.  -600.  -150.  -450.  -300.  -900.]
- [  100.   200.   300.   600.   150.   300.   450.   900.  -100.  -200.
-   -300.  -600.  -150.  -300.  -450.  -900.]
- [  200.   600.   600.  1800.   300.   900.   900.  2700.  -200.  -600.
-   -600. -1800.  -300.  -900.  -900. -2700.]
- [   75.   150.   150.   300.   175.   350.   350.   700.   -75.  -150.
-   -150.  -300.  -175.  -350.  -350.  -700.]
- [  150.   450.   300.   900.   350.  1050.   700.  2100.  -150.  -450.
-   -300.  -900.  -350. -1050.  -700. -2100.]
- [  150.   300.   450.   900.   350.   700.  1050.  2100.  -150.  -300.
-   -450.  -900.  -350.  -700. -1050. -2100.]
- [  300.   900.   900.  2700.   700.  2100.  2100.  6300.  -300.  -900.
-   -900. -2700.  -700. -2100. -2100. -6300.]
- [  -50.  -100.  -100.  -200.   -75.  -150.  -150.  -300.    50.   100.
-    100.   200.    75.   150.   150.   300.]
- [ -100.  -300.  -200.  -600.  -150.  -450.  -300.  -900.   100.   300.
-    200.   600.   150.   450.   300.   900.]
- [ -100.  -200.  -300.  -600.  -150.  -300.  -450.  -900.   100.   200.
-    300.   600.   150.   300.   450.   900.]
- [ -200.  -600.  -600. -1800.  -300.  -900.  -900. -2700.   200.   600.
-    600.  1800.   300.   900.   900.  2700.]
- [  -75.  -150.  -150.  -300.  -175.  -350.  -350.  -700.    75.   150.
-    150.   300.   175.   350.   350.   700.]
- [ -150.  -450.  -300.  -900.  -350. -1050.  -700. -2100.   150.   450.
-    300.   900.   350.  1050.   700.  2100.]
- [ -150.  -300.  -450.  -900.  -350.  -700. -1050. -2100.   150.   300.
-    450.   900.   350.   700.  1050.  2100.]
- [ -300.  -900.  -900. -2700.  -700. -2100. -2100. -6300.   300.   900.
-    900.  2700.   700.  2100.  2100.  6300.]]
->>> print(b)
-[ -198.5  -412.   -459.   -948.   -344.   -710.5  -781.  -1607.    198.5
-   412.    459.    948.    344.    710.5   781.   1607. ]
-
+    >>> import numpy as np
+    >>> im1 = np.zeros((5, 5, 4), dtype=np.float)
+    >>> cbg = 1.32 * np.ones_like(im1)
+    >>> ind = np.indices(im1.shape, dtype=np.float)
+    >>> im3 = cbg + 0.15 * ind[0] + 0.62 * ind[1] + 0.74 * ind[2]
+    >>> mask = np.ones_like(im1, dtype=np.int8)
+    >>> sigma = np.ones_like(im1, dtype=np.float)
+    >>> a, b, ca, ef, cs = build_lsq_eqs([im1, im3],
+    ... [mask, mask], [sigma, sigma], degree=(1,1,1), center=(0,0,0))
+    >>> print(a)
+    [[   50.   100.   100.   200.    75.   150.   150.   300.   -50.  -100.
+        -100.  -200.   -75.  -150.  -150.  -300.]
+     [  100.   300.   200.   600.   150.   450.   300.   900.  -100.  -300.
+       -200.  -600.  -150.  -450.  -300.  -900.]
+     [  100.   200.   300.   600.   150.   300.   450.   900.  -100.  -200.
+       -300.  -600.  -150.  -300.  -450.  -900.]
+     [  200.   600.   600.  1800.   300.   900.   900.  2700.  -200.  -600.
+       -600. -1800.  -300.  -900.  -900. -2700.]
+     [   75.   150.   150.   300.   175.   350.   350.   700.   -75.  -150.
+       -150.  -300.  -175.  -350.  -350.  -700.]
+     [  150.   450.   300.   900.   350.  1050.   700.  2100.  -150.  -450.
+       -300.  -900.  -350. -1050.  -700. -2100.]
+     [  150.   300.   450.   900.   350.   700.  1050.  2100.  -150.  -300.
+       -450.  -900.  -350.  -700. -1050. -2100.]
+     [  300.   900.   900.  2700.   700.  2100.  2100.  6300.  -300.  -900.
+       -900. -2700.  -700. -2100. -2100. -6300.]
+     [  -50.  -100.  -100.  -200.   -75.  -150.  -150.  -300.    50.   100.
+        100.   200.    75.   150.   150.   300.]
+     [ -100.  -300.  -200.  -600.  -150.  -450.  -300.  -900.   100.   300.
+        200.   600.   150.   450.   300.   900.]
+     [ -100.  -200.  -300.  -600.  -150.  -300.  -450.  -900.   100.   200.
+        300.   600.   150.   300.   450.   900.]
+     [ -200.  -600.  -600. -1800.  -300.  -900.  -900. -2700.   200.   600.
+        600.  1800.   300.   900.   900.  2700.]
+     [  -75.  -150.  -150.  -300.  -175.  -350.  -350.  -700.    75.   150.
+        150.   300.   175.   350.   350.   700.]
+     [ -150.  -450.  -300.  -900.  -350. -1050.  -700. -2100.   150.   450.
+        300.   900.   350.  1050.   700.  2100.]
+     [ -150.  -300.  -450.  -900.  -350.  -700. -1050. -2100.   150.   300.
+        450.   900.   350.   700.  1050.  2100.]
+     [ -300.  -900.  -900. -2700.  -700. -2100. -2100. -6300.   300.   900.
+        900.  2700.   700.  2100.  2100.  6300.]]
+    >>> print(b)
+    [ -198.5  -412.   -459.   -948.   -344.   -710.5  -781.  -1607.    198.5
+       412.    459.    948.    344.    710.5   781.   1607. ]
     """
     nimages = len(images)
 
@@ -306,23 +304,23 @@ def pinv_solve(matrix, free_term, nimages, tol=None):
 
     Examples
     --------
->>> from jwst.wiimatch.lsq_optimizer import build_lsq_eqs, pinv_solve
->>> import numpy as np
->>> im1 = np.zeros((5, 5, 4), dtype=np.float)
->>> cbg = 1.32 * np.ones_like(im1)
->>> ind = np.indices(im1.shape, dtype=np.float)
->>> im3 = cbg + 0.15 * ind[0] + 0.62 * ind[1] + 0.74 * ind[2]
->>> mask = np.ones_like(im1, dtype=np.int8)
->>> sigma = np.ones_like(im1, dtype=np.float)
->>> a, b, _, _, _ = build_lsq_eqs([im1, im3], [mask, mask],
-... [sigma, sigma], degree=(1,1,1), center=(0,0,0))
->>> pinv_solve(a, b, 2)
-array([[-6.60000000e-01, -7.50000000e-02, -3.10000000e-01,
-         7.10542736e-15, -3.70000000e-01,  8.88178420e-15,
-         9.21485110e-15, -2.77555756e-15],
-       [ 6.60000000e-01,  7.50000000e-02,  3.10000000e-01,
-        -6.43929354e-15,  3.70000000e-01, -7.77156117e-15,
-        -9.32587341e-15,  2.99760217e-15]])
+    >>> from jwst.wiimatch.lsq_optimizer import build_lsq_eqs, pinv_solve
+    >>> import numpy as np
+    >>> im1 = np.zeros((5, 5, 4), dtype=np.float)
+    >>> cbg = 1.32 * np.ones_like(im1)
+    >>> ind = np.indices(im1.shape, dtype=np.float)
+    >>> im3 = cbg + 0.15 * ind[0] + 0.62 * ind[1] + 0.74 * ind[2]
+    >>> mask = np.ones_like(im1, dtype=np.int8)
+    >>> sigma = np.ones_like(im1, dtype=np.float)
+    >>> a, b, _, _, _ = build_lsq_eqs([im1, im3], [mask, mask],
+    ... [sigma, sigma], degree=(1,1,1), center=(0,0,0))
+    >>> pinv_solve(a, b, 2) # doctest: +FLOAT_CMP
+    array([[-6.60000000e-01, -7.50000000e-02, -3.10000000e-01,
+             7.10542736e-15, -3.70000000e-01,  8.88178420e-15,
+             9.21485110e-15, -2.77555756e-15],
+           [ 6.60000000e-01,  7.50000000e-02,  3.10000000e-01,
+            -6.43929354e-15,  3.70000000e-01, -7.77156117e-15,
+            -9.32587341e-15,  2.99760217e-15]])
 
     """
     if tol is None:
@@ -367,23 +365,23 @@ def rlu_solve(matrix, free_term, nimages):
 
     Examples
     --------
->>> from jwst.wiimatch.lsq_optimizer import build_lsq_eqs, rlu_solve
->>> import numpy as np
->>> im1 = np.zeros((5, 5, 4), dtype=np.float)
->>> cbg = 1.32 * np.ones_like(im1)
->>> ind = np.indices(im1.shape, dtype=np.float)
->>> im3 = cbg + 0.15 * ind[0] + 0.62 * ind[1] + 0.74 * ind[2]
->>> mask = np.ones_like(im1, dtype=np.int8)
->>> sigma = np.ones_like(im1, dtype=np.float)
->>> a, b, _, _, _ = build_lsq_eqs([im1, im3], [mask, mask],
-... [sigma, sigma], degree=(1, 1, 1), center=(0, 0, 0))
->>> rlu_solve(a, b, 2)
-array([[-6.60000000e-01, -7.50000000e-02, -3.10000000e-01,
-        -1.19371180e-15, -3.70000000e-01, -1.62003744e-15,
-        -1.10844667e-15,  5.11590770e-16],
-       [ 6.60000000e-01,  7.50000000e-02,  3.10000000e-01,
-         1.19371180e-15,  3.70000000e-01,  1.62003744e-15,
-         1.10844667e-15, -5.11590770e-16]])
+    >>> from jwst.wiimatch.lsq_optimizer import build_lsq_eqs, rlu_solve
+    >>> import numpy as np
+    >>> im1 = np.zeros((5, 5, 4), dtype=np.float)
+    >>> cbg = 1.32 * np.ones_like(im1)
+    >>> ind = np.indices(im1.shape, dtype=np.float)
+    >>> im3 = cbg + 0.15 * ind[0] + 0.62 * ind[1] + 0.74 * ind[2]
+    >>> mask = np.ones_like(im1, dtype=np.int8)
+    >>> sigma = np.ones_like(im1, dtype=np.float)
+    >>> a, b, _, _, _ = build_lsq_eqs([im1, im3], [mask, mask],
+    ... [sigma, sigma], degree=(1, 1, 1), center=(0, 0, 0))
+    >>> rlu_solve(a, b, 2)   # doctest: +FLOAT_CMP
+    array([[-6.60000000e-01, -7.50000000e-02, -3.10000000e-01,
+            -1.19371180e-15, -3.70000000e-01, -1.62003744e-15,
+            -1.10844667e-15,  5.11590770e-16],
+           [ 6.60000000e-01,  7.50000000e-02,  3.10000000e-01,
+             1.19371180e-15,  3.70000000e-01,  1.62003744e-15,
+             1.10844667e-15, -5.11590770e-16]])
 
     """
     drop =  free_term.size // nimages

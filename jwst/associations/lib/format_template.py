@@ -98,7 +98,7 @@ class FormatTemplate(Formatter):
     'name="fred" value="great"_now-with_more'
 
     Setup preformatting
-    >>> key_formats = {'value': 'pre_{:s}_format'}
+    >>> key_formats = {'value': ['pre_{:s}_format']}
     >>> fmt_preformat = FormatTemplate(key_formats=key_formats)
     >>> fmt_preformat(template, name='fred', value='great')
     'name="fred" value="pre_great_format"'

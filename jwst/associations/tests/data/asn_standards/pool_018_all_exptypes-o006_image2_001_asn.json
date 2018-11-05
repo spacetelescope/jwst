@@ -14,7 +14,7 @@
             "name": "jw_00006",
             "members": [
                 {
-                    "expname": "jw_00006_rate.fits",
+                    "expname": "jw_00006_rateints.fits",
                     "exptype": "science",
                     "exposerr": null
                 }

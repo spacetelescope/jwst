@@ -19,6 +19,7 @@ from jwst.associations.lib.constraint import (
     SimpleConstraint,
 )
 from jwst.associations.lib.dms_base import (
+    CORON_EXP_TYPES,
     DMSAttrConstraint,
     DMSBaseMixin,
     IMAGE2_NONSCIENCE_EXP_TYPES,
@@ -173,15 +174,16 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         except KeyError:
             exposerr = None
 
-        # Handle time-series file naming
-        is_tso = self.constraints['is_tso'].value == 't'
-        if not is_tso:
-            is_tso = item['exp_type'] in TSO_EXP_TYPES
+        # Times series and coronagraphic exposures
+        # process in integration space.
+        use_integrations = self.constraints['is_tso'].value == 't'
+        if not use_integrations:
+            use_integrations = item['exp_type'] in TSO_EXP_TYPES + CORON_EXP_TYPES
 
         # Create the member.
         member = {
             'expname': Utility.rename_to_level2a(
-                item['filename'], is_tso=is_tso
+                item['filename'], use_integrations=use_integrations
             ),
             'exptype': self.get_exposure_type(item),
             'exposerr': exposerr,
@@ -454,7 +456,7 @@ class Utility():
     """Utility functions that understand DMS Level 3 associations"""
 
     @staticmethod
-    def rename_to_level2a(level1b_name, is_tso=False):
+    def rename_to_level2a(level1b_name, use_integrations=False):
         """Rename a Level 1b Exposure to another level
 
         Parameters
@@ -462,7 +464,7 @@ class Utility():
         level1b_name: str
             The Level 1b exposure name.
 
-        is_tso: boolean
+        is_integrations: boolean
             Use 'rateints' instead of 'rate' as
             the suffix.
 
@@ -482,7 +484,7 @@ class Utility():
             return level1b_name
 
         suffix = 'rate'
-        if is_tso:
+        if use_integrations:
             suffix = 'rateints'
         level2a_name = ''.join([
             match.group('path'),

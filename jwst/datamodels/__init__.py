@@ -37,7 +37,7 @@ from .multiextract1d import MultiExtract1dImageModel
 from .multiprod import MultiProductModel
 from .multislit import MultiSlitModel
 from .multispec import MultiSpecModel
-from .nirspec_flat import NRSFlatModel, NirspecFlatModel, NirspecQuadFlatModel
+from .nirspec_flat import NirspecFlatModel, NirspecQuadFlatModel
 from .outlierpars import OutlierParsModel
 from .pathloss import PathlossModel
 from .persat import PersistenceSatModel
@@ -87,7 +87,7 @@ __all__ = [
     'DrizParsModel',
     'Extract1dImageModel',
     'FilteroffsetModel',
-    'FlatModel', 'NRSFlatModel', 'NirspecFlatModel', 'NirspecQuadFlatModel',
+    'FlatModel', 'NirspecFlatModel', 'NirspecQuadFlatModel',
     'FOREModel', 'FPAModel',
     'FringeModel', 'GainModel', 'GLS_RampFitModel',
     'GuiderRawModel', 'GuiderCalModel',

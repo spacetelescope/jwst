@@ -6,7 +6,7 @@ steps in the ``coron`` package uses a reference file.
 PSFMASK Reference File
 -------------------------
 
-:RETYPE: PSFMASK
+:REFTYPE: PSFMASK
 :Data model: `~jwst.datamodels.PsfMaskModel`
 
 The PSFMASK reference file contains a 2-D mask that's used as a weight

@@ -736,7 +736,9 @@ class Step():
         format: str
             The format of the file name.  This is a format
             string that defines where `suffix` and the other
-            components go in the file name.
+            components go in the file name. If False,
+            it will be presumed `output_file` will have
+            all the necessary formatting.
 
         components: dict
             Other components to add to the file name.
@@ -767,6 +769,8 @@ class Step():
                 path=output_file,
                 save_model_func=save_model_func)
         else:
+
+            # Search for an output file name.
             if (
                     self.output_use_model or
                     (output_file is None and not self.search_output_file)
@@ -828,6 +832,8 @@ class Step():
 
         name_format: str or None
             The format string to use to form the base name.
+            If False, it will be presumed that `basepath`
+            has all the necessary formatting.
 
         component_format: str
             Format to use for the components
@@ -854,13 +860,6 @@ class Step():
         if basepath is None:
             basepath = step.default_output_file()
 
-        if name_format is None:
-            name_format = '{basename}{components}{suffix_sep}{suffix}.{ext}'
-        formatter = FormatTemplate(
-            separator=separator,
-            remove_unused=True
-        )
-
         basename, basepath_ext = splitext(split(basepath)[1])
         if ext is None:
             ext = step.output_ext
@@ -869,37 +868,47 @@ class Step():
         if ext.startswith('.'):
             ext = ext[1:]
 
-        if len(components):
-            component_str = formatter(component_format, **components)
-        else:
-            component_str = ''
-
         # Suffix check. An explicit check on `False` is necessary
         # because `None` is also allowed.
         suffix = _get_suffix(suffix, step=step)
         if suffix is not False:
+            default_name_format = '{basename}{components}{suffix_sep}{suffix}.{ext}'
             suffix_sep = None
             if suffix is not None:
                 basename, suffix_sep = remove_suffix(basename)
             if suffix_sep is None:
                 suffix_sep = separator
-
-            basename = formatter(
-                name_format,
-                basename=basename,
-                suffix=suffix,
-                suffix_sep=suffix_sep,
-                ext=ext,
-                components=component_str
-            )
-
         else:
-            basename = formatter(
-                name_format,
-                basename=basename,
-                ext=ext,
-                components=component_str
-            )
+            default_name_format = '{basename}{components}.{ext}'
+            suffix = None
+            suffix_sep = None
+
+        # Setup formatting
+        if name_format is None:
+            name_format = default_name_format
+        elif not name_format:
+            name_format = basename + '.{ext}'
+            basename = ''
+            suffix_sep = ''
+            separator = ''
+        formatter = FormatTemplate(
+            separator=separator,
+            remove_unused=True
+        )
+
+        if len(components):
+            component_str = formatter(component_format, **components)
+        else:
+            component_str = ''
+
+        basename = formatter(
+            name_format,
+            basename=basename,
+            suffix=suffix,
+            suffix_sep=suffix_sep,
+            ext=ext,
+            components=component_str
+        )
 
         output_dir = step.search_attr('output_dir', default='')
         output_dir = expandvars(expanduser(output_dir))

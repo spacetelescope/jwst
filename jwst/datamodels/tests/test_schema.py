@@ -15,10 +15,20 @@ from astropy.io import fits
 from astropy.modeling import models
 from astropy import time
 
-from .. import util, validate
-from .. import (DataModel, ImageModel, RampModel, MaskModel,
-                MultiSlitModel, AsnModel, CollimatorModel)
-from ..schema import merge_property_trees
+from jwst.datamodels import util, validate
+from jwst.datamodels import _defined_models as defined_models
+from jwst.datamodels import (
+    DataModel,
+    ImageModel,
+    RampModel,
+    MaskModel,
+    MultiSlitModel,
+    AsnModel,
+    CollimatorModel,
+    SourceModelContainer,
+    MultiExposureModel,
+)
+from jwst.datamodels.schema import merge_property_trees
 
 from asdf import schema as mschema
 
@@ -617,3 +627,16 @@ def test_merge_property_trees(combiner):
     # Make sure that merge_property_trees does not destructively modify schemas
     f = merge_property_trees(s)
     assert f == s
+
+
+@pytest.mark.parametrize("model", [m for m in defined_models.values()])
+def test_all_datamodels_init(model):
+    """
+    Test that all current datamodels can be initialized.
+    """
+    if model is SourceModelContainer:
+        # SourceModelContainer cannot have init=None
+        m = model(MultiExposureModel())
+    else:
+        m = model()
+    del m

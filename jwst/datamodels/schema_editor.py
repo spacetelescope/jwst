@@ -415,7 +415,7 @@ class Keyword_db:
                     subschema = aschema.load_schema(suburl_path,
                                                     resolver,
                                                     True)
-                except IOError as err:
+                except IOError:
                     print("Could not read " + suburl_path)
                     subschema = OrderedDict()
 
