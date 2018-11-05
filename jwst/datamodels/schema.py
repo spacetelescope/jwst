@@ -310,8 +310,13 @@ def build_docstring(klass, template):
 
     klass : Python class
         A class instance of a datamodel
-    template: str
+    template : str
         A string format template to be applied to each schema item
+
+    Returns
+    -------
+    field_info : str
+        Information about each schema item associated with a FITS hdu
     """
 
     def get_field_info(subschema, path, combiner, info, recurse):
@@ -390,5 +395,6 @@ def build_docstring(klass, template):
             if line and not line.isspace():
                 buffer.append(line)
 
-    return "\n".join(buffer) + "\n"
+    field_info = "\n".join(buffer) + "\n"
+    return field_info
 
