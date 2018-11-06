@@ -5,7 +5,7 @@ def test_env = [
     "HOME=./",
     "TEST_BIGDATA=https://bytesalad.stsci.edu/artifactory",
     "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
-    "CRDS_CONTEXT=jwst-edit",
+    "CRDS_CONTEXT=jwst_0495.pmap",
 ]
 
 // Pip related setup
