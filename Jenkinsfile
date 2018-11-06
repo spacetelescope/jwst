@@ -85,7 +85,7 @@ for (python_ver in matrix_python) {
                 "pip install -q ${pip_packages_tests}",
                 "python setup.py install"
             ]
-            bc.test_cmds = ["pytest -n 8 -r s --basetemp=test_results --junitxml=results.xml"]
+            bc.test_cmds = ["pytest -n 2 -r sx --basetemp=test_results --junitxml=results.xml"]
             matrix += bc
         }
     }
