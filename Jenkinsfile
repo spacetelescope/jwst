@@ -22,7 +22,6 @@ def conda_packages = [
     "jplephem",
     "matplotlib",
     "namedlist",
-    "numpy",
     "photutils",
     "scipy",
     "six",
