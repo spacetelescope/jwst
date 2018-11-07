@@ -7,7 +7,7 @@ class GuiderRawModel(DataModel):
     """
     A data model for FGS pipeline input files
 
-    Attributes
+    Parameters
     __________
     data : numpy float32 array
          The science data

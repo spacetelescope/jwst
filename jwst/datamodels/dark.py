@@ -8,7 +8,7 @@ class DarkModel(ReferenceFileModel):
     """
     A data model for dark reference files.
 
-    Attributes
+    Parameters
     __________
     data : numpy float32 array
          Dark current array

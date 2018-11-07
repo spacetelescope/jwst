@@ -8,7 +8,7 @@ class SpecModel(DataModel):
     """
     A data model for 1D spectra.
 
-    Attributes
+    Parameters
     __________
     spec_table : numpy table
         Extracted spectral data table

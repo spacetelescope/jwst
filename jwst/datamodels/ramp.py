@@ -8,7 +8,7 @@ class RampModel(DataModel):
     """
     A data model for 4D ramps.
 
-    Attributes
+    Parameters
     __________
     data : numpy float32 array
          The science data

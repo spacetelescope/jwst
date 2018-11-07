@@ -7,7 +7,7 @@ class BarshadowModel(ReferenceFileModel):
     """
     A data model for Bar Shadow correction information.
 
-    Attributes
+    Parameters
     __________
     data1x1 : numpy float32 array
          Bar Shadow 1x1 data array

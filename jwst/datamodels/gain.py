@@ -8,7 +8,7 @@ class GainModel(ReferenceFileModel):
     """
     A data model for 2D gain.
 
-    Attributes
+    Parameters
     __________
     data : numpy float32 array
          The gain

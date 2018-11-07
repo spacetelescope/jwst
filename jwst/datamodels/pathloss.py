@@ -8,7 +8,7 @@ class PathlossModel(ReferenceFileModel):
     """
     A data model for pathloss correction information.
 
-    Attributes
+    Parameters
     __________
     apertures.items.pointsource_data : numpy float32 array
          Point source pathloss

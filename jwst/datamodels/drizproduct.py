@@ -8,7 +8,7 @@ class DrizProductModel(DataModel):
     """
     A data model for drizzle-generated products.
 
-    Attributes
+    Parameters
     __________
     data : numpy float32 array
          The science data

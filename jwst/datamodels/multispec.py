@@ -22,7 +22,7 @@ class MultiSpecModel(model_base.DataModel):
     the first element of `spec`.  `SpecModel` objects can be appended
     to the `spec` attribute by using its `append` method.
 
-    Attributes
+    Parameters
     __________
     int_times : numpy table
          table of times for each integration

@@ -8,7 +8,7 @@ class PsfMaskModel(ReferenceFileModel):
     """
     A data model for coronagraphic 2D PSF mask reference files
 
-    Attributes
+    Parameters
     __________
     data : numpy float32 array
          The PSF mask

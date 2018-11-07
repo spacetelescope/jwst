@@ -8,7 +8,7 @@ class IFUCubeModel(DataModel):
     """
     A data model for 3D IFU  cubes.
 
-    Attributes
+    Parameters
     __________
     data : numpy float32 array
          The science data

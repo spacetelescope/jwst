@@ -7,7 +7,7 @@ class IFUCubeParsModel(ReferenceFileModel):
     """
     A data model for IFU Cube  parameters reference tables.
 
-    Attributes
+    Parameters
     __________
     ifucubepars_table : numpy table
          IFU Cube default parameters table
@@ -26,7 +26,7 @@ class MiriIFUCubeParsModel(ReferenceFileModel):
     """
     A data model for MIRI mrs ifucubepars reference files.
 
-    Attributes
+    Parameters
     __________
     ifucubepars_table : numpy table
          default IFU cube  parameters table

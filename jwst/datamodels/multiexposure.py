@@ -34,7 +34,7 @@ class MultiExposureModel(DataModel):
     models. This is part of the Level 3 processing of multi-objection
     observations.
 
-    Attributes
+    Parameters
     __________
     exposures.items.data : numpy float32 array
 

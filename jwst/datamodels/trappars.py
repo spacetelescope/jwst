@@ -8,7 +8,7 @@ class TrapParsModel(ReferenceFileModel):
     """
     A data model for trap capture and decay parameters.
 
-    Attributes
+    Parameters
     __________
     trappars_table : numpy table
          Trap capture and decay parameters

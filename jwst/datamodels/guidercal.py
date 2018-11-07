@@ -7,7 +7,7 @@ class GuiderCalModel(DataModel):
     """
     A data model for FGS pipeline output files
 
-    Attributes
+    Parameters
     __________
     data : numpy float32 array
          The science data

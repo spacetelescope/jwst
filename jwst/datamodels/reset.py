@@ -8,7 +8,7 @@ class ResetModel(ReferenceFileModel):
     """
     A data model for reset correction reference files.
 
-    Attributes
+    Parameters
     __________
     data : numpy float32 array
          Reset Correction array

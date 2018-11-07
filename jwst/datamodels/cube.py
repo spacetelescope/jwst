@@ -8,7 +8,7 @@ class CubeModel(DataModel):
     """
     A data model for 3D image cubes.
 
-    Attributes
+    Parameters
     __________
     data : numpy float32 array
          The science data

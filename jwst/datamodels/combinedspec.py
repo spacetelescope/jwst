@@ -7,7 +7,7 @@ class CombinedSpecModel(DataModel):
     """
     A data model for combined 1D spectra.
 
-    Attributes
+    Parameters
     __________
     spec_table : numpy table
          Combined, extracted spectral data table

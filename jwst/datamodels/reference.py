@@ -46,7 +46,7 @@ class ReferenceImageModel(ReferenceFileModel):
 
 Reference image data model
 
-    Attributes
+    Parameters
     __________
     data : numpy float32 array
          The science data
@@ -74,7 +74,7 @@ class ReferenceCubeModel(ReferenceFileModel):
     """
     A data model for 3D reference images
 
-    Attributes
+    Parameters
     __________
     data : numpy float32 array
          The science data
@@ -98,7 +98,7 @@ class ReferenceQuadModel(ReferenceFileModel):
     """
     A data model for 4D reference images
 
-    Attributes
+    Parameters
     __________
     data : numpy float32 array
          The science data

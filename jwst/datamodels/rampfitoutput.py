@@ -13,7 +13,7 @@ class RampFitOutputModel(DataModel):
     were fit, `nreads` is the number of reads in an integration, and
     `ny` and `nx` are the height and width of the image.
 
-    Attributes
+    Parameters
     __________
 
     slope : numpy float32 array (n_int, max_seg, ny, nx)

@@ -8,7 +8,7 @@ class RSCDModel(ReferenceFileModel):
     """
     A data model for the RSCD reference file.
 
-    Attributes
+    Parameters
     __________
     rscd_table : numpy table
         Reference file for RSCD correction

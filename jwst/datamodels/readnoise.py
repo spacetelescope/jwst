@@ -8,7 +8,7 @@ class ReadnoiseModel(ReferenceFileModel):
     """
     A data model for 2D readnoise.
 
-    Attributes
+    Parameters
     __________
     data : numpy float32 array
          Read noise

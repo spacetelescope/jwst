@@ -7,7 +7,7 @@ class TrapsFilledModel(DataModel):
     A data model for the number of traps filled for a detector, for
     persistence.
 
-    Attributes
+    Parameters
     __________
     data : numpy float32 array
         Traps filled

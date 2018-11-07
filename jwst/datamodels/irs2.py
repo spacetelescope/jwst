@@ -8,7 +8,7 @@ class IRS2Model(DataModel):
     """
     A data model for the IRS2 refpix reference file.
 
-    Attributes
+    Parameters
     __________
     irs2_table : numpy table
          Reference file for IRS2 refpix correction

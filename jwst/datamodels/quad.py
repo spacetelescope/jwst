@@ -7,7 +7,7 @@ class QuadModel(DataModel):
     """
     A data model for 4D image arrays.
 
-    Attributes
+    Parameters
     __________
     data : numpy float32 array
          The science data

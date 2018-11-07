@@ -25,7 +25,7 @@ class MultiSlitModel(model_base.DataModel):
     ``relsens`` attributes from the input file or model will be copied to the
     first element of ``slits``.
 
-    Attributes
+    Parameters
     __________
     slits.items.data : numpy float32 array
          The science data

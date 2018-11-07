@@ -7,7 +7,7 @@ class ContrastModel(DataModel):
     """
     A data model for coronagraphic contrast curve files.
 
-    Attributes
+    Parameters
     __________
     contrast_table : numpy table
          Contrast curve table

@@ -8,7 +8,7 @@ class GLS_RampFitModel(DataModel):
     A data model for the optional output of the ramp fitting step
     for the GLS algorithm.
 
-    Attributes
+    Parameters
     __________
     yint : numpy float32 array
          Y-intercept

@@ -9,7 +9,7 @@ class LinearityModel(ReferenceFileModel):
     """
     A data model for linearity correction information.
 
-    Attributes
+    Parameters
     __________
     coeffs : numpy float32 array
          Linearity coefficients

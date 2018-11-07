@@ -7,7 +7,7 @@ class TrapDensityModel(ReferenceFileModel):
     """
     A data model for the trap density of a detector, for persistence.
 
-    Attributes
+    Parameters
     __________
     data : numpy float32 array
          Trap density

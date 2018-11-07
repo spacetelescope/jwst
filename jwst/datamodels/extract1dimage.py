@@ -6,7 +6,7 @@ class Extract1dImageModel(DataModel):
     """
     A data model for the extract_1d reference image array.
 
-    Attributes
+    Parameters
     __________
     data : numpy float32 array
          1-D extraction regions array

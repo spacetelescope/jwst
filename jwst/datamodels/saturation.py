@@ -7,7 +7,7 @@ class SaturationModel(ReferenceFileModel):
     """
     A data model for saturation checking information.
 
-    Attributes
+    Parameters
     __________
     data : numpy float32 array
          Saturation threshold

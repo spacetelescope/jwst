@@ -7,7 +7,7 @@ class ResolutionModel(ReferenceFileModel):
     """
     A data model for Spectral Resolution  parameters reference tables.
 
-    Attributes
+    Parameters
     __________
     data : numpy float32 array
         Resolving Power table
@@ -19,7 +19,7 @@ class MiriResolutionModel(ResolutionModel):
     """
     A data model for MIRI Resolution reference files.
 
-    Attributes
+    Parameters
     __________
     data : numpy table
         Resolving Power table

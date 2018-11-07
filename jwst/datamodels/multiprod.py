@@ -21,7 +21,7 @@ class MultiProductModel(model_base.DataModel):
     input file or `DrizProductModel` will be copied to the first element of
     `products`.
 
-    Attributes
+    Parameters
     __________
     products.items.data : numpy float32 array
          resampled science data

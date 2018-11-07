@@ -7,7 +7,7 @@ class PersistenceSatModel(ReferenceFileModel):
     """
     A data model for the persistence saturation value (full well).
 
-    Attributes
+    Parameters
     __________
     data : numpy float32 array
          Persistence saturation threshold

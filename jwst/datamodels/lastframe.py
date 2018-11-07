@@ -9,7 +9,7 @@ class LastFrameModel(ReferenceFileModel):
     """
     A data model for Last frame correction reference files.
 
-    Attributes
+    Parameters
     __________
     data : numpy float32 array
          Last Frame Correction array

@@ -8,7 +8,7 @@ class PhotomModel(ReferenceFileModel):
     """
     A base class for photometric reference file models.
 
-    Attributes
+    Parameters
     __________
     phot_table : numpy table
          Photometric flux conversion factors table
@@ -20,7 +20,7 @@ class NircamPhotomModel(PhotomModel):
     """
     A data model for NIRCam photom reference files.
 
-    Attributes
+    Parameters
     __________
     phot_table : numpy table
         Photometric flux conversion factors table
@@ -45,7 +45,7 @@ class NirissPhotomModel(PhotomModel):
     """
     A data model for NIRISS photom reference files.
 
-    Attributes
+    Parameters
     __________
     phot_table : numpy table
         Photometric flux conversion factors table
@@ -70,7 +70,7 @@ class NirspecPhotomModel(PhotomModel):
     """
     A data model for NIRSpec imaging, IFU, and MOS photom reference files.
 
-    Attributes
+    Parameters
     __________
     phot_table : numpy table
         Photometric flux conversion factors table
@@ -95,7 +95,7 @@ class NirspecFSPhotomModel(PhotomModel):
     """
     A data model for NIRSpec Fixed-Slit (FS) photom reference files.
 
-    Attributes
+    Parameters
     __________
     phot_table : numpy table
         Photometric flux conversion factors table
@@ -124,7 +124,7 @@ class MiriImgPhotomModel(PhotomModel):
     """
     A data model for MIRI imaging photom reference files.
 
-    Attributes
+    Parameters
     __________
     phot_table : numpy table
         Photometric flux conversion factors table
@@ -183,7 +183,7 @@ class FgsPhotomModel(PhotomModel):
     """
     A data model for FGS photom reference files.
 
-    Attributes
+    Parameters
     __________
     phot_table : numpy table
         Photometric flux conversion factors table

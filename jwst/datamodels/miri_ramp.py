@@ -8,7 +8,7 @@ class MIRIRampModel(RampModel):
     """
     A data model for MIRI ramps. Includes the ``refout`` array.
 
-    Attributes
+    Parameters
     __________
     data : numpy float32 array
          The science data

@@ -9,7 +9,7 @@ class FlatModel(ReferenceFileModel):
     """
     A data model for 2D flat-field images.
 
-    Attributes
+    Parameters
     __________
     data : numpy float32 array
          The science data

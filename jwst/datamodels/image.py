@@ -8,7 +8,7 @@ class ImageModel(DataModel):
     """
     A data model for 2D images.
 
-    Attributes
+    Parameters
     __________
     data : numpy float32 array
          The science data

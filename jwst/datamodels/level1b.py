@@ -7,7 +7,7 @@ class Level1bModel(DataModel):
     """
     A data model for raw 4D ramps level-1b products.
 
-    Attributes
+    Parameters
     __________
     data : numpy uint16 array
          The science data

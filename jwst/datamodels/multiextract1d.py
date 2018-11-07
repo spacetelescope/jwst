@@ -21,7 +21,7 @@ class MultiExtract1dImageModel(ReferenceFileModel):
     `images[0]`, and the `data` attribute from the input array or
     `Extract1dImageModel` will be copied to the first element of `images`.
 
-    Attributes
+    Parameters
     __________
     images.items.data : numpy float32 array
     """

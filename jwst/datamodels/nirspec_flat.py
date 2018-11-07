@@ -12,7 +12,7 @@ class NRSFlatModel(ReferenceFileModel):
 class NirspecFlatModel(NRSFlatModel):
     """A data model for NIRSpec flat-field reference files.
 
-    Attributes
+    Parameters
     __________
     data : numpy float32 array
          NIRSpec flat-field reference data
@@ -49,7 +49,7 @@ class NirspecFlatModel(NRSFlatModel):
 class NirspecQuadFlatModel(NRSFlatModel):
     """A data model for NIRSpec flat-field files that differ by quadrant.
 
-    Attributes
+    Parameters
     __________
     quadrants.items.data : numpy float32 array
 

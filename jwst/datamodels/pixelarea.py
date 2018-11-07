@@ -9,7 +9,7 @@ class PixelAreaModel(ReferenceFileModel):
     """
     A data model for the pixel area map
 
-    Attributes
+    Parameters
     __________
     data : numpy float32 array
          The pixel area array
@@ -22,7 +22,7 @@ class NirspecSlitAreaModel(ReferenceFileModel):
     """
     A data model for the NIRSpec fixed-slit pixel area reference file
 
-    Attributes
+    Parameters
     __________
     area_table : numpy table
          NIRSpec fixed-slit pixel area table
@@ -40,7 +40,7 @@ class NirspecMosAreaModel(ReferenceFileModel):
     """
     A data model for the NIRSpec MOS pixel area reference file
 
-    Attributes
+    Parameters
     __________
     area_table : numpy table
          NIRSpec MOS pixel area table
@@ -60,7 +60,7 @@ class NirspecIfuAreaModel(ReferenceFileModel):
     """
     A data model for the NIRSpec IFU pixel area reference file
 
-    Attributes
+    Parameters
     __________
     area_table : numpy table
          NIRSpec IFU pixel area table

@@ -6,7 +6,7 @@ class IPCModel(ReferenceFileModel):
     """
     A data model for IPC kernel checking information.
 
-    Attributes
+    Parameters
     __________
     data : numpy float32 array
          IPC deconvolution kernel

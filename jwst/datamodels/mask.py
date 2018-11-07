@@ -8,7 +8,7 @@ class MaskModel(ReferenceFileModel):
     """
     A data model for 2D masks.
 
-    Attributes
+    Parameters
     __________
     dq : numpy uint32 array
          The mask

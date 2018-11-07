@@ -9,7 +9,7 @@ class WfssBkgModel(ReferenceFileModel):
     """
     A data model for 2D WFSS master background reference files.
 
-    Attributes
+    Parameters
     __________
     data : numpy float32 array
          The science data

@@ -8,7 +8,7 @@ class ThroughputModel(ReferenceFileModel):
     """
     A data model for filter throughput.
 
-    Attributes
+    Parameters
     __________
     filter_table : numpy table
          Filter throughput table

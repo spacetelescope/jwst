@@ -9,7 +9,7 @@ class SuperBiasModel(ReferenceFileModel):
     """
     A data model for 2D super-bias images.
 
-    Attributes
+    Parameters
     __________
     data : numpy float32 array
          The science data
