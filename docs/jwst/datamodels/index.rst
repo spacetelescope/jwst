@@ -10,6 +10,7 @@ Data Models
    metadata.rst
    new_model.rst
    fits_files.rst
+   structure.rst
 
 
 .. automodapi:: jwst.datamodels
