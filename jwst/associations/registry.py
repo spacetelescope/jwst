@@ -133,6 +133,7 @@ class AssociationRegistry(dict):
 
     @property
     def rule_set(self):
+        """Rules within the Registry"""
         return self._rule_set
 
     def match(self, item, version_id=None, allow=None, ignore=None):
@@ -179,7 +180,7 @@ class AssociationRegistry(dict):
         return associations, process_list
 
     def validate(self, association):
-        """Validate a given association against schema
+        """Validate a given association
 
         Parameters
         ----------
@@ -284,17 +285,12 @@ class AssociationRegistry(dict):
                  global_constraints=None,
                  include_bases=None
     ):
-        """Parse out all rules and callbacks in a module
+        """Parse out all rules and callbacks in a module and add them to the registry
 
         Parameters
         ----------
         module: module
             The module, and all submodules, to be parsed.
-
-        Modifies
-        --------
-        self.callback
-            Found callbacks are added to the callback registry
         """
         for name, obj in get_marked(module, include_bases=include_bases):
 
