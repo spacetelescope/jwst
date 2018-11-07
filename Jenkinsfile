@@ -1,81 +1,57 @@
-// Perform initial clone and enable [skip ci] feature
 if (utils.scm_checkout()) return
 
-// Build matrix setup
-def PY_VERSIONS = ['3.6']
-def NPY_VERSIONS = ['1.14']
-def ASTROPY_VERSIONS = ['4']  // dev channel is (major + 1)
-def matrix = []  // used by 'utils'
+matrix_python = ['3.6']
+matrix_numpy = ['1.15.2']
+matrix_astropy = ['4']
+matrix = []
 
-// Shell environment setup
-// NOTE: './' or '.' are replaced at runtime with $WORKSPACE
-def ENV_SETUP = [
+def test_env = [
     "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
     "CRDS_PATH=./crds_cache",
 ]
 
-// Conda related setup
-def CONDA_ARGS = "-q -y"
-def CONDA_CREATE = "conda create ${CONDA_ARGS}"
-def CONDA_INST = "conda install ${CONDA_ARGS}"
-def CONDA_CHANNEL = "http://ssb.stsci.edu/astroconda-dev"
-def CONDA_DEPS = "asdf \
-                  astropy \
-                  crds \
-                  dask \
-                  drizzle \
-                  flake8 \
-                  gwcs \
-                  jsonschema \
-                  jplephem \
-                  matplotlib \
-                  namedlist \
-                  numpy \
-                  photutils \
-                  scipy \
-                  six \
-                  spherical-geometry \
-                  stsci.image \
-                  stsci.imagestats \
-                  stsci.stimage \
-                  stsci.tools \
-                  verhawk"
-def CONDA_DOC_DEPS = "sphinx \
-                      sphinx_rtd_theme \
-                      stsci_rtd_theme"
-def CONDA_TEST_DEPS = "pytest"
+def conda_packages = [
+    "asdf",
+    "astropy",
+    "crds",
+    "dask",
+    "drizzle",
+    "flake8",
+    "gwcs",
+    "jsonschema",
+    "jplephem",
+    "matplotlib",
+    "namedlist",
+    "photutils",
+    "scipy",
+    "six",
+    "spherical-geometry",
+    "stsci.image",
+    "stsci.imagestats",
+    "stsci.stimage",
+    "stsci.tools",
+    "verhawk",
+    "pytest=3.8.2"
+]
+def conda_packages_docs = [
+    "sphinx",
+    "sphinx_rtd_theme",
+    "stsci_rtd_theme"
+]
 
 // Pip related setup
-def PIP_ARGS = "-q"
-def PIP_INST = "pip install ${PIP_ARGS}"
-def PIP_DEPS = ""
-def PIP_DOC_DEPS = "sphinx-automodapi"
-def PIP_TEST_DEPS = "requests_mock git+https://github.com/spacetelescope/ci_watson.git"
-
-// Pytest wrapper
-def PYTEST = "pytest \
-              -r s \
-              -v \
-              --basetemp=./test_results \
-              --junit-xml=results.xml"
-
-// Python related setup
-def PY_SETUP = "python setup.py"
-
-
-//
-// JOB SPECIFICATION
-//
+def pip_packages_docs = "sphinx-automodapi"
+def pip_packages_tests = "requests_mock ci_watson"
 
 // Generate distributions
 dist = new BuildConfig()
 dist.nodetype = 'linux'
 dist.name = 'dist'
+dist.conda_packages = ["numpy=${matrix_numpy[0]}"] + ["python=${matrix_python[0]}"]
 dist.build_cmds = [
-    "${CONDA_INST} numpy",
-    "${PY_SETUP} sdist",
-    "${PY_SETUP} bdist_egg",
-    "${PY_SETUP} bdist_wheel"
+    "python setup.py sdist",
+    "python setup.py bdist_egg",
+    "python setup.py bdist_wheel"
 ]
 matrix += dist
 
@@ -84,37 +60,31 @@ matrix += dist
 docs = new BuildConfig()
 docs.nodetype = 'linux'
 docs.name = 'docs'
+docs.conda_channels = ['http://ssb.stsci.edu/astroconda-dev']
+docs.conda_packages = conda_packages + conda_packages_docs + ["numpy=${matrix_numpy[0]}"] + ["python=${matrix_python[0]}"]
 docs.build_cmds = [
-    "conda config --add channels ${CONDA_CHANNEL}",
-    "${CONDA_CREATE} -n ${docs.name} ${CONDA_DOC_DEPS} ${CONDA_DEPS}",
-    "with_env -n ${docs.name} ${PIP_INST} ${PIP_DOC_DEPS}",
-    "with_env -n ${docs.name} ${PY_SETUP} build_sphinx"
+    "pip install -q ${pip_packages_docs}",
+    "python setup.py build_sphinx"
 ]
 matrix += docs
 
 
 // Generate the build and test matrix
-for (py in PY_VERSIONS) {
-    for (npy in NPY_VERSIONS) {
-        for (apy in ASTROPY_VERSIONS) {
-            def NAME = "py${py}np${npy}ap${apy}"
-            def WRAPPER = "with_env -n ${NAME}"
-
+for (python_ver in matrix_python) {
+    for (numpy_ver in matrix_numpy) {
+        for (astropy_ver in matrix_astropy) {
+            def name = "py${python_ver}np${numpy_ver}ap${astropy_ver}"
             bc = new BuildConfig()
             bc.nodetype = 'linux'
-            bc.env_vars = ENV_SETUP
-            bc.name = NAME
+            bc.env_vars = test_env
+            bc.name = name
+            bc.conda_channels = ['http://ssb.stsci.edu/astroconda-dev']
+            bc.conda_packages = conda_packages + ["python=${python_ver}"] + ["numpy=${numpy_ver}"]
             bc.build_cmds = [
-                "conda config --add channels ${CONDA_CHANNEL}",
-                "${CONDA_CREATE} -n ${NAME} \
-                    python=${py} numpy=${npy} astropy=${apy} ${CONDA_DEPS}",
-                "${WRAPPER} ${PY_SETUP} install"
+                "pip install -q ${pip_packages_tests}",
+                "python setup.py install"
             ]
-            bc.test_cmds = [
-                "${WRAPPER} ${CONDA_INST} ${CONDA_TEST_DEPS}",
-                "${WRAPPER} ${PIP_INST} ${PIP_TEST_DEPS}",
-                "${WRAPPER} ${PYTEST}"
-            ]
+            bc.test_cmds = ["pytest -r s --basetemp=test_results --junitxml=results.xml"]
             matrix += bc
         }
     }

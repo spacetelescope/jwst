@@ -67,9 +67,9 @@ class Asn_Image(AsnMixin_Science):
 class Asn_WFSCMB(AsnMixin_Science):
     """Wavefront Sensing association
 
-    Notes
-    -----
-    Defined by `TRAC issue #269 <https://aeon.stsci.edu/ssb/trac/jwst/ticket/269>`_
+    For coarse and fine phasing, dither pairs need
+    be associated to be combined.  The optical path
+    is assumed to be equivalent within an activity.
     """
 
     def __init__(self, *args, **kwargs):
@@ -80,31 +80,83 @@ class Asn_WFSCMB(AsnMixin_Science):
             Constraint_Target(),
             Constraint_Image(),
             DMSAttrConstraint(
-                name='wfsvisit',
-                sources=['visitype'],
-                value='prime_wfsc_sensing_control',
+                name='patttype',
+                sources=['patttype'],
+                value='wfsc'
             ),
             DMSAttrConstraint(
-                name='asn_candidate_wfs',
-                sources=['asn_candidate'],
-                value='.+mosaic.+',
-                force_unique=True,
-                is_acid=True,
-                evaluate=True,
+                name='detector',
+                sources=['detector']
             ),
             DMSAttrConstraint(
-                name='activity_id',
+                name='obs_id',
+                sources=['obs_id']
+            ),
+            DMSAttrConstraint(
+                name='act_id',
                 sources=['act_id']
             )
         ])
+
+        # Only valid if two members exist.
+        self.validity.update({
+            'has_pair': {
+                'validated': False,
+                'check': self._has_pair
+            }
+        })
 
         super(Asn_WFSCMB, self).__init__(*args, **kwargs)
 
     def _init_hook(self, item):
         """Post-check and pre-add initialization"""
 
-        self.data['asn_type'] = 'wfs'
+        self.data['asn_type'] = 'wfs-image3'
         super(Asn_WFSCMB, self)._init_hook(item)
+
+    @property
+    def dms_product_name(self):
+        """Define product name
+
+        Modification is to append the `expspcin` value
+        after the calibration suffix.
+        """
+        product_name_format = '{existing}-{detector}_{suffix}-{expspcin}'
+
+        existing = super().dms_product_name
+
+        product_name = format_product(
+            product_name_format,
+            existing=existing,
+            detector=self.constraints['detector'].value,
+            expspcin=self.constraints['act_id'].value
+        )
+
+        return product_name.lower()
+
+    def _has_pair(self, entry=None):
+        """Check if current product has two members
+
+        If `entry` is given, it is counted as one of the
+        members. If not, the existing member list is only
+        accounted for.
+
+        Parameters
+        ----------
+        entry: dict or None
+            New entry to add to member list.
+
+        Returns
+        -------
+        bool
+            True if there are two members.
+        """
+        if entry is None:
+            count = 2
+        else:
+            count = 1
+
+        return len(self.current_product['members']) == count
 
 
 @RegistryMarker.rule
