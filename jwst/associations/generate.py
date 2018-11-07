@@ -12,6 +12,8 @@ from .lib.process_list import (
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
+__all__ = ['generate']
+
 
 def generate(pool, rules, version_id=None):
     """Generate associations in the pool according to the rules.
@@ -21,7 +23,7 @@ def generate(pool, rules, version_id=None):
     pool: AssociationPool
         The pool to generate from.
 
-    rules: Associations
+    rules: AssociationRegistry
         The associaton rule set.
 
     version_id: None, True, or str
@@ -32,7 +34,7 @@ def generate(pool, rules, version_id=None):
 
     Returns
     -------
-    associations: [association[,...]]
+    associations: [Association[,...]]
         List of associations
 
     Notes

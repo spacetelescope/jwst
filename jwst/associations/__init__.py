@@ -1,4 +1,12 @@
-"""Setup default and environment """
+"""Association Generator
+
+The Association Generator takes a list of items, an Association Pool, and
+creates sub-lists of those items depending on each items' attributes. How the
+sub-lists are created is defined by Association Rules.
+
+For more, see the :ref:`documentation overview <asn-overview>`.
+
+"""
 
 # Take version from the upstream package
 from .. import __version__
@@ -23,3 +31,4 @@ from .generate import *
 from .pool import *
 from .registry import *
 from .load_asn import load_asn
+from .lib.process_list import *
