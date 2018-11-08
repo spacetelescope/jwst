@@ -22,8 +22,8 @@ that have not already been created are checked for. This is to prevent
 cyclical creation of associations.
 
 As discussed in :ref:`design-association`, associations are Python
-classes, often referred to as `association rules`, and their
-instantiations, referred to as `associations`. An association is
+classes, often referred to as ``association rules``, and their
+instantiations, referred to as ``associations``. An association is
 created by calling the :meth:`Association.create
 <jwst.associations.association.Association.create>` class method for each
 association rule. If the member matches the rule, an association is

@@ -6,14 +6,14 @@ Associations and Rules
 Terminology
 -----------
 
-As :ref:`has been described <what-are-associations>`, an `Association`
+As :ref:`has been described <what-are-associations>`, an ``Association``
 is a Python dict or list that is a list of things that belong together
 and are created by association rules. However, as will be described,
 the association rules are Python classes which inherit from the
-`Association` class.
+``Association`` class.
 
 Associations created from these rule classes, refered to as just
-`rules`, have the type of the class they are created from and have all
+``rules``, have the type of the class they are created from and have all
 the methods and attributes of those classes. Such instances are used
 to populate the created associations with new members and check the
 validity of said associations.
@@ -71,7 +71,7 @@ classes which share the same base parent classes are referred to as a
 *rule set*. The JWST :ref:`Level2-associations` and
 :ref:`Level3-associations` are examples of such rule sets.
 The below figure demonstrates the relationships between the base
-`Association`, the defining ruleset classes, and the rule classes
+``Association``, the defining ruleset classes, and the rule classes
 themselves.
 
 .. figure:: graphics/rule_sets.png

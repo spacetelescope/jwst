@@ -12,7 +12,7 @@ Association pools are simply tables. Pools are instantiated using the
 Table`_. As such, any file that is supported by  astropy I/O can be
 used as an association pool.
 
-Each row of a pool defines a `member`, and the columns define the
+Each row of a pool defines a ``member``, and the columns define the
 attributes of that member. It is these attributes that the generator
 uses to determine which members go into which associations.
 
