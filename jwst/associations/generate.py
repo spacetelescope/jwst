@@ -39,7 +39,7 @@ def generate(pool, rules, version_id=None):
 
     Notes
     -----
-    Refer to the :ref:`Association Generator <association-generator>`
+    Refer to the :ref:`Association Generator <design-generator>`
     documentation for a full description.
     """
     associations = []

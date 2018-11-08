@@ -18,6 +18,8 @@ from jwst.associations.lib.constraint import (
 )
 from jwst.associations.lib.log_config import (log_config, DMS_config)
 
+__all__ = ['Main']
+
 # Configure logging
 logger = log_config(name=__package__)
 

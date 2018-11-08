@@ -91,9 +91,7 @@ class AssociationRegistry(dict):
 
     In practice, this is one step in a larger loop over all items to
     be associated. This does not account for adding items to already
-    existing associations. See :ref:`generate` for a full example of
-    using the registry.
-
+    existing associations. See :py:func:`~jwst.associations.generate` for more information.
     """
 
     def __init__(self,
