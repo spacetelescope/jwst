@@ -130,11 +130,11 @@ slits:
   meta:
     date: '2017-04-04T12:28:33.674'
     model_type: ImageModel
-    wcs: !wcs/wcs-1.0.0
+    wcs: !<tag:stsci.edu:gwcs/wcs-1.0.0>
       name: ''
       steps:
-      - !wcs/step-1.0.0
-        frame: !wcs/frame-1.1.0
+      - !<tag:stsci.edu:gwcs/step-1.0.0>
+        frame: !<tag:stsci.edu:gwcs/frame-1.1.0>
           axes_names: [x, y]
           name: detector
           unit: [!unit/unit-1.0.0 pixel, !unit/unit-1.0.0 pixel]
@@ -149,8 +149,8 @@ slits:
             - !transform/shift-1.1.0 {offset: 0.0}
           - !transform/identity-1.1.0 {n_dims: 2}
           name: dms2sca
-      - !wcs/step-1.0.0
-        frame: !wcs/frame-1.1.0
+      - !<tag:stsci.edu:gwcs/step-1.0.0>
+        frame: !<tag:stsci.edu:gwcs/frame-1.1.0>
           axes_names: [x, y]
           name: sca
           unit: [!unit/unit-1.0.0 pixel, !unit/unit-1.0.0 pixel]
@@ -345,8 +345,8 @@ slits:
                     forward:
                     - !transform/shift-1.1.0 {offset: 1.0}
                     - !transform/shift-1.1.0 {offset: 1.0}
-      - !wcs/step-1.0.0
-        frame: !wcs/frame-1.1.0
+      - !<tag:stsci.edu:gwcs/step-1.0.0>
+        frame: !<tag:stsci.edu:gwcs/frame-1.1.0>
           axes_names: [alpha_in, beta_in]
           name: gwa
           unit: [!unit/unit-1.0.0 rad, !unit/unit-1.0.0 rad]
@@ -626,14 +626,14 @@ slits:
                 mapping: [3, 0, 1, 2]
             - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.7.0> {groove_density: 252285.79999999999,
               name: alpha_from_greq, order: -1.0, output: angle}
-      - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.1.0
+      - !<tag:stsci.edu:gwcs/step-1.0.0>
+        frame: !<tag:stsci.edu:gwcs/composite_frame-1.1.0>
           frames:
-          - !wcs/frame-1.1.0
+          - !<tag:stsci.edu:gwcs/frame-1.1.0>
             axes_names: [x_slit, y_slit]
             name: slit_spatial
             unit: [!unit/unit-1.0.0 '', !unit/unit-1.0.0 '']
-          - !wcs/spectral_frame-1.1.0
+          - !<tag:stsci.edu:gwcs/spectral_frame-1.1.0>
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -661,14 +661,14 @@ slits:
                 - !transform/shift-1.1.0 {name: slit_xref, offset: 0.0}
                 - !transform/shift-1.1.0 {name: slit_yref, offset: 0.0}
           - !transform/identity-1.1.0 {}
-      - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.1.0
+      - !<tag:stsci.edu:gwcs/step-1.0.0>
+        frame: !<tag:stsci.edu:gwcs/composite_frame-1.1.0>
           frames:
-          - !wcs/frame-1.1.0
+          - !<tag:stsci.edu:gwcs/frame-1.1.0>
             axes_names: [x_msa, y_msa]
             name: msa_spatial
             unit: [!unit/unit-1.0.0 m, !unit/unit-1.0.0 m]
-          - !wcs/spectral_frame-1.1.0
+          - !<tag:stsci.edu:gwcs/spectral_frame-1.1.0>
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -901,14 +901,14 @@ slits:
               - !transform/identity-1.1.0 {}
             - !transform/identity-1.1.0 {n_dims: 3}
           name: msa2oteip
-      - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.1.0
+      - !<tag:stsci.edu:gwcs/step-1.0.0>
+        frame: !<tag:stsci.edu:gwcs/composite_frame-1.1.0>
           frames:
-          - !wcs/frame-1.1.0
+          - !<tag:stsci.edu:gwcs/frame-1.1.0>
             axes_names: [X_OTEIP, Y_OTEIP]
             name: oteip
             unit: [!unit/unit-1.0.0 deg, !unit/unit-1.0.0 deg]
-          - !wcs/spectral_frame-1.1.0
+          - !<tag:stsci.edu:gwcs/spectral_frame-1.1.0>
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -1074,14 +1074,14 @@ slits:
               - !transform/remap_axes-1.1.0
                 mapping: [0, 1, 2, 2]
           name: oteip2v23
-      - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.1.0
+      - !<tag:stsci.edu:gwcs/step-1.0.0>
+        frame: !<tag:stsci.edu:gwcs/composite_frame-1.1.0>
           frames:
-          - !wcs/frame-1.1.0
+          - !<tag:stsci.edu:gwcs/frame-1.1.0>
             axes_names: [V2, V3]
             name: v2v3_spatial
             unit: [!unit/unit-1.0.0 deg, !unit/unit-1.0.0 deg]
-          - !wcs/spectral_frame-1.1.0
+          - !<tag:stsci.edu:gwcs/spectral_frame-1.1.0>
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -1094,15 +1094,15 @@ slits:
             axes_order: zyxyz
             name: v23tosky
           - !transform/identity-1.1.0 {}
-      - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.1.0
+      - !<tag:stsci.edu:gwcs/step-1.0.0>
+        frame: !<tag:stsci.edu:gwcs/composite_frame-1.1.0>
           frames:
-          - !wcs/celestial_frame-1.0.0
+          - !<tag:stsci.edu:gwcs/celestial_frame-1.0.0>
             axes_names: [lon, lat]
             name: sky
             reference_frame: {type: ICRS}
             unit: [!unit/unit-1.0.0 deg, !unit/unit-1.0.0 deg]
-          - !wcs/spectral_frame-1.1.0
+          - !<tag:stsci.edu:gwcs/spectral_frame-1.1.0>
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -1128,11 +1128,11 @@ slits:
   meta:
     date: '2017-04-04T12:28:33.674'
     model_type: ImageModel
-    wcs: !wcs/wcs-1.0.0
+    wcs: !<tag:stsci.edu:gwcs/wcs-1.0.0>
       name: ''
       steps:
-      - !wcs/step-1.0.0
-        frame: !wcs/frame-1.1.0
+      - !<tag:stsci.edu:gwcs/step-1.0.0>
+        frame: !<tag:stsci.edu:gwcs/frame-1.1.0>
           axes_names: [x, y]
           name: detector
           unit: [!unit/unit-1.0.0 pixel, !unit/unit-1.0.0 pixel]
@@ -1147,8 +1147,8 @@ slits:
             - !transform/shift-1.1.0 {offset: 0.0}
           - !transform/identity-1.1.0 {n_dims: 2}
           name: dms2sca
-      - !wcs/step-1.0.0
-        frame: !wcs/frame-1.1.0
+      - !<tag:stsci.edu:gwcs/step-1.0.0>
+        frame: !<tag:stsci.edu:gwcs/frame-1.1.0>
           axes_names: [x, y]
           name: sca
           unit: [!unit/unit-1.0.0 pixel, !unit/unit-1.0.0 pixel]
@@ -1343,8 +1343,8 @@ slits:
                     forward:
                     - !transform/shift-1.1.0 {offset: 1.0}
                     - !transform/shift-1.1.0 {offset: 1.0}
-      - !wcs/step-1.0.0
-        frame: !wcs/frame-1.1.0
+      - !<tag:stsci.edu:gwcs/step-1.0.0>
+        frame: !<tag:stsci.edu:gwcs/frame-1.1.0>
           axes_names: [alpha_in, beta_in]
           name: gwa
           unit: [!unit/unit-1.0.0 rad, !unit/unit-1.0.0 rad]
@@ -1624,14 +1624,14 @@ slits:
                 mapping: [3, 0, 1, 2]
             - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.7.0> {groove_density: 252285.79999999999,
               name: alpha_from_greq, order: -1.0, output: angle}
-      - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.1.0
+      - !<tag:stsci.edu:gwcs/step-1.0.0>
+        frame: !<tag:stsci.edu:gwcs/composite_frame-1.1.0>
           frames:
-          - !wcs/frame-1.1.0
+          - !<tag:stsci.edu:gwcs/frame-1.1.0>
             axes_names: [x_slit, y_slit]
             name: slit_spatial
             unit: [!unit/unit-1.0.0 '', !unit/unit-1.0.0 '']
-          - !wcs/spectral_frame-1.1.0
+          - !<tag:stsci.edu:gwcs/spectral_frame-1.1.0>
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -1659,14 +1659,14 @@ slits:
                 - !transform/shift-1.1.0 {name: slit_xref, offset: 0.0}
                 - !transform/shift-1.1.0 {name: slit_yref, offset: 0.0}
           - !transform/identity-1.1.0 {}
-      - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.1.0
+      - !<tag:stsci.edu:gwcs/step-1.0.0>
+        frame: !<tag:stsci.edu:gwcs/composite_frame-1.1.0>
           frames:
-          - !wcs/frame-1.1.0
+          - !<tag:stsci.edu:gwcs/frame-1.1.0>
             axes_names: [x_msa, y_msa]
             name: msa_spatial
             unit: [!unit/unit-1.0.0 m, !unit/unit-1.0.0 m]
-          - !wcs/spectral_frame-1.1.0
+          - !<tag:stsci.edu:gwcs/spectral_frame-1.1.0>
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -1899,14 +1899,14 @@ slits:
               - !transform/identity-1.1.0 {}
             - !transform/identity-1.1.0 {n_dims: 3}
           name: msa2oteip
-      - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.1.0
+      - !<tag:stsci.edu:gwcs/step-1.0.0>
+        frame: !<tag:stsci.edu:gwcs/composite_frame-1.1.0>
           frames:
-          - !wcs/frame-1.1.0
+          - !<tag:stsci.edu:gwcs/frame-1.1.0>
             axes_names: [X_OTEIP, Y_OTEIP]
             name: oteip
             unit: [!unit/unit-1.0.0 deg, !unit/unit-1.0.0 deg]
-          - !wcs/spectral_frame-1.1.0
+          - !<tag:stsci.edu:gwcs/spectral_frame-1.1.0>
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -2072,14 +2072,14 @@ slits:
               - !transform/remap_axes-1.1.0
                 mapping: [0, 1, 2, 2]
           name: oteip2v23
-      - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.1.0
+      - !<tag:stsci.edu:gwcs/step-1.0.0>
+        frame: !<tag:stsci.edu:gwcs/composite_frame-1.1.0>
           frames:
-          - !wcs/frame-1.1.0
+          - !<tag:stsci.edu:gwcs/frame-1.1.0>
             axes_names: [V2, V3]
             name: v2v3_spatial
             unit: [!unit/unit-1.0.0 deg, !unit/unit-1.0.0 deg]
-          - !wcs/spectral_frame-1.1.0
+          - !<tag:stsci.edu:gwcs/spectral_frame-1.1.0>
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -2092,15 +2092,15 @@ slits:
             axes_order: zyxyz
             name: v23tosky
           - !transform/identity-1.1.0 {}
-      - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.1.0
+      - !<tag:stsci.edu:gwcs/step-1.0.0>
+        frame: !<tag:stsci.edu:gwcs/composite_frame-1.1.0>
           frames:
-          - !wcs/celestial_frame-1.0.0
+          - !<tag:stsci.edu:gwcs/celestial_frame-1.0.0>
             axes_names: [lon, lat]
             name: sky
             reference_frame: {type: ICRS}
             unit: [!unit/unit-1.0.0 deg, !unit/unit-1.0.0 deg]
-          - !wcs/spectral_frame-1.1.0
+          - !<tag:stsci.edu:gwcs/spectral_frame-1.1.0>
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -2126,11 +2126,11 @@ slits:
   meta:
     date: '2017-04-04T12:28:33.674'
     model_type: ImageModel
-    wcs: !wcs/wcs-1.0.0
+    wcs: !<tag:stsci.edu:gwcs/wcs-1.0.0>
       name: ''
       steps:
-      - !wcs/step-1.0.0
-        frame: !wcs/frame-1.1.0
+      - !<tag:stsci.edu:gwcs/step-1.0.0>
+        frame: !<tag:stsci.edu:gwcs/frame-1.1.0>
           axes_names: [x, y]
           name: detector
           unit: [!unit/unit-1.0.0 pixel, !unit/unit-1.0.0 pixel]
@@ -2145,8 +2145,8 @@ slits:
             - !transform/shift-1.1.0 {offset: 0.0}
           - !transform/identity-1.1.0 {n_dims: 2}
           name: dms2sca
-      - !wcs/step-1.0.0
-        frame: !wcs/frame-1.1.0
+      - !<tag:stsci.edu:gwcs/step-1.0.0>
+        frame: !<tag:stsci.edu:gwcs/frame-1.1.0>
           axes_names: [x, y]
           name: sca
           unit: [!unit/unit-1.0.0 pixel, !unit/unit-1.0.0 pixel]
@@ -2341,8 +2341,8 @@ slits:
                     forward:
                     - !transform/shift-1.1.0 {offset: 1.0}
                     - !transform/shift-1.1.0 {offset: 1.0}
-      - !wcs/step-1.0.0
-        frame: !wcs/frame-1.1.0
+      - !<tag:stsci.edu:gwcs/step-1.0.0>
+        frame: !<tag:stsci.edu:gwcs/frame-1.1.0>
           axes_names: [alpha_in, beta_in]
           name: gwa
           unit: [!unit/unit-1.0.0 rad, !unit/unit-1.0.0 rad]
@@ -2622,14 +2622,14 @@ slits:
                 mapping: [3, 0, 1, 2]
             - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.7.0> {groove_density: 252285.79999999999,
               name: alpha_from_greq, order: -1.0, output: angle}
-      - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.1.0
+      - !<tag:stsci.edu:gwcs/step-1.0.0>
+        frame: !<tag:stsci.edu:gwcs/composite_frame-1.1.0>
           frames:
-          - !wcs/frame-1.1.0
+          - !<tag:stsci.edu:gwcs/frame-1.1.0>
             axes_names: [x_slit, y_slit]
             name: slit_spatial
             unit: [!unit/unit-1.0.0 '', !unit/unit-1.0.0 '']
-          - !wcs/spectral_frame-1.1.0
+          - !<tag:stsci.edu:gwcs/spectral_frame-1.1.0>
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -2657,14 +2657,14 @@ slits:
                 - !transform/shift-1.1.0 {name: slit_xref, offset: 0.0}
                 - !transform/shift-1.1.0 {name: slit_yref, offset: 0.0}
           - !transform/identity-1.1.0 {}
-      - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.1.0
+      - !<tag:stsci.edu:gwcs/step-1.0.0>
+        frame: !<tag:stsci.edu:gwcs/composite_frame-1.1.0>
           frames:
-          - !wcs/frame-1.1.0
+          - !<tag:stsci.edu:gwcs/frame-1.1.0>
             axes_names: [x_msa, y_msa]
             name: msa_spatial
             unit: [!unit/unit-1.0.0 m, !unit/unit-1.0.0 m]
-          - !wcs/spectral_frame-1.1.0
+          - !<tag:stsci.edu:gwcs/spectral_frame-1.1.0>
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -2897,14 +2897,14 @@ slits:
               - !transform/identity-1.1.0 {}
             - !transform/identity-1.1.0 {n_dims: 3}
           name: msa2oteip
-      - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.1.0
+      - !<tag:stsci.edu:gwcs/step-1.0.0>
+        frame: !<tag:stsci.edu:gwcs/composite_frame-1.1.0>
           frames:
-          - !wcs/frame-1.1.0
+          - !<tag:stsci.edu:gwcs/frame-1.1.0>
             axes_names: [X_OTEIP, Y_OTEIP]
             name: oteip
             unit: [!unit/unit-1.0.0 deg, !unit/unit-1.0.0 deg]
-          - !wcs/spectral_frame-1.1.0
+          - !<tag:stsci.edu:gwcs/spectral_frame-1.1.0>
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -3070,14 +3070,14 @@ slits:
               - !transform/remap_axes-1.1.0
                 mapping: [0, 1, 2, 2]
           name: oteip2v23
-      - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.1.0
+      - !<tag:stsci.edu:gwcs/step-1.0.0>
+        frame: !<tag:stsci.edu:gwcs/composite_frame-1.1.0>
           frames:
-          - !wcs/frame-1.1.0
+          - !<tag:stsci.edu:gwcs/frame-1.1.0>
             axes_names: [V2, V3]
             name: v2v3_spatial
             unit: [!unit/unit-1.0.0 deg, !unit/unit-1.0.0 deg]
-          - !wcs/spectral_frame-1.1.0
+          - !<tag:stsci.edu:gwcs/spectral_frame-1.1.0>
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -3090,15 +3090,15 @@ slits:
             axes_order: zyxyz
             name: v23tosky
           - !transform/identity-1.1.0 {}
-      - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.1.0
+      - !<tag:stsci.edu:gwcs/step-1.0.0>
+        frame: !<tag:stsci.edu:gwcs/composite_frame-1.1.0>
           frames:
-          - !wcs/celestial_frame-1.0.0
+          - !<tag:stsci.edu:gwcs/celestial_frame-1.0.0>
             axes_names: [lon, lat]
             name: sky
             reference_frame: {type: ICRS}
             unit: [!unit/unit-1.0.0 deg, !unit/unit-1.0.0 deg]
-          - !wcs/spectral_frame-1.1.0
+          - !<tag:stsci.edu:gwcs/spectral_frame-1.1.0>
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -3124,11 +3124,11 @@ slits:
   meta:
     date: '2017-04-04T12:28:33.674'
     model_type: ImageModel
-    wcs: !wcs/wcs-1.0.0
+    wcs: !<tag:stsci.edu:gwcs/wcs-1.0.0>
       name: ''
       steps:
-      - !wcs/step-1.0.0
-        frame: !wcs/frame-1.1.0
+      - !<tag:stsci.edu:gwcs/step-1.0.0>
+        frame: !<tag:stsci.edu:gwcs/frame-1.1.0>
           axes_names: [x, y]
           name: detector
           unit: [!unit/unit-1.0.0 pixel, !unit/unit-1.0.0 pixel]
@@ -3143,8 +3143,8 @@ slits:
             - !transform/shift-1.1.0 {offset: 0.0}
           - !transform/identity-1.1.0 {n_dims: 2}
           name: dms2sca
-      - !wcs/step-1.0.0
-        frame: !wcs/frame-1.1.0
+      - !<tag:stsci.edu:gwcs/step-1.0.0>
+        frame: !<tag:stsci.edu:gwcs/frame-1.1.0>
           axes_names: [x, y]
           name: sca
           unit: [!unit/unit-1.0.0 pixel, !unit/unit-1.0.0 pixel]
@@ -3339,8 +3339,8 @@ slits:
                     forward:
                     - !transform/shift-1.1.0 {offset: 1.0}
                     - !transform/shift-1.1.0 {offset: 1.0}
-      - !wcs/step-1.0.0
-        frame: !wcs/frame-1.1.0
+      - !<tag:stsci.edu:gwcs/step-1.0.0>
+        frame: !<tag:stsci.edu:gwcs/frame-1.1.0>
           axes_names: [alpha_in, beta_in]
           name: gwa
           unit: [!unit/unit-1.0.0 rad, !unit/unit-1.0.0 rad]
@@ -3620,14 +3620,14 @@ slits:
                 mapping: [3, 0, 1, 2]
             - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.7.0> {groove_density: 252285.79999999999,
               name: alpha_from_greq, order: -1.0, output: angle}
-      - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.1.0
+      - !<tag:stsci.edu:gwcs/step-1.0.0>
+        frame: !<tag:stsci.edu:gwcs/composite_frame-1.1.0>
           frames:
-          - !wcs/frame-1.1.0
+          - !<tag:stsci.edu:gwcs/frame-1.1.0>
             axes_names: [x_slit, y_slit]
             name: slit_spatial
             unit: [!unit/unit-1.0.0 '', !unit/unit-1.0.0 '']
-          - !wcs/spectral_frame-1.1.0
+          - !<tag:stsci.edu:gwcs/spectral_frame-1.1.0>
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -3655,14 +3655,14 @@ slits:
                 - !transform/shift-1.1.0 {name: slit_xref, offset: 0.0}
                 - !transform/shift-1.1.0 {name: slit_yref, offset: 0.0}
           - !transform/identity-1.1.0 {}
-      - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.1.0
+      - !<tag:stsci.edu:gwcs/step-1.0.0>
+        frame: !<tag:stsci.edu:gwcs/composite_frame-1.1.0>
           frames:
-          - !wcs/frame-1.1.0
+          - !<tag:stsci.edu:gwcs/frame-1.1.0>
             axes_names: [x_msa, y_msa]
             name: msa_spatial
             unit: [!unit/unit-1.0.0 m, !unit/unit-1.0.0 m]
-          - !wcs/spectral_frame-1.1.0
+          - !<tag:stsci.edu:gwcs/spectral_frame-1.1.0>
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -3895,14 +3895,14 @@ slits:
               - !transform/identity-1.1.0 {}
             - !transform/identity-1.1.0 {n_dims: 3}
           name: msa2oteip
-      - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.1.0
+      - !<tag:stsci.edu:gwcs/step-1.0.0>
+        frame: !<tag:stsci.edu:gwcs/composite_frame-1.1.0>
           frames:
-          - !wcs/frame-1.1.0
+          - !<tag:stsci.edu:gwcs/frame-1.1.0>
             axes_names: [X_OTEIP, Y_OTEIP]
             name: oteip
             unit: [!unit/unit-1.0.0 deg, !unit/unit-1.0.0 deg]
-          - !wcs/spectral_frame-1.1.0
+          - !<tag:stsci.edu:gwcs/spectral_frame-1.1.0>
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -4068,14 +4068,14 @@ slits:
               - !transform/remap_axes-1.1.0
                 mapping: [0, 1, 2, 2]
           name: oteip2v23
-      - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.1.0
+      - !<tag:stsci.edu:gwcs/step-1.0.0>
+        frame: !<tag:stsci.edu:gwcs/composite_frame-1.1.0>
           frames:
-          - !wcs/frame-1.1.0
+          - !<tag:stsci.edu:gwcs/frame-1.1.0>
             axes_names: [V2, V3]
             name: v2v3_spatial
             unit: [!unit/unit-1.0.0 deg, !unit/unit-1.0.0 deg]
-          - !wcs/spectral_frame-1.1.0
+          - !<tag:stsci.edu:gwcs/spectral_frame-1.1.0>
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -4088,15 +4088,15 @@ slits:
             axes_order: zyxyz
             name: v23tosky
           - !transform/identity-1.1.0 {}
-      - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.1.0
+      - !<tag:stsci.edu:gwcs/step-1.0.0>
+        frame: !<tag:stsci.edu:gwcs/composite_frame-1.1.0>
           frames:
-          - !wcs/celestial_frame-1.0.0
+          - !<tag:stsci.edu:gwcs/celestial_frame-1.0.0>
             axes_names: [lon, lat]
             name: sky
             reference_frame: {type: ICRS}
             unit: [!unit/unit-1.0.0 deg, !unit/unit-1.0.0 deg]
-          - !wcs/spectral_frame-1.1.0
+          - !<tag:stsci.edu:gwcs/spectral_frame-1.1.0>
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -4122,11 +4122,11 @@ slits:
   meta:
     date: '2017-04-04T12:28:33.674'
     model_type: ImageModel
-    wcs: !wcs/wcs-1.0.0
+    wcs: !<tag:stsci.edu:gwcs/wcs-1.0.0>
       name: ''
       steps:
-      - !wcs/step-1.0.0
-        frame: !wcs/frame-1.1.0
+      - !<tag:stsci.edu:gwcs/step-1.0.0>
+        frame: !<tag:stsci.edu:gwcs/frame-1.1.0>
           axes_names: [x, y]
           name: detector
           unit: [!unit/unit-1.0.0 pixel, !unit/unit-1.0.0 pixel]
@@ -4141,8 +4141,8 @@ slits:
             - !transform/shift-1.1.0 {offset: 0.0}
           - !transform/identity-1.1.0 {n_dims: 2}
           name: dms2sca
-      - !wcs/step-1.0.0
-        frame: !wcs/frame-1.1.0
+      - !<tag:stsci.edu:gwcs/step-1.0.0>
+        frame: !<tag:stsci.edu:gwcs/frame-1.1.0>
           axes_names: [x, y]
           name: sca
           unit: [!unit/unit-1.0.0 pixel, !unit/unit-1.0.0 pixel]
@@ -4337,8 +4337,8 @@ slits:
                     forward:
                     - !transform/shift-1.1.0 {offset: 1.0}
                     - !transform/shift-1.1.0 {offset: 1.0}
-      - !wcs/step-1.0.0
-        frame: !wcs/frame-1.1.0
+      - !<tag:stsci.edu:gwcs/step-1.0.0>
+        frame: !<tag:stsci.edu:gwcs/frame-1.1.0>
           axes_names: [alpha_in, beta_in]
           name: gwa
           unit: [!unit/unit-1.0.0 rad, !unit/unit-1.0.0 rad]
@@ -4618,14 +4618,14 @@ slits:
                 mapping: [3, 0, 1, 2]
             - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.7.0> {groove_density: 252285.79999999999,
               name: alpha_from_greq, order: -1.0, output: angle}
-      - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.1.0
+      - !<tag:stsci.edu:gwcs/step-1.0.0>
+        frame: !<tag:stsci.edu:gwcs/composite_frame-1.1.0>
           frames:
-          - !wcs/frame-1.1.0
+          - !<tag:stsci.edu:gwcs/frame-1.1.0>
             axes_names: [x_slit, y_slit]
             name: slit_spatial
             unit: [!unit/unit-1.0.0 '', !unit/unit-1.0.0 '']
-          - !wcs/spectral_frame-1.1.0
+          - !<tag:stsci.edu:gwcs/spectral_frame-1.1.0>
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -4653,14 +4653,14 @@ slits:
                 - !transform/shift-1.1.0 {name: slit_xref, offset: 0.0}
                 - !transform/shift-1.1.0 {name: slit_yref, offset: 0.0}
           - !transform/identity-1.1.0 {}
-      - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.1.0
+      - !<tag:stsci.edu:gwcs/step-1.0.0>
+        frame: !<tag:stsci.edu:gwcs/composite_frame-1.1.0>
           frames:
-          - !wcs/frame-1.1.0
+          - !<tag:stsci.edu:gwcs/frame-1.1.0>
             axes_names: [x_msa, y_msa]
             name: msa_spatial
             unit: [!unit/unit-1.0.0 m, !unit/unit-1.0.0 m]
-          - !wcs/spectral_frame-1.1.0
+          - !<tag:stsci.edu:gwcs/spectral_frame-1.1.0>
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -4893,14 +4893,14 @@ slits:
               - !transform/identity-1.1.0 {}
             - !transform/identity-1.1.0 {n_dims: 3}
           name: msa2oteip
-      - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.1.0
+      - !<tag:stsci.edu:gwcs/step-1.0.0>
+        frame: !<tag:stsci.edu:gwcs/composite_frame-1.1.0>
           frames:
-          - !wcs/frame-1.1.0
+          - !<tag:stsci.edu:gwcs/frame-1.1.0>
             axes_names: [X_OTEIP, Y_OTEIP]
             name: oteip
             unit: [!unit/unit-1.0.0 deg, !unit/unit-1.0.0 deg]
-          - !wcs/spectral_frame-1.1.0
+          - !<tag:stsci.edu:gwcs/spectral_frame-1.1.0>
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -5066,14 +5066,14 @@ slits:
               - !transform/remap_axes-1.1.0
                 mapping: [0, 1, 2, 2]
           name: oteip2v23
-      - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.1.0
+      - !<tag:stsci.edu:gwcs/step-1.0.0>
+        frame: !<tag:stsci.edu:gwcs/composite_frame-1.1.0>
           frames:
-          - !wcs/frame-1.1.0
+          - !<tag:stsci.edu:gwcs/frame-1.1.0>
             axes_names: [V2, V3]
             name: v2v3_spatial
             unit: [!unit/unit-1.0.0 deg, !unit/unit-1.0.0 deg]
-          - !wcs/spectral_frame-1.1.0
+          - !<tag:stsci.edu:gwcs/spectral_frame-1.1.0>
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -5086,15 +5086,15 @@ slits:
             axes_order: zyxyz
             name: v23tosky
           - !transform/identity-1.1.0 {}
-      - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.1.0
+      - !<tag:stsci.edu:gwcs/step-1.0.0>
+        frame: !<tag:stsci.edu:gwcs/composite_frame-1.1.0>
           frames:
-          - !wcs/celestial_frame-1.0.0
+          - !<tag:stsci.edu:gwcs/celestial_frame-1.0.0>
             axes_names: [lon, lat]
             name: sky
             reference_frame: {type: ICRS}
             unit: [!unit/unit-1.0.0 deg, !unit/unit-1.0.0 deg]
-          - !wcs/spectral_frame-1.1.0
+          - !<tag:stsci.edu:gwcs/spectral_frame-1.1.0>
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
