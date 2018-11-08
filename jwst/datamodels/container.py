@@ -70,7 +70,6 @@ class ModelContainer(model_base.DataModel):
 
     def __init__(self, init=None, persist=True, **kwargs):
 
-        inline_threshold = kwargs.pop('inline_threshold', 0)
         super(ModelContainer, self).__init__(init=None, **kwargs)
         self._persist = persist
 
@@ -83,8 +82,7 @@ class ModelContainer(model_base.DataModel):
             instance = copy.deepcopy(init._instance)
             self._schema = init._schema
             self._shape = init._shape
-            self._asdf = AsdfFile(instance, extensions=self._extensions,
-                                  inline_threshold=inline_threshold)
+            self._asdf = AsdfFile(instance, extensions=self._extensions)
             self._instance = instance
             self._ctx = self
             self.__class__ = init.__class__

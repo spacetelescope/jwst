@@ -15,6 +15,7 @@ from astropy.io import fits
 from astropy.time import Time
 from astropy.wcs import WCS
 
+import asdf as asdf_pkg
 from asdf import AsdfFile
 from asdf import yamlutil
 from asdf import schema as asdf_schema
@@ -117,8 +118,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         is_array = False
         is_shape = False
         shape = None
-        # Set threshold size for inlining data arrays to 0 by default
-        asdf_kwargs = dict(inline_threshold=kwargs.pop('inline_threshold', 0))
 
         if init is None:
             asdf = self.open_asdf(init=None, extensions=self._extensions,
@@ -309,11 +308,10 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         return asdf_file_resolver
 
     @staticmethod
-    def clone(target, source, deepcopy=False, memo=None, inline_threshold=0):
+    def clone(target, source, deepcopy=False, memo=None):
         if deepcopy:
             instance = copy.deepcopy(source._instance, memo=memo)
-            target._asdf = AsdfFile(instance, extensions=source._extensions,
-                                    inline_threshold=inline_threshold)
+            target._asdf = AsdfFile(instance, extensions=source._extensions)
             target._instance = instance
             target._iscopy = source._iscopy
         else:
@@ -525,10 +523,8 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         """
         Open an asdf object from a filename or create a new asdf object
         """
-
-
         if isinstance(init, str):
-            asdf = AsdfFile.open(init, extensions=extensions,
+            asdf = asdf_pkg.open(init, extensions=extensions,
                                  ignore_version_mismatch=ignore_version_mismatch,
                                  ignore_unrecognized_tag=ignore_unrecognized_tag)
 
@@ -577,10 +573,9 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             `asdf.AsdfFile.write_to`.
         """
         self.on_save(init)
-
-        inline_threshold = kwargs.pop('inline_threshold', 0)
-        AsdfFile(self._instance, extensions=self._extensions,
-                 inline_threshold=inline_threshold).write_to(init, *args, **kwargs)
+        asdf = self.open_asdf(self._instance, extensions=self._extensions,
+                              **kwargs)
+        asdf.write_to(init, *args, **kwargs)
 
     @classmethod
     def from_fits(cls, init, schema=None, **kwargs):
