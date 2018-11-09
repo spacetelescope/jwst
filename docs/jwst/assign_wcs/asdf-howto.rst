@@ -117,18 +117,17 @@ Save a transform to an ASDF file
 `asdf <http://asdf.readthedocs.io/en/latest/>`__ is used to read and write reference files in
 `ASDF <http://asdf-standard.readthedocs.org/en/latest/>`__ format. Once the model is create using the rules in the above section, it needs to be assigned to the ASDF tree.
 
->>> import asdf
 >>> from asdf import AsdfFile
 >>> f = AsdfFile()
 >>> f.tree['model'] = model
 >>> f.write_to('reffile.asdf')
 
-The ``write_to`` command validates the file and writes it to disk. It will
-catch any errors due to inconsistent inputs/outputs or invalid parameters.
+The ``write_to`` command validates the file and writes it to disk. It will catch any errors due to
+inconsistent inputs/outputs or invalid parameters.
 
-To test the file, it can be read in again using the ``asdf.open()`` function:
+To test the file, it can be read in again using the ``AsdfFile.open()`` method:
 
->>> ff = asdf.open('reffile.asdf')
+>>> ff = AsdfFile.open('reffile.asdf')
 >>> model = ff.tree['model']
 >>> model(1, 1)
     -152.2

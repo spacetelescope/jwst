@@ -1,6 +1,6 @@
 import logging
 
-import asdf
+from asdf import AsdfFile
 from astropy import coordinates as coord
 from astropy import units as u
 from astropy.modeling.models import Const1D, Mapping, Identity
@@ -131,7 +131,7 @@ def niriss_soss(input_model, reference_files):
     world = cf.CompositeFrame([sky, spec], name='world')
 
     try:
-        with asdf.open(reference_files['specwcs']) as wl:
+        with AsdfFile.open(reference_files['specwcs']) as wl:
             wl1 = wl.tree[1].copy()
             wl2 = wl.tree[2].copy()
             wl3 = wl.tree[3].copy()
