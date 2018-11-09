@@ -1,3 +1,4 @@
+import pytest
 from numpy.testing import utils
 from astropy import units as u
 from astropy import wcs
@@ -112,6 +113,7 @@ def test_frame_from_model(tmpdir):
     helpers.assert_roundtrip_tree(tree, tmpdir)
 
 
+@pytest.mark.filterwarnings("ignore: The WCS transformation has more axes")
 def test_create_fitwcs(tmpdir):
     """ Test GWCS vs FITS WCS results. """
     im = _create_model_3d()
