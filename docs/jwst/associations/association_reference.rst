@@ -6,15 +6,15 @@ Association Rules
 =================
 
 Association definitions, or ``rules``, are Python classes, all based on
-the :ref:`association`. The base class provides only a framework, much
-like an abstract base class; all functionality must be implemented in
-sub-classes.
+:py:class:`~jwst.associations.Association`. The base class provides only a
+framework, much like an abstract base class; all functionality must be
+implemented in sub-classes.
 
 Any subclass that is intended to produce an association is referred to
 as a ``rule``. Any rule subclass must have a name that begins with the
 string ``Asn_``. This is to ensure that any other classes involved in
 defining the definition of the rule classes do not get used as rules
-themselves, such as the :ref:`association` itself.
+themselves, such as the :py:class:`~jwst.associations.Association` itself.
 
 Association Dynamic Definition
 ------------------------------
@@ -24,7 +24,7 @@ important concept to remember is that an association is defined by
 both the rule matched, and by the initial member that matched it.
 The following example will illustrate this concept.
 
-For JWST :ref:`level3-associations`, many associations created must
+For JWST :ref:`Level 3<asn-level3-techspecs>`, many associations created must
 have members that all share the same filter. To avoid writing rules
 for each filter, the rules have a condition that states that it
 doesn't matter what filter is specified, as long as the association
@@ -117,8 +117,8 @@ expansion of the pool in :ref:`member-with-lists`
 Addition
 ^^^^^^^^
 
-To add members to an existing association, one uses the :meth:`Association.add
-<jwst.associations.association.Association.add>` method::
+To add members to an existing association, one uses the :py:meth:`Association.add
+<jwst.associations.Association>` method::
 
   (matches, reprocess_list) = association.add(new_member)
 
@@ -127,7 +127,7 @@ If the association accepts the member, the ``matches`` element of the
 
 Typically, one does not deal with a single rule, but a collection of
 rules. For association creation, one typically uses an
-:ref:`AssociationRegistry <asn-registry>` to collect all the rules a pool will be
+:py:class:`~jwst.associations.AssociationRegistry` to collect all the rules a pool will be
 compared against. Association registries provide extra functionality to
 deal with a large and varied set of association rules.
 
@@ -178,7 +178,7 @@ implement in order to create an association.
 Class Naming
 ^^^^^^^^^^^^
 
-The :ref:`AssociationRegistry <asn-registry>` is used to store
+The :py:class:`~jwst.associations.AssociationRegistry` is used to store
 the association rules. Since rules are defined by Python classes, a
 way of indicating what the final rule classes are is needed. By
 definition, rule classes are classes that begin with the string ``Asn_``.

@@ -50,19 +50,18 @@ processing. Due to the nature of the individual instruments, observing
 modes, and the interruptability of the observatory itself, how to
 group the right exposures together is not straight-forward.
 
-Enter the :ref:`Association Generator <association-generator>`. Given a set of exposures,
-called the :ref:`Association Pool <asn-pool>`, and a set of rules found in an
-:ref:`Association Registry <asn-registry>`, the generator groups the exposures into
-individual :ref:`associations <association>`. These associations are
+Enter the :ref:`Association Generator <design-generator>`. Given a set of exposures,
+called the :ref:`Association Pool <design-pool>`, and a set of rules found in an
+:ref:`Association Registry <design-registry>`, the generator groups the exposures into
+individual :ref:`associations <design-association>`. These associations are
 then used as input to the Stage 3 calibration steps to perform the
 transformation from exposure-based data to source-based, high(er)
 signal-to-noise data.
 
 In short, Stage 2 and Stage 3 associations are created running the
-:ref:`asn-generate` task on an :ref:`Association Pool
-<asn-pool>` using the default :ref:`Level 2` and :ref:`Level 3
-Association Rules <level3-asn-rules>` to produce
-:ref:`level2-associations` and :ref:`level3-associations`.
+:ref:`asn-generate` task on an :py:class:`~jwst.associations.AssociationPool`
+using the default :ref:`Level2<asn-level2-techspecs>` and :ref:`Level
+3<asn-level3-techspecs>` association rules to produce Stage 2 and Stage 3 associations.
 
 .. _asn-usage:
 
@@ -81,7 +80,7 @@ routine. For example::
   % strun calwebb_image3.cfg  jw12345_xxxx_asn.json
 
 Programmatically, to read in an Association, one uses the
-:func:`~jwst.associations.load_asn.load_asn` function:
+:py:func:`~jwst.associations.load_asn` function:
 
 .. code-block:: python
 
@@ -100,7 +99,7 @@ exposure file name of a Stage 3 assocations::
 
 Since the JWST pipeline uses associations extensively, higher-level
 access is gained by opening an association as a :ref:`JWST Data
-Model`:
+Model<data-models>`:
 
 .. code-block:: python
 

@@ -7,7 +7,7 @@ Science Data Processing Workflow
 General Workflow
 ================
 
-See :ref:`level3-asn-jwst-overview` for an overview of how JWST uses
+See :ref:`asn-associations-and-jwst` for an overview of how JWST uses
 associations. This document describes how associations are used by the
 ground processing system to execute the level 2 and level 3 pipelines
 based on.

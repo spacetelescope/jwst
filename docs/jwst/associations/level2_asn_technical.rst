@@ -77,10 +77,10 @@ program *optional*
   Program number for which this association was created.
   
 asn_type *optional*
-  The type of association represented. See :ref:`level3-asn-association-types`
+  The type of association represented. See :ref:`asn-jwst-association-types`
 
 asn_id *optional*
-  The association id. The id is what appears in the :ref:`asn-DMS-naming`
+  The association id. The id is what appears in the :ref:`asn-jwst-naming`
   
 asn_pool *optional*
   Association pool from which this association was created.

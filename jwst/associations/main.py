@@ -61,7 +61,7 @@ class Main():
 
     Notes
     -----
-    Refer to the :ref:`Association Generator <association-generator>`
+    Refer to the :ref:`Association Generator <associations>`
     documentation for a full description.
     """
 
