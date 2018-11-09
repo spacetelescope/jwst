@@ -82,7 +82,10 @@ class ModelContainer(model_base.DataModel):
             instance = copy.deepcopy(init._instance)
             self._schema = init._schema
             self._shape = init._shape
-            self._asdf = AsdfFile(instance, extensions=self._extensions)
+            self._asdf = AsdfFile(instance,
+                                  extensions=init._extensions,
+                                  inline_threshold=init._inline_threshold
+                                  )
             self._instance = instance
             self._ctx = self
             self.__class__ = init.__class__

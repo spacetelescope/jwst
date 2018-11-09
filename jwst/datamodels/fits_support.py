@@ -379,7 +379,7 @@ def _save_history(hdulist, tree):
                 history[i] = HistoryEntry({'description': str(history[i])})
         hdulist[0].header['HISTORY'] = history[i]['description']
 
-def to_fits(tree, schema, extensions=None):
+def to_fits(tree, schema, extensions=None, inline_threshold=None):
     hdulist = fits.HDUList()
     hdulist.append(fits.PrimaryHDU())
 
@@ -387,7 +387,9 @@ def to_fits(tree, schema, extensions=None):
     _save_extra_fits(hdulist, tree)
     _save_history(hdulist, tree)
 
-    asdf = fits_embed.AsdfInFits(hdulist, tree, extensions=extensions)
+    asdf = fits_embed.AsdfInFits(hdulist, tree,
+                                 inline_threshold=inline_threshold,
+                                 extensions=extensions)
     return asdf
 
 
