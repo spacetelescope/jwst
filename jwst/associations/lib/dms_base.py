@@ -104,7 +104,6 @@ IMAGE2_NONSCIENCE_EXP_TYPES = [
     'nrc_tacq',
     'nrc_taconfirm',
     'nrc_focus',
-    'nrs_bota',
     'nrs_confirm',
     'nrs_focus',
     'nrs_image',
