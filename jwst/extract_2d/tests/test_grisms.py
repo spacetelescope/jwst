@@ -163,6 +163,7 @@ def get_reference_files(datamodel):
     return refs
 
 
+@pytest.mark.filterwarnings("ignore: Card is too long")
 def test_create_box_fits():
     """Make sure that a box is created around a source catalog object.
     This version allows use of the FITS WCS to translate the source location
@@ -191,7 +192,7 @@ def test_create_box_fits():
         if sid == 9:
             assert [1] == list(ids[0].order_bounding.keys())
 
-@pytest.mark.xfail()
+@pytest.mark.xfail(reason='NIRCam distortion reffile')
 def test_create_box_gwcs():
     """Make sure that a box is created around a source catalog object.
     This version allows use of the GWCS to translate the source location.
@@ -234,7 +235,7 @@ def setup_image_cat():
     return imwcs, refs
 
 
-@pytest.mark.filterwarnings("ignore: VerifyWarning")
+@pytest.mark.filterwarnings("ignore: Card is too long")
 def test_create_specific_orders():
     """Test that boxes only for the specified orders
     are created.. instead of the default in the reference
@@ -326,6 +327,7 @@ def test_extract_tso_height():
     del outmodel
 
 
+@pytest.mark.filterwarnings("ignore: Card is too long")
 def test_extract_wfss_object():
     """Test extraction of a WFSS object.
 
