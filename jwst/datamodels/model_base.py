@@ -15,7 +15,6 @@ from astropy.io import fits
 from astropy.time import Time
 from astropy.wcs import WCS
 
-import asdf
 from asdf import AsdfFile
 from asdf import yamlutil
 from asdf import schema as asdf_schema
@@ -120,13 +119,13 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         asdf_kwargs = dict(inline_threshold=kwargs.pop('inline_threshold', 0))
 
         if init is None:
-            asdffile = AsdfFile(extensions=extensions, **asdf_kwargs)
+            asdf = AsdfFile(extensions=extensions, **asdf_kwargs)
 
         elif isinstance(init, dict):
-            asdffile = AsdfFile(init, extensions=self._extensions, **asdf_kwargs)
+            asdf = AsdfFile(init, extensions=self._extensions, **asdf_kwargs)
 
         elif isinstance(init, np.ndarray):
-            asdffile = AsdfFile(extensions=self._extensions, **asdf_kwargs)
+            asdf = AsdfFile(extensions=self._extensions, **asdf_kwargs)
             shape = init.shape
             is_array = True
 
@@ -136,7 +135,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                     raise ValueError("shape must be a tuple of ints")
 
             shape = init
-            asdffile = AsdfFile(**asdf_kwargs)
+            asdf = AsdfFile(**asdf_kwargs)
             is_shape = True
 
         elif isinstance(init, DataModel):
@@ -146,10 +145,10 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             return
 
         elif isinstance(init, AsdfFile):
-            asdffile = init
+            asdf = init
 
         elif isinstance(init, fits.HDUList):
-            asdffile = fits_support.from_fits(init, self._schema,
+            asdf = fits_support.from_fits(init, self._schema,
                                           self._extensions, self._ctx)
 
         elif isinstance(init, (str, bytes)):
@@ -159,13 +158,13 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
             if file_type == "fits":
                 hdulist = fits.open(init)
-                asdffile = fits_support.from_fits(hdulist, self._schema,
+                asdf = fits_support.from_fits(hdulist, self._schema,
                                               self._extensions, self._ctx)
 
                 self._files_to_close.append(hdulist)
 
             elif file_type == "asdf":
-                asdffile = asdf.open(init, extensions=self._extensions)
+                asdf = AsdfFile.open(init, extensions=self._extensions)
 
             else:
                 # TODO handle json files as well
@@ -178,8 +177,8 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         # Initialize object fields as determined from the code above
         self._shape = shape
-        self._instance = asdffile.tree
-        self._asdf = asdffile
+        self._instance = asdf.tree
+        self._asdf = asdf
 
         # Initalize class dependent hidden fields
         self._no_asdf_extension = False
