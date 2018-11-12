@@ -547,7 +547,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         return asdf
 
     @classmethod
-    def from_asdf(cls, init, schema=None, **kwargs):
+    def from_asdf(cls, init, schema=None, extensions=None, **kwargs):
         """
         Load a data model from a ASDF file.
 
@@ -558,11 +558,10 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             - readable file object: Initialize from the given file object
             - asdf.AsdfFile: Initialize from the given
               `~asdf.AsdfFile`.
-
         schema :
             Same as for `__init__`
-
-
+        extensions :
+            Same as for `__init__`
         kwargs:
             Aadditional arguments passed to lower level functions
 
@@ -570,8 +569,8 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         -------
         model : DataModel instance
         """
-        return cls(init, schema=schema, extensions=self._extensions,
-                   inline_threshold=self._inline_threshold, **kwargs)
+        return cls(init, schema=schema, extensions=extensions, **kwargs)
+
 
     def to_asdf(self, init, *args, **kwargs):
         """

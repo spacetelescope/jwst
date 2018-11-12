@@ -550,7 +550,9 @@ def from_fits_asdf(hdulist, extensions=None,
                   ignore_version_mismatch=True,
                   ignore_unrecognized_tag=False,
                   **kwargs):
-    kwargs = None
+    """
+    Wrap asdf call to extract optional argumentscommet
+    """
     return fits_embed.AsdfInFits.open(hdulist,
                                       extensions=extensions,
                                       ignore_version_mismatch=ignore_version_mismatch,
