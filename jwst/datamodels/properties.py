@@ -11,6 +11,7 @@ from asdf.tags.core import ndarray
 
 from . import util
 from . import validate
+from . import schema as mschema
 
 import logging
 log = logging.getLogger(__name__)
@@ -58,6 +59,33 @@ def _as_fitsrec(val):
         fits_rec = fits.FITS_rec(val)
         fits_rec._coldefs = coldefs
         return fits_rec
+
+
+def _get_schema_type(schema):
+    """
+    Create a list of types used by a schema and its subchemas when
+    the subschemas are joined by combiners. Then return a type string
+    if all the types are the same or 'mixed' if they differ
+    """
+    def callback(subschema, path, combiner, types, recurse):
+        if 'type' in subschema:
+            types.append(subschema['type'])
+
+        has_combiner = ('anyOf' in subschema.keys() or
+                        'allOf' in subschema.keys())
+        return not has_combiner
+
+    types = []
+    mschema.walk_schema(schema, callback, types)
+
+    schema_type = None
+    for a_type in types:
+        if schema_type is None:
+            schema_type = a_type
+        elif schema_type != a_type:
+            schema_type = 'mixed'
+            break
+    return schema_type
 
 
 def _make_default_array(attr, schema, ctx):
@@ -109,13 +137,14 @@ def _make_default(attr, schema, ctx):
         return _make_default_array(attr, schema, ctx)
     elif 'default' in schema:
         return schema['default']
-    elif (schema.get('type') == 'object' or
-          schema.get('allOf') or
-          schema.get('anyOf')):
-        return {}
-    elif schema.get('type') == 'array':
-        return []
-    return None
+    else:
+        schema_type = _get_schema_type(schema)
+        if schema_type == 'object':
+            return {}
+        elif schema_type == 'array':
+            return []
+        else:
+            return None
 
 
 def _make_node(attr, instance, schema, ctx):
