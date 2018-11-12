@@ -15,7 +15,6 @@ from astropy.io import fits
 from astropy.time import Time
 from astropy.wcs import WCS
 
-import asdf as asdf_pkg
 from asdf import AsdfFile
 from asdf import yamlutil
 from asdf import schema as asdf_schema
@@ -535,7 +534,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         """
         if isinstance(init, str):
             # TODO: add inline_threshold when the code supports it
-            asdf = asdf_pkg.open(init, extensions=extensions,
+            asdf = AsdfFile.open(init, extensions=extensions,
                                  ignore_version_mismatch=ignore_version_mismatch,
                                  ignore_unrecognized_tag=ignore_unrecognized_tag)
 
