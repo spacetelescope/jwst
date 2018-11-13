@@ -38,7 +38,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
     def __init__(self, init=None, schema=None, extensions=None,
                  pass_invalid_values=False, strict_validation=False,
-                 inline_threshold=None, **kwargs):
+                 **kwargs):
         """
         Parameters
         ----------
@@ -74,14 +74,11 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         strict_validation: if true, an schema validation errors will generate
             an excption. If false, they will generate a warning.
-        inline_threshold: a flag passed to asdf that determines the size
-            below which an array is written inline as ascii instead of
-            as a binary block.
+
         kwargs: Aadditional arguments passed to lower level functions
         """
-        # Set attributes used to hold information for Asdf
+        # Set attributes used to hold information for asdf
         self._extensions = extensions
-        self._inline_threshold = inline_threshold
 
         # Override value of validation parameters
         # if environment value set
@@ -123,17 +120,14 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         if init is None:
             asdf = self.open_asdf(init=None, extensions=self._extensions,
-                                  inline_threshold=self._inline_threshold,
                                   **kwargs)
 
         elif isinstance(init, dict):
             asdf = self.open_asdf(init=init, extensions=self._extensions,
-                                  inline_threshold=self._inline_threshold,
                                   **kwargs)
 
         elif isinstance(init, np.ndarray):
             asdf = self.open_asdf(init=None, extensions=self._extensions,
-                                  inline_threshold=self._inline_threshold,
                                   **kwargs)
 
             shape = init.shape
@@ -147,7 +141,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             shape = init
             is_shape = True
             asdf = self.open_asdf(init=None, extensions=self._extensions,
-                                  inline_threshold=self._inline_threshold,
                                   **kwargs)
 
         elif isinstance(init, DataModel):
@@ -179,7 +172,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
             elif file_type == "asdf":
                 asdf = self.open_asdf(init=init, extensions=self._extensions,
-                                      inline_threshold=self._inline_threshold,
                                       **kwargs)
 
             else:
@@ -319,8 +311,8 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
     def clone(target, source, deepcopy=False, memo=None):
         if deepcopy:
             instance = copy.deepcopy(source._instance, memo=memo)
-            target._asdf = AsdfFile(instance, extensions=source._extensions,
-                                    inline_threshold=source._inline_threshold)
+            target._asdf = AsdfFile(instance,
+                                    extensions=source._extensions)
             target._instance = instance
             target._iscopy = source._iscopy
         else:
@@ -528,12 +520,11 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
     def open_asdf(init=None, extensions=None,
                   ignore_version_mismatch=True,
                   ignore_unrecognized_tag=False,
-                  inline_threshold=None, **kwargs):
+                  **kwargs):
         """
         Open an asdf object from a filename or create a new asdf object
         """
         if isinstance(init, str):
-            # TODO: add inline_threshold when the code supports it
             asdf = AsdfFile.open(init, extensions=extensions,
                                  ignore_version_mismatch=ignore_version_mismatch,
                                  ignore_unrecognized_tag=ignore_unrecognized_tag)
@@ -541,8 +532,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         else:
             asdf = AsdfFile(init, extensions=extensions,
                             ignore_version_mismatch=ignore_version_mismatch,
-                            ignore_unrecognized_tag=ignore_unrecognized_tag,
-                            inline_threshold=inline_threshold
+                            ignore_unrecognized_tag=ignore_unrecognized_tag
                             )
         return asdf
 
@@ -586,7 +576,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         """
         self.on_save(init)
         asdf = self.open_asdf(self._instance, extensions=self._extensions,
-                              inline_threshold=self._inline_threshold,
                               **kwargs)
         asdf.write_to(init, *args, **kwargs)
 
@@ -630,8 +619,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         self.on_save(init)
 
         with fits_support.to_fits(self._instance, self._schema,
-                                  extensions=self._extensions,
-                                  inline_threshold=self._inline_threshold) as ff:
+                                  extensions=self._extensions) as ff:
             with warnings.catch_warnings():
                 warnings.filterwarnings('ignore', message='Card is too long')
                 if self._no_asdf_extension:
