@@ -12,6 +12,7 @@ from jwst.associations.lib.rules_level3_base import (
 
 __all__ = [
     'Asn_AMI',
+    'Asn_ACQ_Reprocess',
     'Asn_Coron',
     'Asn_IFU',
     'Asn_Image',
@@ -32,7 +33,14 @@ logger.addHandler(logging.NullHandler())
 # --------------------------------
 @RegistryMarker.rule
 class Asn_Image(AsnMixin_Science):
-    """Non-Association Candidate Dither Associations"""
+    """Level 3 Science Image Association
+
+    Characteristics:
+        - Association type: ``image3``
+        - Pipeline: ``calwebb_image3``
+        - Non-TSO
+        - Non-WFS&C
+    """
 
     def __init__(self, *args, **kwargs):
 
@@ -65,11 +73,16 @@ class Asn_Image(AsnMixin_Science):
 
 @RegistryMarker.rule
 class Asn_WFSCMB(AsnMixin_Science):
-    """Wavefront Sensing association
+    """Level 3 Wavefront Control & Sensing Association
 
     For coarse and fine phasing, dither pairs need
     be associated to be combined.  The optical path
     is assumed to be equivalent within an activity.
+
+    Characteristics:
+        - Association type: ``wfs-image3``
+        - Pipeline: ``calwebb_wfs-image3``
+        - Coarse and fine phasing dithers
     """
 
     def __init__(self, *args, **kwargs):
@@ -161,7 +174,14 @@ class Asn_WFSCMB(AsnMixin_Science):
 
 @RegistryMarker.rule
 class Asn_SpectralTarget(AsnMixin_Spectrum):
-    """Slit-like, target-based, or single-object spectrographic modes"""
+    """Level 3 slit-like, target-based or single-object spectrographic Association
+
+    Characteristics:
+        - Association type: ``spec3``
+        - Pipeline: ``calwebb_spec3``
+        - Single target
+        - Non-TSO
+    """
 
     def __init__(self, *args, **kwargs):
 
@@ -191,7 +211,14 @@ class Asn_SpectralTarget(AsnMixin_Spectrum):
 
 @RegistryMarker.rule
 class Asn_SpectralSource(AsnMixin_Spectrum):
-    """Slit-like, multi-object spectrographic modes"""
+    """Level 3 slit-like, multi-object spectrographic Association
+
+    Characteristics:
+        - Association type: ``spec3``
+        - Pipeline: ``calwebb_spec3``
+        - Multi-object
+        - Non-TSO
+    """
 
     def __init__(self, *args, **kwargs):
 
@@ -232,7 +259,13 @@ class Asn_SpectralSource(AsnMixin_Spectrum):
 
 @RegistryMarker.rule
 class Asn_IFU(AsnMixin_Spectrum):
-    """IFU associations"""
+    """Level 3 IFU Association
+
+    Characteristics:
+        - Association type: ``spec3``
+        - Pipeline: ``calwebb_spec3``
+        - optical path determined by calibration
+    """
 
     def __init__(self, *args, **kwargs):
 
@@ -264,13 +297,20 @@ class Asn_IFU(AsnMixin_Spectrum):
 
 @RegistryMarker.rule
 class Asn_Coron(AsnMixin_Science):
-    """Coronography
+    """Level 3 Coronography Association
+
+    Characteristics:
+        - Association type: ``coron3``
+        - Pipeline: ``calwebb_coron3``
+        - Gather science and related PSF exposures
+
     Notes
     -----
     Coronography is nearly completely defined by the association candidates
     produced by APT.
     Tracking Issues:
-    - `github #311 <https://github.com/STScI-JWST/jwst/issues/311>`
+
+        - `github #311 <https://github.com/STScI-JWST/jwst/issues/311>`_
     """
 
     def __init__(self, *args, **kwargs):
@@ -319,13 +359,20 @@ class Asn_Coron(AsnMixin_Science):
 
 @RegistryMarker.rule
 class Asn_AMI(AsnMixin_Science):
-    """Aperture Mask Interferometry
+    """Level 3 Aperture Mask Interferometry Association
+
+    Characteristics:
+        - Association type: ``ami3``
+        - Pipeline: ``calwebb_ami3``
+        - Gather science and related PSF exposures
+
     Notes
     -----
     AMI is nearly completely defined by the association candidates
     produced by APT.
     Tracking Issues:
-    - `github #310 <https://github.com/STScI-JWST/jwst/issues/310>`
+
+        - `github #310 <https://github.com/STScI-JWST/jwst/issues/310>`_
     """
 
     def __init__(self, *args, **kwargs):
@@ -361,7 +408,13 @@ class Asn_AMI(AsnMixin_Science):
 
 @RegistryMarker.rule
 class Asn_WFSS_NIS(AsnMixin_Spectrum):
-    """WFSS/Grism modes"""
+    """Level 3 WFSS/Grism Association
+
+    Characteristics:
+        - Association type: ``spec3``
+        - Pipeline: ``calwebb_spec3``
+        - Gather all grism exposures
+    """
 
     def __init__(self, *args, **kwargs):
 
@@ -395,7 +448,12 @@ class Asn_WFSS_NIS(AsnMixin_Spectrum):
 
 @RegistryMarker.rule
 class Asn_TSO(AsnMixin_Science):
-    """Time-Series observations"""
+    """Level 3 Time-Series Association
+
+    Characteristics:
+        - Association type: ``tso3``
+        - Pipeline: ``calwebb_tso3``
+    """
 
     def __init__(self, *args, **kwargs):
 
@@ -421,7 +479,17 @@ class Asn_TSO(AsnMixin_Science):
 
 @RegistryMarker.rule
 class Asn_ACQ_Reprocess(DMS_Level3_Base):
-    """For first loop, simply send acquisitions and confirms back"""
+    """Level 3 Gather Target Acquisitions
+
+    Characteristics:
+        - Association type: Not applicable
+        - Pipeline: Not applicable
+        - Used to populate other related associations
+
+    Notes
+    -----
+    For first loop, simply send acquisitions and confirms back.
+    """
 
     def __init__(self, *args, **kwargs):
 
