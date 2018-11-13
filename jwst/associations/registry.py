@@ -91,9 +91,7 @@ class AssociationRegistry(dict):
 
     In practice, this is one step in a larger loop over all items to
     be associated. This does not account for adding items to already
-    existing associations. See :ref:`generate` for a full example of
-    using the registry.
-
+    existing associations. See :py:func:`~jwst.associations.generate` for more information.
     """
 
     def __init__(self,
@@ -133,6 +131,7 @@ class AssociationRegistry(dict):
 
     @property
     def rule_set(self):
+        """Rules within the Registry"""
         return self._rule_set
 
     def match(self, item, version_id=None, allow=None, ignore=None):
@@ -179,7 +178,7 @@ class AssociationRegistry(dict):
         return associations, process_list
 
     def validate(self, association):
-        """Validate a given association against schema
+        """Validate a given association
 
         Parameters
         ----------
@@ -284,17 +283,12 @@ class AssociationRegistry(dict):
                  global_constraints=None,
                  include_bases=None
     ):
-        """Parse out all rules and callbacks in a module
+        """Parse out all rules and callbacks in a module and add them to the registry
 
         Parameters
         ----------
         module: module
             The module, and all submodules, to be parsed.
-
-        Modifies
-        --------
-        self.callback
-            Found callbacks are added to the callback registry
         """
         for name, obj in get_marked(module, include_bases=include_bases):
 
@@ -349,7 +343,7 @@ class AssociationRegistry(dict):
 
 
 class RegistryMarker:
-    """Mark rules, callbacks, and module"""
+    """Mark rules, callbacks, and modules for inclusion into a registry"""
 
     class Schema:
         def __init__(self, obj):
@@ -363,26 +357,30 @@ class RegistryMarker:
 
     @staticmethod
     def mark(obj):
-        """Mark that object should be part of the registry
+        """Mark that an object should be part of the registry
 
         Parameters
         ----------
         obj: object
             The object to mark
 
-        Modifies
-        --------
-        _asnreg_mark: True
-            Attribute added to object and is set to True
-
-        _asnreg_role: str or None
-            Attribute added to object indicating role this object plays.
-            If None, no particular role is indicated.
-
         Returns
         -------
-        obj: object
-            Return object to enable use as a decorator.
+        obj
+            Object that has been marked. Returned to enable
+            use as a decorator.
+
+        Notes
+        -----
+        The following attributes are added to the object:
+
+        - _asnreg_mark: True
+              Attribute added to object and is set to True
+
+        - _asnreg_role: str or None
+              If not already assigned, the role is left
+              unspecified using None.
+
         """
         obj._asnreg_marked = True
         obj._asnreg_role = getattr(obj, '_asnreg_role', None)
@@ -397,18 +395,20 @@ class RegistryMarker:
         obj: object
             The object that should be treated as a rule
 
-        Modifies
-        --------
-        _asnreg_role: 'rule'
-            Attributed added to object and set to `rule`
-
-        _asnreg_mark: True
-            Attributed added to object and set to True
-
         Returns
         -------
         obj: object
             Return object to enable use as a decorator.
+
+        Notes
+        -----
+        The following attributes are added to the object:
+
+        - _asnreg_role: 'rule'
+              Attributed added to object and set to `rule`
+
+        - _asnreg_mark: True
+              Attributed added to object and set to True
         """
         obj._asnreg_role = 'rule'
         RegistryMarker.mark(obj)
@@ -427,22 +427,21 @@ class RegistryMarker:
             Function, or any callable, to be called
             when the corresponding event is triggered.
 
-        Modifies
-        --------
-        _asnreg_role: 'callback'
-            Attributed added to object and set to `rule`
-
-        _asnreg_events: [event[, ...]]
-            The events this callable object is a callback for.
-
-        _asnreg_mark: True
-            Attributed added to object and set to True
-
         Returns
         -------
-        obj: object
-            Return object to enable use as a decorator.
+        func
+            Function to use as a decorator for the object to be marked.
 
+        Notes
+        -----
+        The following attributes are added to the object:
+
+        - _asnreg_role: 'callback'
+              The role the object as been assigned.
+        - _asnreg_events: [event[, ...]]
+              The events this callable object is a callback for.
+        - _asnreg_mark: True
+              Indicated that the object has been marked.
         """
         def decorator(func):
             try:
@@ -471,6 +470,7 @@ class RegistryMarker:
 
     @staticmethod
     def is_marked(obj):
+        """Has an objected been marked?"""
         return hasattr(obj, '_asnreg_marked')
 
 
