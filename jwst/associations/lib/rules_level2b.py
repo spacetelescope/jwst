@@ -17,13 +17,18 @@ __all__ = [
     'Asn_Lv2Image',
     'Asn_Lv2ImageNonScience',
     'Asn_Lv2ImageSpecial',
+    'Asn_Lv2ImageTSO',
     'Asn_Lv2MIRLRSFixedSlitNod',
+    'Asn_Lv2NRSFSS',
+    'Asn_Lv2NRSIFUNod',
     'Asn_Lv2NRSLAMPImage',
     'Asn_Lv2NRSLAMPSpectral',
     'Asn_Lv2NRSMSA',
     'Asn_Lv2Spec',
     'Asn_Lv2SpecSpecial',
+    'Asn_Lv2SpecTSO',
     'Asn_Lv2WFSS_NIS',
+    'Asn_Lv2WFSC',
 ]
 
 # Configure logging
@@ -39,7 +44,15 @@ class Asn_Lv2Image(
         AsnMixin_Lv2Image,
         DMSLevel2bBase
 ):
-    """Level2b Image"""
+    """Level2b Non-TSO Science Image Association
+
+    Characteristics:
+        - Association type: ``image2``
+        - Pipeline: ``calwebb_image2``
+        - Image-based science exposures
+        - Single science exposure
+        - Non-TSO
+    """
 
     def __init__(self, *args, **kwargs):
 
@@ -65,7 +78,14 @@ class Asn_Lv2ImageNonScience(
         AsnMixin_Lv2Image,
         DMSLevel2bBase
 ):
-    """Level2b Image that are not science but get Level 2b processing"""
+    """Level2b Non-science Image Association
+
+    Characteristics:
+        - Association type: ``image2``
+        - Pipeline: ``calwebb_image2``
+        - Image-based non-science exposures, such as target acquisitions
+        - Single science exposure
+    """
 
     def __init__(self, *args, **kwargs):
 
@@ -87,10 +107,14 @@ class Asn_Lv2ImageSpecial(
         AsnMixin_Lv2Image,
         DMSLevel2bBase
 ):
-    """Level2b Image that are marked special
-    Image exposures that are marked as backgrounds, etc.,
-    still get 2b processing just as normal science. However, no other
-    exposures should get included into the association.
+    """Level2b Auxiliary Science Image Association
+
+    Characteristics:
+        - Association type: ``image2``
+        - Pipeline: ``calwebb_image2``
+        - Image-based science exposures that are to be used as background or PSF exposures
+        - Single science exposure
+        - No other exposure can be part of the association
     """
 
     def __init__(self, *args, **kwargs):
@@ -113,7 +137,14 @@ class Asn_Lv2ImageTSO(
         AsnMixin_Lv2Image,
         DMSLevel2bBase
 ):
-    """Level2b Time Series Image"""
+    """Level2b Time Series Science Image Association
+
+    Characteristics:
+        - Association type: ``tso-image2``
+        - Pipeline: ``calwebb_tso-image2``
+        - Image-based Time Series exposures
+        - Single science exposure
+    """
 
     def __init__(self, *args, **kwargs):
 
@@ -141,7 +172,14 @@ class Asn_Lv2FGS(
         AsnMixin_Lv2Image,
         DMSLevel2bBase
 ):
-    """Level2b FGS"""
+    """Level2b FGS Association
+
+    Characteristics:
+        - Association type: ``image2``
+        - Pipeline: ``calwebb_image2``
+        - Image-based FGS science exposures
+        - Single science exposure
+    """
 
     def __init__(self, *args, **kwargs):
 
@@ -167,7 +205,16 @@ class Asn_Lv2Spec(
         AsnMixin_Lv2Spectral,
         DMSLevel2bBase
 ):
-    """Level2b Spectra"""
+    """Level2b Science Spectral Association
+
+    Characteristics:
+        - Association type: ``spec2``
+        - Pipeline: ``calwebb_spec2``
+        - Spectral-based single target science exposures
+        - Single science exposure
+        - Non-TSO
+        - Not part of a background dither observation
+    """
 
     def __init__(self, *args, **kwargs):
 
@@ -211,10 +258,13 @@ class Asn_Lv2SpecSpecial(
         AsnMixin_Lv2Spectral,
         DMSLevel2bBase
 ):
-    """Level2b Spectra that are marked special
-    Spectral exposures that are marked as backgrounds, etc.,
-    still get 2b processing just as normal science. However, no other
-    exposures should get included into the association.
+    """Level2b Auxiliary Science Spectral Association
+
+    Characteristics:
+        - Association type: ``spec2``
+        - Pipeline: ``calwebb_spec2``
+        - Spectral-based single target science exposures that are background exposures
+        - Single science exposure
     """
 
     def __init__(self, *args, **kwargs):
@@ -237,7 +287,15 @@ class Asn_Lv2SpecTSO(
         AsnMixin_Lv2Spectral,
         DMSLevel2bBase
 ):
-    """Level2b Time Series Spectra"""
+    """Level2b Time Series Science Spectral Association
+
+    Characteristics:
+        - Association type: ``tso-spec2``
+        - Pipeline: ``calwebb_tso-spec2``
+        - Spectral-based single target time series exposures
+        - Single science exposure
+        - No other exposure can be part of the association
+    """
 
     def __init__(self, *args, **kwargs):
 
@@ -267,7 +325,15 @@ class Asn_Lv2MIRLRSFixedSlitNod(
         AsnMixin_Lv2Spectral,
         DMSLevel2bBase
 ):
-    """Level2b MIRI LRS Fixed Slit background nods"""
+    """Level2b MIRI LRS Fixed Slit background nods Association
+
+    Characteristics:
+        - Association type: ``spec2``
+        - Pipeline: ``calwebb_spec2``
+        - MIRI LRS Fixed slit
+        - Single science exposure
+        - Include slit nods as backgrounds
+    """
 
     def __init__(self, *args, **kwargs):
 
@@ -345,9 +411,13 @@ class Asn_Lv2NRSLAMPImage(
         AsnMixin_Lv2Special,
         DMSLevel2bBase
 ):
-    """Level2b NIRSpec Image Lamp calibrations
+    """Level2b NIRSpec Image Lamp calibrations Association
 
-    NRS_LAMP exposures require specific level 2 processing.
+    Characteristics:
+        - Association type: ``nrslamp-image2``
+        - Pipeline: ``calwebb_nrslamp-image2``
+        - Image-based NRS calibrations
+        - Single science exposure
     """
 
     def __init__(self, *args, **kwargs):
@@ -386,9 +456,13 @@ class Asn_Lv2NRSLAMPSpectral(
         AsnMixin_Lv2Special,
         DMSLevel2bBase
 ):
-    """Level2b NIRSpec spectral Lamp calibrations
+    """Level2b NIRSpec spectral Lamp Calibrations Association
 
-    NRS_LAMP exposures require specific level 2 processing.
+    Characteristics:
+        - Association type: ``nrslamp-spec2``
+        - Pipeline: ``calwebb_nrslamp-spec2``
+        - Spectral-based calibration exposures
+        - Single science exposure
     """
 
     def __init__(self, *args, **kwargs):
@@ -432,9 +506,14 @@ class Asn_Lv2WFSS_NIS(
         AsnMixin_Lv2Spectral,
         DMSLevel2bBase
 ):
-    """Level2b WFSS/GRISM exposures
-    GRISM exposures require a source catalog from processing
-    of the corresponding direct imagery.
+    """Level2b NIRISS WFSS/GRISM Association
+
+    Characteristics:
+        - Association type: ``spec2``
+        - Pipeline: ``calwebb_spec2``
+        - Spectral-based NIRISS mutli-object science exposures
+        - Single science exposure
+        - Require a source catalog from processing of the corresponding direct imagery.
     """
 
     def __init__(self, *args, **kwargs):
@@ -501,7 +580,15 @@ class Asn_Lv2NRSMSA(
         AsnMixin_Lv2Spectral,
         DMSLevel2bBase
 ):
-    """Level2b NIRSpec MSA"""
+    """Level2b NIRSpec MSA Association
+
+    Characteristics:
+        - Association type: ``spec2``
+        - Pipeline: ``calwebb_spec2``
+        - Spectral-based NIRSpec MSA multi-object science exposures
+        - Single science exposure
+        - Handle slitlet nodding for background subtraction
+    """
 
     def __init__(self, *args, **kwargs):
 
@@ -555,7 +642,15 @@ class Asn_Lv2NRSFSS(
         AsnMixin_Lv2Spectral,
         DMSLevel2bBase
 ):
-    """Level2b NIRSpec Fixed-slit"""
+    """Level2b NIRSpec Fixed-slit Association
+
+    Characteristics:
+        - Association type: ``spec2``
+        - Pipeline: ``calwebb_spec2``
+        - Spectral-based NIRSpec fixed-slit single target science exposures
+        - Single science exposure
+        - Handle along-the-slit background nodding
+    """
 
     def __init__(self, *args, **kwargs):
 
@@ -635,7 +730,15 @@ class Asn_Lv2NRSIFUNod(
         AsnMixin_Lv2Spectral,
         DMSLevel2bBase
 ):
-    """Level2b NIRSpec IFU"""
+    """Level2b NIRSpec IFU Association
+
+    Characteristics:
+        - Association type: ``spec2``
+        - Pipeline: ``calwebb_spec2``
+        - Spectral-based NIRSpec IFU multi-object science exposures
+        - Single science exposure
+        - Handle 2 and 4 point background nodding
+    """
 
     def __init__(self, *args, **kwargs):
 
@@ -688,7 +791,14 @@ class Asn_Lv2NRSIFUNod(
 class Asn_Lv2WFSC(
         DMSLevel2bBase
 ):
-    """Level2b Wavefront Sensing & Control"""
+    """Level2b Wavefront Sensing & Control Association
+
+    Characteristics:
+        - Association type: ``wfs-image2``
+        - Pipeline: ``calwebb_wfs-image2``
+        - WFS and WFS&C observations
+        - Single science exposure
+    """
 
     def __init__(self, *args, **kwargs):
 
