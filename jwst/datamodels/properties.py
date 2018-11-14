@@ -192,7 +192,7 @@ def _find_property(schema, attr):
         find = 'default' in subschema
     return find
 
-class Node(object):
+class Node():
     def __init__(self, attr, instance, schema, ctx):
         self._name = attr
         self._instance = instance

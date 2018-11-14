@@ -12,9 +12,11 @@ from .helpers import (
 
 from ...associations.asn_from_list import asn_from_list
 from ...associations.lib.rules_level2_base import DMSLevel2bBase
+from ...datamodels import DataModel
 from ...datamodels import open as dm_open
-from ..calwebb_spec2 import Spec2Pipeline
 from ...stpipe.step import Step
+from ..calwebb_spec2 import Spec2Pipeline
+from ..collect_pipeline_cfgs import collect_pipeline_cfgs
 
 DATAPATH = abspath(
     '$TEST_BIGDATA/pipelines'
@@ -24,13 +26,17 @@ CALFILE = EXPFILE.replace('_rate', '_cal')
 BSUBFILE = EXPFILE.replace('_rate', '_bsub')
 EXTRACT1DFILE = EXPFILE.replace('_rate', '_x1d')
 
-# Skip if the data is not available
-pytestmark = pytest.mark.skipif(
-    not path.exists(DATAPATH),
-    reason='Test data not accessible'
-)
+
+@pytest.mark.bigdata
+def test_result_return(mk_tmp_dirs):
+    """Ensure that a result is returned programmatically"""
+    exppath = path.join(DATAPATH, EXPFILE)
+    collect_pipeline_cfgs('./cfgs')
+    results = Spec2Pipeline.call(exppath, config_file='./cfgs/calwebb_spec2.cfg')
+    assert isinstance(results[0], DataModel)
 
 
+@pytest.mark.bigdata
 def test_full_run(mk_tmp_dirs):
     """Make a full run with the default configuraiton"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -46,6 +52,7 @@ def test_full_run(mk_tmp_dirs):
     assert path.isfile(EXTRACT1DFILE)
 
 
+@pytest.mark.bigdata
 def test_asn_with_bkg(mk_tmp_dirs):
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
@@ -89,6 +96,7 @@ def test_asn_with_bkg(mk_tmp_dirs):
     assert path.isfile(BSUBFILE)
 
 
+@pytest.mark.bigdata
 def test_asn_with_bkg_bsub(mk_tmp_dirs):
     """Test background saving using the bsub flag"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -118,6 +126,7 @@ def test_asn_with_bkg_bsub(mk_tmp_dirs):
     assert path.isfile(BSUBFILE)
 
 
+@pytest.mark.bigdata
 def test_asn(mk_tmp_dirs):
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
     exppath = path.join(DATAPATH, EXPFILE)
@@ -141,6 +150,7 @@ def test_asn(mk_tmp_dirs):
     assert path.isfile(CALFILE)
 
 
+@pytest.mark.bigdata
 def test_asn_multiple_products(mk_tmp_dirs):
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
     exppath = path.join(DATAPATH, EXPFILE)
@@ -167,6 +177,7 @@ def test_asn_multiple_products(mk_tmp_dirs):
     assert path.isfile('product2_cal.fits')
 
 
+@pytest.mark.bigdata
 def test_datamodel(mk_tmp_dirs):
     model = dm_open(path.join(DATAPATH, EXPFILE))
     cfg = path.join(SCRIPT_DATA_PATH, 'calwebb_spec2_save.cfg')
@@ -174,6 +185,7 @@ def test_datamodel(mk_tmp_dirs):
     assert path.isfile(CALFILE)
 
 
+@pytest.mark.bigdata
 def test_file(mk_tmp_dirs):
     exppath = path.join(DATAPATH, EXPFILE)
     cfg = path.join(SCRIPT_DATA_PATH, 'calwebb_spec2_save.cfg')

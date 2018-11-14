@@ -16,7 +16,7 @@ class ProcessItem:
     Parameters
     ----------
     obj: object
-        The object to make a `ProcessItem`
+        The object to make a `ProcessItem`.
         Objects must be equatable.
     """
     def __init__(self, obj):
@@ -67,9 +67,10 @@ class ProcessList:
 
     work_over: int
         What the reprocessing should work on:
-        - `ProcessList.EXISTING`: Only existing associations
-        - `ProcessList.RULES`: Only on the rules to create new associations
-        - `ProcessList.BOTH`: Compare to both existing and rules
+        - `ProcessList.EXISTING`:   Only existing associations
+        - `ProcessList.RULES`:      Only on the rules to create new associations
+        - `ProcessList.BOTH`:       Compare to both existing and rules
+        - `ProcessList.NONSCIENCE`: Only on non-science items
 
     only_on_match: bool
         Only use this object if the overall condition
@@ -82,6 +83,10 @@ class ProcessList:
         EXISTING,
         NONSCIENCE,
     ) = range(0, 4)
+    """
+    Categories of different sets of associations or items
+    to process
+    """
 
     _str_attrs = ('rules', 'work_over', 'only_on_match')
 

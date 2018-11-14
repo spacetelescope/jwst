@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import logging
 from ..stpipe import Pipeline
 from .. import datamodels
 
@@ -22,7 +23,6 @@ from ..gain_scale import gain_scale_step
 __all__ = ['Detector1Pipeline']
 
 # Define logging
-import logging
 log = logging.getLogger()
 log.setLevel(logging.DEBUG)
 
@@ -80,10 +80,10 @@ class Detector1Pipeline(Pipeline):
             input = self.dq_init(input)
             input = self.saturation(input)
             input = self.ipc(input)
-            input = self.linearity(input)
-            input = self.rscd(input)
             input = self.firstframe(input)
             input = self.lastframe(input)
+            input = self.linearity(input)
+            input = self.rscd(input)
             input = self.dark_current(input)
             input = self.refpix(input)
 

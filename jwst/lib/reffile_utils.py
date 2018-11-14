@@ -111,7 +111,7 @@ def ref_matches_sci(sci_model, ref_model):
                 log.error('Missing subarray corner/size keywords in reference file')
                 raise ValueError("Can't determine ref file subarray properties")
 
-    log.debug(" ref xstart=%d, xsize=%d, ystart=%d, ysize=%d" %
+    log.debug("ref substrt1=%d, subsize1=%d, substrt2=%d, subsize2=%d" %
               (xstart_ref, xsize_ref, ystart_ref, ysize_ref))
 
     # Make sure the starting corners are valid
@@ -127,16 +127,21 @@ def ref_matches_sci(sci_model, ref_model):
         xsize_data = ref_model.shape[-1]
         ysize_data = ref_model.shape[-2]
 
-    # Make sure the size attributes are consistent with data array.
-    # NIRSpec IRS2 is a special mode, where it's allowed to have
-    # a mismatch in the y-size.
-    if (ysize_ref == 2048) and (ysize_data == 3200):
-        ysize_ref = ysize_data
-    if (xsize_ref != xsize_data) or (ysize_ref != ysize_data):
-        log.warning("Reference file data array size doesn't match subarray params")
+    # Check x dimensions
+    if xsize_ref != xsize_data:
+        log.warning("Reference file data array size doesn't match SUBSIZE1")
         log.warning("Using actual array size")
         xsize_ref = xsize_data
-        ysize_ref = ysize_data
+    # Check y dimensions
+    if ysize_ref != ysize_data:
+        # NIRSpec IRS2 is a special mode, where it's allowed to have
+        # a mismatch in the y-size.
+        if (ysize_ref == 2048) and (ysize_data == 3200):
+            pass
+        else:
+            log.warning("Reference file data array size doesn't match SUBSIZE2")
+            log.warning("Using actual array size")
+            ysize_ref = ysize_data
 
     # Get the science model subarray parameters
     try:
@@ -159,7 +164,7 @@ def ref_matches_sci(sci_model, ref_model):
         log.error('Missing subarray corner/size keywords in science file')
         raise ValueError("Can't determine science file subarray properties")
     else:
-        log.debug(" sci xstart=%d, xsize=%d, ystart=%d, ysize=%d" %
+        log.debug("sci substrt1=%d, subsize1=%d, substrt2=%d, subsize2=%d" %
                   (xstart_sci, xsize_sci, ystart_sci, ysize_sci))
 
     # Make sure the starting corners are valid
@@ -168,16 +173,21 @@ def ref_matches_sci(sci_model, ref_model):
         raise ValueError("Bad subarray corners")
 
     # Make sure the size attributes are consistent with data array.
-    # NIRSpec IRS2 is a special mode, where it's allowed to have
-    # a mismatch in the y-size.
-    if (ysize_sci == 2048) and (sci_model.shape[-2] == 3200):
-        ysize_sci = sci_model.shape[-2]
-    if (xsize_sci != sci_model.shape[-1]) or \
-       (ysize_sci != sci_model.shape[-2]):
-        log.warning("Science file data array size doesn't match subarray params")
+    # Check x dimensions
+    if xsize_sci != sci_model.shape[-1]:
+        log.warning("Science file data array size doesn't match SUBSIZE1")
         log.warning("Using actual array size")
         xsize_sci = sci_model.shape[-1]
-        ysize_sci = sci_model.shape[-2]
+    # Check y dimensions
+    if ysize_sci != sci_model.shape[-2]:
+        # NIRSpec IRS2 is a special mode, where it's allowed to have
+        # a mismatch in the y-size.
+        if (ysize_sci == 2048) and (sci_model.shape[-2] == 3200):
+            pass
+        else:
+            log.warning("Science file data array size doesn't match SUBSIZE2")
+            log.warning("Using actual array size")
+            ysize_sci = sci_model.shape[-2]
 
     # Finally, see if all of the science file subarray params match those
     # of the reference file
