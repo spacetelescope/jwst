@@ -87,6 +87,8 @@ Software vs DMS build version map
 
 | jwst tag | DMS build |    Date    |          Notes                           |
 | -------- | --------- | ---------- | -----------------------------------------|
+|  0.12.2  | B7.2rc3   | 11/07/2018 | Third release candidate for Build 7.2    |
+|  0.12.1  | B7.2rc2   | 11/01/2018 | Second release candidate for Build 7.2    |
 |  0.12.0  | B7.2rc1   | 10/09/2018 | First release candidate for Build 7.2    |
 |  0.11.0  |           | 09/10/2018 | DMS test, no delivery to I&T             |
 |  0.10.0  |           | 07/31/2018 | DMS test, no delivery to I&T             |
