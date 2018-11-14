@@ -1,7 +1,7 @@
 """Association Generator
 
 The Association Generator takes a list of items, an Association Pool, and
-creates sub-lists of those items depending on each items' attributes. How the
+creates sub-lists of those items depending on each item's attributes. How the
 sub-lists are created is defined by Association Rules.
 
 For more, see the :ref:`documentation overview <asn-overview>`.

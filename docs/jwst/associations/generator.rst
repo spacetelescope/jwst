@@ -48,10 +48,8 @@ Before exiting, :py:func:`~jwst.associations.generate` checks the
 :meth:`Association.is_valid
 <jwst.associations.association.Association.is_valid>` property of each
 association to ensure that an association has all the members it is required to
-have. With respect to JWST and Level3 processing, an example of an association
-that would not be valid would be if an observation failed to complete, producing
-only a subset of exposures. The result would be an invalid association, since
-any further processing would fail.
+have. For example, if a JWST coronagraphic observation was performed, but the
+related PSF observation failed, the coronagraphic association would be marked invalid.
 
 Once validation is complete, :py:func:`~jwst.associations.generate` returns a
 2-tuple. The first item is a list of the associations created. The second item

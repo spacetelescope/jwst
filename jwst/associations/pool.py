@@ -17,7 +17,7 @@ class AssociationPool(Table):
     An ``AssociationPool`` is essentially an astropy Table with the
     following default behaviors:
 
-    - ASCII tables with a default delimiater of `|`
+    - ASCII tables with a default delimiter of `|`
     - All values are read in as strings
     """
 

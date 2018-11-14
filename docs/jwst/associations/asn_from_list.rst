@@ -44,7 +44,7 @@ For those exposures that require an off-target background or imprint
 image, modify the ``members`` list for those exposure, adding a new
 member with an ``exptype`` of ``background`` or ``imprint`` as
 appropriate. The ``expname`` for these members are the Level2a exposures
-the are the background/imprint to use.
+that are the background/imprint to use.
 
 An example product that has both a background and imprint exposure
 would look like the following::
@@ -84,7 +84,7 @@ To create a Level3 association, use the following command:
 The ``-o`` option defines the name of the association file to create.
 
 The ``--product-name`` will set the ``name`` field that the Level3
-calibration code will use as the output name. For the example, the
+calibration code will use as the output name. For the above example, the
 output files created by ``calwebb_image3``, or other Level3 pipelines,
 will all begin with **l3_results**.
 
@@ -92,7 +92,7 @@ The list of files will all become ``science`` members of the
 association, with the presumption that all files will be combined.
 
 For coronagraphic or AMI processing, set the ``exptype`` of the
-exposures that are the PSF reference exposures to ``psf``.  If the
+exposures that are the PSF reference exposures to **psf**.  If the
 PSF files are not in the ``members`` list, edit the association and add
 them as members. An example product with a psf exposure would look
 like::
@@ -122,7 +122,7 @@ API
 ---
 
 There are two programmatic entry points: The
-:class:`~jwst.associatons.asn_from_list.Main` is the highest level
+:class:`~jwst.associations.asn_from_list.Main` is the highest level
 entry and is what is instantiated when the command line
 ``asn_from_list`` is used. ``Main`` handles the command line interface.
 

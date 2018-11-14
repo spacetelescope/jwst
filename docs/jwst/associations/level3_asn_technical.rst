@@ -104,7 +104,7 @@ constraints *optional*
 ``products`` Keyword
 ^^^^^^^^^^^^^^^^^^^^
 
-Association products have to components:
+Association products have two components:
 
 name *optional*
   The string template to be used by Level 3 processing tasks to create
@@ -132,7 +132,7 @@ exptype *required*
 
   * ``science`` *required*
 
-    The primary science expsoures. There is usually more than one
+    The primary science exposures. There is usually more than one
     since Level3 calibration involves combining multiple science
     exposures. However, at least one exposure in an association needs
     to be ``science``.

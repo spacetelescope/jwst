@@ -153,7 +153,7 @@ class Association(MutableMapping):
     @property
     def asn_name(self):
         """Suggest filename for the association"""
-        return 'unamed_association'
+        return 'unnamed_association'
 
     @classmethod
     def _asn_rule(cls):
@@ -269,7 +269,7 @@ class Association(MutableMapping):
 
         Returns
         -------
-        association
+        association: Association
             The association.
 
         Raises
