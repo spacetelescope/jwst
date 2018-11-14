@@ -15,7 +15,8 @@ from .. import (DataModel, ModelContainer, ImageModel, ReferenceFileModel,
                 ReferenceImageModel, ReferenceCubeModel, ReferenceQuadModel,
                 FlatModel, MaskModel, NircamPhotomModel, GainModel,
                 ReadnoiseModel, DistortionModel)
-from jwst.stpipe.crds_client import get_reference_file
+from jwst import datamodels
+
 
 def test_open_fits():
     """Test opening a model from a FITS file"""
@@ -97,22 +98,47 @@ def test_open_reference_files():
         assert isinstance(model, klass)
         model.close()
 
-def test_open_reffile_readonly():
-    """Test opening a reffile from CRDS read-only cache"""
-    model = ImageModel()
-    model.meta.instrument.name = 'NIRCAM'
-    model.meta.instrument.detector = 'NRCA4'
-    model.meta.instrument.channel = 'SHORT'
-    model.meta.observation.date = '2018-01-01'
-    model.meta.observation.time = '12:03:34.176000'
+def test_open_fits_readonly(tmpdir):
+    """Test opening a FITS-format datamodel that is read-only on disk"""
+    tmpfile = str(tmpdir.join('readonly.fits'))
+    data = np.arange(100, dtype=np.float).reshape(10, 10)
 
-    reffile = get_reference_file(model, 'distortion')
-    try:
-        os.chmod(reffile, 0o444)
-    except PermissionError:
-        pass
-    distortion = DistortionModel(reffile)
-    distortion.close()
+    with ImageModel(data=data) as model:
+        model.meta.telescope = 'JWST'
+        model.meta.instrument.name = 'NIRCAM'
+        model.meta.instrument.detector = 'NRCA4'
+        model.meta.instrument.channel = 'SHORT'
+        model.save(tmpfile)
+
+    os.chmod(tmpfile, 0o440)
+    assert os.access(tmpfile, os.W_OK) == False
+
+    with datamodels.open(tmpfile) as model:
+        assert model.meta.telescope == 'JWST'
+
+    # The following *should* fail with a permission error, but it does not.
+    with datamodels.open(tmpfile) as model:
+        model.save(tmpfile)
+
+def test_open_asdf_readonly(tmpdir):
+    tmpfile = str(tmpdir.join('readonly.asdf'))
+
+    with DistortionModel() as model:
+        model.meta.telescope = 'JWST'
+        model.meta.instrument.name = 'NIRCAM'
+        model.meta.instrument.detector = 'NRCA4'
+        model.meta.instrument.channel = 'SHORT'
+        model.save(tmpfile)
+
+    os.chmod(tmpfile, 0o440)
+    assert os.access(tmpfile, os.W_OK) == False
+
+    with datamodels.open(tmpfile) as model:
+        assert model.meta.telescope == 'JWST'
+
+    # The following *should* fail with a permission error, but it does not.
+    with datamodels.open(tmpfile) as model:
+        model.save(tmpfile)
 
 # Utilities
 def t_path(partial_path):
