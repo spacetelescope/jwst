@@ -15,12 +15,12 @@ def compare_asns(left, right):
 
     Parameters
     ---------
-    left, right: dict
+    left, right : dict
         Two, individual, associations to compare
 
     Returns
     -------
-    equality: boolean
+    equality : boolean
         True if matching.
 
     Raises
@@ -52,12 +52,12 @@ def _compare_asns(left, right):
 
     Parameters
     ---------
-    left, right: dict
+    left, right : dict
         Two, individual, associations to compare
 
     Returns
     -------
-    equality: boolean
+    equality : boolean
 
     Raises
     ------
@@ -77,12 +77,12 @@ def compare_membership(left, right):
 
     Parameters
     ---------
-    left, right: dict
+    left, right : dict
         Two, individual, associations to compare
 
     Returns
     -------
-    equality: boolean
+    equality : boolean
 
     Raises
     ------

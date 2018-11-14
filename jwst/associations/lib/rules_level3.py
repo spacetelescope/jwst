@@ -156,7 +156,7 @@ class Asn_WFSCMB(AsnMixin_Science):
 
         Parameters
         ----------
-        entry: dict or None
+        entry : dict or None
             New entry to add to member list.
 
         Returns
