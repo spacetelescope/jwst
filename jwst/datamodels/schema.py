@@ -1,5 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
+import re
 from collections import OrderedDict
 
 from asdf import AsdfFile
@@ -7,6 +8,8 @@ from asdf import schema as asdf_schema
 
 from jwst.transforms.jwextension import JWSTExtension
 from gwcs.extension import GWCSExtension
+
+from . import model_base
 
 # return_result included for backward compatibility
 def find_fits_keyword(schema, keyword, return_result=False):
@@ -295,3 +298,103 @@ def read_schema(schema_file, extensions=None):
 
     schema = merge_property_trees(schema)
     return schema
+
+
+def build_docstring(klass, template):
+    """
+    Build a docstring for the specified DataModel class from its schema.
+
+
+    Parameters
+    ----------
+
+    klass : Python class
+        A class instance of a datamodel
+    template : str
+        A string format template to be applied to each schema item
+
+    Returns
+    -------
+    field_info : str
+        Information about each schema item associated with a FITS hdu
+    """
+
+    def get_field_info(subschema, path, combiner, info, recurse):
+        # Return all schema fields representing fits hdus
+        if 'fits_hdu' in subschema and not 'fits_keyword' in subschema:
+            attr = '.'.join(path)
+            info[attr] = subschema
+        return 'fits_hdu' in subschema or 'fits_keyword' in subschema
+
+    # Silly rabbit, only datamodels have schemas
+    if not (klass == model_base.DataModel or
+            issubclass(klass, model_base.DataModel)):
+        raise ValueError("Class must be a subclass of DataModel: %s",
+                          klass.__name__)
+
+    # Create a new model just to get its shape
+    null_object = klass(init=None)
+    shape = null_object.shape
+    if shape is None:
+        shaped_object = null_object
+    else:
+        # Instantiate an object with correctly dimensioned shape
+        null_object.close()
+        shape = tuple([1 for i in range(len(shape))])
+        shaped_object = klass(init=shape)
+
+    # Get schema fields which have an associated hdu
+    info = {}
+    walk_schema(shaped_object._schema, get_field_info, ctx=info)
+
+    # Extract field names from template to set defaults
+    # so format won't crash while using them when they aren't there
+    default_schema = {}
+    fields = re.findall(r'\{([^\\:}]*)[\:\}]', template)
+    for field in fields:
+        default_schema[field] = ''
+
+    buffer = []
+    for attr, subschema in info.items():
+        schema = {}
+        schema.update(default_schema)
+        schema.update(subschema)
+        schema['path'] = attr
+
+        # Determine if attribute has a default value
+        instance = shaped_object.instance
+        for field in attr.split('.'):
+            try:
+                instance = instance.get(field)
+            except:
+                instance = None
+            if instance is None:
+                break
+        schema['default'] = instance is not None
+
+        # Extract table field names from datatype
+        if type(schema['datatype']) == str:
+            schema['array'] = True
+        else:
+            schema['records'] = True
+            fields = []
+            for field_info in schema['datatype']:
+                fields.append(field_info['name'])
+            schema['fields'] = ', '.join(fields)
+            schema['datatype'] = 'table'
+
+        # Convert boolean fields to their field names
+        for field, value in schema.items():
+            if type(value) == bool:
+                schema[field] = field
+
+        # Apply format to svhema fields
+        # Delete blank lines
+        lines = template.format(**schema)
+        for line in lines.split("\n"):
+            if line and not line.isspace():
+                buffer.append(line)
+
+    field_info = "\n".join(buffer) + "\n"
+    return field_info
+
