@@ -75,7 +75,7 @@ class Asn_Image(AsnMixin_Science):
 class Asn_WFSCMB(AsnMixin_Science):
     """Level 3 Wavefront Control & Sensing Association
 
-    For coarse and fine phasing, dither pairs need
+    For coarse and fine phasing, dither pairs need to
     be associated to be combined.  The optical path
     is assumed to be equivalent within an activity.
 

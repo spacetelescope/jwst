@@ -17,7 +17,7 @@ class ACID():
 
     Parameters
     ----------
-    in : str or 2-tuple
+    input : str or 2-tuple
         The string representation or 2-tuple containing the
         candidate ID and TYPE. The string should be itself
         the 2-tuple representation when evaluated. The 2-tuple

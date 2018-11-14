@@ -140,7 +140,7 @@ class AssociationRegistry(dict):
         Parameters
         ----------
         item : dict
-            A item, like from a Pool, to find assocations for.
+            An item, like from a Pool, to find assocations for.
 
         version_id : str
             If specified, a string appened to association names.
