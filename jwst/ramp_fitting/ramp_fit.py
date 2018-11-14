@@ -800,6 +800,7 @@ def gls_ramp_fit(model,
 
     # Get readnoise array for calculation of variance of noiseless ramps, and
     #   gain array in case optimal weighting is to be done
+    #   KDG - not sure what this means and no optimal weigting in GLS
     readnoise_2d, gain_2d = utils.get_ref_subs(model, readnoise_model,
                                                gain_model, nframes)
 

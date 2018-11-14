@@ -11,11 +11,14 @@ log.setLevel(logging.DEBUG)
 # This is the number of iterations that will be done with use_extra_terms
 # set to False.  If this is zero, use_extra_terms will be set to True even
 # for the first iteration.
-NUM_ITER_NO_EXTRA_TERMS = 1
+# NUM_ITER_NO_EXTRA_TERMS = 1
+NUM_ITER_NO_EXTRA_TERMS = 0
 # These are the lower and upper limits of the number of iterations that
 # will be done by determine_slope.
-MIN_ITER = NUM_ITER_NO_EXTRA_TERMS + 1
-MAX_ITER = 3
+# MIN_ITER = NUM_ITER_NO_EXTRA_TERMS + 1
+# MAX_ITER = 3
+MIN_ITER = 1
+MAX_ITER = 1
 
 # This is a term to add for saturated pixels to give them low weight.
 HUGE_FOR_LOW_WEIGHT = 1.e20
@@ -642,6 +645,7 @@ def gls_fit(ramp_data, input_var_data,
     # 0 to 1 is the location of a cosmic ray hit; the first 1 in a column
     # corresponds to the value in cr_flagged_2d being 1.
     x = np.zeros((nz, ngroups, 2 + num_cr), dtype=np.float64)
+    # KDG - should this be 1 or some particular time
     x[:, :, 0] = 1.
     x[:, :, 1] = np.arange(ngroups, dtype=np.float64) * group_time + \
                  frame_time * (M + 1.) / 2.
@@ -693,6 +697,8 @@ def gls_fit(ramp_data, input_var_data,
     # Divide by sqrt(2) to convert the readnoise from CDS to single readout.
     rn3d = readnoise.reshape((nz, 1, 1)) * SINGLE_READOUT_RN_FACTOR
     cov += (I * (rn3d**2 / M))
+
+    print(cov)
 
     # prev_slope_data must be non-negative.
     flags = prev_slope_data < 0.
