@@ -1,17 +1,11 @@
-import os
 import pytest
 from numpy.testing import assert_allclose
 from gwcs.wcstools import grid_from_bounding_box
+from ci_watson.artifactory_helpers import get_bigdata
 
 from jwst.assign_wcs import AssignWcsStep, nirspec
-
 from jwst.datamodels import ImageModel
 
-pytestmark = [
-    pytest.mark.usefixtures('_jail'),
-    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
-                       reason='requires --bigdata')
-]
 
 testdata = [
     ('nrs1', 'jw00011001001_01120_00001_NRS1_rate.fits', 'jw00011001001_01120_00001_NRS1_assign_wcs.fits'),
@@ -19,15 +13,18 @@ testdata = [
     ('nrs2', 'NRSIFU-COMBO-030_NRS2_SloperPipeline.fits', 'NRSIFU-COMBO-030_NRS2_SloperPipeline_assign_wcs.fits')
 ]
 
+@pytest.mark.bigdata
 @pytest.mark.parametrize("test_id, input_file, truth_file", testdata)
-def test_nirspec_ifu_wcs(_bigdata, test_id, input_file, truth_file):
+def test_nirspec_ifu_wcs(envopt, _jail, test_id, input_file, truth_file):
     """
     Regression test of creating a WCS object and doing pixel to sky transformation.
     """
     del test_id
 
-    input_file = os.path.join(_bigdata, 'nirspec', 'test_wcs', 'nrs1-ifu', input_file)
-    truth_file = os.path.join(_bigdata, 'nirspec', 'test_wcs', 'nrs1-ifu', truth_file)
+    input_file = get_bigdata('jwst-pipeline', envopt,
+                             'nirspec', 'test_wcs', 'nrs1-ifu', input_file)
+    truth_file = get_bigdata('jwst-pipeline', envopt,
+                             'nirspec', 'test_wcs', 'nrs1-ifu', 'truth', truth_file)
 
     result = AssignWcsStep.call(input_file, save_results=True, suffix='assign_wcs')
     result.close()

@@ -1,15 +1,10 @@
 from .reference import ReferenceFileModel
 from .dynamicdq import dynamic_mask
 
-__all__ = ['NRSFlatModel']
-
-class NRSFlatModel(ReferenceFileModel):
-    """A base class for NIRSpec flat-field reference file models."""
-
-    schema_url = "nirspec.flat.schema.yaml"
+__all__ = ['NirspecFlatModel', 'NirspecQuadFlatModel']
 
 
-class NirspecFlatModel(NRSFlatModel):
+class NirspecFlatModel(ReferenceFileModel):
     """A data model for NIRSpec flat-field reference files.
 
     Parameters
@@ -49,7 +44,7 @@ class NirspecFlatModel(NRSFlatModel):
         self.err = self.err
 
 
-class NirspecQuadFlatModel(NRSFlatModel):
+class NirspecQuadFlatModel(ReferenceFileModel):
     """A data model for NIRSpec flat-field files that differ by quadrant.
 
     Parameters

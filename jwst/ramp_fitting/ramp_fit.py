@@ -34,8 +34,6 @@ BUFSIZE = 1024 * 30000  # 30Mb cache size for data section
 def ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
              algorithm, weighting):
     """
-    Extended Summary
-    ----------------
     Calculate the count rate for each pixel in all data cube sections and all
     integrations, equal to the slope for all sections (intervals between
     cosmic rays) of the pixel's ramp divided by the effective integration time.
@@ -45,43 +43,43 @@ def ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
 
     Parameters
     ----------
-    model: data model
+    model : data model
         input data model, assumed to be of type RampModel
 
-    buffsize: int
+    buffsize : int
         size of data section (buffer) in bytes
 
-    save_opt: boolean
+    save_opt : boolean
        calculate optional fitting results
 
-    readnoise_model: instance of data Model
+    readnoise_model : instance of data Model
         readnoise for all pixels
 
-    gain_model: instance of gain model
+    gain_model : instance of gain model
         gain for all pixels
 
-    algorithm: string
+    algorithm : string
         'OLS' specifies that ordinary least squares should be used;
         'GLS' specifies that generalized least squares should be used.
 
-    weighting: string
+    weighting : string
         'optimal' specifies that optimal weighting should be used;
          currently the only weighting supported.
 
     Returns
     -------
-    new_model: Data Model object
+    new_model : Data Model object
         DM object containing a rate image averaged over all integrations in
         the exposure
 
-    int_model: Data Model object
+    int_model : Data Model object or None
         DM object containing rate images for each integration in the exposure
 
-    opt_model: RampFitOutputModel object or None
+    opt_model : RampFitOutputModel object or None
         DM object containing optional OLS-specific ramp fitting data for the
         exposure
 
-    gls_opt_model: GLS_RampFitModel object or None
+    gls_opt_model : GLS_RampFitModel object or None
         Object containing optional GLS-specific ramp fitting data for the
         exposure
     """
@@ -109,8 +107,6 @@ def ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
 def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
                  weighting):
     """
-    Extended Summary
-    ----------------
     Fit a ramp using ordinary least squares. Calculate the count rate for each
     pixel in all data cube sections and all integrations, equal to the weighted
     slope for all sections (intervals between cosmic rays) of the pixel's ramp
@@ -118,36 +114,36 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
 
     Parameters
     ----------
-    model: data model
+    model : data model
         input data model, assumed to be of type RampModel
 
-    buffsize: int
+    buffsize : int
         size of data section (buffer) in bytes
 
-    save_opt: boolean
+    save_opt : boolean
         calculate optional fitting results
 
-    readnoise_model: instance of data Model
+    readnoise_model : instance of data Model
         readnoise for all pixels
 
-    gain_model: instance of gain model
+    gain_model : instance of gain model
         gain for all pixels
 
-    weighting: string
+    weighting : string
         'optimal' specifies that optimal weighting should be used; currently
         the only weighting supported.
 
     Returns
     -------
-    new_model: Data Model object
+    new_model : Data Model object
         DM object containing a rate image averaged over all integrations in
         the exposure
 
-    int_model: Data Model object or None
+    int_model : Data Model object or None
         DM object containing rate images for each integration in the exposure,
         or None if there is only one integration in the exposure
 
-    opt_model: Data Model object or None
+    opt_model : Data Model object or None
         DM object containing optional OLS-specific ramp fitting data for the
         exposure; this will be None if save_opt is False
     """
@@ -161,11 +157,24 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
     orig_nreads = nreads
     orig_cubeshape = cubeshape
 
-    # For MIRI datasets having >1 groups, if all final groups are flagged
-    # as DO_NOT_USE, resize the input model arrays to exclude the final group.
-    if (instrume == 'MIRI' and nreads > 1):
-        last_gdq = model.groupdq[:,-1,:,:]
+    # For MIRI datasets having >1 groups, if all final groups are flagged as 
+    # DO_NOT_USE, resize the input model arrays to exclude the final group.
+    # Similarly, if all first groups are flagged as DO_NOT_USE, resize the input 
+    # model arrays to exclude the first group.
 
+    if (instrume == 'MIRI' and nreads > 1):
+        first_gdq = model.groupdq[:,0,:,:]
+
+        if np.all(np.bitwise_and( first_gdq, dqflags.group['DO_NOT_USE'] )):
+            model.data = model.data[:,1:,:,:]
+            model.err = model.err[:,1:,:,:]
+            model.groupdq = model.groupdq[:,1:,:,:]
+            nreads -= 1
+            ngroups -= 1
+            cubeshape = (nreads,)+imshape
+            log.info('MIRI dataset has all first groups flagged as DO_NOT_USE.')
+
+        last_gdq = model.groupdq[:,-1,:,:]
         if np.all(np.bitwise_and( last_gdq, dqflags.group['DO_NOT_USE'] )):
             model.data = model.data[:,:-1,:,:]
             model.err = model.err[:,:-1,:,:]
@@ -585,8 +594,6 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
             int_times = model.int_times
         else:
             int_times = None
-
-    if opt_res.slope_seg is not None:
         int_model = utils.output_integ(model, slope_int, dq_int, effintim,
                                        var_p3, var_r3, var_both3, int_times)
     else:
@@ -665,32 +672,32 @@ def gls_ramp_fit(model,
 
     Parameters
     ----------
-    model: data model
+    model : data model
         Input data model, assumed to be of type RampModel.
 
-    buffsize: int
+    buffsize : int
         Size of data section (buffer) in bytes.
 
-    save_opt: boolean
+    save_opt : boolean
         Calculate optional fitting results.
 
-    readnoise_model: instance of data Model
+    readnoise_model : instance of data Model
         Readnoise for all pixels.
 
-    gain_model: instance of gain model
+    gain_model : instance of gain model
         Gain for all pixels.
 
     Returns
     -------
-    new_model: Data Model object
+    new_model : Data Model object
         DM object containing a rate image averaged over all integrations in
         the exposure.
 
-    int_model: Data Model object or None
+    int_model : Data Model object or None
         DM object containing rate images for each integration in the exposure,
         or None if there is only one integration.
 
-    gls_opt_model: GLS_RampFitModel object or None
+    gls_opt_model : GLS_RampFitModel object or None
         Object containing optional GLS-specific ramp fitting data for the
         exposure; this will be None if save_opt is False.
     """
@@ -926,20 +933,18 @@ def gls_ramp_fit(model,
 
 def calc_power(snr):
     """
-    Short Summary
-    -------------
     Using the given SNR, calculate the weighting exponent, which is from
     `Fixsen, D.J., Offenberg, J.D., Hanisch, R.J., Mather, J.C, Nieto,
     Santisteban, M.A., Sengupta, R., & Stockman, H.S., 2000, PASP, 112, 1350`.
 
     Parameters
     ----------
-    snr: float, 1D
+    snr : float, 1D array
         signal-to-noise for the ramp segments
 
     Returns
     -------
-    pow_wt.ravel(): float, 1D
+    pow_wt.ravel() : float, 1D array
         weighting exponent
     """
     pow_wt = snr.copy() * 0.0
@@ -954,23 +959,21 @@ def calc_power(snr):
 
 def dq_compress_final(dq_int, n_int):
     """
-    Extended Summary
-    ----------------
     Combine the integration-specific dq arrays (which have already been
     compressed and combined with the PIXELDQ array) to create the dq array
     of the primary output product.
 
     Parameters
     ----------
-    dq_int: uint16, 3D array
+    dq_int : uint16, 3D array
         cube of combined dq arrays for all data sections in a single itegration
 
-    n_int: int
+    n_int : int
         total number of integrations in data set
 
     Returns
     -------
-    f_dq: float, 2D array
+    f_dq : uint16, 2D array
         combination of all integration's pixeldq arrays
 
     """
@@ -984,8 +987,6 @@ def dq_compress_final(dq_int, n_int):
 
 def dq_compress_sect(gdq_sect, pixeldq_sect):
     """
-    Extended Summary
-    ----------------
     Get ramp locations where the data has been flagged as saturated in the 4D
     GROUPDQ array for the current data section, find the corresponding image
     locations, and set the SATURATED flag in those locations in the PIXELDQ
@@ -998,15 +999,15 @@ def dq_compress_sect(gdq_sect, pixeldq_sect):
 
     Parameters
     ----------
-    gdq_sect: int (uint8), 3D array
+    gdq_sect : int (uint8), 3D array
         cube of GROUPDQ array for a data section
 
-    pixeldq_sect: int (uint16), 2D array
+    pixeldq_sect : int, 2D array
         dq array of data section of input model
 
     Returns
     -------
-    pixeldq_sect: int (uint16), 2D array
+    pixeldq_sect : int, 2D array
         dq array of data section updated with saturated and jump-detected flags
 
     """
@@ -1025,27 +1026,25 @@ def dq_compress_sect(gdq_sect, pixeldq_sect):
 
 def calc_nrows(model, buffsize, cubeshape, nreads):
     """
-    Short Summary
-    -------------
     Calculate the number of rows per data section to process.
 
     Parameters
     ----------
-    model: instance of Data Model
+    model : instance of Data Model
        DM object for input
 
-    buffsize: int
+    buffsize : int
        size of data section (buffer) in bytes
 
-    cubeshape: (int, int, int) tuple
+    cubeshape : (int, int, int) tuple
        shape of input dataset
 
-    nreads: int
+    nreads : int
        number of reads in input dataset
 
     Returns
     -------
-    nrows: int
+    nrows : int
        number of rows in buffer of data section
     """
     bitpix = model.data.dtype.itemsize
@@ -1065,8 +1064,6 @@ def calc_nrows(model, buffsize, cubeshape, nreads):
 def calc_slope(data_sect, gdq_sect, frame_time, opt_res, save_opt, rn_sect,
                gain_sect, i_max_seg, ngroups, weighting, f_max_seg, group_time):
     """
-    Short Summary
-    -------------
     Compute the slope of each segment for each pixel in the data cube section
     for the current integration. Each segment has its slope fit in fit_lines();
     that slope and other quantities from the fit are added to the 'optional
@@ -1075,63 +1072,63 @@ def calc_slope(data_sect, gdq_sect, frame_time, opt_res, save_opt, rn_sect,
 
     Parameters
     ----------
-    data_sect: float
+    data_sect : float, 3D array
         section of input data cube array
 
-    gdq_sect: float
+    gdq_sect : int, 3D array
         section of GROUPDQ data quality array
 
-    frame_time: float
+    frame_time : float
         integration time
 
-    opt_res: OptRes object
+    opt_res : OptRes object
         contains quantities related to fitting for optional output
 
-    save_opt: boolean
+    save_opt : boolean
        save optional fitting results
 
-    rn_sect: float, 2D array
+    rn_sect : float, 2D array
         read noise values for all pixels in data section
 
-    gain_sect: float, 2D array
+    gain_sect : float, 2D array
         gain values for all pixels in data section
 
-    i_max_seg: int
+    i_max_seg : int
         used for size of initial allocation of arrays for optional results;
         maximum possible number of segments within the ramp, based on the
         number of CR flags
 
-    ngroups: int
+    ngroups : int
         number of groups per integration
 
-    weighting: string
+    weighting : string
         'optimal' specifies that optimal weighting should be used; currently
         the only weighting supported.
 
-    f_max_seg: int
+    f_max_seg : int
         actual maximum number of segments within a ramp, based on the fitting
         of all ramps; later used when truncating arrays before output.
 
-    group_time: float
+    group_time : float
         Time increment between groups, in seconds.
 
     Returns
     -------
-    gdq_sect: int, 3D array
+    gdq_sect : int, 3D array
         data quality flags for pixels in section
 
-    inv_var: float, 1D array
+    inv_var : float, 1D array
         values of 1/variance for good pixels
 
-    opt_res: OptRes object
+    opt_res : OptRes object
         contains quantities related to fitting for optional output
 
-    f_max_seg: int
+    f_max_seg : int
         actual maximum number of segments within a ramp, updated here based on
         fitting ramps in the current data section; later used when truncating
         arrays before output.
 
-    num_seg: int, 1D array
+    num_seg : int, 1D array
         numbers of segments for good pixels
     """
     nreads, asize2, asize1 = data_sect.shape
@@ -1241,8 +1238,6 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
                      mask_2d_init, inv_var, num_seg, opt_res, save_opt, rn_sect, 
                      gain_sect, ngroups, weighting, f_max_seg):
     """
-    Extended Summary
-    ----------------
     Call routine to LS fit masked data for a single segment for all pixels in
     data section. Then categorize each pixel's fitting interval based on
     interval length, and whether the interval is at the end of the array.
@@ -1255,65 +1250,65 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
 
     Parameters
     ----------
-    start: int, 1D array
+    start : int, 1D array
         lowest channel in fit
 
-    end_st: int, 2D array
+    end_st : int, 2D array
         stack array of endpoints
 
-    end_heads: int, 1D array
+    end_heads : int, 1D array
         number of endpoints for each pixel
 
-    pixel_done: boolean, 1D array
+    pixel_done : boolean, 1D array
         whether each pixel's calculations are completed
 
-    data_sect: float, 3D array
+    data_sect : float, 3D array
         data cube section
 
-    mask_2d: bool, 2D array
+    mask_2d : bool, 2D array
         delineates which channels to fit for each pixel
 
-    mask_2d_init: bool, 2D array
+    mask_2d_init : bool, 2D array
         copy of intial mask_2d
 
-    inv_var: float, 1D array
+    inv_var : float, 1D array
         values of 1/variance for good pixels
 
-    num_seg: int, 1D array
+    num_seg : int, 1D array
         numbers of segments for good pixels
 
-    opt_res: OptRes object
+    opt_res : OptRes object
         optional fitting results to output
 
-    save_opt: boolean
+    save_opt : boolean
        save optional fitting results
 
-    rn_sect: float, 2D array
+    rn_sect : float, 2D array
         read noise values for all pixels in data section
 
-    gain_sect: float, 2D array
+    gain_sect : float, 2D array
         gain values for all pixels in data section
 
-    ngroups: int
+    ngroups : int
         number of groups per integration
 
-    weighting: string
+    weighting : string
         'optimal' specifies that optimal weighting should be used; currently
         the only weighting supported.
 
-    f_max_seg: int
+    f_max_seg : int
         actual maximum number of segments within a ramp, updated here based on
         fitting ramps in the current data section; later used when truncating
         arrays before output.
 
     Returns
     -------
-    f_max_seg: int
+    f_max_seg : int
         actual maximum number of segments within a ramp, updated here based on
         fitting ramps in the current data section; later used when truncating
         arrays before output.
 
-    num_seg: int, 1D array
+    num_seg : int, 1D array
         numbers of segments for good pixels
     """
     nreads, asize2, asize1 = data_sect.shape # Note: nreads is a scalar here
@@ -1633,8 +1628,6 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
 
 def fit_lines(data, mask_2d, rn_sect, gain_sect, ngroups, weighting):
     """
-    Extended Summary
-    ----------------
     Do linear least squares fit to data cube in this integration for a single
     segment for all pixels.  In addition to applying the mask due to identified
     cosmic rays, the data is also masked to exclude intervals that are too short
@@ -1643,42 +1636,42 @@ def fit_lines(data, mask_2d, rn_sect, gain_sect, ngroups, weighting):
 
     Parameters
     ----------
-    data: float
+    data : float, 3D array
        array of values for current data section
 
-    mask_2d: boolean, 2D array
+    mask_2d : boolean, 2D array
        delineates which channels to fit for each pixel
 
-    rn_sect: float, 2D array
+    rn_sect : float, 2D array
         read noise values for all pixels in data section
 
-    gain_sect: float, 2D array
+    gain_sect : float, 2D array
         gain values for all pixels in data section
 
-    ngroups: int
+    ngroups : int
         number of groups per integration
 
-    weighting: string
+    weighting : string
         'optimal' specifies that optimal weighting should be used; currently
         the only weighting supported.
 
     Returns
     -------
-    Note: all of these pertain to a single segment (hence '_s')
+    Note - all of these pertain to a single segment (hence '_s')
 
-    slope_s: float, 1D array
+    slope_s : float, 1D array
        weighted slope for current iteration's pixels for data section
 
-    intercept_s: float, 1D array
+    intercept_s : float, 1D array
        y-intercepts from fit for data section
 
-    variance_s: float, 1D array
+    variance_s : float, 1D array
        variance of residuals for fit for data section
 
-    sig_intercept_s: float, 1D array
+    sig_intercept_s : float, 1D array
        sigma of y-intercepts from fit for data section
 
-    sig_slope_s: float, 1D array
+    sig_slope_s : float, 1D array
        sigma of slopes from fit for data section (for a single segment)
 
     """
@@ -1805,52 +1798,50 @@ def fit_lines(data, mask_2d, rn_sect, gain_sect, ngroups, weighting):
 def fit_single_read(slope_s, intercept_s, variance_s, sig_intercept_s,
                     sig_slope_s, npix, data, wh_pix_1r):
     """
-    Short Summary
-    -------------
     For datasets having >2 groups/integrations, for any semiramp in which the
     0th group is good and the 1st group is either SAT or CR, set slope, etc.
 
     Parameters
     ----------
-    slope_s: float, 1D array
+    slope_s : float, 1D array
         weighted slope for current iteration's pixels for data section
 
-    intercept_s: float, 1D array
+    intercept_s : float, 1D array
         y-intercepts from fit for data section
 
-    variance_s: float, 1D array
+    variance_s : float, 1D array
         variance of residuals for fit for data section
 
-    sig_intercept_s: float, 1D array
+    sig_intercept_s : float, 1D array
         sigma of y-intercepts from fit for data section
 
-    sig_slope_s: float, 1D array
+    sig_slope_s : float, 1D array
         sigma of slopes from fit for data section
 
-    npix: int
+    npix : int
         number of pixels in 2D array
 
-    data: float
+    data : float
         array of values for current data section
 
-    wh_pix_1r: tuple
+    wh_pix_1r : tuple
         locations of pixels whose only good group is the 0th group
 
     Returns
     -------
-    slope_s: float, 1D array
+    slope_s : float, 1D array
         weighted slope for current iteration's pixels for data section
 
-    intercept_s: float, 1D array
+    intercept_s : float, 1D array
         y-intercepts from fit for data section
 
-    variance_s: float, 1D array
+    variance_s : float, 1D array
         variance of residuals for fit for data section
 
-    sig_slope_s: float, 1D array
+    sig_slope_s : float, 1D array
         sigma of slopes from fit for data section
 
-    sig_intercept_s: float, 1D array
+    sig_intercept_s : float, 1D array
         sigma of y-intercepts from fit for data section
     """
     data0_slice = data[0, :, :].reshape(npix)
@@ -1869,55 +1860,53 @@ def fit_single_read(slope_s, intercept_s, variance_s, sig_intercept_s,
 def fit_double_read(mask_2d, wh_pix_2r, data_masked, slope_s, intercept_s,
                     variance_s, sig_slope_s, sig_intercept_s, rn_sect):
     """
-    Short Summary
-    -------------
     Process all semi-ramps having exactly 2 good groups. May need to optimize
     later to remove loop over pixels.
 
     Parameters
     ----------
-    mask_2d: bool, 2D array
+    mask_2d : bool, 2D array
         delineates which channels to fit for each pixel
 
-    wh_pix_2r: tuple
+    wh_pix_2r : tuple
         locations of pixels whose only good groups are the 0th and the 1st
 
-    data_masked: float, 2D array
+    data_masked : float, 2D array
         masked values for all pixels in data section
 
-    slope_s: float, 1D array
+    slope_s : float, 1D array
         weighted slope for current iteration's pixels for data section
 
-    intercept_s: float, 1D array
+    intercept_s : float, 1D array
         y-intercepts from fit for data section
 
-    variance_s: float, 1D array
+    variance_s : float, 1D array
         variance of residuals for fit for data section
 
-    sig_slope_s: float, 1D array
+    sig_slope_s : float, 1D array
         sigma of slopes from fit for data section
 
-    sig_intercept_s: float, 1D array
+    sig_intercept_s : float, 1D array
         sigma of y-intercepts from fit for data section
 
-    rn_sect: float, 2D array
+    rn_sect : float, 2D array
         read noise values for all pixels in data section
 
     Returns
     -------
-    slope_s: float, 1D array
+    slope_s : float, 1D array
         weighted slope for current iteration's pixels for data section
 
-    intercept_s: float, 1D array
+    intercept_s : float, 1D array
         y-intercepts from fit for data section
 
-    variance_s: float, 1D array
+    variance_s : float, 1D array
         variance of residuals for fit for data section
 
-    sig_slope_s: float, 1D array
+    sig_slope_s : float, 1D array
         sigma of slopes from fit for data section
 
-    sig_intercept_s: float, 1D array
+    sig_intercept_s : float, 1D array
         sigma of y-intercepts from fit for data section
     """
     for ff in range(len(wh_pix_2r[0])): # loop over the pixels
@@ -1942,46 +1931,44 @@ def fit_double_read(mask_2d, wh_pix_2r, data_masked, slope_s, intercept_s,
 
 def calc_unwtd_fit(xvalues, nreads_1d, sumxx, sumx, sumxy, sumy):
     """
-    Extended Summary
-    ----------------
     Do linear least squares fit to data cube in this integration, using
     unweighted fits to the segments. Currently not supported.
 
     Parameters
     ----------
-    xvalues: int, 1D array
+    xvalues : int, 1D array
         indices of valid pixel values for all groups
 
-    nreads_1d: int, 1D array
+    nreads_1d : int, 1D array
         number of reads in an integration
 
-    sumxx: float
+    sumxx : float
         sum of squares of xvalues
 
-    sumx: float
+    sumx : float
         sum of xvalues
 
-    sumxy: float
+    sumxy : float
         sum of product of xvalues and data
 
-    sumy: float
+    sumy : float
         sum of data
 
     Returns
     -------
-    slope: float, 1D array
+    slope : float, 1D array
        weighted slope for current iteration's pixels for data section
 
-    intercept: float, 1D array
+    intercept : float, 1D array
        y-intercepts from fit for data section
 
-    sig_slope: float, 1D array
+    sig_slope : float, 1D array
        sigma of slopes from fit for data section
 
-    sig_intercept: float, 1D array
+    sig_intercept : float, 1D array
        sigma of y-intercepts from fit for data section
 
-    line_fit: float, 1D array
+    line_fit : float, 1D array
        values of fit using slope and intercept
     """
 
@@ -1998,8 +1985,6 @@ def calc_unwtd_fit(xvalues, nreads_1d, sumxx, sumx, sumxy, sumy):
 
 def calc_opt_fit(nreads_wtd, sumxx, sumx, sumxy, sumy):
     """
-    Extended Summary
-    ----------------
     Do linear least squares fit to data cube in this integration for a single
     semi-ramp for all pixels, using optimally weighted fits to the semi_ramps.
     The weighting uses the formulation by Fixsen (Fixsen et al, PASP, 112, 1350).
@@ -2008,33 +1993,33 @@ def calc_opt_fit(nreads_wtd, sumxx, sumx, sumxy, sumy):
 
     Parameters
     ----------
-    nreads_wtd: float, 1D array
+    nreads_wtd : float, 1D array
         sum of product of data and optimal weight
 
-    sumxx: float
+    sumxx : float, 1D array
         sum of squares of xvalues
 
-    sumx: float
+    sumx : float, 1D array
         sum of xvalues
 
-    sumxy: float
+    sumxy : float, 1D array
         sum of product of xvalues and data
 
-    sumy: float
+    sumy : float, 1D array
         sum of data
 
     Returns
     -------
-    slope: float, 1D array
+    slope : float, 1D array
        weighted slope for current iteration's pixels for data section
 
-    intercept: float, 1D array
+    intercept : float, 1D array
        y-intercepts from fit for data section
 
-    sig_slope: float, 1D array
+    sig_slope : float, 1D array
        sigma of slopes from fit for data section
 
-    sig_intercept: float, 1D array
+    sig_intercept : float, 1D array
        sigma of y-intercepts from fit for data section
     """
     denominator = nreads_wtd * sumxx - sumx**2
@@ -2049,52 +2034,50 @@ def calc_opt_fit(nreads_wtd, sumxx, sumx, sumxy, sumy):
 def fit_1_group(slope_s, intercept_s, variance_s, sig_intercept_s,
                 sig_slope_s, npix, data, mask_2d):
     """
-    Extended Summary
-    ----------------
     This function sets the fitting arrays for datasets having only 1 group
     per integration.
 
     Parameters
     ----------
-    slope_s: float, 1D array
+    slope_s : float, 1D array
         weighted slope for current iteration's pixels for data section
 
-    intercept_s: float, 1D array
+    intercept_s : float, 1D array
         y-intercepts from fit for data section
 
-    variance_s: float, 1D array
+    variance_s : float, 1D array
         variance of residuals for fit for data section
 
-    sig_intercept_s: float, 1D array
+    sig_intercept_s : float, 1D array
         sigma of y-intercepts from fit for data section
 
-    sig_slope_s: float, 1D array
+    sig_slope_s : float, 1D array
         sigma of slopes from fit for data section
 
-    npix: int
+    npix : int
         number of pixels in 2d array
 
-    data: float
+    data : float
         array of values for current data section
 
-    mask_2d: bool, 2D array
+    mask_2d : bool, 2D array
         delineates which channels to fit for each pixel
 
     Returns
     -------
-    slope_s: float, 1D array
+    slope_s : float, 1D array
         weighted slope for current iteration's pixels for data section
 
-    intercept_s: float, 1D array
+    intercept_s : float, 1D array
         y-intercepts from fit for data section
 
-    variance_s: float, 1D array
+    variance_s : float, 1D array
         variance of residuals for fit for data section
 
-    sig_intercept_s: float, 1D array
+    sig_intercept_s : float, 1D array
         sigma of y-intercepts from fit for data section
 
-    sig_slope_s: float, 1D array
+    sig_slope_s : float, 1D array
         sigma of slopes from fit for data section
     """
     # For pixels not saturated, recalculate the slope as the value of the SCI
@@ -2123,55 +2106,53 @@ def fit_1_group(slope_s, intercept_s, variance_s, sig_intercept_s,
 def fit_2_group(slope_s, intercept_s, variance_s, sig_intercept_s,
                 sig_slope_s, npix, data, mask_2d, rn_sect_1d):
     """
-    Extended Summary
-    ----------------
     This function sets the fitting arrays for datasets having only 2 groups
     per integration.
 
     Parameters
     ----------
-    slope_s: float, 1D array
+    slope_s : float, 1D array
         weighted slope for current iteration's pixels for data section
 
-    intercept_s: float, 1D array
+    intercept_s : float, 1D array
         y-intercepts from fit for data section
 
-    variance_s: float, 1D array
+    variance_s : float, 1D array
         variance of residuals for fit for data section
 
-    sig_intercept_s: float, 1D array
+    sig_intercept_s : float, 1D array
         sigma of y-intercepts from fit for data section
 
-    sig_slope_s: float, 1D array
+    sig_slope_s : float, 1D array
         sigma of slopes from fit for data section
 
-    npix: int
+    npix : int
         number of pixels in 2d array
 
-    data: float
+    data : float
         array of values for current data section
 
-    mask_2d: bool, 2D array
+    mask_2d : bool, 2D array
         delineates which channels to fit for each pixel
 
-    rn_sect_1d: float, 1D array
+    rn_sect_1d : float, 1D array
         read noise values for all pixels in data section
 
     Returns
     -------
-    slope_s: float, 1D array
+    slope_s : float, 1D array
         weighted slope for current iteration's pixels for data section
 
-    intercept_s: float, 1D array
+    intercept_s : float, 1D array
         y-intercepts from fit for data section
 
-    variance_s: float, 1D array
+    variance_s : float, 1D array
         variance of residuals for fit for data section
 
-    sig_intercept_s: float, 1D array
+    sig_intercept_s : float, 1D array
         sigma of y-intercepts from fit for data section
 
-    sig_slope_s: float, 1D array
+    sig_slope_s : float, 1D array
         sigma of slopes from fit for data section
     """
     # For pixels saturated on the first group, overwrite fit values with
@@ -2229,8 +2210,6 @@ def fit_2_group(slope_s, intercept_s, variance_s, sig_intercept_s,
 
 def calc_num_seg(gdq, n_int):
     """
-    Extended Summary
-    ----------------
     Calculate the maximum number of segments that will be be fit within an
     integration, calculated over all pixels and all integrations.  This value
     is based on the locations of cosmic ray-affected pixels in all of the ramps,
@@ -2238,16 +2217,16 @@ def calc_num_seg(gdq, n_int):
 
     Parameters
     ----------
-    gdq: float, 3D array
+    gdq : float, 3D array
         cube of GROUPDQ array for a data
 
-    n_int: int
+    n_int : int
         total number of integrations in data set
 
     Return:
     -------
-    int(max_cr) +1; int
-        maxmimum number of segments; n CRS implies n+1 segments
+    max_num_seg : int
+        maxmimum number of segments which can not exceed the number of groups
     """
     max_cr = 0  # max number of CRS for all integrations
 
@@ -2258,37 +2237,42 @@ def calc_num_seg(gdq, n_int):
         temp_max_cr = int((gdq_cr.sum(axis=0)).max()/dqflags.group['JUMP_DET'])
         max_cr = max( max_cr, temp_max_cr )
 
-    return int(max_cr) +1 # n CRS implies n+1 segments
+    # Do not want to return a value > the number of groups, which can occur if 
+    #  this is a MIRI dataset in which the first or last group was flagged as 
+    #  DO_NOT_USE and also flagged as a jump. 
+    max_num_seg = int(max_cr) +1 
+    if (max_num_seg > gdq.shape[1]): 
+        max_num_seg = gdq.shape[1]
+
+    return max_num_seg
 
 
 def calc_unwtd_sums(data_masked, xvalues):
     """
-    Short Summary
-    -------------
     Calculate the sums needed to determine the slope and intercept (and sigma
     of each) using an unweighted fit. Unweighted fitting currently not
     supported.
 
     Parameters
     ----------
-    data_masked: float, 2D array
+    data_masked : float, 2D array
         masked values for all pixels in data section
 
-    xvalues: int, 1D array
+    xvalues : int, 1D array
         indices of valid pixel values for all groups
 
     Return:
     -------
-    sumx: float
+    sumx : float
         sum of xvalues
 
-    sumxx: float
+    sumxx : float
         sum of squares of xvalues
 
-    sumxy: float
+    sumxy : float
         sum of product of xvalues and data
 
-    sumy: float
+    sumy : float
         sum of data
 
     """
@@ -2302,8 +2286,6 @@ def calc_unwtd_sums(data_masked, xvalues):
 
 def calc_opt_sums(rn_sect, gain_sect, data_masked, mask_2d, xvalues, good_pix):
     """
-    Short Summary
-    -------------
     Calculate the sums needed to determine the slope and intercept (and sigma of
     each) using the optimal weights.  For each good pixel's segment, from the
     initial and final indices and the corresponding number of counts, calculate
@@ -2314,42 +2296,42 @@ def calc_opt_sums(rn_sect, gain_sect, data_masked, mask_2d, xvalues, good_pix):
 
     Parameters
     ----------
-    rn_sect: float, 2D array
+    rn_sect : float, 2D array
         read noise values for all pixels in data section
 
-    gain_sect: float, 2D array
+    gain_sect : float, 2D array
         gain values for all pixels in data section
 
-    data_masked: float, 2D array
+    data_masked : float, 2D array
         masked values for all pixels in data section
 
-    mask_2d: bool, 2D array
+    mask_2d : bool, 2D array
         delineates which channels to fit for each pixel
 
-    xvalues: int, 2D array
+    xvalues : int, 2D array
         indices of valid pixel values for all groups
 
-    good_pix: int, 1D array
+    good_pix : int, 1D array
         indices of pixels having valid data for all groups
 
     Return:
     -------
-    sumx: float
+    sumx : float
         sum of xvalues
 
-    sumxx: float
+    sumxx : float
         sum of squares of xvalues
 
-    sumxy: float
+    sumxy : float
         sum of product of xvalues and data
 
-    sumy: float
+    sumy : float
         sum of data
 
-    nreads_wtd: float, 1D array
+    nreads_wtd : float, 1D array
         sum of optimal weights
 
-    xvalues: int, 2D array
+    xvalues : int, 2D array
         rolled up indices of valid pixel values for all groups
     """
     c_mask_2d = mask_2d.copy() # copy the mask to prevent propagation
@@ -2464,13 +2446,11 @@ def calc_opt_sums(rn_sect, gain_sect, data_masked, mask_2d, xvalues, good_pix):
 
 def log_stats(c_rates):
     """
-    Short Summary
-    -------------
     Optionally log statistics of detected cosmic rays
 
     Parameters
     ----------
-    c_rates: float, 2D array
+    c_rates : float, 2D array
        weighted count rate
 
     Returns

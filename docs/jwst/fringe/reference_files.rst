@@ -1,30 +1,54 @@
-Reference File Types
-====================
+Reference Files
+===============
 
-The fringe correction step uses a FRINGE reference file, which has the same
-format as the FLAT reference file.  This correction is applied only to MIRI 
-MRS (IFU) mode exposures, which are always single full-frame 2-D images.
+The ``fringe`` step uses a FRINGE reference file.
 
-CRDS Selection Criteria
------------------------
-Fringe reference files are selected by DETECTOR and GRATNG14.
+FRINGE Reference File
+---------------------
+
+:REFTYPE: FRINGE
+:Data model: `~jwst.datamodels.FringeModel`
+
+The FRINGE reference file contains pixel-by-pixel fringing correction
+values.
+
+.. include:: fringe_selection.rst
+
+.. include:: ../includes/standard_keywords.rst
+
+Type Specific Keywords for FRINGE
++++++++++++++++++++++++++++++++++
+In addition to the standard reference file keywords listed above,
+the following keywords are *required* in FRINGE reference files,
+because they are used as CRDS selectors
+(see :ref:`fringe_selectors`):
+
+=========  ==============================
+Keyword    Data Model Name
+=========  ==============================
+DETECTOR   model.meta.instrument.detector
+BAND       model.meta.instrument.band
+=========  ==============================
 
 Reference File Format
----------------------
-Fringe reference files are FITS format with 3 IMAGE extensions and 1
-BINTABLE extension. The primary data array is assumed to be empty. The 3
-IMAGE extensions have the following characteristics:
++++++++++++++++++++++
+FRINGE reference files are FITS format, with 3 IMAGE extensions
+and 1 BINTABLE extension. The FITS primary HDU does not contain a data array.
+The format and content of the file is as follows:
 
-=======  =====  =============  =========
-EXTNAME  NAXIS  Dimensions     Data type
-=======  =====  =============  =========
-SCI      2      ncols x nrows  float
-ERR      2      ncols x nrows  float
-DQ       2      ncols x nrows  integer
-=======  =====  =============  =========
+=======  ========  =====  ==============  =========
+EXTNAME  XTENSION  NAXIS  Dimensions      Data type
+=======  ========  =====  ==============  =========
+SCI      IMAGE       2    ncols x nrows   float
+ERR      IMAGE       2    ncols x nrows   float
+DQ       IMAGE       2    ncols x nrows   integer
+DQ_DEF   BINTABLE    2    TFIELDS = 4     N/A
+=======  ========  =====  ==============  =========
 
-Image dimensions should be 1032 x 1024.
+The values in the ``SCI`` array give the correction values to be applied to
+the science data.
+Because MIRI MRS exposures are always full-frame, the image dimensions
+should be 1032 x 1024.
 
-The BINTABLE extension uses ``EXTNAME=DQ_DEF`` and contains the bit assignments
-of the conditions flagged in the DQ array.
+.. include:: ../includes/dq_def.rst
 

@@ -22,8 +22,10 @@ class MultiExposureModel(DataModel):
     This model has a special member `exposures` that can be used to
     deal with an entire slit at a time.  It behaves like a list::
 
-       >>> multislit_model.exposures.append(image_model)
-       >>> multislit_model.exposures[0]
+       >>> from .image import ImageModel
+       >>> multiexposure_model = MultiExposureModel()
+       >>> multiexposure_model.exposures.append(ImageModel())
+       >>> multiexposure_model.exposures[0]      # doctest: +SKIP
        <ImageModel>
 
     Also, there is an extra attribute, `meta`. This will

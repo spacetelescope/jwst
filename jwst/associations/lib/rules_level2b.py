@@ -18,7 +18,8 @@ __all__ = [
     'Asn_Lv2ImageNonScience',
     'Asn_Lv2ImageSpecial',
     'Asn_Lv2MIRLRSFixedSlitNod',
-    'Asn_Lv2NRSLAMP',
+    'Asn_Lv2NRSLAMPImage',
+    'Asn_Lv2NRSLAMPSpectral',
     'Asn_Lv2NRSMSA',
     'Asn_Lv2Spec',
     'Asn_Lv2SpecSpecial',
@@ -340,11 +341,11 @@ class Asn_Lv2MIRLRSFixedSlitNod(
 
 
 @RegistryMarker.rule
-class Asn_Lv2NRSLAMP(
+class Asn_Lv2NRSLAMPImage(
         AsnMixin_Lv2Special,
         DMSLevel2bBase
 ):
-    """Level2b NIRSpec Lamp calibrations
+    """Level2b NIRSpec Image Lamp calibrations
 
     NRS_LAMP exposures require specific level 2 processing.
     """
@@ -354,6 +355,11 @@ class Asn_Lv2NRSLAMP(
         self.constraints = Constraint([
             Constraint_Base(),
             Constraint_Single_Science(self.has_science),
+            DMSAttrConstraint(
+                name='opt_elem2',
+                sources=['grating'],
+                value='mirror'
+            ),
             DMSAttrConstraint(
                 name='instrument',
                 sources=['instrume'],
@@ -366,12 +372,58 @@ class Asn_Lv2NRSLAMP(
             ),
         ])
 
-        super(Asn_Lv2NRSLAMP, self).__init__(*args, **kwargs)
+        super(Asn_Lv2NRSLAMPImage, self).__init__(*args, **kwargs)
 
     def _init_hook(self, item):
         """Post-check and pre-add initialization"""
 
-        super(Asn_Lv2NRSLAMP, self)._init_hook(item)
+        super(Asn_Lv2NRSLAMPImage, self)._init_hook(item)
+        self.data['asn_type'] = 'nrslamp-image2'
+
+
+@RegistryMarker.rule
+class Asn_Lv2NRSLAMPSpectral(
+        AsnMixin_Lv2Special,
+        DMSLevel2bBase
+):
+    """Level2b NIRSpec spectral Lamp calibrations
+
+    NRS_LAMP exposures require specific level 2 processing.
+    """
+
+    def __init__(self, *args, **kwargs):
+
+        self.constraints = Constraint([
+            Constraint_Base(),
+            Constraint_Single_Science(self.has_science),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        name='opt_elem2',
+                        sources=['grating'],
+                        value='mirror'
+                    )
+                ],
+                reduce=Constraint.notany
+            ),
+            DMSAttrConstraint(
+                name='instrument',
+                sources=['instrume'],
+                value='nirspec'
+            ),
+            DMSAttrConstraint(
+                name='opt_elem',
+                sources=['filter'],
+                value='opaque'
+            ),
+        ])
+
+        super(Asn_Lv2NRSLAMPSpectral, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        super(Asn_Lv2NRSLAMPSpectral, self)._init_hook(item)
         self.data['asn_type'] = 'nrslamp-spec2'
 
 

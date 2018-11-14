@@ -159,7 +159,6 @@ def read_cubepars(par_filename,
 # Read MIRI Resolution reference file
 #********************************************************************************
 def read_resolution_file(resol_filename,
-                         channel,
                          all_channel,
                          all_subchannel,
                          instrument_info):
@@ -173,7 +172,6 @@ def read_resolution_file(resol_filename,
     Parameters
     ----------
     resol_filename: MIRI resolution reference table
-    channel: channels working with
     all_channel: all the channels contained in input data
     all_subchannel: all subchannels contained in input data
     instrument_info holds the  MIRI psf weighting parameters
@@ -210,8 +208,7 @@ def read_resolution_file(resol_filename,
                                             table_beta_a_long,
                                             table_beta_b_long)
 
-    number_bands = len(channel)
-
+    number_bands = len(all_channel)
         # pull out the channels and subcahnnels that cover the data making up the cube
     for i in range(number_bands):
         this_channel = all_channel[i]
@@ -233,6 +230,7 @@ def read_resolution_file(resol_filename,
             if compare_band == table_sub_band:
                 instrument_info.Set_RP_Wave_Cutoff(table_wave_center,
                                                   this_channel, this_sub)
+
                 instrument_info.Set_RP_low(table_res_a_low,
                                           table_res_b_low,
                                           table_res_c_low,

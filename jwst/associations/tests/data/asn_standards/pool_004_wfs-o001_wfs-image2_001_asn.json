@@ -2,12 +2,12 @@
     "asn_type": "wfs-image2",
     "asn_rule": "candidate_Asn_Lv2WFSC",
     "version_id": null,
-    "code_version": "0.12.0a.dev115",
+    "code_version": "0.12.0a.dev191",
     "degraded_status": "No known degraded exposures in association.",
-    "program": "99009",
-    "target": "1",
+    "program": "00747",
+    "target": "2",
     "asn_pool": "pool_004_wfs",
-    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '99009'})\nDMSAttrConstraint({'name': 'is_tso', 'sources': ['tsovisit'], 'value': None})\nConstraint_Single_Science({'name': 'single_science', 'value': False})\nDMSAttrConstraint({'name': 'wfsc', 'sources': ['visitype'], 'value': 'prime_wfsc_sensing_control'})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o001\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '747'})\nDMSAttrConstraint({'name': 'is_tso', 'sources': ['tsovisit'], 'value': None})\nConstraint_Single_Science({'name': 'single_science', 'value': False})\nDMSAttrConstraint({'name': 'wfsc', 'sources': ['visitype'], 'value': 'prime_wfsc_sensing_control'})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o001\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
     "asn_id": "o001",
     "products": [
         {
@@ -16,7 +16,7 @@
                 {
                     "expname": "jw_00001_rate.fits",
                     "exptype": "science",
-                    "exposerr": null
+                    "exposerr": "null"
                 }
             ]
         }

@@ -1,4 +1,4 @@
-0.12.0 (unreleased)
+0.13.0 (Unreleased)
 ===================
 
 ami
@@ -7,32 +7,8 @@ ami
 assign_wcs
 ----------
 
-- The bounding box for Nirspec WCS objects was modified to include the
-  edges of the pixels. [#2491]
-
-- Updated assign_wcs to compute the sky footprint of MIRI MRS and Nirspec
-  IFU observations. [#2472]
-
-- Fix minor bug in catalog.utl.get_object_info()[#2550]
-
-- Make GrismObject.partial_order a lookup dict on order and fix partial_order logic [#2643]
-
-- Add tests for grism modes [#2649]
-
 associations
 ------------
-
-- Updated Level2 product naming to use pipeline's remove_suffix. [#2481]
-
-- Added rule Asn_Lv2NRSIFUNod to handle nod backgrounds for NIRspec IFU [#2532]
-
-- Changed deprecated logger.warn to logger.warning. [#2519]
-
-- Made NIRISS WFSS Level2 associations exclusive. [#2555]
-
-- Added new rule Asn_Lv2WFSC and new association type wfs-image2 [#2599]
-
-- Added new rule Asn_Lv2MIRLRSFixedSlitNod to handle LRS Fixed-slit nodding. [#2663]
 
 background
 ----------
@@ -52,8 +28,6 @@ csv_tools
 
 cube_build
 ----------
-This version supports creating IFU Cubes with non-linear wavelength dimension. [#2598]
-
 
 cube_skymatch
 -------------
@@ -63,11 +37,6 @@ dark_current
 
 datamodels
 ----------
-
-- Initialize arrays and tables from function args in model_base [#2502]
-
-- Truncate long schema validation errors to 2000 characters [#2657]
-
 
 dq_init
 -------
@@ -87,27 +56,17 @@ extract_1d
 extract_2d
 ----------
 
-- WFSS modes updated to allow specific order extraction, updated wavelengthrange reference file delivered as part of these changes [#1801]
-
-- add bounding box to wfss output SlitModel [#2643]
-
-- add tests for grism modes [#2649]
-
 firstframe
 ----------
-
 
 fits_generator
 --------------
 
-- NIRSpec data now automatically sanitizes the GWA_TILT keyword. [#2494]
-
-
 flatfield
 ---------
-
-- Modified the code to find the dispersion direction. [#2492]
-- Changed the handling of zero wavelengths for NIRSpec data. [#2659]
+- Updated to not extrapolate for wavelengths that are out of bounds,
+  either due to the WCS, or the wavelengths for a flat-field image cube,
+  or the wavelengths for the fast-variation component. [#2775]
 
 fringe
 ------
@@ -139,8 +98,325 @@ lastframe
 lib
 ---
 
-- Updated reffiles_utils to no longer issue warnings about mismatch in 
+linearity
+---------
+
+model_blender
+-------------
+
+
+mrs_imatch
+----------
+
+msaflagopen
+-----------
+
+
+outlier_detection
+-----------------
+
+pathloss
+--------
+
+persistence
+-----------
+
+photom
+------
+
+pipeline
+--------
+
+ramp_fitting
+------------
+
+refpix
+------
+
+resample
+--------
+
+reset
+-----
+
+rscd
+----
+
+saturation
+----------
+
+skymatch
+--------
+
+source_catalog
+--------------
+
+srctype
+-------
+
+scripts
+-------
+
+stpipe
+------
+
+straylight
+----------
+
+superbias
+---------
+
+timeconversion
+--------------
+
+
+transforms
+----------
+
+tso_photometry
+--------------
+
+tweakreg
+--------
+
+wfs_combine
+-----------
+
+white_light
+-----------
+
+wiimatch
+--------
+
+
+0.12.2 (2018-11-15)
+===================
+
+associations
+------------
+
+- Updated rules based on actual OTB phasing data. [#2831]
+
+wfs_combine
+-----------
+
+- Renamed the configuration from `wfs_combine` to `calwebb_wfs-image3`. [#2831]
+
+
+0.12.1 (2018-10-30)
+===================
+
+The 0.12.0 release is highlighted by the completion of updates for level-2b WFSS
+processing, support for non-linear wavelength sampling in IFU cubes, and several
+Associations updates to support WFS&C observations and background nodding.
+This release had 53 issues closed and a number of pull requests to improve PEP8
+compliance, improve performance, enhance the testing, and remove all python2
+dependencies.  The release also included updated documentation of CRDS reference files.
+
+ami
+---
+
+assign_wcs
+----------
+
+- The bounding box for NIRSpec WCS objects was modified to include the
+  edges of the pixels. [#2491]
+
+- Updated assign_wcs to compute the sky footprint of MIRI MRS and NIRSpec
+  IFU observations. [#2474]
+
+- Fixed minor bug in catalog.utl.get_object_info [#2550]
+
+- Fixed bug in bounding_box_from_shape function [#2558]
+
+- Make GrismObject.partial_order a lookup dict on order and fix partial_order logic [#2643]
+
+- Added unit tests for grism modes [#2649]
+
+- Augmented the logic for choosing a Nirspec WCS mode to include a check for the value
+  of ``GRATING``. If ``GRATING=MIRROR`` imaging mode is chosen reegardless of ``EXP_TYPE``. [#2761]
+
+- Added new NIRSpec target acq exposure types NRS_WATA and NRS_MSATA to be
+  assigned an imaging WCS. Removed NRS_BOTA. [#2781]
+
+associations
+------------
+
+- Updated Level2 product naming to use pipeline's remove_suffix. [#2481]
+
+- Added rule Asn_Lv2NRSIFUNod to handle nod backgrounds for NIRSpec IFU [#2532]
+
+- Changed deprecated logger.warn to logger.warning. [#2519]
+
+- Made NIRISS WFSS Level2 associations exclusive. [#2555]
+
+- Added new rule Asn_Lv2WFSC and new association type wfs-image2, including a new
+  configuration file "calwebb_wfs-image2.cfg" [#2599]
+
+- Added new rule Asn_Lv2MIRLRSFixedSlitNod to handle LRS Fixed-slit nodding. [#2663]
+
+- Updated MIRI Dark and Flat exposure keywords. [#2698, #2710]
+
+- Updated coronagraphy associations to be integrations-based. [#2773]
+
+- Updated NIRSpec Lamp calibrations to be grating-specific. [#2780]
+
+- Added new NIRSpec target acq exposure types NRS_WATA and NRS_MSATA. [#2780]
+
+background
+----------
+
+barshadow
+---------
+
+
+combine_1d
+----------
+
+coron
+-----
+
+csv_tools
+---------
+
+cube_build
+----------
+
+- Added support for creating IFU Cubes with non-linear wavelength sampling,
+  including use of FITS WCS "WAVE-TAB" standard. [#2598]
+- Correctly writing TDIM2 to WCS-TABLE extension [#2719]
+- Fixed error when making IFUCubes with weighting='miripsf' [#2719]
+
+cube_skymatch
+-------------
+
+dark_current
+------------
+
+datamodels
+----------
+
+- Initialize arrays and tables from function args in model_base [#2502]
+
+- Updated guidestar centroid table column data type [#2526]
+
+- Updated BAND keyword allowed values to include cross-dichroic combinations [#2530]
+
+- Truncate long schema validation error messages to 2000 characters [#2657]
+
+- Various keyword changes, including new EXP_ONLY keyword [#2414]
+
+- Added validate_required_fields to datamodels base, so that "fits_required" is
+  checked when writing a model to a file [#2589]
+
+- Added new keywords PWFSEET, NWFSEST, DATE-BEG and made updates to conform to
+  FITS convention for units included in keyword comments [#2595]
+
+- Updated allowed SUBARRAY names for FGS and NIRCam [#2667]
+
+- Updates for python 2 to 3 conversion [#2678]
+
+- Updated EXP_TYPE allowed values to include "MIR_DARKALL", "MIR_DARKIMG",
+  "MIR_DARKMRS", "MIR_FLATALL", "MIR_FLATIMAGE-EXT", and "MIR_FLATMRS-EXT" [#2709]
+
+- Updated the MiriResolutionModel schema to have column names match the actual
+  reference files [#2757]
+
+- Updated EXP_TYPE allowed values to remove NRS_BOTA and replace with NRS_MSATA
+  and NRS_WATA [#2772]
+
+documentation
+-------------
+
+- Clarifications of input and output file naming. [#2727]
+
+dq_init
+-------
+
+- Added ValueError check when loading the input into a data model [#2543]
+
+emission
+--------
+
+engdblog
+--------
+
+exp_to_source
+-------------
+
+extract_1d
+----------
+
+- Added or modified docstrings [#2769]
+
+extract_2d
+----------
+
+- WFSS modes updated to only extract specific orders, including delivery of updated
+  wavelengthrange reference file [#1801]
+
+- Fixed NIRSpec cutout size bug related to FITS 1-indexing [#2541]
+
+- Added bounding box to WFSS output SlitModel [#2643]
+
+- Added unit tests for grism modes [#2649]
+
+- Bounding box sizes in extracted WFSS exposures now correctly cover entire extraction [#2799]
+
+firstframe
+----------
+
+
+fits_generator
+--------------
+
+- NIRSpec data now automatically sanitizes the GWA_TILT keyword. [#2494]
+
+
+flatfield
+---------
+
+- Modified the code to find the dispersion direction. [#2492]
+
+- Changed the handling of zero wavelengths for NIRSpec data. [#2659]
+
+fringe
+------
+
+gain_scale
+----------
+
+group_scale
+-----------
+
+guider_cds
+----------
+
+imprint
+-------
+
+ipc
+---
+
+jump
+----
+
+- Updated step docs, as well as gain and readnoise reference file docs [#2689]
+
+jwpsf
+-----
+
+lastframe
+---------
+
+lib
+---
+
+- Updated reffiles_utils to no longer issue warnings about mismatch in
   data array size params for NIRSpec IRS2 readouts. [#2664]
+
+- Updated reffiles_utils to regard IRS2 science exposures as a match with normal
+  sized reference files. [#2755]
 
 linearity
 ---------
@@ -173,9 +449,29 @@ pipeline
 
 - Added new Image2Pipeline configuration calwebb_wfs-image2.cfg for WFS&C processing [#2599]
 
+- Renamed calwebb_tso_image2, calwebb_tso_spec2, and calwebb_nrslamp_spec2 configuration files to
+  calwebb_tso-image2.cfg, calwebb_tso-spec2.cfg, and calwebb_nrslamp-spec2.cfg [#2639]
+
+- Updated the order of MIRI steps in calwebb_detector1 and calwebb_dark. [#2669]
+
+- Updated Image2Pipeline and Spec2Pipeline to properly return "cal" results. [#2676]
+
+
 ramp_fitting
 ------------
 
+- Improved memory management; Corrected handling of groups in which all pixels have
+  insufficient data for a first difference; Corrected handling of ramps whose initial group
+  is saturated; Corrected handling of ramps whose single good segment is a single group. [#2464]
+
+- Updated gain and readnoise reference file docs [#2689]
+
+- Fixed bug so that an integration-specific (_rateints) product is only created when
+  NINTS>1; Skip MIRI first and/or last groups when flagged as DO_NOT_USE. [#2760]
+
+- Fixed bug in which the number of segments returned exceeds the number  
+  of groups, which had occurred for a MIRI dataset in which the first or last 
+  group was flagged as DO_NOT_USE and also flagged as a jump. [#2834]
 
 refpix
 ------
@@ -183,7 +479,7 @@ refpix
 resample
 --------
 
-- Make finding dispersion axis more robust in resample [#2644]
+- Made finding the dispersion axis more robust [#2644]
 
 reset
 -----
@@ -194,8 +490,12 @@ rscd
 saturation
 ----------
 
+- Updated step docs, as well as saturation reference file docs [#2689]
+
 skymatch
 --------
+
+- Made skymatch to not fail in 'match' mode when images do not overlap [#2803]
 
 source_catalog
 --------------
@@ -226,7 +526,7 @@ transforms
 
 - NIRISS models updated to allow for negative filter wheel rotations [#1801]
 
-- make partial_order attribute of GrismObject as lookup dict on order [#2643]
+- Made partial_order attribute of GrismObject as lookup dict on order [#2643]
 
 tso_photometry
 --------------
@@ -234,8 +534,26 @@ tso_photometry
 tweakreg
 --------
 
-- Updated tweakreg to use `wcs.available_frames` to get the names of the frames in
-  a WCS pipeline. [#2590]
+- Modified default configuration settings: increased "kernel_fwhm" from 2.0
+  to 2.5, increased "snr_threshold" from 3 to 10,
+  and changed "enforce_user_order" from True to False. [#2510]
+
+- Updated tweakreg to use ``wcs.available_frames`` to get the names of the
+  frames in a WCS pipeline. [#2590, #2594, #2629]
+
+- Made the code more robust with images without sources [#2796]
+
+- Made the logic for computations of footprints more reliable for the
+  case of 1 or 2 sources in a catalog. [#2797]
+
+
+- Added two new parameters: ``brightest`` to keep the top ``brightest``
+  (based on the flux) objects in the object catalog *after all other
+  filtering has been applied* and ``peakmax`` to exclude sources with
+  peak pixel values larger or equal to ``peakmax``. ``brightest`` can be used
+  to eliminate false detections and ``peakmax`` can be used to filter out
+  saturated sources (instrument-specific value).[#2706]
+
 wfs_combine
 -----------
 
@@ -319,10 +637,13 @@ csv_tools
 cube_build
 ---------
 - Removed spaxel.py and replace class with set of arrays [#2472]
+
 - reworked in mapping of the detector pixel to the sky spaxel so that consistent
   code can be used for both MIRI and NIRSPEC data [#2472]
+
 - Removed some loops in cube_cloud.py for finding which pixels fall in roi
   of spaxels [#2472]
+
 - In a test with MIRI data there was a 13% improvement in the speed of making IFUcubes. In the
   NIRSPEC case there was a 40% improvment in the speed of creating IFUCubes.
 
@@ -447,7 +768,7 @@ outlier_detection
 pathloss
 --------
 
-- added support for NIRISS SOSS [#2588]
+- Added support for correcting NIRISS SOSS mode exposures [#2588]
 
 persistence
 -----------
@@ -517,6 +838,8 @@ stpipe
 ------
 
 - Fixed bug to allow not being able to find a default input file name [#2461]
+
+- Removed python2-3 dependency in crds_client [#2593]
 
 straylight
 ----------
@@ -690,6 +1013,7 @@ linearity
 
 model_blender
 -------------
+
 - An example has been added to the model_blener documentation for how to blend meta information [#2206]
 
 mrs_imatch
@@ -715,13 +1039,13 @@ photom
 pipeline
 --------
 
--Update the calwebb_tso1 cfg file to skip the firstframe step and save the corrected ramp product. [#2280]
-
+- Update the calwebb_tso1 cfg file to skip the firstframe step and save the corrected ramp product. [#2280]
 
 - Implement TSO-specific Level2 configurations [#2297]
 
 ramp_fitting
 ------------
+
 - Corrected handling of ramps whose first differences are all NaNs (such as ramps with all groups saturated) [#2289]
 
 refpix
@@ -781,7 +1105,6 @@ timeconversion
 
 - Fix the problem in timeconversion that was caused by a recent addition of a new field to the ephemeris by retrieving only the fields needed. [#2296]
 
-
 transforms
 ----------
 
@@ -793,8 +1116,6 @@ tso_photometry
 - Added a new model for setting parameters for TSO photometry [#2239]
 
 - Add a  reference file for use with tso_photometry [#2254, #2264]
-
-
 
 tweakreg
 --------

@@ -14,7 +14,7 @@ DEFAULT_FORMAT = 'ascii'
 class AssociationPool(Table):
     """Association Pool
 
-    An AssociationPool is essentially and astropy Table with the
+    An ``AssociationPool`` is essentially an astropy Table with the
     following default behaviors:
 
     - ASCII tables with a default delimiater of `|`
@@ -30,6 +30,22 @@ class AssociationPool(Table):
             **kwargs
     ):
         """Read in a Pool file
+
+        Parameters
+        ----------
+        filename: str
+            File path to read in as a table.
+
+        delimiter: str
+            Character used to delineate columns.
+
+        format: str
+            The format of the input file.
+
+        Returns
+        -------
+        AssociationPool
+            The ``AssociationPool`` representation of the file.
         """
         table = super(AssociationPool, cls).read(
             filename, delimiter=delimiter,
@@ -52,6 +68,22 @@ class AssociationPool(Table):
 
     def write(self, *args, **kwargs):
         """Write the pool to a file.
+
+        Parameters
+        ----------
+        output: str, file-like
+            The output file or file-like object.
+
+        delimiter: str
+            The string to use to delineate columns.
+            Default is '|'.
+
+        format: str
+            The format the file should be written in.
+            Default is 'ascii'.
+
+        args, kwargs: obj
+            Other parameters that ``astropy.io.ascii.write`` can accept.
         """
         delimiter = kwargs.pop('delimiter', DEFAULT_DELIMITER)
         format = kwargs.pop('format', DEFAULT_FORMAT)

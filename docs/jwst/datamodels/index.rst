@@ -1,3 +1,5 @@
+.. _data-models:
+
 ===========
 Data Models
 ===========

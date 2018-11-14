@@ -10,7 +10,8 @@ import logging
 import numpy as np
 
 
-__all__ = ['iter_linear_fit', 'build_fit_matrix']
+__all__ = ['iter_linear_fit', 'build_fit_matrix', 'SingularMatrixError',
+           'NotEnoughPointsError']
 
 __author__ = 'Mihai Cara, Warren Hack'
 
@@ -25,6 +26,19 @@ elif hasattr(np, 'float96'):
     ndfloat128 = np.float96
 else:
     ndfloat128 = np.float64
+
+
+class SingularMatrixError(Exception):
+    """ An error class used to report when a singular matrix is encountered."""
+    pass
+
+
+class NotEnoughPointsError(Exception):
+    """
+    An error class used to report when there are not enough points to
+    find parameters of a linear transformation.
+    """
+    pass
 
 
 def iter_linear_fit(xy, uv, xyindx=None, uvindx=None, xyorig=None, uvorig=None,
@@ -150,7 +164,9 @@ def fit_shifts(xy, uv):
 
     """
     if len(xy) < 1:
-        raise ValueError("At least one point is required to find shifts.")
+        raise NotEnoughPointsError(
+            "At least one point is required to find shifts."
+        )
 
     diff_pts = xy - uv
     meanx = (diff_pts[:, 0].mean(dtype=np.float64)).astype(np.float64)
@@ -183,8 +199,10 @@ def fit_rscale(xyin, xyref):
         Dictionary containing full solution for fit.
     """
     if len(xyin) < 2:
-        raise ValueError("At least two points are required to find "
-                         "shifts, rotation, and scale.")
+        raise NotEnoughPointsError(
+            "At least two points are required to find shifts, rotation, and "
+            "scale."
+        )
 
     dx = xyref[:, 0].astype(ndfloat128)
     dy = xyref[:, 1].astype(ndfloat128)
@@ -239,7 +257,9 @@ def fit_rscale(xyin, xyref):
     elif s_denom > 0.0:
         mag = s_num / s_denom
     else:
-        raise ArithmeticError("Singular matrix.")
+        raise SingularMatrixError(
+            "Singular matrix: suspected colinear points."
+        )
 
     if det < 0:
         # "flip" y-axis (reflection about x-axis *after* rotation)
@@ -281,7 +301,9 @@ def _inv3x3(x):
     m = np.array([np.cross(x1, x2), np.cross(x2, x0), np.cross(x0, x1)])
     d = np.dot(x0, np.cross(x1, x2))
     if np.abs(d) < np.finfo(np.float64).tiny:
-        raise ArithmeticError("Singular matrix.")
+        raise SingularMatrixError(
+            "Singular matrix: suspected colinear points."
+        )
     return (m / d)
 
 
@@ -307,8 +329,10 @@ def fit_general(xy, uv):
 
     """
     if len(xy) < 3:
-        raise ValueError("At least three points are required to find "
-                         "6-parameter linear affine transformations.")
+        raise NotEnoughPointsError(
+            "At least three points are required to find 6-parameter linear "
+            "affine transformations."
+        )
 
     # Set up products used for computing the fit
     gxy = xy.astype(ndfloat128)
@@ -341,7 +365,9 @@ def fit_general(xy, uv):
     P = np.dot(invM, U).astype(np.float64)
     Q = np.dot(invM, V).astype(np.float64)
     if not (np.all(np.isfinite(P)) and np.all(np.isfinite(Q))):
-        raise ArithmeticError("Singular matrix.")
+        raise SingularMatrixError(
+            "Singular matrix: suspected colinear points."
+        )
 
     # Return the shift, rotation, and scale changes
     result = build_fit(P, Q, 'general')

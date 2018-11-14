@@ -62,9 +62,8 @@ def create_coordinate_arrays(image_shape, center=None, image2world=None,
 
     Examples
     --------
->>> import wiimatch
->>> wiimatch.utils.create_coordinate_arrays((3,5,4))
-((array([[[-1.,  0.,  1.,  2.],
+    >>> create_coordinate_arrays((3,5,4))
+        ((array([[[-1.,  0.,  1.,  2.],
           [-1.,  0.,  1.,  2.],
           [-1.,  0.,  1.,  2.],
           [-1.,  0.,  1.,  2.],

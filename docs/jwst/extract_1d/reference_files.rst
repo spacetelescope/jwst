@@ -1,15 +1,34 @@
 Reference File
 ==============
-The reference file is a text file that uses JSON to hold the information
-needed.
+The ``extract_1d`` step uses an EXTRACT1D reference file.
 
-CRDS Selection Criteria
------------------------
-The file is selected based on the values of DETECTOR and FILTER (and
-GRATING for NIRSpec).
+EXTRACT1D Reference File
+------------------------
+The EXTRACT1D reference file contains information needed to guide
+the 1-D extraction process. It is a text file, with the information
+in JSON format.
 
-Extract_1D Reference File Format
---------------------------------
+.. include:: extract1d_selection.rst
+
+.. include:: ../includes/standard_keywords.rst
+
+Type Specific Keywords for EXTRACT1D
+++++++++++++++++++++++++++++++++++++
+In addition to the standard reference file keywords listed above,
+the following keywords are *required* in EXTRACT1D reference files,
+because they are used as CRDS selectors
+(see :ref:`extract1d_selectors`):
+
+=========  ==============================
+Keyword    Data Model Name
+=========  ==============================
+EXP_TYPE   model.meta.exposure.type
+=========  ==============================
+
+Reference File Format
++++++++++++++++++++++
+EXTRACT1D reference files are text files, with the information stored in
+JSON format.
 All the information is specified in a list with key ``apertures``.  Each
 element of this list is a dictionary, one for each aperture (e.g. a slit)
 that is supported by the given reference file.  The particular dictionary
@@ -17,7 +36,7 @@ to use is found by matching the slit name in the science data with the
 value of key ``id``.  Key ``spectral_order`` is optional, but if it is
 present, it must match the expected spectral order number.
 
-The following keys are supported (but for IFU data, see below).
+The following keys are supported for non-IFU data (see below for IFU keys).
 Key ``id`` is the primary criterion for selecting which element of
 the ``apertures`` list to use.  The slit name (except for a full-frame
 input image) is compared with the values of ``id`` in the ``apertures``
@@ -29,7 +48,8 @@ distinguished by using the secondary selection criterion ``spectral_order``.
 In this case, the various spectral orders would likely have different
 extraction locations within the image, so different elements of ``apertures``
 are needed in order to specify those locations.
-If key ``dispaxis`` is specified, that value will be used.  If it was
+If key ``dispaxis`` is specified, its value will be used to set the
+dispersion direction within the image.  If ``dispaxis`` is
 not specified, the dispersion direction will be taken to be the axis
 along which the wavelengths change more rapidly.
 Key ``region_type`` can be omitted, but if it is specified, its value must
@@ -63,7 +83,7 @@ still be used for the limits in the dispersion direction.  Background
 subtraction will be done if and only if ``bkg_coeff`` is given.  See below
 for further details.
 
-For IFU cube data, these keys are used instead of the above:
+For IFU cube data, the following keys are used instead of those above:
 
 * id: the slit name, but this can be "ANY" (string)
 * x_center: X pixel coordinate of the target (pixels, float, the default
@@ -188,3 +208,57 @@ specified, a value of 0 will be used, i.e. a constant function, the mean
 value.  The polynomial will then be evaluated at each pixel within the
 source extraction region for that column (row), and the fitted values will
 be subtracted (pixel by pixel) from the source count rate.
+
+Example EXTRACT1D Reference File
+--------------------------------
+The following JSON was taken as an example from reference file
+jwst_niriss_extract1d_0003.json::
+  {
+      "REFTYPE": "EXTRACT1D",
+      "INSTRUME": "NIRISS",
+      "TELESCOP": "JWST",
+      "DETECTOR": "NIS",
+      "EXP_TYPE": "NIS_SOSS",
+      "PEDIGREE": "GROUND",
+      "DESCRIP": "NIRISS SOSS extraction params for ground testing",
+      "AUTHOR": "M.Wolfe, H.Bushouse",
+      "HISTORY": "This reference file is for used in Build 7.1 of the JWST Calibraton pipeline. The regions are rectagular and do not follow the trace.",
+      "USEAFTER": "2015-11-01T00:00:00",
+      "apertures": [
+        {
+        "id": "FULL",
+        "region_type": "target",
+        "bkg_coeff": [[2014.5],[2043.5]],
+        "xstart":    4,
+        "xstop":  2044,
+        "ystart": 1792,
+        "ystop":  1972,
+        "dispaxis": 1,
+        "extract_width": 181
+        },
+
+        {
+        "id": "SUBSTRIP256",
+        "region_type": "target",
+        "bkg_coeff": [[221.5],[251.5]],
+        "xstart":   4,
+        "xstop": 2044,
+        "ystart": 20,
+        "ystop":  220,
+        "dispaxis": 1,
+        "extract_width": 201
+        },
+
+        {
+        "id": "SUBSTRIP96",
+        "region_type": "target",
+        "bkg_coeff": [[1.5],[8.5],[92.5],[94.5]],
+        "xstart":   4,
+        "xstop": 2044,
+        "ystart":  10,
+        "ystop":   92,
+        "dispaxis": 1,
+        "extract_width": 83
+        }]
+  }
+

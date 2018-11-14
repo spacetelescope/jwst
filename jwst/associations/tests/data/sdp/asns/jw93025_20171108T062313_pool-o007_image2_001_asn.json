@@ -2,7 +2,7 @@
     "asn_type": "image2",
     "asn_rule": "candidate_Asn_Lv2Image",
     "version_id": null,
-    "code_version": "0.12.0a.dev115",
+    "code_version": "0.12.0a.dev181",
     "degraded_status": "No known degraded exposures in association.",
     "program": "93025",
     "target": "2",
@@ -14,7 +14,7 @@
             "name": "jw93025007001_02102_00001_nrca2",
             "members": [
                 {
-                    "expname": "jw93025007001_02102_00001_nrca2_rate.fits",
+                    "expname": "jw93025007001_02102_00001_nrca2_rateints.fits",
                     "exptype": "science",
                     "exposerr": "null"
                 }

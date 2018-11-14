@@ -45,7 +45,7 @@ NIR Detector Data
 #. It is assumed that a superbias correction has been performed.
 #. For each integration, and for each group:
     #. Calculate the mean value in the top and bottom reference pixels.  The reference pixel means for each amplifier are calculated separately, and the top and bottom means are calculated separately.  Optionally, the user can choose to calculate the means of odd and even columns separately by using the ``--odd_even_columns`` runtime parameter, as evidence has been found that there is a significant odd-even column effect in some datasets.  Bad pixels (those whose DQ flag has the DO_NOT_USE bit set) are not included in the calculation of the mean.
-    #. The mean is calculated as a clipped mean with a 3-sigma rejection threshold.
+    #. The mean is calculated as a clipped mean with a 3-sigma rejection threshold using the scipy.stats.sigmaclip method.
     #. Average the top and bottom reference pixel mean values
     #. Subtract each mean from all pixels that the mean is representative of, i.e. by amplifier and using the odd mean for the odd pixels and even mean for even pixels if this option is selected.
     #. If the ``--use_side_ref_pixels`` option is selected, use the reference pixels up the side of the A and D amplifiers to calculate a smoothed reference pixel signal as a function of row.  A running median of height set by the runtime parameter ``side_smoothing_length`` (default value 11) is calculated for the left and right side reference pixels, and the overall reference signal is obtained by averaging the left and right signals.  A multiple of this signal (set by the runtime parameter ``side_gain``, which defaults to 1.0) is subtracted from the full group on a row-by-row basis.
@@ -57,7 +57,7 @@ MIR Detector Data
 #. MIR data is already in the detector frame, so no flipping/rotation is needed
 #. Subtract the first group from each group within an integration.
 #. For each integration, and for each group after the first:
-    #. Calculate the mean value in the reference pixels for each amplifier. The left and right side reference signals are calculated separately. Optionally, the user can choose to calculate the means of odd and even rows separately using the ``--odd_even_rows`` runtime parameter, as it has been found that there is a significant odd-even row effect.  Bad pixels (those whose DQ flag has the DO_NOT_USE bit set) are not included in the calculation of the mean. The mean is calculated as a clipped mean with a 3-sigma rejection threshold.
+    #. Calculate the mean value in the reference pixels for each amplifier. The left and right side reference signals are calculated separately. Optionally, the user can choose to calculate the means of odd and even rows separately using the ``--odd_even_rows`` runtime parameter, as it has been found that there is a significant odd-even row effect.  Bad pixels (those whose DQ flag has the DO_NOT_USE bit set) are not included in the calculation of the mean. The mean is calculated as a clipped mean with a 3-sigma rejection threshold using the scipy.stats.sigmaclip method.
     #. Average the left and right reference pixel mean values
     #. Subtract each mean from all pixels that the mean is representative of, i.e. by amplifier and using the odd mean for the odd row pixels and even mean for even row pixels if this option is selected.
     #. Add the first group of each integration back to each group.

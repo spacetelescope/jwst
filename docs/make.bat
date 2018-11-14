@@ -6,6 +6,7 @@ if "%SPHINXBUILD%" == "" (
         set SPHINXBUILD=sphinx-build
 )
 set BUILDDIR=_build
+set APIDIR=api
 set ALLSPHINXOPTS=-d %BUILDDIR%/doctrees %SPHINXOPTS% .
 if NOT "%PAPER%" == "" (
         set ALLSPHINXOPTS=-D latex_paper_size=%PAPER% %ALLSPHINXOPTS%
@@ -17,6 +18,7 @@ if "%1" == "" goto help
 if "%1" == "help" (
 	:help
 	echo.Please use `make ^<target^>` where ^<target^> is one of
+        echo. clean      to clean files from previous build
 	echo.  html      to make standalone HTML files
 	echo.  dirhtml   to make HTML files named index.html in directories
 	echo.  pickle    to make pickle files
@@ -33,7 +35,9 @@ if "%1" == "help" (
 if "%1" == "clean" (
 	for /d %%i in (%BUILDDIR%\*) do rmdir /q /s %%i
 	del /q /s %BUILDDIR%\*
-	goto end
+        for /d %%i in (%APIDIR%\*) do rmdir /q /s %%i
+        del /q /s %APIDIR%\*
+        goto end
 )
 
 if "%1" == "html" (

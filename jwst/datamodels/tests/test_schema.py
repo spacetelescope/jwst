@@ -619,8 +619,22 @@ def test_merge_property_trees(combiner):
     assert f == s
 
 
+
 def test_schema_docstring():
     template = "{fits_hdu} {title}"
     docstring = build_docstring(ImageModel, template).split("\n")
     for i, hdu in enumerate(('SCI', 'DQ', 'ERR', 'ZEROFRAME')):
         assert docstring[i].startswith(hdu)
+
+@pytest.mark.parametrize("model", [m for m in defined_models.values()])
+def test_all_datamodels_init(model):
+    """
+    Test that all current datamodels can be initialized.
+    """
+    if model is SourceModelContainer:
+        # SourceModelContainer cannot have init=None
+        m = model(MultiExposureModel())
+    else:
+        m = model()
+    del m
+
