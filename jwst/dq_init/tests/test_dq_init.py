@@ -1,12 +1,8 @@
 import pytest
-from astropy.io import fits
 from jwst.dq_init import DQInitStep
 from jwst.dq_init.dq_initialization import do_dqinit
-from jwst.datamodels import MIRIRampModel, MaskModel
-from jwst.datamodels import GuiderRawModel, RampModel
-from jwst.datamodels import ImageModel, dqflags
+from jwst.datamodels import MIRIRampModel, MaskModel, GuiderRawModel, RampModel, dqflags
 import numpy as np
-import numpy.testing as nptest
 
 
 # Set parameters for multiple runs of data
@@ -20,11 +16,11 @@ ids = ["GuiderRawModel-Stack", "GuiderRawModel-Image", "RampModel", "MIRIRampMod
 
 @pytest.mark.parametrize(args, test_data, ids=ids)
 def test_dq_im(xstart, ystart, xsize, ysize, nints, ngroups, instrument, exp_type):
-    # Check that PIXELDQ is initialized with the information from the reference file.
-    # test that a flagged value in the reference file flags the PIXELDQ array
+    """ Check that PIXELDQ is initialized with the information from the reference file.
+    test that a flagged value in the reference file flags the PIXELDQ array"""
 
     # create raw input data for step
-    dm_ramp = make_rawramp(instrument, nints, ngroups, ysize, xsize, xstart, ystart, exp_type)
+    dm_ramp = make_rawramp(instrument, nints, ngroups, ysize, xsize, ystart, xstart, exp_type)
 
     # create a MaskModel for the dq input mask
     dq, dq_def = make_maskmodel(ysize, xsize)
@@ -50,7 +46,6 @@ def test_dq_im(xstart, ystart, xsize, ysize, nints, ngroups, instrument, exp_typ
 
     # run do_dqinit
     outfile = do_dqinit(dm_ramp, ref_data)
-    print(outfile.err.shape)
 
     if instrument == "FGS":
         dqdata = outfile.dq
@@ -70,7 +65,8 @@ def test_dq_im(xstart, ystart, xsize, ysize, nints, ngroups, instrument, exp_typ
 
 
 def test_groupdq():
-    # Check that GROUPDQ extension is added to the data and all values are initialized to zero.
+    """Check that GROUPDQ extension is added to the data and all values are initialized to zero."""
+
     # size of integration
     instrument = 'MIRI'
     nints = 1
@@ -81,11 +77,11 @@ def test_groupdq():
     ystart = 1
 
     # create raw input data for step
-    dm_ramp = make_rawramp(instrument, nints, ngroups, ysize, xsize, xstart, ystart)
+    dm_ramp = make_rawramp(instrument, nints, ngroups, ysize, xsize, ystart, xstart)
 
     # create a MaskModel for the dq input mask
-
     dq, dq_def = make_maskmodel(ysize, xsize)
+
     # write mask model
     ref_data = MaskModel(dq=dq, dq_def=dq_def)
     ref_data.meta.instrument.name = instrument
@@ -108,7 +104,8 @@ def test_groupdq():
 
 
 def test_err():
-    # Check that a 4-D ERR array is initialized and all values are zero.
+    """Check that a 4-D ERR array is initialized and all values are zero."""
+
     # size of integration
     instrument = 'MIRI'
     nints = 1
@@ -119,11 +116,11 @@ def test_err():
     ystart = 1
 
     # create raw input data for step
-    dm_ramp = make_rawramp(instrument, nints, ngroups, ysize, xsize, xstart, ystart)
+    dm_ramp = make_rawramp(instrument, nints, ngroups, ysize, xsize, ystart, xstart)
 
     # create a MaskModel for the dq input mask
-
     dq, dq_def = make_maskmodel(ysize, xsize)
+
     # write mask model
     ref_data = MaskModel(dq=dq, dq_def=dq_def)
     ref_data.meta.instrument.name = instrument
@@ -143,7 +140,7 @@ def test_err():
 
 
 def test_dq_subarray():
-    # Test that the pipeline properly extracts the subarray from the reference file.
+    """Test that the pipeline properly extracts the subarray from the reference file."""
     # put dq flags in specific pixels and make sure they match in the output subarray file
 
     # create input data
@@ -222,7 +219,6 @@ def test_dq_add1_groupdq():
     dm_ramp = make_rampmodel(nints, ngroups, ysize, xsize)
 
     # create a MaskModel for the dq input mask
-
     dq, dq_def = make_maskmodel(ysize, xsize)
 
     # write reference file with known bad pixel values
@@ -258,10 +254,10 @@ ids = ["GuiderRawModel-Image", "MIRIRampModel"]
 
 @pytest.mark.parametrize(args, test_data, ids=ids)
 def test_fullstep(xstart, ystart, xsize, ysize, nints, ngroups, instrument, exp_type, detector):
-    # Test that the full step runs
+    """Test that the full step runs"""
 
     # create raw input data for step
-    dm_ramp = make_rawramp(instrument, nints, ngroups, ysize, xsize, xstart, ystart, exp_type)
+    dm_ramp = make_rawramp(instrument, nints, ngroups, ysize, xsize, ystart, xstart, exp_type)
 
     dm_ramp.meta.instrument.name = instrument
     dm_ramp.meta.instrument.detector = detector
@@ -278,7 +274,7 @@ def test_fullstep(xstart, ystart, xsize, ysize, nints, ngroups, instrument, exp_
         assert outfile.pixeldq.ndim == 2  # a 2-d pixeldq frame exists
 
 
-def make_rawramp(instrument, nints, ngroups, ysize, xsize, xstart, ystart, exp_type=None):
+def make_rawramp(instrument, nints, ngroups, ysize, xsize, ystart, xstart, exp_type=None):
     # create the data and groupdq arrays
     csize = (nints, ngroups, ysize, xsize)
     data = np.full(csize, 1.0)
