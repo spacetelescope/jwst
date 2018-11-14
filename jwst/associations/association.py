@@ -34,13 +34,13 @@ class Association(MutableMapping):
     Parameters
     ----------
     version_id: str or None
-        Version_Id to use in the name of this association.
+        Version ID to use in the name of this association.
         If None, nothing is added.
 
     Raises
     ------
     AssociationError
-        If a item doesn't match any of the registered associations.
+        If an item doesn't match.
 
     Attributes
     ----------
@@ -54,7 +54,7 @@ class Association(MutableMapping):
     data: dict
         The association. The format of this data structure
         is determined by the individual assocations and, if
-        defined, valided against their specified schema.
+        defined, validated against their specified schema.
 
     schema_file: str
         The name of the output schema that an association
@@ -70,28 +70,30 @@ class Association(MutableMapping):
         The name of the rule
     """
 
-    # Assume no registry
     registry = None
+    """Registry this rule has been placed in."""
 
-    # Default force a constraint to use first value.
     DEFAULT_FORCE_UNIQUE = False
+    """Default whether to force constraints to use unique values."""
 
-    # Default require that the constraint exists or otherwise
-    # can be explicitly checked.
     DEFAULT_REQUIRE_CONSTRAINT = True
+    """Default require that the constraint exists or otherwise
+    can be explicitly checked.
+    """
 
-    # Default do not evaluate input values
     DEFAULT_EVALUATE = False
+    """Default do not evaluate input values"""
 
-    # Global constraints
     GLOBAL_CONSTRAINT = None
+    """Global constraints"""
 
-    # Attribute values that are indicate the
-    # attribute is not specified.
     INVALID_VALUES = None
+    """Attribute values that indicate the
+    attribute is not specified.
+    """
 
-    # Initialize a global IO registry
     ioregistry = IORegistry()
+    """The association IO registry"""
 
     def __init__(
             self,
@@ -131,16 +133,16 @@ class Association(MutableMapping):
             The item to initialize the association with.
 
         version_id: str or None
-            Version_Id to use in the name of this association.
+            Version ID to use in the name of this association.
             If None, nothing is added.
 
         Returns
         -------
         (association, reprocess_list)
             2-tuple consisting of:
-            - association: The association or, if the item does not
-                this rule, None
-            - [ProcessList[, ...]]: List of items to process again.
+                - association or None: The association or, if the item does not
+                  match this rule, None
+                - [ProcessList[, ...]]: List of items to process again.
         """
         asn = cls(version_id=version_id)
         matches, reprocess = asn.add(item)
@@ -150,6 +152,7 @@ class Association(MutableMapping):
 
     @property
     def asn_name(self):
+        """Suggest filename for the association"""
         return 'unamed_association'
 
     @classmethod
@@ -158,6 +161,7 @@ class Association(MutableMapping):
 
     @property
     def asn_rule(self):
+        """Name of the rule"""
         return self._asn_rule()
 
     @classmethod
@@ -265,7 +269,8 @@ class Association(MutableMapping):
 
         Returns
         -------
-        The Association object
+        association
+            The association.
 
         Raises
         ------
@@ -330,10 +335,10 @@ class Association(MutableMapping):
 
         Returns
         -------
-        (matching_constraint, reprocess_list)
+        (match, reprocess_list)
             2-tuple consisting of:
-            - bool: True if match
-            - [ProcessList[, ...]]: List of items to process again.
+                - bool: True if match
+                - [ProcessList[, ...]]: List of items to process again.
         """
         if self.is_item_member(item):
             return False, []
@@ -374,9 +379,8 @@ class Association(MutableMapping):
         -------
         (match, reprocess)
             2-tuple consisting of:
-            - Constraint or False: The successfully matching constraint
-              or False if not matching.
-            - [ProcessItem[, ...]]: List of items to process again.
+                - bool: Did constraint match?
+                - [ProcessItem[, ...]]: List of items to process again.
 
         """
         cached_constraints = deepcopy(self.constraints)
@@ -409,8 +413,8 @@ class Association(MutableMapping):
         -------
         (matches, reprocess_list)
             2-tuple consisting of:
-            - bool: True if the all constraints are satisfied
-            - [ProcessList[, ...]]: List of items to process again.
+                - bool: True if the all constraints are satisfied
+                - [ProcessList[, ...]]: List of items to process again.
         """
         reprocess = []
         evaled_str = conditions['inputs'](item)
