@@ -136,6 +136,23 @@ def normal_shape(input_model, n=None, r=None, detector=None):
         Either the input science data model or the data array from the
         input data model.
 
+    n : int or None
+        If not None, this value will be used for the `nrs_normal`
+        parameter.  If `n` is None, the value will be obtained from the
+        metadata for `input_model`, or, if this fails (e.g. if
+        `input_model` is actually an ndarray), a default value will
+        be used.  None is the default.
+
+    r : int or None
+        If not None, this value will be used for the `nrs_reference`
+        parameter.  See also the description for `n`.  None is the default.
+
+    detector : str or None
+        When `input_model` is a JWST data model, the detector name can be
+        gotten from the metadata.  If `input_model` is an ndarray, the
+        detector name should be explicitly specified.  For NIRSpec data,
+        the value should be either "NRS1" or "NRS2".
+
     Returns
     -------
     tuple of int
