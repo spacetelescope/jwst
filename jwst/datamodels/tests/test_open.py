@@ -14,7 +14,8 @@ from ..util import open
 from .. import (DataModel, ModelContainer, ImageModel, ReferenceFileModel,
                 ReferenceImageModel, ReferenceCubeModel, ReferenceQuadModel,
                 FlatModel, MaskModel, NircamPhotomModel, GainModel,
-                ReadnoiseModel)
+                ReadnoiseModel, DistortionModel)
+from jwst.stpipe.crds_client import get_reference_file
 
 def test_open_fits():
     """Test opening a model from a FITS file"""
@@ -95,6 +96,23 @@ def test_open_reference_files():
         model = klass(file)
         assert isinstance(model, klass)
         model.close()
+
+def test_open_reffile_readonly():
+    """Test opening a reffile from CRDS read-only cache"""
+    model = ImageModel()
+    model.meta.instrument.name = 'NIRCAM'
+    model.meta.instrument.detector = 'NRCA4'
+    model.meta.instrument.channel = 'SHORT'
+    model.meta.observation.date = '2018-01-01'
+    model.meta.observation.time = '12:03:34.176000'
+
+    reffile = get_reference_file(model, 'distortion')
+    try:
+        os.chmod(reffile, 0o444)
+    except PermissionError:
+        pass
+    distortion = DistortionModel(reffile)
+    distortion.close()
 
 # Utilities
 def t_path(partial_path):
