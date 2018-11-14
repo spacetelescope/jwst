@@ -85,6 +85,7 @@ imprint
 
 ipc
 ---
+- Updated the docstrings [#2865]
 
 jump
 ----
