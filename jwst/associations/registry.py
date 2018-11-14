@@ -42,25 +42,25 @@ class AssociationRegistry(dict):
 
     Parameters
     ----------
-    definition_files: [str,]
+    definition_files : [str,]
         The files to find the association definitions in.
 
-    include_default: bool
+    include_default : bool
         True to include the default definitions.
 
-    global_constraints: Constraint
+    global_constraints : Constraint
         Constraints to be added to each rule.
 
-    name: str
+    name : str
         An identifying string, used to prefix rule names.
 
-    include_bases: bool
+    include_bases : bool
         If True, include base classes not considered
         rules.
 
     Attributes
     ----------
-    rule_set: {rule [, ...]}
+    rule_set : {rule [, ...]}
         The rules in the registry.
 
     Methods
@@ -139,18 +139,18 @@ class AssociationRegistry(dict):
 
         Parameters
         ----------
-        item: dict
+        item : dict
             A item, like from a Pool, to find assocations for.
 
-        version_id: str
+        version_id : str
             If specified, a string appened to association names.
             If None, nothing is used.
 
-        allow: [type(Association), ...]
+        allow : [type(Association), ...]
             List of rules to allow to be matched. If None, all
             available rules will be used.
 
-        ignore: list
+        ignore : list
             A list of associations to ignore when looking for a match.
             Intended to ensure that already created associations
             are not re-created.
@@ -158,9 +158,9 @@ class AssociationRegistry(dict):
         Returns
         -------
         (associations, reprocess_list): 2-tuple
-            associations: [association,...]
+            associations : [association,...]
                 List of associations item belongs to. Empty if none match
-            reprocess_list: [AssociationReprocess, ...]
+            reprocess_list : [AssociationReprocess, ...]
                 List of reprocess events.
         """
         if allow is None:
@@ -182,12 +182,12 @@ class AssociationRegistry(dict):
 
         Parameters
         ----------
-        association: association-like
+        association : association-like
             The data to validate
 
         Returns
         -------
-        rules: list
+        rules : list
             List of rules that validated
 
         Raises
@@ -230,20 +230,20 @@ class AssociationRegistry(dict):
 
         Parameters
         ----------
-        serialized: object
+        serialized : object
             The serialized form of the association.
 
-        format: str or None
+        format : str or None
             The format to force. If None, try all available.
 
-        validate: bool
+        validate : bool
             Validate against the class' defined schema, if any.
 
-        first: bool
+        first : bool
             A serialization potentially matches many rules.
             Only return the first succesful load.
 
-        kwargs: dict
+        kwargs : dict
             Other arguments to pass to the `load` method
 
         Returns
@@ -287,7 +287,7 @@ class AssociationRegistry(dict):
 
         Parameters
         ----------
-        module: module
+        module : module
             The module, and all submodules, to be parsed.
         """
         for name, obj in get_marked(module, include_bases=include_bases):
@@ -322,13 +322,13 @@ class AssociationRegistry(dict):
 
         Parameters
         ----------
-        name: str
+        name : str
             Name of the object
 
-        obj: object
+        obj : object
             The object to be considered a rule
 
-        global_constraints: dict
+        global_constraints : dict
             The global constraints to attach to the rule.
         """
         try:
@@ -361,7 +361,7 @@ class RegistryMarker:
 
         Parameters
         ----------
-        obj: object
+        obj : object
             The object to mark
 
         Returns
@@ -374,10 +374,10 @@ class RegistryMarker:
         -----
         The following attributes are added to the object:
 
-        - _asnreg_mark: True
+        - _asnreg_mark : True
               Attribute added to object and is set to True
 
-        - _asnreg_role: str or None
+        - _asnreg_role : str or None
               If not already assigned, the role is left
               unspecified using None.
 
@@ -392,22 +392,22 @@ class RegistryMarker:
 
         Parameters
         ----------
-        obj: object
+        obj : object
             The object that should be treated as a rule
 
         Returns
         -------
-        obj: object
+        obj : object
             Return object to enable use as a decorator.
 
         Notes
         -----
         The following attributes are added to the object:
 
-        - _asnreg_role: 'rule'
+        - _asnreg_role : 'rule'
               Attributed added to object and set to `rule`
 
-        - _asnreg_mark: True
+        - _asnreg_mark : True
               Attributed added to object and set to True
         """
         obj._asnreg_role = 'rule'
@@ -420,10 +420,10 @@ class RegistryMarker:
 
         Parameters
         ----------
-        event: str
+        event : str
             Event this is a callback for.
 
-        obj: func
+        obj : func
             Function, or any callable, to be called
             when the corresponding event is triggered.
 
@@ -436,11 +436,11 @@ class RegistryMarker:
         -----
         The following attributes are added to the object:
 
-        - _asnreg_role: 'callback'
+        - _asnreg_role : 'callback'
               The role the object as been assigned.
-        - _asnreg_events: [event[, ...]]
+        - _asnreg_events : [event[, ...]]
               The events this callable object is a callback for.
-        - _asnreg_mark: True
+        - _asnreg_mark : True
               Indicated that the object has been marked.
         """
         def decorator(func):
@@ -480,12 +480,12 @@ def import_from_file(filename):
 
     Parameters
     ---------
-    filename: str
+    filename : str
         The file to import
 
     Returns
     -------
-    module: python module
+    module : python module
         The imported module
     """
     path = expandvars(expanduser(filename))
@@ -504,20 +504,20 @@ def get_marked(module, predicate=None, include_bases=False):
 
     Parameters
     ----------
-    module: python module
+    module : python module
         The module to examine
 
-    predicate: bool func(object)
+    predicate : bool func(object)
         Determinant of what gets returned.
         If None, all object types are examined
 
-    include_bases: bool
+    include_bases : bool
         If True, include base classes not considered
         rules.
 
     Returns
     -------
-    class object: generator
+    class object : generator
         A generator that will yield all class members in the module.
     """
     def is_method(obj):

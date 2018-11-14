@@ -33,7 +33,7 @@ class Association(MutableMapping):
 
     Parameters
     ----------
-    version_id: str or None
+    version_id : str or None
         Version ID to use in the name of this association.
         If None, nothing is added.
 
@@ -44,29 +44,29 @@ class Association(MutableMapping):
 
     Attributes
     ----------
-    instance: dict-like
+    instance : dict-like
         The instance is the association data structure.
         See `data` below
 
-    meta: dict
+    meta : dict
         Information about the association.
 
-    data: dict
+    data : dict
         The association. The format of this data structure
         is determined by the individual assocations and, if
         defined, validated against their specified schema.
 
-    schema_file: str
+    schema_file : str
         The name of the output schema that an association
         must adhere to.
 
-    registry: AssociationRegistry
+    registry : AssociationRegistry
         The registry this association came from.
 
-    asn_name: str
+    asn_name : str
         The suggested file name of association
 
-    asn_rule: str
+    asn_rule : str
         The name of the rule
     """
 
@@ -129,10 +129,10 @@ class Association(MutableMapping):
 
         Parameters
         ----------
-        item: dict
+        item : dict
             The item to initialize the association with.
 
-        version_id: str or None
+        version_id : str or None
             Version ID to use in the name of this association.
             If None, nothing is added.
 
@@ -170,12 +170,12 @@ class Association(MutableMapping):
 
         Parameters
         ----------
-        asn: Association or association-like
+        asn : Association or association-like
             The association structure to examine
 
         Returns
         -------
-        valid: bool
+        valid : bool
             True if valid. Otherwise the `AssociationNotValidError` is raised
 
         Raises
@@ -214,10 +214,10 @@ class Association(MutableMapping):
 
         Parameters
         ----------
-        format: str
+        format : str
             The format to use to dump the association into.
 
-        kwargs: dict
+        kwargs : dict
             List of arguments to pass to the registered
             routines for the current association type.
 
@@ -255,21 +255,21 @@ class Association(MutableMapping):
 
         Parameters
         ----------
-        serialized: object
+        serialized : object
             The serialized form of the association.
 
-        format: str or None
+        format : str or None
             The format to force. If None, try all available.
 
-        validate: bool
+        validate : bool
             Validate against the class' defined schema, if any.
 
-        kwargs: dict
+        kwargs : dict
             Other arguments to pass to the `load` method
 
         Returns
         -------
-        association: Association
+        association : Association
             The association.
 
         Raises
@@ -326,10 +326,10 @@ class Association(MutableMapping):
 
         Parameters
         ----------
-        item: dict
+        item : dict
             The item to add.
 
-        check_constraints: bool
+        check_constraints : bool
             If True, see if the item should belong to this association.
             If False, just add it.
 
@@ -337,7 +337,7 @@ class Association(MutableMapping):
         -------
         (match, reprocess_list)
             2-tuple consisting of:
-                - bool: True if match
+                - bool : True if match
                 - [ProcessList[, ...]]: List of items to process again.
         """
         if self.is_item_member(item):
@@ -371,7 +371,7 @@ class Association(MutableMapping):
 
         Parameters
         ----------
-        item: dict
+        item : dict
             The parameters to check/set for this association.
             This can be a list of dictionaries.
 
@@ -379,7 +379,7 @@ class Association(MutableMapping):
         -------
         (match, reprocess)
             2-tuple consisting of:
-                - bool: Did constraint match?
+                - bool : Did constraint match?
                 - [ProcessItem[, ...]]: List of items to process again.
 
         """
@@ -400,20 +400,20 @@ class Association(MutableMapping):
 
         Parameters
         ----------
-        item: dict
+        item : dict
             The item to retrieve the values from
 
-        constraint: str
+        constraint : str
             The name of the constraint
 
-        conditions: dict
+        conditions : dict
             The conditions structure
 
         Returns
         -------
         (matches, reprocess_list)
             2-tuple consisting of:
-                - bool: True if the all constraints are satisfied
+                - bool : True if the all constraints are satisfied
                 - [ProcessList[, ...]]: List of items to process again.
         """
         reprocess = []
@@ -445,7 +445,7 @@ class Association(MutableMapping):
 
         Returns
         -------
-        associations: [association[, ...]] or None
+        associations : [association[, ...]] or None
             List of fully-qualified associations that this association
             represents.
             `None` if a complete association cannot be produced.
@@ -461,12 +461,12 @@ class Association(MutableMapping):
 
         Parameters
         ----------
-        item: dict
+        item : dict
             The item to add.
 
         Returns
         -------
-        is_item_member: bool
+        is_item_member : bool
             True if item is a member.
         """
         raise NotImplementedError(
@@ -488,7 +488,7 @@ class Association(MutableMapping):
 
         Parameters
         ----------
-        items: [object[, ...]]
+        items : [object[, ...]]
             A list of items to make members of the association.
 
         Notes

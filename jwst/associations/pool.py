@@ -33,13 +33,13 @@ class AssociationPool(Table):
 
         Parameters
         ----------
-        filename: str
+        filename : str
             File path to read in as a table.
 
-        delimiter: str
+        delimiter : str
             Character used to delineate columns.
 
-        format: str
+        format : str
             The format of the input file.
 
         Returns
@@ -71,18 +71,18 @@ class AssociationPool(Table):
 
         Parameters
         ----------
-        output: str, file-like
+        output : str, file-like
             The output file or file-like object.
 
-        delimiter: str
+        delimiter : str
             The string to use to delineate columns.
             Default is '|'.
 
-        format: str
+        format : str
             The format the file should be written in.
             Default is 'ascii'.
 
-        args, kwargs: obj
+        args, kwargs : obj
             Other parameters that ``astropy.io.ascii.write`` can accept.
         """
         delimiter = kwargs.pop('delimiter', DEFAULT_DELIMITER)
