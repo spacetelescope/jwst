@@ -1,7 +1,7 @@
 if (utils.scm_checkout()) return
 
 matrix_python = ['3.6']
-matrix_numpy = ['1.15.2']
+matrix_numpy = ['1.15']
 matrix_astropy = ['4']
 matrix = []
 
