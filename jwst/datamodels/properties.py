@@ -63,7 +63,7 @@ def _as_fitsrec(val):
 
 def _get_schema_type(schema):
     """
-    Create a list of types used by a schema and its subchemas when
+    Create a list of types used by a schema and its subschemas when
     the subschemas are joined by combiners. Then return a type string
     if all the types are the same or 'mixed' if they differ
     """
