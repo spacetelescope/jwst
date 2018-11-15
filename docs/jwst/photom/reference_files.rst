@@ -307,7 +307,7 @@ area values are in units of square arcseconds.
 ===========  =========
 Column name  Data type 
 ===========  =========
-slit_id      char*15
+slit_id      char\*15
 pixarea      float
 ===========  =========
 
