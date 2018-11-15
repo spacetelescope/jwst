@@ -148,7 +148,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
         Returns
         -------
-        product_name: str
+        product_name : str
             The product name
         """
         return self._dms_product_name(self)
@@ -159,12 +159,12 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
         Parameters
         ----------
-        association: `Association`
+        association : `Association`
             Association to get the name from.
 
         Returns
         -------
-        product_name: str
+        product_name : str
             The product name
         """
         target = association._get_target()
@@ -204,11 +204,11 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
         Parameters
         ----------
-        item: dict or None
+        item : dict or None
             Item to use as a source. If not given, item-specific
             information will be left unchanged.
 
-        member: dict or None
+        member : dict or None
             An association member to use as source.
             If not given, member-specific information will be update
             from current association/product membership.
@@ -260,12 +260,12 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
         Parameters
         ----------
-        item: dict
+        item : dict
             The item to create member from.
 
         Returns
         -------
-        member: dict
+        member : dict
             The member
         """
         try:
@@ -340,21 +340,21 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
         Parameters
         ----------
-        items: [object[, ...]]
+        items : [object[, ...]]
             A list of items to make members of the association.
 
-        product_name: str or None
+        product_name : str or None
             The name of the product to add the items to.
             If the product does not already exist, it will be created.
             If None, the default DMS Level3 naming
             conventions will be attempted.
 
-        with_exptype: bool
+        with_exptype : bool
             If True, each item is expected to be a 2-tuple with
             the first element being the item to add as `expname`
             and the second items is the `exptype`
 
-        kwargs: dict
+        kwargs : dict
             Allows other keyword arguments used by other subclasses.
 
         Notes
@@ -418,13 +418,13 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
         Parameters
         ----------
-        member: dict
+        member : dict
             Member being added causing check.
             Not used
 
         Returns
         -------
-        is_valid: bool
+        is_valid : bool
         """
         return self.acid.type.lower() not in INVALID_AC_TYPES
 
@@ -451,7 +451,7 @@ class Utility():
 
         Parameters
         ----------
-        level1b_name: str
+        level1b_name : str
             The Level 1b exposure name.
 
         exp_type:
@@ -459,7 +459,7 @@ class Utility():
             it will be presumed that the name
             should get a Level2b name
 
-        is_tso: boolean
+        is_tso : boolean
             Use 'calints' instead of 'cal' as
             the suffix.
 
@@ -499,7 +499,7 @@ class Utility():
 
         Parameters
         ----------
-        value: str
+        value : str
             The value from the item to parse. Usually
             item['ASN_CANDIDATE']
 
@@ -529,7 +529,7 @@ class Utility():
 
         Returns
         -------
-        finalized_associations: [association[, ...]]
+        finalized_associations : [association[, ...]]
             The validated list of associations
         """
         finalized_asns = []
@@ -566,13 +566,13 @@ def dms_product_name_sources(asn):
 
     Parameters
     ---------
-    asn: Association
+    asn : Association
         The association for which the product
         name is to be created.
 
     Returns
     -------
-    product_name: str
+    product_name : str
         The product name
     """
     instrument = asn._get_instrument()

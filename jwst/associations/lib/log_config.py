@@ -190,22 +190,22 @@ def log_config(name=None,
 
     Parameters
     ----------
-    name: str
+    name : str
         The name of the logger to instantiate.
         If None, the root logger will be modified.
 
-    user_name: str
+    user_name : str
         User-understandable name. If not specified, it will be the same
         as `name`.
 
-    logger_config: dict
+    logger_config : dict
         The dict to use to setup the logger. This is used
         as the value to the key of `name`.
 
-    config: dict
+    config : dict
         User-specified logging configuration as specified by
 
-    merge: boolean
+    merge : boolean
         Merge the user-specified config in with `base_config`.
         If `False`, just use the user-specified config.
 

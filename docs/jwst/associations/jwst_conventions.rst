@@ -18,7 +18,7 @@ where:
 
   * ``jw``: All JWST-related products begin with ``jw``
   * ``PPPPP``: 5 digit proposal number
-  * ``TNNNN``: Canididate Identifier. Can be one of the following:
+  * ``TNNNN``: Candidate Identifier. Can be one of the following:
 
     * ``oNNN``: Observation candidate specified by the letter ``o`` followed
       by a 3 digit number.
@@ -27,7 +27,7 @@ where:
       number starting at 1001.
     * ``a3NNN``: Discovered whole program associations, specified by the
       letter 'a', followed by a number starting at 3001
-    * ``rNNNN``: Reserverd for future use. If you see this in practice,
+    * ``rNNNN``: Reserved for future use. If you see this in practice,
       file an issue to have this document updated.
 
   * ``YYYYMMDDtHHMMSS``: This is generically referred to as the ``version_id``.
@@ -63,4 +63,4 @@ The current association types are:
   * ``spec3``: Intended for ``calwebb_spec3`` processing
   * ``nrslamp-spec2``: Intended for ``calwebb_nrslamp_spec2`` processing
   * ``wfs-image2``: Intended for ``calwebb_wfs_image2`` processing
-  * ``wfs``: Wave front sensing data, used by ``wfs_combine``
+  * ``wfs-image3``: Wave front sensing data, used by ``calwebb_wfs-image3``

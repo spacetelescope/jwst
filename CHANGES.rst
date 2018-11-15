@@ -10,6 +10,8 @@ assign_wcs
 associations
 ------------
 
+- Updated docstrings and written documentation. [#2856, #2862]
+
 background
 ----------
 

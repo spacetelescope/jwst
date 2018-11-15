@@ -19,25 +19,25 @@ def load_asn(
 
     Parameters
     ----------
-    serialized: object
+    serialized : object
         The serialized form of the association.
 
-    format: str or None
+    format : str or None
         The format to force. If None, try all available.
 
-    validate: bool
+    validate : bool
         Validate against the class' defined schema, if any.
 
-    first: bool
+    first : bool
         A serialization potentially matches many rules.
         Only return the first succesful load.
 
-    registry: AssociationRegistry or None
+    registry : AssociationRegistry or None
         The `AssociationRegistry` to use.
         If None, no registry is used.
         Can be passed just a registry class instead of instance.
 
-    kwargs: dict
+    kwargs : dict
         Other arguments to pass to the `load` methods defined
         in the `Association.IORegistry`
 

@@ -263,7 +263,7 @@ Implementing ``dump()`` and ``load()``
 The base ``Association`` class defines the
 :meth:`~jwst.associations.association.Association.dump` and
 :meth:`~jwst.associations.association.Association.load` methods to
-serialize the data structured pointing to by the ``data`` attribute. If
+serialize the data structure pointing to by the ``data`` attribute. If
 the new rule uses the ``data`` attribute for storing the association
 information, no further overriding of these methods is necessary.
 

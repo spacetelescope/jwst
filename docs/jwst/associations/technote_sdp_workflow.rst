@@ -41,8 +41,8 @@ The figure represents the following workflow:
 - ``calwebb_detector1`` is run on each file to convert the data to the
   countrate format.
 - In parallel with ``calwebb_detector1``, the Pool Maker collects the list
-  of downloaded exposures and places them in the Association Pool
-- When enough exposures have been download to complete and Association
+  of downloaded exposures and places them in the Association Pool.
+- When enough exposures have been download to complete an Association
   Candidate, such as an Observation Candidate, the Pool Maker calls
   the Association Generator, ``asn_generate``, to create the set of
   associations based on that Candidate.
@@ -75,7 +75,7 @@ the image, and a segment map, used to record the minimum bounding
 box sizes for each object, are generated. The source catalog is then used
 as input to the level 2 processing of the spectral data. This extra
 link between the two major stages is represented by the ``Segment &
-Catalog`` file set, show in red in the diagram. The level 2 association
+Catalog`` file set, shown in red in the diagram. The level 2 association
 ``grism_spec2_asn`` not only lists the needed countrate exposures, but
 also the catalog file produced by the level 3 image
 processing. Hence, the workflow knows to wait for this file before
