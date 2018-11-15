@@ -15,10 +15,20 @@ from astropy.io import fits
 from astropy.modeling import models
 from astropy import time
 
-from .. import util, validate
-from .. import (DataModel, ImageModel, RampModel, MaskModel,
-                MultiSlitModel, AsnModel, CollimatorModel)
-from ..schema import merge_property_trees, build_docstring
+from jwst.datamodels import util, validate
+from jwst.datamodels import _defined_models as defined_models
+from jwst.datamodels import (
+    DataModel,
+    ImageModel,
+     RampModel,
+     MaskModel,
+     MultiSlitModel,
+     AsnModel,
+     CollimatorModel,
+     SourceModelContainer,
+     MultiExposureModel,
+ )
+from jwst.datamodels.schema import merge_property_trees, build_docstring
 
 from asdf import schema as mschema
 
