@@ -16,8 +16,10 @@ from astropy.modeling import models
 from astropy import time
 
 from .. import util, validate
+from .. import _defined_models as defined_models
 from .. import (DataModel, ImageModel, RampModel, MaskModel,
-                MultiSlitModel, AsnModel, CollimatorModel)
+                MultiSlitModel, AsnModel, CollimatorModel,
+                SourceModelContainer, MultiExposureModel)
 from ..schema import merge_property_trees, build_docstring
 
 from asdf import schema as mschema
@@ -617,7 +619,6 @@ def test_merge_property_trees(combiner):
     # Make sure that merge_property_trees does not destructively modify schemas
     f = merge_property_trees(s)
     assert f == s
-
 
 
 def test_schema_docstring():

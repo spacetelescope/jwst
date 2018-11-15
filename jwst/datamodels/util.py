@@ -319,15 +319,18 @@ def gentle_asarray(a, dtype):
         elif in_dtype.fields is not None and out_dtype.fields is not None:
             if in_dtype == out_dtype:
                 return a
-            if len(in_dtype) != len(out_dtype):
-                raise ValueError(
-                    "Wrong number of columns.  Expected {0}, got {1}".format(
-                        len(out_dtype), len(in_dtype)))
-            new_dtype = []
-            # Change the dtype name to match the fits record names
-            # as the mismatch causes case insensitive access to fail
-            if hasattr(in_dtype, 'names') and hasattr(out_dtype, 'names'):
+            in_names = {n.upper() for n in in_dtype.names}
+            out_names = {n.upper() for n in out_dtype.names}
+            if in_names == out_names:
+                # Change the dtype name to match the fits record names
+                # as the mismatch causes case insensitive access to fail
                 out_dtype.names = in_dtype.names
+            else:
+                raise ValueError(
+                    "Wrong column names. Expected {0}, got {1}".format(
+                        str(out_names), str(in_names)))
+
+            new_dtype = []
             for i in range(len(out_dtype.fields)):
                 in_type = in_dtype[i]
                 out_type = out_dtype[i]
