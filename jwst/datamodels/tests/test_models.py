@@ -239,7 +239,8 @@ def test_dtype_match():
         dm.data = np.array([[1, 2, 3]], np.float32)
 
 
-def test_default_value():
+def test_default_value_anyof_schema():
+    """Make sure default values are set properly when anyOf in schema"""
     with ImageModel((100, 100)) as im:
         val = im.meta.instrument.channel
         assert val is None
