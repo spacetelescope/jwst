@@ -10,6 +10,8 @@ assign_wcs
 associations
 ------------
 
+- Updated docstrings and written documentation. [#2856, #2862]
+
 background
 ----------
 
@@ -315,6 +317,8 @@ datamodels
 
 - Updated allowed SUBARRAY names for FGS and NIRCam [#2667]
 
+- Fixed bug in default value when schema contains combiner [#2668]
+
 - Updates for python 2 to 3 conversion [#2678]
 
 - Updated EXP_TYPE allowed values to include "MIR_DARKALL", "MIR_DARKIMG",
@@ -330,6 +334,7 @@ documentation
 -------------
 
 - Clarifications of input and output file naming. [#2727]
+
 
 dq_init
 -------
@@ -470,8 +475,8 @@ ramp_fitting
 - Fixed bug so that an integration-specific (_rateints) product is only created when
   NINTS>1; Skip MIRI first and/or last groups when flagged as DO_NOT_USE. [#2760]
 
-- Fixed bug in which the number of segments returned exceeds the number  
-  of groups, which had occurred for a MIRI dataset in which the first or last 
+- Fixed bug in which the number of segments returned exceeds the number
+  of groups, which had occurred for a MIRI dataset in which the first or last
   group was flagged as DO_NOT_USE and also flagged as a jump. [#2834]
 
 refpix

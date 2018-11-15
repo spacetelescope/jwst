@@ -9,10 +9,10 @@ class Member(DictWithAttributes):
 
     Parameters
     ---------
-    initial_params: dict
+    initial_params : dict
         Initiial dict of key/values to populate the member.
 
-    member_map: {input_param: member_param,}
+    member_map : {input_param: member_param,}
         A dict where the keys are names of in input key names
         and the values are the names of the member key names.
 

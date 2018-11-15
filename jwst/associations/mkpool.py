@@ -14,12 +14,12 @@ def mkpool(data, **kwargs):
 
     Parameters
     ----------
-    data: [dataum[, ...]]
+    data : [dataum[, ...]]
         The data to get the pool parameters from.
         Can be pathnames or `astropy.io.fits.HDUL`
         or `astropy.io.fits.ImageHDU
 
-    kwargs: dict
+    kwargs : dict
         Other keyword arguments to pass to the
         `astropy.io.fits.getheader` call.
     """
@@ -47,10 +47,10 @@ def getheader(datum, **kwargs):
 
     Parameters
     ----------
-    datum: str or HDUList or HDU
+    datum : str or HDUList or HDU
         Source of the header information
 
-    kwargs: dict
+    kwargs : dict
         Keyword arguments passed to `astropy.io.fits.getheader`.
         Relevant ones are `ext`, `extname`, or `extver`
     """

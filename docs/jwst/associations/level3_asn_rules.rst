@@ -88,10 +88,3 @@ diagram is not meant to be a complete listing.
    :scale: 50%
 
    Level3 Rule Class Inheritance
-
-Level3 Rules
-------------
-
-.. automodule:: jwst.associations.lib.rules_level3
-   :members:
-   :member-order: bysource

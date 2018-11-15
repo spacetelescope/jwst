@@ -20,12 +20,12 @@ def lv2_v1_to_v2(asn_v1):
 
     Parameters
     ----------
-    asn_v1: dict
+    asn_v1 : dict
         An 'old-style' association
 
     Returns
     -------
-    asn_v2: dict
+    asn_v2 : dict
         A 'new-style' association
     """
 
