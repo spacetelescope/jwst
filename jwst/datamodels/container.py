@@ -70,7 +70,6 @@ class ModelContainer(model_base.DataModel):
 
     def __init__(self, init=None, persist=True, **kwargs):
 
-        inline_threshold = kwargs.pop('inline_threshold', 0)
         super(ModelContainer, self).__init__(init=None, **kwargs)
         self._persist = persist
 
@@ -83,8 +82,7 @@ class ModelContainer(model_base.DataModel):
             instance = copy.deepcopy(init._instance)
             self._schema = init._schema
             self._shape = init._shape
-            self._asdf = AsdfFile(instance, extensions=self._extensions,
-                                  inline_threshold=inline_threshold)
+            self._asdf = AsdfFile(instance, extensions=init._extensions)
             self._instance = instance
             self._ctx = self
             self.__class__ = init.__class__
@@ -160,7 +158,7 @@ class ModelContainer(model_base.DataModel):
         self._open_model(index)
         return self._models.pop(index)
 
-    def copy(self, memo=None, inline_threshold=0):
+    def copy(self, memo=None):
         """
         Returns a deep copy of the models in this model container.
         """
@@ -169,8 +167,7 @@ class ModelContainer(model_base.DataModel):
                                 pass_invalid_values=self._pass_invalid_values,
                                 strict_validation=self._strict_validation)
         instance = copy.deepcopy(self._instance, memo=memo)
-        result._asdf = AsdfFile(instance, extensions=self._extensions,
-                                inline_threshold=inline_threshold)
+        result._asdf = AsdfFile(instance, extensions=self._extensions)
         result._instance = instance
         result._iscopy = self._iscopy
         result._schema = result._schema
