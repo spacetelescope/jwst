@@ -9,8 +9,6 @@ from asdf import schema as asdf_schema
 from jwst.transforms.jwextension import JWSTExtension
 from gwcs.extension import GWCSExtension
 
-from . import model_base
-
 # return_result included for backward compatibility
 def find_fits_keyword(schema, keyword, return_result=False):
     """
@@ -318,6 +316,8 @@ def build_docstring(klass, template):
     field_info : str
         Information about each schema item associated with a FITS hdu
     """
+    from . import model_base
+
 
     def get_field_info(subschema, path, combiner, info, recurse):
         # Return all schema fields representing fits hdus
