@@ -1,7 +1,9 @@
+import warnings
 import pytest
 from jwst.dq_init import DQInitStep
 from jwst.dq_init.dq_initialization import do_dqinit
 from jwst.datamodels import MIRIRampModel, MaskModel, GuiderRawModel, RampModel, dqflags
+from jwst.datamodels.validate import ValidationWarning
 import numpy as np
 
 
@@ -129,6 +131,9 @@ def test_err():
     ref_data.meta.subarray.ystart = ystart
     ref_data.meta.subarray.ysize = ysize
 
+    # Filter out validation warnings from ref_data
+    warnings.filterwarnings("ignore", category=ValidationWarning)
+
     # run correction step
     outfile = do_dqinit(dm_ramp, ref_data)
 
@@ -189,6 +194,9 @@ def test_dq_subarray():
     ref_data.meta.subarray.xsize = fullxsize
     ref_data.meta.subarray.ystart = 1
     ref_data.meta.subarray.ysize = fullysize
+
+    # Filter out validation warnings from ref_data
+    warnings.filterwarnings("ignore", category=ValidationWarning)
 
     # run correction step
     outfile = do_dqinit(im, ref_data)
