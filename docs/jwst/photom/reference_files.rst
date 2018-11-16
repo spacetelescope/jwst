@@ -220,7 +220,7 @@ DQ_DEF   BINTABLE    2    TFIELDS = 4  N/A
 
 The SCI extension contains a 2D array of spectral sensitivity factors
 corresponding to each pixel in a 2D MRS slice image. The sensitivity factors
-are in units of DN/sec/mJy/pixel. The ERR extension contains a 2D array of
+are in units of (DN/sec)/(mJy/pixel). The ERR extension contains a 2D array of
 uncertainties for the SCI values, in the same units. The DQ extension
 contains a 2D array of bit-encoded data quality flags for the SCI values.
 The DQ_DEF extension contains a table listing the definitions of the values
