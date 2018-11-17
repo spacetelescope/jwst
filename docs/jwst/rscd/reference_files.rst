@@ -63,7 +63,7 @@ parameter values for the double-exponential correction function.
 
 The general form of  the correction to be added to the input data is::
 
-   corrected data = input data data + dn_accumulated * scale * exp(-T / tau)  (Equation 1)
+   corrected data = input data + dn_accumulated * scale * exp(-T / tau)  (Equation 1)
 
 where:
 
@@ -96,13 +96,13 @@ If the previous integration saturates, :math:`scale` is no longer calculated usi
 
 where:
 
-    - :math:`Counts{3}` is an estimate of the what the last group in the
+    - :math:`Counts{3}` is an estimate of what the last group in the
       previous integration would have been if saturation did not exist
-    - :math:`scale_\text{sat}` is SAT_SCALE in the RSCD table
-    - :math:`sat_\text{mzp}` is SAT_MZP in the RSCD table
-    - :math:`sat_\text{zp}` is SAT_ZP in the RSCD table
-    - :math:`sat_\text{slope}` is SAT_SLOPE in the RSCD table
-    - :math:`sat_2` is SAT2 in the RSCD table
-    - :math:`evenrow_{corrections}` is SAT_ROWTERM in the RSCD table
+    - :math:`scale_\text{sat}` is sat_scale in the RSCD table
+    - :math:`sat_\text{mzp}` is sat_mzp in the RSCD table
+    - :math:`sat_\text{zp}` is sat_zp in the RSCD table
+    - :math:`sat_\text{slope}` is sat_slope in the RSCD table
+    - :math:`sat_2` is sat2 in the RSCD table
+    - :math:`evenrow_{corrections}` is sat_rowterm in the RSCD table
     - N is the number of groups per integration
  
