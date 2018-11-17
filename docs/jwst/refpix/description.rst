@@ -39,7 +39,7 @@ Algorithm
 The algorithm for the NIR and MIR detectors is different.
 
 NIR Detector Data
------------------
++++++++++++++++++
 
 #. The data from most detectors will have been rotated and/or flipped from their detector frame in order to give them the same orientation and parity in the telescope focal plane.  The first step is to transform them back to the detector frame so that all NIR and MIR detectors can be treated equivalently.
 #. It is assumed that a superbias correction has been performed.
@@ -52,7 +52,7 @@ NIR Detector Data
 #. Transform the data back to the JWST focal plane, or DMS, frame.
 
 MIR Detector Data
------------------
++++++++++++++++++
 
 #. MIR data is already in the detector frame, so no flipping/rotation is needed
 #. Subtract the first group from each group within an integration.
@@ -71,7 +71,7 @@ Subarrays are treated slightly differently.  Once again, the data are flipped
 and/or rotated to convert to the detector frame
 
 NIR Data
---------
+++++++++
 
 If the odd_even_columns flag is set to True, then the clipped means of all
 reference pixels in odd-numbered columns and those in even numbered columns
@@ -90,6 +90,6 @@ If the science dataset has at least 1 group with no valid reference pixels,
 the refpix step is skipped and the S_REFPIX header keyword is set to 'SKIPPED'.
 
 MIR Data
---------
+++++++++
 
 The refpix correction is skipped for MIRI subarray data.
