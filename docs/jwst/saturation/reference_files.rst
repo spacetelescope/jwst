@@ -6,7 +6,7 @@ SATURATION Reference File
 -------------------------
 
 :REFTYPE: SATURATION
-:Data model: `SaturationModel`
+:Data model: `jwst.datamodels.SaturationModel`
 
 The SATURATION reference file contains pixel-by-pixel saturation threshold
 values.
@@ -34,7 +34,7 @@ PUPIL      model.meta.instrument.pupil
 Reference File Format
 +++++++++++++++++++++
 SATURATION reference files are FITS format, with 2 IMAGE extensions
-and 1 BINTABLE extension. The FITS primary data array is assumed to be empty.
+and 1 BINTABLE extension. The FITS primary HDU does not contain a data array.
 The format and content of the file is as follows:
 
 =======  ========  =====  ==============  =========
