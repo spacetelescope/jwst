@@ -4,8 +4,8 @@ from ci_watson.artifactory_helpers import (
     check_url,
     get_bigdata_root,
     get_bigdata,
-    compare_outputs,
 )
+from .compare_outputs import compare_outputs
 
 from jwst.associations import load_asn
 
@@ -69,7 +69,7 @@ class BaseJWSTTest:
 
         input_path = [self.input_repo, self.env, self.input_loc, *self.ref_loc]
 
-        return compare_outputs(outputs, raise_error=True,
+        return compare_outputs(outputs,
                                input_path=input_path,
                                docopy=self.docopy,
                                results_root=self.results_root,
