@@ -1,5 +1,5 @@
 import copy
-import datetime
+from datetime import datetime
 import json
 import os
 import re
@@ -35,6 +35,7 @@ UPLOAD_SCHEMA = {"files": [
                      "explode": "false",
                      "excludePatterns": []}]}
 
+TIME_NOW = datetime.now()
 
 def compare_outputs(outputs, raise_error=True, ignore_keywords=[],
                     ignore_hdus=[], ignore_fields=[], rtol=0.0, atol=0.0,
@@ -343,20 +344,15 @@ def generate_upload_params(results_root, updated_outputs, verbose=True):
 
     # Create instructions for uploading results to artifactory for use
     # as new comparison/truth files
-    time_now = datetime.datetime.now()
     testname = os.path.split(os.path.abspath(os.curdir))[1]
 
     # Meaningful test dir from build info.
     # TODO: Organize results by day test was run. Could replace with git-hash
     whoami = getpass.getuser() or 'nobody'
-    ttime = time_now.strftime("%H_%M_%S")
-    user_tag = 'NOT_CI_{}_{}'.format(whoami, ttime)
+    user_tag = 'NOT_CI_{}'.format(whoami)
     build_tag = os.environ.get('BUILD_TAG', user_tag)
-    build_suffix = os.environ.get('BUILD_MATRIX_SUFFIX', 'standalone')
-    testdir = "{}_{}_{}".format(testname, build_tag, build_suffix)
-
-    dt = time_now.strftime("%Y%m%d")
-    tree = os.path.join(results_root, dt, testdir) + os.sep
+    date = TIME_NOW.strftime("%Y-%m-%d")
+    tree = os.path.join(results_root, date, build_tag, testname) + os.sep
     schema_pattern = []
 
     # Write out JSON file to enable retention of different results.

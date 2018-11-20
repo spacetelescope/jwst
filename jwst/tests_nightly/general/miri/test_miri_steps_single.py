@@ -150,7 +150,6 @@ class TestMIRIWCSFixed(BaseJWSTTest):
         utils.assert_allclose(ra, raref)
         utils.assert_allclose(dec, decref)
         utils.assert_allclose(lam, lamref)
-        assert 0
 
 
 @pytest.mark.bigdata
