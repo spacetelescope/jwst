@@ -239,27 +239,33 @@ def flip_rotate(input_hdulist):
         #
         rcube = cube[:, :, ::-1]
         #
-        # ROWSTART and COLSTART are zero-indexed
+        # ROWSTART and COLSTART are zero-indexed, ROWCORNR and COLCORNR
+        # are 1-indexed
         #
+        detector_row_start = None
         try:
-            detector_row_start = header['ROWSTART']
+            detector_row_start = int(float(header['ROWSTART'])) + 1
         except KeyError:
+            pass
+        try:
+            detector_row_start = int(header['ROWCORNR'])
+        except KeyError:
+            pass
+        if detector_row_start is None:
             print('Unable to get subarray ROWSTART, using 1')
-            detector_row_start = '0.000000'
-        try:
-            detector_row_start = int(float(detector_row_start)) + 1
-        except ValueError:
-            print('Unable to translate ROWSTART to a valid integer, using 1')
             detector_row_start = 1
+
+        detector_column_start = None
         try:
-            detector_column_start = header['COLSTART']
+            detector_column_start = int(float(header['COLSTART'])) + 1
         except KeyError:
-            print('Unable to get subarray COLSTART, using 1')
-            detector_column_start = '0.00000'
+            pass
         try:
-            detector_column_start = int(float(detector_column_start)) + 1
-        except ValueError:
-            print('Unable to translate COLSTART to a valid integer, using 1')
+            detector_column_start = int(header['COLCORNR'])
+        except KeyError:
+            pass
+        if detector_column_start is None:
+            print('Unable to get subarray COLSTART, using 1')
             detector_column_start = 1
 
         ncols = header['NAXIS1']
@@ -282,27 +288,33 @@ def flip_rotate(input_hdulist):
         #
         rcube = cube[:, ::-1]
         #
-        # ROWSTART and COLSTART are zero-indexed
+        # ROWSTART and COLSTART are zero-indexed, COLCORNR and ROWCORNR
+        # are 1-indexed
         #
+        detector_row_start = None
         try:
-            detector_row_start = header['ROWSTART']
+            detector_row_start = int(float(header['ROWSTART'])) + 1
         except KeyError:
+            pass
+        try:
+            detector_row_start = int(header['ROWCORNR'])
+        except KeyError:
+            pass
+        if detector_row_start is None:
             print('Unable to get subarray ROWSTART, using 1')
-            detector_row_start = '0.000000'
-        try:
-            detector_row_start = int(float(detector_row_start)) + 1
-        except ValueError:
-            print('Unable to convert ROWSTART to a valid integer, using 1')
             detector_row_start = 1
+
+        detector_column_start = None
         try:
-            detector_column_start = header['COLSTART']
+            detector_column_start = int(float(header['COLSTART'])) + 1
         except KeyError:
-            print('Unable to get subarray COLSTART, using 1')
-            detector_column_start = '0.00000'
+            pass
         try:
-            detector_column_start = int(float(detector_column_start)) + 1
-        except ValueError:
-            print('Unable to convert COLSTART to a valid integer, using 1')
+            detector_column_start = int(header['COLCORNR'])
+        except KeyError:
+            pass
+        if detector_column_start is None:
+            print('Unable to get subarray COLSTART, using 1')
             detector_column_start = 1
 
         ncols = header['NAXIS1']
