@@ -6,7 +6,7 @@ from astropy.modeling.models import Identity, Const1D, Mapping
 import gwcs.coordinate_frames as cf
 
 from . import pointing
-from .util import not_implemented_mode, subarray_transform
+from .util import not_implemented_mode, subarray_transform, velocity_correction
 from ..datamodels import (ImageModel, NIRCAMGrismModel, DistortionModel,
                           CubeModel)
 from ..transforms.models import (NIRCAMForwardRowGrismDispersion,
@@ -195,6 +195,16 @@ def tsgrism(input_model, reference_files):
                                                     xmodels=dispx,
                                                     ymodels=dispy)
 
+    # Add in the wavelength shift from the velocity dispersion
+    try:
+        velosys = input_model.meta.wcsinfo.velosys
+    except AttributeError:
+        pass
+    if velosys is not None:
+        velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
+        log.info("Added Barycentric velocity correction: {}".format(velocity_corr[1].amplitude.value))
+        det2det = det2det | Mapping((0, 1, 2, 3)) | Identity(2) & velocity_corr & Identity(1)
+
     # input into the forward transform is x,y,x0,y0,order
     # where x,y is the pixel location in the grism image
     # and x0,y0 is the source location in the "direct" image
@@ -333,6 +343,16 @@ def wfss(input_model, reference_files):
                                                     lmodels=invdispl,
                                                     xmodels=dispx,
                                                     ymodels=dispy)
+
+    # Add in the wavelength shift from the velocity dispersion
+    try:
+        velosys = input_model.meta.wcsinfo.velosys
+    except AttributeError:
+        pass
+    if velosys is not None:
+        velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
+        log.info("Added Barycentric velocity correction: {}".format(velocity_corr[1].amplitude.value))
+        det2det = det2det | Mapping((0, 1, 2, 3)) | Identity(2) & velocity_corr & Identity(1)
 
     # create the pipeline to construct a WCS object for the whole image
     # which can translate ra,dec to image frame reference pixels
