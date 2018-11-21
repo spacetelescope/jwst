@@ -23,7 +23,6 @@ def conda_packages = [
     "namedlist",
     "photutils",
     "scipy",
-    "six",
     "spherical-geometry",
     "stsci.image",
     "stsci.imagestats",
