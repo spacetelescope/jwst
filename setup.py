@@ -178,9 +178,9 @@ setup(
                   define_macros=[('NUMPY', '1')]),
     ],
     install_requires=[
-        'asdf~=2.0',
+        'asdf~=2.1',
         'astropy~=3.0',
-        'crds~=7.1',
+        'crds~=7.2.7',
         'drizzle~=1.12',
         'gwcs~=0.9',
         'jsonschema~=2.6',
