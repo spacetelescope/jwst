@@ -1,6 +1,11 @@
 // [skip ci] and [ci skip] have no effect here.
 if (utils.scm_checkout(['skip_disable':true])) return
 
+// Allow modification of the job configuration, affects all relevant build configs.
+// Pass this object in the argument list to the`run()` function below to apply these settings to the job's execution.
+jobconfig = new JobConfig()
+jobconfig.post_test_summary = true
+
 def test_env = [
     "HOME=./",
     "TEST_BIGDATA=https://bytesalad.stsci.edu/artifactory",
@@ -68,4 +73,7 @@ bc.test_cmds = ["printenv | sort",
 
 bc.test_configs = [data_config]
 
-utils.run([bc])
+// Iterate over configurations that define the (distributed) build matrix.
+// Spawn a host (or workdir) for each combination and run in parallel.
+// Also apply the job configuration defined in `jobconfig` above.
+utils.run([bc, jobconfig])
