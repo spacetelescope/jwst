@@ -7,33 +7,16 @@ import shutil
 from difflib import unified_diff
 from io import StringIO
 
-from ci_watson.artifactory_helpers import get_bigdata, BigdataError
+from ci_watson.artifactory_helpers import (
+    get_bigdata,
+    BigdataError,
+    generate_upload_schema,
+)
 
-try:
-    from astropy.io import fits
-    from astropy.io.fits import FITSDiff, HDUDiff
-    from astropy.utils.introspection import minversion
-    HAS_ASTROPY = True
-except ImportError:
-    HAS_ASTROPY = False
+from astropy.io import fits
+from astropy.io.fits import FITSDiff, HDUDiff
+from astropy.utils.introspection import minversion
 
-if HAS_ASTROPY and minversion('astropy', '3.1'):
-    ASTROPY_LT_3_1 = False
-else:
-    ASTROPY_LT_3_1 = True
-
-
-RE_URL = re.compile(r"\w+://\S+")
-
-UPLOAD_SCHEMA = {"files": [
-                    {"pattern": "",
-                     "target": "",
-                     "props": None,
-                     "recursive": "false",
-                     "flat": "true",
-                     "regexp": "false",
-                     "explode": "false",
-                     "excludePatterns": []}]}
 
 TIME_NOW = datetime.now()
 
@@ -155,17 +138,10 @@ def compare_outputs(outputs, raise_error=True, ignore_keywords=[],
     .. note:: Each ``outputs`` entry in the list gets interpreted and processed
               separately.
     """
-    if ASTROPY_LT_3_1:
-        if len(ignore_hdus) > 0:  # pragma: no cover
-            raise ValueError('ignore_hdus cannot be used for astropy<3.1')
-        default_kwargs = {'rtol': rtol, 'atol': atol,
-                          'ignore_keywords': ignore_keywords,
-                          'ignore_fields': ignore_fields}
-    else:
-        default_kwargs = {'rtol': rtol, 'atol': atol,
-                          'ignore_keywords': ignore_keywords,
-                          'ignore_fields': ignore_fields,
-                          'ignore_hdus': ignore_hdus}
+    default_kwargs = {'rtol': rtol, 'atol': atol,
+                      'ignore_keywords': ignore_keywords,
+                      'ignore_fields': ignore_fields,
+                      'ignore_hdus': ignore_hdus}
 
     all_okay = True
     creature_report = ''
@@ -366,51 +342,3 @@ def generate_upload_params(results_root, updated_outputs, verbose=True):
                 files[0], new_truth))
 
     return schema_pattern, tree, testname
-
-
-def generate_upload_schema(pattern, target, testname, recursive=False):
-    """
-    Write out JSON file to upload Jenkins results from test to
-    Artifactory storage area.
-    This function relies on the JFROG JSON schema for uploading data into
-    artifactory using the Jenkins plugin.  Docs can be found at
-    https://www.jfrog.com/confluence/display/RTF/Using+File+Specs
-    Parameters
-    ----------
-    pattern : str or list of strings
-        Specifies the local file system path to test results which should be
-        uploaded to Artifactory. You can specify multiple artifacts by using
-        wildcards or a regular expression as designated by the regexp property.
-    target : str
-        Specifies the target path in Artifactory in the following format::
-            [repository_name]/[repository_path]
-    testname : str
-        Name of test that generate the results. This will be used to create the
-        name of the JSON file to enable these results to be uploaded to
-        Artifactory.
-    recursive : bool, optional
-        Specify whether or not to identify files listed in sub-directories
-        for uploading.  Default: `False`
-    """
-    jsonfile = "{}_results.json".format(testname)
-    recursive = repr(recursive).lower()
-
-    if not isinstance(pattern, str):
-        # Populate schema for this test's data
-        upload_schema = {"files": []}
-
-        for p in pattern:
-            temp_schema = copy.deepcopy(UPLOAD_SCHEMA["files"][0])
-            temp_schema.update({"pattern": p, "target": target,
-                                "recursive": recursive})
-            upload_schema["files"].append(temp_schema)
-
-    else:
-        # Populate schema for this test's data
-        upload_schema = copy.deepcopy(UPLOAD_SCHEMA)
-        upload_schema["files"][0].update({"pattern": pattern, "target": target,
-                                          "recursive": recursive})
-
-    # Write out JSON file with description of test results
-    with open(jsonfile, 'w') as outfile:
-        json.dump(upload_schema, outfile)
