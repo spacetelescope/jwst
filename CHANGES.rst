@@ -6,6 +6,7 @@ ami
 
 assign_wcs
 ----------
+ - Added velocity correction model to the WFSS and TSGRISM wcs pipelines [#2801]
 
 associations
 ------------
@@ -173,7 +174,6 @@ superbias
 
 timeconversion
 --------------
-
 
 transforms
 ----------
