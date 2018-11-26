@@ -526,7 +526,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         Open an asdf object from a filename or create a new asdf object
         """
         if isinstance(init, str):
-            asdffile = AsdfFile.open(init, extensions=extensions,
+            asdffile = asdf.open(init, extensions=extensions,
                                  ignore_version_mismatch=ignore_version_mismatch,
                                  ignore_unrecognized_tag=ignore_unrecognized_tag)
 
