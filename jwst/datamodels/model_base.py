@@ -145,6 +145,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                                   **kwargs)
 
         elif isinstance(init, DataModel):
+            asdffile = None
             self.clone(self, init)
             if not isinstance(init, self.__class__):
                 self.validate()

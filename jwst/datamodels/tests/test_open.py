@@ -116,10 +116,6 @@ def test_open_fits_readonly(tmpdir):
     with datamodels.open(tmpfile) as model:
         assert model.meta.telescope == 'JWST'
 
-    # The following *should* fail with a permission error, but it does not.
-    with datamodels.open(tmpfile) as model:
-        model.save(tmpfile)
-
 def test_open_asdf_readonly(tmpdir):
     tmpfile = str(tmpdir.join('readonly.asdf'))
 
@@ -135,10 +131,6 @@ def test_open_asdf_readonly(tmpdir):
 
     with datamodels.open(tmpfile) as model:
         assert model.meta.telescope == 'JWST'
-
-    # The following *should* fail with a permission error, but it does not.
-    with datamodels.open(tmpfile) as model:
-        model.save(tmpfile)
 
 # Utilities
 def t_path(partial_path):
