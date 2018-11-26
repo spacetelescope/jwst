@@ -15,6 +15,7 @@ from astropy.io import fits
 from astropy.time import Time
 from astropy.wcs import WCS
 
+import asdf
 from asdf import AsdfFile
 from asdf import yamlutil
 from asdf import schema as asdf_schema
@@ -119,15 +120,15 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         shape = None
 
         if init is None:
-            asdf = self.open_asdf(init=None, extensions=self._extensions,
+            asdffile = self.open_asdf(init=None, extensions=self._extensions,
                                   **kwargs)
 
         elif isinstance(init, dict):
-            asdf = self.open_asdf(init=init, extensions=self._extensions,
+            asdffile = self.open_asdf(init=init, extensions=self._extensions,
                                   **kwargs)
 
         elif isinstance(init, np.ndarray):
-            asdf = self.open_asdf(init=None, extensions=self._extensions,
+            asdffile = self.open_asdf(init=None, extensions=self._extensions,
                                   **kwargs)
 
             shape = init.shape
@@ -140,20 +141,21 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
             shape = init
             is_shape = True
-            asdf = self.open_asdf(init=None, extensions=self._extensions,
+            asdffile = self.open_asdf(init=None, extensions=self._extensions,
                                   **kwargs)
 
         elif isinstance(init, DataModel):
+            asdffile = None
             self.clone(self, init)
             if not isinstance(init, self.__class__):
                 self.validate()
             return
 
         elif isinstance(init, AsdfFile):
-            asdf = init
+            asdffile = init
 
         elif isinstance(init, fits.HDUList):
-            asdf = fits_support.from_fits(init, self._schema,
+            asdffile = fits_support.from_fits(init, self._schema,
                                           self._extensions, self._ctx)
 
         elif isinstance(init, (str, bytes)):
@@ -163,7 +165,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
             if file_type == "fits":
                 hdulist = fits.open(init)
-                asdf = fits_support.from_fits(hdulist,
+                asdffile = fits_support.from_fits(hdulist,
                                               self._schema,
                                               self._extensions,
                                               self._ctx,
@@ -171,7 +173,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                 self._files_to_close.append(hdulist)
 
             elif file_type == "asdf":
-                asdf = self.open_asdf(init=init, extensions=self._extensions,
+                asdffile = self.open_asdf(init=init, extensions=self._extensions,
                                       **kwargs)
 
             else:
@@ -185,8 +187,8 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         # Initialize object fields as determined from the code above
         self._shape = shape
-        self._instance = asdf.tree
-        self._asdf = asdf
+        self._instance = asdffile.tree
+        self._asdf = asdffile
 
         # Initalize class dependent hidden fields
         self._no_asdf_extension = False
@@ -525,16 +527,16 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         Open an asdf object from a filename or create a new asdf object
         """
         if isinstance(init, str):
-            asdf = AsdfFile.open(init, extensions=extensions,
+            asdffile = asdf.open(init, extensions=extensions,
                                  ignore_version_mismatch=ignore_version_mismatch,
                                  ignore_unrecognized_tag=ignore_unrecognized_tag)
 
         else:
-            asdf = AsdfFile(init, extensions=extensions,
+            asdffile = AsdfFile(init, extensions=extensions,
                             ignore_version_mismatch=ignore_version_mismatch,
                             ignore_unrecognized_tag=ignore_unrecognized_tag
                             )
-        return asdf
+        return asdffile
 
     @classmethod
     def from_asdf(cls, init, schema=None, extensions=None, **kwargs):
@@ -575,9 +577,9 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             `asdf.AsdfFile.write_to`.
         """
         self.on_save(init)
-        asdf = self.open_asdf(self._instance, extensions=self._extensions,
+        asdffile = self.open_asdf(self._instance, extensions=self._extensions,
                               **kwargs)
-        asdf.write_to(init, *args, **kwargs)
+        asdffile.write_to(init, *args, **kwargs)
 
     @classmethod
     def from_fits(cls, init, schema=None, **kwargs):
