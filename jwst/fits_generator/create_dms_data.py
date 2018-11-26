@@ -164,6 +164,56 @@ def sanitize(header, keyword, type=float, default=0.0):
         return type(default)
     return converted_value
 
+def get_nircam_subarray(header):
+    """Get subarray parameters from NIRCAM data header
+
+    Parameters
+    ----------
+
+    header : fits Header object
+        The header of the data whose subarray parameters are to be determined
+
+    Returns
+    -------
+
+    detector_row_start, detector_column_start : tuple of ints
+        The 1-indexed values of the starting row and column
+    """
+
+    #
+    # ROWSTART and COLSTART are zero-indexed, ROWCORNR and COLCORNR
+    # are 1-indexed
+    # Try to get ROWSTART from header.  If that doesn't work, try ROWCORNR
+    detector_row_start = None
+    try:
+        detector_row_start = int(float(header['ROWSTART'])) + 1
+    except KeyError:
+        pass
+    try:
+        detector_row_start = int(header['ROWCORNR'])
+    except KeyError:
+        pass
+    if detector_row_start is None:
+        print('Unable to get subarray ROWSTART, using 1')
+        detector_row_start = 1
+
+    #
+    # Now try to get COLSTART from header.  If that doesn't work, try COLCORNR
+    detector_column_start = None
+    try:
+        detector_column_start = int(float(header['COLSTART'])) + 1
+    except KeyError:
+        pass
+    try:
+        detector_column_start = int(header['COLCORNR'])
+    except KeyError:
+        pass
+    if detector_column_start is None:
+        print('Unable to get subarray COLSTART, using 1')
+        detector_column_start = 1
+
+    return detector_row_start, detector_column_start
+
 def flip_rotate(input_hdulist):
     """Given a FITS HDUList, flip and rotate the data as appropriate.
     Decide on how to flip and rotate by the SCA_ID keyword.
@@ -238,35 +288,7 @@ def flip_rotate(input_hdulist):
         # Flip horizontally
         #
         rcube = cube[:, :, ::-1]
-        #
-        # ROWSTART and COLSTART are zero-indexed, ROWCORNR and COLCORNR
-        # are 1-indexed
-        #
-        detector_row_start = None
-        try:
-            detector_row_start = int(float(header['ROWSTART'])) + 1
-        except KeyError:
-            pass
-        try:
-            detector_row_start = int(header['ROWCORNR'])
-        except KeyError:
-            pass
-        if detector_row_start is None:
-            print('Unable to get subarray ROWSTART, using 1')
-            detector_row_start = 1
-
-        detector_column_start = None
-        try:
-            detector_column_start = int(float(header['COLSTART'])) + 1
-        except KeyError:
-            pass
-        try:
-            detector_column_start = int(header['COLCORNR'])
-        except KeyError:
-            pass
-        if detector_column_start is None:
-            print('Unable to get subarray COLSTART, using 1')
-            detector_column_start = 1
+        detector_row_start, detector_column_start = get_nircam_subarray(header)
 
         ncols = header['NAXIS1']
         nrows = header['NAXIS2']
@@ -287,35 +309,7 @@ def flip_rotate(input_hdulist):
         # Flip vertically
         #
         rcube = cube[:, ::-1]
-        #
-        # ROWSTART and COLSTART are zero-indexed, COLCORNR and ROWCORNR
-        # are 1-indexed
-        #
-        detector_row_start = None
-        try:
-            detector_row_start = int(float(header['ROWSTART'])) + 1
-        except KeyError:
-            pass
-        try:
-            detector_row_start = int(header['ROWCORNR'])
-        except KeyError:
-            pass
-        if detector_row_start is None:
-            print('Unable to get subarray ROWSTART, using 1')
-            detector_row_start = 1
-
-        detector_column_start = None
-        try:
-            detector_column_start = int(float(header['COLSTART'])) + 1
-        except KeyError:
-            pass
-        try:
-            detector_column_start = int(header['COLCORNR'])
-        except KeyError:
-            pass
-        if detector_column_start is None:
-            print('Unable to get subarray COLSTART, using 1')
-            detector_column_start = 1
+        detector_row_start, detector_column_start = get_nircam_subarray(header)
 
         ncols = header['NAXIS1']
         nrows = header['NAXIS2']
