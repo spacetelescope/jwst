@@ -137,6 +137,8 @@ ramp_fitting
 refpix
 ------
 
+- Added a description of processing for IRS2 readout mode data. [#2889]
+
 resample
 --------
 
