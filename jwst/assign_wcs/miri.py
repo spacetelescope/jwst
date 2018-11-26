@@ -138,8 +138,9 @@ def lrs(input_model, reference_files):
     spec = cf.SpectralFrame(name='wavelength', axes_order=(2,), unit=(u.micron,),
                             axes_names=('lambda',))
     sky = cf.CelestialFrame(reference_frame=coord.ICRS(), name='sky')
+    v2v3_spatial = cf.Frame2D(name='v2v3_spatial', axes_order=(0, 1), unit=(u.arcsec, u.arcsec))
+    v2v3 = cf.CompositeFrame(name="v2v3", frames=[v2v3_spatial, spec])
     world = cf.CompositeFrame(name="world", frames=[sky, spec])
-
 
     # Determine the distortion model.
     subarray2full = subarray_transform(input_model)
@@ -159,8 +160,8 @@ def lrs(input_model, reference_files):
         if input_model.meta.exposure.type.lower() == 'mir_lrs-fixedslit':
             zero_point = ref[1].header['imx'], ref[1].header['imy']
         elif input_model.meta.exposure.type.lower() == 'mir_lrs-slitless':
-            #zero_point = ref[1].header['imxsltl'], ref[1].header['imysltl']
-            zero_point = [35, 442]  # [35, 763] # account for subarray
+            zero_point = ref[1].header['imxsltl'], ref[1].header['imysltl']
+            #zero_point = [35, 442]  # [35, 763] # account for subarray
 
     # Create the bounding_box
     x0 = lrsdata[:, 3]
@@ -179,7 +180,8 @@ def lrs(input_model, reference_files):
     # x.shape will be something like (1, 388)
     y, x = np.mgrid[row_zero_point:row_zero_point + 1, 0:input_model.data.shape[1]]
 
-    spatial_transform = full_distortion | tel2sky
+    #spatial_transform = full_distortion | tel2sky
+    spatial_transform = full_distortion
     radec = np.array(spatial_transform(x, y))[:, 0, :]
 
     ra_full = np.matlib.repmat(radec[0], _toindex(bb[1][1]) + 1 - _toindex(bb[1][0]), 1)
@@ -211,16 +213,19 @@ def lrs(input_model, reference_files):
     # Account for the subarray when computing spatial coordinates.
     xshift = -bb[0][0]
     yshift = -bb[1][0]
-    det2world = models.Mapping((1, 0, 1, 0, 0, 1)) | models.Shift(yshift, name='yshift1') & \
+
+    det_to_v23 = models.Mapping((1, 0, 1, 0, 0, 1)) | models.Shift(yshift, name='yshift1') & \
               models.Shift(xshift, name='xshift1') & \
               models.Shift(yshift, name='yshift2') & models.Shift(xshift, name='xshift2') & \
               models.Identity(2) | radec_t2d & lrs_wav_model
-    det2world.bounding_box = bb[::-1]
+    v23_to_world = tel2sky & models.Identity(1)
+    det_to_v23.bounding_box = bb[::-1]
     # Now the actual pipeline.
-    pipeline = [(detector, det2world),
+
+    pipeline = [(detector, det_to_v23),
+                (v2v3, v23_to_world),
                 (world, None)
                 ]
-
     return pipeline
 
 
