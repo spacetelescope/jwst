@@ -1,8 +1,6 @@
 import copy
 from datetime import datetime
-import json
 import os
-import re
 import shutil
 from difflib import unified_diff
 from io import StringIO
@@ -15,7 +13,6 @@ from ci_watson.artifactory_helpers import (
 
 from astropy.io import fits
 from astropy.io.fits import FITSDiff, HDUDiff
-from astropy.utils.introspection import minversion
 
 
 TIME_NOW = datetime.now()
