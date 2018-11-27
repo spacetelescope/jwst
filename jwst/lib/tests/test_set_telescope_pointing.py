@@ -111,7 +111,6 @@ def test_pointing_averaging(eng_db_jw703):
      obstime) = stp.get_pointing(
          Time('2019-06-03T17:25:40', format='isot'),
          Time('2019-06-03T17:25:56', format='isot'),
-         reduce_func=stp.pointing_from_average
      )
 
     assert np.isclose(q, q_exp).all()
@@ -150,7 +149,7 @@ def test_get_pointing_with_zeros(eng_db_ngas):
     (q,
      j2fgs_matrix,
      fsmcorr,
-     obstime) = stp.get_pointing(ZEROTIME_START, ENDTIME)
+     obstime) = stp.get_pointing(ZEROTIME_START, ENDTIME, reduce_func=stp.first_pointing)
     assert j2fgs_matrix.any()
     (q_desired,
      j2fgs_matrix_desired,

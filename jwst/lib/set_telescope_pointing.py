@@ -918,8 +918,7 @@ def get_pointing(obsstart, obsend, strict_time=False, reduce_func=None):
 
     reduce_func: func or None
         Reduction function to use on values.
-        If None, the full list of `Pointing`s
-        is returned.
+        If None, the average pointing is returned.
 
     Returns
     -------
@@ -940,7 +939,7 @@ def get_pointing(obsstart, obsend, strict_time=False, reduce_func=None):
     available.
     """
     if reduce_func is None:
-        reduce_func = first_pointing
+        reduce_func = pointing_from_average
 
     logger.info(
         'Determining pointing between observations times (mjd):'
