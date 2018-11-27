@@ -927,116 +927,15 @@ def get_pointing(obsstart, obsend, strict_time=False, reduce_func=None):
         )
     )
 
-    logger.info(
-        'Querying engineering DB: {}'.format(ENGDB_BASE_URL)
-    )
-    try:
-        engdb = ENGDB_Service()
-    except Exception as exception:
-        raise ValueError(
-            'Cannot open engineering DB connection'
-            '\nException: {}'.format(
-                exception
-            )
-        )
-    params = {
-        'SA_ZATTEST1':  None,
-        'SA_ZATTEST2':  None,
-        'SA_ZATTEST3':  None,
-        'SA_ZATTEST4':  None,
-        'SA_ZRFGS2J11': None,
-        'SA_ZRFGS2J21': None,
-        'SA_ZRFGS2J31': None,
-        'SA_ZRFGS2J12': None,
-        'SA_ZRFGS2J22': None,
-        'SA_ZRFGS2J32': None,
-        'SA_ZRFGS2J13': None,
-        'SA_ZRFGS2J23': None,
-        'SA_ZRFGS2J33': None,
-        'SA_ZADUCMDX':  None,
-        'SA_ZADUCMDY':  None,
-    }
+    pointings = pointings_from_engdb(obsstart, obsend, strict_time)
 
-    # First try go retrieve values without the database bracket values.
-    for param in params:
-        try:
-            params[param] = engdb.get_values(
-                param, obsstart, obsend,
-                time_format='mjd', include_obstime=True
-            )
-        except Exception as exception:
-            raise ValueError(
-                'Cannot retrive {} from engineering.'
-                '\nFailure was {}'.format(
-                    param,
-                    exception
-                )
-            )
-
-    # For any parameters that did not have values, re-retrieve with
-    # the bracket values.
-    if not strict_time:
-        for param in params:
-            if not len(params[param]):
-                logger.warning(
-                    'Parameter {} not within the observation. Pulling nearest values'.format(param)
-                )
-                params[param] = engdb.get_values(
-                    param, obsstart, obsend,
-                    time_format='mjd', include_obstime=True, include_bracket_values=True
-                )
-
-    # Find the first set of non-zero values
-    results = []
-    for idx in range(len(params['SA_ZATTEST1'])):
-        values = [
-            params[param][idx].value
-            for param in params
-        ]
-        if any(values):
-            pointing = Pointing()
-
-            # The tagged obstime will come from the SA_ZATTEST1 mneunonic
-            pointing.obstime = params['SA_ZATTEST1'][idx].obstime
-
-            # Fill out the matricies
-            pointing.q = np.array([
-                params['SA_ZATTEST1'][idx].value,
-                params['SA_ZATTEST2'][idx].value,
-                params['SA_ZATTEST3'][idx].value,
-                params['SA_ZATTEST4'][idx].value,
-            ])
-
-            pointing.j2fgs_matrix = np.array([
-                params['SA_ZRFGS2J11'][idx].value,
-                params['SA_ZRFGS2J21'][idx].value,
-                params['SA_ZRFGS2J31'][idx].value,
-                params['SA_ZRFGS2J12'][idx].value,
-                params['SA_ZRFGS2J22'][idx].value,
-                params['SA_ZRFGS2J32'][idx].value,
-                params['SA_ZRFGS2J13'][idx].value,
-                params['SA_ZRFGS2J23'][idx].value,
-                params['SA_ZRFGS2J33'][idx].value,
-            ])
-
-            pointing.fsmcorr = np.array([
-                params['SA_ZADUCMDX'][idx].value,
-                params['SA_ZADUCMDY'][idx].value,
-
-            ])
-
-            results.append(pointing)
-
-            # Short circuit if all we're looking for is the first.
-            break
-
-    if not len(results):
+    if not len(pointings):
         raise ValueError(
                 'No non-zero quanternion found '
                 'in the DB between MJD {} and {}'.format(obsstart, obsend)
             )
 
-    return results[0]
+    return pointings[0]
 
 
 def vector_to_ra_dec(v):
@@ -1188,3 +1087,135 @@ def calc_rotation_matrix(angle, vparity=1):
     pc2_2 = cos(angle)
 
     return [pc1_1, pc1_2, pc2_1, pc2_2]
+
+
+def pointings_from_engdb(obsstart, obsend, strict_time):
+    """Retrieve pointings from the engineering database
+
+    Parameters
+    ----------
+    obsstart, obsend: float
+        MJD observation start/end times
+
+    strict_time: bool
+        If true, pointing must be within the observation time.
+        Otherwise, nearest values are allowed.
+
+    reduce_func: func or None
+        Reduction function to use on values.
+        If None, the full list of `Pointing`s
+        is returned.
+
+    Returns
+    -------
+    pointings: [Pointing(, ...)]
+        The engineering pointing parameters.
+
+    Raises
+    ------
+    ValueError
+        Cannot retrieve engineering information
+
+    """
+    logger.info(
+        'Querying engineering DB: {}'.format(ENGDB_BASE_URL)
+    )
+
+    try:
+        engdb = ENGDB_Service()
+    except Exception as exception:
+        raise ValueError(
+            'Cannot open engineering DB connection'
+            '\nException: {}'.format(
+                exception
+            )
+        )
+    params = {
+        'SA_ZATTEST1':  None,
+        'SA_ZATTEST2':  None,
+        'SA_ZATTEST3':  None,
+        'SA_ZATTEST4':  None,
+        'SA_ZRFGS2J11': None,
+        'SA_ZRFGS2J21': None,
+        'SA_ZRFGS2J31': None,
+        'SA_ZRFGS2J12': None,
+        'SA_ZRFGS2J22': None,
+        'SA_ZRFGS2J32': None,
+        'SA_ZRFGS2J13': None,
+        'SA_ZRFGS2J23': None,
+        'SA_ZRFGS2J33': None,
+        'SA_ZADUCMDX':  None,
+        'SA_ZADUCMDY':  None,
+    }
+
+    # First try go retrieve values without the database bracket values.
+    for param in params:
+        try:
+            params[param] = engdb.get_values(
+                param, obsstart, obsend,
+                time_format='mjd', include_obstime=True
+            )
+        except Exception as exception:
+            raise ValueError(
+                'Cannot retrive {} from engineering.'
+                '\nFailure was {}'.format(
+                    param,
+                    exception
+                )
+            )
+
+    # For any parameters that did not have values, re-retrieve with
+    # the bracket values.
+    if not strict_time:
+        for param in params:
+            if not len(params[param]):
+                logger.warning(
+                    'Parameter {} not within the observation. Pulling nearest values'.format(param)
+                )
+                params[param] = engdb.get_values(
+                    param, obsstart, obsend,
+                    time_format='mjd', include_obstime=True, include_bracket_values=True
+                )
+
+    # Construct the pointings
+    pointings = []
+    for idx in range(len(params['SA_ZATTEST1'])):
+        values = [
+            params[param][idx].value
+            for param in params
+        ]
+        if any(values):
+            pointing = Pointing()
+
+            # The tagged obstime will come from the SA_ZATTEST1 mneunonic
+            pointing.obstime = params['SA_ZATTEST1'][idx].obstime
+
+            # Fill out the matricies
+            pointing.q = np.array([
+                params['SA_ZATTEST1'][idx].value,
+                params['SA_ZATTEST2'][idx].value,
+                params['SA_ZATTEST3'][idx].value,
+                params['SA_ZATTEST4'][idx].value,
+            ])
+
+            pointing.j2fgs_matrix = np.array([
+                params['SA_ZRFGS2J11'][idx].value,
+                params['SA_ZRFGS2J21'][idx].value,
+                params['SA_ZRFGS2J31'][idx].value,
+                params['SA_ZRFGS2J12'][idx].value,
+                params['SA_ZRFGS2J22'][idx].value,
+                params['SA_ZRFGS2J32'][idx].value,
+                params['SA_ZRFGS2J13'][idx].value,
+                params['SA_ZRFGS2J23'][idx].value,
+                params['SA_ZRFGS2J33'][idx].value,
+            ])
+
+            pointing.fsmcorr = np.array([
+                params['SA_ZADUCMDX'][idx].value,
+                params['SA_ZADUCMDY'][idx].value,
+
+            ])
+
+            pointings.append(pointing)
+
+    return pointings
