@@ -183,7 +183,7 @@ def get_nircam_subarray(header):
     #
     # ROWSTART and COLSTART are zero-indexed, ROWCORNR and COLCORNR
     # are 1-indexed
-    # Try to get ROWSTART from header.  If that doesn't work, try ROWCORNR
+    # Try to get ROWCORNR from header.  If that doesn't work, try ROWSTART
     detector_row_start = None
     try:
         detector_row_start = int(header['ROWCORNR'])
@@ -197,7 +197,7 @@ def get_nircam_subarray(header):
         detector_row_start = 1
 
     #
-    # Now try to get COLSTART from header.  If that doesn't work, try COLCORNR
+    # Now try to get COLCORNR from header.  If that doesn't work, try COLSTART
     detector_column_start = None
     try:
         detector_column_start = int(header['COLCORNR'])
