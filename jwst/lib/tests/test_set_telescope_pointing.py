@@ -126,12 +126,8 @@ def test_get_pointing(eng_db_ngas):
     assert STARTTIME <= obstime <= ENDTIME
 
 
-@pytest.mark.xfail(
-    reason='Changing the result_type parameter',
-    run=False
-)
 def test_get_pointing_list(eng_db_ngas):
-        results = stp.get_pointing(STARTTIME, ENDTIME, result_type='all')
+        results = stp.get_pointing(STARTTIME, ENDTIME, reduce_func=stp.all_pointings)
         assert isinstance(results, list)
         assert len(results) > 0
         assert np.isclose(results[0].q, Q_EXPECTED).all()

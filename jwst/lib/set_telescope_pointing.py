@@ -94,7 +94,8 @@ WCSRef = namedlist(
 )
 
 
-def add_wcs(filename, default_pa_v3=0., siaf_path=None, strict_time=False, **transform_kwargs):
+def add_wcs(filename, default_pa_v3=0., siaf_path=None,
+            strict_time=False, reduce_func=None, **transform_kwargs):
     """Add WCS information to a FITS file
 
     Telescope orientation is attempted to be obtained from
@@ -119,6 +120,11 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, strict_time=False, **tra
         If true, pointing must be within the observation time.
         Otherwise, nearest values are allowed.
 
+    reduce_func: func or None
+        Reduction function to use on values.
+        If None, the full list of `Pointing`s
+        is returned.
+
     transform_kwargs: dict
         Keyword arguments used by matrix calculation routines
     """
@@ -129,6 +135,7 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, strict_time=False, **tra
         default_pa_v3=default_pa_v3,
         siaf_path=siaf_path,
         strict_time=strict_time,
+        reduce_func=reduce_func,
         **transform_kwargs
     )
     try:
@@ -141,7 +148,8 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, strict_time=False, **tra
     logger.info('...update completed')
 
 
-def update_wcs(model, default_pa_v3=0., siaf_path=None, strict_time=False, **transform_kwargs):
+def update_wcs(model, default_pa_v3=0., siaf_path=None,
+               strict_time=False, reduce_func=None, **transform_kwargs):
     """Update WCS pointing information
 
     Given a `jwst.datamodels.DataModel`, determine the simple WCS parameters
@@ -166,6 +174,11 @@ def update_wcs(model, default_pa_v3=0., siaf_path=None, strict_time=False, **tra
         If True, pointing must be within the observation time.
         Otherwise, nearest values are allowed.
 
+    reduce_func: func or None
+        Reduction function to use on values.
+        If None, the full list of `Pointing`s
+        is returned.
+
     transform_kwargs: dict
         Keyword arguments used by matrix calculation routines.
     """
@@ -182,7 +195,8 @@ def update_wcs(model, default_pa_v3=0., siaf_path=None, strict_time=False, **tra
         )
     else:
         update_wcs_from_telem(
-            model, default_pa_v3=default_pa_v3, siaf_path=siaf_path, strict_time=strict_time, **transform_kwargs
+            model, default_pa_v3=default_pa_v3, siaf_path=siaf_path,
+            strict_time=strict_time, reduce_func=reduce_func, **transform_kwargs
         )
 
 
@@ -241,7 +255,9 @@ def update_wcs_from_fgs_guiding(model, default_pa_v3=0.0, default_vparity=1):
      model.meta.wcsinfo.pc2_2) = calc_rotation_matrix(pa_rad, vparity=vparity)
 
 
-def update_wcs_from_telem(model, default_pa_v3=0., siaf_path=None, strict_time=False, **transform_kwargs):
+def update_wcs_from_telem(
+        model, default_pa_v3=0., siaf_path=None, strict_time=False, reduce_func=None, **transform_kwargs
+):
     """Update WCS pointing information
 
     Given a `jwst.datamodels.DataModel`, determine the simple WCS parameters
@@ -265,6 +281,11 @@ def update_wcs_from_telem(model, default_pa_v3=0., siaf_path=None, strict_time=F
     strict_time: bool
         If true, pointing must be within the observation time.
         Otherwise, nearest values are allowed.
+
+    reduce_func: func or None
+        Reduction function to use on values.
+        If None, the full list of `Pointing`s
+        is returned.
 
     transform_kwargs: dict
         Keyword arguments used by matrix calculation routines.
@@ -292,7 +313,7 @@ def update_wcs_from_telem(model, default_pa_v3=0., siaf_path=None, strict_time=F
 
     # Get the pointing information
     try:
-        pointing = get_pointing(obsstart, obsend, strict_time=strict_time)
+        pointing = get_pointing(obsstart, obsend, strict_time=strict_time, reduce_func=reduce_func)
     except ValueError as exception:
         logger.warning(
             'Cannot retrieve telescope pointing.'
@@ -917,6 +938,9 @@ def get_pointing(obsstart, obsend, strict_time=False, reduce_func=None):
     This will need be re-examined when more information is
     available.
     """
+    if reduce_func is None:
+        reduce_func = first_pointing
+
     logger.info(
         'Determining pointing between observations times (mjd):'
         'obsstart = {obsstart} obsend = {obsend}'
@@ -927,15 +951,10 @@ def get_pointing(obsstart, obsend, strict_time=False, reduce_func=None):
         )
     )
 
-    pointings = pointings_from_engdb(obsstart, obsend, strict_time)
+    mnemonics = get_mnemonics(obsstart, obsend, strict_time)
+    reduced = reduce_func(mnemonics)
 
-    if not len(pointings):
-        raise ValueError(
-                'No non-zero quanternion found '
-                'in the DB between MJD {} and {}'.format(obsstart, obsend)
-            )
-
-    return pointings[0]
+    return reduced
 
 
 def vector_to_ra_dec(v):
@@ -1089,8 +1108,8 @@ def calc_rotation_matrix(angle, vparity=1):
     return [pc1_1, pc1_2, pc2_1, pc2_2]
 
 
-def pointings_from_engdb(obsstart, obsend, strict_time):
-    """Retrieve pointings from the engineering database
+def get_mnemonics(obsstart, obsend, strict_time):
+    """Retrieve pointing mnemonics from the engineering database
 
     Parameters
     ----------
@@ -1101,15 +1120,10 @@ def pointings_from_engdb(obsstart, obsend, strict_time):
         If true, pointing must be within the observation time.
         Otherwise, nearest values are allowed.
 
-    reduce_func: func or None
-        Reduction function to use on values.
-        If None, the full list of `Pointing`s
-        is returned.
-
     Returns
     -------
-    pointings: [Pointing(, ...)]
-        The engineering pointing parameters.
+    mnemonics: {mnemonic: [value[,...]][,...]}
+        The values for each pointing mnemonic
 
     Raises
     ------
@@ -1130,7 +1144,7 @@ def pointings_from_engdb(obsstart, obsend, strict_time):
                 exception
             )
         )
-    params = {
+    mnemonics = {
         'SA_ZATTEST1':  None,
         'SA_ZATTEST2':  None,
         'SA_ZATTEST3':  None,
@@ -1149,17 +1163,17 @@ def pointings_from_engdb(obsstart, obsend, strict_time):
     }
 
     # First try go retrieve values without the database bracket values.
-    for param in params:
+    for mnemonic in mnemonics:
         try:
-            params[param] = engdb.get_values(
-                param, obsstart, obsend,
+            mnemonics[mnemonic] = engdb.get_values(
+                mnemonic, obsstart, obsend,
                 time_format='mjd', include_obstime=True
             )
         except Exception as exception:
             raise ValueError(
                 'Cannot retrive {} from engineering.'
                 '\nFailure was {}'.format(
-                    param,
+                    mnemonic,
                     exception
                 )
             )
@@ -1167,55 +1181,91 @@ def pointings_from_engdb(obsstart, obsend, strict_time):
     # For any parameters that did not have values, re-retrieve with
     # the bracket values.
     if not strict_time:
-        for param in params:
-            if not len(params[param]):
+        for mnemonic in mnemonics:
+            if not len(mnemonics[mnemonic]):
                 logger.warning(
-                    'Parameter {} not within the observation. Pulling nearest values'.format(param)
+                    'Parameter {} not within the observation. Pulling nearest values'.format(mnemonic)
                 )
-                params[param] = engdb.get_values(
-                    param, obsstart, obsend,
+                mnemonics[mnemonic] = engdb.get_values(
+                    mnemonic, obsstart, obsend,
                     time_format='mjd', include_obstime=True, include_bracket_values=True
                 )
 
-    # Construct the pointings
+    return mnemonics
+
+
+def all_pointings(mnemonics):
+    """V1 of making pointings
+
+    Parameters
+    ==========
+    mnemonics: {mnemonic: [value[,...]][,...]}
+        The values for each pointing mnemonic
+
+    Returns
+    =======
+    pointings: [Pointing[,...]]
+        List of pointings.
+    """
     pointings = []
-    for idx in range(len(params['SA_ZATTEST1'])):
+    for idx in range(len(mnemonics['SA_ZATTEST1'])):
         values = [
-            params[param][idx].value
-            for param in params
+            mnemonics[mnemonic][idx].value
+            for mnemonic in mnemonics
         ]
         if any(values):
             pointing = Pointing()
 
             # The tagged obstime will come from the SA_ZATTEST1 mneunonic
-            pointing.obstime = params['SA_ZATTEST1'][idx].obstime
+            pointing.obstime = mnemonics['SA_ZATTEST1'][idx].obstime
 
             # Fill out the matricies
             pointing.q = np.array([
-                params['SA_ZATTEST1'][idx].value,
-                params['SA_ZATTEST2'][idx].value,
-                params['SA_ZATTEST3'][idx].value,
-                params['SA_ZATTEST4'][idx].value,
+                mnemonics['SA_ZATTEST1'][idx].value,
+                mnemonics['SA_ZATTEST2'][idx].value,
+                mnemonics['SA_ZATTEST3'][idx].value,
+                mnemonics['SA_ZATTEST4'][idx].value,
             ])
 
             pointing.j2fgs_matrix = np.array([
-                params['SA_ZRFGS2J11'][idx].value,
-                params['SA_ZRFGS2J21'][idx].value,
-                params['SA_ZRFGS2J31'][idx].value,
-                params['SA_ZRFGS2J12'][idx].value,
-                params['SA_ZRFGS2J22'][idx].value,
-                params['SA_ZRFGS2J32'][idx].value,
-                params['SA_ZRFGS2J13'][idx].value,
-                params['SA_ZRFGS2J23'][idx].value,
-                params['SA_ZRFGS2J33'][idx].value,
+                mnemonics['SA_ZRFGS2J11'][idx].value,
+                mnemonics['SA_ZRFGS2J21'][idx].value,
+                mnemonics['SA_ZRFGS2J31'][idx].value,
+                mnemonics['SA_ZRFGS2J12'][idx].value,
+                mnemonics['SA_ZRFGS2J22'][idx].value,
+                mnemonics['SA_ZRFGS2J32'][idx].value,
+                mnemonics['SA_ZRFGS2J13'][idx].value,
+                mnemonics['SA_ZRFGS2J23'][idx].value,
+                mnemonics['SA_ZRFGS2J33'][idx].value,
             ])
 
             pointing.fsmcorr = np.array([
-                params['SA_ZADUCMDX'][idx].value,
-                params['SA_ZADUCMDY'][idx].value,
+                mnemonics['SA_ZADUCMDX'][idx].value,
+                mnemonics['SA_ZADUCMDY'][idx].value,
 
             ])
 
             pointings.append(pointing)
 
+    if not len(pointings):
+        raise ValueError('No non-zero quanternion found.')
+
     return pointings
+
+
+def first_pointing(mnemonics):
+    """Return first pointing
+
+    Parameters
+    ==========
+    mnemonics: {mnemonic: [value[,...]][,...]}
+        The values for each pointing mnemonic
+
+    Returns
+    =======
+    pointing: Pointing
+        First pointing.
+
+    """
+    pointings = all_pointings(mnemonics)
+    return pointings[0]
