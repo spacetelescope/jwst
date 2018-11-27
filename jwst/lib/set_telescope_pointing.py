@@ -94,7 +94,7 @@ WCSRef = namedlist(
 )
 
 
-def add_wcs(filename, default_pa_v3=0., siaf_path=None, **kwargs):
+def add_wcs(filename, default_pa_v3=0., siaf_path=None, **transform_kwargs):
     """Add WCS information to a FITS file
 
     Telescope orientation is attempted to be obtained from
@@ -112,7 +112,7 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, **kwargs):
         The V3 position angle to use if the pointing information
         is not found.
 
-    kwargs: dict
+    transform_kwargs: dict
         Keyword arguments used by matrix calculation routines
     """
     logger.info('Updating WCS info for file {}'.format(filename))
@@ -121,7 +121,7 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, **kwargs):
         model,
         default_pa_v3=default_pa_v3,
         siaf_path=siaf_path,
-        **kwargs
+        **transform_kwargs
     )
     try:
         _add_axis_3(model)
@@ -133,7 +133,7 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, **kwargs):
     logger.info('...update completed')
 
 
-def update_wcs(model, default_pa_v3=0., siaf_path=None, **kwargs):
+def update_wcs(model, default_pa_v3=0., siaf_path=None, **transform_kwargs):
     """Update WCS pointing information
 
     Given a `jwst.datamodels.DataModel`, determine the simple WCS parameters
@@ -151,7 +151,7 @@ def update_wcs(model, default_pa_v3=0., siaf_path=None, **kwargs):
         use this as the V3 position angle.
     siaf_path : str
         The path to the SIAF file, i.e. ``XML_DATA`` env variable.
-    kwargs: dict
+    transform_kwargs: dict
         Keyword arguments used by matrix calculation routines.
     """
 
@@ -167,7 +167,7 @@ def update_wcs(model, default_pa_v3=0., siaf_path=None, **kwargs):
         )
     else:
         update_wcs_from_telem(
-            model, default_pa_v3=default_pa_v3, siaf_path=siaf_path, **kwargs
+            model, default_pa_v3=default_pa_v3, siaf_path=siaf_path, **transform_kwargs
         )
 
 
@@ -226,7 +226,7 @@ def update_wcs_from_fgs_guiding(model, default_pa_v3=0.0, default_vparity=1):
      model.meta.wcsinfo.pc2_2) = calc_rotation_matrix(pa_rad, vparity=vparity)
 
 
-def update_wcs_from_telem(model, default_pa_v3=0., siaf_path=None, **kwargs):
+def update_wcs_from_telem(model, default_pa_v3=0., siaf_path=None, **transform_kwargs):
     """Update WCS pointing information
 
     Given a `jwst.datamodels.DataModel`, determine the simple WCS parameters
@@ -244,7 +244,7 @@ def update_wcs_from_telem(model, default_pa_v3=0., siaf_path=None, **kwargs):
         use this as the V3 position angle.
     siaf_path : str
         The path to the SIAF file, i.e. ``XML_DATA`` env variable.
-    kwargs: dict
+    transform_kwargs: dict
         Keyword arguments used by matrix calculation routines.
     """
 
@@ -282,7 +282,7 @@ def update_wcs_from_telem(model, default_pa_v3=0., siaf_path=None, **kwargs):
         logger.info('Successful read of engineering quaternions:')
         logger.info('\tPointing = {}'.format(pointing))
         try:
-            wcsinfo, vinfo = calc_wcs(pointing, siaf, **kwargs)
+            wcsinfo, vinfo = calc_wcs(pointing, siaf, **transform_kwargs)
         except Exception as e:
             logger.warning(
                 'WCS calculation has failed and will be skipped.'
@@ -402,7 +402,7 @@ def update_s_region(model, prd_db_filepath=None):
     model.meta.wcsinfo.s_region = s_region
 
 
-def calc_wcs(pointing, siaf, **kwargs):
+def calc_wcs(pointing, siaf, **transform_kwargs):
     """Transform from the given SIAF information and Pointing
     the aperture and V1 wcs
 
@@ -414,7 +414,7 @@ def calc_wcs(pointing, siaf, **kwargs):
     pointing: Pointing
         The telescope pointing. See ref:`Notes` for further details
 
-    kwargs: dict
+    transform_kwargs: dict
         Keyword arguments used by matrix calculation routines
 
     Returns
@@ -450,7 +450,7 @@ def calc_wcs(pointing, siaf, **kwargs):
     """
 
     # Calculate transforms
-    tforms = calc_transforms(pointing, siaf, **kwargs)
+    tforms = calc_transforms(pointing, siaf, **transform_kwargs)
 
     # Calculate the V1 WCS information
     vinfo = calc_v1_wcs(tforms.m_eci2v)
