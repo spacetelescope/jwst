@@ -330,12 +330,12 @@ def generate_upload_params(results_root, updated_outputs, verbose=True):
 
     # Write out JSON file to enable retention of different results.
     # Also rename outputs as new truths.
-    for files in updated_outputs:
-        new_truth = os.path.abspath(files[1])
-        schema_pattern.append(new_truth)
-        shutil.move(files[0], new_truth)
+    for test_result, truth in updated_outputs:
+        new_truth = os.path.basename(truth)
+        shutil.move(test_result, new_truth)
+        schema_pattern.append(os.path.abspath(new_truth))
         if verbose:
             print("Renamed {} as new 'truth' file: {}".format(
-                files[0], new_truth))
+                os.path.abspath(test_result), os.path.abspath(new_truth)))
 
     return schema_pattern, tree, testname
