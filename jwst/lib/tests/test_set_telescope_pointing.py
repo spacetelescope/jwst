@@ -33,8 +33,9 @@ V3_REF = -350.0
 V3I_YANG = 42.0
 VPARITY = -1
 
-# Get the mock DB
-db_path = os.path.join(os.path.dirname(__file__), 'data', 'engdb_ngas')
+# Get the mock databases
+db_ngas_path = os.path.join(os.path.dirname(__file__), 'data', 'engdb_ngas')
+db_jw703_path = os.path.join(os.path.dirname(__file__), 'data', 'engdb_jw00703')
 siaf_db = os.path.join(os.path.dirname(__file__), 'data', 'siaf.db')
 
 # Some expected falues
@@ -49,13 +50,24 @@ J2FGS_MATRIX_EXPECTED = np.asarray(
 FSMCORR_EXPECTED = np.zeros((2,))
 OBSTIME_EXPECTED = STARTTIME
 
-
+# ########################
+# Database access fixtures
+# ########################
 @pytest.fixture
-def eng_db():
+def eng_db_ngas():
     """Setup the test engineering database"""
-    with EngDB_Mocker(db_path=db_path):
+    with EngDB_Mocker(db_path=db_ngas_path):
         engdb = engdb_tools.ENGDB_Service()
         yield engdb
+
+
+@pytest.fixture
+def eng_db_jw703():
+    """Setup the test engineering database"""
+    with EngDB_Mocker(db_path=db_jw703_path):
+        engdb = engdb_tools.ENGDB_Service()
+        yield engdb
+
 
 @pytest.fixture
 def data_file():
@@ -77,12 +89,24 @@ def data_file():
         yield file_path
 
 
+def test_pointing_averaging(eng_db_jw703):
+    """Ensure that the averaging works."""
+    (q,
+     j2fgs_matrix,
+     fsmcorr,
+     obstime) = stp.get_pointing(
+         Time('2019-06-03T17:25:40', format='isot'),
+         Time('2019-06-03T17:25:56', format='isot')
+     )
+    assert False
+
+
 def test_get_pointing_fail():
     with pytest.raises(Exception):
         q, j2fgs_matrix, fmscorr, obstime = stp.get_pointing(47892.0, 48256.0)
 
 
-def test_get_pointing(eng_db):
+def test_get_pointing(eng_db_ngas):
     (q,
      j2fgs_matrix,
      fsmcorr,
@@ -93,7 +117,7 @@ def test_get_pointing(eng_db):
     assert STARTTIME <= obstime <= ENDTIME
 
 
-def test_get_pointing_list(eng_db):
+def test_get_pointing_list(eng_db_ngas):
         results = stp.get_pointing(STARTTIME, ENDTIME, result_type='all')
         assert isinstance(results, list)
         assert len(results) > 0
@@ -103,7 +127,7 @@ def test_get_pointing_list(eng_db):
         assert STARTTIME <= results[0].obstime <= ENDTIME
 
 
-def test_get_pointing_with_zeros(eng_db):
+def test_get_pointing_with_zeros(eng_db_ngas):
     (q,
      j2fgs_matrix,
      fsmcorr,
@@ -195,7 +219,7 @@ def test_add_wcs_fsmcorr_v1(data_file):
 
 @pytest.mark.skipif(sys.version_info.major<3,
                     reason="No URI support in sqlite3")
-def test_add_wcs_with_db(eng_db, data_file, siaf_file=siaf_db):
+def test_add_wcs_with_db(eng_db_ngas, data_file, siaf_file=siaf_db):
     """Test using the database"""
     stp.add_wcs(data_file, siaf_path=siaf_db)
 
@@ -227,7 +251,7 @@ def test_add_wcs_with_db(eng_db, data_file, siaf_file=siaf_db):
 
 @pytest.mark.skipif(sys.version_info.major<3,
                     reason="No URI support in sqlite3")
-def test_add_wcs_with_db_fsmcorr_v1(eng_db, data_file):
+def test_add_wcs_with_db_fsmcorr_v1(eng_db_ngas, data_file):
     """Test using the database with original FSM correction"""
     stp.add_wcs(data_file, fsmcorr_version='v1', siaf_path=siaf_db)
 
