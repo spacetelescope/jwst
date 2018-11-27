@@ -2,6 +2,7 @@
 Test suite for set_telescope_pointing
 """
 import copy
+import logging
 import numpy as np
 import os
 import sys
@@ -18,6 +19,10 @@ from .engdb_mock import EngDB_Mocker
 from .. import set_telescope_pointing as stp
 from ... import datamodels
 from ...tests.helpers import word_precision_check
+
+# Ensure that `set_telescope_pointing` logs.
+stp.logger.setLevel(logging.DEBUG)
+stp.logger.addHandler(logging.StreamHandler())
 
 # Setup mock engineering service
 STARTTIME = Time('2014-01-03')
@@ -89,6 +94,10 @@ def data_file():
         yield file_path
 
 
+@pytest.mark.xfail(
+    reason='Issue #2886',
+    run=False
+)
 def test_pointing_averaging(eng_db_jw703):
     """Ensure that the averaging works."""
     (q,
@@ -117,6 +126,10 @@ def test_get_pointing(eng_db_ngas):
     assert STARTTIME <= obstime <= ENDTIME
 
 
+@pytest.mark.xfail(
+    reason='Changing the result_type parameter',
+    run=False
+)
 def test_get_pointing_list(eng_db_ngas):
         results = stp.get_pointing(STARTTIME, ENDTIME, result_type='all')
         assert isinstance(results, list)
@@ -145,8 +158,9 @@ def test_get_pointing_with_zeros(eng_db_ngas):
 @pytest.mark.skipif(sys.version_info.major<3,
                     reason="No URI support in sqlite3")
 def test_add_wcs_default(data_file):
+    """Handle when no pointing exists and the default is used."""
     try:
-        stp.add_wcs(data_file, siaf_path=siaf_db)
+        stp.add_wcs(data_file, siaf_path=siaf_db, strict_time=True)
     except Exception as e:
         pytest.skip(
             'Live ENGDB service is not accessible.'
@@ -184,7 +198,7 @@ def test_add_wcs_default(data_file):
 def test_add_wcs_fsmcorr_v1(data_file):
     """Test with default value using FSM original correction"""
     try:
-        stp.add_wcs(data_file, fsmcorr_version='v1', siaf_path=siaf_db)
+        stp.add_wcs(data_file, fsmcorr_version='v1', siaf_path=siaf_db, strict_time=True)
     except Exception as e:
         pytest.skip(
             'Live ENGDB service is not accessible.'

@@ -94,7 +94,7 @@ WCSRef = namedlist(
 )
 
 
-def add_wcs(filename, default_pa_v3=0., siaf_path=None, **transform_kwargs):
+def add_wcs(filename, default_pa_v3=0., siaf_path=None, strict_time=False, **transform_kwargs):
     """Add WCS information to a FITS file
 
     Telescope orientation is attempted to be obtained from
@@ -112,6 +112,13 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, **transform_kwargs):
         The V3 position angle to use if the pointing information
         is not found.
 
+    siaf_path: str or file-like object
+        The path to the SIAF database.
+
+    strict_time: bool
+        If true, pointing must be within the observation time.
+        Otherwise, nearest values are allowed.
+
     transform_kwargs: dict
         Keyword arguments used by matrix calculation routines
     """
@@ -121,6 +128,7 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, **transform_kwargs):
         model,
         default_pa_v3=default_pa_v3,
         siaf_path=siaf_path,
+        strict_time=strict_time,
         **transform_kwargs
     )
     try:
@@ -133,7 +141,7 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, **transform_kwargs):
     logger.info('...update completed')
 
 
-def update_wcs(model, default_pa_v3=0., siaf_path=None, **transform_kwargs):
+def update_wcs(model, default_pa_v3=0., siaf_path=None, strict_time=False, **transform_kwargs):
     """Update WCS pointing information
 
     Given a `jwst.datamodels.DataModel`, determine the simple WCS parameters
@@ -146,11 +154,18 @@ def update_wcs(model, default_pa_v3=0., siaf_path=None, **transform_kwargs):
     ----------
     model : `~jwst.datamodels.DataModel`
         The model to update.
+
     default_pa_v3 : float
         If pointing information cannot be retrieved,
         use this as the V3 position angle.
+
     siaf_path : str
         The path to the SIAF file, i.e. ``XML_DATA`` env variable.
+
+    strict_time: bool
+        If True, pointing must be within the observation time.
+        Otherwise, nearest values are allowed.
+
     transform_kwargs: dict
         Keyword arguments used by matrix calculation routines.
     """
@@ -167,7 +182,7 @@ def update_wcs(model, default_pa_v3=0., siaf_path=None, **transform_kwargs):
         )
     else:
         update_wcs_from_telem(
-            model, default_pa_v3=default_pa_v3, siaf_path=siaf_path, **transform_kwargs
+            model, default_pa_v3=default_pa_v3, siaf_path=siaf_path, strict_time=strict_time, **transform_kwargs
         )
 
 
@@ -226,7 +241,7 @@ def update_wcs_from_fgs_guiding(model, default_pa_v3=0.0, default_vparity=1):
      model.meta.wcsinfo.pc2_2) = calc_rotation_matrix(pa_rad, vparity=vparity)
 
 
-def update_wcs_from_telem(model, default_pa_v3=0., siaf_path=None, **transform_kwargs):
+def update_wcs_from_telem(model, default_pa_v3=0., siaf_path=None, strict_time=False, **transform_kwargs):
     """Update WCS pointing information
 
     Given a `jwst.datamodels.DataModel`, determine the simple WCS parameters
@@ -239,11 +254,18 @@ def update_wcs_from_telem(model, default_pa_v3=0., siaf_path=None, **transform_k
     ----------
     model : `~jwst.datamodels.DataModel`
         The model to update.
+
     default_pa_v3 : float
         If pointing information cannot be retrieved,
         use this as the V3 position angle.
+
     siaf_path : str
         The path to the SIAF file, i.e. ``XML_DATA`` env variable.
+
+    strict_time: bool
+        If true, pointing must be within the observation time.
+        Otherwise, nearest values are allowed.
+
     transform_kwargs: dict
         Keyword arguments used by matrix calculation routines.
     """
@@ -270,7 +292,7 @@ def update_wcs_from_telem(model, default_pa_v3=0., siaf_path=None, **transform_k
 
     # Get the pointing information
     try:
-        pointing = get_pointing(obsstart, obsend)
+        pointing = get_pointing(obsstart, obsend, strict_time=strict_time)
     except ValueError as exception:
         logger.warning(
             'Cannot retrieve telescope pointing.'
@@ -859,7 +881,7 @@ def calc_position_angle(v1, v3):
     return v3_pa
 
 
-def get_pointing(obsstart, obsend, result_type='first'):
+def get_pointing(obsstart, obsend, strict_time=False, reduce_func=None):
     """
     Get telescope pointing engineering data.
 
@@ -868,11 +890,14 @@ def get_pointing(obsstart, obsend, result_type='first'):
     obsstart, obsend: float
         MJD observation start/end times
 
-    result_type: str
-        What to return. Possible options are:
-            `first`: Return the first non-zero matricies
-            `all`: Return all non-zero matricies within
-                   the given range.
+    strict_time: bool
+        If true, pointing must be within the observation time.
+        Otherwise, nearest values are allowed.
+
+    reduce_func: func or None
+        Reduction function to use on values.
+        If None, the full list of `Pointing`s
+        is returned.
 
     Returns
     -------
@@ -926,6 +951,8 @@ def get_pointing(obsstart, obsend, result_type='first'):
         'SA_ZADUCMDX':  None,
         'SA_ZADUCMDY':  None,
     }
+
+    # First try go retrieve values without the database bracket values.
     for param in params:
         try:
             params[param] = engdb.get_values(
@@ -940,6 +967,16 @@ def get_pointing(obsstart, obsend, result_type='first'):
                     exception
                 )
             )
+
+    # For any parameters that did not have values, re-retrieve with
+    # the bracket values.
+    if not strict_time:
+        for param in params:
+            if not len(params[param]):
+                params[param] = engdb.get_values(
+                    param, obsstart, obsend,
+                    time_format='mjd', include_obstime=True, include_bracket_values=True
+                )
 
     # Find the first set of non-zero values
     results = []
@@ -983,8 +1020,7 @@ def get_pointing(obsstart, obsend, result_type='first'):
             results.append(pointing)
 
             # Short circuit if all we're looking for is the first.
-            if result_type == 'first':
-                break
+            break
 
     if not len(results):
         raise ValueError(
@@ -992,10 +1028,7 @@ def get_pointing(obsstart, obsend, result_type='first'):
                 'in the DB between MJD {} and {}'.format(obsstart, obsend)
             )
 
-    if result_type == 'first':
-        return results[0]
-    else:
-        return results
+    return results[0]
 
 
 def vector_to_ra_dec(v):
