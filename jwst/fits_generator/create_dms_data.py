@@ -186,13 +186,12 @@ def get_nircam_subarray(header):
     # Try to get ROWSTART from header.  If that doesn't work, try ROWCORNR
     detector_row_start = None
     try:
-        detector_row_start = int(float(header['ROWSTART'])) + 1
-    except KeyError:
-        pass
-    try:
         detector_row_start = int(header['ROWCORNR'])
     except KeyError:
-        pass
+        try:
+            detector_row_start = int(float(header['ROWSTART'])) + 1
+        except KeyError:
+            pass
     if detector_row_start is None:
         print('Unable to get subarray ROWSTART, using 1')
         detector_row_start = 1
@@ -201,13 +200,12 @@ def get_nircam_subarray(header):
     # Now try to get COLSTART from header.  If that doesn't work, try COLCORNR
     detector_column_start = None
     try:
-        detector_column_start = int(float(header['COLSTART'])) + 1
-    except KeyError:
-        pass
-    try:
         detector_column_start = int(header['COLCORNR'])
     except KeyError:
-        pass
+        try:
+            detector_column_start = int(float(header['COLSTART'])) + 1
+        except KeyError:
+            pass
     if detector_column_start is None:
         print('Unable to get subarray COLSTART, using 1')
         detector_column_start = 1
