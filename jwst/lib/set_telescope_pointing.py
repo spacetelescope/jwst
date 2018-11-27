@@ -4,6 +4,7 @@ from math import (cos, sin)
 import os.path
 import sqlite3
 
+from astropy.time import Time
 import numpy as np
 
 from namedlist import namedlist
@@ -1184,7 +1185,7 @@ def get_mnemonics(obsstart, obsend, strict_time):
         for mnemonic in mnemonics:
             if not len(mnemonics[mnemonic]):
                 logger.warning(
-                    'Parameter {} not within the observation. Pulling nearest values'.format(mnemonic)
+                    'Parameter {} not within the observation. Pulling nearest values.'.format(mnemonic)
                 )
                 mnemonics[mnemonic] = engdb.get_values(
                     mnemonic, obsstart, obsend,
@@ -1269,3 +1270,65 @@ def first_pointing(mnemonics):
     """
     pointings = all_pointings(mnemonics)
     return pointings[0]
+
+
+def pointing_from_average(mnemonics):
+    """Determine single pointing from average of available pointings
+
+    Parameters
+    ==========
+    mnemonics: {mnemonic: [value[,...]][,...]}
+        The values for each pointing mnemonic
+
+    Returns
+    =======
+    pointing: Pointing
+        Pointing from average.
+
+    """
+    pointing = Pointing()
+
+    # Get average observation time. This is keyed off the q0 quaternion term, SA_ZATTEST1
+    times = [
+        eng_param.obstime.unix
+        for eng_param in mnemonics['SA_ZATTEST1']
+    ]
+    pointing.obstime = Time(np.average(times), format='unix')
+
+    # Get averages for all the mnemonics.
+    mnemonic_averages = {}
+    for mnemonic in mnemonics:
+        values = [
+            eng_param.value
+            for eng_param in mnemonics[mnemonic]
+        ]
+        mnemonic_averages[mnemonic] = np.average(values)
+
+    # Fill out the pointing matrices.
+    pointing.q = np.array([
+        mnemonic_averages['SA_ZATTEST1'],
+        mnemonic_averages['SA_ZATTEST2'],
+        mnemonic_averages['SA_ZATTEST3'],
+        mnemonic_averages['SA_ZATTEST4']
+    ])
+
+    pointing.j2fgs_matrix = np.array([
+        mnemonic_averages['SA_ZRFGS2J11'],
+        mnemonic_averages['SA_ZRFGS2J21'],
+        mnemonic_averages['SA_ZRFGS2J31'],
+        mnemonic_averages['SA_ZRFGS2J12'],
+        mnemonic_averages['SA_ZRFGS2J22'],
+        mnemonic_averages['SA_ZRFGS2J32'],
+        mnemonic_averages['SA_ZRFGS2J13'],
+        mnemonic_averages['SA_ZRFGS2J23'],
+        mnemonic_averages['SA_ZRFGS2J33']
+    ])
+
+    pointing.fsmcorr = np.array([
+        mnemonic_averages['SA_ZADUCMDX'],
+        mnemonic_averages['SA_ZADUCMDY']
+
+    ])
+
+    # That's all folks
+    return pointing

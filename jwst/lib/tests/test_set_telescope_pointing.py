@@ -94,20 +94,30 @@ def data_file():
         yield file_path
 
 
-@pytest.mark.xfail(
-    reason='Issue #2886',
-    run=False
-)
 def test_pointing_averaging(eng_db_jw703):
     """Ensure that the averaging works."""
+    q_exp = np.array([ 0.62383733,  0.53552715, -0.49252283,  0.28541008])
+    j2fgs_exp = np.array([
+        -1.00962794e-03,  9.99999464e-01,  3.41404261e-06,
+        3.38429719e-03, 2.85793453e-09,  9.99994300e-01,
+        9.99993742e-01,  1.00963370e-03, -3.38429548e-03
+    ])
+    fsmcorr_exp = np.array([-0.02558673, -0.00200601])
+    obstime_exp = Time(1559582740.4880004, format='unix')
+
     (q,
      j2fgs_matrix,
      fsmcorr,
      obstime) = stp.get_pointing(
          Time('2019-06-03T17:25:40', format='isot'),
-         Time('2019-06-03T17:25:56', format='isot')
+         Time('2019-06-03T17:25:56', format='isot'),
+         reduce_func=stp.pointing_from_average
      )
-    assert False
+
+    assert np.isclose(q, q_exp).all()
+    assert np.isclose(j2fgs_matrix, j2fgs_exp).all()
+    assert np.isclose(fsmcorr, fsmcorr_exp).all()
+    assert obstime == obstime_exp
 
 
 def test_get_pointing_fail():
