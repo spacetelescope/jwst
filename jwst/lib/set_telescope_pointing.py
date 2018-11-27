@@ -123,8 +123,6 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None,
 
     reduce_func: func or None
         Reduction function to use on values.
-        If None, the full list of `Pointing`s
-        is returned.
 
     transform_kwargs: dict
         Keyword arguments used by matrix calculation routines
@@ -177,8 +175,6 @@ def update_wcs(model, default_pa_v3=0., siaf_path=None,
 
     reduce_func: func or None
         Reduction function to use on values.
-        If None, the full list of `Pointing`s
-        is returned.
 
     transform_kwargs: dict
         Keyword arguments used by matrix calculation routines.
@@ -285,8 +281,6 @@ def update_wcs_from_telem(
 
     reduce_func: func or None
         Reduction function to use on values.
-        If None, the full list of `Pointing`s
-        is returned.
 
     transform_kwargs: dict
         Keyword arguments used by matrix calculation routines.

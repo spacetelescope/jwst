@@ -58,6 +58,7 @@ PC2_2
 It does not currently place the new keywords in any particular location
 in the header other than what is required by the standard.
 '''
+import argparse
 import logging
 import sys
 
@@ -71,8 +72,20 @@ logger.setLevel(logging.INFO)
 
 
 if __name__ == '__main__':
-    if len(sys.argv) <= 1:
-        raise ValueError('missing filename argument(s)')
-    for filename in sys.argv[1:]:
+
+    parser = argparse.ArgumentParser(
+        description='Update basic WCS information in JWST exposures from the engineering database.'
+    )
+    parser.add_argument(
+        'exposures', type=str, nargs='+',
+        help='List of JWST exposures to update.'
+    )
+    parser.add_argument(
+        '--strict-time', action='store_true',
+        help='Force pointings to be within the observation time.'
+    )
+    args = parser.parse_args()
+
+    for filename in args.exposures:
         logger.info('Setting pointing for {}'.format(filename))
-        add_wcs(filename)
+        add_wcs(filename, strict_time=args.strict_time)
