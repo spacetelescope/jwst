@@ -919,9 +919,14 @@ def get_pointing(obsstart, obsend, strict_time=False, reduce_func=None):
     """
     logger.info(
         'Determining pointing between observations times (mjd):'
-        '\n\tobsstart = {}'
-        '\n\tobsend = {}'.format(obsstart, obsend)
+        'obsstart = {obsstart} obsend = {obsend}'
+        '\nPointing within observation = {strict_time}'
+        '\nReduction function = {reduce_func}'
+        ''.format(
+            obsstart=obsstart, obsend=obsend, strict_time=strict_time, reduce_func=reduce_func
+        )
     )
+
     logger.info(
         'Querying engineering DB: {}'.format(ENGDB_BASE_URL)
     )
@@ -973,6 +978,9 @@ def get_pointing(obsstart, obsend, strict_time=False, reduce_func=None):
     if not strict_time:
         for param in params:
             if not len(params[param]):
+                logger.warning(
+                    'Parameter {} not within the observation. Pulling nearest values'.format(param)
+                )
                 params[param] = engdb.get_values(
                     param, obsstart, obsend,
                     time_format='mjd', include_obstime=True, include_bracket_values=True
