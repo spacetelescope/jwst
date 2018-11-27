@@ -27,6 +27,14 @@ NODATA_STARTIME = '2014-01-01'
 NODATA_ENDTIME = '2014-01-02'
 
 
+@pytest.fixture
+def engdb():
+    """Setup the service to operate through the mock service"""
+    with EngDB_Mocker() as mocker:
+        engdb = engdb_tools.ENGDB_Service()
+        yield engdb
+
+
 def test_basic(engdb):
     assert engdb.get_records(GOOD_MNEMONIC, GOOD_STARTTIME, GOOD_ENDTIME)
 
@@ -103,13 +111,3 @@ def test_unzip(engdb):
     )
     assert isinstance(values, tuple)
     assert len(values.obstime) == len(values.value)
-
-
-# #####################
-# Utilities for testing
-# #####################
-@pytest.fixture
-def engdb():
-    with EngDB_Mocker() as mocker:
-        engdb = engdb_tools.ENGDB_Service()
-        yield engdb

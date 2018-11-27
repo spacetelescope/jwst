@@ -14,12 +14,12 @@ from astropy.table import Table
 from astropy.time import Time
 
 from .. import engdb_tools
+from .engdb_mock import EngDB_Mocker
 from .. import set_telescope_pointing as stp
 from ... import datamodels
 from ...tests.helpers import word_precision_check
 
 # Setup mock engineering service
-GOOD_MNEMONIC = 'INRSI_GWA_Y_TILT_AVGED'
 STARTTIME = Time('2014-01-03')
 ENDTIME = Time('2014-01-04')
 ZEROTIME_START = Time('2014-01-01')
@@ -34,8 +34,7 @@ V3I_YANG = 42.0
 VPARITY = -1
 
 # Get the mock DB
-db_path = os.path.join(os.path.dirname(__file__), 'data', 'engdb_mock.csv')
-mock_db = Table.read(db_path)
+db_path = os.path.join(os.path.dirname(__file__), 'data', 'engdb_ngas')
 siaf_db = os.path.join(os.path.dirname(__file__), 'data', 'siaf.db')
 
 # Some expected falues
@@ -51,93 +50,12 @@ FSMCORR_EXPECTED = np.zeros((2,))
 OBSTIME_EXPECTED = STARTTIME
 
 
-def register_responses(mocker, response_db, starttime, endtime):
-    request_url = ''.join([
-        engdb_tools.ENGDB_BASE_URL,
-        'Data/',
-        '{mnemonic}',
-        '?sTime={starttime}',
-        '&eTime={endtime}'
-    ])
-
-    starttime_mil = int(starttime.unix * 1000)
-    endtime_mil = int(endtime.unix * 1000)
-    time_increment = (endtime_mil - starttime_mil) // len(response_db)
-
-    response_generic = {
-        'AllPoints': 1,
-        'Count': 2,
-        'ReqSTime': '/Date({:013d}+0000)/'.format(starttime_mil),
-        'ReqETime': '/Date({:013d}+0000)/'.format(endtime_mil),
-        'TlmMnemonic': None,
-        'Data': [],
-    }
-
-    responses = {}
-    for mnemonic in response_db.colnames:
-        response = copy.deepcopy(response_generic)
-        response['TlmMnemonic'] = mnemonic
-        current_time = starttime_mil - time_increment
-        for row in response_db:
-            current_time += time_increment
-            data = {}
-            data['ObsTime'] = '/Date({:013d}+0000)/'.format(current_time)
-            data['EUValue'] = row[mnemonic]
-            response['Data'].append(data)
-        mocker.get(
-            request_url.format(
-                mnemonic=mnemonic,
-                starttime=starttime.iso,
-                endtime=endtime.iso
-            ),
-            json=response
-        )
-        responses[mnemonic] = response
-
-    return responses
-
-
 @pytest.fixture
 def eng_db():
-    with requests_mock.Mocker() as rm:
-
-        # Define response for aliveness
-        url = ''.join([
-            engdb_tools.ENGDB_BASE_URL,
-            engdb_tools.ENGDB_METADATA
-        ])
-        rm.get(url, text='Success')
-
-        # Define good responses
-        good_responses = register_responses(
-            rm,
-            mock_db[1:2],
-            STARTTIME,
-            ENDTIME
-        )
-
-        # Define with zeros in the first row
-        zero_responses = register_responses(
-            rm,
-            mock_db,
-            ZEROTIME_START,
-            ENDTIME
-        )
-
-        edb = engdb_tools.ENGDB_Service()
-
-        # Test for good responses.
-        for mnemonic in mock_db.colnames:
-            r = edb.get_records(mnemonic, STARTTIME, ENDTIME)
-            assert r == good_responses[mnemonic]
-
-        # Test for zeros.
-        for mnemonic in mock_db.colnames:
-            r = edb.get_records(mnemonic, ZEROTIME_START, ENDTIME)
-            assert r == zero_responses[mnemonic]
-
-        yield edb
-
+    """Setup the test engineering database"""
+    with EngDB_Mocker(db_path=db_path):
+        engdb = engdb_tools.ENGDB_Service()
+        yield engdb
 
 @pytest.fixture
 def data_file():
@@ -165,14 +83,14 @@ def test_get_pointing_fail():
 
 
 def test_get_pointing(eng_db):
-        (q,
-         j2fgs_matrix,
-         fsmcorr,
-         obstime) = stp.get_pointing(STARTTIME, ENDTIME)
-        assert np.isclose(q, Q_EXPECTED).all()
-        assert np.isclose(j2fgs_matrix, J2FGS_MATRIX_EXPECTED).all()
-        assert np.isclose(fsmcorr, FSMCORR_EXPECTED).all()
-        assert obstime == STARTTIME
+    (q,
+     j2fgs_matrix,
+     fsmcorr,
+     obstime) = stp.get_pointing(STARTTIME, ENDTIME)
+    assert np.isclose(q, Q_EXPECTED).all()
+    assert np.isclose(j2fgs_matrix, J2FGS_MATRIX_EXPECTED).all()
+    assert np.isclose(fsmcorr, FSMCORR_EXPECTED).all()
+    assert STARTTIME <= obstime <= ENDTIME
 
 
 def test_get_pointing_list(eng_db):
@@ -182,7 +100,7 @@ def test_get_pointing_list(eng_db):
         assert np.isclose(results[0].q, Q_EXPECTED).all()
         assert np.isclose(results[0].j2fgs_matrix, J2FGS_MATRIX_EXPECTED).all()
         assert np.isclose(results[0].fsmcorr, FSMCORR_EXPECTED).all()
-        assert results[0].obstime == STARTTIME
+        assert STARTTIME <= results[0].obstime <= ENDTIME
 
 
 def test_get_pointing_with_zeros(eng_db):
