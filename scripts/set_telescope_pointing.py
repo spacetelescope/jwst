@@ -69,6 +69,10 @@ if __name__ == '__main__':
         help='If pointing information cannot be determine, use header information.'
     )
     parser.add_argument(
+        '--dry-run', action='store_true',
+        help='Perform all actions but do not save the results'
+    )
+    parser.add_argument(
         '--siaf', type=str, default=None,
         help='SIAF PRD sqlite database file. If not specified, default is to use `$XML_DATA/prd.db`'
     )
@@ -85,7 +89,8 @@ if __name__ == '__main__':
                 filename,
                 siaf_path=args.siaf,
                 strict_time=args.strict_time,
-                strict_pointing=not args.allow_default
+                strict_pointing=not args.allow_default,
+                dry_run=args.dry_run
             )
         except ValueError as exception:
             logger.info('Cannot determine pointing information: ' + str(exception))

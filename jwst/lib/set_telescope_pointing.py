@@ -97,7 +97,7 @@ WCSRef = namedlist(
 
 def add_wcs(filename, default_pa_v3=0., siaf_path=None,
             strict_time=False, strict_pointing=True, reduce_func=None,
-            **transform_kwargs):
+            dry_run=False, **transform_kwargs):
     """Add WCS information to a FITS file
 
     Telescope orientation is attempted to be obtained from
@@ -128,6 +128,9 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None,
 
     reduce_func: func or None
         Reduction function to use on values.
+
+    dry_run: bool
+        Do not write out the modified file.
 
     transform_kwargs: dict
         Keyword arguments used by matrix calculation routines
@@ -178,7 +181,12 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None,
     except Exception:
         pass
     model.meta.model_type = None
-    model.save(filename)
+
+    if dry_run:
+        logger.info('Dry run requested; results are not saved.')
+    else:
+        model.save(filename)
+
     model.close()
     logger.info('...update completed')
 
