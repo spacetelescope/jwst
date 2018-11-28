@@ -1206,6 +1206,10 @@ def get_mnemonics(obsstart, obsend, strict_time):
                     time_format='mjd', include_obstime=True, include_bracket_values=True
                 )
 
+    # All mnemonics must have some values.
+    if not all([len(mnemonic) for mnemonic in mnemonics.values()]):
+        raise ValueError('Incomplete set of pointing mnemonics')
+
     return mnemonics
 
 
