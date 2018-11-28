@@ -26,16 +26,16 @@ class json():
 
         Parameters
         ----------
-        cls: class
+        cls : class
             The class from which further information will be gathered
             and possibly instantiated.
 
-        serialized: str or file object
+        serialized : str or file object
             The JSON to read
 
         Returns
         -------
-        association: dict
+        association : dict
             The association
 
         Raises
@@ -65,7 +65,7 @@ class json():
 
         Parameters
         ----------
-        asn: Association
+        asn : Association
             The association to serialize
 
         Returns
@@ -91,16 +91,16 @@ class yaml():
 
         Parameters
         ----------
-        cls: class
+        cls : class
             The class from which further information will be gathered
             and possibly instantiated.
 
-        serialized: str or file object
+        serialized : str or file object
             The YAML to read
 
         Returns
         -------
-        association: dict
+        association : dict
             The association
 
         Raises
@@ -127,7 +127,7 @@ class yaml():
 
          Parameters
         ----------
-        asn: Association
+        asn : Association
             The association to serialize
 
 

@@ -14,6 +14,18 @@ class IPCStep(Step):
     reference_file_types = ['ipc']
 
     def process(self, input):
+        """Apply the IPC correction.
+
+        Parameters
+        ----------
+        input : data model object
+            Science data model to be corrected.
+
+        Returns
+        -------
+        data model object
+            IPC-corrected science data model.
+        """
 
         # Open the input data model
         with datamodels.RampModel(input) as input_model:

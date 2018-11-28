@@ -51,9 +51,11 @@ class Image2Pipeline(Pipeline):
 
         # Each exposure is a product in the association.
         # Process each exposure.
+        results = []
         for product in asn['products']:
             self.log.info('Processing product {}'.format(product['name']))
-            self.output_file = product['name']
+            if self.save_results:
+                self.output_file = product['name']
             result = self.process_exposure_product(
                 product,
                 asn['asn_pool'],
@@ -64,11 +66,14 @@ class Image2Pipeline(Pipeline):
             suffix = 'cal'
             if isinstance(result, datamodels.CubeModel):
                 suffix = 'calints'
-            self.save_model(result, suffix)
-
-            self.closeout(to_close=[result])
+            result.meta.filename = self.make_output_path(suffix=suffix)
+            results.append(result)
 
         self.log.info('... ending calwebb_image2')
+
+        self.output_use_model = True
+        self.suffix = False
+        return results
 
     # Process each exposure
     def process_exposure_product(
@@ -142,11 +147,7 @@ class Image2Pipeline(Pipeline):
         # Resample individual exposures, but only if it's one of the
         # regular science image types.
         if input.meta.exposure.type.upper() in self.image_exptypes:
-            result = self.resample(input)
-            if result:
-                # write out resampled exposure
-                self.save_model(result, suffix='i2d')
-                result.close()
+            self.resample(input)
 
         # That's all folks
         self.log.info(

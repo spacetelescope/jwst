@@ -41,7 +41,7 @@ Package Index
    photom/index.rst
    pipeline/index.rst
    ramp_fitting/index.rst
-   ref_file_doc_DMS_653/index.rst
+   references_general/index.rst
    refpix/index.rst
    resample/index.rst
    reset/index.rst

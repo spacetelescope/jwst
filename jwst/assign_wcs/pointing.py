@@ -120,7 +120,7 @@ def wcsinfo_from_model(input_model):
     return wcsinfo
 
 
-def fitswcs_transform_from_model(wcsinfo, wavetab=None):
+def fitswcs_transform_from_model(wcsinfo, wavetable=None):
     """
     Create a WCS object using from datamodel.meta.wcsinfo.
     Transforms assume 0-based coordinates.
@@ -142,14 +142,15 @@ def fitswcs_transform_from_model(wcsinfo, wavetab=None):
     transform = gwutils.make_fitswcs_transform(wcsinfo)
     if spectral_axes:
         sp_axis = spectral_axes[0]
-        if wavetab is None :
+        if wavetable is None :
             # Subtract one from CRPIX which is 1-based.
             spectral_transform = astmodels.Shift(-(wcsinfo['CRPIX'][sp_axis] - 1)) | \
                 astmodels.Scale(wcsinfo['CDELT'][sp_axis]) | \
                 astmodels.Shift(wcsinfo['CRVAL'][sp_axis])
         else :
             # Wave dimension is an array that needs to be converted to a table
-            spectral_transform = astmodels.Tabular1D(lookup_table=wavetab) 
+            waves = wavetable['wavelength'].flatten()
+            spectral_transform = astmodels.Tabular1D(lookup_table=waves) 
 
         transform = transform & spectral_transform
 

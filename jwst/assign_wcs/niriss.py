@@ -1,6 +1,6 @@
 import logging
 
-from asdf import AsdfFile
+import asdf
 from astropy import coordinates as coord
 from astropy import units as u
 from astropy.modeling.models import Const1D, Mapping, Identity
@@ -22,8 +22,23 @@ log.setLevel(logging.DEBUG)
 
 __all__ = ["create_pipeline", "imaging", "niriss_soss", "niriss_soss_set_input", "wfss"]
 
+
 def create_pipeline(input_model, reference_files):
     """Create the WCS pipeline based on EXP_TYPE.
+
+    Parameters
+    ----------
+    input_model : `~jwst.datamodel.DataModel`
+        Input datamodel for processing
+    reference_files : dict
+        The dictionary of reference file names and their associated files
+        {reftype: reference file name}.
+
+    Returns
+    -------
+    pipeline : list
+        The pipeline list that is returned is suitable for
+        input into  gwcs.wcs.WCS to create a GWCS object.
     """
 
     exp_type = input_model.meta.exposure.type.lower()
@@ -38,8 +53,10 @@ def niriss_soss_set_input(model, order_number):
 
     Parameters
     ----------
-    model - `~jwst.datamodels.ImageModel`
-    order_number - the spectral order
+    model : `~jwst.datamodels.ImageModel`
+        An instance of an ImageModel
+    order_number : int
+        the spectral order
 
     Returns
     -------
@@ -73,6 +90,22 @@ def niriss_soss(input_model, reference_files):
     """
     The NIRISS SOSS WCS pipeline.
 
+    Parameters
+    ----------
+    input_model : `~jwst.datamodel.DataModel`
+        Input datamodel for processing
+    reference_files : dict
+        The dictionary of reference file names and their associated files
+        {reftype: reference file name}.
+
+    Returns
+    -------
+    pipeline : list
+        The pipeline list that is returned is suitable for
+        input into  gwcs.wcs.WCS to create a GWCS object.
+
+    Notes
+    -----
     It includes tWO coordinate frames -
     "detector" and "world".
 
@@ -98,13 +131,13 @@ def niriss_soss(input_model, reference_files):
     world = cf.CompositeFrame([sky, spec], name='world')
 
     try:
-        with AsdfFile.open(reference_files['specwcs']) as wl:
+        with asdf.open(reference_files['specwcs']) as wl:
             wl1 = wl.tree[1].copy()
             wl2 = wl.tree[2].copy()
             wl3 = wl.tree[3].copy()
-    except Exception as e:
+    except Exception:
         raise IOError('Error reading wavelength correction from {}'.format(reference_files['specwcs']))
-        
+
     try:
         velosys = input_model.meta.wcsinfo.velosys
     except AttributeError:
@@ -148,6 +181,22 @@ def imaging(input_model, reference_files):
     """
     The NIRISS imaging WCS pipeline.
 
+    Parameters
+    ----------
+    input_model : `~jwst.datamodel.DataModel`
+        Input datamodel for processing
+    reference_files : dict
+        The dictionary of reference file names and their associated files
+        {reftype: reference file name}.
+
+    Returns
+    -------
+    pipeline : list
+        The pipeline list that is returned is suitable for
+        input into  gwcs.wcs.WCS to create a GWCS object.
+
+    Notes
+    -----
     It includes three coordinate frames -
     "detector" "v2v3" and "world".
 
@@ -171,6 +220,18 @@ def imaging(input_model, reference_files):
 
 def imaging_distortion(input_model, reference_files):
     """ Create the transform from "detector" to "v2v3".
+
+    Parameters
+    ----------
+    input_model : `~jwst.datamodel.DataModel`
+        Input datamodel for processing
+    reference_files : dict
+        The dictionary of reference file names and their associated files.
+
+    Returns
+    -------
+    The transform model
+
     """
     dist = DistortionModel(reference_files['distortion'])
     distortion = dist.model
@@ -206,10 +267,16 @@ def wfss(input_model, reference_files):
 
     Parameters
     ----------
-    input_model: jwst.datamodels.ImagingModel
+    input_model: `~jwst.datamodels.ImagingModel`
         The input datamodel, derived from datamodels
     reference_files: dict
         Dictionary specifying reference file names
+
+    Returns
+    -------
+    pipeline : list
+        The pipeline list that is returned is suitable for
+        input into  gwcs.wcs.WCS to create a GWCS object.
 
     Notes
     -----
@@ -265,7 +332,7 @@ def wfss(input_model, reference_files):
 
     # make sure this is a grism image
     if "NIS_WFSS" != input_model.meta.exposure.type:
-            raise TypeError('The input exposure is not NIRISS grism')
+            raise ValueError('The input exposure is not NIRISS grism')
 
     # Create the empty detector as a 2D coordinate frame in pixel units
     gdetector = cf.Frame2D(name='grism_detector',
@@ -306,6 +373,16 @@ def wfss(input_model, reference_files):
                                              ymodels=dispy,
                                              theta=fwcpos_ref - fwcpos)
     det2det.inverse = backward
+
+    # Add in the wavelength shift from the velocity dispersion
+    try:
+        velosys = input_model.meta.wcsinfo.velosys
+    except AttributeError:
+        pass
+    if velosys is not None:
+        velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
+        log.info("Added Barycentric velocity correction: {}".format(velocity_corr[1].amplitude.value))
+        det2det = det2det | Mapping((0, 1, 2, 3)) | Identity(2) & velocity_corr & Identity(1)
 
     # create the pipeline to construct a WCS object for the whole image
     # which can translate ra,dec to image frame reference pixels

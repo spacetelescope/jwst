@@ -68,7 +68,7 @@ class CSVConvertScript():
             self.output = table_to_hdulist(self.table)
             self.output.writeto(parsed.outfile, clobber=True)
         else:
-            raise NotImplemented('Format {} is not implemented.'.format(parsed.format))
+            raise NotImplementedError('Format {} is not implemented.'.format(parsed.format))
         self.format = parsed.format
 
 #*********

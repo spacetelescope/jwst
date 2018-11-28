@@ -19,6 +19,7 @@ from jwst.associations.lib.constraint import (
     SimpleConstraint,
 )
 from jwst.associations.lib.dms_base import (
+    CORON_EXP_TYPES,
     DMSAttrConstraint,
     DMSBaseMixin,
     IMAGE2_NONSCIENCE_EXP_TYPES,
@@ -112,22 +113,14 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
         return result
 
-    def has_science(self, item):
-        """Only allow a single science in the association
+    def has_science(self):
+        """Does association have a science member
 
-        Parameters
-        ----------
-        item: dict
-            The item in question
-
-        Returns
         -------
         bool
-            True if item can be added
+            True if it does.
         """
-        exptype = self.get_exposure_type(item)
         limit_reached = len(self.members_by_type('science')) >= 1
-        limit_reached = limit_reached and exptype == 'science'
         return limit_reached
 
     def __eq__(self, other):
@@ -166,12 +159,12 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
         Parameters
         ----------
-        item: dict
+        item : dict
             The item to create member from.
 
         Returns
         -------
-        member: dict
+        member : dict
             The member
         """
 
@@ -181,15 +174,16 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         except KeyError:
             exposerr = None
 
-        # Handle time-series file naming
-        is_tso = self.constraints['is_tso'].value == 't'
-        if not is_tso:
-            is_tso = item['exp_type'] in TSO_EXP_TYPES
+        # Times series and coronagraphic exposures
+        # process in integration space.
+        use_integrations = self.constraints['is_tso'].value == 't'
+        if not use_integrations:
+            use_integrations = item['exp_type'] in TSO_EXP_TYPES + CORON_EXP_TYPES
 
         # Create the member.
         member = {
             'expname': Utility.rename_to_level2a(
-                item['filename'], is_tso=is_tso
+                item['filename'], use_integrations=use_integrations
             ),
             'exptype': self.get_exposure_type(item),
             'exposerr': exposerr,
@@ -213,7 +207,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
         Parameters
         ----------
-        item: dict
+        item : dict
             The item to be adding.
         """
         member = self.make_member(item)
@@ -235,10 +229,10 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
         Parameters
         ----------
-        items: [object[, ...]]
+        items : [object[, ...]]
             A list of items to make members of the association.
 
-        meta: dict
+        meta : dict
             A dict to be merged into the association meta information.
             The following are suggested to be assigned:
                 - `asn_type`
@@ -250,11 +244,11 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
                 - `program`
                     Originating observing program
 
-        product_name_func: func
+        product_name_func : func
             Used if product name is 'undefined' using
             the class's procedures.
 
-        acid: str
+        acid : str
             The association candidate id to use. Since Level2
             associations require it, one must be specified.
 
@@ -323,7 +317,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
         Parameters
         ----------
-        member: obj
+        member : obj
             Member being added. Ignored.
 
         Returns
@@ -362,7 +356,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
         Returns
         -------
-        associations: [association[, ...]]
+        associations : [association[, ...]]
             List of new associations to be used in place of
             the current one.
 
@@ -462,15 +456,15 @@ class Utility():
     """Utility functions that understand DMS Level 3 associations"""
 
     @staticmethod
-    def rename_to_level2a(level1b_name, is_tso=False):
+    def rename_to_level2a(level1b_name, use_integrations=False):
         """Rename a Level 1b Exposure to another level
 
         Parameters
         ----------
-        level1b_name: str
+        level1b_name : str
             The Level 1b exposure name.
 
-        is_tso: boolean
+        is_integrations : boolean
             Use 'rateints' instead of 'rate' as
             the suffix.
 
@@ -490,7 +484,7 @@ class Utility():
             return level1b_name
 
         suffix = 'rate'
-        if is_tso:
+        if use_integrations:
             suffix = 'rateints'
         level2a_name = ''.join([
             match.group('path'),
@@ -516,7 +510,7 @@ class Utility():
 
         Returns
         -------
-        finalized_associations: [association[, ...]]
+        finalized_associations : [association[, ...]]
             The validated list of associations
         """
         finalized_asns = []
@@ -537,12 +531,12 @@ class Utility():
 
         Parameters
         ----------
-        associations: [asn(, ...)]
+        associations : [asn(, ...)]
             Associations to search for merging.
 
         Returns
         -------
-        associatons: [association(, ...)]
+        associatons : [association(, ...)]
             List of associations, some of which may be merged.
         """
         others = []
@@ -563,12 +557,12 @@ class Utility():
 
         Parameters
         ----------
-        associations: [asn(, ...)]
+        associations : [asn(, ...)]
             Associations to search for merging.
 
         Returns
         -------
-        associatons: [association(, ...)]
+        associatons : [association(, ...)]
             List of associations, some of which may be merged.
         """
         merged = {}
@@ -675,6 +669,15 @@ class Constraint_Mode(Constraint):
                 ],
                 reduce=Constraint.notany
             ),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        sources=['visitype'],
+                        value='.+wfsc.+',
+                    ),
+                ],
+                reduce=Constraint.notany
+            ),
             DMSAttrConstraint(
                 name='slit',
                 sources=['fxd_slit'],
@@ -730,10 +733,12 @@ class Constraint_Single_Science(SimpleConstraint):
 
     Parameters
     ----------
-    has_science_fn: func
+    has_science_fn : func
         Function to determine whether the association
-        has a science member already. A single argument
-        of `item` must be provided.
+        has a science member already. No arguments are provided.
+
+    sc_kwargs : dict
+        Keyword arguments to pass to the parent class `SimpleConstraint`
 
     Notes
     -----
@@ -743,11 +748,12 @@ class Constraint_Single_Science(SimpleConstraint):
     this constraint.
     """
 
-    def __init__(self, has_science_fn):
+    def __init__(self, has_science_fn, **sc_kwargs):
         super(Constraint_Single_Science, self).__init__(
             name='single_science',
             value=False,
-            sources=lambda item: has_science_fn(item)
+            sources=lambda item: has_science_fn(),
+            **sc_kwargs
         )
 
 
@@ -767,7 +773,7 @@ class Constraint_Spectral_Science(Constraint):
     """Select on spectral science
 
     Parameters
-    exclude_exp_types: [exp_type[, ...]]
+    exclude_exp_types : [exp_type[, ...]]
         List of exposure types to not consider from
         from the general list.
     """
@@ -832,14 +838,14 @@ class AsnMixin_Lv2Special:
         """Override to force exposure type to always be science
         Parameters
         ----------
-        item: dict
+        item : dict
             The pool entry to determine the exposure type of
-        default: str or None
+        default : str or None
             The default exposure type.
             If None, routine will raise LookupError
         Returns
         -------
-        exposure_type: 'science'
+        exposure_type : 'science'
             Always returns as science
         """
         return 'science'

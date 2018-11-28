@@ -49,8 +49,11 @@ def create_pipeline(input_model, reference_files):
     reference_files : dict
         {reftype: reference_file_name} mapping.
     """
-    exp_type = input_model.meta.exposure.type.lower()
-    pipeline = exp_type2transform[exp_type](input_model, reference_files)
+    exp_type = input_model.meta.exposure.type.lower()    
+    if input_model.meta.instrument.grating.lower() == "mirror":
+        pipeline = imaging(input_model, reference_files)
+    else:
+        pipeline = exp_type2transform[exp_type](input_model, reference_files)
     if pipeline:
         log.info("Created a NIRSPEC {0} pipeline with references {1}".format(
                 exp_type, reference_files))
@@ -345,7 +348,7 @@ def get_open_slits(input_model, reference_files=None):
         log.info("Slits projected on detector {0}: {1}".format(input_model.meta.instrument.detector,
                                                                [sl.name for sl in slits]))
     if not slits:
-        log_message = "No open slits fall on detector {0}.".format(input_model.meta.instrument.detector) 
+        log_message = "No open slits fall on detector {0}.".format(input_model.meta.instrument.detector)
         log.critical(log_message)
         raise NoDataOnDetectorError(log_message)
     return slits
@@ -386,7 +389,7 @@ def get_msa_metadata(input_model, reference_files):
     """
     try:
         msa_config = reference_files['msametafile']
-    except (KeyError, TypeError) as error:
+    except (KeyError, TypeError):
         log.info('MSA metadata file not in reference files dict')
         log.info('Getting MSA metadata file from MSAMETFL keyword')
         msa_config = input_model.meta.instrument.msa_metadata_file
@@ -1578,7 +1581,8 @@ exp_type2transform = {'nrs_tacq': imaging,
                       'nrs_image': imaging,
                       'nrs_focus': imaging,
                       'nrs_mimf': imaging,
-                      'nrs_bota': imaging,
+                      'nrs_msata': imaging,
+                      'nrs_wata': imaging,
                       'nrs_autoflat': slits_wcs,
                       'nrs_autowave': not_implemented_mode,
                       'nrs_lamp': slits_wcs,

@@ -1,29 +1,56 @@
-Reference File Types
-====================
-The Data Quality Initialization step uses a MASK reference file.
+Reference Files
+===============
+The ``dq_init`` step uses a MASK reference file.
 
-CRDS Selection Criteria
------------------------
-MASK reference files are currently selected based only on the value of
-DETECTOR in the input science data set. There is one MASK reference file for
-each JWST instrument detector.
+MASK Reference File
+-------------------
 
-MASK Reference File Format
---------------------------
-The MASK reference file is a FITS file with a primary HDU, 1 IMAGE extension
-HDU and 1 BINTABLE extension. The primary data array is assumed to be empty.
-The MASK data are stored in the first IMAGE extension, which shall have
-EXTNAME='DQ'. The data array in this extension has integer data type and is
-2-D, with dimensions equal to the number of columns and rows in a full frame
-raw readout for the given detector, including reference pixels. Note that
-this does not include the reference output for MIRI detectors.
+:REFTYPE: MASK
+:Data model: `~jwst.datamodels.MaskModel`
 
-The BINTABLE extension contains the bit assignments used in the DQ array.
-It uses ``EXTNAME=DQ_DEF`` and contains 4 columns:
+The MASK reference file contains pixel-by-pixel DQ flag values that indicate
+problem conditions.
 
-* BIT: integer value giving the bit number, starting at zero
-* VALUE: the equivalent base-10 integer value of BIT
-* NAME: the string mnemonic name of the data quality condition
-* DESCRIPTION: a string description of the condition
+.. include:: mask_selection.rst
 
+.. include:: ../includes/standard_keywords.rst
+
+Type Specific Keywords for MASK
++++++++++++++++++++++++++++++++
+In addition to the standard reference file keywords listed above,
+the following keywords are *required* in MASK reference files,
+because they are used as CRDS selectors
+(see :ref:`mask_selectors`):
+
+=========  ==============================  ============
+Keyword    Data Model Name                 Instruments
+=========  ==============================  ============
+DETECTOR   model.meta.instrument.detector  All
+SUBARRAY   model.meta.subarray.name        All
+EXP_TYPE   model.meta.exposure.type        FGS only
+READPATT   model.meta.exposure.readpatt    NIRSpec only
+=========  ==============================  ============
+
+Reference File Format
++++++++++++++++++++++
+MASK reference files are FITS format, with one IMAGE extension
+and 1 BINTABLE extension. The FITS primary HDU does not contain a
+data array.
+The format and content of the file is as follows:
+
+=======  ========  =====  ==============  =========
+EXTNAME  XTENSION  NAXIS  Dimensions      Data type
+=======  ========  =====  ==============  =========
+DQ       IMAGE       2    ncols x nrows   integer
+DQ_DEF   BINTABLE    2    TFIELDS = 4     N/A
+=======  ========  =====  ==============  =========
+
+The values in the ``DQ`` array give the per-pixel flag conditions that are
+to be propagated into the science exposure's ``PIXELDQ`` array.
+The dimensions of the ``DQ`` array should be equal to the number of columns
+and rows in a full-frame readout of a given detector, including reference
+pixels.
+Note that this does not include the reference *output* for MIRI detectors.
+
+.. include:: ../includes/dq_def.rst
 

@@ -25,8 +25,6 @@ class OptRes:
 
     def __init__(self, n_int, imshape, max_seg, nreads, save_opt):
         """
-        Short Summary
-        -------------
         Initialize the optional attributes. These are 4D arrays for the
         segment-specific values of the y-intercept, the slope, the uncertainty
         associated with both, the weights, the approximate cosmic ray
@@ -35,19 +33,19 @@ class OptRes:
 
         Parameters
         ----------
-        n_int: int
+        n_int : int
             number of integrations in data set
 
-        imshape: (int, int) tuple
+        imshape : (int, int) tuple
             shape of 2D image
 
-        max_seg: int
+        max_seg : int
             maximum number of segments fit
 
-        nreads: int
+        nreads : int
             number of reads in an integration
 
-        save_opt: boolean
+        save_opt : boolean
            save optional fitting results
         """
         self.slope_seg = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
@@ -65,21 +63,19 @@ class OptRes:
 
     def init_2d(self, npix, max_seg, save_opt):
         """
-        Short Summary
-        -------------
         Initialize the 2D segment-specific attributes for the current data
         section.
 
         Parameters
         ----------
-        npix: integer
+        npix : integer
             number of pixels in section of 2D array
 
-        max_seg: integer
+        max_seg : integer
             maximum number of segments that will be fit within an
             integration, calculated over all pixels and all integrations
 
-        save_opt: boolean
+        save_opt : boolean
             save optional fitting results
 
         Returns
@@ -99,29 +95,27 @@ class OptRes:
 
     def reshape_res(self, num_int, rlo, rhi, sect_shape, ff_sect, save_opt):
         """
-        Short Summary
-        -------------
         Loop over the segments and copy the reshaped 2D segment-specific
         results for the current data section to the 4D output arrays.
 
         Parameters
         ----------
-        num_int: int
+        num_int : int
             integration number
 
-        rlo: int
+        rlo : int
             first column of section
 
-        rhi: int
+        rhi : int
             last column of section
 
-        sect_sect: (int,int) tuple
+        sect_sect : (int,int) tuple
             shape of section image
 
-        ff_sect: 2D array
+        ff_sect : 2D array
             first frame data
 
-        save_opt: boolean
+        save_opt : boolean
             save optional fitting results
 
         Returns
@@ -148,37 +142,35 @@ class OptRes:
     def append_arr(self, num_seg, g_pix, intercept, slope, sig_intercept,
                    sig_slope, inv_var, save_opt):
         """
-        Short Summary
-        -------------
         Add the fitting results for the current segment to the 2d arrays.
 
         Parameters
         ----------
-        num_seg: int, 1D array
+        num_seg : int, 1D array
             counter for segment number within the section
 
-        g_pix: int, 1D array
+        g_pix : int, 1D array
             pixels having fitting results in current section
 
-        intercept: float, 1D array
+        intercept : float, 1D array
             intercepts for pixels in current segment and section
 
-        slope: float, 1D array
+        slope : float, 1D array
             slopes for pixels in current segment and section
 
-        sig_intercept: float, 1D array
+        sig_intercept : float, 1D array
             uncertainties of intercepts for pixels in current segment
             and section
 
-        sig_slope: float, 1D array
+        sig_slope : float, 1D array
             uncertainties of slopes for pixels in current segment and
             section
 
-        inv_var: float, 1D array
+        inv_var : float, 1D array
             reciprocals of variances for fits of pixels in current
             segment and section
 
-        save_opt: boolean
+        save_opt : boolean
             save optional fitting results
 
         Returns
@@ -195,8 +187,6 @@ class OptRes:
 
     def shrink_crmag(self, n_int, dq_cube, imshape, nreads):
         """
-        Extended Summary
-        ----------------
         Compress the 4D cosmic ray magnitude array for the current
         integration, removing all groups whose cr magnitude is 0 for
         pixels having at least one group with a non-zero magnitude. For
@@ -209,16 +199,16 @@ class OptRes:
 
         Parameters
         ----------
-        n_int: int
+        n_int : int
             number of integrations in dataset
 
-        dq_cube: 4D float array
+        dq_cube : 4D float array
             input data quality array
 
-        imshape: (int, int) tuple
+        imshape : (int, int) tuple
             shape of a single input image
 
-        nreads: int
+        nreads : int
             number of reads in an integration
 
         Returns
@@ -262,8 +252,6 @@ class OptRes:
 
     def output_optional(self, model, effintim):
         """
-        Short Summary
-        -------------
         These results are the cosmic ray magnitudes in the
         segment-specific results for the count rates, y-intercept,
         uncertainty in the slope, uncertainty in the y-intercept,
@@ -277,15 +265,15 @@ class OptRes:
 
         Parameters
         ----------
-        model: instance of Data Model
+        model : instance of Data Model
             DM object for input
 
-        effintim: float
+        effintim : float
             effective integration time for a single group
 
         Returns
         -------
-        rfo_model: Data Model object
+        rfo_model : Data Model object
         """
         self.var_p_seg[self.var_p_seg > 0.4 * LARGE_VARIANCE ] = 0.
         self.var_r_seg[self.var_r_seg > 0.4 * LARGE_VARIANCE ] = 0.
@@ -309,8 +297,6 @@ class OptRes:
 
     def print_full(self):
         """
-        Short Summary
-        -------------
         Diagnostic function for printing optional output arrays; most
         useful for tiny datasets
 
@@ -350,31 +336,29 @@ class OptRes:
 
 def alloc_arrays_1(n_int, imshape):
     """
-    Short Summary
-    -------------
     Allocate arrays for integration-specific results and segment-specific
     results and variances.
 
     Parameters
     ----------
-    n_int: int
+    n_int : int
         number of integrations
 
-    imshape: (int, int) tuple
+    imshape : (int, int) tuple
         shape of a single image
 
     Returns
     -------
-    dq_int: int, 3D array
+    dq_int : int, 3D array
         Cube of integration-specific group data quality values
 
-    median_diffs_2d: float, 2D array
+    median_diffs_2d : float, 2D array
         Estimated median slopes
 
-    num_seg_per_int: integer, 3D array
+    num_seg_per_int : integer, 3D array
         Cube of numbers of segments for all integrations and pixels
 
-    sat_0th_group_int - uint8, 3D array
+    sat_0th_group_int : uint8, 3D array
         Integration-specific slice whose value for a pixel is 1 if the initial
         group of the ramp is saturated
     """
@@ -390,66 +374,64 @@ def alloc_arrays_1(n_int, imshape):
 
 def alloc_arrays_2(n_int, imshape, max_seg):
     """
-    Short Summary
-    -------------
     Allocate arrays for integration-specific results and segment-specific
     results and variances.
 
     Parameters
     ----------
-    n_int: int
+    n_int : int
         number of integrations
 
-    imshape: (int, int) tuple
+    imshape : (int, int) tuple
         shape of a single image
 
-    max_seg: int
+    max_seg : int
         maximum number of segments fit
 
     Returns
     -------
-    var_p3: float, 3D array
+    var_p3 : float, 3D array
         Cube of integration-specific values for the slope variance due to
         Poisson noise only
 
-    var_r3: float, 3D array
+    var_r3 : float, 3D array
         Cube of integration-specific values for the slope variance due to
         readnoise only
 
-    var_p4: float, 4D array
+    var_p4 : float, 4D array
         Hypercube of segment- and integration-specific values for the slope
         variance due to Poisson noise only
 
-    var_r4: float, 4D array
+    var_r4 : float, 4D array
         Hypercube of segment- and integration-specific values for the slope
         variance due to read noise only
 
-    var_both4: float, 4D array
+    var_both4 : float, 4D array
         Hypercube of segment- and integration-specific values for the slope
         variance due to combined Poisson noise and read noise
 
-    var_both3: float, 3D array
+    var_both3 : float, 3D array
         Cube of segment- and integration-specific values for the slope
         variance due to combined Poisson noise and read noise
 
-    inv_var_both4: float, 4D array
+    inv_var_both4 : float, 4D array
         Hypercube of reciprocals of segment- and integration-specific values for
         the slope variance due to combined Poisson noise and read noise
 
-    s_inv_var_p3: float, 3D array
+    s_inv_var_p3 : float, 3D array
         Cube of reciprocals of segment- and integration-specific values for
         the slope variance due to Poisson noise only, summed over segments
 
-    s_inv_var_r3: float, 3D array
+    s_inv_var_r3 : float, 3D array
         Cube of reciprocals of segment- and integration-specific values for
         the slope variance due to read noise only, summed over segments
 
-    s_inv_var_both3: float, 3D array
+    s_inv_var_both3 : float, 3D array
         Cube of reciprocals of segment- and integration-specific values for
         the slope variance due to combined Poisson noise and read noise, summed
         over segments
 
-    segs_4: integer, 4D array
+    segs_4 : integer, 4D array
         Hypercube of lengths of segments for all integrations and pixels
     """
     # Initialize variances so that non-existing ramps and segments will have
@@ -478,43 +460,41 @@ def alloc_arrays_2(n_int, imshape, max_seg):
 
 def calc_slope_vars(rn_sect, gain_sect, gdq_sect, group_time, max_seg):
     """
-    Short Summary
-    -------------
     Calculate the segment-specific variance arrays for the given
     integration.
 
     Parameters
     ----------
-    rn_sect: float, 2D array
+    rn_sect : float, 2D array
         read noise values for all pixels in data section
 
-    gain_sect: float, 2D array
+    gain_sect : float, 2D array
         gain values for all pixels in data section
 
-    gdq_sect: int, 3D array
+    gdq_sect : int, 3D array
         data quality flags for pixels in section
 
-    group_time: float
+    group_time : float
         Time increment between groups, in seconds.
 
-    max_seg: int
+    max_seg : int
         maximum number of segments fit
 
     Returns
     -------
-    den_r3: float, 3D array
+    den_r3 : float, 3D array
         for a given integration, the reciprocal of the denominator of the
         segment-specific variance of the segment's slope due to read noise
 
-    den_p3: float, 3D array
+    den_p3 : float, 3D array
         for a given integration, the reciprocal of the denominator of the
         segment-specific variance of the segment's slope due to Poisson noise
 
-    num_r3: float, 3D array
+    num_r3 : float, 3D array
         numerator of the segment-specific variance of the segment's slope
         due to read noise
 
-    segs_beg_3: integer, 3D array
+    segs_beg_3 : integer, 3D array
         lengths of segments for all pixels in the given data section and
         integration
     """
@@ -619,8 +599,6 @@ def calc_slope_vars(rn_sect, gain_sect, gdq_sect, group_time, max_seg):
 def calc_pedestal(num_int, slope_int, firstf_int, dq_first, nframes, groupgap,
                   dropframes1):
     """
-    Short Summary
-    -------------
     The pedestal is calculated by extrapolating the final slope for each pixel
     from its value at the first sample in the integration to an exposure time
     of zero; this calculation accounts for the values of nframes and groupgap.
@@ -628,32 +606,32 @@ def calc_pedestal(num_int, slope_int, firstf_int, dq_first, nframes, groupgap,
 
     Parameters
     ----------
-    num_int: int
+    num_int : int
         integration number
 
-    slope_int: float, 3D array
+    slope_int : float, 3D array
         cube of integration-specific slopes
 
-    firstf_int: float, 3D array
+    firstf_int : float, 3D array
         integration-specific first frame array
 
-    dq_first: int, 2D array
+    dq_first : int, 2D array
         DQ of the initial group for all ramps in the given integration
 
-    nframes: int
+    nframes : int
         number of frames averaged per group; from the NFRAMES keyword. Does
         not contain the groupgap.
 
-    groupgap: int
+    groupgap : int
         number of frames dropped between groups, from the GROUPGAP keyword.
 
-    dropframes1: int
+    dropframes1 : int
         number of frames dropped at the beginning of every integration, from
         the DRPFRMS1 keyword.
 
     Returns
     -------
-    ped: float, 2D array
+    ped : float, 2D array
         pedestal image
     """
     ff_all = firstf_int[num_int, :, :].astype(np.float32)
@@ -670,44 +648,42 @@ def calc_pedestal(num_int, slope_int, firstf_int, dq_first, nframes, groupgap,
 def output_integ(model, slope_int, dq_int, effintim, var_p3, var_r3, var_both3,
                  int_times):
     """
-    Short Summary
-    -------------
     Construct the output integration-specific results. Any variance values that
     are a large fraction of the default value LARGE_VARIANCE correspond to
     non-existent segments, so will be set to 0 here before output.
 
     Parameters
     ----------
-    model: instance of Data Model
+    model : instance of Data Model
        DM object for input
 
-    slope_int: float, 3D array
+    slope_int : float, 3D array
        Data cube of weighted slopes for each integration
 
-    dq_int: int, 3D array
+    dq_int : int, 3D array
        Data cube of DQ arrays for each integration
 
-    effintim: float
+    effintim : float
        Effective integration time per integration
 
-    var_p3: float, 3D array
+    var_p3 : float, 3D array
         Cube of integration-specific values for the slope variance due to
         Poisson noise only
 
-    var_r3: float, 3D array
+    var_r3 : float, 3D array
         Cube of integration-specific values for the slope variance due to
         read noise only
 
-    var_both3: float, 3D array
+    var_both3 : float, 3D array
         Cube of integration-specific values for the slope variance due to
         read noise and Poisson noise
 
-    int_times: bintable, or None
+    int_times : bintable, or None
         The INT_TIMES table, if it exists in the input, else None
 
     Returns
     -------
-    cubemod: Data Model object
+    cubemod : Data Model object
 
     """
     var_p3[ var_p3 > 0.4 * LARGE_VARIANCE ] = 0.
@@ -731,8 +707,8 @@ def gls_output_optional(model, intercept_int, intercept_err_int,
                         ampl_int, ampl_err_int):
     """Construct the optional results for the GLS algorithm.
 
-    Short Summary
-    -------------
+    Extended Summary
+    ----------------
     Construct the GLS-specific optional output data.
     These results are the Y-intercepts, uncertainties in the intercepts,
     pedestal (first group extrapolated back to zero time),
@@ -740,31 +716,31 @@ def gls_output_optional(model, intercept_int, intercept_err_int,
 
     Parameters
     ----------
-    model: instance of Data Model
+    model : instance of Data Model
         Data model object for input; this is used only for the file name.
 
-    intercept_int: 3-D ndarray, float32, shape (n_int, ny, nx)
+    intercept_int : 3-D ndarray, float32, shape (n_int, ny, nx)
         Y-intercept for each integration, at each pixel.
 
-    intercept_err_int: 3-D ndarray, float32, shape (n_int, ny, nx)
+    intercept_err_int : 3-D ndarray, float32, shape (n_int, ny, nx)
         Uncertainties for Y-intercept for each integration, at each pixel.
 
-    pedestal_int: 3-D ndarray, float32, shape (n_int, ny, nx)
+    pedestal_int : 3-D ndarray, float32, shape (n_int, ny, nx)
         The pedestal, for each integration and each pixel.
 
-    ampl_int: 4-D ndarray, float32, shape (n_int, ny, nx, max_num_cr)
+    ampl_int : 4-D ndarray, float32, shape (n_int, ny, nx, max_num_cr)
         Cosmic-ray amplitudes for each integration, at each pixel, and for
         each CR hit in the ramp.  max_num_cr will be the maximum number of
         CRs within the ramp for any pixel, or it will be one if there were
         no CRs at all.
 
-    ampl_err_int: 4-D ndarray, float32, shape (n_int, ny, nx, max_num_cr)
+    ampl_err_int : 4-D ndarray, float32, shape (n_int, ny, nx, max_num_cr)
         Uncertainties for cosmic-ray amplitudes for each integration, at
         each pixel, and for each CR in the ramp.
 
     Returns
     -------
-    gls_ramp_model: GLS_RampFitModel object
+    gls_ramp_model : GLS_RampFitModel object
         GLS-specific ramp fit data for the exposure.
     """
 
@@ -800,26 +776,26 @@ def gls_pedestal(first_group, slope_int, s_mask,
 
     Parameters
     ----------
-    first_group: float32, 2-D array
+    first_group : float32, 2-D array
         A slice of the first group in the ramp.
 
-    slope_int: float32, 2-D array
+    slope_int : float32, 2-D array
         The slope obtained by GLS ramp fitting.  This is a slice for the
         current integration and a subset of the image lines.
 
-    s_mask: bool, 2-D array
+    s_mask : bool, 2-D array
         True for ramps that were saturated in the first group.
 
-    frame_time: float
+    frame_time : float
         The time to read one frame, in seconds.
 
-    nframes_used: int
+    nframes_used : int
         Number of frames that were averaged together to make a group.
         Exludes the groupgap.
 
     Returns
     -------
-    pedestal: float32, 2-D array
+    pedestal : float32, 2-D array
         This is a slice of the full pedestal array, and it's for the
         current integration.
     """
@@ -834,22 +810,20 @@ def gls_pedestal(first_group, slope_int, s_mask,
 
 def shift_z(a, off):
     """
-    Short Summary
-    -------------
     Shift input 3D array by requested offset in z-direction, padding shifted
     array (of the same size) by leading or trailing zeros as needed.
 
     Parameters
     ----------
-    a: float, 3D array
+    a : float, 3D array
         input array
 
-    off: int
+    off : int
         offset in z-direction
 
     Returns
     -------
-    b: float, 3D array
+    b : float, 3D array
         shifted array
 
     """
@@ -869,28 +843,26 @@ def shift_z(a, off):
 
 def get_efftim_ped(model):
     """
-    Short Summary
-    -------------
     Calculate the effective integration time for a single group, and return the
     number of frames per group, and the number of frames dropped between groups.
 
     Parameters
     ----------
-    model: instance of Data Model
+    model : instance of Data Model
         DM object for input
 
     Returns
     -------
-    effintim: float
+    effintim : float
         effective integration time for a single group
 
-    nframes: int
+    nframes : int
         number of frames averaged per group; from the NFRAMES keyword.
 
-    groupgap: int
+    groupgap : int
         number of frames dropped between groups; from the GROUPGAP keyword.
 
-    dropframes1: int
+    dropframes1 : int
         number of frames dropped at the beginning of every integration; from
         the DRPFRMS1 keyword, or 0 if the keyword is missing
     """
@@ -920,44 +892,42 @@ def get_efftim_ped(model):
 
 def get_dataset_info(model):
     """
-    Short Summary
-    -------------
     Extract values for the number of groups, the number of pixels, dataset
     shapes, the number of integrations, the instrument name, the frame time,
     and the observation time.
 
     Parameters
     ----------
-    model: instance of Data Model
+    model : instance of Data Model
        DM object for input
 
     Returns
     -------
-    nreads: int
+    nreads : int
        number of reads in input dataset
 
-    npix: int
+    npix : int
        number of pixels in 2D array
 
-    imshape: (int, int) tuple
+    imshape : (int, int) tuple
        shape of 2D image
 
-    cubeshape: (int, int, int) tuple
+    cubeshape : (int, int, int) tuple
        shape of input dataset
 
-    n_int: int
+    n_int : int
        number of integrations
 
-    instrume: string
+    instrume : string
        instrument
 
-    frame_time: float
+    frame_time : float
        integration time from TGROUP
 
-    ngroups: int
+    ngroups : int
         number of groups per integration
 
-    group_time: float
+    group_time : float
         Time increment between groups, in seconds.
     """
     instrume = model.meta.instrument.name
@@ -992,22 +962,22 @@ def get_more_info(model):
 
     Parameters
     ----------
-    model: instance of Data Model
+    model : instance of Data Model
         DM object for input
 
     Returns
     -------
-    group_time: float
+    group_time : float
         Time increment between groups, in seconds.
 
-    nframes_used: int
+    nframes_used : int
         Number of frames that were averaged together to make a group,
         i.e. excluding skipped frames.
 
-    saturated_flag: int
+    saturated_flag : int
         Group data quality flag that indicates a saturated pixel.
 
-    jump_flag: int
+    jump_flag : int
         Group data quality flag that indicates a cosmic ray hit.
     """
 
@@ -1021,21 +991,19 @@ def get_more_info(model):
 
 def get_max_num_cr(gdq_cube, jump_flag):
     """
-    Short Summary
-    -------------
     Find the maximum number of cosmic-ray hits in any one pixel.
 
     Parameters
     ----------
-    gdq_cube: 3-D ndarray
+    gdq_cube : 3-D ndarray
         The group data quality array.
 
-    jump_flag: int
+    jump_flag : int
         The data quality flag indicating a cosmic-ray hit.
 
     Returns
     -------
-    max_num_cr: int
+    max_num_cr : int
         The maximum number of cosmic-ray hits for any pixel.
     """
     cr_flagged = np.empty(gdq_cube.shape, dtype=np.uint8)
@@ -1048,23 +1016,21 @@ def get_max_num_cr(gdq_cube, jump_flag):
 
 def reset_bad_gain(pdq, gain):
     """
-    Short Summary
-    -------------
     For pixels in the gain array that are either non-positive or NaN, reset the
     the corresponding pixels in the pixel DQ array to NO_GAIN_VALUE and
     DO_NOT_USE so that they will be ignored.
 
     Parameters
     ----------
-    pdq: int, 2D array
+    pdq : int, 2D array
         pixel dq array of input model
 
-    gain: float32, 2D array
+    gain : float32, 2D array
         gain array from reference file
 
     Returns
     -------
-    pdq: int, 2D array
+    pdq : int, 2D array
         pixleldq array of input model, reset to NO_GAIN_VALUE and DO_NOT_USE
         for pixels in the gain array that are either non-positive or NaN.
     """
@@ -1083,32 +1049,31 @@ def reset_bad_gain(pdq, gain):
 
 def get_ref_subs(model, readnoise_model, gain_model, nframes):
     """
-    Short Summary
-    -------------
     Get readnoise array for calculation of variance of noiseless ramps, and
-    the gain array in case optimal weighting is to be done.
+    the gain array in case optimal weighting is to be done. The returned
+    readnoise has been multiplied by the gain.
 
     Parameters
     ----------
-    model: data model
+    model : data model
         input data model, assumed to be of type RampModel
 
-    readnoise_model: instance of data Model
+    readnoise_model : instance of data Model
         readnoise for all pixels
 
-    gain_model: instance of gain Model
+    gain_model : instance of gain Model
         gain for all pixels
 
-    nframes: int
+    nframes : int
         number of frames averaged per group; from the NFRAMES keyword. Does
         not contain the groupgap.
 
     Returns
     -------
-    readnoise_2d: float, 2D array; multiplied by gain
+    readnoise_2d : float, 2D array
         readnoise subarray
 
-    gain_2d: float, 2D array
+    gain_2d : float, 2D array
         gain subarray
     """
     if reffile_utils.ref_matches_sci(model, gain_model):
@@ -1132,8 +1097,6 @@ def get_ref_subs(model, readnoise_model, gain_model, nframes):
 
 def remove_bad_singles( segs_beg_3 ):
     """
-    Short Summary
-    -------------
     For the current integration and data section, remove all segments having only
     a single group if there are other segments in the ramp.  This method allows
     for the possibility that a ramp can have multiple (necessarily consecutive)
@@ -1142,14 +1105,14 @@ def remove_bad_singles( segs_beg_3 ):
 
     Parameters
     ----------
-    segs_beg_3: integer, 3D array
+    segs_beg_3 : integer, 3D array
         lengths of all segments for all ramps in the given data section and
         integration; some of these ramps may contain segments having a single
         group, and another segment.
 
     Returns
     -------
-    segs_beg_3: integer, 3D array
+    segs_beg_3 : integer, 3D array
         lengths of all segments for all ramps in the given data section and
         integration; segments having a single group, and another segment
         will be removed.
@@ -1197,46 +1160,44 @@ def remove_bad_singles( segs_beg_3 ):
 
 def fix_sat_ramps( sat_0th_group_int, var_p3, var_both3, slope_int):
     """
-    Short Summary
-    -------------
     For ramps within an integration that are saturated on the initial group,
     reset the integration-specific variances and slope so they will have no
     contribution.
 
     Parameters
     ----------
-    sat_0th_group_int - uint8, 3D array
+    sat_0th_group_int : uint8, 3D array
         Integration-specific slice whose value for a pixel is 1 if the initial
         group of the ramp is saturated
 
-    var_p3: float, 3D array
+    var_p3 : float, 3D array
         Cube of integration-specific values for the slope variance due to
         Poisson noise only; some ramps may be saturated in the initial group
 
-    var_both3: float, 3D array
+    var_both3 : float, 3D array
         Cube of segment- and integration-specific values for the slope
         variance due to combined Poisson noise and read noise; some ramps may
         be saturated in the initial group
 
-    slope_int: float, 3D array
+    slope_int : float, 3D array
         Cube of integration-specific slopes. Some ramps may be saturated in the
         initial group
 
     Returns
     -------
-    var_p3: float, 3D array
+    var_p3 : float, 3D array
         Cube of integration-specific values for the slope variance due to
         Poisson noise only; for ramps that are saturated in the initial group,
         this variance has been reset to a huge value to minimize the ramps
         contribution.
 
-    var_both3: float, 3D array
+    var_both3 : float, 3D array
         Cube of segment- and integration-specific values for the slope
         variance due to combined Poisson noise and read noise; for ramps that
         are saturated in the initial group, this variance has been reset to a
         huge value to minimize the ramps contribution.
 
-    slope_int: float, 3D array
+    slope_int : float, 3D array
         Cube of integration-specific slopes; for ramps that are saturated in
         the initial group, this variance has been reset to a huge value to
         minimize the ramps contribution.

@@ -1,0 +1,34 @@
+{
+    "asn_type": "spec2",
+    "asn_rule": "candidate_Asn_Lv2MIRLRSFixedSlitNod",
+    "version_id": null,
+    "code_version": "0.12.0a.dev115",
+    "degraded_status": "No known degraded exposures in association.",
+    "program": "98010",
+    "target": "1",
+    "asn_pool": "pool_028_mir_lrsfs_nods",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '98010'})\nDMSAttrConstraint({'name': 'is_tso', 'sources': ['tsovisit'], 'value': None})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'miri'})\nDMSAttrConstraint({'name': 'detector', 'sources': ['detector'], 'value': 'mirimage'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'p750l'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['pupil', 'grating'], 'value': None})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': 'full'})\nDMSAttrConstraint({'name': 'channel', 'sources': ['channel'], 'value': None})\nDMSAttrConstraint({'name': 'slit', 'sources': ['fxd_slit'], 'value': None})\nDMSAttrConstraint({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'mir_lrs\\\\-fixedslit'})\nDMSAttrConstraint({'name': 'patttype', 'sources': ['patttype'], 'value': 'along_slit_nod'})\nDMSAttrConstraint({'name': 'dithptin', 'sources': ['dithptin'], 'value': '2'})\nConstraint_Single_Science({'name': 'single_science', 'value': False})\nDMSAttrConstraint({'name': 'is_current_dithptin', 'sources': ['dithptin'], 'value': <function Asn_Lv2MIRLRSFixedSlitNod.__init__.<locals>.<lambda> at 0x1140f40d0>})\nSimpleConstraint({'name': 'force_match', 'value': None})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o001\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
+    "asn_id": "o001",
+    "products": [
+        {
+            "name": "jw_00004",
+            "members": [
+                {
+                    "expname": "jw_00004_rate.fits",
+                    "exptype": "science",
+                    "exposerr": "null"
+                },
+                {
+                    "expname": "jw_00001_rate.fits",
+                    "exptype": "background",
+                    "exposerr": "null"
+                },
+                {
+                    "expname": "jw_00002_rate.fits",
+                    "exptype": "background",
+                    "exposerr": "null"
+                }
+            ]
+        }
+    ]
+}

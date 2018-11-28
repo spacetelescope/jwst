@@ -8,6 +8,6 @@ Cube Building
    main.rst
    arguments.rst
    examples.rst
-   reference.rst
-
-.. automodapi:: jwst.cube_build
+   reference_files.rst
+   
+.. automodapi:: jwst.cube_build.cube_build_step

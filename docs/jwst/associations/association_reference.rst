@@ -5,16 +5,16 @@
 Association Rules
 =================
 
-Association definitions, or `rules`, are Python classes, all based on
-the :ref:`association`. The base class provides only a framework, much
-like an abstract base class; all functionality must be implemented in
-sub-classes.
+Association definitions, or ``rules``, are Python classes, all based on
+:py:class:`~jwst.associations.Association`. The base class provides only a
+framework, much like an abstract base class; all functionality must be
+implemented in sub-classes.
 
 Any subclass that is intended to produce an association is referred to
-as a `rule`. Any rule subclass must have a name that begins with the
-string `Asn_`. This is to ensure that any other classes involved in
+as a ``rule``. Any rule subclass must have a name that begins with the
+string ``Asn_``. This is to ensure that any other classes involved in
 defining the definition of the rule classes do not get used as rules
-themselves, such as the :ref:`association` itself.
+themselves, such as the :py:class:`~jwst.associations.Association` itself.
 
 Association Dynamic Definition
 ------------------------------
@@ -24,7 +24,7 @@ important concept to remember is that an association is defined by
 both the rule matched, and by the initial member that matched it.
 The following example will illustrate this concept.
 
-For JWST :ref:`level3-associations`, many associations created must
+For JWST :ref:`Level 3<asn-level3-techspecs>`, many associations created must
 have members that all share the same filter. To avoid writing rules
 for each filter, the rules have a condition that states that it
 doesn't matter what filter is specified, as long as the association
@@ -54,16 +54,16 @@ To be repetitive, the basic association is simply a dict (default) or
 list. The structure of the dict is completely determined by the rules.
 However, the base class defines the following keys:
 
-    `asn_type`
+    ``asn_type``
         The type of the association.
 
-    `asn_rule`
+    ``asn_rule``
         The name of the rule.
 
-    `version_id`
+    ``version_id``
         A version number for any associations created by this rule.
 
-    `code_version`
+    ``code_version``
         The version of the generator library in use.
 
 These keys are accessed in the same way any dict key is accessed::
@@ -98,36 +98,36 @@ following are required to be implemented.
 Creation
 ^^^^^^^^
 
-To create an association based on a member, the `create` method of the
+To create an association based on a member, the ``create`` method of the
 rule is called::
 
   (association, reprocess_list) = Asn_SomeRule.create(member)
 
-`create` returns a 2-tuple: The first element is the association and the
-second element is a list of `reprocess` instances.
+``create`` returns a 2-tuple: The first element is the association and the
+second element is a list of ``reprocess`` instances.
 
 If the member matches the conditions for the rule, an association is
-returned. If the member does not belong, `None` is returned for the
+returned. If the member does not belong, ``None`` is returned for the
 association.
 
 Whether an association is created or not, it is possible a list of
-`reprocess` instances may be returned. This list represents the
+``reprocess`` instances may be returned. This list represents the
 expansion of the pool in :ref:`member-with-lists`
 
 Addition
 ^^^^^^^^
 
-To add members to an existing association, one uses the :meth:`Association.add
-<jwst.associations.association.Association.add>` method::
+To add members to an existing association, one uses the :py:meth:`Association.add
+<jwst.associations.Association>` method::
 
   (matches, reprocess_list) = association.add(new_member)
 
-If the association accepts the member, the `matches` element of the
-2-tuple will be `True`.
+If the association accepts the member, the ``matches`` element of the
+2-tuple will be ``True``.
 
 Typically, one does not deal with a single rule, but a collection of
 rules. For association creation, one typically uses an
-:ref:`AssociationRegistry <asn-registry>` to collect all the rules a pool will be
+:py:class:`~jwst.associations.AssociationRegistry` to collect all the rules a pool will be
 compared against. Association registries provide extra functionality to
 deal with a large and varied set of association rules.
 
@@ -144,7 +144,7 @@ looks like::
   with open(file_name, 'w') as file_handle:
       file_handle.write(serialized)
 
-Note that `dump` returns a 2-tuple. The first element is the suggested
+Note that ``dump`` returns a 2-tuple. The first element is the suggested
 file name to use to save the association. The second element is the
 serialization.
 
@@ -178,10 +178,10 @@ implement in order to create an association.
 Class Naming
 ^^^^^^^^^^^^
 
-The :ref:`AssociationRegistry <asn-registry>` is used to store
+The :py:class:`~jwst.associations.AssociationRegistry` is used to store
 the association rules. Since rules are defined by Python classes, a
 way of indicating what the final rule classes are is needed. By
-definition, rule classes are classes that begin with the string `Asn_`.
+definition, rule classes are classes that begin with the string ``Asn_``.
 Only these classes are used to produce associations.
 
 Core Attributes
@@ -190,18 +190,18 @@ Core Attributes
 Since rule classes will potentially have a large number of attributes
 and methods, the base :class:`Association
 <jwst.associations.association.Association>` class defines two
-attributes: `data`, which contains the actual association, and `meta`,
+attributes: ``data``, which contains the actual association, and ``meta``,
 the structure that holds auxiliary information needed for association
 creation. Subclasses may redefine these attributes as they see fit.
 However, it is suggested that they be used as conceptually defined here.
 
-`data` Attribute
-""""""""""""""""
+``data`` Attribute
+""""""""""""""""""
 
-`data` contains the association itself. Currently, the base class
-predefines `data` as a dict. The base class itself is a subclass of
+``data`` contains the association itself. Currently, the base class
+predefines ``data`` as a dict. The base class itself is a subclass of
 `~py3:collections.abc.MutableMapping`. Any instance behaves as a dict. The contents of that
-dict is the contents of the `data` attribute. For example::
+dict is the contents of the ``data`` attribute. For example::
 
   asn = Asn_MyAssociation()
   asn.data['value'] = 'a value'
@@ -220,22 +220,22 @@ Instantiating a rule, in and of itself, does nothing more than setup
 the constraints that define the rule, and basic structure
 initialization.
 
-Implementing `create()`
-^^^^^^^^^^^^^^^^^^^^^^^
+Implementing ``create()``
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The base class function performs the following steps:
 
     - Instantiates an instance of the rule
-    - Calls `add()` to attempt to add the member to the instance
+    - Calls ``add()`` to attempt to add the member to the instance
 
-If `add()` returns `matches==False`, then `create` returns `None` as the
+If ``add()`` returns ``matches==False``, then ``create`` returns ``None`` as the
 new association.
 
-Any override of this method is expected to first call `super`. On
+Any override of this method is expected to first call ``super``. On
 success, any further initialization may be performed.
 
-Implementing `add()`
-^^^^^^^^^^^^^^^^^^^^
+Implementing ``add()``
+^^^^^^^^^^^^^^^^^^^^^^
 
 The :meth:`~jwst.associations.association.Association.add` method adds
 members to an association.
@@ -247,37 +247,37 @@ Constraint Modification
     Any wildcard constraints are modified so that any further matching
     must match exactly the value provided by the current member.
 
-`self._init_hook()` is executed
+``self._init_hook()`` is executed
     If a new association is being created, the
-    rule's `_init_hook` method is executed, if defined. This allows a
+    rule's ``_init_hook`` method is executed, if defined. This allows a
     rule to do further initialization before the member is
     officially added to the association.
 
-`self._add()` is executed
-    The rule class must define `_add()`. This method officially adds
+``self._add()`` is executed
+    The rule class must define ``_add()``. This method officially adds
     the member to the association.
 
-Implementing `dump()` and `load()`
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Implementing ``dump()`` and ``load()``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The base `Association` class defines the
+The base ``Association`` class defines the
 :meth:`~jwst.associations.association.Association.dump` and
 :meth:`~jwst.associations.association.Association.load` methods to
-serialize the data structured pointing to by the `data` attribute. If
-the new rule uses the `data` attribute for storing the association
+serialize the data structure pointing to by the ``data`` attribute. If
+the new rule uses the ``data`` attribute for storing the association
 information, no further overriding of these methods is necessary.
 
-However, if the new rule does not define `data`, then these methods
+However, if the new rule does not define ``data``, then these methods
 will need be overridden.
 
 Rule Registration
 =================
 
-In order for a rule to be used by `generate`, the rule must be loaded
-into an `AssociationRegistry`.  Since a rule is just a class that is
+In order for a rule to be used by ``generate``, the rule must be loaded
+into an ``AssociationRegistry``.  Since a rule is just a class that is
 defined as part of a, most likely, larger module, the registry needs
 to know what classes are rules. Classes to be used as rules are marked
-with the `RegistryMarker.rule` decorator as follows::
+with the ``RegistryMarker.rule`` decorator as follows::
 
   # myrules.py
   from jwst.associations import (Association, RegistryMarker)
@@ -286,8 +286,8 @@ with the `RegistryMarker.rule` decorator as follows::
   class MyRule(Association):
       ...
 
-Then, when the rule file is used to create an `AssociationRegistry`,
-the class `MyRule` will be included as one of the available rules::
+Then, when the rule file is used to create an ``AssociationRegistry``,
+the class ``MyRule`` will be included as one of the available rules::
 
   >>> from jwst.associations import AssociationRegistry
   >>> registry = AssociationRegistry('myrules.py', include_default=False)

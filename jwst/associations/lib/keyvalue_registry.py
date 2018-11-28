@@ -33,10 +33,10 @@ class KeyValueRegistry(UserDict):
 
     Parameters
     ----------
-    items: object or (str, object) or dict
+    items : object or (str, object) or dict
         Initializing items.
 
-    default: str or object
+    default : str or object
         The default to use when key is `None`
     """
 
@@ -96,7 +96,7 @@ def make_dict(item):
 
     Parameters
     ----------
-    item: object or (name, object) or dict
+    item : object or (name, object) or dict
         If dict, just return dict.
         If 2-tuple, return dict with the key/value pair
         If just object, use `__name__` as key

@@ -9,13 +9,12 @@ the top of the example data tree.
 
 from glob import glob
 from os import path
+
 import pytest
 
 from .helpers import (
     SCRIPT_DATA_PATH,
     abspath,
-    require_bigdata,
-    runslow,
     update_asn_basedir,
 )
 
@@ -31,8 +30,8 @@ DATAPATH = abspath(
     reason='Fails due to issue #947',
     run=False,
 )
-@runslow
-@require_bigdata
+@pytest.mark.slow
+@pytest.mark.bigdata
 def test_run_outlier_only(mk_tmp_dirs):
     """Test a basic run"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -54,7 +53,7 @@ def test_run_outlier_only(mk_tmp_dirs):
     assert False
 
 
-@require_bigdata
+@pytest.mark.bigdata
 def test_run_resample_mock_only(mk_tmp_dirs):
     """Test resample step only."""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -81,7 +80,7 @@ def test_run_resample_mock_only(mk_tmp_dirs):
     assert path.isfile(product_name)
 
 
-@require_bigdata
+@pytest.mark.bigdata
 def test_run_extract_1d_resample_mock_only(mk_tmp_dirs):
     """Test resample step only."""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -113,8 +112,8 @@ def test_run_extract_1d_resample_mock_only(mk_tmp_dirs):
     reason='Failure documented in issue #1006',
     run=False,
 )
-@runslow
-@require_bigdata
+@pytest.mark.slow
+@pytest.mark.bigdata
 def test_run_resample_only(mk_tmp_dirs):
     """Test resample step only."""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -141,7 +140,7 @@ def test_run_resample_only(mk_tmp_dirs):
     assert path.isfile(product_name)
 
 
-@require_bigdata
+@pytest.mark.bigdata
 def test_run_extract_1d_only(mk_tmp_dirs):
     """Test only the extraction step. Should produce nothing
     because extraction requires resampling
@@ -170,7 +169,7 @@ def test_run_extract_1d_only(mk_tmp_dirs):
     assert not files
 
 
-@require_bigdata
+@pytest.mark.bigdata
 def test_run_nosteps(mk_tmp_dirs):
     """Test where no steps execute"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -202,8 +201,8 @@ def test_run_nosteps(mk_tmp_dirs):
     reason='None of the steps operate',
     run=False,
 )
-@runslow
-@require_bigdata
+@pytest.mark.slow
+@pytest.mark.bigdata
 def test_run_mir_lrs_fixedslit(mk_tmp_dirs):
     """Test a full run"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs

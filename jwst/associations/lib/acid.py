@@ -17,7 +17,7 @@ class ACID():
 
     Parameters
     ----------
-    in: str or 2-tuple
+    input : str or 2-tuple
         The string representation or 2-tuple containing the
         candidate ID and TYPE. The string should be itself
         the 2-tuple representation when evaluated. The 2-tuple
@@ -26,15 +26,15 @@ class ACID():
 
     Attributes
     ----------
-    id: str
+    id : str
         The id number.
 
-    type: str
+    type : str
         The type of candidate. Some, but not all
         possibilities include 'OBSERVATION',
         'MOSAIC', 'DISCOVERED'
 
-    __str__: str
+    __str__ : str
         The DMS-specified string representation of
         a candidate identifier. Possibilities include
         'oXXX' for OBSERVATION, 'c1XXX' for 'MOSAIC' or

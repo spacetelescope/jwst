@@ -4,11 +4,11 @@ from collections import defaultdict
 from glob import glob
 from os import path
 
+import pytest
+
 from .helpers import (
     SCRIPT_DATA_PATH,
     abspath,
-    require_bigdata,
-    runslow,
     update_asn_basedir,
 )
 
@@ -21,8 +21,8 @@ DATAPATH = abspath(
 )
 
 
-@runslow
-@require_bigdata
+@pytest.mark.slow
+@pytest.mark.bigdata
 def test_run_full_noscale(mk_tmp_dirs):
     """Test a full run"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -85,8 +85,8 @@ def test_run_full_noscale(mk_tmp_dirs):
     assert len(output_files) == 0
 
 
-@runslow
-@require_bigdata
+@pytest.mark.slow
+@pytest.mark.bigdata
 def test_run_whitelight(mk_tmp_dirs):
     """Test a full run"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -134,8 +134,8 @@ def test_run_whitelight(mk_tmp_dirs):
     assert len(output_files) == 0
 
 
-@runslow
-@require_bigdata
+@pytest.mark.slow
+@pytest.mark.bigdata
 def test_whitelight_output(mk_tmp_dirs):
     """Test default file output from white_light_step"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -166,8 +166,8 @@ def test_whitelight_output(mk_tmp_dirs):
     assert len(output_files) == 0
 
 
-@runslow
-@require_bigdata
+@pytest.mark.slow
+@pytest.mark.bigdata
 def test_whitelight_nooutput(mk_tmp_dirs):
     """Test for no output from white_light_step"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs

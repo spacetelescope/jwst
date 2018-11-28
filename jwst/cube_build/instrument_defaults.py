@@ -1,7 +1,5 @@
-# Instrument class
-# Information on MIRI and NIRSPEC.
-# Basic information that will not change
-# Default sampling to use based on MIRI:Channel,subchannel, NIRSPEC: FWA,GWS
+""" Dictionary of basic instrument parameters
+"""
 
 import logging
 log = logging.getLogger(__name__)
@@ -11,7 +9,11 @@ log.setLevel(logging.DEBUG)
 class InstrumentInfo():
 
     def __init__(self):
-# Wavelength varying parameters
+        """ Dictionary of basic instrument parameters
+
+        These parameters are filled in from the cube reference file
+        and  MIRI resolution reference file
+        """
 
         self.multich_wavelength = []
         self.multich_sroi = []
@@ -494,47 +496,26 @@ class InstrumentInfo():
             self.Info[parameter1][parameter2]['bscale'] = value
 
 
-    def SetSpectralStep(self, value, parameter1, parameter2=None):
-        if parameter2 is None: # data is NIRSPEC paramters do not vary with filter
-            self.Info[parameter1]['wscale'] = value
-        else:
-            self.Info[parameter1][parameter2]['wscale'] = value
+    def SetSpectralStep(self, value, parameter1, parameter2):
+        self.Info[parameter1][parameter2]['wscale'] = value
 
-    def SetWaveMin(self, value, parameter1, parameter2=None):
-        if parameter2 is None: # data is NIRSPEC paramters do not vary with filter
-            self.Info[parameter1]['wavemin'] = value
-        else:
-            self.Info[parameter1][parameter2]['wavemin'] = value
+    def SetWaveMin(self, value, parameter1, parameter2):
+        self.Info[parameter1][parameter2]['wavemin'] = value
 
-    def SetWaveMax(self, value, parameter1, parameter2=None):
-        if parameter2 is None: # data is NIRSPEC paramters do not vary with filter
-            self.Info[parameter1]['wavemax'] = value
-        else:
-            self.Info[parameter1][parameter2]['wavemax'] = value
+    def SetWaveMax(self, value, parameter1, parameter2):
+        self.Info[parameter1][parameter2]['wavemax'] = value
 
-    def SetSpatialROI(self, value, parameter1, parameter2=None):
-        if parameter2 is None: # data is NIRSPEC paramters do not vary with filter
-            self.Info[parameter1]['sroi'] = value
-        else:
-            self.Info[parameter1][parameter2]['sroi'] = value
+    def SetSpatialROI(self, value, parameter1, parameter2):
+        self.Info[parameter1][parameter2]['sroi'] = value
 
-    def SetWaveROI(self, value, parameter1, parameter2=None):
-        if parameter2 is None: # data is NIRSPEC paramters do not vary with filter
-            self.Info[parameter1]['wroi'] = value
-        else:
-            self.Info[parameter1][parameter2]['wroi'] = value
+    def SetWaveROI(self, value, parameter1, parameter2):
+        self.Info[parameter1][parameter2]['wroi'] = value
 
-    def SetMSMPower(self, value, parameter1, parameter2=None):
-        if parameter2 is None: # data is NIRSPEC paramters do not vary with filter
-            self.Info[parameter1]['msm_power'] = value
-        else:
-            self.Info[parameter1][parameter2]['msm_power'] = value
+    def SetMSMPower(self, value, parameter1, parameter2):
+        self.Info[parameter1][parameter2]['msm_power'] = value
 
-    def SetSoftRad(self, value, parameter1, parameter2=None):
-        if parameter2 is None: # data is NIRSPEC paramters do not vary with filter
-            self.Info[parameter1]['softrad'] = value
-        else:
-            self.Info[parameter1][parameter2]['softrad'] = value
+    def SetSoftRad(self, value, parameter1, parameter2):
+        self.Info[parameter1][parameter2]['softrad'] = value
 
     def Set_RP_Wave_Cutoff(self, table_wave_center, this_channel, this_band):
         self.Info[this_channel][this_band]['rp_wave_cuttoff'] = table_wave_center
@@ -554,7 +535,6 @@ class InstrumentInfo():
         self.Info[this_channel][this_band]['rp_b_ave'] = b
         self.Info[this_channel][this_band]['rp_c_ave'] = c
 
-
     def Set_psf_alpha_parameters(self, cutoff,
                                  a_short, b_short, a_long, b_long):
         self.Info['psf_alpha_cuttoff'] = cutoff
@@ -570,8 +550,6 @@ class InstrumentInfo():
         self.Info['psf_beta_b_short'] = b_short
         self.Info['psf_beta_a_long'] = a_long
         self.Info['psf_beta_b_long'] = b_long
-
-
 #______________________________________________________________________
     def Get_RP_ave_Wave(self, this_channel, this_band):
         w = self.Info[this_channel][this_band]['rp_wave_cuttoff']
@@ -599,32 +577,67 @@ class InstrumentInfo():
         b_weight = (b1, b2, b3, b4, b5)
         return b_weight
 
-    def GetWaveRoi(self, parameter1, parameter2=None):
-        if parameter2 is None:
-            roiw = self.Info[parameter1]['wroi']
-        else:
-            roiw = self.Info[parameter1][parameter2]['wroi']
+    def GetWaveRoi(self, parameter1, parameter2):
+        roiw = self.Info[parameter1][parameter2]['wroi']
         return roiw
 
-
-    def GetSpatialRoi(self, parameter1, parameter2=None):
-        if parameter2 is None:
-            rois = self.Info[parameter1]['sroi']
-        else:
-            rois = self.Info[parameter1][parameter2]['sroi']
+    def GetSpatialRoi(self, parameter1, parameter2):
+        rois = self.Info[parameter1][parameter2]['sroi']
         return rois
 
+    def GetWaveMin(self, parameter1, parameter2):
+        wavemin = self.Info[parameter1][parameter2]['wavemin']
+        return wavemin
 
-    def GetScale(self, parameter1, parameter2=None):
-        if parameter2 is None:
-            scale = (self.Info[parameter1]['ascale'],
-                     self.Info[parameter1]['bscale'],
-                     self.Info[parameter1]['wscale'])
-        else:
-            scale = (self.Info[parameter1][parameter2]['ascale'],
-                     self.Info[parameter1][parameter2]['bscale'],
-                     self.Info[parameter1][parameter2]['wscale'])
+    def GetWaveMax(self, parameter1, parameter2):
+        wavemax = self.Info[parameter1][parameter2]['wavemax']
+        return wavemax
+
+    def GetMSMPower(self, parameter1, parameter2):
+        weight_power = self.Info[parameter1][parameter2]['msm_power']
+        return weight_power
+
+    def GetSoftRad(self, parameter1, parameter2):
+        softrad = self.Info[parameter1][parameter2]['softrad']
+        return softrad
+
+    def GetScale(self, parameter1, parameter2):
+        scale = (self.Info[parameter1][parameter2]['ascale'],
+                 self.Info[parameter1][parameter2]['bscale'],
+                 self.Info[parameter1][parameter2]['wscale'])
         return scale
+
+    def Get_multichannel_table(self):
+        table = (self.multich_wavelength,
+                 self.multich_sroi,
+                 self.multich_wroi,
+                 self.multich_power,
+                 self.multich_softrad)
+        return table
+
+    def Get_prism_table(self):
+        table = (self.prism_wavelength,
+                 self.prism_sroi,
+                 self.prism_wroi,
+                 self.prism_power,
+                 self.prism_softrad)
+        return table
+
+    def Get_med_table(self):
+        table = (self.med_wavelength,
+                 self.med_sroi,
+                 self.med_wroi,
+                 self.med_power,
+                 self.med_softrad)
+        return table
+
+    def Get_high_table(self):
+        table = (self.high_wavelength,
+                 self.high_sroi,
+                 self.high_wroi,
+                 self.high_power,
+                 self.high_softrad)
+        return table
 
 
     def GetMIRISliceEndPts(self, parameter1):

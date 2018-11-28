@@ -309,7 +309,7 @@ def get_object_info(catalog_name=None):
     Parameters
     ----------
     catalog_name : str, astropy.table.table.Qtable
-        The name of the photutils catalog or its quantities table 
+        The name of the photutils catalog or its quantities table
 
     Returns
     -------
@@ -331,7 +331,7 @@ def get_object_info(catalog_name=None):
             log.error("Could not find catalog file: {0}".format(e))
             raise FileNotFoundError("Could not find catalog: {0}".format(e))
     elif isinstance(catalog_name, QTable):
-        pass
+        catalog = catalog_name
     else:
         err_text = "Need to input string name of catalog or astropy.table.table.QTable instance"
         log.error(err_text)
@@ -531,6 +531,7 @@ def create_grism_bbox(input_model,
 
                 order_bounding = {}
                 waverange = {}
+                partial_order = {}
                 for order in available_orders:
                     range_select = [(x[2], x[3]) for x in wavelengthrange if (x[0] == order and x[1] == filter_name)]
                     # The orders of the bounding box in the non-dispersed image
@@ -585,24 +586,27 @@ def create_grism_bbox(input_model,
                     # bigger than the detector FOV for a single grism
                     # exposure.
                     exclude = False
-                    partial_order = False
+                    ispartial = False
 
                     pts = np.array([[ymin, xmin], [ymax, xmax]])
                     ll = np.array([0, 0])
                     ur = np.array([input_model.meta.subarray.ysize, input_model.meta.subarray.xsize])
-                    inidx = np.any(np.logical_and(ll <= pts, pts <= ur), axis=1)
+                    inidx = np.all(np.logical_and(ll <= pts, pts <= ur), axis=1)
                     contained = len(pts[inidx])
 
                     if contained == 0:
                         exclude = True
                         log.info("Excluding off-image object: {}, order {}".format(obj.sid, order))
-                    elif contained == 1:
-                        partial_order = True
-                        log.info("Partial order on detector for obj: {} order: {}".format(obj.sid, order))
+                    elif contained >= 1:
+                        outbox = pts[np.logical_not(inidx)]
+                        if len(outbox) > 0:
+                            ispartial = True
+                            log.info("Partial order on detector for obj: {} order: {}".format(obj.sid, order))
 
                     if not exclude:
                         order_bounding[order] = ((round(ymin), round(ymax)), (round(xmin), round(xmax)))
                         waverange[order] = ((lmin, lmax))
+                        partial_order[order] = ispartial
 
                 if len(order_bounding) > 0:
                     grism_objects.append(GrismObject(sid=obj.sid,
@@ -716,7 +720,7 @@ def _nanminmax(wcsobj):
     ra, dec, lam = wcsobj(x, y)
     return np.nanmin(ra), np.nanmax(ra), np.nanmin(dec), np.nanmax(dec)
 
-    
+
 def update_s_region_nrs_ifu(output_model, mod):
     """
     Update S_REGION for NRS_IFU observations using the instrument model.
@@ -751,12 +755,12 @@ def update_s_region_mrs(output_model):
     ----------
     output_model : `~jwst.datamodels.IFUImageModel`
         The output of assign_wcs.
-    """                         
+    """
     rmin, rmax, dmin, dmax = _nanminmax(output_model.meta.wcs)
     footprint = np.array([rmin, dmin, rmax, dmin, rmax, dmax, rmin, dmax])
     update_s_region_keyword(output_model, footprint)
-    
-    
+
+
 def velocity_correction(velosys):
     """
     Compute wavelength correction to Barycentric reference frame.

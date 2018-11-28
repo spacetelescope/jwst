@@ -1,0 +1,24 @@
+{
+    "asn_type": "wfs-image2",
+    "asn_rule": "candidate_Asn_Lv2WFSC",
+    "version_id": null,
+    "code_version": "0.12.0a.dev115",
+    "degraded_status": "No known degraded exposures in association.",
+    "program": "00328",
+    "target": "1",
+    "asn_pool": "jw00328_20171108T101400_pool",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '328'})\nDMSAttrConstraint({'name': 'is_tso', 'sources': ['tsovisit'], 'value': None})\nConstraint_Single_Science({'name': 'single_science', 'value': False})\nDMSAttrConstraint({'name': 'wfsc', 'sources': ['visitype'], 'value': 'prime_wfsc_sensing_only'})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o001\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
+    "asn_id": "o001",
+    "products": [
+        {
+            "name": "jw00328001001_02104_00001_nrca2",
+            "members": [
+                {
+                    "expname": "jw00328001001_02104_00001_nrca2_rate.fits",
+                    "exptype": "science",
+                    "exposerr": "null"
+                }
+            ]
+        }
+    ]
+}
