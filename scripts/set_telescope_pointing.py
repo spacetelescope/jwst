@@ -96,10 +96,16 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     for filename in args.exposures:
-        logger.info('Setting pointing for {}'.format(filename))
-        add_wcs(
-            filename,
-            siaf_path=args.siaf,
-            strict_time=args.strict_time,
-            strict_pointing=not args.allow_default
+        logger.info(
+            '\n------'
+            'Setting pointing for {}'.format(filename)
         )
+        try:
+            add_wcs(
+                filename,
+                siaf_path=args.siaf,
+                strict_time=args.strict_time,
+                strict_pointing=not args.allow_default
+            )
+        except ValueError as exception:
+            logger.info('Cannot determine pointing information: ' + str(exception))
