@@ -131,6 +131,36 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None,
 
     transform_kwargs: dict
         Keyword arguments used by matrix calculation routines
+
+    Notes
+    -----
+    This function adds absolute pointing information to the FITS files provided
+    to it on the command line (one or more).
+
+    Currently it only uses a constant value for the engineering keywords
+    since the Engineering Database does not yet contain them.
+
+    It assumes the following keywords are present in the file header:
+
+    V2_REF (arcseconds)
+    V3_REF (arcseconds)
+    VPARITY (+1 or -1)
+    V3I_YANG (decimal degrees)
+
+    The keywords added are:
+
+    RA_V1
+    DEC_V1
+    PA_V3
+    CRVAL1
+    CRVAL2
+    PC1_1
+    PC1_2
+    PC2_1
+    PC2_2
+
+    It does not currently place the new keywords in any particular location
+    in the header other than what is required by the standard.
     """
     logger.info('Updating WCS info for file {}'.format(filename))
     model = Level1bModel(filename)
