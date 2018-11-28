@@ -96,7 +96,8 @@ WCSRef = namedlist(
 
 
 def add_wcs(filename, default_pa_v3=0., siaf_path=None,
-            strict_time=False, reduce_func=None, **transform_kwargs):
+            strict_time=False, strict_pointing=True, reduce_func=None,
+            **transform_kwargs):
     """Add WCS information to a FITS file
 
     Telescope orientation is attempted to be obtained from
@@ -121,6 +122,10 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None,
         If true, pointing must be within the observation time.
         Otherwise, nearest values are allowed.
 
+    strict_pointing: bool
+        If engineering pointing cannot be determine, do not
+        allow the use of defaults from the header.
+
     reduce_func: func or None
         Reduction function to use on values.
 
@@ -134,6 +139,7 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None,
         default_pa_v3=default_pa_v3,
         siaf_path=siaf_path,
         strict_time=strict_time,
+        strict_pointing=strict_pointing,
         reduce_func=reduce_func,
         **transform_kwargs
     )
@@ -148,7 +154,8 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None,
 
 
 def update_wcs(model, default_pa_v3=0., siaf_path=None,
-               strict_time=False, reduce_func=None, **transform_kwargs):
+               strict_time=False, strict_pointing=True,
+               reduce_func=None, **transform_kwargs):
     """Update WCS pointing information
 
     Given a `jwst.datamodels.DataModel`, determine the simple WCS parameters
@@ -173,6 +180,10 @@ def update_wcs(model, default_pa_v3=0., siaf_path=None,
         If True, pointing must be within the observation time.
         Otherwise, nearest values are allowed.
 
+    strict_pointing: bool
+        If engineering pointing cannot be determine, do not
+        allow the use of defaults from the header.
+
     reduce_func: func or None
         Reduction function to use on values.
 
@@ -193,7 +204,8 @@ def update_wcs(model, default_pa_v3=0., siaf_path=None,
     else:
         update_wcs_from_telem(
             model, default_pa_v3=default_pa_v3, siaf_path=siaf_path,
-            strict_time=strict_time, reduce_func=reduce_func, **transform_kwargs
+            strict_time=strict_time, strict_pointing=strict_pointing,
+            reduce_func=reduce_func, **transform_kwargs
         )
 
 
@@ -253,7 +265,9 @@ def update_wcs_from_fgs_guiding(model, default_pa_v3=0.0, default_vparity=1):
 
 
 def update_wcs_from_telem(
-        model, default_pa_v3=0., siaf_path=None, strict_time=False, reduce_func=None, **transform_kwargs
+        model, default_pa_v3=0., siaf_path=None,
+        strict_time=False, strict_pointing=True,
+        reduce_func=None, **transform_kwargs
 ):
     """Update WCS pointing information
 
@@ -278,6 +292,10 @@ def update_wcs_from_telem(
     strict_time: bool
         If true, pointing must be within the observation time.
         Otherwise, nearest values are allowed.
+
+    strict_pointing: bool
+        If engineering pointing cannot be determine, do not
+        allow the use of defaults from the header.
 
     reduce_func: func or None
         Reduction function to use on values.
@@ -310,11 +328,14 @@ def update_wcs_from_telem(
     try:
         pointing = get_pointing(obsstart, obsend, strict_time=strict_time, reduce_func=reduce_func)
     except ValueError as exception:
-        logger.warning(
-            'Cannot retrieve telescope pointing.'
-            ' Default pointing parameters will be used.'
-            '\nException is {}'.format(exception)
-        )
+        if strict_pointing:
+            raise
+        else:
+            logger.warning(
+                'Cannot retrieve telescope pointing.'
+                ' Default pointing parameters will be used.'
+                '\nException is {}'.format(exception)
+            )
     else:
         # compute relevant WCS information
         logger.info('Successful read of engineering quaternions:')

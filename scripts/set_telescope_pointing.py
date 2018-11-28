@@ -84,8 +84,22 @@ if __name__ == '__main__':
         '--strict-time', action='store_true',
         help='Force pointings to be within the observation time.'
     )
+    parser.add_argument(
+        '--allow-default', action='store_true',
+        help='If pointing information cannot be determine, use header information.'
+    )
+    parser.add_argument(
+        '--siaf', type=str, default=None,
+        help='SIAF PRD sqlite database file. If not specified, default is to use `$XML_DATA/prd.db`'
+    )
+
     args = parser.parse_args()
 
     for filename in args.exposures:
         logger.info('Setting pointing for {}'.format(filename))
-        add_wcs(filename, strict_time=args.strict_time)
+        add_wcs(
+            filename,
+            siaf_path=args.siaf,
+            strict_time=args.strict_time,
+            strict_pointing=not args.allow_default
+        )

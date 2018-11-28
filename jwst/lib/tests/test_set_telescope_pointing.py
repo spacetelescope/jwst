@@ -74,7 +74,7 @@ def eng_db_jw703():
         yield engdb
 
 
-@pytest.fixture
+@pytest.fixture(scope='module')
 def data_file():
     model = datamodels.Level1bModel()
     model.meta.exposure.start_time = STARTTIME.mjd
@@ -92,6 +92,12 @@ def data_file():
         file_path = os.path.join(path, 'fits.fits')
         model.save(file_path)
         yield file_path
+
+
+def test_strict_pointing(data_file, eng_db_jw703):
+    """Test failure on strict pointing"""
+    with pytest.raises(ValueError):
+        stp.add_wcs(data_file, strict_time=True)
 
 
 def test_pointing_averaging(eng_db_jw703):
