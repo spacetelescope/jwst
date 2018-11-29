@@ -1,1 +1,2 @@
 -e git+https://github.com/astropy/astropy.git#egg=astropy
+pytest==3.8.2
