@@ -60,7 +60,7 @@ matrix += dist
 docs = new BuildConfig()
 docs.nodetype = 'linux'
 docs.name = 'docs'
-docs.conda_packages = ["python=${matrix_python[0]}"]
+docs.conda_packages = ["python=${matrix_python[0]}", "graphviz"]
 docs.build_cmds = [
     "pip install ${pip_install_args} numpy==${matrix_numpy[0]}",
     "pip install ${pip_install_args} -r requirements-dev.txt --editable .",
