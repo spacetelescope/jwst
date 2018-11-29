@@ -240,11 +240,11 @@ def test_full_step(setup_nrc_cube):
     data.data[0, 3, 500, 500] = 60000   # Signal reaches saturation limit
     data.data[0, 4, 500, 500] = 62000
 
-    # Get reference file
-    reffile = "/grp/crds/cache/references/jwst/jwst_nircam_saturation_0064.fits"
-
     # Run the pipeline
-    output = SaturationStep.call(data, override_saturation=reffile)
+    output = SaturationStep.call(data)
+
+    # Check that expected reference file is used based on data headers
+    assert output.meta.ref_file.saturation.name == 'crds://jwst_nircam_saturation_0064.fits'
 
     # Check that correct pixel and group 3+ are flagged as saturated
     # Check that other pixel and groups are not flagged
@@ -262,20 +262,18 @@ def setup_nrc_cube():
 
         nints = 1
 
-        data_model = RampModel()
-        data_model.data = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.float32)
-        data_model.pixeldq = np.zeros(shape=(nrows, ncols), dtype=np.int32)
-        data_model.groupdq = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.float32)
+        data_model = RampModel((nints, ngroups, nrows, ncols))
         data_model.meta.subarray.xstart = 1
         data_model.meta.subarray.ystart = 1
         data_model.meta.subarray.xsize = ncols
         data_model.meta.subarray.ysize = nrows
         data_model.meta.exposure.ngroups = ngroups
         data_model.meta.instrument.name = 'NIRCAM'
+        data_model.meta.instrument.detector = 'NRCA1'
+        data_model.meta.observation.date = '2017-10-01'
+        data_model.meta.observation.time = '00:00:00'
 
-        saturation_model = SaturationModel()
-        saturation_model.data = np.zeros(shape=(2048, 2048), dtype=np.float32)
-        saturation_model.dq = np.zeros(shape=(2048, 2048), dtype=np.int32)
+        saturation_model = SaturationModel((2048, 2048))
         saturation_model.meta.subarray.xstart = 1
         saturation_model.meta.subarray.ystart = 1
         saturation_model.meta.subarray.xsize = 2048
@@ -301,14 +299,9 @@ def setup_miri_cube():
 
         nints = 1
 
-        # create the data and groupdq arrays
-        csize = (nints, ngroups, nrows, ncols)
-        data = np.full(csize, 1.0)
-        pixeldq = np.zeros((nrows, ncols), dtype=int)
-        groupdq = np.zeros(csize, dtype=int)
-
         # create a JWST datamodel for MIRI data
-        data_model = MIRIRampModel(data=data, pixeldq=pixeldq, groupdq=groupdq)
+        data_model = MIRIRampModel((nints, ngroups, nrows, ncols))
+        data_model.data += 1
         data_model.meta.instrument.name = 'MIRI'
         data_model.meta.instrument.detector = 'MIRIMAGE'
         data_model.meta.instrument.filter = 'F1500W'
@@ -323,9 +316,7 @@ def setup_miri_cube():
         data_model.meta.subarray.ysize = nrows
 
         # create a saturation model for the saturation step
-        satdata = np.zeros((1032, 1024), dtype=float)
-        dq = np.zeros((1032, 1024), dtype=int)
-        saturation_model = SaturationModel(data=satdata, dq=dq)
+        saturation_model = SaturationModel((1032, 1024))
         saturation_model.meta.description = 'Fake data.'
         saturation_model.meta.telescope = 'JWST'
         saturation_model.meta.reftype = 'SaturationModel'
