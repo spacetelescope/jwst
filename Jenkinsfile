@@ -40,20 +40,21 @@ def conda_packages_docs = [
 // Pip related setup
 def pip_packages_docs = "sphinx-automodapi"
 def pip_packages_tests = "requests_mock ci_watson"
+def pip_index = "https://bytesalad.stsci.edu/artifactory/api/pypi/datb-pypi-virtual"
+def pip_install_args = "--index-url ${pip_index} --progress-bar=off"
 
-/*
 // Generate distributions
 dist = new BuildConfig()
 dist.nodetype = 'linux'
 dist.name = 'dist'
-dist.conda_packages = ["numpy=${matrix_numpy[0]}"] + ["python=${matrix_python[0]}"]
 dist.build_cmds = [
+    "pip install numpy==${matrix_numpy[0]}",
     "python setup.py sdist",
-    "python setup.py bdist_egg",
     "python setup.py bdist_wheel"
 ]
 matrix += dist
 
+/*
 // Compile documentation
 docs = new BuildConfig()
 docs.nodetype = 'linux'
@@ -78,9 +79,9 @@ for (python_ver in matrix_python) {
             bc.name = name
             bc.conda_packages = ["python=${python_ver}"]
             bc.build_cmds = [
-                "pip install -v -r requirements-dev.txt .",
+                "pip install ${pip_install_args} -r requirements-dev.txt .",
             ]
-            //bc.test_cmds = ["pytest -r s --basetemp=test_results --junitxml=results.xml"]
+            bc.test_cmds = ["pytest -r s --basetemp=test_results --junitxml=results.xml"]
             matrix += bc
         }
     }
