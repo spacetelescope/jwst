@@ -41,7 +41,7 @@ def conda_packages_docs = [
 def pip_packages_docs = "sphinx-automodapi"
 def pip_packages_tests = "requests_mock ci_watson"
 def pip_index = "https://bytesalad.stsci.edu/artifactory/api/pypi/datb-pypi-virtual/simple"
-def pip_install_args = "--index-url ${pip_index} --progress-bar=off"
+def pip_install_args = "--index-url ${pip_index} --src /tmp --progress-bar=off"
 
 // Generate distributions
 dist = new BuildConfig()
