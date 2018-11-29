@@ -38,11 +38,12 @@ def conda_packages_docs = [
 ]
 
 // Pip related setup
-def pip_packages_docs = "sphinx-automodapi"
+def pip_packages_docs = "sphinx sphinx-automodapi sphinx_rtd_theme stsci_rtd_theme"
 def pip_packages_tests = "requests_mock ci_watson"
 def pip_index = "https://bytesalad.stsci.edu/artifactory/api/pypi/datb-pypi-virtual/simple"
 def pip_install_args = "--index-url ${pip_index} --src /tmp --progress-bar=off"
 
+/*
 // Generate distributions
 dist = new BuildConfig()
 dist.nodetype = 'linux'
@@ -53,21 +54,22 @@ dist.build_cmds = [
     "python setup.py bdist_wheel"
 ]
 matrix += dist
+*/
 
-/*
 // Compile documentation
 docs = new BuildConfig()
 docs.nodetype = 'linux'
 docs.name = 'docs'
-docs.conda_channels = ['http://ssb.stsci.edu/astroconda-dev']
-docs.conda_packages = conda_packages + conda_packages_docs + ["numpy=${matrix_numpy[0]}"] + ["python=${matrix_python[0]}"]
+docs.conda_packages = ["python=${matrix_python[0]}"]
 docs.build_cmds = [
-    "pip install -q ${pip_packages_docs}",
+    "pip install ${pip_install_args} numpy==${matrix_numpy[0]}",
+    "pip install ${pip_install_args} -r requirements-dev.txt --editable .",
+    "pip install ${pip_install_args} ${pip_packages_docs}",
     "python setup.py build_sphinx"
 ]
 matrix += docs
-*/
 
+/*
 // Generate pip build and test matrix
 for (python_ver in matrix_python) {
     for (numpy_ver in matrix_numpy) {
@@ -88,6 +90,7 @@ for (python_ver in matrix_python) {
         }
     }
 }
+*/
 
 /*
 // Generate conda build and test matrix
