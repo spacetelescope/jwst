@@ -31,11 +31,6 @@ def conda_packages = [
     "verhawk",
     "pytest"
 ]
-def conda_packages_docs = [
-    "sphinx",
-    "sphinx_rtd_theme",
-    "stsci_rtd_theme"
-]
 
 // Pip related setup
 def pip_packages_docs = "sphinx sphinx-automodapi sphinx_rtd_theme stsci_rtd_theme"
@@ -69,7 +64,6 @@ docs.build_cmds = [
 ]
 matrix += docs
 
-/*
 // Generate pip build and test matrix
 for (python_ver in matrix_python) {
     for (numpy_ver in matrix_numpy) {
@@ -90,9 +84,7 @@ for (python_ver in matrix_python) {
         }
     }
 }
-*/
 
-/*
 // Generate conda build and test matrix
 for (python_ver in matrix_python) {
     for (numpy_ver in matrix_numpy) {
@@ -113,5 +105,5 @@ for (python_ver in matrix_python) {
         }
     }
 }
-*/
+
 utils.run(matrix)
