@@ -47,7 +47,7 @@ def pip_install_args = "--index-url ${pip_index} --progress-bar=off"
 dist = new BuildConfig()
 dist.nodetype = 'linux'
 dist.name = 'dist'
-docs.conda_packages = ["python=${matrix_python[0]}"]
+dist.conda_packages = ["python=${matrix_python[0]}"]
 dist.build_cmds = [
     "pip install ${pip_install_args} numpy==${matrix_numpy[0]}",
     "pip wheel ${pip_install_args} .",
