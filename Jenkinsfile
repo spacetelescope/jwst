@@ -79,6 +79,7 @@ for (python_ver in matrix_python) {
             bc.name = name
             bc.conda_packages = ["python=${python_ver}"]
             bc.build_cmds = [
+                "pip install ${pip_install_args} numpy==${matrix_numpy[0]}",
                 "pip install ${pip_install_args} -r requirements-dev.txt .",
             ]
             bc.test_cmds = ["pytest -r s --basetemp=test_results --junitxml=results.xml"]
