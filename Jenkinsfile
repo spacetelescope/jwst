@@ -76,7 +76,7 @@ for (python_ver in matrix_python) {
             bc.nodetype = 'linux'
             bc.env_vars = test_env
             bc.name = name
-            bc.conda_packages = conda_packages + ["python=${python_ver}"] + ["numpy=${numpy_ver}"]
+            bc.conda_packages = ["python=${python_ver}"]
             bc.build_cmds = [
                 "pip install -v -r requirements-dev.txt .",
             ]
