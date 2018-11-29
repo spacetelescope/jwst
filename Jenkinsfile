@@ -38,6 +38,7 @@ def pip_packages_tests = "requests_mock ci_watson"
 def pip_index = "https://bytesalad.stsci.edu/artifactory/api/pypi/datb-pypi-virtual/simple"
 def pip_install_args = "--index-url ${pip_index} --progress-bar=off"
 
+/*
 // Generate distributions
 dist = new BuildConfig()
 dist.nodetype = 'linux'
@@ -63,6 +64,7 @@ docs.build_cmds = [
     "python setup.py build_sphinx"
 ]
 matrix += docs
+*/
 
 // Generate pip build and test matrix
 for (python_ver in matrix_python) {
@@ -79,12 +81,13 @@ for (python_ver in matrix_python) {
                 "pip install ${pip_install_args} ${pip_packages_tests}",
                 "pip install ${pip_install_args} -r requirements-dev.txt .",
             ]
-            bc.test_cmds = ["pytest -r s --basetemp=test_results --junitxml=results.xml"]
+            bc.test_cmds = ["pytest -r s --basetemp=test_results --junitxml=results.xml jwst/exp_to_source/tests"]
             matrix += bc
         }
     }
 }
 
+/*
 // Generate conda build and test matrix
 for (python_ver in matrix_python) {
     for (numpy_ver in matrix_numpy) {
@@ -105,5 +108,6 @@ for (python_ver in matrix_python) {
         }
     }
 }
+*/
 
 utils.run(matrix)
