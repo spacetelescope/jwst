@@ -48,7 +48,7 @@ dist = new BuildConfig()
 dist.nodetype = 'linux'
 dist.name = 'dist'
 dist.build_cmds = [
-    "pip wheel ."
+    "pip wheel .",
     "python setup.py sdist",
 ]
 matrix += dist
