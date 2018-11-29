@@ -41,6 +41,7 @@ def conda_packages_docs = [
 def pip_packages_docs = "sphinx-automodapi"
 def pip_packages_tests = "requests_mock ci_watson"
 
+/*
 // Generate distributions
 dist = new BuildConfig()
 dist.nodetype = 'linux'
@@ -64,13 +65,33 @@ docs.build_cmds = [
     "python setup.py build_sphinx"
 ]
 matrix += docs
+*/
 
-
-// Generate the build and test matrix
+// Generate pip build and test matrix
 for (python_ver in matrix_python) {
     for (numpy_ver in matrix_numpy) {
         for (astropy_ver in matrix_astropy) {
-            def name = "py${python_ver}np${numpy_ver}ap${astropy_ver}"
+            def name = "pip_py${python_ver}np${numpy_ver}ap${astropy_ver}"
+            bc = new BuildConfig()
+            bc.nodetype = 'linux'
+            bc.env_vars = test_env
+            bc.name = name
+            bc.conda_packages = conda_packages + ["python=${python_ver}"] + ["numpy=${numpy_ver}"]
+            bc.build_cmds = [
+                "pip install -v -r requirements-dev.txt .",
+            ]
+            //bc.test_cmds = ["pytest -r s --basetemp=test_results --junitxml=results.xml"]
+            matrix += bc
+        }
+    }
+}
+
+/*
+// Generate conda build and test matrix
+for (python_ver in matrix_python) {
+    for (numpy_ver in matrix_numpy) {
+        for (astropy_ver in matrix_astropy) {
+            def name = "conda_py${python_ver}np${numpy_ver}ap${astropy_ver}"
             bc = new BuildConfig()
             bc.nodetype = 'linux'
             bc.env_vars = test_env
@@ -86,5 +107,5 @@ for (python_ver in matrix_python) {
         }
     }
 }
-
+*/
 utils.run(matrix)
