@@ -18,7 +18,7 @@
 #
 #   (2) The vertical (both left and right) reference pixels should be smoothed
 #       with an N-pixel wide boxcar convolution, where N may depend on detector
-#       and instrument (adopt N=10 as a default).  The median value of the 8
+#       and instrument (adopt N=11 as a default).  The median value of the 8
 #       smoothed reference pixels in each row should then be multiplied by a
 #       gain factor of some value between 0 (which effectively turns off the
 #       correction) and 1 (for full subtraction, should be the default), with
@@ -30,7 +30,7 @@
 #  Subarray processing added 7/2018
 #
 #  For NIR exposures, calculate the clipped means of odd and even columns
-#  in detector coordinates.  Subtract the odd mean from the odd columns, and
+#  in detector coordinates.  Subtract the odd mea,n from the odd columns, and
 #  the even mean from the even columns.  If there are no reference pixels in the
 #  subarray, omit the refpix step.
 #
@@ -1431,17 +1431,54 @@ class MIRIDataset(Dataset):
         log.warning("Refpix correction skipped for MIRI subarray")
         return
 
+    def get_first_goodgroup(self, integration):
+        """Get the first good group.  This is the first group with no groupdq
+        having the DO_NOT_USE bit set.
+
+        Parameters
+        ----------
+
+        integration : int
+            integration number
+
+        Returns
+        -------
+
+        group number : int
+            The number of the first good group
+
+        first_goodgroup : nddata, 2-dimensional
+            The first good group
+        """
+        ngroups = self.ngroups
+        for i in range(ngroups):
+            groupdq = self.input_model.groupdq[integration]
+            goodorbad = np.bitwise_and(groupdq[i], dqflags.group['DO_NOT_USE'])
+            badpixels = np.where(goodorbad == dqflags.group['DO_NOT_USE'])
+            if len(badpixels[0]) == 0:
+                return i, self.input_model.data[integration, i]
+        #
+        # If we get here, there were no groups that don't have at least 1 pixel
+        # with the groupdq DO_NOT_USE bit set
+        return None, None
+
     def do_fullframe_corrections(self):
         """Do Reference Pixels Corrections for all amplifiers, MIRI detectors"""
         #
-        #  First we need to subtract the first read of each integration
+        #  First we need to subtract the first good read of each integration
 
-        first_read = np.zeros((self.nints, self.nrows, self.ncols))
-        log.info('Subtracting initial read from each integration')
+        log.info('Subtracting first good read from each integration')
+        first_read = np.zeros((self.nints, self.nrows, self.ncols),
+                              dtype=self.input_model.data.dtype)
 
-        for i in range(self.nints):
-            first_read[i] = self.input_model.data[i, 0].copy()
-            self.input_model.data[i] = self.input_model.data[i] - first_read[i]
+        for integration in range(self.nints):
+            ngroup, goodgroup = self.get_first_goodgroup(integration)
+            if ngroup is not None:
+                first_read[integration] = goodgroup
+                log.info("Integration {}, group {} subtracted".format(integration, ngroup))
+            else:
+                log.info("Integration {}, no good first group found".format(integration))
+            self.input_model.data[integration] -= first_read[integration]
 
         #
         #  First transform to detector coordinates
@@ -1474,7 +1511,6 @@ class MIRIDataset(Dataset):
         for i in range(self.nints):
             self.input_model.data[i] += first_read[i]
 
-        del first_read
         return
 
 def create_dataset(input_model,
