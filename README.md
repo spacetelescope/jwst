@@ -135,3 +135,7 @@ or
 and then run the tests in the repository
 
     pytest --bigdata jwst/tests_nightly/general
+
+If developers need to update the truth files in our nightly regression tests, there are instructions in the repository wiki.
+
+https://github.com/spacetelescope/jwst/wiki/Updating-nightly-RT
