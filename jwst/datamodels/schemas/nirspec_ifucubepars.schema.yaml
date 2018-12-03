@@ -7,7 +7,7 @@ allOf:
       title: default IFU cube  parameters table
       fits_hdu: CUBEPAR
       datatype:
-      - name: grating
+      - name: disperser
         datatype: [ascii,5]
       - name: filter
         datatype: [ascii, 6]
@@ -23,7 +23,7 @@ allOf:
       title: default IFU cube msn parameters table
       fits_hdu: CUBEPAR_MSM
       datatype:
-      - name: grating
+      - name: disperser
         datatype: [ascii,5]
       - name: filter
         datatype: [ascii,6]
