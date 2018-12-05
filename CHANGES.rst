@@ -55,6 +55,9 @@ exp_to_source
 
 extract_1d
 ----------
+- Updated to recognize NRC_TSGRISM as WFSS data.  SlitDataModel schema now
+  specifies that the wavelength attribute should be 2-D, with a default
+  value of 0. [#2911]
 
 extract_2d
 ----------

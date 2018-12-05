@@ -107,6 +107,8 @@ allOf:
     wavelength:
       title: Wavelength array, corrected for zero-point
       fits_hdu: WAVELENGTH
+      ndim: 2
+      default: 0.0
       datatype: float32
     barshadow:
       title: Bar shadow correction
