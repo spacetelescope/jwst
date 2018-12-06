@@ -2,7 +2,7 @@
 #  Module for handling Reference Pixels
 #  Final CCWG Recommendation of 6/2013:
 #
-# The reference pixel correction for the NIR detectors should be done\
+# The reference pixel correction for the NIR detectors should be done
 # immediately following the zero frame subtraction.  We recommend that
 # the following steps be taken in order for each frame of each exposure,
 # with the option to turn each one off *on a per-SCA basis*.  The
@@ -30,7 +30,7 @@
 #  Subarray processing added 7/2018
 #
 #  For NIR exposures, calculate the clipped means of odd and even columns
-#  in detector coordinates.  Subtract the odd mea,n from the odd columns, and
+#  in detector coordinates.  Subtract the odd mean from the odd columns, and
 #  the even mean from the even columns.  If there are no reference pixels in the
 #  subarray, omit the refpix step.
 #
