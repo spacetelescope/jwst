@@ -184,7 +184,6 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
             for ii in range(num_cr_1st):
                 model.groupdq[ wh_cr[0][ii], 0, wh_cr[1][ii],
                     wh_cr[2][ii]] -=  dqflags.group['JUMP_DET']
-                print (' ii = ', ii)
 
         last_gdq = model.groupdq[:,-1,:,:]
         if np.all(np.bitwise_and( last_gdq, dqflags.group['DO_NOT_USE'] )):
@@ -220,7 +219,7 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
     gdq_cube = model.groupdq
     gdq_cube_shape = gdq_cube.shape
 
-    # If the all pixels have their initial groups flagged as saturated, the DQ
+    # If all the pixels have their initial groups flagged as saturated, the DQ
     #   in the primary and integration-specific output products are updated,
     #   the other arrays in all output products are populated with zeros, and
     #   the output products are returned to ramp_fit(). If the initial group of
@@ -251,7 +250,7 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
     readnoise_2d, gain_2d = utils.get_ref_subs(model, readnoise_model,
                                                gain_model, nframes)
 
-    # Get Pixel DQ array from input file. The incoming RampModel has uint8
+    # Get Pixel DQ array from input file. The incoming RampModel has uint32
     #   PIXELDQ, but ramp fitting will update this array here by flagging
     #   the 2D PIXELDQ locations where the ramp data has been previously
     #   flagged as jump-detected or saturated. These additional bit values
@@ -1456,15 +1455,15 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
         if(len(wh_check[0]) > 0):
             g_pix = wh_check[0]
 
-        # Ignore all pixels having no good groups (so the single group is bad)
-        if (len(g_pix) > 0):
-            inv_var[g_pix] += 1.0 / variance[g_pix]
+            # Ignore all pixels having no good groups (so the single group is bad)
+            if (len(g_pix) > 0):
+                inv_var[g_pix] += 1.0 / variance[g_pix]
 
-            # Append results to arrays
-            opt_res.append_arr(num_seg, g_pix, intercept, slope,
-                sig_intercept, sig_slope, inv_var, save_opt)
+                # Append results to arrays
+                opt_res.append_arr(num_seg, g_pix, intercept, slope,
+                    sig_intercept, sig_slope, inv_var, save_opt)
 
-            num_seg[g_pix] = 1
+                num_seg[g_pix] = 1
 
         return 1, num_seg
 
@@ -1551,10 +1550,10 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
     #    - set number of end to 0
     #    - add slopes and variances to running sums
     #    - set pixel_done to True to designate all fitting done
-    #  For segments of this type, the final good group in the segment is a CR
-    #    and/or SAT and is not the final group in the ramp, and the variable
-    #    `l_interval` used below is equal to 2, which is the number of the
-    #    segment's groups.
+    #  For segments of this type, the final good group in the segment is
+    #    followed by a group that is flagged as a CR and/or SAT and is not the
+    #    final group in the ramp, and the variable `l_interval` used below is
+    #    equal to 2, which is the number of the segment's groups.
 
     # Copy mask, as will modify when calculating the number of later good groups
     c_mask_2d_init = mask_2d_init.copy()
@@ -2283,7 +2282,14 @@ def calc_num_seg(gdq, n_int):
         temp_max_cr = int((gdq_cr.sum(axis=0)).max()/dqflags.group['JUMP_DET'])
         max_cr = max( max_cr, temp_max_cr )
 
-    return int(max_cr) +1 # n CRS implies n+1 segments
+    # Do not want to return a value > the number of groups, which can occur if 
+    #  this is a MIRI dataset in which the first or last group was flagged as 
+    #  DO_NOT_USE and also flagged as a jump. 
+    max_num_seg = int(max_cr) + 1  # n CRS implies n+1 segments  
+    if (max_num_seg > gdq.shape[1]): 
+        max_num_seg = gdq.shape[1]
+
+    return max_num_seg
 
 
 def calc_unwtd_sums(data_masked, xvalues):
