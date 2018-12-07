@@ -141,6 +141,7 @@ refpix
 ------
 
 - Added a description of processing for IRS2 readout mode data. [#2889]
+- Fixed a mistake in the time to read one pixel. [#2922]
 
 resample
 --------
