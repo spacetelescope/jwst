@@ -226,7 +226,7 @@ class OptRes:
             max_cr = max(max_cr, max_cr_int)
 
         # Allocate compressed array based on max number of crs
-        cr_com = np.zeros((n_int,) + (max_cr,) + imshape, dtype=np.int16)
+        cr_com = np.zeros((n_int,) + (max_cr,) + imshape, dtype=np.float32)
 
         # Loop over integrations and groups: for those pix having a cr, add
         #    the magnitude to the compressed array
@@ -279,7 +279,7 @@ class OptRes:
         self.var_r_seg[self.var_r_seg > 0.4 * LARGE_VARIANCE ] = 0.
 
         # Tiny 'weights' values correspond to non-existent segments, so set to 0.
-        self.weights[1./self.weights > LARGE_VARIANCE ] = 0.
+        self.weights[1./self.weights > 0.4 * LARGE_VARIANCE ] = 0.
 
         rfo_model = \
         datamodels.RampFitOutputModel(\
