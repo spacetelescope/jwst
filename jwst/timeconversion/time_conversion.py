@@ -95,6 +95,8 @@ def read_jwst_ephemeris(times):
         maxpos = end
     f.seek(minpos)
     text = f.read(maxpos - minpos)
+    f.close()
+
     # Convert this to lines
     lines = text.split('\n')
     # Throw away truncated lines
