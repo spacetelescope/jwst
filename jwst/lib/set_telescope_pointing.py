@@ -559,7 +559,7 @@ def calc_wcs(pointing, siaf, **transform_kwargs):
     return (wcsinfo, vinfo)
 
 
-def calc_transforms(pointing, siaf, fsmcorr_version='latest'):
+def calc_transforms(pointing, siaf, fsmcorr_version='latest', j2fgs_transpose=True):
     """Calculate transforms from pointing to SIAF
 
     Given the spacecraft pointing parameters and the
@@ -577,6 +577,9 @@ def calc_transforms(pointing, siaf, fsmcorr_version='latest'):
     fsmcorr_version: str
         The version of the FSM correction calculation to use.
         See :ref:`calc_sifov_fsm_delta_matrix`
+
+    j2fgs_transpose: bool
+        Transpose the `j2fgs1` matrix.
 
     Returns
     -------
@@ -604,7 +607,7 @@ def calc_transforms(pointing, siaf, fsmcorr_version='latest'):
     tforms.m_eci2j = calc_eci2j_matrix(pointing.q)
 
     # Calculate the J-frame to FGS! ICS matrix
-    tforms.m_j2fgs1 = calc_j2fgs1_matrix(pointing.j2fgs_matrix)
+    tforms.m_j2fgs1 = calc_j2fgs1_matrix(pointing.j2fgs_matrix, transpose=j2fgs_transpose)
 
     # Calculate the FSM corrections to the SI_FOV frame
     tforms.m_sifov_fsm_delta = calc_sifov_fsm_delta_matrix(
@@ -613,6 +616,9 @@ def calc_transforms(pointing, siaf, fsmcorr_version='latest'):
 
     # Calculate the FGS1 ICS to SI-FOV matrix
     tforms.m_fgs12sifov = calc_fgs1_to_sifov_mastrix()
+
+    # Calculate SI FOV to V1 matrix
+    tforms.m_sifov2v = calc_sifov2v_matrix()
 
     # Calculate ECI to SI FOV
     tforms.m_eci2sifov = np.dot(
@@ -625,9 +631,6 @@ def calc_transforms(pointing, siaf, fsmcorr_version='latest'):
             )
         )
     )
-
-    # Calculate SI FOV to V1 matrix
-    tforms.m_sifov2v = calc_sifov2v_matrix()
 
     # Calculate the complete transform to the V1 reference
     tforms.m_eci2v = np.dot(
@@ -764,7 +767,7 @@ def calc_eci2j_matrix(q):
     return transform
 
 
-def calc_j2fgs1_matrix(j2fgs_matrix):
+def calc_j2fgs1_matrix(j2fgs_matrix, transpose=False):
     """Calculate the J-frame to FGS1 transformation
 
     Parameters
@@ -772,6 +775,9 @@ def calc_j2fgs1_matrix(j2fgs_matrix):
     j2fgs_matrix: n.array((9,))
         Matrix parameters from the engineering database.
         If all zeros, a predefined matrix is used.
+
+    transpose: bool
+        Transpose the resulting matrix.
 
     Returns
     -------
@@ -800,7 +806,9 @@ def calc_j2fgs1_matrix(j2fgs_matrix):
             'Using J-Frame to FGS1 engineering parameters'
             'for the J-Frame to FGS1 transformation.'
         )
-        transform = np.array(j2fgs_matrix).reshape((3, 3)).transpose()
+        transform = np.array(j2fgs_matrix).reshape((3, 3))
+        if transpose:
+            transform = transform.transpose()
 
     return transform
 
@@ -1203,13 +1211,13 @@ def get_mnemonics(obsstart, obsend, strict_time):
         'SA_ZATTEST3':  None,
         'SA_ZATTEST4':  None,
         'SA_ZRFGS2J11': None,
-        'SA_ZRFGS2J21': None,
-        'SA_ZRFGS2J31': None,
         'SA_ZRFGS2J12': None,
-        'SA_ZRFGS2J22': None,
-        'SA_ZRFGS2J32': None,
         'SA_ZRFGS2J13': None,
+        'SA_ZRFGS2J21': None,
+        'SA_ZRFGS2J22': None,
         'SA_ZRFGS2J23': None,
+        'SA_ZRFGS2J31': None,
+        'SA_ZRFGS2J32': None,
         'SA_ZRFGS2J33': None,
         'SA_ZADUCMDX':  None,
         'SA_ZADUCMDY':  None,
@@ -1286,13 +1294,13 @@ def all_pointings(mnemonics):
 
             pointing.j2fgs_matrix = np.array([
                 mnemonics['SA_ZRFGS2J11'][idx].value,
-                mnemonics['SA_ZRFGS2J21'][idx].value,
-                mnemonics['SA_ZRFGS2J31'][idx].value,
                 mnemonics['SA_ZRFGS2J12'][idx].value,
-                mnemonics['SA_ZRFGS2J22'][idx].value,
-                mnemonics['SA_ZRFGS2J32'][idx].value,
                 mnemonics['SA_ZRFGS2J13'][idx].value,
+                mnemonics['SA_ZRFGS2J21'][idx].value,
+                mnemonics['SA_ZRFGS2J22'][idx].value,
                 mnemonics['SA_ZRFGS2J23'][idx].value,
+                mnemonics['SA_ZRFGS2J31'][idx].value,
+                mnemonics['SA_ZRFGS2J32'][idx].value,
                 mnemonics['SA_ZRFGS2J33'][idx].value,
             ])
 
@@ -1370,13 +1378,13 @@ def pointing_from_average(mnemonics):
 
     pointing.j2fgs_matrix = np.array([
         mnemonic_averages['SA_ZRFGS2J11'],
-        mnemonic_averages['SA_ZRFGS2J21'],
-        mnemonic_averages['SA_ZRFGS2J31'],
         mnemonic_averages['SA_ZRFGS2J12'],
-        mnemonic_averages['SA_ZRFGS2J22'],
-        mnemonic_averages['SA_ZRFGS2J32'],
         mnemonic_averages['SA_ZRFGS2J13'],
+        mnemonic_averages['SA_ZRFGS2J21'],
+        mnemonic_averages['SA_ZRFGS2J22'],
         mnemonic_averages['SA_ZRFGS2J23'],
+        mnemonic_averages['SA_ZRFGS2J31'],
+        mnemonic_averages['SA_ZRFGS2J32'],
         mnemonic_averages['SA_ZRFGS2J33']
     ])
 
