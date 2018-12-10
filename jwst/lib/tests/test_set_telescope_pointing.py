@@ -48,9 +48,9 @@ Q_EXPECTED = np.asarray(
     [-0.36915286, 0.33763282, 0.05758533, 0.86395264]
 )
 J2FGS_MATRIX_EXPECTED = np.asarray(
-    [-1.00444000e-03,   3.38145836e-03,   9.99993778e-01,
-     9.99999496e-01,  -3.90000000e-14,   1.00444575e-03,
-     3.39649146e-06,   9.99994283e-01,  -3.38145665e-03]
+    [-1.00444000e-03, 9.99999496e-01,  3.39649146e-06,
+     3.38145836e-03,  -3.90000000e-14, 9.99994283e-01,
+     9.99993778e-01,  1.00444575e-03,  -3.38145665e-03]
 )
 FSMCORR_EXPECTED = np.zeros((2,))
 OBSTIME_EXPECTED = STARTTIME
@@ -107,6 +107,11 @@ def test_pointing_averaging(eng_db_jw703):
         -1.00962794e-03,  9.99999464e-01,  3.41404261e-06,
         3.38429719e-03, 2.85793453e-09,  9.99994300e-01,
         9.99993742e-01,  1.00963370e-03, -3.38429548e-03
+    ])
+    j2fgs_exp = np.array([
+        -1.00962794e-03, 3.38429719e-03, 9.99993742e-01,
+        9.99999464e-01,  2.85793453e-09, 1.00963370e-03,
+        3.41404261e-06,  9.99994300e-01, -3.38429548e-03
     ])
     fsmcorr_exp = np.array([-0.02558673, -0.00200601])
     obstime_exp = Time(1559582740.4880004, format='unix')
@@ -171,7 +176,11 @@ def test_get_pointing_with_zeros(eng_db_ngas):
 def test_add_wcs_default(data_file):
     """Handle when no pointing exists and the default is used."""
     try:
-        stp.add_wcs(data_file, siaf_path=siaf_db, strict_time=True)
+        stp.add_wcs(
+            data_file, siaf_path=siaf_db, strict_time=True, strict_pointing=False
+        )
+    except ValueError:
+        pass  # This is what we want for the test.
     except Exception as e:
         pytest.skip(
             'Live ENGDB service is not accessible.'
@@ -209,7 +218,11 @@ def test_add_wcs_default(data_file):
 def test_add_wcs_fsmcorr_v1(data_file):
     """Test with default value using FSM original correction"""
     try:
-        stp.add_wcs(data_file, fsmcorr_version='v1', siaf_path=siaf_db, strict_time=True)
+        stp.add_wcs(
+            data_file, fsmcorr_version='v1', siaf_path=siaf_db, strict_time=True, strict_pointing=False
+        )
+    except ValueError:
+        pass  # This is what we want for the test.
     except Exception as e:
         pytest.skip(
             'Live ENGDB service is not accessible.'
@@ -246,7 +259,7 @@ def test_add_wcs_fsmcorr_v1(data_file):
                     reason="No URI support in sqlite3")
 def test_add_wcs_with_db(eng_db_ngas, data_file, siaf_file=siaf_db):
     """Test using the database"""
-    stp.add_wcs(data_file, siaf_path=siaf_db)
+    stp.add_wcs(data_file, siaf_path=siaf_db, j2fgs_transpose=False)
 
     model = datamodels.Level1bModel(data_file)
     assert np.isclose(model.meta.pointing.ra_v1, 348.9278669)
@@ -278,7 +291,7 @@ def test_add_wcs_with_db(eng_db_ngas, data_file, siaf_file=siaf_db):
                     reason="No URI support in sqlite3")
 def test_add_wcs_with_db_fsmcorr_v1(eng_db_ngas, data_file):
     """Test using the database with original FSM correction"""
-    stp.add_wcs(data_file, fsmcorr_version='v1', siaf_path=siaf_db)
+    stp.add_wcs(data_file, fsmcorr_version='v1', siaf_path=siaf_db, j2fgs_transpose=False)
 
     model = datamodels.Level1bModel(data_file)
     assert np.isclose(model.meta.pointing.ra_v1, 348.9278669)
