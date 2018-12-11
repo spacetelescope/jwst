@@ -810,7 +810,7 @@ def calc_j2fgs1_matrix(j2fgs_matrix, transpose=False):
     else:
         logger.info(
             'Using J-Frame to FGS1 engineering parameters'
-            'for the J-Frame to FGS1 transformation.'
+            ' for the J-Frame to FGS1 transformation.'
         )
         transform = np.array(j2fgs_matrix).reshape((3, 3))
         if transpose:

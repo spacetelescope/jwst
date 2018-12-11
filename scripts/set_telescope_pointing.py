@@ -57,12 +57,12 @@ if __name__ == '__main__':
         description='Update basic WCS information in JWST exposures from the engineering database.'
     )
     parser.add_argument(
-        'exposures', type=str, nargs='+',
+        'exposure', type=str, nargs='+',
         help='List of JWST exposures to update.'
     )
     parser.add_argument(
-        '--strict-time', action='store_true',
-        help='Force pointings to be within the observation time.'
+        '--tolerance', type=int, default=60,
+        help='Seconds beyond the observation time to search for telemetry. Default: %(default)s'
     )
     parser.add_argument(
         '--allow-default', action='store_true',
@@ -76,10 +76,14 @@ if __name__ == '__main__':
         '--siaf', type=str, default=None,
         help='SIAF PRD sqlite database file. If not specified, default is to use `$XML_DATA/prd.db`'
     )
+    parser.add_argument(
+        '--transpose_j2fgs', action='store_false',
+        help='Transpose the J2FGS matrix'
+    )
 
     args = parser.parse_args()
 
-    for filename in args.exposures:
+    for filename in args.exposure:
         logger.info(
             '\n------'
             'Setting pointing for {}'.format(filename)
@@ -88,9 +92,10 @@ if __name__ == '__main__':
             add_wcs(
                 filename,
                 siaf_path=args.siaf,
-                strict_time=args.strict_time,
-                strict_pointing=not args.allow_default,
-                dry_run=args.dry_run
+                tolerance=args.tolerance,
+                allow_default=args.allow_default,
+                dry_run=args.dry_run,
+                j2fgs_transpose=args.transpose_j2fgs
             )
         except ValueError as exception:
             logger.info('Cannot determine pointing information: ' + str(exception))
