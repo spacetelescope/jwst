@@ -97,7 +97,7 @@ def data_file():
 def test_strict_pointing(data_file, eng_db_jw703):
     """Test failure on strict pointing"""
     with pytest.raises(ValueError):
-        stp.add_wcs(data_file, strict_time=True)
+        stp.add_wcs(data_file, tolerance=0)
 
 
 def test_pointing_averaging(eng_db_jw703):
@@ -120,8 +120,8 @@ def test_pointing_averaging(eng_db_jw703):
      j2fgs_matrix,
      fsmcorr,
      obstime) = stp.get_pointing(
-         Time('2019-06-03T17:25:40', format='isot'),
-         Time('2019-06-03T17:25:56', format='isot'),
+         Time('2019-06-03T17:25:40', format='isot').mjd,
+         Time('2019-06-03T17:25:56', format='isot').mjd,
      )
 
     assert np.isclose(q, q_exp).all()
@@ -139,7 +139,7 @@ def test_get_pointing(eng_db_ngas):
     (q,
      j2fgs_matrix,
      fsmcorr,
-     obstime) = stp.get_pointing(STARTTIME, ENDTIME)
+     obstime) = stp.get_pointing(STARTTIME.mjd, ENDTIME.mjd)
     assert np.isclose(q, Q_EXPECTED).all()
     assert np.isclose(j2fgs_matrix, J2FGS_MATRIX_EXPECTED).all()
     assert np.isclose(fsmcorr, FSMCORR_EXPECTED).all()
@@ -147,7 +147,7 @@ def test_get_pointing(eng_db_ngas):
 
 
 def test_get_pointing_list(eng_db_ngas):
-        results = stp.get_pointing(STARTTIME, ENDTIME, reduce_func=stp.all_pointings)
+        results = stp.get_pointing(STARTTIME.mjd, ENDTIME.mjd, reduce_func=stp.all_pointings)
         assert isinstance(results, list)
         assert len(results) > 0
         assert np.isclose(results[0].q, Q_EXPECTED).all()
@@ -160,12 +160,12 @@ def test_get_pointing_with_zeros(eng_db_ngas):
     (q,
      j2fgs_matrix,
      fsmcorr,
-     obstime) = stp.get_pointing(ZEROTIME_START, ENDTIME, reduce_func=stp.first_pointing)
+     obstime) = stp.get_pointing(ZEROTIME_START.mjd, ENDTIME.mjd, reduce_func=stp.first_pointing)
     assert j2fgs_matrix.any()
     (q_desired,
      j2fgs_matrix_desired,
      fsmcorr_desired,
-     obstime) = stp.get_pointing(STARTTIME, ENDTIME)
+     obstime) = stp.get_pointing(STARTTIME.mjd, ENDTIME.mjd)
     assert np.array_equal(q, q_desired)
     assert np.array_equal(j2fgs_matrix, j2fgs_matrix_desired)
     assert np.array_equal(fsmcorr, fsmcorr_desired)
@@ -177,7 +177,7 @@ def test_add_wcs_default(data_file):
     """Handle when no pointing exists and the default is used."""
     try:
         stp.add_wcs(
-            data_file, siaf_path=siaf_db, strict_time=True, strict_pointing=False
+            data_file, siaf_path=siaf_db, tolerance=0, allow_default=True
         )
     except ValueError:
         pass  # This is what we want for the test.
@@ -219,7 +219,7 @@ def test_add_wcs_fsmcorr_v1(data_file):
     """Test with default value using FSM original correction"""
     try:
         stp.add_wcs(
-            data_file, fsmcorr_version='v1', siaf_path=siaf_db, strict_time=True, strict_pointing=False
+            data_file, fsmcorr_version='v1', siaf_path=siaf_db, tolerance=0, allow_default=True
         )
     except ValueError:
         pass  # This is what we want for the test.

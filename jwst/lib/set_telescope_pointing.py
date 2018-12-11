@@ -20,6 +20,9 @@ from ..lib.engdb_tools import (
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
+# Conversion from seconds to MJD
+SECONDS2MJD = 1 / 24 / 60 / 60
+
 # Default transformation matricies
 FGS12SIFOV_DEFAULT = np.array(
     [[0.9999994955442, 0.0000000000000, 0.0010044457459],
@@ -96,7 +99,7 @@ WCSRef = namedlist(
 
 
 def add_wcs(filename, default_pa_v3=0., siaf_path=None,
-            strict_time=False, strict_pointing=True, reduce_func=None,
+            tolerance=60, allow_default=False, reduce_func=None,
             dry_run=False, **transform_kwargs):
     """Add WCS information to a FITS file
 
@@ -118,13 +121,14 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None,
     siaf_path: str or file-like object
         The path to the SIAF database.
 
-    strict_time: bool
-        If true, pointing must be within the observation time.
-        Otherwise, nearest values are allowed.
+    tolerance: int
+        If no telemetry can be found during the observation,
+        the time, in seconds, beyond the observation time to
+        search for telemetry.
 
-    strict_pointing: bool
-        If engineering pointing cannot be determine, do not
-        allow the use of defaults from the header.
+    allow_default: bool
+        If telemetry cannot be determine, use existing
+        information in the observation's header.
 
     reduce_func: func or None
         Reduction function to use on values.
@@ -171,8 +175,8 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None,
         model,
         default_pa_v3=default_pa_v3,
         siaf_path=siaf_path,
-        strict_time=strict_time,
-        strict_pointing=strict_pointing,
+        tolerance=tolerance,
+        allow_default=allow_default,
         reduce_func=reduce_func,
         **transform_kwargs
     )
@@ -192,7 +196,7 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None,
 
 
 def update_wcs(model, default_pa_v3=0., siaf_path=None,
-               strict_time=False, strict_pointing=True,
+               tolerance=60, allow_default=False,
                reduce_func=None, **transform_kwargs):
     """Update WCS pointing information
 
@@ -214,13 +218,14 @@ def update_wcs(model, default_pa_v3=0., siaf_path=None,
     siaf_path : str
         The path to the SIAF file, i.e. ``XML_DATA`` env variable.
 
-    strict_time: bool
-        If True, pointing must be within the observation time.
-        Otherwise, nearest values are allowed.
+    tolerance: int
+        If no telemetry can be found during the observation,
+        the time, in seconds, beyond the observation time to
+        search for telemetry.
 
-    strict_pointing: bool
-        If engineering pointing cannot be determine, do not
-        allow the use of defaults from the header.
+    allow_default: bool
+        If telemetry cannot be determine, use existing
+        information in the observation's header.
 
     reduce_func: func or None
         Reduction function to use on values.
@@ -242,7 +247,7 @@ def update_wcs(model, default_pa_v3=0., siaf_path=None,
     else:
         update_wcs_from_telem(
             model, default_pa_v3=default_pa_v3, siaf_path=siaf_path,
-            strict_time=strict_time, strict_pointing=strict_pointing,
+            tolerance=tolerance, allow_default=allow_default,
             reduce_func=reduce_func, **transform_kwargs
         )
 
@@ -304,7 +309,7 @@ def update_wcs_from_fgs_guiding(model, default_pa_v3=0.0, default_vparity=1):
 
 def update_wcs_from_telem(
         model, default_pa_v3=0., siaf_path=None,
-        strict_time=False, strict_pointing=True,
+        tolerance=0, allow_default=False,
         reduce_func=None, **transform_kwargs
 ):
     """Update WCS pointing information
@@ -327,13 +332,14 @@ def update_wcs_from_telem(
     siaf_path : str
         The path to the SIAF file, i.e. ``XML_DATA`` env variable.
 
-    strict_time: bool
-        If true, pointing must be within the observation time.
-        Otherwise, nearest values are allowed.
+    tolerance: int
+        If no telemetry can be found during the observation,
+        the time, in seconds, beyond the observation time to
+        search for telemetry.
 
-    strict_pointing: bool
-        If engineering pointing cannot be determine, do not
-        allow the use of defaults from the header.
+    allow_default: bool
+        If telemetry cannot be determine, use existing
+        information in the observation's header.
 
     reduce_func: func or None
         Reduction function to use on values.
@@ -364,9 +370,9 @@ def update_wcs_from_telem(
 
     # Get the pointing information
     try:
-        pointing = get_pointing(obsstart, obsend, strict_time=strict_time, reduce_func=reduce_func)
+        pointing = get_pointing(obsstart, obsend, tolerance=tolerance, reduce_func=reduce_func)
     except ValueError as exception:
-        if strict_pointing:
+        if not allow_default:
             raise
         else:
             logger.warning(
@@ -964,7 +970,7 @@ def calc_position_angle(v1, v3):
     return v3_pa
 
 
-def get_pointing(obsstart, obsend, strict_time=False, reduce_func=None):
+def get_pointing(obsstart, obsend, tolerance=60, reduce_func=None):
     """
     Get telescope pointing engineering data.
 
@@ -973,9 +979,10 @@ def get_pointing(obsstart, obsend, strict_time=False, reduce_func=None):
     obsstart, obsend: float
         MJD observation start/end times
 
-    strict_time: bool
-        If true, pointing must be within the observation time.
-        Otherwise, nearest values are allowed.
+    tolerance: int
+        If no telemetry can be found during the observation,
+        the time, in seconds, beyond the observation time to
+        search for telemetry.
 
     reduce_func: func or None
         Reduction function to use on values.
@@ -1005,14 +1012,14 @@ def get_pointing(obsstart, obsend, strict_time=False, reduce_func=None):
     logger.info(
         'Determining pointing between observations times (mjd):'
         'obsstart = {obsstart} obsend = {obsend}'
-        '\nPointing within observation = {strict_time}'
+        '\nTelemetry search tolerance = {tolerance}'
         '\nReduction function = {reduce_func}'
         ''.format(
-            obsstart=obsstart, obsend=obsend, strict_time=strict_time, reduce_func=reduce_func
+            obsstart=obsstart, obsend=obsend, tolerance=tolerance, reduce_func=reduce_func
         )
     )
 
-    mnemonics = get_mnemonics(obsstart, obsend, strict_time)
+    mnemonics = get_mnemonics(obsstart, obsend, tolerance)
     reduced = reduce_func(mnemonics)
 
     return reduced
@@ -1169,7 +1176,7 @@ def calc_rotation_matrix(angle, vparity=1):
     return [pc1_1, pc1_2, pc2_1, pc2_2]
 
 
-def get_mnemonics(obsstart, obsend, strict_time):
+def get_mnemonics(obsstart, obsend, tolerance):
     """Retrieve pointing mnemonics from the engineering database
 
     Parameters
@@ -1177,9 +1184,10 @@ def get_mnemonics(obsstart, obsend, strict_time):
     obsstart, obsend: float
         MJD observation start/end times
 
-    strict_time: bool
-        If true, pointing must be within the observation time.
-        Otherwise, nearest values are allowed.
+    tolerance: int
+        If no telemetry can be found during the observation,
+        the time, in seconds, beyond the observation time to
+        search for telemetry.
 
     Returns
     -------
@@ -1223,12 +1231,15 @@ def get_mnemonics(obsstart, obsend, strict_time):
         'SA_ZADUCMDY':  None,
     }
 
-    # First try go retrieve values without the database bracket values.
+    # Retrieve the mnemonics from the engineering database.
+    # Check for whether the bracket values are used and
+    # within tolerance.
     for mnemonic in mnemonics:
         try:
             mnemonics[mnemonic] = engdb.get_values(
                 mnemonic, obsstart, obsend,
-                time_format='mjd', include_obstime=True
+                time_format='mjd', include_obstime=True,
+                include_bracket_values=True
             )
         except Exception as exception:
             raise ValueError(
@@ -1239,18 +1250,28 @@ def get_mnemonics(obsstart, obsend, strict_time):
                 )
             )
 
-    # For any parameters that did not have values, re-retrieve with
-    # the bracket values.
-    if not strict_time:
-        for mnemonic in mnemonics:
-            if not len(mnemonics[mnemonic]):
-                logger.warning(
-                    'Parameter {} not within the observation. Pulling nearest values.'.format(mnemonic)
+        # If more than two points exist, throw off the bracket values.
+        # Else, ensure the bracket values are within the allowed time.
+        if len(mnemonics[mnemonic]) > 2:
+            mnemonics[mnemonic] = mnemonics[mnemonic][1:-1]
+        else:
+            tolerance_mjd = tolerance * SECONDS2MJD
+            allowed_start = obsstart - tolerance_mjd
+            allowed_end = obsend + tolerance_mjd
+            allowed = []
+            for value in mnemonics[mnemonic]:
+                if allowed_start <= value.obstime.mjd <= allowed_end:
+                    allowed.append(value)
+            if not len(allowed):
+                raise ValueError(
+                    'No telemetry exists for mnemonic {} within {} and {}'.format(
+                        mnemonic,
+                        Time(allowed_start, format='mjd').isot,
+                        Time(allowed_end, format='mjd').isot
+                    )
                 )
-                mnemonics[mnemonic] = engdb.get_values(
-                    mnemonic, obsstart, obsend,
-                    time_format='mjd', include_obstime=True, include_bracket_values=True
-                )
+            mnemonics[mnemonic] = allowed
+
 
     # All mnemonics must have some values.
     if not all([len(mnemonic) for mnemonic in mnemonics.values()]):
