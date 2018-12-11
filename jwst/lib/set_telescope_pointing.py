@@ -1255,13 +1255,20 @@ def get_mnemonics(obsstart, obsend, tolerance):
         if len(mnemonics[mnemonic]) > 2:
             mnemonics[mnemonic] = mnemonics[mnemonic][1:-1]
         else:
+            logger.warning(
+                'Mnemonic {} has no telemetry within the observation time.'
+                '\nAttempting to use bracket values within {} seconds'.format(
+                    mnemonic, tolerance
+                )
+            )
             tolerance_mjd = tolerance * SECONDS2MJD
             allowed_start = obsstart - tolerance_mjd
             allowed_end = obsend + tolerance_mjd
-            allowed = []
-            for value in mnemonics[mnemonic]:
-                if allowed_start <= value.obstime.mjd <= allowed_end:
-                    allowed.append(value)
+            allowed = [
+                value
+                for value in mnemonics[mnemonic]
+                if allowed_start <= value.obstime.mjd <= allowed_end
+            ]
             if not len(allowed):
                 raise ValueError(
                     'No telemetry exists for mnemonic {} within {} and {}'.format(
