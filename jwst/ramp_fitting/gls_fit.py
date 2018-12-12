@@ -576,7 +576,7 @@ def gls_fit(ramp_data, input_var_data,
         pixel, in electrons per second.
 
     readnoise: 1-D ndarray, length nz.
-        The read noise in electrons at each deector pixel.
+        The read noise in electrons at each detector pixel.
 
     gain: 1-D ndarray, shape (nz,)
         The analog-to-digital gain (electrons per dn) at each detector
