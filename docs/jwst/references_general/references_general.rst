@@ -78,8 +78,6 @@ documentation on each reference file.
 +                                             +--------------------------------------------------+
 |                                             | REGIONS                                          |
 +                                             +--------------------------------------------------+
-|                                             | V2V3                                             |
-+                                             +--------------------------------------------------+
 |                                             | :ref:`WAVELENGTHRANGE <wavelengthrange_reffile>` |
 +---------------------------------------------+--------------------------------------------------+
 | :ref:`background <background_step>`         | :ref:`WFSSBKG <wfssbkg_reffile>`                 |
@@ -253,8 +251,6 @@ documentation on each reference file.
 | :ref:`TRAPPARS <trappars_reffile>`               | :ref:`persistence <persistence_step>`       |
 +--------------------------------------------------+---------------------------------------------+
 | :ref:`TSOPHOT <tsophot_reffile>`                 | :ref:`tso_photometry <tso_photometry_step>` |
-+--------------------------------------------------+---------------------------------------------+
-| **V2V3**                                         | :ref:`assign_wcs <assign_wcs_step>`         |
 +--------------------------------------------------+---------------------------------------------+
 | :ref:`WAVELENGTHRANGE <wavelengthrange_reffile>` | :ref:`assign_wcs <assign_wcs_step>`         |
 +                                                  +---------------------------------------------+
