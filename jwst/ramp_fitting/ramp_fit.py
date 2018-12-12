@@ -269,6 +269,7 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
     # Loop over data integrations:
     for num_int in range(0, n_int):
         # Loop over data sections
+        print('Nrows = ', nrows)
         for rlo in range(0, cubeshape[1], nrows):
             rhi = rlo + nrows
 
@@ -811,6 +812,8 @@ def gls_ramp_fit(model,
     for num_int in range(n_int):
         if save_opt:
             first_group[:, :] = 0.      # re-use this for each integration
+
+        print('GLS nrows = ', nrows, buffsize)
 
         # loop over data sections
         for rlo in range(0, cubeshape[1], nrows):

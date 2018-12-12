@@ -13,19 +13,14 @@ from jwst.datamodels import GainModel, ReadnoiseModel
 def test_simple_gls_ramp():
     #Here given a 10 group ramp with an exact slope of 20/group.
     # The output slope should be 20.
-    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=10)
-    model1.data[0, 0, 500, 500] = 10.0
-    model1.data[0, 1, 500, 500] = 30.0
-    model1.data[0, 2, 500, 500] = 50.0
-    model1.data[0, 3, 500, 500] = 70.0
-    model1.data[0, 4, 500, 500] = 90.0
-    model1.data[0, 5, 500, 500] = 110.0
-    model1.data[0, 6, 500, 500] = 130.0
-    model1.data[0, 7, 500, 500] = 150.0
-    model1.data[0, 8, 500, 500] = 170.0
-    model1.data[0, 9, 500, 500] = 190.0
-    slopes = ramp_fit(model1, 64000, True, rnModel, gain, 'GLS', 'optimal')
-    print(slopes[0].data)
+    ngroups = 5
+    slope_per_group = 20.
+    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups)
+    for k in range(ngroups):
+        model1.data[0, k, :, :] = 10.0 + k*slope_per_group
+
+    slopes = ramp_fit(model1, 1024*1., False, rnModel, gain, 'GLS', 'optimal')
+    # print(slopes[0].data)
     # take the ratio of the slopes to get the relative error
     # assert_almost_equals(slopes[0].data[500, 500]/ 20.0, 1.0, places=6)
     np.testing.assert_allclose(slopes[0].data[500, 500]/ 20.0, 1.0)

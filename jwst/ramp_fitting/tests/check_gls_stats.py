@@ -2,6 +2,8 @@
 
 import time
 
+from jwst.datamodels import dqflags
+
 from jwst.ramp_fitting.ramp_fit import ramp_fit
 
 from jwst.ramp_fitting.tests.test_gls_ramp_fit import setup_inputs
@@ -10,18 +12,14 @@ from jwst.ramp_fitting.tests.test_gls_ramp_fit import setup_inputs
 def simple_ramp(fit_method='OLS'):
     #Here given a 10 group ramp with an exact slope of 20/group.
     # The output slope should be 20.
-    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=10)
-    model1.data[0, 0, 500, 500] = 10.0
-    model1.data[0, 1, 500, 500] = 30.0
-    model1.data[0, 2, 500, 500] = 50.0
-    model1.data[0, 3, 500, 500] = 70.0
-    model1.data[0, 4, 500, 500] = 90.0
-    model1.data[0, 5, 500, 500] = 110.0
-    model1.data[0, 6, 500, 500] = 130.0
-    model1.data[0, 7, 500, 500] = 150.0
-    model1.data[0, 8, 500, 500] = 170.0
-    model1.data[0, 9, 500, 500] = 190.0
-    slopes = ramp_fit(model1, 64000, True, rnModel, gain, fit_method,
+    ngroups = 5
+    slope_per_group = 20.
+    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups)
+    for k in range(ngroups):
+        model1.data[0, k, :, :] = 10.0 + k*slope_per_group
+
+    model1.groupdq[0, 2, :, :] = dqflags.group['JUMP_DET']
+    slopes = ramp_fit(model1, 1024*10., True, rnModel, gain, fit_method,
                       'optimal')
     return slopes
 
