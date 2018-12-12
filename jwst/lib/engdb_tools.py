@@ -23,8 +23,6 @@ ENGDB_BASE_URL = ''.join([
     'JWDMSEngFqAccB71/',
     'TlmMnemonicDataSrv.svc/',
 ])
-ENGDB_BASE_URL = getenv('ENG_RESTFUL_URL', ENGDB_BASE_URL)
-
 
 # URI paths necessary to access the db
 ENGDB_DATA = 'Data/'
@@ -130,7 +128,9 @@ class ENGDB_Service():
         This is not the format of the returned data.
     """
 
-    def __init__(self, base_url=ENGDB_BASE_URL, default_format='dict'):
+    def __init__(self, base_url=None, default_format='dict'):
+        if base_url is None:
+            base_url = getenv('ENG_RESTFUL_URL', ENGDB_BASE_URL)
         self.base_url = base_url
         self.default_format = default_format
 
