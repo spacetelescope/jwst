@@ -1,19 +1,13 @@
-# Routines used for building cubes
+""" Dictionary holding defaults for cube_build
+"""
 from .. import datamodels
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-##################################################################################
+
 class FileTable():
-    """
-    Dictionary that maps the input files to correct:
-    MIRI - channel/subchannel
-    NIRSPEC - grating/filter
-
-    Parameters
-    ----------
-
+    """ Dictionary contains defaults for MIRI and NIRSPEC data
     """
     def __init__(self):
 

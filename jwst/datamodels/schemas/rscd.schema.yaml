@@ -11,7 +11,7 @@ allOf:
         datatype: [ascii, 13]
       - name: readpatt
         datatype: [ascii, 4]
-      - name: rowtype
+      - name: rows
         datatype: [ascii, 4]
       - name: tau
         datatype: float32

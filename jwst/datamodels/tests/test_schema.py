@@ -16,9 +16,11 @@ from astropy.modeling import models
 from astropy import time
 
 from .. import util, validate
+from .. import _defined_models as defined_models
 from .. import (DataModel, ImageModel, RampModel, MaskModel,
-                MultiSlitModel, AsnModel, CollimatorModel)
-from ..schema import merge_property_trees
+                MultiSlitModel, AsnModel, CollimatorModel,
+                SourceModelContainer, MultiExposureModel)
+from ..schema import merge_property_trees, build_docstring
 
 from asdf import schema as mschema
 
@@ -617,3 +619,23 @@ def test_merge_property_trees(combiner):
     # Make sure that merge_property_trees does not destructively modify schemas
     f = merge_property_trees(s)
     assert f == s
+
+
+def test_schema_docstring():
+    template = "{fits_hdu} {title}"
+    docstring = build_docstring(ImageModel, template).split("\n")
+    for i, hdu in enumerate(('SCI', 'DQ', 'ERR', 'ZEROFRAME')):
+        assert docstring[i].startswith(hdu)
+
+@pytest.mark.parametrize("model", [m for m in defined_models.values()])
+def test_all_datamodels_init(model):
+    """
+    Test that all current datamodels can be initialized.
+    """
+    if model is SourceModelContainer:
+        # SourceModelContainer cannot have init=None
+        m = model(MultiExposureModel())
+    else:
+        m = model()
+    del m
+

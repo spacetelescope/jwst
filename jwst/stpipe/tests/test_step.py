@@ -165,7 +165,7 @@ def test_step_from_commandline_invalid4():
         Step.from_cmdline(args)
 
 
-@pytest.mark.skip(reason="No test here")
+@pytest.mark.skip(reason="This test does nothing")
 def test_step_print_spec():
     import io
     buf = io.BytesIO()

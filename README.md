@@ -69,6 +69,11 @@ Documentation (built daily from `master`) is available here:
 
 https://jwst-pipeline.readthedocs.io/en/latest/
 
+One can clone this repository and build the documentation with
+
+    pip install sphinx_rtd_theme stsci_rtd_theme sphinx_automodapi
+    python setup.py build_sphinx
+
 
 Contributions and Feedback
 --------------------------
@@ -82,6 +87,9 @@ Software vs DMS build version map
 
 | jwst tag | DMS build |    Date    |          Notes                           |
 | -------- | --------- | ---------- | -----------------------------------------|
+|  0.12.2  | B7.2rc3   | 11/07/2018 | Third release candidate for Build 7.2    |
+|  0.12.1  | B7.2rc2   | 11/01/2018 | Second release candidate for Build 7.2    |
+|  0.12.0  | B7.2rc1   | 10/09/2018 | First release candidate for Build 7.2    |
 |  0.11.0  |           | 09/10/2018 | DMS test, no delivery to I&T             |
 |  0.10.0  |           | 07/31/2018 | DMS test, no delivery to I&T             |
 |  0.9.6   | B7.1.3    | 06/08/2018 | Final release candidate for Build 7.1.3  |
@@ -99,12 +107,11 @@ Software vs DMS build version map
 Unit Tests
 ----------
 
-Unit tests can be run via `pytest`.  All tests need a the `ci_watson` pytest plugin to run.  We also recommend using `pytest-xdist` so you can run them in parallel.
+Unit tests can be run via `pytest`.  All tests need a the `ci_watson` pytest plugin to run.
 
-    pip install ci-watson pytest-xdist
-    pytest -n <cores>
+    pip install requests_mock ci_watson
+    pytest jwst
 
-where `cores` is the number of cores you'd like to use on your machine for the tests.
 
 Regression Tests
 ----------------
@@ -117,17 +124,18 @@ https://boyle.stsci.edu:8081/job/RT/job/JWST/
 
 The test builds start at 11am and 6pm local Baltimore time every day on jwcalibdev.
 
-To run the regression tests on your local machine, you need the `ci_watson` pytest plugin as above.  Then `rsync` or `scp` the input and comparison data locally
+To run the regression tests on your local machine, you need the `ci_watson` pytest plugin as above.  Then set the environment variable TEST_BIGDATA to either our Artifactory server or the local upload cache on central store (STSci staff members only)
 
-    rsync -av <username>@jwcalibdev:/data4/jwst_test_data /my/local/path/
+    export TEST_BIGDATA=https://bytesalad.stsci.edu/artifactory/
 
-set the environment variable TEST_BIGDATA to this location
+or
 
-    export TEST_BIGDATA=/my/local/path/jwst_test_data/
+    export TEST_BIGDATA=/grp/jwst/ssb/jwst_test_data
 
 and then run the tests in the repository
 
-    cd /path/to/jwst/jwst/tests_nightly/general
-    pytest --bigdata .
+    pytest --bigdata jwst/tests_nightly/general
 
+If developers need to update the truth files in our nightly regression tests, there are instructions in the repository wiki.
 
+https://github.com/spacetelescope/jwst/wiki/Updating-nightly-RT

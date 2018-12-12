@@ -7,13 +7,13 @@ def update_path(asn, file_path, target='expname'):
 
     Parameters
     ----------
-    asn: Association
+    asn : Association
         An association. The association is modified in-place.
 
-    file_path: str
+    file_path : str
         New path to prepaend to each member
 
-    target: str
+    target : str
         Key to replace
     """
     update_key_value(asn, target, (file_path, ), mod_func=_replace_path)
@@ -24,16 +24,16 @@ def update_key_value(obj, target, func_args, mod_func=None):
 
     Parameters
     ----------
-    obj: object
+    obj : object
         Hashable object to modify
 
-    target: str
+    target : str
         The target key to modify
 
-    func_args: (arg(, ...))
+    func_args : (arg(, ...))
         Arguments to pass to the modification function
 
-    mod_func: function
+    mod_func : function
         Function to modify the target key with. If `None`,
         the key will be replaced by the arg list.
 
@@ -62,15 +62,15 @@ def _replace_path(old_path, new_path):
 
     Parameters
     ----------
-    old_path: str
+    old_path : str
         A string with a file path.
 
-    new_path: str
+    new_path : str
         The new path to prepend to the basename.
 
     Returns
     -------
-    new_full_path: str
+    new_full_path : str
         The basename of the path with the
     """
     file_name = basename(old_path)

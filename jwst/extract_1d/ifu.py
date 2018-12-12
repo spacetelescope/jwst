@@ -18,18 +18,18 @@ def ifu_extract1d(input_model, refname, source_type):
 
     Parameters
     ----------
-    input_model: IFUCubeModel
+    input_model : JWST data model for an IFU cube (IFUCubeModel)
         The input model.
 
-    refname: string
+    refname : string
         The name of the JSON reference file.
 
-    source_type: string
+    source_type : string
         "point" or "extended"
 
     Returns
     -------
-    output_model: MultiSpecModel
+    output_model : MultiSpecModel
         This will contain the extracted spectrum.
     """
 
@@ -116,7 +116,24 @@ def ifu_extract1d(input_model, refname, source_type):
 
 
 def ifu_extract_parameters(refname, slitname, source_type):
-    """Read extraction parameters for an IFU."""
+    """Read extraction parameters for an IFU.
+
+    Parameters
+    ----------
+    refname : str
+        The name of the reference file.
+
+    slitname : str
+        The name of the slit, or "ANY".
+
+    source_type : str
+        "point" or "extended"
+
+    Returns
+    -------
+    dict
+        The extraction parameters.
+    """
 
     extract_params = {}
     with open(refname) as f:
@@ -150,18 +167,33 @@ def extract_ifu(input_model, source_type, extract_params):
 
     Parameters
     ----------
-    input_model: IFUCubeModel
+    input_model : IFUCubeModel
         The input model.
 
-    source_type: string
+    source_type : string
         "point" or "extended"
 
-    extract_params: dict
+    extract_params : dict
         The extraction parameters for aperture photometry.
 
     Returns
     -------
-        (ra, dec, wavelength, net, background, dq)
+    ra, dec : float
+        ra and dec are the right ascension and declination respectively
+        at the nominal center of the image.
+
+    wavelength : ndarray, 1-D
+        The wavelength in micrometers at each pixel.
+
+    net : ndarray, 1-D
+        The count rate (counts / s) minus the background at each pixel.
+
+    background : ndarray, 1-D
+        The background count rate that was subtracted from the total
+        source count rate to get `net`.
+
+    dq : ndarray, 1-D, int32
+        The data quality array.
     """
 
     data = input_model.data
@@ -173,6 +205,7 @@ def extract_ifu(input_model, source_type, extract_params):
     # We need to allocate net, background, and dq arrays no matter what.
     net = np.zeros(shape[0], dtype=np.float64)
     background = np.zeros(shape[0], dtype=np.float64)
+
     dq = np.zeros(shape[0], dtype=np.int32)
 
     x_center = extract_params['x_center']

@@ -1,4 +1,3 @@
-
 Description
 ===========
 At its basic level this step flat-fields an input science data set by dividing
@@ -34,8 +33,8 @@ If any part of the input data model gets flat-fielded (e.g. at least one
 slit of a MultiSlit model), the status keyword S_FLAT will be set to
 COMPLETE in the output science data.
 
-NIRSpec Data
-------------
+NIRSpec Spectroscopic Data
+--------------------------
 Flat-fielding of NIRSpec spectrographic data differs from other modes
 in that the flat field array that will be
 divided into the SCI and ERR arrays of the input science data set is not

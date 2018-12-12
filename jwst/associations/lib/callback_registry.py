@@ -25,7 +25,7 @@ class CallbackRegistry():
 
         Parameters
         ----------
-        args: [arg[,...]]
+        args : [arg[,...]]
             The args to filter
 
         Returns
@@ -55,7 +55,7 @@ class CallbackRegistry():
 
         Parameters
         ----------
-        event: str
+        event : str
             The name of event to attach the object to.
         """
         def decorator(func):

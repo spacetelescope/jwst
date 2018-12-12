@@ -23,6 +23,18 @@ class BarShadowStep(Step):
     reference_file_types = ['barshadow']
 
     def process(self, input):
+        """Perform the barshadow correction step
+
+        Parameters
+        ----------
+        input : JWST datamodel
+            input JWST datamodel object
+
+        Returns
+        -------
+        result : jwst datamodel
+            JWST datamodel object with barshadow extension(s) added
+        """
 
         # Open the input data model
         with datamodels.open(input) as input_model:

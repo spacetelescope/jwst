@@ -1,35 +1,41 @@
-Reference File
-==============
-The barshadow step uses the barshadow reference file.
+Reference Files
+===============
+The ``barshadow`` step uses a BARSHADOW reference file.
 
-.. include:: selection_criteria.rst
+:REFTYPE: BARSHADOW
+:Data model: `~jwst.datamodels.BarshadowModel`
+
+.. include:: barshadow_selection.rst
 
 .. include:: ../includes/standard_keywords.rst
 
 Type Specific Keywords for BARSHADOW
-------------------------------------
-The following additional keywords are required for the BARSHADOW
-reference type:
+++++++++++++++++++++++++++++++++++++
+In addition to the standard reference file keywords listed above,
+the following keywords are *required* in BARSHADOW reference files,
+because they are used as CRDS selectors
+(see :ref:`barshadow_selectors`):
 
 =========  ========================
-Keyword    Model Name
+Keyword    Data Model Name
 =========  ========================
-EXP_TYPE   meta.exposure.type
+EXP_TYPE   model.meta.exposure.type
 =========  ========================
 
 Reference File Format
----------------------
++++++++++++++++++++++
+BARSHADOW reference files are FITS format, with 4 IMAGE extensions.
+The FITS primary data array is assumed to be empty.
+The format and content of the file is as follows:
 
-The barshadow reference file is a FITS file that contains four extensions:
-
-======== ===== ============ =========
-EXTNAME  NAXIS Dimensions   Data type
-======== ===== ============ =========
-DATA1X1  2     101x1001     float
-VAR1X1   2     101x1001     float
-DATA1X3  2     101x1001     float
-VAR1X3   2     101x1001     float
-======== ===== ============ =========
+======== ======== ===== ============ =========
+EXTNAME  XTENSION NAXIS Dimensions   Data type
+======== ======== ===== ============ =========
+DATA1X1  IMAGE      2     101x1001     float
+VAR1X1   IMAGE      2     101x1001     float
+DATA1X3  IMAGE      2     101x1001     float
+VAR1X3   IMAGE      2     101x1001     float
+======== ======== ===== ============ =========
 
 The slow direction has 1001 rows and gives the dependence of the bar shadow
 correction on the Y location of a pixel from the center of the shutter.  The
@@ -37,10 +43,10 @@ fast direction has 101 rows and gives the dependence of the bar shadow
 correction of wavelength.  The WCS keywords CRPIX1/2, CRVAL1/2 and CDELT1/2
 tell how to convert the pixel location in the reference file into a Y location
 and wavelength.  The initial version of the reference file has Y varying from
--1.0 for row 1 to +1.0 at row 1001, and the wavelength varying from 0.6x10^-6m
-to 5.3x10^-6m.
+-1.0 for row 1 to +1.0 at row 1001, and the wavelength varying from
+0.6x10\ :sup:`-6` m to 5.3x10\ :sup:`-6` m.
 
-The extension headers look like this:
+An example extension header is as follows:
 
 ======== = ==================== = ==========================
 XTENSION = 'IMAGE   '           / Image extension           

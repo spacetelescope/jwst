@@ -37,7 +37,7 @@ class WfsCombineStep(Step):
             output_model = wfs.do_all()
             output_model.meta.cal_step.wfs_combine = 'COMPLETE'
             self.save_model(
-                output_model, suffix='wfscmb', output_file=outfile
+                output_model, suffix='wfscmb', output_file=outfile, format=False
             )
 
         return None

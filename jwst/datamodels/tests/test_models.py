@@ -17,6 +17,7 @@ from ..util import open as open_model
 
 ROOT_DIR = os.path.join(os.path.dirname(__file__), 'data')
 FITS_FILE = os.path.join(ROOT_DIR, 'test.fits')
+ASDF_FILE = os.path.join(ROOT_DIR, 'collimator_fake.asdf')
 ASN_FILE = os.path.join(ROOT_DIR, 'association.json')
 
 
@@ -239,6 +240,17 @@ def test_dtype_match():
         dm.data = np.array([[1, 2, 3]], np.float32)
 
 
+def test_default_value_anyof_schema():
+    """Make sure default values are set properly when anyOf in schema"""
+    with ImageModel((100, 100)) as im:
+        val = im.meta.instrument.channel
+        assert val is None
+        val = im.meta.observation.date
+        assert val is None
+        val = im.meta.guidestar
+        assert val.instance == {}
+
+
 def test_multislit():
     with MultiSlitModel() as dm:
         dm.slits.append(dm.slits.item())
@@ -361,6 +373,27 @@ def test_initialize_arrays_with_arglist():
     im = ImageModel(shape, zeroframe=thirteen, dq=bitz)
     assert np.array_equal(im.zeroframe, thirteen)
     assert np.array_equal(im.dq, bitz)
+
+def test_open_asdf_model():
+    # Open an empty asdf file, pass extra arguments
+
+    model = DataModel(init=None,
+                     ignore_version_mismatch=False,
+                     ignore_unrecognized_tag=True)
+
+    assert model._asdf._ignore_version_mismatch == False
+    assert model._asdf._ignore_unrecognized_tag == True
+    model.close()
+
+    # Open an existing asdf file
+
+    model = DataModel(ASDF_FILE,
+                     ignore_version_mismatch=False,
+                     ignore_unrecognized_tag=True)
+
+    assert model._asdf._ignore_version_mismatch == False
+    assert model._asdf._ignore_unrecognized_tag == True
+    model.close()
 
 def test_relsens():
     with ImageModel() as im:

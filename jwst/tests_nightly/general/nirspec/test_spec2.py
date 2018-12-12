@@ -1,24 +1,17 @@
 """Test aspects of Spec2Pipline"""
-import os
 import subprocess
 
 import pytest
+from ci_watson.artifactory_helpers import get_bigdata
 
 from jwst.assign_wcs.util import NoDataOnDetectorError
 from jwst.pipeline import Spec2Pipeline
 
-pytestmark = [
-    pytest.mark.usefixtures('_jail'),
-    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
-                       reason='requires --bigdata')
-]
 
-
-def test_nrs2_nodata_api(_bigdata):
+@pytest.mark.bigdata
+def test_nrs2_nodata_api(envopt, _jail):
     """
-
-    Regression test of handling NRS2 detector that has no data.
-
+    Regression test of handling NRS2 detector that has no data.\
     """
 
     # Only need to ensure that assing_wcs is run.
@@ -27,16 +20,19 @@ def test_nrs2_nodata_api(_bigdata):
     step.assign_wcs.skip = False
 
     with pytest.raises(NoDataOnDetectorError):
-        step.run(os.path.join(
-            _bigdata, 'nirspec', 'test_assignwcs', 'jw84700006001_02101_00001_nrs2_rate.fits'
+        step.run(get_bigdata('jwst-pipeline', envopt,
+                             'nirspec', 'test_assignwcs',
+                             'jw84700006001_02101_00001_nrs2_rate.fits'
         ))
 
 
-def test_nrs2_nodata_strun(_bigdata):
+@pytest.mark.bigdata
+def test_nrs2_nodata_strun(envopt, _jail):
     """Ensure that the appropriate exit status is returned from strun"""
 
-    data_file = os.path.join(
-        _bigdata, 'nirspec', 'test_assignwcs', 'jw84700006001_02101_00001_nrs2_rate.fits'
+    data_file = get_bigdata('jwst-pipeline', envopt,
+                            'nirspec', 'test_assignwcs',
+                            'jw84700006001_02101_00001_nrs2_rate.fits'
     )
 
     cmd = [

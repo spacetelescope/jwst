@@ -1,27 +1,38 @@
-Reference File
-==============
-The tso_photometry step uses a TsoPhotModel reference file, reference type
-TSOPHOT, that supplies values of radius (in pixels) for the target aperture
-and the inner and outer radii for the background annulus.
+Reference Files
+===============
+The ``tso_photometry`` step uses a TSOPHOT reference file.
 
-.. include:: ../includes/standard_keywords.rst
+TSOPHOT Reference File
+----------------------
+
+:REFTYPE: TSOPHOT
+:Data model: `~jwst.datamodels.TsoPhotModel`
+
+The TSOPHOT reference file contains photometry aperture radii for
+TSO imaging observation modes.
 
 .. include:: tsophot_selection.rst
 
+.. include:: ../includes/standard_keywords.rst
+
 Type Specific Keywords for TSOPHOT
-----------------------------------
-These keywords are required to be present in a TsoPhotModel reference file.
+++++++++++++++++++++++++++++++++++
+In addition to the standard reference file keywords listed above,
+the following keywords are *required* in TSOPHOT reference files,
+because they are used as CRDS selectors
+(see :ref:`tsophot_selectors`):
 
-========  ====================
-Keyword   Model Name
-========  ====================
-EXP_TYPE  meta.exposure.type
-TSOVISIT  meta.visit.tsovisit
-========  ====================
+=========  =========================
+Keyword    Data Model Name
+=========  =========================
+EXP_TYPE   model.meta.exposure.type
+TSOVISIT   model.meta.visit.tsovisit
+=========  =========================
 
-TSOPHOT Reference File Format
------------------------------
-TSOPHOT reference files are ASDF files.  An object called 'radii' in a
+Reference File Format
++++++++++++++++++++++
+TSOPHOT reference files are ASDF format.
+An object called 'radii' in a
 TSOPHOT file defines the radii that the step needs.  This object is a list
 of one or more dictionaries.  Each such dictionary has four keys: 'pupil',
 'radius', 'radius_inner', and 'radius_outer'.  The particular one of

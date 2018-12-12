@@ -6,7 +6,7 @@ from astropy.modeling.models import Identity, Const1D, Mapping
 import gwcs.coordinate_frames as cf
 
 from . import pointing
-from .util import not_implemented_mode, subarray_transform
+from .util import not_implemented_mode, subarray_transform, velocity_correction
 from ..datamodels import (ImageModel, NIRCAMGrismModel, DistortionModel,
                           CubeModel)
 from ..transforms.models import (NIRCAMForwardRowGrismDispersion,
@@ -24,6 +24,18 @@ def create_pipeline(input_model, reference_files):
     """
     Create the WCS pipeline based on EXP_TYPE.
 
+    Parameters
+    ----------
+    input_model : `~jwst.datamodel.DataModel`
+        Input datamodel for processing
+    reference_files : dict {reftype: reference file name}
+        The dictionary of reference file names and their associated files.
+
+    Returns
+    -------
+    pipeline : list
+        The pipeline list that is returned is suitable for
+        input into  gwcs.wcs.WCS to create a GWCS object.
     """
     exp_type = input_model.meta.exposure.type.lower()
     pipeline = exp_type2transform[exp_type](input_model, reference_files)
@@ -35,10 +47,24 @@ def imaging(input_model, reference_files):
     """
     The NIRCAM imaging WCS pipeline.
 
-    It includes three coordinate frames -
-    "detector", "v2v3" and "world".
+    Parameters
+    ----------
+    input_model : `~jwst.datamodel.DataModel`
+        Input datamodel for processing
+    reference_files : dict
+        The dictionary of reference file names and their associated files
+        {reftype: reference file name}.
 
-    It uses the "distortion" reference file.
+    Returns
+    -------
+    pipeline : list
+        The pipeline list that is returned is suitable for
+        input into  gwcs.wcs.WCS to create a GWCS object.
+
+    Notes
+    -----
+    It includes three coordinate frames - "detector", "v2v3", and "world",
+    and uses the "distortion" reference file.
     """
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
     v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.arcsec, u.arcsec))
@@ -58,7 +84,20 @@ def imaging(input_model, reference_files):
 
 def imaging_distortion(input_model, reference_files):
     """
-    Create the "detector" to "v2v3" transform.
+    Create the "detector" to "v2v3" transform for imaging mode.
+
+
+    Parameters
+    ----------
+    input_model : `~jwst.datamodel.DataModel`
+        Input datamodel for processing
+    reference_files : dict
+        The dictionary of reference file names and their associated files.
+
+    Returns
+    -------
+    The transform model
+
     """
     dist = DistortionModel(reference_files['distortion'])
     transform = dist.model
@@ -93,10 +132,16 @@ def tsgrism(input_model, reference_files):
 
     Parameters
     ----------
-    input_model: jwst.datamodels.ImagingModel
+    input_model : `~jwst.datamodels.ImagingModel`
         The input datamodel, derived from datamodels
-    reference_files: dict
-        Dictionary {reftype: reference file name}.
+    reference_files : dict
+        Dictionary of reference file names {reftype: reference file name}.
+
+    Returns
+    -------
+    pipeline : list
+        The pipeline list that is returned is suitable for
+        input into  gwcs.wcs.WCS to create a GWCS object.
 
     Notes
     -----
@@ -149,6 +194,16 @@ def tsgrism(input_model, reference_files):
                                                     lmodels=invdispl,
                                                     xmodels=dispx,
                                                     ymodels=dispy)
+
+    # Add in the wavelength shift from the velocity dispersion
+    try:
+        velosys = input_model.meta.wcsinfo.velosys
+    except AttributeError:
+        pass
+    if velosys is not None:
+        velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
+        log.info("Added Barycentric velocity correction: {}".format(velocity_corr[1].amplitude.value))
+        det2det = det2det | Mapping((0, 1, 2, 3)) | Identity(2) & velocity_corr & Identity(1)
 
     # input into the forward transform is x,y,x0,y0,order
     # where x,y is the pixel location in the grism image
@@ -204,23 +259,29 @@ def wfss(input_model, reference_files):
 
     Parameters
     ----------
-    input_model: jwst.datamodels.ImagingModel
+    input_model: `~jwst.datamodels.ImagingModel`
         The input datamodel, derived from datamodels
     reference_files: dict
         Dictionary {reftype: reference file name}.
 
+    Returns
+    -------
+    pipeline : list
+        The pipeline list that is returned is suitable for
+        input into  gwcs.wcs.WCS to create a GWCS object.
+
     Notes
     -----
-    The tree in the grism reference file has a section for each order/beam
-    not sure if there will be a separate passband reference file needed for
-    the wavelength scaling or wedge offsets. This helper is currently in
-    jwreftools/nircam/nircam_reftools.
+    The tree in the grism reference file has a section for each order.
+    Not sure if there will be a separate passband reference file needed for
+    the wavelength scaling or wedge offsets.
 
-    The direct image the catalog has been created from was corrected for
-    distortion, but the dispersed images have not. This is OK if the trace and
-    dispersion solutions are defined with respect to the distortion-corrected
-    image. The catalog from the combined direct image has object locations in
-    in detector space and the RA DEC of the object on sky.
+    The direct image the catalog has been created from was processed through
+    resample, but the dispersed images have not been resampled. This is OK if
+    the trace and dispersion solutions are defined with respect to the
+    distortion-corrected image. The catalog from the combined direct image
+    has object locations in in detector space and the RA DEC of the object on
+    the sky.
 
     The WCS information for the grism image  plus the observed filter will be
     used to translate these to pixel locations for each of the objects.
@@ -231,48 +292,13 @@ def wfss(input_model, reference_files):
     The extent of the trace for each object can then be calculated based on
     the grism in use (row or column). Where the left/bottom of the trace starts
     at t = 0 and the right/top of the trace ends at t = 1, as long as they
-    have been defined as such by th team.
+    have been defined as such by the team.
 
     The extraction box is calculated to be the minimum bounding box of the
     object extent in the segmentation map associated with the direct image.
-    The values of the min and max corners are saved in the photometry
-    catalog in units of RA,DEC so they can be translated to pixels by
-    the dispersed image's imaging wcs.
-
-    For each spectral order, the configuration file contains a
-    magnitude-cutoff value. Sources with magnitudes fainter than the
-    extraction cutoff (MMAG_EXTRACT)  will not be extracted, but are
-    accounted for when computing the spectral contamination and background
-    estimates. The default extraction value is 99 right now.
-
-    The sensitivity information from the original aXe style configuration
-    file needs to be modified by the passband of the filter used for
-    the direct image to get the min and max wavelengths
-    which correspond to t=0 and t=1, this currently has been done by the team
-    and the min and max wavelengths to use to calculate t are stored in the
-    grism reference file as wavelengthrange, which can be selected by waverange_selector
-    which contains the filter names.
-
-    All the following was moved to the extract_2d stage.
-
-    Step 1: Convert the source catalog from the reference frame of the
-            uberimage to that of the dispersed image.  For the Vanilla
-            Pipeline we assume that the pointing information in the file
-            headers is sufficient.  This will be strictly true if all images
-            were obtained in a single visit (same guide stars).
-
-    Step 2: Record source information for each object in the catalog: position
-            (RA and Dec), shape (A_IMAGE, B_IMAGE, THETA_IMAGE), and all
-            available magnitudes.
-
-    Step 3: Compute the trace and wavelength solutions for each object in the
-            catalog and for each spectral order.  Record this information.
-
-    Step 4: Compute the WIDTH of each spectral subwindow, which may be fixed or
-            variable (see discussion of optimal extraction, below).  Record
-            this information.
-
-    Catalog and associated steps moved to extract_2d.
+    The values of the min and max corners, taken from the computed minimum
+    bounding box are saved in the photometry catalog in units of RA, DEC
+    so they can be translated to pixels by the dispersed image's imaging-wcs.
     """
 
     # The input is the grism image
@@ -317,6 +343,16 @@ def wfss(input_model, reference_files):
                                                     lmodels=invdispl,
                                                     xmodels=dispx,
                                                     ymodels=dispy)
+
+    # Add in the wavelength shift from the velocity dispersion
+    try:
+        velosys = input_model.meta.wcsinfo.velosys
+    except AttributeError:
+        pass
+    if velosys is not None:
+        velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
+        log.info("Added Barycentric velocity correction: {}".format(velocity_corr[1].amplitude.value))
+        det2det = det2det | Mapping((0, 1, 2, 3)) | Identity(2) & velocity_corr & Identity(1)
 
     # create the pipeline to construct a WCS object for the whole image
     # which can translate ra,dec to image frame reference pixels
