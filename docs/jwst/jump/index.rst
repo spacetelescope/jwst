@@ -1,3 +1,5 @@
+.. _jump_step:
+
 ==============
 Jump Detection
 ==============

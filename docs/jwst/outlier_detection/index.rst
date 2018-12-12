@@ -1,3 +1,5 @@
+.. _outlier_detection_step:
+
 =================
 Outlier Detection
 =================

@@ -1,4 +1,4 @@
-.. _dqinit_step:
+.. _dq_init_step:
 
 ================================
 Data Quality (DQ) Initialization

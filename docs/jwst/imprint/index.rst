@@ -1,3 +1,5 @@
+.. _imprint_step:
+
 ===================
 Imprint Subtraction
 ===================

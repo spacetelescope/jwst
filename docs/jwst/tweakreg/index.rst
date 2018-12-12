@@ -1,3 +1,5 @@
+.. _tweakreg_step:
+
 ========
 TweakReg
 ========

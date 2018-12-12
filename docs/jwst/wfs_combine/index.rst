@@ -1,3 +1,5 @@
+.. _wfs_combine_step:
+
 ===========
 WFS Combine
 ===========

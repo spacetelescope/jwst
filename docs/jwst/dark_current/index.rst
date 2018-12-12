@@ -1,4 +1,4 @@
-.. _dark_step:
+.. _dark_current_step:
 
 ========================
 Dark Current Subtraction
