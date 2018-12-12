@@ -77,6 +77,12 @@ if __name__ == '__main__':
         help='SIAF PRD sqlite database file. If not specified, default is to use `$XML_DATA/prd.db`'
     )
     parser.add_argument(
+        '--engdb_url', type=str, default=None,
+        help=('URL of the engineering database.'
+              ' If not specified, the environmental variable "ENG_RESTFUL_URL" is used.'
+              ' Otherwise, a hardwired default is used.')
+    )
+    parser.add_argument(
         '--transpose_j2fgs', action='store_false',
         help='Transpose the J2FGS matrix'
     )
@@ -92,6 +98,7 @@ if __name__ == '__main__':
             add_wcs(
                 filename,
                 siaf_path=args.siaf,
+                engdb_url=args.engdb_url,
                 tolerance=args.tolerance,
                 allow_default=args.allow_default,
                 dry_run=args.dry_run,

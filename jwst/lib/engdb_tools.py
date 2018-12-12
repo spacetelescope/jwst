@@ -131,6 +131,8 @@ class ENGDB_Service():
     def __init__(self, base_url=None, default_format='dict'):
         if base_url is None:
             base_url = getenv('ENG_RESTFUL_URL', ENGDB_BASE_URL)
+        if base_url[-1] !='/':
+            base_url += '/'
         self.base_url = base_url
         self.default_format = default_format
 

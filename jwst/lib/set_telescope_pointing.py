@@ -98,7 +98,7 @@ WCSRef = namedlist(
 )
 
 
-def add_wcs(filename, default_pa_v3=0., siaf_path=None,
+def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
             tolerance=60, allow_default=False, reduce_func=None,
             dry_run=False, **transform_kwargs):
     """Add WCS information to a FITS file
@@ -118,8 +118,11 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None,
         The V3 position angle to use if the pointing information
         is not found.
 
-    siaf_path: str or file-like object
+    siaf_path: str or file-like object or None
         The path to the SIAF database.
+
+    engdb_url: str or None
+        URL of the engineering telemetry database REST interface.
 
     tolerance: int
         If no telemetry can be found during the observation,
@@ -175,6 +178,7 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None,
         model,
         default_pa_v3=default_pa_v3,
         siaf_path=siaf_path,
+        engdb_url=engdb_url,
         tolerance=tolerance,
         allow_default=allow_default,
         reduce_func=reduce_func,
@@ -195,7 +199,7 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None,
     logger.info('...update completed')
 
 
-def update_wcs(model, default_pa_v3=0., siaf_path=None,
+def update_wcs(model, default_pa_v3=0., siaf_path=None, engdb_url=None,
                tolerance=60, allow_default=False,
                reduce_func=None, **transform_kwargs):
     """Update WCS pointing information
@@ -217,6 +221,9 @@ def update_wcs(model, default_pa_v3=0., siaf_path=None,
 
     siaf_path : str
         The path to the SIAF file, i.e. ``XML_DATA`` env variable.
+
+    engdb_url: str or None
+        URL of the engineering telemetry database REST interface.
 
     tolerance: int
         If no telemetry can be found during the observation,
@@ -246,7 +253,7 @@ def update_wcs(model, default_pa_v3=0., siaf_path=None,
         )
     else:
         update_wcs_from_telem(
-            model, default_pa_v3=default_pa_v3, siaf_path=siaf_path,
+            model, default_pa_v3=default_pa_v3, siaf_path=siaf_path, engdb_url=engdb_url,
             tolerance=tolerance, allow_default=allow_default,
             reduce_func=reduce_func, **transform_kwargs
         )
@@ -308,7 +315,7 @@ def update_wcs_from_fgs_guiding(model, default_pa_v3=0.0, default_vparity=1):
 
 
 def update_wcs_from_telem(
-        model, default_pa_v3=0., siaf_path=None,
+        model, default_pa_v3=0., siaf_path=None, engdb_url=None,
         tolerance=0, allow_default=False,
         reduce_func=None, **transform_kwargs
 ):
@@ -331,6 +338,9 @@ def update_wcs_from_telem(
 
     siaf_path : str
         The path to the SIAF file, i.e. ``XML_DATA`` env variable.
+
+    engdb_url: str or None
+        URL of the engineering telemetry database REST interface.
 
     tolerance: int
         If no telemetry can be found during the observation,
@@ -370,7 +380,8 @@ def update_wcs_from_telem(
 
     # Get the pointing information
     try:
-        pointing = get_pointing(obsstart, obsend, tolerance=tolerance, reduce_func=reduce_func)
+        pointing = get_pointing(obsstart, obsend, engdb_url=engdb_url,
+                                tolerance=tolerance, reduce_func=reduce_func)
     except ValueError as exception:
         if not allow_default:
             raise
@@ -970,7 +981,8 @@ def calc_position_angle(v1, v3):
     return v3_pa
 
 
-def get_pointing(obsstart, obsend, tolerance=60, reduce_func=None):
+def get_pointing(obsstart, obsend, engdb_url=None,
+                 tolerance=60, reduce_func=None):
     """
     Get telescope pointing engineering data.
 
@@ -978,6 +990,9 @@ def get_pointing(obsstart, obsend, tolerance=60, reduce_func=None):
     ----------
     obsstart, obsend: float
         MJD observation start/end times
+
+    engdb_url: str or None
+        URL of the engineering telemetry database REST interface.
 
     tolerance: int
         If no telemetry can be found during the observation,
@@ -1019,7 +1034,7 @@ def get_pointing(obsstart, obsend, tolerance=60, reduce_func=None):
         )
     )
 
-    mnemonics = get_mnemonics(obsstart, obsend, tolerance)
+    mnemonics = get_mnemonics(obsstart, obsend, tolerance, engdb_url=engdb_url)
     reduced = reduce_func(mnemonics)
 
     return reduced
@@ -1176,7 +1191,7 @@ def calc_rotation_matrix(angle, vparity=1):
     return [pc1_1, pc1_2, pc2_1, pc2_2]
 
 
-def get_mnemonics(obsstart, obsend, tolerance):
+def get_mnemonics(obsstart, obsend, tolerance, engdb_url=None):
     """Retrieve pointing mnemonics from the engineering database
 
     Parameters
@@ -1188,6 +1203,9 @@ def get_mnemonics(obsstart, obsend, tolerance):
         If no telemetry can be found during the observation,
         the time, in seconds, beyond the observation time to
         search for telemetry.
+
+    engdb_url: str or None
+        URL of the engineering telemetry database REST interface.
 
     Returns
     -------
@@ -1205,7 +1223,7 @@ def get_mnemonics(obsstart, obsend, tolerance):
     )
 
     try:
-        engdb = ENGDB_Service()
+        engdb = ENGDB_Service(base_url=engdb_url)
     except Exception as exception:
         raise ValueError(
             'Cannot open engineering DB connection'
