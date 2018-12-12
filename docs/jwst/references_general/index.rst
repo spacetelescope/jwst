@@ -1,5 +1,5 @@
-General Reference File Information
-==================================
+Reference File Information
+==========================
 
 
 .. toctree::
@@ -7,8 +7,4 @@ General Reference File Information
    
    references_general.rst
    explain_rmaps.rst
-
-
-   
-
 

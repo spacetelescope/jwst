@@ -1,4 +1,4 @@
-.. _wavelengthrage_selectors:
+.. _wavelengthrange_selectors:
 
 Reference Selection Keywords for WAVELENGTHRANGE
 ++++++++++++++++++++++++++++++++++++++++++++++++

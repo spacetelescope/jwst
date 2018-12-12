@@ -1,3 +1,5 @@
+.. _gain_reffile:
+
 GAIN reference file
 -------------------
 

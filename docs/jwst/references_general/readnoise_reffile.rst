@@ -1,3 +1,5 @@
+.. _readnoise_reffile:
+
 READNOISE Reference File
 ------------------------
 

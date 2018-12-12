@@ -8,107 +8,262 @@ details on pipeline steps that do not use reference files.
 The present manual is referred to by several other documentation pages, 
 such as the JWST pipeline and JDocs.
 
-Reference Files Naming Convention
-=================================
+Reference File Naming Convention
+================================
 
-Before the reference files are ingested into CRDS, they are renamed following a 
-convention used by the pipeline. As any other changes undergone by the reference files 
-the information of the previous names is kept in the keader keywords, so the Instrument Teams
-can easily track which delivered file is being used by the pipeline on each step. 
+Before reference files are ingested into CRDS, they are renamed following a 
+convention used by the pipeline. As with any other changes undergone by the reference files,
+the previous names are kept in header keywords, so the Instrument Teams
+can easily track which delivered file is being used by the pipeline in each step. 
+
+The naming of reference files uses the following syntax::
+
+ jwst_<instrument>_<reftype>_<version>.<extension>
+
+where
+
+- ``instrument`` is one of "fgs", "miri", "nircam", "niriss", and "nirspec"
+- ``reftype`` is one of the type names listed in the table below
+- ``version`` is a 4-digit version number (e.g. 0042)
+- ``extension`` gives the file format, such as "fits" or "asdf"
+
+An example NIRCam GAIN reference file name would be "jwst_nircam_gain_0042.fits".
 
 The HISTORY header keyword of each reference file includes details on specific processing 
 undergone by the files before being ingested in CRDS.
 
-The reference files names used by the different pipeline steps are define in the table below.
-Details on the files formats used and the CRDS selection criteria are given in the 
-correspondent pipeline sections defined in this document.
+Reference File Types
+====================
 
-==================  ======================================== 
-Pipeline Step        Name (*)         
-==================  ========================================  
-**ami_analyze**      jwst_niriss_throughput_xxxx.fits
-**assign_wcs**       jwst_nirspec_camera_xxx.rmap
-..                   jwst_nirspec_camera_xxx.rmap
-..                   jwst_nirspec_collimator_xxxx.rmap
-..                   jwst_nirspec_disperser_xxxx.rmap
-..                   jwst_niriss_distortion_xxxx.rmap
-..                   jwst_nircam_distortion_xxxx.rmap
-..                   jwst_miri_distortion_xxxx.rmap
-..                   jwst_miri_filteroffset_xxxx.rmap
-..                   jwst_nirspec_fore_xxxx.rmap
-..                   jwst_nirspec_fpa_xxxx.rmap
-..                   jwst_nirspec_ifufore_xxxx.rmap
-..                   jwst_nirspec_ifupost_xxxx.rmap
-..                   jwst_nirspec_ifuslicer_xxxx.rmap
-..                   jwst_nirspec_msa_xxxx.rmap
-..                   jwst_nirspec_ote_xxxx.rmap
-..                   jwst_niriss_specwcs_xxxx.asdf
-..                   jwst_miri_specwcs_xxxx.asdf
-..                   jwst_miri_regions_xxxx.asdf
-..                   jwst_miri_v2v3_xxxx.asdf
-..                   jwst_miri_wavelengthrange_xxxx.asdf
-..                   jwst_nirspec_wavelengthrange_xxxx.asdf
-**dark_current**     miri_dark_xxxx.fits
-..                   nircam_dark_xxxx.fits 
-..                   niriss_dark_xxxx.fits 
-..                   nirspec_dark_xxxx.fits
-**dq_init**          jwst_miri_mask_xxxx.fits
-..                   jwst_nircam_mask_xxxx.fits
-..                   jwst_niriss_mask_xxxx.fits
-..                   jwst_nirspec_mask_xxxx.fits
-**extract_1d**       jwst_miri_extract1d_xxxx.json
-..                   jwst_niriss_extract1d_xxxx.json
-..                   jwst_nirspec_extract1d_xxxx.json
-**flatfield**        jwst_miri_flat_xxxx.fits
-..                   jwst_nircam_flat_xxxx.fits
-..                   jwst_niriss_flat_xxxx.fits
-..                   jwst_nirspec_dflat_xxxx.fits
-..                   jwst_nirspec_fflat_xxxx.fits
-..                   jwst_nirspec_sflat_xxxx.fits
-**fringe**           jwst_miri_fringe_xxxx.fits
-**jump**             jwst_miri_gain_xxxx.fits
-..                   jwst_miri_readnoise_xxxx.fits
-..                   jwst_nircam_gain_xxxx.fits
-..                   jwst_nircam_readnoise_xxxx.fits
-..                   jwst_niriss_gain_xxxx.fits
-..                   jwst_niriss_readnoise_xxxx.fits
-..                   jwst_nirspec_gain_xxxx.fits
-..                   jwst_nirspec_readnoise_xxxx.fits
-**linearity**        jwst_miri_linearity_xxxx.fits 
-..                   jwst_nircam_linearity_xxxx.fits
-..                   jwst_niriss_linearity_xxxx.fits
-..                   jwst_nirspec_linearity_xxxx.fits
-**pathloss**         jwst_nirspec_pathloss_xxxx.fits
-**photom**           jwst_miri_photom_xxxx.fits
-..                   jwst_miri_area_xxxx.fits
-..                   jwst_nircam_photom_xxxx.fits
-..                   jwst_nircam_area_xxxx.fits
-..                   jwst_niriss_photom_xxxx.fits
-..                   jwst_niriss_area_xxxx.fits
-..                   jwst_nirspec_photom_xxxx.fits
-..                   jwst_nirspec_area_xxxx.fits
-**ramp_fitting**     jwst_miri_gain_xxxx.fits
-..                   jwst_miri_readnoise_xxxx.fits
-..                   jwst_nircam_gain_xxxx.fits
-..                   jwst_nircam_readnoise_xxxx.fits
-..                   jwst_niriss_gain_xxxx.fits
-..                   jwst_niriss_readnoise_xxxx.fits
-..                   jwst_nirspec_gain_xxxx.fits
-..                   jwst_nirspec_readnoise_xxxx.fits
-**refpix**           jwst_nirspec_refpix_xxxx.fits
-**rcsd**             jwst_miri_rscd_xxxx.fits
-**saturation**       jwst_miri_saturation_xxxx.fits
-..                   jwst_nircam_saturation_xxxx.fits
-..                   jwst_niriss_saturation_xxxx.fits
-..                   jwst_nirspec_saturation_xxxx.fits
-**straylight**       jwst_miri_straymask_xxxx.fits
-**superbias**        jwst_nircam_superbias_xxxx.fits
-..                   jwst_niriss_superbias_xxxx.fits
-..                   jwst_nirspec_superbias_xxxx.fits
-==================  ========================================
+Most reference files have a one-to-one relationship with calibration steps, e.g.
+there is one step that uses one type of reference file. Some steps, however, use
+several types of reference files and some reference file types are used by more
+than one step. The tables below show the correspondence between pipeline steps and
+refernece file types. The first table is ordered by pipeline step, while the second
+is ordered by reference file type. Links to the reference file types provide detailed
+documentation on each reference file.
 
-(*) xxx indicates different version numbers for the reference files.
++---------------------------------+--------------------------------------------------+
+| Pipeline Step                   | Reference File Type (REFTYPE)                    |
++=================================+==================================================+
+| align_refs                      | :ref:`PSFMASK <psfmask_reffile>`                 |
++---------------------------------+--------------------------------------------------+
+| ami_analyze                     | :ref:`THROUGHPUT <throughput_reffile>`           |
++---------------------------------+--------------------------------------------------+
+| assign_wcs                      | CAMERA                                           |
++                                 +--------------------------------------------------+
+|                                 | COLLIMATOR                                       |
++                                 +--------------------------------------------------+
+|                                 | DISPERSER                                        |
++                                 +--------------------------------------------------+
+|                                 | DISTORTION                                       |
++                                 +--------------------------------------------------+
+|                                 | FILTEROFFSET                                     |
++                                 +--------------------------------------------------+
+|                                 | FORE                                             |
++                                 +--------------------------------------------------+
+|                                 | FPA                                              |
++                                 +--------------------------------------------------+
+|                                 | IFUFORE                                          |
++                                 +--------------------------------------------------+
+|                                 | IFUPOST                                          |
++                                 +--------------------------------------------------+
+|                                 | IFUSLICER                                        |
++                                 +--------------------------------------------------+
+|                                 | MSA                                              |
++                                 +--------------------------------------------------+
+|                                 | OTE                                              |
++                                 +--------------------------------------------------+
+|                                 | SPECWCS                                          |
++                                 +--------------------------------------------------+
+|                                 | REGIONS                                          |
++                                 +--------------------------------------------------+
+|                                 | V2V3                                             |
++                                 +--------------------------------------------------+
+|                                 | :ref:`WAVELENGTHRANGE <wavelengthrange_reffile>` |
++---------------------------------+--------------------------------------------------+
+| background                      | :ref:`WFSSBKG <wfssbkg_reffile>`                 |
++                                 +--------------------------------------------------+
+|                                 | :ref:`WAVELENGTHRANGE <wavelengthrange_reffile>` |
++---------------------------------+--------------------------------------------------+
+| barshadow                       | :ref:`BARSHADOW <barshadow_reffile>`             |
++---------------------------------+--------------------------------------------------+
+| cube_build                      | :ref:`CUBEPAR <cubepar_reffile>`                 |
++                                 +--------------------------------------------------+
+|                                 | :ref:`RESOL <resol_reffile>`                     |
++---------------------------------+--------------------------------------------------+
+| :ref:`dark_current <dark_step>` | :ref:`DARK <dark_reffile>`                       |
++---------------------------------+--------------------------------------------------+
+| :ref:`dq_init <dqinit_step>`    | :ref:`MASK <mask_reffile>`                       |
++---------------------------------+--------------------------------------------------+
+| extract_1d                      | :ref:`EXTRACT1D <extract1d_reffile>`             |
++---------------------------------+--------------------------------------------------+
+| extract_2d                      | :ref:`WAVECORR <wavecorr_reffile>`               |
++                                 +--------------------------------------------------+
+|                                 | :ref:`WAVELENGTHRANGE <wavelengthrange_reffile>` |
++---------------------------------+--------------------------------------------------+
+| flatfield                       | :ref:`FLAT <flat_reffile>`                       |
++                                 +--------------------------------------------------+
+|                                 | :ref:`DFLAT <dflat_reffile>`                     |
++                                 +--------------------------------------------------+
+|                                 | :ref:`FFLAT <fflat_reffile>`                     |
++                                 +--------------------------------------------------+
+|                                 | :ref:`SFLAT <sflat_reffile>`                     |
++---------------------------------+--------------------------------------------------+
+| fringe                          | :ref:`FRINGE <fringe_reffile>`                   |
++---------------------------------+--------------------------------------------------+
+| gain_scale                      | :ref:`GAIN <gain_reffile>`                       |
++---------------------------------+--------------------------------------------------+
+| ipc                             | :ref:`IPC <ipc_reffile>`                         |
++---------------------------------+--------------------------------------------------+
+| jump                            | :ref:`GAIN <gain_reffile>`                       |
++                                 +--------------------------------------------------+
+|                                 | :ref:`READNOISE <readnoise_reffile>`             |
++---------------------------------+--------------------------------------------------+
+| linearity                       | :ref:`LINEARITY <linearity_reffile>`             |
++---------------------------------+--------------------------------------------------+
+| msaflagopen                     | :ref:`MSAOPER <msaoper_reffile>`                 |
++---------------------------------+--------------------------------------------------+
+| pathloss                        | :ref:`PATHLOSS <pathloss_reffile>`               |
++---------------------------------+--------------------------------------------------+
+| persistence                     | :ref:`PERSAT <persat_reffile>`                   |
++                                 +--------------------------------------------------+
+|                                 | :ref:`TRAPDENSITY <trapdensity_reffile>`         |
++                                 +--------------------------------------------------+
+|                                 | :ref:`TRAPPARS <trappars_reffile>`               |
++---------------------------------+--------------------------------------------------+
+| photom                          | :ref:`PHOTOM <photom_reffile>`                   |
++                                 +--------------------------------------------------+
+|                                 | :ref:`AREA <area_reffile>`                       |
++---------------------------------+--------------------------------------------------+
+| ramp_fitting                    | :ref:`GAIN <gain_reffile>`                       |
++                                 +--------------------------------------------------+
+|                                 | :ref:`READNOISE <readnoise_reffile>`             |
++---------------------------------+--------------------------------------------------+
+| refpix                          | :ref:`REFPIX <refpix_reffile>`                   |
++---------------------------------+--------------------------------------------------+
+| reset                           | :ref:`RESET <reset_reffile>`                     |
++---------------------------------+--------------------------------------------------+
+| rscd                            | :ref:`RSCD <rscd_reffile>`                       |
++---------------------------------+--------------------------------------------------+
+| saturation                      | :ref:`SATURATION <saturation_reffile>`           |
++---------------------------------+--------------------------------------------------+
+| straylight                      | :ref:`STRAYMASK <straymask_reffile>`             |
++---------------------------------+--------------------------------------------------+
+| superbias                       | :ref:`SUPERBIAS <superbias_reffile>`             |
++---------------------------------+--------------------------------------------------+
+| tso_photometry                  | :ref:`TSOPHOT <tsophot_reffile>`                 |
++---------------------------------+--------------------------------------------------+
 
++--------------------------------------------------+----------------+
+| Reference File Type (REFTYPE)                    | Pipeline Step  |
++==================================================+================+
+| :ref:`AREA <area_reffile>`                       | photom         |
++--------------------------------------------------+----------------+
+| :ref:`BARSHADOW <barshadow_reffile>`             | barshadow      |
++--------------------------------------------------+----------------+
+| **CAMERA**                                       | assign_wcs     |
++--------------------------------------------------+----------------+
+| **COLLIMATOR**                                   | assign_wcs     |
++--------------------------------------------------+----------------+
+| :ref:`CUBEPAR <cubepar_reffile>`                 | cube_build     |
++--------------------------------------------------+----------------+
+| :ref:`DARK <dark_reffile>`                       | dark_current   |
++--------------------------------------------------+----------------+
+| :ref:`DFLAT <dflat_reffile>`                     | flatfield      |
++--------------------------------------------------+----------------+
+| **DISPERSER**                                    | assign_wcs     |
++--------------------------------------------------+----------------+
+| **DISTORTION**                                   | assign_wcs     |
++--------------------------------------------------+----------------+
+| :ref:`EXTRACT1D <extract1d_reffile>`             | extract_1d     |
++--------------------------------------------------+----------------+
+| :ref:`FFLAT <fflat_reffile>`                     | flatfield      |
++--------------------------------------------------+----------------+
+| **FILTEROFFSET**                                 | assign_wcs     |
++--------------------------------------------------+----------------+
+| :ref:`FLAT <flat_reffile>`                       | flatfield      |
++--------------------------------------------------+----------------+
+| **FORE**                                         | assign_wcs     |
++--------------------------------------------------+----------------+
+| **FPA**                                          | assign_wcs     |
++--------------------------------------------------+----------------+
+| :ref:`FRINGE <fringe_reffile>`                   | fringe         |
++--------------------------------------------------+----------------+
+| :ref:`GAIN <gain_reffile>`                       | gain_scale     |
++                                                  +----------------+
+|                                                  | jump           |
++                                                  +----------------+
+|                                                  | ramp_fitting   |
++--------------------------------------------------+----------------+
+| **IFUFORE**                                      | assign_wcs     |
++--------------------------------------------------+----------------+
+| **IFUPOST**                                      | assign_wcs     |
++--------------------------------------------------+----------------+
+| **IFUSLICER**                                    | assign_wcs     |
++--------------------------------------------------+----------------+
+| :ref:`IPC <ipc_reffile>`                         | ipc            |
++--------------------------------------------------+----------------+
+| :ref:`LINEARITY <linearity_reffile>`             | linearity      |
++--------------------------------------------------+----------------+
+| :ref:`MASK <mask_reffile>`                       | dq_init        |
++--------------------------------------------------+----------------+
+| **MSA**                                          | assign_wcs     |
++--------------------------------------------------+----------------+
+| :ref:`MSAOPER <msaoper_reffile>`                 | msaflagopen    |
++--------------------------------------------------+----------------+
+| **OTE**                                          | assign_wcs     |
++--------------------------------------------------+----------------+
+| :ref:`PATHLOSS <pathloss_reffile>`               | pathloss       |
++--------------------------------------------------+----------------+
+| :ref:`PERSAT <persat_reffile>`                   | persistence    |
++--------------------------------------------------+----------------+
+| :ref:`PHOTOM <photom_reffile>`                   | photom         |
++--------------------------------------------------+----------------+
+| :ref:`PSFMASK <psfmask_reffile>`                 | align_refs     |
++--------------------------------------------------+----------------+
+| :ref:`READNOISE <readnoise_reffile>`             | jump           |
++                                                  +----------------+
+|                                                  | ramp_fitting   |
++--------------------------------------------------+----------------+
+| :ref:`REFPIX <refpix_reffile>`                   | refpix         |
++--------------------------------------------------+----------------+
+| **REGIONS**                                      | assign_wcs     |
++--------------------------------------------------+----------------+
+| :ref:`RESET <reset_reffile>`                     | reset          |
++--------------------------------------------------+----------------+
+| :ref:`RESOL <resol_reffile>`                     | cube_build     |
++--------------------------------------------------+----------------+
+| :ref:`RSCD <rscd_reffile>`                       | rscd           |
++--------------------------------------------------+----------------+
+| :ref:`SATURATION <saturation_reffile>`           | saturation     |
++--------------------------------------------------+----------------+
+| :ref:`SFLAT <sflat_reffile>`                     | flatfield      |
++--------------------------------------------------+----------------+
+| **SPECWCS**                                      | assign_wcs     |
++--------------------------------------------------+----------------+
+| :ref:`STRAYMASK <straymask_reffile>`             | straylight     |
++--------------------------------------------------+----------------+
+| :ref:`SUPERBIAS <superbias_reffile>`             | superbias      |
++--------------------------------------------------+----------------+
+| :ref:`THROUGHPUT <throughput_reffile>`           | ami_analyze    |
++--------------------------------------------------+----------------+
+| :ref:`TRAPDENSITY <trapdensity_reffile>`         | persistence    |
++--------------------------------------------------+----------------+
+| :ref:`TRAPPARS <trappars_reffile>`               | persistence    |
++--------------------------------------------------+----------------+
+| :ref:`TSOPHOT <tsophot_reffile>`                 | tso_photometry |
++--------------------------------------------------+----------------+
+| **V2V3**                                         | assign_wcs     |
++--------------------------------------------------+----------------+
+| :ref:`WAVELENGTHRANGE <wavelengthrange_reffile>` | assign_wcs     |
++                                                  +----------------+
+|                                                  | background     |
++                                                  +----------------+
+|                                                  | extract_2d     |
++--------------------------------------------------+----------------+
+| :ref:`WFSSBKG <wfssbkg_reffile>`                 | background     |
++--------------------------------------------------+----------------+
 
 .. _`Standard Required Keywords`:
 
@@ -120,9 +275,9 @@ The FITS primary data unit is always empty. The primary header contains all keyw
 
 The required Keywords Documenting Contents of Reference Files are:
 
-========  =========================================================================
+========  ==================================================================================
 Keyword   Comment
-========  =========================================================================
+========  ==================================================================================
 REFTYPE   `WFSSBKG    Required values are listed in the discussion of each pipeline step.`
 DESCRIP   `Summary of file content and/or reason for delivery`
 AUTHOR    `Fred Jones     Person(s) who created the file`
@@ -158,7 +313,7 @@ FASTAXIS  `1        Fast readout direction relative to image axes for
           SEE NOTE BELOW.`
 SLOWAXIS  `2        Slow readout direction relative to image axes for
           all amplifiers (1 = +x axis, 2 = +y axis, -1 = -x axis, -2 = -y axis)`
-========  =========================================================================
+========  ==================================================================================
 
 
 Observing Mode Keywords
