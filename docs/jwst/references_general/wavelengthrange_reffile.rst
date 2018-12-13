@@ -34,6 +34,28 @@ Reference File Format
 +++++++++++++++++++++
 WAVELENGTHRANGE reference files are in ASDF format, with the format and contents
 specified by the `~jwst.datamodels.WavelengthrangeModel` data model schema.
+The exact content varies a bit depending on instrument mode, as explained in the
+following sections.
+
+MIRI MRS
+::::::::
+For MIRI MRS, the WAVELENGTHRANGE file consists of two fields that define the
+wavelength range for each combination of channel and band.
+
+:channels: An ordered list of all possible channel and band combinations for MIRI MRS, e.g. "1SHORT".
+:wavelengthrange: An ordered list of (lambda_min, lambda_max) for each item in the list above
+
+NIRSpec
+:::::::
+For NIRSpec, the WAVELENGTHRANGE file is a dictionary storing information about default
+wavelength range and spectral order for each combination of filter and grating.
+
+:filter_grating:
+                 :order: Default spectral order
+                 :range: Default wavelength range
+
+NIRCam WFSS, NIRCam TSGRISM, NIRISS WFSS
+:::::::::::::::::::::::::::::::::::::::::
 For NIRCam WFSS and TSGRIM modes, as well as NIRISS WFSS mode, the WAVELENGTHRANGE
 reference file contains the wavelength limits to use when calculating the minimum
 and maximum dispersion extents on the detector. It also contains the default list

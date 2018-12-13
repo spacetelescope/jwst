@@ -50,33 +50,33 @@ documentation on each reference file.
 +---------------------------------------------+--------------------------------------------------+
 | :ref:`ami_analyze <ami_analyze_step>`       | :ref:`THROUGHPUT <throughput_reffile>`           |
 +---------------------------------------------+--------------------------------------------------+
-| :ref:`assign_wcs <assign_wcs_step>`         | CAMERA                                           |
+| :ref:`assign_wcs <assign_wcs_step>`         | :ref:`CAMERA <camera_reffile>`                   |
 +                                             +--------------------------------------------------+
-|                                             | COLLIMATOR                                       |
+|                                             | :ref:`COLLIMATOR <collimator_reffile>`           |
 +                                             +--------------------------------------------------+
-|                                             | DISPERSER                                        |
+|                                             | :ref:`DISPERSER <disperser_reffile>`             |
 +                                             +--------------------------------------------------+
-|                                             | DISTORTION                                       |
+|                                             | :ref:`DISTORTION <distortion_reffile>`           |
 +                                             +--------------------------------------------------+
-|                                             | FILTEROFFSET                                     |
+|                                             | :ref:`FILTEROFFSET <filteroffset_reffile>`       |
 +                                             +--------------------------------------------------+
-|                                             | FORE                                             |
+|                                             | :ref:`FORE <fore_reffile>`                       |
 +                                             +--------------------------------------------------+
-|                                             | FPA                                              |
+|                                             | :ref:`FPA <fpa_reffile>`                         |
 +                                             +--------------------------------------------------+
-|                                             | IFUFORE                                          |
+|                                             | :ref:`IFUFORE <ifufore_reffile>`                 |
 +                                             +--------------------------------------------------+
-|                                             | IFUPOST                                          |
+|                                             | :ref:`IFUPOST <ifupost_reffile>`                 |
 +                                             +--------------------------------------------------+
-|                                             | IFUSLICER                                        |
+|                                             | :ref:`IFUSLICER <ifuslicer_reffile>`             |
 +                                             +--------------------------------------------------+
-|                                             | MSA                                              |
+|                                             | :ref:`MSA <msa_reffile>`                         |
 +                                             +--------------------------------------------------+
-|                                             | OTE                                              |
+|                                             | :ref:`OTE <ote_reffile>`                         |
 +                                             +--------------------------------------------------+
-|                                             | SPECWCS                                          |
+|                                             | :ref:`SPECWCS <specwcs_reffile>`                 |
 +                                             +--------------------------------------------------+
-|                                             | REGIONS                                          |
+|                                             | :ref:`REGIONS <regions_reffile>`                 |
 +                                             +--------------------------------------------------+
 |                                             | :ref:`WAVELENGTHRANGE <wavelengthrange_reffile>` |
 +---------------------------------------------+--------------------------------------------------+
@@ -160,9 +160,9 @@ documentation on each reference file.
 +--------------------------------------------------+---------------------------------------------+
 | :ref:`BARSHADOW <barshadow_reffile>`             | :ref:`barshadow <barshadow_step>`           |
 +--------------------------------------------------+---------------------------------------------+
-| **CAMERA**                                       | :ref:`assign_wcs <assign_wcs_step>`         |
+| :ref:`CAMERA <camera_reffile>`                   | :ref:`assign_wcs <assign_wcs_step>`         |
 +--------------------------------------------------+---------------------------------------------+
-| **COLLIMATOR**                                   | :ref:`assign_wcs <assign_wcs_step>`         |
+| :ref:`COLLIMATOR <collimator_reffile>`           | :ref:`assign_wcs <assign_wcs_step>`         |
 +--------------------------------------------------+---------------------------------------------+
 | :ref:`CUBEPAR <cubepar_reffile>`                 | :ref:`cube_build <cube_build_step>`         |
 +--------------------------------------------------+---------------------------------------------+
@@ -170,21 +170,21 @@ documentation on each reference file.
 +--------------------------------------------------+---------------------------------------------+
 | :ref:`DFLAT <dflat_reffile>`                     | :ref:`flatfield <flatfield_step>`           |
 +--------------------------------------------------+---------------------------------------------+
-| **DISPERSER**                                    | :ref:`assign_wcs <assign_wcs_step>`         |
+| :ref:`DISPERSER <disperser_reffile>`             | :ref:`assign_wcs <assign_wcs_step>`         |
 +--------------------------------------------------+---------------------------------------------+
-| **DISTORTION**                                   | :ref:`assign_wcs <assign_wcs_step>`         |
+| :ref:`DISTORTION <distortion_reffile>`           | :ref:`assign_wcs <assign_wcs_step>`         |
 +--------------------------------------------------+---------------------------------------------+
 | :ref:`EXTRACT1D <extract1d_reffile>`             | :ref:`extract_1d <extract_1d_step>`         |
 +--------------------------------------------------+---------------------------------------------+
 | :ref:`FFLAT <fflat_reffile>`                     | :ref:`flatfield <flatfield_step>`           |
 +--------------------------------------------------+---------------------------------------------+
-| **FILTEROFFSET**                                 | :ref:`assign_wcs <assign_wcs_step>`         |
+| :ref:`FILTEROFFSET <filteroffset_reffile>`       | :ref:`assign_wcs <assign_wcs_step>`         |
 +--------------------------------------------------+---------------------------------------------+
 | :ref:`FLAT <flat_reffile>`                       | :ref:`flatfield <flatfield_step>`           |
 +--------------------------------------------------+---------------------------------------------+
-| **FORE**                                         | :ref:`assign_wcs <assign_wcs_step>`         |
+| :ref:`FORE <fore_reffile>`                       | :ref:`assign_wcs <assign_wcs_step>`         |
 +--------------------------------------------------+---------------------------------------------+
-| **FPA**                                          | :ref:`assign_wcs <assign_wcs_step>`         |
+| :ref:`FPA <fpa_reffile>`                         | :ref:`assign_wcs <assign_wcs_step>`         |
 +--------------------------------------------------+---------------------------------------------+
 | :ref:`FRINGE <fringe_reffile>`                   | :ref:`fringe <fringe_step>`                 |
 +--------------------------------------------------+---------------------------------------------+
@@ -194,11 +194,11 @@ documentation on each reference file.
 +                                                  +---------------------------------------------+
 |                                                  | :ref:`ramp_fitting <ramp_fitting_step>`     |
 +--------------------------------------------------+---------------------------------------------+
-| **IFUFORE**                                      | :ref:`assign_wcs <assign_wcs_step>`         |
+| :ref:`IFUFORE <ifufore_reffile>`                 | :ref:`assign_wcs <assign_wcs_step>`         |
 +--------------------------------------------------+---------------------------------------------+
-| **IFUPOST**                                      | :ref:`assign_wcs <assign_wcs_step>`         |
+| :ref:`IFUPOST <ifupost_reffile>`                 | :ref:`assign_wcs <assign_wcs_step>`         |
 +--------------------------------------------------+---------------------------------------------+
-| **IFUSLICER**                                    | :ref:`assign_wcs <assign_wcs_step>`         |
+| :ref:`IFUSLICER <ifuslicer_reffile>`             | :ref:`assign_wcs <assign_wcs_step>`         |
 +--------------------------------------------------+---------------------------------------------+
 | :ref:`IPC <ipc_reffile>`                         | :ref:`ipc <ipc_step>`                       |
 +--------------------------------------------------+---------------------------------------------+
@@ -206,11 +206,11 @@ documentation on each reference file.
 +--------------------------------------------------+---------------------------------------------+
 | :ref:`MASK <mask_reffile>`                       | :ref:`dq_init <dq_init_step>`               |
 +--------------------------------------------------+---------------------------------------------+
-| **MSA**                                          | :ref:`assign_wcs <assign_wcs_step>`         |
+| :ref:`MSA <msa_reffile>`                         | :ref:`assign_wcs <assign_wcs_step>`         |
 +--------------------------------------------------+---------------------------------------------+
 | :ref:`MSAOPER <msaoper_reffile>`                 | :ref:`msaflagopen <msaflagopen_step>`       |
 +--------------------------------------------------+---------------------------------------------+
-| **OTE**                                          | :ref:`assign_wcs <assign_wcs_step>`         |
+| :ref:`OTE <ote_reffile>`                         | :ref:`assign_wcs <assign_wcs_step>`         |
 +--------------------------------------------------+---------------------------------------------+
 | :ref:`PATHLOSS <pathloss_reffile>`               | :ref:`pathloss <pathloss_step>`             |
 +--------------------------------------------------+---------------------------------------------+
@@ -226,7 +226,7 @@ documentation on each reference file.
 +--------------------------------------------------+---------------------------------------------+
 | :ref:`REFPIX <refpix_reffile>`                   | :ref:`refpix <refpix_step>`                 |
 +--------------------------------------------------+---------------------------------------------+
-| **REGIONS**                                      | :ref:`assign_wcs <assign_wcs_step>`         |
+| :ref:`REGIONS <regions_reffile>`                 | :ref:`assign_wcs <assign_wcs_step>`         |
 +--------------------------------------------------+---------------------------------------------+
 | :ref:`RESET <reset_reffile>`                     | :ref:`reset <reset_step>`                   |
 +--------------------------------------------------+---------------------------------------------+
@@ -238,7 +238,7 @@ documentation on each reference file.
 +--------------------------------------------------+---------------------------------------------+
 | :ref:`SFLAT <sflat_reffile>`                     | :ref:`flatfield <flatfield_step>`           |
 +--------------------------------------------------+---------------------------------------------+
-| **SPECWCS**                                      | :ref:`assign_wcs <assign_wcs_step>`         |
+| :ref:`SPECWCS <specwcs_reffile>`                 | :ref:`assign_wcs <assign_wcs_step>`         |
 +--------------------------------------------------+---------------------------------------------+
 | :ref:`STRAYMASK <straymask_reffile>`             | :ref:`straylight <straylight_step>`         |
 +--------------------------------------------------+---------------------------------------------+
@@ -395,40 +395,66 @@ Note: For the NIR detectors, the fast readout direction changes sign from one am
 Tracking Pipeline Progress
 ++++++++++++++++++++++++++
 
-As each pipeline step is applied to a science data product, it will record a status indicator in a header keyword of the science data product. The current list of step status keyword names is given in the following table. These status keywords may be included in the primary header of reference files, in order to maintain a history of the data that went into creating the reference file. Allowed values for the status keywords are 'COMPLETE' and 'SKIPPED'. Absence of a particular keyword is understood to mean that step was not even attempted.
+As each pipeline step is applied to a science data product, it will record a status indicator in a
+header keyword of the science data product. The current list of step status keyword names is given
+in the following table. These status keywords may be included in the primary header of reference
+files, in order to maintain a history of the data that went into creating the reference file.
+Allowed values for the status keywords are 'COMPLETE' and 'SKIPPED'. Absence of a particular keyword
+is understood to mean that step was not even attempted.
 
-Table 3.  Keywords Documenting Which Pipeline Steps Have Been Performed
+Table 1.  Keywords Documenting Which Pipeline Steps Have Been Performed.
 
 =========   ========================================
-S_IPC       IPC correction  
-S_RESET     MIRI reset correction
-S_SUPERB    Superbias subtraction   
-S_IMPRNT    NIRSpec MSA imprint subtraction
-S_MSAFLG    NIRSpec MSA failed shutter flagging 
-S_EXTR1D    1-D spectral extraction
-S_LASTFR    MIRI last frame correction  
-S_DQINIT    DQ initialization
-S_REFPIX    Reference pixel correction  
-S_ERRINI    ERR initialization
-S_DARK      Dark subtraction    
-S_SATURA    Saturation check
-S_LINEAR    Linearity correction    
-S_JUMP      Jump detection
-S_RAMP      Ramp fitting    
-S_WCS       WCS assignment
-S_FLAT      Flat-fielding   
-S_FRINGE    Fringe correction
-S_PERSIS    Persistence correction  
-S_STRAY     Straylight correction
-S_TELEMI    Telescope emission  
-S_PHOTOM    Photometric (absolute flux) calibration
-S_EXTR1D    1-D extraction  
-S_EXTR2D    2-D spectral extraction
-S_RESAMP    Image resampling    
+S_AMIANA    AMI fringe analysis
+S_AMIAVG    AMI fringe averaging
+S_AMINOR    AMI fringe normalization
+S_BARSHA    Bar shadow correction
 S_BKDSUB    Background subtraction
-S_SLOSS     Slit-loss correction         
+S_COMB1D    1-D spectral combination
+S_DARK      Dark subtraction    
+S_DQINIT    DQ initialization
+S_ERRINI    ERR initialization
+S_EXTR1D    1-D spectral extraction
+S_EXTR2D    2-D spectral extraction
+S_FLAT      Flat field correction
+S_FRINGE    Fringe correction
+S_FRSTFR    MIRI first frame correction
+S_GANSCL    Gain scale correction
+S_GRPSCL    Group scale correction
+S_GUICDS    Guide mode CDS computation
+S_IFUCUB    IFU cube creation
+S_IMPRNT    NIRSpec MSA imprint subtraction
+S_IPC       IPC correction  
+S_JUMP      Jump detection
+S_KLIP      Coronagraphic PSF subtraction
+S_LASTFR    MIRI last frame correction  
+S_LINEAR    Linearity correction    
+S_MRSMAT    MIRI MRS background matching
+S_MSAFLG    NIRSpec MSA failed shutter flagging 
+S_OUTLIR    Outlier detection
+S_PERSIS    Persistence correction  
+S_PHOTOM    Photometric (absolute flux) calibration
+S_PSFALI    Coronagraphic PSF alignment
+S_PSFSTK    Coronagraphic PSF stacking
+S_PTHLOS    Pathloss correction
+S_RAMP      Ramp fitting    
+S_REFPIX    Reference pixel correction  
+S_RESAMP    Resampling (drizzling)
+S_RESET     MIRI reset correction
+S_RSCD      MIRI RSCD correction
+S_SATURA    Saturation check
+S_SKYMAT    Sky matching
+S_SRCCAT    Source catalog creation
+S_SRCTYP    Source type determination
+S_STRAY     Straylight correction
+S_SUPERB    Superbias subtraction   
+S_TELEMI    Telescope emission correction
+S_TSPHOT    TSO imaging photometry
+S_TWKREG    Tweakreg image alignment
+S_WCS       WCS assignment
+S_WFSCOM    Wavefront sensing image combination
+S_WHTLIT    TSO white-light curve generation
 =========   ========================================
-
 
 
 Orientation of Detector Image
@@ -436,7 +462,7 @@ Orientation of Detector Image
 
 All steps in the pipeline assume the data are in the DMS (science) orientation, not the native readout orientation. The pipeline does NOT check or correct for the orientation of the reference data. It assumes that all files ingested into CRDS have been put into the science orientation.  All header keywords documenting the observing mode (Table 2) should likewise be transformed into the DMS orientation.   For square data array dimensions it's not possible to infer the actual orientation directly so reference file authors must manage orientation carefully.   
 
-    Correct values for FASTAXIS and SLOWAXIS for each detector are:
+Table 2.  Correct values for FASTAXIS and SLOWAXIS for each detector.
 
 =========== ======== ========
 DETECTOR    FASTAXIS SLOWAXIS
@@ -512,7 +538,7 @@ Data Quality Flags
 Within science data files, the PIXELDQ flags are stored as 32-bit integers; 
 the GROUPDQ flags are 8-bit integers.  The meaning of each bit is specified 
 in a separate binary table extension called DQ_DEF.  The binary table has the 
-format presented in Table 1, which represents the master list of DQ flags.  
+format presented in Table 3, which represents the master list of DQ flags.  
 Only the first eight entries in the table below are relevant to the 
 GROUPDQ array. All calibrated data from a particular instrument and observing mode 
 have the same set of DQ flags in the same (bit) order. For Build 7, this master 
@@ -527,7 +553,7 @@ the DQ_DEF extension, which is a binary table having the following fields: Bit, 
 Name, and Description.
 
 
-Table 1. Flags for the PIXELDQ and GROUPDQ Arrays (Format of DQ_DEF Extension)
+Table 3. Flags for the DQ, PIXELDQ, and GROUPDQ Arrays (Format of DQ_DEF Extension).
 
 ===  ==========    ================  ===========================================
 Bit  Value         Name              Description
@@ -563,6 +589,7 @@ Bit  Value         Name              Description
 28   268435456     UNRELIABLE_RESET  Sensitive to reset anomaly
 29   536870912     MSA_FAILED_OPEN   Pixel sees light from failed-open shutter
 30   1073741824    OTHER_BAD_PIXEL   A catch-all flag
+31   2147483648    REFERENCE_PIXEL   Pixel is a reference pixel
 ===  ==========    ================  ===========================================
 
 Note: Words like "highly" and "large" will be defined by each instrument team.  They are likely to vary from one detector to another – or even from one observing mode to another.  
