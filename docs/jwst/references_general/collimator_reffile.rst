@@ -18,8 +18,11 @@ Instrument Keywords
 NIRSpec    INSTRUME, EXP_TYPE, DATE-OBS, TIME-OBS
 ========== ======================================
 
+.. include:: ../includes/standard_keywords.rst
+
 Reference File Format
 +++++++++++++++++++++
-The collimator reference file contains an astropy compound model made up of polynomial models, rotations, and translations. The forward direction is from the GWA to the MSA.
+The collimator reference file contains an astropy compound model made up of polynomial models,
+rotations, and translations. The forward direction is from the GWA to the MSA.
 
 :model: Transform through the COLLIMATOR.

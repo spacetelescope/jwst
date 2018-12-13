@@ -18,6 +18,8 @@ Instrument Keywords
 NIRSpec    INSTRUME, EXP_TYPE, DATE-OBS, TIME-OBS
 ========== ======================================
 
+.. include:: ../includes/standard_keywords.rst
+
 Reference File Format
 +++++++++++++++++++++
 The IFUSLICER stores information about the metrology of the IFU slicer - relative

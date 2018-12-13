@@ -18,6 +18,8 @@ Instrument Keywords
 MIRI       INSTRUME, DETECTOR, EXP_TYPE, CHANNEL, BAND, DATE-OBS, TIME-OBS
 ========== ===============================================================
 
+.. include:: ../includes/standard_keywords.rst
+
 Reference File Format
 +++++++++++++++++++++
 The IFU takes a region reference file that defines the region over which the WCS is valid.

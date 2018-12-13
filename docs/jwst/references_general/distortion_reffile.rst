@@ -21,6 +21,8 @@ NIRCam     INSTRUME, DETECTOR, EXP_TYPE, CHANNEL, FILTER, DATE-OBS, TIME-OBS
 NIRISS     INSTRUME, EXP_TYPE, PUPIL, DATE-OBS, TIME-OBS
 ========== =================================================================
 
+.. include:: ../includes/standard_keywords.rst
+
 Reference File Format
 +++++++++++++++++++++
 The distortion reference file contains a combination of astropy models,

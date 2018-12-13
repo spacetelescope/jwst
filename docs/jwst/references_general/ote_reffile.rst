@@ -18,6 +18,8 @@ Instrument Keywords
 NIRSpec    INSTRUME, EXP_TYPE, DATE-OBS, TIME-OBS
 ========== ======================================
 
+.. include:: ../includes/standard_keywords.rst
+
 Reference File Format
 +++++++++++++++++++++
 The OTE reference file contains a combination of astropy models - polynomial, shift, rotation and scaling.

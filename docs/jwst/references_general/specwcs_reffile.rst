@@ -20,6 +20,8 @@ NIRCam     INSTRUME, EXP_TYPE, MODULE, PUPIL, DATE-OBS, TIME-OBS
 NIRISS     INSTRUME, EXP_TYPE, FILTER, PUPIL, DATE-OBS, TIME-OBS
 ========== =========================================================================
 
+.. include:: ../includes/standard_keywords.rst
+
 Reference File Format
 +++++++++++++++++++++
 The exact format and contents of the SPECWCS reference file varies depending on the

@@ -18,6 +18,8 @@ Instrument Keywords
 NIRSpec    INSTRUME, EXP_TYPE, DATE-OBS, TIME-OBS
 ========== ======================================
 
+.. include:: ../includes/standard_keywords.rst
+
 Reference File Format
 +++++++++++++++++++++
 The camera reference file contains an astropy compound model made up of polynomial models, rotations, and translations. The forward direction is from the FPA to the GWA.

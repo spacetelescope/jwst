@@ -18,6 +18,8 @@ Instrument Keywords
 NIRSpec    INSTRUME, EXP_TYPE, FILTER, DATE-OBS, TIME-OBS
 ========== ==============================================
 
+.. include:: ../includes/standard_keywords.rst
+
 Reference File Format
 +++++++++++++++++++++
 The FORE reference file stores the transform through the Filter Wheel Assembly (FWA).
