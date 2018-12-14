@@ -61,7 +61,7 @@ arrxyzero(PyObject *obj, PyObject *args)
   double **zpmat = NULL;
 
   long imgnum, refnum;
-  integer_t dimensions[2];
+  npy_intp dimensions[2];
   integer_t xind, yind;
   double dx, dy;
   long j, k;
@@ -82,7 +82,7 @@ arrxyzero(PyObject *obj, PyObject *args)
 
   dimensions[0] = (integer_t)(searchrad*2) + 1;
   dimensions[1] = (integer_t)(searchrad*2) + 1;
-  ozpmat = (PyArrayObject *)PyArray_FromDims(2, dimensions, NPY_DOUBLE);
+  ozpmat = (PyArrayObject *)PyArray_SimpleNew(2, dimensions, NPY_DOUBLE);
   if (!ozpmat) {
     goto _exit;
   }
