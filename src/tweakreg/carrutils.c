@@ -12,7 +12,7 @@
 
 static PyObject *gl_Error;
 
-typedef int integer_t;
+typedef npy_intp integer_t;
 
 /* ==== Allocate a double *vector (vec of pointers) ======================
     Memory is Allocated!  See void free_Carray(double ** )                  */
@@ -61,7 +61,7 @@ arrxyzero(PyObject *obj, PyObject *args)
   double **zpmat = NULL;
 
   long imgnum, refnum;
-  npy_intp dimensions[2];
+  integer_t dimensions[2];
   integer_t xind, yind;
   double dx, dy;
   long j, k;
