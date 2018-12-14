@@ -233,10 +233,6 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
 
     # Get max number of segments fit in all integrations
     max_seg = calc_num_seg(gdq_cube, n_int)
-
-    #max_seg should not be greater than the number of frames
-    max_seg = np.minimum(max_seg, ngroups)
-
     del gdq_cube
 
     f_max_seg = 0  # final number to use, usually overwritten by actual value
@@ -502,7 +498,7 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
         del var_p4_int
         del var_p4_int2
 
-    del gain_2d   
+    del gain_2d
 
     var_p4 *= ( segs_4[:,:,:,:] > 0) # Zero out non-existing segments
     var_r4 *= ( segs_4[:,:,:,:] > 0)
@@ -668,12 +664,11 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
     var_p2 = 1/(s_inv_var_p3.sum(axis=0))
     var_r2 = 1/(s_inv_var_r3.sum(axis=0))
 
-
     # Huge variances correspond to non-existing segments, so are reset to 0
     #  to nullify their contribution.
     var_p2[var_p2 > 0.1 * utils.LARGE_VARIANCE] = 0.
     var_r2[var_r2 > 0.1 * utils.LARGE_VARIANCE] = 0.
-    
+
     del s_inv_var_p3
     del s_inv_var_r3
 
@@ -1512,7 +1507,6 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
     #  ramp, and the variable `l_interval` used below = 1, and the number of
     #  groups in the segment = 2
     wh_check = np.where((l_interval == 1) & (end_locs == nreads - 1) &
-
                         (nreads > 1) & (ngroups != 2) & (~pixel_done))
 
     # Require that pixels to be processed here have at least 1 good group out
