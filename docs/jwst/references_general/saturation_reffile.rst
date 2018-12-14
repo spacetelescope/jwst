@@ -20,14 +20,12 @@ the following keywords are *required* in SATURATION reference files,
 because they are used as CRDS selectors
 (see :ref:`saturation_selectors`):
 
-=========  ==============================
-Keyword    Data Model Name
-=========  ==============================
-DETECTOR   model.meta.instrument.detector
-EXP_TYPE   model.meta.exposure.type
-FILTER     model.meta.instrument.filter
-PUPIL      model.meta.instrument.pupil
-=========  ==============================
+=========  ==============================  ==========
+Keyword    Data Model Name                 Instrument
+=========  ==============================  ==========
+DETECTOR   model.meta.instrument.detector  All
+SUBARRAY   model.meta.subarray.name        NIRSpec
+=========  ==============================  ==========
 
 Reference File Format
 +++++++++++++++++++++
