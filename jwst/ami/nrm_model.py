@@ -25,13 +25,13 @@ from . import leastsqnrm as leastsqnrm
 from . import analyticnrm2
 from . import utils
 from . import hexee
-from . import NRM_consts
+from . import nrm_consts
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-class NRM_Model():
+class NrmModel:
 
     def __init__(self, mask=None, holeshape="circ", pixscale=hexee.mas2rad(65),
                  rotate=False, over=1, flip=False, pixweight=None, scallist=None,
@@ -39,7 +39,7 @@ class NRM_Model():
         """
         Short Summary
         -------------
-        Set attributes of NRM_Model object.
+        Set attributes of NrmModel class.
 
         Parameters
         ----------
@@ -96,7 +96,7 @@ class NRM_Model():
                 raise AttributeError("mask must be either 'jwst' \
                                                       or NRM_mask_geometry object")
 
-        log.debug('NRM_Model: ctrs flipped in init for CV1, CV2')
+        log.debug('NrmModel: ctrs flipped in init for CV1, CV2')
 
         if rotate:
             log.info('Providing additional rotation %s degrees',
@@ -129,7 +129,7 @@ class NRM_Model():
         if phi == "perfect":
             self.phi = np.zeros(len(self.ctrs))
         elif phi == 'nb':
-            self.phi = NRM_consts.phi_nb
+            self.phi = nrm_consts.phi_nb
         else:
             self.phi = phi
 
@@ -477,7 +477,7 @@ class NRM_Model():
         Short Summary
         -------------
         Make an image from the object's model and fit solutions, by setting the
-        NRM_Model object's modelpsf attribute
+        NrmModel object's modelpsf attribute
 
         Parameters
         ----------
