@@ -1,3 +1,5 @@
+:orphan:
+
 .. _msa_reffile:
   
 MSA Reference File (NIRSpec only)

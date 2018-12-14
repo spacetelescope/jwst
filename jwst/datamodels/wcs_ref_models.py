@@ -481,7 +481,7 @@ class IFUPostModel(ReferenceFileModel):
     init : str
         A file name.
     slice_models : dict
-        A dictionary with slice transforms with the following entries:
+        A dictionary with slice transforms with the following entries
         {"slice_N": {'linear': astropy.modeling.Model,
                      'xpoly': astropy.modeling.Model,
                      'xpoly_distortion': astropy.modeling.Model,
@@ -489,7 +489,9 @@ class IFUPostModel(ReferenceFileModel):
                      'ypoly_distortion': astropy.modeling.Model,
                      }
         }
+
     """
+
     schema_url = "ifupost.schema.yaml"
     reftype = "ifupost"
 

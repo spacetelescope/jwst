@@ -1,3 +1,5 @@
+:orphan:
+
 .. _disperser_reffile:
 
 DISPERSER Reference File (NIRSpec only)

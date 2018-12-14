@@ -33,7 +33,4 @@ keys defined for `jwst.model_blender.blender_rules.blender_funcs` listed
 above.  This definition illustrates how several rules are simply interfaces for
 numpy array operations, while others are defined internally to `model_blender`.
 
-.. toctree::
-   :maxdepth: 2
-
 .. automodapi:: jwst.model_blender.blendrules

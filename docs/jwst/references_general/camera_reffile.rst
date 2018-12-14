@@ -1,3 +1,5 @@
+:orphan:
+
 .. _camera_reffile:
 
 CAMERA Reference File (NIRSpec only)
