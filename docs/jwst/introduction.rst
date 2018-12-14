@@ -40,11 +40,19 @@ gives examples of running pipelines as a whole or in individual steps.
 Reference Files
 ===============
 
-Many pipeline steps rely on the use of a set of reference files essential to ensure the correct and accurate process of the data. The reference files are instrument-specific, and are periodically updated as the data process evolves and the understanding of the instruments improves. They are created, tested and validated by the JWST Instrument Teams. They ensure all the files are in the correct format and have all required header keywords. The files are then delivered to the Reference Data for Calibration and Tools (ReDCaT) Management Team. The result of this process is the files being ingested into CRDS (the JWST Calibration Reference Data System), and made available to the pipeline team and any other ground-subsystem that needs access to them.
+Many pipeline steps rely on the use of reference files that contain different types of
+calibration data or information necessary for processing the data. The reference files are
+instrument-specific and are periodically updated as the data processing evolves and the
+understanding of the instruments improves. They are created, tested, and validated by the
+JWST Instrument Teams. They ensure all the files are in the correct format and have all
+required header keywords. The files are then delivered to the Reference Data for Calibration
+and Tools (ReDCaT) Management Team. The result of this process is the files being ingested
+into the JWST Calibration Reference Data System (CRDS), and made available to the pipeline
+team and any other ground subsystem that needs access to them.
 
 Information about all the reference files used by the Calibration Pipeline can be found at
-:ref:`reference-file-formats-documentation`
-as well as in the documentation for the Calibration Step using them.
+:ref:`reference_file_information`,
+as well as in the documentation for each Calibration Step that uses a reference file.
  
 CRDS
 ====
@@ -60,7 +68,7 @@ desired project mapping version, e.g.
 
 $ export CRDS_CONTEXT='jwst_0421.pmap'
 
-The current storage location for all JWST CRDS reference files is:
+Within STScI, the current storage location for all JWST CRDS reference files is:
 ::
 
 /grp/crds/jwst/references/jwst/
