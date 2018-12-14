@@ -40,7 +40,7 @@ from . import objects
 from . import generators
 from . import util
 from . import verifiers
-from .pyparsing import *
+from ..extern.pyparsing import *
 
 class TemplateParserBase:
     # This parser is a hybrid between hand-written parsing and
@@ -131,8 +131,7 @@ class TemplateParserBase:
     def _line_iter(self, filename):
         """
         Iterates through the lines of a file, transparently handling
-        continuation lines (lines ending with \), and #include
-        directives.
+        continuation lines and #include directives.
         """
         old_filename = self._filename
         self._filename = filename
