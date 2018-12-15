@@ -444,6 +444,8 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
 
             segs_4[num_int, :, rlo:rhi, :] = segs_beg_3
             var_p4[num_int, :, rlo:rhi, :] = den_p3 * med_rates[ rlo:rhi, :]
+            
+            #find the segment variance due to read noise and convert back to DN
             var_r4[num_int, :, rlo:rhi, :] = num_r3 * den_r3/gain_sect**2
 
             del den_r3, den_p3, num_r3, segs_beg_3
