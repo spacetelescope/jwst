@@ -15,7 +15,7 @@ def test_refpix_subarray():
 
     # create input data
     # create model of data with 0 value array
-    ngroups = 50
+    ngroups = 10
     ysize = 224
     xsize = 288
 
