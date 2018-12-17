@@ -1,3 +1,5 @@
+.. _assign_wcs_step:
+
 ==========
 Assign WCS
 ==========

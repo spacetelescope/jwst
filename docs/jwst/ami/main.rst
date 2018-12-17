@@ -66,6 +66,8 @@ Note that the ``exptype`` attribute value for each input member is used to
 indicate which files contain science target images and which contain reference
 PSF images.
 
+.. _ami_analyze_step:
+
 AMI_Analyze
 ===========
 

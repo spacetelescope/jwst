@@ -92,6 +92,8 @@ concatenated data cubes from the input psf files.
 
 .. automodapi:: jwst.coron.stack_refs_step
 
+.. _align_refs_step:
+
 Align_refs
 ==========
 

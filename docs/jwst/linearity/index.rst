@@ -1,3 +1,5 @@
+.. _linearity_step:
+
 ====================
 Linearity Correction
 ====================
