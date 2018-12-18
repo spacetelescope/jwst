@@ -5,10 +5,12 @@ import os.path as op
 from asdf import AsdfFile
 
 from ..associations import (
-    AssociationError,
+    Association, AssociationError,
     AssociationNotValidError, load_asn)
+
 from . import model_base
 from .util import open as datamodel_open
+from .util import is_association
 
 import logging
 log = logging.getLogger(__name__)
@@ -87,13 +89,16 @@ class ModelContainer(model_base.DataModel):
             self._ctx = self
             self.__class__ = init.__class__
             self._models = init._models
+        elif is_association(init):
+            self.from_asn(init, **kwargs)
         elif isinstance(init, str):
             try:
-                self.from_asn(init, **kwargs)
+                init = self.read_asn(init)
             except (IOError):
                 raise IOError('Cannot open files.')
             except AssociationError:
                 raise AssociationError('{0} must be an ASN file'.format(init))
+            self.from_asn(init, **kwargs)
         else:
             raise TypeError('Input {0!r} is not a list of DataModels or '
                             'an ASN file'.format(init))
@@ -179,7 +184,7 @@ class ModelContainer(model_base.DataModel):
                 result.append(m)
         return result
 
-    def from_asn(self, filepath, **kwargs):
+    def read_asn(self, filepath):
         """
         Load fits files from a JWST association file.
 
@@ -197,7 +202,19 @@ class ModelContainer(model_base.DataModel):
                 asn_data = load_asn(asn_file)
         except AssociationNotValidError:
             raise IOError("Cannot read ASN file.")
+        return asn_data
 
+    def from_asn(self, asn_data, **kwargs):
+        """
+        Load fits files from a JWST association file.
+
+        Parameters
+        ----------
+        asn_data : Association
+            An association dictionary
+
+        kwargs: Optional arguments in DataModel initialization
+        """
         # make a list of all the input files
         infiles = [op.join(basedir, member['expname']) for member
                    in asn_data['products'][0]['members']]

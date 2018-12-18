@@ -9,6 +9,8 @@ from os.path import basename
 import numpy as np
 from astropy.io import fits
 
+from ..associations import Association
+
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -70,6 +72,11 @@ def open(init=None, extensions=None, **kwargs):
     elif isinstance(init, model_base.DataModel):
         # Copy the object so it knows not to close here
         return init.__class__(init)
+
+    elif is_association(init):
+        from . import container
+        return container.ModelContainer(init, extensions=extensions,
+                                        **kwargs)
 
     elif isinstance(init, (str, bytes)) or hasattr(init, "read"):
         # If given a string, presume its a file path.
@@ -299,6 +306,16 @@ def can_broadcast(a, b):
 
 def to_camelcase(token):
     return ''.join(x.capitalize() for x in token.split('_-'))
+
+
+def is_association(asn_data):
+    """
+    Test if an object is an association by checking for required fields
+    """
+    if isinstance(asn_data, dict):
+        if 'asn_id' in asn_data and 'asn_pool' in asn_data:
+            return True
+    return False
 
 
 def gentle_asarray(a, dtype):
