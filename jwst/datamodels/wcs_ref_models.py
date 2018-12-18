@@ -483,12 +483,11 @@ class IFUPostModel(ReferenceFileModel):
     slice_models : dict
         A dictionary with slice transforms with the following entries
         {"slice_N": {'linear': astropy.modeling.Model,
-                     'xpoly': astropy.modeling.Model,
-                     'xpoly_distortion': astropy.modeling.Model,
-                     'ypoly': astropy.modeling.Model,
-                     'ypoly_distortion': astropy.modeling.Model,
-                     }
-        }
+        ...         'xpoly': astropy.modeling.Model,
+        ...         'xpoly_distortion': astropy.modeling.Model,
+        ...         'ypoly': astropy.modeling.Model,
+        ...         'ypoly_distortion': astropy.modeling.Model,
+        ...         }}
 
     """
 
