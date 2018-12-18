@@ -32,7 +32,7 @@ def make_cube(input_models):
             raise ValueError('All PSF exposures must have the same x/y dimensions!')
 
     # Create empty output data arrays of the appropriate dimensions
-    outdata = np.zeros((nints, nrows, ncols), dtype=np.float32)
+    outdata = np.zeros((nints, nrows, ncols), dtype=np.float64)
     outerr = outdata.copy()
     outdq = np.zeros((nints, nrows, ncols), dtype=np.uint32)
 
