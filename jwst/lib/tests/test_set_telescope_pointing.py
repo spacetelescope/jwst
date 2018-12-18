@@ -94,6 +94,29 @@ def data_file():
         yield file_path
 
 
+def test_change_engdb_url():
+    """Test changing the engineering database by call for success.
+
+    The given time and database should not find any values.
+    """
+    with pytest.raises(ValueError):
+        results = stp.get_pointing(
+            STARTTIME.mjd,
+            ENDTIME.mjd,
+            engdb_url=engdb_tools.ENGDB_BASE_URL
+        )
+
+
+def test_change_engdb_url_fail():
+    """Test changing the engineering database by call"""
+    with pytest.raises(Exception):
+        results = stp.get_pointing(
+             Time('2019-06-03T17:25:40', format='isot').mjd,
+             Time('2019-06-03T17:25:56', format='isot').mjd,
+            engdb_url='http://nonexistant.fake'
+        )
+
+
 def test_strict_pointing(data_file, eng_db_jw703):
     """Test failure on strict pointing"""
     with pytest.raises(ValueError):
