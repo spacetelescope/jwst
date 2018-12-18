@@ -1,3 +1,5 @@
+:orphan:
+
 .. _fore_reffile:
 
 FORE Reference File (NIRSpec only)

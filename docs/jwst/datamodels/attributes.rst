@@ -27,7 +27,7 @@ The current models are as follows:
     `DrizProductModel`,
     `Extract1dImageModel`,
     `FilteroffsetModel`,
-    `FlatModel`, `CubeFlatModel`, `NirspecFlatModel`, `NirspecQuadFlatModel`,
+    `FlatModel`, `NirspecFlatModel`, `NirspecQuadFlatModel`,
     `FOREModel`,
     `FPAModel`,
     `FringeModel`,
@@ -116,6 +116,7 @@ DataModel Base Class
 .. autoclass:: jwst.datamodels.DataModel
    :members:
 
+
 Specific Model Classes
 ----------------------
 
@@ -134,7 +135,7 @@ Specific Model Classes
     DrizProductModel,
     Extract1dImageModel,
     FilteroffsetModel,
-    FlatModel, CubeFlatModel, NirspecFlatModel, NirspecQuadFlatModel,
+    FlatModel, NirspecFlatModel, NirspecQuadFlatModel,
     FOREModel,
     FPAModel,
     FringeModel,

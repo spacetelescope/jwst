@@ -1,3 +1,5 @@
+:orphan:
+
 .. _collimator_reffile:
 
 COLLIMATOR Reference File (NIRSpec only)

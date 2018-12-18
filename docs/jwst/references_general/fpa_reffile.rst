@@ -1,3 +1,5 @@
+:orphan:
+
 .. _fpa_reffile:
 
 FPA Reference File (NIRSpec only)

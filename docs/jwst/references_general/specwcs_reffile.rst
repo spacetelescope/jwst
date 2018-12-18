@@ -1,3 +1,5 @@
+:orphan:
+
 .. _specwcs_reffile:
   
 SPECWCS Reference File

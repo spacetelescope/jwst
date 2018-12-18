@@ -1,3 +1,5 @@
+:orphan:
+
 .. _regions_reffile:
   
 REGIONS Reference File (MIRI only)

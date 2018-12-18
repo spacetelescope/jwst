@@ -1,3 +1,5 @@
+:orphan:
+
 .. _ifufore_reffile:
 
 IFUFORE Reference File (NIRSpec only)

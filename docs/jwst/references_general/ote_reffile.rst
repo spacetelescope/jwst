@@ -1,3 +1,5 @@
+:orphan:
+
 .. _ote_reffile:
   
 OTE Reference File (NIRSpec only)

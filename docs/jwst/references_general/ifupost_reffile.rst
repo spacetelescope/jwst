@@ -1,3 +1,5 @@
+:orphan:
+
 .. _ifupost_reffile:
   
 IFUPOST Reference File (NIRSpec only)

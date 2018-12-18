@@ -1,4 +1,7 @@
+:orphan:
+
 .. _filteroffset_reffile:
+
 
 FILTEROFFSET Reference File (MIRI only)
 ---------------------------------------

@@ -211,6 +211,7 @@ Example EXTRACT1D Reference File
 --------------------------------
 The following JSON was taken as an example from reference file
 jwst_niriss_extract1d_0003.json::
+
   {
       "REFTYPE": "EXTRACT1D",
       "INSTRUME": "NIRISS",
