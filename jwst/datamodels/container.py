@@ -90,15 +90,15 @@ class ModelContainer(model_base.DataModel):
             self.__class__ = init.__class__
             self._models = init._models
         elif is_association(init):
-            self.from_asn(init, **kwargs)
+            self.from_asn(init)
         elif isinstance(init, str):
             try:
-                init = self.read_asn(init)
+                init_from_asn = self.read_asn(init)
             except (IOError):
                 raise IOError('Cannot open files.')
             except AssociationError:
                 raise AssociationError('{0} must be an ASN file'.format(init))
-            self.from_asn(init, **kwargs)
+            self.from_asn(init_from_asn, asn_file_path=init)
         else:
             raise TypeError('Input {0!r} is not a list of DataModels or '
                             'an ASN file'.format(init))
@@ -195,8 +195,6 @@ class ModelContainer(model_base.DataModel):
         """
 
         filepath = op.abspath(op.expanduser(op.expandvars(filepath)))
-        basedir = op.dirname(filepath)
-        filename = op.basename(filepath)
         try:
             with open(filepath) as asn_file:
                 asn_data = load_asn(asn_file)
@@ -204,7 +202,7 @@ class ModelContainer(model_base.DataModel):
             raise IOError("Cannot read ASN file.")
         return asn_data
 
-    def from_asn(self, asn_data, **kwargs):
+    def from_asn(self, asn_data, asn_file_path=None):
         """
         Load fits files from a JWST association file.
 
@@ -213,10 +211,11 @@ class ModelContainer(model_base.DataModel):
         asn_data : Association
             An association dictionary
 
-        kwargs: Optional arguments in DataModel initialization
+        asn_file_path: str
+            Filepath of the association, if known.
         """
         # make a list of all the input files
-        infiles = [op.join(basedir, member['expname']) for member
+        infiles = [member['expname'] for member
                    in asn_data['products'][0]['members']]
         self._models = infiles
 
@@ -227,7 +226,10 @@ class ModelContainer(model_base.DataModel):
         )
 
         self.meta.resample.output = asn_data['products'][0]['name']
-        self.meta.table_name = filename
+        if asn_file_path is None:
+            self.meta.table_name = 'not specified'
+        else:
+            self.meta.table_name = op.basename(asn_file_path)
         self.meta.pool_name = asn_data['asn_pool']
 
     def save(self,
