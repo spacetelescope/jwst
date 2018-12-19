@@ -76,7 +76,7 @@ def simple_ramp(fit_method='OLS', ngroups=10, cr_group=None):
 
 if __name__ == '__main__':
 
-    solve_method = ['OLS', 'GLS']
+    solve_method = ['GLS', 'OLS']
     ngroups = [10, 20, 40]
     crgroup = [None, 4]
     for cmethod in solve_method:

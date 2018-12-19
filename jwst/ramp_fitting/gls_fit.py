@@ -707,8 +707,16 @@ def gls_fit(ramp_data,
     # shape of `ramp_invcov` is (nz, ngroups, ngroups)
     I = I.reshape((1, ngroups, ngroups))
     # not clear if this is faster (the same results is obtained)
-    # ramp_invcov = la.solve(ramp_cov, I)
-    ramp_invcov = la.inv(ramp_cov)
+    ramp_invcov = la.solve(ramp_cov, I)
+    # ramp_invcov = la.inv(ramp_cov)
+    # print(ramp_invcov.shape)
+    # print(ramp_invcov[0])
+    #   ****not faster***
+    # a = [la.solve(curcov, I[0]) for curcov in ramp_cov]
+    # ramp_invcov = np.array(a)
+    # print(ramp_invcov2.shape)
+    # print(ramp_invcov2[0])
+    # exit()
     del I
 
     # print('ramp inv covariance')
@@ -758,3 +766,26 @@ def gls_fit(ramp_data,
     variances = fitparam_cov.diagonal(axis1=1, axis2=2).copy()
 
     return (result2d, variances)
+
+
+# from https://stackoverflow.com/questions/11972102/is-there-a-way-to-efficiently-invert-an-array-of-matrices-with-numpy
+# from numpy.linalg import lapack_lite
+# lapack_routine = lapack_lite.dgesv
+# # Looking one step deeper, we see that solve performs many sanity checks.
+# # Stripping these, we have:
+# def faster_inverse(A):
+#     b = np.identity(A.shape[2], dtype=A.dtype)
+#
+#     n_eq = A.shape[1]
+#     n_rhs = A.shape[2]
+#     pivots = zeros(n_eq, np.intc)
+#     identity  = np.eye(n_eq)
+#     def lapack_inverse(a):
+#         b = np.copy(identity)
+#         pivots = zeros(n_eq, np.intc)
+#         results = lapack_lite.dgesv(n_eq, n_rhs, a, n_eq, pivots, b, n_eq, 0)
+#         if results['info'] > 0:
+#             raise LinAlgError('Singular matrix')
+#         return b
+#
+#     return array([lapack_inverse(a) for a in A])
