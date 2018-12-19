@@ -301,7 +301,7 @@ def extract_grism_objects(input_model,
         raise ValueError("No grism objects created from source catalog")
 
     log.info("Extracting grism objects into MultiSlitModel")
-    output_model = datamodels.MultiSlitModel()
+    output_model = datamodels.MultiSlitModel(input_model)
 
     # One WCS model can be used to govern all the extractions
     # and in fact the model transforms rely on the full frame
