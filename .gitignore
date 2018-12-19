@@ -7,6 +7,9 @@ dist/
 *.pyc
 *.egg-info/
 *.so
+*.prof
+.*
+.gitignore
 */version.py
 docs/*/source/*.txt.rst
 docs/fits_generator/source/templates.rst
