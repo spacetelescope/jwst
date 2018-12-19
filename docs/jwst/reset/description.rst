@@ -1,27 +1,29 @@
 Description
 ===========
 
+.. note:: The reset step is not currently applied to MIRI exposures, but
+          will likely be reinstated in a future build.
+
 Assumptions
 -----------
-The reset correction is currently only implemented for MIRI data. It is
+The reset correction is a MIRI-specific correction. It is
 assumed that the input science data have *NOT* had the zero group (or bias)
-subtracted. We also do not want the reset correction  to remove the
+subtracted. We also do not want the reset correction to remove the
 bias signal from the science exposure, therefore the reset correction
 for the first group is defined to be zero.
 
 Background
 __________
 
-Currently this step is only implemented for MIRI data. For MIRI data
-the initial groups  in an integration suffer from two effects related
-to the resetting of the detectors. The first effect is that the
-first few samples starting an integration after a reset do not fall
+For MIRI exposures the initial groups in each integration suffer from two
+effects related to the resetting of the detectors. The first effect is that the
+first few groups after a reset do not fall
 on the expected linear accumulation of signal.
 The most significant deviations ocurr in groups 1 and 2.
 This behavior is relatively uniform detector-wide. The second effect,
 on the other hand, is the appearance of
-significant extra spatial structure that appears on in these initial
-groups, before fading out by later groups.
+significant extra spatial structure in these initial
+groups, before fading out in later groups.
 
 The time constant associated with the reset anomaly is
 roughly a minute so for full array data the effect has faded out
