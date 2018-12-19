@@ -145,7 +145,6 @@ setup(
     name=NAME,
     version=version.pep386,
     author='JWST Pipeline developers',
-    author_email='help@stsci.edu',
     description='Python library for science observations from the James Webb Space Telescope',
     long_description=('The JWST Data Reduction Pipeline is a Python '
                       'software suite that automatically processes the '
