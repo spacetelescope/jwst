@@ -90,7 +90,7 @@ Software vs DMS build version map
 
 | jwst tag | DMS build | CRDS_CONTEXT |   Date     |          Notes                           |
 | -------- | --------- | ------------ | ---------- | -----------------------------------------|
-|  0.12.2  | B7.2rc3   | 0495         | 11/07/2018 | Final release candidate for Build 7.2    |
+|  0.12.2  | B7.2      | 0495         | 11/07/2018 | Final release candidate for Build 7.2    |
 |  0.12.1  | B7.2rc2   | 0495         | 11/01/2018 | Second release candidate for Build 7.2   |
 |  0.12.0  | B7.2rc1   | 0493*        | 10/09/2018 | First release candidate for Build 7.2    |
 |  0.11.0  |           | 0482*        | 09/10/2018 | DMS test, no delivery to I&T             |
