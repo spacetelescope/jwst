@@ -7,9 +7,10 @@ from astropy import units as u
 from astropy import coordinates as coord
 from gwcs import coordinate_frames as cf
 
-from .util import not_implemented_mode, subarray_transform
+from .util import (not_implemented_mode, subarray_transform,
+                   bounding_box_from_model, bounding_box_from_subarray)
 from . import pointing
-from ..datamodels import (DistortionModel, ImageModel, CubeModel)
+from ..datamodels import DistortionModel
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -24,8 +25,8 @@ def create_pipeline(input_model, reference_files):
 
     Parameters
     ----------
-    input_model : jwst.datamodels.DataModel
-        Either an ImageModel or a CubeModel
+    input_model : `~jwst.datamodels.DataModel`
+        The data model.
     reference_files : dict
         {reftype: file_name} mapping.
         Reference files.
@@ -41,27 +42,39 @@ def imaging(input_model, reference_files):
     """
     The FGS imaging WCS pipeline.
 
-    It includes 3 coordinate frames -
-    "detector", "v2v3" and "world".
-
+    It includes 3 coordinate frames - "detector", "v2v3" and "world".
     Uses a ``distortion`` reference file.
+
+    Parameters
+    ----------
+    input_model : `~jwst.datamodels.DataModel`
+        The data model.
+    reference_files : dict
+        {reftype: file_name} mapping.
+        Reference files.
+
+    Returns
+    -------
+    pipeline : list
+        The WCS pipeline.
     """
+    # Create coordinate frames for the ``imaging`` mode.
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
     v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.arcsec, u.arcsec))
     world = cf.CelestialFrame(name='world', reference_frame=coord.ICRS())
-    # Crete the v2v3 to sky transform.
+
+    # Create the v2v3 to sky transform.
     tel2sky = pointing.v23tosky(input_model)
 
-    # If subarray, ceate an offset transform to be prepended to the distortion.
+    # Read the distortion from the reference file
+    distortion = imaging_distortion(input_model, reference_files)
+
+    # If subarray, create an offset transform to be prepended to the distortion.
     subarray2full = subarray_transform(input_model)
-    if reference_files:
-        imdistortion = imaging_distortion(input_model, reference_files)
-        distortion = subarray2full | imdistortion
-        # If the bounding box is saved in the model, move it to the first transform.
-        distortion.bounding_box = imdistortion.bounding_box
-        del imdistortion.bounding_box
-    else:
-        distortion = subarray2full
+    if subarray2full is not None:
+        # Assign a bounding_box based on subarray's xsize and ysize
+        distortion = subarray2full | distortion
+        distortion.bounding_box = bounding_box_from_subarray(input_model)
 
     pipeline = [(detector, distortion),
                 (v2v3, tel2sky),
@@ -76,29 +89,12 @@ def imaging_distortion(input_model, reference_files):
     dist = DistortionModel(reference_files['distortion'])
     transform = dist.model
 
-    # Get the ``bounding_box`` from the transform in the reference file.
+    # Check if the transform in the reference file has a ``bounding_box``.
     # If not set a ``bounding_box`` equal to the size of the image.
     try:
         bb = transform.bounding_box
     except NotImplementedError:
-        shape = input_model.data.shape
-        # Note: Since bounding_box is attached to the model here
-        # it's in reverse order.
-        """
-        A CubeModel is always treated as a stack (in dimension 1)
-        of 2D images, as opposed to actual 3D data. In this case
-        the bounding box is set to the 2nd and 3rd dimension.
-        """
-        if isinstance(input_model, CubeModel):
-            bb = ((-0.5, shape[1] - 0.5),
-                  (-0.5, shape[2] - 0.5))
-        elif isinstance(input_model, ImageModel):
-            bb = ((-0.5, shape[0] - 0.5),
-                  (-0.5, shape[1] - 0.5))
-        else:
-            raise TypeError("Input is not an ImageModel or CubeModel")
-
-        transform.bounding_box = bb
+        transform.bounding_box = bounding_box_from_model(input_model)
     dist.close()
     return transform
 
