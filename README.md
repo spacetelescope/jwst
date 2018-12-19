@@ -90,22 +90,24 @@ Software vs DMS build version map
 
 | jwst tag | DMS build | CRDS_CONTEXT |   Date     |          Notes                           |
 | -------- | --------- | ------------ | ---------- | -----------------------------------------|
-|  0.12.2  | B7.2rc3   | 0497         | 11/07/2018 | Final release candidate for Build 7.2    |
+|  0.12.2  | B7.2rc3   | 0495         | 11/07/2018 | Final release candidate for Build 7.2    |
 |  0.12.1  | B7.2rc2   | 0495         | 11/01/2018 | Second release candidate for Build 7.2   |
-|  0.12.0  | B7.2rc1   | 0493         | 10/09/2018 | First release candidate for Build 7.2    |
-|  0.11.0  |           | 0482         | 09/10/2018 | DMS test, no delivery to I&T             |
-|  0.10.0  |           | 0477         | 07/31/2018 | DMS test, no delivery to I&T             |
+|  0.12.0  | B7.2rc1   | 0493*        | 10/09/2018 | First release candidate for Build 7.2    |
+|  0.11.0  |           | 0482*        | 09/10/2018 | DMS test, no delivery to I&T             |
+|  0.10.0  |           | 0477*        | 07/31/2018 | DMS test, no delivery to I&T             |
 |  0.9.6   | B7.1.3    | 0468         | 06/08/2018 | Final release candidate for Build 7.1.3  |
 |  0.9.5   | B7.1.3rc3 | 0468         | 06/06/2018 | Third release candidate for Build 7.1.3  |
-|  0.9.4   | B7.1.3rc2 | 0463         | 05/29/2018 | Second release candidate for Build 7.1.3 |
-|  0.9.3   | B7.1.3rc1 | 0457         | 05/11/2018 | First release candidate for Build 7.1.3  |
-|  0.9.2   |           | 0441         | 03/28/2018 | DMS test, no delivery to I&T             |
-|  0.9.1   |           | 0432         | 02/16/2018 | DMS test, no delivery to I&T             |
-|  0.9.0   | B7.1.2    | 0424         | 12/22/2017 | DMS patch release to I&T 02/15/2018      |
-|  0.8.0   | B7.1.1    | 0424         |            | DMS patch release to I&T 01/17/2018      |
+|  0.9.4   | B7.1.3rc2 | 0463*        | 05/29/2018 | Second release candidate for Build 7.1.3 |
+|  0.9.3   | B7.1.3rc1 | 0457*        | 05/11/2018 | First release candidate for Build 7.1.3  |
+|  0.9.2   |           | 0441*        | 03/28/2018 | DMS test, no delivery to I&T             |
+|  0.9.1   |           | 0432*        | 02/16/2018 | DMS test, no delivery to I&T             |
+|  0.9.0   | B7.1.2    | 0422         | 12/22/2017 | DMS patch release to I&T 02/15/2018      |
+|  0.8.0   | B7.1.1    | 0422         |            | DMS patch release to I&T 01/17/2018      |
 |  0.8.0   | B7.1      | 0422         | 11/14/2017 | Final, delivered to I&T 11/17/2017       |
 |  0.7.0rc7| B7.0      | 0303         | 12/13/2016 | Final, delivered to I&T                  |
 
+Note: CRDS_CONTEXT values flagged with an asterisk in the above table are estimates
+(formal CONTEXT deliveries are only provided with final builds).
 
 Unit Tests
 ----------
