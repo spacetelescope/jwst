@@ -10,6 +10,7 @@ which is generally not available.
 """
 import os
 import pytest
+import requests
 
 from astropy.time import Time
 
@@ -27,6 +28,31 @@ BAD_MNEMONIC = 'No_Such_MNEMONIC'
 NODATA_STARTIME = '2014-01-01'
 NODATA_ENDTIME = '2014-01-02'
 
+ALTERNATE_HOST = 'http://iwjwdmsbemweb.stsci.edu'
+ALTERNATE_URL = ALTERNATE_HOST + '/JWDMSEngFqAccB71/TlmMnemonicDataSrv.svc/'
+
+
+def is_alive(url):
+    """Check if a url is alive
+
+    Parameters
+    ----------
+    url: str
+        The URL to check.
+
+    Returns
+    -------
+    is_alive: bool
+        True if alive
+    """
+    is_alive = False
+    try:
+        r = requests.get(url)
+        is_alive = (r.status_code == requests.codes.ok)
+    except Exception:
+        pass
+    return is_alive
+
 
 @pytest.fixture
 def engdb():
@@ -36,18 +62,21 @@ def engdb():
         yield engdb
 
 
+@pytest.mark.skipif(
+    not is_alive(ALTERNATE_HOST),
+    reason='Alternate test host not available.'
+)
 def test_environmetal():
-    alternate = 'http://iwjwdmsbemweb.stsci.edu/JWDMSEngFqAccB71/TlmMnemonicDataSrv.svc/'
     old = os.environ.get('ENG_BASE_URL', None)
     try:
-        os.environ['ENG_BASE_URL'] = alternate
+        os.environ['ENG_BASE_URL'] = ALTERNATE_URL
         engdb = engdb_tools.ENGDB_Service()
     finally:
         if old is None:
             del os.environ['ENG_BASE_URL']
         else:
             os.environ['ENG_BASE_URL'] = old
-    assert engdb.base_url == alternate
+    assert engdb.base_url == ALTERNATE_URL
 
 
 def test_environmetal_bad():
