@@ -1,6 +1,5 @@
 import logging
 import math
-import time
 
 import numpy as np
 import numpy.linalg as la
@@ -187,7 +186,6 @@ def determine_slope(data_sect, input_var_sect,
 
     slope_diff_cutoff = 1.e-5
 
-    shape = data_sect.shape
     # These will be updated in the loop.
     prev_slope_sect = (data_sect[1, :, :] - data_sect[0, :, :]) / group_time
     prev_fit = data_sect.copy()
@@ -271,11 +269,8 @@ def evaluate_fit(intercept_sect, slope_sect, cr_sect,
         fit_model and data_sect should not differ by much.
     """
 
-    shape_2d = slope_sect.shape         # just the image subarray (ny, nx)
     shape_3d = gdq_sect.shape           # the ramp, (ngroups, ny, nx)
     ngroups = gdq_sect.shape[0]
-    ny = gdq_sect.shape[1]
-    nx = gdq_sect.shape[2]
     # This array is also created in function compute_slope.
     cr_flagged = np.empty(shape_3d, dtype=np.uint8)
     cr_flagged[:] = np.where(np.bitwise_and(gdq_sect, jump_flag), 1, 0)
@@ -687,9 +682,6 @@ def gls_fit(ramp_data,
     # Divide by sqrt(2) to convert the readnoise from CDS to single readout.
     rn3d = readnoise.reshape((nz, 1, 1)) * SINGLE_READOUT_RN_FACTOR
     ramp_cov += (I * (rn3d**2 / M))
-
-    # print('ramp covariance')
-    # print(ramp_cov[0,:, :])
 
     # prev_slope_data must be non-negative.
     flags = prev_slope_data < 0.
