@@ -67,7 +67,7 @@ class EngDB_Mocker(requests_mock.Mocker):
         data_query = re.compile(''.join([
             engdb_tools.ENGDB_BASE_URL,
             engdb_tools.ENGDB_DATA,
-            '.+\?sTime=.+\&eTime=.+'
+            r'.+\?sTime=.+\&eTime=.+'
         ]))
         self.get(data_query, json=self.response_data)
 

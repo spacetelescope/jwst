@@ -8,6 +8,7 @@ automatically found by py.test. This is because, to test,
 a connection to the internal engineering service is needed,
 which is generally not available.
 """
+import os
 import pytest
 
 from astropy.time import Time
@@ -33,6 +34,37 @@ def engdb():
     with EngDB_Mocker() as mocker:
         engdb = engdb_tools.ENGDB_Service()
         yield engdb
+
+
+def test_environmetal():
+    alternate = 'http://iwjwdmsbemweb.stsci.edu/JWDMSEngFqAccB71/TlmMnemonicDataSrv.svc/'
+    old = os.environ.get('ENG_BASE_URL', None)
+    try:
+        os.environ['ENG_BASE_URL'] = alternate
+        engdb = engdb_tools.ENGDB_Service()
+    finally:
+        if old is None:
+            del os.environ['ENG_BASE_URL']
+        else:
+            os.environ['ENG_BASE_URL'] = old
+    assert engdb.base_url == alternate
+
+
+def test_environmetal_bad():
+    alternate = 'http://google.com/'
+    old = os.environ.get('ENG_BASE_URL', None)
+    did_except = False
+    try:
+        os.environ['ENG_BASE_URL'] = alternate
+        engdb = engdb_tools.ENGDB_Service()
+    except Exception:
+        did_except = True
+    finally:
+        if old is None:
+            del os.environ['ENG_BASE_URL']
+        else:
+            os.environ['ENG_BASE_URL'] = old
+    assert did_except, 'DB connection falsely created for {}'.format(engdb.base_url)
 
 
 def test_basic(engdb):

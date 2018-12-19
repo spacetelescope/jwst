@@ -17,10 +17,10 @@ logger.addHandler(logging.NullHandler())
 # #############################################
 # Where is the engineering service? Its HERE!!!
 # #############################################
-ENGDB_HOST = 'http://iwjwdmsbemweb.stsci.edu/'
+ENGDB_HOST = 'http://iwjwdmscemweb.stsci.edu/'
 ENGDB_BASE_URL = ''.join([
     ENGDB_HOST,
-    'JWDMSEngFqAccB71/',
+    'JWDMSEngFqAccB72/',
     'TlmMnemonicDataSrv.svc/',
 ])
 
@@ -130,7 +130,7 @@ class ENGDB_Service():
 
     def __init__(self, base_url=None, default_format='dict'):
         if base_url is None:
-            base_url = getenv('ENG_RESTFUL_URL', ENGDB_BASE_URL)
+            base_url = getenv('ENG_BASE_URL', ENGDB_BASE_URL)
         if base_url[-1] !='/':
             base_url += '/'
         self.base_url = base_url
