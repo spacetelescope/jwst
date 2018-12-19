@@ -348,7 +348,7 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
             t_dq_cube, inv_var, opt_res, f_max_seg, num_seg = \
                  calc_slope(data_sect, gdq_sect, frame_time, opt_res, save_opt,
                             rn_sect, gain_sect, max_seg, ngroups, weighting,
-                            f_max_seg, group_time)
+                            f_max_seg)
 
             del gain_sect
 
