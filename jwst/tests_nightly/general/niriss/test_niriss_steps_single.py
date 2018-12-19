@@ -37,7 +37,7 @@ class TestAMIPipeline(BaseJWSTTest):
         outputs = [('test_targ_aminorm.fits',
                     'ami_pipeline_targ_lgnorm.fits'),
                   ]
-        self.compare_outputs(outputs, rtol=0.001,
+        self.compare_outputs(outputs, rtol=0.00001,
                              ignore_hdus=['ASDF', 'HDRTAB'])
 
 

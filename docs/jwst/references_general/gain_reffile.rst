@@ -1,3 +1,5 @@
+.. _gain_reffile:
+
 GAIN reference file
 -------------------
 
@@ -35,12 +37,17 @@ the following keywords are *required* in GAIN reference files,
 because they are used as CRDS selectors
 (see :ref:`gain_selectors`):
 
-=========  ==============================
-Keyword    Data Model Name
-=========  ==============================
-DETECTOR   model.meta.instrument.detector
-SUBARRAY   model.meta.subarray.name
-=========  ==============================
+===============  ==============================
+Keyword          Data Model Name
+===============  ==============================
+DETECTOR         model.meta.instrument.detector
+SUBARRAY         model.meta.subarray.name
+BUNIT\ :sup:`1`  model.meta.bunit_data
+===============  ==============================
+
+:sup:`1` BUNIT is not used as a CRDS selector, but is required in the
+"SCI" extension header of GAIN reference files to document the units
+of the data. The expected value is "ELECTRONS/DN".
 
 Reference File Format
 +++++++++++++++++++++

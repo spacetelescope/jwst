@@ -79,6 +79,7 @@ if sys.version_info[0] == 2:
 # ones.
 extensions = [
     'numfig',
+    'sphinxcontrib.programoutput',
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
     'sphinx.ext.todo',

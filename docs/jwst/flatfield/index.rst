@@ -1,6 +1,8 @@
-=========
-Flatfield
-=========
+.. _flatfield_step:
+
+====================
+Flatfield Correction
+====================
 .. toctree::
    :maxdepth: 2
 

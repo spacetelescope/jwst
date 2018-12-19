@@ -1,3 +1,5 @@
+.. _tso_photometry_step:
+
 =======================
 TSO Aperture Photometry
 =======================

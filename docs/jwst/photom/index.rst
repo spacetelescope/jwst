@@ -1,6 +1,8 @@
-======================
-Photometric Correction
-======================
+.. _photom_step:
+
+=======================
+Photometric Calibration
+=======================
 
 .. toctree::
    :maxdepth: 2

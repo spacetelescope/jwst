@@ -1,3 +1,5 @@
+.. _mrs_imatch_step:
+
 =====================
 MIRI MRS Sky Matching
 =====================

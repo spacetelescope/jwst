@@ -4,7 +4,7 @@
 
 import numpy as np
 
-# Constants used in NRM_Model.py
+# Constants used in nrm_model.py
 # piston array, in waves
 phi_nb = np.array([0.028838669455909766, -0.061516214504502634, \
                     0.12390958557781348, -0.020389361461019516, \
