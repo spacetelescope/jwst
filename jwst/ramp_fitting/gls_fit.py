@@ -335,7 +335,7 @@ def positive_fit(current_fit):
 
     return np.where(current_fit <= 0., FIT_MUST_BE_POSITIVE, current_fit)
 
-def compute_slope(data_sect, input_var_sect, 
+def compute_slope(data_sect, input_var_sect,
                   gdq_sect, readnoise_sect, gain_sect,
                   prev_fit, prev_slope_sect,
                   frame_time, group_time, nframes_used,
@@ -643,7 +643,6 @@ def gls_fit(ramp_data,
     # 0 to 1 is the location of a cosmic ray hit; the first 1 in a column
     # corresponds to the value in cr_flagged_2d being 1.
     x = np.zeros((nz, ngroups, 2 + num_cr), dtype=np.float64)
-    # KDG - should this be 1 or some particular time?
     x[:, :, 0] = 1.
     x[:, :, 1] = np.arange(ngroups, dtype=np.float64) * group_time + \
                  frame_time * (M + 1.) / 2.
@@ -697,7 +696,7 @@ def gls_fit(ramp_data,
     prev_slope_data[flags] = 1.
 
     # The resulting fit parameters are
-    #  (xT * ramp_cov^-1 * x)^-1 * [xT * weight * y]
+    #  (xT @ ramp_cov^-1 @ x)^-1 * [xT @ ramp_cov^-1 @ y]
     #  = [y-intercept, slope, cr_amplitude_1, cr_amplitude_2, ...]
     # where * means matrix multiplication.
 
@@ -706,21 +705,9 @@ def gls_fit(ramp_data,
 
     # shape of `ramp_invcov` is (nz, ngroups, ngroups)
     I = I.reshape((1, ngroups, ngroups))
-    # not clear if this is faster (the same results is obtained)
     ramp_invcov = la.solve(ramp_cov, I)
-    # ramp_invcov = la.inv(ramp_cov)
-    # print(ramp_invcov.shape)
-    # print(ramp_invcov[0])
-    #   ****not faster***
-    # a = [la.solve(curcov, I[0]) for curcov in ramp_cov]
-    # ramp_invcov = np.array(a)
-    # print(ramp_invcov2.shape)
-    # print(ramp_invcov2[0])
-    # exit()
-    del I
 
-    # print('ramp inv covariance')
-    # print(ramp_invcov[0])
+    del I
 
     # temp1 = xT @ ramp_invcov
     # np.einsum use is equivalent to matrix mulitplication
@@ -748,44 +735,19 @@ def gls_fit(ramp_data,
                 raise la.LinAlgError(msg2)
     del I_2
 
-    # print(fitparam_cov[0])
-
     # [xT @ ramp_invcov @ y]
     # shape of temp2 is (nz, 2 + num_cr, 1)
     temp2 = np.einsum('...ij,...jk->...ik', temp1, y)
 
-    # shape of result is (nz, 2 + num_cr, 1)
-    result = np.einsum('...ij,...jk->...ik', fitparam_cov, temp2)
-    r_shape = result.shape
-    result2d = result.reshape((r_shape[0], r_shape[1]))
-    del result
+    # shape of fitparam is (nz, 2 + num_cr, 1)
+    fitparam = np.einsum('...ij,...jk->...ik', fitparam_cov, temp2)
+    r_shape = fitparam.shape
+    fitparam2d = fitparam.reshape((r_shape[0], r_shape[1]))
+    del fitparam
 
     # print(result2d[0])
 
     # shape of both result2d and variances is (nz, 2 + num_cr)
-    variances = fitparam_cov.diagonal(axis1=1, axis2=2).copy()
+    fitparam_uncs = fitparam_cov.diagonal(axis1=1, axis2=2).copy()
 
-    return (result2d, variances)
-
-
-# from https://stackoverflow.com/questions/11972102/is-there-a-way-to-efficiently-invert-an-array-of-matrices-with-numpy
-# from numpy.linalg import lapack_lite
-# lapack_routine = lapack_lite.dgesv
-# # Looking one step deeper, we see that solve performs many sanity checks.
-# # Stripping these, we have:
-# def faster_inverse(A):
-#     b = np.identity(A.shape[2], dtype=A.dtype)
-#
-#     n_eq = A.shape[1]
-#     n_rhs = A.shape[2]
-#     pivots = zeros(n_eq, np.intc)
-#     identity  = np.eye(n_eq)
-#     def lapack_inverse(a):
-#         b = np.copy(identity)
-#         pivots = zeros(n_eq, np.intc)
-#         results = lapack_lite.dgesv(n_eq, n_rhs, a, n_eq, pivots, b, n_eq, 0)
-#         if results['info'] > 0:
-#             raise LinAlgError('Singular matrix')
-#         return b
-#
-#     return array([lapack_inverse(a) for a in A])
+    return (fitparam2d, fitparam_uncs)
