@@ -540,3 +540,8 @@ User's Guide at :ref:`stpipe-user-steps`.
 
 More detailed information on writing pipelines can be found
 in the ``stpipe`` Developer's Guide at :ref:`stpipe-devel-steps`.
+
+If you have questions or concerns regarding the software, please open an issue
+at https://github.com/spacetelescope/jwst/issues or contact
+the `JWST Help Desk <https://jwsthelp.stsci.edu>`_.
+
