@@ -7,10 +7,11 @@ from jwst.datamodels import MIRIRampModel
 from jwst.datamodels import GainModel, ReadnoiseModel
 
 
-def test_nocrs_noflux():
-        #all pixel values are zero. So slope should be zero
+@pytest.mark.parametrize("method", ['GLS', 'OLS'])
+def test_nocrs_noflux(method):
+    # all pixel values are zero. So slope should be zero
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=5)
-    slopes = ramp_fit(model1, 60000, False, rnModel, gain, 'OLS', 'optimal')
+    slopes = ramp_fit(model1, 60000, False, rnModel, gain, method, 'optimal')
     assert(0 == np.max(slopes[0].data))
     assert(0 == np.min(slopes[0].data))
 
@@ -20,7 +21,7 @@ def test_one_group_small_buffer_fit():
     model1.data[0, 0, 500, 500] = 10.0
     slopes = ramp_fit(model1, 512, True, rnModel, gain, 'OLS', 'optimal')
     np.testing.assert_allclose(slopes[0].data[500, 500],10.0, 1e-6)
-      
+
 def test_one_group_two_ints_fit():
         #
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=1,gain=1,readnoise=10,nints=2)
@@ -35,7 +36,7 @@ def test_nocrs_noflux_firstrows_are_nan():
     slopes = ramp_fit(model1, 60000, False, rnModel, gain, 'OLS', 'optimal')
     assert(0 == np.max(slopes[0].data))
     assert(0 == np.min(slopes[0].data))
-    
+
 @pytest.mark.xfail(reason="Fails, without frame_time it doesn't work")
 def test_error_when_frame_time_not_set():
         #all pixel values are zero. So slope should be zero
@@ -107,7 +108,7 @@ def test_subarray_5groups():
     coeff = np.polyfit(xvalues, yvalues, 1)
     slopes = ramp_fit(model1, 64000, False, rnModel, gain, 'OLS', 'optimal')
     np.testing.assert_allclose(slopes[0].data[125,10],coeff[0],1e-6)
-   
+
 def test_simple_ramp():
     #Here given a 10 group ramp with an exact slope of 20/group. The output slope should be 20.
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=10, deltatime=3)
@@ -174,7 +175,7 @@ def test_photon_noise_only_bad_last_frame_two_groups():
     slopes = ramp_fit(model1, 1024*30000., True, rnModel, gain, 'OLS', 'optimal')
     cds_slope = (model1.data[0,1,500,500] - model1.data[0,0,500,500])/ 1.0
     np.testing.assert_allclose(slopes[0].data[500, 500], cds_slope, 1e-6)
-    
+
 def test_photon_noise_with_unweighted_fit():
         #
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=5,gain=1000,readnoise=1)
@@ -189,7 +190,7 @@ def test_photon_noise_with_unweighted_fit():
     yvalues = np.array([10,15,25,33,60])
     coeff = np.polyfit(xvalues, yvalues, 1)
     np.testing.assert_allclose(slopes[0].data[500, 500], coeff[0], 1e-6)
-    
+
 def test_two_groups_fit():
         #
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=2,gain=1,readnoise=10)
@@ -267,7 +268,7 @@ def test_four_groups_three_CRs_at_end():
     slopes = ramp_fit(model1, 1024*30000., True, rnModel, gain, 'OLS', 'optimal')
     expected_slope=10.0
     np.testing.assert_allclose(slopes[0].data[500, 500],expected_slope, 1e-6)
-    
+
 def test_four_groups_CR_causes_orphan_1st_group():
         #
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=4,gain=.01,readnoise=10000)
@@ -372,7 +373,7 @@ def test_oneCR_10_groups_combination():
     single_sample_readnoise = np.float64( inreadnoise/np.sqrt(2))
     #check that the segment variance is as expected
     np.testing.assert_allclose(opt_model.var_rnoise[0,0,500,500],(12.0 * single_sample_readnoise**2/(segment_groups * (segment_groups**2 - 1) * grouptime**2)), rtol=1e-6)
-    # check the combined slope is the average of the two segments since they have the same number of groups 
+    # check the combined slope is the average of the two segments since they have the same number of groups
     np.testing.assert_allclose(slopes.data[500, 500], 2.5,rtol=1e-5)
     #check that the slopes of the two segments are correct
     np.testing.assert_allclose(opt_model.slope[0,0,500, 500], 5/3.0,rtol=1e-5)
@@ -406,7 +407,7 @@ def test_oneCR_10_groups_combination_noisy2ndSegment():
 #Need test for multi-ints near zero with positive and negative slopes
 def setup_inputs(ngroups=10, readnoise=10, nints=1,
                  nrows=1032, ncols=1024, nframes=1, grouptime=1.0,gain=1, deltatime=1):
-        
+
         times = np.array(list(range(ngroups)),dtype=np.float64) * deltatime
         gain = np.ones(shape=(nrows, ncols), dtype=np.float64) * gain
         err = np.ones(shape=(nints, ngroups, nrows, ncols), dtype=np.float64)
@@ -449,8 +450,8 @@ def setup_subarray_inputs(ngroups=10, readnoise=10, nints=1,
                  nrows=1032, ncols=1024, subxstart=1, subystart=1,
                  subxsize=1024, subysize=1032, nframes=1,
                  grouptime=1.0,gain=1, deltatime=1):
-        
-        
+
+
         times = np.array(list(range(ngroups)),dtype=np.float64) * deltatime
         gain = np.ones(shape=(nrows, ncols), dtype=np.float64) * gain
         err = np.ones(shape=(nints, ngroups, nrows, ncols), dtype=np.float64)

@@ -812,8 +812,6 @@ def gls_ramp_fit(model,
         if save_opt:
             first_group[:, :] = 0.      # re-use this for each integration
 
-        print('GLS nrows = ', nrows, buffsize)
-
         # loop over data sections
         for rlo in range(0, cubeshape[1], nrows):
             rhi = rlo + nrows
