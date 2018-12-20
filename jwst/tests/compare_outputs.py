@@ -1,7 +1,6 @@
 import copy
 from datetime import datetime
 import os
-import shutil
 from difflib import unified_diff
 from io import StringIO
 
