@@ -9,8 +9,6 @@ from os.path import basename
 import numpy as np
 from astropy.io import fits
 
-from ..associations import Association
-
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -370,7 +368,7 @@ def gentle_asarray(a, dtype):
     else:
         try:
             a = np.asarray(a, dtype=out_dtype)
-        except:
+        except Exception:
             raise ValueError("Can't convert {0!s} to ndarray".format(type(a)))
         return a
 

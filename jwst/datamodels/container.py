@@ -5,8 +5,9 @@ import os.path as op
 from asdf import AsdfFile
 
 from ..associations import (
-    Association, AssociationError,
-    AssociationNotValidError, load_asn)
+    AssociationError,
+    AssociationNotValidError,
+    load_asn)
 
 from . import model_base
 from .util import open as datamodel_open
