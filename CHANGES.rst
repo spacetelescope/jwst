@@ -167,6 +167,8 @@ srctype
 scripts
 -------
 
+- `set_telescope_pointing.py`: Update method of choosing pointing parameters [#2900]
+
 stpipe
 ------
 
