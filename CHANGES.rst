@@ -277,8 +277,8 @@ ramp_fitting
 - Fixed bug so that an integration-specific (_rateints) product is only created when
   NINTS>1; Skip MIRI first and/or last groups when flagged as DO_NOT_USE. [#2760]
 
-- Fixed bug in which the number of segments returned exceeds the number  
-  of groups, which had occurred for a MIRI dataset in which the first or last 
+- Fixed bug in which the number of segments returned exceeds the number
+  of groups, which had occurred for a MIRI dataset in which the first or last
   group was flagged as DO_NOT_USE and also flagged as a jump. [#2834]
 
 refpix
