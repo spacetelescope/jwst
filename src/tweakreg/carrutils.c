@@ -83,6 +83,7 @@ arrxyzero(PyObject *obj, PyObject *args)
   dimensions[0] = (integer_t)(searchrad*2) + 1;
   dimensions[1] = (integer_t)(searchrad*2) + 1;
   ozpmat = (PyArrayObject *)PyArray_SimpleNew(2, dimensions, NPY_DOUBLE);
+  PyArray_FILLWBYTE(ozpmat, 0);
   if (!ozpmat) {
     goto _exit;
   }
