@@ -92,7 +92,7 @@ def imaging_distortion(input_model, reference_files):
     # Check if the transform in the reference file has a ``bounding_box``.
     # If not set a ``bounding_box`` equal to the size of the image.
     try:
-        bb = transform.bounding_box
+        transform.bounding_box
     except NotImplementedError:
         transform.bounding_box = bounding_box_from_model(input_model)
     dist.close()
