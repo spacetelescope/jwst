@@ -83,7 +83,7 @@ reference pixels, but also time for the transition between reading normal
 data and reference pixels, as well as additional overhead at the end of
 each row and between frames.  For example, it takes the same length of time
 to jump from reading normal pixels to reading reference pixels as it does
-to read one pixel value, about one microsecond.
+to read one pixel value, about ten microseconds.
 
 Before subtracting the reference pixel and reference output values from
 the science data, some processing is done on the reference values, and the

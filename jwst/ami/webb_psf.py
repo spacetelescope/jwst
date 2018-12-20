@@ -3,7 +3,7 @@ import logging
 import numpy as np
 
 from . import utils
-from . import NRM_consts
+from . import nrm_consts
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -75,7 +75,7 @@ def get_webbpsf_filter(filter_model, specbin=None, trim=False):
 
     log.debug(' final filter shape %s', spec.shape)
     log.debug(' %d filter samples between %.3f and %.3f um',
-              len(spec[:, 0]), spec[0, W] / NRM_consts.um_,
-              spec[-1, W] / NRM_consts.um_)
+              len(spec[:, 0]), spec[0, W] / nrm_consts.um_,
+              spec[-1, W] / nrm_consts.um_)
 
     return spec

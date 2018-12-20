@@ -1,3 +1,5 @@
+.. _reset_step:
+
 ================
 Reset Correction
 ================

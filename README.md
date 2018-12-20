@@ -25,10 +25,10 @@ To create a new environment, use:
 
 where `<URL>` is of the form:
 
-    Linux: http://ssb.stsci.edu/releases/jwstdp/0.9.6/latest-linux
-    OS X: http://ssb.stsci.edu/releases/jwstdp/0.9.6/latest-osx
+    Linux: http://ssb.stsci.edu/releases/jwstdp/0.12.2/latest-linux
+    OS X: http://ssb.stsci.edu/releases/jwstdp/0.12.2/latest-osx
 
-Other particular versions can be installed by choosing a different version tag in place of "0.9.6" in the URL path.
+Other particular versions can be installed by choosing a different version tag in place of "0.12.2" in the URL path.
 See the "Software vs DMS build version map" table below for a list of tags corresponding to particular releases.
 
 To update to the latest nightly build:
@@ -71,7 +71,7 @@ https://jwst-pipeline.readthedocs.io/en/latest/
 
 One can clone this repository and build the documentation with
 
-    pip install sphinx_rtd_theme stsci_rtd_theme sphinx_automodapi
+    pip install sphinx_rtd_theme stsci_rtd_theme sphinx_automodapi sphinxcontrib_programoutput
     python setup.py build_sphinx
 
 
@@ -81,28 +81,33 @@ We welcome contributions and feedback on the project. Please follow the [contrib
 
 We strive to provide a welcoming community to all of our users by abiding to the [Code of Conduct](CODE_OF_CONDUCT.md).
 
+If you have questions or concerns regarding the software, please open an issue
+at https://github.com/spacetelescope/jwst/issues or
+contact the [JWST Help Desk](https://jwsthelp.stsci.edu).
 
 Software vs DMS build version map
 ---------------------------------
 
-| jwst tag | DMS build |    Date    |          Notes                           |
-| -------- | --------- | ---------- | -----------------------------------------|
-|  0.12.2  | B7.2rc3   | 11/07/2018 | Third release candidate for Build 7.2    |
-|  0.12.1  | B7.2rc2   | 11/01/2018 | Second release candidate for Build 7.2    |
-|  0.12.0  | B7.2rc1   | 10/09/2018 | First release candidate for Build 7.2    |
-|  0.11.0  |           | 09/10/2018 | DMS test, no delivery to I&T             |
-|  0.10.0  |           | 07/31/2018 | DMS test, no delivery to I&T             |
-|  0.9.6   | B7.1.3    | 06/08/2018 | Final release candidate for Build 7.1.3  |
-|  0.9.5   | B7.1.3rc3 | 06/06/2018 | Third release candidate for Build 7.1.3  |
-|  0.9.4   | B7.1.3rc2 | 05/29/2018 | Second release candidate for Build 7.1.3 |
-|  0.9.3   | B7.1.3rc1 | 05/11/2018 | First release candidate for Build 7.1.3  |
-|  0.9.2   |           | 03/28/2018 | DMS test, no delivery to I&T             |
-|  0.9.1   |           | 02/16/2018 | DMS test, no delivery to I&T             |
-|  0.9.0   |   B7.1.2  | 12/22/2017 | DMS patch release to I&T 02/15/2018      |
-|  0.8.0   |   B7.1.1  |            | DMS patch release to I&T 01/17/2018      |
-|  0.8.0   |   B7.1    | 11/14/2017 | Final, delivered to I&T 11/17/2017       |
-|  0.7.0rc7|   B7.0    | 12/13/2016 | Final, delivered to I&T                  |
+| jwst tag | DMS build | CRDS_CONTEXT |   Date     |          Notes                           |
+| -------- | --------- | ------------ | ---------- | -----------------------------------------|
+|  0.12.2  | B7.2      | 0495         | 11/07/2018 | Final release candidate for Build 7.2    |
+|  0.12.1  | B7.2rc2   | 0495         | 11/01/2018 | Second release candidate for Build 7.2   |
+|  0.12.0  | B7.2rc1   | 0493*        | 10/09/2018 | First release candidate for Build 7.2    |
+|  0.11.0  |           | 0482*        | 09/10/2018 | DMS test, no delivery to I&T             |
+|  0.10.0  |           | 0477*        | 07/31/2018 | DMS test, no delivery to I&T             |
+|  0.9.6   | B7.1.3    | 0468         | 06/08/2018 | Final release candidate for Build 7.1.3  |
+|  0.9.5   | B7.1.3rc3 | 0468         | 06/06/2018 | Third release candidate for Build 7.1.3  |
+|  0.9.4   | B7.1.3rc2 | 0463*        | 05/29/2018 | Second release candidate for Build 7.1.3 |
+|  0.9.3   | B7.1.3rc1 | 0457*        | 05/11/2018 | First release candidate for Build 7.1.3  |
+|  0.9.2   |           | 0441*        | 03/28/2018 | DMS test, no delivery to I&T             |
+|  0.9.1   |           | 0432*        | 02/16/2018 | DMS test, no delivery to I&T             |
+|  0.9.0   | B7.1.2    | 0422         | 12/22/2017 | DMS patch release to I&T 02/15/2018      |
+|  0.8.0   | B7.1.1    | 0422         |            | DMS patch release to I&T 01/17/2018      |
+|  0.8.0   | B7.1      | 0422         | 11/14/2017 | Final, delivered to I&T 11/17/2017       |
+|  0.7.0rc7| B7.0      | 0303         | 12/13/2016 | Final, delivered to I&T                  |
 
+Note: CRDS_CONTEXT values flagged with an asterisk in the above table are estimates
+(formal CONTEXT deliveries are only provided with final builds).
 
 Unit Tests
 ----------
@@ -135,3 +140,7 @@ or
 and then run the tests in the repository
 
     pytest --bigdata jwst/tests_nightly/general
+
+If developers need to update the truth files in our nightly regression tests, there are instructions in the repository wiki.
+
+https://github.com/spacetelescope/jwst/wiki/Updating-nightly-RT

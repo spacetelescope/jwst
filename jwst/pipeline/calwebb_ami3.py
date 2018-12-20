@@ -100,6 +100,8 @@ class Ami3Pipeline(Pipeline):
         if len(psf_files) > 0:
             self.log.debug('Calling ami_average for PSF results ...')
             psf_avg = self.ami_average(psf_files)
+            for f in psf_files:
+                f.close()
 
             # Save the results to a file, if requested
             if self.save_averages:
@@ -129,6 +131,8 @@ class Ami3Pipeline(Pipeline):
         if len(targ_files) > 0:
             self.log.debug('Calling ami_average for target results ...')
             targ_avg = self.ami_average(targ_files)
+            for f in targ_files:
+                f.close()
 
             # Save the results to a file, if requested
             if self.save_averages:
@@ -159,9 +163,9 @@ class Ami3Pipeline(Pipeline):
             self.log.info(
                 'Blending metadata for PSF normalized target...'
             )
-            input_list = [targ_avg, psf_avg]
-            blendmeta.blendmodels(result, inputs=input_list)
+            blendmeta.blendmodels(result, inputs=[targ_avg, psf_avg])
             self.save_model(result, suffix='aminorm')
+            result.close()
 
         # We're done
         log.info('... ending calwebb_ami3')

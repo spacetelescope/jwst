@@ -55,6 +55,9 @@ exp_to_source
 
 extract_1d
 ----------
+- Updated to recognize NRC_TSGRISM as WFSS data.  SlitDataModel schema now
+  specifies that the wavelength attribute should be 2-D, with a default
+  value of 0. [#2911]
 
 extract_2d
 ----------
@@ -138,6 +141,7 @@ refpix
 ------
 
 - Added a description of processing for IRS2 readout mode data. [#2889]
+- Fixed a mistake in the time to read one pixel. [#2923]
 
 resample
 --------
@@ -162,6 +166,8 @@ srctype
 
 scripts
 -------
+
+- `set_telescope_pointing.py`: Update method of choosing pointing parameters [#2900]
 
 stpipe
 ------

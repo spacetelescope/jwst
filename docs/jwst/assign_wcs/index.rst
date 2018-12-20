@@ -1,3 +1,5 @@
+.. _assign_wcs_step:
+
 ==========
 Assign WCS
 ==========
@@ -10,15 +12,5 @@ Assign WCS
    asdf-howto.rst
    exp_types.rst
 
+.. automodapi:: jwst.assign_wcs
 
-=============
-Reference/API
-=============
-
-.. automodapi:: jwst.assign_wcs.fgs
-.. automodapi:: jwst.assign_wcs.miri
-.. automodapi:: jwst.assign_wcs.nircam
-.. automodapi:: jwst.assign_wcs.niriss
-.. automodapi:: jwst.assign_wcs.nirspec
-.. automodapi:: jwst.assign_wcs.pointing
-.. automodapi:: jwst.assign_wcs.util

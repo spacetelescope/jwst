@@ -1,6 +1,8 @@
-===========
-Persistence
-===========
+.. _persistence_step:
+
+======================
+Persistence Correction
+======================
 
 .. toctree::
    :maxdepth: 2

@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 #
 # compare_crs.py - compare true and found cosmic rays
-
+# pragma: no cover
 import sys
 import time
 import numpy as np
