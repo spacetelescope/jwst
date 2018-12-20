@@ -2,17 +2,14 @@
 
 import os
 import shutil
+from glob import glob
+from importlib.util import find_spec
 
 
 def collect_pipeline_cfgs(dst='./'):
-    # find installed pipeline *.cfg files
-    import jwst.pipeline as p
+    """Copy step and pipeline .cfg files to destination"""
+    os.makedirs(dst, exist_ok=True)
 
-    if not os.path.exists(dst):
-        os.makedirs(dst)
-
-    cfg_dir = p.__path__[0]
-    for i in os.listdir(cfg_dir):
-        if i.endswith('.cfg'):
-            cfg = os.path.join(cfg_dir, i)
+    cfg_dir = find_spec('jwst.pipeline').submodule_search_locations[0]
+    for cfg in glob(os.path.join(cfg_dir, "*.cfg")):
             shutil.copy(cfg, dst)
