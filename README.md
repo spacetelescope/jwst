@@ -114,7 +114,7 @@ Unit Tests
 
 Unit tests can be run via `pytest`.  All tests need a the `ci_watson` pytest plugin to run.
 
-    pip install requests_mock
+    pip install requests_mock ci_watson
     pytest jwst
 
 
