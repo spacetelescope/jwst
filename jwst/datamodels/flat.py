@@ -10,21 +10,18 @@ class FlatModel(ReferenceFileModel):
     A data model for 2D flat-field images.
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
+    data : numpy float32 array
+         The science data
 
-    data : numpy array
-        The science data.  2-D.
+    dq : numpy uint32 array
+         Data quality array
 
-    dq : numpy array
-        The data quality array.  2-D.
+    err : numpy float32 array
+         Error array
 
-    err : numpy array
-        The error array.  2-D.
-
-    dq_def : numpy array
-        The data quality definitions table.
+    dq_def : numpy table
+         DQ flag definitions
     """
     schema_url = "flat.schema.yaml"
 

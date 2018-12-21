@@ -9,17 +9,17 @@ class PathlossModel(ReferenceFileModel):
     A data model for pathloss correction information.
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
+    apertures.items.pointsource_data : numpy float32 array
+         Point source pathloss
 
-    pointsource : numpy array
-        Array defining the pathloss parameter for point sources.
+    apertures.items.pointsource_err : numpy float32 array
+         Point source pathloss variance
 
-    psvar : numpy array
-        Variance array.
+    apertures.items.uniform_data : numpy float32 array
+         Uniform source pathloss
 
-    uniform : numpy array
-        Pathloss parameter for uniform illumination
+    apertures.items.uniform_err : numpy float32 array
+         Uniform source pathloss variance
     """
     schema_url = "pathloss.schema.yaml"
