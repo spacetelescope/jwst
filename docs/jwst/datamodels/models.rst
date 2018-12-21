@@ -140,7 +140,7 @@ To get to the history::
 
 To add an entry to the history, first create the entry by calling
 `util.create_history_entry` and appending the entry to the model
-historu::
+history::
 
     entry =  util.create_history_entry("Processed through the frobulator step")
     model.history.append(entry)
