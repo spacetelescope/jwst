@@ -93,12 +93,7 @@ class ModelContainer(model_base.DataModel):
         elif is_association(init):
             self.from_asn(init)
         elif isinstance(init, str):
-            try:
-                init_from_asn = self.read_asn(init)
-            except (IOError):
-                raise IOError('Cannot open files.')
-            except AssociationError:
-                raise AssociationError('{0} must be an ASN file'.format(init))
+            init_from_asn = self.read_asn(init)
             self.from_asn(init_from_asn, asn_file_path=init)
         else:
             raise TypeError('Input {0!r} is not a list of DataModels or '
