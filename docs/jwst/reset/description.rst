@@ -8,14 +8,14 @@ Assumptions
 -----------
 The reset correction is a MIRI-specific correction. It is
 assumed that the input science data have *NOT* had the zero group (or bias)
-subtracted. We also do not want the reset correction to remove the
+subtracted. The reset correction should not remove the
 bias signal from the science exposure, therefore the reset correction
 for the first group is defined to be zero.
 
 Background
 __________
 
-For MIRI exposures the initial groups in each integration suffer from two
+For MIRI exposures, the initial groups in each integration suffer from two
 effects related to the resetting of the detectors. The first effect is that the
 first few groups after a reset do not fall
 on the expected linear accumulation of signal.
@@ -31,7 +31,7 @@ by ~group 20. On subarray data, where the read time  depends on
 the size of the subarray, the reset anomaly affects more
 groups in an integration.
 
-For multiple integration data the reset anomaly also varies in amplitude
+For multiple integration data, the reset anomaly also varies in amplitude
 for the first set of integrations before settling down to a relatively
 constant correction for integrations greater than four for full array
 data. Because of the shorter readout time, the subarray data requires a few
