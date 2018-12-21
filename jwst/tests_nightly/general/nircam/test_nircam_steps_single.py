@@ -44,6 +44,8 @@ class TestWFSImage2(BaseJWSTTest):
             output_files.remove(input_name)
         if output_name in output_files:
             output_files.remove(output_name)
+        if "truth" in output_files:
+            output_files.remove("truth")
 
         assert cal_name in output_files
         output_files.remove(cal_name)
