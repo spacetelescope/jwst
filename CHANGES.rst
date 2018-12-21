@@ -61,6 +61,8 @@ extract_1d
 
 extract_2d
 ----------
+- Moved the update of meta information to the MultiSlitModel instead of the
+  SlitModels that compose it. [#2988]
 
 firstframe
 ----------
