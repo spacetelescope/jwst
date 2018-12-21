@@ -5,7 +5,6 @@ import os.path as op
 from asdf import AsdfFile
 
 from ..associations import (
-    AssociationError,
     AssociationNotValidError,
     load_asn)
 
