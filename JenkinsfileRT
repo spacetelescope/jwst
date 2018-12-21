@@ -18,6 +18,7 @@ def PIP_TEST_DEPS = "requests_mock ci_watson"
 def PYTEST_BASETEMP = "test_outputs"
 def PYTEST = "pytest \
               -r s \
+              -v \
               --bigdata \
               --basetemp=${PYTEST_BASETEMP} \
               --junit-xml=results.xml"
