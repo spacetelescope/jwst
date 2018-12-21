@@ -11,7 +11,6 @@ class TestSpec2Pipeline(BaseJWSTTest):
     ref_loc = ['test_spec2pipeline', 'truth']
     test_dir = 'test_spec2pipeline'
 
-    @pytest.mark.xfail(reason='https://github.com/STScI-JWST/jwst/issues/2007')
     def test_nis_wfss_spec2(self):
         """
         Regression test of calwebb_spec2 pipeline performed on NIRISS WFSS data.
