@@ -5,7 +5,6 @@ from jwst.tests.base_classes import BaseJWSTTest, raw_from_asn
 from jwst.pipeline import (
     Ami3Pipeline,
     Detector1Pipeline,
-    Spec2Pipeline
 )
 from jwst.ramp_fitting import RampFitStep
 from jwst.photom import PhotomStep
