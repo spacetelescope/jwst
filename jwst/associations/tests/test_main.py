@@ -29,7 +29,7 @@ def test_script(full_pool_rules):
     generated = Main([pool_fname, '--dry-run'])
     asns = generated.associations
     assert len(asns) == 284
-    assert len(generated.orphaned) == 203
+    assert len(generated.orphaned) == 204
     found_rules = set(
         asn['asn_rule']
         for asn in asns
@@ -99,7 +99,7 @@ def test_version_id(full_pool_rules):
     pool, rules, pool_fname = full_pool_rules
 
     generated = Main([pool_fname, '--dry-run', '-i', 'o001', '--version-id'])
-    regex = re.compile('\d{3}t\d{6}')
+    regex = re.compile(r'\d{3}t\d{6}')
     for asn in generated.associations:
         assert regex.search(asn.asn_name)
 
