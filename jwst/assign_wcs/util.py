@@ -285,7 +285,7 @@ def subarray_transform(input_model):
     Returns
     -------
     subarray2full : `~astropy.modeling.core.Model` or ``None``
-        Returns a (combination of ) ``Shift`` models is a subarray is used.
+        Returns a (combination of ) ``Shift`` models if a subarray is used.
         Returns ``None`` if a full frame observation.
     """
     tr_xstart = astmodels.Identity(1)

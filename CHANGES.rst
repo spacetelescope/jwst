@@ -8,6 +8,9 @@ assign_wcs
 ----------
  - Added velocity correction model to the WFSS and TSGRISM wcs pipelines [#2801]
 
+ - Refactored how the pipeline handles subarrays in the WCS. Fixed a bug
+   where the bounding box was overwritten in full frame mode. [#2980]
+
 associations
 ------------
 
