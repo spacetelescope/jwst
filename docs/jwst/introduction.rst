@@ -17,7 +17,7 @@ Stage 3 is divided into five separate modules for imaging, spectroscopic,
 coronagraphic, Aperture Masking Interferometry (AMI), and Time Series
 Observation (TSO) modes.
 
-Details of all the pipeline modules can be found at :ref:`pipelines`.
+Details of all the pipeline modules can be found at :ref:`pipeline-modules`.
 The remainder of this document discusses pipeline configuration files and
 gives examples of running pipelines as a whole or in individual steps.
 
@@ -61,6 +61,8 @@ Each pipeline step records the reference file that it used in the value of
 a header keyword in the output data file. The keyword names use the syntax
 "R_<ref>", where <ref> corresponds to a 6-character version of the reference
 file type, such as ``R_DARK``, ``R_LINEAR``, and ``R_PHOTOM``.
+
+.. _strun_command_line:
 
 Running From the Command Line
 =============================
@@ -166,6 +168,8 @@ The "No science data found" condition is returned by the ``assign_wcs`` step of
 file, the WCS indicates that no science data will be found. This condition is
 most often found with NIRSpec's NRS2 detector. There are certain optical and MSA
 configurations in which dispersion will not cross to the NRS2 detector.
+
+.. _run_from_python:
 
 Running From Within Python
 ==========================

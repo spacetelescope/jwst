@@ -1,8 +1,8 @@
-.. _pipeline-classes:
+.. _pipeline-modules:
 
-========================================
-Pipeline Classes and Configuration Files
-========================================
+================
+Pipeline Modules
+================
 .. toctree::
    :maxdepth: 2
 
@@ -17,5 +17,7 @@ Pipeline Classes and Configuration Files
    calwebb_tso3.rst
    calwebb_dark.rst
    calwebb_guider.rst
+   calwebb_wfs-image2.rst
+   calwebb_wfs-image3.rst
 
 .. automodapi:: jwst.pipeline
