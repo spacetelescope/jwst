@@ -1,4 +1,4 @@
-"""Test calwebb_spec3 with MIRI LRS-Fixedslit"""
+"""Test calwebb_spec3 with MIRI LRS Fixed-slit"""
 
 from glob import glob
 import os.path as op
@@ -14,7 +14,7 @@ from jwst.pipeline.tests.helpers import SCRIPT_DATA_PATH
 
 
 @pytest.mark.bigdata
-class TestSpec3Pipeline(BaseJWSTTest):
+class TestSpec3MIRLRSFSS(BaseJWSTTest):
     input_loc = 'miri'
     ref_loc = ['test_datasets', 'lrs_fixedslit', 'truth']
     test_dir = ['test_datasets', 'lrs_fixedslit']
