@@ -64,6 +64,8 @@ These products include:
 - targetname_psfalign: the output of the ``align_refs`` step
 - targetname_psfsub: the output of the ``klip`` step
 
+.. _stack_refs_step:
+
 Stack_refs
 ==========
 
@@ -120,6 +122,8 @@ science target product.
 
 .. automodapi:: jwst.coron.align_refs_step
 
+.. _klip_step:
+
 Klip
 ====
 
@@ -164,6 +168,8 @@ number of KL transform rows to keep when computing the PSF fit to the target.
 The default value is 50.
 
 .. automodapi:: jwst.coron.klip_step
+
+.. _hlsp_step:
 
 HLSP
 ====
