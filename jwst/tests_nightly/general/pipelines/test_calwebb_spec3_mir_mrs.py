@@ -8,10 +8,6 @@ import pytest
 
 from jwst.tests.base_classes import BaseJWSTTest
 
-from jwst.pipeline.tests.helpers import (
-    SCRIPT_DATA_PATH,
-)
-
 from jwst.associations import load_asn
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe.step import (Step, remove_suffix)
