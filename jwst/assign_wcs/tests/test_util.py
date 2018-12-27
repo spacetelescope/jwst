@@ -4,12 +4,16 @@ Test the utility functions
 
 import os
 
+import numpy as np
+from astropy.modeling.models import Shift, Identity
 from astropy.table import QTable
 
 from ...lib.catalog_utils import SkyObject
 from ... import datamodels
 
-from ..util import get_object_info, bounding_box_from_shape
+from ..util import (get_object_info, bounding_box_from_shape,
+                    subarray_transform, bounding_box_from_model,
+                    bounding_box_from_subarray)
 
 from . import data
 
@@ -58,3 +62,44 @@ def test_create_grism_objects():
     tempcat = QTable.read(source_catalog, format='ascii.ecsv')
     grism_object_from_table = read_catalog(tempcat)
     assert isinstance(grism_object_from_table, list), "return grism objects were not a list"
+
+
+def test_subarray_transform():
+    im = datamodels.ImageModel()
+    assert subarray_transform(im) is None
+
+    im.meta.subarray.xstart = 3
+    transform = subarray_transform(im)
+    assert isinstance(transform[0], Shift) and transform[0].offset == 2
+    assert isinstance(transform[1], Identity)
+
+    im.meta.subarray.ystart = 5
+    transform = subarray_transform(im)
+    assert isinstance(transform[0], Shift) and transform[0].offset == 2
+    assert isinstance(transform[1], Shift) and transform[1].offset == 4
+
+    im = datamodels.ImageModel()
+    im.meta.subarray.ystart = 5
+    transform = subarray_transform(im)
+    assert isinstance(transform[0], Identity)
+    assert isinstance(transform[1], Shift) and transform[1].offset == 4
+
+
+def test_bounding_box_from_model():
+    im = datamodels.ImageModel()
+    im.data = np.zeros((45, 36))
+
+    cube = datamodels.CubeModel()
+    cube.data = np.zeros((3, 45, 36))
+
+    assert bounding_box_from_model(im) == ((-.5, 44.5), (-.5, 35.5))
+    assert bounding_box_from_model(cube) == ((-.5, 44.5), (-.5, 35.5))
+
+
+def test_bounding_box_from_subarray():
+    im = datamodels.ImageModel()
+    im.meta.subarray.xstart = 4
+    im.meta.subarray.ystart = 6
+    im.meta.subarray.xsize = 400
+    im.meta.subarray.ysize = 600
+    assert bounding_box_from_subarray(im) == ((-.5, 598.5), (-.5, 398.5))
