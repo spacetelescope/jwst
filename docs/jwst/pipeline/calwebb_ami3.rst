@@ -6,10 +6,10 @@ calwebb_ami3: Stage 3 Aperture Masking Interferometry (AMI) Processing
 :Config: calwebb_ami3.cfg
 :Class: `~jwst.pipeline.Ami3Pipeline`
 
-The stage 3 AMI pipeline is to be applied to
-associations of calibrated NIRISS AMI exposures and is used to compute fringe
-parameters and, optionally, correct science target fringe parameters using
-observations of reference PSF targets.
+The stage 3 AMI pipeline is applied to associations of calibrated NIRISS AMI exposures.
+It computes fringe parameters for individual exposures, averages the fringe results from
+multiple exposures, and, optionally, corrects science target fringe parameters using the
+fringe results from reference PSF targets.
 The steps applied by the ``calwebb_ami3`` pipeline are shown below.
 
 +------------------------------------------+
@@ -22,17 +22,19 @@ The steps applied by the ``calwebb_ami3`` pipeline are shown below.
 | :ref:`ami_normalize <ami_normalize_step>`|
 +------------------------------------------+
 
-If the input to the pipeline is an ASN containing multiple target and reference
-PSF exposures:
+When given an association file as input, which lists multiple science target and reference PSF
+exposures, the pipeline will:
 
- - the :ref:`ami_analyze <ami_analyze_step>` step is applied to each input exposure
+ - apply the :ref:`ami_analyze <ami_analyze_step>` step to each input exposure
    independently, computing fringe parameters for each
- - the :ref:`ami_average <ami_average_step>` step computes the average of the
-   :ref:`ami_analyze <ami_analyze_step>` results
-   for all of the target exposures, and an average for all of the reference
-   PSF results (if present)
- - the :ref:`ami_normalize <ami_normalize_step>` step corrects the average target results using
-   the average reference PSF results (if present)
+ - apply the :ref:`ami_average <ami_average_step>` step to compute the average of the
+   :ref:`ami_analyze <ami_analyze_step>` results for all of the science target exposures,
+   and the average for all of the reference PSF results (if present)
+ - apply the :ref:`ami_normalize <ami_normalize_step>` step to correct the average science
+   target results using the average reference PSF results (if present)
+
+If no reference PSF target exposures are present in the input ASN file, the ``ami_normalize``
+step is skipped.
 
 Arguments
 ---------
@@ -40,7 +42,9 @@ The ``calwebb_ami3`` pipeline has one optional argument:
 ::
  --save_averages  boolean  default=False
 
-If set to ``True``, the results of the :ref:`ami_average <ami_average_step>` step will be saved.
+If set to ``True``, the results of the :ref:`ami_average <ami_average_step>` step will be saved
+to a file. If not, the results of the :ref:`ami_average <ami_average_step>` step are passed
+along in memory to the :ref:`ami_normalize <ami_normalize_step>` step.
 
 Inputs
 ------
@@ -55,6 +59,38 @@ The inputs to ``calwebb_ami3`` need to be in the form of an ASN file that lists
 multiple science target exposures, and optionally reference PSF exposures as well.
 The individual exposures must be in the form of calibrated ("_cal") products from
 :ref:`calwebb_image2 <calwebb_image2>` processing.
+
+An example ASN file containing 2 science target and 2 reference PSF target exposures is
+shown below. Only 1 product is defined, corresponding to the science target, with
+members consisting of exposures for both the science target and the reference PSF target,
+as indicated by the "exptype" values for each.
+::
+
+ {"asn_type": "ami3",
+  "asn_rule": "discover_Asn_AMI",
+  "program": "10005",
+  "asn_id": "a3001",
+  "target": "t001",
+  "asn_pool": "jw10005_001_01_pool",
+  "products": [
+      {"name": "jw10005-a3001_t001_niriss_f277w-nrm",
+       "members": [
+           {"expname": "jw10005007001_02102_00001_nis_cal.fits",
+            "exptype": "psf",
+           },
+           {"expname": "jw10005027001_02102_00001_nis_cal.fits",
+            "exptype": "psf",
+           },
+           {"expname": "jw10005004001_02102_00001_nis_cal.fits",
+            "exptype": "science",
+           },
+           {"expname": "jw10005001001_02102_00001_nis_cal.fits",
+            "exptype": "science",
+           }
+       ]
+      }
+  ]
+ }
 
 Outputs
 -------
