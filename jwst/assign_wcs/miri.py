@@ -187,9 +187,6 @@ def lrs(input_model, reference_files):
     bb = ((x0.min() - 0.5 + zero_point[0], x1.max() + 0.5 + zero_point[0]),
           (y0.min() - 0.5 + zero_point[1], y0.max() + 0.5 + zero_point[1]))
 
-    # Find the ROW of the zero point which should be the [1] of zero_point
-    row_zero_point = zero_point[1]
-
     # Compute the v2v3 to sky.
     tel2sky = pointing.v23tosky(input_model)
 
