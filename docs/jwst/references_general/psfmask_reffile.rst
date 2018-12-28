@@ -1,7 +1,7 @@
 .. _psfmask_reffile:
 
 PSFMASK Reference File
--------------------------
+^^^^^^^^^^^^^^^^^^^^^^
 
 :REFTYPE: PSFMASK
 :Data model: `~jwst.datamodels.PsfMaskModel`

@@ -28,16 +28,27 @@ below.
 | :ref:`resample <resample_step>`                   |
 +---------------------------------------------------+
 
+The high-level processing provided by these steps is:
+
+1) Accumulate all reference PSF images into a single product
+2) Align every PSF image to every science target image
+3) Compute an optimal PSF fit and subtract it from every science target image
+4) Compare the PSF-subtracted target images against one another to identify outliers
+5) Combine the PSF-subtracted and CR-flagged images into a single resampled image
+
+Currently the individual steps shown above can only be run in a convenient way by
+running the ``calwebb_coron3`` pipeline on an association (ASN) file that lists the
+various science target and reference PSF exposures to be processed.
+
 Arguments
 ---------
-
 The ``calwebb_coron3`` pipeline does not have any optional arguments.
 
 Inputs
 ------
 
-3D calibrated image stacks
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+3D calibrated images
+^^^^^^^^^^^^^^^^^^^^
 
 :Data model: `~jwst.datamodels.CubeModel`
 :File suffix: _calints
@@ -48,6 +59,34 @@ The individual target and reference PSF exposures should be in the form of 3D
 calibrated ("_calints") products from :ref:`calwebb_image2 <calwebb_image2>`
 processing. Each pipeline step will loop over the 3D stack of per-integration images
 contained in each exposure.
+
+An example ASN file containing 2 science target and 1 reference PSF target exposures is
+shown below. Only 1 product is defined, corresponding to the science target, with members
+consisting of exposures of both the science target and the reference PSF target, as
+indicated by the "exptype" values for each.
+::
+ {"asn_type": "coron3",
+  "asn_rule": "candidate_Asn_Coron",
+  "program": "10005",
+  "asn_id": "c1001",
+  "target": "t001",
+  "asn_pool": "jw10005_20181020T033546_pool",
+  "products": [
+      {"name": "jw10005-c1001_t001_nircam_f430m-maskrnd-sub320a430r",
+       "members": [
+           {"expname": "jw10005009001_02102_00001_nrcalong_calints.fits",
+            "exptype": "psf",
+           },
+           {"expname": "jw10005006001_02102_00001_nrcalong_calints.fits",
+            "exptype": "science",
+           },
+           {"expname": "jw10005003001_02102_00001_nrcalong_calints.fits",
+            "exptype": "science",
+           }
+       ]
+      }
+  ]
+ }
 
 Outputs
 -------
