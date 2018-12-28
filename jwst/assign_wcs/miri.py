@@ -8,7 +8,6 @@ from astropy.io import fits
 
 import gwcs.coordinate_frames as cf
 from gwcs import selector
-from gwcs.utils import _toindex
 from . import pointing
 from ..transforms import models as jwmodels
 from .util import (not_implemented_mode, subarray_transform,
@@ -194,13 +193,10 @@ def lrs(input_model, reference_files):
     # Compute the v2v3 to sky.
     tel2sky = pointing.v23tosky(input_model)
 
-    # Compute the spatial detector to V2V3 transform
+    # To compute the spatial detector to V2V3 transform:
     # Take a row centered on zero_point_y and convert it to v2, v3.
     # The forward transform uses constant ``y`` values for each ``x``.
     # The inverse transform uses constant ``v3`` values for each ``v2``.
-    x = np.arange(0, input_model.data.shape[1], dtype=np.float)
-    y = np.zeros(x.shape, dtype=np.float) + row_zero_point
-
     zero_point_v2v3 = distortion(*zero_point)
 
     spatial_forward = models.Identity(1) & models.Const1D(zero_point[1]) | distortion
