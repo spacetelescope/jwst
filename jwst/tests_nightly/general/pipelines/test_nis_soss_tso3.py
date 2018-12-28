@@ -144,10 +144,6 @@ class TestTSO3NIRSOSS(BaseJWSTTest):
         # If there are files left, this is an error
         assert len(output_files) == 0
 
-    @pytest.mark.xfail(
-        reason="Data needs reformatting: 'TaggedDict' object has no attribute 'name'",
-        run=False
-    )
     def test_whitelight_output(self):
         """Test default file output from white_light_step"""
 
@@ -179,10 +175,6 @@ class TestTSO3NIRSOSS(BaseJWSTTest):
 
         assert len(output_files) == 0
 
-    @pytest.mark.xfail(
-        reason="Data needs reformatting: 'TaggedDict' object has no attribute 'name'",
-        run=False
-    )
     def test_whitelight_nooutput(self):
         """Test for no output from white_light_step"""
 
