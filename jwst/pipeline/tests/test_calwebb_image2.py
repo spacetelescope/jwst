@@ -21,12 +21,6 @@ DATAPATH = abspath(
 EXPFILE = 'jw00001001001_01101_00001_mirimage_rate.fits'
 CALFILE = 'jw00001001001_01101_00001_mirimage_cal.fits'
 
-# Skip if the data is not available
-pytestmark = pytest.mark.skipif(
-    not path.exists(DATAPATH),
-    reason='Test data not accessible'
-)
-
 
 @pytest.mark.bigdata
 def test_result_return(mk_tmp_dirs):

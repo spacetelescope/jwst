@@ -77,10 +77,10 @@ program *optional*
   Program number for which this association was created.
   
 asn_type *optional*
-  The type of association represented. See :ref:`level3-asn-association-types`
+  The type of association represented. See :ref:`asn-jwst-association-types`
 
 asn_id *optional*
-  The association id. The id is what appears in the :ref:`asn-DMS-naming`
+  The association id. The id is what appears in the :ref:`asn-jwst-naming`
   
 asn_pool *optional*
   Association pool from which this association was created.
@@ -90,7 +90,7 @@ asn_rule *optional*
   
 version_id *optional*
   Version identifier. DMS uses a time stamp with the format
-  `yyyymmddthhmmss`
+  ``yyyymmddthhmmss``
   Can be None or NULL
 
 constraints *optional*
@@ -99,12 +99,12 @@ constraints *optional*
   rule.
 
 
-`products` Keyword
-^^^^^^^^^^^^^^^^^^
+``products`` Keyword
+^^^^^^^^^^^^^^^^^^^^
 
 A list of products that would be produced by this association. For
 Level2, each product is an exposure. Each product should have one
-`science` member, the exposure on which the Level2b processing will
+``science`` member, the exposure on which the Level2b processing will
 occur.
 
 Association products have two components: 
@@ -116,16 +116,16 @@ name *optional*
   suffix information is needed.
 
   If not specified, the Level2b processing modules will create a name
-  based off the name of the `science` member.
+  based off the name of the ``science`` member.
 
 members *required*
   This is a list of the exposures to be used by the Level 2b processing
   tasks. This keyword is explained in detail in the next section.
 
-`members` Keyword
-^^^^^^^^^^^^^^^^^
+``members`` Keyword
+^^^^^^^^^^^^^^^^^^^
 
-`members` is a list of objects, each consisting of the following
+``members`` is a list of objects, each consisting of the following
 keywords
 
 expname *required*
@@ -134,23 +134,23 @@ expname *required*
 exptype *required*
   Type of information represented by the exposure. Possible values are
 
-  * `science` *required*
+  * ``science`` *required*
     
     Primary science exposure. For each product, only one exposure can
-    be `science`.
+    be ``science``.
     
-  * `background` *optional*
+  * ``background`` *optional*
     
     Off-target background exposure to subtract.
     
-  * `imprint` *optional*
+  * ``imprint`` *optional*
     
     Imprint exposure to subtract.
     
-  * `sourcecat` *optional*
+  * ``sourcecat`` *optional*
     
     The catalog of sources to extract spectra for. Usually produced by
-    `calwebb_image3` for wide-field slitless spectroscopy.
+    ``calwebb_image3`` for wide-field slitless spectroscopy.
 
 Editing the member list
 ^^^^^^^^^^^^^^^^^^^^^^^

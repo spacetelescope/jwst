@@ -17,23 +17,20 @@ NumRefPixels = namedtuple("NumRefPixels",
 
 
 def do_correction(input_model, ipc_model):
-    """
-    Short Summary
-    -------------
-    Execute all tasks for IPC correction
+    """Execute all tasks for IPC correction
 
     Parameters
     ----------
-    input_model: data model object
+    input_model : data model object
         Science data to be corrected.
 
-    ipc_model: ipc model object
+    ipc_model : ipc model object
         Deconvolution kernel, either a 2-D or 4-D image in the first
         extension.
 
     Returns
     -------
-    output_model: data model object
+    output_model : data model object
         IPC-corrected science data.
     """
 
@@ -57,16 +54,16 @@ def ipc_correction(input_model, ipc_model):
 
     Parameters
     ----------
-    input_model: data model object
+    input_model : data model object
         The input science data.
 
-    ipc_model: ipc model object
+    ipc_model : IPCModel object
         The IPC kernel.  The input is corrected for IPC by convolving
         with this 2-D or 4-D array.
 
     Returns
     -------
-    output: data model object
+    output : data model object
         IPC-corrected science data.
     """
 
@@ -120,21 +117,26 @@ def ipc_correction(input_model, ipc_model):
 
     return output
 
+
 def get_num_ref_pixels(input_model):
     """Get the number of reference pixel rows and columns.
 
     Parameters
     ----------
-    input_model: data model object
+    input_model : data model object
         The input science data.
 
     Returns
     -------
-    nref: NumRefPixels object
-        bottom_rows: the number of reference rows at the bottom of the image
-        top_rows: at the top of the image
-        left_columns: the number of reference columns at the left edge
-        right_columns: at the right edge
+    nref : namedtuple
+        bottom_rows : int
+            The number of reference rows at the bottom of the image.
+        top_rows : int
+            The number of reference rows at the top of the image.
+        left_columns : int
+            The number of reference columns at the left edge.
+        right_columns : int
+            The number of reference columns at the right edge.
     """
 
     xstart = input_model.meta.subarray.xstart - 1       # zero indexed
@@ -154,22 +156,24 @@ def get_num_ref_pixels(input_model):
 
     return nref
 
+
 def get_ipc_slice(input_model, ipc_model):
     """Extract a slice from IPC kernel corresponding to science data.
 
     Parameters
     ----------
-    input_model: data model object
+    input_model : data model object
         The input science data.
 
-    ipc_model: data model object
+    ipc_model : data model object
         The IPC kernel model.
 
     Returns
     -------
-    kernel: ndarray, either 2-D or 4-D
-        The data array for the IPC kernel.  This will be a slice of the
-        IPC kernel if it is 4-D and the science data array is a subarray.
+    kernel : ndarray, either 2-D or 4-D
+        The data array for the IPC kernel.  If the IPC kernel is 4-D and
+        the science data array is a subarray, `kernel` will be a slice of
+        the reference image; otherwise, this will be the full image.
     """
 
     if len(ipc_model.data.shape) == 2:
@@ -190,25 +194,30 @@ def get_ipc_slice(input_model, ipc_model):
     else:
         return ipc_model.data
 
+
 def ipc_convolve(output_data, kernel, nref):
     """Convolve the science data with the IPC kernel.
 
     Parameters
     ----------
-    output_data: ndarray
+    output_data : ndarray, 2-D
         A copy of the input science data for one group; this will be
         modified in-place.
 
-    kernel: ndarray, 2-D or 4-D
+    kernel : ndarray, 2-D or 4-D
         The IPC kernel; the input is corrected for IPC by convolving with
         this array.  If it is 4-D the last two dimensions will be a slice
         that matches the last two dimensions of `output_data`.
 
-    nref: NumRefPixels object
-        bottom_rows: the number of reference rows at the bottom of the image
-        top_rows: at the top of the image
-        left_columns: the number of reference columns at the left edge
-        right_columns: at the right edge
+    nref : namedtuple
+        bottom_rows : int
+            The number of reference rows at the bottom of the image.
+        top_rows : int
+            The number of reference rows at the top of the image.
+        left_columns : int
+            The number of reference columns at the left edge.
+        right_columns : int
+            The number of reference columns at the right edge.
     """
 
     bottom_rows = nref.bottom_rows

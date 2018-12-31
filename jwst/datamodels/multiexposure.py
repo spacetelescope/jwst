@@ -22,8 +22,10 @@ class MultiExposureModel(DataModel):
     This model has a special member `exposures` that can be used to
     deal with an entire slit at a time.  It behaves like a list::
 
-       >>> multislit_model.exposures.append(image_model)
-       >>> multislit_model.exposures[0]
+       >>> from .image import ImageModel
+       >>> multiexposure_model = MultiExposureModel()
+       >>> multiexposure_model.exposures.append(ImageModel())
+       >>> multiexposure_model.exposures[0]      # doctest: +SKIP
        <ImageModel>
 
     Also, there is an extra attribute, `meta`. This will
@@ -33,6 +35,19 @@ class MultiExposureModel(DataModel):
     See the module `exp_to_source` for the initial creation of these
     models. This is part of the Level 3 processing of multi-objection
     observations.
+
+    Parameters
+    __________
+    exposures.items.data : numpy float32 array
+
+    exposures.items.dq : numpy uint32 array
+
+    exposures.items.err : numpy float32 array
+
+    exposures.items.relsens : numpy table
+         relative sensitivity table
+
+    exposures.items.area : numpy float32 array
     """
     schema_url = "multiexposure.schema.yaml"
     core_schema_url = 'core.schema.yaml'

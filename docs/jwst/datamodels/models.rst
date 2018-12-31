@@ -110,11 +110,6 @@ the `format` keyword argument::
 
    Unlike ``astropy.io.fits``, `save` always clobbers the output file.
 
-It also accepts a writable file-like object (opened in binary mode).
-In that case, a format must be specified::
-
-    with open("myimage.fits", "wb") as fd:
-        im.save(fd, format="fits")
 
 Copying a model
 ---------------
@@ -139,15 +134,40 @@ nothing more sophisticated.
 
 To get to the history::
 
-    model.history
+    entries = model.history
+    for entry in entries:
+      pass
 
-To add an entry to the history::
+To add an entry to the history, first create the entry by calling
+`util.create_history_entry` and appending the entry to the model
+history::
 
-    model.history.append("Processed through the frobulator step")
+    entry =  util.create_history_entry("Processed through the frobulator step")
+    model.history.append(entry)
 
 These history entries are stored in ``HISTORY`` keywords when saving
-to FITS format.
+to FITS format. As an option, history entries can contain a dictionary
+with a description of the software used. The dictionary must have the
+following keys:
 
+  ``name``
+      The name of the software
+   ``author``
+       The author or institution that produced the software
+    ``homepage``
+        A URI to the homepage of the software
+    ``version``
+        The version of the software
+
+The calling sequence to create  a history entry with the software
+description is::
+
+  entry =  util.create_history_entry(description, software=software_dict)
+
+where the second argument is the dictionary with the keywords
+mentioned.
+
+  
 Converting from ``astropy.io.fits``
 ===================================
 

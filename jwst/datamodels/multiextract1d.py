@@ -12,8 +12,10 @@ class MultiExtract1dImageModel(ReferenceFileModel):
     This model has a special member `images` that can be used to
     deal with each image separately.  It behaves like a list::
 
-       >>> multiextr1d_img_model.images.append(ref_image_model)
-       >>> multiextr1d_img_model.images[0]
+       >>> from . import Extract1dImageModel
+       >>> multiextr1d_img_model = MultiExtract1dImageModel()
+       >>> multiextr1d_img_model.images.append(Extract1dImageModel())
+       >>> multiextr1d_img_model.images[0]  # doctest: +SKIP
        <Extract1dImageModelModel>
 
     If `init` is a file name or an `Extract1dImageModel` instance, an empty
@@ -22,9 +24,8 @@ class MultiExtract1dImageModel(ReferenceFileModel):
     `Extract1dImageModel` will be copied to the first element of `images`.
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
+    images.items.data : numpy float32 array
     """
     schema_url = "multiextract1d.schema.yaml"
 

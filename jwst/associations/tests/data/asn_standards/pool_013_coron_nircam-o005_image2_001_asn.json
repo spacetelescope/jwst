@@ -2,7 +2,7 @@
     "asn_type": "image2",
     "asn_rule": "candidate_Asn_Lv2ImageNonScience",
     "version_id": null,
-    "code_version": "0.10.1a.dev237",
+    "code_version": "0.12.0a.dev181",
     "degraded_status": "No known degraded exposures in association.",
     "program": "10005",
     "target": "1",
@@ -15,36 +15,6 @@
             "members": [
                 {
                     "expname": "jw_00017_rate.fits",
-                    "exptype": "science",
-                    "exposerr": "null"
-                }
-            ]
-        },
-        {
-            "name": "jw_00018",
-            "members": [
-                {
-                    "expname": "jw_00018_rate.fits",
-                    "exptype": "science",
-                    "exposerr": "null"
-                }
-            ]
-        },
-        {
-            "name": "jw_00019",
-            "members": [
-                {
-                    "expname": "jw_00019_rate.fits",
-                    "exptype": "science",
-                    "exposerr": "null"
-                }
-            ]
-        },
-        {
-            "name": "jw_00020",
-            "members": [
-                {
-                    "expname": "jw_00020_rate.fits",
                     "exptype": "science",
                     "exposerr": "null"
                 }

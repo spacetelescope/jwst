@@ -1,3 +1,5 @@
+.. _source_catalog_step:
+
 ==============
 Source Catalog
 ==============

@@ -14,9 +14,10 @@ class MultiSlitModel(model_base.DataModel):
     This model has a special member `slits` that can be used to
     deal with an entire slit at a time.  It behaves like a list::
 
-       >>> multislit_model.slits.append(image_model)
-       >>> multislit_model.slits[0]
-       >>> multislit[0]
+       >>> from .slit import SlitModel
+       >>> multislit_model = MultiSlitModel()
+       >>> multislit_model.slits.append(SlitModel())
+       >>> multislit_model[0]
        <SlitModel>
 
     If ``init`` is a file name or an ``ImageModel`` or a ``SlitModel``instance,
@@ -26,9 +27,51 @@ class MultiSlitModel(model_base.DataModel):
     first element of ``slits``.
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
+    slits.items.data : numpy float32 array
+         The science data
+
+    slits.items.dq : numpy uint32 array
+         Data quality array
+
+    slits.items.err : numpy float32 array
+         Error array
+
+    slits.items.wavelength : numpy float32 array
+         Wavelength array, corrected for zero-point
+
+    slits.items.barshadow : numpy float32 array
+         Bar shadow correction
+
+    slits.items.area : numpy float32 array
+         Pixel area map array
+
+    slits.items.relsens : numpy table
+         relative sensitivity table
+
+    slits.items.var_poisson : numpy float32 array
+         variance due to poisson noise
+
+    slits.items.var_rnoise : numpy float32 array
+         variance due to read noise
+
+    slits.items.pathloss_pointsource2d : numpy float32 array
+         2-d array for pathloss (point source)
+
+    slits.items.pathloss_pointsource : numpy float32 array
+         pathloss array for point sources
+
+    slits.items.wavelength_pointsource : numpy float32 array
+         wavelength array for point sources
+
+    slits.items.pathloss_uniformsource2d : numpy float32 array
+         2-d array for pathloss (uniform source)
+
+    slits.items.pathloss_uniformsource : numpy float32 array
+         pathloss_array for uniform sources
+
+    slits.items.wavelength_uniformsource : numpy float32 array
+         wavelength array for uniform sources
     """
     schema_url = "multislit.schema.yaml"
 
@@ -52,8 +95,12 @@ class MultiSlitModel(model_base.DataModel):
             return res
         elif isinstance(key, int):
             # Return an instance of a SlitModel
-            slit = self.slits[key]  # returns an ObjectNode instance
-
+            # This only executes when the top object level
+            # is called: object[1].key not object.slits[key]
+            try:
+                slit = self.slits[key]  # returns an ObjectNode instance
+            except IndexError:
+                raise("Slit {0} doesn't exist".format(key))
             kwargs = {}
             items = dict(slit.items())
             for key in items:

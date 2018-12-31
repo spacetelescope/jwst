@@ -12,8 +12,10 @@ class MultiSpecModel(model_base.DataModel):
     This model has a special member `spec` that can be used to
     deal with an entire spectrum at a time.  It behaves like a list::
 
-       >>> multispec_model.spec.append(spec_model)
-       >>> multispec_model.spec[0]
+       >>> from . import SpecModel
+       >>> multispec_model = MultiSpecModel()
+       >>> multispec_model.spec.append(SpecModel())
+       >>> multispec_model.spec[0] # doctest: +SKIP
        <SpecModel>
 
     If `init` is a `SpecModel` instance, an empty `SpecModel` will be
@@ -23,23 +25,26 @@ class MultiSpecModel(model_base.DataModel):
     to the `spec` attribute by using its `append` method.
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
+    int_times : numpy table
+         table of times for each integration
+
+    spec.items.spec_table : numpy table
+         Extracted spectral data table
 
     Examples
     --------
-    >>> output_model = datamodels.MultiSpecModel()
-    >>> spec = datamodels.SpecModel()       # for the default data type
-    >>> for slit in input_model.slits:
-    >>>     slitname = slit.name
-    >>>     slitmodel = ExtractModel()
-    >>>     slitmodel.fromJSONFile(extref, slitname)
-    >>>     column, wavelength, countrate = slitmodel.extract(slit.data)
-    >>>     otab = np.array(zip(column, wavelength, countrate),
-    >>>                     dtype=spec.spec_table.dtype)
-    >>>     spec = datamodels.SpecModel(spec_table=otab)
-    >>>     output_model.spec.append(spec)
+    >>> output_model = MultiSpecModel()
+    >>> spec = SpecModel()       # for the default data type
+    >>> for slit in input_model.slits:  # doctest: +SKIP
+    ...     slitname = slit.name
+    ...     slitmodel = ExtractModel()
+    ...     slitmodel.fromJSONFile(extref, slitname)
+    ...     column, wavelength, countrate = slitmodel.extract(slit.data)
+    ...     otab = np.array(zip(column, wavelength, countrate),
+    ...                     dtype=spec.spec_table.dtype)
+    ...     spec = datamodels.SpecModel(spec_table=otab)
+    ...     output_model.spec.append(spec)
     """
     schema_url = "multispec.schema.yaml"
 

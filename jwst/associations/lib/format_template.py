@@ -33,24 +33,24 @@ class FormatTemplate(Formatter):
 
     Parameters
     ----------
-    template: str
+    template : str
         A Python format string
 
-    separator: string
+    separator : string
         Separater to use for values which have no
         matching replacement strings
 
-    key_formats: dict or None
+    key_formats : dict or None
         A dict of key-specific formatting where the value will
         be pre-formatted before being passed to the final format
         string. Each format will be tried until success.
 
-    remove_unused: bool
+    remove_unused : bool
         By default, unused replacement fields are left in the
         result, for use in subsequent replacement usage.
         If True, such fields are removed from the result.
 
-    kwargs: dict or named parameters
+    kwargs : dict or named parameters
         The key/values pairs to fill into the Python format string
 
     Returns
@@ -98,7 +98,7 @@ class FormatTemplate(Formatter):
     'name="fred" value="great"_now-with_more'
 
     Setup preformatting
-    >>> key_formats = {'value': 'pre_{:s}_format'}
+    >>> key_formats = {'value': ['pre_{:s}_format']}
     >>> fmt_preformat = FormatTemplate(key_formats=key_formats)
     >>> fmt_preformat(template, name='fred', value='great')
     'name="fred" value="pre_great_format"'
@@ -108,12 +108,12 @@ class FormatTemplate(Formatter):
 
         Parameters
         ----------
-        separator: str
+        separator : str
             For key/value pairs given that do not have a
             replacement field, the values are appened to
             the string using this separator.
 
-        key_formats: {key: format(, ...)}
+        key_formats : {key: format(, ...)}
             dict of formats to pre-format the related values
             before insertion into the template.
         """
@@ -131,15 +131,15 @@ class FormatTemplate(Formatter):
 
         Parameters
         ----------
-        format_string: str
+        format_string : str
             The string to be formatted
 
-        kwargs: dict
+        kwargs : dict
             The key/value pairs to insert into the string
 
         Returns
         -------
-        formatted: str
+        formatted : str
             The formatted string.
         """
         self._used_keys = []
@@ -194,14 +194,14 @@ class FormatTemplate(Formatter):
 
         Parameters
         ----------
-        key: str
+        key : str
             The key to retrieve.
 
-        args: [arg(, ...)]
+        args : [arg(, ...)]
             Positional arguments passed.
             This is ignored.
 
-        kwargs: {k:v(, ...)}
+        kwargs : {k:v(, ...)}
             The key/value pairs passed in.
 
         Returns

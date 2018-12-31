@@ -10,13 +10,37 @@ from .. datamodels import dqflags
 log = logging.getLogger()
 log.setLevel(logging.DEBUG)
 
-# This factor is to account for the difference in gain for charges freed
-# from traps, compared with photon-generated charges.
 SCALEFACTOR = 2.
+"""This factor is to account for the difference in gain for charges freed
+from traps, compared with photon-generated charges.
+"""
 
 def no_NaN(input_model, fill_value,
            zap_nan=False, zap_zero=False):
-    """Replace NaNs and/or zeros with a fill value."""
+    """Replace NaNs and/or zeros with a fill value.
+
+    Parameters
+    ----------
+    input_model : JWST data model
+        The input will typically be a reference file model.
+
+    fill_value : float
+        Use this value to replace NaNs and/or zeros.
+
+    zap_nan : bool
+        If True, replace NaNs in a copy of `input_model.data`.
+        The default is False.
+
+    zap_zero : bool
+        If True, replace zeros in a copy of `input_model.data`.
+        The default is False.
+
+    Returns
+    -------
+    JWST data model
+        A copy of `input_model` with NaNs and/or zeros in the `data`
+        attribute replaced with `fill_value`.
+    """
 
     mask = None
 
@@ -38,50 +62,92 @@ def no_NaN(input_model, fill_value,
 
 
 class DataSet():
-    """
-    Input dataset to which persistence will be applied
+    """Input dataset to which persistence will be applied
 
-    Parameters
-   ----------
+    Attributes
+    ----------
+    output_obj : JWST data model
+        A copy of the input model.  This will be modified in-place.
+
+    traps_filled : JWST data model, `TrapsFilledModel`
+        The trap state at some time prior to the current exposure
+
+    flag_pers_cutoff : float or None
+        If not None, pixels will be flagged if the value of persistence
+        that was subtracted is larger than `flag_pers_cutoff`.
+
+    save_persistence : bool
+        If True, the persistence that was subtracted will be written to an
+        output file.
+
+    output_pers : JWST data model or None
+        If `save_persistence` is True, the amount of persistence that was
+        subtracted will be copied to the `data` attribute of a data model
+        and written to a file.
+
+    trap_density : JWST data model, `TrapDensityModel`
+        Reference file, giving the total number of traps per pixel.
+
+    trappars_model : JWST data model, `TrapParsModel`
+        Reference file (table), giving parameters for traps.
+
+    persistencesat : JWST data model, `PersistenceSatModel`
+        Persistence saturation limit (full well) reference file.
+
+    tframe : float
+        The frame time, in seconds.
+
+    tgroup : float
+        The group time, in seconds.
+
+    ngroups : int
+        The number of groups per integration.
+
+    nframes : int
+        The number of frames per group.
+
+    groupgap : int
+        The number of dropped frames.  Currently not used.
+
+    nresets : int
+        The number of resets (frames) at the beginning of each integration.
     """
+
     def __init__(self, output_obj, input_traps_filled,
                  flag_pers_cutoff, save_persistence,
                  trap_density_model, trappars_model,
                  persat_model):
 
-        """
-        Short Summary
-        -------------
-        Set attributes
+        """Assign values to attributes.
 
         Parameters
         ----------
-        output_obj:
+        output_obj : JWST data model
             copy of input data model object
 
-        input_traps_filled: cube model, or None
+        input_traps_filled : cube model or None
             Image of trap state.  There will be one or more image planes,
             each of which corresponds to a trap "family," i.e. a set of
             traps with similar capture and decay properties.
             If this is None, the state will be initialized to an array
             of zeros, indicating that there are no filled traps.
 
-        flag_pers_cutoff: float or None
+        flag_pers_cutoff : float or None
             If not None, pixels will be flagged (with what? xxx) if the
             value of persistence that was subtracted is larger than
             `flag_pers_cutoff`.
 
-        save_persistence: bool
+        save_persistence : bool
             If True, the persistence that was subtracted will be written
             to an output file.
 
-        trap_density_model: image model
+        trap_density_model : image model
             Image (reference file) of the total number of traps per pixel.
 
-        trappars_model: traps model
+        trappars_model : traps model
             Table (reference file) giving parameters for traps.
 
-        persat_model: persistence saturation model
+        persat_model : persistence saturation model
             Persistence saturation limit (full well) reference file.
         """
 
@@ -109,29 +175,25 @@ class DataSet():
 
 
     def do_all(self):
-        """
-        Short Summary
-        -------------
-        Execute all tasks for persistence correction
-
-        Parameters
-        ----------
+        """Execute all tasks for persistence correction
 
         Returns
         -------
-        tuple (output_obj, traps_filled, output_pers, skipped_flag)
-            output_obj: data model
-                The persistence-corrected science data, a RampModel object.
-            traps_filled: data model
-                A TrapsFilledModel object, giving the number of traps that
-                are filled in each pixel at the end of the exposure; there
-                will be one plane for each trap family.
-            output_pers:  data model, or None
-                A RampModel object, giving the value of persistence that
-                was subtracted from each pixel of each group of each
-                integration.
-            skipped_flag: bool
-                This will be True if the step has been skipped.
+        output_obj : data model
+            The persistence-corrected science data, a RampModel object.
+
+        traps_filled : data model or None
+            A TrapsFilledModel object, giving the number of traps that
+            are filled in each pixel at the end of the exposure; there
+            will be one plane for each trap family.
+
+        output_pers :  data model or None
+            A RampModel object, giving the value of persistence that
+            was subtracted from each pixel of each group of each
+            integration.
+
+        skipped : bool
+            This will be True if the step has been skipped.
         """
 
         # Initial value, indicates that processing was done successfully.
@@ -344,17 +406,17 @@ class DataSet():
 
         Parameters
         ----------
-        ref: data model
+        ref : data model
             A reference image.
 
-        sci: data model
+        sci : data model
             The science data.
 
         Returns
         -------
-        tuple
-            A two-element tuple of slice objects, the Y and X slices that
-            can be used to extract a subarray from the reference file.
+        tuple of two slice objects
+            The elements are the Y and X slices that are intended to be
+            used to extract a subarray from the reference file.
         """
 
         sci_shape = sci.shape
@@ -389,19 +451,22 @@ class DataSet():
 
 
     def ref_matches_sci(self, ref, slc):
-        """Test whether ref and sci are full-frame or the same subarray.
+        """Test whether ref and sci cover the same area of the detector.
 
         Parameters
         ----------
-        ref: data model
+        ref : data model
             Reference data.
 
-        slc: tuple of two slice objects
+        slc : tuple of two slice objects
             The Y and X slices that can be used to extract a subarray from
-            the reference file.  This was returned by function get_slice.
+            the reference file.  This was returned by function `get_slice`.
 
         Returns
         -------
+        bool
+            True if both are full-frame or if they are the same subarray;
+            False otherwise.
         """
 
         slc_test_y = slice(0, ref.shape[-2])
@@ -418,17 +483,18 @@ class DataSet():
 
         Parameters
         ----------
-        ref: a data model object
+        ref : JWST data model
             Reference data.
 
-        slc: tuple of two slice objects
+        slc : tuple of two slice objects
             The Y and X slices that can be used to extract a subarray from
-            the reference file.  This was returned by function get_slice.
+            the reference file.  This was returned by function `get_slice`.
 
         Returns
         -------
-        refsub: data model
-            `refsub` is the subarray extracted from `ref`.
+        refsub : data model
+            `refsub` is a copy of `ref`, but the data attribute in `refsub`
+            includes only the relevant slice.
         """
 
         refsub = ref.copy()
@@ -445,14 +511,19 @@ class DataSet():
     def get_parameters(self):
         """Read capture and decay parameters from a reference table.
 
-        Parameters
-        ----------
-
         Returns
         -------
-        tuple (par0, par1, par2, par3) of 1-D ndarrays
-            par0, par1, par2 are trap capture columns
-            par3 is a trap decay column
+        par0 : ndarray
+            Column "capture0" from the trappars table.
+
+        par1 : ndarray
+            Column "capture1" from the trappars table.
+
+        par2 : ndarray
+            Column "capture2" from the trappars table.
+
+        par3 : ndarray
+            Column "decay_param" from the trappars table.
         """
 
         data = self.trappars_model.trappars_table
@@ -467,34 +538,39 @@ class DataSet():
     def compute_slope(self, integ):
         """Compute an estimate of the slope of the ramp for each pixel.
 
+        Extended Summary
+        ----------------
         We need a value for the slope that will not include cosmic-ray
         jumps, and groups that are flagged as saturated must also not
         contribute to the slope.  The approach will be to find the
         difference between adjacent groups, set the difference to a very
         large value if the group was saturated, then sort the differences
         along the axis for the ramp.  All the saturated groups will then
-        be at the (high) end.  Cosmic-ray-affected groups should be just
+        be at the high end.  Cosmic-ray-affected groups should be just
         below the saturated groups (unless the effect of a CR was very
         small, in which case it won't matter where it is).  We can therefore
         ignore all the CR jumps and saturated values just by knowing how
         many of them there are.  The average of the remaining differences
         is the slope.
 
+        Two arrays are returned, both giving the slope at each pixel, but
+        with different units for the slope.  The reason for returning both
+        arrays is that there is not a single factor relating the two; the
+        factor can differ from one pixel to another.
+
         Parameters
         ----------
-        integ: int
+        integ : int
             The number (index) of the current integration.
 
         Returns
         -------
-        (grp_slope, slope): tuple of 2-D ndarrays
-            Both arrays give the ramp slope at each pixel, but the units
-            differ.  `grp_slope` is the ramp slope in units of counts per
-            group, while `slope` is the ramp slope in units of (fraction of
-            the persistence saturation limit) per second.  The reason for
-            keeping both arrays is that the persistence saturation limit
-            (which could be, for example, of order 90000) can differ from
-            one pixel to another.
+        grp_slope : ndarray, 2-D
+            The ramp slope in units of counts (DN) per group.
+
+        slope : ndarray, 2-D
+            The ramp slope in units of fraction of the persistence
+            saturation limit per second.
         """
 
         (_, ngroups, ny, nx) = self.output_obj.shape
@@ -590,19 +666,18 @@ class DataSet():
 
         Parameters
         ----------
-        par: tuple of ndarray
-            These were read from the traps reference table.  Each element
-            of the tuple is a column from the table.  Each row of the
-            table is for a different trap family.
+        par : tuple of ndarray
+            These were read from the trap parameters reference table.
+            Each element of the tuple is a column from the table.  Each
+            row of the table is for a different trap family.
 
-        k: int
+        k : int
             Index of the current trap family
 
         Returns
         -------
-        tuple of float
-            This includes just the capture parameters, and only the values
-            for the current trap family.
+        tuple of three floats
+            These are the capture parameters for the current trap family.
         """
 
         (par0, par1, par2) = par[0:3]
@@ -615,19 +690,18 @@ class DataSet():
 
         Parameters
         ----------
-        par: tuple of ndarray
-            These were read from the traps reference table.  Each element
-            of the tuple is a column from the table.  Each row of the
-            table is for a different trap family.
+        par : tuple of ndarray
+            These were read from the trap parameters reference table.
+            Each element of the tuple is a column from the table.  Each
+            row of the table is for a different trap family.
 
-        k: int
+        k : int
             Index of the current trap family
 
         Returns
         -------
         float
-            This is just the decay parameter, and only the value for the
-            current trap family.
+            This is the decay parameter for the current trap family.
         """
 
         par3 = par[3]
@@ -638,6 +712,8 @@ class DataSet():
     def get_group_info(self, integ):
         """Get some metadata.
 
+        Extended Summary
+        ----------------
         This method populates these attributes:
             self.tframe
             self.tgroup
@@ -648,8 +724,10 @@ class DataSet():
 
         Parameters
         ----------
-        integ: int
-            Integration number.
+        integ : int
+            Integration number.  This is needed because the number of
+            resets before the first integration can be different from the
+            number of resets between integrations.
         """
 
         shape = self.output_obj.data.shape
@@ -684,33 +762,33 @@ class DataSet():
 
         Parameters
         ----------
-        capture_param_k: tuple
+        capture_param_k : tuple of three floats
             Three values read from a reference table.  These will be from
             three separate columns but just one row; the row corresponds
             to the current trap family.  (The _k in the variable name
-            refers to the index of the trap family.)
+            indicates that the values are for one trap family.)
 
-        trap_density: 2-D ndarray
+        trap_density : ndarray, 2-D
             Image of the total number of traps per pixel.
 
-        integ: int
+        integ : int
             Integration number.
 
-        grp_slope: 2-D ndarray
+        grp_slope : ndarray, 2-D
             The slope of the ramp at each pixel, in units of counts (DN)
             per group.  See also `slope`.
             The slope was computed from the pixel values that were not
             saturated and were not affected by jumps, based on flags in
             the groupdq extension.
 
-        slope: 2-D ndarray
+        slope : ndarray, 2-D
             The slope of the ramp at each pixel, in units of
-            (fraction of the persistence saturation limit) per second.
-            See also `grp_slope`.
+            fraction of the persistence saturation limit per second.
+            This is the same as `grp_slope` except for units.
 
         Returns
         -------
-        2-D ndarray
+        ndarray, 2-D
             The computed traps_filled at the end of the integration.
         """
 
@@ -777,29 +855,29 @@ class DataSet():
 
         Parameters
         ----------
-        capture_param_k: tuple
+        capture_param_k : tuple
             Three values read from a reference table.  These will be from
             three separate columns but just one row; the row corresponds
             to the current trap family.  (The _k in the variable name
-            refers to the index of the trap family.)
+            indicates that the values are for one trap family.)
 
-        trap_density: 2-D ndarray
+        trap_density : ndarray, 2-D
             Image of the total number of traps per pixel.
 
-        slope: 2-D ndarray
+        slope : ndarray, 2-D
             Array of the slope of the ramp at each pixel.  The slope was
             computed from the pixel values that were not saturated and were
             not affected by jumps, based on flags in the groupdq extension.
-            The unit is (fraction of the persistence saturation limit)
+            The unit is fraction of the persistence saturation limit
             per second.
 
-        dt: float
+        dt : float
             The time interval (unit = second) over which the charge capture
             is to be computed.  This does not include saturated groups.
 
         Returns
         -------
-        2-D ndarray
+        ndarray, 2-D
             The computed traps_filled at the end of the integration.
         """
 
@@ -827,44 +905,46 @@ class DataSet():
 
         This is based on Michael Regan's predictsaturationcapture.pro.
 
+        Extended Summary
+        ----------------
         This should not be called for ramps that do not have any groups
         that exceed the persistence saturation limit.  One reason is that
-        incoming_filled_traps can be so small that exp_filled_traps
+        `incoming_filled_traps` can be so small that `exp_filled_traps`
         would be negative.
 
-        trap_density, incoming_filled_traps, sattime, and sat_count were
-        all 2-D arrays in the calling function predict_capture(), but
-        these arrays were masked to select only ramps with at least one
-        saturated group, so in this function these arrays are 1-D.
+        `trap_density`, `incoming_filled_traps`, `sattime`, and `sat_count`
+        were all 2-D arrays in the calling function `predict_capture`, but
+        these arrays have been masked to select only ramps with at least
+        one saturated group, so in this function these arrays are 1-D.
 
         Parameters
         ----------
-        capture_param_k: tuple
+        capture_param_k : tuple
             Three values read from a reference table.  These will be from
             three separate columns but just one row; the row corresponds
             to the current trap family.  (The _k in the variable name
-            refers to the index of the trap family.)
+            indicates that the values are for one trap family.)
 
-        trap_density: ndarray
+        trap_density : ndarray
             Image of the total number of traps per pixel.
 
-        incoming_filled_traps: ndarray
+        incoming_filled_traps : ndarray
             Traps filled due to linear portion of the ramp.
             This may be modified in-place.
 
-        sattime: ndarray
+        sattime : ndarray
             Time (seconds) during which each pixel was saturated.
 
-        sat_count: array, int
+        sat_count : array, int
             For each pixel, the number of groups with value exceeding the
             persistence saturation limit.
 
-        ngroups: int
+        ngroups : int
             The number of groups in the ramp
 
         Returns
         -------
-        2-D ndarray
+        ndarray, 2-D
             The computed traps_filled at the end of the integration.
         """
 
@@ -896,8 +976,10 @@ class DataSet():
                           grp_slope, ngroups, t_group):
         """Compute number of traps filled due to cosmic-ray jumps.
 
+        Extended Summary
+        ----------------
         If a cosmic-ray hit was in group number g (meaning that
-        data[integ, g, y, x] was higher than expected), then
+        `data[integ, g, y, x]` was higher than expected), then
         delta_t = (ngroups - g - 0.5) * t_group
         is the time from the CR-affected group to the end of the
         integration, assuming that the CR hit in the middle (timewise)
@@ -907,34 +989,34 @@ class DataSet():
 
         Parameters
         ----------
-        capture_param_k: tuple
+        capture_param_k : tuple
             Three values read from a reference table.  These will be from
             three separate columns but just one row; the row corresponds
             to the current trap family.  (The _k in the variable name
-            refers to the index of the trap family.)
+            indicates that the values are for one trap family.)
 
-        trap_density: 2-D ndarray
+        trap_density : ndarray, 2-D
             Image of the total number of traps per pixel.
 
-        integ: int
+        integ : int
             Integration number.
 
-        grp_slope: 2-D ndarray
+        grp_slope : ndarray, 2-D
             Array of the slope of the ramp at each pixel.  The slope was
             computed from the pixel values that were not saturated and were
             not affected by jumps, based on flags in the groupdq extension.
             The unit is counts (DN) per group.
 
-        ngroups: int
+        ngroups : int
             Total number of groups in the integration.
 
-        t_group: float
+        t_group : float
             The time (seconds) from the start of one group to the start
             of the next group.
 
         Returns
         -------
-        2-D ndarray
+        ndarray, 2-D
             The computed cr_filled at the end of the integration.
         """
 
@@ -978,22 +1060,22 @@ class DataSet():
 
         Parameters
         ----------
-        traps_filled: 2-D ndarray
+        traps_filled : ndarray, 2-D
             This is an image of the number of filled traps in each pixel
             for the current trap family.
 
-        decay_param: float
+        decay_param : float
             The decay parameter.  This is negative, but otherwise it's
             the reciprocal of the e-folding time for trap decay for the
             current trap family.
 
-        delta_t: float
+        delta_t : float
             The time interval (unit = second) over which the trap decay
             is to be computed.
 
         Returns
         -------
-        decayed: 2-D ndarray
+        decayed : ndarray, 2-D
             Image of the computed number of trap decays for each pixel,
             for the current trap family.
         """

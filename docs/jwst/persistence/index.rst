@@ -1,12 +1,14 @@
-===========
-Persistence
-===========
+.. _persistence_step:
+
+======================
+Persistence Correction
+======================
 
 .. toctree::
    :maxdepth: 2
 
    description.rst
-   reference_files.rst
    arguments.rst
+   reference_files.rst
 
 .. automodapi:: jwst.persistence

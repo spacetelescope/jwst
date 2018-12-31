@@ -1,3 +1,5 @@
+.. _extract_1d_step:
+
 ==================
 Extract 1D Spectra
 ==================

@@ -1,10 +1,13 @@
+from astropy.table import Table
+import numpy as np
 from photutils import detect_threshold, DAOStarFinder
 
 from ..datamodels import ImageModel
 
 
 def make_tweakreg_catalog(model, kernel_fwhm, snr_threshold, sharplo=0.2,
-                          sharphi=1.0, roundlo=-1.0, roundhi=1.0):
+                          sharphi=1.0, roundlo=-1.0, roundhi=1.0,
+                          brightest=None, peakmax=None):
     """
     Create a catalog of point-line sources to be used for image
     alignment in tweakreg.
@@ -37,6 +40,21 @@ def make_tweakreg_catalog(model, kernel_fwhm, snr_threshold, sharplo=0.2,
     roundhi : float, optional
         The upper bound on roundess for object detection.
 
+    brightest : int, None, optional
+        Number of brightest objects to keep after sorting the full object list.
+        If ``brightest`` is set to `None`, all objects will be selected.
+
+    peakmax : float, None, optional
+        Maximum peak pixel value in an object. Only objects whose peak pixel
+        values are *strictly smaller* than ``peakmax`` will be selected.
+        This may be used to exclude saturated sources. By default, when
+        ``peakmax`` is set to `None`, all objects will be selected.
+
+        .. warning::
+            `DAOStarFinder` automatically excludes objects whose peak
+            pixel values are negative. Therefore, setting ``peakmax`` to a
+            non-positive value would result in exclusion of all objects.
+
     Returns
     -------
     catalog : `~astropy.Table`
@@ -52,10 +70,15 @@ def make_tweakreg_catalog(model, kernel_fwhm, snr_threshold, sharplo=0.2,
 
     daofind = DAOStarFinder(fwhm=kernel_fwhm, threshold=threshold,
                             sharplo=sharplo, sharphi=sharphi, roundlo=roundlo,
-                            roundhi=roundhi)
+                            roundhi=roundhi, brightest=brightest,
+                            peakmax=peakmax)
     sources = daofind(model.data)
 
     columns = ['id', 'xcentroid', 'ycentroid', 'flux']
-    catalog = sources[columns]
+    if len(sources) > 0:
+        catalog = sources[columns]
+    else:
+        catalog = Table(names=columns, dtype=(np.int_, np.float_, np.float_,
+                                              np.float_))
 
     return catalog

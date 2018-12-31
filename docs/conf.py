@@ -79,6 +79,7 @@ if sys.version_info[0] == 2:
 # ones.
 extensions = [
     'numfig',
+    'sphinxcontrib.programoutput',
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
@@ -202,7 +203,7 @@ graphviz_dot_args = [
 # show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = 'default'
 
 # A list of ignored prefixes for module index sorting.
 # modindex_common_prefix = []

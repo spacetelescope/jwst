@@ -19,7 +19,6 @@ env:
         - CONDA_DEPENDENCIES="asdf
                               astropy
                               crds
-                              dask
                               drizzle
                               flake8
                               gwcs
@@ -27,8 +26,8 @@ env:
                               jplephem
                               matplotlib
                               namedlist
-                              numpy
                               photutils
+                              pytest
                               scipy
                               six
                               spherical-geometry
@@ -42,15 +41,12 @@ env:
         - CRDS_PATH='/tmp/crds_cache'
         - MAIN_CMD='python setup.py'
         - MC_URL=https://repo.continuum.io/miniconda
-        - PIP_DEPENDENCIES=''
+        - PIP_DEPENDENCIES='ci_watson'
         - PYTHON_VERSION=3.6
 
     matrix:
         - SETUP_CMD='install'
         - SETUP_CMD='test'
-        # These will no longer work unless we add an explicit dependency on asdf-1.3.1
-        #- PYTHON_VERSION=2.7 SETUP_CMD='install' ASTROPY_VERSION=stable
-        #- PYTHON_VERSION=2.7 SETUP_CMD='test' ASTROPY_VERSION=stable
 
 matrix:
 
@@ -87,7 +83,7 @@ before_install:
   - conda config --set always_yes yes --set changeps1 no
   - conda config --set auto_update_conda false
   - for channel in $CONDA_CHANNELS; do conda config --add channels "$channel"; done
-  - conda create -n test -q python=$PYTHON_VERSION $CONDA_DEPENDENCIES
+  - conda create -n test -q python=$PYTHON_VERSION numpy $CONDA_DEPENDENCIES
   - source activate test
   - if [[ -n $PIP_DEPENDENCIES ]]; then pip install -q $PIP_DEPENDENCIES; fi
 

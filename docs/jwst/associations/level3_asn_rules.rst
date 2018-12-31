@@ -14,7 +14,7 @@ follows:
 - program
 
   The entirety of a science observing proposal is contained within a
-  `program`. All observations, regardless of instruments, pertaining
+  ``program``. All observations, regardless of instruments, pertaining
   to a proposal are identified by the program id.
 
 - observation
@@ -78,7 +78,7 @@ The rules themselves are subclasses of :class:`AsnMixin_Base
 <jwst.associations.lib.rules_level3_base.AsnMixin_Base>` and whatever
 other mixin classes are necessary to build the rule. Conforming to the
 :ref:`class-naming` scheme, all the final
-Level3 association rules begin with `Asn_`. An example is the
+Level3 association rules begin with ``Asn_``. An example is the
 :class:`Asn_Image <jwst.associations.lib.rules_level3.Asn_Image>` rule.
 
 The following figure shows the above relationships. Note that this
@@ -88,10 +88,3 @@ diagram is not meant to be a complete listing.
    :scale: 50%
 
    Level3 Rule Class Inheritance
-
-Level3 Rules
-------------
-
-.. automodule:: jwst.associations.lib.rules_level3
-   :members:
-   :member-order: bysource

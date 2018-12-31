@@ -11,8 +11,10 @@ class MultiProductModel(model_base.DataModel):
     This model has a special member `products` that can be used to
     deal with each DrizProduct at a time.  It behaves like a list::
 
-       >>> multiprod_model.products.append(image_model)
-       >>> multislit_model.products[0]
+       >>> from . import DrizProductModel
+       >>> multiprod_model = MultiProductModel()
+       >>> multiprod_model.products.append(DrizProductModel())
+       >>> multiprod_model.products[0] # doctest: +SKIP
        <DrizProductModel>
 
     If `init` is a file name or an `DrizProductModel` instance, an empty
@@ -22,9 +24,18 @@ class MultiProductModel(model_base.DataModel):
     `products`.
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
+    products.items.data : numpy float32 array
+         resampled science data
+
+    products.items.wht : numpy float32 array
+         drizzle algorithm weight array
+
+    products.items.con : numpy int32 array
+         drizzle algorithm context array
+
+    products.items.relsens : numpy table
+         relative sensitivity table
     """
     schema_url = "multiproduct.schema.yaml"
 

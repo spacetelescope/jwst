@@ -36,16 +36,16 @@ processing. An example ASN file is shown below.
  "products": [
      {"prodtype": "coroncmb", "name": "jw89001-c1001_t001_nircam_f160w",
       "members": [
-          {"exptype": "science", "expname": "test_targ1_calints.fits"},
-          {"exptype": "science", "expname": "test_targ2_calints.fits"},
-          {"exptype": "psf", "expname": "test_psf1_calints.fits"},
-          {"exptype": "psf", "expname": "test_psf2_calints.fits"},
-          {"exptype": "psf", "expname": "test_psf3_calints.fits"}]}],
+          {"exptype": "science", "expname": "targ1_calints.fits"},
+          {"exptype": "science", "expname": "targ2_calints.fits"},
+          {"exptype": "psf", "expname": "psf1_calints.fits"},
+          {"exptype": "psf", "expname": "psf2_calints.fits"},
+          {"exptype": "psf", "expname": "psf3_calints.fits"}]}],
  "asn_type": "coron",
  "asn_id": "c1001"}
 
 In this example the output product "jw89001-c1001_t001_nircam_f160w"
-is defined to consist of 2 science target inputs and 3 reference psf
+is defined to consist of 2 science target inputs and 3 reference PSF
 inputs. Note that the values of the ``exptype`` attribute for each
 member are very important and used by the ``calwebb_coron3`` pipeline to
 know which members are to be used as reference PSF data and which are
@@ -91,6 +91,8 @@ of ``stack_refs`` will be a single CubeModel containing all of the
 concatenated data cubes from the input psf files.
 
 .. automodapi:: jwst.coron.stack_refs_step
+
+.. _align_refs_step:
 
 Align_refs
 ==========

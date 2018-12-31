@@ -112,6 +112,7 @@ class SkyImage:
 
         # initial sky value:
         self._sky = 0.0
+        self._sky_is_valid = False
 
         # check that mask has the same shape as image:
         if mask is None:
@@ -181,6 +182,19 @@ class SkyImage:
     @sky.setter
     def sky(self, sky):
         self._sky = sky
+
+
+    @property
+    def is_sky_valid(self):
+        """
+        Indicates whether sky value was successfully computed.
+        Must be set externally.
+        """
+        return self._sky_is_valid
+
+    @is_sky_valid.setter
+    def is_sky_valid(self, valid):
+        self._sky_is_valid = valid
 
     @property
     def radec(self):

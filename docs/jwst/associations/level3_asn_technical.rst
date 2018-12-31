@@ -75,10 +75,10 @@ target *optional*
   is no formal restrictions on value.
 
 asn_type *optional*
-  The type of association represented. See :ref:`level3-asn-association-types`
+  The type of association represented. See :ref:`asn-jwst-association-types`
 
 asn_id *optional*
-  The association id. The id is what appears in the :ref:`asn-DMS-naming`
+  The association id. The id is what appears in the :ref:`asn-jwst-naming`
 
 asn_pool *optional*
   Association pool from which this association was created.
@@ -92,7 +92,7 @@ degraded_status *optional*
 
 version_id *optional*
   Version identifier. DMS uses a time stamp with the format
-  `yyyymmddthhmmss`
+  ``yyyymmddthhmmss``
   Can be None or NULL
 
 constraints *optional*
@@ -101,10 +101,10 @@ constraints *optional*
   rule.
 
 
-`products` Keyword
-^^^^^^^^^^^^^^^^^^
+``products`` Keyword
+^^^^^^^^^^^^^^^^^^^^
 
-Association products have to components:
+Association products have two components:
 
 name *optional*
   The string template to be used by Level 3 processing tasks to create
@@ -118,10 +118,10 @@ members *required*
   This is a list of the exposures to be used by the Level 3 processing
   tasks. This keyword is explained in detail in the next section.
 
-`members` Keyword
-^^^^^^^^^^^^^^^^^
+``members`` Keyword
+^^^^^^^^^^^^^^^^^^^
 
-`members` is a list of objects, each consisting of the following
+``members`` is a list of objects, each consisting of the following
 keywords
 
 expname *required*
@@ -130,14 +130,14 @@ expname *required*
 exptype *required*
   Type of information represented by the exposure. Possible values are
 
-  * `science` *required*
+  * ``science`` *required*
 
-    The primary science expsoures. There is usually more than one
+    The primary science exposures. There is usually more than one
     since Level3 calibration involves combining multiple science
     exposures. However, at least one exposure in an association needs
-    to be `science`.
+    to be ``science``.
     
-  * `psf` *optional*
+  * ``psf`` *optional*
 
     Exposures that should be considered PSF references for
     coronagraphic and AMI calibration.
@@ -145,7 +145,7 @@ exptype *required*
 exposerr *optional*
   If there was some issue the occured on the observatory that may have
   affected this exposure, that condition is listed here. Otherwise the
-  value is `null`
+  value is ``null``
 
 asn_candidate *optional*
   Contains the list of association candidates this exposure belongs

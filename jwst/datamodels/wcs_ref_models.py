@@ -151,6 +151,12 @@ class DistortionMRSModel(ReferenceFileModel):
 class SpecwcsModel(_SimpleModel):
     """
     A model for a reference file of type "specwcs".
+
+    Notes
+    -----
+    For NIRISS and NIRCAM WFSS modes the specwcs file is
+    used during extract_2D. See NIRCAMGrismModel and
+    NIRISSGrismModel.
     """
     schema_url = "specwcs.schema.yaml"
     reftype = "specwcs"
@@ -174,10 +180,29 @@ class SpecwcsModel(_SimpleModel):
 
 class NIRCAMGrismModel(ReferenceFileModel):
     """
-    A model for a reference file of type "specwcs" for NIRCAM grisms.
+    A model for a reference file of type "specwcs" for NIRCAM WFSS.
 
     This reference file contains the models for wave, x, and y polynomial
-    solutions that describe dispersion through the grism
+    solutions that describe dispersion through the grism.
+
+    Parameters
+    ----------
+    displ: `~astropy.modeling.Model`
+          Nircam Grism wavelength dispersion model
+    dispx : `~astropy.modeling.Model`
+          Nircam Grism row dispersion model
+    dispy : `~astropy.modeling.Model`
+          Nircam Grism column dispersion model
+    invdispl : `~astropy.modeling.Model`
+          Nircam Grism inverse wavelength dispersion model
+    invdispx : `~astropy.modeling.Model`
+          Nircam Grism inverse row dispersion model
+    invdispy : `~astropy.modeling.Model`
+          Nircam Grism inverse column dispersion model
+    orders : `~astropy.modeling.Model`
+          NIRCAM Grism orders, matched to the array locations of the
+          dispersion models
+
     """
     schema_url = "specwcs_nircam_grism.schema.yaml"
     reftype = "specwcs"
@@ -209,7 +234,7 @@ class NIRCAMGrismModel(ReferenceFileModel):
             self.invdispy = invdispy
         if orders is not None:
             self.orders = orders
-        
+
     def populate_meta(self):
         self.meta.instrument.name = "NIRCAM"
         self.meta.exposure.type = "NRC_WFSS"
@@ -236,6 +261,26 @@ class NIRCAMGrismModel(ReferenceFileModel):
 class NIRISSGrismModel(ReferenceFileModel):
     """
     A model for a reference file of type "specwcs" for NIRISS grisms.
+
+    Parameters
+    ----------
+    displ: `~astropy.modeling.Model`
+          NIRISS Grism wavelength dispersion model
+    dispx : `~astropy.modeling.Model`
+          NIRISS Grism row dispersion model
+    dispy : `~astropy.modeling.Model`
+          NIRISS Grism column dispersion model
+    invdispl : `~astropy.modeling.Model`
+          NIRISS Grism inverse wavelength dispersion model
+    invdispx : `~astropy.modeling.Model`
+          NIRISS Grism inverse row dispersion model
+    invdispy : `~astropy.modeling.Model`
+          NIRISS Grism inverse column dispersion model
+    orders : `~astropy.modeling.Model`
+          NIRISS Grism orders, matched to the array locations of the
+          dispersion models
+    fwcpos_ref : float
+        The reference value for the filter wheel position
     """
     schema_url = "specwcs_niriss_grism.schema.yaml"
     reftype = "specwcs"
@@ -317,7 +362,7 @@ class RegionsModel(ReferenceFileModel):
     def validate(self):
         super(RegionsModel, self).validate()
         try:
-            assert isinstance(self.regions.copy(), np.ndarray)
+            assert isinstance(self.regions, np.ndarray)
             assert self.meta.instrument.name == "MIRI"
             assert self.meta.exposure.type == "MIR_MRS"
             assert self.meta.instrument.channel in ("12", "34", "1", "2", "3", "4")
@@ -333,7 +378,21 @@ class RegionsModel(ReferenceFileModel):
 class WavelengthrangeModel(ReferenceFileModel):
     """
     A model for a reference file of type "wavelengthrange".
+
     The model is used by MIRI, NIRSPEC, NIRCAM, and NIRISS
+
+
+    Parameters
+    ----------
+    wrange : list
+        Contains a list of [order, filter, min wave, max wave]
+    order : list
+        A list of orders that are available and described in the file
+    extract_orders : list
+        A list of filters and the orders that should be extracted by default    
+    wunits : `~astropy.units`
+        The units for the wavelength data
+
     """
     schema_url = "wavelengthrange.schema.yaml"
     reftype = "wavelengthrange"
@@ -395,7 +454,7 @@ class FPAModel(ReferenceFileModel):
         self.meta.instrument.p_detector = "NRS1|NRS2|"
         self.meta.exposure.p_exptype = "NRS_TACQ|NRS_TASLIT|NRS_TACONFIRM|\
         NRS_CONFIRM|NRS_FIXEDSLIT|NRS_IFU|NRS_MSASPEC|NRS_IMAGE|NRS_FOCUS|\
-        NRS_MIMF|NRS_BOTA|NRS_LAMP|NRS_BRIGHTOBJ|"
+        NRS_MIMF|NRS_MSATA|NRS_WATA|NRS_LAMP|NRS_BRIGHTOBJ|"
         self.meta.exposure.type = "N/A"
 
     def to_fits(self):
@@ -422,15 +481,16 @@ class IFUPostModel(ReferenceFileModel):
     init : str
         A file name.
     slice_models : dict
-        A dictionary with slice transforms with the following entries:
+        A dictionary with slice transforms with the following entries
         {"slice_N": {'linear': astropy.modeling.Model,
-                     'xpoly': astropy.modeling.Model,
-                     'xpoly_distortion': astropy.modeling.Model,
-                     'ypoly': astropy.modeling.Model,
-                     'ypoly_distortion': astropy.modeling.Model,
-                     }
-        }
+        ...         'xpoly': astropy.modeling.Model,
+        ...         'xpoly_distortion': astropy.modeling.Model,
+        ...         'ypoly': astropy.modeling.Model,
+        ...         'ypoly_distortion': astropy.modeling.Model,
+        ...         }}
+
     """
+
     schema_url = "ifupost.schema.yaml"
     reftype = "ifupost"
 
@@ -521,7 +581,7 @@ class MSAModel(ReferenceFileModel):
         self.meta.instrument.p_detector = "NRS1|NRS2|"
         self.meta.exposure.p_exptype = "NRS_TACQ|NRS_TASLIT|NRS_TACONFIRM|\
         NRS_CONFIRM|NRS_FIXEDSLIT|NRS_IFU|NRS_MSASPEC|NRS_IMAGE|NRS_FOCUS|\
-        NRS_MIMF|NRS_BOTA|NRS_LAMP|NRS_BRIGHTOBJ|"
+        NRS_MIMF|NRS_MSATA|NRS_WATA|NRS_LAMP|NRS_BRIGHTOBJ|"
         self.meta.exposure.type = "N/A"
 
     def to_fits(self):
@@ -582,7 +642,7 @@ class DisperserModel(ReferenceFileModel):
         self.meta.instrument.p_detector = "NRS1|NRS2|"
         self.meta.exposure.p_exptype = "NRS_TACQ|NRS_TASLIT|NRS_TACONFIRM|\
         NRS_CONFIRM|NRS_FIXEDSLIT|NRS_IFU|NRS_MSASPEC|NRS_IMAGE|NRS_FOCUS|\
-        NRS_MIMF|NRS_BOTA|NRS_LAMP|NRS_BRIGHTOBJ|"
+        NRS_MIMF|NRS_MSATA|NRS_WATA|NRS_LAMP|NRS_BRIGHTOBJ|"
         self.meta.exposure.type = "N/A"
 
     def to_fits(self):
@@ -659,7 +719,7 @@ class CameraModel(_SimpleModel):
         self.meta.instrument.p_detector = "NRS1|NRS2|"
         self.meta.exposure.p_exptype = "NRS_TACQ|NRS_TASLIT|NRS_TACONFIRM|\
         NRS_CONFIRM|NRS_FIXEDSLIT|NRS_IFU|NRS_MSASPEC|NRS_IMAGE|NRS_FOCUS|\
-        NRS_MIMF|NRS_BOTA|NRS_LAMP|NRS_BRIGHTOBJ|"
+        NRS_MIMF|NRS_MSATA|NRS_WATA|NRS_LAMP|NRS_BRIGHTOBJ|"
         self.meta.exposure.type = "N/A"
 
 
@@ -675,7 +735,7 @@ class CollimatorModel(_SimpleModel):
         self.meta.instrument.p_detector = "NRS1|NRS2|"
         self.meta.exposure.p_exptype = "NRS_TACQ|NRS_TASLIT|NRS_TACONFIRM|\
         NRS_CONFIRM|NRS_FIXEDSLIT|NRS_IFU|NRS_MSASPEC|NRS_IMAGE|NRS_FOCUS|\
-        NRS_MIMF|NRS_BOTA|NRS_LAMP|NRS_BRIGHTOBJ|"
+        NRS_MIMF|NRS_MSATA|NRS_WATA|NRS_LAMP|NRS_BRIGHTOBJ|"
         self.meta.exposure.type = "N/A"
 
 
@@ -691,7 +751,7 @@ class OTEModel(_SimpleModel):
         self.meta.instrument.p_detector = "NRS1|NRS2|"
         self.meta.exposure.p_exptype = "NRS_TACQ|NRS_TASLIT|NRS_TACONFIRM|\
         NRS_CONFIRM|NRS_FIXEDSLIT|NRS_IFU|NRS_MSASPEC|NRS_IMAGE|NRS_FOCUS|\
-        NRS_MIMF|NRS_BOTA|NRS_LAMP|NRS_BRIGHTOBJ|"
+        NRS_MIMF|NRS_MSATA|NRS_WATA|NRS_LAMP|NRS_BRIGHTOBJ|"
         self.meta.exposure.type = "N/A"
 
 
@@ -707,7 +767,7 @@ class FOREModel(_SimpleModel):
         self.meta.instrument.p_detector = "NRS1|NRS2|"
         self.meta.exposure.p_exptype = "NRS_TACQ|NRS_TASLIT|NRS_TACONFIRM|\
         NRS_CONFIRM|NRS_FIXEDSLIT|NRS_IFU|NRS_MSASPEC|NRS_IMAGE|NRS_FOCUS|\
-        NRS_MIMF|NRS_BOTA|NRS_LAMP|NRS_BRIGHTOBJ|"
+        NRS_MIMF|NRS_MSATA|NRS_WATA|NRS_LAMP|NRS_BRIGHTOBJ|"
         self.meta.exposure.type = "N/A"
 
     def on_save(self, path=None):

@@ -15,15 +15,17 @@ class PersistenceStep(Step):
     spec = """
         # `input_trapsfilled` is the name of the most recent trapsfilled
         # file for the current detector.
+        input_trapsfilled = string(default="")
         # Pixels that have received a persistence correction greater than
         # or equal to `flag_pers_cutoff` DN will be flagged in the pixeldq
         # extension of the output (rootname_persistence.fits) file.
+        flag_pers_cutoff = float(default=40.)
         # if `save_persistence` is True, the persistence that was
         # subtracted (group by group, integration by integration) will be
         # written to an output file with suffix "_output_pers".
-        input_trapsfilled = string(default="")
-        flag_pers_cutoff = float(default=40.)
         save_persistence = boolean(default=False)
+        # If `save_trapsfilled` is True, the updated trapsfilled file will
+        # be written to an output file with suffix "_trapsfilled".
         save_trapsfilled = boolean(default=True)
     """
 

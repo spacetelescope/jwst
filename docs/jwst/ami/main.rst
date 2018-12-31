@@ -53,18 +53,20 @@ reference target exposures. An example ASN file is shown below.
  "products": [
      {"prodtype": "ami", "name": "jw87003-c1001_t001_niriss_f277w-nrm",
       "members": [
-         {"exptype": "science", "expname": "test_targ14_cal.fits"},
-         {"exptype": "science", "expname": "test_targ15_cal.fits"},
-         {"exptype": "science", "expname": "test_targ16_cal.fits"},
-         {"exptype": "psf", "expname": "test_ref1_cal.fits"},
-         {"exptype": "psf", "expname": "test_ref2_cal.fits"},
-         {"exptype": "psf", "expname": "test_ref3_cal.fits"}]}],
+         {"exptype": "science", "expname": "targ14_cal.fits"},
+         {"exptype": "science", "expname": "targ15_cal.fits"},
+         {"exptype": "science", "expname": "targ16_cal.fits"},
+         {"exptype": "psf", "expname": "ref1_cal.fits"},
+         {"exptype": "psf", "expname": "ref2_cal.fits"},
+         {"exptype": "psf", "expname": "ref3_cal.fits"}]}],
  "asn_type": "ami",
  "asn_id": "c1001"}
 
 Note that the ``exptype`` attribute value for each input member is used to
 indicate which files contain science target images and which contain reference
-psf images.
+PSF images.
+
+.. _ami_analyze_step:
 
 AMI_Analyze
 ===========

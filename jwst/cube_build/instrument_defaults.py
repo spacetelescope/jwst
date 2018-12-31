@@ -1,7 +1,5 @@
-# Instrument class
-# Information on MIRI and NIRSPEC.
-# Basic information that will not change
-# Default sampling to use based on MIRI:Channel,subchannel, NIRSPEC: FWA,GWS
+""" Dictionary of basic instrument parameters
+"""
 
 import logging
 log = logging.getLogger(__name__)
@@ -11,7 +9,11 @@ log.setLevel(logging.DEBUG)
 class InstrumentInfo():
 
     def __init__(self):
-# Wavelength varying parameters
+        """ Dictionary of basic instrument parameters
+
+        These parameters are filled in from the cube reference file
+        and  MIRI resolution reference file
+        """
 
         self.multich_wavelength = []
         self.multich_sroi = []

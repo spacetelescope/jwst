@@ -18,7 +18,8 @@ from . import spec_wcs
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-WFSS_EXPTYPES = ['NIS_WFSS', 'NRC_GRISM', 'NRC_WFSS']
+WFSS_EXPTYPES = ['NIS_WFSS', 'NRC_WFSS', 'NRC_GRISM', 'NRC_TSGRISM']
+"""Exposure types to be regarded as wide-field slitless spectroscopy."""
 
 # These values are used to indicate whether the input reference file
 # (if any) is JSON or IMAGE.
@@ -30,23 +31,32 @@ FILE_TYPE_OTHER = "N/A"
 # multi-integration data.
 OFFSET_NOT_ASSIGNED_YET = "not assigned yet"
 
-# For full-frame input data, keyword SLTNAME may not be populated, so use
-# the following string to indicate that the first slit in the reference
-# file should be used.
-# A slit name in the reference file can also be ANY, in which case that
-# slit can be used with any slit name from the input data.
 ANY = "ANY"
+"""Wildcard for slit name.
 
-# The spectral order number is an integer, so we can't use ANY as a wildcard.
-# The value below is greater than any spectral order for any JWST mode, so
-# if a value of spectral order is greater than or equal to this, we'll
-# interpret that to mean that any value will match.
+Extended summary
+----------------
+For full-frame input data, keyword SLTNAME may not be populated, so the
+slit name will be set to this string to indicate that the first slit in
+the reference file should be used.
+A slit name in the reference file can also be ANY, in which case the
+reference information for that slit will be regarded as matching any slit
+name from the input data.
+"""
+
 ANY_ORDER = 1000
+"""Wildcard for spectral order number in a reference image.
 
-# Dispersion direction, predominantly horizontal or vertical.  These values
-# are to be compared with keyword DISPAXIS from the input header.
+Extended summary
+----------------
+If the reference file contains images, keyword SPORDER gives the order
+number of the spectrum that would be extracted using a given image in
+the reference file.
+"""
+
 HORIZONTAL = 1
 VERTICAL = 2
+"""Dispersion direction, predominantly horizontal or vertical."""
 
 # These values are assigned in get_extract_parameters, using key "match".
 # If there was an aperture in the reference file for which the "id" key
@@ -58,7 +68,18 @@ PARTIAL = "partial match"
 EXACT = "exact match"
 
 DUMMY = "dummy"
+"""Distinguish between a slit object and not a slit object.
 
+Extended summary
+----------------
+The input model can contain a sequence of slits (SlitModel objects,
+2-D cutouts, with attributes), or it might be a full detector image or
+subarray.  In the former case, the step will try to extract a spectrum
+from each slit.  In the latter case, the input can be a CubeModel or an
+ImageModel, and not all of the attributes are the same.  DUMMY is
+passed to functions instead of a SlitModel object if the input model
+does not contain slits.
+"""
 
 Aperture = namedtuple('Aperture', ['xstart', 'ystart', 'xstop', 'ystop'])
 
@@ -78,7 +99,7 @@ def load_ref_file(refname):
 
     Parameters
     ----------
-    refname: string
+    refname : str
         The name of the reference file.  This file is expected to be
         either a JSON file giving extraction information, or a file
         containing one or more images that are to be used as masks that
@@ -86,7 +107,7 @@ def load_ref_file(refname):
 
     Returns
     -------
-    ref_dict: dictionary
+    ref_dict : dict
         If the reference file is in JSON format, ref_dict will be the
         dictionary returned by json.load(), except that the file type
         ('JSON') will also be included with key 'ref_file_type'.
@@ -123,6 +144,61 @@ def load_ref_file(refname):
 def get_extract_parameters(ref_dict,
                            input_model, slitname, sp_order,
                            meta, smoothing_length, bkg_order):
+    """Get reference file values.
+
+    Parameters
+    ----------
+    ref_dict : dict or None
+        For a reference file in JSON format, `ref_dict` will be the entire
+        contents of the file.  For a reference image, `ref_dict` will have
+        just two entries, 'ref_file_type' (a string) and 'ref_model', a
+        JWST data model for a collection of images.  If there is no
+        reference file, `ref_dict` will be None.
+
+    input_model : data model
+        This can be either the input science file or one SlitModel out of
+        a list of slits.
+
+    slitname : str
+        The name of the slit, or "ANY", or for NIRISS SOSS data this will
+        be the subarray name.
+
+    sp_order : int
+        The spectral order number.
+
+    meta : metadata for current slit.
+        Not currently used.
+
+    smoothing_length : int or None
+        Width of a boxcar function for smoothing the background regions.
+        If None, the smoothing length will be gotten from `ref_dict`, or
+        it will be set to 0 (no background smoothing) if this key is
+        not found in `ref_dict`.
+        If `smoothing_length` is not None, that means that the user
+        explicitly specified the value, so that value will be used.
+        This argument is only used if background regions have been
+        specified.
+
+    bkg_order : int or None
+        Polynomial order for fitting to each column (or row, if the
+        dispersion is vertical) of background.  If None, the polynomial
+        order will be gotten from `ref_dict`, or it will be set to 0 if
+        not found in `ref_dict`.
+        A value of 0 means that a simple average of the background
+        regions, column by column (or row by row), will be used.
+        If `bkg_order` is not None, that means that the user explicitly
+        specified the value, so that value will be used.
+        This argument must be positive or zero, and it is only used if
+        background regions have been specified.
+
+    Returns
+    -------
+    extract_params : dict
+        Information copied out of `ref_dict`.  The items will be selected
+        based on `slitname` and `sp_order`.  Default values will be
+        assigned if `ref_dict` is None.  For a reference image, the key
+        'ref_image' gives the image model.
+    """
 
     extract_params = {'match': NO_MATCH}        # initial value
 
@@ -238,25 +314,27 @@ def find_dispaxis(input_model, slit, spectral_order, extract_params):
 
     Parameters:
     -----------
-    input_model: data model
+    input_model : data model
         The input science file.
 
-    slit: data model
-        This is a slit from a MultiSlitModel (or similar), or "dummy"
+    slit : data model or str
+        This is a slit from a `MultiSlitModel` (or similar), or "dummy"
         if the input is not an array of 2-D cutouts.
-        We use the meta.wcs and wavelength attributes.
+        We use the `meta.wcs` and `wavelength` attributes.
 
-    spectral_order: int
+    spectral_order : int
         The spectral order number.
 
-    extract_params: dict, may be modified in-place
-        Parameters read from the extraction reference file.  If key
-        'dispaxis' has already been assigned to a known value, this
-        function will return without doing anything.  Otherwise, the
-        dispersion direction will be determined by comparing the
-        increment in wavelength from one pixel to the next, in the
-        horizontal and vertical directions, and extract_params['dispaxis']
-        will be assigned the value.
+    extract_params : dict, may be modified in-place
+        Parameters read from the 1-D extraction reference file.
+        The dispersion direction will be determined by comparing the
+        increment in wavelength from one pixel in `slit` to the next,
+        in the horizontal and vertical directions.
+        If key 'dispaxis' is present in `extract_params` and is not None,
+        that value will not be modified; however, if 'dispaxis' was not in
+        `extract_params` or if its value was None, then
+        `extract_params['dispaxis']` will be updated with the value
+        determined by this function.
     """
 
     if 'dispaxis' in extract_params:
@@ -450,7 +528,13 @@ def find_dispaxis(input_model, slit, spectral_order, extract_params):
 
 
 def log_initial_parameters(extract_params):
-    """Log some of the initial extraction parameters."""
+    """Log some of the initial extraction parameters.
+
+    Parameters
+    ----------
+    extract_params : dict
+        Information read from the reference file.
+    """
 
     if not "xstart" in extract_params:
         return
@@ -475,22 +559,22 @@ def get_aperture(im_shape, wcs, verbose, extract_params):
 
     Parameters
     ----------
-    im_shape: tuple
+    im_shape : tuple
         The shape (2-D) of the input data.  This will be for the current
         integration, if the input contains more than one integration.
 
-    wcs: a WCS object, or None
+    wcs : a WCS object, or None
         The wcs (if any) for the input data or slit.
 
-    verbose: bool
+    verbose : bool
         If True, log messages.
 
-    extract_params: dictionary
+    extract_params : dict
         Parameters read from the reference file.
 
     Returns
     -------
-    ap_ref: namedtuple
+    ap_ref : namedtuple or an empty dict
         Keys are 'xstart', 'xstop', 'ystart', and 'ystop'.
     """
 
@@ -525,16 +609,16 @@ def aperture_from_ref(extract_params, im_shape):
 
     Parameters
     ----------
-    extract_params: dictionary
+    extract_params : dict
         Parameters read from the reference file.
 
-    im_shape: tuple of int
+    im_shape : tuple of int
         The last two elements are the height and width of the input image
         (slit).
 
     Returns
     -------
-    ap_ref: namedtuple
+    ap_ref : namedtuple
         Keys are 'xstart', 'xstop', 'ystart', and 'ystop'.
     """
 
@@ -568,23 +652,23 @@ def update_from_width(ap_ref, extract_width, direction):
 
     Parameters
     ----------
-    ap_ref: namedtuple
+    ap_ref : namedtuple
         Contains xstart, xstop, ystart, ystop.  These are the initial
         values as read from the reference file, except that they may
         have been truncated at the image borders.
 
-    extract_width: int
+    extract_width : int or None
         The number of pixels in the cross-dispersion direction to add
         together to make a 1-D spectrum from a 2-D image.
 
-    direction: int
+    direction : int
         HORIZONTAL (1) if the dispersion direction is predominantly
         horizontal.  VERTICAL (2) if the dispersion direction is
         predominantly vertical.
 
     Returns
     -------
-    ap_width: namedtuple
+    ap_width : namedtuple
         Keys are 'xstart', 'xstop', 'ystart', and 'ystop'.
     """
 
@@ -629,19 +713,19 @@ def update_from_shape(ap, im_shape):
 
     Parameters
     ----------
-    ap: namedtuple
+    ap : namedtuple
         Extraction region.
 
-    im_shape: tuple of int
+    im_shape : tuple of int
         The last two elements are the height and width of the input image.
 
     Returns
     -------
-    tuple: (ap_shape, truncated)
-        ap_shape is a namedtuple with keys 'xstart', 'xstop', 'ystart',
-        and 'ystop'.
-        `truncated` is a boolean, True if any value was truncated at an
-        image edge.
+    ap_shape : namedtuple
+        Keys are 'xstart', 'xstop', 'ystart', and 'ystop'.
+
+    truncated : bool
+         True if any value was truncated at an image edge.
     """
 
     nx = im_shape[-1]
@@ -677,16 +761,15 @@ def aperture_from_wcs(wcs, verbose):
 
     Parameters
     ----------
-    wcs: data model
+    wcs : data model
         The world coordinate system interface.
 
-    verbose: bool
+    verbose : bool
         If True, log messages.
 
     Returns
     -------
-    tuple ap_wcs
-        namedtuple or None
+    ap_wcs : namedtuple or None
         Keys are 'xstart', 'xstop', 'ystart', and 'ystop'.  These are the
         limits copied directly from wcs.bounding_box.
     """
@@ -729,29 +812,29 @@ def update_from_wcs(ap_ref, ap_wcs, extract_width, direction, verbose):
 
     Parameters
     ----------
-    ap_ref: namedtuple
+    ap_ref : namedtuple
         Contains xstart, xstop, ystart, ystop.  These are the values of
         the extraction region as specified by the reference file or the
         image size.
 
-    ap_wcs: namedtuple
+    ap_wcs : namedtuple or None
         These are the bounding box limits.
 
-    extract_width: int
+    extract_width : int
         The number of pixels in the cross-dispersion direction to add
         together to make a 1-D spectrum from a 2-D image.
 
-    direction: int
+    direction : int
         HORIZONTAL (1) if the dispersion direction is predominantly
         horizontal.  VERTICAL (2) if the dispersion direction is
         predominantly vertical.
 
-    verbose: bool
+    verbose : bool
         If True, log messages.
 
     Returns
     -------
-    ap: namedtuple
+    ap : namedtuple
         Keys are 'xstart', 'xstop', 'ystart', and 'ystop'.
     """
 
@@ -789,20 +872,20 @@ def sanity_check_limits(ap_ref, ap_wcs, verbose):
 
     Parameters
     ----------
-    ap_ref: namedtuple
+    ap_ref : namedtuple
         Contains xstart, xstop, ystart, ystop.  These are the values of
         the extraction region as specified by the reference file or the
         image size.
 
-    ap_wcs: namedtuple
+    ap_wcs : namedtuple
         These are the bounding box limits.
 
-    verbose: bool
+    verbose : bool
         If True, log messages.
 
     Returns
     -------
-    flag: boolean
+    flag : boolean
         True if ap_ref and ap_wcs do overlap, i.e. if the sanity test passes.
     """
 
@@ -827,28 +910,30 @@ def sanity_check_limits(ap_ref, ap_wcs, verbose):
 def compare_start(start_ref, start_wcs):
     """Compare the start limit from the aperture with the WCS lower limit.
 
+    Extended summary
+    ----------------
     The more restrictive (i.e. larger) limit is the one upon which the
     output value will be based.  If the WCS limit is larger, the value will
     be increased to an integer, on the assumption that WCS lower limits
     correspond to the lower edge of the bounding pixel.  If this value
     will actually be used for an extraction limit (i.e. if the limits were
     not already specified by polynomial coefficients), then
-    assign_polynomial_limits will create a polynomial function using this
+    `assign_polynomial_limits` will create a polynomial function using this
     value, except that it will be decreased by 0.5 to correspond to the
     lower edge of the bounding pixels.
 
     Parameters
     ----------
-    start_ref: int or float
+    start_ref : int or float
         xstart or ystart, as specified by the reference file or the image
         size.
 
-    start_wcs: int or float
+    start_wcs : int or float
         The lower limit from the WCS bounding box.
 
     Returns
     -------
-    value: int or float
+    value : int or float
         The start limit, possibly constrained by the WCS start limit.
     """
 
@@ -869,22 +954,22 @@ def compare_stop(stop_ref, stop_wcs):
     limits correspond to the upper edge of the bounding pixel.  If this
     value will actually be used for an extraction limit (i.e. if the
     limits were not already specified by polynomial coefficients), then
-    assign_polynomial_limits will create a polynomial function using this
+    `assign_polynomial_limits` will create a polynomial function using this
     value, except that it will be increased by 0.5 to correspond to the
     upper edge of the bounding pixels.
 
     Parameters
     ----------
-    stop_ref: int or float
+    stop_ref : int or float
         xstop or ystop, as specified by the reference file or the image
         size.
 
-    stop_wcs: int or float
+    stop_wcs : int or float
         The upper limit from the WCS bounding box.
 
     Returns
     -------
-    value: int or float
+    value : int or float
         The stop limit, possibly constrained by the WCS stop limit.
     """
 
@@ -901,13 +986,13 @@ def create_poly(coeff):
 
     Parameters
     ----------
-    coeff: list of float
+    coeff : list of float
         The coefficients of the polynomial, constant term first, highest
         order term last.
 
     Returns
     -------
-    astropy.modeling.polynomial.Polynomial1D object, or None if `coeff`
+    `astropy.modeling.polynomial.Polynomial1D` object, or None if `coeff`
         is empty.
     """
 
@@ -924,6 +1009,101 @@ def create_poly(coeff):
 
 
 class ExtractBase:
+    """Base class for 1-D extraction info and methods.
+
+    Attributes
+    ----------
+    exp_type : str
+        Exposure type.
+
+    dispaxis : int
+        Dispersion direction:  1 is horizontal, 2 is vertical.
+
+    spectral_order : int
+        Spectral order number.
+
+    xstart : int or None
+        First pixel (zero indexed) in extraction region.
+
+    xstop : int or None
+        Last pixel (zero indexed) in extraction region.
+
+    ystart : int or None
+        First pixel (zero indexed) in extraction region.
+
+    ystop : int or None
+        Last pixel (zero indexed) in extraction region.
+
+    extract_width : int or None
+        Height (in the cross-dispersion direction) of the extraction
+        region.
+
+    independent_var : str
+        The polynomial functions for computing the upper and lower
+        boundaries of extraction and background regions can be functions
+        of pixel number or wavelength (in microns).  These options are
+        distinguished by `independent_var`.
+
+    src_coeff : list of lists of float, or None
+        These are coefficients of polynomial functions that define the
+        cross-dispersion limits of one or more source extraction regions
+        (yes, there can be more than one extraction region).  Note that
+        these are float values, and the limits can include fractions of
+        pixels.
+        If specified, this takes priority over `ystart`, `ystop`, and
+        `extract_width`, though `xstart` and `xstop` will still be used
+        for the limits in the dispersion direction.  (Interchange "x" and
+        "y" if the dispersion is in the vertical direction.)
+
+        For example, the value could be:
+
+-           [[1, 2], [3, 4, 5], [6], [7, 8]]
+
+        which means:
+
+-           [1, 2] coefficients for the lower limit of the first region
+-           [3, 4, 5] coefficients for the upper limit of the first region
+-           [6] coefficient(s) for the lower limit of the second region
+-           [7, 8] coefficients for the upper limit of the second region
+
+        The coefficients are listed with the constant term first, highest
+        order term last.  For example, [3, 4, 5] means 3 + 4 * x + 5 * x^2.
+
+    bkg_coeff : list of lists of float, or None
+        This has the same format as `src_coeff`, but the polynomials
+        define one or more background regions.
+
+    p_src : list of astropy.modeling.polynomial.Polynomial1D
+        These are Astropy polynomial functions defining the limits in the
+        cross-dispersion direction of the source extraction region(s).
+        If `src_coeff` was specified, `p_src` will be created directly
+        from `src_coeff`; otherwise, a constant function based on
+        `ystart`, `ystop`, `extract_width` will be assigned to `p_src`.
+
+    p_bkg : list of astropy.modeling.polynomial.Polynomial1D, or None
+        These are Astropy polynomial functions defining the limits in the
+        cross-dispersion direction of the background extraction regions.
+        This list will be populated from `bkg_coeff`, if that was specified.
+
+    smoothing_length : int
+        Width of a boxcar function for smoothing the background regions.
+        This argument must be an odd positive number or zero, and it is
+        only used if background regions have been specified.
+
+    bkg_order : int
+        Polynomial order for fitting to each column (or row, if the
+        dispersion is vertical) of background.
+        This argument must be positive or zero, and it is only used if
+        background regions have been specified.
+
+    nod_correction : float
+        If not zero, this will be added to the extraction region limits
+        for the cross-dispersion direction, both target and background.
+
+    wcs : WCS object
+        For computing the right ascension, declination, and wavelength at
+        one or more pixels.
+    """
 
     def __init__(self):
         self.exp_type = ""
@@ -943,7 +1123,7 @@ class ExtractBase:
         self.bkg_coeff = None
         self.p_src = None
         self.p_bkg = None
-        self.smoothing_length = 0.
+        self.smoothing_length = 0
         self.bkg_order = 0
         self.nod_correction = 0.
         self.wcs = None
@@ -962,19 +1142,24 @@ class ExtractBase:
 
         Parameters
         ----------
-        input_model: data model
+        input_model : data model
             The input science data.
 
-        slit: SlitModel, or "dummy"
+        slit : SlitModel, or "dummy"
             One slit from a MultiSlitModel (or similar), or "dummy" if
             there are no slits.
 
-        verbose: boolean
+        verbose : boolean
             If True, write log messages.
 
         Returns
         -------
-        offset: float
+        offset : float
+            The offset of the exposure from the nominal position, due to
+            nod or dither.  This is the component of the offset
+            perpendicular to the dispersion direction.  A positive value
+            means that the spectrum is at a larger pixel number than the
+            nominal location.
         """
 
         instrument = input_model.meta.instrument.name
@@ -1120,18 +1305,95 @@ class ExtractModel(ExtractBase):
                  inner_bkg=None, outer_bkg=None, method='subpixel'):
         """Create a polynomial model from coefficients.
 
+        Extended summary
+        ----------------
         If InvalidSpectralOrderNumberError is raised, processing of the
         current slit or spectral order should be skipped.
 
         Parameters
         ----------
-        input_model: data model
+        input_model : data model
             The input science data.
 
-        slit: an input slit, or a dummy value if not used
+        slit : an input slit, or a dummy value if not used
             For MultiSlit or MultiProduct data, `slit` is one slit from
             a list of slits in the input.  For other types of data, `slit`
             will not be used.
+
+        ref_file_type : str
+            This indicates whether the reference file (if any) was a JSON
+            file or an image.
+
+        match : str
+            An entry in the reference file (if there is one) should match
+            the slit name and the spectral order number of the current
+            slit (or it can be "ANY").  `match` will be "exact match" if
+            both the name of the current slit and the spectral order number
+            match the selected entry in the reference file, and it will be
+            "partial match" if only the slit name matches.  If neither
+            match, `match` will be "no match".
+
+        dispaxis : int
+            Dispersion direction:  1 is horizontal, 2 is vertical.
+
+        spectral_order : int
+            Spectral order number.
+
+        xstart : int
+            First pixel (zero indexed) in extraction region.
+
+        xstop : int
+            Last pixel (zero indexed) in extraction region.
+
+        ystart : int
+            First pixel (zero indexed) in extraction region.
+
+        ystop : int
+            Last pixel (zero indexed) in extraction region.
+
+        extract_width : int
+            Height (in the cross-dispersion direction) of the extraction
+            region.
+
+        src_coeff : list of lists of float, or None
+            These are coefficients of polynomial functions that define
+            the cross-dispersion limits of one or more source extraction
+            regions.
+
+        bkg_coeff : list of lists of float, or None
+            This has the same format as `src_coeff`, but the polynomials
+            define one or more background regions.
+
+        independent_var : str
+            This can be either "pixel" or "wavelength" to specify the
+            independent variable for polynomial functions.
+
+        smoothing_length : int
+            Width of a boxcar function for smoothing the background
+            regions.
+
+        bkg_order : int
+            Polynomial order for fitting to each column (or row, if the
+            dispersion is vertical) of background.
+
+        nod_correction : float
+            If not zero, this will be added to the extraction region limits
+            for the cross-dispersion direction, both target and background.
+
+        x_center : float
+            This is not relevant; it's only used for IFU data.
+
+        y_center : float
+            This is not relevant; it's only used for IFU data.
+
+        inner_bkg : float
+            This is not relevant; it's only used for IFU data.
+
+        outer_bkg : float
+            This is not relevant; it's only used for IFU data.
+
+        method : str
+            This is not relevant; it's only used for IFU data.
         """
 
         super().__init__()
@@ -1259,6 +1521,8 @@ class ExtractModel(ExtractBase):
     def add_nod_correction(self, verbose):
         """Add the nod offset to the extraction location (in-place).
 
+        Extended summary
+        ----------------
         If source extraction coefficients src_coeff were specified, this
         method will add the nod offset correction to the first coefficient
         of every coefficient list; otherwise, the nod offset will be added
@@ -1267,6 +1531,11 @@ class ExtractModel(ExtractBase):
         this method will add the nod offset to the first coefficients.
         Note that background coefficients are handled independently of
         src_coeff.
+
+        Parameters
+        ----------
+        verbose : bool
+            If True, messages can be logged.
         """
 
         if self.nod_correction == 0.:
@@ -1310,10 +1579,16 @@ class ExtractModel(ExtractBase):
     def update_extraction_limits(self, ap):
         """Update start and stop limits.
 
+        Extended summary
+        ----------------
         Copy the values of xstart, etc., to the attributes.  Note, however,
         that if src_coeff was specified, that will override the values
         given by xstart, etc.
         The limits in the dispersion direction will be rounded to integer.
+
+        Parameters
+        ----------
+        ap : namedtuple
         """
 
         self.xstart = ap.xstart
@@ -1356,30 +1631,46 @@ class ExtractModel(ExtractBase):
     def assign_polynomial_limits(self, verbose):
         """Create polynomial functions for extraction limits.
 
+        Extended summary
+        ----------------
         self.src_coeff and self.bkg_coeff contain lists of polynomial
         coefficients.  These will be used to create corresponding lists of
         polynomial functions, self.p_src and self.p_bkg.  Note, however,
         that the structures of those two lists are not the same.
         The coefficients lists have this form:
-            [[1, 2], [3, 4, 5], [6], [7, 8]]
+
+-           [[1, 2], [3, 4, 5], [6], [7, 8]]
+
         which means:
-            [1, 2] coefficients for the lower limit of the first region
-            [3, 4, 5] coefficients for the upper limit of the first region
-            [6] coefficient(s) for the lower limit of the second region
-            [7, 8] coefficients for the upper limit of the second region
+
+-           [1, 2] coefficients for the lower limit of the first region
+-           [3, 4, 5] coefficients for the upper limit of the first region
+-           [6] coefficient(s) for the lower limit of the second region
+-           [7, 8] coefficients for the upper limit of the second region
+
         The lists of coefficients must always be in pairs, for the lower
         and upper limits respectively, but they're not explicitly in an
         additional layer of two-element lists,
-            i.e., not like this:  [[[1, 2], [3, 4, 5]], [[6], [7, 8]]]
+
+-           i.e., not like this:  [[[1, 2], [3, 4, 5]], [[6], [7, 8]]]
+
         That seemed unnecessarily messy and harder for the user to specify.
         For the lists of polynomial functions, on the other hand, that
         additional layer of list is used:
-            [[fcn_lower1, fcn_upper1], [fcn_lower2, fcn_upper2]]
+
+-           [[fcn_lower1, fcn_upper1], [fcn_lower2, fcn_upper2]]
+
         where:
-            fcn_lower1 is 1 + 2 * x
-            fcn_upper1 is 3 + 4 * x + 5 * x**2
-            fcn_lower2 is 6
-            fcn_upper2 is 7 + 8 * x
+
+-           fcn_lower1 is 1 + 2 * x
+-           fcn_upper1 is 3 + 4 * x + 5 * x**2
+-           fcn_lower2 is 6
+-           fcn_upper2 is 7 + 8 * x
+
+        Parameters
+        ----------
+        verbose : bool
+            If True, messages can be logged.
         """
 
         if self.src_coeff is None:
@@ -1428,32 +1719,43 @@ class ExtractModel(ExtractBase):
 
 
     def extract(self, data, wl_array, verbose):
-        """
-        Do the actual extraction, for the case that the reference file
-        is a JSON file, or that there is no reference file.
+        """Do the extraction.
+
+        Extended summary
+        ----------------
+        This version is for the case that the reference file is a JSON
+        file, or that there is no reference file.
 
         Parameters
         ----------
-        data: array_like (2-D)
-            Data array.
+        data : ndarray, 2-D
+            Data array from which the spectrum will be extracted.
 
-        wl_array: array_like (2-D) or None
+        wl_array : ndarray, 2-D, or None
             Wavelengths corresponding to `data`, or None if no WAVELENGTH
-            was found in the input file.
+            extension was found in the input file.
 
-        verbose: bool
+        verbose : bool
             If True, log messages.
 
         Returns
         -------
-        (ra, dec, wavelength, net, background)
-            ra and dec are floats, and the others are 1-D arrays.
-            ra and dec are the right ascension and declination at the
-            nominal center of the slit.  `wavelength` is the wavelength in
-            micrometers at each pixel.  `net` is the count rate
-            (counts / s) minus the background at each pixel.  `background`
-            is the background count rate that was subtracted from the total
+        ra, dec : float
+            ra and dec are the right ascension and declination respectively
+            at the nominal center of the slit.
+
+        wavelength : ndarray, 1-D
+            The wavelength in micrometers at each pixel.
+
+        net : ndarray, 1-D
+            The count rate (counts / s) minus the background at each pixel.
+
+        background : ndarray, 1-D
+            The background count rate that was subtracted from the total
             source count rate to get `net`.
+
+        dq : ndarray, 1-D, int32
+            The data quality array.
         """
 
         # If the wavelength attribute exists and is populated, use it
@@ -1621,7 +1923,52 @@ class ImageExtractModel(ExtractBase):
                  smoothing_length=0,
                  nod_correction=0):
         """Extract using a reference image to define the extraction and
-           background regions."""
+           background regions.
+
+        Parameters
+        ----------
+        input_model : data model
+            The input science data.
+
+        slit : an input slit, or a dummy value if not used
+            For MultiSlit or MultiProduct data, `slit` is one slit from
+            a list of slits in the input.  For other types of data, `slit`
+            will not be used.
+
+        ref_file_type : str
+            This indicates whether the reference file (if any) was a JSON
+            file or an image.
+
+        match : str
+            An entry in the reference file (if there is one) should match
+            the slit name and the spectral order number of the current
+            slit (or it can be "ANY").  `match` will be "exact match" if
+            both the name of the current slit and the spectral order number
+            match the selected entry in the reference file, and it will be
+            "partial match" if only the slit name matches.  If neither
+            match, `match` will be "no match".
+
+        ref_image : data model
+            The reference image.
+
+        spectral_order : int
+            Spectral order number.
+
+        dispaxis : int
+            Dispersion direction:  1 is horizontal, 2 is vertical.
+
+        smoothing_length : int
+            Width of a boxcar function for smoothing the background
+            regions.
+
+        nod_correction : float
+            If not zero, the reference image will be shifted in the
+            cross-dispersion direction by this number of pixels, rounded
+            to an integer.  That is, a feature with pixel location [y0, x0]
+            will be moved to [y0 + nod, x0], where `nod` is
+            int(round(nod_correction)), if the dispersion direction is
+            horizontal.
+        """
 
         super().__init__()
 
@@ -1665,7 +2012,13 @@ class ImageExtractModel(ExtractBase):
 
 
     def add_nod_correction(self, verbose):
-        """Shift the reference image (in-place)."""
+        """Shift the reference image (in-place).
+
+        Parameters
+        ----------
+        verbose : bool
+            If True, messages can be logged.
+        """
 
         if self.nod_correction == 0:
             return
@@ -1709,6 +2062,7 @@ class ImageExtractModel(ExtractBase):
 
 
     def log_extraction_parameters(self):
+        """Log the updated extraction parameters."""
 
         log.debug("Using a reference image that defines extraction regions.")
         log.debug("dispaxis = %d", self.dispaxis)
@@ -1724,26 +2078,33 @@ class ImageExtractModel(ExtractBase):
 
         Parameters
         ----------
-        data: array_like (2-D)
+        data : ndarray, 2-D
             Science data array.
 
-        wl_array: array_like (2-D) or None
+        wl_array : ndarray, 2-D, or None
             Wavelengths corresponding to `data`, or None if no WAVELENGTH
-            was found in the input file.
+            extension was found in the input file.
 
-        verbose: bool
+        verbose : bool
             If True, log messages.
 
         Returns
         -------
-        (ra, dec, wavelength, net, background)
-            ra and dec are floats, and the others are 1-D arrays.
-            ra and dec are the right ascension and declination at the
-            nominal center of the slit.  `wavelength` is the wavelength in
-            micrometers at each pixel.  `net` is the count rate
-            (counts / s) minus the background at each pixel.  `background`
-            is the background count rate that was subtracted from the total
+        ra, dec : float
+            ra and dec are the right ascension and declination respectively
+            at the nominal center of the slit.
+
+        wavelength : ndarray, 1-D
+            The wavelength in micrometers at each pixel.
+
+        net : ndarray, 1-D
+            The count rate (counts / s) minus the background at each pixel.
+
+        background : ndarray, 1-D
+            The background count rate that was subtracted from the total
             source count rate to get `net`.
+
+        dq : ndarray, 1-D, int32
         """
 
         shape = data.shape
@@ -1944,10 +2305,27 @@ class ImageExtractModel(ExtractBase):
 
 
     def match_shape(self, shape):
-        """Truncate or expand reference image to match the science data."""
+        """Truncate or expand reference image to match the science data.
 
-        # The science data may be 2-D or 3-D (or more?), but the reference
-        # image only needs to be 2-D.
+        Extended summary
+        ----------------
+        The science data may be 2-D or 3-D, but the reference image only
+        needs to be 2-D.
+
+        Parameters
+        ----------
+        shape : tuple
+            The shape of the science data.
+
+        Returns
+        -------
+        ndarray, 2-D
+            This is either the reference image (the data array, not the
+            complete data model), or an array of the same type, either
+            larger or smaller than the actual reference image, but matching
+            the science data array both in size and location on the
+            detector.
+        """
 
         ref = self.ref_image.data
 
@@ -1967,6 +2345,30 @@ class ImageExtractModel(ExtractBase):
 
 
     def separate_target_and_background(self, ref):
+        """Create masks for source and background.
+
+        Parameters
+        ----------
+        ref : ndarray, 2-D
+            This is the reference image as returned by `match_shape`,
+            i.e. it might be a subset of the original reference image.
+
+        Returns
+        -------
+        mask_target : ndarray, 2-D
+            This is an array of the same type and shape as the science
+            image, but with values of only 0 or 1.  A value of 1 indicates
+            that the corresponding pixel in the science data array should
+            be included when adding up values to make the 1-D spectrum,
+            and a value of 0 means that it should not be included.
+
+        mask_bkg : ndarray, 2-D, or None.
+            This is like `mask_target` but for background regions.
+            A negative value in the reference image flags a pixel that
+            should be included in the background region(s).  If there is
+            no pixel in the reference image with a negative value,
+            `mask_bkg` will be set to None.
+        """
 
         mask_target = np.where(ref > 0., 1., 0.)
 
@@ -1983,18 +2385,18 @@ def interpolate_response(wavelength, relsens, verbose):
 
     Parameters
     ----------
-    wavelength: array_like, 1-D
+    wavelength : ndarray, 1-D
         Wavelengths in the science data
 
-    relsens: record array
+    relsens : record array
         Contains two columns, 'wavelength' and 'response'.
 
-    verbose: bool
+    verbose : bool
         If True, write log messages.
 
     Returns
     -------
-    r_factor: array_like
+    r_factor : ndarray, 1-D
         The response, interpolated at `wavelength`, with extrapolated
         elements and zero or negative response values set to 1.  Divide
         the net count rate by r_factor to obtain the flux.
@@ -2041,6 +2443,36 @@ def interpolate_response(wavelength, relsens, verbose):
 
 def do_extract1d(input_model, refname, smoothing_length, bkg_order,
                  log_increment):
+    """Extract 1-D spectra.
+
+    Extended summary
+    ----------------
+
+    Parameters
+    ----------
+    input_model : data model
+        The input science model.
+
+    refname : str
+        The name of the reference file, or "N/A".
+
+    smoothing_length : int
+        Width of a boxcar function for smoothing the background regions.
+
+    bkg_order : int
+        Polynomial order for fitting to each column (or row, if the
+        dispersion is vertical) of background.
+
+    log_increment : int
+        if `log_increment` is greater than 0 and the input data are
+        multi-integration, a message will be written to the log every
+        `log_increment` integrations.
+
+    Returns
+    -------
+    output_model : data model
+        A new MultiSpecModel containing the extracted spectra.
+    """
 
     output_model = datamodels.MultiSpecModel()
     if hasattr(input_model, "int_times"):
@@ -2374,10 +2806,10 @@ def populate_time_keywords(input_model, output_model):
 
     Parameters
     ----------
-    input_model: data model
+    input_model : data model
         The input science model.
 
-    output_model: data model
+    output_model : data model
         The output science model.  This may be modified in-place.
     """
 
@@ -2509,6 +2941,20 @@ def populate_time_keywords(input_model, output_model):
 
 
 def get_spectral_order(slit):
+    """Get the spectral order number.
+
+    Parameters
+    ----------
+    slit : SlitModel object
+        One slit from an input MultiSlitModel or similar.
+
+    Returns
+    -------
+    int
+        Spectral order number for `slit`.  If no information about spectral
+        order is available in `wcsinfo`, a default value of 1 will be
+        returned.
+    """
 
     if hasattr(slit.meta, 'wcsinfo'):
         sp_order = slit.meta.wcsinfo.spectral_order
@@ -2524,6 +2970,24 @@ def get_spectral_order(slit):
 
 
 def is_prism(input_model):
+    """Determine whether the current observing mode used a prism.
+
+    Extended summary
+    ----------------
+    The reason for this test is so we can skip spectral extraction if the
+    spectral order is zero and the exposure was not made using a prism.  
+    In this context, therefore, a grism is not considered to be a prism.
+
+    Parameters
+    ----------
+    input_model : data model
+        The input science model.
+
+    Returns
+    -------
+    bool
+        True if the exposure used a prism; False otherwise.
+    """
 
     detector = input_model.meta.instrument.detector
     if detector is None:
@@ -2553,13 +3017,13 @@ def copy_keyword_info(slit, slitname, spec):
 
     Parameters
     ----------
-    slit: An element of MultiSlitModel.slits or MultiProductModel.products
-        A 2-D array containing a spectrum.
+    slit : A SlitModel object
+        Metadata will be copied from the input `slit` to output `spec`.
 
-    slitname: string or None
+    slitname : str or None
         The name of the slit.
 
-    spec: One element of MultiSpecModel.spec
+    spec : One element of MultiSpecModel.spec
         Metadata attributes will be updated in-place.
     """
 
@@ -2597,49 +3061,59 @@ def copy_keyword_info(slit, slitname, spec):
 def extract_one_slit(input_model, slit, integ,
                      prev_offset, verbose, extract_params):
     """Extract data for one slit, or spectral order, or plane.
+
     Parameters
     ----------
-    input_model: data model
+    input_model : data model
         The input science model.
 
-    slit: one slit from a MultiSlitModel (or similar), or "dummy"
+    slit : one slit from a MultiSlitModel (or similar), or "dummy"
         If slit is "dummy", the data array is input_model.data; otherwise,
         the data array is slit.data.
         In the former case, if `integ` is zero or larger, the spectrum
         will be extracted from the 2-D slice input_model.data[integ].
 
-    integ: int
+    integ : int
         For the case that input_model is a SlitModel or a CubeModel,
         `integ` is the integration number.  If the integration number is
         not relevant (i.e. the data array is 2-D), `integ` should be -1.
 
-    prev_offset: float or str
+    prev_offset : float or str
         When extracting from multi-integration data, the nod/dither offset
         only needs to be determined once.  `prev_offset` is either the
-        previously computed offset or a value (currently a string)
-        indicating that the offset hasn't been computed yet.  In the latter
-        case, method offset_from_offset will be called to determine the
-        offset.
+        previously computed offset or a value (a string) indicating that
+        the offset hasn't been computed yet.  In the latter case, method
+        `offset_from_offset` will be called to determine the offset.
 
-    verbose: boolean
+    verbose : boolean
         If True, log more info (extraction parameters, for example).
 
-    extract_params: dictionary
+    extract_params : dict
         Parameters read from the reference file.
 
     Returns
     -------
-    tuple (ra, dec, wavelength, net, background, dq, offset)
-        `ra` and `dec` are floats, and the others are 1-D arrays.
-        `ra` and `dec` are the right ascension and declination at the
-        nominal center of the slit.  `wavelength` is the wavelength in
-        micrometers at each pixel.  `net` is the count rate (counts / s)
-        minus the background at each pixel.  `background` is the background
-        count rate that was subtracted from the total source count rate
-        to get `net`.  `dq` is the data quality array.
-        `offset` is the nod/dither offset in the cross-dispersion
-        direction, either computed by calling offset_from_offset in this
-        function, or copied from the input `prev_offset`.
+    ra, dec : float
+        ra and dec are the right ascension and declination respectively
+        at the nominal center of the slit.
+
+    wavelength : ndarray, 1-D
+        The wavelength in micrometers at each pixel.
+
+    net : ndarray, 1-D
+        The count rate (counts / s) minus the background at each pixel.
+
+    background : ndarray, 1-D
+        The background count rate that was subtracted from the total
+        source count rate to get `net`.
+
+    dq : ndarray, 1-D, int32
+        The data quality array.
+
+    offset : float
+       The nod/dither offset in the cross-dispersion direction, either
+        computed by calling `offset_from_offset` in this function, or
+        copied from the input `prev_offset`.
     """
 
     if verbose:
@@ -2716,19 +3190,20 @@ def replace_bad_values(data, input_dq, fill=0.):
 
     Parameters
     ----------
-    data: ndarray
+    data : ndarray
         The input data array.
 
-    input_dq: ndarray or None
+    input_dq : ndarray or None
         If not None, this will be checked for flag value DO_NOT_USE.
 
-    fill: float
-        Pixels that are NaN in `data` or are flagged in the `dq` array
-        (if the latter is not None) will be assigned this value.
+    fill : float
+        Pixels that are NaN in `data` or are flagged in the `input_dq`
+        array (if the latter is not None) will be assigned this value.
 
     Returns
     -------
-    A possibly modified copy of the input data array.
+    ndarray
+        A possibly modified copy of `data`.
     """
 
     mask = np.isnan(data)
@@ -2746,7 +3221,9 @@ def replace_bad_values(data, input_dq, fill=0.):
 def nans_at_endpoints(wavelength, net, background, dq, verbose):
     """Flag NaNs in the wavelength array.
 
-    All five input arrays should be 1-D and the same shape.
+    Extended summary
+    ----------------
+    All five input arrays should be 1-D and have the same shape.
     If NaNs are present at endpoints of `wavelength`, the arrays will be
     trimmed to remove the NaNs.  NaNs at interior elements of `wavelength`
     will be left in place, but they will be flagged with DO_NOT_USE in the
@@ -2754,25 +3231,25 @@ def nans_at_endpoints(wavelength, net, background, dq, verbose):
 
     Parameters
     ----------
-    wavelength: ndarray
+    wavelength : ndarray
         Array of wavelengths, possibly containing NaNs.
 
-    net: ndarray
+    net : ndarray
         Array of net count rates.
 
-    background: ndarray
+    background : ndarray
         Array of background values that were subtracted to get `net`.
 
-    dq: ndarray
+    dq : ndarray
         Data quality array.
 
-    verbose: bool
-        If True, log a message.
+    verbose : bool
+        If True and the arrays were trimmed, log a message.
 
     Returns
     -------
-    tuple (wavelength, net, background, dq)
-        The returned `dq` array will have NaNs flagged with DO_NOT_USE,
+    wavelength, net, background, dq : ndarray
+        The returned `dq` array may have NaNs flagged with DO_NOT_USE,
         and all four arrays may have been trimmed at either or both ends.
     """
 

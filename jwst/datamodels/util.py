@@ -71,6 +71,11 @@ def open(init=None, extensions=None, **kwargs):
         # Copy the object so it knows not to close here
         return init.__class__(init)
 
+    elif is_association(init):
+        from . import container
+        return container.ModelContainer(init, extensions=extensions,
+                                        **kwargs)
+
     elif isinstance(init, (str, bytes)) or hasattr(init, "read"):
         # If given a string, presume its a file path.
         # if it has a read method, assume a file descriptor
@@ -301,6 +306,16 @@ def to_camelcase(token):
     return ''.join(x.capitalize() for x in token.split('_-'))
 
 
+def is_association(asn_data):
+    """
+    Test if an object is an association by checking for required fields
+    """
+    if isinstance(asn_data, dict):
+        if 'asn_id' in asn_data and 'asn_pool' in asn_data:
+            return True
+    return False
+
+
 def gentle_asarray(a, dtype):
     """
     Performs an asarray that doesn't cause a copy if the byteorder is
@@ -319,15 +334,20 @@ def gentle_asarray(a, dtype):
         elif in_dtype.fields is not None and out_dtype.fields is not None:
             if in_dtype == out_dtype:
                 return a
-            if len(in_dtype) != len(out_dtype):
-                raise ValueError(
-                    "Wrong number of columns.  Expected {0}, got {1}".format(
-                        len(out_dtype), len(in_dtype)))
-            new_dtype = []
-            # Change the dtype name to match the fits record names
-            # as the mismatch causes case insensitive access to fail
-            if hasattr(in_dtype, 'names') and hasattr(out_dtype, 'names'):
+            in_names = {n.lower() for n in in_dtype.names}
+            out_names = {n.lower() for n in out_dtype.names}
+            if in_names == out_names:
+                # Change the dtype name to match the fits record names
+                # as the mismatch causes case insensitive access to fail
                 out_dtype.names = in_dtype.names
+            else:
+                raise ValueError(
+                    "Column names don't match schema. "
+                    "Schema has {0}. Data has {1}".format(
+                        str(out_names.difference(in_names)),
+                        str(in_names.difference(out_names))))
+
+            new_dtype = []
             for i in range(len(out_dtype.fields)):
                 in_type = in_dtype[i]
                 out_type = out_dtype[i]
@@ -348,7 +368,7 @@ def gentle_asarray(a, dtype):
     else:
         try:
             a = np.asarray(a, dtype=out_dtype)
-        except:
+        except Exception:
             raise ValueError("Can't convert {0!s} to ndarray".format(type(a)))
         return a
 
@@ -391,7 +411,7 @@ def create_history_entry(description, software=None):
 
     Examples
     --------
-    >>> soft = {'name': 'jwreftools', 'author': 'STSCI',
+    >>> soft = {'name': 'jwreftools', 'author': 'STSCI', \
                 'homepage': 'https://github.com/spacetelescope/jwreftools', 'version': "0.7"}
     >>> entry = create_history_entry(description="HISTORY of this file", software=soft)
 
