@@ -20,7 +20,8 @@ log.setLevel(logging.DEBUG)
 HUGE_NUM = np.finfo(np.float32).max
 
 
-def find_crs(data, gdq, read_noise, rej_threshold, nframes):
+#def find_crs(indata, ingdq, read_noise, rej_threshold, nframes):
+def find_crs(indata):
 
     """
     Find CRs/Jumps in each integration within the input data array.
@@ -28,7 +29,13 @@ def find_crs(data, gdq, read_noise, rej_threshold, nframes):
     multiplied by the gain. We also assume that the read noise is in units of
     electrons.
     """
-
+    if isinstance(indata, tuple):
+        read_noise = indata[2]
+        rej_threshold = indata[3]
+        nframes = indata[4]
+        data = indata[0]
+        ingdq = indata[1]
+    gdq = ingdq.copy()
     # Get data characteristics
     (nints, ngroups, nrows, ncols) = data.shape
 
@@ -168,7 +175,7 @@ def find_crs(data, gdq, read_noise, rej_threshold, nframes):
         # Next pixel with an outlier (j loop)
     # Next integration (integration loop)
 
-    return median_slopes
+    return median_slopes, gdq
 
 
 def get_clipped_median(num_differences, diffs_to_ignore, differences, sorted_index):
