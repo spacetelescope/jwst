@@ -34,7 +34,7 @@
 # --> a1 = compare_cr_navg_files.compare_cr_navg_files("cr_and_sp.fits","foundcr.fits","sim_2k_30.fits","fslopes.fits",4)
 # --> status = a1.compare()
 #
-
+# pragma: no cover
 import sys, os, time
 from astropy.io import fits
 import numpy as N

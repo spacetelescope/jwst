@@ -221,7 +221,7 @@ A `Step`'s suffix is defined in a couple of different ways:
 
     - By the `Step.name` attribute. This is the default.
     - By the `suffix` configuration parameter.
-    - Explicitly in the code. Often this is done in `Pipeline`s where
+    - Explicitly in the code. Often this is done in ``Pipelines`` where
       a single pipeline creates numerous different output files.
 
 .. _basename_determination:

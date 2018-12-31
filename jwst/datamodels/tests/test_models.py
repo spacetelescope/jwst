@@ -1,4 +1,5 @@
 import os
+from os import path as op
 import shutil
 import tempfile
 import warnings
@@ -13,6 +14,7 @@ from .. import (DataModel, ImageModel, MaskModel, QuadModel,
                 MultiSlitModel, ModelContainer, SlitModel,
                 SlitDataModel, IFUImageModel)
 from ..util import open as open_model
+from ...lib.file_utils import pushdir
 
 
 ROOT_DIR = os.path.join(os.path.dirname(__file__), 'data')
@@ -426,18 +428,20 @@ def test_image_with_extra_keyword_to_multislit():
 @pytest.fixture(scope="module")
 def container():
     warnings.simplefilter("ignore")
-    with ModelContainer(ASN_FILE, persist=True) as c:
-        for m in c:
-            m.meta.observation.program_number = '0001'
-            m.meta.observation.observation_number = '1'
-            m.meta.observation.visit_number = '1'
-            m.meta.observation.visit_group = '1'
-            m.meta.observation.sequence_id = '01'
-            m.meta.observation.activity_id = '1'
-            m.meta.observation.exposure_number = '1'
-            m.meta.instrument.name = 'NIRCAM'
-            m.meta.instrument.channel = 'SHORT'
-        yield c
+    asn_file_path, asn_file_name = op.split(ASN_FILE)
+    with pushdir(asn_file_path):
+        with ModelContainer(asn_file_name, persist=True) as c:
+            for m in c:
+                m.meta.observation.program_number = '0001'
+                m.meta.observation.observation_number = '1'
+                m.meta.observation.visit_number = '1'
+                m.meta.observation.visit_group = '1'
+                m.meta.observation.sequence_id = '01'
+                m.meta.observation.activity_id = '1'
+                m.meta.observation.exposure_number = '1'
+                m.meta.instrument.name = 'NIRCAM'
+                m.meta.instrument.channel = 'SHORT'
+            yield c
 
 
 def test_modelcontainer_iteration(container):

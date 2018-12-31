@@ -24,9 +24,8 @@ class MultiExtract1dImageModel(ReferenceFileModel):
     `Extract1dImageModel` will be copied to the first element of `images`.
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
+    images.items.data : numpy float32 array
     """
     schema_url = "multiextract1d.schema.yaml"
 

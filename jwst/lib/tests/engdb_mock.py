@@ -17,6 +17,7 @@ __all__ = [
 # Setup for local testing cache
 ENGDB_PATH = os.path.join(
     os.path.dirname(os.path.realpath(__file__)),
+    'data',
     'engdb'
 )
 MNEMONICS_TO_CACHE = [
@@ -66,7 +67,7 @@ class EngDB_Mocker(requests_mock.Mocker):
         data_query = re.compile(''.join([
             engdb_tools.ENGDB_BASE_URL,
             engdb_tools.ENGDB_DATA,
-            '.+\?sTime=.+\&eTime=.+'
+            r'.+\?sTime=.+\&eTime=.+'
         ]))
         self.get(data_query, json=self.response_data)
 
@@ -258,8 +259,8 @@ def mnemonic_data_fname(mnemonic):
 
 def cache_engdb(
         mnemonics=MNEMONICS_TO_CACHE,
-        starttime='2016-01-01',
-        endtime='2016-12-31',
+        starttime='2016-01-18T15:40:00',
+        endtime='2016-01-18T15:40:05',
         db_path=ENGDB_PATH
 ):
     """Create a local cache of the database
@@ -294,8 +295,13 @@ def cache_engdb(
         json.dump(meta, fp)
 
     for mnemonic in mnemonics:
-        meta = edb.get_meta(mnemonic)
         records = edb.get_records(mnemonic, starttime, endtime)
+
+        # Remove the request times. These are filled back in
+        # during retrieval.
+        del records['ReqSTime']
+        del records['ReqETime']
+
         with open(
                 os.path.join(db_path, mnemonic_data_fname(mnemonic)),
                 'w'

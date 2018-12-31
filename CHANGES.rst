@@ -8,6 +8,9 @@ assign_wcs
 ----------
  - Added velocity correction model to the WFSS and TSGRISM wcs pipelines [#2801]
 
+ - Refactored how the pipeline handles subarrays in the WCS. Fixed a bug
+   where the bounding box was overwritten in full frame mode. [#2980]
+
 associations
 ------------
 
@@ -61,6 +64,8 @@ extract_1d
 
 extract_2d
 ----------
+- Moved the update of meta information to the MultiSlitModel instead of the
+  SlitModels that compose it. [#2988]
 
 firstframe
 ----------
@@ -166,6 +171,8 @@ srctype
 
 scripts
 -------
+
+- `set_telescope_pointing.py`: Update method of choosing pointing parameters [#2900]
 
 stpipe
 ------

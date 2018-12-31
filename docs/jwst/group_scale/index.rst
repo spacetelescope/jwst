@@ -1,6 +1,8 @@
-=======================
-Group Scale  Processing
-=======================
+.. _group_scale_step:
+
+======================
+Group Scale Correction
+======================
 
 .. toctree::
    :maxdepth: 2

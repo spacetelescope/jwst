@@ -6,7 +6,8 @@ from astropy.modeling.models import Identity, Const1D, Mapping
 import gwcs.coordinate_frames as cf
 
 from . import pointing
-from .util import not_implemented_mode, subarray_transform, velocity_correction
+from .util import (not_implemented_mode, subarray_transform, velocity_correction,
+                   bounding_box_from_model, bounding_box_from_subarray)
 from ..datamodels import (ImageModel, NIRCAMGrismModel, DistortionModel,
                           CubeModel)
 from ..transforms.models import (NIRCAMForwardRowGrismDispersion,
@@ -70,11 +71,12 @@ def imaging(input_model, reference_files):
     v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.arcsec, u.arcsec))
     world = cf.CelestialFrame(reference_frame=coord.ICRS(), name='world')
 
+    distortion = imaging_distortion(input_model, reference_files)
     subarray2full = subarray_transform(input_model)
-    imdistortion = imaging_distortion(input_model, reference_files)
-    distortion = subarray2full | imdistortion
-    distortion.bounding_box = imdistortion.bounding_box
-    del imdistortion.bounding_box
+    if subarray2full is not None:
+        distortion = subarray2full | distortion
+        distortion.bounding_box = bounding_box_from_subarray(input_model)
+
     tel2sky = pointing.v23tosky(input_model)
     pipeline = [(detector, distortion),
                 (v2v3, tel2sky),
@@ -103,26 +105,11 @@ def imaging_distortion(input_model, reference_files):
     transform = dist.model
 
     try:
-        bb = transform.bounding_box
+        transform.bounding_box
     except NotImplementedError:
-        shape = input_model.data.shape
-        # Note: Since bounding_box is attached to the model here
-        # it's in reverse order.
-        """
-        A CubeModel is always treated as a stack (in dimension 1)
-        of 2D images, as opposed to actual 3D data. In this case
-        the bounding box is set to the 2nd and 3rd dimension.
-        """
-        if isinstance(input_model, CubeModel):
-            bb = ((-0.5, shape[1] - 0.5),
-                  (-0.5, shape[2] - 0.5))
-        elif isinstance(input_model, ImageModel):
-            bb = ((-0.5, shape[0] - 0.5),
-                  (-0.5, shape[1] - 0.5))
-        else:
-            raise TypeError("Input is not an ImageModel or CubeModel")
-
-        transform.bounding_box = bb
+        # Check if the transform in the reference file has a ``bounding_box``.
+        # If not set a ``bounding_box`` equal to the size of the image.
+        transform.bounding_box = bounding_box_from_model(input_model)
     dist.close()
     return transform
 
@@ -227,10 +214,15 @@ def tsgrism(input_model, reference_files):
 
     # x, y, order in goes to transform to full array location and order
     # get the shift to full frame coordinates
-    sub2full = subarray_transform(input_model) & Identity(1)
-    sub2direct = (sub2full | Mapping((0, 1, 0, 1, 2)) |
-                  (Identity(2) & xcenter & ycenter & Identity(1)) |
-                  det2det)
+    sub_trans = subarray_transform(input_model)
+    if sub_trans is not None:
+        sub2direct = (sub_trans & Identity(1) | Mapping((0, 1, 0, 1, 2)) |
+                      (Identity(2) & xcenter & ycenter & Identity(1)) |
+                      det2det)
+    else:
+        sub2direct = (Mapping((0, 1, 0, 1, 2)) |
+                      (Identity(2) & xcenter & ycenter & Identity(1)) |
+                      det2det)
 
     # take us from full frame detector to v2v3
     distortion = imaging_distortion(input_model, reference_files) & Identity(2)
@@ -391,4 +383,5 @@ exp_type2transform = {'nrc_image': imaging,
                       'nrc_led': not_implemented_mode,
                       'nrc_dark': not_implemented_mode,
                       'nrc_flat': not_implemented_mode,
+                      'nrc_grism': not_implemented_mode,
                       }

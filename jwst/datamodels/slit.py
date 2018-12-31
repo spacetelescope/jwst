@@ -10,21 +10,51 @@ class SlitDataModel(DataModel):
     A data model for 2D images.
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
+    data : numpy float32 array
+         The science data
 
-    data : numpy array
-        The science data.
+    dq : numpy uint32 array
+         Data quality array
 
-    dq : numpy array
-        The data quality array.
+    err : numpy float32 array
+         Error array
 
-    err : numpy array
-        The error array.
+    wavelength : numpy float32 array
+         Wavelength array, corrected for zero-point
 
-    relsens : numpy array
-        The relative sensitivity table.
+    barshadow : numpy float32 array
+         Bar shadow correction
+
+    area : numpy float32 array
+         Pixel area map array
+
+    relsens : numpy table
+         relative sensitivity table
+
+    var_poisson : numpy float32 array
+         variance due to poisson noise
+
+    var_rnoise : numpy float32 array
+         variance due to read noise
+
+    pathloss_pointsource2d : numpy float32 array
+         2-d array for pathloss (point source)
+
+    pathloss_pointsource : numpy float32 array
+         pathloss array for point sources
+
+    wavelength_pointsource : numpy float32 array
+         wavelength array for point sources
+
+    pathloss_uniformsource2d : numpy float32 array
+         2-d array for pathloss (uniform source)
+
+    pathloss_uniformsource : numpy float32 array
+         pathloss_array for uniform sources
+
+    wavelength_uniformsource : numpy float32 array
+         wavelength array for uniform sources
 
     """
 
@@ -63,24 +93,54 @@ class SlitModel(DataModel):
     A data model for 2D images.
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
+    data : numpy float32 array
+         The science data
 
-    data : numpy array
-        The science data.
+    dq : numpy uint32 array
+         Data quality array
 
-    dq : numpy array
-        The data quality array.
+    err : numpy float32 array
+         Error array
 
-    err : numpy array
-        The error array.
+    wavelength : numpy float32 array
+         Wavelength array, corrected for zero-point
 
-    relsens : numpy array
-        The relative sensitivity table.
+    barshadow : numpy float32 array
+         Bar shadow correction
 
-    int_times : table
-        The int_times table
+    area : numpy float32 array
+         Pixel area map array
+
+    relsens : numpy table
+         relative sensitivity table
+
+    var_poisson : numpy float32 array
+         variance due to poisson noise
+
+    var_rnoise : numpy float32 array
+         variance due to read noise
+
+    pathloss_pointsource2d : numpy float32 array
+         2-d array for pathloss (point source)
+
+    pathloss_pointsource : numpy float32 array
+         pathloss array for point sources
+
+    wavelength_pointsource : numpy float32 array
+         wavelength array for point sources
+
+    pathloss_uniformsource2d : numpy float32 array
+         2-d array for pathloss (uniform source)
+
+    pathloss_uniformsource : numpy float32 array
+         pathloss_array for uniform sources
+
+    wavelength_uniformsource : numpy float32 array
+         wavelength array for uniform sources
+
+    int_times : numpy table
+         table of times for each integration
 
     """
     schema_url = "slit.schema.yaml"

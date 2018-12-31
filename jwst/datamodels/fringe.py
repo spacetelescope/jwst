@@ -10,21 +10,18 @@ class FringeModel(ReferenceFileModel):
     A data model for 2D fringe correction images.
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
+    data : numpy float32 array
+         The science data
 
-    data : numpy array
-        The science data.
+    dq : numpy uint32 array
+         Data quality array
 
-    dq : numpy array
-        The data quality array.
+    err : numpy float32 array
+         Error array
 
-    err : numpy array
-        The error array.
-
-    dq_def : numpy array
-        The data quality definitions table.
+    dq_def : numpy table
+         DQ flag definitions
     """
     schema_url = "fringe.schema.yaml"
 

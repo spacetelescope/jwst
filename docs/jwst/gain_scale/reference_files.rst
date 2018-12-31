@@ -11,5 +11,4 @@ stored the keyword value in the science data, for later use by the
 ``gain_scale`` step. In this case the ``gain_scale`` step will not read
 the GAIN reference file again when it runs.
 
-.. include:: ../gain_reffile/gain_reference_file.rst
-
+.. include:: ../references_general/gain_reffile.rst

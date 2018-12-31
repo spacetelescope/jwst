@@ -1,3 +1,5 @@
+.. _cube_build_step:
+
 =============
 Cube Building
 =============

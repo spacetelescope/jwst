@@ -1,3 +1,5 @@
+.. _superbias_step:
+
 =====================
 Superbias Subtraction
 =====================

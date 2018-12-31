@@ -1,10 +1,10 @@
 """Handy helpful pytest helpers helping pytest test"""
-from os import path
+from os import path as op
 
 
 def abspath(filepath):
     """Get the absolute file path"""
-    return path.abspath(path.expanduser(path.expandvars(filepath)))
+    return op.abspath(op.expanduser(op.expandvars(filepath)))
 
 
 # Check strings based on words using length precision

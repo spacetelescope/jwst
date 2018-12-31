@@ -332,7 +332,7 @@ def positive_fit(current_fit):
 
     return np.where(current_fit <= 0., FIT_MUST_BE_POSITIVE, current_fit)
 
-def compute_slope(data_sect, input_var_sect,
+def compute_slope(data_sect, input_var_sect, 
                   gdq_sect, readnoise_sect, gain_sect,
                   prev_fit, prev_slope_sect,
                   frame_time, group_time, nframes_used,

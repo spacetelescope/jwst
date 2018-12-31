@@ -13,10 +13,6 @@ class ReferenceFileModel(DataModel):
     """
     A data model for reference tables
 
-    Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
     """
     schema_url = "referencefile.schema.yaml"
 
@@ -54,19 +50,18 @@ class ReferenceImageModel(ReferenceFileModel):
     """
     A data model for 2D reference images
 
+Reference image data model
+
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
+    data : numpy float32 array
+         The science data
 
-    data : numpy array
-        The science data.
+    dq : numpy uint32 array
+         Data quality array
 
-    dq : numpy array
-        The data quality array.
-
-    err : numpy array
-        The error array.
+    err : numpy float32 array
+         Error array
     """
     schema_url = "referenceimage.schema.yaml"
 
@@ -86,18 +81,15 @@ class ReferenceCubeModel(ReferenceFileModel):
     A data model for 3D reference images
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
+    data : numpy float32 array
+         The science data
 
-    data : numpy array
-        The science data.
+    dq : numpy uint32 array
+         Data quality array
 
-    dq : numpy array
-        The data quality array.
-
-    err : numpy array
-        The error array.
+    err : numpy float32 array
+         Error array
     """
     schema_url = "referencecube.schema.yaml"
 
@@ -113,18 +105,15 @@ class ReferenceQuadModel(ReferenceFileModel):
     A data model for 4D reference images
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
+    data : numpy float32 array
+         The science data
 
-    data : numpy array
-        The science data.
+    dq : numpy uint32 array
+         Data quality array
 
-    dq : numpy array
-        The data quality array.
-
-    err : numpy array
-        The error array.
+    err : numpy float32 array
+         Error array
     """
     schema_url = "referencequad.schema.yaml"
 

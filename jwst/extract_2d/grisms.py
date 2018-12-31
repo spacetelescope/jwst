@@ -116,7 +116,7 @@ def extract_tso_object(input_model,
         lmin, lmax = range_select.pop()
 
         # create the order bounding box
-        source_xpos = input_model.meta.wcsinfo.crpix1 - 1  # remove fits 
+        source_xpos = input_model.meta.wcsinfo.crpix1 - 1  # remove fits
         source_ypos = input_model.meta.wcsinfo.crpix2 - 1  # remove fits
         transform = input_model.meta.wcs.get_transform('full_detector', 'grism_detector')
         xmin, ymin, _ = transform(source_xpos,
@@ -302,6 +302,7 @@ def extract_grism_objects(input_model,
 
     log.info("Extracting grism objects into MultiSlitModel")
     output_model = datamodels.MultiSlitModel()
+    output_model.update(input_model)
 
     # One WCS model can be used to govern all the extractions
     # and in fact the model transforms rely on the full frame
@@ -376,7 +377,6 @@ def extract_grism_objects(input_model,
                 subwcs.set_transform('grism_detector', 'detector', tr)
 
                 new_slit = datamodels.SlitModel(data=ext_data, err=ext_err, dq=ext_dq)
-                new_slit.update(input_model)
                 new_slit.meta.wcsinfo.spectral_order = order
                 new_slit.meta.wcs = subwcs
 

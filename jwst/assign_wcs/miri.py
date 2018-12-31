@@ -12,7 +12,7 @@ from gwcs.utils import _toindex
 from . import pointing
 from ..transforms import models as jwmodels
 from .util import (not_implemented_mode, subarray_transform,
-                   velocity_correction)
+                   velocity_correction, bounding_box_from_model, bounding_box_from_subarray)
 from ..datamodels import (DistortionModel, FilteroffsetModel,
                           DistortionMRSModel, WavelengthrangeModel,
                           RegionsModel, SpecwcsModel)
@@ -67,19 +67,23 @@ def imaging(input_model, reference_files):
     world = cf.CelestialFrame(reference_frame=coord.ICRS(), name='world')
 
     # Create the transforms
+    distortion = imaging_distortion(input_model, reference_files)
     subarray2full = subarray_transform(input_model)
-    imdistortion = imaging_distortion(input_model, reference_files)
-    distortion = subarray2full | imdistortion
+    if subarray2full is not None:
+        distortion = subarray2full | distortion
+        distortion.bounding_box = bounding_box_from_subarray(input_model)
+    else:
+        # TODO: remove setting the bounding box when it is set in the new ref file.
+        try:
+            bb = distortion.bounding_box
+        except NotImplementedError:
+            shape = input_model.data.shape
+            # Note: Since bounding_box is attached to the model here it's in reverse order.
+            bb = ((-0.5, shape[0] - 0.5), (3.5, shape[1] - 4.5))
+            distortion.bounding_box = bb
+
     tel2sky = pointing.v23tosky(input_model)
 
-    # TODO: remove setting the bounding box when it is set in the new ref file.
-    try:
-        bb = distortion.bounding_box
-    except NotImplementedError:
-        shape = input_model.data.shape
-        # Note: Since bounding_box is attached to the model here it's in reverse order.
-        bb = ((-0.5, shape[0] - 0.5), (3.5, shape[1] - 4.5))
-    distortion.bounding_box = bb
     # Create the pipeline
     pipeline = [(detector, distortion),
                 (v2v3, tel2sky),
@@ -105,11 +109,19 @@ def imaging_distortion(input_model, reference_files):
     # Read in the distortion.
     with DistortionModel(reference_files['distortion']) as dist:
         distortion = dist.model
-    obsfilter = input_model.meta.instrument.filter
+
+    # Check if the transform in the reference file has a ``bounding_box``.
+    # If not set a ``bounding_box`` equal to the size of the image.
+    try:
+        distortion.bounding_box
+    except NotImplementedError:
+        distortion.bounding_box = bounding_box_from_model(input_model)
 
     # Add an offset for the filter
+    obsfilter = input_model.meta.instrument.filter
     with FilteroffsetModel(reference_files['filteroffset']) as filter_offset:
         filters = filter_offset.filters
+
     col_offset = None
     row_offset = None
     for f in filters:
@@ -132,7 +144,6 @@ def lrs(input_model, reference_files):
     Uses the "specwcs" and "distortion" reference files.
 
     """
-
     # Setup the frames.
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
     spec = cf.SpectralFrame(name='wavelength', axes_order=(2,), unit=(u.micron,),
@@ -147,7 +158,8 @@ def lrs(input_model, reference_files):
     with DistortionModel(reference_files['distortion']) as dist:
         distortion = dist.model
 
-    full_distortion = subarray2full | distortion
+    if subarray2full is not None:
+        distortion = subarray2full | distortion
 
     # Load and process the reference data.
     with fits.open(reference_files['specwcs']) as ref:
@@ -180,8 +192,7 @@ def lrs(input_model, reference_files):
     # x.shape will be something like (1, 388)
     y, x = np.mgrid[row_zero_point:row_zero_point + 1, 0:input_model.data.shape[1]]
 
-    #spatial_transform = full_distortion | tel2sky
-    spatial_transform = full_distortion
+    spatial_transform = distortion
     radec = np.array(spatial_transform(x, y))[:, 0, :]
 
     ra_full = np.matlib.repmat(radec[0], _toindex(bb[1][1]) + 1 - _toindex(bb[1][0]), 1)

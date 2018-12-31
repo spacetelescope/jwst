@@ -8,18 +8,15 @@ class PersistenceSatModel(ReferenceFileModel):
     A data model for the persistence saturation value (full well).
 
     Parameters
-    ----------
-    init: any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
+    data : numpy float32 array
+         Persistence saturation threshold
 
-    data: numpy array
-        The science data.
+    dq : numpy uint32 array
+         data quality array
 
-    dq: numpy array
-        The data quality array.
-
-    dq_def: numpy array
-        The data quality definitions table.
+    dq_def : numpy table
+         DQ flag definitions
     """
     schema_url = "persat.schema.yaml"
 
