@@ -368,6 +368,16 @@ def test_10grps_cr2_gt3sigma_2frames(setup_cube):
     assert(4 == np.max(gdq))  # a CR was found
     assert(np.array_equal([0, 4, 0, 0, 0,0,0,0,0,0] , gdq[0, :, 100, 100]))
 
+def test_10grps_cr2_gt3sigma_2frames_offdiag(setup_cube):
+    ngroups = 10
+    crmag=16
+    data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups,readnoise=5*np.sqrt(2))
+    nframes = 2
+    data[0, 0, 100, 110] = 0
+    data[0, 1:11, 100, 110] = crmag
+    find_crs(data, gdq, read_noise, rej_threshold, nframes)
+    assert(4 == np.max(gdq))  # a CR was found
+    assert(np.array_equal([0, 4, 0, 0, 0,0,0,0,0,0] , gdq[0, :, 100, 110]))
 
 def test_10grps_cr2_3sigma_2frames_nocr(setup_cube):
     ngroups = 10
