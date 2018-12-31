@@ -1,7 +1,6 @@
 import copy
 from datetime import datetime
 import os
-import shutil
 from difflib import unified_diff
 from io import StringIO
 
@@ -15,7 +14,7 @@ from astropy.io import fits
 from astropy.io.fits import FITSDiff, HDUDiff
 
 
-TIME_NOW = datetime.now()
+TODAYS_DATE = datetime.now().strftime("%Y-%m-%d")
 
 def compare_outputs(outputs, raise_error=True, ignore_keywords=[],
                     ignore_hdus=[], ignore_fields=[], rtol=0.0, atol=0.0,
@@ -193,9 +192,15 @@ def compare_outputs(outputs, raise_error=True, ignore_keywords=[],
             desired_name = desired
             desired_extn = None
 
+        actual = os.path.abspath(actual)
+
         # Get "truth" image
         try:
+            os.makedirs('truth', exist_ok=True)
+            os.chdir('truth')
             desired = get_bigdata(*input_path, desired_name, docopy=docopy)
+            desired = os.path.abspath(desired)
+            os.chdir('..')
         except BigdataError:
             all_okay = False
             creature_report += '\nERROR: Cannot find {} in {}\n'.format(
@@ -207,7 +212,7 @@ def compare_outputs(outputs, raise_error=True, ignore_keywords=[],
             desired = "{}[{}]".format(desired, desired_extn)
 
         if verbose:
-            print("\nComparing:\n {} \nto\n {}".format(actual, desired))
+            print("\nComparing:\n {}\n {}".format(actual, desired))
 
         if actual.endswith('.fits') and desired.endswith('.fits'):
             # Build HDULists for comparison based on user-specified extensions
@@ -216,8 +221,10 @@ def compare_outputs(outputs, raise_error=True, ignore_keywords=[],
                     with fits.open(desired) as f_des:
                         actual_hdu = fits.HDUList(
                             [f_act[extn] for extn in extn_list])
+                        actual_hdu.filename = lambda: os.path.basename(actual)
                         desired_hdu = fits.HDUList(
                             [f_des[extn] for extn in extn_list])
+                        desired_hdu.filename = lambda: os.path.basename(desired)
                         fdiff = FITSDiff(actual_hdu, desired_hdu,
                                          **diff_kwargs)
                         creature_report += '\na: {}\nb: {}\n'.format(
@@ -245,7 +252,7 @@ def compare_outputs(outputs, raise_error=True, ignore_keywords=[],
                     desired_hdu = f_des[desired_extn]
                     fdiff = HDUDiff(actual_hdu, desired_hdu, **diff_kwargs)
 
-            creature_report += '\na: {}\nb: {}\n'.format(actual, desired)
+            creature_report += 'a: {}\nb: {}\n'.format(actual, desired)
             creature_report += fdiff.report()
 
             if not fdiff.identical:
@@ -324,18 +331,18 @@ def generate_upload_params(results_root, updated_outputs, verbose=True):
     whoami = getpass.getuser() or 'nobody'
     user_tag = 'NOT_CI_{}'.format(whoami)
     build_tag = os.environ.get('BUILD_TAG', user_tag)
-    date = TIME_NOW.strftime("%Y-%m-%d")
-    tree = os.path.join(results_root, date, build_tag, testname) + os.sep
+    build_matrix_suffix = os.environ.get('BUILD_MATRIX_SUFFIX', '0')
+    subdir = '{}_{}_{}'.format(TODAYS_DATE, build_tag, build_matrix_suffix)
+    tree = os.path.join(results_root, subdir, testname) + os.sep
     schema_pattern = []
 
     # Write out JSON file to enable retention of different results.
     # Also rename outputs as new truths.
     for test_result, truth in updated_outputs:
-        new_truth = os.path.basename(truth)
-        shutil.move(test_result, new_truth)
-        schema_pattern.append(os.path.abspath(new_truth))
+        schema_pattern.append(test_result)
         if verbose:
-            print("Renamed {} as new 'truth' file: {}".format(
-                os.path.abspath(test_result), os.path.abspath(new_truth)))
+            print("\nFailed comparison:")
+            print("    {}".format(test_result))
+            print("    {}".format(truth))
 
     return schema_pattern, tree, testname

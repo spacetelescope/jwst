@@ -5,10 +5,12 @@ import os.path as op
 from asdf import AsdfFile
 
 from ..associations import (
-    AssociationError,
-    AssociationNotValidError, load_asn)
+    AssociationNotValidError,
+    load_asn)
+
 from . import model_base
 from .util import open as datamodel_open
+from .util import is_association
 
 import logging
 log = logging.getLogger(__name__)
@@ -87,13 +89,11 @@ class ModelContainer(model_base.DataModel):
             self._ctx = self
             self.__class__ = init.__class__
             self._models = init._models
+        elif is_association(init):
+            self.from_asn(init)
         elif isinstance(init, str):
-            try:
-                self.from_asn(init, **kwargs)
-            except (IOError):
-                raise IOError('Cannot open files.')
-            except AssociationError:
-                raise AssociationError('{0} must be an ASN file'.format(init))
+            init_from_asn = self.read_asn(init)
+            self.from_asn(init_from_asn, asn_file_path=init)
         else:
             raise TypeError('Input {0!r} is not a list of DataModels or '
                             'an ASN file'.format(init))
@@ -179,7 +179,7 @@ class ModelContainer(model_base.DataModel):
                 result.append(m)
         return result
 
-    def from_asn(self, filepath, **kwargs):
+    def read_asn(self, filepath):
         """
         Load fits files from a JWST association file.
 
@@ -190,16 +190,27 @@ class ModelContainer(model_base.DataModel):
         """
 
         filepath = op.abspath(op.expanduser(op.expandvars(filepath)))
-        basedir = op.dirname(filepath)
-        filename = op.basename(filepath)
         try:
             with open(filepath) as asn_file:
                 asn_data = load_asn(asn_file)
         except AssociationNotValidError:
             raise IOError("Cannot read ASN file.")
+        return asn_data
 
+    def from_asn(self, asn_data, asn_file_path=None):
+        """
+        Load fits files from a JWST association file.
+
+        Parameters
+        ----------
+        asn_data : Association
+            An association dictionary
+
+        asn_file_path: str
+            Filepath of the association, if known.
+        """
         # make a list of all the input files
-        infiles = [op.join(basedir, member['expname']) for member
+        infiles = [member['expname'] for member
                    in asn_data['products'][0]['members']]
         self._models = infiles
 
@@ -210,7 +221,10 @@ class ModelContainer(model_base.DataModel):
         )
 
         self.meta.resample.output = asn_data['products'][0]['name']
-        self.meta.table_name = filename
+        if asn_file_path is None:
+            self.meta.table_name = 'not specified'
+        else:
+            self.meta.table_name = op.basename(asn_file_path)
         self.meta.pool_name = asn_data['asn_pool']
 
     def save(self,

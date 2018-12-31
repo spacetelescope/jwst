@@ -5,7 +5,6 @@ from jwst.tests.base_classes import BaseJWSTTest, raw_from_asn
 from jwst.pipeline import (
     Ami3Pipeline,
     Detector1Pipeline,
-    Spec2Pipeline
 )
 from jwst.ramp_fitting import RampFitStep
 from jwst.photom import PhotomStep
@@ -165,33 +164,3 @@ class TestNIRISSRampFit(BaseJWSTTest):
                   ]
         self.compare_outputs(outputs)
 
-
-@pytest.mark.bigdata
-class TestNIRISSSpec2(BaseJWSTTest):
-    input_loc = 'niriss'
-    ref_loc = ['test_spec2pipeline', 'truth']
-    test_dir = 'test_spec2pipeline'
-
-    def test_nrs_fs_single_spec2(self):
-        """
-        Regression test of calwebb_spec2 pipeline performed on NIRSpec fixed-slit data
-        that uses a single-slit subarray (S200B1).
-        """
-        input_file = self.get_data(self.test_dir,
-                                   'jw84600002001_02101_00001_nrs2_rate.fits')
-        step = Spec2Pipeline()
-        step.save_bsub = True
-        step.save_results = True
-        step.resample_spec.save_results = True
-        step.cube_build.save_results = True
-        step.extract_1d.save_results = True
-        step.run(input_file)
-
-        outputs = [('jw84600002001_02101_00001_nrs2_cal.fits',
-                    'jw84600002001_02101_00001_nrs2_cal_ref.fits'),
-                   ('jw84600002001_02101_00001_nrs2_s2d.fits',
-                    'jw84600002001_02101_00001_nrs2_s2d_ref.fits'),
-                   ('jw84600002001_02101_00001_nrs2_x1d.fits',
-                    'jw84600002001_02101_00001_nrs2_x1d_ref.fits')
-                  ]
-        self.compare_outputs(outputs)
