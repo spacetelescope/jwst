@@ -94,6 +94,22 @@ def data_file():
         yield file_path
 
 
+@pytest.fixture(scope='module')
+def data_file_nosaif():
+    model = datamodels.Level1bModel()
+    model.meta.exposure.start_time = STARTTIME.mjd
+    model.meta.exposure.end_time = ENDTIME.mjd
+    model.meta.target.ra = TARG_RA
+    model.meta.target.dec = TARG_DEC
+    model.meta.aperture.name = "MIRIM_FULL"
+    model.meta.observation.date = '1/1/2017'
+
+    with TemporaryDirectory() as path:
+        file_path = os.path.join(path, 'fits_nosiaf.fits')
+        model.save(file_path)
+        yield file_path
+
+
 def test_change_engdb_url():
     """Test changing the engineering database by call for success.
 
@@ -234,6 +250,38 @@ def test_add_wcs_default(data_file):
             ' 345.42745662836063 -86.84915871318734'
         )
     )
+
+
+def test_add_wcs_default_nosiaf(data_file_nosaif, caplog):
+    """Handle when no pointing exists and the default is used and no SIAF specified."""
+    try:
+        stp.add_wcs(
+            data_file_nosaif, siaf_path=siaf_db, tolerance=0, allow_default=True
+        )
+    except ValueError:
+        pass  # This is what we want for the test.
+    except Exception as e:
+        pytest.skip(
+            'Live ENGDB service is not accessible.'
+            '\nException={}'.format(e)
+        )
+
+    model = datamodels.Level1bModel(data_file_nosaif)
+    assert model.meta.pointing.ra_v1 == TARG_RA
+    assert model.meta.pointing.dec_v1 == TARG_DEC
+    assert model.meta.pointing.pa_v3 == 0.
+    assert model.meta.wcsinfo.crval1 == TARG_RA
+    assert model.meta.wcsinfo.crval2 == TARG_DEC
+    assert np.isclose(model.meta.wcsinfo.pc1_1, 1.0)
+    assert np.isclose(model.meta.wcsinfo.pc1_2, 0.0)
+    assert np.isclose(model.meta.wcsinfo.pc2_1, 0.0)
+    assert np.isclose(model.meta.wcsinfo.pc2_2, 1.0)
+    assert model.meta.wcsinfo.ra_ref == TARG_RA
+    assert model.meta.wcsinfo.dec_ref == TARG_DEC
+    assert np.isclose(model.meta.wcsinfo.roll_ref, 360.)
+    assert model.meta.wcsinfo.wcsaxes == 2
+
+    assert 'Insufficient SIAF information found in header' in caplog.text
 
 
 @pytest.mark.skipif(sys.version_info.major<3,
