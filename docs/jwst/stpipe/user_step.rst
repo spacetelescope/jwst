@@ -65,6 +65,8 @@ configspec for an imaginary step called `stpipe.cleanup`::
     Configspec information can also be displayed from Python, just
     call ``print_configspec`` on any Step class::
 
+.. doctest-skip::
+   
     >>> from jwst.stpipe import cleanup
     >>> cleanup.print_configspec()
     # The threshold below which to apply cleanup

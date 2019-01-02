@@ -106,7 +106,16 @@ Create the reference file
 The DictortionModel in jwst.datamodels is used as an example of how to create a reference file. Similarly data models should be used to create other types of reference files as this process provides validaiton of the file structure.
 
 >>> from jwst.datamodels import DistortionModel
->>> dist = DistortionModel(model=model)
+>>> dist = DistortionModel(model=model, strict_validation=True)
+>>> dist.meta.description = "New distortion model"
+>>> dist.meta.author = "INS team"
+>>> dist.meta.useafter = "2012/01/21"
+>>> dist.meta.instrument.name = "MIRI"
+>>> dist .meta.instrument.detector = "MIRIMAGE"
+>>> dist.meta.pedigree = "GROUND"
+>>> dist.meta.reftype = "distortion"
+>>> dist.meta.input_units = "pixel"
+>>> dist.meta.output_units = "arcsec"
 >>> dist.validate()
 >>> dist.save("new_distortion.asdf")
 'new_distortion.asdf'
