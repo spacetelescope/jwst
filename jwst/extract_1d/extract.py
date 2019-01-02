@@ -2421,6 +2421,13 @@ def interpolate_response(wavelength, relsens, verbose):
     if bad:
         raise ValueError("Found NaNs in RELSENS table.")
 
+    # np.interp requires that wl_relsens be increasing.
+    if wl_relsens[-1] < wl_relsens[0]:
+        if verbose:
+            log.warning("The wavelength column in RELSENS was decreasing.")
+        wl_relsens = wl_relsens[::-1].copy()
+        resp_relsens = resp_relsens[::-1].copy()
+
     # `r_factor` is the response, interpolated at the wavelengths in the
     # science data.  -2048 is a flag value, to check for extrapolation.
     r_factor = np.interp(wavelength, wl_relsens, resp_relsens, -2048., -2048.)

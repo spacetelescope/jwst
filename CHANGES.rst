@@ -62,6 +62,9 @@ extract_1d
   specifies that the wavelength attribute should be 2-D, with a default
   value of 0. [#2911]
 
+- Reverse order of RELSENS wavelength and response if the wavelengths are
+  not increasing. [#3005]
+
 extract_2d
 ----------
 - Moved the update of meta information to the MultiSlitModel instead of the
