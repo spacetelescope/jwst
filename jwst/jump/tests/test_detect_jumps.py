@@ -88,7 +88,7 @@ def test_oneCR_100_groups_fullarray():
     model1.data[0, 9, :, :] = 180.0
     model1.data[0, 10:99, :, :] =190.0
     model1.data[0, 30:99, :, :] = 490.0
-    out_model = detect_jumps(model1, gain, rnModel, 4.0, False, 4.0)
+    out_model = detect_jumps(model1, gain, rnModel, 4.0, False, 4.0, 'one')
     assert (4 == np.max(out_model.groupdq[0, 5, :, :]))
     outdqcr = out_model.groupdq[0, 5, :, :]
  #   np.testing.assert_equal(4,out_model.groupdq[0, 5, :, :])
