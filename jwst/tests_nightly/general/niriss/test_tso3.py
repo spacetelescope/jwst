@@ -30,7 +30,7 @@ class TestTso3Pipeline(BaseJWSTTest):
             ('jw87600-a3001_t1_niriss_clear-gr700xd_x1dints.fits',
              'jw87600-a3001_t1_niriss_clear-gr700xd_x1dints_ref.fits',
              ['primary', 'extract1d']),
-            ('jw87600-a3001_t1_niriss_clear-gr700xd_x1dints.ecsv',
-             'jw87600-a3001_t1_niriss_clear-gr700xd_x1dints_ref.ecsv'),
+            ('jw87600-a3001_t1_niriss_clear-gr700xd_whtlt.ecsv',
+             'jw87600-a3001_t1_niriss_clear-gr700xd_whtlt_ref.ecsv'),
         ]
         self.compare_outputs(outputs)
