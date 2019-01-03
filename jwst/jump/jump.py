@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 def detect_jumps (input_model, gain_model, readnoise_model,
-                  rejection_threshold, do_yint, signal_threshold):
+                  rejection_threshold, do_yint, signal_threshold, max_cores):
     """
     This is the high-level controlling routine for the jump detection process.
     It loads and sets the various input data and parameters needed by each of
@@ -31,9 +31,18 @@ def detect_jumps (input_model, gain_model, readnoise_model,
     image.  Also, a 2-dimensional read noise array with appropriate values for
     each pixel is passed to the detection methods.
     """
-    numslice = psutil.cpu_count(logical = False)
-#    numslice = 1
-    pool = multiprocessing.Pool(processes=numslice)
+    num_cores = psutil.cpu_count(logical = True)
+    log.info("Found %d possible cores to use for jump detection " % num_cores)
+    if max_cores == 'one':
+        numslices = np.int(1)
+    elif max_cores == 'quarter':
+        numslices = np.int(np.floor(num_cores/4))
+    elif max_cores == 'half':
+        numslices = np.int(np.floor(num_cores/2))
+    elif max_cores == 'all':
+        numslices = np.int(num_cores)
+    log.info("Creating %d processes for jump detection " % numslices)
+    pool = multiprocessing.Pool(processes=numslices)
 
     # Load the data arrays that we need from the input model
     output_model = input_model.copy()
@@ -85,26 +94,25 @@ def detect_jumps (input_model, gain_model, readnoise_model,
     numz = int(scisize[1])
     numints = int(scisize[0])
     median_slopes = np.zeros((numy, numx), dtype=np.float32)
-    yincrement = int(numy / numslice)
-    print("yincrement ", yincrement,"numslice ",numslice, "numy ", numy)
+    yincrement = int(numy / numslices)
     slices = []
-    for i in range(numslice - 1):
+    for i in range(numslices - 1):
         slices.insert(i, (data[:, :, i * yincrement:(i + 1) * yincrement, :],
                           gdq[:, :, i * yincrement:(i + 1) * yincrement, :],
                           readnoise_2d[i * yincrement:(i + 1) * yincrement, :],
                           rejection_threshold, nframes))
-    slices.insert(numslice - 1, (data[:, :, (numslice - 1) * yincrement:numy, :],  # last slice get the rest
-                                 gdq[:, :, (numslice - 1) * yincrement:numy, :],
-                                 readnoise_2d[(numslice - 1) * yincrement:numy, :],
+    slices.insert(numslices - 1, (data[:, :, (numslices - 1) * yincrement:numy, :],  # last slice get the rest
+                                 gdq[:, :, (numslices - 1) * yincrement:numy, :],
+                                 readnoise_2d[(numslices - 1) * yincrement:numy, :],
                                  rejection_threshold, nframes))
-    if yincrement * numslice != numy:  # last slice is a larger one
-        print("odd last slice ", yincrement, numy - (numslice - 1) * yincrement)
-    if numslice == 1:  # don't spin off other processes for one slice
+    if yincrement * numslices != numy:  # last slice is a larger one
+        print("odd last slice ", yincrement, numy - (numslices - 1) * yincrement)
+    if numslices == 1:  # don't spin off other processes for one slice
         median_slopes, gdq = twopt.find_crs((data, gdq, readnoise_2d, rejection_threshold, nframes))
     else:
         real_result = pool.map(twopt.find_crs, slices)
     k = 0
-    if numslice > 1:
+    if numslices > 1:
         for resultslice in real_result:
             if (len(real_result) == k + 1):  # last result
                 median_slopes[k * yincrement:numy, :] = resultslice[0]

@@ -127,7 +127,7 @@ def find_crs(indata):
         r, c = np.indices(max_index1.shape)
         # Get the row and column indices of pixels whose largest non-saturated ratio is above the threshold
         row1, col1 = np.where(ratio[r, c, max_index1] > rej_threshold)
-        log.debug('From highest outlier Twopt found %d pixels with at least one CR' % (len(row1)))
+        log.info('From highest outlier Two point found %d pixels with at least one CR' % (len(row1)))
         number_pixels_with_cr = len(row1)
         # Loop over all pixels that we found the first CR in
         for j in range(number_pixels_with_cr):

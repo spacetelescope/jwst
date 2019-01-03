@@ -3,6 +3,7 @@
 from ..stpipe import Step
 from .. import datamodels
 from .jump import detect_jumps
+import time
 
 __all__ = ["JumpStep"]
 
@@ -15,6 +16,7 @@ class JumpStep(Step):
 
     spec = """
         rejection_threshold = float(default=4.0,min=0) # CR rejection threshold
+        maximum_cores = option('one', 'quarter', 'half', 'all', default='half') # max number of processes to create
     """
 
     # Prior to 04/26/17, the following were also in the spec above:
@@ -30,7 +32,7 @@ class JumpStep(Step):
     def process(self, input):
 
         with datamodels.RampModel(input) as input_model:
-
+            tstart = time.time()
             # Check for an input model with NGROUPS<=2
             ngroups = input_model.data.shape[1]
             if ngroups <= 2:
@@ -42,9 +44,11 @@ class JumpStep(Step):
 
             # Retrieve the parameter values
             rej_thresh = self.rejection_threshold
+            max_cores = self.maximum_cores
             do_yint = self.do_yintercept
             sig_thresh = self.yint_threshold
             self.log.info('CR rejection threshold = %g sigma', rej_thresh)
+            self.log.info('Maximum cores to use = %s', max_cores)
             if do_yint:
                 self.log.info('Y-intercept signal threshold = %g', sig_thresh)
 
@@ -62,11 +66,12 @@ class JumpStep(Step):
 
             # Call the jump detection routine
             result = detect_jumps(input_model, gain_model, readnoise_model,
-                                   rej_thresh, do_yint, sig_thresh)
+                                   rej_thresh, do_yint, sig_thresh, max_cores)
 
             gain_model.close()
             readnoise_model.close()
-
+            tstop = time.time()
+            self.log.info('The execution time in seconds: %f', tstop - tstart)
 
         result.meta.cal_step.jump = 'COMPLETE'
 
