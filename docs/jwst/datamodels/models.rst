@@ -228,7 +228,7 @@ There is a convenience method, `find_fits_keyword` to find where a
 FITS keyword is used in the metadata tree::
 
     >>> from jwst.datamodels import DataModel
-    # First, create a model of the desired type
+    >>> # First, create a model of the desired type
     >>> model = DataModel()
     >>> model.find_fits_keyword('DATE-OBS')
     [u'meta.observation.date']

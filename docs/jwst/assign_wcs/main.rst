@@ -48,6 +48,8 @@ Using the WCS interactively
 Once a FITS file is opened as a `DataModel` the WCS can be accessed as an attribute of the meta object. Calling it as a function with detector positions as inputs returns the
 corresponding world coordinates. Using MIRI LRS fixed slit as an example:
 
+.. doctest-skip::
+   
 >>> from jwst.datamodels import ImageModel
 >>> exp = ImageModel('miri_fixedslit_assign_wcs.fits')
 >>> ra, dec, lam = exp.meta.wcs(x, y)
@@ -61,7 +63,9 @@ the detector) the WCS model also looks for the wavelength and order and returns
 the (x,y) location of that wavelength+order on the dispersed image and the original
 source pixel location, as entered, along with the order that was specified:
 
->>> form jwst.datamodels import ImageModel
+.. doctest-skip::
+   
+>>> from jwst.datamodels import ImageModel
 >>> exp = ImageModel('nircam_wfss_assign_wcs.fits')
 >>> x, y, x0, y0, order = exp.meta.wcs(x0, y0, wavelength, order)
 >>> print(x0, y0, wavelength, order)
@@ -75,7 +79,9 @@ and transforms between any two frames in the WCS pipeline in forward or
 backward direction. For example, for a NIRSpec fixed slits exposure,
 which has been through the extract_2d step:
 
->>> exp = models.MultiSlitModel('nrs1_fixed_assign_wcs_extract_2d.fits')
+.. doctest-skip::
+   
+>>> exp = datamodels.MultiSlitModel('nrs1_fixed_assign_wcs_extract_2d.fits')
 >>> exp.slits[0].meta.wcs.available_frames
     ['detector', 'sca', 'bgwa', 'slit_frame', 'msa_frame', 'ote', 'v2v3', 'world']
 >>> msa2detector = exp.slits[0].meta.wcs.get_transform('msa_frame', 'detector')
