@@ -605,7 +605,7 @@ class WCSImageCatalog():
             ninty = 2
         else:
             nintx = max(2, int(np.ceil((hx - lx) / stepsize)))
-            ninty = max(2, int(np.ceil((ny - ly) / stepsize)))
+            ninty = max(2, int(np.ceil((hy - ly) / stepsize)))
 
         xs = np.linspace(lx, hx, nintx, dtype=np.float)
         ys = np.linspace(ly, hy, ninty, dtype=np.float)[1:-1]
