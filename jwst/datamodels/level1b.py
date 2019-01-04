@@ -8,24 +8,21 @@ class Level1bModel(DataModel):
     A data model for raw 4D ramps level-1b products.
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
+    data : numpy uint16 array
+         The science data
 
-    data : numpy array
-        The science data
+    zeroframe : numpy uint16 array
+         Zeroframe array
 
-    zeroframe : numpy array
-        The zero-frame data
+    refout : numpy uint16 array
+         Reference Output
 
-    refout : numpy array
-        The MIRI reference output data
+    group : numpy table
+         group parameters table
 
-    group : table
-        The group parameters table
-
-    int_times : table
-        The int_times table
+    int_times : numpy table
+         table of times for each integration
 
     """
     schema_url = "level1b.schema.yaml"

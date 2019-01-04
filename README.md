@@ -129,17 +129,17 @@ https://boyle.stsci.edu:8081/job/RT/job/JWST/
 
 The test builds start at 11am and 6pm local Baltimore time every day on jwcalibdev.
 
-To run the regression tests on your local machine, you need the `ci_watson` pytest plugin as above.  Then set the environment variable TEST_BIGDATA to either our Artifactory server or the local upload cache on central store (STSci staff members only)
+To run the regression tests on your local machine, you need the `ci_watson` pytest plugin as above.  Then set the environment variable TEST_BIGDATA to our Artifactory server (STSci staff members only)
 
     export TEST_BIGDATA=https://bytesalad.stsci.edu/artifactory/
 
-or
+When you run the tests, the results will get written somewhere in `/tmp` or `/var` by default.  Control this with the `--basetemp` arg to `pytest`.  So to run all the regression tests:
 
-    export TEST_BIGDATA=/grp/jwst/ssb/jwst_test_data
+    pytest --bigdata --basetemp=<PATH> jwst/tests_nightly/general
 
-and then run the tests in the repository
+If you would like to run a specific test, find its name or ID and use the `-k` option:
 
-    pytest --bigdata jwst/tests_nightly/general
+    pytest --bigdata --basetemp=<PATH> jwst/tests_nightly/general -k ami_pipeline
 
 If developers need to update the truth files in our nightly regression tests, there are instructions in the repository wiki.
 

@@ -9,25 +9,21 @@ class IFUCubeModel(DataModel):
     A data model for 3D IFU  cubes.
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
+    data : numpy float32 array
+         The science data
 
-    data: numpy array
-        The science data.  3-D.
+    dq : numpy uint32 array
+         Data quality array
 
-    dq: numpy array
-        The data quality array.  3-D.
+    err : numpy float32 array
+         Error array
 
-    err: numpy array
-        The error array.  3-D
+    weightmap : numpy float32 array
+         Weight map of coverage
 
-    weightmap: numpy array
-        The weight map array.  3-D
-
-    wavetable:  1-D table
-        Optional table of  wavelengths of IFUCube slices
-
+    wavetable : numpy table
+         Wavelength value for slices
     """
     schema_url = "ifucube.schema.yaml"
 

@@ -71,6 +71,11 @@ def open(init=None, extensions=None, **kwargs):
         # Copy the object so it knows not to close here
         return init.__class__(init)
 
+    elif is_association(init):
+        from . import container
+        return container.ModelContainer(init, extensions=extensions,
+                                        **kwargs)
+
     elif isinstance(init, (str, bytes)) or hasattr(init, "read"):
         # If given a string, presume its a file path.
         # if it has a read method, assume a file descriptor
@@ -301,6 +306,16 @@ def to_camelcase(token):
     return ''.join(x.capitalize() for x in token.split('_-'))
 
 
+def is_association(asn_data):
+    """
+    Test if an object is an association by checking for required fields
+    """
+    if isinstance(asn_data, dict):
+        if 'asn_id' in asn_data and 'asn_pool' in asn_data:
+            return True
+    return False
+
+
 def gentle_asarray(a, dtype):
     """
     Performs an asarray that doesn't cause a copy if the byteorder is
@@ -353,7 +368,7 @@ def gentle_asarray(a, dtype):
     else:
         try:
             a = np.asarray(a, dtype=out_dtype)
-        except:
+        except Exception:
             raise ValueError("Can't convert {0!s} to ndarray".format(type(a)))
         return a
 

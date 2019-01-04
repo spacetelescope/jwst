@@ -369,6 +369,15 @@ def update_wcs_from_telem(
         v3idlyang=model.meta.wcsinfo.v3yangle,
         vparity=model.meta.wcsinfo.vparity
     )
+    if None in siaf:
+        if allow_default:
+            logger.warning(
+                'Insufficient SIAF information found in header.'
+                'Resetting to a unity SIAF.'
+            )
+            siaf = SIAF(0., 0., 0., 1)
+        else:
+            raise ValueError('Insufficient SIAF information found in header.')
 
     # Setup default WCS info if actual pointing and calculations fail.
     wcsinfo = WCSRef(

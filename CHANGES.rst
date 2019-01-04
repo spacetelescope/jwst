@@ -8,6 +8,9 @@ assign_wcs
 ----------
  - Added velocity correction model to the WFSS and TSGRISM wcs pipelines [#2801]
 
+ - Refactored how the pipeline handles subarrays in the WCS. Fixed a bug
+   where the bounding box was overwritten in full frame mode. [#2980]
+
 associations
 ------------
 
@@ -59,8 +62,13 @@ extract_1d
   specifies that the wavelength attribute should be 2-D, with a default
   value of 0. [#2911]
 
+- Reverse order of RELSENS wavelength and response if the wavelengths are
+  not increasing. [#3005]
+
 extract_2d
 ----------
+- Moved the update of meta information to the MultiSlitModel instead of the
+  SlitModels that compose it. [#2988]
 
 firstframe
 ----------
