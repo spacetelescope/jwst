@@ -12,6 +12,7 @@ of image WCS.
 import logging
 import numpy as np
 from copy import deepcopy
+import warnings
 
 # THIRD-PARTY
 import gwcs
@@ -806,7 +807,12 @@ class WCSGroupCatalog():
         if len(polygons) == 0:
             self._polygon = SphericalPolygon([])
         else:
-            self._polygon = SphericalPolygon.multi_union(polygons)
+            try:
+                warnings.filterwarnings("error", category=RuntimeWarning)
+                self._polygon = SphericalPolygon.multi_union(polygons)
+                warnings.resetwarnings()
+            except RuntimeWarning:
+                raise RuntimeError
 
     def __len__(self):
         return len(self._images)

@@ -115,7 +115,7 @@ class TweakRegStep(Step):
             self.skip = True
             for model in images:
                 model.meta.cal_step.tweakreg = "SKIPPED"
-            return input
+            return images
 
         # create a list of WCS-Catalog-Images Info and/or their Groups:
         imcats = []
@@ -124,7 +124,17 @@ class TweakRegStep(Step):
                 raise AssertionError("Logical error in the pipeline code.")
 
             wcsimlist = list(map(self._imodel2wcsim, g))
-            wgroup = WCSGroupCatalog(wcsimlist, name=wcsimlist[0].name)
+            try:
+                wgroup = WCSGroupCatalog(wcsimlist, name=wcsimlist[0].name)
+            except RuntimeError:
+                self.log.info("There was a problem computing the union "
+                    "of polygons in spherical_geometry.  Aborting.")
+                self.log.info("Step skipped.")
+                self.skip = True
+                for model in images:
+                    model.meta.cal_step.tweakreg = "SKIPPED"
+                return images
+
             imcats.append(wgroup)
 
         # align images:
