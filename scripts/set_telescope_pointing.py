@@ -79,7 +79,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--engdb_url', type=str, default=None,
         help=('URL of the engineering database.'
-              ' If not specified, the environmental variable "ENG_RESTFUL_URL" is used.'
+              ' If not specified, the environmental variable "ENG_BASE_URL" is used.'
               ' Otherwise, a hardwired default is used.')
     )
     parser.add_argument(
