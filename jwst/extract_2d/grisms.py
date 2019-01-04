@@ -191,7 +191,7 @@ def extract_tso_object(input_model,
             output_model.err = ext_err
             output_model.dq = ext_dq
             output_model.meta.wcs = subwcs
-            output_model.meta.wcs.bounding_box = util.bounding_box_from_shape(ext_data.shape)
+            output_model.meta.wcs.bounding_box = util.bounding_box_for_wcs(ext_data.shape)
             output_model.meta.wcs.crpix2 = 34  # update for the move, vals are the same
             output_model.meta.wcsinfo.spectral_order = order
             output_model.name = str('TSO object')
@@ -373,7 +373,7 @@ def extract_grism_objects(input_model,
                 ext_err = input_model.err[ymin: ymax + 1, xmin: xmax + 1].copy()
                 ext_dq = input_model.dq[ymin: ymax + 1, xmin: xmax + 1].copy()
 
-                tr.bounding_box = util.bounding_box_from_shape(ext_data.shape)
+                tr.bounding_box = util.bounding_box_for_transform(ext_data.shape)
                 subwcs.set_transform('grism_detector', 'detector', tr)
 
                 new_slit = datamodels.SlitModel(data=ext_data, err=ext_err, dq=ext_dq)

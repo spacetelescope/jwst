@@ -246,7 +246,7 @@ def extract_slit(input_model, slit, exp_type):
         raise ValueError("extract_2d does not work with "
                          "{0} dimensional data".format(ndim))
 
-    slit_wcs.bounding_box = util.bounding_box_from_shape(ext_data.shape)
+    slit_wcs.bounding_box = util.bounding_box_for_wcs(ext_data.shape)
 
     # compute wavelengths
     x, y = wcstools.grid_from_bounding_box(slit_wcs.bounding_box, step=(1, 1))
