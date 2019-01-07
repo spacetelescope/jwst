@@ -52,7 +52,6 @@ def test_coeff_dq():
     coeffs = np.asfarray([0.0e+00,  0.85, 4.62e-06,  -6.16e-11, 7.23e-16])
 
     ref_model.data[:, 300, 500] = coeffs
-    print(ref_model.data[:, 300, 500])
 
     # check behavior with NaN coefficients: should not alter pixel values
     coeffs2 = np.asfarray([L0, np.nan, L2, L3, L4])
@@ -85,8 +84,7 @@ def test_coeff_dq():
     # check that multiplication of polynomial was done correctly for specified pixel
     outval = L0+(L1*scival)+(L2*scival**2)+(L3*scival**3)+(L4*scival**4)
 
-    print(outfile.data[0, 45, 300, 500])
-    assert(np.isclose(outfile.data[0, 45, 300, 500], outval, rtol=0.1))
+    assert(np.isclose(outfile.data[0, 45, 300, 500], outval, rtol=0.00001))
 
     # check that dq value was handled correctly
 
@@ -297,19 +295,15 @@ def test_wave_f2100w():
 
     # get linearity reference file from header
     linfile = outfile.meta.ref_file.linearity.name
-    print('Linfile', linfile)
 
     # parse linfile name to discard crds://
     file = linfile.split("/")[2]
-    print('split file', file)
 
     # read in reference file
     filepath = '/grp/crds/jwst/references/jwst/'+file
     reffile = fits.open(filepath)
     refhead = reffile[0].header
     filt = refhead['FILTER']
-    print(filt)
-    print(filter)
    
     # test if filters match
     assert(filt == filter)
@@ -341,19 +335,15 @@ def test_wave_f2300c():
 
     # get linearity reference file from header
     linfile = outfile.meta.ref_file.linearity.name
-    print('Linfile', linfile)
 
     # parse linfile name to discard crds://
     file = linfile.split("/")[2]
-    print('split file', file)
 
     # read in reference file
     filepath = '/grp/crds/jwst/references/jwst/' + file
     reffile = fits.open(filepath)
     refhead = reffile[0].header
     filt = refhead['FILTER']
-    print(filt)
-    print(filter)
 
     # test if filters match
     assert (filt == filter)
@@ -385,20 +375,16 @@ def test_wave_f2550w():
 
     # get linearity reference file from header
     linfile = outfile.meta.ref_file.linearity.name
-    print('Linfile', linfile)
 
     # parse linfile name to discard crds://
     file = linfile.split("/")[2]
-    print('split file', file)
 
     # read in reference file
     filepath = '/grp/crds/jwst/references/jwst/' + file
     reffile = fits.open(filepath)
     refhead = reffile[0].header
     filt = refhead['FILTER']
-    print(filt)
-    print(filter)
-
+   
     # test if filters match
     assert (filt == filter)
 
@@ -467,11 +453,9 @@ def test_ifulong_short():
 
     # get linearity reference file from header
     linfile = outfile.meta.ref_file.linearity.name
-    print('Linfile', linfile)
 
     # parse linfile name to discard crds://
     file = linfile.split("/")[2]
-    print('split file', file)
 
     # read in reference file
     filepath = '/grp/crds/jwst/references/jwst/' + file
@@ -512,11 +496,9 @@ def test_ifulong_med():
 
     # get linearity reference file from header
     linfile = outfile.meta.ref_file.linearity.name
-    print('Linfile', linfile)
 
     # parse linfile name to discard crds://
     file = linfile.split("/")[2]
-    print('split file', file)
 
     # read in reference file
     filepath = '/grp/crds/jwst/references/jwst/' + file
@@ -557,11 +539,9 @@ def test_ifulong_long():
 
     # get linearity reference file from header
     linfile = outfile.meta.ref_file.linearity.name
-    print('Linfile', linfile)
 
     # parse linfile name to discard crds://
     file = linfile.split("/")[2]
-    print('split file', file)
 
     # read in reference file
     filepath = '/grp/crds/jwst/references/jwst/' + file
