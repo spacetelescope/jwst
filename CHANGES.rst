@@ -11,6 +11,8 @@ assign_wcs
  - Refactored how the pipeline handles subarrays in the WCS. Fixed a bug
    where the bounding box was overwritten in full frame mode. [#2980]
 
+ - Rename several functions dealing with calculating bounding boxes for clarity [#3014]
+
 associations
 ------------
 

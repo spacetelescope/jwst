@@ -662,7 +662,7 @@ def get_num_msa_open_shutters(shutter_state):
     return num
 
 
-def bounding_box_for_transform(shape):
+def transform_bbox_from_shape(shape):
     """Create a bounding box from the shape of the data.
 
     This is appropriate to attached to a transform.
@@ -682,7 +682,7 @@ def bounding_box_for_transform(shape):
     return bbox
 
 
-def bounding_box_for_wcs(shape):
+def wcs_bbox_from_shape(shape):
     """Create a bounding box from the shape of the data.
 
     This is appropriate to attach to a wcs object
@@ -701,7 +701,7 @@ def bounding_box_for_wcs(shape):
     return bbox
 
 
-def bounding_box_from_model(input_model):
+def transform_bbox_from_datamodel(input_model):
     """Create a bounding box from the shape of the data base on the model.
 
     Note: The bounding box of a ``CubeModel`` is the bounding_box
@@ -771,7 +771,7 @@ def update_s_region_imaging(model):
     bbox = model.meta.wcs.bounding_box
 
     if bbox is None:
-        bbox = bounding_box_for_wcs(model.data.shape)
+        bbox = wcs_bbox_from_shape(model.data.shape)
 
     # footprint is an array of shape (2, 4) as we
     # are interested only in the footprint on the sky
@@ -793,7 +793,7 @@ def update_s_region_spectral(model):
 
     bbox = swcs.bounding_box
     if bbox is None:
-        bbox = bounding_box_for_wcs(model.data.shape)
+        bbox = wcs_bbox_from_shape(model.data.shape)
 
     x, y = grid_from_bounding_box(bbox)
     ra, dec, lam = swcs(x, y)

@@ -11,7 +11,7 @@ from gwcs import selector
 from . import pointing
 from ..transforms import models as jwmodels
 from .util import (not_implemented_mode, subarray_transform,
-                   velocity_correction, bounding_box_from_model, bounding_box_from_subarray)
+                   velocity_correction, transform_bbox_from_model, bounding_box_from_subarray)
 from ..datamodels import (DistortionModel, FilteroffsetModel,
                           DistortionMRSModel, WavelengthrangeModel,
                           RegionsModel, SpecwcsModel)
@@ -114,7 +114,7 @@ def imaging_distortion(input_model, reference_files):
     try:
         distortion.bounding_box
     except NotImplementedError:
-        distortion.bounding_box = bounding_box_from_model(input_model)
+        distortion.bounding_box = transform_bbox_from_model(input_model)
 
     # Add an offset for the filter
     obsfilter = input_model.meta.instrument.filter

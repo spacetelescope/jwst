@@ -178,7 +178,7 @@ class ResampleSpecData:
         # turn the size into a numpy shape in (y, x) order
         self.data_size = tuple(output_array_size[::-1])
 
-        bounding_box = resample_utils.bounding_box_for_wcs(self.data_size)
+        bounding_box = resample_utils.wcs_bbox_from_shape(self.data_size)
         output_wcs.bounding_box = bounding_box
 
         return output_wcs
@@ -215,7 +215,7 @@ class ResampleSpecData:
             output_model = self.blank_output.copy()
             output_model.meta.wcs = self.output_wcs
 
-            bb = resample_utils.bounding_box_for_wcs(output_model.data.shape)
+            bb = resample_utils.wcs_bbox_from_shape(output_model.data.shape)
             output_model.meta.wcs.bounding_box = bb
             output_model.meta.filename = obs_product
 
