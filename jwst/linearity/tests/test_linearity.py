@@ -183,7 +183,7 @@ def test_pixeldqprop():
     dq[550, 550] = dqflags.pixel['DO_NOT_USE']
     dq[560, 550] = dqflags.pixel['HOT']
     dq[550, 560] = dqflags.pixel['DEAD']
-    dq[500, 300] = 2049  # Hot and DO_NOT_USE
+    dq[500, 300] = np.bitwise_or(dqflags.pixel['HOT'], dqflags.pixel['DO_NOT_USE'])
 
     ref_model = LinearityModel()
     ref_model.data = np.zeros(shape=(numcoeffs, 1024, 1032), dtype=np.float32)
@@ -203,7 +203,7 @@ def test_pixeldqprop():
     assert(outfile.pixeldq[550, 550] == dqflags.pixel['DO_NOT_USE'])
     assert(outfile.pixeldq[560, 550] == dqflags.pixel['HOT'])
     assert(outfile.pixeldq[550, 560] == dqflags.pixel['DEAD'])
-    assert(outfile.pixeldq[500, 300] == 2049)
+    assert(outfile.pixeldq[500, 300] == np.bitwise_or(dqflags.pixel['HOT'], dqflags.pixel['DO_NOT_USE']))
 
 
 def test_lin_subarray():
@@ -269,126 +269,6 @@ def test_lin_subarray():
     assert(outpixdq[76, 104] == 1)
 
 
-def test_wave_f2100w():
-    """make sure correct filter (F2100W) reference file is called"""
-
-    # create input data
-    # create model of data with 0 value array
-    nints = 1
-    ngroups = 50
-    ysize = 1024
-    xsize = 1032
-
-    # create a JWST datamodel for MIRI data
-    im = make_rampmodel(nints, ngroups, ysize, xsize)
-
-    im.meta.instrument.detector = 'MIRIMAGE'
-    im.meta.instrument.filter = 'F2100W'
-    im.meta.instrument.band = 'N/A'
-    im.meta.exposure.type = 'MIR_IMAGE'
-
-    # set filter
-    filter = 'F2100W'
-
-    # run pipeline
-    outfile = LinearityStep.call(im)
-
-    # get linearity reference file from header
-    linfile = outfile.meta.ref_file.linearity.name
-
-    # parse linfile name to discard crds://
-    file = linfile.split("/")[2]
-
-    # read in reference file
-    filepath = '/grp/crds/jwst/references/jwst/'+file
-    reffile = fits.open(filepath)
-    refhead = reffile[0].header
-    filt = refhead['FILTER']
-   
-    # test if filters match
-    assert(filt == filter)
-
-
-def test_wave_f2300c():
-    """make sure correct filter (F2300C) reference file is called"""
-
-    # create input data
-    # create model of data with 0 value array
-    nints = 1
-    ngroups = 50
-    ysize = 1024
-    xsize = 1032
-
-    # create a JWST datamodel for MIRI data
-    im = make_rampmodel(nints, ngroups, ysize, xsize)
-
-    im.meta.instrument.detector = 'MIRIMAGE'
-    im.meta.instrument.filter = 'F2300C'
-    im.meta.instrument.band = 'N/A'
-    im.meta.exposure.type = 'MIR_IMAGE'
-
-    # set filter
-    filter = 'F2300C'
-
-    # run pipeline
-    outfile = LinearityStep.call(im)
-
-    # get linearity reference file from header
-    linfile = outfile.meta.ref_file.linearity.name
-
-    # parse linfile name to discard crds://
-    file = linfile.split("/")[2]
-
-    # read in reference file
-    filepath = '/grp/crds/jwst/references/jwst/' + file
-    reffile = fits.open(filepath)
-    refhead = reffile[0].header
-    filt = refhead['FILTER']
-
-    # test if filters match
-    assert (filt == filter)
-
-
-def test_wave_f2550w():
-    """make sure correct filter (F2550W) reference file is called"""
-
-    # create input data
-    # create model of data with 0 value array
-    nints = 1
-    ngroups = 50
-    ysize = 1024
-    xsize = 1032
-
-    # create a JWST datamodel for MIRI data
-    im = make_rampmodel(nints, ngroups, ysize, xsize)
-
-    im.meta.instrument.detector = 'MIRIMAGE'
-    im.meta.instrument.filter = 'F2550W'
-    im.meta.instrument.band = 'N/A'
-    im.meta.exposure.type = 'MIR_IMAGE'
-
-    # set filter
-    filter = 'F2550W'
-
-    # run pipeline
-    outfile = LinearityStep.call(im)
-
-    # get linearity reference file from header
-    linfile = outfile.meta.ref_file.linearity.name
-
-    # parse linfile name to discard crds://
-    file = linfile.split("/")[2]
-
-    # read in reference file
-    filepath = '/grp/crds/jwst/references/jwst/' + file
-    reffile = fits.open(filepath)
-    refhead = reffile[0].header
-    filt = refhead['FILTER']
-   
-    # test if filters match
-    assert (filt == filter)
-
-
 def test_err_array():
     """test that the error array is not changed by the linearity step"""
 
@@ -424,135 +304,6 @@ def test_err_array():
 
     np.testing.assert_array_equal(np.full(csize, 2.0, dtype=float),
                                   outfile.err, err_msg='no changes should be seen in array ')
-
-
-def test_ifulong_short():
-    """make sure correct (MIRIFULONG-SHORT) reference file is called"""
-
-    # create input data
-    # create model of data with 0 value array
-    nints = 1
-    ngroups = 50
-    ysize = 1024
-    xsize = 1032
-
-    # create a JWST datamodel for MIRI data
-    im = make_rampmodel(nints, ngroups, ysize, xsize)
-
-    im.meta.instrument.detector = 'MIRIFULONG'
-    im.meta.instrument.filter = 'F2100W'
-    im.meta.instrument.band = 'SHORT'
-    im.meta.exposure.type = 'MIR_MRS'
-
-    # set band, det
-    set_band = 'SHORT'
-    set_det = 'MIRIFULONG'
-
-    # run pipeline
-    outfile = LinearityStep.call(im)
-
-    # get linearity reference file from header
-    linfile = outfile.meta.ref_file.linearity.name
-
-    # parse linfile name to discard crds://
-    file = linfile.split("/")[2]
-
-    # read in reference file
-    filepath = '/grp/crds/jwst/references/jwst/' + file
-    reffile = fits.open(filepath)
-    refhead = reffile[0].header
-    file_det = refhead['DETECTOR']
-    file_band = refhead['BAND']
-
-    # test if values match
-    assert set_band == file_band
-    assert set_det == file_det
-
-
-def test_ifulong_med():
-    """make sure correct (MIRIFULONG-MEDIUM) reference file is called"""
-
-    # create input data
-    # create model of data with 0 value array
-    nints = 1
-    ngroups = 50
-    ysize = 1024
-    xsize = 1032
-
-    # create a JWST datamodel for MIRI data
-    im = make_rampmodel(nints, ngroups, ysize, xsize)
-
-    im.meta.instrument.detector = 'MIRIFULONG'
-    im.meta.instrument.filter = 'F2100W'
-    im.meta.instrument.band = 'MEDIUM'
-    im.meta.exposure.type = 'MIR_MRS'
-
-    # set band, det
-    set_band = 'MEDIUM'
-    set_det = 'MIRIFULONG'
-
-    # run pipeline
-    outfile = LinearityStep.call(im)
-
-    # get linearity reference file from header
-    linfile = outfile.meta.ref_file.linearity.name
-
-    # parse linfile name to discard crds://
-    file = linfile.split("/")[2]
-
-    # read in reference file
-    filepath = '/grp/crds/jwst/references/jwst/' + file
-    reffile = fits.open(filepath)
-    refhead = reffile[0].header
-    file_det = refhead['DETECTOR']
-    file_band = refhead['BAND']
-
-    # test if values match
-    assert set_band == file_band
-    assert set_det == file_det
-
-
-def test_ifulong_long():
-    """make sure correct (MIRIFULONG-LONG) reference file is called"""
-
-    # create input data
-    # create model of data with 0 value array
-    nints = 1
-    ngroups = 50
-    ysize = 1024
-    xsize = 1032
-
-    # create a JWST datamodel for MIRI data
-    im = make_rampmodel(nints, ngroups, ysize, xsize)
-
-    im.meta.instrument.detector = 'MIRIFULONG'
-    im.meta.instrument.filter = 'F2100W'
-    im.meta.instrument.band = 'LONG'
-    im.meta.exposure.type = 'MIR_MRS'
-
-    # set band, det
-    set_band = 'LONG'
-    set_det = 'MIRIFULONG'
-
-    # run pipeline
-    outfile = LinearityStep.call(im)
-
-    # get linearity reference file from header
-    linfile = outfile.meta.ref_file.linearity.name
-
-    # parse linfile name to discard crds://
-    file = linfile.split("/")[2]
-
-    # read in reference file
-    filepath = '/grp/crds/jwst/references/jwst/' + file
-    reffile = fits.open(filepath)
-    refhead = reffile[0].header
-    file_det = refhead['DETECTOR']
-    file_band = refhead['BAND']
-
-    # test if values match
-    assert set_band == file_band
-    assert set_det == file_det
 
 
 def make_rampmodel(nints, ngroups, ysize, xsize):
