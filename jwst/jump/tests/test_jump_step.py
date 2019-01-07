@@ -1,5 +1,6 @@
 import pytest
 import numpy as np
+import os
 from astropy.io import fits
 from jwst.jump.jump import detect_jumps
 from jwst.datamodels import dqflags
@@ -8,28 +9,15 @@ from jwst.datamodels import GainModel, ReadnoiseModel
 from jwst.jump import JumpStep
 from itertools import cycle
 
-def test_one_core():
-    grouptime = 3.0
-    deltaDN = 5
-    ingain = 6
-    inreadnoise = np.float64(7)
-    ngroups = 100
-    CR_fraction = 2
-    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
-                                                          gain=ingain, readnoise=inreadnoise, deltatime=grouptime)
-    for i in range(ngroups):
-        model1.data[0, i, :, :] = deltaDN * i
-    first_CR_group_locs = [x for x in range(1,89) if x % 5 == 0]
-    CR_locs = [x for x in range(1032*1024) if x % CR_fraction == 0]
-    CR_x_locs = [x % 1032 for x in CR_locs]
-    CR_y_locs = [np.int(x / 1032) for x in CR_locs]
-    CR_pool = cycle(first_CR_group_locs)
-    for i in range(len(CR_x_locs)):
-        CR_group = next(CR_pool)
-        model1.data[0,CR_group:,CR_y_locs[i], CR_x_locs[i]] = \
-            model1.data[0,CR_group:, CR_y_locs[i], CR_x_locs[i]] + 500
+@pytest.fixture(params=['one','quarter','half','all'])
+def get_max_cores(request):
+    return request.param
 
-    print("number of CRs "+ len(CR_x_locs).__str__())
+
+@pytest.fixture(scope="module")
+def add_reffiles(request):
+    ingain = 6
+    inreadnoise = 5
     gain = np.ones(shape=(1024, 1032), dtype=np.float64) * ingain
     hdr = fits.Header()
     hdr['INSTRUME'] = 'MIRI'
@@ -38,48 +26,27 @@ def test_one_core():
     hdr['SUBSIZE1'] = 1032
     hdr['SUBSTRT2'] = 1
     hdr['SUBSIZE2'] = 1024
-    hdu = fits.PrimaryHDU(gain,header=hdr)
+    hdu = fits.PrimaryHDU(gain, header=hdr)
     hdul = fits.HDUList([hdu])
     hdul.append(fits.ImageHDU(name="SCI", data=gain))
     hdul.writeto('gain.fits', overwrite=True)
 
     rnoise = np.ones(shape=(1024, 1032), dtype=np.float64) * inreadnoise
-    hdu = fits.PrimaryHDU(rnoise,header=hdr)
+    hdu = fits.PrimaryHDU(rnoise, header=hdr)
     hdul = fits.HDUList([hdu])
     hdul.append(fits.ImageHDU(name="SCI", data=rnoise))
     hdul.writeto('readnoise.fits', overwrite=True)
+    def fin():
+        os.remove('gain.fits')
+        os.remove('readnoise.fits')
 
+    request.addfinalizer(fin)
 
-    out_model = JumpStep.call(model1, override_gain='gain.fits', override_readnoise = 'readnoise.fits',
-                              maximum_cores='one')
-    CR_pool = cycle(first_CR_group_locs)
-    for i in range(len(CR_x_locs)):
-        CR_group = next(CR_pool)
-        print,CR_group
-        assert (4 == np.max(out_model.groupdq[0, CR_group, CR_y_locs[i], CR_x_locs[i]]))
+@pytest.fixture(scope="module")
 
-def test_one_core_NIRCAM():
-    grouptime = 3.0
-    deltaDN = 5
+def add_NIRCAM_reffiles(request):
     ingain = 6
-    inreadnoise = np.float64(7)
-    ngroups = 100
-    CR_fraction = 2
-    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,nrows=2048, ncols=2048,
-                                                          gain=ingain, readnoise=inreadnoise, deltatime=grouptime)
-    for i in range(ngroups):
-        model1.data[0, i, :, :] = deltaDN * i
-    first_CR_group_locs = [x for x in range(1,89) if x % 5 == 0]
-    CR_locs = [x for x in range(2048*2048) if x % CR_fraction == 0]
-    CR_x_locs = [x % 2048 for x in CR_locs]
-    CR_y_locs = [np.int(x / 2048) for x in CR_locs]
-    CR_pool = cycle(first_CR_group_locs)
-    for i in range(len(CR_x_locs)):
-        CR_group = next(CR_pool)
-        model1.data[0,CR_group:,CR_y_locs[i], CR_x_locs[i]] = \
-            model1.data[0,CR_group:, CR_y_locs[i], CR_x_locs[i]] + 500
-
-    print("number of CRs "+ len(CR_x_locs).__str__())
+    inreadnoise = 5
     gain = np.ones(shape=(2048, 2048), dtype=np.float64) * ingain
     hdr = fits.Header()
     hdr['INSTRUME'] = 'MIRI'
@@ -88,127 +55,23 @@ def test_one_core_NIRCAM():
     hdr['SUBSIZE1'] = 2048
     hdr['SUBSTRT2'] = 1
     hdr['SUBSIZE2'] = 2048
-    hdu = fits.PrimaryHDU(gain,header=hdr)
+    hdu = fits.PrimaryHDU(gain, header=hdr)
     hdul = fits.HDUList([hdu])
     hdul.append(fits.ImageHDU(name="SCI", data=gain))
-    hdul.writeto('gain.fits', overwrite=True)
+    hdul.writeto('gain.NIRCAM.fits', overwrite=True)
 
     rnoise = np.ones(shape=(2048, 2048), dtype=np.float64) * inreadnoise
-    hdu = fits.PrimaryHDU(rnoise,header=hdr)
+    hdu = fits.PrimaryHDU(rnoise, header=hdr)
     hdul = fits.HDUList([hdu])
     hdul.append(fits.ImageHDU(name="SCI", data=rnoise))
-    hdul.writeto('readnoise.fits', overwrite=True)
+    hdul.writeto('readnoise.NIRCAM.fits', overwrite=True)
+    def fin():
+        os.remove('gain.NIRCAM.fits')
+        os.remove('readnoise.NIRCAM.fits')
 
+    request.addfinalizer(fin)
 
-    out_model = JumpStep.call(model1, override_gain='gain.fits', override_readnoise = 'readnoise.fits',
-                              maximum_cores='one')
-    CR_pool = cycle(first_CR_group_locs)
-    for i in range(len(CR_x_locs)):
-        CR_group = next(CR_pool)
-        print,CR_group
-        assert (4 == np.max(out_model.groupdq[0, CR_group, CR_y_locs[i], CR_x_locs[i]]))
-
-def test_all_cores_NIRCAM():
-    grouptime = 3.0
-    deltaDN = 5
-    ingain = 6
-    inreadnoise = np.float64(7)
-    ngroups = 100
-    CR_fraction = 2
-    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,nrows=2048, ncols=2048,
-                                                          gain=ingain, readnoise=inreadnoise, deltatime=grouptime)
-    for i in range(ngroups):
-        model1.data[0, i, :, :] = deltaDN * i
-    first_CR_group_locs = [x for x in range(1,89) if x % 5 == 0]
-    CR_locs = [x for x in range(2048*2048) if x % CR_fraction == 0]
-    CR_x_locs = [x % 2048 for x in CR_locs]
-    CR_y_locs = [np.int(x / 2048) for x in CR_locs]
-    CR_pool = cycle(first_CR_group_locs)
-    for i in range(len(CR_x_locs)):
-        CR_group = next(CR_pool)
-        model1.data[0,CR_group:,CR_y_locs[i], CR_x_locs[i]] = \
-            model1.data[0,CR_group:, CR_y_locs[i], CR_x_locs[i]] + 500
-
-    print("number of CRs "+ len(CR_x_locs).__str__())
-    gain = np.ones(shape=(2048, 2048), dtype=np.float64) * ingain
-    hdr = fits.Header()
-    hdr['INSTRUME'] = 'MIRI'
-    hdr['SUBARRAY'] = 'FULL'
-    hdr['SUBSTRT1'] = 1
-    hdr['SUBSIZE1'] = 2048
-    hdr['SUBSTRT2'] = 1
-    hdr['SUBSIZE2'] = 2048
-    hdu = fits.PrimaryHDU(gain,header=hdr)
-    hdul = fits.HDUList([hdu])
-    hdul.append(fits.ImageHDU(name="SCI", data=gain))
-    hdul.writeto('gain.fits', overwrite=True)
-
-    rnoise = np.ones(shape=(2048, 2048), dtype=np.float64) * inreadnoise
-    hdu = fits.PrimaryHDU(rnoise,header=hdr)
-    hdul = fits.HDUList([hdu])
-    hdul.append(fits.ImageHDU(name="SCI", data=rnoise))
-    hdul.writeto('readnoise.fits', overwrite=True)
-
-
-    out_model = JumpStep.call(model1, override_gain='gain.fits', override_readnoise = 'readnoise.fits',
-                              maximum_cores='all')
-    CR_pool = cycle(first_CR_group_locs)
-    for i in range(len(CR_x_locs)):
-        CR_group = next(CR_pool)
-        print,CR_group
-        assert (4 == np.max(out_model.groupdq[0, CR_group, CR_y_locs[i], CR_x_locs[i]]))
-
-def test_half_cores():
-    grouptime = 3.0
-    deltaDN = 5
-    ingain = 6
-    inreadnoise = np.float64(7)
-    ngroups = 100
-    CR_fraction = 2
-    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
-                                                          gain=ingain, readnoise=inreadnoise, deltatime=grouptime)
-    for i in range(ngroups):
-        model1.data[0, i, :, :] = deltaDN * i
-    first_CR_group_locs = [x for x in range(1,89) if x % 5 == 0]
-    CR_locs = [x for x in range(1032*1024) if x % CR_fraction == 0]
-    CR_x_locs = [x % 1032 for x in CR_locs]
-    CR_y_locs = [np.int(x / 1032) for x in CR_locs]
-    CR_pool = cycle(first_CR_group_locs)
-    for i in range(len(CR_x_locs)):
-        CR_group = next(CR_pool)
-        model1.data[0,CR_group:,CR_y_locs[i], CR_x_locs[i]] = \
-            model1.data[0,CR_group:, CR_y_locs[i], CR_x_locs[i]] + 500
-
-    print("number of CRs "+ len(CR_x_locs).__str__())
-    gain = np.ones(shape=(1024, 1032), dtype=np.float64) * ingain
-    hdr = fits.Header()
-    hdr['INSTRUME'] = 'MIRI'
-    hdr['SUBARRAY'] = 'FULL'
-    hdr['SUBSTRT1'] = 1
-    hdr['SUBSIZE1'] = 1032
-    hdr['SUBSTRT2'] = 1
-    hdr['SUBSIZE2'] = 1024
-    hdu = fits.PrimaryHDU(gain,header=hdr)
-    hdul = fits.HDUList([hdu])
-    hdul.append(fits.ImageHDU(name="SCI", data=gain))
-    hdul.writeto('gain.fits', overwrite=True)
-
-    rnoise = np.ones(shape=(1024, 1032), dtype=np.float64) * inreadnoise
-    hdu = fits.PrimaryHDU(rnoise,header=hdr)
-    hdul = fits.HDUList([hdu])
-    hdul.append(fits.ImageHDU(name="SCI", data=rnoise))
-    hdul.writeto('readnoise.fits', overwrite=True)
-
-
-    out_model = JumpStep.call(model1, override_gain='gain.fits', override_readnoise = 'readnoise.fits',
-                              maximum_cores='all')
-    CR_pool = cycle(first_CR_group_locs)
-    for i in range(len(CR_x_locs)):
-        CR_group = next(CR_pool)
-        print,CR_group
-        assert (4 == np.max(out_model.groupdq[0, CR_group, CR_y_locs[i], CR_x_locs[i]]))
-
-def test_one_core_two_CRs():
+def test_one_CR(add_reffiles,get_max_cores):
     grouptime = 3.0
     deltaDN = 5
     ingain = 6
@@ -228,33 +91,70 @@ def test_one_core_two_CRs():
         CR_group = next(CR_pool)
         model1.data[0,CR_group:,CR_y_locs[i], CR_x_locs[i]] = \
             model1.data[0,CR_group:, CR_y_locs[i], CR_x_locs[i]] + 500
-        model1.data[0, CR_group+8:, CR_y_locs[i], CR_x_locs[i]] = \
-            model1.data[0, CR_group+8:, CR_y_locs[i], CR_x_locs[i]] + 700
-
 
     print("number of CRs "+ len(CR_x_locs).__str__())
-    gain = np.ones(shape=(1024, 1032), dtype=np.float64) * ingain
-    hdr = fits.Header()
-    hdr['INSTRUME'] = 'MIRI'
-    hdr['SUBARRAY'] = 'FULL'
-    hdr['SUBSTRT1'] = 1
-    hdr['SUBSIZE1'] = 1032
-    hdr['SUBSTRT2'] = 1
-    hdr['SUBSIZE2'] = 1024
-    hdu = fits.PrimaryHDU(gain,header=hdr)
-    hdul = fits.HDUList([hdu])
-    hdul.append(fits.ImageHDU(name="SCI", data=gain))
-    hdul.writeto('gain.fits', overwrite=True)
-
-    rnoise = np.ones(shape=(1024, 1032), dtype=np.float64) * inreadnoise
-    hdu = fits.PrimaryHDU(rnoise,header=hdr)
-    hdul = fits.HDUList([hdu])
-    hdul.append(fits.ImageHDU(name="SCI", data=rnoise))
-    hdul.writeto('readnoise.fits', overwrite=True)
-
 
     out_model = JumpStep.call(model1, override_gain='gain.fits', override_readnoise = 'readnoise.fits',
-                              maximum_cores='one')
+                              maximum_cores=get_max_cores)
+    CR_pool = cycle(first_CR_group_locs)
+    for i in range(len(CR_x_locs)):
+        CR_group = next(CR_pool)
+        assert (4 == np.max(out_model.groupdq[0, CR_group, CR_y_locs[i], CR_x_locs[i]]))
+
+def test_half_NIRCAM(add_NIRCAM_reffiles):
+    grouptime = 3.0
+    deltaDN = 5
+    ingain = 6
+    inreadnoise = np.float64(7)
+    ngroups = 100
+    CR_fraction = 5
+    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,nrows=2048, ncols=2048,
+                                                          gain=ingain, readnoise=inreadnoise, deltatime=grouptime)
+    for i in range(ngroups):
+        model1.data[0, i, :, :] = deltaDN * i
+    first_CR_group_locs = [x for x in range(1,89) if x % 5 == 0]
+    CR_locs = [x for x in range(2048*2048) if x % CR_fraction == 0]
+    CR_x_locs = [x % 2048 for x in CR_locs]
+    CR_y_locs = [np.int(x / 2048) for x in CR_locs]
+    CR_pool = cycle(first_CR_group_locs)
+    for i in range(len(CR_x_locs)):
+        CR_group = next(CR_pool)
+        model1.data[0,CR_group:,CR_y_locs[i], CR_x_locs[i]] = \
+            model1.data[0,CR_group:, CR_y_locs[i], CR_x_locs[i]] + 500
+
+    print("number of CRs "+ len(CR_x_locs).__str__())
+
+    out_model = JumpStep.call(model1, override_gain='gain.NIRCAM.fits', override_readnoise = 'readnoise.NIRCAM.fits',
+                              maximum_cores='half')
+    CR_pool = cycle(first_CR_group_locs)
+    for i in range(len(CR_x_locs)):
+        CR_group = next(CR_pool)
+        assert (4 == np.max(out_model.groupdq[0, CR_group, CR_y_locs[i], CR_x_locs[i]]))
+
+def test_two_CRs(add_reffiles,get_max_cores):
+    grouptime = 3.0
+    deltaDN = 5
+    ingain = 6
+    inreadnoise = np.float64(7)
+    ngroups = 100
+    CR_fraction = 5
+    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
+                                                          gain=ingain, readnoise=inreadnoise, deltatime=grouptime)
+    for i in range(ngroups):
+        model1.data[0, i, :, :] = deltaDN * i
+    first_CR_group_locs = [x for x in range(1,89) if x % 5 == 0]
+    CR_locs = [x for x in range(1032*1024) if x % CR_fraction == 0]
+    CR_x_locs = [x % 1032 for x in CR_locs]
+    CR_y_locs = [np.int(x / 1032) for x in CR_locs]
+    CR_pool = cycle(first_CR_group_locs)
+    for i in range(len(CR_x_locs)):
+        CR_group = next(CR_pool)
+        model1.data[0,CR_group:,CR_y_locs[i], CR_x_locs[i]] = \
+            model1.data[0,CR_group:, CR_y_locs[i], CR_x_locs[i]] + 500
+        model1.data[0, CR_group+8:, CR_y_locs[i], CR_x_locs[i]] = \
+            model1.data[0, CR_group+8:, CR_y_locs[i], CR_x_locs[i]] + 700
+    out_model = JumpStep.call(model1, override_gain='gain.fits', override_readnoise = 'readnoise.fits',
+                              maximum_cores=get_max_cores)
     CR_pool = cycle(first_CR_group_locs)
     for i in range(len(CR_x_locs)):
         CR_group = next(CR_pool)
