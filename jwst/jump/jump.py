@@ -38,9 +38,9 @@ def detect_jumps (input_model, gain_model, readnoise_model,
     elif max_cores == 'quarter':
         numslices = np.int(np.floor(num_cores/4))
     elif max_cores == 'half':
-        numslices = np.int(np.floor(num_cores/2)) - 1 # leave room for the main thread
+        numslices = np.int(np.floor(num_cores/2))
     elif max_cores == 'all':
-        numslices = np.int(num_cores) - 1 # leave room for the main thread
+        numslices = np.int(num_cores)
     log.info("Creating %d processes for jump detection " % numslices)
     pool = multiprocessing.Pool(processes=numslices)
 
