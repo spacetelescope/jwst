@@ -8,11 +8,10 @@ from astropy.io import fits
 
 import gwcs.coordinate_frames as cf
 from gwcs import selector
-from gwcs.utils import _toindex
 from . import pointing
 from ..transforms import models as jwmodels
 from .util import (not_implemented_mode, subarray_transform,
-                   velocity_correction, bounding_box_from_model, bounding_box_from_subarray)
+                   velocity_correction, transform_bbox_from_datamodel, bounding_box_from_subarray)
 from ..datamodels import (DistortionModel, FilteroffsetModel,
                           DistortionMRSModel, WavelengthrangeModel,
                           RegionsModel, SpecwcsModel)
@@ -115,7 +114,7 @@ def imaging_distortion(input_model, reference_files):
     try:
         distortion.bounding_box
     except NotImplementedError:
-        distortion.bounding_box = bounding_box_from_model(input_model)
+        distortion.bounding_box = transform_bbox_from_datamodel(input_model)
 
     # Add an offset for the filter
     obsfilter = input_model.meta.instrument.filter
@@ -161,6 +160,11 @@ def lrs(input_model, reference_files):
     if subarray2full is not None:
         distortion = subarray2full | distortion
 
+    # Incorporate the small rotation
+    angle = np.arctan(0.00421924)
+    rotation = models.Rotation2D(angle)
+    distortion = distortion | rotation
+
     # Load and process the reference data.
     with fits.open(reference_files['specwcs']) as ref:
         lrsdata = np.array([l for l in ref[1].data])
@@ -182,28 +186,21 @@ def lrs(input_model, reference_files):
 
     bb = ((x0.min() - 0.5 + zero_point[0], x1.max() + 0.5 + zero_point[0]),
           (y0.min() - 0.5 + zero_point[1], y0.max() + 0.5 + zero_point[1]))
-    # Find the ROW of the zero point which should be the [1] of zero_point
-    row_zero_point = zero_point[1]
 
     # Compute the v2v3 to sky.
     tel2sky = pointing.v23tosky(input_model)
 
-    # Compute the V2/V3 for each pixel in this row
-    # x.shape will be something like (1, 388)
-    y, x = np.mgrid[row_zero_point:row_zero_point + 1, 0:input_model.data.shape[1]]
+    # To compute the spatial detector to V2V3 transform:
+    # Take a row centered on zero_point_y and convert it to v2, v3.
+    # The forward transform uses constant ``y`` values for each ``x``.
+    # The inverse transform uses constant ``v3`` values for each ``v2``.
+    zero_point_v2v3 = distortion(*zero_point)
 
-    spatial_transform = distortion
-    radec = np.array(spatial_transform(x, y))[:, 0, :]
+    spatial_forward = models.Identity(1) & models.Const1D(zero_point[1]) | distortion
+    spatial_forward.inverse = (models.Identity(1) & models.Const1D(zero_point_v2v3[1]) |
+                               distortion.inverse)
 
-    ra_full = np.matlib.repmat(radec[0], _toindex(bb[1][1]) + 1 - _toindex(bb[1][0]), 1)
-    dec_full = np.matlib.repmat(radec[1], _toindex(bb[1][1]) + 1 - _toindex(bb[1][0]), 1)
-
-    ra_t2d = models.Tabular2D(lookup_table=ra_full, name='xtable',
-        bounds_error=False, fill_value=np.nan)
-    dec_t2d = models.Tabular2D(lookup_table=dec_full, name='ytable',
-        bounds_error=False, fill_value=np.nan)
-
-    # Create the model transforms.
+    # Create the spectral transforms.
     lrs_wav_model = jwmodels.LRSWavelength(lrsdata, zero_point)
 
     try:
@@ -216,24 +213,12 @@ def lrs(input_model, reference_files):
             lrs_wav_model = lrs_wav_model | velocity_corr
             log.info("Applied Barycentric velocity correction : {}".format(velocity_corr[1].amplitude.value))
 
-    # Incorporate the small rotation
-    angle = np.arctan(0.00421924)
-    rot = models.Rotation2D(angle)
-    radec_t2d = ra_t2d & dec_t2d | rot
-
-    # Account for the subarray when computing spatial coordinates.
-    xshift = -bb[0][0]
-    yshift = -bb[1][0]
-
-    det_to_v23 = models.Mapping((1, 0, 1, 0, 0, 1)) | models.Shift(yshift, name='yshift1') & \
-              models.Shift(xshift, name='xshift1') & \
-              models.Shift(yshift, name='yshift2') & models.Shift(xshift, name='xshift2') & \
-              models.Identity(2) | radec_t2d & lrs_wav_model
+    det_to_v2v3 = models.Mapping((0, 1, 0, 1)) | spatial_forward & lrs_wav_model
+    det_to_v2v3.bounding_box = bb[::-1]
     v23_to_world = tel2sky & models.Identity(1)
-    det_to_v23.bounding_box = bb[::-1]
-    # Now the actual pipeline.
 
-    pipeline = [(detector, det_to_v23),
+    # Now the actual pipeline.
+    pipeline = [(detector, det_to_v2v3),
                 (v2v3, v23_to_world),
                 (world, None)
                 ]

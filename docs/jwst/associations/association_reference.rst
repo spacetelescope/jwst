@@ -289,6 +289,8 @@ with the ``RegistryMarker.rule`` decorator as follows::
 Then, when the rule file is used to create an ``AssociationRegistry``,
 the class ``MyRule`` will be included as one of the available rules::
 
+.. doctest-skip::
+   
   >>> from jwst.associations import AssociationRegistry
   >>> registry = AssociationRegistry('myrules.py', include_default=False)
   >>> print(registry)

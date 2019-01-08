@@ -592,17 +592,23 @@ class WCSImageCatalog():
         if self.wcs is None:
             return
 
-        ny, nx = self.imshape
+        if self.wcs.bounding_box is None:
+            lx = -0.5
+            ly = -0.5
+            hx = self.imshape[1] - 0.5
+            hy = self.imshape[0] - 0.5
+        else:
+            ((lx, hx), (ly, hy)) = self.wcs.bounding_box
 
         if stepsize is None:
             nintx = 2
             ninty = 2
         else:
-            nintx = max(2, int(np.ceil((nx + 1.0) / stepsize)))
-            ninty = max(2, int(np.ceil((ny + 1.0) / stepsize)))
+            nintx = max(2, int(np.ceil((hx - lx) / stepsize)))
+            ninty = max(2, int(np.ceil((hy - ly) / stepsize)))
 
-        xs = np.linspace(-0.5, nx - 0.5, nintx, dtype=np.float)
-        ys = np.linspace(-0.5, ny - 0.5, ninty, dtype=np.float)[1:-1]
+        xs = np.linspace(lx, hx, nintx, dtype=np.float)
+        ys = np.linspace(ly, hy, ninty, dtype=np.float)[1:-1]
         nptx = xs.size
         npty = ys.size
 
@@ -613,18 +619,18 @@ class WCSImageCatalog():
 
         # "bottom" points:
         borderx[:nptx] = xs
-        bordery[:nptx] = -0.5
+        bordery[:nptx] = ly
         # "right"
         sl = np.s_[nptx:nptx + npty]
-        borderx[sl] = nx - 0.5
+        borderx[sl] = hx
         bordery[sl] = ys
         # "top"
         sl = np.s_[nptx + npty:2 * nptx + npty]
         borderx[sl] = xs[::-1]
-        bordery[sl] = ny - 0.5
+        bordery[sl] = hy
         # "left"
         sl = np.s_[2 * nptx + npty:-1]
-        borderx[sl] = -0.5
+        borderx[sl] = lx
         bordery[sl] = ys[::-1]
 
         # close polygon:
@@ -635,7 +641,7 @@ class WCSImageCatalog():
         # TODO: for strange reasons, occasionally ra[0] != ra[-1] and/or
         #       dec[0] != dec[-1] (even though we close the polygon in the
         #       previous two lines). Then SphericalPolygon fails because
-        #       points are not closed. Threfore we force it to be closed:
+        #       points are not closed. Therefore we force it to be closed:
         ra[-1] = ra[0]
         dec[-1] = dec[0]
 
@@ -803,6 +809,7 @@ class WCSGroupCatalog():
         """ Recompute bounding polygons of the member images.
         """
         polygons = [im.polygon for im in self._images]
+
         if len(polygons) == 0:
             self._polygon = SphericalPolygon([])
         else:
@@ -1514,6 +1521,7 @@ class RefCatalog():
         """
         # create spherical polygon bounding the sources
         self._calc_cat_convex_hull()
+
 
     def expand_catalog(self, catalog):
         """

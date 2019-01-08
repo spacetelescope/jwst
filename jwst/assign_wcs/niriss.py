@@ -8,7 +8,7 @@ import gwcs.coordinate_frames as cf
 from gwcs import wcs
 
 from .util import (not_implemented_mode, subarray_transform,
-                   velocity_correction, bounding_box_from_subarray, bounding_box_from_model)
+                   velocity_correction, bounding_box_from_subarray, transform_bbox_from_datamodel)
 from . import pointing
 from ..transforms.models import (NirissSOSSModel,
                                  NIRISSForwardRowGrismDispersion,
@@ -249,7 +249,7 @@ def imaging_distortion(input_model, reference_files):
         # Check if the model has a bounding box.
         distortion.bounding_box
     except NotImplementedError:
-        distortion.bounding_box = bounding_box_from_model(input_model)
+        distortion.bounding_box = transform_bbox_from_datamodel(input_model)
 
     dist.close()
     return distortion
