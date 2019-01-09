@@ -1,7 +1,6 @@
 """
 Test suite for set_telescope_pointing
 """
-import copy
 import logging
 import numpy as np
 import os
@@ -9,9 +8,6 @@ import sys
 import pytest
 from tempfile import TemporaryDirectory
 
-import requests_mock
-
-from astropy.table import Table
 from astropy.time import Time
 
 from .. import engdb_tools
@@ -183,6 +179,17 @@ def test_get_pointing(eng_db_ngas):
     assert np.isclose(j2fgs_matrix, J2FGS_MATRIX_EXPECTED).all()
     assert np.isclose(fsmcorr, FSMCORR_EXPECTED).all()
     assert STARTTIME <= obstime <= ENDTIME
+
+
+def test_logging(eng_db_ngas, caplog):
+    (q,
+     j2fgs_matrix,
+     fsmcorr,
+     obstime) = stp.get_pointing(STARTTIME.mjd, ENDTIME.mjd)
+    assert 'Determining pointing between observations times' in caplog.text
+    assert 'Telemetry search tolerance' in caplog.text
+    assert 'Reduction function' in caplog.text
+    assert 'Querying engineering DB' in caplog.text
 
 
 def test_get_pointing_list(eng_db_ngas):
