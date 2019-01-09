@@ -1,14 +1,18 @@
 """
-
 Unit tests for dark current correction
-
 """
 
 import pytest
 import numpy as np
 
 from jwst.dark_current.dark_sub import average_dark_frames
-from jwst.datamodels import RampModel, DarkModel, MIRIRampModel, DarkMIRIModel, dqflags
+from jwst.datamodels import (
+    RampModel, 
+    DarkModel, 
+    MIRIRampModel, 
+    DarkMIRIModel, 
+    dqflags,
+)
 from jwst.dark_current.dark_sub import do_correction as darkcorr
 from jwst.dark_current import DarkCurrentStep
 from astropy.io import fits
@@ -134,7 +138,7 @@ def test_frame_averaging(setup_nrc_cube):
 
 
 def test_more_sci_frames():
-    """Check that data is unchanged if there are more frames in the science data is than in the reference file"""
+    '''Check that data is unchanged if there are more frames in the science data is than in the reference file'''
 
     # size of integration
     nints = 1
@@ -172,8 +176,8 @@ def test_more_sci_frames():
 
 
 def test_sub_by_frame():
-    """Check that if NFRAMES=1 and GROUPGAP=0 for the science data, the dark reference data are
-    directly subtracted frame by frame"""
+    '''Check that if NFRAMES=1 and GROUPGAP=0 for the science data, the dark reference data are
+    directly subtracted frame by frame'''
 
     # size of integration
     nints = 1
@@ -213,7 +217,7 @@ def test_sub_by_frame():
 
 
 def test_nan():
-    """Verify that when a dark has NaNs, these are correctly assumed as zero and the PIXELDQ is set properly"""
+    '''Verify that when a dark has NaNs, these are correctly assumed as zero and the PIXELDQ is set properly'''
 
     # size of integration
     nints = 1
@@ -254,7 +258,7 @@ def test_nan():
 
 
 def test_dq_combine():
-    """Verify that the DQ array of the dark is correctly combined with the PIXELDQ array of the science data."""
+    '''Verify that the DQ array of the dark is correctly combined with the PIXELDQ array of the science data.'''
 
     # size of integration
     nints = 1
@@ -291,7 +295,7 @@ def test_dq_combine():
 
 
 def test_2_int():
-    """Verify the dark correction is done by integration for MIRI observations"""
+    '''Verify the dark correction is done by integration for MIRI observations'''
 
     # size of integration
     nints = 2
@@ -335,7 +339,7 @@ def test_2_int():
 
 
 def test_dark_skipped():
-    """Verify that when the dark is not applied, the data is correctly flagged as such."""
+    '''Verify that when the dark is not applied, the data is correctly flagged as such.'''
 
     # size of integration
     nints = 1
@@ -371,8 +375,8 @@ def test_dark_skipped():
 
 
 def test_frame_avg():
-    """Check that if NFRAMES>1 or GROUPGAP>0, the frame-averaged dark data are
-    subtracted group-by-group from science data groups and the ERR arrays are not modified"""
+    '''Check that if NFRAMES>1 or GROUPGAP>0, the frame-averaged dark data are
+    subtracted group-by-group from science data groups and the ERR arrays are not modified'''
 
     # size of integration
     nints = 1
@@ -414,7 +418,7 @@ def test_frame_avg():
 
 
 def test_sub_masklyot():
-    """make sure correct subarray (masklyot) reference file is called"""
+    '''make sure correct subarray (masklyot) reference file is called'''
 
     # size of integration
     nints = 1
@@ -470,7 +474,7 @@ def test_sub_masklyot():
 
 
 def test_sub_mask1550():
-    """make sure correct subarray (mask1550) reference file is called"""
+    '''make sure correct subarray (mask1550) reference file is called'''
 
     # size of integration
     nints = 1
@@ -527,7 +531,7 @@ def test_sub_mask1550():
 
 
 def test_sub_mask1140():
-    """make sure correct subarray (mask1140) reference file is called"""
+    '''make sure correct subarray (mask1140) reference file is called'''
 
     # size of integration
     nints = 1
@@ -584,7 +588,7 @@ def test_sub_mask1140():
 
 
 def test_sub_mask1065():
-    """make sure correct subarray (mask1065) reference file is called"""
+    '''make sure correct subarray (mask1065) reference file is called'''
 
     # size of integration
     nints = 1
@@ -641,7 +645,7 @@ def test_sub_mask1065():
 
 
 def test_sub_sub256():
-    """make sure correct subarray (sub256) reference file is called"""
+    '''make sure correct subarray (sub256) reference file is called'''
 
     # size of integration
     nints = 1
@@ -698,7 +702,7 @@ def test_sub_sub256():
 
 
 def test_sub_sub128():
-    """make sure correct subarray (sub128) reference file is called"""
+    '''make sure correct subarray (sub128) reference file is called'''
 
     # size of integration
     nints = 1
@@ -755,7 +759,7 @@ def test_sub_sub128():
 
 
 def test_sub_sub64():
-    """make sure correct subarray (sub64) reference file is called"""
+    '''make sure correct subarray (sub64) reference file is called'''
 
     # size of integration
     nints = 1
@@ -812,7 +816,7 @@ def test_sub_sub64():
 
 
 def test_sub_brightsky():
-    """make sure correct subarray (brightsky) reference file is called"""
+    '''make sure correct subarray (brightsky) reference file is called'''
 
     # size of integration
     nints = 1
@@ -870,7 +874,7 @@ def test_sub_brightsky():
 
 @pytest.mark.xfail
 def test_sub_slitlessprism():
-    """make sure correct subarray reference file is called"""
+    '''make sure correct subarray reference file is called'''
     # we have issues with mismatch between SLITLESSPRISM and SUBPRISM in the headers of the files
 
     # size of integration
@@ -929,7 +933,7 @@ def test_sub_slitlessprism():
 
 
 def test_slowmode():
-    """make sure correct slow mode reference file is called"""
+    '''make sure correct slow mode reference file is called'''
 
     # size of integration
     nints = 1
@@ -985,7 +989,7 @@ def test_slowmode():
 
 
 def test_ifulong():
-    """make sure correct mrs (IFULONG) mode reference file is called"""
+    '''make sure correct mrs (IFULONG) mode reference file is called'''
 
     # size of integration
     nints = 1
@@ -1041,7 +1045,7 @@ def test_ifulong():
 
 
 def test_ifushort():
-    """make sure correct mrs (IFUSHORT) mode reference file is called"""
+    '''make sure correct mrs (IFUSHORT) mode reference file is called'''
 
     # size of integration
     nints = 1
@@ -1097,6 +1101,7 @@ def test_ifushort():
 
 
 def make_rampmodel(nints, ngroups, ysize, xsize):
+    '''Make MIRI Ramp model for testing'''
     # create the data and groupdq arrays
     csize = (nints, ngroups, ysize, xsize)
     data = np.full(csize, 1.0)
@@ -1121,6 +1126,7 @@ def make_rampmodel(nints, ngroups, ysize, xsize):
 
 
 def make_darkmodel(ngroups, ysize, xsize):
+    '''Make MIRI dark model for testing'''
     # create the data and groupdq arrays
     nints = 2
     csize = (nints, ngroups, ysize, xsize)
@@ -1150,7 +1156,7 @@ def make_darkmodel(ngroups, ysize, xsize):
 
 @pytest.fixture(scope='function')
 def setup_nrc_cube():
-    ''' Set up fake NIRCam data to test.'''
+    '''Set up fake NIRCam data to test.'''
 
     def _cube(readpatt, ngroups, nrows, ncols):
 
