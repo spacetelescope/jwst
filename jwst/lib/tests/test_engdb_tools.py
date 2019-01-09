@@ -62,15 +62,13 @@ def engdb():
         yield engdb
 
 
-@pytest.mark.skipif(
-    not is_alive(ALTERNATE_HOST),
-    reason='Alternate test host not available.'
-)
 def test_environmetal():
     old = os.environ.get('ENG_BASE_URL', None)
     try:
         os.environ['ENG_BASE_URL'] = ALTERNATE_URL
         engdb = engdb_tools.ENGDB_Service()
+    except Exception:
+        pytest.skip('Alternate engineering db not available for test.')
     finally:
         if old is None:
             del os.environ['ENG_BASE_URL']
