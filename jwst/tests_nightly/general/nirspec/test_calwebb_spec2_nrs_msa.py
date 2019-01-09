@@ -1,5 +1,4 @@
 """Test calwebb_spec2 for NIRSpec MSA"""
-import glob
 import os.path as op
 
 import pytest
