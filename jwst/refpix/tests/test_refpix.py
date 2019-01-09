@@ -1,8 +1,11 @@
 import numpy as np
 import pytest
 
-from jwst.datamodels import MIRIRampModel, dqflags
-from jwst.datamodels import RampModel, dqflags
+from jwst.datamodels import (
+    MIRIRampModel,
+    RampModel,
+    dqflags,
+)
 from jwst.refpix import RefPixStep
 from jwst.refpix.reference_pixels import Dataset, NIRDataset, correct_model, create_dataset
 
@@ -78,15 +81,16 @@ def test_each_amp():
 
 
 def test_firstframe_sub():
+    
     '''For MIR data, check that the first group is subtracted from each group in an integration
-       and added back in after the correction. '''
+    and added back in after the correction.
 
-    """This was found in testing the amp step. Make sure that the first frame is
-        subtracted from each group and added back in afterwards. If the reference pixels
-        in the first group match the reference pixels in all other groups, then the
-        subtraction will result in zeros, leaving zeros to be calculated as the reference
-        pixel values, and the output data will match the input data after the frame is
-        added back in. So there should be no change to the data."""
+    This was found in testing the amp step. Make sure that the first frame is
+    subtracted from each group and added back in afterwards. If the reference pixels
+    in the first group match the reference pixels in all other groups, then the
+    subtraction will result in zeros, leaving zeros to be calculated as the reference
+    pixel values, and the output data will match the input data after the frame is
+    added back in. So there should be no change to the data.'''
 
     # create input data
     # create model of data with 0 value array
@@ -114,7 +118,7 @@ def test_firstframe_sub():
     # run the step
     outim = RefPixStep.call(im)
 
-    diff = im.data[:, :, :, :] - outim.data[:, :, :, :]
+    diff = im.data - outim.data
 
     # test that the science data are not changed
 
@@ -229,8 +233,8 @@ def test_no_odd_even():
 
 
 def test_side_averaging():
-    '''	For MIR data, check that the mean value in the reference pixels is calculated for each amplifier
-        using the average of the left and right side reference pixels.'''
+    '''For MIRI data, check that the mean value in the reference pixels is calculated for each amplifier
+    using the average of the left and right side reference pixels.'''
     # Test that the left and right side pixels are averaged.
 
     # create input data
@@ -265,7 +269,7 @@ def test_above_sigma():
 
     # create input data
     # create model of data with 0 value array
-    ngroups = 5
+    ngroups = 10
     ysize = 1024
     xsize = 1032
 
@@ -291,15 +295,15 @@ def test_above_sigma():
 
 
 def test_nan_refpix():
-    '''Verify that the reference pixels flagged DO_NOT_USE are not used in the calculation'''
+    '''Verify that the reference pixels flagged DO_NOT_USE are not used in the calculation
 
-    # Test that flagging a reference pixel with DO_NOT_USE does not use the pixel in the
-    # average. Set the pixel to NaN, which results in a NaN average value if used. If the test
-    # passes, then the NaN was correctly flagged and rejected from the average.
+    Test that flagging a reference pixel with DO_NOT_USE does not use the pixel in the
+    average. Set the pixel to NaN, which results in a NaN average value if used. If the test
+    passes, then the NaN was correctly flagged and rejected from the average.'''
 
     # create input data
     # create model of data with 0 value array
-    ngroups = 5
+    ngroups = 10
     ysize = 1024
     xsize = 1032
 
@@ -329,7 +333,7 @@ def test_do_corrections_subarray_no_oddEven(setup_subarray_cube):
     '''Test all corrections for subarray data with no even/odd.'''
 
     # Create inputs and subarray SUB320A335R data, and set correction parameters
-    ngroups = 5
+    ngroups = 10
     nrows = 160
     ncols = 160
     xstart = 1
@@ -351,8 +355,8 @@ def test_do_corrections_subarray_no_oddEven(setup_subarray_cube):
     input_model.data[0, 0, :, :] = dataval
     input_model.data[0, 0, :4, :] = bottom_rpix
     input_model.data[0, 0, :, :4] = left_rpix
-    input_model.pixeldq[:4, :] = 2147483648
-    input_model.pixeldq[:, :4] = 2147483648
+    input_model.pixeldq[:4, :] = dqflags.pixel['REFERENCE_PIXEL'])
+    input_model.pixeldq[:, :4] = dqflags.pixel['REFERENCE_PIXEL'])
 
     init_dataset = create_dataset(input_model,
                                 odd_even_columns,
@@ -372,7 +376,7 @@ def test_do_corrections_subarray(setup_subarray_cube):
     '''Test all corrections for subarray data.'''
 
     # Create inputs and subarray SUB320A335R data, and set correction parameters
-    ngroups = 5
+    ngroups = 10
     nrows = 160
     ncols = 160
     xstart = 1
@@ -394,8 +398,8 @@ def test_do_corrections_subarray(setup_subarray_cube):
     input_model.data[0, 0, :, :] = dataval
     input_model.data[0, 0, :4, :] = bottom_rpix
     input_model.data[0, 0, :, :4] = left_rpix
-    input_model.pixeldq[:4, :] = 2147483648
-    input_model.pixeldq[:, :4] = 2147483648
+    input_model.pixeldq[:4, :] = dqflags.pixel['REFERENCE_PIXEL'])
+    input_model.pixeldq[:, :4] = dqflags.pixel['REFERENCE_PIXEL'])
 
     init_dataset = create_dataset(input_model,
                                 odd_even_columns,
@@ -415,7 +419,7 @@ def test_get_restore_group_subarray(setup_subarray_cube):
     '''Test subarray input model data is replaced with group data.'''
 
     # Create inputs and subarray SUB320A335R data, and set correction parameters
-    ngroups = 5
+    ngroups = 10
     nrows = 320
     ncols = 320
     xstart = 486
@@ -452,9 +456,9 @@ def test_get_restore_group_subarray(setup_subarray_cube):
 
 
 def test_do_top_bottom_correction(setup_cube):
-    '''Test top/bottom correction.'''
+    '''Test top/bottom correction for NIRCam data.'''
 
-    ngroups = 5
+    ngroups = 10
     nrows = 2048
     ncols = 2048
 
@@ -512,7 +516,7 @@ def test_do_top_bottom_correction(setup_cube):
 def test_do_top_bottom_correction_no_evenOdd(setup_cube):
     '''Test top/bottom correction with no even/odd.'''
 
-    ngroups = 5
+    ngroups = 10
     nrows = 2048
     ncols = 2048
 
