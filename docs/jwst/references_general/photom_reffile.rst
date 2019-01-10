@@ -238,17 +238,19 @@ which contains the columns of information unique to that instrument.
 A NIRISS photom reference file, for example, could be constructed as follows
 from within the python environment::
 
- >>> from jwst import models
+ >>> from jwst import datamodels
  >>> import numpy as np
- >>> output=models.NirissPhotomModel()
- >>> filter=np.array(['F277W','F356W','CLEAR'])
- >>> pupil=np.array(['CLEARP','CLEARP','F090W'])
- >>> photf=np.array([1.e-15,2.e-15,3.e-15])
- >>> uncer=np.array([1.e-17,2.e-17,3.e-17])
- >>> nelem=np.zeros(3)
- >>> wave=np.zeros(3)
- >>> resp=np.zeros(3)
- >>> data=np.array(list(zip(filter,pupil,photf,uncer,nelem,wave,resp)),dtype=output.phot_table.dtype)
- >>> output.phot_table=data
+ >>> output = datamodels.NirissPhotomModel()
+ >>> filter = np.array(['F277W','F356W','CLEAR'])
+ >>> pupil = np.array(['CLEARP','CLEARP','F090W'])
+ >>> photf = np.array([1.e-15,2.e-15,3.e-15])
+ >>> uncer = np.array([1.e-17,2.e-17,3.e-17])
+ >>> nelem = np.zeros(3, dtype=np.int16)
+ >>> wave = np.zeros((3, 5000))
+ >>> resp = np.zeros((3, 5000))
+ >>> order = np.array([1, 2, 3], dtype=np.int16)
+ >>> data = np.array(list(zip(filter, pupil, order, photf, uncer, nelem, wave, resp)), dtype=output.phot_table.dtype)
+ >>> output.phot_table = data
  >>> output.save('niriss_photom_0001.fits')
+ 'niriss_photom_0001.fits'
 

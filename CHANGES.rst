@@ -11,6 +11,8 @@ assign_wcs
  - Refactored how the pipeline handles subarrays in the WCS. Fixed a bug
    where the bounding box was overwritten in full frame mode. [#2980]
 
+ - Rename several functions dealing with calculating bounding boxes for clarity [#3014]
+
 associations
 ------------
 
@@ -61,6 +63,9 @@ extract_1d
 - Updated to recognize NRC_TSGRISM as WFSS data.  SlitDataModel schema now
   specifies that the wavelength attribute should be 2-D, with a default
   value of 0. [#2911]
+
+- Reverse order of RELSENS wavelength and response if the wavelengths are
+  not increasing. [#3005]
 
 extract_2d
 ----------
@@ -141,6 +146,30 @@ pipeline
 
 ramp_fitting
 ------------
+- Ramp-fitting returning zero for all background pixels; Issue #2848, JP-453.
+
+- MIRI ramps with jumps flagged at group 2 result in slopes of 0 in the rate
+  image; Issue #2233,
+
+- Processing pixels in ramp fitting in which all groups are saturated; Issue
+  #2885.
+
+- Ramp Fit fails when only two groups are in a segment after cosmic ray hits.;
+  Issue #2832, JP-450.
+
+- Fixed a bug in which the keywords from the input were not included in the OPT
+  output header.
+
+- Simplified and clarified classification of segment types based on DQ flags.
+
+- Added handling of ramps ending in 2 saturated groups.
+
+- Fix units for Read Noise Variance in ramp_fit (PR #2767). This may needed to
+  revised based on Mike Regan's comment when he closed this PR.
+
+- Added check to handle integration-specific variances for too short segments.
+
+- More robust handling of ramps flagged as DO_NOT_USE (PR #3016)
 
 refpix
 ------
@@ -172,8 +201,6 @@ srctype
 scripts
 -------
 
-- `set_telescope_pointing.py`: Update method of choosing pointing parameters [#2900]
-
 stpipe
 ------
 
@@ -204,6 +231,15 @@ white_light
 wiimatch
 --------
 
+0.12.3 (2019-01-10)
+===================
+
+scripts
+-------
+
+- ``set_telescope_pointing.py``: Update method of choosing pointing parameters. [#2900, #3008, #3022]
+
+- ``set_telescope_pointing.py``: Allow undefined SIAF. [#3002, #3006]
 
 0.12.2 (2018-11-15)
 ===================

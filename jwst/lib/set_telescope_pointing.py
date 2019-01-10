@@ -369,6 +369,15 @@ def update_wcs_from_telem(
         v3idlyang=model.meta.wcsinfo.v3yangle,
         vparity=model.meta.wcsinfo.vparity
     )
+    if None in siaf:
+        if allow_default:
+            logger.warning(
+                'Insufficient SIAF information found in header.'
+                'Resetting to a unity SIAF.'
+            )
+            siaf = SIAF(0., 0., 0., 1)
+        else:
+            raise ValueError('Insufficient SIAF information found in header.')
 
     # Setup default WCS info if actual pointing and calculations fail.
     wcsinfo = WCSRef(
@@ -1218,10 +1227,6 @@ def get_mnemonics(obsstart, obsend, tolerance, engdb_url=None):
         Cannot retrieve engineering information
 
     """
-    logger.info(
-        'Querying engineering DB: {}'.format(ENGDB_BASE_URL)
-    )
-
     try:
         engdb = ENGDB_Service(base_url=engdb_url)
     except Exception as exception:
@@ -1231,6 +1236,10 @@ def get_mnemonics(obsstart, obsend, tolerance, engdb_url=None):
                 exception
             )
         )
+    logger.info(
+        'Querying engineering DB: {}'.format(engdb.base_url)
+    )
+
     mnemonics = {
         'SA_ZATTEST1':  None,
         'SA_ZATTEST2':  None,
