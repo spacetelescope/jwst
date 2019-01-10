@@ -16,7 +16,7 @@ class JumpStep(Step):
 
     spec = """
         rejection_threshold = float(default=4.0,min=0) # CR rejection threshold
-        maximum_cores = option('one', 'quarter', 'half', 'all', default='half') # max number of processes to create
+        maximum_cores = option('one', 'quarter', 'half', 'all', default='one') # max number of processes to create
     """
 
     # Prior to 04/26/17, the following were also in the spec above:
