@@ -41,7 +41,7 @@ in the case of NIRSpec FS exposure or any of the slitlet names in the case of th
 To find out what slits are available for extraction:
 
   >>> from jwst.assign_wcs import nirspec
-  >>> nirspec.get_open_slits(input_model)
+  >>> nirspec.get_open_slits(input_model) # doctest: +SKIP
 
 
 The corner locations of the regions to be extracted are determined from the

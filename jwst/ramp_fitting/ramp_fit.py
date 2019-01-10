@@ -583,6 +583,11 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
         opt_res.shrink_crmag(n_int, gdq_cube, imshape, nreads)
         del gdq_cube
 
+        # Some contributions to these vars may be NaN as they are from ramps 
+        # having PIXELDQ=DO_NOT_USE
+        var_p4[ np.isnan( var_p4 )] = 0.
+        var_r4[ np.isnan( var_r4 )] = 0.
+
         # Truncate results at the maximum number of segments found
         opt_res.slope_seg = opt_res.slope_seg[:,:f_max_seg,:,:]
         opt_res.sigslope_seg = opt_res.sigslope_seg[:,:f_max_seg,:,:]
@@ -668,6 +673,11 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
     #  to nullify their contribution.
     var_p2[var_p2 > 0.1 * utils.LARGE_VARIANCE] = 0.
     var_r2[var_r2 > 0.1 * utils.LARGE_VARIANCE] = 0.
+
+    # Some contributions to these vars may be NaN as they are from ramps 
+    # having PIXELDQ=DO_NOT_USE
+    var_p2[ np.isnan( var_p2 )] = 0.
+    var_r2[ np.isnan( var_r2 )] = 0.
 
     del s_inv_var_p3
     del s_inv_var_r3

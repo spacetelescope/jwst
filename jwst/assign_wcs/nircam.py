@@ -7,7 +7,7 @@ import gwcs.coordinate_frames as cf
 
 from . import pointing
 from .util import (not_implemented_mode, subarray_transform, velocity_correction,
-                   bounding_box_from_model, bounding_box_from_subarray)
+                   transform_bbox_from_datamodel, bounding_box_from_subarray)
 from ..datamodels import (ImageModel, NIRCAMGrismModel, DistortionModel,
                           CubeModel)
 from ..transforms.models import (NIRCAMForwardRowGrismDispersion,
@@ -109,7 +109,7 @@ def imaging_distortion(input_model, reference_files):
     except NotImplementedError:
         # Check if the transform in the reference file has a ``bounding_box``.
         # If not set a ``bounding_box`` equal to the size of the image.
-        transform.bounding_box = bounding_box_from_model(input_model)
+        transform.bounding_box = transform_bbox_from_datamodel(input_model)
     dist.close()
     return transform
 
