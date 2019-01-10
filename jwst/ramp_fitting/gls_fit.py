@@ -1,5 +1,4 @@
 import logging
-import math
 
 import numpy as np
 import numpy.linalg as la
@@ -27,11 +26,6 @@ HUGE_FOR_LOW_WEIGHT = 1.e20
 # zero or negative.
 FIT_MUST_BE_POSITIVE = 1.e10
 
-# The readnoise in the reference file is appropriate for the difference
-# between adjacent reads.  We need the readnoise for a single read, so
-# the readnoise read from the reference file should be multiplied by
-# the following factor to convert from CDS to single read.
-SINGLE_READOUT_RN_FACTOR = 1. / math.sqrt(2.)
 
 def determine_slope(data_sect, input_var_sect,
                     gdq_sect, readnoise_sect, gain_sect,
@@ -679,18 +673,17 @@ def gls_fit(ramp_data,
     # the diagonal of the covariance matrix.
     I = np.identity(ngroups)
 
-    # Divide by sqrt(2) to convert the readnoise from CDS to single readout.
-    rn3d = readnoise.reshape((nz, 1, 1)) * SINGLE_READOUT_RN_FACTOR
-    ramp_cov += (I * (rn3d**2 / M))
+    rn3d = readnoise.reshape((nz, 1, 1))
+    ramp_cov += (I * rn3d**2)
 
     # prev_slope_data must be non-negative.
     flags = prev_slope_data < 0.
     prev_slope_data[flags] = 1.
 
     # The resulting fit parameters are
-    #  (xT @ ramp_cov^-1 @ x)^-1 * [xT @ ramp_cov^-1 @ y]
+    #  (xT @ ramp_cov^-1 @ x)^-1 @ [xT @ ramp_cov^-1 @ y]
     #  = [y-intercept, slope, cr_amplitude_1, cr_amplitude_2, ...]
-    # where * means matrix multiplication.
+    # where @ means matrix multiplication.
 
     # shape of xT is (nz, 2 + num_cr, ngroups)
     xT = np.transpose(x, (0, 2, 1))
@@ -702,7 +695,7 @@ def gls_fit(ramp_data,
     del I
 
     # temp1 = xT @ ramp_invcov
-    # np.einsum use is equivalent to matrix mulitplication
+    # np.einsum use is equivalent to matrix multiplication
     # shape of temp1 is (nz, 2 + num_cr, ngroups)
     temp1 = np.einsum('...ij,...jk->...ik', xT, ramp_invcov)
 
@@ -736,8 +729,6 @@ def gls_fit(ramp_data,
     r_shape = fitparam.shape
     fitparam2d = fitparam.reshape((r_shape[0], r_shape[1]))
     del fitparam
-
-    # print(result2d[0])
 
     # shape of both result2d and variances is (nz, 2 + num_cr)
     fitparam_uncs = fitparam_cov.diagonal(axis1=1, axis2=2).copy()

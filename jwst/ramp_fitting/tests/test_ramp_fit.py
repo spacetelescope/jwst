@@ -39,6 +39,9 @@ def test_one_group_two_ints_fit_gls():
     slopes = ramp_fit(model1, 1024*30000., True, rnModel, gain, 'GLS', 'optimal')
     np.testing.assert_allclose(slopes[0].data[500, 500],11.0, 1e-6)
 
+# tests that apply to both 'ols' and 'gls' are in the TestMethods class so
+# that both can use the parameterized 'method'
+
 @pytest.mark.parametrize("method", ['OLS', 'GLS'])
 class TestMethods:
 
@@ -198,7 +201,7 @@ class TestMethods:
         model1.data[0, 3, 500, 500] = 33.0
         model1.data[0, 4, 500, 500] = 60.0
         slopes = ramp_fit(model1, 1024*30000., True, rnModel, gain, 'OLS', 'unweighted')
-        cds_slope = (model1.data[0,4,500,500] - model1.data[0,0,500,500])/ 4.0
+        # cds_slope = (model1.data[0,4,500,500] - model1.data[0,0,500,500])/ 4.0
         xvalues = np.arange(5)*1.0
         yvalues = np.array([10,15,25,33,60])
         coeff = np.polyfit(xvalues, yvalues, 1)
@@ -308,7 +311,7 @@ class TestMethods:
         model1.data[0, 0, 500, 500] = 10.0
         model1.data[0, 1, 500, 500] = 10.0 + deltaDN
         slopes = ramp_fit(model1, 1024*30000., True, rnModel, gain, 'OLS', 'optimal')
-        delta_electrons = deltaDN * ingain
+        # delta_electrons = deltaDN * ingain
         single_sample_readnoise = inreadnoise/np.sqrt(2)
         np.testing.assert_allclose(slopes[0].var_poisson[500,500],((deltaDN/ingain)/grouptime**2), 1e-6)
         np.testing.assert_allclose(slopes[0].var_rnoise[500,500],(inreadnoise**2/grouptime**2), 1e-6)
@@ -317,7 +320,7 @@ class TestMethods:
 
     def test_five_groups_unc(self, method):
         grouptime=3.0
-        deltaDN = 5
+        # deltaDN = 5
         ingain = 2
         inreadnoise =7
         ngroups=5
@@ -329,11 +332,11 @@ class TestMethods:
         model1.data[0, 3, 500, 500] = 33.0
         model1.data[0, 4, 500, 500] = 60.0
         slopes = ramp_fit(model1, 1024*30000., True, rnModel, gain, 'OLS', 'optimal')
-        out_slope=slopes[0].data[500, 500]
+        # out_slope=slopes[0].data[500, 500]
         median_slope=np.median(np.diff(model1.data[0,:,500,500]))/grouptime
-        deltaDN = 50
+        # deltaDN = 50
         delta_time = (ngroups - 1) * grouptime
-        delta_electrons = median_slope * ingain *delta_time
+        # delta_electrons = median_slope * ingain *delta_time
         single_sample_readnoise = np.float64(inreadnoise/np.sqrt(2))
         np.testing.assert_allclose(slopes[0].var_poisson[500,500],((median_slope)/(ingain*delta_time)), 1e-6)
         np.testing.assert_allclose(slopes[0].var_rnoise[500,500],(12 * single_sample_readnoise**2/(ngroups * (ngroups**2 - 1) * grouptime**2)),  1e-6)
@@ -341,7 +344,7 @@ class TestMethods:
 
     def test_oneCR_10_groups_combination(self, method):
         grouptime=3.0
-        deltaDN = 5
+        # deltaDN = 5
         ingain = 200 # use large gain to show that Poisson noise doesn't affect the recombination
         inreadnoise = np.float64(7)
         ngroups=10
@@ -372,7 +375,7 @@ class TestMethods:
 
     def test_oneCR_10_groups_combination_noisy2ndSegment(self, method):
         grouptime=3.0
-        deltaDN = 5
+        # deltaDN = 5
         ingain = 200 # use large gain to show that Poisson noise doesn't affect the recombination
         inreadnoise =7
         ngroups=10
