@@ -2,8 +2,6 @@ import pytest
 import numpy as np
 import os
 from astropy.io import fits
-from jwst.jump.jump import detect_jumps
-from jwst.datamodels import dqflags
 from jwst.datamodels import MIRIRampModel
 from jwst.datamodels import GainModel, ReadnoiseModel
 from jwst.jump import JumpStep

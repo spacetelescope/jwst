@@ -1,8 +1,5 @@
-import pytest
 import numpy as np
-
 from jwst.jump.jump import detect_jumps
-from jwst.datamodels import dqflags
 from jwst.datamodels import MIRIRampModel
 from jwst.datamodels import GainModel, ReadnoiseModel
 
@@ -10,14 +7,12 @@ from jwst.datamodels import GainModel, ReadnoiseModel
 def test_nocrs_noflux():
     # all pixel values are zero. So slope should be zero
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=5)
-    out_model = detect_jumps(model1, gain, rnModel, 4.0, False, 4.0)
+    out_model = detect_jumps(model1, gain, rnModel, 4.0, False, 4.0, 'one')
     assert (0 == np.max(out_model.groupdq))
-
 
 
 def test_oneCR_10_groups():
     grouptime = 3.0
-    deltaDN = 5
     ingain = 200  # use large gain to show that Poisson noise doesn't affect the recombination
     inreadnoise = np.float64(7)
     ngroups = 10
@@ -34,12 +29,11 @@ def test_oneCR_10_groups():
     model1.data[0, 7, 500, 500] = 160.0
     model1.data[0, 8, 500, 500] = 170.0
     model1.data[0, 9, 500, 500] = 180.0
-    out_model = detect_jumps(model1, gain, rnModel, 4.0, False, 4.0)
+    out_model = detect_jumps(model1, gain, rnModel, 4.0, False, 4.0, 'one')
     assert (4 == np.max(out_model.groupdq[0, 5, 500, 500]))
 
 def test_oneCR_10_groups_fullarray():
     grouptime = 3.0
-    deltaDN = 5
     ingain = 5  # use large gain to show that Poisson noise doesn't affect the recombination
     inreadnoise = np.float64(7)
     ngroups = 10
@@ -64,12 +58,12 @@ def test_oneCR_10_groups_fullarray():
     model1.data[0, 7, :, 102] = 220
     model1.data[0, 8, :, 102] = 250
     model1.data[0, 9, :, 102] = 280
-    out_model = detect_jumps(model1, gain, rnModel, 4.0, False, 4.0)
+    out_model = detect_jumps(model1, gain, rnModel, 4.0, False, 4.0, 'one')
     assert (4 == np.max(out_model.groupdq[0, 5, :, :]))
+
 
 def test_oneCR_100_groups_fullarray():
     grouptime = 3.0
-    deltaDN = 5
     ingain = 5  # use large gain to show that Poisson noise doesn't affect the recombination
     inreadnoise = np.float64(7)
     ngroups = 10
@@ -91,11 +85,7 @@ def test_oneCR_100_groups_fullarray():
     out_model = detect_jumps(model1, gain, rnModel, 4.0, False, 4.0, 'one')
     assert (4 == np.max(out_model.groupdq[0, 5, :, :]))
     outdqcr = out_model.groupdq[0, 5, :, :]
- #   np.testing.assert_equal(4,out_model.groupdq[0, 5, :, :])
-    badpixel = np.where(outdqcr != 4)
     np.testing.assert_allclose(4, outdqcr)
-
-
 
 # Need test for multi-ints near zero with positive and negative slopes
 
@@ -145,7 +135,7 @@ def setup_inputs(ngroups=10, readnoise=10, nints=1,
 def setup_subarray_inputs(ngroups=10, readnoise=10, nints=1,
                           nrows=1032, ncols=1024, subxstart=1, subystart=1,
                           subxsize=1024, subysize=1032, nframes=1,
-                          grouptime=1.0, gain=1, deltatime=1):
+                          gain=1, deltatime=1.0):
     times = np.array(list(range(ngroups)), dtype=np.float64) * deltatime
     gain = np.ones(shape=(nrows, ncols), dtype=np.float64) * gain
     err = np.ones(shape=(nints, ngroups, nrows, ncols), dtype=np.float64)
@@ -168,7 +158,7 @@ def setup_subarray_inputs(ngroups=10, readnoise=10, nints=1,
     model1.meta.exposure.frame_time = deltatime
     model1.meta.exposure.ngroups = ngroups
     model1.meta.exposure.group_time = deltatime
-    model1.meta.exposure.nframes = 1
+    model1.meta.exposure.nframes = nframes
     model1.meta.exposure.groupgap = 0
     gain = GainModel(data=gain)
     gain.meta.instrument.name = 'MIRI'

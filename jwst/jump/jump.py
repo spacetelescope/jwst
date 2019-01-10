@@ -91,8 +91,6 @@ def detect_jumps (input_model, gain_model, readnoise_model,
     scisize = data.shape
     numx = int(scisize[3])
     numy = int(scisize[2])
-    numz = int(scisize[1])
-    numints = int(scisize[0])
     median_slopes = np.zeros((numy, numx), dtype=np.float32)
     yincrement = int(numy / numslices)
     slices = []
