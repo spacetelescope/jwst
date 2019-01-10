@@ -148,13 +148,13 @@ ramp_fitting
 ------------
 - Ramp-fitting returning zero for all background pixels; Issue #2848, JP-453.
 
-- MIRI ramps with jumps flagged at group 2 result in slopes of 0 in the rate 
+- MIRI ramps with jumps flagged at group 2 result in slopes of 0 in the rate
   image; Issue #2233,
 
-- Processing pixels in ramp fitting in which all groups are saturated; Issue 
+- Processing pixels in ramp fitting in which all groups are saturated; Issue
   #2885.
 
-- Ramp Fit fails when only two groups are in a segment after cosmic ray hits.; 
+- Ramp Fit fails when only two groups are in a segment after cosmic ray hits.;
   Issue #2832, JP-450.
 
 - Fixed a bug in which the keywords from the input were not included in the OPT
@@ -164,7 +164,7 @@ ramp_fitting
 
 - Added handling of ramps ending in 2 saturated groups.
 
-- Fix units for Read Noise Variance in ramp_fit (PR #2767). This may needed to 
+- Fix units for Read Noise Variance in ramp_fit (PR #2767). This may needed to
   revised based on Mike Regan's comment when he closed this PR.
 
 - Added check to handle integration-specific variances for too short segments.
@@ -201,8 +201,6 @@ srctype
 scripts
 -------
 
-- `set_telescope_pointing.py`: Update method of choosing pointing parameters [#2900]
-
 stpipe
 ------
 
@@ -233,6 +231,15 @@ white_light
 wiimatch
 --------
 
+0.12.3 (2019-01-10)
+===================
+
+scripts
+-------
+
+- ``set_telescope_pointing.py``: Update method of choosing pointing parameters. [#2900, #3008, #3022]
+
+- ``set_telescope_pointing.py``: Allow undefined SIAF. [#3002, #3006]
 
 0.12.2 (2018-11-15)
 ===================
