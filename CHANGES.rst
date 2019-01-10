@@ -1,4 +1,14 @@
-0.12.2 (2018-11-06)
+0.12.3 (2019-01-10)
+===================
+
+scripts
+-------
+
+- ``set_telescope_pointing.py``: Update method of choosing pointing parameters. [#2900, #3008, #3022]
+
+- ``set_telescope_pointing.py``: Allow undefined SIAF. [#3002, #3006]
+
+0.12.2 (2018-11-15)
 ===================
 
 associations
