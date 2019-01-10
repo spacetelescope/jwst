@@ -291,7 +291,7 @@ class TestMIRISetPointing(BaseJWSTTest):
                                     docopy=True  # always produce local copy
                               )
 
-        add_wcs(input_file)
+        add_wcs(input_file, allow_default=True)
 
         outputs = [(input_file,
                     'jw80600010001_02101_00001_mirimage_uncal_ref.fits')]
