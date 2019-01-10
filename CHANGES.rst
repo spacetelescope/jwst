@@ -8,6 +8,7 @@ scripts
 
 - ``set_telescope_pointing.py``: Allow undefined SIAF. [#3002, #3006]
 
+
 0.12.2 (2018-11-15)
 ===================
 
