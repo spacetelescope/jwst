@@ -1,13 +1,24 @@
+from bs4 import BeautifulSoup
+from fnmatch import fnmatch
+from glob import glob as _sys_glob
+import os.path as op
 import pytest
+import requests
 
 from ci_watson.artifactory_helpers import (
+    BigdataError,
     check_url,
-    get_bigdata_root,
     get_bigdata,
+    get_bigdata_root,
 )
 from .compare_outputs import compare_outputs
 
 from jwst.associations import load_asn
+
+__all__ = [
+    'BaseJWSTTest',
+]
+
 
 @pytest.mark.usefixtures('_jail')
 @pytest.mark.bigdata
@@ -74,6 +85,35 @@ class BaseJWSTTest:
                                docopy=self.docopy,
                                results_root=self.results_root,
                                **compare_kws)
+
+    def data_glob(self, *pathargs, glob='*'):
+        """Retrieve file list matching glob
+
+        Parameters
+        ----------
+        pathargs: (str[, ...])
+            Path components
+
+        glob: str
+            The file name match criterion
+
+        Returns
+        -------
+        file_paths: [str[, ...]]
+            Full file paths that match the glob criterion
+        """
+
+        # Get full path and proceed depending on whether
+        # is a local path or URL.
+        path = op.join(get_bigdata_root(), *pathargs)
+        if op.exists(path):
+            file_paths = _data_glob_local(path, glob)
+        elif check_url(path):
+            file_paths = _data_glob_url(path, glob)
+        else:
+            raise BigdataError('Path cannot be found: {}'.format(path))
+
+        return file_paths
 
 
 # Pytest function to support the parameterization of BaseJWSTTestSteps
@@ -163,3 +203,48 @@ def raw_from_asn(asn_file):
             members.append(member['expname'])
 
     return members
+
+
+def _data_glob_local(path, glob='*'):
+    """Perform a glob on the local path
+
+    Parameters
+    ----------
+    path: File path-like object
+        The path to check.
+
+    glob: str
+        The file name match criterion
+
+    Returns
+    -------
+    file_paths: [str[, ...]]
+        Full file paths that match the glob criterion
+    """
+    full_glob = op.join(path, glob)
+    return _sys_glob(full_glob)
+
+
+def _data_glob_url(url, glob='*'):
+    """
+    Parameters
+    ----------
+    url: str
+        The URL to check
+
+    glob: str
+        The file name match criterion
+
+    Returns
+    -------
+    url_paths: [str[, ...]]
+        Full URLS that match the glob criterion
+    """
+    path = requests.get(url).text
+    soup = BeautifulSoup(path, 'html.parser')
+    url_paths = [
+        url + '/' + node.get('href')
+        for node in soup.find_all('a')
+        if fnmatch(node.get('href'), glob)
+    ]
+    return url_paths
