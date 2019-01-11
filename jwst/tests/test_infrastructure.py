@@ -77,20 +77,20 @@ def test_data_glob_url(glob_filter, nfiles):
     assert len(files) == nfiles
 
 
-class GlobTest(BaseJWSTTest):
+class TestGlob(BaseJWSTTest):
     """Test globbing from the class"""
 
-    input_loc = ['nircam']
+    input_loc = 'nircam'
     ref_loc = ['test_bias_drift', 'truth']
 
-    def test_glob(self):
-        nfiles = self.data_glob('test_bias_drift')
-        assert len(nfiles) == 3
-
-    def test_glob_fits(self):
-        nfiles = self.data_glob('test_bias_drift', '*.fits')
-        assert len(nfiles) == 1
-
-    def test_glob_none(self):
-        nfiles = self.data_glob('test_bias_drift', '*.txt')
-        assert len(nfiles) == 0
+    @pytest.mark.parametrize(
+        'glob_filter, nfiles',
+        [
+            ('*', 3),
+            ('*.txt', 0),
+            ('*.fits', 1)
+        ]
+    )
+    def test_glob(self, glob_filter, nfiles):
+        files = self.data_glob('test_bias_drift', glob=glob_filter)
+        assert len(files) == nfiles

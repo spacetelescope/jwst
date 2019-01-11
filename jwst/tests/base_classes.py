@@ -105,7 +105,7 @@ class BaseJWSTTest:
 
         # Get full path and proceed depending on whether
         # is a local path or URL.
-        path = op.join(get_bigdata_root(), *pathargs)
+        path = op.join(get_bigdata_root(), *self.repo_path, *pathargs)
         if op.exists(path):
             file_paths = _data_glob_local(path, glob)
         elif check_url(path):
