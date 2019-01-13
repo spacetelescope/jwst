@@ -77,7 +77,7 @@ def test_data_glob_url(glob_filter, nfiles):
     assert len(files) == nfiles
 
 
-class TestGlob(BaseJWSTTest):
+class TestBaseJWSTTest(BaseJWSTTest):
     """Test globbing from the class"""
 
     input_loc = 'nircam'
@@ -92,5 +92,17 @@ class TestGlob(BaseJWSTTest):
         ]
     )
     def test_glob(self, glob_filter, nfiles):
+        """Test data globbing
+
+        Ensure glob gets the right files.
+
+        Parameters
+        ----------
+        glob_filter: str
+            The `glob`-like filter to use.
+
+        nfiles: int
+            Number of files expected to be returned.
+        """
         files = self.data_glob('test_bias_drift', glob=glob_filter)
         assert len(files) == nfiles
