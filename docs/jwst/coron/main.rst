@@ -1,6 +1,6 @@
-Tasks in the Package
+Steps in the Package
 ====================
-The coronagraphic package currently consists of the following tasks:
+The coronagraphic package currently consists of the following steps:
 
 1) :ref:`stack_refs <stack_refs_step>`: Accumulate PSF target images from multiple exposures
    into a single product, for use in other steps
@@ -9,5 +9,5 @@ The coronagraphic package currently consists of the following tasks:
    from science target images
 4) :ref:`hlsp <hlsp_step>`: Create high-level science products from a PSF-subtracted image
 
-These tasks, and others, are applied to an association of coronagraphic exposures using the
+These steps, and others, are applied to an association of coronagraphic exposures using the
 pipeline module :ref:`calwebb_coron3 <calwebb_coron3>`.

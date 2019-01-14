@@ -1,6 +1,6 @@
 .. _ami_analyze_step:
 
-AMI_Analyze
+ami_analyze
 ===========
 
 Description

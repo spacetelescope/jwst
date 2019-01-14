@@ -1,6 +1,6 @@
 .. _ami_normalize_step:
 
-AMI_Normalize
+ami_normalize
 =============
 
 Description

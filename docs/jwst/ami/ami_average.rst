@@ -1,6 +1,6 @@
 .. _ami_average_step:
 
-AMI_Average
+ami_average
 ===========
 
 Description
