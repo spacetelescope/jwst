@@ -18,8 +18,6 @@ from astropy.modeling import models, fitting
 
 __all__ = ['extract1d']
 __taskname__ = 'extract1d'
-__version__ = '0.9.3'
-__vdate__ = '22-December-2015'
 __author__ = 'Mihai Cara'
 
 log = logging.getLogger(__name__)
