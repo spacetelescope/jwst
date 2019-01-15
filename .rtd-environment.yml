@@ -1,15 +1,9 @@
 name: jwst
 dependencies:
-  - python=3.6.6
+  - python=3.6
   - setuptools
+  - numpy=1.15
   - pip:
-    - numpy
-    - sphinx
-    - sphinxcontrib-programoutput
-    - sphinx-automodapi
-    - sphinx_rtd_theme
-    - stsci_rtd_theme
-    - matplotlib
     - astropy
     - asdf
     - crds
@@ -27,3 +21,7 @@ dependencies:
     - stsci.tools
     - verhawk
     - pytest
+    - sphinxcontrib-programoutput
+    - sphinx-automodapi
+    - stsci_rtd_theme
+    - matplotlib
