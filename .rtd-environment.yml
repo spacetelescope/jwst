@@ -1,17 +1,19 @@
-
+name: jwst
 dependencies:
-  - python>=3
+  - "python>=3.5"
   - setuptools
-  - astropy
-  - matplotlib
   - numpy
-  - scipy
   - pip:
+    - sphinx
     - sphinxcontrib-programoutput
     - sphinx-automodapi
+    - sphinx_rtd_theme
     - stsci_rtd_theme
+    - matplotlib
+    - "astropy>=3.1"
     - asdf
     - crds
+    - scipy
     - drizzle
     - gwcs
     - jsonschema
@@ -23,7 +25,4 @@ dependencies:
     - stsci.imagestats
     - stsci.stimage
     - stsci.tools
-    - six
     - verhawk
-    - sphinx_rtd_theme
-
