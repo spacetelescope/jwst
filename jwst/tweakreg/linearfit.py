@@ -292,21 +292,6 @@ def fit_rscale(xyin, xyref):
     return result
 
 
-def _inv3x3(x):
-    """ Return inverse of a 3-by-3 matrix.
-    """
-    x0 = x[:, 0]
-    x1 = x[:, 1]
-    x2 = x[:, 2]
-    m = np.array([np.cross(x1, x2), np.cross(x2, x0), np.cross(x0, x1)])
-    d = np.dot(x0, np.cross(x1, x2))
-    if np.abs(d) < np.finfo(np.float64).tiny:
-        raise SingularMatrixError(
-            "Singular matrix: suspected colinear points."
-        )
-    return (m / d)
-
-
 def fit_general(xy, uv):
     """ Performs a simple fit for the shift only between
         matched lists of positions 'xy' and 'uv'.
@@ -361,7 +346,7 @@ def fit_general(xy, uv):
     #   u = P0 + P1*x + P2*y
     #   v = Q0 + Q1*x + Q2*y
     #
-    invM = _inv3x3(M)
+    invM = np.linalg.inv(M)
     P = np.dot(invM, U).astype(np.float64)
     Q = np.dot(invM, V).astype(np.float64)
     if not (np.all(np.isfinite(P)) and np.all(np.isfinite(Q))):

@@ -222,6 +222,9 @@ tso_photometry
 tweakreg
 --------
 
+- Use a more numerically stable ``numpy.linalg.inv`` instead of own matrix
+  inversion. [#3033]
+
 wfs_combine
 -----------
 
