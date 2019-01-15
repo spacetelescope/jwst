@@ -1,7 +1,6 @@
 name: jwst
 dependencies:
   - python=3.6
-  - setuptools
   - numpy=1.15
   - pip:
     - astropy
