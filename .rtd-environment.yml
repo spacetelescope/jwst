@@ -2,8 +2,8 @@ name: jwst
 dependencies:
   - "python>=3.5"
   - setuptools
-  - numpy
   - pip:
+    - numpy
     - sphinx
     - sphinxcontrib-programoutput
     - sphinx-automodapi
