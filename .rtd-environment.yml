@@ -26,3 +26,4 @@ dependencies:
     - stsci.stimage
     - stsci.tools
     - verhawk
+    - pytest
