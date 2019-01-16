@@ -11,12 +11,12 @@ from pathlib import Path
 
 import pytest
 
-from jwst.associations.tests.helpers import (
-    compare_asns,
+from jwst.associations.lib.diff import (
+    compare_asn_files,
 )
+from jwst.lib.file_utils import pushdir
 from jwst.tests.base_classes import BaseJWSTTest
 
-from jwst.associations import load_asn
 from jwst.associations.main import Main
 
 # Main test args
@@ -43,28 +43,24 @@ class TestAgainstStandards(AssociationBase):
         """
 
         # Create the associations
+        generated_path = Path('generate')
+        generated_path.mkdir()
         local_pool_path = self.get_data(pool_path)
-        args = TEST_ARGS + [local_pool_path]
-        generated = Main(args).associations
+        Main([
+            '--no-merge',
+            '-p', str(generated_path),
+            local_pool_path
+        ])
 
         # Retrieve the truth files
         pool = Path(pool_path).stem
-        standards = []
-        for standard_path in self.data_glob(*self.ref_loc, glob=pool + '*.json'):
-            local_path = self.get_data(standard_path)
-            with open(local_path, 'r') as fh:
-                standards.append(load_asn(fh))
+        sdp_path = Path('sdp')
+        sdp_path.mkdir()
+        with pushdir(sdp_path):
+            for standard_path in self.data_glob(*self.ref_loc, glob=pool + '*.json'):
+                self.get_data(standard_path)
 
-        # Start assertions
-        assert len(generated) == len(standards)
-        for asn in generated:
-            for idx, standard in enumerate(standards):
-                try:
-                    compare_asns(asn, standard)
-                except AssertionError as e:
-                    last_err = e
-                else:
-                    del standards[idx]
-                    break
-            else:
-                assert False, '{}'.format(last_err)
+        # Compare the association sets.
+        assert compare_asn_files(
+            generated_path.glob('*.json'), standard_path.glob('*.json')
+        )
