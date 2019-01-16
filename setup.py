@@ -78,11 +78,18 @@ PACKAGE_DATA = {
         '*.asdf'
     ]
 }
+DOCS_REQUIRE = [
+    'matplotlib',
+    'sphinxcontrib-programoutput',
+    'sphinx-automodapi',
+    'stsci-rtd-theme',
+    'sphinx-rtd-theme'
+]
 TESTS_REQUIRE = [
     'pytest',
-    'pytest_doctestplus',
+    'pytest-doctestplus',
     'requests_mock',
-    'ci_watson'
+    'ci-watson'
 ]
 
 def get_transforms_data():
@@ -203,6 +210,7 @@ setup(
         'verhawk>=0.0',
     ],
     extras_require={
+        'docs': DOCS_REQUIRE,
         'ephem': ['pymssql>=2.1', 'jplephem>=2.8'],
         'test': TESTS_REQUIRE,
     },
