@@ -458,10 +458,16 @@ def find_dispaxis(input_model, slit, spectral_order, extract_params):
             wl_10 = stuff[2]
         dwlx = wl_10 - wl_00
         dwly = wl_01 - wl_00
-        if (np.isnan(dwlx) or np.isnan(dwly) or
+        if (np.isnan(dwlx) or np.isnan(dwly) or dwlx == dwly or
             wl_00 == 0 or wl_01 == 0 or wl_10 == 0):
-                log.warning("wavelength from WCS is NaN or 0 "
-                            "within the bounding box")
+                if dwlx == dwly:
+                    log.warning("One-pixel offset gives dwlx = {}, dwly = {}"
+                                .format(dwlx, dwly))
+                else:
+                    log.warning("wavelength from WCS is NaN or 0 "
+                                "within the bounding box")
+                log.warning("    computing differences over "
+                            "the whole bounding box ...")
                 if input_model.meta.exposure.type in WFSS_EXPTYPES:
                     wl_wcs = np.zeros(shape, dtype=np.float64)
                     log.debug("Starting to compute wavelengths ...")
