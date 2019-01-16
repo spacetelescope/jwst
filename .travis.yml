@@ -41,7 +41,7 @@ env:
         - CRDS_PATH='/tmp/crds_cache'
         - MAIN_CMD='python setup.py'
         - MC_URL=https://repo.continuum.io/miniconda
-        - PIP_DEPENDENCIES='ci_watson'
+        - PIP_DEPENDENCIES='ci_watson pytest-faulthandler'
         - PYTHON_VERSION=3.6
 
     matrix:
