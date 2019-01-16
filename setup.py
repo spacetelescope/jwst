@@ -78,7 +78,12 @@ PACKAGE_DATA = {
         '*.asdf'
     ]
 }
-
+TESTS_REQUIRE = [
+    'pytest',
+    'pytest_doctestplus',
+    'requests_mock',
+    'ci_watson'
+]
 
 def get_transforms_data():
     # Installs the schema files in jwst/transforms
@@ -199,12 +204,9 @@ setup(
     ],
     extras_require={
         'ephem': ['pymssql>=2.1', 'jplephem>=2.8'],
+        'test': TESTS_REQUIRE,
     },
-    tests_require=[
-        'pytest',
-        'requests_mock',
-        'ci_watson'
-    ],
+    tests_require=TESTS_REQUIRE,
     cmdclass={
         'test': PyTest,
         'build_sphinx': BuildSphinx
