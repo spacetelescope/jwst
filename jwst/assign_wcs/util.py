@@ -677,8 +677,8 @@ def transform_bbox_from_shape(shape):
     bbox : tuple
         Bounding box in y, x order.
     """
-    bbox = ((-0.5, shape[0] - 0.5),
-            (-0.5, shape[1] - 0.5))
+    bbox = ((-0.5, shape[-2] - 0.5),
+            (-0.5, shape[-1] - 0.5))
     return bbox
 
 
@@ -698,29 +698,6 @@ def wcs_bbox_from_shape(shape):
     """
     bbox = ((-0.5, shape[-1] - 0.5),
             (-0.5, shape[-2] - 0.5))
-    return bbox
-
-
-def transform_bbox_from_datamodel(input_model):
-    """Create a bounding box from the shape of the data base on the model.
-
-    Note: The bounding box of a ``CubeModel`` is the bounding_box
-    of one of the stacked images. A CubeModel is always treated as
-    a stack (in dimension 1) of 2D images, as opposed to actual 3D data.
-    In this case the bounding box is set to the 2nd and 3rd dimension.
-
-    Parameters
-    ----------
-    input_model : `~jwst.datamodels.DataModel`
-        The data model.
-
-    Returns
-    -------
-    bbox : tuple
-        Bounding box in y, x order.
-    """
-    shape = input_model.data.shape
-    bbox = ((-0.5, shape[-2] - 0.5), (-0.5, shape[-1] - 0.5))
     return bbox
 
 

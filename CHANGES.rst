@@ -6,6 +6,11 @@ ami
 
 assign_wcs
 ----------
+
+ - Removed ``transform_bbox_from_datamodels`` in favor of
+   ``transform_bbox_from_shape`` which now works by using last two dimensions
+   in the ``shape``. [#3040]
+
  - Added velocity correction model to the WFSS and TSGRISM wcs pipelines [#2801]
 
  - Refactored how the pipeline handles subarrays in the WCS. Fixed a bug
