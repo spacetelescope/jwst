@@ -1,11 +1,4 @@
 """Test using SDP-generated pools
-
-Notes
------
-Most of the standard associations which are compared
-against are built in the jupyter notebook
-
-./notebooks/make_tests.ipynb
 """
 from pathlib import Path
 import pytest
@@ -78,7 +71,6 @@ class TestAgainstStandards(AssociationBase):
         generated_path = Path('generate')
         generated_path.mkdir()
         Main([
-
             '--no-merge',
             '-p', str(generated_path),
             '--version-id', version_id,
