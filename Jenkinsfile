@@ -56,10 +56,8 @@ docs.nodetype = 'linux'
 docs.name = 'docs'
 docs.conda_packages = ["python=${matrix_python[0]}"]
 docs.build_cmds = [
-    "sudo yum install -y graphviz texlive",
-    "pip install ${pip_install_args} numpy==${matrix_numpy[0]}",
-    "pip install ${pip_install_args} -r requirements-dev.txt --editable .",
-    "pip install ${pip_install_args} ${pip_packages_docs}",
+    "sudo yum install -y graphviz",
+    "pip install ${pip_install_args} -r requirements-dev.txt -e .[docs]",
     "python setup.py build_sphinx"
 ]
 matrix += docs
@@ -76,8 +74,7 @@ for (python_ver in matrix_python) {
             bc.conda_packages = ["python=${python_ver}"]
             bc.build_cmds = [
                 "pip install ${pip_install_args} numpy==${matrix_numpy[0]}",
-                "pip install ${pip_install_args} ${pip_packages_tests}",
-                "pip install ${pip_install_args} -r requirements-dev.txt .",
+                "pip install ${pip_install_args} -r requirements-dev.txt .[test]",
             ]
             bc.test_cmds = ["pytest -r s --basetemp=test_results --junitxml=results.xml"]
             matrix += bc
