@@ -1,26 +1,9 @@
 name: jwst
 dependencies:
-  - python=3.6
-  - numpy=1.15
+  - "python>=3"
+  - "pip>=10.0"
+  - "nomkl"
+  - numpy
+  - setuptools
   - pip:
-    - astropy
-    - asdf
-    - crds
-    - scipy
-    - drizzle
-    - gwcs
-    - jsonschema
-    - jplephem
-    - namedlist
-    - photutils
-    - spherical-geometry
-    - stsci.image
-    - stsci.imagestats
-    - stsci.stimage
-    - stsci.tools
-    - verhawk
-    - pytest
-    - sphinxcontrib-programoutput
-    - sphinx-automodapi
-    - stsci_rtd_theme
-    - matplotlib
+    - ".[docs]"

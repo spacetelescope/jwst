@@ -1,0 +1,3 @@
+git+https://github.com/astropy/astropy.git#egg=astropy
+git+https://github.com/spacetelescope/asdf.git#egg=asdf
+git+https://github.com/spacetelescope/gwcs.git#egg=gwcs
