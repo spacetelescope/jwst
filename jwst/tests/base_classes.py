@@ -100,12 +100,16 @@ class BaseJWSTTest:
         Returns
         -------
         file_paths: [str[, ...]]
-            Full file paths that match the glob criterion
+            File paths that match the glob criterion.
+            Note that the TEST_BIGDATA and `repo_path`
+            roots are removed so these results can be fed
+            back into `get_data()`
         """
 
         # Get full path and proceed depending on whether
         # is a local path or URL.
-        path = op.join(get_bigdata_root(), *self.repo_path, *pathargs)
+        root = op.join(get_bigdata_root(), *self.repo_path)
+        path = op.join(root, *pathargs)
         if op.exists(path):
             file_paths = _data_glob_local(path, glob)
         elif check_url(path):
@@ -113,6 +117,12 @@ class BaseJWSTTest:
         else:
             raise BigdataError('Path cannot be found: {}'.format(path))
 
+        # Remove the root from the paths
+        root_len = len(root) + 1  # +1 to account for the folder delimiter.
+        file_paths = [
+            file_path[root_len:]
+            for file_path in file_paths
+        ]
         return file_paths
 
 
