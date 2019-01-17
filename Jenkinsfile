@@ -33,8 +33,6 @@ def conda_packages = [
 ]
 
 // Pip related setup
-def pip_packages_docs = "sphinx sphinx-automodapi sphinx_rtd_theme stsci_rtd_theme"
-def pip_packages_tests = "requests_mock ci_watson"
 def pip_index = "https://bytesalad.stsci.edu/artifactory/api/pypi/datb-pypi-virtual/simple"
 def pip_install_args = "--index-url ${pip_index} --progress-bar=off"
 
