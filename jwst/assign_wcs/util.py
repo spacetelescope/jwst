@@ -720,14 +720,7 @@ def transform_bbox_from_datamodel(input_model):
         Bounding box in y, x order.
     """
     shape = input_model.data.shape
-    if isinstance(input_model, CubeModel):
-        bbox = ((-0.5, shape[1] - 0.5),
-              (-0.5, shape[2] - 0.5))
-    elif isinstance(input_model, ImageModel):
-        bbox = ((-0.5, shape[0] - 0.5),
-              (-0.5, shape[1] - 0.5))
-    else:
-        raise TypeError("Input is not an ImageModel or CubeModel")
+    bbox = ((-0.5, shape[-2] - 0.5), (-0.5, shape[-1] - 0.5))
     return bbox
 
 
