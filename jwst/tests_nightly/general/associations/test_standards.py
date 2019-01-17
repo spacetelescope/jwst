@@ -117,7 +117,7 @@ class TestAgainstStandards(BaseJWSTTest):
             '--version-id', version_id,
         ]
         pool = combine_pools([
-            self.get_data(self.test_dir, 'pools', standard_pars.pool_root + '.csv')
+            t_path('data/' + standard_pars.pool_root + '.csv')
         ])
         Main(args, pool=pool )
 
