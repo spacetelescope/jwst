@@ -87,10 +87,10 @@ DOCS_REQUIRE = [
     'stsci-rtd-theme'
 ]
 TESTS_REQUIRE = [
+    'ci-watson',
     'pytest',
     'pytest-doctestplus',
-    'requests_mock',
-    'ci-watson'
+    'requests_mock'
 ]
 
 def get_transforms_data():
