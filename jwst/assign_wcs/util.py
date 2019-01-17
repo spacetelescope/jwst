@@ -21,7 +21,7 @@ from gwcs import utils as gwutils
 from . import pointing
 from ..lib.catalog_utils import SkyObject
 from ..transforms.models import GrismObject
-from ..datamodels import WavelengthrangeModel, DataModel, ImageModel, CubeModel
+from ..datamodels import WavelengthrangeModel, DataModel
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

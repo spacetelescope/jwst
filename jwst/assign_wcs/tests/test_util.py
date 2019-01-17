@@ -4,7 +4,6 @@ Test the utility functions
 
 import os
 
-import numpy as np
 from astropy.modeling.models import Shift, Identity
 from astropy.table import QTable
 
