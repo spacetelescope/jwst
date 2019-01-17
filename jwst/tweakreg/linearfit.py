@@ -347,7 +347,7 @@ def fit_general(xy, uv):
     #   v = Q0 + Q1*x + Q2*y
     #
     try:
-        invM = np.linalg.inv(M)
+        invM = np.linalg.inv(M.astype(np.float64))
     except np.linalg.LinAlgError:
         raise SingularMatrixError(
             "Singular matrix: suspected colinear points."
