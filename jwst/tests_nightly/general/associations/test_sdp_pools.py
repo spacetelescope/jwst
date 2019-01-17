@@ -50,6 +50,10 @@ class AssociationBase(BaseJWSTTest):
         return self._truth_paths
 
 asn_base = AssociationBase()
+try:
+    POOL_PATHS = asn_base.pool_paths
+except Exception:
+    POOL_PATHS = ['test will be skipped']
 
 
 # #####
@@ -58,7 +62,7 @@ asn_base = AssociationBase()
 class TestAgainstStandards(AssociationBase):
     @pytest.mark.parametrize(
         'pool_path',
-        asn_base.pool_paths
+        POOL_PATHS
     )
     def test_against_standard(self, pool_path):
         """Compare a generated association against a standard
