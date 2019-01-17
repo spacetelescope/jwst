@@ -92,8 +92,7 @@ for (python_ver in matrix_python) {
             bc.conda_channels = ['http://ssb.stsci.edu/astroconda-dev']
             bc.conda_packages = conda_packages + ["python=${python_ver}"] + ["numpy=${numpy_ver}"]
             bc.build_cmds = [
-                "pip install -q ${pip_packages_tests}",
-                "python setup.py install"
+                "pip install ${pip_install_args} .[test]",
             ]
             bc.test_cmds = ["pytest -r s --basetemp=test_results --junitxml=results.xml"]
             matrix += bc
