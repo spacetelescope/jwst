@@ -52,6 +52,7 @@ def test_data_glob_local(glob_filter, nfiles):
     assert len(files) == nfiles
 
 
+@pytest.mark.bigdata
 @pytest.mark.parametrize(
     'glob_filter, nfiles',
     [
