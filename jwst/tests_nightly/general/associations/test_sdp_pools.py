@@ -21,8 +21,8 @@ from jwst.associations.main import Main
 # Main test args
 TEST_ARGS = ['--dry-run', '--no-merge']
 
-# Get version id out of pool name
-version_id_regex = re.compile(r'(?P<proposal>jw.+?)_(?P<versionid>.+)_pool')
+# Decompose pool name to retrieve proposal and version id.
+pool_regex = re.compile(r'(?P<proposal>jw.+?)_(?P<versionid>.+)_pool')
 
 
 # #############################################################
@@ -68,7 +68,7 @@ class TestAgainstStandards(AssociationBase):
 
         # Parse pool name
         pool = Path(pool_path).stem
-        proposal, version_id = version_id_regex.match(pool).group('proposal', 'versionid')
+        proposal, version_id = pool_regex.match(pool).group('proposal', 'versionid')
 
         # Create the associations
         generated_path = Path('generate')
@@ -99,6 +99,6 @@ class TestAgainstStandards(AssociationBase):
             compare_asn_files(generated_path.glob('*.json'), truth_paths)
         except AssertionError as error:
             if 'Associations do not share a common set of products' in str(error):
-                pytest.xfail('Possibly due to Issue #3039 but manually confirm.')
+                pytest.xfail('Issue #3039')
             else:
                 raise
