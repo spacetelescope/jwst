@@ -124,7 +124,7 @@ class TestAgainstStandards(BaseJWSTTest):
         # Retrieve the truth files
         truth_paths = [
             self.get_data(truth_path)
-            for truth_path in self.data_glob(*self.ref_loc, glob='*' + version_id + '*.json')
+            for truth_path in self.data_glob(*self.ref_loc, glob='*_' + version_id + '_*.json')
         ]
 
         # Compare the association sets.
@@ -133,5 +133,7 @@ class TestAgainstStandards(BaseJWSTTest):
         except AssertionError as error:
             if 'Associations do not share a common set of products' in str(error):
                 pytest.xfail('Issue #3039')
+            elif 'Associations have the following product name duplication' in str(error):
+                pytest.xfail('Issue #3041')
             else:
                 raise
