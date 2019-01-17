@@ -80,10 +80,11 @@ PACKAGE_DATA = {
 }
 DOCS_REQUIRE = [
     'matplotlib',
-    'sphinxcontrib-programoutput',
+    'sphinx',
     'sphinx-automodapi',
-    'stsci-rtd-theme',
-    'sphinx-rtd-theme'
+    'sphinxcontrib-programoutput',
+    'sphinx-rtd-theme',
+    'stsci-rtd-theme'
 ]
 TESTS_REQUIRE = [
     'pytest',
@@ -191,7 +192,7 @@ setup(
     ],
     install_requires=[
         'asdf>=2.1',
-        'astropy>=3.0',
+        'astropy>=3.1',
         'crds>=7.2.7',
         'drizzle>=1.12',
         'gwcs>=0.9',
