@@ -67,6 +67,8 @@ extract_1d
 - Reverse order of RELSENS wavelength and response if the wavelengths are
   not increasing. [#3005]
 
+- Add a test for constant wavelengths (or constant slope). [#3032]
+
 extract_2d
 ----------
 - Moved the update of meta information to the MultiSlitModel instead of the
@@ -221,6 +223,9 @@ tso_photometry
 
 tweakreg
 --------
+
+- Use a more numerically stable ``numpy.linalg.inv`` instead of own matrix
+  inversion. [#3033]
 
 wfs_combine
 -----------
