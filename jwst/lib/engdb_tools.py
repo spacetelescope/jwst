@@ -17,10 +17,10 @@ logger.addHandler(logging.NullHandler())
 # #############################################
 # Where is the engineering service? Its HERE!!!
 # #############################################
-ENGDB_HOST = 'http://iwjwdmscemweb.stsci.edu/'
+ENGDB_HOST = 'http://iwjwdmsbemweb.stsci.edu/'
 ENGDB_BASE_URL = ''.join([
     ENGDB_HOST,
-    'JWDMSEngFqAccB72/',
+    'JWDMSEngFqAcc/',
     'TlmMnemonicDataSrv.svc/',
 ])
 

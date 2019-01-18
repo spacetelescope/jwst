@@ -1227,10 +1227,6 @@ def get_mnemonics(obsstart, obsend, tolerance, engdb_url=None):
         Cannot retrieve engineering information
 
     """
-    logger.info(
-        'Querying engineering DB: {}'.format(ENGDB_BASE_URL)
-    )
-
     try:
         engdb = ENGDB_Service(base_url=engdb_url)
     except Exception as exception:
@@ -1240,6 +1236,10 @@ def get_mnemonics(obsstart, obsend, tolerance, engdb_url=None):
                 exception
             )
         )
+    logger.info(
+        'Querying engineering DB: {}'.format(engdb.base_url)
+    )
+
     mnemonics = {
         'SA_ZATTEST1':  None,
         'SA_ZATTEST2':  None,
