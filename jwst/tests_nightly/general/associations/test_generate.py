@@ -1,4 +1,6 @@
 """Test general asn_generate operations"""
+import pytest
+
 from jwst.associations.tests.helpers import full_pool_rules
 
 from jwst.associations import (
@@ -7,6 +9,7 @@ from jwst.associations import (
 )
 
 
+@pytest.mark.slow
 def test_generate(full_pool_rules):
     """Run a full sized pool using all rules"""
     pool, rules, pool_fname = full_pool_rules
@@ -19,6 +22,7 @@ def test_generate(full_pool_rules):
         assert len(schemas) > 0
 
 
+@pytest.mark.slow
 def test_serialize(full_pool_rules):
     """Test serializing roundtripping"""
     pool, rules, pool_fname = full_pool_rules

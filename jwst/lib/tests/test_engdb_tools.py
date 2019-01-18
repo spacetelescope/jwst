@@ -29,7 +29,7 @@ NODATA_STARTIME = '2014-01-01'
 NODATA_ENDTIME = '2014-01-02'
 
 ALTERNATE_HOST = 'http://iwjwdmsbemweb.stsci.edu'
-ALTERNATE_URL = ALTERNATE_HOST + '/JWDMSEngFqAccB71/TlmMnemonicDataSrv.svc/'
+ALTERNATE_URL = ALTERNATE_HOST + '/JWDMSEngFqAcc/TlmMnemonicDataSrv.svc/'
 
 
 def is_alive(url):

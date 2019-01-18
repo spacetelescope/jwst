@@ -13,6 +13,7 @@ from jwst.associations import load_asn
 from jwst.associations.main import Main
 
 
+@pytest.mark.slow
 @pytest.yield_fixture(
     scope='module',
     params=['yaml', 'json']
@@ -30,6 +31,7 @@ def make_asns(request, full_pool_rules):
         yield generated, path, asn_format
 
 
+@pytest.mark.slow
 def test_roundtrip(make_asns):
     generated, path, asn_format = make_asns
     asn_files = glob(os.path.join(path, '*.' + asn_format))
@@ -49,6 +51,7 @@ def test_roundtrip(make_asns):
     assert len(orphaned) == len(generated.orphaned)
 
 
+@pytest.mark.slow
 def test_load_asn_all(make_asns):
     generated, path, asn_format = make_asns
     asn_files = glob(os.path.join(path, '*.' + asn_format))

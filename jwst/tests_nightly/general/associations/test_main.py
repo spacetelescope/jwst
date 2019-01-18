@@ -7,6 +7,7 @@ from jwst.associations.tests.helpers import full_pool_rules
 from jwst.associations.main import Main
 
 
+@pytest.mark.slow
 def test_script(full_pool_rules):
     """Test full run of the script code"""
     pool, rules, pool_fname = full_pool_rules
@@ -37,6 +38,7 @@ def test_script(full_pool_rules):
     assert ref_rule_set == found_rules
 
 
+@pytest.mark.slow
 def test_asn_candidates(full_pool_rules):
     """Test basic candidate selection"""
     pool, rules, pool_fname = full_pool_rules
@@ -47,6 +49,7 @@ def test_asn_candidates(full_pool_rules):
     assert len(generated.associations) == 2
 
 
+@pytest.mark.slow
 def test_version_id(full_pool_rules):
     """Test that version id is properly included"""
     pool, rules, pool_fname = full_pool_rules
@@ -62,6 +65,7 @@ def test_version_id(full_pool_rules):
         assert version_id in asn.asn_name
 
 
+@pytest.mark.slow
 def test_pool_as_parameter(full_pool_rules):
     """Test passing the pool as an object"""
     pool, rules, pool_fname = full_pool_rules
