@@ -1,5 +1,6 @@
 """Test using SDP-generated pools
 """
+from collections import Counter
 from pathlib import Path
 import pytest
 import re
@@ -9,7 +10,7 @@ from jwst.associations.lib.diff import (
 )
 from jwst.tests.base_classes import BaseJWSTTest
 
-from jwst.associations.main import Main
+from jwst.associations.main import Main as asn_generate
 
 # Main test args
 TEST_ARGS = ['--dry-run', '--no-merge']
@@ -52,7 +53,7 @@ except Exception:
 # #####
 # Tests
 # #####
-class TestAgainstStandards(AssociationBase):
+class TestSDPPools(AssociationBase):
     @pytest.mark.parametrize(
         'pool_path',
         POOL_PATHS
@@ -70,7 +71,7 @@ class TestAgainstStandards(AssociationBase):
         # Create the associations
         generated_path = Path('generate')
         generated_path.mkdir()
-        Main([
+        asn_generate([
             '--no-merge',
             '-p', str(generated_path),
             '--version-id', version_id,
@@ -98,3 +99,31 @@ class TestAgainstStandards(AssociationBase):
                 pytest.xfail('Issue #3039')
             else:
                 raise
+
+    @pytest.mark.parametrize(
+        'pool_path',
+        POOL_PATHS
+    )
+    def test_dup_product_names(self, pool_path):
+        """Check for duplicate product names for a pool"""
+
+        results = asn_generate([
+            '--dry-run',
+            '--no-merge',
+            self.get_data(pool_path)
+        ])
+        asns = results.associations
+
+        product_names = Counter(
+            product['name']
+            for asn in asns
+            for product in asn['products']
+        )
+
+        multiples = [
+            product_name
+            for product_name, count in product_names.items()
+            if count > 1
+        ]
+
+        assert not len(multiples), 'Multiple product names: {}'.format(multiples)
