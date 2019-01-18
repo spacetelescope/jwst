@@ -17,6 +17,7 @@ import sys
 import os
 import sphinx
 import stsci_rtd_theme
+import sphinx_astropy
 
 def setup(app):
     app.add_stylesheet("stsci.css")
@@ -41,7 +42,7 @@ conf.read([os.path.join(os.path.dirname(__file__), '..', 'setup.cfg')])
 setup_cfg = dict(conf.items('metadata'))
 
 # If your documentation needs a minimal Sphinx version, state it here.
-needs_sphinx = '1.3'
+#needs_sphinx = '1.3'
 
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
@@ -92,6 +93,7 @@ extensions = [
     'sphinx_automodapi.automodsumm',
     'sphinx_automodapi.autodoc_enhancements',
     'sphinx_automodapi.smart_resolver',
+    'sphinx_astropy.ext.doctest'
     ]
 
 
@@ -121,6 +123,7 @@ master_doc = 'index'
 # thus need to ignore those warning. This can be removed once the patch gets
 # released in upstream Sphinx (https://github.com/sphinx-doc/sphinx/pull/1843).
 # Suppress the warnings requires Sphinx v1.4.2
+
 suppress_warnings = ['app.add_directive', ]
 
 

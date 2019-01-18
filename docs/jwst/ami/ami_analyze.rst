@@ -63,9 +63,3 @@ following list of extensions:
 The output file name syntax is exposure-based, using the input file name as the root, with
 the addition of the association candidate ID and the "_ami" product type suffix, e.g.
 "jw87600027001_02101_00002_nis_a3001_ami.fits."
-
-Reference Files
----------------
-The ``ami_analyze`` step uses a THROUGHPUT reference file.
-
-.. include:: ../references_general/throughput_reffile.rst

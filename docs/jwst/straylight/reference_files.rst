@@ -11,4 +11,4 @@ algorithm is used to compute the correction, which requires the use of
 the ``STRAYMASK`` reference file. It contains a simple mask indicating
 which pixels lie within the inter-slice regions of the image.
 
-.. include:: ../references_general/straymask_reffile.rst
+.. include:: ../references_general/straymask_reffile.inc

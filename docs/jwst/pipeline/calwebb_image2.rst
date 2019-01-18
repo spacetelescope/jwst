@@ -41,9 +41,10 @@ below and indicates which steps are used by the ``calwebb_tso-image2.cfg`` confi
 
 Arguments
 ---------
-The ``calwebb_image2`` pipeline has one optional argument:
-::
- --save_bsub  boolean  default=False
+
+The ``calwebb_image2`` pipeline has one optional argument::
+
+  --save_bsub  boolean  default=False
 
 If set to ``True``, the results of
 the background subtraction step will be saved to an intermediate file,

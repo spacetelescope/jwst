@@ -5,7 +5,7 @@ type of data being processed. Most cases just use the FLAT reference file, while
 spectroscopic exposures use the three reference files FFLAT (fore optics),
 SFLAT (spectrograph optics), and DFLAT (detector).
 
-.. include:: ../references_general/flat_reffile.rst
+.. include:: ../references_general/flat_reffile.inc
 
 Reference Files for NIRSpec Spectroscopy
 ===================================================
@@ -69,13 +69,13 @@ For the detector section, the DFLAT file contains a 3-D image
 (i.e. the flat field at multiple wavelengths), a corresponding
 WAVELENGTH table, and a FAST_VARIATION table with one row.
 
-As just described, there are 3 types of reference files for NIRSpec (FFLAT, 
-SFLAT, and DFLAT), and within each of these types, there are several formats, 
+As just described, there are 3 types of reference files for NIRSpec (FFLAT,
+SFLAT, and DFLAT), and within each of these types, there are several formats,
 which are now described.
 
-.. include:: ../references_general/fflat_reffile.rst
+.. include:: ../references_general/fflat_reffile.inc
 
-.. include:: ../references_general/sflat_reffile.rst
+.. include:: ../references_general/sflat_reffile.inc
 
-.. include:: ../references_general/dflat_reffile.rst
+.. include:: ../references_general/dflat_reffile.inc
 

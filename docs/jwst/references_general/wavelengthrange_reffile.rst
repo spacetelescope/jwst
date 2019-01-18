@@ -1,3 +1,5 @@
+:orphan:
+
 .. _wavelengthrange_reffile:
 
 WAVELENGTHRANGE Reference File
@@ -13,9 +15,9 @@ around the spectral traces produced by each object in the NIRCam and NIRISS
 WFSS modes.
 If a list of ``GrismObject`` is supplied, then no reference file is neccessary.
 
-.. include:: ../references_general/wavelengthrange_selection.rst
+.. include:: ../references_general/wavelengthrange_selection.inc
 
-.. include:: ../includes/standard_keywords.rst
+.. include:: ../includes/standard_keywords.inc
 
 Type Specific Keywords for WAVELENGTHRANGE
 ++++++++++++++++++++++++++++++++++++++++++

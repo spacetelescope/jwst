@@ -68,8 +68,8 @@ the steps are applied in a different order than for Near-IR (NIR) instrument exp
 
 Arguments
 ---------
-The ``calwebb_detector1`` pipeline has one optional argument:
-::
+The ``calwebb_detector1`` pipeline has one optional argument::
+
   --save_calibrated_ramp  boolean  default=False
 
 If set to ``True``, the pipeline will save intermediate data to a file as it

@@ -12,7 +12,7 @@ the meta object when the fits file is opened as a data model.
 The forward direction of the transforms is from detector to world coordinates
 and the input positions are 0-based.
 
-``jwst.assign_wcs`` expects to find the basic WCS keywords in the 
+``jwst.assign_wcs`` expects to find the basic WCS keywords in the
 SCI header. Distortion and spectral models are stored in reference files in the
 `ASDF <http://asdf-standard.readthedocs.org/en/latest/>`__  format.
 
@@ -49,12 +49,12 @@ Once a FITS file is opened as a `DataModel` the WCS can be accessed as an attrib
 corresponding world coordinates. Using MIRI LRS fixed slit as an example:
 
 .. doctest-skip::
-   
->>> from jwst.datamodels import ImageModel
->>> exp = ImageModel('miri_fixedslit_assign_wcs.fits')
->>> ra, dec, lam = exp.meta.wcs(x, y)
->>> print(ra, dec, lam)
-    (329.97260532549336, 372.0242999250267, 5.4176100046836675)
+
+  >>> from jwst.datamodels import ImageModel
+  >>> exp = ImageModel('miri_fixedslit_assign_wcs.fits')
+  >>> ra, dec, lam = exp.meta.wcs(x, y)
+  >>> print(ra, dec, lam)
+      (329.97260532549336, 372.0242999250267, 5.4176100046836675)
 
 The WFSS modes for NIRCam and NIRISS have a slightly different calling structure,
 in addition to the (x, y) coordinate, they need to know other information about the
@@ -64,14 +64,14 @@ the (x,y) location of that wavelength+order on the dispersed image and the origi
 source pixel location, as entered, along with the order that was specified:
 
 .. doctest-skip::
-   
->>> from jwst.datamodels import ImageModel
->>> exp = ImageModel('nircam_wfss_assign_wcs.fits')
->>> x, y, x0, y0, order = exp.meta.wcs(x0, y0, wavelength, order)
->>> print(x0, y0, wavelength, order)
-    (365.523884327, 11.6539963919, 2.557881113, 2)
->>> print(x, y, x0, y0, order)
-    (1539.5898464615102, 11.6539963919, 365.523884327, 11.6539963919, 2)
+
+  >>> from jwst.datamodels import ImageModel
+  >>> exp = ImageModel('nircam_wfss_assign_wcs.fits')
+  >>> x, y, x0, y0, order = exp.meta.wcs(x0, y0, wavelength, order)
+  >>> print(x0, y0, wavelength, order)
+      (365.523884327, 11.6539963919, 2.557881113, 2)
+  >>> print(x, y, x0, y0, order)
+      (1539.5898464615102, 11.6539963919, 365.523884327, 11.6539963919, 2)
 
 
 The WCS provides access to intermediate coordinate frames
@@ -80,13 +80,13 @@ backward direction. For example, for a NIRSpec fixed slits exposure,
 which has been through the extract_2d step:
 
 .. doctest-skip::
-   
->>> exp = datamodels.MultiSlitModel('nrs1_fixed_assign_wcs_extract_2d.fits')
->>> exp.slits[0].meta.wcs.available_frames
-    ['detector', 'sca', 'bgwa', 'slit_frame', 'msa_frame', 'ote', 'v2v3', 'world']
->>> msa2detector = exp.slits[0].meta.wcs.get_transform('msa_frame', 'detector')
->>> msa2detector(0, 0, 2*10**-6)
-    (5042.064255529629, 1119.8937888372516)
+
+  >>> exp = datamodels.MultiSlitModel('nrs1_fixed_assign_wcs_extract_2d.fits')
+  >>> exp.slits[0].meta.wcs.available_frames
+      ['detector', 'sca', 'bgwa', 'slit_frame', 'msa_frame', 'ote', 'v2v3', 'world']
+  >>> msa2detector = exp.slits[0].meta.wcs.get_transform('msa_frame', 'detector')
+  >>> msa2detector(0, 0, 2*10**-6)
+      (5042.064255529629, 1119.8937888372516)
 
 For each exposure, assign_wcs uses reference files and WCS header keywords
 to create the WCS object. What reference files are retrieved
@@ -100,12 +100,10 @@ that is the result of averaging over all integrations.
 
 ``jwst.assign_wcs`` is based on gwcs and uses the modeling, units and coordinates subpackages in astropy.
 
-Software dependencies:
+- `gwcs <https://github.com/spacetelescope/gwcs>`__
 
-- `gwcs <https://github.com/spacetelescope/gwcs>`__ 0.7
+- `numpy <http://www.numpy.org/>`__
 
-- `numpy <http://www.numpy.org/>`__ 1.9 or later
+- `astropy <http://www.astropy.org/>`__
 
-- `astropy <http://www.astropy.org/>`__ 1.2.1 or later
-
-- `asdf <http://asdf.readthedocs.io/en/latest/>`__ 1.1.1 or later
+- `asdf <http://asdf.readthedocs.io/en/latest/>`__

@@ -38,9 +38,9 @@ step is skipped.
 
 Arguments
 ---------
-The ``calwebb_ami3`` pipeline has one optional argument:
-::
- --save_averages  boolean  default=False
+The ``calwebb_ami3`` pipeline has one optional argument::
+
+  --save_averages  boolean  default=False
 
 If set to ``True``, the results of the :ref:`ami_average <ami_average_step>` step will be saved
 to a file. If not, the results of the :ref:`ami_average <ami_average_step>` step are passed

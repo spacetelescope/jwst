@@ -23,7 +23,7 @@ NIRCam     INSTRUME, DETECTOR, EXP_TYPE, CHANNEL, FILTER, DATE-OBS, TIME-OBS
 NIRISS     INSTRUME, EXP_TYPE, PUPIL, DATE-OBS, TIME-OBS
 ========== =================================================================
 
-.. include:: ../includes/standard_keywords.rst
+.. include:: ../includes/standard_keywords.inc
 
 Reference File Format
 +++++++++++++++++++++

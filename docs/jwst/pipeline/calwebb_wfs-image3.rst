@@ -15,9 +15,9 @@ be obtained by just running the :ref:`wfs_combine <wfs_combine_step>` step direc
 
 Arguments
 ---------
-The ``calwebb_wfs-image3`` pipeline has one optional argument:
-::
- --do_refine  boolean  default=False
+The ``calwebb_wfs-image3`` pipeline has one optional argument::
+
+  --do_refine  boolean  default=False
 
 If set to ``True``, offsets between the dithered images computed from the WCS will be
 refined emperically using a cross-correlation technique.

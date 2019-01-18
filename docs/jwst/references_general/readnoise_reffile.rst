@@ -1,3 +1,5 @@
+:orphan:
+
 .. _readnoise_reffile:
 
 READNOISE Reference File
@@ -27,7 +29,7 @@ NIRISS     INSTRUME, DETECTOR, READPATT, SUBARRAY, DATE-OBS, TIME-OBS
 NIRSpec    INSTRUME, DETECTOR, READPATT, SUBARRAY, DATE-OBS, TIME-OBS
 ========== ==========================================================
 
-.. include:: ../includes/standard_keywords.rst
+.. include:: ../includes/standard_keywords.inc
 
 Type Specific Keywords for READNOISE
 ++++++++++++++++++++++++++++++++++++

@@ -7,7 +7,7 @@ WAVELENGTHRANGE reference file is used in the process of determining the
 locations of source spectra in the image, and conversely the image areas
 that contain only background signal.
 
-.. include:: ../references_general/wfssbkg_reffile.rst
+.. include:: ../references_general/wfssbkg_reffile.inc
 
-.. include:: ../references_general/wavelengthrange_reffile.rst
+:ref: `WAVELENGTHRANGE <../includes/wavelengthrange_reffile.rst>`
 

@@ -1,3 +1,5 @@
+:orphan:
+
 .. _gain_reffile:
 
 GAIN reference file
@@ -28,7 +30,7 @@ NIRISS     INSTRUME, DETECTOR, SUBARRAY, DATE-OBS, TIME-OBS
 NIRSpec    INSTRUME, DETECTOR, SUBARRAY, DATE-OBS, TIME-OBS
 ========== ================================================
 
-.. include:: ../includes/standard_keywords.rst
+.. include:: ../includes/standard_keywords.inc
 
 Type Specific Keywords for GAIN
 +++++++++++++++++++++++++++++++
