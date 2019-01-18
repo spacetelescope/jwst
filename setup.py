@@ -1,14 +1,19 @@
 import os
-from os.path import basename
-import subprocess
 import sys
+import pkgutil
+from os.path import basename
+from subprocess import check_call, CalledProcessError
 from setuptools import setup, find_packages, Extension, Command
 from setuptools.command.test import test as TestCommand
-from numpy import get_include as np_include
+from setuptools.command.build_ext import build_ext
 from glob import glob
 
-# hack building the sphinx docs with C source
-from setuptools.command.build_ext import build_ext
+try:
+    from numpy import get_include as np_include
+except ImportError:
+    print('Unable to import "numpy".\n'
+          'Please install "numpy" and try again.', file=sys.stderr)
+    exit(1)
 
 if sys.version_info < (3, 5):
     error = """
@@ -73,7 +78,20 @@ PACKAGE_DATA = {
         '*.asdf'
     ]
 }
-
+DOCS_REQUIRE = [
+    'matplotlib',
+    'sphinx',
+    'sphinx-automodapi',
+    'sphinxcontrib-programoutput',
+    'sphinx-rtd-theme',
+    'stsci-rtd-theme'
+]
+TESTS_REQUIRE = [
+    'ci-watson',
+    'pytest',
+    'pytest-doctestplus',
+    'requests_mock'
+]
 
 def get_transforms_data():
     # Installs the schema files in jwst/transforms
@@ -119,22 +137,23 @@ class PyTest(TestCommand):
         sys.exit(errno)
 
 
-if os.path.exists('relic'):
-    sys.path.insert(1, 'relic')
-    import relic.release
-else:
+if not pkgutil.find_loader('relic'):
+    relic_local = os.path.exists('relic')
+    relic_submodule = (relic_local and
+                       os.path.exists('.gitmodules') and
+                       not os.listdir('relic'))
     try:
-        import relic.release
-    except ImportError:
-        try:
-            subprocess.check_call(['git', 'clone',
-                'https://github.com/spacetelescope/relic.git'])
-            sys.path.insert(1, 'relic')
-            import relic.release
-        except subprocess.CalledProcessError as e:
-            print(e)
-            exit(1)
+        if relic_submodule:
+            check_call(['git', 'submodule', 'update', '--init', '--recursive'])
+        elif not relic_local:
+            check_call(['git', 'clone', 'https://github.com/spacetelescope/relic.git'])
 
+        sys.path.insert(1, 'relic')
+    except CalledProcessError as e:
+        print(e)
+        exit(1)
+
+import relic.release
 
 version = relic.release.get_info()
 relic.release.write_template(version, NAME)
@@ -167,18 +186,36 @@ setup(
     package_data=PACKAGE_DATA,
     ext_modules=[
         Extension('jwst.tweakreg.chelp',
-            glob('src/tweakreg/*.c'),
-            include_dirs=[np_include()],
-            define_macros=[('NUMPY', '1')]),
+                  glob('src/tweakreg/*.c'),
+                  include_dirs=[np_include()],
+                  define_macros=[('NUMPY', '1')]),
     ],
     install_requires=[
-        'namedlist'
-    ],
-    tests_require=[
-        'pytest',
+        'asdf>=2.1',
+        'astropy>=3.1',
+        'crds>=7.2.7',
+        'drizzle>=1.12',
+        'gwcs>=0.9',
+        'jsonschema>=2.3,<=2.6',
+        'namedlist>=1.7',
+        'numpy>=1.13',
         'requests_mock',
-        'ci_watson'
+        'scipy>=1.0',
+        'spherical-geometry>=1.2',
+        'stsci.tools>=3.4',
+        'stsci.image>=2.3',
+        'stsci.imagestats>=1.4',
+        'stsci.stimage>=0.2',
+        'photutils>=0.4',
+        'pytest',
+        'verhawk>=0.0',
     ],
+    extras_require={
+        'docs': DOCS_REQUIRE,
+        'ephem': ['pymssql>=2.1', 'jplephem>=2.8'],
+        'test': TESTS_REQUIRE,
+    },
+    tests_require=TESTS_REQUIRE,
     cmdclass={
         'test': PyTest,
         'build_sphinx': BuildSphinx

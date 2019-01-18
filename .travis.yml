@@ -29,7 +29,6 @@ env:
                               photutils
                               pytest
                               scipy
-                              six
                               spherical-geometry
                               stsci.image
                               stsci.imagestats
