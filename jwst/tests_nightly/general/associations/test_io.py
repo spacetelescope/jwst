@@ -4,13 +4,13 @@ import os
 import pytest
 from astropy.table import Table
 
-from .helpers import (
+from jwst.associations.tests.helpers import (
     TemporaryDirectory,
     full_pool_rules,
 )
 
-from ..main import Main
-from .. import load_asn
+from jwst.associations import load_asn
+from jwst.associations.main import Main
 
 
 @pytest.yield_fixture(
@@ -30,7 +30,6 @@ def make_asns(request, full_pool_rules):
         yield generated, path, asn_format
 
 
-@pytest.mark.slow
 def test_roundtrip(make_asns):
     generated, path, asn_format = make_asns
     asn_files = glob(os.path.join(path, '*.' + asn_format))
@@ -50,7 +49,6 @@ def test_roundtrip(make_asns):
     assert len(orphaned) == len(generated.orphaned)
 
 
-@pytest.mark.slow
 def test_load_asn_all(make_asns):
     generated, path, asn_format = make_asns
     asn_files = glob(os.path.join(path, '*.' + asn_format))
