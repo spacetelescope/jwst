@@ -74,6 +74,9 @@ extract_1d
 
 - Add a test for constant wavelengths (or constant slope). [#3032]
 
+- Fix issue regarding mixing of the syntax for Boolean arrays and for
+  integer index arrays. [#3045]
+
 extract_2d
 ----------
 - Moved the update of meta information to the MultiSlitModel instead of the
