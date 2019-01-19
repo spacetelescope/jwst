@@ -1,5 +1,4 @@
 """Test the Registry"""
-from .helpers import full_pool_rules
 
 
 def test_registry_match(full_pool_rules):

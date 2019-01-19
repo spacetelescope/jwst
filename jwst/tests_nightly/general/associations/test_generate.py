@@ -1,8 +1,6 @@
 """Test general asn_generate operations"""
 import pytest
 
-from jwst.associations.tests.helpers import full_pool_rules
-
 from jwst.associations import (
     generate,
     load_asn

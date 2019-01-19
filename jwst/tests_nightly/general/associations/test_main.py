@@ -3,7 +3,6 @@ import re
 
 import pytest
 
-from jwst.associations.tests.helpers import full_pool_rules
 from jwst.associations.main import Main
 
 

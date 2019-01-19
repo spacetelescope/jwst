@@ -1,9 +1,6 @@
 """test_associations: Test of general Association functionality."""
-import re
-
 import pytest
 
-from .helpers import full_pool_rules
 from ..main import Main
 
 
@@ -12,7 +9,7 @@ def test_toomanyoptions(full_pool_rules):
     pool, rules, pool_fname = full_pool_rules
 
     with pytest.raises(SystemExit):
-        generated = Main([
+        Main([
             pool_fname,
             '--dry-run',
             '--discover',
@@ -20,21 +17,21 @@ def test_toomanyoptions(full_pool_rules):
             '-i', 'o001',
         ])
     with pytest.raises(SystemExit):
-        generated = Main([
+        Main([
             pool_fname,
             '--dry-run',
             '--discover',
             '--all-candidates',
         ])
     with pytest.raises(SystemExit):
-        generated = Main([
+        Main([
             pool_fname,
             '--dry-run',
             '--discover',
             '-i', 'o001',
         ])
     with pytest.raises(SystemExit):
-        generated = Main([
+        Main([
             pool_fname,
             '--dry-run',
             '--all-candidates',

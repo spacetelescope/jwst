@@ -4,10 +4,7 @@ import os
 import pytest
 from astropy.table import Table
 
-from jwst.associations.tests.helpers import (
-    TemporaryDirectory,
-    full_pool_rules,
-)
+from jwst.associations.tests.helpers import TemporaryDirectory
 
 from jwst.associations import load_asn
 from jwst.associations.main import Main
@@ -39,7 +36,7 @@ def test_roundtrip(make_asns):
 
     for asn_file in asn_files:
         with open(asn_file, 'r') as asn_fp:
-            asn = load_asn(asn_fp)
+            load_asn(asn_fp)
 
     orphaned_files = glob(os.path.join(path, '*.csv'))
     assert len(orphaned_files) == 1
