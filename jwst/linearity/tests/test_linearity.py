@@ -6,7 +6,6 @@ Authors:
 from jwst.linearity import LinearityStep
 from jwst.linearity.linearity import do_correction as lincorr
 from jwst.datamodels import dqflags, LinearityModel, MIRIRampModel
-from astropy.io import fits
 import numpy as np
 
 
