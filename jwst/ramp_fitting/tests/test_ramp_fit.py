@@ -454,28 +454,26 @@ def test_miri_all_sat():
         True, rnModel, gain, 'OLS', 'optimal')
 
     # Check PRI output arrays
-    np.testing.assert_allclose( new_mod.data, 0.0, rtol=1E-5  )
-    np.testing.assert_allclose( new_mod.err, 0.0, rtol=1E-5  )
-    np.testing.assert_allclose( new_mod.data, 0.0, rtol=1E-5  )
-    np.testing.assert_allclose( new_mod.var_poisson, 0.0, rtol=1E-5  )
-    np.testing.assert_allclose( new_mod.var_rnoise, 0.0, rtol=1E-5  )
+    np.testing.assert_allclose( new_mod.data, 0.0, atol=1E-6  )
+    np.testing.assert_allclose( new_mod.err, 0.0, atol=1E-6  )
+    np.testing.assert_allclose( new_mod.var_poisson, 0.0, atol=1E-6  )
+    np.testing.assert_allclose( new_mod.var_rnoise, 0.0, atol=1E-6  )
 
     # Check INT output arrays
-    np.testing.assert_allclose( int_model.data, 0.0, rtol=1E-5  )
-    np.testing.assert_allclose( int_model.err, 0.0, rtol=1E-5  )
-    np.testing.assert_allclose( int_model.data, 0.0, rtol=1E-5  )
-    np.testing.assert_allclose( int_model.var_poisson, 0.0, rtol=1E-5  )
-    np.testing.assert_allclose( int_model.var_rnoise, 0.0, rtol=1E-5  )
+    np.testing.assert_allclose( int_model.data, 0.0, atol=1E-6  )
+    np.testing.assert_allclose( int_model.err, 0.0, atol=1E-6  )
+    np.testing.assert_allclose( int_model.var_poisson, 0.0, atol=1E-6  )
+    np.testing.assert_allclose( int_model.var_rnoise, 0.0, atol=1E-6  )
 
     # Check OPT output arrays
-    np.testing.assert_allclose( opt_model.slope, 0.0, rtol=1E-5  )
-    np.testing.assert_allclose( opt_model.var_poisson, 0.0, rtol=1E-5  )
-    np.testing.assert_allclose( opt_model.var_rnoise, 0.0, rtol=1E-5  )
-    np.testing.assert_allclose( opt_model.sigslope, 0.0, rtol=1E-5  )
-    np.testing.assert_allclose( opt_model.yint, 0.0, rtol=1E-5  )
-    np.testing.assert_allclose( opt_model.sigyint, 0.0, rtol=1E-5  )
-    np.testing.assert_allclose( opt_model.pedestal, 0.0, rtol=1E-5  )
-    np.testing.assert_allclose( opt_model.weights, 0.0, rtol=1E-5  )
+    np.testing.assert_allclose( opt_model.slope, 0.0, atol=1E-6  )
+    np.testing.assert_allclose( opt_model.var_poisson, 0.0, atol=1E-6  )
+    np.testing.assert_allclose( opt_model.var_rnoise, 0.0, atol=1E-6  )
+    np.testing.assert_allclose( opt_model.sigslope, 0.0, atol=1E-6  )
+    np.testing.assert_allclose( opt_model.yint, 0.0, atol=1E-6  )
+    np.testing.assert_allclose( opt_model.sigyint, 0.0, atol=1E-6  )
+    np.testing.assert_allclose( opt_model.pedestal, 0.0, atol=1E-6  )
+    np.testing.assert_allclose( opt_model.weights, 0.0, atol=1E-6  )
 
 
 def test_miri_first_last():
@@ -492,7 +490,7 @@ def test_miri_first_last():
 
     # Make smooth ramps having outlier SCI values in the 0th and final groups 
     #   to reveal if they are included in the fit (they shouldn't be, as those 
-    #   groups flagged are as DO_NOT_USE) 
+    #   groups are flagged as DO_NOT_USE) 
     model1.data[0,:,0,0] = np.array([-200., 30., 40., 50., 60., 70., 80., 
         90., 100., -500.], dtype=np.float32)
     model1.data[0,:,0,1] = np.array([-300.,  80., 90., 100., 110., 120., 
