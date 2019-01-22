@@ -18,7 +18,7 @@ def test_refpix_subarray():
 
     # create input data
     # create model of data with 0 value array
-    ngroups = 10
+    ngroups = 5
     ysize = 224
     xsize = 288
 
@@ -49,7 +49,7 @@ def test_each_amp():
 
     # create input data
     # create model of data with 0 value array
-    ngroups = 10
+    ngroups = 5
     ysize = 1024
     xsize = 1032
 
@@ -94,7 +94,7 @@ def test_firstframe_sub():
 
     # create input data
     # create model of data with 0 value array
-    ngroups = 10
+    ngroups = 5
     ysize = 1024
     xsize = 1032
 
@@ -133,7 +133,7 @@ def test_odd_even():
 
     # create input data
     # create model of data with 0 value array
-    ngroups = 10
+    ngroups = 5
     ysize = 1024
     xsize = 1032
 
@@ -185,7 +185,7 @@ def test_no_odd_even():
 
     # create input data
     # create model of data with 0 value array
-    ngroups = 10
+    ngroups = 5
     ysize = 1024
     xsize = 1032
 
@@ -239,7 +239,7 @@ def test_side_averaging():
 
     # create input data
     # create model of data with 0 value array
-    ngroups = 10
+    ngroups = 5
     ysize = 1024
     xsize = 1032
 
@@ -269,7 +269,7 @@ def test_above_sigma():
 
     # create input data
     # create model of data with 0 value array
-    ngroups = 10
+    ngroups = 5
     ysize = 1024
     xsize = 1032
 
@@ -303,7 +303,7 @@ def test_nan_refpix():
 
     # create input data
     # create model of data with 0 value array
-    ngroups = 10
+    ngroups = 5
     ysize = 1024
     xsize = 1032
 
@@ -333,7 +333,7 @@ def test_do_corrections_subarray_no_oddEven(setup_subarray_cube):
     '''Test all corrections for subarray data with no even/odd.'''
 
     # Create inputs and subarray SUB320A335R data, and set correction parameters
-    ngroups = 10
+    ngroups = 5
     nrows = 160
     ncols = 160
     xstart = 1
@@ -355,8 +355,8 @@ def test_do_corrections_subarray_no_oddEven(setup_subarray_cube):
     input_model.data[0, 0, :, :] = dataval
     input_model.data[0, 0, :4, :] = bottom_rpix
     input_model.data[0, 0, :, :4] = left_rpix
-    input_model.pixeldq[:4, :] = dqflags.pixel['REFERENCE_PIXEL'])
-    input_model.pixeldq[:, :4] = dqflags.pixel['REFERENCE_PIXEL'])
+    input_model.pixeldq[:4, :] = dqflags.pixel['REFERENCE_PIXEL']
+    input_model.pixeldq[:, :4] = dqflags.pixel['REFERENCE_PIXEL']
 
     init_dataset = create_dataset(input_model,
                                 odd_even_columns,
@@ -376,7 +376,7 @@ def test_do_corrections_subarray(setup_subarray_cube):
     '''Test all corrections for subarray data.'''
 
     # Create inputs and subarray SUB320A335R data, and set correction parameters
-    ngroups = 10
+    ngroups = 5
     nrows = 160
     ncols = 160
     xstart = 1
@@ -419,7 +419,7 @@ def test_get_restore_group_subarray(setup_subarray_cube):
     '''Test subarray input model data is replaced with group data.'''
 
     # Create inputs and subarray SUB320A335R data, and set correction parameters
-    ngroups = 10
+    ngroups = 5
     nrows = 320
     ncols = 320
     xstart = 486
@@ -458,7 +458,7 @@ def test_get_restore_group_subarray(setup_subarray_cube):
 def test_do_top_bottom_correction(setup_cube):
     '''Test top/bottom correction for NIRCam data.'''
 
-    ngroups = 10
+    ngroups = 5
     nrows = 2048
     ncols = 2048
 
@@ -516,7 +516,7 @@ def test_do_top_bottom_correction(setup_cube):
 def test_do_top_bottom_correction_no_evenOdd(setup_cube):
     '''Test top/bottom correction with no even/odd.'''
 
-    ngroups = 10
+    ngroups = 5
     nrows = 2048
     ncols = 2048
 
