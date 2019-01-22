@@ -398,8 +398,8 @@ def test_do_corrections_subarray(setup_subarray_cube):
     input_model.data[0, 0, :, :] = dataval
     input_model.data[0, 0, :4, :] = bottom_rpix
     input_model.data[0, 0, :, :4] = left_rpix
-    input_model.pixeldq[:4, :] = dqflags.pixel['REFERENCE_PIXEL'])
-    input_model.pixeldq[:, :4] = dqflags.pixel['REFERENCE_PIXEL'])
+    input_model.pixeldq[:4, :] = dqflags.pixel['REFERENCE_PIXEL']
+    input_model.pixeldq[:, :4] = dqflags.pixel['REFERENCE_PIXEL']
 
     init_dataset = create_dataset(input_model,
                                 odd_even_columns,
