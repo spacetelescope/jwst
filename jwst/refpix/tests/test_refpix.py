@@ -18,7 +18,7 @@ def test_refpix_subarray():
 
     # create input data
     # create model of data with 0 value array
-    ngroups = 5
+    ngroups = 10
     ysize = 224
     xsize = 288
 
@@ -49,7 +49,7 @@ def test_each_amp():
 
     # create input data
     # create model of data with 0 value array
-    ngroups = 5
+    ngroups = 10
     ysize = 1024
     xsize = 1032
 
@@ -94,7 +94,7 @@ def test_firstframe_sub():
 
     # create input data
     # create model of data with 0 value array
-    ngroups = 5
+    ngroups = 10
     ysize = 1024
     xsize = 1032
 
@@ -133,7 +133,7 @@ def test_odd_even():
 
     # create input data
     # create model of data with 0 value array
-    ngroups = 5
+    ngroups = 10
     ysize = 1024
     xsize = 1032
 
@@ -185,7 +185,7 @@ def test_no_odd_even():
 
     # create input data
     # create model of data with 0 value array
-    ngroups = 5
+    ngroups = 10
     ysize = 1024
     xsize = 1032
 
@@ -239,7 +239,7 @@ def test_side_averaging():
 
     # create input data
     # create model of data with 0 value array
-    ngroups = 5
+    ngroups = 10
     ysize = 1024
     xsize = 1032
 
