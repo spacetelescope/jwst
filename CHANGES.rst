@@ -222,6 +222,7 @@ superbias
 
 timeconversion
 --------------
+- Updated the docstrings [#3020]
 
 transforms
 ----------
