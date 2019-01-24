@@ -36,16 +36,16 @@ try:
         """Build Sphinx documentation after compiling C source files"""
 
         description = 'Build Sphinx documentation'
-        
+
         user_options = BuildDoc.user_options[:]
-        
+
         user_options.append(
             ('keep-going', 'k',
              'Parses the sphinx output and sets the return code to 1 if there '
              'are any warnings. Note that this will cause the sphinx log to '
              'only update when it completes, rather than continuously as is '
              'normally the case.'))
-        
+
 
         def initialize_options(self):
             BuildDoc.initialize_options(self)
@@ -58,7 +58,6 @@ try:
             build_cmd.inplace = 1
             self.run_command('build_ext')
             retcode = build_main(['-W', '--keep-going', '-b', 'html', './docs', './docs/_build/html'])
-            print('retcode', retcode)
             if retcode != 0:
                 sys.exit(retcode)
 

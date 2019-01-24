@@ -9,4 +9,4 @@ Wide-Field Slitless Spectroscopy (WFSS) exposures.
 
 .. include:: ../references_general/wavecorr_reffile.inc
 
-:ref: `WAVELENGHTRANGE <../includes/wavelengthrange_reffile.rst>`
+.. include:: ../references_general/wavelengthrange_reffile.inc

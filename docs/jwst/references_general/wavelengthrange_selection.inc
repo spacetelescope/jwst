@@ -1,5 +1,3 @@
-.. _wavelengthrange_selectors:
-
 Reference Selection Keywords for WAVELENGTHRANGE
 ++++++++++++++++++++++++++++++++++++++++++++++++
 CRDS selects appropriate WAVELENGTHRANGE references based on the following

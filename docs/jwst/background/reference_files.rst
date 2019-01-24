@@ -9,5 +9,5 @@ that contain only background signal.
 
 .. include:: ../references_general/wfssbkg_reffile.inc
 
-:ref: `WAVELENGTHRANGE <../includes/wavelengthrange_reffile.rst>`
+.. include:: ../references_general/wavelengthrange_reffile.inc
 
