@@ -94,15 +94,16 @@ DOCS_REQUIRE = [
     'matplotlib',
     'sphinx',
     'sphinx-automodapi',
-    'sphinxcontrib-programoutput',
     'sphinx-rtd-theme',
-    'stsci-rtd-theme'
+    'stsci-rtd-theme',
+    'sphinx-astropy'
 ]
 TESTS_REQUIRE = [
     'ci-watson',
     'pytest',
     'pytest-doctestplus',
-    'requests_mock'
+    'requests_mock',
+    'pytest-astropy'
 ]
 
 def get_transforms_data():
