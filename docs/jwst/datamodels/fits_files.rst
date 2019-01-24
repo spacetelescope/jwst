@@ -34,45 +34,45 @@ Stage 1 and 2 exposure-based products, which contain the data
 from an individual exposure on an individual detector, use the
 following FITS file naming scheme::
 
-    jw<ppppp><ooo><vvv>_<gg><s><aa>_<eeeee>_<detector>_<prodType>.fits
+ jw<ppppp><ooo><vvv>_<gg><s><aa>_<eeeee>_<detector>_<prodType>.fits
 
 where
 
-   - ppppp: program ID number
-   - ooo: observation number
-   - vvv: visit number
-   - gg: visit group
-   - s: parallel sequence ID (1=prime, 2-5=parallel)
-   - aa: activity number (base 36)
-   - eeeee: exposure number
-   - detector: detector name (e.g. 'nrca1', 'nrcblong', 'mirimage')
-   - prodType: product type identifier (e.g. 'uncal', 'rate', 'cal')
+ - ppppp: program ID number
+ - ooo: observation number
+ - vvv: visit number
+ - gg: visit group
+ - s: parallel sequence ID (1=prime, 2-5=parallel)
+ - aa: activity number (base 36)
+ - eeeee: exposure number
+ - detector: detector name (e.g. 'nrca1', 'nrcblong', 'mirimage')
+ - prodType: product type identifier (e.g. 'uncal', 'rate', 'cal')
 
 An example Stage 1 product FITS file name is::
 
-   jw93065002001_02101_00001_nrca1_rate.fits
+ jw93065002001_02101_00001_nrca1_rate.fits
 
 Stage 3 products, which consist of data from multiple exposures and/or
 detectors, use a source-based file naming scheme::
 
-jw<ppppp>-<AC_ID>_[<"t"TargID | "s"SourceID">](-<"epoch"X>)_<instr>_<optElements>(-<subarray>)_<prodType>(-<ACT_ID>).fits
+ jw<ppppp>-<AC_ID>_[<"t"TargID | "s"SourceID">](-<"epoch"X>)_<instr>_<optElements>(-<subarray>)_<prodType>(-<ACT_ID>).fits
 
 where
 
-   - ppppp: program ID number
-   - AC_ID: association candidate ID
-   - TargID: a 3-digit target ID (either TargID or SourceID must be present)
-   - SourceID: a 5-digit source ID
-   - epochX: the text "epoch" followed by a single digit epoch number
-   - instr: science instrument name (e.g. 'nircam', 'miri')
-   - optElements: a single or hyphen-separated list of optical elements (e.g. filter, grating)
-   - subarray: optional indicator of subarray name
-   - prodType: product type identifier (e.g. 'i2d', 's3d', 'x1d')
-   - ACT_ID: a 2-digit activity ID
+ - ppppp: program ID number
+ - AC_ID: association candidate ID
+ - TargID: a 3-digit target ID (either TargID or SourceID must be present)
+ - SourceID: a 5-digit source ID
+ - epochX: the text "epoch" followed by a single digit epoch number
+ - instr: science instrument name (e.g. 'nircam', 'miri')
+ - optElements: a single or hyphen-separated list of optical elements (e.g. filter, grating)
+ - subarray: optional indicator of subarray name
+ - prodType: product type identifier (e.g. 'i2d', 's3d', 'x1d')
+ - ACT_ID: a 2-digit activity ID
 
 An example Stage 3 product FITS file name is::
 
-   jw87600-a3001_t001_niriss_f480m-nrm_amiavg.fits
+ jw87600-a3001_t001_niriss_f480m-nrm_amiavg.fits
 
 Specific products
 -----------------
@@ -102,23 +102,23 @@ Additional extensions can be included for certain instruments and readout types,
 below.
 The FITS file structure is as follows.
 
-+-----+--------------------+-----------+----------+-----------+---------------------------------+
-| HDU | Content            | EXTNAME   | HDU Type | Data Type | Dimensions                      |
-+=====+====================+===========+==========+===========+=================================+
-|  0  | Primary header     | N/A       | N/A      | N/A       | N/A                             |
-+-----+--------------------+-----------+----------+-----------+---------------------------------+
-|  1  | Pixel values       | SCI       | IMAGE    | uint16    | ncols x nrows x ngroups x nints |
-+-----+--------------------+-----------+----------+-----------+---------------------------------+
-|  2  | Group meta data    | GROUP     | BINTABLE | N/A       | variable                        |
-+-----+--------------------+-----------+----------+-----------+---------------------------------+
-|  3  | Integration times  | INT_TIMES | BINTABLE | N/A       | nints (rows) x 7 cols           |
-+-----+--------------------+-----------+----------+-----------+---------------------------------+
-|     | Zero-frame images* | ZEROFRAME | IMAGE    | uint16    | ncols x nrows x nints           |
-+-----+--------------------+-----------+----------+-----------+---------------------------------+
-|     | Reference output*  | REFOUT    | IMAGE    | uint16    | ncols x 256 x ngroups x nints   |
-+-----+--------------------+-----------+----------+-----------+---------------------------------+
-|     | Data model meta    | ASDF      | BINTABLE | N/A       | variable                        |
-+-----+--------------------+-----------+----------+-----------+---------------------------------+
++-----+------------+----------+-----------+---------------------------------+
+| HDU | EXTNAME    | HDU Type | Data Type | Dimensions                      |
++=====+============+==========+===========+=================================+
+|  0  | N/A        | primary  | N/A       | N/A                             |
++-----+------------+----------+-----------+---------------------------------+
+|  1  | SCI        | IMAGE    | uint16    | ncols x nrows x ngroups x nints |
++-----+------------+----------+-----------+---------------------------------+
+|  2  | GROUP      | BINTABLE | N/A       | variable                        |
++-----+------------+----------+-----------+---------------------------------+
+|  3  | INT_TIMES  | BINTABLE | N/A       | nints (rows) x 7 cols           |
++-----+------------+----------+-----------+---------------------------------+
+|     | ZEROFRAME* | IMAGE    | uint16    | ncols x nrows x nints           |
++-----+------------+----------+-----------+---------------------------------+
+|     | REFOUT*    | IMAGE    | uint16    | ncols x 256 x ngroups x nints   |
++-----+------------+----------+-----------+---------------------------------+
+|     | ASDF       | BINTABLE | N/A       | variable                        |
++-----+------------+----------+-----------+---------------------------------+
 
  - SCI: 4-D data array containing the raw pixel values. The first two dimensions are equal to
    the size of the detector readout, with the data from multiple groups (NGROUPS) within each
@@ -148,29 +148,29 @@ from integer to floating-point data type. The same is true for the ZEROFRAME and
 data extensions, if they are present. An ERR array and two types of data quality arrays are
 also added to the product. The FITS file layout is as follows:
 
-+-----+--------------------+-----------+----------+-----------+---------------------------------+
-| HDU | Content            | EXTNAME   | HDU Type | Data Type | Dimensions                      |
-+=====+====================+===========+==========+===========+=================================+
-|  0  | Primary header     | N/A       | N/A      | N/A       | N/A                             |
-+-----+--------------------+-----------+----------+-----------+---------------------------------+
-|  1  | Pixel values       | SCI       | IMAGE    | float32   | ncols x nrows x ngroups x nints |
-+-----+--------------------+-----------+----------+-----------+---------------------------------+
-|  2  | 2-D data quality   | PIXELDQ   | IMAGE    | uint32    | ncols x nrows                   |
-+-----+--------------------+-----------+----------+-----------+---------------------------------+
-|  3  | 4-D data quality   | GROUPDQ   | IMAGE    | uint8     | ncols x nrows x ngroups x nints |
-+-----+--------------------+-----------+----------+-----------+---------------------------------+
-|  4  | Error values       | ERR       | IMAGE    | float32   | ncols x nrows x ngroups x nints |
-+-----+--------------------+-----------+----------+-----------+---------------------------------+
-|     | Zero-frame images* | ZEROFRAME | IMAGE    | float32   | ncols x nrows x nints           |
-+-----+--------------------+-----------+----------+-----------+---------------------------------+
-|     | Group meta data    | GROUP     | BINTABLE | N/A       | variable                        |
-+-----+--------------------+-----------+----------+-----------+---------------------------------+
-|     | Integration times  | INT_TIMES | BINTABLE | N/A       | nints (rows) x 7 cols           |
-+-----+--------------------+-----------+----------+-----------+---------------------------------+
-|     | Reference output*  | REFOUT    | IMAGE    | uint16    | ncols x 256 x ngroups x nints   |
-+-----+--------------------+-----------+----------+-----------+---------------------------------+
-|     | Data model meta    | ASDF      | BINTABLE | N/A       | variable                        |
-+-----+--------------------+-----------+----------+-----------+---------------------------------+
++-----+------------+----------+-----------+---------------------------------+
+| HDU | EXTNAME    | HDU Type | Data Type | Dimensions                      |
++=====+============+==========+===========+=================================+
+|  0  | N/A        | primary  | N/A       | N/A                             |
++-----+------------+----------+-----------+---------------------------------+
+|  1  | SCI        | IMAGE    | float32   | ncols x nrows x ngroups x nints |
++-----+------------+----------+-----------+---------------------------------+
+|  2  | PIXELDQ    | IMAGE    | uint32    | ncols x nrows                   |
++-----+------------+----------+-----------+---------------------------------+
+|  3  | GROUPDQ    | IMAGE    | uint8     | ncols x nrows x ngroups x nints |
++-----+------------+----------+-----------+---------------------------------+
+|  4  | ERR        | IMAGE    | float32   | ncols x nrows x ngroups x nints |
++-----+------------+----------+-----------+---------------------------------+
+|     | ZEROFRAME* | IMAGE    | float32   | ncols x nrows x nints           |
++-----+------------+----------+-----------+---------------------------------+
+|     | GROUP      | BINTABLE | N/A       | variable                        |
++-----+------------+----------+-----------+---------------------------------+
+|     | INT_TIMES  | BINTABLE | N/A       | nints (rows) x 7 cols           |
++-----+------------+----------+-----------+---------------------------------+
+|     | REFOUT*    | IMAGE    | uint16    | ncols x 256 x ngroups x nints   |
++-----+------------+----------+-----------+---------------------------------+
+|     | ASDF       | BINTABLE | N/A       | variable                        |
++-----+------------+----------+-----------+---------------------------------+
 
  - SCI: 4-D data array containing the pixel values. The first two dimensions are equal to
    the size of the detector readout, with the data from multiple groups (NGROUPS) within each
@@ -205,25 +205,25 @@ image for the entire exposure. These resuls are stored in a ``rate`` product.
 
 The FITS file structure for a ``rateints`` product is as follows:
 
-+-----+---------------------+-------------+----------+-----------+-----------------------+
-| HDU | Content             | EXTNAME     | HDU Type | Data Type | Dimensions            |
-+=====+=====================+=============+==========+===========+=======================+
-|  0  | Primary header      | N/A         | N/A      | N/A       | N/A                   |
-+-----+---------------------+-------------+----------+-----------+-----------------------+
-|  1  | Pixel values        | SCI         | IMAGE    | float32   | ncols x nrows x nints |
-+-----+---------------------+-------------+----------+-----------+-----------------------+
-|  2  | Error values        | ERR         | IMAGE    | float32   | ncols x nrows x nints |
-+-----+---------------------+-------------+----------+-----------+-----------------------+
-|  3  | Data quality        | DQ          | IMAGE    | uint32    | ncols x nrows x nints |
-+-----+---------------------+-------------+----------+-----------+-----------------------+
-|  4  | Integration times   | INT_TIMES   | BINTABLE | N/A       | nints (rows) x 7 cols |
-+-----+---------------------+-------------+----------+-----------+-----------------------+
-|  5  | Poisson variance    | VAR_POISSON | IMAGE    | float32   | ncols x nrows x nints |
-+-----+---------------------+-------------+----------+-----------+-----------------------+
-|  6  | Read noise variance | VAR_RNOISE  | IMAGE    | float32   | ncols x nrows x nints |
-+-----+---------------------+-------------+----------+-----------+-----------------------+
-|  7  | Data model meta     | ASDF        | BINTABLE | N/A       | variable              |
-+-----+---------------------+-------------+----------+-----------+-----------------------+
++-----+-------------+----------+-----------+-----------------------+
+| HDU | EXTNAME     | HDU Type | Data Type | Dimensions            |
++=====+=============+==========+===========+=======================+
+|  0  | N/A         | primary  | N/A       | N/A                   |
++-----+-------------+----------+-----------+-----------------------+
+|  1  | SCI         | IMAGE    | float32   | ncols x nrows x nints |
++-----+-------------+----------+-----------+-----------------------+
+|  2  | ERR         | IMAGE    | float32   | ncols x nrows x nints |
++-----+-------------+----------+-----------+-----------------------+
+|  3  | DQ          | IMAGE    | uint32    | ncols x nrows x nints |
++-----+-------------+----------+-----------+-----------------------+
+|  4  | INT_TIMES   | BINTABLE | N/A       | nints (rows) x 7 cols |
++-----+-------------+----------+-----------+-----------------------+
+|  5  | VAR_POISSON | IMAGE    | float32   | ncols x nrows x nints |
++-----+-------------+----------+-----------+-----------------------+
+|  6  | VAR_RNOISE  | IMAGE    | float32   | ncols x nrows x nints |
++-----+-------------+----------+-----------+-----------------------+
+|  7  | ASDF        | BINTABLE | N/A       | variable              |
++-----+-------------+----------+-----------+-----------------------+
 
  - SCI: 3-D data array containing the pixel values, in units of DN/s. The first two dimensions are equal to
    the size of the detector readout, with the data from multiple integrations stored along the 3rd axis.
@@ -243,23 +243,23 @@ These FITS files are compatitable with the `~jwst.datamodels.CubeModel` data mod
 
 The FITS file structure for a ``rate`` product is as follows:
 
-+-----+---------------------+-------------+----------+-----------+-----------------------+
-| HDU | Content             | EXTNAME     | HDU Type | Data Type | Dimensions            |
-+=====+=====================+=============+==========+===========+=======================+
-|  0  | Primary header      | N/A         | N/A      | N/A       | N/A                   |
-+-----+---------------------+-------------+----------+-----------+-----------------------+
-|  1  | Pixel values        | SCI         | IMAGE    | float32   | ncols x nrows         |
-+-----+---------------------+-------------+----------+-----------+-----------------------+
-|  2  | Error values        | ERR         | IMAGE    | float32   | ncols x nrows         |
-+-----+---------------------+-------------+----------+-----------+-----------------------+
-|  3  | Data quality        | DQ          | IMAGE    | uint32    | ncols x nrows         |
-+-----+---------------------+-------------+----------+-----------+-----------------------+
-|  4  | Poisson variance    | VAR_POISSON | IMAGE    | float32   | ncols x nrows x nints |
-+-----+---------------------+-------------+----------+-----------+-----------------------+
-|  5  | Read noise variance | VAR_RNOISE  | IMAGE    | float32   | ncols x nrows x nints |
-+-----+---------------------+-------------+----------+-----------+-----------------------+
-|  6  | Data model meta     | ASDF        | BINTABLE | N/A       | variable              |
-+-----+---------------------+-------------+----------+-----------+-----------------------+
++-----+-------------+----------+-----------+-----------------------+
+| HDU | EXTNAME     | HDU Type | Data Type | Dimensions            |
++=====+=============+==========+===========+=======================+
+|  0  | N/A         | primary  | N/A       | N/A                   |
++-----+-------------+----------+-----------+-----------------------+
+|  1  | SCI         | IMAGE    | float32   | ncols x nrows         |
++-----+-------------+----------+-----------+-----------------------+
+|  2  | ERR         | IMAGE    | float32   | ncols x nrows         |
++-----+-------------+----------+-----------+-----------------------+
+|  3  | DQ          | IMAGE    | uint32    | ncols x nrows         |
++-----+-------------+----------+-----------+-----------------------+
+|  4  | VAR_POISSON | IMAGE    | float32   | ncols x nrows x nints |
++-----+-------------+----------+-----------+-----------------------+
+|  5  | VAR_RNOISE  | IMAGE    | float32   | ncols x nrows x nints |
++-----+-------------+----------+-----------+-----------------------+
+|  6  | ASDF        | BINTABLE | N/A       | variable              |
++-----+-------------+----------+-----------+-----------------------+
 
  - SCI: 2-D data array containing the pixel values, in units of DN/s.
  - ERR: 2-D data array containing uncertainty estimates for each pixel. These values
@@ -285,35 +285,37 @@ countrate products. There are two different high-level forms of calibrated produ
 one containing results for all integrations in an exposure (``calints``) and one for
 results averaged over all integrations (``cal``). These products are the main result of
 Stage 2 pipelines like :ref:`calwebb_image2 <calwebb_image2>` and
-:ref:`calwebb_spec2 <calwebb_spec2>`.
+:ref:`calwebb_spec2 <calwebb_spec2>`. There are many additional types of extensions
+that only appear for certain observing modes or instruments, especially for spectroscopic
+exposures.
 
 The FITS file structure for a ``calints`` product is as follows:
 
-+-----+---------------------+-------------+----------+-----------+-----------------------+
-| HDU | Content             | EXTNAME     | HDU Type | Data Type | Dimensions            |
-+=====+=====================+=============+==========+===========+=======================+
-|  0  | Primary header      | N/A         | N/A      | N/A       | N/A                   |
-+-----+---------------------+-------------+----------+-----------+-----------------------+
-|  1  | Pixel values        | SCI         | IMAGE    | float32   | ncols x nrows x nints |
-+-----+---------------------+-------------+----------+-----------+-----------------------+
-|  2  | Error values        | ERR         | IMAGE    | float32   | ncols x nrows x nints |
-+-----+---------------------+-------------+----------+-----------+-----------------------+
-|  3  | Data quality        | DQ          | IMAGE    | uint32    | ncols x nrows x nints |
-+-----+---------------------+-------------+----------+-----------+-----------------------+
-|     | Integration times   | INT_TIMES   | BINTABLE | N/A       | nints (rows) x 7 cols |
-+-----+---------------------+-------------+----------+-----------+-----------------------+
-|     | Poisson variance    | VAR_POISSON | IMAGE    | float32   | ncols x nrows x nints |
-+-----+---------------------+-------------+----------+-----------+-----------------------+
-|     | Read noise variance | VAR_RNOISE  | IMAGE    | float32   | ncols x nrows x nints |
-+-----+---------------------+-------------+----------+-----------+-----------------------+
-|     | Pixel area values*  | AREA        | IMAGE    |           | ncols x nrows         |
-+-----+---------------------+-------------+----------+-----------+-----------------------+
-|     | Sensitivity values* | RELSENS     | BINTABLE | N/A       | variable              |
-+-----+---------------------+-------------+----------+-----------+-----------------------+
-|     | Wavelength values*  | WAVELENGTH  | IMAGE    | float32   | ncols x nrows         |
-+-----+---------------------+-------------+----------+-----------+-----------------------+
-|     | Data model meta     | ASDF        | BINTABLE | N/A       | variable              |
-+-----+---------------------+-------------+----------+-----------+-----------------------+
++-----+-------------+----------+-----------+-----------------------+
+| HDU | EXTNAME     | HDU Type | Data Type | Dimensions            |
++=====+=============+==========+===========+=======================+
+|  0  | N/A         | primary  | N/A       | N/A                   |
++-----+-------------+----------+-----------+-----------------------+
+|  1  | SCI         | IMAGE    | float32   | ncols x nrows x nints |
++-----+-------------+----------+-----------+-----------------------+
+|  2  | ERR         | IMAGE    | float32   | ncols x nrows x nints |
++-----+-------------+----------+-----------+-----------------------+
+|  3  | DQ          | IMAGE    | uint32    | ncols x nrows x nints |
++-----+-------------+----------+-----------+-----------------------+
+|     | INT_TIMES   | BINTABLE | N/A       | nints (rows) x 7 cols |
++-----+-------------+----------+-----------+-----------------------+
+|     | VAR_POISSON | IMAGE    | float32   | ncols x nrows x nints |
++-----+-------------+----------+-----------+-----------------------+
+|     | VAR_RNOISE  | IMAGE    | float32   | ncols x nrows x nints |
++-----+-------------+----------+-----------+-----------------------+
+|     | AREA*       | IMAGE    |           | ncols x nrows         |
++-----+-------------+----------+-----------+-----------------------+
+|     | RELSENS*    | BINTABLE | N/A       | variable              |
++-----+-------------+----------+-----------+-----------------------+
+|     | WAVELENGTH* | IMAGE    | float32   | ncols x nrows         |
++-----+-------------+----------+-----------+-----------------------+
+|     | ASDF        | BINTABLE | N/A       | variable              |
++-----+-------------+----------+-----------+-----------------------+
 
  - SCI: 3-D data array containing the pixel values, in units of surface brightness, for
    each integration.
@@ -334,43 +336,43 @@ The FITS file structure for a ``calints`` product is as follows:
  - WAVELENGTH: 2-D data array of wavelength values for each pixel, for some spectroscopic modes.
  - ADSF: The data model meta data.
 
-The FITS file structure for a `cal` product is as follows:
+The FITS file structure for a ``cal`` product is as follows:
 
-+-----+------------------------+--------------------------+----------+-----------+---------------+
-| HDU | Content                | EXTNAME                  | HDU Type | Data Type | Dimensions    |
-+=====+========================+==========================+==========+===========+===============+
-|  0  | Primary header         | N/A                      | N/A      | N/A       | N/A           |
-+-----+------------------------+--------------------------+----------+-----------+---------------+
-|  1  | Pixel values           | SCI                      | IMAGE    | float32   | ncols x nrows |
-+-----+------------------------+--------------------------+----------+-----------+---------------+
-|  2  | Error values           | ERR                      | IMAGE    | float32   | ncols x nrows |
-+-----+------------------------+--------------------------+----------+-----------+---------------+
-|  3  | Data quality           | DQ                       | IMAGE    | uint32    | ncols x nrows |
-+-----+------------------------+--------------------------+----------+-----------+---------------+
-|     | Poisson variance       | VAR_POISSON              | IMAGE    | float32   | ncols x nrows |
-+-----+------------------------+--------------------------+----------+-----------+---------------+
-|     | Read noise variance    | VAR_RNOISE               | IMAGE    | float32   | ncols x nrows |
-+-----+------------------------+--------------------------+----------+-----------+---------------+
-|     | Pixel area values*     | AREA                     | IMAGE    | float32   | ncols x nrows |
-+-----+------------------------+--------------------------+----------+-----------+---------------+
-|     | Sensitivity values*    | RELSENS                  | BINTABLE | N/A       | variable      |
-+-----+------------------------+--------------------------+----------+-----------+---------------+
-|     | Sensitivity values*    | RELSENS2D                | BINTABLE | N/A       | ncols x nrows |
-+-----+------------------------+--------------------------+----------+-----------+---------------+
-|     | Pathloss correction*   | PATHLOSS_POINTSOURCE     | IMAGE    | float32   | ncols         |
-+-----+------------------------+--------------------------+----------+-----------+---------------+
-|     | Wavelength values*     | WAVELENGTH_POINTSOURCE   | IMAGE    | float32   | ncols         |
-+-----+------------------------+--------------------------+----------+-----------+---------------+
-|     | Pathloss correction*   | PATHLOSS_UNIFORMSOURCE   | IMAGE    | float32   | ncols         |
-+-----+------------------------+--------------------------+----------+-----------+---------------+
-|     | Wavelength values*     | WAVELENGTH_UNIFORMSOURCE | IMAGE    | float32   | ncols         |
-+-----+------------------------+--------------------------+----------+-----------+---------------+
-|     | Bar shadow correction* | BARSHADOW                | IMAGE    | float32   | ncols x nrows |
-+-----+------------------------+--------------------------+----------+-----------+---------------+
-|     | Wavelength values*     | WAVELENGTH               | IMAGE    | float32   | ncols x nrows |
-+-----+------------------------+--------------------------+----------+-----------+---------------+
-|     | Data model meta        | ASDF                     | BINTABLE | N/A       | variable      |
-+-----+------------------------+--------------------------+----------+-----------+---------------+
++-----+---------------------------+----------+-----------+---------------+
+| HDU | EXTNAME                   | HDU Type | Data Type | Dimensions    |
++=====+===========================+==========+===========+===============+
+|  0  | N/A                       | primary  | N/A       | N/A           |
++-----+---------------------------+----------+-----------+---------------+
+|  1  | SCI                       | IMAGE    | float32   | ncols x nrows |
++-----+---------------------------+----------+-----------+---------------+
+|  2  | ERR                       | IMAGE    | float32   | ncols x nrows |
++-----+---------------------------+----------+-----------+---------------+
+|  3  | DQ                        | IMAGE    | uint32    | ncols x nrows |
++-----+---------------------------+----------+-----------+---------------+
+|     | VAR_POISSON               | IMAGE    | float32   | ncols x nrows |
++-----+---------------------------+----------+-----------+---------------+
+|     | VAR_RNOISE                | IMAGE    | float32   | ncols x nrows |
++-----+---------------------------+----------+-----------+---------------+
+|     | AREA*                     | IMAGE    | float32   | ncols x nrows |
++-----+---------------------------+----------+-----------+---------------+
+|     | RELSENS*                  | BINTABLE | N/A       | variable      |
++-----+---------------------------+----------+-----------+---------------+
+|     | RELSENS2D*                | BINTABLE | N/A       | ncols x nrows |
++-----+---------------------------+----------+-----------+---------------+
+|     | PATHLOSS_POINTSOURCE*     | IMAGE    | float32   | ncols         |
++-----+---------------------------+----------+-----------+---------------+
+|     | WAVELENGTH_POINTSOURCE*   | IMAGE    | float32   | ncols         |
++-----+---------------------------+----------+-----------+---------------+
+|     | PATHLOSS_UNIFORMSOURCE*   | IMAGE    | float32   | ncols         |
++-----+---------------------------+----------+-----------+---------------+
+|     | WAVELENGTH_UNIFORMSOURCE* | IMAGE    | float32   | ncols         |
++-----+---------------------------+----------+-----------+---------------+
+|     | BARSHADOW*                | IMAGE    | float32   | ncols x nrows |
++-----+---------------------------+----------+-----------+---------------+
+|     | WAVELENGTH*               | IMAGE    | float32   | ncols x nrows |
++-----+---------------------------+----------+-----------+---------------+
+|     | ASDF                      | BINTABLE | N/A       | variable      |
++-----+---------------------------+----------+-----------+---------------+
 
  - SCI: 2-D data array containing the pixel values, in units of surface brightness.
  - ERR: 2-D data array containing uncertainty estimates for each pixel.
@@ -402,3 +404,197 @@ The FITS file structure for a `cal` product is as follows:
  - WAVELENGTH: 2-D data array of wavelength values for each pixel, for some spectroscopic modes.
  - ADSF: The data model meta data.
 
+For spectroscopic modes that contain data for multiple sources, such as NIRSpec MOS,
+NIRCam WFSS, and NIRISS WFSS, there will be multiple tuples of the SCI, ERR, DQ, VAR_POISSON,
+VAR_RNOISE, RELSENS, etc. extensions, where each tuple contains the data for a given source or
+slit, as created by the :ref:`extract_2d <extract_2d_step>` step. FITS "EXTVER" keywords are
+used in each extension header to segregate the multiple instances of each extension type by
+source.
+
+Resampled 2-D data: ``i2d`` and ``s2d``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Images and spectra that have been resampled by the :ref:`resample <resample_step>` step use a
+different set of data arrays than other science products. Resampled 2-D images are stored in
+``i2d`` products and resampled 2-D spectra are stored in ``s2d`` products.
+The FITS file structure for ``i2d`` products is as follows:
+
++-----+-------------+----------+-----------+---------------+
+| HDU | EXTNAME     | HDU Type | Data Type | Dimensions    |
++=====+=============+==========+===========+===============+
+|  0  | N/A         | primary  | N/A       | N/A           |
++-----+-------------+----------+-----------+---------------+
+|  1  | SCI         | IMAGE    | float32   | ncols x nrows |
++-----+-------------+----------+-----------+---------------+
+|  2  | CON         | IMAGE    | int32     | ncols x nrows |
++-----+-------------+----------+-----------+---------------+
+|  3  | WHT         | IMAGE    | float32   | ncols x nrows |
++-----+-------------+----------+-----------+---------------+
+|     | HDRTAB*     | BINTABLE | N/A       | variable      |
++-----+-------------+----------+-----------+---------------+
+|     | ASDF        | BINTABLE | N/A       | variable      |
++-----+-------------+----------+-----------+---------------+
+
+ - SCI: 2-D data array containing the pixel values, in units of surface brightness.
+ - CON: 2-D context image, which encodes information about which input images contribute
+   to a specific output pixel.
+ - WHT: 2-D weight image giving the relative weight of the output pixels (effectively a
+   relative exposure time map).
+ - HDRTAB: A table containing meta data (FITS keyword values) for all of the input images
+   that were combined to produce the output image. Only appears when multiple inputs are used.
+ - ADSF: The data model meta data.
+ 
+The FITS file structure for ``s2d`` products is as follows:
+
++-----+-------------+----------+-----------+---------------+
+| HDU | EXTNAME     | HDU Type | Data Type | Dimensions    |
++=====+=============+==========+===========+===============+
+|  0  | N/A         | primary  | N/A       | N/A           |
++-----+-------------+----------+-----------+---------------+
+|  1  | SCI         | IMAGE    | float32   | ncols x nrows |
++-----+-------------+----------+-----------+---------------+
+|  2  | CON         | IMAGE    | int32     | ncols x nrows |
++-----+-------------+----------+-----------+---------------+
+|  3  | WHT         | IMAGE    | float32   | ncols x nrows |
++-----+-------------+----------+-----------+---------------+
+|  4  | RELSENS     | BINTABLE | N/A       | variable      |
++-----+-------------+----------+-----------+---------------+
+|     | HDRTAB*     | BINTABLE | N/A       | variable      |
++-----+-------------+----------+-----------+---------------+
+|     | ASDF        | BINTABLE | N/A       | variable      |
++-----+-------------+----------+-----------+---------------+
+
+ - SCI: 2-D data array containing the pixel values, in units of surface brightness.
+ - CON: 2-D context image, which encodes information about which input images contribute
+   to a specific output pixel.
+ - WHT: 2-D weight image giving the relative weight of the output pixels (effectively a
+   relative exposure time map).
+ - RELSENS: A table of sensitivity values as a function of wavelength, carried along from the
+   input calibrated product.
+ - HDRTAB: A table containing meta data (FITS keyword values) for all of the input images
+   that were combined to produce the output image. Only appears when multiple inputs are used.
+ - ADSF: The data model meta data.
+
+For exposure-based products that contain spectra for more than one source or slit
+(e.g. NIRSpec MOS) there will be multiple tuples of the SCI, CON, WHT, and RELSENS
+extensions, one set for each source or slit. FITS "EXTVER" keywords are used in each
+extension header to segregate the multiple instances of each extension type by
+source.
+
+Resampled 3-D (IFU) data: ``s3d``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+3-D IFU cubes created by the :ref:`cube_build <cube_build_step>` step are stored in FITS
+files with the following structure:
+
++-----+-------------+----------+-----------+------------------------+
+| HDU | EXTNAME     | HDU Type | Data Type | Dimensions             |
++=====+=============+==========+===========+========================+
+|  0  | N/A         | primary  | N/A       | N/A                    |
++-----+-------------+----------+-----------+------------------------+
+|  1  | SCI         | IMAGE    | float32   | ncols x nrows x nwaves |
++-----+-------------+----------+-----------+------------------------+
+|  2  | ERR         | IMAGE    | float32   | ncols x nrows x nwaves |
++-----+-------------+----------+-----------+------------------------+
+|  3  | DQ          | IMAGE    | int32     | ncols x nrows x nwaves |
++-----+-------------+----------+-----------+------------------------+
+|  4  | WMAP        | IMAGE    | float32   | ncols x nrows x nwaves |
++-----+-------------+----------+-----------+------------------------+
+|     | WCS-TABLE   | BINTABLE | N/A       | 2 cols x 1 row         |
++-----+-------------+----------+-----------+------------------------+
+|     | HDRTAB*     | BINTABLE | N/A       | variable               |
++-----+-------------+----------+-----------+------------------------+
+|     | ASDF        | BINTABLE | N/A       | variable               |
++-----+-------------+----------+-----------+------------------------+
+
+ - SCI: 3-D data array containing the spaxel values, in units of surface brightness.
+ - DQ: 3-D data array containing DQ flags for each spaxel.
+ - ERR: 3-D data array containing uncertainty estimates for each spaxel.
+ - WMAP: 3-D weight image giving the relative weight of the output spaxels.
+ - WCS-TABLE: A table listing the wavelength to be associated with each plane of the
+   third axis in the SCI, DQ, ERR, and WMAP arrays, in a format that conforms to the
+   FITS spectroscopic WCS standards. Column 1 of the table ("nelem") gives the number of
+   wavelength elements listed in the table and column 2 ("wavelength") is a 1-D array
+   giving the wavelength values.
+ - HDRTAB: A table containing meta data (FITS keyword values) for all of the input images
+   that were combined to produce the output image. Only appears when multiple inputs are used.
+ - ADSF: The data model meta data.
+
+``s3d`` products contain several unique meta data elements intended to aid in the use
+of these products in data analysis tools. This includes the following keywords located in
+the header of the FITS primary HDU:
+
+ - FLUXEXT: A string value containing the EXTNAME of the extension containing the IFU flux
+   data. Normally set to "SCI" for JWST IFU cube products.
+ - ERREXT: A string value containing the EXTNAME of the extension containing error estimates
+   for the IFU cube. Normally set to "ERR" for JWST IFU cube products.
+ - ERRTYPE: A string value giving the type of error estimates contained in ERREXT, with
+   possible values of "ERR" (error = standard deviation), "IERR" (inverse error),
+   "VAR" (variance), and "IVAR" (inverse variance). Normally set to "ERR" for JWST IFU
+   cube products.
+ - MASKEXT: A string value containing the EXTNAME of the extension containing the Data Quality
+   mask for the IFU cube. Normally set to "DQ" for JWST IFU cube products.
+
+In addition, the following WCS-related keywords are included in the header of the "SCI"
+extension to support the use of the wavelength table contained in the "WCS-TABLE" extension.
+These keywords allow data analysis tools that are compliant with the FITS spectroscopic WCS
+standards to automatically recognize and load the wavelength information in the "WCS-TABLE"
+and assign wavelengths to the IFU cube data.
+
+ - PS3_0 = 'WCS-TABLE': The name of the extension containing coordinate data for axis 3.
+ - PS3_1 = 'wavelength': The name of the table column containing the coordinate data.
+
+The coordinate data (wavelength values in this case) contained in the "WCS-TABLE" override
+any coordinate information normally computed from FITS WCS keywords like CRPIX3, CRVAL3,
+and CDELT3 for coordinate axis 3.
+
+Extracted 1-D spectroscopic data: ``x1d`` and ``x1dints``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Extracted spectral data produced by the :ref:`extract_1d <extract_1d_step>` step are stored
+in binary table extensions of FITS files. The overall layout of the FITS file is as follows:
+
++-----+-------------+----------+-----------+---------------+
+| HDU | EXTNAME     | HDU Type | Data Type | Dimensions    |
++=====+=============+==========+===========+===============+
+|  0  | N/A         | primary  | N/A       | N/A           |
++-----+-------------+----------+-----------+---------------+
+|  1  | EXTRACT1D   | BINTABLE | N/A       | variable      |
++-----+-------------+----------+-----------+---------------+
+|  2  | ASDF        | BINTABLE | N/A       | variable      |
++-----+-------------+----------+-----------+---------------+
+
+ - EXTRACT1D: A 2-D table containing the extracted spectral data.
+ - ADSF: The data model meta data.
+
+Multiple "EXTRACT1D" extensions can be present if there is data for more than one source or
+if the file is an ``x1dints`` product. For ``x1dints`` products, there is one "EXTRACT1D"
+extension for each integration in the exposure.
+
+The structure of the "EXTRACT1D" table extension is as follows:
+
++-------------+-----------+-------------------+----------------+
+| Column Name | Data Type | Contents          | Units          |
++=============+===========+===================+================+
+| WAVELENGTH  | float64   | Wavelength values | :math:`\mu` m  |
++-------------+-----------+-------------------+----------------+
+| FLUX        | float64   | Flux values       | mJy            |
++-------------+-----------+-------------------+----------------+
+| ERROR       | float64   | Error values      | mJy            |
++-------------+-----------+-------------------+----------------+
+| DQ          | int32     | DQ flags          | N/A            |
++-------------+-----------+-------------------+----------------+
+| NET         | float64   | Net flux          | DN/s           |
++-------------+-----------+-------------------+----------------+
+| NERROR      | float64   | Net error         | DN/s           |
++-------------+-----------+-------------------+----------------+
+| BACKGROUND  | float64   | Background signal | DN/s           |
++-------------+-----------+-------------------+----------------+
+| BERROR      | float64   | Background error  | DN/s           |
++-------------+-----------+-------------------+----------------+
+
+The table is constructed using a simple 2-D layout, using one row per extracted spectral
+element in the dispersion direction of the data (i.e. one row per wavelength bin).
+For some spectroscopic modes, such as MIRI MRS and NIRSpec IFU, the data that are used
+as input to the :ref:`extract_1d` step are already in calibrated units of surface
+brightness and therefore it's not possible to present 1-D extracted results for the net
+and background spectral data in units of DN/s. In these cases the NET, NERROR, BACKGROUND,
+and BERROR table columns will be zero-filled and only the WAVELENGTH, FLUX, ERROR, and DQ
+columns will be populated.
