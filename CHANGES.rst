@@ -77,6 +77,8 @@ extract_1d
 - Fix issue regarding mixing of the syntax for Boolean arrays and for
   integer index arrays. [#3045]
 
+- Changed the names of time-related keywords for extracted spectra. [#3057]
+
 extract_2d
 ----------
 - Moved the update of meta information to the MultiSlitModel instead of the
