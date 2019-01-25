@@ -48,18 +48,6 @@ dist.build_cmds = [
 ]
 matrix += dist
 
-// Compile documentation
-docs = new BuildConfig()
-docs.nodetype = 'linux'
-docs.name = 'docs'
-docs.conda_packages = ["python=${matrix_python[0]}"]
-docs.build_cmds = [
-    "sudo yum install -y graphviz",
-    "pip install ${pip_install_args} -r requirements-dev.txt -e .[docs]",
-    "python setup.py build_sphinx"
-]
-matrix += docs
-
 // Generate pip build and test matrix
 for (python_ver in matrix_python) {
     for (numpy_ver in matrix_numpy) {
