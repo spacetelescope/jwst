@@ -157,8 +157,8 @@ def lrs(input_model, reference_files):
     with DistortionModel(reference_files['distortion']) as dist:
         distortion = dist.model
 
-    if subarray2full is not None:
-        distortion = subarray2full | distortion
+    #if subarray2full is not None:
+    #    distortion = subarray2full | distortion
 
     # Incorporate the small rotation
     angle = np.arctan(0.00421924)
@@ -219,6 +219,11 @@ def lrs(input_model, reference_files):
             log.info("Applied Barycentric velocity correction : {}".format(velocity_corr[1].amplitude.value))
 
     det_to_v2v3 = models.Mapping((0, 1, 0, 1)) | spatial_forward & lrs_wav_model
+
+    # Correction for subarray is done here so that it applies to the input coordinates
+    # to the spatial as well as the spectral transform
+    if subarray2full is not None:
+        det_to_v2v3 = subarray2full | det_to_v2v3
     det_to_v2v3.bounding_box = bb[::-1]
     v23_to_world = tel2sky & models.Identity(1)
 
