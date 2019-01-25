@@ -96,14 +96,14 @@ DOCS_REQUIRE = [
     'sphinx-automodapi',
     'sphinx-rtd-theme',
     'stsci-rtd-theme',
-    'sphinx-astropy'
+    'sphinx-astropy',
 ]
 TESTS_REQUIRE = [
     'ci-watson',
     'pytest',
     'pytest-doctestplus',
     'requests_mock',
-    'pytest-astropy'
+    'pytest-astropy',
 ]
 
 def get_transforms_data():
@@ -204,23 +204,22 @@ setup(
                   define_macros=[('NUMPY', '1')]),
     ],
     install_requires=[
-        'asdf>=2.1',
+        'asdf>=2.3',
         'astropy>=3.1',
         'crds>=7.2.7',
         'drizzle>=1.12',
-        'gwcs>=0.9',
+        'gwcs>=0.10',
         'jsonschema>=2.3,<=2.6',
         'namedlist>=1.7',
         'numpy>=1.13',
+        'photutils>=0.4',
         'scipy>=1.0',
         'spherical-geometry>=1.2',
-        'stsci.tools>=3.4',
         'stsci.image>=2.3',
         'stsci.imagestats>=1.4',
         'stsci.stimage>=0.2',
-        'photutils>=0.4',
-        'pytest',
-        'verhawk>=0.0',
+        'stsci.tools>=3.4',
+        'verhawk',
     ],
     extras_require={
         'docs': DOCS_REQUIRE,
