@@ -659,7 +659,7 @@ class Step():
         return crds_client.check_reference_open(reference_name)
 
     @classmethod
-    def reference_uri_to_cache_path(self, reference_uri):
+    def reference_uri_to_cache_path(cls, reference_uri):
         """Convert an abstract CRDS reference URI to an absolute file path in the CRDS
         cache.  Reference URI's are typically output to dataset headers to record the
         reference files used.
