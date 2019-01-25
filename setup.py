@@ -208,7 +208,7 @@ setup(
         'astropy>=3.1',
         'crds>=7.2.7',
         'drizzle>=1.12',
-        'gwcs>=0.10',
+        'gwcs>=0.9',
         'jsonschema>=2.3,<=2.6',
         'namedlist>=1.7',
         'numpy>=1.13',
