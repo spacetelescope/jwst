@@ -184,8 +184,13 @@ def lrs(input_model, reference_files):
     y0 = lrsdata[:, 4]
     x1 = lrsdata[:, 5]
 
-    bb = ((x0.min() - 0.5 + zero_point[0], x1.max() + 0.5 + zero_point[0]),
-          (y0.min() - 0.5 + zero_point[1], y0.max() + 0.5 + zero_point[1]))
+    subarray_xstart = input_model.meta.subarray.xstart - 1
+    subarray_ystart = input_model.meta.subarray.ystart - 1
+
+    # The bounding box is computed from the data in the wavelength solution
+    # and corrected for subarray.
+    bb = ((x0.min() - 0.5 + zero_point[0] - subarray_xstart, x1.max() + 0.5 + zero_point[0] - subarray_xstart),
+          (y0.min() - 0.5 + zero_point[1] - subarray_ystart, y0.max() + 0.5 + zero_point[1] - subarray_ystart))
 
     # Compute the v2v3 to sky.
     tel2sky = pointing.v23tosky(input_model)

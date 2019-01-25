@@ -167,8 +167,8 @@ def niriss_soss(input_model, reference_files):
         cm_order2 = subarray2full | cm_order2
         cm_order3 = subarray2full | cm_order3
 
-        bbox = ((0, input_model.meta.subarray.ysize),
-                (0, input_model.meta.subarray.xsize))
+        bbox = ((-0.5, input_model.meta.subarray.ysize - 0.5),
+                (-0.5, input_model.meta.subarray.xsize - 0.5))
         cm_order1.bounding_box = bbox
         cm_order2.bounding_box = bbox
         cm_order3.bounding_box = bbox
