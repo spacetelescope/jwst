@@ -150,14 +150,10 @@ to FITS format. As an option, history entries can contain a dictionary
 with a description of the software used. The dictionary must have the
 following keys:
 
-  ``name``
-      The name of the software
-   ``author``
-       The author or institution that produced the software
-    ``homepage``
-        A URI to the homepage of the software
-    ``version``
-        The version of the software
+  ``name``: The name of the software
+  ``author``: The author or institution that produced the software
+  ``homepage``: A URI to the homepage of the software
+  ``version``: The version of the software
 
 The calling sequence to create  a history entry with the software
 description is::
@@ -167,7 +163,7 @@ description is::
 where the second argument is the dictionary with the keywords
 mentioned.
 
-  
+
 Converting from ``astropy.io.fits``
 ===================================
 

@@ -37,6 +37,16 @@ try:
 
         description = 'Build Sphinx documentation'
 
+        user_options = BuildDoc.user_options[:]
+
+        user_options.append(
+            ('keep-going', 'k',
+             'Parses the sphinx output and sets the return code to 1 if there '
+             'are any warnings. Note that this will cause the sphinx log to '
+             'only update when it completes, rather than continuously as is '
+             'normally the case.'))
+
+
         def initialize_options(self):
             BuildDoc.initialize_options(self)
 
@@ -47,7 +57,9 @@ try:
             build_cmd = self.reinitialize_command('build_ext')
             build_cmd.inplace = 1
             self.run_command('build_ext')
-            build_main(['-b', 'html', './docs', './docs/_build/html'])
+            retcode = build_main(['-W', '--keep-going', '-b', 'html', './docs', './docs/_build/html'])
+            if retcode != 0:
+                sys.exit(retcode)
 
 except ImportError:
     class BuildSphinx(Command):
@@ -82,15 +94,16 @@ DOCS_REQUIRE = [
     'matplotlib',
     'sphinx',
     'sphinx-automodapi',
-    'sphinxcontrib-programoutput',
     'sphinx-rtd-theme',
-    'stsci-rtd-theme'
+    'stsci-rtd-theme',
+    'sphinx-astropy'
 ]
 TESTS_REQUIRE = [
     'ci-watson',
     'pytest',
     'pytest-doctestplus',
-    'requests_mock'
+    'requests_mock',
+    'pytest-astropy'
 ]
 
 def get_transforms_data():

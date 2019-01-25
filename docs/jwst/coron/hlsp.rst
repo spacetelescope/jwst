@@ -20,8 +20,8 @@ pipeline, but can be run standalone.
 
 Arguments
 ---------
-The ``hlsp`` step has one optional argument:
-::
+The ``hlsp`` step has one optional argument::
+
  --annuli_width  integer  default=2
 
 which specifies the width, in pixels, of the annuli to use when computing the

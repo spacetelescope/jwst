@@ -71,7 +71,7 @@ https://jwst-pipeline.readthedocs.io/en/latest/
 
 One can clone this repository and build the documentation with
 
-    pip install sphinx_rtd_theme stsci_rtd_theme sphinx_automodapi sphinxcontrib_programoutput
+    pip install sphinx_rtd_theme stsci_rtd_theme sphinx_automodapi
     python setup.py build_sphinx
 
 

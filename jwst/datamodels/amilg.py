@@ -8,7 +8,8 @@ class AmiLgModel(DataModel):
     A data model for AMI LG analysis results.
 
     Parameters
-    __________
+    ----------
+
     fit_image : numpy float32 array
          Fitted image
 

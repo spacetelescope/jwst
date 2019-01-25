@@ -12,6 +12,7 @@ addons:
         packages:
             - texlive-latex-extra
             - dvipng
+            - graphviz
 
 env:
     global:
@@ -40,7 +41,7 @@ env:
         - CRDS_PATH='/tmp/crds_cache'
         - MAIN_CMD='python setup.py'
         - MC_URL=https://repo.continuum.io/miniconda
-        - PIP_DEPENDENCIES='ci_watson'
+        - PIP_DEPENDENCIES='ci_watson pytest-doctestplus pytest-astropy'
         - PYTHON_VERSION=3.6
 
     matrix:
@@ -61,9 +62,9 @@ matrix:
 
         # build sphinx documentation with warnings
         - os: linux
-          env: SETUP_CMD='build_sphinx'
-               CONDA_DEPENDENCIES="$CONDA_DEPENDENCIES $CONDA_DOC_DEPENDENCIES"
-               PIP_DEPENDENCIES='sphinx_rtd_theme stsci_rtd_theme sphinx-automodapi'
+          env: SETUP_CMD='build_sphinx -W'
+               CONDA_DEPENDENCIES="$CONDA_DEPENDENCIES"
+               PIP_DEPENDENCIES='sphinx_rtd_theme stsci_rtd_theme sphinx-astropy'
         - os: linux
           env: MAIN_CMD='flake8 --count --select=F, E101, E111, E112, E113, E401, E402, E711, E722 --max-line-length=110'
                SETUP_CMD='jwst'

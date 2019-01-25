@@ -63,8 +63,8 @@ contained in each exposure.
 An example ASN file containing 2 science target and 1 reference PSF target exposures is
 shown below. Only 1 product is defined, corresponding to the science target, with members
 consisting of exposures of both the science target and the reference PSF target, as
-indicated by the "exptype" values for each.
-::
+indicated by the "exptype" values for each::
+
  {"asn_type": "coron3",
   "asn_rule": "candidate_Asn_Coron",
   "program": "10005",

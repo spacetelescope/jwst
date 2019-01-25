@@ -71,6 +71,6 @@ Reference Files
 ---------------
 The ``align_refs`` step uses a PSFMASK reference file.
 
-.. include:: ../references_general/psfmask_reffile.rst
+.. include:: ../references_general/psfmask_reffile.inc
 
 .. automodapi:: jwst.coron.align_refs_step

@@ -11,7 +11,7 @@ Sources are detected using `image segmentation
 <http://en.wikipedia.org/wiki/Image_segmentation>`_, which is a
 process of assigning a label to every pixel in an image such that
 pixels with the same label are part of the same source.  The
-segmentation procedure used is from `Photutils
+segmentation procedure used is from `Photutils source extraction 
 <http://photutils.readthedocs.org/en/latest/photutils/detection.html#source-extraction-using-image-segmentation>`_
 and is called the threshold method, where detected sources must have a
 minimum number of connected pixels that are each greater than a

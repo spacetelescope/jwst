@@ -26,8 +26,8 @@ The KLIP algorithm consists of the following high-level steps:
 
 Arguments
 ---------
-The ``klip`` step has one optional argument:
-::
+The ``klip`` step has one optional argument::
+
  --truncate  integer  default=50
 
 which is used to specify the number of KL transform rows to keep when computing the PSF fit
