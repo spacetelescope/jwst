@@ -1,7 +1,7 @@
-from bs4 import BeautifulSoup
-from fnmatch import fnmatch
 from glob import glob as _sys_glob
 import os.path as op
+import os
+import sys
 import pytest
 import requests
 
@@ -18,6 +18,9 @@ from jwst.associations import load_asn
 __all__ = [
     'BaseJWSTTest',
 ]
+
+# Define location of default Artifactory API key, for Jenkins use only
+ARTIFACTORY_API_KEY_FILE = '/eng/ssb2/keys/svc_rodata.key'
 
 
 @pytest.mark.usefixtures('_jail')
@@ -250,11 +253,26 @@ def _data_glob_url(url, glob='*'):
     url_paths: [str[, ...]]
         Full URLS that match the glob criterion
     """
-    path = requests.get(url).text
-    soup = BeautifulSoup(path, 'html.parser')
-    url_paths = [
-        url + '/' + node.get('href')
-        for node in soup.find_all('a')
-        if fnmatch(node.get('href'), glob)
-    ]
+    try:
+        envkey = os.environ['API_KEY_FILE']
+    except KeyError:
+        envkey = ARTIFACTORY_API_KEY_FILE
+
+    try:
+        with open(envkey) as fp:
+            headers = {'X-JFrog-Art-Api': fp.readline().strip()}
+    except (PermissionError, FileNotFoundError):
+        print("Warning: Anonymous Artifactory search requests are limited to "
+            "1000 results. Use an API key and define API_KEY_FILE environment "
+            "variable to get full search results.", file=sys.stderr)
+        headers = None
+
+    search_url = op.join(get_bigdata_root(), 'api/search/artifact')
+    # Pick out "jwst-pipeline", the repo name
+    repo = url.split('/')[4]
+    params = {'name': glob, 'repos': repo}
+    with requests.get(search_url, params=params, headers=headers) as r:
+        url_paths = [a['uri'].replace('api/storage/', '') for a in r.json()['results']]
+
     return url_paths
+
