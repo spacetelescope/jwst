@@ -3,8 +3,8 @@ import sys
 from copy import deepcopy
 from tempfile import NamedTemporaryFile
 
-from ..lib.keyvalue_registry import KeyValueRegistry
-from ..registry import import_from_file
+from jwst.associations.lib.keyvalue_registry import KeyValueRegistry
+from jwst.associations.registry import import_from_file
 
 import pytest
 
