@@ -20,7 +20,6 @@ def conda_packages = [
     "jsonschema",
     "jplephem",
     "matplotlib",
-    "namedlist",
     "photutils",
     "scipy",
     "spherical-geometry",

@@ -3,11 +3,10 @@ import logging
 from math import (cos, sin)
 import os.path
 import sqlite3
+from collections import namedtuple
 
 from astropy.time import Time
 import numpy as np
-
-from namedlist import namedlist
 
 from ..datamodels import Level1bModel
 from ..lib.engdb_tools import (
@@ -60,22 +59,15 @@ A2R = D2R/3600.
 R2A = 3600.*R2D
 
 # SIAF container
-SIAF = namedlist(
-    'SIAF',
-    ['v2ref', 'v3ref', 'v3idlyang', 'vparity'],
-    default=None
-)
+SIAF = namedtuple("SIAF", ["v2ref", "v3ref", "v3idlyang", "vparity"])
+SIAF.__new__.__defaults__ = (None, None, None, None)
 
 # Pointing container
-Pointing = namedlist(
-    'Pointing',
-    ['q', 'j2fgs_matrix', 'fsmcorr', 'obstime'],
-    default=None
-)
+Pointing = namedtuple("Pointing", ["q", "j2fgs_matrix", "fsmcorr", "obstime"])
+Pointing.__new__.__defaults__ = (None, None, None, None)
 
 # Transforms
-Transforms = namedlist(
-    'Transforms',
+Transforms = namedtuple("Transforms",
     [
         'm_eci2j',            # ECI to J-Frame
         'm_j2fgs1',           # J-Frame to FGS1
@@ -86,16 +78,14 @@ Transforms = namedlist(
         'm_eci2v',            # ECI to V
         'm_v2siaf',           # V to SIAF
         'm_eci2siaf'          # ECI to SIAF
-    ],
-    default=None
-)
-
+    ])
+Transforms.__new__.__defaults__ = (None, None, None, None, None,
+                                    None, None, None, None)
 # WCS reference container
-WCSRef = namedlist(
+WCSRef = namedtuple(
     'WCSRef',
-    ['ra', 'dec', 'pa'],
-    default=None
-)
+    ['ra', 'dec', 'pa'])
+WCSRef.__new__.__defaults__ = (None, None, None)
 
 
 def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
@@ -627,52 +617,73 @@ def calc_transforms(pointing, siaf, fsmcorr_version='latest', j2fgs_transpose=Tr
             M_eci_to_j        *   # ECI to J-Frame
     """
 
-    tforms = Transforms()
+    #tforms = Transforms()
 
     # Determine the ECI to J-frame matrix
-    tforms.m_eci2j = calc_eci2j_matrix(pointing.q)
+    #tforms.
+    m_eci2j = calc_eci2j_matrix(pointing.q)
 
     # Calculate the J-frame to FGS! ICS matrix
-    tforms.m_j2fgs1 = calc_j2fgs1_matrix(pointing.j2fgs_matrix, transpose=j2fgs_transpose)
+    #tforms.
+    m_j2fgs1 = calc_j2fgs1_matrix(pointing.j2fgs_matrix, transpose=j2fgs_transpose)
 
     # Calculate the FSM corrections to the SI_FOV frame
-    tforms.m_sifov_fsm_delta = calc_sifov_fsm_delta_matrix(
+    #tforms.
+    m_sifov_fsm_delta = calc_sifov_fsm_delta_matrix(
         pointing.fsmcorr, fsmcorr_version=fsmcorr_version
     )
 
     # Calculate the FGS1 ICS to SI-FOV matrix
-    tforms.m_fgs12sifov = calc_fgs1_to_sifov_mastrix()
+    #tforms.
+    m_fgs12sifov = calc_fgs1_to_sifov_mastrix()
 
     # Calculate SI FOV to V1 matrix
-    tforms.m_sifov2v = calc_sifov2v_matrix()
+    #tforms.
+    m_sifov2v = calc_sifov2v_matrix()
 
     # Calculate ECI to SI FOV
-    tforms.m_eci2sifov = np.dot(
-        tforms.m_sifov_fsm_delta,
+    #tforms.
+    m_eci2sifov = np.dot(
+        #tforms.
+        m_sifov_fsm_delta,
         np.dot(
-            tforms.m_fgs12sifov,
+            #tforms.
+            m_fgs12sifov,
             np.dot(
-                tforms.m_j2fgs1,
-                tforms.m_eci2j
+                #tforms.
+                m_j2fgs1,
+                #tforms.
+                m_eci2j
             )
         )
     )
 
     # Calculate the complete transform to the V1 reference
-    tforms.m_eci2v = np.dot(
-        tforms.m_sifov2v,
-        tforms.m_eci2sifov
+    #tforms.
+    m_eci2v = np.dot(
+        #tforms.
+        m_sifov2v,
+        #tforms.
+        m_eci2sifov
     )
 
     # Calculate the SIAF transform matrix
-    tforms.m_v2siaf = calc_v2siaf_matrix(siaf)
+    #tforms.
+    m_v2siaf = calc_v2siaf_matrix(siaf)
 
     # Calculate the full ECI to SIAF transform matrix
-    tforms.m_eci2siaf = np.dot(
-        tforms.m_v2siaf,
-        tforms.m_eci2v
+    #tforms.
+    m_eci2siaf = np.dot(
+        #tforms.
+        m_v2siaf,
+        #tforms.
+        m_eci2v
     )
 
+    tforms = Transforms(m_eci2j=m_eci2j, m_j2fgs1=m_j2fgs1, m_sifov_fsm_delta=m_sifov_fsm_delta,
+                        m_fgs12sifov=m_fgs12sifov, m_eci2sifov=m_eci2sifov, m_sifov2v=m_sifov2v,
+                        m_eci2v=m_eci2v, m_v2siaf=m_v2siaf, m_eci2siaf=m_eci2siaf
+                        )
     return tforms
 
 
@@ -689,23 +700,28 @@ def calc_v1_wcs(m_eci2v):
     vinfo: WCSRef
         The V1 wcs pointing
     """
-    vinfo = WCSRef()
+    #vinfo = WCSRef()
 
     # V1 RA/Dec is the first row of the transform
-    vinfo.ra, vinfo.dec = vector_to_ra_dec(m_eci2v[0])
+    #vinfo.ra, vinfo.dec = vector_to_ra_dec(m_eci2v[0])
+    v1_ra, v1_dec = vector_to_ra_dec(m_eci2v[0])
+    vinfo = WCSRef(v1_ra, v1_dec, None)
 
     # V3 is the third row of the transformation
-    v3info = WCSRef()
-    v3info.ra, v3info.dec = vector_to_ra_dec(m_eci2v[2])
+    #v3info = WCSRef()
+    #v3info.ra, v3info.dec = vector_to_ra_dec(m_eci2v[2])
+    v3_ra, v3_dec = vector_to_ra_dec(m_eci2v[2])
+    v3info = WCSRef(v3_ra, v3_dec, None)
 
     # Calculate the V3 position angle
-    vinfo.pa = calc_position_angle(vinfo, v3info)
+    #vinfo.pa = calc_position_angle(vinfo, v3info)
+    v1_pa = calc_position_angle(vinfo, v3info)
 
     # Convert to degrees
     vinfo = WCSRef(
         ra=vinfo.ra * R2D,
         dec=vinfo.dec * R2D,
-        pa=vinfo.pa * R2D
+        pa=v1_pa * R2D
     )
 
     return vinfo
@@ -729,7 +745,7 @@ def calc_aperture_wcs(m_eci2siaf):
     # Note, the SIAF referenct point is hardcoded to
     # (0, 0). The calculation is left here in case
     # this is not desired.
-    wcsinfo = WCSRef()
+    #wcsinfo = WCSRef()
     siaf_x = 0. * A2R
     siaf_y = 0. * A2R
     refpos = np.array(
@@ -738,7 +754,8 @@ def calc_aperture_wcs(m_eci2siaf):
          np.sqrt(1.-siaf_x * siaf_x - siaf_y * siaf_y)]
     )
     msky = np.dot(m_eci2siaf.transpose(), refpos)
-    wcsinfo.ra, wcsinfo.dec = vector_to_ra_dec(msky)
+    #wcsinfo.ra, wcsinfo.dec = vector_to_ra_dec(msky)
+    wcs_ra, wcs_dec = vector_to_ra_dec(msky)
 
     # Calculate the position angle
     vysiaf = np.array([0., 1., 0.])
@@ -748,16 +765,16 @@ def calc_aperture_wcs(m_eci2siaf):
     vy_ra, vy_dec = vector_to_ra_dec(myeci)
 
     # The VyPA @ xref,yref is given by
-    y = cos(vy_dec) * sin(vy_ra-wcsinfo.ra)
-    x = sin(vy_dec) * cos(wcsinfo.dec) - \
-        cos(vy_dec) * sin(wcsinfo.dec) * cos((vy_ra - wcsinfo.ra))
-    wcsinfo.pa = np.arctan2(y, x)
+    y = cos(vy_dec) * sin(vy_ra-wcs_ra)
+    x = sin(vy_dec) * cos(wcs_dec) - \
+        cos(vy_dec) * sin(wcs_dec) * cos((vy_ra - wcs_ra))
+    wcs_pa = np.arctan2(y, x)
 
     # Convert all WCS to degrees
     wcsinfo = WCSRef(
-        ra=wcsinfo.ra * R2D,
-        dec=wcsinfo.dec * R2D,
-        pa=wcsinfo.pa * R2D
+        ra=wcs_ra * R2D,
+        dec=wcs_dec * R2D,
+        pa=wcs_pa * R2D
     )
 
     return wcsinfo
@@ -1334,20 +1351,23 @@ def all_pointings(mnemonics):
             for mnemonic in mnemonics
         ]
         if any(values):
-            pointing = Pointing()
+            #pointing = Pointing()
 
             # The tagged obstime will come from the SA_ZATTEST1 mneunonic
-            pointing.obstime = mnemonics['SA_ZATTEST1'][idx].obstime
+            #pointing.
+            obstime = mnemonics['SA_ZATTEST1'][idx].obstime
 
             # Fill out the matricies
-            pointing.q = np.array([
+            #pointing.
+            q = np.array([
                 mnemonics['SA_ZATTEST1'][idx].value,
                 mnemonics['SA_ZATTEST2'][idx].value,
                 mnemonics['SA_ZATTEST3'][idx].value,
                 mnemonics['SA_ZATTEST4'][idx].value,
             ])
 
-            pointing.j2fgs_matrix = np.array([
+            #pointing.
+            j2fgs_matrix = np.array([
                 mnemonics['SA_ZRFGS2J11'][idx].value,
                 mnemonics['SA_ZRFGS2J12'][idx].value,
                 mnemonics['SA_ZRFGS2J13'][idx].value,
@@ -1359,12 +1379,14 @@ def all_pointings(mnemonics):
                 mnemonics['SA_ZRFGS2J33'][idx].value,
             ])
 
-            pointing.fsmcorr = np.array([
+            #pointing.
+            fsmcorr = np.array([
                 mnemonics['SA_ZADUCMDX'][idx].value,
                 mnemonics['SA_ZADUCMDY'][idx].value,
 
             ])
-
+            pointing = Pointing(q=q, obstime=obstime, j2fgs_matrix=j2fgs_matrix,
+                                fsmcorr=fsmcorr)
             pointings.append(pointing)
 
     if not len(pointings):
@@ -1405,14 +1427,15 @@ def pointing_from_average(mnemonics):
         Pointing from average.
 
     """
-    pointing = Pointing()
+    #pointing = Pointing()
 
     # Get average observation time. This is keyed off the q0 quaternion term, SA_ZATTEST1
     times = [
         eng_param.obstime.unix
         for eng_param in mnemonics['SA_ZATTEST1']
     ]
-    pointing.obstime = Time(np.average(times), format='unix')
+    #pointing.
+    obstime = Time(np.average(times), format='unix')
 
     # Get averages for all the mnemonics.
     mnemonic_averages = {}
@@ -1424,14 +1447,16 @@ def pointing_from_average(mnemonics):
         mnemonic_averages[mnemonic] = np.average(values)
 
     # Fill out the pointing matrices.
-    pointing.q = np.array([
+    #pointing.
+    q = np.array([
         mnemonic_averages['SA_ZATTEST1'],
         mnemonic_averages['SA_ZATTEST2'],
         mnemonic_averages['SA_ZATTEST3'],
         mnemonic_averages['SA_ZATTEST4']
     ])
 
-    pointing.j2fgs_matrix = np.array([
+    #pointing.
+    j2fgs_matrix = np.array([
         mnemonic_averages['SA_ZRFGS2J11'],
         mnemonic_averages['SA_ZRFGS2J12'],
         mnemonic_averages['SA_ZRFGS2J13'],
@@ -1443,11 +1468,13 @@ def pointing_from_average(mnemonics):
         mnemonic_averages['SA_ZRFGS2J33']
     ])
 
-    pointing.fsmcorr = np.array([
+    #pointing.
+    fsmcorr = np.array([
         mnemonic_averages['SA_ZADUCMDX'],
         mnemonic_averages['SA_ZADUCMDY']
 
     ])
-
+    pointing = Pointing(obstime=obstime, q=q, j2fgs_matrix=j2fgs_matrix,
+                        fsmcorr=fsmcorr)
     # That's all folks
     return pointing
