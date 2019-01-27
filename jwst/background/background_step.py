@@ -18,9 +18,6 @@ class BackgroundStep(Step):
         maxiters = integer(default=None)  # Number of clipping iterations
     """
 
-    # These reference files are only used for WFSS/GRISM data.
-    reference_file_types = ["wfssbkg", "wavelengthrange"]
-
     def process(self, input, bkg_list):
 
         """
