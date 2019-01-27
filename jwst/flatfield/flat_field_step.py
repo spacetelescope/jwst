@@ -32,7 +32,7 @@ class FlatFieldStep(Step):
         flat_suffix = string(default=None)
     """
 
-    reference_file_types = ["flat", "fflat", "sflat", "dflat"]
+    reference_file_types = ["flat"]#, "fflat", "sflat", "dflat"]
 
     def process(self, input):
 
