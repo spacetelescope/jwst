@@ -3,15 +3,7 @@ import importlib
 from gwcs.wcs import WCS
 from .util import (update_s_region_spectral, update_s_region_imaging,
                    update_s_region_nrs_ifu, update_s_region_mrs)
-from ..associations.lib.dms_base import (ACQ_EXP_TYPES, IMAGE2_SCIENCE_EXP_TYPES,
-                                         IMAGE2_NONSCIENCE_EXP_TYPES,
-                                         SPEC2_SCIENCE_EXP_TYPES)
-
-IMAGING_TYPES = set(tuple(ACQ_EXP_TYPES) + tuple(IMAGE2_SCIENCE_EXP_TYPES)
-                    + tuple(IMAGE2_NONSCIENCE_EXP_TYPES) +
-                    ('fgs_image', 'fgs_focus'))
-
-SPEC_TYPES = SPEC2_SCIENCE_EXP_TYPES
+from ..lib.exposure_types import IMAGING_TYPES, SPEC_TYPES
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
