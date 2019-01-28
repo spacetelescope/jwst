@@ -29,12 +29,7 @@ ZEROTIME_END = Time('2014-01-02')
 # Header defaults
 TARG_RA = 345.0
 TARG_DEC = -87.0
-'''
-V2_REF = 200.0
-V3_REF = -350.0
-V3I_YANG = 42.0
-VPARITY = -1
-'''
+
 # Get the mock databases
 db_ngas_path = os.path.join(os.path.dirname(__file__), 'data', 'engdb_ngas')
 db_jw703_path = os.path.join(os.path.dirname(__file__), 'data', 'engdb_jw00703')

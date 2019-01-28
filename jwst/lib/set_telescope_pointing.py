@@ -14,6 +14,7 @@ from ..lib.engdb_tools import (
     ENGDB_Service,
 )
 from .exposure_types import IMAGING_TYPES, FGS_GUIDE_EXP_TYPES
+TYPES_TO_UPDATE = set(list(IMAGING_TYPES) + FGS_GUIDE_EXP_TYPES)
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -409,7 +410,7 @@ def update_wcs_from_telem(
     model.meta.wcsinfo.roll_ref = compute_local_roll(
         vinfo.pa, wcsinfo.ra, wcsinfo.dec, siaf.v2_ref, siaf.v3_ref
     )
-    if model.meta.exposure.type.lower() in IMAGING_TYPES:
+    if model.meta.exposure.type.lower() in TYPES_TO_UPDATE:
         model.meta.wcsinfo.crval1 = wcsinfo.ra
         model.meta.wcsinfo.crval2 = wcsinfo.dec
         (model.meta.wcsinfo.pc1_1,
@@ -1093,6 +1094,7 @@ def _read_wcs_from_siaf(aperture_name, useafter, prd_db_filepath=None):
     aperture = (aperture_name, useafter)
 
     RESULT = {}
+    PRD_DB = False
     try:
         PRD_DB = sqlite3.connect(prd_db_filepath, uri=True)
 
@@ -1106,16 +1108,22 @@ def _read_wcs_from_siaf(aperture_name, useafter, prd_db_filepath=None):
         for row in cursor:
             RESULT[row[0]] = tuple(row[1:17])
         PRD_DB.commit()
-    except sqlite3.Error as err:
-        print("Error" + err.args[0])
+    except (sqlite3.Error, sqlite3.OperationalError) as err:
+        print("Error: " + err.args[0])
         raise
     finally:
         if PRD_DB:
             PRD_DB.close()
     logger.info("loaded {0} table rows from {1}".format(len(RESULT), prd_db_filepath))
-    values = list(RESULT.values())[0]
-    siaf = SIAF(*values[:-8], values[-8:])
-    return siaf
+    if RESULT:
+        values = list(RESULT.values())[0]
+        # This call populates the SIAF tuple with the values fomr the database.
+        # The last 8 values returned from the database are the vertices.
+        # They are wrapped in a list and assigned tp SIAF.vertices_idl.
+        siaf = SIAF(*values[:-8], values[-8:])
+        return siaf
+    else:
+        return SIAF()
 
 
 def calc_rotation_matrix(angle, vparity=1):
@@ -1350,7 +1358,7 @@ def populate_model_from_siaf(model, siaf):
     model.meta.wcsinfo.v3_ref = siaf.v3_ref
     model.meta.wcsinfo.v3yangle = siaf.v3yangle
     model.meta.wcsinfo.vparity = siaf.vparity
-    if model.meta.exposure.type.lower() in IMAGING_TYPES:
+    if model.meta.exposure.type.lower() in TYPES_TO_UPDATE:
         # For imaging modes update the pointing and
         # the FITS WCS keywords.
         model.meta.wcsinfo.ctype1 = 'RA--TAN'
