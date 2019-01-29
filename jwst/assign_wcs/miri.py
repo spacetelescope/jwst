@@ -157,9 +157,6 @@ def lrs(input_model, reference_files):
     with DistortionModel(reference_files['distortion']) as dist:
         distortion = dist.model
 
-    #if subarray2full is not None:
-    #    distortion = subarray2full | distortion
-
     # Incorporate the small rotation
     angle = np.arctan(0.00421924)
     rotation = models.Rotation2D(angle)
@@ -177,7 +174,6 @@ def lrs(input_model, reference_files):
             zero_point = ref[1].header['imx'], ref[1].header['imy']
         elif input_model.meta.exposure.type.lower() == 'mir_lrs-slitless':
             zero_point = ref[1].header['imxsltl'], ref[1].header['imysltl']
-            #zero_point = [35, 442]  # [35, 763] # account for subarray
 
     # Create the bounding_box
     x0 = lrsdata[:, 3]
