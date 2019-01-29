@@ -1398,7 +1398,7 @@ def all_pointings(mnemonics):
 
 def populate_model_from_siaf(model, siaf):
     """
-    Populate the WCS keywords of a Level2bModel from the SIAF.
+    Populate the WCS keywords of a Level1bModel from the SIAF.
 
     Parameters
     ----------
@@ -1418,6 +1418,11 @@ def populate_model_from_siaf(model, siaf):
         model.meta.wcsinfo.ctype1 = 'RA--TAN'
         model.meta.wcsinfo.ctype2 = 'DEC-TAN'
         model.meta.wcsinfo.wcsaxes = 2
+        model.meta.wcsinfo.cunit1 = "deg"
+        model.meta.wcsinfo.cunit2 = "deg"
+        model.meta.wcsinfo.crpix1 = siaf.crpix1
+        model.meta.wcsinfo.crpix2 = siaf.crpix2
+        model.meta.coordinates.reference_frmae = "ICRS"
 
 
 def first_pointing(mnemonics):

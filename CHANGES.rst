@@ -18,6 +18,8 @@ assign_wcs
 
  - Rename several functions dealing with calculating bounding boxes for clarity [#3014]
 
+ - FITS WCS keywords are written out only if the observation is one of the IMAGING_MODES. [#3066]
+
 associations
 ------------
 
@@ -254,6 +256,9 @@ scripts
 - ``set_telescope_pointing.py``: Update method of choosing pointing parameters. [#2900, #3008, #3022]
 
 - ``set_telescope_pointing.py``: Allow undefined SIAF. [#3002, #3006]
+
+- ``set_telescope_pointing`` now populates WCS keywords from the SIAF file. [#3066]
+
 
 0.12.2 (2018-11-15)
 ===================
