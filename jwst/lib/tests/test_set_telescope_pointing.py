@@ -116,8 +116,8 @@ def test_change_engdb_url_fail():
     """Test changing the engineering database by call"""
     with pytest.raises(Exception):
         results = stp.get_pointing(
-             Time('2019-06-03T17:25:40', format='isot').mjd,
-             Time('2019-06-03T17:25:56', format='isot').mjd,
+            Time('2019-06-03T17:25:40', format='isot').mjd,
+            Time('2019-06-03T17:25:56', format='isot').mjd,
             engdb_url='http://nonexistant.fake'
         )
 
@@ -186,13 +186,13 @@ def test_logging(eng_db_ngas, caplog):
 
 
 def test_get_pointing_list(eng_db_ngas):
-        results = stp.get_pointing(STARTTIME.mjd, ENDTIME.mjd, reduce_func=stp.all_pointings)
-        assert isinstance(results, list)
-        assert len(results) > 0
-        assert np.isclose(results[0].q, Q_EXPECTED).all()
-        assert np.isclose(results[0].j2fgs_matrix, J2FGS_MATRIX_EXPECTED).all()
-        assert np.isclose(results[0].fsmcorr, FSMCORR_EXPECTED).all()
-        assert STARTTIME <= results[0].obstime <= ENDTIME
+    results = stp.get_pointing(STARTTIME.mjd, ENDTIME.mjd, reduce_func=stp.all_pointings)
+    assert isinstance(results, list)
+    assert len(results) > 0
+    assert np.isclose(results[0].q, Q_EXPECTED).all()
+    assert np.isclose(results[0].j2fgs_matrix, J2FGS_MATRIX_EXPECTED).all()
+    assert np.isclose(results[0].fsmcorr, FSMCORR_EXPECTED).all()
+    assert STARTTIME <= results[0].obstime <= ENDTIME
 
 
 def test_get_pointing_with_zeros(eng_db_ngas):

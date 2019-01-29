@@ -3,7 +3,7 @@ import importlib
 from gwcs.wcs import WCS
 from .util import (update_s_region_spectral, update_s_region_imaging,
                    update_s_region_nrs_ifu, update_s_region_mrs)
-from ..lib.exposure_types import IMAGING_TYPES, SPEC_TYPES, SPEC2_SCIENCE_EXP_TYPES
+from ..lib.exposure_types import IMAGING_TYPES, SPEC_TYPES
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -35,7 +35,7 @@ def load_wcs(input_model, reference_files={}):
     instrument = input_model.meta.instrument.name.lower()
     mod = importlib.import_module('.' + instrument, 'jwst.assign_wcs')
 
-    if input_model.meta.exposure.type.lower() in SPEC2_SCIENCE_EXP_TYPES:
+    if input_model.meta.exposure.type.lower() in SPEC_TYPES:
         input_model.meta.wcsinfo.specsys = "BARYCENT"
 
     pipeline = mod.create_pipeline(input_model, reference_files)

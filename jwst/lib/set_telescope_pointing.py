@@ -50,10 +50,10 @@ A2R = D2R/3600.
 R2A = 3600.*R2D
 
 # SIAF container
-# The names should correspond ot the names in the wcsinfo schema.
+# The names should correspond to the names in the ``wcsinfo`` schema.
 # It is populated by the SIAF values in the PRD database based
 # on APERNAME and UseAfterDate and used to populate the keywords
-# in the Level1b data model.
+# in Level1bModel data models.
 SIAF = namedtuple("SIAF", ["v2_ref", "v3_ref", "v3yangle", "vparity",
                            "crpix1", "crpix2", "cdelt1", "cdelt2",
                            "vertices_idl"])
@@ -65,19 +65,19 @@ Pointing.__new__.__defaults__ = (None, None, None, None)
 
 # Transforms
 Transforms = namedtuple("Transforms",
-    [
-        'm_eci2j',            # ECI to J-Frame
-        'm_j2fgs1',           # J-Frame to FGS1
-        'm_sifov_fsm_delta',  # FSM correction
-        'm_fgs12sifov',       # FGS1 to SIFOV
-        'm_eci2sifov',        # ECI to SIFOV
-        'm_sifov2v',          # SIFOV to V1
-        'm_eci2v',            # ECI to V
-        'm_v2siaf',           # V to SIAF
-        'm_eci2siaf'          # ECI to SIAF
-    ])
+                        [
+                            'm_eci2j',            # ECI to J-Frame
+                            'm_j2fgs1',           # J-Frame to FGS1
+                            'm_sifov_fsm_delta',  # FSM correction
+                            'm_fgs12sifov',       # FGS1 to SIFOV
+                            'm_eci2sifov',        # ECI to SIFOV
+                            'm_sifov2v',          # SIFOV to V1
+                            'm_eci2v',            # ECI to V
+                            'm_v2siaf',           # V to SIAF
+                            'm_eci2siaf'          # ECI to SIAF
+                        ])
 Transforms.__new__.__defaults__ = (None, None, None, None, None,
-                                    None, None, None, None)
+                                   None, None, None, None)
 # WCS reference container
 WCSRef = namedtuple( 'WCSRef', ['ra', 'dec', 'pa'])
 WCSRef.__new__.__defaults__ = (None, None, None)
@@ -86,7 +86,7 @@ WCSRef.__new__.__defaults__ = (None, None, None)
 def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
             tolerance=60, allow_default=False, reduce_func=None,
             dry_run=False, **transform_kwargs):
-    """Add WCS information to a FITS file
+    """Add WCS information to a FITS file.
 
     Telescope orientation is attempted to be obtained from
     the engineering database. Failing that, a default pointing
@@ -97,7 +97,7 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
     Parameters
     ----------
     filename: str
-        The path to a data file
+        The path to a data file.
 
     default_pa_v3: float
         The V3 position angle to use if the pointing information
@@ -135,18 +135,38 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
     Currently it only uses a constant value for the engineering keywords
     since the Engineering Database does not yet contain them.
 
-    It assumes the following keywords are present in the file header:
+    It starts by populating the headers with values from the SIAF database.
+    It adds the following keywords to all files:
 
     V2_REF (arcseconds)
     V3_REF (arcseconds)
     VPARITY (+1 or -1)
     V3I_YANG (decimal degrees)
 
-    The keywords added are:
+    In addition for ``IMAGING_MODES`` it adds these keywords:
+
+    CRPIX1 (pixels)
+    CRPIX2 (pixels)
+    CDELT1 (deg/pix)
+    CDELT2 (deg/pix)
+    CUNIT1 (str)
+    CUNIT2
+    CTYPE1
+    CTYPE2
+    WCSAXES
+
+    The keywords computed and added to all files are:
 
     RA_V1
     DEC_V1
     PA_V3
+    RA_REF
+    DEC_REF
+    ROLL_REF
+    S_REGION
+
+    In addition the following keywords are computed and added to IMAGING_MODES only:
+
     CRVAL1
     CRVAL2
     PC1_1
@@ -303,9 +323,9 @@ def update_wcs_from_fgs_guiding(model, default_pa_v3=0.0, default_vparity=1):
 
 
 def update_wcs_from_telem(
-        model, default_pa_v3=0., siaf=None, engdb_url=None,
-        tolerance=0, allow_default=False,
-        reduce_func=None, **transform_kwargs
+    model, default_pa_v3=0., siaf=None, engdb_url=None,
+    tolerance=0, allow_default=False,
+    reduce_func=None, **transform_kwargs
 ):
     """Update WCS pointing information
 
@@ -431,7 +451,6 @@ def update_wcs_from_telem(
         )
 
 
-#def update_s_region(model, prd_db_filepath=None):
 def update_s_region(model, siaf):
     """Update ``S_REGION`` sky footprint information.
 
@@ -442,9 +461,8 @@ def update_s_region(model, siaf):
     ----------
     model : `~jwst.datamodels.DataModel`
         The model to update in-place.
-    prd_db_filepath : str
-        The filepath to the SIAF file (PRD database).
-        If None, attempt to get the path from the ``XML_DATA`` environment variable.
+    siaf : namedtuple
+        The ``SIAF`` tuple withg values populated from the PRD database.
     """
     vertices = siaf.vertices_idl
     xvert = vertices[:4]
@@ -716,7 +734,7 @@ def calc_aperture_wcs(m_eci2siaf):
     # The VyPA @ xref,yref is given by
     y = cos(vy_dec) * sin(vy_ra-wcs_ra)
     x = sin(vy_dec) * cos(wcs_dec) - \
-        cos(vy_dec) * sin(wcs_dec) * cos((vy_ra - wcs_ra))
+      cos(vy_dec) * sin(wcs_dec) * cos((vy_ra - wcs_ra))
     wcs_pa = np.arctan2(y, x)
 
     # Convert all WCS to degrees
@@ -910,7 +928,7 @@ def calc_v2siaf_matrix(siaf):
         The V1 to SIAF transformation matrix
     """
     v2, v3, v3idlyang, vparity = (siaf.v2_ref, siaf.v3_ref,
-                                 siaf.v3yangle, siaf.vparity)
+                                  siaf.v3yangle, siaf.vparity)
     v2 *= A2R
     v3 *= A2R
     v3idlyang *= D2R
@@ -951,7 +969,7 @@ def calc_position_angle(v1, v3):
     """
     y = cos(v3.dec) * sin(v3.ra-v1.ra)
     x = sin(v3.dec) * cos(v1.dec) - \
-        cos(v3.dec) * sin(v1.dec) * cos((v3.ra - v1.ra))
+      cos(v3.dec) * sin(v1.dec) * cos((v3.ra - v1.ra))
     v3_pa = np.arctan2(y, x)
 
     return v3_pa
@@ -1087,10 +1105,46 @@ def _roll_angle_from_matrix(matrix, v2, v3):
 
 
 def _read_wcs_from_siaf(aperture_name, useafter, prd_db_filepath=None):
+    """
+    Read WCS keywords from the SIAF database file.
+
+    Given an ``APERTURE_NAME`` and a ``USEAFTER`` dat query the SIAF database
+    and extract the following keywords:
+    ``V2Ref``, ``V3Ref``, ``V3IdlYAngle``, ``VIdlParity``,
+    ``XSciRef``, ``YSciRef``, ``XSciScale``, ``YSciScale``,
+    ``XIdlVert1``, ``XIdlVert2``, ``XIdlVert3``, ``XIdlVert4``,
+    ``YIdlVert1``, ``YIdlVert2``, ``YIdlVert3``, ``YIdlVert4``
+
+    Parameters
+    ----------
+    aperture_name : str
+        The name of the aperture in the data file (``model.meta.aperture.name``).
+    useafter : str
+        The date of observation (``model.meta.date``)
+    prd_db_filepath : str
+        The path to the SIAF (PRD database) file.
+        If None, attempt to get the path from the ``XML_DATA`` environment variable.
+
+    Returns
+    -------
+    siaf : namedtuple
+        The SIAF namedtuple with values from the PRD database.
+    """
+    if prd_db_filepath is None:
+        try:
+            prd_db_filepath = os.path.join(os.environ['XML_DATA'], "prd.db")
+        except KeyError:
+            message = "Unknown path to PRD DB file or missing env variable ``XML_DATA``."
+            log.info(message)
+            raise KeyError(message)
+    if not os.path.exists(prd_db_filepath):
+        message = "Invalid path to PRD DB file: {0}".format(prd_db_filepath)
+        log.info(message)
+        raise OSError(message)
     prd_db_filepath = "file:{0}?mode=ro".format(prd_db_filepath)
     logger.info("Using SIAF database from {}".format(prd_db_filepath))
-    logger.info("Getting aperture vertices for aperture "
-             "{0} with USEAFTER {1}".format(aperture_name, useafter))
+    logger.info("Quering SIAF for aperture "
+                "{0} with USEAFTER {1}".format(aperture_name, useafter))
     aperture = (aperture_name, useafter)
 
     RESULT = {}
@@ -1127,14 +1181,14 @@ def _read_wcs_from_siaf(aperture_name, useafter, prd_db_filepath=None):
 
 
 def calc_rotation_matrix(angle, vparity=1):
-    """ Calculate the rotation matrix
+    """ Calculate the rotation matrix.
 
     Parameters
     ----------
-    angle: float in radians
-        The angle to create the matrix
+    angle : float in radians
+        The angle to create the matrix.
 
-    vparity: int
+    vparity : int
         The x-axis parity, usually taken from
         the JWST SIAF parameter VIdlParity.
         Value should be "1" or "-1".
@@ -1344,13 +1398,13 @@ def all_pointings(mnemonics):
 
 def populate_model_from_siaf(model, siaf):
     """
-    Populate the WCS keywords of a Level2BModel from the SIAF.
+    Populate the WCS keywords of a Level2bModel from the SIAF.
 
     Parameters
     ----------
     model : `~jwst.datamodels.Level1bModel`
         Input data as Level1bModel.
-    siaf : anmedtuple
+    siaf : namedtuple
         The WCS keywords read in from the SIAF.
     """
     # If not an imaging mode, update the pointing only.
