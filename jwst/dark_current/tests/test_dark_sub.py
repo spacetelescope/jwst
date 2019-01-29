@@ -39,22 +39,22 @@ def test_frame_averaging(setup_nrc_cube):
     # Values to build the fake data arrays.  Rows/Cols are smaller than the
     # normal 2048x2048 to save memory and time
     ngroups = 3
-    nrows = 512
-    ncols = 512
+    nrows = 200
+    ncols = 200
 
     # Loop over the NIRCam readout patterns:
-    for readpatt in READPATTERNS:
+    for readpatt, readpatt_values in READPATTERNS.items():
 
         # Get the configuration for the readout pattern
-        nframes = READPATTERNS[readpatt]['nframes']
-        groupgap = READPATTERNS[readpatt]['nskip']
+        nframes = readpatt_values['nframes']
+        groupgap = readpatt_values['nskip']
 
         # Create data and dark model
         data, dark = setup_nrc_cube(readpatt, ngroups, nrows, ncols)
 
         # Add ramp values to dark model data array
-        dark.data[:, 500, 500] = np.arange(0, 100)
-        dark.err[:, 500, 500] = np.arange(100, 200)
+        dark.data[:, 100, 100] = np.arange(0, 100)
+        dark.err[:, 100, 100] = np.arange(100, 200)
 
         # Run the pipeline's averaging function
         avg_dark = average_dark_frames(dark, ngroups, nframes, groupgap)
@@ -74,24 +74,26 @@ def test_frame_averaging(setup_nrc_cube):
         for newgp, gstart, gend in zip(range(ngroups), gstrt_ind, gend_ind):
 
             # Average the data frames
-            newframe = np.mean(dark.data[gstart:gend, 500, 500])
+            newframe = np.mean(dark.data[gstart:gend, 100, 100])
             manual_avg[newgp] = newframe
 
             # ERR arrays will be quadratic sum of error values
-            manual_errs[newgp] = np.sqrt(np.sum(dark.err[gstart:gend, 500, 500]**2)) / (gend - gstart)
+            manual_errs[newgp] = np.sqrt(np.sum(dark.err[gstart:gend, 100, 100]**2)) / (gend - gstart)
 
         # Check that pipeline output matches manual averaging results
-        assert np.all(manual_avg == avg_dark.data[:, 500, 500])
-        assert np.all(manual_errs == avg_dark.err[:, 500, 500])
+        assert np.all(manual_avg == avg_dark.data[:, 100, 100])
+        assert np.all(manual_errs == avg_dark.err[:, 100, 100])
 
         # Check that meta data was properly updated
         assert avg_dark.meta.exposure.nframes == nframes
         assert avg_dark.meta.exposure.ngroups == ngroups
         assert avg_dark.meta.exposure.groupgap == groupgap
 
+        data.close()
+        dark.close()
 
 
-def test_more_sci_frames():
+def test_more_sci_frames(make_rampmodel, make_darkmodel):
     '''Check that data is unchanged if there are more frames in the science
     data is than in the dark reference file'''
 
@@ -130,7 +132,7 @@ def test_more_sci_frames():
                                   diff, err_msg='no changes should be seen in array ')
 
 
-def test_sub_by_frame():
+def test_sub_by_frame(make_rampmodel, make_darkmodel):
     '''Check that if NFRAMES=1 and GROUPGAP=0 for the science data, the dark reference data are
     directly subtracted frame by frame'''
 
@@ -171,7 +173,7 @@ def test_sub_by_frame():
     np.testing.assert_array_equal(outdata, diff, err_msg='dark file should be subtracted from sci file ')
 
 
-def test_nan():
+def test_nan(make_rampmodel, make_darkmodel):
     '''Verify that when a dark has NaNs, these are correctly assumed as zero and the PIXELDQ is set properly'''
 
     # size of integration
@@ -212,7 +214,7 @@ def test_nan():
     # test that the output dq file is flagged (with what)
 
 
-def test_dq_combine():
+def test_dq_combine(make_rampmodel, make_darkmodel):
     '''Verify that the DQ array of the dark is correctly combined with the PIXELDQ array of the science data.'''
 
     # size of integration
@@ -249,7 +251,7 @@ def test_dq_combine():
     assert outfile.pixeldq[500, 501] == 3
 
 
-def test_2_int():
+def test_2_int(make_rampmodel, make_darkmodel):
     '''Verify the dark correction is done by integration for MIRI observations'''
 
     # size of integration
@@ -293,7 +295,7 @@ def test_2_int():
                                   err_msg='dark file should be subtracted from sci file ')
 
 
-def test_dark_skipped():
+def test_dark_skipped(make_rampmodel, make_darkmodel):
     '''Verify that when the dark is not applied, the data is correctly flagged as such.'''
 
     # size of integration
@@ -329,7 +331,7 @@ def test_dark_skipped():
     assert darkstatus == 'SKIPPED'
 
 
-def test_frame_avg():
+def test_frame_avg(make_rampmodel, make_darkmodel):
     '''Check that if NFRAMES>1 or GROUPGAP>0, the frame-averaged dark data are
     subtracted group-by-group from science data groups and the ERR arrays are not modified'''
 
@@ -372,58 +374,68 @@ def test_frame_avg():
                                   err_msg='error array should remain 0 ')
 
 
-def make_rampmodel(nints, ngroups, ysize, xsize):
+@pytest.fixture(scope='function')
+def make_rampmodel():
     '''Make MIRI Ramp model for testing'''
-    # create the data and groupdq arrays
-    csize = (nints, ngroups, ysize, xsize)
-    data = np.full(csize, 1.0)
-    pixeldq = np.zeros((ysize, xsize), dtype=int)
-    groupdq = np.zeros(csize, dtype=int)
-    err = np.zeros((ysize, xsize), dtype=int)
 
-    # create a JWST datamodel for MIRI data
-    dm_ramp = MIRIRampModel(data=data, pixeldq=pixeldq, groupdq=groupdq, err=err)
+    def _ramp(nints, ngroups, ysize, xsize):
 
-    dm_ramp.meta.instrument.name = 'MIRI'
-    dm_ramp.meta.observation.date = '2018-01-01'
-    dm_ramp.meta.observation.time = '00:00:00'
-    dm_ramp.meta.subarray.xstart = 1
-    dm_ramp.meta.subarray.xsize = xsize
-    dm_ramp.meta.subarray.ystart = 1
-    dm_ramp.meta.subarray.ysize = ysize
-    dm_ramp.meta.description = 'Fake data.'
+        # create the data and groupdq arrays
+        csize = (nints, ngroups, ysize, xsize)
+        data = np.full(csize, 1.0)
+        pixeldq = np.zeros((ysize, xsize), dtype=int)
+        groupdq = np.zeros(csize, dtype=int)
+        err = np.zeros((ysize, xsize), dtype=int)
+
+        # create a JWST datamodel for MIRI data
+        dm_ramp = MIRIRampModel(data=data, pixeldq=pixeldq, groupdq=groupdq, err=err)
+
+        dm_ramp.meta.instrument.name = 'MIRI'
+        dm_ramp.meta.observation.date = '2018-01-01'
+        dm_ramp.meta.observation.time = '00:00:00'
+        dm_ramp.meta.subarray.xstart = 1
+        dm_ramp.meta.subarray.xsize = xsize
+        dm_ramp.meta.subarray.ystart = 1
+        dm_ramp.meta.subarray.ysize = ysize
+        dm_ramp.meta.description = 'Fake data.'
+
+        return dm_ramp
+
+    return _ramp
 
 
-    return dm_ramp
-
-
-def make_darkmodel(ngroups, ysize, xsize):
+@pytest.fixture(scope='function')
+def make_darkmodel():
     '''Make MIRI dark model for testing'''
-    # create the data and groupdq arrays
-    nints = 2
-    csize = (nints, ngroups, ysize, xsize)
-    data = np.full(csize, 1.0)
-    dq = np.zeros((nints, 1, ysize, xsize), dtype=int)
 
-    # create a JWST datamodel for MIRI data
-    dark = DarkMIRIModel(data=data, dq=dq)
+    def _dark(ngroups, ysize, xsize):
+        # create the data and groupdq arrays
+        nints = 2
+        csize = (nints, ngroups, ysize, xsize)
+        data = np.full(csize, 1.0)
+        dq = np.zeros((nints, 1, ysize, xsize), dtype=int)
 
-    dark.meta.instrument.name = 'MIRI'
-    dark.meta.date = '2018-01-01'
-    dark.meta.time = '00:00:00'
-    dark.meta.subarray.xstart = 1
-    dark.meta.subarray.xsize = xsize
-    dark.meta.subarray.ystart = 1
-    dark.meta.subarray.ysize = ysize
-    dark.meta.exposure.nframes = 1
-    dark.meta.exposure.groupgap = 0
-    dark.meta.description = 'Fake data.'
-    dark.meta.reftype = 'DarkModel'
-    dark.meta.author = 'Alicia'
-    dark.meta.pedigree = 'Dummy'
-    dark.meta.useafter = '2015-10-01T00:00:00'    
+        # create a JWST datamodel for MIRI data
+        dark = DarkMIRIModel(data=data, dq=dq)
 
-    return dark
+        dark.meta.instrument.name = 'MIRI'
+        dark.meta.date = '2018-01-01'
+        dark.meta.time = '00:00:00'
+        dark.meta.subarray.xstart = 1
+        dark.meta.subarray.xsize = xsize
+        dark.meta.subarray.ystart = 1
+        dark.meta.subarray.ysize = ysize
+        dark.meta.exposure.nframes = 1
+        dark.meta.exposure.groupgap = 0
+        dark.meta.description = 'Fake data.'
+        dark.meta.reftype = 'DarkModel'
+        dark.meta.author = 'Alicia'
+        dark.meta.pedigree = 'Dummy'
+        dark.meta.useafter = '2015-10-01T00:00:00'
+
+        return dark
+
+    return _dark
 
 
 @pytest.fixture(scope='function')
