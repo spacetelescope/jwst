@@ -11,12 +11,14 @@ assign_wcs
    ``transform_bbox_from_shape`` which now works by using last two dimensions
    in the ``shape``. [#3040]
 
- - Added velocity correction model to the WFSS and TSGRISM wcs pipelines [#2801]
+ - Added velocity correction model to the WFSS and TSGRISM wcs pipelines. [#2801]
 
  - Refactored how the pipeline handles subarrays in the WCS. Fixed a bug
    where the bounding box was overwritten in full frame mode. [#2980]
 
- - Rename several functions dealing with calculating bounding boxes for clarity [#3014]
+ - Rename several functions dealing with calculating bounding boxes for clarity. [#3014]
+
+ - The bounding box of the MIRI LRS WCS is now in "image" coordinates, not full frame. [#3063]
 
 associations
 ------------
