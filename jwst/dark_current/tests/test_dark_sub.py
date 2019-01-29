@@ -11,68 +11,22 @@ from jwst.datamodels import (
     DarkModel, 
     MIRIRampModel, 
     DarkMIRIModel, 
-    dqflags,
 )
 from jwst.dark_current.dark_sub import do_correction as darkcorr
-from jwst.dark_current import DarkCurrentStep
-from astropy.io import fits
+
 
 # Dictionary of NIRCam readout patterns
-DEEP8 = {}
-DEEP8['ngroups'] = 20.
-DEEP8['nframes'] = 8
-DEEP8['nskip'] = 12
-
-DEEP2 = {}
-DEEP2['ngroups'] = 20.
-DEEP2['nframes'] = 2
-DEEP2['nskip'] = 18
-
-MEDIUM8 = {}
-MEDIUM8['ngroups'] = 10.
-MEDIUM8['nframes'] = 8
-MEDIUM8['nskip'] = 2
-
-MEDIUM2 = {}
-MEDIUM2['ngroups'] = 10.
-MEDIUM2['nframes'] = 2
-MEDIUM2['nskip'] = 8
-
-SHALLOW4 = {}
-SHALLOW4['ngroups'] = 10.
-SHALLOW4['nframes'] = 4
-SHALLOW4['nskip'] = 1
-
-SHALLOW2 = {}
-SHALLOW2['ngroups'] = 10.
-SHALLOW2['nframes'] = 2
-SHALLOW2['nskip'] = 3
-
-BRIGHT2 = {}
-BRIGHT2['ngroups'] = 10.
-BRIGHT2['nframes'] = 2
-BRIGHT2['nskip'] = 0
-
-BRIGHT1 = {}
-BRIGHT1['ngroups'] = 10.
-BRIGHT1['nframes'] = 1
-BRIGHT1['nskip'] = 1
-
-RAPID = {}
-RAPID['ngroups'] = 10.
-RAPID['nframes'] = 1
-RAPID['nskip'] = 0
-
-READPATTERNS = {}
-READPATTERNS['DEEP8'] = DEEP8
-READPATTERNS['DEEP2'] = DEEP2
-READPATTERNS['MEDIUM8'] = MEDIUM8
-READPATTERNS['MEDIUM2'] = MEDIUM2
-READPATTERNS['SHALLOW4'] = SHALLOW4
-READPATTERNS['SHALLOW2'] = SHALLOW2
-READPATTERNS['BRIGHT2'] = BRIGHT2
-READPATTERNS['BRIGHT1'] = BRIGHT1
-READPATTERNS['RAPID'] = RAPID
+READPATTERNS = dict(
+    DEEP8 = dict(ngroups=20, nframes=8, nskip=12),
+    DEEP2 = dict(ngroups=20, nframes=2, nskip=18),
+    MEDIUM8 = dict(ngroups=10, nframes=8, nskip=2),
+    MEDIUM2 = dict(ngroups=10, nframes=2, nskip=8),
+    SHALLOW4 = dict(ngroups=10, nframes=4, nskip=1),
+    SHALLOW2 = dict(ngroups=10, nframes=2, nskip=3),
+    BRIGHT2 = dict(ngroups=10, nframes=2, nskip=0),
+    BRIGHT1 = dict(ngroups=10, nframes=1, nskip=1),
+    RAPID = dict(ngroups=10, nframes=1, nskip=0),
+    )
 
 TFRAME = 10.73677
 
@@ -82,16 +36,16 @@ def test_frame_averaging(setup_nrc_cube):
        the dark reference file to match the frame averaging and groupgap
        settings of the exposure.'''
 
-    # Values to build the fake data arrays
-    ngroups = 5
-    nrows = 2048
-    ncols = 2048
+    # Values to build the fake data arrays.  Rows/Cols are smaller than the
+    # normal 2048x2048 to save memory and time
+    ngroups = 3
+    nrows = 512
+    ncols = 512
 
     # Loop over the NIRCam readout patterns:
-    for name in READPATTERNS:
+    for readpatt in READPATTERNS:
 
         # Get the configuration for the readout pattern
-        readpatt = name
         nframes = READPATTERNS[readpatt]['nframes']
         groupgap = READPATTERNS[readpatt]['nskip']
 
@@ -138,7 +92,8 @@ def test_frame_averaging(setup_nrc_cube):
 
 
 def test_more_sci_frames():
-    '''Check that data is unchanged if there are more frames in the science data is than in the reference file'''
+    '''Check that data is unchanged if there are more frames in the science
+    data is than in the dark reference file'''
 
     # size of integration
     nints = 1
