@@ -145,7 +145,7 @@ def test_nirspec_imaging():
 
     refs = create_reference_files(im)
 
-    pipe = nirspec.create_pipeline(im, refs)
+    pipe = nirspec.create_pipeline(im, refs, slit_y_range=[-.5, .5])
     w = wcs.WCS(pipe)
     im.meta.wcs = w
     # Test evaluating the WCS
@@ -165,7 +165,7 @@ def test_nirspec_ifu_against_esa():
     im.meta.filename = "test_ifu.fits"
     refs = create_reference_files(im)
 
-    pipe = nirspec.create_pipeline(im, refs)
+    pipe = nirspec.create_pipeline(im, refs, slit_y_range=[-.5, .5])
     w = wcs.WCS(pipe)
     im.meta.wcs = w
     # Test evaluating the WCS (slice 0)
@@ -199,7 +199,7 @@ def test_nirspec_fs_esa():
     im.meta.filename = "test_fs.fits"
     refs = create_reference_files(im)
 
-    pipe = nirspec.create_pipeline(im, refs)
+    pipe = nirspec.create_pipeline(im, refs, slit_y_range=[-.5, .5])
     w = wcs.WCS(pipe)
     im.meta.wcs = w
     # Test evaluating the WCS
