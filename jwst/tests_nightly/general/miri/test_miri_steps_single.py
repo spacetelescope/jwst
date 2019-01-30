@@ -166,8 +166,7 @@ class TestMIRIWCSIFU(BaseJWSTTest):
         region = RegionsModel(crds_client.get_reference_file(result, 'regions'))
 
         # inputs
-        shape = region.regions.shape
-        y, x = np.mgrid[ : shape[0], : shape[1]]
+        x, y = grid_from_bounding_box(result.meta.wcs.bounding_box)
 
         # Get indices where pixels == 0. These should be NaNs in the output.
         ind_zeros = region.regions == 0
