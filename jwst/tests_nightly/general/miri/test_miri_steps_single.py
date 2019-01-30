@@ -1,7 +1,8 @@
 import os
 import numpy as np
-from numpy.testing import utils
+from numpy.testing import assert_allclose
 import pytest
+from gwcs.wcstools import grid_from_bounding_box
 
 from jwst import datamodels
 from jwst.datamodels import ImageModel, RegionsModel, CubeModel
@@ -134,22 +135,17 @@ class TestMIRIWCSFixed(BaseJWSTTest):
         """
         input_file = self.get_data(self.test_dir,
                                    'jw00035001001_01101_00001_mirimage_rate.fits')
-        ref_file = self.get_data(os.path.join(*self.ref_loc),
+        result = AssignWcsStep.call(input_file, save_results=True)
+
+        truth_file = self.get_data(os.path.join(*self.ref_loc),
                                  'jw00035001001_01101_00001_mirimage_assign_wcs.fits')
-
-        result = AssignWcsStep.call(input_file)
-        output_file = result.meta.filename
-        result.save(output_file)
-        result.close()
-
-        im = ImageModel(output_file)
-        imref = ImageModel(ref_file)
-        y, x = np.mgrid[:1031, :1024]
-        ra, dec, lam = im.meta.wcs(x, y)
-        raref, decref, lamref = imref.meta.wcs(x, y)
-        utils.assert_allclose(ra, raref)
-        utils.assert_allclose(dec, decref)
-        utils.assert_allclose(lam, lamref)
+        truth = ImageModel(truth_file)
+        x, y = grid_from_bounding_box(result.meta.wcs.bounding_box)
+        ra, dec, lam = result.meta.wcs(x, y)
+        raref, decref, lamref = truth.meta.wcs(x, y)
+        assert_allclose(ra, raref)
+        assert_allclose(dec, decref)
+        assert_allclose(lam, lamref)
 
 
 @pytest.mark.bigdata
@@ -164,20 +160,10 @@ class TestMIRIWCSIFU(BaseJWSTTest):
         """
         input_file = self.get_data(self.test_dir,
                                    'jw00024001001_01101_00001_MIRIFUSHORT_uncal_MiriSloperPipeline.fits')
-        ref_file = self.get_data(os.path.join(*self.ref_loc),
-                                 'jw00024001001_01101_00001_MIRIFUSHORT_assign_wcs.fits')
-
-
-        result = AssignWcsStep.call(input_file)
-        output_file = result.meta.filename
-        result.save(output_file)
-        result.close()
-
-        im = ImageModel(output_file)
-        imref = ImageModel(ref_file)
+        result = AssignWcsStep.call(input_file, save_results=True)
 
         # Get the region file
-        region = RegionsModel(crds_client.get_reference_file(im, 'regions'))
+        region = RegionsModel(crds_client.get_reference_file(result, 'regions'))
 
         # inputs
         shape = region.regions.shape
@@ -186,18 +172,22 @@ class TestMIRIWCSIFU(BaseJWSTTest):
         # Get indices where pixels == 0. These should be NaNs in the output.
         ind_zeros = region.regions == 0
 
-        ra, dec, lam = im.meta.wcs(x, y)
-        raref, decref, lamref = imref.meta.wcs(x, y)
-        utils.assert_allclose(ra, raref, equal_nan=True)
-        utils.assert_allclose(dec, decref, equal_nan=True)
-        utils.assert_allclose(lam, lamref, equal_nan=True)
+        truth_file = self.get_data(os.path.join(*self.ref_loc),
+                                 'jw00024001001_01101_00001_MIRIFUSHORT_assign_wcs.fits')
+        truth = ImageModel(truth_file)
+
+        ra, dec, lam = result.meta.wcs(x, y)
+        raref, decref, lamref = truth.meta.wcs(x, y)
+        assert_allclose(ra, raref, equal_nan=True)
+        assert_allclose(dec, decref, equal_nan=True)
+        assert_allclose(lam, lamref, equal_nan=True)
 
         # Test that we got NaNs at ind_zero
         assert(np.isnan(ra).nonzero()[0] == ind_zeros.nonzero()[0]).all()
         assert(np.isnan(ra).nonzero()[1] == ind_zeros.nonzero()[1]).all()
 
         # Test the inverse transform
-        x1, y1 = im.meta.wcs.backward_transform(ra, dec, lam)
+        x1, y1 = result.meta.wcs.backward_transform(ra, dec, lam)
         assert(np.isnan(x1).nonzero()[0] == ind_zeros.nonzero()[0]).all()
         assert (np.isnan(x1).nonzero()[1] == ind_zeros.nonzero()[1]).all()
 
@@ -206,7 +196,7 @@ class TestMIRIWCSIFU(BaseJWSTTest):
         ra[100][200] = 7
         lam[100][200] = 15
 
-        x2, y2 = im.meta.wcs.backward_transform(ra, dec, lam)
+        x2, y2 = result.meta.wcs.backward_transform(ra, dec, lam)
         assert np.isnan(x2[100][200])
         assert np.isnan(x2[100][200])
 
@@ -224,21 +214,21 @@ class TestMIRIWCSImage(BaseJWSTTest):
 
         input_file = self.get_data(self.test_dir,
                                     "jw00001001001_01101_00001_MIRIMAGE_ramp_fit.fits")
-        ref_file = self.get_data(*self.ref_loc,
+        result = AssignWcsStep.call(input_file, save_results=True)
+
+        cwd = os.path.abspath('.')
+        os.makedirs('truth', exist_ok=True)
+        os.chdir('truth')
+        truth_file = self.get_data(*self.ref_loc,
                                  "jw00001001001_01101_00001_MIRIMAGE_assign_wcs.fits")
+        os.chdir(cwd)
+        truth = ImageModel(truth_file)
 
-        result = AssignWcsStep.call(input_file)
-        output_file = result.meta.filename
-        result.save(output_file)
-        result.close()
-
-        im = ImageModel(output_file)
-        imref = ImageModel(ref_file)
-        x, y = np.mgrid[:1031, :1024]
-        ra, dec = im.meta.wcs(x, y)
-        raref, decref = imref.meta.wcs(x, y)
-        utils.assert_allclose(ra, raref)
-        utils.assert_allclose(dec, decref)
+        x, y = grid_from_bounding_box(result.meta.wcs.bounding_box)
+        ra, dec = result.meta.wcs(x, y)
+        raref, decref = truth.meta.wcs(x, y)
+        assert_allclose(ra, raref)
+        assert_allclose(dec, decref)
 
 
 @pytest.mark.bigdata
@@ -249,28 +239,26 @@ class TestMIRIWCSSlitless(BaseJWSTTest):
 
     def test_miri_slitless_wcs(self):
         """
-
         Regression test of creating a WCS object and doing pixel to sky transformation.
-
         """
         input_file = self.get_data(self.test_dir,
                                    "jw80600012001_02101_00003_mirimage_rateints.fits")
-        ref_file = self.get_data(*self.ref_loc,
-                                 "jw80600012001_02101_00003_mirimage_assign_wcs.fits")
+        result = AssignWcsStep.call(input_file, save_results=True)
 
-        result = AssignWcsStep.call(input_file)
-        output_file = result.meta.filename
-        result.save(output_file)
-        result.close()
+        cwd = os.path.abspath('.')
+        os.makedirs('truth', exist_ok=True)
+        os.chdir('truth')
+        truth_file = self.get_data(*self.ref_loc,
+                                 "jw80600012001_02101_00003_mirimage_assignwcsstep.fits")
+        os.chdir(cwd)
+        truth = CubeModel(truth_file)
 
-        im = CubeModel(output_file)
-        imref = CubeModel(ref_file)
-        x, y = np.mgrid[:1031, :1024]
-        ra, dec, lam = im.meta.wcs(x, y)
-        raref, decref, lamref = imref.meta.wcs(x, y)
-        utils.assert_allclose(ra, raref)
-        utils.assert_allclose(dec, decref)
-        utils.assert_allclose(lam, lamref)
+        x, y = grid_from_bounding_box(result.meta.wcs.bounding_box)
+        ra, dec, lam = result.meta.wcs(x, y)
+        raref, decref, lamref = truth.meta.wcs(x, y)
+        assert_allclose(ra, raref)
+        assert_allclose(dec, decref)
+        assert_allclose(lam, lamref)
 
 
 @pytest.mark.bigdata
