@@ -10,7 +10,7 @@ import numpy as np
 
 
 def test_coeff_dq():
-    """test linearity algorithm with random data ramp (does algorithm match expected algorithm)
+    """Test linearity algorithm with random data ramp (does algorithm match expected algorithm)
     also test a variety of dq flags and expected output """
 
     # size of integration
@@ -27,8 +27,7 @@ def test_coeff_dq():
     # Create reference file
     numcoeffs = 5
 
-    ref_model = LinearityModel()
-    ref_model.data = np.zeros(shape=(numcoeffs, ysize, xsize), dtype=np.float32)
+    ref_model = LinearityModel((numcoeffs, ysize, xsize))
     ref_model.dq = np.zeros((ysize, xsize), dtype=int)
 
     ref_model.meta.instrument.name = 'MIRI'
@@ -73,9 +72,9 @@ def test_coeff_dq():
     im.pixeldq[50, 43] = 2048
 
     # set dq flags in DQ of reference file
-    ref_model.dq[350, 350] = 1  # DO_NOT_USE
-    ref_model.dq[350, 360] = dqflags.pixel['NO_LIN_CORR']  # NO_LIN_CORR
-    ref_model.dq[300, 500] = 0  # good pixel
+    ref_model.dq[350, 350] = dqflags.pixel['DO_NOT_USE']
+    ref_model.dq[350, 360] = dqflags.pixel['NO_LIN_CORR']
+    ref_model.dq[300, 500] = dqflags.pixel['GOOD']
 
     # run through Linearity pipeline
     outfile = lincorr(im, ref_model)
@@ -134,22 +133,21 @@ def test_nolincorr():
     im.data[0, 5, 500, 500] = 35
 
     # Create reference file
-    dq = np.zeros((1024, 1032), dtype=int)
+    dq = np.zeros((ysize, xsize), dtype=int)
     numcoeffs = 3
 
     # set reference file DQ to 'NO_LIN_CORR'
     dq[500, 500] = dqflags.pixel['NO_LIN_CORR']
 
-    ref_model = LinearityModel()
-    ref_model.data = np.zeros(shape=(numcoeffs, 1024, 1032), dtype=np.float32)
+    ref_model = LinearityModel((numcoeffs, 1024, 1032))
     ref_model.dq = dq
 
     ref_model.meta.instrument.name = 'MIRI'
     ref_model.meta.instrument.detector = 'MIRIMAGE'
     ref_model.meta.subarray.xstart = 1
-    ref_model.meta.subarray.xsize = 1032
+    ref_model.meta.subarray.xsize = xsize
     ref_model.meta.subarray.ystart = 1
-    ref_model.meta.subarray.ysize = 1024
+    ref_model.meta.subarray.ysize = ysize
 
     # run through pipeline (saturation and linearity steps)
     outfile = lincorr(im, ref_model)
@@ -174,7 +172,7 @@ def test_pixeldqprop():
     im.meta.instrument.detector = 'MIRIMAGE'
 
     # Create reference file
-    dq = np.zeros((1024, 1032), dtype=int)
+    dq = np.zeros((ysize, xsize), dtype=int)
     numcoeffs = 3
 
     # set PIXELDQ to 'NO_LIN_CORR'
@@ -184,16 +182,15 @@ def test_pixeldqprop():
     dq[550, 560] = dqflags.pixel['DEAD']
     dq[500, 300] = np.bitwise_or(dqflags.pixel['HOT'], dqflags.pixel['DO_NOT_USE'])
 
-    ref_model = LinearityModel()
-    ref_model.data = np.zeros(shape=(numcoeffs, 1024, 1032), dtype=np.float32)
+    ref_model = LinearityModel((numcoeffs, ysize, xsize))
     ref_model.dq = dq
 
     ref_model.meta.instrument.name = 'MIRI'
     ref_model.meta.instrument.detector = 'MIRIMAGE'
     ref_model.meta.subarray.xstart = 1
-    ref_model.meta.subarray.xsize = 1032
+    ref_model.meta.subarray.xsize = xsize
     ref_model.meta.subarray.ystart = 1
-    ref_model.meta.subarray.ysize = 1024
+    ref_model.meta.subarray.ysize = ysize
 
     # run through linearity correction
     outfile = lincorr(im, ref_model)
@@ -215,14 +212,9 @@ def test_lin_subarray():
     ysize = 224
     xsize = 288
 
-    # create the data and groupdq arrays
-    csize = (1, ngroups, ysize, xsize)
-    data = np.full(csize, 1.0)
-    pixeldq = np.zeros((ysize, xsize), dtype=int)
-    groupdq = np.zeros(csize, dtype=int)
-
     # create a JWST datamodel for MIRI data
-    im = MIRIRampModel(data=data, pixeldq=pixeldq, groupdq=groupdq)
+    im = MIRIRampModel((1, ngroups, ysize, xsize))
+    im.data += 1
 
     im.meta.instrument.name = 'MIRI'
     im.meta.instrument.detector = 'MIRIMAGE'
@@ -246,8 +238,7 @@ def test_lin_subarray():
     # MASK1550 file has colstart=1, rowstart=467
     dq[542, 100:105] = 1
 
-    ref_model = LinearityModel()
-    ref_model.data = np.zeros(shape=(numcoeffs, 1024, 1032), dtype=np.float32)
+    ref_model = LinearityModel((numcoeffs, 1024, 1032))
     ref_model.dq = dq
 
     ref_model.meta.instrument.name = 'MIRI'
@@ -269,22 +260,17 @@ def test_lin_subarray():
 
 
 def test_err_array():
-    """test that the error array is not changed by the linearity step"""
+    """Test that the error array is not changed by the linearity step"""
 
     # size of integration
-    ngroups = 20
+    ngroups = 10
     xsize = 1032
     ysize = 1024
 
-    # create the data and groupdq arrays
-    csize = (1, ngroups, ysize, xsize)
-    data = np.full(csize, 1.0)
-    pixeldq = np.zeros((ysize, xsize), dtype=int)
-    groupdq = np.zeros(csize, dtype=int)
-    err = np.full(csize, 2.0)
-
     # create a JWST datamodel for MIRI data
-    im = MIRIRampModel(data=data, pixeldq=pixeldq, groupdq=groupdq, err=err)
+    im = MIRIRampModel((1, ngroups, ysize, xsize))
+    im.data += 1
+    im.err += 2
     # set file header values
     im.meta.instrument.detector = 'MIRIMAGE'
     im.meta.instrument.name = 'MIRI'
@@ -300,20 +286,14 @@ def test_err_array():
 
     # check output of error array
     # test that the science data are not changed
-
-    np.testing.assert_array_equal(np.full(csize, 2.0, dtype=float),
-                                  outfile.err, err_msg='no changes should be seen in array ')
+    np.testing.assert_allclose(im.err, outfile.err)
 
 
 def make_rampmodel(nints, ngroups, ysize, xsize):
-    # create the data and groupdq arrays
-    csize = (nints, ngroups, ysize, xsize)
-    data = np.full(csize, 1.0)
-    pixeldq = np.zeros((ysize, xsize), dtype=int)
-    groupdq = np.zeros(csize, dtype=int)
+    """Function to provide ramp model to tests"""
 
-    # create a JWST datamodel for MIRI data
-    dm_ramp = MIRIRampModel(data=data, pixeldq=pixeldq, groupdq=groupdq)
+    dm_ramp = MIRIRampModel((nints, ngroups, ysize, xsize))
+    dm_ramp.data += 1
 
     dm_ramp.meta.instrument.name = 'MIRI'
     dm_ramp.meta.observation.date = '2018-01-01'
