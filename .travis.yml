@@ -40,12 +40,13 @@ env:
         - CRDS_PATH='/tmp/crds_cache'
         - MAIN_CMD='python setup.py'
         - MC_URL=https://repo.continuum.io/miniconda
-        - PIP_DEPENDENCIES='ci_watson pytest-doctestplus pytest-astropy'
+        - PIP_DEPENDENCIES='ci_watson pytest-doctestplus pytest-astropy requests-mock'
         - PYTHON_VERSION=3.6
 
     matrix:
         - SETUP_CMD='install'
-        - SETUP_CMD='test'
+        - MAIN_CMD='pytest -v'
+          SETUP_CMD=''
 
 matrix:
 
@@ -56,8 +57,8 @@ matrix:
 
         # PEP8 check with flake8 (only once, i.e. "os: linux")
         - os: linux
-          env: MAIN_CMD='pytest -v'
-               SETUP_CMD=''
+          env: MAIN_CMD='flake8 --count'
+               SETUP_CMD='jwst'
 
         # build sphinx documentation with warnings
         - os: linux
