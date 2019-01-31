@@ -98,7 +98,7 @@ def test_saturation():
 
     # size of integration
     nints = 1
-    ngroups = 160
+    ngroups = 16
     xsize = 1032
     ysize = 1024
 
@@ -107,13 +107,13 @@ def test_saturation():
     im.meta.instrument.detector = 'MIRIMAGE'
 
     # set groupdq pixels to saturated
-    im.groupdq[0, 100:, 200, 150] = dqflags.pixel['SATURATED']  # saturated dq flag
-    im.data[0, 150, 200, 150] = 1000.0  # value shouldn't change
+    im.groupdq[0, 10:, 200, 150] = dqflags.pixel['SATURATED']  # saturated dq flag
+    im.data[0, 15, 200, 150] = 1000.0  # value shouldn't change
 
     # run through Linearity pipeline
     outfile = LinearityStep.call(im)
 
-    assert(outfile.data[0, 150, 200, 150] == 1000.0)  # pixel flagged as saturated, shouldn't change
+    assert(outfile.data[0, 15, 200, 150] == 1000.0)  # pixel flagged as saturated, shouldn't change
 
 
 def test_nolincorr():

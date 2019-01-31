@@ -102,7 +102,7 @@ def test_more_sci_frames(make_rampmodel, make_darkmodel):
 
     # size of integration
     nints = 1
-    ngroups = 30
+    ngroups = 7
     xsize = 1032
     ysize = 1024
 
@@ -113,26 +113,21 @@ def test_more_sci_frames(make_rampmodel, make_darkmodel):
 
     # populate data array of science cube
     for i in range(0, ngroups-1):
-        dm_ramp.data[0, i, :, :] = i
+        dm_ramp.data[0, i] = i
 
-    refgroups = 20
+    refgroups = 5
     # create dark reference file model with fewer frames than science data
     dark = make_darkmodel(refgroups, ysize, xsize)
 
     # populate data array of reference file
     for i in range(0, refgroups - 1):
-        dark.data[0, i, :, :] = i * 0.1
+        dark.data[0, i] = i * 0.1
 
     # apply correction
     outfile = darkcorr(dm_ramp, dark)
 
-    # check that no correction/subtraction was applied; input file = output file
-    diff = dm_ramp.data[:, :, :, :] - outfile.data[:, :, :, :]
-
-    # test that the science data are not changed
-
-    np.testing.assert_array_equal(np.full((nints, ngroups, ysize, xsize), 0.0, dtype=float),
-                                  diff, err_msg='no changes should be seen in array ')
+    # test that the science data are not changed; input file = output file
+    np.testing.assert_array_equal(dm_ramp.data, outfile.data)
 
 
 def test_sub_by_frame(make_rampmodel, make_darkmodel):
@@ -141,7 +136,7 @@ def test_sub_by_frame(make_rampmodel, make_darkmodel):
 
     # size of integration
     nints = 1
-    ngroups = 30
+    ngroups = 10
     xsize = 1032
     ysize = 1024
 
@@ -152,15 +147,15 @@ def test_sub_by_frame(make_rampmodel, make_darkmodel):
 
     # populate data array of science cube
     for i in range(0, ngroups-1):
-        dm_ramp.data[0, i, :, :] = i
+        dm_ramp.data[0, i] = i
 
-    refgroups = 50
-    # create dark reference file model with fewer frames than science data
+    # create dark reference file model with more frames than science data
+    refgroups = 15
     dark = make_darkmodel(refgroups, ysize, xsize)
 
     # populate data array of reference file
     for i in range(0, refgroups - 1):
-        dark.data[0, i, :, :] = i * 0.1
+        dark.data[0, i] = i * 0.1
 
     # apply correction
     outfile = darkcorr(dm_ramp, dark)
@@ -169,7 +164,7 @@ def test_sub_by_frame(make_rampmodel, make_darkmodel):
     outdata = np.squeeze(outfile.data)
 
     # check that the dark file is subtracted frame by frame from the science data
-    diff = dm_ramp.data[0, :, :, :] - dark.data[0, :ngroups, :, :]
+    diff = dm_ramp.data[0] - dark.data[0, :ngroups]
 
     # test that the output data file is equal to the difference found when subtracting ref file from sci file
 
@@ -194,13 +189,13 @@ def test_nan(make_rampmodel, make_darkmodel):
     for i in range(0, ngroups-1):
         dm_ramp.data[0, i, :, :] = i
 
+    # create dark reference file model with more frames than science data
     refgroups = 15
-    # create dark reference file model with fewer frames than science data
     dark = make_darkmodel(refgroups, ysize, xsize)
 
     # populate data array of reference file
     for i in range(0, refgroups - 1):
-        dark.data[0, i, :, :] = i * 0.1
+        dark.data[0, i] = i * 0.1
 
     # set NaN in dark file
     dark.data[0, 5, 500, 500] = np.nan
@@ -232,8 +227,8 @@ def test_dq_combine(make_rampmodel, make_darkmodel):
     for i in range(1, ngroups-1):
         dm_ramp.data[0, i, :, :] = i
 
-    refgroups = 7
     # create dark reference file model with more frames than science data
+    refgroups = 7
     dark = make_darkmodel(refgroups, ysize, xsize)
 
     jump_det = dqflags.pixel['JUMP_DET']
@@ -271,32 +266,27 @@ def test_2_int(make_rampmodel, make_darkmodel):
 
     # populate data array of science cube
     for i in range(0, ngroups-1):
-        dm_ramp.data[:, i, :, :] = i
+        dm_ramp.data[:, i] = i
 
+    # create dark reference file model with more frames than science data
     refgroups = 15
-    # create dark reference file model with fewer frames than science data
     dark = make_darkmodel(refgroups, ysize, xsize)
 
     # populate data array of reference file
     for i in range(0, refgroups - 1):
-        dark.data[0, i, :, :] = i * 0.1
-        dark.data[1, i, :, :] = i * 0.2
+        dark.data[0, i] = i * 0.1
+        dark.data[1, i] = i * 0.2
 
     # run correction
     outfile = darkcorr(dm_ramp, dark)
 
-    # perform subtractions manually
-
     # check that the dark file is subtracted frame by frame from the science data
-    diff = dm_ramp.data[0, :, :, :] - dark.data[0, :ngroups, :, :]
-    diff_int2 = dm_ramp.data[1, :, :, :] - dark.data[1, :ngroups, :, :]
+    diff = dm_ramp.data[0] - dark.data[0, :ngroups]
+    diff_int2 = dm_ramp.data[1] - dark.data[1, :ngroups]
 
     # test that the output data file is equal to the difference found when subtracting ref file from sci file
-
-    np.testing.assert_array_equal(outfile.data[0, :, :, :], diff,
-                                  err_msg='dark file should be subtracted from sci file ')
-    np.testing.assert_array_equal(outfile.data[1, :, :, :], diff_int2,
-                                  err_msg='dark file should be subtracted from sci file ')
+    np.testing.assert_array_equal(outfile.data[0], diff)
+    np.testing.assert_array_equal(outfile.data[1], diff_int2)
 
 
 def test_dark_skipped(make_rampmodel, make_darkmodel):
@@ -304,7 +294,7 @@ def test_dark_skipped(make_rampmodel, make_darkmodel):
 
     # size of integration
     nints = 1
-    ngroups = 30
+    ngroups = 7
     xsize = 1032
     ysize = 1024
 
@@ -315,15 +305,15 @@ def test_dark_skipped(make_rampmodel, make_darkmodel):
 
     # populate data array of science cube
     for i in range(0, ngroups-1):
-        dm_ramp.data[0, i, :, :] = i
+        dm_ramp.data[0, i] = i
 
-    refgroups = 20
+    refgroups = 5
     # create dark reference file model with fewer frames than science data
     dark = make_darkmodel(refgroups, ysize, xsize)
 
     # populate data array of reference file
     for i in range(0, refgroups - 1):
-        dark.data[0, i, :, :] = i * 0.1
+        dark.data[0, i] = i * 0.1
 
     # apply correction
     outfile = darkcorr(dm_ramp, dark)
@@ -352,15 +342,15 @@ def test_frame_avg(make_rampmodel, make_darkmodel):
 
     # populate data array of science cube
     for i in range(0, ngroups-1):
-        dm_ramp.data[:, i, :, :] = i + 1
+        dm_ramp.data[:, i] = i + 1
 
-    refgroups = 20
     # create dark reference file model
+    refgroups = 20
     dark = make_darkmodel(refgroups, ysize, xsize)
 
     # populate data array of reference file
     for i in range(0, refgroups - 1):
-        dark.data[0, i, :, :] = i * 0.1
+        dark.data[0, i] = i * 0.1
 
     # apply correction
     outfile = darkcorr(dm_ramp, dark)
@@ -374,8 +364,7 @@ def test_frame_avg(make_rampmodel, make_darkmodel):
     assert outfile.data[0, 3, 500, 500] == pytest.approx(2.65)
 
     # check that the error array is not modified.
-    np.testing.assert_array_equal(outfile.err[:, :], 0,
-                                  err_msg='error array should remain 0 ')
+    np.testing.assert_array_equal(outfile.err[:, :], 0)
 
 
 @pytest.fixture(scope='function')
