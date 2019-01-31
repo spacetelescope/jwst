@@ -4,6 +4,7 @@ Unit tests for dark current correction
 
 import pytest
 import numpy as np
+from numpy.testing import assert_allclose
 
 from jwst.dark_current.dark_sub import (
     average_dark_frames,
@@ -42,8 +43,8 @@ def test_frame_averaging(setup_nrc_cube):
     # Values to build the fake data arrays.  Rows/Cols are smaller than the
     # normal 2048x2048 to save memory and time
     ngroups = 3
-    nrows = 200
-    ncols = 200
+    nrows = 20
+    ncols = 20
 
     # Loop over the NIRCam readout patterns:
     for readpatt, readpatt_values in READPATTERNS.items():
@@ -56,8 +57,8 @@ def test_frame_averaging(setup_nrc_cube):
         data, dark = setup_nrc_cube(readpatt, ngroups, nrows, ncols)
 
         # Add ramp values to dark model data array
-        dark.data[:, 100, 100] = np.arange(0, 100)
-        dark.err[:, 100, 100] = np.arange(100, 200)
+        dark.data[:, 10, 10] = np.arange(0, 5)
+        dark.err[:, 10, 10] = np.arange(10, 15)
 
         # Run the pipeline's averaging function
         avg_dark = average_dark_frames(dark, ngroups, nframes, groupgap)
@@ -77,23 +78,20 @@ def test_frame_averaging(setup_nrc_cube):
         for newgp, gstart, gend in zip(range(ngroups), gstrt_ind, gend_ind):
 
             # Average the data frames
-            newframe = np.mean(dark.data[gstart:gend, 100, 100])
+            newframe = np.mean(dark.data[gstart:gend, 10, 10])
             manual_avg[newgp] = newframe
 
             # ERR arrays will be quadratic sum of error values
-            manual_errs[newgp] = np.sqrt(np.sum(dark.err[gstart:gend, 100, 100]**2)) / (gend - gstart)
+            manual_errs[newgp] = np.sqrt(np.sum(dark.err[gstart:gend, 10, 10]**2)) / (gend - gstart)
 
         # Check that pipeline output matches manual averaging results
-        assert np.all(manual_avg == avg_dark.data[:, 100, 100])
-        assert np.all(manual_errs == avg_dark.err[:, 100, 100])
+        assert_allclose(manual_avg, avg_dark.data[:, 10, 10])
+        assert_allclose(manual_errs, avg_dark.err[:, 10, 10])
 
         # Check that meta data was properly updated
         assert avg_dark.meta.exposure.nframes == nframes
         assert avg_dark.meta.exposure.ngroups == ngroups
         assert avg_dark.meta.exposure.groupgap == groupgap
-
-        data.close()
-        dark.close()
 
 
 def test_more_sci_frames(make_rampmodel, make_darkmodel):
@@ -452,12 +450,12 @@ def setup_nrc_cube():
         data_model.meta.observation.date = '2017-10-01'
         data_model.meta.observation.time = '00:00:00'
 
-        dark_model = DarkModel((100, 2048, 2048))
+        dark_model = DarkModel((5, 2048, 2048))
         dark_model.meta.subarray.xstart = 1
         dark_model.meta.subarray.ystart = 1
         dark_model.meta.subarray.xsize = 2048
         dark_model.meta.subarray.ysize = 2048
-        dark_model.meta.exposure.ngroups = 100
+        dark_model.meta.exposure.ngroups = 10
         dark_model.meta.exposure.groupgap = 0
         dark_model.meta.exposure.nframes = 1
         dark_model.meta.instrument.name = 'NIRCAM'
