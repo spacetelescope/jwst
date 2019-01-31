@@ -5,14 +5,17 @@ Unit tests for dark current correction
 import pytest
 import numpy as np
 
-from jwst.dark_current.dark_sub import average_dark_frames
+from jwst.dark_current.dark_sub import (
+    average_dark_frames,
+    do_correction as darkcorr
+    )
 from jwst.datamodels import (
     RampModel, 
     DarkModel, 
     MIRIRampModel, 
     DarkMIRIModel, 
 )
-from jwst.dark_current.dark_sub import do_correction as darkcorr
+from jwst.datamodels import dqflags
 
 
 # Dictionary of NIRCam readout patterns
@@ -205,9 +208,6 @@ def test_nan(make_rampmodel, make_darkmodel):
     # apply correction
     outfile = darkcorr(dm_ramp, dark)
 
-    print(outfile.pixeldq[500, 500])
-    print(outfile.groupdq[0, 5, 500, 500])
-
     # test that the NaN dark reference pixel was set to 0 (nothing subtracted)
     assert outfile.data[0, 5, 500, 500] == 5.0
 
@@ -220,8 +220,8 @@ def test_dq_combine(make_rampmodel, make_darkmodel):
     # size of integration
     nints = 1
     ngroups = 5
-    xsize = 1032
-    ysize = 1024
+    xsize = 103
+    ysize = 102
 
     # create raw input data for step
     dm_ramp = make_rampmodel(nints, ngroups, ysize, xsize)
@@ -229,26 +229,30 @@ def test_dq_combine(make_rampmodel, make_darkmodel):
     dm_ramp.meta.exposure.groupgap = 0
 
     # populate data array of science cube
-    for i in range(0, ngroups-1):
+    for i in range(1, ngroups-1):
         dm_ramp.data[0, i, :, :] = i
 
-    refgroups = 15
-    # create dark reference file model with fewer frames than science data
+    refgroups = 7
+    # create dark reference file model with more frames than science data
     dark = make_darkmodel(refgroups, ysize, xsize)
 
-    # populate dq flags of sci pixeldq and reference dq
-    dm_ramp.pixeldq[500, 500] = 4
-    dm_ramp.pixeldq[500, 501] = 2
+    jump_det = dqflags.pixel['JUMP_DET']
+    saturated = dqflags.pixel['SATURATED']
+    do_not_use = dqflags.pixel['DO_NOT_USE']
 
-    dark.dq[0, 0, 500, 500] = 1
-    dark.dq[0, 0, 500, 501] = 1
+    # populate dq flags of sci pixeldq and reference dq
+    dm_ramp.pixeldq[50, 50] = jump_det
+    dm_ramp.pixeldq[50, 51] = saturated
+
+    dark.dq[0, 0, 50, 50] = do_not_use
+    dark.dq[0, 0, 50, 51] = do_not_use
 
     # run correction step
     outfile = darkcorr(dm_ramp, dark)
 
     # check that dq flags were correctly added
-    assert outfile.pixeldq[500, 500] == 5
-    assert outfile.pixeldq[500, 501] == 3
+    assert outfile.pixeldq[50, 50] == np.bitwise_or(jump_det, do_not_use)
+    assert outfile.pixeldq[50, 51] == np.bitwise_or(saturated, do_not_use)
 
 
 def test_2_int(make_rampmodel, make_darkmodel):
@@ -383,12 +387,9 @@ def make_rampmodel():
         # create the data and groupdq arrays
         csize = (nints, ngroups, ysize, xsize)
         data = np.full(csize, 1.0)
-        pixeldq = np.zeros((ysize, xsize), dtype=int)
-        groupdq = np.zeros(csize, dtype=int)
-        err = np.zeros((ysize, xsize), dtype=int)
 
         # create a JWST datamodel for MIRI data
-        dm_ramp = MIRIRampModel(data=data, pixeldq=pixeldq, groupdq=groupdq, err=err)
+        dm_ramp = MIRIRampModel(data=data)
 
         dm_ramp.meta.instrument.name = 'MIRI'
         dm_ramp.meta.observation.date = '2018-01-01'
@@ -413,10 +414,9 @@ def make_darkmodel():
         nints = 2
         csize = (nints, ngroups, ysize, xsize)
         data = np.full(csize, 1.0)
-        dq = np.zeros((nints, 1, ysize, xsize), dtype=int)
 
         # create a JWST datamodel for MIRI data
-        dark = DarkMIRIModel(data=data, dq=dq)
+        dark = DarkMIRIModel(data=data)
 
         dark.meta.instrument.name = 'MIRI'
         dark.meta.date = '2018-01-01'
