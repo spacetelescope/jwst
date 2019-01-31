@@ -238,6 +238,8 @@ tweakreg
 - Use a more numerically stable ``numpy.linalg.inv`` instead of own matrix
   inversion. [#3033]
 
+- Bug fix: Use integer division in Python 3. [#3072]
+
 wfs_combine
 -----------
 
