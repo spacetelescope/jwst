@@ -71,8 +71,8 @@ def test_frame_averaging(setup_nrc_cube):
         gend_ind = gstrt_ind + nframes
 
         # Prepare arrays to hold results of averaging
-        manual_avg = np.zeros((ngroups))
-        manual_errs = np.zeros((ngroups))
+        manual_avg = np.zeros((ngroups), dtype=np.float32)
+        manual_errs = np.zeros((ngroups), dtype=np.float32)
 
         # Manually average the input data to compare with pipeline output
         for newgp, gstart, gend in zip(range(ngroups), gstrt_ind, gend_ind):
