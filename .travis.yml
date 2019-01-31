@@ -56,8 +56,8 @@ matrix:
 
         # PEP8 check with flake8 (only once, i.e. "os: linux")
         - os: linux
-          env: MAIN_CMD='flake8 --count'
-               SETUP_CMD='jwst' TEST_CMD='flake8 --version'
+          env: MAIN_CMD='pytest -v'
+               SETUP_CMD=''
 
         # build sphinx documentation with warnings
         - os: linux
@@ -71,7 +71,7 @@ matrix:
     allow_failures:
         # PEP8 will fail for numerous reasons. Ignore it.
         - env: MAIN_CMD='flake8 --count'
-               SETUP_CMD='jwst' TEST_CMD='flake8 --version'
+               SETUP_CMD='jwst'
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then MC_INST=Miniconda3-4.4.10-Linux-x86_64.sh; fi
