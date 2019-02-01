@@ -108,34 +108,40 @@ allOf:
             type: integer
             fits_keyword: INT_NUM
             fits_hdu: EXTRACT1D
+          time_scale:
+            title: "Time scale"
+            type: string
+            default: "UTC"
+            fits_keyword: TIMESYS
+            fits_hdu: EXTRACT1D
           start_utc:
             title: "UTC at start of integration [MJD]"
             type: number
-            fits_keyword: STRT_UTC
+            fits_keyword: MJD-BEG
             fits_hdu: EXTRACT1D
           mid_utc:
             title: "UTC at middle of integration [MJD]"
             type: number
-            fits_keyword: MID_UTC
+            fits_keyword: MJD-AVG
             fits_hdu: EXTRACT1D
           end_utc:
             title: "UTC at end of integration [MJD]"
             type: number
-            fits_keyword: END_UTC
+            fits_keyword: MJD-END
             fits_hdu: EXTRACT1D
           start_tdb:
             title: "TDB at start of integration [MJD]"
             type: number
-            fits_keyword: STRT_TDB
+            fits_keyword: TDB-BEG
             fits_hdu: EXTRACT1D
           mid_tdb:
             title: "TDB at middle of integration [MJD]"
             type: number
-            fits_keyword: MID_TDB
+            fits_keyword: TDB-MID
             fits_hdu: EXTRACT1D
           end_tdb:
             title: "TDB at end of integration [MJD]"
             type: number
-            fits_keyword: END_TDB
+            fits_keyword: TDB-END
             fits_hdu: EXTRACT1D
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

@@ -2944,6 +2944,7 @@ def populate_time_keywords(input_model, output_model):
             row = k + offset
             spec = output_model.spec[n]             # n is incremented below
             spec.int_num = int_num[row]
+            spec.time_scale = "UTC"
             spec.start_utc = start_utc[row]
             spec.mid_utc = mid_utc[row]
             spec.end_utc = end_utc[row]
