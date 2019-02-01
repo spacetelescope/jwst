@@ -19,31 +19,44 @@ from jwst.datamodels import (
 from jwst.datamodels import dqflags
 
 
-# Dictionary of NIRCam readout patterns
-READPATTERNS = dict(
-    DEEP8 = dict(ngroups=20, nframes=8, nskip=12),
-    DEEP2 = dict(ngroups=20, nframes=2, nskip=18),
-    MEDIUM8 = dict(ngroups=10, nframes=8, nskip=2),
-    MEDIUM2 = dict(ngroups=10, nframes=2, nskip=8),
-    SHALLOW4 = dict(ngroups=10, nframes=4, nskip=1),
-    SHALLOW2 = dict(ngroups=10, nframes=2, nskip=3),
-    BRIGHT2 = dict(ngroups=10, nframes=2, nskip=0),
-    BRIGHT1 = dict(ngroups=10, nframes=1, nskip=1),
-    RAPID = dict(ngroups=10, nframes=1, nskip=0),
+# Define frame_time and number of groups in the generated dark reffile
+TFRAME = 10.73677
+NGROUPS_DARK = 10
+
+
+def _params():
+    """Returns list of tuples, one for each readpatt generating parameters for
+    test_frame_averaging. Parameters are the following:
+
+        (readpatt, ngroups, nframes, nskip, nrows, ncols)
+
+    Note nskip = groupgap
+    """
+
+    # Dictionary of NIRCam readout patterns
+    readpatterns = dict(
+        DEEP8 = dict(ngroups=20, nframes=8, nskip=12),
+        DEEP2 = dict(ngroups=20, nframes=2, nskip=18),
+        MEDIUM8 = dict(ngroups=10, nframes=8, nskip=2),
+        MEDIUM2 = dict(ngroups=10, nframes=2, nskip=8),
+        SHALLOW4 = dict(ngroups=10, nframes=4, nskip=1),
+        SHALLOW2 = dict(ngroups=10, nframes=2, nskip=3),
+        BRIGHT2 = dict(ngroups=10, nframes=2, nskip=0),
+        BRIGHT1 = dict(ngroups=10, nframes=1, nskip=1),
+        RAPID = dict(ngroups=10, nframes=1, nskip=0),
     )
 
-TFRAME = 10.73677
+    params = []
+    ngroups = 3
+    nrows = 20
+    ncols = 20
+    for readpatt, values in readpatterns.items():
+        params.append((readpatt, ngroups, values['nframes'], values['nskip'], nrows, ncols))
 
-# Parametrize the test with the following:
-#   (readpatt, ngroups, nframes, nskip, nrows, ncols)
-param = []
-ngroups = 3
-nrows = 20
-ncols = 20
-for readpatt, values in READPATTERNS.items():
-    param.append((readpatt, ngroups, values['nframes'], values['nskip'], nrows, ncols))
+    return params
 
-@pytest.mark.parametrize('readpatt, ngroups, nframes, groupgap, nrows, ncols', param)
+
+@pytest.mark.parametrize('readpatt, ngroups, nframes, groupgap, nrows, ncols', _params())
 def test_frame_averaging(setup_nrc_cube, readpatt, ngroups, nframes, groupgap, nrows, ncols):
     '''Check that if nframes>1 or groupgap>0, then the pipeline reconstructs
        the dark reference file to match the frame averaging and groupgap
@@ -54,8 +67,8 @@ def test_frame_averaging(setup_nrc_cube, readpatt, ngroups, nframes, groupgap, n
     data, dark = setup_nrc_cube(readpatt, ngroups, nframes, groupgap, nrows, ncols)
 
     # Add ramp values to dark model data array
-    dark.data[:, 10, 10] = np.arange(0, 5)
-    dark.err[:, 10, 10] = np.arange(10, 15)
+    dark.data[:, 10, 10] = np.arange(0, NGROUPS_DARK)
+    dark.err[:, 10, 10] = np.arange(10, NGROUPS_DARK + 10)
 
     # Run the pipeline's averaging function
     avg_dark = average_dark_frames(dark, ngroups, nframes, groupgap)
@@ -445,12 +458,12 @@ def setup_nrc_cube():
         data_model.meta.observation.date = '2017-10-01'
         data_model.meta.observation.time = '00:00:00'
 
-        dark_model = DarkModel((5, 2048, 2048))
+        dark_model = DarkModel((NGROUPS_DARK, 2048, 2048))
         dark_model.meta.subarray.xstart = 1
         dark_model.meta.subarray.ystart = 1
         dark_model.meta.subarray.xsize = 2048
         dark_model.meta.subarray.ysize = 2048
-        dark_model.meta.exposure.ngroups = 10
+        dark_model.meta.exposure.ngroups = NGROUPS_DARK
         dark_model.meta.exposure.groupgap = 0
         dark_model.meta.exposure.nframes = 1
         dark_model.meta.instrument.name = 'NIRCAM'
