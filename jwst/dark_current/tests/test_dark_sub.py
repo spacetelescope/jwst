@@ -34,64 +34,61 @@ READPATTERNS = dict(
 
 TFRAME = 10.73677
 
+# Parametrize the test with the following:
+#   (readpatt, ngroups, nframes, nskip, nrows, ncols)
+param = []
+ngroups = 3
+nrows = 20
+ncols = 20
+for readpatt, values in READPATTERNS.items():
+    param.append((readpatt, ngroups, values['nframes'], values['nskip'], nrows, ncols))
 
-def test_frame_averaging(setup_nrc_cube):
+@pytest.mark.parametrize('readpatt, ngroups, nframes, groupgap, nrows, ncols', param)
+def test_frame_averaging(setup_nrc_cube, readpatt, ngroups, nframes, groupgap, nrows, ncols):
     '''Check that if nframes>1 or groupgap>0, then the pipeline reconstructs
        the dark reference file to match the frame averaging and groupgap
        settings of the exposure.'''
 
-    # Values to build the fake data arrays.  Rows/Cols are smaller than the
-    # normal 2048x2048 to save memory and time
-    ngroups = 3
-    nrows = 20
-    ncols = 20
 
-    # Loop over the NIRCam readout patterns:
-    for readpatt, readpatt_values in READPATTERNS.items():
+    # Create data and dark model
+    data, dark = setup_nrc_cube(readpatt, ngroups, nframes, groupgap, nrows, ncols)
 
-        # Get the configuration for the readout pattern
-        nframes = readpatt_values['nframes']
-        groupgap = readpatt_values['nskip']
+    # Add ramp values to dark model data array
+    dark.data[:, 10, 10] = np.arange(0, 5)
+    dark.err[:, 10, 10] = np.arange(10, 15)
 
-        # Create data and dark model
-        data, dark = setup_nrc_cube(readpatt, ngroups, nrows, ncols)
+    # Run the pipeline's averaging function
+    avg_dark = average_dark_frames(dark, ngroups, nframes, groupgap)
 
-        # Add ramp values to dark model data array
-        dark.data[:, 10, 10] = np.arange(0, 5)
-        dark.err[:, 10, 10] = np.arange(10, 15)
+    # Group input groups into collections of frames which will be averaged
+    total_frames = (nframes * ngroups) + (groupgap * (ngroups-1))
 
-        # Run the pipeline's averaging function
-        avg_dark = average_dark_frames(dark, ngroups, nframes, groupgap)
+    # Get starting/ending indexes of the input groups to be averaged
+    gstrt_ind = np.arange(0, total_frames, nframes + groupgap)
+    gend_ind = gstrt_ind + nframes
 
-        # Group input groups into collections of frames which will be averaged
-        total_frames = (nframes * ngroups) + (groupgap * (ngroups-1))
+    # Prepare arrays to hold results of averaging
+    manual_avg = np.zeros((ngroups), dtype=np.float32)
+    manual_errs = np.zeros((ngroups), dtype=np.float32)
 
-        # Get starting/ending indexes of the input groups to be averaged
-        gstrt_ind = np.arange(0, total_frames, nframes + groupgap)
-        gend_ind = gstrt_ind + nframes
+    # Manually average the input data to compare with pipeline output
+    for newgp, gstart, gend in zip(range(ngroups), gstrt_ind, gend_ind):
 
-        # Prepare arrays to hold results of averaging
-        manual_avg = np.zeros((ngroups), dtype=np.float32)
-        manual_errs = np.zeros((ngroups), dtype=np.float32)
+        # Average the data frames
+        newframe = np.mean(dark.data[gstart:gend, 10, 10])
+        manual_avg[newgp] = newframe
 
-        # Manually average the input data to compare with pipeline output
-        for newgp, gstart, gend in zip(range(ngroups), gstrt_ind, gend_ind):
+        # ERR arrays will be quadratic sum of error values
+        manual_errs[newgp] = np.sqrt(np.sum(dark.err[gstart:gend, 10, 10]**2)) / (gend - gstart)
 
-            # Average the data frames
-            newframe = np.mean(dark.data[gstart:gend, 10, 10])
-            manual_avg[newgp] = newframe
+    # Check that pipeline output matches manual averaging results
+    assert_allclose(manual_avg, avg_dark.data[:, 10, 10], rtol=1e-5)
+    assert_allclose(manual_errs, avg_dark.err[:, 10, 10], rtol=1e-5)
 
-            # ERR arrays will be quadratic sum of error values
-            manual_errs[newgp] = np.sqrt(np.sum(dark.err[gstart:gend, 10, 10]**2)) / (gend - gstart)
-
-        # Check that pipeline output matches manual averaging results
-        assert_allclose(manual_avg, avg_dark.data[:, 10, 10], rtol=1e-5)
-        assert_allclose(manual_errs, avg_dark.err[:, 10, 10], rtol=1e-5)
-
-        # Check that meta data was properly updated
-        assert avg_dark.meta.exposure.nframes == nframes
-        assert avg_dark.meta.exposure.ngroups == ngroups
-        assert avg_dark.meta.exposure.groupgap == groupgap
+    # Check that meta data was properly updated
+    assert avg_dark.meta.exposure.nframes == nframes
+    assert avg_dark.meta.exposure.ngroups == ngroups
+    assert avg_dark.meta.exposure.groupgap == groupgap
 
 
 def test_more_sci_frames(make_rampmodel, make_darkmodel):
@@ -429,11 +426,9 @@ def make_darkmodel():
 def setup_nrc_cube():
     '''Set up fake NIRCam data to test.'''
 
-    def _cube(readpatt, ngroups, nrows, ncols):
+    def _cube(readpatt, ngroups, nframes, groupgap, nrows, ncols):
 
         nints = 1
-        groupgap = READPATTERNS[readpatt.upper()]['nskip']
-        nframes = READPATTERNS[readpatt.upper()]['nframes']
 
         data_model = RampModel((nints, ngroups, nrows, ncols))
         data_model.meta.subarray.xstart = 1
