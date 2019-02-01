@@ -6,7 +6,7 @@ Non-science products
 Dark exposure: ``dark``
 ^^^^^^^^^^^^^^^^^^^^^^^
 Dark exposures processed by the :ref:`calwebb_dark <calwebb_dark>` pipeline result in a
-product that has the same structure and content as the ramp_ product described above.
+product that has the same structure and content as the :ref:`ramp <ramp>` product described above.
 The details are as follows:
 
 +-----+------------+----------+-----------+---------------------------------+
@@ -58,7 +58,7 @@ Charge trap state data: ``trapsfilled``
 The :ref:`persistence <persistence_step>` step in the :ref:`calwebb_detector1 <calwebb_detector1>`
 pipeline produces an image containing information on the number of filled charge traps in each
 pixel at the end of an exposure. Internally these data exist as a `~jwst.datamodels.TrapsFilledModel`
-data model, which is saved to a ``trapsfilled` FITS product. The FITS file has the following
+data model, which is saved to a ``trapsfilled`` FITS product. The FITS file has the following
 format:
 
 +-----+---------+----------+-----------+-------------------+
@@ -82,8 +82,8 @@ WFS&C combined image: ``wfscmb``
 The :ref:`wfs_combine <wfs_combine_step>` step in the :ref:`calwebb_wfs-image3 <calwebb_wfs-image3>`
 pipeline combines dithered pairs of Wavefront Sensing and Control (WFS&C) images, with the
 result being stored in a ``wfscmb`` product. Unlike the drizzle methods used to combine and resample
-science images, resulting in an i2d_ product, the WFS&C combination is a simple shift and add technique
-that results in a standard imaging FITS file structure, as shown below.
+science images, resulting in an :ref:`i2d <i2d>` product, the WFS&C combination is a simple shift and add
+technique that results in a standard imaging FITS file structure, as shown below.
 
 +-----+---------+----------+-----------+---------------+
 | HDU | EXTNAME | HDU Type | Data Type | Dimensions    |

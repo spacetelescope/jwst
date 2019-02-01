@@ -14,6 +14,41 @@ countrate images, which are computed by the :ref:`guider_cds <guider_cds_step>` 
 for most modes by simply differencing groups 1 and 2 in each integration and dividing by the group
 time.
 
+File naming
+^^^^^^^^^^^
+Guide star product file names contain identifiers related to the function in use and the time at
+which the data were obtained. The table below lists the file name syntax used for each of the
+guiding functions and the related value of the EXP_TYPE keyword.
+
++----------------+---------------+-----------------------------------------------------+
+| Function       | EXP_TYPE      | File name                                           |
++================+===============+=====================================================+
+| Identification | FGS_ID-IMAGE  | jw<pppppooovvv>_gs-id_<m>_image-uncal.fits          |
++                +---------------+-----------------------------------------------------+
+|                | FGS_ID-STACK  | jw<pppppooovvv>_gs-id_<m>_stacked-uncal.fits        |
++----------------+---------------+-----------------------------------------------------+
+| Acquistion     | FGS_ACQ1      | jw<pppppooovvv>_gs-acq1_<yyyydddhhmmss>_uncal.fits  |
++                +---------------+-----------------------------------------------------+
+|                | FGS_ACQ2      | jw<pppppooovvv>_gs-acq2_<yyyydddhhmmss>_uncal.fits  |
++----------------+---------------+-----------------------------------------------------+
+| Track          | FGS_TRACK     | jw<pppppooovvv>_gs-track_<yyyydddhhmmss>_uncal.fits |
++----------------+---------------+-----------------------------------------------------+
+| Fine Guide     | FGS_FINEGUIDE | jw<pppppooovvv>_gs-fg_<yyyydddhhmmss>_uncal.fits    |
++----------------+---------------+-----------------------------------------------------+
+
+where the file name fields are:
+
+:jw: mission identifier
+:ppppp: program id
+:ooo: observation number
+:vvv: visit number
+:m: ID attempt counter (1-8)
+:yyyydddhhmmss: time stamp at the end of the data in the file
+
+Uncalibrated products use the "uncal" file name suffix as shown above, while calibrated
+products use a "cal" suffix. The relevance of the "image" and "stacked" designations for the
+Identification mode products is described below.
+
 ID mode
 ^^^^^^^
 The "Identification" guiding function images the field of view by reading the detector in a series
@@ -27,20 +62,6 @@ DMS creates 2 different forms of products for ID mode data: one in which an imag
 by simply stacking or butting the data from adjacent subarray strips against one another and the
 other in which the overlap regions of the strips are taken into account by averaging the pixel
 values. The first form is referred to as a "stacked" product and the second as an "image" product.
-
-The file name syntax for ID mode products is as follows::
-
- jw<pppppooovvv>_gs-id_<m>_<stacked | image>-<uncal | cal>.fits
-
-where:
-
- - pppppooovvv: the visit id, consisting of program id, obervation number, and visit number
- - gs-id: guide star identification product
- - m: the number of the identification attempt (0-8) within a visit
- - stacked: indicates that the subarray strips are stacked (butted) against one another in the image
- - image: indicates that the subarray strips have been merged in their overlap regions
- - uncal: indicates the uncalibrated (raw) product
- - cal: indicates the calibrated product
 
 The FITS file structure for uncalibrated ID "image" products is as follows:
 
@@ -200,19 +221,6 @@ ACQ1 mode
 ^^^^^^^^^
 The "Acquistion" guiding function ACQ1 performs 128 x 128 pixel subarray readouts of the
 detector, using 2 groups per integration and a total of 6 integrations.
-
-The file name syntax for ACQ1 mode products is as follows::
-
- jw<pppppooovvv>_gs-acq1_<yyyydddhhmmss>-<uncal | cal>.fits
-
-where:
-
- - pppppooovvv: the visit id, consisting of program id, obervation number, and visit number
- - gs-acq1: guide star acquisition1 product
- - yyyydddhhmmss: the time stamp at the *end* of the data contained in the file
- - uncal: indicates the uncalibrated (raw) product
- - cal: indicates the calibrated product
-
 The FITS file structure for ACQ1 uncalibrated products is as follows:
 
 +-----+---------+----------+-----------+-------------------+
@@ -251,19 +259,6 @@ ACQ2 mode
 ^^^^^^^^^
 The "Acquisition" guiding function ACQ2 performs 32 x 32 pixel subarray readouts of the detector,
 using 2 groups per integration and a total of 5 integrations.
-
-The file name syntax for ACQ2 mode products is as follows::
-
- jw<pppppooovvv>_gs-acq2_<yyyydddhhmmss>-<uncal | cal>.fits
-
-where:
-
- - pppppooovvv: the visit id, consisting of program id, obervation number, and visit number
- - gs-acq2: guide star acquisition2 product
- - yyyydddhhmmss: the time stamp at the *end* of the data contained in the file
- - uncal: indicates the uncalibrated (raw) product
- - cal: indicates the calibrated product
-
 The FITS file structure for ACQ2 uncalibrated products is as follows:
 
 +-----+---------+----------+-----------+-----------------+
@@ -304,19 +299,6 @@ The "Track" guiding function performs 32 x 32 pixel subarray readouts, the locat
 can move on the detector as the FGS FSW tracks the position of the guide star. The subarray
 readouts are performed with a cadence of 16 Hz. Each integration consists of 2 groups, and the
 total number of integrations (NINTS) can be very large (in the thousands).
-
-The file name syntax for TRACK mode products is as follows::
-
- jw<pppppooovvv>_gs-track_<yyyydddhhmmss>-<uncal | cal>.fits
-
-where:
-
- - pppppooovvv: the visit id, consisting of program id, obervation number, and visit number
- - gs-track: guide star track product
- - yyyydddhhmmss: the time stamp at the *end* of the data contained in the file
- - uncal: indicates the uncalibrated (raw) product
- - cal: indicates the calibrated product
-
 The FITS file structure for TRACK uncalibrated products is as follows:
 
 +-----+----------------------+----------+-----------+---------------------+
@@ -488,18 +470,6 @@ together, the 4 readouts at the end are averaged together, and then the differen
 averages is computed to form a final countrate image for each integration. This approach to
 creating the countrate images is used both on-board and in the :ref:`calwebb_guider <calwebb_guider>`
 pipeline when the raw data are processed on the ground.
-
-The file name syntax for FineGuide mode products is as follows::
-
- jw<pppppooovvv>_gs-fg_<yyyydddhhmmss>-<uncal | cal>.fits
-
-where:
-
- - pppppooovvv: the visit id, consisting of program id, obervation number, and visit number
- - gs-fg: guide star FineGuide product
- - yyyydddhhmmss: the time stamp at the *end* of the data contained in the file
- - uncal: indicates the uncalibrated (raw) product
- - cal: indicates the calibrated product
 
 The FITS file structure for FineGuide uncalibrated products is as follows:
 

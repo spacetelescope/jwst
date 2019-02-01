@@ -567,7 +567,7 @@ The structure of the "EXTRACT1D" table extension is as follows:
 The table is constructed using a simple 2-D layout, using one row per extracted spectral
 element in the dispersion direction of the data (i.e. one row per wavelength bin).
 For some spectroscopic modes, such as MIRI MRS and NIRSpec IFU, the data that are used
-as input to the :ref:`extract_1d` step are already in calibrated units of surface
+as input to the :ref:`extract_1d <extract_1d_step>` step are already in calibrated units of surface
 brightness and therefore it's not possible to present 1-D extracted results for the net
 and background spectral data in units of DN/s. In these cases the NET, NERROR, BACKGROUND,
 and BERROR table columns will be zero-filled and only the WAVELENGTH, FLUX, ERROR, and DQ
