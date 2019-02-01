@@ -1,82 +1,5 @@
-JWST FITS data product formats
-==============================
-
-Here we describe the structure and content of the most frequently used
-forms of FITS files for JWST science data products. Each type of FITS
-file is the result of serialization of a corresponding data model. All
-JWST pipeline input and output products, with the exception of a few
-reference files and catalogs, are serialized as FITS files. The ASDF
-representation of the data model is serialized as a FITS BINTABLE extension
-within the FITS file, with EXTNAME="ASDF" (essentialy a text character
-serialization in yaml format.  The ASDF representation
-is read from the extension when a FITS file is loaded into a data model,
-to provide the initial instance of the data model. Values in the other
-FITS extensions then either override this initial model or are added to it.
-
-Common Features
----------------
-
-All JWST FITS science products have a few common features in their structure
-and organization:
-
-1. The FITS primary Header-Data Unit (HDU) only contains header information,
-   in the form of keyword records, with an empty data array, which is
-   indicated by the occurence of NAXIS=0 in the primary header. Meta
-   data that pertains to the entire product is stored in keywords in the
-   primary header. Meta data related to specific extensions (see below)
-   is stored in keywords in the headers of each extension.
-
-2. All data related to the product are contained in one or more FITS
-   IMAGE or BINTABLE extensions. The header of each extension may contain
-   keywords that pertain uniquely to that extension.
-
-Stage 1 and 2 exposure-based products, which contain the data
-from an individual exposure on an individual detector, use the
-following FITS file naming scheme::
-
- jw<ppppp><ooo><vvv>_<gg><s><aa>_<eeeee>_<detector>_<prodType>.fits
-
-where
-
- - ppppp: program ID number
- - ooo: observation number
- - vvv: visit number
- - gg: visit group
- - s: parallel sequence ID (1=prime, 2-5=parallel)
- - aa: activity number (base 36)
- - eeeee: exposure number
- - detector: detector name (e.g. 'nrca1', 'nrcblong', 'mirimage')
- - prodType: product type identifier (e.g. 'uncal', 'rate', 'cal')
-
-An example Stage 1 product FITS file name is::
-
- jw93065002001_02101_00001_nrca1_rate.fits
-
-Stage 3 products, which consist of data from multiple exposures and/or
-detectors, use a source-based file naming scheme::
-
- jw<ppppp>-<AC_ID>_[<"t"TargID | "s"SourceID">](-<"epoch"X>)_<instr>_<optElements>(-<subarray>)_<prodType>(-<ACT_ID>).fits
-
-where
-
- - ppppp: program ID number
- - AC_ID: association candidate ID
- - TargID: a 3-digit target ID (either TargID or SourceID must be present)
- - SourceID: a 5-digit source ID
- - epochX: the text "epoch" followed by a single digit epoch number
- - instr: science instrument name (e.g. 'nircam', 'miri')
- - optElements: a single or hyphen-separated list of optical elements (e.g. filter, grating)
- - subarray: optional indicator of subarray name
- - prodType: product type identifier (e.g. 'i2d', 's3d', 'x1d')
- - ACT_ID: a 2-digit activity ID
-
-An example Stage 3 product FITS file name is::
-
- jw87600-a3001_t001_niriss_f480m-nrm_amiavg.fits
-
-Specific products
------------------
-
+Science products
+----------------
 The following sections describe the format and contents of each of the JWST FITS science
 products. Things to note in the descriptions include:
 
@@ -91,6 +14,8 @@ products. Things to note in the descriptions include:
    Other common extensions, like ``DQ`` and ``ERR``, usually immediately follow the ``SCI``,
    but the order is not guaranteed. Hence HDU index numbers are not listed for many
    extension types, because they can vary.
+
+.. _uncal:
 
 Uncalibrated raw data: ``uncal``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -137,6 +62,8 @@ This FITS file structure is the result of serializing a `~jwst.datamodels.Level1
 can also be read into a `~jwst.datamodels.RampModel`, in which case zero-filled
 ERR, GROUPDQ, and PIXELDQ data arrays will be created and stored in the model, having array
 dimensions based on the shape of the SCI array (see `~jwst.datamodels.RampModel`).
+
+.. _ramp:
 
 Ramp data: ``ramp``
 ^^^^^^^^^^^^^^^^^^^
@@ -189,6 +116,9 @@ also added to the product. The FITS file layout is as follows:
    exposure.
  - REFOUT: The MIRI detector reference output values. Only appears in MIRI exposures.
  - ADSF: The data model meta data.
+ 
+.. _rate:
+.. _rateints:
 
 Countrate data: ``rate`` and ``rateints``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -277,6 +207,27 @@ These FITS files are compatible with the `~jwst.datamodels.ImageModel` data mode
 Note that the ``INT_TIMES`` table does not appear in ``rate`` products, because the
 data have been averaged over all integrations and hence the per-integration time stamps
 are no longer relevant.
+
+.. _bsub:
+.. _bsubints:
+
+Background-subtracted data: ``bsub`` and ``bsubints``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The :ref:`calwebb_image2 <calwebb_image2>` and :ref:`calwebb_spec2 <calwebb_spec2>`
+pipelines have the capability to perform background subtraction on countrate data.
+In its simplest form, this consists of subtracting background exposures or a
+CRDS background reference image from science images. This operation is performed by
+the :ref:`background <background_step>` step in the stage 2 pipelines. If the pipeline
+parameter ``save_bsub`` is set to ``True``, the result of the background subtraction
+step will be saved to a file. Because this is a direct image-from-image operation, the
+form of the result is identical to input. If the input is a ``rate`` product, the
+background-subtracted result will be a ``bsub`` product, which has the exact same
+structure as the rate_ product described above. Similarly, if the input is a ``rateints``
+product, the background-subtracted result will be saved to a ``bsubints`` product, with
+the exact same structure as the rateints_ product described above.
+
+.. _cal:
+.. _calints:
 
 Calibrated data: ``cal`` and ``calints``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -411,6 +362,24 @@ slit, as created by the :ref:`extract_2d <extract_2d_step>` step. FITS "EXTVER" 
 used in each extension header to segregate the multiple instances of each extension type by
 source.
 
+.. _crf:
+.. _crfints:
+
+Cosmic-Ray flagged data: ``crf`` and ``crfints``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Several of the stage 3 pipelines, such as :ref:`calwebb_image3 <calwebb_image3>` and
+:ref:`calwebb_spec3 <calwebb_spec3>`, include the :ref:`outlier detection <outlier_detection_step>`
+step, which finds and flags outlier pixel values within calibrated images. The results of this
+process have the identical format and content as the input ``cal`` and ``calints`` products.
+The only difference is that the DQ arrays have been updated to contain CR flags. If the inputs
+are in the form of ``cal`` products, the CR-flagged data will be saved to a ``crf`` product, which
+has the exact same structure and content as the cal_ product described above. Similarly, if the
+inputs are ``calints`` products, the CR-flagged results will be saved to a ``crfints`` product,
+which has the same structure and content as the calints_ product described above.
+
+.. _i2d:
+.. _s2d:
+
 Resampled 2-D data: ``i2d`` and ``s2d``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Images and spectra that have been resampled by the :ref:`resample <resample_step>` step use a
@@ -480,6 +449,8 @@ extensions, one set for each source or slit. FITS "EXTVER" keywords are used in 
 extension header to segregate the multiple instances of each extension type by
 source.
 
+.. _s3d:
+
 Resampled 3-D (IFU) data: ``s3d``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 3-D IFU cubes created by the :ref:`cube_build <cube_build_step>` step are stored in FITS
@@ -546,6 +517,9 @@ The coordinate data (wavelength values in this case) contained in the "WCS-TABLE
 any coordinate information normally computed from FITS WCS keywords like CRPIX3, CRVAL3,
 and CDELT3 for coordinate axis 3.
 
+.. _x1d:
+.. _x1dints:
+
 Extracted 1-D spectroscopic data: ``x1d`` and ``x1dints``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Extracted spectral data produced by the :ref:`extract_1d <extract_1d_step>` step are stored
@@ -598,3 +572,192 @@ brightness and therefore it's not possible to present 1-D extracted results for 
 and background spectral data in units of DN/s. In these cases the NET, NERROR, BACKGROUND,
 and BERROR table columns will be zero-filled and only the WAVELENGTH, FLUX, ERROR, and DQ
 columns will be populated.
+
+.. _cat:
+
+Source catalog: ``cat``
+^^^^^^^^^^^^^^^^^^^^^^^
+The :ref:`source_catalog <source_catalog_step>` step contained in the
+:ref:`calwebb_image3 <calwebb_image3>` pipeline detects and quantifies sources within imaging
+products. The derived data for the sources is stored in a ``cat`` product, which is in the form
+of an ASCII table in `ECSV <http://docs.astropy.org/en/stable/_modules/astropy/io/ascii/ecsv.html>`_
+(Enhanced Character Separated Values) format. It is a flat text file, containing meta data
+header entries and the source data in a 2-D table layout, with one row per source.
+
+.. _phot:
+
+Photometry catalog: ``phot``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The :ref:`tso_photometry <tso_photometry_step>` step in the :ref:`calwebb_tso3 <calwebb_tso3>`
+pipeline produces light curve from TSO imaging observations by computing aperture photometry as a
+function of integration time stamp within one or more exposures. The resulting photometric data
+are stored in a ``phot`` product, which is in the form of an ASCII table in
+`ECSV <http://docs.astropy.org/en/stable/_modules/astropy/io/ascii/ecsv.html>`_
+(Enhanced Character Separated Values) format. It is a flat text file, containing meta data
+header entries and the photometric data in a 2-D table layout, with one row per exposure
+integration.
+
+.. _whtlt:
+
+White-light photometry catalog: ``whtlt``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The :ref:`white_light <white_light_step>` step in the :ref:`calwebb_tso3 <calwebb_tso3>`
+pipeline produces a light curve from TSO spectroscopic observations by computing the
+wavelength-integrated spectral flux as a function of integration time stamp within one or more
+exposures. The resulting data
+are stored in a ``whtlt`` product, which is in the form of an ASCII table in
+`ECSV <http://docs.astropy.org/en/stable/_modules/astropy/io/ascii/ecsv.html>`_
+(Enhanced Character Separated Values) format. It is a flat text file, containing meta data
+header entries and the white-light flux data in a 2-D table layout, with one row per exposure
+integration.
+
+.. _psfstack:
+
+Stacked PSF data: ``psfstack``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The :ref:`stack_refs <stack_refs_step>` step in the :ref:`calwebb_coron3 <calwebb_coron3>`
+pipeline takes a collection of PSF reference image and assembles them into a 3-D stack of
+PSF images, which results in a ``psfstack`` product. The ``psfstack`` product uses the
+`~jwst.datamodels.CubeModel` data model, which when serialized to a FITS file has the
+structure shown below.
+
++-----+-------------+----------+-----------+-----------------------+
+| HDU | EXTNAME     | HDU Type | Data Type | Dimensions            |
++=====+=============+==========+===========+=======================+
+|  0  | N/A         | primary  | N/A       | N/A                   |
++-----+-------------+----------+-----------+-----------------------+
+|  1  | SCI         | IMAGE    | float32   | ncols x nrows x npsfs |
++-----+-------------+----------+-----------+-----------------------+
+|  2  | DQ          | IMAGE    | uint32    | ncols x nrows x npsfs |
++-----+-------------+----------+-----------+-----------------------+
+|  3  | ERR         | IMAGE    | float32   | ncols x nrows x npsfs |
++-----+-------------+----------+-----------+-----------------------+
+|  4  | ASDF        | BINTABLE | N/A       | variable              |
++-----+-------------+----------+-----------+-----------------------+
+
+ - SCI: 3-D data array containing a stack of 2-D PSF images.
+ - DQ: 3-D data array containing DQ flags for each PSF image.
+ - ERR: 3-D data array containing a stack of 2-D uncertainty estimates for each PSF image.
+ - ADSF: The data model meta data.
+
+.. _psfalign:
+
+Aligned PSF data: ``psfalign``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The :ref:`align_refs <align_refs_step>` step in the :ref:`calwebb_coron3 <calwebb_coron3>`
+pipeline creates a 3-D stack of PSF images that are aligned to corresponding science target
+images. The resulting ``psfalign`` product uses the `~jwst.datamodels.QuadModel` data model,
+which when serialized to a FITS file has the structure and content shown below.
+
++-----+-------------+----------+-----------+-------------------------------+
+| HDU | EXTNAME     | HDU Type | Data Type | Dimensions                    |
++=====+=============+==========+===========+===============================+
+|  0  | N/A         | primary  | N/A       | N/A                           |
++-----+-------------+----------+-----------+-------------------------------+
+|  1  | SCI         | IMAGE    | float32   | ncols x nrows x npsfs x nints |
++-----+-------------+----------+-----------+-------------------------------+
+|  2  | DQ          | IMAGE    | uint32    | ncols x nrows x npsfs x nints |
++-----+-------------+----------+-----------+-------------------------------+
+|  3  | ERR         | IMAGE    | float32   | ncols x nrows x npsfs x nints |
++-----+-------------+----------+-----------+-------------------------------+
+|  4  | ASDF        | BINTABLE | N/A       | variable                      |
++-----+-------------+----------+-----------+-------------------------------+
+
+ - SCI: 4-D data array containing a stack of 2-D PSF images aligned to each integration
+   within a corresponding science target exposure.
+   each integration.
+ - DQ: 4-D data array containing DQ flags for each PSF image.
+ - ERR: 4-D data array containing a stack of 2-D uncertainty estimates for each PSF image,
+   per science target integration.
+ - ADSF: The data model meta data.
+
+.. _psfsub:
+
+PSF-subtracted data: ``psfsub``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The :ref:`klip <klip_step>` step in the :ref:`calwebb_coron3 <calwebb_coron3>`
+pipeline subtracts an optimized combination of PSF images from each integration in a
+science target exposure. The resulting PSF-subtracted science exposure data uses the
+`~jwst.datamodels.CubeModel` data model, which when serialized to a FITS file has the
+structure shown below.
+
++-----+-------------+----------+-----------+-----------------------+
+| HDU | EXTNAME     | HDU Type | Data Type | Dimensions            |
++=====+=============+==========+===========+=======================+
+|  0  | N/A         | primary  | N/A       | N/A                   |
++-----+-------------+----------+-----------+-----------------------+
+|  1  | SCI         | IMAGE    | float32   | ncols x nrows x nints |
++-----+-------------+----------+-----------+-----------------------+
+|  2  | ERR         | IMAGE    | float32   | ncols x nrows x nints |
++-----+-------------+----------+-----------+-----------------------+
+|  3  | DQ          | IMAGE    | uint32    | ncols x nrows x nints |
++-----+-------------+----------+-----------+-----------------------+
+|  4  | INT_TIMES   | BINTABLE | N/A       | nints (rows) x 7 cols |
++-----+-------------+----------+-----------+-----------------------+
+|  5  | VAR_POISSON | IMAGE    | float32   | ncols x nrows x nints |
++-----+-------------+----------+-----------+-----------------------+
+|  6  | VAR_RNOISE  | IMAGE    | float32   | ncols x nrows x nints |
++-----+-------------+----------+-----------+-----------------------+
+|  7  | ASDF        | BINTABLE | N/A       | variable              |
++-----+-------------+----------+-----------+-----------------------+
+
+ - SCI: 3-D data array containing a stack of 2-D PSF-subtracted science target images, one per
+   integration.
+ - ERR: 3-D data array containing a stack of 2-D uncertainty estimates for each science target
+   integration.
+ - DQ: 3-D data array containing DQ flags for each science target integration.
+ - INT_TIMES: A table of begining, middle, and end time stamps for each integration in the
+   exposure.
+ - VAR_POISSON: 3-D data array containing the per-integration variance estimates for each pixel,
+   based on Poisson noise only.
+ - VAR_RNOISE: 3-D data array containing the per-integration variance estimates for each pixel,
+   based on read noise only.
+ - ADSF: The data model meta data.
+
+.. _ami:
+.. _amiavg:
+.. _aminorm:
+
+AMI data: ``ami``, ``amiavg``, and ``aminorm``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AMI derived data created by the :ref:`ami_analyze <ami_analyze_step>`,
+:ref:`ami_average <ami_average_step>`, and :ref:`ami_normalize <ami_normalize_step>` steps,
+as part of the :ref:`calwebb_ami3 <calwebb_ami3>` pipeline, are stored in FITS files that
+contain a mixture of images and binary table extensions. The output format of all three
+pipeline steps is the same, encapsulated within a `~jwst.datamodels.AmiLgModel` data model.
+The overall layout of the corresponding FITS files is as follows:
+
++-----+-------------+----------+-----------+-----------------+
+| HDU | EXTNAME     | HDU Type | Data Type | Dimensions      |
++=====+=============+==========+===========+=================+
+|  0  | N/A         | primary  | N/A       | N/A             |
++-----+-------------+----------+-----------+-----------------+
+|  1  | FIT         | IMAGE    | float32   | ncols x nrows   |
++-----+-------------+----------+-----------+-----------------+
+|  2  | RESID       | IMAGE    | float32   | ncols x nrows   |
++-----+-------------+----------+-----------+-----------------+
+|  3  | CLOSURE_AMP | BINTABLE | float64   | 1 col x 35 rows |
++-----+-------------+----------+-----------+-----------------+
+|  4  | CLOSURE_PHA | BINTABLE | float64   | 1 col x 35 rows |
++-----+-------------+----------+-----------+-----------------+
+|  5  | FRINGE_AMP  | BINTABLE | float64   | 1 col x 21 rows |
++-----+-------------+----------+-----------+-----------------+
+|  6  | FRINGE_PHA  | BINTABLE | float64   | 1 col x 21 rows |
++-----+-------------+----------+-----------+-----------------+
+|  7  | PUPIL_PHA   | BINTABLE | float64   | 1 col x 7 rows  |
++-----+-------------+----------+-----------+-----------------+
+|  8  | SOLNS       | BINTABLE | float64   | 1 col x 44 rows |
++-----+-------------+----------+-----------+-----------------+
+|  9  | ASDF        | BINTABLE | N/A       | variable        |
++-----+-------------+----------+-----------+-----------------+
+
+ - FIT: A 2-D image of the fitted model.
+ - RESID: A 2-D image of the fit residuals.
+ - CLOSURE_AMP: A table of closure amplitudes.
+ - CLOSURE_PHA: A table of closure phases.
+ - FRINGE_AMP: A table of fringe amplitudes.
+ - FRINGE_PHA: A table of fringe phases.
+ - PUPIL_PHA: A table of pupil phases.
+ - SOLNS: A table of fringe coefficients.
+ - ADSF: The data model meta data.
+
