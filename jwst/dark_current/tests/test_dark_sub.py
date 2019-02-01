@@ -85,8 +85,8 @@ def test_frame_averaging(setup_nrc_cube):
             manual_errs[newgp] = np.sqrt(np.sum(dark.err[gstart:gend, 10, 10]**2)) / (gend - gstart)
 
         # Check that pipeline output matches manual averaging results
-        assert_allclose(manual_avg, avg_dark.data[:, 10, 10])
-        assert_allclose(manual_errs, avg_dark.err[:, 10, 10])
+        assert_allclose(manual_avg, avg_dark.data[:, 10, 10], rtol=1e-5)
+        assert_allclose(manual_errs, avg_dark.err[:, 10, 10], rtol=1e-5)
 
         # Check that meta data was properly updated
         assert avg_dark.meta.exposure.nframes == nframes
