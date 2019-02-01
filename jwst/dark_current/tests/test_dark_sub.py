@@ -11,12 +11,12 @@ from jwst.dark_current.dark_sub import (
     do_correction as darkcorr
     )
 from jwst.datamodels import (
-    RampModel, 
-    DarkModel, 
-    MIRIRampModel, 
-    DarkMIRIModel, 
+    RampModel,
+    DarkModel,
+    MIRIRampModel,
+    DarkMIRIModel,
+    dqflags,
 )
-from jwst.datamodels import dqflags
 
 
 # Define frame_time and number of groups in the generated dark reffile
@@ -25,12 +25,12 @@ NGROUPS_DARK = 10
 
 
 def _params():
-    """Returns list of tuples, one for each readpatt generating parameters for
+    """Returns list of tuples, one for each readpatt, generating parameters for
     test_frame_averaging. Parameters are the following:
 
-        (readpatt, ngroups, nframes, nskip, nrows, ncols)
+        (readpatt, ngroups, nframes, groupgap, nrows, ncols)
 
-    Note nskip = groupgap
+    Note groupgap = nskip
     """
 
     # Dictionary of NIRCam readout patterns
@@ -48,6 +48,7 @@ def _params():
 
     params = []
     ngroups = 3
+    # NIRCam is 2048x2048, but we reduce the size to 20x20 for speed/memory
     nrows = 20
     ncols = 20
     for readpatt, values in readpatterns.items():

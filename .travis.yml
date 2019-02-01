@@ -27,6 +27,7 @@ env:
                               jplephem
                               matplotlib
                               photutils
+                              pytest
                               scipy
                               spherical-geometry
                               stsci.image
@@ -39,13 +40,12 @@ env:
         - CRDS_PATH='/tmp/crds_cache'
         - MAIN_CMD='python setup.py'
         - MC_URL=https://repo.continuum.io/miniconda
-        - PIP_DEPENDENCIES='.[test]'
+        - PIP_DEPENDENCIES='ci_watson pytest-doctestplus pytest-astropy'
         - PYTHON_VERSION=3.6
 
     matrix:
         - SETUP_CMD='install'
-        - MAIN_CMD='pytest -v'
-          SETUP_CMD=''
+        - SETUP_CMD='test'
 
 matrix:
 
@@ -57,14 +57,13 @@ matrix:
         # PEP8 check with flake8 (only once, i.e. "os: linux")
         - os: linux
           env: MAIN_CMD='flake8 --count'
-               SETUP_CMD='jwst'
-               PIP_DEPENDENCIES='.'
+               SETUP_CMD='jwst' TEST_CMD='flake8 --version'
 
         # build sphinx documentation with warnings
         - os: linux
           env: SETUP_CMD='build_sphinx -W'
                CONDA_DEPENDENCIES="$CONDA_DEPENDENCIES"
-               PIP_DEPENDENCIES='.[docs]'
+               PIP_DEPENDENCIES='sphinx_rtd_theme stsci_rtd_theme sphinx-astropy'
         - os: linux
           env: MAIN_CMD='flake8 --count --select=F, E101, E111, E112, E113, E401, E402, E711, E722 --max-line-length=110'
                SETUP_CMD='jwst'
@@ -72,8 +71,7 @@ matrix:
     allow_failures:
         # PEP8 will fail for numerous reasons. Ignore it.
         - env: MAIN_CMD='flake8 --count'
-               SETUP_CMD='jwst'
-               PIP_DEPENDENCIES='.'
+               SETUP_CMD='jwst' TEST_CMD='flake8 --version'
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then MC_INST=Miniconda3-4.4.10-Linux-x86_64.sh; fi
@@ -86,7 +84,7 @@ before_install:
   - for channel in $CONDA_CHANNELS; do conda config --add channels "$channel"; done
   - conda create -n test -q python=$PYTHON_VERSION numpy $CONDA_DEPENDENCIES
   - source activate test
-  - if [[ -n $PIP_DEPENDENCIES ]]; then pip install -q -e $PIP_DEPENDENCIES; fi
+  - if [[ -n $PIP_DEPENDENCIES ]]; then pip install -q $PIP_DEPENDENCIES; fi
 
 after_install:
   - conda list astropy
