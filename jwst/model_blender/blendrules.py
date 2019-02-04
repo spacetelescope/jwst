@@ -324,7 +324,7 @@ def _build_schema_rules_dict(schema):
 
     Returns
     -------
-    results : dict
+    results : OrderedDict
         Dictionary with schema attributes as keys and blend rules
         as values
 

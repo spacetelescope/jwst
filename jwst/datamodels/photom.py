@@ -7,6 +7,11 @@ __all__ = ['PhotomModel']
 class PhotomModel(ReferenceFileModel):
     """
     A base class for photometric reference file models.
+
+    Parameters
+    __________
+    phot_table : numpy table
+         Photometric flux conversion factors table
     """
     schema_url = "photom.schema.yaml"
 
@@ -16,11 +21,9 @@ class NircamPhotomModel(PhotomModel):
     A data model for NIRCam photom reference files.
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
-
-    phot_table : numpy array
+    __________
+    phot_table : numpy table
+        Photometric flux conversion factors table
         A table-like object containing row selection criteria made up
         of instrument mode parameters and photometric conversion
         factors associated with those modes.
@@ -43,11 +46,9 @@ class NirissPhotomModel(PhotomModel):
     A data model for NIRISS photom reference files.
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
-
-    phot_table : numpy array
+    __________
+    phot_table : numpy table
+        Photometric flux conversion factors table
         A table-like object containing row selection criteria made up
         of instrument mode parameters and photometric conversion
         factors associated with those modes.
@@ -70,11 +71,9 @@ class NirspecPhotomModel(PhotomModel):
     A data model for NIRSpec imaging, IFU, and MOS photom reference files.
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
-
-    phot_table : numpy array
+    __________
+    phot_table : numpy table
+        Photometric flux conversion factors table
         A table-like object containing row selection criteria made up
         of instrument mode parameters and photometric conversion
         factors associated with those modes.
@@ -97,11 +96,9 @@ class NirspecFSPhotomModel(PhotomModel):
     A data model for NIRSpec Fixed-Slit (FS) photom reference files.
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
-
-    phot_table : numpy array
+    __________
+    phot_table : numpy table
+        Photometric flux conversion factors table
         A table-like object containing row selection criteria made up
         of instrument mode parameters and photometric conversion
         factors associated with those modes.
@@ -128,22 +125,20 @@ class MiriImgPhotomModel(PhotomModel):
     A data model for MIRI imaging photom reference files.
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
-
-    phot_table : numpy array
+    __________
+    phot_table : numpy table
+        Photometric flux conversion factors table
         A table-like object containing row selection criteria made up
         of instrument mode parameters and photometric conversion
         factors associated with those modes.
 
-        - filter: str[12]
-        - subarray: str[15]
-        - photmjsr: float32
-        - uncertainty: float32
-        - nelem: int16
-        - wavelength: float32[500]
-        - relresponse: float32[500]
+       - filter: str[12]
+       - subarray: str[15]
+       - photmjsr: float32
+       - uncertainty: float32
+       - nelem: int16
+       - wavelength: float32[500]
+       - relresponse: float32[500]
 
     """
     schema_url = "mirimg_photom.schema.yaml"
@@ -189,11 +184,9 @@ class FgsPhotomModel(PhotomModel):
     A data model for FGS photom reference files.
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
-
-    phot_table : numpy array
+    __________
+    phot_table : numpy table
+        Photometric flux conversion factors table
         A table-like object containing row selection criteria made up
         of instrument mode parameters and photometric conversion
         factors associated with those modes.

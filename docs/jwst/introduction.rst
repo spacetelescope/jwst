@@ -4,36 +4,20 @@ Introduction
 This document provides instructions on running the JWST Science Calibration
 Pipeline (referred to as "the pipeline") and individual pipeline steps.
 
-Pipeline modules are available for detector-level (stage 1) processing of
-data from all observing modes, stage 2 processing for imaging and
-spectroscopic modes, and stage 3 processing for imaging, spectroscopic,
+Multiple pipeline modules are used for different stages of processing and for
+different JWST observing modes. The modules are broken into 3 stages:
+
+ - Stage 1: Detector-level corrections and ramp fitting for individual exposures
+ - Stage 2: Instrument-mode calibrations for individual exposures
+ - Stage 3: Combining data from multiple exposures within an observation
+
+Stage 1 corrections are applied nearly universally for all instruments and modes.
+Stage 2 is divided into separate modules for imaging and spectroscopic modes.
+Stage 3 is divided into five separate modules for imaging, spectroscopic,
 coronagraphic, Aperture Masking Interferometry (AMI), and Time Series
-Observations (TSO).
+Observation (TSO) modes.
 
-Stage 1 processing consists of detector-level
-corrections that must be performed on a group-by-group basis
-before ramp fitting is applied. The output of stage 1 processing
-is a countrate image per exposure or per integration for some modes.
-Details of this pipeline can be found at :ref:`stage1-flow`.
-
-Stage 2 processing consists of additional corrections and
-calibrations to produce fully calibrated exposures. The details
-differ for imaging and spectroscopic exposures, and there are some
-corrections that are unique to certain instruments or modes.
-Details are at :ref:`stage2-imaging-flow`
-and :ref:`stage2-spectroscopic-flow`.
-
-Stage 3 processing consists of routines that work with multiple exposures
-and in most cases produce some kind of combined product.
-There are dedicated (and unique) pipeline modules for stage 3 processing of
-imaging, spectroscopic, coronagraphic, AMI, and TSO observations. Details
-of each are available at
-:ref:`stage3-imaging-flow`,
-:ref:`stage3-spectroscopic-flow`,
-:ref:`stage3-coron-flow`,
-:ref:`stage3-ami-flow`, and
-:ref:`stage3-tso-flow`.
-
+Details of all the pipeline modules can be found at :ref:`pipeline-modules`.
 The remainder of this document discusses pipeline configuration files and
 gives examples of running pipelines as a whole or in individual steps.
 
@@ -77,6 +61,8 @@ Each pipeline step records the reference file that it used in the value of
 a header keyword in the output data file. The keyword names use the syntax
 "R_<ref>", where <ref> corresponds to a 6-character version of the reference
 file type, such as ``R_DARK``, ``R_LINEAR``, and ``R_PHOTOM``.
+
+.. _strun_command_line:
 
 Running From the Command Line
 =============================
@@ -182,6 +168,8 @@ The "No science data found" condition is returned by the ``assign_wcs`` step of
 file, the WCS indicates that no science data will be found. This condition is
 most often found with NIRSpec's NRS2 detector. There are certain optical and MSA
 configurations in which dispersion will not cross to the NRS2 detector.
+
+.. _run_from_python:
 
 Running From Within Python
 ==========================
@@ -540,3 +528,8 @@ User's Guide at :ref:`stpipe-user-steps`.
 
 More detailed information on writing pipelines can be found
 in the ``stpipe`` Developer's Guide at :ref:`stpipe-devel-steps`.
+
+If you have questions or concerns regarding the software, please open an issue
+at https://github.com/spacetelescope/jwst/issues or contact
+the `JWST Help Desk <https://jwsthelp.stsci.edu>`_.
+

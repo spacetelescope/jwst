@@ -4,12 +4,14 @@ Test the utility functions
 
 import os
 
+from astropy.modeling.models import Shift, Identity
 from astropy.table import QTable
 
 from ...lib.catalog_utils import SkyObject
 from ... import datamodels
 
-from ..util import get_object_info, bounding_box_from_shape
+from ..util import (get_object_info, wcs_bbox_from_shape, subarray_transform,
+                    bounding_box_from_subarray, transform_bbox_from_shape)
 
 from . import data
 
@@ -23,19 +25,31 @@ def get_file_path(filename):
     return os.path.join(data_path, filename)
 
 
-def test_bounding_box_from_shape_2d():
+def test_transform_bbox_from_shape_2d():
     model = datamodels.ImageModel((512, 2048))
-    bb = bounding_box_from_shape(model.data.shape)
+    bb = transform_bbox_from_shape(model.data.shape)
+    assert bb == ((-0.5, 511.5), (-0.5, 2047.5))
+
+
+def test_transform_bbox_from_shape_3d():
+    model = datamodels.CubeModel((3, 32, 2048))
+    bb = transform_bbox_from_shape(model.data.shape)
+    assert bb == ((-0.5, 31.5), (-0.5, 2047.5))
+
+
+def test_wcs_bbox_from_shape_2d():
+    model = datamodels.ImageModel((512, 2048))
+    bb = wcs_bbox_from_shape(model.data.shape)
     assert bb == ((-0.5, 2047.5), (-0.5, 511.5))
 
 
-def test_bounding_box_from_shape_3d():
+def test_wcs_bbox_from_shape_3d():
     model = datamodels.CubeModel((3, 32, 2048))
-    bb = bounding_box_from_shape(model.data.shape)
+    bb = wcs_bbox_from_shape(model.data.shape)
     assert bb == ((-0.5, 2047.5), (-0.5, 31.5))
 
     model = datamodels.IFUCubeModel((750, 45, 50))
-    bb = bounding_box_from_shape(model.data.shape)
+    bb = wcs_bbox_from_shape(model.data.shape)
     assert bb == ((-0.5, 49.5), (-0.5, 44.5))
 
 
@@ -58,3 +72,33 @@ def test_create_grism_objects():
     tempcat = QTable.read(source_catalog, format='ascii.ecsv')
     grism_object_from_table = read_catalog(tempcat)
     assert isinstance(grism_object_from_table, list), "return grism objects were not a list"
+
+
+def test_subarray_transform():
+    im = datamodels.ImageModel()
+    assert subarray_transform(im) is None
+
+    im.meta.subarray.xstart = 3
+    transform = subarray_transform(im)
+    assert isinstance(transform[0], Shift) and transform[0].offset == 2
+    assert isinstance(transform[1], Identity)
+
+    im.meta.subarray.ystart = 5
+    transform = subarray_transform(im)
+    assert isinstance(transform[0], Shift) and transform[0].offset == 2
+    assert isinstance(transform[1], Shift) and transform[1].offset == 4
+
+    im = datamodels.ImageModel()
+    im.meta.subarray.ystart = 5
+    transform = subarray_transform(im)
+    assert isinstance(transform[0], Identity)
+    assert isinstance(transform[1], Shift) and transform[1].offset == 4
+
+
+def test_bounding_box_from_subarray():
+    im = datamodels.ImageModel()
+    im.meta.subarray.xstart = 4
+    im.meta.subarray.ystart = 6
+    im.meta.subarray.xsize = 400
+    im.meta.subarray.ysize = 600
+    assert bounding_box_from_subarray(im) == ((-.5, 598.5), (-.5, 398.5))

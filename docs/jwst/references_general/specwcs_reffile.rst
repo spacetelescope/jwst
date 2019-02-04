@@ -1,3 +1,5 @@
+:orphan:
+
 .. _specwcs_reffile:
   
 SPECWCS Reference File
@@ -20,7 +22,7 @@ NIRCam     INSTRUME, EXP_TYPE, MODULE, PUPIL, DATE-OBS, TIME-OBS
 NIRISS     INSTRUME, EXP_TYPE, FILTER, PUPIL, DATE-OBS, TIME-OBS
 ========== =========================================================================
 
-.. include:: ../includes/standard_keywords.rst
+.. include:: ../includes/standard_keywords.inc
 
 Reference File Format
 +++++++++++++++++++++

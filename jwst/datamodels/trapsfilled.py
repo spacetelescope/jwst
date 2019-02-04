@@ -8,11 +8,9 @@ class TrapsFilledModel(DataModel):
     persistence.
 
     Parameters
-    ----------
-    init: any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
-
-    data: numpy array
+    __________
+    data : numpy float32 array
+        Traps filled
         The map of the number of traps filled over the detector, with
         one plane for each "trap family."
     """

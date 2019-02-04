@@ -7,7 +7,7 @@ values from units of DN to electrons, and convert the results of ramp fitting
 back to DN.  The READNOISE values are used as part of the noise estimate for
 each pixel. Both are necessary for proper computation of noise estimates.
 
-.. include:: ../references_general/gain_reffile.rst
+:ref:`GAIN <gain_reffile>`
 
-.. include:: ../references_general/readnoise_reffile.rst
+:ref:`READNOISE <readnoise_reffile>`
 

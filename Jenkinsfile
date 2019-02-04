@@ -20,10 +20,8 @@ def conda_packages = [
     "jsonschema",
     "jplephem",
     "matplotlib",
-    "namedlist",
     "photutils",
     "scipy",
-    "six",
     "spherical-geometry",
     "stsci.image",
     "stsci.imagestats",
@@ -32,47 +30,48 @@ def conda_packages = [
     "verhawk",
     "pytest"
 ]
-def conda_packages_docs = [
-    "sphinx",
-    "sphinx_rtd_theme",
-    "stsci_rtd_theme"
-]
 
 // Pip related setup
-def pip_packages_docs = "sphinx-automodapi"
-def pip_packages_tests = "requests_mock ci_watson"
+def pip_index = "https://bytesalad.stsci.edu/artifactory/api/pypi/datb-pypi-virtual/simple"
+def pip_install_args = "--index-url ${pip_index} --progress-bar=off"
 
 // Generate distributions
 dist = new BuildConfig()
 dist.nodetype = 'linux'
 dist.name = 'dist'
-dist.conda_packages = ["numpy=${matrix_numpy[0]}"] + ["python=${matrix_python[0]}"]
+dist.conda_packages = ["python=${matrix_python[0]}"]
 dist.build_cmds = [
+    "pip install ${pip_install_args} numpy==${matrix_numpy[0]}",
+    "pip wheel ${pip_install_args} .",
     "python setup.py sdist",
-    "python setup.py bdist_egg",
-    "python setup.py bdist_wheel"
 ]
 matrix += dist
 
-
-// Compile documentation
-docs = new BuildConfig()
-docs.nodetype = 'linux'
-docs.name = 'docs'
-docs.conda_channels = ['http://ssb.stsci.edu/astroconda-dev']
-docs.conda_packages = conda_packages + conda_packages_docs + ["numpy=${matrix_numpy[0]}"] + ["python=${matrix_python[0]}"]
-docs.build_cmds = [
-    "pip install -q ${pip_packages_docs}",
-    "python setup.py build_sphinx"
-]
-matrix += docs
-
-
-// Generate the build and test matrix
+// Generate pip build and test matrix
 for (python_ver in matrix_python) {
     for (numpy_ver in matrix_numpy) {
         for (astropy_ver in matrix_astropy) {
-            def name = "py${python_ver}np${numpy_ver}ap${astropy_ver}"
+            def name = "pip_py${python_ver}np${numpy_ver}ap${astropy_ver}"
+            bc = new BuildConfig()
+            bc.nodetype = 'linux'
+            bc.env_vars = test_env
+            bc.name = name
+            bc.conda_packages = ["python=${python_ver}"]
+            bc.build_cmds = [
+                "pip install ${pip_install_args} numpy==${matrix_numpy[0]}",
+                "pip install ${pip_install_args} -r requirements-dev.txt .[test]",
+            ]
+            bc.test_cmds = ["pytest -r s --basetemp=test_results --junitxml=results.xml"]
+            matrix += bc
+        }
+    }
+}
+
+// Generate conda build and test matrix
+for (python_ver in matrix_python) {
+    for (numpy_ver in matrix_numpy) {
+        for (astropy_ver in matrix_astropy) {
+            def name = "conda_py${python_ver}np${numpy_ver}ap${astropy_ver}"
             bc = new BuildConfig()
             bc.nodetype = 'linux'
             bc.env_vars = test_env
@@ -80,8 +79,7 @@ for (python_ver in matrix_python) {
             bc.conda_channels = ['http://ssb.stsci.edu/astroconda-dev']
             bc.conda_packages = conda_packages + ["python=${python_ver}"] + ["numpy=${numpy_ver}"]
             bc.build_cmds = [
-                "pip install -q ${pip_packages_tests}",
-                "python setup.py install"
+                "pip install ${pip_install_args} .[test]",
             ]
             bc.test_cmds = ["pytest -r s --basetemp=test_results --junitxml=results.xml"]
             matrix += bc

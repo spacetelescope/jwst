@@ -429,7 +429,8 @@ class Step():
                             if hasattr(result.meta.ref_file, ref_name):
                                 getattr(result.meta.ref_file, ref_name).name = filename
                         result.meta.ref_file.crds.sw_version = crds_client.get_svn_version()
-                        result.meta.ref_file.crds.context_used = crds_client.get_context_used()
+                        result.meta.ref_file.crds.context_used = \
+                            crds_client.get_context_used(result.meta.telescope)
                 self._reference_files_used = []
 
             # Mark versions
@@ -657,7 +658,8 @@ class Step():
                 (reference_file_type, hdr_name))
         return crds_client.check_reference_open(reference_name)
 
-    def reference_uri_to_cache_path(self, reference_uri):
+    @classmethod
+    def reference_uri_to_cache_path(cls, reference_uri):
         """Convert an abstract CRDS reference URI to an absolute file path in the CRDS
         cache.  Reference URI's are typically output to dataset headers to record the
         reference files used.

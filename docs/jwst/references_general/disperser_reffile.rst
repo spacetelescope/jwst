@@ -1,3 +1,5 @@
+:orphan:
+
 .. _disperser_reffile:
 
 DISPERSER Reference File (NIRSpec only)
@@ -18,7 +20,7 @@ Instrument Keywords
 NIRSpec    INSTRUME, EXP_TYPE, DATE-OBS, TIME-OBS
 ========== ======================================
 
-.. include:: ../includes/standard_keywords.rst
+.. include:: ../includes/standard_keywords.inc
 
 Reference File Format
 +++++++++++++++++++++

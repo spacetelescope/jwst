@@ -3,10 +3,10 @@ import logging
 from math import (cos, sin)
 import os.path
 import sqlite3
+from collections import namedtuple
 
+from astropy.time import Time
 import numpy as np
-
-from namedlist import namedlist
 
 from ..datamodels import Level1bModel
 from ..lib.engdb_tools import (
@@ -18,6 +18,9 @@ from ..lib.engdb_tools import (
 # Setup logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
+
+# Conversion from seconds to MJD
+SECONDS2MJD = 1 / 24 / 60 / 60
 
 # Default transformation matricies
 FGS12SIFOV_DEFAULT = np.array(
@@ -56,22 +59,15 @@ A2R = D2R/3600.
 R2A = 3600.*R2D
 
 # SIAF container
-SIAF = namedlist(
-    'SIAF',
-    ['v2ref', 'v3ref', 'v3idlyang', 'vparity'],
-    default=None
-)
+SIAF = namedtuple("SIAF", ["v2ref", "v3ref", "v3idlyang", "vparity"])
+SIAF.__new__.__defaults__ = (None, None, None, None)
 
 # Pointing container
-Pointing = namedlist(
-    'Pointing',
-    ['q', 'j2fgs_matrix', 'fsmcorr', 'obstime'],
-    default=None
-)
+Pointing = namedtuple("Pointing", ["q", "j2fgs_matrix", "fsmcorr", "obstime"])
+Pointing.__new__.__defaults__ = (None, None, None, None)
 
 # Transforms
-Transforms = namedlist(
-    'Transforms',
+Transforms = namedtuple("Transforms",
     [
         'm_eci2j',            # ECI to J-Frame
         'm_j2fgs1',           # J-Frame to FGS1
@@ -82,19 +78,19 @@ Transforms = namedlist(
         'm_eci2v',            # ECI to V
         'm_v2siaf',           # V to SIAF
         'm_eci2siaf'          # ECI to SIAF
-    ],
-    default=None
-)
-
+    ])
+Transforms.__new__.__defaults__ = (None, None, None, None, None,
+                                    None, None, None, None)
 # WCS reference container
-WCSRef = namedlist(
+WCSRef = namedtuple(
     'WCSRef',
-    ['ra', 'dec', 'pa'],
-    default=None
-)
+    ['ra', 'dec', 'pa'])
+WCSRef.__new__.__defaults__ = (None, None, None)
 
 
-def add_wcs(filename, default_pa_v3=0., siaf_path=None, **kwargs):
+def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
+            tolerance=60, allow_default=False, reduce_func=None,
+            dry_run=False, **transform_kwargs):
     """Add WCS information to a FITS file
 
     Telescope orientation is attempted to be obtained from
@@ -112,8 +108,59 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, **kwargs):
         The V3 position angle to use if the pointing information
         is not found.
 
-    kwargs: dict
+    siaf_path: str or file-like object or None
+        The path to the SIAF database.
+
+    engdb_url: str or None
+        URL of the engineering telemetry database REST interface.
+
+    tolerance: int
+        If no telemetry can be found during the observation,
+        the time, in seconds, beyond the observation time to
+        search for telemetry.
+
+    allow_default: bool
+        If telemetry cannot be determine, use existing
+        information in the observation's header.
+
+    reduce_func: func or None
+        Reduction function to use on values.
+
+    dry_run: bool
+        Do not write out the modified file.
+
+    transform_kwargs: dict
         Keyword arguments used by matrix calculation routines
+
+    Notes
+    -----
+    This function adds absolute pointing information to the FITS files provided
+    to it on the command line (one or more).
+
+    Currently it only uses a constant value for the engineering keywords
+    since the Engineering Database does not yet contain them.
+
+    It assumes the following keywords are present in the file header:
+
+    V2_REF (arcseconds)
+    V3_REF (arcseconds)
+    VPARITY (+1 or -1)
+    V3I_YANG (decimal degrees)
+
+    The keywords added are:
+
+    RA_V1
+    DEC_V1
+    PA_V3
+    CRVAL1
+    CRVAL2
+    PC1_1
+    PC1_2
+    PC2_1
+    PC2_2
+
+    It does not currently place the new keywords in any particular location
+    in the header other than what is required by the standard.
     """
     logger.info('Updating WCS info for file {}'.format(filename))
     model = Level1bModel(filename)
@@ -121,19 +168,30 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, **kwargs):
         model,
         default_pa_v3=default_pa_v3,
         siaf_path=siaf_path,
-        **kwargs
+        engdb_url=engdb_url,
+        tolerance=tolerance,
+        allow_default=allow_default,
+        reduce_func=reduce_func,
+        **transform_kwargs
     )
     try:
         _add_axis_3(model)
     except Exception:
         pass
     model.meta.model_type = None
-    model.save(filename)
+
+    if dry_run:
+        logger.info('Dry run requested; results are not saved.')
+    else:
+        model.save(filename)
+
     model.close()
     logger.info('...update completed')
 
 
-def update_wcs(model, default_pa_v3=0., siaf_path=None, **kwargs):
+def update_wcs(model, default_pa_v3=0., siaf_path=None, engdb_url=None,
+               tolerance=60, allow_default=False,
+               reduce_func=None, **transform_kwargs):
     """Update WCS pointing information
 
     Given a `jwst.datamodels.DataModel`, determine the simple WCS parameters
@@ -146,12 +204,30 @@ def update_wcs(model, default_pa_v3=0., siaf_path=None, **kwargs):
     ----------
     model : `~jwst.datamodels.DataModel`
         The model to update.
+
     default_pa_v3 : float
         If pointing information cannot be retrieved,
         use this as the V3 position angle.
+
     siaf_path : str
         The path to the SIAF file, i.e. ``XML_DATA`` env variable.
-    kwargs: dict
+
+    engdb_url: str or None
+        URL of the engineering telemetry database REST interface.
+
+    tolerance: int
+        If no telemetry can be found during the observation,
+        the time, in seconds, beyond the observation time to
+        search for telemetry.
+
+    allow_default: bool
+        If telemetry cannot be determine, use existing
+        information in the observation's header.
+
+    reduce_func: func or None
+        Reduction function to use on values.
+
+    transform_kwargs: dict
         Keyword arguments used by matrix calculation routines.
     """
 
@@ -167,7 +243,9 @@ def update_wcs(model, default_pa_v3=0., siaf_path=None, **kwargs):
         )
     else:
         update_wcs_from_telem(
-            model, default_pa_v3=default_pa_v3, siaf_path=siaf_path, **kwargs
+            model, default_pa_v3=default_pa_v3, siaf_path=siaf_path, engdb_url=engdb_url,
+            tolerance=tolerance, allow_default=allow_default,
+            reduce_func=reduce_func, **transform_kwargs
         )
 
 
@@ -226,7 +304,11 @@ def update_wcs_from_fgs_guiding(model, default_pa_v3=0.0, default_vparity=1):
      model.meta.wcsinfo.pc2_2) = calc_rotation_matrix(pa_rad, vparity=vparity)
 
 
-def update_wcs_from_telem(model, default_pa_v3=0., siaf_path=None, **kwargs):
+def update_wcs_from_telem(
+        model, default_pa_v3=0., siaf_path=None, engdb_url=None,
+        tolerance=0, allow_default=False,
+        reduce_func=None, **transform_kwargs
+):
     """Update WCS pointing information
 
     Given a `jwst.datamodels.DataModel`, determine the simple WCS parameters
@@ -239,12 +321,30 @@ def update_wcs_from_telem(model, default_pa_v3=0., siaf_path=None, **kwargs):
     ----------
     model : `~jwst.datamodels.DataModel`
         The model to update.
+
     default_pa_v3 : float
         If pointing information cannot be retrieved,
         use this as the V3 position angle.
+
     siaf_path : str
         The path to the SIAF file, i.e. ``XML_DATA`` env variable.
-    kwargs: dict
+
+    engdb_url: str or None
+        URL of the engineering telemetry database REST interface.
+
+    tolerance: int
+        If no telemetry can be found during the observation,
+        the time, in seconds, beyond the observation time to
+        search for telemetry.
+
+    allow_default: bool
+        If telemetry cannot be determine, use existing
+        information in the observation's header.
+
+    reduce_func: func or None
+        Reduction function to use on values.
+
+    transform_kwargs: dict
         Keyword arguments used by matrix calculation routines.
     """
 
@@ -259,6 +359,15 @@ def update_wcs_from_telem(model, default_pa_v3=0., siaf_path=None, **kwargs):
         v3idlyang=model.meta.wcsinfo.v3yangle,
         vparity=model.meta.wcsinfo.vparity
     )
+    if None in siaf:
+        if allow_default:
+            logger.warning(
+                'Insufficient SIAF information found in header.'
+                'Resetting to a unity SIAF.'
+            )
+            siaf = SIAF(0., 0., 0., 1)
+        else:
+            raise ValueError('Insufficient SIAF information found in header.')
 
     # Setup default WCS info if actual pointing and calculations fail.
     wcsinfo = WCSRef(
@@ -270,19 +379,23 @@ def update_wcs_from_telem(model, default_pa_v3=0., siaf_path=None, **kwargs):
 
     # Get the pointing information
     try:
-        pointing = get_pointing(obsstart, obsend)
+        pointing = get_pointing(obsstart, obsend, engdb_url=engdb_url,
+                                tolerance=tolerance, reduce_func=reduce_func)
     except ValueError as exception:
-        logger.warning(
-            'Cannot retrieve telescope pointing.'
-            ' Default pointing parameters will be used.'
-            '\nException is {}'.format(exception)
-        )
+        if not allow_default:
+            raise
+        else:
+            logger.warning(
+                'Cannot retrieve telescope pointing.'
+                ' Default pointing parameters will be used.'
+                '\nException is {}'.format(exception)
+            )
     else:
         # compute relevant WCS information
         logger.info('Successful read of engineering quaternions:')
         logger.info('\tPointing = {}'.format(pointing))
         try:
-            wcsinfo, vinfo = calc_wcs(pointing, siaf, **kwargs)
+            wcsinfo, vinfo = calc_wcs(pointing, siaf, **transform_kwargs)
         except Exception as e:
             logger.warning(
                 'WCS calculation has failed and will be skipped.'
@@ -402,7 +515,7 @@ def update_s_region(model, prd_db_filepath=None):
     model.meta.wcsinfo.s_region = s_region
 
 
-def calc_wcs(pointing, siaf, **kwargs):
+def calc_wcs(pointing, siaf, **transform_kwargs):
     """Transform from the given SIAF information and Pointing
     the aperture and V1 wcs
 
@@ -414,7 +527,7 @@ def calc_wcs(pointing, siaf, **kwargs):
     pointing: Pointing
         The telescope pointing. See ref:`Notes` for further details
 
-    kwargs: dict
+    transform_kwargs: dict
         Keyword arguments used by matrix calculation routines
 
     Returns
@@ -450,7 +563,7 @@ def calc_wcs(pointing, siaf, **kwargs):
     """
 
     # Calculate transforms
-    tforms = calc_transforms(pointing, siaf, **kwargs)
+    tforms = calc_transforms(pointing, siaf, **transform_kwargs)
 
     # Calculate the V1 WCS information
     vinfo = calc_v1_wcs(tforms.m_eci2v)
@@ -462,7 +575,7 @@ def calc_wcs(pointing, siaf, **kwargs):
     return (wcsinfo, vinfo)
 
 
-def calc_transforms(pointing, siaf, fsmcorr_version='latest'):
+def calc_transforms(pointing, siaf, fsmcorr_version='latest', j2fgs_transpose=True):
     """Calculate transforms from pointing to SIAF
 
     Given the spacecraft pointing parameters and the
@@ -480,6 +593,9 @@ def calc_transforms(pointing, siaf, fsmcorr_version='latest'):
     fsmcorr_version: str
         The version of the FSM correction calculation to use.
         See :ref:`calc_sifov_fsm_delta_matrix`
+
+    j2fgs_transpose: bool
+        Transpose the `j2fgs1` matrix.
 
     Returns
     -------
@@ -501,52 +617,54 @@ def calc_transforms(pointing, siaf, fsmcorr_version='latest'):
             M_eci_to_j        *   # ECI to J-Frame
     """
 
-    tforms = Transforms()
-
     # Determine the ECI to J-frame matrix
-    tforms.m_eci2j = calc_eci2j_matrix(pointing.q)
+    m_eci2j = calc_eci2j_matrix(pointing.q)
 
     # Calculate the J-frame to FGS! ICS matrix
-    tforms.m_j2fgs1 = calc_j2fgs1_matrix(pointing.j2fgs_matrix)
+    m_j2fgs1 = calc_j2fgs1_matrix(pointing.j2fgs_matrix, transpose=j2fgs_transpose)
 
     # Calculate the FSM corrections to the SI_FOV frame
-    tforms.m_sifov_fsm_delta = calc_sifov_fsm_delta_matrix(
+    m_sifov_fsm_delta = calc_sifov_fsm_delta_matrix(
         pointing.fsmcorr, fsmcorr_version=fsmcorr_version
     )
 
     # Calculate the FGS1 ICS to SI-FOV matrix
-    tforms.m_fgs12sifov = calc_fgs1_to_sifov_mastrix()
+    m_fgs12sifov = calc_fgs1_to_sifov_mastrix()
+
+    # Calculate SI FOV to V1 matrix
+    m_sifov2v = calc_sifov2v_matrix()
 
     # Calculate ECI to SI FOV
-    tforms.m_eci2sifov = np.dot(
-        tforms.m_sifov_fsm_delta,
+    m_eci2sifov = np.dot(
+        m_sifov_fsm_delta,
         np.dot(
-            tforms.m_fgs12sifov,
+            m_fgs12sifov,
             np.dot(
-                tforms.m_j2fgs1,
-                tforms.m_eci2j
+                m_j2fgs1,
+                m_eci2j
             )
         )
     )
 
-    # Calculate SI FOV to V1 matrix
-    tforms.m_sifov2v = calc_sifov2v_matrix()
-
     # Calculate the complete transform to the V1 reference
-    tforms.m_eci2v = np.dot(
-        tforms.m_sifov2v,
-        tforms.m_eci2sifov
+    m_eci2v = np.dot(
+        m_sifov2v,
+        m_eci2sifov
     )
 
     # Calculate the SIAF transform matrix
-    tforms.m_v2siaf = calc_v2siaf_matrix(siaf)
+    m_v2siaf = calc_v2siaf_matrix(siaf)
 
     # Calculate the full ECI to SIAF transform matrix
-    tforms.m_eci2siaf = np.dot(
-        tforms.m_v2siaf,
-        tforms.m_eci2v
+    m_eci2siaf = np.dot(
+        m_v2siaf,
+        m_eci2v
     )
 
+    tforms = Transforms(m_eci2j=m_eci2j, m_j2fgs1=m_j2fgs1, m_sifov_fsm_delta=m_sifov_fsm_delta,
+                        m_fgs12sifov=m_fgs12sifov, m_eci2sifov=m_eci2sifov, m_sifov2v=m_sifov2v,
+                        m_eci2v=m_eci2v, m_v2siaf=m_v2siaf, m_eci2siaf=m_eci2siaf
+                        )
     return tforms
 
 
@@ -563,23 +681,22 @@ def calc_v1_wcs(m_eci2v):
     vinfo: WCSRef
         The V1 wcs pointing
     """
-    vinfo = WCSRef()
-
     # V1 RA/Dec is the first row of the transform
-    vinfo.ra, vinfo.dec = vector_to_ra_dec(m_eci2v[0])
+    v1_ra, v1_dec = vector_to_ra_dec(m_eci2v[0])
+    vinfo = WCSRef(v1_ra, v1_dec, None)
 
     # V3 is the third row of the transformation
-    v3info = WCSRef()
-    v3info.ra, v3info.dec = vector_to_ra_dec(m_eci2v[2])
+    v3_ra, v3_dec = vector_to_ra_dec(m_eci2v[2])
+    v3info = WCSRef(v3_ra, v3_dec, None)
 
     # Calculate the V3 position angle
-    vinfo.pa = calc_position_angle(vinfo, v3info)
+    v1_pa = calc_position_angle(vinfo, v3info)
 
     # Convert to degrees
     vinfo = WCSRef(
         ra=vinfo.ra * R2D,
         dec=vinfo.dec * R2D,
-        pa=vinfo.pa * R2D
+        pa=v1_pa * R2D
     )
 
     return vinfo
@@ -603,7 +720,7 @@ def calc_aperture_wcs(m_eci2siaf):
     # Note, the SIAF referenct point is hardcoded to
     # (0, 0). The calculation is left here in case
     # this is not desired.
-    wcsinfo = WCSRef()
+
     siaf_x = 0. * A2R
     siaf_y = 0. * A2R
     refpos = np.array(
@@ -612,7 +729,7 @@ def calc_aperture_wcs(m_eci2siaf):
          np.sqrt(1.-siaf_x * siaf_x - siaf_y * siaf_y)]
     )
     msky = np.dot(m_eci2siaf.transpose(), refpos)
-    wcsinfo.ra, wcsinfo.dec = vector_to_ra_dec(msky)
+    wcs_ra, wcs_dec = vector_to_ra_dec(msky)
 
     # Calculate the position angle
     vysiaf = np.array([0., 1., 0.])
@@ -622,16 +739,16 @@ def calc_aperture_wcs(m_eci2siaf):
     vy_ra, vy_dec = vector_to_ra_dec(myeci)
 
     # The VyPA @ xref,yref is given by
-    y = cos(vy_dec) * sin(vy_ra-wcsinfo.ra)
-    x = sin(vy_dec) * cos(wcsinfo.dec) - \
-        cos(vy_dec) * sin(wcsinfo.dec) * cos((vy_ra - wcsinfo.ra))
-    wcsinfo.pa = np.arctan2(y, x)
+    y = cos(vy_dec) * sin(vy_ra-wcs_ra)
+    x = sin(vy_dec) * cos(wcs_dec) - \
+        cos(vy_dec) * sin(wcs_dec) * cos((vy_ra - wcs_ra))
+    wcs_pa = np.arctan2(y, x)
 
     # Convert all WCS to degrees
     wcsinfo = WCSRef(
-        ra=wcsinfo.ra * R2D,
-        dec=wcsinfo.dec * R2D,
-        pa=wcsinfo.pa * R2D
+        ra=wcs_ra * R2D,
+        dec=wcs_dec * R2D,
+        pa=wcs_pa * R2D
     )
 
     return wcsinfo
@@ -667,7 +784,7 @@ def calc_eci2j_matrix(q):
     return transform
 
 
-def calc_j2fgs1_matrix(j2fgs_matrix):
+def calc_j2fgs1_matrix(j2fgs_matrix, transpose=False):
     """Calculate the J-frame to FGS1 transformation
 
     Parameters
@@ -675,6 +792,9 @@ def calc_j2fgs1_matrix(j2fgs_matrix):
     j2fgs_matrix: n.array((9,))
         Matrix parameters from the engineering database.
         If all zeros, a predefined matrix is used.
+
+    transpose: bool
+        Transpose the resulting matrix.
 
     Returns
     -------
@@ -701,9 +821,11 @@ def calc_j2fgs1_matrix(j2fgs_matrix):
     else:
         logger.info(
             'Using J-Frame to FGS1 engineering parameters'
-            'for the J-Frame to FGS1 transformation.'
+            ' for the J-Frame to FGS1 transformation.'
         )
-        transform = np.array(j2fgs_matrix).reshape((3, 3)).transpose()
+        transform = np.array(j2fgs_matrix).reshape((3, 3))
+        if transpose:
+            transform = transform.transpose()
 
     return transform
 
@@ -859,7 +981,8 @@ def calc_position_angle(v1, v3):
     return v3_pa
 
 
-def get_pointing(obsstart, obsend, result_type='first'):
+def get_pointing(obsstart, obsend, engdb_url=None,
+                 tolerance=60, reduce_func=None):
     """
     Get telescope pointing engineering data.
 
@@ -868,11 +991,17 @@ def get_pointing(obsstart, obsend, result_type='first'):
     obsstart, obsend: float
         MJD observation start/end times
 
-    result_type: str
-        What to return. Possible options are:
-            `first`: Return the first non-zero matricies
-            `all`: Return all non-zero matricies within
-                   the given range.
+    engdb_url: str or None
+        URL of the engineering telemetry database REST interface.
+
+    tolerance: int
+        If no telemetry can be found during the observation,
+        the time, in seconds, beyond the observation time to
+        search for telemetry.
+
+    reduce_func: func or None
+        Reduction function to use on values.
+        If None, the average pointing is returned.
 
     Returns
     -------
@@ -892,110 +1021,23 @@ def get_pointing(obsstart, obsend, result_type='first'):
     This will need be re-examined when more information is
     available.
     """
+    if reduce_func is None:
+        reduce_func = pointing_from_average
+
     logger.info(
         'Determining pointing between observations times (mjd):'
-        '\n\tobsstart = {}'
-        '\n\tobsend = {}'.format(obsstart, obsend)
-    )
-    logger.info(
-        'Querying engineering DB: {}'.format(ENGDB_BASE_URL)
-    )
-    try:
-        engdb = ENGDB_Service()
-    except Exception as exception:
-        raise ValueError(
-            'Cannot open engineering DB connection'
-            '\nException: {}'.format(
-                exception
-            )
+        'obsstart = {obsstart} obsend = {obsend}'
+        '\nTelemetry search tolerance = {tolerance}'
+        '\nReduction function = {reduce_func}'
+        ''.format(
+            obsstart=obsstart, obsend=obsend, tolerance=tolerance, reduce_func=reduce_func
         )
-    params = {
-        'SA_ZATTEST1':  None,
-        'SA_ZATTEST2':  None,
-        'SA_ZATTEST3':  None,
-        'SA_ZATTEST4':  None,
-        'SA_ZRFGS2J11': None,
-        'SA_ZRFGS2J21': None,
-        'SA_ZRFGS2J31': None,
-        'SA_ZRFGS2J12': None,
-        'SA_ZRFGS2J22': None,
-        'SA_ZRFGS2J32': None,
-        'SA_ZRFGS2J13': None,
-        'SA_ZRFGS2J23': None,
-        'SA_ZRFGS2J33': None,
-        'SA_ZADUCMDX':  None,
-        'SA_ZADUCMDY':  None,
-    }
-    for param in params:
-        try:
-            params[param] = engdb.get_values(
-                param, obsstart, obsend,
-                time_format='mjd', include_obstime=True
-            )
-        except Exception as exception:
-            raise ValueError(
-                'Cannot retrive {} from engineering.'
-                '\nFailure was {}'.format(
-                    param,
-                    exception
-                )
-            )
+    )
 
-    # Find the first set of non-zero values
-    results = []
-    for idx in range(len(params['SA_ZATTEST1'])):
-        values = [
-            params[param][idx].value
-            for param in params
-        ]
-        if any(values):
-            pointing = Pointing()
+    mnemonics = get_mnemonics(obsstart, obsend, tolerance, engdb_url=engdb_url)
+    reduced = reduce_func(mnemonics)
 
-            # The tagged obstime will come from the SA_ZATTEST1 mneunonic
-            pointing.obstime = params['SA_ZATTEST1'][idx].obstime
-
-            # Fill out the matricies
-            pointing.q = np.array([
-                params['SA_ZATTEST1'][idx].value,
-                params['SA_ZATTEST2'][idx].value,
-                params['SA_ZATTEST3'][idx].value,
-                params['SA_ZATTEST4'][idx].value,
-            ])
-
-            pointing.j2fgs_matrix = np.array([
-                params['SA_ZRFGS2J11'][idx].value,
-                params['SA_ZRFGS2J21'][idx].value,
-                params['SA_ZRFGS2J31'][idx].value,
-                params['SA_ZRFGS2J12'][idx].value,
-                params['SA_ZRFGS2J22'][idx].value,
-                params['SA_ZRFGS2J32'][idx].value,
-                params['SA_ZRFGS2J13'][idx].value,
-                params['SA_ZRFGS2J23'][idx].value,
-                params['SA_ZRFGS2J33'][idx].value,
-            ])
-
-            pointing.fsmcorr = np.array([
-                params['SA_ZADUCMDX'][idx].value,
-                params['SA_ZADUCMDY'][idx].value,
-
-            ])
-
-            results.append(pointing)
-
-            # Short circuit if all we're looking for is the first.
-            if result_type == 'first':
-                break
-
-    if not len(results):
-        raise ValueError(
-                'No non-zero quanternion found '
-                'in the DB between MJD {} and {}'.format(obsstart, obsend)
-            )
-
-    if result_type == 'first':
-        return results[0]
-    else:
-        return results
+    return reduced
 
 
 def vector_to_ra_dec(v):
@@ -1147,3 +1189,255 @@ def calc_rotation_matrix(angle, vparity=1):
     pc2_2 = cos(angle)
 
     return [pc1_1, pc1_2, pc2_1, pc2_2]
+
+
+def get_mnemonics(obsstart, obsend, tolerance, engdb_url=None):
+    """Retrieve pointing mnemonics from the engineering database
+
+    Parameters
+    ----------
+    obsstart, obsend: float
+        MJD observation start/end times
+
+    tolerance: int
+        If no telemetry can be found during the observation,
+        the time, in seconds, beyond the observation time to
+        search for telemetry.
+
+    engdb_url: str or None
+        URL of the engineering telemetry database REST interface.
+
+    Returns
+    -------
+    mnemonics: {mnemonic: [value[,...]][,...]}
+        The values for each pointing mnemonic
+
+    Raises
+    ------
+    ValueError
+        Cannot retrieve engineering information
+
+    """
+    try:
+        engdb = ENGDB_Service(base_url=engdb_url)
+    except Exception as exception:
+        raise ValueError(
+            'Cannot open engineering DB connection'
+            '\nException: {}'.format(
+                exception
+            )
+        )
+    logger.info(
+        'Querying engineering DB: {}'.format(engdb.base_url)
+    )
+
+    mnemonics = {
+        'SA_ZATTEST1':  None,
+        'SA_ZATTEST2':  None,
+        'SA_ZATTEST3':  None,
+        'SA_ZATTEST4':  None,
+        'SA_ZRFGS2J11': None,
+        'SA_ZRFGS2J12': None,
+        'SA_ZRFGS2J13': None,
+        'SA_ZRFGS2J21': None,
+        'SA_ZRFGS2J22': None,
+        'SA_ZRFGS2J23': None,
+        'SA_ZRFGS2J31': None,
+        'SA_ZRFGS2J32': None,
+        'SA_ZRFGS2J33': None,
+        'SA_ZADUCMDX':  None,
+        'SA_ZADUCMDY':  None,
+    }
+
+    # Retrieve the mnemonics from the engineering database.
+    # Check for whether the bracket values are used and
+    # within tolerance.
+    for mnemonic in mnemonics:
+        try:
+            mnemonics[mnemonic] = engdb.get_values(
+                mnemonic, obsstart, obsend,
+                time_format='mjd', include_obstime=True,
+                include_bracket_values=True
+            )
+        except Exception as exception:
+            raise ValueError(
+                'Cannot retrive {} from engineering.'
+                '\nFailure was {}'.format(
+                    mnemonic,
+                    exception
+                )
+            )
+
+        # If more than two points exist, throw off the bracket values.
+        # Else, ensure the bracket values are within the allowed time.
+        if len(mnemonics[mnemonic]) > 2:
+            mnemonics[mnemonic] = mnemonics[mnemonic][1:-1]
+        else:
+            logger.warning(
+                'Mnemonic {} has no telemetry within the observation time.'
+                '\nAttempting to use bracket values within {} seconds'.format(
+                    mnemonic, tolerance
+                )
+            )
+            tolerance_mjd = tolerance * SECONDS2MJD
+            allowed_start = obsstart - tolerance_mjd
+            allowed_end = obsend + tolerance_mjd
+            allowed = [
+                value
+                for value in mnemonics[mnemonic]
+                if allowed_start <= value.obstime.mjd <= allowed_end
+            ]
+            if not len(allowed):
+                raise ValueError(
+                    'No telemetry exists for mnemonic {} within {} and {}'.format(
+                        mnemonic,
+                        Time(allowed_start, format='mjd').isot,
+                        Time(allowed_end, format='mjd').isot
+                    )
+                )
+            mnemonics[mnemonic] = allowed
+
+
+    # All mnemonics must have some values.
+    if not all([len(mnemonic) for mnemonic in mnemonics.values()]):
+        raise ValueError('Incomplete set of pointing mnemonics')
+
+    return mnemonics
+
+
+def all_pointings(mnemonics):
+    """V1 of making pointings
+
+    Parameters
+    ==========
+    mnemonics: {mnemonic: [value[,...]][,...]}
+        The values for each pointing mnemonic
+
+    Returns
+    =======
+    pointings: [Pointing[,...]]
+        List of pointings.
+    """
+    pointings = []
+    for idx in range(len(mnemonics['SA_ZATTEST1'])):
+        values = [
+            mnemonics[mnemonic][idx].value
+            for mnemonic in mnemonics
+        ]
+        if any(values):
+            # The tagged obstime will come from the SA_ZATTEST1 mneunonic
+            #pointing.
+            obstime = mnemonics['SA_ZATTEST1'][idx].obstime
+
+            # Fill out the matricies
+            q = np.array([
+                mnemonics['SA_ZATTEST1'][idx].value,
+                mnemonics['SA_ZATTEST2'][idx].value,
+                mnemonics['SA_ZATTEST3'][idx].value,
+                mnemonics['SA_ZATTEST4'][idx].value,
+            ])
+
+            j2fgs_matrix = np.array([
+                mnemonics['SA_ZRFGS2J11'][idx].value,
+                mnemonics['SA_ZRFGS2J12'][idx].value,
+                mnemonics['SA_ZRFGS2J13'][idx].value,
+                mnemonics['SA_ZRFGS2J21'][idx].value,
+                mnemonics['SA_ZRFGS2J22'][idx].value,
+                mnemonics['SA_ZRFGS2J23'][idx].value,
+                mnemonics['SA_ZRFGS2J31'][idx].value,
+                mnemonics['SA_ZRFGS2J32'][idx].value,
+                mnemonics['SA_ZRFGS2J33'][idx].value,
+            ])
+
+            fsmcorr = np.array([
+                mnemonics['SA_ZADUCMDX'][idx].value,
+                mnemonics['SA_ZADUCMDY'][idx].value,
+
+            ])
+            pointing = Pointing(q=q, obstime=obstime, j2fgs_matrix=j2fgs_matrix,
+                                fsmcorr=fsmcorr)
+            pointings.append(pointing)
+
+    if not len(pointings):
+        raise ValueError('No non-zero quanternion found.')
+
+    return pointings
+
+
+def first_pointing(mnemonics):
+    """Return first pointing
+
+    Parameters
+    ==========
+    mnemonics: {mnemonic: [value[,...]][,...]}
+        The values for each pointing mnemonic
+
+    Returns
+    =======
+    pointing: Pointing
+        First pointing.
+
+    """
+    pointings = all_pointings(mnemonics)
+    return pointings[0]
+
+
+def pointing_from_average(mnemonics):
+    """Determine single pointing from average of available pointings
+
+    Parameters
+    ==========
+    mnemonics: {mnemonic: [value[,...]][,...]}
+        The values for each pointing mnemonic
+
+    Returns
+    =======
+    pointing: Pointing
+        Pointing from average.
+
+    """
+    # Get average observation time. This is keyed off the q0 quaternion term, SA_ZATTEST1
+    times = [
+        eng_param.obstime.unix
+        for eng_param in mnemonics['SA_ZATTEST1']
+    ]
+    obstime = Time(np.average(times), format='unix')
+
+    # Get averages for all the mnemonics.
+    mnemonic_averages = {}
+    for mnemonic in mnemonics:
+        values = [
+            eng_param.value
+            for eng_param in mnemonics[mnemonic]
+        ]
+        mnemonic_averages[mnemonic] = np.average(values)
+
+    # Fill out the pointing matrices.
+    q = np.array([
+        mnemonic_averages['SA_ZATTEST1'],
+        mnemonic_averages['SA_ZATTEST2'],
+        mnemonic_averages['SA_ZATTEST3'],
+        mnemonic_averages['SA_ZATTEST4']
+    ])
+
+    j2fgs_matrix = np.array([
+        mnemonic_averages['SA_ZRFGS2J11'],
+        mnemonic_averages['SA_ZRFGS2J12'],
+        mnemonic_averages['SA_ZRFGS2J13'],
+        mnemonic_averages['SA_ZRFGS2J21'],
+        mnemonic_averages['SA_ZRFGS2J22'],
+        mnemonic_averages['SA_ZRFGS2J23'],
+        mnemonic_averages['SA_ZRFGS2J31'],
+        mnemonic_averages['SA_ZRFGS2J32'],
+        mnemonic_averages['SA_ZRFGS2J33']
+    ])
+
+    fsmcorr = np.array([
+        mnemonic_averages['SA_ZADUCMDX'],
+        mnemonic_averages['SA_ZADUCMDY']
+
+    ])
+    pointing = Pointing(obstime=obstime, q=q, j2fgs_matrix=j2fgs_matrix,
+                        fsmcorr=fsmcorr)
+    # That's all folks
+    return pointing

@@ -458,10 +458,16 @@ def find_dispaxis(input_model, slit, spectral_order, extract_params):
             wl_10 = stuff[2]
         dwlx = wl_10 - wl_00
         dwly = wl_01 - wl_00
-        if (np.isnan(dwlx) or np.isnan(dwly) or
+        if (np.isnan(dwlx) or np.isnan(dwly) or dwlx == dwly or
             wl_00 == 0 or wl_01 == 0 or wl_10 == 0):
-                log.warning("wavelength from WCS is NaN or 0 "
-                            "within the bounding box")
+                if dwlx == dwly:
+                    log.warning("One-pixel offset gives dwlx = {}, dwly = {}"
+                                .format(dwlx, dwly))
+                else:
+                    log.warning("wavelength from WCS is NaN or 0 "
+                                "within the bounding box")
+                log.warning("    computing differences over "
+                            "the whole bounding box ...")
                 if input_model.meta.exposure.type in WFSS_EXPTYPES:
                     wl_wcs = np.zeros(shape, dtype=np.float64)
                     log.debug("Starting to compute wavelengths ...")
@@ -2421,6 +2427,13 @@ def interpolate_response(wavelength, relsens, verbose):
     if bad:
         raise ValueError("Found NaNs in RELSENS table.")
 
+    # np.interp requires that wl_relsens be increasing.
+    if wl_relsens[-1] < wl_relsens[0]:
+        if verbose:
+            log.warning("The wavelength column in RELSENS was decreasing.")
+        wl_relsens = wl_relsens[::-1].copy()
+        resp_relsens = resp_relsens[::-1].copy()
+
     # `r_factor` is the response, interpolated at the wavelengths in the
     # science data.  -2048 is a flag value, to check for extrapolation.
     r_factor = np.interp(wavelength, wl_relsens, resp_relsens, -2048., -2048.)
@@ -2931,6 +2944,7 @@ def populate_time_keywords(input_model, output_model):
             row = k + offset
             spec = output_model.spec[n]             # n is incremented below
             spec.int_num = int_num[row]
+            spec.time_scale = "UTC"
             spec.start_utc = start_utc[row]
             spec.mid_utc = mid_utc[row]
             spec.end_utc = end_utc[row]

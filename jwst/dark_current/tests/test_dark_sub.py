@@ -110,11 +110,13 @@ def test_more_sci_frames(make_rampmodel, make_darkmodel):
     data is than in the dark reference file and verify that when the dark is not applied,
     the data is correctly flagged as such'''
 
+
     # size of integration
     nints = 1
     ngroups = 7
     xsize = 200
     ysize = 200
+
 
     # create raw input data for step
     dm_ramp = make_rampmodel(nints, ngroups, ysize, xsize)
@@ -214,15 +216,15 @@ def test_nan(make_rampmodel, make_darkmodel):
         dark.data[0, i] = i * 0.1
 
     # set NaN in dark file
+
     dark.data[0, 5, 100, 100] = np.nan
 
     # apply correction
     outfile = darkcorr(dm_ramp, dark)
 
     # test that the NaN dark reference pixel was set to 0 (nothing subtracted)
-    assert outfile.data[0, 5, 100, 100] == 5.0
 
-    # test that the output dq file is flagged (with what)
+    assert outfile.data[0, 5, 100, 100] == 5.0
 
 
 def test_dq_combine(make_rampmodel, make_darkmodel):
@@ -325,6 +327,7 @@ def test_frame_avg(make_rampmodel, make_darkmodel):
         dm_ramp.data[:, i] = i + 1
 
     # create dark reference file model
+
     refgroups = 20  # This needs to be 20 groups for the calculations to work
     dark = make_darkmodel(refgroups, ysize, xsize)
 
@@ -336,6 +339,7 @@ def test_frame_avg(make_rampmodel, make_darkmodel):
     outfile = darkcorr(dm_ramp, dark)
 
     # dark frames should be averaged in groups of 4 frames
+
     # this will result in average values of 0.15, 0.55, 0.95, and 1.35
     # these values are then subtracted from frame values of 1, 2, 3 and 4
 

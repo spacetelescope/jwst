@@ -18,8 +18,6 @@ from astropy.modeling import models, fitting
 
 __all__ = ['extract1d']
 __taskname__ = 'extract1d'
-__version__ = '0.9.3'
-__vdate__ = '22-December-2015'
 __author__ = 'Mihai Cara'
 
 log = logging.getLogger(__name__)
@@ -321,11 +319,22 @@ def _extract_src_flux(image, x, j, lam, srclim,
         current column.
 
     tarea : float
-        The number of pixels (possibly including a fraction at each
-        endpoint) in the source extraction region for the current column.
+        The sum of the number of pixels in the source extraction region for
+        the current column.  If only a fraction of a pixel is included at
+        an endpoint, that fraction is what would be included in the sum.
+        For example, if the source limits (in `srclim`) are (3, 7), then
+        the extraction region extends from the middle of pixel 3 to the
+        middle of pixel 7, so the pixel areas in the extraction region
+        would be:  0.5, 1.0, 1.0, 1.0, 0.5, resulting in `tarea` = 4.
 
     twht : float
-        Sum of weights.
+        Two different weights are applied to the pixels.  One is the
+        fraction of a pixel that is included in the extraction (this will
+        be 1.0 except possibly at the endpoints); see also `tarea`.  The
+        other weight depends on the `weights` argument.  If `weights` is
+        None, then this weight will be 1.0 for each pixel, and `twht` will
+        be the sum of these values.  If the source limits are (3, 7) as in
+        the example for `tarea`, `twht` would be 5.0.
     """
 
     # extract pixel values along the column that are within
@@ -333,12 +342,8 @@ def _extract_src_flux(image, x, j, lam, srclim,
     y, val, area = _extract_colpix(image, x, j, srclim)
 
     # find indices of "good" (finite) values:
-    """ xxx I suspect this should have been:
-    good = np.where(np.isfinite(val))
-    npts = len(good[0])
-    """
     good = np.isfinite(val)
-    npts = good.shape[0]
+    npts = good.sum()
 
     if npts == 0:
         return (np.nan, 0.0, 0.0, 0.0) # src total flux, bkg, area, total weight
@@ -377,7 +382,6 @@ def _extract_src_flux(image, x, j, lam, srclim,
     total_flux = (val * wht).sum(dtype=np.float64) / mwht
     bkg_flux = bkg.sum(dtype=np.float64)
 
-    # src total flux, bkg total flux, area, total weight
     return (total_flux, bkg_flux, tarea, twht)
 
 
@@ -413,8 +417,9 @@ def _fit_background_model(image, x, j, bkglim, bkg_order):
 
     npts : int
         This is intended to be the number of good values in the background
-        regions.  xxx Currently, however, this is the total number of
-        pixels in the background regions.
+        regions.  If the background limits are at pixel edges, however,
+        `npts` can include a pixel with zero weight; that is, `npts` can be
+        1 larger than one might expect.
     """
 
     # extract pixel values along the column that are within
@@ -422,12 +427,8 @@ def _fit_background_model(image, x, j, bkglim, bkg_order):
     y, val, wht = _extract_colpix(image, x, j, bkglim)
 
     # find indices of "good" (finite) values:
-    """ xxx I suspect this should have been:
-    good = np.where(np.isfinite(val))
-    npts = len(good[0])
-    """
     good = np.isfinite(val)
-    npts = good.shape[0]
+    npts = good.sum()
 
     if npts == 0 or not np.any(good):
         return (models.Polynomial1D(0), 0)

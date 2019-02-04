@@ -41,7 +41,7 @@ They are evaluated by passing the inputs directly, similar
 to the way functions are called. For example,
 
 >>> poly_x = astmodels.Polynomial2D(degree=2, c0_0=.2, c1_0=.11, c2_0=2.3, c0_1=.43, c0_2=.1, c1_1=.5)
->>> poly_x(1, 1)
+>>> poly_x(1, 1)   # doctest: +FLOAT_CMP
     3.639999
 
 Models have their analytical inverse defined if it exists and accessible through the ``inverse`` property.
@@ -50,7 +50,7 @@ An inverse model can also be (re)defined by assigning to the ``inverse`` propert
 >>> rotation = astmodels.Rotation2D(angle=23.4)
 >>> rotation.inverse
     <Rotation2D(angle=-23.4)>
->>> poly_x.inverse = astmodels.Polynomial2D(degree=3, **coeffs)
+>>> poly_x.inverse = astmodels.Polynomial2D(degree=3, **coeffs) # doctest: +SKIP
 
 astropy.modeling also provides the means to combine models in various ways.
 
@@ -68,7 +68,7 @@ sum of the number of inputs of all models.
 as input to the next one, so the number of outputs of one model must be equal to the number
 of inputs to the next one.
 
->>> model = poly_x | shift_x | scale_x
+>>> model = poly_x | shift_x | astmodels.Scale(-2.3)
 >>> model = shift_x & shift_y | poly_x
 
 Two models, ``Mapping`` and ``Identity``, are useful for axes manipulation - dropping
@@ -80,8 +80,8 @@ in ``x`` and ``y``, preceded by a shift in both axes:
 
 >>> poly_y = astmodels.Polynomial2D(degree=2, c0_0=.2, c1_0=1.1, c2_0=.023, c0_1=3, c0_2=.01, c1_1=2.2)
 >>> model = shift_x & shift_y | astmodels.Mapping((0, 1, 0, 1)) | poly_x & poly_y
->>> model(1, 1)
-    (5872.03, 29242.892)
+>>> model(1, 1) # doctest: +FLOAT_CMP
+    (5872.03, 8465.401)
 
 ``Identity`` takes an integer which represents the number of inputs to be passed unchanged.
 This can be useful when one of the inputs does not need more processing. As an example,
@@ -106,10 +106,19 @@ Create the reference file
 The DictortionModel in jwst.datamodels is used as an example of how to create a reference file. Similarly data models should be used to create other types of reference files as this process provides validaiton of the file structure.
 
 >>> from jwst.datamodels import DistortionModel
->>> dist = DistortionModel(model=model)
+>>> dist = DistortionModel(model=model, strict_validation=True)
+>>> dist.meta.description = "New distortion model"
+>>> dist.meta.author = "INS team"
+>>> dist.meta.useafter = "2012/01/21"
+>>> dist.meta.instrument.name = "MIRI"
+>>> dist .meta.instrument.detector = "MIRIMAGE"
+>>> dist.meta.pedigree = "GROUND"
+>>> dist.meta.reftype = "distortion"
+>>> dist.meta.input_units = "pixel"
+>>> dist.meta.output_units = "arcsec"
 >>> dist.validate()
 >>> dist.save("new_distortion.asdf")
-
+'new_distortion.asdf'
 
 Save a transform to an ASDF file
 --------------------------------

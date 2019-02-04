@@ -1,4 +1,7 @@
+:orphan:
+
 .. _filteroffset_reffile:
+
 
 FILTEROFFSET Reference File (MIRI only)
 ---------------------------------------
@@ -18,7 +21,7 @@ Instrument Keywords
 MIRI       INSTRUME, DETECTOR, EXP_TYPE, DATE-OBS, TIME-OBS
 ========== ================================================
 
-.. include:: ../includes/standard_keywords.rst
+.. include:: ../includes/standard_keywords.inc
 
 Reference File Format
 +++++++++++++++++++++
