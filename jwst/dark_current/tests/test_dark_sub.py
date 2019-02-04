@@ -142,7 +142,7 @@ def test_more_sci_frames():
 
     # size of integration
     nints = 1
-    ngroups = 30
+    ngroups = 15
     xsize = 200
     ysize = 200
 
@@ -155,7 +155,7 @@ def test_more_sci_frames():
     for i in range(0, ngroups-1):
         dm_ramp.data[0, i, :, :] = i
 
-    refgroups = 20
+    refgroups = 10
     # create dark reference file model with fewer frames than science data
     dark = make_darkmodel(refgroups, ysize, xsize)
 
@@ -199,7 +199,7 @@ def test_sub_by_frame():
     for i in range(0, ngroups-1):
         dm_ramp.data[0, i, :, :] = i
 
-    refgroups = 20
+    refgroups = 12
     # create dark reference file model with fewer frames than science data
     dark = make_darkmodel(refgroups, ysize, xsize)
 
@@ -239,7 +239,7 @@ def test_nan():
     for i in range(0, ngroups-1):
         dm_ramp.data[0, i, :, :] = i
 
-    refgroups = 15
+    refgroups = 12
     # create dark reference file model with fewer frames than science data
     dark = make_darkmodel(refgroups, ysize, xsize)
 
@@ -278,8 +278,8 @@ def test_dq_combine():
     for i in range(0, ngroups-1):
         dm_ramp.data[0, i, :, :] = i
 
-    refgroups = 10
-    # create dark reference file model with fewer frames than science data
+    refgroups = 8
+    # create dark reference file model with more frames than science data
     dark = make_darkmodel(refgroups, ysize, xsize)
 
     # populate dq flags of sci pixeldq and reference dq
@@ -315,7 +315,7 @@ def test_2_int():
     for i in range(0, ngroups-1):
         dm_ramp.data[:, i, :, :] = i
 
-    refgroups = 15
+    refgroups = 12
     # create dark reference file model with fewer frames than science data
     dark = make_darkmodel(refgroups, ysize, xsize)
 
