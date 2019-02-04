@@ -107,13 +107,16 @@ def test_frame_averaging(setup_nrc_cube, readpatt, ngroups, nframes, groupgap, n
 
 def test_more_sci_frames(make_rampmodel, make_darkmodel):
     '''Check that data is unchanged if there are more frames in the science
-    data is than in the dark reference file'''
+    data is than in the dark reference file and verify that when the dark is not applied,
+    the data is correctly flagged as such'''
+
 
     # size of integration
     nints = 1
     ngroups = 7
-    xsize = 1032
-    ysize = 1024
+    xsize = 200
+    ysize = 200
+
 
     # create raw input data for step
     dm_ramp = make_rampmodel(nints, ngroups, ysize, xsize)
@@ -138,6 +141,12 @@ def test_more_sci_frames(make_rampmodel, make_darkmodel):
     # test that the science data are not changed; input file = output file
     np.testing.assert_array_equal(dm_ramp.data, outfile.data)
 
+    # get dark correction status from header
+    darkstatus = outfile.meta.cal_step.dark_sub
+    print('Dark status', darkstatus)
+
+    assert darkstatus == 'SKIPPED'
+
 
 def test_sub_by_frame(make_rampmodel, make_darkmodel):
     '''Check that if NFRAMES=1 and GROUPGAP=0 for the science data, the dark reference data are
@@ -146,8 +155,8 @@ def test_sub_by_frame(make_rampmodel, make_darkmodel):
     # size of integration
     nints = 1
     ngroups = 10
-    xsize = 1032
-    ysize = 1024
+    xsize = 200
+    ysize = 200
 
     # create raw input data for step
     dm_ramp = make_rampmodel(nints, ngroups, ysize, xsize)
@@ -186,8 +195,8 @@ def test_nan(make_rampmodel, make_darkmodel):
     # size of integration
     nints = 1
     ngroups = 10
-    xsize = 1032
-    ysize = 1024
+    xsize = 200
+    ysize = 200
 
     # create raw input data for step
     dm_ramp = make_rampmodel(nints, ngroups, ysize, xsize)
@@ -207,15 +216,15 @@ def test_nan(make_rampmodel, make_darkmodel):
         dark.data[0, i] = i * 0.1
 
     # set NaN in dark file
-    dark.data[0, 5, 500, 500] = np.nan
+
+    dark.data[0, 5, 100, 100] = np.nan
 
     # apply correction
     outfile = darkcorr(dm_ramp, dark)
 
     # test that the NaN dark reference pixel was set to 0 (nothing subtracted)
-    assert outfile.data[0, 5, 500, 500] == 5.0
 
-    # test that the output dq file is flagged (with what)
+    assert outfile.data[0, 5, 100, 100] == 5.0
 
 
 def test_dq_combine(make_rampmodel, make_darkmodel):
@@ -224,8 +233,8 @@ def test_dq_combine(make_rampmodel, make_darkmodel):
     # size of integration
     nints = 1
     ngroups = 5
-    xsize = 103
-    ysize = 102
+    xsize = 200
+    ysize = 200
 
     # create raw input data for step
     dm_ramp = make_rampmodel(nints, ngroups, ysize, xsize)
@@ -265,8 +274,8 @@ def test_2_int(make_rampmodel, make_darkmodel):
     # size of integration
     nints = 2
     ngroups = 10
-    xsize = 1032
-    ysize = 1024
+    xsize = 200
+    ysize = 200
 
     # create raw input data for step
     dm_ramp = make_rampmodel(nints, ngroups, ysize, xsize)
@@ -298,42 +307,6 @@ def test_2_int(make_rampmodel, make_darkmodel):
     np.testing.assert_array_equal(outfile.data[1], diff_int2)
 
 
-def test_dark_skipped(make_rampmodel, make_darkmodel):
-    '''Verify that when the dark is not applied, the data is correctly flagged as such.'''
-
-    # size of integration
-    nints = 1
-    ngroups = 7
-    xsize = 1032
-    ysize = 1024
-
-    # create raw input data for step
-    dm_ramp = make_rampmodel(nints, ngroups, ysize, xsize)
-    dm_ramp.meta.exposure.nframes = 1
-    dm_ramp.meta.exposure.groupgap = 0
-
-    # populate data array of science cube
-    for i in range(0, ngroups-1):
-        dm_ramp.data[0, i] = i
-
-    refgroups = 5
-    # create dark reference file model with fewer frames than science data
-    dark = make_darkmodel(refgroups, ysize, xsize)
-
-    # populate data array of reference file
-    for i in range(0, refgroups - 1):
-        dark.data[0, i] = i * 0.1
-
-    # apply correction
-    outfile = darkcorr(dm_ramp, dark)
-
-    # get dark correction status from header
-    darkstatus = outfile.meta.cal_step.dark_sub
-    print('Dark status', darkstatus)
-
-    assert darkstatus == 'SKIPPED'
-
-
 def test_frame_avg(make_rampmodel, make_darkmodel):
     '''Check that if NFRAMES>1 or GROUPGAP>0, the frame-averaged dark data are
     subtracted group-by-group from science data groups and the ERR arrays are not modified'''
@@ -354,7 +327,8 @@ def test_frame_avg(make_rampmodel, make_darkmodel):
         dm_ramp.data[:, i] = i + 1
 
     # create dark reference file model
-    refgroups = 20
+
+    refgroups = 20  # This needs to be 20 groups for the calculations to work
     dark = make_darkmodel(refgroups, ysize, xsize)
 
     # populate data array of reference file
@@ -365,7 +339,9 @@ def test_frame_avg(make_rampmodel, make_darkmodel):
     outfile = darkcorr(dm_ramp, dark)
 
     # dark frames should be averaged in groups of 4 frames
-    # this will result in average values of 0.15, 0.55, .095. 1.35
+
+    # this will result in average values of 0.15, 0.55, 0.95, and 1.35
+    # these values are then subtracted from frame values of 1, 2, 3 and 4
 
     assert outfile.data[0, 0, 500, 500] == pytest.approx(0.85)
     assert outfile.data[0, 1, 500, 500] == pytest.approx(1.45)
