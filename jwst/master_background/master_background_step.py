@@ -24,19 +24,20 @@ class MasterBackgroundStep(Step):
 
         Parameters
         ----------
-        input: JWST data model, ModelContainer or association
-            input target data model(s) to which background subtraction is applied
+        input : `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`, `~jwst.datamodels.ModelContainer`, association
+            Input target data model(s) to which master background subtraction is
+            to be applied
 
-        user_background: string or SpecModel
-            Path to user-supplied master background 1D spectrum, or SpecModel
+        user_background: string path or `~jwst.datamodels.MultiSpecModel`
+            User-supplied master background 1D spectrum, path to file or opened
+            datamodel
 
         Returns
         -------
-        result: JWST data model
-            the background-subtracted target data model(s)
+        result: `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`, `~jwst.datamodels.ModelContainer`
+            The background-subtracted target data model(s)
         """
 
-        # Load the input data model
         with datamodels.open(input) as input_data:
 
             # Handle individual NIRSpec FS, NIRSpec MOS
@@ -70,6 +71,8 @@ class MasterBackgroundStep(Step):
             # Save the computed background if requested by user
             if self.save_background:
                 pass
+                # TODO, figure out step suffix, use stpipe tools to generate
+                # the filename from the input filename(s) and/or association.
 
             # Return input as dummy result for now
             result = input_data
