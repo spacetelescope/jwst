@@ -42,6 +42,8 @@ An example Stage 3 product FITS file name is::
 
  jw87600-a3001_t001_niriss_f480m-nrm_amiavg.fits
 
+.. _segmented_files:
+
 Segmented Products
 ^^^^^^^^^^^^^^^^^^
 When the raw data volume for an individual exposure is determined to be large enough to result in

@@ -42,6 +42,16 @@ or :ref:`calwebb_spec2 <calwebb_spec2>` processing. These products contain 3D st
 per-integration images. Each pipeline step will loop over all of the integrations in each
 input.
 
+Many TSO exposures may contain a sufficiently large number of integrations (NINTS) so as to make
+their individual exposure products too large (in terms of file size on disk) to be able to handle
+conveniently. In these cases, the uncalibrated raw data for a given exposure are split into
+multiple "segmented" products, each of which is identified with a segment number
+(see :ref:`segmented products <segmented_files>`). The ``calwebb_tso3`` input ASN file includes
+all "_calints" exposure segments. The :ref:`outlier_detection <outlier_detection_step>` step will
+process a single segment at a time, creating one output "_crfints" product per segment. The
+remaining ``calwebb_tso3`` steps, will process each segment and concatenate the results into a
+single output product, containing the results for all exposures and segments listed in the ASN.
+
 Outputs
 -------
 
