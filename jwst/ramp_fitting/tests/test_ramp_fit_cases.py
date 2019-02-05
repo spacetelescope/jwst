@@ -491,11 +491,11 @@ def create_mod_arrays(ngroups, nints, nrows, ncols, deltatime, gain, readnoise):
     ERR extensions, and create datamodels for the ramp, readnoise, and gain.
     """ 
 
-    gain = np.ones(shape=(nrows, ncols), dtype=np.float64) * gain
-    err = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.float64)
-    data = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.float64)
+    gain = np.ones(shape=(nrows, ncols), dtype=np.float32) * gain
+    err = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.float32)
+    data = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.float32)
     pixdq = np.zeros(shape=(nrows, ncols), dtype=np.int32)
-    read_noise = np.full((nrows, ncols), readnoise, dtype=np.float64)
+    read_noise = np.full((nrows, ncols), readnoise, dtype=np.float32)
     gdq = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.uint8)
 
     # Create and populate ramp model
