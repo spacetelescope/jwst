@@ -29,9 +29,10 @@ Note that overlapping sources are detected as single sources.
 Separating those sources requires a deblending procedure, such as a
 multi-thresholding technique used by `SExtractor
 <http://www.astromatic.net/software/sextractor>`_.  Here we use the
-Photutils deblender, which is an algorithm that deblends
-sources using a combination of multi-thresholding and `watershed
-segmentation
+`Photutils deblender
+<https://photutils.readthedocs.io/en/latest/segmentation.html#source-deblending>`_,
+which is an algorithm that deblends sources using a combination of
+multi-thresholding and `watershed segmentation
 <https://en.wikipedia.org/wiki/Watershed_(image_processing)>`_.  In
 order to deblend sources, they must be separated enough such that
 there is a saddle between them.
