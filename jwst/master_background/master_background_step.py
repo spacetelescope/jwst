@@ -67,8 +67,17 @@ class MasterBackgroundStep(Step):
             else:
                 pass
 
+            # Save the computed background if requested by user
+            if self.save_background:
+                pass
+
             # Return input as dummy result for now
             result = input_data
-            result.meta.cal_step.master_back_sub = 'COMPLETE'
+            
+            try:
+                result.meta.cal_step.master_back_sub = 'COMPLETE'
+            except AttributeError:
+                for model in result:
+                    model.meta.cal_step.master_back_sub = 'COMPLETE'
 
         return result
