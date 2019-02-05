@@ -8,7 +8,7 @@ Source Detection
 ^^^^^^^^^^^^^^^^
 
 Sources are detected using `image segmentation
-<http://en.wikipedia.org/wiki/Image_segmentation>`_, which is a
+<https://en.wikipedia.org/wiki/Image_segmentation>`_, which is a
 process of assigning a label to every pixel in an image such that
 pixels with the same label are part of the same source.  The
 segmentation procedure used is from `Photutils source extraction
@@ -28,7 +28,7 @@ Source Deblending
 Note that overlapping sources are detected as single sources.
 Separating those sources requires a deblending procedure, such as a
 multi-thresholding technique used by `SExtractor
-<http://www.astromatic.net/software/sextractor>`_.  Here we use the
+<https://www.astromatic.net/software/sextractor>`_.  Here we use the
 `Photutils deblender
 <https://photutils.readthedocs.io/en/latest/segmentation.html#source-deblending>`_,
 which is an algorithm that deblends sources using a combination of
@@ -44,7 +44,7 @@ Source Photometry and Properties
 After detecting sources using image segmentation, we can measure their
 photometry, centroids, and morphological properties.  Here we use the
 functions in `Photutils
-<http://photutils.readthedocs.org/en/latest/segmentation.html>`_.  The
+<https://photutils.readthedocs.org/en/latest/segmentation.html>`_.  The
 properties that are currently calculated for each source include
 source centroids (both in pixel and sky coordinates), fluxes (and
 errors), AB magnitudes (and errors), area, semimajor and semiminor
