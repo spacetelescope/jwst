@@ -159,7 +159,6 @@ class IFUCubeData():
     def define_cubename(self):
         """ Define the base output name
         """
-#        print ('ifu_cube:define_cubename basename ',self.output_name_base)
         if self.pipeline == 2:
             newname = self.output_name_base + '_s3d.fits'
         else:
@@ -872,13 +871,13 @@ class IFUCubeData():
         if self.weight_power == 0:
             self.weight_power = weight_power
 
-        print('spatial size', self.spatial_size)
-        print('spectral size', self.spectral_size)
-        print('spatial roi', self.rois)
-        print('wave min and max', self.wavemin, self.wavemax)
-        print('linear wavelength', self.linear_wavelength)
-        print('roiw', self.roiw)
-        print('output_type',self.output_type)
+#        print('spatial size', self.spatial_size)
+#        print('spectral size', self.spectral_size)
+#        print('spatial roi', self.rois)
+#        print('wave min and max', self.wavemin, self.wavemax)
+#        print('linear wavelength', self.linear_wavelength)
+#        print('roiw', self.roiw)
+#        print('output_type',self.output_type)
 
 # ******************************************************************************
 
