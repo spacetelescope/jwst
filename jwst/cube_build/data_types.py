@@ -100,7 +100,7 @@ class DataTypes():
                 self.filenames.append(model.meta.filename)
 
         else:
-            raise TypeError
+            raise TypeError("Failed to process file type {}".format(type(input_try)))
 
 # if the user has set the output name - strip out *.fits
 # later suffixes will be added to this name to designate the
