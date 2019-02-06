@@ -139,6 +139,7 @@ _calculated_suffixes = set([
     'guidercds',
     'firstframe',
     'masterbackgroundstep',
+    'master_background',
     'skymatchstep',
     'white_light',
     'persistencestep',

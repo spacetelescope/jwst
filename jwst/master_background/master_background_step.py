@@ -11,16 +11,14 @@ class MasterBackgroundStep(Step):
     """
 
     spec = """
-        user_background = str(default=None) # Path to user-supplied master background
+        user_background = string(default=None) # Path to user-supplied master background
         save_background = boolean(default=False) # Save computed master background
     """
 
 
     def process(self, input):
-
         """
-        Compute a master background from N > 1 dedicated background exposures
-        and subtract it from the target science exposure(s)
+        Compute and subtract a master background spectrum
 
         Parameters
         ----------
@@ -28,9 +26,12 @@ class MasterBackgroundStep(Step):
             Input target data model(s) to which master background subtraction is
             to be applied
 
-        user_background: string path or `~jwst.datamodels.MultiSpecModel`
-            User-supplied master background 1D spectrum, path to file or opened
-            datamodel
+        user_background : None, string, or `~jwst.datamodels.MultiSpecModel`
+            Optional user-supplied master background 1D spectrum, path to file
+            or opened datamodel
+
+        save_background : bool, optional
+            Save master background.
 
         Returns
         -------
@@ -59,8 +60,16 @@ class MasterBackgroundStep(Step):
             else:
                 result = input_data
                 self.log.warning(
-                    "Input %s cannot be handled.  Doing nothing.", input
+                    "Input %s of type %s cannot be handled.  Step skipped.",
+                    input, type(input)
                     )
+                try:
+                    result.meta.cal_step.master_back_sub = 'SKIPPED'
+                except AttributeError:
+                    for model in result:
+                        model.meta.cal_step.master_back_sub = 'SKIPPED'
+
+                return result
 
             # Check if user has supplied a master background spectrum.
             if self.user_background is None:
@@ -69,10 +78,11 @@ class MasterBackgroundStep(Step):
                 pass
 
             # Save the computed background if requested by user
-            if self.save_background:
+            if self.save_background and self.user_background is None:
                 pass
                 # TODO, figure out step suffix, use stpipe tools to generate
                 # the filename from the input filename(s) and/or association.
+                # Notice this is a custom `output_file` type in the spec above
 
             # Return input as dummy result for now
             result = input_data
