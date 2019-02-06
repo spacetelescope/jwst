@@ -9,6 +9,6 @@ in each pixel.
 Both are necessary for proper computation of noise estimates within the
 ``jump`` step.
 
-.. include:: ../references_general/gain_reffile.rst
+:ref: `GAIN <../references_general/gain_reffile.rst>`
 
-.. include:: ../references_general/readnoise_reffile.rst
+:ref: `READNOISE <../references_general/readnoise_reffile.rst>`

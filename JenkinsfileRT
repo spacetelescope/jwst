@@ -20,6 +20,7 @@ def PYTEST = "pytest \
               -r s \
               -v \
               --bigdata \
+              --slow \
               --basetemp=${PYTEST_BASETEMP} \
               --junit-xml=results.xml"
 
@@ -45,7 +46,6 @@ bc.conda_packages = ['asdf',
                      'jsonschema',
                      'jplephem',
                      'matplotlib',
-                     'namedlist',
                      'numpy',
                      'photutils',
                      'python=3.6',

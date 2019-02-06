@@ -68,4 +68,4 @@ Reference Files
 ---------------
 The ``ami_analyze`` step uses a THROUGHPUT reference file.
 
-.. include:: ../references_general/throughput_reffile.rst
+.. include:: ../references_general/throughput_reffile.inc

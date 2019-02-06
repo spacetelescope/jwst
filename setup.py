@@ -37,6 +37,16 @@ try:
 
         description = 'Build Sphinx documentation'
 
+        user_options = BuildDoc.user_options[:]
+
+        user_options.append(
+            ('keep-going', 'k',
+             'Parses the sphinx output and sets the return code to 1 if there '
+             'are any warnings. Note that this will cause the sphinx log to '
+             'only update when it completes, rather than continuously as is '
+             'normally the case.'))
+
+
         def initialize_options(self):
             BuildDoc.initialize_options(self)
 
@@ -47,7 +57,9 @@ try:
             build_cmd = self.reinitialize_command('build_ext')
             build_cmd.inplace = 1
             self.run_command('build_ext')
-            build_main(['-b', 'html', './docs', './docs/_build/html'])
+            retcode = build_main(['-W', '--keep-going', '-b', 'html', './docs', './docs/_build/html'])
+            if retcode != 0:
+                sys.exit(retcode)
 
 except ImportError:
     class BuildSphinx(Command):
@@ -82,15 +94,16 @@ DOCS_REQUIRE = [
     'matplotlib',
     'sphinx',
     'sphinx-automodapi',
-    'sphinxcontrib-programoutput',
     'sphinx-rtd-theme',
-    'stsci-rtd-theme'
+    'stsci-rtd-theme',
+    'sphinx-astropy',
 ]
 TESTS_REQUIRE = [
     'ci-watson',
     'pytest',
     'pytest-doctestplus',
-    'requests_mock'
+    'requests_mock',
+    'pytest-astropy',
 ]
 
 def get_transforms_data():
@@ -191,24 +204,21 @@ setup(
                   define_macros=[('NUMPY', '1')]),
     ],
     install_requires=[
-        'asdf>=2.1',
+        'asdf>=2.3',
         'astropy>=3.1',
         'crds>=7.2.7',
         'drizzle>=1.12',
         'gwcs>=0.9',
         'jsonschema>=2.3,<=2.6',
-        'namedlist>=1.7',
         'numpy>=1.13',
-        'requests_mock',
+        'photutils>=0.4',
         'scipy>=1.0',
         'spherical-geometry>=1.2',
-        'stsci.tools>=3.4',
         'stsci.image>=2.3',
         'stsci.imagestats>=1.4',
         'stsci.stimage>=0.2',
-        'photutils>=0.4',
-        'pytest',
-        'verhawk>=0.0',
+        'stsci.tools>=3.4',
+        'verhawk',
     ],
     extras_require={
         'docs': DOCS_REQUIRE,

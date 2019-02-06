@@ -157,9 +157,6 @@ def lrs(input_model, reference_files):
     with DistortionModel(reference_files['distortion']) as dist:
         distortion = dist.model
 
-    if subarray2full is not None:
-        distortion = subarray2full | distortion
-
     # Incorporate the small rotation
     angle = np.arctan(0.00421924)
     rotation = models.Rotation2D(angle)
@@ -177,15 +174,19 @@ def lrs(input_model, reference_files):
             zero_point = ref[1].header['imx'], ref[1].header['imy']
         elif input_model.meta.exposure.type.lower() == 'mir_lrs-slitless':
             zero_point = ref[1].header['imxsltl'], ref[1].header['imysltl']
-            #zero_point = [35, 442]  # [35, 763] # account for subarray
 
     # Create the bounding_box
     x0 = lrsdata[:, 3]
     y0 = lrsdata[:, 4]
     x1 = lrsdata[:, 5]
 
-    bb = ((x0.min() - 0.5 + zero_point[0], x1.max() + 0.5 + zero_point[0]),
-          (y0.min() - 0.5 + zero_point[1], y0.max() + 0.5 + zero_point[1]))
+    subarray_xstart = input_model.meta.subarray.xstart - 1
+    subarray_ystart = input_model.meta.subarray.ystart - 1
+
+    # The bounding box is computed from the data in the wavelength solution
+    # and corrected for subarray.
+    bb = ((x0.min() - 0.5 + zero_point[0] - subarray_xstart, x1.max() + 0.5 + zero_point[0] - subarray_xstart),
+          (y0.min() - 0.5 + zero_point[1] - subarray_ystart, y0.max() + 0.5 + zero_point[1] - subarray_ystart))
 
     # Compute the v2v3 to sky.
     tel2sky = pointing.v23tosky(input_model)
@@ -214,6 +215,11 @@ def lrs(input_model, reference_files):
             log.info("Applied Barycentric velocity correction : {}".format(velocity_corr[1].amplitude.value))
 
     det_to_v2v3 = models.Mapping((0, 1, 0, 1)) | spatial_forward & lrs_wav_model
+
+    # Correction for subarray is done here so that it applies to the input coordinates
+    # to the spatial as well as the spectral transform
+    if subarray2full is not None:
+        det_to_v2v3 = subarray2full | det_to_v2v3
     det_to_v2v3.bounding_box = bb[::-1]
     v23_to_world = tel2sky & models.Identity(1)
 

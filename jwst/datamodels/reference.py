@@ -48,9 +48,9 @@ class ReferenceFileModel(DataModel):
 
 class ReferenceImageModel(ReferenceFileModel):
     """
-    A data model for 2D reference images
+    A data model for 2D reference images.
 
-Reference image data model
+    Reference image data model.
 
     Parameters
     __________

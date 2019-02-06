@@ -2,6 +2,7 @@
 #
 # utils.py: utility functions
 import logging
+import warnings
 import numpy as np
 
 from .. import datamodels
@@ -278,8 +279,12 @@ class OptRes:
         self.var_p_seg[self.var_p_seg > 0.4 * LARGE_VARIANCE ] = 0.
         self.var_r_seg[self.var_r_seg > 0.4 * LARGE_VARIANCE ] = 0.
 
+        # Suppress, then re-enable, arithmetic warnings
+        warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
+        warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
         # Tiny 'weights' values correspond to non-existent segments, so set to 0.
         self.weights[1./self.weights > 0.4 * LARGE_VARIANCE ] = 0.
+        warnings.resetwarnings()
 
         rfo_model = \
         datamodels.RampFitOutputModel(\
@@ -576,7 +581,13 @@ def calc_slope_vars(rn_sect, gain_sect, gdq_sect, group_time, max_seg):
     #   and ngroups is the number of groups in the segment.
     #   Here the denominator of this quantity will be computed, which will be
     #   later multiplied by the estimated median slope.
+
+    # Suppress, then re-enable, harmless arithmetic warnings, as NaN will be 
+    #   checked for and handled later
+    warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
+    warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
     den_p3 = 1./(group_time * gain_1d.reshape(imshape) * segs_beg_3_m1 )
+    warnings.resetwarnings()
 
     # For a segment, the variance due to readnoise noise
     # = 12 * readnoise**2 /(ngroups_seg**3. - ngroups_seg)/( tgroup **2.)
@@ -594,8 +605,14 @@ def calc_slope_vars(rn_sect, gain_sect, gdq_sect, group_time, max_seg):
     #   longer segments, this value is overwritten below.
     den_r3 = num_r3.copy() * 0. + 1./6
     wh_seg_pos = np.where (segs_beg_3 > 1)
+    
+    # Suppress, then, re-enable harmless arithmetic warnings, as NaN will be 
+    #   checked for and handled later
+    warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
+    warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
     den_r3[ wh_seg_pos ] = 1./(segs_beg_3[ wh_seg_pos ] **3. -
                                segs_beg_3[ wh_seg_pos ]) # overwrite where segs>1
+    warnings.resetwarnings()
 
     return ( den_r3, den_p3, num_r3, segs_beg_3 )
 
@@ -690,6 +707,10 @@ def output_integ(model, slope_int, dq_int, effintim, var_p3, var_r3, var_both3,
     cubemod : Data Model object
 
     """
+    # Suppress harmless arithmetic warnings for now
+    warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
+    warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
+
     var_p3[ var_p3 > 0.4 * LARGE_VARIANCE ] = 0.
     var_r3[ var_r3 > 0.4 * LARGE_VARIANCE ] = 0.
     var_both3[ var_both3 > 0.4 * LARGE_VARIANCE ] = 0.
@@ -701,6 +722,9 @@ def output_integ(model, slope_int, dq_int, effintim, var_p3, var_r3, var_both3,
     cubemod.var_poisson = var_p3
     cubemod.var_rnoise = var_r3
     cubemod.int_times = int_times
+
+    # Reset the warnings filter to its original state
+    warnings.resetwarnings()
 
     cubemod.update(model) # keys from input needed for photom step
 
