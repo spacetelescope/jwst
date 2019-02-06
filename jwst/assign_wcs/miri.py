@@ -1,4 +1,3 @@
-# Nadia
 import os.path
 import logging
 import numpy as np
