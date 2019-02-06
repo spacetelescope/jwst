@@ -159,7 +159,6 @@ class IFUCubeData():
     def define_cubename(self):
         """ Define the base output name
         """
-#        print ('ifu_cube:define_cubename basename ',self.output_name_base)
         if self.pipeline == 2:
             newname = self.output_name_base + '_s3d.fits'
         else:
@@ -801,11 +800,19 @@ class IFUCubeData():
 
 # now check spectral step
         all_same_spectral = np.all(spectralsize == spectralsize[0])
-        if all_same_spectral:
+
+# check if scalew has been set - if yes then linear scale
+        if self.scalew != 0:
+            self.spectral_size = self.scalew
+            self.linear_wavelength = True
+            wave_roi = np.amin(roiw)
+            weight_power = np.amin(power)
+            self.soft_rad = np.amin(softrad)            
+        elif all_same_spectral:
             self.spectral_size = spectralsize[0]
             wave_roi = roiw[0]
-            self.soft_rad = softrad[0]
             weight_power = power[0]
+            self.soft_rad = softrad[0]
         else:
             self.linear_wavelength = False
             if self.instrument == 'MIRI':
@@ -840,9 +847,13 @@ class IFUCubeData():
 
             self.roiw_table = table_wroi[imin:imax]
             self.rois_table = table_sroi[imin:imax]
+            if self.num_files < 4: 
+                self.rois_table = [i*1.5 for i in self.rois_table]
+
             self.softrad_table = table_softrad[imin:imax]
             self.weight_power_table = table_power[imin:imax]
             self.wavelength_table = table_wavelength[imin:imax]
+            
 
         # check if the user has set the cube parameters to use
         if self.rois == 0:
@@ -853,9 +864,7 @@ class IFUCubeData():
                      'default value set for 4 dithers %f', self.rois)
         if self.scale1 != 0:
             self.spatial_size = self.scale1
-        if self.scalew != 0:
-            self.spectral_size = self.scalew
-            self.linear_wavelength = True
+
             # set wave_roi, weight_power, soft_rad to same values if they are in  list
         if self.roiw == 0:
             self.roiw = wave_roi
@@ -868,9 +877,8 @@ class IFUCubeData():
 #        print('wave min and max', self.wavemin, self.wavemax)
 #        print('linear wavelength', self.linear_wavelength)
 #        print('roiw', self.roiw)
+#        print('output_type',self.output_type)
 
-#        if self.interpolation == 'pointcloud':
-#            log.info('Region of interest spatial, wavelength  %f %f', self.rois, self.roiw)
 # ******************************************************************************
 
     def setup_ifucube_wcs(self):
