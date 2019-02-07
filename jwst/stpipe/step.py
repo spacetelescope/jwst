@@ -270,7 +270,7 @@ class Step():
 
         config_file : str path, optional
             The path to the config file that this step was initialized
-            with.  Use to determine relative path names.
+            with.  Use to determine relative path names of other config files.
 
         **kws : dict
             Additional parameters to set.  These will be set as member
@@ -310,7 +310,7 @@ class Step():
         # Log the fact that we have been init-ed.
         self.log.info('{0} instance created.'.format(self.__class__.__name__))
 
-        # Store the config file path so filenames can be resolved
+        # Store the config file path so config filenames can be resolved
         # against it.
         self.config_file = config_file
 
