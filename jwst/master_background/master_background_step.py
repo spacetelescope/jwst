@@ -86,10 +86,10 @@ class MasterBackgroundStep(Step):
 
                 # Record name of user-supplied master background spectrum
                 try:
-                    result.meta.background.master_background = basename(self.user_background)
-                except AttributeError:
                     for model in result:
-                        model.meta.background.master_background = basename(self.user_background)
+                        model.meta.master_background = basename(self.user_background)
+                except AttributeError:
+                    result.meta.master_background = basename(self.user_background)
 
             # Save the computed background if requested by user
             if self.save_background and self.user_background is None:
