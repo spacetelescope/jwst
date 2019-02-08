@@ -1,0 +1,74 @@
+import numpy as np
+
+from .. import datamodels
+
+def create_background(m_bkg_spec, wavelength, flux):
+    """Create a 1-D spectrum table as a MultiSpecModel.
+
+    This is the syntax for accessing the data in the columns:
+    wavelength = output_model.spec_table[0]['wavelength'])
+    background = output_model.spec_table[0]['flux'])
+
+    Parameters
+    ----------
+    m_bkg_spec : string
+        The name of the file to create.
+
+    wavelength : 1-D ndarray
+        Array of wavelengths, in nanometers.
+
+    flux : 1-D ndarray
+        Array of background fluxes.
+
+    Returns
+    -------
+    output_model : datamodels.MultiSpecModel, or None
+        A data model containing the 1-D background spectrum.  This can be
+        written to disk by calling:
+
+        output_model.save(m_bkg_spec)
+    """
+
+    wl_shape = wavelength.shape
+    flux_shape = flux.shape
+    bad = False
+    if len(wl_shape) > 1:
+        bad = True
+        print("ERROR:  The wavelength array has shape {}; expected "
+              "a 1-D array".format(wl_shape))
+    if len(flux_shape) > 1:
+        bad = True
+        print("ERROR:  The background flux array has shape {}; expected "
+              "a 1-D array".format(flux_shape))
+    if bad:
+        return None
+
+    if wl_shape[0] != flux_shape[0]:
+        print("ERROR:  wavelength array has length {},".format(wl_shape[0]))
+        print("but background flux array has length {}.".format(flux_shape[0]))
+        print("The arrays must be the same size.")
+        return None
+
+    # Create arrays for columns that we won't need.
+    dummy = np.zeros(wl_shape[0], dtype=np.float64)
+    dq = np.zeros(wl_shape[0], dtype=np.int32)
+
+    output_model = datamodels.MultiSpecModel()
+
+    # This is temporary, just to give us spec.spec_table.dtype
+    spec = datamodels.SpecModel()
+
+    # xxx Include one more argument at the end, after column NPIXELS has
+    # xxx been added to the x1d table.  The new argument should be float64
+    # xxx and with values of 1 (i.e. not dummy).
+    otab = np.array(list(zip(wavelength, flux,
+                             dummy, dq, dummy, dummy, dummy, dummy)),
+                    dtype=spec.spec_table.dtype)
+
+    # We're done with the temporary one.
+    spec.close()
+
+    spec = datamodels.SpecModel(spec_table=otab)
+    output_model.spec.append(spec)
+
+    return output_model
