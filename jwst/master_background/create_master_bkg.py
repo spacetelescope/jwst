@@ -2,18 +2,15 @@ import numpy as np
 
 from .. import datamodels
 
-def create_background(m_bkg_spec, wavelength, flux):
+def create_background(wavelength, flux):
     """Create a 1-D spectrum table as a MultiSpecModel.
 
     This is the syntax for accessing the data in the columns:
-    wavelength = output_model.spec_table[0]['wavelength'])
-    background = output_model.spec_table[0]['flux'])
+    wavelength = output_model.spec[0].spec_table['wavelength']
+    background = output_model.spec[0].spec_table['flux']
 
     Parameters
     ----------
-    m_bkg_spec : string
-        The name of the file to create.
-
     wavelength : 1-D ndarray
         Array of wavelengths, in nanometers.
 
@@ -26,7 +23,7 @@ def create_background(m_bkg_spec, wavelength, flux):
         A data model containing the 1-D background spectrum.  This can be
         written to disk by calling:
 
-        output_model.save(m_bkg_spec)
+        output_model.save(<filename>)
     """
 
     wl_shape = wavelength.shape
