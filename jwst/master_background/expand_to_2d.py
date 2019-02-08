@@ -1,9 +1,13 @@
+import logging
 import math
 
 import numpy as np
 
 from .. import datamodels
 from .. assign_wcs import nirspec               # for NIRSpec IFU data
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 def expand_to_2d(input, m_bkg_spec):
     """Expand a 1-D background to 2-D.
@@ -26,7 +30,7 @@ def expand_to_2d(input, m_bkg_spec):
 
     with datamodels.open(m_bkg_spec) as bkg:
         if len(bkg.spec) > 1:
-            print("Warning:  The input 1-D spectrum contains multiple spectra")
+            log.warning("The input 1-D spectrum contains multiple spectra")
         tab_wavelength = bkg.spec[0].spec_table['wavelength'].copy()
         try:
             tab_npixels = bkg.spec[0].spec_table['npixels'].copy()
@@ -113,7 +117,7 @@ def create_bkg(input, tab_wavelength, tab_background):
 
     # Handle MIRI MRS and NIRSpec IFU
     elif isinstance(input, datamodels.IFUImageModel):
-        background = bkg_for_IFUimage(input, tab_wavelength, tab_background)
+        background = bkg_for_ifu_image(input, tab_wavelength, tab_background)
 
     else:
         # Shouldn't get here.
@@ -208,7 +212,7 @@ def bkg_for_image(input, tab_wavelength, tab_background):
     return background
 
 
-def bkg_for_IFUimage(input, tab_wavelength, tab_background):
+def bkg_for_ifu_image(input, tab_wavelength, tab_background):
     """Create a 2-D background for an IFUImageModel
 
     Parameters
@@ -233,7 +237,7 @@ def bkg_for_IFUimage(input, tab_wavelength, tab_background):
     background = input.copy()
     background.data[:, :] = 0.
 
-    if input.meta.instrument.name == "NIRSPEC":
+    if input.meta.instrument.name.upper() == "NIRSPEC":
         list_of_wcs = nirspec.nrs_ifu_wcs(input)
         for ifu_wcs in list_of_wcs:
 
@@ -264,7 +268,7 @@ def bkg_for_IFUimage(input, tab_wavelength, tab_background):
                                  left=0., right=0.)
             background.data[ystop:ystart, xstop:xstart] = bkg_flux.copy()
 
-    elif input.meta.instrument.name == "MIRI":
+    elif input.meta.instrument.name.upper() == "MIRI":
         shape = input.data.shape
         grid = np.indices(shape, dtype=np.float64)
         wl_array = ifu_wcs(grid[1], grid[0])[2]
