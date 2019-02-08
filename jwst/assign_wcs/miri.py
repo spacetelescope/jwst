@@ -75,7 +75,7 @@ def imaging(input_model, reference_files):
         distortion = subarray2full | distortion
         distortion.bounding_box = bounding_box_from_subarray(input_model)
     else:
-        # TODO: remove setting the bounding box when it is set in the new ref file.
+        # TODO: remove setting the bounding box if it is set in the new ref file.
         try:
             bb = distortion.bounding_box
         except NotImplementedError:
@@ -252,9 +252,7 @@ def lrs_distortion(input_model, reference_files):
     # Find the ROW of the zero point
     row_zero_point = zero_point[1]
     # Make a vector of x,y locations for every pixel in the reference row
-    # (make sure to include a couple of pixels beyond the nominal shape too, so that we don't have
-    # undefined regionsa after the slight rotation gets applied)
-    yrow, xrow = np.mgrid[row_zero_point:row_zero_point + 1, -2:input_model.data.shape[1]+2]
+    yrow, xrow = np.mgrid[row_zero_point:row_zero_point + 1, 0:input_model.data.shape[1]]
     # And compute the v2,v3 coordinates of pixels in this reference row
     v2v3refrow = np.array(subarray_dist(xrow, yrow))[:, 0, :]
 
@@ -269,7 +267,7 @@ def lrs_distortion(input_model, reference_files):
                               bounds_error=False, fill_value=np.nan)
     v3_t2d = models.Tabular2D(lookup_table=v3_full, name='v3table',
                               bounds_error=False, fill_value=np.nan)
-
+    
     # Now deal with the fact that the spectral trace isn't perfectly up and down along detector.
     # This information is contained in the xcenter/ycenter values in the CDP table, but we'll handle it
     # as a simple rotation using a linear fit to this relation provided by the CDP.
