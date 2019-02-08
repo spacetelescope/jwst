@@ -30,8 +30,8 @@ wavelength space to form the final MSB spectrum, once that's been decided.]
 
 Subtracting the master background
 ---------------------------------
-The 1-D master background spectrum is projected into the 2-D space of each source data instance
-contained in the inputs and subtracted from it. The source data instances could be, for example, a set
+The 1-D master background spectrum is interpolated by wavelength at each pixel of a 2-D source
+spectrum and subtracted from it. The source data instances can be, for example, a set
 of NIRSpec or MIRI IFU exposures, a set of NIRSpec MOS or fixed-slit 2-D extractions, or a set of
 nodded MIRI LRS fixed-slit exposures. The subtraction process performs a loop over all input
 source data instances and for each one it does the following:
