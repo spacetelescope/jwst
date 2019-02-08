@@ -301,7 +301,7 @@ def get_wavelengths(model):
     else:
         wl_array = None
     if (wl_array is None or len(wl_array) == 0 or
-        wl_array.min() == 0. and wl_array.max() == 0.):
+        np.nanmin(wl_array) == 0. and np.nanmax(wl_array) == 0.):
             got_wavelength = False
             wl_array = None
 
