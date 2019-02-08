@@ -68,11 +68,7 @@ class MasterBackgroundStep(Step):
                     "Input %s of type %s cannot be handled.  Step skipped.",
                     input, type(input)
                     )
-                try:
-                    result.meta.cal_step.master_back_sub = 'SKIPPED'
-                except AttributeError:
-                    for model in result:
-                        model.meta.cal_step.master_back_sub = 'SKIPPED'
+                self.record_step_status(result, 'master_back_sub', success=False)
 
                 return result
 
@@ -85,10 +81,10 @@ class MasterBackgroundStep(Step):
                 result = input_data
 
                 # Record name of user-supplied master background spectrum
-                try:
+                if isinstance(result, datamodels.ModelContainer):
                     for model in result:
                         model.meta.master_background = basename(self.user_background)
-                except AttributeError:
+                else:
                     result.meta.master_background = basename(self.user_background)
 
             # Save the computed background if requested by user
@@ -96,10 +92,20 @@ class MasterBackgroundStep(Step):
                 # self.save_model(background, suffix='masterbg', asn_id=asn_id)
                 pass
             
-            try:
-                result.meta.cal_step.master_back_sub = 'COMPLETE'
-            except AttributeError:
-                for model in result:
-                    model.meta.cal_step.master_back_sub = 'COMPLETE'
+            self.record_step_status(result, 'master_back_sub')
 
         return result
+
+
+    def record_step_status(self, result, cal_step, success=True):
+        """Record whether or not a step completed in meta.cal_step"""
+        if success:
+            status = 'COMPLETE'
+        else:
+            status = 'SKIPPED'
+
+        if isinstance(result, datamodels.ModelContainer):
+            for model in result:
+                model.meta.cal_step._instance[cal_step] = status
+        else:
+            result.meta.cal_step._instance[cal_step] = status
