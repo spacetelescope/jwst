@@ -31,7 +31,7 @@ def expand_to_2d(input, m_bkg_spec):
         try:
             tab_npixels = bkg.spec[0].spec_table['npixels'].copy()
         except KeyError:
-            tab_npixels = np.ones_like(wavelength)
+            tab_npixels = np.ones_like(tab_wavelength)
         tab_background = bkg.spec[0].spec_table['flux'] / tab_npixels
 
     # We're going to use np.interp, so tab_wavelength must be strictly
