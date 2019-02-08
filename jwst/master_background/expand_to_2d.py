@@ -3,6 +3,8 @@ import math
 
 import numpy as np
 
+from gwcs.utils import _toindex
+from gwcs.wcstools import grid_from_bounding_box
 from .. import datamodels
 from .. assign_wcs import nirspec               # for NIRSpec IFU data
 
@@ -14,16 +16,16 @@ def expand_to_2d(input, m_bkg_spec):
 
     Parameters
     ----------
-    input : JWST data model
+    input : `~jwst.datamodels.DataModel`
         The input science data.
 
-    m_bkg_spec : string or JWST data model
+    m_bkg_spec : str or `~jwst.datamodels.DataModel`
         Either the name of a file containing a 1-D background spectrum,
         or a data model containing such a spectrum.
 
     Returns
     -------
-    background : JWST data model
+    background : `~jwst.datamodels.DataModel`
         A copy of `input` but with the data replaced by the background,
         "expanded" from 1-D to 2-D.
     """
@@ -60,7 +62,7 @@ def bkg_for_container(input, tab_wavelength, tab_background):
 
     Parameters
     ----------
-    input : JWST association or ModelContainer
+    input : JWST association or `~jwst.datamodels.ModelContainer`
         The input science data.
 
     tab_wavelength : 1-D ndarray
@@ -72,7 +74,7 @@ def bkg_for_container(input, tab_wavelength, tab_background):
 
     Returns
     -------
-    background : JWST ModelContainer
+    background : `~jwst.datamodels.ModelContainer`
         A copy of `input` but with the data replaced by the background,
         "expanded" from 1-D to 2-D.
     """
@@ -90,7 +92,7 @@ def create_bkg(input, tab_wavelength, tab_background):
 
     Parameters
     ----------
-    input : JWST data model
+    input : `~jwst.datamodels.DataModel`
         The input science data.
 
     tab_wavelength : 1-D ndarray
@@ -102,7 +104,7 @@ def create_bkg(input, tab_wavelength, tab_background):
 
     Returns
     -------
-    background : JWST data model
+    background : `~jwst.datamodels.DataModel`
         A copy of `input` but with the data replaced by the background,
         "expanded" from 1-D to 2-D.
     """
@@ -132,7 +134,7 @@ def bkg_for_multislit(input, tab_wavelength, tab_background):
 
     Parameters
     ----------
-    input : JWST MultiSlitModel
+    input : `~jwst.datamodels.MultiSlitModel`
         The input science data.
 
     tab_wavelength : 1-D ndarray
@@ -144,7 +146,7 @@ def bkg_for_multislit(input, tab_wavelength, tab_background):
 
     Returns
     -------
-    background : JWST MultiSlitModel
+    background : `~jwst.datamodels.MultiSlitModel`
         A copy of `input` but with the data replaced by the background,
         "expanded" from 1-D to 2-D.
     """
@@ -177,7 +179,7 @@ def bkg_for_image(input, tab_wavelength, tab_background):
 
     Parameters
     ----------
-    input : JWST ImageModel
+    input : `~jwst.datamodels.ImageModel`
         The input science data.
 
     tab_wavelength : 1-D ndarray
@@ -189,7 +191,7 @@ def bkg_for_image(input, tab_wavelength, tab_background):
 
     Returns
     -------
-    background : JWST ImageModel
+    background : `~jwst.datamodels.ImageModel`
         A copy of `input` but with the data replaced by the background,
         "expanded" from 1-D to 2-D.
     """
@@ -217,7 +219,7 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
 
     Parameters
     ----------
-    input : JWST IFUImageModel
+    input : `~jwst.datamodels.IFUImageModel`
         The input science data.
 
     tab_wavelength : 1-D ndarray
@@ -229,7 +231,7 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
 
     Returns
     -------
-    background : JWST IFUImageModel
+    background : `~jwst.datamodels.IFUImageModel`
         A copy of `input` but with the data replaced by the background,
         "expanded" from 1-D to 2-D.
     """
@@ -241,27 +243,10 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
         list_of_wcs = nirspec.nrs_ifu_wcs(input)
         for ifu_wcs in list_of_wcs:
 
-            xstart = ifu_wcs.bounding_box[0][0]
-            xstop = ifu_wcs.bounding_box[0][1]
-            ystart = ifu_wcs.bounding_box[1][0]
-            ystop = ifu_wcs.bounding_box[1][1]
+            ((xstart, xstop), (ystart, ystop)) = _toindex(ifu_wcs.bounding_box)
 
-            # Convert to integers, and add one to the upper limits,
-            # because we want to use these as slice limits.
-            xstart = math.floor(xstart)
-            xstop = math.ceil(xstop) + 1
-            ystart = math.floor(ystart)
-            ystop = math.ceil(ystop) + 1
-            xstart = max(xstart, 0)
-            ystart = max(ystart, 0)
-            xstop = min(xstop, 2048)
-            ystop = min(ystop, 2048)
-
-            shape = (ystop - ystart, xstop - xstart)
-            grid = np.indices(shape, dtype=np.float64)
-            grid[0] += ystart
-            grid[1] += xstart
-            wl_array = ifu_wcs(grid[1], grid[0])[2]
+            x, y = grid_from_bounding_box(ifu_wcs.bounding_box)
+            wl_array = ifu_wcs(x, y)[2]
 
             wl_array[np.isnan(wl_array)] = -1.
             bkg_flux = np.interp(wl_array, tab_wavelength, tab_background,
@@ -290,7 +275,7 @@ def get_wavelengths(model):
 
     Parameters
     ----------
-    model : JWST data model
+    model : `~jwst.datamodels.DataModel`
         The input science data.
 
     Returns
@@ -309,8 +294,8 @@ def get_wavelengths(model):
             got_wavelength = False
             wl_array = None
 
-    if hasattr(model, "wcs") and not got_wavelength:
-        wcs = model.wcs.forward_transform
+    if hasattr(model.meta, "wcs") and not got_wavelength:
+        wcs = model.meta.wcs
         shape = model.data.shape
         grid = np.indices(shape[-2:], dtype=np.float64)
         wl_array = wcs(grid[1], grid[0])[2]
