@@ -81,6 +81,8 @@ extract_1d
 
 - Changed the names of time-related keywords for extracted spectra. [#3058]
 
+- A new NPIXELS column has been added to the output table. [#3108]
+
 extract_2d
 ----------
 - Moved the update of meta information to the MultiSlitModel instead of the
