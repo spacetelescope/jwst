@@ -39,17 +39,41 @@ def _generate_data():
             ]
 
 @pytest.mark.parametrize('input_data, status', _generate_data())
-def test_master_background_init(input_data, status, _jail, user_background):
+def test_master_background_init(input_data, status, _jail):
     """Verify data can run through the step"""
 
     result = MasterBackgroundStep.call(input_data)
-    result = MasterBackgroundStep.call(input_data, user_background=user_background)
-    result = MasterBackgroundStep.call(input_data, save_background=True)
+
     collect_pipeline_cfgs('./config')
     result = MasterBackgroundStep.call(
         input_data,
         config_file='config/master_background.cfg'
         )
+
+    assert type(input_data) is type(result)
+
+    try:
+        assert result.meta.cal_step.master_back_sub == status
+    except AttributeError:
+        for model in result:
+            assert model.meta.cal_step.master_back_sub == status
+
+
+@pytest.mark.parametrize('input_data, status', _generate_data())
+def test_master_background_optional_args(input_data, status, _jail, user_background):
+    """Verify data can run through the step with optional arguments"""
+
+    result = MasterBackgroundStep.call(input_data, user_background=user_background)
+
+    try:
+        if result.meta.cal_step.master_back_sub == 'COMPLETE':
+            assert result.meta.master_background == 'user_background.fits'
+    except AttributeError:
+        for model in result:
+            if model.meta.cal_step.master_back_sub == 'COMPLETE':
+                assert model.meta.master_background == 'user_background.fits'
+
+    result = MasterBackgroundStep.call(input_data, save_background=True)
 
     assert type(input_data) is type(result)
 
