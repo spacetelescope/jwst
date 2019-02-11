@@ -2,7 +2,6 @@ import logging
 
 import numpy as np
 
-from gwcs.utils import _toindex
 from gwcs.wcstools import grid_from_bounding_box
 from .. import datamodels
 from .. assign_wcs import nirspec               # for NIRSpec IFU data
@@ -241,16 +240,13 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
     if input.meta.instrument.name.upper() == "NIRSPEC":
         list_of_wcs = nirspec.nrs_ifu_wcs(input)
         for ifu_wcs in list_of_wcs:
-
-            ((xstart, xstop), (ystart, ystop)) = _toindex(ifu_wcs.bounding_box)
-
             x, y = grid_from_bounding_box(ifu_wcs.bounding_box)
             wl_array = ifu_wcs(x, y)[2]
 
             wl_array[np.isnan(wl_array)] = -1.
             bkg_flux = np.interp(wl_array, tab_wavelength, tab_background,
                                  left=0., right=0.)
-            background.data[ystop:ystart, xstop:xstart] = bkg_flux.copy()
+            background.data[y.astype(int), x.astype(int)] = bkg_flux.copy()
 
     elif input.meta.instrument.name.upper() == "MIRI":
         shape = input.data.shape
