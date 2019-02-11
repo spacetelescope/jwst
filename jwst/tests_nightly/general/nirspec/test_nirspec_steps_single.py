@@ -188,11 +188,14 @@ class TestNIRSpecMasterBackGround_FS(BaseJWSTTest):
 
         """
         # input file has 2-D background image added to it
+        # produce a local copy 
         input_file = self.get_data(*self.test_dir,
-                                  'nrs1_sci_bkg_cal.fits')
+                                  'nrs1_sci_bkg_cal.fits',
+                                    docopy=True)
         # user provide 1-D background was created from the 2-D background image
         input_1dbgd_file = self.get_data(*self.test_dir,
-                                         'nrs1_bkg_x1d_user.fits')
+                                         'nrs1_bkg_x1d_user.fits',
+                                          docopy=True)
 
         #result = MasterBackgroundStep.call(input_file,user_background=input_1dbgd_file, 
         #save_results=True)
@@ -222,7 +225,14 @@ class TestNIRSpecMasterBackGround_FS(BaseJWSTTest):
         rtol = 0.0005
         for i in range(num_spec):
             sci_spec_1d = sci_cal_1d.spec[i].spec_table.FLUX
-            result_spec_1d = result_1d.spec[i].spec_table.FLUX
+            # check if we need to pull FLUX or NET from table 
+            min_value = sci_spec_1d.min()
+            max_value = sci_spec_1d.max()
+            if min_value == 0 and max_value == 0: 
+                sci_spec_1d = sci_cal_1d.spec[i].spec_table.NET
+                result_spec_1d = result_1d.spec[i].spec_table.NET
+            else:
+                result_spec_1d = result_1d.spec[i].spec_table.FLUX
             assert_allclose(sci_spec_1d,result_spec_1d,rtol=rtol,atol=atol)
         #____________________________________________________________________________
         # Test 2  compare the science MultiSlit data with no background to the

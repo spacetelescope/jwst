@@ -287,3 +287,36 @@ class TestMIRISetPointing(BaseJWSTTest):
         outputs = [(input_file,
                     'jw80600010001_02101_00001_mirimage_uncal_ref.fits')]
         self.compare_outputs(outputs)
+
+
+@pytest.mark.bigdata
+class TestMIRIMBGMRS(BaseJWSTTest):
+    input_loc = 'miri'
+    ref_loc = ['test_masterbackground','lrs', 'truth']
+    test_dir = ['test_masterbackground','lrs']
+
+    rtol = 0.000001
+
+    def test_miri_masterbackground_lrs_user1d(self):
+        """
+        Regression test of masterbackgound subtraction with mrs, with user provided 1-D background
+        """
+
+        # input file has the background added 
+        # Copy original version of file to test file, which will get overwritten by test
+        input_file = self.get_data(*self.test_dir,
+                                   'miri_lrs_sci_bkg_cal.fits',
+                                   docopy=True  # always produce local copy
+                                   )
+
+        #user provided 1-D background
+        input_1dbgd_file = self.get_data(*self.test_dir,
+                                         'miri_lrs_bkg_x1d.fits',
+                                          docopy=True)
+
+
+        #result = MasterBackGroundStep.call(input_file,user_background=input_1d_bkg_file,
+#                                           save_results=True)
+        #Test up tests
+        # waiting to flush out test_nirspec_steps_single.py, test_nirspec_masterbackground_fs_userid
+
