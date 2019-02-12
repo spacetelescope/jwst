@@ -9,13 +9,13 @@ from jwst import datamodels
 from jwst.datamodels import ImageModel, RegionsModel, CubeModel
 from jwst.stpipe import crds_client
 from jwst.lib.set_telescope_pointing import add_wcs
-
 from jwst.tests.base_classes import BaseJWSTTest
 
 from jwst.assign_wcs import AssignWcsStep
 from jwst.cube_build import CubeBuildStep
 from jwst.linearity import LinearityStep
 from jwst.ramp_fitting import RampFitStep
+from jwst.master_background import MasterBackgroundStep
 
 
 @pytest.mark.bigdata
@@ -290,33 +290,33 @@ class TestMIRISetPointing(BaseJWSTTest):
 
 
 @pytest.mark.bigdata
-class TestMIRIMBGMRS(BaseJWSTTest):
+class TestMIRIMBGLRS(BaseJWSTTest):
     input_loc = 'miri'
-    ref_loc = ['test_masterbackground','lrs', 'truth']
-    test_dir = ['test_masterbackground','lrs']
+    ref_loc = ['test_masterbackground', 'lrs', 'truth']
+    test_dir = ['test_masterbackground', 'lrs']
 
     rtol = 0.000001
 
     def test_miri_masterbackground_lrs_user1d(self):
         """
-        Regression test of masterbackgound subtraction with mrs, with user provided 1-D background
+        Regression test of masterbackgound subtraction with lrs, with user provided 1-D background
         """
 
-        # input file has the background added 
+        # input file has the background added
         # Copy original version of file to test file, which will get overwritten by test
         input_file = self.get_data(*self.test_dir,
                                    'miri_lrs_sci_bkg_cal.fits',
                                    docopy=True  # always produce local copy
                                    )
 
-        #user provided 1-D background
-        input_1dbgd_file = self.get_data(*self.test_dir,
+        # user provided 1-D background
+        input_1d_bkg_file = self.get_data(*self.test_dir,
                                          'miri_lrs_bkg_x1d.fits',
                                           docopy=True)
 
-
-        #result = MasterBackGroundStep.call(input_file,user_background=input_1d_bkg_file,
-#                                           save_results=True)
-        #Test up tests
-        # waiting to flush out test_nirspec_steps_single.py, test_nirspec_masterbackground_fs_userid
-
+        result = MasterBackgroundStep.call(input_file,
+                                           user_background=input_1d_bkg_file,
+                                           save_results=True)
+        # Test up tests
+        # waiting to flush out test_nirspec_steps_single.py,
+        # test_nirspec_masterbackground_fs_userid
