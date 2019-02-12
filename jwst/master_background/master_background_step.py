@@ -119,25 +119,28 @@ def subtract_2d_background(source, background):
         Background subtracted from source.
     """
     def _subtract_2d_background(model, background):
+        result = model.copy()
         # Handle individual NIRSpec FS, NIRSpec MOS
         if isinstance(model, datamodels.MultiSlitModel):
-            for slit, slitbg in zip(model.slits, background.slits):
+            for slit, slitbg in zip(result.slits, background.slits):
                 slit.data -= slitbg.data
 
         # Handle MIRI LRS, MIRI MRS and NIRSpec IFU
         elif isinstance(model, (datamodels.ImageModel, datamodels.IFUImageModel)):
-            model.data -= background.data
+            result.data -= background.data
 
         else:
             # Shouldn't get here.
             raise RuntimeError("Input type {} is not supported."
                                .format(type(model)))
-        return model
+        return result
 
     # Handle containers of many datamodels
     if isinstance(source, datamodels.ModelContainer):
+        result = datamodels.ModelContainer()
+        result.update(source)
         for model, bg in zip(source, background):
-            result = _subtract_2d_background(model, bg)
+            result.append(_subtract_2d_background(model, bg))
 
     # Handle single datamodels
     elif isinstance(source, (datamodels.ImageModel, datamodels.IFUImageModel, datamodels.MultiSlitModel)):
