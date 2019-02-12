@@ -38,6 +38,9 @@ combine_1d
 coron
 -----
 
+- Updated the `stack_refs` routine to update the output data model with metadata
+  from the first input model. [#3111]
+
 csv_tools
 ---------
 
