@@ -11,8 +11,7 @@ IMAGING_TYPES = set(tuple(ACQ_EXP_TYPES) + tuple(IMAGE2_SCIENCE_EXP_TYPES)
 
 SPEC_TYPES = SPEC2_SCIENCE_EXP_TYPES
 
-# JWST Exposures that are Fine Guidance exposures that actually
-# define the pointing.
+# FGS guide star exposures
 FGS_GUIDE_EXP_TYPES = [
     'fgs_acq1',
     'fgs_acq2',

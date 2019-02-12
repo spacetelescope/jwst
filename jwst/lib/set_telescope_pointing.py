@@ -14,7 +14,8 @@ from ..lib.engdb_tools import (
     ENGDB_Service,
 )
 from .exposure_types import IMAGING_TYPES, FGS_GUIDE_EXP_TYPES
-TYPES_TO_UPDATE = set(list(IMAGING_TYPES) + FGS_GUIDE_EXP_TYPES)
+
+TYPES_TO_UPDATE = IMAGING_TYPES
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -249,11 +250,14 @@ def update_wcs(model, default_pa_v3=0., siaf_path=None, engdb_url=None,
     except AttributeError:
         exp_type = None
     aperture_name = model.meta.aperture.name.upper()
-    if aperture_name is not "UNKNOWN":
+    if aperture_name != "UNKNOWN":
         logger.info("Updating WCS for aperture {}".format(aperture_name))
         useafter = model.meta.observation.date
-        siaf = _read_wcs_from_siaf(aperture_name, useafter, siaf_path)
+        siaf = _get_wcs_values_from_siaf(aperture_name, useafter, siaf_path)
         populate_model_from_siaf(model, siaf)
+    else:
+        logger.warning("Aperture name is set to 'UNKNOWN'. "
+                       "WCS keywords will not be populated from SIAF.")
 
     if exp_type in FGS_GUIDE_EXP_TYPES:
         update_wcs_from_fgs_guiding(
@@ -1104,11 +1108,11 @@ def _roll_angle_from_matrix(matrix, v2, v3):
     return new_roll
 
 
-def _read_wcs_from_siaf(aperture_name, useafter, prd_db_filepath=None):
+def _get_wcs_values_from_siaf(aperture_name, useafter, prd_db_filepath=None):
     """
-    Read WCS keywords from the SIAF database file.
+    Query the SIAF database file and get WCS values.
 
-    Given an ``APERTURE_NAME`` and a ``USEAFTER`` dat query the SIAF database
+    Given an ``APERTURE_NAME`` and a ``USEAFTER`` date query the SIAF database
     and extract the following keywords:
     ``V2Ref``, ``V3Ref``, ``V3IdlYAngle``, ``VIdlParity``,
     ``XSciRef``, ``YSciRef``, ``XSciScale``, ``YSciScale``,
@@ -1171,9 +1175,9 @@ def _read_wcs_from_siaf(aperture_name, useafter, prd_db_filepath=None):
     logger.info("loaded {0} table rows from {1}".format(len(RESULT), prd_db_filepath))
     if RESULT:
         values = list(RESULT.values())[0]
-        # This call populates the SIAF tuple with the values fomr the database.
+        # This call populates the SIAF tuple with the values from the database.
         # The last 8 values returned from the database are the vertices.
-        # They are wrapped in a list and assigned tp SIAF.vertices_idl.
+        # They are wrapped in a list and assigned to SIAF.vertices_idl.
         siaf = SIAF(*values[:-8], values[-8:])
         return siaf
     else:
