@@ -38,6 +38,9 @@ combine_1d
 coron
 -----
 
+- Updated the `stack_refs` routine to update the output data model with metadata
+  from the first input model. [#3111]
+
 csv_tools
 ---------
 
@@ -134,6 +137,17 @@ lib
 linearity
 ---------
 
+master_background
+-----------------
+
+- Implement the basic step scaffolding for `MasterBackgroundStep`. [#3090]
+
+- Record user-supplied master background in MSTRBKGD keyword [#3101]
+
+- Add step documentation for master background subtraction [#3102]
+
+- Make master background step actually work [#3110]
+
 model_blender
 -------------
 
@@ -219,6 +233,9 @@ scripts
 
 stpipe
 ------
+
+- Add `Step.record_step_status()` method for use by this step (and any other
+  pipeline or pipeline step) [#3110]
 
 straylight
 ----------
