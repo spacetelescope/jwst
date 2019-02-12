@@ -3,6 +3,8 @@ from os.path import basename
 from ..stpipe import Step
 from .. import datamodels
 
+from .expand_to_2d import expand_to_2d
+
 
 __all__ = ["MasterBackgroundStep"]
 
@@ -74,11 +76,12 @@ class MasterBackgroundStep(Step):
 
             # Check if user has supplied a master background spectrum.
             if self.user_background is None:
+                # TODO: 1. compute master background from asn, 2. subtract it
                 # Return input as dummy result for now
                 result = input_data
             else:
-                # Return input as dummy result for now
-                result = input_data
+                background_2d = expand_to_2d(input_data, self.user_background)
+                result = subtract_2d_background(input_data, background_2d)
 
                 # Record name of user-supplied master background spectrum
                 if isinstance(result, datamodels.ModelContainer):
@@ -97,15 +100,52 @@ class MasterBackgroundStep(Step):
         return result
 
 
-    def record_step_status(self, result, cal_step, success=True):
-        """Record whether or not a step completed in meta.cal_step"""
-        if success:
-            status = 'COMPLETE'
-        else:
-            status = 'SKIPPED'
+def subtract_2d_background(source, background):
+    """Subtract a 2D background
 
-        if isinstance(result, datamodels.ModelContainer):
-            for model in result:
-                model.meta.cal_step._instance[cal_step] = status
+    Parameters
+    ----------
+    source : `~jwst.datamodels.DataModel`
+        The input science data.
+
+    background : `~jwst.datamodels.DataModel`
+        The input background data.  Must be the same datamodel type as `source`.
+        For a `~jwst.datamodels.ModelContainer`, the source and background
+        models in the input containers must match one-to-one.
+
+    Returns
+    -------
+    `~jwst.datamodels.DataModel`
+        Background subtracted from source.
+    """
+    def _subtract_2d_background(model, background):
+        # Handle individual NIRSpec FS, NIRSpec MOS
+        if isinstance(model, datamodels.MultiSlitModel):
+            for slit, slitbg in zip(model.slits, background.slits):
+                slit.data -= slitbg.data
+
+        # Handle MIRI LRS, MIRI MRS and NIRSpec IFU
+        elif isinstance(model, (datamodels.ImageModel, datamodels.IFUImageModel)):
+            model.data -= background.data
+
         else:
-            result.meta.cal_step._instance[cal_step] = status
+            # Shouldn't get here.
+            raise RuntimeError("Input type {} is not supported."
+                               .format(type(model)))
+        return model
+
+    # Handle containers of many datamodels
+    if isinstance(source, datamodels.ModelContainer):
+        for model, bg in zip(source, background):
+            result = _subtract_2d_background(model, bg)
+
+    # Handle single datamodels
+    elif isinstance(source, (datamodels.ImageModel, datamodels.IFUImageModel, datamodels.MultiSlitModel)):
+        result = _subtract_2d_background(source, background)
+
+    else:
+        # Shouldn't get here.
+        raise RuntimeError("Input type {} is not supported."
+                           .format(type(source)))
+
+    return result
