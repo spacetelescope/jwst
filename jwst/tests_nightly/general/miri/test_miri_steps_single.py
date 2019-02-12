@@ -10,13 +10,12 @@ from jwst.datamodels import ImageModel, RegionsModel, CubeModel
 from jwst.stpipe import crds_client
 from jwst.lib.set_telescope_pointing import add_wcs
 from jwst.tests.base_classes import BaseJWSTTest
-
 from jwst.assign_wcs import AssignWcsStep
 from jwst.cube_build import CubeBuildStep
 from jwst.linearity import LinearityStep
 from jwst.ramp_fitting import RampFitStep
 from jwst.master_background import MasterBackgroundStep
-
+from jwst.extract_1d import Extract1dStep
 
 @pytest.mark.bigdata
 class TestMIRIRampFit(BaseJWSTTest):
@@ -290,7 +289,7 @@ class TestMIRISetPointing(BaseJWSTTest):
 
 
 @pytest.mark.bigdata
-class TestMIRIMBGLRS(BaseJWSTTest):
+class TestMIRIMasterBackground_LRS(BaseJWSTTest):
     input_loc = 'miri'
     ref_loc = ['test_masterbackground', 'lrs', 'truth']
     test_dir = ['test_masterbackground', 'lrs']
@@ -305,7 +304,7 @@ class TestMIRIMBGLRS(BaseJWSTTest):
         # input file has the background added
         # Copy original version of file to test file, which will get overwritten by test
         input_file = self.get_data(*self.test_dir,
-                                   'miri_lrs_sci_bkg_cal.fits',
+                                   'miri_lrs_sci+bkg_cal.fits',
                                    docopy=True  # always produce local copy
                                    )
 
@@ -317,6 +316,24 @@ class TestMIRIMBGLRS(BaseJWSTTest):
         result = MasterBackgroundStep.call(input_file,
                                            user_background=input_1d_bkg_file,
                                            save_results=True)
-        # Test up tests
-        # waiting to flush out test_nirspec_steps_single.py,
-        # test_nirspec_masterbackground_fs_userid
+        #_____________________________________________________________________
+        # Test 1
+        # Run extract1D on the master background subtracted data (result)  and
+        # the science data with not background added
+
+        # run 1-D extract on results from MasterBackground step                                        
+        result_1d = Extract1dStep.call(result, save_results=True)
+
+        # run 1-D extract on original science data without background                                  
+        input_sci_cal_file = self.get_data(*self.test_dir,
+                                            'miri_lrs_sci_cal.fits')
+        # find the 1D extraction of this file                                                          
+        # find Extract1dStep on sci data to use the same version of                                    
+        # this rountine run on both files  rather than running it off line                             
+        # and having the 1-D extracted science file stored as input to step                            
+
+        sci_cal_1d = Extract1dStep.call(input_sci_cal_file, save_results=True)
+
+        # Compare the MultiSpec 1-D data
+        atol = 100.
+        rtol = 0.05

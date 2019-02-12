@@ -174,7 +174,7 @@ class TestNIRISSSpec2(BaseJWSTTest):
 
 
 @pytest.mark.bigdata
-class TestNIRSpecMasterBackGround_FS(BaseJWSTTest):
+class TestNIRSpecMasterBackground_FS(BaseJWSTTest):
     input_loc = 'nirspec'
     ref_loc = ['test_masterbackground', 'nrs-fs', 'truth']
     test_dir = ['test_masterbackground', 'nrs-fs']
@@ -212,8 +212,10 @@ class TestNIRSpecMasterBackGround_FS(BaseJWSTTest):
         input_sci_cal_file = self.get_data(*self.test_dir,
                                             'nrs1_sci_cal.fits')
         # find the 1D extraction of this file
-        # or should I run Extract1dStep off line and make the sci_cal_1d
-        # a truth file  or input file
+        # find Extract1dStep on sci data to use the same version of
+        # this rountine run on both files  rather than running it off line
+        # and having the 1-D extracted science file stored as input to step
+        
         sci_cal_1d = Extract1dStep.call(input_sci_cal_file, save_results=True)
 
         # Compare the FS  1D extracted data. These types of data are
