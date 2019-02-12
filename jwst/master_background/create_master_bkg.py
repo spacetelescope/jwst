@@ -24,7 +24,7 @@ def create_background(wavelength, flux):
 
     Returns
     -------
-    output_model : `~jwst.datamodels.MultiSlitModel`, or None
+    output_model : `~jwst.datamodels.MultiSpecModel`, or None
         A data model containing the 1-D background spectrum.  This can be
         written to disk by calling:
 

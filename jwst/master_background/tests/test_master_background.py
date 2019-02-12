@@ -25,7 +25,6 @@ def user_background(tmpdir_factory):
     wavelength = np.linspace(0.5, 25, num=100)
     flux = np.linspace(2.0, 2.2, num=100)
     data = create_background(wavelength, flux)
-    data.meta.model_type = 'MultiSpecModel'
     data.save(filename)
 
     return filename
