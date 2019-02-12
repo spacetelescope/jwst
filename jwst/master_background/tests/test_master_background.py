@@ -84,23 +84,24 @@ def test_master_background_init(input_data, status, _jail, user_background):
         )
 
     assert type(input_data) is type(result)
+    assert result is not input_data
 
-    try:
-        assert result.meta.cal_step.master_back_sub == status
-    except AttributeError:
+    if isinstance(result, datamodels.ModelContainer):
         for model in result:
             assert model.meta.cal_step.master_back_sub == status
+    else:
+        assert result.meta.cal_step.master_back_sub == status
 
     # Run with a user-supplied background and verify this is recorded in header
     result = MasterBackgroundStep.call(input_data, user_background=user_background)
 
-    try:
-        if result.meta.cal_step.master_back_sub == 'COMPLETE':
-            assert result.meta.master_background == 'user_background.fits'
-    except AttributeError:
+    if isinstance(result, datamodels.ModelContainer):
         for model in result:
             if model.meta.cal_step.master_back_sub == 'COMPLETE':
                 assert model.meta.master_background == 'user_background.fits'
+    else:
+        if result.meta.cal_step.master_back_sub == 'COMPLETE':
+            assert result.meta.master_background == 'user_background.fits'
 
     # Make sure saving the computed background works
     result = MasterBackgroundStep.call(input_data, save_background=True)
