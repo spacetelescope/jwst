@@ -143,6 +143,8 @@ master_background
 
 - Add step documentation for master background subtraction [#3102]
 
+- Make master background step actually work [#3110]
+
 model_blender
 -------------
 
@@ -228,6 +230,9 @@ scripts
 
 stpipe
 ------
+
+- Add `Step.record_step_status()` method for use by this step (and any other
+  pipeline or pipeline step) [#3110]
 
 straylight
 ----------
