@@ -252,7 +252,7 @@ class TestNIRSpecMasterBackground_FS(BaseJWSTTest):
             slit_result = result.slits[i].data
             sub = slit_sci - slit_result
             sub_smo = convolve(sub, Box2DKernel(3))
-            sub_smo_zero = sub_smo*0.0  # need something better to compare too
+            sub_smo_zero = sub_smo*0.1  # need something better to compare too
             assert_allclose(sub_smo, sub_smo_zero, atol=atol)
         # ______________________________________________________________________
         # Test 3 Compare background sutracted science data (results)
