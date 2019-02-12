@@ -65,7 +65,7 @@ class MasterBackgroundStep(Step):
                 pass
 
             else:
-                result = input_data
+                result = input_data.copy()
                 self.log.warning(
                     "Input %s of type %s cannot be handled.  Step skipped.",
                     input, type(input)
@@ -78,7 +78,7 @@ class MasterBackgroundStep(Step):
             if self.user_background is None:
                 # TODO: 1. compute master background from asn, 2. subtract it
                 # Return input as dummy result for now
-                result = input_data
+                result = input_data.copy()
             else:
                 background_2d = expand_to_2d(input_data, self.user_background)
                 result = subtract_2d_background(input_data, background_2d)
@@ -105,7 +105,7 @@ def subtract_2d_background(source, background):
 
     Parameters
     ----------
-    source : `~jwst.datamodels.DataModel`
+    source : `~jwst.datamodels.DataModel` or `~jwst.datamodels.ModelContainer`
         The input science data.
 
     background : `~jwst.datamodels.DataModel`
