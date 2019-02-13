@@ -15,7 +15,7 @@ from ..lib.engdb_tools import (
 )
 from .exposure_types import IMAGING_TYPES, FGS_GUIDE_EXP_TYPES
 
-TYPES_TO_UPDATE = IMAGING_TYPES
+TYPES_TO_UPDATE = set(list(IMAGING_TYPES) + FGS_GUIDE_EXP_TYPES)
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -1139,11 +1139,11 @@ def _get_wcs_values_from_siaf(aperture_name, useafter, prd_db_filepath=None):
             prd_db_filepath = os.path.join(os.environ['XML_DATA'], "prd.db")
         except KeyError:
             message = "Unknown path to PRD DB file or missing env variable ``XML_DATA``."
-            log.info(message)
+            logger.info(message)
             raise KeyError(message)
     if not os.path.exists(prd_db_filepath):
         message = "Invalid path to PRD DB file: {0}".format(prd_db_filepath)
-        log.info(message)
+        logger.info(message)
         raise OSError(message)
     prd_db_filepath = "file:{0}?mode=ro".format(prd_db_filepath)
     logger.info("Using SIAF database from {}".format(prd_db_filepath))
