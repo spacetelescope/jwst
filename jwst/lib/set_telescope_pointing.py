@@ -15,7 +15,7 @@ from ..lib.engdb_tools import (
 )
 from .exposure_types import IMAGING_TYPES, FGS_GUIDE_EXP_TYPES
 
-TYPES_TO_UPDATE = IMAGING_TYPES
+TYPES_TO_UPDATE = set(list(IMAGING_TYPES) + FGS_GUIDE_EXP_TYPES)
 
 # Setup logging
 logger = logging.getLogger(__name__)
