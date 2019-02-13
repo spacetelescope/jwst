@@ -250,7 +250,7 @@ def update_wcs(model, default_pa_v3=0., siaf_path=None, engdb_url=None,
     except AttributeError:
         exp_type = None
     aperture_name = model.meta.aperture.name.upper()
-    if aperture_name != "UNKNOWN":
+    if aperture_name != "UNKNOWN" and exp_type not in FGS_GUIDE_EXP_TYPES:
         logger.info("Updating WCS for aperture {}".format(aperture_name))
         useafter = model.meta.observation.date
         siaf = _get_wcs_values_from_siaf(aperture_name, useafter, siaf_path)
@@ -1139,11 +1139,11 @@ def _get_wcs_values_from_siaf(aperture_name, useafter, prd_db_filepath=None):
             prd_db_filepath = os.path.join(os.environ['XML_DATA'], "prd.db")
         except KeyError:
             message = "Unknown path to PRD DB file or missing env variable ``XML_DATA``."
-            log.info(message)
+            logger.info(message)
             raise KeyError(message)
     if not os.path.exists(prd_db_filepath):
         message = "Invalid path to PRD DB file: {0}".format(prd_db_filepath)
-        log.info(message)
+        logger.info(message)
         raise OSError(message)
     prd_db_filepath = "file:{0}?mode=ro".format(prd_db_filepath)
     logger.info("Using SIAF database from {}".format(prd_db_filepath))
