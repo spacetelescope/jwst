@@ -1426,7 +1426,7 @@ def populate_model_from_siaf(model, siaf):
         model.meta.wcsinfo.cunit2 = "deg"
         model.meta.wcsinfo.crpix1 = siaf.crpix1
         model.meta.wcsinfo.crpix2 = siaf.crpix2
-        model.meta.coordinates.reference_frmae = "ICRS"
+        model.meta.coordinates.reference_frame = "ICRS"
 
 
 def first_pointing(mnemonics):
