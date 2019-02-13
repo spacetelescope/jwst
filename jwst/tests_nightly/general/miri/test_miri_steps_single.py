@@ -316,24 +316,25 @@ class TestMIRIMasterBackground_LRS(BaseJWSTTest):
         result = MasterBackgroundStep.call(input_file,
                                            user_background=input_1d_bkg_file,
                                            save_results=True)
-        #_____________________________________________________________________
+        # _____________________________________________________________________
         # Test 1
         # Run extract1D on the master background subtracted data (result)  and
         # the science data with not background added
 
-        # run 1-D extract on results from MasterBackground step                                        
+        # run 1-D extract on results from MasterBackground step
         result_1d = Extract1dStep.call(result, save_results=True)
 
-        # run 1-D extract on original science data without background                                  
+        # run 1-D extract on original science data without background
         input_sci_cal_file = self.get_data(*self.test_dir,
                                             'miri_lrs_sci_cal.fits')
-        # find the 1D extraction of this file                                                          
-        # find Extract1dStep on sci data to use the same version of                                    
-        # this rountine run on both files  rather than running it off line                             
-        # and having the 1-D extracted science file stored as input to step                            
+        # find the 1D extraction of this file
+        # find Extract1dStep on sci data to use the same version of
+        # this rountine run on both files  rather than running it off line
+        # and having the 1-D extracted science file stored as input to step
 
         sci_cal_1d = Extract1dStep.call(input_sci_cal_file, save_results=True)
 
         # Compare the MultiSpec 1-D data
-        atol = 100.
-        rtol = 0.05
+        atol = 100.  # set high for testing
+        rtol = 0.05  # set hight for testing
+        assert_allclose(result_1d,sci_cal_1d,atol=atol,rtol=rtol)
