@@ -1979,7 +1979,7 @@ properties:
             type: string
             fits_keyword: S_LINEAR
             blend_table: True
-          master_back_sub:
+          master_background:
             title: Master Background subtraction
             type: string
             fits_keyword: S_MSBSUB
@@ -2132,8 +2132,8 @@ properties:
                 channel:
                   title: Channel ID
                   type: string
-      master_background:
+      master_background_file:
         title: User-supplied master background file
         type: string
-        fits_keyword: MSTRBKGD
+        fits_keyword: MASTERBG
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema
