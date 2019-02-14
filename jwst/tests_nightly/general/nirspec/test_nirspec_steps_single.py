@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from astropy.convolution import convolve, Box2DKernel
+
 from numpy.testing import assert_allclose
 from gwcs.wcstools import grid_from_bounding_box
 from jwst.tests.base_classes import BaseJWSTTest
@@ -215,7 +215,7 @@ class TestNIRSpecMasterBackground_FS(BaseJWSTTest):
         # find Extract1dStep on sci data to use the same version of
         # this rountine run on both files  rather than running it off line
         # and having the 1-D extracted science file stored as input to step
-        
+
         sci_cal_1d = Extract1dStep.call(input_sci_cal_file, save_results=True)
 
         # Compare the FS  1D extracted data. These types of data are
@@ -245,27 +245,30 @@ class TestNIRSpecMasterBackground_FS(BaseJWSTTest):
         input_sci_model = datamodels.open(input_sci_cal_file)
         num_slits = len(input_sci_model.slits)
 
-        atol = 500000.0  # way to high just to pass test 
-        rtol = 1000  #too high just to pass test 
-        # I need to somehow skip the hot pixels that are causing problems 
-
         for i in range(num_slits):
             slit_sci = input_sci_model.slits[i].data
             slit_result = result.slits[i].data
+
+            # check for outliers in the science image - need a method that iterates
+            # do not check for outliers on result - some of those  outliers might be
+            # something we need to flag
+            sci_mean = np.nanmean(slit_sci)
+            sci_std = np.nanstd(slit_sci)
+            upper = sci_mean + sci_std*3.0
+            mask_clean = slit_sci < upper
             sub = slit_result - slit_sci
-            # need first reject the hot spikes using the
-            # sci data, then smooth
-            
-            sub_smo = convolve(sub, Box2DKernel(3))
-            sub_smo_zero = sub_smo*0.0 + 100  # need something better to compare too
-            assert_allclose(sub_smo, sub_smo_zero, atol=atol,rtol=rtol)
+
+            sci_mean = np.nanmean(sub[mask_clean])
+            # sci_median = np.nanmedian(sub[mask_clean])
+            atol = 20.0  # too high need to improve mask_clean with iterating outliers
+            rtol = 10
+            assert_allclose(sci_mean, 0, atol=atol, rtol=rtol)
         # ______________________________________________________________________
         # Test 3 Compare background sutracted science data (results)
         #  to a truth file. This data is MultiSlit data
 
         ref_file = self.get_data(*self.ref_loc,
-                                  'nrs1_sci_bkg_masterbackgroundstep.fits') 
-        
+                                  'nrs1_sci_bkg_masterbackgroundstep.fits')
 
         result_file = result.meta.filename
         result.save(result_file)

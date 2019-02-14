@@ -335,6 +335,48 @@ class TestMIRIMasterBackground_LRS(BaseJWSTTest):
         sci_cal_1d = Extract1dStep.call(input_sci_cal_file, save_results=True)
 
         # Compare the MultiSpec 1-D data
-        atol = 100.  # set high for testing
-        rtol = 0.05  # set hight for testing
-        assert_allclose(result_1d,sci_cal_1d,atol=atol,rtol=rtol)
+        atol = 500.  # set high for testing
+        rtol = 0.5  # set hight for testing
+        result_1d_data = result_1d.spec[0].spec_table['flux']
+        sci_cal_1d_data = sci_cal_1d.spec[0].spec_table['flux']
+
+        assert_allclose(result_1d_data, sci_cal_1d_data, atol=atol, rtol=rtol)
+        # _____________________________________________________________________
+        # Test 2
+        # Compare result (background subtracted image) to science image with no
+        # background. Subtract these images, smooth the subtracted image and
+        # the mean should be close to zero.
+
+        input_sci = datamodels.open(input_sci_cal_file)
+
+        # find the LRS region
+        bb = result.meta.wcs.bounding_box
+        x, y = grid_from_bounding_box(bb)
+        result_lrs_region = result.data[y.astype(int), x.astype(int)]
+        sci_lrs_region = input_sci.data[y.astype(int), x.astype(int)]
+
+        # do a 5 sigma clip on the science image
+        sci_mean = np.nanmean(sci_lrs_region)
+        sci_std = np.nanmean(sci_lrs_region)
+        upper = sci_mean + sci_std*3.0
+        mask_clean = sci_lrs_region < upper
+
+        sub = result_lrs_region - sci_lrs_region
+        mean_sub = np.mean(sub[mask_clean])
+        # median_sub = np.mean(sub[mask_clean])
+
+        atol = 2.0
+        assert_allclose(mean_sub, 0, atol=atol)
+
+# ______________________________________________________________________
+        # Test 3 Compare background sutracted science data (results)
+        #  to a truth file.
+
+        ref_file = self.get_data(*self.ref_loc,
+                                  'miri_lrs_sci+bkg_masterbackgroundstep.fits')
+
+        result_file = result.meta.filename
+        result.save(result_file)
+        outputs = [(result_file, ref_file)]
+        self.compare_outputs(outputs)
+        result.close()
