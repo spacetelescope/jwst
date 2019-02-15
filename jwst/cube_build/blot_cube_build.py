@@ -1,4 +1,5 @@
-# Routines used for building cubes
+""" Main module for blotting sky cube back to detector space
+"""
 import time
 import numpy as np
 import logging
@@ -13,43 +14,45 @@ from . import coord
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+
 class CubeBlot():
 
     def __init__(self, median_model, input_models):
-        """
-        Short Summary
-        -------------
-        Class Blot cube holds all the main varibles for blotting an IFU Cube back to
-        the detector
-        Information is pulled out of the Median Sky Cube created by a previous run
-        of cube_build in single mode.
+        """Class Blot holds the main varibles for blotting sky cube to detector
 
-        Basic parameters of the instrument the  data is for is stored.
-        The ra,dec, and wavelenth of the median sky cube is set up
+
+        Information is pulled out of the median sky Cube created by a previous
+        run of cube_build in single mode and stored in the ClassBlot.These
+        variables include the WCS of median sky cube, the weighting parameters
+        used to create this median sky image and basic information of the input
+        data (instrument, channel, band, grating or filter).
 
         Parameters
         ---------
-        median_model: median input sky cube created from a median stack of all the
-           individual input_models mapped to the full IFU cube imprint on the sky
+        median_model: ifucube model
+           The median input sky cube is created from a median stack of all the
+           individual input_models mapped to the full IFU cube imprint on the
+           sky.
         input_models: data model
-           a blotted image is created for each science image
+           The input models used to create the median sky image.
 
         Returns
         -------
         CubeBlot class initialzied
         """
-        #Pull out the needed information from the Median IFUCube
+
+        # Pull out the needed information from the Median IFUCube
         self.median_skycube = median_model
         self.instrument = median_model.meta.instrument.name
         self.detector = median_model.meta.instrument.detector
 
-        #information on how the IFUCube was constructed
+        # information on how the IFUCube was constructed
         self.weight_power = median_model.meta.ifu.weight_power
         self.weighting = median_model.meta.ifu.weighting
         self.rois = median_model.meta.ifu.roi_spatial
         self.roiw = median_model.meta.ifu.roi_wave
 
-        #basic information about the type of data
+        # basic information about the type of data
         self.grating = None
         self.filter = None
         self.subchannel = None
@@ -69,35 +72,32 @@ class CubeBlot():
         self.cdelt1 = median_model.meta.wcsinfo.cdelt1 * 3600.0
         self.cdelt2 = median_model.meta.wcsinfo.cdelt2 * 3600.0
         self.cdelt3 = median_model.meta.wcsinfo.cdelt3 * 3600.0
-#_______________________________________________________________________________
+# _______________________________________________________________________________
         xcube, ycube, zcube = wcstools.grid_from_bounding_box(
             self.median_skycube.meta.wcs.bounding_box,
             step=(1, 1, 1))
 
-        self.cube_ra, self.cube_dec, self.cube_wave = self.median_skycube.meta.wcs(
-            xcube,
-            ycube,
-            zcube)
+        self.cube_ra, self.cube_dec, self.cube_wave = \
+            self.median_skycube.meta.wcs(xcube, ycube, zcube)
 
         flux = self.median_skycube.data
         self.cube_flux = flux
-#wavelength slices
+# wavelength slices
         self.lam_centers = self.cube_wave[:, 0, 0]
 # initialize blotted images to be original input images
 
         self.input_models = input_models
 
-#********************************************************************************
+# *******************************************************************************
 
     def blot_info(self):
-        """
-        Short Summary
-        ------------
-        Prints the basic paramters of the blot image and median sky cube
+        """ Prints the basic paramters of the blot image and median sky cube
         """
         log.info('Information on Blotting')
-        log.info('Working with instrument %s %s', self.instrument, self.detector)
-        log.info('shape of sky cube %f %f %f', self.naxis1, self.naxis2, self.naxis3)
+        log.info('Working with instrument %s %s', self.instrument,
+                 self.detector)
+        log.info('shape of sky cube %f %f %f', self.naxis1, self.naxis2,
+                 self.naxis3)
 
         log.info('Instrument %s ', self.instrument)
         if self.instrument == 'MIRI':
@@ -110,31 +110,30 @@ class CubeBlot():
         log.info('ROI size (spatial and wave) %f %f', self.rois, self.roiw)
         log.info('Number of input models %i ', len(self.input_models))
 
-#********************************************************************************
+# *****************************************************************************
     def blot_images(self):
-        """
-        Short Summary
-        ------------
-        Core blotting module
-        Initialize blot_model = input_model
-        1. Loop over every data model to be blotted and find ra,dec,wavelength
-           for every slice pixel.
-        2. Using WCS of input image convert ra,dec of input model to tangent
-           plane values: xi,eta
-        3. For the median sky cube convert the ra,dec of each x,y in this cube
-           to xi,eta using the wcs of the imput image
-        4. a. Loop over  every input_model valid IFU slice pixel and find the
-            median image pixels that fall within the ROI of the center of pixel.
-            The ROI parameters are the same as those used to construct the
-            median sky cube and are stored in the meta data of the Median Cube.
-            b. After all the overlapping median pixels have been found find the
-            weighted flux using this overlapping pixels. The weighting is based
-            on the distance between the detector pixel and the median flux pixel
-            in tangent plane plane. Additional weighting parameters are read in
-            from the median cube meta data.
-            c. The blotted flux (blot.data) = the weighted flux determined in
-            step b.
+        """ Core blotting routine
 
+        This is the main routine for blotting the median sky image back to
+        the detector space and creating a blotting image for each input model
+        1. Loop over every data model to be blotted and find ra,dec,wavelength
+           for every pixel in a valid slice on the detector.
+        2. Using WCS of input image convert the ra and dec of input model
+           to then tangent plane values: xi,eta.
+        3. For the median sky cube convert the ra and dec of each x,y in this
+           cube to xi,eta using the wcs of the imput image.
+        4. a. Loop over  every input_model valid IFU slice pixel and find the
+            median image pixels that fall within the ROI of the center of
+            pixel.The ROI parameters are the same as those used to construct
+            the median sky cube and are stored in the meta data of the median
+            cube.
+            b. After all the overlapping median pixels have been found find the
+            weighted flux using these overlapping pixels. The weighting is
+            based on the distance between the detector pixel and the median
+            flux pixel in tangent plane plane. Additional weighting parameters
+            are read in from the median cube meta data.
+            c. The blotted flux  = the weighted flux determined in
+            step b and stored in blot.data
         """
         t0 = time.time()
         blot_models = datamodels.ModelContainer()
@@ -150,11 +149,12 @@ class CubeBlot():
             indx = filename.rfind('.fits')
 
             blot_flux = np.zeros(model.shape, dtype=np.float32)
-#________________________________________________________________________________
+# ________________________________________________________________________________
 # From the x,y pixel for detector. For MIRI we only work on one channel at a time
 
             if self.instrument == 'MIRI':
-                this_par1 = self.channel # only one channel is blotted at a time
+                # only one channel is blotted at a time
+                this_par1 = self.channel
                 ch_name = '_ch' + this_par1
                 blot.meta.filename = filename[:indx] + ch_name + '_blot.fits'
 
@@ -162,7 +162,7 @@ class CubeBlot():
                 xstart, xend = instrument_info.GetMIRISliceEndPts(this_par1)
                 ydet, xdet = np.mgrid[:1024, :1032]
 
-                #mask out the side channel we aren not working on
+                # mask out the side channel we aren not working on
                 pixel_mask = np.full(model.shape, False, dtype=bool)
                 pixel_mask[:, xstart:xend] = True
                 ra_det, dec_det, lam_det = model.meta.wcs(xdet, ydet)
@@ -228,20 +228,20 @@ class CubeBlot():
 
             # x,y detector pixels --> xi, eta
             xi_blot, eta_blot = coord.radec2std(crval1, crval2,
-                                               ra_blot, dec_blot)
+                                                ra_blot, dec_blot)
 
             # cube spaxel ra,dec values --> xi, eta
             xi_cube, eta_cube = coord.radec2std(crval1, crval2,
-                                               self.cube_ra, self.cube_dec)
+                                                self.cube_ra, self.cube_dec)
             nplane = self.naxis1 * self.naxis2
             self.xi_centers = np.reshape(xi_cube[0, :, :], nplane)
             self.eta_centers = np.reshape(eta_cube[0, :, :], nplane)
 
             num = ra_blot.size
-#________________________________________________________________________________
+# ______________________________________________________________________________
 # For every detector pixel find the overlapping median cube spaxels.
-# A median spaxel that falls withing the ROI of the center of the detector pixel
-# in the tangent plane is flagged as an overlapping pixel
+# A median spaxel that falls withing the ROI of the center of the detector
+# pixel in the tangent plane is flagged as an overlapping pixel.
 
             for ipt in range(0, num - 1):
                 # xx,yy are the index value of the orginal detector frame -
@@ -252,18 +252,18 @@ class CubeBlot():
                 xdistance = (xi_blot[ipt] - self.xi_centers)
                 ydistance = (eta_blot[ipt] - self.eta_centers)
                 radius = np.sqrt(xdistance * xdistance + ydistance * ydistance)
-                # indexr holds the index of the sky median spaxels that fall within
-                # the spatial  ROI of xx,yy location
+                # indexr holds the index of the sky median spaxels that fall
+                # within the spatial  ROI of xx,yy location
                 indexr = np.where(radius <= self.rois)
-                #indexz holds the index of the sky median spaxels that fall within
-                # the spectral ROI of wave length assocation with xx,yy
+                # indexz holds the index of the sky median spaxels that fall
+                # withing the spectral ROI of wave length assocation with xx,yy
                 indexz = np.where(abs(self.lam_centers - wave_blot[ipt]) <= self.roiw)
                 # Pull out the Cube spaxels falling with ROI regions
 
                 wave_found = self.lam_centers[indexz]
                 xi_found = self.xi_centers[indexr]
                 eta_found = self.eta_centers[indexr]
-#________________________________________________________________________________
+# ______________________________________________________________________________
                 # form the arrays to be used calculated the weighting
                 d1 = np.array(xi_found - xi_blot[ipt]) / self.cdelt1
                 d2 = np.array(eta_found - eta_blot[ipt]) / self.cdelt2
@@ -278,9 +278,9 @@ class CubeBlot():
                 weight_distance[weight_distance < lower_limit] = lower_limit
                 weight_distance = 1.0 / weight_distance
 
-                # determine the spaxel xx_cube,yy_cube values of these spaxels in
-                # the ROI so they can be used to pull out the flux of the median
-                # sky cube.
+                # determine the spaxel xx_cube,yy_cube values of these spaxels
+                # in the ROI so they can be used to pull out the flux of the
+                # median sky cube.
                 yy_cube = (indexr[0] / self.naxis1).astype(np.int)
                 xx_cube = indexr[0] - yy_cube * self.naxis1
                 scf = np.array([self.cube_flux[zz, yy_cube[ir], xx_cube[ir]]
@@ -294,11 +294,9 @@ class CubeBlot():
                     blot_flux[yy, xx] = 0
                 else:
                     blot_flux[yy, xx] = blot_flux[yy, xx] / blot_weight
-#________________________________________________________________________________
+# ________________________________________________________________________________
             blot.data = blot_flux
             blot_models.append(blot)
         t1 = time.time()
         log.info("Time Blot images = %.1f.s" % (t1 - t0,))
         return blot_models
-
-#********************************************************************************

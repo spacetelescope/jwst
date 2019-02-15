@@ -1,6 +1,8 @@
-========
-Emission
-========
+.. _emission_step:
+
+===================
+Emission Correction
+===================
 
 .. toctree::
    :maxdepth: 2

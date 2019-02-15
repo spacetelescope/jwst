@@ -136,7 +136,7 @@ def do_flat_field(output_model, flat_model):
 
 
 def apply_flat_field(science, flat):
-    """Flat fields the data and error arrays.
+    """Flat field the data and error arrays.
 
     Extended summary
     ----------------
@@ -389,7 +389,8 @@ def populate_interpolated_flats(k, slit,
     k : int
         Index of `slit` in `output_model.slits`.
 
-    slit : 
+
+    slit :
         A SlitModel object, one element of `output_model.slits`.
 
     interpolated_flats : JWST data model
@@ -697,7 +698,13 @@ def NIRSpec_IFU(output_model,
         del mask
 
         flat[ystart:ystop, xstart:xstop][good_flag] = flat_2d[good_flag]
-        flat_dq[ystart:ystop, xstart:xstop] |= flat_dq_2d.copy()
+        if flat_dq.dtype == flat_dq_2d.dtype:
+            flat_dq[ystart:ystop, xstart:xstop] |= flat_dq_2d.copy()
+        else:
+            log.warning("flat_dq.dtype = {}  flat_dq_2d.dtype = {}"
+                        .format(flat_dq.dtype, flat_dq_2d.dtype))
+            flat_dq[ystart:ystop, xstart:xstop] |= \
+                flat_dq_2d.astype(flat_dq.dtype).copy()
         del nan_flag, good_flag
 
         any_updated = True
@@ -791,6 +798,10 @@ def create_flat_field(wl, f_flat_model, s_flat_model, d_flat_model,
 
     flat_dq = combine_dq(f_flat_dq, s_flat_dq, d_flat_dq,
                          default_shape=flat_2d.shape)
+
+    mask1 = np.bitwise_and(flat_dq, dqflags.pixel['UNRELIABLE_FLAT'])
+    mask2 = np.bitwise_and(flat_dq, dqflags.pixel['NO_FLAT_FIELD'])
+    flat_2d[mask1 + mask2 > 0] = 1.
 
     return (flat_2d, flat_dq)
 
@@ -917,7 +928,8 @@ def fore_optics_flat(wl, f_flat_model, exposure_type,
     f_flat_dq = None
 
     # The shape of the output array is obtained from `wl`.
-    f_flat = combine_fast_slow(wl, flat_2d, tab_wl, tab_flat, dispaxis)
+    (f_flat, f_flat_dq) = combine_fast_slow(wl, flat_2d, f_flat_dq,
+                                            tab_wl, tab_flat, dispaxis)
 
     return (f_flat, f_flat_dq)
 
@@ -995,7 +1007,8 @@ def spectrograph_flat(wl, s_flat_model,
         flat_2d = full_array_flat[ystart:ystop, xstart:xstop]
         s_flat_dq = full_array_dq[ystart:ystop, xstart:xstop]
 
-    s_flat = combine_fast_slow(wl, flat_2d, tab_wl, tab_flat, dispaxis)
+    (s_flat, s_flat_dq) = combine_fast_slow(wl, flat_2d, s_flat_dq,
+                                            tab_wl, tab_flat, dispaxis)
 
     return (s_flat, s_flat_dq)
 
@@ -1071,7 +1084,8 @@ def detector_flat(wl, d_flat_model,
     (flat_2d, d_flat_dq) = interpolate_flat(image_flat, image_dq,
                                             image_wl, wl)
 
-    d_flat = combine_fast_slow(wl, flat_2d, tab_wl, tab_flat, dispaxis)
+    (d_flat, d_flat_dq) = combine_fast_slow(wl, flat_2d, d_flat_dq,
+                                            tab_wl, tab_flat, dispaxis)
 
     return (d_flat, d_flat_dq)
 
@@ -1312,7 +1326,7 @@ def read_flat_table(flat_model, exposure_type,
     return (tab_wl, tab_flat)
 
 
-def combine_fast_slow(wl, flat_2d, tab_wl, tab_flat, dispaxis):
+def combine_fast_slow(wl, flat_2d, flat_dq, tab_wl, tab_flat, dispaxis):
     """Multiply the image by the tabular values.
 
     Parameters
@@ -1324,6 +1338,12 @@ def combine_fast_slow(wl, flat_2d, tab_wl, tab_flat, dispaxis):
         The flat field derived from the image part of the reference file,
         or a scalar (e.g. 1) if there is no image part in the current
         reference file.
+
+    flat_dq : ndarray or None
+        If not None, the data quality array corresponding to `flat_2d`.
+        A copy of this will be updated with flags which may be set based
+        on the fast-variation component, and the updated array will be
+        returned.
 
     tab_wl : ndarray, 1-D
         Wavelengths corresponding to `tab_flat`.
@@ -1339,12 +1359,23 @@ def combine_fast_slow(wl, flat_2d, tab_wl, tab_flat, dispaxis):
     Returns
     -------
     ndarray, 2-D, float32
-        The product of flat_2d and the values in `tab_flat` interpolated
+        The product of `flat_2d` and the values in `tab_flat` interpolated
         to the wavelengths of the science image, i.e. `wl`.
+    ndarray, 2-D, uint32
+        The updated data quality array corresponding to `flat_2d`.  If a
+        pixel wavelength is less than or equal to zero, or if it's not
+        within the range of `tab_wl`, NO_FLAT_FIELD will be used to flag
+        this condition, and the fast-variation flat field value at that
+        pixel will be set to 1.
     """
 
     wl_c = clean_wl(wl, dispaxis)
     dwl = np.zeros_like(wl_c)
+
+    if flat_dq is None:
+        combined_dq = np.zeros(wl.shape, dtype=np.uint32)
+    else:
+        combined_dq = flat_dq.copy()
 
     if dispaxis == HORIZONTAL:
         dwl[:, 0:-1] = wl_c[:, 1:] - wl_c[:, 0:-1]
@@ -1368,10 +1399,15 @@ def combine_fast_slow(wl, flat_2d, tab_wl, tab_flat, dispaxis):
                 values[j, i] = 1.
             else:
                 # average the tabular data over the range of wavelengths
-                values[j, i] = g_average(wl_c[j, i], dwl[j, i],
-                                         tab_wl, tab_flat, dx, wgt)
+                temp = g_average(wl_c[j, i], dwl[j, i],
+                                 tab_wl, tab_flat, dx, wgt)
+                if temp is None:
+                    values[j, i] = 1.
+                    combined_dq[j, i] |= dqflags.pixel['NO_FLAT_FIELD']
+                else:
+                    values[j, i] = temp
 
-    return flat_2d * values
+    return (flat_2d * values, combined_dq)
 
 
 def clean_wl(wl, dispaxis):
@@ -1463,8 +1499,10 @@ def g_average(wl0, dwl0, tab_wl, tab_flat, dx, wgt):
 
     Returns
     -------
-    float
-        The average value of `tab_flat` over the current pixel.
+    float or None
+        The average value of `tab_flat` over the current pixel.  None
+        will be returned if any of the wavelengths used for computing
+        the average is outside the range of wavelengths in `tab_wl`.
     """
 
     npts = len(dx)
@@ -1472,6 +1510,8 @@ def g_average(wl0, dwl0, tab_wl, tab_flat, dx, wgt):
     sum = 0.
     for k in range(npts):
         value = wl_interpolate(wavelengths[k], tab_wl, tab_flat)
+        if value is None:               # wavelengths[k] was out of bounds
+            return None
         sum += (value * wgt[k])
 
     return sum
@@ -1498,14 +1538,14 @@ def wl_interpolate(wavelength, tab_wl, tab_flat):
 
     Returns
     -------
-    float
+    float or None
         The flat-field value (from `tab_flat`) at `wavelength`.
+        None will be returned if `wavelength` is not positive or is
+        outside the range of `tab_wl`.
     """
 
-    if wavelength < tab_wl[0]:
-        return tab_flat[0]
-    if wavelength > tab_wl[-1]:
-        return tab_flat[-1]
+    if wavelength <= 0. or wavelength < tab_wl[0] or wavelength > tab_wl[-1]:
+        return None
 
     n0 = np.searchsorted(tab_wl, wavelength) - 1
     p = (wavelength - tab_wl[n0]) / (tab_wl[n0 + 1] - tab_wl[n0])
@@ -1601,9 +1641,13 @@ def interpolate_flat(image_flat, image_dq, image_wl, wl):
                            np.bitwise_or(image_dq[k, iypixel, ixpixel],
                                          image_dq[k + 1, iypixel, ixpixel]))
 
-    # If the wavelength at a pixel is zero, the flat field cannot be
-    # determined.
-    flat_dq[wl <= 0.] |= dqflags.pixel['NO_FLAT_FIELD']
+    # If the wavelength at a pixel is outside the range of wavelengths
+    # for the reference image, flag the pixel as bad.  Note that this will
+    # also result in the computed flat field being set to 1.
+    mask = (wl < image_wl[0])
+    flat_dq[mask] = np.bitwise_or(flat_dq[mask], dqflags.pixel['NO_FLAT_FIELD'])
+    mask = (wl > image_wl[-1])
+    flat_dq[mask] = np.bitwise_or(flat_dq[mask], dqflags.pixel['NO_FLAT_FIELD'])
 
     # If a pixel is flagged as bad, applying flat_2d should not make any
     # change to the science data.

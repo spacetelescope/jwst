@@ -1,4 +1,5 @@
 import os
+from os import path as op
 import shutil
 import tempfile
 import warnings
@@ -13,10 +14,12 @@ from .. import (DataModel, ImageModel, MaskModel, QuadModel,
                 MultiSlitModel, ModelContainer, SlitModel,
                 SlitDataModel, IFUImageModel)
 from ..util import open as open_model
+from ...lib.file_utils import pushdir
 
 
 ROOT_DIR = os.path.join(os.path.dirname(__file__), 'data')
 FITS_FILE = os.path.join(ROOT_DIR, 'test.fits')
+ASDF_FILE = os.path.join(ROOT_DIR, 'collimator_fake.asdf')
 ASN_FILE = os.path.join(ROOT_DIR, 'association.json')
 
 
@@ -239,6 +242,17 @@ def test_dtype_match():
         dm.data = np.array([[1, 2, 3]], np.float32)
 
 
+def test_default_value_anyof_schema():
+    """Make sure default values are set properly when anyOf in schema"""
+    with ImageModel((100, 100)) as im:
+        val = im.meta.instrument.channel
+        assert val is None
+        val = im.meta.observation.date
+        assert val is None
+        val = im.meta.guidestar
+        assert val.instance == {}
+
+
 def test_multislit():
     with MultiSlitModel() as dm:
         dm.slits.append(dm.slits.item())
@@ -362,6 +376,27 @@ def test_initialize_arrays_with_arglist():
     assert np.array_equal(im.zeroframe, thirteen)
     assert np.array_equal(im.dq, bitz)
 
+def test_open_asdf_model():
+    # Open an empty asdf file, pass extra arguments
+
+    model = DataModel(init=None,
+                     ignore_version_mismatch=False,
+                     ignore_unrecognized_tag=True)
+
+    assert model._asdf._ignore_version_mismatch == False
+    assert model._asdf._ignore_unrecognized_tag == True
+    model.close()
+
+    # Open an existing asdf file
+
+    model = DataModel(ASDF_FILE,
+                     ignore_version_mismatch=False,
+                     ignore_unrecognized_tag=True)
+
+    assert model._asdf._ignore_version_mismatch == False
+    assert model._asdf._ignore_unrecognized_tag == True
+    model.close()
+
 def test_relsens():
     with ImageModel() as im:
         assert len(im.relsens.dtype) == 2
@@ -393,18 +428,20 @@ def test_image_with_extra_keyword_to_multislit():
 @pytest.fixture(scope="module")
 def container():
     warnings.simplefilter("ignore")
-    with ModelContainer(ASN_FILE, persist=True) as c:
-        for m in c:
-            m.meta.observation.program_number = '0001'
-            m.meta.observation.observation_number = '1'
-            m.meta.observation.visit_number = '1'
-            m.meta.observation.visit_group = '1'
-            m.meta.observation.sequence_id = '01'
-            m.meta.observation.activity_id = '1'
-            m.meta.observation.exposure_number = '1'
-            m.meta.instrument.name = 'NIRCAM'
-            m.meta.instrument.channel = 'SHORT'
-        yield c
+    asn_file_path, asn_file_name = op.split(ASN_FILE)
+    with pushdir(asn_file_path):
+        with ModelContainer(asn_file_name, persist=True) as c:
+            for m in c:
+                m.meta.observation.program_number = '0001'
+                m.meta.observation.observation_number = '1'
+                m.meta.observation.visit_number = '1'
+                m.meta.observation.visit_group = '1'
+                m.meta.observation.sequence_id = '01'
+                m.meta.observation.activity_id = '1'
+                m.meta.observation.exposure_number = '1'
+                m.meta.instrument.name = 'NIRCAM'
+                m.meta.instrument.channel = 'SHORT'
+            yield c
 
 
 def test_modelcontainer_iteration(container):

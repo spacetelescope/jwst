@@ -566,7 +566,7 @@ properties:
               NIS_AMI, NIS_DARK, NIS_EXTCAL, NIS_FOCUS, NIS_IMAGE, NIS_LAMP,
               NIS_SOSS, NIS_TACQ, NIS_TACONFIRM, NIS_WFSS,
               # NIRCam
-              NRC_CORON, NRC_DARK, NRC_FLAT, NRC_FOCUS, NRC_IMAGE, NRC_WFSS,
+              NRC_CORON, NRC_DARK, NRC_FLAT, NRC_FOCUS, NRC_GRISM, NRC_IMAGE, NRC_WFSS,
               NRC_LED, NRC_WFSC, NRC_TACONFIRM, NRC_TACQ, NRC_TSGRISM, NRC_TSIMAGE,
               # NIRSpec
               NRS_AUTOFLAT, NRS_AUTOWAVE, NRS_BRIGHTOBJ, NRS_CONFIRM, NRS_DARK,
@@ -1979,6 +1979,11 @@ properties:
             type: string
             fits_keyword: S_LINEAR
             blend_table: True
+          master_background:
+            title: Master Background Subtraction
+            type: string
+            fits_keyword: S_MSBSUB
+            blend_table: True
           mrs_imatch:
             title: MIRI MRS background matching
             type: string
@@ -2127,4 +2132,8 @@ properties:
                 channel:
                   title: Channel ID
                   type: string
+      master_background_file:
+        title: Master background file used
+        type: string
+        fits_keyword: MASTERBG
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

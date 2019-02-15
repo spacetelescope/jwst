@@ -30,22 +30,22 @@ class SimpleConstraintABC(abc.ABC):
 
     Parameters
     ----------
-    init: dict
+    init : dict
         dict where the key:value pairs define
         the following parameters
 
-    value: object or None
+    value : object or None
         Value that must be matched.
 
-    name: str or None
+    name : str or None
         Option name for constraint
 
-    **kwargs: key:value pairs
+    **kwargs : key:value pairs
         Other initialization parameters
 
     Attributes
     ----------
-    matched: bool
+    matched : bool
         Last call to `check_and_set`
     """
 
@@ -70,9 +70,9 @@ class SimpleConstraintABC(abc.ABC):
 
         Returns
         -------
-        success, reprocess: bool, [ProcessList[,...]]
+        success, reprocess : bool, [ProcessList[,...]]
             Returns 2-tuple of:
-            - success: True if check is successful.
+            - success : True if check is successful.
             - List of `ProcessList`.
         """
         self.matched = True
@@ -117,24 +117,24 @@ class SimpleConstraint(SimpleConstraintABC):
 
     Parameters
     ----------
-    init: dict
+    init : dict
         dict where the key:value pairs define
         the following parameters
 
-    value: object or None
+    value : object or None
         Value that must be matched.
         If None, any retrieved value will match.
 
-    sources: func(item) or None
+    sources : func(item) or None
         Function taking `item` as argument used to
         retrieve a value to check against.
         If None, the item itself is used as the value.
 
-    force_unique: bool
+    force_unique : bool
         If the constraint is satisfied, reset `value`
         to the value of the source.
 
-    test: function
+    test : function
         The test function for the constraint.
         Takes two arguments:
             - constraint
@@ -142,19 +142,19 @@ class SimpleConstraint(SimpleConstraintABC):
         Returns a boolean.
         Default is `SimpleConstraint.eq`
 
-    name: str or None
+    name : str or None
         Option name for constraint
 
-    reprocess_on_match: bool
+    reprocess_on_match : bool
         Reprocess the item if the constraint is satisfied.
 
-    reprocess_on_fail: bool
+    reprocess_on_fail : bool
         Reprocess the item if the constraint is not satisfied.
 
-    work_over: ProcessList.[BOTH, EXISTING, RULES]
+    work_over : ProcessList.[BOTH, EXISTING, RULES]
         The condition on which this constraint should operate.
 
-    reprocess_rules: [rule[,..]] or None
+    reprocess_rules : [rule[,..]] or None
         List of rules to be applied to.
         If None, calling function will determine the ruleset.
         If empty, [], all rules will be used.
@@ -242,7 +242,7 @@ class SimpleConstraint(SimpleConstraintABC):
 
         Returns
         -------
-        success: bool
+        success : bool
             If successful, a copy of the constraint
             is returned with modified value.
         """
@@ -279,54 +279,54 @@ class AttrConstraint(SimpleConstraintABC):
 
     Parameters
     ----------
-    sources: [str[,...]]
+    sources : [str[,...]]
         List of attributes to query
 
-    value: str, function or None
+    value : str, function or None
         The value to check for. If None and
         `force_unique`, any value in the first
         available source will become the value.
         If function, the function takes no arguments
         and returns a string.
 
-    evaluate: bool
+    evaluate : bool
         Evaluate the item's value before checking condition.
 
-    force_reprocess: ProcessList.state or False
+    force_reprocess : ProcessList.state or False
         Add item back onto the reprocess list using
         the specified `ProcessList` work over state.
 
-    force_unique: bool
+    force_unique : bool
         If the initial value of `value` is None,
         `value` will be set to the first source.
         Otherwise, this will be left as None.
 
-    invalid_values: [str[,...]]
+    invalid_values : [str[,...]]
         List of values that are invalid in an item.
         Will cause a non-match.
 
-    name: str or None
+    name : str or None
         Name of the constraint.
 
-    only_on_match: bool
+    only_on_match : bool
         If `force_reprocess`, only do the reprocess
         if the entire constraint is satisfied.
 
-    onlyif: function
+    onlyif : function
         Boolean function that takes `item` as argument.
         If True, the rest of the condition is checked. Otherwise
         return as a matched condition
 
-    required: bool
+    required : bool
         One of the sources must exist. Otherwise,
         return as a matched constraint.
 
     Attributes
     ----------
-    found_values: set(str[,...])
+    found_values : set(str[,...])
         Set of actual found values for this condition.
 
-    matched: bool
+    matched : bool
         Last result of `check_and_set`
 
     """
@@ -374,12 +374,12 @@ class AttrConstraint(SimpleConstraintABC):
 
         Parameters
         ----------
-        item: dict
+        item : dict
             The item to check on.
 
         Returns
         -------
-        bool, reprocess: AttrConstraint or False
+        bool, reprocess : AttrConstraint or False
             A 2-tuple consisting of:
             - bool indicating if a match or not.
             - List of `ProcessList`s that need to be checked again.
@@ -465,45 +465,45 @@ class Constraint:
 
     Parameters
     ----------
-    init: object or [object[,...]]
+    init : object or [object[,...]]
         A single object or list of objects where the
         objects are as follows.
         - SimpleConstraint or subclass
         - Constraint
 
-    reduce: function
+    reduce : function
         A reduction function with signature `x(iterable)`
         where `iterable` is the `components` list. Returns
         boolean indicating state of the components.
         Default value is `Constraint.all`
 
-    name: str or None
+    name : str or None
         Optional name for constraint.
 
-    reprocess_on_match: bool
+    reprocess_on_match : bool
         Reprocess the item if the constraint is satisfied.
 
-    reprocess_on_fail: bool
+    reprocess_on_fail : bool
         Reprocess the item if the constraint is not satisfied.
 
-    work_over: ProcessList.[BOTH, EXISTING, RULES]
+    work_over : ProcessList.[BOTH, EXISTING, RULES]
         The condition on which this constraint should operate.
 
-    reprocess_rules: [rule[,..]] or None
+    reprocess_rules : [rule[,..]] or None
         List of rules to be applied to.
         If None, calling function will determine the ruleset.
         If empty, [], all rules will be used.
 
     Attributes
     ----------
-    constraints: [Constraint[,...]]
+    constraints : [Constraint[,...]]
         `Constraint`s or `SimpleConstaint`s that
         make this constraint.
 
-    matched: bool
+    matched : bool
         Result of the last `check_and_set`
 
-    reduce: function
+    reduce : function
         A reduction function with signature `x(iterable)`
         where `iterable` is the `components` list. Returns
         boolean indicating state of the components.
@@ -729,10 +729,10 @@ def meets_conditions(value, conditions):
 
     Parameters
     ----------
-    values: str
+    values : str
         The value to be check with.
 
-    condition: regex,
+    condition : regex,
         Regular expressions to match against.
 
     Returns

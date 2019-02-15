@@ -101,10 +101,21 @@ class SkyMatchStep(Step):
         # set sky background value in each image's meta:
         for im in images:
             if isinstance(im, SkyImage):
-                self._set_sky_background(im.meta['imagemodel'], im.sky)
+                if im.is_sky_valid:
+                    self._set_sky_background(im.meta['image_model'], im.sky)
+                    im.meta['image_model'].meta.cal_step.skymatch = "COMPLETE"
+                else:
+                    im.meta['image_model'].meta.cal_step.skymatch = "SKIPPED"
             else:
                 for gim in im:
-                    self._set_sky_background(gim.meta['imagemodel'], gim.sky)
+                    if gim.is_sky_valid:
+                        self._set_sky_background(
+                            gim.meta['image_model'],
+                            gim.sky
+                        )
+                        gim.meta['image_model'].meta.cal_step.skymatch = "COMPLETE"
+                    else:
+                        gim.meta['image_model'].meta.cal_step.skymatch = "SKIPPED"
 
         return img
 
@@ -177,7 +188,7 @@ class SkyMatchStep(Step):
             id=image_model.meta.filename, # file name?
             skystat=self._skystat,
             stepsize=self.stepsize,
-            meta={'imagemodel': image_model}
+            meta={'image_model': image_model}
         )
 
         if self.subtract:

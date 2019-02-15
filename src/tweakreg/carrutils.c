@@ -12,7 +12,7 @@
 
 static PyObject *gl_Error;
 
-typedef int integer_t;
+typedef npy_intp integer_t;
 
 /* ==== Allocate a double *vector (vec of pointers) ======================
     Memory is Allocated!  See void free_Carray(double ** )                  */
@@ -82,10 +82,10 @@ arrxyzero(PyObject *obj, PyObject *args)
 
   dimensions[0] = (integer_t)(searchrad*2) + 1;
   dimensions[1] = (integer_t)(searchrad*2) + 1;
-  ozpmat = (PyArrayObject *)PyArray_FromDims(2, dimensions, NPY_DOUBLE);
-  if (!ozpmat) {
+  ozpmat = (PyArrayObject *)PyArray_SimpleNew(2, dimensions, NPY_DOUBLE);
+  if (!ozpmat)
     goto _exit;
-  }
+  PyArray_FILLWBYTE(ozpmat, 0);
   /* Allocate memory for return matrix */
   zpmat=pymatrix_to_Carrayptrs(ozpmat);
 

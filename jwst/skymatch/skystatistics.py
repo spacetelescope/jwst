@@ -13,8 +13,6 @@ from copy import deepcopy
 
 __all__ = ['SkyStats']
 __taskname__ = 'skystatistics'
-__version__ = '0.9.3'
-__vdate__ = '12-May-2016'
 __author__ = 'Mihai Cara'
 
 class SkyStats():

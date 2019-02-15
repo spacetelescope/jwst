@@ -67,7 +67,7 @@ def makeA(nh):
 
     To change the convention just reverse the signs of the 'ones'.
 
-    When tested against Alex'' NRM_Model.py 'piston_phase' text output
+    When tested against Alex'' nrm_model.py 'piston_phase' text output
     of fringe phases, these signs appear to be correct -
     anand@stsci.edu 12 Nov 2014
 
@@ -110,7 +110,7 @@ def fringes2pistons(fringephases, nholes):
     """
     Short Summary
     -------------
-    For NRM_Model.py to use to extract pistons out of fringes, given
+    For nrm_model.py to use to extract pistons out of fringes, given
     its hole bookkeeping, which apparently matches that of this module,
     and is the same as Noah Gamper's.
 

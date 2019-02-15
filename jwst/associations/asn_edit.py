@@ -19,13 +19,13 @@ def add(asn, filenames, exptype):
 
     Parameters
     ----------
-    asn: object
+    asn : object
         An association object
 
-    filenames: list of str
+    filenames : list of str
         The filenames to be added to the association
 
-    exptype: str
+    exptype : str
         The exposure type of the filenames to be added
 
 
@@ -58,7 +58,7 @@ def reader(association_file):
 
     Parameters
     ----------
-    association_file: str
+    association_file : str
         An association filename
 
 
@@ -95,13 +95,13 @@ def remove(asn, filenames, ignore):
 
     Parameters
     ----------
-    asn: object
+    asn : object
         An association object
 
-    filenames: list of str
+    filenames : list of str
         The filenames to be removed the association
 
-    ignore: bool
+    ignore : bool
         Ignore the filename suffix when matching filenames?
 
 
@@ -143,10 +143,10 @@ def writer(asn, output_file):
 
     Parameters
     ----------
-    asn: object
+    asn : object
         An association object
 
-    output_file: str
+    output_file : str
         The filename of the association
 
     Raises

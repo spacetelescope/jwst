@@ -1,27 +1,14 @@
-Reference File Types
-====================
-The default algorithm in the MIRI MRS stray-light correction step uses
-information contained in the meta data of the input image which maps each
-pixels to a slice or the region between the slices, also known as the slice
-gaps. This information was previously loaded from a reference file into the
-meta data by the assign_wcs step.  There is an option to use a more simplistic
-algorithm that uses STRAYMASK reference file.
+Reference Files
+===============
 
-.. include:: ../includes/standard_keywords.rst
+By default the ``straylight`` step does not use a reference file.
+It instead uses meta information added by the ``assign_wcs`` step that
+maps each pixel to an IFU slice number or the regions between slices
+within the 2-D slice image.
 
-.. include:: straymask_selection.rst
+If the step option ``method`` is set to "Nearest", a more simplistic
+algorithm is used to compute the correction, which requires the use of
+the ``STRAYMASK`` reference file. It contains a simple mask indicating
+which pixels lie within the inter-slice regions of the image.
 
-
-If --method = "Nearest" option is used then the MIRI MRS stray-light reference
-file is selected on the basis of INSTRUME, DETECTOR, and BAND values of the
-input science data set.
-
-MIRI MRS stray-light  Reference File Format
--------------------------------------------
-The STRAYMASK reference files are FITS files with and empty primary data array
-and one IMAGE extension named MASK. This IMAGE extension is a 2-D integer image
-mask file of size 1032 X 1024. The mask contains values of 1 for pixels that
-fall in the slice gaps and values of 0 for science pixels. The stray-light
-algorithm only uses pixels that fall in the slice gaps to determine the
-correction.
-
+.. include:: ../references_general/straymask_reffile.inc

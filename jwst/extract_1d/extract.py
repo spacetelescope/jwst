@@ -18,7 +18,7 @@ from . import spec_wcs
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-WFSS_EXPTYPES = ['NIS_WFSS', 'NRC_GRISM', 'NRC_WFSS']
+WFSS_EXPTYPES = ['NIS_WFSS', 'NRC_WFSS', 'NRC_GRISM', 'NRC_TSGRISM']
 """Exposure types to be regarded as wide-field slitless spectroscopy."""
 
 # These values are used to indicate whether the input reference file
@@ -458,10 +458,16 @@ def find_dispaxis(input_model, slit, spectral_order, extract_params):
             wl_10 = stuff[2]
         dwlx = wl_10 - wl_00
         dwly = wl_01 - wl_00
-        if (np.isnan(dwlx) or np.isnan(dwly) or
+        if (np.isnan(dwlx) or np.isnan(dwly) or dwlx == dwly or
             wl_00 == 0 or wl_01 == 0 or wl_10 == 0):
-                log.warning("wavelength from WCS is NaN or 0 "
-                            "within the bounding box")
+                if dwlx == dwly:
+                    log.warning("One-pixel offset gives dwlx = {}, dwly = {}"
+                                .format(dwlx, dwly))
+                else:
+                    log.warning("wavelength from WCS is NaN or 0 "
+                                "within the bounding box")
+                log.warning("    computing differences over "
+                            "the whole bounding box ...")
                 if input_model.meta.exposure.type in WFSS_EXPTYPES:
                     wl_wcs = np.zeros(shape, dtype=np.float64)
                     log.debug("Starting to compute wavelengths ...")
@@ -1744,17 +1750,20 @@ class ExtractModel(ExtractBase):
             ra and dec are the right ascension and declination respectively
             at the nominal center of the slit.
 
-        wavelength : ndarray, 1-D
+        wavelength : ndarray, 1-D, float64
             The wavelength in micrometers at each pixel.
 
         net : ndarray, 1-D
             The count rate (counts / s) minus the background at each pixel.
 
-        background : ndarray, 1-D
+        background : ndarray, 1-D, float64
             The background count rate that was subtracted from the total
             source count rate to get `net`.
 
-        dq : ndarray, 1-D, int32
+        npixels : ndarray, 1-D, float64
+            The number of pixels that were added together to get `net`.
+
+        dq : ndarray, 1-D, uint32
             The data quality array.
         """
 
@@ -1896,19 +1905,20 @@ class ExtractModel(ExtractBase):
             temp_wl[nan_mask] = 0.01            # because NaNs cause problems
 
         # src total flux, area, total weight
-        (net, background) = \
+        (net, background, npixels) = \
         extract1d.extract1d(image, temp_wl, disp_range,
                             self.p_src, self.p_bkg, self.independent_var,
                             self.smoothing_length, self.bkg_order,
                             weights=None)
         del temp_wl
 
-        dq = np.zeros(net.shape, dtype=np.int32)
+        dq = np.zeros(net.shape, dtype=np.uint32)
         if n_nan > 0:
-            (wavelength, net, background, dq) = \
-                nans_at_endpoints(wavelength, net, background, dq, verbose)
+            (wavelength, net, background, npixels, dq) = \
+                nans_at_endpoints(wavelength, net, background, npixels, dq,
+                                  verbose)
 
-        return (ra, dec, wavelength, net, background, dq)
+        return (ra, dec, wavelength, net, background, npixels, dq)
 
 
 class ImageExtractModel(ExtractBase):
@@ -2104,7 +2114,10 @@ class ImageExtractModel(ExtractBase):
             The background count rate that was subtracted from the total
             source count rate to get `net`.
 
-        dq : ndarray, 1-D, int32
+        npixels : ndarray, 1-D, float32
+            The number of pixels that were added together to get `net`.
+
+        dq : ndarray, 1-D, uint32
         """
 
         shape = data.shape
@@ -2127,6 +2140,10 @@ class ImageExtractModel(ExtractBase):
 
         # Extract the data.
         gross = (data * mask_target).sum(axis=axis, dtype=np.float)
+
+        # Compute the number of pixels that were added together to get gross.
+        temp = np.ones_like(data)
+        npixels = (temp * mask_target).sum(axis=axis, dtype=np.float)
 
         # Extract the background.
         if mask_bkg is not None:
@@ -2292,16 +2309,17 @@ class ImageExtractModel(ExtractBase):
                 wavelength = np.arange(shape[0], dtype=np.float)
             wavelength = wavelength[trim_slc]
 
-        dq = np.zeros(net.shape, dtype=np.int32)
+        dq = np.zeros(net.shape, dtype=np.uint32)
         nan_mask = np.isnan(wavelength)
         n_nan = nan_mask.sum(dtype=np.intp)
         if n_nan > 0:
             if verbose:
                 log.warning("%d NaNs in wavelength array", n_nan)
-            (wavelength, net, background, dq) = \
-                nans_at_endpoints(wavelength, net, background, dq, verbose)
+            (wavelength, net, background, npixels, dq) = \
+                nans_at_endpoints(wavelength, net, background, npixels, dq,
+                                  verbose)
 
-        return (ra, dec, wavelength, net, background, dq)
+        return (ra, dec, wavelength, net, background, npixels, dq)
 
 
     def match_shape(self, shape):
@@ -2421,6 +2439,13 @@ def interpolate_response(wavelength, relsens, verbose):
     if bad:
         raise ValueError("Found NaNs in RELSENS table.")
 
+    # np.interp requires that wl_relsens be increasing.
+    if wl_relsens[-1] < wl_relsens[0]:
+        if verbose:
+            log.warning("The wavelength column in RELSENS was decreasing.")
+        wl_relsens = wl_relsens[::-1].copy()
+        resp_relsens = resp_relsens[::-1].copy()
+
     # `r_factor` is the response, interpolated at the wavelengths in the
     # science data.  -2048 is a flag value, to check for extrapolation.
     r_factor = np.interp(wavelength, wl_relsens, resp_relsens, -2048., -2048.)
@@ -2479,6 +2504,9 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
         output_model.int_times = input_model.int_times.copy()
     output_model.update(input_model)
 
+    # This data type is used for creating an output table.
+    spec_dtype = datamodels.SpecModel().spec_table.dtype
+
     # This will be relevant if we're asked to extract a spectrum and the
     # spectral order is zero.  That's only OK if the disperser is a prism.
     prism_mode = is_prism(input_model)
@@ -2522,7 +2550,7 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
                 continue
 
             try:
-                (ra, dec, wavelength, net, background, dq,
+                (ra, dec, wavelength, net, background, npixels, dq,
                  prev_offset) = extract_one_slit(
                                         input_model, slit, -1,
                                         prev_offset, True, extract_params)
@@ -2546,10 +2574,10 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
             fl_error = np.ones_like(net)
             nerror = np.ones_like(net)
             berror = np.ones_like(net)
-            spec = datamodels.SpecModel()
             otab = np.array(list(zip(wavelength, flux, fl_error, dq,
-                                 net, nerror, background, berror)),
-                            dtype=spec.spec_table.dtype)
+                                     net, nerror, background, berror,
+                                     npixels)),
+                            dtype=spec_dtype)
             spec = datamodels.SpecModel(spec_table=otab)
             spec.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec, wavelength)
             spec.spec_table.columns['wavelength'].unit = 'um'
@@ -2605,7 +2633,7 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
                                     "determined, so skipping ...")
                         continue
                     try:
-                        (ra, dec, wavelength, net, background, dq,
+                        (ra, dec, wavelength, net, background, npixels, dq,
                          prev_offset) = extract_one_slit(
                                         input_model, slit, -1,
                                         prev_offset, True, extract_params)
@@ -2636,10 +2664,10 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
                 fl_error = np.ones_like(net)
                 nerror = np.ones_like(net)
                 berror = np.ones_like(net)
-                spec = datamodels.SpecModel()
                 otab = np.array(list(zip(wavelength, flux, fl_error, dq,
-                                     net, nerror, background, berror)),
-                                dtype=spec.spec_table.dtype)
+                                         net, nerror, background, berror,
+                                         npixels)),
+                                dtype=spec_dtype)
                 spec = datamodels.SpecModel(spec_table=otab)
                 spec.meta.wcs = spec_wcs.create_spectral_wcs(
                                         ra, dec, wavelength)
@@ -2711,7 +2739,7 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
                 for integ in range(input_model.data.shape[0]):
                     # Extract spectrum
                     try:
-                        (ra, dec, wavelength, net, background, dq,
+                        (ra, dec, wavelength, net, background, npixels, dq,
                          prev_offset) = extract_one_slit(
                                         input_model, slit, integ,
                                         prev_offset, verbose, extract_params)
@@ -2728,10 +2756,10 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
                     fl_error = np.ones_like(net)
                     nerror = np.ones_like(net)
                     berror = np.ones_like(net)
-                    spec = datamodels.SpecModel()
                     otab = np.array(list(zip(wavelength, flux, fl_error, dq,
-                                         net, nerror, background, berror)),
-                                    dtype=spec.spec_table.dtype)
+                                             net, nerror, background, berror,
+                                             npixels)),
+                                             dtype=spec_dtype)
                     spec = datamodels.SpecModel(spec_table=otab)
                     spec.meta.wcs = spec_wcs.create_spectral_wcs(
                                         ra, dec, wavelength)
@@ -2931,6 +2959,7 @@ def populate_time_keywords(input_model, output_model):
             row = k + offset
             spec = output_model.spec[n]             # n is incremented below
             spec.int_num = int_num[row]
+            spec.time_scale = "UTC"
             spec.start_utc = start_utc[row]
             spec.mid_utc = mid_utc[row]
             spec.end_utc = end_utc[row]
@@ -2975,7 +3004,7 @@ def is_prism(input_model):
     Extended summary
     ----------------
     The reason for this test is so we can skip spectral extraction if the
-    spectral order is zero and the exposure was not made using a prism.  
+    spectral order is zero and the exposure was not made using a prism.
     In this context, therefore, a grism is not considered to be a prism.
 
     Parameters
@@ -3097,17 +3126,20 @@ def extract_one_slit(input_model, slit, integ,
         ra and dec are the right ascension and declination respectively
         at the nominal center of the slit.
 
-    wavelength : ndarray, 1-D
+    wavelength : ndarray, 1-D, float64
         The wavelength in micrometers at each pixel.
 
-    net : ndarray, 1-D
+    net : ndarray, 1-D, float64
         The count rate (counts / s) minus the background at each pixel.
 
-    background : ndarray, 1-D
+    background : ndarray, 1-D, float64
         The background count rate that was subtracted from the total
         source count rate to get `net`.
 
-    dq : ndarray, 1-D, int32
+    npixels : ndarray, 1-D, float64
+        The number of pixels that were added together to get `net`.
+
+    dq : ndarray, 1-D, uint32
         The data quality array.
 
     offset : float
@@ -3179,10 +3211,10 @@ def extract_one_slit(input_model, slit, integ,
         extract_model.log_extraction_parameters()
 
     extract_model.assign_polynomial_limits(verbose)
-    (ra, dec, wavelength, net, background, dq) = \
+    (ra, dec, wavelength, net, background, npixels, dq) = \
                 extract_model.extract(data, wl_array, verbose)
 
-    return (ra, dec, wavelength, net, background, dq, offset)
+    return (ra, dec, wavelength, net, background, npixels, dq, offset)
 
 
 def replace_bad_values(data, input_dq, fill=0.):
@@ -3218,7 +3250,7 @@ def replace_bad_values(data, input_dq, fill=0.):
     else:
         return data
 
-def nans_at_endpoints(wavelength, net, background, dq, verbose):
+def nans_at_endpoints(wavelength, net, background, npixels, dq, verbose):
     """Flag NaNs in the wavelength array.
 
     Extended summary
@@ -3240,6 +3272,9 @@ def nans_at_endpoints(wavelength, net, background, dq, verbose):
     background : ndarray
         Array of background values that were subtracted to get `net`.
 
+    npixels : ndarray, float32
+        The number of pixels that were added together to get `net`.
+
     dq : ndarray
         Data quality array.
 
@@ -3248,15 +3283,16 @@ def nans_at_endpoints(wavelength, net, background, dq, verbose):
 
     Returns
     -------
-    wavelength, net, background, dq : ndarray
+    wavelength, net, background, npixels, dq : ndarray
         The returned `dq` array may have NaNs flagged with DO_NOT_USE,
-        and all four arrays may have been trimmed at either or both ends.
+        and all five arrays may have been trimmed at either or both ends.
     """
 
     # The input arrays will not be modified in-place.
     new_wl = wavelength.copy()
     new_net = net.copy()
     new_bkg = background.copy()
+    new_npixels = npixels.copy()
     new_dq = dq.copy()
     nelem = wavelength.shape[0]
 
@@ -3276,8 +3312,9 @@ def nans_at_endpoints(wavelength, net, background, dq, verbose):
             new_wl = new_wl[slc]
             new_net = new_net[slc]
             new_bkg = new_bkg[slc]
+            new_npixels = new_npixels[slc]
             new_dq = new_dq[slc]
     else:
         new_dq |= dqflags.pixel['DO_NOT_USE']
 
-    return (new_wl, new_net, new_bkg, new_dq)
+    return (new_wl, new_net, new_bkg, new_npixels, new_dq)

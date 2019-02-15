@@ -27,7 +27,7 @@ class TestNIRISSSteps(BaseJWSTTestSteps):
                       step_class=AmiAnalyzeStep,
                       step_pars=dict(oversample=3, rotation=1.49),
                       output_truth=('ami_analyze_ref_output_16.fits',
-                                    dict(rtol = 0.001)),
+                                    dict(rtol = 0.00001)),
                       output_hdus=['primary','fit','resid','closure_amp',
                                          'closure_pha','fringe_amp','fringe_pha',
                                          'pupil_pha','solns'],

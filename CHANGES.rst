@@ -1,3 +1,279 @@
+0.13.0 (2019-02-15)
+===================
+
+ami
+---
+
+assign_wcs
+----------
+
+ - Removed ``transform_bbox_from_datamodels`` in favor of
+   ``transform_bbox_from_shape`` which now works by using last two dimensions
+   in the ``shape``. [#3040]
+
+ - Added velocity correction model to the WFSS and TSGRISM wcs pipelines. [#2801]
+
+ - Refactored how the pipeline handles subarrays in the WCS. Fixed a bug
+   where the bounding box was overwritten in full frame mode. [#2980]
+
+ - Rename several functions dealing with calculating bounding boxes for clarity. [#3014]
+
+ - The bounding box of the MIRI LRS WCS is now in "image" coordinates, not full frame. [#3063]
+
+ - FITS WCS keywords are written out only if the observation is one of the IMAGING_MODES. [#3066]
+
+associations
+------------
+
+- Updated docstrings and written documentation. [#2856, #2862]
+
+background
+----------
+
+barshadow
+---------
+
+
+combine_1d
+----------
+
+coron
+-----
+
+- Updated the `stack_refs` routine to update the output data model with metadata
+  from the first input model. [#3111]
+
+csv_tools
+---------
+
+cube_build
+----------
+
+cube_skymatch
+-------------
+
+dark_current
+------------
+
+datamodels
+----------
+
+dq_init
+-------
+
+emission
+--------
+
+engdblog
+--------
+
+exp_to_source
+-------------
+
+extract_1d
+----------
+- Updated to recognize NRC_TSGRISM as WFSS data.  SlitDataModel schema now
+  specifies that the wavelength attribute should be 2-D, with a default
+  value of 0. [#2911]
+
+- Reverse order of RELSENS wavelength and response if the wavelengths are
+  not increasing. [#3005]
+
+- Add a test for constant wavelengths (or constant slope). [#3032]
+
+- Fix issue regarding mixing of the syntax for Boolean arrays and for
+  integer index arrays. [#3045]
+
+- Changed the names of time-related keywords for extracted spectra. [#3058]
+
+- A new NPIXELS column has been added to the output table. [#3108]
+
+extract_2d
+----------
+- Moved the update of meta information to the MultiSlitModel instead of the
+  SlitModels that compose it. [#2988]
+
+firstframe
+----------
+
+fits_generator
+--------------
+
+flatfield
+---------
+- Updated to not extrapolate for wavelengths that are out of bounds,
+  either due to the WCS, or the wavelengths for a flat-field image cube,
+  or the wavelengths for the fast-variation component. [#2775]
+
+fringe
+------
+
+gain_scale
+----------
+
+group_scale
+-----------
+
+guider_cds
+----------
+
+imprint
+-------
+
+ipc
+---
+- Updated the docstrings [#2822]
+
+jump
+----
+
+jwpsf
+-----
+
+lastframe
+---------
+
+lib
+---
+
+- ``set_telescope_pointing`` now populates WCS keywords from the SIAF file. [#3066]
+
+linearity
+---------
+
+master_background
+-----------------
+
+- Implement the basic step scaffolding for `MasterBackgroundStep`. [#3090]
+
+- Record user-supplied master background in MSTRBKGD keyword [#3101]
+
+- Add step documentation for master background subtraction [#3102]
+
+- Make master background step actually work [#3110]
+
+model_blender
+-------------
+
+
+mrs_imatch
+----------
+
+msaflagopen
+-----------
+
+
+outlier_detection
+-----------------
+
+pathloss
+--------
+
+persistence
+-----------
+
+photom
+------
+
+pipeline
+--------
+
+ramp_fitting
+------------
+- Ramp-fitting returning zero for all background pixels; Issue #2848, JP-453.
+
+- MIRI ramps with jumps flagged at group 2 result in slopes of 0 in the rate
+  image; Issue #2233,
+
+- Processing pixels in ramp fitting in which all groups are saturated; Issue
+  #2885.
+
+- Ramp Fit fails when only two groups are in a segment after cosmic ray hits.;
+  Issue #2832, JP-450.
+
+- Fixed a bug in which the keywords from the input were not included in the OPT
+  output header.
+
+- Simplified and clarified classification of segment types based on DQ flags.
+
+- Added handling of ramps ending in 2 saturated groups.
+
+- Fix units for Read Noise Variance in ramp_fit (PR #2767). This may needed to
+  revised based on Mike Regan's comment when he closed this PR.
+
+- Added check to handle integration-specific variances for too short segments.
+
+- More robust handling of ramps flagged as DO_NOT_USE (PR #3016)
+
+refpix
+------
+
+- Added a description of processing for IRS2 readout mode data. [#2889]
+- Fixed a mistake in the time to read one pixel. [#2923]
+
+resample
+--------
+
+reset
+-----
+
+rscd
+----
+
+saturation
+----------
+
+skymatch
+--------
+
+source_catalog
+--------------
+
+srctype
+-------
+
+scripts
+-------
+
+stpipe
+------
+
+- Add `Step.record_step_status()` method for use by this step (and any other
+  pipeline or pipeline step) [#3110]
+
+straylight
+----------
+
+superbias
+---------
+
+timeconversion
+--------------
+- Updated the docstrings [#3020]
+
+transforms
+----------
+
+tso_photometry
+--------------
+
+tweakreg
+--------
+
+- Use a more numerically stable ``numpy.linalg.inv`` instead of own matrix
+  inversion. [#3033]
+
+- Bug fix: Use integer division in Python 3. [#3072]
+
+wfs_combine
+-----------
+
+white_light
+-----------
+
+wiimatch
+--------
+
 0.12.3 (2019-01-10)
 ===================
 
@@ -7,7 +283,6 @@ scripts
 - ``set_telescope_pointing.py``: Update method of choosing pointing parameters. [#2900, #3008, #3022]
 
 - ``set_telescope_pointing.py``: Allow undefined SIAF. [#3002, #3006]
-
 
 0.12.2 (2018-11-15)
 ===================
@@ -21,6 +296,7 @@ wfs_combine
 -----------
 
 - Renamed the configuration from `wfs_combine` to `calwebb_wfs-image3`. [#2831]
+
 
 0.12.1 (2018-10-30)
 ===================
@@ -133,6 +409,8 @@ datamodels
 
 - Updated allowed SUBARRAY names for FGS and NIRCam [#2667]
 
+- Fixed bug in default value when schema contains combiner [#2668]
+
 - Updates for python 2 to 3 conversion [#2678]
 
 - Updated EXP_TYPE allowed values to include "MIR_DARKALL", "MIR_DARKIMG",
@@ -148,6 +426,7 @@ documentation
 -------------
 
 - Clarifications of input and output file naming. [#2727]
+
 
 dq_init
 -------
@@ -314,6 +593,8 @@ saturation
 skymatch
 --------
 
+- Made skymatch to not fail in 'match' mode when images do not overlap [#2803]
+
 source_catalog
 --------------
 
@@ -363,6 +644,13 @@ tweakreg
 - Made the logic for computations of footprints more reliable for the
   case of 1 or 2 sources in a catalog. [#2797]
 
+
+- Added two new parameters: ``brightest`` to keep the top ``brightest``
+  (based on the flux) objects in the object catalog *after all other
+  filtering has been applied* and ``peakmax`` to exclude sources with
+  peak pixel values larger or equal to ``peakmax``. ``brightest`` can be used
+  to eliminate false detections and ``peakmax`` can be used to filter out
+  saturated sources (instrument-specific value).[#2706]
 
 wfs_combine
 -----------

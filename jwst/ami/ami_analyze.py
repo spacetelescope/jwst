@@ -7,7 +7,7 @@ import warnings
 import numpy as np
 from .. import datamodels
 
-from .NRM_Model import NRM_Model
+from .nrm_model import NrmModel
 from . import webb_psf
 from . import leastsqnrm
 
@@ -61,7 +61,7 @@ def apply_LG(input_model, filter_model, oversample, rotation):
     rotation = rotation * np.pi / 180.0
 
     # Instantiate the NRM model object
-    jwnrm = NRM_Model(mask='JWST', holeshape='hex',
+    jwnrm = NrmModel(mask='JWST', holeshape='hex',
                 pixscale=leastsqnrm.mas2rad(63.52554816773347),
                 rotate=rotation, rotlist_deg=rots_deg,
                 scallist=relpixscales)
@@ -74,6 +74,7 @@ def apply_LG(input_model, filter_model, oversample, rotation):
     # Now fit the data in the science exposure
     # (pixguess is a guess at the pixel scale of the data)
     #  produces a 19x19 image of the fit
+    input_data = input_model.data.astype(np.float64)
 
     subarray = input_model.meta.subarray.name.upper()
     if subarray == 'FULL':
@@ -86,10 +87,9 @@ def apply_LG(input_model, filter_model, oversample, rotation):
         xstop = xstart + xsize - 1
         ystop = ystart + ysize - 1
 
-        jwnrm.fit_image(input_model.data[ ystart-1:ystop, xstart-1:xstop ],
-                        pixguess=jwnrm.pixel)
+        jwnrm.fit_image(input_data[ystart-1:ystop, xstart-1:xstop], pixguess=jwnrm.pixel)
     else:
-        jwnrm.fit_image(input_model.data, pixguess=jwnrm.pixel)
+        jwnrm.fit_image(input_data, pixguess=jwnrm.pixel)
 
     # Construct model image from fitted PSF
     jwnrm.create_modelpsf()

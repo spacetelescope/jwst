@@ -1,13 +1,27 @@
+from glob import glob as _sys_glob
+import os.path as op
+import os
+import sys
 import pytest
+import requests
 
 from ci_watson.artifactory_helpers import (
+    BigdataError,
     check_url,
-    get_bigdata_root,
     get_bigdata,
-    compare_outputs,
+    get_bigdata_root,
 )
+from .compare_outputs import compare_outputs
 
 from jwst.associations import load_asn
+
+__all__ = [
+    'BaseJWSTTest',
+]
+
+# Define location of default Artifactory API key, for Jenkins use only
+ARTIFACTORY_API_KEY_FILE = '/eng/ssb2/keys/svc_rodata.key'
+
 
 @pytest.mark.usefixtures('_jail')
 @pytest.mark.bigdata
@@ -69,11 +83,50 @@ class BaseJWSTTest:
 
         input_path = [self.input_repo, self.env, self.input_loc, *self.ref_loc]
 
-        return compare_outputs(outputs, raise_error=True,
+        return compare_outputs(outputs,
                                input_path=input_path,
                                docopy=self.docopy,
                                results_root=self.results_root,
                                **compare_kws)
+
+    def data_glob(self, *pathargs, glob='*'):
+        """Retrieve file list matching glob
+
+        Parameters
+        ----------
+        pathargs: (str[, ...])
+            Path components
+
+        glob: str
+            The file name match criterion
+
+        Returns
+        -------
+        file_paths: [str[, ...]]
+            File paths that match the glob criterion.
+            Note that the TEST_BIGDATA and `repo_path`
+            roots are removed so these results can be fed
+            back into `get_data()`
+        """
+
+        # Get full path and proceed depending on whether
+        # is a local path or URL.
+        root = op.join(get_bigdata_root(), *self.repo_path)
+        path = op.join(root, *pathargs)
+        if op.exists(path):
+            file_paths = _data_glob_local(path, glob)
+        elif check_url(path):
+            file_paths = _data_glob_url(path, glob)
+        else:
+            raise BigdataError('Path cannot be found: {}'.format(path))
+
+        # Remove the root from the paths
+        root_len = len(root) + 1  # +1 to account for the folder delimiter.
+        file_paths = [
+            file_path[root_len:]
+            for file_path in file_paths
+        ]
+        return file_paths
 
 
 # Pytest function to support the parameterization of BaseJWSTTestSteps
@@ -163,3 +216,63 @@ def raw_from_asn(asn_file):
             members.append(member['expname'])
 
     return members
+
+
+def _data_glob_local(path, glob='*'):
+    """Perform a glob on the local path
+
+    Parameters
+    ----------
+    path: File path-like object
+        The path to check.
+
+    glob: str
+        The file name match criterion
+
+    Returns
+    -------
+    file_paths: [str[, ...]]
+        Full file paths that match the glob criterion
+    """
+    full_glob = op.join(path, glob)
+    return _sys_glob(full_glob)
+
+
+def _data_glob_url(url, glob='*'):
+    """
+    Parameters
+    ----------
+    url: str
+        The URL to check
+
+    glob: str
+        The file name match criterion
+
+    Returns
+    -------
+    url_paths: [str[, ...]]
+        Full URLS that match the glob criterion
+    """
+    try:
+        envkey = os.environ['API_KEY_FILE']
+    except KeyError:
+        envkey = ARTIFACTORY_API_KEY_FILE
+
+    try:
+        with open(envkey) as fp:
+            headers = {'X-JFrog-Art-Api': fp.readline().strip()}
+    except (PermissionError, FileNotFoundError):
+        print("Warning: Anonymous Artifactory search requests are limited to "
+            "1000 results. Use an API key and define API_KEY_FILE environment "
+            "variable to get full search results.", file=sys.stderr)
+        headers = None
+
+    search_url = op.join(get_bigdata_root(), 'api/search/artifact')
+    # Pick out "jwst-pipeline", the repo name
+    repo = url.split('/')[4]
+    params = {'name': glob, 'repos': repo}
+    with requests.get(search_url, params=params, headers=headers) as r:
+        url_paths = [a['uri'].replace('api/storage/', '') for a in r.json()['results']]
+
+    return url_paths
+

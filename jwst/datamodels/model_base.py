@@ -15,6 +15,7 @@ from astropy.io import fits
 from astropy.time import Time
 from astropy.wcs import WCS
 
+import asdf
 from asdf import AsdfFile
 from asdf import yamlutil
 from asdf import schema as asdf_schema
@@ -74,8 +75,10 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         strict_validation: if true, an schema validation errors will generate
             an excption. If false, they will generate a warning.
+
+        kwargs: Aadditional arguments passed to lower level functions
         """
-        # Set the extensions
+        # Set attributes used to hold information for asdf
         self._extensions = extensions
 
         # Override value of validation parameters
@@ -115,17 +118,19 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         is_array = False
         is_shape = False
         shape = None
-        # Set threshold size for inlining data arrays to 0 by default
-        asdf_kwargs = dict(inline_threshold=kwargs.pop('inline_threshold', 0))
 
         if init is None:
-            asdf = AsdfFile(extensions=extensions, **asdf_kwargs)
+            asdffile = self.open_asdf(init=None, extensions=self._extensions,
+                                  **kwargs)
 
         elif isinstance(init, dict):
-            asdf = AsdfFile(init, extensions=self._extensions, **asdf_kwargs)
+            asdffile = self.open_asdf(init=init, extensions=self._extensions,
+                                  **kwargs)
 
         elif isinstance(init, np.ndarray):
-            asdf = AsdfFile(extensions=self._extensions, **asdf_kwargs)
+            asdffile = self.open_asdf(init=None, extensions=self._extensions,
+                                  **kwargs)
+
             shape = init.shape
             is_array = True
 
@@ -135,20 +140,22 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                     raise ValueError("shape must be a tuple of ints")
 
             shape = init
-            asdf = AsdfFile(**asdf_kwargs)
             is_shape = True
+            asdffile = self.open_asdf(init=None, extensions=self._extensions,
+                                  **kwargs)
 
         elif isinstance(init, DataModel):
+            asdffile = None
             self.clone(self, init)
             if not isinstance(init, self.__class__):
                 self.validate()
             return
 
         elif isinstance(init, AsdfFile):
-            asdf = init
+            asdffile = init
 
         elif isinstance(init, fits.HDUList):
-            asdf = fits_support.from_fits(init, self._schema,
+            asdffile = fits_support.from_fits(init, self._schema,
                                           self._extensions, self._ctx)
 
         elif isinstance(init, (str, bytes)):
@@ -158,13 +165,16 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
             if file_type == "fits":
                 hdulist = fits.open(init)
-                asdf = fits_support.from_fits(hdulist, self._schema,
-                                              self._extensions, self._ctx)
-
+                asdffile = fits_support.from_fits(hdulist,
+                                              self._schema,
+                                              self._extensions,
+                                              self._ctx,
+                                              **kwargs)
                 self._files_to_close.append(hdulist)
 
             elif file_type == "asdf":
-                asdf = AsdfFile.open(init, extensions=self._extensions)
+                asdffile = self.open_asdf(init=init, extensions=self._extensions,
+                                      **kwargs)
 
             else:
                 # TODO handle json files as well
@@ -177,8 +187,8 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         # Initialize object fields as determined from the code above
         self._shape = shape
-        self._instance = asdf.tree
-        self._asdf = asdf
+        self._instance = asdffile.tree
+        self._asdf = asdffile
 
         # Initalize class dependent hidden fields
         self._no_asdf_extension = False
@@ -300,11 +310,11 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         return asdf_file_resolver
 
     @staticmethod
-    def clone(target, source, deepcopy=False, memo=None, inline_threshold=0):
+    def clone(target, source, deepcopy=False, memo=None):
         if deepcopy:
             instance = copy.deepcopy(source._instance, memo=memo)
-            target._asdf = AsdfFile(instance, extensions=source._extensions,
-                                    inline_threshold=inline_threshold)
+            target._asdf = AsdfFile(instance,
+                                    extensions=source._extensions)
             target._instance = instance
             target._iscopy = source._iscopy
         else:
@@ -349,6 +359,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
             # Get the value pointed at by the path to the node,
             # or None in case there is no entry for the node
+
             node = ctx
             for attr in path:
                 node = getattr(node, attr)
@@ -494,8 +505,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             path_head = dir_path
         output_path = os.path.join(path_head, path_tail)
 
-        self.validate_required_fields()
-
         # TODO: Support gzip-compressed fits
         if ext == '.fits':
             # TODO: remove 'clobber' check once depreciated fully in astropy
@@ -509,8 +518,28 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         return output_path
 
+    @staticmethod
+    def open_asdf(init=None, extensions=None,
+                  ignore_version_mismatch=True,
+                  ignore_unrecognized_tag=False,
+                  **kwargs):
+        """
+        Open an asdf object from a filename or create a new asdf object
+        """
+        if isinstance(init, str):
+            asdffile = asdf.open(init, extensions=extensions,
+                                 ignore_version_mismatch=ignore_version_mismatch,
+                                 ignore_unrecognized_tag=ignore_unrecognized_tag)
+
+        else:
+            asdffile = AsdfFile(init, extensions=extensions,
+                            ignore_version_mismatch=ignore_version_mismatch,
+                            ignore_unrecognized_tag=ignore_unrecognized_tag
+                            )
+        return asdffile
+
     @classmethod
-    def from_asdf(cls, init, schema=None):
+    def from_asdf(cls, init, schema=None, extensions=None, **kwargs):
         """
         Load a data model from a ASDF file.
 
@@ -521,15 +550,19 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             - readable file object: Initialize from the given file object
             - asdf.AsdfFile: Initialize from the given
               `~asdf.AsdfFile`.
-
         schema :
             Same as for `__init__`
+        extensions :
+            Same as for `__init__`
+        kwargs:
+            Aadditional arguments passed to lower level functions
 
         Returns
         -------
         model : DataModel instance
         """
-        return cls(init, schema=schema)
+        return cls(init, schema=schema, extensions=extensions, **kwargs)
+
 
     def to_asdf(self, init, *args, **kwargs):
         """
@@ -544,13 +577,12 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             `asdf.AsdfFile.write_to`.
         """
         self.on_save(init)
-
-        inline_threshold = kwargs.pop('inline_threshold', 0)
-        AsdfFile(self._instance, extensions=self._extensions,
-                 inline_threshold=inline_threshold).write_to(init, *args, **kwargs)
+        asdffile = self.open_asdf(self._instance, extensions=self._extensions,
+                              **kwargs)
+        asdffile.write_to(init, *args, **kwargs)
 
     @classmethod
-    def from_fits(cls, init, schema=None):
+    def from_fits(cls, init, schema=None, **kwargs):
         """
         Load a model from a FITS file.
 
@@ -565,11 +597,14 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         schema :
             Same as for `__init__`
 
+        kwargs:
+            Aadditional arguments passed to lower level functions
+
         Returns
         -------
         model : DataModel instance
         """
-        return cls(init, schema=schema)
+        return cls(init, schema=schema, **kwargs)
 
     def to_fits(self, init, *args, **kwargs):
         """

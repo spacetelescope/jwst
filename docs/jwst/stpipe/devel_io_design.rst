@@ -96,16 +96,17 @@ the result will be saved in a file called::
 Similarly, the same code can be used in a Python script or interactive
 environment as follows::
 
+.. doctest_skip::
+
+  >>> import jwst
   >>> input = jwst.datamodels.open('input_data.fits')
   >>> result = MyStep.call(input)
-
       # `result` contains the resulting data
       # which can then be used by further `Steps`'s or
       # other functions.
       #
       # when done, the data can be saved with the `DataModel.save`
       # method
-
   >>> result.save('my_final_results.fits')
 
 
@@ -221,7 +222,7 @@ A `Step`'s suffix is defined in a couple of different ways:
 
     - By the `Step.name` attribute. This is the default.
     - By the `suffix` configuration parameter.
-    - Explicitly in the code. Often this is done in `Pipeline`s where
+    - Explicitly in the code. Often this is done in ``Pipelines`` where
       a single pipeline creates numerous different output files.
 
 .. _basename_determination:
@@ -271,8 +272,8 @@ Also, for `output_file`, there is another option,
 Basenames, Associations, and Stage 3 Pipelines
 ``````````````````````````````````````````````
 
-Stage 3 pipelines, such as :ref:`calwebb_image3<stage3-imaging-flow>`
-or :ref:`calwebb_spec3<stage3-spectroscopic-flow>`, take associations
+Stage 3 pipelines, such as :ref:`calwebb_image3<calwebb_image3>`
+or :ref:`calwebb_spec3<calwebb_spec3>`, take associations
 as their primary input. In general, the association defines what the
 output basename should be. A typical pattern used to handle
 associations is::

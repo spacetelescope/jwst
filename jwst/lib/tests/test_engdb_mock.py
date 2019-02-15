@@ -5,6 +5,7 @@ import os
 import pytest
 import requests
 from tempfile import TemporaryDirectory
+import warnings
 
 from astropy.time import Time
 
@@ -125,6 +126,9 @@ def test_cache_end_data(db_cache, engdb):
     # We only check counts because the actual data may be different.
     assert data_short['Count'] == live_data_short['Count']
 
+    # Filter ERFA warnings for times far into the future, LATE_STARTTIME and
+    # LATE_ENDTIME.  We don't know leap seconds between now and 2034.
+    warnings.filterwarnings('ignore', message='ERFA function ')
     # Now for post data
     data_short = db_cache.fetch_data(
         GOOD_MNEMONIC,

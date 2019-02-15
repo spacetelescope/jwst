@@ -827,7 +827,7 @@ class NirissSOSSModel(Model):
         # So, we are going to just take the 0'th element and use that as the index.
         try:
             order_number = int(spectral_order[0])
-        except Exception as e:
+        except Exception:
             raise ValueError('Spectral order is not between 1 and 3, {}'.format(spectral_order))
 
         return self.models[order_number](x, y)

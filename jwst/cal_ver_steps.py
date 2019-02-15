@@ -15,8 +15,7 @@ from . import steps  # noqa: F401
 from . import __name__ as jwst_pkg_name
 from . import __file__ as jwst_pkg_file
 
-__version__ = "0.9.3"
-
+__version__ = version.__version__
 STDOUT = sys.stdout
 
 class StepVersions(object):
@@ -43,7 +42,7 @@ class StepVersions(object):
         """
         # Initialize output reference file information based on user input
         descrip = pars.get('pars', "JWST calibration processing step version reference file")
-        history = pars.get('history', "Created by cal_ver_steps version {}".format(__version__))
+        history = pars.get('history', "Created by jwst version {}".format(__version__))
         self.verbose = pars.get('verbose', False)
 
 #        useafter = pars.get('useafter', None)

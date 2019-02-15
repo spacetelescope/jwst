@@ -230,9 +230,9 @@ specify groups of values for which a file is equally applicable.
 In this case the file *jwst_nirspec_pathloss_0001.fits* can be used to
 calibrate either NRS_FIXEDSLIT or NRS_BRIGHTOBJ.
 
-Or'ed parameter combinations shown in rmaps are almost identical to the or'ed
-parameter combinations taken from P_ pattern keywords; the only difference is
-that rmaps do not specify the trailing or-bar required for P_ keyword values.
+``Or'ed`` parameter combinations shown in rmaps are almost identical to the or'ed
+parameter combinations taken from ``P\_`` pattern keywords; the only difference is
+that rmaps do not specify the trailing or-bar required for ``P\_`` keyword values.
 
 If a parameter combination maps to the value N/A,  then the reference type is
 not applicable for that combination and CRDS returns the value N/A instead of
@@ -294,7 +294,7 @@ the file to its corresponding .rmap, i.e. each reference defines the science
 data parameters for which it is *initially* applicable.
 
 When creating reference files,  you will need to define a value for every
-CRDS matching parameter and/or define a pattern using the P_ version of the
+CRDS matching parameter and/or define a pattern using the ``P_`` version of the
 matching parameter.
 
 When CRDS adds a reference file to a .rmap, it uses literal matching between

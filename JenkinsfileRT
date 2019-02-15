@@ -5,7 +5,7 @@ def test_env = [
     "HOME=./",
     "TEST_BIGDATA=https://bytesalad.stsci.edu/artifactory",
     "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
-    "CRDS_CONTEXT=jwst_0495.pmap",
+    "CRDS_CONTEXT=jwst-edit",
 ]
 
 // Pip related setup
@@ -18,7 +18,9 @@ def PIP_TEST_DEPS = "requests_mock ci_watson"
 def PYTEST_BASETEMP = "test_outputs"
 def PYTEST = "pytest \
               -r s \
+              -v \
               --bigdata \
+              --slow \
               --basetemp=${PYTEST_BASETEMP} \
               --junit-xml=results.xml"
 
@@ -38,20 +40,17 @@ bc.conda_channels = ['http://ssb.stsci.edu/astroconda-dev']
 bc.conda_packages = ['asdf',
                      'astropy',
                      'crds',
-                     'dask',
                      'drizzle',
                      'flake8',
                      'gwcs',
                      'jsonschema',
                      'jplephem',
                      'matplotlib',
-                     'namedlist',
-                     'numpy=1.15.2',
+                     'numpy',
                      'photutils',
                      'python=3.6',
-                     'pytest=3.8.2',
+                     'pytest',
                      'scipy',
-                     'six',
                      'spherical-geometry',
                      'stsci.image',
                      'stsci.imagestats',

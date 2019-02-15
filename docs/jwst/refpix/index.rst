@@ -1,3 +1,5 @@
+.. _refpix_step:
+
 ==========================
 Reference Pixel Correction
 ==========================

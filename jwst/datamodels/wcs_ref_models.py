@@ -362,7 +362,7 @@ class RegionsModel(ReferenceFileModel):
     def validate(self):
         super(RegionsModel, self).validate()
         try:
-            assert isinstance(self.regions.copy(), np.ndarray)
+            assert isinstance(self.regions, np.ndarray)
             assert self.meta.instrument.name == "MIRI"
             assert self.meta.exposure.type == "MIR_MRS"
             assert self.meta.instrument.channel in ("12", "34", "1", "2", "3", "4")
@@ -481,15 +481,16 @@ class IFUPostModel(ReferenceFileModel):
     init : str
         A file name.
     slice_models : dict
-        A dictionary with slice transforms with the following entries:
+        A dictionary with slice transforms with the following entries
         {"slice_N": {'linear': astropy.modeling.Model,
-                     'xpoly': astropy.modeling.Model,
-                     'xpoly_distortion': astropy.modeling.Model,
-                     'ypoly': astropy.modeling.Model,
-                     'ypoly_distortion': astropy.modeling.Model,
-                     }
-        }
+        ...         'xpoly': astropy.modeling.Model,
+        ...         'xpoly_distortion': astropy.modeling.Model,
+        ...         'ypoly': astropy.modeling.Model,
+        ...         'ypoly_distortion': astropy.modeling.Model,
+        ...         }}
+
     """
+
     schema_url = "ifupost.schema.yaml"
     reftype = "ifupost"
 

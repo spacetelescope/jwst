@@ -14,7 +14,7 @@ allOf:
       - name: ERROR
         datatype: float64
       - name: DQ
-        datatype: int32
+        datatype: uint32
       - name: NET
         datatype: float64
       - name: NERROR
@@ -22,5 +22,7 @@ allOf:
       - name: BACKGROUND
         datatype: float64
       - name: BERROR
+        datatype: float64
+      - name: NPIXELS
         datatype: float64
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

@@ -98,15 +98,6 @@ class BasePoolRule():
                                 ppars.path + ': Suffix {} not valid'.format(match.groupdict()['suffix'])
 
 
-@pytest.fixture(scope='session')
-def full_pool_rules(request):
-    pool_fname = t_path('data/mega_pool.csv')
-    pool = AssociationPool.read(pool_fname)
-    rules = AssociationRegistry()
-
-    return (pool, rules, pool_fname)
-
-
 def make_megapool():
     """Combine the individual test pools into one
 

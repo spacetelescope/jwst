@@ -35,7 +35,7 @@ WCS reference file information per EXP_TYPE
 :NRC_WFSS, NRC_TSGRISM:
   | reftypes: *specwcs*, *distortion* 
   | WCS pipeline coordinate frames: grism_detector, detector, v2v3, world
-  | Implements: reference files provided by NIRCAM team
+  | Implements: reference files provided by NIRCam team
 
 :NIS_IMAGE, NIS_TACQ, NIS_TACONFIRM, NIS_FOCUS:
 

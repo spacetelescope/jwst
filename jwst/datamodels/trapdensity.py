@@ -8,18 +8,15 @@ class TrapDensityModel(ReferenceFileModel):
     A data model for the trap density of a detector, for persistence.
 
     Parameters
-    ----------
-    init: any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
+    data : numpy float32 array
+         Trap density
 
-    data: numpy array
-        The science data.
+    dq : numpy uint32 array
+         data quality array
 
-    dq: numpy array
-        The data quality array.
-
-    dq_def: numpy array
-        The data quality definitions table.
+    dq_def : numpy table
+         DQ flag definitions
     """
     schema_url = "trapdensity.schema.yaml"
 
