@@ -1,4 +1,4 @@
-0.13.0 (Unreleased)
+0.13.0 (2019-02-15)
 ===================
 
 ami
@@ -135,6 +135,8 @@ lastframe
 
 lib
 ---
+
+- ``set_telescope_pointing`` now populates WCS keywords from the SIAF file. [#3066]
 
 linearity
 ---------
@@ -281,9 +283,6 @@ scripts
 - ``set_telescope_pointing.py``: Update method of choosing pointing parameters. [#2900, #3008, #3022]
 
 - ``set_telescope_pointing.py``: Allow undefined SIAF. [#3002, #3006]
-
-- ``set_telescope_pointing`` now populates WCS keywords from the SIAF file. [#3066]
-
 
 0.12.2 (2018-11-15)
 ===================
