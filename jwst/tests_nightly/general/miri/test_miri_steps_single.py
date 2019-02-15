@@ -304,14 +304,11 @@ class TestMIRIMasterBackground_LRS(BaseJWSTTest):
         # input file has the background added
         # Copy original version of file to test file, which will get overwritten by test
         input_file = self.get_data(*self.test_dir,
-                                   'miri_lrs_sci+bkg_cal.fits',
-                                   docopy=True  # always produce local copy
-                                   )
+                                   'miri_lrs_sci+bkg_cal.fits')
 
         # user provided 1-D background
         input_1d_bkg_file = self.get_data(*self.test_dir,
-                                         'miri_lrs_bkg_x1d.fits',
-                                          docopy=True)
+                                         'miri_lrs_bkg_x1d.fits')
 
         result = MasterBackgroundStep.call(input_file,
                                            user_background=input_1d_bkg_file,
@@ -322,7 +319,7 @@ class TestMIRIMasterBackground_LRS(BaseJWSTTest):
         # the science data with not background added
 
         # run 1-D extract on results from MasterBackground step
-        result_1d = Extract1dStep.call(result, save_results=True)
+        result_1d = Extract1dStep.call(result)
 
         # run 1-D extract on original science data without background
         input_sci_cal_file = self.get_data(*self.test_dir,
@@ -332,11 +329,11 @@ class TestMIRIMasterBackground_LRS(BaseJWSTTest):
         # this rountine run on both files  rather than running it off line
         # and having the 1-D extracted science file stored as input to step
 
-        sci_cal_1d = Extract1dStep.call(input_sci_cal_file, save_results=True)
+        sci_cal_1d = Extract1dStep.call(input_sci_cal_file)
 
         # Compare the MultiSpec 1-D data
-        atol = 500.  # set high for testing
-        rtol = 0.5  # set hight for testing
+        atol = 0.0001
+        rtol = 0.000001
         result_1d_data = result_1d.spec[0].spec_table['flux']
         sci_cal_1d_data = sci_cal_1d.spec[0].spec_table['flux']
 
@@ -357,19 +354,18 @@ class TestMIRIMasterBackground_LRS(BaseJWSTTest):
 
         # do a 5 sigma clip on the science image
         sci_mean = np.nanmean(sci_lrs_region)
-        sci_std = np.nanmean(sci_lrs_region)
-        upper = sci_mean + sci_std*3.0
+        sci_std = np.nanstd(sci_lrs_region)
+        upper = sci_mean + sci_std*5.0
         mask_clean = sci_lrs_region < upper
 
         sub = result_lrs_region - sci_lrs_region
         mean_sub = np.mean(sub[mask_clean])
-        # median_sub = np.mean(sub[mask_clean])
 
-        atol = 2.0
-        assert_allclose(mean_sub, 0, atol=atol)
-
+        atol = 0.5
+        rtol = 0.001
+        assert_allclose(mean_sub, 0, atol=atol, rtol=rtol)
 # ______________________________________________________________________
-        # Test 3 Compare background sutracted science data (results)
+        # Test 3 Compare background subtracted science data (results)
         #  to a truth file.
 
         ref_file = self.get_data(*self.ref_loc,
