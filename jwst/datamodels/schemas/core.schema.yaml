@@ -2132,8 +2132,8 @@ properties:
                 channel:
                   title: Channel ID
                   type: string
-      master_background_file:
-        title: Master background file used
-        type: string
-        fits_keyword: MASTERBG
+          master_background_file:
+            title: Master background file used
+            type: string
+            fits_keyword: MASTERBG
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

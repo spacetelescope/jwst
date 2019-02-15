@@ -99,10 +99,10 @@ def test_master_background_init(input_data, status, _jail, user_background):
     if isinstance(result, datamodels.ModelContainer):
         for model in result:
             if model.meta.cal_step.master_background == 'COMPLETE':
-                assert model.meta.master_background_file == 'user_background.fits'
+                assert model.meta.background.master_background_file == 'user_background.fits'
     else:
         if result.meta.cal_step.master_background == 'COMPLETE':
-            assert result.meta.master_background_file == 'user_background.fits'
+            assert result.meta.background.master_background_file == 'user_background.fits'
 
     # Make sure saving the computed background works
     result = MasterBackgroundStep.call(input_data, save_background=True)
