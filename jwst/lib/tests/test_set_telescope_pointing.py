@@ -240,6 +240,10 @@ def test_add_wcs_default(data_file):
     assert model.meta.wcsinfo.dec_ref == TARG_DEC
     assert np.isclose(model.meta.wcsinfo.roll_ref, 358.9045979379)
     assert model.meta.wcsinfo.wcsaxes == 2
+    assert model.meta.wcsinfo.ctype1 == "RA---TAN"
+    assert model.meta.wcsinfo.ctype2 == "DEC--TAN"
+    assert model.meta.wcsinfo.cunit1 == 'deg'
+    assert model.meta.wcsinfo.cunit2 == 'deg'
     assert word_precision_check(
         model.meta.wcsinfo.s_region,
         (
@@ -314,6 +318,10 @@ def test_add_wcs_fsmcorr_v1(data_file):
     assert model.meta.wcsinfo.dec_ref == TARG_DEC
     assert np.isclose(model.meta.wcsinfo.roll_ref, 358.9045979379)
     assert model.meta.wcsinfo.wcsaxes == 2
+    assert model.meta.wcsinfo.ctype1 == "RA---TAN"
+    assert model.meta.wcsinfo.ctype2 == "DEC--TAN"
+    assert model.meta.wcsinfo.cunit1 == 'deg'
+    assert model.meta.wcsinfo.cunit2 == 'deg'
     assert word_precision_check(
         model.meta.wcsinfo.s_region,
         (
@@ -346,6 +354,10 @@ def test_add_wcs_with_db(eng_db_ngas, data_file, siaf_file=siaf_db):
     assert np.isclose(model.meta.wcsinfo.dec_ref, -38.854159)
     assert np.isclose(model.meta.wcsinfo.roll_ref, 50.20832726650)
     assert model.meta.wcsinfo.wcsaxes == 2
+    assert model.meta.wcsinfo.ctype1 == "RA---TAN"
+    assert model.meta.wcsinfo.ctype2 == "DEC--TAN"
+    assert model.meta.wcsinfo.cunit1 == 'deg'
+    assert model.meta.wcsinfo.cunit2 == 'deg'
     assert word_precision_check(
         model.meta.wcsinfo.s_region,
         (
@@ -378,6 +390,10 @@ def test_add_wcs_with_db_fsmcorr_v1(eng_db_ngas, data_file):
     assert np.isclose(model.meta.wcsinfo.dec_ref, -38.854159)
     assert np.isclose(model.meta.wcsinfo.roll_ref, 50.20832726650)
     assert model.meta.wcsinfo.wcsaxes == 2
+    assert model.meta.wcsinfo.ctype1 == "RA---TAN"
+    assert model.meta.wcsinfo.ctype2 == "DEC--TAN"
+    assert model.meta.wcsinfo.cunit1 == 'deg'
+    assert model.meta.wcsinfo.cunit2 == 'deg'
     assert word_precision_check(
         model.meta.wcsinfo.s_region,
         (
