@@ -32,7 +32,6 @@ env:
                               stsci.image
                               stsci.imagestats
                               stsci.stimage
-                              stsci.tools
                               verhawk"
         - CONDA_DOCS_DEPENDENCIES='sphinx graphviz'
         - CRDS_SERVER_URL='https://jwst-crds.stsci.edu'

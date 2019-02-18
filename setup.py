@@ -217,7 +217,6 @@ setup(
         'stsci.image>=2.3',
         'stsci.imagestats>=1.4',
         'stsci.stimage>=0.2',
-        'stsci.tools>=3.4',
         'verhawk',
     ],
     extras_require={
