@@ -1419,8 +1419,8 @@ def populate_model_from_siaf(model, siaf):
     if model.meta.exposure.type.lower() in TYPES_TO_UPDATE:
         # For imaging modes update the pointing and
         # the FITS WCS keywords.
-        model.meta.wcsinfo.ctype1 = 'RA--TAN'
-        model.meta.wcsinfo.ctype2 = 'DEC-TAN'
+        model.meta.wcsinfo.ctype1 = 'RA---TAN'
+        model.meta.wcsinfo.ctype2 = 'DEC--TAN'
         model.meta.wcsinfo.wcsaxes = 2
         model.meta.wcsinfo.cunit1 = "deg"
         model.meta.wcsinfo.cunit2 = "deg"
