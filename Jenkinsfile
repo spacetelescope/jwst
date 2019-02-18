@@ -26,7 +26,6 @@ def conda_packages = [
     "stsci.image",
     "stsci.imagestats",
     "stsci.stimage",
-    "stsci.tools",
     "verhawk",
     "pytest"
 ]
