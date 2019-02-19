@@ -2161,7 +2161,7 @@ class ImageExtractModel(ExtractBase):
                 mask_background = None
         else:
             if mask_bkg is None:
-                log.info("Skipping backround subtraction because "
+                log.info("Skipping background subtraction because "
                          "background regions are not defined.")
         # Extract the background.
         if mask_bkg is not None:

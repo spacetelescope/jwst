@@ -92,12 +92,12 @@ def extract1d(image, lambdas, disp_range,
     """
     if not subtract_background:
         if p_bkg is not None:
-            log.info("Background is not subtracted.")
+            log.info("Background subtraction was turned off - skipping it.")
         p_bkg = None
     else:
         if p_bkg is None:
-            log.info("subtract_background requested but background regions "
-                     "not defined. Skipping local background subtraction")
+            log.info("Skipping background subtraction because "
+                     "background regions are not defined.")
 
     nl = lambdas.shape[0]
 
