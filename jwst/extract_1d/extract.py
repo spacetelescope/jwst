@@ -1308,7 +1308,8 @@ class ExtractModel(ExtractBase):
                  independent_var="pixel",
                  smoothing_length=0, bkg_order=0, nod_correction=0.,
                  x_center=None, y_center=None,
-                 inner_bkg=None, outer_bkg=None, method='subpixel'):
+                 inner_bkg=None, outer_bkg=None, method='subpixel',
+                 subtract_background=None):
         """Create a polynomial model from coefficients.
 
         Extended summary
@@ -1400,6 +1401,12 @@ class ExtractModel(ExtractBase):
 
         method : str
             This is not relevant; it's only used for IFU data.
+
+        subtract_background : bool or None
+            A flag which indicates whether the background should be subtracted.
+            If None, the value in the extract_1d reference file will be used.
+            If not None, this parameter overrides the value in the
+            extract_1d reference file.
         """
 
         super().__init__()
@@ -1504,6 +1511,7 @@ class ExtractModel(ExtractBase):
         self.smoothing_length = smoothing_length
         self.bkg_order = bkg_order
         self.nod_correction = nod_correction
+        self.subtract_background = subtract_background
 
         self.wcs = None                         # initial value
         if input_model.meta.exposure.type == "NIS_SOSS":
@@ -1909,7 +1917,7 @@ class ExtractModel(ExtractBase):
         extract1d.extract1d(image, temp_wl, disp_range,
                             self.p_src, self.p_bkg, self.independent_var,
                             self.smoothing_length, self.bkg_order,
-                            weights=None)
+                            weights=None, subtract_background=self.subtract_background)
         del temp_wl
 
         dq = np.zeros(net.shape, dtype=np.uint32)
@@ -1931,7 +1939,8 @@ class ImageExtractModel(ExtractBase):
                  ref_image=None,
                  dispaxis=HORIZONTAL,
                  smoothing_length=0,
-                 nod_correction=0):
+                 nod_correction=0,
+                 subtract_background=None):
         """Extract using a reference image to define the extraction and
            background regions.
 
@@ -2002,6 +2011,7 @@ class ImageExtractModel(ExtractBase):
                         smoothing_length)
             smoothing_length += 1               # must be odd
         self.smoothing_length = smoothing_length
+        self.subtract_background = subtract_background
 
         if self.exp_type == "NIS_SOSS":
             if hasattr(input_model.meta, 'wcs'):
@@ -2145,6 +2155,14 @@ class ImageExtractModel(ExtractBase):
         temp = np.ones_like(data)
         npixels = (temp * mask_target).sum(axis=axis, dtype=np.float)
 
+        if not subtract_background:
+            if mask_bkg is not None:
+                log.info("Background subtraction was turned off - skipping it.")
+                mask_background = None
+        else:
+            if mask_bkg is None:
+                log.info("Skipping backround subtraction because "
+                         "background regions are not defined.")
         # Extract the background.
         if mask_bkg is not None:
             n_bkg = mask_bkg.sum(axis=axis, dtype=np.float)
@@ -2467,7 +2485,7 @@ def interpolate_response(wavelength, relsens, verbose):
 
 
 def do_extract1d(input_model, refname, smoothing_length, bkg_order,
-                 log_increment):
+                 log_increment, subtract_background):
     """Extract 1-D spectra.
 
     Extended summary
@@ -2492,6 +2510,12 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
         if `log_increment` is greater than 0 and the input data are
         multi-integration, a message will be written to the log every
         `log_increment` integrations.
+
+    subtract_background : bool or None
+        User supplied flag indicating whether the background should be subtracted.
+        If None, the value in the extract_1d reference file will be used.
+        If not None, this parameter overrides the value in the
+        extract_1d reference file.
 
     Returns
     -------
@@ -2537,6 +2561,8 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
                                 ref_dict,
                                 slit, slit.name, sp_order,
                                 input_model.meta, smoothing_length, bkg_order)
+            if subtract_background is not None:
+                extract_params['subtract_background'] = subtract_background
             if extract_params['match'] == NO_MATCH:
                 log.critical('Missing extraction parameters.')
                 raise ValueError('Missing extraction parameters.')
@@ -2625,6 +2651,8 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
                                     input_model, slitname, sp_order,
                                     input_model.meta, smoothing_length,
                                     bkg_order)
+                if subtract_background is not None:
+                    extract_params['subtract_background'] = subtract_background
                 if extract_params['match'] == EXACT:
                     slit = DUMMY
                     find_dispaxis(input_model, slit, sp_order, extract_params)
@@ -2705,6 +2733,8 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
                                     input_model, slitname, sp_order,
                                     input_model.meta, smoothing_length,
                                     bkg_order)
+                if subtract_background is not None:
+                    extract_params['subtract_background'] = subtract_background
                 if extract_params['match'] == NO_MATCH:
                     log.critical('Missing extraction parameters.')
                     raise ValueError('Missing extraction parameters.')
@@ -2805,7 +2835,7 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
                 source_type = input_model.meta.target.source_type.lower()
             except AttributeError:
                 source_type = "unknown"
-            output_model = ifu.ifu_extract1d(input_model, refname, source_type)
+            output_model = ifu.ifu_extract1d(input_model, refname, source_type, subtract_background)
 
         else:
             log.error("The input file is not supported for this step.")
