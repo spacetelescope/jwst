@@ -58,7 +58,6 @@ def ifu_extract1d(input_model, refname, source_type, subtract_background):
     extract_params = ifu_extract_parameters(refname, slitname, source_type)
     if subtract_background is not None:
         extract_params['subtract_background'] = subtract_background
-    print('extract_params', extract_params)
     if extract_params:
         (ra, dec, wavelength, net, background, npixels, dq) = extract_ifu(
                         input_model, source_type, extract_params)
@@ -271,10 +270,7 @@ def extract_ifu(input_model, source_type, extract_params):
         if height is None:
             height = smaller_axis / 2.
         theta = extract_params['theta'] * math.pi / 180.
-        radius = None
         subtract_background = False
-        inner_bkg = None
-        outer_bkg = None
 
     log.debug("IFU 1-D extraction parameters:")
     log.debug("  x_center = %s", str(x_center))
