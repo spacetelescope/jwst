@@ -204,11 +204,11 @@ setup(
                   define_macros=[('NUMPY', '1')]),
     ],
     install_requires=[
-        'asdf>=2.3',
+        'asdf>=2.3.2',
         'astropy>=3.1',
         'crds>=7.2.7',
         'drizzle>=1.12',
-        'gwcs>=0.9',
+        'gwcs>=0.10',
         'jsonschema>=2.3,<=2.6',
         'numpy>=1.13',
         'photutils>=0.4',
