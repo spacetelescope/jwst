@@ -2155,10 +2155,10 @@ class ImageExtractModel(ExtractBase):
         temp = np.ones_like(data)
         npixels = (temp * mask_target).sum(axis=axis, dtype=np.float)
 
-        if not subtract_background:
+        if not self.subtract_background:
             if mask_bkg is not None:
                 log.info("Background subtraction was turned off - skipping it.")
-                mask_background = None
+                mask_bkg = None
         else:
             if mask_bkg is None:
                 log.info("Skipping background subtraction because "
