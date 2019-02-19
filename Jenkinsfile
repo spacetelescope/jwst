@@ -3,6 +3,7 @@ if (utils.scm_checkout()) return
 matrix_python = ['3.6']
 matrix_numpy = ['1.15']
 matrix_astropy = ['4']
+matrix_astropy_pip = ['3.1']
 matrix = []
 
 def test_env = [
@@ -46,10 +47,10 @@ dist.build_cmds = [
 ]
 matrix += dist
 
-// Generate pip build and test matrix
+// Generate pip build and test matrix with released upstream dependencies
 for (python_ver in matrix_python) {
     for (numpy_ver in matrix_numpy) {
-        for (astropy_ver in matrix_astropy) {
+        for (astropy_ver in matrix_astropy_pip) {
             def name = "pip_py${python_ver}np${numpy_ver}ap${astropy_ver}"
             bc = new BuildConfig()
             bc.nodetype = 'linux'
@@ -58,7 +59,7 @@ for (python_ver in matrix_python) {
             bc.conda_packages = ["python=${python_ver}"]
             bc.build_cmds = [
                 "pip install ${pip_install_args} numpy==${matrix_numpy[0]}",
-                "pip install ${pip_install_args} -r requirements-dev.txt .[test]",
+                "pip install ${pip_install_args} .[test]",
             ]
             bc.test_cmds = ["pytest -r s --basetemp=test_results --junitxml=results.xml"]
             matrix += bc
@@ -66,7 +67,7 @@ for (python_ver in matrix_python) {
     }
 }
 
-// Generate conda build and test matrix
+// Generate conda build and test matrix with astroconda-dev dependencies
 for (python_ver in matrix_python) {
     for (numpy_ver in matrix_numpy) {
         for (astropy_ver in matrix_astropy) {
