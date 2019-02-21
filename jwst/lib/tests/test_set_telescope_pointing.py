@@ -29,10 +29,6 @@ ZEROTIME_END = Time('2014-01-02')
 # Header defaults
 TARG_RA = 345.0
 TARG_DEC = -87.0
-V2_REF = 200.0
-V3_REF = -350.0
-V3I_YANG = 42.0
-VPARITY = -1
 
 # Get the mock databases
 db_ngas_path = os.path.join(os.path.dirname(__file__), 'data', 'engdb_ngas')
@@ -77,12 +73,9 @@ def data_file():
     model.meta.exposure.end_time = ENDTIME.mjd
     model.meta.target.ra = TARG_RA
     model.meta.target.dec = TARG_DEC
-    model.meta.wcsinfo.v2_ref = V2_REF
-    model.meta.wcsinfo.v3_ref = V3_REF
-    model.meta.wcsinfo.v3yangle = V3I_YANG
-    model.meta.wcsinfo.vparity = VPARITY
     model.meta.aperture.name = "MIRIM_FULL"
     model.meta.observation.date = '1/1/2017'
+    model.meta.exposure.type = "MIR_IMAGE"
 
     with TemporaryDirectory() as path:
         file_path = os.path.join(path, 'fits.fits')
@@ -91,13 +84,13 @@ def data_file():
 
 
 @pytest.fixture(scope='module')
-def data_file_nosaif():
+def data_file_nosiaf():
     model = datamodels.Level1bModel()
     model.meta.exposure.start_time = STARTTIME.mjd
     model.meta.exposure.end_time = ENDTIME.mjd
     model.meta.target.ra = TARG_RA
     model.meta.target.dec = TARG_DEC
-    model.meta.aperture.name = "MIRIM_FULL"
+    model.meta.aperture.name = "UNKNOWN"
     model.meta.observation.date = '1/1/2017'
 
     with TemporaryDirectory() as path:
@@ -123,8 +116,8 @@ def test_change_engdb_url_fail():
     """Test changing the engineering database by call"""
     with pytest.raises(Exception):
         results = stp.get_pointing(
-             Time('2019-06-03T17:25:40', format='isot').mjd,
-             Time('2019-06-03T17:25:56', format='isot').mjd,
+            Time('2019-06-03T17:25:40', format='isot').mjd,
+            Time('2019-06-03T17:25:56', format='isot').mjd,
             engdb_url='http://nonexistant.fake'
         )
 
@@ -132,7 +125,7 @@ def test_change_engdb_url_fail():
 def test_strict_pointing(data_file, eng_db_jw703):
     """Test failure on strict pointing"""
     with pytest.raises(ValueError):
-        stp.add_wcs(data_file, tolerance=0)
+        stp.add_wcs(data_file, siaf_path=siaf_db, tolerance=0)
 
 
 def test_pointing_averaging(eng_db_jw703):
@@ -193,13 +186,13 @@ def test_logging(eng_db_ngas, caplog):
 
 
 def test_get_pointing_list(eng_db_ngas):
-        results = stp.get_pointing(STARTTIME.mjd, ENDTIME.mjd, reduce_func=stp.all_pointings)
-        assert isinstance(results, list)
-        assert len(results) > 0
-        assert np.isclose(results[0].q, Q_EXPECTED).all()
-        assert np.isclose(results[0].j2fgs_matrix, J2FGS_MATRIX_EXPECTED).all()
-        assert np.isclose(results[0].fsmcorr, FSMCORR_EXPECTED).all()
-        assert STARTTIME <= results[0].obstime <= ENDTIME
+    results = stp.get_pointing(STARTTIME.mjd, ENDTIME.mjd, reduce_func=stp.all_pointings)
+    assert isinstance(results, list)
+    assert len(results) > 0
+    assert np.isclose(results[0].q, Q_EXPECTED).all()
+    assert np.isclose(results[0].j2fgs_matrix, J2FGS_MATRIX_EXPECTED).all()
+    assert np.isclose(results[0].fsmcorr, FSMCORR_EXPECTED).all()
+    assert STARTTIME <= results[0].obstime <= ENDTIME
 
 
 def test_get_pointing_with_zeros(eng_db_ngas):
@@ -247,6 +240,10 @@ def test_add_wcs_default(data_file):
     assert model.meta.wcsinfo.dec_ref == TARG_DEC
     assert np.isclose(model.meta.wcsinfo.roll_ref, 358.9045979379)
     assert model.meta.wcsinfo.wcsaxes == 2
+    assert model.meta.wcsinfo.ctype1 == "RA---TAN"
+    assert model.meta.wcsinfo.ctype2 == "DEC--TAN"
+    assert model.meta.wcsinfo.cunit1 == 'deg'
+    assert model.meta.wcsinfo.cunit2 == 'deg'
     assert word_precision_check(
         model.meta.wcsinfo.s_region,
         (
@@ -259,11 +256,11 @@ def test_add_wcs_default(data_file):
     )
 
 
-def test_add_wcs_default_nosiaf(data_file_nosaif, caplog):
+def test_add_wcs_default_nosiaf(data_file_nosiaf, caplog):
     """Handle when no pointing exists and the default is used and no SIAF specified."""
     try:
         stp.add_wcs(
-            data_file_nosaif, siaf_path=siaf_db, tolerance=0, allow_default=True
+            data_file_nosiaf, siaf_path=siaf_db, tolerance=0, allow_default=True
         )
     except ValueError:
         pass  # This is what we want for the test.
@@ -273,7 +270,7 @@ def test_add_wcs_default_nosiaf(data_file_nosaif, caplog):
             '\nException={}'.format(e)
         )
 
-    model = datamodels.Level1bModel(data_file_nosaif)
+    model = datamodels.Level1bModel(data_file_nosiaf)
     assert model.meta.pointing.ra_v1 == TARG_RA
     assert model.meta.pointing.dec_v1 == TARG_DEC
     assert model.meta.pointing.pa_v3 == 0.
@@ -321,6 +318,10 @@ def test_add_wcs_fsmcorr_v1(data_file):
     assert model.meta.wcsinfo.dec_ref == TARG_DEC
     assert np.isclose(model.meta.wcsinfo.roll_ref, 358.9045979379)
     assert model.meta.wcsinfo.wcsaxes == 2
+    assert model.meta.wcsinfo.ctype1 == "RA---TAN"
+    assert model.meta.wcsinfo.ctype2 == "DEC--TAN"
+    assert model.meta.wcsinfo.cunit1 == 'deg'
+    assert model.meta.wcsinfo.cunit2 == 'deg'
     assert word_precision_check(
         model.meta.wcsinfo.s_region,
         (
@@ -353,6 +354,10 @@ def test_add_wcs_with_db(eng_db_ngas, data_file, siaf_file=siaf_db):
     assert np.isclose(model.meta.wcsinfo.dec_ref, -38.854159)
     assert np.isclose(model.meta.wcsinfo.roll_ref, 50.20832726650)
     assert model.meta.wcsinfo.wcsaxes == 2
+    assert model.meta.wcsinfo.ctype1 == "RA---TAN"
+    assert model.meta.wcsinfo.ctype2 == "DEC--TAN"
+    assert model.meta.wcsinfo.cunit1 == 'deg'
+    assert model.meta.wcsinfo.cunit2 == 'deg'
     assert word_precision_check(
         model.meta.wcsinfo.s_region,
         (
@@ -385,6 +390,10 @@ def test_add_wcs_with_db_fsmcorr_v1(eng_db_ngas, data_file):
     assert np.isclose(model.meta.wcsinfo.dec_ref, -38.854159)
     assert np.isclose(model.meta.wcsinfo.roll_ref, 50.20832726650)
     assert model.meta.wcsinfo.wcsaxes == 2
+    assert model.meta.wcsinfo.ctype1 == "RA---TAN"
+    assert model.meta.wcsinfo.ctype2 == "DEC--TAN"
+    assert model.meta.wcsinfo.cunit1 == 'deg'
+    assert model.meta.wcsinfo.cunit2 == 'deg'
     assert word_precision_check(
         model.meta.wcsinfo.s_region,
         (

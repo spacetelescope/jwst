@@ -1,4 +1,8 @@
-0.13.0 (Unreleased)
+0.13.1 (Unreleased)
+===================
+
+
+0.13.0 (2019-02-15)
 ===================
 
 ami
@@ -19,6 +23,8 @@ assign_wcs
  - Rename several functions dealing with calculating bounding boxes for clarity. [#3014]
 
  - The bounding box of the MIRI LRS WCS is now in "image" coordinates, not full frame. [#3063]
+
+ - FITS WCS keywords are written out only if the observation is one of the IMAGING_MODES. [#3066]
 
 associations
 ------------
@@ -133,6 +139,8 @@ lastframe
 
 lib
 ---
+
+- ``set_telescope_pointing`` now populates WCS keywords from the SIAF file. [#3066]
 
 linearity
 ---------

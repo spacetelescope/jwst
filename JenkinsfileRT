@@ -55,7 +55,6 @@ bc.conda_packages = ['asdf',
                      'stsci.image',
                      'stsci.imagestats',
                      'stsci.stimage',
-                     'stsci.tools',
                      'verhawk'
 ]
 

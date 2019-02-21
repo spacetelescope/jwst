@@ -19,3 +19,4 @@ relic/
 *wpu
 .pytest_cache
 results.xml
+pip-wheel-metadata/
