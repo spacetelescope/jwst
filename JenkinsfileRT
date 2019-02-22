@@ -23,11 +23,13 @@ def pip_install_args = "--index-url ${pip_index} --progress-bar=off"
 
 // Pytest command setup
 def pytest_basetemp = "test_outputs"
-def pytest_command = "pytest -r s -v \
+def pytest_command = "pytest -r sx -v \
+                      -n 28 \
                       --bigdata --slow \
                       --basetemp=${pytest_basetemp} \
                       --junit-xml=results.xml \
                       jwst/tests_nightly/general"
+//                      -k 'not ami_' \
 
 // Configure artifactory ingest
 data_config = new DataConfig()
@@ -42,6 +44,7 @@ bc.conda_packages = ["python=${python_version}"]
 bc.build_cmds = [
     "pip install ${pip_install_args} numpy==${numpy_version}",
     "pip install ${pip_install_args} .[test]",
+    "pip install pytest-xdist",
     "pip freeze",
 ]
 
