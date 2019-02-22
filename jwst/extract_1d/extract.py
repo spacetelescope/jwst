@@ -1011,7 +1011,7 @@ def create_poly(coeff):
         key = "c{}".format(i)
         coeff_dict[key] = coeff[i]
 
-    return polynomial.Polynomial1D(degree=n - 1, **coeff_dict)
+    return polynomial.Polynomial1D(degree=n-1, **coeff_dict)
 
 
 class ExtractBase:
@@ -1299,7 +1299,7 @@ class ExtractBase:
 class ExtractModel(ExtractBase):
     """The extraction region was specified in a JSON file."""
 
-    def __init__(self, input_model, slit,
+    def __init__(self, input_model, slit, verbose,
                  ref_file_type=None,
                  match="unknown",
                  dispaxis=HORIZONTAL, spectral_order=1,
@@ -1496,6 +1496,16 @@ class ExtractModel(ExtractBase):
         self.src_coeff = copy.deepcopy(src_coeff)
         self.bkg_coeff = copy.deepcopy(bkg_coeff)
 
+        self.subtract_background = subtract_background
+        if not subtract_background:
+            if verbose and self.bkg_coeff is not None:
+                log.info("Background subtraction was turned off - skipping it.")
+            self.bkg_coeff = None
+        else:
+            if verbose and self.bkg_coeff is None:
+                log.info("Skipping background subtraction because "
+                         "background regions are not defined.")
+
         # These functions will be assigned by assign_polynomial_limits.
         # The "p" in the attribute name indicates a polynomial function.
         self.p_src = None
@@ -1511,7 +1521,6 @@ class ExtractModel(ExtractBase):
         self.smoothing_length = smoothing_length
         self.bkg_order = bkg_order
         self.nod_correction = nod_correction
-        self.subtract_background = subtract_background
 
         self.wcs = None                         # initial value
         if input_model.meta.exposure.type == "NIS_SOSS":
@@ -2156,13 +2165,13 @@ class ImageExtractModel(ExtractBase):
         npixels = (temp * mask_target).sum(axis=axis, dtype=np.float)
 
         if not self.subtract_background:
-            if mask_bkg is not None:
-                log.info("Background subtraction was turned off - skipping it.")
-                mask_bkg = None
+            if verbose and mask_bkg is not None:
+                    log.info("Background subtraction was turned off - skipping it.")
+            mask_bkg = None
         else:
-            if mask_bkg is None:
-                log.info("Skipping background subtraction because "
-                         "background regions are not defined.")
+            if verbose and mask_bkg is None:
+                    log.info("Skipping background subtraction because "
+                             "background regions are not defined.")
         # Extract the background.
         if mask_bkg is not None:
             n_bkg = mask_bkg.sum(axis=axis, dtype=np.float)
@@ -3211,12 +3220,12 @@ def extract_one_slit(input_model, slit, integ,
 
     if extract_params['ref_file_type'] == FILE_TYPE_IMAGE:
         # The reference file is an image.
-        extract_model = ImageExtractModel(input_model, slit, **extract_params)
+        extract_model = ImageExtractModel(input_model, slit, verbose, **extract_params)
         ap = None
     else:
         # If there is a reference file (there doesn't have to be), it's in
         # JSON format.
-        extract_model = ExtractModel(input_model, slit, **extract_params)
+        extract_model = ExtractModel(input_model, slit, verbose, **extract_params)
         ap = get_aperture(data.shape, extract_model.wcs,
                           verbose, extract_params)
         extract_model.update_extraction_limits(ap)

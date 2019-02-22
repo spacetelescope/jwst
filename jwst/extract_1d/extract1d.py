@@ -90,15 +90,6 @@ def extract1d(image, lambdas, disp_range,
         For each column, this is the number of pixels that were added
         together to get `countrate`.
     """
-    if not subtract_background:
-        if p_bkg is not None:
-            log.info("Background subtraction was turned off - skipping it.")
-        p_bkg = None
-    else:
-        if p_bkg is None:
-            log.info("Skipping background subtraction because "
-                     "background regions are not defined.")
-
     nl = lambdas.shape[0]
 
     # Evaluate the functions for source and (optionally) background limits,
