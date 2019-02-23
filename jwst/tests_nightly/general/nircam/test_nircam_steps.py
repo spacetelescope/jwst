@@ -34,7 +34,7 @@ class TestNIRCamSteps(BaseJWSTTestSteps):
                                      side_gain=1.0),
                       output_truth='jw00017001001_01101_00001_NRCA1_bias_drift.fits',
                       output_hdus=[],
-                      id='test_refpixt_nircam'
+                      id='test_refpix_nircam'
 
                       ),
                  dict(input='jw00017001001_01101_00001_NRCA1_saturation.fits',
