@@ -7,7 +7,7 @@ jobconfig.publish_env_on_success_only = true
 
 // Define python and numpy versions
 python_version = '3.6'
-numpy_version = '1.16.1'
+numpy_version = '1.16.*'
 
 // Define environment variables needed for the tests
 def test_env = [
@@ -41,7 +41,7 @@ bc.nodetype = 'jwst'
 bc.env_vars = test_env
 bc.conda_packages = ["python=${python_version}"]
 bc.build_cmds = [
-    "pip install ${pip_install_args} numpy==${numpy_version}",
+    "pip install --progress-bar=off numpy==${numpy_version}",
     "pip install ${pip_install_args} .[test]",
     "pip install pytest-xdist",
     "pip freeze",
