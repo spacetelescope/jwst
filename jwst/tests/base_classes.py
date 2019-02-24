@@ -30,7 +30,7 @@ class BaseJWSTTest:
     Base test class from which to derive JWST regression tests
     '''
     rtol = 1e-5
-    atol = 1e-8
+    atol = 1e-7
 
     input_loc = ''  # root directory for 'input' files
     ref_loc = []    # root path for 'truth' files: ['test1','truth'] or ['test3']

@@ -32,8 +32,6 @@ class TestCoron3Pipeline(BaseJWSTTest):
         pipe.outlier_detection.resample_data = False
         pipe.run(asn_file)
 
-        self.ignore_keywords += ['NAXIS1', 'TFORM7']
-
         outputs = [( # Compare psfstack product
                     'jw99999-a3001_t1_nircam_f140m-maskbar_psfstack.fits',
                     'jw99999-a3001_t1_nircam_f140m-maskbar_psfstack_ref.fits'
@@ -54,9 +52,13 @@ class TestCoron3Pipeline(BaseJWSTTest):
                     'jw9999947001_02102_00002_nrcb3_a3001_crfints.fits',
                     'jw9999947001_02102_00002_nrcb3_a3001_crfints_ref.fits'
                    ),
-                   ( # Compare i2d product
-                    'jw99999-a3001_t1_nircam_f140m-maskbar_i2d.fits',
-                    'jw99999-a3001_t1_nircam_f140m-maskbar_i2d_ref.fits'
-                   )
+                   {'files':(# Compare i2d product
+                             'jw99999-a3001_t1_nircam_f140m-maskbar_i2d.fits',
+                             'jw99999-a3001_t1_nircam_f140m-maskbar_i2d_ref.fits'),
+                    'pars': {'ignore_keywords':
+                             self.ignore_keywords+['NAXIS1', 'TFORM*'],
+                             'ignore_fields':self.ignore_keywords
+                             }
+                   }
                   ]
         self.compare_outputs(outputs)

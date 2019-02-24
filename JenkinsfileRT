@@ -7,7 +7,7 @@ jobconfig.publish_env_on_success_only = true
 
 // Define python and numpy versions
 python_version = '3.6'
-numpy_version = '1.15.*'
+numpy_version = '1.16.1'
 
 // Define environment variables needed for the tests
 def test_env = [
@@ -24,12 +24,11 @@ def pip_install_args = "--index-url ${pip_index} --progress-bar=off"
 // Pytest command setup
 def pytest_basetemp = "test_outputs"
 def pytest_command = "pytest -r sx -v \
-                      -n 28 \
+                      -n 30 \
                       --bigdata --slow \
                       --basetemp=${pytest_basetemp} \
                       --junit-xml=results.xml \
                       jwst/tests_nightly/general"
-//                      -k 'not ami_' \
 
 // Configure artifactory ingest
 data_config = new DataConfig()
