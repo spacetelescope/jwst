@@ -1,2 +1,2 @@
 [build-system]
-requires = ["setuptools>=38.2.5", "wheel", "numpy"]
+requires = ["python>=3.5", "setuptools>=38.2.5", "wheel", "numpy"]
