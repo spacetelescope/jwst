@@ -17,7 +17,7 @@ extract_1d
 
  - Added a parameter ``subtract_background`` to ``extract_1d`` indicating
    whether the local background should be subtracted. If None, the value
-   in the extract_1d reference file is used. [#3157, #3184]y
+   in the extract_1d reference file is used. [#3157, #3186]
 
 master_background
 -----------------
