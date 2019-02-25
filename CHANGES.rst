@@ -1,6 +1,12 @@
 0.13.1 (Unreleased)
 ===================
 
+combine_1d
+----------
+ - Added parameter ``background``; for background data, scale the flux,
+   error, and net by 1 / NPIXELS, and include NPIXELS in the weight;
+   changed the default for ``exptime_key`` to "exposure_time". [#3180]
+
 set_telescope_pointing
 ----------------------
 
