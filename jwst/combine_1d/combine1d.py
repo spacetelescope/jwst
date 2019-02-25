@@ -643,7 +643,8 @@ def do_correction(asn_file, exptime_key, interpolation, background=False):
     """
 
     log.debug("Using exptime_key = {}.".format(exptime_key))
-    log.debug("The FLUX data will be treated as background data.")
+    if background:
+        log.debug("The FLUX data will be treated as background data.")
 
     with open(asn_file) as asn_file_handle:
         asn = load_asn(asn_file_handle)
