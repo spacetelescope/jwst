@@ -1,6 +1,11 @@
 0.13.1 (Unreleased)
 ===================
 
+set_telescope_pointing
+----------------------
+
+ - Added population of CDELTn keywords based on SIAF values and fixed bug in calculation
+   of S_REGION corners. [#3184]
 
 0.13.0 (2019-02-15)
 ===================
