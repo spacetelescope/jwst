@@ -487,7 +487,7 @@ def update_s_region(model, siaf):
     # V2_ref and v3_ref should be in arcsec
     idltov23 = IdealToV2V3(
         v3yangle,
-        model.meta.wcsinfo.v2_ref, model.meta.wcsinfo.v2_ref,
+        model.meta.wcsinfo.v2_ref, model.meta.wcsinfo.v3_ref,
         vparity
     )
     v2, v3 = idltov23(xvert, yvert)  # in arcsec
@@ -1426,6 +1426,8 @@ def populate_model_from_siaf(model, siaf):
         model.meta.wcsinfo.cunit2 = "deg"
         model.meta.wcsinfo.crpix1 = siaf.crpix1
         model.meta.wcsinfo.crpix2 = siaf.crpix2
+        model.meta.wcsinfo.cdelt1 = siaf.cdelt1
+        model.meta.wcsinfo.cdelt2 = siaf.cdelt2
         model.meta.coordinates.reference_frame = "ICRS"
 
 

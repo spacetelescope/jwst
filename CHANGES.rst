@@ -7,6 +7,11 @@ combine_1d
    error, and net by 1 / NPIXELS, and include NPIXELS in the weight;
    changed the default for ``exptime_key`` to "exposure_time". [#3180]
 
+set_telescope_pointing
+----------------------
+
+ - Added population of CDELTn keywords based on SIAF values and fixed bug in calculation
+   of S_REGION corners. [#3184]
 
 0.13.0 (2019-02-15)
 ===================
