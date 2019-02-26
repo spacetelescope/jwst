@@ -7,7 +7,7 @@ jobconfig.publish_env_on_success_only = true
 
 // Define python and numpy versions
 python_version = '3.6'
-numpy_version = '1.15.*'
+numpy_version = '1.16.1'
 
 // Define environment variables needed for the tests
 def test_env = [
