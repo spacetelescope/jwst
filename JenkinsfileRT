@@ -42,7 +42,7 @@ bc.env_vars = test_env
 bc.conda_packages = ["python=${python_version}"]
 bc.build_cmds = [
     "pip install --progress-bar=off numpy==${numpy_version}",
-    "pip install ${pip_install_args} .[test]",
+    "pip install ${pip_install_args} -e .[test]",
     "pip install pytest-xdist",
     "pip freeze",
 ]
