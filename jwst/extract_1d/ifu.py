@@ -59,10 +59,10 @@ def ifu_extract1d(input_model, refname, source_type, subtract_background):
     sub_bkg = extract_params['subtract_background']
     if subtract_background is not None:
         extract_params['subtract_background'] = subtract_background
-    if subtract_background and not sub_bkg:
-        log.info("Background subtraction was enabled - performing it.")
-    elif sub_bkg and not subtract_background:
-        log.info("Background subtraction was disabled - skipping it.")
+        if subtract_background and not sub_bkg:
+            log.info("Background subtraction was enabled - performing it.")
+        elif sub_bkg and not subtract_background:
+            log.info("Background subtraction was disabled - skipping it.")
 
     if extract_params:
         (ra, dec, wavelength, net, background, npixels, dq) = extract_ifu(
