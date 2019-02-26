@@ -58,7 +58,6 @@ for (python_ver in matrix_python) {
             bc.name = name
             bc.conda_packages = ["python=${python_ver}"]
             bc.build_cmds = [
-                "conda update -n base -y conda",
                 "pip install ${pip_install_args} numpy==${matrix_numpy[0]}",
                 "pip install ${pip_install_args} -e .[test]",
             ]
