@@ -1,7 +1,7 @@
 if (utils.scm_checkout()) return
 
-matrix_python = ['3.6.8']
-matrix_numpy = ['1.16.1']
+matrix_python = ['3.6']
+matrix_numpy = ['1.15']
 matrix_astropy = ['4']
 matrix_astropy_pip = ['3.1']
 matrix = []
@@ -59,7 +59,7 @@ for (python_ver in matrix_python) {
             bc.conda_ver = '4.6.7'
             bc.conda_packages = ["python=${python_ver}"]
             bc.build_cmds = [
-                "pip install ${pip_install_args} numpy==${matrix_numpy}",
+                "pip install ${pip_install_args} numpy",
                 "pip install ${pip_install_args} -e .[test]",
             ]
             bc.test_cmds = ["pytest -r s --basetemp=test_results --junitxml=results.xml"]
