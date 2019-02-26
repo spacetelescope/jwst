@@ -37,11 +37,11 @@ data_config.root = '${pytest_basetemp}'
 data_config.match_prefix = '(.*)_result' // .json is appended automatically
 
 bc = new BuildConfig()
-bc.conda_ver = '4.6.7'
 bc.nodetype = 'jwst'
 bc.env_vars = test_env
 bc.conda_packages = ["python=${python_version}"]
 bc.build_cmds = [
+    "conda --version",
     "pip install ${pip_install_args} numpy==${numpy_version}",
     "pip install ${pip_install_args} -e .[test]",
     "pip install pytest-xdist",
