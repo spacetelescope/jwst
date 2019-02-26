@@ -3,6 +3,7 @@ import numpy as np
 from numpy.testing import assert_allclose
 import pytest
 from gwcs.wcstools import grid_from_bounding_box
+from ci_watson.artifactory_helpers import get_bigdata
 
 from jwst import datamodels
 from jwst.datamodels import ImageModel, RegionsModel, CubeModel
@@ -277,8 +278,11 @@ class TestMIRISetPointing(BaseJWSTTest):
                                     'jw80600010001_02101_00001_mirimage_uncal_orig.fits',
                                     docopy=True  # always produce local copy
                               )
+        # Get SIAF PRD database file
+        siaf_prd_loc = ['jwst-pipeline', self.env, 'common', 'prd.db']
+        siaf_path = get_bigdata(*siaf_prd_loc)
 
-        add_wcs(input_file, allow_default=True)
+        add_wcs(input_file, allow_default=True, siaf_path=siaf_path)
 
         outputs = [(input_file,
                     'jw80600010001_02101_00001_mirimage_uncal_ref.fits')]

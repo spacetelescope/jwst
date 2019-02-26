@@ -13,7 +13,7 @@ from . import spec_wcs
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-def ifu_extract1d(input_model, refname, source_type):
+def ifu_extract1d(input_model, refname, source_type, subtract_background):
     """Extract a 1-D spectrum from an IFU cube.
 
     Parameters
@@ -26,6 +26,12 @@ def ifu_extract1d(input_model, refname, source_type):
 
     source_type : string
         "point" or "extended"
+
+    subtract_background : bool or None
+        User supplied flag indicating whether the background should be subtracted.
+        If None, the value in the extract_1d reference file will be used.
+        If not None, this parameter overrides the value in the
+        extract_1d reference file.
 
     Returns
     -------
@@ -50,9 +56,10 @@ def ifu_extract1d(input_model, refname, source_type):
         slitname = "ANY"
 
     extract_params = ifu_extract_parameters(refname, slitname, source_type)
-
+    if subtract_background is not None:
+        extract_params['subtract_background'] = subtract_background
     if extract_params:
-        (ra, dec, wavelength, net, background, dq) = extract_ifu(
+        (ra, dec, wavelength, net, background, npixels, dq) = extract_ifu(
                         input_model, source_type, extract_params)
     else:
         log.critical('Missing extraction parameters.')
@@ -90,10 +97,10 @@ def ifu_extract1d(input_model, refname, source_type):
     fl_error = np.ones_like(net)
     nerror = np.ones_like(net)
     berror = np.ones_like(net)
-    spec = datamodels.SpecModel()
+    spec_dtype = datamodels.SpecModel().spec_table.dtype
     otab = np.array(list(zip(wavelength, flux, fl_error, dq,
-                         net, nerror, background, berror)),
-                    dtype=spec.spec_table.dtype)
+                         net, nerror, background, berror, npixels)),
+                    dtype=spec_dtype)
     spec = datamodels.SpecModel(spec_table=otab)
     spec.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec, wavelength)
     spec.spec_table.columns['wavelength'].unit = 'um'
@@ -192,7 +199,11 @@ def extract_ifu(input_model, source_type, extract_params):
         The background count rate that was subtracted from the total
         source count rate to get `net`.
 
-    dq : ndarray, 1-D, int32
+    npixels : ndarray, 1-D, float64
+        For each slice, this is the number of pixels that were added
+        together to get `net`.
+
+    dq : ndarray, 1-D, uint32
         The data quality array.
     """
 
@@ -202,11 +213,14 @@ def extract_ifu(input_model, source_type, extract_params):
         log.error("Expected a 3-D IFU cube; dimension is %d.", len(shape))
         raise RuntimeError("The IFU cube should be 3-D.")
 
-    # We need to allocate net, background, and dq arrays no matter what.
+    # We need to allocate net, background, npixels, and dq arrays
+    # no matter what.  We may need to divide by npixels, so the default
+    # is 1 rather than 0.
     net = np.zeros(shape[0], dtype=np.float64)
     background = np.zeros(shape[0], dtype=np.float64)
+    npixels = np.ones(shape[0], dtype=np.float64)
 
-    dq = np.zeros(shape[0], dtype=np.int32)
+    dq = np.zeros(shape[0], dtype=np.uint32)
 
     x_center = extract_params['x_center']
     y_center = extract_params['y_center']
@@ -225,6 +239,10 @@ def extract_ifu(input_model, source_type, extract_params):
 
     subtract_background = extract_params['subtract_background']
     smaller_axis = float(min(shape[1], shape[2]))       # for defaults
+    radius = None
+    inner_bkg = None
+    outer_bkg = None
+
     if source_type == 'point':
         radius = extract_params['radius']
         if radius is None:
@@ -252,10 +270,7 @@ def extract_ifu(input_model, source_type, extract_params):
         if height is None:
             height = smaller_axis / 2.
         theta = extract_params['theta'] * math.pi / 180.
-        radius = None
         subtract_background = False
-        inner_bkg = None
-        outer_bkg = None
 
     log.debug("IFU 1-D extraction parameters:")
     log.debug("  x_center = %s", str(x_center))
@@ -299,7 +314,7 @@ def extract_ifu(input_model, source_type, extract_params):
         (ra, dec) = (0., 0.)
         wavelength = np.zeros(shape[0], dtype=np.float64)
         dq[:] = dqflags.pixel['DO_NOT_USE']
-        return (ra, dec, wavelength, net, background, dq)       # all bad
+        return (ra, dec, wavelength, net, background, npixels, dq)  # all bad
 
     if hasattr(input_model.meta, 'wcs'):
         wcs = input_model.meta.wcs
@@ -332,6 +347,7 @@ def extract_ifu(input_model, source_type, extract_params):
         aperture = RectangularAperture(position, width, height, theta)
         # No background is computed for an extended source.
 
+    npixels[:] = aperture.area()
     for k in range(shape[0]):
         phot_table = aperture_photometry(data[k, :, :], aperture,
                                          method=method, subpixels=subpixels)
@@ -361,8 +377,9 @@ def extract_ifu(input_model, source_type, extract_params):
                 wavelength = wavelength[slc]
                 net = net[slc]
                 background = background[slc]
+                npixels = npixels[slc]
                 dq = dq[slc]
         else:
             dq |= dqflags.pixel['DO_NOT_USE']
 
-    return (ra, dec, wavelength, net, background, dq)
+    return (ra, dec, wavelength, net, background, npixels, dq)

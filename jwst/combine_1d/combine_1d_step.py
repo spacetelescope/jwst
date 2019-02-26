@@ -16,15 +16,18 @@ class Combine1dStep(Step):
 
     spec = """
     # integration_time or exposure_time.
-    exptime_key = string(default="integration_time")
+    exptime_key = string(default="exposure_time")
     # Interpolation between pixels.
     interpolation = string(default="nearest")
+    # Set to True if the input spectra are just background.
+    background = boolean(default=False)
     """
 
     def process(self, input_file):
 
         result = combine1d.do_correction(input_file,
                                          self.exptime_key,
-                                         self.interpolation)
+                                         self.interpolation,
+                                         self.background)
 
         return result

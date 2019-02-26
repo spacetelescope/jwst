@@ -1,4 +1,19 @@
-0.13.0 (Unreleased)
+0.13.1 (Unreleased)
+===================
+
+combine_1d
+----------
+ - Added parameter ``background``; for background data, scale the flux,
+   error, and net by 1 / NPIXELS, and include NPIXELS in the weight;
+   changed the default for ``exptime_key`` to "exposure_time". [#3180]
+
+set_telescope_pointing
+----------------------
+
+ - Added population of CDELTn keywords based on SIAF values and fixed bug in calculation
+   of S_REGION corners. [#3184]
+
+0.13.0 (2019-02-15)
 ===================
 
 ami
@@ -20,6 +35,8 @@ assign_wcs
 
  - The bounding box of the MIRI LRS WCS is now in "image" coordinates, not full frame. [#3063]
 
+ - FITS WCS keywords are written out only if the observation is one of the IMAGING_MODES. [#3066]
+
 associations
 ------------
 
@@ -37,6 +54,9 @@ combine_1d
 
 coron
 -----
+
+- Updated the `stack_refs` routine to update the output data model with metadata
+  from the first input model. [#3111]
 
 csv_tools
 ---------
@@ -80,6 +100,8 @@ extract_1d
   integer index arrays. [#3045]
 
 - Changed the names of time-related keywords for extracted spectra. [#3058]
+
+- A new NPIXELS column has been added to the output table. [#3108]
 
 extract_2d
 ----------
@@ -129,8 +151,21 @@ lastframe
 lib
 ---
 
+- ``set_telescope_pointing`` now populates WCS keywords from the SIAF file. [#3066]
+
 linearity
 ---------
+
+master_background
+-----------------
+
+- Implement the basic step scaffolding for `MasterBackgroundStep`. [#3090]
+
+- Record user-supplied master background in MSTRBKGD keyword [#3101]
+
+- Add step documentation for master background subtraction [#3102]
+
+- Make master background step actually work [#3110]
 
 model_blender
 -------------
@@ -217,6 +252,9 @@ scripts
 
 stpipe
 ------
+
+- Add `Step.record_step_status()` method for use by this step (and any other
+  pipeline or pipeline step) [#3110]
 
 straylight
 ----------

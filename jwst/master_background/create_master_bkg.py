@@ -24,7 +24,7 @@ def create_background(wavelength, flux):
 
     Returns
     -------
-    output_model : `~jwst.datamodels.MultiSlitModel`, or None
+    output_model : `~jwst.datamodels.MultiSpecModel`, or None
         A data model containing the 1-D background spectrum.  This can be
         written to disk by calling:
 
@@ -55,16 +55,14 @@ def create_background(wavelength, flux):
     # Create arrays for columns that we won't need.
     dummy = np.zeros(wl_shape[0], dtype=np.float64)
     dq = np.zeros(wl_shape[0], dtype=np.int32)
+    npixels = np.ones(wl_shape[0], dtype=np.float64)
 
     output_model = datamodels.MultiSpecModel()
 
     spec_dtype = datamodels.SpecModel().spec_table.dtype
 
-    # xxx Include one more argument at the end, after column NPIXELS has
-    # xxx been added to the x1d table.  The new argument should be float64
-    # xxx and with values of 1 (i.e. not dummy).
     otab = np.array(list(zip(wavelength, flux,
-                             dummy, dq, dummy, dummy, dummy, dummy)),
+                             dummy, dq, dummy, dummy, dummy, dummy, npixels)),
                     dtype=spec_dtype)
 
     spec = datamodels.SpecModel(spec_table=otab)

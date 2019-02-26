@@ -40,7 +40,6 @@ DAMAGE.
 
 import argparse
 import logging
-import sys
 
 from jwst.lib.set_telescope_pointing import add_wcs
 

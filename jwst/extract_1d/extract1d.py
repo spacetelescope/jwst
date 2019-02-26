@@ -3,8 +3,6 @@
 
 :Authors: Mihai Cara (contact: help@stsci.edu)
 
-:License: :doc:`../LICENSE`
-
 """
 
 # STDLIB
@@ -25,7 +23,8 @@ log.setLevel(logging.DEBUG)
 
 def extract1d(image, lambdas, disp_range,
               p_src, p_bkg=None, independent_var="wavelength",
-              smoothing_length=0, bkg_order=0, weights=None):
+              smoothing_length=0, bkg_order=0, weights=None,
+              subtract_background=None):
     """Extract the spectrum, optionally subtracting background.
 
     Parameters:
@@ -73,15 +72,24 @@ def extract1d(image, lambdas, disp_range,
         region as a function of the wavelength (a single float) for the
         current column and an array of Y pixel coordinates.
 
+    subtract_background : bool or None
+        A flag which indicates whether the background should be subtracted.
+        If None, the value in the extract_1d reference file will be used.
+        If not None, this parameter overrides the value in the
+        extract_1d reference file.
+
     Returns:
     --------
-    countrate : ndarray, 1-D
+    countrate : ndarray, 1-D, float64
         The extracted spectrum in units of counts / s.
 
-    background : ndarray, 1-D
+    background : ndarray, 1-D, float64
         The background that was subtracted from the source.
-    """
 
+    npixels : ndarray, 1-D, float64
+        For each column, this is the number of pixels that were added
+        together to get `countrate`.
+    """
     nl = lambdas.shape[0]
 
     # Evaluate the functions for source and (optionally) background limits,
@@ -195,10 +203,12 @@ def extract1d(image, lambdas, disp_range,
 
     bkg_model = None
 
-    countrate = np.zeros(nl, dtype=np.float32)
-    background = np.zeros(nl, dtype=np.float32)
+    countrate = np.zeros(nl, dtype=np.float64)
+    background = np.zeros(nl, dtype=np.float64)
+    npixels = np.zeros(nl, dtype=np.float64)
     # x is an index (column number) within `image`, while j is an index in
-    # lambdas, countrate, background, and the arrays in srclim and bkglim.
+    # lambdas, countrate, background, npixels, and the arrays in
+    # srclim and bkglim.
     x = disp_range[0]
     for j in range(nl):
         lam = lambdas[j]
@@ -233,13 +243,14 @@ def extract1d(image, lambdas, disp_range,
             weights=weights, bkgmodel=bkg_model
         )
         countrate[j] = total_flux
+        npixels[j] = tarea
         if nbkglim > 0:
             background[j] = bkg_flux
 
         x += 1
         continue
 
-    return (countrate, background)
+    return (countrate, background, npixels)
 
 def bxcar(image, smoothing_length):
     """Smooth with a 1-D interval, along the last axis.
@@ -470,15 +481,15 @@ def _extract_colpix(image_data, x, j, limits):
 
     Returns:
     --------
-    y : ndarray, float32
+    y : ndarray, float64
         Y pixel coordinates within the current column, for every pixel that
         is included in any of the intervals in `limits`.
 
-    val : ndarray, float32
+    val : ndarray, float64
         The image values at the pixels given by `y`.  That is,
         val[i] = image_data[y[i], x].
 
-    wht : ndarray, float32
+    wht : ndarray, float64
         The weight associated with each element in `val`.  The weight
         ranges from 0 to 1, giving the fraction of a pixel that is included
         within an interval.  For example, suppose one of the elements in
@@ -512,9 +523,9 @@ def _extract_colpix(image_data, x, j, limits):
     npts = max(npts, 1)
 
     # pre-allocate data arrays:
-    y = np.empty(npts, dtype=np.float32)
-    val = np.empty(npts, dtype=np.float32)
-    wht = np.ones(npts, dtype=np.float32)
+    y = np.empty(npts, dtype=np.float64)
+    val = np.empty(npts, dtype=np.float64)
+    wht = np.ones(npts, dtype=np.float64)
 
     # populate data and weights:
     k = 0
@@ -548,7 +559,7 @@ def _extract_colpix(image_data, x, j, limits):
 
         # c. all other intermediate pixels:
         val[k + 1:kn] = image_data[ii1 + 1:ii2, x]
-        y[k:kn + 1] = np.arange(ii1, ii2 + 1, 1, dtype=np.float32)
+        y[k:kn + 1] = np.arange(ii1, ii2 + 1, 1, dtype=np.float64)
 
         k += ii2 - ii1 + 1
 

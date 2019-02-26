@@ -270,7 +270,7 @@ class Step():
 
         config_file : str path, optional
             The path to the config file that this step was initialized
-            with.  Use to determine relative path names.
+            with.  Use to determine relative path names of other config files.
 
         **kws : dict
             Additional parameters to set.  These will be set as member
@@ -310,7 +310,7 @@ class Step():
         # Log the fact that we have been init-ed.
         self.log.info('{0} instance created.'.format(self.__class__.__name__))
 
-        # Store the config file path so filenames can be resolved
+        # Store the config file path so config filenames can be resolved
         # against it.
         self.config_file = config_file
 
@@ -1063,6 +1063,34 @@ class Step():
             except Exception:
                 # Not a file-checkable object. Ignore.
                 pass
+
+    @staticmethod
+    def record_step_status(datamodel, cal_step, success=True):
+        """Record whether or not a step completed in meta.cal_step
+
+        Parameters
+        ----------
+        datamodel : `~jwst.datamodels.Datamodel` instance
+            This is the datamodel or container of datamodels to modify in place
+
+        cal_step : str
+            The attribute in meta.cal_step for recording the status of the step
+
+        success : bool
+            If True, then 'COMPLETE' is recorded.  If False, then 'SKIPPED'
+        """
+        if success:
+            status = 'COMPLETE'
+        else:
+            status = 'SKIPPED'
+
+        if isinstance(datamodel, ModelContainer):
+            for model in datamodel:
+                model.meta.cal_step._instance[cal_step] = status
+        else:
+            datamodel.meta.cal_step._instance[cal_step] = status
+
+        # TODO: standardize cal_step naming to point to the offical step name
 
 
 # #########
