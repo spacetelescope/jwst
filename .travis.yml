@@ -75,8 +75,8 @@ matrix:
                PIP_DEPENDENCIES='.'
 
 before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then MC_INST=Miniconda-latest-Linux-x86_64.sh; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then MC_INST=Miniconda-latest-MacOSX-x86_64.sh; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then MC_INST=Miniconda3-latest-Linux-x86_64.sh; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then MC_INST=Miniconda3-latest-MacOSX-x86_64.sh; fi
   - curl -LO "$MC_URL/$MC_INST"
   - bash $MC_INST -b -p $HOME/miniconda
   - export PATH=$HOME/miniconda/bin:$PATH
