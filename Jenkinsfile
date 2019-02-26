@@ -58,6 +58,7 @@ for (python_ver in matrix_python) {
             bc.nodetype = 'linux'
             bc.env_vars = test_env
             bc.name = name
+            bc.conda_ver = '4.6.7'
             bc.conda_packages = ["python=${python_ver}"]
             bc.build_cmds = [
                 "pip install ${pip_install_args} numpy==${matrix_numpy[0]}",
