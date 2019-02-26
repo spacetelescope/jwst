@@ -80,9 +80,9 @@ before_install:
   - bash $MC_INST -b -p $HOME/miniconda
   - export PATH=$HOME/miniconda/bin:$PATH
   - conda config --set always_yes yes --set changeps1 no
-  - conda config --set auto_update_conda false
+  - conda config --set auto_update_conda true
   - for channel in $CONDA_CHANNELS; do conda config --add channels "$channel"; done
-  - conda update -q conda
+  - conda --version
   - conda create -n test -q python=$PYTHON_VERSION numpy $CONDA_DEPENDENCIES
   - source activate test
   - if [[ -n $PIP_DEPENDENCIES ]]; then pip install -q -e $PIP_DEPENDENCIES; fi
