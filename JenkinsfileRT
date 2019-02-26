@@ -41,7 +41,6 @@ bc.nodetype = 'jwst'
 bc.env_vars = test_env
 bc.conda_packages = ["python=${python_version}"]
 bc.build_cmds = [
-    "conda --version",
     "pip install ${pip_install_args} numpy==${numpy_version}",
     "pip install ${pip_install_args} -e .[test]",
     "pip install pytest-xdist",
