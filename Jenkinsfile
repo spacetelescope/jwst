@@ -1,5 +1,3 @@
-@Library('utils@conda_override') _
-
 if (utils.scm_checkout()) return
 
 matrix_python = ['3.6']
