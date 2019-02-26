@@ -40,7 +40,7 @@ env:
         - MC_URL=https://repo.continuum.io/miniconda
         - PIP_DEPENDENCIES='.[test]'
         - PYTHON_VERSION=3.6
-        - NUMPY_VERSION=1.15
+        - NUMPY_VERSION=1.16
 
     matrix:
         - SETUP_CMD='install'
