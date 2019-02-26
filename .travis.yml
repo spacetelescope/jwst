@@ -86,8 +86,5 @@ before_install:
   - source activate test
   - if [[ -n $PIP_DEPENDENCIES ]]; then pip install -q -e $PIP_DEPENDENCIES; fi
 
-after_install:
-  - conda list astropy
-
 script:
   - $MAIN_CMD $SETUP_CMD

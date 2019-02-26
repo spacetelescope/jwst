@@ -56,7 +56,6 @@ for (python_ver in matrix_python) {
             bc.nodetype = 'linux'
             bc.env_vars = test_env
             bc.name = name
-            bc.conda_ver = '4.6.7'
             bc.conda_packages = ["python=${python_ver}"]
             bc.build_cmds = [
                 "pip install ${pip_install_args} numpy",
@@ -77,11 +76,11 @@ for (python_ver in matrix_python) {
             bc.nodetype = 'linux'
             bc.env_vars = test_env
             bc.name = name
-            bc.conda_ver = '4.6.7'
             bc.conda_channels = ['http://ssb.stsci.edu/astroconda-dev']
             bc.conda_packages = conda_packages + ["python=${python_ver}"] + ["numpy=${numpy_ver}"]
             bc.build_cmds = [
                 "pip install ${pip_install_args} -e .[test]",
+                "python setup.py install",
             ]
             bc.test_cmds = ["pytest -r s --basetemp=test_results --junitxml=results.xml"]
             matrix += bc
