@@ -28,7 +28,7 @@ def conda_packages = [
     "stsci.imagestats",
     "stsci.stimage",
     "verhawk",
-    "pytest"
+    "pytest",
 ]
 
 // Pip related setup
@@ -56,11 +56,11 @@ for (python_ver in matrix_python) {
             bc.nodetype = 'linux'
             bc.env_vars = test_env
             bc.name = name
-            bc.conda_packages = ["python=${python_ver}"]
+            bc.conda_packages = ["python=${python_ver}", "git"]
             bc.build_cmds = [
                 "pip install ${pip_install_args} numpy",
                 "pip install ${pip_install_args} -e .[test]",
-                "python setup.py clean",
+                "git clean -xdf",
                 "python setup.py develop",
             ]
             bc.test_cmds = ["pytest -r s --basetemp=test_results --junitxml=results.xml"]
@@ -79,10 +79,10 @@ for (python_ver in matrix_python) {
             bc.env_vars = test_env
             bc.name = name
             bc.conda_channels = ['http://ssb.stsci.edu/astroconda-dev']
-            bc.conda_packages = conda_packages + ["python=${python_ver}"] + ["numpy=${numpy_ver}"]
+            bc.conda_packages = conda_packages + ["python=${python_ver}", "numpy=${numpy_ver}", git]
             bc.build_cmds = [
                 "pip install ${pip_install_args} -e .[test]",
-                "python setup.py clean",
+                "git clean -xdf",
                 "python setup.py develop",
             ]
             bc.test_cmds = ["pytest -r s --basetemp=test_results --junitxml=results.xml"]
