@@ -36,16 +36,16 @@ def pip_index = "https://bytesalad.stsci.edu/artifactory/api/pypi/datb-pypi-virt
 def pip_install_args = "--index-url ${pip_index} --progress-bar=off"
 
 // Generate distributions
-dist = new BuildConfig()
-dist.nodetype = 'linux'
-dist.name = 'dist'
-dist.conda_packages = ["python=${matrix_python[0]}"]
-dist.build_cmds = [
+bc_dist = new BuildConfig()
+bc_dist.nodetype = 'linux'
+bc_dist.name = 'dist'
+bc_dist.conda_packages = ["python=${matrix_python[0]}"]
+bc_dist.build_cmds = [
     "pip install ${pip_install_args} numpy==${matrix_numpy[0]}",
     "pip wheel ${pip_install_args} .",
     "python setup.py sdist",
 ]
-matrix += dist
+matrix += bc_dist
 
 // Generate pip build and test matrix with released upstream dependencies
 for (python_ver in matrix_python) {
@@ -60,6 +60,8 @@ for (python_ver in matrix_python) {
             bc.build_cmds = [
                 "pip install ${pip_install_args} numpy",
                 "pip install ${pip_install_args} -e .[test]",
+                "python setup.py clean",
+                "python setup.py develop",
             ]
             bc.test_cmds = ["pytest -r s --basetemp=test_results --junitxml=results.xml"]
             matrix += bc
@@ -80,7 +82,8 @@ for (python_ver in matrix_python) {
             bc.conda_packages = conda_packages + ["python=${python_ver}"] + ["numpy=${numpy_ver}"]
             bc.build_cmds = [
                 "pip install ${pip_install_args} -e .[test]",
-                "python setup.py install",
+                "python setup.py clean",
+                "python setup.py develop",
             ]
             bc.test_cmds = ["pytest -r s --basetemp=test_results --junitxml=results.xml"]
             matrix += bc
