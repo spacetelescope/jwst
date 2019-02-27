@@ -29,14 +29,18 @@ def expand_to_2d(input, m_bkg_spec):
     """
 
     with datamodels.open(m_bkg_spec) as bkg:
-        if len(bkg.spec) > 1:
-            log.warning("The input 1-D spectrum contains multiple spectra")
-        tab_wavelength = bkg.spec[0].spec_table['wavelength'].copy()
+        if hasattr(bkg, 'spec'):                # MultiSpecModel
+            if len(bkg.spec) > 1:
+                log.warning("The input 1-D spectrum contains multiple spectra")
+            spec_table = bkg.spec[0].spec_table
+        else:                                   # CombinedSpecModel
+            spec_table = bkg.spec_table
+        tab_wavelength = spec_table['wavelength'].copy()
         try:
-            tab_npixels = bkg.spec[0].spec_table['npixels'].copy()
+            tab_npixels = spec_table['npixels'].copy()
         except KeyError:
             tab_npixels = np.ones_like(tab_wavelength)
-        tab_background = bkg.spec[0].spec_table['flux'] / tab_npixels
+        tab_background = spec_table['flux'] / tab_npixels
 
     # We're going to use np.interp, so tab_wavelength must be strictly
     # increasing.
