@@ -2133,7 +2133,7 @@ class ImageExtractModel(ExtractBase):
             The background count rate that was subtracted from the total
             source count rate to get `net`.
 
-        npixels : ndarray, 1-D, float32
+        npixels : ndarray, 1-D, float64
             The number of pixels that were added together to get `net`.
 
         dq : ndarray, 1-D, uint32
@@ -2441,10 +2441,10 @@ def interpolate_response(wavelength, relsens, verbose):
 
     Returns
     -------
-    r_factor : ndarray, 1-D
-        The response, interpolated at `wavelength`, with extrapolated
-        elements and zero or negative response values set to 1.  Divide
-        the net count rate by r_factor to obtain the flux.
+    rr_factor : ndarray, 1-D
+        The reciprocal of the response, interpolated at `wavelength`, with
+        extrapolated elements and zero or negative response values set to 0.
+        Multiply the net count rate by rr_factor to obtain the flux.
     """
 
     # "_relsens" indicates that the values were read from the RELSENS table.
@@ -2476,21 +2476,26 @@ def interpolate_response(wavelength, relsens, verbose):
     # `r_factor` is the response, interpolated at the wavelengths in the
     # science data.  -2048 is a flag value, to check for extrapolation.
     r_factor = np.interp(wavelength, wl_relsens, resp_relsens, -2048., -2048.)
-    mask = np.where(r_factor == -2048.)
-    if len(mask[0]) > 0:
+    mask2048 = np.where(r_factor == -2048.)
+    if len(mask2048[0]) > 0:
         if verbose:
-            log.warning("Using RELSENS, %d elements were extrapolated; "
-                        "these values will be set to 1.", len(mask[0]))
-        r_factor[mask] = 1.
-    mask = np.where(r_factor <= 0.)
-    if len(mask[0]) > 0:
+            log.warning("Using RELSENS, %d elements were extrapolated; the "
+                        "corresponding flux will be set to 0.",
+                        len(mask2048[0]))
+        r_factor[mask2048] = 1.                 # temporary
+    mask_neg = np.where(r_factor <= 0.)
+    if len(mask_neg[0]) > 0:
         if verbose:
             log.warning("Using RELSENS, %d interpolated response values "
-                        "were <= 0; these values will be set to 1.",
-                        len(mask[0]))
-        r_factor[mask] = 1.
+                        "were <= 0; the corresponding flux will be set to 0.",
+                        len(mask_neg[0]))
+        r_factor[mask_neg] = 1.                 # temporary
 
-    return r_factor
+    rr_factor = 1. / r_factor
+    rr_factor[mask2048] = 0.
+    rr_factor[mask_neg] = 0.
+
+    return rr_factor
 
 
 def do_extract1d(input_model, refname, smoothing_length, bkg_order,
@@ -2600,8 +2605,9 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
             if got_relsens and len(relsens) == 0:
                 got_relsens = False
             if got_relsens:
-                r_factor = interpolate_response(wavelength, relsens, True)
-                flux = net / r_factor
+                # reciprocal of the response
+                rr_factor = interpolate_response(wavelength, relsens, True)
+                flux = net * rr_factor
             else:
                 log.warning("No relsens for current slit, "
                             "so can't compute flux.")
@@ -2692,8 +2698,9 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
                 if got_relsens and len(relsens) == 0:
                     got_relsens = False
                 if got_relsens:
-                    r_factor = interpolate_response(wavelength, relsens, True)
-                    flux = net / r_factor
+                    # reciprocal of the response
+                    rr_factor = interpolate_response(wavelength, relsens, True)
+                    flux = net * rr_factor
                 else:
                     log.warning("No relsens for input file, "
                                 "so can't compute flux.")
@@ -2786,10 +2793,11 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
                         log.info(str(e) + ", skipping ...")
                         break
                     if got_relsens:
-                        r_factor = interpolate_response(
+                        # reciprocal of the response
+                        rr_factor = interpolate_response(
                                         wavelength, input_model.relsens,
                                         verbose)
-                        flux = net / r_factor
+                        flux = net * rr_factor
                     else:
                         flux = np.zeros_like(net)
                     fl_error = np.ones_like(net)
@@ -3311,7 +3319,7 @@ def nans_at_endpoints(wavelength, net, background, npixels, dq, verbose):
     background : ndarray
         Array of background values that were subtracted to get `net`.
 
-    npixels : ndarray, float32
+    npixels : ndarray, float64
         The number of pixels that were added together to get `net`.
 
     dq : ndarray

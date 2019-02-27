@@ -7,6 +7,13 @@ combine_1d
    error, and net by 1 / NPIXELS, and include NPIXELS in the weight;
    changed the default for ``exptime_key`` to "exposure_time". [#3180]
 
+extract_1d
+----------
+
+ - If flux conversion is done, the FLUX is now set to zero (instead of
+   copying the NET) if the wavelength of a pixel is outside the range of
+   the RELSENS array. [#3190]
+
 master_background
 -----------------
 
