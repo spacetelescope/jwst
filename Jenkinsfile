@@ -60,7 +60,7 @@ for (python_ver in matrix_python) {
             bc.build_cmds = [
                 "pip install ${pip_install_args} numpy",
                 "pip install ${pip_install_args} -e .[test]",
-                "git clean -xdf",
+                "python setup.py clean --all",
                 "python setup.py develop",
             ]
             bc.test_cmds = ["pytest -r s --basetemp=test_results --junitxml=results.xml"]
@@ -82,7 +82,7 @@ for (python_ver in matrix_python) {
             bc.conda_packages = conda_packages + ["python=${python_ver}", "numpy=${numpy_ver}", git]
             bc.build_cmds = [
                 "pip install ${pip_install_args} -e .[test]",
-                "git clean -xdf",
+                "python setup.py clean --all",
                 "python setup.py develop",
             ]
             bc.test_cmds = ["pytest -r s --basetemp=test_results --junitxml=results.xml"]
