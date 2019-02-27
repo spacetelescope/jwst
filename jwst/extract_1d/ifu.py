@@ -13,7 +13,7 @@ from . import spec_wcs
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-def ifu_extract1d(input_model, refname, source_type):
+def ifu_extract1d(input_model, refname, source_type, subtract_background):
     """Extract a 1-D spectrum from an IFU cube.
 
     Parameters
@@ -26,6 +26,12 @@ def ifu_extract1d(input_model, refname, source_type):
 
     source_type : string
         "point" or "extended"
+
+    subtract_background : bool or None
+        User supplied flag indicating whether the background should be subtracted.
+        If None, the value in the extract_1d reference file will be used.
+        If not None, this parameter overrides the value in the
+        extract_1d reference file.
 
     Returns
     -------
@@ -50,7 +56,8 @@ def ifu_extract1d(input_model, refname, source_type):
         slitname = "ANY"
 
     extract_params = ifu_extract_parameters(refname, slitname, source_type)
-
+    if subtract_background is not None:
+        extract_params['subtract_background'] = subtract_background
     if extract_params:
         (ra, dec, wavelength, net, background, npixels, dq) = extract_ifu(
                         input_model, source_type, extract_params)
@@ -232,6 +239,10 @@ def extract_ifu(input_model, source_type, extract_params):
 
     subtract_background = extract_params['subtract_background']
     smaller_axis = float(min(shape[1], shape[2]))       # for defaults
+    radius = None
+    inner_bkg = None
+    outer_bkg = None
+
     if source_type == 'point':
         radius = extract_params['radius']
         if radius is None:
@@ -259,10 +270,7 @@ def extract_ifu(input_model, source_type, extract_params):
         if height is None:
             height = smaller_axis / 2.
         theta = extract_params['theta'] * math.pi / 180.
-        radius = None
         subtract_background = False
-        inner_bkg = None
-        outer_bkg = None
 
     log.debug("IFU 1-D extraction parameters:")
     log.debug("  x_center = %s", str(x_center))

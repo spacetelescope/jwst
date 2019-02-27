@@ -1,6 +1,23 @@
 0.13.1 (Unreleased)
 ===================
 
+combine_1d
+----------
+ - Added parameter ``background``; for background data, scale the flux,
+   error, and net by 1 / NPIXELS, and include NPIXELS in the weight;
+   changed the default for ``exptime_key`` to "exposure_time". [#3180]
+
+master_background
+-----------------
+
+ - Added unit tests for expand_to_2d.  Support CombinedSpecModel data
+   for the 1-D user-supplied background spectrum. [#3188]
+
+set_telescope_pointing
+----------------------
+
+ - Added population of CDELTn keywords based on SIAF values and fixed bug in calculation
+   of S_REGION corners. [#3184]
 
 0.13.0 (2019-02-15)
 ===================
