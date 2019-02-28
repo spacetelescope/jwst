@@ -1,6 +1,7 @@
 language: python
+dist: xenial
 python:
-  - "3.6.8"
+  - "3.6"
 sudo: false
 
 # The apt packages below are needed for sphinx builds
