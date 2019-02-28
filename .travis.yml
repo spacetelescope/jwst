@@ -1,7 +1,6 @@
-language: python
 dist: xenial
-python:
-  - "3.6"
+language: python
+python: 3.6
 sudo: false
 
 # The apt packages below are needed for sphinx builds
@@ -29,15 +28,19 @@ matrix:
            PIP_DEPENDENCIES='.[docs]'
     # PEP8 check
     - env: TEST_COMMAND='flake8 --count --select=F, E101, E111, E112, E113, E401, E402, E711, E722 --max-line-length=110 jwst'
+           PIP_DEPENDENCIES='.'
     # Strict PEP8 check, an allowed failure below
     - env: TEST_COMMAND='flake8 --count jwst'
+           PIP_DEPENDENCIES='.'
 
   allow_failures:
     - env: TEST_COMMAND='flake8 --count jwst'
+           PIP_DEPENDENCIES='.'
 
 install:
   - pip install numpy~=1.16
   - if [[ -n $PIP_DEPENDENCIES ]]; then pip install -e $PIP_DEPENDENCIES; fi
+  - pip install flake8
   - python setup.py develop
 
 script:
