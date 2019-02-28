@@ -16,9 +16,6 @@ env:
   global:
     - CRDS_SERVER_URL='https://jwst-crds.stsci.edu'
     - CRDS_PATH='/tmp/crds_cache'
-    - PIP_INDEX="https://bytesalad.stsci.edu/artifactory/api/pypi/datb-pypi-virtual/simple"
-    - PIP_INSTALL_ARGS=" --index-url ${pip_index} --progress-bar=off "
-
 
 matrix:
   # Don't wait for allowed failures
@@ -40,7 +37,7 @@ matrix:
 
 install:
   - pip install numpy~=1.16
-  - if [[ -n $PIP_DEPENDENCIES ]]; then pip install $PIP_INSTALL_ARGS -e $PIP_DEPENDENCIES; fi
+  - if [[ -n $PIP_DEPENDENCIES ]]; then pip install -e $PIP_DEPENDENCIES; fi
   - python setup.py develop
 
 script:
