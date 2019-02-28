@@ -1,10 +1,8 @@
 if (utils.scm_checkout()) return
 
-matrix_python = ['3.6']
-matrix_numpy = ['1.15']
-matrix_astropy = ['4']
-matrix_astropy_pip = ['3.1']
-matrix = []
+python_ver = '3.6'
+numpy_ver = '1.16'
+numpy_conda_ver = '1.15'
 
 def test_env = [
     "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
@@ -36,59 +34,40 @@ def pip_index = "https://bytesalad.stsci.edu/artifactory/api/pypi/datb-pypi-virt
 def pip_install_args = "--index-url ${pip_index} --progress-bar=off"
 
 // Generate distributions
-bc_dist = new BuildConfig()
-bc_dist.nodetype = 'linux'
-bc_dist.name = 'dist'
-bc_dist.conda_packages = ["python=${matrix_python[0]}"]
-bc_dist.build_cmds = [
+bc0 = new BuildConfig()
+bc0.nodetype = 'linux'
+bc0.name = 'dist'
+bc0.conda_packages = ["python=${python_ver}"]
+bc0.build_cmds = [
     "pip install ${pip_install_args} numpy==${matrix_numpy[0]}",
     "pip wheel ${pip_install_args} .",
     "python setup.py sdist",
 ]
-matrix += bc_dist
 
-// Generate pip build and test matrix with released upstream dependencies
-for (python_ver in matrix_python) {
-    for (numpy_ver in matrix_numpy) {
-        for (astropy_ver in matrix_astropy_pip) {
-            def name = "pip_py${python_ver}np${numpy_ver}ap${astropy_ver}"
-            bc = new BuildConfig()
-            bc.nodetype = 'linux'
-            bc.env_vars = test_env
-            bc.name = name
-            bc.conda_packages = ["python=${python_ver}", "git"]
-            bc.build_cmds = [
-                "pip install ${pip_install_args} numpy",
-                "pip install ${pip_install_args} -e .[test]",
-                "pip uninstall -y jwst",
-                "python setup.py develop",
-            ]
-            bc.test_cmds = ["pytest -r s --basetemp=test_results --junitxml=results.xml"]
-            matrix += bc
-        }
-    }
-}
+// Generate pip build/test with released upstream dependencies
+bc1 = utils.copy(bc0)
+bc1.name = "pip_py${python_ver}np${numpy_ver}"
+bc1.env_vars = test_env
+bc1.conda_packages = ["python=${python_ver}"]
+bc1.build_cmds = [
+    "pip install ${pip_install_args} numpy~=${numpy_ver}",
+    "pip install ${pip_install_args} -e .[test]",
+    "pip uninstall -y jwst",
+    "python setup.py develop",
+]
+bc1.test_cmds = ["pytest -r sx --basetemp=test_results --junitxml=results.xml"]
 
-// Generate conda build and test matrix with astroconda-dev dependencies
-for (python_ver in matrix_python) {
-    for (numpy_ver in matrix_numpy) {
-        for (astropy_ver in matrix_astropy) {
-            def name = "conda_py${python_ver}np${numpy_ver}ap${astropy_ver}"
-            bc = new BuildConfig()
-            bc.nodetype = 'linux'
-            bc.env_vars = test_env
-            bc.name = name
-            bc.conda_channels = ['http://ssb.stsci.edu/astroconda-dev']
-            bc.conda_packages = conda_packages + ["python=${python_ver}", "numpy=${numpy_ver}", git]
-            bc.build_cmds = [
-                "pip install ${pip_install_args} -e .[test]",
-                "pip uninstall -y jwst",
-                "python setup.py develop",
-            ]
-            bc.test_cmds = ["pytest -r s --basetemp=test_results --junitxml=results.xml"]
-            matrix += bc
-        }
-    }
-}
+// Generate conda build/test with astroconda-dev dependencies
+bc2 = utils.copy(bc0)
+bc2.name = "conda_py${python_ver}np${numpy_ver}"
+bc2.env_vars = test_env
+bc2.conda_channels = ['http://ssb.stsci.edu/astroconda-dev']
+bc2.conda_packages = conda_packages + ["python=${python_ver}", "numpy=${numpy_conda_ver}"]
+bc2.build_cmds = [
+    "pip install ${pip_install_args} -e .[test]",
+    "pip uninstall -y jwst",
+    "python setup.py develop",
+]
+bc2.test_cmds = ["pytest -r sx --basetemp=test_results --junitxml=results.xml"]
 
-utils.run(matrix)
+utils.run([bc0, bc1, bc2])
