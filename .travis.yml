@@ -46,12 +46,10 @@ matrix:
 
         # Run tests
         - env: TEST_COMMAND='python setup.py test'
-               CONDA_DEPENDENCIES="$CONDA_DEPENDENCIES"
                PIP_DEPENDENCIES='.[test]'
 
         # Build sphinx documentation with warnings
         - env: TEST_COMMAND='python setup.py build_sphinx -W'
-               CONDA_DEPENDENCIES="$CONDA_DEPENDENCIES"
                PIP_DEPENDENCIES='.[docs]'
 
         # PEP8 check
