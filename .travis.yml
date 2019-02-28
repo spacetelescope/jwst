@@ -17,7 +17,7 @@ env:
     - CRDS_SERVER_URL='https://jwst-crds.stsci.edu'
     - CRDS_PATH='/tmp/crds_cache'
     - PIP_INDEX="https://bytesalad.stsci.edu/artifactory/api/pypi/datb-pypi-virtual/simple"
-    = PIP_INSTALL_ARGS="--index-url ${pip_index} --progress-bar=off"
+    - PIP_INSTALL_ARGS="--index-url ${pip_index} --progress-bar=off"
 
 
 matrix:
