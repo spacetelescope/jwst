@@ -34,13 +34,14 @@ def conda_packages = [
 def pip_index = "https://bytesalad.stsci.edu/artifactory/api/pypi/datb-pypi-virtual/simple"
 def pip_install_args = "--index-url ${pip_index} --progress-bar=off"
 
-// Generate distributions
+
+// Generate distributions build
 bc0 = new BuildConfig()
 bc0.nodetype = 'linux'
 bc0.name = 'dist'
 bc0.conda_packages = ["python=${python_ver}"]
 bc0.build_cmds = [
-    "pip install ${pip_install_args} numpy==${matrix_numpy[0]}",
+    "pip install ${pip_install_args} numpy==${pip_numpy_ver}",
     "pip wheel ${pip_install_args} .",
     "python setup.py sdist",
 ]
