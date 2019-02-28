@@ -38,15 +38,14 @@ data_config.match_prefix = '(.*)_result' // .json is appended automatically
 
 bc = new BuildConfig()
 bc.nodetype = 'jwst'
+bc.name = "released dependencies"
 bc.env_vars = test_env
 bc.conda_packages = ["python=${python_version}"]
 bc.build_cmds = [
     "pip install ${pip_install_args} numpy~=${numpy_version}",
-    "pip install ${pip_install_args} develop",
+    "python setup.py ${pip_install_args} develop",
     "pip install ${pip_install_args} -e .[test]",
     "pip install pytest-xdist",
-    "pip freeze",
-    "conda list",
 ]
 
 bc.test_cmds = ["${pytest_command}"]
