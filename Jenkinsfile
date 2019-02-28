@@ -2,7 +2,7 @@ if (utils.scm_checkout()) return
 
 python_ver = '3.6'
 pip_numpy_ver = '1.16'
-conda_numpy_conda_ver = '1.15'
+conda_numpy_ver = '1.15'
 
 def test_env = [
     "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
