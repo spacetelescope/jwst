@@ -38,6 +38,8 @@ matrix:
            PIP_DEPENDENCIES='.'
 
 install:
+  - pip install -U pip
+  - pip install -U python~=3.6
   - pip install numpy~=1.16
   - if [[ -n $PIP_DEPENDENCIES ]]; then pip install -e $PIP_DEPENDENCIES; fi
   - pip install flake8
