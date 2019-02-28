@@ -48,7 +48,6 @@ bc0.build_cmds = [
 bc1 = utils.copy(bc0)
 bc1.name = "pip_py${python_ver}np${numpy_ver}"
 bc1.env_vars = test_env
-bc1.conda_packages = ["python=${python_ver}"]
 bc1.build_cmds = [
     "pip install ${pip_install_args} numpy~=${numpy_ver}",
     "pip install ${pip_install_args} -e .[test]",
@@ -59,10 +58,10 @@ bc1.test_cmds = ["pytest -r sx --basetemp=test_results --junitxml=results.xml"]
 
 // Generate conda build/test with astroconda-dev dependencies
 bc2 = utils.copy(bc0)
-bc2.name = "conda_py${python_ver}np${numpy_ver}"
+bc2.name = "conda_py${python_ver}np${numpy_conda_ver}"
 bc2.env_vars = test_env
 bc2.conda_channels = ['http://ssb.stsci.edu/astroconda-dev']
-bc2.conda_packages = conda_packages + ["python=${python_ver}", "numpy=${numpy_conda_ver}"]
+bc2.conda_packages += conda_packages + ["numpy=${numpy_conda_ver}"]
 bc2.build_cmds = [
     "pip install ${pip_install_args} -e .[test]",
     "pip uninstall -y jwst",
