@@ -64,8 +64,8 @@ bc2.env_vars = test_env
 bc2.conda_channels = ['http://ssb.stsci.edu/astroconda-dev']
 bc2.conda_packages += conda_packages + ["numpy=${conda_numpy_ver}"]
 bc2.build_cmds = [
-    "pip install ${pip_install_args} -e .[test]",
     "python setup.py develop",
+    "pip install ${pip_install_args} -e .[test]",
 ]
 bc2.test_cmds = ["pytest -r sx --basetemp=test_results --junitxml=results.xml"]
 
