@@ -5,8 +5,8 @@ combine_1d
 ----------
 
 - Added parameter ``background``; for background data, scale the flux,
-   error, and net by 1 / NPIXELS, and include NPIXELS in the weight;
-   changed the default for ``exptime_key`` to "exposure_time". [#3180]
+  error, and net by 1 / NPIXELS, and include NPIXELS in the weight;
+  changed the default for ``exptime_key`` to "exposure_time". [#3180]
 
 extract_1d
 ----------
@@ -24,6 +24,11 @@ master_background
 
  - Added unit tests for expand_to_2d.  Support CombinedSpecModel data
    for the 1-D user-supplied background spectrum. [#3188]
+
+set_bary_helio_times
+--------------------
+
+ - Raise an exception when unable to compute converted times. [#3197]
 
 set_telescope_pointing
 ----------------------
