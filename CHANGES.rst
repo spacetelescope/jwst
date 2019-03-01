@@ -28,7 +28,7 @@ master_background
 set_bary_helio_times
 --------------------
 
- - Added exit code of 1 when unable to compute converted times. [#3197]
+ - Raise an exception when unable to compute converted times. [#3197]
 
 set_telescope_pointing
 ----------------------
