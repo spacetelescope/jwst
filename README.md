@@ -160,4 +160,4 @@ To run a pre-installed pipeline in JupyterHub:
     * Grab your notebooks (e.g., using `git clone`) and install any optional software (e.g., using `pip install`).
 * Launch your notebook to run the JWST pipeline.
 
-Latest release of any packages is not guaranteed in this environment. Amazone Web Services charges may apply.
+Latest release of any packages is not guaranteed in this environment. Amazon Web Services charges may apply.
