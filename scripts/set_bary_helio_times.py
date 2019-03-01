@@ -36,8 +36,7 @@ times. It also updates the extension that contains the times
 for each group by adding the necessary columns to that table.
 '''
 
-from __future__ import print_function, division
-
+import sys
 import argparse
 import logging
 
@@ -90,6 +89,7 @@ def set_bary_helio_times(filename, jwstpos=None):
     pheader['HELIDELT'] = (hstrtime - starttime) * 86400.
 
     # Now modify the table
+    success = False
     try:
         tabhdu = hdul['GROUP']
     except KeyError:
@@ -129,6 +129,8 @@ def set_bary_helio_times(filename, jwstpos=None):
             hcol = fits.Column(
                 name='helio_end_time', format='D', unit='MJD', array=htimes
             )
+            success = True
+
         binhdu = fits.BinTableHDU.from_columns(
             tabhdu.columns + fits.ColDefs([bcol, hcol])
         )
@@ -138,6 +140,9 @@ def set_bary_helio_times(filename, jwstpos=None):
     hdul.flush()
     hdul.close()
     logging.info('Completed set_bary_helio_times task')
+
+    if not success:
+        sys.exit(1)
 
 
 def main(args):
