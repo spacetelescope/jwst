@@ -36,7 +36,6 @@ times. It also updates the extension that contains the times
 for each group by adding the necessary columns to that table.
 '''
 
-import sys
 import argparse
 import logging
 
@@ -89,7 +88,6 @@ def set_bary_helio_times(filename, jwstpos=None):
     pheader['HELIDELT'] = (hstrtime - starttime) * 86400.
 
     # Now modify the table
-    success = False
     try:
         tabhdu = hdul['GROUP']
     except KeyError:
@@ -111,17 +109,10 @@ def set_bary_helio_times(filename, jwstpos=None):
                 times=mjdtimes
             )
         except Exception as exception:
-            logging.warning(
-                'Error in calculating times. Filling with invalid dates.'
-                '\nError is "{}"'.format(exception)
-            )
-            nulls = -1.0 * np.ones(len(tendtimeslist), dtype=np.float)
-            bcol = fits.Column(
-                name='bary_end_time', format='D', unit='MJD', array=nulls
-            )
-            hcol = fits.Column(
-                name='helio_end_time', format='D', unit='MJD', array=nulls
-            )
+            # Cleanup before exiting
+            hdul.flush()
+            hdul.close()
+            raise Exception('Error in calculating times.') from exception
         else:
             bcol = fits.Column(
                 name='bary_end_time', format='D', unit='MJD', array=btimes
@@ -129,7 +120,6 @@ def set_bary_helio_times(filename, jwstpos=None):
             hcol = fits.Column(
                 name='helio_end_time', format='D', unit='MJD', array=htimes
             )
-            success = True
 
         binhdu = fits.BinTableHDU.from_columns(
             tabhdu.columns + fits.ColDefs([bcol, hcol])
@@ -140,9 +130,6 @@ def set_bary_helio_times(filename, jwstpos=None):
     hdul.flush()
     hdul.close()
     logging.info('Completed set_bary_helio_times task')
-
-    if not success:
-        sys.exit(1)
 
 
 def main(args):
