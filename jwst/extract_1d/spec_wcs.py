@@ -32,20 +32,23 @@ def create_spectral_wcs(ra, dec, wavelength):
         wavelengths) at the pixel(s) specified by the input argument.
     """
 
-    # Only the first coordinate is used.
-    input_frame = cf.Frame2D(axes_order=(0, 1), unit=(u.pix, u.pix),
-                             name="pixel_frame")
+    input_frame = cf.CoordinateFrame(naxes=1, axes_type=("SPATIAL",), axes_order=(0,), unit=(u.pix,), name="pixel_frame")
 
     sky = cf.CelestialFrame(name='sky', axes_order=(0, 1),
                             reference_frame=coord.ICRS())
     spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.micron,),
                             axes_names=('wavelength',))
+    world = cf.CompositeFrame([sky, spec], name='world')
 
     pixel = np.arange(len(wavelength), dtype=np.float)
     tab = Mapping((0, 0, 0)) | \
-          Const1D(ra) & Const1D(dec) & Tabular1D(pixel, wavelength)
+          Const1D(ra) & Const1D(dec) & Tabular1D(points=pixel, lookup_table=wavelength, bounds_error=False)
+    tab.name = "pixel_to_world"
 
-    world = cf.CompositeFrame([sky, spec], name='world')
+    if all(np.diff(wavelength) > 0):
+           tab.inverse = Mapping((2,)) | Tabular1D(points=wavelength, lookup_table=pixel, bounds_error=False)
+    elif all(np.diff(wavelength) < 0):
+           tab.inverse = Mapping((2,)) | Tabular1D(points=wavelength[::-1], lookup_table=pixel[::-1], bounds_error=False)
 
     pipeline = [(input_frame, tab),
                 (world, None)]
