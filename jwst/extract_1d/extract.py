@@ -2174,7 +2174,8 @@ class ImageExtractModel(ExtractBase):
         if self.subtract_background is not None:
             if not self.subtract_background:
                 if verbose and mask_bkg is not None:
-                        log.info("Background subtraction was turned off - skipping it.")
+                        log.info("Background subtraction was turned off "
+                                 "- skipping it.")
                 mask_bkg = None
             else:
                 if verbose and mask_bkg is None:
@@ -2533,7 +2534,8 @@ def run_extract1d(input_model, refname, smoothing_length, bkg_order,
         `log_increment` integrations.
 
     subtract_background : bool or None
-        User supplied flag indicating whether the background should be subtracted.
+        User supplied flag indicating whether the background should be
+        subtracted.
         If None, the value in the extract_1d reference file will be used.
         If not None, this parameter overrides the value in the
         extract_1d reference file.
