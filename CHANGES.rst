@@ -14,6 +14,9 @@ extract_1d
    copying the NET) if the wavelength of a pixel is outside the range of
    the RELSENS array. [#3190]
 
+ - extract_1d can be invoked by calling do_extract1d directly, passing
+   it a dictionary with the reference file information. [#3202]
+
 master_background
 -----------------
 
