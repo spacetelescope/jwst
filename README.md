@@ -146,3 +146,18 @@ If you would like to run a specific test, find its name or ID and use the `-k` o
 If developers need to update the truth files in our nightly regression tests, there are instructions in the repository wiki.
 
 https://github.com/spacetelescope/jwst/wiki/Updating-nightly-RT
+
+JupyterHub Access
+-----------------
+
+**Note:** This is currently still in research-and-development stage and is subject to change.
+
+To run a pre-installed pipeline in JupyterHub:
+
+* Click on https://dev.science.stsci.edu/hub/spawn?image=793754315137.dkr.ecr.us-east-1.amazonaws.com/datb-tc-pipeline-nb:jwstdp-snapshot and sign in.
+* Click "Terminal" to:
+    * Run `pip freeze` to see what is installed.
+    * Grab your notebooks (e.g., using `git clone`) and install any optional software (e.g., using `pip install`).
+* Launch your notebook to run the JWST pipeline.
+
+Latest release of any packages is not guaranteed in this environment. Amazone Web Services charges may apply.
