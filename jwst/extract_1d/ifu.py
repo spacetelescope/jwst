@@ -13,7 +13,7 @@ from . import spec_wcs
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-def ifu_extract1d(input_model, refname, source_type, subtract_background):
+def ifu_extract1d(input_model, ref_dict, source_type, subtract_background):
     """Extract a 1-D spectrum from an IFU cube.
 
     Parameters
@@ -21,8 +21,8 @@ def ifu_extract1d(input_model, refname, source_type, subtract_background):
     input_model : JWST data model for an IFU cube (IFUCubeModel)
         The input model.
 
-    refname : string
-        The name of the JSON reference file.
+    ref_dict : dict
+        The contents of the reference file.
 
     source_type : string
         "point" or "extended"
@@ -55,15 +55,9 @@ def ifu_extract1d(input_model, refname, source_type, subtract_background):
     if slitname is None:
         slitname = "ANY"
 
-    extract_params = ifu_extract_parameters(refname, slitname, source_type)
-    sub_bkg = extract_params['subtract_background']
+    extract_params = get_extract_parameters(ref_dict, slitname, source_type)
     if subtract_background is not None:
         extract_params['subtract_background'] = subtract_background
-        if subtract_background and not sub_bkg:
-            log.info("Background subtraction was enabled - performing it.")
-        elif sub_bkg and not subtract_background:
-            log.info("Background subtraction was disabled - skipping it.")
-
     if extract_params:
         (ra, dec, wavelength, net, background, npixels, dq) = extract_ifu(
                         input_model, source_type, extract_params)
@@ -128,13 +122,13 @@ def ifu_extract1d(input_model, refname, source_type, subtract_background):
     return output_model
 
 
-def ifu_extract_parameters(refname, slitname, source_type):
+def get_extract_parameters(ref_dict, slitname, source_type):
     """Read extraction parameters for an IFU.
 
     Parameters
     ----------
-    refname : str
-        The name of the reference file.
+    ref_dict : dict
+        The contents of the reference file.
 
     slitname : str
         The name of the slit, or "ANY".
@@ -149,9 +143,7 @@ def ifu_extract_parameters(refname, slitname, source_type):
     """
 
     extract_params = {}
-    with open(refname) as f:
-        ref = json.load(f)
-    for aper in ref['apertures']:
+    for aper in ref_dict['apertures']:
         if 'id' in aper and aper['id'] != "dummy" and \
            (aper['id'] == slitname or aper['id'] == "ANY" or
             slitname == "ANY"):

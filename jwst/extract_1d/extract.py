@@ -1127,6 +1127,7 @@ class ExtractBase:
         self.independent_var = "pixel"
         self.src_coeff = None
         self.bkg_coeff = None
+        self.subtract_background = None
         self.p_src = None
         self.p_bkg = None
         self.smoothing_length = 0
@@ -1496,15 +1497,21 @@ class ExtractModel(ExtractBase):
         self.src_coeff = copy.deepcopy(src_coeff)
         self.bkg_coeff = copy.deepcopy(bkg_coeff)
 
-        self.subtract_background = subtract_background
-        if not subtract_background:
-            if verbose and self.bkg_coeff is not None:
-                log.info("Background subtraction was turned off - skipping it.")
-            self.bkg_coeff = None
-        else:
-            if verbose and self.bkg_coeff is None:
-                log.info("Skipping background subtraction because "
-                         "background regions are not defined.")
+        if subtract_background is not None:
+            self.subtract_background = subtract_background
+            if subtract_background:
+                if self.bkg_coeff is None:
+                    self.subtract_background = False
+                    if verbose:
+                        log.info("Skipping background subtraction because "
+                                 "background regions are not defined.")
+            else:
+                if self.bkg_coeff is not None:
+                    self.bkg_coeff = None
+                    if verbose:
+                        log.info("Background subtraction will not be done; "
+                                 "it was specified in the reference file, but "
+                                 "it was overridden by the step parameter.")
 
         # These functions will be assigned by assign_polynomial_limits.
         # The "p" in the attribute name indicates a polynomial function.
@@ -1926,7 +1933,7 @@ class ExtractModel(ExtractBase):
         extract1d.extract1d(image, temp_wl, disp_range,
                             self.p_src, self.p_bkg, self.independent_var,
                             self.smoothing_length, self.bkg_order,
-                            weights=None, subtract_background=self.subtract_background)
+                            weights=None)
         del temp_wl
 
         dq = np.zeros(net.shape, dtype=np.uint32)
@@ -1941,7 +1948,7 @@ class ExtractModel(ExtractBase):
 class ImageExtractModel(ExtractBase):
     """This uses an image that specifies the extraction region."""
 
-    def __init__(self, input_model, slit,
+    def __init__(self, input_model, slit, verbose,
                  ref_file_type=None,
                  match="unknown",
                  spectral_order=1,
@@ -2164,14 +2171,15 @@ class ImageExtractModel(ExtractBase):
         temp = np.ones_like(data)
         npixels = (temp * mask_target).sum(axis=axis, dtype=np.float)
 
-        if not self.subtract_background:
-            if verbose and mask_bkg is not None:
-                    log.info("Background subtraction was turned off - skipping it.")
-            mask_bkg = None
-        else:
-            if verbose and mask_bkg is None:
-                    log.info("Skipping background subtraction because "
-                             "background regions are not defined.")
+        if self.subtract_background is not None:
+            if not self.subtract_background:
+                if verbose and mask_bkg is not None:
+                        log.info("Background subtraction was turned off - skipping it.")
+                mask_bkg = None
+            else:
+                if verbose and mask_bkg is None:
+                        log.info("Skipping background subtraction because "
+                                 "background regions are not defined.")
         # Extract the background.
         if mask_bkg is not None:
             n_bkg = mask_bkg.sum(axis=axis, dtype=np.float)
@@ -2498,12 +2506,11 @@ def interpolate_response(wavelength, relsens, verbose):
     return rr_factor
 
 
-def do_extract1d(input_model, refname, smoothing_length, bkg_order,
-                 log_increment, subtract_background):
+def run_extract1d(input_model, refname, smoothing_length, bkg_order,
+                  log_increment, subtract_background):
     """Extract 1-D spectra.
 
-    Extended summary
-    ----------------
+    This just reads the reference file (if any) and calls do_extract1d.
 
     Parameters
     ----------
@@ -2537,6 +2544,97 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
         A new MultiSpecModel containing the extracted spectra.
     """
 
+    # Read and interpret the reference file.
+    ref_dict = load_ref_file(refname)
+
+    # This item is a flag to let us know that do_extract1d was called
+    # from run_extract1d; that is, we don't expect this key to be present
+    # in ref_dict if do_extract1d was called directly.
+    # If this key is not in ref_dict, or if it is but it's True, then
+    # we'll set S_EXTR1D to 'COMPLETE'.
+    ref_dict['need_to_set_to_complete'] = False
+
+    output_model = do_extract1d(input_model, ref_dict,
+                                smoothing_length, bkg_order,
+                                log_increment, subtract_background)
+
+    return output_model
+
+
+def ref_dict_sanity_check(ref_dict):
+    """Check for required entries.
+
+    Parameters
+    ----------
+    ref_dict : dict or None
+        The contents of the reference file.
+
+    Returns
+    -------
+    ref_dict : dict or None
+    """
+
+    if ref_dict is None:
+        return ref_dict
+
+    if 'ref_file_type' not in ref_dict:
+        # We can make an educated guess as to what this must be.
+        if 'ref_model' in ref_dict:
+            log.info("Assuming reference file type is image")
+            ref_dict['ref_file_type'] = FILE_TYPE_IMAGE
+        else:
+            log.info("Assuming reference file type is JSON")
+            ref_dict['ref_file_type'] = FILE_TYPE_JSON
+            if 'apertures' not in ref_dict:
+                raise RuntimeError("Key 'apertures' must be present in "
+                                   "the reference file.")
+            for aper in ref_dict['apertures']:
+                if 'id' not in aper:
+                    log.warning("Key 'id' not found in aperture {} "
+                                "in reference file".format(aper))
+
+    return ref_dict
+
+
+def do_extract1d(input_model, ref_dict, smoothing_length, bkg_order,
+                 log_increment, subtract_background):
+    """Extract 1-D spectra.
+
+    Parameters
+    ----------
+    input_model : data model
+        The input science model.
+
+    ref_dict : dict or None
+        The contents of the reference file.  This will be None if there
+        is no reference file (i.e. if refname was "N/A").
+
+    smoothing_length : int
+        Width of a boxcar function for smoothing the background regions.
+
+    bkg_order : int
+        Polynomial order for fitting to each column (or row, if the
+        dispersion is vertical) of background.
+
+    log_increment : int
+        if `log_increment` is greater than 0 and the input data are
+        multi-integration, a message will be written to the log every
+        `log_increment` integrations.
+
+    subtract_background : bool or None
+        User supplied flag indicating whether the background should be subtracted.
+        If None, the value in the extract_1d reference file will be used.
+        If not None, this parameter overrides the value in the
+        extract_1d reference file.
+
+    Returns
+    -------
+    output_model : data model
+        A new MultiSpecModel containing the extracted spectra.
+    """
+
+    ref_dict = ref_dict_sanity_check(ref_dict)
+
     output_model = datamodels.MultiSpecModel()
     if hasattr(input_model, "int_times"):
         output_model.int_times = input_model.int_times.copy()
@@ -2548,9 +2646,6 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
     # This will be relevant if we're asked to extract a spectrum and the
     # spectral order is zero.  That's only OK if the disperser is a prism.
     prism_mode = is_prism(input_model)
-
-    # Read and interpret the reference file.
-    ref_dict = load_ref_file(refname)
 
     if isinstance(input_model, datamodels.MultiSlitModel) or \
        isinstance(input_model, datamodels.MultiProductModel):
@@ -2852,7 +2947,8 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
                 source_type = input_model.meta.target.source_type.lower()
             except AttributeError:
                 source_type = "unknown"
-            output_model = ifu.ifu_extract1d(input_model, refname, source_type, subtract_background)
+            output_model = ifu.ifu_extract1d(input_model, ref_dict,
+                                             source_type, subtract_background)
 
         else:
             log.error("The input file is not supported for this step.")
@@ -2872,6 +2968,10 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order,
     # If the reference file is an image, explicitly close it.
     if ref_dict is not None and 'ref_model' in ref_dict:
         ref_dict['ref_model'].close()
+
+    if ('need_to_set_to_complete' not in ref_dict or
+        ref_dict['need_to_set_to_complete']):
+            output_model.meta.cal_step.extract_1d = 'COMPLETE'
 
     return output_model
 

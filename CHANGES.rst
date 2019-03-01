@@ -19,6 +19,9 @@ extract_1d
    whether the local background should be subtracted. If None, the value
    in the extract_1d reference file is used. [#3157, #3186]
 
+ - ``extract_1d`` can be run by calling ``extract.do_extract1d`` and
+   passing a dictionary of reference file information. [#3202]
+
 master_background
 -----------------
 
