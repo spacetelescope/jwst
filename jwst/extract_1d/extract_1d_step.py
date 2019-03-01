@@ -119,11 +119,11 @@ class Extract1dStep(Step):
                                         model, 'extract1d')
                         self.log.info('Using EXTRACT1D reference file %s',
                                       self.ref_file)
-                    temp = extract.run_extract1d(model, self.ref_file,
-                                                 self.smoothing_length,
-                                                 self.bkg_order,
-                                                 self.log_increment,
-                                                 self.subtract_background)
+                    temp = extract.do_extract1d(model, self.ref_file,
+                                                self.smoothing_length,
+                                                self.bkg_order,
+                                                self.log_increment,
+                                                self.subtract_background)
                     # Set the step flag to complete in each MultiSpecModel
                     temp.meta.cal_step.extract_1d = 'COMPLETE'
                     result.append(temp)
@@ -138,11 +138,11 @@ class Extract1dStep(Step):
                                                             'extract1d')
                     self.log.info('Using EXTRACT1D reference file %s',
                                   self.ref_file)
-                result = extract.run_extract1d(input_model[0], self.ref_file,
-                                               self.smoothing_length,
-                                               self.bkg_order,
-                                               self.log_increment,
-                                               self.subtract_background)
+                result = extract.do_extract1d(input_model[0], self.ref_file,
+                                              self.smoothing_length,
+                                              self.bkg_order,
+                                              self.log_increment,
+                                              self.subtract_background)
                 # Set the step flag to complete
                 result.meta.cal_step.extract_1d = 'COMPLETE'
             else:
@@ -159,11 +159,11 @@ class Extract1dStep(Step):
                                                         'extract1d')
                 self.log.info('Using EXTRACT1D reference file %s',
                               self.ref_file)
-            result = extract.run_extract1d(input_model, self.ref_file,
-                                           self.smoothing_length,
-                                           self.bkg_order,
-                                           self.log_increment,
-                                           self.subtract_background)
+            result = extract.do_extract1d(input_model, self.ref_file,
+                                          self.smoothing_length,
+                                          self.bkg_order,
+                                          self.log_increment,
+                                          self.subtract_background)
             # Set the step flag to complete
             result.meta.cal_step.extract_1d = 'COMPLETE'
 
