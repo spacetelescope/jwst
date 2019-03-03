@@ -184,9 +184,9 @@ class NrmModel:
             self.fov_sim = fov
 
         if hasattr(centering, '__iter__'):
-            if centering is 'PIXELCENTERED':
+            if centering == 'PIXELCENTERED':
                 centering=(0.5, 0.5)
-            elif centering is 'PIXELCORNER':
+            elif centering == 'PIXELCORNER':
                 centering=(0.0, 0.0)
 
         self.bandpass = bandpass
