@@ -309,14 +309,14 @@ class TestMIRIMasterBackground_LRS(BaseJWSTTest):
         # user provided 1-D background
         input_1d_bkg_file = self.get_data(*self.test_dir,
                                          'miri_lrs_bkg_x1d.fits')
+        input_1d_bkg_model = datamodels.open(input_1d_bkg_file)
 
         result = MasterBackgroundStep.call(input_file,
-                                           user_background=input_1d_bkg_file,
-                                           save_results=True)
+                                           user_background=input_1d_bkg_file)
         # _____________________________________________________________________
         # Test 1
         # Run extract1D on the master background subtracted data (result)  and
-        # the science data with not background added
+        # the science data with no background added
 
         # run 1-D extract on results from MasterBackground step
         result_1d = Extract1dStep.call(result)
@@ -325,19 +325,34 @@ class TestMIRIMasterBackground_LRS(BaseJWSTTest):
         input_sci_cal_file = self.get_data(*self.test_dir,
                                             'miri_lrs_sci_cal.fits')
         # find the 1D extraction of this file
-        # find Extract1dStep on sci data to use the same version of
-        # this rountine run on both files  rather than running it off line
-        # and having the 1-D extracted science file stored as input to step
-
         sci_cal_1d = Extract1dStep.call(input_sci_cal_file)
 
-        # Compare the MultiSpec 1-D data
-        atol = 0.0001
-        rtol = 0.000001
-        result_1d_data = result_1d.spec[0].spec_table['flux']
         sci_cal_1d_data = sci_cal_1d.spec[0].spec_table['flux']
+        result_1d_data = result_1d.spec[0].spec_table['flux']
+        sci_wave = sci_cal_1d.spec[0].spec_table['wavelength']
+        # find the valid wavelenth of the user provided spectrun
+        user_wave = input_1d_bkg_model.spec[0].spec_table['wavelength']
+        user_flux = input_1d_bkg_model.spec[0].spec_table['flux']
+        user_wave_valid = np.where(user_flux > 0)
+        min_user_wave = np.amin(user_wave[user_wave_valid])
+        max_user_wave = np.amax(user_wave[user_wave_valid])
+        input_1d_bkg_model.close()
 
-        assert_allclose(result_1d_data, sci_cal_1d_data, atol=atol, rtol=rtol)
+        # find the waverange covered by both user and science                                          
+        sci_wave_valid = np.where(sci_cal_1d_data > 0)
+        min_wave = np.amin(sci_wave[sci_wave_valid])
+        max_wave = np.amax(sci_wave[sci_wave_valid])
+        if min_user_wave > min_wave: min_wave = min_user_wave
+        if max_user_wave < max_wave: max_wave = max_user_wave
+
+        # Compare the data 
+        sub_spec = sci_cal_1d_data - result_1d_data
+        valid = np.where(np.logical_and(sci_wave > min_wave, sci_wave < max_wave))
+        sub_spec = sub_spec[valid]
+        mean_sub = np.absolute(np.nanmean(sub_spec))
+        atol = 0.00005
+        rtol = 0.000001
+        assert_allclose(mean_sub, 0, atol=atol, rtol=rtol)
         # _____________________________________________________________________
         # Test 2
         # Compare result (background subtracted image) to science image with no
@@ -356,10 +371,11 @@ class TestMIRIMasterBackground_LRS(BaseJWSTTest):
         sci_mean = np.nanmean(sci_lrs_region)
         sci_std = np.nanstd(sci_lrs_region)
         upper = sci_mean + sci_std*5.0
-        mask_clean = sci_lrs_region < upper
+        lower = sci_mean - sci_std*5.0
+        mask_clean = np.logical_and(sci_lrs_region < upper, sci_lrs_region > lower)
 
         sub = result_lrs_region - sci_lrs_region
-        mean_sub = np.mean(sub[mask_clean])
+        mean_sub = np.absolute(np.mean(sub[mask_clean]))
 
         atol = 0.5
         rtol = 0.001
@@ -376,3 +392,4 @@ class TestMIRIMasterBackground_LRS(BaseJWSTTest):
         outputs = [(result_file, ref_file)]
         self.compare_outputs(outputs)
         result.close()
+        input_sci.close()
