@@ -179,7 +179,6 @@ class TestNIRSpecMasterBackground_FS(BaseJWSTTest):
     input_loc = 'nirspec'
     ref_loc = ['test_masterbackground', 'nrs-fs', 'truth']
     test_dir = ['test_masterbackground', 'nrs-fs']
-    rtol = 0.0001
 
     def test_nirspec_masterbackground_fs_user1d(self):
         """
@@ -248,7 +247,6 @@ class TestNIRSpecMasterBackground_FS(BaseJWSTTest):
             sub_spec = sub_spec[valid]
             mean_sub = np.absolute(np.nanmean(sub_spec))
             atol = 4.0
-            rtol = 0.02
             assert_allclose(mean_sub, 0, atol=atol)
             # ______________________________________________________________________
             # Test 2  compare the science  data with no background
@@ -298,7 +296,6 @@ class TestNIRSpecMasterBackground_IFU(BaseJWSTTest):
     input_loc = 'nirspec'
     ref_loc = ['test_masterbackground', 'nrs-ifu', 'truth']
     test_dir = ['test_masterbackground', 'nrs-ifu']
-    rtol = 0.0001
 
     def test_nirspec_masterbackground_ifu_user1d(self):
         """
@@ -419,7 +416,7 @@ class TestNIRSpecMasterBackground_MOS(BaseJWSTTest):
     input_loc = 'nirspec'
     ref_loc = ['test_masterbackground', 'nrs-mos', 'truth']
     test_dir = ['test_masterbackground', 'nrs-mos']
-    rtol = 0.0001
+
 
     def test_nirspec_masterbackground_mos_user1d(self):
         """
