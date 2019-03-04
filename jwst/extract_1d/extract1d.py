@@ -23,8 +23,7 @@ log.setLevel(logging.DEBUG)
 
 def extract1d(image, lambdas, disp_range,
               p_src, p_bkg=None, independent_var="wavelength",
-              smoothing_length=0, bkg_order=0, weights=None,
-              subtract_background=None):
+              smoothing_length=0, bkg_order=0, weights=None):
     """Extract the spectrum, optionally subtracting background.
 
     Parameters:
@@ -71,12 +70,6 @@ def extract1d(image, lambdas, disp_range,
         If not None, this computes the weights for the source extraction
         region as a function of the wavelength (a single float) for the
         current column and an array of Y pixel coordinates.
-
-    subtract_background : bool or None
-        A flag which indicates whether the background should be subtracted.
-        If None, the value in the extract_1d reference file will be used.
-        If not None, this parameter overrides the value in the
-        extract_1d reference file.
 
     Returns:
     --------
