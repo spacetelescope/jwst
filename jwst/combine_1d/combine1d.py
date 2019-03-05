@@ -6,7 +6,6 @@ import logging
 
 import numpy as np
 
-from ..associations import load_asn
 from .. import datamodels
 from ..extract_1d.spec_wcs import create_spectral_wcs
 
@@ -619,20 +618,19 @@ def check_exptime(exptime_key):
     return exptime_key
 
 
-def do_correction(asn_file, exptime_key, interpolation, background=False):
+def do_correction(input_model, exptime_key, background=False):
     """Combine the input spectra.
 
     Parameters
     ----------
-    asn_file : str
-        The association file name.
+    input_model : `~jwst.datamodels.DataModel`
+        The input spectra.  This will likely be a ModelContainer object.
 
     exptime_key : str
         A string identifying which keyword to use to get the exposure time,
-        which is used as a weight when combining spectra.
-
-    interpolation : str
-        The type of interpolation between input pixels.
+        which is used as a weight when combining spectra.  The value should
+        be one of:  "exposure_time" (the default), "integration_time",
+        or "unit_weight".
 
     background : bool, default=False
         If the flux data are actually background rather than a target
@@ -640,43 +638,33 @@ def do_correction(asn_file, exptime_key, interpolation, background=False):
         values read from the flux column of each input spectrum will be
         divided by the npixels column (if that column exists).  This is
         to convert the values to background per pixel.
+
+    Returns
+    -------
+    output_model : `~jwst.datamodels.DataModel`
+        A datamodels.CombinedSpecModel object.
     """
 
     log.debug("Using exptime_key = {}.".format(exptime_key))
     if background:
         log.debug("The FLUX data will be treated as background data.")
 
-    with open(asn_file) as asn_file_handle:
-        asn = load_asn(asn_file_handle)
-
-    # Get the name to use for the output file.
-    output_name = asn["products"][0]["name"]
-    # Get the dictionary that contains the input file names.
-    input_files = asn["products"][0]["members"]
-    del asn
-
     exptime_key = check_exptime(exptime_key)
 
     input_spectra = []
-    for file_dict in input_files:
-        file = file_dict["expname"]
-        ms = datamodels.open(file)
-        try:
-            dummy = len(ms.spec)
-            del dummy
-        except AttributeError:
-            log.error("Input file {} is a {}; skipping ..."
-                      .format(file, type(ms)))
-            ms.close()
-            continue
-        for in_spec in ms.spec:
-            input_spectra.append(InputSpectrumModel(ms, in_spec, exptime_key,
-                                                    background))
-        ms.close()
+    if isinstance(input_model, datamodels.ModelContainer):
+        for ms in input_model:
+            for in_spec in ms.spec:
+                input_spectra.append(InputSpectrumModel(
+                                ms, in_spec, exptime_key, background))
+    else:
+        for in_spec in input_model.spec:
+            input_spectra.append(InputSpectrumModel(
+                                input_model, in_spec, exptime_key, background))
 
     output_spec = OutputSpectrumModel()
     output_spec.assign_wavelengths(input_spectra)
-    output_spec.accumulate_sums(input_spectra, interpolation)
+    output_spec.accumulate_sums(input_spectra, "nearest")
     output_spec.compute_combination()
 
     for in_spec in input_spectra:
@@ -685,12 +673,12 @@ def do_correction(asn_file, exptime_key, interpolation, background=False):
     output_model = output_spec.create_output()
 
     # Copy one of the input headers to output.
-    ms = datamodels.MultiSpecModel(input_files[0]["expname"])
-    output_model.update(ms, only="PRIMARY")
-    ms.close()
+    if isinstance(input_model, datamodels.ModelContainer):
+        output_model.update(input_model[0], only="PRIMARY")
+    else:
+        output_model.update(input_model, only="PRIMARY")
 
     output_model.meta.wcs = output_spec.wcs
-    output_model.meta.filename = output_name
     output_model.meta.cal_step.combine_1d = 'COMPLETE'
 
     output_spec.close()

@@ -4,9 +4,14 @@
 combine_1d
 ----------
 
-- Added parameter ``background``; for background data, scale the flux,
-  error, and net by 1 / NPIXELS, and include NPIXELS in the weight;
-  changed the default for ``exptime_key`` to "exposure_time". [#3180]
+ - Added parameter ``background``; for background data, scale the flux,
+   error, and net by 1 / NPIXELS, and include NPIXELS in the weight;
+   changed the default for ``exptime_key`` to "exposure_time". [#3180]
+
+ - There is now a direct interface for calling the step.  This function,
+   ``do_correction``, may be passed either a ModelContainer or a
+   MultiSpecModel object.  Previously this function expected the name of
+   an association file. [#3220]
 
 extract_1d
 ----------
