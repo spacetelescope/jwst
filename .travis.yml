@@ -13,7 +13,7 @@ addons:
       - graphviz
 
 env:
-  - NUMPY_VERSION=1.15.4
+  - NUMPY_VERSION='1.15.4'
   global:
     - CRDS_SERVER_URL='https://jwst-crds.stsci.edu'
     - CRDS_PATH='/tmp/crds_cache'
