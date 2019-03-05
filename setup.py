@@ -99,7 +99,7 @@ DOCS_REQUIRE = [
     'sphinx-astropy',
 ]
 TESTS_REQUIRE = [
-    'ci-watson',
+    'ci-watson>=0.3.0',
     'pytest',
     'pytest-doctestplus',
     'requests_mock',
