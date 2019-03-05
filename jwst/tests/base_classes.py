@@ -40,9 +40,12 @@ class BaseJWSTTest:
     ignore_hdus = ['ASDF']
     ignore_keywords = ['DATE', 'CAL_VER', 'CAL_VCS', 'CRDS_VER', 'CRDS_CTX', 'FILENAME']
 
-    input_repo = 'jwst-pipeline'
-    results_root = 'jwst-pipeline-results'
     env = 'dev'
+
+    @pytest.fixture(autouse=True)
+    def config_access(self, pytestconfig):
+        self.inputs_root = pytestconfig.getini('inputs_root')[0]
+        self.results_root = pytestconfig.getini('results_root')[0]
 
     @pytest.fixture(autouse=True)
     def auto_toggle_docopy(self):
@@ -54,7 +57,7 @@ class BaseJWSTTest:
 
     @property
     def repo_path(self):
-        return [self.input_repo, self.env, self.input_loc]
+        return [self.inputs_root, self.env, self.input_loc]
 
     def get_data(self, *pathargs, docopy=True):
         """
@@ -81,7 +84,7 @@ class BaseJWSTTest:
                         ignore_keywords=ignore_keywords,
                         rtol=rtol, atol=atol)
 
-        input_path = [self.input_repo, self.env, self.input_loc, *self.ref_loc]
+        input_path = [self.inputs_root, self.env, self.input_loc, *self.ref_loc]
 
         return compare_outputs(outputs,
                                input_path=input_path,

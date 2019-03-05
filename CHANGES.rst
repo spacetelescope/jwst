@@ -3,9 +3,35 @@
 
 combine_1d
 ----------
- - Added parameter ``background``; for background data, scale the flux,
-   error, and net by 1 / NPIXELS, and include NPIXELS in the weight;
-   changed the default for ``exptime_key`` to "exposure_time". [#3180]
+
+- Added parameter ``background``; for background data, scale the flux,
+  error, and net by 1 / NPIXELS, and include NPIXELS in the weight;
+  changed the default for ``exptime_key`` to "exposure_time". [#3180]
+
+extract_1d
+----------
+
+ - If flux conversion is done, the FLUX is now set to zero (instead of
+   copying the NET) if the wavelength of a pixel is outside the range of
+   the RELSENS array. [#3190]
+
+ - Added a parameter ``subtract_background`` to ``extract_1d`` indicating
+   whether the local background should be subtracted. If None, the value
+   in the extract_1d reference file is used. [#3157, #3186]
+
+ - ``extract_1d`` can be run by calling ``extract.do_extract1d`` and
+   passing a dictionary of reference file information. [#3202]
+
+master_background
+-----------------
+
+ - Added unit tests for expand_to_2d.  Support CombinedSpecModel data
+   for the 1-D user-supplied background spectrum. [#3188]
+
+set_bary_helio_times
+--------------------
+
+ - Raise an exception when unable to compute converted times. [#3197]
 
 set_telescope_pointing
 ----------------------
