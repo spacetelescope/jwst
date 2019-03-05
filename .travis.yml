@@ -38,7 +38,6 @@ matrix:
 install:
   - pip install numpy~=$NUMPY_VERSION
   - if [[ -n $PIP_DEPENDENCIES ]]; then pip install -e $PIP_DEPENDENCIES; fi
-  - if [[ -n $PIP_DEPENDENCIES ]]; then python setup.py develop; fi
   - pip install flake8
 
 script: $TEST_COMMAND
