@@ -194,7 +194,8 @@ class TestNIRSpecMasterBackground_FS(BaseJWSTTest):
                                           'nrs_bkg_user_clean_x1d.fits')
 
         result = MasterBackgroundStep.call(input_file,
-                                           user_background=input_1dbkg_file)
+                                           user_background=input_1dbkg_file,
+                                           save_results=True)
         # _________________________________________________________________________
         # Test 1 compare 4 FS 1D extracted spectra from science data with
         # no background added to 4 FS 1D extracted spectra from the output
@@ -282,14 +283,13 @@ class TestNIRSpecMasterBackground_FS(BaseJWSTTest):
         # Test 3 Compare background sutracted science data (results)
         #  to a truth file. This data is MultiSlit data
         result_file = result.meta.filename
-        result.save(result_file)
-        result.close()
-        ref_file = self.get_data(*self.ref_loc,
+
+        truth_file = self.get_data(*self.ref_loc,
                                   'nrs_sci+bkg_masterbackgroundstep.fits')
 
-        outputs = [(result_file, ref_file)]
+        outputs = [(result_file, truth_file)]
         self.compare_outputs(outputs)
-
+        result.close()
 
 @pytest.mark.bigdata
 class TestNIRSpecMasterBackground_IFU(BaseJWSTTest):
@@ -312,7 +312,8 @@ class TestNIRSpecMasterBackground_IFU(BaseJWSTTest):
                                           'prism_bkg_x1d.fits')
 
         result = MasterBackgroundStep.call(input_file,
-                                           user_background=input_1dbkg_file)
+                                           user_background=input_1dbkg_file,
+                                           save_results=True)
 
         # _________________________________________________________________________
         # Test 1 compare extracted spectra data with
@@ -401,15 +402,13 @@ class TestNIRSpecMasterBackground_IFU(BaseJWSTTest):
 
         input_sci_model.close()
         result_file = result.meta.filename
-        result.save(result_file)
-        result.close()
-        ref_file = self.get_data(*self.ref_loc,
+        truth_file = self.get_data(*self.ref_loc,
                                   'prism_sci_bkg_masterbackgroundstep.fits')
 
-        outputs = [(result_file, ref_file)]
+        outputs = [(result_file, truth_file)]
         self.compare_outputs(outputs)
         input_sci_model.close()
-
+        result.close()
 
 @pytest.mark.bigdata
 class TestNIRSpecMasterBackground_MOS(BaseJWSTTest):
@@ -432,7 +431,8 @@ class TestNIRSpecMasterBackground_MOS(BaseJWSTTest):
                                           'nrs_mos_bkg_x1d.fits')
 
         result = MasterBackgroundStep.call(input_file,
-                                           user_background=input_1dbkg_file)
+                                           user_background=input_1dbkg_file,
+                                           save_results=True)
         # _________________________________________________________________________
         # One of out tests is to compare the 1-D extracted spectra from
         # the science image (no background added) and the masterbackground subtracted
@@ -519,11 +519,10 @@ class TestNIRSpecMasterBackground_MOS(BaseJWSTTest):
         #  to a truth file. This data is MultiSlit data
 
         result_file = result.meta.filename
-        result.save(result_file)
-        result.close()
         ref_file = self.get_data(*self.ref_loc,
                                   'nrs_mos_sci+bkg_masterbackgroundstep.fits')
 
         outputs = [(result_file, ref_file)]
         self.compare_outputs(outputs)
         input_sci.close()
+        result.close()

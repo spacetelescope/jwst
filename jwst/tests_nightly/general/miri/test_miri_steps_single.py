@@ -312,7 +312,8 @@ class TestMIRIMasterBackground_LRS(BaseJWSTTest):
         input_1d_bkg_model = datamodels.open(input_1d_bkg_file)
 
         result = MasterBackgroundStep.call(input_file,
-                                           user_background=input_1d_bkg_file)
+                                           user_background=input_1d_bkg_file,
+                                           save_results=True)
         # _____________________________________________________________________
         # Test 1
         # Run extract1D on the master background subtracted data (result)  and
@@ -345,7 +346,7 @@ class TestMIRIMasterBackground_LRS(BaseJWSTTest):
         if min_user_wave > min_wave: min_wave = min_user_wave
         if max_user_wave < max_wave: max_wave = max_user_wave
 
-        # Compare the data 
+        # Compare the data
         sub_spec = sci_cal_1d_data - result_1d_data
         valid = np.where(np.logical_and(sci_wave > min_wave, sci_wave < max_wave))
         sub_spec = sub_spec[valid]
@@ -384,12 +385,11 @@ class TestMIRIMasterBackground_LRS(BaseJWSTTest):
         # Test 3 Compare background subtracted science data (results)
         #  to a truth file.
 
-        ref_file = self.get_data(*self.ref_loc,
+        truth_file = self.get_data(*self.ref_loc,
                                   'miri_lrs_sci+bkg_masterbackgroundstep.fits')
 
         result_file = result.meta.filename
-        result.save(result_file)
-        outputs = [(result_file, ref_file)]
+        outputs = [(result_file, truth_file)]
         self.compare_outputs(outputs)
         result.close()
         input_sci.close()
