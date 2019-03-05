@@ -16,9 +16,7 @@ env:
   global:
     - CRDS_SERVER_URL='https://jwst-crds.stsci.edu'
     - CRDS_PATH='/tmp/crds_cache'
-  matrix:
-    - NUMPY_VERSION=1.15
-    - NUMPY_VERSION=1.16
+    - NUMPY_VERSION=1.15.4
 
 matrix:
   # Don't wait for allowed failures
