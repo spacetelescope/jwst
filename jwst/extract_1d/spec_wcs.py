@@ -46,17 +46,20 @@ def create_spectral_wcs(ra, dec, wavelength):
     tab = Mapping((0, 0, 0)) | \
           Const1D(ra) & Const1D(dec) & Tabular1D(points=pixel,
                                                  lookup_table=wavelength,
-                                                 bounds_error=False)
+                                                 bounds_error=False,
+                                                 fill_value=None)
     tab.name = "pixel_to_world"
 
     if all(np.diff(wavelength) > 0):
            tab.inverse = Mapping((2,)) | Tabular1D(points=wavelength,
                                                    lookup_table=pixel,
-                                                   bounds_error=False)
+                                                   bounds_error=False,
+                                                   fill_value=None)
     elif all(np.diff(wavelength) < 0):
            tab.inverse = Mapping((2,)) | Tabular1D(points=wavelength[::-1],
                                                    lookup_table=pixel[::-1],
-                                                   bounds_error=False)
+                                                   bounds_error=False,
+                                                   fill_value=None)
 
     pipeline = [(input_frame, tab),
                 (world, None)]

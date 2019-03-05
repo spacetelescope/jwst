@@ -2,8 +2,6 @@ import numpy as np
 from numpy.testing import assert_allclose
 
 from .. import spec_wcs
-from ... master_background import create_master_bkg
-from ...combine_1d import combine1d
 
 import pytest
 
