@@ -2,6 +2,7 @@ dist: xenial
 language: python
 python:
   - 3.6.8
+  - 3.7.2
 sudo: false
 
 # The apt packages below are needed for sphinx builds
@@ -16,7 +17,7 @@ env:
   global:
     - CRDS_SERVER_URL='https://jwst-crds.stsci.edu'
     - CRDS_PATH='/tmp/crds_cache'
-    - NUMPY_VERSION=1.15.4
+    - NUMPY_VERSION=1.16
 
 matrix:
   # Don't wait for allowed failures
