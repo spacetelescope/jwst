@@ -815,7 +815,6 @@ datamodels
 
 - Removed BaseExtension class, it was not being used [#2430]
 
-
 dq_init
 -------
 

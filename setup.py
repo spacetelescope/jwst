@@ -17,13 +17,7 @@ except ImportError:
 
 if sys.version_info < (3, 5):
     error = """
-    JWST 0.9+ does not support Python 2.x, 3.0, 3.1, 3.2, 3.3 or 3.4.
     Beginning with JWST 0.9, Python 3.5 and above is required.
-
-    This may be due to an out of date pip
-
-    Make sure you have pip >= 9.0.1.
-
     """
     sys.exit(error)
 
@@ -171,7 +165,8 @@ import relic.release
 version = relic.release.get_info()
 relic.release.write_template(version, NAME)
 
-entry_points = dict(asdf_extensions=['jwst_pipeline = jwst.transforms.jwextension:JWSTExtension'])
+entry_points = dict(asdf_extensions=['jwst_pipeline = jwst.transforms.jwextension:JWSTExtension',
+                                     'model_extensions = jwst.datamodels.extension:BaseExtension'])
 
 setup(
     name=NAME,
