@@ -360,7 +360,7 @@ properties:
           name:
             title: Instrument used to acquire the data
             type: string
-            enum: [NIRCAM, NIRSPEC, MIRI, TFI, FGS, NIRISS, IRIS, ANY, N/A]
+            enum: [NIRCAM, NIRSPEC, MIRI, TFI, FGS, NIRISS, ANY, N/A]
             fits_keyword: INSTRUME
             blend_table: True
           detector:
@@ -368,7 +368,7 @@ properties:
             type: string
             enum: [NRCA1, NRCA2, NRCA3, NRCA4, NRCALONG, NRCB1, NRCB2, NRCB3, NRCB4,
               NRCBLONG, NRS1, NRS2, ANY, MIRIMAGE, MIRIFULONG, MIRIFUSHORT,
-              NIS, GUIDER1, GUIDER2, IRIS1, N/A]
+              NIS, GUIDER1, GUIDER2, N/A]
             fits_keyword: DETECTOR
             blend_table: True
           module:
@@ -401,7 +401,7 @@ properties:
               F212N, F2300C, F250M, F2550W, F2550WR, F277W, F290LP, F300M,
               F322W2, F335M, F356W, F360M, F380M, F410M, F430M, F444W,
               F460M, F480M, F560W, F770W, FLENS, FND, GR150C,
-              GR150R, OPAQUE, P750L, WLP4, N/A, K, MULTIPLE]
+              GR150R, OPAQUE, P750L, WLP4, N/A, MULTIPLE]
             fits_keyword: FILTER
             blend_table: True
             blend_rule: multi
@@ -572,8 +572,6 @@ properties:
               NRS_AUTOFLAT, NRS_AUTOWAVE, NRS_BRIGHTOBJ, NRS_CONFIRM, NRS_DARK,
               NRS_FIXEDSLIT, NRS_FOCUS, NRS_IFU, NRS_IMAGE, NRS_LAMP, NRS_MIMF,
               NRS_MSASPEC, NRS_MSATA, NRS_TACONFIRM, NRS_TACQ, NRS_TASLIT, NRS_WATA,
-              # IRIS
-              IRIS_IMAGE,
               # Misc
               N/A, ANY]
             fits_keyword: EXP_TYPE
