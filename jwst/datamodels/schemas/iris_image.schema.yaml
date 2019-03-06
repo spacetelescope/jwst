@@ -1,0 +1,107 @@
+#allOf:
+    #- $ref: core.schema.yaml
+    #- $ref: bunit.schema.yaml
+    #- $ref: photometry.schema.yaml
+    #- $ref: wcsinfo.schema.yaml
+- type: object
+  properties:
+    data:
+      title: The science data
+      fits_hdu: SCI
+      default: 0.0
+      ndim: 2
+      datatype: float32
+    dq:
+      title: Data quality array
+      fits_hdu: DQ
+      default: 0
+      datatype: uint32
+    err:
+      title: Error array
+      fits_hdu: ERR
+      default: 0.0
+      datatype: float32
+    zeroframe:
+      title: Zeroframe array
+      fits_hdu: ZEROFRAME
+      default: 0.0
+      datatype: float32
+    area:
+      title: Pixel area map array
+      fits_hdu: AREA
+      default: 0.0
+      datatype: float32
+    pathloss_pointsource:
+      title: Pathloss correction
+      fits_hdu: PATHLOSS_POINTSOURCE
+      default: 1.0
+      datatype: float32
+    relsens:
+      $ref: relsens.schema.yaml
+    relsens2d:
+      title: Sensitivity array
+      fits_hdu: RELSENS2D
+      default: 1.0
+      datatype: float32
+    var_poisson:
+      title: variance due to poisson noise
+      fits_hdu: VAR_POISSON
+      ndim: 2
+      default: 0.0
+      datatype: float32
+    var_rnoise:
+      title: variance due to read noise
+      fits_hdu: VAR_RNOISE
+      ndim: 2
+      default: 0.0
+      datatype: float32
+- type: object
+  properties:
+    meta:
+      type: object
+      properties:
+        tweakreg_catalog:
+            type: object
+            properties:
+              filename:
+                title: Output tweakreg catalog filename
+                type: string
+                fits_keyword: TCATFILE
+        source_catalog:
+            type: object
+            properties:
+              filename:
+                title: Output source catalog filename
+                type: string
+                fits_keyword: SCATFILE
+        # instrument from core.schema.yaml
+        instrument:
+          title: Instrument configuration information
+          type: object
+          properties:
+            name:
+              title: Instrument used to acquire the data
+              type: string
+              enum: [IRIS, ANY, N/A]
+              fits_keyword: INSTRUME
+              blend_table: True
+            detector:
+              title: Name of detector used to acquire the data
+              type: string
+              enum: [IRIS1, N/A]
+              fits_keyword: DETECTOR
+              blend_table: True
+            filter:
+              title: Name of the filter element used
+              type: string
+              enum: [ANY, N/A, K, MULTIPLE]
+              fits_keyword: FILTER
+              blend_table: True
+              blend_rule: multi
+            pupil:
+              title: Name of the pupil element used
+              type: string
+              enum: [ANY, CLEAR, N/A]
+              fits_keyword: PUPIL
+              blend_table: True
+$schema: http://stsci.edu/schemas/fits-schema/fits-schema
