@@ -1,8 +1,5 @@
-#allOf:
-    #- $ref: core.schema.yaml
-    #- $ref: bunit.schema.yaml
-    #- $ref: photometry.schema.yaml
-    #- $ref: wcsinfo.schema.yaml
+allOf:
+- $ref: tmt_core.schema.yaml
 - type: object
   properties:
     data:
@@ -74,34 +71,4 @@
                 title: Output source catalog filename
                 type: string
                 fits_keyword: SCATFILE
-        # instrument from core.schema.yaml
-        instrument:
-          title: Instrument configuration information
-          type: object
-          properties:
-            name:
-              title: Instrument used to acquire the data
-              type: string
-              enum: [IRIS, ANY, N/A]
-              fits_keyword: INSTRUME
-              blend_table: True
-            detector:
-              title: Name of detector used to acquire the data
-              type: string
-              enum: [IRIS1, N/A]
-              fits_keyword: DETECTOR
-              blend_table: True
-            filter:
-              title: Name of the filter element used
-              type: string
-              enum: [ANY, N/A, K, MULTIPLE]
-              fits_keyword: FILTER
-              blend_table: True
-              blend_rule: multi
-            pupil:
-              title: Name of the pupil element used
-              type: string
-              enum: [ANY, CLEAR, N/A]
-              fits_keyword: PUPIL
-              blend_table: True
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema
