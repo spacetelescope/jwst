@@ -618,7 +618,7 @@ def check_exptime(exptime_key):
     return exptime_key
 
 
-def do_correction(input_model, exptime_key, background=False):
+def do_combine(input_model, exptime_key, background=False):
     """Combine the input spectra.
 
     Parameters

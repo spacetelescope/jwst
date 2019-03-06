@@ -27,8 +27,8 @@ class Combine1dStep(Step):
     def process(self, input_file):
 
         with datamodels.open(input_file) as input_model:
-            result = combine1d.do_correction(input_model,
-                                             self.exptime_key,
-                                             self.background)
+            result = combine1d.do_combine(input_model,
+                                          self.exptime_key,
+                                          self.background)
 
         return result
