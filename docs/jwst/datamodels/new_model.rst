@@ -428,7 +428,7 @@ string, float, and integer. The entries in the final 3 columns, on the other
 hand, contain 1-D float arrays (vectors). The "shape" attribute is used to
 designate the dimensions of the arrays.
 
-The corressponding python module containing the data model class is quite
+The corresponding python module containing the data model class is quite
 simple:
 
 .. code-block:: python
