@@ -8,6 +8,11 @@ combine_1d
   error, and net by 1 / NPIXELS, and include NPIXELS in the weight;
   changed the default for ``exptime_key`` to "exposure_time". [#3180]
 
+datamodels
+----------
+
+- Add back BaseExtension class so url-to-schema mapping works again [#3227]
+
 extract_1d
 ----------
 
