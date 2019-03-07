@@ -89,7 +89,7 @@ class ModelContainer(model_base.DataModel):
             instance = copy.deepcopy(init._instance)
             self._schema = init._schema
             self._shape = init._shape
-            self._asdf = AsdfFile(instance, extensions=init._extensions)
+            self._asdf = AsdfFile(instance)
             self._instance = instance
             self._ctx = self
             self.__class__ = init.__class__
@@ -136,11 +136,10 @@ class ModelContainer(model_base.DataModel):
         Returns a deep copy of the models in this model container.
         """
         result = self.__class__(init=None,
-                                extensions=self._extensions,
                                 pass_invalid_values=self._pass_invalid_values,
                                 strict_validation=self._strict_validation)
         instance = copy.deepcopy(self._instance, memo=memo)
-        result._asdf = AsdfFile(instance, extensions=self._extensions)
+        result._asdf = AsdfFile(instance)
         result._instance = instance
         result._iscopy = self._iscopy
         result._schema = result._schema

@@ -17,7 +17,7 @@ log.addHandler(logging.NullHandler())
 class NoTypeWarning(Warning):
     pass
 
-def open(init=None, extensions=None, **kwargs):
+def open(init=None, **kwargs):
     """
     Creates a DataModel from a number of different types
 
@@ -41,10 +41,6 @@ def open(init=None, extensions=None, **kwargs):
           to what was passed in.
 
         - dict: The object model tree for the data model
-
-    extensions : list of AsdfExtension
-        A list of extensions to the ASDF to support when reading
-        and writing ASDF files.
 
     Returns
     -------
@@ -88,13 +84,11 @@ def open(init=None, extensions=None, **kwargs):
         elif file_type == "asn":
             # Read the file as an association / model container
             from . import container
-            return container.ModelContainer(init, extensions=extensions,
-                                            **kwargs)
+            return container.ModelContainer(init, **kwargs)
 
         elif file_type == "asdf":
             # Read the file as asdf, no need for a special class
-            return model_base.DataModel(init, extensions=extensions,
-                                        **kwargs)
+            return model_base.DataModel(init, **kwargs)
 
     elif isinstance(init, tuple):
         for item in init:
@@ -110,8 +104,7 @@ def open(init=None, extensions=None, **kwargs):
 
     elif is_association(init) or isinstance(init, list):
         from . import container
-        return container.ModelContainer(init, extensions=extensions,
-                                        **kwargs)
+        return container.ModelContainer(init, **kwargs)
 
     # If we have it, determine the shape from the science hdu
     if hdulist:
@@ -158,7 +151,7 @@ def open(init=None, extensions=None, **kwargs):
         log.debug('Opening as {0}'.format(new_class))
 
     # Actually open the model
-    model = new_class(init, extensions=extensions, **kwargs)
+    model = new_class(init, **kwargs)
 
     # Close the hdulist if we opened it
     if file_to_close is not None:
