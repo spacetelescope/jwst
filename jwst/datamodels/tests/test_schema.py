@@ -644,5 +644,5 @@ def test_all_datamodels_init(model):
 def test_datamodel_schema_entry_points():
     """Test that entry points for datamodels BaseExtension work with asdf"""
     resolver = asdf.AsdfFile().resolver
-    schema = mschema.load_schema('http://jwst.stsci.edu/schemas/image.schema.yaml',
+    mschema.load_schema('http://jwst.stsci.edu/schemas/image.schema.yaml',
         resolver=resolver, resolve_references=True)

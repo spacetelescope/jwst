@@ -4,7 +4,6 @@ Data model class heirarchy
 
 import copy
 import datetime
-import inspect
 import os
 import sys
 import warnings
