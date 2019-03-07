@@ -1,8 +1,9 @@
 dist: xenial
 language: python
-python:
-  - 3.6.8
+python: 3.6.8
+
 sudo: false
+#os: linux
 
 # The apt packages below are needed for sphinx builds
 addons:
@@ -28,6 +29,23 @@ matrix:
     # Build sphinx documentation with warnings
     - env: TEST_COMMAND='python setup.py build_sphinx -W'
            PIP_DEPENDENCIES='.[docs]'
+    # Test with python 3.7
+    - python: 3.7
+      env: TEST_COMMAND='python setup.py test'
+           PIP_DEPENDENCIES='.[test]'
+    # Cron job test with dev versions of dependencies and python 3.6
+    - env: ASTROPY_DEV="git+https://github.com/astropy/astropy.git#egg=astropy"
+           ASDF_DEV="git+https://github.com/spacetelescope/asdf.git#egg=asdf"
+           GWCS_DEV="git+https://github.com/spacetelescope/gwcs.git#egg=gwcs"
+           PIP_DEPENDENCIES="$ASTROPY_DEV $ASDF_DEV $GWCS_DEV"
+           TEST_COMMAND='python setup.py test'
+    # Cron job test with dev versions of dependencies and python 3.7
+    - python: 3.7
+      env: ASTROPY_DEV="git+https://github.com/astropy/astropy.git#egg=astropy"
+           ASDF_DEV="git+https://github.com/spacetelescope/asdf.git#egg=asdf"
+           GWCS_DEV="git+https://github.com/spacetelescope/gwcs.git#egg=gwcs"
+           PIP_DEPENDENCIES="$ASTROPY_DEV $ASDF_DEV $GWCS_DEV"
+           TEST_COMMAND='python setup.py test'
     # PEP8 check
     - env: TEST_COMMAND='flake8 --count --select=F, E101, E111, E112, E113, E401, E402, E711, E722 --max-line-length=110 jwst'
     # Strict PEP8 check, an allowed failure below
@@ -37,7 +55,9 @@ matrix:
 
 install:
   - pip install numpy~=$NUMPY_VERSION
-  - if [[ -n $PIP_DEPENDENCIES ]]; then pip install -e $PIP_DEPENDENCIES; fi
+  - pip install $PIP_DEPENDENCIES
+  - pip install .[test]
+  #- if [[ -n $PIP_DEPENDENCIES ]]; then pip install $PIP_DEPENDENCIES; fi
   - pip install flake8
 
 script: $TEST_COMMAND
