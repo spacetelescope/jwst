@@ -10,6 +10,7 @@ from jwst.pipeline import Detector1Pipeline, Spec2Pipeline
 from jwst.imprint import ImprintStep
 from jwst.ramp_fitting import RampFitStep
 from jwst.extract_1d import Extract1dStep
+from jwst.resample import ResampleSpecStep
 from jwst.master_background import MasterBackgroundStep
 from jwst.cube_build import CubeBuildStep
 from jwst import datamodels
@@ -204,15 +205,12 @@ class TestNIRSpecMasterBackground_FS(BaseJWSTTest):
         # run 1-D extract on results from MasterBackground step
         result_1d = Extract1dStep.call(result)
 
-        # run 1-D extract on original science data without background
-        input_sci_cal_file = self.get_data(*self.test_dir,
-                                            'nrs_sci_cal.fits')
-        # run 1D extraction on original science data without background
-        sci_cal_1d = Extract1dStep.call(input_sci_cal_file)
-
+        # get the science extracted 1-D spectrum for comparision
+        sci_cal_1d_file = self.get_data(*self.ref_loc, 'nrs_sci_extract1d.fits')
+        sci_cal_1d = datamodels.open(sci_cal_1d_file)
         # Compare the FS  1D extracted data. These types of data are
         #  MultiSpec Models.
-        input_sci = datamodels.open(input_sci_cal_file)
+
         num_spec = len(sci_cal_1d.spec)
 
         # the user 1D spectrum may not cover the entire wavelength range of the
@@ -225,6 +223,11 @@ class TestNIRSpecMasterBackground_FS(BaseJWSTTest):
         max_user_wave = np.amax(user_wave[user_wave_valid])
         input_1dbkg_1d.close()
 
+        # get the science image with no background added
+        # going to use this file to compare slit images
+        input_sci_cal_file = self.get_data(*self.test_dir,
+                                            'nrs_sci_cal.fits')
+        input_sci = datamodels.open(input_sci_cal_file)
         for i in range(num_spec):
             # ______________________________________________________________________
             # Test 1 compare extracted spectra data from the science data
@@ -291,6 +294,7 @@ class TestNIRSpecMasterBackground_FS(BaseJWSTTest):
         self.compare_outputs(outputs)
         result.close()
 
+
 @pytest.mark.bigdata
 class TestNIRSpecMasterBackground_IFU(BaseJWSTTest):
     input_loc = 'nirspec'
@@ -325,16 +329,9 @@ class TestNIRSpecMasterBackground_IFU(BaseJWSTTest):
         # run 1-D extract on results from MasterBackground step
         result_1d = Extract1dStep.call(result_s3d, subtract_background=False)
 
-        # run 1-D extract on original science data without background
-        input_sci_cal_file = self.get_data(*self.test_dir,
-                                            'prism_sci_cal.fits')
-        # find the 1D extraction of this file
-        # find Extract1dStep on sci data to use the same version of
-        # this rountine run on both files  rather than running it off line
-        # and having the 1-D extracted science file stored as input to step
-
-        sci_s3d = CubeBuildStep.call(input_sci_cal_file)
-        sci_1d = Extract1dStep.call(sci_s3d, subtract_background=False)
+        # get the 1-D extracted spectrum from the science data in truth directory
+        input_sci_1d_file = self.get_data(*self.ref_loc, 'prism_sci_extract1d.fits')
+        sci_1d = datamodels.open(input_sci_1d_file)
 
         # read in the valid wavelengths of the user-1d
         input_1d_bkg_model = datamodels.open(input_1dbkg_file)
@@ -361,7 +358,7 @@ class TestNIRSpecMasterBackground_IFU(BaseJWSTTest):
         sub_spec = sci_spec_1d - result_spec_1d
         valid = np.where(np.logical_and(sci_spec_wave > min_wave, sci_spec_wave < max_wave))
         sub_spec = sub_spec[valid]
-        sub_spec = sub_spec[1:-2] #  endpoints are wacky
+        sub_spec = sub_spec[1:-2]  # endpoints are wacky
 
         mean_sub = np.absolute(np.nanmean(sub_spec))
         atol = 5.0
@@ -370,6 +367,8 @@ class TestNIRSpecMasterBackground_IFU(BaseJWSTTest):
         # Test 2  compare the science  data with no background
         # to the output from the masterBackground Subtraction step
         # background subtracted science image.
+        input_sci_cal_file = self.get_data(*self.test_dir,
+                                            'prism_sci_cal.fits')
         input_sci_model = datamodels.open(input_sci_cal_file)
 
         # We don't want the slices gaps to impact the statisitic
@@ -410,16 +409,15 @@ class TestNIRSpecMasterBackground_IFU(BaseJWSTTest):
         input_sci_model.close()
         result.close()
 
+
 @pytest.mark.bigdata
 class TestNIRSpecMasterBackground_MOS(BaseJWSTTest):
     input_loc = 'nirspec'
     ref_loc = ['test_masterbackground', 'nrs-mos', 'truth']
     test_dir = ['test_masterbackground', 'nrs-mos']
 
-
     def test_nirspec_masterbackground_mos_user1d(self):
         """
-
         Regression test of master background subtraction for NRS MOS when a user 1-D spectrum is provided.
 
         """
@@ -436,17 +434,23 @@ class TestNIRSpecMasterBackground_MOS(BaseJWSTTest):
         # _________________________________________________________________________
         # One of out tests is to compare the 1-D extracted spectra from
         # the science image (no background added) and the masterbackground subtracted
-        # data. Run extract1d on both of these files
+        # data.
 
+        # run resample_spec  on results from MasterBackground step
+        result_2d = ResampleSpecStep.call(result)
         # run 1-D extract on results from MasterBackground step
-        result_1d = Extract1dStep.call(result)
+        result_1d = Extract1dStep.call(result_2d)
 
-        # run 1-D extract on original science data without background
+        # get input science data with background added
         input_sci_cal_file = self.get_data(*self.test_dir,
                                             'nrs_mos_sci_cal.fits')
+        # get 1-D extract on original science data without background
+        # this reference data was also run through ResampleSpec
+        input_sci_1d_file = self.get_data(*self.ref_loc,
+                                            'nrs_mos_sci_extract1dstep.fits')
 
         input_sci = datamodels.open(input_sci_cal_file)
-        sci_cal_1d = Extract1dStep.call(input_sci)
+        sci_cal_1d = datamodels.open(input_sci_1d_file)
         num_spec = len(sci_cal_1d.spec)
 
         # the user 1D spectrum may not cover the entire wavelength range of the
@@ -483,7 +487,7 @@ class TestNIRSpecMasterBackground_MOS(BaseJWSTTest):
             valid = np.where(np.logical_and(sci_wave > min_wave, sci_wave < max_wave))
             sub_spec = sub_spec[valid]
             mean_sub = np.nanmean(sub_spec)
-            atol = 3.0
+            atol = 1.5
             assert_allclose(mean_sub, 0, atol=atol)
             # ______________________________________________________________________
             # Test 2  compare the science  data with no background

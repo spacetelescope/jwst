@@ -322,11 +322,11 @@ class TestMIRIMasterBackground_LRS(BaseJWSTTest):
         # run 1-D extract on results from MasterBackground step
         result_1d = Extract1dStep.call(result)
 
-        # run 1-D extract on original science data without background
-        input_sci_cal_file = self.get_data(*self.test_dir,
-                                            'miri_lrs_sci_cal.fits')
-        # find the 1D extraction of this file
-        sci_cal_1d = Extract1dStep.call(input_sci_cal_file)
+        # get the 1-D extracted Spectrum from the science data with
+        # no background added to test against
+        sci_cal_1d_file = self.get_data(*self.ref_loc,
+                                    'miri_lrs_sci_extract1d.fits')
+        sci_cal_1d = datamodels.open(sci_cal_1d_file)
 
         sci_cal_1d_data = sci_cal_1d.spec[0].spec_table['flux']
         result_1d_data = result_1d.spec[0].spec_table['flux']
@@ -343,8 +343,10 @@ class TestMIRIMasterBackground_LRS(BaseJWSTTest):
         sci_wave_valid = np.where(sci_cal_1d_data > 0)
         min_wave = np.amin(sci_wave[sci_wave_valid])
         max_wave = np.amax(sci_wave[sci_wave_valid])
-        if min_user_wave > min_wave: min_wave = min_user_wave
-        if max_user_wave < max_wave: max_wave = max_user_wave
+        if min_user_wave > min_wave:
+            min_wave = min_user_wave
+        if max_user_wave < max_wave:
+            max_wave = max_user_wave
 
         # Compare the data
         sub_spec = sci_cal_1d_data - result_1d_data
@@ -359,7 +361,8 @@ class TestMIRIMasterBackground_LRS(BaseJWSTTest):
         # Compare result (background subtracted image) to science image with no
         # background. Subtract these images, smooth the subtracted image and
         # the mean should be close to zero.
-
+        input_sci_cal_file = self.get_data(*self.test_dir,
+                                            'miri_lrs_sci_cal.fits')
         input_sci = datamodels.open(input_sci_cal_file)
 
         # find the LRS region
