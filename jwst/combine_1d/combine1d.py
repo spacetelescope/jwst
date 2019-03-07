@@ -329,7 +329,7 @@ class OutputSpectrumModel:
         return temp_wl[np.where(temp_wl > 0.)].copy()
 
 
-    def accumulate_sums(self, input_spectra, interpolation):
+    def accumulate_sums(self, input_spectra, interpolation=""):
         """Compute a weighted sum of all the input spectra.
 
         Each pixel of each input spectrum will be added to one pixel of
@@ -361,7 +361,6 @@ class OutputSpectrumModel:
             List of input spectra.
 
         interpolation : str
-            The type of interpolation to use.
             This is currently ignored.
         """
 
@@ -386,7 +385,7 @@ class OutputSpectrumModel:
             for i in range(len(out_pixel)):
                 if in_spec.dq[i] & datamodels.dqflags.pixel['DO_NOT_USE'] > 0:
                     continue
-                # Nearest pixel "interpolation."
+                # Round to the nearest pixel.
                 k = round(float(out_pixel[i]))
                 self.net[k] += (in_spec.net[i] * in_spec.weight[i])
                 self.weight[k] += in_spec.weight[i]
@@ -618,7 +617,7 @@ def check_exptime(exptime_key):
     return exptime_key
 
 
-def do_combine(input_model, exptime_key, background=False):
+def combine_1d_spectra(input_model, exptime_key, background=False):
     """Combine the input spectra.
 
     Parameters
@@ -664,7 +663,7 @@ def do_combine(input_model, exptime_key, background=False):
 
     output_spec = OutputSpectrumModel()
     output_spec.assign_wavelengths(input_spectra)
-    output_spec.accumulate_sums(input_spectra, "nearest")
+    output_spec.accumulate_sums(input_spectra)
     output_spec.compute_combination()
 
     for in_spec in input_spectra:

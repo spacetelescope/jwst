@@ -9,7 +9,7 @@ combine_1d
    changed the default for ``exptime_key`` to "exposure_time". [#3180]
 
  - There is now a direct interface for calling the step.  This function,
-   ``do_correction``, may be passed either a ModelContainer or a
+   ``combine_1d_spectra``, may be passed either a ModelContainer or a
    MultiSpecModel object.  Previously this function expected the name of
    an association file. [#3220]
 
