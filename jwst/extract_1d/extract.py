@@ -2554,7 +2554,8 @@ def run_extract1d(input_model, refname, smoothing_length, bkg_order,
     # in ref_dict if do_extract1d was called directly.
     # If this key is not in ref_dict, or if it is but it's True, then
     # we'll set S_EXTR1D to 'COMPLETE'.
-    ref_dict['need_to_set_to_complete'] = False
+    if ref_dict is not None:
+        ref_dict['need_to_set_to_complete'] = False
 
     output_model = do_extract1d(input_model, ref_dict,
                                 smoothing_length, bkg_order,
@@ -2971,7 +2972,7 @@ def do_extract1d(input_model, ref_dict, smoothing_length, bkg_order,
     if ref_dict is not None and 'ref_model' in ref_dict:
         ref_dict['ref_model'].close()
 
-    if ('need_to_set_to_complete' not in ref_dict or
+    if (ref_dict is None or 'need_to_set_to_complete' not in ref_dict or
         ref_dict['need_to_set_to_complete']):
             output_model.meta.cal_step.extract_1d = 'COMPLETE'
 

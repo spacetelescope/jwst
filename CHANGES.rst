@@ -32,6 +32,9 @@ extract_1d
  - ``extract_1d`` can be run by calling ``extract.do_extract1d`` and
    passing a dictionary of reference file information. [#3202]
 
+ - ``ref_dict`` was None in ``run_extract1d``, and a check for that was
+   missing. [#3233]
+
 master_background
 -----------------
 
