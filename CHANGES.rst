@@ -1,12 +1,22 @@
-0.13.1 (Unreleased)
+0.13.1 (2019-03-07)
 ===================
 
 combine_1d
 ----------
 
-- Added parameter ``background``; for background data, scale the flux,
-  error, and net by 1 / NPIXELS, and include NPIXELS in the weight;
-  changed the default for ``exptime_key`` to "exposure_time". [#3180]
+ - Added parameter ``background``; for background data, scale the flux,
+   error, and net by 1 / NPIXELS, and include NPIXELS in the weight;
+   changed the default for ``exptime_key`` to "exposure_time". [#3180]
+
+ - There is now a direct interface for calling the step.  This function,
+   ``combine_1d_spectra``, may be passed either a ModelContainer or a
+   MultiSpecModel object.  Previously this function expected the name of
+   an association file. [#3220]
+
+datamodels
+----------
+
+- Add back BaseExtension class so url-to-schema mapping works again [#3227]
 
 extract_1d
 ----------
@@ -814,7 +824,6 @@ datamodels
 - Included the ability to handle 'allOf' when reading in  schemas [#2407]
 
 - Removed BaseExtension class, it was not being used [#2430]
-
 
 dq_init
 -------
