@@ -329,7 +329,7 @@ class OutputSpectrumModel:
         return temp_wl[np.where(temp_wl > 0.)].copy()
 
 
-    def accumulate_sums(self, input_spectra, interpolation=""):
+    def accumulate_sums(self, input_spectra):
         """Compute a weighted sum of all the input spectra.
 
         Each pixel of each input spectrum will be added to one pixel of
@@ -359,9 +359,6 @@ class OutputSpectrumModel:
         ----------
         input_spectra : list of InputSpectrumModel objects
             List of input spectra.
-
-        interpolation : str
-            This is currently ignored.
         """
 
         nelem = self.wavelength.shape[0]

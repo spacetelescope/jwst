@@ -16,12 +16,8 @@ class Combine1dStep(Step):
     """
 
     spec = """
-    # integration_time or exposure_time.
-    exptime_key = string(default="exposure_time")
-    # This is currently not used.
-    interpolation = string(default="")
-    # Set to True if the input spectra are just background.
-    background = boolean(default=False)
+    exptime_key = string(default="exposure_time") # use for weight
+    background = boolean(default=False) # True if the input are all background
     """
 
     def process(self, input_file):
