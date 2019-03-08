@@ -1,6 +1,10 @@
 // [skip ci] and [ci skip] have no effect here.
 if (utils.scm_checkout(['skip_disable':true])) return
 
+jobconfig = new JobConfig()
+jobconfig.enable_env_publication = true
+jobconfig.publish_env_on_success_only = true
+
 def test_env = [
     "HOME=./",
     "TEST_BIGDATA=https://bytesalad.stsci.edu/artifactory",
@@ -66,4 +70,4 @@ bc.test_cmds = ["printenv | sort",
 
 bc.test_configs = [data_config]
 
-utils.run([bc])
+utils.run([jobconfig, bc])
