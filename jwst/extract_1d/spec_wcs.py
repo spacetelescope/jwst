@@ -1,3 +1,4 @@
+import logging
 import numpy as np
 
 from astropy.modeling.models import Mapping, Const1D, Tabular1D
@@ -7,6 +8,8 @@ from astropy import coordinates as coord
 from gwcs.wcs import WCS
 from gwcs import coordinate_frames as cf
 
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 def create_spectral_wcs(ra, dec, wavelength):
     """Assign a WCS for sky coordinates and a table of wavelengths
@@ -54,12 +57,14 @@ def create_spectral_wcs(ra, dec, wavelength):
            tab.inverse = Mapping((2,)) | Tabular1D(points=wavelength,
                                                    lookup_table=pixel,
                                                    bounds_error=False,
-                                                   fill_value=None)
+                                                   )
     elif all(np.diff(wavelength) < 0):
            tab.inverse = Mapping((2,)) | Tabular1D(points=wavelength[::-1],
                                                    lookup_table=pixel[::-1],
                                                    bounds_error=False,
-                                                   fill_value=None)
+                                                   )
+    else:
+        log.warn("Wavelengths are not strictly monotonic, inverse transform is not set")
 
     pipeline = [(input_frame, tab),
                 (world, None)]

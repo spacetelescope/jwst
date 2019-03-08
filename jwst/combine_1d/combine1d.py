@@ -381,7 +381,7 @@ class OutputSpectrumModel:
             temp_flux = np.where(in_spec.flux == 0., 1., in_spec.flux)
             # Get the pixel numbers in the output corresponding to the
             # wavelengths of the current input spectrum.
-            out_pixel = self.to_pixel(in_spec.wavelength)
+            out_pixel = self.wcs.invert(in_spec.right_ascension, in_spec.declination, in_spec.wavelength)
             # i is a pixel number in the current input spectrum, and
             # k is the corresponding pixel number in the output spectrum.
             for i in range(len(out_pixel)):
@@ -424,93 +424,6 @@ class OutputSpectrumModel:
         del index
 
         self.normalized = False
-
-
-    def to_pixel(self, in_wl):
-        """Get pixel numbers in the output array corresponding to
-        wavelengths in an input spectrum.
-
-        Parameters
-        ----------
-        in_wl :  1-D array, or float
-             Array (or a single value) of wavelengths.
-
-        Returns
-        -------
-        pixel :  1-D array, or float
-             Pixel numbers in the output spectrum corresponding to the
-             wavelengths in `in_wl`.
-        """
-
-        out_wl = self.wavelength
-        nelem = self.wavelength.shape[0]
-
-        if not nelem or nelem < 1:
-            return None
-
-        try:
-            len_wl = len(in_wl)
-            wl_has_len = True
-        except TypeError:
-            wl_has_len = False
-
-        if nelem == 1:
-            if wl_has_len:
-                return np.zeros(len_wl, dtype=np.float)
-            else:
-                return 0.
-
-        if out_wl[-1] > out_wl[0]:
-            dir = 1.
-        else:
-            dir = -1.
-
-        if not wl_has_len:
-            in_wl = np.array([in_wl], dtype=np.float)
-
-        pixel = np.zeros_like(in_wl)
-        if dir > 0.:
-            for i in range(len(in_wl)):
-                if in_wl[i] < out_wl[0]:
-                    # Linear extrapolation.
-                    pixel[i] = (in_wl[i] - out_wl[0]) / \
-                               (out_wl[1] - out_wl[0])
-                elif in_wl[i] > out_wl[-1]:
-                    # Linear extrapolation.
-                    pixel[i] = float(nelem - 1) + \
-                               (in_wl[i] - out_wl[-1]) / \
-                               (out_wl[-1] - out_wl[-2])
-                else:
-                    for k in range(nelem - 1):
-                        # Linear interpolation.
-                        if in_wl[i] >= out_wl[k] and \
-                           in_wl[i] <= out_wl[k + 1]:
-                            pixel[i] = float(k) + (in_wl[i] - out_wl[k]) / \
-                                           (out_wl[k + 1] - out_wl[k])
-                            break
-        else:                                   # dir < 0
-            for i in range(len(in_wl)):
-                if in_wl[i] > out_wl[0]:
-                    pixel[i] = (in_wl[i] - out_wl[0]) / \
-                               (out_wl[1] - out_wl[0])
-                elif in_wl[i] < out_wl[-1]:
-                    pixel[i] = float(nelem - 1) + \
-                               (in_wl[i] - out_wl[-1]) / \
-                               (out_wl[-1] - out_wl[-2])
-                else:
-                    for k in range(nelem - 1):
-                        if in_wl[i] <= out_wl[k] and \
-                           in_wl[i] >= out_wl[k + 1]:
-                            pixel[i] = float(k + 1) - \
-                                       (in_wl[i] - out_wl[k + 1]) / \
-                                       (out_wl[k] - out_wl[k + 1])
-                            break
-
-        if wl_has_len:
-            return pixel
-        else:
-            return float(pixel[0])
-
 
     def compute_combination(self):
         """Compute the combined values."""
