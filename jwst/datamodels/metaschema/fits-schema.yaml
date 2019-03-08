@@ -7,7 +7,7 @@ description: |
   to converting models to and from FITS files.
 
 allOf:
-  - $ref: "http://stsci.edu/schemas/asdf-schema/0.1.0/asdf-schema"
+  - $ref: "http://stsci.edu/schemas/asdf/asdf-schema-1.0.0"
   - type: object
     properties:
       fits_keyword:
