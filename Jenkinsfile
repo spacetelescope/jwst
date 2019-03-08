@@ -7,6 +7,7 @@ conda_numpy_ver = '1.15'
 def test_env = [
     "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
     "CRDS_PATH=./crds_cache",
+    "CRDS+CONTEXT=jwst_0500.pmap",
 ]
 
 // Define conda packages needed for build bc2.  Some come from astroconda-dev
