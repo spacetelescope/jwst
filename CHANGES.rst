@@ -8,6 +8,11 @@ datamodels
   http://stsci.edu/schemas/fits-schema/ to map to the correct location
   in the ``jwst`` package. [#3239]
 
+master_background
+-----------------
+
+- Modified the unit tests for ``expand_to_2d``. [#3242]
+
 0.13.1 (2019-03-07)
 ===================
 
