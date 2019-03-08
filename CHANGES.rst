@@ -1,6 +1,13 @@
 0.13.2 (Unreleased)
 ===================
 
+datamodels
+----------
+
+- Fix ``url_mapper`` for fits-schema to allow URLs with of the format
+  http://stsci.edu/schemas/fits-schema/ to map to the correct location
+  in the ``jwst`` package. [#3239]
+
 0.13.1 (2019-03-07)
 ===================
 
