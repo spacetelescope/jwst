@@ -240,14 +240,18 @@ def test_add_wcs_default(data_file):
     assert model.meta.wcsinfo.dec_ref == TARG_DEC
     assert np.isclose(model.meta.wcsinfo.roll_ref, 358.9045979379)
     assert model.meta.wcsinfo.wcsaxes == 2
+    assert model.meta.wcsinfo.ctype1 == "RA---TAN"
+    assert model.meta.wcsinfo.ctype2 == "DEC--TAN"
+    assert model.meta.wcsinfo.cunit1 == 'deg'
+    assert model.meta.wcsinfo.cunit2 == 'deg'
     assert word_precision_check(
         model.meta.wcsinfo.s_region,
         (
             'POLYGON ICRS'
-            ' 345.0516057166881 -86.87312441299257'
-            ' 344.61737392066823 -86.85221531104224'
-            ' 344.99072891662956 -86.82863042295425'
-            ' 345.42745662836063 -86.84915871318734'
+            ' 345.11054995209815 -87.02586884935684'
+            ' 344.6537904121288 -87.00498014679253'
+            ' 345.04569816117015 -86.98138111042982'
+            ' 345.50498899320183 -87.00187988107017'
         )
     )
 
@@ -314,14 +318,18 @@ def test_add_wcs_fsmcorr_v1(data_file):
     assert model.meta.wcsinfo.dec_ref == TARG_DEC
     assert np.isclose(model.meta.wcsinfo.roll_ref, 358.9045979379)
     assert model.meta.wcsinfo.wcsaxes == 2
+    assert model.meta.wcsinfo.ctype1 == "RA---TAN"
+    assert model.meta.wcsinfo.ctype2 == "DEC--TAN"
+    assert model.meta.wcsinfo.cunit1 == 'deg'
+    assert model.meta.wcsinfo.cunit2 == 'deg'
     assert word_precision_check(
         model.meta.wcsinfo.s_region,
         (
             'POLYGON ICRS'
-            ' 345.0516057166881 -86.87312441299257'
-            ' 344.61737392066823 -86.85221531104224'
-            ' 344.99072891662956 -86.82863042295425'
-            ' 345.42745662836063 -86.84915871318734'
+            ' 345.11054995209815 -87.02586884935684'
+            ' 344.6537904121288 -87.00498014679253'
+            ' 345.04569816117015 -86.98138111042982'
+            ' 345.50498899320183 -87.00187988107017'
         )
     )
 
@@ -346,14 +354,18 @@ def test_add_wcs_with_db(eng_db_ngas, data_file, siaf_file=siaf_db):
     assert np.isclose(model.meta.wcsinfo.dec_ref, -38.854159)
     assert np.isclose(model.meta.wcsinfo.roll_ref, 50.20832726650)
     assert model.meta.wcsinfo.wcsaxes == 2
+    assert model.meta.wcsinfo.ctype1 == "RA---TAN"
+    assert model.meta.wcsinfo.ctype2 == "DEC--TAN"
+    assert model.meta.wcsinfo.cunit1 == 'deg'
+    assert model.meta.wcsinfo.cunit2 == 'deg'
     assert word_precision_check(
         model.meta.wcsinfo.s_region,
         (
             'POLYGON ICRS'
-            ' 349.00694612561705 -38.776964589744054'
-            ' 349.0086451128466 -38.74533844552814'
-            ' 349.04874980331374 -38.746495669763334'
-            ' 349.0474396482846 -38.77812380255898'
+            ' 348.8563379013152 -38.874810886750495'
+            ' 348.85810582665334 -38.84318773861823'
+            ' 348.8982592685148 -38.84439628911871'
+            ' 348.89688051688233 -38.876020020321164'
         )
     )
 
@@ -378,13 +390,17 @@ def test_add_wcs_with_db_fsmcorr_v1(eng_db_ngas, data_file):
     assert np.isclose(model.meta.wcsinfo.dec_ref, -38.854159)
     assert np.isclose(model.meta.wcsinfo.roll_ref, 50.20832726650)
     assert model.meta.wcsinfo.wcsaxes == 2
+    assert model.meta.wcsinfo.ctype1 == "RA---TAN"
+    assert model.meta.wcsinfo.ctype2 == "DEC--TAN"
+    assert model.meta.wcsinfo.cunit1 == 'deg'
+    assert model.meta.wcsinfo.cunit2 == 'deg'
     assert word_precision_check(
         model.meta.wcsinfo.s_region,
         (
             'POLYGON ICRS'
-            ' 349.00694612561705 -38.776964589744054'
-            ' 349.0086451128466 -38.74533844552814'
-            ' 349.04874980331374 -38.746495669763334'
-            ' 349.0474396482846 -38.77812380255898'
+            ' 348.8563379013152 -38.874810886750495'
+            ' 348.85810582665334 -38.84318773861823'
+            ' 348.8982592685148 -38.84439628911871'
+            ' 348.89688051688233 -38.876020020321164'
         )
     )

@@ -17,13 +17,7 @@ except ImportError:
 
 if sys.version_info < (3, 5):
     error = """
-    JWST 0.9+ does not support Python 2.x, 3.0, 3.1, 3.2, 3.3 or 3.4.
     Beginning with JWST 0.9, Python 3.5 and above is required.
-
-    This may be due to an out of date pip
-
-    Make sure you have pip >= 9.0.1.
-
     """
     sys.exit(error)
 
@@ -99,7 +93,7 @@ DOCS_REQUIRE = [
     'sphinx-astropy',
 ]
 TESTS_REQUIRE = [
-    'ci-watson',
+    'ci-watson>=0.3.0',
     'pytest',
     'pytest-doctestplus',
     'requests_mock',
@@ -171,7 +165,8 @@ import relic.release
 version = relic.release.get_info()
 relic.release.write_template(version, NAME)
 
-entry_points = dict(asdf_extensions=['jwst_pipeline = jwst.transforms.jwextension:JWSTExtension'])
+entry_points = dict(asdf_extensions=['jwst_pipeline = jwst.transforms.jwextension:JWSTExtension',
+                                     'model_extensions = jwst.datamodels.extension:BaseExtension'])
 
 setup(
     name=NAME,
@@ -204,11 +199,11 @@ setup(
                   define_macros=[('NUMPY', '1')]),
     ],
     install_requires=[
-        'asdf>=2.3',
+        'asdf>=2.3.2',
         'astropy>=3.1',
         'crds>=7.2.7',
         'drizzle>=1.12',
-        'gwcs>=0.9',
+        'gwcs>=0.10',
         'jsonschema>=2.3,<=2.6',
         'numpy>=1.13',
         'photutils>=0.4',
@@ -217,7 +212,6 @@ setup(
         'stsci.image>=2.3',
         'stsci.imagestats>=1.4',
         'stsci.stimage>=0.2',
-        'stsci.tools>=3.4',
         'verhawk',
     ],
     extras_require={

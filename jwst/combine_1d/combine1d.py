@@ -6,7 +6,6 @@ import logging
 
 import numpy as np
 
-from ..associations import load_asn
 from .. import datamodels
 from ..extract_1d.spec_wcs import create_spectral_wcs
 
@@ -28,45 +27,67 @@ class InputSpectrumModel:
         declination
     """
 
-    def __init__(self, ms, spec, exptime_key):
+    def __init__(self, ms, spec, exptime_key, background):
         """Create an InputSpectrumModel object.
 
         Parameters
         ----------
-        ms: MultiSpecModel or SpecModel object
+        ms : MultiSpecModel or SpecModel object
             This is used to get the integration time.
 
-        spec: SpecModel table
+        spec : SpecModel table
             The table containing columns "wavelength" and "net".
             The `ms` object may contain more than one spectrum, but `spec`
             should be just one of those.
 
-        exptime_key: str
+        exptime_key : str
             A string identifying which keyword to use to get the exposure
             time, which is used as a weight; or "unit_weight", which means
             to use weight = 1.
+
+        background : bool
+            If the flux data are actually background rather than a target
+            spectrum, `background` should be set to True.  In this case, the
+            values read from the flux column of each input spectrum will be
+            divided by the npixels column (if that column exists).  This is
+            to convert the values to background per pixel.
         """
 
         self.wavelength = spec.spec_table.field("wavelength").copy()
-        self.flux = spec.spec_table.field("flux").copy()
-        self.error = spec.spec_table.field("error").copy()
-        self.net = spec.spec_table.field("net").copy()
+
+        if background:
+            try:
+                npixels = spec.spec_table.field("npixels").copy()
+            except KeyError:
+                npixels = np.ones_like(self.wavelength)
+
+        if background:
+            # Convert to background value per pixel.
+            self.flux = spec.spec_table.field("flux") / npixels
+            self.error = spec.spec_table.field("error") / npixels
+            self.net = spec.spec_table.field("net") / npixels
+        else:
+            self.flux = spec.spec_table.field("flux").copy()
+            self.error = spec.spec_table.field("error").copy()
+            self.net = spec.spec_table.field("net").copy()
         self.dq = spec.spec_table.field("dq").copy()
         self.nelem = self.wavelength.shape[0]
         self.unit_weight = False        # may be reset below
         self.right_ascension = None
         self.declination = None
 
+        self.weight = np.ones_like(self.wavelength)
         if exptime_key == "integration_time":
-            self.weight = ms.meta.exposure.integration_time
+            self.weight *= ms.meta.exposure.integration_time
         elif exptime_key == "exposure_time":
-            self.weight = ms.meta.exposure.exposure_time
+            self.weight *= ms.meta.exposure.exposure_time
         elif exptime_key == "unit_weight":
-            self.weight = 1.
             self.unit_weight = True
         else:
             raise RuntimeError("Don't understand exptime_key = '%s'" %
                                exptime_key)
+        if background and exptime_key != "unit_weight":
+            self.weight *= npixels
 
         got_wcs = True
         try:
@@ -137,7 +158,7 @@ class OutputSpectrumModel:
 
         Parameters
         ----------
-        input_spectra: list of InputSpectrumModel objects
+        input_spectra : list of InputSpectrumModel objects
             List of input spectra.
         """
 
@@ -218,18 +239,18 @@ class OutputSpectrumModel:
 
         Parameters
         ----------
-        wl: 1-D array
+        wl : 1-D array
             An array containing all the wavelengths from all the input
             spectra, sorted in increasing order.
 
-        count_input: 1-D array
+        count_input : 1-D array
             An integer array of the same length as `wl`.  For a given
             array index k (for example), count_input[k] is the number of
             input spectra that cover wavelength wl[k].
 
         Returns
         -------
-        wavelength:  1-D array
+        wavelength :  1-D array
             Array of wavelengths for the output spectrum.
         """
 
@@ -308,7 +329,7 @@ class OutputSpectrumModel:
         return temp_wl[np.where(temp_wl > 0.)].copy()
 
 
-    def accumulate_sums(self, input_spectra, interpolation):
+    def accumulate_sums(self, input_spectra):
         """Compute a weighted sum of all the input spectra.
 
         Each pixel of each input spectrum will be added to one pixel of
@@ -336,12 +357,8 @@ class OutputSpectrumModel:
 
         Parameters
         ----------
-        input_spectra: list of InputSpectrumModel objects
+        input_spectra : list of InputSpectrumModel objects
             List of input spectra.
-
-        interpolation: str
-            The type of interpolation to use.
-            This is currently ignored.
         """
 
         nelem = self.wavelength.shape[0]
@@ -365,17 +382,18 @@ class OutputSpectrumModel:
             for i in range(len(out_pixel)):
                 if in_spec.dq[i] & datamodels.dqflags.pixel['DO_NOT_USE'] > 0:
                     continue
-                # Nearest pixel "interpolation."
+                # Round to the nearest pixel.
                 k = round(float(out_pixel[i]))
-                self.net[k] += (in_spec.net[i] * in_spec.weight)
-                self.weight[k] += in_spec.weight
+                self.net[k] += (in_spec.net[i] * in_spec.weight[i])
+                self.weight[k] += in_spec.weight[i]
                 self.dq[k] |= in_spec.dq[i]
                 if in_spec.unit_weight:
                     flux_wgt = 1.
                 else:
                     # net / flux is the sensitivity
-                    flux_wgt = in_spec.weight * in_spec.net[i] / temp_flux[i]
-                    flux_wgt = np.where(flux_wgt < 0., 0., flux_wgt)
+                    flux_wgt = (in_spec.weight[i] *
+                                in_spec.net[i] / temp_flux[i])
+                    flux_wgt = max(flux_wgt, 0.)
                 self.flux[k] += in_spec.flux[i] * flux_wgt
                 self.error[k] += (in_spec.error[i] * flux_wgt)**2
                 self.flux_weight[k] += flux_wgt
@@ -409,12 +427,12 @@ class OutputSpectrumModel:
 
         Parameters
         ----------
-        in_wl:  1-D array, or float
+        in_wl :  1-D array, or float
              Array (or a single value) of wavelengths.
 
         Returns
         -------
-        pixel:  1-D array, or float
+        pixel :  1-D array, or float
              Pixel numbers in the output spectrum corresponding to the
              wavelengths in `in_wl`.
         """
@@ -507,7 +525,7 @@ class OutputSpectrumModel:
 
         Returns
         -------
-        output_model: CombinedSpecModel object
+        output_model : CombinedSpecModel object
             A table of combined spectral data.
         """
 
@@ -562,13 +580,13 @@ def check_exptime(exptime_key):
 
     Parameters
     ----------
-    exptime_key: str
+    exptime_key : str
         A keyword or string indicating what value (integration time or
         exposure time) should be used as a weight when combing spectra.
 
     Returns
     -------
-    exptime_key: str
+    exptime_key : str
         The value will be either "integration_time", "exposure_time",
         or "unit_weight".
     """
@@ -596,52 +614,53 @@ def check_exptime(exptime_key):
     return exptime_key
 
 
-def do_correction(asn_file, exptime_key, interpolation):
+def combine_1d_spectra(input_model, exptime_key, background=False):
     """Combine the input spectra.
 
     Parameters
     ----------
-    asn_file: str
-        The association file name.
+    input_model : `~jwst.datamodels.DataModel`
+        The input spectra.  This will likely be a ModelContainer object.
 
-    exptime_key: str
+    exptime_key : str
         A string identifying which keyword to use to get the exposure time,
-        which is used as a weight when combining spectra.
+        which is used as a weight when combining spectra.  The value should
+        be one of:  "exposure_time" (the default), "integration_time",
+        or "unit_weight".
 
-    interpolation: str
-        The type of interpolation between input pixels.
+    background : bool, default=False
+        If the flux data are actually background rather than a target
+        spectrum, `background` should be set to True.  In this case, the
+        values read from the flux column of each input spectrum will be
+        divided by the npixels column (if that column exists).  This is
+        to convert the values to background per pixel.
+
+    Returns
+    -------
+    output_model : `~jwst.datamodels.DataModel`
+        A datamodels.CombinedSpecModel object.
     """
 
-    with open(asn_file) as asn_file_handle:
-        asn = load_asn(asn_file_handle)
-
-    # Get the name to use for the output file.
-    output_name = asn["products"][0]["name"]
-    # Get the dictionary that contains the input file names.
-    input_files = asn["products"][0]["members"]
-    del asn
+    log.debug("Using exptime_key = {}.".format(exptime_key))
+    if background:
+        log.debug("The FLUX data will be treated as background data.")
 
     exptime_key = check_exptime(exptime_key)
 
     input_spectra = []
-    for file_dict in input_files:
-        file = file_dict["expname"]
-        ms = datamodels.open(file)
-        try:
-            dummy = len(ms.spec)
-            del dummy
-        except AttributeError:
-            log.error("Input file {} is a {}; skipping ..."
-                      .format(file, type(ms)))
-            ms.close()
-            continue
-        for in_spec in ms.spec:
-            input_spectra.append(InputSpectrumModel(ms, in_spec, exptime_key))
-        ms.close()
+    if isinstance(input_model, datamodels.ModelContainer):
+        for ms in input_model:
+            for in_spec in ms.spec:
+                input_spectra.append(InputSpectrumModel(
+                                ms, in_spec, exptime_key, background))
+    else:
+        for in_spec in input_model.spec:
+            input_spectra.append(InputSpectrumModel(
+                                input_model, in_spec, exptime_key, background))
 
     output_spec = OutputSpectrumModel()
     output_spec.assign_wavelengths(input_spectra)
-    output_spec.accumulate_sums(input_spectra, interpolation)
+    output_spec.accumulate_sums(input_spectra)
     output_spec.compute_combination()
 
     for in_spec in input_spectra:
@@ -650,12 +669,12 @@ def do_correction(asn_file, exptime_key, interpolation):
     output_model = output_spec.create_output()
 
     # Copy one of the input headers to output.
-    ms = datamodels.MultiSpecModel(input_files[0]["expname"])
-    output_model.update(ms, only="PRIMARY")
-    ms.close()
+    if isinstance(input_model, datamodels.ModelContainer):
+        output_model.update(input_model[0], only="PRIMARY")
+    else:
+        output_model.update(input_model, only="PRIMARY")
 
     output_model.meta.wcs = output_spec.wcs
-    output_model.meta.filename = output_name
     output_model.meta.cal_step.combine_1d = 'COMPLETE'
 
     output_spec.close()

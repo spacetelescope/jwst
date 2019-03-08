@@ -86,9 +86,9 @@ class MasterBackgroundStep(Step):
                 # Record name of user-supplied master background spectrum
                 if isinstance(result, datamodels.ModelContainer):
                     for model in result:
-                        model.meta.master_background_file = basename(self.user_background)
+                        model.meta.background.master_background_file = basename(self.user_background)
                 else:
-                    result.meta.master_background_file = basename(self.user_background)
+                    result.meta.background.master_background_file = basename(self.user_background)
 
             # Save the computed background if requested by user
             if self.save_background and self.user_background is None:

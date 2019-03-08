@@ -1,3 +1,57 @@
+0.13.1 (2019-03-07)
+===================
+
+combine_1d
+----------
+
+ - Added parameter ``background``; for background data, scale the flux,
+   error, and net by 1 / NPIXELS, and include NPIXELS in the weight;
+   changed the default for ``exptime_key`` to "exposure_time". [#3180]
+
+ - There is now a direct interface for calling the step.  This function,
+   ``combine_1d_spectra``, may be passed either a ModelContainer or a
+   MultiSpecModel object.  Previously this function expected the name of
+   an association file. [#3220]
+
+datamodels
+----------
+
+- Add back BaseExtension class so url-to-schema mapping works again [#3227]
+
+extract_1d
+----------
+
+ - If flux conversion is done, the FLUX is now set to zero (instead of
+   copying the NET) if the wavelength of a pixel is outside the range of
+   the RELSENS array. [#3190]
+
+ - Added a parameter ``subtract_background`` to ``extract_1d`` indicating
+   whether the local background should be subtracted. If None, the value
+   in the extract_1d reference file is used. [#3157, #3186]
+
+ - ``extract_1d`` can be run by calling ``extract.do_extract1d`` and
+   passing a dictionary of reference file information. [#3202]
+
+ - ``ref_dict`` was None in ``run_extract1d``, and a check for that was
+   missing. [#3233]
+
+master_background
+-----------------
+
+ - Added unit tests for expand_to_2d.  Support CombinedSpecModel data
+   for the 1-D user-supplied background spectrum. [#3188]
+
+set_bary_helio_times
+--------------------
+
+ - Raise an exception when unable to compute converted times. [#3197]
+
+set_telescope_pointing
+----------------------
+
+ - Added population of CDELTn keywords based on SIAF values and fixed bug in calculation
+   of S_REGION corners. [#3184]
+
 0.13.0 (2019-02-15)
 ===================
 
@@ -773,7 +827,6 @@ datamodels
 - Included the ability to handle 'allOf' when reading in  schemas [#2407]
 
 - Removed BaseExtension class, it was not being used [#2430]
-
 
 dq_init
 -------

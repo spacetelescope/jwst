@@ -3,8 +3,6 @@
 
 :Authors: Mihai Cara (contact: help@stsci.edu)
 
-:License: :doc:`../LICENSE`
-
 """
 
 # STDLIB
@@ -85,7 +83,6 @@ def extract1d(image, lambdas, disp_range,
         For each column, this is the number of pixels that were added
         together to get `countrate`.
     """
-
     nl = lambdas.shape[0]
 
     # Evaluate the functions for source and (optionally) background limits,

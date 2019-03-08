@@ -4,7 +4,6 @@ Data model class heirarchy
 
 import copy
 import datetime
-import inspect
 import os
 import sys
 import warnings
@@ -29,6 +28,11 @@ from . import schema as mschema
 from . import validate
 
 from .history import HistoryList
+
+from .extension import (
+    BaseExtension,
+    URL_PREFIX,
+)
 
 
 class DataModel(properties.ObjectNode, ndmodel.NDModel):
@@ -79,6 +83,10 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         kwargs: Aadditional arguments passed to lower level functions
         """
         # Set attributes used to hold information for asdf
+        if extensions is None:
+            extensions = [BaseExtension()]
+        else:
+            extensions.extend([BaseExtension()])
         self._extensions = extensions
 
         # Override value of validation parameters
@@ -88,22 +96,13 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         self._strict_validation = self.get_envar("STRICT_VALIDATION",
                                                  strict_validation)
 
-        # Construct the path to the schema files
-        filename = os.path.abspath(inspect.getfile(self.__class__))
-        base_url = os.path.join(
-            os.path.dirname(filename), 'schemas', '')
-
         # Load the schema files
         if schema is None:
-            schema_path = os.path.join(base_url, self.schema_url)
+            schema_path = os.path.join(URL_PREFIX, self.schema_url)
             # Create an AsdfFile so we can use its resolver for loading schemas
-            asdf_file = AsdfFile(extensions=self._extensions)
-            if hasattr(asdf_file, 'resolver'):
-                file_resolver = asdf_file.resolver
-            else:
-                file_resolver = self.get_resolver(asdf_file)
+            asdf_file = AsdfFile()
             schema = asdf_schema.load_schema(schema_path,
-                                             resolver=file_resolver,
+                                             resolver=asdf_file.resolver,
                                              resolve_references=True)
 
         self._schema = mschema.merge_property_trees(schema)
@@ -302,12 +301,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             except ValueError:
                 value = True
         return value
-
-    def get_resolver(self, asdf_file):
-        extensions = asdf_file._extensions
-        def asdf_file_resolver(uri):
-            return extensions._url_mapping(extensions._tag_mapping(uri))
-        return asdf_file_resolver
 
     @staticmethod
     def clone(target, source, deepcopy=False, memo=None):
