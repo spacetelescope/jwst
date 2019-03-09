@@ -11,7 +11,6 @@ numpy_version = '1.16'
 
 // Define environment variables needed for the tests
 def test_env = [
-    "HOME=./",
     "TEST_BIGDATA=https://bytesalad.stsci.edu/artifactory",
     "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
     "CRDS_CONTEXT=jwst_0500.pmap",
@@ -44,8 +43,7 @@ bc.conda_ver = '4.6.7'
 bc.conda_packages = ["python=${python_version}"]
 bc.build_cmds = [
     "pip install ${pip_install_args} numpy~=${numpy_version}",
-    "pip install ${pip_install_args} -e .[test]",
-    "python setup.py develop",
+    "pip install ${pip_install_args} .[test]",
     "pip install pytest-xdist",
 ]
 
