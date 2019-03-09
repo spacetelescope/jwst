@@ -1,9 +1,11 @@
 """Test using SDP-generated pools
 """
 from collections import Counter
+import configparser
 from pathlib import Path
-import pytest
 import re
+
+import pytest
 
 from jwst.associations.lib.diff import (
     compare_asn_files,
@@ -24,6 +26,10 @@ pool_regex = re.compile(r'(?P<proposal>jw.+?)_(?P<versionid>.+)_pool')
 # file lists for the test parametrization.
 # #############################################################
 class AssociationBase(BaseJWSTTest):
+    """Set testing environment"""
+
+    inputs_root = pytest.config.getini('inputs_root')[0]
+    results_root = pytest.config.getini('results_root')[0]
     input_loc = 'associations'
     test_dir = 'sdp'
     ref_loc = [test_dir, 'truth']
@@ -33,27 +39,28 @@ class AssociationBase(BaseJWSTTest):
 
     @property
     def pool_paths(self):
+        """Get the association pools"""
         if self._pool_paths is None:
             self._pool_paths = self.data_glob(self.test_dir, 'pools', glob='*.csv')
         return self._pool_paths
 
     @property
     def truth_paths(self):
+        """Get the truth associations"""
         if self._truth_paths is None:
             self._truth_paths = self.data_glob(*self.ref_loc, glob='*.json')
         return self._truth_paths
 
-asn_base = AssociationBase()
-try:
-    POOL_PATHS = asn_base.pool_paths
-except Exception:
-    POOL_PATHS = ['test will be skipped']
+ASN_BASE = AssociationBase()
+POOL_PATHS = ASN_BASE.pool_paths
 
 
 # #####
 # Tests
 # #####
 class TestSDPPools(AssociationBase):
+    """Test createion of association from SDP-created pools"""
+
     @pytest.mark.parametrize(
         'pool_path',
         POOL_PATHS
@@ -87,7 +94,7 @@ class TestSDPPools(AssociationBase):
         )
         truth_paths = [
             self.get_data(truth_path)
-            for truth_path in asn_base.truth_paths
+            for truth_path in ASN_BASE.truth_paths
             if asn_regex.match(truth_path)
         ]
 
@@ -126,4 +133,4 @@ class TestSDPPools(AssociationBase):
             if count > 1
         ]
 
-        assert not len(multiples), 'Multiple product names: {}'.format(multiples)
+        assert not multiples, 'Multiple product names: {}'.format(multiples)
