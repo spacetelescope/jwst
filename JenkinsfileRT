@@ -35,6 +35,7 @@ data_config.server_id = 'bytesalad'
 data_config.root = '${pytest_basetemp}'
 data_config.match_prefix = '(.*)_result' // .json is appended automatically
 
+// Build and test with python 3.6 with released dependencies
 bc = new BuildConfig()
 bc.nodetype = 'jwst'
 bc.name = "released dependencies"
