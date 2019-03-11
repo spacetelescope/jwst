@@ -1,7 +1,6 @@
 """Test using SDP-generated pools
 """
 from collections import Counter
-import configparser
 from pathlib import Path
 import re
 
@@ -52,7 +51,10 @@ class AssociationBase(BaseJWSTTest):
         return self._truth_paths
 
 ASN_BASE = AssociationBase()
-POOL_PATHS = ASN_BASE.pool_paths
+try:
+    POOL_PATHS = ASN_BASE.pool_paths
+except Exception as e:
+    POOL_PATHS = e
 
 
 # #####
@@ -61,9 +63,13 @@ POOL_PATHS = ASN_BASE.pool_paths
 class TestSDPPools(AssociationBase):
     """Test createion of association from SDP-created pools"""
 
+    @pytest.mark.skipif(
+        isinstance(POOL_PATHS, Exception),
+        reason='Test pool files not available. Reason={}'.format(POOL_PATHS)
+    )
     @pytest.mark.parametrize(
         'pool_path',
-        POOL_PATHS
+        [] if isinstance(POOL_PATHS, Exception) else POOL_PATHS
     )
     def test_against_standard(self, pool_path):
         """Compare a generated association against a standard
@@ -107,9 +113,13 @@ class TestSDPPools(AssociationBase):
             else:
                 raise
 
+    @pytest.mark.skipif(
+        isinstance(POOL_PATHS, Exception),
+        reason='Test pool files not available. Reason={}'.format(POOL_PATHS)
+    )
     @pytest.mark.parametrize(
         'pool_path',
-        POOL_PATHS
+        [] if isinstance(POOL_PATHS, Exception) else POOL_PATHS
     )
     def test_dup_product_names(self, pool_path):
         """Check for duplicate product names for a pool"""
