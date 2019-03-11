@@ -1,6 +1,7 @@
 """Test using SDP-generated pools
 """
 from collections import Counter
+import logging
 from pathlib import Path
 import re
 
@@ -12,6 +13,10 @@ from jwst.associations.lib.diff import (
 from jwst.tests.base_classes import BaseJWSTTest
 
 from jwst.associations.main import Main as asn_generate
+
+# Configure logging
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 # Main test args
 TEST_ARGS = ['--dry-run', '--no-merge']
@@ -25,10 +30,25 @@ pool_regex = re.compile(r'(?P<proposal>jw.+?)_(?P<versionid>.+)_pool')
 # file lists for the test parametrization.
 # #############################################################
 class AssociationBase(BaseJWSTTest):
-    """Set testing environment"""
+    """Set testing environment
 
-    inputs_root = pytest.config.getini('inputs_root')[0]
-    results_root = pytest.config.getini('results_root')[0]
+    These tests are very much tied to using `pytest` and the `ci-watson` plugin.
+    In particular, there are references to `pytest.config` that only exist when
+    running under pytest. Such references are stubbed out with best defaults used.
+
+    """
+
+    try:
+        inputs_root = pytest.config.getini('inputs_root')[0]
+        results_root = pytest.config.getini('results_root')[0]
+    except AttributeError:
+        logger.warning(
+            '`pytest.config` referenced outside of a pytest run.'
+            '\n`inputs_root` and `results_root` set to empty.'
+        )
+        inputs_root = ''
+        results_root = ''
+
     input_loc = 'associations'
     test_dir = 'sdp'
     ref_loc = [test_dir, 'truth']
@@ -60,13 +80,13 @@ except Exception as e:
 # #####
 # Tests
 # #####
+@pytest.mark.skipif(
+    isinstance(POOL_PATHS, Exception),
+    reason='Test pool files not available. Reason={}'.format(POOL_PATHS)
+)
 class TestSDPPools(AssociationBase):
     """Test createion of association from SDP-created pools"""
 
-    @pytest.mark.skipif(
-        isinstance(POOL_PATHS, Exception),
-        reason='Test pool files not available. Reason={}'.format(POOL_PATHS)
-    )
     @pytest.mark.parametrize(
         'pool_path',
         [] if isinstance(POOL_PATHS, Exception) else POOL_PATHS
@@ -113,10 +133,6 @@ class TestSDPPools(AssociationBase):
             else:
                 raise
 
-    @pytest.mark.skipif(
-        isinstance(POOL_PATHS, Exception),
-        reason='Test pool files not available. Reason={}'.format(POOL_PATHS)
-    )
     @pytest.mark.parametrize(
         'pool_path',
         [] if isinstance(POOL_PATHS, Exception) else POOL_PATHS
