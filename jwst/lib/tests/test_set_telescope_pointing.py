@@ -227,23 +227,32 @@ def test_add_wcs_default(data_file):
         )
 
     model = datamodels.Level1bModel(data_file)
+    model.save('test_add_wcs_default.fits')
     assert model.meta.pointing.ra_v1 == TARG_RA
     assert model.meta.pointing.dec_v1 == TARG_DEC
     assert model.meta.pointing.pa_v3 == 0.
+    assert model.meta.wcsinfo.wcsaxes == 2
+    assert model.meta.wcsinfo.crpix1 == 693.5
+    assert model.meta.wcsinfo.crpix2 == 512.5
     assert model.meta.wcsinfo.crval1 == TARG_RA
     assert model.meta.wcsinfo.crval2 == TARG_DEC
-    assert np.isclose(model.meta.wcsinfo.pc1_1, -1.0)
-    assert np.isclose(model.meta.wcsinfo.pc1_2, 0.0)
-    assert np.isclose(model.meta.wcsinfo.pc2_1, 0.0)
-    assert np.isclose(model.meta.wcsinfo.pc2_2, 1.0)
-    assert model.meta.wcsinfo.ra_ref == TARG_RA
-    assert model.meta.wcsinfo.dec_ref == TARG_DEC
-    assert np.isclose(model.meta.wcsinfo.roll_ref, 358.9045979379)
-    assert model.meta.wcsinfo.wcsaxes == 2
     assert model.meta.wcsinfo.ctype1 == "RA---TAN"
     assert model.meta.wcsinfo.ctype2 == "DEC--TAN"
     assert model.meta.wcsinfo.cunit1 == 'deg'
     assert model.meta.wcsinfo.cunit2 == 'deg'
+    assert np.isclose(model.meta.wcsinfo.cdelt1, 3.0555555e-5)
+    assert np.isclose(model.meta.wcsinfo.cdelt2, 3.0555555e-5)
+    assert np.isclose(model.meta.wcsinfo.pc1_1, -1.0)
+    assert np.isclose(model.meta.wcsinfo.pc1_2, 0.0)
+    assert np.isclose(model.meta.wcsinfo.pc2_1, 0.0)
+    assert np.isclose(model.meta.wcsinfo.pc2_2, 1.0)
+    assert model.meta.wcsinfo.v2_ref == 200.0
+    assert model.meta.wcsinfo.v3_ref == -350.0
+    assert model.meta.wcsinfo.vparity == -1
+    assert model.meta.wcsinfo.v3yangle == 42.0
+    assert model.meta.wcsinfo.ra_ref == TARG_RA
+    assert model.meta.wcsinfo.dec_ref == TARG_DEC
+    assert np.isclose(model.meta.wcsinfo.roll_ref, 358.9045979379)
     assert word_precision_check(
         model.meta.wcsinfo.s_region,
         (
@@ -308,20 +317,28 @@ def test_add_wcs_fsmcorr_v1(data_file):
     assert model.meta.pointing.ra_v1 == TARG_RA
     assert model.meta.pointing.dec_v1 == TARG_DEC
     assert model.meta.pointing.pa_v3 == 0.
+    assert model.meta.wcsinfo.wcsaxes == 2
+    assert model.meta.wcsinfo.crpix1 == 693.5
+    assert model.meta.wcsinfo.crpix2 == 512.5
     assert model.meta.wcsinfo.crval1 == TARG_RA
     assert model.meta.wcsinfo.crval2 == TARG_DEC
-    assert np.isclose(model.meta.wcsinfo.pc1_1, -1.0)
-    assert np.isclose(model.meta.wcsinfo.pc1_2, 0.0)
-    assert np.isclose(model.meta.wcsinfo.pc2_1, 0.0)
-    assert np.isclose(model.meta.wcsinfo.pc2_2, 1.0)
-    assert model.meta.wcsinfo.ra_ref == TARG_RA
-    assert model.meta.wcsinfo.dec_ref == TARG_DEC
-    assert np.isclose(model.meta.wcsinfo.roll_ref, 358.9045979379)
-    assert model.meta.wcsinfo.wcsaxes == 2
     assert model.meta.wcsinfo.ctype1 == "RA---TAN"
     assert model.meta.wcsinfo.ctype2 == "DEC--TAN"
     assert model.meta.wcsinfo.cunit1 == 'deg'
     assert model.meta.wcsinfo.cunit2 == 'deg'
+    assert np.isclose(model.meta.wcsinfo.cdelt1, 3.0555555e-5)
+    assert np.isclose(model.meta.wcsinfo.cdelt2, 3.0555555e-5)
+    assert np.isclose(model.meta.wcsinfo.pc1_1, -1.0)
+    assert np.isclose(model.meta.wcsinfo.pc1_2, 0.0)
+    assert np.isclose(model.meta.wcsinfo.pc2_1, 0.0)
+    assert np.isclose(model.meta.wcsinfo.pc2_2, 1.0)
+    assert model.meta.wcsinfo.v2_ref == 200.0
+    assert model.meta.wcsinfo.v3_ref == -350.0
+    assert model.meta.wcsinfo.vparity == -1
+    assert model.meta.wcsinfo.v3yangle == 42.0
+    assert model.meta.wcsinfo.ra_ref == TARG_RA
+    assert model.meta.wcsinfo.dec_ref == TARG_DEC
+    assert np.isclose(model.meta.wcsinfo.roll_ref, 358.9045979379)
     assert word_precision_check(
         model.meta.wcsinfo.s_region,
         (
@@ -344,20 +361,28 @@ def test_add_wcs_with_db(eng_db_ngas, data_file, siaf_file=siaf_db):
     assert np.isclose(model.meta.pointing.ra_v1, 348.9278669)
     assert np.isclose(model.meta.pointing.dec_v1, -38.749239)
     assert np.isclose(model.meta.pointing.pa_v3, 50.1767077)
+    assert model.meta.wcsinfo.wcsaxes == 2
+    assert model.meta.wcsinfo.crpix1 == 693.5
+    assert model.meta.wcsinfo.crpix2 == 512.5
     assert np.isclose(model.meta.wcsinfo.crval1, 348.8776709)
     assert np.isclose(model.meta.wcsinfo.crval2, -38.854159)
-    assert np.isclose(model.meta.wcsinfo.pc1_1, 0.0385309)
-    assert np.isclose(model.meta.wcsinfo.pc1_2, 0.9992574)
-    assert np.isclose(model.meta.wcsinfo.pc2_1, 0.9992574)
-    assert np.isclose(model.meta.wcsinfo.pc2_2, -0.0385309)
-    assert np.isclose(model.meta.wcsinfo.ra_ref, 348.8776709)
-    assert np.isclose(model.meta.wcsinfo.dec_ref, -38.854159)
-    assert np.isclose(model.meta.wcsinfo.roll_ref, 50.20832726650)
-    assert model.meta.wcsinfo.wcsaxes == 2
     assert model.meta.wcsinfo.ctype1 == "RA---TAN"
     assert model.meta.wcsinfo.ctype2 == "DEC--TAN"
     assert model.meta.wcsinfo.cunit1 == 'deg'
     assert model.meta.wcsinfo.cunit2 == 'deg'
+    assert np.isclose(model.meta.wcsinfo.cdelt1, 3.0555555e-5)
+    assert np.isclose(model.meta.wcsinfo.cdelt2, 3.0555555e-5)
+    assert np.isclose(model.meta.wcsinfo.pc1_1, 0.0385309)
+    assert np.isclose(model.meta.wcsinfo.pc1_2, 0.9992574)
+    assert np.isclose(model.meta.wcsinfo.pc2_1, 0.9992574)
+    assert np.isclose(model.meta.wcsinfo.pc2_2, -0.0385309)
+    assert model.meta.wcsinfo.v2_ref == 200.0
+    assert model.meta.wcsinfo.v3_ref == -350.0
+    assert model.meta.wcsinfo.vparity == -1
+    assert model.meta.wcsinfo.v3yangle == 42.0
+    assert np.isclose(model.meta.wcsinfo.ra_ref, 348.8776709)
+    assert np.isclose(model.meta.wcsinfo.dec_ref, -38.854159)
+    assert np.isclose(model.meta.wcsinfo.roll_ref, 50.20832726650)
     assert word_precision_check(
         model.meta.wcsinfo.s_region,
         (
@@ -380,20 +405,28 @@ def test_add_wcs_with_db_fsmcorr_v1(eng_db_ngas, data_file):
     assert np.isclose(model.meta.pointing.ra_v1, 348.9278669)
     assert np.isclose(model.meta.pointing.dec_v1, -38.749239)
     assert np.isclose(model.meta.pointing.pa_v3, 50.1767077)
+    assert model.meta.wcsinfo.wcsaxes == 2
+    assert model.meta.wcsinfo.crpix1 == 693.5
+    assert model.meta.wcsinfo.crpix2 == 512.5
     assert np.isclose(model.meta.wcsinfo.crval1, 348.8776709)
     assert np.isclose(model.meta.wcsinfo.crval2, -38.854159)
-    assert np.isclose(model.meta.wcsinfo.pc1_1, 0.0385309)
-    assert np.isclose(model.meta.wcsinfo.pc1_2, 0.9992574)
-    assert np.isclose(model.meta.wcsinfo.pc2_1, 0.9992574)
-    assert np.isclose(model.meta.wcsinfo.pc2_2, -0.0385309)
-    assert np.isclose(model.meta.wcsinfo.ra_ref, 348.8776709)
-    assert np.isclose(model.meta.wcsinfo.dec_ref, -38.854159)
-    assert np.isclose(model.meta.wcsinfo.roll_ref, 50.20832726650)
-    assert model.meta.wcsinfo.wcsaxes == 2
     assert model.meta.wcsinfo.ctype1 == "RA---TAN"
     assert model.meta.wcsinfo.ctype2 == "DEC--TAN"
     assert model.meta.wcsinfo.cunit1 == 'deg'
     assert model.meta.wcsinfo.cunit2 == 'deg'
+    assert np.isclose(model.meta.wcsinfo.cdelt1, 3.0555555e-5)
+    assert np.isclose(model.meta.wcsinfo.cdelt2, 3.0555555e-5)
+    assert np.isclose(model.meta.wcsinfo.pc1_1, 0.0385309)
+    assert np.isclose(model.meta.wcsinfo.pc1_2, 0.9992574)
+    assert np.isclose(model.meta.wcsinfo.pc2_1, 0.9992574)
+    assert np.isclose(model.meta.wcsinfo.pc2_2, -0.0385309)
+    assert model.meta.wcsinfo.v2_ref == 200.0
+    assert model.meta.wcsinfo.v3_ref == -350.0
+    assert model.meta.wcsinfo.vparity == -1
+    assert model.meta.wcsinfo.v3yangle == 42.0
+    assert np.isclose(model.meta.wcsinfo.ra_ref, 348.8776709)
+    assert np.isclose(model.meta.wcsinfo.dec_ref, -38.854159)
+    assert np.isclose(model.meta.wcsinfo.roll_ref, 50.20832726650)
     assert word_precision_check(
         model.meta.wcsinfo.s_region,
         (
