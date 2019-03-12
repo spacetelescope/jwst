@@ -80,7 +80,7 @@ Transforms = namedtuple("Transforms",
 Transforms.__new__.__defaults__ = (None, None, None, None, None,
                                    None, None, None, None)
 # WCS reference container
-WCSRef = namedtuple( 'WCSRef', ['ra', 'dec', 'pa'])
+WCSRef = namedtuple('WCSRef', ['ra', 'dec', 'pa'])
 WCSRef.__new__.__defaults__ = (None, None, None)
 
 
@@ -476,8 +476,8 @@ def update_s_region(model, siaf):
     )
     # Execute IdealToV2V3, followed by V23ToSky
     from ..transforms.models import IdealToV2V3, V23ToSky
-    v2_ref_deg = model.meta.wcsinfo.v2_ref / 3600 # in deg
-    v3_ref_deg = model.meta.wcsinfo.v3_ref / 3600 # in deg
+    v2_ref_deg = model.meta.wcsinfo.v2_ref / 3600  # in deg
+    v3_ref_deg = model.meta.wcsinfo.v3_ref / 3600  # in deg
     roll_ref = model.meta.wcsinfo.roll_ref
     ra_ref = model.meta.wcsinfo.ra_ref
     dec_ref = model.meta.wcsinfo.dec_ref
@@ -493,8 +493,8 @@ def update_s_region(model, siaf):
     v2, v3 = idltov23(xvert, yvert)  # in arcsec
 
     # Convert to deg
-    v2 = v2 / 3600 # in deg
-    v3 = v3 / 3600 # in deg
+    v2 = v2 / 3600  # in deg
+    v3 = v3 / 3600  # in deg
     angles = [-v2_ref_deg, v3_ref_deg, -roll_ref, -dec_ref, ra_ref]
     axes = "zyxyz"
     v23tosky = V23ToSky(angles, axes_order=axes)
@@ -738,7 +738,7 @@ def calc_aperture_wcs(m_eci2siaf):
     # The VyPA @ xref,yref is given by
     y = cos(vy_dec) * sin(vy_ra-wcs_ra)
     x = sin(vy_dec) * cos(wcs_dec) - \
-      cos(vy_dec) * sin(wcs_dec) * cos((vy_ra - wcs_ra))
+        cos(vy_dec) * sin(wcs_dec) * cos((vy_ra - wcs_ra))
     wcs_pa = np.arctan2(y, x)
 
     # Convert all WCS to degrees
@@ -973,7 +973,7 @@ def calc_position_angle(v1, v3):
     """
     y = cos(v3.dec) * sin(v3.ra-v1.ra)
     x = sin(v3.dec) * cos(v1.dec) - \
-      cos(v3.dec) * sin(v1.dec) * cos((v3.ra - v1.ra))
+        cos(v3.dec) * sin(v1.dec) * cos((v3.ra - v1.ra))
     v3_pa = np.arctan2(y, x)
 
     return v3_pa
@@ -1100,8 +1100,8 @@ def compute_local_roll(pa_v3, ra_ref, dec_ref, v2_ref, v3_ref):
 
 def _roll_angle_from_matrix(matrix, v2, v3):
     X = -(matrix[2, 0] * np.cos(v2) + matrix[2, 1] * np.sin(v2)) * np.sin(v3) + matrix[2, 2] * np.cos(v3)
-    Y = (matrix[0, 0] *  matrix[1, 2] - matrix[1, 0] * matrix[0, 2]) * np.cos(v2) + \
-      (matrix[0, 1] * matrix[1, 2] - matrix[1, 1] * matrix[0, 2]) * np.sin(v2)
+    Y = (matrix[0, 0] * matrix[1, 2] - matrix[1, 0] * matrix[0, 2]) * np.cos(v2) + \
+        (matrix[0, 1] * matrix[1, 2] - matrix[1, 1] * matrix[0, 2]) * np.sin(v2)
     new_roll = np.rad2deg(np.arctan2(Y, X))
     if new_roll < 0:
         new_roll += 360
@@ -1332,7 +1332,6 @@ def get_mnemonics(obsstart, obsend, tolerance, engdb_url=None):
                 )
             mnemonics[mnemonic] = allowed
 
-
     # All mnemonics must have some values.
     if not all([len(mnemonic) for mnemonic in mnemonics.values()]):
         raise ValueError('Incomplete set of pointing mnemonics')
@@ -1360,8 +1359,8 @@ def all_pointings(mnemonics):
             for mnemonic in mnemonics
         ]
         if any(values):
-            # The tagged obstime will come from the SA_ZATTEST1 mneunonic
-            #pointing.
+            # The tagged obstime will come from the SA_ZATTEST1 mnemonic
+            # pointing.
             obstime = mnemonics['SA_ZATTEST1'][idx].obstime
 
             # Fill out the matricies
@@ -1399,7 +1398,6 @@ def all_pointings(mnemonics):
     return pointings
 
 
-
 def populate_model_from_siaf(model, siaf):
     """
     Populate the WCS keywords of a Level1bModel from the SIAF.
@@ -1426,8 +1424,8 @@ def populate_model_from_siaf(model, siaf):
         model.meta.wcsinfo.cunit2 = "deg"
         model.meta.wcsinfo.crpix1 = siaf.crpix1
         model.meta.wcsinfo.crpix2 = siaf.crpix2
-        model.meta.wcsinfo.cdelt1 = siaf.cdelt1
-        model.meta.wcsinfo.cdelt2 = siaf.cdelt2
+        model.meta.wcsinfo.cdelt1 = siaf.cdelt1 / 3600  # in deg
+        model.meta.wcsinfo.cdelt2 = siaf.cdelt2 / 3600  # in deg
         model.meta.coordinates.reference_frame = "ICRS"
 
 
