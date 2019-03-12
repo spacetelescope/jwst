@@ -160,20 +160,23 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
 
     # For MIRI datasets having >1 group, if all final groups are flagged as
     #   DO_NOT_USE, resize the input model arrays to exclude the final group.
-    #   Similarly, if all first groups are flagged as DO_NOT_USE, resize the
-    #   input model arrays to exclude the first group.
+    #   Similarly, if leading groups 1 though N have all pixels flagged as
+    #   DO_NOT_USE, those groups will be ignored by ramp fitting, and the input
+    #   model arrays will be resized appropriately.
 
+    num_bad_slices = 0 # number of initial groups that are all DO_NOT_USE
     if (instrume == 'MIRI' and nreads > 1):
         first_gdq = model.groupdq[:,0,:,:]
 
-        if np.all(np.bitwise_and( first_gdq, dqflags.group['DO_NOT_USE'] )):
+        while (np.all(np.bitwise_and( first_gdq, dqflags.group['DO_NOT_USE']))): 
+            num_bad_slices += 1 
+
             model.data = model.data[:,1:,:,:]
             model.err = model.err[:,1:,:,:]
             model.groupdq = model.groupdq[:,1:,:,:]
             nreads -= 1
             ngroups -= 1
             cubeshape = (nreads,)+imshape
-            log.info('MIRI dataset has all first groups flagged as DO_NOT_USE.')
 
             # Where the initial group of the just-truncated data is a cosmic ray,
             #   remove the JUMP_DET flag from the group dq for those pixels so
@@ -185,6 +188,10 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
             for ii in range(num_cr_1st):
                 model.groupdq[ wh_cr[0][ii], 0, wh_cr[1][ii],
                     wh_cr[2][ii]] -=  dqflags.group['JUMP_DET']
+
+            first_gdq = model.groupdq[:,0,:,:]
+
+        log.info('Number of leading groups that are flagged as DO_NOT_USE: %s', num_bad_slices) 
 
         last_gdq = model.groupdq[:,-1,:,:]
         if np.all(np.bitwise_and( last_gdq, dqflags.group['DO_NOT_USE'] )):
