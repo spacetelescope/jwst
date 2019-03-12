@@ -227,7 +227,6 @@ def test_add_wcs_default(data_file):
         )
 
     model = datamodels.Level1bModel(data_file)
-    model.save('test_add_wcs_default.fits')
     assert model.meta.pointing.ra_v1 == TARG_RA
     assert model.meta.pointing.dec_v1 == TARG_DEC
     assert model.meta.pointing.pa_v3 == 0.
