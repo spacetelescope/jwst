@@ -18,10 +18,11 @@ typedef npy_intp integer_t;
     Memory is Allocated!  See void free_Carray(double ** )                  */
 double **ptrvector(long n)  {
     double **v;
-    v=(double **)malloc((size_t) (n*sizeof(double)));
-    if (!v)   {
+    v = (double **) malloc((size_t) (n * sizeof(double)));
+    if (!v) {
         printf("In **ptrvector. Allocation of memory for double array failed.");
-        exit(0);  }
+        exit(0);
+    }
     return v;
 }
 
@@ -29,17 +30,17 @@ double **ptrvector(long n)  {
 /* ==== Create Carray from PyArray ======================
     Assumes PyArray is contiguous in memory.
     Memory is allocated!                                    */
-double **pymatrix_to_Carrayptrs(PyArrayObject *arrayin)  {
-    double **c, *a;
-    long i,n,m;
+double **pymatrix_to_Carrayptrs(PyArrayObject *arrayin) {
+  double **c, *a;
+  integer_t i, n, m;
 
-    n=PyArray_DIMS(arrayin)[0];
-    m=PyArray_DIMS(arrayin)[1];
-    c=(double **)ptrvector(n);
-    a=(double *) PyArray_DATA(arrayin);  /* pointer to arrayin data as double */
-    for ( i=0; i<n; i++)  {
-        c[i]=a+i*m;  }
-    return c;
+  n = PyArray_DIMS(arrayin)[0];
+  m = PyArray_DIMS(arrayin)[1];
+  c = (double **) ptrvector(n);
+  a = (double *) PyArray_DATA(arrayin); /* pointer to arrayin data as double */
+  for (i=0; i<n; i++)
+    c[i] = a + i * m;
+  return c;
 }
 
 /* ==== Free a double *vector (vec of pointers) ========================== */
@@ -60,31 +61,29 @@ arrxyzero(PyObject *obj, PyObject *args)
   PyArrayObject *ozpmat = NULL;
   double **zpmat = NULL;
 
-  long imgnum, refnum;
+  integer_t imgnum, refnum;
   integer_t dimensions[2];
   integer_t xind, yind;
+  integer_t j, k;
   double dx, dy;
-  long j, k;
 
-  if (!PyArg_ParseTuple(args,"OOd:arrxyzero", &oimgxy, &orefxy, &searchrad)){
+  if (!PyArg_ParseTuple(args,"OOd:arrxyzero", &oimgxy, &orefxy, &searchrad))
     return PyErr_Format(gl_Error, "chelp.arrxyzero: Invalid Parameters.");
-  }
 
   imgxy = (PyArrayObject *)PyArray_ContiguousFromAny(oimgxy, NPY_FLOAT32, 2, 2);
-  if (!imgxy) {
+  if (!imgxy)
     goto _exit;
-  }
 
   refxy = (PyArrayObject *)PyArray_ContiguousFromAny(orefxy, NPY_FLOAT32, 2, 2);
-  if (!refxy) {
+  if (!refxy)
     goto _exit;
-  }
 
   dimensions[0] = (integer_t)(searchrad*2) + 1;
   dimensions[1] = (integer_t)(searchrad*2) + 1;
   ozpmat = (PyArrayObject *)PyArray_SimpleNew(2, dimensions, NPY_DOUBLE);
   if (!ozpmat)
     goto _exit;
+
   PyArray_FILLWBYTE(ozpmat, 0);
   /* Allocate memory for return matrix */
   zpmat=pymatrix_to_Carrayptrs(ozpmat);
@@ -93,19 +92,21 @@ arrxyzero(PyObject *obj, PyObject *args)
   refnum = PyArray_DIMS(refxy)[0];
 
   /* For each entry in the input image...*/
-  for (j=0; j< imgnum; j++){
+  for (j=0; j< imgnum; j++)
     /* compute the delta relative to each source in ref image */
-    for (k = 0; k < refnum; k++){
-        dx = *(float *)(PyArray_DATA(imgxy) + j*PyArray_STRIDES(imgxy)[0]) - *(float *)(PyArray_DATA(refxy) + k*PyArray_STRIDES(refxy)[0]);
-        dy = *(float *)(PyArray_DATA(imgxy) + j*PyArray_STRIDES(imgxy)[0]+ PyArray_STRIDES(imgxy)[1]) -
-             *(float *)(PyArray_DATA(refxy) + k*PyArray_STRIDES(refxy)[0]+ PyArray_STRIDES(refxy)[1]);
-        if ((fabs(dx) < searchrad) && (fabs(dy) < searchrad)) {
-            xind = (integer_t)(dx+searchrad);
-            yind = (integer_t)(dy+searchrad);
-            zpmat[yind][xind] += 1;
-        }
+    for (k = 0; k < refnum; k++) {
+      dx = *((float *)PyArray_DATA(imgxy) + j*PyArray_STRIDES(imgxy)[0]) -
+           *((float *)PyArray_DATA(refxy) + k*PyArray_STRIDES(refxy)[0]);
+      dy = *((float *)PyArray_DATA(imgxy) +
+             (j*PyArray_STRIDES(imgxy)[0] + PyArray_STRIDES(imgxy)[1])) -
+           *((float *)PyArray_DATA(refxy) +
+             (k*PyArray_STRIDES(refxy)[0] + PyArray_STRIDES(refxy)[1]));
+      if ((fabs(dx) < searchrad) && (fabs(dy) < searchrad)) {
+        xind = (integer_t)(dx + searchrad);
+        yind = (integer_t)(dy + searchrad);
+        zpmat[yind][xind] += 1;
+      }
     }
-  }
 
  _exit:
   Py_DECREF(imgxy);
@@ -115,11 +116,10 @@ arrxyzero(PyObject *obj, PyObject *args)
   return PyArray_Return(ozpmat);
 }
 
-static PyMethodDef chelp_methods[] =
-  {
-    {"arrxyzero", arrxyzero, METH_VARARGS, "arrxyzero(imgxy,refxy,searchrad,zpmat)"},
-    {0, 0, 0, 0}                             /* sentinel */
-  };
+static PyMethodDef chelp_methods[] = {
+  {"arrxyzero", arrxyzero, METH_VARARGS, "arrxyzero(imgxy,refxy,searchrad,zpmat)"},
+  {0, 0, 0, 0}                             /* sentinel */
+};
 
 #if PY_MAJOR_VERSION >= 3
 static struct PyModuleDef moduledef = {
@@ -145,9 +145,8 @@ void initchelp(void)
 
 #if PY_MAJOR_VERSION >= 3
   m = PyModule_Create(&moduledef);
-  if (m == NULL) {
+  if (m == NULL)
     return NULL;
-  }
 
 #else
   m = Py_InitModule("chelp", chelp_methods);
