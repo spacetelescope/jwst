@@ -17,7 +17,7 @@ def conda_packages = [
     "drizzle",
     "flake8",
     "gwcs",
-    "jsonschema",
+    "jsonschema<=2.6",
     "jplephem",
     "matplotlib",
     "photutils",
