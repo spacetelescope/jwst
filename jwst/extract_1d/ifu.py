@@ -12,6 +12,15 @@ from . import spec_wcs
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+# These values are used to indicate whether the input reference file
+# (if any) is JSON or IMAGE.
+FILE_TYPE_JSON = "JSON"
+FILE_TYPE_IMAGE = "IMAGE"
+
+# This is to prevent calling offset_from_offset multiple times for
+# multi-integration data.
+OFFSET_NOT_ASSIGNED_YET = "not assigned yet"
+
 def ifu_extract1d(input_model, ref_dict, source_type, subtract_background):
     """Extract a 1-D spectrum from an IFU cube.
 
@@ -58,8 +67,12 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background):
     if subtract_background is not None:
         extract_params['subtract_background'] = subtract_background
     if extract_params:
-        (ra, dec, wavelength, net, background, npixels, dq) = extract_ifu(
-                        input_model, source_type, extract_params)
+        if extract_params['ref_file_type'] == FILE_TYPE_JSON:
+            (ra, dec, wavelength, net, background, npixels, dq) = extract_ifu(
+                            input_model, source_type, extract_params)
+        else:                                   # FILE_TYPE_IMAGE
+            (ra, dec, wavelength, net, background, npixels, dq) = \
+                        image_extract_ifu(input_model, extract_params)
     else:
         log.critical('Missing extraction parameters.')
         raise ValueError('Missing extraction parameters.')
@@ -142,26 +155,49 @@ def get_extract_parameters(ref_dict, slitname, source_type):
     """
 
     extract_params = {}
-    for aper in ref_dict['apertures']:
-        if 'id' in aper and aper['id'] != "dummy" and \
-           (aper['id'] == slitname or aper['id'] == "ANY" or
-            slitname == "ANY"):
-            region_type = aper.get("region_type", "target")
-            if region_type == "target":
-                extract_params['x_center'] = aper.get('x_center')
-                extract_params['y_center'] = aper.get('y_center')
-                extract_params['method'] = aper.get('method', 'exact')
-                extract_params['subpixels'] = aper.get('subpixels', 5)
-                extract_params['radius'] = aper.get('radius')
-                extract_params['subtract_background'] = \
-                      aper.get('subtract_background', False)
-                extract_params['inner_bkg'] = aper.get('inner_bkg')
-                extract_params['outer_bkg'] = aper.get('outer_bkg')
-                extract_params['width'] = aper.get('width')
-                extract_params['height'] = aper.get('height')
-                # theta is in degrees (converted to radians later)
-                extract_params['theta'] = aper.get('theta', 0.)
-            break
+
+    if ('ref_file_type' not in ref_dict or
+        ref_dict['ref_file_type'] == FILE_TYPE_JSON):
+            extract_params['ref_file_type'] = FILE_TYPE_JSON
+            for aper in ref_dict['apertures']:
+                if 'id' in aper and aper['id'] != "dummy" and \
+                   (aper['id'] == slitname or aper['id'] == "ANY" or
+                    slitname == "ANY"):
+                    region_type = aper.get("region_type", "target")
+                    if region_type == "target":
+                        extract_params['x_center'] = aper.get('x_center')
+                        extract_params['y_center'] = aper.get('y_center')
+                        extract_params['method'] = aper.get('method', 'exact')
+                        extract_params['subpixels'] = aper.get('subpixels', 5)
+                        extract_params['radius'] = aper.get('radius')
+                        extract_params['subtract_background'] = \
+                              aper.get('subtract_background', False)
+                        extract_params['inner_bkg'] = aper.get('inner_bkg')
+                        extract_params['outer_bkg'] = aper.get('outer_bkg')
+                        extract_params['width'] = aper.get('width')
+                        extract_params['height'] = aper.get('height')
+                        # theta is in degrees (converted to radians later)
+                        extract_params['theta'] = aper.get('theta', 0.)
+                    break
+
+    elif ref_dict['ref_file_type'] == FILE_TYPE_IMAGE:
+        extract_params['ref_file_type'] = FILE_TYPE_IMAGE
+        foundit = False
+        for im in ref_dict['ref_model'].images:
+            if (im.name is None or im.name == "ANY" or slitname == "ANY" or
+                im.name == slitname):
+                    extract_params['ref_image'] = im
+                    foundit = True
+                    break
+
+        if not foundit:
+            log.error("No match for slit name %s in reference image", slitname)
+            raise RuntimeError("Specify slit name or use 'any' in ref image.")
+
+    else:
+        log.error("Reference file type %s not recognized",
+                  ref_dict['ref_file_type'])
+        raise RuntimeError("Reference file must be JSON or a FITS image.")
 
     return extract_params
 
@@ -190,7 +226,7 @@ def extract_ifu(input_model, source_type, extract_params):
         The wavelength in micrometers at each pixel.
 
     net : ndarray, 1-D
-        The count rate (counts / s) minus the background at each pixel.
+        The count rate (or flux) minus the background at each pixel.
 
     background : ndarray, 1-D
         The background count rate that was subtracted from the total
@@ -313,25 +349,9 @@ def extract_ifu(input_model, source_type, extract_params):
         dq[:] = dqflags.pixel['DO_NOT_USE']
         return (ra, dec, wavelength, net, background, npixels, dq)  # all bad
 
-    if hasattr(input_model.meta, 'wcs'):
-        wcs = input_model.meta.wcs
-    else:
-        log.warning("WCS function not found in input.")
-        wcs = None
-
-    if wcs is not None:
-        x_array = np.empty(shape[0], dtype=np.float64)
-        x_array.fill(float(shape[2]) / 2.)
-        y_array = np.empty(shape[0], dtype=np.float64)
-        y_array.fill(float(shape[1]) / 2.)
-        z_array = np.arange(shape[0], dtype=np.float64) # for wavelengths
-        ra, dec, wavelength = wcs(x_array, y_array, z_array)
-        nelem = len(wavelength)
-        ra = ra[nelem // 2]
-        dec = dec[nelem // 2]
-    else:
-        (ra, dec) = (0., 0.)
-        wavelength = np.arange(1, shape[0] + 1, dtype=np.float64)
+    x0 = float(shape[2]) / 2.
+    y0 = float(shape[1]) / 2.
+    (ra, dec, wavelength) = get_coordinates(input_model, x0, y0)
 
     position = (x_center, y_center)
     if source_type == 'point':
@@ -358,8 +378,230 @@ def extract_ifu(input_model, source_type, extract_params):
     # Check for NaNs in the wavelength array, flag them in the dq array,
     # and truncate the arrays if NaNs are found at endpoints (unless the
     # entire array is NaN).
+    (wavelength, net, background, npixels, dq) = \
+                nans_in_wavelength(wavelength, net, background, npixels, dq)
+
+    return (ra, dec, wavelength, net, background, npixels, dq)
+
+
+def image_extract_ifu(input_model, extract_params):
+    """Extraction using a reference image.
+
+    Parameters
+    ----------
+    input_model : IFUCubeModel
+        The input model.
+
+    extract_params : dict
+        The extraction parameters.  One of these is a open file handle
+        for an image that specifies which pixels should be included as
+        source and which (if any) should be used as background.
+
+    Returns
+    -------
+    ra, dec : float
+        ra and dec are the right ascension and declination respectively
+        at the centroid of the target region in the reference image.
+
+    wavelength : ndarray, 1-D
+        The wavelength in micrometers at each pixel.
+
+    net : ndarray, 1-D
+        The count rate (or flux) minus the background at each pixel.
+
+    background : ndarray, 1-D
+        The background count rate that was subtracted from the total
+        source count rate to get `net`.
+
+    npixels : ndarray, 1-D, float64
+        For each slice, this is the number of pixels that were added
+        together to get `net`.
+
+    dq : ndarray, 1-D, uint32
+        The data quality array.
+    """
+
+    data = input_model.data
+    # The axes are (z, y, x) in the sense that (x, y) are the ordinary
+    # axes of the image for one plane, i.e. at one wavelength.  The
+    # wavelengths vary along the z-axis.
+    shape = data.shape
+
+    # The dispersion direction is the first axis.
+    net = np.zeros(shape[0], dtype=np.float64)
+    background = np.zeros(shape[0], dtype=np.float64)
+    npixels = np.ones(shape[0], dtype=np.float64)
+
+    dq = np.zeros(shape[0], dtype=np.uint32)
+
+    ref_image = extract_params['ref_image']
+    ref = ref_image.data
+    if 'subtract_background' in extract_params:
+        subtract_background = extract_params['subtract_background']
+    else:
+        subtract_background = None
+
+    (mask_target, mask_bkg) = separate_target_and_background(ref)
+
+    n_target = mask_target.sum(dtype=np.float64)
+
+    # Extract the data.
+    # First add up the values along the x direction, then add up the
+    # values along the y direction.
+    gross = (data * mask_target).sum(axis=2, dtype=np.float64).sum(axis=1)
+
+    # Compute the number of pixels that were added together to get gross.
+    temp = np.ones_like(data)
+    npixels = (temp * mask_target).sum(axis=2, dtype=np.float64).sum(axis=1)
+    del temp
+
+    if subtract_background is not None:
+        if subtract_background:
+            if mask_bkg is None:
+                log.info("Skipping background subtraction because "
+                         "background regions are not defined.")
+        else:
+            if mask_bkg is not None:
+                log.info("Background subtraction was turned off "
+                         "- skipping it.")
+            mask_bkg = None
+
+    # Extract the background.
+    if mask_bkg is not None:
+        n_bkg = mask_bkg.sum(dtype=np.float64)
+        background = (data * mask_bkg).sum(axis=2, dtype=np.float64).sum(axis=1)
+        background *= (n_target / n_bkg)
+        net = gross - background
+    else:
+        background = np.zeros_like(gross)
+        net = gross.copy()
+
+    # Use the centroid of mask_target as the location of the target, and
+    # compute the ra, dec, and wavelength at the pixels of a column through
+    # the IFU cube at that point.  ra and dec should be constant (so they're
+    # scalars), but wavelength should differ from plane to plane.
+    (y0, x0) = im_centroid(data, mask_target)
+
+    log.debug("IFU 1-D extraction parameters (using reference image):")
+    log.debug("  x_center = %s", str(x0))
+    log.debug("  y_center = %s", str(y0))
+    log.debug("  subtract_background parameter = %s", str(subtract_background))
+    if mask_bkg is not None:
+        log.debug("    background will be subtracted")
+    else:
+        log.debug("    background will not be subtracted")
+
+    (ra, dec, wavelength) = get_coordinates(input_model, x0, y0)
+
+    # Check for NaNs in the wavelength array, flag them in the dq array,
+    # and truncate the arrays if NaNs are found at endpoints (unless the
+    # entire array is NaN).
+    (wavelength, net, background, npixels, dq) = \
+                nans_in_wavelength(wavelength, net, background, npixels, dq)
+
+    return (ra, dec, wavelength, net, background, npixels, dq)
+
+
+def get_coordinates(input_model, x0, y0):
+    """Get celestial coordinates and wavelengths.
+
+    Parameters
+    ----------
+    input_model : IFUCubeModel
+        The input model.
+
+    x0, y0 : float
+        The pixel number at which the coordinates should be determined.
+        If the reference file is JSON format, this point will be the
+        nominal center of the image.  For an image reference file this
+        will be the centroid of the pixels that were flagged as source.
+
+    Returns
+    -------
+    ra, dec : float
+        ra and dec are the right ascension and declination respectively
+        at pixel (0, y0, x0).
+
+    wavelength : ndarray, 1-D
+        The wavelength in micrometers at each pixel.
+    """
+
+    if hasattr(input_model.meta, 'wcs'):
+        wcs = input_model.meta.wcs
+    else:
+        log.warning("WCS function not found in input.")
+        wcs = None
+
+    nelem = input_model.data.shape[0]
+
+    if wcs is not None:
+        x_array = np.empty(nelem, dtype=np.float64)
+        x_array.fill(x0)
+        y_array = np.empty(nelem, dtype=np.float64)
+        y_array.fill(y0)
+        z_array = np.arange(nelem, dtype=np.float64) # for wavelengths
+        ra, dec, wavelength = wcs(x_array, y_array, z_array)
+        # ra and dec should be constant, so nelem // 2 is an arbitrary element.
+        ra = ra[nelem // 2]
+        dec = dec[nelem // 2]
+    else:
+        (ra, dec) = (0., 0.)
+        wavelength = np.arange(1, nelem + 1, dtype=np.float64)
+
+    return (ra, dec, wavelength)
+
+
+def nans_in_wavelength(wavelength, net, background, npixels, dq):
+    """Check for NaNs in the wavelength array.
+
+    If NaNs are found in the wavelength array, flag them in the dq array,
+    and truncate the arrays at either or both ends if NaNs are found at
+    endpoints (unless the entire array is NaN).
+
+    Parameters
+    ----------
+    wavelength : ndarray, 1-D, float64
+        The wavelength in micrometers at each pixel.
+
+    net : ndarray, 1-D, float64
+        The count rate (or flux) minus the background at each pixel.
+
+    background : ndarray, 1-D, float64
+        The background count rate that was subtracted from the total
+        source count rate to get `net`.
+
+    npixels : ndarray, 1-D, float64
+        For each slice, this is the number of pixels that were added
+        together to get `net`.
+
+    dq : ndarray, 1-D, uint32
+        The data quality array.
+
+    Returns
+    -------
+    wavelength : ndarray, 1-D, float64
+
+    net : ndarray, 1-D, float64
+
+    background : ndarray, 1-D, float64
+
+    npixels : ndarray, 1-D, float64
+
+    dq : ndarray, 1-D, uint32
+    """
+
+    nelem = np.size(wavelength)
+    if nelem == 0:
+        log.warning("Output arrays are empty!")
+        return (wavelength, net, background, npixels, dq)
+
     nan_mask = np.isnan(wavelength)
     n_nan = nan_mask.sum(dtype=np.intp)
+    if n_nan == nelem:
+        log.warning("Wavelength array is all NaN!")
+        dq = np.bitwise_or(dq[:], dqflags.pixel['DO_NOT_USE'])
+        return (wavelength, net, background, npixels, dq)
+
     if n_nan > 0:
         log.warning("%d NaNs in wavelength array.", n_nan)
         dq[nan_mask] = np.bitwise_or(dq[nan_mask], dqflags.pixel['DO_NOT_USE'])
@@ -368,15 +610,97 @@ def extract_ifu(input_model, source_type, extract_params):
         if len(flag[0]) > 0:
             n_trimmed = flag[0][0] + nelem - (flag[0][-1] + 1)
             if n_trimmed > 0:
-                log.info("Output arrays have been trimmed by %d elements",
-                         n_trimmed)
                 slc = slice(flag[0][0], flag[0][-1] + 1)
                 wavelength = wavelength[slc]
                 net = net[slc]
                 background = background[slc]
                 npixels = npixels[slc]
                 dq = dq[slc]
-        else:
-            dq |= dqflags.pixel['DO_NOT_USE']
+                log.info("Output arrays have been trimmed by %d elements",
+                         n_trimmed)
 
-    return (ra, dec, wavelength, net, background, npixels, dq)
+    return (wavelength, net, background, npixels, dq)
+
+
+def separate_target_and_background(ref):
+    """Create masks for source and background.
+
+    Parameters
+    ----------
+    ref : ndarray, 2-D
+        This is the reference image data array.  This should be the same
+        shape as one plane of the science data.  A value of 1 in a pixel
+        indicates that the pixel should be included when computing the
+        target spectrum.  A value of 0 means the pixel is not part of
+        either the target or background.  A value of -1 means the pixel
+        should be included as part of the background region.
+
+    Returns
+    -------
+    mask_target : ndarray, 2-D
+        This is an array of the same type and shape as the reference
+        image, but with values of only 0 or 1.  A value of 1 indicates
+        that the corresponding pixel in each plane of the science data
+        array should be included when adding up values to make the 1-D
+        spectrum, and a value of 0 means that it should not be included.
+
+    mask_bkg : ndarray, 2-D, or None.
+        This is like `mask_target` (i.e. values are 0 or 1) but for
+        background regions.  A value of 1 in `mask_bkg` indicates a pixel
+        that should be included as part of the background.  If there is no
+        pixel in the reference image with a value of -1, `mask_bkg` will
+        be set to None.
+    """
+
+    mask_target = np.where(ref == 1., 1., 0.)
+
+    if np.any(ref == -1.):
+        mask_bkg = np.where(ref == -1., 1., 0.)
+    else:
+        mask_bkg = None
+
+    return (mask_target, mask_bkg)
+
+
+def im_centroid(data, mask_target):
+    """Compute the mean location of the target.
+
+    Parameters
+    ----------
+    data : ndarray, 2-D
+        This is the science image data array.
+
+    mask_target : ndarray, 2-D
+        This is an array of the same type and shape as one plane of the
+        science image, but with values of 0 or 1, where 1 indicates a pixel
+        within the source.
+
+    Returns
+    -------
+    y0, x0 : tuple of two float
+        The centroid of pixels flagged as source.
+    """
+
+    # Collapse the science data along the dispersion direction to get a
+    # 2-D image of the IFU field of view.  Multiplying by mask_target
+    # zeros out all pixels that are not regarded as part of the target
+    # (or targets).
+    data_2d = data.sum(axis=0, dtype=np.float64) * mask_target
+    if data_2d.sum() == 0.:
+        log.warning("Couldn't compute image centroid.")
+        shape = data_2d.shape
+        y0 = shape[0] / 2.
+        x0 = shape[0] / 2.
+        return (y0, x0)
+
+    x_profile = data_2d.sum(axis=0, dtype=np.float64)
+    x = np.arange(data_2d.shape[1], dtype=np.float64)
+    s_x = (x_profile * x).sum()
+    x0 = s_x / x_profile.sum()
+
+    y_profile = data_2d.sum(axis=1, dtype=np.float64)
+    y = np.arange(data_2d.shape[0], dtype=np.float64)
+    s_y = (y_profile * y).sum()
+    y0 = s_y / y_profile.sum()
+
+    return (y0, x0)

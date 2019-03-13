@@ -8,6 +8,11 @@ datamodels
   http://stsci.edu/schemas/fits-schema/ to map to the correct location
   in the ``jwst`` package. [#3239]
 
+extract_1d
+----------
+
+- This step can now use a reference image for IFU data. [#3258]
+
 master_background
 -----------------
 
