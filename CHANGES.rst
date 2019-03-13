@@ -13,6 +13,12 @@ master_background
 
 - Modified the unit tests for ``expand_to_2d``. [#3242]
 
+set_telescope_pointing
+----------------------
+
+ - Fix ``populate_model_from_siaf`` to convert SIAF pixel scale from
+   arcsec to degress for CDELTn keywords. [#3248]
+
 0.13.1 (2019-03-07)
 ===================
 
