@@ -5,30 +5,19 @@ jobconfig = new JobConfig()
 jobconfig.enable_env_publication = true
 jobconfig.publish_env_on_success_only = true
 
-def test_env = [
-    "HOME=./",
+// Define python and numpy versions for conda
+python_version = '3.6'
+numpy_version = '1.16'
+
+// Define environement variables needed for the regression tests
+test_env = [
     "TEST_BIGDATA=https://bytesalad.stsci.edu/artifactory",
     "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
     "CRDS_CONTEXT=jwst_0500.pmap",
 ]
 
-// Pip related setup
-def PIP_ARGS = "-q"
-def PIP_INST = "pip install ${PIP_ARGS}"
-def PIP_DEPS = ""
-def PIP_TEST_DEPS = "requests_mock ci_watson"
-
-// Pytest wrapper
-def PYTEST_BASETEMP = "test_outputs"
-def PYTEST = "pytest \
-              -r s \
-              -v \
-              --bigdata \
-              --slow \
-              --basetemp=${PYTEST_BASETEMP} \
-              --junit-xml=results.xml"
-
-def TEST_ROOT = "jwst/tests_nightly/general"
+// Set pytest basetemp output directory
+pytest_basetemp = "test_outputs"
 
 // Configure artifactory ingest
 data_config = new DataConfig()
@@ -36,38 +25,34 @@ data_config.server_id = 'bytesalad'
 data_config.root = '${PYTEST_BASETEMP}'
 data_config.match_prefix = '(.*)_result' // .json is appended automatically
 
+// Build and test with python 3.6 and released dependencies from astroconda
 bc = new BuildConfig()
 bc.nodetype = 'jwst'
+bc.name = 'released dependencies'
 bc.env_vars = test_env
-bc.name = '3.6'
-bc.conda_channels = ['http://ssb.stsci.edu/astroconda-dev']
-bc.conda_packages = ['asdf',
-                     'astropy',
-                     'crds',
-                     'drizzle',
-                     'flake8',
-                     'gwcs',
-                     'jsonschema',
-                     'jplephem',
-                     'matplotlib',
-                     'numpy',
-                     'photutils',
-                     'python=3.6',
-                     'pytest',
-                     'scipy',
-                     'spherical-geometry',
-                     'stsci.image',
-                     'stsci.imagestats',
-                     'stsci.stimage',
-                     'verhawk'
+bc.conda_ver = '4.6.8'
+bc.conda_override_channels = true
+bc.conda_channels = [
+    'http://ssb.stsci.edu/astroconda',
+    'defaults',
+    'http://ssb.stsci.edu/astroconda-dev',
 ]
-
-bc.test_cmds = ["printenv | sort",
-                "python setup.py develop",
-                "${PIP_INST} ${PIP_TEST_DEPS}",
-                "${PYTEST} ${TEST_ROOT}"
+bc.conda_packages = [
+    "python=${python_version}",
+    "numpy=${numpy_version}",
+    "nomkl",
+    "jwst",
 ]
-
+bc.build_cmds = [
+    "python setup.py develop",
+    "pip install -e .[test]",
+    "pip install pytest-xdist",
+]
+bc.test_cmds = [
+    "pytest -r sx -v -n 30 --bigdata --slow \
+    --basetemp=${pytest_basetemp}  --junit-xml=results.xml \
+    jwst/tests_nightly/general"
+]
 bc.test_configs = [data_config]
 
 utils.run([jobconfig, bc])
