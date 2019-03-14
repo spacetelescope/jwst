@@ -96,8 +96,10 @@ def ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
         gls_opt_model = None
 
     # Update data units in output models
-    new_model.meta.bunit_data = 'DN/s'
-    new_model.meta.bunit_err = 'DN/s'
+    if new_model is not None:
+        new_model.meta.bunit_data = 'DN/s'
+        new_model.meta.bunit_err = 'DN/s'
+
     if int_model is not None:
         int_model.meta.bunit_data = 'DN/s'
         int_model.meta.bunit_err = 'DN/s'
@@ -158,24 +160,32 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
     orig_nreads = nreads
     orig_cubeshape = cubeshape
 
-    # For MIRI datasets having >1 group, if all final groups are flagged as
-    #   DO_NOT_USE, resize the input model arrays to exclude the final group.
-    #   Similarly, if leading groups 1 though N have all pixels flagged as
-    #   DO_NOT_USE, those groups will be ignored by ramp fitting, and the input
-    #   model arrays will be resized appropriately.
+    # For MIRI datasets having >1 group, if all pixels in the final group are
+    #   flagged as DO_NOT_USE, resize the input model arrays to exclude the
+    #   final group.  Similarly, if leading groups 1 though N have all pixels
+    #   flagged as DO_NOT_USE, those groups will be ignored by ramp fitting, and
+    #   the input model arrays will be resized appropriately. If all pixels in
+    #   all groups are flagged, return None for the models.
 
-    num_bad_slices = 0 # number of initial groups that are all DO_NOT_USE
     if (instrume == 'MIRI' and nreads > 1):
         first_gdq = model.groupdq[:,0,:,:]
+        num_bad_slices = 0 # number of initial groups that are all DO_NOT_USE
 
         while (np.all(np.bitwise_and( first_gdq, dqflags.group['DO_NOT_USE']))): 
             num_bad_slices += 1 
+            nreads -= 1
+            ngroups -= 1
+
+            # Check if there are remaining groups before accessing data
+            if ngroups < 1 : # no usable data
+                log.error('1. All groups have all pixels flagged as DO_NOT_USE,')
+                log.error('  so will not process this dataset.')
+                return None, None, None
 
             model.data = model.data[:,1:,:,:]
             model.err = model.err[:,1:,:,:]
             model.groupdq = model.groupdq[:,1:,:,:]
-            nreads -= 1
-            ngroups -= 1
+
             cubeshape = (nreads,)+imshape
 
             # Where the initial group of the just-truncated data is a cosmic ray,
@@ -193,15 +203,27 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
 
         log.info('Number of leading groups that are flagged as DO_NOT_USE: %s', num_bad_slices) 
 
+        # If all groups were flagged, the final group would have been picked up 
+        #   in the while loop above, ngroups would have been set to 0, and Nones 
+        #   would have been returned.  If execution has made to here, there must
+        #   be at least 1 remaining group that is not all flagged.
         last_gdq = model.groupdq[:,-1,:,:]
         if np.all(np.bitwise_and( last_gdq, dqflags.group['DO_NOT_USE'] )):
+            nreads -= 1
+            ngroups -= 1
+
+            # Check if there are remaining groups before accessing data
+            if ngroups < 1 : # no usable data
+                log.error('2. All groups have all pixels flagged as DO_NOT_USE,')
+                log.error('  so will not process this dataset.')
+                return None, None, None
+
             model.data = model.data[:,:-1,:,:]
             model.err = model.err[:,:-1,:,:]
             model.groupdq = model.groupdq[:,:-1,:,:]
-            nreads -= 1
-            ngroups -= 1
+
             cubeshape = (nreads,)+imshape
-            log.info('MIRI dataset has all final groups flagged as DO_NOT_USE.')
+            log.info('MIRI dataset has all pixels in the final group flagged as DO_NOT_USE.')
 
         # Next block is to satisfy github issue 1681:
         # "MIRI FirstFrame and LastFrame minimum number of groups"

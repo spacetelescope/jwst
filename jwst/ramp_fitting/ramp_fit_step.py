@@ -84,7 +84,9 @@ class RampFitStep (Step):
                 gls_opt_model, 'fitoptgls', output_file=self.opt_name
             )
 
-        out_model.meta.cal_step.ramp_fit = 'COMPLETE'
+        if out_model is not None:
+            out_model.meta.cal_step.ramp_fit = 'COMPLETE'
+
         if int_model is not None:
             int_model.meta.cal_step.ramp_fit = 'COMPLETE'
 
