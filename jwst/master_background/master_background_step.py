@@ -1,5 +1,5 @@
 from os.path import basename
-
+import logging
 from ..stpipe import Step
 from .. import datamodels
 
@@ -17,8 +17,8 @@ class MasterBackgroundStep(Step):
     spec = """
         user_background = string(default=None) # Path to user-supplied master background
         save_background = boolean(default=False) # Save computed master background
+        subtract_background = boolean(default=None) #control flag
     """
-
 
     def process(self, input):
         """
@@ -36,6 +36,11 @@ class MasterBackgroundStep(Step):
 
         save_background : bool, optional
             Save master background.
+
+        subtract_background : bool, optional
+            A flag which indicates whether the background should be subtracted
+            If None, the logic in the step determines if backgrouned is subtracted
+            If not None, the parameter overrides logic in step
 
         Returns
         -------
@@ -73,7 +78,25 @@ class MasterBackgroundStep(Step):
                 self.record_step_status(result, 'master_background', success=False)
 
                 return result
+            # Check if subtract_background is set to False -> skip step
+            if self.subtract_background is False:
+                self.log.warning(
+                    "Not subtracting masterbackground, subtract_background set to False")
+                result = input_data.copy()
+                self.record_step_status(result, 'master_background', success=False)
+                return result
+            # Check if subtract_background is None but the background was
+            # subtracted in calspec2 background step  -> skip step
+            if self.subtract_background is None and \
+                input_data.meta.cal_step.back_sub == 'COMPLETE':
+                self.log.warning(
+                    "Not subtracting master background, background was subtracted in calspec2")
 
+                result = input_data.copy()
+                self.record_step_status(result, 'master_background', success=False)
+                return result
+
+            # various tests have passed and now we want to subtract the master background
             # Check if user has supplied a master background spectrum.
             if self.user_background is None:
                 # TODO: 1. compute master background from asn, 2. subtract it
@@ -94,8 +117,8 @@ class MasterBackgroundStep(Step):
             if self.save_background and self.user_background is None:
                 # self.save_model(background, suffix='masterbg', asn_id=asn_id)
                 pass
-            
-            self.record_step_status(result, 'master_background')
+
+            self.record_step_status(result, 'master_background', success=True)
 
         return result
 
@@ -118,11 +141,16 @@ def subtract_2d_background(source, background):
     `~jwst.datamodels.DataModel`
         Background subtracted from source.
     """
+
+    log = logging.getLogger(__name__)
+    log.setLevel(logging.DEBUG)
+
     def _subtract_2d_background(model, background):
         result = model.copy()
         # Handle individual NIRSpec FS, NIRSpec MOS
         if isinstance(model, datamodels.MultiSlitModel):
-            for slit, slitbg in zip(result.slits, background.slits):
+            for i, (slit, slitbg) in enumerate(zip(result.slits, background.slits)):
+                log.info('Master background subtraction being done for slit %i', i)
                 slit.data -= slitbg.data
 
         # Handle MIRI LRS, MIRI MRS and NIRSpec IFU
