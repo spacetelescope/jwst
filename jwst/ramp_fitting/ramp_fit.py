@@ -205,7 +205,7 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
 
         # If all groups were flagged, the final group would have been picked up 
         #   in the while loop above, ngroups would have been set to 0, and Nones 
-        #   would have been returned.  If execution has made to here, there must
+        #   would have been returned.  If execution has gotten here, there must
         #   be at least 1 remaining group that is not all flagged.
         last_gdq = model.groupdq[:,-1,:,:]
         if np.all(np.bitwise_and( last_gdq, dqflags.group['DO_NOT_USE'] )):
