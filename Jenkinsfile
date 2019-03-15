@@ -2,7 +2,7 @@ if (utils.scm_checkout()) return
 
 python_version = '3.6'
 
-test_env = [
+env_vars = [
     "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
     "CRDS_PATH=./crds_cache",
 ]
@@ -15,7 +15,7 @@ def pip_install_args = "--index-url ${pip_index} --progress-bar=off"
 // Generate distributions build
 bc0 = new BuildConfig()
 bc0.nodetype = 'linux'
-bc0.name = 'wheel sdist'
+bc0.name = 'wheel-sdist'
 bc0.conda_ver = '4.6.8'
 bc0.conda_packages = ["python=${python_version}"]
 bc0.build_cmds = [
@@ -26,8 +26,8 @@ bc0.build_cmds = [
 
 // Generate pip build/test with released upstream dependencies
 bc1 = utils.copy(bc0)
-bc1.name = "released dependencies"
-bc1.env_vars = test_env
+bc1.name = "stable-deps"
+bc1.env_vars = env_vars
 bc1.build_cmds = [
     "pip install ${pip_install_args} numpy",
     "pip install ${pip_install_args} -e .[test]",
@@ -38,7 +38,7 @@ bc1.test_cmds = ["pytest -r sx --basetemp=test_results --junitxml=results.xml"]
 // Generate conda build/test with astroconda-dev dependencies
 bc2 = utils.copy(bc0)
 bc2.name = "astroconda-dev"
-bc2.env_vars = test_env
+bc2.env_vars = env_vars
 bc2.conda_channels = [
     "http://ssb.stsci.edu/astroconda-dev"
 ]
