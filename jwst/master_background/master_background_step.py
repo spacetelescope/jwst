@@ -1,5 +1,4 @@
 from os.path import basename
-import logging
 from ..stpipe import Step
 from .. import datamodels
 
@@ -17,7 +16,7 @@ class MasterBackgroundStep(Step):
     spec = """
         user_background = string(default=None) # Path to user-supplied master background
         save_background = boolean(default=False) # Save computed master background
-        subtract_background = boolean(default=None) #control flag
+        subtract_background = boolean(default=None) #Subtract master background
     """
 
     def process(self, input):
@@ -79,7 +78,7 @@ class MasterBackgroundStep(Step):
 
                 return result
             # Check if subtract_background is set to False -> skip step
-            if self.subtract_background is False:
+            if self.subtract_background is not None and not self.subtract_background:
                 self.log.warning(
                     "Not subtracting masterbackground, subtract_background set to False")
                 result = input_data.copy()
@@ -89,7 +88,7 @@ class MasterBackgroundStep(Step):
             # subtracted in calspec2 background step  -> skip step
             if self.subtract_background is None and \
                 input_data.meta.cal_step.back_sub == 'COMPLETE':
-                self.log.warning(
+                self.log.info(
                     "Not subtracting master background, background was subtracted in calspec2")
 
                 result = input_data.copy()
@@ -142,15 +141,11 @@ def subtract_2d_background(source, background):
         Background subtracted from source.
     """
 
-    log = logging.getLogger(__name__)
-    log.setLevel(logging.DEBUG)
-
     def _subtract_2d_background(model, background):
         result = model.copy()
         # Handle individual NIRSpec FS, NIRSpec MOS
         if isinstance(model, datamodels.MultiSlitModel):
-            for i, (slit, slitbg) in enumerate(zip(result.slits, background.slits)):
-                log.info('Master background subtraction being done for slit %i', i)
+            for slit, slitbg in zip(result.slits, background.slits):
                 slit.data -= slitbg.data
 
         # Handle MIRI LRS, MIRI MRS and NIRSpec IFU
