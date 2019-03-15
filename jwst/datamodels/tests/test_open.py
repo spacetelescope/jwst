@@ -23,8 +23,8 @@ def test_open_fits():
 
     warnings.simplefilter("ignore")
     fits_file = t_path('test.fits')
-    m = open(fits_file)
-    assert isinstance(m, DataModel)
+    with open(fits_file) as model:
+        assert isinstance(model, DataModel)
 
 def test_open_fits_s3(s3_root_dir):
     """Test opening a model from a FITS file on S3"""
@@ -50,14 +50,13 @@ def test_open_association():
     asn_file = t_path('association.json')
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", "model_type not found")
-        m = open(asn_file)
-    assert isinstance(m, ModelContainer)
+        with open(asn_file) as c:
+            assert isinstance(c, ModelContainer)
 
 def test_open_shape():
     init = (200, 200)
-    model = open(init)
-    assert type(model) == ImageModel
-    model.close()
+    with open(init) as model:
+        assert type(model) == ImageModel
 
 def test_open_illegal():
     with pytest.raises(ValueError):
@@ -72,16 +71,14 @@ def test_open_hdulist():
     science = fits.ImageHDU(data=data, name='SCI')
     hdulist.append(science)
 
-    model = open(hdulist)
-    assert type(model) == ImageModel
-    model.close()
+    with open(hdulist) as model:
+        assert type(model) == ImageModel
 
 def test_open_image():
     warnings.simplefilter("ignore")
     image_name = t_path('jwst_image.fits')
-    model = open(image_name)
-    assert type(model) == ImageModel
-    model.close()
+    with open(image_name) as model:
+        assert type(model) == ImageModel
 
 
 def test_open_reference_files():
