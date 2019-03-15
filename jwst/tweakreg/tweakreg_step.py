@@ -59,7 +59,7 @@ class TweakRegStep(Step):
     def process(self, input):
 
         try:
-            images = datamodels.ModelContainer(input, persist=True)
+            images = datamodels.ModelContainer(input)
         except TypeError as te:
             raise te("Input to tweakreg must be a list of DataModels, an "
                 "association, or an already open ModelContainer containing "
