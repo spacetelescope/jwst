@@ -1,6 +1,7 @@
 import copy
 from collections import OrderedDict
 import os.path as op
+import warnings
 
 from asdf import AsdfFile
 
@@ -11,10 +12,6 @@ from ..associations import (
 from . import model_base
 from .util import open as datamodel_open
 from .util import is_association
-
-import logging
-log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 __doctest_skip__ = ['ModelContainer']
 
@@ -284,7 +281,6 @@ class ModelContainer(model_base.DataModel):
             'activity_id',
             'exposure_number'
             ]
-        group_dict = OrderedDict()
 
         for i, model in enumerate(self._models):
             params = []
@@ -297,7 +293,7 @@ class ModelContainer(model_base.DataModel):
             except TypeError:
                 params_dict = dict(zip(unique_exposure_parameters, params))
                 bad_params = {'meta.observation.'+k:v for k, v in params_dict.items() if not v}
-                log.warning(
+                warnings.warn(
                     'Cannot determine grouping of exposures: '
                     '{}'.format(bad_params)
                     )
