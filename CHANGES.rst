@@ -11,7 +11,10 @@ datamodels
 extract_1d
 ----------
 
-- This step can now use a reference image for IFU data. [#3258]
+- This step can now use a reference image for IFU data.  The reference
+  image (for IFU) may be either 2-D or 3-D.  When using a reference image
+  for non-IFU data, background smoothing is now done after scaling the
+  background count rate. [#3258]
 
 master_background
 -----------------

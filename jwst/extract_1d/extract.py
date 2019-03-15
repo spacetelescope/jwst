@@ -2187,12 +2187,13 @@ class ImageExtractModel(ExtractBase):
             # -1 is used as a flag, and also to avoid dividing by zero.
             n_bkg = np.where(n_bkg == 0., -1., n_bkg)
             background = (data * mask_bkg).sum(axis=axis, dtype=np.float)
-            # Boxcar smoothing.
-            if self.smoothing_length > 1:
-                background = extract1d.bxcar(background, self.smoothing_length)
             scalefactor = n_target / n_bkg
             scalefactor = np.where(n_bkg > 0., scalefactor, 0.)
             background *= scalefactor
+            # Boxcar smoothing.
+            if self.smoothing_length > 1:
+                background = extract1d.bxcar(background, self.smoothing_length)
+                background = np.where(n_bkg > 0., background, 0.)
             net = gross - background
         else:
             background = np.zeros_like(gross)

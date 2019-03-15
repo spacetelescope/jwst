@@ -627,24 +627,25 @@ def separate_target_and_background(ref):
 
     Parameters
     ----------
-    ref : ndarray, 2-D
+    ref : ndarray, 2-D or 3-D
         This is the reference image data array.  This should be the same
-        shape as one plane of the science data.  A value of 1 in a pixel
-        indicates that the pixel should be included when computing the
-        target spectrum.  A value of 0 means the pixel is not part of
-        either the target or background.  A value of -1 means the pixel
-        should be included as part of the background region.
+        shape as one plane of the science data (or the same shape as the
+        entire 3-D science data array).  A value of 1 in a pixel indicates
+        that the pixel should be included when computing the target
+        spectrum.  A value of 0 means the pixel is not part of either the
+        target or background.  A value of -1 means the pixel should be
+        included as part of the background region.
 
     Returns
     -------
-    mask_target : ndarray, 2-D
+    mask_target : ndarray, 2-D or 3-D
         This is an array of the same type and shape as the reference
         image, but with values of only 0 or 1.  A value of 1 indicates
-        that the corresponding pixel in each plane of the science data
-        array should be included when adding up values to make the 1-D
-        spectrum, and a value of 0 means that it should not be included.
+        that the corresponding pixel of the science data array should be
+        included when adding up values to make the 1-D spectrum, and a
+        value of 0 means that it should not be included.
 
-    mask_bkg : ndarray, 2-D, or None.
+    mask_bkg : ndarray, 2-D or 3-D, or None.
         This is like `mask_target` (i.e. values are 0 or 1) but for
         background regions.  A value of 1 in `mask_bkg` indicates a pixel
         that should be included as part of the background.  If there is no
@@ -667,13 +668,14 @@ def im_centroid(data, mask_target):
 
     Parameters
     ----------
-    data : ndarray, 2-D
+    data : ndarray, 3-D
         This is the science image data array.
 
-    mask_target : ndarray, 2-D
+    mask_target : ndarray, 2-D or 3-D
         This is an array of the same type and shape as one plane of the
-        science image, but with values of 0 or 1, where 1 indicates a pixel
-        within the source.
+        science image (or the same type and shape of the entire 3-D science
+        image), but with values of 0 or 1, where 1 indicates a pixel within
+        the source.
 
     Returns
     -------
@@ -685,7 +687,10 @@ def im_centroid(data, mask_target):
     # 2-D image of the IFU field of view.  Multiplying by mask_target
     # zeros out all pixels that are not regarded as part of the target
     # (or targets).
-    data_2d = data.sum(axis=0, dtype=np.float64) * mask_target
+    if len(mask_target.shape) == 2:
+        data_2d = data.sum(axis=0, dtype=np.float64) * mask_target
+    else:
+        data_2d = (data * mask_target).sum(axis=0, dtype=np.float64)
     if data_2d.sum() == 0.:
         log.warning("Couldn't compute image centroid.")
         shape = data_2d.shape
