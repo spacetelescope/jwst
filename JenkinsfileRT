@@ -10,7 +10,7 @@ python_version = '3.6'
 numpy_version = '1.16'
 
 // Define environement variables needed for the regression tests
-test_env = [
+env_vars = [
     "TEST_BIGDATA=https://bytesalad.stsci.edu/artifactory",
     "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
     "CRDS_CONTEXT=jwst_0500.pmap",
@@ -28,8 +28,8 @@ data_config.match_prefix = '(.*)_result' // .json is appended automatically
 // Build and test with python 3.6 and released dependencies from astroconda
 bc = new BuildConfig()
 bc.nodetype = 'jwst'
-bc.name = 'released dependencies'
-bc.env_vars = test_env
+bc.name = 'stable-deps'
+bc.env_vars = env_vars
 bc.conda_ver = '4.6.8'
 bc.conda_override_channels = true
 bc.conda_channels = [
