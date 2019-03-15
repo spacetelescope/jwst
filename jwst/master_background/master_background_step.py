@@ -16,7 +16,7 @@ class MasterBackgroundStep(Step):
     spec = """
         user_background = string(default=None) # Path to user-supplied master background
         save_background = boolean(default=False) # Save computed master background
-        subtract_background = boolean(default=None) #Subtract master background
+        force_subtract = boolean(default=False) # Force subtracting master background
     """
 
     def process(self, input):
@@ -36,10 +36,11 @@ class MasterBackgroundStep(Step):
         save_background : bool, optional
             Save master background.
 
-        subtract_background : bool, optional
-            A flag which indicates whether the background should be subtracted
-            If None, the logic in the step determines if backgrouned is subtracted
-            If not None, the parameter overrides logic in step
+        force_subtract : bool, optional
+            Optinoal user-supplied flag which subtracts the master background overriding the checks
+            on whether the background in calspec2 has already been subtracted.
+            Default is set to false. The step logic determines if the master background should be
+            subtracted. If set to true then the step logic is by passed and the master background is subtrcted
 
         Returns
         -------
@@ -77,20 +78,48 @@ class MasterBackgroundStep(Step):
                 self.record_step_status(result, 'master_background', success=False)
 
                 return result
-            # Check if subtract_background is set to False -> skip step
-            if self.subtract_background is not None and not self.subtract_background:
-                self.log.warning(
-                    "Not subtracting masterbackground, subtract_background set to False")
-                result = input_data.copy()
-                self.record_step_status(result, 'master_background', success=False)
-                return result
-            # Check if subtract_background is None but the background was
-            # subtracted in calspec2 background step  -> skip step
-            if self.subtract_background is None and \
-                input_data.meta.cal_step.back_sub == 'COMPLETE':
-                self.log.info(
-                    "Not subtracting master background, background was subtracted in calspec2")
+            # Check if background was subtracted in calspec 2 and force_subtract is False
+            # first check if input is a model container
 
+            do_sub = True  # flag if set to False then no master background subtraction is done
+            if not self.force_subtract:  # default mode
+
+                # check if the input data is a model container. If it is then loop over
+                # container and see if the background was subtracted in calspec2.
+                # If all data was  background subtracted. Print log.info and skip master bgk subtrction
+                # If there is a mixture of some being background subtracted print, warning
+                # and message to user to use force_subtract to force the master background
+                # to be subtracted.
+                if isinstance(input_data, datamodels.ModelContainer):
+                    isub = 0
+                    for indata in input_data:
+                        if indata.meta.cal_step.back_sub == 'COMPLETE':
+                            do_sub = False
+                            isub += 1
+
+                    if not do_sub and isub == len(input_data):
+                        self.log.info(
+                            "Not subtracting master background, background was subtracted in calspec2")
+                        self.log.info("To force the master background to be subtracted from this data,"
+                                             "run again and set force_subtract = True)")
+
+                    if not do_sub and isub != len(input_data):
+                        self.log.warning("Not subtracting master background")
+                        self.log.warning("Input data contains a mixture of data with and without "
+                                             "background subtraction done in calspec2")
+                        self.log.warning("To force the master background to be subtracted from this data,"
+                                             "run again and set force_subtract = True)")
+                # input data is a single file
+                else:
+                    if input_data.meta.cal_step.back_sub == 'COMPLETE':
+                        do_sub = False
+                        self.log.info(
+                            "Not subtracting master background, background was subtracted in calspec2")
+                        self.log.info("To force the master background to be subtracted from this data,"
+                                             "run again and set force_subtract = True)")
+
+            # checked all the input data - do we subtract (continue) or not (return)
+            if not do_sub:
                 result = input_data.copy()
                 self.record_step_status(result, 'master_background', success=False)
                 return result
