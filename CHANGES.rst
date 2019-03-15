@@ -8,6 +8,9 @@ datamodels
   http://stsci.edu/schemas/fits-schema/ to map to the correct location
   in the ``jwst`` package. [#3239]
 
+- Change ``ModelContainer`` to load and instantiate datamodels from an
+  association on init.  This reverts #1027. [#3264]
+
 master_background
 -----------------
 
