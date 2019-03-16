@@ -3,7 +3,7 @@
 from ..stpipe import Step
 from .. import datamodels
 from . import background_sub
-
+import numpy as np
 __all__ = ["BackgroundStep"]
 
 
@@ -67,15 +67,15 @@ class BackgroundStep(Step):
                     input_xtilt = input_model.meta.instrument.gwa_xtilt
                     input_ytilt = input_model.meta.instrument.gwa_ytilt
                     for bkg_file in bkg_list:
-                        bkg_model = datamodels.open(bkg_file)
-                        bkg_xtilt = bkg_model.meta.instrument.gwa_xtilt
-                        bkg_ytilt = bkg_model.meta.instrument.gwa_ytilt
-                        xdiff = abs(bkg_xtilt - input_xtilt)
-                        ydiff = abs(bkg_ytilt - input_ytilt)
-                        bkg_model.close()
-                        if xdiff > tolerance or ydiff > tolerance:
-                            do_sub = False
-                            break
+                        with datamodels.open(bkg_file) as bkg_model:
+                            bkg_xtilt = bkg_model.meta.instrument.gwa_xtilt
+                            bkg_ytilt = bkg_model.meta.instrument.gwa_ytilt
+                            if np.allclose((input_xtilt, input_ytilt), 
+                                           (bkg_xtilt, bkg_ytilt), atol=tolerance, rtol=0):
+                                pass
+                            else:
+                                do_sub  = False
+                                break
                 # Do the background subtraction
                 if do_sub:
                     result = background_sub.background_sub(input_model,
