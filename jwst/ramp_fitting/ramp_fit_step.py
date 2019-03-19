@@ -86,11 +86,10 @@ class RampFitStep (Step):
 
         if out_model is not None:
             out_model.meta.cal_step.ramp_fit = 'COMPLETE'
+            if input_model.meta.exposure.type in ('NRS_IFU', 'MIR_MRS'):
+                out_model = datamodels.IFUImageModel(out_model)
 
         if int_model is not None:
             int_model.meta.cal_step.ramp_fit = 'COMPLETE'
-
-        if input_model.meta.exposure.type in ('NRS_IFU', 'MIR_MRS'):
-            out_model = datamodels.IFUImageModel(out_model)
 
         return out_model, int_model
