@@ -1,6 +1,14 @@
 0.13.2 (Unreleased)
 ===================
 
+background
+----------
+
+- Verify the exposures to be used as background have the same NIRSpec GWA
+  tilt values as the science exposures. If the background and science
+  exposures do not have matching GWA tilt values, then skip the background
+  subtraction step in calspec2. [#3252]
+
 combine_1d
 ----------
 
