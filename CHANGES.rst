@@ -9,6 +9,12 @@ background
   exposures do not have matching GWA tilt values, then skip the background
   subtraction step in calspec2. [#3252]
 
+combine_1d
+----------
+
+- Fix call to wcs.invert, and don't weight flux by sensitivity if the net
+  column is all zeros. [#3274]
+
 datamodels
 ----------
 

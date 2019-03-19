@@ -73,8 +73,8 @@ class InputSpectrumModel:
         self.dq = spec.spec_table.field("dq").copy()
         self.nelem = self.wavelength.shape[0]
         self.unit_weight = False        # may be reset below
-        self.right_ascension = None
-        self.declination = None
+        self.right_ascension = np.zeros_like(self.wavelength)
+        self.declination = np.zeros_like(self.wavelength)
 
         self.weight = np.ones_like(self.wavelength)
         if exptime_key == "integration_time":
@@ -95,10 +95,10 @@ class InputSpectrumModel:
         except AttributeError:
             got_wcs = False
         if got_wcs:
-            self.right_ascension, self.declination, _ = wcs(0.)
+            self.right_ascension[:], self.declination[:], _ = wcs(0.)
         else:
-            self.right_ascension = ms.meta.target.ra
-            self.declination = ms.meta.target.dec
+            self.right_ascension[:] = ms.meta.target.ra
+            self.declination[:] = ms.meta.target.dec
             log.warning("There is no WCS in the input.")
 
 
@@ -209,8 +209,8 @@ class OutputSpectrumModel:
 
         self.wavelength = self.compute_output_wl(wl, count_input)
 
-        self.wcs = create_spectral_wcs(input_spectra[0].right_ascension,
-                                       input_spectra[0].declination,
+        self.wcs = create_spectral_wcs(input_spectra[0].right_ascension[0],
+                                       input_spectra[0].declination[0],
                                        self.wavelength)
 
 
@@ -371,12 +371,27 @@ class OutputSpectrumModel:
         self.weight = np.zeros(nelem, dtype=np.float)
         self.count = np.zeros(nelem, dtype=np.float)
 
+        # The flux should be weighted by sensitivity (as well as exposure
+        # time), but if the input net columns are not populated, we can't
+        # compute the sensitivity.
+        weight_flux_by_sensitivity = True
         for in_spec in input_spectra:
-            # Replace zeros so we can divide by the flux.
-            temp_flux = np.where(in_spec.flux == 0., 1., in_spec.flux)
+            if in_spec.net.min() == 0. and in_spec.net.max() == 0.:
+                weight_flux_by_sensitivity = False
+                log.warning("The NET column is all zero in one or more "
+                            "input tables, so FLUX will not be weighted by "
+                            "sensitivity.")
+                break
+
+        for in_spec in input_spectra:
+            if weight_flux_by_sensitivity:
+                # Replace zeros so we can divide by the flux.
+                temp_flux = np.where(in_spec.flux == 0., 1., in_spec.flux)
             # Get the pixel numbers in the output corresponding to the
             # wavelengths of the current input spectrum.
-            out_pixel = self.wcs.invert(in_spec.right_ascension, in_spec.declination, in_spec.wavelength)
+            out_pixel = self.wcs.invert(in_spec.right_ascension,
+                                        in_spec.declination,
+                                        in_spec.wavelength)
             # i is a pixel number in the current input spectrum, and
             # k is the corresponding pixel number in the output spectrum.
             for i in range(len(out_pixel)):
@@ -389,11 +404,13 @@ class OutputSpectrumModel:
                 self.dq[k] |= in_spec.dq[i]
                 if in_spec.unit_weight:
                     flux_wgt = 1.
-                else:
+                elif weight_flux_by_sensitivity:
                     # net / flux is the sensitivity
                     flux_wgt = (in_spec.weight[i] *
                                 in_spec.net[i] / temp_flux[i])
                     flux_wgt = max(flux_wgt, 0.)
+                else:
+                    flux_wgt = in_spec.weight[i]
                 self.flux[k] += in_spec.flux[i] * flux_wgt
                 self.error[k] += (in_spec.error[i] * flux_wgt)**2
                 self.flux_weight[k] += flux_wgt
