@@ -13,6 +13,10 @@ master_background
 
 - Modified the unit tests for ``expand_to_2d``. [#3242]
 
+- Modified ``MasterBackgroundStep`` to be skipped if ``BackgroundStep``
+  was already run on the data.  A new ``force_subtract`` parameter is
+  added to override this logic.  [#3263]
+
 set_telescope_pointing
 ----------------------
 
