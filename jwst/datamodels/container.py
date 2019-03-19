@@ -4,6 +4,7 @@ import os.path as op
 import warnings
 
 from asdf import AsdfFile
+from astropy.io import fits
 
 from ..associations import (
     AssociationNotValidError,
@@ -67,12 +68,22 @@ class ModelContainer(model_base.DataModel):
 
         super(ModelContainer, self).__init__(init=None, **kwargs)
 
+        self._models = []
+
         if init is None:
-            self._models = []
+            # Don't populate the container with models
+            pass
+        elif isinstance(init, fits.HDUList):
+            self._models.append([datamodel_open(init)])
         elif isinstance(init, list):
-            for item in init:
-                if not isinstance(item, model_base.DataModel):
-                    raise ValueError('list must contain only DataModels')
+            if all(isinstance(x, (str, fits.HDUList)) for x in init):
+                # Try opening the list of files as datamodels
+                try:
+                    init = [datamodel_open(m) for m in init]
+                except (FileNotFoundError, ValueError):
+                    raise
+            elif not all(isinstance(x, model_base.DataModel) for x in init):
+                raise TypeError('list must contain DataModels')
             self._models = init
         elif isinstance(init, self.__class__):
             instance = copy.deepcopy(init._instance)
@@ -299,7 +310,6 @@ class ModelContainer(model_base.DataModel):
                     )
                 model.meta.group_id = 'exposure{0:04d}'.format(i + 1)
 
-
     @property
     def models_grouped(self):
         """
@@ -324,33 +334,6 @@ class ModelContainer(model_base.DataModel):
         for group in self.models_grouped:
             result.append(group[0].meta.group_id)
         return result
-
-    def get_recursively(self, field):
-        """
-        Returns a list of values of the specified field from meta.
-        """
-        def _get_recursively(self, field, search_dict):
-            """
-            Takes a dict with nested lists and dicts, and searches all dicts for
-            a key of the field provided.
-            """
-            values_found = []
-            for key, value in search_dict.items():
-                if key == field:
-                    values_found.append(value)
-                elif isinstance(value, dict):
-                    results = self.__get_recursively(field, value)
-                    for result in results:
-                        values_found.append(result)
-                elif isinstance(value, list):
-                    for item in value:
-                        if isinstance(item, dict):
-                            more_results = self.__get_recursively(field, item)
-                            for another_result in more_results:
-                                values_found.append(another_result)
-            return values_found
-
-        return self._get_recursively(field, self.meta._instance)
 
 
 def make_file_with_index(file_path, idx):
