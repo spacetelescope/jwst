@@ -906,8 +906,10 @@ properties:
           primary_type:
             title: Primary dither pattern type
             type: string
-            enum: [CYCLING, EXTENDED_TARGET, FULL, FULL-TIGHT, GAUSSIAN,
-              INTRAMODULE, INTRASCA, NONE, POINT_SOURCE, REULEAUX, WFSC]
+            enum: [2-POINT, 2-POINT-NOD, 4-POINT, 4-POINT-NOD, 4-POINT-DITHER,
+              ALONG-SLIT-NOD, CYCLING, EXTENDED_TARGET, FULL, FULL-TIGHT, GAUSSIAN,
+              INTRAMODULE, INTRASCA, MAPPING, NONE, POINT_SOURCE, REULEAUX,
+              SPARSE-CYCLING, WFSC]
             fits_keyword: PATTTYPE
             blend_table: True
           position_number:
