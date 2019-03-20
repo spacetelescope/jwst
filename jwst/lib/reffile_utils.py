@@ -282,9 +282,9 @@ def get_subarray_data(sci_model, ref_model):
         log.error('Computed reference file slice indexes are ' +
                   'incompatible with size of reference data array')
         log.error('Science: SUBSTRT1=%d, SUBSTRT2=%d, SUBSIZE1=%d, SUBSIZE2=%d',
-                   xstart_sci+1, ystart_sci+1, xsize_sci, ysize_sci)
+                   xstart_sci, ystart_sci, xsize_sci, ysize_sci)
         log.error('Reference: SUBSTRT1=%d, SUBSTRT2=%d, SUBSIZE1=%d, SUBSIZE2=%d',
-                   xstart_ref+1, ystart_ref+1, xsize_ref, ysize_ref)
+                   xstart_ref, ystart_ref, xsize_ref, ysize_ref)
         log.error('Slice indexes: xstart=%d, xstop=%d, ystart=%d, ystop=%d',
                    xstart, xstop, ystart, ystop)
         raise ValueError('Bad reference file slice indexes')
@@ -339,9 +339,9 @@ def get_subarray_model(sci_model, ref_model):
         xstop > ref_model.meta.subarray.xsize or ystop > ref_model.meta.subarray.ysize):
         log.error('Computed reference file slice indexes are incompatible with size of reference data array')
         log.error('Science: SUBSTRT1=%d, SUBSTRT2=%d, SUBSIZE1=%d, SUBSIZE2=%d',
-                   xstart_sci+1, ystart_sci+1, xsize_sci, ysize_sci)
+                   xstart_sci, ystart_sci, xsize_sci, ysize_sci)
         log.error('Reference: SUBSTRT1=%d, SUBSTRT2=%d, SUBSIZE1=%d, SUBSIZE2=%d',
-                   xstart_ref+1, ystart_ref+1, xsize_ref, ysize_ref)
+                   xstart_ref, ystart_ref, xsize_ref, ysize_ref)
         log.error('Slice indexes: xstart=%d, xstop=%d, ystart=%d, ystop=%d', xstart, xstop, ystart, ystop)
         raise ValueError('Bad reference file slice indexes')
 
