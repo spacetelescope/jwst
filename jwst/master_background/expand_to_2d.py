@@ -255,7 +255,7 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
     elif input.meta.instrument.name.upper() == "MIRI":
         shape = input.data.shape
         grid = np.indices(shape, dtype=np.float64)
-        wl_array = ifu_wcs(grid[1], grid[0])[2]
+        wl_array = input.meta.wcs(grid[1], grid[0])[2]
 
         wl_array[np.isnan(wl_array)] = -1.
         bkg_flux = np.interp(wl_array, tab_wavelength, tab_background,

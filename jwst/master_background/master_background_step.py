@@ -53,6 +53,7 @@ class MasterBackgroundStep(Step):
         # asn_id = ???
 
         with datamodels.open(input) as input_data:
+            background_data = None
 
             # Handle individual NIRSpec FS, NIRSpec MOS
             if isinstance(input_data, datamodels.MultiSlitModel):
@@ -60,7 +61,7 @@ class MasterBackgroundStep(Step):
 
             # Handle associations, or input ModelContainers
             elif isinstance(input_data, datamodels.ModelContainer):
-                input_data, background = split_container(input_data)
+                input_data, background_data = split_container(input_data)
                 asn_id = input_data.meta.asn_table.asn_id
 
             # Handle MIRI LRS
@@ -127,13 +128,16 @@ class MasterBackgroundStep(Step):
                 return result
 
             # Compute master background and subtract it
-            if self.user_background is None:
+            if self.user_background is None and background_data is not None:
                 master_background = combine_1d_spectra(
-                    background,
+                    background_data,
                     exptime_key='exposure_time',
                     background=True,
                 )
                 if isinstance(input_data, datamodels.ModelContainer):
+                    input_data, background = split_container(input_data)
+                    asn_id = input_data.meta.asn_table.asn_id
+
                     result = datamodels.ModelContainer()
                     for model in input_data:
                         background_2d = expand_to_2d(model, master_background)
