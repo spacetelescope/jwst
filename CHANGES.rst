@@ -25,6 +25,9 @@ datamodels
 - Change ``ModelContainer`` to load and instantiate datamodels from an
   association on init.  This reverts #1027. [#3264]
 
+- Keyword updates to data model schemas, including OBSFOLDR, MIRNGRPS,
+  MIRNFRMS, and new PATTTYPE values. [#3266]
+
 extract_1d
 ----------
 
@@ -42,11 +45,17 @@ master_background
   was already run on the data.  A new ``force_subtract`` parameter is
   added to override this logic.  [#3263]
 
+reffile_utils
+-------------
+
+- Improved error messages when problems are encountered in extracting
+  subarrays from reference files. [#3268]
+
 set_telescope_pointing
 ----------------------
 
- - Fix ``populate_model_from_siaf`` to convert SIAF pixel scale from
-   arcsec to degress for CDELTn keywords. [#3248]
+- Fix ``populate_model_from_siaf`` to convert SIAF pixel scale from
+  arcsec to degress for CDELTn keywords. [#3248]
 
 0.13.1 (2019-03-07)
 ===================
@@ -54,14 +63,14 @@ set_telescope_pointing
 combine_1d
 ----------
 
- - Added parameter ``background``; for background data, scale the flux,
-   error, and net by 1 / NPIXELS, and include NPIXELS in the weight;
-   changed the default for ``exptime_key`` to "exposure_time". [#3180]
+- Added parameter ``background``; for background data, scale the flux,
+  error, and net by 1 / NPIXELS, and include NPIXELS in the weight;
+  changed the default for ``exptime_key`` to "exposure_time". [#3180]
 
- - There is now a direct interface for calling the step.  This function,
-   ``combine_1d_spectra``, may be passed either a ModelContainer or a
-   MultiSpecModel object.  Previously this function expected the name of
-   an association file. [#3220]
+- There is now a direct interface for calling the step.  This function,
+  ``combine_1d_spectra``, may be passed either a ModelContainer or a
+  MultiSpecModel object.  Previously this function expected the name of
+  an association file. [#3220]
 
 datamodels
 ----------
@@ -71,36 +80,36 @@ datamodels
 extract_1d
 ----------
 
- - If flux conversion is done, the FLUX is now set to zero (instead of
-   copying the NET) if the wavelength of a pixel is outside the range of
-   the RELSENS array. [#3190]
+- If flux conversion is done, the FLUX is now set to zero (instead of
+  copying the NET) if the wavelength of a pixel is outside the range of
+  the RELSENS array. [#3190]
 
- - Added a parameter ``subtract_background`` to ``extract_1d`` indicating
-   whether the local background should be subtracted. If None, the value
-   in the extract_1d reference file is used. [#3157, #3186]
+- Added a parameter ``subtract_background`` to ``extract_1d`` indicating
+  whether the local background should be subtracted. If None, the value
+  in the extract_1d reference file is used. [#3157, #3186]
 
- - ``extract_1d`` can be run by calling ``extract.do_extract1d`` and
-   passing a dictionary of reference file information. [#3202]
+- ``extract_1d`` can be run by calling ``extract.do_extract1d`` and
+  passing a dictionary of reference file information. [#3202]
 
- - ``ref_dict`` was None in ``run_extract1d``, and a check for that was
-   missing. [#3233]
+- ``ref_dict`` was None in ``run_extract1d``, and a check for that was
+  missing. [#3233]
 
 master_background
 -----------------
 
- - Added unit tests for expand_to_2d.  Support CombinedSpecModel data
-   for the 1-D user-supplied background spectrum. [#3188]
+- Added unit tests for expand_to_2d.  Support CombinedSpecModel data
+  for the 1-D user-supplied background spectrum. [#3188]
 
 set_bary_helio_times
 --------------------
 
- - Raise an exception when unable to compute converted times. [#3197]
+- Raise an exception when unable to compute converted times. [#3197]
 
 set_telescope_pointing
 ----------------------
 
- - Added population of CDELTn keywords based on SIAF values and fixed bug in calculation
-   of S_REGION corners. [#3184]
+- Added population of CDELTn keywords based on SIAF values and fixed bug in calculation
+  of S_REGION corners. [#3184]
 
 0.13.0 (2019-02-15)
 ===================
@@ -111,20 +120,20 @@ ami
 assign_wcs
 ----------
 
- - Removed ``transform_bbox_from_datamodels`` in favor of
-   ``transform_bbox_from_shape`` which now works by using last two dimensions
-   in the ``shape``. [#3040]
+- Removed ``transform_bbox_from_datamodels`` in favor of
+  ``transform_bbox_from_shape`` which now works by using last two dimensions
+  in the ``shape``. [#3040]
 
- - Added velocity correction model to the WFSS and TSGRISM wcs pipelines. [#2801]
+- Added velocity correction model to the WFSS and TSGRISM wcs pipelines. [#2801]
 
- - Refactored how the pipeline handles subarrays in the WCS. Fixed a bug
-   where the bounding box was overwritten in full frame mode. [#2980]
+- Refactored how the pipeline handles subarrays in the WCS. Fixed a bug
+  where the bounding box was overwritten in full frame mode. [#2980]
 
- - Rename several functions dealing with calculating bounding boxes for clarity. [#3014]
+- Rename several functions dealing with calculating bounding boxes for clarity. [#3014]
 
- - The bounding box of the MIRI LRS WCS is now in "image" coordinates, not full frame. [#3063]
+- The bounding box of the MIRI LRS WCS is now in "image" coordinates, not full frame. [#3063]
 
- - FITS WCS keywords are written out only if the observation is one of the IMAGING_MODES. [#3066]
+- FITS WCS keywords are written out only if the observation is one of the IMAGING_MODES. [#3066]
 
 associations
 ------------
@@ -136,7 +145,6 @@ background
 
 barshadow
 ---------
-
 
 combine_1d
 ----------
