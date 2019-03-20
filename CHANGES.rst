@@ -1,6 +1,20 @@
 0.13.2 (Unreleased)
 ===================
 
+background
+----------
+
+- Verify the exposures to be used as background have the same NIRSpec GWA
+  tilt values as the science exposures. If the background and science
+  exposures do not have matching GWA tilt values, then skip the background
+  subtraction step in calspec2. [#3252]
+
+combine_1d
+----------
+
+- Fix call to wcs.invert, and don't weight flux by sensitivity if the net
+  column is all zeros. [#3274]
+
 datamodels
 ----------
 
@@ -8,7 +22,9 @@ datamodels
   http://stsci.edu/schemas/fits-schema/ to map to the correct location
   in the ``jwst`` package. [#3239]
 
-<<<<<<< mod_extract
+- Change ``ModelContainer`` to load and instantiate datamodels from an
+  association on init.  This reverts #1027. [#3264]
+
 extract_1d
 ----------
 
@@ -16,15 +32,15 @@ extract_1d
   image (for IFU) may be either 2-D or 3-D.  When using a reference image
   for non-IFU data, background smoothing is now done after scaling the
   background count rate. [#3258]
-=======
-- Change ``ModelContainer`` to load and instantiate datamodels from an
-  association on init.  This reverts #1027. [#3264]
->>>>>>> master
 
 master_background
 -----------------
 
 - Modified the unit tests for ``expand_to_2d``. [#3242]
+
+- Modified ``MasterBackgroundStep`` to be skipped if ``BackgroundStep``
+  was already run on the data.  A new ``force_subtract`` parameter is
+  added to override this logic.  [#3263]
 
 set_telescope_pointing
 ----------------------

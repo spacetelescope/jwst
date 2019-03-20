@@ -41,10 +41,16 @@ class TestTso3Pipeline(BaseJWSTTest):
 
         step.run(asn_file)
 
-        outputs = [('jw93065002001_02101_00001_nrca1_a3001_crfints.fits',
-                    'jw93065002001_02101_00001_nrca1_a3001_crfints_ref.fits',
-                    ['primary', 'sci', 'dq', 'err'])
-                   ]
+        outputs = [
+            # Compare level-2c product
+            ('jw93065002001_02101_00001_nrca1_a3001_crfints.fits',
+             'jw93065002001_02101_00001_nrca1_a3001_crfints_ref.fits',
+             ['primary', 'sci', 'dq', 'err']),
+
+            # Compare level-3 product
+            ('jw93065-a3001_t1_nircam_f150w-wlp8_phot.ecsv',
+             'jw93065-a3001_t1_nircam_f150w-wlp8_phot_ref.ecsv'),
+        ]
         self.compare_outputs(outputs)
 
 
@@ -78,8 +84,14 @@ class TestTso3Pipeline(BaseJWSTTest):
         step.extract_1d.bkg_order = 0
 
         step.run(asn_file)
-        outputs = [('jw93065002002_02101_00001_nrca1_a3002_crfints.fits',
-                    'jw93065002002_02101_00001_nrca1_a3002_crfints_ref.fits',
-                    ['primary', 'sci', 'dq', 'err'])
-                  ]
+        outputs = [
+            # Compare level-2c product
+            ('jw93065002002_02101_00001_nrca1_a3002_crfints.fits',
+             'jw93065002002_02101_00001_nrca1_a3002_crfints_ref.fits',
+             ['primary', 'sci', 'dq', 'err']),
+
+            # Compare level-3 product
+            ('jw93065-a3002_t1_nircam_f150w-wlp8_phot.ecsv',
+             'jw93065-a3002_t1_nircam_f150w-wlp8_phot_ref.ecsv'),
+        ]
         self.compare_outputs(outputs)
