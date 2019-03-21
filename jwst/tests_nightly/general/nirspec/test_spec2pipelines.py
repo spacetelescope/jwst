@@ -13,7 +13,7 @@ class TestSpec2Pipeline(BaseJWSTTest):
     test_dir = 'test_pipelines'
 
     # Specification of parameters for Spec2Pipeline tests
-    params = {'test_nrs_fs_multi_spec2' :
+    params = {'test_spec2':
                 # test_nrs_fs_multi_spec2_1: NIRSpec fixed-slit data
                 [dict(input='jw00023001001_01101_00001_NRS1_rate.fits',
                       outputs=[('jw00023001001_01101_00001_NRS1_cal.fits',
@@ -23,7 +23,7 @@ class TestSpec2Pipeline(BaseJWSTTest):
                                  ('jw00023001001_01101_00001_NRS1_x1d.fits',
                                   'jw00023001001_01101_00001_NRS1_x1d_ref.fits')
                                  ],
-                       id="test_nrs_fs_multi_spec2_1"
+                       id="nirspec_fs_multi_1"
                       ),
                 # test_nrs_fs_multi_spec2_2: NIRSpec fixed-slit data
                  dict(input= 'jwtest1013001_01101_00001_NRS1_rate.fits',
@@ -34,7 +34,7 @@ class TestSpec2Pipeline(BaseJWSTTest):
                                ('jwtest1013001_01101_00001_NRS1_x1d.fits',
                                 'jwtest1013001_01101_00001_NRS1_x1d_ref.fits')
                               ],
-                      id="test_nrs_fs_multi_spec2_2"
+                      id="nirspec_fs_multi_2"
                      ),
                 # test_nrs_fs_multi_spec2_3:
                 # NIRSpec fixed-slit data using the ALLSLITS subarray and detector NRS2
@@ -47,7 +47,7 @@ class TestSpec2Pipeline(BaseJWSTTest):
                                ('jw84600002001_02101_00001_nrs2_x1d.fits',
                                 'jw84600002001_02101_00001_nrs2_x1d_ref.fits')
                               ],
-                      id="test_nrs_fs_multi_spec2_3"
+                      id="nirspec_fs_multi_3"
                      ),
                 # test_nrs_ifu_spec2: NIRSpec IFU data
                  dict(input= 'jw95175001001_02104_00001_nrs1_rate.fits',
@@ -63,16 +63,16 @@ class TestSpec2Pipeline(BaseJWSTTest):
                                 'jw95175001001_02104_00001_nrs1_x1d_ref.fits',
                                 ['primary','extract1d'])
                               ],
-                      id = "test_nrs_ifu_spec2"
+                      id = "nirspec_ifu"
                       )
                 ]
             }
 
-    def test_nrs_fs_multi_spec2(self, input, outputs):
+    def test_spec2(self, input, outputs):
         """
         Regression test of calwebb_spec2 pipeline performed on NIRSpec data.
         """
-        input_file = self.get_data(self.test_dir,input)
+        input_file = self.get_data(self.test_dir, input)
 
         step = Spec2Pipeline()
         step.save_bsub = True

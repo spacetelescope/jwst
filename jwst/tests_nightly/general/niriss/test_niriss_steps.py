@@ -31,7 +31,7 @@ class TestNIRISSSteps(BaseJWSTTestSteps):
                       output_hdus=['primary','fit','resid','closure_amp',
                                          'closure_pha','fringe_amp','fringe_pha',
                                          'pupil_pha','solns'],
-                      id='test_ami_analyze'
+                      id='ami_analyze_niriss'
                       ),
                  dict(input='jw00034001001_01101_00001_NIRISS_dq_init.fits',
                       test_dir='test_bias_drift',
@@ -42,7 +42,7 @@ class TestNIRISSSteps(BaseJWSTTestSteps):
                                      side_gain=1.0),
                       output_truth='jw00034001001_01101_00001_NIRISS_bias_drift.fits',
                       output_hdus=[],
-                      id='test_refpix_niriss'
+                      id='refpix_niriss'
                       ),
                  dict(input='jw00034001001_01101_00001_NIRISS_saturation.fits',
                       test_dir='test_dark_step',
@@ -50,7 +50,7 @@ class TestNIRISSSteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='jw00034001001_01101_00001_NIRISS_dark_current.fits',
                       output_hdus=[],
-                      id='test_dark_current_niriss'
+                      id='dark_current_niriss'
                       ),
                  dict(input='jw00034001001_01101_00001_NIRISS_uncal.fits',
                       test_dir='test_dq_init',
@@ -58,7 +58,7 @@ class TestNIRISSSteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='jw00034001001_01101_00001_NIRISS_dq_init.fits',
                       output_hdus=[],
-                      id='test_dq_init_niriss'
+                      id='dq_init_niriss'
                       ),
                  dict(input='jw00034001001_01101_00001_NIRISS_ramp_fit.fits',
                       test_dir='test_flat_field',
@@ -66,7 +66,7 @@ class TestNIRISSSteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='jw00034001001_01101_00001_NIRISS_flat_field.fits',
                       output_hdus=[],
-                      id='test_flat_field_niriss'
+                      id='flat_field_niriss'
                       ),
                  dict(input='jw00034001001_01101_00001_NIRISS_linearity.fits',
                       test_dir='test_jump',
@@ -74,7 +74,7 @@ class TestNIRISSSteps(BaseJWSTTestSteps):
                       step_pars=dict(rejection_threshold=20.0),
                       output_truth='jw00034001001_01101_00001_NIRISS_jump.fits',
                       output_hdus=[],
-                      id='test_jump_niriss'
+                      id='jump_niriss'
                       ),
                  dict(input='jw00034001001_01101_00001_NIRISS_dark_current.fits',
                       test_dir='test_linearity',
@@ -82,7 +82,7 @@ class TestNIRISSSteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='jw00034001001_01101_00001_NIRISS_linearity.fits',
                       output_hdus=[],
-                      id='test_linearity_niriss'
+                      id='linearity_niriss'
                       ),
                  dict(input='jw00034001001_01101_00001_NIRISS_bias_drift.fits',
                       test_dir='test_saturation',
@@ -90,7 +90,7 @@ class TestNIRISSSteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='jw00034001001_01101_00001_NIRISS_saturation.fits',
                       output_hdus=[],
-                      id='test_saturation_niriss'
+                      id='saturation_niriss'
                       ),
                 ]
               }

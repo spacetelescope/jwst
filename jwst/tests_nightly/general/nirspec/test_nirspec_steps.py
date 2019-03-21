@@ -35,7 +35,7 @@ class TestNIRSpecSteps(BaseJWSTTestSteps):
                                      side_gain=1.0),
                       output_truth='jw00023001001_01101_00001_NRS1_bias_drift.fits',
                       output_hdus=[],
-                      id='test_refpix_nirspec'
+                      id='refpix_nirspec'
                       ),
                  dict(input='jw00023001001_01101_00001_NRS1_saturation.fits',
                       test_dir='test_dark_step',
@@ -43,7 +43,7 @@ class TestNIRSpecSteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='jw00023001001_01101_00001_NRS1_dark_current.fits',
                       output_hdus=[],
-                      id='test_dark_current_nirspec'
+                      id='dark_current_nirspec'
                       ),
                  dict(input='jw00023001001_01101_00001_NRS1_uncal.fits',
                       test_dir='test_dq_init',
@@ -51,7 +51,7 @@ class TestNIRSpecSteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='jw00023001001_01101_00001_NRS1_dq_init.fits',
                       output_hdus=[],
-                      id='test_dq_init_nirspec'
+                      id='dq_init_nirspec'
                       ),
                  dict(input='jw00023001001_01101_00001_NRS1_cal.fits',
                       test_dir='test_extract_1d',
@@ -60,7 +60,7 @@ class TestNIRSpecSteps(BaseJWSTTestSteps):
                       output_truth='jw00023001001_01101_00001_NRS1_spec.fits',
                       output_hdus=['primary',('extract1d',1),('extract1d',2),
                                    ('extract1d',3),('extract1d',4)],
-                      id='test_extract1d_nirspec'
+                      id='extract1d_nirspec'
                       ),
                  dict(input='jw00023001001_01101_00001_NRS1_assign_wcs.fits',
                       test_dir='test_extract_2d',
@@ -72,7 +72,7 @@ class TestNIRSpecSteps(BaseJWSTTestSteps):
                                          ('sci', 3), ('err', 3), ('dq', 3),
                                          ('sci', 4), ('err', 4), ('dq', 4),
                                          ('sci', 5), ('err', 5), ('dq', 5)],
-                      id='test_extract2d_nirspec'
+                      id='extract2d_nirspec'
                       ),
                  dict(input='jw00023001001_01101_00001_NRS1_extract_2d.fits',
                       test_dir='test_flat_field',
@@ -83,7 +83,7 @@ class TestNIRSpecSteps(BaseJWSTTestSteps):
                                          ('sci', 2), ('err', 2), ('dq', 2),
                                          ('sci', 3), ('err', 3), ('dq', 3),
                                          ('sci', 4), ('err', 4), ('dq', 4)],
-                      id='test_flat_field_nirspec'
+                      id='flat_field_nirspec'
                       ),
                  dict(input='NRSIRS2_230_491_uncal.fits',
                       test_dir='test_group_scale',
@@ -91,7 +91,7 @@ class TestNIRSpecSteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='NRSIRS2_230_491_groupscale.fits',
                       output_hdus=[],
-                      id='test_group_scale_nirspec'
+                      id='group_scale_nirspec'
                       ),
                  dict(input='jw00023001001_01101_00001_NRS1_linearity.fits',
                       test_dir='test_jump',
@@ -99,7 +99,7 @@ class TestNIRSpecSteps(BaseJWSTTestSteps):
                       step_pars=dict(rejection_threshold=50.0),
                       output_truth='jw00023001001_01101_00001_NRS1_jump.fits',
                       output_hdus=[],
-                      id='test_jump_nirspec'
+                      id='jump_nirspec'
                       ),
                  dict(input='jw00023001001_01101_00001_NRS1_dark_current.fits',
                       test_dir='test_linearity',
@@ -107,7 +107,7 @@ class TestNIRSpecSteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='jw00023001001_01101_00001_NRS1_linearity.fits',
                       output_hdus=[],
-                      id='test_linearity_nirspec'
+                      id='linearity_nirspec'
                       ),
                  dict(input='jw00023001001_01101_00001_NRS1_flat_field.fits',
                       test_dir='test_photom',
@@ -118,7 +118,7 @@ class TestNIRSpecSteps(BaseJWSTTestSteps):
                                               ('sci',2),('err',2),('dq',2),('relsens',2),
                                               ('sci',3),('err',3),('dq',3),('relsens',3),
                                               ('sci',4),('err',4),('dq',4),('relsens',4)],
-                      id='test_photom_nirspec'
+                      id='photom_nirspec'
                       ),
                  dict(input='jw84600007001_02101_00001_nrs1_superbias.fits',
                       test_dir='test_bias_drift',
@@ -126,7 +126,7 @@ class TestNIRSpecSteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='jw84600007001_02101_00001_nrs1_refpix.fits',
                       output_hdus=[],
-                      id='test_refpix_nirspec_irs2'
+                      id='refpix_nirspec_irs2'
                       ),
                  dict(input='jw00023001001_01101_00001_NRS1_bias_drift.fits',
                       test_dir='test_saturation',
@@ -134,7 +134,7 @@ class TestNIRSpecSteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='jw00023001001_01101_00001_NRS1_saturation.fits',
                       output_hdus=[],
-                      id='test_saturation_nirspec'
+                      id='saturation_nirspec'
                       ),
                  dict(input='jw00011001001_01106_00001_NRS2_saturation.fits',
                       test_dir='test_superbias',
@@ -142,7 +142,7 @@ class TestNIRSpecSteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='jw00011001001_01106_00001_NRS2_superbias.fits',
                       output_hdus=[],
-                      id='test_superbias_nirspec'
+                      id='superbias_nirspec'
                       )
                 ]
               }
