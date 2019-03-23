@@ -377,6 +377,8 @@ tweakreg
 
 - Bug fix: Use integer division in Python 3. [#3072]
 
+- Bug fix: Improved 2D Histogram (pre-match shift) algorithm in Python. [#3281]
+
 wfs_combine
 -----------
 
