@@ -57,6 +57,12 @@ set_telescope_pointing
 - Fix ``populate_model_from_siaf`` to convert SIAF pixel scale from
   arcsec to degress for CDELTn keywords. [#3248]
 
+tweakreg
+--------
+
+- Bug fix: Improved 2D Histogram (pre-match shift) algorithm in Python. [#3281]
+
+
 0.13.1 (2019-03-07)
 ===================
 
@@ -377,7 +383,6 @@ tweakreg
 
 - Bug fix: Use integer division in Python 3. [#3072]
 
-- Bug fix: Improved 2D Histogram (pre-match shift) algorithm in Python. [#3281]
 
 wfs_combine
 -----------
