@@ -17,6 +17,7 @@ class MasterBackgroundStep(Step):
         user_background = string(default=None) # Path to user-supplied master background
         save_background = boolean(default=False) # Save computed master background
         force_subtract = boolean(default=False) # Force subtracting master background
+        output_use_model = boolean(default=True)
     """
 
     def process(self, input):
@@ -26,7 +27,7 @@ class MasterBackgroundStep(Step):
         Parameters
         ----------
         input : `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`, `~jwst.datamodels.ModelContainer`, association
-            Input target data model(s) to which master background subtraction is
+            Input target datamodel(s) to which master background subtraction is
             to be applied
 
         user_background : None, string, or `~jwst.datamodels.MultiSpecModel`
@@ -34,7 +35,7 @@ class MasterBackgroundStep(Step):
             or opened datamodel
 
         save_background : bool, optional
-            Save master background.
+            Save computed master background.
 
         force_subtract : bool, optional
             Optional user-supplied flag which subtracts the master background overriding the checks
@@ -46,7 +47,7 @@ class MasterBackgroundStep(Step):
         Returns
         -------
         result: `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`, `~jwst.datamodels.ModelContainer`
-            The background-subtracted target data model(s)
+            The background-subtracted science datamodel(s)
         """
 
         # Get association info if available
