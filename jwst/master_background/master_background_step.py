@@ -1,9 +1,9 @@
 from os.path import basename
 from ..stpipe import Step
 from .. import datamodels
+from jwst.combine_1d.combine1d import combine_1d_spectra
 
 from .expand_to_2d import expand_to_2d
-
 
 __all__ = ["MasterBackgroundStep"]
 
@@ -17,6 +17,7 @@ class MasterBackgroundStep(Step):
         user_background = string(default=None) # Path to user-supplied master background
         save_background = boolean(default=False) # Save computed master background
         force_subtract = boolean(default=False) # Force subtracting master background
+        output_use_model = boolean(default=True)
     """
 
     def process(self, input):
@@ -26,7 +27,7 @@ class MasterBackgroundStep(Step):
         Parameters
         ----------
         input : `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`, `~jwst.datamodels.ModelContainer`, association
-            Input target data model(s) to which master background subtraction is
+            Input target datamodel(s) to which master background subtraction is
             to be applied
 
         user_background : None, string, or `~jwst.datamodels.MultiSpecModel`
@@ -34,7 +35,7 @@ class MasterBackgroundStep(Step):
             or opened datamodel
 
         save_background : bool, optional
-            Save master background.
+            Save computed master background.
 
         force_subtract : bool, optional
             Optional user-supplied flag which subtracts the master background overriding the checks
@@ -46,13 +47,14 @@ class MasterBackgroundStep(Step):
         Returns
         -------
         result: `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`, `~jwst.datamodels.ModelContainer`
-            The background-subtracted target data model(s)
+            The background-subtracted science datamodel(s)
         """
 
         # Get association info if available
         # asn_id = ???
 
         with datamodels.open(input) as input_data:
+            background_data = None
 
             # Handle individual NIRSpec FS, NIRSpec MOS
             if isinstance(input_data, datamodels.MultiSlitModel):
@@ -60,7 +62,8 @@ class MasterBackgroundStep(Step):
 
             # Handle associations, or input ModelContainers
             elif isinstance(input_data, datamodels.ModelContainer):
-                pass
+                input_data, background_data = split_container(input_data)
+                asn_id = input_data.meta.asn_table.asn_id
 
             # Handle MIRI LRS
             elif isinstance(input_data, datamodels.ImageModel):
@@ -125,12 +128,27 @@ class MasterBackgroundStep(Step):
                 self.record_step_status(result, 'master_background', success=False)
                 return result
 
-            # various tests have passed and now we want to subtract the master background
-            # Check if user has supplied a master background spectrum.
-            if self.user_background is None:
-                # TODO: 1. compute master background from asn, 2. subtract it
-                # Return input as dummy result for now
-                result = input_data.copy()
+            # Compute master background and subtract it
+            if self.user_background is None and background_data is not None:
+                master_background = combine_1d_spectra(
+                    background_data,
+                    exptime_key='exposure_time',
+                    background=True,
+                )
+                if isinstance(input_data, datamodels.ModelContainer):
+                    input_data, background = split_container(input_data)
+                    asn_id = input_data.meta.asn_table.asn_id
+
+                    result = datamodels.ModelContainer()
+                    for model in input_data:
+                        background_2d = expand_to_2d(model, master_background)
+                        result.append(subtract_2d_background(model, background_2d))
+                else:
+                    # Is it possible that we will not have a container and not
+                    # have a list of background 1D spectra?  Probably not.
+                    pass
+
+            # Use user-supplied master background and subtract it
             else:
                 background_2d = expand_to_2d(input_data, self.user_background)
                 result = subtract_2d_background(input_data, background_2d)
@@ -144,12 +162,33 @@ class MasterBackgroundStep(Step):
 
             # Save the computed background if requested by user
             if self.save_background and self.user_background is None:
-                # self.save_model(background, suffix='masterbg', asn_id=asn_id)
-                pass
-
+                self.save_model(master_background, suffix='masterbg', asn_id=asn_id)
+            
             self.record_step_status(result, 'master_background', success=True)
 
         return result
+
+
+def split_container(container):
+    """Divide a ModelContainer with science and background into one of each
+    """
+    asn = container.meta.asn_table.instance
+    background = datamodels.ModelContainer()
+    science = datamodels.ModelContainer()
+    for product in asn['products']:
+        for member in product['members']:
+            if member['exptype'] == 'science':
+                science.append(datamodels.open(member['expname']))
+            if member['exptype'] == 'background':
+                background.append(datamodels.open(member['expname']))
+
+    science.meta.asn_table = {}
+    datamodels.model_base.properties.merge_tree(
+        science.meta.asn_table._instance, asn
+    )
+    for p in science.meta.asn_table.instance['products']:
+        p['members'] = [m for m in p['members'] if m['exptype'] != 'background']
+    return science, background
 
 
 def subtract_2d_background(source, background):

@@ -71,11 +71,6 @@ def open(init=None, extensions=None, **kwargs):
         # Copy the object so it knows not to close here
         return init.__class__(init)
 
-    elif is_association(init):
-        from . import container
-        return container.ModelContainer(init, extensions=extensions,
-                                        **kwargs)
-
     elif isinstance(init, (str, bytes)) or hasattr(init, "read"):
         # If given a string, presume its a file path.
         # if it has a read method, assume a file descriptor
@@ -112,6 +107,11 @@ def open(init=None, extensions=None, **kwargs):
 
     elif isinstance(init, fits.HDUList):
         hdulist = init
+
+    elif is_association(init) or isinstance(init, list):
+        from . import container
+        return container.ModelContainer(init, extensions=extensions,
+                                        **kwargs)
 
     # If we have it, determine the shape from the science hdu
     if hdulist:

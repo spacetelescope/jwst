@@ -9,7 +9,8 @@ from jwst import datamodels
 from jwst.datamodels import ImageModel, RegionsModel, CubeModel
 from jwst.stpipe import crds_client
 from jwst.lib.set_telescope_pointing import add_wcs
-from jwst.tests.base_classes import BaseJWSTTest
+from jwst.tests.base_classes import BaseJWSTTest, raw_from_asn
+from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.assign_wcs import AssignWcsStep
 from jwst.cube_build import CubeBuildStep
 from jwst.linearity import LinearityStep
@@ -289,7 +290,7 @@ class TestMIRISetPointing(BaseJWSTTest):
 
 
 @pytest.mark.bigdata
-class TestMIRIMasterBackground_LRS(BaseJWSTTest):
+class TestMIRIMasterBackgroundLRS(BaseJWSTTest):
     input_loc = 'miri'
     ref_loc = ['test_masterbackground', 'lrs', 'truth']
     test_dir = ['test_masterbackground', 'lrs']
@@ -314,7 +315,7 @@ class TestMIRIMasterBackground_LRS(BaseJWSTTest):
         result = MasterBackgroundStep.call(input_file,
                                            user_background=input_1d_bkg_file,
                                            save_results=True)
-        # _____________________________________________________________________
+
         # Test 1
         # Run extract1D on the master background subtracted data (result)  and
         # the science data with no background added
@@ -356,7 +357,7 @@ class TestMIRIMasterBackground_LRS(BaseJWSTTest):
         atol = 0.00005
         rtol = 0.000001
         assert_allclose(mean_sub, 0, atol=atol, rtol=rtol)
-        # _____________________________________________________________________
+
         # Test 2
         # Compare result (background subtracted image) to science image with no
         # background. Subtract these images, smooth the subtracted image and
@@ -384,10 +385,9 @@ class TestMIRIMasterBackground_LRS(BaseJWSTTest):
         atol = 0.5
         rtol = 0.001
         assert_allclose(mean_sub, 0, atol=atol, rtol=rtol)
-# ______________________________________________________________________
+
         # Test 3 Compare background subtracted science data (results)
         #  to a truth file.
-
         truth_file = self.get_data(*self.ref_loc,
                                   'miri_lrs_sci+bkg_masterbackgroundstep.fits')
 
@@ -396,3 +396,28 @@ class TestMIRIMasterBackground_LRS(BaseJWSTTest):
         self.compare_outputs(outputs)
         result.close()
         input_sci.close()
+
+
+class TestMIRIMasterBackgroundMRS(BaseJWSTTest):
+    input_loc = 'miri'
+    ref_loc = ['test_masterbackground', 'mrs', 'truth']
+    test_dir = ['test_masterbackground', 'mrs']
+
+    rtol = 0.000001
+
+    def test_miri_masterbackground_mrs(self):
+        """Run masterbackground step on MIRI LRS association"""
+        asn_file = self.get_data(*self.test_dir,
+                                   'miri_mrs_mbkg_0304_spec3_asn.json')
+        for file in raw_from_asn(asn_file):
+            self.get_data(*self.test_dir, file)
+
+        collect_pipeline_cfgs('./config')
+        result = MasterBackgroundStep.call(
+            asn_file,
+            config_file='config/master_background.cfg',
+            save_background=True
+            )
+
+        for model in result:
+            assert model.meta.cal_step.master_background == 'COMPLETE'

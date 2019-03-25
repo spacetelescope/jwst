@@ -30,8 +30,8 @@ def user_background(tmpdir_factory):
     return filename
 
 
-def _generate_data():
-    """Generate data of each type of input for master background step"""
+def test_master_background_userbg(_jail, user_background):
+    """Verify data can run through the step with a user-supplied background"""
 
     image = datamodels.ImageModel((10, 10))
     image.meta.instrument.name = 'MIRI'
@@ -48,61 +48,18 @@ def _generate_data():
     image.meta.wcsinfo.dec_ref = 0
     image = AssignWcsStep.call(image)
 
-    # hdulist = create_nirspec_fs_file(grating="G140M", filter="F100LP")
-    # hdulist[1].data = np.zeros((2048, 2048))
-    # fs = datamodels.ImageModel(hdulist)
-    # fs = AssignWcsStep.call(fs)
-    # multislit = Extract2dStep.call(fs)
-
-    # hdulist = create_nirspec_ifu_file("OPAQUE", "G140M")
-    # hdulist[1].data = np.zeros((2048, 2048))
-    # ifu_image = datamodels.IFUImageModel(hdulist)
-    # ifu_image = AssignWcsStep.call(ifu_image)
-    
-    container = datamodels.ModelContainer([image])
-    
-    cube = datamodels.CubeModel((2, 10, 10))
-
-    # Return the data and a status dependent on whether the step can process it
-    return [(image, 'COMPLETE'),
-            # (multislit, 'COMPLETE'),
-            # (ifu_image, 'COMPLETE'),
-            (container, 'COMPLETE'),
-            (cube, 'SKIPPED'),
-            ]
-
-@pytest.mark.parametrize('input_data, status', _generate_data())
-def test_master_background_init(input_data, status, _jail, user_background):
-    """Verify data can run through the step"""
-
-    result = MasterBackgroundStep.call(input_data)
+    # Run with a user-supplied background and verify this is recorded in header
+    result = MasterBackgroundStep.call(image, user_background=user_background)
 
     collect_pipeline_cfgs('./config')
     result = MasterBackgroundStep.call(
-        input_data,
-        config_file='config/master_background.cfg'
+        image,
+        config_file='config/master_background.cfg',
+        user_background=user_background,
         )
 
     # For inputs that are not files, the following should be true
-    assert type(input_data) is type(result)
-    assert result is not input_data
-
-    if isinstance(result, datamodels.ModelContainer):
-        for model in result:
-            assert model.meta.cal_step.master_background == status
-    else:
-        assert result.meta.cal_step.master_background == status
-
-    # Run with a user-supplied background and verify this is recorded in header
-    result = MasterBackgroundStep.call(input_data, user_background=user_background)
-
-    if isinstance(result, datamodels.ModelContainer):
-        for model in result:
-            if model.meta.cal_step.master_background == 'COMPLETE':
-                assert model.meta.background.master_background_file == 'user_background.fits'
-    else:
-        if result.meta.cal_step.master_background == 'COMPLETE':
-            assert result.meta.background.master_background_file == 'user_background.fits'
-
-    # Make sure saving the computed background works
-    result = MasterBackgroundStep.call(input_data, save_background=True)
+    assert type(image) is type(result)
+    assert result is not image
+    assert result.meta.cal_step.master_background == 'COMPLETE'
+    assert result.meta.background.master_background_file == 'user_background.fits'
