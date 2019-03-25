@@ -36,6 +36,8 @@ extract_1d
   for non-IFU data, background smoothing is now done after scaling the
   background count rate. [#3258]
 
+- Unit tests were added for IFU data. [#3285]
+
 master_background
 -----------------
 
