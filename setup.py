@@ -8,12 +8,6 @@ from setuptools.command.test import test as TestCommand
 from setuptools.command.build_ext import build_ext
 from glob import glob
 
-try:
-    from numpy import get_include as np_include
-except ImportError:
-    print('Unable to import "numpy".\n'
-          'Please install "numpy" and try again.', file=sys.stderr)
-    exit(1)
 
 if sys.version_info < (3, 5):
     error = """
@@ -192,12 +186,6 @@ setup(
     scripts=SCRIPTS,
     packages=find_packages(),
     package_data=PACKAGE_DATA,
-    ext_modules=[
-        Extension('jwst.tweakreg.chelp',
-                  glob('src/tweakreg/*.c'),
-                  include_dirs=[np_include()],
-                  define_macros=[('NUMPY', '1')]),
-    ],
     install_requires=[
         'asdf>=2.3.2',
         'astropy>=3.1',
