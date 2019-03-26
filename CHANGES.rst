@@ -57,6 +57,12 @@ set_telescope_pointing
 - Fix ``populate_model_from_siaf`` to convert SIAF pixel scale from
   arcsec to degress for CDELTn keywords. [#3248]
 
+tweakreg
+--------
+
+- Fixed a bug in handling situations when no useable sources are
+  detected in any of the input images. [#3286]
+
 0.13.1 (2019-03-07)
 ===================
 
