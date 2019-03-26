@@ -64,6 +64,8 @@ tweakreg
 
 - Bug fix: Improved 2D Histogram (pre-match shift) algorithm in Python. [#3281]
 
+- Fixed a bug in handling situations when no useable sources are
+  detected in any of the input images. [#3286]
 
 0.13.1 (2019-03-07)
 ===================

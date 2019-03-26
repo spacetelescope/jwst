@@ -886,7 +886,7 @@ class WCSGroupCatalog():
                 catname = image.name
 
             col_catname = table.MaskedColumn([catname], name='cat_name')
-            del col_catname[0]
+            col_catname = col_catname[[False]]
             col_imcatidx = table.MaskedColumn([], dtype=np.int,
                                               name='_imcat_idx')
             col_id = table.MaskedColumn(image.catalog['id'])
