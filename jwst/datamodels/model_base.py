@@ -30,7 +30,6 @@ from . import validate
 from .history import HistoryList
 
 from .extension import (
-    BaseExtension,
     URL_PREFIX,
 )
 
