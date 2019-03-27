@@ -22,6 +22,8 @@ from .. import (DataModel, ImageModel, RampModel, MaskModel,
                 SourceModelContainer, MultiExposureModel)
 from ..schema import merge_property_trees, build_docstring
 
+from ..extension import URL_PREFIX
+
 import asdf
 from asdf import schema as mschema
 
@@ -74,9 +76,8 @@ def test_date2():
 
 TRANSFORMATION_SCHEMA = {
     "allOf": [
-        mschema.load_schema(
-            os.path.join(os.path.dirname(__file__),
-                         "../schemas/image.schema.yaml"),
+        mschema.load_schema(os.path.join(URL_PREFIX, "image.schema"),
+            resolver=asdf.AsdfFile().resolver,
             resolve_references=True),
         {
             "type": "object",
@@ -264,9 +265,8 @@ def test_to_flat_dict():
 def test_table_array():
     table_schema = {
         "allOf": [
-            mschema.load_schema(
-                os.path.join(os.path.dirname(__file__),
-                             "../schemas/image.schema.yaml"),
+            mschema.load_schema(os.path.join(URL_PREFIX, "image.schema"),
+                resolver=asdf.AsdfFile().resolver,
                 resolve_references=True),
             {
                 "type": "object",
@@ -320,9 +320,8 @@ def test_table_array_convert():
 
     table_schema = {
         "allOf": [
-            mschema.load_schema(
-                os.path.join(os.path.dirname(__file__),
-                             "../schemas/image.schema.yaml"),
+            mschema.load_schema(os.path.join(URL_PREFIX, "image.schema"),
+                resolver=asdf.AsdfFile().resolver,
                 resolve_references=True),
             {
                 "type": "object",
@@ -385,9 +384,8 @@ def test_mask_model():
 def test_data_array():
     data_array_schema = {
         "allOf": [
-            mschema.load_schema(
-                os.path.join(os.path.dirname(__file__),
-                         "../schemas/core.schema.yaml"),
+            mschema.load_schema(os.path.join(URL_PREFIX, "core.schema"),
+                resolver=asdf.AsdfFile().resolver,
                 resolve_references=True),
             {
                 "type": "object",
@@ -642,7 +640,7 @@ def test_all_datamodels_init(model):
 
 
 def test_datamodel_schema_entry_points():
-    """Test that entry points for datamodels BaseExtension work with asdf"""
+    """Test that entry points for datamodels DataModelSchemaExtension works with asdf"""
     resolver = asdf.AsdfFile().resolver
-    mschema.load_schema('http://jwst.stsci.edu/schemas/image.schema.yaml',
+    mschema.load_schema('http://stsci.edu/schemas/jwst_datamodel/image.schema',
         resolver=resolver, resolve_references=True)

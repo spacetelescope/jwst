@@ -7,10 +7,10 @@ SCHEMA_PATH = os.path.abspath(
 METASCHEMA_PATH = os.path.abspath(
     os.path.join(os.path.dirname(__file__), 'metaschema'))
 
-URL_PREFIX = 'http://jwst.stsci.edu/schemas/'
+URL_PREFIX = 'http://stsci.edu/schemas/jwst_datamodel/'
 
 
-class BaseExtension(AsdfExtension):
+class DataModelSchemaExtension(AsdfExtension):
     """
     This asdf extension provides url mapping for the asdf resolver
 
@@ -29,7 +29,7 @@ class BaseExtension(AsdfExtension):
     @property
     def url_mapping(self):
         return [
-            (URL_PREFIX, util.filepath_to_url(SCHEMA_PATH) + '/{url_suffix}'),
+            (URL_PREFIX, util.filepath_to_url(SCHEMA_PATH) + '/{url_suffix}.yaml'),
             ('http://stsci.edu/schemas/fits-schema/',
                 util.filepath_to_url(METASCHEMA_PATH) + '/{url_suffix}.yaml'),
         ]
