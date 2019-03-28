@@ -67,6 +67,9 @@ tweakreg
 - Fixed a bug in handling situations when no useable sources are
   detected in any of the input images. [#3286]
 
+- Enhanced source catalog extraction algorithm to filer out sources outside
+  the WCS domain of definition (when available). [#3292]
+
 0.13.1 (2019-03-07)
 ===================
 
