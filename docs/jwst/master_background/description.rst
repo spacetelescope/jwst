@@ -7,6 +7,14 @@ by the user. The 1-D background spectrum - flux versus wavelength - is projected
 2-D space of source data based on the wavelength of each pixel in the 2-D data. The resulting
 2-D background signal is then subtracted directly from the 2-D source data.
 
+Logic built into the step checks to see if the exposure-based :ref:`background <background_step>`
+subtraction step in the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline has already been
+performed on the input images, based on the value of the S_BKDSUB keyword. If S_BKGSUB is
+set to 'COMPLETE', the master background step is skipped. The user can override this logic,
+if desired, by setting the step argument ``--force_subtract`` to ``True``, in which case master
+background subtraction will be applied regardless of the value of S_BKDSUB (see
+:ref:`msb_step_args`).
+
 Upon successful completion of the step, the S_MSBSUB keyword is set to 'COMPLETE' in the
 output product. The background-subtracted results are returned as a new data model, leaving
 the input model unchanged.
