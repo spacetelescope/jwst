@@ -76,11 +76,10 @@ class Spec3Pipeline(Pipeline):
         self.output_file = output_file
 
         # Split the inputs into science and background
-        background_data = None
         science_data, background_data = split_container(input_models)
 
         # If background data are present, call the master background step
-        if background_data is not None:
+        if len(background_data) > 0:
             source_models = self.master_background(input_models)
             source_models.meta.asn_table = input_models.meta.asn_table
         else:
