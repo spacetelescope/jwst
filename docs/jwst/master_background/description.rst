@@ -87,7 +87,7 @@ Creating the 1-D master background spectrum
 -------------------------------------------
 The 1-D master background spectrum is created by combining data contained in the
 :ref:`x1d <x1d>` products listed in the input ASN as being "exptype: background" members.
-As noted above, the background members can be exposures obtained of dedicated background targets
+As noted above, the background members can be exposures of dedicated background targets
 or can be a collection of exposures of a point-like source observed in a nod pattern
 (e.g. MIRI LRS fixed-slit "ALONG-SLIT-NOD" or NIRSpec IFU "2-POINT-NOD" dither patterns).
 
