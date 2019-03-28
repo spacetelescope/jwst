@@ -1,8 +1,8 @@
 .. _master_background_step:
 
-===========================================
-Master Spectroscopic Background Subtraction
-===========================================
+=============================
+Master Background Subtraction
+=============================
 
 .. toctree::
    :maxdepth: 2
