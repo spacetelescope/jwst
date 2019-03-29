@@ -11,14 +11,14 @@ description: |
   MIRI LRS fixed slit.
 
 allOf:
-  - $ref: ../asdf/transform/transform-1.1.0
+  - $ref: "tag:stsci.edu:asdf/transform/transform-1.1.0"
   - type: object
     properties:
       wavetable:
         description: |
           An array with columns of:
           xcenter, ycenter, wavelength, x0, y0, x1, y1, x2, y2, x3, y3
-        $ref: ../asdf/core/ndarray-1.0.0
+        $ref: "tag:stsci.edu:asdf/core/ndarray-1.0.0"
       zero_point:
         description: |
           An array of size 2 - the zero point of the wavelength solution.

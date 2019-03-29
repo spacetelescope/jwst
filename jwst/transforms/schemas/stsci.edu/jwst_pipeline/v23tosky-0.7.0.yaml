@@ -21,7 +21,7 @@ examples:
           axes_order: zyxyz
 
 allOf:
-  - $ref: ../asdf/transform/transform-1.1.0
+  - $ref: "tag:stsci.edu:asdf/transform/transform-1.1.0"
   - type: object
     properties:
       angles:
