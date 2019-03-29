@@ -92,7 +92,8 @@ extensions = [
     'sphinx_automodapi.automodsumm',
     'sphinx_automodapi.autodoc_enhancements',
     'sphinx_automodapi.smart_resolver',
-    'sphinx_astropy.ext.doctest'
+    'sphinx_astropy.ext.doctest',
+    'sphinx_asdf',
     ]
 
 
@@ -213,6 +214,11 @@ pygments_style = 'default'
 # If true, keep warnings as "system message" paragraphs in the built documents.
 # keep_warnings = False
 
+# Mapping for links to the ASDF Standard in ASDF schema documentation
+asdf_schema_reference_mappings = [
+    ('tag:stsci.edu:asdf',
+     'http://asdf-standard.readthedocs.io/en/latest/generated/stsci.edu/asdf/'),
+]
 
 # -- Options for HTML output ----------------------------------------------
 
