@@ -81,6 +81,8 @@ class Spec3Pipeline(Pipeline):
         # If background data are present, call the master background step
         if len(background_data) > 0:
             source_models = self.master_background(input_models)
+            if self.master_background.skip:
+                source_models = science_data
             source_models.meta.asn_table = input_models.meta.asn_table
         else:
             source_models = science_data
