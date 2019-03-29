@@ -70,6 +70,8 @@ tweakreg
 - Enhanced source catalog extraction algorithm to filter out sources outside
   the WCS domain of definition (when available). [#3292]
 
+- Changed the type of exception raised when input has incorrect type. [#3297]
+
 0.13.1 (2019-03-07)
 ===================
 
