@@ -9,6 +9,11 @@ background
   exposures do not have matching GWA tilt values, then skip the background
   subtraction step in calspec2. [#3252]
 
+calwebb_spec3
+-------------
+
+- Add the ``master_background`` subtraction step to the pipeline. [#3296]
+
 combine_1d
 ----------
 
@@ -46,6 +51,12 @@ master_background
 - Modified ``MasterBackgroundStep`` to be skipped if ``BackgroundStep``
   was already run on the data.  A new ``force_subtract`` parameter is
   added to override this logic.  [#3263]
+
+outlier_detection
+-----------------
+
+- Fixed a bug that was causing the step to crash when calling the
+  ``cube_build`` step for MIRI MRS data. [#3296]
 
 reffile_utils
 -------------
