@@ -70,6 +70,11 @@ set_telescope_pointing
 - Fix ``populate_model_from_siaf`` to convert SIAF pixel scale from
   arcsec to degress for CDELTn keywords. [#3248]
 
+srctype
+-------
+
+- Updated logic for background targets and nodded exposures. [#3310]
+
 tweakreg
 --------
 

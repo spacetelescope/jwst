@@ -15,8 +15,8 @@ def set_source_type(input_model):
 
     Returns
     -------
-    input_model :
-        The updated model that has been processed.
+    input_model : `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`, `~jwst.datamodels.MultiSlitModel`, or None
+        The updated model or None if the process couldn't be completed.
     """
 
     # Get the exposure type of the input model
@@ -38,7 +38,7 @@ def set_source_type(input_model):
         patttype = input_model.meta.dither.primary_type
         user_type = input_model.meta.target.source_type
 
-        if (bkg_target is not None) and (bkg_target is True):
+        if bkg_target:
 
             # If this image is flagged as a BACKGROUND target, set the
             # source type to EXTENDED regardless of any other settings
@@ -51,7 +51,7 @@ def set_source_type(input_model):
             src_type = 'POINT'
             log.info('Exposure is nodded; setting SRCTYPE = %s' % src_type)
 
-        elif (user_type is not None) and (user_type in ['POINT', 'EXTENDED']):
+        elif user_type in ['POINT', 'EXTENDED']:
 
             # Use the value supplied by the user
             src_type = user_type
