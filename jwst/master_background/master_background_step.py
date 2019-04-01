@@ -177,9 +177,9 @@ def split_container(container):
     science = datamodels.ModelContainer()
     for product in asn['products']:
         for member in product['members']:
-            if member['exptype'] == 'science':
+            if member['exptype'].lower() == 'science':
                 science.append(datamodels.open(member['expname']))
-            if member['exptype'] == 'background':
+            if member['exptype'].lower() == 'background':
                 background.append(datamodels.open(member['expname']))
 
     science.meta.asn_table = {}
@@ -187,7 +187,7 @@ def split_container(container):
         science.meta.asn_table._instance, asn
     )
     for p in science.meta.asn_table.instance['products']:
-        p['members'] = [m for m in p['members'] if m['exptype'] != 'background']
+        p['members'] = [m for m in p['members'] if m['exptype'].lower() != 'background']
     return science, background
 
 
