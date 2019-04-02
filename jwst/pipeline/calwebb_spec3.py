@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from collections import defaultdict
 
 from .. import datamodels
 from ..associations.lib.rules_level3_base import format_product
@@ -75,17 +76,26 @@ class Spec3Pipeline(Pipeline):
         output_file = input_models.meta.asn_table.products[0].name
         self.output_file = output_file
 
-        # Split the inputs into science and background
-        science_data, background_data = split_container(input_models)
+        # Find all the member types in the product
+        members_by_type = defaultdict(list)
+        product = input_models.meta.asn_table.products[0].instance
+        for member in product['members']:
+            members_by_type[member['exptype'].lower()].append(member['expname'])
 
         # If background data are present, call the master background step
-        if len(background_data) > 0:
+        if members_by_type['background']:
             source_models = self.master_background(input_models)
-            if self.master_background.skip:
-                source_models = science_data
             source_models.meta.asn_table = input_models.meta.asn_table
+
+            # If the step is skipped, do the container splitting that
+            # would've been done in master_background
+            if self.master_background.skip:
+                source_models, bkg_models = split_container(input_models)
+                del bkg_models  # we don't need the background members
         else:
-            source_models = science_data
+            # The input didn't contain any background members,
+            # so we use all the inputs in subsequent steps
+            source_models = input_models
 
         # `sources` is the list of astronomical sources that need be
         # processed. Each element is a ModelContainer, which contains
