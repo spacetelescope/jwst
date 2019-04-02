@@ -1,5 +1,4 @@
 from os.path import basename
-from collections import defaultdict
 
 from ..stpipe import Step
 from .. import datamodels
@@ -52,83 +51,80 @@ class MasterBackgroundStep(Step):
             The background-subtracted science datamodel(s)
         """
 
-        # Get association info if available
-        # asn_id = ???
-
         with datamodels.open(input) as input_data:
 
+            # Make the input data availabled to self
             self.input_data = input_data
 
-            # First check if we should even do the subtraction
-            if not self._subraction_logic:
+            # First check if we should even do the subtraction.  If not, bail.
+            if not self._do_sub:
                 result = input_data.copy()
                 self.record_step_status(result, 'master_background', success=False)
                 return result
 
-            background_data = None
-
-            # Handle individual NIRSpec FS, NIRSpec MOS
-            if isinstance(input_data, datamodels.MultiSlitModel):
-                pass
-
-            # Handle associations, or input ModelContainers
-            elif isinstance(input_data, datamodels.ModelContainer):
-                input_data, background_data = split_container(input_data)
-                asn_id = input_data.meta.asn_table.asn_id
-
-            # Handle MIRI LRS
-            elif isinstance(input_data, datamodels.ImageModel):
-                pass
-
-            # Handle MIRI MRS and NIRSpec IFU
-            elif isinstance(input_data, datamodels.IFUImageModel):
-                pass
-
-            else:
+            # Check that data is a supported datamodel. If not, bail.
+            if not isinstance(input_data, (
+                    datamodels.ModelContainer,
+                    datamodels.MultiSlitModel,
+                    datamodels.ImageModel,
+                    datamodels.IFUImageModel,
+                )):
                 result = input_data.copy()
                 self.log.warning(
                     "Input %s of type %s cannot be handled.  Step skipped.",
                     input, type(input)
                     )
                 self.record_step_status(result, 'master_background', success=False)
-
                 return result
 
-            # Compute master background and subtract it
-            if self.user_background is None and background_data is not None:
-                master_background = combine_1d_spectra(
-                    background_data,
-                    exptime_key='exposure_time',
-                    background=True,
-                )
+            # If user-supplied master background, subtract it
+            if self.user_background:
                 if isinstance(input_data, datamodels.ModelContainer):
-                    input_data, background = split_container(input_data)
+                    input_data, _ = split_container(input_data)
+                    del _
+                    result = datamodels.ModelContainer()
+                    result.update(input_data)
+                    for model in input_data:
+                        background_2d = expand_to_2d(model, self.user_background)
+                        result.append(subtract_2d_background(model, background_2d))
+                    # Record name of user-supplied master background spectrum
+                    for model in result:
+                        model.meta.background.master_background_file = basename(self.user_background)
+                else:
+                    background_2d = expand_to_2d(input_data, self.user_background)
+                    result = subtract_2d_background(input_data, background_2d)
+                    # Record name of user-supplied master background spectrum
+                    result.meta.background.master_background_file = basename(self.user_background)
+
+            # Compute master background and subtract it
+            else:
+                if isinstance(input_data, datamodels.ModelContainer):
+                    input_data, background_data = split_container(input_data)
                     asn_id = input_data.meta.asn_table.asn_id
 
+                    master_background = combine_1d_spectra(
+                        background_data,
+                        exptime_key='exposure_time',
+                        background=True,
+                    )
+
                     result = datamodels.ModelContainer()
+                    result.update(input_data)
                     for model in input_data:
                         background_2d = expand_to_2d(model, master_background)
                         result.append(subtract_2d_background(model, background_2d))
                 else:
-                    # Is it possible that we will not have a container and not
-                    # have a list of background 1D spectra?  Probably not.
-                    pass
+                    result = input_data.copy()
+                    self.log.warning(
+                        "Input %s of type %s cannot be handled without user-supplied background.  Step skipped.",
+                        input, type(input)
+                        )
+                    self.record_step_status(result, 'master_background', success=False)
+                    return result
 
-            # Use user-supplied master background and subtract it
-            else:
-                background_2d = expand_to_2d(input_data, self.user_background)
-                result = subtract_2d_background(input_data, background_2d)
-
-                # Record name of user-supplied master background spectrum
-                if isinstance(result, datamodels.ModelContainer):
-                    for model in result:
-                        model.meta.background.master_background_file = basename(self.user_background)
-                else:
-                    result.meta.background.master_background_file = basename(self.user_background)
-
-            # Save the computed background if requested by user
-            if self.save_background and self.user_background is None:
-                self.save_model(master_background, suffix='masterbg', asn_id=asn_id)
+                # Save the computed background if requested by user
+                if self.save_background:
+                    self.save_model(master_background, suffix='masterbg', asn_id=asn_id)
             
             self.record_step_status(result, 'master_background', success=True)
 
@@ -136,7 +132,7 @@ class MasterBackgroundStep(Step):
 
 
     @property
-    def _subraction_logic(self):
+    def _do_sub(self):
         """
         Decide if subtraction is to be done
 
@@ -146,17 +142,17 @@ class MasterBackgroundStep(Step):
         Returns
         -------
         do_sub : bool
+            If ``True``, do the subtraction
         """
-        do_sub = True  # flag if set to False then no master background subtraction is done
+        do_sub = True
         input_data = self.input_data
-        if not self.force_subtract:  # default mode
+        if not self.force_subtract:
 
             # check if the input data is a model container. If it is then loop over
             # container and see if the background was subtracted in calspec2.
-            # If all data was  background subtracted. Print log.info and skip master bgk subtrction
-            # If there is a mixture of some being background subtracted print, warning
-            # and message to user to use force_subtract to force the master background
-            # to be subtracted.
+            # If all data was background subtracted, skip master bgk subtraction.
+            # If there is a mixture of some being background subtracted, don't
+            # subtract and print warning message
             if isinstance(input_data, datamodels.ModelContainer):
                 isub = 0
                 for indata in input_data:
@@ -201,10 +197,12 @@ def split_container(container):
             if member['exptype'].lower() == 'background':
                 background.append(datamodels.open(member['expname']))
 
+    # Pass along the association table to the output science container
     science.meta.asn_table = {}
     datamodels.model_base.properties.merge_tree(
         science.meta.asn_table._instance, asn
     )
+    # Prune the background members from the table
     for p in science.meta.asn_table.instance['products']:
         p['members'] = [m for m in p['members'] if m['exptype'].lower() != 'background']
     return science, background
