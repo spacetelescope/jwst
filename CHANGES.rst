@@ -52,6 +52,9 @@ master_background
   was already run on the data.  A new ``force_subtract`` parameter is
   added to override this logic.  [#3263]
 
+- ``MasterBackgroundStep`` now can handle BACKGROUND association members
+  that come from nodded exposures of the source. [#3311]
+
 outlier_detection
 -----------------
 
