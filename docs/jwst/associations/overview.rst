@@ -72,7 +72,8 @@ Users should not need to run the generator. Instead, it is expected
 that one edits an already existing association that accompanies the
 user's JWST data. Or, if need be, an association can be created based
 on the existing :ref:`Stage 2 <asn-level2-example>` or
-:ref:`Stage 3 <asn-level3-example>` examples.
+:ref:`Stage 3 <asn-level3-example>` examples. If, however, the user *does* need
+to run the generator, the :ref:`asn-utilities` and :ref:`Association Generator <design-generator>` documentation will be helpful.
 
 Once an association is in-hand, one can pass it as input to a pipeline
 routine. For example::
@@ -114,4 +115,5 @@ Utilities
 Other useful utilities for creating and manipulating associations:
 
 - :ref:`asn-from-list`
+- :ref:`asn-generate`
 - *many other TBD*
