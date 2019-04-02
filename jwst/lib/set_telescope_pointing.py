@@ -1422,10 +1422,18 @@ def populate_model_from_siaf(model, siaf):
         model.meta.wcsinfo.wcsaxes = 2
         model.meta.wcsinfo.cunit1 = "deg"
         model.meta.wcsinfo.cunit2 = "deg"
-        model.meta.wcsinfo.crpix1 = siaf.crpix1
-        model.meta.wcsinfo.crpix2 = siaf.crpix2
-        model.meta.wcsinfo.cdelt1 = siaf.cdelt1 / 3600  # in deg
-        model.meta.wcsinfo.cdelt2 = siaf.cdelt2 / 3600  # in deg
+        model.meta.wcsinfo.crpix1 = 0.0  # initialize to default
+        model.meta.wcsinfo.crpix2 = 0.0  # initialize to default
+        model.meta.wcsinfo.cdelt1 = 1.0  # initialize to default
+        model.meta.wcsinfo.cdelt2 = 1.0  # initialize to default
+        if siaf.crpix1:
+            model.meta.wcsinfo.crpix1 = siaf.crpix1
+        if siaf.crpix2:
+            model.meta.wcsinfo.crpix2 = siaf.crpix2
+        if siaf.cdelt1:
+            model.meta.wcsinfo.cdelt1 = siaf.cdelt1 / 3600  # in deg
+        if siaf.cdelt2:
+            model.meta.wcsinfo.cdelt2 = siaf.cdelt2 / 3600  # in deg
         model.meta.coordinates.reference_frame = "ICRS"
 
 
