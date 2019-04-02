@@ -14,13 +14,8 @@ allOf:
           fits_hdu: FGS Centroid Packet
         guide_star_state:
           title: "Guide star state: track or fine_guide"
-          type: number
-          fits_keyword: GUIDESTA
-          fits_hdu: FGS Centroid Packet
-        guide_star_acq_state:
-          title: State of guide star acquisition sequence
           type: string
-          fits_keyword: GS_STATE
+          fits_keyword: GUIDESTA
           fits_hdu: FGS Centroid Packet
         ddc_field_point:
           title: Differential Distortion Compensation field point
