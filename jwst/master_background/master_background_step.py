@@ -102,6 +102,17 @@ class MasterBackgroundStep(Step):
                     input_data, background_data = split_container(input_data)
                     asn_id = input_data.meta.asn_table.asn_id
 
+                    # Check if the background members are nodded x1d extractions
+                    try:
+                        if 'NOD' in input_data[0].meta.dither.primary_type:
+                            for model in background_data:
+                                model = copy_background_to_flux(model)
+                    except TypeError:
+                        self.log.warning(
+                            "Cannot determine dither type. "
+                            "Assuming it is not nodded."
+                            )
+
                     master_background = combine_1d_spectra(
                         background_data,
                         exptime_key='exposure_time',
@@ -182,6 +193,17 @@ class MasterBackgroundStep(Step):
                         "run again and set force_subtract = True.")
 
         return do_sub
+
+
+def copy_background_to_flux(spectrum):
+    """Copy the background column to the flux column in a MultiSpecModel"""
+    result = spectrum.copy()
+    for spec in result.spec:
+        spec.spec_table['FLUX'] = spec.spec_table['BACKGROUND']
+        # Zero out the background column for safety
+        spec.spec_table['BACKGROUND'][:] = 0.0
+
+    return result
 
 
 def split_container(container):
