@@ -103,15 +103,12 @@ class MasterBackgroundStep(Step):
                     asn_id = input_data.meta.asn_table.asn_id
 
                     # Check if the background members are nodded x1d extractions
-                    try:
-                        if 'NOD' in input_data[0].meta.dither.primary_type:
-                            for model in background_data:
-                                model = copy_background_to_flux(model)
-                    except TypeError:
-                        self.log.warning(
-                            "Cannot determine dither type. "
-                            "Assuming it is not nodded."
-                            )
+                    for model in background_data:
+                        # use "bkgdtarg == False" so we don't also get None cases
+                        # for simulated data that didn't bother populating this
+                        # keyword
+                        if model.meta.observation.bkgdtarg == False:
+                            model = copy_background_to_flux(model)
 
                     master_background = combine_1d_spectra(
                         background_data,
@@ -124,6 +121,8 @@ class MasterBackgroundStep(Step):
                     for model in input_data:
                         background_2d = expand_to_2d(model, master_background)
                         result.append(subtract_2d_background(model, background_2d))
+
+                # Skip step for case where no container and now user background
                 else:
                     result = input_data.copy()
                     self.log.warning(
