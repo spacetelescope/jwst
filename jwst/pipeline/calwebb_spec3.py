@@ -83,7 +83,7 @@ class Spec3Pipeline(Pipeline):
             members_by_type[member['exptype'].lower()].append(member['expname'])
 
         # If background data are present, call the master background step
-        if len(members_by_type['background']) > 0:
+        if members_by_type['background']:
             source_models = self.master_background(input_models)
             source_models.meta.asn_table = input_models.meta.asn_table
 
