@@ -30,7 +30,7 @@ exposures to make up a single observation, and a whole program is made
 up of a large number of observations.
 
 On first arrival, an exposure is termed to be at *Level1b*: The only
-transformation that has occured is the extraction of the science data
+transformation that has occurred is the extraction of the science data
 from the observatory telemetry into a FITS file. At this point, the
 science exposures enter the calibration pipeline.
 
@@ -40,14 +40,16 @@ instrumental effects from the data. The resulting files contain flux
 and spatially calibrated data, called *Stage 2b* data. The information
 is still in individual exposures.
 
-*Note: Older documentation and code may refer to the stages as **levels**. The
- are synonymous.*
+.. note::
+
+   Older documentation and code may refer to the stages as **levels**. They
+   are synonymous.
 
 To be truly useful, the exposures need to be combined and, in the case
 of multi-object spectrometry, separated, into data that is
 source-oriented. This type of calibration is called *Stage 3*
 processing. Due to the nature of the individual instruments, observing
-modes, and the interruptability of the observatory itself, how to
+modes, and the interruptibility of the observatory itself, how to
 group the right exposures together is not straight-forward.
 
 Enter the :ref:`Association Generator <design-generator>`. Given a set of exposures,
@@ -94,7 +96,7 @@ What exactly is returned depends on what the association is. However,
 for all Stage 2 and Stage 3 associations, a Python ``dict`` is returned,
 whose structure matches that of the JSON or YAML file. Continuing
 from the above example, the following shows how to access the first
-exposure file name of a Stage 3 assocations::
+exposure file name of a Stage 3 associations::
 
   exposure = asn['products'][0]['members'][0]['expname']
 
