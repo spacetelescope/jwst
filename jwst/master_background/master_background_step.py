@@ -53,7 +53,7 @@ class MasterBackgroundStep(Step):
 
         with datamodels.open(input) as input_data:
 
-            # Make the input data availabled to self
+            # Make the input data available to self
             self.input_data = input_data
 
             # First check if we should even do the subtraction.  If not, bail.
@@ -122,7 +122,7 @@ class MasterBackgroundStep(Step):
                         background_2d = expand_to_2d(model, master_background)
                         result.append(subtract_2d_background(model, background_2d))
 
-                # Skip step for case where no container and now user background
+                # Skip step for case with no container and no user background
                 else:
                     result = input_data.copy()
                     self.log.warning(
@@ -199,8 +199,10 @@ def copy_background_to_flux(spectrum):
     result = spectrum.copy()
     for spec in result.spec:
         spec.spec_table['FLUX'] = spec.spec_table['BACKGROUND']
+        spec.spec_table['ERROR'] = spec.spec_table['BERROR']
         # Zero out the background column for safety
-        spec.spec_table['BACKGROUND'][:] = 0.0
+        spec.spec_table['BACKGROUND'][:] = 0
+        spec.spec_table['BERROR'][:] = 1 # set to dummy val as in extract_1d
 
     return result
 
