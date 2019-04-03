@@ -155,9 +155,8 @@ class MasterBackgroundStep(Step):
             If ``True``, do the subtraction
         """
         do_sub = True
-        input_data = self.input_data
         if not self.force_subtract:
-
+            input_data = self.input_data
             # check if the input data is a model container. If it is then loop over
             # container and see if the background was subtracted in calspec2.
             # If all data was background subtracted, skip master bgk subtraction.
@@ -198,8 +197,8 @@ def copy_background_to_flux(spectrum):
     """Copy the background column to the flux column in a MultiSpecModel"""
     result = spectrum.copy()
     for spec in result.spec:
-        spec.spec_table['FLUX'] = spec.spec_table['BACKGROUND']
-        spec.spec_table['ERROR'] = spec.spec_table['BERROR']
+        spec.spec_table['FLUX'] = spec.spec_table['BACKGROUND'].copy()
+        spec.spec_table['ERROR'] = spec.spec_table['BERROR'].copy()
         # Zero out the background column for safety
         spec.spec_table['BACKGROUND'][:] = 0
         spec.spec_table['BERROR'][:] = 1 # set to dummy val as in extract_1d
