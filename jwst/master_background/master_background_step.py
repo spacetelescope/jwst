@@ -201,7 +201,8 @@ def copy_background_to_flux(spectrum):
         spec.spec_table['ERROR'] = spec.spec_table['BERROR'].copy()
         # Zero out the background column for safety
         spec.spec_table['BACKGROUND'][:] = 0
-        spec.spec_table['BERROR'][:] = 1 # set to dummy val as in extract_1d
+        # Set BERROR to dummy val of 1.0, as in extract_1d currently
+        spec.spec_table['BERROR'][:] = 1
 
     return result
 
