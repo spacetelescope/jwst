@@ -196,8 +196,8 @@ def lrs_distortion(input_model, reference_files):
         subarray_dist.inverse = distortion.inverse | subarray2full.inverse
     else:
         subarray_dist = distortion
-        subarray_dist.inverst = distortion.inverse
-        
+        subarray_dist.inverse = distortion.inverse
+
     # Read in the reference table data and get the zero point (SIAF reference point)
     # of the LRS in the subarray ref frame
     with fits.open(reference_files['specwcs']) as ref:
@@ -230,16 +230,16 @@ def lrs_distortion(input_model, reference_files):
     # bb will be the bounding box in full-array coordinates
     subarray_xstart = input_model.meta.subarray.xstart - 1
     subarray_ystart = input_model.meta.subarray.ystart - 1
-    
+
     # If in fixed slit mode, define the bounding box using the corner locations provided in
     # the CDP reference file.
     if input_model.meta.exposure.type.lower() == 'mir_lrs-fixedslit':
-        
+
         bb_sub = ((np.floor(x0.min()+ zero_point[0]) - 0.5, np.ceil(x1.max()+ zero_point[0]) + 0.5),
                   (np.floor(y2.min()+ zero_point[1]) - 0.5, np.ceil(y0.max()+ zero_point[1]) + 0.5))
         bb = ((bb_sub[0][0]+subarray_xstart,bb_sub[0][1]+subarray_xstart),
               (bb_sub[1][0]+subarray_ystart,bb_sub[1][1]+subarray_ystart))
-        
+
     # If in slitless mode, define the bounding box X locations using the subarray x boundaries
     # and the y locations using the corner locations in the CDP reference file.  Make sure to
     # omit the 4 reference pixels on the left edge of slitless subarray.
@@ -267,7 +267,7 @@ def lrs_distortion(input_model, reference_files):
                               bounds_error=False, fill_value=np.nan)
     v3_t2d = models.Tabular2D(lookup_table=v3_full, name='v3table',
                               bounds_error=False, fill_value=np.nan)
-    
+
     # Now deal with the fact that the spectral trace isn't perfectly up and down along detector.
     # This information is contained in the xcenter/ycenter values in the CDP table, but we'll handle it
     # as a simple rotation using a linear fit to this relation provided by the CDP.
@@ -275,7 +275,7 @@ def lrs_distortion(input_model, reference_files):
     z=np.polyfit(xcen,ycen,1)
     slope=1./z[0]
     traceangle = np.arctan(slope)*180./np.pi # trace angle in degrees
-    rot = models.Rotation2D(traceangle) # Rotation model   
+    rot = models.Rotation2D(traceangle) # Rotation model
 
     # Now include this rotation in our overall transform
     # First shift to a frame relative to the trace zeropoint, then apply the rotation
