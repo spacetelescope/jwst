@@ -58,7 +58,12 @@ R2A = 3600.*R2D
 SIAF = namedtuple("SIAF", ["v2_ref", "v3_ref", "v3yangle", "vparity",
                            "crpix1", "crpix2", "cdelt1", "cdelt2",
                            "vertices_idl"])
-SIAF.__new__.__defaults__ = (None, ) * 9
+# Set default values for the SIAF.
+# Values which are needed by the pipeline are set to None which
+# triggers a ValueError if missing in the SIAF database.
+# Quantities not used by the pipeline get a default value -
+# FITS keywords and aperture vertices.
+SIAF.__new__.__defaults__ = (None, None, None, None, 0, 0, 1, 1, (0, 1, 1, 0, 0, 0, 1, 1))
 
 # Pointing container
 Pointing = namedtuple("Pointing", ["q", "j2fgs_matrix", "fsmcorr", "obstime"])
@@ -376,14 +381,7 @@ def update_wcs_from_telem(
     obsstart = model.meta.exposure.start_time
     obsend = model.meta.exposure.end_time
     if None in siaf:
-        if allow_default:
-            logger.warning(
-                'Insufficient SIAF information found in header.'
-                'Resetting to a unity SIAF.'
-            )
-            siaf = SIAF(0, 0, 0, 1, 0, 0, 1, 1, [])
-        else:
-            raise ValueError('Insufficient SIAF information found in header.')
+        raise ValueError('Insufficient SIAF information found in header.')
 
     # Setup default WCS info if actual pointing and calculations fail.
     wcsinfo = WCSRef(
