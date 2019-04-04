@@ -13,7 +13,7 @@ barshadow
 ---------
 
 - Updated to apply the correction to the science data arrays, in addition
-  to attaching as an extension. [#3317]
+  to attaching as an extension. [#3319]
 
 calwebb_spec3
 -------------

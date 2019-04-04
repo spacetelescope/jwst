@@ -44,6 +44,9 @@ def do_correction(input_model, barshadow_model):
     exp_type = input_model.meta.exposure.type
     log.debug('EXP_TYPE = %s' % exp_type)
 
+    # Create output as a copy of the input science data model
+    output_model = input_model.copy()
+
     # Create the pieces that are put together to make the barshadow model
     shutter_elements = create_shutter_elements(barshadow_model)
     w0 = barshadow_model.crval1
@@ -52,7 +55,7 @@ def do_correction(input_model, barshadow_model):
     shutter_height = 1.0 / y_increment
 
     # Loop over all the slits in the input model
-    for slitlet in input_model.slits:
+    for slitlet in output_model.slits:
         slitlet_number = slitlet.slitlet_id
         log.info('Working on slitlet %d' % slitlet_number)
 
@@ -95,11 +98,13 @@ def do_correction(input_model, barshadow_model):
                 # Add the correction array to the datamodel
                 slitlet.barshadow = correction
 
-                # Apply the correction to the science and uncertainty arrays
+                # Apply the correction by dividing into the science and uncertainty arrays:
+                #     var_poission is divided by correction**2, because it's variance,
+                #         while err is standard deviation
+                #     var_rnoise is not changed, because it does not depend on signal level
                 slitlet.data /= correction
                 slitlet.err /= correction
-                slitlet.var_poisson /= correction
-                slitlet.var_rnoise /= correction
+                slitlet.var_poisson /= correction**2
             else:
                 log.info("Slitlet %d has zero length, correction skipped" % slitlet_number)
 
@@ -111,7 +116,7 @@ def do_correction(input_model, barshadow_model):
             # Put an array of ones in a correction extension
             slitlet.barshadow = np.ones(slitlet.data.shape)
 
-    return input_model
+    return output_model
 
 
 def create_shutter_elements(barshadow_model):
