@@ -31,26 +31,28 @@ where `<URL>` is of the form:
 Other particular versions can be installed by choosing a different version tag in place of "0.12.2" in the URL path.
 See the "Software vs DMS build version map" table below for a list of tags corresponding to particular releases.
 
-To update to the latest nightly build:
+To create an environment with the latest nightly build:
 
-    conda update -n jwst --override-channels -c http://ssb.stsci.edu/astroconda-dev -c defaults --all
+    conda create -n jwst --override-channels -c http://ssb.stsci.edu/astroconda -c defaults -c http://ssb.stsci.edu/astroconda-dev jwst
 
 ### Installing the latest development version ###
 
 To install the development version of the repository, we recommend creating a new
 environment, using the [astroconda](https://astroconda.readthedocs.io) channel
-to install the dependencies, and then installing from the github repository:
+to install the dependencies, and then installing from the GitHub repository:
 
-    conda create -n jwst_dev --only-deps --override-channels -c http://ssb.stsci.edu/astroconda-dev -c defaults python=3.6 jwst
+    conda create -n jwst_dev --only-deps --override-channels -c http://ssb.stsci.edu/astroconda -c defaults -c http://ssb.stsci.edu/astroconda-dev jwst
     source activate jwst_dev
     git clone https://github.com/spacetelescope/jwst.git
     cd jwst
     python setup.py develop
+    
+You can also fork the repo above and install your fork from GitHub.
 
 Once installed, the software can be updated to the lastest development version by updating the dependencies,
-pulling the latest version of `master` from the Github repository inside the `jwst` directory:
+pulling the latest version of `master` from the Github repository inside your local `jwst` checkout:
 
-    conda update -n jwst_dev --override-channels -c http://ssb.stsci.edu/astroconda-dev -c defaults --all
+    conda update -n jwst_dev --override-channels -c http://ssb.stsci.edu/astroconda -c defaults --all
     git pull origin master
     python setup.py develop
 
@@ -65,13 +67,13 @@ Inside the STScI network, the pipeline works with default CRDS setup with no mod
 Documentation
 -------------
 
-Documentation (built daily from `master`) is available here:
+Documentation (built daily from `master`) is available at:
 
 https://jwst-pipeline.readthedocs.io/en/latest/
 
-One can clone this repository and build the documentation with
+One can clone this repository and build the documentation with:
 
-    pip install sphinx_rtd_theme stsci_rtd_theme sphinx_automodapi
+    pip install -e .[docs]
     python setup.py build_sphinx
 
 
@@ -115,10 +117,10 @@ Note: CRDS_CONTEXT values flagged with an asterisk in the above table are estima
 Unit Tests
 ----------
 
-Unit tests can be run via `pytest`.  All tests need a the `ci_watson` pytest plugin to run.
+Unit tests can be run via `pytest`.  Within the top level of your local `jwst` repo checkout:
 
-    pip install requests_mock ci_watson
-    pytest jwst
+    pip install -e .[test]
+    pytest
 
 
 Regression Tests
@@ -128,21 +130,22 @@ Regression tests - both the data and the result reports - are currently only acc
 
 Latest regression test results can be found here:
 
-https://boyle.stsci.edu:8081/job/RT/job/JWST/
+https://pembry.stsci.edu:8081/job/RT/job/JWST/
 
-The test builds start at 11am and 6pm local Baltimore time every day on jwcalibdev.
+The test builds start at 6pm local Baltimore time Monday through Saturday on `jwcalibdev`.
 
-To run the regression tests on your local machine, you need the `ci_watson` pytest plugin as above.  Then set the environment variable TEST_BIGDATA to our Artifactory server (STSci staff members only)
+To run the regression tests on your local machine, get the test dependencies and set the environment variable TEST_BIGDATA to our Artifactory server (STSci staff members only)
 
+    pip install -e .[test]
     export TEST_BIGDATA=https://bytesalad.stsci.edu/artifactory/
 
 When you run the tests, the results will get written somewhere in `/tmp` or `/var` by default.  Control this with the `--basetemp` arg to `pytest`.  So to run all the regression tests:
 
-    pytest --bigdata --basetemp=<PATH> jwst/tests_nightly/general
+    pytest --bigdata --basetemp=<PATH> jwst/tests_nightly
 
 If you would like to run a specific test, find its name or ID and use the `-k` option:
 
-    pytest --bigdata --basetemp=<PATH> jwst/tests_nightly/general -k ami_pipeline
+    pytest --bigdata --basetemp=<PATH> jwst/tests_nightly/general -k image3_pipeline
 
 If developers need to update the truth files in our nightly regression tests, there are instructions in the repository wiki.
 
