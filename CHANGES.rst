@@ -9,6 +9,12 @@ background
   exposures do not have matching GWA tilt values, then skip the background
   subtraction step in calspec2. [#3252]
 
+barshadow
+---------
+
+- Updated to apply the correction to the science data arrays, in addition
+  to attaching as an extension. [#3317]
+
 calwebb_spec3
 -------------
 
@@ -32,6 +38,9 @@ datamodels
 
 - Keyword updates to data model schemas, including OBSFOLDR, MIRNGRPS,
   MIRNFRMS, and new PATTTYPE values. [#3266]
+
+- Keyword updates to remove GS_STATE and change GUIDESTA to string
+  type. [#3314]
 
 extract_1d
 ----------
