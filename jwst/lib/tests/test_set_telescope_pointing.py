@@ -438,8 +438,11 @@ def test_add_wcs_with_db_fsmcorr_v1(eng_db_ngas, data_file):
     )
 
 
-def test_default_siaf_values():
-    model = datamodels.Level1bModel()
+def test_default_siaf_values(eng_db_ngas, data_file_nosiaf):
+    """
+    Test that FITS WCS default values were set.
+    """
+    model = datamodels.Level1bModel(data_file_nosiaf)
     model.meta.exposure.start_time = STARTTIME.mjd
     model.meta.exposure.end_time = ENDTIME.mjd
     model.meta.target.ra = TARG_RA

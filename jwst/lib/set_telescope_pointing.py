@@ -58,7 +58,13 @@ R2A = 3600.*R2D
 SIAF = namedtuple("SIAF", ["v2_ref", "v3_ref", "v3yangle", "vparity",
                            "crpix1", "crpix2", "cdelt1", "cdelt2",
                            "vertices_idl"])
-SIAF.__new__.__defaults__ = (None, ) * 9
+# Set default values for the SIAF.
+# Values which are needed by the pipeline are set to None which
+# triggers a ValueError if missing in the SIAF database.
+# Quantities not used by the pipeline get a default value -
+# FITS keywords and aperture vertices.
+SIAF.__new__.__defaults__ = (None, None, None, None, 0, 0, 3600, 3600,
+                             (0, 1, 1, 0, 0, 0, 1, 1))
 
 # Pointing container
 Pointing = namedtuple("Pointing", ["q", "j2fgs_matrix", "fsmcorr", "obstime"])
@@ -376,14 +382,9 @@ def update_wcs_from_telem(
     obsstart = model.meta.exposure.start_time
     obsend = model.meta.exposure.end_time
     if None in siaf:
-        if allow_default:
-            logger.warning(
-                'Insufficient SIAF information found in header.'
-                'Resetting to a unity SIAF.'
-            )
-            siaf = SIAF(0, 0, 0, 1, 0, 0, 1, 1, [])
-        else:
-            raise ValueError('Insufficient SIAF information found in header.')
+        # Check if any of "v2_ref", "v3_ref", "v3yangle", "vparity" is None
+        # and raise an error. The other fields have default values.
+        raise ValueError('Insufficient SIAF information found in header.')
 
     # Setup default WCS info if actual pointing and calculations fail.
     wcsinfo = WCSRef(
@@ -1173,15 +1174,24 @@ def _get_wcs_values_from_siaf(aperture_name, useafter, prd_db_filepath=None):
         if PRD_DB:
             PRD_DB.close()
     logger.info("loaded {0} table rows from {1}".format(len(RESULT), prd_db_filepath))
+    default_siaf = SIAF()
     if RESULT:
-        values = list(RESULT.values())[0]
-        # This call populates the SIAF tuple with the values from the database.
+        # This populates the SIAF tuple with the values from the database.
         # The last 8 values returned from the database are the vertices.
         # They are wrapped in a list and assigned to SIAF.vertices_idl.
-        siaf = SIAF(*values[:-8], values[-8:])
+        values = list(RESULT.values())[0]
+        vert = values[-8:]
+        values = list(values[: - 8])
+        values.append(vert)
+        # If any of "crpix1", "crpix2", "cdelt1", "cdelt2", "vertices_idl" is None
+        # reset ot to the default value.
+        for i in range(4, 8):
+            if values[i] is None:
+                values[i] = default_siaf[i]
+        siaf = SIAF(*values)
         return siaf
     else:
-        return SIAF()
+        return default_siaf
 
 
 def calc_rotation_matrix(angle, vparity=1):
@@ -1422,18 +1432,10 @@ def populate_model_from_siaf(model, siaf):
         model.meta.wcsinfo.wcsaxes = 2
         model.meta.wcsinfo.cunit1 = "deg"
         model.meta.wcsinfo.cunit2 = "deg"
-        model.meta.wcsinfo.crpix1 = 0.0  # initialize to default
-        model.meta.wcsinfo.crpix2 = 0.0  # initialize to default
-        model.meta.wcsinfo.cdelt1 = 1.0  # initialize to default
-        model.meta.wcsinfo.cdelt2 = 1.0  # initialize to default
-        if siaf.crpix1:
-            model.meta.wcsinfo.crpix1 = siaf.crpix1
-        if siaf.crpix2:
-            model.meta.wcsinfo.crpix2 = siaf.crpix2
-        if siaf.cdelt1:
-            model.meta.wcsinfo.cdelt1 = siaf.cdelt1 / 3600  # in deg
-        if siaf.cdelt2:
-            model.meta.wcsinfo.cdelt2 = siaf.cdelt2 / 3600  # in deg
+        model.meta.wcsinfo.crpix1 = siaf.crpix1
+        model.meta.wcsinfo.crpix2 = siaf.crpix2
+        model.meta.wcsinfo.cdelt1 = siaf.cdelt1 / 3600  # in deg
+        model.meta.wcsinfo.cdelt2 = siaf.cdelt2 / 3600  # in deg
         model.meta.coordinates.reference_frame = "ICRS"
 
 
