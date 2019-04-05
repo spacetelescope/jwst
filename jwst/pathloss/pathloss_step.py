@@ -1,6 +1,6 @@
 from ..stpipe import Step
 from .. import datamodels
-from . import path_loss
+from . import pathloss
 
 __all__ = ["PathLossStep"]
 
@@ -55,7 +55,7 @@ class PathLossStep(Step):
             pathloss_model = datamodels.PathlossModel(self.pathloss_name)
 
             # Do the pathloss correction
-            result = path_loss.do_correction(input_model, pathloss_model)
+            result = pathloss.do_correction(input_model, pathloss_model)
 
             pathloss_model.close()
 
