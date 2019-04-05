@@ -436,3 +436,22 @@ def test_add_wcs_with_db_fsmcorr_v1(eng_db_ngas, data_file):
             ' 348.89688051688233 -38.876020020321164'
         )
     )
+
+
+def test_default_siaf_values(eng_db_ngas, data_file_nosiaf):
+    """
+    Test that FITS WCS default values were set.
+    """
+    model = datamodels.Level1bModel(data_file_nosiaf)
+    model.meta.exposure.start_time = STARTTIME.mjd
+    model.meta.exposure.end_time = ENDTIME.mjd
+    model.meta.target.ra = TARG_RA
+    model.meta.target.dec = TARG_DEC
+    model.meta.aperture.name = "MIRIM_TAFULL"
+    model.meta.observation.date = '1/1/2017'
+    model.meta.exposure.type = "MIR_IMAGE"
+    stp.update_wcs(model, siaf_path=siaf_db, allow_default=False)
+    assert model.meta.wcsinfo.crpix1 == 0
+    assert model.meta.wcsinfo.crpix2 == 0
+    assert model.meta.wcsinfo.cdelt1 == 1
+    assert model.meta.wcsinfo.cdelt2 == 1
