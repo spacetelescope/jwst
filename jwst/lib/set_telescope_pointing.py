@@ -4,7 +4,6 @@ from math import (cos, sin)
 import os.path
 import sqlite3
 from collections import namedtuple
-from collections import OrderedDict
 
 from astropy.time import Time
 import numpy as np
@@ -383,6 +382,8 @@ def update_wcs_from_telem(
     obsstart = model.meta.exposure.start_time
     obsend = model.meta.exposure.end_time
     if None in siaf:
+        # Check if any of "v2_ref", "v3_ref", "v3yangle", "vparity" is None
+        # and raise an error. The other fields have default values.
         raise ValueError('Insufficient SIAF information found in header.')
 
     # Setup default WCS info if actual pointing and calculations fail.
@@ -1182,6 +1183,8 @@ def _get_wcs_values_from_siaf(aperture_name, useafter, prd_db_filepath=None):
         vert = values[-8:]
         values = list(values[: - 8])
         values.append(vert)
+        # If any of "crpix1", "crpix2", "cdelt1", "cdelt2", "vertices_idl" is None
+        # reset ot to the default value.
         for i in range(4, 8):
             if values[i] is None:
                 values[i] = default_siaf[i]
@@ -1422,7 +1425,6 @@ def populate_model_from_siaf(model, siaf):
     model.meta.wcsinfo.v3yangle = siaf.v3yangle
     model.meta.wcsinfo.vparity = siaf.vparity
     if model.meta.exposure.type.lower() in TYPES_TO_UPDATE:
-        print('in populate, siaf', siaf.crpix1, siaf.crpix2, siaf.cdelt1, siaf.cdelt2)
         # For imaging modes update the pointing and
         # the FITS WCS keywords.
         model.meta.wcsinfo.ctype1 = 'RA---TAN'
