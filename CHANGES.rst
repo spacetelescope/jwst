@@ -70,6 +70,11 @@ outlier_detection
 - Fixed a bug that was causing the step to crash when calling the
   ``cube_build`` step for MIRI MRS data. [#3296]
 
+pathloss
+--------
+
+- Updated to apply the correction to the science data and err arrays. [#3323]
+
 reffile_utils
 -------------
 
