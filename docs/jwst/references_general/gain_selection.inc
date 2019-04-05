@@ -1,5 +1,3 @@
-:orphan:
-
 Reference Selection Keywords for GAIN
 +++++++++++++++++++++++++++++++++++++
 CRDS selects appropriate GAIN references based on the following keywords.
