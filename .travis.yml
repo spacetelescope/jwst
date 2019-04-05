@@ -54,7 +54,7 @@ matrix:
            # EVENT_TYPE='cron'
 
     # PEP8 check
-    - env: TEST_COMMAND='flake8 --count --select=F, E101, E111, E112, E113, E401, E402, E711, E722 --max-line-length=110 jwst'
+    - env: TEST_COMMAND='flake8 jwst'
 
     # Strict PEP8 check, an allowed failure below
     - env: TEST_COMMAND='flake8 --count jwst'
