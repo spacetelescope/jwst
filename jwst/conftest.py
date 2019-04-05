@@ -3,17 +3,8 @@ import os
 import tempfile
 import pytest
 
-from astropy.tests.plugins.display import PYTEST_HEADER_MODULES
-
 from jwst.associations import (AssociationRegistry, AssociationPool)
 from jwst.associations.tests.helpers import t_path
-
-try:
-    PYTEST_HEADER_MODULES['Astropy'] = 'astropy'
-    PYTEST_HEADER_MODULES['asdf'] = 'asdf'
-    del PYTEST_HEADER_MODULES['h5py']
-except (NameError, KeyError):
-    pass
 
 
 @pytest.fixture
