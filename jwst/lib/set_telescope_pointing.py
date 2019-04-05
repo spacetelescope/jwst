@@ -4,6 +4,7 @@ from math import (cos, sin)
 import os.path
 import sqlite3
 from collections import namedtuple
+from collections import OrderedDict
 
 from astropy.time import Time
 import numpy as np
@@ -63,7 +64,8 @@ SIAF = namedtuple("SIAF", ["v2_ref", "v3_ref", "v3yangle", "vparity",
 # triggers a ValueError if missing in the SIAF database.
 # Quantities not used by the pipeline get a default value -
 # FITS keywords and aperture vertices.
-SIAF.__new__.__defaults__ = (None, None, None, None, 0, 0, 1, 1, (0, 1, 1, 0, 0, 0, 1, 1))
+SIAF.__new__.__defaults__ = (None, None, None, None, 0, 0, 3600, 3600,
+                             (0, 1, 1, 0, 0, 0, 1, 1))
 
 # Pointing container
 Pointing = namedtuple("Pointing", ["q", "j2fgs_matrix", "fsmcorr", "obstime"])
@@ -1171,15 +1173,22 @@ def _get_wcs_values_from_siaf(aperture_name, useafter, prd_db_filepath=None):
         if PRD_DB:
             PRD_DB.close()
     logger.info("loaded {0} table rows from {1}".format(len(RESULT), prd_db_filepath))
+    default_siaf = SIAF()
     if RESULT:
-        values = list(RESULT.values())[0]
-        # This call populates the SIAF tuple with the values from the database.
+        # This populates the SIAF tuple with the values from the database.
         # The last 8 values returned from the database are the vertices.
         # They are wrapped in a list and assigned to SIAF.vertices_idl.
-        siaf = SIAF(*values[:-8], values[-8:])
+        values = list(RESULT.values())[0]
+        vert = values[-8:]
+        values = list(values[: - 8])
+        values.append(vert)
+        for i in range(4, 8):
+            if values[i] is None:
+                values[i] = default_siaf[i]
+        siaf = SIAF(*values)
         return siaf
     else:
-        return SIAF()
+        return default_siaf
 
 
 def calc_rotation_matrix(angle, vparity=1):
@@ -1413,6 +1422,7 @@ def populate_model_from_siaf(model, siaf):
     model.meta.wcsinfo.v3yangle = siaf.v3yangle
     model.meta.wcsinfo.vparity = siaf.vparity
     if model.meta.exposure.type.lower() in TYPES_TO_UPDATE:
+        print('in populate, siaf', siaf.crpix1, siaf.crpix2, siaf.cdelt1, siaf.cdelt2)
         # For imaging modes update the pointing and
         # the FITS WCS keywords.
         model.meta.wcsinfo.ctype1 = 'RA---TAN'
@@ -1420,18 +1430,10 @@ def populate_model_from_siaf(model, siaf):
         model.meta.wcsinfo.wcsaxes = 2
         model.meta.wcsinfo.cunit1 = "deg"
         model.meta.wcsinfo.cunit2 = "deg"
-        model.meta.wcsinfo.crpix1 = 0.0  # initialize to default
-        model.meta.wcsinfo.crpix2 = 0.0  # initialize to default
-        model.meta.wcsinfo.cdelt1 = 1.0  # initialize to default
-        model.meta.wcsinfo.cdelt2 = 1.0  # initialize to default
-        if siaf.crpix1:
-            model.meta.wcsinfo.crpix1 = siaf.crpix1
-        if siaf.crpix2:
-            model.meta.wcsinfo.crpix2 = siaf.crpix2
-        if siaf.cdelt1:
-            model.meta.wcsinfo.cdelt1 = siaf.cdelt1 / 3600  # in deg
-        if siaf.cdelt2:
-            model.meta.wcsinfo.cdelt2 = siaf.cdelt2 / 3600  # in deg
+        model.meta.wcsinfo.crpix1 = siaf.crpix1
+        model.meta.wcsinfo.crpix2 = siaf.crpix2
+        model.meta.wcsinfo.cdelt1 = siaf.cdelt1 / 3600  # in deg
+        model.meta.wcsinfo.cdelt2 = siaf.cdelt2 / 3600  # in deg
         model.meta.coordinates.reference_frame = "ICRS"
 
 
