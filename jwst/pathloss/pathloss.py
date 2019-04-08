@@ -220,23 +220,22 @@ def do_correction(input_model, pathloss_model):
 
                         wavelength_array = slit.wavelength
 
-                        # Compute and apply the 2D correction
+                        # Compute the pathloss 2D correction
                         if is_pointsource(slit.source_type):
-                            pathloss_pointsource_2d = interpolate_onto_grid(
+                            pathloss_2d = interpolate_onto_grid(
                                 wavelength_array,
                                 wavelength_pointsource,
                                 pathloss_pointsource_vector)
-                            slit.data /= pathloss_pointsource_2d
-                            slit.err /= pathloss_pointsource_2d
-                            slit.var_poisson /= pathloss_pointsource_2d**2
                         else:
-                            pathloss_uniformsource_2d = interpolate_onto_grid(
+                            pathloss_2d = interpolate_onto_grid(
                                 wavelength_array,
                                 wavelength_uniformsource,
                                 pathloss_uniform_vector)
-                            slit.data /= pathloss_uniformsource_2d
-                            slit.err /= pathloss_uniformsource_2d
-                            slit.var_poisson /= pathloss_uniformsource_2d**2
+                        # Apply the pathloss 2D correction and attach to datamodel
+                        slit.data /= pathloss_2d
+                        slit.err /= pathloss_2d
+                        slit.var_poisson /= pathloss_2d**2
+                        slit.pathloss = pathloss_2d
                     else:
                         log.warning("Source is outside slitlet, \
                         skipping pathloss correction for this slitlet")
@@ -282,23 +281,22 @@ def do_correction(input_model, pathloss_model):
 
                     wavelength_array = slit.wavelength
 
-                    # Compute and apply the 2D correction
+                    # Compute the pathloss 2D correction
                     if is_pointsource(slit.source_type):
-                        pathloss_pointsource_2d = interpolate_onto_grid(
+                        pathloss_2d = interpolate_onto_grid(
                             wavelength_array,
                             wavelength_pointsource,
                             pathloss_pointsource_vector)
-                        slit.data /= pathloss_pointsource_2d
-                        slit.err /= pathloss_pointsource_2d
-                        slit.var_poisson /= pathloss_pointsource_2d**2
                     else:
-                        pathloss_uniformsource_2d = interpolate_onto_grid(
+                        pathloss_2d = interpolate_onto_grid(
                             wavelength_array,
                             wavelength_uniformsource,
                             pathloss_uniform_vector)
-                        slit.data /= pathloss_uniformsource_2d
-                        slit.err /= pathloss_uniformsource_2d
-                        slit.var_poisson /= pathloss_uniformsource_2d**2
+                    # Apply the pathloss 2D correction and attach to datamodel
+                    slit.data /= pathloss_2d
+                    slit.err /= pathloss_2d
+                    slit.var_poisson /= pathloss_2d**2
+                    slit.pathloss = pathloss_2d
                 else:
                     log.warning("Source is outside slit, skipping pathloss correction for this slit")
             else:
@@ -341,23 +339,22 @@ def do_correction(input_model, pathloss_model):
             ra, dec, wavelength = slice_wcs(x, y)
             wavelength_array[ymin:ymax+1, xmin:xmax+1] = wavelength
 
-        # Compute and apply the 2D correction
+        # Compute the pathloss 2D correction
         if is_pointsource(input_model.meta.target.source_type):
-            pathloss_pointsource_2d = interpolate_onto_grid(
+            pathloss_2d = interpolate_onto_grid(
                 wavelength_array,
                 wavelength_pointsource,
                 pathloss_pointsource_vector)
-            output_model.data /= pathloss_pointsource_2d
-            output_model.err /= pathloss_pointsource_2d
-            output_model.var_poisson /= pathloss_pointsource_2d**2
         else:
-            pathloss_uniformsource_2d = interpolate_onto_grid(
+            pathloss_2d = interpolate_onto_grid(
                 wavelength_array,
                 wavelength_uniformsource,
                 pathloss_uniform_vector)
-            output_model.data /= pathloss_uniformsource_2d
-            output_model.err /= pathloss_uniformsource_2d
-            output_model.var_poisson /= pathloss_uniformsource_2d**2
+        # Apply the pathloss 2D correction and attach to datamodel
+        output_model.data /= pathloss_2d
+        output_model.err /= pathloss_2d
+        output_model.var_poisson /= pathloss_2d**2
+        output_model.pathloss = pathloss_2d
 
         # This might be useful to other steps
         output_model.wavelength = wavelength_array
@@ -413,7 +410,13 @@ def do_correction(input_model, pathloss_model):
                     correction[row] = (1.0 - dx) * pathloss_array[refrow_index, ix] + \
                                       dx * pathloss_array[refrow_index, ix + 1]
 
-        output_model.pathloss_pointsource = correction
+        # How do we apply for NIRISS?
+        # output_model.data /= pathloss_2d
+        # output_model.err /= pathloss_2d
+        # output_model.var_poisson /= pathloss_2d**2
+        # output_model.pathloss = pathloss_2d
+
+        output_model.pathloss = correction
         output_model.meta.cal_step.pathloss = 'COMPLETE'
 
     return output_model
