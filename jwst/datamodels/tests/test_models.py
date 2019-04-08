@@ -586,14 +586,14 @@ def test_slit_from_image():
     im.meta.instrument.name = "MIRI"
     slit_dm = SlitDataModel(im)
     assert_allclose(im.data, slit_dm.data)
-    assert hasattr(slit_dm, 'pathloss_pointsource')
+    assert hasattr(slit_dm, 'wavelength')
     # this should be enabled after gwcs starts using non-coordinate inputs
     #assert not hasattr(slit_dm, 'meta')
 
     slit = SlitModel(im)
     assert_allclose(im.data, slit.data)
     assert_allclose(im.err, slit.err)
-    assert hasattr(slit, 'pathloss_pointsource')
+    assert hasattr(slit, 'wavelength')
     assert slit.meta.instrument.name == "MIRI"
 
     im = ImageModel(slit)
