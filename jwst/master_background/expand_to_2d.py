@@ -10,6 +10,7 @@ from .. datamodels import dqflags
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+
 def expand_to_2d(input, m_bkg_spec):
     """Expand a 1-D background to 2-D.
 
@@ -245,8 +246,8 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
         A copy of `input` but with the data replaced by the background,
         "expanded" from 1-D to 2-D. The dq flags are set to DO_NOT_USE
         for the pixels outside the region provided in the X1D background
-        wavelength table. 
-        
+        wavelength table.
+
     """
 
     background = input.copy()
@@ -264,7 +265,7 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
             mask_limit = (wl_array > max_wave) | (wl_array < min_wave)
             wl_array[mask_limit] = -1
 
-        #TODO - add another DQ Flag something like NO_BACKGROUND when we have space in dqflags
+            # TODO - add another DQ Flag something like NO_BACKGROUND when we have space in dqflags
             background.dq[mask_limit] |= dqflags.pixel['DO_NOT_USE']
             bkg_flux = np.interp(wl_array, tab_wavelength, tab_background,
                                  left=0., right=0.)
@@ -277,11 +278,11 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
         # first remove the nans from wl_array and replace with -1
         mask = np.isnan(wl_array)
         wl_array[mask] = -1.
-        # next look at the limits of the wavelength tale 
+        # next look at the limits of the wavelength table
         mask_limit = (wl_array > max_wave) | (wl_array < min_wave)
         wl_array[mask_limit] = -1
 
-        #TODO - add another DQ Flag something like NO_BACKGROUND when we have space in dqflags
+        # TODO - add another DQ Flag something like NO_BACKGROUND when we have space in dqflags
         background.dq[mask_limit] |= dqflags.pixel['DO_NOT_USE']
         bkg_flux = np.interp(wl_array, tab_wavelength, tab_background,
                              left=0., right=0.)

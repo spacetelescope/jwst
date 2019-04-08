@@ -52,9 +52,7 @@ class MasterBackgroundStep(Step):
         """
 
         with datamodels.open(input) as input_data:
-
             background_data = None
-         
             # Handle individual NIRSpec FS, NIRSpec MOS
             if isinstance(input_data, datamodels.MultiSlitModel):
                 pass
@@ -131,7 +129,7 @@ class MasterBackgroundStep(Step):
             else:
                 background_2d = expand_to_2d(input_data, self.user_background)
                 result = subtract_2d_background(input_data, background_2d)
-                
+
                 # Record name of user-supplied master background spectrum
                 if isinstance(result, datamodels.ModelContainer):
                     for model in result:
@@ -148,11 +146,10 @@ class MasterBackgroundStep(Step):
                 # Save the computed background if requested by user
                 if self.save_background:
                     self.save_model(master_background, suffix='masterbg', asn_id=asn_id)
-            
+
             self.record_step_status(result, 'master_background', success=True)
 
         return result
-
 
     @property
     def _do_sub(self):
@@ -269,13 +266,12 @@ def subtract_2d_background(source, background):
         if isinstance(model, datamodels.MultiSlitModel):
             for slit, slitbg in zip(result.slits, background.slits):
                 slit.data -= slitbg.data
-                slit.dq  |= slitbg.dq
+                slit.dq |= slitbg.dq
 
         # Handle MIRI LRS, MIRI MRS and NIRSpec IFU
         elif isinstance(model, (datamodels.ImageModel, datamodels.IFUImageModel)):
             result.data -= background.data
-            result.dq  |= background.dq
-
+            result.dq |= background.dq
         else:
             # Shouldn't get here.
             raise RuntimeError("Input type {} is not supported."
