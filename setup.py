@@ -85,6 +85,7 @@ DOCS_REQUIRE = [
     'sphinx-rtd-theme',
     'stsci-rtd-theme',
     'sphinx-astropy',
+    'sphinx-asdf',
 ]
 TESTS_REQUIRE = [
     'ci-watson>=0.3.0',
