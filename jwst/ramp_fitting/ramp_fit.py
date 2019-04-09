@@ -370,7 +370,9 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
 
             # All first differences affected by saturation and CRs have been set
             #  to NaN, so compute the median of all non-NaN first differences.
-            nan_med = np.nanmedian(first_diffs_sect, axis=0)
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", "All-NaN.*", RuntimeWarning)
+                nan_med = np.nanmedian(first_diffs_sect, axis=0)
             nan_med[np.isnan(nan_med)] = 0. # if all first_diffs_sect are nans
             median_diffs_2d[ rlo:rhi, : ] += nan_med
 
@@ -502,7 +504,6 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
         warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
         warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
         var_p4[var_p4 <= 0.] = utils.LARGE_VARIANCE
-        warnings.resetwarnings()
 
         var_r4[num_int,:,:,:] *= ( segs_4[num_int,:,:,:] > 0)
         var_r4[var_r4 <= 0.] = utils.LARGE_VARIANCE
@@ -517,6 +518,7 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
         # Huge variances correspond to non-existing segments, so are reset to 0
         #  to nullify their contribution.
         var_p3[var_p3 > 0.1 * utils.LARGE_VARIANCE] = 0.
+        warnings.resetwarnings()
 
         var_both4[num_int,:,:,:] = var_r4[num_int,:,:,:] + var_p4[num_int,:,:,:]
         inv_var_both4[num_int, :, :, :] = 1./var_both4[num_int, :, :, :]
@@ -730,8 +732,10 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
 
     # Huge variances correspond to non-existing segments, so are reset to 0
     #  to nullify their contribution.
-    var_p2[var_p2 > 0.1 * utils.LARGE_VARIANCE] = 0.
-    var_r2[var_r2 > 0.1 * utils.LARGE_VARIANCE] = 0.
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "invalid value.*", RuntimeWarning)
+        var_p2[var_p2 > 0.1 * utils.LARGE_VARIANCE] = 0.
+        var_r2[var_r2 > 0.1 * utils.LARGE_VARIANCE] = 0.
 
     # Some contributions to these vars may be NaN as they are from ramps 
     # having PIXELDQ=DO_NOT_USE
@@ -1455,7 +1459,9 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
         pixel_done[these_pix] = True # all processing for pixel is completed
         got_case[ these_pix ] = True
 
-        g_pix = these_pix[variance[these_pix] > 0.] # good pixels
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", "invalid value.*", RuntimeWarning)
+            g_pix = these_pix[variance[these_pix] > 0.] # good pixels
         if (len(g_pix) > 0):
             inv_var[g_pix] += 1.0 / variance[g_pix]
 
@@ -2528,12 +2534,15 @@ def calc_opt_sums(rn_sect, gain_sect, data_masked, mask_2d, xvalues, good_pix):
     # difference between the last and first reads for pixels where this results
     # in a positive SNR. Otherwise set the SNR to 0.
     sqrt_arg = rn_2_r + data_diff * gain_sect_r
-    wh_pos = np.where((sqrt_arg >= 0.) & (gain_sect_r != 0.))
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "invalid value.*", RuntimeWarning)
+        wh_pos = np.where((sqrt_arg >= 0.) & (gain_sect_r != 0.))
     numer_ir[wh_pos] = np.sqrt(rn_2_r[wh_pos] + \
                                 data_diff[wh_pos] * gain_sect_r[wh_pos])
     sigma_ir[wh_pos] = numer_ir[wh_pos] / gain_sect_r[wh_pos]
     snr = data_diff * 0.
     snr[wh_pos] = data_diff[wh_pos] / sigma_ir[wh_pos]
+    snr[np.isnan(snr)] = 0.0
     snr[snr < 0.] = 0.0
 
     del wh_pos
