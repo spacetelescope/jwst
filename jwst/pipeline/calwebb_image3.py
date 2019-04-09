@@ -62,7 +62,7 @@ class Image3Pipeline(Pipeline):
         is_container = isinstance(input_models, datamodels.ModelContainer)
         try:
             has_groups = len(input_models.group_names) > 1
-        except:
+        except Exception:
             has_groups = False
         if is_container and has_groups:
 
@@ -94,7 +94,7 @@ class Image3Pipeline(Pipeline):
             result.meta.asn.pool_name = input_models.meta.asn_table.asn_pool
             result.meta.asn.table_name = os.path.basename(input)
             result.meta.filename = input_models.meta.asn_table.products[0].name
-        except:
+        except Exception:
             pass
 
         self.save_model(result, suffix=self.suffix)
