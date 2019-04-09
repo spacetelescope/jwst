@@ -30,7 +30,9 @@ def test_open_association():
     """Test for opening an association"""
 
     asn_file = t_path('association.json')
-    m = open(asn_file)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "model_type not found")
+        m = open(asn_file)
     assert isinstance(m, ModelContainer)
 
 def test_open_shape():
