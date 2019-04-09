@@ -2,7 +2,9 @@
 JWST calibration processing steps.
 
 """
-import os, sys, inspect
+import os
+import sys
+import inspect
 import imp
 import json
 
@@ -139,7 +141,7 @@ class StepVersions(object):
         if clobber:
             try:
                 os.remove(filename)
-            except:
+            except Exception:
                 pass
             if self.verbose:
                 print('Removing previous version of {}'.format(filename))

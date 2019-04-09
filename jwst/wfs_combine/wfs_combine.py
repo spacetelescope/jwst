@@ -533,9 +533,10 @@ def create_griddata_array(sci_data, pixel):
         for y in range(ymin, ymax + 1):
             interp_list.append([y, x, sci_data[y, x]])
 
-    try:  # Remove identity element (central pixel)
+    # Remove identity element (central pixel)
+    try:
         interp_list.remove([pixel[0], pixel[1], sci_data[pixel[0], pixel[1]]])
-    except:
+    except ValueError:
         pass
 
     interp_arr = np.asarray(interp_list)  # griddata requires an array

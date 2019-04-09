@@ -114,9 +114,9 @@ def niriss_soss(input_model, reference_files):
     # Get the target RA and DEC, they will be used for setting the WCS RA
     # and DEC based on a conversation with Kevin Volk.
     try:
-        target_ra = float(input_model['meta.target.ra'])
-        target_dec = float(input_model['meta.target.dec'])
-    except:
+        target_ra = float(input_model.meta.target.ra)
+        target_dec = float(input_model.meta.target.dec)
+    except TypeError:
         # There was an error getting the target RA and DEC, so we are not going to continue.
         raise ValueError('Problem getting the TARG_RA or TARG_DEC from input model {}'.format(input_model))
 

@@ -3,11 +3,11 @@ import sys
 import pkgutil
 from os.path import basename
 from subprocess import check_call, CalledProcessError
-from setuptools import setup, find_packages, Extension, Command
+from setuptools import setup, find_packages, Command
 from setuptools.command.test import test as TestCommand
-from setuptools.command.build_ext import build_ext
 from glob import glob
 
+import relic.release
 
 if sys.version_info < (3, 5):
     error = """
@@ -154,8 +154,6 @@ if not pkgutil.find_loader('relic'):
     except CalledProcessError as e:
         print(e)
         exit(1)
-
-import relic.release
 
 version = relic.release.get_info()
 relic.release.write_template(version, NAME)
