@@ -5,6 +5,7 @@ import numpy as np
 from gwcs.wcstools import grid_from_bounding_box
 from .. import datamodels
 from .. assign_wcs import nirspec               # for NIRSpec IFU data
+from .. datamodels import dqflags
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -154,6 +155,8 @@ def bkg_for_multislit(input, tab_wavelength, tab_background):
     """
 
     background = input.copy()
+    min_wave = np.amin(tab_wavelength)
+    max_wave = np.amax(tab_wavelength)
 
     for (k, slit) in enumerate(input.slits):
         wl_array = get_wavelengths(slit)
@@ -166,13 +169,15 @@ def bkg_for_multislit(input, tab_wavelength, tab_background):
         # will detect that those values are out of range (note the `left`
         # argument to np.interp) and set the output to 0.
         wl_array[np.isnan(wl_array)] = -1.
-
+        # flag values outside of background wavelength table
+        mask_limit = (wl_array > max_wave) | (wl_array < min_wave)
+        wl_array[mask_limit] = -1
         # bkg_flux will be a 2-D array, because wl_array is 2-D.
         bkg_flux = np.interp(wl_array, tab_wavelength, tab_background,
                              left=0., right=0.)
 
         background.slits[k].data[:] = bkg_flux.copy()
-
+        background.slits[k].dq[mask_limit] |= dqflags.pixel['DO_NOT_USE']
     return background
 
 
@@ -199,20 +204,23 @@ def bkg_for_image(input, tab_wavelength, tab_background):
     """
 
     background = input.copy()
-
+    min_wave = np.amin(tab_wavelength)
+    max_wave = np.amax(tab_wavelength)
     wl_array = get_wavelengths(input)
     if wl_array is None:
         raise RuntimeError("Can't determine wavelengths for {}"
                            .format(type(input)))
 
     wl_array[np.isnan(wl_array)] = -1.
-
+    # flag values outside of background wavelength table
+    mask_limit = (wl_array > max_wave) | (wl_array < min_wave)
+    wl_array[mask_limit] = -1
     # bkg_flux will be a 2-D array, because wl_array is 2-D.
     bkg_flux = np.interp(wl_array, tab_wavelength, tab_background,
                          left=0., right=0.)
 
     background.data[:] = bkg_flux.copy()
-
+    background.dq[mask_limit] |= dqflags.pixel['DO_NOT_USE']
     return background
 
 
@@ -235,19 +243,29 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
     -------
     background : `~jwst.datamodels.IFUImageModel`
         A copy of `input` but with the data replaced by the background,
-        "expanded" from 1-D to 2-D.
+        "expanded" from 1-D to 2-D. The dq flags are set to DO_NOT_USE
+        for the pixels outside the region provided in the X1D background
+        wavelength table. 
+        
     """
 
     background = input.copy()
     background.data[:, :] = 0.
+    min_wave = np.amin(tab_wavelength)
+    max_wave = np.amax(tab_wavelength)
 
     if input.meta.instrument.name.upper() == "NIRSPEC":
         list_of_wcs = nirspec.nrs_ifu_wcs(input)
         for ifu_wcs in list_of_wcs:
             x, y = grid_from_bounding_box(ifu_wcs.bounding_box)
             wl_array = ifu_wcs(x, y)[2]
-
             wl_array[np.isnan(wl_array)] = -1.
+            # flag values outside of the background wavelength table
+            mask_limit = (wl_array > max_wave) | (wl_array < min_wave)
+            wl_array[mask_limit] = -1
+
+        #TODO - add another DQ Flag something like NO_BACKGROUND when we have space in dqflags
+            background.dq[mask_limit] |= dqflags.pixel['DO_NOT_USE']
             bkg_flux = np.interp(wl_array, tab_wavelength, tab_background,
                                  left=0., right=0.)
             background.data[y.astype(int), x.astype(int)] = bkg_flux.copy()
@@ -256,12 +274,18 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
         shape = input.data.shape
         grid = np.indices(shape, dtype=np.float64)
         wl_array = input.meta.wcs(grid[1], grid[0])[2]
+        # first remove the nans from wl_array and replace with -1
+        mask = np.isnan(wl_array)
+        wl_array[mask] = -1.
+        # next look at the limits of the wavelength tale 
+        mask_limit = (wl_array > max_wave) | (wl_array < min_wave)
+        wl_array[mask_limit] = -1
 
-        wl_array[np.isnan(wl_array)] = -1.
+        #TODO - add another DQ Flag something like NO_BACKGROUND when we have space in dqflags
+        background.dq[mask_limit] |= dqflags.pixel['DO_NOT_USE']
         bkg_flux = np.interp(wl_array, tab_wavelength, tab_background,
                              left=0., right=0.)
         background.data[:, :] = bkg_flux.copy()
-
     else:
         raise RuntimeError("Exposure type {} is not supported."
                            .format(input.meta.exposure.type))
