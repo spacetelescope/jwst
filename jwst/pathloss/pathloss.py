@@ -1,6 +1,5 @@
-#
-#  Module for calculating pathloss correction for science data sets
-#
+# Module for calculating pathloss correction for science data sets
+
 import math
 import numpy as np
 import logging
@@ -11,13 +10,11 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-# There are 30 slices in the NIRSPEC IFU, numbered from
-# 0 to 29
+# There are 30 slices in the NIRSPEC IFU, numbered from 0 to 29
 NIRSPEC_IFU_SLICES = np.arange(30)
 
 def get_center(exp_type, input):
-    """
-    Get the center of the target in the aperture.
+    """Get the center of the target in the aperture.
     (0.0, 0.0) is the aperture center.  Coordinates go
     from -0.5 to 0.5.
     """
@@ -76,36 +73,28 @@ def calculate_pathloss_vector(pathloss_refdata,
 
     Parameters:
     -----------
+    pathloss_refdata : numpy ndarray
+        The input pathloss data array
 
-    pathloss_refdata:     numpy ndarray
+    pathloss_wcs : wcs attribute from model
 
-    The input pathloss data array
+    xcenter : float
+        The x-center of the target (-0.5 to 0.5)
 
-    pathloss_wcs:      wcs attribute from model
-
-    xcenter: Float
-
-    The x-center of the target (-0.5 to 0.5)
-
-    ycenter: Float
-
-    The y-center of the target (-0.5 to 0.5)
+    ycenter : float
+        The y-center of the target (-0.5 to 0.5)
 
     Returns:
     --------
+    wavelength : numpy ndarray
+        The 1-d wavelength array
 
-    wavelength:   numpy ndarray
+    pathloss : numpy ndarray
+        The corresponding 1-d pathloss array
 
-    The 1-d wavelength array
-
-    pathloss:   numpy ndarray
-
-    The corresponding 1-d pathloss array
-
-    is_inside_slitlet:    Boolean
-
-    Returns True if the object source position is inside the slitlet,
-    otherwise returns False
+    is_inside_slitlet : bool
+        Returns True if the object source position is inside the slitlet,
+        otherwise returns False
 
     """
     is_inside_slitlet = True
@@ -174,15 +163,15 @@ def do_correction(input_model, pathloss_model):
 
     Parameters
     ----------
-    input_model: data model object
+    input_model : data model object
         science data to be corrected
 
-    pathloss_model: pathloss model object
+    pathloss_model : pathloss model object
         pathloss correction data
 
     Returns
     -------
-    output_model: data model object
+    output_model : data model object
         Science data with pathloss extensions added
 
     """
@@ -369,9 +358,10 @@ def do_correction(input_model, pathloss_model):
 
     elif exp_type == 'NIS_SOSS':
         """NIRISS SOSS pathloss correction is basically a correction for the
-        flux that falls outside the subarray aperture.  The correction depends
+        flux from the 2nd and 3rd order dispersion that falls outside the
+        subarray aperture.  The correction depends
         on the pupil wheel position and column number (or wavelength).  The
-        simpler option is to do the correction by column number, then the only
+        simple option is to do the correction by column number, then the only
         interpolation needed is a 1-d interpolation into the pupil wheel position
         dimension."""
 
@@ -380,7 +370,15 @@ def do_correction(input_model, pathloss_model):
             log.warning("NIRISS SOSS TSO observations skip the pathloss step")
             output_model.meta.cal_step.pathloss = 'SKIPPED'
             return output_model
+
         pupil_wheel_position = input_model.meta.instrument.pupil_position
+        if pupil_wheel_position is None:
+            log.warning("Unable to get pupil wheel position from PWCPOS keyword "
+                "for {}".format(input_model.meta.filename))
+            log.warning("Pathloss correction skipped")
+            output_model.meta.cal_step.pathloss = 'SKIPPED'
+            return output_model
+
         subarray = input_model.meta.subarray.name
         # Get the aperture from the reference file that matches the subarray
         aperture = get_aperture_from_model(pathloss_model, subarray)
@@ -390,15 +388,18 @@ def do_correction(input_model, pathloss_model):
             log.warning("Pathloss correction skipped")
             output_model.meta.cal_step.pathloss = 'SKIPPED'
             return output_model
+
         else:
             log.info("Aperture {} selected from reference file".format(aperture.name))
         pathloss_array = aperture.pointsource_data[0]
         nrows, ncols = pathloss_array.shape
-        correction = np.ones(2048, dtype=np.float32)
+        _, data_ncols = input_model.data.shape
+        correction = np.ones(data_ncols, dtype=np.float32)
         crpix1 = aperture.pointsource_wcs.crpix1
         crval1 = aperture.pointsource_wcs.crval1
         cdelt1 = aperture.pointsource_wcs.cdelt1
         pupil_wheel_index = crpix1 + (pupil_wheel_position - crval1) / cdelt1 - 1
+
         if pupil_wheel_index < 0 or pupil_wheel_index > (ncols - 2):
             log.info("Pupil Wheel position outside reference file coverage")
             log.info("Setting pathloss correction to 1.0")
@@ -408,7 +409,7 @@ def do_correction(input_model, pathloss_model):
             crpix2 = aperture.pointsource_wcs.crpix2
             crval2 = aperture.pointsource_wcs.crval2
             cdelt2 = aperture.pointsource_wcs.cdelt2
-            for row in range(2048):
+            for row in range(data_ncols):
                 row_1indexed = row + 1
                 refrow_index = math.floor(crpix2 + (row_1indexed - crval2) / cdelt2 - 0.5)
                 if refrow_index < 0 or refrow_index > (nrows - 1):
@@ -417,13 +418,13 @@ def do_correction(input_model, pathloss_model):
                     correction[row] = (1.0 - dx) * pathloss_array[refrow_index, ix] + \
                                       dx * pathloss_array[refrow_index, ix + 1]
 
-        # How do we apply for NIRISS?
-        # output_model.data /= pathloss_2d
-        # output_model.err /= pathloss_2d
-        # output_model.var_poisson /= pathloss_2d**2
-        # output_model.pathloss = pathloss_2d
+        pathloss_2d = np.broadcast_to(correction, input_model.data.shape)
+        print(pathloss_2d.mean())
+        output_model.data /= pathloss_2d
+        output_model.err /= pathloss_2d
+        output_model.var_poisson /= pathloss_2d**2
+        output_model.pathloss = pathloss_2d
 
-        output_model.pathloss = correction
         output_model.meta.cal_step.pathloss = 'COMPLETE'
 
     return output_model
