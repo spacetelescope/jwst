@@ -171,10 +171,9 @@ class BaseJWSTTestSteps(BaseJWSTTest):
 
         input_file = self.get_data(self.test_dir, input)
 
-        result = step_class.call(input_file, **step_pars)
+        result = step_class.call(input_file, save_results=True, **step_pars)
 
         output_file = result.meta.filename
-        result.save(output_file)
         result.close()
 
         output_pars = None
