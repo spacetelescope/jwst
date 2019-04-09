@@ -64,7 +64,7 @@ def create_spectral_wcs(ra, dec, wavelength):
                                                 bounds_error=False,
                                                 )
     else:
-        log.warn("Wavelengths are not strictly monotonic, inverse transform is not set")
+        log.warning("Wavelengths are not strictly monotonic, inverse transform is not set")
 
     pipeline = [(input_frame, tab),
                 (world, None)]
