@@ -1,7 +1,7 @@
 type: object
 properties:
   pathloss:
-    title: 2D array for pathloss
+    title: Path loss correction
     fits_hdu: PATHLOSS
     ndim: 2
     datatype: float32
