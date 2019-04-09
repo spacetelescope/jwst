@@ -44,7 +44,7 @@ def _cast(val, schema):
                     schema['max_ndim'], len(val.shape)))
 
         if isinstance(val, np.generic) and np.isscalar(val):
-            val = np.asscalar(val)
+            val = val.item()
     return val
 
 
