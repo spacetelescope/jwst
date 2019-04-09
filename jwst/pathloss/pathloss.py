@@ -10,6 +10,7 @@ from gwcs import wcstools
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+
 # There are 30 slices in the NIRSPEC IFU, numbered from
 # 0 to 29
 NIRSPEC_IFU_SLICES = np.arange(30)
@@ -49,14 +50,17 @@ def get_aperture_from_model(input_model, match):
     """
     if input_model.meta.exposure.type == 'NRS_MSASPEC':
         for aperture in input_model.apertures:
-            if aperture.shutters == match: return aperture
+            if aperture.shutters == match:
+                return aperture
     elif input_model.meta.exposure.type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ',
                                             'NIS_SOSS']:
         for aperture in input_model.apertures:
             log.debug(aperture.name)
-            if aperture.name == match: return aperture
+            if aperture.name == match:
+                return aperture
     else:
-        log.warning('Unable to get aperture from model type {0}'.format(input_model.meta.exposure.type))
+        log.warning("Unable to get aperture from "
+            "model type {0}".format(input_model.meta.exposure.type))
 
     # If nothing matches, return None
     return None
@@ -140,8 +144,8 @@ def calculate_pathloss_vector(pathloss_refdata,
         cdelt2 = pathloss_wcs.cdelt2
         object_colindex = crpix1 + (xcenter - crval1) / cdelt1 - 1
         object_rowindex = crpix2 + (ycenter - crval2) / cdelt2 - 1
-        if (object_colindex < 0 or object_colindex >= (ncols-1) or 
-            object_rowindex < 0 or object_rowindex >= (nrows-1)):
+        if (object_colindex < 0 or object_colindex >= (ncols - 1) or
+            object_rowindex < 0 or object_rowindex >= (nrows - 1)):
             is_inside_slitlet = False
         else:
 
@@ -237,15 +241,16 @@ def do_correction(input_model, pathloss_model):
                         slit.var_poisson /= pathloss_2d**2
                         slit.pathloss = pathloss_2d
                     else:
-                        log.warning("Source is outside slitlet, \
-                        skipping pathloss correction for this slitlet")
+                        log.warning("Source is outside slit.  Skipping "
+                        "pathloss correction for slit {}".format(slit_number))
                 else:
-                    log.warning("Cannot find matching pathloss model for slit with size {}, \
-                    skipping pathloss correction for this slitlet".format(nshutters))
+                    log.warning("Cannot find matching pathloss model for slit "
+                        "with {} shutters, skipping pathloss correction for this "
+                        "slit".format(nshutters))
                     continue
             else:
-                log.warning("Slit has data size = {}, \
-                skipping pathloss correction for this slitlet".format(size))
+                log.warning("Slit has data size = {}, skipping "
+                    "pathloss correction for this slitlet".format(size))
         output_model.meta.cal_step.pathloss = 'COMPLETE'
     elif exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
         slit_number = 0
@@ -261,7 +266,7 @@ def do_correction(input_model, pathloss_model):
             # Get the aperture from the reference file that matches the slit
             aperture = get_aperture_from_model(pathloss_model, slit.name)
             if aperture is not None:
-                log.info("Using aperture {0}".format(aperture.name))
+                log.info("Using aperture {}".format(aperture.name))
                 (wavelength_pointsource,
                  pathloss_pointsource_vector,
                  is_inside_slit) = calculate_pathloss_vector(aperture.pointsource_data,
@@ -298,10 +303,11 @@ def do_correction(input_model, pathloss_model):
                     slit.var_poisson /= pathloss_2d**2
                     slit.pathloss = pathloss_2d
                 else:
-                    log.warning("Source is outside slit, skipping pathloss correction for this slit")
+                    log.warning("Source is outside slit.  Skipping "
+                        "pathloss correction for slit {}".format(slit.name))
             else:
-                log.warning("Cannot find matching pathloss model for aperture {}, \
-                skipping pathloss correction for this slit".format(slit.name))
+                log.warning("Cannot find matching pathloss model for aperture {} "
+                    "skipping pathloss correction for this slit".format(slit.name))
                 continue
         output_model.meta.cal_step.pathloss = 'COMPLETE'
     elif exp_type == 'NRS_IFU':
@@ -379,7 +385,8 @@ def do_correction(input_model, pathloss_model):
         # Get the aperture from the reference file that matches the subarray
         aperture = get_aperture_from_model(pathloss_model, subarray)
         if aperture is None:
-            log.warning("Unable to get Aperture from reference file for subarray {}".format(subarray))
+            log.warning("Unable to get Aperture from reference file "
+                "for subarray {}".format(subarray))
             log.warning("Pathloss correction skipped")
             output_model.meta.cal_step.pathloss = 'SKIPPED'
             return output_model
