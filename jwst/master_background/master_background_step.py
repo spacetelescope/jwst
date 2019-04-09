@@ -94,12 +94,12 @@ class MasterBackgroundStep(Step):
                     # Record name of user-supplied master background spectrum
                     for model in result:
                         model.meta.background.master_background_file = basename(self.user_background)
+                # Use user-supplied master background and subtract it
                 else:
                     background_2d = expand_to_2d(input_data, self.user_background)
                     result = subtract_2d_background(input_data, background_2d)
                     # Record name of user-supplied master background spectrum
                     result.meta.background.master_background_file = basename(self.user_background)
-
             # Compute master background and subtract it
             else:
                 if isinstance(input_data, datamodels.ModelContainer):
@@ -118,17 +118,13 @@ class MasterBackgroundStep(Step):
                         background_data,
                         exptime_key='exposure_time',
                         background=True,
-                    )
+                        )
 
                     result = datamodels.ModelContainer()
                     result.update(input_data)
                     for model in input_data:
                         background_2d = expand_to_2d(model, master_background)
                         result.append(subtract_2d_background(model, background_2d))
-            # Use user-supplied master background and subtract it
-            else:
-                background_2d = expand_to_2d(input_data, self.user_background)
-                result = subtract_2d_background(input_data, background_2d)
 
                 # Record name of user-supplied master background spectrum
                 if isinstance(result, datamodels.ModelContainer):
