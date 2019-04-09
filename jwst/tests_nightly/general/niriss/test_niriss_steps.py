@@ -11,6 +11,7 @@ from jwst.flatfield import FlatFieldStep
 from jwst.jump import JumpStep
 from jwst.linearity import LinearityStep
 from jwst.saturation import SaturationStep
+from jwst.pathloss import PathLossStep
 
 
 # Parameterized regression tests for NIRISS processing
@@ -91,6 +92,14 @@ class TestNIRISSSteps(BaseJWSTTestSteps):
                       output_truth='jw00034001001_01101_00001_NIRISS_saturation.fits',
                       output_hdus=[],
                       id='saturation_niriss'
+                      ),
+                 dict(input='soss_2AB_results_int_assign_wcs.fits',
+                      test_dir='test_pathloss',
+                      step_class=PathLossStep,
+                      step_pars=dict(),
+                      output_truth='soss_2AB_results_int_pathloss.fits',
+                      output_hdus=[],
+                      id='pathloss_niriss'
                       ),
                 ]
               }
