@@ -50,6 +50,7 @@ allOf:
       ndim: 2
       default: 0.0
       datatype: float32
+- $ref: pathlosscorr.schema.yaml
 - type: object
   properties:
     meta:

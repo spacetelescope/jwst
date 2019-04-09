@@ -419,7 +419,6 @@ def do_correction(input_model, pathloss_model):
                                       dx * pathloss_array[refrow_index, ix + 1]
 
         pathloss_2d = np.broadcast_to(correction, input_model.data.shape)
-        print(pathloss_2d.mean())
         output_model.data /= pathloss_2d
         output_model.err /= pathloss_2d
         output_model.var_poisson /= pathloss_2d**2
