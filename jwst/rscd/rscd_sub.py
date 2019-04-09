@@ -93,18 +93,18 @@ def do_correction(input_model, rscd_model):
         param['odd']['sat_zp'] + param['odd']['sat_slope'] * sci_ngroups +
         param['odd']['sat2'] * ngroups2 + param['odd']['sat_rowterm'])
 
-    b2_even = np.asscalar(param['even']['pow'])
-    b2_odd = np.asscalar(param['odd']['pow'])
-    b3_even = np.asscalar(param['even']['param3'])
-    b3_odd = np.asscalar(param['odd']['param3'])
-    crossopt_even = np.asscalar(param['even']['crossopt'])
-    crossopt_odd = np.asscalar(param['odd']['crossopt'])
-    sat_mzp_even = np.asscalar(param['even']['sat_mzp'])
-    sat_mzp_odd = np.asscalar(param['odd']['sat_mzp'])
-    sat_scale_even = np.asscalar(param['even']['sat_scale'])
-    sat_scale_odd = np.asscalar(param['odd']['sat_scale'])
-    tau_even = np.asscalar(param['even']['tau'])
-    tau_odd = np.asscalar(param['odd']['tau'])
+    b2_even = param['even']['pow'].item()
+    b2_odd = param['odd']['pow'].item()
+    b3_even = param['even']['param3'].item()
+    b3_odd = param['odd']['param3'].item()
+    crossopt_even = param['even']['crossopt'].item()
+    crossopt_odd = param['odd']['crossopt'].item()
+    sat_mzp_even = param['even']['sat_mzp'].item()
+    sat_mzp_odd = param['odd']['sat_mzp'].item()
+    sat_scale_even = param['even']['sat_scale'].item()
+    sat_scale_odd = param['odd']['sat_scale'].item()
+    tau_even = param['even']['tau'].item()
+    tau_odd = param['odd']['tau'].item()
 
     # loop over all integrations except the first
     mdelta = int(sci_nints / 10) + 1
