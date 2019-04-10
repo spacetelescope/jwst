@@ -1,9 +1,8 @@
 from os.path import basename
-
+import numpy as np
 from ..stpipe import Step
 from .. import datamodels
 from ..combine_1d.combine1d import combine_1d_spectra
-
 from .expand_to_2d import expand_to_2d
 
 __all__ = ["MasterBackgroundStep"]
@@ -52,7 +51,6 @@ class MasterBackgroundStep(Step):
         """
 
         with datamodels.open(input) as input_data:
-
             # Make the input data available to self
             self.input_data = input_data
 
@@ -90,12 +88,12 @@ class MasterBackgroundStep(Step):
                     # Record name of user-supplied master background spectrum
                     for model in result:
                         model.meta.background.master_background_file = basename(self.user_background)
+                # Use user-supplied master background and subtract it
                 else:
                     background_2d = expand_to_2d(input_data, self.user_background)
                     result = subtract_2d_background(input_data, background_2d)
                     # Record name of user-supplied master background spectrum
                     result.meta.background.master_background_file = basename(self.user_background)
-
             # Compute master background and subtract it
             else:
                 if isinstance(input_data, datamodels.ModelContainer):
@@ -114,7 +112,7 @@ class MasterBackgroundStep(Step):
                         background_data,
                         exptime_key='exposure_time',
                         background=True,
-                    )
+                        )
 
                     result = datamodels.ModelContainer()
                     result.update(input_data)
@@ -122,7 +120,6 @@ class MasterBackgroundStep(Step):
                         background_2d = expand_to_2d(model, master_background)
                         result.append(subtract_2d_background(model, background_2d))
 
-                # Skip step for case with no container and no user background
                 else:
                     result = input_data.copy()
                     self.log.warning(
@@ -135,11 +132,10 @@ class MasterBackgroundStep(Step):
                 # Save the computed background if requested by user
                 if self.save_background:
                     self.save_model(master_background, suffix='masterbg', asn_id=asn_id)
-            
+
             self.record_step_status(result, 'master_background', success=True)
 
         return result
-
 
     @property
     def _do_sub(self):
@@ -256,11 +252,12 @@ def subtract_2d_background(source, background):
         if isinstance(model, datamodels.MultiSlitModel):
             for slit, slitbg in zip(result.slits, background.slits):
                 slit.data -= slitbg.data
+                slit.dq = np.bitwise_or(slit.dq, slitbg.dq)
 
         # Handle MIRI LRS, MIRI MRS and NIRSpec IFU
         elif isinstance(model, (datamodels.ImageModel, datamodels.IFUImageModel)):
             result.data -= background.data
-
+            result.dq = np.bitwise_or(result.dq, background.dq)
         else:
             # Shouldn't get here.
             raise RuntimeError("Input type {} is not supported."

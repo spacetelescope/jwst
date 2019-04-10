@@ -67,6 +67,9 @@ master_background
 - ``MasterBackgroundStep`` now can handle BACKGROUND association members
   that come from nodded exposures of the source. [#3311]
 
+- Updated the DQFlags of the background subtracted data to be DO_NOT_USE
+  for the pixels that have wavelenghts outside the master background [#3326]
+
 outlier_detection
 -----------------
 
