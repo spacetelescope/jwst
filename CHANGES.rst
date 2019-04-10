@@ -42,6 +42,9 @@ datamodels
 - Keyword updates to remove GS_STATE and change GUIDESTA to string
   type. [#3314]
 
+- Added BUNIT keyword to gain and readnoise reference file schemas.
+  [#3322]
+
 extract_1d
 ----------
 
@@ -86,6 +89,9 @@ set_telescope_pointing
 
 - Fix ``populate_model_from_siaf`` to convert SIAF pixel scale from
   arcsec to degress for CDELTn keywords. [#3248]
+
+- Updates to prevent crashes when SIAF values needed for crpix or
+  cdelt keywords are missing. [#3316]
 
 srctype
 -------
