@@ -876,7 +876,7 @@ class V23ToSky(Rotation3D):
 
         return ra, dec
 
-    def __call__(self, v2, v3):
+    def __call__(self, v2, v3, **kwargs):
         from itertools import chain
         inputs, format_info = self.prepare_inputs(v2, v3)
         parameters = self._param_sets(raw=True)
