@@ -180,7 +180,7 @@ def bkg_for_multislit(input, tab_wavelength, tab_background):
         background.slits[k].data[:] = bkg_flux.copy()
         background.slits[k].dq[mask_limit] = np.bitwise_or(background.slits[k].dq[mask_limit],
                                                            dqflags.pixel['DO_NOT_USE'])
-        
+
     return background
 
 
@@ -223,9 +223,9 @@ def bkg_for_image(input, tab_wavelength, tab_background):
                          left=0., right=0.)
 
     background.data[:] = bkg_flux.copy()
-    background.dq[mask_limit] = np.bitwise_or(background.dq[mask_limt],
+    background.dq[mask_limit] = np.bitwise_or(background.dq[mask_limit],
                                               dqflags.pixel['DO_NOT_USE'])
-    
+
     return background
 
 
