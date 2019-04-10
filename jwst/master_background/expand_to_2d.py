@@ -178,7 +178,9 @@ def bkg_for_multislit(input, tab_wavelength, tab_background):
                              left=0., right=0.)
 
         background.slits[k].data[:] = bkg_flux.copy()
-        background.slits[k].dq[mask_limit] |= dqflags.pixel['DO_NOT_USE']
+        background.slits[k].dq[mask_limit] = np.bitwise_or(background.slits[k].dq[mask_limit],
+                                                           dqflags.pixel['DO_NOT_USE'])
+        
     return background
 
 
@@ -221,7 +223,9 @@ def bkg_for_image(input, tab_wavelength, tab_background):
                          left=0., right=0.)
 
     background.data[:] = bkg_flux.copy()
-    background.dq[mask_limit] |= dqflags.pixel['DO_NOT_USE']
+    background.dq[mask_limit] = np.bitwise_or(background.dq[mask_limt],
+                                              dqflags.pixel['DO_NOT_USE'])
+    
     return background
 
 
@@ -266,7 +270,8 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
             wl_array[mask_limit] = -1
 
             # TODO - add another DQ Flag something like NO_BACKGROUND when we have space in dqflags
-            background.dq[mask_limit] |= dqflags.pixel['DO_NOT_USE']
+            background.dq[mask_limit] = np.bitwise_or(background.dq[mask_limit],
+                                                      dqflags.pixel['DO_NOT_USE'])
             bkg_flux = np.interp(wl_array, tab_wavelength, tab_background,
                                  left=0., right=0.)
             background.data[y.astype(int), x.astype(int)] = bkg_flux.copy()
@@ -283,7 +288,8 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
         wl_array[mask_limit] = -1
 
         # TODO - add another DQ Flag something like NO_BACKGROUND when we have space in dqflags
-        background.dq[mask_limit] |= dqflags.pixel['DO_NOT_USE']
+        background.dq[mask_limit] = np.bitwise_or(background.dq[mask_limit],
+                                                dqflags.pixel['DO_NOT_USE'])
         bkg_flux = np.interp(wl_array, tab_wavelength, tab_background,
                              left=0., right=0.)
         background.data[:, :] = bkg_flux.copy()

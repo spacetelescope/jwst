@@ -1,9 +1,8 @@
 from os.path import basename
-
+import numpy as np
 from ..stpipe import Step
 from .. import datamodels
 from ..combine_1d.combine1d import combine_1d_spectra
-
 from .expand_to_2d import expand_to_2d
 
 __all__ = ["MasterBackgroundStep"]
@@ -52,11 +51,6 @@ class MasterBackgroundStep(Step):
         """
 
         with datamodels.open(input) as input_data:
-            background_data = None
-            # Handle individual NIRSpec FS, NIRSpec MOS
-            if isinstance(input_data, datamodels.MultiSlitModel):
-                pass
-
             # Make the input data available to self
             self.input_data = input_data
 
@@ -126,10 +120,6 @@ class MasterBackgroundStep(Step):
                         background_2d = expand_to_2d(model, master_background)
                         result.append(subtract_2d_background(model, background_2d))
 
-                # Record name of user-supplied master background spectrum
-                if isinstance(result, datamodels.ModelContainer):
-                    for model in result:
-                        model.meta.background.master_background_file = basename(self.user_background)
                 else:
                     result = input_data.copy()
                     self.log.warning(
@@ -262,12 +252,12 @@ def subtract_2d_background(source, background):
         if isinstance(model, datamodels.MultiSlitModel):
             for slit, slitbg in zip(result.slits, background.slits):
                 slit.data -= slitbg.data
-                slit.dq |= slitbg.dq
+                slit.dq = np.bitwise_or(slit.dq, slitbg.dq)
 
         # Handle MIRI LRS, MIRI MRS and NIRSpec IFU
         elif isinstance(model, (datamodels.ImageModel, datamodels.IFUImageModel)):
             result.data -= background.data
-            result.dq |= background.dq
+            result.dq = np.bitwise_or(result.dq, background.dq)
         else:
             # Shouldn't get here.
             raise RuntimeError("Input type {} is not supported."
