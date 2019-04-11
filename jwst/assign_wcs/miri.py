@@ -1,7 +1,6 @@
 import os.path
 import logging
 import numpy as np
-from numpy import matlib as mb
 from astropy.modeling import models
 from astropy import coordinates as coord
 from astropy import units as u
@@ -10,7 +9,6 @@ from astropy.io import fits
 from scipy.interpolate import UnivariateSpline
 import gwcs.coordinate_frames as cf
 from gwcs import selector
-from gwcs.utils import _toindex
 from . import pointing
 from ..transforms import models as jwmodels
 from .util import (not_implemented_mode, subarray_transform,
@@ -241,8 +239,6 @@ def lrs_distortion(input_model, reference_files):
 
         bb_sub = ((np.floor(x0.min() + zero_point[0]) - 0.5, np.ceil(x1.max() + zero_point[0]) + 0.5),
                   (np.floor(y2.min() + zero_point[1]) - 0.5, np.ceil(y0.max() + zero_point[1]) + 0.5))
-        bb = ((bb_sub[0][0] + subarray_xstart, bb_sub[0][1] + subarray_xstart),
-              (bb_sub[1][0] + subarray_ystart, bb_sub[1][1] + subarray_ystart))
 
     # If in slitless mode, define the bounding box X locations using the subarray x boundaries
     # and the y locations using the corner locations in the CDP reference file.  Make sure to
@@ -250,8 +246,6 @@ def lrs_distortion(input_model, reference_files):
     if input_model.meta.exposure.type.lower() == 'mir_lrs-slitless':
         bb_sub = ((input_model.meta.subarray.xstart - 1 + 4 - 0.5, input_model.meta.subarray.xsize - 1 + 0.5),
                   (np.floor(y2.min() + zero_point[1]) - 0.5, np.ceil(y0.max() + zero_point[1]) + 0.5))
-        bb = ((bb_sub[0][0] + subarray_xstart, bb_sub[0][1] + subarray_xstart),
-              (bb_sub[1][0] + subarray_ystart, bb_sub[1][1] + subarray_ystart))
 
     # Find the ROW of the zero point
     row_zero_point = zero_point[1]
