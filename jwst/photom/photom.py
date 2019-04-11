@@ -662,15 +662,19 @@ class DataSet():
             # instrument teams deliver multiplicative conversions in photom ref files
             conversion = conversion / conv_2d
 
-        # Apply the conversion to the data and err arrays
+        # Apply the conversion to the data and all uncertainty arrays
         if isinstance(self.input, datamodels.MultiSlitModel):
             self.input.slits[self.slitnum].data *= conversion
             self.input.slits[self.slitnum].err *= conversion
+            self.input.slits[self.slitnum].var_poisson *= conversion
+            self.input.slits[self.slitnum].var_rnoise *= conversion
             self.input.slits[self.slitnum].meta.bunit_data = 'MJy/sr'
             self.input.slits[self.slitnum].meta.bunit_err = 'MJy/sr'
         else:
             self.input.data *= conversion
             self.input.err *= conversion
+            self.input.var_poisson *= conversion
+            self.input.var_rnoise *= conversion
             self.input.meta.bunit_data = 'MJy/sr'
             self.input.meta.bunit_err = 'MJy/sr'
 
