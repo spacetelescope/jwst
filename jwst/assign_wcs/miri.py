@@ -255,24 +255,13 @@ def lrs_distortion(input_model, reference_files):
 
     # Find the ROW of the zero point
     row_zero_point = zero_point[1]
-    # Make a vector of x,y locations for every pixel in the reference row
-    yrow, xrow = np.mgrid[row_zero_point:row_zero_point + 1, 0: input_model.data.shape[1]]
-    # And compute the v2,v3 coordinates of pixels in this reference row
-    v2v3refrow = np.array(subarray_dist(xrow, yrow))[:, 0, :]
 
-    # Now repeat the v2,v3, matrix from the central row so that it is copied
-    # to all of the other valid rows too.
-    v2_full = mb.repmat(v2v3refrow[0], _toindex(bb[1][1]) + 1 - _toindex(bb[1][0]), 1)
-    v3_full = mb.repmat(v2v3refrow[1], _toindex(bb[1][1]) + 1 - _toindex(bb[1][0]), 1)
-    # v2_full and v3_full now have shape 392x68 for slitless and 391x44 for slit
-
-    # Now take these matrices and put them into tabular models that can be
-    # interpolated to find v2,v3 for arbitrary
-    # x,y pixel values in the valid region.
-    v2_t2d = models.Tabular2D(lookup_table=v2_full, name='v2table',
-                              bounds_error=False, fill_value=np.nan)
-    v3_t2d = models.Tabular2D(lookup_table=v3_full, name='v3table',
-                              bounds_error=False, fill_value=np.nan)
+    # The inputs to the "detector_to_v2v3" transform are
+    # - the indices in x spanning the entire image row
+    # - y is the y-value of the zero point
+    # This is equivalent of making a vector of x, y locations for
+    # every pixel in the reference row
+    det_to_v2v3 = models.Identity(1) & models.Const1D(row_zero_point) | subarray_dist
 
     # Now deal with the fact that the spectral trace isn't perfectly up and down along detector.
     # This information is contained in the xcenter/ycenter values in the CDP table, but we'll handle it
@@ -288,9 +277,10 @@ def lrs_distortion(input_model, reference_files):
     # to correct for the curved trace.  End in a rotated frame relative to zero at the reference point
     # and where yrot is aligned with the spectral trace)
     xysubtoxyrot = models.Shift(-zero_point[0]) & models.Shift(-zero_point[1]) | rot
+
     # Next shift back to the subarray frame, and then map to v2v3
-    xyrottov2v3 = (models.Shift(zero_point[0]) & models.Shift(zero_point[1]) |
-                   models.Mapping((1, 0, 1, 0)) | v2_t2d & v3_t2d)
+    xyrottov2v3 = models.Shift(zero_point[0]) & models.Shift(zero_point[1]) | det_to_v2v3
+
     # The two models together
     xysubtov2v3 = xysubtoxyrot | xyrottov2v3
 
