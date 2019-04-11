@@ -42,6 +42,9 @@ datamodels
 - Keyword updates to remove GS_STATE and change GUIDESTA to string
   type. [#3314]
 
+- Added BUNIT keyword to gain and readnoise reference file schemas.
+  [#3322]
+
 extract_1d
 ----------
 
@@ -63,6 +66,9 @@ master_background
 
 - ``MasterBackgroundStep`` now can handle BACKGROUND association members
   that come from nodded exposures of the source. [#3311]
+
+- Updated the DQFlags of the background subtracted data to be DO_NOT_USE
+  for the pixels that have wavelenghts outside the master background [#3326]
 
 outlier_detection
 -----------------
@@ -86,6 +92,9 @@ set_telescope_pointing
 
 - Fix ``populate_model_from_siaf`` to convert SIAF pixel scale from
   arcsec to degress for CDELTn keywords. [#3248]
+
+- Updates to prevent crashes when SIAF values needed for crpix or
+  cdelt keywords are missing. [#3316]
 
 srctype
 -------
