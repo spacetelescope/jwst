@@ -72,23 +72,23 @@ def test_history_from_model_to_fits():
     }))
     m.save(TMP_FITS)
 
-    hdulist = fits.open(TMP_FITS)
-    assert list(hdulist[0].header['HISTORY']) == ["First entry", "Second entry"]
-    hdulist.close()
+    with fits.open(TMP_FITS, memmap=False) as hdulist:
+        assert list(hdulist[0].header['HISTORY']) == ["First entry", 
+                                                      "Second entry"]
 
-    m = DataModel(TMP_FITS)
-    m2 = DataModel()
-    m2.update(m)
-    m2.history = m.history
+    with DataModel(TMP_FITS) as m2:
+        m2 = DataModel()
+        m2.update(m)
+        m2.history = m.history
 
-    assert m2.history == [{'description': "First entry"},
-                          {'description': "Second entry"}]
+        assert m2.history == [{'description': "First entry"},
+                              {'description': "Second entry"}]
 
-    m2.save(TMP_FITS)
+        m2.save(TMP_FITS)
 
-    hdulist = fits.open(TMP_FITS)
-    assert list(hdulist[0].header['HISTORY']) == ["First entry", "Second entry"]
-    hdulist.close()
+    with fits.open(TMP_FITS, memmap=False) as hdulist:
+        assert list(hdulist[0].header['HISTORY']) == ["First entry",
+                                                      "Second entry"]
 
 
 def test_history_from_fits():
@@ -97,17 +97,16 @@ def test_history_from_fits():
     header['HISTORY'] = "Second entry"
     fits.writeto(TMP_FITS, np.array([]), header, overwrite=True)
 
-    m = DataModel(TMP_FITS)
-    assert m.history == [{'description': 'First entry'},
-                         {'description': 'Second entry'}]
+    with DataModel(TMP_FITS) as m:
+        assert m.history == [{'description': 'First entry'},
+                             {'description': 'Second entry'}]
 
-    del m.history[0]
-    m.history.append(HistoryEntry({'description': "Third entry"}))
-    assert m.history == [{'description': "Second entry"},
-                         {'description': "Third entry"}]
+        del m.history[0]
+        m.history.append(HistoryEntry({'description': "Third entry"}))
+        assert m.history == [{'description': "Second entry"},
+                             {'description': "Third entry"}]
+        m.save(TMP_FITS)
 
-    m.save(TMP_FITS)
-
-    m = DataModel(TMP_FITS)
-    assert m.history == [{'description': "Second entry"},
-                         {'description': "Third entry"}]
+    with DataModel(TMP_FITS) as m:
+        assert m.history == [{'description': "Second entry"},
+                             {'description': "Third entry"}]

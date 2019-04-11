@@ -17,7 +17,6 @@ from . import schema as mschema
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
-log.addHandler(logging.NullHandler())
 
 __all__ = ['ObjectNode', 'ListNode']
 
@@ -255,7 +254,7 @@ class Node():
         self._name = attr
         self._instance = instance
         self._schema = schema
-        self._schema['$schema'] = 'http://stsci.edu/schemas/asdf-schema/0.1.0/asdf-schema'
+        self._schema['$schema'] = 'http://stsci.edu/schemas/asdf/asdf-schema-1.0.0'
         self._ctx = ctx
 
     def _validate(self):

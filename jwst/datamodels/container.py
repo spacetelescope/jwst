@@ -88,14 +88,15 @@ class ModelContainer(model_base.DataModel):
         elif isinstance(init, fits.HDUList):
             self._models.append([datamodel_open(init)])
         elif isinstance(init, list):
-            if all(isinstance(x, (str, fits.HDUList)) for x in init):
-                # Try opening the list of files as datamodels
+            if all(isinstance(x, (str, fits.HDUList, model_base.DataModel)) for x in init):
+                # Try opening the list as datamodels
                 try:
                     init = [datamodel_open(m) for m in init]
                 except (FileNotFoundError, ValueError):
                     raise
-            elif not all(isinstance(x, model_base.DataModel) for x in init):
-                raise TypeError('list must contain DataModels')
+            else:
+                raise TypeError("list must contain items that can be opened"
+                                "DataModels.open()")
             self._models = init
         elif isinstance(init, self.__class__):
             instance = copy.deepcopy(init._instance)
@@ -296,6 +297,11 @@ class ModelContainer(model_base.DataModel):
                 output_paths.append(save_model_func(model, idx=idx))
 
         return output_paths
+
+    def close(self):
+        for model in self._models:
+            model.close()
+
 
     def _assign_group_ids(self):
         """

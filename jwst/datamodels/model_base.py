@@ -162,15 +162,17 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
             if file_type == "fits":
                 if s3_utils.is_s3_uri(init):
-                    hdulist = fits.open(s3_utils.get_object(init))
+                    init_fitsopen = s3_utils.get_object(init)
+                    memmap = None
                 else:
-                    hdulist = fits.open(init, memmap=memmap)
+                    init_fitsopen = init
 
-                asdffile = fits_support.from_fits(hdulist,
-                                              self._schema,
-                                              self._ctx,
-                                              **kwargs)
-                self._files_to_close.append(hdulist)
+                with fits.open(init_fitsopen, memmap=memmap) as hdulist:
+                    asdffile = fits_support.from_fits(hdulist,
+                                                  self._schema,
+                                                  self._ctx,
+                                                  **kwargs)
+                    self._files_to_close.append(hdulist)
 
             elif file_type == "asdf":
                 asdffile = self.open_asdf(init=init, **kwargs)

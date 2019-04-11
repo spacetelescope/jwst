@@ -73,7 +73,7 @@ def test_broadcast2():
 def test_from_hdulist():
     from astropy.io import fits
     warnings.simplefilter("ignore")
-    with fits.open(FITS_FILE) as hdulist:
+    with fits.open(FITS_FILE, memmap=False) as hdulist:
         with open_model(hdulist) as dm:
             dm.data
         assert hdulist.fileinfo(0)['file'].closed == False
@@ -332,7 +332,7 @@ def test_multislit_copy():
         assert i == 4
 
     from astropy.io import fits
-    with fits.open(TMP_FITS) as hdulist:
+    with fits.open(TMP_FITS, memmap=False) as hdulist:
         assert len(hdulist) == 6
 
     with MultiSlitModel(TMP_FITS) as input:
@@ -420,7 +420,7 @@ def test_image_with_extra_keyword_to_multislit():
         im.save(TMP_FITS, overwrite=True)
 
     from astropy.io import fits
-    with fits.open(TMP_FITS, mode="update") as hdulist:
+    with fits.open(TMP_FITS, mode="update", memmap=False) as hdulist:
         hdulist[1].header['BUNIT'] = 'x'
 
     with ImageModel(TMP_FITS) as im:
@@ -527,7 +527,7 @@ def container():
     warnings.simplefilter("ignore")
     asn_file_path, asn_file_name = op.split(ASN_FILE)
     with pushdir(asn_file_path):
-        with ModelContainer(asn_file_name, persist=True) as c:
+        with ModelContainer(asn_file_name) as c:
             for m in c:
                 m.meta.observation.program_number = '0001'
                 m.meta.observation.observation_number = '1'
@@ -586,14 +586,12 @@ def test_object_node_iterator():
     assert 'date' in items
     assert 'model_type' in items
 
+
 def test_hasattr():
     model = DataModel()
+    assert model.meta.hasattr('date')
+    assert not model.meta.hasattr('filename')
 
-    has_date = model.meta.hasattr('date')
-    assert has_date, "Check that date exists"
-
-    has_filename = model.meta.hasattr('filename')
-    assert not has_filename, "Check that filename does not exist"
 
 def test_info():
     warnings.simplefilter("ignore")
@@ -618,22 +616,12 @@ def test_info():
     assert matches== 3, "Check all extensions are described"
 
 def test_validate_on_read():
-    im1 = ImageModel((10,10))
-    schema = im1.meta._schema
-    schema['properties']['calibration_software_version']['fits_required'] = True
+    schema = ImageModel()._schema.copy()
+    schema['properties']['meta']['properties']['calibration_software_version']['fits_required'] = True
 
-    try:
-        im2 = ImageModel(FITS_FILE,
-                          schema=im1._schema,
-                          strict_validation=True)
-    except jsonschema.ValidationError:
-        caught = True
-    else:
-        caught = False
-        im2.close()
+    with pytest.raises(jsonschema.ValidationError):
+        im = ImageModel(FITS_FILE, schema=schema, strict_validation=True)
 
-    im1.close()
-    assert caught, "Test of validation while reading image"
 
 def test_validate_required_field():
     im = ImageModel((10,10), strict_validation=True)
