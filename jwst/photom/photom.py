@@ -6,6 +6,7 @@ import logging
 import numpy as np
 from .. import datamodels
 from .. datamodels import dqflags
+from .. master_background import expand_to_2d
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -15,7 +16,7 @@ PHOT_TOL = 0.001  # relative tolerance between PIXAR_* keys
 
 class DataSet():
     """
-    Input dataset to which the photom information will be attached
+    Input dataset to which the photom information will be applied
 
     Parameters
     ----------
@@ -40,29 +41,29 @@ class DataSet():
         self.detector = model.meta.instrument.detector.upper()
         self.exptype = model.meta.exposure.type.upper()
         self.filter = None
-        if model.meta.instrument.filter is not None:
+        if model.meta.instrument.filter:
             self.filter = model.meta.instrument.filter.upper()
         self.pupil = None
-        if model.meta.instrument.pupil is not None:
+        if model.meta.instrument.pupil:
             self.pupil = model.meta.instrument.pupil.upper()
         self.grating = None
-        if model.meta.instrument.grating is not None:
+        if model.meta.instrument.grating:
             self.grating = model.meta.instrument.grating.upper()
         self.band = None
-        if model.meta.instrument.band is not None:
+        if model.meta.instrument.band:
             self.band = model.meta.instrument.band.upper()
         self.slitnum = -1
 
         log.info('Using instrument: %s', self.instrument)
         log.info(' detector: %s', self.detector)
         log.info(' exp_type: %s', self.exptype)
-        if self.filter is not None:
+        if self.filter:
             log.info(' filter: %s', self.filter)
-        if self.pupil is not None:
+        if self.pupil:
             log.info(' pupil: %s', self.pupil)
-        if self.grating is not None:
+        if self.grating:
             log.info(' grating: %s', self.grating)
-        if self.band is not None:
+        if self.band:
             log.info(' band: %s', self.band)
 
     def calc_nirspec(self, ftab, area_fname):
@@ -96,7 +97,7 @@ class DataSet():
         # Normal fixed-slit exposures get handled as a MultiSlitModel
         if self.exptype == 'NRS_FIXEDSLIT':
 
-            # We have to find and attach a separate set of flux cal
+            # We have to find and apply a separate set of flux cal
             # data for each of the fixed slits in the input
             for slit in self.input.slits:
 
@@ -235,9 +236,6 @@ class DataSet():
                         # conversion factors
                         self.input.data /= sens2d
                         self.input.err /= sens2d
-
-                        # Store the 2D sensitivity factors
-                        self.input.relsens2d = sens2d
 
                         # Update BUNIT values for the science data and err
                         self.input.meta.bunit_data = 'mJy/arcsec^2'
@@ -424,9 +422,6 @@ class DataSet():
                                                dqflags.pixel['NON_SCIENCE'])
             ftab.dq[where_zero] = np.bitwise_or(ftab.dq[where_zero],
                                                 dqflags.pixel['NON_SCIENCE'])
-
-            # Store the 2D sensitivity factors in the science product
-            self.input.relsens2d = ftab.data * ftab.pixsiz
 
             # Divide the science data and err by the 2D sensitivity factors
             self.input.data /= self.input.relsens2d
@@ -618,21 +613,19 @@ class DataSet():
         -------
 
         """
-        # Get the conversion factor from the PHOTMJSR column of the table row
-        conv_factor = tabdata['photmjsr']
+        # Get the scalar conversion factor from the PHOTMJSR column of the table row
+        conversion = tabdata['photmjsr']
 
-        # Store the conversion factors in the meta data
-        log.info('PHOTMJSR value: %g', conv_factor)
+        # Store the conversion factor in the meta data
+        log.info('PHOTMJSR value: %g', conversion)
         if isinstance(self.input, datamodels.MultiSlitModel):
             self.input.slits[self.slitnum].meta.photometry.conversion_megajanskys = \
-                conv_factor
+                conversion
             self.input.slits[self.slitnum].meta.photometry.conversion_microjanskys = \
-                23.50443 * conv_factor
+                23.50443 * conversion
         else:
-            self.input.meta.photometry.conversion_megajanskys = \
-                conv_factor
-            self.input.meta.photometry.conversion_microjanskys = \
-                23.50443 * conv_factor
+            self.input.meta.photometry.conversion_megajanskys = conversion
+            self.input.meta.photometry.conversion_microjanskys = 23.50443 * conversion
 
         # Get the length of the relative response arrays in this row
         nelem = tabdata['nelem']
@@ -643,25 +636,43 @@ class DataSet():
             waves = tabdata['wavelength'][:nelem]
             relresps = tabdata['relresponse'][:nelem]
 
+            # Make sure waves and relresps are in increasing wavelength order
+            if not np.all(np.diff(waves) > 0):
+                index = np.argsort(waves)
+                waves = waves[index].copy()
+                relresps = relresps[index].copy()
+
             # Convert wavelengths from meters to microns, if necessary
             microns_100 = 1.e-4         # 100 microns, in meters
             if waves.max() > 0. and waves.max() < microns_100:
                 waves *= 1.e+6
             wl_unit = 'um'
 
-            # Set the relative sensitivity table for the correct Model type
-            log.info('Storing relative response table')
+            # Compute a 2-D grid of conversion factors, as a function of wavelength
             if isinstance(self.input, datamodels.MultiSlitModel):
-                otab = np.array(list(zip(waves, relresps)),
-                       dtype=self.input.slits[self.slitnum].relsens.dtype)
-                self.input.slits[self.slitnum].relsens = otab
-                self.input.slits[self.slitnum].relsens.columns['wavelength'].unit = wl_unit
-
+                wl_array = expand_to_2d.get_wavelengths(self.input.slits[self.slitnum])
             else:
-                otab = np.array(list(zip(waves, relresps)),
-                                dtype=self.input.relsens.dtype)
-                self.input.relsens = otab
-                self.input.relsens.columns['wavelength'].unit= wl_unit
+                wl_array = expand_to_2d.get_wavelengths(self.input)
+
+            wl_array[np.isnan(wl_array)] = -1.
+            conv_2d = np.interp(wl_array, waves, relresps, left=0., right=0.)
+
+            # Combine the scalar and 2-D conversions
+            # NOTE: the 2-D conversion is divided into the data for now, until the
+            # instrument teams deliver multiplicative conversions in photom ref files
+            conversion = conversion / conv_2d
+
+        # Apply the conversion to the data and err arrays
+        if isinstance(self.input, datamodels.MultiSlitModel):
+            self.input.slits[self.slitnum].data *= conversion
+            self.input.slits[self.slitnum].err *= conversion
+            self.input.slits[self.slitnum].meta.bunit_data = 'MJy/sr'
+            self.input.slits[self.slitnum].meta.bunit_err = 'MJy/sr'
+        else:
+            self.input.data *= conversion
+            self.input.err *= conversion
+            self.input.meta.bunit_data = 'MJy/sr'
+            self.input.meta.bunit_err = 'MJy/sr'
 
         return
 

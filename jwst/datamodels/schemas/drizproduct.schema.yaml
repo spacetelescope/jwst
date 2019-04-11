@@ -31,6 +31,4 @@ allOf:
       fits_hdu: WHT
       default: 0.0
       datatype: float32
-    relsens:
-      $ref: relsens.schema.yaml
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema
