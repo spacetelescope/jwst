@@ -81,6 +81,12 @@ pathloss
 
 - Updated to apply the correction to the science data and err arrays. [#3323]
 
+photom
+------
+
+- Updated to apply the flux calibration to the science data and err arrays.
+  [#3359]
+
 reffile_utils
 -------------
 
