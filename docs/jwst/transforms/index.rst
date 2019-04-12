@@ -24,7 +24,6 @@ these transform definitions.
    grating_equation-0.7.0
    gwa_to_slit-0.7.0
    logical-0.7.0
-   lrs_wavelength-0.7.0
    miri_ab2slice-0.7.0
    nircam_grism_dispersion-0.7.0
    niriss_grism_dispersion-0.7.0

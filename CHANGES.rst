@@ -1,6 +1,13 @@
 0.13.2 (Unreleased)
 ===================
 
+assign_wcs
+----------
+
+- The MIRI LRS WCS was updated to include an nverse transform. [#3106, #3360]
+
+- The MIRI LRS spectral distortion is implemented now using a spline model. [#3106]
+
 background
 ----------
 
@@ -422,6 +429,9 @@ timeconversion
 
 transforms
 ----------
+
+- The `LRSWavelength` model was removed as obsolete.
+  Instead a spline is used for the wavelength solution. [#3106]
 
 tso_photometry
 --------------

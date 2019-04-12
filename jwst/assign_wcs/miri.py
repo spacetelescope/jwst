@@ -1,7 +1,6 @@
 import os.path
 import logging
 import numpy as np
-from numpy import matlib as mb
 from astropy.modeling import models
 from astropy import coordinates as coord
 from astropy import units as u
@@ -10,7 +9,6 @@ from astropy.io import fits
 from scipy.interpolate import UnivariateSpline
 import gwcs.coordinate_frames as cf
 from gwcs import selector
-from gwcs.utils import _toindex
 from . import pointing
 from ..transforms import models as jwmodels
 from .util import (not_implemented_mode, subarray_transform,
@@ -228,21 +226,12 @@ def lrs_distortion(input_model, reference_files):
     x1 = lrsdata[:, 5]
     y2 = lrsdata[:, 8]
 
-    # Now define the bounding boxes for the distortion solution using the 0-indexed convention where
-    # integer coordinates are in the middle of pixels (and boxes go to the outside edge of pixels).
-    # bb_sub will be the bounding box in subarray coordinates
-    # bb will be the bounding box in full-array coordinates
-    subarray_xstart = input_model.meta.subarray.xstart - 1
-    subarray_ystart = input_model.meta.subarray.ystart - 1
-
     # If in fixed slit mode, define the bounding box using the corner locations provided in
     # the CDP reference file.
     if input_model.meta.exposure.type.lower() == 'mir_lrs-fixedslit':
 
         bb_sub = ((np.floor(x0.min() + zero_point[0]) - 0.5, np.ceil(x1.max() + zero_point[0]) + 0.5),
                   (np.floor(y2.min() + zero_point[1]) - 0.5, np.ceil(y0.max() + zero_point[1]) + 0.5))
-        bb = ((bb_sub[0][0] + subarray_xstart, bb_sub[0][1] + subarray_xstart),
-              (bb_sub[1][0] + subarray_ystart, bb_sub[1][1] + subarray_ystart))
 
     # If in slitless mode, define the bounding box X locations using the subarray x boundaries
     # and the y locations using the corner locations in the CDP reference file.  Make sure to
@@ -250,29 +239,18 @@ def lrs_distortion(input_model, reference_files):
     if input_model.meta.exposure.type.lower() == 'mir_lrs-slitless':
         bb_sub = ((input_model.meta.subarray.xstart - 1 + 4 - 0.5, input_model.meta.subarray.xsize - 1 + 0.5),
                   (np.floor(y2.min() + zero_point[1]) - 0.5, np.ceil(y0.max() + zero_point[1]) + 0.5))
-        bb = ((bb_sub[0][0] + subarray_xstart, bb_sub[0][1] + subarray_xstart),
-              (bb_sub[1][0] + subarray_ystart, bb_sub[1][1] + subarray_ystart))
 
     # Find the ROW of the zero point
     row_zero_point = zero_point[1]
-    # Make a vector of x,y locations for every pixel in the reference row
-    yrow, xrow = np.mgrid[row_zero_point:row_zero_point + 1, 0: input_model.data.shape[1]]
-    # And compute the v2,v3 coordinates of pixels in this reference row
-    v2v3refrow = np.array(subarray_dist(xrow, yrow))[:, 0, :]
 
-    # Now repeat the v2,v3, matrix from the central row so that it is copied
-    # to all of the other valid rows too.
-    v2_full = mb.repmat(v2v3refrow[0], _toindex(bb[1][1]) + 1 - _toindex(bb[1][0]), 1)
-    v3_full = mb.repmat(v2v3refrow[1], _toindex(bb[1][1]) + 1 - _toindex(bb[1][0]), 1)
-    # v2_full and v3_full now have shape 392x68 for slitless and 391x44 for slit
-
-    # Now take these matrices and put them into tabular models that can be
-    # interpolated to find v2,v3 for arbitrary
-    # x,y pixel values in the valid region.
-    v2_t2d = models.Tabular2D(lookup_table=v2_full, name='v2table',
-                              bounds_error=False, fill_value=np.nan)
-    v3_t2d = models.Tabular2D(lookup_table=v3_full, name='v3table',
-                              bounds_error=False, fill_value=np.nan)
+    # The inputs to the "detector_to_v2v3" transform are
+    # - the indices in x spanning the entire image row
+    # - y is the y-value of the zero point
+    # This is equivalent of making a vector of x, y locations for
+    # every pixel in the reference row
+    const1d = models.Const1D(row_zero_point)
+    const1d.inverse = models.Const1D(row_zero_point)
+    det_to_v2v3 = models.Identity(1) & const1d | subarray_dist
 
     # Now deal with the fact that the spectral trace isn't perfectly up and down along detector.
     # This information is contained in the xcenter/ycenter values in the CDP table, but we'll handle it
@@ -288,9 +266,10 @@ def lrs_distortion(input_model, reference_files):
     # to correct for the curved trace.  End in a rotated frame relative to zero at the reference point
     # and where yrot is aligned with the spectral trace)
     xysubtoxyrot = models.Shift(-zero_point[0]) & models.Shift(-zero_point[1]) | rot
+
     # Next shift back to the subarray frame, and then map to v2v3
-    xyrottov2v3 = (models.Shift(zero_point[0]) & models.Shift(zero_point[1]) |
-                   models.Mapping((1, 0, 1, 0)) | v2_t2d & v3_t2d)
+    xyrottov2v3 = models.Shift(zero_point[0]) & models.Shift(zero_point[1]) | det_to_v2v3
+
     # The two models together
     xysubtov2v3 = xysubtoxyrot | xyrottov2v3
 
@@ -347,7 +326,7 @@ def lrs_distortion(input_model, reference_files):
     v2v3toxrot = subarray_dist.inverse | xysubtoxyrot | models.Mapping([0], n_inputs=2)
     # wavemodel.inverse gives yrot from wavelength
     # v2,v3,lambda -> xrot,yrot
-    xform1 = models.Mapping((0, 1, 2)) | v2v3toxrot & wavemodel.inverse
+    xform1 = v2v3toxrot & wavemodel.inverse
     dettotel.inverse = xform1 | xysubtoxyrot.inverse
 
     # Bounding box is the subarray bounding box, because we're assuming subarray coordinates passed in
