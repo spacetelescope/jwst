@@ -1,9 +1,7 @@
-#  Module for extraction of photom conversion factor(s)
-#        and writing them to input header
-#
-
 import logging
 import numpy as np
+from astropy import units as u
+
 from .. import datamodels
 from .. datamodels import dqflags
 from .. master_background import expand_to_2d
@@ -12,6 +10,9 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 PHOT_TOL = 0.001  # relative tolerance between PIXAR_* keys
+
+# Conversion factor from MJy/sr to uJy/arcsec^2
+MJSR_TO_UJA2 = (u.megajansky/u.steradian).to(u.microjansky/u.arcsecond/u.arcsecond)
 
 
 class DataSet():
@@ -35,7 +36,8 @@ class DataSet():
             input Data Model object
 
         """
-        self.input = model
+        # Create a copy of the input model
+        self.input = model.copy()
 
         self.instrument = model.meta.instrument.name.upper()
         self.detector = model.meta.instrument.detector.upper()
@@ -54,6 +56,7 @@ class DataSet():
             self.band = model.meta.instrument.band.upper()
         self.slitnum = -1
 
+        # Let the user know what we're working with
         log.info('Using instrument: %s', self.instrument)
         log.info(' detector: %s', self.detector)
         log.info(' exp_type: %s', self.exptype)
@@ -70,17 +73,16 @@ class DataSet():
         """
         Extended Summary
         -------------
-        For the NIRSPEC instrument, extract PHOTMJSR from the input model to
-        write to the output model. Matching is based on FILTER and GRATING.
-
+        For the NIRSPEC instrument, reference file matching is based on
+        FILTER and GRATING, as well as SLIT name for the fixed-slits mode.
         The routine will find the corresponding information in the reference
-        file and write the conversion factor to the output model.  The routine
-        will also check to see if there is a wavelength-dependent response
-        table; if there is it will be written to the output model.
+        file, apply it to the data, and write the scalar conversion
+        factor to the output model. All NIRSpec modes use wavelength-dependent
+        flux calibration factors.
 
         Parameters
         ----------
-        ftab: fits HDUList
+        ftab: FITS HDUList
             HDUList for NIRSPEC photom reference file
 
         area_fname: string
@@ -185,16 +187,17 @@ class DataSet():
 
                         # Populate the photometry keywords
                         self.input.meta.photometry.conversion_megajanskys = \
-                            conv_factor
+                            conv_factor.value
                         self.input.meta.photometry.conversion_microjanskys = \
-                            23.50443 * conv_factor
+                            conv_factor * MJSR_TO_UJA2
 
                         # Get the length of the relative response arrays in
                         # this table row
                         nelem = tabdata['nelem']
 
                         # If the relative response arrays have length > 0,
-                        # copy them into the relsens table of the data model
+                        # load them for use in creating a 2-d array of
+                        # flux conversion factors
                         if nelem > 0:
                             waves = tabdata['wavelength'][:nelem]
                             relresps = tabdata['relresponse'][:nelem]
@@ -206,14 +209,12 @@ class DataSet():
                                 waves *= 1.e+6
 
                         # Load the pixel area table for the IFU slices
-                        area_model = \
-                            datamodels.NirspecIfuAreaModel(area_fname)
+                        area_model = datamodels.NirspecIfuAreaModel(area_fname)
                         area_data = area_model.area_table
 
                         # Compute 2D wavelength and pixel area arrays for the
                         # whole image
-                        wave2d, area2d, dqmap = \
-                            self.calc_nrs_ifu_sens2d(area_data)
+                        wave2d, area2d, dqmap = self.calc_nrs_ifu_sens2d(area_data)
 
                         # Compute relative sensitivity for each pixel based
                         # on its wavelength
@@ -225,17 +226,19 @@ class DataSet():
                         # Divide by pixel area
                         sens2d /= area2d
 
-                        # Reset NON_SCIENCE pixels to 1 in sens2d array and in
-                        # science data dq array
+                        # Reset NON_SCIENCE pixels to 1 in sens2d array and flag
+                        # them in the science data DQ array
                         where_dq = \
                             np.bitwise_and(dqmap, dqflags.pixel['NON_SCIENCE'])
                         sens2d[where_dq > 0] = 1.
                         self.input.dq = np.bitwise_or(self.input.dq, dqmap)
 
-                        # Divide the science data and err by the
+                        # Divide the science data and uncertainty arrays by the
                         # conversion factors
                         self.input.data /= sens2d
                         self.input.err /= sens2d
+                        self.input.var_poisson /= sens2d**2
+                        self.input.var_rnoise /= sens2d**2
 
                         # Update BUNIT values for the science data and err
                         self.input.meta.bunit_data = 'mJy/arcsec^2'
@@ -254,27 +257,28 @@ class DataSet():
         """
         Extended Summary
         -------------
-        For the NIRISS instrument, extract PHOTMJSR from the input model to
-        write to the output model. Matching is based on FILTER and PUPIL.
+        For NIRISS matching is based on FILTER and PUPIL, as well as ORDER
+        for spectroscopic modes.
         There may be multiple entries for a given FILTER+PUPIL combination,
         corresponding to different spectral orders. Data for all orders will
         be retrieved.
 
         The routine will find the corresponding information in the reference
-        file and write the conversion factor to the output model.  The routine
-        will also check if there is a wavelength-dependent response table; if
-        there is it will be written to the output model.
+        file and apply the conversions to the science arrays.
+        If wavelength-dependent conversion factors exist, which will be the
+        case for spectroscopic modes, they will be loaded and applied along
+        with the scalar conversion.
 
         Parameters
         ----------
         ftab: fits HDUList
-            HDUList for NIRISS reference file
+            HDUList for photom reference file
 
         Returns
         -------
         """
 
-        # Handle MultiSlit models separately
+        # Handle MultiSlit models separately, which are used for NIRISS WFSS
         if isinstance(self.input, datamodels.MultiSlitModel):
 
             # We have to find and attach a separate set of flux cal
@@ -289,8 +293,7 @@ class DataSet():
                 # Get the spectral order number for this slit
                 order = slit.meta.wcsinfo.spectral_order
 
-                log.info("Working on slit: {} order: {}".format(slit.name,
-                         order))
+                log.info("Working on slit: {} order: {}".format(slit.name, order))
 
                 # Locate matching row in reference file
                 for tabdata in ftab.phot_table:
@@ -300,8 +303,7 @@ class DataSet():
                     ref_order = tabdata['order']
 
                     # Find matching values of FILTER, PUPIL, ORDER
-                    if (self.filter == ref_filter and
-                            self.pupil == ref_pupil and order == ref_order):
+                    if (self.filter == ref_filter and self.pupil == ref_pupil and order == ref_order):
                         self.photom_io(tabdata)
                         match = True
                         break
@@ -309,7 +311,7 @@ class DataSet():
                 if not match:
                     log.warning('No match in reference file')
 
-        # Simple ImageModels
+        # NIRISS imaging and SOSS modes
         else:
 
             # Hardwire the science data order number to 1 for now
@@ -326,8 +328,7 @@ class DataSet():
                 if self.exptype in ['NIS_SOSS', 'NIS_WFSS']:
 
                     # Find matching values of FILTER, PUPIL, and ORDER
-                    if (self.filter == ref_filter and
-                            self.pupil == ref_pupil and order == ref_order):
+                    if (self.filter == ref_filter and self.pupil == ref_pupil and order == ref_order):
                         self.photom_io(tabdata)
                         match = True
                         break
@@ -350,22 +351,19 @@ class DataSet():
         """
         Extended Summary
         -------------
-        For the MIRI instrument, extract PHOTMJSR from the input model to
-        write to the output model.
+        For MIRI imaging and LRS modes, matching is based on FILTER and SUBARRAY.
+        MIRI MRS uses dedicated photom reference files per CHANNEL+BAND.
 
-        For the imaging detector, matching is based on FILTER and SUBARRAY.
-
-        For the MRS detectors, matching is based on BAND.
-
-        The routine will find the corresponding information in the reference
-        file and write the conversion factor to the output model.  The routine
-        will also check if there is a wavelength-dependent response table; if
-        there is it will be written to the output model.
+        For Imaging and LRS, the routine will find the corresponding row of
+        information in the reference file, apply it, and store the scalar
+        conversion factor in the output model PHOTMJSR keyword. If
+        wavelength-dependent conversion values exist, which is the case for LRS
+        mode, they will be included in the applied conversion.
 
         Parameters
         ----------
         ftab: fits HDUList
-            HDUList for MIRI reference file
+            HDUList for photom reference file
 
         Returns
         -------
@@ -423,9 +421,11 @@ class DataSet():
             ftab.dq[where_zero] = np.bitwise_or(ftab.dq[where_zero],
                                                 dqflags.pixel['NON_SCIENCE'])
 
-            # Divide the science data and err by the 2D sensitivity factors
+            # Divide the science data and uncertainty arrays by the 2D sensitivity factors
             self.input.data /= self.input.relsens2d
             self.input.err /= self.input.relsens2d
+            self.input.var_poisson /= self.input.relsens2d**2
+            self.input.var_rnoise /= self.input.relsens2d**2
 
             # Update the science dq
             self.input.dq = np.bitwise_or(self.input.dq, ftab.dq)
@@ -437,7 +437,7 @@ class DataSet():
             self.input.meta.photometry.conversion_megajanskys = \
                 conv_factor
             self.input.meta.photometry.conversion_microjanskys = \
-                23.50443 * conv_factor
+                conv_factor * MJSR_TO_UJA2
 
             # Update BUNIT values for the science data and err
             self.input.meta.bunit_data = 'mJy/arcsec^2'
@@ -449,21 +449,18 @@ class DataSet():
         """
         Extended Summary
         -------------
-        For the NIRCAM instrument, extract PHOTMJSR from the input model to
-        write to the output model. Matching is based on FILTER and PUPIL.
-
+        For NIRCAM, matching is based on FILTER and PUPIL.
         The routine will find the corresponding information in the reference
-        file and write the conversion factor to the output model.  The routine
-        will also check if there is a wavelength-dependent response table; if
-        there is it will be written to the output model.
-
+        file, apply the conversion factors, and store the scalar conversion
+        factor in the output model. If wavelength-dependent conversion factors
+        exist, they will be included in the calibration.
         For WFSS (grism) mode, the calibration information extracted from the
-        reference file is attached to each slit instance in the science data.
+        reference file is applied to each slit instance in the science data.
 
         Parameters
         ----------
         ftab: fits HDUList
-            HDUList for NIRCAM reference file
+            HDUList for photom reference file
 
         Returns
         -------
@@ -482,8 +479,7 @@ class DataSet():
                 match = True
 
                 # Handle WFSS data separately from regular imaging
-                if (isinstance(self.input, datamodels.MultiSlitModel) and
-                        self.exptype == 'NRC_WFSS'):
+                if (isinstance(self.input, datamodels.MultiSlitModel) and self.exptype == 'NRC_WFSS'):
 
                     # Loop over the WFSS slits, applying the same photom
                     # ref data to all slits
@@ -508,20 +504,17 @@ class DataSet():
         """
         Extended Summary
         -------------
-        For the FGS instrument, extract PHOTMJSR from the input model to
-        write to the output model. There is no FILTER or PUPIL wheel, so the
-        only mode is CLEAR.
+        For FGS, there is no matching required, because the instrument does
+        not contain any filters or pupil wheel elements. The only mode is CLEAR.
 
         The routine will find the corresponding information in the reference
-        file (which should have only a single row) and write the conversion
-        factor to the output model.  The routine will also check if there is
-        a wavelength-dependent response table; if there is it will be written
-        to the output model.
+        file (which should have only a single row), apply it to the data, and
+        write the conversion factor to the output model.
 
         Parameters
         ----------
         ftab: fits HDUList
-            HDUList for FGS reference file
+            HDUList for photom reference file
 
         Returns
         -------
@@ -535,6 +528,25 @@ class DataSet():
         return
 
     def calc_nrs_ifu_sens2d(self, area_data):
+        """Create the 2-D wavelength and pixel area arrays needed for
+        constructing a NIRSpec IFU sensitivity map.
+
+        Parameters
+        ----------
+        area_data : 1-D ndarray
+            Array of pixel area values for the IFU slices
+
+        Returns
+        -------
+        wave2d : 2-D ndarray
+            Array of wavelengths per pixel
+
+        area2d : 2-D ndarray
+            Array of pixel area values
+
+        dqmap : 2-D ndarray
+            Array of DQ flags per pixel
+        """
 
         import numpy as np
         from .. assign_wcs import nirspec       # for NIRSpec IFU data
@@ -590,8 +602,7 @@ class DataSet():
             # Insert the pixel area value for this slice into the
             # whole image array
             ar = np.ones_like(wl)
-            ar[:, :] = \
-                area_data[np.where(area_data['slice_id'] == k)]['pixarea'][0]
+            ar[:, :] = area_data[np.where(area_data['slice_id'] == k)]['pixarea'][0]
             ar[nan_flag] = 1.
             area2d[y.astype(int), x.astype(int)] = ar
 
@@ -622,16 +633,16 @@ class DataSet():
             self.input.slits[self.slitnum].meta.photometry.conversion_megajanskys = \
                 conversion
             self.input.slits[self.slitnum].meta.photometry.conversion_microjanskys = \
-                23.50443 * conversion
+                conversion * MJSR_TO_UJA2
         else:
             self.input.meta.photometry.conversion_megajanskys = conversion
-            self.input.meta.photometry.conversion_microjanskys = 23.50443 * conversion
+            self.input.meta.photometry.conversion_microjanskys = conversion * MJSR_TO_UJA2
 
         # Get the length of the relative response arrays in this row
         nelem = tabdata['nelem']
 
-        # If the relative response arrays have length > 0, copy them into the
-        # relsens table of the data model
+        # If the relative response arrays have length > 0, load and include them in
+        # the flux conversion
         if nelem > 0:
             waves = tabdata['wavelength'][:nelem]
             relresps = tabdata['relresponse'][:nelem]
@@ -666,15 +677,15 @@ class DataSet():
         if isinstance(self.input, datamodels.MultiSlitModel):
             self.input.slits[self.slitnum].data *= conversion
             self.input.slits[self.slitnum].err *= conversion
-            self.input.slits[self.slitnum].var_poisson *= conversion
-            self.input.slits[self.slitnum].var_rnoise *= conversion
+            self.input.slits[self.slitnum].var_poisson *= conversion**2
+            self.input.slits[self.slitnum].var_rnoise *= conversion**2
             self.input.slits[self.slitnum].meta.bunit_data = 'MJy/sr'
             self.input.slits[self.slitnum].meta.bunit_err = 'MJy/sr'
         else:
             self.input.data *= conversion
             self.input.err *= conversion
-            self.input.var_poisson *= conversion
-            self.input.var_rnoise *= conversion
+            self.input.var_poisson *= conversion**2
+            self.input.var_rnoise *= conversion**2
             self.input.meta.bunit_data = 'MJy/sr'
             self.input.meta.bunit_err = 'MJy/sr'
 
@@ -767,19 +778,13 @@ class DataSet():
         """
         Short Summary
         -------------
-        Open the reference file, retrieve the conversion factor, and write that
-        factor as the key PHOTMJSR to header of input.  The conversion factor
-        for each instrument has its own dependence on detector- and
-        observation-specific parameters.  The corresponding conversion factor
-        from the reference file is written as PHOTMJSR to the model. The table
-        of relative response vs wavelength will be read from the reference
-        file, and if it contains >0 rows, it will be attached to the model. If
-        this is an imaging mode, there will be a pixel area map file, from
-        which the pixel area array will be copied to the area extension of the
-        output product. The keywords having the pixel area values are read
-        from the map file and compared to their values in the table reference
-        file. If these values agree, these keywords will be written to the
-        output.
+        Open the reference file, retrieve the conversion factors from the reference
+        file that are appropriate to the instrument mode. This can consist of both
+        a scalar factor and an array of wavelength-dependent factors. The combination
+        of both factors are applied to the input model. The scalar factor is also
+        written to the PHOTMJSR and PHOTUJA2 keywords in the model. If a pixel area
+        map reference file exists for the instrument mode, it is also attached to
+        the input model.
 
         Parameters
         ----------
@@ -791,8 +796,14 @@ class DataSet():
 
         Returns
         -------
+        output_model: jwst datamodel
+            output data model with the flux calibrations applied
 
         """
+
+        # Load the photom reference file into the appropriate type of datamodel
+        # for the instrument mode in use and then call the calculation routine
+        # for that instrument mode
         if self.instrument == 'NIRISS':
             ftab = datamodels.NirissPhotomModel(photom_fname)
             self.calc_niriss(ftab)
@@ -819,10 +830,12 @@ class DataSet():
             ftab = datamodels.FgsPhotomModel(photom_fname)
             self.calc_fgs(ftab)
 
-        if area_fname is not None:   # Load and save the pixel area info
+        # Load the pixel area reference file, if it exists, and attach the
+        # the reference data to the science model
+        if area_fname:
             if 'IMAGE' in self.exptype and area_fname != 'N/A':
                 self.save_area_info(ftab, area_fname)
 
-        ftab.close()
+        ftab.close()  # Close the photom reference table
 
         return self.input

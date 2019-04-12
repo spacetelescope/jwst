@@ -260,7 +260,7 @@ class ResampleSpecData:
             for attr in ['name', 'xstart', 'xsize', 'ystart', 'ysize',
                     'slitlet_id', 'source_id', 'source_name', 'source_alias',
                     'stellarity', 'source_type', 'source_xpos', 'source_ypos',
-                    'shutter_state', 'relsens']:
+                    'shutter_state']:
                 try:
                     val = getattr(img, attr)
                 except AttributeError:
