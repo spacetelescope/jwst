@@ -226,13 +226,6 @@ def lrs_distortion(input_model, reference_files):
     x1 = lrsdata[:, 5]
     y2 = lrsdata[:, 8]
 
-    # Now define the bounding boxes for the distortion solution using the 0-indexed convention where
-    # integer coordinates are in the middle of pixels (and boxes go to the outside edge of pixels).
-    # bb_sub will be the bounding box in subarray coordinates
-    # bb will be the bounding box in full-array coordinates
-    subarray_xstart = input_model.meta.subarray.xstart - 1
-    subarray_ystart = input_model.meta.subarray.ystart - 1
-
     # If in fixed slit mode, define the bounding box using the corner locations provided in
     # the CDP reference file.
     if input_model.meta.exposure.type.lower() == 'mir_lrs-fixedslit':
@@ -255,7 +248,9 @@ def lrs_distortion(input_model, reference_files):
     # - y is the y-value of the zero point
     # This is equivalent of making a vector of x, y locations for
     # every pixel in the reference row
-    det_to_v2v3 = models.Identity(1) & models.Const1D(row_zero_point) | subarray_dist
+    const1d = models.Const1D(row_zero_point)
+    const1d.inverse = models.Const1D(row_zero_point)
+    det_to_v2v3 = models.Identity(1) & const1d | subarray_dist
 
     # Now deal with the fact that the spectral trace isn't perfectly up and down along detector.
     # This information is contained in the xcenter/ycenter values in the CDP table, but we'll handle it
@@ -331,7 +326,7 @@ def lrs_distortion(input_model, reference_files):
     v2v3toxrot = subarray_dist.inverse | xysubtoxyrot | models.Mapping([0], n_inputs=2)
     # wavemodel.inverse gives yrot from wavelength
     # v2,v3,lambda -> xrot,yrot
-    xform1 = models.Mapping((0, 1, 2)) | v2v3toxrot & wavemodel.inverse
+    xform1 = v2v3toxrot & wavemodel.inverse
     dettotel.inverse = xform1 | xysubtoxyrot.inverse
 
     # Bounding box is the subarray bounding box, because we're assuming subarray coordinates passed in
