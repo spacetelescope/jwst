@@ -657,7 +657,6 @@ class DataSet():
             microns_100 = 1.e-4         # 100 microns, in meters
             if waves.max() > 0. and waves.max() < microns_100:
                 waves *= 1.e+6
-            wl_unit = 'um'
 
             # Compute a 2-D grid of conversion factors, as a function of wavelength
             if isinstance(self.input, datamodels.MultiSlitModel):
@@ -666,7 +665,7 @@ class DataSet():
                 wl_array = expand_to_2d.get_wavelengths(self.input)
 
             wl_array[np.isnan(wl_array)] = -1.
-            conv_2d = np.interp(wl_array, waves, relresps, left=0., right=0.)
+            conv_2d = np.interp(wl_array, waves, relresps, left=1., right=1.)
 
             # Combine the scalar and 2-D conversions
             # NOTE: the 2-D conversion is divided into the data for now, until the
