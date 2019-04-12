@@ -15,6 +15,7 @@ Package Index
    cube_build/index.rst
    dark_current/index.rst
    datamodels/index.rst
+   data_products/index.rst
    dq_init/index.rst
    emission/index.rst
    exp_to_source/index.rst
@@ -32,6 +33,7 @@ Package Index
    jump/index.rst
    lastframe/index.rst
    linearity/index.rst
+   master_background/index.rst
    model_blender/index.rst
    mrs_imatch/index.rst
    msaflagopen/index.rst

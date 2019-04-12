@@ -14,7 +14,9 @@ from ..util import open
 from .. import (DataModel, ModelContainer, ImageModel, ReferenceFileModel,
                 ReferenceImageModel, ReferenceCubeModel, ReferenceQuadModel,
                 FlatModel, MaskModel, NircamPhotomModel, GainModel,
-                ReadnoiseModel)
+                ReadnoiseModel, DistortionModel)
+from jwst import datamodels
+
 
 def test_open_fits():
     """Test opening a model from a FITS file"""
@@ -95,6 +97,40 @@ def test_open_reference_files():
         model = klass(file)
         assert isinstance(model, klass)
         model.close()
+
+def test_open_fits_readonly(tmpdir):
+    """Test opening a FITS-format datamodel that is read-only on disk"""
+    tmpfile = str(tmpdir.join('readonly.fits'))
+    data = np.arange(100, dtype=np.float).reshape(10, 10)
+
+    with ImageModel(data=data) as model:
+        model.meta.telescope = 'JWST'
+        model.meta.instrument.name = 'NIRCAM'
+        model.meta.instrument.detector = 'NRCA4'
+        model.meta.instrument.channel = 'SHORT'
+        model.save(tmpfile)
+
+    os.chmod(tmpfile, 0o440)
+    assert os.access(tmpfile, os.W_OK) == False
+
+    with datamodels.open(tmpfile) as model:
+        assert model.meta.telescope == 'JWST'
+
+def test_open_asdf_readonly(tmpdir):
+    tmpfile = str(tmpdir.join('readonly.asdf'))
+
+    with DistortionModel() as model:
+        model.meta.telescope = 'JWST'
+        model.meta.instrument.name = 'NIRCAM'
+        model.meta.instrument.detector = 'NRCA4'
+        model.meta.instrument.channel = 'SHORT'
+        model.save(tmpfile)
+
+    os.chmod(tmpfile, 0o440)
+    assert os.access(tmpfile, os.W_OK) == False
+
+    with datamodels.open(tmpfile) as model:
+        assert model.meta.telescope == 'JWST'
 
 # Utilities
 def t_path(partial_path):

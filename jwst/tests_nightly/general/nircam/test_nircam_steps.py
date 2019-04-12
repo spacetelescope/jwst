@@ -34,7 +34,7 @@ class TestNIRCamSteps(BaseJWSTTestSteps):
                                      side_gain=1.0),
                       output_truth='jw00017001001_01101_00001_NRCA1_bias_drift.fits',
                       output_hdus=[],
-                      id='test_refpixt_nircam'
+                      id='refpix_nircam'
 
                       ),
                  dict(input='jw00017001001_01101_00001_NRCA1_saturation.fits',
@@ -43,7 +43,7 @@ class TestNIRCamSteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='jw00017001001_01101_00001_NRCA1_dark_current.fits',
                       output_hdus=[],
-                      id='test_dark_current_nircam'
+                      id='dark_current_nircam'
 
                       ),
                  dict(input='jw00017001001_01101_00001_NRCA1_uncal.fits',
@@ -52,7 +52,7 @@ class TestNIRCamSteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='jw00017001001_01101_00001_NRCA1_dq_init.fits',
                       output_hdus=[],
-                      id='test_dq_init_nircam'
+                      id='dq_init_nircam'
                       ),
                  dict(input='jw00017001001_01101_00001_NRCA1_persistence.fits',
                       test_dir='test_emission',
@@ -60,7 +60,7 @@ class TestNIRCamSteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='jw00017001001_01101_00001_NRCA1_emission.fits',
                       output_hdus=[],
-                      id='test_emission_nircam'
+                      id='emission_nircam'
                       ),
                  dict(input='jw00017001001_01101_00001_NRCA1_ramp_fit.fits',
                       test_dir='test_flat_field',
@@ -68,7 +68,7 @@ class TestNIRCamSteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='jw00017001001_01101_00001_NRCA1_flat_field.fits',
                       output_hdus=[],
-                      id='test_flat_field_nircam'
+                      id='flat_field_nircam'
                       ),
                  dict(input='jw00017001001_01101_00001_NRCA3_uncal.fits',
                       test_dir='test_ipc_step',
@@ -76,7 +76,7 @@ class TestNIRCamSteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='jw00017001001_01101_00001_NRCA3_ipc.fits',
                       output_hdus=['primary', 'sci'],
-                      id='test_ipc_nircam'
+                      id='ipc_nircam'
                       ),
                  dict(input='jw00017001001_01101_00001_NRCA1_linearity.fits',
                       test_dir='test_jump',
@@ -84,7 +84,7 @@ class TestNIRCamSteps(BaseJWSTTestSteps):
                       step_pars=dict(rejection_threshold=25.0),
                       output_truth='jw00017001001_01101_00001_NRCA1_jump.fits',
                       output_hdus=[],
-                      id='test_jump_nircam'
+                      id='jump_nircam'
                       ),
                  dict(input='jw00017001001_01101_00001_NRCA1_dark_current.fits',
                       test_dir='test_linearity',
@@ -92,7 +92,7 @@ class TestNIRCamSteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='jw00017001001_01101_00001_NRCA1_linearity.fits',
                       output_hdus=[],
-                      id='test_linearity_nircam'
+                      id='linearity_nircam'
                       ),
                  dict(input='jw00017001001_01101_00001_NRCA1_ramp.fits',
                       test_dir='test_persistence',
@@ -100,7 +100,7 @@ class TestNIRCamSteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='jw00017001001_01101_00001_NRCA1_persistence.fits',
                       output_hdus=[],
-                      id='test_persistence_nircam'
+                      id='persistence_nircam'
                       ),
                  dict(input='jw00017001001_01101_00001_NRCA1_emission.fits',
                       test_dir='test_photom',
@@ -108,7 +108,7 @@ class TestNIRCamSteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='jw00017001001_01101_00001_NRCA1_photom.fits',
                       output_hdus=[],
-                      id='test_photom_nircam'
+                      id='photom_nircam'
                       ),
                  dict(input='jw00017001001_01101_00001_NRCA1_bias_drift.fits',
                       test_dir='test_saturation',
@@ -116,7 +116,7 @@ class TestNIRCamSteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='jw00017001001_01101_00001_NRCA1_saturation.fits',
                       output_hdus=[],
-                      id='test_saturation_nircam'
+                      id='saturation_nircam'
                       ),
                 ]
               }

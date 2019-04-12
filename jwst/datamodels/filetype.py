@@ -16,9 +16,8 @@ def check(init):
 
     if isinstance(init, str):
         if os.path.exists(init):
-            fd = open(init, "rb")
-            magic = fd.read(5)
-            fd.close()
+            with open(init, "rb") as fd:
+                magic = fd.read(5)
         else:
             filename, file_extension = os.path.splitext(init)
             file_type = file_extension[1:]

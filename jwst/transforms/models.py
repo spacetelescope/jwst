@@ -630,69 +630,6 @@ class Rotation3D(Model):
         return x, y, z
 
 
-class LRSWavelength(Model):
-    """
-    The MIRI LRS wavelength solution implemented as an astropy.modeling.Model.
-
-    Parameters
-    ----------
-    wavetable : ndarray
-        Array of wavelengths.
-    zero_point : tuple
-        The (X, Y) pixel coordinates of the wavelength zero point.
-    """
-
-    standard_broadcasting = False
-    _separable = False
-
-    linear = False
-    fittable = False
-
-    inputs = ('x', 'y')
-    outputs = ('lambda',)
-
-    def __init__(self, wavetable, zero_point, name=None):
-        self._wavetable = wavetable
-        self._zero_point = zero_point
-        super(LRSWavelength, self).__init__(name=name)
-
-    @property
-    def wavetable(self):
-        return self._wavetable
-
-    @property
-    def zero_point(self):
-        return self._zero_point
-
-    def evaluate(self, x, y):
-        slitsize = 1.00076751  # The MIRI LRS slit size.
-        imx, imy = self.zero_point
-        dx = x - imx
-        dy = y - imy
-        if x.shape != y.shape:
-            raise ValueError("Inputs have different shape.")
-        x0 = self._wavetable[:, 3]
-        y0 = self._wavetable[:, 4]
-        x1 = self._wavetable[:, 5]
-        #y1 = self._wavetable[:, 6]
-        wave = self._wavetable[:, 2]
-
-        diff0 = (dy - y0[0])
-        ind = np.abs(np.asarray(diff0 / slitsize, dtype=np.int))
-        condition = np.logical_and(dy < y0[0], dy > y0[-1])  #, dx>x0, dx<x1)
-        xyind = condition.nonzero()
-        wavelength = np.zeros(condition.shape)
-        wavelength += np.nan
-        wavelength[xyind] = wave[ind[xyind]]
-        wavelength = wavelength.flatten()
-
-        wavelength[(dx[xyind] < x0[ind[xyind]]).nonzero()[0]] = np.nan
-        wavelength[(dx[xyind] > x1[ind[xyind]]).nonzero()[0]] = np.nan
-        wavelength.shape = condition.shape
-
-        return wavelength
-
-
 class Gwa2Slit(Model):
     """
     NIRSpec GWA to slit transform.
@@ -939,7 +876,7 @@ class V23ToSky(Rotation3D):
 
         return ra, dec
 
-    def __call__(self, v2, v3):
+    def __call__(self, v2, v3, **kwargs):
         from itertools import chain
         inputs, format_info = self.prepare_inputs(v2, v3)
         parameters = self._param_sets(raw=True)

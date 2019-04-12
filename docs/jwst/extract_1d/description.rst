@@ -39,14 +39,19 @@ Output
 ======
 The output will be in MultiSpecModel format; for each input slit there will
 be an output table extension with the name EXTRACT1D.  This extension will
-have columns WAVELENGTH, FLUX, ERROR, DQ, NET, NERROR, BACKGROUND, and BERROR.
-WAVELENGTH is the value calculated using the WCS.  NET is the count rate
-minus background, in counts/pixel of spectral width, summed along the
-direction perpendicular to the dispersion.  Currently only a simple
-summation is done, with no weighting.  A more sophisticated algorithm will
-be introduced in future builds.  BACKGROUND is the measured background,
-scaled to the extraction width used for the NET.  BACKGROUND will be
-zero if the reference file did not specify that background should be
-determined.  FLUX will be computed from NET if there is a RELSENS table
+have columns WAVELENGTH, FLUX, ERROR, DQ, NET, NERROR, BACKGROUND, BERROR
+and NPIXELS.
+WAVELENGTH was copied from the wavelength attribute of the input 2-D data,
+if that attribute exists and was populated, or it was calculated from the
+WCS otherwise.
+NET is the count rate minus background, in counts/second (per pixel in the
+dispersion direction), obtained by summing along the direction perpendicular
+to the dispersion.  Currently only a simple summation is done, with
+no weighting.
+NPIXELS is the number of pixels that were added together for the source
+extraction region.
+BACKGROUND is the measured background, scaled to the extraction width used
+for the NET.  BACKGROUND will be zero if no background was subtracted.
+FLUX will be computed from NET if there is a RELSENS table
 for the input slit; otherwise, FLUX will be zero.
 ERROR, DQ, NERROR, and BERROR are not populated with useful values yet.

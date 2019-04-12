@@ -1,3 +1,5 @@
+.. _white_light_step:
+
 ============================
 White Light Curve Generation
 ============================

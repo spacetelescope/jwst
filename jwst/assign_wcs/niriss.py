@@ -1,6 +1,6 @@
 import logging
 
-from asdf import AsdfFile
+import asdf
 from astropy import coordinates as coord
 from astropy import units as u
 from astropy.modeling.models import Const1D, Mapping, Identity
@@ -8,14 +8,13 @@ import gwcs.coordinate_frames as cf
 from gwcs import wcs
 
 from .util import (not_implemented_mode, subarray_transform,
-                   velocity_correction)
+                   velocity_correction, bounding_box_from_subarray, transform_bbox_from_shape)
 from . import pointing
 from ..transforms.models import (NirissSOSSModel,
                                  NIRISSForwardRowGrismDispersion,
                                  NIRISSBackwardGrismDispersion,
                                  NIRISSForwardColumnGrismDispersion)
-from ..datamodels import (ImageModel, NIRISSGrismModel, DistortionModel,
-                          CubeModel)
+from ..datamodels import ImageModel, NIRISSGrismModel, DistortionModel
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -131,7 +130,7 @@ def niriss_soss(input_model, reference_files):
     world = cf.CompositeFrame([sky, spec], name='world')
 
     try:
-        with AsdfFile.open(reference_files['specwcs']) as wl:
+        with asdf.open(reference_files['specwcs']) as wl:
             wl1 = wl.tree[1].copy()
             wl2 = wl.tree[2].copy()
             wl3 = wl.tree[3].copy()
@@ -150,19 +149,29 @@ def niriss_soss(input_model, reference_files):
             wl2 = wl3 | velocity_corr
             log.info("Applied Barycentric velocity correction: {}".format(velocity_corr[1].amplitude.value))
 
-    subarray2full = subarray_transform(input_model)
-
     # Reverse the order of inputs passed to Tabular because it's in python order in modeling.
     # Consider changing it in modelng ?
-    cm_order1 = subarray2full | (Mapping((0, 1, 1, 0)) | \
-                                 (Const1D(target_ra) & Const1D(target_dec) & wl1)
-                                 ).rename('Order1')
-    cm_order2 = subarray2full | (Mapping((0, 1, 1, 0)) | \
-                                 (Const1D(target_ra) & Const1D(target_dec) & wl2)
-                                 ).rename('Order2')
-    cm_order3 = subarray2full | (Mapping((0, 1, 1, 0)) | \
-                                 (Const1D(target_ra) & Const1D(target_dec) & wl3)
-                                 ).rename('Order3')
+    cm_order1 = (Mapping((0, 1, 1, 0)) | \
+                 (Const1D(target_ra) & Const1D(target_dec) & wl1)
+                 ).rename('Order1')
+    cm_order2 = (Mapping((0, 1, 1, 0)) | \
+                 (Const1D(target_ra) & Const1D(target_dec) & wl2)
+                 ).rename('Order2')
+    cm_order3 = (Mapping((0, 1, 1, 0)) | \
+                 (Const1D(target_ra) & Const1D(target_dec) & wl3)
+                 ).rename('Order3')
+
+    subarray2full = subarray_transform(input_model)
+    if subarray2full is not None:
+        cm_order1 = subarray2full | cm_order1
+        cm_order2 = subarray2full | cm_order2
+        cm_order3 = subarray2full | cm_order3
+
+        bbox = ((-0.5, input_model.meta.subarray.ysize - 0.5),
+                (-0.5, input_model.meta.subarray.xsize - 0.5))
+        cm_order1.bounding_box = bbox
+        cm_order2.bounding_box = bbox
+        cm_order3.bounding_box = bbox
 
     # Define the transforms, they should accept (x,y) and return (ra, dec, lambda)
     soss_model = NirissSOSSModel([1, 2, 3],
@@ -199,18 +208,19 @@ def imaging(input_model, reference_files):
     -----
     It includes three coordinate frames -
     "detector" "v2v3" and "world".
-
     It uses the "distortion" reference file.
     """
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
     v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.arcsec, u.arcsec))
     world = cf.CelestialFrame(reference_frame=coord.ICRS(), name='world')
 
+    distortion = imaging_distortion(input_model, reference_files)
+
     subarray2full = subarray_transform(input_model)
-    imdistortion = imaging_distortion(input_model, reference_files)
-    distortion = subarray2full | imdistortion
-    distortion.bounding_box = imdistortion.bounding_box
-    del imdistortion.bounding_box
+    if subarray2full is not None:
+        distortion = subarray2full | distortion
+        distortion.bounding_box = bounding_box_from_subarray(input_model)
+
     tel2sky = pointing.v23tosky(input_model)
     pipeline = [(detector, distortion),
                 (v2v3, tel2sky),
@@ -239,23 +249,7 @@ def imaging_distortion(input_model, reference_files):
         # Check if the model has a bounding box.
         distortion.bounding_box
     except NotImplementedError:
-        shape = input_model.data.shape
-        # Note: Since bounding_box is attached to the model here
-        # it's in reverse order.
-        """
-        A CubeModel is always treated as a stack (in dimension 1)
-        of 2D images, as opposed to actual 3D data. In this case
-        the bounding box is set to the 2nd and 3rd dimension.
-        """
-        if isinstance(input_model, CubeModel):
-            bb = ((-0.5, shape[1] - 0.5),
-                  (-0.5, shape[2] - 0.5))
-        elif isinstance(input_model, ImageModel):
-            bb = ((-0.5, shape[0] - 0.5),
-                  (-0.5, shape[1] - 0.5))
-        else:
-            raise TypeError("Input is not an ImageModel or CubeModel")
-        distortion.bounding_box = bb
+        distortion.bounding_box = transform_bbox_from_shape(input_model.data.shape)
 
     dist.close()
     return distortion

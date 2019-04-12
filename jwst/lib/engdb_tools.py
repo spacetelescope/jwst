@@ -20,11 +20,9 @@ logger.addHandler(logging.NullHandler())
 ENGDB_HOST = 'http://iwjwdmsbemweb.stsci.edu/'
 ENGDB_BASE_URL = ''.join([
     ENGDB_HOST,
-    'JWDMSEngFqAccB71/',
+    'JWDMSEngFqAcc/',
     'TlmMnemonicDataSrv.svc/',
 ])
-ENGDB_BASE_URL = getenv('ENG_RESTFUL_URL', ENGDB_BASE_URL)
-
 
 # URI paths necessary to access the db
 ENGDB_DATA = 'Data/'
@@ -130,7 +128,11 @@ class ENGDB_Service():
         This is not the format of the returned data.
     """
 
-    def __init__(self, base_url=ENGDB_BASE_URL, default_format='dict'):
+    def __init__(self, base_url=None, default_format='dict'):
+        if base_url is None:
+            base_url = getenv('ENG_BASE_URL', ENGDB_BASE_URL)
+        if base_url[-1] !='/':
+            base_url += '/'
         self.base_url = base_url
         self.default_format = default_format
 

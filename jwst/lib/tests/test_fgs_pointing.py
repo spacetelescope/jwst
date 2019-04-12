@@ -1,4 +1,5 @@
 """Test suite for ensuring correct FGS pointing"""
+import os.path
 import logging
 from numpy import array
 
@@ -13,36 +14,19 @@ handler = logging.StreamHandler()
 handler.setLevel(logging.INFO)
 logger.addHandler(handler)
 
+siaf_db = os.path.join(os.path.dirname(__file__), 'data', 'siaf.db')
+
 # Define minimal model meta structure
 WCS_META = {
     'meta': {
         'exposure': {
             'type': 'FGS_ACQ1',
         },
-        'wcsinfo': {
-            'cdelt1': 1.90364333333333e-05,
-            'cdelt2': 1.94607944444444e-05,
-            'crpix1': 1024.5,
-            'crpix2': 1024.5,
-            'crval1': 0,
-            'crval2': 0,
-            'ctype1': 'RA---TAN',
-            'ctype2': 'DEC--TAN',
-            'cunit1': 'deg',
-            'cunit2': 'deg',
-            'dec_v1': 13.0,
-            'pa_v3': 0.0,
-            'pc1_1': 1.0,
-            'pc1_2': 0.0,
-            'pc2_1': 0.0,
-            'pc2_2': 1.0,
-            'ra_v1': 79.0,
-            's_region': '',
-            'v2_ref': 0,
-            'v3_ref': 0,
-            'v3yangle': -1.2508,
-            'vparity': -1,
-            'wcsaxes': 2
+        'aperture': {
+            'name': 'FGS1_FULL',
+        },
+        'observation': {
+            'date': '1/1/2017',
         }
     }
 }
@@ -50,7 +34,7 @@ WCS_META = {
 
 def test_fgs_pointing():
     model = make_level1b()
-    stp.update_wcs(model)
+    stp.update_wcs(model, siaf_path=siaf_db)
 
     assert model.meta.wcsinfo.pc1_1 == -1.0
     assert model.meta.wcsinfo.pc1_2 == 0.0

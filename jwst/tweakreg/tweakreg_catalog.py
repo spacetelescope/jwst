@@ -60,9 +60,8 @@ def make_tweakreg_catalog(model, kernel_fwhm, snr_threshold, sharplo=0.2,
     catalog : `~astropy.Table`
         An astropy Table containing the source catalog.
     """
-
     if not isinstance(model, ImageModel):
-        raise ValueError('The input model must be a ImageModel.')
+        raise TypeError('The input model must be an ImageModel.')
 
     threshold_img = detect_threshold(model.data, snr=snr_threshold)
     # TODO:  use threshold image based on error array
@@ -75,7 +74,7 @@ def make_tweakreg_catalog(model, kernel_fwhm, snr_threshold, sharplo=0.2,
     sources = daofind(model.data)
 
     columns = ['id', 'xcentroid', 'ycentroid', 'flux']
-    if len(sources) > 0:
+    if sources:
         catalog = sources[columns]
     else:
         catalog = Table(names=columns, dtype=(np.int_, np.float_, np.float_,

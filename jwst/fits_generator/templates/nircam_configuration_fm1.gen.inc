@@ -7,7 +7,7 @@ CHANNEL  = {'L': 'LONG',  \
             '3': 'SHORT', \
             '4': 'SHORT', \
            } [input('DETECTOR')[4]]    /       NIRCam channel: long or short
-PUPIL    = input('PUPIL_P')   /        name of the pupil element used
-FILTER   = input('FILTER_P')  /        name of the filter element used
+PUPIL    = input('PUPIL_P') or input('PUPIL')   /        name of the pupil element used
+FILTER   = input('FILTER_P') or input('FILTER')  /        name of the filter element used
 PILIN    =   F      /        pupil imaging lens in optical path: T/F
 

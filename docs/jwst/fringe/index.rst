@@ -1,3 +1,5 @@
+.. _fringe_step:
+
 =================
 Fringe Correction
 =================

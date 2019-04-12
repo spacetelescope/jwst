@@ -9,39 +9,36 @@ class CubeModel(DataModel):
     A data model for 3D image cubes.
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
+    data : numpy float32 array
+         The science data
 
-    data : numpy array
-        The science data.  3-D.
+    dq : numpy uint32 array
+         Data quality array
 
-    dq : numpy array
-        The data quality array.  3-D.
+    err : numpy float32 array
+         Error array
 
-    err : numpy array
-        The error array.  3-D
+    zeroframe : numpy float32 array
+         Zero frame array
 
-    zeroframe: numpy array
-        The zero-frame array.  3-D
+    area : numpy float32 array
+         Pixel area map array
 
-    relsens: numpy array
-        The relative sensitivity array.
+    relsens : numpy table
+         relative sensitivity table
 
-    int_times : table
-        The int_times table
+    int_times : numpy table
+         table of times for each integration
 
-    area: numpy array
-        The pixel area array.  2-D
+    wavelength : numpy float32 array
+         Wavelength array
 
-    wavelength: numpy array
-        The wavelength array.  2-D
+    var_poisson : numpy float32 array
+         Integration-specific variances of slope due to Poisson noise
 
-    var_poisson: numpy array
-        The variance due to Poisson noise array.  3-D
-
-    var_rnoise: numpy array
-        The variance due to read noise array.  3-D
+    var_rnoise : numpy float32 array
+         Integration-specific variances of slope due to read noise
     """
     schema_url = "cube.schema.yaml"
 

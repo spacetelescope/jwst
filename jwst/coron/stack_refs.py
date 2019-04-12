@@ -12,6 +12,7 @@ import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+
 def make_cube(input_models):
     """
     make_cube: Stack all of the integrations from multiple PSF
@@ -32,7 +33,7 @@ def make_cube(input_models):
             raise ValueError('All PSF exposures must have the same x/y dimensions!')
 
     # Create empty output data arrays of the appropriate dimensions
-    outdata = np.zeros((nints, nrows, ncols), dtype=np.float32)
+    outdata = np.zeros((nints, nrows, ncols), dtype=np.float64)
     outerr = outdata.copy()
     outdq = np.zeros((nints, nrows, ncols), dtype=np.uint32)
 
@@ -49,5 +50,6 @@ def make_cube(input_models):
 
     # Create the ouput Cube model
     output_model = datamodels.CubeModel(data=outdata, err=outerr, dq=outdq)
+    output_model.update(input_models[0])  # copy input meta data to output
 
     return output_model

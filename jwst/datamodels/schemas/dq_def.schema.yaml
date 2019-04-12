@@ -4,7 +4,7 @@ datatype:
 - name: BIT
   datatype: int32
 - name: VALUE
-  datatype: int32
+  datatype: uint32
 - name: NAME
   datatype: [ascii, 40]
 - name: DESCRIPTION

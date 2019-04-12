@@ -9,6 +9,7 @@ dist/
 *.so
 */version.py
 docs/*/source/*.txt.rst
+docs/generated
 docs/fits_generator/source/templates.rst
 docs/jwst_git/
 docs/_build/
@@ -19,3 +20,4 @@ relic/
 *wpu
 .pytest_cache
 results.xml
+pip-wheel-metadata/

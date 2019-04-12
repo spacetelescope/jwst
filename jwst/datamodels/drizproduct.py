@@ -7,6 +7,20 @@ __all__ = ['DrizProductModel']
 class DrizProductModel(DataModel):
     """
     A data model for drizzle-generated products.
+
+    Parameters
+    __________
+    data : numpy float32 array
+         The science data
+
+    con : numpy int32 array
+         Drizzle Context array
+
+    wht : numpy float32 array
+         Drizzle Weight array
+
+    relsens : numpy table
+         relative sensitivity table
     """
     schema_url = "drizproduct.schema.yaml"
 

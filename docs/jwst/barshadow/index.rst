@@ -1,3 +1,5 @@
+.. _barshadow_step:
+
 ====================
 Barshadow Correction
 ====================

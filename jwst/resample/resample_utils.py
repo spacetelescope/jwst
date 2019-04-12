@@ -6,9 +6,9 @@ from astropy.modeling.models import Scale, AffineTransformation2D
 from astropy.modeling import Model
 from gwcs import WCS, wcstools
 
-from stsci.tools.bitmask import interpret_bit_flags
+from astropy.nddata.bitmask import interpret_bit_flags
 
-from ..assign_wcs.util import wcs_from_footprints, bounding_box_from_shape
+from ..assign_wcs.util import wcs_from_footprints, wcs_bbox_from_shape
 
 import logging
 log = logging.getLogger(__name__)
@@ -37,7 +37,7 @@ def make_output_wcs(input_models):
     wcslist = [i.meta.wcs for i in input_models]
     for w, i in zip(wcslist, input_models):
         if w.bounding_box is None:
-            w.bounding_box = bounding_box_from_shape(i.data.shape)
+            w.bounding_box = wcs_bbox_from_shape(i.data.shape)
     naxes = wcslist[0].output_frame.naxes
 
     if naxes == 3:
@@ -99,7 +99,7 @@ def calc_gwcs_pixmap(in_wcs, out_wcs, shape=None):
     """ Return a pixel grid map from input frame to output frame.
     """
     if shape:
-        bb = bounding_box_from_shape(shape)
+        bb = wcs_bbox_from_shape(shape)
         log.debug("Bounding box from data shape: {}".format(bb))
     else:
         bb = in_wcs.bounding_box

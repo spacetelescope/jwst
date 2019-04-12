@@ -275,18 +275,39 @@ def is_fits(input):
 
 def subarray_transform(input_model):
     """
-    Inputs are in full frame coordinates.
-    If a subarray observation - shift the inputs.
+    Return an offset model if the observation uses a subarray.
 
+    Parameters
+    ----------
+    input_model : `~jwst.datamodels.DataModel`
+        Data model.
+
+    Returns
+    -------
+    subarray2full : `~astropy.modeling.core.Model` or ``None``
+        Returns a (combination of ) ``Shift`` models if a subarray is used.
+        Returns ``None`` if a full frame observation.
     """
+    tr_xstart = astmodels.Identity(1)
+    tr_ystart = astmodels.Identity(1)
+
+    # These quanities are 1-based
     xstart = input_model.meta.subarray.xstart
     ystart = input_model.meta.subarray.ystart
-    if xstart is None:
-        xstart = 1
-    if ystart is None:
-        ystart = 1
-    subarray2full = astmodels.Shift(xstart - 1) & astmodels.Shift(ystart - 1)
-    return subarray2full
+
+    if xstart is not None and xstart != 1:
+        tr_xstart = astmodels.Shift(xstart -1)
+
+    if ystart is not None and ystart != 1:
+        tr_ystart = astmodels.Shift(ystart -1)
+
+    if (isinstance(tr_xstart, astmodels.Identity) and
+        isinstance(tr_ystart, astmodels.Identity)):
+        # the case of a full frame observation
+        return None
+    else:
+        subarray2full = tr_xstart & tr_ystart
+        return subarray2full
 
 
 def not_implemented_mode(input_model, ref):
@@ -641,19 +662,74 @@ def get_num_msa_open_shutters(shutter_state):
     return num
 
 
-def bounding_box_from_shape(shape):
+def transform_bbox_from_shape(shape):
     """Create a bounding box from the shape of the data.
+
+    This is appropriate to attached to a transform.
 
     Parameters
     ----------
     shape : tuple
         The shape attribute from a `numpy.ndarray` array
 
-    Note: The bounding box of a ``CubeModel`` is the bounding_box of one
-    of the stacked images.
+    Returns
+    -------
+    bbox : tuple
+        Bounding box in y, x order.
+    """
+    bbox = ((-0.5, shape[-2] - 0.5),
+            (-0.5, shape[-1] - 0.5))
+    return bbox
+
+
+def wcs_bbox_from_shape(shape):
+    """Create a bounding box from the shape of the data.
+
+    This is appropriate to attach to a wcs object
+    Parameters
+    ----------
+    shape : tuple
+        The shape attribute from a `numpy.ndarray` array
+
+    Returns
+    -------
+    bbox : tuple
+        Bounding box in x, y order.
     """
     bbox = ((-0.5, shape[-1] - 0.5),
             (-0.5, shape[-2] - 0.5))
+    return bbox
+
+
+def bounding_box_from_subarray(input_model):
+    """Create a bounding box from the subarray size.
+
+    Note: The bounding_box assumes full frame coordinates.
+    It is set to ((ystart, ystart + xsize), (xstart, xstart + xsize)).
+    It is in 0-based coordinates.
+
+    Parameters
+    ----------
+    input_model : `~jwst.datamodels.DataModel`
+        The data model.
+
+    Returns
+    -------
+    bbox : tuple
+        Bounding box in y, x order.
+    """
+    bb_xstart = -0.5
+    bb_xend = -0.5
+    bb_ystart = -0.5
+    bb_yend = -0.5
+
+    if input_model.meta.subarray.xsize is not None:
+        # Implicitely there's bb_xstart + 0.5 and xsize -1 - 0.5
+        bb_xend = input_model.meta.subarray.xsize - 1 - 0.5
+    if input_model.meta.subarray.ysize is not None:
+        bb_yend = input_model.meta.subarray.ysize - 1 - 0.5
+
+    bbox = ((bb_ystart, bb_yend), (bb_xstart, bb_xend))
     return bbox
 
 
@@ -665,7 +741,7 @@ def update_s_region_imaging(model):
     bbox = model.meta.wcs.bounding_box
 
     if bbox is None:
-        bbox = bounding_box_from_shape(model.data.shape)
+        bbox = wcs_bbox_from_shape(model.data.shape)
 
     # footprint is an array of shape (2, 4) as we
     # are interested only in the footprint on the sky
@@ -687,7 +763,7 @@ def update_s_region_spectral(model):
 
     bbox = swcs.bounding_box
     if bbox is None:
-        bbox = bounding_box_from_shape(model.data.shape)
+        bbox = wcs_bbox_from_shape(model.data.shape)
 
     x, y = grid_from_bounding_box(bbox)
     ra, dec, lam = swcs(x, y)

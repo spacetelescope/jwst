@@ -1,6 +1,8 @@
-=======================
-Gain Scale  Processing
-=======================
+.. _gain_scale_step:
+
+=====================
+Gain Scale Correction
+=====================
 
 .. toctree::
    :maxdepth: 2

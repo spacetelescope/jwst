@@ -1,3 +1,5 @@
+.. _saturation_step:
+
 ====================
 Saturation Detection
 ====================

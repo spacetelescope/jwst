@@ -10,7 +10,7 @@ collection of images so as to minimize their differences. This operation is
 typically applied before combining multiple images into a mosaic. When running
 the ``skymatch`` step in a matching mode, it compares *total* signal
 levels in *the overlap regions* (instead of doing this comparison on a
-per-pixel basis, cf. :doc:`mrs_imatch step <../mrs_imatch/README>`)
+per-pixel basis)
 of a set of input images and computes the signal offsets for each image
 that will minimize the residuals across the entire set in the least squares
 sence. This comparison is performed directly on input images without resampling

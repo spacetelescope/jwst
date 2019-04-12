@@ -1,8 +1,8 @@
-"""Project default for pytest"""
-from astropy.tests.helper import enable_deprecations_as_exceptions
+import pkg_resources
 
-enable_deprecations_as_exceptions()
+entry_points = []
+for entry_point in pkg_resources.iter_entry_points('pytest11'):
+    entry_points.append(entry_point.name)
 
-pytest_plugins = [
-    'asdf.tests.schema_tester'
-]
+if "asdf_schema_tester" not in entry_points:
+    pytest_plugins = ['asdf.tests.schema_tester']

@@ -2,6 +2,7 @@
 #
 # utils.py: utility functions
 import logging
+import warnings
 import numpy as np
 
 from .. import datamodels
@@ -226,7 +227,7 @@ class OptRes:
             max_cr = max(max_cr, max_cr_int)
 
         # Allocate compressed array based on max number of crs
-        cr_com = np.zeros((n_int,) + (max_cr,) + imshape, dtype=np.int16)
+        cr_com = np.zeros((n_int,) + (max_cr,) + imshape, dtype=np.float32)
 
         # Loop over integrations and groups: for those pix having a cr, add
         #    the magnitude to the compressed array
@@ -278,6 +279,13 @@ class OptRes:
         self.var_p_seg[self.var_p_seg > 0.4 * LARGE_VARIANCE ] = 0.
         self.var_r_seg[self.var_r_seg > 0.4 * LARGE_VARIANCE ] = 0.
 
+        # Suppress, then re-enable, arithmetic warnings
+        warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
+        warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
+        # Tiny 'weights' values correspond to non-existent segments, so set to 0.
+        self.weights[1./self.weights > 0.4 * LARGE_VARIANCE ] = 0.
+        warnings.resetwarnings()
+
         rfo_model = \
         datamodels.RampFitOutputModel(\
             slope=self.slope_seg.astype(np.float32) / effintim,
@@ -291,11 +299,12 @@ class OptRes:
             crmag=self.cr_mag_seg)
 
         rfo_model.meta.filename = model.meta.filename
+        rfo_model.update(model)  # add all keys from input
 
         return rfo_model
 
 
-    def print_full(self):
+    def print_full(self):# pragma: no cover
         """
         Diagnostic function for printing optional output arrays; most
         useful for tiny datasets
@@ -572,7 +581,13 @@ def calc_slope_vars(rn_sect, gain_sect, gdq_sect, group_time, max_seg):
     #   and ngroups is the number of groups in the segment.
     #   Here the denominator of this quantity will be computed, which will be
     #   later multiplied by the estimated median slope.
+
+    # Suppress, then re-enable, harmless arithmetic warnings, as NaN will be 
+    #   checked for and handled later
+    warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
+    warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
     den_p3 = 1./(group_time * gain_1d.reshape(imshape) * segs_beg_3_m1 )
+    warnings.resetwarnings()
 
     # For a segment, the variance due to readnoise noise
     # = 12 * readnoise**2 /(ngroups_seg**3. - ngroups_seg)/( tgroup **2.)
@@ -590,8 +605,14 @@ def calc_slope_vars(rn_sect, gain_sect, gdq_sect, group_time, max_seg):
     #   longer segments, this value is overwritten below.
     den_r3 = num_r3.copy() * 0. + 1./6
     wh_seg_pos = np.where (segs_beg_3 > 1)
+    
+    # Suppress, then, re-enable harmless arithmetic warnings, as NaN will be 
+    #   checked for and handled later
+    warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
+    warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
     den_r3[ wh_seg_pos ] = 1./(segs_beg_3[ wh_seg_pos ] **3. -
                                segs_beg_3[ wh_seg_pos ]) # overwrite where segs>1
+    warnings.resetwarnings()
 
     return ( den_r3, den_p3, num_r3, segs_beg_3 )
 
@@ -686,8 +707,13 @@ def output_integ(model, slope_int, dq_int, effintim, var_p3, var_r3, var_both3,
     cubemod : Data Model object
 
     """
+    # Suppress harmless arithmetic warnings for now
+    warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
+    warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
+
     var_p3[ var_p3 > 0.4 * LARGE_VARIANCE ] = 0.
     var_r3[ var_r3 > 0.4 * LARGE_VARIANCE ] = 0.
+    var_both3[ var_both3 > 0.4 * LARGE_VARIANCE ] = 0.
 
     cubemod = datamodels.CubeModel()
     cubemod.data = slope_int / effintim
@@ -697,6 +723,9 @@ def output_integ(model, slope_int, dq_int, effintim, var_p3, var_r3, var_both3,
     cubemod.var_rnoise = var_r3
     cubemod.int_times = int_times
 
+    # Reset the warnings filter to its original state
+    warnings.resetwarnings()
+
     cubemod.update(model) # keys from input needed for photom step
 
     return cubemod
@@ -704,7 +733,7 @@ def output_integ(model, slope_int, dq_int, effintim, var_p3, var_r3, var_both3,
 
 def gls_output_optional(model, intercept_int, intercept_err_int,
                         pedestal_int,
-                        ampl_int, ampl_err_int):
+                        ampl_int, ampl_err_int):# pragma: no cover
     """Construct the optional results for the GLS algorithm.
 
     Extended Summary
@@ -756,7 +785,7 @@ def gls_output_optional(model, intercept_int, intercept_err_int,
 
 
 def gls_pedestal(first_group, slope_int, s_mask,
-                 frame_time, nframes_used):
+                 frame_time, nframes_used):# pragma: no cover
 
     """Calculate the pedestal for the GLS case.
 
@@ -957,7 +986,7 @@ def get_dataset_info(model):
            ngroups, group_time
 
 
-def get_more_info(model):
+def get_more_info(model):# pragma: no cover
     """Get information used by GLS algorithm.
 
     Parameters
@@ -989,7 +1018,7 @@ def get_more_info(model):
     return (group_time, nframes_used, saturated_flag, jump_flag)
 
 
-def get_max_num_cr(gdq_cube, jump_flag):
+def get_max_num_cr(gdq_cube, jump_flag): # pragma: no cover
     """
     Find the maximum number of cosmic-ray hits in any one pixel.
 
@@ -1134,25 +1163,24 @@ def remove_bad_singles( segs_beg_3 ):
 
                 slice_1 = segs_beg_3[ii_1,:,:]
 
-                # Find ramps of a single-group segment and another segment 
+                # Find ramps of a single-group segment and another segment
                 #    either earlier or later
-                wh_y_all, wh_x_all = np.where((slice_0 == 1) & (slice_1 > 0))
+                wh_y, wh_x = np.where((slice_0 == 1) & (slice_1 > 0))
 
-                if (len( wh_y_all) == 0):
+                if (len(wh_y) == 0):
                    # Are none, so go to next pair of segments to check
                     continue
 
                 # Remove the 1-group segment
-                segs_beg_3[ii_0:-1, wh_y_all, wh_x_all] = \
-                           segs_beg_3[ii_0+1:, wh_y_all, wh_x_all] 
+                segs_beg_3[ii_0:-1, wh_y, wh_x] = segs_beg_3[ii_0+1:, wh_y, wh_x]
 
                 # Zero the last segment entry for the ramp, which would otherwise
                 #   remain non-zero due to the shift
-                segs_beg_3[-1, wh_y_all, wh_x_all] = 0
+                segs_beg_3[-1, wh_y, wh_x] = 0
 
-                del wh_y_all, wh_x_all
+                del wh_y, wh_x
 
-                tot_num_single_grp_ramps = len( np.where((segs_beg_3 == 1) & 
+                tot_num_single_grp_ramps = len( np.where((segs_beg_3 == 1) &
                            (segs_beg_3.sum(axis=0) > 1))[0])
 
     return segs_beg_3
@@ -1215,3 +1243,99 @@ def fix_sat_ramps( sat_0th_group_int, var_p3, var_both3, slope_int):
         slope_int[ ii_integ, ii_y, ii_x ] = 0.
 
     return var_p3, var_both3, slope_int
+
+
+def do_all_sat( model, imshape, n_int, save_opt):
+    """
+    For an input exposure where all groups in all integrations are saturated,
+    the DQ in the primary and integration-specific output products are updated,
+    and the other arrays in all output products are populated with zeros.
+
+    Parameters
+    ----------
+    model : instance of Data Model
+       DM object for input
+
+    imshape : (int, int) tuple
+       shape of 2D image
+
+    n_int : int
+       number of integrations
+
+    save_opt : boolean
+       save optional fitting results
+
+    Returns
+    -------
+    new_model : Data Model object
+        DM object containing a rate image averaged over all integrations in
+        the exposure
+
+    int_model : Data Model object or None
+        DM object containing rate images for each integration in the exposure
+
+    opt_model : RampFitOutputModel object or None
+        DM object containing optional OLS-specific ramp fitting data for the
+        exposure
+    """    
+    # Create model for the primary output. Flag all pixels in the pixiel DQ
+    #   extension as SATURATED and DO_NOT_USE.
+    model.pixeldq = np.bitwise_or(model.pixeldq, dqflags.group['SATURATED'] )
+    model.pixeldq = np.bitwise_or(model.pixeldq, dqflags.group['DO_NOT_USE'] )
+
+    new_model = datamodels.ImageModel(data = np.zeros(imshape, dtype=np.float32),
+        dq = model.pixeldq,
+        var_poisson = np.zeros(imshape, dtype=np.float32),
+        var_rnoise = np.zeros(imshape, dtype=np.float32),
+        err = np.zeros(imshape, dtype=np.float32) )
+
+    new_model.update(model)  # ... and add all keys from input
+
+    # Create model for the integration-specific output. The 3D group DQ created
+    #   is based on the 4D group DQ of the model, and all pixels in all
+    #   integrations will be flagged here as DO_NOT_USE (they are already flagged
+    #   as SATURATED). The INT_TIMES extension will be left as None.
+    if n_int > 1:
+        m_sh = model.groupdq.shape  # (integ, grps/integ, y, x )
+        groupdq_3d = np.zeros((m_sh[0], m_sh[2], m_sh[3]), dtype=np.uint32)
+
+        for ii in range(n_int): # add SAT flag to existing groupdq in each slice
+            groupdq_3d[ii,:,:] = np.bitwise_or.reduce( model.groupdq[ii,:,:,:],
+                                                       axis=0)
+
+        groupdq_3d = np.bitwise_or( groupdq_3d, dqflags.group['DO_NOT_USE'] )
+        int_model = datamodels.CubeModel(
+            data = np.zeros((n_int,) + imshape, dtype=np.float32),
+            dq = groupdq_3d,
+            var_poisson = np.zeros((n_int,) + imshape, dtype=np.float32),
+            var_rnoise =  np.zeros((n_int,) + imshape, dtype=np.float32),
+            int_times = None,
+            err =  np.zeros((n_int,) + imshape, dtype=np.float32))
+
+        int_model.update(model)  # ... and add all keys from input
+    else:
+        int_model = None
+
+    # Create model for the optional output
+    if save_opt:
+        new_arr = np.zeros((n_int,)+(1,)+ imshape, dtype=np.float32)
+
+        opt_model = datamodels.RampFitOutputModel(
+            slope = new_arr,
+            sigslope = new_arr,
+            var_poisson =new_arr,
+            var_rnoise = new_arr,
+            yint = new_arr,
+            sigyint = new_arr,
+            pedestal = np.zeros((n_int,)+ imshape,dtype=np.float32),
+            weights = new_arr,
+            crmag = new_arr)
+
+        opt_model.meta.filename = model.meta.filename
+        opt_model.update(model)  # ... and add all keys from input
+    else:
+        opt_model = None
+
+    log.info('All groups of all integrations are saturated.')
+
+    return new_model, int_model, opt_model
