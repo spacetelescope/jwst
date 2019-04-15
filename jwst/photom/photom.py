@@ -32,7 +32,7 @@ class DataSet():
 
         Parameters
         ----------
-        model: data model object
+        model : ~jwst.datamodels.DataModel
             input Data Model object
 
         """
@@ -43,16 +43,16 @@ class DataSet():
         self.detector = model.meta.instrument.detector.upper()
         self.exptype = model.meta.exposure.type.upper()
         self.filter = None
-        if model.meta.instrument.filter:
+        if model.meta.instrument.filter is not None:
             self.filter = model.meta.instrument.filter.upper()
         self.pupil = None
-        if model.meta.instrument.pupil:
+        if model.meta.instrument.pupil is not None:
             self.pupil = model.meta.instrument.pupil.upper()
         self.grating = None
-        if model.meta.instrument.grating:
+        if model.meta.instrument.grating is not None:
             self.grating = model.meta.instrument.grating.upper()
         self.band = None
-        if model.meta.instrument.band:
+        if model.meta.instrument.band is not None:
             self.band = model.meta.instrument.band.upper()
         self.slitnum = -1
 
@@ -60,13 +60,13 @@ class DataSet():
         log.info('Using instrument: %s', self.instrument)
         log.info(' detector: %s', self.detector)
         log.info(' exp_type: %s', self.exptype)
-        if self.filter:
+        if self.filter is not None:
             log.info(' filter: %s', self.filter)
-        if self.pupil:
+        if self.pupil is not None:
             log.info(' pupil: %s', self.pupil)
-        if self.grating:
+        if self.grating is not None:
             log.info(' grating: %s', self.grating)
-        if self.band:
+        if self.band is not None:
             log.info(' band: %s', self.band)
 
     def calc_nirspec(self, ftab, area_fname):
@@ -82,10 +82,10 @@ class DataSet():
 
         Parameters
         ----------
-        ftab: FITS HDUList
-            HDUList for NIRSPEC photom reference file
+        ftab : ~jwst.datamodels.DataModel
+            NIRSpec photom reference file data model
 
-        area_fname: string
+        area_fname : str
             Pixel area map reference file name
 
         Returns
@@ -271,8 +271,8 @@ class DataSet():
 
         Parameters
         ----------
-        ftab: fits HDUList
-            HDUList for photom reference file
+        ftab : ~jwst.datamodels.DataModel
+            NIRISS photom reference file data model
 
         Returns
         -------
@@ -362,8 +362,8 @@ class DataSet():
 
         Parameters
         ----------
-        ftab: fits HDUList
-            HDUList for photom reference file
+        ftab : ~jwst.datamodels.DataModel
+            MIRI photom reference file data model
 
         Returns
         -------
@@ -459,8 +459,8 @@ class DataSet():
 
         Parameters
         ----------
-        ftab: fits HDUList
-            HDUList for photom reference file
+        ftab : ~jwst.datamodels.DataModel
+            NIRCam photom reference file data model
 
         Returns
         -------
@@ -513,8 +513,8 @@ class DataSet():
 
         Parameters
         ----------
-        ftab: fits HDUList
-            HDUList for photom reference file
+        ftab : ~jwst.datamodels.DataModel
+            FGS photom reference file data model
 
         Returns
         -------
@@ -617,7 +617,7 @@ class DataSet():
 
         Parameters
         ----------
-        tabdata: FITS record
+        tabdata : FITS record
             Single row of data from reference table
 
         Returns
@@ -706,10 +706,10 @@ class DataSet():
 
         Parameters
         ----------
-        ftab: DataModel object
-            Instance of photom reference file table data
+        ftab : ~jwst.datamodels.DataModel
+            Photom reference file data model
 
-        area_fname: string
+        area_fname : str
             Pixel area reference file name
 
         Returns
@@ -787,15 +787,15 @@ class DataSet():
 
         Parameters
         ----------
-        photom_fname: string
+        photom_fname : str
             photom reference file name
 
-        area_fname: string
+        area_fname: str
             pixel area map reference file name
 
         Returns
         -------
-        output_model: jwst datamodel
+        output_model : ~jwst.datamodels.DataModel
             output data model with the flux calibrations applied
 
         """
