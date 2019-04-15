@@ -181,23 +181,20 @@ class TestNIRSpecMasterBackground_FS(BaseJWSTTest):
     ref_loc = ['test_masterbackground', 'nrs-fs', 'truth']
     test_dir = ['test_masterbackground', 'nrs-fs']
 
-    def test_nirspec_masterbackground_fs_user1d(self):
+    def test_nirspec_fs_masterbg_user(self):
         """
-
-        Regression test of master background subtraction for NRS FS when a user 1-D spectrum is provided.
-
+        Regression test of master background subtraction for NRS FS when a
+        user 1-D spectrum is provided.
         """
         # input file has 2-D background image added to it
-        input_file = self.get_data(*self.test_dir,
-                                    'nrs_sci+bkg_cal.fits')
+        input_file = self.get_data(*self.test_dir, 'nrs_sci+bkg_cal.fits')
         # user provided 1-D background was created from the 2-D background image
-        input_1dbkg_file = self.get_data(*self.test_dir,
-                                          'nrs_bkg_user_clean_x1d.fits')
+        input_1dbkg_file = self.get_data(*self.test_dir, 'nrs_bkg_user_clean_x1d.fits')
 
         result = MasterBackgroundStep.call(input_file,
                                            user_background=input_1dbkg_file,
                                            save_results=True)
-        # _________________________________________________________________________
+
         # Test 1 compare 4 FS 1D extracted spectra from science data with
         # no background added to 4 FS 1D extracted spectra from the output
         # from MasterBackground subtraction
@@ -229,7 +226,7 @@ class TestNIRSpecMasterBackground_FS(BaseJWSTTest):
                                             'nrs_sci_cal.fits')
         input_sci = datamodels.open(input_sci_cal_file)
         for i in range(num_spec):
-            # ______________________________________________________________________
+
             # Test 1 compare extracted spectra data from the science data
             # to extracted spectra from the output
             # from MasterBackground subtraction.
@@ -252,7 +249,7 @@ class TestNIRSpecMasterBackground_FS(BaseJWSTTest):
             mean_sub = np.absolute(np.nanmean(sub_spec))
             atol = 4.0
             assert_allclose(mean_sub, 0, atol=atol)
-            # ______________________________________________________________________
+
             # Test 2  compare the science  data with no background
             # to the output from the masterBackground Subtraction step
             # background subtracted science image.
@@ -282,7 +279,7 @@ class TestNIRSpecMasterBackground_FS(BaseJWSTTest):
             atol = 0.5
             assert_allclose(np.absolute(mean_sub), 0, atol=atol)
         input_sci.close()
-        # ______________________________________________________________________
+
         # Test 3 Compare background sutracted science data (results)
         #  to a truth file. This data is MultiSlit data
         result_file = result.meta.filename
@@ -301,30 +298,25 @@ class TestNIRSpecMasterBackground_IFU(BaseJWSTTest):
     ref_loc = ['test_masterbackground', 'nrs-ifu', 'truth']
     test_dir = ['test_masterbackground', 'nrs-ifu']
 
-    def test_nirspec_masterbackground_ifu_user1d(self):
+    def test_nirspec_ifu_masterbg_user(self):
         """
-
-        Regression test of master background subtraction for NRS IFU when a user 1-D spectrum is provided.
-
+        Regression test of master background subtraction for NRS IFU when a
+        user 1-D spectrum is provided.
         """
         # input file has 2-D background image added to it
+        input_file = self.get_data(*self.test_dir, 'prism_sci_bkg_cal.fits')
 
-        input_file = self.get_data(*self.test_dir,
-                                    'prism_sci_bkg_cal.fits')
-        # user provide 1-D background was created from the 2-D background image
-        input_1dbkg_file = self.get_data(*self.test_dir,
-                                          'prism_bkg_x1d.fits')
+        # user-provided 1-D background was created from the 2-D background image
+        user_background = self.get_data(*self.test_dir, 'prism_bkg_x1d.fits')
 
         result = MasterBackgroundStep.call(input_file,
-                                           user_background=input_1dbkg_file,
+                                           user_background=user_background,
                                            save_results=True)
 
-        # _________________________________________________________________________
         # Test 1 compare extracted spectra data with
         # no background added to extracted spectra from the output
         # from MasterBackground subtraction. First cube_build has to be run
         # on the data.
-
         result_s3d = CubeBuildStep.call(result)
         # run 1-D extract on results from MasterBackground step
         result_1d = Extract1dStep.call(result_s3d, subtract_background=False)
@@ -334,13 +326,13 @@ class TestNIRSpecMasterBackground_IFU(BaseJWSTTest):
         sci_1d = datamodels.open(input_sci_1d_file)
 
         # read in the valid wavelengths of the user-1d
-        input_1d_bkg_model = datamodels.open(input_1dbkg_file)
-        user_wave = input_1d_bkg_model.spec[0].spec_table['wavelength']
-        user_flux = input_1d_bkg_model.spec[0].spec_table['net']
+        user_background_model = datamodels.open(user_background)
+        user_wave = user_background_model.spec[0].spec_table['wavelength']
+        user_flux = user_background_model.spec[0].spec_table['net']
         user_wave_valid = np.where(user_flux > 0)
         min_user_wave = np.amin(user_wave[user_wave_valid])
         max_user_wave = np.amax(user_wave[user_wave_valid])
-        input_1d_bkg_model.close()
+        user_background_model.close()
         # find the waverange covered by both user and science
         sci_spec_1d = sci_1d.spec[0].spec_table['net']
         sci_spec_wave = sci_1d.spec[0].spec_table['wavelength']
@@ -363,7 +355,7 @@ class TestNIRSpecMasterBackground_IFU(BaseJWSTTest):
         mean_sub = np.absolute(np.nanmean(sub_spec))
         atol = 5.0
         assert_allclose(mean_sub, 0, atol=atol)
-        # ______________________________________________________________________
+
         # Test 2  compare the science  data with no background
         # to the output from the masterBackground Subtraction step
         # background subtracted science image.
@@ -395,7 +387,7 @@ class TestNIRSpecMasterBackground_IFU(BaseJWSTTest):
             sub_mean = np.absolute(np.nanmean(sub[mask_clean]))
             atol = 2.0
             assert_allclose(sub_mean, 0, atol=atol)
-        # ______________________________________________________________________
+
         # Test 3 Compare background sutracted science data (results)
         #  to a truth file. This data is MultiSlit data
 
@@ -416,22 +408,20 @@ class TestNIRSpecMasterBackground_MOS(BaseJWSTTest):
     ref_loc = ['test_masterbackground', 'nrs-mos', 'truth']
     test_dir = ['test_masterbackground', 'nrs-mos']
 
-    def test_nirspec_masterbackground_mos_user1d(self):
+    def test_nirspec_mos_masterbg_user(self):
         """
-        Regression test of master background subtraction for NRS MOS when a user 1-D spectrum is provided.
-
+        Regression test of master background subtraction for NRS MOS when
+        a user 1-D spectrum is provided.
         """
         # input file has 2-D background image added to it
-        input_file = self.get_data(*self.test_dir,
-                                    'nrs_mos_sci+bkg_cal.fits')
+        input_file = self.get_data(*self.test_dir, 'nrs_mos_sci+bkg_cal.fits')
         # user provide 1-D background was created from the 2-D background image
-        input_1dbkg_file = self.get_data(*self.test_dir,
-                                          'nrs_mos_bkg_x1d.fits')
+        input_1dbkg_file = self.get_data(*self.test_dir, 'nrs_mos_bkg_x1d.fits')
 
         result = MasterBackgroundStep.call(input_file,
                                            user_background=input_1dbkg_file,
                                            save_results=True)
-        # _________________________________________________________________________
+
         # One of out tests is to compare the 1-D extracted spectra from
         # the science image (no background added) and the masterbackground subtracted
         # data.
@@ -466,7 +456,6 @@ class TestNIRSpecMasterBackground_MOS(BaseJWSTTest):
 
         # loop over each slit and perform 2 tests on each slit
         for i in range(num_spec):
-            # ______________________________________________________________________
             # Test 1 compare extracted spectra data from the science data
             # to extracted spectra from the output
             # from MasterBackground subtraction.
@@ -489,7 +478,7 @@ class TestNIRSpecMasterBackground_MOS(BaseJWSTTest):
             mean_sub = np.nanmean(sub_spec)
             atol = 1.5
             assert_allclose(mean_sub, 0, atol=atol)
-            # ______________________________________________________________________
+
             # Test 2  compare the science  data with no background
             # to the output from the masterBackground Subtraction step
             # background subtracted science image.
@@ -518,7 +507,7 @@ class TestNIRSpecMasterBackground_MOS(BaseJWSTTest):
             mean_sub = np.mean(sub_valid[mask_clean])
             atol = 0.1
             assert_allclose(np.absolute(mean_sub), 0, atol=atol)
-        # ______________________________________________________________________
+
         # Test 3 Compare background sutracted science data (results)
         #  to a truth file. This data is MultiSlit data
 
