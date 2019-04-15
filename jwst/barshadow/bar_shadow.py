@@ -99,9 +99,8 @@ def do_correction(input_model, barshadow_model):
                 slitlet.barshadow = correction
 
                 # Apply the correction by dividing into the science and uncertainty arrays:
-                #     var_poission is divided by correction**2, because it's variance,
-                #         while err is standard deviation
-                #     var_rnoise is not changed, because it does not depend on signal level
+                #     var_poission and var_rnoise are divided by correction**2,
+                #     because they're variance, while err is standard deviation
                 slitlet.data /= correction
                 slitlet.err /= correction
                 slitlet.var_poisson /= correction**2
