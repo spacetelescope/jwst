@@ -443,9 +443,9 @@ def locn_from_wcs(input_model, ra_targ, dec_targ):
         # The arguments are the X, Y, and Z pixel coordinates, and the
         # output arrays will be 2-D.
         (ra_i, dec_i, wl) = input_model.meta.wcs(grid[1], grid[0], z)
-        rect = sph_to_rect(ra_i, dec_i)
-        v = sph_to_rect(ra_targ, dec_targ)
-        diff = rect - v
+        cart = celestial_to_cartesian(ra_i, dec_i)
+        v = celestial_to_cartesian(ra_targ, dec_targ)   # a single vector
+        diff = cart - v
         # We want the pixel with the minimum distance from v, but the pixel
         # with the minimum value of distance squared will be the same.
         dist2 = (diff**2).sum(axis=-1)
@@ -465,8 +465,8 @@ def locn_from_wcs(input_model, ra_targ, dec_targ):
     return locn
 
 
-def sph_to_rect(ra, dec):
-    """Convert celestial coordinates to rectangular.
+def celestial_to_cartesian(ra, dec):
+    """Convert celestial coordinates to Cartesian.
 
     Parameters
     ----------
@@ -476,13 +476,13 @@ def sph_to_rect(ra, dec):
 
     Returns
     -------
-    rect : ndarray
-        If `ra` and `dec` are float, `rect` with be a 3-element array.
-        If `ra` and `dec` are arrays, `rect` will be an array with shape
+    cart : ndarray
+        If `ra` and `dec` are float, `cart` with be a 3-element array.
+        If `ra` and `dec` are arrays, `cart` will be an array with shape
         ra.shape + (3,).
-        For each element of `ra` (or `dec`), the last axis of `rect` will
-        give the rectangular coordinates of a unit vector in the direction
-        `ra`, `dec`.  The elements of the vector in rectangular coordinates
+        For each element of `ra` (or `dec`), the last axis of `cart` will
+        give the Cartesian coordinates of a unit vector in the direction
+        `ra`, `dec`.  The elements of the vector in Cartesian coordinates
         are in the order x, y, z, where x is the direction toward the
         vernal equinox, y is the direction toward right ascension = 90
         degrees (6 hours) and declination = 0, and z is toward the north
@@ -494,13 +494,13 @@ def sph_to_rect(ra, dec):
     else:
         shape = (3,)
 
-    rect = np.zeros(shape, dtype=np.float64)
-    rect[..., 2] = np.sin(dec * np.pi / 180.)
+    cart = np.zeros(shape, dtype=np.float64)
+    cart[..., 2] = np.sin(dec * np.pi / 180.)
     r_xy = np.cos(dec * np.pi / 180.)
-    rect[..., 1] = r_xy * np.sin(ra * np.pi / 180.)
-    rect[..., 0] = r_xy * np.cos(ra * np.pi / 180.)
+    cart[..., 1] = r_xy * np.sin(ra * np.pi / 180.)
+    cart[..., 0] = r_xy * np.cos(ra * np.pi / 180.)
 
-    return rect
+    return cart
 
 
 def image_extract_ifu(input_model, source_type, extract_params):

@@ -8,8 +8,9 @@ import numpy as np
 from astropy.modeling import polynomial
 from .. import datamodels
 from ..datamodels import dqflags
-from .. assign_wcs import niriss        # for specifying spectral order number
-from .. lib import pipe_utils
+from ..assign_wcs import niriss         # for specifying spectral order number
+from ..assign_wcs.util import wcs_bbox_from_shape
+from ..lib import pipe_utils
 from . import extract1d
 from . import ifu
 from . import spec_wcs
@@ -1281,7 +1282,7 @@ class ExtractBase:
                 shape = input_model.data.shape
             else:
                 shape = slit.data.shape
-            bb = [[-0.5, shape[-1] - 0.5], [-0.5, shape[-2] - 0.5]]
+            bb = wcs_bbox_from_shape(shape)
 
         if self.dispaxis == HORIZONTAL:
             # Width (height) in the cross-dispersion direction, from the
@@ -1304,7 +1305,7 @@ class ExtractBase:
 
         # We need stuff[2], a 1-D array of wavelengths crossing the
         # spectrum near its middle.
-        stuff = self.wcs(x, y, self.spectral_order)
+        stuff = self.wcs(x, y)
         middle_wl = np.nanmean(stuff[2])
 
         targ_ra = input_model.meta.target.ra
@@ -1340,6 +1341,7 @@ class ExtractBase:
 
     def nominal_locn(self, middle, middle_wl):
         # Implemented in the subclasses.
+        raise NotImplementedError()
         pass
 
 
@@ -2175,7 +2177,8 @@ class ImageExtractModel(ExtractBase):
             spectrum.
 
         middle_wl: float
-            The wavelength at pixel `middle`.  This is not used.
+            The wavelength at pixel `middle`.  This is not used in this
+            version.
 
         Returns
         -------
@@ -2189,14 +2192,22 @@ class ImageExtractModel(ExtractBase):
 
         shape = self.ref_image.data.shape
 
+        bad = False
         if self.dispaxis == HORIZONTAL:
-            if middle < 0 or middle >= shape[1]:
-                return None
-            middle_line = self.ref_image.data[:, middle]
+            if middle >= 0 and middle < shape[1]:
+                middle_line = self.ref_image.data[:, middle]
+            else:
+                bad = True
         else:
-            if middle < 0 or middle >= shape[0]:
-                return None
-            middle_line = self.ref_image.data[middle, :]
+            if middle >= 0 and middle < shape[0]:
+                middle_line = self.ref_image.data[middle, :]
+            else:
+                bad = True
+        if bad:
+            log.warning("Can't determine nominal location of target "
+                        "spectrum because middle = %g is off the image.",
+                        middle)
+            return None
 
         mask_target = np.where(middle_line > 0., 1., 0.)
         x = np.arange(len(middle_line), dtype=np.float64)
