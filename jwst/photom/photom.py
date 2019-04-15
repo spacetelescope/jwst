@@ -82,7 +82,7 @@ class DataSet():
 
         Parameters
         ----------
-        ftab : ~jwst.datamodels.DataModel
+        ftab : `~jwst.datamodels.NirspecPhotomModel` or `~jwst.datamodels.NirspecFSPhotomModel`
             NIRSpec photom reference file data model
 
         area_fname : str
@@ -271,7 +271,7 @@ class DataSet():
 
         Parameters
         ----------
-        ftab : ~jwst.datamodels.DataModel
+        ftab : `~jwst.datamodels.NirissPhotomModel`
             NIRISS photom reference file data model
 
         Returns
@@ -362,7 +362,7 @@ class DataSet():
 
         Parameters
         ----------
-        ftab : ~jwst.datamodels.DataModel
+        ftab : `~jwst.datamodels.MiriImgPhotomModel` or `~jwst.datamodels.MiriMrsPhotomModel`
             MIRI photom reference file data model
 
         Returns
@@ -459,7 +459,7 @@ class DataSet():
 
         Parameters
         ----------
-        ftab : ~jwst.datamodels.DataModel
+        ftab : `~jwst.datamodels.NircamPhotomModel`
             NIRCam photom reference file data model
 
         Returns
@@ -513,7 +513,7 @@ class DataSet():
 
         Parameters
         ----------
-        ftab : ~jwst.datamodels.DataModel
+        ftab : `~jwst.datamodels.FgsPhotomModel`
             FGS photom reference file data model
 
         Returns
@@ -706,7 +706,7 @@ class DataSet():
 
         Parameters
         ----------
-        ftab : ~jwst.datamodels.DataModel
+        ftab : `~jwst.datamodels.DataModel`
             Photom reference file data model
 
         area_fname : str
