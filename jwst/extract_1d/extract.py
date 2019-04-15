@@ -71,20 +71,6 @@ NO_MATCH = "no match"
 PARTIAL = "partial match"
 EXACT = "exact match"
 
-DUMMY = "dummy"
-"""Distinguish between a slit object and not a slit object.
-
-Extended summary
-----------------
-The input model can contain a sequence of slits (SlitModel objects,
-2-D cutouts, with attributes), or it might be a full detector image or
-subarray.  In the former case, the step will try to extract a spectrum
-from each slit.  In the latter case, the input can be a CubeModel or an
-ImageModel, and not all of the attributes are the same.  DUMMY is
-passed to functions instead of a SlitModel object if the input model
-does not contain slits.
-"""
-
 Aperture = namedtuple('Aperture', ['xstart', 'ystart', 'xstop', 'ystop'])
 
 
@@ -323,8 +309,7 @@ def get_extract_parameters(ref_dict,
                 # The user-supplied value takes precedence.
                 extract_params['smoothing_length'] = smoothing_length
             if apply_nod_offset is None:
-                extract_params['apply_nod_offset'] = \
-                      aper.get('apply_nod_offset', True)
+                extract_params['apply_nod_offset'] = True
             else:
                 extract_params['apply_nod_offset'] = apply_nod_offset
             extract_params['nod_correction'] = 0
@@ -344,8 +329,8 @@ def find_dispaxis(input_model, slit, spectral_order, extract_params):
     input_model : data model
         The input science file.
 
-    slit : data model or str
-        This is a slit from a `MultiSlitModel` (or similar), or "dummy"
+    slit : data model or None
+        This is a slit from a `MultiSlitModel` (or similar), or None
         if the input is not an array of 2-D cutouts.
         We use the `meta.wcs` and `wavelength` attributes.
 
@@ -372,13 +357,13 @@ def find_dispaxis(input_model, slit, spectral_order, extract_params):
         # updated with a valid value, we will not extract the spectrum.
         extract_params['dispaxis'] = None
 
-    if slit == DUMMY:
+    if slit is None:
         shape = input_model.data.shape[-2:]
     else:
         shape = slit.data.shape[-2:]
 
     wcs = None                                  # initial value
-    if slit == DUMMY:
+    if slit is None:
         if input_model.meta.exposure.type == "NIS_SOSS":
             if hasattr(input_model.meta, 'wcs'):
                 try:
@@ -423,7 +408,7 @@ def find_dispaxis(input_model, slit, spectral_order, extract_params):
         log.warning("Can't determine dispaxis from the WCS.")
         return
 
-    if slit == DUMMY:
+    if slit is None:
         got_wavelength = False
     else:
         if hasattr(slit, "wavelength"):
@@ -1176,8 +1161,8 @@ class ExtractBase:
         input_model : data model
             The input science data.
 
-        slit : SlitModel, or "dummy"
-            One slit from a MultiSlitModel (or similar), or "dummy" if
+        slit : SlitModel or None
+            One slit from a MultiSlitModel (or similar), or None if
             there are no slits.
 
         Returns
@@ -1189,7 +1174,7 @@ class ExtractBase:
             means that the spectrum is at a larger pixel number than the
             nominal location.
 
-        locn : int or float or None
+        locn : float or None
             The pixel coordinate of the target in the cross-dispersion
             direction, at the middle of the spectrum in the dispersion
             direction.
@@ -1242,11 +1227,11 @@ class ExtractBase:
         ----------
         input_model : data model
             The input science model.  This will only be used if `slit`
-            is "dummy".
+            is None
 
-        slit : one slit from a MultiSlitModel (or similar), or "dummy"
+        slit : one slit from a MultiSlitModel (or similar), or None
             The WCS and target coordinates will be gotten from `slit`
-            unless `slit` is "dummy", and in that case they will be gotten
+            unless `slit` is None, and in that case they will be gotten
             from `input_model`.
 
         verbose : bool
@@ -1265,7 +1250,7 @@ class ExtractBase:
         middle_wl : float or None
             The wavelength at pixel `middle`.
 
-        locn : int or float or None
+        locn : float or None
             Pixel coordinate in the cross-dispersion direction within the
             2-D cutout (or the entire input image) that has right ascension
             and declination coordinates corresponding to the target location.
@@ -1278,7 +1263,7 @@ class ExtractBase:
         bb = self.wcs.bounding_box          # ((x0, x1), (y0, y1))
 
         if bb is None:
-            if slit == DUMMY:
+            if slit is None:
                 shape = input_model.data.shape
             else:
                 shape = slit.data.shape
@@ -1372,7 +1357,7 @@ class ExtractModel(ExtractBase):
         input_model : data model
             The input science data.
 
-        slit : an input slit, or a dummy value if not used
+        slit : an input slit, or None if not used
             For MultiSlit or MultiProduct data, `slit` is one slit from
             a list of slits in the input.  For other types of data, `slit`
             will not be used.
@@ -1595,7 +1580,7 @@ class ExtractModel(ExtractBase):
                     raise InvalidSpectralOrderNumberError(
                                 "Spectral order {} is not valid"
                                 .format(self.spectral_order))
-        elif slit == DUMMY:
+        elif slit is None:
             if hasattr(input_model.meta, 'wcs'):
                 self.wcs = input_model.meta.wcs
         elif hasattr(slit, 'meta') and hasattr(slit.meta, 'wcs'):
@@ -2080,7 +2065,7 @@ class ImageExtractModel(ExtractBase):
         input_model : data model
             The input science data.
 
-        slit : an input slit, or a dummy value if not used
+        slit : an input slit, or None if not used
             For MultiSlit or MultiProduct data, `slit` is one slit from
             a list of slits in the input.  For other types of data, `slit`
             will not be used.
@@ -2154,7 +2139,7 @@ class ImageExtractModel(ExtractBase):
                     raise InvalidSpectralOrderNumberError(
                                 "Spectral order {} is not valid"
                                 .format(self.spectral_order))
-        elif slit == DUMMY:
+        elif slit is None:
             if hasattr(input_model.meta, 'wcs'):
                 self.wcs = input_model.meta.wcs
         elif hasattr(slit, 'meta') and hasattr(slit.meta, 'wcs'):
@@ -2966,7 +2951,7 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                 if subtract_background is not None:
                     extract_params['subtract_background'] = subtract_background
                 if extract_params['match'] == EXACT:
-                    slit = DUMMY
+                    slit = None
                     find_dispaxis(input_model, slit, sp_order, extract_params)
                     if extract_params['dispaxis'] is None:
                         log.warning("The dispersion direction couldn't be "
@@ -3029,7 +3014,7 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
         elif isinstance(input_model, (datamodels.CubeModel,
                                       datamodels.SlitModel)):
 
-            slit = DUMMY
+            slit = None
 
             # NRS_BRIGHTOBJ exposures are instances of SlitModel.
             prev_offset = OFFSET_NOT_ASSIGNED_YET
@@ -3447,8 +3432,8 @@ def extract_one_slit(input_model, slit, integ,
     input_model : data model
         The input science model.
 
-    slit : one slit from a MultiSlitModel (or similar), or "dummy"
-        If slit is "dummy", the data array is input_model.data; otherwise,
+    slit : one slit from a MultiSlitModel (or similar), or None
+        If slit is None, the data array is input_model.data; otherwise,
         the data array is slit.data.
         In the former case, if `integ` is zero or larger, the spectrum
         will be extracted from the 2-D slice input_model.data[integ].
@@ -3511,7 +3496,7 @@ def extract_one_slit(input_model, slit, integ,
             wl_array = input_model.wavelength
         except AttributeError:
             wl_array = None
-    elif slit == DUMMY:
+    elif slit is None:
         data = input_model.data
         if hasattr(input_model, 'dq'):
             input_dq = input_model.dq
