@@ -32,7 +32,7 @@ class DataSet():
 
         Parameters
         ----------
-        model : ~jwst.datamodels.DataModel
+        model : `~jwst.datamodels.DataModel`
             input Data Model object
 
         """
