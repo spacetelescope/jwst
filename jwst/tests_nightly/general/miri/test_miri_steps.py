@@ -100,7 +100,7 @@ class TestMIRISteps(BaseJWSTTestSteps):
                  dict(input='jw00035001001_01101_00001_mirimage_photom.fits',
                       test_dir='test_extract1d',
                       step_class=Extract1dStep,
-                      step_pars=dict(smoothing_length=0),
+                      step_pars=dict(suffix='x1d'),
                       output_truth='jw00035001001_01101_00001_mirimage_x1d.fits',
                       output_hdus=[],
                       id='extract1d_miri'
@@ -109,9 +109,9 @@ class TestMIRISteps(BaseJWSTTestSteps):
                  dict(input='jw80600012001_02101_00003_mirimage_photom.fits',
                       test_dir='test_extract1d',
                       step_class=Extract1dStep,
-                      step_pars=dict(smoothing_length=0),
+                      step_pars=dict(suffix='x1d'),
                       output_truth='jw80600012001_02101_00003_mirimage_x1d.fits',
-                      output_hdus=['primary',('extract1d',1),('extract1d',2),('extract1d',3),('extract1d',4)],
+                      output_hdus=[],
                       id='extract1d_miri2'
                      ),
                 # test_flat_field_miri: flat_field step performed on MIRI data.
