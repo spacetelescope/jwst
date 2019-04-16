@@ -264,6 +264,7 @@ def update_wcs(model, default_pa_v3=0., siaf_path=None, engdb_url=None,
     else:
         logger.warning("Aperture name is set to 'UNKNOWN'. "
                        "WCS keywords will not be populated from SIAF.")
+        siaf = SIAF()
 
     if exp_type in FGS_GUIDE_EXP_TYPES:
         update_wcs_from_fgs_guiding(
