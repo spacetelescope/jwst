@@ -312,61 +312,16 @@ class TestMIRIMasterBackgroundLRS(BaseJWSTTest):
         """
 
         # input file has the background added
-        input_file = self.get_data(*self.test_dir,
-                                   'miri_lrs_sci+bkg_cal.fits')
+        input_file = self.get_data(*self.test_dir, 'miri_lrs_sci+bkg_cal.fits')
 
         # user provided 1-D background
-        user_background = self.get_data(*self.test_dir,
-                                         'miri_lrs_bkg_x1d.fits')
+        user_background = self.get_data(*self.test_dir, 'miri_lrs_bkg_x1d.fits')
         user_background_model = datamodels.open(user_background)
 
         result = MasterBackgroundStep.call(input_file,
                                            user_background=user_background,
                                            save_results=True)
 
-        # Test 1
-        # Run extract1D on the master background subtracted data (result)  and
-        # the science data with no background added
-
-        # run 1-D extract on results from MasterBackground step
-        result_1d = Extract1dStep.call(result)
-
-        # get the 1-D extracted Spectrum from the science data with
-        # no background added to test against
-        sci_cal_1d_file = self.get_data(*self.ref_loc,
-                                    'miri_lrs_sci_extract1d.fits')
-        sci_cal_1d = datamodels.open(sci_cal_1d_file)
-
-        sci_cal_1d_data = sci_cal_1d.spec[0].spec_table['flux']
-        result_1d_data = result_1d.spec[0].spec_table['flux']
-        sci_wave = sci_cal_1d.spec[0].spec_table['wavelength']
-        # find the valid wavelenth of the user provided spectrun
-        user_wave = user_background_model.spec[0].spec_table['wavelength']
-        user_flux = user_background_model.spec[0].spec_table['flux']
-        user_wave_valid = np.where(user_flux > 0)
-        min_user_wave = np.amin(user_wave[user_wave_valid])
-        max_user_wave = np.amax(user_wave[user_wave_valid])
-        user_background_model.close()
-
-        # find the waverange covered by both user and science                                          
-        sci_wave_valid = np.where(sci_cal_1d_data > 0)
-        min_wave = np.amin(sci_wave[sci_wave_valid])
-        max_wave = np.amax(sci_wave[sci_wave_valid])
-        if min_user_wave > min_wave:
-            min_wave = min_user_wave
-        if max_user_wave < max_wave:
-            max_wave = max_user_wave
-
-        # Compare the data
-        sub_spec = sci_cal_1d_data - result_1d_data
-        valid = np.where(np.logical_and(sci_wave > min_wave, sci_wave < max_wave))
-        sub_spec = sub_spec[valid]
-        mean_sub = np.absolute(np.nanmean(sub_spec))
-        atol = 0.00005
-        rtol = 0.000001
-        assert_allclose(mean_sub, 0, atol=atol, rtol=rtol)
-
-        # Test 2
         # Compare result (background subtracted image) to science image with no
         # background. Subtract these images, smooth the subtracted image and
         # the mean should be close to zero.
@@ -390,7 +345,7 @@ class TestMIRIMasterBackgroundLRS(BaseJWSTTest):
         sub = result_lrs_region - sci_lrs_region
         mean_sub = np.absolute(np.mean(sub[mask_clean]))
 
-        atol = 0.5
+        atol = 0.1
         rtol = 0.001
         assert_allclose(mean_sub, 0, atol=atol, rtol=rtol)
 
