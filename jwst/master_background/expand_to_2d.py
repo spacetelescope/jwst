@@ -273,8 +273,9 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
             # mask_limit is indices into each WCS slice grid.  Need them in
             # full frame coordinates, so we use x and y, which are full-frame
             full_frame_ind = y[mask_limit].astype(int), x[mask_limit].astype(int)
-            background.dq[full_frame_ind] |= dqflags.pixel['DO_NOT_USE']
             # TODO - add another DQ Flag something like NO_BACKGROUND when we have space in dqflags
+            background.dq[full_frame_ind] = np.bitwise_or(background.dq[full_frame_ind],
+                                                          dqflags.pixel['DO_NOT_USE'])
 
             bkg_flux = np.interp(wl_array, tab_wavelength, tab_background,
                                  left=0., right=0.)
@@ -292,7 +293,8 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
         wl_array[mask_limit] = -1
 
         # TODO - add another DQ Flag something like NO_BACKGROUND when we have space in dqflags
-        background.dq[mask_limit] |= dqflags.pixel['DO_NOT_USE']
+        background.dq[mask_limit] = np.bitwise_or(background.dq[mask_limit],
+                                                  dqflags.pixel['DO_NOT_USE'])
         bkg_flux = np.interp(wl_array, tab_wavelength, tab_background,
                              left=0., right=0.)
         background.data[:, :] = bkg_flux.copy()
