@@ -16,7 +16,7 @@ from jwst.cube_build import CubeBuildStep
 from jwst.linearity import LinearityStep
 from jwst.ramp_fitting import RampFitStep
 from jwst.master_background import MasterBackgroundStep
-from jwst.extract_1d import Extract1dStep
+
 
 @pytest.mark.bigdata
 class TestMIRIRampFit(BaseJWSTTest):
@@ -313,10 +313,8 @@ class TestMIRIMasterBackgroundLRS(BaseJWSTTest):
 
         # input file has the background added
         input_file = self.get_data(*self.test_dir, 'miri_lrs_sci+bkg_cal.fits')
-
         # user provided 1-D background
         user_background = self.get_data(*self.test_dir, 'miri_lrs_bkg_x1d.fits')
-        user_background_model = datamodels.open(user_background)
 
         result = MasterBackgroundStep.call(input_file,
                                            user_background=user_background,
