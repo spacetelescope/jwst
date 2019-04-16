@@ -734,7 +734,7 @@ class DataSet():
             tab_a2 = None
             #tab_ster = ftab.meta.photometry.pixelarea_steradians
             tab_a2 = ftab.meta.photometry.pixelarea_arcsecsq
-        except:
+        except AttributeError:
             # If one or both of them are missing, issue a warning, but carry on
             log.warning('At least one of the PIXAR_nn keyword values is')
             log.warning('missing from the photom reference file')
@@ -745,7 +745,7 @@ class DataSet():
             area_a2 = None
             area_ster = pix_area.meta.photometry.pixelarea_steradians
             area_a2 = pix_area.meta.photometry.pixelarea_arcsecsq
-        except:
+        except AttributeError:
             # If one or both of them are missing, issue a warning
             log.warning('At least one of the PIXAR_nn keyword values is')
             log.warning('missing from the reference file %s', area_fname)
