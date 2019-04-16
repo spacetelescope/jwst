@@ -190,101 +190,17 @@ class TestNIRSpecMasterBackground_FS(BaseJWSTTest):
         # input file has 2-D background image added to it
         input_file = self.get_data(*self.test_dir,
                                     'nrs_sci+bkg_cal.fits')
-        # user provided 1-D background was created from the 2-D background image
+
+        # user-provided 1-D background was created from the 2-D background image
         input_1dbkg_file = self.get_data(*self.test_dir,
                                           'nrs_bkg_user_clean_x1d.fits')
 
         result = MasterBackgroundStep.call(input_file,
                                            user_background=input_1dbkg_file,
                                            save_results=True)
-        # _________________________________________________________________________
-        # Test 1 compare 4 FS 1D extracted spectra from science data with
-        # no background added to 4 FS 1D extracted spectra from the output
-        # from MasterBackground subtraction
 
-        # run 1-D extract on results from MasterBackground step
-        result_1d = Extract1dStep.call(result)
-
-        # get the science extracted 1-D spectrum for comparision
-        sci_cal_1d_file = self.get_data(*self.ref_loc, 'nrs_sci_extract1d.fits')
-        sci_cal_1d = datamodels.open(sci_cal_1d_file)
-        # Compare the FS  1D extracted data. These types of data are
-        #  MultiSpec Models.
-
-        num_spec = len(sci_cal_1d.spec)
-
-        # the user 1D spectrum may not cover the entire wavelength range of the
-        # science data.  Find the wavelength range of user 1-D spectra
-        input_1dbkg_1d = datamodels.open(input_1dbkg_file)
-        user_wave = input_1dbkg_1d.spec[0].spec_table['wavelength']
-        user_flux = input_1dbkg_1d.spec[0].spec_table['flux']
-        user_wave_valid = np.where(user_flux > 0)
-        min_user_wave = np.amin(user_wave[user_wave_valid])
-        max_user_wave = np.amax(user_wave[user_wave_valid])
-        input_1dbkg_1d.close()
-
-        # get the science image with no background added
-        # going to use this file to compare slit images
-        input_sci_cal_file = self.get_data(*self.test_dir,
-                                            'nrs_sci_cal.fits')
-        input_sci = datamodels.open(input_sci_cal_file)
-        for i in range(num_spec):
-            # ______________________________________________________________________
-            # Test 1 compare extracted spectra data from the science data
-            # to extracted spectra from the output
-            # from MasterBackground subtraction.
-            sci_spec_1d = sci_cal_1d.spec[i].spec_table['flux']
-            sci_wave = sci_cal_1d.spec[i].spec_table['wavelength']
-            result_spec_1d = result_1d.spec[i].spec_table['flux']
-
-            # find the waverange covered by both user 1-D and science slit
-            sci_wave_valid = np.where(sci_spec_1d > 0)
-            min_wave = np.amin(sci_wave[sci_wave_valid])
-            max_wave = np.amax(sci_wave[sci_wave_valid])
-            if min_user_wave > min_wave:
-                min_wave = min_user_wave
-            if max_user_wave < max_wave:
-                max_wave = max_user_wave
-
-            sub_spec = sci_spec_1d - result_spec_1d
-            valid = np.where(np.logical_and(sci_wave > min_wave, sci_wave < max_wave))
-            sub_spec = sub_spec[valid]
-            mean_sub = np.absolute(np.nanmean(sub_spec))
-            atol = 4.0
-            assert_allclose(mean_sub, 0, atol=atol)
-            # ______________________________________________________________________
-            # Test 2  compare the science  data with no background
-            # to the output from the masterBackground Subtraction step
-            # background subtracted science image.
-            bb = input_sci.slits[i].meta.wcs.bounding_box
-            x, y = grid_from_bounding_box(bb)
-            ra, dec, lam = input_sci.slits[i].meta.wcs(x, y)
-            valid = np.isfinite(lam)
-
-            sci = input_sci.slits[i].data
-            result_slit = result.slits[i].data
-
-            # check for outliers in the science image that could cause test
-            # to fail. These could be cosmic ray hits or other yeck that
-            # messes up the science data - ignores these cases
-            sci_mean = np.nanmean(sci[valid])
-            sci_std = np.nanstd(sci[valid])
-            upper = sci_mean + sci_std*5.0
-            lower = sci_mean - sci_std*5.0
-            mask_clean = np.logical_and(sci[valid] < upper, sci[valid] > lower)
-
-            # for this slit subtract the background subtracted data from
-            # the science data with no background added
-            sub = result_slit - sci
-            # do not look at outliers - they confuse things
-            sub_valid = sub[valid]
-            mean_sub = np.mean(sub_valid[mask_clean])
-            atol = 0.5
-            assert_allclose(np.absolute(mean_sub), 0, atol=atol)
-        input_sci.close()
-        # ______________________________________________________________________
-        # Test 3 Compare background sutracted science data (results)
-        #  to a truth file. This data is MultiSlit data
+        # Compare background-subtracted science data (results)
+        # to a truth file. These data are MultiSlitModel data
         result_file = result.meta.filename
 
         truth_file = self.get_data(*self.ref_loc,
