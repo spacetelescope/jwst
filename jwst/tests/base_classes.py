@@ -59,16 +59,21 @@ class BaseJWSTTest:
     def repo_path(self):
         return [self.inputs_root, self.env, self.input_loc]
 
-    def get_data(self, *pathargs, docopy=True):
+    def get_data(self, *pathargs, docopy=None):
         """
         Download `filename` into working directory using
         `artifactory_helpers/get_bigdata()`.
         This will then return the full path to the local copy of the file.
         """
-        # If user has specified action for no_copy, apply it with
+        # If user has specified action for docopy use it, If none
         # default behavior being whatever was defined in the base class.
-        local_file = get_bigdata(*self.repo_path, *pathargs, docopy=self.docopy)
-
+        if docopy is None: 
+            local_file = get_bigdata(*self.repo_path, *pathargs, docopy=self.docopy)
+        elif docopy:
+            local_file = get_bigdata(*self.repo_path, *pathargs, docopy=True)
+        else:
+            local_file = get_bigdata(*self.repo_path, *pathargs, docopy=False)
+            
         return local_file
 
     def compare_outputs(self, outputs, raise_error=True, **kwargs):
@@ -160,6 +165,7 @@ class BaseJWSTTestSteps(BaseJWSTTest):
         Template method for parameterizing all the tests of JWST pipeline
         processing steps.
         """
+
         if test_dir is None:
             return
 
@@ -170,7 +176,6 @@ class BaseJWSTTestSteps(BaseJWSTTest):
         self.ignore_keywords += ['FILENAME']
 
         input_file = self.get_data(self.test_dir, input)
-
         result = step_class.call(input_file, save_results=True, **step_pars)
 
         output_file = result.meta.filename
