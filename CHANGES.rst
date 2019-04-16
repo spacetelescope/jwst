@@ -103,6 +103,8 @@ set_telescope_pointing
 - Updates to prevent crashes when SIAF values needed for crpix or
   cdelt keywords are missing. [#3316]
 
+- Convert FSM correction values from arcsec to radians. [#3367]
+
 srctype
 -------
 
