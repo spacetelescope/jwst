@@ -47,9 +47,9 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
         extract_1d reference file.
 
     apply_nod_offset : bool or None
-        If True, the source and target positions specified in the reference
-        file (or the default position, if there is no reference file) will
-        be shifted to account for nod and/or dither offset.
+        If True, the target and background positions specified in the
+        reference file (or the default position, if there is no reference
+        file) will be shifted to account for nod and/or dither offset.
 
     Returns
     -------
@@ -784,7 +784,7 @@ def nans_in_wavelength(wavelength, net, background, npixels, dq):
 
 
 def separate_target_and_background(ref):
-    """Create masks for source and background.
+    """Create masks for target and background.
 
     Parameters
     ----------

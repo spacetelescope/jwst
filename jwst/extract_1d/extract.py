@@ -183,7 +183,7 @@ def get_extract_parameters(ref_dict,
         background regions have been specified.
 
     apply_nod_offset : bool or None
-        If True, the source and target positions specified in `ref_dict`
+        If True, the target and background positions specified in `ref_dict`
         (or a default target position) will be shifted to account for nod
         and/or dither offset.
         If None, the value specified in `ref_dict` will be used, or it will
@@ -1281,12 +1281,16 @@ class ExtractBase:
             x = np.empty(xd_width, dtype=np.float64)
             x[:] = float(middle)
             y = np.arange(xd_width, dtype=np.float64)
+            lower = bb[1][0]
+            upper = bb[1][1]
         else:                                   # dispaxis = VERTICAL
             xd_width = int(round(bb[0][1]))     # must be an int
             middle = int((bb[1][0] + bb[1][1]) / 2.)
             x = np.arange(xd_width, dtype=np.float64)
             y = np.empty(xd_width, dtype=np.float64)
             y[:] = float(middle)
+            lower = bb[0][0]
+            upper = bb[0][1]
 
         # We need stuff[2], a 1-D array of wavelengths crossing the
         # spectrum near its middle.
@@ -1295,22 +1299,28 @@ class ExtractBase:
 
         targ_ra = input_model.meta.target.ra
         targ_dec = input_model.meta.target.dec
-        # xxx temporary workaround
-        if targ_ra > 180.:
-            targ_ra -= 360.
-            log.warning("targ_ra changed from %g to %g",
-                        targ_ra + 360., targ_ra)
 
         x_y = self.wcs.backward_transform(targ_ra, targ_dec, middle_wl)
+
         # locn is the xd location of the spectrum:
         if self.dispaxis == HORIZONTAL:
             locn = x_y[1]
-            lower = bb[1][0]
-            upper = bb[1][1]
         else:
             locn = x_y[0]
-            lower = bb[0][0]
-            upper = bb[0][1]
+        if locn < lower or locn > upper and targ_ra > 340.:
+            # Try this as a temporary workaround.
+            x_y = self.wcs.backward_transform(targ_ra - 360., targ_dec,
+                                              middle_wl)
+            if self.dispaxis == HORIZONTAL:
+                temp_locn = x_y[1]
+            else:
+                temp_locn = x_y[0]
+            if temp_locn >= lower and temp_locn <= upper:
+                # Subtracting 360 from the right ascension worked!
+                locn = temp_locn
+                if verbose:
+                    log.warning("targ_ra changed from %g to %g",
+                                targ_ra, targ_ra - 360.)
 
         # If the target is at the edge of the image or at the edge of the
         # non-NaN area, we can't use the WCS to find the location of the
@@ -1444,7 +1454,7 @@ class ExtractModel(ExtractBase):
             extract_1d reference file.
 
         apply_nod_offset : bool or None
-            If True, the source and target positions specified in the
+            If True, the target and background positions specified in the
             reference file (or the default position, if there is no
             reference file) will be shifted to account for nod and/or
             dither offset.
@@ -1523,7 +1533,7 @@ class ExtractModel(ExtractBase):
         else:
             self.extract_width = int(round(extract_width))
         # 'wavelength' or 'pixel', the independent variable for functions
-        # for lower and upper limits of source and background regions.
+        # for lower and upper limits of target and background regions.
         self.independent_var = independent_var.lower()
         if (self.independent_var != "wavelength" and
             self.independent_var != "pixel" and
@@ -2552,7 +2562,7 @@ class ImageExtractModel(ExtractBase):
 
 
     def separate_target_and_background(self, ref):
-        """Create masks for source and background.
+        """Create masks for target and background.
 
         Parameters
         ----------
@@ -2694,9 +2704,9 @@ def run_extract1d(input_model, refname, smoothing_length, bkg_order,
         extract_1d reference file.
 
     apply_nod_offset : bool or None
-        If True, the source and target positions specified in the reference
-        file (or the default position, if there is no reference file) will
-        be shifted to account for nod and/or dither offset.
+        If True, the target and background positions specified in the
+        reference file (or the default position, if there is no reference
+        file) will be shifted to account for nod and/or dither offset.
 
     Returns
     -------
@@ -2792,9 +2802,9 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
         extract_1d reference file.
 
     apply_nod_offset : bool or None
-        If True, the source and target positions specified in the reference
-        file (or the default position, if there is no reference file) will
-        be shifted to account for nod and/or dither offset.
+        If True, the target and background positions specified in the
+        reference file (or the default position, if there is no reference
+        file) will be shifted to account for nod and/or dither offset.
 
     Returns
     -------
