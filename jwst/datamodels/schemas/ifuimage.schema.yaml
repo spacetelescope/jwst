@@ -29,10 +29,6 @@ allOf:
       title: Pixel area map array
       fits_hdu: AREA
       datatype: float32
-    relsens2d:
-      title: Sensitivity array
-      fits_hdu: RELSENS2D
-      datatype: float32
     var_poisson:
       title: variance due to poisson noise
       fits_hdu: VAR_POISSON

@@ -29,32 +29,14 @@ class SlitDataModel(DataModel):
     area : numpy float32 array
          Pixel area map array
 
-    relsens : numpy table
-         relative sensitivity table
-
     var_poisson : numpy float32 array
          variance due to poisson noise
 
     var_rnoise : numpy float32 array
          variance due to read noise
 
-    pathloss_pointsource2d : numpy float32 array
-         2-d array for pathloss (point source)
-
-    pathloss_pointsource : numpy float32 array
-         pathloss array for point sources
-
-    wavelength_pointsource : numpy float32 array
-         wavelength array for point sources
-
-    pathloss_uniformsource2d : numpy float32 array
-         2-d array for pathloss (uniform source)
-
-    pathloss_uniformsource : numpy float32 array
-         pathloss_array for uniform sources
-
-    wavelength_uniformsource : numpy float32 array
-         wavelength array for uniform sources
+    pathloss : numpy float32 array
+         pathloss array
 
     """
 
@@ -66,7 +48,6 @@ class SlitDataModel(DataModel):
             self.data = init.data
             self.dq = init.dq
             self.err = init.err
-            self.relsens = init.relsens
             self.area = init.area
             if init.hasattr('wavelength'):
                 self.wavelength = init.wavelength
@@ -112,32 +93,14 @@ class SlitModel(DataModel):
     area : numpy float32 array
          Pixel area map array
 
-    relsens : numpy table
-         relative sensitivity table
-
     var_poisson : numpy float32 array
          variance due to poisson noise
 
     var_rnoise : numpy float32 array
          variance due to read noise
 
-    pathloss_pointsource2d : numpy float32 array
-         2-d array for pathloss (point source)
-
-    pathloss_pointsource : numpy float32 array
-         pathloss array for point sources
-
-    wavelength_pointsource : numpy float32 array
-         wavelength array for point sources
-
-    pathloss_uniformsource2d : numpy float32 array
-         2-d array for pathloss (uniform source)
-
-    pathloss_uniformsource : numpy float32 array
-         pathloss_array for uniform sources
-
-    wavelength_uniformsource : numpy float32 array
-         wavelength array for uniform sources
+    pathloss : numpy float32 array
+         pathloss array
 
     int_times : numpy table
          table of times for each integration
@@ -152,7 +115,6 @@ class SlitModel(DataModel):
             self.data = init.data
             self.dq = init.dq
             self.err = init.err
-            self.relsens = init.relsens
             self.area = init.area
             if init.hasattr('wavelength'):
                 self.wavelength = init.wavelength

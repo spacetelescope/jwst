@@ -27,7 +27,7 @@ class TestSpec2Pipeline(BaseJWSTTest):
 
         outputs = [('jw80600012001_02101_00003_mirimage_calints.fits',
                     'jw80600012001_02101_00003_mirimage_calints_ref.fits',
-                    ['primary', 'sci', 'err', 'dq', 'relsens']
+                    ['primary', 'sci', 'err', 'dq']
                     ),
                     ('jw80600012001_02101_00003_mirimage_x1dints.fits',
                      'jw80600012001_02101_00003_mirimage_x1dints_ref.fits',

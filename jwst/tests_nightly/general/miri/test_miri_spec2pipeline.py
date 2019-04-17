@@ -40,13 +40,13 @@ class TestSpec2Pipeline(BaseJWSTTest):
                    ('test_lrs4_bsub.fits','test_lrs4_bsub_ref.fits',
                     ['primary','sci','err','dq']),
                    ('test_lrs1_cal.fits', 'test_lrs1_cal_ref.fits',
-                    ['primary','sci','err','dq','relsens']),
+                    ['primary','sci','err','dq']),
                    ('test_lrs2_cal.fits', 'test_lrs2_cal_ref.fits',
-                    ['primary','sci','err','dq','relsens']),
+                    ['primary','sci','err','dq']),
                    ('test_lrs3_cal.fits', 'test_lrs3_cal_ref.fits',
-                    ['primary','sci','err','dq','relsens']),
+                    ['primary','sci','err','dq']),
                    ('test_lrs4_cal.fits', 'test_lrs4_cal_ref.fits',
-                    ['primary','sci','err','dq','relsens'])
+                    ['primary','sci','err','dq'])
         ]
         self.compare_outputs(outputs)
 
@@ -70,7 +70,7 @@ class TestSpec2Pipeline(BaseJWSTTest):
 
         outputs = [('jw00035001001_01101_00001_MIRIMAGE_cal.fits',
                     'jw00035001001_01101_00001_MIRIMAGE_cal_ref.fits',
-                    ['primary','sci','err','dq','relsens']),
+                    ['primary','sci','err','dq']),
                    ('jw00035001001_01101_00001_MIRIMAGE_x1d.fits',
                     'jw00035001001_01101_00001_MIRIMAGE_x1d_ref.fits',
                     ['primary','extract1d'])
@@ -93,7 +93,7 @@ class TestSpec2Pipeline(BaseJWSTTest):
 
         outputs = [('jw00035001001_01101_00001_MIRIMAGE_calints.fits',
                     'jw00035001001_01101_00001_MIRIMAGE_calints_ref.fits',
-                    ['primary','sci','err','dq','relsens']),
+                    ['primary','sci','err','dq']),
                     ('jw00035001001_01101_00001_MIRIMAGE_x1dints.fits',
                      'jw00035001001_01101_00001_MIRIMAGE_x1dints_ref.fits',
                      ['primary', ('extract1d', 1), ('extract1d', 2), ('extract1d', 3), ('extract1d', 4)]
@@ -151,7 +151,7 @@ class TestSpec2Pipeline(BaseJWSTTest):
 
         outputs = [('jw10001001001_01101_00001_mirifushort_cal.fits',
                     'jw10001001001_01101_00001_mirifushort_cal_ref.fits',
-                    ['primary','sci','err','dq','relsens2d']),
+                    ['primary','sci','err','dq']),
                     ('jw10001001001_01101_00001_mirifushort_s3d.fits',
                      'jw10001001001_01101_00001_mirifushort_s3d_ref.fits',
                      ['primary','sci','err','dq','wmap']),
