@@ -47,7 +47,7 @@ extract_1d reference file.
 
 *  ``--apply_nod_offset``
 
-This is a boolean flag to specify whether the source and target positions
+This is a boolean flag to specify whether the target and background positions
 specified in the reference file should be shifted to account for nod
 and/or dither offset.  If None (the default), the value in the reference
 file will be used, or it will be set to True if it is not specified in
