@@ -7,9 +7,10 @@ The calibration information is read from a photometric reference file.
 The exact nature of the calibration information loaded from the reference file
 and applied to the science data depends on the instrument mode.
 
-This step relies on having wavelength information available for the input
-image (see below) and therefore the :ref:`assign_wcs <assign_wcs_step>` step
-*must* be applied before executing the photom step.
+This step relies on having wavelength information available when working on
+spectroscopic data (see below) and therefore the
+:ref:`assign_wcs <assign_wcs_step>` step *must* be applied before executing
+the photom step.
 
 Upon successful completion of this step, the status keyword S_PHOTOM will be
 set to COMPLETE.

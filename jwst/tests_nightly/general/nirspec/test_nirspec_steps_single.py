@@ -10,7 +10,6 @@ from jwst.pipeline import Detector1Pipeline, Spec2Pipeline
 from jwst.imprint import ImprintStep
 from jwst.ramp_fitting import RampFitStep
 from jwst.extract_1d import Extract1dStep
-from jwst.resample import ResampleSpecStep
 from jwst.master_background import MasterBackgroundStep
 from jwst.cube_build import CubeBuildStep
 from jwst import datamodels
@@ -345,5 +344,4 @@ class TestNIRSpecMasterBackground_MOS(BaseJWSTTest):
 
         outputs = [(result_file, ref_file)]
         self.compare_outputs(outputs)
-        input_sci.close()
         result.close()
