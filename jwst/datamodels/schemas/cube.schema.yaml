@@ -32,8 +32,6 @@ allOf:
       default: 0.0
       ndim: 2
       datatype: float32
-    relsens:
-      $ref: relsens.schema.yaml
     int_times:
       $ref: int_times.schema.yaml
     wavelength:

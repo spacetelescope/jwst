@@ -62,6 +62,11 @@ extract_1d
 
 - Unit tests were added for IFU data. [#3285]
 
+- The target coordinates are used (for some modes) to determine the
+  extraction location, i.e. correcting for nod/dither offset.  For IFU,
+  the areas of the source aperture and background annulus are computed
+  differently. [#3362]
+
 master_background
 -----------------
 
@@ -88,6 +93,12 @@ pathloss
 
 - Updated to apply the correction to the science data and err arrays. [#3323]
 
+photom
+------
+
+- Updated to apply the flux calibration to the science data and err arrays.
+  [#3359]
+
 reffile_utils
 -------------
 
@@ -102,6 +113,8 @@ set_telescope_pointing
 
 - Updates to prevent crashes when SIAF values needed for crpix or
   cdelt keywords are missing. [#3316]
+
+- Convert FSM correction values from arcsec to radians. [#3367]
 
 srctype
 -------

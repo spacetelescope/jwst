@@ -16,7 +16,7 @@ from jwst.cube_build import CubeBuildStep
 from jwst.linearity import LinearityStep
 from jwst.ramp_fitting import RampFitStep
 from jwst.master_background import MasterBackgroundStep
-from jwst.extract_1d import Extract1dStep
+
 
 @pytest.mark.bigdata
 class TestMIRIRampFit(BaseJWSTTest):
@@ -138,9 +138,14 @@ class TestMIRIWCSFixed(BaseJWSTTest):
                                    'jw00035001001_01101_00001_mirimage_rate.fits')
         result = AssignWcsStep.call(input_file, save_results=True)
 
-        truth_file = self.get_data(os.path.join(*self.ref_loc),
+        cwd = os.path.abspath('.')
+        os.makedirs('truth', exist_ok=True)
+        os.chdir('truth')
+        truth_file = self.get_data(*self.ref_loc,
                                  'jw00035001001_01101_00001_mirimage_assign_wcs.fits')
+        os.chdir(cwd)
         truth = ImageModel(truth_file)
+
         x, y = grid_from_bounding_box(result.meta.wcs.bounding_box)
         ra, dec, lam = result.meta.wcs(x, y)
         raref, decref, lamref = truth.meta.wcs(x, y)
@@ -172,8 +177,12 @@ class TestMIRIWCSIFU(BaseJWSTTest):
         # Get indices where pixels == 0. These should be NaNs in the output.
         ind_zeros = region.regions == 0
 
-        truth_file = self.get_data(os.path.join(*self.ref_loc),
+        cwd = os.path.abspath('.')
+        os.makedirs('truth', exist_ok=True)
+        os.chdir('truth')
+        truth_file = self.get_data(*self.ref_loc,
                                  'jw00024001001_01101_00001_MIRIFUSHORT_assign_wcs.fits')
+        os.chdir(cwd)
         truth = ImageModel(truth_file)
 
         ra, dec, lam = result.meta.wcs(x, y)
@@ -297,68 +306,20 @@ class TestMIRIMasterBackgroundLRS(BaseJWSTTest):
 
     rtol = 0.000001
 
-    def test_miri_masterbackground_lrs_user1d(self):
+    def test_miri_lrs_masterbg_user(self):
         """
         Regression test of masterbackgound subtraction with lrs, with user provided 1-D background
         """
 
         # input file has the background added
-        # Copy original version of file to test file, which will get overwritten by test
-        input_file = self.get_data(*self.test_dir,
-                                   'miri_lrs_sci+bkg_cal.fits')
-
+        input_file = self.get_data(*self.test_dir, 'miri_lrs_sci+bkg_cal.fits')
         # user provided 1-D background
-        input_1d_bkg_file = self.get_data(*self.test_dir,
-                                         'miri_lrs_bkg_x1d.fits')
-        input_1d_bkg_model = datamodels.open(input_1d_bkg_file)
+        user_background = self.get_data(*self.test_dir, 'miri_lrs_bkg_x1d.fits')
 
         result = MasterBackgroundStep.call(input_file,
-                                           user_background=input_1d_bkg_file,
+                                           user_background=user_background,
                                            save_results=True)
 
-        # Test 1
-        # Run extract1D on the master background subtracted data (result)  and
-        # the science data with no background added
-
-        # run 1-D extract on results from MasterBackground step
-        result_1d = Extract1dStep.call(result)
-
-        # get the 1-D extracted Spectrum from the science data with
-        # no background added to test against
-        sci_cal_1d_file = self.get_data(*self.ref_loc,
-                                    'miri_lrs_sci_extract1d.fits')
-        sci_cal_1d = datamodels.open(sci_cal_1d_file)
-
-        sci_cal_1d_data = sci_cal_1d.spec[0].spec_table['flux']
-        result_1d_data = result_1d.spec[0].spec_table['flux']
-        sci_wave = sci_cal_1d.spec[0].spec_table['wavelength']
-        # find the valid wavelenth of the user provided spectrun
-        user_wave = input_1d_bkg_model.spec[0].spec_table['wavelength']
-        user_flux = input_1d_bkg_model.spec[0].spec_table['flux']
-        user_wave_valid = np.where(user_flux > 0)
-        min_user_wave = np.amin(user_wave[user_wave_valid])
-        max_user_wave = np.amax(user_wave[user_wave_valid])
-        input_1d_bkg_model.close()
-
-        # find the waverange covered by both user and science                                          
-        sci_wave_valid = np.where(sci_cal_1d_data > 0)
-        min_wave = np.amin(sci_wave[sci_wave_valid])
-        max_wave = np.amax(sci_wave[sci_wave_valid])
-        if min_user_wave > min_wave:
-            min_wave = min_user_wave
-        if max_user_wave < max_wave:
-            max_wave = max_user_wave
-
-        # Compare the data
-        sub_spec = sci_cal_1d_data - result_1d_data
-        valid = np.where(np.logical_and(sci_wave > min_wave, sci_wave < max_wave))
-        sub_spec = sub_spec[valid]
-        mean_sub = np.absolute(np.nanmean(sub_spec))
-        atol = 0.00005
-        rtol = 0.000001
-        assert_allclose(mean_sub, 0, atol=atol, rtol=rtol)
-
-        # Test 2
         # Compare result (background subtracted image) to science image with no
         # background. Subtract these images, smooth the subtracted image and
         # the mean should be close to zero.
@@ -382,7 +343,7 @@ class TestMIRIMasterBackgroundLRS(BaseJWSTTest):
         sub = result_lrs_region - sci_lrs_region
         mean_sub = np.absolute(np.mean(sub[mask_clean]))
 
-        atol = 0.5
+        atol = 0.1
         rtol = 0.001
         assert_allclose(mean_sub, 0, atol=atol, rtol=rtol)
 
@@ -405,7 +366,7 @@ class TestMIRIMasterBackgroundMRS(BaseJWSTTest):
 
     rtol = 0.000001
 
-    def test_miri_masterbackground_mrs(self):
+    def test_miri_mrs_masterbg(self):
         """Run masterbackground step on MIRI LRS association"""
         asn_file = self.get_data(*self.test_dir,
                                    'miri_mrs_mbkg_0304_spec3_asn.json')

@@ -130,7 +130,7 @@ Regression tests - both the data and the result reports - are currently only acc
 
 Latest regression test results can be found here:
 
-https://pembry.stsci.edu:8081/job/RT/job/JWST/
+https://plwishmaster.stsci.edu:8081/job/RT/job/JWST/
 
 The test builds start at 6pm local Baltimore time Monday through Saturday on `jwcalibdev`.
 

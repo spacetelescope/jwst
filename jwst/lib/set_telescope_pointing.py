@@ -264,6 +264,7 @@ def update_wcs(model, default_pa_v3=0., siaf_path=None, engdb_url=None,
     else:
         logger.warning("Aperture name is set to 'UNKNOWN'. "
                        "WCS keywords will not be populated from SIAF.")
+        siaf = SIAF()
 
     if exp_type in FGS_GUIDE_EXP_TYPES:
         update_wcs_from_fgs_guiding(
@@ -573,7 +574,7 @@ def calc_wcs(pointing, siaf, **transform_kwargs):
     return (wcsinfo, vinfo)
 
 
-def calc_transforms(pointing, siaf, fsmcorr_version='latest', j2fgs_transpose=True):
+def calc_transforms(pointing, siaf, fsmcorr_version='latest', fsmcorr_units='arcsec', j2fgs_transpose=True):
     """Calculate transforms from pointing to SIAF
 
     Given the spacecraft pointing parameters and the
@@ -582,17 +583,21 @@ def calc_transforms(pointing, siaf, fsmcorr_version='latest', j2fgs_transpose=Tr
 
     Parameters
     ----------
-    pointing: Pointing
+    pointing : Pointing
         Observatory pointing information
 
-    siaf: SIAF
+    siaf : SIAF
         Aperture information
 
-    fsmcorr_version: str
+    fsmcorr_version : str
         The version of the FSM correction calculation to use.
         See :ref:`calc_sifov_fsm_delta_matrix`
 
-    j2fgs_transpose: bool
+    fsmcorr_units : str
+        Units of the FSM correction values. Default is 'arcsec'.
+        See :ref:`calc_sifov_fsm_delta_matrix`
+
+    j2fgs_transpose : bool
         Transpose the `j2fgs1` matrix.
 
     Returns
@@ -623,7 +628,7 @@ def calc_transforms(pointing, siaf, fsmcorr_version='latest', j2fgs_transpose=Tr
 
     # Calculate the FSM corrections to the SI_FOV frame
     m_sifov_fsm_delta = calc_sifov_fsm_delta_matrix(
-        pointing.fsmcorr, fsmcorr_version=fsmcorr_version
+        pointing.fsmcorr, fsmcorr_version=fsmcorr_version, fsmcorr_units=fsmcorr_units
     )
 
     # Calculate the FGS1 ICS to SI-FOV matrix
@@ -828,22 +833,25 @@ def calc_j2fgs1_matrix(j2fgs_matrix, transpose=False):
     return transform
 
 
-def calc_sifov_fsm_delta_matrix(fsmcorr, fsmcorr_version='latest'):
+def calc_sifov_fsm_delta_matrix(fsmcorr, fsmcorr_version='latest', fsmcorr_units='arcsec'):
     """Calculate Fine Steering Mirror correction matrix
 
     Parameters
     ----------
-    fsmcorr: np.array((2,))
+    fsmcorr : np.array((2,))
         The FSM correction parameters:
             0: SA_ZADUCMDX
             1: SA_ZADUCMDY
 
-    fsmcorr_version: str
+    fsmcorr_version : str
         The version of the FSM correction calculation to use.
         Versions available:
             latest: The state-of-art. Currently `v2`
             v2: Update 201708 to use actual spherical calculations
             v1: Original linear approximation
+
+    fsmcorr_units : str
+        The units of the FSM correction values. Default is `arcsec`.
 
     Returns
     -------
@@ -851,12 +859,19 @@ def calc_sifov_fsm_delta_matrix(fsmcorr, fsmcorr_version='latest'):
         The transformation matrix
     """
     version = fsmcorr_version.lower()
+    units = fsmcorr_units.lower()
     logger.debug('Using version {}'.format(version))
+    logger.debug('Using units {}'.format(units))
 
     x = fsmcorr[0]  # SA_ZADUCMDX
     y = fsmcorr[1]  # SA_ZADUCMDY
 
-    # `V1`: Linear approximation calcuation
+    # If FSMCORR values are in arcsec, convert to radians
+    if units == 'arcsec':
+        x *= D2R / 3600.
+        y *= D2R / 3600.
+
+    # `V1`: Linear approximation calculation
     if version == 'v1':
         transform = np.array(
             [

@@ -397,11 +397,6 @@ def test_open_asdf_model():
     assert model._asdf._ignore_unrecognized_tag == True
     model.close()
 
-def test_relsens():
-    with ImageModel() as im:
-        assert len(im.relsens.dtype) == 2
-
-
 def test_image_with_extra_keyword_to_multislit():
     with ImageModel(data=np.empty((32, 32))) as im:
         im.save(TMP_FITS, overwrite=True)
