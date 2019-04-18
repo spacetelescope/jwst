@@ -187,7 +187,7 @@ class DataSet():
 
                         # Populate the photometry keywords
                         self.input.meta.photometry.conversion_megajanskys = \
-                            conv_factor.value
+                            conv_factor
                         self.input.meta.photometry.conversion_microjanskys = \
                             conv_factor * MJSR_TO_UJA2
 
@@ -421,11 +421,14 @@ class DataSet():
             ftab.dq[where_zero] = np.bitwise_or(ftab.dq[where_zero],
                                                 dqflags.pixel['NON_SCIENCE'])
 
+            # Compute the combined 2D sensitivity factors
+            sens2d = ftab.data * ftab.pixsiz
+
             # Divide the science data and uncertainty arrays by the 2D sensitivity factors
-            self.input.data /= self.input.relsens2d
-            self.input.err /= self.input.relsens2d
-            self.input.var_poisson /= self.input.relsens2d**2
-            self.input.var_rnoise /= self.input.relsens2d**2
+            self.input.data /= sens2d
+            self.input.err /= sens2d
+            self.input.var_poisson /= sens2d**2
+            self.input.var_rnoise /= sens2d**2
 
             # Update the science dq
             self.input.dq = np.bitwise_or(self.input.dq, ftab.dq)
