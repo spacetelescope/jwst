@@ -62,6 +62,11 @@ extract_1d
 
 - Unit tests were added for IFU data. [#3285]
 
+- The target coordinates are used (for some modes) to determine the
+  extraction location, i.e. correcting for nod/dither offset.  For IFU,
+  the areas of the source aperture and background annulus are computed
+  differently. [#3362]
+
 master_background
 -----------------
 
