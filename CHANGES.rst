@@ -67,6 +67,12 @@ extract_1d
   the areas of the source aperture and background annulus are computed
   differently. [#3362]
 
+flatfield
+---------
+
+- Propagate uncertainty from flat field into science ERR array and new
+  VAR_FLAT array which holds the variance due to the flat field.  [#3384]
+
 master_background
 -----------------
 
