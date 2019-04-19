@@ -158,11 +158,13 @@ def apply_flat_field(science, flat):
     if reffile_utils.ref_matches_sci(science, flat):
         flat_data = flat.data
         flat_dq = flat.dq
+        flat_err = flat.err
     else:
         log.info("Extracting matching subarray from flat")
         sub_flat = reffile_utils.get_subarray_model(science, flat)
         flat_data = sub_flat.data.copy()
         flat_dq = sub_flat.dq.copy()
+        flat_err = sub_flat.err.copy()
         sub_flat.close()
 
     # Find pixels in the flat that have a value of NaN and set
@@ -187,9 +189,21 @@ def apply_flat_field(science, flat):
     # For CubeModel science data, apply flat to each integration
     if isinstance(science, datamodels.CubeModel):
         for integ in range(science.data.shape[0]):
-            # Flatten data and error arrays
+            # Flatten data
             science.data[integ] /= flat_data
-            science.err[integ] /= flat_data
+
+            # Update the variances using BASELINE algorithm
+            science.var_poisson[integ] /= flat_data**2
+            science.var_rnoise[integ] /= flat_data**2
+            science.var_flat[integ] = science.data[integ]**2 / flat_data**2 * flat_err**2
+
+            # Propogate flat and flat variance into the science err array
+            science.err[integ] = np.sqrt(
+                science.var_poisson[integ] +
+                science.var_rnoise[integ] +
+                science.var_flat[integ]
+                )
+
             # Combine the science and flat DQ arrays
             science.dq[integ] = np.bitwise_or(science.dq[integ], flat_dq)
 
@@ -197,7 +211,18 @@ def apply_flat_field(science, flat):
     else:
         # Flatten data and error arrays
         science.data /= flat_data
-        science.err /= flat_data
+
+        # Update the variances using BASELINE algorithm
+        science.var_poisson /= flat_data**2
+        science.var_rnoise /= flat_data**2
+        science.var_flat = science.data**2 / flat_data**2 * flat_err**2
+
+        # Propogate flat and flat variance into the science err array
+        science.err = np.sqrt(
+            science.var_poisson +
+            science.var_rnoise +
+            science.var_flat
+            )
 
         # Combine the science and flat DQ arrays
         science.dq = np.bitwise_or(science.dq, flat_dq)
