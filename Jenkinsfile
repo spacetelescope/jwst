@@ -5,7 +5,7 @@ python_version = '3.6'
 env_vars = [
     "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
     "CRDS_PATH=./crds_cache",
-    "CRDS_CONTEXT=jwst_0502.pmap",
+    "CRDS_CONTEXT=jwst_0503.pmap",
 ]
 
 // Pip related setup
