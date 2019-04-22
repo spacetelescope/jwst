@@ -24,8 +24,5 @@ allOf:
       ndim: 4
       datatype: uint16
 - $ref: group.schema.yaml
-- type: object
-  properties:
-    int_times:
-      $ref: int_times.schema.yaml
+- $ref: int_times.schema.yaml
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema
