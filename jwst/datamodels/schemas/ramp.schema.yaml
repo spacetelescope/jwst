@@ -34,8 +34,9 @@ allOf:
       default: 0.0
       ndim: 3
       datatype: float32
-    group:
-      $ref: group.schema.yaml
+- $ref: group.schema.yaml
+- type: object
+  properties:
     int_times:
       $ref: int_times.schema.yaml
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema
