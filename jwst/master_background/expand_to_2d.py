@@ -336,11 +336,15 @@ def get_wavelengths(model, order=None):
 
     # If no existing wavelength array, compute one
     if hasattr(model.meta, "wcs") and not got_wavelength:
+
+        # Set up an appropriate WCS object
         if hasattr(model.meta, "exposure") and model.meta.exposure.type == "NIS_SOSS":
-            transform = niriss.niriss_soss_set_input(model, order)
-            wcs = transform
+            wcs = niriss.niriss_soss_set_input(model, order)
         else:
             wcs = model.meta.wcs
+
+        # Evaluate the WCS on the grid of pixel indexes, capturing only the
+        # resulting wavelength values
         shape = model.data.shape
         grid = np.indices(shape[-2:], dtype=np.float64)
         wl_array = wcs(grid[1], grid[0])[2]

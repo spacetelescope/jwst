@@ -614,8 +614,8 @@ class DataSet():
         """
         Short Summary
         -------------
-        Read the conversion photom factor, and attach the relative sensitivity
-        table if the number of rows in the table > 0.
+        Combine photometric scalar and wavelength-dependent conversion factors
+        and apply to the science dataset.
 
         Parameters
         ----------
@@ -787,7 +787,7 @@ class DataSet():
         a scalar factor and an array of wavelength-dependent factors. The combination
         of both factors are applied to the input model. The scalar factor is also
         written to the PHOTMJSR and PHOTUJA2 keywords in the model. If a pixel area
-        map reference file exists for the instrument mode, it is also attached to
+        map reference file exists for the instrument mode, it is attached to
         the input model.
 
         Parameters
