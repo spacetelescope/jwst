@@ -881,8 +881,7 @@ class V23ToSky(Rotation3D):
         inputs, format_info = self.prepare_inputs(v2, v3)
         parameters = self._param_sets(raw=True)
 
-        outputs = self.evaluate(*chain([v2, v3], parameters))
-
+        outputs = self.evaluate(*chain(inputs, parameters))
         if self.n_outputs == 1:
             outputs = (outputs,)
 

@@ -175,9 +175,9 @@ class TPCorr(Model):
         # apply corrections:
         # NOTE: order of transforms may need to be swapped depending on the
         #       how shifts are defined.
-        xt -= self.shift[0][0]
-        yt -= self.shift[0][1]
-        xt, yt = np.dot(self.matrix[0], (xt, yt))
+        xt -= self.shift.value[0]
+        yt -= self.shift.value[1]
+        xt, yt = np.dot(self.matrix, (xt, yt))
 
         return self.prepare_outputs(format_info, xt.reshape(v2.shape),
                                     yt.reshape(v3.shape))
@@ -191,9 +191,9 @@ class TPCorr(Model):
         zt = np.full_like(xt, self.__class__.r0)
 
         # undo corrections:
-        xt, yt = np.dot(np.linalg.inv(self.matrix[0]), (xt, yt))
-        xt += self.shift[0][0]
-        yt += self.shift[0][1]
+        xt, yt = np.dot(np.linalg.inv(self.matrix), (xt, yt))
+        xt += self.shift.value[0]
+        yt += self.shift.value[1]
 
         # build Euler rotation matrices:
         rotm = [
@@ -220,14 +220,13 @@ class TPCorr(Model):
         Evaluate the model on some input variables.
 
         """
-        (v2, v3), format_info = self.prepare_inputs(v2, v3)
 
         # convert spherical coordinates to cartesian assuming unit sphere:
         xyz = self.spherical2cartesian(v2.ravel(), v3.ravel())
 
         # build Euler rotation matrices:
         rotm = [rot_mat3D(np.deg2rad(alpha), axis)
-                for axis, alpha in enumerate([roll[0], v3ref[0], v2ref[0]])]
+                for axis, alpha in enumerate([roll, v3ref, v2ref])]
         euler_rot = np.linalg.multi_dot(rotm)
         inv_euler_rot = np.linalg.inv(euler_rot)
 
@@ -254,8 +253,8 @@ class TPCorr(Model):
         # convert cartesian to spherical coordinates:
         v2c, v3c = self.cartesian2spherical(zcr, xcr, ycr)
 
-        return self.prepare_outputs(format_info, v2c.reshape(v2.shape),
-                                    v3c.reshape(v3.shape))
+        return v2c, v3c
+
 
     @property
     def inverse(self):
