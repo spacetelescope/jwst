@@ -99,6 +99,9 @@ photom
 - Updated to apply the flux calibration to the science data and err arrays.
   [#3359]
 
+- Updated to compute a wavelength array for NIRISS SOSS exposures using
+  spectral order 1. [#3387]
+
 reffile_utils
 -------------
 

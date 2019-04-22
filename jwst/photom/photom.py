@@ -281,12 +281,11 @@ class DataSet():
         # Handle MultiSlit models separately, which are used for NIRISS WFSS
         if isinstance(self.input, datamodels.MultiSlitModel):
 
-            # We have to find and attach a separate set of flux cal
+            # We have to find and apply a separate set of flux cal
             # data for each of the slits/orders in the input
             for slit in self.input.slits:
 
-                # Initialize the output conversion factor and
-                # increment slit number
+                # Initialize the output conversion factor and increment slit number
                 match = False
                 self.slitnum += 1
 
@@ -324,12 +323,12 @@ class DataSet():
                 ref_pupil = tabdata['pupil'].strip().upper()
                 ref_order = tabdata['order']
 
-                # Spectroscopic mode
-                if self.exptype in ['NIS_SOSS', 'NIS_WFSS']:
+                # SOSS mode
+                if self.exptype in ['NIS_SOSS']:
 
                     # Find matching values of FILTER, PUPIL, and ORDER
                     if (self.filter == ref_filter and self.pupil == ref_pupil and order == ref_order):
-                        self.photom_io(tabdata)
+                        self.photom_io(tabdata, order)
                         match = True
                         break
 
@@ -611,17 +610,20 @@ class DataSet():
 
         return wave2d, area2d, dqmap
 
-    def photom_io(self, tabdata):
+    def photom_io(self, tabdata, order=None):
         """
         Short Summary
         -------------
-        Read the conversion photom factor, and attach the relative sensitivity
-        table if the number of rows in the table > 0.
+        Combine photometric scalar and wavelength-dependent conversion factors
+        and apply to the science dataset.
 
         Parameters
         ----------
         tabdata : FITS record
             Single row of data from reference table
+
+        order : int
+            Spectral order number
 
         Returns
         -------
@@ -663,9 +665,9 @@ class DataSet():
 
             # Compute a 2-D grid of conversion factors, as a function of wavelength
             if isinstance(self.input, datamodels.MultiSlitModel):
-                wl_array = expand_to_2d.get_wavelengths(self.input.slits[self.slitnum])
+                wl_array = expand_to_2d.get_wavelengths(self.input.slits[self.slitnum], order)
             else:
-                wl_array = expand_to_2d.get_wavelengths(self.input)
+                wl_array = expand_to_2d.get_wavelengths(self.input, order)
 
             wl_array[np.isnan(wl_array)] = -1.
             conv_2d = np.interp(wl_array, waves, relresps, left=1., right=1.)
@@ -785,7 +787,7 @@ class DataSet():
         a scalar factor and an array of wavelength-dependent factors. The combination
         of both factors are applied to the input model. The scalar factor is also
         written to the PHOTMJSR and PHOTUJA2 keywords in the model. If a pixel area
-        map reference file exists for the instrument mode, it is also attached to
+        map reference file exists for the instrument mode, it is attached to
         the input model.
 
         Parameters
