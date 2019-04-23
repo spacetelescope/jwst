@@ -26,9 +26,7 @@ HORIZONTAL = 1
 VERTICAL = 2
 
 
-def do_correction(input_model, flat_model,
-                  f_flat_model, s_flat_model,
-                  d_flat_model, flat_suffix=None):
+def do_correction(input_model, flat, fflat, sflat, dflat):
     """Flat-field a JWST data model using a flat-field model
 
     Parameters
@@ -36,22 +34,18 @@ def do_correction(input_model, flat_model,
     input_model : JWST data model
         Input science data model to be flat-fielded.
 
-    flat_model : JWST data model, or None
+    flat : JWST data model, or None
         Data model containing flat-field for all instruments other than
         NIRSpec spectrographic data.
 
-    f_flat_model : NirspecFlatModel, or NirspecQuadFlatModel object, or None
+    fflat : NirspecFlatModel, NirspecQuadFlatModel object, or None
         Flat field for the fore optics.  Used only for NIRSpec data.
 
-    s_flat_model : NirspecFlatModel object, or None
+    sflat : NirspecFlatModel object, or None
         Flat field for the spectrograph.  Used only for NIRSpec data.
 
-    d_flat_model : NirspecFlatModel object, or None
+    dflat : NirspecFlatModel object, or None
         Flat field for the detector.  Used only for NIRSpec data.
-
-    flat_suffix : str or None
-        Filename suffix for optional output file to save flat field images.
-        Note that this is only supported for NIRSpec spectrographic data.
 
     Returns
     -------
@@ -59,7 +53,7 @@ def do_correction(input_model, flat_model,
         The data model for the flat-fielded science data.
 
     interpolated_flats : data model or None
-        If not None, this will be a MultiSlitModel containing the
+        If not None, this will be a MultiSlitModel or ImageModel containing the
         interpolated flat fields (NIRSpec data only).
     """
 
@@ -67,28 +61,20 @@ def do_correction(input_model, flat_model,
     output_model = input_model.copy()
 
     # NIRSpec spectrographic data are processed differently from other
-    # types of data (including NIRSpec imaging).  The test on flat_model is
+    # types of data (including NIRSpec imaging).  The test on flat is
     # needed because NIRSpec imaging data are processed by do_flat_field().
-    is_NRS_spectrographic = (input_model.meta.instrument.name == 'NIRSPEC' and
-                             flat_model is None)
-
-    if is_NRS_spectrographic:
-        interpolated_flats = do_NIRSpec_flat_field(output_model,
-                                                   f_flat_model, s_flat_model,
-                                                   d_flat_model, flat_suffix)
+    if input_model.meta.instrument.name == 'NIRSPEC' and flat is None:
+        interpolated_flats = do_nirspec_flat_field(output_model, fflat, sflat, dflat)
     else:
-        if flat_suffix is not None:
-            log.warning("The flat_suffix parameter is not implemented "
-                        "for this mode; will be ignored.")
-        do_flat_field(output_model, flat_model)
+        do_flat_field(output_model, flat)
         interpolated_flats = None
 
-    return (output_model, interpolated_flats)
+    return output_model, interpolated_flats
+
 
 #
 # These functions are for non-NIRSpec flat fielding, or for NIRSpec imaging.
 #
-
 
 def do_flat_field(output_model, flat_model):
     """Apply flat-fielding for non-NIRSpec modes, updating the output model.
@@ -206,9 +192,10 @@ def apply_flat_field(science, flat):
 #
 # The following functions are for NIRSpec spectrographic data.
 #
-def do_NIRSpec_flat_field(output_model,
+
+def do_nirspec_flat_field(output_model,
                           f_flat_model, s_flat_model,
-                          d_flat_model, flat_suffix):
+                          d_flat_model):
     """Apply flat-fielding for NIRSpec data, updating the output model.
 
     Parameters
@@ -225,15 +212,10 @@ def do_NIRSpec_flat_field(output_model,
     d_flat_model : NirspecFlatModel object, or None
         Flat field for the detector.
 
-    flat_suffix : str or None
-        Filename suffix for optional output file to save the interpolated
-        flat field images.  If not None, a file will be written (later, not
-        by the current function).
-
     Returns
     -------
-    MultiSlitModel, ImageModel (for IFU data), or None
-        If not None, the value will be the interpolated flat fields.
+    MultiSlitModel, ImageModel (for IFU data)
+        The interpolated flat field(s).
     """
 
     log.debug("Flat field correction for NIRSpec spectrographic data.")
@@ -246,9 +228,9 @@ def do_NIRSpec_flat_field(output_model,
                       "don't know how to process it.")
             raise RuntimeError("Input is {}; expected SlitModel"
                                .format(type(output_model)))
-        return NIRSpec_brightobj(output_model,
+        return nirspec_brightobj(output_model,
                                  f_flat_model, s_flat_model,
-                                 d_flat_model, flat_suffix)
+                                 d_flat_model)
 
     # We expect NIRSpec IFU data to be an IFUImageModel, but it's conceivable
     # that the slices have been copied out into a MultiSlitModel, so
@@ -260,16 +242,13 @@ def do_NIRSpec_flat_field(output_model,
                           "don't know how to process it.")
                 raise RuntimeError("Input is {}; expected IFUImageModel"
                                    .format(type(output_model)))
-            return NIRSpec_IFU(output_model,
+            return nirspec_ifu(output_model,
                                f_flat_model, s_flat_model,
-                               d_flat_model, flat_suffix)
+                               d_flat_model)
 
     # Create an output model for the interpolated flat fields.
-    if flat_suffix is not None:
-        interpolated_flats = datamodels.MultiSlitModel()
-        interpolated_flats.update(output_model, only="PRIMARY")
-    else:
-        interpolated_flats = None
+    interpolated_flats = datamodels.MultiSlitModel()
+    interpolated_flats.update(output_model, only="PRIMARY")
 
     any_updated = False
 
@@ -443,9 +422,9 @@ def populate_interpolated_flats(k, slit,
                   output_model.slits[k].meta.wcs
 
 
-def NIRSpec_brightobj(output_model,
+def nirspec_brightobj(output_model,
                       f_flat_model, s_flat_model,
-                      d_flat_model, flat_suffix):
+                      d_flat_model):
     """Apply flat-fielding for NIRSpec BRIGHTOBJ data, in-place
 
     Parameters
@@ -462,15 +441,10 @@ def NIRSpec_brightobj(output_model,
     d_flat_model : NirspecFlatModel object, or None
         Flat field for the detector.
 
-    flat_suffix : str or None
-        Filename suffix for optional output file to save the interpolated
-        flat field images.  If not None, a file will be written (later, not
-        by the current function).
-
     Returns
     -------
-    ImageModel or None
-        If not None, the value will be the interpolated flat field.
+    ImageModel
+        The interpolated flat field.
     """
 
     exposure_type = output_model.meta.exposure.type
@@ -479,13 +453,10 @@ def NIRSpec_brightobj(output_model,
                output_model.meta.wcs is not None)
 
     # Create an output model for the interpolated flat fields.
-    if flat_suffix is not None:
-        interpolated_flats = datamodels.ImageModel()
-        interpolated_flats.update(output_model, only="PRIMARY")
-        if got_wcs:
-            interpolated_flats.meta.wcs = output_model.meta.wcs
-    else:
-        interpolated_flats = None
+    interpolated_flats = datamodels.ImageModel()
+    interpolated_flats.update(output_model, only="PRIMARY")
+    if got_wcs:
+        interpolated_flats.meta.wcs = output_model.meta.wcs
 
     slit_name = output_model.name
 
@@ -555,34 +526,33 @@ def NIRSpec_brightobj(output_model,
 
     flat_dq_2d = flat_dq_2d.astype(output_model.dq.dtype)
 
-    if flat_suffix is not None:
-        interpolated_flats.data = flat_2d.copy()
-        interpolated_flats.dq = flat_dq_2d.copy()
-        interpolated_flats.err = np.zeros((ysize, xsize),
-                                          dtype=output_model.err.dtype)
-        if got_wl_attribute:
-            interpolated_flats.wavelength = wl.copy()
-        else:
-            interpolated_flats.wavelength = np.zeros_like(flat_2d)
+    interpolated_flats.data = flat_2d.copy()
+    interpolated_flats.dq = flat_dq_2d.copy()
+    interpolated_flats.err = np.zeros((ysize, xsize),
+                                      dtype=output_model.err.dtype)
+    if got_wl_attribute:
+        interpolated_flats.wavelength = wl.copy()
+    else:
+        interpolated_flats.wavelength = np.zeros_like(flat_2d)
 
     if len(shape) == 3:
-        flat_Nd = flat_2d.reshape((1, ysize, xsize))
-        flat_dq_Nd = flat_dq_2d.reshape((1, ysize, xsize))
+        flat_nd = flat_2d.reshape((1, ysize, xsize))
+        flat_dq_nd = flat_dq_2d.reshape((1, ysize, xsize))
     else:
         flat_Nd = flat_2d
         flat_dq_Nd = flat_dq_2d
-    output_model.data /= flat_Nd
-    output_model.err /= flat_Nd
-    output_model.dq |= flat_dq_Nd
+    output_model.data /= flat_nd
+    output_model.err /= flat_nd
+    output_model.dq |= flat_dq_nd
 
     output_model.meta.cal_step.flat_field = 'COMPLETE'
 
     return interpolated_flats
 
 
-def NIRSpec_IFU(output_model,
+def nirspec_ifu(output_model,
                 f_flat_model, s_flat_model,
-                d_flat_model, flat_suffix):
+                d_flat_model):
     """Apply flat-fielding for NIRSpec IFU data, in-place
 
     Parameters
@@ -599,15 +569,10 @@ def NIRSpec_IFU(output_model,
     d_flat_model : NirspecFlatModel object, or None
         Flat field for the detector.
 
-    flat_suffix : str or None
-        Filename suffix for optional output file to save the interpolated
-        flat field images.  If not None, a file will be written (later, not
-        by the current function).
-
     Returns
     -------
-    ImageModel or None
-        If not None, the value will be the interpolated flat field.
+    ImageModel
+        The interpolated flat field.
     """
 
     any_updated = False
@@ -714,12 +679,10 @@ def NIRSpec_IFU(output_model,
         output_model.data /= flat
         output_model.err /= flat
         output_model.meta.cal_step.flat_field = 'COMPLETE'
-        if flat_suffix is None:
-            interpolated_flats = None
-        else:
-            # Create an output model for the interpolated flat fields.
-            interpolated_flats = datamodels.ImageModel(data=flat, dq=flat_dq)
-            interpolated_flats.update(output_model, only="PRIMARY")
+
+        # Create an output model for the interpolated flat fields.
+        interpolated_flats = datamodels.ImageModel(data=flat, dq=flat_dq)
+        interpolated_flats.update(output_model, only="PRIMARY")
     else:
         output_model.meta.cal_step.flat_field = 'SKIPPED'
         interpolated_flats = None
