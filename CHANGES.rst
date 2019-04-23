@@ -130,6 +130,10 @@ srctype
 
 - Updated logic for background targets and nodded exposures. [#3310]
 
+tests
+-----
+- Removed set do_copy = True for get_data [#3370] 
+- Removed auto_toggle_do_copy  [#3370]
 tweakreg
 --------
 
