@@ -67,6 +67,12 @@ extract_1d
   the areas of the source aperture and background annulus are computed
   differently. [#3362]
 
+- For IFU data for an extended source, the extraction parameters are
+  assigned values so that the entire image will be extracted, with no
+  background subtraction.  For non-IFU data, a try/except block was added
+  to check for a WCS that does not have an inverse.  Some code (but not
+  all) for the now-obsolete RELSENS extension has been deleted. [#3390]
+
 master_background
 -----------------
 
