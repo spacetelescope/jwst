@@ -213,8 +213,8 @@ class TestMIRIWCSIFU(BaseJWSTTest):
 @pytest.mark.bigdata
 class TestMIRIWCSImage(BaseJWSTTest):
     input_loc = 'miri'
-    ref_loc = ['test_wcs','image','truth']
-    test_dir = os.path.join('test_wcs','image')
+    ref_loc = ['test_wcs', 'image', 'truth']
+    test_dir = os.path.join('test_wcs', 'image')
 
     def test_miri_image_wcs(self):
         """
@@ -243,8 +243,8 @@ class TestMIRIWCSImage(BaseJWSTTest):
 @pytest.mark.bigdata
 class TestMIRIWCSSlitless(BaseJWSTTest):
     input_loc = 'miri'
-    ref_loc = ['test_wcs','slitless','truth']
-    test_dir = os.path.join('test_wcs','slitless')
+    ref_loc = ['test_wcs', 'slitless', 'truth']
+    test_dir = os.path.join('test_wcs', 'slitless')
 
     def test_miri_slitless_wcs(self):
         """
@@ -284,9 +284,7 @@ class TestMIRISetPointing(BaseJWSTTest):
 
         # Copy original version of file to test file, which will get overwritten by test
         input_file = self.get_data(self.test_dir,
-                                    'jw80600010001_02101_00001_mirimage_uncal_orig.fits',
-                                    docopy=True  # always produce local copy
-                              )
+                                    'jw80600010001_02101_00001_mirimage_uncal_orig.fits')
         # Get SIAF PRD database file
         siaf_prd_loc = ['jwst-pipeline', self.env, 'common', 'prd.db']
         siaf_path = get_bigdata(*siaf_prd_loc)
@@ -359,17 +357,18 @@ class TestMIRIMasterBackgroundLRS(BaseJWSTTest):
         input_sci.close()
 
 
-class TestMIRIMasterBackgroundMRS(BaseJWSTTest):
+@pytest.mark.bigdata
+class TestMIRIMasterBackgroundMRSDedicated(BaseJWSTTest):
     input_loc = 'miri'
-    ref_loc = ['test_masterbackground', 'mrs', 'truth']
-    test_dir = ['test_masterbackground', 'mrs']
+    ref_loc = ['test_masterbackground', 'mrs', 'dedicated', 'truth']
+    test_dir = ['test_masterbackground', 'mrs', 'dedicated']
 
     rtol = 0.000001
 
-    def test_miri_mrs_masterbg(self):
-        """Run masterbackground step on MIRI LRS association"""
+    def test_miri_masterbg_mrs_dedicated(self):
+        """Run masterbackground step on MIRI MRS association"""
         asn_file = self.get_data(*self.test_dir,
-                                   'miri_mrs_mbkg_0304_spec3_asn.json')
+                                  'miri_mrs_mbkg_0304_spec3_asn.json')
         for file in raw_from_asn(asn_file):
             self.get_data(*self.test_dir, file)
 
@@ -377,8 +376,158 @@ class TestMIRIMasterBackgroundMRS(BaseJWSTTest):
         result = MasterBackgroundStep.call(
             asn_file,
             config_file='config/master_background.cfg',
-            save_background=True
+            save_background=True,
+            save_results=True
             )
 
+        # test 1
+        # loop over the background subtracted data and compare to truth files
+        # check that the  cal_step master_background ran to complete
         for model in result:
             assert model.meta.cal_step.master_background == 'COMPLETE'
+
+            result_file = model.meta.filename.replace('cal', 'master_background')
+            truth_file = self.get_data(*self.ref_loc,
+                                        result_file)
+            outputs = [(result_file, truth_file)]
+            self.compare_outputs(outputs)
+
+        # test 2
+        # compare the master background combined file to truth file
+        master_combined_bkg_file = 'MIRI_MRS_seq1_MIRIFULONG_34LONGexp1_bkg_o002_masterbg.fits'
+        truth_background = self.get_data(*self.ref_loc,
+                                          master_combined_bkg_file)
+        outputs = [(master_combined_bkg_file, truth_background)]
+        self.compare_outputs(outputs)
+
+
+@pytest.mark.bigdata
+class TestMIRIMasterBackgroundMRSNodded(BaseJWSTTest):
+    input_loc = 'miri'
+    ref_loc = ['test_masterbackground', 'mrs', 'nodded', 'truth']
+    test_dir = ['test_masterbackground', 'mrs', 'nodded']
+
+    rtol = 0.000001
+
+    def test_miri_masterbg_mrs_nodded(self):
+        """Run masterbackground step on MIRI MRS association"""
+        asn_file = self.get_data(*self.test_dir,
+                                  'miri_mrs_mbkg_spec3_asn.json')
+        for file in raw_from_asn(asn_file):
+            self.get_data(*self.test_dir, file)
+
+        collect_pipeline_cfgs('./config')
+        result = MasterBackgroundStep.call(
+            asn_file,
+            config_file='config/master_background.cfg',
+            save_background=True,
+            save_results=True
+            )
+
+        # test 1
+        # loop over the background subtracted data and compare to truth files
+        # check that the  cal_step master_background ran to complete
+        for model in result:
+            assert model.meta.cal_step.master_background == 'COMPLETE'
+
+            result_file = model.meta.filename.replace('cal', 'master_background')
+            truth_file = self.get_data(*self.ref_loc,
+                                        result_file)
+
+            outputs = [(result_file, truth_file)]
+            self.compare_outputs(outputs)
+
+        # test 2
+        # compare the master background combined file to truth file
+        master_combined_bkg_file = 'MIRI_MRS_nod_seq1_MIRIFUSHORT_12SHORTexp1_o001_masterbg.fits'
+        truth_background = self.get_data(*self.ref_loc,
+                                          master_combined_bkg_file)
+        outputs = [(master_combined_bkg_file, truth_background)]
+        self.compare_outputs(outputs)
+
+
+@pytest.mark.bigdata
+class TestMIRIMasterBackgroundLRSNodded(BaseJWSTTest):
+    input_loc = 'miri'
+    ref_loc = ['test_masterbackground', 'lrs', 'nodded', 'truth']
+    test_dir = ['test_masterbackground', 'lrs', 'nodded']
+
+    rtol = 0.000001
+
+    def test_miri_masterbg_lrs_nodded(self):
+        """Run masterbackground step on MIRI LRS association"""
+        asn_file = self.get_data(*self.test_dir,
+                                  'miri_lrs_mbkg_nodded_spec3_asn.json')
+        for file in raw_from_asn(asn_file):
+            self.get_data(*self.test_dir, file)
+
+        collect_pipeline_cfgs('./config')
+        result = MasterBackgroundStep.call(
+            asn_file,
+            config_file='config/master_background.cfg',
+            save_background=True,
+            save_results=True
+            )
+
+        # test 1
+        # loop over the background subtracted data and compare to truth files
+        for model in result:
+            assert model.meta.cal_step.master_background == 'COMPLETE'
+
+            result_file = model.meta.filename.replace('cal', 'master_background')
+            truth_file = self.get_data(*self.ref_loc,
+                                        result_file)
+
+            outputs = [(result_file, truth_file)]
+            self.compare_outputs(outputs)
+
+        # test 2
+        # compare the master background combined file to truth file
+        master_combined_bkg_file = 'MIRI_LRS_nod_seq1_MIRIMAGE_P750Lexp1_o002_masterbg.fits'
+        truth_background = self.get_data(*self.ref_loc,
+                                          master_combined_bkg_file)
+        outputs = [(master_combined_bkg_file, truth_background)]
+        self.compare_outputs(outputs)
+
+
+@pytest.mark.bigdata
+class TestMIRIMasterBackgroundLRSDedicated(BaseJWSTTest):
+    input_loc = 'miri'
+    ref_loc = ['test_masterbackground', 'lrs', 'dedicated', 'truth']
+    test_dir = ['test_masterbackground', 'lrs', 'dedicated']
+
+    rtol = 0.000001
+
+    def test_miri_masterbg_lrs_dedicated(self):
+        """Run masterbackground step on MIRI LRS association"""
+        asn_file = self.get_data(*self.test_dir,
+                                  'miri_lrs_mbkg_dedicated_spec3_asn.json')
+        for file in raw_from_asn(asn_file):
+            self.get_data(*self.test_dir, file)
+
+        collect_pipeline_cfgs('./config')
+        result = MasterBackgroundStep.call(
+            asn_file,
+            config_file='config/master_background.cfg',
+            save_background = True,
+            save_results = True)
+
+        # test 1
+        # loop over the background subtracted data and compare to truth files
+        for model in result:
+            assert model.meta.cal_step.master_background == 'COMPLETE'
+
+            result_file = model.meta.filename.replace('cal', 'master_background')
+            truth_file = self.get_data(*self.ref_loc,
+                                        result_file)
+
+            outputs = [(result_file, truth_file)]
+            self.compare_outputs(outputs)
+
+        # test 2
+        # compare the master background combined file to truth file
+        master_combined_bkg_file = 'MIRI_LRS_seq1_MIRIMAGE_P750Lexp1_o001_masterbg.fits'
+        truth_background = self.get_data(*self.ref_loc,
+                                          master_combined_bkg_file)
+        outputs = [(master_combined_bkg_file, truth_background)]
+        self.compare_outputs(outputs)
