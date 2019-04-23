@@ -253,7 +253,7 @@ class TPCorr(Model):
         # convert cartesian to spherical coordinates:
         v2c, v3c = self.cartesian2spherical(zcr, xcr, ycr)
 
-        return v2c, v3c
+        return v2c.reshape(v2.shape), v3c.reshape(v3.shape)
 
 
     @property
