@@ -47,19 +47,19 @@ class BaseJWSTTest:
         self.inputs_root = pytestconfig.getini('inputs_root')[0]
         self.results_root = pytestconfig.getini('results_root')[0]
 
-    @pytest.fixture(autouse=True)
-    def auto_toggle_docopy(self):
-        bigdata_root = get_bigdata_root()
-        if bigdata_root and check_url(bigdata_root):
-            self.docopy = True
-        else:
-            self.docopy = False
+#    @pytest.fixture(autouse=True)
+#    def auto_toggle_docopy(self):
+#        bigdata_root = get_bigdata_root()
+#        if bigdata_root and check_url(bigdata_root):
+#            self.docopy = True
+#        else:
+#            self.docopy = False
 
     @property
     def repo_path(self):
         return [self.inputs_root, self.env, self.input_loc]
 
-    def get_data(self, *pathargs, docopy=None):
+    def get_data(self, *pathargs, docopy=True):
         """
         Download `filename` into working directory using
         `artifactory_helpers/get_bigdata()`.
@@ -67,12 +67,12 @@ class BaseJWSTTest:
         """
         # If user has specified action for docopy use it, If none
         # default behavior being whatever was defined in the base class.
-        if docopy is None: 
-            local_file = get_bigdata(*self.repo_path, *pathargs, docopy=self.docopy)
-        elif docopy:
-            local_file = get_bigdata(*self.repo_path, *pathargs, docopy=True)
-        else:
-            local_file = get_bigdata(*self.repo_path, *pathargs, docopy=False)
+#        if docopy is None: 
+#            local_file = get_bigdata(*self.repo_path, *pathargs, docopy=self.docopy)
+#        elif docopy:
+        local_file = get_bigdata(*self.repo_path, *pathargs, docopy=True)
+#        else:
+#            local_file = get_bigdata(*self.repo_path, *pathargs, docopy=False)
             
         return local_file
 
@@ -93,7 +93,7 @@ class BaseJWSTTest:
 
         return compare_outputs(outputs,
                                input_path=input_path,
-                               docopy=self.docopy,
+                               docopy=True,
                                results_root=self.results_root,
                                **compare_kws)
 
