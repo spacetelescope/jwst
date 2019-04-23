@@ -284,9 +284,7 @@ class TestMIRISetPointing(BaseJWSTTest):
 
         # Copy original version of file to test file, which will get overwritten by test
         input_file = self.get_data(self.test_dir,
-                                    'jw80600010001_02101_00001_mirimage_uncal_orig.fits',
-                                    docopy=True  # always produce local copy
-                              )
+                                    'jw80600010001_02101_00001_mirimage_uncal_orig.fits')
         # Get SIAF PRD database file
         siaf_prd_loc = ['jwst-pipeline', self.env, 'common', 'prd.db']
         siaf_path = get_bigdata(*siaf_prd_loc)
@@ -370,10 +368,9 @@ class TestMIRIMasterBackgroundMRSDedicated(BaseJWSTTest):
     def test_miri_masterbg_mrs_dedicated(self):
         """Run masterbackground step on MIRI MRS association"""
         asn_file = self.get_data(*self.test_dir,
-                                  'miri_mrs_mbkg_0304_spec3_asn.json',
-                                  docopy=True)
+                                  'miri_mrs_mbkg_0304_spec3_asn.json')
         for file in raw_from_asn(asn_file):
-            self.get_data(*self.test_dir, file, docopy=True)
+            self.get_data(*self.test_dir, file)
 
         collect_pipeline_cfgs('./config')
         result = MasterBackgroundStep.call(
@@ -389,10 +386,9 @@ class TestMIRIMasterBackgroundMRSDedicated(BaseJWSTTest):
         for model in result:
             assert model.meta.cal_step.master_background == 'COMPLETE'
 
-            result_file = model.meta.filename.replace('cal','master_background')
+            result_file = model.meta.filename.replace('cal', 'master_background')
             truth_file = self.get_data(*self.ref_loc,
                                         result_file)
-
             outputs = [(result_file, truth_file)]
             self.compare_outputs(outputs)
 
@@ -416,10 +412,9 @@ class TestMIRIMasterBackgroundMRSNodded(BaseJWSTTest):
     def test_miri_masterbg_mrs_nodded(self):
         """Run masterbackground step on MIRI MRS association"""
         asn_file = self.get_data(*self.test_dir,
-                                  'miri_mrs_mbkg_spec3_asn.json',
-                                  docopy=True)
+                                  'miri_mrs_mbkg_spec3_asn.json')
         for file in raw_from_asn(asn_file):
-            self.get_data(*self.test_dir, file, docopy=True)
+            self.get_data(*self.test_dir, file)
 
         collect_pipeline_cfgs('./config')
         result = MasterBackgroundStep.call(
@@ -462,10 +457,9 @@ class TestMIRIMasterBackgroundLRSNodded(BaseJWSTTest):
     def test_miri_masterbg_lrs_nodded(self):
         """Run masterbackground step on MIRI LRS association"""
         asn_file = self.get_data(*self.test_dir,
-                                  'miri_lrs_mbkg_nodded_spec3_asn.json',
-                                  docopy=True)
+                                  'miri_lrs_mbkg_nodded_spec3_asn.json')
         for file in raw_from_asn(asn_file):
-            self.get_data(*self.test_dir, file, docopy=True)
+            self.get_data(*self.test_dir, file)
 
         collect_pipeline_cfgs('./config')
         result = MasterBackgroundStep.call(
@@ -507,10 +501,9 @@ class TestMIRIMasterBackgroundLRSDedicated(BaseJWSTTest):
     def test_miri_masterbg_lrs_dedicated(self):
         """Run masterbackground step on MIRI LRS association"""
         asn_file = self.get_data(*self.test_dir,
-                                  'miri_lrs_mbkg_dedicated_spec3_asn.json',
-                                  docopy = True)
+                                  'miri_lrs_mbkg_dedicated_spec3_asn.json')
         for file in raw_from_asn(asn_file):
-            self.get_data(*self.test_dir, file, docopy=True)
+            self.get_data(*self.test_dir, file)
 
         collect_pipeline_cfgs('./config')
         result = MasterBackgroundStep.call(

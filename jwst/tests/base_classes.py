@@ -47,14 +47,6 @@ class BaseJWSTTest:
         self.inputs_root = pytestconfig.getini('inputs_root')[0]
         self.results_root = pytestconfig.getini('results_root')[0]
 
-#    @pytest.fixture(autouse=True)
-#    def auto_toggle_docopy(self):
-#        bigdata_root = get_bigdata_root()
-#        if bigdata_root and check_url(bigdata_root):
-#            self.docopy = True
-#        else:
-#            self.docopy = False
-
     @property
     def repo_path(self):
         return [self.inputs_root, self.env, self.input_loc]
@@ -65,15 +57,7 @@ class BaseJWSTTest:
         `artifactory_helpers/get_bigdata()`.
         This will then return the full path to the local copy of the file.
         """
-        # If user has specified action for docopy use it, If none
-        # default behavior being whatever was defined in the base class.
-#        if docopy is None: 
-#            local_file = get_bigdata(*self.repo_path, *pathargs, docopy=self.docopy)
-#        elif docopy:
-        local_file = get_bigdata(*self.repo_path, *pathargs, docopy=True)
-#        else:
-#            local_file = get_bigdata(*self.repo_path, *pathargs, docopy=False)
-            
+        local_file = get_bigdata(*self.repo_path, *pathargs, docopy=docopy)
         return local_file
 
     def compare_outputs(self, outputs, raise_error=True, **kwargs):
@@ -282,4 +266,3 @@ def _data_glob_url(url, glob='*'):
         url_paths = [a['uri'].replace('api/storage/', '') for a in r.json()['results']]
 
     return url_paths
-
