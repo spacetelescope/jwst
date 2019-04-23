@@ -52,4 +52,10 @@ allOf:
       default: 0.0
       ndim: 3
       datatype: float32
+    var_flat:
+      title: Integration-specific variances due to flat field
+      fits_hdu: VAR_FLAT
+      default: 0.0
+      ndim: 3
+      datatype: float32
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

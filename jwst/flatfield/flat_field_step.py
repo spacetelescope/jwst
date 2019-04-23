@@ -27,9 +27,7 @@ class FlatFieldStep(Step):
     """
 
     spec = """
-        # Suffix for optional output file for interpolated flat fields.
-        # Note that this is only used for NIRSpec spectrographic data.
-        flat_suffix = string(default=None)
+        flat_suffix = string(default=None) #Suffix for optional NIRSpec interpolated flat output file
     """
 
     reference_file_types = ["flat", "fflat", "sflat", "dflat"]
