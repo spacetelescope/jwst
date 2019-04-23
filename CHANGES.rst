@@ -130,10 +130,6 @@ srctype
 
 - Updated logic for background targets and nodded exposures. [#3310]
 
-tests
------
-- in base_classes.py forced do_copy = True for def get_data [#3370] 
-- in base_classes.py removed auto_toggle_do_copy  [#3370]
 tweakreg
 --------
 
