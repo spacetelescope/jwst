@@ -132,8 +132,8 @@ srctype
 
 tests
 -----
-- Removed set do_copy = True for get_data [#3370] 
-- Removed auto_toggle_do_copy  [#3370]
+- in base_classes.py forced do_copy = True for def get_data [#3370] 
+- in base_classes.py removed auto_toggle_do_copy  [#3370]
 tweakreg
 --------
 
