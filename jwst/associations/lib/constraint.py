@@ -137,8 +137,10 @@ class SimpleConstraint(SimpleConstraintABC):
     test : function
         The test function for the constraint.
         Takes two arguments:
+
             - constraint
             - object to compare against.
+
         Returns a boolean.
         Default is `SimpleConstraint.eq`
 
