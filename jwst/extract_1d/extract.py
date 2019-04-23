@@ -1300,7 +1300,12 @@ class ExtractBase:
         targ_ra = input_model.meta.target.ra
         targ_dec = input_model.meta.target.dec
 
-        x_y = self.wcs.backward_transform(targ_ra, targ_dec, middle_wl)
+        try:
+            x_y = self.wcs.backward_transform(targ_ra, targ_dec, middle_wl)
+        except NotImplementedError:
+            log.warning("Inverse wcs is not implemented, so can't use "
+                        "target coordinates to get location of spectrum.")
+            return None, None, None
 
         # locn is the xd location of the spectrum:
         if self.dispaxis == HORIZONTAL:
@@ -2893,8 +2898,6 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                 relsens = slit.relsens
             except AttributeError:
                 got_relsens = False
-            if got_relsens and len(relsens) == 0:
-                got_relsens = False
             if got_relsens:
                 # reciprocal of the response
                 rr_factor = interpolate_response(wavelength, relsens, True)
@@ -2987,8 +2990,6 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                     relsens = input_model.relsens
                 except AttributeError:
                     got_relsens = False
-                if got_relsens and len(relsens) == 0:
-                    got_relsens = False
                 if got_relsens:
                     # reciprocal of the response
                     rr_factor = interpolate_response(wavelength, relsens, True)
@@ -3061,8 +3062,6 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                 try:
                     relsens = input_model.relsens
                 except AttributeError:
-                    got_relsens = False
-                if got_relsens and len(relsens) == 0:
                     got_relsens = False
                 if not got_relsens:
                     log.warning("No relsens for input file, "
