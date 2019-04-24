@@ -1,0 +1,125 @@
+"""
+Unit tests for group_scale correction
+"""
+
+from jwst.datamodels import RampModel
+from jwst.group_scale.group_scale import do_correction
+from jwst.group_scale import GroupScaleStep
+import numpy as np
+import pytest
+
+
+def test_nframes_or_frame_divisor_is_none(make_rampmodel):
+    """If nframes or frame_divisor is None, skip correction.
+    Here I am just setting nframes=None
+    """
+    datmod = make_rampmodel(2, None, 4, 2048, 2048)
+    output = do_correction(datmod)
+
+    assert(output.meta.cal_step.group_scale == 'SKIPPED')
+
+
+def test_nframes_equal_frame_divisor(make_rampmodel):
+    """If nframes and frame_divisor are equal, skip correction
+    """
+    datmod = make_rampmodel(2, 4, 4, 2048, 2048)
+    output = GroupScaleStep.call(datmod)
+    print(output.meta.exposure.frame_divisor,
+          output.meta.exposure.nframes)
+    assert(output.meta.cal_step.group_scale == 'SKIPPED')
+
+
+def test_nframes_not_equal_frame_divisor(make_rampmodel):
+    """If nframes and frame_divisor are not equal, do correction
+    """
+    datmod = make_rampmodel(2, 2, 4, 2048, 2048)
+    output = GroupScaleStep.call(datmod)
+    
+    # Assert that the step completed
+    assert(output.meta.cal_step.group_scale == 'COMPLETE')
+    
+    # Since the step multiplies data by scale = frame_divisor/nframes (4/2=2)
+    # and the data array is all ones, the output array should contain 
+    # all twos since the correction applied is data*=scale.
+
+    # This assertion doesn't verify output like explained above, 
+    # it just checks that the correction ran and that the data array 
+    # outputs are different as requested in the document.
+    assert not np.array_equal(output.data, datmod.data)
+
+
+def test_nframes_is_none(make_rampmodel):
+    """Make sure step is skipped if nframes is None
+    """
+    datmod = make_rampmodel(2, None, 4, 2048, 2048)
+    output = GroupScaleStep.call(datmod)
+
+    assert(output.meta.cal_step.group_scale == 'SKIPPED')
+
+
+def test_nframes_is_power_of_two(make_rampmodel):
+    """When frame_divisor is None, the correction will skip if
+    nframes is a power of 2.
+    """
+    datmod = make_rampmodel(2, 4, None, 2048, 2048)
+    output = GroupScaleStep.call(datmod)
+
+    assert(output.meta.cal_step.group_scale == 'SKIPPED')
+
+
+def test_nframes_is_not_power_of_two(make_rampmodel):
+    """When frame_divisor is None, then do_correction will be applied if
+    nframes is not a power of two but will be skip because if nframes or
+    frame_divisor is none.
+    """
+    datmod = make_rampmodel(2, 3, None, 2048, 2048)
+    output = GroupScaleStep.call(datmod)
+
+    assert(output.meta.cal_step.group_scale == 'SKIPPED')
+
+
+# Make this a test eventually. The pipeline step nor the caldetector1 pipeline
+# code checks for instrument specific mode information. We want to make sure 
+# in the future that the group_scale calculation is only run on IRS2 mode data 
+# as defined in the confluence table for this step. Here we set the read pattern 
+# mode to 'NRSIRS2RAPID' to make sure it fails on purpose.
+#
+# @pytest.mark.xfail
+# def test_correction_only_for_irs2(make_rampmodel):
+#     """Make sure pipeline doesnt run correction on data that isnt IRS2
+#     """
+#     datmod = make_rampmodel(2, 2, 4, 2048, 2048)
+#     datmod.meta.readpatt = 'NRSIRS2RAPID'
+#     output = GroupScaleStep.call(datmod)
+
+
+@pytest.fixture(scope='function')
+def make_rampmodel():
+    '''Make NIRSPEC IRS2 model for testing'''
+
+    # NRS1 and NRS2 are size  2048x2048 pixels
+    def _dm(ngroups, nframes, frame_divisor, ysize, xsize):
+        # create the data and groupdq arrays
+        nints = 2
+        csize = (nints, ngroups, ysize, xsize)
+        data = np.full(csize, 1.0)
+
+        # create a JWST datamodel for NIRSPEC data
+        dm = RampModel(data=data)
+
+        dm.meta.instrument.name = 'NIRSPEC'
+        dm.meta.date = '2018-01-01'
+        dm.meta.description = 'Fake data'
+        dm.meta.reftype = 'RampModel'
+        dm.meta.author = 'Mees'
+        dm.meta.pedigree = 'Dummy'
+        dm.meta.useafter = '2015-10-01T00:00:00'
+        dm.meta.readpatt = 'NRS_IRS2'
+
+        # Begin NIRSPEC specific for tests.
+        dm.meta.exposure.frame_divisor = frame_divisor
+        dm.meta.exposure.nframes = nframes
+
+        return dm
+
+    return _dm
