@@ -3,19 +3,19 @@ properties:
     var_poisson:
       title: variance due to poisson noise
       fits_hdu: VAR_POISSON
-      ndim: 2
+      max_ndim: 3
       default: 0.0
       datatype: float32
     var_rnoise:
       title: variance due to read noise
       fits_hdu: VAR_RNOISE
-      ndim: 2
+      max_ndim: 3
       default: 0.0
       datatype: float32
     var_flat:
       title: variance due to flat field
       fits_hdu: VAR_FLAT
-      ndim: 2
+      max_ndim: 3
       default: 0.0
       datatype: float32
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema
