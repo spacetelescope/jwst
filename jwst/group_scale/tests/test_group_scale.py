@@ -77,6 +77,29 @@ def test_nframes_is_not_power_of_two(make_rampmodel):
 
     assert(output.meta.cal_step.group_scale == 'SKIPPED')
 
+def test_scale_value(make_rampmodel):
+    """Compare the ratio of the FRMDIVSR/NFRAMES from the data model input and
+    compare to the output of the pipeline.
+    """
+
+    datmod = make_rampmodel(2, 2, 4, 2048, 2048)
+
+    # Calculate the scale based off of the input.
+    scale = datmod.meta.exposure.frame_divisor/datmod.meta.exposure.nframes
+    
+    output = GroupScaleStep.call(datmod)
+
+    scale_from_data = np.unique(output.data/datmod.data)
+
+    # Since the scale value is applied uniformly to the array, if we divide the output
+    # by the input then we should get a single unique value (ie the scale) calculated
+    # by the pipeline. 
+    assert(len(scale_from_data) == 1)
+
+    # Make sure the scale calculated manually from the data model aboved matched what the
+    # pipeline calculated.
+    assert(scale == scale_from_data[0])
+
 
 # Make this a test eventually. The pipeline step nor the caldetector1 pipeline
 # code checks for instrument specific mode information. We want to make sure 
@@ -102,7 +125,7 @@ def make_rampmodel():
         # create the data and groupdq arrays
         nints = 2
         csize = (nints, ngroups, ysize, xsize)
-        data = np.full(csize, 1.0)
+        data = np.random.randint(low=1, high=50, size=csize)
 
         # create a JWST datamodel for NIRSPEC data
         dm = RampModel(data=data)
