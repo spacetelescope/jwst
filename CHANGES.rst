@@ -52,6 +52,9 @@ datamodels
 - Added BUNIT keyword to gain and readnoise reference file schemas.
   [#3322]
 
+- Update ``dq_def.schema``, ``group.schema`` and ``int_times.schema`` to comply
+  with ASDF standard.  Remove unused ``extract1d.schema``.  [#3386]
+
 extract_1d
 ----------
 
