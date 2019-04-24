@@ -38,13 +38,9 @@ def test_nframes_not_equal_frame_divisor(make_rampmodel):
     # Assert that the step completed
     assert(output.meta.cal_step.group_scale == 'COMPLETE')
     
-    # Since the step multiplies data by scale = frame_divisor/nframes (4/2=2)
-    # and the data array is all ones, the output array should contain 
-    # all twos since the correction applied is data*=scale.
-
-    # This assertion doesn't verify output like explained above, 
+    # This assertion doesn't verify for correct output, 
     # it just checks that the correction ran and that the data array 
-    # outputs are different as requested in the document.
+    # outputs are different than the inputs as requested in the document.
     assert not np.array_equal(output.data, datmod.data)
 
 
