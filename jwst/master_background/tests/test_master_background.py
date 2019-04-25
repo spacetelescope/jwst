@@ -63,3 +63,46 @@ def test_master_background_userbg(_jail, user_background):
     assert result is not image
     assert result.meta.cal_step.master_background == 'COMPLETE'
     assert result.meta.background.master_background_file == 'user_background.fits'
+
+
+def test_master_background_logic(_jail, user_background):
+    """Verify if calspec 2 background step was run the master background step will be skipped"""
+
+    image = datamodels.ImageModel((10, 10))
+    image.meta.instrument.name = 'MIRI'
+    image.meta.instrument.detector = 'MIRIMAGE'
+    image.meta.exposure.type = 'MIR_LRS-FIXEDSLIT'
+    image.meta.observation.date = '2018-01-01'
+    image.meta.observation.time = '00:00:00'
+    image.meta.subarray.xstart = 1
+    image.meta.subarray.ystart = 1
+    image.meta.wcsinfo.v2_ref = 0
+    image.meta.wcsinfo.v3_ref = 0
+    image.meta.wcsinfo.roll_ref = 0
+    image.meta.wcsinfo.ra_ref = 0
+    image.meta.wcsinfo.dec_ref = 0
+    image.meta.cal_step.back_sub = 'COMPLETE'
+    image = AssignWcsStep.call(image)
+
+    # Run with a user-supplied background
+    collect_pipeline_cfgs('./config')
+    result = MasterBackgroundStep.call(
+        image,
+        config_file='config/master_background.cfg',
+        user_background=user_background,
+        )
+
+    assert result.meta.cal_step.master_background == 'SKIPPED'
+    assert type(image) is type(result)
+
+
+# Now force it
+    result = MasterBackgroundStep.call(
+        image,
+        config_file='config/master_background.cfg',
+        user_background=user_background,
+        force_subtract=True
+        )
+
+    assert result.meta.cal_step.master_background == 'COMPLETE'
+    assert type(image) is type(result)
