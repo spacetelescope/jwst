@@ -194,7 +194,7 @@ class DMSBaseMixin(ACIDMixin):
             2-tuple consisting of:
 
                 - association : The association or, if the item does not
-                  this rule, None
+                  match this rule, None
                 - [ProcessList[, ...]]: List of items to process again.
         """
         asn, reprocess = super(DMSBaseMixin, cls).create(item, version_id)

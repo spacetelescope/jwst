@@ -71,9 +71,10 @@ class SimpleConstraintABC(abc.ABC):
         Returns
         -------
         success, reprocess : bool, [ProcessList[,...]]
-            Returns 2-tuple of:
-            - success : True if check is successful.
-            - List of `ProcessList`.
+            Returns 2-tuple of
+
+                - True if check is successful.
+                - List of `ProcessList`.
         """
         self.matched = True
         return self.matched, []
@@ -244,9 +245,11 @@ class SimpleConstraint(SimpleConstraintABC):
 
         Returns
         -------
-        success : bool
-            If successful, a copy of the constraint
-            is returned with modified value.
+        success, reprocess : bool, [ProcessList[,...]]
+            Returns 2-tuple of
+
+                - True if check is successful.
+                - List of `ProcessList`.
         """
         source_value = self.sources(item)
 
@@ -381,10 +384,11 @@ class AttrConstraint(SimpleConstraintABC):
 
         Returns
         -------
-        bool, reprocess : AttrConstraint or False
-            A 2-tuple consisting of:
-            - bool indicating if a match or not.
-            - List of `ProcessList`s that need to be checked again.
+        success, reprocess : bool, [ProcessList[,...]]
+            Returns 2-tuple of
+
+                - True if check is successful.
+                - List of `ProcessList`.
         """
         reprocess = []
 
@@ -582,7 +586,11 @@ class Constraint:
 
         Returns
         -------
-        2-tuple of (bool, reprocess)
+        success, reprocess : bool, [ProcessList[,...]]
+            Returns 2-tuple of
+
+                - success : True if check is successful.
+                - List of `ProcessList`.
         """
         if work_over not in (self.work_over, ProcessList.BOTH):
             return False, []
