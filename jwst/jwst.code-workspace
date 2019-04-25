@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "associations"
+		},
+		{
+			"path": "/Users/ddavis/src/JWST/scsb/jwst"
+		}
+	],
+	"settings": {
+		"git.ignoreLimitWarning": true
+	}
+}

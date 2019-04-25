@@ -1,12 +1,7 @@
 """Base classes which define the Level3 Associations"""
 from collections import defaultdict
-import copy
 import logging
-from os.path import (
-    basename,
-    split,
-    splitext
-    )
+from os.path import basename
 import re
 
 from jwst.associations import (
@@ -61,7 +56,7 @@ __all__ = [
     'SimpleConstraint',
     'Utility',
 ]
-from jwst.lib.suffix import remove_suffix
+
 # Configure logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -299,56 +294,6 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         }
         return member
 
-    def make_fixedslit_bkg(self):
-        """Add a background to a MIR_lrs-fixedslit observation"""
-
-        for product in self['products']:
-            members = product['members']
-
-            # Split out the science vs. non-science
-            # The non-science exposures will get attached
-            # to every resulting association.
-            science_exps = [
-                member
-                for member in members
-                if member['exptype'] == 'science'
-            ]
-            nonscience_exps = [
-                member
-                for member in members
-                if member['exptype'] != 'science'
-            ]
-            # Create new associations for each science exposure, using
-            # the the base name + _x1d as background.
-            results = []
-            asn = copy.deepcopy(self)
-            asn.data['products'] = None
-            product_name = product['name']
-            asn.new_product(product_name)
-            new_members = asn.current_product['members']
-            # Loop over all science exposures in the association
-            for science_exp in science_exps:
-                sci_name = science_exp['expname']
-                science_exp['expname'] = sci_name
-                # Add each science exposure to the association table
-                new_members.append(science_exp)
-                bkg_name = remove_suffix(
-                    splitext(split(science_exp['expname'])[1])[0])[0]
-                bkg_name = bkg_name+'_x1d.fits'
-                now_background = copy.copy(science_exp)
-                now_background['expname'] = bkg_name
-                now_background['exptype'] = 'background'
-                # Add the background file to the association table
-                new_members.append(now_background)
-
-            new_members += nonscience_exps
-
-            if asn.is_valid:
-                results.append(asn)
-
-            return results
-
-
     def _init_hook(self, item):
         """Post-check and pre-add initialization"""
         super(DMS_Level3_Base, self)._init_hook(item)
@@ -425,9 +370,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
         self.new_product(product_name)
         members = self.current_product['members']
-        print("Memebers: ", members)
         for item in items:
-            logger.info("Item in _add_item: ", item)
             exptype = 'science'
             if with_exptype:
                 item, exptype = item
@@ -691,7 +634,7 @@ class Constraint_IFU(DMSAttrConstraint):
                 '|nrs_autowave'
                 '|nrs_ifu'
             ),
-            force_unique=False
+            force_unique=False,
         )
 
 

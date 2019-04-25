@@ -20,3 +20,7 @@ relic/
 .pytest_cache
 results.xml
 pip-wheel-metadata/
+.DS_Store
+.project
+.pydevproject
+.vscode

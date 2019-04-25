@@ -5,6 +5,7 @@ import logging
 from jwst.associations.registry import RegistryMarker
 from jwst.associations.lib.dms_base import (ACQ_EXP_TYPES, Constraint_TSO)
 from jwst.associations.lib.rules_level3_base import *
+from jwst.associations.lib.rules_level2_base import Constraint_Single_Science
 from jwst.associations.lib.rules_level3_base import (
     dms_product_name_sources,
     format_product
@@ -193,6 +194,7 @@ class Asn_SpectralTarget(AsnMixin_Spectrum):
             ),
             Constraint_Optical_Path(),
             Constraint_Target(),
+
             DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
@@ -208,6 +210,21 @@ class Asn_SpectralTarget(AsnMixin_Spectrum):
         # Check and continue initialization.
         super(Asn_SpectralTarget, self).__init__(*args, **kwargs)
 
+    def finalize(self):
+        """Finalize assocation
+
+        For NRS Fixed-slit, finalization means creating new associations for
+        background nods.
+
+        Returns
+        -------
+        associations: [association[, ...]] or None
+            List of fully-qualified associations that this association
+            represents.
+            `None` if a complete association cannot be produced.
+
+        """
+        return self.make_fixedslit_bkg()
 
 @RegistryMarker.rule
 class Asn_SpectralSource(AsnMixin_Spectrum):
@@ -273,7 +290,17 @@ class Asn_IFU(AsnMixin_Spectrum):
         self.constraints = Constraint([
             Constraint_Target(),
             Constraint_IFU(),
-        ])
+            Constraint(
+                [
+                    Constraint_TSO(),
+                    DMSAttrConstraint(
+                        name='patttype',
+                        sources=['patttype'],
+                        value=['2_point|4_point_nod|along_slit_nod'],
+                    )
+                ],
+                reduce=Constraint.notany
+            )        ])
 
         # Check and continue initialization.
         super(Asn_IFU, self).__init__(*args, **kwargs)
