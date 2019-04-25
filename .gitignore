@@ -24,3 +24,4 @@ pip-wheel-metadata/
 .project
 .pydevproject
 .vscode
+*code-workspace
