@@ -302,7 +302,15 @@ def extract_ifu(input_model, source_type, extract_params):
     inner_bkg = None
     outer_bkg = None
 
-    if source_type == 'point':
+    if source_type == 'extended':
+        # Ignore any input parameters, and extract the whole image.
+        width = float(shape[-1])
+        height = float(shape[-2])
+        x_center = width / 2. - 0.5
+        y_center = height / 2. - 0.5
+        theta = 0.
+        subtract_background = False
+    else:
         radius = extract_params['radius']
         if radius is None:
             radius = smaller_axis / 4.
@@ -321,19 +329,6 @@ def extract_ifu(input_model, source_type, extract_params):
         width = None
         height = None
         theta = None
-    else:
-        width = extract_params['width']
-        if width is None:
-            width = float(shape[-1])
-        height = extract_params['height']
-        if height is None:
-            height = float(shape[-2])
-        theta_degrees = extract_params['theta']
-        if theta_degrees is None:
-            theta = 0.
-            theta_degrees = 0.
-        theta = theta_degrees * math.pi / 180.
-        subtract_background = False
 
     log.debug("IFU 1-D extraction parameters:")
     log.debug("  x_center = %s", str(x_center))
@@ -349,7 +344,7 @@ def extract_ifu(input_model, source_type, extract_params):
     else:
         log.debug("  width = %s", str(width))
         log.debug("  height = %s", str(height))
-        log.debug("  theta = %s degrees", str(theta_degrees))
+        log.debug("  theta = %s degrees", str(theta))
         log.debug("  subtract_background = %s", str(subtract_background))
         log.debug("  method = %s", method)
         if method == "subpixel":
@@ -577,9 +572,13 @@ def image_extract_ifu(input_model, source_type, extract_params):
                          "- skipping it.")
             mask_bkg = None
 
-    # For an extended target, the entire aperture is supposed to be
-    # extracted, so it makes no sense to shift the reference file.
-    if source_type.lower() != "extended":
+    if source_type.lower() == "extended":
+        # For an extended target, the entire aperture is supposed to be
+        # extracted, so it makes no sense to shift the reference file.
+        log.info("Target is extended, so not shifting to target location")
+        x0 = float(shape[-1]) / 2. - 0.5
+        y0 = float(shape[-2]) / 2. - 0.5
+    else:
         ra_targ = input_model.meta.target.ra
         dec_targ = input_model.meta.target.dec
         locn = locn_from_wcs(input_model, ra_targ, dec_targ)

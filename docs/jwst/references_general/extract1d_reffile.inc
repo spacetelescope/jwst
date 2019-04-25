@@ -81,31 +81,25 @@ still be used for the limits in the dispersion direction.  Background
 subtraction will be done if and only if ``bkg_coeff`` is given.  See below
 for further details.
 
-For IFU cube data, the following keys are used instead of those above:
+For IFU cube data, the following keys are used instead of those above.
+Note that for an extended source, anything specified in a reference file
+or command-line argument will be ignored; the entire image will be
+extracted, and no background subtraction will be done.
 
 * id: the slit name, but this can be "ANY" (string)
 * x_center: X pixel coordinate of the target (pixels, float, the default
   is the center of the image along the X axis)
 * y_center: Y pixel coordinate of the target (pixels, float, the default
   is the center of the image along the Y axis)
-* radius: (only used for a point source) the radius of the circular
-  extraction aperture (pixels, float, default is one quarter of the smaller
-  of the image axis lengths)
-* subtract_background: (only used for a point source) if true, subtract a
-  background determined from an annulus with inner and outer radii given
-  by ``inner_bkg`` and ``outer_bkg`` (boolean)
-* inner_bkg: (only for a point source) radius of the inner edge of the
-  background annulus (pixels, float, default = ``radius``)
-* outer_bkg: (only for a point source) radius of the outer edge of the
-  background annulus (pixels, float, default = ``inner_bkg * sqrt(2)``)
-* width: (only for an extended source) the width of the rectangular
-  extraction region; if ``theta = 0``, the width side is along the X axis
-  (pixels, float, default is half of the smaller image axis length)
-* height: (only for an extended source) the height of the rectangular
-  extraction region; if ``theta = 0``, the height side is along the Y axis
-  (pixels, float, default is half of the smaller image axis length)
-* angle: (only for an extended source) the counterclockwise rotation angle of
-  the ``width`` side from the positive X axis (degrees)
+* radius: the radius of the circular extraction aperture (pixels, float,
+  default is one quarter of the smaller of the image axis lengths)
+* subtract_background: if true, subtract a background determined from an
+  annulus with inner and outer radii given by ``inner_bkg`` and
+  ``outer_bkg`` (boolean)
+* inner_bkg: of the inner edge of the background annulus (pixels, float,
+  default = ``radius``)
+* outer_bkg: of the outer edge of the background annulus (pixels, float,
+  default = ``inner_bkg * sqrt(2)``)
 * method: one of "exact", "subpixel", or "center", the method
   used by photutils for computing the overlap between apertures and pixels
   (string, default is "exact")

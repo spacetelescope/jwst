@@ -52,6 +52,9 @@ datamodels
 - Added BUNIT keyword to gain and readnoise reference file schemas.
   [#3322]
 
+- Update ``dq_def.schema``, ``group.schema`` and ``int_times.schema`` to comply
+  with ASDF standard.  Remove unused ``extract1d.schema``.  [#3386]
+
 extract_1d
 ----------
 
@@ -65,7 +68,20 @@ extract_1d
 - The target coordinates are used (for some modes) to determine the
   extraction location, i.e. correcting for nod/dither offset.  For IFU,
   the areas of the source aperture and background annulus are computed
-  differently. [#3362]
+  differently. [#3362
+  
+- For IFU data for an extended source, the extraction parameters are
+  assigned values so that the entire image will be extracted, with no
+  background subtraction.  For non-IFU data, a try/except block was added
+  to check for a WCS that does not have an inverse.  Some code (but not
+  all) for the now-obsolete RELSENS extension has been deleted. [#3390]
+
+
+flatfield
+---------
+
+- Propagate uncertainty from flat field into science ERR array and new
+  VAR_FLAT array which holds the variance due to the flat field.  [#3384]
 
 master_background
 -----------------
@@ -98,6 +114,9 @@ photom
 
 - Updated to apply the flux calibration to the science data and err arrays.
   [#3359]
+
+- Updated to compute a wavelength array for NIRISS SOSS exposures using
+  spectral order 1. [#3387]
 
 reffile_utils
 -------------
