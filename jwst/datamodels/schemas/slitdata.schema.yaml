@@ -92,6 +92,7 @@ allOf:
     data:
       title: The science data
       fits_hdu: SCI
+      max_ndim: 3
       default: 0.0
       datatype: float32
     dq:
