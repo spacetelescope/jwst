@@ -32,31 +32,13 @@ allOf:
       default: 0.0
       ndim: 2
       datatype: float32
-- $ref: int_times.schema.yaml
-- type: object
-  properties:
     wavelength:
       title: Wavelength array
       fits_hdu: WAVELENGTH
       ndim: 2
       default: 0.0
       datatype: float32
-    var_poisson:
-      title: Integration-specific variances of slope due to Poisson noise
-      fits_hdu: VAR_POISSON
-      default: 0.0
-      ndim: 3
-      datatype: float32
-    var_rnoise:
-      title: Integration-specific variances of slope due to read noise
-      fits_hdu: VAR_RNOISE
-      default: 0.0
-      ndim: 3
-      datatype: float32
-    var_flat:
-      title: Integration-specific variances due to flat field
-      fits_hdu: VAR_FLAT
-      default: 0.0
-      ndim: 3
-      datatype: float32
+- $ref: int_times.schema.yaml
+- $ref: variance.schema.yaml
+
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema
