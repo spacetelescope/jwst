@@ -503,7 +503,7 @@ class Constraint:
     Attributes
     ----------
     constraints : [Constraint[,...]]
-        `Constraint`s or `SimpleConstaint`s that
+        List of `Constraint` or `SimpleConstaint` that
         make this constraint.
 
     matched : bool
