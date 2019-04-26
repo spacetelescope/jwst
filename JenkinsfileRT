@@ -44,8 +44,7 @@ bc.conda_packages = [
     "jwst",
 ]
 bc.build_cmds = [
-    "python setup.py develop",
-    "pip install -e .[test]",
+    "pip install .[test]",
     "pip install pytest-xdist",
 ]
 bc.test_cmds = [

@@ -30,8 +30,7 @@ bc1.name = "stable-deps"
 bc1.env_vars = env_vars
 bc1.build_cmds = [
     "pip install ${pip_install_args} numpy",
-    "pip install ${pip_install_args} -e .[test]",
-    "python setup.py develop",
+    "pip install ${pip_install_args} .[test]",
 ]
 bc1.test_cmds = ["pytest -r sx --basetemp=test_results --junitxml=results.xml"]
 
@@ -49,8 +48,7 @@ bc2.conda_packages = [
     "jwst",
 ]
 bc2.build_cmds = [
-    "python setup.py develop",
-    "pip install -e .[test]",
+    "pip install ${pip_install_args} .[test]",
 ]
 bc2.test_cmds = ["pytest -r sx --basetemp=test_results --junitxml=results.xml"]
 
