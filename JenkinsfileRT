@@ -42,6 +42,7 @@ bc.conda_packages = [
     "numpy=${numpy_version}",
     "nomkl",
     "jwst",
+    "pip<19.1",
 ]
 bc.build_cmds = [
     "python setup.py develop",
