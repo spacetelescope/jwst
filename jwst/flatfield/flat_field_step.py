@@ -54,8 +54,8 @@ class FlatFieldStep(Step):
         input_model = datamodels.open(input)
         exposure_type = input_model.meta.exposure.type.upper()
 
-        # Figure out what kind of input data model is in use.
-        self.log.debug("Input is {}".format(input_model.__class__.__name__))
+        self.log.debug("Input is {} of exposure type {}".format(
+            input_model.__class__.__name__, exposure_type))
 
         if input_model.meta.instrument.name.upper() == "NIRSPEC":
             if (exposure_type not in NRS_SPEC_MODES and

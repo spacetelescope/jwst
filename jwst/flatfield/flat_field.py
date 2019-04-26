@@ -6,11 +6,12 @@ import logging
 import math
 
 import numpy as np
+from gwcs.wcstools import grid_from_bounding_box
 
 from .. import datamodels
 from .. datamodels import dqflags
 from .. lib import reffile_utils
-from .. assign_wcs import nirspec       # for NIRSpec IFU data
+from .. assign_wcs import nirspec
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -193,9 +194,7 @@ def apply_flat_field(science, flat):
 # The following functions are for NIRSpec spectrographic data.
 #
 
-def do_nirspec_flat_field(output_model,
-                          f_flat_model, s_flat_model,
-                          d_flat_model):
+def do_nirspec_flat_field(output_model, f_flat_model, s_flat_model, d_flat_model):
     """Apply flat-fielding for NIRSpec data, updating the output model.
 
     Parameters
@@ -246,19 +245,24 @@ def do_nirspec_flat_field(output_model,
                                f_flat_model, s_flat_model,
                                d_flat_model)
 
-    # Create an output model for the interpolated flat fields.
-    interpolated_flats = datamodels.MultiSlitModel()
-    interpolated_flats.update(output_model, only="PRIMARY")
+    # Create a list to hold the list of slits.  This will eventually be used
+    # to extend the MultiSlitModel.slits attribute.  We do it this way to
+    # postpone validation until the end.
+    flat_slits = []
 
+    # A flag to make sure at least one slit was flatfielded, so we can set
+    # "COMPLETE", otherwise we set "SKIP"
     any_updated = False
 
-    for (k, slit) in enumerate(output_model.slits):
+    for slit in output_model.slits:
         log.info("Processing slit %s", slit.name)
         if exposure_type == "NRS_MSASPEC":
             slit_nt = slit                      # includes quadrant info
         else:
             slit_nt = None
-        flat_2d = np.ones_like(slit.data)       # default values
+
+        # Create flat and flat dq arrays with default values
+        flat_2d = np.ones_like(slit.data)
         flat_dq_2d = np.zeros_like(slit.dq)
 
         # pixels with respect to the original image
@@ -280,6 +284,7 @@ def do_nirspec_flat_field(output_model,
             got_wl_attribute = False
         if not got_wl_attribute or len(wl) == 0:
             got_wl_attribute = False
+
         # The default value is 0, so all 0 values means that the
         # wavelength attribute was not populated.  We need either a
         # wavelength array or a meta.wcs.
@@ -288,12 +293,10 @@ def do_nirspec_flat_field(output_model,
             log.warning("The wavelength array for slit %s has not "
                         "been populated,", slit.name)
             if got_wcs:
-                log.warning("so using wcs instead of the wavelength array.")
-                # Pixels with respect to the cutout
-                grid = np.indices((ysize, xsize), dtype=np.float64)
-                # The arguments are the X and Y pixel coordinates.
-                (ra, dec, wl) = slit.meta.wcs(grid[1], grid[0])
-                del ra, dec, grid
+                bb = slit.meta.wcs.bounding_box
+                grid = grid_from_bounding_box(bb)
+                wl = slit.meta.wcs(*grid)[2]
+                del grid
             else:
                 log.warning("and this slit does not have a 'wcs' attribute")
                 if output_model.meta.cal_step.assign_wcs == 'COMPLETE':
@@ -301,10 +304,16 @@ def do_nirspec_flat_field(output_model,
                 else:
                     log.warning("likely because assign_wcs has not been run.")
                 log.error("skipping ...")
-                populate_interpolated_flats(k, slit,
-                                            interpolated_flats, output_model,
-                                            flat_2d, flat_dq_2d,
-                                            got_wl_attribute=False)
+                # Put a dummy flat here as a placeholder
+                dummy_flat = datamodels.SlitModel(data=flat_2d, dq=flat_dq_2d)
+                dummy_flat.name = slit.name
+                dummy_flat.xstart = slit.xstart
+                dummy_flat.xsize = slit.xsize
+                dummy_flat.ystart = slit.ystart
+                dummy_flat.ysize = slit.ysize
+                dummy_flat.wavelength = np.zeros_like(slit.data)
+                flat_slits.append(dummy_flat)
+
                 continue
         else:
             log.debug("Wavelengths are from the wavelength array.")
@@ -325,10 +334,12 @@ def do_nirspec_flat_field(output_model,
             log.warning("Wavelengths in science data appear to be in meters.")
 
         # Combine the three flat fields for the current subarray.
-        (flat_2d, flat_dq_2d) = create_flat_field(wl,
+        flat_2d, flat_dq_2d = create_flat_field(wl,
                         f_flat_model, s_flat_model, d_flat_model,
                         xstart, xstop, ystart, ystop,
                         exposure_type, slit.name, slit_nt)
+
+        # Mask bad flatfield values
         mask = (flat_2d <= 0.)
         nbad = mask.sum(dtype=np.intp)
         if nbad > 0:
@@ -336,12 +347,24 @@ def do_nirspec_flat_field(output_model,
             flat_2d[mask] = 1.
         del mask
 
-        # Save flat_2d and flat_dq_2d for an output file, if specified.
-        populate_interpolated_flats(k, slit,
-                                    interpolated_flats, output_model,
-                                    flat_2d, flat_dq_2d,
-                                    got_wl_attribute, wl, got_wcs)
+        # Put the computed flat, flat_dq and flat_err into a datamodel
+        new_flat = datamodels.SlitModel(data=flat_2d, dq=flat_dq_2d)
+        new_flat.name = slit.name
+        new_flat.xstart = slit.xstart
+        new_flat.xsize = slit.xsize
+        new_flat.ystart = slit.ystart
+        new_flat.ysize = slit.ysize
+        if got_wl_attribute:
+            new_flat.wavelength = wl.copy()
+        else:
+            new_flat.wavelength = np.zeros_like(slit.data)
+        # Copy the WCS info from output (same as input).
+        if got_wcs:
+            new_flat.meta.wcs = slit.meta.wcs
+        # Append the SlitDataModel to the list of slits
+        flat_slits.append(new_flat)
 
+        # Apply flat to data, err and dq arrays
         slit.data /= flat_2d
         slit.err /= flat_2d
         slit.dq |= flat_dq_2d.astype(slit.dq.dtype)
@@ -353,73 +376,12 @@ def do_nirspec_flat_field(output_model,
     else:
         output_model.meta.cal_step.flat_field = 'SKIPPED'
 
+    # Create an output model for the interpolated flat fields.
+    interpolated_flats = datamodels.MultiSlitModel()
+    interpolated_flats.update(output_model, only="PRIMARY")
+    interpolated_flats.slits.extend(flat_slits)
+
     return interpolated_flats
-
-
-def populate_interpolated_flats(k, slit,
-                                interpolated_flats, output_model,
-                                flat_2d, flat_dq_2d,
-                                got_wl_attribute, wl=None,
-                                got_wcs=False):
-    """Save flat_2d and flat_dq_2d for an output file.
-
-    Parameters
-    ----------
-    k : int
-        Index of `slit` in `output_model.slits`.
-
-
-    slit :
-        A SlitModel object, one element of `output_model.slits`.
-
-    interpolated_flats : JWST data model
-        A MultiSlitModel object for containing the on-the-fly calculated
-        flat fields, in order to be saved to disk.  This will be updated
-        in-place.
-
-    output_model :  JWST data model
-        The output MultiSlitModel, needed for copying WCS info to
-        `interpolated_flats`.
-
-    flat_2d : ndarray, 2-D, float32
-        The calculated flat field for the current slit.
-
-    flat_dq_2d : ndarray, 2-D uint32
-        The calculated data quality array for the current slit.
-
-    got_wl_attribute : bool
-        If True, the `wavelength` attrbute of the current slit will be
-        populated by copying from `wl`.  This argument should be False if
-        there is no such attribute, or if it was not possible to compute
-        the wavelengths from the WCS.
-
-    wl : ndarray or None
-        If not None, this will be a 2-D array of wavelengths with the same
-        shape as `flat_2d`, giving the wavelength at each pixel of the
-        slit.
-
-    got_wcs : bool
-        If True, the WCS object in output_model for the current slit will
-        be copied to the corresponding slit object in interpolated_flats.
-    """
-
-    if interpolated_flats is not None:
-        new_flat = datamodels.ImageModel(data=flat_2d, dq=flat_dq_2d)
-        interpolated_flats.slits.append(new_flat.copy())
-        interpolated_flats.slits[k].err[...] = 1.       # not realistic
-        interpolated_flats.slits[k].name = slit.name
-        interpolated_flats.slits[k].xstart = slit.xstart
-        interpolated_flats.slits[k].xsize = slit.xsize
-        interpolated_flats.slits[k].ystart = slit.ystart
-        interpolated_flats.slits[k].ysize = slit.ysize
-        if got_wl_attribute:
-            interpolated_flats.slits[k].wavelength = wl.copy()
-        else:
-            interpolated_flats.slits[k].wavelength = np.zeros_like(slit.data)
-        # Copy the WCS info from output (same as input).
-        if got_wcs:
-            interpolated_flats.slits[k].meta.wcs = \
-                  output_model.slits[k].meta.wcs
 
 
 def nirspec_brightobj(output_model,
@@ -539,8 +501,8 @@ def nirspec_brightobj(output_model,
         flat_nd = flat_2d.reshape((1, ysize, xsize))
         flat_dq_nd = flat_dq_2d.reshape((1, ysize, xsize))
     else:
-        flat_Nd = flat_2d
-        flat_dq_Nd = flat_dq_2d
+        flat_nd = flat_2d
+        flat_dq_nd = flat_dq_2d
     output_model.data /= flat_nd
     output_model.err /= flat_nd
     output_model.dq |= flat_dq_nd
