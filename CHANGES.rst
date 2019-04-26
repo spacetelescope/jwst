@@ -35,7 +35,7 @@ combine_1d
 
 - Modified to use the same columns as now written by extract_1d.
   The background parameter has been removed, since dividing by npixels
-  is now done in extract_1d. [#3409]
+  is now done in extract_1d. [#3412]
 
 datamodels
 ----------
@@ -83,7 +83,7 @@ extract_1d
 - This now writes columns SURF_BRIGHT and SB_ERROR instead of NET and
   NERROR.  The BACKGROUND column is divided by NPIXELS, so the units will
   be surface brightness.  This step no longer looks for a RELSENS
-  extension. [#3409]
+  extension. [#3412]
 
 
 flatfield
