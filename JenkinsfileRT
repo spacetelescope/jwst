@@ -13,7 +13,7 @@ numpy_version = '1.16'
 env_vars = [
     "TEST_BIGDATA=https://bytesalad.stsci.edu/artifactory",
     "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
-    "CRDS_CONTEXT=jwst_0508.pmap",
+    "CRDS_CONTEXT=jwst_0513.pmap",
 ]
 
 // Set pytest basetemp output directory
