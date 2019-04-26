@@ -17,7 +17,7 @@ env:
   global:
     - CRDS_SERVER_URL='https://jwst-crds.stsci.edu'
     - CRDS_PATH='/tmp/crds_cache'
-    - CRDS_CONTEXT="jwst_0504.pmap"
+    - CRDS_CONTEXT="jwst_0508.pmap"
     - NUMPY_VERSION=1.16
 
 matrix:
