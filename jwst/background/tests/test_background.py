@@ -28,11 +28,6 @@ def background(tmpdir_factory):
 
     image.meta.subarray.xstart = 1
     image.meta.subarray.ystart = 1
-    image.meta.wcsinfo.v2_ref = 0
-    image.meta.wcsinfo.v3_ref = 0
-    image.meta.wcsinfo.roll_ref = 0
-    image.meta.wcsinfo.ra_ref = 0
-    image.meta.wcsinfo.dec_ref = 0
 
     image.meta.instrument.gwa_xtilt = 0.0001
     image.meta.instrument.gwa_ytilt = 0.0001
@@ -59,15 +54,9 @@ def test_background_nirspec_gwa(_jail, background):
 
     image.meta.subarray.xstart = 1
     image.meta.subarray.ystart = 1
-    image.meta.wcsinfo.v2_ref = 0
-    image.meta.wcsinfo.v3_ref = 0
-    image.meta.wcsinfo.roll_ref = 0
-    image.meta.wcsinfo.ra_ref = 0
-    image.meta.wcsinfo.dec_ref = 0
 
     # open the background to read in the GWA values
     back_image = datamodels.open(background)
-
     image.meta.instrument.gwa_xtilt = back_image.meta.instrument.gwa_xtilt
     image.meta.instrument.gwa_ytilt = back_image.meta.instrument.gwa_ytilt
     image.meta.instrument.gwa_tilt = back_image.meta.instrument.gwa_tilt
