@@ -11,6 +11,8 @@ from .. datamodels import dqflags
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+WFSS_EXPTYPES = ['NIS_WFSS', 'NRC_WFSS', 'NRC_GRISM', 'NRC_TSGRISM']
+
 
 def expand_to_2d(input, m_bkg_spec):
     """Expand a 1-D background to 2-D.
@@ -161,7 +163,7 @@ def bkg_for_multislit(input, tab_wavelength, tab_background):
     max_wave = np.amax(tab_wavelength)
 
     for (k, slit) in enumerate(input.slits):
-        wl_array = get_wavelengths(slit)
+        wl_array = get_wavelengths(slit, input.meta.exposure.type)
         if wl_array is None:
             raise RuntimeError("Can't determine wavelengths for {}"
                                .format(type(slit)))
@@ -210,7 +212,7 @@ def bkg_for_image(input, tab_wavelength, tab_background):
     background = input.copy()
     min_wave = np.amin(tab_wavelength)
     max_wave = np.amax(tab_wavelength)
-    wl_array = get_wavelengths(input)
+    wl_array = get_wavelengths(input, input.meta.exposure.type)
     if wl_array is None:
         raise RuntimeError("Can't determine wavelengths for {}"
                            .format(type(input)))
@@ -306,13 +308,18 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
     return background
 
 
-def get_wavelengths(model, order=None):
+def get_wavelengths(model, exp_type="", order=None):
     """Read or compute wavelengths.
 
     Parameters
     ----------
     model : `~jwst.datamodels.DataModel`
-        The input science data.
+        The input science data, or a slit from a
+        `~jwst.datamodels.MultiSlitModel`.
+
+    exp_type : str
+        The exposure type.  This is only needed to check whether the input
+        data are WFSS.
 
     order : int
         Spectral order number, for NIRISS SOSS only.
@@ -347,6 +354,15 @@ def get_wavelengths(model, order=None):
         # resulting wavelength values
         shape = model.data.shape
         grid = np.indices(shape[-2:], dtype=np.float64)
-        wl_array = wcs(grid[1], grid[0])[2]
+
+        if exp_type in WFSS_EXPTYPES:
+            # We currently have to loop over pixels for WFSS data.
+            wl_array = np.zeros(shape[-2:], dtype=np.float64)
+            for j in range(shape[-2]):
+                for i in range(shape[-1]):
+                    # Keep wavelength; ignore RA and Dec
+                    wl_array[..., j, i] = wcs(i, j)[2]
+        else:
+            wl_array = wcs(grid[1], grid[0])[2]
 
     return wl_array

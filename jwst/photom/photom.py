@@ -665,9 +665,15 @@ class DataSet():
 
             # Compute a 2-D grid of conversion factors, as a function of wavelength
             if isinstance(self.input, datamodels.MultiSlitModel):
-                wl_array = expand_to_2d.get_wavelengths(self.input.slits[self.slitnum], order)
+                wl_array = expand_to_2d.get_wavelengths(
+                                self.input.slits[self.slitnum],
+                                self.input.meta.exposure.type,
+                                order)
             else:
-                wl_array = expand_to_2d.get_wavelengths(self.input, order)
+                wl_array = expand_to_2d.get_wavelengths(
+                                self.input,
+                                self.input.meta.exposure.type,
+                                order)
 
             wl_array[np.isnan(wl_array)] = -1.
             conv_2d = np.interp(wl_array, waves, relresps, left=1., right=1.)
@@ -681,15 +687,23 @@ class DataSet():
         if isinstance(self.input, datamodels.MultiSlitModel):
             self.input.slits[self.slitnum].data *= conversion
             self.input.slits[self.slitnum].err *= conversion
-            self.input.slits[self.slitnum].var_poisson *= conversion**2
-            self.input.slits[self.slitnum].var_rnoise *= conversion**2
+            if (self.input.slits[self.slitnum].var_poisson is not None and
+                np.size(self.input.slits[self.slitnum].var_poisson) > 0):
+                    self.input.slits[self.slitnum].var_poisson *= conversion**2
+            if (self.input.slits[self.slitnum].var_rnoise is not None and
+                np.size(self.input.slits[self.slitnum].var_rnoise) > 0):
+                    self.input.slits[self.slitnum].var_rnoise *= conversion**2
             self.input.slits[self.slitnum].meta.bunit_data = 'MJy/sr'
             self.input.slits[self.slitnum].meta.bunit_err = 'MJy/sr'
         else:
             self.input.data *= conversion
             self.input.err *= conversion
-            self.input.var_poisson *= conversion**2
-            self.input.var_rnoise *= conversion**2
+            if (self.input.var_poisson is not None and
+                np.size(self.input.var_poisson) > 0):
+                    self.input.var_poisson *= conversion**2
+            if (self.input.var_rnoise is not None and
+                np.size(self.input.var_rnoise) > 0):
+                    self.input.var_rnoise *= conversion**2
             self.input.meta.bunit_data = 'MJy/sr'
             self.input.meta.bunit_err = 'MJy/sr'
 

@@ -98,6 +98,8 @@ master_background
 - Updated the DQFlags of the background subtracted data to be DO_NOT_USE
   for the pixels that have wavelenghts outside the master background [#3326]
 
+- Modified ``expand_to_2d`` to loop over pixels for WFSS data. [#3406]
+
 outlier_detection
 -----------------
 
