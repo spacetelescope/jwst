@@ -5,7 +5,8 @@ import numpy as np
 
 from astropy import coordinates as coord
 from astropy import units as u
-from astropy.modeling.models import Mapping, Tabular1D, Linear1D, Pix2Sky_TAN
+from astropy.modeling.models import (Mapping, Tabular1D, Linear1D,
+                                     Pix2Sky_TAN, RotateNative2Celestial)
 from astropy.modeling.fitting import LinearLSQFitter
 from gwcs import wcstools, WCS
 from gwcs import coordinate_frames as cf
@@ -97,8 +98,12 @@ class ResampleSpecData:
 
         grid = wcstools.grid_from_bounding_box(bb)
         ra, dec, lam = np.array(refwcs(*grid))
+        crval1 = np.nanmean(ra)
+        crval2 = np.nanmean(dec)
         tan = Pix2Sky_TAN()
-        x_tan, y_tan = tan.inverse(ra, dec)
+        native2celestial = RotateNative2Celestial(crval1, crval2, 180)
+        undist2sky = tan | native2celestial
+        x_tan, y_tan = undist2sky.inverse(ra, dec)
 
         spectral_axis = find_dispersion_axis(lam)
         spatial_axis = spectral_axis ^ 1
@@ -158,7 +163,7 @@ class ResampleSpecData:
                 mapping.inverse = Mapping(mapping_tuple)
 
         # The final transform
-        transform = mapping | (pix_to_ra & pix_to_dec | tan)  & pix_to_wavelength
+        transform = mapping | (pix_to_ra & pix_to_dec | undist2sky)  & pix_to_wavelength
 
         det = cf.Frame2D(name='detector', axes_order=(0, 1))
         sky = cf.CelestialFrame(name='sky', axes_order=(0, 1),
