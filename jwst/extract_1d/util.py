@@ -44,23 +44,27 @@ def pixel_area(wcs, shape, verbose=True):
         # The arguments are the X, Y, and Z pixel coordinates, and the
         # output arrays will be 2-D.
         try:
-            (ra, dec, _) = wcs(grid[1], grid[0], z)
+            stuff = wcs(grid[1], grid[0], z)
         except TypeError:
-            (ra, dec, _) = temp_wcs(wcs, grid[1], grid[0], z)
+            stuff = temp_wcs(wcs, grid[1], grid[0], z)
+        (ra, dec) = stuff[0:2]
     else:
         if hasattr(wcs, 'bounding_box') and wcs.bounding_box is not None:
             grid2 = grid_from_bounding_box(wcs.bounding_box)
             # Note that the elements of grid2 are reversed wrt grid.
             try:
-                (ra, dec, _) = wcs(grid2[0], grid2[1])
+                stuff = wcs(grid2[0], grid2[1])
             except TypeError:
-                (ra, dec, _) = temp_wcs(wcs, grid2[0], grid2[1])
+                stuff = temp_wcs(wcs, grid2[0], grid2[1])
+            (ra, dec) = stuff[0:2]
         else:
             grid = np.indices(shape)
             try:
-                (ra, dec, _) = wcs(grid[1], grid[0])
+                stuff = wcs(grid[1], grid[0])
+                (ra, dec) = stuff[0:2]
             except TypeError:
-                (ra, dec, _) = temp_wcs(wcs, grid[1], grid[0])
+                stuff = temp_wcs(wcs, grid[1], grid[0])
+            (ra, dec) = stuff[0:2]
 
     cos_dec = np.cos(dec[0:-1, 0:-1] * np.pi / 180.)
     dra1 = (ra[0:-1, 1:] - ra[0:-1, 0:-1]) * cos_dec
@@ -103,20 +107,23 @@ def temp_wcs(wcs, x, y, z=None):
         This takes a pair of pixel coordinates and returns the right
         ascension, declination, and wavelength at that pixel.
 
-    x, y : 2-D ndarray
+    x, y : ndarray, 2-D
         The arrays of pixel coordinates.
 
-    z : 2-D ndarray, or None
-        If the data are 3-D, e.g. IFU or CubeModel, this is an array of
-        values for axis 0 (wavelength for IFU, multiple exposures for
-        CubeModel).
+    z : ndarray, or None
+        If the data are 3-D, e.g. IFU or CubeModel, this should be an array
+        of values for one plane in axis 0 (wavelength for IFU, multiple
+        exposures for CubeModel).
 
     verbose : bool
         If True, log messages.
 
     Returns
     -------
-    pixel_solid_angle : float or None
+    ra, dec, wl : ndarray, 2-D
+        The first three elements of the output of the `wcs` function for
+        spectral data.
+    """
 
     ra = np.zeros_like(x)
     dec = np.zeros_like(x)
@@ -125,11 +132,12 @@ def temp_wcs(wcs, x, y, z=None):
     if z is None:
         for j in range(shape[-2]):
             for i in range(shape[-1]):
-                (ra[j, i], dec[j, i], wl[j, i]) = wcs(x[j, i], y[j, i])
+                stuff = wcs(x[j, i], y[j, i])
+                ra[j, i], dec[j, i], wl[j, i] = stuff[0:3]
     else:
         for j in range(shape[-2]):
             for i in range(shape[-1]):
-                (ra[j, i], dec[j, i], wl[j, i]) = wcs(x[j, i], y[j, i],
-                                                      z[j, i])
+                stuff = wcs(x[j, i], y[j, i], z[j, i])
+                ra[j, i], dec[j, i], wl[j, i] = stuff[0:3]
 
     return (ra, dec, wl)
