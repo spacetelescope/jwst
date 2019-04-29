@@ -43,15 +43,24 @@ def pixel_area(wcs, shape, verbose=True):
         z = np.zeros(shape[-2:], dtype=np.float64) + shape[0] // 2
         # The arguments are the X, Y, and Z pixel coordinates, and the
         # output arrays will be 2-D.
-        (ra, dec, _) = wcs(grid[1], grid[0], z)
+        try:
+            (ra, dec, _) = wcs(grid[1], grid[0], z)
+        except TypeError:
+            (ra, dec, _) = temp_wcs(wcs, grid[1], grid[0], z)
     else:
         if hasattr(wcs, 'bounding_box') and wcs.bounding_box is not None:
             grid2 = grid_from_bounding_box(wcs.bounding_box)
             # Note that the elements of grid2 are reversed wrt grid.
-            (ra, dec, _) = wcs(grid2[0], grid2[1])
+            try:
+                (ra, dec, _) = wcs(grid2[0], grid2[1])
+            except TypeError:
+                (ra, dec, _) = temp_wcs(wcs, grid2[0], grid2[1])
         else:
             grid = np.indices(shape)
-            (ra, dec, _) = wcs(grid[1], grid[0])
+            try:
+                (ra, dec, _) = wcs(grid[1], grid[0])
+            except TypeError:
+                (ra, dec, _) = temp_wcs(wcs, grid[1], grid[0])
 
     cos_dec = np.cos(dec[0:-1, 0:-1] * np.pi / 180.)
     dra1 = (ra[0:-1, 1:] - ra[0:-1, 0:-1]) * cos_dec
@@ -83,3 +92,21 @@ def pixel_area(wcs, shape, verbose=True):
         pixel_solid_angle = (cdelt1 * cdelt2) * (np.pi / 180.)**2
 
     return pixel_solid_angle
+
+
+def temp_wcs(wcs, x, y, z=None):
+
+    ra = np.zeros_like(x)
+    dec = np.zeros_like(x)
+    wl = np.zeros_like(x)
+    shape = x.shape
+    if z is None:
+        for j in range(shape[-2]):
+            for i in range(shape[-1]):
+                stuff = wcs(i, j)
+    else:
+        for j in range(shape[-2]):
+            for i in range(shape[-1]):
+                stuff = wcs(i, j, z[j, i])
+
+    return (ra, dec, wl)
