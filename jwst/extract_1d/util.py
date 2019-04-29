@@ -95,6 +95,28 @@ def pixel_area(wcs, shape, verbose=True):
 
 
 def temp_wcs(wcs, x, y, z=None):
+    """Call the wcs function in a loop over pixels.
+
+    Parameters
+    ----------
+    wcs : function
+        This takes a pair of pixel coordinates and returns the right
+        ascension, declination, and wavelength at that pixel.
+
+    x, y : 2-D ndarray
+        The arrays of pixel coordinates.
+
+    z : 2-D ndarray, or None
+        If the data are 3-D, e.g. IFU or CubeModel, this is an array of
+        values for axis 0 (wavelength for IFU, multiple exposures for
+        CubeModel).
+
+    verbose : bool
+        If True, log messages.
+
+    Returns
+    -------
+    pixel_solid_angle : float or None
 
     ra = np.zeros_like(x)
     dec = np.zeros_like(x)
@@ -103,10 +125,11 @@ def temp_wcs(wcs, x, y, z=None):
     if z is None:
         for j in range(shape[-2]):
             for i in range(shape[-1]):
-                stuff = wcs(i, j)
+                (ra[j, i], dec[j, i], wl[j, i]) = wcs(x[j, i], y[j, i])
     else:
         for j in range(shape[-2]):
             for i in range(shape[-1]):
-                stuff = wcs(i, j, z[j, i])
+                (ra[j, i], dec[j, i], wl[j, i]) = wcs(x[j, i], y[j, i],
+                                                      z[j, i])
 
     return (ra, dec, wl)
