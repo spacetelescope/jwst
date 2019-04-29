@@ -1280,6 +1280,15 @@ class ExtractBase:
             wavelength attribute or wcs function is not defined.
         """
 
+        # WFSS data are not currently supported because we don't have the
+        # target coordinates; also, we would have to loop over pixels when
+        # calling the wcs function.
+        if input_model.meta.exposure.type in WFSS_EXPTYPES:
+            log.warning("For exposure type %s, we currently can't use "
+                        "target coordinates to get location of spectrum.",
+                        input_model.meta.exposure.type)
+            return None, None, None
+
         bb = self.wcs.bounding_box          # ((x0, x1), (y0, y1))
 
         if bb is None:
@@ -3541,22 +3550,21 @@ def extract_one_slit(input_model, slit, integ,
                           verbose, extract_params)
         extract_model.update_extraction_limits(ap)
 
-    # Only call this method for the first integration.
-    if prev_offset == OFFSET_NOT_ASSIGNED_YET:
-        # If apply_nod_offset is False, compute the offset anyway in order
-        # to log the offset and target location (below), but don't log any
-        # messages in or below offset_from_offset.
-        local_verbose = extract_model.apply_nod_offset
-        (offset, locn) = extract_model.offset_from_offset(
-                                input_model, slit, local_verbose)
-        if verbose:
-            log.debug("Computed nod/dither offset = %s, "
-                      "target location = %s.", str(offset), str(locn))
-        if not extract_model.apply_nod_offset:
-            offset = 0.
+    if extract_model.apply_nod_offset:
+        # Only call this method for the first integration.
+        if prev_offset == OFFSET_NOT_ASSIGNED_YET:
+            (offset, locn) = extract_model.offset_from_offset(
+                                    input_model, slit, verbose)
+            if verbose:
+                log.debug("Computed nod/dither offset = %s, "
+                          "target location = %s.", str(offset), str(locn))
+            if not extract_model.apply_nod_offset:
+                offset = 0.
+        else:
+            offset = prev_offset
+        extract_model.nod_correction = offset
     else:
-        offset = prev_offset
-    extract_model.nod_correction = offset
+        extract_model.nod_correction = 0.
 
     # Add the nod/dither offset to the polynomial coefficients, or shift
     # the reference image (depending on the type of reference file).
