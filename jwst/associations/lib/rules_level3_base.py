@@ -301,7 +301,6 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
     def make_fixedslit_bkg(self):
         """Add a background to a MIR_lrs-fixedslit observation"""
-
         for product in self['products']:
             members = product['members']
 
@@ -318,20 +317,15 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
                 for member in members
                 if member['exptype'] != 'science'
             ]
-            # Create new associations for each science exposure, using
-            # the the base name + _x1d as background.
+            # Create new members for each science exposure in the association,
+            # using the the base name + _x1d as background.
             results = []
-            asn = copy.deepcopy(self)
-            asn.data['products'] = None
-            product_name = product['name']
-            asn.new_product(product_name)
-            new_members = asn.current_product['members']
+            new_members = self.current_product['members']
             # Loop over all science exposures in the association
             for science_exp in science_exps:
                 sci_name = science_exp['expname']
                 science_exp['expname'] = sci_name
-                # Add each science exposure to the association table
-                new_members.append(science_exp)
+                # Construct the name for the background file
                 bkg_name = remove_suffix(
                     splitext(split(science_exp['expname'])[1])[0])[0]
                 bkg_name = bkg_name+'_x1d.fits'
@@ -343,8 +337,8 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
             new_members += nonscience_exps
 
-            if asn.is_valid:
-                results.append(asn)
+            if self.is_valid:
+                results.append(self)
 
             return results
 
