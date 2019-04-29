@@ -2891,8 +2891,10 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                 continue
 
             # Convert the sum to an average, for surface brightness.
-            surf_bright = temp_flux / npixels
-            background /= npixels
+            npixels_temp = np.where(npixels > 0., npixels, 1.)
+            surf_bright = temp_flux / npixels_temp
+            background /= npixels_temp
+            del npixels_temp
 
             # Convert to flux density (for a point source).
             pixel_solid_angle = util.pixel_area(slit.meta.wcs, slit.data.shape)
@@ -3079,8 +3081,10 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                         break
 
                     # Convert the sum to an average, for surface brightness.
-                    surf_bright = temp_flux / npixels
-                    background /= npixels
+                    npixels_temp = np.where(npixels > 0., npixels, 1.)
+                    surf_bright = temp_flux / npixels_temp
+                    background /= npixels_temp
+                    del npixels_temp
 
                     # Convert to flux density (for a point source).
                     if input_model.meta.exposure.type == "NIS_SOSS":
