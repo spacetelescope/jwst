@@ -420,8 +420,10 @@ def detector_to_abl(input_model, reference_files):
             log.info("Applied Barycentric velocity correction : {}".format(velocity_corr[1].amplitude.value))
 
     with RegionsModel(reference_files['regions']) as f:
-        regions = f.regions.copy()
-
+        allregions = f.regions.copy()
+        # Use the 50% throughput slice mask
+        regions=allregions[4,:,:]
+        
     label_mapper = selector.LabelMapperArray(regions)
     transforms = {}
 
