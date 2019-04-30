@@ -26,3 +26,5 @@ pip-wheel-metadata/
 .vscode
 *code-workspace
 src/launch.json
+scripts/launch.json
+*.orig

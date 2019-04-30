@@ -5,7 +5,6 @@ import logging
 from jwst.associations.registry import RegistryMarker
 from jwst.associations.lib.dms_base import (ACQ_EXP_TYPES, Constraint_TSO)
 from jwst.associations.lib.rules_level3_base import *
-from jwst.associations.lib.rules_level2_base import Constraint_Single_Science
 from jwst.associations.lib.rules_level3_base import (
     dms_product_name_sources,
     format_product
@@ -194,7 +193,6 @@ class Asn_SpectralTarget(AsnMixin_Spectrum):
             ),
             Constraint_Optical_Path(),
             Constraint_Target(),
-
             DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
@@ -224,7 +222,10 @@ class Asn_SpectralTarget(AsnMixin_Spectrum):
             `None` if a complete association cannot be produced.
 
         """
-        return self.make_fixedslit_bkg()
+        if self.is_valid:
+            return self.make_fixedslit_bkg()
+        else:
+            return None
 
 @RegistryMarker.rule
 class Asn_SpectralSource(AsnMixin_Spectrum):
