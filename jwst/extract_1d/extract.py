@@ -2901,9 +2901,10 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
             if pixel_solid_angle is None:
                 log.warning("Pixel solid angle could not be determined")
                 pixel_solid_angle = 1.
-            flux = temp_flux * pixel_solid_angle
+            # MJy / steradian --> Jy
+            flux = temp_flux * pixel_solid_angle * 1.e6
             del temp_flux
-            error = np.zeros_like(flux) * pixel_solid_angle
+            error = np.zeros_like(flux) * pixel_solid_angle * 1.e6
             sb_error = np.zeros_like(flux)
             berror = np.zeros_like(flux)
             otab = np.array(list(zip(wavelength,
@@ -2999,9 +3000,10 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                 if pixel_solid_angle is None:
                     log.warning("Pixel solid angle could not be determined")
                     pixel_solid_angle = 1.
-                flux = temp_flux * pixel_solid_angle
+                # MJy / steradian --> Jy
+                flux = temp_flux * pixel_solid_angle * 1.e6
                 del temp_flux
-                error = np.zeros_like(flux) * pixel_solid_angle
+                error = np.zeros_like(flux) * pixel_solid_angle * 1.e6
                 sb_error = np.zeros_like(flux)
                 berror = np.zeros_like(flux)
                 otab = np.array(list(zip(wavelength,
@@ -3100,9 +3102,10 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                             log.warning("Pixel solid angle could not "
                                         "be determined")
                         pixel_solid_angle = 1.
-                    flux = temp_flux * pixel_solid_angle
+                    # MJy / steradian --> Jy
+                    flux = temp_flux * pixel_solid_angle * 1.e6
                     del temp_flux
-                    error = np.zeros_like(flux) * pixel_solid_angle
+                    error = np.zeros_like(flux) * pixel_solid_angle * 1.e6
                     sb_error = np.zeros_like(flux)
                     berror = np.zeros_like(flux)
                     otab = np.array(list(zip(wavelength,

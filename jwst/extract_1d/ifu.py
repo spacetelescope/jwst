@@ -107,8 +107,10 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
             megajanskys = False
 
     # Convert the sum to an average, for surface brightness.
-    surf_bright = temp_flux / npixels
-    background /= npixels
+    npixels_temp = np.where(npixels > 0., npixels, 1.)
+    surf_bright = temp_flux / npixels_temp
+    background /= npixels_temp
+    del npixels_temp
     if not megajanskys:
         # Not MJy / sr?  Then assume the units are mJy / arcsec^2.
         # Target spectrum in units of surface brightness.
@@ -118,17 +120,20 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
         bkg = background * u.mJy / (u.arcsec**2)
         background = bkg.to(u.MJy / u.steradian).value
 
-    # Convert surface brightness to flux density (for a point source).
+    # Compute the solid angle of a pixel in steradians.
     pixel_solid_angle = util.pixel_area(input_model.meta.wcs,
                                         input_model.data.shape)
     if pixel_solid_angle is None:
         log.warning("Pixel solid angle could not be determined")
         pixel_solid_angle = 1.
-    if not megajanskys:
-        psa = pixel_solid_angle * u.mJy / (u.arcsec**2)
-        pixel_solid_angle = psa.to(u.MJy / u.steradian).value
-    # The factor 1.e-6 is to get the flux in janskys, rather than MJy.
-    flux = temp_flux * pixel_solid_angle * 1.e-6
+    if megajanskys:
+        # Convert flux from MJy / steradian to Jy.
+        flux = temp_flux * pixel_solid_angle * 1.e6
+    else:
+        # Convert flux from mJy / arcsec**2 to Jy.
+        psa = pixel_solid_angle * u.steradian
+        pixel_solid_angle = psa.to(u.arcsec**2).value
+        flux = temp_flux * pixel_solid_angle * 1.e-3
     del temp_flux
 
     error = np.zeros_like(flux)
