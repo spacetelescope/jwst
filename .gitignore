@@ -29,5 +29,5 @@ src/launch.json
 scripts/launch.json
 *.orig
 .ipynb_checkpoints
-*_checkpoints.ipynb
+*/.ipynb_checkpoints/*.ipynb
 
