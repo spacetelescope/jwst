@@ -151,6 +151,21 @@ def _compare_asns(left, right):
     Raises
     ------
     AssertionError
+
+    Note
+    ----
+    This comparison is dependent on the associations being JWST-like associations.
+    The attributes that are compared are as follows:
+
+        - key `asn_type`
+        - key `products`. Specifically the following are compared:
+            - Length of the list
+            - key `name` for each product
+            - key `members` for each product
+        - For the member lists of each product, the following are compared:
+            - Length of the list
+            - key `expname` for each member
+            - key 'exptype` for each member
     """
 
     # Metadata

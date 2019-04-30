@@ -118,12 +118,8 @@ class TestNIRISSPhotom(BaseJWSTTest):
         """
         input_file = self.get_data(self.test_dir,
                                    'jw00034001001_01101_00001_NIRISS_flat_field.fits')
-        override_photom = self.get_data(self.test_dir,
-                                        'jwst_niriss_photom_b7a.fits')
 
-        result = PhotomStep.call(input_file,
-                        override_photom=override_photom
-                        )
+        result = PhotomStep.call(input_file)
         output_file = result.meta.filename
         result.save(output_file)
         result.close()

@@ -5,7 +5,6 @@ python_version = '3.6'
 env_vars = [
     "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
     "CRDS_PATH=./crds_cache",
-    "CRDS_CONTEXT=jwst_0501.pmap",
 ]
 
 // Pip related setup
@@ -18,7 +17,10 @@ bc0 = new BuildConfig()
 bc0.nodetype = 'linux'
 bc0.name = 'wheel-sdist'
 bc0.conda_ver = '4.6.8'
-bc0.conda_packages = ["python=${python_version}"]
+bc0.conda_packages = [
+    "python=${python_version}",
+    "pip<19.1"
+]
 bc0.build_cmds = [
     "pip install ${pip_install_args} numpy",
     "pip wheel ${pip_install_args} .",
@@ -48,6 +50,7 @@ bc2.conda_packages = [
     "numpy",
     "nomkl",
     "jwst",
+    "pip<19.1",
 ]
 bc2.build_cmds = [
     "python setup.py develop",

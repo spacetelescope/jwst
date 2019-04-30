@@ -1,9 +1,8 @@
 allOf:
 - $ref: core.schema.yaml
+- $ref: int_times.schema.yaml
 - type: object
   properties:
-    int_times:
-      $ref: int_times.schema.yaml
     spec:
       type: array
       title: An array of spectra

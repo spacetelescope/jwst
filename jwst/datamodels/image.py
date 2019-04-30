@@ -25,14 +25,8 @@ class ImageModel(DataModel):
     area : numpy float32 array
          Pixel area map array
 
-    pathloss_pointsource : numpy float32 array
+    pathloss : numpy float32 array
          Pathloss correction
-
-    relsens : numpy table
-         relative sensitivity table
-
-    relsens2d : numpy float32 array
-         Sensitivity array
 
     var_poisson : numpy float32 array
          variance due to poisson noise

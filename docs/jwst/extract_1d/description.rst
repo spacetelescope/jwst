@@ -17,7 +17,9 @@ whether the target is a point source or an extended source.  For a point
 source, the spectrum will be extracted using circular aperture photometry,
 optionally including background subtraction using a circular annulus.
 For an extended source, rectangular aperture photometry will be used, with
-no background subtraction.  The photometry makes use of astropy photutils.
+the entire image being extracted, and no background subtraction, regardless
+of what was specified in the reference file or command-line arguments.
+The photometry makes use of astropy photutils.
 The region of overlap between an aperture and a pixel can be calculated by
 one of three different methods:  "exact", limited only by finite precision
 arithmetic; "center", i.e. the full value in a pixel will be included if its

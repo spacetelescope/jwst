@@ -44,9 +44,6 @@ class MultiExposureModel(DataModel):
 
     exposures.items.err : numpy float32 array
 
-    exposures.items.relsens : numpy table
-         relative sensitivity table
-
     exposures.items.area : numpy float32 array
     """
     schema_url = "multiexposure.schema.yaml"
@@ -68,7 +65,6 @@ class MultiExposureModel(DataModel):
             self.exposures[0].data = init.data
             self.exposures[0].dq = init.dq
             self.exposures[0].err = init.err
-            self.exposures[0].relsens = init.relsens
             self.exposures[0].area = init.area
             return
 

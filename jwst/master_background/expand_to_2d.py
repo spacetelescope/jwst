@@ -4,11 +4,14 @@ import numpy as np
 
 from gwcs.wcstools import grid_from_bounding_box
 from .. import datamodels
-from .. assign_wcs import nirspec               # for NIRSpec IFU data
+from .. assign_wcs import nirspec   # For NIRSpec IFU data
+from .. assign_wcs import niriss    # For NIRISS SOSS data
 from .. datamodels import dqflags
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
+
+WFSS_EXPTYPES = ['NIS_WFSS', 'NRC_WFSS', 'NRC_GRISM', 'NRC_TSGRISM']
 
 
 def expand_to_2d(input, m_bkg_spec):
@@ -160,7 +163,7 @@ def bkg_for_multislit(input, tab_wavelength, tab_background):
     max_wave = np.amax(tab_wavelength)
 
     for (k, slit) in enumerate(input.slits):
-        wl_array = get_wavelengths(slit)
+        wl_array = get_wavelengths(slit, input.meta.exposure.type)
         if wl_array is None:
             raise RuntimeError("Can't determine wavelengths for {}"
                                .format(type(slit)))
@@ -209,7 +212,7 @@ def bkg_for_image(input, tab_wavelength, tab_background):
     background = input.copy()
     min_wave = np.amin(tab_wavelength)
     max_wave = np.amax(tab_wavelength)
-    wl_array = get_wavelengths(input)
+    wl_array = get_wavelengths(input, input.meta.exposure.type)
     if wl_array is None:
         raise RuntimeError("Can't determine wavelengths for {}"
                            .format(type(input)))
@@ -265,13 +268,18 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
             x, y = grid_from_bounding_box(ifu_wcs.bounding_box)
             wl_array = ifu_wcs(x, y)[2]
             wl_array[np.isnan(wl_array)] = -1.
-            # flag values outside of the background wavelength table
+
+            # mask wavelengths not covered by the master background
             mask_limit = (wl_array > max_wave) | (wl_array < min_wave)
             wl_array[mask_limit] = -1
 
+            # mask_limit is indices into each WCS slice grid.  Need them in
+            # full frame coordinates, so we use x and y, which are full-frame
+            full_frame_ind = y[mask_limit].astype(int), x[mask_limit].astype(int)
             # TODO - add another DQ Flag something like NO_BACKGROUND when we have space in dqflags
-            background.dq[mask_limit] = np.bitwise_or(background.dq[mask_limit],
-                                                      dqflags.pixel['DO_NOT_USE'])
+            background.dq[full_frame_ind] = np.bitwise_or(background.dq[full_frame_ind],
+                                                          dqflags.pixel['DO_NOT_USE'])
+
             bkg_flux = np.interp(wl_array, tab_wavelength, tab_background,
                                  left=0., right=0.)
             background.data[y.astype(int), x.astype(int)] = bkg_flux.copy()
@@ -289,7 +297,7 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
 
         # TODO - add another DQ Flag something like NO_BACKGROUND when we have space in dqflags
         background.dq[mask_limit] = np.bitwise_or(background.dq[mask_limit],
-                                                dqflags.pixel['DO_NOT_USE'])
+                                                  dqflags.pixel['DO_NOT_USE'])
         bkg_flux = np.interp(wl_array, tab_wavelength, tab_background,
                              left=0., right=0.)
         background.data[:, :] = bkg_flux.copy()
@@ -300,13 +308,21 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
     return background
 
 
-def get_wavelengths(model):
+def get_wavelengths(model, exp_type="", order=None):
     """Read or compute wavelengths.
 
     Parameters
     ----------
     model : `~jwst.datamodels.DataModel`
-        The input science data.
+        The input science data, or a slit from a
+        `~jwst.datamodels.MultiSlitModel`.
+
+    exp_type : str
+        The exposure type.  This is only needed to check whether the input
+        data are WFSS.
+
+    order : int
+        Spectral order number, for NIRISS SOSS only.
 
     Returns
     -------
@@ -314,6 +330,7 @@ def get_wavelengths(model):
         An array of wavelengths corresponding to the data in `model`.
     """
 
+    # Use the existing wavelength array, if there is one
     if hasattr(model, "wavelength"):
         wl_array = model.wavelength.copy()
         got_wavelength = True                   # may be reset below
@@ -324,10 +341,28 @@ def get_wavelengths(model):
             got_wavelength = False
             wl_array = None
 
+    # If no existing wavelength array, compute one
     if hasattr(model.meta, "wcs") and not got_wavelength:
-        wcs = model.meta.wcs
+
+        # Set up an appropriate WCS object
+        if hasattr(model.meta, "exposure") and model.meta.exposure.type == "NIS_SOSS":
+            wcs = niriss.niriss_soss_set_input(model, order)
+        else:
+            wcs = model.meta.wcs
+
+        # Evaluate the WCS on the grid of pixel indexes, capturing only the
+        # resulting wavelength values
         shape = model.data.shape
         grid = np.indices(shape[-2:], dtype=np.float64)
-        wl_array = wcs(grid[1], grid[0])[2]
+
+        if exp_type in WFSS_EXPTYPES:
+            # We currently have to loop over pixels for WFSS data.
+            wl_array = np.zeros(shape[-2:], dtype=np.float64)
+            for j in range(shape[-2]):
+                for i in range(shape[-1]):
+                    # Keep wavelength; ignore RA and Dec
+                    wl_array[..., j, i] = wcs(i, j)[2]
+        else:
+            wl_array = wcs(grid[1], grid[0])[2]
 
     return wl_array

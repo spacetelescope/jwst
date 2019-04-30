@@ -1,8 +1,7 @@
 Step Arguments
 ==============
 
-The extract_1d step has three step-specific arguments.  Currently none of
-these is used for IFU data.
+The extract_1d step has five step-specific arguments.
 
 *  ``--smoothing_length``
 
@@ -38,3 +37,24 @@ let the user know that the step is still running.
 ``log_increment`` is an integer, with default value 50.  If it is greater
 than 0, an INFO message will be printed every ``log_increment``
 integrations, e.g. "... 150 integrations done".
+
+*  ``--subtract_background``
+
+This is a boolean flag to specify whether the background should be
+subtracted.  If None, the value in the extract_1d reference file (if any)
+will be used.  If not None, this parameter overrides the value in the
+extract_1d reference file.
+
+*  ``--apply_nod_offset``
+
+This is a boolean flag to specify whether the target and background positions
+specified in the reference file should be shifted to account for nod
+and/or dither offset.  If None (the default), the value in the reference
+file will be used, or it will be set to True if it is not specified in
+the reference file.  The offset is determined by finding the location in
+the data corresponding to the target position (as given by keywords
+TARG_RA and TARG_DEC).
+
+At the time of writing, a nod/dither offset will not be applied if the
+source is extended.  It will also not be applied for wide-field slitless
+spectroscopy data, or NIRSpec fixed-slit, or NIRSpec MOS (MSA) data.
