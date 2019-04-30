@@ -76,7 +76,7 @@ def test_ifu_2d():
 
     assert np.allclose(flux, true_flux, rtol=0.05)
 
-    assert np.allclose(background, true_bkg, rtol=0.05)
+    assert np.allclose(background, true_bkg, rtol=0.1)
 
     input.close()
     truth.close()
