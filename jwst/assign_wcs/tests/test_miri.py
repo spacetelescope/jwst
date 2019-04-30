@@ -3,20 +3,7 @@ Test MIRI MRS WCS transformation against IDT team data.
 
 Notes:
 
-1. New inverse polynomials were delivered in CDP5. However the test data table was not
-   updated. The inverse transform tests against the IDT test data are commented out
-   until we get new test data.
-
-2. The center of the first pixel is (0, 0) so the pixel is from -.5 to .5.
-   The test inputs (x, y data in the table provided by the IDT) include pixels just outside
-   a slice. For example, x=60.995683, y=1014 is within pixel (61, 1014) and this happens
-   to be the first pixel outside slice 21 in "1C". Because of the way they round the numbers,
-   the IDT team considers this to be pixel (60, 1014), i.e. the last pixel in that slice.
-   The pipeline comptes this pixel to be outside any slices and the output is NaN.
-   To get around this, there's not test for the entire pipeline. Rather the tests are written to
-   compute intermediate transforms using the table with verification data.
-
-Both notes have been communicated to the INS team.
+1. Test data use CDP-8b placeholder values computed by D. Law for the time being.
 
 """
 import numpy as np
@@ -87,28 +74,40 @@ def run_test(model):
     for ch in model.meta.instrument.channel:
         ref_data = mrs_ref_data[ch + band_mapping[model.meta.instrument.band]]
         detector_to_alpha_beta = wcsobj.get_transform('detector', 'alpha_beta')
-        #ab_to_xan_yan = wcsobj.get_transform('alpha_beta', 'Xan_Yan').set_input(int(ch))
         ab_to_v2v3 = wcsobj.get_transform('alpha_beta', 'v2v3').set_input(int(ch))
-        ab_to_xan_yan = ab_to_v2v3 | Scale(1/60) & Scale(1/60) & Identity(1)| Identity(1) & (Scale(-1) |Shift(-7.8)) & Identity(1)
+        v2v3_to_ab = wcsobj.get_transform('v2v3', 'alpha_beta').set_input(int(ch))
+        ab_to_detector = wcsobj.get_transform('alpha_beta','detector')
+        
         ref_alpha = ref_data['alpha']
         ref_beta = ref_data['beta']
         ref_lam = ref_data['lam']
+        ref_v2 = ref_data['v2']
+        ref_v3 = ref_data['v3']
 
         x, y = ref_data['x'], ref_data['y']
         for i, s in enumerate(ref_data['s']):
             sl = int(ch) * 100 + s
             alpha, beta, lam = detector_to_alpha_beta.set_input(sl)(x[i], y[i])
-            utils.assert_allclose(alpha, ref_alpha[i], atol=10**-4)
-            utils.assert_allclose(beta, ref_beta[i], atol=10**-4)
-            utils.assert_allclose(lam, ref_lam[i], atol=10**-4)
+            utils.assert_allclose(alpha, ref_alpha[i], atol=0.05)
+            utils.assert_allclose(beta, ref_beta[i], atol=0.05)
+            utils.assert_allclose(lam, ref_lam[i], atol=0.05)
 
-        xan, yan, lam = ab_to_xan_yan(ref_alpha, ref_beta, ref_lam)
-        utils.assert_allclose(xan, ref_data['v2'], atol=10**-4)
-        utils.assert_allclose(yan, ref_data['v3'], atol=10**-4)
-        utils.assert_allclose(lam, ref_data['lam'], atol=10**-4)
+        v2, v3, lam = ab_to_v2v3(ref_alpha, ref_beta, ref_lam)
+        utils.assert_allclose(v2, ref_v2, atol=0.05)
+        utils.assert_allclose(v3, ref_v3, atol=0.05)
+        utils.assert_allclose(lam, ref_lam, atol=0.05)
 
-        #utils.assert_allclose(xin, x, atol=10**-5)
-        #utils.assert_allclose(yin, y, atol=10**-5)
+        # Test the reverse transform
+        alpha_back, beta_back, lam_back = v2v3_to_ab(v2,v3,lam)
+        utils.assert_allclose(alpha_back, ref_alpha, atol=0.05)
+        utils.assert_allclose(beta_back, ref_beta, atol=0.05)
+        utils.assert_allclose(lam_back, ref_lam, atol=0.05)
+        
+        for i, s in enumerate(ref_data['s']):
+            sl = int(ch) * 100 + s
+            x_back, y_back = ab_to_detector.set_input(sl)(alpha_back[i],beta_back[i],lam_back[i])
+            utils.assert_allclose(x_back, x[i], atol=0.08)
+            utils.assert_allclose(y_back, y[i], atol=0.08)
 
 
 def test_miri_mrs_12A():
@@ -147,119 +146,117 @@ def test_miri_mrs_34C():
     im = create_datamodel(hdul)
     run_test(im)
 
-# The reference data below is from th e"verification Examples" table
-# in MIRI-­TN-­00001-­ETH.
-# The (x, y) coordinates in the original table are 1-based.
-# The reference data are 0-based, (x,y)_data = (x,y)_table -1
+# MRS test reference data
+# These values are all CDP-8b placeholders mocked up by D. Law
 
 mrs_ref_data = {
-    '1A': {'x': np.array([28.310396, 475.02154, 493.9777, 41.282537, 58.998266]) - 1,
-           #'x': np.array([28.310396, 475.02154, 493.4777, 41.282537, 58.498266]),
-           'y': np.array([512., 10, 100, 900, 1014]) -1,
-           's': np.array([11, 1, 1, 21, 21]),
-           'alpha': np.array([0, -1.66946, 1.65180, -1.70573, 1.70244]),
-           'beta': np.array([0, -1.77210, -1.77210, 1.77210, 1.77210]),
-           'lam': np.array([5.34437, 4.86642, 4.95325, 5.65296, 5.74349]),
-           'v2': np.array([-8.39424, -8.41746, -8.36306, -8.42653, -8.37026]),
-           'v3': np.array([-2.48763, -2.52081, -2.51311, -2.46269, -2.45395]),
+    '1A': {'x': np.array([123, 468]),
+           'y': np.array([245, 1000]),
+           's': np.array([9, 12]),
+           'alpha': np.array([0.10731135, 1.12529977]),
+           'beta': np.array([-0.35442029,  0.17721014]),
+           'lam': np.array([5.11499695, 5.74016832]),
+           'v2': np.array([-503.49916454, -502.56838429]),
+           'v3': np.array([-318.40628359, -319.08393052]),
            },
-    '1B': {'x': np.array([28.648221, 475.07259, 493.98157, 41.559386, 59.738296]) - 1,
-           'y': np.array([512., 10, 100, 900, 1014]) - 1,
-           's': np.array([11, 1, 1, 21, 21]),
-           'alpha': np.array([0., -1.70796, 1.60161, -1.70854, 1.78261]),
-           'beta': np.array([0., -1.77204, -1.77204, 1.77204, 1.77204]),
-           'lam': np.array([6.17572, 5.62345, 5.72380, 6.53231, 6.63698]),
-           'v2': np.array([-8.39426, -8.41808, -8.36368, -8.42682, -8.36899]),
-           'v3': np.array([-2.48492, -2.51808, -2.51040, -2.46001, -2.45126])
+    '1B': {'x': np.array([51, 244]),
+           'y': np.array([1016,  476]),
+           's': np.array([21, 17]),
+           'alpha': np.array([0.38199789, 0.63723143]),
+           'beta': np.array([1.77204177, 1.06322506]),
+           'lam': np.array([6.62421656, 6.12990972]),
+           'v2': np.array([-503.5315322 , -503.17667842]),
+           'v3': np.array([-320.71381511, -320.05014591]),
            },
-    '1C': {'x': np.array([30.461871, 477.23742, 495.96228, 43.905314, 60.995683]) - 1,
-           'y': np.array([512., 10, 100, 900, 1014]) - 1,
-           's': np.array([11, 1, 1, 21, 21]),
-           'alpha': np.array([0., -1.60587, 1.67276, -1.60766, 1.68720]),
-           'beta': np.array([0., -1.77202, -1.77202, 1.77202, 1.77202]),
-           'lam': np.array([7.04951, 6.42424, 6.53753, 7.45360, 7.57167]),
-           'v2': np.array([-8.39357, -8.41570, -8.36165, -8.42457, -8.36996]),
-           'v3': np.array([-2.48987, -2.52271, -2.51525, -2.46467, -2.45649])
+    '1C': {'x': np.array([127, 394]),
+           'y': np.array([747, 111]),
+           's': np.array([9, 3]),
+           'alpha': np.array([0.37487296, -0.87620923]),
+           'beta': np.array([-0.35440438, -1.4176175]),
+           'lam': np.array([7.26440645, 6.52961571]),
+           'v2': np.array([-503.19062471, -504.27276937]),
+           'v3': np.array([-318.31059564, -317.08599443]),
            },
-    '2A': {'x': np.array([992.158, 545.38386, 525.76143, 969.29711, 944.19303]) - 1,
-           'y': np.array([512., 10, 100, 900, 1014]) - 1,
-           's': np.array([9, 1, 1, 17, 17]),
-           'alpha': np.array([0., -2.11250, 2.10676, -2.17239, 2.10447]),
-           'beta': np.array([0., -2.23775, -2.23775, 2.23775, 2.23775]),
-           'lam': np.array([8.20797, 7.52144, 7.64907, 8.68677, 8.83051]),
-           'v2': np.array([-8.39393, -8.42259, -8.35355, -8.43583, -8.36499]),
-           'v3': np.array([-2.48181, -2.52375, -2.51357, -2.44987, -2.44022])
+    '2A': {'x': np.array([574, 913]),
+           'y': np.array([578, 163]),
+           's': np.array([10, 16]),
+           'alpha': np.array([0.02652122, -1.44523112]),
+           'beta': np.array([0.27971819, 1.9580273]),
+           'lam': np.array([8.22398597, 7.66495464]),
+           'v2': np.array([-503.65420691, -505.38172957]),
+           'v3': np.array([-319.37148692, -320.82933868]),
            },
-    '2B': {'x': np.array([988.39977, 541.23447, 521.60207, 964.91753, 940.10325]) - 1,
-           'y': np.array([512., 10, 100, 900, 1014]) - 1,
-           's': np.array([9, 1, 1, 17, 17]),
-           'alpha': np.array([0., -2.10593, 2.10015, -2.08817, 2.10422]),
-           'beta': np.array([0., -2.23781, -2.23781, 2.23781, 2.23781]),
-           'lam': np.array([9.44205, 8.65341, 8.79991, 9.99257, 10.15795]),
-           'v2': np.array([-8.39645, -8.42502, -8.35603, -8.43716, -8.36742]),
-           'v3': np.array([-2.47773, -2.51972, -2.50938, -2.44554, -2.43626])
+    '2B': {'x': np.array([634, 955]),
+           'y': np.array([749,  12]),
+           's': np.array([11, 17]),
+           'alpha': np.array([-1.31986085, -1.66029886]),
+           'beta': np.array([0.5594521 , 2.23780842]),
+           'lam': np.array([9.85535403, 8.65341739]),
+           'v2': np.array([-505.18703764, -505.80250684]),
+           'v3': np.array([-319.7057936 , -321.32425399]),
            },
-    '2C': {'x': np.array([990.89693, 543.82344, 524.34514, 967.98318, 942.77564]) - 1,
-           'y': np.array([512., 10, 100, 900, 1014]) - 1,
-           's': np.array([9, 1, 1, 17, 17]),
-           'alpha': np.array([0., -2.07490, 2.11234, -2.14704, 2.14196]),
-           'beta': np.array([0., -2.23778, -2.23778, 2.23778, 2.23778]),
-           'lam': np.array([10.90225, 9.99162, 10.16079, 11.53780, 11.72887]),
-           'v2': np.array([-8.39303, -8.42129, -8.35221, -8.43454, -8.36352]),
-           'v3': np.array([-2.47869, -2.52052, -2.51036, -2.44668, -2.43712])
+    '2C': {'x': np.array([530, 884]),
+           'y': np.array([965, 346]),
+           's': np.array([1, 7]),
+           'alpha': np.array([1.17219936, -0.13199122]),
+           'beta': np.array([-2.23777695, -0.55944424]),
+           'lam': np.array([11.68798183, 10.65732315]),
+           'v2': np.array([-502.0634552 , -503.62291245]),
+           'v3': np.array([-317.2417194 , -318.70820411]),
            },
-    '3A': {'x': np.array([574.80828, 1001.0602, 984.6387, 547.27479, 518.89992]) - 1,
-           'y': np.array([512., 10, 100, 900, 1014]) - 1,
-           's': np.array([8, 1, 1, 16, 16]),
-           'alpha': np.array([0., -2.86745, 3.20982, -3.01230, 2.96643]),
-           'beta': np.array([-0.19491, -2.92360, -2.92360, 2.92360, 2.92360]),
-           'lam': np.array([12.5335, 13.49968, 13.33846, 11.77148, 11.52350]),
-           'v2': np.array([-8.40590, -8.44849, -8.34906, -8.46070, -8.36174]),
-           'v3': np.array([-2.48992, -2.54104, -2.52854, -2.44547, -2.43112])
+    '3A': {'x': np.array([573, 913]),
+           'y': np.array([851, 323]),
+           's': np.array([8, 10]),
+           'alpha': np.array([-1.0181757 ,  0.65295329]),
+           'beta': np.array([-0.19490689,  0.58472067]),
+           'lam': np.array([11.84245153, 12.96396074]),
+           'v2': np.array([-505.35888594, -503.7824966]),
+           'v3': np.array([-318.46913272, -319.4685406]),
            },
-    '3B': {'x': np.array([574.26012, 1001.7349, 985.30166, 548.016, 519.98]) - 1,
-           'y': np.array([512., 10., 100, 900, 1014]) - 1,
-           's': np.array([8, 1, 1, 16, 16]),
-           'alpha': np.array([0, -3.17728, 2.92434, -3.29402, 2.60797]),
-           'beta': np.array([-0.19491, -2.92360, -2.92360, 2.92360, 2.92360]),
-           'lam': np.array([14.53997, 15.66039, 15.47355, 13.65622, 13.36833]),
-           'v2': np.array([-8.40044, -8.44785, -8.34786, -8.46088, -8.36211]),
-           'v3': np.array([-2.48588, -2.53771, -2.52512, -2.44219, -2.42776])
+    '3B': {'x': np.array([606, 861]),
+           'y': np.array([926, 366]),
+           's': np.array([15, 11]),
+           'alpha': np.array([-1.5124193 , -0.79361415]),
+           'beta': np.array([2.53378956, 0.97453445]),
+           'lam': np.array([13.60306079, 14.94878428]),
+           'v2': np.array([-505.82191056, -504.9372123]),
+           'v3': np.array([-321.34413558, -319.90108102]),
            },
-    '3C': {'x': np.array([573.25446, 1000.21721, 983.92918, 546.00285, 518.2782]) - 1,
-           'y': np.array([512., 10, 100, 900, 1014]) - 1,
-           's': np.array([8, 1, 1, 16, 16]),
-           'alpha': np.array([0., -2.94573, 3.09057, -3.07810, 2.73161]),
-           'beta': np.array([-0.19491, -2.92360, -2.92360, 2.92360, 2.92360]),
-           'lam': np.array([16.79017, 18.08441, 17.86845, 15.76948, 15.43724]),
-           'v2': np.array([-8.40205, -8.44574, -8.34664, -8.45859, -8.36196]),
-           'v3': np.array([-2.48627, -2.53761, -2.52502, -2.44221, -2.42787]),
+    '3C': {'x': np.array([663, 852]),
+           'y': np.array([822,  86]),
+           's': np.array([14, 11]),
+           'alpha': np.array([0.83845626, -1.00005387]),
+           'beta': np.array([2.14397578, 0.97453445]),
+           'lam': np.array([16.01468948, 17.97678143]),
+           'v2': np.array([-503.52817761, -505.23700039]),
+           'v3': np.array([-321.27004219, -319.84577337]),
            },
-    '4A': {'x': np.array([80.987181, 434.34987, 461.90855, 26.322503, 53.674656]) - 1,
-           'y': np.array([512., 10, 100, 900, 1014]) - 1,
-           's': np.array([6, 1, 1, 12, 12]),
-           'alpha': np.array([0., -3.74625, 3.72621, -3.94261, 3.62762]),
-           'beta': np.array([-0.32802, -3.60821, -3.60821, 3.60821, 3.60821]),
-           'lam': np.array([19.34914, 20.93078, 20.6464, 18.07975, 17.67221]),
-           'v2': np.array([-8.38446, -8.43506, -8.31378, -8.46256, -8.33609]),
-           'v3': np.array([-2.48058, -2.5444, -2.52426, -2.42449, -2.40839])
+    '4A': {'x': np.array([448, 409]),
+           'y': np.array([873,  49]),
+           's': np.array([1, 7]),
+           'alpha': np.array([-0.45466621, -1.07614592]),
+           'beta': np.array([-3.60820915,  0.32801901]),
+           'lam': np.array([18.05366191, 20.88016154]),
+           'v2': np.array([-502.89806847, -504.25439193]),
+           'v3': np.array([-315.86847223, -319.65622713]),
            },
-    '4B': {'x': np.array([77.625553, 431.57061, 458.86869, 23.559111, 50.632416]) - 1,
-           'y': np.array([512., 10, 100, 900, 1014]) - 1,
-           's': np.array([6, 1, 1, 12, 12]),
-           'alpha': np.array([0., -3.64817, 3.73313, -3.73558, 3.74096]),
-           'beta': np.array([-0.32802, -3.60821, -3.60821, 3.60821, 3.60821]),
-           'lam': np.array([22.38267, 24.21212, 23.88327, 20.91426, 20.44279]),
-           'v2': np.array([-8.38581, -8.43443, -8.3141, -8.46152, -8.33604]),
-           'v3': np.array([-2.48185, -2.54526, -2.52568, -2.42513, -2.40959])
+    '4B': {'x': np.array([380, 260]),
+           'y': np.array([926, 325]),
+           's': np.array([2, 9]),
+           'alpha': np.array([1.64217386, -1.70062938]),
+           'beta': np.array([-2.95217555,  1.64009753]),
+           'lam': np.array([20.69573674, 23.17990504]),
+           'v2': np.array([-501.01720495, -505.23791555]),
+           'v3': np.array([-316.76598039, -320.79546159]),
            },
-    '4C': {'x': np.array([79.662059, 433.73384, 460.75026, 25.820431, 52.412219]) - 1,
-           'y': np.array([512., 10, 100, 900, 1014]) - 1,
-           's': np.array([6, 1, 1, 12, 12]),
-           'alpha': np.array([0., -3.61682, 3.69713, -3.66259, 3.69888]),
-           'beta': np.array([-0.32802, -3.60819, -3.60819, 3.60819, 3.60819]),
-           'lam': np.array([26.18343, 28.32354, 27.93894, 24.46574, 23.91417]),
-           'v2': np.array([-8.38603, -8.43509, -8.31524, -8.45888, -8.33707]),
-           'v3': np.array([-2.48315, -2.54647, -2.52661, -2.42721, -2.41060])
+    '4C': {'x': np.array([309, 114]),
+           'y': np.array([941, 196]),
+           's': np.array([3, 11]),
+           'alpha': np.array([1.65440228, -0.87408042]),
+           'beta': np.array([-2.29611932,  2.95215341]),
+           'lam': np.array([24.17180582, 27.63402178]),
+           'v2': np.array([-501.1647203 , -504.64107203]),
+           'v3': np.array([-317.34628   , -322.10088837]),
            }
+    
 }
