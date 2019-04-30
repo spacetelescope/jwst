@@ -98,10 +98,10 @@ class ResampleSpecData:
 
         grid = wcstools.grid_from_bounding_box(bb)
         ra, dec, lam = np.array(refwcs(*grid))
-        crval1 = np.nanmean(ra)
-        crval2 = np.nanmean(dec)
+        lon = np.nanmean(ra)
+        lat = np.nanmean(dec)
         tan = Pix2Sky_TAN()
-        native2celestial = RotateNative2Celestial(crval1, crval2, 180)
+        native2celestial = RotateNative2Celestial(lon, lat, 180)
         undist2sky = tan | native2celestial
         x_tan, y_tan = undist2sky.inverse(ra, dec)
 
