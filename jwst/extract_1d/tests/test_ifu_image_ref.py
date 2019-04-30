@@ -74,9 +74,9 @@ def test_ifu_2d():
     """
     assert np.allclose(wavelength, true_wl, rtol=1.e-14, atol=1.e-14)
 
-    assert np.allclose(flux, true_flux, atol=150.)
+    assert np.allclose(flux, true_flux, rtol=0.05)
 
-    assert np.allclose(background, true_bkg, atol=150.)
+    assert np.allclose(background, true_bkg, rtol=0.05)
 
     input.close()
     truth.close()
@@ -190,7 +190,7 @@ def test_ifu_no_background():
 
     assert np.allclose(wavelength, true_wl, rtol=1.e-14, atol=1.e-14)
 
-    assert np.allclose(flux, true_flux, atol=150.)
+    assert np.allclose(flux, true_flux, rtol=0.03)
 
     assert np.allclose(background, true_bkg, atol=1.)
 
