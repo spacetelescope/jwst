@@ -420,7 +420,6 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         self.new_product(product_name)
         members = self.current_product['members']
         for item in items:
-            logger.info("Item in _add_item: ", item)
             exptype = 'science'
             if with_exptype:
                 item, exptype = item
