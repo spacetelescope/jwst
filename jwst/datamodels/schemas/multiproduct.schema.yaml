@@ -27,8 +27,6 @@ allOf:
               fits_hdu: CON
               default: 0
               datatype: int32
-            relsens:
-              $ref: relsens.schema.yaml
             bunit_data:
               title: physical units of the array values
               type: string

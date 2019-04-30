@@ -29,6 +29,5 @@ allOf:
       default: 0.0
       ndim: 3
       datatype: float32
-    dq_def:
-      $ref: dq_def.schema.yaml
+- $ref: dq_def.schema.yaml
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

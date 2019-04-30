@@ -47,14 +47,6 @@ class BaseJWSTTest:
         self.inputs_root = pytestconfig.getini('inputs_root')[0]
         self.results_root = pytestconfig.getini('results_root')[0]
 
-    @pytest.fixture(autouse=True)
-    def auto_toggle_docopy(self):
-        bigdata_root = get_bigdata_root()
-        if bigdata_root and check_url(bigdata_root):
-            self.docopy = True
-        else:
-            self.docopy = False
-
     @property
     def repo_path(self):
         return [self.inputs_root, self.env, self.input_loc]
@@ -65,10 +57,7 @@ class BaseJWSTTest:
         `artifactory_helpers/get_bigdata()`.
         This will then return the full path to the local copy of the file.
         """
-        # If user has specified action for no_copy, apply it with
-        # default behavior being whatever was defined in the base class.
-        local_file = get_bigdata(*self.repo_path, *pathargs, docopy=self.docopy)
-
+        local_file = get_bigdata(*self.repo_path, *pathargs, docopy=docopy)
         return local_file
 
     def compare_outputs(self, outputs, raise_error=True, **kwargs):
@@ -88,7 +77,7 @@ class BaseJWSTTest:
 
         return compare_outputs(outputs,
                                input_path=input_path,
-                               docopy=self.docopy,
+                               docopy=True,
                                results_root=self.results_root,
                                **compare_kws)
 
@@ -160,6 +149,7 @@ class BaseJWSTTestSteps(BaseJWSTTest):
         Template method for parameterizing all the tests of JWST pipeline
         processing steps.
         """
+
         if test_dir is None:
             return
 
@@ -170,11 +160,9 @@ class BaseJWSTTestSteps(BaseJWSTTest):
         self.ignore_keywords += ['FILENAME']
 
         input_file = self.get_data(self.test_dir, input)
-
-        result = step_class.call(input_file, **step_pars)
+        result = step_class.call(input_file, save_results=True, **step_pars)
 
         output_file = result.meta.filename
-        result.save(output_file)
         result.close()
 
         output_pars = None
@@ -278,4 +266,3 @@ def _data_glob_url(url, glob='*'):
         url_paths = [a['uri'].replace('api/storage/', '') for a in r.json()['results']]
 
     return url_paths
-

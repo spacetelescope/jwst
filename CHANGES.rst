@@ -1,6 +1,13 @@
 0.13.2 (Unreleased)
 ===================
 
+assign_wcs
+----------
+
+- The MIRI LRS WCS was updated to include an nverse transform. [#3106, #3360]
+
+- The MIRI LRS spectral distortion is implemented now using a spline model. [#3106]
+
 background
 ----------
 
@@ -8,6 +15,12 @@ background
   tilt values as the science exposures. If the background and science
   exposures do not have matching GWA tilt values, then skip the background
   subtraction step in calspec2. [#3252]
+
+barshadow
+---------
+
+- Updated to apply the correction to the science data arrays, in addition
+  to attaching as an extension. [#3319]
 
 calwebb_spec3
 -------------
@@ -33,6 +46,15 @@ datamodels
 - Keyword updates to data model schemas, including OBSFOLDR, MIRNGRPS,
   MIRNFRMS, and new PATTTYPE values. [#3266]
 
+- Keyword updates to remove GS_STATE and change GUIDESTA to string
+  type. [#3314]
+
+- Added BUNIT keyword to gain and readnoise reference file schemas.
+  [#3322]
+
+- Update ``dq_def.schema``, ``group.schema`` and ``int_times.schema`` to comply
+  with ASDF standard.  Remove unused ``extract1d.schema``.  [#3386]
+
 extract_1d
 ----------
 
@@ -43,6 +65,24 @@ extract_1d
 
 - Unit tests were added for IFU data. [#3285]
 
+- The target coordinates are used (for some modes) to determine the
+  extraction location, i.e. correcting for nod/dither offset.  For IFU,
+  the areas of the source aperture and background annulus are computed
+  differently. [#3362
+  
+- For IFU data for an extended source, the extraction parameters are
+  assigned values so that the entire image will be extracted, with no
+  background subtraction.  For non-IFU data, a try/except block was added
+  to check for a WCS that does not have an inverse.  Some code (but not
+  all) for the now-obsolete RELSENS extension has been deleted. [#3390]
+
+
+flatfield
+---------
+
+- Propagate uncertainty from flat field into science ERR array and new
+  VAR_FLAT array which holds the variance due to the flat field.  [#3384]
+
 master_background
 -----------------
 
@@ -52,11 +92,33 @@ master_background
   was already run on the data.  A new ``force_subtract`` parameter is
   added to override this logic.  [#3263]
 
+- ``MasterBackgroundStep`` now can handle BACKGROUND association members
+  that come from nodded exposures of the source. [#3311]
+
+- Updated the DQFlags of the background subtracted data to be DO_NOT_USE
+  for the pixels that have wavelenghts outside the master background [#3326]
+
+- Modified ``expand_to_2d`` to loop over pixels for WFSS data. [#3408]
+
 outlier_detection
 -----------------
 
 - Fixed a bug that was causing the step to crash when calling the
   ``cube_build`` step for MIRI MRS data. [#3296]
+
+pathloss
+--------
+
+- Updated to apply the correction to the science data and err arrays. [#3323]
+
+photom
+------
+
+- Updated to apply the flux calibration to the science data and err arrays.
+  [#3359]
+
+- Updated to compute a wavelength array for NIRISS SOSS exposures using
+  spectral order 1. [#3387]
 
 reffile_utils
 -------------
@@ -69,6 +131,11 @@ set_telescope_pointing
 
 - Fix ``populate_model_from_siaf`` to convert SIAF pixel scale from
   arcsec to degress for CDELTn keywords. [#3248]
+
+- Updates to prevent crashes when SIAF values needed for crpix or
+  cdelt keywords are missing. [#3316]
+
+- Convert FSM correction values from arcsec to radians. [#3367]
 
 srctype
 -------
@@ -396,6 +463,9 @@ timeconversion
 
 transforms
 ----------
+
+- The `LRSWavelength` model was removed as obsolete.
+  Instead a spline is used for the wavelength solution. [#3106]
 
 tso_photometry
 --------------

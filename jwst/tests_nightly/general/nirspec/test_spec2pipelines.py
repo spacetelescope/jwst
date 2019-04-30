@@ -52,16 +52,11 @@ class TestSpec2Pipeline(BaseJWSTTest):
                 # test_nrs_ifu_spec2: NIRSpec IFU data
                  dict(input= 'jw95175001001_02104_00001_nrs1_rate.fits',
                       outputs=[('jw95175001001_02104_00001_nrs1_cal.fits',
-                                'jw95175001001_02104_00001_nrs1_cal_ref.fits',
-                                ['primary','sci','err','dq','relsens2d',
-                                    'pathloss_pointsource','wavelength_pointsource',
-                                    'pathloss_uniformsource','wavelength_uniformsource']),
+                                'jw95175001001_02104_00001_nrs1_cal_ref.fits'),
                                ('jw95175001001_02104_00001_nrs1_s3d.fits',
-                                'jw95175001001_02104_00001_nrs1_s3d_ref.fits',
-                                ['primary','sci','err','dq','wmap']),
+                                'jw95175001001_02104_00001_nrs1_s3d_ref.fits'),
                                ('jw95175001001_02104_00001_nrs1_x1d.fits',
-                                'jw95175001001_02104_00001_nrs1_x1d_ref.fits',
-                                ['primary','extract1d'])
+                                'jw95175001001_02104_00001_nrs1_x1d_ref.fits')
                               ],
                       id = "nirspec_ifu"
                       )
