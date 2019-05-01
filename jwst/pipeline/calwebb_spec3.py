@@ -1,13 +1,16 @@
 #!/usr/bin/env python
+from collections import defaultdict
 
 from .. import datamodels
 from ..associations.lib.rules_level3_base import format_product
 from ..exp_to_source import multislit_to_container
+from ..master_background.master_background_step import split_container
 from ..stpipe import Pipeline
 
 # step imports
 from ..cube_build import cube_build_step
 from ..extract_1d import extract_1d_step
+from ..master_background import master_background_step
 from ..mrs_imatch import mrs_imatch_step
 from ..outlier_detection import outlier_detection_step
 from ..resample import resample_spec_step
@@ -36,6 +39,7 @@ class Spec3Pipeline(Pipeline):
 
     # Define aliases to steps
     step_defs = {
+        'master_background': master_background_step.MasterBackgroundStep,
         'mrs_imatch': mrs_imatch_step.MRSIMatchStep,
         'outlier_detection': outlier_detection_step.OutlierDetectionStep,
         'resample_spec': resample_spec_step.ResampleSpecStep,
@@ -72,6 +76,27 @@ class Spec3Pipeline(Pipeline):
         output_file = input_models.meta.asn_table.products[0].name
         self.output_file = output_file
 
+        # Find all the member types in the product
+        members_by_type = defaultdict(list)
+        product = input_models.meta.asn_table.products[0].instance
+        for member in product['members']:
+            members_by_type[member['exptype'].lower()].append(member['expname'])
+
+        # If background data are present, call the master background step
+        if members_by_type['background']:
+            source_models = self.master_background(input_models)
+            source_models.meta.asn_table = input_models.meta.asn_table
+
+            # If the step is skipped, do the container splitting that
+            # would've been done in master_background
+            if self.master_background.skip:
+                source_models, bkg_models = split_container(input_models)
+                del bkg_models  # we don't need the background members
+        else:
+            # The input didn't contain any background members,
+            # so we use all the inputs in subsequent steps
+            source_models = input_models
+
         # `sources` is the list of astronomical sources that need be
         # processed. Each element is a ModelContainer, which contains
         # models for all exposures that belong to a single source.
@@ -87,12 +112,12 @@ class Spec3Pipeline(Pipeline):
         # source into its own ModelContainer. This produces a list of
         # sources, each represented by a MultiExposureModel instead of
         # a single ModelContainer.
-        sources = [input_models]
+        sources = [source_models]
         if model_type in MULTISOURCE_MODELS:
             self.log.info('Convert from exposure-based to source-based data.')
             sources = [
                 (name, model)
-                for name, model in multislit_to_container(input_models).items()
+                for name, model in multislit_to_container(source_models).items()
             ]
 
         # Process each source

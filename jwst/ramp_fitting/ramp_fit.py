@@ -16,6 +16,7 @@
 import time
 import logging
 import numpy as np
+import warnings
 
 from .. import datamodels
 from ..datamodels import dqflags
@@ -95,8 +96,10 @@ def ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
         gls_opt_model = None
 
     # Update data units in output models
-    new_model.meta.bunit_data = 'DN/s'
-    new_model.meta.bunit_err = 'DN/s'
+    if new_model is not None:
+        new_model.meta.bunit_data = 'DN/s'
+        new_model.meta.bunit_err = 'DN/s'
+
     if int_model is not None:
         int_model.meta.bunit_data = 'DN/s'
         int_model.meta.bunit_err = 'DN/s'
@@ -157,22 +160,33 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
     orig_nreads = nreads
     orig_cubeshape = cubeshape
 
-    # For MIRI datasets having >1 group, if all final groups are flagged as
-    #   DO_NOT_USE, resize the input model arrays to exclude the final group.
-    #   Similarly, if all first groups are flagged as DO_NOT_USE, resize the
-    #   input model arrays to exclude the first group.
+    # For MIRI datasets having >1 group, if all pixels in the final group are
+    #   flagged as DO_NOT_USE, resize the input model arrays to exclude the
+    #   final group.  Similarly, if leading groups 1 though N have all pixels
+    #   flagged as DO_NOT_USE, those groups will be ignored by ramp fitting, and
+    #   the input model arrays will be resized appropriately. If all pixels in
+    #   all groups are flagged, return None for the models.
 
     if (instrume == 'MIRI' and nreads > 1):
         first_gdq = model.groupdq[:,0,:,:]
+        num_bad_slices = 0 # number of initial groups that are all DO_NOT_USE
 
-        if np.all(np.bitwise_and( first_gdq, dqflags.group['DO_NOT_USE'] )):
+        while (np.all(np.bitwise_and( first_gdq, dqflags.group['DO_NOT_USE']))): 
+            num_bad_slices += 1 
+            nreads -= 1
+            ngroups -= 1
+
+            # Check if there are remaining groups before accessing data
+            if ngroups < 1 : # no usable data
+                log.error('1. All groups have all pixels flagged as DO_NOT_USE,')
+                log.error('  so will not process this dataset.')
+                return None, None, None
+
             model.data = model.data[:,1:,:,:]
             model.err = model.err[:,1:,:,:]
             model.groupdq = model.groupdq[:,1:,:,:]
-            nreads -= 1
-            ngroups -= 1
+
             cubeshape = (nreads,)+imshape
-            log.info('MIRI dataset has all first groups flagged as DO_NOT_USE.')
 
             # Where the initial group of the just-truncated data is a cosmic ray,
             #   remove the JUMP_DET flag from the group dq for those pixels so
@@ -185,15 +199,31 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
                 model.groupdq[ wh_cr[0][ii], 0, wh_cr[1][ii],
                     wh_cr[2][ii]] -=  dqflags.group['JUMP_DET']
 
+            first_gdq = model.groupdq[:,0,:,:]
+
+        log.info('Number of leading groups that are flagged as DO_NOT_USE: %s', num_bad_slices) 
+
+        # If all groups were flagged, the final group would have been picked up 
+        #   in the while loop above, ngroups would have been set to 0, and Nones 
+        #   would have been returned.  If execution has gotten here, there must
+        #   be at least 1 remaining group that is not all flagged.
         last_gdq = model.groupdq[:,-1,:,:]
         if np.all(np.bitwise_and( last_gdq, dqflags.group['DO_NOT_USE'] )):
+            nreads -= 1
+            ngroups -= 1
+
+            # Check if there are remaining groups before accessing data
+            if ngroups < 1 : # no usable data
+                log.error('2. All groups have all pixels flagged as DO_NOT_USE,')
+                log.error('  so will not process this dataset.')
+                return None, None, None
+
             model.data = model.data[:,:-1,:,:]
             model.err = model.err[:,:-1,:,:]
             model.groupdq = model.groupdq[:,:-1,:,:]
-            nreads -= 1
-            ngroups -= 1
+
             cubeshape = (nreads,)+imshape
-            log.info('MIRI dataset has all final groups flagged as DO_NOT_USE.')
+            log.info('MIRI dataset has all pixels in the final group flagged as DO_NOT_USE.')
 
         # Next block is to satisfy github issue 1681:
         # "MIRI FirstFrame and LastFrame minimum number of groups"
@@ -443,10 +473,19 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
                                        group_time, max_seg )
 
             segs_4[num_int, :, rlo:rhi, :] = segs_beg_3
+
+            # Suppress harmless arithmetic warnings for now
+            warnings.filterwarnings("ignore", ".*invalid value.*",
+                RuntimeWarning)
+            warnings.filterwarnings("ignore", ".*divide by zero.*",
+                RuntimeWarning)
             var_p4[num_int, :, rlo:rhi, :] = den_p3 * med_rates[ rlo:rhi, :]
 
-            #find the segment variance due to read noise and convert back to DN
+            # Find the segment variance due to read noise and convert back to DN
             var_r4[num_int, :, rlo:rhi, :] = num_r3 * den_r3/gain_sect**2
+   
+            # Reset the warnings filter to its original state
+            warnings.resetwarnings()
 
             del den_r3, den_p3, num_r3, segs_beg_3
             del gain_sect
@@ -458,7 +497,13 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
         #   outrageously large values so that they will have negligible
         #   contributions.
         var_p4[num_int,:,:,:] *= ( segs_4[num_int,:,:,:] > 0)
+
+        # Suppress, then re-enable harmless arithmetic warnings
+        warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
+        warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
         var_p4[var_p4 <= 0.] = utils.LARGE_VARIANCE
+        warnings.resetwarnings()
+
         var_r4[num_int,:,:,:] *= ( segs_4[num_int,:,:,:] > 0)
         var_r4[var_r4 <= 0.] = utils.LARGE_VARIANCE
 
@@ -493,7 +538,12 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
                             var_p4_int.shape[1]*var_p4_int.shape[2]))
 
         s_inv_var_both3[num_int,:,:] = (inv_var_both4[num_int,:,:,:]).sum(axis=0)
+
+        # Suppress, then re-enable harmless arithmetic warnings
+        warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
+        warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
         var_both3[num_int, :, :] = 1./s_inv_var_both3[num_int, :, :]
+        warnings.resetwarnings()
 
         del var_p4_int
         del var_p4_int2
@@ -540,7 +590,11 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
     s_inv_var_both2 = s_inv_var_both3.sum(axis=0)
 
     # Compute the 'dataset-averaged' slope
+    # Suppress, then re-enable harmless arithmetic warnings
+    warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
+    warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
     slope_dataset2 = s_slope_by_var2/s_inv_var_both2
+    warnings.resetwarnings()
 
     del s_inv_var_both2, s_slope_by_var2, s_slope_by_var3, slope_by_var4
     del s_inv_var_both3
@@ -552,7 +606,12 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
     the_num = (opt_res.slope_seg * inv_var_both4).sum(axis=1)
 
     the_den = (inv_var_both4).sum(axis=1)
+
+    # Suppress, then re-enable harmless arithmetic warnings
+    warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
+    warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
     slope_int = the_num/the_den
+    warnings.resetwarnings()
 
     del the_num, the_den
 
@@ -582,6 +641,11 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
         gdq_cube = model.groupdq
         opt_res.shrink_crmag(n_int, gdq_cube, imshape, nreads)
         del gdq_cube
+
+        # Some contributions to these vars may be NaN as they are from ramps 
+        # having PIXELDQ=DO_NOT_USE
+        var_p4[ np.isnan( var_p4 )] = 0.
+        var_r4[ np.isnan( var_r4 )] = 0.
 
         # Truncate results at the maximum number of segments found
         opt_res.slope_seg = opt_res.slope_seg[:,:f_max_seg,:,:]
@@ -669,6 +733,16 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
     var_p2[var_p2 > 0.1 * utils.LARGE_VARIANCE] = 0.
     var_r2[var_r2 > 0.1 * utils.LARGE_VARIANCE] = 0.
 
+    # Some contributions to these vars may be NaN as they are from ramps 
+    # having PIXELDQ=DO_NOT_USE
+    var_p2[ np.isnan( var_p2 )] = 0.
+    var_r2[ np.isnan( var_r2 )] = 0.
+
+    # Suppress, then re-enable, harmless arithmetic warning
+    warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
+    err_tot = np.sqrt(var_p2 + var_r2)
+    warnings.resetwarnings()
+
     del s_inv_var_p3
     del s_inv_var_r3
 
@@ -676,7 +750,8 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
     new_model = datamodels.ImageModel(data=c_rates.astype(np.float32),
             dq=final_pixeldq.astype(np.uint32),
             var_poisson=var_p2.astype(np.float32),
-            var_rnoise=var_r2.astype(np.float32), err=np.sqrt(var_p2 + var_r2))
+            var_rnoise=var_r2.astype(np.float32), 
+            err=err_tot.astype(np.float32))
 
     new_model.update(model)  # ... and add all keys from input
 
@@ -1196,7 +1271,12 @@ def calc_slope(data_sect, gdq_sect, frame_time, opt_res, save_opt, rn_sect,
     # Create nominal 2D ERR array, which is 1st slice of
     #    avged_data_cube * readtime
     err_2d_array = data_sect[0, :, :] * frame_time
+
+    # Suppress, then re-enable, harmless arithmetic warnings
+    warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
+    warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
     err_2d_array[err_2d_array < 0] = 0
+    warnings.resetwarnings()
 
     # Frames >= start and <= end will be masked. However, the first channel
     #   to be included in fit will be the read in which a cosmic ray has
@@ -1576,7 +1656,12 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
     if(len(wh_check[0]) > 0):
         these_pix = wh_check[0]
         got_case[ these_pix ] = True
+
+        # Suppress, then re-enable, harmless arithmetic warnings
+        warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
+        warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
         inv_var[these_pix] += 1.0 / variance[these_pix]
+        warnings.resetwarnings()
 
         # create array: 0...nreads-1 in a column for each pixel
         arr_ind_all = np.array([np.arange(nreads),] *
@@ -1835,7 +1920,13 @@ def fit_lines(data, mask_2d, rn_sect, gain_sect, ngroups, weighting):
 
         denominator = nreads_1d * sumxx - sumx**2
 
+        # In case this branch is ever used again, disable, and then re-enable
+        #   harmless arithmetic warrnings
+        warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
+        warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
         variance = nreads_1d / denominator
+        warnings.resetwarnings()
+
         denominator = 0
 
     else: # unsupported weighting type specified
@@ -2030,10 +2121,16 @@ def calc_unwtd_fit(xvalues, nreads_1d, sumxx, sumx, sumxy, sumy):
     """
 
     denominator = nreads_1d * sumxx - sumx**2
+
+     # In case this branch is ever used again, suppress, and then re-enable 
+     #   harmless arithmetic warnings
+    warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
+    warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
     slope = (nreads_1d * sumxy - sumx * sumy) / denominator
     intercept = (sumxx * sumy - sumx * sumxy) / denominator
     sig_intercept = (sumxx / denominator)**0.5
     sig_slope = (nreads_1d / denominator)**0.5
+    warnings.resetwarnings()
 
     line_fit = (slope * xvalues) + intercept
 
@@ -2080,10 +2177,17 @@ def calc_opt_fit(nreads_wtd, sumxx, sumx, sumxy, sumy):
        sigma of y-intercepts from fit for data section
     """
     denominator = nreads_wtd * sumxx - sumx**2
+
+    # Suppress, and then re-enable harmless arithmetic warnings
+    warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
+    warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
+
     slope = (nreads_wtd * sumxy - sumx * sumy) / denominator
     intercept = (sumxx * sumy - sumx * sumxy) / denominator
     sig_intercept = (sumxx / denominator)**0.5
     sig_slope = (nreads_wtd / denominator)**0.5 # STD of the slope's fit
+
+    warnings.resetwarnings()
 
     return slope, intercept, sig_slope, sig_intercept
 
@@ -2460,7 +2564,11 @@ def calc_opt_sums(rn_sect, gain_sect, data_masked, mask_2d, xvalues, good_pix):
     nrd_data_a = 0
 
     # Calculate inverse read noise^2 for use in weights
+    # Suppress, then re-enable, harmless arithmetic warning
+    warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
     invrdns2_r = 1./rn_2_r
+    warnings.resetwarnings()
+
     rn_sect = 0
     fnz = 0
 

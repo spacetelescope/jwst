@@ -9,13 +9,30 @@ class ImageModel(DataModel):
     A data model for 2D images.
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
+    data : numpy float32 array
+         The science data
 
-    kwargs: numpy array
-        The name and value of any array mentioned in the schema to be
-        initialized through the function call.
+    dq : numpy uint32 array
+         Data quality array
+
+    err : numpy float32 array
+         Error array
+
+    zeroframe : numpy float32 array
+         Zeroframe array
+
+    area : numpy float32 array
+         Pixel area map array
+
+    pathloss : numpy float32 array
+         Pathloss correction
+
+    var_poisson : numpy float32 array
+         variance due to poisson noise
+
+    var_rnoise : numpy float32 array
+         variance due to read noise
     """
     schema_url = "image.schema.yaml"
 

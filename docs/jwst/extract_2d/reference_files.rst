@@ -7,6 +7,6 @@ exposures.
 The WAVELENGTHRANGE reference file is only used for NIRCam and NIRISS
 Wide-Field Slitless Spectroscopy (WFSS) exposures.
 
-.. include:: ../references_general/wavecorr_reffile.rst
+.. include:: ../references_general/wavecorr_reffile.inc
 
-.. include:: ../references_general/wavelengthrange_reffile.rst
+.. include:: ../references_general/wavelengthrange_reffile.inc

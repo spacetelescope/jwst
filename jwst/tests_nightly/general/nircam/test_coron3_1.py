@@ -6,14 +6,17 @@ from jwst.pipeline import Coron3Pipeline
 
 @pytest.mark.bigdata
 class TestCoron3Pipeline(BaseJWSTTest):
-    rtol = 0.001
+    rtol = 0.00001
+    atol = 0.00001
     input_loc = 'nircam'
     ref_loc = ['test_coron3', 'truth']
+
+    ignore_fields = ['CAL_VCS', 'CAL_VER']
 
     def test_coron3_1(self):
         """Regression test of calwebb_coron3 pipeline.
 
-        Test will be performed on NIRCam simulated data.
+        Test is performed on NIRCam simulated data.
         """
         asn_name = 'jw99999-a3001_20170327t121212_coron3_001_asn.json'
         override_psfmask = 'jwst_nircam_psfmask_somb.fits'
@@ -28,6 +31,8 @@ class TestCoron3Pipeline(BaseJWSTTest):
         pipe.align_refs.override_psfmask = psfmask_file
         pipe.outlier_detection.resample_data = False
         pipe.run(asn_file)
+
+        self.ignore_keywords += ['NAXIS1', 'TFORM7']
 
         outputs = [( # Compare psfstack product
                     'jw99999-a3001_t1_nircam_f140m-maskbar_psfstack.fits',
@@ -49,18 +54,9 @@ class TestCoron3Pipeline(BaseJWSTTest):
                     'jw9999947001_02102_00002_nrcb3_a3001_crfints.fits',
                     'jw9999947001_02102_00002_nrcb3_a3001_crfints_ref.fits'
                    ),
-                   {'files':( # Compare i2d product
-                            'jw99999-a3001_t1_nircam_f140m-maskbar_i2d.fits',
-                            'jw99999-a3001_t1_nircam_f140m-maskbar_i2d_ref.fits'
-                     ),
-                     'pars': {'ignore_hdus':self.ignore_hdus+['HDRTAB']}
-                   },
-                   {'files':( # Compare the HDRTAB in the i2d product
-                    'jw99999-a3001_t1_nircam_f140m-maskbar_i2d.fits[hdrtab]',
-                    'jw99999-a3001_t1_nircam_f140m-maskbar_i2d_ref.fits[hdrtab]'
-                   ),
-                    'pars': {'ignore_keywords':self.ignore_keywords+['NAXIS1', 'TFORM*'],
-                             'ignore_fields':self.ignore_keywords}
-                   }
+                   ( # Compare i2d product
+                    'jw99999-a3001_t1_nircam_f140m-maskbar_i2d.fits',
+                    'jw99999-a3001_t1_nircam_f140m-maskbar_i2d_ref.fits'
+                   )
                   ]
         self.compare_outputs(outputs)

@@ -383,7 +383,7 @@ def max_overlap_pair(images, enforce_user_order):
     m = overlap_matrix(images)
     n = m.shape[0]
     index = m.argmax()
-    i = index / n
+    i = index // n
     j = index % n
     si = np.sum(m[i])
     sj = np.sum(m[:, j])

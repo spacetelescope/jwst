@@ -8,27 +8,24 @@ class NirspecFlatModel(ReferenceFileModel):
     """A data model for NIRSpec flat-field reference files.
 
     Parameters
-    ----------
-    init: any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
+    data : numpy float32 array
+         NIRSpec flat-field reference data
 
-    data: numpy array
-        The science data.  2-D or 3-D.
+    dq : numpy uint32 array
+         Data quality array
 
-    dq: numpy array
-        The data quality array.  2-D or 3-D.
+    err : numpy float32 array
+         Error estimate
 
-    err: numpy array
-        The error array.  2-D or 3-D.
+    wavelength : numpy table
+         Table of wavelengths for image planes
 
-    wavelength: numpy array
-        The wavelength for each plane of the `data` array.  This will
-        only be needed if `data` is 3-D.
+    flat_table : numpy table
+         Table for quickly varying component of flat field
 
-    flat_table: numpy array
-        A table of wavelengths and flat-field values, to specify the
-        component of the flat field that can vary over a relatively short
-        distance (can be pixel-to-pixel).
+    dq_def : numpy table
+         DQ flag definitions
     """
 
     schema_url = "nirspec_flat.schema.yaml"
@@ -48,30 +45,24 @@ class NirspecQuadFlatModel(ReferenceFileModel):
     """A data model for NIRSpec flat-field files that differ by quadrant.
 
     Parameters
-    ----------
-    init: any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
+    quadrants.items.data : numpy float32 array
 
-    data: numpy array
-        The science data.  2-D or 3-D.
 
-    dq: numpy array
-        The data quality array.  2-D or 3-D.
+    quadrants.items.dq : numpy uint32 array
 
-    err: numpy array
-        The error array.  2-D or 3-D.
 
-    wavelength: numpy array
-        The wavelength for each plane of the `data` array.  This will
-        only be needed if `data` is 3-D.
+    quadrants.items.err : numpy float32 array
 
-    flat_table: numpy array
-        A table of wavelengths and flat-field values, to specify the
-        component of the flat field that can vary over a relatively short
-        distance (can be pixel-to-pixel).
 
-    dq_def: numpy array
-        The data quality definitions table.
+    quadrants.items.wavelength : numpy table
+         Table of wavelengths for image planes
+
+    quadrants.items.flat_table : numpy table
+         Table for quickly varying component of flat field
+
+    dq_def : numpy table
+         DQ flag definitions
     """
 
     schema_url = "nirspec_quad_flat.schema.yaml"

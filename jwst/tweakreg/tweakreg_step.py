@@ -59,7 +59,7 @@ class TweakRegStep(Step):
     def process(self, input):
 
         try:
-            images = datamodels.ModelContainer(input, persist=True)
+            images = datamodels.ModelContainer(input)
         except TypeError as te:
             raise te("Input to tweakreg must be a list of DataModels, an "
                 "association, or an already open ModelContainer containing "
@@ -71,6 +71,19 @@ class TweakRegStep(Step):
                 image_model, self.kernel_fwhm, self.snr_threshold,
                 brightest=self.brightest, peakmax=self.peakmax
             )
+
+            # filter out sources outside the image array if WCS validity
+            # region is provided:
+            wcs_bounds = image_model.meta.wcs.pixel_bounds
+            if wcs_bounds is not None:
+                ((xmin, xmax), (ymin, ymax)) = wcs_bounds
+                xname = 'xcentroid' if 'xcentroid' in catalog.colnames else 'x'
+                yname = 'ycentroid' if 'ycentroid' in catalog.colnames else 'y'
+                x = catalog[xname]
+                y = catalog[yname]
+                mask = (x > xmin) & (x < xmax) & (y > ymin) & (y < ymax)
+                catalog = catalog[mask]
+
             filename = image_model.meta.filename
             nsources = len(catalog)
             if nsources == 0:

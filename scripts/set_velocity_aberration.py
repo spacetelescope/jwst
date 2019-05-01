@@ -49,8 +49,6 @@ It does not currently place the new keywords in any particular location
 in the header other than what is required by the standard.
 '''
 
-from __future__ import print_function, division
-
 import astropy.io.fits as fits
 import logging
 import math
@@ -103,9 +101,9 @@ def aberration_scale(velocity_x, velocity_y, velocity_z,
     targ_y = r_xy * math.sin(targ_ra * d_to_r)
     targ_z = math.sin(targ_dec * d_to_r)
 
-    dot_prod = velocity_x * targ_x + \
-               velocity_y * targ_y + \
-               velocity_z * targ_z
+    dot_prod = (velocity_x * targ_x +
+                velocity_y * targ_y +
+                velocity_z * targ_z)
     cos_theta = dot_prod / speed
     # This sin_theta is only valid over the range [0, pi], but so is the
     # angle between the velocity vector and the direction toward the target.
@@ -114,8 +112,8 @@ def aberration_scale(velocity_x, velocity_y, velocity_z,
     tan_theta_p = sin_theta / (gamma * (cos_theta + beta))
     theta_p = math.atan(tan_theta_p)
 
-    scale_factor = gamma * (cos_theta + beta)**2 / \
-                   (math.cos(theta_p)**2 * (1. + beta * cos_theta))
+    scale_factor = (gamma * (cos_theta + beta)**2 /
+                    (math.cos(theta_p)**2 * (1. + beta * cos_theta)))
 
     return scale_factor
 
@@ -153,9 +151,9 @@ def aberration_offset(velocity_x, velocity_y, velocity_z,
     cos_delta = math.cos(targ_dec * d_to_r)
 
     delta_ra = (-xdot * sin_alpha + ydot * cos_alpha) / cos_delta
-    delta_dec = -xdot * cos_alpha * sin_delta - \
-                ydot * sin_alpha * sin_delta + \
-                zdot * cos_delta
+    delta_dec = (-xdot * cos_alpha * sin_delta -
+                 ydot * sin_alpha * sin_delta +
+                 zdot * cos_delta)
 
     return delta_ra, delta_dec
 

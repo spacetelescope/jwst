@@ -1,13 +1,27 @@
+from glob import glob as _sys_glob
+import os.path as op
+import os
+import sys
 import pytest
+import requests
 
 from ci_watson.artifactory_helpers import (
+    BigdataError,
     check_url,
-    get_bigdata_root,
     get_bigdata,
+    get_bigdata_root,
 )
 from .compare_outputs import compare_outputs
 
 from jwst.associations import load_asn
+
+__all__ = [
+    'BaseJWSTTest',
+]
+
+# Define location of default Artifactory API key, for Jenkins use only
+ARTIFACTORY_API_KEY_FILE = '/eng/ssb2/keys/svc_rodata.key'
+
 
 @pytest.mark.usefixtures('_jail')
 @pytest.mark.bigdata
@@ -26,21 +40,16 @@ class BaseJWSTTest:
     ignore_hdus = ['ASDF']
     ignore_keywords = ['DATE', 'CAL_VER', 'CAL_VCS', 'CRDS_VER', 'CRDS_CTX', 'FILENAME']
 
-    input_repo = 'jwst-pipeline'
-    results_root = 'jwst-pipeline-results'
     env = 'dev'
 
     @pytest.fixture(autouse=True)
-    def auto_toggle_docopy(self):
-        bigdata_root = get_bigdata_root()
-        if bigdata_root and check_url(bigdata_root):
-            self.docopy = True
-        else:
-            self.docopy = False
+    def config_access(self, pytestconfig):
+        self.inputs_root = pytestconfig.getini('inputs_root')[0]
+        self.results_root = pytestconfig.getini('results_root')[0]
 
     @property
     def repo_path(self):
-        return [self.input_repo, self.env, self.input_loc]
+        return [self.inputs_root, self.env, self.input_loc]
 
     def get_data(self, *pathargs, docopy=True):
         """
@@ -48,10 +57,7 @@ class BaseJWSTTest:
         `artifactory_helpers/get_bigdata()`.
         This will then return the full path to the local copy of the file.
         """
-        # If user has specified action for no_copy, apply it with
-        # default behavior being whatever was defined in the base class.
-        local_file = get_bigdata(*self.repo_path, *pathargs, docopy=self.docopy)
-
+        local_file = get_bigdata(*self.repo_path, *pathargs, docopy=docopy)
         return local_file
 
     def compare_outputs(self, outputs, raise_error=True, **kwargs):
@@ -67,13 +73,52 @@ class BaseJWSTTest:
                         ignore_keywords=ignore_keywords,
                         rtol=rtol, atol=atol)
 
-        input_path = [self.input_repo, self.env, self.input_loc, *self.ref_loc]
+        input_path = [self.inputs_root, self.env, self.input_loc, *self.ref_loc]
 
         return compare_outputs(outputs,
                                input_path=input_path,
-                               docopy=self.docopy,
+                               docopy=True,
                                results_root=self.results_root,
                                **compare_kws)
+
+    def data_glob(self, *pathargs, glob='*'):
+        """Retrieve file list matching glob
+
+        Parameters
+        ----------
+        pathargs: (str[, ...])
+            Path components
+
+        glob: str
+            The file name match criterion
+
+        Returns
+        -------
+        file_paths: [str[, ...]]
+            File paths that match the glob criterion.
+            Note that the TEST_BIGDATA and `repo_path`
+            roots are removed so these results can be fed
+            back into `get_data()`
+        """
+
+        # Get full path and proceed depending on whether
+        # is a local path or URL.
+        root = op.join(get_bigdata_root(), *self.repo_path)
+        path = op.join(root, *pathargs)
+        if op.exists(path):
+            file_paths = _data_glob_local(path, glob)
+        elif check_url(path):
+            file_paths = _data_glob_url(path, glob)
+        else:
+            raise BigdataError('Path cannot be found: {}'.format(path))
+
+        # Remove the root from the paths
+        root_len = len(root) + 1  # +1 to account for the folder delimiter.
+        file_paths = [
+            file_path[root_len:]
+            for file_path in file_paths
+        ]
+        return file_paths
 
 
 # Pytest function to support the parameterization of BaseJWSTTestSteps
@@ -104,6 +149,7 @@ class BaseJWSTTestSteps(BaseJWSTTest):
         Template method for parameterizing all the tests of JWST pipeline
         processing steps.
         """
+
         if test_dir is None:
             return
 
@@ -114,11 +160,9 @@ class BaseJWSTTestSteps(BaseJWSTTest):
         self.ignore_keywords += ['FILENAME']
 
         input_file = self.get_data(self.test_dir, input)
-
-        result = step_class.call(input_file, **step_pars)
+        result = step_class.call(input_file, save_results=True, **step_pars)
 
         output_file = result.meta.filename
-        result.save(output_file)
         result.close()
 
         output_pars = None
@@ -163,3 +207,62 @@ def raw_from_asn(asn_file):
             members.append(member['expname'])
 
     return members
+
+
+def _data_glob_local(path, glob='*'):
+    """Perform a glob on the local path
+
+    Parameters
+    ----------
+    path: File path-like object
+        The path to check.
+
+    glob: str
+        The file name match criterion
+
+    Returns
+    -------
+    file_paths: [str[, ...]]
+        Full file paths that match the glob criterion
+    """
+    full_glob = op.join(path, glob)
+    return _sys_glob(full_glob)
+
+
+def _data_glob_url(url, glob='*'):
+    """
+    Parameters
+    ----------
+    url: str
+        The URL to check
+
+    glob: str
+        The file name match criterion
+
+    Returns
+    -------
+    url_paths: [str[, ...]]
+        Full URLS that match the glob criterion
+    """
+    try:
+        envkey = os.environ['API_KEY_FILE']
+    except KeyError:
+        envkey = ARTIFACTORY_API_KEY_FILE
+
+    try:
+        with open(envkey) as fp:
+            headers = {'X-JFrog-Art-Api': fp.readline().strip()}
+    except (PermissionError, FileNotFoundError):
+        print("Warning: Anonymous Artifactory search requests are limited to "
+            "1000 results. Use an API key and define API_KEY_FILE environment "
+            "variable to get full search results.", file=sys.stderr)
+        headers = None
+
+    search_url = op.join(get_bigdata_root(), 'api/search/artifact')
+    # Pick out "jwst-pipeline", the repo name
+    repo = url.split('/')[4]
+    params = {'name': glob, 'repos': repo}
+    with requests.get(search_url, params=params, headers=headers) as r:
+        url_paths = [a['uri'].replace('api/storage/', '') for a in r.json()['results']]
+
+    return url_paths

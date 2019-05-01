@@ -35,6 +35,16 @@ class MultiExposureModel(DataModel):
     See the module `exp_to_source` for the initial creation of these
     models. This is part of the Level 3 processing of multi-objection
     observations.
+
+    Parameters
+    __________
+    exposures.items.data : numpy float32 array
+
+    exposures.items.dq : numpy uint32 array
+
+    exposures.items.err : numpy float32 array
+
+    exposures.items.area : numpy float32 array
     """
     schema_url = "multiexposure.schema.yaml"
     core_schema_url = 'core.schema.yaml'
@@ -55,7 +65,6 @@ class MultiExposureModel(DataModel):
             self.exposures[0].data = init.data
             self.exposures[0].dq = init.dq
             self.exposures[0].err = init.err
-            self.exposures[0].relsens = init.relsens
             self.exposures[0].area = init.area
             return
 

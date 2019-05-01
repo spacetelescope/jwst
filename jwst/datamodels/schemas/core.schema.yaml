@@ -229,6 +229,10 @@ properties:
             type: string
             fits_keyword: OBSLABEL
             blend_table: True
+          observation_folder:
+            title: Name of the APT observation folder
+            type: string
+            fits_keyword: OBSFOLDR
       visit:
         title: Visit information
         type: object
@@ -566,7 +570,7 @@ properties:
               NIS_AMI, NIS_DARK, NIS_EXTCAL, NIS_FOCUS, NIS_IMAGE, NIS_LAMP,
               NIS_SOSS, NIS_TACQ, NIS_TACONFIRM, NIS_WFSS,
               # NIRCam
-              NRC_CORON, NRC_DARK, NRC_FLAT, NRC_FOCUS, NRC_IMAGE, NRC_WFSS,
+              NRC_CORON, NRC_DARK, NRC_FLAT, NRC_FOCUS, NRC_GRISM, NRC_IMAGE, NRC_WFSS,
               NRC_LED, NRC_WFSC, NRC_TACONFIRM, NRC_TACQ, NRC_TSGRISM, NRC_TSIMAGE,
               # NIRSpec
               NRS_AUTOFLAT, NRS_AUTOWAVE, NRS_BRIGHTOBJ, NRS_CONFIRM, NRS_DARK,
@@ -652,6 +656,16 @@ properties:
             title: Number of frames per group
             type: integer
             fits_keyword: NFRAMES
+            blend_table: True
+          miri_fsw_ngroups:
+            title: MIRI flight system number of groups
+            type: integer
+            fits_keyword: MIRNGRPS
+            blend_table: True
+          miri_fsw_nframes:
+            title: MIRI flight system number of frames
+            type: integer
+            fits_keyword: MIRNFRMS
             blend_table: True
           frame_divisor:
             title: Divisor applied to frame-averaged groups
@@ -892,8 +906,10 @@ properties:
           primary_type:
             title: Primary dither pattern type
             type: string
-            enum: [CYCLING, EXTENDED_TARGET, FULL, FULL-TIGHT, GAUSSIAN,
-              INTRAMODULE, INTRASCA, NONE, POINT_SOURCE, REULEAUX, WFSC]
+            enum: [2-POINT, 2-POINT-NOD, 4-POINT, 4-POINT-NOD, 4-POINT-DITHER,
+              ALONG-SLIT-NOD, CYCLING, EXTENDED_TARGET, FULL, FULL-TIGHT, GAUSSIAN,
+              INTRAMODULE, INTRASCA, MAPPING, NONE, POINT_SOURCE, REULEAUX,
+              SPARSE-CYCLING, WFSC]
             fits_keyword: PATTTYPE
             blend_table: True
           position_number:
@@ -1307,70 +1323,65 @@ properties:
             type: string
             fits_keyword: GS_EPOCH
             blend_table: True
-          gs_jmag:
-            title: Guide star NIR J magnitude
+          gs_mura:
+            title: Guide star IRCS right ascension proper motion
             type: number
-            fits_keyword: GS_JMAG
-            blend_table: True
-          gs_hmag:
-            title: Guide star NIR H magnitude
-            type: number
-            fits_keyword: GS_HMAG
-            blend_table: True
-          gs_kmag:
-            title: Guide star NIR K magnitude
-            type: number
-            fits_keyword: GS_KMAG
-            blend_table: True
-          gs_jitter_rms:
-            title: "[arcsec] RMS jitter over the exposure"
-            type: number
-            fits_keyword: JITTERMS
+            fits_keyword: GS_MURA
             blend_table: True
           gs_mudec:
             title: Guide star IRCS declination proper motion
             type: number
             fits_keyword: GS_MUDEC
             blend_table: True
-          gs_mura:
-            title: Guide star IRCS right ascension proper motion
-            type: number
-            fits_keyword: GS_MURA
-            blend_table: True
           gs_para:
             title: Guide star annual parallax
             type: number
             fits_keyword: GS_PARA
             blend_table: True
-          gs_srcjm:
-            title: Guide star NIR J magnitude source
-            type: string
-            fits_keyword: GS_SRCJM
-            blend_table: True
-          gs_srchm:
-            title: Guide star NIR H magnitude source
-            type: string
-            fits_keyword: GS_SRCHM
-            blend_table: True
-          gs_srckm:
-            title: Guide star NIR K magnitude source
-            type: string
-            fits_keyword: GS_SRCKM
+          gs_jmag:
+            title: Guide star NIR J magnitude
+            type: number
+            fits_keyword: GS_JMAG
             blend_table: True
           gs_ujmag:
             title: Guide star NIR J magnitude uncertainy
             type: number
             fits_keyword: GS_UJMAG
             blend_table: True
+          gs_srcjm:
+            title: Guide star NIR J magnitude source
+            type: string
+            fits_keyword: GS_SRCJM
+            blend_table: True
+          gs_hmag:
+            title: Guide star NIR H magnitude
+            type: number
+            fits_keyword: GS_HMAG
+            blend_table: True
           gs_uhmag:
             title: Guide star NIR H magnitude uncertainy
             type: number
             fits_keyword: GS_UHMAG
             blend_table: True
+          gs_srchm:
+            title: Guide star NIR H magnitude source
+            type: string
+            fits_keyword: GS_SRCHM
+            blend_table: True
+          gs_kmag:
+            title: Guide star NIR K magnitude
+            type: number
+            fits_keyword: GS_KMAG
+            blend_table: True
           gs_ukmag:
             title: Guide star NIR K magnitude uncertainy
             type: number
             fits_keyword: GS_UKMAG
+            blend_table: True
+          gs_srckm:
+            title: Guide star NIR K magnitude source
+            type: string
+            fits_keyword: GS_SRCKM
             blend_table: True
       ref_file:
         title: Reference file information
@@ -1979,6 +1990,11 @@ properties:
             type: string
             fits_keyword: S_LINEAR
             blend_table: True
+          master_background:
+            title: Master Background Subtraction
+            type: string
+            fits_keyword: S_MSBSUB
+            blend_table: True
           mrs_imatch:
             title: MIRI MRS background matching
             type: string
@@ -2127,4 +2143,8 @@ properties:
                 channel:
                   title: Channel ID
                   type: string
+          master_background_file:
+            title: Master background file used
+            type: string
+            fits_keyword: MASTERBG
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

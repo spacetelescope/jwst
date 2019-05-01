@@ -1,94 +1,84 @@
-language: c
-
-os:
-    - linux
+dist: xenial
+language: python
+python: 3.6.8
 
 sudo: false
+#os: linux
 
-# The apt packages below are needed for sphinx builds, which can no longer
-# be installed with sudo apt-get.
+# The apt packages below are needed for sphinx builds
 addons:
-    apt:
-        packages:
-            - texlive-latex-extra
-            - dvipng
+  apt:
+    packages:
+      - texlive-latex-extra
+      - dvipng
+      - graphviz
 
 env:
-    global:
-        - CONDA_CHANNELS='http://ssb.stsci.edu/astroconda-dev'
-        - CONDA_DEPENDENCIES="asdf
-                              astropy
-                              crds
-                              drizzle
-                              flake8
-                              gwcs
-                              jsonschema
-                              jplephem
-                              matplotlib
-                              namedlist
-                              photutils
-                              pytest
-                              scipy
-                              six
-                              spherical-geometry
-                              stsci.image
-                              stsci.imagestats
-                              stsci.stimage
-                              stsci.tools
-                              verhawk"
-        - CONDA_DOCS_DEPENDENCIES='sphinx graphviz'
-        - CRDS_SERVER_URL='https://jwst-crds.stsci.edu'
-        - CRDS_PATH='/tmp/crds_cache'
-        - MAIN_CMD='python setup.py'
-        - MC_URL=https://repo.continuum.io/miniconda
-        - PIP_DEPENDENCIES='ci_watson'
-        - PYTHON_VERSION=3.6
-
-    matrix:
-        - SETUP_CMD='install'
-        - SETUP_CMD='test'
+  global:
+    - CRDS_SERVER_URL='https://jwst-crds.stsci.edu'
+    - CRDS_PATH='/tmp/crds_cache'
+    - NUMPY_VERSION=1.16
 
 matrix:
+  # Don't wait for allowed failures
+  fast_finish: true
+  include:
+    # Run tests
+    - env: TEST_COMMAND='python setup.py test'
+           PIP_DEPENDENCIES='.[test]'
 
-    # Don't wait for allowed failures
-    fast_finish: true
+    # Build sphinx documentation with warnings
+    - env: TEST_COMMAND='python setup.py build_sphinx -W'
+           PIP_DEPENDENCIES='.[docs]'
 
-    include:
+    # Test with python 3.7
+    - python: 3.7
+      env: TEST_COMMAND='python setup.py test'
+           PIP_DEPENDENCIES='.[test]'
 
-        # PEP8 check with flake8 (only once, i.e. "os: linux")
-        - os: linux
-          env: MAIN_CMD='flake8 --count'
-               SETUP_CMD='jwst' TEST_CMD='flake8 --version'
+    # Cron job test with dev versions of dependencies and python 3.6
+    - env: ASTROPY_DEV="git+https://github.com/astropy/astropy.git#egg=astropy"
+           ASDF_DEV="git+https://github.com/spacetelescope/asdf.git#egg=asdf"
+           GWCS_DEV="git+https://github.com/spacetelescope/gwcs.git#egg=gwcs"
+           PIP_DEPENDENCIES="$ASTROPY_DEV $ASDF_DEV $GWCS_DEV .[test]"
+           TEST_COMMAND='python setup.py test'
+           # EVENT_TYPE='cron'
 
-        # build sphinx documentation with warnings
-        - os: linux
-          env: SETUP_CMD='build_sphinx'
-               CONDA_DEPENDENCIES="$CONDA_DEPENDENCIES $CONDA_DOC_DEPENDENCIES"
-               PIP_DEPENDENCIES='sphinx_rtd_theme stsci_rtd_theme sphinx-automodapi'
-        - os: linux
-          env: MAIN_CMD='flake8 --count --select=F, E101, E111, E112, E113, E401, E402, E711, E722 --max-line-length=110'
-               SETUP_CMD='jwst'
+    # Cron job test with dev versions of dependencies and python 3.7
+    - python: 3.7
+      env: ASTROPY_DEV="git+https://github.com/astropy/astropy.git#egg=astropy"
+           ASDF_DEV="git+https://github.com/spacetelescope/asdf.git#egg=asdf"
+           GWCS_DEV="git+https://github.com/spacetelescope/gwcs.git#egg=gwcs"
+           PIP_DEPENDENCIES="$ASTROPY_DEV $ASDF_DEV $GWCS_DEV .[test]"
+           TEST_COMMAND='python setup.py test'
+           # EVENT_TYPE='cron'
 
-    allow_failures:
-        # PEP8 will fail for numerous reasons. Ignore it.
-        - env: MAIN_CMD='flake8 --count'
-               SETUP_CMD='jwst' TEST_CMD='flake8 --version'
+    # PEP8 check
+    - env: TEST_COMMAND='flake8 --count --select=F, E101, E111, E112, E113, E401, E402, E711, E722 --max-line-length=110 jwst'
 
-before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then MC_INST=Miniconda3-4.4.10-Linux-x86_64.sh; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then MC_INST=Miniconda3-4.4.10-MacOSX-x86_64.sh; fi
-  - curl -LO "$MC_URL/$MC_INST"
-  - bash $MC_INST -b -p $HOME/miniconda
-  - export PATH=$HOME/miniconda/bin:$PATH
-  - conda config --set always_yes yes --set changeps1 no
-  - conda config --set auto_update_conda false
-  - for channel in $CONDA_CHANNELS; do conda config --add channels "$channel"; done
-  - conda create -n test -q python=$PYTHON_VERSION numpy $CONDA_DEPENDENCIES
-  - source activate test
-  - if [[ -n $PIP_DEPENDENCIES ]]; then pip install -q $PIP_DEPENDENCIES; fi
+    # Strict PEP8 check, an allowed failure below
+    - env: TEST_COMMAND='flake8 --count jwst'
 
-after_install:
-  - conda list astropy
+  allow_failures:
 
-script:
-  - $MAIN_CMD $SETUP_CMD
+    - env: TEST_COMMAND='flake8 --count jwst'
+
+    - python: 3.7
+      env: ASTROPY_DEV="git+https://github.com/astropy/astropy.git#egg=astropy"
+           ASDF_DEV="git+https://github.com/spacetelescope/asdf.git#egg=asdf"
+           GWCS_DEV="git+https://github.com/spacetelescope/gwcs.git#egg=gwcs"
+           PIP_DEPENDENCIES="$ASTROPY_DEV $ASDF_DEV $GWCS_DEV .[test]"
+           TEST_COMMAND='python setup.py test'
+
+    - env: ASTROPY_DEV="git+https://github.com/astropy/astropy.git#egg=astropy"
+           ASDF_DEV="git+https://github.com/spacetelescope/asdf.git#egg=asdf"
+           GWCS_DEV="git+https://github.com/spacetelescope/gwcs.git#egg=gwcs"
+           PIP_DEPENDENCIES="$ASTROPY_DEV $ASDF_DEV $GWCS_DEV .[test]"
+           TEST_COMMAND='python setup.py test'
+
+install:
+  - pip install numpy~=$NUMPY_VERSION
+  - if [[ -n $PIP_DEPENDENCIES ]]; then pip install $PIP_DEPENDENCIES; fi
+  - pip install flake8
+
+script: $TEST_COMMAND

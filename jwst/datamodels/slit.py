@@ -10,21 +10,33 @@ class SlitDataModel(DataModel):
     A data model for 2D images.
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
+    data : numpy float32 array
+         The science data
 
-    data : numpy array
-        The science data.
+    dq : numpy uint32 array
+         Data quality array
 
-    dq : numpy array
-        The data quality array.
+    err : numpy float32 array
+         Error array
 
-    err : numpy array
-        The error array.
+    wavelength : numpy float32 array
+         Wavelength array, corrected for zero-point
 
-    relsens : numpy array
-        The relative sensitivity table.
+    barshadow : numpy float32 array
+         Bar shadow correction
+
+    area : numpy float32 array
+         Pixel area map array
+
+    var_poisson : numpy float32 array
+         variance due to poisson noise
+
+    var_rnoise : numpy float32 array
+         variance due to read noise
+
+    pathloss : numpy float32 array
+         pathloss array
 
     """
 
@@ -36,7 +48,6 @@ class SlitDataModel(DataModel):
             self.data = init.data
             self.dq = init.dq
             self.err = init.err
-            self.relsens = init.relsens
             self.area = init.area
             if init.hasattr('wavelength'):
                 self.wavelength = init.wavelength
@@ -63,24 +74,36 @@ class SlitModel(DataModel):
     A data model for 2D images.
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
+    data : numpy float32 array
+         The science data
 
-    data : numpy array
-        The science data.
+    dq : numpy uint32 array
+         Data quality array
 
-    dq : numpy array
-        The data quality array.
+    err : numpy float32 array
+         Error array
 
-    err : numpy array
-        The error array.
+    wavelength : numpy float32 array
+         Wavelength array, corrected for zero-point
 
-    relsens : numpy array
-        The relative sensitivity table.
+    barshadow : numpy float32 array
+         Bar shadow correction
 
-    int_times : table
-        The int_times table
+    area : numpy float32 array
+         Pixel area map array
+
+    var_poisson : numpy float32 array
+         variance due to poisson noise
+
+    var_rnoise : numpy float32 array
+         variance due to read noise
+
+    pathloss : numpy float32 array
+         pathloss array
+
+    int_times : numpy table
+         table of times for each integration
 
     """
     schema_url = "slit.schema.yaml"
@@ -92,7 +115,6 @@ class SlitModel(DataModel):
             self.data = init.data
             self.dq = init.dq
             self.err = init.err
-            self.relsens = init.relsens
             self.area = init.area
             if init.hasattr('wavelength'):
                 self.wavelength = init.wavelength

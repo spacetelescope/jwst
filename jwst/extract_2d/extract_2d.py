@@ -49,11 +49,6 @@ def extract2d(input_model,
                  'NRS_LAMP', 'NRS_AUTOFLAT']
     slitless_modes = ['NIS_WFSS', 'NRC_WFSS', 'NRC_TSGRISM']
 
-    if grism_objects is None:
-        grism_objects = []
-    if not isinstance(grism_objects, list):
-        raise TypeError("Expected grism_objects to be of type list")
-
     exp_type = input_model.meta.exposure.type.upper()
     log.info('EXP_TYPE is {0}'.format(exp_type))
 

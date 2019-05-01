@@ -14,26 +14,33 @@ class RampFitOutputModel(DataModel):
     `ny` and `nx` are the height and width of the image.
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
 
-    slope : numpy array (n_int, max_seg, ny, nx)
+    slope : numpy float32 array (n_int, max_seg, ny, nx)
+        Segment-specific slope
 
-    sigslope : numpy array (n_int, max_seg, ny, nx)
+    sigslope : numpy float32 array (n_int, max_seg, ny, nx)
+        Sigma for segment-specific slope
 
-    var_poisson : numpy array (n_int, max_seg, ny, nx)
+    var_poisson : numpy float32 array (n_int, max_seg, ny, nx)
+        Variance due to poisson noise for segment-specific slope
 
-    var_rnoise : numpy array (n_int, max_seg, ny, nx)
+    var_rnoise : numpy float32 array (n_int, max_seg, ny, nx)
+        Variance due to read noise for segment-specific slope
 
-    yint : numpy array (n_int, max_seg, ny, nx)
+    yint : numpy float32 array (n_int, max_seg, ny, nx)
+        Segment-specific y-intercept
 
-    sigyint : numpy array (n_int, max_seg, ny, nx)
+    sigyint : numpy float32 array (n_int, max_seg, ny, nx)
+        Sigma for segment-specific y-intercept
 
-    pedestal : numpy array (n_int, max_seg, ny, nx)
+    pedestal : numpy float32 array (n_int, max_seg, ny, nx)
+        Pedestal array
 
-    weights : numpy array (n_int, max_seg, ny, nx)
+    weights : numpy float32 array (n_int, max_seg, ny, nx)
+        Weights for segment-specific fits
 
-    crmag : numpy array (n_int, max_seg, ny, nx)
+    crmag : numpy float32 array (n_int, max_seg, ny, nx)
+        Approximate CR magnitudes
     """
     schema_url = "rampfitoutput.schema.yaml"

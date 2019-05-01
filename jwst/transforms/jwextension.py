@@ -2,7 +2,7 @@
 import os.path
 from asdf.extension import AsdfExtension
 from asdf import util
-from .tags import (GratingEquationType, CoordsType, RotationSequenceType, LRSWavelengthType,
+from .tags import (GratingEquationType, CoordsType, RotationSequenceType,
                    Gwa2SlitType, Slit2MsaType, LogicalType, NirissSOSSType, V23ToSkyType,
                    RefractionIndexType, SnellType, MIRI_AB2SliceType, NIRCAMGrismDispersionType,
                    NIRISSGrismDispersionType, TPCorrType)
@@ -10,7 +10,7 @@ from .tags import (GratingEquationType, CoordsType, RotationSequenceType, LRSWav
 from .jwst_types import _jwst_types
 
 
-__all__ = ['GratingEquationType', 'CoordsType', 'RotationSequenceType', 'LRSWavelengthType',
+__all__ = ['GratingEquationType', 'CoordsType', 'RotationSequenceType',
            'Gwa2SlitType', 'Slit2MsaType', 'LogicalType', 'NirissSOSSType', 'V23ToSkyType',
            'RefractionIndexType', 'SnellType', 'MIRI_AB2SliceType', 'NIRCAMGrismDispersionType',
            'NIRISSGrismDispersionType', 'TPCorrType']

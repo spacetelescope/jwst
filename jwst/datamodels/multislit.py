@@ -22,14 +22,38 @@ class MultiSlitModel(model_base.DataModel):
 
     If ``init`` is a file name or an ``ImageModel`` or a ``SlitModel``instance,
     an empty ``SlitModel`` will be created and assigned to attribute ``slits[0]``,
-    and the `data`, ``dq``, ``err``, ``var_rnoise``, ``var_poisson``and
-    ``relsens`` attributes from the input file or model will be copied to the
+    and the `data`, ``dq``, ``err``, ``var_rnoise``, and ``var_poisson``
+    attributes from the input file or model will be copied to the
     first element of ``slits``.
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
+    slits.items.data : numpy float32 array
+         The science data
+
+    slits.items.dq : numpy uint32 array
+         Data quality array
+
+    slits.items.err : numpy float32 array
+         Error array
+
+    slits.items.wavelength : numpy float32 array
+         Wavelength array, corrected for zero-point
+
+    slits.items.barshadow : numpy float32 array
+         Bar shadow correction
+
+    slits.items.area : numpy float32 array
+         Pixel area map array
+
+    slits.items.var_poisson : numpy float32 array
+         variance due to poisson noise
+
+    slits.items.var_rnoise : numpy float32 array
+         variance due to read noise
+
+    slits.items.pathloss : numpy float32 array
+         pathloss array
     """
     schema_url = "multislit.schema.yaml"
 

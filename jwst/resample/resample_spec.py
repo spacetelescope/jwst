@@ -5,7 +5,8 @@ import numpy as np
 
 from astropy import coordinates as coord
 from astropy import units as u
-from astropy.modeling.models import Mapping, Tabular1D, Linear1D
+from astropy.modeling.models import (Mapping, Tabular1D, Linear1D,
+                                     Pix2Sky_TAN, RotateNative2Celestial)
 from astropy.modeling.fitting import LinearLSQFitter
 from gwcs import wcstools, WCS
 from gwcs import coordinate_frames as cf
@@ -97,6 +98,12 @@ class ResampleSpecData:
 
         grid = wcstools.grid_from_bounding_box(bb)
         ra, dec, lam = np.array(refwcs(*grid))
+        lon = np.nanmean(ra)
+        lat = np.nanmean(dec)
+        tan = Pix2Sky_TAN()
+        native2celestial = RotateNative2Celestial(lon, lat, 180)
+        undist2sky = tan | native2celestial
+        x_tan, y_tan = undist2sky.inverse(ra, dec)
 
         spectral_axis = find_dispersion_axis(lam)
         spatial_axis = spectral_axis ^ 1
@@ -109,18 +116,18 @@ class ResampleSpecData:
         # of the dispersion.  Use spectral_axis to determine slicing dimension
         lam_center_index = int((bb[spectral_axis][1] - bb[spectral_axis][0]) / 2)
         if not spectral_axis:
-            ra_array = ra.T[lam_center_index]
-            dec_array = dec.T[lam_center_index]
+            x_tan_array = x_tan.T[lam_center_index]
+            y_tan_array = y_tan.T[lam_center_index]
         else:
-            ra_array = ra[lam_center_index]
-            dec_array = dec[lam_center_index]
-        ra_array = ra_array[~np.isnan(ra_array)]
-        dec_array = dec_array[~np.isnan(dec_array)]
+            x_tan_array = x_tan[lam_center_index]
+            y_tan_array = y_tan[lam_center_index]
+        x_tan_array = x_tan_array[~np.isnan(x_tan_array)]
+        y_tan_array = y_tan_array[~np.isnan(y_tan_array)]
 
         fitter = LinearLSQFitter()
         fit_model = Linear1D()
-        pix_to_ra = fitter(fit_model, np.arange(ra_array.shape[0]), ra_array)
-        pix_to_dec = fitter(fit_model, np.arange(dec_array.shape[0]), dec_array)
+        pix_to_ra = fitter(fit_model, np.arange(x_tan_array.shape[0]), x_tan_array)
+        pix_to_dec = fitter(fit_model, np.arange(y_tan_array.shape[0]), y_tan_array)
 
         # Tabular interpolation model, pixels -> lambda
         pix_to_wavelength = Tabular1D(lookup_table=wavelength_array,
@@ -156,7 +163,7 @@ class ResampleSpecData:
                 mapping.inverse = Mapping(mapping_tuple)
 
         # The final transform
-        transform = mapping | pix_to_ra & pix_to_dec & pix_to_wavelength
+        transform = mapping | (pix_to_ra & pix_to_dec | undist2sky)  & pix_to_wavelength
 
         det = cf.Frame2D(name='detector', axes_order=(0, 1))
         sky = cf.CelestialFrame(name='sky', axes_order=(0, 1),
@@ -173,12 +180,12 @@ class ResampleSpecData:
         # compute the output array size in WCS axes order, i.e. (x, y)
         output_array_size = [0, 0]
         output_array_size[spectral_axis] = len(wavelength_array)
-        output_array_size[spatial_axis] = len(ra_array)
+        output_array_size[spatial_axis] = len(x_tan_array)
 
         # turn the size into a numpy shape in (y, x) order
         self.data_size = tuple(output_array_size[::-1])
 
-        bounding_box = resample_utils.bounding_box_from_shape(self.data_size)
+        bounding_box = resample_utils.wcs_bbox_from_shape(self.data_size)
         output_wcs.bounding_box = bounding_box
 
         return output_wcs
@@ -215,7 +222,7 @@ class ResampleSpecData:
             output_model = self.blank_output.copy()
             output_model.meta.wcs = self.output_wcs
 
-            bb = resample_utils.bounding_box_from_shape(output_model.data.shape)
+            bb = resample_utils.wcs_bbox_from_shape(output_model.data.shape)
             output_model.meta.wcs.bounding_box = bb
             output_model.meta.filename = obs_product
 
@@ -260,7 +267,7 @@ class ResampleSpecData:
             for attr in ['name', 'xstart', 'xsize', 'ystart', 'ysize',
                     'slitlet_id', 'source_id', 'source_name', 'source_alias',
                     'stellarity', 'source_type', 'source_xpos', 'source_ypos',
-                    'shutter_state', 'relsens']:
+                    'shutter_state']:
                 try:
                     val = getattr(img, attr)
                 except AttributeError:

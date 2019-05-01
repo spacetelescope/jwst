@@ -1,9 +1,5 @@
 allOf:
 - $ref: core.schema.yaml
 - $ref: slitdata.schema.yaml
-- type: object
-  properties:
-    int_times:
-      $ref: int_times.schema.yaml
-
+- $ref: int_times.schema.yaml
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

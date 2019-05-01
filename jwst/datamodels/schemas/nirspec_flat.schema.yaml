@@ -44,6 +44,5 @@ allOf:
       - name: data
         shape: [130000]
         datatype: float32
-    dq_def:   
-      $ref: dq_def.schema.yaml
+- $ref: dq_def.schema.yaml
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

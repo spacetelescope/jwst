@@ -19,14 +19,20 @@ class MultiProductModel(model_base.DataModel):
 
     If `init` is a file name or an `DrizProductModel` instance, an empty
     `DrizProductModel` will be created and assigned to attribute `products[0]`,
-    and the `data`, `wht`, `con`, and `relsens` attributes from the
+    and the `data`, `wht`, and `con` attributes from the
     input file or `DrizProductModel` will be copied to the first element of
     `products`.
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
+    products.items.data : numpy float32 array
+         resampled science data
+
+    products.items.wht : numpy float32 array
+         drizzle algorithm weight array
+
+    products.items.con : numpy int32 array
+         drizzle algorithm context array
     """
     schema_url = "multiproduct.schema.yaml"
 
@@ -38,7 +44,6 @@ class MultiProductModel(model_base.DataModel):
             self.products[0].data = init.data
             self.products[0].wht = init.wht
             self.products[0].con = init.con
-            self.products[0].relsens = init.relsens
             return
 
         super(MultiProductModel, self).__init__(init=init, **kwargs)

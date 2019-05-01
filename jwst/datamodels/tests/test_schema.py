@@ -22,6 +22,7 @@ from .. import (DataModel, ImageModel, RampModel, MaskModel,
                 SourceModelContainer, MultiExposureModel)
 from ..schema import merge_property_trees, build_docstring
 
+import asdf
 from asdf import schema as mschema
 
 FITS_FILE = None
@@ -639,3 +640,9 @@ def test_all_datamodels_init(model):
         m = model()
     del m
 
+
+def test_datamodel_schema_entry_points():
+    """Test that entry points for datamodels BaseExtension work with asdf"""
+    resolver = asdf.AsdfFile().resolver
+    mschema.load_schema('http://jwst.stsci.edu/schemas/image.schema.yaml',
+        resolver=resolver, resolve_references=True)

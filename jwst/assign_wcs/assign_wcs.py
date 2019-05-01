@@ -3,15 +3,7 @@ import importlib
 from gwcs.wcs import WCS
 from .util import (update_s_region_spectral, update_s_region_imaging,
                    update_s_region_nrs_ifu, update_s_region_mrs)
-from ..associations.lib.dms_base import (ACQ_EXP_TYPES, IMAGE2_SCIENCE_EXP_TYPES,
-                                         IMAGE2_NONSCIENCE_EXP_TYPES,
-                                         SPEC2_SCIENCE_EXP_TYPES)
-
-IMAGING_TYPES = set(tuple(ACQ_EXP_TYPES) + tuple(IMAGE2_SCIENCE_EXP_TYPES)
-                    + tuple(IMAGE2_NONSCIENCE_EXP_TYPES) +
-                    ('fgs_image', 'fgs_focus'))
-
-SPEC_TYPES = SPEC2_SCIENCE_EXP_TYPES
+from ..lib.exposure_types import IMAGING_TYPES, SPEC_TYPES
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -43,11 +35,7 @@ def load_wcs(input_model, reference_files={}):
     instrument = input_model.meta.instrument.name.lower()
     mod = importlib.import_module('.' + instrument, 'jwst.assign_wcs')
 
-    # Add WCS keywords for the spectral axis.
-    if input_model.meta.wcsinfo.wcsaxes == 3:
-        _add_3rd_axis(input_model)
-
-    if input_model.meta.exposure.type.lower() in SPEC2_SCIENCE_EXP_TYPES:
+    if input_model.meta.exposure.type.lower() in SPEC_TYPES:
         input_model.meta.wcsinfo.specsys = "BARYCENT"
 
     pipeline = mod.create_pipeline(input_model, reference_files)
@@ -66,11 +54,12 @@ def load_wcs(input_model, reference_files={}):
         exclude_types = ['nrc_wfss', 'nrc_tsgrism', 'nis_wfss',
                          'nrs_fixedslit', 'nrs_msaspec',
                          'nrs_autowave', 'nrs_autoflat', 'nrs_lamp',
-                         'nrs_brightobj', 'mir_lrs-fixedslit', 'mir_lrs-slitless',
-                         'nis_soss']
+                         'nrs_brightobj', 'nis_soss']
 
         if output_model.meta.exposure.type.lower() not in exclude_types:
-            if output_model.meta.exposure.type.lower() in IMAGING_TYPES:
+            imaging_types = IMAGING_TYPES.copy()
+            imaging_types.update(['mir_lrs-fixedslit', 'mir_lrs-slitless'])
+            if output_model.meta.exposure.type.lower() in imaging_types:
                 try:
                     update_s_region_imaging(output_model)
                 except Exception as exc:
@@ -91,25 +80,3 @@ def load_wcs(input_model, reference_files={}):
                         output_model.meta.exposure.type, exc))
     log.info("COMPLETED assign_wcs")
     return output_model
-
-
-def _add_3rd_axis(input_model):
-    """
-    Add WCS keywords and their default values for the spectral axis.
-
-    Parameters
-    ----------
-    input_model : `~jwst.datamodels.DataModel`
-        An instance of a datamodel
-
-    Notes
-    -----
-    SDP adds CTYPE3 and CUNIT3.
-
-    """
-    input_model.meta.wcsinfo.pc1_3 = 0.
-    input_model.meta.wcsinfo.pc2_3 = 0.
-    input_model.meta.wcsinfo.pc3_3 = 1.
-    input_model.meta.wcsinfo.crval3 = 0.
-    input_model.meta.wcsinfo.crpix3 = 0.
-    input_model.meta.wcsinfo.cdelt3 = 1.

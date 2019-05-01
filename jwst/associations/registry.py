@@ -22,7 +22,6 @@ from .exceptions import (
     AssociationNotValidError
 )
 from .lib.callback_registry import CallbackRegistry
-from .lib.constraint import ConstraintTrue
 
 __all__ = [
     'AssociationRegistry',
@@ -539,19 +538,3 @@ def get_marked(module, predicate=None, include_bases=False):
                     yield sub_name, sub_obj
             else:
                 yield name, obj
-
-
-# ##########
-# Unit Tests
-# ##########
-def test_import_from_file():
-    from copy import deepcopy
-    from pytest import raises as pytest_raises
-    from tempfile import NamedTemporaryFile
-
-    current_path = deepcopy(sys.path)
-    with NamedTemporaryFile() as junk_fh:
-        junk_path = junk_fh.name
-        with pytest_raises(ImportError):
-            module = import_from_file(junk_path)
-        assert current_path == sys.path
