@@ -37,12 +37,10 @@ def background(tmpdir_factory):
     return filename
 
 
-@pytest.fixture(scope='module')
-def science_image(tmpdir_factory):
+@pytest.fixture(scope='function')
+def science_image():
     """Generate science image"""
 
-    filename = tmpdir_factory.mktemp('background_input')
-    filename = str(filename.join('science_image.fits'))
     image = datamodels.IFUImageModel((10, 10))
     image.data[:,:] = 100
     image.meta.instrument.name = 'NIRSPEC'
@@ -60,19 +58,17 @@ def science_image(tmpdir_factory):
     image.meta.instrument.gwa_ytilt = 0.0001
     image.meta.instrument.gwa_tilt = 37.0610
 
-    image.save(filename)
-    return filename
+    return image
 
 
 def test_nirspec_gwa(_jail, background, science_image):
     """Verify NIRSPEC GWA logic for in the science and background"""
 
-    image = datamodels.open(science_image)
     # open the background to read in the GWA values
     back_image = datamodels.open(background)
-    image.meta.instrument.gwa_xtilt = back_image.meta.instrument.gwa_xtilt
-    image.meta.instrument.gwa_ytilt = back_image.meta.instrument.gwa_ytilt
-    image.meta.instrument.gwa_tilt = back_image.meta.instrument.gwa_tilt
+    science_image.meta.instrument.gwa_xtilt = back_image.meta.instrument.gwa_xtilt
+    science_image.meta.instrument.gwa_ytilt = back_image.meta.instrument.gwa_ytilt
+    science_image.meta.instrument.gwa_tilt = back_image.meta.instrument.gwa_tilt
 
     bkg = [background]
     # Test Run with GWA values the same - confirm it runs
@@ -80,66 +76,61 @@ def test_nirspec_gwa(_jail, background, science_image):
 
     collect_pipeline_cfgs('./config')
     result = BackgroundStep.call(
-        image, bkg,
+        science_image, bkg,
         config_file='config/background.cfg',
         )
 
-    test = image.data - back_image.data
+    test = science_image.data - back_image.data
     assert_allclose(result.data, test)
-    assert type(image) is type(result)
+    assert type(result) is type(science_image)
     assert result.meta.cal_step.back_sub == 'COMPLETE'
     back_image.close()
-    image.close()
 
 
 def test_nirspec_gwa_xtilt(_jail, background, science_image):
     """Verify NIRSPEC GWA Xtilt must be the same in the science and background image"""
 
-    # set up the IFU science image
-    image = datamodels.open(science_image)
-
     # open the background to read in the GWA values
     back_image = datamodels.open(background)
-    image.meta.instrument.gwa_xtilt = back_image.meta.instrument.gwa_xtilt
-    image.meta.instrument.gwa_ytilt = back_image.meta.instrument.gwa_ytilt
-    image.meta.instrument.gwa_tilt = back_image.meta.instrument.gwa_tilt
+    science_image.meta.instrument.gwa_xtilt = back_image.meta.instrument.gwa_xtilt
+    science_image.meta.instrument.gwa_ytilt = back_image.meta.instrument.gwa_ytilt
+    science_image.meta.instrument.gwa_tilt = back_image.meta.instrument.gwa_tilt
 
     bkg = [background]
 
     # Test change xtilt
-    image.meta.instrument.gwa_xtilt = image.meta.instrument.gwa_xtilt + 0.00001
+    science_image.meta.instrument.gwa_xtilt = \
+        science_image.meta.instrument.gwa_xtilt + 0.00001
     collect_pipeline_cfgs('./config')
     result = BackgroundStep.call(
-        image, bkg,
+        science_image, bkg,
         config_file='config/background.cfg',
         )
+    assert type(result) is type(science_image)
     assert result.meta.cal_step.back_sub == 'SKIPPED'
-    image.close()
     back_image.close()
 
 
 def test_nirspec_gwa_ytitl(_jail, background, science_image):
     """Verify NIRSPEC GWA Ytilt must be the same in the science and background image"""
 
-    # set up the IFU science image
-    image = datamodels.open(science_image)
-
     # open the background to read in the GWA values
     back_image = datamodels.open(background)
-    image.meta.instrument.gwa_xtilt = back_image.meta.instrument.gwa_xtilt
-    image.meta.instrument.gwa_ytilt = back_image.meta.instrument.gwa_ytilt
-    image.meta.instrument.gwa_tilt = back_image.meta.instrument.gwa_tilt
+    science_image.meta.instrument.gwa_xtilt = back_image.meta.instrument.gwa_xtilt
+    science_image.meta.instrument.gwa_ytilt = back_image.meta.instrument.gwa_ytilt
+    science_image.meta.instrument.gwa_tilt = back_image.meta.instrument.gwa_tilt
 
     bkg = [background]
 
     # Test different ytilt
-    image.meta.instrument.gwa_ytilt = image.meta.instrument.gwa_ytilt + 0.00001
+    science_image.meta.instrument.gwa_ytilt = \
+        science_image.meta.instrument.gwa_ytilt + 0.00001
     collect_pipeline_cfgs('./config')
     result = BackgroundStep.call(
-        image, bkg,
+        science_image, bkg,
         config_file='config/background.cfg',
         )
+    assert type(result) is type(science_image)
     assert result.meta.cal_step.back_sub == 'SKIPPED'
 
     back_image.close()
-    image.close()
