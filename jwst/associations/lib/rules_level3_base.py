@@ -1,6 +1,7 @@
 """Base classes which define the Level3 Associations"""
 from collections import defaultdict
 import copy
+import pdb
 import logging
 from os.path import (
     basename,
@@ -303,24 +304,15 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         """Add a background to a MIR_lrs-fixedslit observation"""
         for product in self['products']:
             members = product['members']
-
-            # Split out the science vs. non-science
-            # The non-science exposures will get attached
-            # to every resulting association.
+            # Split out the science exposures
             science_exps = [
                 member
                 for member in members
                 if member['exptype'] == 'science'
             ]
-            nonscience_exps = [
-                member
-                for member in members
-                if member['exptype'] != 'science'
-            ]
             # Create new members for each science exposure in the association,
             # using the the base name + _x1d as background.
             results = []
-            new_members = self.current_product['members']
             # Loop over all science exposures in the association
             for science_exp in science_exps:
                 sci_name = science_exp['expname']
@@ -333,10 +325,9 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
                 now_background['expname'] = bkg_name
                 now_background['exptype'] = 'background'
                 # Add the background file to the association table
-                new_members.append(now_background)
+                members.append(now_background)
 
-            new_members += nonscience_exps
-
+            #pdb.set_trace()
             if self.is_valid:
                 results.append(self)
 
