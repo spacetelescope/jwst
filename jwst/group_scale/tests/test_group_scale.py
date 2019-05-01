@@ -97,21 +97,6 @@ def test_scale_value(make_rampmodel):
     assert(scale == scale_from_data[0])
 
 
-# Make this a test eventually. The pipeline step nor the caldetector1 pipeline
-# code checks for instrument specific mode information. We want to make sure 
-# in the future that the group_scale calculation is only run on IRS2 mode data 
-# as defined in the confluence table for this step. Here we set the read pattern 
-# mode to 'NRSIRS2RAPID' to make sure it fails on purpose.
-#
-# @pytest.mark.xfail
-# def test_correction_only_for_irs2(make_rampmodel):
-#     """Make sure pipeline doesnt run correction on data that isnt IRS2
-#     """
-#     datmod = make_rampmodel(2, 2, 4, 2048, 2048)
-#     datmod.meta.readpatt = 'NRSIRS2RAPID'
-#     output = GroupScaleStep.call(datmod)
-
-
 @pytest.fixture(scope='function')
 def make_rampmodel():
     '''Make NIRSPEC IRS2 model for testing'''
