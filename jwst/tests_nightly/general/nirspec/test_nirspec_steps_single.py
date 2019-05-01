@@ -373,14 +373,15 @@ class TestNIRSpecMasterBackgroundNodded(BaseJWSTTest):
         # test 1
         # compare  background subtracted data  to truth files
         # check that the  cal_step master_background ran to complete
+        outputs = []
         for model in result:
             assert model.meta.cal_step.master_background == 'COMPLETE'
 
             result_file = model.meta.filename.replace('cal', 'master_background')
             truth_file = self.get_data(*self.ref_loc, result_file)
 
-            outputs = [(result_file, truth_file)]
-            self.compare_outputs(outputs)
+            outputs.append((result_file, truth_file))
+        self.compare_outputs(outputs)
 
 
         # test 2
