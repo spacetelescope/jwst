@@ -29,12 +29,9 @@ def user_background(tmpdir_factory):
     return filename
 
 
-@pytest.fixture(scope='module')
-def science_image(tmpdir_factory):
+@pytest.fixture(scope='function')
+def science_image():
     """Generate science image """
-
-    filename = tmpdir_factory.mktemp('master_background_image')
-    filename = str(filename.join('science_image.fits'))
 
     image = datamodels.ImageModel((10, 10))
     image.meta.instrument.name = 'MIRI'
@@ -50,8 +47,7 @@ def science_image(tmpdir_factory):
     image.meta.wcsinfo.ra_ref = 0
     image.meta.wcsinfo.dec_ref = 0
     image = AssignWcsStep.call(image)
-    image.save(filename)
-    return filename
+    return image
 
 
 def test_master_background_userbg(_jail, user_background, science_image):
@@ -65,11 +61,8 @@ def test_master_background_userbg(_jail, user_background, science_image):
         user_background=user_background,
         )
 
-    # with the fixture science_image is a filename now - should
-    # I use datamodels open to  compre
-    # For inputs that are not files, the following should be true
-    # assert type(science_image) is type(result)
-    # assert result is not science_image
+    assert type(science_image) is type(result)
+    assert result is not science_image
     assert result.meta.cal_step.master_background == 'COMPLETE'
     assert result.meta.background.master_background_file == 'user_background.fits'
 
@@ -77,28 +70,28 @@ def test_master_background_userbg(_jail, user_background, science_image):
 def test_master_background_logic(_jail, user_background, science_image):
     """Verify if calspec 2 background step was run the master background step will be skipped"""
 
-    image = datamodels.open(science_image)
-    image.meta.cal_step.back_sub = 'COMPLETE'
+    # the background step in calspec2 was done
+    science_image.meta.cal_step.back_sub = 'COMPLETE'
 
     # Run with a user-supplied background
     collect_pipeline_cfgs('./config')
     result = MasterBackgroundStep.call(
-        image,
+        science_image,
         config_file='config/master_background.cfg',
         user_background=user_background,
         )
 
     assert result.meta.cal_step.master_background == 'SKIPPED'
-    assert type(image) is type(result)
+    assert type(science_image) is type(result)
 
     # Now force it
     result = MasterBackgroundStep.call(
-        image,
+        science_image,
         config_file='config/master_background.cfg',
         user_background=user_background,
         force_subtract=True
         )
 
     assert result.meta.cal_step.master_background == 'COMPLETE'
-    assert type(image) is type(result)
-    image.close()
+    assert type(science_image) is type(result)
+    
