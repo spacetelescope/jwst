@@ -1,7 +1,6 @@
 """Base classes which define the Level3 Associations"""
 from collections import defaultdict
 import copy
-import pdb
 import logging
 from os.path import (
     basename,
@@ -327,7 +326,6 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
                 # Add the background file to the association table
                 members.append(now_background)
 
-            #pdb.set_trace()
             if self.is_valid:
                 results.append(self)
 
