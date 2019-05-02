@@ -3,10 +3,11 @@ import numpy as np
 
 from numpy.testing import assert_allclose
 from gwcs.wcstools import grid_from_bounding_box
-from jwst.tests.base_classes import BaseJWSTTest
+from jwst.tests.base_classes import BaseJWSTTest, raw_from_asn
 from jwst.assign_wcs import AssignWcsStep, nirspec
 from jwst.datamodels import ImageModel
 from jwst.pipeline import Detector1Pipeline, Spec2Pipeline
+from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.imprint import ImprintStep
 from jwst.ramp_fitting import RampFitStep
 from jwst.extract_1d import Extract1dStep
@@ -345,3 +346,50 @@ class TestNIRSpecMasterBackground_MOS(BaseJWSTTest):
         outputs = [(result_file, ref_file)]
         self.compare_outputs(outputs)
         result.close()
+
+@pytest.mark.bigdata
+class TestNIRSpecMasterBackgroundNodded(BaseJWSTTest):
+    input_loc = 'nirspec'
+    ref_loc = ['test_masterbackground', 'nrs-ifu', 'nodded', 'truth']
+    test_dir = ['test_masterbackground', 'nrs-ifu', 'nodded']
+
+    rtol = 0.000001
+
+    def test_nirspec_masterbg_nodded(self):
+        """Run masterbackground step on NIRSpec association"""
+        asn_file = self.get_data(*self.test_dir,
+                                  'nirspec_spec3_asn.json')
+        for file in raw_from_asn(asn_file):
+            self.get_data(*self.test_dir, file)
+
+        collect_pipeline_cfgs('./config')
+        result = MasterBackgroundStep.call(
+            asn_file,
+            config_file='config/master_background.cfg',
+            save_background=True,
+            save_results=True
+            )
+
+        # test 1
+        # compare  background subtracted data  to truth files
+        # check that the  cal_step master_background ran to complete
+        outputs = []
+        for model in result:
+            assert model.meta.cal_step.master_background == 'COMPLETE'
+
+            result_file = model.meta.filename.replace('cal', 'master_background')
+            truth_file = self.get_data(*self.ref_loc, result_file)
+
+            outputs.append((result_file, truth_file))
+        self.compare_outputs(outputs)
+
+
+        # test 2
+        # compare the master background combined file to truth file
+        master_combined_bkg_file = 'ifu_prism_source_off_fix_NRS1_o001_masterbg.fits'
+        truth_background = self.get_data(*self.ref_loc,
+                                          master_combined_bkg_file)
+        outputs = [(master_combined_bkg_file, truth_background)]
+        self.compare_outputs(outputs)
+
+
