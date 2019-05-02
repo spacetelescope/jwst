@@ -274,7 +274,7 @@ def test_msa_configuration_normal():
     # Test 1: Reasonably normal as well
     msa_meta_id = 12
     msaconfl = get_file_path('msa_configuration.fits')
-    slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
+    slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id, slit_y_range=[-.5, .5])
     ref_slit = Slit(55, 9376, 251, 26, -5.15, 0.55, 4, 1, '1111x', '95065_1', '2122',
                       0.13, -0.31716078999999997, 0.18092266)
     _compare_slits(slitlet_info[0], ref_slit)
@@ -299,7 +299,7 @@ def test_msa_configuration_all_background():
     # Test 3:  No non-background, not acceptable.
     msa_meta_id = 14
     msaconfl = get_file_path('msa_configuration.fits')
-    slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
+    slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id, slit_y_range=[-.5, .5])
     ref_slit = Slit(57, 8646, 251, 24, -2.85, .55, 4, 1, '11x', '95065_1', '2122',
                     0.13, -0.5, 0.5)
     _compare_slits(slitlet_info[0], ref_slit)
@@ -314,7 +314,7 @@ def test_msa_configuration_row_skipped():
     # Test 4: One row is skipped, should be acceptable.
     msa_meta_id = 15
     msaconfl = get_file_path('msa_configuration.fits')
-    slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
+    slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id, slit_y_range=[-.5, .5])
     ref_slit = Slit(58, 8646, 251, 24, -2.85, 5.15, 4, 1, '11x1011', '95065_1', '2122',
                       0.130, -0.31716078999999997, 0.18092266)
     _compare_slits(slitlet_info[0], ref_slit)
@@ -327,7 +327,7 @@ def test_msa_configuration_multiple_returns():
     # Test 4: One row is skipped, should be acceptable.
     msa_meta_id = 16
     msaconfl = get_file_path('msa_configuration.fits')
-    slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
+    slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id, slit_y_range=[-.5, .5])
     ref_slit1 = Slit(59, 8651, 256, 24, -2.85, 5.15, 4, 1, '11x1011', '95065_1', '2122',
                      0.13000000000000003, -0.31716078999999997, 0.18092266)
     ref_slit2 = Slit(60, 11573, 258, 32, -2.85, 4, 4, 2, '11x111', '95065_2', '172',
