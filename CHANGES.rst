@@ -22,6 +22,8 @@ barshadow
 - Updated to apply the correction to the science data arrays, in addition
   to attaching as an extension. [#3319]
 
+- Updated to apply the square of the correction to VAR_FLAT [#3427]
+
 calwebb_spec3
 -------------
 
@@ -120,6 +122,8 @@ pathloss
 
 - Updated to apply the correction to the science data and err arrays. [#3323]
 
+- Updated to apply the square of the correction to VAR_FLAT [#3427]
+
 photom
 ------
 
@@ -128,6 +132,8 @@ photom
 
 - Updated to compute a wavelength array for NIRISS SOSS exposures using
   spectral order 1. [#3387]
+
+- Updated to apply the square of the correction to VAR_FLAT [#3427]
 
 reffile_utils
 -------------
