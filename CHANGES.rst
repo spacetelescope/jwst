@@ -33,6 +33,10 @@ combine_1d
 - Fix call to wcs.invert, and don't weight flux by sensitivity if the net
   column is all zeros. [#3274]
 
+- Modified to use the same columns as now written by extract_1d.
+  The background parameter has been removed, since dividing by npixels
+  is now done in extract_1d. [#3412]
+
 datamodels
 ----------
 
@@ -75,6 +79,11 @@ extract_1d
   background subtraction.  For non-IFU data, a try/except block was added
   to check for a WCS that does not have an inverse.  Some code (but not
   all) for the now-obsolete RELSENS extension has been deleted. [#3390]
+
+- This now writes columns SURF_BRIGHT and SB_ERROR instead of NET and
+  NERROR.  The BACKGROUND column is divided by NPIXELS, so the units will
+  be surface brightness.  This step no longer looks for a RELSENS
+  extension. [#3412]
 
 
 flatfield
