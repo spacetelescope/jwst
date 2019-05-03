@@ -44,7 +44,9 @@ on the wavelength at each pixel.
 
 The combination of the scalar conversion factor and the 2-D response values are
 then applied to the science data, including the SCI and ERR arrays, as well as
-the variance (VAR_POISSON and VAR_RNOISE) arrays.
+the variance (VAR_POISSON, VAR_RNOISE, and VAR_FLAT) arrays.
+The correction values are divided into the SCI and ERR arrays, and the square
+of the correction values are divided into the variance arrays.
 
 The scalar conversion constant is copied to the header keyword PHOTMJSR, which
 gives the conversion from DN/s to MegaJy/steradian that was applied to the data.
