@@ -80,9 +80,7 @@ class Extract1dError(Exception):
 
 class InvalidSpectralOrderNumberError(Extract1dError):
     """The spectral order number was invalid or off the detector."""
-    def __init__(self, message=None):
-        super().__init__()
-        self.message = message
+    pass
 
 
 def load_ref_file(refname):
