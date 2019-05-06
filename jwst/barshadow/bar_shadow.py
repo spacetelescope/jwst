@@ -105,6 +105,8 @@ def do_correction(input_model, barshadow_model):
                 slitlet.err /= correction
                 slitlet.var_poisson /= correction**2
                 slitlet.var_rnoise /= correction**2
+                if slitlet.var_flat is not None and np.size(slitlet.var_flat) > 0:
+                    slitlet.var_flat /= correction**2
             else:
                 log.info("Slitlet %d has zero length, correction skipped" % slitlet_number)
 

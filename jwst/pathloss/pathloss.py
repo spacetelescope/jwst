@@ -229,6 +229,8 @@ def do_correction(input_model, pathloss_model):
                         slit.err /= pathloss_2d
                         slit.var_poisson /= pathloss_2d**2
                         slit.var_rnoise /= pathloss_2d**2
+                        if slit.var_flat is not None and np.size(slit.var_flat) > 0:
+                            slit.var_flat /= pathloss_2d**2
                         slit.pathloss = pathloss_2d
                     else:
                         log.warning("Source is outside slit.  Skipping "
@@ -292,6 +294,8 @@ def do_correction(input_model, pathloss_model):
                     slit.err /= pathloss_2d
                     slit.var_poisson /= pathloss_2d**2
                     slit.var_rnoise /= pathloss_2d**2
+                    if slit.var_flat is not None and np.size(slit.var_flat) > 0:
+                        slit.var_flat /= pathloss_2d**2
                     slit.pathloss = pathloss_2d
                 else:
                     log.warning("Source is outside slit.  Skipping "
@@ -352,6 +356,8 @@ def do_correction(input_model, pathloss_model):
         output_model.err /= pathloss_2d
         output_model.var_poisson /= pathloss_2d**2
         output_model.var_rnoise /= pathloss_2d**2
+        if output_model.var_flat is not None and np.size(output_model.var_flat) > 0:
+            output_model.var_flat /= pathloss_2d**2
         output_model.pathloss = pathloss_2d
 
         # This might be useful to other steps
@@ -426,6 +432,8 @@ def do_correction(input_model, pathloss_model):
         output_model.err /= pathloss_2d
         output_model.var_poisson /= pathloss_2d**2
         output_model.var_rnoise /= pathloss_2d**2
+        if output_model.var_flat is not None and np.size(output_model.var_flat) > 0:
+            output_model.var_flat /= pathloss_2d**2
         output_model.pathloss = pathloss_2d
 
         output_model.meta.cal_step.pathloss = 'COMPLETE'

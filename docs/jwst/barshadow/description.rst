@@ -41,9 +41,10 @@ heights to shutter spacings, and then the Y and wavelength values are interpolat
 into the model to determine the correction for each pixel.
 
 Once the 2-D correction array for a slit has been computed, it is applied to the
-science (SCI), error (ERR), and Poisson variance (VAR_POISSON) data arrays of the slit.
+science (SCI), error (ERR), and variance (VAR_POISSON, VAR_RNOISE, and
+VAR_FLAT) data arrays of the slit.
 The correction values are divided into the SCI and ERR arrays, and the square of the
-correction values are divided into the VAR_POISSON array.
+correction values are divided into the variance arrays.
 
 Output product
 --------------
