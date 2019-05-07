@@ -38,7 +38,7 @@ __all__ = ["create_pipeline", "imaging", "ifu", "slits_wcs", "get_open_slits", "
            "nrs_ifu_wcs", "get_spectral_order_wrange"]
 
 
-def create_pipeline(input_model, reference_files):
+def create_pipeline(input_model, reference_files, slit_y_range):
     """
     Create a pipeline list based on EXP_TYPE.
 
@@ -48,12 +48,14 @@ def create_pipeline(input_model, reference_files):
         The input exposure.
     reference_files : dict
         {reftype: reference_file_name} mapping.
+    slit_y_range : list
+        The slit Y-range for Nirspec slits, relative to (0, 0) in the center.
     """
-    exp_type = input_model.meta.exposure.type.lower()    
+    exp_type = input_model.meta.exposure.type.lower()
     if input_model.meta.instrument.grating.lower() == "mirror":
         pipeline = imaging(input_model, reference_files)
     else:
-        pipeline = exp_type2transform[exp_type](input_model, reference_files)
+        pipeline = exp_type2transform[exp_type](input_model, reference_files, slit_y_range=slit_y_range)
     if pipeline:
         log.info("Created a NIRSPEC {0} pipeline with references {1}".format(
                 exp_type, reference_files))
@@ -139,7 +141,7 @@ def imaging(input_model, reference_files):
     return imaging_pipeline
 
 
-def ifu(input_model, reference_files):
+def ifu(input_model, reference_files, slit_y_range=[-.55, .55]):
     """
     The Nirspec IFU WCS pipeline.
 
@@ -152,6 +154,15 @@ def ifu(input_model, reference_files):
     "msa_frame" : at the MSA
     "oteip" : after the FWA
     "v2v3" and "world"
+
+    Parameters
+    ----------
+    input_model : `~jwst.datamodels.DataModel`
+        The input data model.
+    reference_files : dict
+        The reference files used for this mode.
+    slit_y_range : list
+        The slit dimensions relative to the center of the slit.
     """
     detector = input_model.meta.instrument.detector
     grating = input_model.meta.instrument.grating
@@ -181,10 +192,12 @@ def ifu(input_model, reference_files):
     # DMS to SCA transform
     dms2detector = dms_to_sca(input_model)
     # DETECTOR to GWA transform
-    det2gwa = Identity(2) & detector_to_gwa(reference_files, input_model.meta.instrument.detector, disperser)
+    det2gwa = Identity(2) & detector_to_gwa(reference_files,
+                                            input_model.meta.instrument.detector,
+                                            disperser)
 
     # GWA to SLIT
-    gwa2slit = gwa_to_ifuslit(slits, input_model, disperser, reference_files)
+    gwa2slit = gwa_to_ifuslit(slits, input_model, disperser, reference_files, slit_y_range)
 
     # SLIT to MSA transform
     slit2slicer = ifuslit_to_slicer(slits, reference_files, input_model)
@@ -232,7 +245,7 @@ def ifu(input_model, reference_files):
     return pipeline
 
 
-def slits_wcs(input_model, reference_files):
+def slits_wcs(input_model, reference_files, slit_y_range):
     """
     The WCS pipeline for MOS and fixed slits.
 
@@ -246,8 +259,16 @@ def slits_wcs(input_model, reference_files):
     "v2v3" : at V2V3
     "world" : sky and spectral
 
+    Parameters
+    ----------
+    input_model : `~jwst.datamodels.DataModel`
+        The input data model.
+    reference_files : dict
+        The reference files used for this mode.
+    slit_y_range : list
+        The slit dimensions relative to the center of the slit.
     """
-    open_slits_id = get_open_slits(input_model, reference_files)
+    open_slits_id = get_open_slits(input_model, reference_files, slit_y_range)
     if not open_slits_id:
         return None
     n_slits = len(open_slits_id)
@@ -261,9 +282,10 @@ def slits_wcs(input_model, reference_files):
 def slitlets_wcs(input_model, reference_files, open_slits_id):
     """
     Create The WCS piepline for MOS and Fixed slits for the
-    specific opened shutters/slits.
+    specific opened shutters/slits. ``slit_y_range`` is taken from
+    ``slit.ymin`` and ``slit.ymax``.
 
-    Note: This function is also used bby the ``msaflagopen`` step.
+    Note: This function is also used by the ``msaflagopen`` step.
     """
     # Get the corrected disperser model
     disperser = get_disperser(input_model, reference_files['disperser'])
@@ -328,19 +350,19 @@ def slitlets_wcs(input_model, reference_files, open_slits_id):
     return msa_pipeline
 
 
-def get_open_slits(input_model, reference_files=None):
+def get_open_slits(input_model, reference_files=None, slit_y_range=[-.55, .55]):
     """Return the opened slits/shutters in a MOS or Fixed Slits exposure.
     """
     exp_type = input_model.meta.exposure.type.lower()
     if exp_type in ["nrs_msaspec", "nrs_autoflat"]:
         msa_metadata_file, msa_metadata_id = get_msa_metadata(input_model, reference_files)
-        slits = get_open_msa_slits(msa_metadata_file, msa_metadata_id)
+        slits = get_open_msa_slits(msa_metadata_file, msa_metadata_id, slit_y_range)
     elif exp_type == "nrs_fixedslit":
-        slits = get_open_fixed_slits(input_model)
+        slits = get_open_fixed_slits(input_model, slit_y_range)
     elif exp_type == "nrs_brightobj":
-        slits = [Slit('S1600A1', 3, 0, 0, -.5, .5, 5)]
+        slits = [Slit('S1600A1', 3, 0, 0, slit_y_range[0], slit_y_range[1], 5)]
     elif exp_type == "nrs_lamp":
-        slits = get_open_fixed_slits(input_model)
+        slits = get_open_fixed_slits(input_model, slit_y_range)
     else:
         raise ValueError("EXP_TYPE {0} is not supported".format(exp_type.upper()))
     if reference_files is not None:
@@ -354,16 +376,17 @@ def get_open_slits(input_model, reference_files=None):
     return slits
 
 
-def get_open_fixed_slits(input_model):
+def get_open_fixed_slits(input_model, slit_y_range=[-.55, .55]):
     """ Return the opened fixed slits."""
     if input_model.meta.subarray.name is None:
         raise ValueError("Input file is missing SUBARRAY value/keyword.")
     slits = []
-    s2a1 = Slit('S200A1', 0, 0, 0, -.5, .5, 5)
-    s2a2 = Slit('S200A2', 1, 0, 0, -.5, .5, 5)
-    s4a1 = Slit('S400A1', 2, 0, 0, -.5, .5, 5)
-    s16a1 = Slit('S1600A1', 3, 0, 0, -.5, .5, 5)
-    s2b1 = Slit('S200B1', 4, 0, 0, -.5, .5, 5)
+    ylow, yhigh = slit_y_range
+    s2a1 = Slit('S200A1', 0, 0, 0, ylow, yhigh, 5)
+    s2a2 = Slit('S200A2', 1, 0, 0, ylow, yhigh, 5)
+    s4a1 = Slit('S400A1', 2, 0, 0, ylow, yhigh, 5)
+    s16a1 = Slit('S1600A1', 3, 0, 0, ylow, yhigh, 5)
+    s2b1 = Slit('S200B1', 4, 0, 0, ylow, yhigh, 5)
 
     subarray = input_model.meta.subarray.name.upper()
     if subarray == "SUBS200A1":
@@ -404,7 +427,7 @@ def get_msa_metadata(input_model, reference_files):
     return msa_config, msa_metadata_id
 
 
-def get_open_msa_slits(msa_file, msa_metadata_id):
+def get_open_msa_slits(msa_file, msa_metadata_id, slit_y_range=[-.55, .55]):
     """
     Return the opened MOS slitlets.
 
@@ -444,7 +467,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id):
 
     """
     slitlets = []
-
+    ylow, yhigh = slit_y_range
     # If they passed in a string then we shall assume it is the filename
     # of the configuration file.
     try:
@@ -491,9 +514,9 @@ def get_open_msa_slits(msa_file, msa_metadata_id):
             jmin = min([s['shutter_column'] for s in slitlets_sid])
             jmax = max([s['shutter_column'] for s in slitlets_sid])
             j = jmin + (jmax - jmin) // 2 + 1
-            ymax = 0.5 + margin + (jmax - j) * 1.15
+            ymax = yhigh + margin + (jmax - j) * 1.15
             ## TODO: check this formula - it is different (assuming it's incorrect in the report).
-            ymin = -(0.5 + margin) + (jmin - j) * 1.15
+            ymin = -(-ylow + margin) + (jmin - j) * 1.15
             quadrant = slitlets_sid[0]['shutter_quadrant']
             ycen = j
             xcen = slitlets_sid[0]['shutter_row']  # grab the first as they are all the same
@@ -511,8 +534,8 @@ def get_open_msa_slits(msa_file, msa_metadata_id):
             jmin = min([s['shutter_column'] for s in slitlets_sid])
             jmax = max([s['shutter_column'] for s in slitlets_sid])
             j = ycen
-            ymax = 0.5 + margin + (jmax - j) * 1.15
-            ymin = -(0.5 + margin) + (jmin - j) * 1.15
+            ymax = yhigh + margin + (jmax - j) * 1.15
+            ymin = -(-ylow + margin) + (jmin - j) * 1.15
 
         # Not allowed....
         else:
@@ -713,7 +736,7 @@ def slit_to_msa(open_slits, msafile):
     return Slit2Msa(slits, models)
 
 
-def gwa_to_ifuslit(slits, input_model, disperser, reference_files):
+def gwa_to_ifuslit(slits, input_model, disperser, reference_files, slit_y_range):
     """
     The transform from ``gwa`` to ``slit_frame``.
 
@@ -729,14 +752,15 @@ def gwa_to_ifuslit(slits, input_model, disperser, reference_files):
         The grating used in the observation.
     reference_files: dict
         Dictionary with reference files returned by CRDS.
+    slit_y_range : list or tuple of size 2
+        The lower and upper bounds of a slit.
 
     Returns
     -------
     model : `~jwst.transforms.Gwa2Slit` model.
         Transform from ``gwa`` frame to ``slit_frame``.
    """
-    ymin = -.55
-    ymax = .55
+    ymin, ymax = slit_y_range
 
     agreq = angle_from_disperser(disperser, input_model)
     lgreq = wavelength_from_disperser(disperser, input_model)
@@ -774,7 +798,7 @@ def gwa_to_ifuslit(slits, input_model, disperser, reference_files):
         # construct IFU post transform
         ifupost_transform = _create_ifupost_transform(ifupost_sl)
         msa2gwa = ifuslicer_transform & Const1D(lam_cen) | ifupost_transform | collimator2gwa
-        gwa2slit = gwa_to_ymsa(msa2gwa, lam_cen=lam_cen)# TODO: Use model sets here
+        gwa2slit = gwa_to_ymsa(msa2gwa, lam_cen=lam_cen, slit_y_range=slit_y_range)# TODO: Use model sets here
 
         # The commnts below list the input coordinates.
         bgwa2msa = (
@@ -805,7 +829,8 @@ def gwa_to_ifuslit(slits, input_model, disperser, reference_files):
     return Gwa2Slit(slits, slit_models)
 
 
-def gwa_to_slit(open_slits, input_model, disperser, reference_files):
+def gwa_to_slit(open_slits, input_model, disperser,
+                reference_files):
     """
     The transform from ``gwa`` to ``slit_frame``.
 
@@ -871,7 +896,7 @@ def gwa_to_slit(open_slits, input_model, disperser, reference_files):
                 slitdata_model = get_slit_location_model(slitdata)
                 msa_transform = (slitdata_model | msa_model)
                 msa2gwa = (msa_transform | collimator2gwa)
-                gwa2msa = gwa_to_ymsa(msa2gwa, slit=slit)# TODO: Use model sets here
+                gwa2msa = gwa_to_ymsa(msa2gwa, slit=slit, slit_y_range=(slit.ymin, slit.ymax))# TODO: Use model sets here
                 bgwa2msa = Mapping((0, 1, 0, 1), n_inputs=3) | \
                     Const1D(0) * Identity(1) & Const1D(-1) * Identity(1) & Identity(2) | \
                     Identity(1) & gwa2msa & Identity(2) | \
@@ -1024,7 +1049,7 @@ def dms_to_sca(input_model):
     return subarray2full | model
 
 
-def mask_slit(ymin=-.5, ymax=.5):
+def mask_slit(ymin=-.55, ymax=.55):
     """
     Returns a model which masks out pixels in a NIRSpec cutout outside the slit.
 
@@ -1052,7 +1077,7 @@ def mask_slit(ymin=-.5, ymax=.5):
     return model
 
 
-def compute_bounding_box(slit2detector, wavelength_range, slit_ymin=-.5, slit_ymax=.5):
+def compute_bounding_box(slit2detector, wavelength_range, slit_ymin=-.55, slit_ymax=.55):
     """
     Compute the bounding box of the projection of a slit/slice on the detector.
 
@@ -1348,7 +1373,7 @@ def get_slit_location_model(slitdata):
     return model
 
 
-def gwa_to_ymsa(msa2gwa_model, lam_cen=None, slit=None):
+def gwa_to_ymsa(msa2gwa_model, lam_cen=None, slit=None, slit_y_range=None):
     """
     Determine the linear relation d_y(beta_in) for the aperture on the detector.
 
@@ -1356,12 +1381,20 @@ def gwa_to_ymsa(msa2gwa_model, lam_cen=None, slit=None):
     ----------
     msa2gwa_model : `astropy.modeling.core.Model`
         The transform from the MSA to the GWA.
+    lam_cen : float
+        Central wavelength in meters.
+    slit : `~jwst.transforms.models.Slit`
+        A Fixed slit or MOS slitlet.
+    slit_y_range: list or tuple of size 2
+        The lower and upper limit of the slit.
+        Used for IFU mode only.
     """
     nstep = 1000
     if slit is not None:
         ymin, ymax = slit.ymin, slit.ymax
     else:
-        ymin, ymax = (-.55, .55)
+        # The case of IFU data.
+        ymin, ymax = slit_y_range
     dy = np.linspace(ymin, ymax, nstep)
     dx = np.zeros(dy.shape)
     if lam_cen is not None:
