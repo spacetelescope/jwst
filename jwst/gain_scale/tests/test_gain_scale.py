@@ -11,23 +11,24 @@ import pytest
 def test_correction(make_rampmodel):
     """Make sure correct gain factor is applied
     """
-    datmod = make_rampmodel(2, 2048, 2048)
+    datmod = make_rampmodel(2, 50, 50)
     output = do_correction(datmod, 
                            gain_factor=datmod.meta.exposure.gain_factor)
 
     assert(output.meta.cal_step.gain_scale == 'COMPLETE')
-    assert np.all(output.err == datmod.err*datmod.meta.exposure.gain_factor)
+    assert np.all(output.err == datmod.err * datmod.meta.exposure.gain_factor)
+    assert np.all(output.data == datmod.data * datmod.meta.exposure.gain_factor)
 
 
 def test_step(make_rampmodel):
     """Make sure correct gain factor is applied at step level
     """
-    datmod = make_rampmodel(2, 2048, 2048)
+    datmod = make_rampmodel(2, 50, 50)
     output = GainScaleStep.call(datmod)
 
     assert(output.meta.cal_step.gain_scale == 'COMPLETE')
-    assert np.all(output.err == datmod.err*datmod.meta.exposure.gain_factor)
-    assert np.all(output.data == datmod.data*datmod.meta.exposure.gain_factor)
+    assert np.all(output.err == datmod.err * datmod.meta.exposure.gain_factor)
+    assert np.all(output.data == datmod.data * datmod.meta.exposure.gain_factor)
 
 
 @pytest.fixture(scope='function')
@@ -47,11 +48,6 @@ def make_rampmodel():
 
         dm.meta.instrument.name = 'NIRSPEC'
         dm.meta.date = '2018-01-01'
-        dm.meta.description = 'Fake data'
-        dm.meta.reftype = 'RampModel'
-        dm.meta.author = 'Mees'
-        dm.meta.pedigree = 'Dummy'
-        dm.meta.useafter = '2015-10-01T00:00:00'
         dm.meta.instrument.detector= 'NRS1'
         dm.meta.observation.date = '2018-01-01'
 
