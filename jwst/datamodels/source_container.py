@@ -1,4 +1,4 @@
-from . import ModelContainer, MultiExposureModel
+from . import ModelContainer, MultiExposureModel, SlitModel
 
 __all__ = ['SourceModelContainer']
 
@@ -25,7 +25,14 @@ class SourceModelContainer(ModelContainer):
             self._multiexposure = init._multiexposure
         elif isinstance(init, MultiExposureModel):
             super(SourceModelContainer, self).__init__(init=None, **kwargs)
-            self._models = init.exposures
+
+            # Convert each exposure to an actual ImageModel
+            models = []
+            for exposure in init.exposures:
+                model = SlitModel()
+                model._instance.update(exposure._instance)
+                models.append(model)
+            self._models = models
             self._multiexposure = init
 
     def save(self,
