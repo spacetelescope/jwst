@@ -802,3 +802,14 @@ class AsnMixin_Spectrum(AsnMixin_Science):
 
         self.data['asn_type'] = 'spec3'
         super(AsnMixin_Spectrum, self)._init_hook(item)
+
+class Constraint_Special_BKG(DMSAttrConstraint):
+    """Select on backgrounds and other auxilliary images"""
+    def __init__(self):
+        super(Constraint_Special_BKG, self).__init__(
+            name='is_special',
+            sources=[
+                'bkgdtarg',
+            ],
+            reduce=Constraint.any
+        )

@@ -7,7 +7,8 @@ from jwst.associations.lib.dms_base import (ACQ_EXP_TYPES, Constraint_TSO)
 from jwst.associations.lib.rules_level3_base import *
 from jwst.associations.lib.rules_level3_base import (
     dms_product_name_sources,
-    format_product
+    format_product,
+    Constraint_Special_BKG
 )
 
 __all__ = [
@@ -273,6 +274,7 @@ class Asn_IFU(AsnMixin_Spectrum):
         self.constraints = Constraint([
             Constraint_Target(),
             Constraint_IFU(),
+            Constraint_Special_BKG(),
         ])
 
         # Check and continue initialization.
