@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 def detect_jumps (input_model, gain_model, readnoise_model,
-                  rejection_threshold, do_yint, signal_threshold, max_cores):
+                  rejection_threshold, do_yint, signal_threshold, max_cores=None):
     """
     This is the high-level controlling routine for the jump detection process.
     It loads and sets the various input data and parameters needed by each of
@@ -31,17 +31,18 @@ def detect_jumps (input_model, gain_model, readnoise_model,
     image.  Also, a 2-dimensional read noise array with appropriate values for
     each pixel is passed to the detection methods.
     """
-    num_cores = psutil.cpu_count(logical = True)
-    log.info("Found %d possible cores to use for jump detection " % num_cores)
-    if max_cores == 'one':
-        numslices = np.int(1)
-    elif max_cores == 'quarter':
-        numslices = np.int(np.floor(num_cores/4))
-    elif max_cores == 'half':
-        numslices = np.int(np.floor(num_cores/2))
-    elif max_cores == 'all':
-        numslices = np.int(num_cores)
-    log.info("Creating %d processes for jump detection " % numslices)
+    if max_cores is None:
+        numslices = 1
+    else:
+        num_cores = psutil.cpu_count(logical = True)
+        log.info("Found %d possible cores to use for jump detection " % num_cores)
+        if max_cores == 'quarter':
+            numslices = num_cores // 4
+        elif max_cores == 'half':
+            numslices = num_cores // 2
+        elif max_cores == 'all':
+            numslices = num_cores
+        log.info("Creating %d processes for jump detection " % numslices)
     pool = multiprocessing.Pool(processes=numslices)
 
     # Load the data arrays that we need from the input model

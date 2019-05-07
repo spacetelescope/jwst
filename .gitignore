@@ -8,8 +8,7 @@ dist/
 *.egg-info/
 *.so
 *.prof
-.*
-.gitignore
+.idea
 */version.py
 docs/*/source/*.txt.rst
 docs/generated
