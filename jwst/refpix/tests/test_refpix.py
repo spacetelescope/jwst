@@ -505,11 +505,26 @@ def test_do_top_bottom_correction(setup_cube):
         even_rmean = np.mean([bottom_even_amps[i], top_even_amps[i]])
         odd_rmean = np.mean([bottom_odd_amps[i], top_odd_amps[i]])
         rmean = np.mean([even_rmean, odd_rmean])
-        np.testing.assert_almost_equal(np.mean(input_model.data[0, 0, :4, abounds[i]:abounds[i+1]:2]), bottom_even_amps[i] - even_rmean, decimal=1)
-        np.testing.assert_almost_equal(np.mean(input_model.data[0, 0, :4, abounds[i]+1:abounds[i+1]:2]), bottom_odd_amps[i] - odd_rmean, decimal=1)
-        np.testing.assert_almost_equal(np.mean(input_model.data[0, 0, -4:, abounds[i]:abounds[i+1]:2]), top_even_amps[i] - even_rmean, decimal=1)
-        np.testing.assert_almost_equal(np.mean(input_model.data[0, 0, -4:, abounds[i]+1:abounds[i+1]:2]), top_odd_amps[i] - odd_rmean, decimal=1)
-        np.testing.assert_almost_equal(np.mean(input_model.data[0, 0, 4:-4, abounds[i]:abounds[i+1]]), dataval[i] - rmean, decimal=1)
+        np.testing.assert_almost_equal(
+            np.mean(input_model.data[0, 0, :4, abounds[i]:abounds[i+1]:2]),
+            bottom_even_amps[i] - even_rmean,
+            decimal=1)
+        np.testing.assert_almost_equal(
+            np.mean(input_model.data[0, 0, :4, abounds[i]+1:abounds[i+1]:2]),
+            bottom_odd_amps[i] - odd_rmean,
+            decimal=1)
+        np.testing.assert_almost_equal(
+            np.mean(input_model.data[0, 0, -4:, abounds[i]:abounds[i+1]:2]),
+            top_even_amps[i] - even_rmean,
+            decimal=1)
+        np.testing.assert_almost_equal(
+            np.mean(input_model.data[0, 0, -4:, abounds[i]+1:abounds[i+1]:2]),
+            top_odd_amps[i] - odd_rmean,
+            decimal=1)
+        np.testing.assert_almost_equal(
+            np.mean(input_model.data[0, 0, 4:-4, abounds[i]:abounds[i+1]]),
+            dataval[i] - rmean,
+            decimal=1)
 
 
 def test_do_top_bottom_correction_no_evenOdd(setup_cube):
@@ -553,9 +568,18 @@ def test_do_top_bottom_correction_no_evenOdd(setup_cube):
 
     for i in np.arange(0, len(abounds)-1):
         rmean = np.mean([top_amps[i], bottom_amps[i]])
-        np.testing.assert_almost_equal(np.mean(input_model.data[0, 0, :4, abounds[i]:abounds[i+1]]), bottom_amps[i] - rmean, decimal=1)
-        np.testing.assert_almost_equal(np.mean(input_model.data[0, 0, -4:, abounds[i]:abounds[i+1]]), top_amps[i] - rmean, decimal=1)
-        np.testing.assert_almost_equal(np.mean(input_model.data[0, 0, 4:-4, abounds[i]:abounds[i+1]]), dataval[i] - rmean, decimal=1)
+        np.testing.assert_almost_equal(
+            np.mean(input_model.data[0, 0, :4, abounds[i]:abounds[i+1]]),
+            bottom_amps[i] - rmean,
+            decimal=1)
+        np.testing.assert_almost_equal(
+            np.mean(input_model.data[0, 0, -4:, abounds[i]:abounds[i+1]]),
+            top_amps[i] - rmean,
+            decimal=1)
+        np.testing.assert_almost_equal(
+            np.mean(input_model.data[0, 0, 4:-4, abounds[i]:abounds[i+1]]),
+            dataval[i] - rmean,
+            decimal=1)
 
 
 def make_rampmodel(ngroups, ysize, xsize):

@@ -153,7 +153,6 @@ def find_crs(data, gdq, read_noise, rej_threshold, nframes):
 
 
 def return_clipped_median(num_differences, diffs_to_ignore, differences, sorted_index):
-
     """
     This routine will return the clipped median for the input array or pixel.
     It will ignore the input number of largest differences. At a minimum this
@@ -166,21 +165,24 @@ def return_clipped_median(num_differences, diffs_to_ignore, differences, sorted_
     if sorted_index.ndim > 1:
 
         # always exclude the highest value
-        pixel_med_index = sorted_index[:, :, int((num_differences - 1) / 2)] # always exclude the highest value
+        pixel_med_index = sorted_index[:, :, int((num_differences - 1) / 2)]
         row, col = np.indices(pixel_med_index.shape)
 
-        # In addition, decrease the index by 1 for every two diffs_to_ignore, these will be saturated values in this case
+        # In addition, decrease the index by 1 for every two diffs_to_ignore,
+        # these will be saturated values in this case
         pixel_med_diff = differences[row, col, pixel_med_index - ((diffs_to_ignore) / 2).astype(int)]
         # For pixels with an even number of groups the median is the mean of the two central values
         even_group_rows,even_group_cols = np.where((num_differences - diffs_to_ignore - 1)% 2 == 0)
         pixel_med_index2 = np.zeros_like(pixel_med_index)
-        pixel_med_index2[even_group_rows,even_group_cols]=sorted_index[even_group_rows, even_group_cols, int((num_differences - 1) / 2 ) - 1]
+        pixel_med_index2[even_group_rows, even_group_cols] = sorted_index[even_group_rows,
+        even_group_cols, int((num_differences - 1) / 2 ) - 1]
         # Average together the two central values
-        pixel_med_diff[even_group_rows,even_group_cols] = (pixel_med_diff[even_group_rows, even_group_cols] +
-                                                           differences[even_group_rows, even_group_cols,
-                                                                       pixel_med_index2[even_group_rows, even_group_cols]
-                                                                       - ((diffs_to_ignore[even_group_rows, even_group_cols])
-                                                                          / 2).astype(int)]) / 2.0
+        pixel_med_diff[even_group_rows,even_group_cols] = (
+            pixel_med_diff[even_group_rows, even_group_cols]
+            + differences[even_group_rows, even_group_cols,
+            pixel_med_index2[even_group_rows, even_group_cols]
+            - ((diffs_to_ignore[even_group_rows, even_group_cols]) / 2).astype(int)]
+            ) / 2.0
     # The 1-D array case is a lot simplier.
     else:
         pixel_med_index = sorted_index[int(((num_differences - 1 - diffs_to_ignore) / 2))]
