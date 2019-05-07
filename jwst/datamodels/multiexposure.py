@@ -1,6 +1,4 @@
 from copy import deepcopy
-import inspect
-import os
 
 from asdf import schema as asdf_schema
 from asdf import treeutil, AsdfFile

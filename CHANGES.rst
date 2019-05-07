@@ -70,6 +70,12 @@ datamodels
 - Update ``dq_def.schema``, ``group.schema`` and ``int_times.schema`` to comply
   with ASDF standard.  Remove unused ``extract1d.schema``.  [#3386]
 
+- Datamodels schemas should now be referenced with
+  ``http://stsci.edu/schemas/jwst_datamodel/image.schema`` instead of
+  ``http://jwst.stsci.edu/schemas/image.schema.yaml``.  The datamodels
+  ``BaseExtension`` is renamed interally to ``DataModelExtension``. [#3437]
+
+
 extract_1d
 ----------
 
