@@ -41,8 +41,8 @@ class AssignWcsStep(Step):
     """
 
     spec = """
-        slit_y_low = float(default=-.55)  # The lower edge of a slit, (0, 0) is the center.
-        slit_y_high = float(default=.55)  # The upper edge of a slit, (0, 0) is the center.
+        slit_y_low = float(default=-.55)  # The lower edge of a slit.
+        slit_y_high = float(default=.55)  # The upper edge of a slit.
 
     """
 
