@@ -459,8 +459,8 @@ def test_6grps_satat6_crat1_flagadjpixels(setup_cube):
     assert (np.array_equal([0, dqflags.group['JUMP_DET'], 0, 0, 0, dqflags.group['SATURATED']], gdq[0, :, 101, 100]))
     assert (np.array_equal([0, dqflags.group['JUMP_DET'], 0, 0, 0, dqflags.group['SATURATED']], gdq[0, :, 100, 99]))
     assert (np.array_equal([0, dqflags.group['JUMP_DET'], 0, 0, 0, dqflags.group['SATURATED']], gdq[0, :, 100, 101]))
-    
-    
+
+
 def test_10grps_satat8_crsat3and6(setup_cube):
     ngroups = 10
     #crmag = 1000

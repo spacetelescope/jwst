@@ -391,5 +391,3 @@ class TestNIRSpecMasterBackgroundNodded(BaseJWSTTest):
                                           master_combined_bkg_file)
         outputs = [(master_combined_bkg_file, truth_background)]
         self.compare_outputs(outputs)
-
-

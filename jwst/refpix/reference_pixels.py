@@ -35,7 +35,7 @@
 #  subarray, omit the refpix step.
 #
 #  For MIRI subarray exposures, omit the refpix step.
-# 
+
 
 import numpy as np
 from scipy import stats
@@ -226,17 +226,17 @@ class Dataset():
     def get_pixeldq(self):
         """Get the properly sized version of the pixeldq array from the
         input model.
-        
+
         Parameters
         ----------
         None
-        
+
         Returns
         -------
         pixeldq : NDArray
             numpy array for the pixeldq data with the full shape of the detector
 
-        """ 
+        """
         if self.is_subarray:
             # deal with subarrays
             if self.detector[:3] == 'MIR':
@@ -251,20 +251,17 @@ class Dataset():
 
     def get_group(self, integration, group):
         """Get a properly sized copy of the array for each group
-        
+
         Parameters
         ----------
         integration : int
-            Index of the integration from the input model from which to extract 
+            Index of the integration from the input model from which to extract
             the group array
 
         group : int
             Index of the group, within the integration, from which to extract
             the group array
-
         """
-                        
-
         if self.group is None:
             self.group = np.zeros(self.full_shape, dtype=self.input_model.data.dtype)
         if self.is_subarray:
@@ -274,22 +271,23 @@ class Dataset():
 
     def restore_group(self, integration, group):
         """Replace input model data with processed group array
-        
+
         Parameters
         ----------
         integration : int
-            Index of the integration from the input model which needs to be  
+            Index of the integration from the input model which needs to be
             updated with the newly processed group array
 
         group : int
-            Index of the group, within the integration, which needs to be 
+            Index of the group, within the integration, which needs to be
             updated with the newly processed group array
 
-        """        
+        """
         if self.is_subarray:
             self.input_model.data[integration, group] = self.group[self.rowstart:self.rowstop, self.colstart:self.colstop]
         else:
             self.input_model.data[integration, group] = self.group.copy()
+
 
 class NIRDataset(Dataset):
     """Generic NIR detector Class.
@@ -857,11 +855,11 @@ class NIRDataset(Dataset):
                 self.DMS_to_detector(integration, group)
                 thisgroup = self.group
 
-                if self.odd_even_columns:                        
+                if self.odd_even_columns:
                     evenrefpixvalue = self.sigma_clip(thisgroup[evenrefpixindices],
                                                       self.pixeldq[evenrefpixindices])
                     oddrefpixvalue = self.sigma_clip(thisgroup[oddrefpixindices],
-                                                      self.pixeldq[oddrefpixindices])                    
+                                                      self.pixeldq[oddrefpixindices])
                     thisgroup[:, 0::2] -= evenrefpixvalue
                     thisgroup[:, 1::2] -= oddrefpixvalue
                 else:
@@ -872,7 +870,7 @@ class NIRDataset(Dataset):
                 #  Now transform back from detector to DMS coordinates.
                 self.detector_to_DMS(integration, group)
         log.setLevel(logging.INFO)
-        return 
+        return
 
 
 class NRS1Dataset(NIRDataset):
@@ -1670,7 +1668,7 @@ def correct_model(input_model, odd_even_columns,
                                    side_smoothing_length,
                                    side_gain,
                                    odd_even_rows)
-                                   
+
     if input_dataset is None:
         status = SUBARRAY_DOESNTFIT
         return status

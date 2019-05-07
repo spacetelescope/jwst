@@ -3,7 +3,7 @@ import os.path
 def check(init):
     """
     Determine the type of a file and return it as a string
-    
+
     Parameters
     ----------
 
@@ -24,11 +24,11 @@ def check(init):
             if file_type not in ("asdf", "fits"):
                 raise ValueError("Cannot get file type of " + str(init))
             return file_type
-        
+
     elif hasattr(init, "read") and hasattr(init, "seek"):
         magic = init.read(5)
         init.seek(0, 0)
-        
+
     else:
         magic = None
 

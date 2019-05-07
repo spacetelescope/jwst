@@ -40,7 +40,7 @@ data_path = os.path.split(os.path.abspath(data.__file__))[0]
 
 # Default wcs information
 # This is set for a standard nircam image just as an example
-# It does not test the validity of the absolute results 
+# It does not test the validity of the absolute results
 wcs_image_kw = {'wcsaxes': 2, 'ra_ref': 53.1490299775, 'dec_ref': -27.8168745624,
                 'v2_ref': 86.103458, 'v3_ref': -493.227512, 'roll_ref': 45.04234459270135,
                 'crpix1': 1024.5, 'crpix2': 1024.5,
@@ -181,7 +181,7 @@ def test_create_box_fits():
                                    use_fits_wcs=True,
                                    mmag_extract=99.)
 
-    assert len(test_boxes) >= 2  # the catalog has 4 objects  
+    assert len(test_boxes) >= 2  # the catalog has 4 objects
     for sid in [9, 19]:
         ids = [source for source in test_boxes if source.sid == sid]
         assert len(ids) == 1
@@ -211,7 +211,7 @@ def test_create_box_gwcs():
     test_boxes = create_grism_bbox(imwcs, refs,
                                    use_fits_wcs=False,
                                    mmag_extract=99.)
-    assert len(test_boxes) >= 2  # the catalog has 4 objects  
+    assert len(test_boxes) >= 2  # the catalog has 4 objects
     for sid in [9, 19]:
         ids = [source for source in test_boxes if source.sid == sid]
         assert len(ids) == 1

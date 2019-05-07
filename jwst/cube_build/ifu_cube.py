@@ -807,7 +807,7 @@ class IFUCubeData():
             self.linear_wavelength = True
             wave_roi = np.amin(roiw)
             weight_power = np.amin(power)
-            self.soft_rad = np.amin(softrad)            
+            self.soft_rad = np.amin(softrad)
         elif all_same_spectral:
             self.spectral_size = spectralsize[0]
             wave_roi = roiw[0]
@@ -847,13 +847,12 @@ class IFUCubeData():
 
             self.roiw_table = table_wroi[imin:imax]
             self.rois_table = table_sroi[imin:imax]
-            if self.num_files < 4: 
+            if self.num_files < 4:
                 self.rois_table = [i*1.5 for i in self.rois_table]
 
             self.softrad_table = table_softrad[imin:imax]
             self.weight_power_table = table_power[imin:imax]
             self.wavelength_table = table_wavelength[imin:imax]
-            
 
         # check if the user has set the cube parameters to use
         if self.rois == 0:

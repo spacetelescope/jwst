@@ -418,7 +418,7 @@ class CubeData():
 
 class ErrorNoChannels(Exception):
     """ Raises Exception if the user selected channels are not in the data
-    """    
+    """
     pass
 
 
@@ -444,4 +444,3 @@ class ErrorMissingParameter(Exception):
     """ Raises Exception if the proived grating but not filter or vice versa
     """
     pass
-

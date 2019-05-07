@@ -14,7 +14,7 @@ def radec2std(crval1, crval2, ra, dec):
     ____________
     crval1 : float
       RA value of tangent point
-    crval2 : float 
+    crval2 : float
       DEC value of tangent point
     ra : numpy.ndarray or float
       A list (or single value) of ra points to convert

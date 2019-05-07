@@ -256,7 +256,7 @@ class DataSet():
         wcs2 = self.input_2.meta.wcs
         tr1 = wcs1.get_transform('detector', 'world')
         tr2 = wcs2.get_transform('world', 'detector')
- 
+
         # Get coords of center pixel
         xcen = int(self.input_1.data.shape[1]/2)
         ycen = int(self.input_1.data.shape[0]/2)

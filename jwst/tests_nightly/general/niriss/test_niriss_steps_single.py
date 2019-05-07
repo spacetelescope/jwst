@@ -159,4 +159,3 @@ class TestNIRISSRampFit(BaseJWSTTest):
                       'pedestal','weights','crmag'])
                   ]
         self.compare_outputs(outputs)
-

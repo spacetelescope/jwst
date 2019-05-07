@@ -34,12 +34,12 @@ def test_nframes_not_equal_frame_divisor(make_rampmodel):
     """
     datmod = make_rampmodel(2, 2, 4, 2048, 2048)
     output = GroupScaleStep.call(datmod)
-    
+
     # Assert that the step completed
     assert(output.meta.cal_step.group_scale == 'COMPLETE')
-    
-    # This assertion doesn't verify for correct output, 
-    # it just checks that the correction ran and that the data array 
+
+    # This assertion doesn't verify for correct output,
+    # it just checks that the correction ran and that the data array
     # outputs are different than the inputs as requested in the document.
     assert not np.array_equal(output.data, datmod.data)
 
@@ -82,14 +82,14 @@ def test_scale_value(make_rampmodel):
 
     # Calculate the scale based off of the input.
     scale = datmod.meta.exposure.frame_divisor/datmod.meta.exposure.nframes
-    
+
     output = GroupScaleStep.call(datmod)
 
     scale_from_data = np.unique(output.data/datmod.data)
 
     # Since the scale value is applied uniformly to the array, if we divide the output
     # by the input then we should get a single unique value (ie the scale) calculated
-    # by the pipeline. 
+    # by the pipeline.
     assert(len(scale_from_data) == 1)
 
     # Make sure the scale calculated manually from the data model aboved matched what the

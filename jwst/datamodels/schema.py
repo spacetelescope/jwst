@@ -361,4 +361,3 @@ def build_docstring(klass, template="{fits_hdu} {title}"):
 
     field_info = "\n".join(buffer) + "\n"
     return field_info
-
