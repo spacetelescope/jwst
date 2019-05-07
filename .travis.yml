@@ -41,7 +41,7 @@ matrix:
       env: PIP_DEPENDENCIES="-r requirements-dev.txt .[test]"
            TEST_COMMAND='python setup.py test'
 
-    # Test with latest delivered CRDS_CONTEXT
+    # Test with latest delivered CRDS_CONTEXT, as in regressions tests
     - env: CRDS_CONTEXT="jwst-edit"
            TEST_COMMAND='python setup.py test'
 
@@ -53,14 +53,7 @@ matrix:
     - env: TEST_COMMAND='flake8 jwst'
            PIP_DEPENDENCIES='flake8'
 
-    # Strict PEP8 check, an allowed failure below
-    - env: TEST_COMMAND='flake8 --count --select F,E,W jwst'
-           PIP_DEPENDENCIES='flake8'
-
   allow_failures:
-    - env: TEST_COMMAND='flake8 --count --select F,E,W jwst'
-           PIP_DEPENDENCIES='flake8'
-
     - env: PIP_DEPENDENCIES="-r requirements-dev.txt .[test]"
            TEST_COMMAND='python setup.py test'
 
