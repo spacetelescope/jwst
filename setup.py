@@ -7,8 +7,6 @@ from setuptools import setup, find_packages, Command
 from setuptools.command.test import test as TestCommand
 from glob import glob
 
-import relic.release
-
 if sys.version_info < (3, 5):
     error = """
     Beginning with JWST 0.9, Python 3.5 and above is required.
@@ -154,6 +152,8 @@ if not pkgutil.find_loader('relic'):
     except CalledProcessError as e:
         print(e)
         exit(1)
+
+import relic.release # noqa: E402
 
 version = relic.release.get_info()
 relic.release.write_template(version, NAME)
