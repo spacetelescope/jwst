@@ -42,6 +42,8 @@ def detect_jumps (input_model, gain_model, readnoise_model,
             numslices = num_cores // 2
         elif max_cores == 'all':
             numslices = num_cores
+        else:
+            numslices = 1
         log.info("Creating %d processes for jump detection " % numslices)
     pool = multiprocessing.Pool(processes=numslices)
 
@@ -79,8 +81,8 @@ def detect_jumps (input_model, gain_model, readnoise_model,
         pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['NO_GAIN_VALUE'] )
         pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['DO_NOT_USE'] )
 
-    # Apply gain to the SCI, ERR, and readnoise arrays so they're in units
-    #   of electrons
+    # Apply gain to the SCI, ERR, and readnoise arrays so they're in units 
+    # of electrons
 
     data *= gain_2d
     err  *= gain_2d
@@ -124,7 +126,7 @@ def detect_jumps (input_model, gain_model, readnoise_model,
     pool.terminate()
     pool.close()
     elapsed = time.time() - start
-    log.debug('Elapsed time = %g sec' %elapsed)
+    log.debug('Elapsed time = %g sec' % elapsed)
 
     # Apply the y-intercept method as a second pass, if requested
     if do_yint:
@@ -140,7 +142,7 @@ def detect_jumps (input_model, gain_model, readnoise_model,
         yint.find_crs(data, err, gdq, times, readnoise_2d,
                         rejection_threshold, signal_threshold, median_slopes)
         elapsed = time.time() - start
-        log.debug('Elapsed time = %g sec' %elapsed)
+        log.debug('Elapsed time = %g sec' % elapsed)
 
     # Update the DQ arrays of the output model with the jump detection results
     output_model.groupdq = gdq

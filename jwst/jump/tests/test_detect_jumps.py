@@ -7,7 +7,7 @@ from jwst.datamodels import GainModel, ReadnoiseModel
 def test_nocrs_noflux():
     # all pixel values are zero. So slope should be zero
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=5)
-    out_model = detect_jumps(model1, gain, rnModel, 4.0, False, 4.0, 'one')
+    out_model = detect_jumps(model1, gain, rnModel, 4.0, False, 4.0)
     assert (0 == np.max(out_model.groupdq))
 
 
@@ -29,7 +29,7 @@ def test_oneCR_10_groups():
     model1.data[0, 7, 500, 500] = 160.0
     model1.data[0, 8, 500, 500] = 170.0
     model1.data[0, 9, 500, 500] = 180.0
-    out_model = detect_jumps(model1, gain, rnModel, 4.0, False, 4.0, 'one')
+    out_model = detect_jumps(model1, gain, rnModel, 4.0, False, 4.0)
     assert (4 == np.max(out_model.groupdq[0, 5, 500, 500]))
 
 def test_oneCR_10_groups_fullarray():
@@ -58,7 +58,7 @@ def test_oneCR_10_groups_fullarray():
     model1.data[0, 7, :, 102] = 220
     model1.data[0, 8, :, 102] = 250
     model1.data[0, 9, :, 102] = 280
-    out_model = detect_jumps(model1, gain, rnModel, 4.0, False, 4.0, 'one')
+    out_model = detect_jumps(model1, gain, rnModel, 4.0, False, 4.0)
     assert (4 == np.max(out_model.groupdq[0, 5, :, :]))
 
 
@@ -82,7 +82,7 @@ def test_oneCR_100_groups_fullarray():
     model1.data[0, 9, :, :] = 180.0
     model1.data[0, 10:99, :, :] =190.0
     model1.data[0, 30:99, :, :] = 490.0
-    out_model = detect_jumps(model1, gain, rnModel, 4.0, False, 4.0, 'one')
+    out_model = detect_jumps(model1, gain, rnModel, 4.0, False, 4.0)
     assert (4 == np.max(out_model.groupdq[0, 5, :, :]))
     outdqcr = out_model.groupdq[0, 5, :, :]
     np.testing.assert_allclose(4, outdqcr)

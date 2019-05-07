@@ -48,7 +48,8 @@ class JumpStep(Step):
             do_yint = self.do_yintercept
             sig_thresh = self.yint_threshold
             self.log.info('CR rejection threshold = %g sigma', rej_thresh)
-            self.log.info('Maximum cores to use = %s', max_cores)
+            if self.maximum_cores is not None:
+                self.log.info('Maximum cores to use = %s', max_cores)
             if do_yint:
                 self.log.info('Y-intercept signal threshold = %g', sig_thresh)
 
