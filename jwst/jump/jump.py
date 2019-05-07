@@ -37,9 +37,9 @@ def detect_jumps (input_model, gain_model, readnoise_model,
         num_cores = psutil.cpu_count(logical = True)
         log.info("Found %d possible cores to use for jump detection " % num_cores)
         if max_cores == 'quarter':
-            numslices = num_cores // 4
+            numslices = num_cores // 4 or 1
         elif max_cores == 'half':
-            numslices = num_cores // 2
+            numslices = num_cores // 2 or 1
         elif max_cores == 'all':
             numslices = num_cores
         else:
