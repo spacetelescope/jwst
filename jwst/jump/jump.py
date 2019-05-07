@@ -44,8 +44,6 @@ def detect_jumps (input_model, gain_model, readnoise_model,
             numslices = num_cores
         else:
             numslices = 1
-        log.info("Creating %d processes for jump detection " % numslices)
-    pool = multiprocessing.Pool(processes=numslices)
 
     # Load the data arrays that we need from the input model
     output_model = input_model.copy()
@@ -110,10 +108,12 @@ def detect_jumps (input_model, gain_model, readnoise_model,
         print("odd last slice ", yincrement, numy - (numslices - 1) * yincrement)
     if numslices == 1:  # don't spin off other processes for one slice
         median_slopes, gdq = twopt.find_crs((data, gdq, readnoise_2d, rejection_threshold, nframes))
+        elapsed = time.time() - start
     else:
+        log.info("Creating %d processes for jump detection " % numslices)
+        pool = multiprocessing.Pool(processes=numslices)
         real_result = pool.map(twopt.find_crs, slices)
-    k = 0
-    if numslices > 1:
+        k = 0
         for resultslice in real_result:
             if (len(real_result) == k + 1):  # last result
                 median_slopes[k * yincrement:numy, :] = resultslice[0]
@@ -122,10 +122,9 @@ def detect_jumps (input_model, gain_model, readnoise_model,
                 median_slopes[k * yincrement:(k + 1) * yincrement, :] = resultslice[0]
                 gdq[:, :, k * yincrement:(k + 1) * yincrement, :] = resultslice[1]
             k += 1
-
-    pool.terminate()
-    pool.close()
-    elapsed = time.time() - start
+        pool.terminate()
+        pool.close()
+        elapsed = time.time() - start
     log.debug('Elapsed time = %g sec' % elapsed)
 
     # Apply the y-intercept method as a second pass, if requested
