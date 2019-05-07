@@ -474,4 +474,3 @@ def merge_tree(a, b):
 
     recurse(a, b)
     return a
-

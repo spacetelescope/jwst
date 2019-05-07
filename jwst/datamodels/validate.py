@@ -95,4 +95,3 @@ def _error_message(path, error):
     errfmt = "While validating {} the following error occurred:\n{}"
     errmsg = errfmt.format(name, error)
     return errmsg
-

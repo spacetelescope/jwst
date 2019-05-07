@@ -111,4 +111,3 @@ def test_history_from_fits():
     m = DataModel(TMP_FITS)
     assert m.history == [{'description': "Second entry"},
                          {'description': "Third entry"}]
-

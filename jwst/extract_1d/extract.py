@@ -2375,7 +2375,7 @@ class ImageExtractModel(ExtractBase):
             Multiply `temp_flux` by the solid angle of a pixel to get the
             flux for a point source (column "flux").  Divide `temp_flux` by
             `npixels` (to compute the average) to get the array for the
-            "surf_bright" (surface brightness) output column.  
+            "surf_bright" (surface brightness) output column.
 
         background : ndarray, 1-D
             The background count rate that was subtracted from the sum of
@@ -3496,7 +3496,7 @@ def extract_one_slit(input_model, slit, integ,
         `temp_flux` by the solid angle of a pixel to get the flux for a
         point source (column "flux").  Divide `temp_flux` by `npixels` (to
         compute the average) to get the array for the "surf_bright"
-        (surface brightness) output column.  
+        (surface brightness) output column.
 
     background : ndarray, 1-D, float64
         The background count rate that was subtracted from the total

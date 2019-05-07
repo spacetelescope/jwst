@@ -197,4 +197,3 @@ class SkyMatchStep(Step):
     def _set_sky_background(self, image, sky):
         image.meta.background.level = sky
         image.meta.background.subtracted = self.subtract
-

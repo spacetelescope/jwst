@@ -18,4 +18,3 @@ class IRS2Model(DataModel):
          values.  There are four columns for ALPHA and four for BETA.
     """
     schema_url = "irs2.schema.yaml"
-

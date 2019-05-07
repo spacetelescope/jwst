@@ -71,4 +71,3 @@ class JumpStep(Step):
         result.meta.cal_step.jump = 'COMPLETE'
 
         return result
-

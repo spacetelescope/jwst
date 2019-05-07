@@ -94,4 +94,3 @@ def test_master_background_logic(_jail, user_background, science_image):
 
     assert result.meta.cal_step.master_background == 'COMPLETE'
     assert type(science_image) is type(result)
-    

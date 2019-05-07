@@ -44,4 +44,3 @@ class MiriIFUCubeParsModel(ReferenceFileModel):
          default IFU cube high resolution wavetable
     """
     schema_url = "miri_ifucubepars.schema.yaml"
-

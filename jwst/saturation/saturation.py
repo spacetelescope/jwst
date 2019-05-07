@@ -130,4 +130,3 @@ def correct_for_NaN(satmask, dqmask):
         log.info("Unflagged pixels having saturation values set to NaN were"
                  " detected in the ref file; for those affected pixels no"
                  " saturation check will be made.")
-

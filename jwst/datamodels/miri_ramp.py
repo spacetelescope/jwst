@@ -33,4 +33,3 @@ class MIRIRampModel(RampModel):
 
     """
     schema_url = "miri_ramp.schema.yaml"
-

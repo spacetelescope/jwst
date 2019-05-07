@@ -93,7 +93,6 @@ def find_crs(data, gdq, read_noise, rej_threshold, nframes):
         # negative outliers
         ratio = np.abs(first_diffs - med_diffs[:, :, np.newaxis]) / sigma[:, :, np.newaxis]
 
-        
         # get the rows and columns of pixels of all pixels
         row, col = np.where(number_sat_groups >= 0)
         # Get the group index for each pixel of the largest non-saturated group, assuming the indicies are sorted.
@@ -182,7 +181,7 @@ def return_clipped_median(num_differences, diffs_to_ignore, differences, sorted_
                                                                        pixel_med_index2[even_group_rows, even_group_cols]
                                                                        - ((diffs_to_ignore[even_group_rows, even_group_cols])
                                                                           / 2).astype(int)]) / 2.0
-    # The 1-D array case is a lot simplier.    
+    # The 1-D array case is a lot simplier.
     else:
         pixel_med_index = sorted_index[int(((num_differences - 1 - diffs_to_ignore) / 2))]
         pixel_med_diff = differences[pixel_med_index]
