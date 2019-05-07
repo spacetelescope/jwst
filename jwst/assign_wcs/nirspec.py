@@ -192,7 +192,9 @@ def ifu(input_model, reference_files, slit_y_range=[-.55, .55]):
     # DMS to SCA transform
     dms2detector = dms_to_sca(input_model)
     # DETECTOR to GWA transform
-    det2gwa = Identity(2) & detector_to_gwa(reference_files, input_model.meta.instrument.detector, disperser)
+    det2gwa = Identity(2) & detector_to_gwa(reference_files,
+                                            input_model.meta.instrument.detector,
+                                            disperser)
 
     # GWA to SLIT
     gwa2slit = gwa_to_ifuslit(slits, input_model, disperser, reference_files, slit_y_range)
@@ -280,9 +282,10 @@ def slits_wcs(input_model, reference_files, slit_y_range):
 def slitlets_wcs(input_model, reference_files, open_slits_id):
     """
     Create The WCS piepline for MOS and Fixed slits for the
-    specific opened shutters/slits.
+    specific opened shutters/slits. ``slit_y_range`` is taken from
+    ``slit.ymin`` and ``slit.ymax``.
 
-    Note: This function is also used bby the ``msaflagopen`` step.
+    Note: This function is also used by the ``msaflagopen`` step.
     """
     # Get the corrected disperser model
     disperser = get_disperser(input_model, reference_files['disperser'])
@@ -749,6 +752,8 @@ def gwa_to_ifuslit(slits, input_model, disperser, reference_files, slit_y_range)
         The grating used in the observation.
     reference_files: dict
         Dictionary with reference files returned by CRDS.
+    slit_y_range : list or tuple of size 2
+        The lower and upper bounds of a slit.
 
     Returns
     -------
@@ -825,7 +830,7 @@ def gwa_to_ifuslit(slits, input_model, disperser, reference_files, slit_y_range)
 
 
 def gwa_to_slit(open_slits, input_model, disperser,
-                reference_files, slit_y_range=[-.55, .55]):
+                reference_files):
     """
     The transform from ``gwa`` to ``slit_frame``.
 
@@ -1376,11 +1381,19 @@ def gwa_to_ymsa(msa2gwa_model, lam_cen=None, slit=None, slit_y_range=None):
     ----------
     msa2gwa_model : `astropy.modeling.core.Model`
         The transform from the MSA to the GWA.
+    lam_cen : float
+        Central wavelength in meters.
+    slit : `~jwst.transforms.models.Slit`
+        A Fixed slit or MOS slitlet.
+    slit_y_range: list or tuple of size 2
+        The lower and upper limit of the slit.
+        Used for IFU mode only.
     """
     nstep = 1000
     if slit is not None:
         ymin, ymax = slit.ymin, slit.ymax
     else:
+        # The case of IFU data.
         ymin, ymax = slit_y_range
     dy = np.linspace(ymin, ymax, nstep)
     dx = np.zeros(dy.shape)

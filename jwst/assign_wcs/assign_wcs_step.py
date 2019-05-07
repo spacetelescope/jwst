@@ -41,9 +41,9 @@ class AssignWcsStep(Step):
     """
 
     spec = """
-        slit_y_low = float(default=-.55)
-        slit_y_high = float(default=.55)
-        # The y-range of a slit, (0, 0) is the center.
+        slit_y_low = float(default=-.55)  # The lower edge of a slit, (0, 0) is the center.
+        slit_y_high = float(default=.55)  # The upper edge of a slit, (0, 0) is the center.
+
     """
 
     reference_file_types = ['distortion', 'filteroffset', 'specwcs', 'regions',
@@ -79,7 +79,7 @@ class AssignWcsStep(Step):
                     message = "MSA metadata file (MSAMETFL) is required for NRS_MSASPEC exposures."
                     log.error(message)
                     raise MissingMSAFileError(message)
-            slit_y_range = self.slit_y_low, self.slit_y_high
+            slit_y_range = [self.slit_y_low, self.slit_y_high]
             result = load_wcs(input_model, reference_file_names, slit_y_range)
 
         return result
