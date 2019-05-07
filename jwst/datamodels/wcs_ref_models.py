@@ -62,7 +62,7 @@ class DistortionModel(_SimpleModel):
     """
     A model for a reference file of type "distortion".
     """
-    schema_url = "distortion.schema.yaml"
+    schema_url = "distortion.schema"
     reftype = "distortion"
 
     def validate(self):
@@ -84,7 +84,7 @@ class DistortionMRSModel(ReferenceFileModel):
     """
     A model for a reference file of type "distortion" for the MIRI MRS.
     """
-    schema_url = "distortion_mrs.schema.yaml"
+    schema_url = "distortion_mrs.schema"
     reftype = "distortion"
 
     def __init__(self, init=None, x_model=None, y_model=None, alpha_model=None, beta_model=None,
@@ -158,7 +158,7 @@ class SpecwcsModel(_SimpleModel):
     used during extract_2D. See NIRCAMGrismModel and
     NIRISSGrismModel.
     """
-    schema_url = "specwcs.schema.yaml"
+    schema_url = "specwcs.schema"
     reftype = "specwcs"
 
     def validate(self):
@@ -204,7 +204,7 @@ class NIRCAMGrismModel(ReferenceFileModel):
           dispersion models
 
     """
-    schema_url = "specwcs_nircam_grism.schema.yaml"
+    schema_url = "specwcs_nircam_grism.schema"
     reftype = "specwcs"
 
     def __init__(self, init=None,
@@ -282,7 +282,7 @@ class NIRISSGrismModel(ReferenceFileModel):
     fwcpos_ref : float
         The reference value for the filter wheel position
     """
-    schema_url = "specwcs_niriss_grism.schema.yaml"
+    schema_url = "specwcs_niriss_grism.schema"
     reftype = "specwcs"
 
     def __init__(self, init=None,
@@ -339,7 +339,7 @@ class RegionsModel(ReferenceFileModel):
     """
     A model for a reference file of type "regions".
     """
-    schema_url = "regions.schema.yaml"
+    schema_url = "regions.schema"
     reftype = "regions"
 
     def __init__(self, init=None, regions=None, **kwargs):
@@ -394,7 +394,7 @@ class WavelengthrangeModel(ReferenceFileModel):
         The units for the wavelength data
 
     """
-    schema_url = "wavelengthrange.schema.yaml"
+    schema_url = "wavelengthrange.schema"
     reftype = "wavelengthrange"
 
     def __init__(self, init=None, wrange_selector=None, wrange=None,
@@ -433,7 +433,7 @@ class FPAModel(ReferenceFileModel):
     """
     A model for a NIRSPEC reference file of type "fpa".
     """
-    schema_url = "fpa.schema.yaml"
+    schema_url = "fpa.schema"
     reftype = "fpa"
 
     def __init__(self, init=None, nrs1_model=None, nrs2_model=None, **kwargs):
@@ -491,7 +491,7 @@ class IFUPostModel(ReferenceFileModel):
 
     """
 
-    schema_url = "ifupost.schema.yaml"
+    schema_url = "ifupost.schema"
     reftype = "ifupost"
 
     def __init__(self, init=None, slice_models=None, **kwargs):
@@ -526,7 +526,7 @@ class IFUSlicerModel(ReferenceFileModel):
     """
     A model for a NIRSPEC reference file of type "ifuslicer".
     """
-    schema_url = "ifuslicer.schema.yaml"
+    schema_url = "ifuslicer.schema"
     reftype = "ifuslicer"
 
     def __init__(self, init=None, model=None, data=None, **kwargs):
@@ -559,7 +559,7 @@ class MSAModel(ReferenceFileModel):
     """
     A model for a NIRSPEC reference file of type "msa".
     """
-    schema_url = "msa.schema.yaml"
+    schema_url = "msa.schema"
     reftype = "msa"
 
     def __init__(self, init=None, models=None, data=None, **kwargs):
@@ -595,7 +595,7 @@ class DisperserModel(ReferenceFileModel):
     """
     A model for a NIRSPEC reference file of type "disperser".
     """
-    schema_url = "disperser.schema.yaml"
+    schema_url = "disperser.schema"
     reftype = "disperser"
 
     def __init__(self, init=None, angle=None, gwa_tiltx=None, gwa_tilty=None,
@@ -664,7 +664,7 @@ class FilteroffsetModel(ReferenceFileModel):
     """
     A model for a NIRSPEC reference file of type "disperser".
     """
-    schema_url = "filteroffset.schema.yaml"
+    schema_url = "filteroffset.schema"
     reftype = "filteroffset"
 
     def __init__(self, init=None, filters=None, **kwargs):
@@ -697,7 +697,7 @@ class IFUFOREModel(_SimpleModel):
     """
     A model for a NIRSPEC reference file of type "ifufore".
     """
-    schema_url = "ifufore.schema.yaml"
+    schema_url = "ifufore.schema"
     reftype = "ifufore"
 
     def populate_meta(self):
@@ -711,7 +711,7 @@ class CameraModel(_SimpleModel):
     """
     A model for a reference file of type "camera".
     """
-    schema_url = "camera.schema.yaml"
+    schema_url = "camera.schema"
     reftype = 'camera'
 
     def populate_meta(self):
@@ -727,7 +727,7 @@ class CollimatorModel(_SimpleModel):
     """
     A model for a reference file of type "collimator".
     """
-    schema_url = "collimator.schema.yaml"
+    schema_url = "collimator.schema"
     reftype = 'collimator'
 
     def populate_meta(self):
@@ -743,7 +743,7 @@ class OTEModel(_SimpleModel):
     """
     A model for a reference file of type "ote".
     """
-    schema_url = "ote.schema.yaml"
+    schema_url = "ote.schema"
     reftype = 'ote'
 
     def populate_meta(self):
@@ -759,7 +759,7 @@ class FOREModel(_SimpleModel):
     """
     A model for a reference file of type "fore".
     """
-    schema_url = "fore.schema.yaml"
+    schema_url = "fore.schema"
     reftype = 'fore'
 
     def populate_meta(self):
@@ -788,7 +788,7 @@ class FOREModel(_SimpleModel):
 class WaveCorrModel(ReferenceFileModel):
 
     reftype = "wavecorr"
-    schema_url = "wavecorr.schema.yaml"
+    schema_url = "wavecorr.schema"
 
     def __init__(self, init=None, apertures=None, **kwargs):
         super(WaveCorrModel, self).__init__(init, **kwargs)

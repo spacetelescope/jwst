@@ -13,4 +13,4 @@ class ReadnoiseModel(ReferenceFileModel):
     data : numpy float32 array
          Read noise
     """
-    schema_url = "readnoise.schema.yaml"
+    schema_url = "readnoise.schema"

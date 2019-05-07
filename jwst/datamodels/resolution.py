@@ -12,7 +12,7 @@ class ResolutionModel(ReferenceFileModel):
     data : numpy float32 array
         Resolving Power table
     """
-    schema_url = "resolution.schema.yaml"
+    schema_url = "resolution.schema"
 
 
 class MiriResolutionModel(ResolutionModel):
@@ -45,4 +45,4 @@ class MiriResolutionModel(ResolutionModel):
         than cuttoff. Columns 4 and 5 give the polynomial coefficients (a,b)
         describing beta FWHM for wavelengths longer than the cutoff.
     """
-    schema_url = "miri_resolution.schema.yaml"
+    schema_url = "miri_resolution.schema"
