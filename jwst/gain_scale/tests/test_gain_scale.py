@@ -24,7 +24,7 @@ def test_step(make_rampmodel):
     """
     datmod = make_rampmodel(2, 2048, 2048)
     output = GainScaleStep.call(datmod)
-    
+
     assert(output.meta.cal_step.gain_scale == 'COMPLETE')
     assert np.all(output.err == datmod.err*datmod.meta.exposure.gain_factor)
     assert np.all(output.data == datmod.data*datmod.meta.exposure.gain_factor)
