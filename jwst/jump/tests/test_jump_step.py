@@ -1,9 +1,7 @@
-import os
 from itertools import cycle
 
 import pytest
 import numpy as np
-from astropy.io import fits
 
 from jwst.datamodels import MIRIRampModel
 from jwst.datamodels import GainModel, ReadnoiseModel
