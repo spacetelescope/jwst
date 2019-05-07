@@ -8,9 +8,12 @@ from jwst.datamodels import ImageModel
 
 
 testdata = [
-    ('nrs1', 'jw00011001001_01120_00001_NRS1_rate.fits', 'jw00011001001_01120_00001_NRS1_assign_wcs.fits'),
-    ('nrs1_opaque', 'jw00011001001_01120_00001_NRS1_rate_opaque.fits', 'jw00011001001_01120_00001_NRS1_rate_opaque_assign_wcs.fits'),
-    ('nrs2', 'NRSIFU-COMBO-030_NRS2_SloperPipeline.fits', 'NRSIFU-COMBO-030_NRS2_SloperPipeline_assign_wcs.fits')
+    ('nrs1', 'jw00011001001_01120_00001_NRS1_rate.fits',
+        'jw00011001001_01120_00001_NRS1_assign_wcs.fits'),
+    ('nrs1_opaque', 'jw00011001001_01120_00001_NRS1_rate_opaque.fits',
+        'jw00011001001_01120_00001_NRS1_rate_opaque_assign_wcs.fits'),
+    ('nrs2', 'NRSIFU-COMBO-030_NRS2_SloperPipeline.fits',
+        'NRSIFU-COMBO-030_NRS2_SloperPipeline_assign_wcs.fits')
 ]
 
 @pytest.mark.bigdata

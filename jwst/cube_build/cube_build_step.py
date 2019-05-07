@@ -33,10 +33,10 @@ class CubeBuildStep (Step):
     """
 
     spec = """
-         channel = option('1','2','3','4','all',default='all') # Options: 1,2,3,4, or all
-         band = option('short','medium','long','all',default='all') # Options: short, medium, long, all
-         grating   = option('prism','g140m','g140h','g235m','g235h',g395m','g395h','all',default='all') # Options: prism,g140m,g140h,g235m,g235h,g395m,g395h, or all
-         filter   = option('clear','f100lp','f070lp','f170lp','f290lp','all',default='all') # Options: clear,f100lp,f070lp,f170lp,f290lp, or all
+         channel = option('1','2','3','4','all',default='all') # Channel
+         band = option('short','medium','long','all',default='all') # Band
+         grating   = option('prism','g140m','g140h','g235m','g235h',g395m','g395h','all',default='all') # Grating
+         filter   = option('clear','f100lp','f070lp','f170lp','f290lp','all',default='all') # Filter
          scale1 = float(default=0.0) # cube sample size to use for axis 1, arc seconds
          scale2 = float(default=0.0) # cube sample size to use for axis 2, arc seconds
          scalew = float(default=0.0) # cube sample size to use for axis 3, microns
@@ -51,7 +51,7 @@ class CubeBuildStep (Step):
          xdebug = integer(default=None) # debug option, x spaxel value to report information on
          ydebug = integer(default=None) # debug option, y spaxel value to report information on
          zdebug = integer(default=None) # debug option, z spaxel value to report  information on
-         output_type = option('band','channel','grating','multi',default='band') # Type IFUcube to create. Options=band,channel,grating,multi
+         output_type = option('band','channel','grating','multi',default='band') # Type IFUcube to create.
          search_output_file = boolean(default=false)
          output_use_model = boolean(default=true) # Use filenames in the output models
        """
