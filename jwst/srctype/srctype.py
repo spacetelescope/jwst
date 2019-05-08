@@ -1,4 +1,5 @@
 import logging
+from ..lib import pipe_utils
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -15,16 +16,15 @@ def set_source_type(input_model):
 
     Returns
     -------
-    input_model : `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`, `~jwst.datamodels.MultiSlitModel`, or None
-        The updated model or None if the process couldn't be completed.
+    input_model : `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`, `~jwst.datamodels.MultiSlitModel`
+        The updated model.
     """
 
     # Get the exposure type of the input model
     exptype = input_model.meta.exposure.type
     if exptype is None:
-        log.warning('EXP_TYPE value not found in input')
-        log.warning('Step will be skipped')
-        return None
+        log.error('EXP_TYPE value not found in input')
+        raise RuntimeError('Step cannot be executed without an EXP_TYPE value')
     else:
         log.info('Input EXP_TYPE is %s' % exptype)
 
@@ -95,11 +95,18 @@ def set_source_type(input_model):
         # a harmless default
         input_model.meta.target.source_type = 'UNKNOWN'
 
-    # Unrecognized exposure type
+    # Set all TSO exposures to POINT
+    elif pipe_utils.is_tso(input_model):
+        src_type = 'POINT'
+        log.info('Input is a TSO exposure; setting default SRCTYPE = %s' % src_type)
+        input_model.meta.target.source_type = src_type
+
+    # Unrecognized exposure type; set to EXTENDED as default
     else:
         log.warning('EXP_TYPE %s not applicable to this operation' % exptype)
-        log.warning('Step will be skipped')
-        return None
+        src_type = 'EXTENDED'
+        log.warning('Setting SRCTYPE = %s' % src_type)
+        input_model.meta.target.source_type = src_type
 
     # We're done
     return input_model

@@ -14,13 +14,15 @@ extended. If they don't know the character of the source, they can also
 choose a value of "UNKNOWN." The observer's choice in the APT is passed along
 to DMS processing, which sets the value of the "SRCTYPE" keyword in the
 primary header of the uncalibrated (_uncal.fits) product that's used as input
-to the calibration pipeline. The resulting "SRCTYPE" values can be
-"POINT", "EXTENDED", or "UNKNOWN."
+to the calibration pipeline. If the user has selected a value in the APT, the
+"SRCTYPE" keyword will be set to "POINT", "EXTENDED", or "UNKNOWN." If the
+selection is not available for a given observing mode or a choice wasn't
+made, the "SRCTYPE" keyword will be absent in the uncalibrated product.
 
 The ``srctype`` calibration step checks to see if the "SRCTYPE" keyword
-has already been populated. If the observer did not provide a source
-type value or the "SRCTYPE" keyword is set to "UNKNOWN", the ``srctype``
-step will choose a suitable value based on the observing mode and
+is present and has already been populated. If the observer did not provide a
+source type value or it is set to "UNKNOWN", the ``srctype``
+step chooses a suitable value based on the observing mode and
 other characteristics of the exposure. The following choices are used, in
 order of priority:
 
@@ -33,6 +35,10 @@ order of priority:
    of "POINT." Nodded exposures are identified by the "PATTTYPE" keyword
    either being set to a value of "POINT-SOURCE" (MIRI MRS) or containing
    the sub-string "NOD" (NIRSpec IFU and Fixed Slit).
+
+ - TSO exposures default to a source type of "POINT." TSO exposures are
+   identified by EXP_TYPE="NRC_TSGRISM" or "NRS_BRIGHTOBJ", or
+   TSOVISIT=True.
 
  - If none of the above conditions apply, and the user did not choose a
    value in the APT, the following table of defaults is used, based on
@@ -55,6 +61,9 @@ order of priority:
 +-------------------+------------------------+----------+
 | NRS_IFU           | NIRSpec IFU            | POINT    |
 +-------------------+------------------------+----------+
+
+If the EXP_TYPE value of the input image is not in the above list,
+the default choice will be SRCTYPE="EXTENDED."
 
 For NIRSpec MOS exposures (EXP_TYPE="NRS_MSASPEC"), there are multiple
 sources per exposure and hence a single parameter can't be used in the
