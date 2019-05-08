@@ -1,10 +1,7 @@
 """Test calwebb_spec3 against NIRSpec MOS science (MSA)"""
-from glob import glob
 from pathlib import Path
 import pytest
 
-from jwst.associations import load_asn
-from jwst.pipeline import Spec3Pipeline
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
@@ -13,6 +10,8 @@ from jwst.tests.base_classes import BaseJWSTTest, raw_from_asn
 
 @pytest.mark.bigdata
 class TestSpec3Pipeline(BaseJWSTTest):
+    """Tests for Spec3Pipeline"""
+
     input_loc = 'nirspec'
     ref_loc = ['test_datasets', 'msa', 'sdp_jw95175', 'truth']
     test_dir = ['test_datasets', 'msa', 'sdp_jw95175']
