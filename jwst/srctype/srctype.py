@@ -45,7 +45,7 @@ def set_source_type(input_model):
             src_type = 'EXTENDED'
             log.info('Exposure is a background target; setting SRCTYPE = %s' % src_type)
 
-        elif (patttype is not None) and ('NOD' in patttype):
+        elif (patttype is not None) and (('NOD' in patttype) or ('POINT-SOURCE' in patttype)):
 
             # Set all nodded exposures to POINT source type
             src_type = 'POINT'
