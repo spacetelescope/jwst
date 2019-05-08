@@ -56,7 +56,7 @@ def test_data_glob_local(glob_filter, nfiles):
 @pytest.mark.parametrize(
     'glob_filter, nfiles',
     [
-        ('*', 3),
+        ('*', 1),
         ('*.txt', 0),
         ('*.fits', 1)
     ]
@@ -87,7 +87,7 @@ class TestBaseJWSTTest(BaseJWSTTest):
     @pytest.mark.parametrize(
         'glob_filter, nfiles',
         [
-            ('*', 3),
+            ('*', 1),
             ('*.txt', 0),
             ('*.fits', 1)
         ]
