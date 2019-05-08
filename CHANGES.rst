@@ -295,6 +295,10 @@ engdblog
 exp_to_source
 -------------
 
+- Updated SourceContainer to wrap each exposure of a MultiExposure in a
+  SlitModel, allowing pipeline code to simply treat each as DataModel.
+  [#3438]
+
 extract_1d
 ----------
 - Updated to recognize NRC_TSGRISM as WFSS data.  SlitDataModel schema now
