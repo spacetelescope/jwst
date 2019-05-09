@@ -8,6 +8,15 @@ assign_wcs
 
 - The MIRI LRS spectral distortion is implemented now using a spline model. [#3106]
 
+- Both ``dither_point_index`` and ``metadata_id`` are used now to match rows
+  into the MSA meta file. [#3448]
+
+- ``MissingMSAFileError`` was renamed to ``MSAFileError`` [#3448]
+
+- Added two parameters to ``assign_wcs``, ``slit_y_low`` and ``slit_y_high``,
+  to allow changing the lower and upper limit of a Nirspec slit in the instrument
+  model. [#2819]
+
 background
 ----------
 
@@ -75,7 +84,7 @@ extract_1d
   extraction location, i.e. correcting for nod/dither offset.  For IFU,
   the areas of the source aperture and background annulus are computed
   differently. [#3362
-  
+
 - For IFU data for an extended source, the extraction parameters are
   assigned values so that the entire image will be extracted, with no
   background subtraction.  For non-IFU data, a try/except block was added
@@ -90,6 +99,11 @@ extract_1d
 - The keywords that describe the units for the FLUX and ERROR columns
   have been corrected; the units are now specified as "Jy". [#3447]
 
+exrtact_2d
+----------
+
+- An ``attribute dither_point`` was added to each slit in a ``MultiSlitModel``
+  for MOS observations. [#3448]
 
 flatfield
 ---------
@@ -144,6 +158,13 @@ reffile_utils
 - Improved error messages when problems are encountered in extracting
   subarrays from reference files. [#3268]
 
+resample_spec
+-------------
+
+- Fixed an issue with the spatial component of the WCS where the inverse
+  transform gave different results for negative ``RA`` and ``360 + RA``. [#3404]
+
+
 set_telescope_pointing
 ----------------------
 
@@ -159,6 +180,13 @@ srctype
 -------
 
 - Updated logic for background targets and nodded exposures. [#3310]
+
+
+transforms
+----------
+
+- A field ``dither_point`` to the ``Slit`` structure. [#3448]
+
 
 tweakreg
 --------
