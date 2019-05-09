@@ -2912,8 +2912,8 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
             spec = datamodels.SpecModel(spec_table=otab)
             spec.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec, wavelength)
             spec.spec_table.columns['wavelength'].unit = 'um'
-            spec.spec_table.columns['flux'].unit = 'mJy'
-            spec.spec_table.columns['error'].unit = 'mJy'
+            spec.spec_table.columns['flux'].unit = 'Jy'
+            spec.spec_table.columns['error'].unit = 'Jy'
             spec.spec_table.columns['surf_bright'].unit = 'MJy/sr'
             spec.spec_table.columns['sb_error'].unit = 'MJy/sr'
             spec.spec_table.columns['background'].unit = 'MJy/sr'
@@ -3013,8 +3013,8 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                 spec.meta.wcs = spec_wcs.create_spectral_wcs(
                                         ra, dec, wavelength)
                 spec.spec_table.columns['wavelength'].unit = 'um'
-                spec.spec_table.columns['flux'].unit = 'mJy'
-                spec.spec_table.columns['error'].unit = 'mJy'
+                spec.spec_table.columns['flux'].unit = 'Jy'
+                spec.spec_table.columns['error'].unit = 'Jy'
                 spec.spec_table.columns['surf_bright'].unit = 'MJy/sr'
                 spec.spec_table.columns['sb_error'].unit = 'MJy/sr'
                 spec.spec_table.columns['background'].unit = 'MJy/sr'

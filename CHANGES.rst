@@ -87,6 +87,9 @@ extract_1d
   be surface brightness.  This step no longer looks for a RELSENS
   extension. [#3412]
 
+- The keywords that describe the units for the FLUX and ERROR columns
+  have been corrected; the units are now specified as "Jy". [#3447]
+
 
 flatfield
 ---------
