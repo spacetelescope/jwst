@@ -1,4 +1,5 @@
 import logging
+import pdb
 
 from .association import (
     make_timestamp
@@ -158,6 +159,8 @@ def generate_from_item(
             ProcessList.BOTH,
             ProcessList.RULES,
     ) and rules is not None:
+        print("Candidate Assoc : \n", existing_asns,"\n")
+        print(rules)
         ignore_asns = set([type(asn) for asn in existing_asns])
         new_asns, reprocess = rules.match(
             item,

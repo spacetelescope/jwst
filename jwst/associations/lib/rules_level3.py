@@ -1,6 +1,7 @@
 """Association Definitions: DMS Level3 product associations
 """
 import logging
+import pdb
 
 from jwst.associations.registry import RegistryMarker
 from jwst.associations.lib.dms_base import (ACQ_EXP_TYPES, Constraint_TSO)
@@ -260,6 +261,7 @@ class Asn_SpectralSource(AsnMixin_Spectrum):
 
 @RegistryMarker.rule
 class Asn_IFU(AsnMixin_Spectrum):
+
     """Level 3 IFU Association
 
     Characteristics:
@@ -274,9 +276,9 @@ class Asn_IFU(AsnMixin_Spectrum):
         self.constraints = Constraint([
             Constraint_Target(),
             Constraint_IFU(),
-            Constraint_Special_BKG(),
+            #Constraint_Special_BKG()
         ])
-
+        #pdb.set_trace()
         # Check and continue initialization.
         super(Asn_IFU, self).__init__(*args, **kwargs)
 
