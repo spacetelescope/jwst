@@ -105,7 +105,6 @@ class BaseJWSTTest:
         # Get full path and proceed depending on whether
         # is a local path or URL.
         root = get_bigdata_root()
-        import pdb; pdb.set_trace()
         if op.exists(root):
             path = op.join(root, *self.repo_path)
             root_len = len(path) + 1
