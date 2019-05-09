@@ -104,17 +104,20 @@ class BaseJWSTTest:
 
         # Get full path and proceed depending on whether
         # is a local path or URL.
-        root = op.join(get_bigdata_root(), *self.repo_path)
-        path = op.join(root, *pathargs)
-        if op.exists(path):
+        root = get_bigdata_root()
+        if op.exists(root):
+            path = op.join(root, *self.repo_path)
+            root_len = len(path) + 1
+            path = op.join(path, *pathargs)
             file_paths = _data_glob_local(path, glob)
-        elif check_url(path):
-            file_paths = _data_glob_url(path, glob)
+        elif check_url(root):
+            root_len = len(op.join(*self.repo_path[1:])) + 1
+            path = op.join(*self.repo_path, *pathargs)
+            file_paths = _data_glob_url(path, glob, root=root)
         else:
             raise BigdataError('Path cannot be found: {}'.format(path))
 
         # Remove the root from the paths
-        root_len = len('/'.join(self.repo_path[1:])) + 1  # +1 to account for the folder delimiter.
         file_paths = [
             file_path[root_len:]
             for file_path in file_paths
@@ -227,12 +230,16 @@ def _data_glob_local(*glob_parts):
     return _sys_glob(str(full_glob))
 
 
-def _data_glob_url(*url_parts):
+def _data_glob_url(*url_parts, root=None):
     """
     Parameters
     ----------
     url: (str[,...])
         List of components that will be used to create a URL path
+
+    root: str
+        The root server path to the Artifactory server.
+        Normally retrieved from `get_bigdata_root`.
 
     Returns
     -------
@@ -253,10 +260,10 @@ def _data_glob_url(*url_parts):
             "variable to get full search results.", file=sys.stderr)
         headers = None
 
-    search_url = op.join(get_bigdata_root(), 'api/search/pattern')
+    search_url = op.join(root, 'api/search/pattern')
 
     # Join and re-split the url so that every component is identified.
-    url = '/'.join(url_parts)
+    url = root + '/'.join(url_parts)
     all_parts = url.split('/')
 
     # Pick out "jwst-pipeline", the repo name

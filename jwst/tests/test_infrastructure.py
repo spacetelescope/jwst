@@ -72,9 +72,10 @@ def test_data_glob_url(glob_filter, nfiles):
     nfiles: int
         The number of files expected to find.
     """
-    path = 'https://bytesalad.stsci.edu/artifactory/jwst-pipeline/dev/nircam/test_bias_drift'
+    root = 'https://bytesalad.stsci.edu/artifactory/'
+    path = 'jwst-pipeline/dev/nircam/test_bias_drift'
 
-    files = _data_glob_url(path, glob_filter)
+    files = _data_glob_url(path, glob_filter, root=root)
     assert len(files) == nfiles
 
 
@@ -87,9 +88,9 @@ class TestBaseJWSTTest(BaseJWSTTest):
     @pytest.mark.parametrize(
         'glob_filter, nfiles',
         [
-            ('*', 1),
-            ('*.txt', 0),
-            ('*.fits', 1)
+            ('*', [1, 2]),
+            ('*.txt', [0]),
+            ('*.fits', [1])
         ]
     )
     def test_glob(self, glob_filter, nfiles):
@@ -102,8 +103,10 @@ class TestBaseJWSTTest(BaseJWSTTest):
         glob_filter: str
             The `glob`-like filter to use.
 
-        nfiles: int
+        nfiles: [int[,...]]
             Number of files expected to be returned.
+            List because the number can change depending on whether
+            url-based artifactory location or local.
         """
         files = self.data_glob('test_bias_drift', glob=glob_filter)
-        assert len(files) == nfiles
+        assert len(files) in nfiles
