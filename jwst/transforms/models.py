@@ -32,14 +32,14 @@ N_SHUTTERS_QUADRANT = 62415
 """ Number of shutters per quadrant in the NIRSPEC MSA shutter array"""
 
 
-Slit = namedtuple('Slit', ["name", "shutter_id", "xcen", "ycen",
+Slit = namedtuple('Slit', ["name", "shutter_id", "dither_position", "xcen", "ycen",
                            "ymin", "ymax", "quadrant", "source_id", "shutter_state",
                            "source_name", "source_alias", "stellarity",
-                           "source_xpos", "source_ypos"])
+                           "source_xpos", "source_ypos", ])
 """ Nirspec Slit structure definition"""
 
 
-Slit.__new__.__defaults__ = ("", 0, 0.0, 0.0, 0.0, 0.0, 0, 0, "", "", "", "",
+Slit.__new__.__defaults__ = ("", 0, 0, 0.0, 0.0, 0.0, 0.0, 0, 0, "", "", "", "",
                              0.0, 0.0, 0.0)
 
 
@@ -639,7 +639,7 @@ class Gwa2Slit(Model):
     slits : list
         A list of open slits.
         A slit is a namedtupe of type `~jwst.transforms.models.Slit`
-        Slit("name", "shutter_id", "xcen", "ycen", "ymin", "ymax",
+        Slit("name", "shutter_id", "dither_position", "xcen", "ycen", "ymin", "ymax",
         "quadrant", "source_id", "shutter_state", "source_name",
         "source_alias", "stellarity", "source_xpos", "source_ypos"])
     models : list
@@ -689,7 +689,7 @@ class Slit2Msa(Model):
     slits : list
         A list of open slits.
         A slit is a namedtupe, `~jwst.transforms.models.Slit`
-        Slit("name", "shutter_id", "xcen", "ycen", "ymin", "ymax",
+        Slit("name", "shutter_id", "dither_position", "xcen", "ycen", "ymin", "ymax",
         "quadrant", "source_id", "shutter_state", "source_name",
         "source_alias", "stellarity", "source_xpos", "source_ypos")
     models : list

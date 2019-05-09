@@ -26,13 +26,15 @@ from ..datamodels import WavelengthrangeModel, DataModel
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-__all__ = ["reproject", "wcs_from_footprints", "velocity_correction"]
+
+__all__ = ["reproject", "wcs_from_footprints", "velocity_correction",
+           "MSAFileError", "NoDataOnDetectorError"]
 
 
-class MissingMSAFileError(Exception):
+class MSAFileError(Exception):
 
     def __init__(self, message):
-        super(MissingMSAFileError, self).__init__(message)
+        super(MSAFileError, self).__init__(message)
 
 
 class NoDataOnDetectorError(Exception):
