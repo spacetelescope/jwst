@@ -104,19 +104,21 @@ class BaseJWSTTest:
 
         # Get full path and proceed depending on whether
         # is a local path or URL.
-        root = op.join(get_bigdata_root(), *self.repo_path)
-        path = op.join(root, *pathargs)
+        root = get_bigdata_root()
+        import pdb; pdb.set_trace()
         if op.exists(root):
-            path = op.join(root, *self.repo_path, *pathargs)
+            path = op.join(root, *self.repo_path)
+            root_len = len(path) + 1
+            path = op.join(path, *pathargs)
             file_paths = _data_glob_local(path, glob)
         elif check_url(root):
+            root_len = len(op.join(*self.repo_path[1:])) + 1
             path = op.join(*self.repo_path, *pathargs)
             file_paths = _data_glob_url(path, glob, root=root)
         else:
             raise BigdataError('Path cannot be found: {}'.format(path))
 
         # Remove the root from the paths
-        root_len = len('/'.join(self.repo_path[1:])) + 1  # +1 to account for the folder delimiter.
         file_paths = [
             file_path[root_len:]
             for file_path in file_paths
@@ -262,7 +264,7 @@ def _data_glob_url(*url_parts, root=None):
     search_url = op.join(root, 'api/search/pattern')
 
     # Join and re-split the url so that every component is identified.
-    url = '/'.join((root,) + url_parts)
+    url = root + '/'.join(url_parts)
     all_parts = url.split('/')
 
     # Pick out "jwst-pipeline", the repo name
