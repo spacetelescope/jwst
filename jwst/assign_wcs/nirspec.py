@@ -516,6 +516,11 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
     # First thing to do is to get the unique slitlet_ids
     slitlet_ids_unique = list(set([x['slitlet_id'] for x in msa_data]))
 
+    # SDP may assign a value of "-1" tp ``slitlet_id`` - these need to be ignored.
+    # JP-436
+    if -1 in slitlet_ids_unique:
+        slitlet_ids_unique.remove(-1)
+
     margin = 0.05
 
     # Now lets look at each unique slitlet id
