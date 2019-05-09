@@ -72,9 +72,10 @@ def test_data_glob_url(glob_filter, nfiles):
     nfiles: int
         The number of files expected to find.
     """
-    path = 'https://bytesalad.stsci.edu/artifactory/jwst-pipeline/dev/nircam/test_bias_drift'
+    root = 'https://bytesalad.stsci.edu/artifactory'
+    path = 'jwst-pipeline/dev/nircam/test_bias_drift'
 
-    files = _data_glob_url(path, glob_filter)
+    files = _data_glob_url(path, glob_filter, root=root)
     assert len(files) == nfiles
 
 
