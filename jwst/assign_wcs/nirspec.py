@@ -382,6 +382,7 @@ def get_open_fixed_slits(input_model, slit_y_range=[-.55, .55]):
     if input_model.meta.subarray.name is None:
         raise ValueError("Input file is missing SUBARRAY value/keyword.")
     slits = []
+    ylow, yhigh = slit_y_range
 
     s2a1 = Slit('S200A1', 0, 0, 0, 0, ylow, yhigh, 5)
     s2a2 = Slit('S200A2', 1, 0, 0, 0, ylow, yhigh, 5)
@@ -469,6 +470,8 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
         The MSA meta id for the science file, FITS keyword ``MSAMETID``.
     dither_position : int
         The index in the dither patern, FITS keyword ``PATT_NUM``.
+    slit_y_range : list or tuple of size 2
+        The lower and upper limit of the slit.
 
     Returns
     -------
@@ -492,6 +495,10 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
         message = "Unable to read MSA FITS file (MSAMETFL) {0}".format(msa_file)
         log.error(message)
         raise MSAFileError(message)
+    except Exception:
+        message = "problem reading MSA metafile (MSAMETFL) {0}".format(msa_file)
+        log.error(message)
+        raise MSAFileError(message)
 
     # Get the configuration header from teh _msa.fits file.  The EXTNAME should be 'SHUTTER_INFO'
     msa_conf = msa_file[('SHUTTER_INFO', 1)]
@@ -499,7 +506,8 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
 
     # First we are going to filter the msa_file data on the msa_metadata_id
     # as that is all we are interested in for this function.
-    msa_data = [x for x in msa_conf.data if x['msa_metadata_id'] == msa_metadata_id and x['dither_point_index'] == dither_position]
+    msa_data = [x for x in msa_conf.data if x['msa_metadata_id'] == msa_metadata_id \
+                and x['dither_point_index'] == dither_position]
 
     log.debug('msa_data with msa_metadata_id = {}   {}'.format(msa_metadata_id, msa_data))
     log.info('Retrieving open slitlets for msa_metadata_id {} '
@@ -512,16 +520,10 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
 
     # Now lets look at each unique slitlet id
     for slitlet_id in slitlet_ids_unique:
-        log.info('working on slit_id {}'.format(slitlet_id))
         # Get the rows for the current slitlet_id
         slitlets_sid = [x for x in msa_data if x['slitlet_id'] == slitlet_id]
         open_shutters = [x['shutter_column'] for x in slitlets_sid]
 
-        # Count the number of backgrounds that have an 'N' (meaning main shutter)
-        # This needs to be 0 or 1 and we will have to deal with those differently
-        # See: https://github.com/STScI-JWST/jwst/commit/7588668b44b77486cdafb35f7e2eb2dcfa7d1b63#commitcomment-18987564
-
-        #n_main_shutter = len([s for s in slitlets_sid if s['background'] == 'N'])
         n_main_shutter = len([s for s in slitlets_sid if s['primary_source'] == 'Y'])
 
         # In the next part we need to calculate, find, determine 5 things:

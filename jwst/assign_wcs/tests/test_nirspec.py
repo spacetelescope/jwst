@@ -367,10 +367,6 @@ def test_slit_projection_on_detector():
     hdul[0].header['DETECTOR'] = 'NRS1'
     im = datamodels.ImageModel(hdul)
 
-    #refs = {}
-    #for reftype in step.reference_file_types:
-    #    refs[reftype] = step.get_reference_file(im, reftype)
-
     open_slits = nirspec.get_open_slits(im, refs)
     assert len(open_slits) == 4
     names = [s.name for s in open_slits]
