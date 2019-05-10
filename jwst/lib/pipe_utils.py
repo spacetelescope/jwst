@@ -24,7 +24,7 @@ def is_tso(model):
 
     # Check on JWST-specific TSOVISIT flag
     try:
-        is_tso = model.meta.observation.tsovisit
+        is_tso = model.meta.visit.tsovisit
     except AttributeError:
         pass
 

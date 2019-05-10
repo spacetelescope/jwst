@@ -1,7 +1,12 @@
 """Base classes which define the Level3 Associations"""
 from collections import defaultdict
+import copy
 import logging
-from os.path import basename
+from os.path import (
+    basename,
+    split,
+    splitext
+    )
 import re
 
 from jwst.associations import (
@@ -56,7 +61,7 @@ __all__ = [
     'SimpleConstraint',
     'Utility',
 ]
-
+from jwst.lib.suffix import remove_suffix
 # Configure logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -293,6 +298,39 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             'asn_candidate': item['asn_candidate']
         }
         return member
+
+    def make_fixedslit_bkg(self):
+        """Add a background to a MIR_lrs-fixedslit observation"""
+        for product in self['products']:
+            members = product['members']
+            # Split out the science exposures
+            science_exps = [
+                member
+                for member in members
+                if member['exptype'] == 'science'
+            ]
+            # Create new members for each science exposure in the association,
+            # using the the base name + _x1d as background.
+            results = []
+            # Loop over all science exposures in the association
+            for science_exp in science_exps:
+                sci_name = science_exp['expname']
+                science_exp['expname'] = sci_name
+                # Construct the name for the background file
+                bkg_name = remove_suffix(
+                    splitext(split(science_exp['expname'])[1])[0])[0]
+                bkg_name = bkg_name+'_x1d.fits'
+                now_background = copy.copy(science_exp)
+                now_background['expname'] = bkg_name
+                now_background['exptype'] = 'background'
+                # Add the background file to the association table
+                members.append(now_background)
+
+            if self.is_valid:
+                results.append(self)
+
+            return results
+
 
     def _init_hook(self, item):
         """Post-check and pre-add initialization"""

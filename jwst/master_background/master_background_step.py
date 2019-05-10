@@ -111,7 +111,6 @@ class MasterBackgroundStep(Step):
                     master_background = combine_1d_spectra(
                         background_data,
                         exptime_key='exposure_time',
-                        background=True,
                         )
 
                     result = datamodels.ModelContainer()

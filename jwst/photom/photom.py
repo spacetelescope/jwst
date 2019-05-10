@@ -239,6 +239,9 @@ class DataSet():
                         self.input.err /= sens2d
                         self.input.var_poisson /= sens2d**2
                         self.input.var_rnoise /= sens2d**2
+                        if (self.input.var_flat is not None and
+                            np.size(self.input.var_flat) > 0):
+                                self.input.var_flat /= sens2d**2
 
                         # Update BUNIT values for the science data and err
                         self.input.meta.bunit_data = 'mJy/arcsec^2'
@@ -428,6 +431,8 @@ class DataSet():
             self.input.err /= sens2d
             self.input.var_poisson /= sens2d**2
             self.input.var_rnoise /= sens2d**2
+            if self.input.var_flat is not None and np.size(self.input.var_flat) > 0:
+                    self.input.var_flat /= sens2d**2
 
             # Update the science dq
             self.input.dq = np.bitwise_or(self.input.dq, ftab.dq)
@@ -693,6 +698,9 @@ class DataSet():
             if (self.input.slits[self.slitnum].var_rnoise is not None and
                 np.size(self.input.slits[self.slitnum].var_rnoise) > 0):
                     self.input.slits[self.slitnum].var_rnoise *= conversion**2
+            if (self.input.slits[self.slitnum].var_flat is not None and
+                np.size(self.input.slits[self.slitnum].var_flat) > 0):
+                    self.input.slits[self.slitnum].var_flat *= conversion**2
             self.input.slits[self.slitnum].meta.bunit_data = 'MJy/sr'
             self.input.slits[self.slitnum].meta.bunit_err = 'MJy/sr'
         else:
@@ -704,6 +712,9 @@ class DataSet():
             if (self.input.var_rnoise is not None and
                 np.size(self.input.var_rnoise) > 0):
                     self.input.var_rnoise *= conversion**2
+            if (self.input.var_flat is not None and
+                np.size(self.input.var_flat) > 0):
+                    self.input.var_flat *= conversion**2
             self.input.meta.bunit_data = 'MJy/sr'
             self.input.meta.bunit_err = 'MJy/sr'
 
@@ -849,7 +860,7 @@ class DataSet():
             self.calc_fgs(ftab)
 
         # Load the pixel area reference file, if it exists, and attach the
-        # the reference data to the science model
+        # reference data to the science model
         if area_fname:
             if 'IMAGE' in self.exptype and area_fname != 'N/A':
                 self.save_area_info(ftab, area_fname)

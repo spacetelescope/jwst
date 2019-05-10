@@ -22,6 +22,8 @@ barshadow
 - Updated to apply the correction to the science data arrays, in addition
   to attaching as an extension. [#3319]
 
+- Updated to apply the square of the correction to VAR_FLAT [#3427]
+
 calwebb_spec3
 -------------
 
@@ -32,6 +34,10 @@ combine_1d
 
 - Fix call to wcs.invert, and don't weight flux by sensitivity if the net
   column is all zeros. [#3274]
+
+- Modified to use the same columns as now written by extract_1d.
+  The background parameter has been removed, since dividing by npixels
+  is now done in extract_1d. [#3412]
 
 datamodels
 ----------
@@ -76,6 +82,14 @@ extract_1d
   to check for a WCS that does not have an inverse.  Some code (but not
   all) for the now-obsolete RELSENS extension has been deleted. [#3390]
 
+- This now writes columns SURF_BRIGHT and SB_ERROR instead of NET and
+  NERROR.  The BACKGROUND column is divided by NPIXELS, so the units will
+  be surface brightness.  This step no longer looks for a RELSENS
+  extension. [#3412]
+
+- The keywords that describe the units for the FLUX and ERROR columns
+  have been corrected; the units are now specified as "Jy". [#3447]
+
 
 flatfield
 ---------
@@ -111,6 +125,8 @@ pathloss
 
 - Updated to apply the correction to the science data and err arrays. [#3323]
 
+- Updated to apply the square of the correction to VAR_FLAT [#3427]
+
 photom
 ------
 
@@ -119,6 +135,8 @@ photom
 
 - Updated to compute a wavelength array for NIRISS SOSS exposures using
   spectral order 1. [#3387]
+
+- Updated to apply the square of the correction to VAR_FLAT [#3427]
 
 reffile_utils
 -------------
@@ -279,6 +297,10 @@ engdblog
 
 exp_to_source
 -------------
+
+- Updated SourceContainer to wrap each exposure of a MultiExposure in a
+  SlitModel, allowing pipeline code to simply treat each as DataModel.
+  [#3438]
 
 extract_1d
 ----------

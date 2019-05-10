@@ -148,15 +148,15 @@ def user_bkg_spec_a():
                               dtype=np.float64)
     flux = np.linspace(13., 25., num=25, endpoint=True, retstep=False,
                        dtype=np.float64)
-    fl_error = np.ones_like(wavelength)
+    error = np.ones_like(wavelength)
     dq = np.zeros(wavelength.shape, dtype=np.uint32)
-    net = np.zeros_like(wavelength)
-    nerror = np.ones_like(wavelength)
+    surf_bright = np.zeros_like(wavelength)
+    sb_error = np.ones_like(wavelength)
     background = np.ones_like(wavelength)
     berror = np.ones_like(wavelength)
     npixels = np.ones_like(wavelength)
-    otab = np.array(list(zip(wavelength, flux, fl_error, dq,
-                             net, nerror, background, berror,
+    otab = np.array(list(zip(wavelength, flux, error,
+                             surf_bright, sb_error, dq, background, berror,
                              npixels)),
                     dtype=spec_dtype)
     spec = datamodels.SpecModel(spec_table=otab)
@@ -189,15 +189,15 @@ def user_bkg_spec_b():
                               dtype=np.float64)[::-1]
     flux = np.linspace(13., 25., num=25, endpoint=True, retstep=False,
                        dtype=np.float64)[::-1]
-    fl_error = np.ones_like(wavelength)
+    error = np.ones_like(wavelength)
     dq = np.zeros(wavelength.shape, dtype=np.uint32)
-    net = np.zeros_like(wavelength)
-    nerror = np.ones_like(wavelength)
+    surf_bright = np.zeros_like(wavelength)
+    sb_error = np.ones_like(wavelength)
     background = np.ones_like(wavelength)
     berror = np.ones_like(wavelength)
     npixels = np.ones_like(wavelength)
-    otab = np.array(list(zip(wavelength, flux, fl_error, dq,
-                             net, nerror, background, berror,
+    otab = np.array(list(zip(wavelength, flux, error,
+                             surf_bright, sb_error, dq, background, berror,
                              npixels)),
                     dtype=spec_dtype)
     spec = datamodels.SpecModel(spec_table=otab)
@@ -221,13 +221,14 @@ def user_bkg_spec_c():
                               dtype=np.float64)
     flux = np.linspace(13., 25., num=25, endpoint=True, retstep=False,
                        dtype=np.float64)
-    fl_error = np.ones_like(wavelength)
+    error = np.ones_like(wavelength)
+    surf_bright = np.zeros_like(wavelength)
+    sb_error = np.ones_like(wavelength)
     dq = np.zeros(wavelength.shape, dtype=np.uint32)
-    net = np.zeros_like(wavelength)
     weight = np.ones_like(wavelength)
     n_input = np.ones_like(wavelength)                  # yes, float64
-    data = np.array(list(zip(wavelength, flux, fl_error, net,
-                             dq, weight, n_input)),
+    data = np.array(list(zip(wavelength, flux, error, surf_bright,
+                             sb_error, dq, weight, n_input)),
                     dtype=spec_table_dtype)
     m_bkg_spec = datamodels.CombinedSpecModel(spec_table=data)
 

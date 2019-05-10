@@ -23,13 +23,11 @@ results.xml
 pip-wheel-metadata/
 .DS_Store
 .project
-.vscode
 .pydevproject
+.vscode
 *code-workspace
 src/launch.json
 scripts/launch.json
 *.orig
 .ipynb_checkpoints
 */.ipynb_checkpoints/*.ipynb
-
-

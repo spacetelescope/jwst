@@ -14,6 +14,7 @@ from ..lib import pipe_utils
 from . import extract1d
 from . import ifu
 from . import spec_wcs
+from . import util
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -79,9 +80,7 @@ class Extract1dError(Exception):
 
 class InvalidSpectralOrderNumberError(Extract1dError):
     """The spectral order number was invalid or off the detector."""
-    def __init__(self, message=None):
-        super().__init__()
-        self.message = message
+    pass
 
 
 def load_ref_file(refname):
@@ -157,7 +156,8 @@ def get_extract_parameters(ref_dict,
     sp_order : int
         The spectral order number.
 
-    meta : metadata for current slit.
+    meta : metadata for the actual input model, i.e. not just for the
+        current slit.
         Not currently used.
 
     smoothing_length : int or None
@@ -254,36 +254,55 @@ def get_extract_parameters(ref_dict,
                         raise ValueError('dispaxis must be 1 or 2.')
                     else:
                         extract_params['dispaxis'] = disp
-                    extract_params['src_coeff'] = aper.get('src_coeff')
-                    extract_params['bkg_coeff'] = aper.get('bkg_coeff')
-                    extract_params['independent_var'] = \
-                          aper.get('independent_var', 'pixel').lower()
+                    if meta.target.source_type.upper() == "EXTENDED":
+                        log.info("Target is extended, so the entire region "
+                                 "will be extracted.")
+                        shape = input_model.data.shape
+                        extract_params['src_coeff'] = None
+                        extract_params['bkg_coeff'] = None
+                        extract_params['bkg_order'] = 0
+                        extract_params['apply_nod_offset'] = False
+                        extract_params['xstart'] = 0
+                        extract_params['xstop'] = shape[-1] - 1
+                        extract_params['ystart'] = 0
+                        extract_params['ystop'] = shape[-2] - 1
+                        extract_params['extract_width'] = None
+                        extract_params['independent_var'] = 'pixel'
+                        extract_params['nod_correction'] = 0    # default value
+                    else:
+                        extract_params['src_coeff'] = aper.get('src_coeff')
+                        extract_params['bkg_coeff'] = aper.get('bkg_coeff')
+                        extract_params['independent_var'] = \
+                              aper.get('independent_var', 'pixel').lower()
+                        if bkg_order is None:
+                            extract_params['bkg_order'] = aper.get('bkg_order', 0)
+                        else:
+                            # If the user supplied a value, use that value.
+                            extract_params['bkg_order'] = bkg_order
+                        if apply_nod_offset is None:
+                            extract_params['apply_nod_offset'] = \
+                                  aper.get('apply_nod_offset', True)
+                        else:
+                            # If the user supplied a value, use that value.
+                            extract_params['apply_nod_offset'] = apply_nod_offset
+                        extract_params['xstart'] = aper.get('xstart')
+                        extract_params['xstop'] = aper.get('xstop')
+                        extract_params['ystart'] = aper.get('ystart')
+                        extract_params['ystop'] = aper.get('ystop')
+                        extract_params['extract_width'] = aper.get('extract_width')
+                        extract_params['nod_correction'] = 0    # default value
                     if smoothing_length is None:
                         extract_params['smoothing_length'] = \
                               aper.get('smoothing_length', 0)
                     else:
                         # If the user supplied a value, use that value.
                         extract_params['smoothing_length'] = smoothing_length
-                    if bkg_order is None:
-                        extract_params['bkg_order'] = aper.get('bkg_order', 0)
-                    else:
-                        # If the user supplied a value, use that value.
-                        extract_params['bkg_order'] = bkg_order
-                    if apply_nod_offset is None:
-                        extract_params['apply_nod_offset'] = \
-                              aper.get('apply_nod_offset', True)
-                    else:
-                        # If the user supplied a value, use that value.
-                        extract_params['apply_nod_offset'] = apply_nod_offset
-                    extract_params['xstart'] = aper.get('xstart')
-                    extract_params['xstop'] = aper.get('xstop')
-                    extract_params['ystart'] = aper.get('ystart')
-                    extract_params['ystop'] = aper.get('ystop')
-                    extract_params['extract_width'] = aper.get('extract_width')
-                    extract_params['nod_correction'] = 0        # default value
                     break
 
     elif ref_dict['ref_file_type'] == FILE_TYPE_IMAGE:
+        # Note that we will use the supplied image-format reference file,
+        # without regard for the distinction between point source and
+        # extended source.
         extract_params['ref_file_type'] = ref_dict['ref_file_type']
         foundit = False
         for im in ref_dict['ref_model'].images:
@@ -1226,8 +1245,7 @@ class ExtractBase:
         Parameters
         ----------
         input_model : data model
-            The input science model.  This will only be used if `slit`
-            is None
+            The input science model.
 
         slit : one slit from a MultiSlitModel (or similar), or None
             The WCS and target coordinates will be gotten from `slit`
@@ -1259,6 +1277,15 @@ class ExtractBase:
             if there was not sufficient information available, e.g. if the
             wavelength attribute or wcs function is not defined.
         """
+
+        # WFSS data are not currently supported because we don't have the
+        # target coordinates; also, we would have to loop over pixels when
+        # calling the wcs function.
+        if input_model.meta.exposure.type in WFSS_EXPTYPES:
+            log.warning("For exposure type %s, we currently can't use "
+                        "target coordinates to get location of spectrum.",
+                        input_model.meta.exposure.type)
+            return None, None, None
 
         bb = self.wcs.bounding_box          # ((x0, x1), (y0, y1))
 
@@ -1376,6 +1403,9 @@ class ExtractModel(ExtractBase):
             For MultiSlit or MultiProduct data, `slit` is one slit from
             a list of slits in the input.  For other types of data, `slit`
             will not be used.
+
+        verbose : bool
+            If True, log messages.
 
         ref_file_type : str
             This indicates whether the reference file (if any) was a JSON
@@ -1891,15 +1921,23 @@ class ExtractModel(ExtractBase):
         wavelength : ndarray, 1-D, float64
             The wavelength in micrometers at each pixel.
 
-        net : ndarray, 1-D
-            The count rate (counts / s) minus the background at each pixel.
+        temp_flux : ndarray, 1-D
+            The sum of the data values in the extraction region minus the
+            sum of the data values in the background regions (scaled by the
+            ratio of the numbers of pixels), for each pixel.
+            The data values are in units of surface brightness, so this
+            value isn't really the flux, it's an intermediate value.
+            Dividing by `npixels` (to compute the average) will give the
+            array for the `surf_bright` (surface brightness) output column,
+            and multiplying by the solid angle of a pixel will give the
+            flux for a point source.
 
         background : ndarray, 1-D, float64
-            The background count rate that was subtracted from the total
-            source count rate to get `net`.
+            The background count rate that was subtracted from the sum of
+            the source data values to get `temp_flux`.
 
         npixels : ndarray, 1-D, float64
-            The number of pixels that were added together to get `net`.
+            The number of pixels that were added together to get `temp_flux`.
 
         dq : ndarray, 1-D, uint32
             The data quality array.
@@ -2043,24 +2081,35 @@ class ExtractModel(ExtractBase):
             temp_wl[nan_mask] = 0.01            # because NaNs cause problems
 
         # src total flux, area, total weight
-        (net, background, npixels) = \
+        (temp_flux, background, npixels) = \
         extract1d.extract1d(image, temp_wl, disp_range,
                             self.p_src, self.p_bkg, self.independent_var,
                             self.smoothing_length, self.bkg_order,
                             weights=None)
         del temp_wl
 
-        dq = np.zeros(net.shape, dtype=np.uint32)
+        dq = np.zeros(temp_flux.shape, dtype=np.uint32)
         if n_nan > 0:
-            (wavelength, net, background, npixels, dq) = \
-                nans_at_endpoints(wavelength, net, background, npixels, dq,
-                                  verbose)
+            (wavelength, temp_flux, background, npixels, dq) = \
+                nans_at_endpoints(wavelength, temp_flux, background,
+                                  npixels, dq, verbose)
 
-        return (ra, dec, wavelength, net, background, npixels, dq)
+        return (ra, dec, wavelength, temp_flux, background, npixels, dq)
 
 
 class ImageExtractModel(ExtractBase):
-    """This uses an image that specifies the extraction region."""
+    """This uses an image that specifies the extraction region.
+
+    Extended summary
+    ----------------
+    One of the requirements for this step is that for an extended target,
+    the entire aperture is supposed to be extracted (with no background
+    subtraction).  It doesn't make any sense to use an image reference file
+    to extract the entire aperture; a trivially simple JSON reference file
+    would do.  Therefore, we assume that if the user specified a reference
+    file in image format, the user actually wanted that reference file
+    to be used, so we will ignore the requirement in this case.
+    """
 
     def __init__(self, input_model, slit, verbose,
                  ref_file_type=None,
@@ -2085,6 +2134,9 @@ class ImageExtractModel(ExtractBase):
             a list of slits in the input.  For other types of data, `slit`
             will not be used.
 
+        verbose : bool
+            If True, log messages.
+
         ref_file_type : str
             This indicates whether the reference file (if any) was a JSON
             file or an image.
@@ -2098,11 +2150,11 @@ class ImageExtractModel(ExtractBase):
             "partial match" if only the slit name matches.  If neither
             match, `match` will be "no match".
 
-        ref_image : data model
-            The reference image.
-
         spectral_order : int
             Spectral order number.
+
+        ref_image : data model
+            The reference image.
 
         dispaxis : int
             Dispersion direction:  1 is horizontal, 2 is vertical.
@@ -2118,6 +2170,12 @@ class ImageExtractModel(ExtractBase):
             will be moved to [y0 + nod, x0], where `nod` is
             int(round(nod_correction)), if the dispersion direction is
             horizontal.
+
+        subtract_background : bool or None
+            A flag which indicates whether the background should be subtracted.
+            If None, the value in the extract_1d reference file will be used.
+            If not None, this parameter overrides the value in the
+            extract_1d reference file.
 
         apply_nod_offset : bool or None
             If True, the reference image will be shifted by an integral
@@ -2308,15 +2366,23 @@ class ImageExtractModel(ExtractBase):
         wavelength : ndarray, 1-D
             The wavelength in micrometers at each pixel.
 
-        net : ndarray, 1-D
-            The count rate (counts / s) minus the background at each pixel.
+        temp_flux : ndarray, 1-D
+            The sum of the data values in the extraction region minus the
+            sum of the data values in the background regions (scaled by the
+            ratio of the numbers of pixels), for each pixel.
+            The data values are in units of surface brightness, so this
+            value isn't really the flux, it's an intermediate value.
+            Multiply `temp_flux` by the solid angle of a pixel to get the
+            flux for a point source (column "flux").  Divide `temp_flux` by
+            `npixels` (to compute the average) to get the array for the
+            "surf_bright" (surface brightness) output column.  
 
         background : ndarray, 1-D
-            The background count rate that was subtracted from the total
-            source count rate to get `net`.
+            The background count rate that was subtracted from the sum of
+            the source data values to get `temp_flux`.
 
         npixels : ndarray, 1-D, float64
-            The number of pixels that were added together to get `net`.
+            The number of pixels that were added together to get `temp_flux`.
 
         dq : ndarray, 1-D, uint32
         """
@@ -2369,10 +2435,10 @@ class ImageExtractModel(ExtractBase):
             if self.smoothing_length > 1:
                 background = extract1d.bxcar(background, self.smoothing_length)
                 background = np.where(n_bkg > 0., background, 0.)
-            net = gross - background
+            temp_flux = gross - background
         else:
             background = np.zeros_like(gross)
-            net = gross.copy()
+            temp_flux = gross.copy()
         del gross
 
         if wl_array is None or len(wl_array) == 0:
@@ -2417,9 +2483,10 @@ class ImageExtractModel(ExtractBase):
         mask = np.where(n_target > 0.)
         if len(mask[0]) > 0:
             trim_slc = slice(mask[0][0], mask[0][-1] + 1)
-            net = net[trim_slc]
+            temp_flux = temp_flux[trim_slc]
             background = background[trim_slc]
             n_target = n_target[trim_slc]
+            npixels = npixels[trim_slc]
             x_array = x_array[trim_slc]
             y_array = y_array[trim_slc]
 
@@ -2513,17 +2580,17 @@ class ImageExtractModel(ExtractBase):
                 wavelength = np.arange(shape[0], dtype=np.float)
             wavelength = wavelength[trim_slc]
 
-        dq = np.zeros(net.shape, dtype=np.uint32)
+        dq = np.zeros(temp_flux.shape, dtype=np.uint32)
         nan_mask = np.isnan(wavelength)
         n_nan = nan_mask.sum(dtype=np.intp)
         if n_nan > 0:
             if verbose:
                 log.warning("%d NaNs in wavelength array", n_nan)
-            (wavelength, net, background, npixels, dq) = \
-                nans_at_endpoints(wavelength, net, background, npixels, dq,
-                                  verbose)
+            (wavelength, temp_flux, background, npixels, dq) = \
+                nans_at_endpoints(wavelength, temp_flux, background,
+                                  npixels, dq, verbose)
 
-        return (ra, dec, wavelength, net, background, npixels, dq)
+        return (ra, dec, wavelength, temp_flux, background, npixels, dq)
 
 
     def match_shape(self, shape):
@@ -2600,79 +2667,6 @@ class ImageExtractModel(ExtractBase):
             mask_bkg = None
 
         return (mask_target, mask_bkg)
-
-
-def interpolate_response(wavelength, relsens, verbose):
-    """Interpolate within the relative response table.
-
-    Parameters
-    ----------
-    wavelength : ndarray, 1-D
-        Wavelengths in the science data
-
-    relsens : record array
-        Contains two columns, 'wavelength' and 'response'.
-
-    verbose : bool
-        If True, write log messages.
-
-    Returns
-    -------
-    rr_factor : ndarray, 1-D
-        The reciprocal of the response, interpolated at `wavelength`, with
-        extrapolated elements and zero or negative response values set to 0.
-        Multiply the net count rate by rr_factor to obtain the flux.
-    """
-
-    # "_relsens" indicates that the values were read from the RELSENS table.
-    wl_relsens = relsens['wavelength']
-    resp_relsens = relsens['response']
-    MICRONS_100 = 1.e-4                 # 100 microns, in meters
-    if wl_relsens.max() > 0. and wl_relsens.max() < MICRONS_100:
-        if verbose:
-            log.warning("Converting RELSENS wavelengths to microns.")
-        wl_relsens *= 1.e6
-
-    bad = False
-    if np.any(np.isnan(wl_relsens)):
-        log.error("In RELSENS, the 'wavelength' column contains NaNs.")
-        bad = True
-    if np.any(np.isnan(resp_relsens)):
-        log.error("In RELSENS, the 'response' column contains NaNs.")
-        bad = True
-    if bad:
-        raise ValueError("Found NaNs in RELSENS table.")
-
-    # np.interp requires that wl_relsens be increasing.
-    if wl_relsens[-1] < wl_relsens[0]:
-        if verbose:
-            log.warning("The wavelength column in RELSENS was decreasing.")
-        wl_relsens = wl_relsens[::-1].copy()
-        resp_relsens = resp_relsens[::-1].copy()
-
-    # `r_factor` is the response, interpolated at the wavelengths in the
-    # science data.  -2048 is a flag value, to check for extrapolation.
-    r_factor = np.interp(wavelength, wl_relsens, resp_relsens, -2048., -2048.)
-    mask2048 = np.where(r_factor == -2048.)
-    if len(mask2048[0]) > 0:
-        if verbose:
-            log.warning("Using RELSENS, %d elements were extrapolated; the "
-                        "corresponding flux will be set to 0.",
-                        len(mask2048[0]))
-        r_factor[mask2048] = 1.                 # temporary
-    mask_neg = np.where(r_factor <= 0.)
-    if len(mask_neg[0]) > 0:
-        if verbose:
-            log.warning("Using RELSENS, %d interpolated response values "
-                        "were <= 0; the corresponding flux will be set to 0.",
-                        len(mask_neg[0]))
-        r_factor[mask_neg] = 1.                 # temporary
-
-    rr_factor = 1. / r_factor
-    rr_factor[mask2048] = 0.
-    rr_factor[mask_neg] = 0.
-
-    return rr_factor
 
 
 def run_extract1d(input_model, refname, smoothing_length, bkg_order,
@@ -2886,42 +2880,44 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                 continue
 
             try:
-                (ra, dec, wavelength, net, background, npixels, dq,
-                 prev_offset) = extract_one_slit(
+                (ra, dec, wavelength, temp_flux, background,
+                 npixels, dq, prev_offset) = extract_one_slit(
                                         input_model, slit, -1,
                                         prev_offset, True, extract_params)
             except InvalidSpectralOrderNumberError as e:
                 log.info(str(e) + ", skipping ...")
                 continue
-            got_relsens = True
-            try:
-                relsens = slit.relsens
-            except AttributeError:
-                got_relsens = False
-            if got_relsens:
-                # reciprocal of the response
-                rr_factor = interpolate_response(wavelength, relsens, True)
-                flux = net * rr_factor
-            else:
-                log.warning("No relsens for current slit, "
-                            "so can't compute flux.")
-                flux = np.zeros_like(net)
-            fl_error = np.ones_like(net)
-            nerror = np.ones_like(net)
-            berror = np.ones_like(net)
-            otab = np.array(list(zip(wavelength, flux, fl_error, dq,
-                                     net, nerror, background, berror,
-                                     npixels)),
+
+            # Convert the sum to an average, for surface brightness.
+            npixels_temp = np.where(npixels > 0., npixels, 1.)
+            surf_bright = temp_flux / npixels_temp
+            background /= npixels_temp
+            del npixels_temp
+
+            # Convert to flux density (for a point source).
+            pixel_solid_angle = util.pixel_area(slit.meta.wcs, slit.data.shape)
+            if pixel_solid_angle is None:
+                log.warning("Pixel solid angle could not be determined")
+                pixel_solid_angle = 1.
+            # MJy / steradian --> Jy
+            flux = temp_flux * pixel_solid_angle * 1.e6
+            del temp_flux
+            error = np.zeros_like(flux) * pixel_solid_angle * 1.e6
+            sb_error = np.zeros_like(flux)
+            berror = np.zeros_like(flux)
+            otab = np.array(list(zip(wavelength,
+                                     flux, error, surf_bright, sb_error,
+                                     dq, background, berror, npixels)),
                             dtype=spec_dtype)
             spec = datamodels.SpecModel(spec_table=otab)
             spec.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec, wavelength)
             spec.spec_table.columns['wavelength'].unit = 'um'
-            spec.spec_table.columns['flux'].unit = 'mJy'
-            spec.spec_table.columns['error'].unit = 'mJy'
-            spec.spec_table.columns['net'].unit = 'DN/s'
-            spec.spec_table.columns['nerror'].unit = 'DN/s'
-            spec.spec_table.columns['background'].unit = 'DN/s'
-            spec.spec_table.columns['berror'].unit = 'DN/s'
+            spec.spec_table.columns['flux'].unit = 'Jy'
+            spec.spec_table.columns['error'].unit = 'Jy'
+            spec.spec_table.columns['surf_bright'].unit = 'MJy/sr'
+            spec.spec_table.columns['sb_error'].unit = 'MJy/sr'
+            spec.spec_table.columns['background'].unit = 'MJy/sr'
+            spec.spec_table.columns['berror'].unit = 'MJy/sr'
             spec.slit_ra = ra
             spec.slit_dec = dec
             spec.spectral_order = sp_order
@@ -2971,8 +2967,8 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                                     "determined, so skipping ...")
                         continue
                     try:
-                        (ra, dec, wavelength, net, background, npixels, dq,
-                         prev_offset) = extract_one_slit(
+                        (ra, dec, wavelength, temp_flux, background,
+                         npixels, dq, prev_offset) = extract_one_slit(
                                         input_model, slit, -1,
                                         prev_offset, True, extract_params)
                     except InvalidSpectralOrderNumberError as e:
@@ -2985,36 +2981,44 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                 else:
                     log.critical('Missing extraction parameters.')
                     raise ValueError('Missing extraction parameters.')
-                got_relsens = True
-                try:
-                    relsens = input_model.relsens
-                except AttributeError:
-                    got_relsens = False
-                if got_relsens:
-                    # reciprocal of the response
-                    rr_factor = interpolate_response(wavelength, relsens, True)
-                    flux = net * rr_factor
+
+                # Convert the sum to an average, for surface brightness.
+                npixels_temp = np.where(npixels > 0., npixels, 1.)
+                surf_bright = temp_flux / npixels_temp
+                background /= npixels_temp
+                del npixels_temp
+
+                # Convert to flux density (for a point source).
+                if input_model.meta.exposure.type == "NIS_SOSS":
+                    wcs = niriss.niriss_soss_set_input(input_model, sp_order)
                 else:
-                    log.warning("No relsens for input file, "
-                                "so can't compute flux.")
-                    flux = np.zeros_like(net)
-                fl_error = np.ones_like(net)
-                nerror = np.ones_like(net)
-                berror = np.ones_like(net)
-                otab = np.array(list(zip(wavelength, flux, fl_error, dq,
-                                         net, nerror, background, berror,
-                                         npixels)),
+                    wcs = input_model.meta.wcs
+                pixel_solid_angle = util.pixel_area(wcs,
+                                                    input_model.data.shape)
+                if pixel_solid_angle is None:
+                    log.warning("Pixel solid angle could not be determined")
+                    pixel_solid_angle = 1.
+                # MJy / steradian --> Jy
+                flux = temp_flux * pixel_solid_angle * 1.e6
+                del temp_flux
+                error = np.zeros_like(flux) * pixel_solid_angle * 1.e6
+                sb_error = np.zeros_like(flux)
+                berror = np.zeros_like(flux)
+                otab = np.array(list(zip(wavelength,
+                                         flux, error,
+                                         surf_bright, sb_error,
+                                         dq, background, berror, npixels)),
                                 dtype=spec_dtype)
                 spec = datamodels.SpecModel(spec_table=otab)
                 spec.meta.wcs = spec_wcs.create_spectral_wcs(
                                         ra, dec, wavelength)
                 spec.spec_table.columns['wavelength'].unit = 'um'
-                spec.spec_table.columns['flux'].unit = 'mJy'
-                spec.spec_table.columns['error'].unit = 'mJy'
-                spec.spec_table.columns['net'].unit = 'DN/s'
-                spec.spec_table.columns['nerror'].unit = 'DN/s'
-                spec.spec_table.columns['background'].unit = 'DN/s'
-                spec.spec_table.columns['berror'].unit = 'DN/s'
+                spec.spec_table.columns['flux'].unit = 'Jy'
+                spec.spec_table.columns['error'].unit = 'Jy'
+                spec.spec_table.columns['surf_bright'].unit = 'MJy/sr'
+                spec.spec_table.columns['sb_error'].unit = 'MJy/sr'
+                spec.spec_table.columns['background'].unit = 'MJy/sr'
+                spec.spec_table.columns['berror'].unit = 'MJy/sr'
                 spec.slit_ra = ra
                 spec.slit_dec = dec
                 spec.spectral_order = sp_order
@@ -3058,15 +3062,6 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                                 "determined, so skipping ...")
                     continue
 
-                got_relsens = True
-                try:
-                    relsens = input_model.relsens
-                except AttributeError:
-                    got_relsens = False
-                if not got_relsens:
-                    log.warning("No relsens for input file, "
-                                "so can't compute flux.")
-
                 # Loop over each integration in the input model
                 verbose = True          # for just the first integration
                 if input_model.data.shape[0] == 1:
@@ -3077,38 +3072,56 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                 for integ in range(input_model.data.shape[0]):
                     # Extract spectrum
                     try:
-                        (ra, dec, wavelength, net, background, npixels, dq,
-                         prev_offset) = extract_one_slit(
+                        (ra, dec, wavelength, temp_flux, background,
+                         npixels, dq, prev_offset) = extract_one_slit(
                                         input_model, slit, integ,
                                         prev_offset, verbose, extract_params)
                     except InvalidSpectralOrderNumberError as e:
                         log.info(str(e) + ", skipping ...")
                         break
-                    if got_relsens:
-                        # reciprocal of the response
-                        rr_factor = interpolate_response(
-                                        wavelength, input_model.relsens,
-                                        verbose)
-                        flux = net * rr_factor
+
+                    # Convert the sum to an average, for surface brightness.
+                    npixels_temp = np.where(npixels > 0., npixels, 1.)
+                    surf_bright = temp_flux / npixels_temp
+                    background /= npixels_temp
+                    del npixels_temp
+
+                    # Convert to flux density (for a point source).
+                    if input_model.meta.exposure.type == "NIS_SOSS":
+                        wcs = niriss.niriss_soss_set_input(input_model,
+                                                           sp_order)
                     else:
-                        flux = np.zeros_like(net)
-                    fl_error = np.ones_like(net)
-                    nerror = np.ones_like(net)
-                    berror = np.ones_like(net)
-                    otab = np.array(list(zip(wavelength, flux, fl_error, dq,
-                                             net, nerror, background, berror,
+                        wcs = input_model.meta.wcs
+                    pixel_solid_angle = util.pixel_area(wcs,
+                                                        input_model.data.shape,
+                                                        verbose)
+                    if pixel_solid_angle is None:
+                        if verbose:
+                            log.warning("Pixel solid angle could not "
+                                        "be determined")
+                        pixel_solid_angle = 1.
+                    # MJy / steradian --> Jy
+                    flux = temp_flux * pixel_solid_angle * 1.e6
+                    del temp_flux
+                    error = np.zeros_like(flux) * pixel_solid_angle * 1.e6
+                    sb_error = np.zeros_like(flux)
+                    berror = np.zeros_like(flux)
+                    otab = np.array(list(zip(wavelength,
+                                             flux, error,
+                                             surf_bright, sb_error,
+                                             dq, background, berror,
                                              npixels)),
-                                             dtype=spec_dtype)
+                                    dtype=spec_dtype)
                     spec = datamodels.SpecModel(spec_table=otab)
                     spec.meta.wcs = spec_wcs.create_spectral_wcs(
                                         ra, dec, wavelength)
                     spec.spec_table.columns['wavelength'].unit = 'um'
-                    spec.spec_table.columns['flux'].unit = 'mJy'
-                    spec.spec_table.columns['error'].unit = 'mJy'
-                    spec.spec_table.columns['net'].unit = 'DN/s'
-                    spec.spec_table.columns['nerror'].unit = 'DN/s'
-                    spec.spec_table.columns['background'].unit = 'DN/s'
-                    spec.spec_table.columns['berror'].unit = 'DN/s'
+                    spec.spec_table.columns['flux'].unit = 'Jy'
+                    spec.spec_table.columns['error'].unit = 'Jy'
+                    spec.spec_table.columns['surf_bright'].unit = 'MJy/sr'
+                    spec.spec_table.columns['sb_error'].unit = 'MJy/sr'
+                    spec.spec_table.columns['background'].unit = 'MJy/sr'
+                    spec.spec_table.columns['berror'].unit = 'MJy/sr'
                     spec.slit_ra = ra
                     spec.slit_dec = dec
                     spec.spectral_order = sp_order
@@ -3474,15 +3487,23 @@ def extract_one_slit(input_model, slit, integ,
     wavelength : ndarray, 1-D, float64
         The wavelength in micrometers at each pixel.
 
-    net : ndarray, 1-D, float64
-        The count rate (counts / s) minus the background at each pixel.
+    temp_flux : ndarray, 1-D, float64
+        The sum of the data values in the extraction region minus the sum
+        of the data values in the background regions (scaled by the ratio
+        of the numbers of pixels), for each pixel.
+        The data values are in units of surface brightness, so this value
+        isn't really the flux, it's an intermediate value.  Multiply
+        `temp_flux` by the solid angle of a pixel to get the flux for a
+        point source (column "flux").  Divide `temp_flux` by `npixels` (to
+        compute the average) to get the array for the "surf_bright"
+        (surface brightness) output column.  
 
     background : ndarray, 1-D, float64
         The background count rate that was subtracted from the total
-        source count rate to get `net`.
+        source count rate to get `temp_flux`.
 
     npixels : ndarray, 1-D, float64
-        The number of pixels that were added together to get `net`.
+        The number of pixels that were added together to get `temp_flux`.
 
     dq : ndarray, 1-D, uint32
         The data quality array.
@@ -3536,21 +3557,20 @@ def extract_one_slit(input_model, slit, integ,
                           verbose, extract_params)
         extract_model.update_extraction_limits(ap)
 
-    # Only call this method for the first integration.
-    if prev_offset == OFFSET_NOT_ASSIGNED_YET:
-        # If apply_nod_offset is False, compute the offset anyway in order
-        # to log the offset and target location (below), but don't log any
-        # messages in or below offset_from_offset.
-        local_verbose = extract_model.apply_nod_offset
-        (offset, locn) = extract_model.offset_from_offset(
-                                input_model, slit, local_verbose)
-        if verbose:
-            log.debug("Computed nod/dither offset = %s, "
-                      "target location = %s.", str(offset), str(locn))
-        if not extract_model.apply_nod_offset:
-            offset = 0.
+    if extract_model.apply_nod_offset:
+        # Only call this method for the first integration.
+        if prev_offset == OFFSET_NOT_ASSIGNED_YET:
+            (offset, locn) = extract_model.offset_from_offset(
+                                    input_model, slit, verbose)
+            if verbose:
+                log.debug("Computed nod/dither offset = %s, "
+                          "target location = %s.", str(offset), str(locn))
+            if not extract_model.apply_nod_offset:
+                offset = 0.
+        else:
+            offset = prev_offset
     else:
-        offset = prev_offset
+        offset = 0.
     extract_model.nod_correction = offset
 
     # Add the nod/dither offset to the polynomial coefficients, or shift
@@ -3561,10 +3581,10 @@ def extract_one_slit(input_model, slit, integ,
         extract_model.log_extraction_parameters()
 
     extract_model.assign_polynomial_limits(verbose)
-    (ra, dec, wavelength, net, background, npixels, dq) = \
+    (ra, dec, wavelength, temp_flux, background, npixels, dq) = \
                 extract_model.extract(data, wl_array, verbose)
 
-    return (ra, dec, wavelength, net, background, npixels, dq, offset)
+    return (ra, dec, wavelength, temp_flux, background, npixels, dq, offset)
 
 
 def replace_bad_values(data, input_dq, fill=0.):
@@ -3600,7 +3620,8 @@ def replace_bad_values(data, input_dq, fill=0.):
     else:
         return data
 
-def nans_at_endpoints(wavelength, net, background, npixels, dq, verbose):
+def nans_at_endpoints(wavelength, temp_flux, background,
+                      npixels, dq, verbose):
     """Flag NaNs in the wavelength array.
 
     Extended summary
@@ -3616,14 +3637,14 @@ def nans_at_endpoints(wavelength, net, background, npixels, dq, verbose):
     wavelength : ndarray
         Array of wavelengths, possibly containing NaNs.
 
-    net : ndarray
-        Array of net count rates.
+    temp_flux : ndarray
+        Array of sums of data values (scaled background has been subtracted).
 
     background : ndarray
-        Array of background values that were subtracted to get `net`.
+        Array of background values that were subtracted to get `temp_flux`.
 
     npixels : ndarray, float64
-        The number of pixels that were added together to get `net`.
+        The number of pixels that were added together to get `temp_flux`.
 
     dq : ndarray
         Data quality array.
@@ -3633,14 +3654,14 @@ def nans_at_endpoints(wavelength, net, background, npixels, dq, verbose):
 
     Returns
     -------
-    wavelength, net, background, npixels, dq : ndarray
+    wavelength, temp_flux, background, npixels, dq : ndarray
         The returned `dq` array may have NaNs flagged with DO_NOT_USE,
         and all five arrays may have been trimmed at either or both ends.
     """
 
     # The input arrays will not be modified in-place.
     new_wl = wavelength.copy()
-    new_net = net.copy()
+    new_temp_flux = temp_flux.copy()
     new_bkg = background.copy()
     new_npixels = npixels.copy()
     new_dq = dq.copy()
@@ -3660,11 +3681,11 @@ def nans_at_endpoints(wavelength, net, background, npixels, dq, verbose):
                          n_trimmed)
             slc = slice(flag[0][0], flag[0][-1] + 1)
             new_wl = new_wl[slc]
-            new_net = new_net[slc]
+            new_temp_flux = new_temp_flux[slc]
             new_bkg = new_bkg[slc]
             new_npixels = new_npixels[slc]
             new_dq = new_dq[slc]
     else:
         new_dq |= dqflags.pixel['DO_NOT_USE']
 
-    return (new_wl, new_net, new_bkg, new_npixels, new_dq)
+    return (new_wl, new_temp_flux, new_bkg, new_npixels, new_dq)

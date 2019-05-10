@@ -18,7 +18,8 @@ class InputSpectrumModel:
         wavelength
         flux
         error
-        net
+        surf_bright
+        sb_error
         dq
         nelem
         weight
@@ -27,16 +28,16 @@ class InputSpectrumModel:
         declination
     """
 
-    def __init__(self, ms, spec, exptime_key, background):
+    def __init__(self, ms, spec, exptime_key):
         """Create an InputSpectrumModel object.
 
         Parameters
         ----------
-        ms : MultiSpecModel or SpecModel object
+        ms : `~jwst.datamodels.DataModel`, MultiSpecModel or SpecModel
             This is used to get the integration time.
 
-        spec : SpecModel table
-            The table containing columns "wavelength" and "net".
+        spec : `~jwst.datamodels.DataModel`, SpecModel table
+            The table containing columns "wavelength" and "flux".
             The `ms` object may contain more than one spectrum, but `spec`
             should be just one of those.
 
@@ -44,32 +45,19 @@ class InputSpectrumModel:
             A string identifying which keyword to use to get the exposure
             time, which is used as a weight; or "unit_weight", which means
             to use weight = 1.
-
-        background : bool
-            If the flux data are actually background rather than a target
-            spectrum, `background` should be set to True.  In this case, the
-            values read from the flux column of each input spectrum will be
-            divided by the npixels column (if that column exists).  This is
-            to convert the values to background per pixel.
         """
 
         self.wavelength = spec.spec_table.field("wavelength").copy()
 
-        if background:
-            try:
-                npixels = spec.spec_table.field("npixels").copy()
-            except KeyError:
-                npixels = np.ones_like(self.wavelength)
-
-        if background:
-            # Convert to background value per pixel.
-            self.flux = spec.spec_table.field("flux") / npixels
-            self.error = spec.spec_table.field("error") / npixels
-            self.net = spec.spec_table.field("net") / npixels
-        else:
-            self.flux = spec.spec_table.field("flux").copy()
-            self.error = spec.spec_table.field("error").copy()
-            self.net = spec.spec_table.field("net").copy()
+        self.flux = spec.spec_table.field("flux").copy()
+        self.error = spec.spec_table.field("error").copy()
+        try:
+            self.surf_bright = spec.spec_table.field("surf_bright").copy()
+            self.sb_error = spec.spec_table.field("sb_error").copy()
+        except KeyError:
+            self.surf_bright = np.zeros_like(self.flux)
+            self.sb_error = np.zeros_like(self.flux)
+            log.warning("There is no SURF_BRIGHT column in the input.")
         self.dq = spec.spec_table.field("dq").copy()
         self.nelem = self.wavelength.shape[0]
         self.unit_weight = False        # may be reset below
@@ -86,8 +74,6 @@ class InputSpectrumModel:
         else:
             raise RuntimeError("Don't understand exptime_key = '%s'" %
                                exptime_key)
-        if background and exptime_key != "unit_weight":
-            self.weight *= npixels
 
         got_wcs = True
         try:
@@ -101,12 +87,12 @@ class InputSpectrumModel:
             self.declination[:] = ms.meta.target.dec
             log.warning("There is no WCS in the input.")
 
-
     def close(self):
         self.wavelength = None
         self.flux = None
         self.error = None
-        self.net = None
+        self.surf_bright = None
+        self.sb_error = None
         self.dq = None
         self.nelem = 0
         self.weight = 1.
@@ -120,14 +106,14 @@ class OutputSpectrumModel:
         wavelength
         flux
         error
-        net
+        surf_bright
+        sb_error
         dq
-        flux_weight
         weight
         count
         wcs
         wavelength_dtype
-        net_dtype
+        flux_dtype
         dq_dtype
         normalized
     """
@@ -137,17 +123,16 @@ class OutputSpectrumModel:
         self.wavelength = None
         self.flux = None
         self.error = None
-        self.net = None
+        self.surf_bright = None
+        self.sb_error = None
         self.dq = None
-        self.flux_weight = None
         self.weight = None
         self.count = None
         self.wcs = None
         self.wavelength_dtype = None
-        self.net_dtype = None
+        self.flux_dtype = None
         self.dq_dtype = None
         self.normalized = False
-
 
     def assign_wavelengths(self, input_spectra):
         """Create an array of wavelengths to use for the output spectrum.
@@ -166,7 +151,7 @@ class OutputSpectrumModel:
         # The types used for accumulating sums and taking averages may not
         # be the same as these types.
         self.wavelength_dtype = input_spectra[0].wavelength.dtype
-        self.net_dtype = input_spectra[0].net.dtype
+        self.flux_dtype = input_spectra[0].flux.dtype
         self.dq_dtype = input_spectra[0].dq.dtype
 
         nwl = 0
@@ -175,7 +160,7 @@ class OutputSpectrumModel:
 
         # Create an array with all the input wavelengths (i.e. the union
         # of the input wavelengths).
-        wl = np.zeros(nwl, dtype=np.float)
+        wl = np.zeros(nwl, dtype=np.float64)
         i = 0
         for in_spec in input_spectra:
             nelem = in_spec.nelem
@@ -212,7 +197,6 @@ class OutputSpectrumModel:
         self.wcs = create_spectral_wcs(input_spectra[0].right_ascension[0],
                                        input_spectra[0].declination[0],
                                        self.wavelength)
-
 
     def compute_output_wl(self, wl, count_input):
         """Compute output wavelengths.
@@ -260,19 +244,19 @@ class OutputSpectrumModel:
         # of wl, over count_input elements.  A small value implies that
         # there's a clump, i.e. several elements of wl with nearly the
         # same wavelength.
-        sigma = np.zeros(nwl, dtype=np.float) + 9999.
+        sigma = np.zeros(nwl, dtype=np.float64) + 9999.
 
         # mean_wl is the mean wavelength over the same slice of wl that we
         # used to compute sigma.  If sigma is small enough that it looks
         # as if there's a clump, we'll copy the mean_wl value to temp_wl
         # to be one element of the output wavelengths.
-        mean_wl = np.zeros(nwl, dtype=np.float) - 99.
+        mean_wl = np.zeros(nwl, dtype=np.float64) - 99.
 
         # temp_wl has the same number of elements as wl, but we expect the
         # array of output wavelengths to be significantly smaller, so
         # temp_wl is initialized to a negative value as a flag.  Positive
         # elements will be copied to the array of output wavelengths.
-        temp_wl = np.zeros(nwl, dtype=np.float) - 99.
+        temp_wl = np.zeros(nwl, dtype=np.float64) - 99.
 
         for k in range(nwl):
             n = count_input[k]
@@ -328,7 +312,6 @@ class OutputSpectrumModel:
 
         return temp_wl[np.where(temp_wl > 0.)].copy()
 
-
     def accumulate_sums(self, input_spectra):
         """Compute a weighted sum of all the input spectra.
 
@@ -348,13 +331,6 @@ class OutputSpectrumModel:
         input pixel is flagged with a non-zero value other than DO_NOT_USE,
         the value will be propagated to the output DQ array via bitwise OR.
 
-        The net will be weighted by the exposure (or integration) time.
-        The flux will also be weighted by the sensitivity.  The ratio of
-        net to flux is the sensitivity.  For both net and flux, the idea
-        is that it is counts that should be added up when accumulating
-        sums.  If unit weight was specified, however, both net and flux
-        will be weighted by one.
-
         Parameters
         ----------
         input_spectra : list of InputSpectrumModel objects
@@ -363,30 +339,15 @@ class OutputSpectrumModel:
 
         nelem = self.wavelength.shape[0]
 
-        self.flux = np.zeros(nelem, dtype=np.float)
-        self.error = np.zeros(nelem, dtype=np.float)
-        self.flux_weight = np.zeros(nelem, dtype=np.float)
+        self.flux = np.zeros(nelem, dtype=np.float64)
+        self.error = np.zeros(nelem, dtype=np.float64)
+        self.surf_bright = np.zeros(nelem, dtype=np.float64)
+        self.sb_error = np.zeros(nelem, dtype=np.float64)
         self.dq = np.zeros(nelem, dtype=self.dq_dtype)
-        self.net = np.zeros(nelem, dtype=np.float)
-        self.weight = np.zeros(nelem, dtype=np.float)
-        self.count = np.zeros(nelem, dtype=np.float)
-
-        # The flux should be weighted by sensitivity (as well as exposure
-        # time), but if the input net columns are not populated, we can't
-        # compute the sensitivity.
-        weight_flux_by_sensitivity = True
-        for in_spec in input_spectra:
-            if in_spec.net.min() == 0. and in_spec.net.max() == 0.:
-                weight_flux_by_sensitivity = False
-                log.warning("The NET column is all zero in one or more "
-                            "input tables, so FLUX will not be weighted by "
-                            "sensitivity.")
-                break
+        self.weight = np.zeros(nelem, dtype=np.float64)
+        self.count = np.zeros(nelem, dtype=np.float64)
 
         for in_spec in input_spectra:
-            if weight_flux_by_sensitivity:
-                # Replace zeros so we can divide by the flux.
-                temp_flux = np.where(in_spec.flux == 0., 1., in_spec.flux)
             # Get the pixel numbers in the output corresponding to the
             # wavelengths of the current input spectrum.
             out_pixel = self.wcs.invert(in_spec.right_ascension,
@@ -399,21 +360,13 @@ class OutputSpectrumModel:
                     continue
                 # Round to the nearest pixel.
                 k = round(float(out_pixel[i]))
-                self.net[k] += (in_spec.net[i] * in_spec.weight[i])
-                self.weight[k] += in_spec.weight[i]
+                weight = in_spec.weight[i]
                 self.dq[k] |= in_spec.dq[i]
-                if in_spec.unit_weight:
-                    flux_wgt = 1.
-                elif weight_flux_by_sensitivity:
-                    # net / flux is the sensitivity
-                    flux_wgt = (in_spec.weight[i] *
-                                in_spec.net[i] / temp_flux[i])
-                    flux_wgt = max(flux_wgt, 0.)
-                else:
-                    flux_wgt = in_spec.weight[i]
-                self.flux[k] += in_spec.flux[i] * flux_wgt
-                self.error[k] += (in_spec.error[i] * flux_wgt)**2
-                self.flux_weight[k] += flux_wgt
+                self.flux[k] += in_spec.flux[i] * weight
+                self.error[k] += (in_spec.error[i] * weight)**2
+                self.surf_bright[k] += (in_spec.surf_bright[i] * weight)
+                self.sb_error[k] += (in_spec.sb_error[i] * weight)**2
+                self.weight[k] += weight
                 self.count[k] += 1.
 
         # Since the output wavelengths will not usually be exactly the same
@@ -428,10 +381,11 @@ class OutputSpectrumModel:
             log.warning("    these elements will be omitted.")
             self.wavelength = self.wavelength[index]
             self.flux = self.flux[index]
-            self.net = self.net[index]
-            self.weight = self.weight[index]
-            self.flux_weight = self.flux_weight[index]
             self.error = self.error[index]
+            self.surf_bright = self.surf_bright[index]
+            self.sb_error = self.error[index]
+            self.dq = self.dq[index]
+            self.weight = self.weight[index]
             self.count = self.count[index]
         del index
 
@@ -442,20 +396,18 @@ class OutputSpectrumModel:
 
         if not self.normalized:
             sum_weight = np.where(self.weight > 0., self.weight, 1.)
-            sum_flux_wgt = np.where(self.flux_weight > 0.,
-                                    self.flux_weight, 1.)
-            self.net /= sum_weight
-            self.flux /= sum_flux_wgt
-            self.error = np.sqrt(self.error / sum_flux_wgt)
+            self.surf_bright /= sum_weight
+            self.flux /= sum_weight
+            self.error = np.sqrt(self.error / sum_weight)
+            self.sb_error = np.sqrt(self.sb_error / sum_weight)
             self.normalized = True
-
 
     def create_output(self):
         """Create the output model.
 
         Returns
         -------
-        output_model : CombinedSpecModel object
+        output_model : `~jwst.datamodels.DataModel`, CombinedSpecModel object
             A table of combined spectral data.
         """
 
@@ -463,18 +415,20 @@ class OutputSpectrumModel:
             log.warning("Data have not been divided by"
                         " the sum of the weights.")
 
-        dtype = [('wavelength', self.wavelength_dtype),
-                 ('flux', self.net_dtype),
-                 ('error', self.net_dtype),
-                 ('net', self.net_dtype),
-                 ('dq', self.dq_dtype),
-                 ('weight', self.wavelength_dtype),
-                 ('n_input', np.float)]
+        dtype = [('WAVELENGTH', self.wavelength_dtype),
+                 ('FLUX', self.flux_dtype),
+                 ('ERROR', self.flux_dtype),
+                 ('SURF_BRIGHT', self.flux_dtype),
+                 ('SB_ERROR', self.flux_dtype),
+                 ('DQ', self.dq_dtype),
+                 ('WEIGHT', self.wavelength_dtype),
+                 ('N_INPUT', np.float64)]
 
         data = np.array(list(zip(self.wavelength,
                                  self.flux,
                                  self.error,
-                                 self.net,
+                                 self.surf_bright,
+                                 self.sb_error,
                                  self.dq,
                                  self.weight,
                                  self.count)), dtype=dtype)
@@ -482,19 +436,18 @@ class OutputSpectrumModel:
 
         return output_model
 
-
     def close(self):
         self.wavelength = None
         self.flux = None
         self.error = None
-        self.net = None
+        self.surf_bright = None
+        self.sb_error = None
         self.dq = None
-        self.flux_weight = None
         self.weight = None
         self.count = None
         self.wcs = None
         self.wavelength_dtype = None
-        self.net_dtype = None
+        self.flux_dtype = None
         self.dq_dtype = None
         self.normalized = False
 
@@ -544,7 +497,7 @@ def check_exptime(exptime_key):
     return exptime_key
 
 
-def combine_1d_spectra(input_model, exptime_key, background=False):
+def combine_1d_spectra(input_model, exptime_key):
     """Combine the input spectra.
 
     Parameters
@@ -558,13 +511,6 @@ def combine_1d_spectra(input_model, exptime_key, background=False):
         be one of:  "exposure_time" (the default), "integration_time",
         or "unit_weight".
 
-    background : bool, default=False
-        If the flux data are actually background rather than a target
-        spectrum, `background` should be set to True.  In this case, the
-        values read from the flux column of each input spectrum will be
-        divided by the npixels column (if that column exists).  This is
-        to convert the values to background per pixel.
-
     Returns
     -------
     output_model : `~jwst.datamodels.DataModel`
@@ -572,8 +518,6 @@ def combine_1d_spectra(input_model, exptime_key, background=False):
     """
 
     log.debug("Using exptime_key = {}.".format(exptime_key))
-    if background:
-        log.debug("The FLUX data will be treated as background data.")
 
     exptime_key = check_exptime(exptime_key)
 
@@ -582,11 +526,11 @@ def combine_1d_spectra(input_model, exptime_key, background=False):
         for ms in input_model:
             for in_spec in ms.spec:
                 input_spectra.append(InputSpectrumModel(
-                                ms, in_spec, exptime_key, background))
+                                ms, in_spec, exptime_key))
     else:
         for in_spec in input_model.spec:
             input_spectra.append(InputSpectrumModel(
-                                input_model, in_spec, exptime_key, background))
+                                input_model, in_spec, exptime_key))
 
     output_spec = OutputSpectrumModel()
     output_spec.assign_wavelengths(input_spectra)
