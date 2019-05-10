@@ -356,7 +356,7 @@ class Asn_Lv2MIRLRSFixedSlitNod(
                     Constraint(
                         [
                             DMSAttrConstraint(
-                                name='',
+                                name='patt_num',
                                 sources=['patt_num'],
                             ),
                             Constraint_Single_Science(
