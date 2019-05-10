@@ -34,7 +34,7 @@ class SourceModelContainer(ModelContainer):
 
             # Convert each exposure to an actual SlitModel.
             # Note that the model is not instantiated
-            # since a copy is not desired. 
+            # since a copy is not desired.
             models = []
             for exposure in init.exposures:
                 model = SlitModel()

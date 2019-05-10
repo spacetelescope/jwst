@@ -12,8 +12,7 @@ def test_correction(make_rampmodel):
     """Make sure correct gain factor is applied
     """
     datmod = make_rampmodel(2, 50, 50)
-    output = do_correction(datmod, 
-                           gain_factor=datmod.meta.exposure.gain_factor)
+    output = do_correction(datmod, gain_factor=datmod.meta.exposure.gain_factor)
 
     assert(output.meta.cal_step.gain_scale == 'COMPLETE')
     assert np.all(output.err == datmod.err * datmod.meta.exposure.gain_factor)
@@ -52,7 +51,7 @@ def make_rampmodel():
         dm.meta.observation.date = '2018-01-01'
 
         dm.meta.exposure.gain_factor = 2
-        
+
         return dm
 
     return _dm
