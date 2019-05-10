@@ -453,7 +453,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
         ('background', 'S1'),
         ('shutter_state', 'S6'),
         ('estimated_source_in_shutter_x', '>f4'),
-        ('estimated_source_in_shutter_y', '>f4')
+        ('estimated_source_in_shutter_y', '>f4'),
         ('dither_point_index', '>i2'),
         ('primary_source', 'S1')
 
@@ -469,7 +469,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
     msa_metadata_id : int
         The MSA meta id for the science file, FITS keyword ``MSAMETID``.
     dither_position : int
-        The index in the dither patern, FITS keyword ``PATT_NUM``.
+        The index in the dither pattern, FITS keyword ``PATT_NUM``.
     slit_y_range : list or tuple of size 2
         The lower and upper limit of the slit.
 
@@ -488,7 +488,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
     try:
         msa_file = fits.open(msa_file)
     except FileNotFoundError:
-        message = "Mising MSA meta (MSAMETFL) file {}".format(msa_file)
+        message = "Missing MSA meta (MSAMETFL) file {}".format(msa_file)
         log.error(message)
         raise MSAFileError(message)
     except OSError:
@@ -532,7 +532,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
         n_main_shutter = len([s for s in slitlets_sid if s['primary_source'] == 'Y'])
 
         # In the next part we need to calculate, find, determine 5 things:
-        #    quadrant,  xcen, ycen,  ymin, max
+        #    quadrant,  xcen, ycen,  ymin, ymax
 
         # There are no main shutters, all are background
         if n_main_shutter == 0:

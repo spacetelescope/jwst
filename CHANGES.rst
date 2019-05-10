@@ -185,7 +185,7 @@ srctype
 transforms
 ----------
 
-- A field ``dither_point`` to the ``Slit`` structure. [#3448]
+- A field ``dither_point`` was added to the ``Slit`` structure. [#3448]
 
 
 tweakreg
