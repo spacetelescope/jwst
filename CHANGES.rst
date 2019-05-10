@@ -99,10 +99,10 @@ extract_1d
 - The keywords that describe the units for the FLUX and ERROR columns
   have been corrected; the units are now specified as "Jy". [#3447]
 
-exrtact_2d
+extract_2d
 ----------
 
-- An ``attribute dither_point`` was added to each slit in a ``MultiSlitModel``
+- An attribute ``dither_point`` was added to each slit in a ``MultiSlitModel``
   for MOS observations. [#3448]
 
 flatfield

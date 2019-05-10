@@ -458,14 +458,14 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
         ('primary_source', 'S1')
 
     For example, something like:
-        (12, 2, 4, 251, 22, 1, 'Y', 'OPEN', nan, nan),
+        (12, 2, 4, 251, 22, 1, 'Y', 'OPEN', nan, nan, 1, 'N'),
 
        column
 
     Parameters
     ----------
     msa_file : str
-        MSA configuration file name, FITS keyword ``MSAMETFL``.
+        MSA meta data file name, FITS keyword ``MSAMETFL``.
     msa_metadata_id : int
         The MSA meta id for the science file, FITS keyword ``MSAMETID``.
     dither_position : int
@@ -505,7 +505,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
     msa_source = msa_file[("SOURCE_INFO", 1)].data
 
     # First we are going to filter the msa_file data on the msa_metadata_id
-    # as that is all we are interested in for this function.
+    # and dither_point_index.
     msa_data = [x for x in msa_conf.data if x['msa_metadata_id'] == msa_metadata_id \
                 and x['dither_point_index'] == dither_position]
 
@@ -513,7 +513,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
     log.info('Retrieving open slitlets for msa_metadata_id {} '
              'and dither_position {}'.format(msa_metadata_id, dither_position))
 
-    # First thing to do is to get the unique slitlet_ids
+    # Get the unique slitlet_ids
     slitlet_ids_unique = list(set([x['slitlet_id'] for x in msa_data]))
 
     # SDP may assign a value of "-1" tp ``slitlet_id`` - these need to be ignored.
@@ -521,6 +521,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
     if -1 in slitlet_ids_unique:
         slitlet_ids_unique.remove(-1)
 
+    # add a margin to the slit y limits
     margin = 0.05
 
     # Now lets look at each unique slitlet id
@@ -580,7 +581,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
                 for s in msa_source if s['source_id'] == source_id][0]
         except IndexError:
             # all background shutters
-            log.info("All background shutters, slitlet_id is {}".format(slitlet_id))
+            log.info("Slitlet_id {} contains all background shutters".format(slitlet_id))
             source_name = "background_{}".format(slitlet_id)
             source_alias = "bkg_{}".format(slitlet_id)
             stellarity = 0.0
