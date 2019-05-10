@@ -3,7 +3,7 @@ from ..stpipe import Step
 from .. import datamodels
 import logging
 from .assign_wcs import load_wcs
-from .util import MissingMSAFileError
+from .util import MSAFileError
 
 
 log = logging.getLogger(__name__)
@@ -78,8 +78,9 @@ class AssignWcsStep(Step):
                 else:
                     message = "MSA metadata file (MSAMETFL) is required for NRS_MSASPEC exposures."
                     log.error(message)
-                    raise MissingMSAFileError(message)
+                    raise MSAFileError(message)
             slit_y_range = [self.slit_y_low, self.slit_y_high]
             result = load_wcs(input_model, reference_file_names, slit_y_range)
+
 
         return result

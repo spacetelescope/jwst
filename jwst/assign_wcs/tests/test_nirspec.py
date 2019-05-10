@@ -13,7 +13,7 @@ from ...transforms.models import Slit
 from .. import nirspec
 from .. import assign_wcs_step
 from . import data
-from ..util import MissingMSAFileError
+from ..util import MSAFileError
 
 import pytest
 
@@ -29,7 +29,7 @@ wcs_kw = {'wcsaxes': 2, 'ra_ref': 165, 'dec_ref': 54,
           }
 
 
-slit_fields_num = ["shutter_id", "xcen", "ycen",
+slit_fields_num = ["shutter_id", "dither_position", "xcen", "ycen",
                    "ymin", "ymax", "quadrant", "source_id",
                    "stellarity", "source_xpos", "source_ypos"]
 
@@ -95,11 +95,7 @@ def create_nirspec_mos_file():
     image[0].header['exp_type'] = 'NRS_MSASPEC'
     image[0].header['filter'] = 'F170LP'
     image[0].header['grating'] = 'G235M'
-    image[0].header['crval3'] = 0
-    image[0].header['wcsaxes'] = 3
-    image[0].header['ctype3'] = 'WAVE'
-    image[0].header['pc3_1'] = 1
-    image[0].header['pc3_2'] = 0
+    image[0].header['PATT_NUM'] = 1
 
     msa_status_file = get_file_path('SPCB-GD-A.msa.fits.gz')
     image[0].header['MSACONFG'] = msa_status_file
@@ -274,9 +270,11 @@ def test_msa_configuration_normal():
     # Test 1: Reasonably normal as well
     msa_meta_id = 12
     msaconfl = get_file_path('msa_configuration.fits')
-    slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id, slit_y_range=[-.5, .5])
-    ref_slit = Slit(55, 9376, 251, 26, -5.15, 0.55, 4, 1, '1111x', '95065_1', '2122',
-                      0.13, -0.31716078999999997, 0.18092266)
+    dither_position = 1
+    slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id, dither_position,
+                                              slit_y_range=[-.5, .5])
+    ref_slit = Slit(55, 9376, 1, 251, 26, -5.15, 0.55, 4, 1, '1111x', '95065_1', '2122',
+                    0.13, -0.31716078999999997, 0.18092266)
     _compare_slits(slitlet_info[0], ref_slit)
 
 
@@ -287,8 +285,10 @@ def test_msa_configuration_no_background():
     # Test 2: Two main shutters, not allowed and should fail
     msa_meta_id = 13
     msaconfl = get_file_path('msa_configuration.fits')
-    with pytest.raises(ValueError):
-        nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
+    dither_position = 1
+    with pytest.raises(MSAFileError):
+        nirspec.get_open_msa_slits(msaconfl, msa_meta_id, dither_position,
+                                   slit_y_range=[-.5, .5])
 
 
 def test_msa_configuration_all_background():
@@ -299,8 +299,10 @@ def test_msa_configuration_all_background():
     # Test 3:  No non-background, not acceptable.
     msa_meta_id = 14
     msaconfl = get_file_path('msa_configuration.fits')
-    slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id, slit_y_range=[-.5, .5])
-    ref_slit = Slit(57, 8646, 251, 24, -2.85, .55, 4, 1, '11x', '95065_1', '2122',
+    dither_position = 1
+    slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id, dither_position,
+                                              slit_y_range=[-.5, .5])
+    ref_slit = Slit(57, 8646, 1, 251, 24, -2.85, .55, 4, 1, '11x', '95065_1', '2122',
                     0.13, -0.5, 0.5)
     _compare_slits(slitlet_info[0], ref_slit)
 
@@ -314,9 +316,11 @@ def test_msa_configuration_row_skipped():
     # Test 4: One row is skipped, should be acceptable.
     msa_meta_id = 15
     msaconfl = get_file_path('msa_configuration.fits')
-    slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id, slit_y_range=[-.5, .5])
-    ref_slit = Slit(58, 8646, 251, 24, -2.85, 5.15, 4, 1, '11x1011', '95065_1', '2122',
-                      0.130, -0.31716078999999997, 0.18092266)
+    dither_position = 1
+    slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id, dither_position,
+                                              slit_y_range=[-.5, .5])
+    ref_slit = Slit(58, 8646, 1, 251, 24, -2.85, 5.15, 4, 1, '11x1011', '95065_1', '2122',
+                    0.130, -0.31716078999999997, 0.18092266)
     _compare_slits(slitlet_info[0], ref_slit)
 
 
@@ -327,10 +331,12 @@ def test_msa_configuration_multiple_returns():
     # Test 4: One row is skipped, should be acceptable.
     msa_meta_id = 16
     msaconfl = get_file_path('msa_configuration.fits')
-    slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id, slit_y_range=[-.5, .5])
-    ref_slit1 = Slit(59, 8651, 256, 24, -2.85, 5.15, 4, 1, '11x1011', '95065_1', '2122',
+    dither_position = 1
+    slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id, dither_position,
+                                              slit_y_range=[-.5, .5])
+    ref_slit1 = Slit(59, 8651, 1, 256, 24, -2.85, 5.15, 4, 1, '11x1011', '95065_1', '2122',
                      0.13000000000000003, -0.31716078999999997, 0.18092266)
-    ref_slit2 = Slit(60, 11573, 258, 32, -2.85, 4, 4, 2, '11x111', '95065_2', '172',
+    ref_slit2 = Slit(60, 11573, 1, 258, 32, -2.85, 4, 4, 2, '11x111', '95065_2', '172',
                      0.70000000000000007, -0.31716078999999997, 0.18092266)
     _compare_slits(slitlet_info[0], ref_slit1)
     _compare_slits(slitlet_info[1], ref_slit2)
@@ -366,10 +372,6 @@ def test_slit_projection_on_detector():
     hdul[0].header['DETECTOR'] = 'NRS1'
     im = datamodels.ImageModel(hdul)
 
-    refs = {}
-    for reftype in step.reference_file_types:
-        refs[reftype] = step.get_reference_file(im, reftype)
-
     open_slits = nirspec.get_open_slits(im, refs)
     assert len(open_slits) == 4
     names = [s.name for s in open_slits]
@@ -384,11 +386,11 @@ def test_missing_msa_file():
     model = datamodels.ImageModel(image)
 
     model.meta.instrument.msa_metadata_file = ""
-    with pytest.raises(MissingMSAFileError):
+    with pytest.raises(MSAFileError):
         assign_wcs_step.AssignWcsStep.call(model)
 
     model.meta.instrument.msa_metadata_file = "missing.fits"
-    with pytest.raises(MissingMSAFileError):
+    with pytest.raises(MSAFileError):
         assign_wcs_step.AssignWcsStep.call(model)
 
 
@@ -402,7 +404,7 @@ def test_open_slits():
     msaconfl = get_file_path('msa_configuration.fits')
 
     model.meta.instrument.msa_metadata_file = msaconfl
-    model.meta.instrument.msa_metadata_id=12
+    model.meta.instrument.msa_metadata_id = 12
 
     slits = nirspec.get_open_slits(model)
     assert len(slits) == 1

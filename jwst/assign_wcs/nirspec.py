@@ -20,7 +20,7 @@ from ..transforms.models import (Rotation3DToGWA, DirCos2Unitless, Slit2Msa,
                                  RefractionIndexFromPrism)
 
 from .util import (
-    MissingMSAFileError,
+    MSAFileError,
     NoDataOnDetectorError,
     not_implemented_mode,
     velocity_correction
@@ -355,12 +355,13 @@ def get_open_slits(input_model, reference_files=None, slit_y_range=[-.55, .55]):
     """
     exp_type = input_model.meta.exposure.type.lower()
     if exp_type in ["nrs_msaspec", "nrs_autoflat"]:
-        msa_metadata_file, msa_metadata_id = get_msa_metadata(input_model, reference_files)
-        slits = get_open_msa_slits(msa_metadata_file, msa_metadata_id, slit_y_range)
+        msa_metadata_file, msa_metadata_id, dither_point = get_msa_metadata(
+            input_model, reference_files)
+        slits = get_open_msa_slits(msa_metadata_file, msa_metadata_id, dither_point, slit_y_range)
     elif exp_type == "nrs_fixedslit":
         slits = get_open_fixed_slits(input_model, slit_y_range)
     elif exp_type == "nrs_brightobj":
-        slits = [Slit('S1600A1', 3, 0, 0, slit_y_range[0], slit_y_range[1], 5)]
+        slits = [Slit('S1600A1', 3, 0, 0, 0, slit_y_range[0], slit_y_range[1], 5)]
     elif exp_type == "nrs_lamp":
         slits = get_open_fixed_slits(input_model, slit_y_range)
     else:
@@ -382,11 +383,12 @@ def get_open_fixed_slits(input_model, slit_y_range=[-.55, .55]):
         raise ValueError("Input file is missing SUBARRAY value/keyword.")
     slits = []
     ylow, yhigh = slit_y_range
-    s2a1 = Slit('S200A1', 0, 0, 0, ylow, yhigh, 5)
-    s2a2 = Slit('S200A2', 1, 0, 0, ylow, yhigh, 5)
-    s4a1 = Slit('S400A1', 2, 0, 0, ylow, yhigh, 5)
-    s16a1 = Slit('S1600A1', 3, 0, 0, ylow, yhigh, 5)
-    s2b1 = Slit('S200B1', 4, 0, 0, ylow, yhigh, 5)
+
+    s2a1 = Slit('S200A1', 0, 0, 0, 0, ylow, yhigh, 5)
+    s2a2 = Slit('S200A2', 1, 0, 0, 0, ylow, yhigh, 5)
+    s4a1 = Slit('S400A1', 2, 0, 0, 0, ylow, yhigh, 5)
+    s16a1 = Slit('S1600A1', 3, 0, 0, 0, ylow, yhigh, 5)
+    s2b1 = Slit('S200B1', 4, 0, 0, 0, ylow, yhigh, 5)
 
     subarray = input_model.meta.subarray.name.upper()
     if subarray == "SUBS200A1":
@@ -417,17 +419,24 @@ def get_msa_metadata(input_model, reference_files):
         log.info('Getting MSA metadata file from MSAMETFL keyword')
         msa_config = input_model.meta.instrument.msa_metadata_file
         if msa_config is None:
-            message = "MSA metadata file is not available (keyword MSAMETFL)."
+            message = "msa_metadata_file is None."
             log.critical(message)
-            raise MissingMSAFileError(message)
+            raise MSAFileError(message)
     msa_metadata_id = input_model.meta.instrument.msa_metadata_id
     if msa_metadata_id is None:
-        message = "MSA metadata ID is not available (keyword MSAMETID)."
+        message = "Missing msa_metadata_id (keyword MSAMETID)."
         log.critical(message)
-    return msa_config, msa_metadata_id
+        raise MSAFileError(message)
+    dither_position = input_model.meta.dither.position_number
+    if dither_position is None:
+        message = "Missing dither position_number (keyword PATT_NUM)."
+        log.critical(message)
+        raise MSAFileError(message)
+    return msa_config, msa_metadata_id, dither_position
 
 
-def get_open_msa_slits(msa_file, msa_metadata_id, slit_y_range=[-.55, .55]):
+def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
+                       slit_y_range=[-.55, .55]):
     """
     Return the opened MOS slitlets.
 
@@ -444,19 +453,25 @@ def get_open_msa_slits(msa_file, msa_metadata_id, slit_y_range=[-.55, .55]):
         ('background', 'S1'),
         ('shutter_state', 'S6'),
         ('estimated_source_in_shutter_x', '>f4'),
-        ('estimated_source_in_shutter_y', '>f4')])
+        ('estimated_source_in_shutter_y', '>f4'),
+        ('dither_point_index', '>i2'),
+        ('primary_source', 'S1')
 
     For example, something like:
-        (12, 2, 4, 251, 22, 1, 'Y', 'OPEN', nan, nan),
+        (12, 2, 4, 251, 22, 1, 'Y', 'OPEN', nan, nan, 1, 'N'),
 
        column
 
     Parameters
     ----------
-        msa_file : str
-            MSA configuration file name, FITS keyword MSACONFL.
-        msa_metadata_id : int
-            The MSA meta id for the science file, FITS keyword MSAMETID.
+    msa_file : str
+        MSA meta data file name, FITS keyword ``MSAMETFL``.
+    msa_metadata_id : int
+        The MSA meta id for the science file, FITS keyword ``MSAMETID``.
+    dither_position : int
+        The index in the dither pattern, FITS keyword ``PATT_NUM``.
+    slit_y_range : list or tuple of size 2
+        The lower and upper limit of the slit.
 
     Returns
     -------
@@ -472,50 +487,63 @@ def get_open_msa_slits(msa_file, msa_metadata_id, slit_y_range=[-.55, .55]):
     # of the configuration file.
     try:
         msa_file = fits.open(msa_file)
-    except:
-        message = "Unable to open MSA FITS file (MSAMETFL) {0}".format(msa_file)
+    except FileNotFoundError:
+        message = "Missing MSA meta (MSAMETFL) file {}".format(msa_file)
         log.error(message)
-        raise MissingMSAFileError(message)
+        raise MSAFileError(message)
+    except OSError:
+        message = "Unable to read MSA FITS file (MSAMETFL) {0}".format(msa_file)
+        log.error(message)
+        raise MSAFileError(message)
+    except Exception:
+        message = "problem reading MSA metafile (MSAMETFL) {0}".format(msa_file)
+        log.error(message)
+        raise MSAFileError(message)
 
     # Get the configuration header from teh _msa.fits file.  The EXTNAME should be 'SHUTTER_INFO'
     msa_conf = msa_file[('SHUTTER_INFO', 1)]
     msa_source = msa_file[("SOURCE_INFO", 1)].data
 
     # First we are going to filter the msa_file data on the msa_metadata_id
-    # as that is all we are interested in for this function.
-    msa_data = [x for x in msa_conf.data if x['msa_metadata_id'] == msa_metadata_id]
+    # and dither_point_index.
+    msa_data = [x for x in msa_conf.data if x['msa_metadata_id'] == msa_metadata_id \
+                and x['dither_point_index'] == dither_position]
 
     log.debug('msa_data with msa_metadata_id = {}   {}'.format(msa_metadata_id, msa_data))
-    log.info('Retrieving open slitlets for msa_metadata_id = {}'.format(msa_metadata_id))
+    log.info('Retrieving open slitlets for msa_metadata_id {} '
+             'and dither_position {}'.format(msa_metadata_id, dither_position))
 
-    # First thing to do is to get the unique slitlet_ids
+    # Get the unique slitlet_ids
     slitlet_ids_unique = list(set([x['slitlet_id'] for x in msa_data]))
+
+    # SDP may assign a value of "-1" tp ``slitlet_id`` - these need to be ignored.
+    # JP-436
+    if -1 in slitlet_ids_unique:
+        slitlet_ids_unique.remove(-1)
+
+    # add a margin to the slit y limits
+    margin = 0.05
 
     # Now lets look at each unique slitlet id
     for slitlet_id in slitlet_ids_unique:
-
         # Get the rows for the current slitlet_id
         slitlets_sid = [x for x in msa_data if x['slitlet_id'] == slitlet_id]
         open_shutters = [x['shutter_column'] for x in slitlets_sid]
 
-        # Count the number of backgrounds that have an 'N' (meaning main shutter)
-        # This needs to be 0 or 1 and we will have to deal with those differently
-        # See: https://github.com/STScI-JWST/jwst/commit/7588668b44b77486cdafb35f7e2eb2dcfa7d1b63#commitcomment-18987564
-
-        n_main_shutter = len([s for s in slitlets_sid if s['background'] == 'N'])
+        n_main_shutter = len([s for s in slitlets_sid if s['primary_source'] == 'Y'])
 
         # In the next part we need to calculate, find, determine 5 things:
-        #    quadrant,  xcen, ycen,  ymin, max
-
-        margin = 0.05
+        #    quadrant,  xcen, ycen,  ymin, ymax
 
         # There are no main shutters, all are background
         if n_main_shutter == 0:
-            jmin = min([s['shutter_column'] for s in slitlets_sid])
-            jmax = max([s['shutter_column'] for s in slitlets_sid])
-            j = jmin + (jmax - jmin) // 2 + 1
-            ymax = yhigh + margin + (jmax - j) * 1.15
-            ## TODO: check this formula - it is different (assuming it's incorrect in the report).
+            if len(open_shutters) == 1:
+                jmin = jmax = j = open_shutters[0]
+            else:
+                jmin = min([s['shutter_column'] for s in slitlets_sid])
+                jmax = max([s['shutter_column'] for s in slitlets_sid])
+                j = jmin + (jmax - jmin) // 2 + 1
+            ymax = 0.5 + margin + (jmax - j) * 1.15
             ymin = -(-ylow + margin) + (jmin - j) * 1.15
             quadrant = slitlets_sid[0]['shutter_quadrant']
             ycen = j
@@ -539,15 +567,25 @@ def get_open_msa_slits(msa_file, msa_metadata_id, slit_y_range=[-.55, .55]):
 
         # Not allowed....
         else:
-            raise ValueError("MSA configuration file has more than 1 shutter with "
-                             "sources for metadata_id = {}".format(msa_metadata_id))
+            message = ("MSA configuration file has more than 1 shutter with "
+                       "sources for metadata_id = {}".format(msa_metadata_id))
+            log.info(message)
+            raise MSAFileError(message)
 
         # subtract 1 because shutter numbers in the MSA reference file are 1-based.
         shutter_id = xcen + (ycen - 1) * 365
         source_id = slitlets_sid[0]['source_id']
-        source_name, source_alias, stellarity = [
-            (s['source_name'], s['alias'], s['stellarity']) \
-            for s in msa_source if s['source_id'] == source_id][0]
+        try:
+            source_name, source_alias, stellarity = [
+                (s['source_name'], s['alias'], s['stellarity']) \
+                for s in msa_source if s['source_id'] == source_id][0]
+        except IndexError:
+            # all background shutters
+            log.info("Slitlet_id {} contains all background shutters".format(slitlet_id))
+            source_name = "background_{}".format(slitlet_id)
+            source_alias = "bkg_{}".format(slitlet_id)
+            stellarity = 0.0
+
         # Create the output list of tuples that contain the required
         # data for further computations
         """
@@ -564,7 +602,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id, slit_y_range=[-.55, .55]):
         # Create the shutter_state string
         all_shutters = _shutter_id_to_str(open_shutters, ycen)
 
-        slitlets.append(Slit(slitlet_id, shutter_id, xcen, ycen, ymin, ymax,
+        slitlets.append(Slit(slitlet_id, shutter_id, dither_position, xcen, ycen, ymin, ymax,
                              quadrant, source_id, all_shutters, source_name, source_alias,
                              stellarity, source_xpos, source_ypos))
     msa_file.close()
