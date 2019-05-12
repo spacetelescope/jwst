@@ -32,7 +32,7 @@ class TestSpec2NRSMSA(BaseJWSTTest):
         with pytest.raises(Exception):
             Step.from_cmdline(args)
 
-        assert 'Unable to open MSA FITS file (MSAMETFL)' in caplog.text
+        assert 'Mising MSA meta (MSAMETFL) file' in caplog.text
 
     def test_msa_missing_nofail(self, caplog):
         """Test MSA missing failure"""
@@ -49,7 +49,7 @@ class TestSpec2NRSMSA(BaseJWSTTest):
 
         Step.from_cmdline(args)
 
-        assert 'Unable to open MSA FITS file (MSAMETFL)' in caplog.text
+        assert 'Mising MSA meta (MSAMETFL) file' in caplog.text
 
     def test_msa_missing_skip(self, caplog):
         """Test MSA missing failure"""
