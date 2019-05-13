@@ -496,7 +496,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
         log.error(message)
         raise MSAFileError(message)
     except Exception:
-        message = "problem reading MSA metafile (MSAMETFL) {0}".format(msa_file)
+        message = "Problem reading MSA metafile (MSAMETFL) {0}".format(msa_file)
         log.error(message)
         raise MSAFileError(message)
 
