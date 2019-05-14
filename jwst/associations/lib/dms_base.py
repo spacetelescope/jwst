@@ -8,7 +8,6 @@ from jwst.associations.exceptions import (
 from jwst.associations.lib.acid import ACIDMixin
 from jwst.associations.lib.constraint import (Constraint, AttrConstraint)
 from jwst.associations.lib.utilities import getattr_from_list
-import pdb
 
 
 __all__ = ['Constraint_TSO', 'DMSBaseMixin']
@@ -126,6 +125,10 @@ SPEC2_SCIENCE_EXP_TYPES = [
     'nrs_brightobj',
     'nis_soss',
     'nis_wfss',
+]
+
+SPEC3_SCIENCE_EXP_TYPES = [
+    'mir_mrs'
 ]
 
 SPECIAL_EXPTYPES = {
@@ -316,8 +319,9 @@ class DMSBaseMixin(ACIDMixin):
                 except KeyError:
                     pass
                 else:
-                    result = special
-                    break
+                        if exp_type not in SPEC3_SCIENCE_EXP_TYPES:
+                            result = special
+                            break
 
         return result
 
@@ -572,7 +576,6 @@ class DMSAttrConstraint(AttrConstraint):
         if kwargs.get('invalid_values', None) is None:
             kwargs['invalid_values'] = _EMPTY
 
-        #pdb.set_trace()
         super(DMSAttrConstraint, self).__init__(**kwargs)
 
 

@@ -3,7 +3,6 @@ from collections import defaultdict
 import logging
 from os.path import basename
 import re
-import pdb
 
 from jwst.associations import (
     Association,
@@ -765,13 +764,11 @@ class AsnMixin_Science(DMS_Level3_Base):
             name='acq_constraint',
             work_over=ProcessList.EXISTING
         )
-        #print(":--\n",self.constraints,"\n")
         # Put all constraints together.
         self.constraints = Constraint(
             [
                 Constraint_Base(),
                 DMSAttrConstraint(
-                    #sources=['is_imprt','bkgdtarg'],
                     sources=['is_imprt'],
                     force_undefined=True
                 ),
@@ -792,8 +789,6 @@ class AsnMixin_Science(DMS_Level3_Base):
             ],
             name='dmsbase_top'
         )
-        #print(self.constraints,"\n")
-        #pdb.set_trace()
         super(AsnMixin_Science, self).__init__(*args, **kwargs)
 
 
@@ -805,16 +800,3 @@ class AsnMixin_Spectrum(AsnMixin_Science):
 
         self.data['asn_type'] = 'spec3'
         super(AsnMixin_Spectrum, self)._init_hook(item)
-
-class Constraint_Special_BKG(DMSAttrConstraint):
-    """Select items that have BKGDTARG set"""
-    def __init__(self):
-        super(Constraint_Special_BKG, self).__init__(
-            name='is_special_bkg',
-            sources=['bkgdtarg'],
-            #value='t',
-            #value=lambda: '('
-            #        + '|'.join(self.constraints['bkgdtarg'].found_values)
-            #        + ')',
-            force_unique=False,
-        )

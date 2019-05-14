@@ -1,15 +1,13 @@
 """Association Definitions: DMS Level3 product associations
 """
 import logging
-import pdb
 
 from jwst.associations.registry import RegistryMarker
 from jwst.associations.lib.dms_base import (ACQ_EXP_TYPES, Constraint_TSO)
 from jwst.associations.lib.rules_level3_base import *
 from jwst.associations.lib.rules_level3_base import (
     dms_product_name_sources,
-    format_product,
-    Constraint_Special_BKG
+    format_product
 )
 
 __all__ = [
@@ -275,10 +273,8 @@ class Asn_IFU(AsnMixin_Spectrum):
         # Setup for checking.
         self.constraints = Constraint([
             Constraint_Target(),
-            Constraint_IFU(),
-            #Constraint_Special_BKG()
+            Constraint_IFU()
         ])
-        #pdb.set_trace()
         # Check and continue initialization.
         super(Asn_IFU, self).__init__(*args, **kwargs)
 
