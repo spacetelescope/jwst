@@ -9,6 +9,7 @@ dist/
 *.so
 */version.py
 docs/*/source/*.txt.rst
+docs/generated
 docs/fits_generator/source/templates.rst
 docs/jwst_git/
 docs/_build/
@@ -20,3 +21,13 @@ relic/
 .pytest_cache
 results.xml
 pip-wheel-metadata/
+.DS_Store
+.project
+.pydevproject
+.vscode
+*code-workspace
+src/launch.json
+scripts/launch.json
+*.orig
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*.ipynb

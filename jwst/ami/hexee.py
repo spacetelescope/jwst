@@ -92,7 +92,7 @@ def glimit(xi, eta, **kwargs):
 
     eta: 2D float array
         hexagon's coordinate center at center of symmetry, normal to xi;
-        not currently used 
+        not currently used
 
     c (optional, via **kwargs): tuple(float, float)
         coordinates of center
@@ -127,7 +127,7 @@ def glimit(xi, eta, **kwargs):
     Pi = np.pi
 
     g1 = (np.exp(-1j * Pi * xi) / (2 * np.sqrt(3) * Pi * Pi * xi * xi))
-    g2 = (-1 + 1j * Pi * xi + np.exp(1j * Pi * xi) - 2j * Pi * xi * 
+    g2 = (-1 + 1j * Pi * xi + np.exp(1j * Pi * xi) - 2j * Pi * xi *
             np.exp(1J * Pi * xi))
     g = g1 * g2
 

@@ -71,9 +71,10 @@ class SimpleConstraintABC(abc.ABC):
         Returns
         -------
         success, reprocess : bool, [ProcessList[,...]]
-            Returns 2-tuple of:
-            - success : True if check is successful.
-            - List of `ProcessList`.
+            Returns 2-tuple of
+
+                - True if check is successful.
+                - List of `ProcessList`.
         """
         self.matched = True
         return self.matched, []
@@ -137,8 +138,10 @@ class SimpleConstraint(SimpleConstraintABC):
     test : function
         The test function for the constraint.
         Takes two arguments:
+
             - constraint
             - object to compare against.
+
         Returns a boolean.
         Default is `SimpleConstraint.eq`
 
@@ -242,9 +245,11 @@ class SimpleConstraint(SimpleConstraintABC):
 
         Returns
         -------
-        success : bool
-            If successful, a copy of the constraint
-            is returned with modified value.
+        success, reprocess : bool, [ProcessList[,...]]
+            Returns 2-tuple of
+
+                - True if check is successful.
+                - List of `ProcessList`.
         """
         source_value = self.sources(item)
 
@@ -379,10 +384,11 @@ class AttrConstraint(SimpleConstraintABC):
 
         Returns
         -------
-        bool, reprocess : AttrConstraint or False
-            A 2-tuple consisting of:
-            - bool indicating if a match or not.
-            - List of `ProcessList`s that need to be checked again.
+        success, reprocess : bool, [ProcessList[,...]]
+            Returns 2-tuple of
+
+                - True if check is successful.
+                - List of `ProcessList`.
         """
         reprocess = []
 
@@ -497,7 +503,7 @@ class Constraint:
     Attributes
     ----------
     constraints : [Constraint[,...]]
-        `Constraint`s or `SimpleConstaint`s that
+        List of `Constraint` or `SimpleConstaint` that
         make this constraint.
 
     matched : bool
@@ -580,7 +586,11 @@ class Constraint:
 
         Returns
         -------
-        2-tuple of (bool, reprocess)
+        success, reprocess : bool, [ProcessList[,...]]
+            Returns 2-tuple of
+
+                - success : True if check is successful.
+                - List of `ProcessList`.
         """
         if work_over not in (self.work_over, ProcessList.BOTH):
             return False, []
@@ -694,7 +704,7 @@ class Constraint:
 
     def __setitem__(self, key, value):
         """Not implemented"""
-        raise NotImplemented('Cannot set constraints by index.')
+        raise NotImplementedError('Cannot set constraints by index.')
 
     def __delitem__(self, key):
         """Not implemented"""

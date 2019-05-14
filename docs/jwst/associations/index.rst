@@ -42,3 +42,5 @@ Reference
    association_api.rst
    rules_level2.rst
    rules_level3.rst
+   lib_dmsbase.rst
+   lib_constraint.rst

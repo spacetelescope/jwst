@@ -3,17 +3,9 @@ import sys
 import pkgutil
 from os.path import basename
 from subprocess import check_call, CalledProcessError
-from setuptools import setup, find_packages, Extension, Command
+from setuptools import setup, find_packages, Command
 from setuptools.command.test import test as TestCommand
-from setuptools.command.build_ext import build_ext
 from glob import glob
-
-try:
-    from numpy import get_include as np_include
-except ImportError:
-    print('Unable to import "numpy".\n'
-          'Please install "numpy" and try again.', file=sys.stderr)
-    exit(1)
 
 if sys.version_info < (3, 5):
     error = """
@@ -91,6 +83,7 @@ DOCS_REQUIRE = [
     'sphinx-rtd-theme',
     'stsci-rtd-theme',
     'sphinx-astropy',
+    'sphinx-asdf',
 ]
 TESTS_REQUIRE = [
     'ci-watson>=0.3.0',
@@ -160,7 +153,7 @@ if not pkgutil.find_loader('relic'):
         print(e)
         exit(1)
 
-import relic.release
+import relic.release # noqa: E402
 
 version = relic.release.get_info()
 relic.release.write_template(version, NAME)
@@ -192,12 +185,6 @@ setup(
     scripts=SCRIPTS,
     packages=find_packages(),
     package_data=PACKAGE_DATA,
-    ext_modules=[
-        Extension('jwst.tweakreg.chelp',
-                  glob('src/tweakreg/*.c'),
-                  include_dirs=[np_include()],
-                  define_macros=[('NUMPY', '1')]),
-    ],
     install_requires=[
         'asdf>=2.3.2',
         'astropy>=3.1',

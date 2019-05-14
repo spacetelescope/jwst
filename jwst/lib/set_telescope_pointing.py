@@ -58,7 +58,13 @@ R2A = 3600.*R2D
 SIAF = namedtuple("SIAF", ["v2_ref", "v3_ref", "v3yangle", "vparity",
                            "crpix1", "crpix2", "cdelt1", "cdelt2",
                            "vertices_idl"])
-SIAF.__new__.__defaults__ = (None, ) * 9
+# Set default values for the SIAF.
+# Values which are needed by the pipeline are set to None which
+# triggers a ValueError if missing in the SIAF database.
+# Quantities not used by the pipeline get a default value -
+# FITS keywords and aperture vertices.
+SIAF.__new__.__defaults__ = (None, None, None, None, 0, 0, 3600, 3600,
+                             (0, 1, 1, 0, 0, 0, 1, 1))
 
 # Pointing container
 Pointing = namedtuple("Pointing", ["q", "j2fgs_matrix", "fsmcorr", "obstime"])
@@ -80,7 +86,7 @@ Transforms = namedtuple("Transforms",
 Transforms.__new__.__defaults__ = (None, None, None, None, None,
                                    None, None, None, None)
 # WCS reference container
-WCSRef = namedtuple( 'WCSRef', ['ra', 'dec', 'pa'])
+WCSRef = namedtuple('WCSRef', ['ra', 'dec', 'pa'])
 WCSRef.__new__.__defaults__ = (None, None, None)
 
 
@@ -258,6 +264,7 @@ def update_wcs(model, default_pa_v3=0., siaf_path=None, engdb_url=None,
     else:
         logger.warning("Aperture name is set to 'UNKNOWN'. "
                        "WCS keywords will not be populated from SIAF.")
+        siaf = SIAF()
 
     if exp_type in FGS_GUIDE_EXP_TYPES:
         update_wcs_from_fgs_guiding(
@@ -376,14 +383,9 @@ def update_wcs_from_telem(
     obsstart = model.meta.exposure.start_time
     obsend = model.meta.exposure.end_time
     if None in siaf:
-        if allow_default:
-            logger.warning(
-                'Insufficient SIAF information found in header.'
-                'Resetting to a unity SIAF.'
-            )
-            siaf = SIAF(0, 0, 0, 1, 0, 0, 1, 1, [])
-        else:
-            raise ValueError('Insufficient SIAF information found in header.')
+        # Check if any of "v2_ref", "v3_ref", "v3yangle", "vparity" is None
+        # and raise an error. The other fields have default values.
+        raise ValueError('Insufficient SIAF information found in header.')
 
     # Setup default WCS info if actual pointing and calculations fail.
     wcsinfo = WCSRef(
@@ -476,8 +478,8 @@ def update_s_region(model, siaf):
     )
     # Execute IdealToV2V3, followed by V23ToSky
     from ..transforms.models import IdealToV2V3, V23ToSky
-    v2_ref_deg = model.meta.wcsinfo.v2_ref / 3600 # in deg
-    v3_ref_deg = model.meta.wcsinfo.v3_ref / 3600 # in deg
+    v2_ref_deg = model.meta.wcsinfo.v2_ref / 3600  # in deg
+    v3_ref_deg = model.meta.wcsinfo.v3_ref / 3600  # in deg
     roll_ref = model.meta.wcsinfo.roll_ref
     ra_ref = model.meta.wcsinfo.ra_ref
     dec_ref = model.meta.wcsinfo.dec_ref
@@ -493,8 +495,8 @@ def update_s_region(model, siaf):
     v2, v3 = idltov23(xvert, yvert)  # in arcsec
 
     # Convert to deg
-    v2 = v2 / 3600 # in deg
-    v3 = v3 / 3600 # in deg
+    v2 = v2 / 3600  # in deg
+    v3 = v3 / 3600  # in deg
     angles = [-v2_ref_deg, v3_ref_deg, -roll_ref, -dec_ref, ra_ref]
     axes = "zyxyz"
     v23tosky = V23ToSky(angles, axes_order=axes)
@@ -572,7 +574,7 @@ def calc_wcs(pointing, siaf, **transform_kwargs):
     return (wcsinfo, vinfo)
 
 
-def calc_transforms(pointing, siaf, fsmcorr_version='latest', j2fgs_transpose=True):
+def calc_transforms(pointing, siaf, fsmcorr_version='latest', fsmcorr_units='arcsec', j2fgs_transpose=True):
     """Calculate transforms from pointing to SIAF
 
     Given the spacecraft pointing parameters and the
@@ -581,17 +583,21 @@ def calc_transforms(pointing, siaf, fsmcorr_version='latest', j2fgs_transpose=Tr
 
     Parameters
     ----------
-    pointing: Pointing
+    pointing : Pointing
         Observatory pointing information
 
-    siaf: SIAF
+    siaf : SIAF
         Aperture information
 
-    fsmcorr_version: str
+    fsmcorr_version : str
         The version of the FSM correction calculation to use.
         See :ref:`calc_sifov_fsm_delta_matrix`
 
-    j2fgs_transpose: bool
+    fsmcorr_units : str
+        Units of the FSM correction values. Default is 'arcsec'.
+        See :ref:`calc_sifov_fsm_delta_matrix`
+
+    j2fgs_transpose : bool
         Transpose the `j2fgs1` matrix.
 
     Returns
@@ -622,7 +628,7 @@ def calc_transforms(pointing, siaf, fsmcorr_version='latest', j2fgs_transpose=Tr
 
     # Calculate the FSM corrections to the SI_FOV frame
     m_sifov_fsm_delta = calc_sifov_fsm_delta_matrix(
-        pointing.fsmcorr, fsmcorr_version=fsmcorr_version
+        pointing.fsmcorr, fsmcorr_version=fsmcorr_version, fsmcorr_units=fsmcorr_units
     )
 
     # Calculate the FGS1 ICS to SI-FOV matrix
@@ -738,7 +744,7 @@ def calc_aperture_wcs(m_eci2siaf):
     # The VyPA @ xref,yref is given by
     y = cos(vy_dec) * sin(vy_ra-wcs_ra)
     x = sin(vy_dec) * cos(wcs_dec) - \
-      cos(vy_dec) * sin(wcs_dec) * cos((vy_ra - wcs_ra))
+        cos(vy_dec) * sin(wcs_dec) * cos((vy_ra - wcs_ra))
     wcs_pa = np.arctan2(y, x)
 
     # Convert all WCS to degrees
@@ -827,22 +833,25 @@ def calc_j2fgs1_matrix(j2fgs_matrix, transpose=False):
     return transform
 
 
-def calc_sifov_fsm_delta_matrix(fsmcorr, fsmcorr_version='latest'):
+def calc_sifov_fsm_delta_matrix(fsmcorr, fsmcorr_version='latest', fsmcorr_units='arcsec'):
     """Calculate Fine Steering Mirror correction matrix
 
     Parameters
     ----------
-    fsmcorr: np.array((2,))
+    fsmcorr : np.array((2,))
         The FSM correction parameters:
             0: SA_ZADUCMDX
             1: SA_ZADUCMDY
 
-    fsmcorr_version: str
+    fsmcorr_version : str
         The version of the FSM correction calculation to use.
         Versions available:
             latest: The state-of-art. Currently `v2`
             v2: Update 201708 to use actual spherical calculations
             v1: Original linear approximation
+
+    fsmcorr_units : str
+        The units of the FSM correction values. Default is `arcsec`.
 
     Returns
     -------
@@ -850,12 +859,19 @@ def calc_sifov_fsm_delta_matrix(fsmcorr, fsmcorr_version='latest'):
         The transformation matrix
     """
     version = fsmcorr_version.lower()
+    units = fsmcorr_units.lower()
     logger.debug('Using version {}'.format(version))
+    logger.debug('Using units {}'.format(units))
 
     x = fsmcorr[0]  # SA_ZADUCMDX
     y = fsmcorr[1]  # SA_ZADUCMDY
 
-    # `V1`: Linear approximation calcuation
+    # If FSMCORR values are in arcsec, convert to radians
+    if units == 'arcsec':
+        x *= D2R / 3600.
+        y *= D2R / 3600.
+
+    # `V1`: Linear approximation calculation
     if version == 'v1':
         transform = np.array(
             [
@@ -973,7 +989,7 @@ def calc_position_angle(v1, v3):
     """
     y = cos(v3.dec) * sin(v3.ra-v1.ra)
     x = sin(v3.dec) * cos(v1.dec) - \
-      cos(v3.dec) * sin(v1.dec) * cos((v3.ra - v1.ra))
+        cos(v3.dec) * sin(v1.dec) * cos((v3.ra - v1.ra))
     v3_pa = np.arctan2(y, x)
 
     return v3_pa
@@ -1100,8 +1116,8 @@ def compute_local_roll(pa_v3, ra_ref, dec_ref, v2_ref, v3_ref):
 
 def _roll_angle_from_matrix(matrix, v2, v3):
     X = -(matrix[2, 0] * np.cos(v2) + matrix[2, 1] * np.sin(v2)) * np.sin(v3) + matrix[2, 2] * np.cos(v3)
-    Y = (matrix[0, 0] *  matrix[1, 2] - matrix[1, 0] * matrix[0, 2]) * np.cos(v2) + \
-      (matrix[0, 1] * matrix[1, 2] - matrix[1, 1] * matrix[0, 2]) * np.sin(v2)
+    Y = (matrix[0, 0] * matrix[1, 2] - matrix[1, 0] * matrix[0, 2]) * np.cos(v2) + \
+        (matrix[0, 1] * matrix[1, 2] - matrix[1, 1] * matrix[0, 2]) * np.sin(v2)
     new_roll = np.rad2deg(np.arctan2(Y, X))
     if new_roll < 0:
         new_roll += 360
@@ -1173,15 +1189,24 @@ def _get_wcs_values_from_siaf(aperture_name, useafter, prd_db_filepath=None):
         if PRD_DB:
             PRD_DB.close()
     logger.info("loaded {0} table rows from {1}".format(len(RESULT), prd_db_filepath))
+    default_siaf = SIAF()
     if RESULT:
-        values = list(RESULT.values())[0]
-        # This call populates the SIAF tuple with the values from the database.
+        # This populates the SIAF tuple with the values from the database.
         # The last 8 values returned from the database are the vertices.
         # They are wrapped in a list and assigned to SIAF.vertices_idl.
-        siaf = SIAF(*values[:-8], values[-8:])
+        values = list(RESULT.values())[0]
+        vert = values[-8:]
+        values = list(values[: - 8])
+        values.append(vert)
+        # If any of "crpix1", "crpix2", "cdelt1", "cdelt2", "vertices_idl" is None
+        # reset ot to the default value.
+        for i in range(4, 8):
+            if values[i] is None:
+                values[i] = default_siaf[i]
+        siaf = SIAF(*values)
         return siaf
     else:
-        return SIAF()
+        return default_siaf
 
 
 def calc_rotation_matrix(angle, vparity=1):
@@ -1332,7 +1357,6 @@ def get_mnemonics(obsstart, obsend, tolerance, engdb_url=None):
                 )
             mnemonics[mnemonic] = allowed
 
-
     # All mnemonics must have some values.
     if not all([len(mnemonic) for mnemonic in mnemonics.values()]):
         raise ValueError('Incomplete set of pointing mnemonics')
@@ -1360,8 +1384,8 @@ def all_pointings(mnemonics):
             for mnemonic in mnemonics
         ]
         if any(values):
-            # The tagged obstime will come from the SA_ZATTEST1 mneunonic
-            #pointing.
+            # The tagged obstime will come from the SA_ZATTEST1 mnemonic
+            # pointing.
             obstime = mnemonics['SA_ZATTEST1'][idx].obstime
 
             # Fill out the matricies
@@ -1399,7 +1423,6 @@ def all_pointings(mnemonics):
     return pointings
 
 
-
 def populate_model_from_siaf(model, siaf):
     """
     Populate the WCS keywords of a Level1bModel from the SIAF.
@@ -1426,8 +1449,8 @@ def populate_model_from_siaf(model, siaf):
         model.meta.wcsinfo.cunit2 = "deg"
         model.meta.wcsinfo.crpix1 = siaf.crpix1
         model.meta.wcsinfo.crpix2 = siaf.crpix2
-        model.meta.wcsinfo.cdelt1 = siaf.cdelt1
-        model.meta.wcsinfo.cdelt2 = siaf.cdelt2
+        model.meta.wcsinfo.cdelt1 = siaf.cdelt1 / 3600  # in deg
+        model.meta.wcsinfo.cdelt2 = siaf.cdelt2 / 3600  # in deg
         model.meta.coordinates.reference_frame = "ICRS"
 
 

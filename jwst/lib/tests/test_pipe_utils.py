@@ -76,5 +76,5 @@ def test_is_tso_from_exptype(exp_type, expected):
 def test_is_tso_from_tsoflag(tsovisit, expected):
     """Test is_tso integrity based on the TSO flag"""
     model = datamodels.DataModel()
-    model.meta.observation.tsovisit = tsovisit
+    model.meta.visit.tsovisit = tsovisit
     assert pipe_utils.is_tso(model) is expected

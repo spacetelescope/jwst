@@ -70,7 +70,7 @@ class OutlierDetectionIFU(OutlierDetection):
         # NOTE:  Need to confirm that this attribute accurately reports the
         #        channel 'names' for both types of IFU data; MIRI and NRS
         try:
-            self.channels = self.input_models[0].meta.instrument.channel
+            self.channels = input_models[0].meta.instrument.channel
             if self.channels is None:  # account for NIRSpec IFU data
                 self.channels = '1'
         except AttributeError:

@@ -43,7 +43,8 @@ class TestImage3Pipeline1(BaseJWSTTest):
                              self.ignore_keywords+['NAXIS1', 'TFORM*'],
                              'ignore_fields':self.ignore_keywords,
                              'rtol': 0.0001}
-                   }
+                   },
+                   ('mosaic_long_cat.ecsv', 'mosaic_long_cat_ref.ecsv'),
                   ]
         self.compare_outputs(outputs)
 
@@ -79,6 +80,8 @@ class TestImage3Pipeline1(BaseJWSTTest):
                     'pars':{'ignore_keywords':self.ignore_keywords+['NAXIS1','TFORM*'],
                             'ignore_fields':self.ignore_keywords,
                             'rtol':0.0001}
-                   }
+                   },
+                   ('jw10002-o001_t002_nircam_f444w_cat.ecsv',
+                    'jw10002-o001_t002_nircam_f444w_cat_ref.ecsv'),
                   ]
         self.compare_outputs(outputs)

@@ -26,12 +26,12 @@ def user_background(tmpdir_factory):
     flux = np.linspace(2.0, 2.2, num=100)
     data = create_background(wavelength, flux)
     data.save(filename)
-
     return filename
 
 
-def _generate_data():
-    """Generate data of each type of input for master background step"""
+@pytest.fixture(scope='function')
+def science_image():
+    """Generate science image """
 
     image = datamodels.ImageModel((10, 10))
     image.meta.instrument.name = 'MIRI'
@@ -47,62 +47,50 @@ def _generate_data():
     image.meta.wcsinfo.ra_ref = 0
     image.meta.wcsinfo.dec_ref = 0
     image = AssignWcsStep.call(image)
+    return image
 
-    # hdulist = create_nirspec_fs_file(grating="G140M", filter="F100LP")
-    # hdulist[1].data = np.zeros((2048, 2048))
-    # fs = datamodels.ImageModel(hdulist)
-    # fs = AssignWcsStep.call(fs)
-    # multislit = Extract2dStep.call(fs)
 
-    # hdulist = create_nirspec_ifu_file("OPAQUE", "G140M")
-    # hdulist[1].data = np.zeros((2048, 2048))
-    # ifu_image = datamodels.IFUImageModel(hdulist)
-    # ifu_image = AssignWcsStep.call(ifu_image)
-    
-    container = datamodels.ModelContainer([image])
-    
-    cube = datamodels.CubeModel((2, 10, 10))
-
-    # Return the data and a status dependent on whether the step can process it
-    return [(image, 'COMPLETE'),
-            # (multislit, 'COMPLETE'),
-            # (ifu_image, 'COMPLETE'),
-            (container, 'COMPLETE'),
-            (cube, 'SKIPPED'),
-            ]
-
-@pytest.mark.parametrize('input_data, status', _generate_data())
-def test_master_background_init(input_data, status, _jail, user_background):
-    """Verify data can run through the step"""
-
-    result = MasterBackgroundStep.call(input_data)
-
-    collect_pipeline_cfgs('./config')
-    result = MasterBackgroundStep.call(
-        input_data,
-        config_file='config/master_background.cfg'
-        )
-
-    # For inputs that are not files, the following should be true
-    assert type(input_data) is type(result)
-    assert result is not input_data
-
-    if isinstance(result, datamodels.ModelContainer):
-        for model in result:
-            assert model.meta.cal_step.master_background == status
-    else:
-        assert result.meta.cal_step.master_background == status
+def test_master_background_userbg(_jail, user_background, science_image):
+    """Verify data can run through the step with a user-supplied background"""
 
     # Run with a user-supplied background and verify this is recorded in header
-    result = MasterBackgroundStep.call(input_data, user_background=user_background)
+    collect_pipeline_cfgs('./config')
+    result = MasterBackgroundStep.call(
+        science_image,
+        config_file='config/master_background.cfg',
+        user_background=user_background,
+        )
 
-    if isinstance(result, datamodels.ModelContainer):
-        for model in result:
-            if model.meta.cal_step.master_background == 'COMPLETE':
-                assert model.meta.background.master_background_file == 'user_background.fits'
-    else:
-        if result.meta.cal_step.master_background == 'COMPLETE':
-            assert result.meta.background.master_background_file == 'user_background.fits'
+    assert type(science_image) is type(result)
+    assert result is not science_image
+    assert result.meta.cal_step.master_background == 'COMPLETE'
+    assert result.meta.background.master_background_file == 'user_background.fits'
 
-    # Make sure saving the computed background works
-    result = MasterBackgroundStep.call(input_data, save_background=True)
+
+def test_master_background_logic(_jail, user_background, science_image):
+    """Verify if calspec 2 background step was run the master background step will be skipped"""
+
+    # the background step in calspec2 was done
+    science_image.meta.cal_step.back_sub = 'COMPLETE'
+
+    # Run with a user-supplied background
+    collect_pipeline_cfgs('./config')
+    result = MasterBackgroundStep.call(
+        science_image,
+        config_file='config/master_background.cfg',
+        user_background=user_background,
+        )
+
+    assert result.meta.cal_step.master_background == 'SKIPPED'
+    assert type(science_image) is type(result)
+
+    # Now force it
+    result = MasterBackgroundStep.call(
+        science_image,
+        config_file='config/master_background.cfg',
+        user_background=user_background,
+        force_subtract=True
+        )
+
+    assert result.meta.cal_step.master_background == 'COMPLETE'
+    assert type(science_image) is type(result)

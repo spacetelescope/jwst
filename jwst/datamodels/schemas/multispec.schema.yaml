@@ -1,9 +1,8 @@
 allOf:
 - $ref: core.schema.yaml
+- $ref: int_times.schema.yaml
 - type: object
   properties:
-    int_times:
-      $ref: int_times.schema.yaml
     spec:
       type: array
       title: An array of spectra
@@ -20,12 +19,12 @@ allOf:
               datatype: float64
             - name: ERROR
               datatype: float64
+            - name: SURF_BRIGHT
+              datatype: float64
+            - name: SB_ERROR
+              datatype: float64
             - name: DQ
               datatype: uint32
-            - name: NET
-              datatype: float64
-            - name: NERROR
-              datatype: float64
             - name: BACKGROUND
               datatype: float64
             - name: BERROR

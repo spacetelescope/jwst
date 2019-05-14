@@ -241,7 +241,7 @@ class Asn_Lv2Spec(
                     DMSAttrConstraint(
                         name='patttype',
                         sources=['patttype'],
-                        value=['2_point_nod|4_point_nod|along_slit_nod'],
+                        value=['2-point-nod|4-point-nod|along-slit-nod'],
                     )
                 ],
                 reduce=Constraint.notany
@@ -349,15 +349,15 @@ class Asn_Lv2MIRLRSFixedSlitNod(
             DMSAttrConstraint(
                 name='patttype',
                 sources=['patttype'],
-                value=['along_slit_nod'],
+                value=['along-slit-nod'],
             ),
             Constraint(
                 [
                     Constraint(
                         [
                             DMSAttrConstraint(
-                                name='dithptin',
-                                sources=['dithptin'],
+                                name='patt_num',
+                                sources=['patt_num'],
                             ),
                             Constraint_Single_Science(
                                 self.has_science,
@@ -369,9 +369,9 @@ class Asn_Lv2MIRLRSFixedSlitNod(
                     Constraint(
                         [
                             DMSAttrConstraint(
-                                name='is_current_dithptin',
-                                sources=['dithptin'],
-                                value=lambda: '((?!{}).)*'.format(self.constraints['dithptin'].value),
+                                name='is_current_patt_num',
+                                sources=['patt_num'],
+                                value=lambda: '((?!{}).)*'.format(self.constraints['patt_num'].value),
                             ),
                             SimpleConstraint(
                                 name='force_match',
@@ -394,13 +394,13 @@ class Asn_Lv2MIRLRSFixedSlitNod(
         """Modify exposure type depending on dither pointing index
 
         Behaves as the superclass method. However, if the constraint
-        `is_current_dithptin` is True, mark the exposure type as
+        `is_current_patt_num` is True, mark the exposure type as
         `background`.
         """
         exp_type = super(Asn_Lv2MIRLRSFixedSlitNod, self).get_exposure_type(
             item, default
         )
-        if exp_type == 'science' and self.constraints['is_current_dithptin'].matched:
+        if exp_type == 'science' and self.constraints['is_current_patt_num'].matched:
             exp_type = 'background'
 
         return exp_type
@@ -760,7 +760,7 @@ class Asn_Lv2NRSIFUNod(
                     DMSAttrConstraint(
                         name='patttype',
                         sources=['patttype'],
-                        value=['2_point_nod|4_point_nod'],
+                        value=['2-point-nod|4-point-nod'],
                         force_unique=True
                     )
                 ]

@@ -23,8 +23,9 @@ allOf:
       default: 0
       ndim: 2
       datatype: uint32
-    dq_def:
-      $ref: dq_def.schema.yaml
+- $ref: dq_def.schema.yaml
+- type: object
+  properties:
     pixsiz:
       title: Pixel size array
       fits_hdu: PIXSIZ

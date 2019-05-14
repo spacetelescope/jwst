@@ -203,7 +203,7 @@ class IFUCubeData():
                     newname = self.output_name_base + fg_name + 'single_s3d.fits'
 # ______________________________________________________________________________
         if self.output_type != 'single':
-            log.info('Output Name %s', newname)
+            log.info('Output Name: %s', newname)
         return newname
 # _______________________________________________________________________
 
@@ -230,7 +230,7 @@ class IFUCubeData():
         # astropy circmean assumes angles are in radians,
         # we have angles in degrees
         ra_ave = circmean(ravalues * u.deg).value
-#       log.info('Ra average %f12.8', ra_ave)
+#       log.info('RA average %f12.8', ra_ave)
 
         self.crval1 = ra_ave
         self.crval2 = dec_ave
@@ -414,9 +414,9 @@ class IFUCubeData():
 
         log.info('Cube Geometry:')
         if self.coord_system == 'alpha-beta':
-            log.info('axis#  Naxis  CRPIX    CRVAL      CDELT(arc sec)  MIN & Max (alpha,beta arc sec)')
+            log.info('axis#  Naxis  CRPIX    CRVAL      CDELT(arcsec)  Min & Max (alpha, beta arcsec)')
         else:
-            log.info('axis#  Naxis  CRPIX    CRVAL      CDELT(arc sec)  MIN & Max (xi,eta arc sec)')
+            log.info('axis#  Naxis  CRPIX    CRVAL      CDELT(arcsec)  Min & Max (xi, eta arcsec)')
             log.info('Axis 1 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f',
                      self.naxis1, self.crpix1, self.crval1, self.cdelt1,
                      self.a_min, self.a_max)
@@ -424,14 +424,14 @@ class IFUCubeData():
                      self.naxis2, self.crpix2, self.crval2, self.cdelt2,
                      self.b_min, self.b_max)
             if self.linear_wavelength:
-                log.info('axis#  Naxis  CRPIX    CRVAL      CDELT(microns)  MIN & Max (microns)')
+                log.info('axis#  Naxis  CRPIX    CRVAL      CDELT(microns)  Min & Max (microns)')
                 log.info('Axis 3 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f',
                          self.naxis3, self.crpix3, self.crval3, self.cdelt3,
                          self.lambda_min, self.lambda_max)
 
             if not self.linear_wavelength:
-                log.info('Non-linear wavelength dimension, CDELT3 variable')
-                log.info('axis#  Naxis  CRPIX    CRVAL     MIN & Max (microns)')
+                log.info('Non-linear wavelength dimension; CDELT3 variable')
+                log.info('axis#  Naxis  CRPIX    CRVAL     Min & Max (microns)')
                 log.info('Axis 3 %5d  %5.2f %12.8f %12.8f %12.8f',
                          self.naxis3, self.crpix3, self.crval3,
                          self.wavelength_table[0], self.wavelength_table[self.naxis3 - 1])
@@ -442,14 +442,14 @@ class IFUCubeData():
             for i in range(number_bands):
                 this_channel = self.list_par1[i]
                 this_subchannel = self.list_par2[i]
-                log.info('Cube covers channel, subchannel: %s %s ', this_channel, this_subchannel)
+                log.info('Cube covers channel, subchannel: %s, %s ', this_channel, this_subchannel)
         elif self.instrument == 'NIRSPEC':
             # number of filters and gratings are the same
             number_bands = len(self.list_par1)
             for i in range(number_bands):
                 this_fwa = self.list_par2[i]
                 this_gwa = self.list_par1[i]
-                log.info('Cube covers grating, filter: %s %s ', this_gwa, this_fwa)
+                log.info('Cube covers grating, filter: %s, %s ', this_gwa, this_fwa)
 # ________________________________________________________________________________
 
     def build_ifucube(self):
@@ -533,7 +533,7 @@ class IFUCubeData():
             for k in range(nfiles):
                 ifile = self.master_table.FileMap[self.instrument][this_par1][this_par2][k]
                 self.this_cube_filenames.append(ifile)
-                log.debug("Working on Band defined by:%s %s ", this_par1, this_par2)
+                log.debug("Working on Band defined by: %s %s ", this_par1, this_par2)
 # --------------------------------------------------------------------------------
                 if self.interpolation == 'pointcloud':
                     t0 = time.time()
@@ -641,7 +641,7 @@ class IFUCubeData():
                                                         self.naxis1, self.naxis2)
                         t1 = time.time()
 
-                        log.info("Time Map All slices on Detector to Cube = %.1f.s" % (t1 - t0,))
+                        log.info("Time to Map All slices on Detector to Cube = %.1f.s" % (t1 - t0,))
 # _______________________________________________________________________
 # Mapped all data to cube or Point Cloud
 # now determine Cube Spaxel flux
@@ -650,7 +650,7 @@ class IFUCubeData():
         self.find_spaxel_flux()
 
         t1 = time.time()
-        log.info("Time to find Cube Flux= %.1f.s" % (t1 - t0,))
+        log.info("Time to find Cube Flux = %.1f.s" % (t1 - t0,))
 
         ifucube_model = self.setup_ifucube(0)
 # _______________________________________________________________________
@@ -674,14 +674,14 @@ class IFUCubeData():
         # loop over input models
         single_ifucube_container = datamodels.ModelContainer()
         n = len(self.input_models)
-        log.info("Number of Single IFU cubes creating  = %i" % n)
+        log.info("Number of Single IFU cubes to create = %i" % n)
         this_par1 = self.list_par1[0]  # only one channel is used in this approach
         this_par2 = None  # not important for this type of mapping
 
         self.weighting == 'msm'
 
         for j in range(n):
-            log.info("Working on next Single IFU Cube  = %i" % (j + 1))
+            log.info("Working on next Single IFU Cube = %i" % (j + 1))
             t0 = time.time()
 # for each new data model create a new spaxel
             total_num = self.naxis1 * self.naxis2 * self.naxis3
@@ -721,7 +721,7 @@ class IFUCubeData():
             ifucube_model = self.setup_ifucube(j)
             self.update_ifucube(ifucube_model)
             t1 = time.time()
-            log.info("Time Create Single ifucube  = %.1f.s" % (t1 - t0,))
+            log.info("Time to Create Single ifucube = %.1f.s" % (t1 - t0,))
 # _______________________________________________________________________
             single_ifucube_container.append(ifucube_model)
 
@@ -807,7 +807,7 @@ class IFUCubeData():
             self.linear_wavelength = True
             wave_roi = np.amin(roiw)
             weight_power = np.amin(power)
-            self.soft_rad = np.amin(softrad)            
+            self.soft_rad = np.amin(softrad)
         elif all_same_spectral:
             self.spectral_size = spectralsize[0]
             wave_roi = roiw[0]
@@ -847,20 +847,19 @@ class IFUCubeData():
 
             self.roiw_table = table_wroi[imin:imax]
             self.rois_table = table_sroi[imin:imax]
-            if self.num_files < 4: 
+            if self.num_files < 4:
                 self.rois_table = [i*1.5 for i in self.rois_table]
 
             self.softrad_table = table_softrad[imin:imax]
             self.weight_power_table = table_power[imin:imax]
             self.wavelength_table = table_wavelength[imin:imax]
-            
 
         # check if the user has set the cube parameters to use
         if self.rois == 0:
             self.rois = spatial_roi
         if self.output_type == 'single' or self.num_files < 4:
             self.rois = self.rois * 1.5
-            log.info('Increasing spatial region of interest' +
+            log.info('Increasing spatial region of interest ' +
                      'default value set for 4 dithers %f', self.rois)
         if self.scale1 != 0:
             self.spatial_size = self.scale1
@@ -917,14 +916,14 @@ class IFUCubeData():
         lambda_max = []
 
         self.num_bands = len(self.list_par1)
-        log.info('Number of bands in cube  %i', self.num_bands)
+        log.info('Number of bands in cube: %i', self.num_bands)
 
         for i in range(self.num_bands):
             this_a = parameter1[i]
             this_b = parameter2[i]
-            log.debug('Working on data  from %s,%s', this_a, this_b)
+            log.debug('Working on data from %s, %s', this_a, this_b)
             n = len(self.master_table.FileMap[self.instrument][this_a][this_b])
-            log.debug('number of files %d ', n)
+            log.debug('number of files %d', n)
             for k in range(n):
                 amin = 0.0
                 amax = 0.0
@@ -992,7 +991,7 @@ class IFUCubeData():
             log.info('Beta Scale %f ', self.cdelt2)
             self.cdelt2 = (final_b_max - final_b_min) / nslice
             final_b_max = final_b_min + (nslice) * self.cdelt2
-            log.info('Changed the Beta Scale dimension so we have 1 -1 mapping between beta and slice #')
+            log.info('Changed the Beta Scale dimension so we have 1-1 mapping between beta and slice #')
             log.info('New Beta Scale %f ', self.cdelt2)
 # ________________________________________________________________________________
 # Test that we have data (NIRSPEC NRS2 only has IFU data for 3 configurations)
@@ -1128,7 +1127,7 @@ class IFUCubeData():
                 # for NIRSPEC each file has 30 slices
                 # wcs information access seperately for each slice
                 nslices = 30
-                log.info("Mapping each NIRSPEC slice to sky, this takes a while for NIRSPEC data")
+                log.info("Mapping each NIRSpec slice to sky; this takes a while for NIRSpec data")
                 for ii in range(nslices):
                     slice_wcs = nirspec.nrs_wcs_set_input(input_model, ii)
                     x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)

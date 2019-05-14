@@ -262,7 +262,7 @@ def merge_property_trees(schema):
     return newschema
 
 
-def build_docstring(klass, template):
+def build_docstring(klass, template="{fits_hdu} {title}"):
     """
     Build a docstring for the specified DataModel class from its schema.
 
@@ -330,7 +330,7 @@ def build_docstring(klass, template):
         for field in attr.split('.'):
             try:
                 instance = instance.get(field)
-            except:
+            except AttributeError:
                 instance = None
             if instance is None:
                 break
@@ -352,7 +352,7 @@ def build_docstring(klass, template):
             if type(value) == bool:
                 schema[field] = field
 
-        # Apply format to svhema fields
+        # Apply format to schema fields
         # Delete blank lines
         lines = template.format(**schema)
         for line in lines.split("\n"):
@@ -361,4 +361,3 @@ def build_docstring(klass, template):
 
     field_info = "\n".join(buffer) + "\n"
     return field_info
-

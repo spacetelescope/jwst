@@ -1,9 +1,11 @@
 """Test using SDP-generated pools
 """
 from collections import Counter
+import logging
 from pathlib import Path
-import pytest
 import re
+
+import pytest
 
 from jwst.associations.lib.diff import (
     compare_asn_files,
@@ -11,6 +13,10 @@ from jwst.associations.lib.diff import (
 from jwst.tests.base_classes import BaseJWSTTest
 
 from jwst.associations.main import Main as asn_generate
+
+# Configure logging
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 # Main test args
 TEST_ARGS = ['--dry-run', '--no-merge']
@@ -24,6 +30,25 @@ pool_regex = re.compile(r'(?P<proposal>jw.+?)_(?P<versionid>.+)_pool')
 # file lists for the test parametrization.
 # #############################################################
 class AssociationBase(BaseJWSTTest):
+    """Set testing environment
+
+    These tests are very much tied to using `pytest` and the `ci-watson` plugin.
+    In particular, there are references to `pytest.config` that only exist when
+    running under pytest. Such references are stubbed out with best defaults used.
+
+    """
+
+    try:
+        inputs_root = pytest.config.getini('inputs_root')[0]
+        results_root = pytest.config.getini('results_root')[0]
+    except AttributeError:
+        logger.warning(
+            '`pytest.config` referenced outside of a pytest run.'
+            '\n`inputs_root` and `results_root` set to empty.'
+        )
+        inputs_root = ''
+        results_root = ''
+
     input_loc = 'associations'
     test_dir = 'sdp'
     ref_loc = [test_dir, 'truth']
@@ -33,30 +58,38 @@ class AssociationBase(BaseJWSTTest):
 
     @property
     def pool_paths(self):
+        """Get the association pools"""
         if self._pool_paths is None:
             self._pool_paths = self.data_glob(self.test_dir, 'pools', glob='*.csv')
         return self._pool_paths
 
     @property
     def truth_paths(self):
+        """Get the truth associations"""
         if self._truth_paths is None:
             self._truth_paths = self.data_glob(*self.ref_loc, glob='*.json')
         return self._truth_paths
 
-asn_base = AssociationBase()
+ASN_BASE = AssociationBase()
 try:
-    POOL_PATHS = asn_base.pool_paths
-except Exception:
-    POOL_PATHS = ['test will be skipped']
+    POOL_PATHS = ASN_BASE.pool_paths
+except Exception as e:
+    POOL_PATHS = e
 
 
 # #####
 # Tests
 # #####
+@pytest.mark.skipif(
+    isinstance(POOL_PATHS, Exception),
+    reason='Test pool files not available. Reason={}'.format(POOL_PATHS)
+)
 class TestSDPPools(AssociationBase):
+    """Test createion of association from SDP-created pools"""
+
     @pytest.mark.parametrize(
         'pool_path',
-        POOL_PATHS
+        [] if isinstance(POOL_PATHS, Exception) else POOL_PATHS
     )
     def test_against_standard(self, pool_path):
         """Compare a generated association against a standard
@@ -87,7 +120,7 @@ class TestSDPPools(AssociationBase):
         )
         truth_paths = [
             self.get_data(truth_path)
-            for truth_path in asn_base.truth_paths
+            for truth_path in ASN_BASE.truth_paths
             if asn_regex.match(truth_path)
         ]
 
@@ -102,7 +135,7 @@ class TestSDPPools(AssociationBase):
 
     @pytest.mark.parametrize(
         'pool_path',
-        POOL_PATHS
+        [] if isinstance(POOL_PATHS, Exception) else POOL_PATHS
     )
     def test_dup_product_names(self, pool_path):
         """Check for duplicate product names for a pool"""
@@ -126,4 +159,4 @@ class TestSDPPools(AssociationBase):
             if count > 1
         ]
 
-        assert not len(multiples), 'Multiple product names: {}'.format(multiples)
+        assert not multiples, 'Multiple product names: {}'.format(multiples)

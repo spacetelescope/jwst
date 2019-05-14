@@ -1063,7 +1063,9 @@ def reset_bad_gain(pdq, gain):
         pixleldq array of input model, reset to NO_GAIN_VALUE and DO_NOT_USE
         for pixels in the gain array that are either non-positive or NaN.
     """
-    wh_g = np.where( gain <= 0.)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "invalid value.*", RuntimeWarning)
+        wh_g = np.where( gain <= 0.)
     if len(wh_g[0]) > 0:
         pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['NO_GAIN_VALUE'] )
         pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['DO_NOT_USE'] )

@@ -1,10 +1,9 @@
 from os.path import basename
-
+import numpy as np
 from ..stpipe import Step
 from .. import datamodels
-
+from ..combine_1d.combine1d import combine_1d_spectra
 from .expand_to_2d import expand_to_2d
-
 
 __all__ = ["MasterBackgroundStep"]
 
@@ -17,8 +16,9 @@ class MasterBackgroundStep(Step):
     spec = """
         user_background = string(default=None) # Path to user-supplied master background
         save_background = boolean(default=False) # Save computed master background
+        force_subtract = boolean(default=False) # Force subtracting master background
+        output_use_model = boolean(default=True)
     """
-
 
     def process(self, input):
         """
@@ -27,7 +27,7 @@ class MasterBackgroundStep(Step):
         Parameters
         ----------
         input : `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`, `~jwst.datamodels.ModelContainer`, association
-            Input target data model(s) to which master background subtraction is
+            Input target datamodel(s) to which master background subtraction is
             to be applied
 
         user_background : None, string, or `~jwst.datamodels.MultiSpecModel`
@@ -35,69 +35,195 @@ class MasterBackgroundStep(Step):
             or opened datamodel
 
         save_background : bool, optional
-            Save master background.
+            Save computed master background.
+
+        force_subtract : bool, optional
+            Optional user-supplied flag that overrides step logic to force subtraction of the
+            master background.
+            Default is False, in which case the step logic determines if the calspec2 background step
+            has already been applied and, if so, the master background step is skipped.
+            If set to True, the step logic is bypassed and the master background is subtracted.
 
         Returns
         -------
-        result: `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`, `~jwst.datamodels.ModelContainer`
-            The background-subtracted target data model(s)
+        result : `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`, `~jwst.datamodels.ModelContainer`
+            The background-subtracted science datamodel(s)
         """
 
-        # Get association info if available
-        # asn_id = ???
-
         with datamodels.open(input) as input_data:
+            # Make the input data available to self
+            self.input_data = input_data
 
-            # Handle individual NIRSpec FS, NIRSpec MOS
-            if isinstance(input_data, datamodels.MultiSlitModel):
-                pass
+            # First check if we should even do the subtraction.  If not, bail.
+            if not self._do_sub:
+                result = input_data.copy()
+                self.record_step_status(result, 'master_background', success=False)
+                return result
 
-            # Handle associations, or input ModelContainers
-            elif isinstance(input_data, datamodels.ModelContainer):
-                pass
-
-            # Handle MIRI LRS
-            elif isinstance(input_data, datamodels.ImageModel):
-                pass
-
-            # Handle MIRI MRS and NIRSpec IFU
-            elif isinstance(input_data, datamodels.IFUImageModel):
-                pass
-
-            else:
+            # Check that data is a supported datamodel. If not, bail.
+            if not isinstance(input_data, (
+                    datamodels.ModelContainer,
+                    datamodels.MultiSlitModel,
+                    datamodels.ImageModel,
+                    datamodels.IFUImageModel,
+                )):
                 result = input_data.copy()
                 self.log.warning(
                     "Input %s of type %s cannot be handled.  Step skipped.",
                     input, type(input)
                     )
                 self.record_step_status(result, 'master_background', success=False)
-
                 return result
 
-            # Check if user has supplied a master background spectrum.
-            if self.user_background is None:
-                # TODO: 1. compute master background from asn, 2. subtract it
-                # Return input as dummy result for now
-                result = input_data.copy()
-            else:
-                background_2d = expand_to_2d(input_data, self.user_background)
-                result = subtract_2d_background(input_data, background_2d)
-
-                # Record name of user-supplied master background spectrum
-                if isinstance(result, datamodels.ModelContainer):
+            # If user-supplied master background, subtract it
+            if self.user_background:
+                if isinstance(input_data, datamodels.ModelContainer):
+                    input_data, _ = split_container(input_data)
+                    del _
+                    result = datamodels.ModelContainer()
+                    result.update(input_data)
+                    for model in input_data:
+                        background_2d = expand_to_2d(model, self.user_background)
+                        result.append(subtract_2d_background(model, background_2d))
+                    # Record name of user-supplied master background spectrum
                     for model in result:
                         model.meta.background.master_background_file = basename(self.user_background)
+                # Use user-supplied master background and subtract it
                 else:
+                    background_2d = expand_to_2d(input_data, self.user_background)
+                    result = subtract_2d_background(input_data, background_2d)
+                    # Record name of user-supplied master background spectrum
                     result.meta.background.master_background_file = basename(self.user_background)
+            # Compute master background and subtract it
+            else:
+                if isinstance(input_data, datamodels.ModelContainer):
+                    input_data, background_data = split_container(input_data)
+                    asn_id = input_data.meta.asn_table.asn_id
 
-            # Save the computed background if requested by user
-            if self.save_background and self.user_background is None:
-                # self.save_model(background, suffix='masterbg', asn_id=asn_id)
-                pass
-            
-            self.record_step_status(result, 'master_background')
+                    # Check if the background members are nodded x1d extractions
+                    for model in background_data:
+                        # use "bkgdtarg == False" so we don't also get None cases
+                        # for simulated data that didn't bother populating this
+                        # keyword
+                        if model.meta.observation.bkgdtarg == False:
+                            model = copy_background_to_flux(model)
+
+                    master_background = combine_1d_spectra(
+                        background_data,
+                        exptime_key='exposure_time',
+                        )
+
+                    result = datamodels.ModelContainer()
+                    result.update(input_data)
+                    for model in input_data:
+                        background_2d = expand_to_2d(model, master_background)
+                        result.append(subtract_2d_background(model, background_2d))
+
+                else:
+                    result = input_data.copy()
+                    self.log.warning(
+                        "Input %s of type %s cannot be handled without user-supplied background.  Step skipped.",
+                        input, type(input)
+                        )
+                    self.record_step_status(result, 'master_background', success=False)
+                    return result
+
+                # Save the computed background if requested by user
+                if self.save_background:
+                    self.save_model(master_background, suffix='masterbg', asn_id=asn_id)
+
+            self.record_step_status(result, 'master_background', success=True)
 
         return result
+
+    @property
+    def _do_sub(self):
+        """
+        Decide if subtraction is to be done
+
+        Encapsulates logic that checks if background step has already been run
+        on the data, or if the user has selected to force_subtract regardless.
+
+        Returns
+        -------
+        do_sub : bool
+            If ``True``, do the subtraction
+        """
+        do_sub = True
+        if not self.force_subtract:
+            input_data = self.input_data
+            # check if the input data is a model container. If it is then loop over
+            # container and see if the background was subtracted in calspec2.
+            # If all data was background subtracted, skip master bgk subtraction.
+            # If there is a mixture of some being background subtracted, don't
+            # subtract and print warning message
+            if isinstance(input_data, datamodels.ModelContainer):
+                isub = 0
+                for indata in input_data:
+                    if indata.meta.cal_step.back_sub == 'COMPLETE':
+                        do_sub = False
+                        isub += 1
+
+                if not do_sub and isub == len(input_data):
+                    self.log.info(
+                        "Not subtracting master background, background was subtracted in calspec2")
+                    self.log.info("To force the master background to be subtracted from this data, "
+                        "run again and set force_subtract = True.")
+
+                if not do_sub and isub != len(input_data):
+                    self.log.warning("Not subtracting master background.")
+                    self.log.warning("Input data contains a mixture of data with and without "
+                        "background subtraction done in calspec2.")
+                    self.log.warning("To force the master background to be subtracted from this data, "
+                        "run again and set force_subtract = True.")
+            # input data is a single file
+            else:
+                if input_data.meta.cal_step.back_sub == 'COMPLETE':
+                    do_sub = False
+                    self.log.info(
+                        "Not subtracting master background, background was subtracted in calspec2")
+                    self.log.info("To force the master background to be subtracted from this data, "
+                        "run again and set force_subtract = True.")
+
+        return do_sub
+
+
+def copy_background_to_flux(spectrum):
+    """Copy the background column to the flux column in a MultiSpecModel"""
+    result = spectrum.copy()
+    for spec in result.spec:
+        spec.spec_table['FLUX'] = spec.spec_table['BACKGROUND'].copy()
+        spec.spec_table['ERROR'] = spec.spec_table['BERROR'].copy()
+        # Zero out the background column for safety
+        spec.spec_table['BACKGROUND'][:] = 0
+        # Set BERROR to dummy val of 1.0, as in extract_1d currently
+        spec.spec_table['BERROR'][:] = 1
+
+    return result
+
+
+def split_container(container):
+    """Divide a ModelContainer with science and background into one of each
+    """
+    asn = container.meta.asn_table.instance
+    background = datamodels.ModelContainer()
+    science = datamodels.ModelContainer()
+    for product in asn['products']:
+        for member in product['members']:
+            if member['exptype'].lower() == 'science':
+                science.append(datamodels.open(member['expname']))
+            if member['exptype'].lower() == 'background':
+                background.append(datamodels.open(member['expname']))
+
+    # Pass along the association table to the output science container
+    science.meta.asn_table = {}
+    datamodels.model_base.properties.merge_tree(
+        science.meta.asn_table._instance, asn
+    )
+    # Prune the background members from the table
+    for p in science.meta.asn_table.instance['products']:
+        p['members'] = [m for m in p['members'] if m['exptype'].lower() != 'background']
+    return science, background
 
 
 def subtract_2d_background(source, background):
@@ -118,17 +244,19 @@ def subtract_2d_background(source, background):
     `~jwst.datamodels.DataModel`
         Background subtracted from source.
     """
+
     def _subtract_2d_background(model, background):
         result = model.copy()
         # Handle individual NIRSpec FS, NIRSpec MOS
         if isinstance(model, datamodels.MultiSlitModel):
             for slit, slitbg in zip(result.slits, background.slits):
                 slit.data -= slitbg.data
+                slit.dq = np.bitwise_or(slit.dq, slitbg.dq)
 
         # Handle MIRI LRS, MIRI MRS and NIRSpec IFU
         elif isinstance(model, (datamodels.ImageModel, datamodels.IFUImageModel)):
             result.data -= background.data
-
+            result.dq = np.bitwise_or(result.dq, background.dq)
         else:
             # Shouldn't get here.
             raise RuntimeError("Input type {} is not supported."

@@ -221,7 +221,7 @@ def metablender(input_models, spec):
                 result = mapping.agg_func(data[i])
             if result is not None:
                 results[mapping.dst_name] = result
-        
+
     # Aggregate data into table
     dtype = []
     arrays = []

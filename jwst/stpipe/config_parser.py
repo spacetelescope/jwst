@@ -277,7 +277,7 @@ def string_to_python_type(section, key):
 
 def _parse(val):
     """
-    Do the actual parsing of scalar strings into scalar python types.
+    Parse scalar strings into scalar python types.
     """
     if val.lower() == 'true':
         return True
@@ -285,10 +285,10 @@ def _parse(val):
         return False
     try:
         return int(val)
-    except:
+    except ValueError:
         pass
     try:
         return float(val)
-    except:
+    except ValueError:
         pass
     return str(val)

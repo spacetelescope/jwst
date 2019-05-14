@@ -886,7 +886,7 @@ class WCSGroupCatalog():
                 catname = image.name
 
             col_catname = table.MaskedColumn([catname], name='cat_name')
-            del col_catname[0]
+            col_catname = col_catname[[False]]
             col_imcatidx = table.MaskedColumn([], dtype=np.int,
                                               name='_imcat_idx')
             col_id = table.MaskedColumn(image.catalog['id'])
@@ -1033,23 +1033,17 @@ class WCSGroupCatalog():
         log.info("Matching sources from '{}' with sources from reference "
                  "{:s} '{}'".format(self.name, 'image', refcat.name))
 
-        xyoff = (xoffset, yoffset)
-
         if use2dhist:
             # Determine xyoff (X,Y offset) and tolerance
             # to be used with xyxymatch:
-            zpxoff, zpyoff, flux, zpqual = matchutils.build_xy_zeropoint(
+            xyoff = matchutils.estimate_2dhist_shift(
                 im_xyref,
                 refxy,
                 searchrad=searchrad
             )
 
-            if zpqual is not None:
-                xyoff = (zpxoff, zpyoff)
-                # set tolerance as well
-                # This value allows initial guess to be off by 1 in both and
-                # still pick up the identified matches
-                tolerance = 1.5
+        else:
+            xyoff = (xoffset, yoffset)
 
         matches = xyxymatch(
             im_xyref,

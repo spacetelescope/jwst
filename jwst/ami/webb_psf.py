@@ -64,8 +64,8 @@ def get_webbpsf_filter(filter_model, specbin=None, trim=False):
         log.debug(' TRIMing filter data ...')
         wl = spec[:, W].copy()
         tr = spec[:, T].copy()
-        idx = np.where((wl > (1.0 - 0.5 * trim[1]) * trim[0]) &
-                       (wl < (1.0 + 0.5 * trim[1]) * trim[0]))
+        idx = np.where((wl > (1.0 - 0.5 * trim[1]) * trim[0])
+                       & (wl < (1.0 + 0.5 * trim[1]) * trim[0]))
         wl = wl[idx]
         tr = tr[idx]
         spec = np.zeros((len(idx[0]), 2))

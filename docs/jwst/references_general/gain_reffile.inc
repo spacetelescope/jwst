@@ -1,4 +1,3 @@
-
 GAIN reference file
 -------------------
 
@@ -9,12 +8,16 @@ The GAIN reference file contains a pixel-by-pixel gain map, which can be
 used to convert pixel values from units of DN to electrons. The gain
 values are assumed to be in units of e/DN.
 
+.. include:: ../references_general/gain_selection.inc
+
 .. include:: ../includes/standard_keywords.inc
 
 Type Specific Keywords for GAIN
 +++++++++++++++++++++++++++++++
 In addition to the standard reference file keywords listed above,
-the following keywords are *required* in GAIN reference files
+the following keywords are *required* in GAIN reference files,
+because they are used as CRDS selectors
+(see :ref:`gain_selectors`):
 
 ===============  ==============================
 Keyword          Data Model Name
@@ -23,10 +26,6 @@ DETECTOR         model.meta.instrument.detector
 SUBARRAY         model.meta.subarray.name
 BUNIT\ :sup:`1`  model.meta.bunit_data
 ===============  ==============================
-
-These keywords are used as CRDS selectors
-
-.. include:: ../references_general/gain_selection.inc
 
 :sup:`1` BUNIT is not used as a CRDS selector, but is required in the
 "SCI" extension header of GAIN reference files to document the units

@@ -1,15 +1,21 @@
 Description
 ============
 
-The photom step loads - and in some cases applies - information into a
-data product that allows for the
-conversion of count rates to absolute flux units. The flux conversion
-information is read from the photometric reference file. The exact nature
-of the information that's stored in the reference file and loaded into the
-science data product depends on the instrument mode.
+The photom step applies flux (photometric) calibrations to a data product
+to convert the data from units of countrate to surface brightness.
+The calibration information is read from a photometric reference file.
+The exact nature of the calibration information loaded from the reference file
+and applied to the science data depends on the instrument mode.
+
+This step relies on having wavelength information available when working on
+spectroscopic data (see below) and therefore the
+:ref:`assign_wcs <assign_wcs_step>` step *must* be applied before executing
+the photom step.
 
 Upon successful completion of this step, the status keyword S_PHOTOM will be
 set to COMPLETE.
+Furthermore, the BUNIT keyword value in the SCI and ERR extension
+headers of the science product are updated to reflect the change in units.
 
 Imaging and non-IFU Spectroscopy
 --------------------------------
@@ -23,27 +29,29 @@ conversion data for each of those configurations. The table contains one row
 for each allowed combination of exposure parameters,
 such as detector, filter, pupil, and grating. The photom step searches the
 table for the row that matches the parameters of the science exposure and
-then copies the calibration information from that table row into the science
-product. Note that for NIRSpec fixed-slit mode, the step will search the table
+then loads the calibration information from that table.
+Note that for NIRSpec fixed-slit mode, the step will search the table
 for each slit in use in the exposure, using the table row that corresponds to
 each slit.
 
-For these table-based reference files, the calibration information in each row
-includes a scalar flux conversion constant, as well as optional arrays of
-wavelength and relative response (as a function of wavelength). The scalar
-conversion constant in a selected
-table row is copied into the keyword PHOTMJSR in the primary header of the
-science product. The value of PHOTMJSR can then be used to convert data from
-units of DN/sec to MJy/steradian. The step also computes, on the fly,
-the equivalent conversion factor for converting the data to units of
-microJy/square-arcsecond and stores this value in the header keyword PHOTUJA2.
+For these table-based photom reference files, the calibration information in each
+row includes a scalar flux conversion constant, as well as optional arrays of
+wavelength and relative response (as a function of wavelength).
+For spectroscopic data, if the photom step finds that the wavelength and relative
+response arrays in the reference table row are populated, it loads those 1-D arrays
+and interpolates the response values into the 2-D space of the science image based
+on the wavelength at each pixel.
 
-If the photom step finds that the wavelength and relative response arrays are
-populated in the selected table row, it copies those arrays to a table extension
-called "RELSENS" in the science data product.
+The combination of the scalar conversion factor and the 2-D response values are
+then applied to the science data, including the SCI and ERR arrays, as well as
+the variance (VAR_POISSON, VAR_RNOISE, and VAR_FLAT) arrays.
+The correction values are divided into the SCI and ERR arrays, and the square
+of the correction values are divided into the variance arrays.
 
-None of the conversion factors are actually applied to the data for these
-observing modes. They are simply attached to the science product.
+The scalar conversion constant is copied to the header keyword PHOTMJSR, which
+gives the conversion from DN/s to MegaJy/steradian that was applied to the data.
+The step also computes the equivalent conversion factor to units of
+microJy/square-arcsecond and stores it in the header keyword PHOTUJA2.
 
 Pixel Area Data
 ^^^^^^^^^^^^^^^
@@ -69,29 +77,24 @@ NIRSpec IFU
 The photom step uses the same type of tabular reference file for NIRSpec IFU
 exposures as discussed above for other modes, where there is a single table
 row that corresponds to a given exposure's filter and grating settings. It
-retreives the scalar conversion constant, as well as the 1D wavelength and
+retreives the scalar conversion constant, as well as the 1-D wavelength and
 relative response arrays, from that row. It also loads the IFU pixel area
 data from the pixel area reference file.
 
-It then uses the scalar conversion constant, the 1D wavelength and relative
-response, and pixel area data to compute a 2D sensitivity map (pixel-by-pixel)
-for the entire 2D science image. The 2D SCI and ERR arrays in the science
+It then uses the scalar conversion constant, the 1-D wavelength and relative
+response, and pixel area data to compute a 2-D sensitivity map (pixel-by-pixel)
+for the entire science image. The 2-D SCI and ERR arrays in the science
 exposure are divided by the 2D sensitivity map, which converts the science
-pixels from units of DN/sec to mJy/arcsec\ :sup:`2`\ . Furthermore, the
-2D sensitivity array is stored in a new extension of the science exposure
-called "RELSENS2D". The BUNIT keyword value in the SCI and ERR extension
-headers of the science product are updated to reflect the change in units.
+pixels from units of DN/sec to mJy/arcsec\ :sup:`2`\ .
+Variance arrays are divided by the square of the conversion factors.
 
 MIRI MRS
 --------
 
-For the MIRI MRS mode, the photom reference file contains 2D arrays of sensitivity
+For the MIRI MRS mode, the photom reference file contains 2-D arrays of sensitivity
 factors and pixel sizes that are loaded into the step. As with NIRSpec IFU, the
-sensitivity and pixel size data are used to compute a 2D sensitivity map
+sensitivity and pixel size data are used to compute a 2-D sensitivity map
 (pixel-by-pixel) for the entire science image. This is divided into both
 the SCI and ERR arrays of the science exposure, which converts the pixel values
-from units of DN/sec to mJy/arcsec\ :sup:`2`\ . The 2D sensitivity array is
-also stored in a "RELSENS2D" extension of the science exposure.
-The BUNIT keyword value in the SCI and ERR extension
-headers of the science product are updated to reflect the change in units.
-
+from units of DN/sec to mJy/arcsec\ :sup:`2`\ .
+Variance arrays are divided by the square of the conversion factors.

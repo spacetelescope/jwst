@@ -6,14 +6,62 @@ import numpy as np
 from jwst import datamodels
 from jwst.master_background import expand_to_2d
 
-def test_expand_to_2d():
 
-    # This is used for creating a MultiSpecModel.
-    spec_dtype = datamodels.SpecModel().spec_table.dtype
+def test_expand_to_2d_1():
+    """Test 1"""
 
-    ### Test 1
-    # `input` is a MultiSlitModel object, and `m_bkg_spec` is a
-    # MultiSpecModel object.
+    input = slit_data_a()               # MultiSlitModel
+
+    m_bkg_spec = user_bkg_spec_a()      # MultiSpecModel
+
+    bkg = expand_to_2d.expand_to_2d(input, m_bkg_spec)
+
+    truth_a = truth_array_a()
+
+    assert np.allclose(bkg.slits[0].data, truth_a, rtol=1.e-6)
+
+
+def test_expand_to_2d_2():
+    """Test 2"""
+
+    # Same input data as in the first test.
+    input = slit_data_a()               # MultiSlitModel
+
+    # Check that expand_to_2d works if the wavelength array is reversed.
+    # The flux array is also reversed, so the results should be unchanged.
+    m_bkg_spec = user_bkg_spec_b()
+
+    bkg = expand_to_2d.expand_to_2d(input, m_bkg_spec)
+
+    # Same truth array as in the first test.
+    truth_a = truth_array_a()
+
+    assert np.allclose(bkg.slits[0].data, truth_a, rtol=1.e-6)
+
+
+def test_expand_to_2d_3():
+    """Test 3"""
+
+    input = image_data_c()              # ImageModel
+
+    m_bkg_spec = user_bkg_spec_c()      # CombinedSpecModel
+
+    bkg = expand_to_2d.expand_to_2d(input, m_bkg_spec)
+
+    truth_c = truth_array_c()
+
+    assert np.allclose(bkg.data, truth_c, rtol=1.e-6)
+
+
+# slit_data_a and image_data_c create `input` for the tests above.
+
+def slit_data_a():
+    """Create "science" data for testing.
+
+    Returns
+    -------
+    input_model : `~jwst.datamodels.MultiSlitModel`
+    """
 
     # Create a MultiSlitModel object.
     data_shape = (5, 9)
@@ -28,91 +76,26 @@ def test_expand_to_2d():
     for j in range(data_shape[0]):
         wavelength[j, :] = (temp_wl + j * dwl)
     wavelength = np.around(wavelength, 4)
-    input = datamodels.MultiSlitModel()
+    input_model = datamodels.MultiSlitModel()
     slit = datamodels.SlitModel(init=None, data=data, dq=dq,
                                 wavelength=wavelength)
-    input.slits.append(slit)
+    input_model.slits.append(slit)
 
-    # m_bkg_spec doesn't have to be a MultiSpecModel, but that's an option.
-    m_bkg_spec = datamodels.MultiSpecModel()
-    wavelength = np.geomspace(1.5, 4.5, num=25, endpoint=True,
-                              dtype=np.float64)
-    flux = np.linspace(13., 25., num=25, endpoint=True, retstep=False,
-                       dtype=np.float64)
-    fl_error = np.ones_like(wavelength)
-    dq = np.zeros(wavelength.shape, dtype=np.uint32)
-    net = np.zeros_like(wavelength)
-    nerror = np.ones_like(wavelength)
-    background = np.ones_like(wavelength)
-    berror = np.ones_like(wavelength)
-    npixels = np.ones_like(wavelength)
-    otab = np.array(list(zip(wavelength, flux, fl_error, dq,
-                             net, nerror, background, berror,
-                             npixels)),
-                    dtype=spec_dtype)
-    spec = datamodels.SpecModel(spec_table=otab)
-    m_bkg_spec.spec.append(spec)
+    return input_model
 
-    bkg = expand_to_2d.expand_to_2d(input, m_bkg_spec)
 
-    truth_test1 = np.array(
-[[ 0., 14.603571, 17.057364, 19.059263, 20.748844, 22.21304, 23.506573,
-  24.658548, 0.],
- [ 0., 15.213889, 17.548525, 19.470137, 21.102207, 22.524107, 23.77871,
-  24.906878, 0.],
- [13., 15.792757, 18.018988, 19.86396, 21.444334, 22.822334, 24.04857,
-   0., 0.],
- [13.702182, 16.342768, 18.469252, 20.244974, 21.773643, 23.115166, 24.308529,
-   0., 0.],
- [14.364901, 16.866348, 18.900745, 20.614536, 22.095966, 23.40005, 24.565424,
-   0., 0.]],
-                           dtype=np.float64)
+def image_data_c():
+    """Create "science" data for testing.
 
-    assert np.allclose(bkg.slits[0].data, truth_test1, rtol=1.e-6)
-
-    ### Test 2
-    # `input` is the same MultiSlitModel object as above, and `m_bkg_spec`
-    # is the same MultiSpecModel except that the wavelength and flux
-    # arrays are reversed to test that expand_to_2d handles that correctly.
-
-    # expand_to_2d uses np.interp for interpolation, so the wavelength
-    # array that is passed to np.interp must be increasing.  Check that
-    # the results are the same even if the wavelength array in `m_bkg_spec`
-    # is reversed so that the values are decreasing, and the corresponding
-    # flux array is also reversed to retain the original (wavelength, flux)
-    # relation.
-    m_bkg_spec = datamodels.MultiSpecModel()
-    wavelength = np.geomspace(1.5, 4.5, num=25, endpoint=True,
-                              dtype=np.float64)[::-1]
-    flux = np.linspace(13., 25., num=25, endpoint=True, retstep=False,
-                       dtype=np.float64)[::-1]
-    fl_error = np.ones_like(wavelength)
-    dq = np.zeros(wavelength.shape, dtype=np.uint32)
-    net = np.zeros_like(wavelength)
-    nerror = np.ones_like(wavelength)
-    background = np.ones_like(wavelength)
-    berror = np.ones_like(wavelength)
-    npixels = np.ones_like(wavelength)
-    otab = np.array(list(zip(wavelength, flux, fl_error, dq,
-                             net, nerror, background, berror,
-                             npixels)),
-                    dtype=spec_dtype)
-    spec = datamodels.SpecModel(spec_table=otab)
-    m_bkg_spec.spec.append(spec)
-
-    bkg = expand_to_2d.expand_to_2d(input, m_bkg_spec)
-
-    # Use the same truth array as in Test 1.
-    assert np.allclose(bkg.slits[0].data, truth_test1, rtol=1.e-6)
-
-    ### Test 3
-    # `input` is an ImageModel, and `m_bkg_spec` is a CombinedSpecModel
-    # object, i.e. like the output of the combine_1d step.
+    Returns
+    -------
+    input_model : `~jwst.datamodels.ImageModel`
+    """
 
     data_shape = (9, 5)
     data = np.zeros(data_shape, dtype=np.float32) + 10.
     dq = np.zeros(data_shape, dtype=np.uint32)
-    input = datamodels.ImageModel(data=data, dq=dq)
+    input_model = datamodels.ImageModel(data=data, dq=dq)
 
     def mock_wcs(x, y):
         """Fake wcs method."""
@@ -140,9 +123,97 @@ def test_expand_to_2d():
         dec = wl.copy()                         # placeholder
         return (ra, dec, wl)
 
-    input.meta.wcs = mock_wcs
+    input_model.meta.wcs = mock_wcs
 
-    # Create m_bkg_spec as a CombinedSpecModel object.
+    return input_model
+
+
+# Functions user_bkg_spec_a, user_bkg_spec_b, and user_bkg_spec_c create
+# "user-supplied" background data for the tests above.
+
+def user_bkg_spec_a():
+    """Create "user-background" data for testing.
+
+    Returns
+    -------
+    m_bkg_spec : `~jwst.datamodels.MultiSpecModel`
+    """
+
+    # This data type is used for creating a MultiSpecModel.
+    spec_dtype = datamodels.SpecModel().spec_table.dtype
+
+    # m_bkg_spec doesn't have to be a MultiSpecModel, but that's an option.
+    m_bkg_spec = datamodels.MultiSpecModel()
+    wavelength = np.geomspace(1.5, 4.5, num=25, endpoint=True,
+                              dtype=np.float64)
+    flux = np.linspace(13., 25., num=25, endpoint=True, retstep=False,
+                       dtype=np.float64)
+    error = np.ones_like(wavelength)
+    dq = np.zeros(wavelength.shape, dtype=np.uint32)
+    surf_bright = np.zeros_like(wavelength)
+    sb_error = np.ones_like(wavelength)
+    background = np.ones_like(wavelength)
+    berror = np.ones_like(wavelength)
+    npixels = np.ones_like(wavelength)
+    otab = np.array(list(zip(wavelength, flux, error,
+                             surf_bright, sb_error, dq, background, berror,
+                             npixels)),
+                    dtype=spec_dtype)
+    spec = datamodels.SpecModel(spec_table=otab)
+    m_bkg_spec.spec.append(spec)
+
+    return m_bkg_spec
+
+
+def user_bkg_spec_b():
+    """Create "user-background" data for testing.
+
+    `expand_to_2d` uses `np.interp` for interpolation, and the wavelength
+    array that is passed to `np.interp` must be increasing.  `expand_to_2d`
+    is supposed to handle the case that the wavelengths are decreasing.
+    Create data for checking that the results are the same even if the
+    wavelength array in `m_bkg_spec` is reversed so that the values are
+    decreasing, and the corresponding flux array is also reversed to retain
+    the original (wavelength, flux) relation.
+
+    Returns
+    -------
+    m_bkg_spec : `~jwst.datamodels.MultiSpecModel`
+    """
+
+    # This data type is used for creating a MultiSpecModel.
+    spec_dtype = datamodels.SpecModel().spec_table.dtype
+
+    m_bkg_spec = datamodels.MultiSpecModel()
+    wavelength = np.geomspace(1.5, 4.5, num=25, endpoint=True,
+                              dtype=np.float64)[::-1]
+    flux = np.linspace(13., 25., num=25, endpoint=True, retstep=False,
+                       dtype=np.float64)[::-1]
+    error = np.ones_like(wavelength)
+    dq = np.zeros(wavelength.shape, dtype=np.uint32)
+    surf_bright = np.zeros_like(wavelength)
+    sb_error = np.ones_like(wavelength)
+    background = np.ones_like(wavelength)
+    berror = np.ones_like(wavelength)
+    npixels = np.ones_like(wavelength)
+    otab = np.array(list(zip(wavelength, flux, error,
+                             surf_bright, sb_error, dq, background, berror,
+                             npixels)),
+                    dtype=spec_dtype)
+    spec = datamodels.SpecModel(spec_table=otab)
+    m_bkg_spec.spec.append(spec)
+
+    return m_bkg_spec
+
+
+def user_bkg_spec_c():
+    """Create "user-background" data for testing.
+
+    Returns
+    -------
+    m_bkg_spec : `~jwst.datamodels.CombinedSpecModel`
+    """
+
     # This is the data type of an output table from combine_1d.
     spec_table_dtype = datamodels.CombinedSpecModel().spec_table.dtype
 
@@ -150,27 +221,62 @@ def test_expand_to_2d():
                               dtype=np.float64)
     flux = np.linspace(13., 25., num=25, endpoint=True, retstep=False,
                        dtype=np.float64)
-    fl_error = np.ones_like(wavelength)
+    error = np.ones_like(wavelength)
+    surf_bright = np.zeros_like(wavelength)
+    sb_error = np.ones_like(wavelength)
     dq = np.zeros(wavelength.shape, dtype=np.uint32)
-    net = np.zeros_like(wavelength)
     weight = np.ones_like(wavelength)
     n_input = np.ones_like(wavelength)                  # yes, float64
-    data = np.array(list(zip(wavelength, flux, fl_error, net,
-                             dq, weight, n_input)),
+    data = np.array(list(zip(wavelength, flux, error, surf_bright,
+                             sb_error, dq, weight, n_input)),
                     dtype=spec_table_dtype)
     m_bkg_spec = datamodels.CombinedSpecModel(spec_table=data)
 
-    bkg = expand_to_2d.expand_to_2d(input, m_bkg_spec)
+    return m_bkg_spec
 
-    truth_test2 = np.array([[ 0., 17.057364, 20.748844, 23.506573, 0.],
-                            [ 0., 17.548523, 21.102207, 23.77871, 0.],
-                            [13., 18.018988, 21.444334, 24.04857, 0.],
-                            [13.702181, 18.469252, 21.773643, 24.308529, 0.],
-                            [14.3649, 18.900745, 22.095966, 24.565424, 0.],
-                            [14.9912815, 19.31606, 22.408163, 24.813755, 0.],
-                            [15.5804825, 19.716778, 22.710499, 0., 0.],
-                            [16.139992, 20.104378, 23.008335, 0., 0.],
-                            [16.672644, 20.479303, 23.293217, 0., 0.]],
-                           dtype=np.float64)
 
-    assert np.allclose(bkg.data, truth_test2, rtol=1.e-6)
+def truth_array_a():
+    """Create an array of comparison values, for testing.
+
+    Returns
+    -------
+    truth_a : ndarray, 2-D, float64
+        An array to compare with the data in the output from `expand_to_2d`.
+    """
+
+    truth_a = np.array([[ 0., 14.603571, 17.057364, 19.059263, 20.748844,
+                         22.21304, 23.506573, 24.658548, 0.],
+                        [ 0., 15.213889, 17.548525, 19.470137, 21.102207,
+                         22.524107, 23.77871, 24.906878, 0.],
+                        [13., 15.792757, 18.018988, 19.86396, 21.444334,
+                         22.822334, 24.04857, 0., 0.],
+                        [13.702182, 16.342768, 18.469252, 20.244974,
+                         21.773643, 23.115166, 24.308529, 0., 0.],
+                        [14.364901, 16.866348, 18.900745, 20.614536,
+                         22.095966, 23.40005, 24.565424, 0., 0.]],
+                       dtype=np.float64)
+
+    return truth_a
+
+
+def truth_array_c():
+    """Create an array of comparison values, for testing.
+
+    Returns
+    -------
+    truth_c : ndarray, 2-D, float64
+        An array to compare with the data in the output from `expand_to_2d`.
+    """
+
+    truth_c = np.array([[ 0., 17.057364, 20.748844, 23.506573, 0.],
+                        [ 0., 17.548523, 21.102207, 23.77871, 0.],
+                        [13., 18.018988, 21.444334, 24.04857, 0.],
+                        [13.702181, 18.469252, 21.773643, 24.308529, 0.],
+                        [14.3649, 18.900745, 22.095966, 24.565424, 0.],
+                        [14.9912815, 19.31606, 22.408163, 24.813755, 0.],
+                        [15.5804825, 19.716778, 22.710499, 0., 0.],
+                        [16.139992, 20.104378, 23.008335, 0., 0.],
+                        [16.672644, 20.479303, 23.293217, 0., 0.]],
+                       dtype=np.float64)
+
+    return truth_c

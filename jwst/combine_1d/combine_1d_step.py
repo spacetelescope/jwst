@@ -17,14 +17,12 @@ class Combine1dStep(Step):
 
     spec = """
     exptime_key = string(default="exposure_time") # use for weight
-    background = boolean(default=False) # True if the input are all background
     """
 
     def process(self, input_file):
 
         with datamodels.open(input_file) as input_model:
             result = combine1d.combine_1d_spectra(input_model,
-                                                  self.exptime_key,
-                                                  self.background)
+                                                  self.exptime_key)
 
         return result

@@ -10,7 +10,7 @@ description: |
    - given x,y,wave,order in effective direct image return x,y,wave,order in dispersed
    - given x,y,x0,y0,order in dispersed image returns x,y,wave,order in effective direct
 anyOf:
-  - $ref: ../asdf/transform/transform-1.1.0
+  - $ref: "tag:stsci.edu:asdf/transform/transform-1.1.0"
   - type: object
     properties:
       xmodels:
@@ -18,19 +18,19 @@ anyOf:
          NIRCAM row dispersion models
         type: array
         items:
-          $ref: ../asdf/transform/transform-1.1.0
+          $ref: "tag:stsci.edu:asdf/transform/transform-1.1.0"
       ymodels:
         description: |
           NIRCAM column dispersion models
         type: array
         items:
-          $ref: ../asdf/transform/transform-1.1.0
+          $ref: "tag:stsci.edu:asdf/transform/transform-1.1.0"
       lmodels:
         description: |
           NIRCAM wavelength dispersion models
         type: array
         items:
-          $ref: ../asdf/transform/transform-1.1.0
+          $ref: "tag:stsci.edu:asdf/transform/transform-1.1.0"
       orders:
         description: |
           NIRCAM available grism orders, in-sync with the model arrays

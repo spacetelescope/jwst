@@ -25,9 +25,6 @@ class CubeModel(DataModel):
     area : numpy float32 array
          Pixel area map array
 
-    relsens : numpy table
-         relative sensitivity table
-
     int_times : numpy table
          table of times for each integration
 
@@ -49,4 +46,3 @@ class CubeModel(DataModel):
         # Implicitly create arrays
         self.dq = self.dq
         self.err = self.err
-

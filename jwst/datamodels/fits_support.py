@@ -379,7 +379,7 @@ def _save_history(hdulist, tree):
                 history[i] = HistoryEntry({'description': str(history[i])})
         hdulist[0].header['HISTORY'] = history[i]['description']
 
-def to_fits(tree, schema, extensions=None):
+def to_fits(tree, schema):
     hdulist = fits.HDUList()
     hdulist.append(fits.PrimaryHDU())
 
@@ -387,8 +387,7 @@ def to_fits(tree, schema, extensions=None):
     _save_extra_fits(hdulist, tree)
     _save_history(hdulist, tree)
 
-    asdf = fits_embed.AsdfInFits(hdulist, tree,
-                                 extensions=extensions)
+    asdf = fits_embed.AsdfInFits(hdulist, tree)
     return asdf
 
 
@@ -532,9 +531,9 @@ def _load_history(hdulist, tree):
         history['entries'].append(HistoryEntry({'description': entry}))
 
 
-def from_fits(hdulist, schema, extensions, context, **kwargs):
+def from_fits(hdulist, schema, context, **kwargs):
     try:
-        ff = from_fits_asdf(hdulist, extensions=extensions, **kwargs)
+        ff = from_fits_asdf(hdulist, **kwargs)
     except Exception as exc:
         raise exc.__class__("ERROR loading embedded ASDF: " + str(exc)) from exc
 
@@ -545,7 +544,7 @@ def from_fits(hdulist, schema, extensions, context, **kwargs):
 
     return ff
 
-def from_fits_asdf(hdulist, extensions=None,
+def from_fits_asdf(hdulist,
                   ignore_version_mismatch=True,
                   ignore_unrecognized_tag=False,
                   **kwargs):
@@ -553,7 +552,6 @@ def from_fits_asdf(hdulist, extensions=None,
     Wrap asdf call to extract optional argumentscommet
     """
     return fits_embed.AsdfInFits.open(hdulist,
-                                      extensions=extensions,
                                       ignore_version_mismatch=ignore_version_mismatch,
                                       ignore_unrecognized_tag=ignore_unrecognized_tag)
 

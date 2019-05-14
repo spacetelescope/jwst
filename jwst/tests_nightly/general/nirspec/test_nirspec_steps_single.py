@@ -1,14 +1,19 @@
 import pytest
+import numpy as np
+
 from numpy.testing import assert_allclose
 from gwcs.wcstools import grid_from_bounding_box
-
-from jwst.tests.base_classes import BaseJWSTTest
-
+from jwst.tests.base_classes import BaseJWSTTest, raw_from_asn
 from jwst.assign_wcs import AssignWcsStep, nirspec
 from jwst.datamodels import ImageModel
 from jwst.pipeline import Detector1Pipeline, Spec2Pipeline
+from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.imprint import ImprintStep
 from jwst.ramp_fitting import RampFitStep
+from jwst.extract_1d import Extract1dStep
+from jwst.master_background import MasterBackgroundStep
+from jwst.cube_build import CubeBuildStep
+from jwst import datamodels
 
 
 @pytest.mark.bigdata
@@ -167,4 +172,222 @@ class TestNIRISSSpec2(BaseJWSTTest):
                    ('jw84600002001_02101_00001_nrs2_x1d.fits',
                     'jw84600002001_02101_00001_nrs2_x1d_ref.fits')
                   ]
+        self.compare_outputs(outputs)
+
+
+@pytest.mark.bigdata
+class TestNIRSpecMasterBackground_FS(BaseJWSTTest):
+    input_loc = 'nirspec'
+    ref_loc = ['test_masterbackground', 'nrs-fs', 'truth']
+    test_dir = ['test_masterbackground', 'nrs-fs']
+
+    def test_nirspec_fs_masterbg_user(self):
+        """
+        Regression test of master background subtraction for NRS FS when a
+        user 1-D spectrum is provided.
+        """
+        # input file has 2-D background image added to it
+
+        input_file = self.get_data(*self.test_dir, 'nrs_sci+bkg_cal.fits')
+        # user provided 1-D background was created from the 2-D background image
+        input_1dbkg_file = self.get_data(*self.test_dir, 'nrs_bkg_user_clean_x1d.fits')
+
+        result = MasterBackgroundStep.call(input_file,
+                                           user_background=input_1dbkg_file,
+                                           save_results=True)
+
+        # Compare background-subtracted science data (results)
+        # to a truth file. These data are MultiSlitModel data
+        result_file = result.meta.filename
+
+        truth_file = self.get_data(*self.ref_loc,
+                                  'nrs_sci+bkg_masterbackgroundstep.fits')
+
+        outputs = [(result_file, truth_file)]
+        self.compare_outputs(outputs)
+        result.close()
+
+
+@pytest.mark.bigdata
+class TestNIRSpecMasterBackground_IFU(BaseJWSTTest):
+    input_loc = 'nirspec'
+    ref_loc = ['test_masterbackground', 'nrs-ifu', 'truth']
+    test_dir = ['test_masterbackground', 'nrs-ifu']
+
+    def test_nirspec_ifu_masterbg_user(self):
+        """
+        Regression test of master background subtraction for NRS IFU when a
+        user 1-D spectrum is provided.
+        """
+        # input file has 2-D background image added to it
+        input_file = self.get_data(*self.test_dir, 'prism_sci_bkg_cal.fits')
+
+        # user-provided 1-D background was created from the 2-D background image
+        user_background = self.get_data(*self.test_dir, 'prism_bkg_x1d.fits')
+
+        result = MasterBackgroundStep.call(input_file,
+                                           user_background=user_background,
+                                           save_results=True)
+
+        # Test 1 compare extracted spectra data with
+        # no background added to extracted spectra from the output
+        # from MasterBackground subtraction. First cube_build has to be run
+        # on the data.
+        result_s3d = CubeBuildStep.call(result)
+        # run 1-D extract on results from MasterBackground step
+        result_1d = Extract1dStep.call(result_s3d, subtract_background=False)
+
+        # get the 1-D extracted spectrum from the science data in truth directory
+        input_sci_1d_file = self.get_data(*self.ref_loc, 'prism_sci_extract1d.fits')
+        sci_1d = datamodels.open(input_sci_1d_file)
+
+        # read in the valid wavelengths of the user-1d
+        user_background_model = datamodels.open(user_background)
+        user_wave = user_background_model.spec[0].spec_table['wavelength']
+        user_flux = user_background_model.spec[0].spec_table['net']
+        user_wave_valid = np.where(user_flux > 0)
+        min_user_wave = np.amin(user_wave[user_wave_valid])
+        max_user_wave = np.amax(user_wave[user_wave_valid])
+        user_background_model.close()
+        # find the waverange covered by both user and science
+        sci_spec_1d = sci_1d.spec[0].spec_table['net']
+        sci_spec_wave = sci_1d.spec[0].spec_table['wavelength']
+
+        result_spec_1d = result_1d.spec[0].spec_table['net']
+
+        sci_wave_valid = np.where(sci_spec_1d > 0)
+        min_wave = np.amin(sci_spec_wave[sci_wave_valid])
+        max_wave = np.amax(sci_spec_wave[sci_wave_valid])
+        if min_user_wave > min_wave:
+            min_wave = min_user_wave
+        if max_user_wave < max_wave:
+            max_wave = max_user_wave
+
+        sub_spec = sci_spec_1d - result_spec_1d
+        valid = np.where(np.logical_and(sci_spec_wave > min_wave, sci_spec_wave < max_wave))
+        sub_spec = sub_spec[valid]
+        sub_spec = sub_spec[1:-2]  # endpoints are wacky
+
+        mean_sub = np.absolute(np.nanmean(sub_spec))
+        atol = 5.0
+        assert_allclose(mean_sub, 0, atol=atol)
+
+        # Test 2  compare the science  data with no background
+        # to the output from the masterBackground Subtraction step
+        # background subtracted science image.
+        input_sci_cal_file = self.get_data(*self.test_dir,
+                                            'prism_sci_cal.fits')
+        input_sci_model = datamodels.open(input_sci_cal_file)
+
+        # We don't want the slices gaps to impact the statisitic
+        # loop over the 30 Slices
+        for i in range(30):
+            slice_wcs = nirspec.nrs_wcs_set_input(input_sci_model, i)
+            x, y = grid_from_bounding_box(slice_wcs.bounding_box)
+            ra, dec, lam = slice_wcs(x, y)
+            valid = np.isfinite(lam)
+            result_slice_region = result.data[y.astype(int), x.astype(int)]
+            sci_slice_region = input_sci_model.data[y.astype(int),
+                                                    x.astype(int)]
+            sci_slice = sci_slice_region[valid]
+            result_slice = result_slice_region[valid]
+            sub = result_slice - sci_slice
+
+            # check for outliers in the science image
+            sci_mean = np.nanmean(sci_slice)
+            sci_std = np.nanstd(sci_slice)
+            upper = sci_mean + sci_std*5.0
+            lower = sci_mean - sci_std*5.0
+            mask_clean = np.logical_and(sci_slice < upper, sci_slice > lower)
+
+            sub_mean = np.absolute(np.nanmean(sub[mask_clean]))
+            atol = 2.0
+            assert_allclose(sub_mean, 0, atol=atol)
+
+        # Test 3 Compare background sutracted science data (results)
+        #  to a truth file. This data is MultiSlit data
+
+        input_sci_model.close()
+        result_file = result.meta.filename
+        truth_file = self.get_data(*self.ref_loc,
+                                  'prism_sci_bkg_masterbackgroundstep.fits')
+
+        outputs = [(result_file, truth_file)]
+        self.compare_outputs(outputs)
+        input_sci_model.close()
+        result.close()
+
+
+@pytest.mark.bigdata
+class TestNIRSpecMasterBackground_MOS(BaseJWSTTest):
+    input_loc = 'nirspec'
+    ref_loc = ['test_masterbackground', 'nrs-mos', 'truth']
+    test_dir = ['test_masterbackground', 'nrs-mos']
+
+    def test_nirspec_mos_masterbg_user(self):
+        """
+        Regression test of master background subtraction for NRS MOS when
+        a user 1-D spectrum is provided.
+        """
+        # input file has 2-D background image added to it
+        input_file = self.get_data(*self.test_dir, 'nrs_mos_sci+bkg_cal.fits')
+        # user provide 1-D background was created from the 2-D background image
+        input_1dbkg_file = self.get_data(*self.test_dir, 'nrs_mos_bkg_x1d.fits')
+
+        result = MasterBackgroundStep.call(input_file,
+                                           user_background=input_1dbkg_file,
+                                           save_results=True)
+
+        # Compare background subtracted science data (results)
+        # to a truth file. These data are MultiSlit data.
+        result_file = result.meta.filename
+        ref_file = self.get_data(*self.ref_loc, 'nrs_mos_sci+bkg_masterbackgroundstep.fits')
+
+        outputs = [(result_file, ref_file)]
+        self.compare_outputs(outputs)
+        result.close()
+
+@pytest.mark.bigdata
+class TestNIRSpecMasterBackgroundNodded(BaseJWSTTest):
+    input_loc = 'nirspec'
+    ref_loc = ['test_masterbackground', 'nrs-ifu', 'nodded', 'truth']
+    test_dir = ['test_masterbackground', 'nrs-ifu', 'nodded']
+
+    rtol = 0.000001
+
+    def test_nirspec_masterbg_nodded(self):
+        """Run masterbackground step on NIRSpec association"""
+        asn_file = self.get_data(*self.test_dir,
+                                  'nirspec_spec3_asn.json')
+        for file in raw_from_asn(asn_file):
+            self.get_data(*self.test_dir, file)
+
+        collect_pipeline_cfgs('./config')
+        result = MasterBackgroundStep.call(
+            asn_file,
+            config_file='config/master_background.cfg',
+            save_background=True,
+            save_results=True
+            )
+
+        # test 1
+        # compare  background subtracted data  to truth files
+        # check that the  cal_step master_background ran to complete
+        outputs = []
+        for model in result:
+            assert model.meta.cal_step.master_background == 'COMPLETE'
+
+            result_file = model.meta.filename.replace('cal', 'master_background')
+            truth_file = self.get_data(*self.ref_loc, result_file)
+
+            outputs.append((result_file, truth_file))
+        self.compare_outputs(outputs)
+
+
+        # test 2
+        # compare the master background combined file to truth file
+        master_combined_bkg_file = 'ifu_prism_source_off_fix_NRS1_o001_masterbg.fits'
+        truth_background = self.get_data(*self.ref_loc,
+                                          master_combined_bkg_file)
+        outputs = [(master_combined_bkg_file, truth_background)]
         self.compare_outputs(outputs)

@@ -5,14 +5,14 @@ from asdf import yamlutil
 from ..jwst_types import JWSTTransformType
 from .. import models
 from ..models import (WavelengthFromGratingEquation, AngleFromGratingEquation,
-                      Unitless2DirCos, DirCos2Unitless, Rotation3DToGWA, LRSWavelength, Gwa2Slit,
+                      Unitless2DirCos, DirCos2Unitless, Rotation3DToGWA, Gwa2Slit,
                       Slit2Msa, Logical, NirissSOSSModel, V23ToSky, RefractionIndexFromPrism,
                       Snell, NIRCAMForwardRowGrismDispersion, NIRCAMForwardColumnGrismDispersion,
                       NIRISSForwardRowGrismDispersion, NIRISSForwardColumnGrismDispersion,
                       NIRCAMBackwardGrismDispersion, NIRISSBackwardGrismDispersion, MIRI_AB2Slice)
 from ..tpcorr import TPCorr
 
-__all__ = ['GratingEquationType', 'CoordsType', 'RotationSequenceType', 'LRSWavelengthType',
+__all__ = ['GratingEquationType', 'CoordsType', 'RotationSequenceType',
            'Gwa2SlitType', 'Slit2MsaType', 'LogicalType', 'NirissSOSSType', 'V23ToSkyType',
            'RefractionIndexType', 'SnellType', 'MIRI_AB2SliceType', 'NIRCAMGrismDispersionType',
            'NIRISSGrismDispersionType', 'TPCorrType']
@@ -194,25 +194,6 @@ class GratingEquationType(JWSTTransformType):
         else:
             raise TypeError("Can't serialize an instance of {0}"
                             .format(model.__class__.__name__))
-        return yamlutil.custom_tree_to_tagged_tree(node, ctx)
-
-
-class LRSWavelengthType(JWSTTransformType):
-    name = "lrs_wavelength"
-    types = [LRSWavelength]
-    standard = "jwst_pipeline"
-    version = "0.7.0"
-
-    @classmethod
-    def from_tree_transform(cls, node, ctx):
-        wavetable = node['wavetable']
-        zero_point = node['zero_point']
-        return LRSWavelength(wavetable, zero_point)
-
-    @classmethod
-    def to_tree_transform(cls, model, ctx):
-        node = {'wavetable': model.wavetable,
-                'zero_point': model.zero_point}
         return yamlutil.custom_tree_to_tagged_tree(node, ctx)
 
 

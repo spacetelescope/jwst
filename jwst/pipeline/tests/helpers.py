@@ -10,7 +10,7 @@ import tempfile
 # simply to make available from this module.
 from ...tests.helpers import ( # noqa: F401
     abspath,
-) 
+)
 
 from ...associations import load_asn
 

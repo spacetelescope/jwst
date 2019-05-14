@@ -3,7 +3,7 @@ import os.path
 def check(init):
     """
     Determine the type of a file and return it as a string
-    
+
     Parameters
     ----------
 
@@ -16,20 +16,19 @@ def check(init):
 
     if isinstance(init, str):
         if os.path.exists(init):
-            fd = open(init, "rb")
-            magic = fd.read(5)
-            fd.close()
+            with open(init, "rb") as fd:
+                magic = fd.read(5)
         else:
             filename, file_extension = os.path.splitext(init)
             file_type = file_extension[1:]
             if file_type not in ("asdf", "fits"):
                 raise ValueError("Cannot get file type of " + str(init))
             return file_type
-        
+
     elif hasattr(init, "read") and hasattr(init, "seek"):
         magic = init.read(5)
         init.seek(0, 0)
-        
+
     else:
         magic = None
 

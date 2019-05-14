@@ -192,9 +192,10 @@ class DMSBaseMixin(ACIDMixin):
         -------
         (association, reprocess_list)
             2-tuple consisting of:
-            - association : The association or, if the item does not
-                this rule, None
-            - [ProcessList[, ...]]: List of items to process again.
+
+                - association : The association or, if the item does not
+                  match this rule, None
+                - [ProcessList[, ...]]: List of items to process again.
         """
         asn, reprocess = super(DMSBaseMixin, cls).create(item, version_id)
         if not asn:
@@ -279,12 +280,13 @@ class DMSBaseMixin(ACIDMixin):
         -------
         exposure_type : str
             Exposure type. Can be one of
-                'science': Item contains science data
-                'target_aquisition': Item contains target acquisition data.
-                'autoflat': NIRSpec AUTOFLAT
-                'autowave': NIRSpec AUTOWAVE
-                'psf': PSF
-                'imprint': MSA/IFU Imprint/Leakcal
+
+                - 'science': Item contains science data
+                - 'target_aquisition': Item contains target acquisition data.
+                - 'autoflat': NIRSpec AUTOFLAT
+                - 'autowave': NIRSpec AUTOWAVE
+                - 'psf': PSF
+                - 'imprint': MSA/IFU Imprint/Leakcal
 
         Raises
         ------
