@@ -1,4 +1,16 @@
-0.13.2 (Unreleased)
+0.13.3 (Unreleased)
+===================
+
+datamodels
+----------
+
+- Datamodels schemas should now be referenced with
+  ``http://stsci.edu/schemas/jwst_datamodel/image.schema`` instead of
+  ``http://jwst.stsci.edu/schemas/image.schema.yaml``.  The datamodels
+  ``BaseExtension`` is renamed internally to ``DataModelExtension``. [#3437]
+
+
+0.13.2 (2019-05-14)
 ===================
 
 assign_wcs
@@ -70,11 +82,7 @@ datamodels
 - Update ``dq_def.schema``, ``group.schema`` and ``int_times.schema`` to comply
   with ASDF standard.  Remove unused ``extract1d.schema``.  [#3386]
 
-- Datamodels schemas should now be referenced with
-  ``http://stsci.edu/schemas/jwst_datamodel/image.schema`` instead of
-  ``http://jwst.stsci.edu/schemas/image.schema.yaml``.  The datamodels
-  ``BaseExtension`` is renamed interally to ``DataModelExtension``. [#3437]
-
+- Update schemas to add new READPATT and BAND allowed values. [#3463]
 
 extract_1d
 ----------
