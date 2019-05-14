@@ -70,6 +70,8 @@ datamodels
 - Update ``dq_def.schema``, ``group.schema`` and ``int_times.schema`` to comply
   with ASDF standard.  Remove unused ``extract1d.schema``.  [#3386]
 
+- Update schemas to add new READPATT and BAND allowed values. [#3463]
+
 extract_1d
 ----------
 
