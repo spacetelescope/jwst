@@ -70,7 +70,7 @@ class BackgroundStep(Step):
                         with datamodels.open(bkg_file) as bkg_model:
                             bkg_xtilt = bkg_model.meta.instrument.gwa_xtilt
                             bkg_ytilt = bkg_model.meta.instrument.gwa_ytilt
-                            if np.allclose((input_xtilt, input_ytilt), 
+                            if np.allclose((input_xtilt, input_ytilt),
                                            (bkg_xtilt, bkg_ytilt), atol=tolerance, rtol=0):
                                 pass
                             else:

@@ -15,7 +15,7 @@ def do_correction(input_model):
     -------------
     The sole correction is to reset to DO_NOT_USE the GROUP data quality flags
     for the final group, if the number of groups is greater than 2.
-    
+
     Parameters
     ----------
     input_model: data model object

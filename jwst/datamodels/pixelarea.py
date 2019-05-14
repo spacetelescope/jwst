@@ -72,4 +72,3 @@ class NirspecIfuAreaModel(ReferenceFileModel):
          - pixarea: float32
     """
     schema_url = "nirspec_area_ifu.schema.yaml"
-

@@ -10,7 +10,7 @@ sys.path.insert(
     os.path.join(os.path.dirname(__file__), '../../scripts')
 )
 
-import set_velocity_aberration as sva
+import set_velocity_aberration as sva # noqa: E402
 
 # Testing constants
 GOOD_VELOCITY = (100.0, 100.0, 100.0)

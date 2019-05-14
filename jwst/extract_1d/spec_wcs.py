@@ -54,17 +54,17 @@ def create_spectral_wcs(ra, dec, wavelength):
     tab.name = "pixel_to_world"
 
     if all(np.diff(wavelength) > 0):
-           tab.inverse = Mapping((2,)) | Tabular1D(points=wavelength,
-                                                   lookup_table=pixel,
-                                                   bounds_error=False,
-                                                   )
+        tab.inverse = Mapping((2,)) | Tabular1D(points=wavelength,
+                                                lookup_table=pixel,
+                                                bounds_error=False,
+                                                )
     elif all(np.diff(wavelength) < 0):
-           tab.inverse = Mapping((2,)) | Tabular1D(points=wavelength[::-1],
-                                                   lookup_table=pixel[::-1],
-                                                   bounds_error=False,
-                                                   )
+        tab.inverse = Mapping((2,)) | Tabular1D(points=wavelength[::-1],
+                                                lookup_table=pixel[::-1],
+                                                bounds_error=False,
+                                                )
     else:
-        log.warn("Wavelengths are not strictly monotonic, inverse transform is not set")
+        log.warning("Wavelengths are not strictly monotonic, inverse transform is not set")
 
     pipeline = [(input_frame, tab),
                 (world, None)]

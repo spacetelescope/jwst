@@ -27,7 +27,7 @@ class SkyStats():
     """
     def __init__(self, skystat='mean', lower=None, upper=None,
                  nclip=5, lsig=4.0, usig=4.0, binwidth=0.1, **kwargs):
-        """ Initializes the SkyStats object.
+        """Initializes the SkyStats object.
 
         Parameters
         -----------
@@ -37,8 +37,7 @@ class SkyStats():
             and 'median'. First three statistics have the same meaning as in
             `stsdas.toolbox.imgtools.gstatistics <http://stsdas.stsci.edu/\
 cgi-bin/gethelp.cgi?gstatistics>`_
-            while `skystat`\ ='median' will compute the median of the
-            distribution.
+            while 'median' will compute the median of the distribution.
 
         lower : float, None, optional
             Lower limit of usable pixel values for computing the sky.

@@ -704,7 +704,7 @@ class Constraint:
 
     def __setitem__(self, key, value):
         """Not implemented"""
-        raise NotImplemented('Cannot set constraints by index.')
+        raise NotImplementedError('Cannot set constraints by index.')
 
     def __delitem__(self, key):
         """Not implemented"""

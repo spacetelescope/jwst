@@ -41,11 +41,7 @@ def expand_to_2d(input, m_bkg_spec):
         else:                                   # CombinedSpecModel
             spec_table = bkg.spec_table
         tab_wavelength = spec_table['wavelength'].copy()
-        try:
-            tab_npixels = spec_table['npixels'].copy()
-        except KeyError:
-            tab_npixels = np.ones_like(tab_wavelength)
-        tab_background = spec_table['flux'] / tab_npixels
+        tab_background = spec_table['flux']
 
     # We're going to use np.interp, so tab_wavelength must be strictly
     # increasing.
@@ -76,8 +72,7 @@ def bkg_for_container(input, tab_wavelength, tab_background):
         The wavelength column read from the 1-D background table.
 
     tab_background : 1-D ndarray
-        The flux column read from the 1-D background table, divided by
-        the npixels column.
+        The flux column read from the 1-D background table.
 
     Returns
     -------
@@ -106,8 +101,7 @@ def create_bkg(input, tab_wavelength, tab_background):
         The wavelength column read from the 1-D background table.
 
     tab_background : 1-D ndarray
-        The flux column read from the 1-D background table, divided by
-        the npixels column.
+        The flux column read from the 1-D background table.
 
     Returns
     -------
@@ -148,8 +142,7 @@ def bkg_for_multislit(input, tab_wavelength, tab_background):
         The wavelength column read from the 1-D background table.
 
     tab_background : 1-D ndarray
-        The flux column read from the 1-D background table, divided by
-        the npixels column.
+        The flux column read from the 1-D background table.
 
     Returns
     -------
@@ -199,8 +192,7 @@ def bkg_for_image(input, tab_wavelength, tab_background):
         The wavelength column read from the 1-D background table.
 
     tab_background : 1-D ndarray
-        The flux column read from the 1-D background table, divided by
-        the npixels column.
+        The flux column read from the 1-D background table.
 
     Returns
     -------
@@ -244,8 +236,7 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
         The wavelength column read from the 1-D background table.
 
     tab_background : 1-D ndarray
-        The flux column read from the 1-D background table, divided by
-        the npixels column.
+        The flux column read from the 1-D background table.
 
     Returns
     -------

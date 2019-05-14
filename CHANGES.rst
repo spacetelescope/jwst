@@ -1,4 +1,8 @@
-0.13.2 (Unreleased)
+0.13.3 (Unreleased)
+===================
+
+
+0.13.2 (2019-05-14)
 ===================
 
 assign_wcs
@@ -7,6 +11,15 @@ assign_wcs
 - The MIRI LRS WCS was updated to include an nverse transform. [#3106, #3360]
 
 - The MIRI LRS spectral distortion is implemented now using a spline model. [#3106]
+
+- Both ``dither_point_index`` and ``metadata_id`` are used now to match rows
+  into the MSA meta file. [#3448]
+
+- ``MissingMSAFileError`` was renamed to ``MSAFileError`` [#3448]
+
+- Added two parameters to ``assign_wcs``, ``slit_y_low`` and ``slit_y_high``,
+  to allow changing the lower and upper limit of a Nirspec slit in the instrument
+  model. [#2819]
 
 background
 ----------
@@ -22,6 +35,8 @@ barshadow
 - Updated to apply the correction to the science data arrays, in addition
   to attaching as an extension. [#3319]
 
+- Updated to apply the square of the correction to VAR_FLAT [#3427]
+
 calwebb_spec3
 -------------
 
@@ -32,6 +47,10 @@ combine_1d
 
 - Fix call to wcs.invert, and don't weight flux by sensitivity if the net
   column is all zeros. [#3274]
+
+- Modified to use the same columns as now written by extract_1d.
+  The background parameter has been removed, since dividing by npixels
+  is now done in extract_1d. [#3412]
 
 datamodels
 ----------
@@ -55,6 +74,8 @@ datamodels
 - Update ``dq_def.schema``, ``group.schema`` and ``int_times.schema`` to comply
   with ASDF standard.  Remove unused ``extract1d.schema``.  [#3386]
 
+- Update schemas to add new READPATT and BAND allowed values. [#3463]
+
 extract_1d
 ----------
 
@@ -69,13 +90,26 @@ extract_1d
   extraction location, i.e. correcting for nod/dither offset.  For IFU,
   the areas of the source aperture and background annulus are computed
   differently. [#3362
-  
+
 - For IFU data for an extended source, the extraction parameters are
   assigned values so that the entire image will be extracted, with no
   background subtraction.  For non-IFU data, a try/except block was added
   to check for a WCS that does not have an inverse.  Some code (but not
   all) for the now-obsolete RELSENS extension has been deleted. [#3390]
 
+- This now writes columns SURF_BRIGHT and SB_ERROR instead of NET and
+  NERROR.  The BACKGROUND column is divided by NPIXELS, so the units will
+  be surface brightness.  This step no longer looks for a RELSENS
+  extension. [#3412]
+
+- The keywords that describe the units for the FLUX and ERROR columns
+  have been corrected; the units are now specified as "Jy". [#3447]
+
+extract_2d
+----------
+
+- An attribute ``dither_point`` was added to each slit in a ``MultiSlitModel``
+  for MOS observations. [#3448]
 
 flatfield
 ---------
@@ -111,6 +145,8 @@ pathloss
 
 - Updated to apply the correction to the science data and err arrays. [#3323]
 
+- Updated to apply the square of the correction to VAR_FLAT [#3427]
+
 photom
 ------
 
@@ -120,11 +156,20 @@ photom
 - Updated to compute a wavelength array for NIRISS SOSS exposures using
   spectral order 1. [#3387]
 
+- Updated to apply the square of the correction to VAR_FLAT [#3427]
+
 reffile_utils
 -------------
 
 - Improved error messages when problems are encountered in extracting
   subarrays from reference files. [#3268]
+
+resample_spec
+-------------
+
+- Fixed an issue with the spatial component of the WCS where the inverse
+  transform gave different results for negative ``RA`` and ``360 + RA``. [#3404]
+
 
 set_telescope_pointing
 ----------------------
@@ -141,6 +186,13 @@ srctype
 -------
 
 - Updated logic for background targets and nodded exposures. [#3310]
+
+
+transforms
+----------
+
+- A field ``dither_point`` was added to the ``Slit`` structure. [#3448]
+
 
 tweakreg
 --------
@@ -279,6 +331,10 @@ engdblog
 
 exp_to_source
 -------------
+
+- Updated SourceContainer to wrap each exposure of a MultiExposure in a
+  SlitModel, allowing pipeline code to simply treat each as DataModel.
+  [#3438]
 
 extract_1d
 ----------

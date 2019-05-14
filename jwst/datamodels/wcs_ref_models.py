@@ -389,7 +389,7 @@ class WavelengthrangeModel(ReferenceFileModel):
     order : list
         A list of orders that are available and described in the file
     extract_orders : list
-        A list of filters and the orders that should be extracted by default    
+        A list of filters and the orders that should be extracted by default
     wunits : `~astropy.units`
         The units for the wavelength data
 

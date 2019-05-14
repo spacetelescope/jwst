@@ -2,12 +2,14 @@ import logging
 import math
 
 import numpy as np
+from astropy import units as u
 from photutils import CircularAperture, CircularAnnulus, \
                       RectangularAperture, aperture_photometry
 
 from .. import datamodels
-from .. datamodels import dqflags
+from ..datamodels import dqflags
 from . import spec_wcs
+from . import util
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -61,7 +63,8 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
         log.error("Expected an IFU cube.")
         raise RuntimeError("Expected an IFU cube.")
 
-    if source_type.lower() != "point" and source_type.lower() != "extended":
+    source_type = source_type.lower()
+    if source_type != "point" and source_type != "extended":
         log.warning("source_type was '%s', setting to 'point'.", source_type)
         source_type = "point"
     else:
@@ -76,7 +79,7 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
 
     extract_params = get_extract_parameters(ref_dict, slitname)
     if subtract_background is not None:
-        if subtract_background and source_type.lower() == "extended":
+        if subtract_background and source_type == "extended":
             subtract_background = False
             log.info("Turning off background subtraction because "
                      "the source is extended.")
@@ -84,60 +87,72 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
 
     if extract_params:
         if extract_params['ref_file_type'] == FILE_TYPE_JSON:
-            (ra, dec, wavelength, net, background, npixels, dq) = \
+            (ra, dec, wavelength, temp_flux, background, npixels, dq) = \
                     extract_ifu(input_model, source_type, extract_params)
         else:                                   # FILE_TYPE_IMAGE
-            (ra, dec, wavelength, net, background, npixels, dq) = \
+            (ra, dec, wavelength, temp_flux, background, npixels, dq) = \
                     image_extract_ifu(input_model, source_type, extract_params)
     else:
         log.critical('Missing extraction parameters.')
         raise ValueError('Missing extraction parameters.')
 
-    # Check whether the data have been converted to flux density.
-    fluxcorr_complete = True                    # initial values
-    missing = False
+    # Check the units.  We expect either "MJy / sr" or "mJy / arcsec^2".
     try:
         bunit = input_model.meta.bunit_data
     except AttributeError:
         bunit = None
-    if bunit is None:
-        fluxcorr_complete = False
-        missing = True
-    elif (bunit.find("Jy") < 0 and
-          bunit.find("jansky") < 0 and bunit.find("Jansky") < 0):
-        fluxcorr_complete = False
-    if missing:
-        log.warning("No BUNIT found in input science data header.")
+    megajanskys = True                          # initial value
+    if bunit is not None:
+        if bunit.find("M") < 0 or bunit.find("arcsec") >= 0:
+            megajanskys = False
 
-    # If the data have already been converted to flux density, `net`
-    # contains fluxes, so move that column to `flux`.  If not, it's
-    # too late to do flux correction.
-    if fluxcorr_complete:
-        flux = net.copy()
-        net[:] = 0.
-        log.info("Data have been flux calibrated; setting net to 0.")
-        data_units = 'mJy'
+    # Convert the sum to an average, for surface brightness.
+    npixels_temp = np.where(npixels > 0., npixels, 1.)
+    surf_bright = temp_flux / npixels_temp
+    background /= npixels_temp
+    del npixels_temp
+    if not megajanskys:
+        # Not MJy / sr?  Then assume the units are mJy / arcsec^2.
+        # Target spectrum in units of surface brightness.
+        sb = surf_bright * u.mJy / (u.arcsec**2)
+        surf_bright = sb.to(u.MJy / u.steradian).value
+        # Background spectrum.
+        bkg = background * u.mJy / (u.arcsec**2)
+        background = bkg.to(u.MJy / u.steradian).value
+
+    # Compute the solid angle of a pixel in steradians.
+    pixel_solid_angle = util.pixel_area(input_model.meta.wcs,
+                                        input_model.data.shape)
+    if pixel_solid_angle is None:
+        log.warning("Pixel solid angle could not be determined")
+        pixel_solid_angle = 1.
+    if megajanskys:
+        # Convert flux from MJy / steradian to Jy.
+        flux = temp_flux * pixel_solid_angle * 1.e6
     else:
-        flux = np.zeros_like(net)
-        log.info("Data have NOT been flux calibrated; setting flux to 0.")
-        data_units = 'DN/s'
+        # Convert flux from mJy / arcsec**2 to Jy.
+        psa = pixel_solid_angle * u.steradian
+        pixel_solid_angle = psa.to(u.arcsec**2).value
+        flux = temp_flux * pixel_solid_angle * 1.e-3
+    del temp_flux
 
-    fl_error = np.ones_like(net)
-    nerror = np.ones_like(net)
-    berror = np.ones_like(net)
+    error = np.zeros_like(flux)
+    sb_error = np.zeros_like(flux)
+    berror = np.zeros_like(flux)
     spec_dtype = datamodels.SpecModel().spec_table.dtype
-    otab = np.array(list(zip(wavelength, flux, fl_error, dq,
-                         net, nerror, background, berror, npixels)),
+    otab = np.array(list(zip(wavelength,
+                             flux, error, surf_bright, sb_error,
+                             dq, background, berror, npixels)),
                     dtype=spec_dtype)
     spec = datamodels.SpecModel(spec_table=otab)
     spec.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec, wavelength)
     spec.spec_table.columns['wavelength'].unit = 'um'
-    spec.spec_table.columns['flux'].unit = data_units
-    spec.spec_table.columns['error'].unit = data_units
-    spec.spec_table.columns['net'].unit = data_units
-    spec.spec_table.columns['nerror'].unit = data_units
-    spec.spec_table.columns['background'].unit = data_units
-    spec.spec_table.columns['berror'].unit = data_units
+    spec.spec_table.columns['flux'].unit = "Jy"
+    spec.spec_table.columns['error'].unit = "Jy"
+    spec.spec_table.columns['surf_bright'].unit = "MJy/sr"
+    spec.spec_table.columns['sb_error'].unit = "MJy/sr"
+    spec.spec_table.columns['background'].unit = "MJy/sr"
+    spec.spec_table.columns['berror'].unit = "MJy/sr"
     spec.slit_ra = ra
     spec.slit_dec = dec
     if slitname is not None and slitname != "ANY":
@@ -236,18 +251,25 @@ def extract_ifu(input_model, source_type, extract_params):
         at the nominal center of the image.
 
     wavelength : ndarray, 1-D
-        The wavelength in micrometers at each pixel.
+        The wavelength in micrometers at each plane of the IFU cube.
 
-    net : ndarray, 1-D
-        The count rate (or flux) minus the background at each pixel.
+    temp_flux : ndarray, 1-D
+        The sum of the data values in the extraction aperture minus the
+        sum of the data values in the background region (scaled by the
+        ratio of areas), for each plane.
+        The data values are in units of surface brightness, so this value
+        isn't really the flux, it's an intermediate value.  Dividing by
+        `npixels` (to compute the average) will give the value for the
+        `surf_bright` (surface brightness) column, and multiplying by
+        the solid angle of a pixel will give the flux for a point source.
 
     background : ndarray, 1-D
         The background count rate that was subtracted from the total
-        source count rate to get `net`.
+        source data values to get `temp_flux`.
 
     npixels : ndarray, 1-D, float64
         For each slice, this is the number of pixels that were added
-        together to get `net`.
+        together to get `temp_flux`.
 
     dq : ndarray, 1-D, uint32
         The data quality array.
@@ -259,10 +281,10 @@ def extract_ifu(input_model, source_type, extract_params):
         log.error("Expected a 3-D IFU cube; dimension is %d.", len(shape))
         raise RuntimeError("The IFU cube should be 3-D.")
 
-    # We need to allocate net, background, npixels, and dq arrays
+    # We need to allocate temp_flux, background, npixels, and dq arrays
     # no matter what.  We may need to divide by npixels, so the default
     # is 1 rather than 0.
-    net = np.zeros(shape[0], dtype=np.float64)
+    temp_flux = np.zeros(shape[0], dtype=np.float64)
     background = np.zeros(shape[0], dtype=np.float64)
     npixels = np.ones(shape[0], dtype=np.float64)
 
@@ -270,7 +292,7 @@ def extract_ifu(input_model, source_type, extract_params):
 
     # For an extended target, the entire aperture will be extracted, so
     # it makes no sense to shift the extraction location.
-    if source_type.lower() != "extended":
+    if source_type != "extended":
         ra_targ = input_model.meta.target.ra
         dec_targ = input_model.meta.target.dec
         locn = locn_from_wcs(input_model, ra_targ, dec_targ)
@@ -392,20 +414,20 @@ def extract_ifu(input_model, source_type, extract_params):
     for k in range(shape[0]):
         phot_table = aperture_photometry(data[k, :, :], aperture,
                                          method=method, subpixels=subpixels)
-        net[k] = float(phot_table['aperture_sum'][0])
+        temp_flux[k] = float(phot_table['aperture_sum'][0])
         if subtract_background:
             bkg_table = aperture_photometry(data[k, :, :], annulus,
                                             method=method, subpixels=subpixels)
             background[k] = float(bkg_table['aperture_sum'][0])
-            net[k] = net[k] - background[k] * normalization
+            temp_flux[k] = temp_flux[k] - background[k] * normalization
 
     # Check for NaNs in the wavelength array, flag them in the dq array,
     # and truncate the arrays if NaNs are found at endpoints (unless the
     # entire array is NaN).
-    (wavelength, net, background, npixels, dq) = \
-                nans_in_wavelength(wavelength, net, background, npixels, dq)
+    (wavelength, temp_flux, background, npixels, dq) = \
+        nans_in_wavelength(wavelength, temp_flux, background, npixels, dq)
 
-    return (ra, dec, wavelength, net, background, npixels, dq)
+    return (ra, dec, wavelength, temp_flux, background, npixels, dq)
 
 
 def locn_from_wcs(input_model, ra_targ, dec_targ):
@@ -501,6 +523,16 @@ def celestial_to_cartesian(ra, dec):
 def image_extract_ifu(input_model, source_type, extract_params):
     """Extraction using a reference image.
 
+    Extended summary
+    ----------------
+    One of the requirements for this step is that for an extended target,
+    the entire aperture is supposed to be extracted (with no background
+    subtraction).  It doesn't make any sense to use an image reference file
+    to extract the entire aperture; a trivially simple JSON reference file
+    would do.  Therefore, we assume that if the user specified a reference
+    file in image format, the user actually wanted that reference file
+    to be used, so we will ignore the requirement in this case.
+
     Parameters
     ----------
     input_model : IFUCubeModel
@@ -510,7 +542,7 @@ def image_extract_ifu(input_model, source_type, extract_params):
         "point" or "extended"
 
     extract_params : dict
-        The extraction parameters.  One of these is a open file handle
+        The extraction parameters.  One of these is an open file handle
         for an image that specifies which pixels should be included as
         source and which (if any) should be used as background.
 
@@ -521,18 +553,25 @@ def image_extract_ifu(input_model, source_type, extract_params):
         at the centroid of the target region in the reference image.
 
     wavelength : ndarray, 1-D
-        The wavelength in micrometers at each pixel.
+        The wavelength in micrometers at each plane of the IFU cube.
 
-    net : ndarray, 1-D
-        The count rate (or flux) minus the background at each pixel.
+    temp_flux : ndarray, 1-D
+        The sum of the data values in the extraction aperture minus the
+        sum of the data values in the background region (scaled by the
+        ratio of areas), for each plane.
+        The data values are in units of surface brightness, so this value
+        isn't really the flux, it's an intermediate value.  Dividing by
+        `npixels` (to compute the average) will give the value for the
+        `surf_bright` (surface brightness) column, and multiplying by
+        the solid angle of a pixel will give the flux for a point source.
 
     background : ndarray, 1-D
         The background count rate that was subtracted from the total
-        source count rate to get `net`.
+        source data values to get `temp_flux`.
 
     npixels : ndarray, 1-D, float64
         For each slice, this is the number of pixels that were added
-        together to get `net`.
+        together to get `temp_flux`.
 
     dq : ndarray, 1-D, uint32
         The data quality array.
@@ -545,7 +584,7 @@ def image_extract_ifu(input_model, source_type, extract_params):
     shape = data.shape
 
     # The dispersion direction is the first axis.
-    net = np.zeros(shape[0], dtype=np.float64)
+    temp_flux = np.zeros(shape[0], dtype=np.float64)
     background = np.zeros(shape[0], dtype=np.float64)
     npixels = np.ones(shape[0], dtype=np.float64)
     n_bkg = np.ones(shape[0], dtype=np.float64)
@@ -572,47 +611,40 @@ def image_extract_ifu(input_model, source_type, extract_params):
                          "- skipping it.")
             mask_bkg = None
 
-    if source_type.lower() == "extended":
-        # For an extended target, the entire aperture is supposed to be
-        # extracted, so it makes no sense to shift the reference file.
-        log.info("Target is extended, so not shifting to target location")
-        x0 = float(shape[-1]) / 2. - 0.5
-        y0 = float(shape[-2]) / 2. - 0.5
+    ra_targ = input_model.meta.target.ra
+    dec_targ = input_model.meta.target.dec
+    locn = locn_from_wcs(input_model, ra_targ, dec_targ)
+    if locn is not None:
+        log.info("Target location is x_center = %g, y_center = %g, "
+                 "based on TARG_RA and TARG_DEC.", locn[0], locn[1])
+
+    # Use the centroid of mask_target as the point where the target
+    # would be without any nod/dither correction.
+    (y0, x0) = im_centroid(data, mask_target)
+    log.debug("Target location based on reference image is X = %g, Y = %g",
+              x0, y0)
+
+    if locn is None or np.isnan(locn[0]):
+        log.warning("Couldn't determine pixel location from WCS, so "
+                    "nod/dither correction will not be applied.")
     else:
-        ra_targ = input_model.meta.target.ra
-        dec_targ = input_model.meta.target.dec
-        locn = locn_from_wcs(input_model, ra_targ, dec_targ)
-        if locn is not None:
-            log.info("Target location is x_center = %g, y_center = %g, "
-                     "based on TARG_RA and TARG_DEC.", locn[0], locn[1])
-
-        # Use the centroid of mask_target as the point where the target
-        # would be without any nod/dither correction.
-        (y0, x0) = im_centroid(data, mask_target)
-        log.debug("Target location based on reference image is X = %g, Y = %g",
-                  x0, y0)
-
-        if locn is None or np.isnan(locn[0]):
-            log.warning("Couldn't determine pixel location from WCS, so "
-                        "nod/dither correction will not be applied.")
-        else:
-            (x_center, y_center) = locn
-            # Shift the reference image so it will be centered at locn.
-            # Only shift by a whole number of pixels.
-            delta_x = int(round(x_center - x0))         # must be integer
-            delta_y = int(round(y_center - y0))
-            log.debug("Shifting reference image by %g in X and %g in Y",
-                      delta_x, delta_y)
-            temp = shift_ref_image(mask_target, delta_y, delta_x)
-            if temp is not None:
-                mask_target = temp
-                del temp
-                if mask_bkg is not None:
-                    mask_bkg = shift_ref_image(mask_bkg, delta_y, delta_x)
-                # Since we have shifted mask_target and mask_bkg to
-                # x_center and y_center, update x0 and y0.
-                x0 = x_center
-                y0 = y_center
+        (x_center, y_center) = locn
+        # Shift the reference image so it will be centered at locn.
+        # Only shift by a whole number of pixels.
+        delta_x = int(round(x_center - x0))         # must be integer
+        delta_y = int(round(y_center - y0))
+        log.debug("Shifting reference image by %g in X and %g in Y",
+                  delta_x, delta_y)
+        temp = shift_ref_image(mask_target, delta_y, delta_x)
+        if temp is not None:
+            mask_target = temp
+            del temp
+            if mask_bkg is not None:
+                mask_bkg = shift_ref_image(mask_bkg, delta_y, delta_x)
+            # Since we have shifted mask_target and mask_bkg to
+            # x_center and y_center, update x0 and y0.
+            x0 = x_center
+            y0 = y_center
 
     # Extract the data.
     # First add up the values along the x direction, then add up the
@@ -633,10 +665,10 @@ def image_extract_ifu(input_model, source_type, extract_params):
     if mask_bkg is not None:
         background = (data * mask_bkg).sum(axis=2, dtype=np.float64).sum(axis=1)
         background *= normalization
-        net = gross - background
+        temp_flux = gross - background
     else:
         background = np.zeros_like(gross)
-        net = gross.copy()
+        temp_flux = gross.copy()
 
     # Compute the ra, dec, and wavelength at the pixels of a column through
     # the IFU cube at the target location.  ra and dec should be constant
@@ -656,10 +688,10 @@ def image_extract_ifu(input_model, source_type, extract_params):
     # Check for NaNs in the wavelength array, flag them in the dq array,
     # and truncate the arrays if NaNs are found at endpoints (unless the
     # entire array is NaN).
-    (wavelength, net, background, npixels, dq) = \
-                nans_in_wavelength(wavelength, net, background, npixels, dq)
+    (wavelength, temp_flux, background, npixels, dq) = \
+        nans_in_wavelength(wavelength, temp_flux, background, npixels, dq)
 
-    return (ra, dec, wavelength, net, background, npixels, dq)
+    return (ra, dec, wavelength, temp_flux, background, npixels, dq)
 
 
 def get_coordinates(input_model, x0, y0):
@@ -711,7 +743,7 @@ def get_coordinates(input_model, x0, y0):
     return (ra, dec, wavelength)
 
 
-def nans_in_wavelength(wavelength, net, background, npixels, dq):
+def nans_in_wavelength(wavelength, flux, background, npixels, dq):
     """Check for NaNs in the wavelength array.
 
     If NaNs are found in the wavelength array, flag them in the dq array,
@@ -723,16 +755,16 @@ def nans_in_wavelength(wavelength, net, background, npixels, dq):
     wavelength : ndarray, 1-D, float64
         The wavelength in micrometers at each pixel.
 
-    net : ndarray, 1-D, float64
-        The count rate (or flux) minus the background at each pixel.
+    flux : ndarray, 1-D, float64
+        The flux minus the background at each pixel.
 
     background : ndarray, 1-D, float64
         The background count rate that was subtracted from the total
-        source count rate to get `net`.
+        source count rate to get `flux`.
 
     npixels : ndarray, 1-D, float64
         For each slice, this is the number of pixels that were added
-        together to get `net`.
+        together to get `flux`.
 
     dq : ndarray, 1-D, uint32
         The data quality array.
@@ -741,7 +773,7 @@ def nans_in_wavelength(wavelength, net, background, npixels, dq):
     -------
     wavelength : ndarray, 1-D, float64
 
-    net : ndarray, 1-D, float64
+    flux : ndarray, 1-D, float64
 
     background : ndarray, 1-D, float64
 
@@ -753,14 +785,14 @@ def nans_in_wavelength(wavelength, net, background, npixels, dq):
     nelem = np.size(wavelength)
     if nelem == 0:
         log.warning("Output arrays are empty!")
-        return (wavelength, net, background, npixels, dq)
+        return (wavelength, flux, background, npixels, dq)
 
     nan_mask = np.isnan(wavelength)
     n_nan = nan_mask.sum(dtype=np.intp)
     if n_nan == nelem:
         log.warning("Wavelength array is all NaN!")
         dq = np.bitwise_or(dq[:], dqflags.pixel['DO_NOT_USE'])
-        return (wavelength, net, background, npixels, dq)
+        return (wavelength, flux, background, npixels, dq)
 
     if n_nan > 0:
         log.warning("%d NaNs in wavelength array.", n_nan)
@@ -772,14 +804,14 @@ def nans_in_wavelength(wavelength, net, background, npixels, dq):
             if n_trimmed > 0:
                 slc = slice(flag[0][0], flag[0][-1] + 1)
                 wavelength = wavelength[slc]
-                net = net[slc]
+                flux = flux[slc]
                 background = background[slc]
                 npixels = npixels[slc]
                 dq = dq[slc]
                 log.info("Output arrays have been trimmed by %d elements",
                          n_trimmed)
 
-    return (wavelength, net, background, npixels, dq)
+    return (wavelength, flux, background, npixels, dq)
 
 
 def separate_target_and_background(ref):

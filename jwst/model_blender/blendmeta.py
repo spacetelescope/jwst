@@ -83,7 +83,7 @@ def blendmodels(product, inputs=None, output=None, verbose=False):
 
     >>> from .. import datamodels
     >>> asnfile = "jw99999-a3001_20170327t121212_coron3_001_asn.json"
-    >>> asn = datamodels.open(asnfile)  
+    >>> asn = datamodels.open(asnfile)
     >>> input_models = [asn[3],asn[4]]  # we know the last datasets are SCIENCE
     >>> blendmodels(asn.meta.resample.output, inputs=input_models)
 

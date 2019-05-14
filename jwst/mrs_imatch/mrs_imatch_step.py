@@ -361,4 +361,3 @@ def _find_channel_bkg_index(model2d, channel):
         if m.channel == channel:
             index = k
     return index
-

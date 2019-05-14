@@ -1,6 +1,7 @@
 from glob import glob as _sys_glob
-import os.path as op
 import os
+from os import path as op
+from pathlib import Path
 import sys
 import pytest
 import requests
@@ -103,17 +104,20 @@ class BaseJWSTTest:
 
         # Get full path and proceed depending on whether
         # is a local path or URL.
-        root = op.join(get_bigdata_root(), *self.repo_path)
-        path = op.join(root, *pathargs)
-        if op.exists(path):
+        root = get_bigdata_root()
+        if op.exists(root):
+            path = op.join(root, *self.repo_path)
+            root_len = len(path) + 1
+            path = op.join(path, *pathargs)
             file_paths = _data_glob_local(path, glob)
-        elif check_url(path):
-            file_paths = _data_glob_url(path, glob)
+        elif check_url(root):
+            root_len = len(op.join(*self.repo_path[1:])) + 1
+            path = op.join(*self.repo_path, *pathargs)
+            file_paths = _data_glob_url(path, glob, root=root)
         else:
             raise BigdataError('Path cannot be found: {}'.format(path))
 
         # Remove the root from the paths
-        root_len = len(root) + 1  # +1 to account for the folder delimiter.
         file_paths = [
             file_path[root_len:]
             for file_path in file_paths
@@ -209,35 +213,33 @@ def raw_from_asn(asn_file):
     return members
 
 
-def _data_glob_local(path, glob='*'):
+def _data_glob_local(*glob_parts):
     """Perform a glob on the local path
 
     Parameters
     ----------
-    path: File path-like object
-        The path to check.
-
-    glob: str
-        The file name match criterion
+    glob_parts: (path-like,[...])
+        List of components that will be built into a single path
 
     Returns
     -------
     file_paths: [str[, ...]]
         Full file paths that match the glob criterion
     """
-    full_glob = op.join(path, glob)
-    return _sys_glob(full_glob)
+    full_glob = Path().joinpath(*glob_parts)
+    return _sys_glob(str(full_glob))
 
 
-def _data_glob_url(url, glob='*'):
+def _data_glob_url(*url_parts, root=None):
     """
     Parameters
     ----------
-    url: str
-        The URL to check
+    url: (str[,...])
+        List of components that will be used to create a URL path
 
-    glob: str
-        The file name match criterion
+    root: str
+        The root server path to the Artifactory server.
+        Normally retrieved from `get_bigdata_root`.
 
     Returns
     -------
@@ -258,11 +260,21 @@ def _data_glob_url(url, glob='*'):
             "variable to get full search results.", file=sys.stderr)
         headers = None
 
-    search_url = op.join(get_bigdata_root(), 'api/search/artifact')
+    search_url = op.join(root, 'api/search/pattern')
+
+    # Join and re-split the url so that every component is identified.
+    url = root + '/'.join(url_parts)
+    all_parts = url.split('/')
+
     # Pick out "jwst-pipeline", the repo name
-    repo = url.split('/')[4]
-    params = {'name': glob, 'repos': repo}
+    repo = all_parts[4]
+
+    # Format the pattern
+    pattern = repo + ':' + '/'.join(all_parts[5:])
+
+    # Make the query
+    params = {'pattern': pattern}
     with requests.get(search_url, params=params, headers=headers) as r:
-        url_paths = [a['uri'].replace('api/storage/', '') for a in r.json()['results']]
+        url_paths = r.json()['files']
 
     return url_paths

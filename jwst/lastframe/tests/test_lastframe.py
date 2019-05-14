@@ -1,5 +1,4 @@
 import numpy as np
-# import pytest
 
 from jwst.datamodels import MIRIRampModel, RampModel
 from jwst.datamodels import dqflags
@@ -8,7 +7,7 @@ from jwst.lastframe import LastFrameStep
 
 
 def test_lastframe_set_groupdq():
-    """ 
+    """
     Test if the lastframe code set the groupdq flag on the last
     group to 'do_not_use'. For ngroups >= 3, lastframe should be flagged.
     """
@@ -32,7 +31,7 @@ def test_lastframe_set_groupdq():
     # check that the difference in the groupdq flags is equal to
     #   the 'do_not_use' flag
     dq_diff = dm_ramp_lastframe.groupdq[0, ngroups-1, :, :] - dm_ramp.groupdq[0, ngroups-1, :, :]
-    
+
     np.testing.assert_array_equal(np.full((ysize, xsize),
                                           dqflags.group['DO_NOT_USE'],
                                           dtype=int),
@@ -86,8 +85,8 @@ def test_lastframe_ngroup2():
 
 
 def test_lastframe_single_group():
-    """ 
-    Test that the lastframe code does nothing when passed a single 
+    """
+    Test that the lastframe code does nothing when passed a single
     group integration
     """
 
@@ -111,7 +110,7 @@ def test_lastframe_single_group():
     # zero
 
     dq_diff = dm_ramp_lastframe.groupdq[0, ngroups-1, :, :] - dm_ramp.groupdq[0, ngroups-1, :, :]
-    
+
     np.testing.assert_array_equal(np.full((ysize, xsize),
                                           0,
                                           dtype=int),

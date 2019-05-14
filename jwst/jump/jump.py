@@ -2,7 +2,7 @@ import time
 import logging
 
 import numpy as np
-from ..datamodels import dqflags 
+from ..datamodels import dqflags
 from ..lib import reffile_utils
 from . import twopoint_difference as twopt
 from . import yintercept as yint
@@ -55,17 +55,17 @@ def detect_jumps (input_model, gain_model, readnoise_model,
         readnoise_2d = reffile_utils.get_subarray_data(input_model, readnoise_model)
 
     # Flag the pixeldq where the gain is <=0 or NaN so they will be ignored
-    wh_g = np.where( gain_2d <= 0.)  
+    wh_g = np.where( gain_2d <= 0.)
     if len(wh_g[0] > 0):
         pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['NO_GAIN_VALUE'] )
-        pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['DO_NOT_USE'] ) 
+        pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['DO_NOT_USE'] )
 
     wh_g = np.where( np.isnan( gain_2d ))
     if len(wh_g[0] > 0):
         pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['NO_GAIN_VALUE'] )
-        pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['DO_NOT_USE'] ) 
+        pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['DO_NOT_USE'] )
 
-    # Apply gain to the SCI, ERR, and readnoise arrays so they're in units 
+    # Apply gain to the SCI, ERR, and readnoise arrays so they're in units
     #   of electrons
 
     data *= gain_2d

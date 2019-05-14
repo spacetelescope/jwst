@@ -1,4 +1,4 @@
-from . import ModelContainer, MultiExposureModel
+from . import ModelContainer, MultiExposureModel, SlitModel
 
 __all__ = ['SourceModelContainer']
 
@@ -12,6 +12,12 @@ VALID_INITS = (
 class SourceModelContainer(ModelContainer):
     """
     A container to make MultiExposureModel look like ModelContainer
+
+    The `MultiExposureModel.exposures` list contains the data for each exposure
+    from a common slit id. Though the information is the same, the structures
+    are not true `SlitModel` instances. This container creates a `SlitModel`
+    wrapper around each exposure, such that pipeline code can treat each
+    as a `DataModel`.
     """
     def __init__(self, init=None, **kwargs):
 
@@ -25,7 +31,16 @@ class SourceModelContainer(ModelContainer):
             self._multiexposure = init._multiexposure
         elif isinstance(init, MultiExposureModel):
             super(SourceModelContainer, self).__init__(init=None, **kwargs)
-            self._models = init.exposures
+
+            # Convert each exposure to an actual SlitModel.
+            # Note that the model is not instantiated
+            # since a copy is not desired.
+            models = []
+            for exposure in init.exposures:
+                model = SlitModel()
+                model._instance.update(exposure._instance)
+                models.append(model)
+            self._models = models
             self._multiexposure = init
 
     def save(self,

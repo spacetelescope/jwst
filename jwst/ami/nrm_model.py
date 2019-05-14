@@ -489,7 +489,7 @@ class NrmModel:
         """
         try:
             self.modelpsf = np.zeros((self.fov, self.fov))
-        except:
+        except AttributeError:
             self.modelpsf = np.zeros((self.fov_sim, self.fov_sim))
 
         for ind, coeff in enumerate(self.soln):
@@ -582,8 +582,8 @@ class NrmModel:
                 rotate=self.rot_measured, centering=centering)
 
         try:
-            self.gof = goodness_of_fit(img,self.refpsf)
-        except:
+            self.gof = goodness_of_fit(img, self.refpsf)
+        except Exception:
             self.gof = False
 
         return self.pixscale_factor, self.rot_measured, self.gof
