@@ -349,7 +349,7 @@ class Asn_Lv2MIRLRSFixedSlitNod(
             DMSAttrConstraint(
                 name='patttype',
                 sources=['patttype'],
-                value=['along_slit_nod'],
+                value=['along-slit-nod'],
             ),
             Constraint(
                 [
