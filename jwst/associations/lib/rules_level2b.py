@@ -241,7 +241,7 @@ class Asn_Lv2Spec(
                     DMSAttrConstraint(
                         name='patttype',
                         sources=['patttype'],
-                        value=['2_point_nod|4_point_nod|along_slit_nod'],
+                        value=['2-point-nod|4-point-nod|along-slit-nod'],
                     )
                 ],
                 reduce=Constraint.notany
@@ -349,7 +349,7 @@ class Asn_Lv2MIRLRSFixedSlitNod(
             DMSAttrConstraint(
                 name='patttype',
                 sources=['patttype'],
-                value=['along_slit_nod'],
+                value=['along-slit-nod'],
             ),
             Constraint(
                 [
@@ -760,7 +760,7 @@ class Asn_Lv2NRSIFUNod(
                     DMSAttrConstraint(
                         name='patttype',
                         sources=['patttype'],
-                        value=['2_point_nod|4_point_nod'],
+                        value=['2-point-nod|4-point-nod'],
                         force_unique=True
                     )
                 ]
