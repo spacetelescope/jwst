@@ -180,6 +180,12 @@ reffile_utils
 - Improved error messages when problems are encountered in extracting
   subarrays from reference files. [#3268]
 
+refpix
+------
+
+- Fixed a bug where the pixeldq array was being repeatedly transformed from
+  DMS to detector frame with each group processed [#3181]
+
 resample_spec
 -------------
 
