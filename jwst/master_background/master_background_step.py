@@ -100,13 +100,13 @@ class MasterBackgroundStep(Step):
                     input_data, background_data = split_container(input_data)
                     asn_id = input_data.meta.asn_table.asn_id
 
-                    # Check if the background members are nodded x1d extractions
                     for model in background_data:
-                        # use "bkgdtarg == False" so we don't also get None cases
+                        # Check if the background members are nodded x1d extractions.
+                        # Use "bkgdtarg == False" so we don't also get None cases
                         # for simulated data that didn't bother populating this
                         # keyword
                         if model.meta.observation.bkgdtarg == False:
-                            model = copy_background_to_flux(model)
+                            copy_background_to_flux(model)
 
                     master_background = combine_1d_spectra(
                         background_data,
@@ -189,17 +189,14 @@ class MasterBackgroundStep(Step):
 
 
 def copy_background_to_flux(spectrum):
-    """Copy the background column to the flux column in a MultiSpecModel"""
-    result = spectrum.copy()
-    for spec in result.spec:
+    """Copy the background column to the flux column in a MultiSpecModel in-place"""
+    for spec in spectrum.spec:
         spec.spec_table['FLUX'] = spec.spec_table['BACKGROUND'].copy()
         spec.spec_table['ERROR'] = spec.spec_table['BERROR'].copy()
         # Zero out the background column for safety
         spec.spec_table['BACKGROUND'][:] = 0
         # Set BERROR to dummy val of 1.0, as in extract_1d currently
         spec.spec_table['BERROR'][:] = 1
-
-    return result
 
 
 def split_container(container):
