@@ -48,21 +48,22 @@ def apply_LG(input_model, filter_model, oversample, rotation):
     log.info('Filter: %s', input_model.meta.instrument.filter)
 
     # Load the filter throughput data from the reference file
-    bindown = 6
-    band = webb_psf.get_webbpsf_filter(filter_model, specbin=bindown)
+    bindown = 12   
+    band = webb_psf.get_webbpsf_filter(filter_model, specbin=bindown, trim=(3.8e-6,0.05))
 
     # Set up some params that are needed as input to the LG algorithm:
     #  Search window for rotation fine-tuning
-    rots_deg = np.array((-0.5, -0.25, 0.0, 0.25, 0.5))
+    rots_deg = np.array(( -1.00, -0.5, 0.0, 0.5, 1.00))
+
     #  Search range for relative pixel scales
-    relpixscales = np.array((63.0, 63.25, 63.75, 64.0, 64.25)) / 63.75
+    relpixscales = np.array((64.2, 64.4, 64.6, 64.8, 65.0, 65.2, 65.4, 65.6, 65.8)) /65.0
 
     # Convert initial rotation guess from degrees to radians
     rotation = rotation * np.pi / 180.0
 
     # Instantiate the NRM model object
-    jwnrm = NrmModel(mask='JWST', holeshape='hex',
-                pixscale=leastsqnrm.mas2rad(63.52554816773347),
+    jwnrm = NrmModel(mask='jwst', holeshape='hex',
+                pixscale=leastsqnrm.mas2rad(65.),
                 rotate=rotation, rotlist_deg=rots_deg,
                 scallist=relpixscales)
 
