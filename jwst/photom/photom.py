@@ -239,9 +239,8 @@ class DataSet():
                         self.input.err /= sens2d
                         self.input.var_poisson /= sens2d**2
                         self.input.var_rnoise /= sens2d**2
-                        if (self.input.var_flat is not None and
-                            np.size(self.input.var_flat) > 0):
-                                self.input.var_flat /= sens2d**2
+                        if self.input.var_flat is not None and np.size(self.input.var_flat) > 0:
+                            self.input.var_flat /= sens2d**2
 
                         # Update BUNIT values for the science data and err
                         self.input.meta.bunit_data = 'mJy/arcsec^2'
@@ -432,7 +431,7 @@ class DataSet():
             self.input.var_poisson /= sens2d**2
             self.input.var_rnoise /= sens2d**2
             if self.input.var_flat is not None and np.size(self.input.var_flat) > 0:
-                    self.input.var_flat /= sens2d**2
+                self.input.var_flat /= sens2d**2
 
             # Update the science dq
             self.input.dq = np.bitwise_or(self.input.dq, ftab.dq)
@@ -681,40 +680,39 @@ class DataSet():
                                 order)
 
             wl_array[np.isnan(wl_array)] = -1.
-            conv_2d = np.interp(wl_array, waves, relresps, left=1., right=1.)
+            conv_2d = np.interp(wl_array, waves, relresps, left=np.NaN, right=np.NaN)
+            no_cal = np.isnan(conv_2d)
 
             # Combine the scalar and 2-D conversions
             # NOTE: the 2-D conversion is divided into the data for now, until the
             # instrument teams deliver multiplicative conversions in photom ref files
             conversion = conversion / conv_2d
+            conversion[no_cal] = 0.
 
         # Apply the conversion to the data and all uncertainty arrays
         if isinstance(self.input, datamodels.MultiSlitModel):
-            self.input.slits[self.slitnum].data *= conversion
-            self.input.slits[self.slitnum].err *= conversion
-            if (self.input.slits[self.slitnum].var_poisson is not None and
-                np.size(self.input.slits[self.slitnum].var_poisson) > 0):
-                    self.input.slits[self.slitnum].var_poisson *= conversion**2
-            if (self.input.slits[self.slitnum].var_rnoise is not None and
-                np.size(self.input.slits[self.slitnum].var_rnoise) > 0):
-                    self.input.slits[self.slitnum].var_rnoise *= conversion**2
-            if (self.input.slits[self.slitnum].var_flat is not None and
-                np.size(self.input.slits[self.slitnum].var_flat) > 0):
-                    self.input.slits[self.slitnum].var_flat *= conversion**2
-            self.input.slits[self.slitnum].meta.bunit_data = 'MJy/sr'
-            self.input.slits[self.slitnum].meta.bunit_err = 'MJy/sr'
+            slit = self.input.slits[self.slitnum]
+            slit.data *= conversion
+            slit.err *= conversion
+            if slit.var_poisson is not None and np.size(slit.var_poisson) > 0:
+                slit.var_poisson *= conversion**2
+            if slit.var_rnoise is not None and np.size(slit.var_rnoise) > 0:
+                slit.var_rnoise *= conversion**2
+            if slit.var_flat is not None and np.size(slit.var_flat) > 0:
+                slit.var_flat *= conversion**2
+            slit.dq[no_cal] = np.bitwise_or(slit.dq[no_cal], dqflags.pixel['DO_NOT_USE'])
+            slit.meta.bunit_data = 'MJy/sr'
+            slit.meta.bunit_err = 'MJy/sr'
         else:
             self.input.data *= conversion
             self.input.err *= conversion
-            if (self.input.var_poisson is not None and
-                np.size(self.input.var_poisson) > 0):
-                    self.input.var_poisson *= conversion**2
-            if (self.input.var_rnoise is not None and
-                np.size(self.input.var_rnoise) > 0):
-                    self.input.var_rnoise *= conversion**2
-            if (self.input.var_flat is not None and
-                np.size(self.input.var_flat) > 0):
-                    self.input.var_flat *= conversion**2
+            if self.input.var_poisson is not None and np.size(self.input.var_poisson) > 0:
+                self.input.var_poisson *= conversion**2
+            if self.input.var_rnoise is not None and np.size(self.input.var_rnoise) > 0:
+                self.input.var_rnoise *= conversion**2
+            if self.input.var_flat is not None and np.size(self.input.var_flat) > 0:
+                self.input.var_flat *= conversion**2
+            self.input.dq[no_cal] = np.bitwise_or(self.input.dq[no_cal], dqflags.pixel['DO_NOT_USE'])
             self.input.meta.bunit_data = 'MJy/sr'
             self.input.meta.bunit_err = 'MJy/sr'
 
@@ -784,7 +782,7 @@ class DataSet():
         # Compute the relative difference between the pixel area values from
         # the two different sources, if they exist
         if (tab_a2 is not None) and (area_a2 is not None):
-            a2_tol = abs(tab_a2 - area_a2) / (tab_a2 + area_a2)
+            a2_tol = abs(tab_a2 - area_a2) / ((tab_a2 + area_a2) / 2)
 
             # If the difference is greater than the defined tolerance,
             # issue a warning

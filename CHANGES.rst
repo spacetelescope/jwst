@@ -17,6 +17,12 @@ master_background
 
 - Use the surf_bright column instead of flux in master_background.  [#3476]
 
+photom
+------
+
+- Updated to zero-out pixels outside the wavelength range of flux calibration
+  and set DQ=DO_NOT_USE. [#3475]
+
 refpix
 ------
 
