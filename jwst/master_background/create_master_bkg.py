@@ -20,7 +20,7 @@ def create_background(wavelength, surf_bright):
         Array of wavelengths, in micrometers.
 
     surf_bright : 1-D ndarray
-        Array of background fluxes.
+        Array of background surface brightness values.
 
     Returns
     -------

@@ -108,7 +108,7 @@ class MasterBackgroundStep(Step):
                         if model.meta.observation.bkgdtarg == False:
                             self.log.debug("Copying BACKGROUND column "
                                            "to SURF_BRIGHT")
-                            copy_background_to_flux(model)
+                            copy_background_to_surf_bright(model)
 
                     master_background = combine_1d_spectra(
                         background_data,
@@ -190,7 +190,7 @@ class MasterBackgroundStep(Step):
         return do_sub
 
 
-def copy_background_to_flux(spectrum):
+def copy_background_to_surf_bright(spectrum):
     """Copy the background column to the surf_bright column in a MultiSpecModel in-place"""
     for spec in spectrum.spec:
         spec.spec_table['SURF_BRIGHT'][:] = spec.spec_table['BACKGROUND'].copy()

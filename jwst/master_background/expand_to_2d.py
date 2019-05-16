@@ -161,19 +161,19 @@ def bkg_for_multislit(input, tab_wavelength, tab_background):
             raise RuntimeError("Can't determine wavelengths for {}"
                                .format(type(slit)))
 
-        # Wherever the wavelength is NaN, the background flux should to be set
-        # to 0.  We replace NaN elements in wl_array with -1, so that np.interp
-        # will detect that those values are out of range (note the `left`
-        # argument to np.interp) and set the output to 0.
+        # Wherever the wavelength is NaN, the background surface brightness
+        # should to be set to 0.  We replace NaN elements in wl_array with
+        # -1, so that np.interp will detect that those values are out of range
+        # (note the `left` argument to np.interp) and set the output to 0.
         wl_array[np.isnan(wl_array)] = -1.
         # flag values outside of background wavelength table
         mask_limit = (wl_array > max_wave) | (wl_array < min_wave)
         wl_array[mask_limit] = -1
-        # bkg_flux will be a 2-D array, because wl_array is 2-D.
-        bkg_flux = np.interp(wl_array, tab_wavelength, tab_background,
-                             left=0., right=0.)
+        # bkg_surf_bright will be a 2-D array, because wl_array is 2-D.
+        bkg_surf_bright = np.interp(wl_array, tab_wavelength, tab_background,
+                                    left=0., right=0.)
 
-        background.slits[k].data[:] = bkg_flux.copy()
+        background.slits[k].data[:] = bkg_surf_bright.copy()
         background.slits[k].dq[mask_limit] = np.bitwise_or(background.slits[k].dq[mask_limit],
                                                            dqflags.pixel['DO_NOT_USE'])
 
@@ -213,11 +213,11 @@ def bkg_for_image(input, tab_wavelength, tab_background):
     # flag values outside of background wavelength table
     mask_limit = (wl_array > max_wave) | (wl_array < min_wave)
     wl_array[mask_limit] = -1
-    # bkg_flux will be a 2-D array, because wl_array is 2-D.
-    bkg_flux = np.interp(wl_array, tab_wavelength, tab_background,
-                         left=0., right=0.)
+    # bkg_surf_bright will be a 2-D array, because wl_array is 2-D.
+    bkg_surf_bright = np.interp(wl_array, tab_wavelength, tab_background,
+                                left=0., right=0.)
 
-    background.data[:] = bkg_flux.copy()
+    background.data[:] = bkg_surf_bright.copy()
     background.dq[mask_limit] = np.bitwise_or(background.dq[mask_limit],
                                               dqflags.pixel['DO_NOT_USE'])
 
@@ -271,9 +271,9 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
             background.dq[full_frame_ind] = np.bitwise_or(background.dq[full_frame_ind],
                                                           dqflags.pixel['DO_NOT_USE'])
 
-            bkg_flux = np.interp(wl_array, tab_wavelength, tab_background,
-                                 left=0., right=0.)
-            background.data[y.astype(int), x.astype(int)] = bkg_flux.copy()
+            bkg_surf_bright = np.interp(wl_array, tab_wavelength,
+                                        tab_background, left=0., right=0.)
+            background.data[y.astype(int), x.astype(int)] = bkg_surf_bright.copy()
 
     elif input.meta.instrument.name.upper() == "MIRI":
         shape = input.data.shape
@@ -289,9 +289,9 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
         # TODO - add another DQ Flag something like NO_BACKGROUND when we have space in dqflags
         background.dq[mask_limit] = np.bitwise_or(background.dq[mask_limit],
                                                   dqflags.pixel['DO_NOT_USE'])
-        bkg_flux = np.interp(wl_array, tab_wavelength, tab_background,
-                             left=0., right=0.)
-        background.data[:, :] = bkg_flux.copy()
+        bkg_surf_bright = np.interp(wl_array, tab_wavelength, tab_background,
+                                    left=0., right=0.)
+        background.data[:, :] = bkg_surf_bright.copy()
     else:
         raise RuntimeError("Exposure type {} is not supported."
                            .format(input.meta.exposure.type))
