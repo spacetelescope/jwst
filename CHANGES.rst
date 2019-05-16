@@ -164,6 +164,9 @@ photom
 
 - Updated to apply the square of the correction to VAR_FLAT [#3427]
 
+- Updated to zero-out pixels outside the wavelength range of flux calibration
+  and set DQ=DO_NOT_USE. [#3475]
+
 reffile_utils
 -------------
 
