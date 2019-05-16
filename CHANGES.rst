@@ -17,6 +17,11 @@ master_background
 
 - Use the surf_bright column instead of flux in master_background.  [#3476]
 
+refpix
+------
+
+- Fixed a bug where pixeldq arrays were being transformed from DMS to detector
+  coordinates for every group instead of just once
 
 0.13.2 (2019-05-14)
 ===================
