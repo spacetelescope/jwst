@@ -239,7 +239,7 @@ class DataSet():
                         self.input.err /= sens2d
                         self.input.var_poisson /= sens2d**2
                         self.input.var_rnoise /= sens2d**2
-                        if (self.input.var_flat is not None and np.size(self.input.var_flat) > 0):
+                        if self.input.var_flat is not None and np.size(self.input.var_flat) > 0:
                             self.input.var_flat /= sens2d**2
 
                         # Update BUNIT values for the science data and err
@@ -431,7 +431,7 @@ class DataSet():
             self.input.var_poisson /= sens2d**2
             self.input.var_rnoise /= sens2d**2
             if self.input.var_flat is not None and np.size(self.input.var_flat) > 0:
-                    self.input.var_flat /= sens2d**2
+                self.input.var_flat /= sens2d**2
 
             # Update the science dq
             self.input.dq = np.bitwise_or(self.input.dq, ftab.dq)
