@@ -3,7 +3,8 @@ Description
 The master background subtraction step subtracts background signal from
 2-D spectroscopic data using a 1-D master background spectrum. The 1-D master background
 spectrum is computed from one or more input exposures, or can alternatively be supplied
-by the user. The 1-D background spectrum - flux versus wavelength - is projected into the
+by the user. The 1-D background spectrum - surfact brightness
+versus wavelength - is projected into the
 2-D space of source data based on the wavelength of each pixel in the 2-D data. The resulting
 2-D background signal is then subtracted directly from the 2-D source data.
 
@@ -92,7 +93,7 @@ or can be a collection of exposures of a point-like source observed in a nod pat
 (e.g. MIRI LRS fixed-slit "ALONG-SLIT-NOD" or NIRSpec IFU "2-POINT-NOD" dither patterns).
 
 For the case of dedicated background target exposures, the 1-D spectrum contained in the
-"FLUX" column of the background :ref:`x1d <x1d>` products will be used for creating the
+"SURF_BRIGHT" column of the background :ref:`x1d <x1d>` products will be used for creating the
 master background spectrum. For the case of nodded exposures, the 1-D spectrum contained
 in the "BACKGROUND" column of the :ref:`x1d <x1d>` products will be used.
 
@@ -121,4 +122,3 @@ source data instances and for each one it does the following:
    the 1-D master background spectrum as a function of wavelength.
 
  - Subtract the resulting 2-D background image from the 2-D source data.
-
