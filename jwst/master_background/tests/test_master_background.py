@@ -8,7 +8,7 @@ from jwst import datamodels
 from jwst.assign_wcs import AssignWcsStep
 from jwst.master_background import MasterBackgroundStep
 from jwst.master_background.create_master_bkg import create_background
-from jwst.master_background.master_background_step import copy_background_to_flux
+from jwst.master_background.master_background_step import copy_background_to_surf_bright
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 
 
@@ -92,8 +92,8 @@ def test_master_background_logic(_jail, user_background, science_image):
     assert type(science_image) is type(result)
 
 
-def test_copy_background_to_flux():
-    """Test the copy_background_to_flux function"""
+def test_copy_background_to_surf_bright():
+    """Test the copy_background_to_surf_bright function"""
 
     wavelength = np.linspace(0.5, 25, num=100)
     surf_bright = np.linspace(2.0, 2.2, num=100) + (np.random.random(100) - 0.5) * 0.001
@@ -106,7 +106,7 @@ def test_copy_background_to_flux():
     data.spec[0].spec_table['berror'] = berror
 
     newdata = data.copy()
-    copy_background_to_flux(newdata)
+    copy_background_to_surf_bright(newdata)
 
     assert (newdata.spec[0].spec_table['surf_bright'] == background).all()
     assert (newdata.spec[0].spec_table['sb_error'] == berror).all()
