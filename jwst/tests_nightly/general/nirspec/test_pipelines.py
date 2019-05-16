@@ -63,7 +63,7 @@ class TestNIRSpecPipelines(BaseJWSTTest):
         """
         Regression test of calwebb_spec2 pipeline performed on NIRSpec MSA data.
         """
-        input = 'F170LP-G235M_MOS_observation-6-c0e0_001_DN_NRS1_mod.fits'
+        input = 'f170lp-g235m_mos_observation-6-c0e0_001_dn_nrs1_mod.fits'
         input_file = self.get_data(self.test_dir, input)
         self.get_data(self.test_dir, 'jw95065006001_0_short_msa.fits')
 
@@ -78,11 +78,11 @@ class TestNIRSpecPipelines(BaseJWSTTest):
         step.extract_1d.bkg_order = 0
         step.run(input_file)
 
-        outputs = [('F170LP-G235M_MOS_observation-6-c0e0_001_DN_NRS1_mod_cal.fits',
+        outputs = [('f170lp-g235m_mos_observation-6-c0e0_001_dn_nrs1_mod_cal.fits',
                     'f170lp-g235m_mos_observation-6-c0e0_001_dn_nrs1_mod_cal_ref.fits'),
-                   ('F170LP-G235M_MOS_observation-6-c0e0_001_DN_NRS1_mod_s2d.fits',
+                   ('f170lp-g235m_mos_observation-6-c0e0_001_dn_nrs1_mod_s2d.fits',
                     'f170lp-g235m_mos_observation-6-c0e0_001_dn_nrs1_mod_s2d_ref.fits'),
-                   ('F170LP-G235M_MOS_observation-6-c0e0_001_DN_NRS1_mod_x1d.fits',
+                   ('f170lp-g235m_mos_observation-6-c0e0_001_dn_nrs1_mod_x1d.fits',
                     'f170lp-g235m_mos_observation-6-c0e0_001_dn_nrs1_mod_x1d_ref.fits')
                   ]
         self.compare_outputs(outputs)
