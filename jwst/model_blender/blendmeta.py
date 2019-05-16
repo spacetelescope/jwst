@@ -12,10 +12,8 @@ from .. import associations
 from ..datamodels import fits_support
 from ..datamodels import schema as dm_schema
 
-
 from .blendrules import KeywordRules
 
-__vdate__ = '11-May-2018'
 
 EMPTY_LIST = [None, '', ' ', 'INDEF', 'None']
 
@@ -135,7 +133,11 @@ def blendmodels(product, inputs=None, output=None, verbose=False):
     for attr in flat_new_metadata:
         attr_use = not [attr.startswith(i) for i in ignore_list].count(True)
         if attr.startswith('meta') and attr_use:
-            output_model[attr] = newmeta[attr]
+            try:
+                output_model[attr] = newmeta[attr]
+            except KeyError:
+                # Ignore keys that are in the asdf tree but not in the schema
+                pass
 
     # Apply any user-specified filename for output product
     if output:
