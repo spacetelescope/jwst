@@ -41,7 +41,7 @@ def expand_to_2d(input, m_bkg_spec):
         else:                                   # CombinedSpecModel
             spec_table = bkg.spec_table
         tab_wavelength = spec_table['wavelength'].copy()
-        tab_background = spec_table['flux']
+        tab_background = spec_table['surf_bright']
 
     # We're going to use np.interp, so tab_wavelength must be strictly
     # increasing.
@@ -72,7 +72,7 @@ def bkg_for_container(input, tab_wavelength, tab_background):
         The wavelength column read from the 1-D background table.
 
     tab_background : 1-D ndarray
-        The flux column read from the 1-D background table.
+        The surf_bright column read from the 1-D background table.
 
     Returns
     -------
@@ -101,7 +101,7 @@ def create_bkg(input, tab_wavelength, tab_background):
         The wavelength column read from the 1-D background table.
 
     tab_background : 1-D ndarray
-        The flux column read from the 1-D background table.
+        The surf_bright column read from the 1-D background table.
 
     Returns
     -------
@@ -142,7 +142,7 @@ def bkg_for_multislit(input, tab_wavelength, tab_background):
         The wavelength column read from the 1-D background table.
 
     tab_background : 1-D ndarray
-        The flux column read from the 1-D background table.
+        The surf_bright column read from the 1-D background table.
 
     Returns
     -------
@@ -192,7 +192,7 @@ def bkg_for_image(input, tab_wavelength, tab_background):
         The wavelength column read from the 1-D background table.
 
     tab_background : 1-D ndarray
-        The flux column read from the 1-D background table.
+        The surf_bright column read from the 1-D background table.
 
     Returns
     -------
@@ -236,7 +236,7 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
         The wavelength column read from the 1-D background table.
 
     tab_background : 1-D ndarray
-        The flux column read from the 1-D background table.
+        The surf_bright column read from the 1-D background table.
 
     Returns
     -------

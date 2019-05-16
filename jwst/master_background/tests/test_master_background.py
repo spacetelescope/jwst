@@ -96,18 +96,18 @@ def test_copy_background_to_flux():
     """Test the copy_background_to_flux function"""
 
     wavelength = np.linspace(0.5, 25, num=100)
-    flux = np.linspace(2.0, 2.2, num=100) + (np.random.random(100) - 0.5) * 0.001
-    error = np.random.random(100) * 0.01
+    surf_bright = np.linspace(2.0, 2.2, num=100) + (np.random.random(100) - 0.5) * 0.001
+    sb_error = np.random.random(100) * 0.01 + 17.       # different from berror
     background = np.random.random(100) * 0.01 + 1
     berror = np.random.random(100) * 0.01
-    data = create_background(wavelength, flux)
-    data.spec[0].spec_table['error'] = error
+    data = create_background(wavelength, surf_bright)
+    data.spec[0].spec_table['sb_error'] = sb_error
     data.spec[0].spec_table['background'] = background
     data.spec[0].spec_table['berror'] = berror
 
     newdata = data.copy()
     copy_background_to_flux(newdata)
 
-    assert (newdata.spec[0].spec_table['flux'] == background).all()
-    assert (newdata.spec[0].spec_table['error'] == berror).all()
+    assert (newdata.spec[0].spec_table['surf_bright'] == background).all()
+    assert (newdata.spec[0].spec_table['sb_error'] == berror).all()
     assert (newdata.spec[0].spec_table['background'] == 0).all()

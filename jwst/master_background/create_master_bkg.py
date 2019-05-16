@@ -7,19 +7,19 @@ from .. import datamodels
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-def create_background(wavelength, flux):
+def create_background(wavelength, surf_bright):
     """Create a 1-D spectrum table as a MultiSpecModel.
 
     This is the syntax for accessing the data in the columns:
     wavelength = output_model.spec[0].spec_table['wavelength']
-    background = output_model.spec[0].spec_table['flux']
+    background = output_model.spec[0].spec_table['surf_bright']
 
     Parameters
     ----------
     wavelength : 1-D ndarray
         Array of wavelengths, in micrometers.
 
-    flux : 1-D ndarray
+    surf_bright : 1-D ndarray
         Array of background fluxes.
 
     Returns
@@ -32,23 +32,23 @@ def create_background(wavelength, flux):
     """
 
     wl_shape = wavelength.shape
-    flux_shape = flux.shape
+    sb_shape = surf_bright.shape
     bad = False
     if len(wl_shape) > 1:
         bad = True
         log.error("The wavelength array has shape {}; expected "
               "a 1-D array".format(wl_shape))
-    if len(flux_shape) > 1:
+    if len(sb_shape) > 1:
         bad = True
-        log.error("The background flux array has shape {}; expected "
-              "a 1-D array".format(flux_shape))
+        log.error("The background surf_bright array has shape {}; expected "
+              "a 1-D array".format(sb_shape))
     if bad:
         return None
 
-    if wl_shape[0] != flux_shape[0]:
+    if wl_shape[0] != sb_shape[0]:
         log.error("wavelength array has length {}, "
-                  "but background flux array has length {}."
-                  .format(wl_shape[0], flux_shape[0]))
+                  "but background surf_bright array has length {}."
+                  .format(wl_shape[0], sb_shape[0]))
         log.error("The arrays must be the same size.")
         return None
 
@@ -61,8 +61,8 @@ def create_background(wavelength, flux):
 
     spec_dtype = datamodels.SpecModel().spec_table.dtype
 
-    otab = np.array(list(zip(wavelength, flux,
-                             dummy, dq, dummy, dummy, dummy, dummy, npixels)),
+    otab = np.array(list(zip(wavelength, dummy, dummy,
+                             surf_bright, dummy, dq, dummy, dummy, npixels)),
                     dtype=spec_dtype)
 
     spec = datamodels.SpecModel(spec_table=otab)

@@ -106,6 +106,8 @@ class MasterBackgroundStep(Step):
                         # for simulated data that didn't bother populating this
                         # keyword
                         if model.meta.observation.bkgdtarg == False:
+                            self.log.debug("Copying BACKGROUND column "
+                                           "to SURF_BRIGHT")
                             copy_background_to_flux(model)
 
                     master_background = combine_1d_spectra(
@@ -189,14 +191,14 @@ class MasterBackgroundStep(Step):
 
 
 def copy_background_to_flux(spectrum):
-    """Copy the background column to the flux column in a MultiSpecModel in-place"""
+    """Copy the background column to the surf_bright column in a MultiSpecModel in-place"""
     for spec in spectrum.spec:
-        spec.spec_table['FLUX'] = spec.spec_table['BACKGROUND'].copy()
-        spec.spec_table['ERROR'] = spec.spec_table['BERROR'].copy()
+        spec.spec_table['SURF_BRIGHT'][:] = spec.spec_table['BACKGROUND'].copy()
+        spec.spec_table['SB_ERROR'][:] = spec.spec_table['BERROR'].copy()
         # Zero out the background column for safety
         spec.spec_table['BACKGROUND'][:] = 0
-        # Set BERROR to dummy val of 1.0, as in extract_1d currently
-        spec.spec_table['BERROR'][:] = 1
+        # Set BERROR to dummy val of 0.0, as in extract_1d currently
+        spec.spec_table['BERROR'][:] = 0.
 
 
 def split_container(container):
