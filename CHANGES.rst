@@ -7,6 +7,12 @@ master_background
 - Fix bug in master_background where the flux from the input x1d files
   was being combined instead of the background columns.  [#3468]
 
+photom
+------
+
+- Updated to zero-out pixels outside the wavelength range of flux calibration
+  and set DQ=DO_NOT_USE. [#3475]
+
 
 0.13.2 (2019-05-14)
 ===================
@@ -163,9 +169,6 @@ photom
   spectral order 1. [#3387]
 
 - Updated to apply the square of the correction to VAR_FLAT [#3427]
-
-- Updated to zero-out pixels outside the wavelength range of flux calibration
-  and set DQ=DO_NOT_USE. [#3475]
 
 reffile_utils
 -------------
