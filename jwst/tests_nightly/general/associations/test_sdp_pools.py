@@ -78,6 +78,7 @@ class AssociationBase(BaseJWSTTest):
             self._truth_paths = self.data_glob(*self.ref_loc, glob='*.json')
         return self._truth_paths
 
+
 ASN_BASE = AssociationBase()
 try:
     POOL_PATHS = ASN_BASE.pool_paths
@@ -168,3 +169,11 @@ class TestSDPPools(AssociationBase):
         ]
 
         assert not multiples, 'Multiple product names: {}'.format(multiples)
+
+    def test_specified_sdp_pool(self, sdp_pool):
+        """Test a command-line specified pool"""
+        if sdp_pool:
+            pool_path = Path(self.test_dir) / 'pools' / (sdp_pool + '.csv')
+            self.test_against_standard(pool_path)
+        else:
+            pytest.skip('No SDP pool specified using `--sdp-pool` command-line option.')
