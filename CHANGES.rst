@@ -15,6 +15,8 @@ master_background
 - Fix bug in master_background where the flux from the input x1d files
   was being combined instead of the background columns.  [#3468]
 
+- Use the surf_bright column instead of flux in master_background.  [#3476]
+
 
 0.13.2 (2019-05-14)
 ===================
