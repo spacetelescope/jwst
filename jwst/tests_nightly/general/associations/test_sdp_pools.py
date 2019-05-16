@@ -25,6 +25,14 @@ TEST_ARGS = ['--dry-run', '--no-merge']
 pool_regex = re.compile(r'(?P<proposal>jw.+?)_(?P<versionid>.+)_pool')
 
 
+# Mark expected failures. Key is the pool name
+# and value is the reason message.
+EXPECTED_FAILS = {
+    'jw80600_20171108T041522_pool': 'PR #3450',
+    'jw87600_20180824T213416_pool': 'Issue #3039',
+    'jw98010_20171108T062332_pool': 'PR #3450',
+}
+
 # #############################################################
 # Setup a base class and instantiate it in order to provide the
 # file lists for the test parametrization.
@@ -127,9 +135,9 @@ class TestSDPPools(AssociationBase):
         # Compare the association sets.
         try:
             compare_asn_files(generated_path.glob('*.json'), truth_paths)
-        except AssertionError as error:
-            if 'Associations do not share a common set of products' in str(error):
-                pytest.xfail('Issue #3039')
+        except AssertionError:
+            if pool in EXPECTED_FAILS:
+                pytest.xfail(EXPECTED_FAILS[pool])
             else:
                 raise
 
