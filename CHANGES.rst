@@ -17,6 +17,11 @@ master_background
 
 - Use the surf_bright column instead of flux in master_background.  [#3476]
 
+model_blender
+-------------
+
+- Allow blendmodels to ignore attributes in asdf tree not in schema [#3480]
+
 photom
 ------
 
@@ -28,6 +33,12 @@ refpix
 
 - Fixed a bug where pixeldq arrays were being transformed from DMS to detector
   coordinates for every group instead of just once
+
+tweakreg
+--------
+
+- Mask and do not use NON-SCIENCE regions in tweakreg source detection. [#3461]
+
 
 0.13.2 (2019-05-14)
 ===================
