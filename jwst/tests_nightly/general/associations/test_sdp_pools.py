@@ -78,6 +78,7 @@ class AssociationBase(BaseJWSTTest):
             self._truth_paths = self.data_glob(*self.ref_loc, glob='*.json')
         return self._truth_paths
 
+
 ASN_BASE = AssociationBase()
 try:
     POOL_PATHS = ASN_BASE.pool_paths
