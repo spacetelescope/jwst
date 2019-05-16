@@ -3,7 +3,7 @@ Description
 The master background subtraction step subtracts background signal from
 2-D spectroscopic data using a 1-D master background spectrum. The 1-D master background
 spectrum is computed from one or more input exposures, or can alternatively be supplied
-by the user. The 1-D background spectrum - surfact brightness
+by the user. The 1-D background spectrum - surface brightness
 versus wavelength - is projected into the
 2-D space of source data based on the wavelength of each pixel in the 2-D data. The resulting
 2-D background signal is then subtracted directly from the 2-D source data.
