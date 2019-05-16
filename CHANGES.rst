@@ -184,7 +184,7 @@ refpix
 ------
 
 - Fixed a bug where the pixeldq array was being repeatedly transformed from
-  DMS to detector frame with each group processed [#3181]
+  DMS to detector frame with each group processed [#3471]
 
 resample_spec
 -------------
