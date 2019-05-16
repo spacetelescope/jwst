@@ -9,6 +9,12 @@ datamodels
   ``http://jwst.stsci.edu/schemas/image.schema.yaml``.  The datamodels
   ``BaseExtension`` is renamed internally to ``DataModelExtension``. [#3437]
 
+master_background
+-----------------
+
+- Fix bug in master_background where the flux from the input x1d files
+  was being combined instead of the background columns.  [#3468]
+
 
 0.13.2 (2019-05-14)
 ===================
