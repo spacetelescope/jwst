@@ -694,11 +694,11 @@ class DataSet():
             slit = self.input.slits[self.slitnum]
             slit.data *= conversion
             slit.err *= conversion
-            if (slit.var_poisson is not None and np.size(slit.var_poisson) > 0):
+            if slit.var_poisson is not None and np.size(slit.var_poisson) > 0:
                 slit.var_poisson *= conversion**2
-            if (slit.var_rnoise is not None and np.size(slit.var_rnoise) > 0):
+            if slit.var_rnoise is not None and np.size(slit.var_rnoise) > 0:
                 slit.var_rnoise *= conversion**2
-            if (slit.var_flat is not None and np.size(slit.var_flat) > 0):
+            if slit.var_flat is not None and np.size(slit.var_flat) > 0:
                 slit.var_flat *= conversion**2
             slit.dq[no_cal] = np.bitwise_or(slit.dq[no_cal], dqflags.pixel['DO_NOT_USE'])
             slit.meta.bunit_data = 'MJy/sr'
@@ -706,11 +706,11 @@ class DataSet():
         else:
             self.input.data *= conversion
             self.input.err *= conversion
-            if (self.input.var_poisson is not None and np.size(self.input.var_poisson) > 0):
+            if self.input.var_poisson is not None and np.size(self.input.var_poisson) > 0:
                 self.input.var_poisson *= conversion**2
-            if (self.input.var_rnoise is not None and np.size(self.input.var_rnoise) > 0):
+            if self.input.var_rnoise is not None and np.size(self.input.var_rnoise) > 0:
                 self.input.var_rnoise *= conversion**2
-            if (self.input.var_flat is not None and np.size(self.input.var_flat) > 0):
+            if self.input.var_flat is not None and np.size(self.input.var_flat) > 0:
                 self.input.var_flat *= conversion**2
             self.input.dq[no_cal] = np.bitwise_or(self.input.dq[no_cal], dqflags.pixel['DO_NOT_USE'])
             self.input.meta.bunit_data = 'MJy/sr'
