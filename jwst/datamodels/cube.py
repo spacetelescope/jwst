@@ -37,7 +37,7 @@ class CubeModel(DataModel):
     var_rnoise : numpy float32 array
          Integration-specific variances of slope due to read noise
     """
-    schema_url = "cube.schema.yaml"
+    schema_url = "cube.schema"
 
     def __init__(self, init=None, **kwargs):
 

@@ -22,7 +22,7 @@ class DarkModel(ReferenceFileModel):
     dq_def : numpy table
          DQ flag definitions
     """
-    schema_url = "dark.schema.yaml"
+    schema_url = "dark.schema"
 
     def __init__(self, init=None, **kwargs):
         super(DarkModel, self).__init__(init=init, **kwargs)

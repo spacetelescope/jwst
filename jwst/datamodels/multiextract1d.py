@@ -27,7 +27,7 @@ class MultiExtract1dImageModel(ReferenceFileModel):
     __________
     images.items.data : numpy float32 array
     """
-    schema_url = "multiextract1d.schema.yaml"
+    schema_url = "multiextract1d.schema"
 
     def __init__(self, init=None, **kwargs):
         if isinstance(init, Extract1dImageModel):

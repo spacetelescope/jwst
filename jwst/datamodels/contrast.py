@@ -12,4 +12,4 @@ class ContrastModel(DataModel):
     contrast_table : numpy table
          Contrast curve table
     """
-    schema_url = "contrast.schema.yaml"
+    schema_url = "contrast.schema"

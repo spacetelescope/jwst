@@ -22,7 +22,7 @@ class DarkMIRIModel(ReferenceFileModel):
     dq_def : numpy table
          DQ flag definitions
     """
-    schema_url = "darkMIRI.schema.yaml"
+    schema_url = "darkMIRI.schema"
 
     def __init__(self, init=None, **kwargs):
         super(DarkMIRIModel, self).__init__(init=init, **kwargs)

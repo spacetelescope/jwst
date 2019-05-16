@@ -1,6 +1,14 @@
 0.13.3 (Unreleased)
 ===================
 
+datamodels
+----------
+
+- Datamodels schemas should now be referenced with
+  ``http://stsci.edu/schemas/jwst_datamodel/image.schema`` instead of
+  ``http://jwst.stsci.edu/schemas/image.schema.yaml``.  The datamodels
+  ``BaseExtension`` is renamed internally to ``DataModelExtension``. [#3437]
+
 master_background
 -----------------
 

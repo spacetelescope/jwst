@@ -34,7 +34,7 @@ class AmiLgModel(DataModel):
     solns_table : numpy table
          Solutions table
     """
-    schema_url = "amilg.schema.yaml"
+    schema_url = "amilg.schema"
 
     def get_primary_array_name(self):
         """

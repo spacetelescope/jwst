@@ -14,7 +14,7 @@ class ReferenceFileModel(DataModel):
     A data model for reference tables
 
     """
-    schema_url = "referencefile.schema.yaml"
+    schema_url = "referencefile.schema"
 
     def __init__(self, init=None, **kwargs):
         super(ReferenceFileModel, self).__init__(init=init, **kwargs)
@@ -63,7 +63,7 @@ class ReferenceImageModel(ReferenceFileModel):
     err : numpy float32 array
          Error array
     """
-    schema_url = "referenceimage.schema.yaml"
+    schema_url = "referenceimage.schema"
 
     def __init__(self, init=None, **kwargs):
         super(ReferenceImageModel, self).__init__(init=init, **kwargs)
@@ -91,7 +91,7 @@ class ReferenceCubeModel(ReferenceFileModel):
     err : numpy float32 array
          Error array
     """
-    schema_url = "referencecube.schema.yaml"
+    schema_url = "referencecube.schema"
 
     def __init__(self, init=None, **kwargs):
         super(ReferenceCubeModel, self).__init__(init=init, **kwargs)
@@ -115,7 +115,7 @@ class ReferenceQuadModel(ReferenceFileModel):
     err : numpy float32 array
          Error array
     """
-    schema_url = "referencequad.schema.yaml"
+    schema_url = "referencequad.schema"
 
     def __init__(self, init=None, **kwargs):
         super(ReferenceQuadModel, self).__init__(init=init, **kwargs)

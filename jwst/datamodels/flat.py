@@ -23,7 +23,7 @@ class FlatModel(ReferenceFileModel):
     dq_def : numpy table
          DQ flag definitions
     """
-    schema_url = "flat.schema.yaml"
+    schema_url = "flat.schema"
 
     def __init__(self, init=None, **kwargs):
         super(FlatModel, self).__init__(init=init, **kwargs)

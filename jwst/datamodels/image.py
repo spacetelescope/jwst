@@ -34,7 +34,7 @@ class ImageModel(DataModel):
     var_rnoise : numpy float32 array
          variance due to read noise
     """
-    schema_url = "image.schema.yaml"
+    schema_url = "image.schema"
 
     def __init__(self, init=None, **kwargs):
 

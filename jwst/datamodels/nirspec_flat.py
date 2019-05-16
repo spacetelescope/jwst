@@ -28,7 +28,7 @@ class NirspecFlatModel(ReferenceFileModel):
          DQ flag definitions
     """
 
-    schema_url = "nirspec_flat.schema.yaml"
+    schema_url = "nirspec_flat.schema"
 
     def __init__(self, init=None, **kwargs):
         super(NirspecFlatModel, self).__init__(init=init, **kwargs)
@@ -65,7 +65,7 @@ class NirspecQuadFlatModel(ReferenceFileModel):
          DQ flag definitions
     """
 
-    schema_url = "nirspec_quad_flat.schema.yaml"
+    schema_url = "nirspec_quad_flat.schema"
 
     def __init__(self, init=None, **kwargs):
         if isinstance(init, NirspecFlatModel):
