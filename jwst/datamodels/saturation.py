@@ -18,7 +18,7 @@ class SaturationModel(ReferenceFileModel):
     dq_def : numpy table
          DQ flag definitions
     """
-    schema_url = "saturation.schema.yaml"
+    schema_url = "saturation.schema"
 
     def __init__(self, init=None, **kwargs):
         super(SaturationModel, self).__init__(init=init, **kwargs)

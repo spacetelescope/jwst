@@ -18,7 +18,7 @@ class PersistenceSatModel(ReferenceFileModel):
     dq_def : numpy table
          DQ flag definitions
     """
-    schema_url = "persat.schema.yaml"
+    schema_url = "persat.schema"
 
     def __init__(self, init=None, **kwargs):
         super(PersistenceSatModel, self).__init__(init=init, **kwargs)

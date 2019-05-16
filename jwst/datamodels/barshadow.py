@@ -21,4 +21,4 @@ class BarshadowModel(ReferenceFileModel):
     var1x3 : numpy float32 array
          Bar Shadow 1x3 correction variance
     """
-    schema_url = "barshadow.schema.yaml"
+    schema_url = "barshadow.schema"

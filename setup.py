@@ -159,7 +159,7 @@ version = relic.release.get_info()
 relic.release.write_template(version, NAME)
 
 entry_points = dict(asdf_extensions=['jwst_pipeline = jwst.transforms.jwextension:JWSTExtension',
-                                     'model_extensions = jwst.datamodels.extension:BaseExtension'])
+                                     'jwst_datamodel = jwst.datamodels.extension:DataModelExtension'])
 
 setup(
     name=NAME,
@@ -193,7 +193,7 @@ setup(
         'gwcs>=0.10',
         'jsonschema>=2.3,<=2.6',
         'numpy>=1.13',
-        'photutils>=0.4',
+        'photutils>=0.6',
         'scipy>=1.0',
         'spherical-geometry>=1.2',
         'stsci.image>=2.3',

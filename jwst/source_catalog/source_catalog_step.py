@@ -42,7 +42,7 @@ class SourceCatalogStep(Step):
                 model, kernel_fwhm, kernel_xsize, kernel_ysize, snr_threshold,
                 npixels, deblend=deblend)
 
-            if len(catalog) == 0:
+            if catalog is None:
                 self.log.info('No sources were found.  Source catalog will '
                               'not be written.')
                 return

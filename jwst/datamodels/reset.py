@@ -22,7 +22,7 @@ class ResetModel(ReferenceFileModel):
     dq_def : numpy table
          DQ flag definitions
     """
-    schema_url = "reset.schema.yaml"
+    schema_url = "reset.schema"
 
     def __init__(self, init=None, **kwargs):
         super(ResetModel, self).__init__(init=init, **kwargs)

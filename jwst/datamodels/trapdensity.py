@@ -18,7 +18,7 @@ class TrapDensityModel(ReferenceFileModel):
     dq_def : numpy table
          DQ flag definitions
     """
-    schema_url = "trapdensity.schema.yaml"
+    schema_url = "trapdensity.schema"
 
     def __init__(self, init=None, **kwargs):
         super(TrapDensityModel, self).__init__(init=init, **kwargs)

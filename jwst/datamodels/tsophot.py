@@ -11,7 +11,7 @@ class TsoPhotModel(ReferenceFileModel):
     """
     A model for a reference file of type "tsophot".
     """
-    schema_url = "tsophot.schema.yaml"
+    schema_url = "tsophot.schema"
     reftype = "tsophot"
 
     def __init__(self, init=None, radii=None, **kwargs):

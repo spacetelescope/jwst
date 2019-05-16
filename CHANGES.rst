@@ -1,11 +1,21 @@
 0.13.3 (Unreleased)
 ===================
 
+datamodels
+----------
+
+- Datamodels schemas should now be referenced with
+  ``http://stsci.edu/schemas/jwst_datamodel/image.schema`` instead of
+  ``http://jwst.stsci.edu/schemas/image.schema.yaml``.  The datamodels
+  ``BaseExtension`` is renamed internally to ``DataModelExtension``. [#3437]
+
 master_background
 -----------------
 
 - Fix bug in master_background where the flux from the input x1d files
   was being combined instead of the background columns.  [#3468]
+
+- Use the surf_bright column instead of flux in master_background.  [#3476]
 
 photom
 ------
@@ -13,6 +23,11 @@ photom
 - Updated to zero-out pixels outside the wavelength range of flux calibration
   and set DQ=DO_NOT_USE. [#3475]
 
+refpix
+------
+
+- Fixed a bug where pixeldq arrays were being transformed from DMS to detector
+  coordinates for every group instead of just once
 
 0.13.2 (2019-05-14)
 ===================

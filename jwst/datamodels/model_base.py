@@ -29,16 +29,14 @@ from . import validate
 
 from .history import HistoryList
 
-from .extension import (
-    URL_PREFIX,
-)
+from .extension import URL_PREFIX
 
 
 class DataModel(properties.ObjectNode, ndmodel.NDModel):
     """
     Base class of all of the data models.
     """
-    schema_url = "core.schema.yaml"
+    schema_url = "core.schema"
 
     def __init__(self, init=None, schema=None,
                  pass_invalid_values=False, strict_validation=False,

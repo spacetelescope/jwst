@@ -7,4 +7,4 @@ class DrizParsModel(ReferenceFileModel):
     """
     A data model for drizzle parameters reference tables.
     """
-    schema_url = "drizpars.schema.yaml"
+    schema_url = "drizpars.schema"
