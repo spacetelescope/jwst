@@ -5,12 +5,15 @@ The photom step applies flux (photometric) calibrations to a data product
 to convert the data from units of countrate to surface brightness.
 The calibration information is read from a photometric reference file.
 The exact nature of the calibration information loaded from the reference file
-and applied to the science data depends on the instrument mode.
+and applied to the science data depends on the instrument mode, as
+described below.
 
 This step relies on having wavelength information available when working on
-spectroscopic data (see below) and therefore the
+spectroscopic data and therefore the
 :ref:`assign_wcs <assign_wcs_step>` step *must* be applied before executing
-the photom step.
+the photom step. Pixels with wavelengths that are outside of the range
+covered by the calibration reference data are set to zero and flagged
+in the DQ array as "DO_NOT_USE."
 
 Upon successful completion of this step, the status keyword S_PHOTOM will be
 set to COMPLETE.
