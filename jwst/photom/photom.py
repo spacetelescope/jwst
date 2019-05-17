@@ -650,8 +650,9 @@ class DataSet():
         # Get the length of the relative response arrays in this row
         nelem = tabdata['nelem']
 
-        # If the relative response arrays have length > 0, load and include them in
-        # the flux conversion
+        # If the relative response arrays have length > 0,
+        # load and include them in the flux conversion
+        no_cal = None
         if nelem > 0:
             waves = tabdata['wavelength'][:nelem]
             relresps = tabdata['relresponse'][:nelem]
@@ -700,7 +701,9 @@ class DataSet():
                 slit.var_rnoise *= conversion**2
             if slit.var_flat is not None and np.size(slit.var_flat) > 0:
                 slit.var_flat *= conversion**2
-            slit.dq[no_cal] = np.bitwise_or(slit.dq[no_cal], dqflags.pixel['DO_NOT_USE'])
+            if no_cal is not None:
+                slit.dq[..., no_cal] = np.bitwise_or(slit.dq[..., no_cal],
+                                                     dqflags.pixel['DO_NOT_USE'])
             slit.meta.bunit_data = 'MJy/sr'
             slit.meta.bunit_err = 'MJy/sr'
         else:
@@ -712,7 +715,9 @@ class DataSet():
                 self.input.var_rnoise *= conversion**2
             if self.input.var_flat is not None and np.size(self.input.var_flat) > 0:
                 self.input.var_flat *= conversion**2
-            self.input.dq[no_cal] = np.bitwise_or(self.input.dq[no_cal], dqflags.pixel['DO_NOT_USE'])
+            if no_cal is not None:
+                self.input.dq[..., no_cal] = np.bitwise_or(self.input.dq[..., no_cal],
+                                                           dqflags.pixel['DO_NOT_USE'])
             self.input.meta.bunit_data = 'MJy/sr'
             self.input.meta.bunit_err = 'MJy/sr'
 
