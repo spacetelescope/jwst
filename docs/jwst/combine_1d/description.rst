@@ -12,15 +12,7 @@ spectra have been included, the output is normalized by dividing by
 the sum of the weights.
 
 The weight will typically be the integration time or the exposure time,
-but uniform (unit) weighting can be specified instead.  It is the net
-count rate that uses this weight; that is, the net count rate is multiplied
-by the integration time to get net counts, and it is the net counts that
-are added together and finally divided by the sum of the integration
-times.  The flux weighted by an additional factor of the instrumental
-sensitivity, count rate per unit flux.  The idea is that the quantity
-that is added up should be in units of counts.  If unit weight was
-specified, however, unit weight will be used for both flux and net.
-The data quality (DQ) columns will be combined using bitwise OR.
+but uniform (unit) weighting can be specified instead.
 
 The only part of this step that is not completely straightforward is the
 determination of wavelengths for the output spectrum.  The output
@@ -31,11 +23,9 @@ wavelength would be computed as the average of the wavelengths at the same
 pixel in all the input files.  The combine_1d step is intended to handle a
 more general case where the input wavelength arrays may be offset with
 respect to each other, or they might not align well due to different
-distortions.
-
-All the input wavelength arrays will be concatenated and then sorted.
-The code then looks for "clumps" in wavelength, based on the standard
-deviation of a slice of the concatenated and sorted array of input
+distortions.  All the input wavelength arrays will be concatenated and then
+sorted.  The code then looks for "clumps" in wavelength, based on the
+standard deviation of a slice of the concatenated and sorted array of input
 wavelengths; a small standard deviation implies a clump.  In regions of
 the spectrum where the input wavelengths overlap with somewhat random
 offsets and don't form any clumps, the output wavelengths are computed
@@ -46,9 +36,9 @@ Input
 =====
 An association file specifies which file or files to read for the input
 data.  Each input data file contains one or more 1-D spectra in table
-format, e.g. as written by the extract_1d step.  An input data file can
-be either SpecModel (for one spectrum) or MultiSpecModel format (which
-can contain more than one spectrum).
+format, e.g. as written by the extract_1d step.  Each input data file will
+ordinarily be in MultiSpecModel format (which can contain more than one
+spectrum).
 
 The association file should have an object called "products", which is
 a one-element list containing a dictionary.  This dictionary contains two
@@ -60,8 +50,8 @@ of which contains one input file name, identified by key "expname".
 Output
 ======
 The output will be in CombinedSpecModel format, with a table extension
-having the name COMBINE1D.  This extension will have six columns, giving
-the wavelength, flux, error estimate for the flux, net countrate in
-counts/second, the sum of the weights that were used when combining the
-input spectra, and the number of input spectra that contributed to each
-output pixel.
+having the name COMBINE1D.  This extension will have eight columns, giving
+the wavelength, flux, error estimate for the flux, surface brightness,
+error estimate for the surface brightness, the combined data quality flags,
+the sum of the weights that were used when combining the input spectra,
+and the number of input spectra that contributed to each output pixel.
