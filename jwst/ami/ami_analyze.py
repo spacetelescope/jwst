@@ -48,7 +48,7 @@ def apply_LG(input_model, filter_model, oversample, rotation):
     log.info('Filter: %s', input_model.meta.instrument.filter)
 
     # Load the filter throughput data from the reference file
-    bindown = 12   
+    bindown = 12
     band = webb_psf.get_webbpsf_filter(filter_model, specbin=bindown, trim=(3.8e-6,0.05))
 
     # Set up some params that are needed as input to the LG algorithm:
