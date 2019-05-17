@@ -26,7 +26,6 @@ from . import analyticnrm2
 from . import utils
 from . import hexee
 from . import nrm_consts
-from . import subpix
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -333,13 +332,8 @@ class NrmModel:
 
             # loop over slices "sl" in the model
             for sl in range(self.model_over.shape[2]):
-                if self.pixweight is None:
-                    self.model[:,:,sl] = utils.rebin( self.model_over[:,:,sl],
-                                                (self.over, self.over))
-                else:
-                    self.model[:,:,sl] = subpix.weightpixels(
-                        self.model_over[:,:,sl], self.pixweight)
-
+                self.model[:,:,sl] = utils.rebin( self.model_over[:,:,sl],
+                                            (self.over, self.over))
             return self.model
 
         else:

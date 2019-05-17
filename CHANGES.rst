@@ -1,6 +1,15 @@
 0.13.3 (Unreleased)
 ===================
 
+ami
+---
+
+- Fixed indentation bug in ami_analyze, so now all results are sufficiently 
+  close to the results of the stand-alone prototype. Other modifications include 
+  minor tweaks to more closely match those in the prototype code: changed some of 
+  initial values of the estimation parameters, and the filtering routine 
+  arguments.  [#3487]
+
 datamodels
 ----------
 
