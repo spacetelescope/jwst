@@ -702,12 +702,8 @@ class DataSet():
             if slit.var_flat is not None and np.size(slit.var_flat) > 0:
                 slit.var_flat *= conversion**2
             if no_cal is not None:
-                    if len(slit.dq.shape) == 3:
-                        slit.dq[:,no_cal] = np.bitwise_or(slit.dq[:,no_cal],
-                            dqflags.pixel['DO_NOT_USE'])
-                    else:
-                        slit.dq[no_cal] = np.bitwise_or(slit.dq[no_cal],
-                            dqflags.pixel['DO_NOT_USE'])
+                slit.dq[..., no_cal] = np.bitwise_or(slit.dq[..., no_cal],
+                                                     dqflags.pixel['DO_NOT_USE'])
             slit.meta.bunit_data = 'MJy/sr'
             slit.meta.bunit_err = 'MJy/sr'
         else:
@@ -720,12 +716,8 @@ class DataSet():
             if self.input.var_flat is not None and np.size(self.input.var_flat) > 0:
                 self.input.var_flat *= conversion**2
             if no_cal is not None:
-                if len(self.input.dq.shape) == 3:
-                    self.input.dq[:,no_cal] = np.bitwise_or(self.input.dq[:,no_cal],
-                        dqflags.pixel['DO_NOT_USE'])
-                else:
-                    self.input.dq[no_cal] = np.bitwise_or(self.input.dq[no_cal],
-                        dqflags.pixel['DO_NOT_USE'])
+                self.input.dq[..., no_cal] = np.bitwise_or(self.input.dq[..., no_cal],
+                                                           dqflags.pixel['DO_NOT_USE'])
             self.input.meta.bunit_data = 'MJy/sr'
             self.input.meta.bunit_err = 'MJy/sr'
 
