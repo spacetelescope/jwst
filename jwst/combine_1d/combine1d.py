@@ -301,7 +301,7 @@ def count_input(input_spectra):
     wl : ndarray
         Sorted list of all the wavelengths in all the input spectra.
 
-    n_input_spectra : 
+    n_input_spectra : ndarray, 1-D
         For each element of `wl`, the corresponding element of
         `n_input_spectra` is the number of input spectra that cover the
         wavelength in `wl`.
