@@ -4,8 +4,7 @@ Test for combine1d.count_input
 import numpy as np
 
 # from jwst import datamodels
-from jwst.combine_1d import new_combine1d as combine1d      # xxx temporary
-# xxx from jwst.combine_1d import combine1d
+from jwst.combine_1d import combine1d
 
 class DummySpectra:
     def __init__(self, wavelength):
