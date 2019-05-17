@@ -4,7 +4,7 @@
 combine_1d
 ----------
 
-- Unit tests were added to combine_1d.  [#3489]
+- Unit tests were added to combine_1d.  [#3490]
 
 datamodels
 ----------
