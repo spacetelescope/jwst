@@ -75,14 +75,9 @@ class InputSpectrumModel:
             raise RuntimeError("Don't understand exptime_key = '%s'" %
                                exptime_key)
 
-        got_wcs = True
         try:
-            wcs = spec.meta.wcs
+            self.right_ascension[:], self.declination[:], _ = spec.meta.wcs(0., 0.)
         except AttributeError:
-            got_wcs = False
-        if got_wcs:
-            self.right_ascension[:], self.declination[:], _ = wcs(0.)
-        else:
             self.right_ascension[:] = ms.meta.target.ra
             self.declination[:] = ms.meta.target.dec
             log.warning("There is no WCS in the input.")
@@ -112,9 +107,6 @@ class OutputSpectrumModel:
         weight
         count
         wcs
-        wavelength_dtype
-        flux_dtype
-        dq_dtype
         normalized
     """
 
@@ -129,17 +121,13 @@ class OutputSpectrumModel:
         self.weight = None
         self.count = None
         self.wcs = None
-        self.wavelength_dtype = None
-        self.flux_dtype = None
-        self.dq_dtype = None
         self.normalized = False
 
     def assign_wavelengths(self, input_spectra):
         """Create an array of wavelengths to use for the output spectrum.
 
-        Take the union of all input wavelengths, then call method
-        compute_output_wl to bin wavelengths in groups of the number of
-        overlapping spectra.
+        Take the union of all input wavelengths, then call compute_output_wl
+        to bin wavelengths in groups of the number of overlapping spectra.
 
         Parameters
         ----------
@@ -147,170 +135,13 @@ class OutputSpectrumModel:
             List of input spectra.
         """
 
-        # Save these, so we'll know what data type to use for the output.
-        # The types used for accumulating sums and taking averages may not
-        # be the same as these types.
-        self.wavelength_dtype = input_spectra[0].wavelength.dtype
-        self.flux_dtype = input_spectra[0].flux.dtype
-        self.dq_dtype = input_spectra[0].dq.dtype
+        (wl, n_input_spectra) = count_input(input_spectra)
 
-        nwl = 0
-        for in_spec in input_spectra:
-            nwl += in_spec.nelem
-
-        # Create an array with all the input wavelengths (i.e. the union
-        # of the input wavelengths).
-        wl = np.zeros(nwl, dtype=np.float64)
-        i = 0
-        for in_spec in input_spectra:
-            nelem = in_spec.nelem
-            # Concatenate current input wavelengths to wl array.
-            wl[i:i + nelem] = in_spec.wavelength.copy()
-            i += nelem
-        wl.sort()
-
-        # count_input will be the number of input spectra that cover the
-        # corresponding wavelength in wl.
-        count_input = np.zeros(nwl, dtype=np.int64)
-        for in_spec in input_spectra:
-            input_wl = in_spec.wavelength
-            # wl0 and wl1 will be about a half pixel wider on either side
-            # of the wavelength range for the current input spectrum.
-            if input_wl[1] > input_wl[0]:       # wavelengths are increasing
-                wl0 = input_wl[0] - 0.5 * (input_wl[1] - input_wl[0])
-                wl1 = input_wl[-1] + 0.5 * (input_wl[-1] - input_wl[-2])
-            elif input_wl[1] < input_wl[0]:     # wavelengths are decreasing
-                wl0 = input_wl[-1] - 0.5 * (input_wl[-2] - input_wl[-1])
-                wl1 = input_wl[0] + 0.5 * (input_wl[0] - input_wl[1])
-            else:
-                raise RuntimeError("Wavelength increment must not be zero.")
-            temp = np.where(wl >= wl0, 1, 0)
-            temp = np.where(wl >= wl1, 0, temp)
-            count_input += temp
-            del temp
-        # This shouldn't happen.
-        if np.any(count_input <= 0.):
-            raise RuntimeError("Problem with input wavelengths.")
-
-        self.wavelength = self.compute_output_wl(wl, count_input)
+        self.wavelength = compute_output_wl(wl, n_input_spectra)
 
         self.wcs = create_spectral_wcs(input_spectra[0].right_ascension[0],
                                        input_spectra[0].declination[0],
                                        self.wavelength)
-
-    def compute_output_wl(self, wl, count_input):
-        """Compute output wavelengths.
-
-        In summary, the output wavelengths are computed by binning the
-        input wavelengths in groups of the number of overlapping spectra.
-        The merged and sorted input wavelengths are in `wl`.
-
-        If the wavelength arrays of the input spectra are nearly all the
-        same, the values in wl will be in clumps of N nearly identical
-        values (for N input files).  We want to average the wavelengths
-        in those clumps to get the output wavelengths.  However, if the
-        wavelength scales of the input files differ slightly, the values
-        in wl may clump in some regions but not in others.  The algorithm
-        below tries to find clumps; a clump is identified by having a
-        small standard deviation of all the wavelengths in a slice of wl,
-        compared with neighboring slices.  It is intended that this should
-        not find clumps where they're not present, i.e. in regions where
-        the wavelengths of the input spectra are not well aligned with each
-        other.  These regions will be gaps in the initial determination
-        of output wavelengths based on clumps.  In such regions, output
-        wavelengths will then be computed by just averaging groups of
-        input wavelengths to fill in the gaps.
-
-        Parameters
-        ----------
-        wl : 1-D array
-            An array containing all the wavelengths from all the input
-            spectra, sorted in increasing order.
-
-        count_input : 1-D array
-            An integer array of the same length as `wl`.  For a given
-            array index k (for example), count_input[k] is the number of
-            input spectra that cover wavelength wl[k].
-
-        Returns
-        -------
-        wavelength :  1-D array
-            Array of wavelengths for the output spectrum.
-        """
-
-        nwl = len(wl)
-
-        # sigma is an array of the standard deviation at each element
-        # of wl, over count_input elements.  A small value implies that
-        # there's a clump, i.e. several elements of wl with nearly the
-        # same wavelength.
-        sigma = np.zeros(nwl, dtype=np.float64) + 9999.
-
-        # mean_wl is the mean wavelength over the same slice of wl that we
-        # used to compute sigma.  If sigma is small enough that it looks
-        # as if there's a clump, we'll copy the mean_wl value to temp_wl
-        # to be one element of the output wavelengths.
-        mean_wl = np.zeros(nwl, dtype=np.float64) - 99.
-
-        # temp_wl has the same number of elements as wl, but we expect the
-        # array of output wavelengths to be significantly smaller, so
-        # temp_wl is initialized to a negative value as a flag.  Positive
-        # elements will be copied to the array of output wavelengths.
-        temp_wl = np.zeros(nwl, dtype=np.float64) - 99.
-
-        for k in range(nwl):
-            n = count_input[k]
-            if n == 1:
-                sigma[k] = 0.
-                mean_wl[k] = wl[k]
-                temp_wl[k] = mean_wl[k]
-            else:
-                k1 = k + n // 2 + 1
-                k0 = k1 - n
-                if k0 >= 0 and k1 <= nwl:
-                    sigma[k] = wl[k0:k1].std()
-                    mean_wl[k] = wl[k0:k1].mean()
-                    if sigma[k] == 0.:
-                        temp_wl[k] = mean_wl[k]
-
-        cutoff = 0.8
-        for k in range(nwl):
-            # If sigma[k] equals 0, temp_wl has already been assigned.
-            if sigma[k] > 0.:
-                if k == 0:
-                    if sigma[k] < cutoff * sigma[1]:
-                        temp_wl[k] = mean_wl[k]
-                elif k == nwl - 1:
-                    if sigma[k] < cutoff * sigma[nwl - 2]:
-                        temp_wl[k] = mean_wl[k]
-                else:
-                    if sigma[k] < cutoff * (sigma[k - 1] + sigma[k + 1]) / 2.:
-                        temp_wl[k] = mean_wl[k]
-
-        # Fill gaps in the output wavelengths by taking averages of the
-        # input wavelengths.  If there are n overlapping input spectra,
-        # average a block of n elements of `wl`.
-        done = False
-        i = 0
-        while not done:
-            if i >= nwl:
-                done = True
-            else:
-                n = count_input[i]
-                middle = n // 2
-                if i + middle < nwl:
-                    n = count_input[i + middle]
-                    if i + n < nwl:
-                        # The nominal range is i - 1 to i + n (inclusive) for
-                        # checking whether an output wavelength has already
-                        # been assigned.
-                        low = max(i - 1, 0)
-                        high = min(i + n + 1, nwl - 1)
-                        if temp_wl[low:high].max() <= 0.:
-                            temp_wl[i] = wl[i:i + n].mean()
-                i += n
-
-        return temp_wl[np.where(temp_wl > 0.)].copy()
 
     def accumulate_sums(self, input_spectra):
         """Compute a weighted sum of all the input spectra.
@@ -337,13 +168,19 @@ class OutputSpectrumModel:
             List of input spectra.
         """
 
+        # This is the data type for the output spectrum.  We'll use double
+        # precision for accumulating sums for most columns, but for the DQ
+        # array, use the correct output data type.
+        cmb_dtype = datamodels.CombinedSpecModel().spec_table.dtype
+        dq_dtype = cmb_dtype.fields["DQ"][0]
+
         nelem = self.wavelength.shape[0]
 
         self.flux = np.zeros(nelem, dtype=np.float64)
         self.error = np.zeros(nelem, dtype=np.float64)
         self.surf_bright = np.zeros(nelem, dtype=np.float64)
         self.sb_error = np.zeros(nelem, dtype=np.float64)
-        self.dq = np.zeros(nelem, dtype=self.dq_dtype)
+        self.dq = np.zeros(nelem, dtype=dq_dtype)
         self.weight = np.zeros(nelem, dtype=np.float64)
         self.count = np.zeros(nelem, dtype=np.float64)
 
@@ -415,15 +252,9 @@ class OutputSpectrumModel:
             log.warning("Data have not been divided by"
                         " the sum of the weights.")
 
-        dtype = [('WAVELENGTH', self.wavelength_dtype),
-                 ('FLUX', self.flux_dtype),
-                 ('ERROR', self.flux_dtype),
-                 ('SURF_BRIGHT', self.flux_dtype),
-                 ('SB_ERROR', self.flux_dtype),
-                 ('DQ', self.dq_dtype),
-                 ('WEIGHT', self.wavelength_dtype),
-                 ('N_INPUT', np.float64)]
+        cmb_dtype = datamodels.CombinedSpecModel().spec_table.dtype
 
+        # Note that these arrays have to be in the right order.
         data = np.array(list(zip(self.wavelength,
                                  self.flux,
                                  self.error,
@@ -431,7 +262,7 @@ class OutputSpectrumModel:
                                  self.sb_error,
                                  self.dq,
                                  self.weight,
-                                 self.count)), dtype=dtype)
+                                 self.count)), dtype=cmb_dtype)
         output_model = datamodels.CombinedSpecModel(spec_table=data)
 
         return output_model
@@ -446,10 +277,181 @@ class OutputSpectrumModel:
         self.weight = None
         self.count = None
         self.wcs = None
-        self.wavelength_dtype = None
-        self.flux_dtype = None
-        self.dq_dtype = None
         self.normalized = False
+
+
+def count_input(input_spectra):
+    """Determine the number of input spectra that cover each wavelength.
+
+    For any given input spectrum, the array of wavelengths gives the
+    wavelengths at the centers of the pixels.  In this context, the
+    expression that an input spectrum "covers" some particular wavelength
+    (typically not one of the elements in the input spectrum's array of
+    wavelengths) means that this wavelength is within the interval between
+    the left edge of the first pixel and the right edge of the last pixel
+    of the input spectrum.
+
+    Parameters
+    ----------
+    input_spectra : list of InputSpectrumModel objects
+        List of input spectra.
+
+    Returns
+    -------
+    wl : ndarray
+        Sorted list of all the wavelengths in all the input spectra.
+
+    n_input_spectra : 
+        For each element of `wl`, the corresponding element of
+        `n_input_spectra` is the number of input spectra that cover the
+        wavelength in `wl`.
+    """
+
+    # Create an array with all the input wavelengths (i.e. the union
+    # of the input wavelengths).
+    wl = np.hstack([in_spec.wavelength for in_spec in input_spectra])
+    wl.sort()
+    nwl = len(wl)
+
+    # n_input_spectra will be the number of input spectra that cover the
+    # corresponding wavelength in wl.
+    n_input_spectra = np.zeros(nwl, dtype=np.int64)
+    for in_spec in input_spectra:
+        input_wl = in_spec.wavelength
+        # wl0 and wl1 will be about a half pixel wider on either side
+        # of the wavelength range for the current input spectrum.
+        if input_wl[1] > input_wl[0]:       # wavelengths are increasing
+            wl0 = input_wl[0] - 0.5 * (input_wl[1] - input_wl[0])
+            wl1 = input_wl[-1] + 0.5 * (input_wl[-1] - input_wl[-2])
+        elif input_wl[1] < input_wl[0]:     # wavelengths are decreasing
+            wl0 = input_wl[-1] - 0.5 * (input_wl[-2] - input_wl[-1])
+            wl1 = input_wl[0] + 0.5 * (input_wl[0] - input_wl[1])
+        else:
+            raise RuntimeError("Wavelength increment must not be zero.")
+        temp = np.where(wl >= wl0, 1, 0)
+        temp = np.where(wl >= wl1, 0, temp)
+        n_input_spectra += temp
+        del temp
+    # This shouldn't happen.
+    if np.any(n_input_spectra <= 0.):
+        raise RuntimeError("Problem with input wavelengths.")
+
+    return (wl, n_input_spectra)
+
+
+def compute_output_wl(wl, n_input_spectra):
+    """Compute output wavelengths.
+
+    In summary, the output wavelengths are computed by binning the
+    input wavelengths in groups of the number of overlapping spectra.
+    The merged and sorted input wavelengths are in `wl`.
+
+    If the wavelength arrays of the input spectra are nearly all the
+    same, the values in wl will be in clumps of N nearly identical
+    values (for N input files).  We want to average the wavelengths
+    in those clumps to get the output wavelengths.  However, if the
+    wavelength scales of the input files differ slightly, the values
+    in wl may clump in some regions but not in others.  The algorithm
+    below tries to find clumps; a clump is identified by having a
+    small standard deviation of all the wavelengths in a slice of wl,
+    compared with neighboring slices.  It is intended that this should
+    not find clumps where they're not present, i.e. in regions where
+    the wavelengths of the input spectra are not well aligned with each
+    other.  These regions will be gaps in the initial determination
+    of output wavelengths based on clumps.  In such regions, output
+    wavelengths will then be computed by just averaging groups of
+    input wavelengths to fill in the gaps.
+
+    Parameters
+    ----------
+    wl : 1-D array
+        An array containing all the wavelengths from all the input
+        spectra, sorted in increasing order.
+
+    n_input_spectra : 1-D array
+        An integer array of the same length as `wl`.  For a given
+        array index k (for example), n_input_spectra[k] is the number of
+        input spectra that cover wavelength wl[k].
+
+    Returns
+    -------
+    wavelength :  1-D array
+        Array of wavelengths for the output spectrum.
+    """
+
+    nwl = len(wl)
+
+    # sigma is an array of the standard deviation at each element
+    # of wl, over n_input_spectra elements.  A small value implies that
+    # there's a clump, i.e. several elements of wl with nearly the
+    # same wavelength.
+    sigma = np.zeros(nwl, dtype=np.float64) + 9999.
+
+    # mean_wl is the mean wavelength over the same slice of wl that we
+    # used to compute sigma.  If sigma is small enough that it looks
+    # as if there's a clump, we'll copy the mean_wl value to temp_wl
+    # to be one element of the output wavelengths.
+    mean_wl = np.zeros(nwl, dtype=np.float64) - 99.
+
+    # temp_wl has the same number of elements as wl, but we expect the
+    # array of output wavelengths to be significantly smaller, so
+    # temp_wl is initialized to a negative value as a flag.  Positive
+    # elements will be copied to the array of output wavelengths.
+    temp_wl = np.zeros(nwl, dtype=np.float64) - 99.
+
+    for k in range(nwl):
+        n = n_input_spectra[k]
+        if n == 1:
+            sigma[k] = 0.
+            mean_wl[k] = wl[k]
+            temp_wl[k] = mean_wl[k]
+        else:
+            k1 = k + n // 2 + 1
+            k0 = k1 - n
+            if k0 >= 0 and k1 <= nwl:
+                sigma[k] = wl[k0:k1].std()
+                mean_wl[k] = wl[k0:k1].mean()
+                if sigma[k] == 0.:
+                    temp_wl[k] = mean_wl[k]
+
+    cutoff = 0.8
+    for k in range(nwl):
+        # If sigma[k] equals 0, temp_wl has already been assigned.
+        if sigma[k] > 0.:
+            if k == 0:
+                if sigma[k] < cutoff * sigma[1]:
+                    temp_wl[k] = mean_wl[k]
+            elif k == nwl - 1:
+                if sigma[k] < cutoff * sigma[nwl - 2]:
+                    temp_wl[k] = mean_wl[k]
+            else:
+                if sigma[k] < cutoff * (sigma[k - 1] + sigma[k + 1]) / 2.:
+                    temp_wl[k] = mean_wl[k]
+
+    # Fill gaps in the output wavelengths by taking averages of the
+    # input wavelengths.  If there are n overlapping input spectra,
+    # average a block of n elements of `wl`.
+    done = False
+    i = 0
+    while not done:
+        if i >= nwl:
+            done = True
+        else:
+            n = n_input_spectra[i]
+            middle = n // 2
+            if i + middle < nwl:
+                n = n_input_spectra[i + middle]
+                if i + n < nwl:
+                    # The nominal range is i - 1 to i + n (inclusive) for
+                    # checking whether an output wavelength has already
+                    # been assigned.
+                    low = max(i - 1, 0)
+                    high = min(i + n + 1, nwl - 1)
+                    if temp_wl[low:high].max() <= 0.:
+                        temp_wl[i] = wl[i:i + n].mean()
+            i += n
+
+    return temp_wl[np.where(temp_wl > 0.)].copy()
 
 
 def check_exptime(exptime_key):

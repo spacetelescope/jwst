@@ -1,6 +1,11 @@
 0.13.3 (Unreleased)
 ===================
 
+combine_1d
+----------
+
+- Unit tests were added to combine_1d.  [#3489]
+
 datamodels
 ----------
 
