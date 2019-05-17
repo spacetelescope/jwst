@@ -195,7 +195,7 @@ def apply_flat_field(science, flat):
 #
 
 def do_nirspec_flat_field(output_model, f_flat_model, s_flat_model, d_flat_model):
-    """Apply flat-fielding for NIRSpec data, updating the output model.
+    """Apply flat-fielding for NIRSpec data, updating in-place
 
     Parameters
     ----------
@@ -334,7 +334,7 @@ def do_nirspec_flat_field(output_model, f_flat_model, s_flat_model, d_flat_model
             log.warning("Wavelengths in science data appear to be in meters.")
 
         # Combine the three flat fields for the current subarray.
-        flat_2d, flat_dq_2d = create_flat_field(wl,
+        flat_2d, flat_dq_2d, flat_err_2d = create_flat_field(wl,
                         f_flat_model, s_flat_model, d_flat_model,
                         xstart, xstop, ystart, ystop,
                         exposure_type, slit.name, slit_nt)
@@ -655,7 +655,7 @@ def nirspec_ifu(output_model,
 def create_flat_field(wl, f_flat_model, s_flat_model, d_flat_model,
                       xstart, xstop, ystart, ystop,
                       exposure_type, slit_name, slit_nt=None):
-    """Extract and combine flat field components.
+    """Extract and combine flat field components for NIRSpec
 
     Parameters
     ----------
@@ -708,27 +708,31 @@ def create_flat_field(wl, f_flat_model, s_flat_model, d_flat_model,
         log.warning("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
         dispaxis = HORIZONTAL
 
-    (f_flat, f_flat_dq) = fore_optics_flat(wl, f_flat_model, exposure_type,
-                                           slit_name, slit_nt, dispaxis)
-
-    (s_flat, s_flat_dq) = spectrograph_flat(wl, s_flat_model,
-                                            xstart, xstop, ystart, ystop,
-                                            exposure_type, slit_name, dispaxis)
-
-    (d_flat, d_flat_dq) = detector_flat(wl, d_flat_model,
-                                        xstart, xstop, ystart, ystop,
-                                        exposure_type, slit_name, dispaxis)
+    f_flat, f_flat_dq, f_flat_err = fore_optics_flat(wl, f_flat_model,
+                                                    exposure_type, slit_name,
+                                                    slit_nt, dispaxis)
+    s_flat, s_flat_dq, s_flat_err = spectrograph_flat(wl, s_flat_model,
+                                                    xstart, xstop, ystart, ystop,
+                                                    exposure_type, slit_name,
+                                                    dispaxis)
+    d_flat, d_flat_dq, d_flat_err = detector_flat(wl, d_flat_model,
+                                                    xstart, xstop, ystart, ystop,
+                                                    exposure_type, slit_name,
+                                                    dispaxis)
 
     flat_2d = f_flat * s_flat * d_flat
 
     flat_dq = combine_dq(f_flat_dq, s_flat_dq, d_flat_dq,
                          default_shape=flat_2d.shape)
 
+    # Placeholder for the error array
+    flat_err = np.zeros_like(flat_2d)
+
     mask1 = np.bitwise_and(flat_dq, dqflags.pixel['UNRELIABLE_FLAT'])
     mask2 = np.bitwise_and(flat_dq, dqflags.pixel['NO_FLAT_FIELD'])
     flat_2d[mask1 + mask2 > 0] = 1.
 
-    return (flat_2d, flat_dq)
+    return flat_2d, flat_dq, flat_err
 
 
 def find_dispaxis(wl):
@@ -800,12 +804,16 @@ def fore_optics_flat(wl, f_flat_model, exposure_type,
 
     f_flat_dq : ndarray, 2d, uint32, or None
         The associated data quality array.
+
+    f_flat_err : ndarray, 2d, float32, or None
+        The associated error array.
     """
 
     if f_flat_model is None:
         f_flat = np.ones(wl.shape, dtype=np.float32)
         f_flat_dq = None
-        return (f_flat, f_flat_dq)
+        f_flat_err = None
+        return f_flat, f_flat_dq, f_flat_err
 
     if slit_nt is None:
         quadrant = None
@@ -851,12 +859,13 @@ def fore_optics_flat(wl, f_flat_model, exposure_type,
         tab_flat *= np.interp(tab_wl, image_wl, one_d_flat, 1., 1.)
 
     f_flat_dq = None
+    f_flat_err = None
 
     # The shape of the output array is obtained from `wl`.
-    (f_flat, f_flat_dq) = combine_fast_slow(wl, flat_2d, f_flat_dq,
+    f_flat, f_flat_dq = combine_fast_slow(wl, flat_2d, f_flat_dq,
                                             tab_wl, tab_flat, dispaxis)
 
-    return (f_flat, f_flat_dq)
+    return f_flat, f_flat_dq, f_flat_err
 
 
 def spectrograph_flat(wl, s_flat_model,
@@ -898,6 +907,9 @@ def spectrograph_flat(wl, s_flat_model,
 
     s_flat_dq : ndarray, 2d, uint32, or None
         The associated data quality array.
+
+    s_flat_err : ndarray, 2d, float32, or None
+        The associated error array.
     """
 
     if s_flat_model is None:
@@ -932,10 +944,12 @@ def spectrograph_flat(wl, s_flat_model,
         flat_2d = full_array_flat[ystart:ystop, xstart:xstop]
         s_flat_dq = full_array_dq[ystart:ystop, xstart:xstop]
 
-    (s_flat, s_flat_dq) = combine_fast_slow(wl, flat_2d, s_flat_dq,
-                                            tab_wl, tab_flat, dispaxis)
+    s_flat_err = None
 
-    return (s_flat, s_flat_dq)
+    s_flat, s_flat_dq = combine_fast_slow(wl, flat_2d, s_flat_dq,
+                                          tab_wl, tab_flat, dispaxis)
+
+    return s_flat, s_flat_dq, s_flat_err
 
 
 def detector_flat(wl, d_flat_model,
@@ -977,6 +991,9 @@ def detector_flat(wl, d_flat_model,
 
     d_flat_dq : ndarray, 2d, uint32, or None
         The associated data quality array.
+
+    d_flat_err : ndarray, 2d, float32, or None
+        The associated error array.
     """
 
     if d_flat_model is None:
@@ -1006,13 +1023,14 @@ def detector_flat(wl, d_flat_model,
     if image_wl.max() < MICRONS_100:
         log.warning("Wavelengths in d_flat image appear to be in meters.")
 
-    (flat_2d, d_flat_dq) = interpolate_flat(image_flat, image_dq,
-                                            image_wl, wl)
+    d_flat_err = None
 
-    (d_flat, d_flat_dq) = combine_fast_slow(wl, flat_2d, d_flat_dq,
-                                            tab_wl, tab_flat, dispaxis)
+    flat_2d, d_flat_dq = interpolate_flat(image_flat, image_dq, image_wl, wl)
 
-    return (d_flat, d_flat_dq)
+    d_flat, d_flat_dq = combine_fast_slow(wl, flat_2d, d_flat_dq,
+                                          tab_wl, tab_flat, dispaxis)
+
+    return d_flat, d_flat_dq, d_flat_err
 
 
 def combine_dq(f_flat_dq, s_flat_dq, d_flat_dq, default_shape):
