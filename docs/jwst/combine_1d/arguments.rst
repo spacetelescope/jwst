@@ -14,9 +14,3 @@ the exposure time (FITS keyword EFFEXPTM) is used as the weight.  If
 the string is "unit_weight" or "unit weight", the same weight (1) will
 be used for all input spectra.  If the string is anything else, a warning
 will be logged and unit weight will be used.
-
-*  ``--background``
-
-Set this boolean parameter to True if the input spectra are all just
-background.  The default is False, meaning that the input are science
-spectra.
