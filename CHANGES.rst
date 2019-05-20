@@ -10,6 +10,11 @@ ami
   initial values of the estimation parameters, and the filtering routine 
   arguments.  [#3487]
 
+assign_wcs
+------------
+
+- Fix a one pixel off problem with the Nirspec NRS2 WCS transforms. [#3473]
+
 datamodels
 ----------
 
@@ -25,6 +30,28 @@ master_background
   was being combined instead of the background columns.  [#3468]
 
 - Use the surf_bright column instead of flux in master_background.  [#3476]
+
+model_blender
+-------------
+
+- Allow blendmodels to ignore attributes in asdf tree not in schema [#3480]
+
+photom
+------
+
+- Updated to zero-out pixels outside the wavelength range of flux calibration
+  and set DQ=DO_NOT_USE. [#3475, #3489]
+
+refpix
+------
+
+- Fixed a bug where pixeldq arrays were being transformed from DMS to detector
+  coordinates for every group instead of just once
+
+tweakreg
+--------
+
+- Mask and do not use NON-SCIENCE regions in tweakreg source detection. [#3461]
 
 
 0.13.2 (2019-05-14)
