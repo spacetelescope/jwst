@@ -1076,12 +1076,12 @@ def dms_to_sca(input_model):
         ystart = 1
     # The SCA coordinates are in full frame
     # The inputs are 1-based, remove -1 when'if they are 0-based
-    # The outputs must be 1-based becaause this is what the model expects.
+    # The outputs must be 1-based because this is what the model expects.
     # If xstart was 0-based and the inputs were 0-based ->
     # Shift(+1)
     subarray2full = models.Shift(xstart - 1) & models.Shift(ystart - 1)
     if detector == 'NRS2':
-        model = models.Shift(-2048) & models.Shift(-2048) | models.Scale(-1) & models.Scale(-1)
+        model = models.Shift(-2047) & models.Shift(-2047) | models.Scale(-1) & models.Scale(-1)
     elif detector == 'NRS1':
         model = models.Identity(2)
     return subarray2full | model

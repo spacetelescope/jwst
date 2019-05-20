@@ -1,6 +1,12 @@
 0.13.3 (Unreleased)
 ===================
 
+- assign_wcs
+------------
+
+- Fix a one pixel off problem with the Nirspec NRS2 WCS transforms. [#3473]
+
+
 datamodels
 ----------
 
