@@ -329,11 +329,11 @@ class NrmModel:
             self.model_over = leastsqnrm.multiplyenv(self.model_beam, self.fringes)
 
             self.model = np.zeros((self.fov,self.fov, self.model_over.shape[2]))
+
             # loop over slices "sl" in the model
             for sl in range(self.model_over.shape[2]):
                 self.model[:,:,sl] = utils.rebin( self.model_over[:,:,sl],
-                                                (self.over, self.over))
-
+                                            (self.over, self.over))
             return self.model
 
         else:
@@ -371,7 +371,7 @@ class NrmModel:
                     model_binned[:,:,sl] = utils.rebin(
                         self.model_over[:,:,sl], (self.over, self.over))
 
-                    self.model += w*model_binned
+                self.model += w*model_binned
 
             return self.model
 
@@ -582,7 +582,7 @@ class NrmModel:
                 rotate=self.rot_measured, centering=centering)
 
         try:
-            self.gof = goodness_of_fit(img, self.refpsf)
+            self.gof = goodness_of_fit(img,self.refpsf)
         except Exception:
             self.gof = False
 
