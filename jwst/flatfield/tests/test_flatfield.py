@@ -43,6 +43,10 @@ def test_flatfield_step_interface(tmpdir, instrument, exptype):
     flat.err = np.random.random(shape) * 0.05
     flat.save(flat_file)
 
+    # override class attribute so only the `flat` type needs to be overriden
+    # in the step call.  Otherwise CRDS calls will be made for the other 3
+    # types of flat reference file.
+    FlatFieldStep.reference_file_types = ["flat"]
     result = FlatFieldStep.call(data, override_flat=flat_file)
 
     assert (result.data == data.data).all()
