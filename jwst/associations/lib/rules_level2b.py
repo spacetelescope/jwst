@@ -519,15 +519,32 @@ class Asn_Lv2WFSS(
     def __init__(self, *args, **kwargs):
 
         self.constraints = Constraint([
+
+            # Basic constraints
             Constraint_Base(),
-            Constraint_Mode(),
             Constraint_Target(),
-            Constraint_Single_Science(self.has_science),
-            DMSAttrConstraint(
-                name='exp_type',
-                sources=['exp_type'],
-                value='nis_wfss|nrc_wfss',
-            )
+
+            # Allow WFSS exposures but account for the direct imaging.
+            Constraint([
+
+                # Constrain on the WFSS exposure
+                Constraint([
+                    DMSAttrConstraint(
+                        name='exp_type',
+                        sources=['exp_type'],
+                        value='nis_wfss|nrc_wfss',
+                    ),
+                    Constraint_Mode(),
+                    Constraint_Single_Science(self.has_science),
+                ]),
+
+                # Or select related imaging exposures.
+                DMSAttrConstraint(
+                    name='image_exp_type',
+                    sources=['exp_type'],
+                    value='nis_image|nrc_image',
+                ),
+            ], reduce=Constraint.any)
         ])
 
         super(Asn_Lv2WFSS, self).__init__(*args, **kwargs)
@@ -574,6 +591,18 @@ class Asn_Lv2WFSS(
             opt_elem = 'clear'
         return opt_elem
 
+    def get_exposure_type(self, item, default='science'):
+        """Modify exposure type depending on dither pointing index
+
+        If an imaging exposure as been found, treat is as a direct image.
+        """
+        exp_type = super(Asn_Lv2WFSS, self).get_exposure_type(
+            item, default
+        )
+        if exp_type == 'science' and item['exp_type'] in ['nis_image', 'nrc_image']:
+            exp_type = 'direct_image'
+
+        return exp_type
 
 @RegistryMarker.rule
 class Asn_Lv2NRSMSA(
