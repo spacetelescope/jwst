@@ -502,16 +502,16 @@ class Asn_Lv2NRSLAMPSpectral(
 
 
 @RegistryMarker.rule
-class Asn_Lv2WFSS_NIS(
+class Asn_Lv2WFSS(
         AsnMixin_Lv2Spectral,
         DMSLevel2bBase
 ):
-    """Level2b NIRISS WFSS/GRISM Association
+    """Level2b WFSS/GRISM Association
 
     Characteristics:
         - Association type: ``spec2``
         - Pipeline: ``calwebb_spec2``
-        - Spectral-based NIRISS mutli-object science exposures
+        - Mutli-object science exposures
         - Single science exposure
         - Require a source catalog from processing of the corresponding direct imagery.
     """
@@ -526,15 +526,15 @@ class Asn_Lv2WFSS_NIS(
             DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
-                value='nis_wfss',
+                value='nis_wfss|nrc_wfss',
             )
         ])
 
-        super(Asn_Lv2WFSS_NIS, self).__init__(*args, **kwargs)
+        super(Asn_Lv2WFSS, self).__init__(*args, **kwargs)
 
     def _init_hook(self, item):
         """Post-check and pre-add initialization"""
-        super(Asn_Lv2WFSS_NIS, self)._init_hook(item)
+        super(Asn_Lv2WFSS, self)._init_hook(item)
 
         # Get the Level3 product name of this association.
         # Except for the grism component, it should be what
