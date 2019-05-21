@@ -27,7 +27,7 @@ HORIZONTAL = 1
 VERTICAL = 2
 
 
-def do_correction(input_model, flat, fflat, sflat, dflat):
+def do_correction(input_model, flat=None, fflat=None, sflat=None, dflat=None):
     """Flat-field a JWST data model using a flat-field model
 
     Parameters
