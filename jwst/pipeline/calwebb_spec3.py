@@ -20,6 +20,7 @@ __all__ = ['Spec3Pipeline']
 # Group exposure types
 MULTISOURCE_MODELS = ['MultiSlitModel']
 IFU_EXPTYPES = ['MIR_MRS', 'NRS_IFU']
+SLITLESS_TYPES = ['NIS_WFSS', 'NRC_WFSS'] #, 'NRC_TSGRISM']
 
 
 class Spec3Pipeline(Pipeline):
@@ -142,26 +143,29 @@ class Spec3Pipeline(Pipeline):
                 result = self.mrs_imatch(result)
 
             # Call outlier detection
-            result = self.outlier_detection(result)
+            if exptype not in SLITLESS_TYPES:
+                result = self.outlier_detection(result)
 
-            # Resample time. Dependent on whether the data is IFU or
-            # not.
-            resample_complete = None
-            if exptype in IFU_EXPTYPES:
-                result = self.cube_build(result)
-                try:
-                    resample_complete = result[0].meta.cal_step.cube_build
-                except AttributeError:
-                    pass
-            else:
-                result = self.resample_spec(result)
-                try:
-                    resample_complete = result.meta.cal_step.resample
-                except AttributeError:
-                    pass
+                # Resample time. Dependent on whether the data is IFU or
+                # not.
+                resample_complete = None
+                if exptype in IFU_EXPTYPES:
+                    result = self.cube_build(result)
+                    try:
+                        resample_complete = result[0].meta.cal_step.cube_build
+                    except AttributeError:
+                        pass
+                else:
+                    result = self.resample_spec(result)
+                    try:
+                        resample_complete = result.meta.cal_step.resample
+                    except AttributeError:
+                        pass
 
             # Do 1-D spectral extraction
-            if resample_complete is not None and \
+            if exptype in SLITLESS_TYPES:
+                result = self.extract_1d(result)
+            elif resample_complete is not None and \
                resample_complete.upper() == 'COMPLETE':
                 if exptype in IFU_EXPTYPES:
                     self.extract_1d.search_output_file = False
