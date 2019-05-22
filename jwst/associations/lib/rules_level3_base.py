@@ -42,6 +42,7 @@ from jwst.associations.lib.dms_base import (
     TSO_EXP_TYPES,
 )
 from jwst.associations.lib.format_template import FormatTemplate
+from jwst.associations.lib.member import Member
 
 __all__ = [
     'ASN_SCHEMA',
@@ -213,7 +214,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             Item to use as a source. If not given, item-specific
             information will be left unchanged.
 
-        member : dict or None
+        member : Member or None
             An association member to use as source.
             If not given, member-specific information will be update
             from current association/product membership.
@@ -270,7 +271,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
         Returns
         -------
-        member : dict
+        member : Member
             The member
         """
         try:
@@ -291,12 +292,15 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
                 item['filename'], exp_type=item['exp_type'], is_tso=is_tso
             )
 
-        member = {
-            'expname': expname,
-            'exptype': exptype,
-            'exposerr': exposerr,
-            'asn_candidate': item['asn_candidate']
-        }
+        member = Member(
+            {
+                'expname': expname,
+                'exptype': exptype,
+                'exposerr': exposerr,
+                'asn_candidate': item['asn_candidate']
+            },
+            item=item
+        )
         return member
 
     def make_fixedslit_bkg(self):
@@ -320,7 +324,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
                 bkg_name = remove_suffix(
                     splitext(split(science_exp['expname'])[1])[0])[0]
                 bkg_name = bkg_name+'_x1d.fits'
-                now_background = copy.copy(science_exp)
+                now_background = Member(science_exp)
                 now_background['expname'] = bkg_name
                 now_background['exptype'] = 'background'
                 # Add the background file to the association table
@@ -412,10 +416,13 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             exptype = 'science'
             if with_exptype:
                 item, exptype = item
-            member = {
-                'expname': item,
-                'exptype': exptype
-            }
+            member = Member(
+                {
+                    'expname': item,
+                    'exptype': exptype
+                },
+                item=item
+            )
             self.update_validity(member)
             members.append(member)
             self.from_items.append(item)
@@ -456,7 +463,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
         Parameters
         ----------
-        member : dict
+        member : Member
             Member being added causing check.
             Not used
 

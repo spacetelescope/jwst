@@ -8,6 +8,7 @@ from jwst.associations.lib.dms_base import (
     Constraint_TSO,
     format_list
 )
+from jwst.associations.lib.member import Member
 from jwst.associations.lib.process_list import ProcessList
 from jwst.associations.lib.rules_level2_base import *
 from jwst.associations.lib.rules_level3_base import DMS_Level3_Base
@@ -27,7 +28,7 @@ __all__ = [
     'Asn_Lv2Spec',
     'Asn_Lv2SpecSpecial',
     'Asn_Lv2SpecTSO',
-    'Asn_Lv2WFSS_NIS',
+    'Asn_Lv2WFSS',
     'Asn_Lv2WFSC',
 ]
 
@@ -559,10 +560,10 @@ class Asn_Lv2WFSS(
         lv3_direct_image_catalog = DMS_Level3_Base._dms_product_name(self) + '_cat.ecsv'
 
         # Insert the needed catalog member
-        member = {
+        member = Member({
             'expname': lv3_direct_image_catalog,
             'exptype': 'sourcecat'
-        }
+        })
         members = self.current_product['members']
         members.append(member)
 

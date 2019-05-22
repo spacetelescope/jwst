@@ -165,7 +165,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
         Returns
         -------
-        member : dict
+        member : Member
             The member
         """
 
@@ -321,7 +321,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
         Parameters
         ----------
-        member : obj
+        member : Member
             Member being added. Ignored.
 
         Returns

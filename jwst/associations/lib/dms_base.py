@@ -325,7 +325,7 @@ class DMSBaseMixin(ACIDMixin):
 
         Parameters
         ----------
-        new_member : dict
+        new_member : Member
             The member to check for
         """
         try:
@@ -402,7 +402,7 @@ class DMSBaseMixin(ACIDMixin):
             Item to use as a source. If not given, item-specific
             information will be left unchanged.
 
-        member : dict or None
+        member : Member or None
             An association member to use as source.
             If not given, member-specific information will be update
             from current association/product membership.
