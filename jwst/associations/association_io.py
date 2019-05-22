@@ -8,12 +8,23 @@ import yaml as yaml_lib
 
 from .association import Association
 from .exceptions import AssociationNotValidError
+from .lib.member import Member
 
 # Configure logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 __all__ = []
+
+
+# Define JSON encoder to convert `Member` to `dict`
+class AssociationEncoder(json_lib.JSONEncoder):
+    """Encode to handle Associations"""
+    def default(self, obj):
+
+        # Convert Member to a simple dict
+        if isinstance(obj, Member):
+            return obj.data
 
 
 @Association.ioregistry
@@ -77,7 +88,7 @@ class json():
         """
         return (
             asn.asn_name,
-            json_lib.dumps(asn.data, indent=4, separators=(',', ': '))
+            json_lib.dumps(asn.data, cls=AssociationEncoder, indent=4, separators=(',', ': '))
         )
 
 

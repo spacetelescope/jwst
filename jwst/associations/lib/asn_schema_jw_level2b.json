@@ -36,7 +36,6 @@
                         "description": "Array of input members.",
                         "type": "array",
                         "items": {
-                            "type": "object",
                             "required": ["expname", "exptype"],
                             "properties": {
                                 "expname": {
