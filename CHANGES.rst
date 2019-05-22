@@ -2,11 +2,6 @@
 ===================
 
 
-combine_1d
-----------
-
-- Unit tests were added to combine_1d.  [#3490]
-
 ami
 ---
 
@@ -21,6 +16,11 @@ assign_wcs
 
 - Fix a one pixel off problem with the Nirspec NRS2 WCS transforms. [#3473]
 
+combine_1d
+----------
+
+- Unit tests were added to combine_1d.  [#3490]
+
 datamodels
 ----------
 
@@ -28,6 +28,10 @@ datamodels
   ``http://stsci.edu/schemas/jwst_datamodel/image.schema`` instead of
   ``http://jwst.stsci.edu/schemas/image.schema.yaml``.  The datamodels
   ``BaseExtension`` is renamed internally to ``DataModelExtension``. [#3437]
+
+extract_1d
+----------
+- An indexing bug was fixed. [#3497]
 
 master_background
 -----------------
