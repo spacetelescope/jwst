@@ -217,7 +217,6 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         member = self.make_member(item)
         members = self.current_product['members']
         members.append(member)
-        self.from_items.append(item)
         self.update_validity(member)
 
         # Update association state due to new member
@@ -291,9 +290,8 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             member = Member({
                 'expname': item,
                 'exptype': 'science'
-            })
+            }, item=item)
             members.append(member)
-            self.from_items.append(item)
             self.update_validity(member)
             self.update_asn()
 

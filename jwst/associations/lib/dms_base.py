@@ -168,7 +168,6 @@ class DMSBaseMixin(ACIDMixin):
         super(DMSBaseMixin, self).__init__(*args, **kwargs)
 
         self._acid = None
-        self.from_items = []
         self.sequence = None
         if 'degraded_status' not in self.data:
             self.data['degraded_status'] = _DEGRADED_STATUS_OK
@@ -238,6 +237,16 @@ class DMSBaseMixin(ACIDMixin):
     @property
     def current_product(self):
         return self.data['products'][-1]
+
+    @property
+    def from_items(self):
+        """List of items from which members were created"""
+        items = [
+            member.item
+            for product in self['products']
+            for member in product['members']
+        ]
+        return items
 
     @property
     def member_ids(self):
