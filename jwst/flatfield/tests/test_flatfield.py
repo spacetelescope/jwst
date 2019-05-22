@@ -3,6 +3,7 @@ import numpy as np
 
 from jwst import datamodels
 from jwst.flatfield import FlatFieldStep
+from jwst.flatfield.flat_field_step import NRS_IMAGING_MODES
 
 
 @pytest.mark.parametrize(
@@ -10,13 +11,12 @@ from jwst.flatfield import FlatFieldStep
     [
         ("NIRCAM", "NRC_IMAGE"),
         ("NIRCAM", "NRC_WFSS"),
-        ("NIRSPEC", "NRS_FOCUS"),
         ("MIRI", "MIR_IMAGE"),
         ("MIRI", "MIR_LRS-FIXEDSLIT"),
         ("MIRI", "MIR_MRS"),
         ("NIRISS", "NIS_IMAGE"),
         ("FGS", "FGS_IMAGE"),
-    ]
+    ] + [("NIRSPEC", exptype) for exptype in NRS_IMAGING_MODES]
 )
 def test_flatfield_step_interface(tmpdir, instrument, exptype):
     """Test that the basic inferface works for data requiring a FLAT reffile"""
