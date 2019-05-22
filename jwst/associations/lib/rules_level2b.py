@@ -1,9 +1,11 @@
 """Association Definitions: DMS Level2b product associations
 """
+from collections import deque
 import logging
 
+from jwst.associations.exceptions import AssociationNotValidError
 from jwst.associations.registry import RegistryMarker
-from jwst.associations.lib.constraint import (Constraint, SimpleConstraint)
+from jwst.associations.lib.constraint import (Constraint, SimpleConstraint, getattr_from_list)
 from jwst.associations.lib.dms_base import (
     Constraint_TSO,
     format_list
@@ -550,47 +552,79 @@ class Asn_Lv2WFSS(
 
         super(Asn_Lv2WFSS, self).__init__(*args, **kwargs)
 
-    def _init_hook(self, item):
-        """Post-check and pre-add initialization"""
-        super(Asn_Lv2WFSS, self)._init_hook(item)
+    def add_catalog_member(self):
+        """Add catalog member based on direct image members"""
+        directs = self.members_by_type('direct_image')
+        if not directs:
+            raise AssociationNotValidError(
+                '{} has no required direct image exposures'.format(
+                    self.__class__.__name__
+                )
+            )
 
-        # Get the Level3 product name of this association.
-        # Except for the grism component, it should be what
-        # the Level3 direct image name is.
+        sciences = self.members_by_type('science')
+        if not sciences:
+            raise AssociationNotValidError(
+                '{} has no required science exposure'.format(
+                    self.__class__.__name__
+                )
+            )
+        science = sciences[0]
+
+        # Get the exposure sequence for the science. Then, find
+        # the direct image greater than but closest to this value.
+        expspcin = int(getattr_from_list(science.item, ['expspcin'], _EMPTY)[1])
+        min_diff = -1         # Initialize to an invalid value.
+        closest = directs[0]  # If the search fails, just use the first.
+        for direct in directs:
+            direct_expspcin = int(getattr_from_list(
+                direct.item, ['expspcin'], _EMPTY
+            )[1])
+            diff = direct_expspcin - expspcin
+            if diff > min_diff:
+                min_diff = diff
+                closest = direct
+
+        # Note the selected direct image. Used in `Asn_Lv2WFSS._get_opt_element`
+        self.direct_image = closest
+
+        # Remove all other direct images from the association.
+        members = self.current_product['members']
+        direct_idxs = [
+            idx
+            for idx, member in enumerate(members)
+            if member['exptype'] == 'direct_image' and member != closest
+        ]
+        deque((
+            list.pop(members, idx)
+            for idx in sorted(direct_idxs, reverse=True)
+        ))
+
+        # Finally, add the catalog member
         lv3_direct_image_catalog = DMS_Level3_Base._dms_product_name(self) + '_cat.ecsv'
-
-        # Insert the needed catalog member
-        member = Member({
+        catalog_member = Member({
             'expname': lv3_direct_image_catalog,
             'exptype': 'sourcecat'
         })
-        members = self.current_product['members']
-        members.append(member)
+        members.append(catalog_member)
 
-    def _get_opt_element(self):
-        """Get string representation of the optical elements
-        Returns
-        -------
-        opt_elem: str
-            The Level3 Product name representation
-            of the optical elements.
-        Notes
-        -----
-        This is an override for the method in `DMSBaseMixin`.
-        The second optical element, the grism, would never be part
-        of the direct image Level3 name.
+    def finalize(self):
+        """Finalize the association
+
+        For WFSS, this involves taking all the direct image exposures,
+        determine which one is first after last science exposure,
+        and creating the catalog name from that image.
         """
-        opt_elem = ''
         try:
-            value = format_list(self.constraints['opt_elem2'].found_values)
-        except KeyError:
-            pass
-        else:
-            if value not in _EMPTY and value != 'clear':
-                opt_elem = value
-        if opt_elem == '':
-            opt_elem = 'clear'
-        return opt_elem
+            self.add_catalog_member()
+        except AssociationNotValidError:
+            logger.debug(
+                '%s has no required direct image exposures',
+                self.__class__.__name__
+            )
+            return None
+
+        return super(Asn_Lv2WFSS, self).finalize()
 
     def get_exposure_type(self, item, default='science'):
         """Modify exposure type depending on dither pointing index
@@ -604,6 +638,50 @@ class Asn_Lv2WFSS(
             exp_type = 'direct_image'
 
         return exp_type
+
+    def _get_opt_element(self):
+        """Get string representation of the optical elements
+
+        Returns
+        -------
+        opt_elem: str
+            The Level3 Product name representation
+            of the optical elements.
+        Notes
+        -----
+        This is an override for the method in `DMSBaseMixin`.
+        The optical element is retieved from the chosen direct image
+        found in `self.direct_image`, determined in the `self.finalize`
+        method.
+        """
+        item = self.direct_image.item
+        try:
+            opt_elem = getattr_from_list(
+                item, ['filter', 'band'], _EMPTY
+            )[1]
+        except KeyError:
+            opt_elem = None
+        else:
+            opt_elem = None if opt_elem == 'clear' else opt_elem
+        try:
+            opt_elem2 = getattr_from_list(
+                item, ['pupil', 'grating'], _EMPTY
+            )[1]
+        except KeyError:
+            opt_elem2 = None
+        else:
+            opt_elem2 = None if opt_elem2 == 'clear' else opt_elem2
+
+        full_opt_elem = []
+        if opt_elem2:
+            full_opt_elem.append(opt_elem2)
+        if opt_elem and opt_elem2:
+            full_opt_elem.append('-')
+        if opt_elem:
+            full_opt_elem.append(opt_elem)
+
+        return ''.join(full_opt_elem)
+
 
 @RegistryMarker.rule
 class Asn_Lv2NRSMSA(
