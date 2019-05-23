@@ -20,22 +20,14 @@ log.setLevel(logging.DEBUG)
 HUGE_NUM = np.finfo(np.float32).max
 
 
-#def find_crs(indata, ingdq, read_noise, rej_threshold, nframes):
-def find_crs(indata):
-
+def find_crs(data, group_dq, read_noise, rej_threshold, nframes):
     """
     Find CRs/Jumps in each integration within the input data array.
     The input data array is assumed to be in units of electrons, i.e. already
     multiplied by the gain. We also assume that the read noise is in units of
     electrons.
     """
-    if isinstance(indata, tuple):
-        read_noise = indata[2]
-        rej_threshold = indata[3]
-        nframes = indata[4]
-        data = indata[0]
-        ingdq = indata[1]
-    gdq = ingdq.copy()
+    gdq = group_dq.copy()
     # Get data characteristics
     (nints, ngroups, nrows, ncols) = data.shape
 
@@ -43,7 +35,7 @@ def find_crs(indata):
     median_slopes = np.zeros((nints, nrows, ncols), dtype=np.float32)
 
     # Square the read noise values, for use later
-    read_noise_2 = read_noise * read_noise
+    read_noise_2 = read_noise**2
 
     # Reset saturated values in input data array to NaN, so they don't get
     # used in any of the subsequent calculations
@@ -170,7 +162,7 @@ def find_crs(indata):
 
             # Save the CR-cleaned median slope for this pixel
             if not new_CR_found:  # the while loop ran at least one time
-                 median_slopes[integration, row1[j], col1[j]] = pixel_med_diff
+                median_slopes[integration, row1[j], col1[j]] = pixel_med_diff
 
         # Next pixel with an outlier (j loop)
     # Next integration (integration loop)

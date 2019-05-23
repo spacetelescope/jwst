@@ -89,31 +89,33 @@ def detect_jumps (input_model, gain_model, readnoise_model,
     # Apply the 2-point difference method as a first pass
     log.info('Executing two-point difference method')
     start = time.time()
-    scisize = data.shape
-    numx = int(scisize[3])
-    numy = int(scisize[2])
+    numx = data.shape[-1]
+    numy = data.shape[-2]
     median_slopes = np.zeros((numy, numx), dtype=np.float32)
     yincrement = int(numy / numslices)
     slices = []
+    # Slice up data, gdq, readnoise_2d into slices
+    # Each element of slices is a tuple of
+    # (data, gdq, readnoise_2d, rejection_threshold, nframes)
     for i in range(numslices - 1):
         slices.insert(i, (data[:, :, i * yincrement:(i + 1) * yincrement, :],
                           gdq[:, :, i * yincrement:(i + 1) * yincrement, :],
                           readnoise_2d[i * yincrement:(i + 1) * yincrement, :],
                           rejection_threshold, nframes))
-    slices.insert(numslices - 1, (data[:, :, (numslices - 1) * yincrement:numy, :],  # last slice get the rest
+    # last slice get the rest
+    slices.insert(numslices - 1, (data[:, :, (numslices - 1) * yincrement:numy, :],
                                  gdq[:, :, (numslices - 1) * yincrement:numy, :],
                                  readnoise_2d[(numslices - 1) * yincrement:numy, :],
                                  rejection_threshold, nframes))
-    if yincrement * numslices != numy:  # last slice is a larger one
-        print("odd last slice ", yincrement, numy - (numslices - 1) * yincrement)
-    if numslices == 1:  # don't spin off other processes for one slice
-        median_slopes, gdq = twopt.find_crs((data, gdq, readnoise_2d, rejection_threshold, nframes))
+    if numslices == 1:
+        median_slopes, gdq = twopt.find_crs(data, gdq, readnoise_2d, rejection_threshold, nframes)
         elapsed = time.time() - start
     else:
         log.info("Creating %d processes for jump detection " % numslices)
         pool = multiprocessing.Pool(processes=numslices)
-        real_result = pool.map(twopt.find_crs, slices)
+        real_result = pool.starmap(twopt.find_crs, slices)
         k = 0
+        # Reconstruct median_slopes and gdq from the slice results
         for resultslice in real_result:
             if (len(real_result) == k + 1):  # last result
                 median_slopes[k * yincrement:numy, :] = resultslice[0]
