@@ -157,8 +157,6 @@ __all__ = (
     'is_string_list',
     'is_ip_addr_list',
     'is_mixed_list',
-    'is_datamodel',
-    'is_string_or_datamodel',
     'is_option',
     '__docformat__',
 )
@@ -585,8 +583,6 @@ class Validator(object):
             'pass': self._pass,
             'option': is_option,
             'force_list': force_list,
-            'is_datamodel' : is_datamodel,
-            'is_string_or_datamodel': is_string_or_datamodel,
         }
         if functions is not None:
             self.functions.update(functions)
@@ -1336,24 +1332,6 @@ def is_option(value, *options):
     if not value in options:
         raise VdtValueError(value)
     return value
-
-def is_datamodel(value, default=None):
-    """Verify that value is either is a DataModel."""
-    if isinstance(value, DataModel):
-        return value
-    else:
-        raise VdtTypeError(value)
-    
-def is_string_or_datamodel(value, default=None):
-    """Verify that value is either a string (nominally a reference file path)
-    or a DataModel (possibly one with no corresponding file.)
-    """
-    if isinstance(value, DataModel):
-        return value
-    elif isinstance(value, string_type):
-        return value
-    else:
-        raise VdtTypeError(value)
 
 def _test(value, *args, **keywargs):
     """

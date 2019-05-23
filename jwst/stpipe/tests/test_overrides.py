@@ -1,14 +1,13 @@
 #!/usr/bin/env python
 # coding: utf-8
 import numpy as np
+import pytest
 
-from jwst import datamodels
 from jwst.datamodels.miri_ramp import MIRIRampModel
 from jwst.datamodels.mask import MaskModel
 from jwst.datamodels import dqflags
 
 from jwst.dq_init import DQInitStep
-from jwst.dq_init.dq_initialization import do_dqinit
 
 from jwst.stpipe.config_parser import ValidationError
 
@@ -77,12 +76,9 @@ def make_rawramp(nints, ngroups, ysize, xsize):
 def test_invalid_override():
     """Test that a bogus override type is caught."""
     dm_ramp, ref_data = create_models()
-    try:
+
+    with pytest.raises(ValidationError):
         step = DQInitStep(override_mask = DQInitStep)
-    except ValidationError:
-        pass
-    else:
-        assert 0, "Expected validator type exception didn't occur."
 
 def test_valid_model_override():
     dm_ramp, ref_data = create_models()
@@ -102,16 +98,7 @@ def test_string_override():
     
     step = DQInitStep(override_mask = "some_file.fits")
 
-    try:
-        # Verify get_reference_file() returns an override model.
+    # Verify stpipe treats string as filename and attempts to open
+    with pytest.raises(FileNotFoundError):
         fetched_reference = step.get_reference_file(dm_ramp, 'mask')
-    except FileNotFoundError:
-        pass
-    else:
-        assert 0, "override string wasn't treated as a file."
-
-if __name__ == "__main__":
-    test_valid_model_override()
-    test_invalid_override()
-    test_string_override()
 
