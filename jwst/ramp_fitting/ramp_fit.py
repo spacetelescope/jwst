@@ -462,8 +462,7 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
             if rhi > cubeshape[1]:
                 rhi = cubeshape[1]
 
-            # data_sect and gdq_sect are: [ groups, y, x ]
-            data_sect = model.get_section('data')[num_int, :, rlo:rhi, :]
+            # gdq_sect is: [ groups, y, x ]
             gdq_sect = model.get_section('groupdq')[num_int, :, rlo:rhi, :]
 
             rn_sect = readnoise_2d[rlo:rhi, :]
@@ -821,6 +820,8 @@ def gls_ramp_fit(model,
     if n_int > 1:
         # `slopes` will be used for accumulating the sum of weighted slopes.
         sum_weight = np.zeros(imshape, dtype=np.float64)
+        # `slopes` below, only to placate flake8 in this unused function
+        slopes = np.zeros(imshape, dtype=np.float64)
 
     # For multiple-integration datasets, will output integration-specific
     # results to separate file named <basename> + '_rateints.fits'.
@@ -927,7 +928,7 @@ def gls_ramp_fit(model,
             v_mask = (slope_var_sect <= 0.)
             if v_mask.any():
                 # Replace negative or zero variances with a large value.
-                slope_var_sect[v_mask] = LARGE_VARIANCE
+                slope_var_sect[v_mask] = utils.LARGE_VARIANCE
                 # Also set a flag in the pixel dq array.
                 temp_dq[rlo:rhi, :][v_mask] = dqflags.pixel['UNRELIABLE_SLOPE']
             del v_mask
@@ -1937,8 +1938,6 @@ def fit_lines(data, mask_2d, rn_sect, gain_sect, ngroups, weighting):
 
     else: # unsupported weighting type specified
         log.error('FATAL ERROR: unsupported weighting type specified.')
-
-    line_fit = 0
 
     slope_s[good_pix] = slope
     variance_s[good_pix] = variance
