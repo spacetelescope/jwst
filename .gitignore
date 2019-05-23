@@ -7,8 +7,6 @@ dist/
 *.pyc
 *.egg-info/
 *.so
-*.prof
-.idea
 */version.py
 docs/*/source/*.txt.rst
 docs/generated

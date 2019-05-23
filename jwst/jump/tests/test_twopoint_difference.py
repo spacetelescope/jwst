@@ -445,7 +445,7 @@ def test_6grps_satat6_crat1_flagadjpixels(setup_cube):
     data[0, 5, 100, 101] = 35015
     gdq[0, 5, 100, 100] = dqflags.group['SATURATED']
     median_diff, out_gdq = find_crs(data, gdq, read_noise, rej_threshold, nframes)
-   # assert(4 == np.max(out_gdq))  # no CR was found
+    # assert(4 == np.max(out_gdq))  # no CR was found
     assert (np.array_equal([0, dqflags.group['JUMP_DET'], 0,0,0, dqflags.group['SATURATED']], out_gdq[0, :, 100, 100]))
     assert (np.array_equal([0, dqflags.group['JUMP_DET'], 0, 0, 0, dqflags.group['SATURATED']], out_gdq[0, :, 99, 100]))
     assert (np.array_equal([0, dqflags.group['JUMP_DET'], 0, 0, 0, dqflags.group['SATURATED']], out_gdq[0, :, 101, 100]))
@@ -468,7 +468,7 @@ def test_10grps_satat8_crsat3and6(setup_cube):
     data[0, 7:11, 100, 100] = 61000
     gdq[0, 7:11, 100, 100] = dqflags.group['SATURATED']
     median_diff, out_gdq = find_crs(data, gdq, read_noise, rej_threshold, nframes)
-   # assert(4 == np.max(out_gdq))  # no CR was found
+    # assert(4 == np.max(out_gdq))  # no CR was found
     assert np.array_equal(
         [0, 0, dqflags.group['JUMP_DET'], 0, 0, dqflags.group['JUMP_DET'], 0,
             dqflags.group['SATURATED'], dqflags.group['SATURATED'], dqflags.group['SATURATED']],
