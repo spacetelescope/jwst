@@ -118,8 +118,8 @@ class Spec3Pipeline(Pipeline):
             self.log.info('Convert from exposure-based to source-based data.')
             sources = [
                 (name, model)
-                for name, model in multislit_to_container(source_models).items()
-            ]
+                        for name, model in multislit_to_container(source_models).items()
+                ]
 
         # Process each source
         for source in sources:
