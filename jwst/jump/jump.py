@@ -79,7 +79,7 @@ def detect_jumps (input_model, gain_model, readnoise_model,
         pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['NO_GAIN_VALUE'] )
         pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['DO_NOT_USE'] )
 
-    # Apply gain to the SCI, ERR, and readnoise arrays so they're in units 
+    # Apply gain to the SCI, ERR, and readnoise arrays so they're in units
     # of electrons
 
     data *= gain_2d
