@@ -33,6 +33,11 @@ extract_1d
 ----------
 - An indexing bug was fixed. [#3497]
 
+jump
+----
+
+- Add multiprocessing capability to JumpStep [#3440]
+
 master_background
 -----------------
 
