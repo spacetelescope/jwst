@@ -246,11 +246,8 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
     @property
     def override_handle(self):
-        """override_handle identifies in-memory models in place of filepath for 
-        dataset headers, i.e. in place of CRDS references recorded as:
-            crds://<reference_basename> 
-        or overrides recorded as:
-          <reference_basename>.
+        """override_handle identifies in-memory models where a filepath
+        would normally be used.
         """
         # Arbitrary choice to look something like crds://
         return "override://" + self.__class__.__name__
