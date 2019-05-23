@@ -546,6 +546,8 @@ class Asn_Lv2WFSS(
                     name='image_exp_type',
                     sources=['exp_type'],
                     value='nis_image|nrc_image',
+                    force_reprocess=ProcessList.EXISTING,
+                    only_on_match=True,
                 ),
             ], reduce=Constraint.any)
         ])

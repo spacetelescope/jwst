@@ -397,7 +397,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
                 for other_science in science_exps:
                     if other_science['expname'] != science_exp['expname']:
-                        now_background = copy.copy(other_science)
+                        now_background = Member(other_science)
                         now_background['exptype'] = 'background'
                         new_members.append(now_background)
 
