@@ -1,6 +1,4 @@
 import logging
-import math
-import time
 
 import numpy as np
 import numpy.linalg as la
@@ -11,11 +9,14 @@ log.setLevel(logging.DEBUG)
 # This is the number of iterations that will be done with use_extra_terms
 # set to False.  If this is zero, use_extra_terms will be set to True even
 # for the first iteration.
-NUM_ITER_NO_EXTRA_TERMS = 1
+# NUM_ITER_NO_EXTRA_TERMS = 1
+NUM_ITER_NO_EXTRA_TERMS = 0
 # These are the lower and upper limits of the number of iterations that
 # will be done by determine_slope.
-MIN_ITER = NUM_ITER_NO_EXTRA_TERMS + 1
-MAX_ITER = 3
+# MIN_ITER = NUM_ITER_NO_EXTRA_TERMS + 1
+# MAX_ITER = 3
+MIN_ITER = 1
+MAX_ITER = 1
 
 # This is a term to add for saturated pixels to give them low weight.
 HUGE_FOR_LOW_WEIGHT = 1.e20
@@ -25,11 +26,6 @@ HUGE_FOR_LOW_WEIGHT = 1.e20
 # zero or negative.
 FIT_MUST_BE_POSITIVE = 1.e10
 
-# The readnoise in the reference file is appropriate for the difference
-# between adjacent reads.  We need the readnoise for a single read, so
-# the readnoise read from the reference file should be multiplied by
-# the following factor to convert from CDS to single read.
-SINGLE_READOUT_RN_FACTOR = 1. / math.sqrt(2.)
 
 def determine_slope(data_sect, input_var_sect,
                     gdq_sect, readnoise_sect, gain_sect,
@@ -184,7 +180,6 @@ def determine_slope(data_sect, input_var_sect,
 
     slope_diff_cutoff = 1.e-5
 
-    shape = data_sect.shape
     # These will be updated in the loop.
     prev_slope_sect = (data_sect[1, :, :] - data_sect[0, :, :]) / group_time
     prev_fit = data_sect.copy()
@@ -268,11 +263,8 @@ def evaluate_fit(intercept_sect, slope_sect, cr_sect,
         fit_model and data_sect should not differ by much.
     """
 
-    shape_2d = slope_sect.shape         # just the image subarray (ny, nx)
     shape_3d = gdq_sect.shape           # the ramp, (ngroups, ny, nx)
     ngroups = gdq_sect.shape[0]
-    ny = gdq_sect.shape[1]
-    nx = gdq_sect.shape[2]
     # This array is also created in function compute_slope.
     cr_flagged = np.empty(shape_3d, dtype=np.uint8)
     cr_flagged[:] = np.where(np.bitwise_and(gdq_sect, jump_flag), 1, 0)
@@ -332,7 +324,7 @@ def positive_fit(current_fit):
 
     return np.where(current_fit <= 0., FIT_MUST_BE_POSITIVE, current_fit)
 
-def compute_slope(data_sect, input_var_sect, 
+def compute_slope(data_sect, input_var_sect,
                   gdq_sect, readnoise_sect, gain_sect,
                   prev_fit, prev_slope_sect,
                   frame_time, group_time, nframes_used,
@@ -517,12 +509,11 @@ def compute_slope(data_sect, input_var_sect,
             saturated_data[k] = saturated[k][ncr_mask]
 
         (result, variances) = \
-                gls_fit(ramp_data, input_var_data,
+                gls_fit(ramp_data,
                         prev_fit_data, prev_slope_data,
                         readnoise, gain,
                         frame_time, group_time, nframes_used,
-                        num_cr, cr_flagged_2d, saturated_data,
-                        use_extra_terms=use_extra_terms)
+                        num_cr, cr_flagged_2d, saturated_data)
         # Copy the intercept, slope, and cosmic-ray amplitudes and their
         # variances to the arrays to be returned.
         # ncr_mask is a mask array that is True for each pixel that has the
@@ -542,17 +533,24 @@ def compute_slope(data_sect, input_var_sect,
     return (intercept_sect, int_var_sect, slope_sect, slope_var_sect,
             cr_sect, cr_var_sect)
 
-def gls_fit(ramp_data, input_var_data,
+
+def gls_fit(ramp_data,
              prev_fit_data, prev_slope_data,
              readnoise, gain,
              frame_time, group_time, nframes_used,
-             num_cr, cr_flagged_2d, saturated_data,
-             use_extra_terms=True):
+             num_cr, cr_flagged_2d, saturated_data):
     """Generalized least squares linear fit.
 
     It is assumed that every input pixel has num_cr cosmic-ray hits
     somewhere within the ramp.  This function should be called separately
     for different values of num_cr.
+
+    Notes
+    -----
+    Curently the noise model is assumed to be a combination of
+    read and photon noise alone.
+    Same technique could be used with more complex noise models, but then
+    the ramp covariance matrix should be input.
 
     Parameters
     ----------
@@ -561,9 +559,6 @@ def gls_fit(ramp_data, input_var_data,
         may be a subset in detector coordinates, but covering all groups.
         The shape is (ngroups, nz), where ngroups is the length of the
         ramp, and nz is the number of pixels in the current subset.
-
-    input_var_data: 2-D ndarray, shape (ngroups, nz)
-        The square of the input ERR array, matching ramp_data.
 
     prev_fit_data: 2-D ndarray, shape (ngroups, nz)
         The fit to ramp_data, based on applying the values of intercept,
@@ -607,11 +602,6 @@ def gls_fit(ramp_data, input_var_data,
         saturated pixels.  This will be added to the main diagonal of the
         inverse of the weight matrix to greatly reduce the weight for
         saturated pixels.
-
-    use_extra_terms: bool
-        True if we should include Massimo Robberto's terms in the inverse
-        weight matrix.
-        See JWST-STScI-003193.pdf
 
     Returns
     -------
@@ -660,14 +650,9 @@ def gls_fit(ramp_data, input_var_data,
 
     y = np.transpose(ramp_data, (1, 0)).reshape((nz, ngroups, 1))
 
-    # cov is an array of nz matrices, each ngroups x ngroups.  The
-    # inverse of each of these matrices is a weight matrix.
-    # Note that there are two objects that are called the covariance
-    # matrix:  (1) the ngroups x ngroups matrices in cov, and (2) the
-    # smaller matrix (see near the end of this function) that contains
-    # the variances and covariances of the fitted parameters.
-
-    cov = np.ones((nz, ngroups, ngroups), dtype=np.float64)
+    # ramp_cov is an array of nz matrices, each ngroups x ngroups.
+    # each matrix gives the covariance of that pixel's ramp data
+    ramp_cov = np.ones((nz, ngroups, ngroups), dtype=np.float64)
 
     # Use the previous fit to the data to populate the covariance matrix,
     # for each of the nz pixels.  prev_fit_data has shape (ngroups, nz),
@@ -677,67 +662,56 @@ def gls_fit(ramp_data, input_var_data,
     prev_fit_T = np.transpose(prev_fit_data, (1, 0))
     for k in range(ngroups):
         # Populate the upper right, row by row.
-        cov[:, k, k:ngroups] = prev_fit_T[:, k:k + 1]
+        ramp_cov[:, k, k:ngroups] = prev_fit_T[:, k:k + 1]
         # Populate the lower left, column by column.
-        cov[:, k:ngroups, k] = prev_fit_T[:, k:k + 1]
-        # Propagate errors from input.
-        cov[:, k, k] += input_var_data[k, :]
-        # Give saturated pixels very low weight (i.e. high variance).
-        cov[:, k, k] += saturated_data[k, :]
+        ramp_cov[:, k:ngroups, k] = prev_fit_T[:, k:k + 1]
+        # Give saturated pixels a very high high variance (hence a low weight)
+        ramp_cov[:, k, k] += saturated_data[k, :]
     del prev_fit_T
 
     # I is 2-D, but it can broadcast to 4-D.  This is used to add terms to
     # the diagonal of the covariance matrix.
     I = np.identity(ngroups)
 
-    # Divide by sqrt(2) to convert the readnoise from CDS to single readout.
-    rn3d = readnoise.reshape((nz, 1, 1)) * SINGLE_READOUT_RN_FACTOR
-    cov += (I * (rn3d**2 / M))
+    rn3d = readnoise.reshape((nz, 1, 1))
+    ramp_cov += (I * rn3d**2)
 
     # prev_slope_data must be non-negative.
     flags = prev_slope_data < 0.
     prev_slope_data[flags] = 1.
 
-    if use_extra_terms:
-        # Include two dummy axes to allow broadcasting with cov.
-        slope3d = prev_slope_data.reshape((nz, 1, 1))
-        # diagonal:
-        if gain is not None:
-            g3d = gain.reshape((nz, 1, 1))
-        else:
-            g3d = 1.
-        delta_diag = I * (slope3d * frame_time *
-                          (M - 1.) * (M - 2.) / (3. * M) +
-                          (g3d * M)**2 / 12.)
-        cov += delta_diag
-        del delta_diag
-
-    # This is the solution:  (xT @ weight @ x)^-1 @ [xT @ weight @ y]
+    # The resulting fit parameters are
+    #  (xT @ ramp_cov^-1 @ x)^-1 @ [xT @ ramp_cov^-1 @ y]
+    #  = [y-intercept, slope, cr_amplitude_1, cr_amplitude_2, ...]
     # where @ means matrix multiplication.
 
     # shape of xT is (nz, 2 + num_cr, ngroups)
     xT = np.transpose(x, (0, 2, 1))
 
-    # shape of `weight` is (nz, ngroups, ngroups)
+    # shape of `ramp_invcov` is (nz, ngroups, ngroups)
     I = I.reshape((1, ngroups, ngroups))
-    weight = la.solve(cov, I)                   # inverse of cov
+    ramp_invcov = la.solve(ramp_cov, I)
+
     del I
 
-    # temp1 = xT @ weight
+    # temp1 = xT @ ramp_invcov
+    # np.einsum use is equivalent to matrix multiplication
     # shape of temp1 is (nz, 2 + num_cr, ngroups)
-    temp1 = np.einsum('...ij,...jk->...ik', xT, weight)
+    temp1 = np.einsum('...ij,...jk->...ik', xT, ramp_invcov)
 
-    # temp_var = xT @ weight @ x
+    # temp_var = xT @ ramp_invcov @ x
     # shape of temp_var is (nz, 2 + num_cr, 2 + num_cr)
     temp_var = np.einsum('...ij,...jk->...ik', temp1, x)
 
-    # `covar` is an array of nz covariance matrices.
-    # covar = (xT @ weight @ x)^-1
-    # shape of covar is (nz, 2 + num_cr, 2 + num_cr)
+    # `fitparam_cov` is an array of nz covariance matrices.
+    # fitparam_cov = (xT @ ramp_invcov @ x)^-1
+    # shape of fitparam_covar is (nz, 2 + num_cr, 2 + num_cr)
     I_2 = np.eye(2 + num_cr).reshape((1, 2 + num_cr, 2 + num_cr))
     try:
-        covar = la.solve(temp_var, I_2)         # inverse of temp_var
+        # inverse of temp_var
+        fitparam_cov = la.solve(temp_var, I_2)
     except la.LinAlgError as msg:
+        # find the pixel with the singular matrix
         for z in range(nz):
             try:
                 dummy = la.solve(temp_var[z], I_2)
@@ -746,17 +720,17 @@ def gls_fit(ramp_data, input_var_data,
                 raise la.LinAlgError(msg2)
     del I_2
 
-    # [xT @ weight @ y]
+    # [xT @ ramp_invcov @ y]
     # shape of temp2 is (nz, 2 + num_cr, 1)
     temp2 = np.einsum('...ij,...jk->...ik', temp1, y)
 
-    # shape of result is (nz, 2 + num_cr, 1)
-    result = np.einsum('...ij,...jk->...ik', covar, temp2)
-    r_shape = result.shape
-    result2d = result.reshape((r_shape[0], r_shape[1]))
-    del result
+    # shape of fitparam is (nz, 2 + num_cr, 1)
+    fitparam = np.einsum('...ij,...jk->...ik', fitparam_cov, temp2)
+    r_shape = fitparam.shape
+    fitparam2d = fitparam.reshape((r_shape[0], r_shape[1]))
+    del fitparam
 
     # shape of both result2d and variances is (nz, 2 + num_cr)
-    variances = covar.diagonal(axis1=1, axis2=2).copy()
+    fitparam_uncs = fitparam_cov.diagonal(axis1=1, axis2=2).copy()
 
-    return (result2d, variances)
+    return (fitparam2d, fitparam_uncs)
