@@ -675,12 +675,12 @@ class Asn_Lv2WFSS(
             opt_elem2 = None if opt_elem2 == 'clear' else opt_elem2
 
         full_opt_elem = []
-        if opt_elem2:
-            full_opt_elem.append(opt_elem2)
-        if opt_elem and opt_elem2:
-            full_opt_elem.append('-')
         if opt_elem:
             full_opt_elem.append(opt_elem)
+        if opt_elem and opt_elem2:
+            full_opt_elem.append('-')
+        if opt_elem2:
+            full_opt_elem.append(opt_elem2)
 
         return ''.join(full_opt_elem)
 
