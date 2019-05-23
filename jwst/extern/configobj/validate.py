@@ -1348,10 +1348,10 @@ def is_string_or_datamodel(value, default=None):
     """Verify that value is either a string (nominally a reference file path)
     or a DataModel (possibly one with no corresponding file.)
     """
-    if is_datamodel(value):
-        return is_datamodel(value)
-    elif is_string(value):
-        return is_string(value)
+    if isinstance(value, DataModel):
+        return value
+    elif isinstance(value, string_type):
+        return value
     else:
         raise VdtTypeError(value)
 

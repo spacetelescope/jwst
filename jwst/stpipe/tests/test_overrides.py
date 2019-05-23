@@ -92,12 +92,26 @@ def test_valid_model_override():
     # Verify get_reference_file() returns an override model.
     fetched_reference = step.get_reference_file(dm_ramp, 'mask')
     assert isinstance(fetched_reference, MaskModel), \
-        "get_reference_file() should return a model for model overrides."
+        "get_reference_file() should return a model for this override."
                       
     # Verify no exceptions occur during DQ processing.
     outfile = step.process(dm_ramp)
 
+def test_string_override():
+    dm_ramp, ref_data = create_models()
+    
+    step = DQInitStep(override_mask = "some_file.fits")
+
+    try:
+        # Verify get_reference_file() returns an override model.
+        fetched_reference = step.get_reference_file(dm_ramp, 'mask')
+    except FileNotFoundError:
+        pass
+    else:
+        assert 0, "override string wasn't treated as a file."
+
 if __name__ == "__main__":
     test_valid_model_override()
     test_invalid_override()
+    test_string_override()
 
