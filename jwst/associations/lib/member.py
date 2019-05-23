@@ -1,6 +1,6 @@
 """Association Member"""
 from collections import UserDict
-from copy import deepcopy
+from copy import copy
 
 
 class Member(UserDict):
@@ -11,7 +11,6 @@ class Member(UserDict):
     initialdata: Dict-like or Member
         Initialization data. Any type of initialization that
         `collections.UserDict` allows or `Member` itself.
-        Either way, copy of the initialization data is done.
 
     item: obj
         The item to initialize with. This will override
@@ -26,10 +25,10 @@ class Member(UserDict):
         self.item = None
 
         if isinstance(initialdata, Member):
-            self.data = deepcopy(initialdata.data)
-            self.item = deepcopy(initialdata.item)
+            self.data = copy(initialdata.data)
+            self.item = copy(initialdata.item)
         else:
             super(Member, self).__init__(initialdata)
-            
+
         if item is not None:
-            self.item = deepcopy(item)
+            self.item = copy(item)
