@@ -1692,7 +1692,7 @@ class ExtractModel(ExtractBase):
         return location
 
 
-    def add_nod_correction(self, verbose):
+    def add_nod_correction(self, verbose, shape):
         """Add the nod offset to the extraction location (in-place).
 
         Extended summary
@@ -1710,24 +1710,37 @@ class ExtractModel(ExtractBase):
         ----------
         verbose : bool
             If True, messages can be logged.
+
+        shape : tuple
+            The shape of the data array (may be just the last two axes).
+            This is used for truncating a shifted limit at the image edge.
         """
 
         if self.nod_correction == 0.:
             return
 
-        if self.src_coeff is None:
-            if self.dispaxis == HORIZONTAL:
-                dir = "y"
-                self.ystart += self.nod_correction
-                self.ystop += self.nod_correction
-            else:
-                dir = "x"
-                self.xstart += self.nod_correction
-                self.xstop += self.nod_correction
-            if verbose:
-                log.info("Applying nod/dither offset of %s "
-                         "to %sstart and %sstop",
-                         str(self.nod_correction), dir, dir)
+        if self.dispaxis == HORIZONTAL:
+            dir = "y"
+            self.ystart += self.nod_correction
+            self.ystop += self.nod_correction
+            # These values must not be negative.
+            self.ystart = max(self.ystart, 0)
+            self.ystop = max(self.ystop, 0)
+            self.ystart = min(self.ystart, shape[-2] - 1)
+            self.ystop = min(self.ystop, shape[-2] - 1)     # inclusive limit
+        else:
+            dir = "x"
+            self.xstart += self.nod_correction
+            self.xstop += self.nod_correction
+            # These values must not be negative.
+            self.xstart = max(self.xstart, 0)
+            self.xstop = max(self.xstop, 0)
+            self.xstart = min(self.xstart, shape[-1] - 1)
+            self.xstop = min(self.xstop, shape[-1] - 1)     # inclusive limit
+        if self.src_coeff is None and verbose:
+            log.info("Applying nod/dither offset of %s "
+                     "to %sstart and %sstop",
+                     str(self.nod_correction), dir, dir)
 
         if self.src_coeff is not None or self.bkg_coeff is not None:
             if verbose:
@@ -2280,13 +2293,16 @@ class ImageExtractModel(ExtractBase):
         return location
 
 
-    def add_nod_correction(self, verbose):
+    def add_nod_correction(self, verbose, shape):
         """Shift the reference image (in-place).
 
         Parameters
         ----------
         verbose : bool
             If True, messages can be logged.
+
+        shape : tuple
+            This is not used.
         """
 
         if self.nod_correction == 0:
@@ -3575,7 +3591,7 @@ def extract_one_slit(input_model, slit, integ,
 
     # Add the nod/dither offset to the polynomial coefficients, or shift
     # the reference image (depending on the type of reference file).
-    extract_model.add_nod_correction(verbose)
+    extract_model.add_nod_correction(verbose, data.shape)
 
     if verbose:
         extract_model.log_extraction_parameters()
