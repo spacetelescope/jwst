@@ -3080,11 +3080,11 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                 shape = input_model.data.shape
                 if len(shape) == 3 and shape[0] == 1 or len(shape) == 2:
                     log.info("Beginning loop, just 1 integration ...")
-                    num_integrations = [-1]
+                    integrations = [-1]
                 else:
                     log.info("Beginning loop over {} integrations ...".format(shape[0]))
-                    num_integrations = range(shape[0])
-                for integ in num_integrations:
+                    integrations = range(shape[0])
+                for integ in integrations:
                     # Extract spectrum
                     try:
                         (ra, dec, wavelength, temp_flux, background,

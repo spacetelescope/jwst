@@ -46,7 +46,7 @@ jump
 extract_2d
 ----------
 
-- A space was removed from the names of grism objects in a MultiSlit model. [#3517]
+- Replaced a white space in the names of grism objects with an upderscore. [#3517]
 
 
 master_background

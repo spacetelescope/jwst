@@ -14,13 +14,15 @@ from ..master_background import master_background_step
 from ..mrs_imatch import mrs_imatch_step
 from ..outlier_detection import outlier_detection_step
 from ..resample import resample_spec_step
+from ..combine_1d import combine_1d_step
+
 
 __all__ = ['Spec3Pipeline']
 
 # Group exposure types
 MULTISOURCE_MODELS = ['MultiSlitModel']
 IFU_EXPTYPES = ['MIR_MRS', 'NRS_IFU']
-SLITLESS_TYPES = ['NIS_WFSS', 'NRC_WFSS'] #, 'NRC_TSGRISM']
+SLITLESS_TYPES = ['NIS_WFSS', 'NRC_WFSS']
 
 
 class Spec3Pipeline(Pipeline):
@@ -45,7 +47,8 @@ class Spec3Pipeline(Pipeline):
         'outlier_detection': outlier_detection_step.OutlierDetectionStep,
         'resample_spec': resample_spec_step.ResampleSpecStep,
         'cube_build': cube_build_step.CubeBuildStep,
-        'extract_1d': extract_1d_step.Extract1dStep
+        'extract_1d': extract_1d_step.Extract1dStep,
+        'combine_1d': combine_1d_step.Combine1dStep
     }
 
     # Main processing
@@ -165,6 +168,7 @@ class Spec3Pipeline(Pipeline):
             # Do 1-D spectral extraction
             if exptype in SLITLESS_TYPES:
                 result = self.extract_1d(result)
+                result = self.combine_1d(result)
             elif resample_complete is not None and \
                resample_complete.upper() == 'COMPLETE':
                 if exptype in IFU_EXPTYPES:
