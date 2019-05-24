@@ -29,6 +29,12 @@ datamodels
   ``http://jwst.stsci.edu/schemas/image.schema.yaml``.  The datamodels
   ``BaseExtension`` is renamed internally to ``DataModelExtension``. [#3437]
 
+reference file overrides
+------------------------
+
+- Capability to define reference overrides using a ``DataModel`` instead of
+  a file path was added.  [#3514]
+
 master_background
 -----------------
 
