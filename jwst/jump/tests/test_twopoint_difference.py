@@ -475,6 +475,35 @@ def test_10grps_satat8_crsat3and6(setup_cube):
         out_gdq[0, :, 100, 100])
 
 
+def test_first_last_group(setup_cube):
+    ngroups = 7
+    nframes = 1
+    data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups, readnoise=25.0)
+
+    #  set up the data so that if the first and last group are used in jump
+    #  detection it would cause a jump to be detected between group 1-2
+    #  and group 6-7. Add a jump between 3 and 4 just to make sure jump detection is working
+    #  set group 1 to be 10,000
+    data[0, 0, 100, 100] = 10000.0
+    #  set groups 1,2 - to be around 30,000
+    data[0, 1, 100, 100] = 30000.0
+    data[0, 2, 100, 100] = 30020.0
+    #  set up a jump to make sure it is detected
+    data[0, 3, 100, 100] = 40000.0
+    data[0, 4, 100, 100] = 40020.0
+    data[0, 5, 100, 100] = 40040.0
+    #  set group 6 to be 50,000
+    data[0, 6, 100, 100] = 50000.0
+
+    gdq[0, 0, 100, 100] = dqflags.group['DO_NOT_USE']
+    gdq[0, 6, 100, 100] = dqflags.group['DO_NOT_USE']
+    median_diff, outgdq = find_crs(data, gdq, read_noise, rej_threshold, nframes)
+
+    assert outgdq[0, 0, 100, 100] == dqflags.group['DO_NOT_USE']
+    assert outgdq[0, 6, 100, 100] == dqflags.group['DO_NOT_USE']
+    assert outgdq[0, 3, 100, 100] == dqflags.group['JUMP_DET']
+
+
 @pytest.fixture(scope='function')
 def setup_cube():
 

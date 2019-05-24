@@ -42,6 +42,12 @@ def find_crs(data, group_dq, read_noise, rej_threshold, nframes):
     saturated_pixels = np.where(np.bitwise_and(gdq, dqflags.group['SATURATED']))
     data[saturated_pixels] = np.NaN
 
+    # Reset groups set to DO_NOT_USE in the input data array to NaN, so they don't get
+    # used in any of the subsequent calculations. For MIRI data the first and last group
+    # can be set to DO_NOT_USE.
+    wh_donotuse = np.where(np.bitwise_and(gdq, dqflags.group['DO_NOT_USE']))
+    data[wh_donotuse] = np.NaN
+
     # Loop over multiple integrations
     for integration in range(nints):
 
