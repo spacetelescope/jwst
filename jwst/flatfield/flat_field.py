@@ -470,11 +470,10 @@ def nirspec_brightobj(output_model,
 
     # Combine the three flat fields.  The same flat will be applied to
     # each plane (integration) in the cube.
-    (flat_2d, flat_dq_2d) = create_flat_field(
-                        wl,
-                        f_flat_model, s_flat_model, d_flat_model,
-                        xstart, xstop, ystart, ystop,
-                        exposure_type, slit_name, None)
+    flat_2d, flat_dq_2d, flat_err_2d = create_flat_field(wl, f_flat_model,
+                                                         s_flat_model, d_flat_model,
+                                                         xstart, xstop, ystart, ystop,
+                                                         exposure_type, slit_name, None)
     mask = (flat_2d <= 0.)
     nbad = mask.sum(dtype=np.intp)
     if nbad > 0:
@@ -605,10 +604,10 @@ def nirspec_ifu(output_model,
         # Set NaNs to a relatively harmless value, but don't modify nan_flag.
         wl[nan_flag] = 0.
 
-        (flat_2d, flat_dq_2d) = create_flat_field(wl,
-                        f_flat_model, s_flat_model, d_flat_model,
-                        xstart, xstop, ystart, ystop,
-                        exposure_type, None, None)
+        flat_2d, flat_dq_2d, flat_err_2d = create_flat_field(wl, f_flat_model,
+                                                             s_flat_model, d_flat_model,
+                                                             xstart, xstop, ystart, ystop,
+                                                             exposure_type, None, None)
         flat_2d[nan_flag] = 1.
         mask = (flat_2d <= 0.)
         nbad = mask.sum(dtype=np.intp)
@@ -692,6 +691,8 @@ def create_flat_field(wl, f_flat_model, s_flat_model, d_flat_model,
         flat-field variations.
     flat_dq : ndarray, 2-D, uint32
         The data quality array corresponding to flat_2d.
+    flat_err : ndarray, 2-D, float
+        The error array corresponding to flat_2d.
     """
 
     dispaxis = find_dispaxis(wl)

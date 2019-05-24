@@ -2,11 +2,6 @@
 ===================
 
 
-combine_1d
-----------
-
-- Unit tests were added to combine_1d.  [#3490]
-
 ami
 ---
 
@@ -21,6 +16,11 @@ assign_wcs
 
 - Fix a one pixel off problem with the Nirspec NRS2 WCS transforms. [#3473]
 
+combine_1d
+----------
+
+- Unit tests were added to combine_1d.  [#3490]
+
 datamodels
 ----------
 
@@ -29,11 +29,17 @@ datamodels
   ``http://jwst.stsci.edu/schemas/image.schema.yaml``.  The datamodels
   ``BaseExtension`` is renamed internally to ``DataModelExtension``. [#3437]
 
-reference file overrides
-------------------------
+- Added the new column "relresperror" to the "MiriImgPhotomModel" data
+  model schema. [#3512]
 
-- Capability to define reference overrides using a ``DataModel`` instead of
-  a file path was added.  [#3514]
+extract_1d
+----------
+- An indexing bug was fixed. [#3497]
+
+jump
+----
+
+- Add multiprocessing capability to JumpStep [#3440]
 
 master_background
 -----------------
@@ -59,6 +65,13 @@ refpix
 
 - Fixed a bug where pixeldq arrays were being transformed from DMS to detector
   coordinates for every group instead of just once
+
+
+stpipe
+------
+
+- Capability to define reference overrides using a ``DataModel`` instead of
+  a file path was added.  [#3514]
 
 tweakreg
 --------
@@ -456,6 +469,7 @@ ipc
 
 jump
 ----
+ - Updated twopoint_difference.py to not use groups with groupdq set to DO_NOT_USE [#3495]
 
 jwpsf
 -----

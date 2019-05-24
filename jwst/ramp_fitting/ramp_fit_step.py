@@ -1,8 +1,7 @@
 #! /usr/bin/env python
 
-from ..stpipe import Step, cmdline
+from ..stpipe import Step
 from .. import datamodels
-from ..gain_scale import gain_scale
 from . import ramp_fit
 
 import logging

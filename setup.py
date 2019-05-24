@@ -91,6 +91,7 @@ TESTS_REQUIRE = [
     'pytest-doctestplus',
     'requests_mock',
     'pytest-astropy',
+    'pytest-faulthandler',
 ]
 
 def get_transforms_data():
@@ -194,6 +195,7 @@ setup(
         'jsonschema>=2.3,<=2.6',
         'numpy>=1.13',
         'photutils>=0.6',
+        'psutil',
         'scipy>=1.0',
         'spherical-geometry>=1.2',
         'stsci.image>=2.3',
