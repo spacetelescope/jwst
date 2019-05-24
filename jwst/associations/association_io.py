@@ -160,3 +160,9 @@ def np_str_representer(dumper, data):
     """Convert numpy.str_ into standard YAML string"""
     return dumper.represent_scalar('tag:yaml.org,2002:str', str(data))
 yaml_lib.add_representer(np.str_, np_str_representer)
+
+
+def member_representer(dumper, member):
+    """Convert a Member to its basic dict representation"""
+    return dumper.represent_dict(member.data)
+yaml_lib.add_representer(Member, member_representer)

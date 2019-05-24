@@ -619,10 +619,10 @@ class Asn_Lv2WFSS(
         """
         try:
             self.add_catalog_member()
-        except AssociationNotValidError:
+        except AssociationNotValidError as err:
             logger.debug(
-                '%s has no required direct image exposures',
-                self.__class__.__name__
+                '%s: %s',
+                self.__class__.__name__, str(err)
             )
             return None
 
