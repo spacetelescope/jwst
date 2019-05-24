@@ -1,7 +1,6 @@
 0.13.3 (Unreleased)
 ===================
 
-
 ami
 ---
 
@@ -10,6 +9,8 @@ ami
   minor tweaks to more closely match those in the prototype code: changed some of 
   initial values of the estimation parameters, and the filtering routine 
   arguments.  [#3487]
+
+- Updated ami_analyze.cfg to use default value of zero for rotation. [#3520]
 
 assign_wcs
 ------------
