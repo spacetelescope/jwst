@@ -497,16 +497,11 @@ def test_first_last_group(setup_cube):
 
     gdq[0, 0, 100, 100] = dqflags.group['DO_NOT_USE']
     gdq[0, 6, 100, 100] = dqflags.group['DO_NOT_USE']
-    find_crs(data, gdq, read_noise, rej_threshold, nframes)
+    median_diff, outgdq = find_crs(data, gdq, read_noise, rej_threshold, nframes)
 
-#    print(rej_threshold)
-#    print(read_noise)
-#    print(data[0, :, 100, 100])
-#    print(gdq[0, :, 100, 100])
-
-    assert gdq[0, 0, 100, 100] == dqflags.group['DO_NOT_USE']
-    assert gdq[0, 6, 100, 100] == dqflags.group['DO_NOT_USE']
-#    assert gdq[0, 3, 100, 100] == dqflags.group['JUMP_DET']
+    assert outgdq[0, 0, 100, 100] == dqflags.group['DO_NOT_USE']
+    assert outgdq[0, 6, 100, 100] == dqflags.group['DO_NOT_USE']
+    assert outgdq[0, 3, 100, 100] == dqflags.group['JUMP_DET']
 
 
 @pytest.fixture(scope='function')
