@@ -645,9 +645,9 @@ class Step():
         override = self.get_ref_override(reference_file_type)
         if override is not None:
             if isinstance(override, DataModel):
-              self._reference_files_used.append(
-                  (reference_file_type, override.override_handle))
-              return override
+                self._reference_files_used.append(
+                    (reference_file_type, override.override_handle))
+                return override
             elif override.strip() != "":
                 self._reference_files_used.append(
                     (reference_file_type, basename(override)))

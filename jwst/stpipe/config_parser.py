@@ -100,7 +100,8 @@ def _is_datamodel(value, default=None):
         return value
     else:
         raise VdtTypeError(value)
-    
+
+
 def _is_string_or_datamodel(value, default=None):
     """Verify that value is either a string (nominally a reference file path)
     or a DataModel (possibly one with no corresponding file.)
@@ -111,6 +112,7 @@ def _is_string_or_datamodel(value, default=None):
         return value
     else:
         raise VdtTypeError(value)
+
 
 def load_config_file(config_file):
     """

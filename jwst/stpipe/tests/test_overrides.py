@@ -14,9 +14,9 @@ from jwst.stpipe.config_parser import ValidationError
 # Tests derived from example code from Jira JP-345
 # Tests are for override functionality only,  not DQ init.
 
+
 def create_models():
     """Returns  MIRIRampModel(), MaskModel()."""
-    
     # size of integration
     nints = 1
     ngroups = 5
@@ -41,6 +41,7 @@ def create_models():
 
     return dm_ramp, ref_data
 
+
 def make_maskmodel(ysize, xsize):
     # create a mask model for the dq_init step
     csize = (ysize, xsize)
@@ -59,6 +60,7 @@ def make_maskmodel(ysize, xsize):
 
     return dq, dq_def
 
+
 def make_rawramp(nints, ngroups, ysize, xsize):
     # create the data and groupdq arrays
     csize = (nints, ngroups, ysize, xsize)
@@ -73,6 +75,7 @@ def make_rawramp(nints, ngroups, ysize, xsize):
 
     return dm_ramp
 
+
 def test_invalid_override():
     """Test that a bogus override type is caught."""
     dm_ramp, ref_data = create_models()
@@ -80,25 +83,26 @@ def test_invalid_override():
     with pytest.raises(ValidationError):
         step = DQInitStep(override_mask = DQInitStep)
 
+
 def test_valid_model_override():
     dm_ramp, ref_data = create_models()
-    
+
     step = DQInitStep(override_mask = ref_data)
 
     # Verify get_reference_file() returns an override model.
     fetched_reference = step.get_reference_file(dm_ramp, 'mask')
     assert isinstance(fetched_reference, MaskModel), \
         "get_reference_file() should return a model for this override."
-                      
+
     # Verify no exceptions occur during DQ processing.
     outfile = step.process(dm_ramp)
 
+
 def test_string_override():
     dm_ramp, ref_data = create_models()
-    
+
     step = DQInitStep(override_mask = "some_file.fits")
 
     # Verify stpipe treats string as filename and attempts to open
     with pytest.raises(FileNotFoundError):
         fetched_reference = step.get_reference_file(dm_ramp, 'mask')
-
