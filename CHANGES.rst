@@ -29,6 +29,9 @@ datamodels
   ``http://jwst.stsci.edu/schemas/image.schema.yaml``.  The datamodels
   ``BaseExtension`` is renamed internally to ``DataModelExtension``. [#3437]
 
+- Added the new column "relresperror" to the "MiriImgPhotomModel" data
+  model schema. [#3512]
+
 extract_1d
 ----------
 - An indexing bug was fixed. [#3497]
