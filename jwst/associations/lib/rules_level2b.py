@@ -5,13 +5,14 @@ import logging
 
 from jwst.associations.exceptions import AssociationNotValidError
 from jwst.associations.registry import RegistryMarker
-from jwst.associations.lib.constraint import (Constraint, SimpleConstraint, getattr_from_list)
+from jwst.associations.lib.constraint import (Constraint, SimpleConstraint)
 from jwst.associations.lib.dms_base import (
     Constraint_TSO,
     format_list
 )
 from jwst.associations.lib.member import Member
 from jwst.associations.lib.process_list import ProcessList
+from jwst.associations.lib.utilities import (getattr_from_list, getattr_from_list_nofail)
 from jwst.associations.lib.rules_level2_base import *
 from jwst.associations.lib.rules_level3_base import DMS_Level3_Base
 
@@ -575,17 +576,27 @@ class Asn_Lv2WFSS(
 
         # Get the exposure sequence for the science. Then, find
         # the direct image greater than but closest to this value.
-        expspcin = int(getattr_from_list(science.item, ['expspcin'], _EMPTY)[1])
-        min_diff = -1         # Initialize to an invalid value.
         closest = directs[0]  # If the search fails, just use the first.
-        for direct in directs:
-            direct_expspcin = int(getattr_from_list(
-                direct.item, ['expspcin'], _EMPTY
-            )[1])
-            diff = direct_expspcin - expspcin
-            if diff > min_diff:
-                min_diff = diff
-                closest = direct
+        try:
+            expspcin = int(getattr_from_list(science.item, ['expspcin'], _EMPTY)[1])
+        except KeyError:
+            # If exposure sequence cannot be determined, just fall through.
+            logger.debug('Science exposure %s has no EXPSPCIN defined.', science)
+        else:
+            min_diff = -1         # Initialize to an invalid value.
+            for direct in directs:
+                try:
+                    direct_expspcin = int(getattr_from_list(
+                        direct.item, ['expspcin'], _EMPTY
+                    )[1])
+                except KeyError:
+                    # Try the next one.
+                    logger.debug('Direct image %s has no EXPSPCIN defined.', direct)
+                    continue
+                diff = direct_expspcin - expspcin
+                if diff > min_diff:
+                    min_diff = diff
+                    closest = direct
 
         # Note the selected direct image. Used in `Asn_Lv2WFSS._get_opt_element`
         self.direct_image = closest
@@ -657,22 +668,15 @@ class Asn_Lv2WFSS(
         method.
         """
         item = self.direct_image.item
-        try:
-            opt_elem = getattr_from_list(
-                item, ['filter', 'band'], _EMPTY
-            )[1]
-        except KeyError:
-            opt_elem = None
-        else:
-            opt_elem = None if opt_elem == 'clear' else opt_elem
-        try:
-            opt_elem2 = getattr_from_list(
-                item, ['pupil', 'grating'], _EMPTY
-            )[1]
-        except KeyError:
-            opt_elem2 = None
-        else:
-            opt_elem2 = None if opt_elem2 == 'clear' else opt_elem2
+        opt_elem = getattr_from_list_nofail(
+            item, ['filter', 'band'], _EMPTY
+        )[1]
+        opt_elem = None if opt_elem == 'clear' else opt_elem
+
+        opt_elem2 = getattr_from_list_nofail(
+            item, ['pupil', 'grating'], _EMPTY
+        )[1]
+        opt_elem2 = None if opt_elem2 == 'clear' else opt_elem2
 
         full_opt_elem = []
         if opt_elem:
