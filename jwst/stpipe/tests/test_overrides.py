@@ -5,7 +5,6 @@ import pytest
 
 from jwst.datamodels.miri_ramp import MIRIRampModel
 from jwst.datamodels.mask import MaskModel
-from jwst.datamodels import dqflags
 
 from jwst.dq_init import DQInitStep
 
@@ -81,7 +80,7 @@ def test_invalid_override():
     dm_ramp, ref_data = create_models()
 
     with pytest.raises(ValidationError):
-        step = DQInitStep(override_mask = DQInitStep)
+        DQInitStep(override_mask = DQInitStep)
 
 
 def test_valid_model_override():
@@ -95,7 +94,7 @@ def test_valid_model_override():
         "get_reference_file() should return a model for this override."
 
     # Verify no exceptions occur during DQ processing.
-    outfile = step.process(dm_ramp)
+    step.process(dm_ramp)
 
 
 def test_string_override():
@@ -105,4 +104,4 @@ def test_string_override():
 
     # Verify stpipe treats string as filename and attempts to open
     with pytest.raises(FileNotFoundError):
-        fetched_reference = step.get_reference_file(dm_ramp, 'mask')
+        step.get_reference_file(dm_ramp, 'mask')
