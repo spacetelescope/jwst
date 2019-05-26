@@ -67,6 +67,13 @@ refpix
 - Fixed a bug where pixeldq arrays were being transformed from DMS to detector
   coordinates for every group instead of just once
 
+
+stpipe
+------
+
+- Capability to define reference overrides using a ``DataModel`` instead of
+  a file path was added.  [#3514]
+
 tweakreg
 --------
 

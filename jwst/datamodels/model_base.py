@@ -244,6 +244,14 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         return "".join(buf)
 
+    @property
+    def override_handle(self):
+        """override_handle identifies in-memory models where a filepath
+        would normally be used.
+        """
+        # Arbitrary choice to look something like crds://
+        return "override://" + self.__class__.__name__
+
     def __enter__(self):
         return self
 

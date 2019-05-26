@@ -73,7 +73,7 @@ class Step():
         # Add arguments for all of the expected reference files
         for reference_file_type in cls.reference_file_types:
             override_name = crds_client.get_override_name(reference_file_type)
-            spec[override_name] = 'string(default=None)'
+            spec[override_name] = 'is_string_or_datamodel(default=None)'
             spec.inline_comments[override_name] = (
                 '# Override the {0} reference file'.format(
                     reference_file_type))
@@ -614,7 +614,10 @@ class Step():
         """
         override_name = crds_client.get_override_name(reference_file_type)
         path = getattr(self, override_name, None)
-        return abspath(path) if path else path
+        if isinstance(path, DataModel):
+            return path
+        else:
+            return abspath(path) if path else path
 
     def get_reference_file(self, input_file, reference_file_type):
         """
@@ -641,7 +644,11 @@ class Step():
         """
         override = self.get_ref_override(reference_file_type)
         if override is not None:
-            if override.strip() != "":
+            if isinstance(override, DataModel):
+                self._reference_files_used.append(
+                    (reference_file_type, override.override_handle))
+                return override
+            elif override.strip() != "":
                 self._reference_files_used.append(
                     (reference_file_type, basename(override)))
                 reference_name = override
