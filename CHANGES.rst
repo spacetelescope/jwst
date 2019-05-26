@@ -352,6 +352,8 @@ associations
 
 - Updated docstrings and written documentation. [#2856, #2862]
 
+- Fixed NIRISS WFSS catalog naming and implement NIRCam WFSS [#3515]
+
 background
 ----------
 
