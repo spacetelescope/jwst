@@ -252,21 +252,21 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model):
 
     Parameters
     ----------
-    output_model : ~jwst.datamodels.MultiSlitModel
+    output_model : `~jwst.datamodels.MultiSlitModel`
         MultiSlitModel, modified (flat fielded) slit-by-slit, in-place.
 
-    f_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+    f_flat_model : `~jwst.datamodels.NirspecFlatModel` or None
         Flat field for the fore optics.
 
-    s_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+    s_flat_model : `~jwst.datamodels.NirspecFlatModel` or None
         Flat field for the spectrograph.
 
-    d_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+    d_flat_model : `~jwst.datamodels.NirspecFlatModel` or None
         Flat field for the detector.
 
     Returns
     -------
-    ~jwst.datamodels.MultiSlitModel
+    interpolated_flats: `~jwst.datamodels.MultiSlitModel`
         The interpolated flat field, one for each slit.
     """
 
