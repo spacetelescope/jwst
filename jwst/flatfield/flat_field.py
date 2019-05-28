@@ -1596,10 +1596,14 @@ def interpolate_flat(image_flat, image_dq, image_err, image_wl, wl):
     (nz, ysize, xsize) = image_flat.shape
     if nz == 1:
         if len(image_dq.shape) == 2:
-            return (image_flat.reshape((ysize, xsize)), image_dq)
+            # dq and err arrays are the same size, so treat them the same
+            return image_flat.reshape((ysize, xsize)), image_dq, image_err
         else:
-            return (image_flat.reshape((ysize, xsize)),
-                    image_dq.reshape((ysize, xsize)))
+            return (
+                image_flat.reshape((ysize, xsize)),
+                image_dq.reshape((ysize, xsize)),
+                image_err.reshape((ysize, xsize))
+            )
 
     grid = np.indices((ysize, xsize), dtype=np.intp)
     ixpixel = grid[1]
