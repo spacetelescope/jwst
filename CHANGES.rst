@@ -35,7 +35,10 @@ datamodels
 
 extract_1d
 ----------
+
 - An indexing bug was fixed. [#3497]
+
+- Pixels with wavelength = NaN are no longer used. [#3539]
 
 
 jump
