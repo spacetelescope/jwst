@@ -617,7 +617,6 @@ def get_aperture(im_shape, wcs, verbose, extract_params):
 
     if extract_params['ref_file_type'] == FILE_TYPE_IMAGE:
         return {}
-
     ap_ref = aperture_from_ref(extract_params, im_shape)
 
     (ap_ref, truncated) = update_from_shape(ap_ref, im_shape)
@@ -2739,7 +2738,6 @@ def run_extract1d(input_model, refname, smoothing_length, bkg_order,
     # we'll set S_EXTR1D to 'COMPLETE'.
     if ref_dict is not None:
         ref_dict['need_to_set_to_complete'] = False
-
     output_model = do_extract1d(input_model, ref_dict,
                                 smoothing_length, bkg_order,
                                 log_increment, subtract_background,
@@ -3046,7 +3044,6 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                                       datamodels.SlitModel)):
 
             slit = None
-
             # NRS_BRIGHTOBJ exposures are instances of SlitModel.
             prev_offset = OFFSET_NOT_ASSIGNED_YET
             for sp_order in spectral_order_list:
@@ -3080,12 +3077,14 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
 
                 # Loop over each integration in the input model
                 verbose = True          # for just the first integration
-                if input_model.data.shape[0] == 1:
+                shape = input_model.data.shape
+                if len(shape) == 3 and shape[0] == 1 or len(shape) == 2:
                     log.info("Beginning loop, just 1 integration ...")
+                    integrations = [-1]
                 else:
-                    log.info("Beginning loop over %d integrations ...",
-                             input_model.data.shape[0])
-                for integ in range(input_model.data.shape[0]):
+                    log.info("Beginning loop over {} integrations ...".format(shape[0]))
+                    integrations = range(shape[0])
+                for integ in integrations:
                     # Extract spectrum
                     try:
                         (ra, dec, wavelength, temp_flux, background,

@@ -37,10 +37,17 @@ extract_1d
 ----------
 - An indexing bug was fixed. [#3497]
 
+
 jump
 ----
 
 - Add multiprocessing capability to JumpStep [#3440]
+
+extract_2d
+----------
+
+- Replaced a white space in the names of grism objects with an underscore. [#3517]
+
 
 master_background
 -----------------
@@ -60,6 +67,11 @@ photom
 
 - Updated to zero-out pixels outside the wavelength range of flux calibration
   and set DQ=DO_NOT_USE. [#3475, #3489]
+
+pipeline
+--------
+
+- calwebb_spec3 was changed to allow processing of WFSS modes. [#3517]
 
 refpix
 ------
