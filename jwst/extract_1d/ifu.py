@@ -1,8 +1,10 @@
+from distutils.version import LooseVersion
 import logging
 import math
 
 import numpy as np
 from astropy import units as u
+import photutils
 from photutils import CircularAperture, CircularAnnulus, \
                       RectangularAperture, aperture_photometry
 
@@ -393,15 +395,24 @@ def extract_ifu(input_model, source_type, extract_params):
     phot_table = aperture_photometry(temp, aperture,
                                      method=method, subpixels=subpixels)
     aperture_area = float(phot_table['aperture_sum'][0])
-    log.debug("aperture.area() = %g; aperture_area = %g",
-              aperture.area(), aperture_area)
+    if LooseVersion(photutils.__version__) >= '0.7':
+        log.debug("aperture.area = %g; aperture_area = %g",
+                  aperture.area, aperture_area)
+    else:
+        log.debug("aperture.area() = %g; aperture_area = %g",
+                  aperture.area(), aperture_area)
+
     if subtract_background and annulus is not None:
         # Compute the area of the annulus.
         phot_table = aperture_photometry(temp, annulus,
                                          method=method, subpixels=subpixels)
         annulus_area = float(phot_table['aperture_sum'][0])
-        log.debug("annulus.area() = %g; annulus_area = %g",
-                  annulus.area(), annulus_area)
+        if LooseVersion(photutils.__version__) >= '0.7':
+            log.debug("annulus.area = %g; annulus_area = %g",
+                      annulus.area, annulus_area)
+        else:
+            log.debug("annulus.area() = %g; annulus_area = %g",
+                      annulus.area(), annulus_area)
         if annulus_area > 0.:
             normalization = aperture_area / annulus_area
         else:
