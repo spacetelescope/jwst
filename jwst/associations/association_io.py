@@ -8,12 +8,23 @@ import yaml as yaml_lib
 
 from .association import Association
 from .exceptions import AssociationNotValidError
+from .lib.member import Member
 
 # Configure logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 __all__ = []
+
+
+# Define JSON encoder to convert `Member` to `dict`
+class AssociationEncoder(json_lib.JSONEncoder):
+    """Encode to handle Associations"""
+    def default(self, obj):
+
+        # Convert Member to a simple dict
+        if isinstance(obj, Member):
+            return obj.data
 
 
 @Association.ioregistry
@@ -77,7 +88,7 @@ class json():
         """
         return (
             asn.asn_name,
-            json_lib.dumps(asn.data, indent=4, separators=(',', ': '))
+            json_lib.dumps(asn.data, cls=AssociationEncoder, indent=4, separators=(',', ': '))
         )
 
 
@@ -149,3 +160,9 @@ def np_str_representer(dumper, data):
     """Convert numpy.str_ into standard YAML string"""
     return dumper.represent_scalar('tag:yaml.org,2002:str', str(data))
 yaml_lib.add_representer(np.str_, np_str_representer)
+
+
+def member_representer(dumper, member):
+    """Convert a Member to its basic dict representation"""
+    return dumper.represent_dict(member.data)
+yaml_lib.add_representer(Member, member_representer)

@@ -28,6 +28,7 @@ from jwst.associations.lib.dms_base import (
     SPEC2_SCIENCE_EXP_TYPES,
     TSO_EXP_TYPES
 )
+from jwst.associations.lib.member import Member
 from jwst.associations.lib.rules_level3_base import _EMPTY
 from jwst.associations.lib.rules_level3_base import Utility as Utility_Level3
 from jwst.lib.suffix import remove_suffix
@@ -164,7 +165,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
         Returns
         -------
-        member : dict
+        member : Member
             The member
         """
 
@@ -181,13 +182,16 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             use_integrations = item['exp_type'] in TSO_EXP_TYPES + CORON_EXP_TYPES
 
         # Create the member.
-        member = {
-            'expname': Utility.rename_to_level2a(
-                item['filename'], use_integrations=use_integrations
-            ),
-            'exptype': self.get_exposure_type(item),
-            'exposerr': exposerr,
-        }
+        member = Member(
+            {
+                'expname': Utility.rename_to_level2a(
+                    item['filename'], use_integrations=use_integrations
+                ),
+                'exptype': self.get_exposure_type(item),
+                'exposerr': exposerr,
+            },
+            item=item
+        )
 
         return member
 
@@ -213,7 +217,6 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         member = self.make_member(item)
         members = self.current_product['members']
         members.append(member)
-        self.from_items.append(item)
         self.update_validity(member)
 
         # Update association state due to new member
@@ -284,12 +287,11 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         for idx, item in enumerate(items, start=1):
             self.new_product()
             members = self.current_product['members']
-            member = {
+            member = Member({
                 'expname': item,
                 'exptype': 'science'
-            }
+            }, item=item)
             members.append(member)
-            self.from_items.append(item)
             self.update_validity(member)
             self.update_asn()
 
@@ -317,7 +319,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
         Parameters
         ----------
-        member : obj
+        member : Member
             Member being added. Ignored.
 
         Returns
@@ -395,7 +397,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
                 for other_science in science_exps:
                     if other_science['expname'] != science_exp['expname']:
-                        now_background = copy.copy(other_science)
+                        now_background = Member(other_science)
                         now_background['exptype'] = 'background'
                         new_members.append(now_background)
 

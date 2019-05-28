@@ -54,7 +54,6 @@ def generate(pool, rules, version_id=None):
 
     for process_list in process_queue:
         for item in process_list.items:
-
             existing_asns, new_asns, to_process = generate_from_item(
                 item,
                 version_id,
@@ -74,7 +73,6 @@ def generate(pool, rules, version_id=None):
                     if to_process_list.work_over != process_list.work_over
                 ]
             process_queue.extend(to_process)
-            pass
 
     # Finalize found associations
     try:

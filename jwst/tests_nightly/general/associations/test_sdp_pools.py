@@ -28,7 +28,6 @@ pool_regex = re.compile(r'(?P<proposal>jw.+?)_(?P<versionid>.+)_pool')
 # Mark expected failures. Key is the pool name
 # and value is the reason message.
 EXPECTED_FAILS = {
-    'jw00624_20190205t031003_pool': 'Issue #655',
     'jw80600_20171108T041522_pool': 'PR #3450',
     'jw87600_20180824T213416_pool': 'Issue #3039',
     'jw98010_20171108T062332_pool': 'PR #3450',

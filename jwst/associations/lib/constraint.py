@@ -461,6 +461,16 @@ class AttrConstraint(SimpleConstraintABC):
             self.sources = [source]
             self.force_unique = False
 
+        # If required to reprocess, add to the reprocess list.
+        if self.force_reprocess:
+            reprocess.append(
+                ProcessList(
+                    items=[item],
+                    work_over=self.force_reprocess,
+                    only_on_match=self.only_on_match
+                )
+            )
+
         # That's all folks
         self.matched = True
         return self.matched, reprocess
