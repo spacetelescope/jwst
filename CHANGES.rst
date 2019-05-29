@@ -37,6 +37,14 @@ extract_1d
 ----------
 - An indexing bug was fixed. [#3497]
 
+flatfield
+---------
+
+- Remove flatfield step parameter `flat_suffix`.  Add boolean step parameter
+  `save_interpolated_flat`.  Refactor flatfield internals. [#3493]
+
+- Propagate uncertainty from FFLAT, SFLAT and DFLAT flat fields into science
+  ERR array and VAR_FLAT array for NIRSpec spectroscopic modes.  [#3538]
 
 jump
 ----
