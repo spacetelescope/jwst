@@ -911,7 +911,7 @@ class AsnMixin_AuxData:
         Parameters
         ----------
         item : dict
-            The pool entry to determine the exposure type of
+            The pool entry for which the exposure type is determined
         default : str or None
             The default exposure type.
             If None, routine will raise LookupError
