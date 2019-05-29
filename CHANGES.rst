@@ -40,6 +40,14 @@ extract_1d
 
 - Pixels with wavelength = NaN are no longer used. [#3539]
 
+flatfield
+---------
+
+- Remove flatfield step parameter `flat_suffix`.  Add boolean step parameter
+  `save_interpolated_flat`.  Refactor flatfield internals. [#3493]
+
+- Propagate uncertainty from FFLAT, SFLAT and DFLAT flat fields into science
+  ERR array and VAR_FLAT array for NIRSpec spectroscopic modes.  [#3538]
 
 jump
 ----
