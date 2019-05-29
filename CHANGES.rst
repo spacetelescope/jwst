@@ -82,7 +82,10 @@ photom
 pipeline
 --------
 
-- calwebb_spec3 was changed to allow processing of WFSS modes. [#3517]
+- ``calwebb_spec3`` was changed to allow processing of WFSS modes. [#3517]
+
+- ``calwebb_image2`` was changed to prevent 3D data from being sent to
+  ``resample``. [#3544]
 
 refpix
 ------
