@@ -11,7 +11,7 @@ from ..datamodels import dqflags
 from ..assign_wcs import niriss         # for specifying spectral order number
 from ..assign_wcs.util import wcs_bbox_from_shape
 from ..lib import pipe_utils
-from ..master_background.expand_to_2d import get_wavelengths
+from ..lib.wcs_utils import get_wavelengths
 from . import extract1d
 from . import ifu
 from . import spec_wcs
