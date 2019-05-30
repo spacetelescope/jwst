@@ -4,10 +4,10 @@
 ami
 ---
 
-- Fixed indentation bug in ami_analyze, so now all results are sufficiently 
-  close to the results of the stand-alone prototype. Other modifications include 
-  minor tweaks to more closely match those in the prototype code: changed some of 
-  initial values of the estimation parameters, and the filtering routine 
+- Fixed indentation bug in ami_analyze, so now all results are sufficiently
+  close to the results of the stand-alone prototype. Other modifications include
+  minor tweaks to more closely match those in the prototype code: changed some of
+  initial values of the estimation parameters, and the filtering routine
   arguments.  [#3487]
 
 - Updated ami_analyze.cfg to use default value of zero for rotation. [#3520]
@@ -93,6 +93,11 @@ refpix
 - Fixed a bug where pixeldq arrays were being transformed from DMS to detector
   coordinates for every group instead of just once
 
+skymatch
+--------
+
+- Improved reliability when matching sky in images with very close sky
+  footprints. [#3557]
 
 stpipe
 ------
