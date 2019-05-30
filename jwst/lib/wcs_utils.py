@@ -1,4 +1,6 @@
 import numpy as np
+from ..assign_wcs import niriss
+
 
 
 WFSS_EXPTYPES = ['NIS_WFSS', 'NRC_WFSS', 'NRC_GRISM', 'NRC_TSGRISM']

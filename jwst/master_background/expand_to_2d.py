@@ -5,7 +5,6 @@ import numpy as np
 from gwcs.wcstools import grid_from_bounding_box
 from .. import datamodels
 from .. assign_wcs import nirspec   # For NIRSpec IFU data
-from .. assign_wcs import niriss    # For NIRISS SOSS data
 from .. datamodels import dqflags
 from ..lib.wcs_utils import get_wavelengths
 
