@@ -144,7 +144,7 @@ properties:
             title: "[yyyy-mm-dd] UTC date at start of exposure"
             fits_keyword: DATE-OBS
             blend_table: True
-            blend_rule: mintime
+            blend_rule: mindate
           time:
             title: "[hh:mm:ss.sss] UTC time at start of exposure"
             type: string
@@ -156,13 +156,13 @@ properties:
             title: "Date-time start of data acquisition"
             fits_keyword: DATE-BEG
             blend_table: True
-            blend_rule: mintime
+            blend_rule: mindate
           date_end:
             type: string
             title: "[yyyy-mm-dd] UTC date at end of exposure"
             fits_keyword: DATE-END
             blend_table: True
-            blend_rule: maxtime
+            blend_rule: maxdate
           time_end:
             title: "[hh:mm:ss.sss] UTC time at end of exposure"
             type: string
