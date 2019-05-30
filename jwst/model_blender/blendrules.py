@@ -6,6 +6,7 @@ from collections import OrderedDict
 
 import numpy as np
 from astropy.io import fits
+from astropy.time import Time
 
 from jwst import __version__
 from .. import datamodels
@@ -81,6 +82,16 @@ def last(items):
         return items[-1]
     return None
 
+def mintime(items):
+    """Return the minimum time from a list of time strings."""
+    time_list = Time(items)
+    return time_list.min()
+
+def maxtime(items):
+    """Return the maximum time from a list of time strings."""
+    time_list = Time(items)
+    return time_list.max()
+
 
 # translation dictionary for function entries from rules files
 blender_funcs = {'first': first,
@@ -94,7 +105,9 @@ blender_funcs = {'first': first,
                  'sum': np.sum,
                  'max': np.max,
                  'min': np.min,
-                 'stddev': np.std}
+                 'stddev': np.std,
+                 'mintime': mintime,
+                 'maxtime': maxtime}
 
 
 # Classes for managing keyword rules
