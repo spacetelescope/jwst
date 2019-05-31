@@ -43,6 +43,7 @@ matrix:
 
     # Test with latest delivered CRDS_CONTEXT, as in regressions tests
     - env: CRDS_CONTEXT="jwst-edit"
+           PIP_DEPENDENCIES=".[test]"
            TEST_COMMAND='python setup.py test'
 
     # Build sphinx documentation with warnings
@@ -62,6 +63,7 @@ matrix:
            TEST_COMMAND='python setup.py test'
 
     - env: CRDS_CONTEXT="jwst-edit"
+           PIP_DEPENDENCIES=".[test]"
            TEST_COMMAND='python setup.py test'
 
 install:
