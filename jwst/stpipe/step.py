@@ -363,14 +363,6 @@ class Step():
             self.set_primary_input(args[0])
 
         try:
-            # prefetch truly occurs at the Pipeline (or subclass) level.
-            if (
-                    len(args) and len(self.reference_file_types) and
-                    not self.skip and
-                    self.prefetch_references
-            ):
-                self._precache_references(args[0])
-
             # Default output file configuration
             if self.output_file is not None:
                 self.save_results = True
@@ -396,6 +388,8 @@ class Step():
                 self.log.info('Step skipped.')
                 step_result = args[0]
             else:
+                if self.prefetch_references:
+                    self.prefetch(*args)
                 try:
                     step_result = self.process(*args)
                 except TypeError as e:
@@ -479,6 +473,15 @@ class Step():
         return step_result
 
     __call__ = run
+
+    def prefetch(self, *args):
+        """Prefetch reference files,  nominally called when
+        self.prefetch_references is True.  Can be called explictly
+        when self.prefetch_refences is False.
+        """
+        # prefetch truly occurs at the Pipeline (or subclass) level.
+        if len(args) and len(self.reference_file_types) and not self.skip:
+            self._precache_references(args[0])
 
     def process(self, *args):
         """
