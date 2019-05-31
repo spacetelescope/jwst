@@ -8,7 +8,6 @@ Notes:
 """
 import numpy as np
 from astropy.io import fits
-from astropy.modeling.models import Scale, Shift, Identity
 from gwcs import wcs
 from numpy.testing import utils
 
@@ -77,7 +76,7 @@ def run_test(model):
         ab_to_v2v3 = wcsobj.get_transform('alpha_beta', 'v2v3').set_input(int(ch))
         v2v3_to_ab = wcsobj.get_transform('v2v3', 'alpha_beta').set_input(int(ch))
         ab_to_detector = wcsobj.get_transform('alpha_beta','detector')
-        
+
         ref_alpha = ref_data['alpha']
         ref_beta = ref_data['beta']
         ref_lam = ref_data['lam']
@@ -102,7 +101,7 @@ def run_test(model):
         utils.assert_allclose(alpha_back, ref_alpha, atol=0.05)
         utils.assert_allclose(beta_back, ref_beta, atol=0.05)
         utils.assert_allclose(lam_back, ref_lam, atol=0.05)
-        
+
         for i, s in enumerate(ref_data['s']):
             sl = int(ch) * 100 + s
             x_back, y_back = ab_to_detector.set_input(sl)(alpha_back[i],beta_back[i],lam_back[i])
@@ -256,5 +255,5 @@ mrs_ref_data = {
            'v2': np.array([-503.7171854824459, -502.9282547181127]),
            'v3': np.array([-321.57006077329663, -317.7252303132135]),
            }
-    
+
 }
