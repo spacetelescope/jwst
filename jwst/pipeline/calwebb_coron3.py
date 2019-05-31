@@ -42,6 +42,8 @@ class Coron3Pipeline(Pipeline):
         'resample': resample_step.ResampleStep
     }
 
+    prefetch_references = False
+
     def process(self, input):
         """Primary method for performing pipeline."""
         self.log.info('Starting calwebb_coron3 ...')
@@ -72,6 +74,9 @@ class Coron3Pipeline(Pipeline):
             self.log.error(err_str1)
             self.log.error('Calwebb_coron3 processing will be aborted')
             return
+
+        for member in psf_files + targ_files:
+            self.prefetch(member)
 
         # Assemble all the input psf files into a single ModelContainer
         psf_models = datamodels.ModelContainer()
