@@ -4,7 +4,7 @@ from astropy import units as u
 
 from .. import datamodels
 from .. datamodels import dqflags
-from .. master_background import expand_to_2d
+from .. lib.wcs_utils import get_wavelengths
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -670,15 +670,13 @@ class DataSet():
 
             # Compute a 2-D grid of conversion factors, as a function of wavelength
             if isinstance(self.input, datamodels.MultiSlitModel):
-                wl_array = expand_to_2d.get_wavelengths(
-                                self.input.slits[self.slitnum],
-                                self.input.meta.exposure.type,
-                                order)
+                wl_array = get_wavelengths(self.input.slits[self.slitnum],
+                                           self.input.meta.exposure.type,
+                                           order)
             else:
-                wl_array = expand_to_2d.get_wavelengths(
-                                self.input,
-                                self.input.meta.exposure.type,
-                                order)
+                wl_array = get_wavelengths(self.input,
+                                           self.input.meta.exposure.type,
+                                           order)
 
             wl_array[np.isnan(wl_array)] = -1.
             conv_2d = np.interp(wl_array, waves, relresps, left=np.NaN, right=np.NaN)
