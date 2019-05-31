@@ -17,6 +17,7 @@ from ..datamodels import (DistortionModel, FilteroffsetModel,
                           DistortionMRSModel, WavelengthrangeModel,
                           RegionsModel, SpecwcsModel)
 
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -423,7 +424,7 @@ def detector_to_abl(input_model, reference_files):
         allregions = f.regions.copy()
         # Use the 50% throughput slice mask
         regions=allregions[4,:,:]
-        
+
     label_mapper = selector.LabelMapperArray(regions)
     transforms = {}
 
