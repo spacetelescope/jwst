@@ -568,7 +568,7 @@ def nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model):
     exposure_type = output_model.meta.exposure.type
     flat = np.ones_like(output_model.data)
     flat_dq = np.zeros_like(output_model.dq)
-    flat_err = np.ones_like(output_model.data)
+    flat_err = np.zeros_like(output_model.data)
 
     try:
         list_of_wcs = nirspec.nrs_ifu_wcs(output_model)
@@ -912,8 +912,7 @@ def fore_optics_flat(wl, f_flat_model, exposure_type,
         #       fp:  array of data values
         #       left, right:  values to return for out-of-bounds x
         tab_flat *= np.interp(tab_wl, image_wl, one_d_flat, 1., 1.)
-
-        f_flat_err = np.interp(tab_wl, image_wl, one_d_err, 1., 1.)
+        f_flat_err = np.interp(wl, image_wl, one_d_err, 0., 0.)
 
     # The shape of the output array is obtained from `wl`.
     f_flat, f_flat_dq = combine_fast_slow(wl, flat_2d, f_flat_dq,
