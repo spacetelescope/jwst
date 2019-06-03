@@ -410,10 +410,8 @@ def match_det2cube(x, y, sliceno, start_slice, input_model, transform,
 
     pixel_dq = input_model.dq[y, x]
 
-    all_flags = (dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['DROPOUT'] +
-                 dqflags.pixel['NON_SCIENCE'] +
-                 dqflags.pixel['DEAD'] + dqflags.pixel['HOT'] +
-                 dqflags.pixel['RC'] + dqflags.pixel['NONLINEAR'])
+    all_flags = (dqflags.pixel['DO_NOT_USE']  +
+                 dqflags.pixel['NON_SCIENCE'] )
     # find the location of all the values to reject in cube building
     good_data = np.where((np.bitwise_and(pixel_dq, all_flags) == 0))
 
