@@ -38,31 +38,35 @@ class AmiAnalyzeStep(Step):
         self.log.info('Initial rotation guess = %g deg', rotate)
 
         # Open the input data model
-        with datamodels.ImageModel(input) as input_model:
+        try:
+            with datamodels.ImageModel(input) as input_model:
 
-            # Get the name of the filter throughput reference file to use
-            self.filter_ref_name = self.get_reference_file(input_model,
-                                   'throughput')
-            self.log.info('Using filter throughput reference file %s',
-                           self.filter_ref_name)
+                # Get the name of the filter throughput reference file to use
+                throughput_reffile = self.get_reference_file(input_model,
+                                       'throughput')
+                self.log.info('Using filter throughput reference file %s',
+                               throughput_reffile)
 
-            # Check for a valid reference file
-            if self.filter_ref_name == 'N/A':
-                self.log.warning('No THROUGHPUT reference file found')
-                self.log.warning('AMI analyze step will be skipped')
-                result = input_model.copy()
-                result.meta.cal_step.ami_analyze = 'SKIPPED'
-                return result
+                # Check for a valid reference file
+                if throughput_reffile == 'N/A':
+                    self.log.warning('No THROUGHPUT reference file found')
+                    self.log.warning('AMI analyze step will be skipped')
+                    raise RuntimeError("No throughput reference file found. "
+                                       "ami_analyze cannot continue.")
 
-            # Open the filter throughput reference file
-            filter_model = datamodels.ThroughputModel(self.filter_ref_name)
+                # Open the filter throughput reference file
+                throughput_model = datamodels.ThroughputModel(throughput_reffile)
 
-            # Do the LG analysis on the input image
-            result = ami_analyze.apply_LG(input_model, filter_model,
-                                          oversample, rotate)
+                # Do the LG analysis on the input image
+                result = ami_analyze.apply_LG(input_model, throughput_model,
+                                              oversample, rotate)
 
-            # Close the reference file and update the step status
-            filter_model.close()
-            result.meta.cal_step.ami_analyze = 'COMPLETE'
+                # Close the reference file and update the step status
+                throughput_model.close()
+                result.meta.cal_step.ami_analyze = 'COMPLETE'
 
-        return result
+            return result
+
+        # If _calints CubeModel input, handle as RuntimeError
+        except ValueError as err:
+            raise RuntimeError("Only 2D ImageModel data can be processed.") from err
