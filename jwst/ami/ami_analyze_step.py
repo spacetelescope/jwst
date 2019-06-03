@@ -40,7 +40,8 @@ class AmiAnalyzeStep(Step):
         # Open the input data model
         try:
             with datamodels.ImageModel(input) as input_model:
-
+                if len(input_model.data.shape) != 2:
+                    raise RuntimeError("Only 2D ImageModel data can be processed.")
                 # Get the name of the filter throughput reference file to use
                 throughput_reffile = self.get_reference_file(input_model,
                                        'throughput')
