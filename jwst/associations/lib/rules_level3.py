@@ -15,7 +15,7 @@ __all__ = [
     'Asn_ACQ_Reprocess',
     'Asn_Coron',
     'Asn_IFU',
-    'Asn_Lv3MIRSpec',
+    'Asn_Lv3SpecAux',
     'Asn_Image',
     'Asn_SpectralSource',
     'Asn_SpectralTarget',
@@ -321,7 +321,7 @@ class Asn_IFU(AsnMixin_Spectrum):
         return product_name.lower()
 
 @RegistryMarker.rule
-class Asn_Lv3MIRSpec(AsnMixin_AuxData, AsnMixin_BkgScience):
+class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_BkgScience):
 
     """Level 3 Spectral Association
 
@@ -362,7 +362,7 @@ class Asn_Lv3MIRSpec(AsnMixin_AuxData, AsnMixin_BkgScience):
                 ])
 
         # Check and continue initialization.
-        super(Asn_Lv3MIRSpec, self).__init__(*args, **kwargs)
+        super(Asn_Lv3SpecAux, self).__init__(*args, **kwargs)
 
 @RegistryMarker.rule
 class Asn_Coron(AsnMixin_Science):
