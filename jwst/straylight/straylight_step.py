@@ -50,23 +50,34 @@ class StraylightStep (Step):
                     straylight_model.close()
 # ________________________________________________________________________________
                 if self.method == 'ModShepard':
-                    # going to use Regions file that is in the ASDF extension
-                    assign_wcs = input_model.meta.cal_step.assign_wcs
-                    if(assign_wcs != 'COMPLETE'):
-                        self.log.warning('Assign_WCS was not run on file, we  need the information of the slice gap locations')
-                        raise ErrorNoAssignWCS("Assign WCS has not been run on file")
+                    # Use the Regions reference file set to 20% throughput threshhold
+                    self.straylight_name = self.get_reference_file(input_model,
+                                                                   'regions')
+                    self.log.info('Using regions reference file %s',
+                                  self.straylight_name)
+                # Check for a valid reference file
+                    if self.straylight_name == 'N/A':
+                        self.log.warning('No REGIONS reference file found')
+                        self.log.warning('Straylight step will be skipped')
+                        result = input_model.copy()
+                        result.meta.cal_step.straylight = 'SKIPPED'
+                        return result
 
-                    det2ab = input_model.meta.wcs.get_transform('detector', 'alpha_beta')
-                    #det2ab is a RegionsSelector model
-                    slices = det2ab.label_mapper.mapper
-
+                    allregions = datamodels.RegionsModel(self.straylight_name)
+                    # Use 20% throughput array
+                    regions=(allregions.regions)[2,:,:].copy()
+                    self.log.info('Using 20% throughput threshhold.')
                     self.log.info(' Region of influence radius (pixels) %6.2f', self.roi)
                     self.log.info(' Modified Shepard weighting power %5.2f', self.power)
-                # Do the correction
+                    # Do the correction
                     result = straylight.correct_mrs_modshepard(input_model,
-                                                               slices,
+                                                               regions,
                                                                self.roi,
                                                                self.power)
+
+                    # Close the reference file and update the step status
+                    allregions.close()
+
 # ________________________________________________________________________________
                 result.meta.cal_step.straylight = 'COMPLETE'
 
