@@ -12,6 +12,9 @@ ami
 
 - Updated ami_analyze.cfg to use default value of zero for rotation. [#3520]
 
+- ``ami_analyze`` now emits a RuntimeError if the input is _calints or if a
+  throughput reference file cannot be found.  [#3567]
+
 assign_wcs
 ------------
 
