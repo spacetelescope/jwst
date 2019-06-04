@@ -39,6 +39,9 @@ datamodels
 - Added the new column "relresperror" to the "MiriImgPhotomModel" data
   model schema. [#3512]
 
+- Added all ``SlitModel`` data arrays to ``MultiExposureModel``, so that all input
+  arrays appear in the output of ``exp_to_source``. [#3572]
+
 extract_1d
 ----------
 
