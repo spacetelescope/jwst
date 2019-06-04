@@ -30,6 +30,7 @@ bc1 = utils.copy(bc0)
 bc1.name = "stable-deps"
 bc1.env_vars = env_vars
 bc1.build_cmds = [
+    "pip install numpy",
     "pip install ${pip_install_args} -e .[test]",
 ]
 bc1.test_cmds = ["pytest -r sx --junitxml=results.xml"]
@@ -38,6 +39,7 @@ bc1.test_cmds = ["pytest -r sx --junitxml=results.xml"]
 bc2 = utils.copy(bc1)
 bc2.name = "dev-deps"
 bc2.build_cmds = [
+    "pip install numpy",
     "pip install ${pip_install_args} -r requirements-dev.txt -e .[test]",
 ]
 
