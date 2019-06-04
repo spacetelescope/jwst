@@ -34,6 +34,7 @@ bc.conda_packages = [
     "python=${python_version}",
 ]
 bc.build_cmds = [
+    "pip install numpy",
     "python setup.py develop",
     "pip install -e .[test]",
     "pip install pytest-xdist",
