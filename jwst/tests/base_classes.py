@@ -113,7 +113,6 @@ class BaseJWSTTest:
         # Get full path and proceed depending on whether
         # is a local path or URL.
         root = get_bigdata_root()
-        logger.debug('root = %s', root)
         if op.exists(root):
             path = op.join(root, *self.repo_path)
             root_len = len(path) + 1
@@ -272,6 +271,8 @@ def _data_glob_url(*url_parts, root=None):
     search_url = op.join(root, 'api/search/pattern')
 
     # Join and re-split the url so that every component is identified.
+    if not root.endswith('/'):
+        root += '/'
     url = root + '/'.join(url_parts)
     all_parts = url.split('/')
 
