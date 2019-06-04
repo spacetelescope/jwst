@@ -7,7 +7,7 @@ env_vars = [
     "CRDS_PATH=./crds_cache",
 ]
 
-// Pip related setup
+// pip related setup
 def pip_index = "https://bytesalad.stsci.edu/artifactory/api/pypi/datb-pypi-virtual/simple"
 def pip_install_args = "--index-url ${pip_index} --progress-bar=off"
 
@@ -38,7 +38,7 @@ bc1.test_cmds = ["pytest -r sx --junitxml=results.xml"]
 bc2 = utils.copy(bc1)
 bc2.name = "dev-deps"
 bc2.build_cmds = [
-    "pip install -r requirements-dev.txt -e .[test]",
+    "pip install ${pip_install_args} -r requirements-dev.txt -e .[test]",
 ]
 
 utils.run([bc0, bc1, bc2])
