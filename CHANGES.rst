@@ -84,6 +84,7 @@ model_blender
 -------------
 
 - Allow blendmodels to ignore attributes in asdf tree not in schema [#3480]
+- Add new rules for dates and times [#3554]
 
 photom
 ------
@@ -1624,4 +1625,3 @@ white_light
 
 wiimatch
 --------
-
