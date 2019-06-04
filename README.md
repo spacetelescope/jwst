@@ -137,7 +137,7 @@ The test builds start at 6pm local Baltimore time Monday through Saturday on `jw
 To run the regression tests on your local machine, get the test dependencies and set the environment variable TEST_BIGDATA to our Artifactory server (STSci staff members only)
 
     pip install -e .[test]
-    export TEST_BIGDATA=https://bytesalad.stsci.edu/artifactory/
+    export TEST_BIGDATA=https://bytesalad.stsci.edu/artifactory
 
 When you run the tests, the results will get written somewhere in `/tmp` or `/var` by default.  Control this with the `--basetemp` arg to `pytest`.  So to run all the regression tests:
 
