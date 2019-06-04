@@ -381,14 +381,15 @@ def get_open_fixed_slits(input_model, slit_y_range=[-.55, .55]):
     """ Return the opened fixed slits."""
     if input_model.meta.subarray.name is None:
         raise ValueError("Input file is missing SUBARRAY value/keyword.")
+
     slits = []
     ylow, yhigh = slit_y_range
 
-    s2a1 = Slit('S200A1', 0, 0, 0, 0, ylow, yhigh, 5)
-    s2a2 = Slit('S200A2', 1, 0, 0, 0, ylow, yhigh, 5)
-    s4a1 = Slit('S400A1', 2, 0, 0, 0, ylow, yhigh, 5)
-    s16a1 = Slit('S1600A1', 3, 0, 0, 0, ylow, yhigh, 5)
-    s2b1 = Slit('S200B1', 4, 0, 0, 0, ylow, yhigh, 5)
+    s2a1 = Slit('S200A1', 0, 0, 0, 0, ylow, yhigh, 5, 1)
+    s2a2 = Slit('S200A2', 1, 0, 0, 0, ylow, yhigh, 5, 2)
+    s4a1 = Slit('S400A1', 2, 0, 0, 0, ylow, yhigh, 5, 3)
+    s16a1 = Slit('S1600A1', 3, 0, 0, 0, ylow, yhigh, 5, 4)
+    s2b1 = Slit('S200B1', 4, 0, 0, 0, ylow, yhigh, 5, 5)
 
     subarray = input_model.meta.subarray.name.upper()
     if subarray == "SUBS200A1":
@@ -404,6 +405,7 @@ def get_open_fixed_slits(input_model, slit_y_range=[-.55, .55]):
         slits.append(s2b1)
     else:
         slits.extend([s2a1, s2a2, s4a1, s16a1, s2b1])
+
     return slits
 
 
@@ -433,6 +435,32 @@ def get_msa_metadata(input_model, reference_files):
         log.critical(message)
         raise MSAFileError(message)
     return msa_config, msa_metadata_id, dither_position
+
+
+def _get_bkg_source_id(bkg_counter, source_ids, shift_by):
+    """
+    Compute a ``source_id`` for background slitlets.
+
+    All background slitlets are assigned a source_id of 0.
+    A unique ``source_id`` is necessary to keep them separate in exp_to_source.
+    A counter is used to assign unique `source_id``.
+    If the current value of the counter is one of the ``source_id`` values
+    of a slitlet with a source it is shifted by the highest source_id value
+    in the exposure.
+
+    Parameters
+    ----------
+    bkg_counter : int
+        The current value of the counter.
+    source_ids : set
+        All source_id values of slitlets with sources.
+    shift_by : int
+        The highest of all source_id values.
+    """
+    if bkg_counter in source_ids:
+        return bkg_counter + shift_by
+    else:
+        return bkg_counter
 
 
 def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
@@ -509,6 +537,22 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
     msa_data = [x for x in msa_conf.data if x['msa_metadata_id'] == msa_metadata_id \
                 and x['dither_point_index'] == dither_position]
 
+    # Get all source_ids for slitlets with sources.
+    # These should not be used when assigning source_id to background slitlets.
+    source_ids = set([x[5] for x in msa_conf.data if x['msa_metadata_id'] == msa_metadata_id \
+                      and x['dither_point_index'] == dither_position])
+    # All BKG shutters get a source_id value of 0.
+    if 0 in source_ids:
+        source_ids.remove(0)
+    if source_ids:
+        max_source_id = max(source_ids) + 1
+    else:
+        max_source_id = 0
+
+    # define a counter for "all background" slitlets.
+    # It will be used to assign a "source_id".
+    bkg_counter = 0
+
     log.debug('msa_data with msa_metadata_id = {}   {}'.format(msa_metadata_id, msa_data))
     log.info('Retrieving open slitlets for msa_metadata_id {} '
              'and dither_position {}'.format(msa_metadata_id, dither_position))
@@ -516,7 +560,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
     # Get the unique slitlet_ids
     slitlet_ids_unique = list(set([x['slitlet_id'] for x in msa_data]))
 
-    # SDP may assign a value of "-1" tp ``slitlet_id`` - these need to be ignored.
+    # SDP may assign a value of "-1" to ``slitlet_id`` - these need to be ignored.
     # JP-436
     if -1 in slitlet_ids_unique:
         slitlet_ids_unique.remove(-1)
@@ -550,6 +594,8 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
             xcen = slitlets_sid[0]['shutter_row']  # grab the first as they are all the same
             source_xpos = 0.0
             source_ypos = 0.0
+            source_id = _get_bkg_source_id(bkg_counter, source_ids, max_source_id)
+            bkg_counter += 1
         # There is 1 main shutter, phew, that makes it easier.
         elif n_main_shutter == 1:
             xcen, ycen, quadrant, source_xpos, source_ypos = [
@@ -564,7 +610,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
             j = ycen
             ymax = yhigh + margin + (jmax - j) * 1.15
             ymin = -(-ylow + margin) + (jmin - j) * 1.15
-
+            source_id = slitlets_sid[0]['source_id']
         # Not allowed....
         else:
             message = ("MSA configuration file has more than 1 shutter with "
@@ -574,7 +620,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
 
         # subtract 1 because shutter numbers in the MSA reference file are 1-based.
         shutter_id = xcen + (ycen - 1) * 365
-        source_id = slitlets_sid[0]['source_id']
+        #source_id = slitlets_sid[0]['source_id']
         try:
             source_name, source_alias, stellarity = [
                 (s['source_name'], s['alias'], s['stellarity']) \
