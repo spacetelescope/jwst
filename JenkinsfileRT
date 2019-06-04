@@ -52,7 +52,7 @@ bc.build_cmds = [
 bc.test_cmds = [
     "pytest -r sx -v -n 30 --bigdata --slow \
     --basetemp=${pytest_basetemp}  --junit-xml=results.xml \
-    jwst/tests_nightly/general"
+    jwst/tests_nightly/general/associations/test_sdp_pools.py --collect-only"
 ]
 bc.test_configs = [data_config]
 
