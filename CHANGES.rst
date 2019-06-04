@@ -15,7 +15,10 @@ ami
 assign_wcs
 ------------
 
-- Fix a one pixel off problem with the Nirspec NRS2 WCS transforms. [#3473]
+- Fix a one pixel off problem with the NIRSpec NRS2 WCS transforms. [#3473]
+
+- Raise a ``ValueError`` if the FWCPOS keyword isn't found in input NIRISS
+  WFSS images. [#3574]
 
 combine_1d
 ----------
@@ -86,6 +89,9 @@ pipeline
 
 - ``calwebb_image2`` was changed to prevent 3D data from being sent to
   ``resample``. [#3544]
+
+- ``calwebb_spec2`` was changed to check for an error in ``assign_wcs`` processing
+  before executing the ``background`` step. [#3574]
 
 refpix
 ------
