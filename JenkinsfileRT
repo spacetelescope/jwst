@@ -38,7 +38,7 @@ bc.conda_packages = [
     "python=${python_version}",
 ]
 bc.build_cmds = [
-    "pip install ${pip_install_args} -e .[test]",
+    "pip install -e .[test]",
     "pip install pytest-xdist",
 ]
 bc.test_cmds = [
