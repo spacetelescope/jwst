@@ -11,6 +11,7 @@ from ..datamodels import dqflags
 from ..assign_wcs import niriss         # for specifying spectral order number
 from ..assign_wcs.util import wcs_bbox_from_shape
 from ..lib import pipe_utils
+from ..lib.wcs_utils import get_wavelengths
 from . import extract1d
 from . import ifu
 from . import spec_wcs
@@ -617,7 +618,6 @@ def get_aperture(im_shape, wcs, verbose, extract_params):
 
     if extract_params['ref_file_type'] == FILE_TYPE_IMAGE:
         return {}
-
     ap_ref = aperture_from_ref(extract_params, im_shape)
 
     (ap_ref, truncated) = update_from_shape(ap_ref, im_shape)
@@ -1692,7 +1692,7 @@ class ExtractModel(ExtractBase):
         return location
 
 
-    def add_nod_correction(self, verbose):
+    def add_nod_correction(self, verbose, shape):
         """Add the nod offset to the extraction location (in-place).
 
         Extended summary
@@ -1710,24 +1710,37 @@ class ExtractModel(ExtractBase):
         ----------
         verbose : bool
             If True, messages can be logged.
+
+        shape : tuple
+            The shape of the data array (may be just the last two axes).
+            This is used for truncating a shifted limit at the image edge.
         """
 
         if self.nod_correction == 0.:
             return
 
-        if self.src_coeff is None:
-            if self.dispaxis == HORIZONTAL:
-                dir = "y"
-                self.ystart += self.nod_correction
-                self.ystop += self.nod_correction
-            else:
-                dir = "x"
-                self.xstart += self.nod_correction
-                self.xstop += self.nod_correction
-            if verbose:
-                log.info("Applying nod/dither offset of %s "
-                         "to %sstart and %sstop",
-                         str(self.nod_correction), dir, dir)
+        if self.dispaxis == HORIZONTAL:
+            dir = "y"
+            self.ystart += self.nod_correction
+            self.ystop += self.nod_correction
+            # These values must not be negative.
+            self.ystart = max(self.ystart, 0)
+            self.ystop = max(self.ystop, 0)
+            self.ystart = min(self.ystart, shape[-2] - 1)
+            self.ystop = min(self.ystop, shape[-2] - 1)     # inclusive limit
+        else:
+            dir = "x"
+            self.xstart += self.nod_correction
+            self.xstop += self.nod_correction
+            # These values must not be negative.
+            self.xstart = max(self.xstart, 0)
+            self.xstop = max(self.xstop, 0)
+            self.xstart = min(self.xstart, shape[-1] - 1)
+            self.xstop = min(self.xstop, shape[-1] - 1)     # inclusive limit
+        if self.src_coeff is None and verbose:
+            log.info("Applying nod/dither offset of %s "
+                     "to %sstart and %sstop",
+                     str(self.nod_correction), dir, dir)
 
         if self.src_coeff is not None or self.bkg_coeff is not None:
             if verbose:
@@ -1945,6 +1958,9 @@ class ExtractModel(ExtractBase):
 
         # If the wavelength attribute exists and is populated, use it
         # in preference to the wavelengths returned by the wcs function.
+        # But since we're now calling get_wavelengths from
+        # master_background.expand_to_2d, wl_array should be populated,
+        # and we should be able to remove some of this code.
         if wl_array is None or len(wl_array) == 0:
             got_wavelength = False
         else:
@@ -1955,8 +1971,6 @@ class ExtractModel(ExtractBase):
         if not got_wavelength or wl_array.min() == 0. and wl_array.max() == 0.:
             got_wavelength = False
         if got_wavelength:
-            if verbose:
-                log.debug("Wavelengths are from wavelength attribute.")
             # We need a 1-D array of wavelengths, one element for each
             # output table row.
             # These are slice limits.
@@ -1994,8 +2008,6 @@ class ExtractModel(ExtractBase):
             x_array.fill((self.xstart + self.xstop) / 2.)
 
         if self.wcs is not None:
-            if verbose and not got_wavelength:
-                log.debug("Wavelengths are from the wcs function.")
             nelem = slice1 - slice0
             if self.exp_type in WFSS_EXPTYPES:
                 # We expect two (x and y) or three (x, y, spectral order).
@@ -2057,8 +2069,6 @@ class ExtractModel(ExtractBase):
         if not got_wavelength:
             wavelength = wcs_wl                 # from wcs, or None
 
-        # Range (slice) of pixel numbers in the dispersion direction.
-        disp_range = [slice0, slice1]
         if self.dispaxis == HORIZONTAL:
             image = data
         else:
@@ -2077,10 +2087,12 @@ class ExtractModel(ExtractBase):
         n_nan = nan_mask.sum(dtype=np.intp)
         if n_nan > 0:
             if verbose:
-                log.warning("%d NaNs in wavelength array", n_nan)
-            temp_wl[nan_mask] = 0.01            # because NaNs cause problems
+                log.debug("%d NaNs in wavelength array", n_nan)
+            # NaNs in the wavelength array cause problems; replace them.
+            temp_wl[nan_mask] = 0.01
 
-        # src total flux, area, total weight
+        # Range (slice) of pixel numbers in the dispersion direction.
+        disp_range = [slice0, slice1]
         (temp_flux, background, npixels) = \
         extract1d.extract1d(image, temp_wl, disp_range,
                             self.p_src, self.p_bkg, self.independent_var,
@@ -2280,13 +2292,16 @@ class ImageExtractModel(ExtractBase):
         return location
 
 
-    def add_nod_correction(self, verbose):
+    def add_nod_correction(self, verbose, shape=None):
         """Shift the reference image (in-place).
 
         Parameters
         ----------
         verbose : bool
             If True, messages can be logged.
+
+        shape : tuple
+            This is not used.
         """
 
         if self.nod_correction == 0:
@@ -2441,6 +2456,9 @@ class ImageExtractModel(ExtractBase):
             temp_flux = gross.copy()
         del gross
 
+        # Since we're now calling get_wavelengths from
+        # master_background.expand_to_2d, wl_array should be populated,
+        # and we should be able to remove some of this code.
         if wl_array is None or len(wl_array) == 0:
             got_wavelength = False
         else:
@@ -2491,8 +2509,6 @@ class ImageExtractModel(ExtractBase):
             y_array = y_array[trim_slc]
 
         if got_wavelength:
-            if verbose:
-                log.debug("Wavelengths are from wavelength attribute.")
             indx = np.around(x_array).astype(np.int)
             indy = np.around(y_array).astype(np.int)
             indx = np.where(indx < 0, 0, indx)
@@ -2504,8 +2520,6 @@ class ImageExtractModel(ExtractBase):
         nelem = len(x_array)
 
         if self.wcs is not None:
-            if verbose and not got_wavelength:
-                log.debug("Wavelengths are from the wcs function.")
             if self.exp_type in WFSS_EXPTYPES:
                 # We expect two (x and y) or three (x, y, spectral order).
                 n_inputs = self.wcs.forward_transform.n_inputs
@@ -2723,7 +2737,6 @@ def run_extract1d(input_model, refname, smoothing_length, bkg_order,
     # we'll set S_EXTR1D to 'COMPLETE'.
     if ref_dict is not None:
         ref_dict['need_to_set_to_complete'] = False
-
     output_model = do_extract1d(input_model, ref_dict,
                                 smoothing_length, bkg_order,
                                 log_increment, subtract_background,
@@ -3030,7 +3043,6 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                                       datamodels.SlitModel)):
 
             slit = None
-
             # NRS_BRIGHTOBJ exposures are instances of SlitModel.
             prev_offset = OFFSET_NOT_ASSIGNED_YET
             for sp_order in spectral_order_list:
@@ -3064,12 +3076,14 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
 
                 # Loop over each integration in the input model
                 verbose = True          # for just the first integration
-                if input_model.data.shape[0] == 1:
+                shape = input_model.data.shape
+                if len(shape) == 3 and shape[0] == 1 or len(shape) == 2:
                     log.info("Beginning loop, just 1 integration ...")
+                    integrations = [-1]
                 else:
-                    log.info("Beginning loop over %d integrations ...",
-                             input_model.data.shape[0])
-                for integ in range(input_model.data.shape[0]):
+                    log.info("Beginning loop over {} integrations ...".format(shape[0]))
+                    integrations = range(shape[0])
+                for integ in integrations:
                     # Extract spectrum
                     try:
                         (ra, dec, wavelength, temp_flux, background,
@@ -3517,33 +3531,28 @@ def extract_one_slit(input_model, slit, integ,
     if verbose:
         log_initial_parameters(extract_params)
 
+    exp_type = input_model.meta.exposure.type
     input_dq = None                             # possibly replaced below
     if integ > -1:
         data = input_model.data[integ]
         if hasattr(input_model, 'dq'):
             input_dq = input_model.dq[integ]
-        try:
-            wl_array = input_model.wavelength
-        except AttributeError:
-            wl_array = None
+        wl_array = get_wavelengths(input_model, exp_type,
+                                   extract_params['spectral_order'])
     elif slit is None:
         data = input_model.data
         if hasattr(input_model, 'dq'):
             input_dq = input_model.dq
-        try:
-            wl_array = input_model.wavelength
-        except AttributeError:
-            wl_array = None
+        wl_array = get_wavelengths(input_model, exp_type,
+                                   extract_params['spectral_order'])
     else:
         data = slit.data
         if hasattr(slit, 'dq'):
             input_dq = slit.dq
-        try:
-            wl_array = slit.wavelength
-        except AttributeError:
-            wl_array = None
+        wl_array = get_wavelengths(slit, exp_type,
+                                   extract_params['spectral_order'])
 
-    data = replace_bad_values(data, input_dq, fill=0.)
+    data = replace_bad_values(data, input_dq, wl_array)
 
     if extract_params['ref_file_type'] == FILE_TYPE_IMAGE:
         # The reference file is an image.
@@ -3575,7 +3584,7 @@ def extract_one_slit(input_model, slit, integ,
 
     # Add the nod/dither offset to the polynomial coefficients, or shift
     # the reference image (depending on the type of reference file).
-    extract_model.add_nod_correction(verbose)
+    extract_model.add_nod_correction(verbose, data.shape)
 
     if verbose:
         extract_model.log_extraction_parameters()
@@ -3587,38 +3596,44 @@ def extract_one_slit(input_model, slit, integ,
     return (ra, dec, wavelength, temp_flux, background, npixels, dq, offset)
 
 
-def replace_bad_values(data, input_dq, fill=0.):
-    """Replace NaNs and values flagged with DO_NOT_USE.
+def replace_bad_values(data, input_dq, wl_array):
+    """Replace values flagged with DO_NOT_USE or that have NaN wavelengths.
 
     Parameters
     ----------
     data : ndarray
-        The input data array.
+        The science data array.
 
     input_dq : ndarray or None
-        If not None, this will be checked for flag value DO_NOT_USE.
+        If not None, this will be checked for flag value DO_NOT_USE.  The
+        science data will be set to NaN for every pixel that is flagged
+        with DO_NOT_USE in `input_dq`.
 
-    fill : float
-        Pixels that are NaN in `data` or are flagged in the `input_dq`
-        array (if the latter is not None) will be assigned this value.
+    wl_array : ndarray, 2-D
+        Wavelengths corresponding to `data`.  For any element of this
+        array that is NaN, the corresponding element in `data` will be
+        set to NaN.
 
     Returns
     -------
     ndarray
-        A possibly modified copy of `data`.
+        A possibly modified copy of `data`.  If no change was made, this
+        will be a view rather than a copy.  Values that are set to NaN
+        should not be included when doing the 1-D spectral extraction.
     """
 
-    mask = np.isnan(data)
+    mask = np.isnan(wl_array)
     if input_dq is not None:
         bad_mask = np.bitwise_and(input_dq, dqflags.pixel['DO_NOT_USE']) > 0
         mask = np.logical_or(mask, bad_mask)
 
     if np.any(mask):
         mod_data = data.copy()
-        mod_data[mask] = fill
+        mod_data[mask] = np.nan
         return mod_data
     else:
         return data
+
 
 def nans_at_endpoints(wavelength, temp_flux, background,
                       npixels, dq, verbose):

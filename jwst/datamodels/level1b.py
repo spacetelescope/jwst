@@ -25,7 +25,7 @@ class Level1bModel(DataModel):
          table of times for each integration
 
     """
-    schema_url = "level1b.schema.yaml"
+    schema_url = "level1b.schema"
 
     def __init__(self, init=None, **kwargs):
         super(Level1bModel, self).__init__(init=init, **kwargs)

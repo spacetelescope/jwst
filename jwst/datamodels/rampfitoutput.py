@@ -43,4 +43,4 @@ class RampFitOutputModel(DataModel):
     crmag : numpy float32 array (n_int, max_seg, ny, nx)
         Approximate CR magnitudes
     """
-    schema_url = "rampfitoutput.schema.yaml"
+    schema_url = "rampfitoutput.schema"

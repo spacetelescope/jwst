@@ -1,19 +1,15 @@
 """
 Unit tests for master background subtraction
 """
-import pytest
 import numpy as np
+import pytest
 
-from jwst.master_background import MasterBackgroundStep
-from jwst.assign_wcs import AssignWcsStep
-# from jwst.assign_wcs.tests.test_nirspec import (
-#     create_nirspec_fs_file,
-#     create_nirspec_ifu_file,
-#     )
-from jwst.master_background.create_master_bkg import create_background
 from jwst import datamodels
+from jwst.assign_wcs import AssignWcsStep
+from jwst.master_background import MasterBackgroundStep
+from jwst.master_background.create_master_bkg import create_background
+from jwst.master_background.master_background_step import copy_background_to_surf_bright
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
-# from jwst.extract_2d import Extract2dStep
 
 
 @pytest.fixture(scope='module')
@@ -94,3 +90,24 @@ def test_master_background_logic(_jail, user_background, science_image):
 
     assert result.meta.cal_step.master_background == 'COMPLETE'
     assert type(science_image) is type(result)
+
+
+def test_copy_background_to_surf_bright():
+    """Test the copy_background_to_surf_bright function"""
+
+    wavelength = np.linspace(0.5, 25, num=100)
+    surf_bright = np.linspace(2.0, 2.2, num=100) + (np.random.random(100) - 0.5) * 0.001
+    sb_error = np.random.random(100) * 0.01 + 17.       # different from berror
+    background = np.random.random(100) * 0.01 + 1
+    berror = np.random.random(100) * 0.01
+    data = create_background(wavelength, surf_bright)
+    data.spec[0].spec_table['sb_error'] = sb_error
+    data.spec[0].spec_table['background'] = background
+    data.spec[0].spec_table['berror'] = berror
+
+    newdata = data.copy()
+    copy_background_to_surf_bright(newdata)
+
+    assert (newdata.spec[0].spec_table['surf_bright'] == background).all()
+    assert (newdata.spec[0].spec_table['sb_error'] == berror).all()
+    assert (newdata.spec[0].spec_table['background'] == 0).all()

@@ -1,4 +1,7 @@
 from pathlib import Path
+import importlib
+from pkgutil import iter_modules
+
 import pytest
 
 from .base_classes import (
@@ -110,3 +113,14 @@ class TestBaseJWSTTest(BaseJWSTTest):
         """
         files = self.data_glob('test_bias_drift', glob=glob_filter)
         assert len(files) in nfiles
+
+
+def test_submodules_can_be_imported():
+    """Make sure all package submodules can be imported"""
+    import jwst
+
+    submodules = [mod for _, mod, ispkg in iter_modules(jwst.__path__) if ispkg]
+    # Ignore timeconversion which has non-standard env vars and dependencies
+    submodules.remove('timeconversion')
+    for module in submodules:
+        importlib.import_module("jwst." + module)

@@ -12,24 +12,23 @@ def test_script(full_pool_rules):
     pool, rules, pool_fname = full_pool_rules
 
     ref_rule_set = {
-        'discover_Asn_SpectralTarget', 'discover_Asn_Coron',
-        'candidate_Asn_Lv2Image', 'candidate_Asn_Lv2WFSS_NIS',
-        'candidate_Asn_Lv2Spec', 'candidate_Asn_SpectralSource',
-        'discover_Asn_SpectralSource', 'candidate_Asn_SpectralTarget',
-        'discover_Asn_AMI', 'discover_Asn_Image',
-        'candidate_Asn_Image', 'candidate_Asn_Lv2ImageTSO',
-        'candidate_Asn_Lv2SpecTSO', 'candidate_Asn_Lv2FGS',
-        'candidate_Asn_AMI', 'candidate_Asn_IFU',
-        'candidate_Asn_Lv2WFSC', 'candidate_Asn_TSO',
-        'candidate_Asn_Lv2ImageSpecial', 'discover_Asn_IFU',
-        'candidate_Asn_Lv2SpecSpecial', 'candidate_Asn_Coron',
-        'candidate_Asn_Lv2ImageNonScience'
+        'candidate_Asn_Coron', 'discover_Asn_TSO', 'candidate_Asn_Lv2NRSFSS',
+        'candidate_Asn_SpectralTarget', 'candidate_Asn_TSO', 'candidate_Asn_WFSCMB',
+        'candidate_Asn_Lv2SpecSpecial', 'candidate_Asn_Image', 'candidate_Asn_IFU',
+        'candidate_Asn_Lv2NRSMSA', 'candidate_Asn_Lv2Image', 'candidate_Asn_Lv2Spec',
+        'discover_Asn_AMI', 'candidate_Asn_AMI', 'candidate_Asn_Lv2ImageSpecial',
+        'candidate_Asn_Lv2SpecTSO', 'candidate_Asn_SpectralSource',
+        'candidate_Asn_Lv2WFSS', 'discover_Asn_Coron', 'candidate_Asn_WFSS_NIS',
+        'discover_Asn_IFU', 'candidate_Asn_Lv2WFSC',
+        'candidate_Asn_Lv2ImageNonScience', 'discover_Asn_SpectralTarget',
+        'candidate_Asn_Lv2ImageTSO', 'discover_Asn_SpectralSource',
+        'discover_Asn_Image', 'candidate_Asn_Lv2FGS'
     }
 
     generated = Main([pool_fname, '--dry-run'])
     asns = generated.associations
-    assert len(asns) == 288
-    assert len(generated.orphaned) == 203
+    assert len(asns) == 442
+    assert len(generated.orphaned) == 61
     found_rules = set(
         asn['asn_rule']
         for asn in asns
@@ -43,9 +42,9 @@ def test_asn_candidates(full_pool_rules):
     pool, rules, pool_fname = full_pool_rules
 
     generated = Main([pool_fname, '--dry-run', '-i', 'o001'])
-    assert len(generated.associations) == 1
+    assert len(generated.associations) == 3
     generated = Main([pool_fname, '--dry-run', '-i', 'o001', 'o002'])
-    assert len(generated.associations) == 2
+    assert len(generated.associations) == 6
 
 
 @pytest.mark.slow

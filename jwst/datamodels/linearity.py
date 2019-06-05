@@ -20,7 +20,7 @@ class LinearityModel(ReferenceFileModel):
     dq_def : numpy table
          DQ flag definitions
     """
-    schema_url = "linearity.schema.yaml"
+    schema_url = "linearity.schema"
 
     def __init__(self, init=None, **kwargs):
         super(LinearityModel, self).__init__(init=init, **kwargs)

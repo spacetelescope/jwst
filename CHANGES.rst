@@ -1,3 +1,128 @@
+0.13.3 (2019-05-04)
+===================
+
+ami
+---
+
+- Fixed indentation bug in ami_analyze, so now all results are sufficiently
+  close to the results of the stand-alone prototype. Other modifications include
+  minor tweaks to more closely match those in the prototype code: changed some of
+  initial values of the estimation parameters, and the filtering routine
+  arguments.  [#3487]
+
+- Updated ami_analyze.cfg to use default value of zero for rotation. [#3520]
+
+- ``ami_analyze`` now emits a RuntimeError if the input is _calints or if a
+  throughput reference file cannot be found.  [#3567]
+
+assign_wcs
+------------
+
+- Fix a one pixel off problem with the NIRSpec NRS2 WCS transforms. [#3473]
+
+- Raise a ``ValueError`` if the FWCPOS keyword isn't found in input NIRISS
+  WFSS images. [#3574]
+
+combine_1d
+----------
+
+- Unit tests were added to combine_1d.  [#3490]
+
+datamodels
+----------
+
+- Datamodels schemas should now be referenced with
+  ``http://stsci.edu/schemas/jwst_datamodel/image.schema`` instead of
+  ``http://jwst.stsci.edu/schemas/image.schema.yaml``.  The datamodels
+  ``BaseExtension`` is renamed internally to ``DataModelExtension``. [#3437]
+
+- Added the new column "relresperror" to the "MiriImgPhotomModel" data
+  model schema. [#3512]
+
+- Added all ``SlitModel`` data arrays to ``MultiExposureModel``, so that all input
+  arrays appear in the output of ``exp_to_source``. [#3572]
+
+extract_1d
+----------
+
+- An indexing bug was fixed. [#3497]
+
+- Pixels with wavelength = NaN are no longer used. [#3539]
+
+flatfield
+---------
+
+- Remove flatfield step parameter `flat_suffix`.  Add boolean step parameter
+  `save_interpolated_flat`.  Refactor flatfield internals. [#3493]
+
+- Propagate uncertainty from FFLAT, SFLAT and DFLAT flat fields into science
+  ERR array and VAR_FLAT array for NIRSpec spectroscopic modes.  [#3538]
+
+jump
+----
+
+- Add multiprocessing capability to JumpStep [#3440]
+
+extract_2d
+----------
+
+- Replaced a white space in the names of grism objects with an underscore. [#3517]
+
+
+master_background
+-----------------
+
+- Fix bug in master_background where the flux from the input x1d files
+  was being combined instead of the background columns.  [#3468]
+
+- Use the surf_bright column instead of flux in master_background.  [#3476]
+
+model_blender
+-------------
+
+- Allow blendmodels to ignore attributes in asdf tree not in schema [#3480]
+
+photom
+------
+
+- Updated to zero-out pixels outside the wavelength range of flux calibration
+  and set DQ=DO_NOT_USE. [#3475, #3489]
+
+pipeline
+--------
+
+- ``calwebb_spec3`` was changed to allow processing of WFSS modes. [#3517]
+
+- ``calwebb_image2`` was changed to prevent 3D data from being sent to
+  ``resample``. [#3544]
+
+- ``calwebb_spec2`` was changed to check for an error in ``assign_wcs`` processing
+  before executing the ``background`` step. [#3574]
+
+refpix
+------
+
+- Fixed a bug where pixeldq arrays were being transformed from DMS to detector
+  coordinates for every group instead of just once
+
+skymatch
+--------
+
+- Improved reliability when matching sky in images with very close sky
+  footprints. [#3557]
+
+stpipe
+------
+
+- Capability to define reference overrides using a ``DataModel`` instead of
+  a file path was added.  [#3514]
+
+tweakreg
+--------
+
+- Mask and do not use NON-SCIENCE regions in tweakreg source detection. [#3461]
+
+
 0.13.2 (2019-05-14)
 ===================
 
@@ -286,6 +411,8 @@ associations
 
 - Updated docstrings and written documentation. [#2856, #2862]
 
+- Fixed NIRISS WFSS catalog naming and implement NIRCam WFSS [#3515]
+
 background
 ----------
 
@@ -388,6 +515,7 @@ ipc
 
 jump
 ----
+ - Updated twopoint_difference.py to not use groups with groupdq set to DO_NOT_USE [#3495]
 
 jwpsf
 -----

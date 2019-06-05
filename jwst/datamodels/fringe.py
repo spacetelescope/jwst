@@ -23,7 +23,7 @@ class FringeModel(ReferenceFileModel):
     dq_def : numpy table
          DQ flag definitions
     """
-    schema_url = "fringe.schema.yaml"
+    schema_url = "fringe.schema"
 
     def __init__(self, init=None, **kwargs):
         super(FringeModel, self).__init__(init=init, **kwargs)

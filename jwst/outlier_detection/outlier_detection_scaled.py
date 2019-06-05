@@ -1,8 +1,10 @@
 """Class definition for performing outlier detection with scaling."""
 
 from copy import deepcopy
+from distutils.version import LooseVersion
 import numpy as np
 
+import photutils
 from photutils import aperture_photometry, CircularAperture, CircularAnnulus
 import astropy.units as u
 
@@ -125,8 +127,13 @@ class OutlierDetectionScaled(OutlierDetection):
 
         aperture_sum = u.Quantity(tbl1['aperture_sum'][0])
         annulus_sum = u.Quantity(tbl2['aperture_sum'][0])
-        annulus_mean = annulus_sum / aper2.area()
-        aperture_bkg = annulus_mean * apertures.area()
+        if LooseVersion(photutils.__version__) >= '0.7':
+            annulus_mean = annulus_sum / aper2.area
+            aperture_bkg = annulus_mean * apertures.area
+        else:
+            annulus_mean = annulus_sum / aper2.area()
+            aperture_bkg = annulus_mean * apertures.area()
+
         median_phot_value = aperture_sum - aperture_bkg
 
         if save_intermediate_results:

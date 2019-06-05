@@ -13,4 +13,4 @@ class StrayLightModel(ReferenceFileModel):
     data : numpy uint8 array
          Straylight mask
     """
-    schema_url = "straylight.schema.yaml"
+    schema_url = "straylight.schema"

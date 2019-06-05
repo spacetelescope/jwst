@@ -5,8 +5,8 @@ import numpy as np
 from gwcs.wcstools import grid_from_bounding_box
 from .. import datamodels
 from .. assign_wcs import nirspec   # For NIRSpec IFU data
-from .. assign_wcs import niriss    # For NIRISS SOSS data
 from .. datamodels import dqflags
+from ..lib.wcs_utils import get_wavelengths
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -41,7 +41,7 @@ def expand_to_2d(input, m_bkg_spec):
         else:                                   # CombinedSpecModel
             spec_table = bkg.spec_table
         tab_wavelength = spec_table['wavelength'].copy()
-        tab_background = spec_table['flux']
+        tab_background = spec_table['surf_bright']
 
     # We're going to use np.interp, so tab_wavelength must be strictly
     # increasing.
@@ -72,7 +72,7 @@ def bkg_for_container(input, tab_wavelength, tab_background):
         The wavelength column read from the 1-D background table.
 
     tab_background : 1-D ndarray
-        The flux column read from the 1-D background table.
+        The surf_bright column read from the 1-D background table.
 
     Returns
     -------
@@ -101,7 +101,7 @@ def create_bkg(input, tab_wavelength, tab_background):
         The wavelength column read from the 1-D background table.
 
     tab_background : 1-D ndarray
-        The flux column read from the 1-D background table.
+        The surf_bright column read from the 1-D background table.
 
     Returns
     -------
@@ -142,7 +142,7 @@ def bkg_for_multislit(input, tab_wavelength, tab_background):
         The wavelength column read from the 1-D background table.
 
     tab_background : 1-D ndarray
-        The flux column read from the 1-D background table.
+        The surf_bright column read from the 1-D background table.
 
     Returns
     -------
@@ -161,19 +161,19 @@ def bkg_for_multislit(input, tab_wavelength, tab_background):
             raise RuntimeError("Can't determine wavelengths for {}"
                                .format(type(slit)))
 
-        # Wherever the wavelength is NaN, the background flux should to be set
-        # to 0.  We replace NaN elements in wl_array with -1, so that np.interp
-        # will detect that those values are out of range (note the `left`
-        # argument to np.interp) and set the output to 0.
+        # Wherever the wavelength is NaN, the background surface brightness
+        # should to be set to 0.  We replace NaN elements in wl_array with
+        # -1, so that np.interp will detect that those values are out of range
+        # (note the `left` argument to np.interp) and set the output to 0.
         wl_array[np.isnan(wl_array)] = -1.
         # flag values outside of background wavelength table
         mask_limit = (wl_array > max_wave) | (wl_array < min_wave)
         wl_array[mask_limit] = -1
-        # bkg_flux will be a 2-D array, because wl_array is 2-D.
-        bkg_flux = np.interp(wl_array, tab_wavelength, tab_background,
-                             left=0., right=0.)
+        # bkg_surf_bright will be a 2-D array, because wl_array is 2-D.
+        bkg_surf_bright = np.interp(wl_array, tab_wavelength, tab_background,
+                                    left=0., right=0.)
 
-        background.slits[k].data[:] = bkg_flux.copy()
+        background.slits[k].data[:] = bkg_surf_bright.copy()
         background.slits[k].dq[mask_limit] = np.bitwise_or(background.slits[k].dq[mask_limit],
                                                            dqflags.pixel['DO_NOT_USE'])
 
@@ -192,7 +192,7 @@ def bkg_for_image(input, tab_wavelength, tab_background):
         The wavelength column read from the 1-D background table.
 
     tab_background : 1-D ndarray
-        The flux column read from the 1-D background table.
+        The surf_bright column read from the 1-D background table.
 
     Returns
     -------
@@ -213,11 +213,11 @@ def bkg_for_image(input, tab_wavelength, tab_background):
     # flag values outside of background wavelength table
     mask_limit = (wl_array > max_wave) | (wl_array < min_wave)
     wl_array[mask_limit] = -1
-    # bkg_flux will be a 2-D array, because wl_array is 2-D.
-    bkg_flux = np.interp(wl_array, tab_wavelength, tab_background,
-                         left=0., right=0.)
+    # bkg_surf_bright will be a 2-D array, because wl_array is 2-D.
+    bkg_surf_bright = np.interp(wl_array, tab_wavelength, tab_background,
+                                left=0., right=0.)
 
-    background.data[:] = bkg_flux.copy()
+    background.data[:] = bkg_surf_bright.copy()
     background.dq[mask_limit] = np.bitwise_or(background.dq[mask_limit],
                                               dqflags.pixel['DO_NOT_USE'])
 
@@ -236,7 +236,7 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
         The wavelength column read from the 1-D background table.
 
     tab_background : 1-D ndarray
-        The flux column read from the 1-D background table.
+        The surf_bright column read from the 1-D background table.
 
     Returns
     -------
@@ -271,9 +271,9 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
             background.dq[full_frame_ind] = np.bitwise_or(background.dq[full_frame_ind],
                                                           dqflags.pixel['DO_NOT_USE'])
 
-            bkg_flux = np.interp(wl_array, tab_wavelength, tab_background,
-                                 left=0., right=0.)
-            background.data[y.astype(int), x.astype(int)] = bkg_flux.copy()
+            bkg_surf_bright = np.interp(wl_array, tab_wavelength,
+                                        tab_background, left=0., right=0.)
+            background.data[y.astype(int), x.astype(int)] = bkg_surf_bright.copy()
 
     elif input.meta.instrument.name.upper() == "MIRI":
         shape = input.data.shape
@@ -289,71 +289,11 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
         # TODO - add another DQ Flag something like NO_BACKGROUND when we have space in dqflags
         background.dq[mask_limit] = np.bitwise_or(background.dq[mask_limit],
                                                   dqflags.pixel['DO_NOT_USE'])
-        bkg_flux = np.interp(wl_array, tab_wavelength, tab_background,
-                             left=0., right=0.)
-        background.data[:, :] = bkg_flux.copy()
+        bkg_surf_bright = np.interp(wl_array, tab_wavelength, tab_background,
+                                    left=0., right=0.)
+        background.data[:, :] = bkg_surf_bright.copy()
     else:
         raise RuntimeError("Exposure type {} is not supported."
                            .format(input.meta.exposure.type))
 
     return background
-
-
-def get_wavelengths(model, exp_type="", order=None):
-    """Read or compute wavelengths.
-
-    Parameters
-    ----------
-    model : `~jwst.datamodels.DataModel`
-        The input science data, or a slit from a
-        `~jwst.datamodels.MultiSlitModel`.
-
-    exp_type : str
-        The exposure type.  This is only needed to check whether the input
-        data are WFSS.
-
-    order : int
-        Spectral order number, for NIRISS SOSS only.
-
-    Returns
-    -------
-    wl_array : 2-D ndarray
-        An array of wavelengths corresponding to the data in `model`.
-    """
-
-    # Use the existing wavelength array, if there is one
-    if hasattr(model, "wavelength"):
-        wl_array = model.wavelength.copy()
-        got_wavelength = True                   # may be reset below
-    else:
-        wl_array = None
-    if (wl_array is None or len(wl_array) == 0 or
-        np.nanmin(wl_array) == 0. and np.nanmax(wl_array) == 0.):
-            got_wavelength = False
-            wl_array = None
-
-    # If no existing wavelength array, compute one
-    if hasattr(model.meta, "wcs") and not got_wavelength:
-
-        # Set up an appropriate WCS object
-        if hasattr(model.meta, "exposure") and model.meta.exposure.type == "NIS_SOSS":
-            wcs = niriss.niriss_soss_set_input(model, order)
-        else:
-            wcs = model.meta.wcs
-
-        # Evaluate the WCS on the grid of pixel indexes, capturing only the
-        # resulting wavelength values
-        shape = model.data.shape
-        grid = np.indices(shape[-2:], dtype=np.float64)
-
-        if exp_type in WFSS_EXPTYPES:
-            # We currently have to loop over pixels for WFSS data.
-            wl_array = np.zeros(shape[-2:], dtype=np.float64)
-            for j in range(shape[-2]):
-                for i in range(shape[-1]):
-                    # Keep wavelength; ignore RA and Dec
-                    wl_array[..., j, i] = wcs(i, j)[2]
-        else:
-            wl_array = wcs(grid[1], grid[0])[2]
-
-    return wl_array

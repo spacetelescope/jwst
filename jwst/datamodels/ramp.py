@@ -32,7 +32,7 @@ class RampModel(DataModel):
          table of times for each integration
 
     """
-    schema_url = "ramp.schema.yaml"
+    schema_url = "ramp.schema"
 
     def __init__(self, init=None, **kwargs):
         super(RampModel, self).__init__(init=init, **kwargs)

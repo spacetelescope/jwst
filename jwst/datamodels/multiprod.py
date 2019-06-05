@@ -34,7 +34,7 @@ class MultiProductModel(model_base.DataModel):
     products.items.con : numpy int32 array
          drizzle algorithm context array
     """
-    schema_url = "multiproduct.schema.yaml"
+    schema_url = "multiproduct.schema"
 
     def __init__(self, init=None, **kwargs):
         if isinstance(init, DrizProductModel):

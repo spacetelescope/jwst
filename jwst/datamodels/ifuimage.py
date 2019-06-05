@@ -38,7 +38,7 @@ class IFUImageModel(DataModel):
     pathloss : numpy float32 array
          pathloss correction
     """
-    schema_url = "ifuimage.schema.yaml"
+    schema_url = "ifuimage.schema"
 
     def __init__(self, init=None, **kwargs):
         if isinstance(init, ImageModel):

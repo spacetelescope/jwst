@@ -203,17 +203,8 @@ def _class_from_ramp_type(hdulist, shape):
             try:
                 hdulist['DQ']
             except KeyError:
-                # It's a RampModel or MIRIRampModel
-                try:
-                    hdulist['REFOUT']
-                except KeyError:
-                    # It's a RampModel
-                    from . import ramp
-                    new_class = ramp.RampModel
-                else:
-                    # It's a MIRIRampModel
-                    from . import miri_ramp
-                    new_class = miri_ramp.MIRIRampModel
+                from . import ramp
+                new_class = ramp.RampModel
             else:
                 new_class = None
         else:

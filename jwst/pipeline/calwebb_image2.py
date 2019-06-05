@@ -145,8 +145,9 @@ class Image2Pipeline(Pipeline):
         input = self.photom(input)
 
         # Resample individual exposures, but only if it's one of the
-        # regular science image types.
-        if input.meta.exposure.type.upper() in self.image_exptypes:
+        # regular 2D science image types
+        if input.meta.exposure.type.upper() in self.image_exptypes and \
+        len(input.data.shape) == 2:
             self.resample(input)
 
         # That's all folks
