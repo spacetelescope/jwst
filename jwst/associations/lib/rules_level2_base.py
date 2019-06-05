@@ -648,6 +648,11 @@ class Constraint_Mode(Constraint):
                 required=False,
             ),
             DMSAttrConstraint(
+                name='opt_elem3',
+                sources=['fxd_slit'],
+                required=False,
+            ),
+            DMSAttrConstraint(
                 name='subarray',
                 sources=['subarray'],
                 required=False,
