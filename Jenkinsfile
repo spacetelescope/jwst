@@ -48,6 +48,7 @@ bc2.build_cmds = [
 bc3 = new BuildConfig()
 bc3.nodetype = 'python3.7'
 bc3.name = 'python3.7'
+bc3.env_vars = env_vars
 bc3.build_cmds = [
     "pip install -e .[test]",
 ]
