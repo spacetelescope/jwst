@@ -1,7 +1,5 @@
 if (utils.scm_checkout()) return
 
-python_version = '3.6'
-
 env_vars = [
     "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
     "CRDS_PATH=./crds_cache",
@@ -18,7 +16,7 @@ bc0.nodetype = 'linux'
 bc0.name = 'wheel-sdist'
 bc0.conda_ver = '4.6.14'
 bc0.conda_packages = [
-    "python=${python_version}",
+    "python=3.6",
 ]
 bc0.build_cmds = [
     "pip install numpy",
@@ -40,6 +38,9 @@ bc1.test_cmds = [
 // Generate pip build/test with dev upstream dependencies
 bc2 = utils.copy(bc1)
 bc2.name = "dev-deps"
+bc2.conda_packages = [
+    "python=3.7",
+]
 bc2.build_cmds = [
     "pip install -r requirements-dev.txt -e .[test]",
 ]
