@@ -619,15 +619,23 @@ class Constraint_TSO(Constraint):
         super(Constraint_TSO, self).__init__(
             [
                 DMSAttrConstraint(
-                    sources=['tsovisit'],
-                    value='t',
+                    sources=['pntgtype'],
+                    value='science'
                 ),
-                DMSAttrConstraint(
-                    sources=['exp_type'],
-                    value='|'.join(TSO_EXP_TYPES),
-                ),
+                Constraint(
+                    [
+                        DMSAttrConstraint(
+                            sources=['tsovisit'],
+                            value='t',
+                        ),
+                        DMSAttrConstraint(
+                            sources=['exp_type'],
+                            value='|'.join(TSO_EXP_TYPES),
+                        ),
+                    ],
+                    reduce=Constraint.any
+                )
             ],
-            reduce=Constraint.any,
             name='is_tso'
         )
 
