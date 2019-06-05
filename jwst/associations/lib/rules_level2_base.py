@@ -176,6 +176,10 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             exposerr = None
 
         # Create the member.
+        # `is_item_tso` is used to determine whether the name should
+        # represent the integrations form of the data.
+        # Though coronagraphic data is not TSO,
+        # it does remain in the separate integrations.
         member = Member(
             {
                 'expname': Utility.rename_to_level2a(

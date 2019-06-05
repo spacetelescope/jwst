@@ -366,6 +366,11 @@ class DMSBaseMixin(ACIDMixin):
     def is_item_tso(self, item, other_exp_types=None):
         """Is the given item TSO
 
+        Determine whether the specific item represents
+        TSO data or not. When used to determine naming
+        of files, coronagraphic data will be included through
+        the `other_exp_types` parameter.
+
         Parameters
         ----------
         item : dict
@@ -373,14 +378,13 @@ class DMSBaseMixin(ACIDMixin):
 
         other_exp_types: [str[,...]] or None
             List of other exposure types to consider TSO.
-            Usually used to include coronagraphic exposures
 
         Returns
         -------
         is_item_tso : bool
             Item represents a TSO exposure.
         """
-        # If not a sciencer exposure, such as target aquisitions,
+        # If not a science exposure, such as target aquisitions,
         # then other TSO indicators do not apply.
         if item['pntgtype'] != 'science':
             return False
