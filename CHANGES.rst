@@ -13,8 +13,6 @@ associations
 - MIRI MRS dedicated background exposures are now listed as science observations in
   a new association. [#3542]
 
-  - Prevent inclusion of data files with exp_type="NIS_EXTCAL" in the association files [#3611]
-
 datamodels
 ----------
 
