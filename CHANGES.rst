@@ -1,6 +1,12 @@
 0.13.4 (Unreleased)
 ===================
 
+associations
+---
+
+- MIRI MRS dedicated background exposures are now listed as science observations in
+  a new association. [#3459]
+
 0.13.3 (2019-06-04)
 ===================
 
