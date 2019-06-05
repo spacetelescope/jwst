@@ -45,9 +45,10 @@ bc2.build_cmds = [
 ]
 
 // Generate conda-free build with python 3.7
+// TODO: add to matrix below when SQLite is upgraded on the "python3.7" image
 bc3 = new BuildConfig()
 bc3.nodetype = 'python3.7'
-bc3.name = 'python3.7'
+bc3.name = 'conda-free'
 bc3.env_vars = env_vars
 bc3.build_cmds = [
     "pip install -e .[test]",
@@ -56,4 +57,4 @@ bc3.test_cmds = [
     "pytest -r sx --junitxml=results.xml"
 ]
 
-utils.run([bc0, bc1, bc2, bc3])
+utils.run([bc0, bc1, bc2])
