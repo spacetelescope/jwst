@@ -18,7 +18,7 @@ class StraylightStep (Step):
          power = float(default = 1.0) # Power of weighting function
 
     """
-    reference_file_types = ['straymask']
+    reference_file_types = ['regions']
     def process(self, input):
 
 
@@ -30,32 +30,12 @@ class StraylightStep (Step):
             if detector == 'MIRIFUSHORT':
 
                 if self.method == 'Nearest':
-                # Get the name of the straylight reference file
-                    self.straylight_name = self.get_reference_file(input_model,
-                                                                   'straymask')
-                    self.log.info('Using straylight reference file %s',
-                                  self.straylight_name)
-                # Check for a valid reference file
-                    if self.straylight_name == 'N/A':
-                        self.log.warning('No STRAYLIGHT reference file found')
-                        self.log.warning('Straylight step will be skipped')
-                        result = input_model.copy()
-                        result.meta.cal_step.straylight = 'SKIPPED'
-                        return result
-
-                # Open the straylight mask ref file data model
-                    straylight_model = datamodels.StrayLightModel(self.straylight_name)
-                    result = straylight.correct_MRS(input_model, straylight_model)
-                # Close the reference file and update the step status
-                    straylight_model.close()
-# ________________________________________________________________________________
-                if self.method == 'ModShepard':
                     # Use the Regions reference file set to 20% throughput threshhold
                     self.straylight_name = self.get_reference_file(input_model,
                                                                    'regions')
                     self.log.info('Using regions reference file %s',
                                   self.straylight_name)
-                # Check for a valid reference file
+                    # Check for a valid reference file
                     if self.straylight_name == 'N/A':
                         self.log.warning('No REGIONS reference file found')
                         self.log.warning('Straylight step will be skipped')
@@ -66,7 +46,31 @@ class StraylightStep (Step):
                     allregions = datamodels.RegionsModel(self.straylight_name)
                     # Use 20% throughput array
                     regions=(allregions.regions)[2,:,:].copy()
-                    self.log.info('Using 20% throughput threshhold.')
+                    self.log.info(' Using 20% throughput threshhold.')
+                    self.log.info(' Using row-by-row approach.')
+                    # Do the correction
+                    result = straylight.correct_mrs(input_model, regions)
+                    # Close the reference file and update the step status
+                    allregions.close()
+# ________________________________________________________________________________
+                if self.method == 'ModShepard':
+                    # Use the Regions reference file set to 20% throughput threshhold
+                    self.straylight_name = self.get_reference_file(input_model,
+                                                                   'regions')
+                    self.log.info('Using regions reference file %s',
+                                  self.straylight_name)
+                    # Check for a valid reference file
+                    if self.straylight_name == 'N/A':
+                        self.log.warning('No REGIONS reference file found')
+                        self.log.warning('Straylight step will be skipped')
+                        result = input_model.copy()
+                        result.meta.cal_step.straylight = 'SKIPPED'
+                        return result
+
+                    allregions = datamodels.RegionsModel(self.straylight_name)
+                    # Use 20% throughput array
+                    regions=(allregions.regions)[2,:,:].copy()
+                    self.log.info(' Using 20% throughput threshhold.')
                     self.log.info(' Region of influence radius (pixels) %6.2f', self.roi)
                     self.log.info(' Modified Shepard weighting power %5.2f', self.power)
                     # Do the correction

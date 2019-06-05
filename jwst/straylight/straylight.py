@@ -19,7 +19,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def correct_mrs(input_model, straylight_model):
+def correct_mrs(input_model, sliceMap):
     """
     Short Summary
     -------------
@@ -31,7 +31,9 @@ def correct_mrs(input_model, straylight_model):
     input_model: data model object
         science data to be corrected
 
-    straylight_model: holds the straylight mask for the correction
+    sliceMap: holds the pixel region mask for the correction
+                   slice = (band*100+slice#)
+                   gap = 0
 
     Returns
     -------
@@ -42,13 +44,16 @@ def correct_mrs(input_model, straylight_model):
 
     # Save some data parameterss for easy use later
     nrows, ncols = input_model.data.shape
-    # mask is either 1 or 0
-    mask = straylight_model.data
-    x = float('nan')
-    # The straylight mask has values of 1 and 0. The straylight task uses data
+
+    # The slice mask has values of 0 and nonzero, values of 0 present pixel
+    # in a slice gap and non zero values are science pixels.  The straylight task uses data
     # in-between the slices (also called slice gaps) of the MRS data to correct
-    # the science data in the slices. In the mask the pixels found in the gaps
-    # have a value of 1 and the science pixels have a value of 0.
+    # the science data in the slices.
+
+    #mask is same size as sliceMap - set = 0 everywhere
+    mask = np.zeros_like(sliceMap)
+    #mask = 1 for slice gaps
+    mask[sliceMap == 0] = 1
 
     # Create output as a copy of the input science data model
     # sci_mask is the input science image * mask
