@@ -90,7 +90,7 @@ TESTS_REQUIRE = [
     'pytest',
     'pytest-doctestplus',
     'requests_mock',
-    'pytest-astropy',
+    'pytest-openfiles',
     'pytest-faulthandler',
 ]
 

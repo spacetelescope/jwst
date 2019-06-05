@@ -33,7 +33,9 @@ bc1.env_vars = env_vars
 bc1.build_cmds = [
     "pip install -e .[test]",
 ]
-bc1.test_cmds = ["pytest -r sx --junitxml=results.xml"]
+bc1.test_cmds = [
+    "pytest -r sx --junitxml=results.xml"
+]
 
 // Generate pip build/test with dev upstream dependencies
 bc2 = utils.copy(bc1)
@@ -42,4 +44,15 @@ bc2.build_cmds = [
     "pip install -r requirements-dev.txt -e .[test]",
 ]
 
-utils.run([bc0, bc1, bc2])
+// Generate conda-free build with python 3.7
+bc3 = new BuildConfig()
+bc3.nodetype = 'python3.7'
+bc3.name = 'python3.7'
+bc3.build_cmds = [
+    "pip install -e .[test]",
+]
+bc3.test_cmds = [
+    "pytest -r sx --junitxml=results.xml"
+]
+
+utils.run([bc0, bc1, bc2, bc3])
