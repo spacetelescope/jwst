@@ -18,9 +18,6 @@ from jwst.tests_nightly.general.associations.sdp_pools_source import SDPPoolsSou
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-# Main test args
-TEST_ARGS = ['--dry-run', '--no-merge']
-
 # Decompose pool name to retrieve proposal and version id.
 pool_regex = re.compile(r'(?P<proposal>jw.+?)_(?P<versionid>.+)_pool')
 
@@ -28,9 +25,30 @@ pool_regex = re.compile(r'(?P<proposal>jw.+?)_(?P<versionid>.+)_pool')
 # Mark expected failures. Key is the pool name
 # and value is the reason message.
 EXPECTED_FAILS = {
-    'jw80600_20171108T041522_pool': 'PR #3450',
-    'jw87600_20180824T213416_pool': 'Issue #3039',
-    'jw98010_20171108T062332_pool': 'PR #3450',
+}
+
+# Pools that require special handling
+SPECIAL_DEFAULT = {
+    'args': [],
+    'xfail': None
+}
+SPECIAL_POOLS = {
+    'jw80600_20171108T041522_pool': {
+        'args': [],
+        'xfail': 'PR #3450',
+    },
+    'jw87600_20180824T213416_pool': {
+        'args': [],
+        'xfail':'Issue #3039',
+    },
+    'jw98010_20171108T062332_pool': {
+        'args': [],
+        'xfail': 'PR #3450',
+    },
+    'jw00625_20190603t233254_pool': {
+        'args': ['-i', 'o023'],
+        'xfail': None,
+    }
 }
 
 
@@ -48,16 +66,20 @@ class TestSDPPools(SDPPoolsSource):
         # Parse pool name
         pool = Path(pool_path).stem
         proposal, version_id = pool_regex.match(pool).group('proposal', 'versionid')
+        special = SPECIAL_POOLS.get(pool, SPECIAL_DEFAULT)
 
-        # Create the associations
+        # Create the generator running arguments
         generated_path = Path('generate')
         generated_path.mkdir()
-        asn_generate([
+        args = special['args'] + [
             '--no-merge',
             '-p', str(generated_path),
             '--version-id', version_id,
             self.get_data(pool_path)
-        ])
+        ]
+
+        # Create the associations
+        asn_generate(args)
 
         # Retrieve the truth files
         asn_regex = re.compile(
@@ -76,8 +98,8 @@ class TestSDPPools(SDPPoolsSource):
         try:
             compare_asn_files(generated_path.glob('*.json'), truth_paths)
         except AssertionError:
-            if pool in EXPECTED_FAILS:
-                pytest.xfail(EXPECTED_FAILS[pool])
+            if special['xfail']:
+                pytest.xfail(special['xfail'])
             else:
                 raise
 
