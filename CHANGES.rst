@@ -7,12 +7,7 @@ associations
 - MIRI MRS dedicated background exposures are now listed as science observations in
   a new association. [#3542]
 
-datamodels
-----------
-
-- Changed PATTSIZE keyword data type from float to string. [#3606]
-
-
+\
 0.13.3 (2019-06-04)
 ===================
 
