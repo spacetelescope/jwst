@@ -19,6 +19,21 @@ PRODUCT_NAME_DEFAULT = 'undefined'
 _ASN_NAME_TEMPLATE_STAMP = 'jw{program}-{acid}_{stamp}_{type}_{sequence:03d}_asn'
 _ASN_NAME_TEMPLATE = 'jw{program}-{acid}_{type}_{sequence:03d}_asn'
 
+# Acquistions and Confirmation images
+ACQ_EXP_TYPES = (
+    'mir_tacq',
+    'nis_taconfirm',
+    'nis_tacq',
+    'nrc_taconfirm',
+    'nrc_tacq',
+    'nrs_confirm',
+    'nrs_msata',
+    'nrs_taconfirm',
+    'nrs_tacq',
+    'nrs_taslit',
+    'nrs_wata',
+)
+
 # Exposure EXP_TYPE to Association EXPTYPE mapping
 EXPTYPE_MAP = {
     'mir_darkall':       'dark',
@@ -54,29 +69,11 @@ EXPTYPE_MAP = {
     'nrs_wata':          'target_acquistion',
 }
 
-# Acquistions and Confirmation images
-ACQ_EXP_TYPES = (
-    'mir_tacq',
-    'nis_taconfirm',
-    'nis_tacq',
-    'nrc_taconfirm',
-    'nrc_tacq',
-    'nrs_confirm',
-    'nrs_msata',
-    'nrs_taconfirm',
-    'nrs_tacq',
-    'nrs_taslit',
-    'nrs_wata',
-)
-
-# Exposures that are always TSO
-TSO_EXP_TYPES = [
+# Coronographic exposures
+CORON_EXP_TYPES = [
     'mir_lyot',
     'mir_4qpm',
     'nrc_coron'
-    'nrc_tsimage',
-    'nrc_tsgrism',
-    'nrs_brightobj'
 ]
 
 # Exposures that get Level2b processing
@@ -128,6 +125,13 @@ SPECIAL_EXPTYPES = {
     'imprint': ['is_imprt'],
     'background': ['bkgdtarg']
 }
+
+# Exposures that are always TSO
+TSO_EXP_TYPES = [
+    'nrc_tsimage',
+    'nrc_tsgrism',
+    'nrs_brightobj'
+]
 
 # Key that uniquely identfies members.
 MEMBER_KEY = 'expname'
@@ -359,13 +363,17 @@ class DMSBaseMixin(ACIDMixin):
         member = self.make_member(item)
         return self.is_member(member)
 
-    def is_item_tso(self, item):
+    def is_item_tso(self, item, other_exp_types=None):
         """Is the given item TSO
 
         Parameters
         ----------
         item : dict
             The item to check for.
+
+        other_exp_types: [str[,...]] or None
+            List of other exposure types to consider TSO.
+            Usually used to include coronagraphic exposures
 
         Returns
         -------
@@ -376,6 +384,11 @@ class DMSBaseMixin(ACIDMixin):
         # then other TSO indicators do not apply.
         if item['pntgtype'] != 'science':
             return False
+
+        # Setup exposure list
+        all_exp_types = TSO_EXP_TYPES.copy()
+        if other_exp_types:
+            all_exp_types += other_exp_types
 
         # Go through all other TSO indicators.
         try:
@@ -388,7 +401,7 @@ class DMSBaseMixin(ACIDMixin):
         except KeyError:
             pass
         try:
-            is_tso = is_tso or self.item_getattr(item, ['exp_type'])[1] in TSO_EXP_TYPES
+            is_tso = is_tso or self.item_getattr(item, ['exp_type'])[1] in all_exp_types
         except KeyError:
             pass
         return is_tso

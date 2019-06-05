@@ -19,6 +19,7 @@ from jwst.associations.lib.constraint import (
     SimpleConstraint,
 )
 from jwst.associations.lib.dms_base import (
+    CORON_EXP_TYPES,
     DMSAttrConstraint,
     DMSBaseMixin,
     IMAGE2_NONSCIENCE_EXP_TYPES,
@@ -178,7 +179,8 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         member = Member(
             {
                 'expname': Utility.rename_to_level2a(
-                    item['filename'], use_integrations=self.is_item_tso(item)
+                    item['filename'],
+                    use_integrations=self.is_item_tso(item, other_exp_types=CORON_EXP_TYPES),
                 ),
                 'exptype': self.get_exposure_type(item),
                 'exposerr': exposerr,
