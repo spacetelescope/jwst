@@ -19,7 +19,6 @@ from jwst.associations.lib.constraint import (
     SimpleConstraint,
 )
 from jwst.associations.lib.dms_base import (
-    CORON_EXP_TYPES,
     DMSAttrConstraint,
     DMSBaseMixin,
     IMAGE2_NONSCIENCE_EXP_TYPES,
@@ -175,17 +174,11 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         except KeyError:
             exposerr = None
 
-        # Times series and coronagraphic exposures
-        # process in integration space.
-        use_integrations = self.constraints['is_tso'].value == 't'
-        if not use_integrations:
-            use_integrations = item['exp_type'] in TSO_EXP_TYPES + CORON_EXP_TYPES
-
         # Create the member.
         member = Member(
             {
                 'expname': Utility.rename_to_level2a(
-                    item['filename'], use_integrations=use_integrations
+                    item['filename'], use_integrations=self.is_item_tso(item)
                 ),
                 'exptype': self.get_exposure_type(item),
                 'exposerr': exposerr,

@@ -33,7 +33,6 @@ from jwst.associations.lib.counter import Counter
 from jwst.associations.lib.dms_base import (
     _EMPTY,
     ACQ_EXP_TYPES,
-    CORON_EXP_TYPES,
     DMSAttrConstraint,
     DMSBaseMixin,
     IMAGE2_SCIENCE_EXP_TYPES,
@@ -280,17 +279,13 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             exposerr = None
 
         # Get exposure type
-        try:
-            is_tso = self.constraints['is_tso'].matched
-        except KeyError:
-            is_tso = item['exp_type'] in TSO_EXP_TYPES
-
         exptype = self.get_exposure_type(item)
 
         # Determine expected member name
         expname = Utility.rename_to_level2(
-                item['filename'], exp_type=item['exp_type'], is_tso=is_tso
-            )
+            item['filename'], exp_type=item['exp_type'],
+            is_tso=self.is_item_tso(item)
+        )
 
         member = Member(
             {
@@ -525,7 +520,7 @@ class Utility():
             suffix = 'cal'
         else:
             suffix = 'rate'
-        if is_tso or exp_type in CORON_EXP_TYPES:
+        if is_tso:
             suffix += 'ints'
 
         level2_name = ''.join([

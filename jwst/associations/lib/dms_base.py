@@ -71,16 +71,12 @@ ACQ_EXP_TYPES = (
 
 # Exposures that are always TSO
 TSO_EXP_TYPES = [
-    'nrc_tsimage',
-    'nrc_tsgrism',
-    'nrs_brightobj'
-]
-
-# Coronographic exposures that require integration processing
-CORON_EXP_TYPES = [
     'mir_lyot',
     'mir_4qpm',
     'nrc_coron'
+    'nrc_tsimage',
+    'nrc_tsgrism',
+    'nrs_brightobj'
 ]
 
 # Exposures that get Level2b processing
@@ -362,6 +358,40 @@ class DMSBaseMixin(ACIDMixin):
         """
         member = self.make_member(item)
         return self.is_member(member)
+
+    def is_item_tso(self, item):
+        """Is the given item TSO
+
+        Parameters
+        ----------
+        item : dict
+            The item to check for.
+
+        Returns
+        -------
+        is_item_tso : bool
+            Item represents a TSO exposure.
+        """
+        # If not a sciencer exposure, such as target aquisitions,
+        # then other TSO indicators do not apply.
+        if item['pntgtype'] != 'science':
+            return False
+
+        # Go through all other TSO indicators.
+        try:
+            is_tso = self.constraints['is_tso'].value == 't'
+        except (AttributeError, KeyError):
+            # No such constraint is defined. Just continue on.
+            is_tso = False
+        try:
+            is_tso = is_tso or self.item_getattr(item, ['tsovisit'])[1] == 't'
+        except KeyError:
+            pass
+        try:
+            is_tso = is_tso or self.item_getattr(item, ['exp_type'])[1] in TSO_EXP_TYPES
+        except KeyError:
+            pass
+        return is_tso
 
     def item_getattr(self, item, attributes):
         """Return value from any of a list of attributes
