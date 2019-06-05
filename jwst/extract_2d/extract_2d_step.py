@@ -4,10 +4,6 @@ from ..stpipe import Step
 from .. import datamodels
 from . import extract_2d
 
-import logging
-log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
-
 
 __all__ = ["Extract2dStep"]
 
@@ -30,7 +26,6 @@ class Extract2dStep(Step):
 
     def process(self, input_model, *args, **kwargs):
         reference_file_names = {}
-        log.info('reference_file_names {}'.format(reference_file_names))
         for reftype in self.reference_file_types:
             reffile = self.get_reference_file(input_model, reftype)
             reference_file_names[reftype] = reffile if reffile else ""
