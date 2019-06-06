@@ -1,6 +1,11 @@
 0.13.4 (Unreleased)
 ===================
 
+datamodels
+----------
+
+- Changed PATTSIZE keyword data type from float to string. [#3606]
+
 0.13.3 (2019-06-04)
 ===================
 

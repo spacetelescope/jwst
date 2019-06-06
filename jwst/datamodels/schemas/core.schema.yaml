@@ -930,8 +930,8 @@ properties:
             fits_keyword: NUMDTHPT
             blend_table: True
           pattern_size:
-            title: "[arcsec] Primary dither pattern size"
-            type: number
+            title: "Primary dither pattern size"
+            type: string
             fits_keyword: PATTSIZE
             blend_table: True
           subpixel_type:
