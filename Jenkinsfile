@@ -35,27 +35,16 @@ bc1.test_cmds = [
     "pytest -r sx --junitxml=results.xml"
 ]
 
-// Generate pip build/test with dev upstream dependencies
-bc2 = utils.copy(bc1)
-bc2.name = "dev-deps"
-bc2.conda_packages = [
-    "python=3.7",
-]
-bc2.build_cmds = [
-    "pip install -r requirements-dev.txt -e .[test]",
-]
-
 // Generate conda-free build with python 3.7
-// TODO: add to matrix below when SQLite is upgraded on the "python3.7" image
-bc3 = new BuildConfig()
-bc3.nodetype = 'python3.7'
-bc3.name = 'conda-free'
-bc3.env_vars = env_vars
-bc3.build_cmds = [
+bc2 = new BuildConfig()
+bc2.nodetype = 'python3.7'
+bc2.name = 'conda-free'
+bc2.env_vars = env_vars
+bc2.build_cmds = [
     "pip install -e .[test]",
 ]
-bc3.test_cmds = [
+bc2.test_cmds = [
     "pytest -r sx --junitxml=results.xml"
 ]
 
-utils.run([bc0, bc1, bc2, bc3])
+utils.run([bc0, bc1, bc2])
