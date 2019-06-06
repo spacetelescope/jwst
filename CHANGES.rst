@@ -2,10 +2,16 @@
 ===================
 
 associations
----
+------------
 
 - MIRI MRS dedicated background exposures are now listed as science observations in
   a new association. [#3542]
+
+datamodels
+----------
+
+- Changed PATTSIZE keyword data type from float to string. [#3606]
+
 
 0.13.3 (2019-06-04)
 ===================
@@ -90,6 +96,7 @@ model_blender
 -------------
 
 - Allow blendmodels to ignore attributes in asdf tree not in schema [#3480]
+- Add new rules for dates and times [#3554]
 
 photom
 ------
@@ -421,6 +428,8 @@ associations
 - Updated docstrings and written documentation. [#2856, #2862]
 
 - Fixed NIRISS WFSS catalog naming and implement NIRCam WFSS [#3515]
+
+- Fixed treating non-science as TSO [#3601]
 
 background
 ----------
@@ -1628,4 +1637,3 @@ white_light
 
 wiimatch
 --------
-
