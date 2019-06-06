@@ -926,7 +926,16 @@ class Asn_Lv2WFSC(
                 sources=['visitype'],
                 value='.+wfsc.+',
                 force_unique=True
+            ),
+            # exclude any NIS EXTCAL files from the associations to prevent
+            # OPS failues
+            DMSAttrConstraint(
+                name='nis_extcal',
+                sources=['exp_type'],
+                value='((?!nis_extcal).)*',
+                reduce=Constraint.any
             )
+
         ])
 
         # Now check and continue initialization.
