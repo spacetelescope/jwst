@@ -418,6 +418,8 @@ associations
 
 - Fixed treating non-science as TSO [#3601]
 
+- Added the fxd_slit keyword as the third optical component [#3607]
+
 background
 ----------
 
