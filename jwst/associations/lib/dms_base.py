@@ -564,7 +564,7 @@ class DMSBaseMixin(ACIDMixin):
             except KeyError:
                 pass
             else:
-                if value not in _EMPTY and value != 'clear':
+                if value not in _EMPTY:
                     opt_elems.append(value)
 
         opt_elem = '-'.join(opt_elems)
