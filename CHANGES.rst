@@ -30,6 +30,8 @@ ami
 - ``ami_analyze`` now emits a RuntimeError if the input is _calints or if a
   throughput reference file cannot be found.  [#3567]
 
+- Remove change to filtering routine arguments of #3487.  [#3612]
+
 assign_wcs
 ------------
 
