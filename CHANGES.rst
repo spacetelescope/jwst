@@ -19,12 +19,17 @@ ami
   throughput reference file cannot be found.  [#3567]
 
 assign_wcs
-------------
+----------
 
 - Fix a one pixel off problem with the NIRSpec NRS2 WCS transforms. [#3473]
 
 - Raise a ``ValueError`` if the FWCPOS keyword isn't found in input NIRISS
   WFSS images. [#3574]
+
+associations
+------------
+
+- Added the fxd_slit keyword as the third optical component [#3607]
 
 combine_1d
 ----------
@@ -417,8 +422,6 @@ associations
 - Fixed NIRISS WFSS catalog naming and implement NIRCam WFSS [#3515]
 
 - Fixed treating non-science as TSO [#3601]
-
-- Added the fxd_slit keyword as the third optical component [#3607]
 
 background
 ----------
