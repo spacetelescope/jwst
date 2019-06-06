@@ -14,6 +14,12 @@ datamodels
 
 - Removed the enum list for the SUBPXPAT keyword to allow validation of any value. [#3616]
 
+pipeline
+--------
+
+- ``calwebb_spec2`` was changed to allow processing of exposures
+  with ``EXP_TYPE=NRS_LAMP.`` [#3603]
+
 
 0.13.3 (2019-06-04)
 ===================
