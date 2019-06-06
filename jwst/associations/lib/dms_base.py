@@ -560,10 +560,12 @@ class DMSBaseMixin(ACIDMixin):
         opt_elems = []
         for opt_elem in ['opt_elem', 'opt_elem2', 'opt_elem3']:
             try:
-                value = format_list(self.constraints[opt_elem].found_values)
+                values = list(self.constraints[opt_elem].found_values)
             except KeyError:
                 pass
             else:
+                values.sort(key=str.lower)
+                value = format_list(values)
                 if value not in _EMPTY:
                     opt_elems.append(value)
 

@@ -77,7 +77,7 @@ standards = [
              xfail='Issue #3041'),
     MakePars('pool_017_spec_nirspec_lv2imprint'),
     MakePars('pool_018_all_exptypes', main_args=LV2_ONLY_ARGS, xfail='Issue #3041'),
-    MakePars('pool_019_niriss_wfss', xfail='Issue #3039'),
+    MakePars('pool_019_niriss_wfss'),
     MakePars('pool_020_00009_image_miri'),
     MakePars('pool_021_tso'),
     MakePars('pool_022_tso_noflag'),
