@@ -1,4 +1,7 @@
-0.13.3 (2019-05-04)
+0.13.4 (Unreleased)
+===================
+
+0.13.3 (2019-06-04)
 ===================
 
 ami
@@ -412,6 +415,8 @@ associations
 - Updated docstrings and written documentation. [#2856, #2862]
 
 - Fixed NIRISS WFSS catalog naming and implement NIRCam WFSS [#3515]
+
+- Fixed treating non-science as TSO [#3601]
 
 background
 ----------
