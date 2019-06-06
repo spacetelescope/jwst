@@ -567,6 +567,9 @@ class DMSBaseMixin(ACIDMixin):
                 if value not in _EMPTY:
                     opt_elems.append(value)
 
+        # Build the string. Sort the elements in order to
+        # create data-independent results
+        opt_elems.sort(key=str.lower)
         opt_elem = '-'.join(opt_elems)
         if opt_elem == '':
             opt_elem = 'clear'
