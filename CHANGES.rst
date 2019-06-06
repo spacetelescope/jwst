@@ -18,7 +18,12 @@ datamodels
 
 - Changed PATTSIZE keyword data type from float to string. [#3606]
 
+- Added enumeration of allowed values of ``FXD_SLIT`` to the core schema. [#3584]
 
+exp_to_source
+-------------
+
+- Changed `exp_to_source`` to use ``source_id`` to group exposures. [#3584]
 
 
 0.13.3 (2019-06-04)
