@@ -413,6 +413,8 @@ associations
 
 - Fixed NIRISS WFSS catalog naming and implement NIRCam WFSS [#3515]
 
+- Fixed treating non-science as TSO [#3601]
+
 background
 ----------
 
