@@ -31,6 +31,8 @@ associations
 
 - Added the fxd_slit keyword as the third optical component [#3607]
 
+- Orders the elements in Level3 naming in alphabetical order [#3614]
+
 combine_1d
 ----------
 
