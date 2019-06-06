@@ -5,7 +5,7 @@ env_vars = [
     "CRDS_PATH=./crds_cache",
 ]
 
-// pip related setup
+// pip related setup for local index, not used currently
 def pip_index = "https://bytesalad.stsci.edu/artifactory/api/pypi/datb-pypi-virtual/simple"
 def pip_install_args = "--index-url ${pip_index} --progress-bar=off"
 
@@ -58,4 +58,4 @@ bc3.test_cmds = [
     "pytest -r sx --junitxml=results.xml"
 ]
 
-utils.run([bc0, bc1, bc2])
+utils.run([bc0, bc1, bc2, bc3])
