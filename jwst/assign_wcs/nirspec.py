@@ -541,7 +541,8 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
     # These should not be used when assigning source_id to background slitlets.
     source_ids = set([x[5] for x in msa_conf.data if x['msa_metadata_id'] == msa_metadata_id \
                       and x['dither_point_index'] == dither_position])
-    # All BKG shutters get a source_id value of 0.
+    # All BKG shutters in the msa metafile have a source_id value of 0.
+    # Remove it from the list of source ids.
     if 0 in source_ids:
         source_ids.remove(0)
     if source_ids:
@@ -620,7 +621,6 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
 
         # subtract 1 because shutter numbers in the MSA reference file are 1-based.
         shutter_id = xcen + (ycen - 1) * 365
-        #source_id = slitlets_sid[0]['source_id']
         try:
             source_name, source_alias, stellarity = [
                 (s['source_name'], s['alias'], s['stellarity']) \
