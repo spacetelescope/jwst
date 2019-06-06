@@ -24,14 +24,14 @@ def exp_to_source(inputs):
     {str: MultiExposureModel, }
         Returns a dict of MultiExposureModel instances wherein each
         instance contains slits belonging to the same source.
-        The key is the name of each source.
+        The key is the ID of each source, i.e. ``source_id``.
     """
     result = DefaultOrderedDict(MultiExposureModel)
     for exposure in inputs:
         for slit in exposure.slits:
-            result[slit.name].exposures.append(slit)
+            result[str(slit.source_id)].exposures.append(slit)
             merge_tree(
-                result[slit.name].exposures[-1].meta.instance,
+                result[str(slit.source_id)].exposures[-1].meta.instance,
                 exposure.meta.instance
             )
 
@@ -55,7 +55,7 @@ def multislit_to_container(inputs):
     {str: ModelContainer, }
         Returns a dict of ModelContainer instances wherein each
         instance contains ImageModels of slits belonging to the same source.
-        The key is the name of each slit.
+        The key is the ID of each slit, i.e. 11source_id``.
     """
     containers = exp_to_source(inputs)
     for id in containers:
