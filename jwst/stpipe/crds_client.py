@@ -35,9 +35,8 @@ and provide results in the forms required by STPIPE.
 import re
 
 import crds
-from crds.core import config, exceptions, heavy_client
+from crds.core import config, exceptions, heavy_client, log
 from crds.core import crds_cache_locking
-
 
 # This is really a testing and debug convenience function, and notably now
 # the only place in this module that a direct import of datamodels occurs
@@ -70,6 +69,7 @@ def get_multiple_reference_paths(dataset_model, reference_file_types, observator
 
     Returns best references dict { filetype : filepath or "N/A", ... }
     """
+    log.set_log_time(True)
     data_dict = _get_data_dict(dataset_model)
     if observatory is None:
         observatory = dataset_model.meta.telescope or 'jwst'

@@ -175,17 +175,16 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         except KeyError:
             exposerr = None
 
-        # Times series and coronagraphic exposures
-        # process in integration space.
-        use_integrations = self.constraints['is_tso'].value == 't'
-        if not use_integrations:
-            use_integrations = item['exp_type'] in TSO_EXP_TYPES + CORON_EXP_TYPES
-
         # Create the member.
+        # `is_item_tso` is used to determine whether the name should
+        # represent the integrations form of the data.
+        # Though coronagraphic data is not TSO,
+        # it does remain in the separate integrations.
         member = Member(
             {
                 'expname': Utility.rename_to_level2a(
-                    item['filename'], use_integrations=use_integrations
+                    item['filename'],
+                    use_integrations=self.is_item_tso(item, other_exp_types=CORON_EXP_TYPES),
                 ),
                 'exptype': self.get_exposure_type(item),
                 'exposerr': exposerr,

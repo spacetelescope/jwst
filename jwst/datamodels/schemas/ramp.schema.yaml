@@ -34,6 +34,12 @@ allOf:
       default: 0.0
       ndim: 3
       datatype: float32
+    refout:
+      title: Reference Output
+      fits_hdu: REFOUT
+      default: 0.0
+      ndim: 4
+      datatype: float32
 - $ref: group.schema.yaml
 - $ref: int_times.schema.yaml
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

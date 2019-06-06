@@ -1,21 +1,42 @@
-0.13.3 (Unreleased)
+0.13.4 (Unreleased)
+===================
+
+associations
+------------
+
+- MIRI MRS dedicated background exposures are now listed as science observations in
+  a new association. [#3542]
+
+datamodels
+----------
+
+- Changed PATTSIZE keyword data type from float to string. [#3606]
+
+
+0.13.3 (2019-06-04)
 ===================
 
 ami
 ---
 
-- Fixed indentation bug in ami_analyze, so now all results are sufficiently 
-  close to the results of the stand-alone prototype. Other modifications include 
-  minor tweaks to more closely match those in the prototype code: changed some of 
-  initial values of the estimation parameters, and the filtering routine 
+- Fixed indentation bug in ami_analyze, so now all results are sufficiently
+  close to the results of the stand-alone prototype. Other modifications include
+  minor tweaks to more closely match those in the prototype code: changed some of
+  initial values of the estimation parameters, and the filtering routine
   arguments.  [#3487]
 
 - Updated ami_analyze.cfg to use default value of zero for rotation. [#3520]
 
+- ``ami_analyze`` now emits a RuntimeError if the input is _calints or if a
+  throughput reference file cannot be found.  [#3567]
+
 assign_wcs
 ------------
 
-- Fix a one pixel off problem with the Nirspec NRS2 WCS transforms. [#3473]
+- Fix a one pixel off problem with the NIRSpec NRS2 WCS transforms. [#3473]
+
+- Raise a ``ValueError`` if the FWCPOS keyword isn't found in input NIRISS
+  WFSS images. [#3574]
 
 combine_1d
 ----------
@@ -33,6 +54,9 @@ datamodels
 - Added the new column "relresperror" to the "MiriImgPhotomModel" data
   model schema. [#3512]
 
+- Added all ``SlitModel`` data arrays to ``MultiExposureModel``, so that all input
+  arrays appear in the output of ``exp_to_source``. [#3572]
+
 extract_1d
 ----------
 
@@ -40,6 +64,14 @@ extract_1d
 
 - Pixels with wavelength = NaN are no longer used. [#3539]
 
+flatfield
+---------
+
+- Remove flatfield step parameter `flat_suffix`.  Add boolean step parameter
+  `save_interpolated_flat`.  Refactor flatfield internals. [#3493]
+
+- Propagate uncertainty from FFLAT, SFLAT and DFLAT flat fields into science
+  ERR array and VAR_FLAT array for NIRSpec spectroscopic modes.  [#3538]
 
 jump
 ----
@@ -64,6 +96,7 @@ model_blender
 -------------
 
 - Allow blendmodels to ignore attributes in asdf tree not in schema [#3480]
+- Add new rules for dates and times [#3554]
 
 photom
 ------
@@ -74,7 +107,13 @@ photom
 pipeline
 --------
 
-- calwebb_spec3 was changed to allow processing of WFSS modes. [#3517]
+- ``calwebb_spec3`` was changed to allow processing of WFSS modes. [#3517]
+
+- ``calwebb_image2`` was changed to prevent 3D data from being sent to
+  ``resample``. [#3544]
+
+- ``calwebb_spec2`` was changed to check for an error in ``assign_wcs`` processing
+  before executing the ``background`` step. [#3574]
 
 refpix
 ------
@@ -82,6 +121,11 @@ refpix
 - Fixed a bug where pixeldq arrays were being transformed from DMS to detector
   coordinates for every group instead of just once
 
+skymatch
+--------
+
+- Improved reliability when matching sky in images with very close sky
+  footprints. [#3557]
 
 stpipe
 ------
@@ -384,6 +428,8 @@ associations
 - Updated docstrings and written documentation. [#2856, #2862]
 
 - Fixed NIRISS WFSS catalog naming and implement NIRCam WFSS [#3515]
+
+- Fixed treating non-science as TSO [#3601]
 
 background
 ----------
@@ -1591,4 +1637,3 @@ white_light
 
 wiimatch
 --------
-

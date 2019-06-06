@@ -555,8 +555,8 @@ class Asn_Lv2WFSS(
 
         super(Asn_Lv2WFSS, self).__init__(*args, **kwargs)
 
-    def add_catalog_member(self):
-        """Add catalog member based on direct image members"""
+    def add_catalog_members(self):
+        """Add catalog and direct image member based on direct image members"""
         directs = self.members_by_type('direct_image')
         if not directs:
             raise AssociationNotValidError(
@@ -601,25 +601,32 @@ class Asn_Lv2WFSS(
         # Note the selected direct image. Used in `Asn_Lv2WFSS._get_opt_element`
         self.direct_image = closest
 
-        # Remove all other direct images from the association.
+        # Remove all direct images from the association.
         members = self.current_product['members']
         direct_idxs = [
             idx
             for idx, member in enumerate(members)
-            if member['exptype'] == 'direct_image' and member != closest
+            if member['exptype'] == 'direct_image'
         ]
         deque((
             list.pop(members, idx)
             for idx in sorted(direct_idxs, reverse=True)
         ))
 
-        # Finally, add the catalog member
-        lv3_direct_image_catalog = DMS_Level3_Base._dms_product_name(self) + '_cat.ecsv'
-        catalog_member = Member({
-            'expname': lv3_direct_image_catalog,
-            'exptype': 'sourcecat'
-        })
-        members.append(catalog_member)
+        # Add the Level3 catalog and direct image members
+        lv3_direct_image_root = DMS_Level3_Base._dms_product_name(self)
+        members.append(
+            Member({
+                'expname': lv3_direct_image_root + '_i2d.fits',
+                'exptype': 'direct_image'
+            })
+        )
+        members.append(
+            Member({
+                'expname': lv3_direct_image_root + '_cat.ecsv',
+                'exptype': 'sourcecat'
+            })
+        )
 
     def finalize(self):
         """Finalize the association
@@ -629,7 +636,7 @@ class Asn_Lv2WFSS(
         and creating the catalog name from that image.
         """
         try:
-            self.add_catalog_member()
+            self.add_catalog_members()
         except AssociationNotValidError as err:
             logger.debug(
                 '%s: %s',

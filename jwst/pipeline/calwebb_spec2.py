@@ -160,6 +160,7 @@ class Spec2Pipeline(Pipeline):
         if exp_type in WFSS_TYPES:
             try:
                 input.meta.source_catalog.filename = members_by_type['sourcecat'][0]
+                self.log.info('Using sourcecat file {}'.format(input.meta.source_catalog.filename))
             except IndexError:
                 if input.meta.source_catalog.filename is None:
                     raise IndexError("No source catalog specified in association or datamodel")
@@ -169,6 +170,25 @@ class Spec2Pipeline(Pipeline):
             input = self.assign_wcs(input)
         except Exception as exception:
             assign_wcs_exception = exception
+
+        # If assign_wcs was skipped, abort the rest of processing,
+        # because so many downstream steps depend on the WCS
+        if assign_wcs_exception is not None or \
+           input.meta.cal_step.assign_wcs != 'COMPLETE':
+            message = (
+                'Assign_wcs processing was skipped.'
+                '\nAborting remaining processing for this exposure.'
+                '\nNo output product will be created.'
+            )
+            if self.assign_wcs.skip:
+                self.log.warning(message)
+                return
+            else:
+                self.log.error(message)
+                if assign_wcs_exception is not None:
+                    raise assign_wcs_exception
+                else:
+                    raise RuntimeError('Cannot determine WCS.')
 
         # Do background processing, if necessary
         if exp_type in WFSS_TYPES or len(members_by_type['background']) > 0:
@@ -189,25 +209,6 @@ class Spec2Pipeline(Pipeline):
 
             # Call the background subtraction step
             input = self.bkg_subtract(input, bkg_list)
-
-        # If assign_wcs was skipped, abort the rest of processing,
-        # because so many downstream steps depend on the WCS
-        if assign_wcs_exception is not None or \
-           input.meta.cal_step.assign_wcs != 'COMPLETE':
-            message = (
-                'Assign_wcs processing was skipped.'
-                '\nAborting remaining processing for this exposure.'
-                '\nNo output product will be created.'
-            )
-            if self.assign_wcs.skip:
-                self.log.warning(message)
-                return
-            else:
-                self.log.error(message)
-                if assign_wcs_exception is not None:
-                    raise assign_wcs_exception
-                else:
-                    raise RuntimeError('Cannot determine WCS.')
 
         # Apply NIRSpec MSA imprint subtraction
         # Technically there should be just one.

@@ -246,6 +246,11 @@ def _data_glob_url(*url_parts, root=None):
     url_paths: [str[, ...]]
         Full URLS that match the glob criterion
     """
+    # Fix root root-ed-ness
+    if root.endswith('/'):
+        root = root[:-1]
+
+    # Access
     try:
         envkey = os.environ['API_KEY_FILE']
     except KeyError:
@@ -260,10 +265,10 @@ def _data_glob_url(*url_parts, root=None):
             "variable to get full search results.", file=sys.stderr)
         headers = None
 
-    search_url = op.join(root, 'api/search/pattern')
+    search_url = '/'.join([root, 'api/search/pattern'])
 
     # Join and re-split the url so that every component is identified.
-    url = root + '/'.join(url_parts)
+    url = '/'.join([root] + [idx for idx in url_parts])
     all_parts = url.split('/')
 
     # Pick out "jwst-pipeline", the repo name

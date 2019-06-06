@@ -346,6 +346,8 @@ def wfss(input_model, reference_files):
 
     # This is the actual rotation from the input model
     fwcpos = input_model.meta.instrument.filter_position
+    if fwcpos is None:
+        raise ValueError('FWCPOS keyword value not found in input image')
 
     # sep the row and column grism models
     if 'R' in input_model.meta.instrument.filter[-1]:

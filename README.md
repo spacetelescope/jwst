@@ -74,7 +74,9 @@ https://jwst-pipeline.readthedocs.io/en/latest/
 One can clone this repository and build the documentation with:
 
     pip install -e .[docs]
-    python setup.py build_sphinx
+    cd docs
+    make html
+    make latexpdf
 
 
 Contributions and Feedback
@@ -92,7 +94,9 @@ Software vs DMS build version map
 
 | jwst tag | DMS build | CRDS_CONTEXT |   Date     |          Notes                           |
 | -------- | --------- | ------------ | ---------- | -----------------------------------------|
-|  0.13.1  |           | 0500         | 03/08/2019 | DMS test, no delivery to I&T             |
+|  0.13.3  | B7.3rc1   | 0532         | 06/04/2019 | First release candidate for Build 7.3    |
+|  0.13.2  |           | 0500*        | 05/14/2019 | DMS test, no delivery to I&T             |
+|  0.13.1  |           | 0500*        | 03/08/2019 | DMS test, no delivery to I&T             |
 |  0.13.0  |           | 0500         | 02/15/2019 | DMS test, no delivery to I&T             |
 |  0.12.3  | B7.2.1    | 0500         | 01/15/2019 | DMS Build 7.2.1 patch release            |
 |  0.12.2  | B7.2      | 0495         | 11/07/2018 | Final release candidate for Build 7.2    |
@@ -137,7 +141,7 @@ The test builds start at 6pm local Baltimore time Monday through Saturday on `jw
 To run the regression tests on your local machine, get the test dependencies and set the environment variable TEST_BIGDATA to our Artifactory server (STSci staff members only)
 
     pip install -e .[test]
-    export TEST_BIGDATA=https://bytesalad.stsci.edu/artifactory/
+    export TEST_BIGDATA=https://bytesalad.stsci.edu/artifactory
 
 When you run the tests, the results will get written somewhere in `/tmp` or `/var` by default.  Control this with the `--basetemp` arg to `pytest`.  So to run all the regression tests:
 

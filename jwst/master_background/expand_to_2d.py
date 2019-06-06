@@ -5,8 +5,8 @@ import numpy as np
 from gwcs.wcstools import grid_from_bounding_box
 from .. import datamodels
 from .. assign_wcs import nirspec   # For NIRSpec IFU data
-from .. assign_wcs import niriss    # For NIRISS SOSS data
 from .. datamodels import dqflags
+from ..lib.wcs_utils import get_wavelengths
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -297,63 +297,3 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
                            .format(input.meta.exposure.type))
 
     return background
-
-
-def get_wavelengths(model, exp_type="", order=None):
-    """Read or compute wavelengths.
-
-    Parameters
-    ----------
-    model : `~jwst.datamodels.DataModel`
-        The input science data, or a slit from a
-        `~jwst.datamodels.MultiSlitModel`.
-
-    exp_type : str
-        The exposure type.  This is only needed to check whether the input
-        data are WFSS.
-
-    order : int
-        Spectral order number, for NIRISS SOSS only.
-
-    Returns
-    -------
-    wl_array : 2-D ndarray
-        An array of wavelengths corresponding to the data in `model`.
-    """
-
-    # Use the existing wavelength array, if there is one
-    if hasattr(model, "wavelength"):
-        wl_array = model.wavelength.copy()
-        got_wavelength = True                   # may be reset below
-    else:
-        wl_array = None
-    if (wl_array is None or len(wl_array) == 0 or
-        np.nanmin(wl_array) == 0. and np.nanmax(wl_array) == 0.):
-            got_wavelength = False
-            wl_array = None
-
-    # If no existing wavelength array, compute one
-    if hasattr(model.meta, "wcs") and not got_wavelength:
-
-        # Set up an appropriate WCS object
-        if hasattr(model.meta, "exposure") and model.meta.exposure.type == "NIS_SOSS":
-            wcs = niriss.niriss_soss_set_input(model, order)
-        else:
-            wcs = model.meta.wcs
-
-        # Evaluate the WCS on the grid of pixel indexes, capturing only the
-        # resulting wavelength values
-        shape = model.data.shape
-        grid = np.indices(shape[-2:], dtype=np.float64)
-
-        if exp_type in WFSS_EXPTYPES:
-            # We currently have to loop over pixels for WFSS data.
-            wl_array = np.zeros(shape[-2:], dtype=np.float64)
-            for j in range(shape[-2]):
-                for i in range(shape[-1]):
-                    # Keep wavelength; ignore RA and Dec
-                    wl_array[..., j, i] = wcs(i, j)[2]
-        else:
-            wl_array = wcs(grid[1], grid[0])[2]
-
-    return wl_array

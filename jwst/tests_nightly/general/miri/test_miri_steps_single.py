@@ -170,12 +170,14 @@ class TestMIRIWCSIFU(BaseJWSTTest):
 
         # Get the region file
         region = RegionsModel(crds_client.get_reference_file(result, 'regions'))
+        # Choose the same plane as in the miri.py file (hardcoded for now).
+        regions = region.regions[4, :, :]
 
         # inputs
         x, y = grid_from_bounding_box(result.meta.wcs.bounding_box)
 
         # Get indices where pixels == 0. These should be NaNs in the output.
-        ind_zeros = region.regions == 0
+        ind_zeros = regions == 0
 
         cwd = os.path.abspath('.')
         os.makedirs('truth', exist_ok=True)
