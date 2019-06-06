@@ -19,6 +19,21 @@ PRODUCT_NAME_DEFAULT = 'undefined'
 _ASN_NAME_TEMPLATE_STAMP = 'jw{program}-{acid}_{stamp}_{type}_{sequence:03d}_asn'
 _ASN_NAME_TEMPLATE = 'jw{program}-{acid}_{type}_{sequence:03d}_asn'
 
+# Acquistions and Confirmation images
+ACQ_EXP_TYPES = (
+    'mir_tacq',
+    'nis_taconfirm',
+    'nis_tacq',
+    'nrc_taconfirm',
+    'nrc_tacq',
+    'nrs_confirm',
+    'nrs_msata',
+    'nrs_taconfirm',
+    'nrs_tacq',
+    'nrs_taslit',
+    'nrs_wata',
+)
+
 # Exposure EXP_TYPE to Association EXPTYPE mapping
 EXPTYPE_MAP = {
     'mir_darkall':       'dark',
@@ -54,29 +69,7 @@ EXPTYPE_MAP = {
     'nrs_wata':          'target_acquistion',
 }
 
-# Acquistions and Confirmation images
-ACQ_EXP_TYPES = (
-    'mir_tacq',
-    'nis_taconfirm',
-    'nis_tacq',
-    'nrc_taconfirm',
-    'nrc_tacq',
-    'nrs_confirm',
-    'nrs_msata',
-    'nrs_taconfirm',
-    'nrs_tacq',
-    'nrs_taslit',
-    'nrs_wata',
-)
-
-# Exposures that are always TSO
-TSO_EXP_TYPES = [
-    'nrc_tsimage',
-    'nrc_tsgrism',
-    'nrs_brightobj'
-]
-
-# Coronographic exposures that require integration processing
+# Coronographic exposures
 CORON_EXP_TYPES = [
     'mir_lyot',
     'mir_4qpm',
@@ -132,6 +125,13 @@ SPECIAL_EXPTYPES = {
     'imprint': ['is_imprt'],
     'background': ['bkgdtarg']
 }
+
+# Exposures that are always TSO
+TSO_EXP_TYPES = [
+    'nrc_tsimage',
+    'nrc_tsgrism',
+    'nrs_brightobj'
+]
 
 # Key that uniquely identfies members.
 MEMBER_KEY = 'expname'
@@ -363,6 +363,53 @@ class DMSBaseMixin(ACIDMixin):
         member = self.make_member(item)
         return self.is_member(member)
 
+    def is_item_tso(self, item, other_exp_types=None):
+        """Is the given item TSO
+
+        Determine whether the specific item represents
+        TSO data or not. When used to determine naming
+        of files, coronagraphic data will be included through
+        the `other_exp_types` parameter.
+
+        Parameters
+        ----------
+        item : dict
+            The item to check for.
+
+        other_exp_types: [str[,...]] or None
+            List of other exposure types to consider TSO.
+
+        Returns
+        -------
+        is_item_tso : bool
+            Item represents a TSO exposure.
+        """
+        # If not a science exposure, such as target aquisitions,
+        # then other TSO indicators do not apply.
+        if item['pntgtype'] != 'science':
+            return False
+
+        # Setup exposure list
+        all_exp_types = TSO_EXP_TYPES.copy()
+        if other_exp_types:
+            all_exp_types += other_exp_types
+
+        # Go through all other TSO indicators.
+        try:
+            is_tso = self.constraints['is_tso'].value == 't'
+        except (AttributeError, KeyError):
+            # No such constraint is defined. Just continue on.
+            is_tso = False
+        try:
+            is_tso = is_tso or self.item_getattr(item, ['tsovisit'])[1] == 't'
+        except KeyError:
+            pass
+        try:
+            is_tso = is_tso or self.item_getattr(item, ['exp_type'])[1] in all_exp_types
+        except KeyError:
+            pass
+        return is_tso
+
     def item_getattr(self, item, attributes):
         """Return value from any of a list of attributes
 
@@ -589,15 +636,23 @@ class Constraint_TSO(Constraint):
         super(Constraint_TSO, self).__init__(
             [
                 DMSAttrConstraint(
-                    sources=['tsovisit'],
-                    value='t',
+                    sources=['pntgtype'],
+                    value='science'
                 ),
-                DMSAttrConstraint(
-                    sources=['exp_type'],
-                    value='|'.join(TSO_EXP_TYPES),
-                ),
+                Constraint(
+                    [
+                        DMSAttrConstraint(
+                            sources=['tsovisit'],
+                            value='t',
+                        ),
+                        DMSAttrConstraint(
+                            sources=['exp_type'],
+                            value='|'.join(TSO_EXP_TYPES),
+                        ),
+                    ],
+                    reduce=Constraint.any
+                )
             ],
-            reduce=Constraint.any,
             name='is_tso'
         )
 
