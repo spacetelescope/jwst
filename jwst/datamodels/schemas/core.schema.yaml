@@ -144,31 +144,31 @@ properties:
             title: "[yyyy-mm-dd] UTC date at start of exposure"
             fits_keyword: DATE-OBS
             blend_table: True
-            blend_rule: first
+            blend_rule: mindate
           time:
             title: "[hh:mm:ss.sss] UTC time at start of exposure"
             type: string
             fits_keyword: TIME-OBS
             blend_table: True
-            blend_rule: first
+            blend_rule: mintime
           date_beg:
             type: string
             title: "Date-time start of data acquisition"
             fits_keyword: DATE-BEG
             blend_table: True
-            blend_rule: first
+            blend_rule: mindate
           date_end:
             type: string
             title: "[yyyy-mm-dd] UTC date at end of exposure"
             fits_keyword: DATE-END
             blend_table: True
-            blend_rule: last
+            blend_rule: maxdate
           time_end:
             title: "[hh:mm:ss.sss] UTC time at end of exposure"
             type: string
             fits_keyword: TIME-END
             blend_table: True
-            blend_rule: last
+            blend_rule: maxtime
           obs_id:
             title: Programmatic observation identifier
             type: string
