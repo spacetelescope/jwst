@@ -48,6 +48,8 @@ __all__ = [
     'ASN_SCHEMA',
     'AsnMixin_Science',
     'AsnMixin_Spectrum',
+    'AsnMixin_BkgScience',
+    'AsnMixin_AuxData',
     'Constraint_Base',
     'Constraint_IFU',
     'Constraint_Image',
@@ -832,6 +834,61 @@ class AsnMixin_Science(DMS_Level3_Base):
 
         super(AsnMixin_Science, self).__init__(*args, **kwargs)
 
+class AsnMixin_BkgScience(DMS_Level3_Base):
+    """Basic science constraints for background targets"""
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup target acquisition inclusion
+        constraint_acqs = Constraint(
+            [
+                DMSAttrConstraint(
+                    name='acq_exp',
+                    sources=['exp_type'],
+                    value='|'.join(ACQ_EXP_TYPES),
+                    force_unique=False
+                ),
+                DMSAttrConstraint(
+                    name='acq_obsnum',
+                    sources=['obs_num'],
+                    value=lambda: '('
+                             + '|'.join(self.constraints['obs_num'].found_values)
+                             + ')',
+                    force_unique=False,
+                )
+            ],
+            name='acq_constraint',
+            work_over=ProcessList.EXISTING
+        )
+
+        # Put all constraints together.
+        self.constraints = Constraint(
+            [
+                Constraint_Base(),
+                DMSAttrConstraint(
+                    sources=['is_imprt'],
+                    force_undefined=True
+                ),
+                Constraint(
+                    [
+                        Constraint(
+                            [
+                                self.constraints,
+                                Constraint_Obsnum()
+                            ],
+                            name='rule'
+                        ),
+                        constraint_acqs
+                    ],
+                    name='acq_check',
+                    reduce=Constraint.any
+                ),
+            ],
+            name='dmsbase_bkg'
+        )
+
+        super(AsnMixin_BkgScience, self).__init__(*args, **kwargs)
+
 
 class AsnMixin_Spectrum(AsnMixin_Science):
     """All things that are spectrum"""
@@ -841,3 +898,27 @@ class AsnMixin_Spectrum(AsnMixin_Science):
 
         self.data['asn_type'] = 'spec3'
         super(AsnMixin_Spectrum, self)._init_hook(item)
+
+class AsnMixin_AuxData:
+    """Process special and non-science exposures as science.
+    """
+    def get_exposure_type(self, item, default='science'):
+        """Override to force exposure type to always be science
+        Parameters
+        ----------
+        item : dict
+            The pool entry for which the exposure type is determined
+        default : str or None
+            The default exposure type.
+            If None, routine will raise LookupError
+        Returns
+        -------
+        exposure_type : 'science'
+            Always returns as science
+        """
+        return 'science'
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        self.data['asn_type'] = 'spec3'
+        super(AsnMixin_AuxData, self)._init_hook(item)
