@@ -45,14 +45,16 @@ class StraylightStep (Step):
                 # Use 20% throughput array
                 regions=(allregions.regions)[2,:,:].copy()
                 self.log.info(' Using 20% throughput threshhold.')
-                self.log.info(' Using row-by-row approach.')
                 allregions.close()
 
                 if self.method == 'Nearest':
                     # Do the correction
+                    self.log.info(' Using row-by-row approach.')
                     result = straylight.correct_mrs(input_model, regions)
                 elif self.method == 'ModShepard':
                     # Do the correction
+                    self.log.info(' Modified Shepard weighting power %5.2f', self.power)
+                    self.log.info(' Region of influence radius (pixels) %6.2f', self.roi)
                     result = straylight.correct_mrs_modshepard(input_model,
                                                                regions,
                                                                self.roi,
