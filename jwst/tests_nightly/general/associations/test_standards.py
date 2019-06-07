@@ -65,7 +65,7 @@ standards = [
     MakePars('pool_004_wfs'),
     MakePars('pool_005_spec_niriss'),
     MakePars('pool_006_spec_nirspec'),
-    MakePars('pool_007_spec_miri', xfail='Not updated since PR #3399'),
+    MakePars('pool_007_spec_miri'),
     MakePars('pool_009_spec_miri_lv2bkg', xfail='Issue #3041'),
     MakePars('pool_010_spec_nirspec_lv2bkg', xfail='Issue #3041'),
     MakePars('pool_011_spec_miri_lv2bkg_lrs', xfail='Issue #3041'),
@@ -86,7 +86,7 @@ standards = [
     MakePars('pool_025_nirspec_fss_nod_chop', xfail='Issue #3041'),
     MakePars('pool_026_mir_image_tso'),
     MakePars('pool_027_nirspec_ifu_nods', xfail='Issue #3041'),
-    MakePars('pool_028_mir_lrsfs_nods', xfail='Not updated since PR #3399'),
+    MakePars('pool_028_mir_lrsfs_nods'),
 ]
 
 
