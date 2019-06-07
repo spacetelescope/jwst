@@ -150,6 +150,7 @@ class CubeBuildStep (Step):
         if self.coord_system == 'world':
             self.interpolation = 'pointcloud'  # can not be area
 
+
         self.log.info('Input interpolation: %s', self.interpolation)
         self.log.info('Coordinate system to use: %s', self.coord_system)
         if self.interpolation == 'pointcloud':

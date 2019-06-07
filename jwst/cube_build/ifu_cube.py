@@ -5,6 +5,8 @@ import time
 import numpy as np
 import logging
 import math
+import pysiaf
+from shapely.geometry import box, Polygon
 from ..model_blender import blendmeta
 from .. import datamodels
 from ..assign_wcs import pointing
@@ -43,6 +45,10 @@ class IFUCubeData():
         self.new_code = 0
         self.input_filenames = input_filenames
         self.pipeline = pipeline
+
+        dq_file = 'cube_spaxel_dq'+str(list_par1[0]) +'.results'
+        self.spaxel_dq_file =  open(dq_file, 'w')
+        print('dq file',dq_file)
 
         self.input_models = input_models  # needed when building single mode IFU cubes
         self.output_name_base = output_name_base
@@ -487,6 +493,7 @@ class IFUCubeData():
         self.spaxel_flux = np.zeros(total_num)
         self.spaxel_weight = np.zeros(total_num)
         self.spaxel_iflux = np.zeros(total_num)
+        self.spaxel_dq = np.zeros((self.naxis3, self.naxis2* self.naxis1),dtype=np.int32)
 
         spaxel_ra = None
         spaxel_dec = None
@@ -514,7 +521,6 @@ class IFUCubeData():
                                                                     self.ycenters[ixy])
                     spaxel_wave[ii] = self.zcoord[iz]
 # ______________________________________________________________________________
-
         subtract_background = True
 
         # now need to loop over every file that covers this
@@ -523,7 +529,7 @@ class IFUCubeData():
         # and map the detector pixels to the cube spaxel
 
         number_bands = len(self.list_par1)
-        t0 = time.time()
+
         for i in range(number_bands):
             this_par1 = self.list_par1[i]
             this_par2 = self.list_par2[i]
@@ -546,6 +552,21 @@ class IFUCubeData():
                         softrad_pixel, alpha_det, beta_det = pixelresult
                     t1 = time.time()
                     log.info("Time to transform pixels to output frame = %.1f.s" % (t1 - t0,))
+
+                    min_wave_band = np.amin(wave)
+                    max_wave_band = np.amax(wave)
+                    
+                    print('slice projection pars',this_par1,this_par2)
+
+                    self.map_sliceprojection_to_dqframe(this_par1,
+                                                        this_par2,
+                                                        ifile,
+                                                        min_wave_band,
+                                                        max_wave_band,
+                                                        k)
+
+
+
                     if self.weighting == 'msm':
                         t0 = time.time()
 #                        if self.new_code:
@@ -1212,7 +1233,158 @@ class IFUCubeData():
         return coord1, coord2, wave, flux, rois_det, roiw_det, weight_det, \
             softrad_det, alpha_det, beta_det
 # ********************************************************************************
+    def map_sliceprojection_to_dqframe(self, this_par1, this_par2,
+                                       ifile, min_wave_band, max_wave_band,k):
 
+# **************************************************************************
+        """Loop over a file and map the slice corners to the output cube
+        
+
+        return spaxel_dq updated for this input file 
+
+
+        Parameter
+        ----------
+        this_par1 : str
+           for MIRI this is the channel # for NIRSPEC this is the grating name
+        this_par2 : str
+           for MIRI this is the subchannel type for NIRSPEC this is the filter
+           name
+        ifile : datamodel
+           input data model
+
+        Returns
+        -------
+        self.spaxel_dq : numpy.ndarray. Module updates spaxel_dq for each file 
+           
+
+        """
+
+        # first find the wavelength planes this slice overlaps. Min and max wavelength
+        # input values are set for MIRI for the entire band. 
+
+        rpd=math.pi/180.
+        print('Working on file - transforming slices to output',ifile)
+
+        id_min = np.abs(self.zcoord - min_wave_band).argmin()
+        id_max = np.abs(self.zcoord - max_wave_band).argmin()
+        print(id_min,id_max,min_wave_band, max_wave_band,self.zcoord[id_min], self.zcoord[id_max])
+
+# Open the input data model
+        test = 1
+        t0 = time.time()
+        with datamodels.IFUImageModel(ifile) as input_model:
+            print( 'file # ',k) 
+            overlap_partial = 1
+            overlap_full  = 2
+# --------------------------------------------------------------------------------
+            if self.instrument == 'MIRI':
+                v2v3_to_world_transform = input_model.meta.wcs.get_transform('v2v3',
+                                                                          'world')
+                siaf = pysiaf.Siaf('MIRI')
+                nslices = self.instrument_info.GetNSlice(this_par1) 
+                subchannel_name = 'A'
+                if this_par2 == 'medium':
+                    subchannel_name = 'B'
+                elif this_par2 == 'long':
+                    subchannel_name = 'C'
+
+
+#                for ii in range(nslices):
+#                    print('working on slice',ii +1)
+#                    slice_name = str(ii+1)
+#                    if (ii+1) < 10:
+#                        slice_name = '0'+slice_name
+#                    siaf_slice_name = 'MIRIFU_'+str(this_par1)+subchannel_name+ \
+#                        'SLICE'+slice_name
+#                    this_slice = siaf[siaf_slice_name]
+                siaf_channel_band   = 'MIRIFU_CHANNEL'+str(this_par1)+subchannel_name
+                print('siaf name',siaf_channel_band)
+                this_slice = siaf[siaf_channel_band]
+
+                v2ref,v3ref = this_slice.V2Ref, this_slice.V3Ref
+                angle, parity = this_slice.V3IdlYAngle,this_slice.VIdlParity
+                x1, x2, x3, x4, y1, y2, y3, y4 = this_slice.XIdlVert1, \
+                    this_slice.XIdlVert2, this_slice.XIdlVert3, this_slice.XIdlVert4, \
+                    this_slice.YIdlVert1, this_slice.YIdlVert2, this_slice.YIdlVert3, \
+                    this_slice.YIdlVert4
+                x=np.array([x1,x2,x3,x4])
+                y=np.array([y1,y2,y3,y4])
+                v2_vert = v2ref + parity*x*math.cos(angle*rpd) + y*math.sin(angle*rpd)
+                v3_vert = v3ref - parity*x*math.sin(angle*rpd) + y*math.cos(angle*rpd)
+                lam_vert = 1.0
+                ra_vert, dec_vert, lam = v2v3_to_world_transform(v2_vert, v3_vert, lam_vert)
+                coord1, coord2 = coord.radec2std(self.crval1,
+                                                 self.crval2,
+                                                 ra_vert, dec_vert)
+#                    print('input to sliceprojection',this_par1,this_par2,ii,siaf_slice_name)
+#                    print('v2, v3', v2_vert, v3_vert, lam_vert)
+#                    print('ra, dec', ra_vert, dec_vert, lam)
+#                    print('coord1, coord2', coord1, coord2)
+
+                if test == 2 or test == 3:
+                    poly_shape = Polygon([ [coord1[0], coord2[0]],
+                                           [coord1[1], coord2[1]],
+                                           [coord1[2], coord2[2]],
+                                           [coord1[3], coord2[3]] ])
+
+                slice_dq = np.zeros(self.naxis2 * self.naxis1 ,dtype=np.int32)
+                nxy = self.xcenters.size
+                nz = self.zcoord.size
+
+                for ixy in range(nxy):
+                    x0 =  self.xcenters[ixy] - self.cdelt1/2.0
+                    x1 =  self.xcenters[ixy] + self.cdelt1/2.0
+                    y0 =  self.ycenters[ixy] - self.cdelt2/2.0
+                    y1 =  self.ycenters[ixy] + self.cdelt2/2.0
+
+                    area_box = (x1-x0)*(y1-y0)
+
+                    if test ==1 or test == 3:
+                        area_overlap = cube_overlap.sh_find_overlap(self.xcenters[ixy], 
+                                                                   self.ycenters[ixy],
+                                                                   self.cdelt1, self.cdelt2,
+                                                                   coord1, coord2)
+                        
+                        overlap_coverage = area_overlap/area_box
+
+                    if test == 2 or test == 3:
+                        spaxel_shape = box(x0, y0, x1, y1)
+                        overlap = poly_shape.intersection(spaxel_shape).area
+                        overlap_coverage = overlap/area_box
+
+                    if test == 3:
+                        test_over = area_overlap - overlap
+                        if(test_over > 0.1):
+                            print(test_over, overlap,area_overlap)
+
+                    if overlap_coverage > 0:
+                        self.spaxel_dq_file.write('%f %f %f %f  %f %f %f %f %f %f %f %f %f %i' %
+                                                  (x0, y0, x1, y1, coord1[0], coord2[0],
+                                                   coord1[1], coord2[1],coord1[2],coord2[2],
+                                                   coord1[3], coord2[3], overlap_coverage,
+                                                   k) + '\n')
+
+                        if overlap_coverage > 0.95:
+                            slice_dq[ixy] = overlap_full
+                        else:
+                            slice_dq[ixy] = overlap_partial
+                            
+                for iz in range(id_min, id_max):
+                    self.spaxel_dq[iz,:] = np.bitwise_or(self.spaxel_dq[iz,:] , slice_dq)
+# ________________________________________________________________________________
+            elif self.instrument == 'NIRSPEC':
+
+                # for NIRSPEC each file has 30 slices
+                # wcs information access seperately for each slice
+                nslices = 30
+#                for ii in range(nslices):
+
+        t1 = time.time()
+        print('time to map file projection to cube',t1 - t0) 
+#        return coord1, coord2, wave, flux, rois_det, roiw_det, weight_det, \
+#            softrad_det, alpha_det, beta_det
+# ********************************************************************************
     def find_spaxel_flux(self):
 
         """Depending on the interpolation method, find the flux for each spaxel value
@@ -1438,8 +1610,12 @@ class IFUCubeData():
         temp_wmap = self.spaxel_iflux.reshape((self.naxis3,
                                                self.naxis2, self.naxis1))
 
+        temp_dq = self.spaxel_dq.reshape((self.naxis3,
+                                          self.naxis2, self.naxis1))
+
         ifucube_model.data = temp_flux
         ifucube_model.weightmap = temp_wmap
+        ifucube_model.dq = temp_dq
         ifucube_model.meta.cal_step.cube_build = 'COMPLETE'
 # ********************************************************************************
 
