@@ -556,27 +556,21 @@ class DMSBaseMixin(ACIDMixin):
             The Level3 Product name representation
             of the optical elements.
         """
-        opt_elem = ''
-        join_char = ''
-        try:
-            value = format_list(self.constraints['opt_elem'].found_values)
-        except KeyError:
-            pass
-        else:
-            if value not in _EMPTY and value != 'clear':
-                opt_elem = value
-                join_char = '-'
-        try:
-            value = format_list(self.constraints['opt_elem2'].found_values)
-        except KeyError:
-            pass
-        else:
-            if value not in _EMPTY and value != 'clear':
-                opt_elem = join_char.join(
-                    [opt_elem, value]
-                )
+        # Retrieve all the optical elements
+        opt_elems = []
+        for opt_elem in ['opt_elem', 'opt_elem2', 'opt_elem3']:
+            try:
+                value = format_list(self.constraints[opt_elem].found_values)
+            except KeyError:
+                pass
+            else:
+                if value not in _EMPTY and value != 'clear':
+                    opt_elems.append(value)
+
+        opt_elem = '-'.join(opt_elems)
         if opt_elem == '':
             opt_elem = 'clear'
+
         return opt_elem
 
     def _get_subarray(self):
