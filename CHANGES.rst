@@ -12,6 +12,8 @@ datamodels
 
 - Changed PATTSIZE keyword data type from float to string. [#3606]
 
+- Removed the enum list for the SUBPXPAT keyword to allow validation of any value. [#3616]
+
 
 0.13.3 (2019-06-04)
 ===================
