@@ -25,6 +25,14 @@ exp_to_source
 
 - Changed `exp_to_source`` to use ``source_id`` to group exposures. [#3584]
 
+- Removed the enum list for the SUBPXPAT keyword to allow validation of any value. [#3616]
+
+pipeline
+--------
+
+- ``calwebb_spec2`` was changed to allow processing of exposures
+  with ``EXP_TYPE=NRS_LAMP.`` [#3603]
+
 
 0.13.3 (2019-06-04)
 ===================
@@ -43,13 +51,22 @@ ami
 - ``ami_analyze`` now emits a RuntimeError if the input is _calints or if a
   throughput reference file cannot be found.  [#3567]
 
+- Remove change to filtering routine arguments of #3487.  [#3612]
+
 assign_wcs
-------------
+----------
 
 - Fix a one pixel off problem with the NIRSpec NRS2 WCS transforms. [#3473]
 
 - Raise a ``ValueError`` if the FWCPOS keyword isn't found in input NIRISS
   WFSS images. [#3574]
+
+associations
+------------
+
+- Added the fxd_slit keyword as the third optical component [#3607]
+
+- Orders the elements in Level3 naming in alphabetical order [#3614]
 
 combine_1d
 ----------
