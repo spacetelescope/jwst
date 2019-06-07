@@ -952,7 +952,6 @@ properties:
           subpixel_dither_pattern:
             title: subpixel dither pattern
             type: string
-            enum: [BOTH, SPATIAL, SPECTRAL, NONE]
             fits_keyword: SUBPXPAT
             blend_table: True
           spectral_position_number:
