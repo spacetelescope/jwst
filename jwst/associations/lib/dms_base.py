@@ -560,13 +560,18 @@ class DMSBaseMixin(ACIDMixin):
         opt_elems = []
         for opt_elem in ['opt_elem', 'opt_elem2', 'opt_elem3']:
             try:
-                value = format_list(self.constraints[opt_elem].found_values)
+                values = list(self.constraints[opt_elem].found_values)
             except KeyError:
                 pass
             else:
-                if value not in _EMPTY and value != 'clear':
+                values.sort(key=str.lower)
+                value = format_list(values)
+                if value not in _EMPTY:
                     opt_elems.append(value)
 
+        # Build the string. Sort the elements in order to
+        # create data-independent results
+        opt_elems.sort(key=str.lower)
         opt_elem = '-'.join(opt_elems)
         if opt_elem == '':
             opt_elem = 'clear'
