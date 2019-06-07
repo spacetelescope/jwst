@@ -33,12 +33,17 @@ ami
 - Remove change to filtering routine arguments of #3487.  [#3612]
 
 assign_wcs
-------------
+----------
 
 - Fix a one pixel off problem with the NIRSpec NRS2 WCS transforms. [#3473]
 
 - Raise a ``ValueError`` if the FWCPOS keyword isn't found in input NIRISS
   WFSS images. [#3574]
+
+associations
+------------
+
+- Added the fxd_slit keyword as the third optical component [#3607]
 
 combine_1d
 ----------
