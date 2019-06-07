@@ -1,6 +1,18 @@
 0.13.4 (Unreleased)
 ===================
 
+associations
+------------
+
+- MIRI MRS dedicated background exposures are now listed as science observations in
+  a new association. [#3542]
+
+datamodels
+----------
+
+- Changed PATTSIZE keyword data type from float to string. [#3606]
+
+
 0.13.3 (2019-06-04)
 ===================
 
@@ -17,6 +29,8 @@ ami
 
 - ``ami_analyze`` now emits a RuntimeError if the input is _calints or if a
   throughput reference file cannot be found.  [#3567]
+
+- Remove change to filtering routine arguments of #3487.  [#3612]
 
 assign_wcs
 ----------
@@ -91,6 +105,7 @@ model_blender
 -------------
 
 - Allow blendmodels to ignore attributes in asdf tree not in schema [#3480]
+- Add new rules for dates and times [#3554]
 
 photom
 ------
@@ -1631,4 +1646,3 @@ white_light
 
 wiimatch
 --------
-

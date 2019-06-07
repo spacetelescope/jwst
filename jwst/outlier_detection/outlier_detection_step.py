@@ -32,7 +32,7 @@ __all__ = ["OutlierDetectionStep"]
 class OutlierDetectionStep(Step):
     """Flag outlier bad pixels and cosmic rays in DQ array of each input image.
 
-    Input images can listed in an input association file or already opened
+    Input images can be listed in an input association file or already opened
     with a ModelContainer.  DQ arrays are modified in place.
 
     Parameters
