@@ -441,6 +441,7 @@ properties:
           fixed_slit:
             title: Name of fixed slit aperture used
             type: string
+            enum: [S200A1, S200A2, S200B1, S400A1, S1600A1, NONE]
             fits_keyword: FXD_SLIT
             blend_table: True
           focus_position:

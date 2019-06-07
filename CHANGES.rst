@@ -1,6 +1,12 @@
 0.13.4 (Unreleased)
 ===================
 
+assign_wcs
+----------
+
+- A unique integer ``source_id`` is now assigned to all MOS background slitlets
+  and NRS Fixed Slits. [#3584]
+
 associations
 ------------
 
@@ -11,6 +17,13 @@ datamodels
 ----------
 
 - Changed PATTSIZE keyword data type from float to string. [#3606]
+
+- Added enumeration of allowed values of ``FXD_SLIT`` to the core schema. [#3584]
+
+exp_to_source
+-------------
+
+- Changed `exp_to_source`` to use ``source_id`` to group exposures. [#3584]
 
 - Removed the enum list for the SUBPXPAT keyword to allow validation of any value. [#3616]
 
