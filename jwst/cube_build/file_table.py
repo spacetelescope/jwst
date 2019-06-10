@@ -148,23 +148,10 @@ class FileTable():
                 detector = input_model.meta.instrument.detector
                 instrument = input_model.meta.instrument.name
                 assign_wcs = input_model.meta.cal_step.assign_wcs
-                footprint =  input_model.meta.wcsinfo.s_region
-                bbox = input_model.meta.wcs.bounding_box
-                if bbox is None:
-                    bbox = wcs_bbox_from_shape(input_model.data.shape)
-                print('bbox', bbox) 
-                #wcslist = [input_model.meta.wcs]
-                #footprints = [w.footprint().T for w in wcslist]
-                footprint = input_model.meta.wcs.footprint(bbox, center=True, axis_type="spatial").T<
+                sfootprint =  input_model.meta.wcsinfo.s_region
+                print('sfootprint',sfootprint)
 
-                print('footprint',footprint)
-                sys.exit()
 
-                
-
-                #footprint = input_model.meta.wcs.footprint(bbox, center=True, axis_type="spatial").T
-                #print('footprint',footprint)
-                #print(type(footprint))
                 if(assign_wcs != 'COMPLETE'):
                     raise ErrorNoAssignWCS("Assign WCS has not been run on file %s",
                                            ifile)
@@ -174,6 +161,7 @@ class FileTable():
                 if instrument == 'MIRI':
                     channel = input_model.meta.instrument.channel
                     subchannel = input_model.meta.instrument.band.lower()
+                    footprint = find_footprint_spectral(input_model) 
             #________________________________________________________________________________
                     clenf = len(channel)
                     for k in range(clenf):
@@ -187,9 +175,10 @@ class FileTable():
                     gwa = input_model.meta.instrument.grating.lower()
 
                     self.FileMap['NIRSPEC'][gwa][fwa]['file'].append(input_model)
-
-
-                    #self.FileMap['NIRSPEC'][gwa][fwa]['footprint'].append(footprint)
+                    instrument = input_model.meta.instrument.name.lower()
+                    mod = importlib.import_module('.' + instrument, 'jwst.assign_wcs')
+                    footprint = find_footprint_nrs_ifu(input_model, mod)
+                    self.FileMap['NIRSPEC'][gwa][fwa]['footprint'].append(footprint)
                 else:
 
                     log.info('Instrument not valid for cube')
