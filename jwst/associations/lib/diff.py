@@ -171,9 +171,14 @@ def _compare_asns(left, right):
             - key 'exptype` for each member
     """
 
-    # Metadata
+    # Assert that the same result type is the same.
     assert left['asn_type'] == right['asn_type'], \
         'Type mismatch {} != {}'.format(left['asn_type'], right['asn_type'])
+
+    # Assert that the level of association candidate is the same.
+    # Cannot guarantee value, but that the 'a'/'c'/'o' levels are similar.
+    assert left['asn_id'][0] == right['asn_id'][0], \
+        f"Candidate level mismatch left '{left['asn_id'][0]}' != right '{right['asn_id'][0]}'"
 
     # Membership
     return compare_membership(left, right)
