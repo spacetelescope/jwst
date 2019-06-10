@@ -192,7 +192,7 @@ class CubeData():
 # _______________________________________________________________________________
             for i in range(nchannels):
                 for j in range(nsubchannels):
-                    nfiles = len(master_table.FileMap['MIRI'][valid_channel[i]][valid_subchannel[j]])
+                    nfiles = len(master_table.FileMap['MIRI'][valid_channel[i]][valid_subchannel[j]]['file'])
                     if nfiles > 0:
 # ______________________________________________________________________________
                         # neither parameters are set
@@ -260,7 +260,7 @@ class CubeData():
             if user_glen == 0 and user_flen == 0:
                 for i in range(nbands):
 
-                    nfiles = len(master_table.FileMap['NIRSPEC'][valid_gwa[i]][valid_fwa[i]])
+                    nfiles = len(master_table.FileMap['NIRSPEC'][valid_gwa[i]][valid_fwa[i]]['file'])
                     if nfiles > 0:
                         self.all_grating.append(valid_gwa[i])
                         self.all_filter.append(valid_fwa[i])
@@ -270,7 +270,7 @@ class CubeData():
 
             else:
                 for i in range(nbands):
-                    nfiles = len(master_table.FileMap['NIRSPEC'][valid_gwa[i]][valid_fwa[i]])
+                    nfiles = len(master_table.FileMap['NIRSPEC'][valid_gwa[i]][valid_fwa[i]]['file'])
                     if nfiles > 0:
                         # now check if THESE Filter and Grating input parameters were set
                         if (valid_fwa[i] in self.filter and

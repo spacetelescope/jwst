@@ -45,6 +45,9 @@ class IFUCubeData():
         self.new_code = 0
         self.input_filenames = input_filenames
         self.pipeline = pipeline
+        
+        print('defining cube',list_par1,list_par2)
+
 
         dq_file = 'cube_spaxel_dq'+str(list_par1[0]) +'.results'
         self.spaxel_dq_file =  open(dq_file, 'w')
@@ -138,7 +141,8 @@ class IFUCubeData():
         for i in range(num1):
             this_a = self.list_par1[i]
             this_b = self.list_par2[i]
-            n = len(self.master_table.FileMap[self.instrument][this_a][this_b])
+            print(this_a,this_b)
+            n = len(self.master_table.FileMap[self.instrument][this_a][this_b]['file'])
             num_files = num_files + n
         self.num_files = num_files
 # do some basic checks on the cubes
@@ -533,11 +537,11 @@ class IFUCubeData():
         for i in range(number_bands):
             this_par1 = self.list_par1[i]
             this_par2 = self.list_par2[i]
-            nfiles = len(self.master_table.FileMap[self.instrument][this_par1][this_par2])
+            nfiles = len(self.master_table.FileMap[self.instrument][this_par1][this_par2]['file'])
 # ________________________________________________________________________________
 # loop over the files that cover the spectral range the cube is for
             for k in range(nfiles):
-                ifile = self.master_table.FileMap[self.instrument][this_par1][this_par2][k]
+                ifile = self.master_table.FileMap[self.instrument][this_par1][this_par2]['file'][k]
                 self.this_cube_filenames.append(ifile)
                 log.debug("Working on Band defined by: %s %s ", this_par1, this_par2)
 # --------------------------------------------------------------------------------
@@ -556,14 +560,24 @@ class IFUCubeData():
                     min_wave_band = np.amin(wave)
                     max_wave_band = np.amax(wave)
                     
-                    print('slice projection pars',this_par1,this_par2)
 
-                    self.map_sliceprojection_to_dqframe(this_par1,
-                                                        this_par2,
-                                                        ifile,
-                                                        min_wave_band,
-                                                        max_wave_band,
-                                                        k)
+                    # send footprint of file on sky -spatial and wavelength
+                    # set the spaxel_dq values, need the roiw and self.zcoord - defines wavelengths
+                    print('slice projection pars',this_par1,this_par2)
+                    footprint =  self.master_table.FileMap[self.instrument][this_par1][this_par2]['footprint'][k]
+                    print('footprint',footprint)
+
+
+                    self.map_sliceprojection_to_dqframe(footprint,
+                                                        min_wave_band, max_wave_band)
+
+                    
+#                    self.map_sliceprojection_to_dqframe(this_par1,
+#                                                        this_par2,
+#                                                        ifile,
+#                                                        min_wave_band,
+#                                                        max_wave_band,
+#                                                        k)
 
 
 
@@ -929,6 +943,9 @@ class IFUCubeData():
 
         parameter1 = self.list_par1
         parameter2 = self.list_par2
+
+        print('parameter 1',parameter1)
+        print('parameter 2',parameter2)
         a_min = []
         a_max = []
         b_min = []
@@ -943,7 +960,7 @@ class IFUCubeData():
             this_a = parameter1[i]
             this_b = parameter2[i]
             log.debug('Working on data from %s, %s', this_a, this_b)
-            n = len(self.master_table.FileMap[self.instrument][this_a][this_b])
+            n = len(self.master_table.FileMap[self.instrument][this_a][this_b]['file'])
             log.debug('number of files %d', n)
             for k in range(n):
                 amin = 0.0
@@ -953,7 +970,8 @@ class IFUCubeData():
                 lmin = 0.0
                 lmax = 0.0
 
-                ifile = self.master_table.FileMap[self.instrument][this_a][this_b][k]
+                ifile = self.master_table.FileMap[self.instrument][this_a][this_b]['file'][k]
+                print(ifile)
 # ______________________________________________________________________________
 # Open the input data model
 # Find the footprint of the image
@@ -990,6 +1008,8 @@ class IFUCubeData():
                     b_max.append(bmax)
                     lambda_min.append(lmin)
                     lambda_max.append(lmax)
+# store footprint for later need it for setting up DQ flags to help find holdes
+#                self.master_table.FileMap[self.instrument][this_a][this_b].append(ch_footprint)
 # ________________________________________________________________________________
     # done looping over files determine final size of cube
 
@@ -1233,7 +1253,82 @@ class IFUCubeData():
         return coord1, coord2, wave, flux, rois_det, roiw_det, weight_det, \
             softrad_det, alpha_det, beta_det
 # ********************************************************************************
-    def map_sliceprojection_to_dqframe(self, this_par1, this_par2,
+    def map_sliceprojection_to_dqframe(self, footprint,
+                                       min_wave_band, max_wave_band):
+
+# **************************************************************************
+        """Based on footprint of model set spaxel_dq
+        
+
+        return spaxel_dq updated for this input file 
+
+
+        Parameter
+        ----------
+        footprint spatial and wavelength footprint of input model
+
+        Returns
+        -------
+        self.spaxel_dq : numpy.ndarray. Module updates spaxel_dq for each file 
+           
+
+        """
+
+        # first find the wavelength planes this slice overlaps. Min and max wavelength
+        # input values are set for MIRI for the entire band. 
+        t0 = time.time()
+
+        overlap_partial = 1
+        overlap_full  = 2
+        print('footprit',footprint)
+        print(type(footprint))
+        print(footprint.shape)
+        # footprint of input model on the sky 
+        ra1, dec1, ra2, dec2, ra3, dec3, ra4, dec4 = footprint 
+        ra_vert=np.array([ra1,ra2,ra3,ra4])
+        dec_vert=np.array([dec1,dec2,dec3,dec4])
+        coord1, coord2 = coord.radec2std(self.crval1,
+                                         self.crval2,
+                                         ra_vert, dec_vert)
+
+#        rpd=math.pi/180.
+        id_min = np.abs(self.zcoord - min_wave_band).argmin()
+        id_max = np.abs(self.zcoord - max_wave_band).argmin()
+        print(id_min,id_max,min_wave_band, max_wave_band,self.zcoord[id_min], self.zcoord[id_max])
+
+        slice_dq = np.zeros(self.naxis2 * self.naxis1 ,dtype=np.int32)
+        nxy = self.xcenters.size
+        nz = self.zcoord.size
+
+        for ixy in range(nxy):
+            area_box = self.cdelt1 * self.cdelt2
+            area_overlap = cube_overlap.sh_find_overlap(self.xcenters[ixy], 
+                                                        self.ycenters[ixy],
+                                                        self.cdelt1, self.cdelt2,
+                                                        coord1, coord2)
+                        
+            overlap_coverage = area_overlap/area_box
+            if overlap_coverage > 0:
+                self.spaxel_dq_file.write('%f %f %f %f  %f %f %f %f %f %f %f %f %f %i' %
+                                          (x0, y0, x1, y1, coord1[0], coord2[0],
+                                           coord1[1], coord2[1],coord1[2],coord2[2],
+                                           coord1[3], coord2[3], overlap_coverage,
+                                           k) + '\n')
+
+                if overlap_coverage > 0.95:
+                    slice_dq[ixy] = overlap_full
+                else:
+                    slice_dq[ixy] = overlap_partial
+                            
+        for iz in range(id_min, id_max):
+            self.spaxel_dq[iz,:] = np.bitwise_or(self.spaxel_dq[iz,:] , slice_dq)
+# ________________________________________________________________________________
+                    
+        t1 = time.time()
+        print('time to map file projection to cube',t1 - t0) 
+
+# ********************************************************************************
+    def map_sliceprojection_to_dqframe_siaf(self, this_par1, this_par2,
                                        ifile, min_wave_band, max_wave_band,k):
 
 # **************************************************************************
@@ -1289,25 +1384,16 @@ class IFUCubeData():
                 elif this_par2 == 'long':
                     subchannel_name = 'C'
 
-
-#                for ii in range(nslices):
-#                    print('working on slice',ii +1)
-#                    slice_name = str(ii+1)
-#                    if (ii+1) < 10:
-#                        slice_name = '0'+slice_name
-#                    siaf_slice_name = 'MIRIFU_'+str(this_par1)+subchannel_name+ \
-#                        'SLICE'+slice_name
-#                    this_slice = siaf[siaf_slice_name]
                 siaf_channel_band   = 'MIRIFU_CHANNEL'+str(this_par1)+subchannel_name
                 print('siaf name',siaf_channel_band)
-                this_slice = siaf[siaf_channel_band]
+                this_band = siaf[siaf_channel_band]
 
-                v2ref,v3ref = this_slice.V2Ref, this_slice.V3Ref
-                angle, parity = this_slice.V3IdlYAngle,this_slice.VIdlParity
-                x1, x2, x3, x4, y1, y2, y3, y4 = this_slice.XIdlVert1, \
-                    this_slice.XIdlVert2, this_slice.XIdlVert3, this_slice.XIdlVert4, \
-                    this_slice.YIdlVert1, this_slice.YIdlVert2, this_slice.YIdlVert3, \
-                    this_slice.YIdlVert4
+                v2ref,v3ref = this_band.V2Ref, this_band.V3Ref
+                angle, parity = this_band.V3IdlYAngle,this_band.VIdlParity
+                x1, x2, x3, x4, y1, y2, y3, y4 = this_band.XIdlVert1, \
+                    this_band.XIdlVert2, this_band.XIdlVert3, this_band.XIdlVert4, \
+                    this_band.YIdlVert1, this_band.YIdlVert2, this_band.YIdlVert3, \
+                    this_band.YIdlVert4
                 x=np.array([x1,x2,x3,x4])
                 y=np.array([y1,y2,y3,y4])
                 v2_vert = v2ref + parity*x*math.cos(angle*rpd) + y*math.sin(angle*rpd)
@@ -1317,10 +1403,6 @@ class IFUCubeData():
                 coord1, coord2 = coord.radec2std(self.crval1,
                                                  self.crval2,
                                                  ra_vert, dec_vert)
-#                    print('input to sliceprojection',this_par1,this_par2,ii,siaf_slice_name)
-#                    print('v2, v3', v2_vert, v3_vert, lam_vert)
-#                    print('ra, dec', ra_vert, dec_vert, lam)
-#                    print('coord1, coord2', coord1, coord2)
 
                 if test == 2 or test == 3:
                     poly_shape = Polygon([ [coord1[0], coord2[0]],
@@ -1377,13 +1459,79 @@ class IFUCubeData():
 
                 # for NIRSPEC each file has 30 slices
                 # wcs information access seperately for each slice
-                nslices = 30
-#                for ii in range(nslices):
 
+
+                v2v3_to_world_transform = input_model.meta.wcs.get_transform('v2v3',
+                                                                          'world')
+                siaf = pysiaf.Siaf('NIRSPEC')
+                nslices = 30
+                slice_dq = np.zeros(self.naxis2 * self.naxis1 ,dtype=np.int32)
+
+                siaf_name = 'NRS_FULL_IFU'
+
+                this_projection = siaf[siaf_name]
+                v2ref,v3ref = this_projection.V2Ref, this_projection.V3Ref
+                angle, parity = this_projection.V3IdlYAngle,this_projection.VIdlParity
+                x1, x2, x3, x4, y1, y2, y3, y4 = this_projection.XIdlVert1, \
+                    this_projection.XIdlVert2, this_projection.XIdlVert3, this_projection.XIdlVert4, \
+                    this_projection.YIdlVert1, this_projection.YIdlVert2, this_projection.YIdlVert3, \
+                    this_projection.YIdlVert4
+                x=np.array([x1,x2,x3,x4])
+                y=np.array([y1,y2,y3,y4])
+                v2_vert = v2ref + parity*x*math.cos(angle*rpd) + y*math.sin(angle*rpd)
+                v3_vert = v3ref - parity*x*math.sin(angle*rpd) + y*math.cos(angle*rpd)
+                lam_vert = 1.0
+                ra_vert, dec_vert, lam = v2v3_to_world_transform(v2_vert, v3_vert, lam_vert)
+
+                print('ra dec from pysiaf',ra_vert,dec_vert)
+
+                ra_vert = np.zeros(4)
+                dec_vert = np.zeros(4)
+                print('s_region',input_model.meta.wcsinfo.s_region)
+
+                
+                
+                print(ra_vert,dec_vert)
+
+                ra_vert[0], dec_vert[0], ra_vert[1], dec_vert[1], ra_vert[2], dec_vert[2], ra_vert[3], dec_vert[3] = \
+                    input_model.meta.wcsinfo.s_region
+
+                coord1, coord2 = coord.radec2std(self.crval1,
+                                                 self.crval2,
+                                                 ra_vert, dec_vert)
+
+                nxy = self.xcenters.size
+                for ixy in range(nxy):
+                    x0 =  self.xcenters[ixy] - self.cdelt1/2.0
+                    x1 =  self.xcenters[ixy] + self.cdelt1/2.0
+                    y0 =  self.ycenters[ixy] - self.cdelt2/2.0
+                    y1 =  self.ycenters[ixy] + self.cdelt2/2.0
+
+                    area_box = (x1-x0)*(y1-y0)
+                    area_overlap = cube_overlap.sh_find_overlap(self.xcenters[ixy], 
+                                                                self.ycenters[ixy],
+                                                                self.cdelt1, self.cdelt2,
+                                                                coord1, coord2)
+                        
+                    overlap_coverage = area_overlap/area_box
+
+                    self.spaxel_dq_file.write('%f %f %f %f  %f %f %f %f %f %f %f %f %f %i' %
+                                                  (x0, y0, x1, y1, coord1[0], coord2[0],
+                                                   coord1[1], coord2[1],coord1[2],coord2[2],
+                                                   coord1[3], coord2[3], overlap_coverage,
+                                                   k) + '\n')
+
+                    if overlap_coverage > 0.95:
+                        slice_dq[ixy] = overlap_full
+                    else:
+                        slice_dq[ixy] = overlap_partial
+                            
+                #for iz in range(id_min, id_max):
+                    self.spaxel_dq[:,:] = np.bitwise_or(self.spaxel_dq[:,:] , slice_dq)
+                    
         t1 = time.time()
         print('time to map file projection to cube',t1 - t0) 
-#        return coord1, coord2, wave, flux, rois_det, roiw_det, weight_det, \
-#            softrad_det, alpha_det, beta_det
+
 # ********************************************************************************
     def find_spaxel_flux(self):
 

@@ -269,7 +269,8 @@ class CubeBuildStep (Step):
 # cubeinfo.setup:
 # read in all the input files, information from cube_pars, read in input data
 # and fill in master_table holding what files are associationed with each
-# ch/sub-ch or grating/filter.
+# ch/sub-ch or grating/filter. Also the footprint on the sky and wavelength range
+# of each file is stored in file_map.
 # Fill in all_channel, all_subchannel,all_filter, all_grating, instrument and
 # detector
 
