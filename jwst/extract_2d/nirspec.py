@@ -45,6 +45,7 @@ def nrs_extract2d(input_model, slit_name=None, apply_wavecorr=False, reference_f
             apply_wavecorr = False
             warnings.warn("WAVECORR reference file missing - skipping correction")
     else:
+        reffile = None
         apply_wavecorr = False
         log.info("Skipping wavecorr correction for EXP_TYPE {0}".format(exp_type))
 

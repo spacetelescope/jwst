@@ -1,6 +1,12 @@
 0.13.4 (Unreleased)
 ===================
 
+assign_wcs
+----------
+
+- A unique integer ``source_id`` is now assigned to all MOS background slitlets
+  and NRS Fixed Slits. [#3584]
+
 associations
 ------------
 
@@ -8,6 +14,27 @@ associations
   a new association. [#3542]
 
 - Prevent inclusion of data files with exp_type="NIS_EXTCAL" in the association files [#3611]
+=======
+datamodels
+----------
+
+- Changed PATTSIZE keyword data type from float to string. [#3606]
+
+- Added enumeration of allowed values of ``FXD_SLIT`` to the core schema. [#3584]
+
+exp_to_source
+-------------
+
+- Changed `exp_to_source`` to use ``source_id`` to group exposures. [#3584]
+
+- Removed the enum list for the SUBPXPAT keyword to allow validation of any value. [#3616]
+
+pipeline
+--------
+
+- ``calwebb_spec2`` was changed to allow processing of exposures
+  with ``EXP_TYPE=NRS_LAMP.`` [#3603]
+
 
 0.13.3 (2019-06-04)
 ===================
