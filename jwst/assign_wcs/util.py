@@ -760,9 +760,10 @@ def update_s_region_imaging(model):
     update_s_region_keyword(model, footprint)
 
 
-def find_footprint_spectral(model):
+def compute_footprint_spectral(model):
     """
-    determine spatial footprint for spectral observations using the instrument model.
+    Determine spatial footprint for spectral observations using the instrument model.
+
     Parameters
     ----------
     output_model : `~jwst.datamodels.IFUImageModel`
@@ -785,7 +786,7 @@ def find_footprint_spectral(model):
 def update_s_region_spectral(model):
     """ Update the S_REGION keyword.
     """
-    footprint = find_footprint_spectral(model)
+    footprint = compute_footprint_spectral(model)
     update_s_region_keyword(model, footprint)
 
 
@@ -812,7 +813,7 @@ def _nanminmax(wcsobj):
     return np.nanmin(ra), np.nanmax(ra), np.nanmin(dec), np.nanmax(dec)
 
 
-def find_footprint_nrs_ifu(output_model, mod):
+def compute_footprint_nrs_ifu(output_model, mod):
     """
     determine NIRSPEC ifu footprint observations using the instrument model.
 
@@ -849,7 +850,7 @@ def update_s_region_nrs_ifu(output_model, mod):
     mod : module
         The imported ``nirspec`` module.
     """
-    footprint = find_footprint_nrs_ifu(output_model, mod)
+    footprint = compute_footprint_nrs_ifu(output_model, mod)
     update_s_region_keyword(output_model, footprint)
 
 
@@ -862,7 +863,7 @@ def update_s_region_mrs(output_model):
     output_model : `~jwst.datamodels.IFUImageModel`
         The output of assign_wcs.
     """
-    footprint = find_footprint_spectral(output_model)
+    footprint = compute_footprint_spectral(output_model)
     update_s_region_keyword(output_model, footprint)
 
 
