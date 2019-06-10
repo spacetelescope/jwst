@@ -457,49 +457,6 @@ class Utility():
     """Utility functions that understand DMS Level 3 associations"""
 
     @staticmethod
-    def rename_to_level2a(level1b_name, use_integrations=False):
-        """Rename a Level 1b Exposure to another level
-
-        Parameters
-        ----------
-        level1b_name : str
-            The Level 1b exposure name.
-
-        is_integrations : boolean
-            Use 'rateints' instead of 'rate' as
-            the suffix.
-
-        Returns
-        -------
-        str
-            The Level 2a name
-        """
-        match = re.match(_LEVEL1B_REGEX, level1b_name)
-        if match is None or match.group('type') != '_uncal':
-            logger.warning((
-                'Item FILENAME="{}" is not a Level 1b name. '
-                'Cannot transform to Level 2a.'
-            ).format(
-                level1b_name
-            ))
-            return level1b_name
-
-        suffix = 'rate'
-        if use_integrations:
-            suffix = 'rateints'
-        level2a_name = ''.join([
-            match.group('path'),
-            '_',
-            suffix,
-            match.group('extension')
-        ])
-        return level2a_name
-
-    @staticmethod
-    def resequence(*args, **kwargs):
-        return Utility_Level3.resequence(*args, **kwargs)
-
-    @staticmethod
     @RegistryMarker.callback('finalize')
     def finalize(associations):
         """Check validity and duplications in an association list
@@ -551,6 +508,49 @@ class Utility():
         lv2_asns = Utility._merge_asns(lv2_asns)
 
         return others + lv2_asns
+
+    @staticmethod
+    def rename_to_level2a(level1b_name, use_integrations=False):
+        """Rename a Level 1b Exposure to another level
+
+        Parameters
+        ----------
+        level1b_name : str
+            The Level 1b exposure name.
+
+        is_integrations : boolean
+            Use 'rateints' instead of 'rate' as
+            the suffix.
+
+        Returns
+        -------
+        str
+            The Level 2a name
+        """
+        match = re.match(_LEVEL1B_REGEX, level1b_name)
+        if match is None or match.group('type') != '_uncal':
+            logger.warning((
+                'Item FILENAME="{}" is not a Level 1b name. '
+                'Cannot transform to Level 2a.'
+            ).format(
+                level1b_name
+            ))
+            return level1b_name
+
+        suffix = 'rate'
+        if use_integrations:
+            suffix = 'rateints'
+        level2a_name = ''.join([
+            match.group('path'),
+            '_',
+            suffix,
+            match.group('extension')
+        ])
+        return level2a_name
+
+    @staticmethod
+    def resequence(*args, **kwargs):
+        return Utility_Level3.resequence(*args, **kwargs)
 
     @staticmethod
     def _merge_asns(asns):
