@@ -924,16 +924,8 @@ class Asn_Lv2WFSC(
             DMSAttrConstraint(
                 name='wfsc',
                 sources=['visitype'],
-                value='.+wfsc.+',
+                value='prime_wfsc_sensing_control',
                 force_unique=True
-            ),
-            # exclude any NIS EXTCAL files from the associations to prevent
-            # OPS failues
-            DMSAttrConstraint(
-                name='nis_extcal',
-                sources=['exp_type'],
-                value='((?!nis_extcal).)*',
-                reduce=Constraint.any
             )
 
         ])
