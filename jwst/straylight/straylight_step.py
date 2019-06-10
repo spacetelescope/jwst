@@ -18,56 +18,48 @@ class StraylightStep (Step):
          power = float(default = 1.0) # Power of weighting function
 
     """
-    reference_file_types = ['straymask']
+
+    reference_file_types = ['regions']
+
+
     def process(self, input):
-
-
         # Open the input data model
         with datamodels.IFUImageModel(input) as input_model:
 
             # check the data is MIRI data
             detector = input_model.meta.instrument.detector
             if detector == 'MIRIFUSHORT':
+                # Use the Regions reference file set to 20% throughput threshhold
+                self.straylight_name = self.get_reference_file(input_model,
+                                                               'regions')
+                self.log.info('Using regions reference file %s',
+                              self.straylight_name)
+                # Check for a valid reference file
+                if self.straylight_name == 'N/A':
+                    self.log.warning('No REGIONS reference file found')
+                    self.log.warning('Straylight step will be skipped')
+                    result = input_model.copy()
+                    result.meta.cal_step.straylight = 'SKIPPED'
+                    return result
+                allregions = datamodels.RegionsModel(self.straylight_name)
+                # Use 20% throughput array
+                regions=(allregions.regions)[2,:,:].copy()
+                self.log.info(' Using 20% throughput threshhold.')
+                allregions.close()
 
                 if self.method == 'Nearest':
-                # Get the name of the straylight reference file
-                    self.straylight_name = self.get_reference_file(input_model,
-                                                                   'straymask')
-                    self.log.info('Using straylight reference file %s',
-                                  self.straylight_name)
-                # Check for a valid reference file
-                    if self.straylight_name == 'N/A':
-                        self.log.warning('No STRAYLIGHT reference file found')
-                        self.log.warning('Straylight step will be skipped')
-                        result = input_model.copy()
-                        result.meta.cal_step.straylight = 'SKIPPED'
-                        return result
-
-                # Open the straylight mask ref file data model
-                    straylight_model = datamodels.StrayLightModel(self.straylight_name)
-                    result = straylight.correct_MRS(input_model, straylight_model)
-                # Close the reference file and update the step status
-                    straylight_model.close()
-# ________________________________________________________________________________
-                if self.method == 'ModShepard':
-                    # going to use Regions file that is in the ASDF extension
-                    assign_wcs = input_model.meta.cal_step.assign_wcs
-                    if(assign_wcs != 'COMPLETE'):
-                        self.log.warning('Assign_WCS was not run on file, we  need the information of the slice gap locations')
-                        raise ErrorNoAssignWCS("Assign WCS has not been run on file")
-
-                    det2ab = input_model.meta.wcs.get_transform('detector', 'alpha_beta')
-                    #det2ab is a RegionsSelector model
-                    slices = det2ab.label_mapper.mapper
-
-                    self.log.info(' Region of influence radius (pixels) %6.2f', self.roi)
+                    # Do the correction
+                    self.log.info(' Using row-by-row approach.')
+                    result = straylight.correct_mrs(input_model, regions)
+                elif self.method == 'ModShepard':
+                    # Do the correction
                     self.log.info(' Modified Shepard weighting power %5.2f', self.power)
-                # Do the correction
+                    self.log.info(' Region of influence radius (pixels) %6.2f', self.roi)
                     result = straylight.correct_mrs_modshepard(input_model,
-                                                               slices,
+                                                               regions,
                                                                self.roi,
                                                                self.power)
-# ________________________________________________________________________________
+
                 result.meta.cal_step.straylight = 'COMPLETE'
 
             else:
