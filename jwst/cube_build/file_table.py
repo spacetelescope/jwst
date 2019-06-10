@@ -1,6 +1,7 @@
 """ Dictionary holding defaults for cube_build
 """
 from .. import datamodels
+from .. assign_wcs.util import  wcs_bbox_from_shape
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -14,49 +15,98 @@ class FileTable():
         self.FileMap = {}
         self.FileMap['MIRI'] = {}
 
+#        self.FileMap['MIRI']['1'] = {}
+#        self.FileMap['MIRI']['1']['short'] = []
+#        self.FileMap['MIRI']['1']['medium'] = []
+#        self.FileMap['MIRI']['1']['long'] = []
         self.FileMap['MIRI']['1'] = {}
-        self.FileMap['MIRI']['1']['short'] = []
-        self.FileMap['MIRI']['1']['medium'] = []
-        self.FileMap['MIRI']['1']['long'] = []
+        self.FileMap['MIRI']['1']['short'] = {}
+        self.FileMap['MIRI']['1']['short']['footprint'] = []
+        self.FileMap['MIRI']['1']['short']['file'] = []
+        self.FileMap['MIRI']['1']['medium'] = {}
+        self.FileMap['MIRI']['1']['medium']['footprint'] = []
+        self.FileMap['MIRI']['1']['medium']['file'] = []
+        self.FileMap['MIRI']['1']['long'] = {}
+        self.FileMap['MIRI']['1']['long']['footprint'] = []
+        self.FileMap['MIRI']['1']['long']['file'] = []
 
         self.FileMap['MIRI']['2'] = {}
-        self.FileMap['MIRI']['2']['short'] = []
-        self.FileMap['MIRI']['2']['medium'] = []
-        self.FileMap['MIRI']['2']['long'] = []
+        self.FileMap['MIRI']['2']['short'] = {}
+        self.FileMap['MIRI']['2']['short']['footprint'] = []
+        self.FileMap['MIRI']['2']['short']['file'] = []
+        self.FileMap['MIRI']['2']['medium'] = {}
+        self.FileMap['MIRI']['2']['medium']['footprint'] = []
+        self.FileMap['MIRI']['2']['medium']['file'] = []
+        self.FileMap['MIRI']['2']['long'] = {}
+        self.FileMap['MIRI']['2']['long']['footprint'] = []
+        self.FileMap['MIRI']['2']['long']['file'] = []
 
         self.FileMap['MIRI']['3'] = {}
-        self.FileMap['MIRI']['3']['short'] = []
-        self.FileMap['MIRI']['3']['medium'] = []
-        self.FileMap['MIRI']['3']['long'] = []
+        self.FileMap['MIRI']['3']['short'] = {}
+        self.FileMap['MIRI']['3']['short']['footprint'] = []
+        self.FileMap['MIRI']['3']['short']['file'] = []
+        self.FileMap['MIRI']['3']['medium'] = {}
+        self.FileMap['MIRI']['3']['medium']['footprint'] = []
+        self.FileMap['MIRI']['3']['medium']['file'] = []
+        self.FileMap['MIRI']['3']['long'] = {}
+        self.FileMap['MIRI']['3']['long']['footprint'] = []
+        self.FileMap['MIRI']['3']['long']['file'] = []
 
         self.FileMap['MIRI']['4'] = {}
-        self.FileMap['MIRI']['4']['short'] = []
-        self.FileMap['MIRI']['4']['medium'] = []
-        self.FileMap['MIRI']['4']['long'] = []
+        self.FileMap['MIRI']['4']['short'] = {}
+        self.FileMap['MIRI']['4']['short']['footprint'] = []
+        self.FileMap['MIRI']['4']['short']['file'] = []
+        self.FileMap['MIRI']['4']['medium'] = {}
+        self.FileMap['MIRI']['4']['medium']['footprint'] = []
+        self.FileMap['MIRI']['4']['medium']['file'] = []
+        self.FileMap['MIRI']['4']['long'] = {}
+        self.FileMap['MIRI']['4']['long']['footprint'] = []
+        self.FileMap['MIRI']['4']['long']['file'] = []
 
         self.FileMap['NIRSPEC'] = {}
         self.FileMap['NIRSPEC']['prism'] = {}
-        self.FileMap['NIRSPEC']['prism']['clear'] = []
+        self.FileMap['NIRSPEC']['prism']['clear'] = {}
+        self.FileMap['NIRSPEC']['prism']['clear']['footprint'] = []
+        self.FileMap['NIRSPEC']['prism']['clear']['file'] = []
 
         self.FileMap['NIRSPEC']['g140m'] = {}
-        self.FileMap['NIRSPEC']['g140m']['f070lp'] = []
-        self.FileMap['NIRSPEC']['g140m']['f100lp'] = []
+        self.FileMap['NIRSPEC']['g140m']['f070lp'] = {}
+        self.FileMap['NIRSPEC']['g140m']['f070lp']['footprint'] = []
+        self.FileMap['NIRSPEC']['g140m']['f070lp']['file'] = []
+
+#        self.FileMap['NIRSPEC']['g140m']['f100lp'] = []
+        self.FileMap['NIRSPEC']['g140m']['f100lp'] = {}
+        self.FileMap['NIRSPEC']['g140m']['f100lp']['file'] = []
+        self.FileMap['NIRSPEC']['g140m']['f100lp']['footprint'] = []
 
         self.FileMap['NIRSPEC']['g140h'] = {}
-        self.FileMap['NIRSPEC']['g140h']['f070lp'] = []
-        self.FileMap['NIRSPEC']['g140h']['f100lp'] = []
+        self.FileMap['NIRSPEC']['g140h']['f070lp'] = {}
+        self.FileMap['NIRSPEC']['g140h']['f070lp']['footprint'] = []
+        self.FileMap['NIRSPEC']['g140h']['f070lp']['file'] = []
+
+        self.FileMap['NIRSPEC']['g140h']['f100lp'] = {}
+        self.FileMap['NIRSPEC']['g140h']['f100lp']['footprint'] = []
+        self.FileMap['NIRSPEC']['g140h']['f100lp']['file'] = []
 
         self.FileMap['NIRSPEC']['g235m'] = {}
-        self.FileMap['NIRSPEC']['g235m']['f170lp'] = []
+        self.FileMap['NIRSPEC']['g235m']['f170lp'] = {}
+        self.FileMap['NIRSPEC']['g235m']['f170lp']['footprint'] = []
+        self.FileMap['NIRSPEC']['g235m']['f170lp']['file'] = []
 
         self.FileMap['NIRSPEC']['g235h'] = {}
-        self.FileMap['NIRSPEC']['g235h']['f170lp'] = []
+        self.FileMap['NIRSPEC']['g235h']['f170lp'] = {}
+        self.FileMap['NIRSPEC']['g235h']['f170lp']['footprint'] = []
+        self.FileMap['NIRSPEC']['g235h']['f170lp']['file'] = []
 
         self.FileMap['NIRSPEC']['g395m'] = {}
-        self.FileMap['NIRSPEC']['g395m']['f290lp'] = []
+        self.FileMap['NIRSPEC']['g395m']['f290lp'] = {}
+        self.FileMap['NIRSPEC']['g395m']['f290lp']['footprint'] = []
+        self.FileMap['NIRSPEC']['g395m']['f290lp']['file'] = []
 
         self.FileMap['NIRSPEC']['g395h'] = {}
-        self.FileMap['NIRSPEC']['g395h']['f290lp'] = []
+        self.FileMap['NIRSPEC']['g395h']['f290lp'] = {}
+        self.FileMap['NIRSPEC']['g395h']['f290lp']['footprint'] = []
+        self.FileMap['NIRSPEC']['g395h']['f290lp']['file'] = []
 
 #********************************************************************************
     def set_file_table(self,
@@ -98,7 +148,23 @@ class FileTable():
                 detector = input_model.meta.instrument.detector
                 instrument = input_model.meta.instrument.name
                 assign_wcs = input_model.meta.cal_step.assign_wcs
+                footprint =  input_model.meta.wcsinfo.s_region
+                bbox = input_model.meta.wcs.bounding_box
+                if bbox is None:
+                    bbox = wcs_bbox_from_shape(input_model.data.shape)
+                print('bbox', bbox) 
+                #wcslist = [input_model.meta.wcs]
+                #footprints = [w.footprint().T for w in wcslist]
+                footprint = input_model.meta.wcs.footprint(bbox, center=True, axis_type="spatial").T<
 
+                print('footprint',footprint)
+                sys.exit()
+
+                
+
+                #footprint = input_model.meta.wcs.footprint(bbox, center=True, axis_type="spatial").T
+                #print('footprint',footprint)
+                #print(type(footprint))
                 if(assign_wcs != 'COMPLETE'):
                     raise ErrorNoAssignWCS("Assign WCS has not been run on file %s",
                                            ifile)
@@ -111,7 +177,8 @@ class FileTable():
             #________________________________________________________________________________
                     clenf = len(channel)
                     for k in range(clenf):
-                        self.FileMap['MIRI'][channel[k]][subchannel].append(input_model)
+                        self.FileMap['MIRI'][channel[k]][subchannel]['file'].append(input_model)
+                        self.FileMap['MIRI'][channel[k]][subchannel]['footprint'].append(footprint)
             #________________________________________________________________________________
             #NIRSPEC instrument
             #________________________________________________________________________________
@@ -119,7 +186,10 @@ class FileTable():
                     fwa = input_model.meta.instrument.filter.lower()
                     gwa = input_model.meta.instrument.grating.lower()
 
-                    self.FileMap['NIRSPEC'][gwa][fwa].append(input_model)
+                    self.FileMap['NIRSPEC'][gwa][fwa]['file'].append(input_model)
+
+
+                    #self.FileMap['NIRSPEC'][gwa][fwa]['footprint'].append(footprint)
                 else:
 
                     log.info('Instrument not valid for cube')
