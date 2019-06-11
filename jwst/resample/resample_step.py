@@ -30,7 +30,7 @@ class ResampleStep(Step):
         kernel = string(default=None)
         fillval = string(default=None)
         weight_type = option('exptime', default=None)
-        good_bits = integer(min=0, default=4)
+        good_bits = integer(min=0, default=6)
         single = boolean(default=False)
         blendheaders = boolean(default=True)
     """
