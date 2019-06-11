@@ -180,7 +180,7 @@ class Main():
             help='Merge associations into single associations with multiple products'
         )
         parser.add_argument(
-            '--no-merge', action='store_true',
+            '--no-merge', action=DeprecateNoMerge,
             help='Deprecated: Default is to not merge. See "--merge".'
         )
 
@@ -339,6 +339,16 @@ class Main():
 # #########
 # Utilities
 # #########
+class DeprecateNoMerge(argparse.Action):
+    """Deprecate the `--no-merge` option"""
+    def __init__(self, option_strings, dest, nargs=None, **kwargs):
+        logger.warning('The "--no-merge" option is deprecated in favor of the "--merge" option.')
+        super(DeprecateNoMerge, self).__init__(option_strings, dest, const=True, nargs=0, **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        setattr(namespace, self.dest, values)
+
+
 def constrain_on_candidates(candidates):
     """Create a constraint based on a list of candidates
 
