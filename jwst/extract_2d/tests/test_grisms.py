@@ -6,7 +6,7 @@ No images are needed here to check the location
 and size of bounding boxes.
 
 NIRCAM and NIRISS WFSS use the same code, testing with NIRCAM
-settings here for funcationality. In the future, full data
+settings here for functionality. In the future, full data
 regression tests will provide the truth between instruments.
 
 For the testing catalog:
@@ -348,6 +348,9 @@ def test_extract_wfss_object():
     assert len(outmodel.slits) == 3
     ids = [slit.source_id for slit in outmodel.slits]
     assert ids == [9, 19, 19]
+
+    names = [slit.name for slit in outmodel.slits]
+    assert names == ['9', '19', '19']
 
     # check that bounding boxes exist
     del outmodel
