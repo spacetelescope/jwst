@@ -59,7 +59,7 @@ class OutlierDetectionStep(Step):
         backg = float(default=0.0)
         save_intermediate_results = boolean(default=False)
         resample_data = boolean(default=True)
-        good_bits = integer(default=4)
+        good_bits = integer(default=6)
         scale_detection = boolean(default=False)
         search_output_file = boolean(default=False)
     """
