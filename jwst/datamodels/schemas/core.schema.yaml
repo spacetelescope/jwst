@@ -4,10 +4,8 @@ properties:
     type: object
     properties:
       date:
-        anyOf:
-          - $ref: http://stsci.edu/schemas/asdf/time/time-1.0.0
-          - type: string
         title: "[yyyy-mm-ddThh:mm:ss.ss] UTC date file created"
+        type: string
         fits_keyword: DATE
         blend_table: True
       origin:
@@ -138,10 +136,8 @@ properties:
         type: object
         properties:
           date:
-            anyOf:
-              - $ref: http://stsci.edu/schemas/asdf/time/time-1.0.0
-              - type: string
             title: "[yyyy-mm-dd] UTC date at start of exposure"
+            type: string
             fits_keyword: DATE-OBS
             blend_table: True
             blend_rule: mindate
@@ -156,7 +152,7 @@ properties:
             title: "Date-time start of data acquisition"
             fits_keyword: DATE-BEG
             blend_table: True
-            blend_rule: mindate
+            blend_rule: mindatetime
           date_end:
             type: string
             title: "[yyyy-mm-dd] UTC date at end of exposure"

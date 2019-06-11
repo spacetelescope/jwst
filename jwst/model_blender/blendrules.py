@@ -84,14 +84,24 @@ def last(items):
     return None
 
 def mindate(items):
-    """Return the minimum time from a list of time strings."""
-    time_list = Time(items)
-    return time_list.min()
+    """Return the minimum date from a list of date strings in yyyy-mm-dd format."""
+    time_list = Time(items, format="iso", in_subfmt="date", out_subfmt="date")
+    return str(time_list.min())
 
 def maxdate(items):
-    """Return the maximum time from a list of time strings."""
-    time_list = Time(items)
-    return time_list.max()
+    """Return the maximum date from a list of date strings in yyyy-mm-dd format."""
+    time_list = Time(items, format="iso", in_subfmt="date", out_subfmt="date")
+    return str(time_list.max())
+
+def mindatetime(items):
+    """Return the minimum datetime from a list of datetime strings in ISO-8601 format."""
+    time_list = Time(items, format="isot")
+    return str(time_list.min())
+
+def maxdatetime(items):
+    """Return the maximum datetime from a list of datetime strings in ISO-8601 format."""
+    time_list = Time(items, format="isot")
+    return str(time_list.max())
 
 def mintime(items):
     times = [_isotime(time_str) for time_str in items]
@@ -123,7 +133,9 @@ blender_funcs = {'first': first,
                  'mintime': mintime,
                  'maxtime': maxtime,
                  'mindate': mindate,
-                 'maxdate': maxdate}
+                 'maxdate': maxdate,
+                 'mindatetime': mindatetime,
+                 'maxdatetime': maxdatetime}
 
 
 # Classes for managing keyword rules
