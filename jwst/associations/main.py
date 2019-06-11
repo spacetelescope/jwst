@@ -176,8 +176,12 @@ class Main():
             help='Version of the generator.'
         )
         parser.add_argument(
+            '--merge', action='store_true',
+            help='Merge associations into single associations with multiple products'
+        )
+        parser.add_argument(
             '--no-merge', action='store_true',
-            help='Do not merge Level2 associations into one'
+            help='Deprecated: Default is to not merge. See "--merge".'
         )
 
         parsed = parser.parse_args(args=args)
@@ -265,7 +269,7 @@ class Main():
 
         # Do a grand merging. This is done particularly for
         # Level2 associations.
-        if not parsed.no_merge:
+        if parsed.merge:
             try:
                 self.associations = self.rules.Utility.merge_asns(self.associations)
             except AttributeError:
