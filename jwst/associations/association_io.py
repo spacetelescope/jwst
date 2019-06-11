@@ -124,7 +124,7 @@ class yaml():
         except AttributeError:
             pass
         try:
-            asn = yaml_lib.load(serialized)
+            asn = yaml_lib.safe_load(serialized)
         except Exception as err:
             logger.debug('Error unserializing: "{}"'.format(err))
             raise AssociationNotValidError(
