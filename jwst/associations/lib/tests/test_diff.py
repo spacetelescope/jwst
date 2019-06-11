@@ -6,6 +6,7 @@ import jwst.associations.lib.diff as asn_diff
 
 standard_asn = {
     'asn_type': 'test',
+    'asn_id': 'c1001',
     'products': [
         {
             'name': 'product_a',
@@ -33,6 +34,7 @@ standard_asn = {
 
 badexptype_asn = {
     'asn_type': 'test',
+    'asn_id': 'c1001',
     'products': [
         {
             'name': 'product_a',
@@ -60,6 +62,7 @@ badexptype_asn = {
 
 dup_product_asn = {
     'asn_type': 'test',
+    'asn_id': 'c1001',
     'products': [
         {
             'name': 'product_a',
@@ -87,6 +90,7 @@ dup_product_asn = {
 
 disjoint_product_asn = {
     'asn_type': 'test',
+    'asn_id': 'c1001',
     'products': [
         {
             'name': 'product_a',
@@ -114,6 +118,7 @@ disjoint_product_asn = {
 
 badtype_asn = {
     'asn_type': 'badtype',
+    'asn_id': 'c1001',
     'products': [
         {
             'name': 'product_a',
@@ -141,6 +146,35 @@ badtype_asn = {
 
 badmember_asn = {
     'asn_type': 'test',
+    'asn_id': 'c1001',
+    'products': [
+        {
+            'name': 'product_a',
+            'members': [
+                {'expname': 'member_a_a', 'exptype': 'science'},
+                {'expname': 'member_a_a', 'exptype': 'science'}
+            ]
+        },
+        {
+            'name': 'product_b',
+            'members': [
+                {'expname': 'member_b_a', 'exptype': 'science'},
+                {'expname': 'member_b_b', 'exptype': 'science'}
+            ]
+        },
+        {
+            'name': 'product_d',
+            'members': [
+                {'expname': 'member_d_a', 'exptype': 'science'},
+                {'expname': 'member_d_b', 'exptype': 'science'}
+            ]
+        },
+    ]
+}
+
+badcandidate_asn = {
+    'asn_type': 'test',
+    'asn_id': 'o001',
     'products': [
         {
             'name': 'product_a',
@@ -174,7 +208,8 @@ badmember_asn = {
         disjoint_product_asn,
         badtype_asn,
         badmember_asn,
-        badexptype_asn
+        badexptype_asn,
+        badcandidate_asn,
     ]
 )
 def test_fails(mismatched, standard=standard_asn):
