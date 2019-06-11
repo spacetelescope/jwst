@@ -46,7 +46,7 @@ def test_nrs_fixedslit_nod_chop():
     asns = generate(pool, registry_level2_only(
         global_constraints=constraint_all_candidates)
     )
-    assert len(asns) == 14
+    assert len(asns) == 8
     for asn in asns:
         assert asn['asn_rule'] in ['Asn_Lv2NRSFSS', 'Asn_Lv2SpecSpecial']
         if asn['asn_rule'] == 'Asn_Lv2SpecSpecial':
