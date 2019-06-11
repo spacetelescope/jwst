@@ -40,8 +40,12 @@ class TSOPhotometryStep(Step):
                 self.log.warning('the tso_photometry step will be skipped.')
                 return None
 
+            pupil_name = 'ANY'
+            if model.meta.instrument.pupil is not None:
+                pupil_name = model.meta.instrument.pupil
+
             (radius, radius_inner, radius_outer) = get_ref_data(
-                        tsophot_filename, pupil=model.meta.instrument.pupil)
+                        tsophot_filename, pupil=pupil_name)
             self.log.debug('Using reference file {}'.format(tsophot_filename))
             self.log.debug('radius = {}'.format(radius))
             self.log.debug('radius_inner = {}'.format(radius_inner))
