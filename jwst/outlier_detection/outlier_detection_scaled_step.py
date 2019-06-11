@@ -31,7 +31,7 @@ class OutlierDetectionScaledStep(Step):
         scale = string(default='0.5 0.4')
         backg = float(default=0.0)
         save_intermediate_results = boolean(default=False)
-        good_bits = integer(default=4)
+        good_bits = integer(default=6)
     """
 
     def process(self, input):
