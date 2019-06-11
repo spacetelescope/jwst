@@ -33,6 +33,9 @@ pipeline
 - ``calwebb_spec2`` was changed to allow processing of exposures
   with ``EXP_TYPE=NRS_LAMP.`` [#3603]
 
+- ``calwebb_tso3`` was changed to allow processing of exposures
+  with ``EXP_TYPE=MIR_IMAGE.`` [#3633]
+
 
 0.13.3 (2019-06-04)
 ===================
