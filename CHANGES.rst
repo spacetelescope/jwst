@@ -29,6 +29,11 @@ exp_to_source
 
 - Removed the enum list for the SUBPXPAT keyword to allow validation of any value. [#3616]
 
+outlier_detection
+-----------------
+
+- Changed default value of good_pixel from 4 to 6 [#3638]
+
 pipeline
 --------
 
@@ -38,6 +43,13 @@ pipeline
 - ``calwebb_tso3`` was changed to allow processing of exposures
   with ``EXP_TYPE=MIR_IMAGE.`` [#3633]
 
+- Changed the default value of good_pixel from 4 to 6 for all outlier
+  detection steps and both resample steps [#3638]
+
+resample
+--------
+
+- Changed default value of good_pixel from 4 to 6 [#3638]
 
 0.13.3 (2019-06-04)
 ===================
