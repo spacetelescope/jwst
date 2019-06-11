@@ -19,36 +19,39 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def correct_mrs(input_model, straylight_model):
+def correct_mrs(input_model, slice_map):
     """
-    Short Summary
-    -------------
-    Corrects the MIRI MRS data for straylight
-    Uses the straylight reference file
+    Corrects the MIRI MRS data for straylight.
 
-    Parameter
+    Parameters
     ----------
-    input_model: data model object
-        science data to be corrected
+    input_model: `~jwst.datamodels.IFUImageModel`
+        Science data to be corrected.
 
-    straylight_model: holds the straylight mask for the correction
+    slice_map: ndarray
+        Holds the pixel region mask for the correction.
+        slice = (band * 100 + slice#)
+        gap = 0
 
     Returns
     -------
-    output: data model object
-        straylight-subtracted science data
+    output: `~jwst.datamodels.IFUImageModel`
+        Straylight-subtracted science data.
 
     """
 
     # Save some data parameterss for easy use later
     nrows, ncols = input_model.data.shape
-    # mask is either 1 or 0
-    mask = straylight_model.data
-    x = float('nan')
-    # The straylight mask has values of 1 and 0. The straylight task uses data
+
+    # The slice mask has values of 0 and nonzero, values of 0 present pixel
+    # in a slice gap and non zero values are science pixels.  The straylight task uses data
     # in-between the slices (also called slice gaps) of the MRS data to correct
-    # the science data in the slices. In the mask the pixels found in the gaps
-    # have a value of 1 and the science pixels have a value of 0.
+    # the science data in the slices.
+
+    # mask is same size as slice_map - set = 0 everywhere
+    mask = np.zeros_like(slice_map)
+    # mask = 1 for slice gaps
+    mask[slice_map == 0] = 1
 
     # Create output as a copy of the input science data model
     # sci_mask is the input science image * mask
@@ -76,7 +79,7 @@ def correct_mrs(input_model, straylight_model):
     sci_mask = output.data * mask    #sci_maskcontains 0's in science regions of detector.
     straylight_image = output.data * 0.0
 
-    #We Want Sci mask smoothed for GAP region with 3 X 3 box car filter
+    # We Want Sci mask smoothed for GAP region with 3 X 3 box car filter
     # Handle edge cases for boxcar smoothing, by determining the
     # boxcar smoothing of the mask.
 
@@ -170,33 +173,36 @@ def correct_mrs(input_model, straylight_model):
     output.data = output.data - simage
     return output
 
-def correct_mrs_modshepard(input_model, sliceMap, roi, power):
+
+def correct_mrs_modshepard(input_model, slice_map, roi, power):
     """
-    Short Summary
-    -------------
+    Straylight correction using a modified Shepard algorithm.
+
     Corrects the MIRI MRS data for straylight using a Modified version of the
     Shepard algorithm. Straylight is determined using an inverse distance weighting
     function. The inverse distance weighting is determined by module
-    shepard_2d_kernel(roi,power):
+    ``shepard_2d_kernel(roi,power)``.
 
-    Parameter
+    Parameters
     ----------
-    input_model: data model object
-        science data to be corrected
+    input_model : `~jwst.datamodels.IFUImageModel`
+        Science data to be corrected.
 
-    sliceMap: holds the pixel region mask for the correction
-                   slice = (band*100+slice#)
-                   gap = 0
-    roi: region of inflence (size of radius)
-    power: exponent of Shepard kernel
-    sci_ngroups:int
-        number of groups in input data
-
+    slice_map : ndarray
+        Holds the pixel region mask for the correction.
+        slice = (band*100+slice#)
+        gap = 0
+    roi : float
+        Region of influence (size of radius)
+    power : float
+        Exponent of Shepard kernel.
+    sci_ngroups :int
+        Number of groups in input data.
 
     Returns
     -------
-    output: data model object
-        straylight-subtracted science data
+    output : `~jwst.datamodels.IFUImageModel`
+        Straylight-subtracted science data.
 
     """
 
@@ -213,10 +219,10 @@ def correct_mrs_modshepard(input_model, sliceMap, roi, power):
 
     # kernel matrix
     w = shepard_2d_kernel(roi, power)
-    #mask is same size as sliceMap - set = 0 everywhere
-    mask = np.zeros_like(sliceMap)
-    #mask = 1 for slice gaps
-    mask[sliceMap == 0] = 1
+    # mask is same size as slice_map - set = 0 everywhere
+    mask = np.zeros_like(slice_map)
+    # mask = 1 for slice gaps
+    mask[slice_map == 0] = 1
 
     # find if any of the gap pixels are bad pixels - if so mark them
     mask_dq = input_model.dq.copy()
@@ -232,7 +238,7 @@ def correct_mrs_modshepard(input_model, sliceMap, roi, power):
 
     #avoid cosmic ray contamination
     # only using the science data for this cosmic ray test
-    cosmic_ray_test = 0.02 * np.max(output.data[sliceMap > 0])
+    cosmic_ray_test = 0.02 * np.max(output.data[slice_map > 0])
     image_gap[image_gap > cosmic_ray_test] = 0
 
     image_gap[image_gap < 0] = 0   #set pixels less than zero to 0
@@ -259,9 +265,14 @@ def correct_mrs_modshepard(input_model, sliceMap, roi, power):
 def shepard_2d_kernel(roi, power):
 
     """
-    Calculates the kernel matrix of Shepard's modified algorithm
-    roi: region of influence
-    power: exponent
+    Calculates the kernel matrix of Shepard's modified algorithm.
+
+    Parameters
+    ----------
+    roi : float
+        Region of influence.
+    power : float
+        Exponent of Shepard kernel.
     """
 
     distance_tolerance = 0.001 # for very small distances set min distance
