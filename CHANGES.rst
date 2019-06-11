@@ -49,6 +49,8 @@ associations
 
 - Orders the elements in Level3 naming in alphabetical order [#3614]
 
+- Ensured that higher-order candidates only exist for Level2 associations [#3629]
+
 combine_1d
 ----------
 
