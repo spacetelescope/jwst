@@ -30,7 +30,9 @@ includes
                       'mintime': mintime,
                       'maxtime': maxtime,
                       'mindate': mindate,
-                      'maxdate': maxdate}
+                      'maxdate': maxdate,
+		      'mindatetime': mindatetime,
+		      'maxdatetime': maxdatetime}
 
 The rules that should be referenced in the model schema definition are the
 keys defined for `jwst.model_blender.blender_rules.blender_funcs` listed

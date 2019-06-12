@@ -12,8 +12,9 @@ start_times = [57877.00359994354, 57877.0168373584, 57877.03126958496]
 exp_times = [107.3676, 107.3676, 107.3676]
 end_times = [57877.0048426241, 57877.01808003896, 57877.03251226551]
 filenames = ['image1_cal.fits', 'image2_cal.fits', 'image3_cal.fits']
-dates = ['2017-11-30T13:52:20.367', '2017-11-11T15:14:29.176',
-         '2017-11-11T15:15:06.118']
+datetimes = ['2017-11-30T13:52:20.367', '2017-11-11T15:14:29.176',
+             '2017-11-11T15:15:06.118']
+dates = ['2017-11-30', '2017-11-11', '2017-12-10']
 instrument_names = ['NIRCAM'] * 3
 
 
@@ -28,13 +29,17 @@ def setup():
                     'meta.exposure.end_time': end_times,
                     'meta.filename': filenames,
                     'meta.instrument.name': instrument_names,
-                    'meta.date': dates}
+                    'meta.date': datetimes,
+                    'meta.observation.date': dates,
+                    'meta.observation.date_beg': datetimes}
     OUTPUT_VALUES = {'meta.exposure.start_time': start_times[0],
                     'meta.exposure.exposure_time': np.sum(exp_times),
                     'meta.exposure.end_time': end_times[-1],
                     'meta.filename': filenames[0],
                     'meta.instrument.name': instrument_names[0],
-                    'meta.date': dates[0]}
+                    'meta.date': datetimes[0],
+                    'meta.observation.date': dates[1],
+                    'meta.observation.date_beg': datetimes[1]}
 
     for i, tfile in enumerate(TMP_FILES):
         for attr in INPUT_VALUES:
