@@ -15,6 +15,8 @@ associations
   
 - Generate will no longer merge Level2 associations by default [#3631]
 
+- Prevent inclusion of data files with exp_type="NIS_EXTCAL" in the association files [#3611]
+=======
 datamodels
 ----------
 
