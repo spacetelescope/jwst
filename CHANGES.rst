@@ -12,6 +12,8 @@ associations
 
 - MIRI MRS dedicated background exposures are now listed as science observations in
   a new association. [#3542]
+  
+- Generate will no longer merge Level2 associations by default [#3631]
 
 datamodels
 ----------
