@@ -22,12 +22,12 @@ def test_script(full_pool_rules):
         'discover_Asn_IFU', 'candidate_Asn_Lv2WFSC',
         'candidate_Asn_Lv2ImageNonScience', 'discover_Asn_SpectralTarget',
         'candidate_Asn_Lv2ImageTSO', 'discover_Asn_SpectralSource',
-        'discover_Asn_Image', 'candidate_Asn_Lv2FGS'
+        'discover_Asn_Image', 'candidate_Asn_Lv2FGS', 'candidate_Asn_Lv3SpecAux'
     }
 
     generated = Main([pool_fname, '--dry-run'])
     asns = generated.associations
-    assert len(asns) == 442
+    assert len(asns) == 939
     assert len(generated.orphaned) == 61
     found_rules = set(
         asn['asn_rule']
@@ -42,9 +42,9 @@ def test_asn_candidates(full_pool_rules):
     pool, rules, pool_fname = full_pool_rules
 
     generated = Main([pool_fname, '--dry-run', '-i', 'o001'])
-    assert len(generated.associations) == 3
+    assert len(generated.associations) == 12
     generated = Main([pool_fname, '--dry-run', '-i', 'o001', 'o002'])
-    assert len(generated.associations) == 6
+    assert len(generated.associations) == 24
 
 
 @pytest.mark.slow
