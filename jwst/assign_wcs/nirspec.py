@@ -361,7 +361,7 @@ def get_open_slits(input_model, reference_files=None, slit_y_range=[-.55, .55]):
     elif exp_type == "nrs_fixedslit":
         slits = get_open_fixed_slits(input_model, slit_y_range)
     elif exp_type == "nrs_brightobj":
-        slits = [Slit('S1600A1', 3, 0, 0, 0, slit_y_range[0], slit_y_range[1], 5)]
+        slits = [Slit('S1600A1', 3, 0, 0, 0, slit_y_range[0], slit_y_range[1], 5, 4)]
     elif exp_type == "nrs_lamp":
         slits = get_open_fixed_slits(input_model, slit_y_range)
     else:
