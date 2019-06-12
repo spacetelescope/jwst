@@ -4,34 +4,34 @@ properties:
     type: object
     properties:
       resample:
-          title: Metadata describing resampling done using this data
-          type: object
-          properties:
-            pointings:
-              title: Number of pointings included in resampled product
-              type: integer
-              fits_keyword:  NDRIZ
-            product_exposure_time:
-              title: Total exposure time for product
-              type: number
-              fits_keyword: TEXPTIME
-            weight_type:
-              title: Type of drizzle weighting to use in resampling input
-              type: string
-              enum: ['exptime','error']
-              fits_keyword: WHT_TYPE
+        title: Metadata describing resampling done using this data
+        type: object
+        properties:
+          pointings:
+            title: Number of pointings included in resampled product
+            type: integer
+            fits_keyword: NDRIZ
+          product_exposure_time:
+            title: Total exposure time for product
+            type: number
+            fits_keyword: TEXPTIME
+          weight_type:
+            title: Type of drizzle weighting to use in resampling input
+            type: string
+            enum: [exptime, error]
+            fits_keyword: WHT_TYPE
       tweakreg_catalog:
-          type: object
-          properties:
-            filename:
-              title: Output tweakreg catalog filename
-              type: string
-              fits_keyword: TCATFILE
+        type: object
+        properties:
+          filename:
+            title: Output tweakreg catalog filename
+            type: string
+            fits_keyword: TCATFILE
       source_catalog:
-          type: object
-          properties:
-            filename:
-              title: Output source catalog filename
-              type: string
-              fits_keyword: SCATFILE
+        type: object
+        properties:
+          filename:
+            title: Output source catalog filename
+            type: string
+            fits_keyword: SCATFILE
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

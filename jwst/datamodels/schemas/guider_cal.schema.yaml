@@ -106,7 +106,7 @@ allOf:
       default: 0
       ndim: 2
       datatype: uint32
-    planned_star_table: 
+    planned_star_table:
       title: Planned reference star table
       fits_hdu: Planned Reference Stars
       datatype:
@@ -130,7 +130,7 @@ allOf:
         datatype: float64
       - name: count_rate_uncert
         datatype: float64
-    flight_star_table: 
+    flight_star_table:
       title: Flight reference star table
       fits_hdu: Flight Reference Stars
       datatype:
@@ -170,13 +170,13 @@ allOf:
         datatype: float64
       - name: HGA_motion
         datatype: int16
-    centroid_table: 
+    centroid_table:
       title: Centroid packet table
       fits_hdu: FGS Centroid Packet
       datatype:
-      - name: observatory_time   
+      - name: observatory_time
         datatype: [ascii, 23]
-      - name: centroid_time   
+      - name: centroid_time
         datatype: [ascii, 23]
       - name: guide_star_position_x
         datatype: float64
@@ -212,7 +212,7 @@ allOf:
       title: Track subarray data table
       fits_hdu: Track subarray table
       datatype:
-      - name: observatory_time   
+      - name: observatory_time
         datatype: [ascii, 23]
       - name: x_corner
         datatype: float64
