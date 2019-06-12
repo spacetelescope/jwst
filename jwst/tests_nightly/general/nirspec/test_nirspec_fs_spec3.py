@@ -37,7 +37,7 @@ class TestSpec3Pipeline(BaseJWSTTest):
         with open(asn_file) as fh:
             asn = load_asn(fh)
         base_name = asn['products'][0]['name']
-        product_name = base_name.format(source_id='ss400a1') + '_cal.fits'
+        product_name = base_name.format(source_id='s00000') + '_cal.fits'
         output_files = glob('*')
 
         if product_name in output_files:
