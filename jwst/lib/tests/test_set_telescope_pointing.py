@@ -433,7 +433,7 @@ def test_default_siaf_values(eng_db_ngas, data_file_nosiaf):
     assert model.meta.wcsinfo.cdelt2 == 1
 
 
-def test_default_siaf_values(eng_db_ngas, data_file_nosiaf):
+def test_tsgrism_siaf_values(eng_db_ngas, data_file_nosiaf):
     """
     Test that FITS WCS default values were set.
     """
