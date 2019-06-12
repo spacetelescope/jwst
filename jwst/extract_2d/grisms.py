@@ -53,6 +53,8 @@ def extract_tso_object(input_model,
     bright object is considered in the field, so there's
     no catalog of sources and the object is assumed to
     have been observed at the aperture location crpix1/2.
+    CRPIX1/2 are read from the SIAF and saved as
+    "meta.wcsinfo.siaf_xref_sci" and "meta.wcsinfo.siaf_yref_sci".
 
     GrismObject is a named tuple which contains distilled
     information about each catalog object and the bounding
@@ -116,8 +118,8 @@ def extract_tso_object(input_model,
         lmin, lmax = range_select.pop()
 
         # create the order bounding box
-        source_xpos = input_model.meta.wcsinfo.crpix1 - 1  # remove fits
-        source_ypos = input_model.meta.wcsinfo.crpix2 - 1  # remove fits
+        source_xpos = input_model.meta.wcsinfo.siaf_xref_sci - 1  # remove fits
+        source_ypos = input_model.meta.wcsinfo.siaf_xref_sci - 1  # remove fits
         transform = input_model.meta.wcs.get_transform('full_detector', 'grism_detector')
         xmin, ymin, _ = transform(source_xpos,
                                   source_ypos,
@@ -192,7 +194,7 @@ def extract_tso_object(input_model,
             output_model.dq = ext_dq
             output_model.meta.wcs = subwcs
             output_model.meta.wcs.bounding_box = util.wcs_bbox_from_shape(ext_data.shape)
-            output_model.meta.wcs.crpix2 = 34  # update for the move, vals are the same
+            output_model.meta.wcs.siaf_yref_sci = 34  # update for the move, vals are the same
             output_model.meta.wcsinfo.spectral_order = order
             output_model.name = str('TSO object')
             output_model.xstart = 1  # fits pixels
