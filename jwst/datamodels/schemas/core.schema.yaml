@@ -158,7 +158,9 @@ properties:
             title: "[yyyy-mm-dd] UTC date at end of exposure"
             fits_keyword: DATE-END
             blend_table: True
-            blend_rule: maxdate
+            # Despite what the title might lead you to believe, this keyword
+            # actually contains a full datetime string.
+            blend_rule: maxdatetime
           time_end:
             title: "[hh:mm:ss.sss] UTC time at end of exposure"
             type: string
