@@ -160,8 +160,9 @@ def set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi):
     output_model.xsize = (xhi - xlo)
     output_model.ystart = ylo + 1 # FITS 1-indexed
     output_model.ysize = (yhi - ylo)
+    output_model.source_id = int(slit.source_id)
     if output_model.meta.exposure.type.lower() in ['nrs_msaspec', 'nrs_autoflat']:
-        output_model.source_id = int(slit.source_id)
+        #output_model.source_id = int(slit.source_id)
         output_model.source_name = slit.source_name
         output_model.source_alias = slit.source_alias
         output_model.stellarity = float(slit.stellarity)
