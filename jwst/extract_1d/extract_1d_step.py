@@ -92,16 +92,23 @@ class Extract1dStep(Step):
         # Open the input and figure out what type of model it is
         input_model = datamodels.open(input)
 
+        was_source_model = False                 # default value
         if isinstance(input_model, datamodels.CubeModel):
             # It's a 3-D multi-integration model
             self.log.debug('Input is a CubeModel for a multiple integ. file')
         elif isinstance(input_model, datamodels.ImageModel):
             # It's a single 2-D image
             self.log.debug('Input is an ImageModel')
+        elif isinstance(input_model, datamodels.SourceModelContainer):
+            self.log.debug('Input is a SourceModelContainer')
+            was_source_model = True
         elif isinstance(input_model, datamodels.ModelContainer):
             self.log.debug('Input is a ModelContainer')
         elif isinstance(input_model, datamodels.MultiSlitModel):
             self.log.debug('Input is a MultiSlitModel')
+        elif isinstance(input_model, datamodels.MultiExposureModel):
+            self.log.warning('Input is a MultiExposureModel, '
+                             'which is not currently supported')
         elif isinstance(input_model, datamodels.MultiProductModel):
             self.log.debug('Input is a MultiProductModel')
         elif isinstance(input_model, datamodels.IFUCubeModel):
@@ -125,6 +132,7 @@ class Extract1dStep(Step):
                 self.log.debug("Input contains %d items", len(input_model))
                 result = datamodels.ModelContainer()
                 for model in input_model:
+                    # This is a flag for do_extract1d.
                     if model.meta.exposure.type in extract.WFSS_EXPTYPES:
                         ref_file = 'N/A'
                         self.log.info('No EXTRACT1D reference file '
@@ -139,7 +147,8 @@ class Extract1dStep(Step):
                                                  self.bkg_order,
                                                  self.log_increment,
                                                  self.subtract_background,
-                                                 self.apply_nod_offset)
+                                                 self.apply_nod_offset,
+                                                 was_source_model=was_source_model)
                     # Set the step flag to complete in each MultiSpecModel
                     temp.meta.cal_step.extract_1d = 'COMPLETE'
                     result.append(temp)
@@ -159,7 +168,8 @@ class Extract1dStep(Step):
                                                self.bkg_order,
                                                self.log_increment,
                                                self.subtract_background,
-                                               self.apply_nod_offset)
+                                               self.apply_nod_offset,
+                                               was_source_model=was_source_model)
                 # Set the step flag to complete
                 result.meta.cal_step.extract_1d = 'COMPLETE'
             else:
@@ -179,7 +189,8 @@ class Extract1dStep(Step):
                                            self.bkg_order,
                                            self.log_increment,
                                            self.subtract_background,
-                                           self.apply_nod_offset)
+                                           self.apply_nod_offset,
+                                           was_source_model=False)
             # Set the step flag to complete
             result.meta.cal_step.extract_1d = 'COMPLETE'
 

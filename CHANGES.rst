@@ -16,13 +16,17 @@ associations
 - Generate will no longer merge Level2 associations by default [#3631]
 
 - Prevent inclusion of data files with exp_type="NIS_EXTCAL" in the association files [#3611]
-=======
+
 datamodels
 ----------
 
 - Changed PATTSIZE keyword data type from float to string. [#3606]
 
 - Added enumeration of allowed values of ``FXD_SLIT`` to the core schema. [#3584]
+
+extract_1d
+----------
+- Checks for input from a SourceModelContainer. [#3648]
 
 exp_to_source
 -------------

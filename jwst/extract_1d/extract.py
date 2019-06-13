@@ -2684,7 +2684,8 @@ class ImageExtractModel(ExtractBase):
 
 
 def run_extract1d(input_model, refname, smoothing_length, bkg_order,
-                  log_increment, subtract_background, apply_nod_offset):
+                  log_increment, subtract_background, apply_nod_offset,
+                  was_source_model=False):
     """Extract 1-D spectra.
 
     This just reads the reference file (if any) and calls do_extract1d.
@@ -2721,6 +2722,11 @@ def run_extract1d(input_model, refname, smoothing_length, bkg_order,
         reference file (or the default position, if there is no reference
         file) will be shifted to account for nod and/or dither offset.
 
+    was_source_model : bool
+        True if and only if `input_model` is actually one SlitModel
+        obtained by iterating over a SourceModelContainer.  The default
+        is False.
+
     Returns
     -------
     output_model : data model
@@ -2740,7 +2746,7 @@ def run_extract1d(input_model, refname, smoothing_length, bkg_order,
     output_model = do_extract1d(input_model, ref_dict,
                                 smoothing_length, bkg_order,
                                 log_increment, subtract_background,
-                                apply_nod_offset)
+                                apply_nod_offset, was_source_model)
 
     return output_model
 
@@ -2782,7 +2788,8 @@ def ref_dict_sanity_check(ref_dict):
 
 def do_extract1d(input_model, ref_dict, smoothing_length=None,
                  bkg_order=None, log_increment=50,
-                 subtract_background=None, apply_nod_offset=None):
+                 subtract_background=None, apply_nod_offset=None,
+                 was_source_model=False):
     """Extract 1-D spectra.
 
     Parameters
@@ -2817,6 +2824,11 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
         If True, the target and background positions specified in the
         reference file (or the default position, if there is no reference
         file) will be shifted to account for nod and/or dither offset.
+
+    was_source_model : bool
+        True if and only if `input_model` is actually one SlitModel
+        obtained by iterating over a SourceModelContainer.  The default
+        is False.
 
     Returns
     -------
@@ -2854,10 +2866,13 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                         "so apply_nod_offset will be set to False",
                         input_model.meta.target.source_type)
 
-    if isinstance(input_model, datamodels.MultiSlitModel) or \
-       isinstance(input_model, datamodels.MultiProductModel):
+    if (was_source_model or
+        isinstance(input_model, datamodels.MultiSlitModel) or
+        isinstance(input_model, datamodels.MultiProductModel)):
 
-        if isinstance(input_model, datamodels.MultiSlitModel):
+        if was_source_model:            # from a SourceModelContainer?
+            slits = [input_model]
+        elif isinstance(input_model, datamodels.MultiSlitModel):
             slits = input_model.slits
         else:                           # MultiProductModel
             slits = input_model.products
