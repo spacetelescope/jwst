@@ -45,6 +45,9 @@ pipeline
 - ``calwebb_tso3`` was changed to allow processing of exposures
   with ``EXP_TYPE=MIR_IMAGE.`` [#3633]
 
+- - ``calwebb_tso3`` was changed to allow tso photometry processing of
+  with (``EXP_TYPE=MIR_IMAGE`` and tsovisit = True) or  with (``EXP_TYPE=MIR_IMAGE`) [#3650]
+
 - Changed the default value of good_pixel from 4 to 6 for all outlier
   detection steps and both resample steps [#3638]
 
