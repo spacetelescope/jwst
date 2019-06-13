@@ -29,7 +29,8 @@ bc1 = utils.copy(bc0)
 bc1.name = "stable-deps"
 bc1.env_vars = env_vars
 bc1.build_cmds = [
-    "pip install -e .[test]",
+    "pip install numpy",
+    "pip install .[test]",
 ]
 bc1.test_cmds = [
     "pytest -r sx --junitxml=results.xml"
@@ -41,6 +42,7 @@ bc2.nodetype = 'python3.7'
 bc2.name = 'conda-free'
 bc2.env_vars = env_vars
 bc2.build_cmds = [
+    "pip install numpy",
     "pip install -e .[test]",
 ]
 bc2.test_cmds = [
