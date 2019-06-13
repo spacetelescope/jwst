@@ -100,6 +100,19 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             }
         })
 
+    def check_and_set_constraints(self, item):
+        """Override of Association method
+
+        An addition check is made on candidate type.
+        Level 2 associations can only be created by
+        OBSERVATION and BACKGROUND candidates.
+        """
+        match, reprocess = super(DMSLevel2bBase, self).check_and_set_constraints(item)
+        if match and not self.acid.type in ['observation', 'background']:
+            return False, []
+        else:
+            return match, reprocess
+
     def members_by_type(self, member_type):
         """Get list of members by their exposure type"""
         member_type = member_type.lower()

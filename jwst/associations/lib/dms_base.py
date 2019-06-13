@@ -241,11 +241,14 @@ class DMSBaseMixin(ACIDMixin):
     @property
     def from_items(self):
         """List of items from which members were created"""
-        items = [
-            member.item
-            for product in self['products']
-            for member in product['members']
-        ]
+        try:
+            items = [
+                member.item
+                for product in self['products']
+                for member in product['members']
+            ]
+        except KeyError:
+            items = []
         return items
 
     @property
@@ -360,8 +363,7 @@ class DMSBaseMixin(ACIDMixin):
         is_item_member : bool
             True if item is a member.
         """
-        member = self.make_member(item)
-        return self.is_member(member)
+        return item in self.from_items
 
     def is_item_tso(self, item, other_exp_types=None):
         """Is the given item TSO

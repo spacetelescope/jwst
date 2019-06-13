@@ -41,10 +41,6 @@ SPECIAL_POOLS = {
         'args': [],
         'xfail': 'PR #3450',
     },
-    'jw00625_20190603t233254_pool': {
-        'args': [],
-        'xfail': 'JP-767',
-    }
 }
 
 
@@ -121,12 +117,9 @@ class TestSDPPools(SDPPoolsSource):
             if count > 1
         ]
 
-        if multiples:
-            pytest.xfail('Multiple product names. See JP-767')
-
         assert not multiples, 'Multiple product names: {}'.format(multiples)
 
-    def test_specified_sdp_pool(self, sdp_pool):
+    def test_asns_by_pool(self, sdp_pool):
         """Test a command-line specified pool"""
         if sdp_pool:
             pool_path = Path(self.test_dir) / 'pools' / (sdp_pool + '.csv')
@@ -134,7 +127,7 @@ class TestSDPPools(SDPPoolsSource):
         else:
             pytest.skip('No SDP pool specified using `--sdp-pool` command-line option.')
 
-    def test_specified_sdp_pool_dup_product_names(self, sdp_pool):
+    def test_dup_products_by_pool(self, sdp_pool):
         """Test for duplicate product names for a specific pool"""
         if sdp_pool:
             pool_path = Path(self.test_dir) / 'pools' / (sdp_pool + '.csv')

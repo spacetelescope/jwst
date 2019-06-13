@@ -89,6 +89,8 @@ associations
 
 - Ensured that higher-order candidates only exist for Level2 associations [#3629]
 
+- Improve member checking and removed duplicate product names [#3647]
+
 combine_1d
 ----------
 
