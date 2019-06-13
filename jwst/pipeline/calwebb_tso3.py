@@ -37,7 +37,7 @@ class Tso3Pipeline(Pipeline):
                  'extract_1d': extract_1d_step.Extract1dStep,
                  'white_light': white_light_step.WhiteLightStep
                  }
-    image_exptypes = ['NRC_TSIMAGE']
+    image_exptypes = ['NRC_TSIMAGE', 'MIR_IMAGE']
     reference_file_types = ['gain', 'readnoise']
 
     def process(self, input):
@@ -58,10 +58,15 @@ class Tso3Pipeline(Pipeline):
         self.asn_id = input_models.meta.asn_table.asn_id
 
         input_exptype = None
+        input_tsovisit = None
         # Input may consist of multiple exposures, so loop over each of them
         for cube in input_models:
             if input_exptype is None:
                 input_exptype = cube.meta.exposure.type
+
+            if input_tsovisit is None:
+                input_tsovisit = cube.meta.visit.tsovisit
+
             # Convert CubeModel into ModelContainer of 2-D DataModels
             input_2dmodels = datamodels.ModelContainer()
             for i in range(cube.data.shape[0]):
@@ -105,7 +110,8 @@ class Tso3Pipeline(Pipeline):
         # Create final photometry results as a single output
         # regardless of how many members there may be...
         phot_result_list = []
-        if input_exptype in self.image_exptypes:
+
+        if input_exptype in self.image_exptypes and input_tsovisit:
             # Create name for extracted photometry (Level 3) product
             phot_tab_suffix = 'phot'
 

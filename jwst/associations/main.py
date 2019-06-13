@@ -176,8 +176,12 @@ class Main():
             help='Version of the generator.'
         )
         parser.add_argument(
-            '--no-merge', action='store_true',
-            help='Do not merge Level2 associations into one'
+            '--merge', action='store_true',
+            help='Merge associations into single associations with multiple products'
+        )
+        parser.add_argument(
+            '--no-merge', action=DeprecateNoMerge,
+            help='Deprecated: Default is to not merge. See "--merge".'
         )
 
         parsed = parser.parse_args(args=args)
@@ -265,7 +269,7 @@ class Main():
 
         # Do a grand merging. This is done particularly for
         # Level2 associations.
-        if not parsed.no_merge:
+        if parsed.merge:
             try:
                 self.associations = self.rules.Utility.merge_asns(self.associations)
             except AttributeError:
@@ -335,6 +339,16 @@ class Main():
 # #########
 # Utilities
 # #########
+class DeprecateNoMerge(argparse.Action):
+    """Deprecate the `--no-merge` option"""
+    def __init__(self, option_strings, dest, nargs=None, **kwargs):
+        logger.warning('The "--no-merge" option is deprecated in favor of the "--merge" option.')
+        super(DeprecateNoMerge, self).__init__(option_strings, dest, const=True, nargs=0, **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        setattr(namespace, self.dest, values)
+
+
 def constrain_on_candidates(candidates):
     """Create a constraint based on a list of candidates
 

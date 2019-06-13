@@ -4,10 +4,8 @@ properties:
     type: object
     properties:
       date:
-        anyOf:
-          - $ref: http://stsci.edu/schemas/asdf/time/time-1.0.0
-          - type: string
         title: "[yyyy-mm-ddThh:mm:ss.ss] UTC date file created"
+        type: string
         fits_keyword: DATE
         blend_table: True
       origin:
@@ -138,10 +136,8 @@ properties:
         type: object
         properties:
           date:
-            anyOf:
-              - $ref: http://stsci.edu/schemas/asdf/time/time-1.0.0
-              - type: string
             title: "[yyyy-mm-dd] UTC date at start of exposure"
+            type: string
             fits_keyword: DATE-OBS
             blend_table: True
             blend_rule: mindate
@@ -156,13 +152,15 @@ properties:
             title: "Date-time start of data acquisition"
             fits_keyword: DATE-BEG
             blend_table: True
-            blend_rule: mindate
+            blend_rule: mindatetime
           date_end:
             type: string
             title: "[yyyy-mm-dd] UTC date at end of exposure"
             fits_keyword: DATE-END
             blend_table: True
-            blend_rule: maxdate
+            # Despite what the title might lead you to believe, this keyword
+            # actually contains a full datetime string.
+            blend_rule: maxdatetime
           time_end:
             title: "[hh:mm:ss.sss] UTC time at end of exposure"
             type: string
@@ -441,6 +439,7 @@ properties:
           fixed_slit:
             title: Name of fixed slit aperture used
             type: string
+            enum: [S200A1, S200A2, S200B1, S400A1, S1600A1, NONE]
             fits_keyword: FXD_SLIT
             blend_table: True
           focus_position:
@@ -952,7 +951,6 @@ properties:
           subpixel_dither_pattern:
             title: subpixel dither pattern
             type: string
-            enum: [BOTH, SPATIAL, SPECTRAL, NONE]
             fits_keyword: SUBPXPAT
             blend_table: True
           spectral_position_number:

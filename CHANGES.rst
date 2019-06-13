@@ -1,17 +1,57 @@
 0.13.4 (Unreleased)
 ===================
 
+assign_wcs
+----------
+
+- A unique integer ``source_id`` is now assigned to all MOS background slitlets
+  and NRS Fixed Slits. [#3584]
+
 associations
 ------------
 
 - MIRI MRS dedicated background exposures are now listed as science observations in
   a new association. [#3542]
+  
+- Generate will no longer merge Level2 associations by default [#3631]
 
+- Prevent inclusion of data files with exp_type="NIS_EXTCAL" in the association files [#3611]
+=======
 datamodels
 ----------
 
 - Changed PATTSIZE keyword data type from float to string. [#3606]
 
+- Added enumeration of allowed values of ``FXD_SLIT`` to the core schema. [#3584]
+
+exp_to_source
+-------------
+
+- Changed `exp_to_source`` to use ``source_id`` to group exposures. [#3584]
+
+- Removed the enum list for the SUBPXPAT keyword to allow validation of any value. [#3616]
+
+outlier_detection
+-----------------
+
+- Changed default value of good_pixel from 4 to 6 [#3638]
+
+pipeline
+--------
+
+- ``calwebb_spec2`` was changed to allow processing of exposures
+  with ``EXP_TYPE=NRS_LAMP.`` [#3603]
+
+- ``calwebb_tso3`` was changed to allow processing of exposures
+  with ``EXP_TYPE=MIR_IMAGE.`` [#3633]
+
+- Changed the default value of good_pixel from 4 to 6 for all outlier
+  detection steps and both resample steps [#3638]
+
+resample
+--------
+
+- Changed default value of good_pixel from 4 to 6 [#3638]
 
 0.13.3 (2019-06-04)
 ===================
@@ -30,13 +70,24 @@ ami
 - ``ami_analyze`` now emits a RuntimeError if the input is _calints or if a
   throughput reference file cannot be found.  [#3567]
 
+- Remove change to filtering routine arguments of #3487.  [#3612]
+
 assign_wcs
-------------
+----------
 
 - Fix a one pixel off problem with the NIRSpec NRS2 WCS transforms. [#3473]
 
 - Raise a ``ValueError`` if the FWCPOS keyword isn't found in input NIRISS
   WFSS images. [#3574]
+
+associations
+------------
+
+- Added the fxd_slit keyword as the third optical component [#3607]
+
+- Orders the elements in Level3 naming in alphabetical order [#3614]
+
+- Ensured that higher-order candidates only exist for Level2 associations [#3629]
 
 combine_1d
 ----------

@@ -12,7 +12,7 @@ def test_generate(full_pool_rules):
     """Run a full sized pool using all rules"""
     pool, rules, pool_fname = full_pool_rules
     asns = generate(pool, rules)
-    assert len(asns) == 96
+    assert len(asns) == 97
     for asn in asns:
         asn_name, asn_store = asn.dump()
         asn_table = load_asn(asn_store)
