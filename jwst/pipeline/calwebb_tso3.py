@@ -37,7 +37,6 @@ class Tso3Pipeline(Pipeline):
                  'extract_1d': extract_1d_step.Extract1dStep,
                  'white_light': white_light_step.WhiteLightStep
                  }
-    image_exptypes = ['NRC_TSIMAGE', 'MIR_IMAGE']
     reference_file_types = ['gain', 'readnoise']
 
     def process(self, input):
