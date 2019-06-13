@@ -71,3 +71,4 @@ def test_level35_names(pool_file):
             m = re.match(LEVEL3_PRODUCT_NAME_NO_OPTELEM_REGEX, product_name)
         else:
             m = re.match(LEVEL3_PRODUCT_NAME_REGEX, product_name)
+        assert m is not None
