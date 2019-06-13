@@ -119,7 +119,7 @@ def extract_tso_object(input_model,
 
         # create the order bounding box
         source_xpos = input_model.meta.wcsinfo.siaf_xref_sci - 1  # remove fits
-        source_ypos = input_model.meta.wcsinfo.siaf_xref_sci - 1  # remove fits
+        source_ypos = input_model.meta.wcsinfo.siaf_yref_sci - 1  # remove fits
         transform = input_model.meta.wcs.get_transform('full_detector', 'grism_detector')
         xmin, ymin, _ = transform(source_xpos,
                                   source_ypos,
@@ -194,7 +194,8 @@ def extract_tso_object(input_model,
             output_model.dq = ext_dq
             output_model.meta.wcs = subwcs
             output_model.meta.wcs.bounding_box = util.wcs_bbox_from_shape(ext_data.shape)
-            output_model.meta.wcs.siaf_yref_sci = 34  # update for the move, vals are the same
+            output_model.meta.wcsinfo.siaf_yref_sci = 34  # update for the move, vals are the same
+            output_model.meta.wcsinfo.siaf_xref_sci = input_model.meta.wcsinfo.siaf_xref_sci
             output_model.meta.wcsinfo.spectral_order = order
             output_model.name = str('TSO object')
             output_model.xstart = 1  # fits pixels
