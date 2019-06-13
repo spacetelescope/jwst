@@ -61,7 +61,7 @@ def generate(pool, rules, version_id=None):
             f'\n\trules {process_list.rules}'
         )
         for item in process_list.items:
-            logger.debug(f'Processing item {item["filename"]}')
+            logger.debug(f'Processing item {item}')
             existing_asns, new_asns, to_process = generate_from_item(
                 item,
                 version_id,

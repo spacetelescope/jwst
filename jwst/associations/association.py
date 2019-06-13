@@ -342,7 +342,7 @@ class Association(MutableMapping):
                 - [ProcessList[, ...]]: List of items to process again.
         """
         if self.is_item_member(item):
-            return False, []
+            return True, []
 
         match = not check_constraints
         if check_constraints:
