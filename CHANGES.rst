@@ -12,11 +12,11 @@ associations
 
 - MIRI MRS dedicated background exposures are now listed as science observations in
   a new association. [#3542]
-  
+
 - Generate will no longer merge Level2 associations by default [#3631]
 
 - Prevent inclusion of data files with exp_type="NIS_EXTCAL" in the association files [#3611]
-=======
+
 datamodels
 ----------
 
@@ -30,6 +30,19 @@ exp_to_source
 - Changed `exp_to_source`` to use ``source_id`` to group exposures. [#3584]
 
 - Removed the enum list for the SUBPXPAT keyword to allow validation of any value. [#3616]
+
+extract_2d
+----------
+
+- Nircam ``TSGRISM`` extraction uses now ``wcsinfo.siaf_x(y)ref_sci`` as the source position
+  on the detector. [#3646]
+
+lib
+---
+
+- ``set_telescope_pointing`` now retrieves CRPIX1/2 from the SIAF for Nircam TSGRISM
+  observations and saves the values as ``meta.wcsinfo.siaf_x(y)ref_sci``. These are used
+  by ``extract_2d`` as the source position on the detector. [#3646]
 
 outlier_detection
 -----------------
