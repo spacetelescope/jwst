@@ -113,6 +113,8 @@ extract_2d
 
 - Replaced a white space in the names of grism objects with an underscore. [#3517]
 
+- Update WFSS slit names to use simple integer value, and add accompanying unit 
+  test for NIRCAM grism extract_2d [#3632].
 
 master_background
 -----------------
