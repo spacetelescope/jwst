@@ -29,8 +29,9 @@ bc1 = utils.copy(bc0)
 bc1.name = "stable-deps"
 bc1.env_vars = env_vars
 bc1.build_cmds = [
+    "pip install pytest==4.6.2",
     "pip install numpy",
-    "pip install .[test]",
+    "pip install -e .[test]",
 ]
 bc1.test_cmds = [
     "pytest -r sx --junitxml=results.xml"
