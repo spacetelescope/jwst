@@ -334,31 +334,27 @@ class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_BkgScience):
         # Setup for checking.
         self.constraints = Constraint([
             Constraint_Target(),
-            Constraint_IFU(),
+            #Constraint_IFU(),
             Constraint(
                 [
                     Constraint_TSO(),
                 ],
                 reduce=Constraint.notany
             ),
-            Constraint(
-                [
-                DMSAttrConstraint(
-                name='bkgdtarg',
-                sources=['bkgdtarg'],
-                value=['T'],)
-                    ],
-                    reduce=Constraint.any
-                    ),
-            Constraint(
-                [
-                DMSAttrConstraint(
-                name='mir_bkgdtarg',
-                sources=['exp_type'],
-                value=['mir_mrs'],)
-                    ],
-                    reduce=Constraint.any
-                    ),
+            #Constraint(
+            #    [
+            #    DMSAttrConstraint(
+            #    name='bkgdtarg',
+            #    sources=['bkgdtarg'],
+            #    value=['T|F'],)
+            #        ],
+            #
+            #Constraint(
+            #    [
+            #    DMSAttrConstraint(
+            #    name='mir_bkgdtarg',
+            #    sources=['exp_type'],
+            ###        ),
                 ])
 
         # Check and continue initialization.

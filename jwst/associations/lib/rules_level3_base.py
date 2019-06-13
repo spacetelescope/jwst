@@ -1,6 +1,7 @@
 """Base classes which define the Level3 Associations"""
 from collections import defaultdict
 import copy
+import pdb
 import logging
 from os.path import (
     basename,
@@ -467,7 +468,8 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         -------
         is_valid : bool
         """
-        return self.acid.type.lower() not in INVALID_AC_TYPES
+        return self.acid.type.lower()
+        #return self.acid.type.lower() not in INVALID_AC_TYPES
 
 
 @RegistryMarker.utility
@@ -772,12 +774,15 @@ class Constraint_MSA(Constraint):
         )
 
 
-class Constraint_Target(DMSAttrConstraint):
+class Constraint_Target(DMSAttrConstraint, DMSBaseMixin):
     """Select on target"""
     def __init__(self):
         super(Constraint_Target, self).__init__(
             name='target',
             sources=['targetid'],
+            onlyif=lambda item: self.get_exposure_type(item) == 'science',
+            force_reprocess=ProcessList.EXISTING,
+            only_on_match=True,
         )
 
 
@@ -883,7 +888,7 @@ class AsnMixin_BkgScience(DMS_Level3_Base):
                             ],
                             name='rule'
                         ),
-                        constraint_acqs
+                        #constraint_acqs
                     ],
                     name='acq_check',
                     reduce=Constraint.any

@@ -163,6 +163,7 @@ class DMSBaseMixin(ACIDMixin):
 
     # Associations of the same type are sequenced.
     _sequence = Counter(start=1)
+    INVALID_VALUES = _EMPTY
 
     def __init__(self, *args, **kwargs):
         super(DMSBaseMixin, self).__init__(*args, **kwargs)
@@ -326,7 +327,6 @@ class DMSBaseMixin(ACIDMixin):
                 else:
                     result = special
                     break
-
         return result
 
     def is_member(self, new_member):
