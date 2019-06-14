@@ -24,16 +24,17 @@ datamodels
 
 - Added enumeration of allowed values of ``FXD_SLIT`` to the core schema. [#3584]
 
-extract_1d
-----------
-- Checks for input from a SourceModelContainer. [#3649]
-
 exp_to_source
 -------------
 
 - Changed `exp_to_source`` to use ``source_id`` to group exposures. [#3584]
 
 - Removed the enum list for the SUBPXPAT keyword to allow validation of any value. [#3616]
+
+extract_1d
+----------
+
+- Checks for input from a SourceModelContainer. [#3649]
 
 extract_2d
 ----------
@@ -42,7 +43,7 @@ extract_2d
   on the detector. [#3646]
 
 - For grism data, a wavelength array is computed and saved, and the variance
-  arrays are extracted and copied to output. [#3654]
+  arrays are extracted and copied to output. [#3664]
 
 lib
 ---
