@@ -360,10 +360,11 @@ class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_BkgScience):
             `None` if a complete association cannot be produced.
 
         """
-        if self.is_valid:
-            return self.make_targeted_bkg()
-        else:
-            return None
+        #if self.is_valid:
+        #    return self.make_targeted_bkg()
+        #else:
+        #    return None
+        return self.make_targeted_bkg()
 
 @RegistryMarker.rule
 class Asn_Coron(AsnMixin_Science):

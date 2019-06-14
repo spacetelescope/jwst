@@ -1,7 +1,6 @@
 """Base classes which define the Level3 Associations"""
 from collections import defaultdict
 import copy
-import pdb
 import logging
 from os.path import (
     basename,
@@ -285,7 +284,6 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         # Get exposure type
         exptype = self.get_exposure_type(item)
         # Determine expected member name
-        #pdb.set_trace()
         expname = Utility.rename_to_level2(
             item['filename'], exp_type=item['exp_type'],
             is_tso=self.is_item_tso(item, other_exp_types=CORON_EXP_TYPES)
@@ -349,7 +347,6 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             # Rename the targeted background exposures in the association,
             # using the the base name + _x1d as background.
             results = []
-            #pdb.set_trace()
             # Loop over all science exposures in the association
             for science_exp in science_exps:
                 sci_name = science_exp['expname']

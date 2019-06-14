@@ -1,5 +1,5 @@
 import logging
-import pdb
+import re
 
 from .association import (
     make_timestamp
@@ -166,8 +166,6 @@ def generate_from_item(
         )
     reprocess_list.extend(reprocess)
 
-    #print("Generate New asns:", new_asns)
-    #pdb.set_trace()
     return existing_asns, new_asns, reprocess_list
 
 
@@ -200,5 +198,11 @@ def match_item(item, associations):
         matches, reprocess = asn.add(item)
         process_list.extend(reprocess)
         if matches:
+            if 'Asn_Lv3SpecAux' in asn['asn_rule']:
+                if item['bkgdtarg'] == 't':
+                    nproducts = len(asn['products'][0]['members'])-1
+                    asn['products'][0]['members'][nproducts]['exptype'] ='background'
+                    asn['products'][0]['members'][nproducts]['expname'] = \
+                        re.sub('cal','x1d',asn['products'][0]['members'][nproducts]['expname'])
             item_associations.append(asn)
     return item_associations, process_list
