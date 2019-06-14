@@ -899,7 +899,8 @@ class Asn_Lv2NRSIFUNod(
             `None` if a complete association cannot be produced.
 
         """
-        return self.make_nod_asns()
+        nodded_asns = self.make_nod_asns()
+        return nodded_asns
 
 
 @RegistryMarker.rule
