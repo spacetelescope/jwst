@@ -12,7 +12,7 @@ associations
 
 - MIRI MRS dedicated background exposures are now listed as science observations in
   a new association. [#3542]
-  
+
 - Generate will no longer merge Level2 associations by default [#3631]
 
 - Prevent inclusion of data files with exp_type="NIS_EXTCAL" in the association files [#3611]
@@ -35,10 +35,25 @@ exp_to_source
 
 - Removed the enum list for the SUBPXPAT keyword to allow validation of any value. [#3616]
 
+extract_2d
+----------
+
+- Nircam ``TSGRISM`` extraction uses now ``wcsinfo.siaf_x(y)ref_sci`` as the source position
+  on the detector. [#3646]
+
+lib
+---
+
+- ``set_telescope_pointing`` now retrieves CRPIX1/2 from the SIAF for Nircam TSGRISM
+  observations and saves the values as ``meta.wcsinfo.siaf_x(y)ref_sci``. These are used
+  by ``extract_2d`` as the source position on the detector. [#3646]
+
 outlier_detection
 -----------------
 
 - Changed default value of good_pixel from 4 to 6 [#3638]
+
+- Don't use NaNs or masked values in weight image for blotting. [#3651]
 
 pipeline
 --------
@@ -48,6 +63,9 @@ pipeline
 
 - ``calwebb_tso3`` was changed to allow processing of exposures
   with ``EXP_TYPE=MIR_IMAGE.`` [#3633]
+
+- - ``calwebb_tso3`` was changed to allow tso photometry processing of exposures
+  with (``EXP_TYPE=MIR_IMAGE`` and tsovisit = True) or  with (``EXP_TYPE=MIR_IMAGE``) [#3650]
 
 - Changed the default value of good_pixel from 4 to 6 for all outlier
   detection steps and both resample steps [#3638]
@@ -92,6 +110,8 @@ associations
 - Orders the elements in Level3 naming in alphabetical order [#3614]
 
 - Ensured that higher-order candidates only exist for Level2 associations [#3629]
+
+- Improve member checking and removed duplicate product names [#3647]
 
 combine_1d
 ----------
@@ -138,6 +158,8 @@ extract_2d
 
 - Replaced a white space in the names of grism objects with an underscore. [#3517]
 
+- Update WFSS slit names to use simple integer value, and add accompanying unit 
+  test for NIRCAM grism extract_2d [#3632].
 
 master_background
 -----------------

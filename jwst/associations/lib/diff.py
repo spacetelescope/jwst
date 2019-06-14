@@ -77,7 +77,7 @@ def compare_asn_lists(left_asns, right_asns):
     left_product_names, left_duplicates = get_product_names(left_asns)
     right_product_names, right_duplicates = get_product_names(right_asns)
     assert not left_duplicates, f'Left associations have duplicate products {left_duplicates} '
-    assert not right_duplicates, f'Right associations have duplicate products {left_duplicates} '
+    assert not right_duplicates, f'Right associations have duplicate products {right_duplicates} '
 
     # Ensure that the product name lists are the same.
     name_diff = left_product_names ^ right_product_names

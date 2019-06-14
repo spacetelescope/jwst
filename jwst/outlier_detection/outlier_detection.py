@@ -4,12 +4,13 @@ from functools import partial
 import numpy as np
 
 from stsci.image import median
-from astropy.stats import sigma_clipped_stats
+from astropy.stats import sigma_clip
 from scipy import ndimage
+from drizzle.cdrizzle import tblot
 
 from .. import datamodels
-from ..resample import resample, gwcs_blot
-from ..resample.resample_utils import build_driz_weight
+from ..resample import resample
+from ..resample.resample_utils import build_driz_weight, calc_gwcs_pixmap
 from ..stpipe.step import Step
 
 import logging
@@ -258,31 +259,37 @@ class OutlierDetection:
         following ways:
         - type of combination: fixed to 'median'
         - 'minmed' not implemented as an option
-        - does not use buffers to try to minimize memory usage
-        - `astropy.stats.sigma_clipped_stats` replaces `stsci.imagestats.ImageStats`
-        - `stsci.image.median` replaces `stsci.image.numcombine.numCombine`
         """
         resampled_sci = [i.data for i in resampled_models]
-        resampled_wht = [i.wht for i in resampled_models]
+        resampled_weight = [i.wht for i in resampled_models]
 
         nlow = self.outlierpars.get('nlow', 0)
         nhigh = self.outlierpars.get('nhigh', 0)
         maskpt = self.outlierpars.get('maskpt', 0.7)
 
+        # Create a mask for each input image, masking out areas where there is
+        # no data or the data has very low weight
         badmasks = []
-        for w in resampled_wht:
-            mean_weight, _, _ = sigma_clipped_stats(w,
-                                                    sigma=3.0, mask_value=0.)
+        for weight in resampled_weight:
+            # Create boolean masks for weight being zero or NaN
+            mask_zero_weight = np.equal(weight, 0.)
+            mask_nans = np.isnan(weight)
+            # Combine the masks
+            weight_masked = np.ma.array(weight, mask=np.logical_or(
+                mask_zero_weight, mask_nans))
+            # Sigma-clip the unmasked data
+            weight_masked = sigma_clip(weight_masked, sigma=3, maxiters=5)
+            mean_weight = np.mean(weight_masked)
+            # Mask pixels where weight falls below maskpt percent
             weight_threshold = mean_weight * maskpt
-            # Mask pixels were weight falls below
-            #   MASKPT percent of the mean weight
-            mask = np.less(w, weight_threshold)
-            log.debug("Number of pixels with low weight: {}".format(
-                np.sum(mask)))
-            badmasks.append(mask)
+            badmask = np.less(weight, weight_threshold)
+            log.debug("Percentage of pixels with low weight: {}".format(
+                np.sum(badmask) / len(weight.flat) * 100))
+            badmasks.append(badmask)
 
-        # Compute median of stack os images using BADMASKS to remove low weight
-        # values
+        # Compute median of stack of images using `badmasks` to remove
+        # low-weight values.  In the future we should use a masked array
+        # and np.median
         median_image = median(resampled_sci, nlow=nlow, nhigh=nhigh,
                               badmasks=badmasks)
 
@@ -297,7 +304,6 @@ class OutlierDetection:
         blot_models = datamodels.ModelContainer()
 
         log.info("Blotting median...")
-        blot = gwcs_blot.GWCSBlot(median_model)
 
         for model in self.input_models:
             blotted_median = model.copy()
@@ -309,7 +315,7 @@ class OutlierDetection:
             blotted_median.err = None
             blotted_median.dq = None
             # apply blot to re-create model.data from median image
-            blotted_median.data = blot.extract_image(model, interp=interp,
+            blotted_median.data = gwcs_blot(median_model, model, interp=interp,
                                                      sinscl=sinscl)
             blot_models.append(blotted_median)
 
@@ -513,3 +519,46 @@ def _absolute_subtract(array, tmp, out):
     out = np.maximum(tmp, out)
     tmp = tmp * 0.
     return tmp, out
+
+
+def gwcs_blot(median_model, blot_img, interp='poly5', sinscl=1.0):
+    """
+    Resample the output/resampled image to recreate an input image based on
+    the input image's world coordinate system
+
+    Parameters
+    ----------
+    median_model : ~jwst.datamodels.DataModel
+
+    blot_img : datamodel
+        Datamodel containing header and WCS to define the 'blotted' image
+
+    interp : str, optional
+        The type of interpolation used in the resampling. The
+        possible values are "nearest" (nearest neighbor interpolation),
+        "linear" (bilinear interpolation), "poly3" (cubic polynomial
+        interpolation), "poly5" (quintic polynomial interpolation),
+        "sinc" (sinc interpolation), "lan3" (3rd order Lanczos
+        interpolation), and "lan5" (5th order Lanczos interpolation).
+
+    sincscl : float, optional
+        The scaling factor for sinc interpolation.
+    """
+    blot_wcs = blot_img.meta.wcs
+
+    # Compute the mapping between the input and output pixel coordinates
+    pixmap = calc_gwcs_pixmap(blot_wcs, median_model.meta.wcs, blot_img.data.shape)
+    log.debug("Pixmap shape: {}".format(pixmap[:, :, 0].shape))
+    log.debug("Sci shape: {}".format(blot_img.data.shape))
+
+    # median_model_pscale = median_model.meta.wcsinfo.cdelt1
+    # blot_pscale = blot_img.meta.wcsinfo.cdelt1
+
+    pix_ratio = 1
+    log.info('Blotting {} <-- {}'.format(blot_img.data.shape, median_model.data.shape))
+
+    outsci = np.zeros(blot_img.shape, dtype=np.float32)
+    tblot(median_model.data, pixmap, outsci, scale=pix_ratio, kscale=1.0,
+                   interp=interp, exptime=1.0, misval=0.0, sinscl=sinscl)
+
+    return outsci
