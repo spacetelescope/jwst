@@ -375,13 +375,39 @@ def extract_grism_objects(input_model,
                 ext_data = input_model.data[ymin: ymax + 1, xmin: xmax + 1].copy()
                 ext_err = input_model.err[ymin: ymax + 1, xmin: xmax + 1].copy()
                 ext_dq = input_model.dq[ymin: ymax + 1, xmin: xmax + 1].copy()
+                if input_model.var_poisson is not None and np.size(input_model.var_poisson) > 0:
+                    var_poisson = input_model.var_poisson[ymin:ymax+1, xmin:xmax+1].copy()
+                else:
+                    var_poisson = None
+                if input_model.var_rnoise is not None and np.size(input_model.var_rnoise) > 0:
+                    var_rnoise = input_model.var_rnoise[ymin:ymax+1, xmin:xmax+1].copy()
+                else:
+                    var_rnoise = None
+                if input_model.var_flat is not None and np.size(input_model.var_flat) > 0:
+                    var_flat = input_model.var_flat[ymin:ymax+1, xmin:xmax+1].copy()
+                else:
+                    var_flat = None
 
                 tr.bounding_box = util.transform_bbox_from_shape(ext_data.shape)
                 subwcs.set_transform('grism_detector', 'detector', tr)
 
-                new_slit = datamodels.SlitModel(data=ext_data, err=ext_err, dq=ext_dq)
+                new_slit = datamodels.SlitModel(data=ext_data,
+                                                err=ext_err,
+                                                dq=ext_dq,
+                                                var_poisson=var_poisson,
+                                                var_rnoise=var_rnoise,
+                                                var_flat=var_flat)
                 new_slit.meta.wcsinfo.spectral_order = order
                 new_slit.meta.wcs = subwcs
+                grid = grid_from_bounding_box(new_slit.meta.wcs.bounding_box)
+                shape = grid[0].shape
+                wl = np.empty(shape, dtype=np.float64)
+                transform = new_slit.meta.wcs.forward_transform
+                for j in range(shape[0]):
+                    for i in range(shape[1]):
+                        wl[j, i] = transform(grid[0][j, i], grid[1][j, i])[2]
+                new_slit.wavelength = wl.copy()
+                del grid
 
                 # set x/ystart values relative to the image (screen) frame.
                 # The overall subarray offset is recorded in model.meta.subarray.

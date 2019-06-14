@@ -41,6 +41,9 @@ extract_2d
 - Nircam ``TSGRISM`` extraction uses now ``wcsinfo.siaf_x(y)ref_sci`` as the source position
   on the detector. [#3646]
 
+- For grism data, a wavelength array is computed and saved, and the variance
+  arrays are extracted and copied to output. [#3654]
+
 lib
 ---
 
