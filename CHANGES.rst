@@ -53,6 +53,8 @@ outlier_detection
 
 - Changed default value of good_pixel from 4 to 6 [#3638]
 
+- Don't use NaNs or masked values in weight image for blotting. [#3651]
+
 pipeline
 --------
 
