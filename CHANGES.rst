@@ -30,6 +30,33 @@ datamodels
 
 - Added enumeration of allowed values of ``FXD_SLIT`` to the core schema. [#3584]
 
+- Changed ``WHT_TYPE`` keyword to ``RESWHT``. [#3653]
+
+- Add missing pattern/enum values to keyword_pband, keyword_pfilter, keyword_channel [#3653]
+
+- New keywords [#3653]
+   - ``DSETSTRT``
+   - ``NUMDSETS``
+   - ``DITHDIRC``
+   - ``DITHOPFR``
+   - ``DITHPNTS``
+   - ``MRSPRCHN``
+   - ``NDITHPTS``
+   - ``DWTSCL``
+   - ``DOUTUN``
+   - ``RESBITS``
+   - ``DFVAL``
+   - ``DPIXFR``
+   - ``DKERN``
+   - ``SCIEXT``
+   - ``CONEXT``
+   - ``WHTEXT``
+
+extract_1d
+----------
+
+- Checks for input from a SourceModelContainer. [#3649]
+
 exp_to_source
 -------------
 

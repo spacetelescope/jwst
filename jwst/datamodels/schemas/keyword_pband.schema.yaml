@@ -9,6 +9,6 @@ properties:
           p_band:
             title: MRS wavelength band
             type: string
-            pattern: ^((ANY|SHORT|MEDIUM|LONG|SHORT-MEDIUM|SHORT-LONG|\
+            pattern: ^((ANY|MULTIPLE|SHORT|MEDIUM|LONG|SHORT-MEDIUM|SHORT-LONG|\
                         MEDIUM-SHORT|MEDIUM-LONG|LONG-SHORT|LONG-MEDIUM|N/A)\s*\|\s*)+$
             fits_keyword: P_BAND

@@ -16,5 +16,5 @@ properties:
               F212N|F2300C|F250M|F2550W|F2550WR|F277W|F290LP|F300M|\
               F322W2|F335M|F356W|F360M|F380M|F410M|F430M|F444W|\
               F460M|F480M|F560W|F770W|FLENS|FND|GR150C|\
-              GR150R|OPAQUE|P750L|WLP4|N/A|ANY)\\s*\\|\\s*)+$"
+              GR150R|OPAQUE|P750L|WLP4|F070W|MULTIPLE|N/A|ANY)\\s*\\|\\s*)+$"
             fits_keyword: P_FILTER
