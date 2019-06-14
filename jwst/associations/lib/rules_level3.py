@@ -334,31 +334,36 @@ class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_BkgScience):
         # Setup for checking.
         self.constraints = Constraint([
             Constraint_Target(),
-            #Constraint_IFU(),
+            Constraint_IFU(),
             Constraint(
                 [
                     Constraint_TSO(),
                 ],
                 reduce=Constraint.notany
             ),
-            #Constraint(
-            #    [
-            #    DMSAttrConstraint(
-            #    name='bkgdtarg',
-            #    sources=['bkgdtarg'],
-            #    value=['T|F'],)
-            #        ],
-            #
-            #Constraint(
-            #    [
-            #    DMSAttrConstraint(
-            #    name='mir_bkgdtarg',
-            #    sources=['exp_type'],
-            ###        ),
                 ])
 
         # Check and continue initialization.
         super(Asn_Lv3SpecAux, self).__init__(*args, **kwargs)
+
+    def finalize(self):
+        """Finalize assocation
+
+        For targeted background observations reset the expname from _cal to
+        _x1d for the master background.
+
+        Returns
+        -------
+        associations: [association[, ...]] or None
+            List of fully-qualified associations that this association
+            represents.
+            `None` if a complete association cannot be produced.
+
+        """
+        if self.is_valid:
+            return self.make_targeted_bkg()
+        else:
+            return None
 
 @RegistryMarker.rule
 class Asn_Coron(AsnMixin_Science):

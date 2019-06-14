@@ -284,12 +284,14 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
         # Get exposure type
         exptype = self.get_exposure_type(item)
-
         # Determine expected member name
+        #pdb.set_trace()
         expname = Utility.rename_to_level2(
             item['filename'], exp_type=item['exp_type'],
             is_tso=self.is_item_tso(item, other_exp_types=CORON_EXP_TYPES)
         )
+        #if item['bkgdtarg']:
+        #    exptype='background'
 
         member = Member(
             {
@@ -328,6 +330,38 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
                 now_background['exptype'] = 'background'
                 # Add the background file to the association table
                 members.append(now_background)
+
+            if self.is_valid:
+                results.append(self)
+
+            return results
+
+    def make_targeted_bkg(self):
+        """Add a targeted background to a science observation"""
+        for product in self['products']:
+            members = product['members']
+            # Split out the science exposures
+            science_exps = [
+                member
+                for member in members
+                if member['exptype'] == 'science'
+            ]
+            # Rename the targeted background exposures in the association,
+            # using the the base name + _x1d as background.
+            results = []
+            #pdb.set_trace()
+            # Loop over all science exposures in the association
+            for science_exp in science_exps:
+                sci_name = science_exp['expname']
+                science_exp['expname'] = sci_name
+                # Construct the name for the background file
+                bkg_name = remove_suffix(
+                    splitext(split(science_exp['expname'])[1])[0])[0]
+                if science_exp['expname'] == 'background':
+                    bkg_name = bkg_name+'_x1d.fits'
+                    science_exp['expname'] = bkg_name
+                # update the asn with the new expname
+                #self.update_asn(item=science_exp, member=member)
 
             if self.is_valid:
                 results.append(self)
@@ -896,7 +930,6 @@ class AsnMixin_BkgScience(DMS_Level3_Base):
             ],
             name='dmsbase_bkg'
         )
-
         super(AsnMixin_BkgScience, self).__init__(*args, **kwargs)
 
 
@@ -927,6 +960,7 @@ class AsnMixin_AuxData:
             Always returns as science
         """
         return 'science'
+
     def _init_hook(self, item):
         """Post-check and pre-add initialization"""
 

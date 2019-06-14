@@ -1,4 +1,5 @@
 import logging
+import pdb
 
 from .association import (
     make_timestamp
@@ -165,6 +166,8 @@ def generate_from_item(
         )
     reprocess_list.extend(reprocess)
 
+    #print("Generate New asns:", new_asns)
+    #pdb.set_trace()
     return existing_asns, new_asns, reprocess_list
 
 
