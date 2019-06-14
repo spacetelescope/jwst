@@ -24,6 +24,10 @@ datamodels
 
 - Added enumeration of allowed values of ``FXD_SLIT`` to the core schema. [#3584]
 
+extract_1d
+----------
+- Checks for input from a SourceModelContainer. [#3649]
+
 exp_to_source
 -------------
 
