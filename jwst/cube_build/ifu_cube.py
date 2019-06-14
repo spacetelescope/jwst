@@ -1141,6 +1141,8 @@ class IFUCubeData():
                     wave = wave[valid1]
                     x = x[valid1]
                     y = y[valid1]
+                    #TODO add footprint determation
+
                     if self.weighting == 'miripsf':
                         det2ab_transform = input_model.meta.wcs.get_transform('detector',
                                                                               'alpha_beta')
@@ -1165,6 +1167,9 @@ class IFUCubeData():
                 dec_det = np.zeros((2048, 2048))
                 lam_det = np.zeros((2048, 2048))
                 flag_det = np.zeros((2048, 2048))
+
+                #TODO add footprint determination
+
                 # for NIRSPEC each file has 30 slices
                 # wcs information access seperately for each slice
                 nslices = 30
