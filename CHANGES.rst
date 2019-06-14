@@ -17,6 +17,12 @@ associations
 
 - Prevent inclusion of data files with exp_type="NIS_EXTCAL" in the association files [#3611]
 
+combine_1d
+----------
+
+The input DQ column is temporarily replaced by a zero-filled array of
+the right data type. [#3666]
+
 datamodels
 ----------
 
