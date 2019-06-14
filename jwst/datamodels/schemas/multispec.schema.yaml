@@ -110,6 +110,7 @@ allOf:
             fits_keyword: INT_NUM
             fits_hdu: EXTRACT1D
           time_scale:
+            # 2019-06-12: Title has changed to "principal time system for time-related keywords" in keyword dictionary.
             title: "Time scale"
             type: string
             default: "UTC"
