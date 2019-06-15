@@ -11,7 +11,7 @@ class TestCoron3Pipeline(BaseJWSTTest):
     input_loc = 'nircam'
     ref_loc = ['test_coron3', 'truth']
 
-    ignore_fields = ['CAL_VCS', 'CAL_VER']
+    ignore_fields = ['CAL_VCS', 'CAL_VER', 'DATE']
 
     def test_coron3_1(self):
         """Regression test of calwebb_coron3 pipeline.
@@ -32,7 +32,7 @@ class TestCoron3Pipeline(BaseJWSTTest):
         pipe.outlier_detection.resample_data = False
         pipe.run(asn_file)
 
-        self.ignore_keywords += ['NAXIS1', 'TFORM7']
+        self.ignore_keywords += ['NAXIS1', 'TFORM*']
 
         outputs = [( # Compare psfstack product
                     'jw99999-a3001_t1_nircam_f140m-maskbar_psfstack.fits',
