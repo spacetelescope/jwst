@@ -497,6 +497,9 @@ class Utility():
                 finalized_asns.append(asn)
         lv2_asns = Utility.prune_duplicate_products(lv2_asns)
 
+        # Ensure sequencing is correct.
+        Utility_Level3.resequence(lv2_asns)
+
         return finalized_asns + lv2_asns
 
     @staticmethod
