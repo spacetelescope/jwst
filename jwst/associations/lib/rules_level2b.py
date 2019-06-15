@@ -235,6 +235,7 @@ class Asn_Lv2Spec(
                     SimpleConstraint(
                         value='science',
                         test=lambda value, item: self.get_exposure_type(item) != value,
+                        force_unique=False,
                     )
                 ],
                 reduce=Constraint.any
@@ -939,3 +940,29 @@ class Asn_Lv2WFSC(
 
         super(Asn_Lv2WFSC, self)._init_hook(item)
         self.data['asn_type'] = 'wfs-image2'
+
+
+@RegistryMarker.rule
+class Asn_Force_Reprocess(DMSLevel2bBase):
+    """Force all backgrounds to reprocess"""
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup constraints
+        self.constraints = Constraint([
+            SimpleConstraint(
+                value='background',
+                sources=self.get_exposure_type,
+                force_unique=False,
+            ),
+            SimpleConstraint(
+                name='force_fail',
+                test=lambda x, y: False,
+                value='anything but None',
+                reprocess_on_fail=True,
+                work_over=ProcessList.EXISTING,
+                reprocess_rules=[]
+            )
+        ])
+
+        super(Asn_Force_Reprocess, self).__init__(*args, **kwargs)
