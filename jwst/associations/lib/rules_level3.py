@@ -289,8 +289,14 @@ class Asn_IFU(AsnMixin_Spectrum):
     def __init__(self, *args, **kwargs):
         # Setup for checking.
         self.constraints = Constraint([
-            Constraint_Target(),
             Constraint_IFU(),
+            DMSAttrConstraint(
+                name='target',
+                sources=['targetid'],
+                onlyif=lambda item: self.get_exposure_type(item) == 'science',
+                force_reprocess=ProcessList.EXISTING,
+                only_on_match=True,
+            ),
             Constraint(
                 [
                     Constraint_TSO(),
@@ -301,7 +307,9 @@ class Asn_IFU(AsnMixin_Spectrum):
                     )
                 ],
                 reduce=Constraint.notany
-            )        ])
+            )
+        ])
+
         # Check and continue initialization.
         super(Asn_IFU, self).__init__(*args, **kwargs)
 

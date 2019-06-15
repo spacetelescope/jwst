@@ -112,10 +112,6 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
                 'validated': False,
                 'check': lambda member: member['exptype'] == 'science'
             },
-            'ok_candidate': {
-                'validated': False,
-                'check': self.ok_candidate
-            }
         })
 
         # Other presumptions on the association
@@ -287,7 +283,8 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         # Determine expected member name
         expname = Utility.rename_to_level2(
             item['filename'], exp_type=item['exp_type'],
-            is_tso=self.is_item_tso(item, other_exp_types=CORON_EXP_TYPES)
+            is_tso=self.is_item_tso(item, other_exp_types=CORON_EXP_TYPES),
+            member_exptype=exptype
         )
 
         member = Member(
@@ -484,7 +481,7 @@ class Utility():
             )
 
     @staticmethod
-    def rename_to_level2(level1b_name, exp_type=None, is_tso=False):
+    def rename_to_level2(level1b_name, exp_type=None, is_tso=False, member_exptype='science'):
         """Rename a Level 1b Exposure to a Level2 name.
 
         The basic transform is changing the suffix `uncal` to
@@ -504,6 +501,9 @@ class Utility():
             Use 'calints' instead of 'cal' as
             the suffix.
 
+        member_exptype: str
+            The assocition member exposure type, such as "science".
+
         Returns
         -------
         str
@@ -519,10 +519,14 @@ class Utility():
             ))
             return level1b_name
 
-        if exp_type in LEVEL2B_EXPTYPES:
-            suffix = 'cal'
+        if member_exptype == 'background':
+            suffix = 'x1d'
         else:
-            suffix = 'rate'
+            if exp_type in LEVEL2B_EXPTYPES:
+                suffix = 'cal'
+            else:
+                suffix = 'rate'
+
         if is_tso:
             suffix += 'ints'
 
@@ -816,7 +820,7 @@ class AsnMixin_Science(DMS_Level3_Base):
             [
                 Constraint_Base(),
                 DMSAttrConstraint(
-                    sources=['is_imprt', 'bkgdtarg'],
+                    sources=['is_imprt'],
                     force_undefined=True
                 ),
                 Constraint(
