@@ -1452,6 +1452,9 @@ def populate_model_from_siaf(model, siaf):
         model.meta.wcsinfo.cdelt1 = siaf.cdelt1 / 3600  # in deg
         model.meta.wcsinfo.cdelt2 = siaf.cdelt2 / 3600  # in deg
         model.meta.coordinates.reference_frame = "ICRS"
+    elif model.meta.exposure.type.lower() == 'nrc_tsgrism':
+        model.meta.wcsinfo.siaf_xref_sci = siaf.crpix1
+        model.meta.wcsinfo.siaf_yref_sci = siaf.crpix2
 
 
 def first_pointing(mnemonics):

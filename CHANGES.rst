@@ -12,20 +12,52 @@ associations
 
 - MIRI MRS dedicated background exposures are now listed as science observations in
   a new association. [#3542]
-  
+
 - Generate will no longer merge Level2 associations by default [#3631]
 
 - Prevent inclusion of data files with exp_type="NIS_EXTCAL" in the association files [#3611]
 
 - Implemented Level 2 re-sequencing to prevent overwriting of associations [#3674]
 
-=======
+combine_1d
+----------
+
+The input DQ column is temporarily replaced by a zero-filled array of
+the right data type. [#3666]
+
 datamodels
 ----------
 
 - Changed PATTSIZE keyword data type from float to string. [#3606]
 
 - Added enumeration of allowed values of ``FXD_SLIT`` to the core schema. [#3584]
+
+- Changed ``WHT_TYPE`` keyword to ``RESWHT``. [#3653]
+
+- Add missing pattern/enum values to keyword_pband, keyword_pfilter, keyword_channel [#3653]
+
+- New keywords [#3653]
+   - ``DSETSTRT``
+   - ``NUMDSETS``
+   - ``DITHDIRC``
+   - ``DITHOPFR``
+   - ``DITHPNTS``
+   - ``MRSPRCHN``
+   - ``NDITHPTS``
+   - ``DWTSCL``
+   - ``DOUTUN``
+   - ``RESBITS``
+   - ``DFVAL``
+   - ``DPIXFR``
+   - ``DKERN``
+   - ``SCIEXT``
+   - ``CONEXT``
+   - ``WHTEXT``
+
+extract_1d
+----------
+
+- Checks for input from a SourceModelContainer. [#3649]
 
 exp_to_source
 -------------
@@ -34,10 +66,33 @@ exp_to_source
 
 - Removed the enum list for the SUBPXPAT keyword to allow validation of any value. [#3616]
 
+extract_1d
+----------
+
+- Checks for input from a SourceModelContainer. [#3649]
+
+extract_2d
+----------
+
+- Nircam ``TSGRISM`` extraction uses now ``wcsinfo.siaf_x(y)ref_sci`` as the source position
+  on the detector. [#3646]
+
+- For grism data, a wavelength array is computed and saved, and the variance
+  arrays are extracted and copied to output. [#3664]
+
+lib
+---
+
+- ``set_telescope_pointing`` now retrieves CRPIX1/2 from the SIAF for Nircam TSGRISM
+  observations and saves the values as ``meta.wcsinfo.siaf_x(y)ref_sci``. These are used
+  by ``extract_2d`` as the source position on the detector. [#3646]
+
 outlier_detection
 -----------------
 
 - Changed default value of good_pixel from 4 to 6 [#3638]
+
+- Don't use NaNs or masked values in weight image for blotting. [#3651]
 
 pipeline
 --------
@@ -47,6 +102,9 @@ pipeline
 
 - ``calwebb_tso3`` was changed to allow processing of exposures
   with ``EXP_TYPE=MIR_IMAGE.`` [#3633]
+
+- - ``calwebb_tso3`` was changed to allow tso photometry processing of exposures
+  with (``EXP_TYPE=MIR_IMAGE`` and tsovisit = True) or  with (``EXP_TYPE=MIR_IMAGE``) [#3650]
 
 - Changed the default value of good_pixel from 4 to 6 for all outlier
   detection steps and both resample steps [#3638]
