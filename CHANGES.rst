@@ -19,6 +19,8 @@ associations
 
 - Implemented Level 2 re-sequencing to prevent overwriting of associations [#3674]
 
+- Implemented Level 2 background exposure reprocessing [#3675]
+
 combine_1d
 ----------
 
