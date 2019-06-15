@@ -17,6 +17,8 @@ associations
 
 - Prevent inclusion of data files with exp_type="NIS_EXTCAL" in the association files [#3611]
 
+- Implemented Level 2 re-sequencing to prevent overwriting of associations [#3674]
+
 combine_1d
 ----------
 
