@@ -777,12 +777,29 @@ class Constraint_MSA(Constraint):
 
 
 class Constraint_Target(DMSAttrConstraint):
-    """Select on target"""
-    def __init__(self):
-        super(Constraint_Target, self).__init__(
-            name='target',
-            sources=['targetid'],
-        )
+    """Select on target
+
+    Parameters
+    ----------
+    association: Association
+        If specified, use the `get_exposure_type` method
+        to as part of the target selection.
+    """
+    def __init__(self, association=None):
+        if association is None:
+            super(Constraint_Target, self).__init__(
+                name='target',
+                sources=['targetid'],
+            )
+        else:
+            super(Constraint_Target, self).__init__(
+                name='target',
+                sources=['targetid'],
+                onlyif=lambda item: association.get_exposure_type(item) != 'background',
+                force_reprocess=ProcessList.EXISTING,
+                only_on_match=True,
+            )
+
 
 
 # -----------
