@@ -58,6 +58,7 @@ class InputSpectrumModel:
             self.surf_bright = np.zeros_like(self.flux)
             self.sb_error = np.zeros_like(self.flux)
             log.warning("There is no SURF_BRIGHT column in the input.")
+        self.dq = spec.spec_table.field("dq").copy()
         self.nelem = self.wavelength.shape[0]
         self.unit_weight = False        # may be reset below
         self.right_ascension = np.zeros_like(self.wavelength)
