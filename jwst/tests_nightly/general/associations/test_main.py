@@ -6,6 +6,9 @@ import pytest
 from jwst.associations.main import Main
 
 
+@pytest.mark.skip(
+    reason='Takes too long and is not currently contributing to any actual testing'
+)
 @pytest.mark.slow
 def test_script(full_pool_rules):
     """Test full run of the script code"""
@@ -28,7 +31,7 @@ def test_script(full_pool_rules):
     generated = Main([pool_fname, '--dry-run'])
     asns = generated.associations
     assert len(asns) == 938
-    #assert len(generated.orphaned) == 61
+    assert len(generated.orphaned) == 61
     found_rules = set(
         asn['asn_rule']
         for asn in asns
