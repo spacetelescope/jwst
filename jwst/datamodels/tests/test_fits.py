@@ -1,7 +1,6 @@
 import os
 import shutil
 import tempfile
-from collections import OrderedDict
 
 import pytest
 
