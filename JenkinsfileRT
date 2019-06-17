@@ -16,7 +16,7 @@ def pip_install_args = "--index-url ${pip_index} --progress-bar=off"
 env_vars = [
     "TEST_BIGDATA=https://bytesalad.stsci.edu/artifactory",
     "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
-    "CRDS_CONTEXT=jwst_0500.pmap",
+    "CRDS_CONTEXT=jwst-edit",
 ]
 
 // Set pytest basetemp output directory
