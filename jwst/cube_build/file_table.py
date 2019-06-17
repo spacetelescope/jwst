@@ -172,8 +172,8 @@ class FileTable():
 
                     self.FileMap['NIRSPEC'][gwa][fwa]['file'].append(input_model)
                     self.FileMap['NIRSPEC'][gwa][fwa]['footprint'].append(None)
-                    instrument = input_model.meta.instrument.name.lower()
-                    mod = importlib.import_module('.' + instrument, 'jwst.assign_wcs')
+#                    instrument = input_model.meta.instrument.name.lower()
+#                    mod = importlib.import_module('.' + instrument, 'jwst.assign_wcs')
                 else:
 
                     log.info('Instrument not valid for cube')

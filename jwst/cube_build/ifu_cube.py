@@ -129,11 +129,12 @@ class IFUCubeData():
         self.ycoord = None
         self.zcoord = None
 
-        self.overlap_partial = 1  # intermediate flag
+        self.overlap_partial = 4  # intermediate flag
         self.overlap_full  = 2    # intermediate flag
         self.overlap_hole = dqflags.pixel['DO_NOT_USE'] 
-        self.overlap_nocoverage = dqflags.pixel['NON_SCIENCE'] 
-# ********************************************************************************
+        self.overlap_no_coverage = dqflags.pixel['NON_SCIENCE'] 
+# **************************************************************
+
 
     def check_ifucube(self):
         
@@ -496,7 +497,7 @@ class IFUCubeData():
         the overlap of between the detector pixel and spaxel. This method is simplified
         to determine the overlap in the alpha-wavelength plane.
         4. find_spaxel_flux: find the final flux assoicated with each spaxel
-        5. setup_ifucube
+        5. setup_final_ifucube_model
         6. output_ifucube
 
         Returns
@@ -573,7 +574,7 @@ class IFUCubeData():
                     min_wave_band = np.amin(wave)
                     max_wave_band = np.amax(wave)
                     
-                    footprint_wave = self.compute_four_corners(coord1, coord2, wave)
+#                    footprint_wave = self.compute_four_corners(coord1, coord2, wave)
                     footprint_siaf = self.compute_four_corners_siaf(this_par1,this_par2, ifile)
 
                     print('footprint siaf',footprint_siaf)
@@ -689,10 +690,11 @@ class IFUCubeData():
         t0 = time.time()
         self.find_spaxel_flux()
 
+        self.set_final_dq_flags()
         t1 = time.time()
         log.info("Time to find Cube Flux = %.1f.s" % (t1 - t0,))
 
-        ifucube_model = self.setup_ifucube(0)
+        ifucube_model = self.setup_final_ifucube_model(0)
 # _______________________________________________________________________
 # shove Flux and iflux in the  final IFU cube
         self.update_ifucube(ifucube_model)
@@ -758,7 +760,7 @@ class IFUCubeData():
             self.find_spaxel_flux()
 # now determine Cube Spaxel flux
 
-            ifucube_model = self.setup_ifucube(j)
+            ifucube_model = self.setup_final_ifucube_model(j)
             self.update_ifucube(ifucube_model)
             t1 = time.time()
             log.info("Time to Create Single ifucube = %.1f.s" % (t1 - t0,))
@@ -883,7 +885,6 @@ class IFUCubeData():
                 imin = imin - 1
             if (imax < len(table_wavelength) and
                 self.wavemax > table_wavelength[imax]): imax = imax + 1
-#            print('index of wavelength values',imin,imax)
 
             self.roiw_table = table_wroi[imin:imax]
             self.rois_table = table_sroi[imin:imax]
@@ -949,8 +950,8 @@ class IFUCubeData():
         parameter1 = self.list_par1
         parameter2 = self.list_par2
 
-        print('parameter 1',parameter1)
-        print('parameter 2',parameter2)
+#        print('parameter 1',parameter1)
+#        print('parameter 2',parameter2)
         a_min = []
         a_max = []
         b_min = []
@@ -1529,17 +1530,10 @@ class IFUCubeData():
                 lam_vert = 1.0
                 ra_vert, dec_vert, lam = v2v3_to_world_transform(v2_vert, v3_vert, lam_vert)
 
-                ra_vert = np.zeros(4)
-                dec_vert = np.zeros(4)
-
-                ra_vert[0], dec_vert[0], ra_vert[1], dec_vert[1], ra_vert[2], dec_vert[2], ra_vert[3], dec_vert[3] = \
-                    input_model.meta.wcsinfo.s_region
 
                 coord1, coord2 = coord.radec2std(self.crval1,
                                                  self.crval2,
                                                  ra_vert, dec_vert)
-
-
 
         self.spaxel_wave_siaf_dq_file.write('%f %f %f %f %f %f %f %f' %
                                           (coord1[0],coord2[0],
@@ -1566,8 +1560,39 @@ class IFUCubeData():
             good = self.spaxel_iflux > 0
             self.spaxel_flux[good] = self.spaxel_flux[good] / self.spaxel_weight[good]
 # ********************************************************************************
+            
+    def set_final_dq_flags(self):
 
-    def setup_ifucube(self, j):
+        """ Set up the final dq flags, Good data(0) , NON_SCIENCE or DO_NOT_USE
+        """
+
+        #defined in ifu_cube class:
+        #self.overlap_partial = 4  # intermediate flag
+        #self.overlap_full  = 2    # intermediate flag
+        #self.overlap_hole = dqflags.pixel['DO_NOT_USE'] 
+        #self.overlap_no_coverage = dqflags.pixel['NON_SCIENCE'] 
+
+       # first convert all the value of spaxel_dq of 0 to NON_SCIENCE
+        non_science = self.spaxel_dq == 0
+        self.spaxel_dq[non_science] = self.overlap_no_coverage
+
+
+        # refine where good data should be
+        ind_full = self.spaxel_dq == self.overlap_full
+        ind_partial = self.spaxel_dq == self.overlap_partial
+        self.spaxel_dq[ind_full] = 0
+        self.spaxel_dq[ind_partial] = 0
+                         
+        # flatten to match the size of spaxel_weight
+        self.spaxel_dq = np.ndarray.flatten(self.spaxel_dq)
+        location_holes = np.where(( self.spaxel_dq == 0) & (self.spaxel_weight==0))
+#        print( 'number of holes',len(location_holes[0]))
+
+        self.spaxel_dq[location_holes]  = self.overlap_hole
+
+# ********************************************************************************
+
+    def setup_final_ifucube_model(self, j):
 
         """ Set up the final meta WCS info of IFUCube along with other fits keywords
 
@@ -1604,7 +1629,7 @@ class IFUCubeData():
 
             nelem = np.append(nelem, num)
 # to get the data in the correct format (an array in a single cell in the fit table)
-# I had to zip data.
+# need to zip data.
             alldata = np.array(list(zip(np.array(nelem), np.array(allwave))),
                                dtype=datamodels.IFUCubeModel().wavetable.dtype)
 
