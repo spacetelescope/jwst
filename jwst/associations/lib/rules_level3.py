@@ -289,7 +289,7 @@ class Asn_IFU(AsnMixin_Spectrum):
     def __init__(self, *args, **kwargs):
         # Setup for checking.
         self.constraints = Constraint([
-            Constraint_Target(),
+            Constraint_Target(association=self),
             Constraint_IFU(),
             Constraint(
                 [
