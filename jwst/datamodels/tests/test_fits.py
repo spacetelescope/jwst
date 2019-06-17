@@ -468,6 +468,7 @@ def test_metadata_from_fits():
     with fits.open(TMP_FITS2) as hdulist:
         assert hdulist[2].name == 'ASDF'
 
+
 # def test_float_as_int():
 #     from astropy.io import fits
 
