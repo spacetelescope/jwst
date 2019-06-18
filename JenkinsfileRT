@@ -38,11 +38,12 @@ bc.conda_packages = [
     "python=${python_version}",
 ]
 bc.build_cmds = [
+    "pip install numpy",
     "pip install -e .[test]",
     "pip install pytest-xdist",
 ]
 bc.test_cmds = [
-    "pytest -r sx -v -n 30 --bigdata --slow --env=0.13.4 \
+    "pytest -r sx -v -n 30 --bigdata --slow --env=stable \
     --basetemp=${pytest_basetemp}  --junit-xml=results.xml \
     jwst/tests_nightly/general"
 ]
