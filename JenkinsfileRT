@@ -39,6 +39,7 @@ bc.conda_packages = [
 ]
 bc.build_cmds = [
     "pip install numpy",
+    "pip install -r requirements-dms.txt",
     "pip install -e .[test]",
     "pip install pytest-xdist",
 ]

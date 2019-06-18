@@ -1,0 +1,13 @@
+asdf==2.3.3
+astropy==3.1.2
+crds==7.3.3
+drizzle==1.13
+gwcs==0.10.0
+jsonschema==2.6.0
+numpy==1.16.4
+photutils==0.6
+scipy==1.2.1
+spherical-geometry==1.2.9
+stsci.image==2.3.1
+stsci.imagestats==1.6.2
+stsci.stimage==0.2.2
