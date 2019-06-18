@@ -5,13 +5,14 @@ JWST pipeline step for image alignment.
 
 """
 from astropy.table import Table
+from tweakwcs.imalign import align_wcs
+from tweakwcs.tpwcs import JWSTgWCS
+from tweakwcs.matchutils import TPMatch
 
 # LOCAL
 from ..stpipe import Step
 from .. import datamodels
 
-from .imalign import align
-from .wcsimage import (WCSImageCatalog, WCSGroupCatalog)
 from .tweakreg_catalog import make_tweakreg_catalog
 
 
@@ -132,31 +133,48 @@ class TweakRegStep(Step):
 
         # create a list of WCS-Catalog-Images Info and/or their Groups:
         imcats = []
+        group_id = 1
         for g in grp_img:
             if len(g) == 0:
                 raise AssertionError("Logical error in the pipeline code.")
-
-            wcsimlist = list(map(self._imodel2wcsim, g))
-            wgroup = WCSGroupCatalog(wcsimlist, name=wcsimlist[0].name)
-            imcats.append(wgroup)
+            elif len(g) == 1:
+                imcats.append(self._imodel2wcsim(g[0]))
+            else:
+                wcsimlist = list(map(self._imodel2wcsim, g))
+                for im in wcsimlist:
+                    im.meta['group_id'] = group_id
+                imcats.extend(wcsimlist)
+                group_id += 1
 
         # align images:
-        align(
-            imcat=imcats,
+        tpmatch = TPMatch(
+            searchrad=self.searchrad,
+            separation=self.searchrad,
+            use2dhist=self.use2dhist,
+            tolerance=self.tolerance,
+            xoffset=self.xoffset,
+            yoffset=self.yoffset
+        )
+
+        align_wcs(
+            imcats,
             refcat=None,
             enforce_user_order=self.enforce_user_order,
             expand_refcat=self.expand_refcat,
             minobj=self.minobj,
-            searchrad=self.searchrad,
-            use2dhist=self.use2dhist,
-            separation=self.separation,
-            tolerance=self.tolerance,
-            xoffset=self.xoffset,
-            yoffset=self.yoffset,
+            match=tpmatch,
             fitgeom=self.fitgeometry,
             nclip=self.nclip,
-            sigma=self.sigma
+            sigma=(self.sigma, 'rmse')
         )
+
+        for imcat in imcats:
+            fit_info = imcat.meta.get('fit_info')
+            if fit_info['status'] == 'SUCCESS':
+                imcat.meta['image_model'].meta.cal_step.tweakreg = 'COMPLETE'
+                imcat.meta['image_model'].meta.wcs = imcat.wcs
+            else:
+                imcat.meta['image_model'].meta.cal_step.tweakreg = 'SKIPPED'
 
         return images
 
@@ -179,17 +197,13 @@ class TweakRegStep(Step):
 
         # create WCSImageCatalog object:
         refang = image_model.meta.wcsinfo.instance
-        im = WCSImageCatalog(
-            shape=image_model.data.shape,
+        im = JWSTgWCS(
             wcs=image_model.meta.wcs,
-            ref_angles={'roll_ref': refang['roll_ref'],
-                        'ra_ref': refang['ra_ref'],
-                        'dec_ref': refang['dec_ref'],
-                        'v2_ref': refang['v2_ref'] / 3600.0,
-                        'v3_ref': refang['v3_ref'] / 3600.0},
-            catalog=catalog,
-            name=image_model.meta.filename,
-            meta={'image_model': image_model}
+            wcsinfo={'roll_ref': refang['roll_ref'],
+                     'v2_ref': refang['v2_ref'],
+                     'v3_ref': refang['v3_ref']},
+            meta={'image_model': image_model, 'catalog': catalog,
+                  'name': image_model.meta.filename}
         )
 
         return im
