@@ -7,7 +7,6 @@ from ..lib import reffile_utils
 from . import twopoint_difference as twopt
 from . import yintercept as yint
 import multiprocessing
-import psutil
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -34,7 +33,7 @@ def detect_jumps (input_model, gain_model, readnoise_model,
     if max_cores is None:
         numslices = 1
     else:
-        num_cores = psutil.cpu_count(logical = True)
+        num_cores = multiprocessing.cpu_count()
         log.info("Found %d possible cores to use for jump detection " % num_cores)
         if max_cores == 'quarter':
             numslices = num_cores // 4 or 1

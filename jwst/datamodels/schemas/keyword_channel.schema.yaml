@@ -9,5 +9,5 @@ properties:
           channel:
             title: NIRCAM or MIRI channel name.
             type: string
-            enum: [LONG, SHORT, '12', '34', '1', '2', '3', '4', ANY, N/A]
+            enum: [LONG, SHORT, '1234', '123', '234', '12', '34', '1', '2', '3', '4', ANY, N/A]
             fits_keyword: CHANNEL

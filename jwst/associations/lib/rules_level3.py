@@ -15,6 +15,7 @@ __all__ = [
     'Asn_ACQ_Reprocess',
     'Asn_Coron',
     'Asn_IFU',
+    'Asn_Lv3SpecAux',
     'Asn_Image',
     'Asn_SpectralSource',
     'Asn_SpectralTarget',
@@ -286,10 +287,9 @@ class Asn_IFU(AsnMixin_Spectrum):
     """
 
     def __init__(self, *args, **kwargs):
-
         # Setup for checking.
         self.constraints = Constraint([
-            Constraint_Target(),
+            Constraint_Target(association=self),
             Constraint_IFU(),
             Constraint(
                 [
@@ -302,7 +302,6 @@ class Asn_IFU(AsnMixin_Spectrum):
                 ],
                 reduce=Constraint.notany
             )        ])
-
         # Check and continue initialization.
         super(Asn_IFU, self).__init__(*args, **kwargs)
 
@@ -319,9 +318,51 @@ class Asn_IFU(AsnMixin_Spectrum):
             target,
             instrument
         )
-
         return product_name.lower()
 
+@RegistryMarker.rule
+class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_BkgScience):
+
+    """Level 3 Spectral Association
+
+    Characteristics:
+        - Association type: ``spec3``
+        - Pipeline: ``calwebb_spec3``
+    """
+    def __init__(self, *args, **kwargs):
+
+        # Setup for checking.
+        self.constraints = Constraint([
+            Constraint_Target(),
+            Constraint_IFU(),
+            Constraint(
+                [
+                    Constraint_TSO(),
+                ],
+                reduce=Constraint.notany
+            ),
+            Constraint(
+                [
+                DMSAttrConstraint(
+                name='bkgdtarg',
+                sources=['bkgdtarg'],
+                value=['T'],)
+                    ],
+                    reduce=Constraint.any
+                    ),
+            Constraint(
+                [
+                DMSAttrConstraint(
+                name='mir_bkgdtarg',
+                sources=['exp_type'],
+                value=['mir_mrs'],)
+                    ],
+                    reduce=Constraint.any
+                    ),
+                ])
+
+        # Check and continue initialization.
+        super(Asn_Lv3SpecAux, self).__init__(*args, **kwargs)
 
 @RegistryMarker.rule
 class Asn_Coron(AsnMixin_Science):
@@ -423,6 +464,14 @@ class Asn_AMI(AsnMixin_Science):
                 only_on_match=True,
             ),
         ])
+
+        # PSF is required
+        self.validity.update({
+            'has_psf': {
+                'validated': False,
+                'check': lambda entry: entry['exptype'] == 'psf'
+            }
+        })
 
         # Check and continue initialization.
         super(Asn_AMI, self).__init__(*args, **kwargs)

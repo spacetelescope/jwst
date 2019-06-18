@@ -90,7 +90,7 @@ TESTS_REQUIRE = [
     'pytest',
     'pytest-doctestplus',
     'requests_mock',
-    'pytest-astropy',
+    'pytest-openfiles',
     'pytest-faulthandler',
 ]
 
@@ -190,12 +190,11 @@ setup(
         'asdf>=2.3.2',
         'astropy>=3.1',
         'crds>=7.2.7',
-        'drizzle>=1.12',
+        'drizzle>=1.13',
         'gwcs>=0.10',
         'jsonschema>=2.3,<=2.6',
         'numpy>=1.13',
         'photutils>=0.6',
-        'psutil',
         'scipy>=1.0',
         'spherical-geometry>=1.2',
         'stsci.image>=2.3',

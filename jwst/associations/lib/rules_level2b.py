@@ -235,6 +235,7 @@ class Asn_Lv2Spec(
                     SimpleConstraint(
                         value='science',
                         test=lambda value, item: self.get_exposure_type(item) != value,
+                        force_unique=False,
                     )
                 ],
                 reduce=Constraint.any
@@ -675,25 +676,19 @@ class Asn_Lv2WFSS(
         method.
         """
         item = self.direct_image.item
-        opt_elem = getattr_from_list_nofail(
-            item, ['filter', 'band'], _EMPTY
-        )[1]
-        opt_elem = None if opt_elem == 'clear' else opt_elem
+        opt_elems = []
+        for keys in [['filter', 'band'], ['pupil', 'grating']]:
+            opt_elem = getattr_from_list_nofail(
+                item, keys, _EMPTY
+            )[1]
+            if opt_elem:
+                opt_elems.append(opt_elem)
+        opt_elems.sort(key=str.lower)
+        full_opt_elem = '-'.join(opt_elems)
+        if full_opt_elem == '':
+            full_opt_elem = 'clear'
 
-        opt_elem2 = getattr_from_list_nofail(
-            item, ['pupil', 'grating'], _EMPTY
-        )[1]
-        opt_elem2 = None if opt_elem2 == 'clear' else opt_elem2
-
-        full_opt_elem = []
-        if opt_elem:
-            full_opt_elem.append(opt_elem)
-        if opt_elem and opt_elem2:
-            full_opt_elem.append('-')
-        if opt_elem2:
-            full_opt_elem.append(opt_elem2)
-
-        return ''.join(full_opt_elem)
+        return full_opt_elem
 
 
 @RegistryMarker.rule
@@ -905,7 +900,8 @@ class Asn_Lv2NRSIFUNod(
             `None` if a complete association cannot be produced.
 
         """
-        return self.make_nod_asns()
+        nodded_asns = self.make_nod_asns()
+        return nodded_asns
 
 
 @RegistryMarker.rule
@@ -930,9 +926,10 @@ class Asn_Lv2WFSC(
             DMSAttrConstraint(
                 name='wfsc',
                 sources=['visitype'],
-                value='.+wfsc.+',
+                value='prime_wfsc_sensing_control',
                 force_unique=True
             )
+
         ])
 
         # Now check and continue initialization.
@@ -943,3 +940,29 @@ class Asn_Lv2WFSC(
 
         super(Asn_Lv2WFSC, self)._init_hook(item)
         self.data['asn_type'] = 'wfs-image2'
+
+
+@RegistryMarker.rule
+class Asn_Force_Reprocess(DMSLevel2bBase):
+    """Force all backgrounds to reprocess"""
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup constraints
+        self.constraints = Constraint([
+            SimpleConstraint(
+                value='background',
+                sources=self.get_exposure_type,
+                force_unique=False,
+            ),
+            SimpleConstraint(
+                name='force_fail',
+                test=lambda x, y: False,
+                value='anything but None',
+                reprocess_on_fail=True,
+                work_over=ProcessList.EXISTING,
+                reprocess_rules=[]
+            )
+        ])
+
+        super(Asn_Force_Reprocess, self).__init__(*args, **kwargs)

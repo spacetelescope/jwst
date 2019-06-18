@@ -4,10 +4,8 @@ properties:
     type: object
     properties:
       date:
-        anyOf:
-          - $ref: http://stsci.edu/schemas/asdf/time/time-1.0.0
-          - type: string
         title: "[yyyy-mm-ddThh:mm:ss.ss] UTC date file created"
+        type: string
         fits_keyword: DATE
         blend_table: True
       origin:
@@ -138,37 +136,38 @@ properties:
         type: object
         properties:
           date:
-            anyOf:
-              - $ref: http://stsci.edu/schemas/asdf/time/time-1.0.0
-              - type: string
             title: "[yyyy-mm-dd] UTC date at start of exposure"
+            type: string
             fits_keyword: DATE-OBS
             blend_table: True
-            blend_rule: first
+            blend_rule: mindate
           time:
             title: "[hh:mm:ss.sss] UTC time at start of exposure"
             type: string
             fits_keyword: TIME-OBS
             blend_table: True
-            blend_rule: first
+            blend_rule: mintime
           date_beg:
             type: string
             title: "Date-time start of data acquisition"
             fits_keyword: DATE-BEG
             blend_table: True
-            blend_rule: first
+            blend_rule: mindatetime
           date_end:
             type: string
+            # 2019-06-12: Title has changed to "Date-time end of data acquisition" in keyword dictionary.
             title: "[yyyy-mm-dd] UTC date at end of exposure"
             fits_keyword: DATE-END
             blend_table: True
-            blend_rule: last
+            # Despite what the title might lead you to believe, this keyword
+            # actually contains a full datetime string.
+            blend_rule: maxdatetime
           time_end:
             title: "[hh:mm:ss.sss] UTC time at end of exposure"
             type: string
             fits_keyword: TIME-END
             blend_table: True
-            blend_rule: last
+            blend_rule: maxtime
           obs_id:
             title: Programmatic observation identifier
             type: string
@@ -441,6 +440,7 @@ properties:
           fixed_slit:
             title: Name of fixed slit aperture used
             type: string
+            enum: [S200A1, S200A2, S200B1, S400A1, S1600A1, NONE]
             fits_keyword: FXD_SLIT
             blend_table: True
           focus_position:
@@ -930,8 +930,8 @@ properties:
             fits_keyword: NUMDTHPT
             blend_table: True
           pattern_size:
-            title: "[arcsec] Primary dither pattern size"
-            type: number
+            title: "Primary dither pattern size"
+            type: string
             fits_keyword: PATTSIZE
             blend_table: True
           subpixel_type:
@@ -952,7 +952,6 @@ properties:
           subpixel_dither_pattern:
             title: subpixel dither pattern
             type: string
-            enum: [BOTH, SPATIAL, SPECTRAL, NONE]
             fits_keyword: SUBPXPAT
             blend_table: True
           spectral_position_number:
@@ -1010,6 +1009,54 @@ properties:
             type: number
             fits_keyword: YOFFSET
             blend_table: True
+          starting_set:
+            title: Starting 4-point set number
+            type: integer
+            # 2019-06-12: The keyword dictionary specifies an enum constraint for this field, but
+            # due to discrepancies in the dictionary JSON we're going to leave this unconstrained
+            # for now.
+            # enum: [1, 3, 5]
+            fits_keyword: DSETSTRT
+          number_of_sets:
+            title: Total number of 4-point sets
+            type: integer
+            # 2019-06-12: The keyword dictionary specifies an enum constraint for this field, but
+            # due to discrepancies in the dictionary JSON we're going to leave this unconstrained
+            # for now.
+            # enum: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+            fits_keyword: NUMDSETS
+          direction:
+            title: Direction of dither pattern offsets
+            type: string
+            # 2019-06-12: The keyword dictionary specifies an enum constraint for this field, but
+            # due to discrepancies in the dictionary JSON we're going to leave this unconstrained
+            # for now.
+            # enum: [NEGATIVE, POSITIVE]
+            fits_keyword: DITHDIRC
+          optimized_for:
+            title: Dither pattern optimization
+            type: string
+            # 2019-06-12: The keyword dictionary specifies an enum constraint for this field, but
+            # due to discrepancies in the dictionary JSON we're going to leave this unconstrained
+            # for now.
+            # enum: ["POINT-SOURCE", "EXTENDED-SOURCE"]
+            fits_keyword: DITHOPFR
+          sparse_points:
+            title: Sparse cycling dither points
+            type: string
+            fits_keyword: DITHPNTS
+          primary_channel:
+            title: MRS primary channel
+            type: string
+            # 2019-06-12: The keyword dictionary specifies an enum constraint for this field, but
+            # due to discrepancies in the dictionary JSON we're going to leave this unconstrained
+            # for now.
+            # enum: [ALL, CHANNEL1, CHANNEL2, CHANNEL3, CHANNEL4]
+            fits_keyword: MRSPRCHN
+          dither_points:
+            title: Total number of points in primary dither pattern
+            type: string
+            fits_keyword: NDITHPTS
       ephemeris:
         title: JWST ephemeris information
         type: object

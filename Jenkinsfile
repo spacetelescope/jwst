@@ -1,14 +1,12 @@
 if (utils.scm_checkout()) return
 
-python_version = '3.6'
-
 env_vars = [
     "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
     "CRDS_PATH=./crds_cache",
     "CRDS+CONTEXT=jwst_0500.pmap",
 ]
 
-// Pip related setup
+// pip related setup for local index, not used currently
 def pip_index = "https://bytesalad.stsci.edu/artifactory/api/pypi/datb-pypi-virtual/simple"
 def pip_install_args = "--index-url ${pip_index} --progress-bar=off"
 
@@ -17,14 +15,13 @@ def pip_install_args = "--index-url ${pip_index} --progress-bar=off"
 bc0 = new BuildConfig()
 bc0.nodetype = 'linux'
 bc0.name = 'wheel-sdist'
-bc0.conda_ver = '4.6.8'
+bc0.conda_ver = '4.6.14'
 bc0.conda_packages = [
-    "python=${python_version}",
-    "pip<19.1"
+    "python=3.6",
 ]
 bc0.build_cmds = [
-    "pip install ${pip_install_args} numpy",
-    "pip wheel ${pip_install_args} .",
+    "pip install numpy",
+    "pip wheel .",
     "python setup.py sdist",
 ]
 
@@ -33,30 +30,22 @@ bc1 = utils.copy(bc0)
 bc1.name = "stable-deps"
 bc1.env_vars = env_vars
 bc1.build_cmds = [
-    "pip install ${pip_install_args} numpy",
-    "pip install ${pip_install_args} -e .[test]",
-    "python setup.py develop",
-]
-bc1.test_cmds = ["pytest -r sx --basetemp=test_results --junitxml=results.xml"]
-
-// Generate conda build/test with astroconda-dev dependencies
-bc2 = utils.copy(bc0)
-bc2.name = "astroconda-dev"
-bc2.env_vars = env_vars
-bc2.conda_channels = [
-    "http://ssb.stsci.edu/astroconda-dev"
-]
-bc2.conda_packages = [
-    "python=${python_version}",
-    "numpy",
-    "nomkl",
-    "jwst",
-    "pip<19.1",
-]
-bc2.build_cmds = [
-    "python setup.py develop",
     "pip install -e .[test]",
 ]
-bc2.test_cmds = ["pytest -r sx --basetemp=test_results --junitxml=results.xml"]
+bc1.test_cmds = [
+    "pytest -r sx --junitxml=results.xml"
+]
+
+// Generate conda-free build with python 3.7
+bc2 = new BuildConfig()
+bc2.nodetype = 'python3.7'
+bc2.name = 'conda-free'
+bc2.env_vars = env_vars
+bc2.build_cmds = [
+    "pip install -e .[test]",
+]
+bc2.test_cmds = [
+    "pytest -r sx --junitxml=results.xml"
+]
 
 utils.run([bc0, bc1, bc2])

@@ -41,7 +41,7 @@ class OutlierDetectionStackStep(Step):
         backg = float(default=0.0)
         save_intermediate_results = boolean(default=False)
         resample_data = boolean(default=False)
-        good_bits = integer(default=4)
+        good_bits = integer(default=6)
     """
 
     def process(self, input):

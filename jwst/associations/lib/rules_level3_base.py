@@ -48,6 +48,8 @@ __all__ = [
     'ASN_SCHEMA',
     'AsnMixin_Science',
     'AsnMixin_Spectrum',
+    'AsnMixin_BkgScience',
+    'AsnMixin_AuxData',
     'Constraint_Base',
     'Constraint_IFU',
     'Constraint_Image',
@@ -110,10 +112,6 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
                 'validated': False,
                 'check': lambda member: member['exptype'] == 'science'
             },
-            'ok_candidate': {
-                'validated': False,
-                'check': self.ok_candidate
-            }
         })
 
         # Other presumptions on the association
@@ -280,17 +278,14 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             exposerr = None
 
         # Get exposure type
-        try:
-            is_tso = self.constraints['is_tso'].matched
-        except KeyError:
-            is_tso = item['exp_type'] in TSO_EXP_TYPES
-
         exptype = self.get_exposure_type(item)
 
         # Determine expected member name
         expname = Utility.rename_to_level2(
-                item['filename'], exp_type=item['exp_type'], is_tso=is_tso
-            )
+            item['filename'], exp_type=item['exp_type'],
+            is_tso=self.is_item_tso(item, other_exp_types=CORON_EXP_TYPES),
+            member_exptype=exptype
+        )
 
         member = Member(
             {
@@ -486,7 +481,7 @@ class Utility():
             )
 
     @staticmethod
-    def rename_to_level2(level1b_name, exp_type=None, is_tso=False):
+    def rename_to_level2(level1b_name, exp_type=None, is_tso=False, member_exptype='science'):
         """Rename a Level 1b Exposure to a Level2 name.
 
         The basic transform is changing the suffix `uncal` to
@@ -506,6 +501,9 @@ class Utility():
             Use 'calints' instead of 'cal' as
             the suffix.
 
+        member_exptype: str
+            The assocition member exposure type, such as "science".
+
         Returns
         -------
         str
@@ -521,11 +519,15 @@ class Utility():
             ))
             return level1b_name
 
-        if exp_type in LEVEL2B_EXPTYPES:
-            suffix = 'cal'
+        if member_exptype == 'background':
+            suffix = 'x1d'
         else:
-            suffix = 'rate'
-        if is_tso or exp_type in CORON_EXP_TYPES:
+            if exp_type in LEVEL2B_EXPTYPES:
+                suffix = 'cal'
+            else:
+                suffix = 'rate'
+
+        if is_tso:
             suffix += 'ints'
 
         level2_name = ''.join([
@@ -721,6 +723,11 @@ class Constraint_Optical_Path(Constraint):
                 required=False,
             ),
             DMSAttrConstraint(
+                name='opt_elem3',
+                sources=['fxd_slit'],
+                required=False,
+            ),
+            DMSAttrConstraint(
                 name='subarray',
                 sources=['subarray']
             )
@@ -770,12 +777,29 @@ class Constraint_MSA(Constraint):
 
 
 class Constraint_Target(DMSAttrConstraint):
-    """Select on target"""
-    def __init__(self):
-        super(Constraint_Target, self).__init__(
-            name='target',
-            sources=['targetid'],
-        )
+    """Select on target
+
+    Parameters
+    ----------
+    association: Association
+        If specified, use the `get_exposure_type` method
+        to as part of the target selection.
+    """
+    def __init__(self, association=None):
+        if association is None:
+            super(Constraint_Target, self).__init__(
+                name='target',
+                sources=['targetid'],
+            )
+        else:
+            super(Constraint_Target, self).__init__(
+                name='target',
+                sources=['targetid'],
+                onlyif=lambda item: association.get_exposure_type(item) != 'background',
+                force_reprocess=ProcessList.EXISTING,
+                only_on_match=True,
+            )
+
 
 
 # -----------
@@ -813,7 +837,7 @@ class AsnMixin_Science(DMS_Level3_Base):
             [
                 Constraint_Base(),
                 DMSAttrConstraint(
-                    sources=['is_imprt', 'bkgdtarg'],
+                    sources=['is_imprt'],
                     force_undefined=True
                 ),
                 Constraint(
@@ -836,6 +860,61 @@ class AsnMixin_Science(DMS_Level3_Base):
 
         super(AsnMixin_Science, self).__init__(*args, **kwargs)
 
+class AsnMixin_BkgScience(DMS_Level3_Base):
+    """Basic science constraints for background targets"""
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup target acquisition inclusion
+        constraint_acqs = Constraint(
+            [
+                DMSAttrConstraint(
+                    name='acq_exp',
+                    sources=['exp_type'],
+                    value='|'.join(ACQ_EXP_TYPES),
+                    force_unique=False
+                ),
+                DMSAttrConstraint(
+                    name='acq_obsnum',
+                    sources=['obs_num'],
+                    value=lambda: '('
+                             + '|'.join(self.constraints['obs_num'].found_values)
+                             + ')',
+                    force_unique=False,
+                )
+            ],
+            name='acq_constraint',
+            work_over=ProcessList.EXISTING
+        )
+
+        # Put all constraints together.
+        self.constraints = Constraint(
+            [
+                Constraint_Base(),
+                DMSAttrConstraint(
+                    sources=['is_imprt'],
+                    force_undefined=True
+                ),
+                Constraint(
+                    [
+                        Constraint(
+                            [
+                                self.constraints,
+                                Constraint_Obsnum()
+                            ],
+                            name='rule'
+                        ),
+                        constraint_acqs
+                    ],
+                    name='acq_check',
+                    reduce=Constraint.any
+                ),
+            ],
+            name='dmsbase_bkg'
+        )
+
+        super(AsnMixin_BkgScience, self).__init__(*args, **kwargs)
+
 
 class AsnMixin_Spectrum(AsnMixin_Science):
     """All things that are spectrum"""
@@ -845,3 +924,27 @@ class AsnMixin_Spectrum(AsnMixin_Science):
 
         self.data['asn_type'] = 'spec3'
         super(AsnMixin_Spectrum, self)._init_hook(item)
+
+class AsnMixin_AuxData:
+    """Process special and non-science exposures as science.
+    """
+    def get_exposure_type(self, item, default='science'):
+        """Override to force exposure type to always be science
+        Parameters
+        ----------
+        item : dict
+            The pool entry for which the exposure type is determined
+        default : str or None
+            The default exposure type.
+            If None, routine will raise LookupError
+        Returns
+        -------
+        exposure_type : 'science'
+            Always returns as science
+        """
+        return 'science'
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        self.data['asn_type'] = 'spec3'
+        super(AsnMixin_AuxData, self)._init_hook(item)

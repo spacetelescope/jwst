@@ -1,4 +1,122 @@
-0.13.3 (2019-05-04)
+0.13.4 (2019-06-17)
+===================
+
+assign_wcs
+----------
+
+- A unique integer ``source_id`` is now assigned to all MOS background slitlets
+  and NRS Fixed Slits. [#3584]
+
+associations
+------------
+
+- MIRI MRS dedicated background exposures are now listed as science observations in
+  a new association. [#3542]
+
+- Generate will no longer merge Level2 associations by default [#3631]
+
+- Prevent inclusion of data files with exp_type="NIS_EXTCAL" in the association files [#3611]
+
+- Implemented Level 2 re-sequencing to prevent overwriting of associations [#3674]
+
+- Implemented Level 2 background exposure reprocessing [#3675]
+
+combine_1d
+----------
+
+The input DQ column is temporarily replaced by a zero-filled array of
+the right data type. [#3666]
+
+datamodels
+----------
+
+- Changed PATTSIZE keyword data type from float to string. [#3606]
+
+- Added enumeration of allowed values of ``FXD_SLIT`` to the core schema. [#3584]
+
+- Changed ``WHT_TYPE`` keyword to ``RESWHT``. [#3653]
+
+- Add missing pattern/enum values to keyword_pband, keyword_pfilter, keyword_channel [#3653]
+
+- New keywords [#3653]
+   - ``DSETSTRT``
+   - ``NUMDSETS``
+   - ``DITHDIRC``
+   - ``DITHOPFR``
+   - ``DITHPNTS``
+   - ``MRSPRCHN``
+   - ``NDITHPTS``
+   - ``DWTSCL``
+   - ``DOUTUN``
+   - ``RESBITS``
+   - ``DFVAL``
+   - ``DPIXFR``
+   - ``DKERN``
+   - ``SCIEXT``
+   - ``CONEXT``
+   - ``WHTEXT``
+
+extract_1d
+----------
+
+- Checks for input from a SourceModelContainer. [#3649]
+
+exp_to_source
+-------------
+
+- Changed `exp_to_source`` to use ``source_id`` to group exposures. [#3584]
+
+- Removed the enum list for the SUBPXPAT keyword to allow validation of any value. [#3616]
+
+extract_1d
+----------
+
+- Checks for input from a SourceModelContainer. [#3649]
+
+extract_2d
+----------
+
+- Nircam ``TSGRISM`` extraction uses now ``wcsinfo.siaf_x(y)ref_sci`` as the source position
+  on the detector. [#3646]
+
+- For grism data, a wavelength array is computed and saved, and the variance
+  arrays are extracted and copied to output. [#3664]
+
+lib
+---
+
+- ``set_telescope_pointing`` now retrieves CRPIX1/2 from the SIAF for Nircam TSGRISM
+  observations and saves the values as ``meta.wcsinfo.siaf_x(y)ref_sci``. These are used
+  by ``extract_2d`` as the source position on the detector. [#3646]
+
+outlier_detection
+-----------------
+
+- Changed default value of good_pixel from 4 to 6 [#3638]
+
+- Don't use NaNs or masked values in weight image for blotting. [#3651]
+
+pipeline
+--------
+
+- ``calwebb_spec2`` was changed to allow processing of exposures
+  with ``EXP_TYPE=NRS_LAMP.`` [#3603]
+
+- ``calwebb_tso3`` was changed to allow processing of exposures
+  with ``EXP_TYPE=MIR_IMAGE.`` [#3633]
+
+- - ``calwebb_tso3`` was changed to allow tso photometry processing of exposures
+  with (``EXP_TYPE=MIR_IMAGE`` and tsovisit = True) or  with (``EXP_TYPE=MIR_IMAGE``) [#3650]
+
+- Changed the default value of good_pixel from 4 to 6 for all outlier
+  detection steps and both resample steps [#3638]
+
+resample
+--------
+
+- Changed default value of good_pixel from 4 to 6 [#3638]
+
+0.13.3 (2019-06-04)
 ===================
 
 ami
@@ -15,13 +133,26 @@ ami
 - ``ami_analyze`` now emits a RuntimeError if the input is _calints or if a
   throughput reference file cannot be found.  [#3567]
 
+- Remove change to filtering routine arguments of #3487.  [#3612]
+
 assign_wcs
-------------
+----------
 
 - Fix a one pixel off problem with the NIRSpec NRS2 WCS transforms. [#3473]
 
 - Raise a ``ValueError`` if the FWCPOS keyword isn't found in input NIRISS
   WFSS images. [#3574]
+
+associations
+------------
+
+- Added the fxd_slit keyword as the third optical component [#3607]
+
+- Orders the elements in Level3 naming in alphabetical order [#3614]
+
+- Ensured that higher-order candidates only exist for Level2 associations [#3629]
+
+- Improve member checking and removed duplicate product names [#3647]
 
 combine_1d
 ----------
@@ -68,6 +199,8 @@ extract_2d
 
 - Replaced a white space in the names of grism objects with an underscore. [#3517]
 
+- Update WFSS slit names to use simple integer value, and add accompanying unit 
+  test for NIRCAM grism extract_2d [#3632].
 
 master_background
 -----------------
@@ -81,6 +214,7 @@ model_blender
 -------------
 
 - Allow blendmodels to ignore attributes in asdf tree not in schema [#3480]
+- Add new rules for dates and times [#3554]
 
 photom
 ------
@@ -412,6 +546,8 @@ associations
 - Updated docstrings and written documentation. [#2856, #2862]
 
 - Fixed NIRISS WFSS catalog naming and implement NIRCam WFSS [#3515]
+
+- Fixed treating non-science as TSO [#3601]
 
 background
 ----------
@@ -1619,4 +1755,3 @@ white_light
 
 wiimatch
 --------
-

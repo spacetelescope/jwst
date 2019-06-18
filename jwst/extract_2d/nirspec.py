@@ -45,6 +45,7 @@ def nrs_extract2d(input_model, slit_name=None, apply_wavecorr=False, reference_f
             apply_wavecorr = False
             warnings.warn("WAVECORR reference file missing - skipping correction")
     else:
+        reffile = None
         apply_wavecorr = False
         log.info("Skipping wavecorr correction for EXP_TYPE {0}".format(exp_type))
 
@@ -159,8 +160,9 @@ def set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi):
     output_model.xsize = (xhi - xlo)
     output_model.ystart = ylo + 1 # FITS 1-indexed
     output_model.ysize = (yhi - ylo)
+    output_model.source_id = int(slit.source_id)
     if output_model.meta.exposure.type.lower() in ['nrs_msaspec', 'nrs_autoflat']:
-        output_model.source_id = int(slit.source_id)
+        #output_model.source_id = int(slit.source_id)
         output_model.source_name = slit.source_name
         output_model.source_alias = slit.source_alias
         output_model.stellarity = float(slit.stellarity)

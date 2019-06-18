@@ -8,6 +8,7 @@ import re
 from ..load_asn import load_asn
 
 logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 
 def compare_asn_files(left_paths, right_paths):
@@ -73,12 +74,14 @@ def compare_asn_lists(left_asns, right_asns):
     """
 
     # Ensure that product names are unique
-    left_product_names = no_duplicate_products(left_asns)
-    right_product_names = no_duplicate_products(right_asns)
+    left_product_names, left_duplicates = get_product_names(left_asns)
+    right_product_names, right_duplicates = get_product_names(right_asns)
+    assert not left_duplicates, f'Left associations have duplicate products {left_duplicates} '
+    assert not right_duplicates, f'Right associations have duplicate products {right_duplicates} '
 
     # Ensure that the product name lists are the same.
     name_diff = left_product_names ^ right_product_names
-    assert not len(name_diff), (
+    assert not name_diff, (
         'Associations do not share a common set of products: {}'
         ''.format(name_diff)
     )
@@ -168,9 +171,14 @@ def _compare_asns(left, right):
             - key 'exptype` for each member
     """
 
-    # Metadata
+    # Assert that the same result type is the same.
     assert left['asn_type'] == right['asn_type'], \
         'Type mismatch {} != {}'.format(left['asn_type'], right['asn_type'])
+
+    # Assert that the level of association candidate is the same.
+    # Cannot guarantee value, but that the 'a'/'c'/'o' levels are similar.
+    assert left['asn_id'][0] == right['asn_id'][0], \
+        f"Candidate level mismatch left '{left['asn_id'][0]}' != right '{right['asn_id'][0]}'"
 
     # Membership
     return compare_membership(left, right)
@@ -288,8 +296,8 @@ def separate_products(asn):
     return separated
 
 
-def no_duplicate_products(asns):
-    """Ensure there are no duplicate product names in a list of associations
+def get_product_names(asns):
+    """Return product names from associations and flag duplicates
 
     Parameters
     ----------
@@ -297,14 +305,8 @@ def no_duplicate_products(asns):
 
     Returns
     -------
-    product_names: set(str[, ...])
-        The set of product names.
-
-    Raises
-    ------
-    AssertionError
-        If there are differences. The message will contain
-        all the differences.
+    product_names, duplicates: set(str[, ...]), [str[,...]]
+        2-tuple consisting of the set of product names and the list of duplicates.
     """
     product_names = [
         asn['products'][0]['name']
@@ -316,9 +318,9 @@ def no_duplicate_products(asns):
         for name, count in Counter(product_names).items()
         if count > 1
     ]
-    assert not len(dups), (
-        'Associations have the following product name duplication'
-        '{}'.format(dups)
-    )
+    if dups:
+        logger.debug(
+            'Duplicate product names: %s', dups
+        )
 
-    return set(product_names)
+    return set(product_names), dups
