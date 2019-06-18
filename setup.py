@@ -188,7 +188,7 @@ setup(
     package_data=PACKAGE_DATA,
     install_requires=[
         'asdf>=2.3.2',
-        'astropy==3.1',
+        'astropy>=3.1',
         'crds>=7.2.7',
         'drizzle>=1.13',
         'gwcs>=0.10',
