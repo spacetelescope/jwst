@@ -22,12 +22,11 @@ The ``jwst`` package can be installed into a virtualenv or conda environment via
 To install a released (tagged) version, you can install directly from Github.  To install ``jwst 0.13.4``:
 
     pip install numpy
-    pip install git+https://github.com/spacetelescope/jwst.git#0.13.4
+    pip install git+https://github.com/spacetelescope/jwst#0.13.4
 
-The same can be done to install the latest development version (from ``master``)
+The same can be done to install the latest development version (from ``master``):
 
-    pip install numpy
-    pip install git+https://github.com/spacetelescope/jwst.git
+    pip install git+https://github.com/spacetelescope/jwst
 
 ### Installing a DMS release ###
 
@@ -47,12 +46,16 @@ See the "Software vs DMS build version map" table below for a list of tags corre
 
 ### Installing for developers ###
 
-Fork and clone the repo.  Install from your local checked out copy as an "editable" install
+Fork and clone the repo:
+
+    git clone https://github.com/spacetelescope/asdf
+
+Install from your local checked out copy as an "editable" install:
 
     pip install numpy
     pip install -e .
 
-This is like doing a ``setup.py develop`` install.  If you want to run the tests and/or build the docs, you can make sure those dependencies are installed too.
+This is like doing a ``setup.py develop`` install.  If you want to run the tests and/or build the docs, you can make sure those dependencies are installed too:
 
     pip install -e .[test]
     pip install -e .[docs]
