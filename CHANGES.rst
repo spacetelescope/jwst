@@ -1,5 +1,13 @@
-0.13.5 (Unreleased)
+0.13.5 (2019-06-19)
 ===================
+
+associations
+------------
+
+- Reverted over-restrictive constraints on WFSC processing. [#3691]
+
+- Removed the rule creating associations for NIRSpec LAMP exposures in image modes. [#3693]
+
 
 0.13.4 (2019-06-17)
 ===================
