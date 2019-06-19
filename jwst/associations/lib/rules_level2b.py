@@ -881,7 +881,7 @@ class Asn_Lv2WFSC(
             DMSAttrConstraint(
                 name='wfsc',
                 sources=['visitype'],
-                value='.+wfsc.+',
+                value='prime_wfsc_sensing_control',
                 force_unique=True
             ),
             DMSAttrConstraint(
@@ -890,6 +890,7 @@ class Asn_Lv2WFSC(
                 value='.+(?!nis_extcal).+',
                 force_unique=False,
             )
+
         ])
 
         # Now check and continue initialization.
