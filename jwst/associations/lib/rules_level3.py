@@ -203,6 +203,15 @@ class Asn_SpectralTarget(AsnMixin_Spectrum):
                     '|nis_soss'
                 ),
                 force_unique=False
+            ),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        name='patttype',
+                        sources=['patttype'],
+                    ),
+                ],
+                reduce=Constraint.notany
             )
         ])
 
