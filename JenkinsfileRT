@@ -42,7 +42,7 @@ bc.build_cmds = [
     "pip install pytest-xdist",
 ]
 bc.test_cmds = [
-    "pytest -r sx -v -n 30 --bigdata --slow  \
+    "pytest -r sx -v -n 30 --bigdata --slow \
     --basetemp=${pytest_basetemp}  --junit-xml=results.xml \
     jwst/tests_nightly/general"
 ]
