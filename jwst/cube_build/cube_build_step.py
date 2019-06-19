@@ -56,7 +56,7 @@ class CubeBuildStep (Step):
          output_use_model = boolean(default=true) # Use filenames in the output models
        """
 
-    reference_file_types = ['cubepar', 'resol']
+    reference_file_types = ['cubepar', 'resol', 'regions']
 
 # ________________________________________________________________________________
     def process(self, input):
@@ -225,6 +225,16 @@ class CubeBuildStep (Step):
                 self.log.warning('No spectral resolution reference file found')
                 self.log.warning('Run again and turn off miripsf')
                 return
+
+# ________________________________________________________________________________
+# Read in regions reference file - only needed for MIRI Data
+
+#        regions_filename = self.get_reference_file(self.input_models[0], 'regions')
+
+#        if regions_filename == 'N/A':
+#            self.log.warning('No regions reference file found')
+#            self.log.warning('This must be NIRSPEC data')
+#            return
 # ________________________________________________________________________________
 # shove the input parameters in to pars to pull out in general cube_build.py
 

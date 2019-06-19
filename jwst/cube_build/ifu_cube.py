@@ -46,9 +46,9 @@ class IFUCubeData():
         self.input_filenames = input_filenames
         self.pipeline = pipeline
         
-        dq_file = 'cube_spaxel_dq'+str(list_par1[0]) +'.results'
-        self.spaxel_dq_file =  open(dq_file, 'w')
-        print('dq file',dq_file)
+#        dq_file = 'cube_spaxel_dq'+str(list_par1[0]) +'.results'
+#        self.spaxel_dq_file =  open(dq_file, 'w')
+#        print('dq file',dq_file)
 
         dq_wave_file = 'cube_spaxel_wave_dq'+str(list_par1[0]) +'.results'
         self.spaxel_wave_dq_file =  open(dq_wave_file, 'w')
@@ -58,7 +58,7 @@ class IFUCubeData():
         self.spaxel_wave_footprint_dq_file =  open(dq_wave_footprint_file, 'w')
         print('dq wave file',dq_wave_footprint_file)
 
-        dq_wave_siaf_file = 'cube_spaxel_wave_saif_dq'+str(list_par1[0]) +'.results'
+        dq_wave_siaf_file = 'cube_spaxel_wave_siaf_dq'+str(list_par1[0]) +'.results'
         self.spaxel_wave_siaf_dq_file =  open(dq_wave_siaf_file, 'w')
         print('dq siaf file',dq_wave_siaf_file)
 
@@ -574,17 +574,17 @@ class IFUCubeData():
                     min_wave_band = np.amin(wave)
                     max_wave_band = np.amax(wave)
                     
-#                    footprint_wave = self.compute_four_corners(coord1, coord2, wave)
+                    footprint_wave = self.compute_four_corners(coord1, coord2, wave)
                     footprint_siaf = self.compute_four_corners_siaf(this_par1,this_par2, ifile)
 
                     print('footprint siaf',footprint_siaf)
-                    self.master_table.FileMap[self.instrument][this_par1][this_par2]['footprint'][k]=footprint_siaf
+#                    self.master_table.FileMap[self.instrument][this_par1][this_par2]['footprint'][k]=footprint_siaf
                     # send footprint of file on sky -spatial and wavelength
                     # set the spaxel_dq values, need the roiw and self.zcoord - defines wavelengths
 
-                    self.map_siaf_projection_to_dqframe(footprint_siaf, min_wave_band, max_wave_band)
+                    #self.map_siaf_projection_to_dqframe(footprint_siaf, min_wave_band, max_wave_band)
 
-                    #self.map_fov_wave_projection_to_dqframe(footprint_wave)
+                    self.map_fov_wave_projection_to_dqframe(footprint_wave)
 
                     
                     if self.weighting == 'msm':
@@ -1308,11 +1308,11 @@ class IFUCubeData():
                         
             overlap_coverage = area_overlap/area_box
             if overlap_coverage > 0:
-                self.spaxel_dq_file.write('%f %f %f %f  %f %f %f %f %f %f %f %f %f' %
-                                          (self.xcenters[ixy], self.ycenters[ixy],
-                                           self.cdelt1, self.cdelt3, xi_corner[0], eta_corner[0],
-                                           xi_corner[1], eta_corner[1],xi_corner[2],eta_corner[2],
-                                           xi_corner[3], eta_corner[3], overlap_coverage) + '\n')
+#                self.spaxel_dq_file.write('%f %f %f %f  %f %f %f %f %f %f %f %f %f' %
+#                                          (self.xcenters[ixy], self.ycenters[ixy],
+#                                           self.cdelt1, self.cdelt3, xi_corner[0], eta_corner[0],
+#                                           xi_corner[1], eta_corner[1],xi_corner[2],eta_corner[2],
+#                                           xi_corner[3], eta_corner[3], overlap_coverage) + '\n')
 
                 if overlap_coverage > 0.95:
                     slice_dq[ixy] = self.overlap_full
@@ -1373,11 +1373,11 @@ class IFUCubeData():
                         
                 overlap_coverage = area_overlap/area_box
                 if overlap_coverage > 0:
-                    self.spaxel_dq_file.write('%f %f %f %f  %f %f %f %f %f %f %f %f %f' %
-                                              (self.xcenters[ixy], self.ycenters[ixy],
-                                               self.cdelt1, self.cdelt3, xi_corner[0], eta_corner[0],
-                                               xi_corner[1], eta_corner[1],xi_corner[2],eta_corner[2],
-                                               xi_corner[3], eta_corner[3], overlap_coverage) + '\n')
+#                    self.spaxel_dq_file.write('%f %f %f %f  %f %f %f %f %f %f %f %f %f' %
+#                                              (self.xcenters[ixy], self.ycenters[ixy],
+#                                               self.cdelt1, self.cdelt3, xi_corner[0], eta_corner[0],
+#                                               xi_corner[1], eta_corner[1],xi_corner[2],eta_corner[2],
+#                                               xi_corner[3], eta_corner[3], overlap_coverage) + '\n')
 
                     if overlap_coverage > 0.95:
                         slice_dq[ixy] = self.overlap_full
@@ -1410,36 +1410,35 @@ class IFUCubeData():
             wave2 = wave1 + self.cdelt3
 
             index_use = np.where((wave <= wave2)  & (wave >= wave1))
-            coord2_use = coord2[index_use]
-            coord1_use = coord1[index_use]
 
-#            print(w, coord2_use.shape) 
-            for i in range(len(index_use[0])):
+            if len(index_use[0]) > 1:
+                coord2_use = coord2[index_use]
+                coord1_use = coord1[index_use]
+                for i in range(len(index_use[0])):
                 
-                self.spaxel_wave_dq_file.write('%i %f %f ' %
-                                          (w,coord1_use[i],coord2_use[i])+ '\n')
+                    self.spaxel_wave_dq_file.write('%i %f %f ' %
+                                                   (w,coord1_use[i],coord2_use[i])+ '\n')
 
+                index = np.where(coord2_use == np.amin(coord2_use))
+                xi_corner1 = coord1_use[index[0]]
+                eta_corner1 = coord2_use[index[0]]
 
-            index = np.where(coord2_use == np.amin(coord2_use))
-            xi_corner1 = coord1_use[index[0]]
-            eta_corner1 = coord2_use[index[0]]
+                index = np.where(coord1_use == np.amax(coord1_use))
+                xi_corner2 = coord1_use[index[0]]
+                eta_corner2 = coord2_use[index[0]]
 
-            index = np.where(coord1_use == np.amax(coord1_use))
-            xi_corner2 = coord1_use[index[0]]
-            eta_corner2 = coord2_use[index[0]]
-
-            index = np.where(coord2_use == np.amax(coord2_use))
-            xi_corner3 = coord1_use[index[0]]
-            eta_corner3 = coord2_use[index[0]]
-
-            index = np.where(coord1_use == np.amin(coord1_use))
-            xi_corner4 = coord1_use[index[0]]
-            eta_corner4 = coord2_use[index[0]]
+                index = np.where(coord2_use == np.amax(coord2_use))
+                xi_corner3 = coord1_use[index[0]]
+                eta_corner3 = coord2_use[index[0]]
+                
+                index = np.where(coord1_use == np.amin(coord1_use))
+                xi_corner4 = coord1_use[index[0]]
+                eta_corner4 = coord2_use[index[0]]
             
-            footprint_wave[w,:] = (xi_corner1[0], eta_corner1[0],xi_corner2[0], eta_corner2[0], 
-                                   xi_corner3[0], eta_corner3[0], xi_corner4[0], eta_corner4[0])
+                footprint_wave[w,:] = (xi_corner1[0], eta_corner1[0],xi_corner2[0], eta_corner2[0], 
+                                       xi_corner3[0], eta_corner3[0], xi_corner4[0], eta_corner4[0])
 
-            self.spaxel_wave_footprint_dq_file.write('%i %f %f %f %f %f %f %f %f %f %f' %
+                self.spaxel_wave_footprint_dq_file.write('%i %f %f %f %f %f %f %f %f %f %f' %
                                           (w,wave1,wave2,xi_corner1[0],eta_corner1[0],
                                            xi_corner2[0],eta_corner2[0],xi_corner3[0],eta_corner3[0],
                                            xi_corner4[0],eta_corner4[0],)+ '\n')
@@ -1489,7 +1488,6 @@ class IFUCubeData():
                     subchannel_name = 'C'
 
                 siaf_channel_band   = 'MIRIFU_CHANNEL'+str(this_par1)+subchannel_name
-                print('siaf name',siaf_channel_band)
                 this_band = siaf[siaf_channel_band]
 
                 v2ref,v3ref = this_band.V2Ref, this_band.V3Ref
