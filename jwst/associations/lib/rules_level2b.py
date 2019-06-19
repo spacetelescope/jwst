@@ -25,7 +25,6 @@ __all__ = [
     'Asn_Lv2MIRLRSFixedSlitNod',
     'Asn_Lv2NRSFSS',
     'Asn_Lv2NRSIFUNod',
-    'Asn_Lv2NRSLAMPImage',
     'Asn_Lv2NRSLAMPSpectral',
     'Asn_Lv2NRSMSA',
     'Asn_Lv2Spec',
