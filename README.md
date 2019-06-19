@@ -61,6 +61,10 @@ This is like doing a ``setup.py develop`` install.  If you want to run the tests
     pip install -e .[docs]
     pip install -e .[test,docs]
 
+Need other useful packages in your development environment?
+
+    pip install ipython, flake8
+
 ### CRDS Setup ###
 
 Inside the STScI network, the pipeline works with default CRDS setup with no modifications.  To run the pipeline outside the STScI network, CRDS must be configured by setting two environment variables:
@@ -132,6 +136,11 @@ Unit tests can be run via `pytest`.  Within the top level of your local `jwst` r
 
     pip install -e .[test]
     pytest
+
+Need to parallelize your test runs over 8 cores?
+
+    pip install pytest-xdist
+    pytest -n 8
 
 
 Regression Tests
