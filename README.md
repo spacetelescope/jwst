@@ -7,54 +7,63 @@ JWST Calibration Pipeline
 
 ![STScI Logo](docs/_static/stsci_logo.png)
 
-Note
-----
-Beginning with version 0.9.0, **JWST requires Python 3.5 or above**.
+**JWST requires Python 3.5 or above**.
 
-Installing
-----------
+Installation
+------------
 
-### Installing a release version ###
+The ``jwst`` package can be installed into a virtualenv or conda environment via ``pip``.  We recommend creating a fresh environment with only python installed.  Via conda:
 
-To install a particular released version of the package, and all dependencies, we recommend using
-[conda](https://conda.io/docs/index.html) and a spec file that lists the exact versions of all packages to be installed.
-To create a new environment, use:
+    conda create -n jwst_env python=3.6
+    source activate jwst_env
 
-    conda create -n jwst --file <URL>
-    source activate jwst
+### Installing for end-users ###
+
+To install a released (tagged) version, you can install directly from Github.  To install ``jwst 0.13.4``:
+
+    pip install numpy
+    pip install git+https://github.com/spacetelescope/jwst#0.13.4
+
+The same can be done to install the latest development version (from ``master``):
+
+    pip install git+https://github.com/spacetelescope/jwst
+
+### Installing a DMS release ###
+
+We still package our releases to DMS via a conda spec file that lists the exact versions of all packages to be installed.
+To create a new environment with a specific release, use:
+
+    conda create -n jwst_env --file <URL>
+    source activate jwst_env
 
 where `<URL>` is of the form:
 
-    Linux: http://ssb.stsci.edu/releases/jwstdp/0.12.2/latest-linux
-    OS X: http://ssb.stsci.edu/releases/jwstdp/0.12.2/latest-osx
+    Linux: http://ssb.stsci.edu/releases/jwstdp/0.13.4/latest-linux
+    OS X: http://ssb.stsci.edu/releases/jwstdp/0.13.4/latest-osx
 
-Other particular versions can be installed by choosing a different version tag in place of "0.12.2" in the URL path.
+Other particular versions can be installed by choosing a different version tag in place of "0.13.4" in the URL path.
 See the "Software vs DMS build version map" table below for a list of tags corresponding to particular releases.
 
-To create an environment with the latest nightly build:
+### Installing for developers ###
 
-    conda create -n jwst --override-channels -c http://ssb.stsci.edu/astroconda -c defaults -c http://ssb.stsci.edu/astroconda-dev jwst
+Fork and clone the repo:
 
-### Installing the latest development version ###
+    git clone https://github.com/spacetelescope/asdf
 
-To install the development version of the repository, we recommend creating a new
-environment, using the [astroconda](https://astroconda.readthedocs.io) channel
-to install the dependencies, and then installing from the GitHub repository:
+Install from your local checked out copy as an "editable" install:
 
-    conda create -n jwst_dev --only-deps --override-channels -c http://ssb.stsci.edu/astroconda -c defaults -c http://ssb.stsci.edu/astroconda-dev jwst
-    source activate jwst_dev
-    git clone https://github.com/spacetelescope/jwst.git
-    cd jwst
-    python setup.py develop
-    
-You can also fork the repo above and install your fork from GitHub.
+    pip install numpy
+    pip install -e .
 
-Once installed, the software can be updated to the lastest development version by updating the dependencies,
-pulling the latest version of `master` from the Github repository inside your local `jwst` checkout:
+This is like doing a ``setup.py develop`` install.  If you want to run the tests and/or build the docs, you can make sure those dependencies are installed too:
 
-    conda update -n jwst_dev --override-channels -c http://ssb.stsci.edu/astroconda -c defaults --all
-    git pull origin master
-    python setup.py develop
+    pip install -e .[test]
+    pip install -e .[docs]
+    pip install -e .[test,docs]
+
+Need other useful packages in your development environment?
+
+    pip install ipython, flake8
 
 ### CRDS Setup ###
 
@@ -71,7 +80,7 @@ Documentation (built daily from `master`) is available at:
 
 https://jwst-pipeline.readthedocs.io/en/latest/
 
-One can clone this repository and build the documentation with:
+To build the docs yourself, clone this repository and build the documentation with:
 
     pip install -e .[docs]
     cd docs
@@ -94,6 +103,9 @@ Software vs DMS build version map
 
 | jwst tag | DMS build | CRDS_CONTEXT |   Date     |          Notes                           |
 | -------- | --------- | ------------ | ---------- | -----------------------------------------|
+|  0.13.6  | B7.3      | 0534         | 06/19/2019 | Final release candidate for Build 7.3    |
+|  0.13.5  | B7.3rc3   | 0534         | 06/19/2019 | Third release candidate for Build 7.3    |
+|  0.13.4  | B7.3rc2   | 0534         | 06/18/2019 | Second release candidate for Build 7.3   |
 |  0.13.3  | B7.3rc1   | 0532         | 06/04/2019 | First release candidate for Build 7.3    |
 |  0.13.2  |           | 0500*        | 05/14/2019 | DMS test, no delivery to I&T             |
 |  0.13.1  |           | 0500*        | 03/08/2019 | DMS test, no delivery to I&T             |
@@ -126,13 +138,16 @@ Unit tests can be run via `pytest`.  Within the top level of your local `jwst` r
     pip install -e .[test]
     pytest
 
+Need to parallelize your test runs over 8 cores?
+
+    pip install pytest-xdist
+    pytest -n 8
+
 
 Regression Tests
 ----------------
 
-Regression tests - both the data and the result reports - are currently only accessible to STScI staff members. If you do need information about this, please open an issue.
-
-Latest regression test results can be found here:
+Latest regression test results can be found here (STScI staff only):
 
 https://plwishmaster.stsci.edu:8081/job/RT/job/JWST/
 
@@ -143,17 +158,17 @@ To run the regression tests on your local machine, get the test dependencies and
     pip install -e .[test]
     export TEST_BIGDATA=https://bytesalad.stsci.edu/artifactory
 
-When you run the tests, the results will get written somewhere in `/tmp` or `/var` by default.  Control this with the `--basetemp` arg to `pytest`.  So to run all the regression tests:
+When you run the tests, control where the test results are written with the `--basetemp` arg to `pytest`.  So to run all the regression tests:
 
     pytest --bigdata --basetemp=<PATH> jwst/tests_nightly
 
 If you would like to run a specific test, find its name or ID and use the `-k` option:
 
-    pytest --bigdata --basetemp=<PATH> jwst/tests_nightly/general -k image3_pipeline
+    pytest --bigdata --basetemp=<PATH> jwst/tests_nightly -k image3_pipeline
 
 If developers need to update the truth files in our nightly regression tests, there are instructions in the repository wiki.
 
-https://github.com/spacetelescope/jwst/wiki/Updating-nightly-RT
+https://github.com/spacetelescope/jwst/wiki/Maintaining-Regression-Tests
 
 JupyterHub Access
 -----------------

@@ -1,3 +1,17 @@
+0.13.6 (2019-06-20)
+===================
+
+associations
+------------
+
+- Fixed constraints on WFSC processing. [#3710]
+
+datamodels
+----------
+
+- Fixed corruption of FITS tables wiht unsigned int columns. [#3680]
+
+  
 0.13.5 (2019-06-19)
 ===================
 
