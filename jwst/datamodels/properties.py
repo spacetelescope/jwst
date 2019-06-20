@@ -56,8 +56,12 @@ def _as_fitsrec(val):
         return val
     else:
         coldefs = fits.ColDefs(val)
+        uint = any(c._pseudo_unsigned_ints for c in coldefs)
         fits_rec = fits.FITS_rec(val)
         fits_rec._coldefs = coldefs
+        # FITS_rec needs to know if it should be operating in pseudo-unsigned-ints mode,
+        # otherwise it won't properly convert integer columns with TZEROn before saving.
+        fits_rec._uint = uint
         return fits_rec
 
 
