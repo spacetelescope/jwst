@@ -3,7 +3,6 @@ if (utils.scm_checkout()) return
 env_vars = [
     "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
     "CRDS_PATH=./crds_cache",
-    "CRDS+CONTEXT=jwst_0500.pmap",
 ]
 
 // pip related setup for local index, not used currently
