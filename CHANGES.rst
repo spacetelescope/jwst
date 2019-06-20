@@ -1,6 +1,12 @@
 0.13.6 (Unreleased)
 ===================
 
+flatfield
+---------
+
+- Three new unit tests were added, and two existing ones were split into
+  multiple functions. [#3704]
+
 
 0.13.5 (2019-06-19)
 ===================
