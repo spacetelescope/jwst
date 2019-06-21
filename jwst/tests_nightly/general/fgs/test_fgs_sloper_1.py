@@ -4,6 +4,7 @@ from jwst.pipeline.calwebb_detector1 import Detector1Pipeline
 from jwst.tests.base_classes import BaseJWSTTest
 
 
+@pytest.mark.skip
 @pytest.mark.bigdata
 class TestSloperPipeline(BaseJWSTTest):
     input_loc = 'fgs'
