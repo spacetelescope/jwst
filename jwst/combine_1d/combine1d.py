@@ -47,7 +47,7 @@ class InputSpectrumModel:
             to use weight = 1.
         """
 
-        self.wavelength = spec.spec_table.field("wavelength").copy()
+        self.wavelength = spec.spec_table.field("wavelength").copy().astype(np.float64)
 
         self.flux = spec.spec_table.field("flux").copy()
         self.error = spec.spec_table.field("error").copy()
