@@ -398,65 +398,6 @@ def test_replace_table():
         assert hdulist[1].header['TFORM2'] == 'D'
 
 
-def test_table_with_unsigned_int():
-    schema = {
-        'title': 'Test data model',
-        '$schema': 'http://stsci.edu/schemas/fits-schema/fits-schema',
-        'type': 'object',
-        'properties': {
-            'meta': {
-                'type': 'object',
-                'properties': {}
-            },
-            'test_table': {
-                'title': 'Test table',
-                'fits_hdu': 'TESTTABL',
-                'datatype': [
-                    {'name': 'FLOAT64_COL', 'datatype': 'float64'},
-                    {'name': 'UINT32_COL', 'datatype': 'uint32'}
-                ]
-            }
-        }
-    }
-
-    dm = DataModel(schema=schema)
-
-    float64_info = np.finfo(np.float64)
-    float64_arr = np.random.uniform(size=(10,))
-    float64_arr[0] = float64_info.min
-    float64_arr[-1] = float64_info.max
-
-    uint32_info = np.iinfo(np.uint32)
-    uint32_arr = np.random.randint(uint32_info.min, uint32_info.max + 1, size=(10,), dtype=np.uint32)
-    uint32_arr[0] = uint32_info.min
-    uint32_arr[-1] = uint32_info.max
-
-    test_table = np.array(list(zip(float64_arr, uint32_arr)), dtype=dm.test_table.dtype)
-
-    def assert_table_correct(model):
-        for idx, (col_name, col_data) in enumerate([('float64_col', float64_arr), ('uint32_col', uint32_arr)]):
-            # The table dtype and field dtype are stored separately, and may not
-            # necessarily agree.
-            assert np.can_cast(model.test_table.dtype[idx], col_data.dtype, 'equiv')
-            assert np.can_cast(model.test_table.field(col_name).dtype, col_data.dtype, 'equiv')
-            assert np.array_equal(model.test_table.field(col_name), col_data)
-
-    # The datamodel casts our array to FITS_rec on assignment, so here we're
-    # checking that the data survived the casting.
-    dm.test_table = test_table
-    assert_table_correct(dm)
-
-    # Confirm that saving the table (and converting the uint32 values to signed int w/TZEROn)
-    # doesn't mangle the data.
-    dm.save(TMP_FITS)
-    assert_table_correct(dm)
-
-    # Confirm that the data loads from the file intact (converting the signed ints back to
-    # the appropriate uint32 values).
-    dm2 = DataModel(TMP_FITS, schema=schema)
-    assert_table_correct(dm2)
-
-
 def test_metadata_from_fits():
     from astropy.io import fits
 
