@@ -1,7 +1,6 @@
 """exp_to_source: Reformat Level2b MSA data to be source-based.
 """
-from collections import OrderedDict
-from collections.abc import Callable
+from collections import OrderedDict, Callable
 
 from ..datamodels import (
     MultiExposureModel,

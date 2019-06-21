@@ -211,7 +211,7 @@ class NDModel(nddata_base.NDDataBase):
 # for the NDData interface to Datamodels
 #---------------------------------------------
 
-class MetaNode(properties.ObjectNode, collections.abc.MutableMapping):
+class MetaNode(properties.ObjectNode, collections.MutableMapping):
     """
     NDData compatibility class for meta node
     """
