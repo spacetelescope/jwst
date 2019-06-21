@@ -1,7 +1,6 @@
 """Base classes which define the Level3 Associations"""
 from collections import defaultdict
 import copy
-import pdb
 import logging
 from os.path import (
     basename,
@@ -301,6 +300,14 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
     def make_fixedslit_bkg(self):
         """Add a background to a MIR_lrs-fixedslit observation"""
+
+        # check to see if these are nodded backgrounds, if they are setup
+        # the background members, otherwise return the original association
+        if "nod" not in self.constraints['patttype_spectarg']:
+            results = []
+            results.append(self)
+            return results
+
         for product in self['products']:
             members = product['members']
             # Split out the science exposures
@@ -312,12 +319,6 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             # if there is only one science observation it cannot be the background
             # return with original association.
             if len(science_exps) < 2:
-                return
-
-            # check to see if these are nodded backgrounds, if they are setup
-            # the background members, otherwise return the original
-            if "nod" not in self.constraints['patttype']:
-                pdb.set_trace()
                 return
 
             # Create new members for each science exposure in the association,

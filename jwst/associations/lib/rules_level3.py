@@ -207,7 +207,7 @@ class Asn_SpectralTarget(AsnMixin_Spectrum):
             Constraint(
                 [
                     DMSAttrConstraint(
-                        name='patttype',
+                        name='patttype_spectarg',
                         sources=['patttype'],
                     ),
                 ],
@@ -221,7 +221,7 @@ class Asn_SpectralTarget(AsnMixin_Spectrum):
     def finalize(self):
         """Finalize assocation
 
-        For NRS Fixed-slit, finalization means creating new associations for
+        For NRS Fixed-slit, finalization means creating new members for the
         background nods.
 
         Returns
