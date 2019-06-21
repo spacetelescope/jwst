@@ -4,36 +4,10 @@ Test for flat_field.g_average
 import math
 
 import numpy as np
+from scipy.integrate import quad
+from astropy.modeling import polynomial
 
 from jwst.flatfield.flat_field import g_average
-
-def evaluate_polynomial(x, coeff):
-    """Evaluate a polynomial."""
-    n = len(coeff)
-    sum = np.zeros_like(x) + coeff[0]
-    for i in range(1, n):
-        sum = sum * x + coeff[i]
-    return sum
-
-
-def integrate_polynomial(lower, upper, coeff):
-    """Integrate a polynomial."""
-
-    # Compute the indefinite integral by modifying the coefficients,
-    # setting the constant term to 0.
-    n = len(coeff)
-    icoeff = np.zeros(n + 1, dtype=np.float64)
-    p = float(n - 1)
-    # Don't explicitly assign a value to icoeff[-1], leave it at 0.
-    for i in range(n):
-        icoeff[i] = coeff[i] / (p + 1.)
-        p -= 1.
-
-    # Compute the definite integral.
-    value = (evaluate_polynomial(upper, icoeff) -
-             evaluate_polynomial(lower, icoeff))
-
-    return value
 
 
 def test_g_average():
@@ -47,22 +21,29 @@ def test_g_average():
     with those coefficients over the tab_wl array.
     """
 
-    # Fifth-order polynomial, created using x = 5 to 11 inclusive.
-    coeff = np.array([2.0e-03, -7.8e-02, 1.15, -8.3, 30.7, -41.9],
-                     dtype=np.float64)
-
+    # Generate an array (tab_wl) of wavelengths, not uniformly spaced.
+    wl_coeff = {'c0': 5., 'c1': 1., 'c2': -0.05}
+    wl_poly = polynomial.Polynomial1D(degree=2, **wl_coeff)
     tab_index = np.arange(6000, dtype=np.float64) / 1000.
-    wl_coeff = np.array([-0.05, 1., 5.], dtype=np.float64)
-    tab_wl = evaluate_polynomial(tab_index, wl_coeff)
-    tab_flat = evaluate_polynomial(tab_wl, coeff)
+    tab_wl = wl_poly(tab_index)
+    del tab_index
+
+    coeff = {'c0': -41.9,
+             'c1': 30.7,
+             'c2': -8.3,
+             'c3': 1.15,
+             'c4': -7.8e-2,
+             'c5': 2.0e-3}
+    poly = polynomial.Polynomial1D(degree=5, **coeff)
+    tab_flat = poly(tab_wl)
 
     wl0 = 7.37
     dwl0 = 2.99
     lower = wl0 - dwl0 / 2.
     upper = wl0 + dwl0 / 2.
-    # This is the actual integral of the polynomial over wavelength, not
-    # over the non-uniformly spaced tab_wl.
-    integral = integrate_polynomial(lower, upper, coeff)
+    # Compute the integral of the polynomial over wavelength.
+    # This function returns a tuple, the integral and an error estimate.
+    integral = quad(poly, lower, upper)[0]
     # We want the average over the interval, not the integral itself.
     correct_value = integral / (upper - lower)
 
