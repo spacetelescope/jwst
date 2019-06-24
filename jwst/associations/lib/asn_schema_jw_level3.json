@@ -1,5 +1,5 @@
 {
-    "$schema": "http://json-schema.org/schema#",
+    "$schema": "http://json-schema.org/draft-04/schema",
     "title": "Association: JWST DMS Level2b->Level3",
     "description": "The data structure that, within the JWST DMS processing system, defines how to group level2b exposures to produce Level3 data products.",
     "type": "object",

@@ -1,6 +1,15 @@
 0.14.0 (Unreleased)
 ===================
 
+datamodels
+----------
+
+- Use public API of jsonschema to ease upgrade to 3.x.
+
+
+0.13.8 (Unreleased)
+===================
+
 extract_1d
 ----------
 
@@ -34,7 +43,7 @@ datamodels
 
 - Fixed corruption of FITS tables with unsigned int columns. [#3680]
 
-  
+
 0.13.5 (2019-06-19)
 ===================
 
@@ -247,7 +256,7 @@ extract_2d
 
 - Replaced a white space in the names of grism objects with an underscore. [#3517]
 
-- Update WFSS slit names to use simple integer value, and add accompanying unit 
+- Update WFSS slit names to use simple integer value, and add accompanying unit
   test for NIRCAM grism extract_2d [#3632].
 
 master_background

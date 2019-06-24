@@ -293,7 +293,7 @@ def _fits_item_recurse(validator, items, instance, schema):
 def _fits_type(validator, items, instance, schema):
     if instance in ('N/A', '#TODO', '', None):
         return
-    return validators._validators.type_draft4(validator, items, instance, schema)
+    return validators.Draft4Validator.VALIDATORS["type"](validator, items, instance, schema)
 
 
 FITS_VALIDATORS = HashableDict(asdf_schema.YAML_VALIDATORS)
