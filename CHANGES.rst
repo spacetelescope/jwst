@@ -4,7 +4,8 @@
 extract_1d
 ----------
 
-- Parameters were added to ExtractBase.__init__. [#3714]
+- Parameters were added to ExtractBase.__init__, and most of the initialization
+  is done there rather than in the subclasses. [#3714]
 
 0.13.7 (2019-06-21)
 ===================
