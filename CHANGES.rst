@@ -4,9 +4,7 @@
 extract_1d
 ----------
 
-- Parameters were added to ExtractBase.__init__, and most of the initialization
-  is done there rather than in the subclasses.
-
+- Parameters were added to ExtractBase.__init__. [#3714]
 
 0.13.7 (2019-06-21)
 ===================
@@ -33,7 +31,7 @@ associations
 datamodels
 ----------
 
-- Fixed corruption of FITS tables wiht unsigned int columns. [#3680]
+- Fixed corruption of FITS tables with unsigned int columns. [#3680]
 
   
 0.13.5 (2019-06-19)
