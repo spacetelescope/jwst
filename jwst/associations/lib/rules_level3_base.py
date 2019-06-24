@@ -300,6 +300,14 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
     def make_fixedslit_bkg(self):
         """Add a background to a MIR_lrs-fixedslit observation"""
+
+        # check to see if these are nodded backgrounds, if they are setup
+        # the background members, otherwise return the original association
+        if "nod" not in self.constraints['patttype_spectarg']:
+            results = []
+            results.append(self)
+            return results
+
         for product in self['products']:
             members = product['members']
             # Split out the science exposures
@@ -308,6 +316,11 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
                 for member in members
                 if member['exptype'] == 'science'
             ]
+            # if there is only one science observation it cannot be the background
+            # return with original association.
+            if len(science_exps) < 2:
+                return
+
             # Create new members for each science exposure in the association,
             # using the the base name + _x1d as background.
             results = []
