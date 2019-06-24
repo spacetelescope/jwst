@@ -1,12 +1,11 @@
-0.13.8 (Unreleased)
+0.14.0 (Unreleased)
 ===================
 
-flatfield
----------
+extract_1d
+----------
 
-- Three new unit tests were added, and two existing ones were split into
-  multiple functions. [#3704]
-
+- Parameters were added to ExtractBase.__init__, and most of the initialization
+  is done there rather than in the subclasses. [#3714]
 
 0.13.7 (2019-06-21)
 ===================
@@ -15,6 +14,12 @@ datamodels
 ----------
 
 - Reverted #3680 and #3709. [#3717, #3718]
+
+flatfield
+---------
+
+- Three new unit tests were added.  Two existing files were modified to
+  split the tests into separate functions. [#3704]
 
 0.13.6 (2019-06-20)
 ===================
@@ -27,7 +32,7 @@ associations
 datamodels
 ----------
 
-- Fixed corruption of FITS tables wiht unsigned int columns. [#3680]
+- Fixed corruption of FITS tables with unsigned int columns. [#3680]
 
   
 0.13.5 (2019-06-19)
