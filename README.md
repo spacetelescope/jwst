@@ -15,7 +15,7 @@ Installation
 The ``jwst`` package can be installed into a virtualenv or conda environment via ``pip``.  We recommend creating a fresh environment with only python installed.  Via conda:
 
     conda create -n jwst_env python=3.6
-    source activate jwst_env
+    conda activate jwst_env
 
 ### Installing for end-users ###
 
@@ -48,7 +48,7 @@ See the "Software vs DMS build version map" table below for a list of tags corre
 
 Fork and clone the repo:
 
-    git clone https://github.com/spacetelescope/asdf
+    git clone https://github.com/spacetelescope/jwst
 
 Install from your local checked out copy as an "editable" install:
 
@@ -63,7 +63,8 @@ This is like doing a ``setup.py develop`` install.  If you want to run the tests
 
 Need other useful packages in your development environment?
 
-    pip install ipython, flake8
+    pip install ipython
+    pip install flake8
 
 ### CRDS Setup ###
 
