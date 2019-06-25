@@ -325,7 +325,7 @@ def gentle_asarray(a, dtype):
                 new_in_dtype = []
                 for field_name in in_dtype.fields:
                     new_in_dtype.append((field_name, a.field(field_name).dtype))
-                    in_dtype = np.dtype(new_in_dtype)
+                in_dtype = np.dtype(new_in_dtype)
 
             if in_dtype == out_dtype:
                 return a
