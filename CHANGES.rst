@@ -6,6 +6,10 @@ datamodels
 
 - Use public API of jsonschema to ease upgrade to 3.x.
 
+group_scale
+-----------
+
+- Updates to documentation and log messages. [#3738]
 
 0.13.8 (Unreleased)
 ===================
