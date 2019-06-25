@@ -19,10 +19,10 @@ The ``jwst`` package can be installed into a virtualenv or conda environment via
 
 ### Installing for end-users ###
 
-To install a released (tagged) version, you can install directly from Github.  To install ``jwst 0.13.4``:
+To install a released (tagged) version, you can install directly from Github.  To install tagged release ``jwst 0.13.7``:
 
     pip install numpy
-    pip install git+https://github.com/spacetelescope/jwst#0.13.4
+    pip install git+https://github.com/spacetelescope/jwst#0.13.7
 
 The same can be done to install the latest development version (from ``master``):
 
@@ -34,14 +34,14 @@ We still package our releases to DMS via a conda spec file that lists the exact 
 To create a new environment with a specific release, use:
 
     conda create -n jwst_env --file <URL>
-    source activate jwst_env
+    conda activate jwst_env
 
 where `<URL>` is of the form:
 
-    Linux: http://ssb.stsci.edu/releases/jwstdp/0.13.4/latest-linux
-    OS X: http://ssb.stsci.edu/releases/jwstdp/0.13.4/latest-osx
+    Linux: http://ssb.stsci.edu/releases/jwstdp/0.13.7/latest-linux
+    OS X: http://ssb.stsci.edu/releases/jwstdp/0.13.7/latest-osx
 
-Other particular versions can be installed by choosing a different version tag in place of "0.13.4" in the URL path.
+Other particular versions can be installed by choosing a different version tag in place of "0.13.7" in the URL path.
 See the "Software vs DMS build version map" table below for a list of tags corresponding to particular releases.
 
 ### Installing for developers ###
@@ -104,7 +104,8 @@ Software vs DMS build version map
 
 | jwst tag | DMS build | CRDS_CONTEXT |   Date     |          Notes                           |
 | -------- | --------- | ------------ | ---------- | -----------------------------------------|
-|  0.13.6  | B7.3      | 0534         | 06/19/2019 | Final release candidate for Build 7.3    |
+|  0.13.7  | B7.3      | 0535         | 06/21/2019 | Final release candidate for Build 7.3    |
+|  0.13.6  | B7.3rc4   | 0534         | 06/20/2019 | Fourth release candidate for Build 7.3   |
 |  0.13.5  | B7.3rc3   | 0534         | 06/19/2019 | Third release candidate for Build 7.3    |
 |  0.13.4  | B7.3rc2   | 0534         | 06/18/2019 | Second release candidate for Build 7.3   |
 |  0.13.3  | B7.3rc1   | 0532         | 06/04/2019 | First release candidate for Build 7.3    |
