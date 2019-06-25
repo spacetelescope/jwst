@@ -1,6 +1,9 @@
 0.14.0 (Unreleased)
 ===================
 
+- Remove references to deprecated collections.* ABCs that will be removed in
+  Python 3.8. [#3732]
+
 datamodels
 ----------
 
