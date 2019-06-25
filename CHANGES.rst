@@ -4,7 +4,9 @@
 datamodels
 ----------
 
-- Use public API of jsonschema to ease upgrade to 3.x.
+- Use public API of jsonschema to ease upgrade to 3.x. [#3705]
+
+- Fixed corruption of FITS tables with unsigned int columns. [#3736]
 
 
 0.13.8 (Unreleased)
