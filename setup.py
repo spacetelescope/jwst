@@ -200,7 +200,6 @@ setup(
         'stsci.image>=2.3',
         'stsci.imagestats>=1.4',
         'stsci.stimage>=0.2',
-        'verhawk',
     ],
     extras_require={
         'docs': DOCS_REQUIRE,
