@@ -5,9 +5,9 @@ The `group_scale` step rescales pixel values in raw JWST science
 data products to correct for instances where on-board frame averaging 
 did not result in the proper values.
 
-When multiple frames are averaged together on board into a single
+When multiple frames are averaged together on-board into a single
 group, the sum of the frames is computed and then the sum is
-divided by the number of frames to compute an average. Division by
+divided by the number of frames to compute the average. Division by
 the number of frames is accomplished by simply bit-shifting the
 sum by an appropriate number of bits, corresponding to the 
 decimal value of the number of frames. For example, when 2 frames
