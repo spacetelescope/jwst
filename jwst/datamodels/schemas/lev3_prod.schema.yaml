@@ -4,18 +4,15 @@ properties:
     type: object
     properties:
       resample:
-        # 2019-06-12: Title has changed to "Resampling parameter information" in keyword dictionary.
-        title: Metadata describing resampling done using this data
+        title: Resampling parameter information
         type: object
         properties:
           pointings:
-            # 2019-06-12: Title has changed to "Number of groups/pointings included in resampled product" in keyword dictionary.
-            title: Number of pointings included in resampled product
+            title: "Number of groups/pointings included in resampled product"
             type: integer
             fits_keyword: NDRIZ
           product_exposure_time:
-            # 2019-06-12: Title has changed to "[s] Total exposure time for product" in keyword dictionary.
-            title: Total exposure time for product
+            title: "[s] Total exposure time for product"
             type: number
             fits_keyword: TEXPTIME
           weight_type:
