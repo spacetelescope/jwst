@@ -20,10 +20,11 @@ from jwst import datamodels
 def test_open_fits():
     """Test opening a model from a FITS file"""
 
-    warnings.simplefilter("ignore")
-    fits_file = t_path('test.fits')
-    with datamodels.open(fits_file) as model:
-        assert isinstance(model, DataModel)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "model_type not found")
+        fits_file = t_path('test.fits')
+        with datamodels.open(fits_file) as model:
+            assert isinstance(model, DataModel)
 
 
 def test_open_fits_s3(s3_root_dir):
@@ -81,10 +82,11 @@ def test_open_hdulist():
 
 
 def test_open_image():
-    warnings.simplefilter("ignore")
-    image_name = t_path('jwst_image.fits')
-    with datamodels.open(image_name) as model:
-        assert type(model) == ImageModel
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "model_type not found")
+        image_name = t_path('jwst_image.fits')
+        with datamodels.open(image_name) as model:
+            assert type(model) == ImageModel
 
 
 def test_open_reference_files():
@@ -94,32 +96,33 @@ def test_open_reference_files():
              'nircam_gain.fits' : GainModel,
              'nircam_readnoise.fits' : ReadnoiseModel}
 
-    warnings.simplefilter("ignore")
-    for base_name, klass in files.items():
-        file = t_path(base_name)
-        model = datamodels.open(file)
-        if model.shape:
-            ndim = len(model.shape)
-        else:
-            ndim = 0
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "model_type not found")
+        for base_name, klass in files.items():
+            file = t_path(base_name)
+            model = datamodels.open(file)
+            if model.shape:
+                ndim = len(model.shape)
+            else:
+                ndim = 0
 
-        if ndim == 0:
-            my_klass = ReferenceFileModel
-        elif ndim == 2:
-            my_klass = ReferenceImageModel
-        elif ndim == 3:
-            my_klass = ReferenceCubeModel
-        elif ndim == 4:
-            my_klass = ReferenceQuadModel
-        else:
-            my_klass = None
+            if ndim == 0:
+                my_klass = ReferenceFileModel
+            elif ndim == 2:
+                my_klass = ReferenceImageModel
+            elif ndim == 3:
+                my_klass = ReferenceCubeModel
+            elif ndim == 4:
+                my_klass = ReferenceQuadModel
+            else:
+                my_klass = None
 
-        assert isinstance(model, my_klass)
-        model.close()
+            assert isinstance(model, my_klass)
+            model.close()
 
-        model = klass(file)
-        assert isinstance(model, klass)
-        model.close()
+            model = klass(file)
+            assert isinstance(model, klass)
+            model.close()
 
 
 def test_open_fits_readonly(tmpdir):
