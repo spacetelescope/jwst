@@ -1,9 +1,4 @@
-# Licensed under a 3-clause BSD style license - see LICENSE.rst
-
 import datetime
-import os
-import shutil
-import tempfile
 
 import numpy as np
 from astropy.io import fits
@@ -13,19 +8,6 @@ from asdf.tags.core import HistoryEntry
 
 from .. import DataModel
 
-TMP_FITS = None
-TMP_DIR = None
-
-
-def setup():
-    global TMP_DIR, TMP_FITS
-
-    TMP_DIR = tempfile.mkdtemp()
-    TMP_FITS = os.path.join(TMP_DIR, 'tmp.fits')
-
-
-def teardown():
-    shutil.rmtree(TMP_DIR)
 
 def test_historylist_methods():
     m = DataModel()
@@ -61,7 +43,8 @@ def test_historylist_methods():
     h1.clear()
     assert len(h1) == 0, "Clear history list"
 
-def test_history_from_model_to_fits():
+def test_history_from_model_to_fits(tmpdir):
+    tmpfits = str(tmpdir.join('tmp.fits'))
     m = DataModel()
     m.history = [HistoryEntry({
         'description': 'First entry',
@@ -70,13 +53,13 @@ def test_history_from_model_to_fits():
         'description': 'Second entry',
         'time': Time(datetime.datetime.now())
     }))
-    m.save(TMP_FITS)
+    m.save(tmpfits)
 
-    with fits.open(TMP_FITS, memmap=False) as hdulist:
-        assert list(hdulist[0].header['HISTORY']) == ["First entry", 
+    with fits.open(tmpfits, memmap=False) as hdulist:
+        assert list(hdulist[0].header['HISTORY']) == ["First entry",
                                                       "Second entry"]
 
-    with DataModel(TMP_FITS) as m2:
+    with DataModel(tmpfits) as m2:
         m2 = DataModel()
         m2.update(m)
         m2.history = m.history
@@ -84,20 +67,21 @@ def test_history_from_model_to_fits():
         assert m2.history == [{'description': "First entry"},
                               {'description': "Second entry"}]
 
-        m2.save(TMP_FITS)
+        m2.save(tmpfits)
 
-    with fits.open(TMP_FITS, memmap=False) as hdulist:
+    with fits.open(tmpfits, memmap=False) as hdulist:
         assert list(hdulist[0].header['HISTORY']) == ["First entry",
                                                       "Second entry"]
 
 
-def test_history_from_fits():
+def test_history_from_fits(tmpdir):
+    tmpfits = str(tmpdir.join('tmp.fits'))
     header = fits.Header()
     header['HISTORY'] = "First entry"
     header['HISTORY'] = "Second entry"
-    fits.writeto(TMP_FITS, np.array([]), header, overwrite=True)
+    fits.writeto(tmpfits, np.array([]), header, overwrite=True)
 
-    with DataModel(TMP_FITS) as m:
+    with DataModel(tmpfits) as m:
         assert m.history == [{'description': 'First entry'},
                              {'description': 'Second entry'}]
 
@@ -105,8 +89,8 @@ def test_history_from_fits():
         m.history.append(HistoryEntry({'description': "Third entry"}))
         assert m.history == [{'description': "Second entry"},
                              {'description': "Third entry"}]
-        m.save(TMP_FITS)
+        m.save(tmpfits)
 
-    with DataModel(TMP_FITS) as m:
+    with DataModel(tmpfits) as m:
         assert m.history == [{'description': "Second entry"},
                              {'description': "Third entry"}]

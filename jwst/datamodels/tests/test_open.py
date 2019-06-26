@@ -10,11 +10,10 @@ import pytest
 import numpy as np
 from astropy.io import fits
 
-from ..util import open
-from .. import (DataModel, ModelContainer, ImageModel, ReferenceFileModel,
-                ReferenceImageModel, ReferenceCubeModel, ReferenceQuadModel,
-                FlatModel, MaskModel, NrcImgPhotomModel, GainModel,
-                ReadnoiseModel, DistortionModel)
+from jwst.datamodels import (DataModel, ModelContainer, ImageModel,
+    ReferenceFileModel, ReferenceImageModel, ReferenceCubeModel,
+    ReferenceQuadModel, FlatModel, MaskModel, NircamPhotomModel, GainModel,
+    ReadnoiseModel, DistortionModel)
 from jwst import datamodels
 
 
@@ -23,8 +22,9 @@ def test_open_fits():
 
     warnings.simplefilter("ignore")
     fits_file = t_path('test.fits')
-    with open(fits_file) as model:
+    with datamodels.open(fits_file) as model:
         assert isinstance(model, DataModel)
+
 
 def test_open_fits_s3(s3_root_dir):
     """Test opening a model from a FITS file on S3"""
@@ -32,8 +32,9 @@ def test_open_fits_s3(s3_root_dir):
     with DataModel() as dm:
         dm.save(path)
 
-    m = open("s3://test-s3-data/test.fits")
-    assert isinstance(m, DataModel)
+    with datamodels.open("s3://test-s3-data/test.fits") as m:
+        assert isinstance(m, DataModel)
+
 
 def test_open_asdf_s3(s3_root_dir):
     """Test opening a model from an ASDF file on S3"""
@@ -41,8 +42,9 @@ def test_open_asdf_s3(s3_root_dir):
     with DataModel() as dm:
         dm.save(path)
 
-    m = open("s3://test-s3-data/test.asdf")
-    assert isinstance(m, DataModel)
+    with datamodels.open("s3://test-s3-data/test.asdf") as m:
+        assert isinstance(m, DataModel)
+
 
 def test_open_association():
     """Test for opening an association"""
@@ -50,18 +52,21 @@ def test_open_association():
     asn_file = t_path('association.json')
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", "model_type not found")
-        with open(asn_file) as c:
+        with datamodels.open(asn_file) as c:
             assert isinstance(c, ModelContainer)
+
 
 def test_open_shape():
     init = (200, 200)
-    with open(init) as model:
+    with datamodels.open(init) as model:
         assert type(model) == ImageModel
+
 
 def test_open_illegal():
     with pytest.raises(ValueError):
         init = 5
-        open(init)
+        datamodels.open(init)
+
 
 def test_open_hdulist():
     hdulist = fits.HDUList()
@@ -71,13 +76,14 @@ def test_open_hdulist():
     science = fits.ImageHDU(data=data, name='SCI')
     hdulist.append(science)
 
-    with open(hdulist) as model:
+    with datamodels.open(hdulist) as model:
         assert type(model) == ImageModel
+
 
 def test_open_image():
     warnings.simplefilter("ignore")
     image_name = t_path('jwst_image.fits')
-    with open(image_name) as model:
+    with datamodels.open(image_name) as model:
         assert type(model) == ImageModel
 
 
@@ -91,7 +97,7 @@ def test_open_reference_files():
     warnings.simplefilter("ignore")
     for base_name, klass in files.items():
         file = t_path(base_name)
-        model = open(file)
+        model = datamodels.open(file)
         if model.shape:
             ndim = len(model.shape)
         else:
@@ -115,6 +121,7 @@ def test_open_reference_files():
         assert isinstance(model, klass)
         model.close()
 
+
 def test_open_fits_readonly(tmpdir):
     """Test opening a FITS-format datamodel that is read-only on disk"""
     tmpfile = str(tmpdir.join('readonly.fits'))
@@ -132,6 +139,7 @@ def test_open_fits_readonly(tmpdir):
 
     with datamodels.open(tmpfile) as model:
         assert model.meta.telescope == 'JWST'
+
 
 def test_open_asdf_readonly(tmpdir):
     tmpfile = str(tmpdir.join('readonly.asdf'))
