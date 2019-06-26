@@ -169,12 +169,11 @@ class TweakRegStep(Step):
         )
 
         for imcat in imcats:
+            imcat.meta['image_model'].meta.cal_step.tweakreg = 'COMPLETE'
+            # retrieve fit status and update wcs if fit is successful:
             fit_info = imcat.meta.get('fit_info')
-            if fit_info['status'] == 'SUCCESS':
-                imcat.meta['image_model'].meta.cal_step.tweakreg = 'COMPLETE'
+            if fit_info['status'] in 'SUCCESS':
                 imcat.meta['image_model'].meta.wcs = imcat.wcs
-            else:
-                imcat.meta['image_model'].meta.cal_step.tweakreg = 'SKIPPED'
 
         return images
 
