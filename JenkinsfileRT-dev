@@ -31,7 +31,7 @@ data_config.match_prefix = '(.*)_result' // .json is appended automatically
 // Build and test with python 3.6 and released dependencies from astroconda
 bc = new BuildConfig()
 bc.nodetype = 'jwst'
-bc.name = 'stable'
+bc.name = 'dev'
 bc.env_vars = env_vars
 bc.conda_ver = '4.7.5'
 bc.conda_packages = [
@@ -39,6 +39,7 @@ bc.conda_packages = [
 ]
 bc.build_cmds = [
     "pip install numpy",
+    "pip install -r requirements-dev.txt",
     "pip install -e .[test]",
     "pip install pytest-xdist",
 ]
