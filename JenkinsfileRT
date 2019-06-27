@@ -28,7 +28,7 @@ data_config.server_id = 'bytesalad'
 data_config.root = '${pytest_basetemp}'
 data_config.match_prefix = '(.*)_result' // .json is appended automatically
 
-// Build and test with python 3.6 and released dependencies from astroconda
+// Build and test
 bc = new BuildConfig()
 bc.nodetype = 'jwst'
 bc.name = 'stable'
