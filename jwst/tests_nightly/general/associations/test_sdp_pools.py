@@ -30,7 +30,7 @@ EXPECTED_FAILS = {
 # Pools that require special handling
 SPECIAL_DEFAULT = {
     'args': [],
-    'xfail': None
+    'xfail': None,
 }
 SPECIAL_POOLS = {
     'jw80600_20171108T041522_pool': {
@@ -40,6 +40,10 @@ SPECIAL_POOLS = {
     'jw98010_20171108T062332_pool': {
         'args': [],
         'xfail': 'PR #3450',
+    },
+    'jw00626_20190625t115022_pool': {
+        'args': [],
+        'xfail': 'JP-829',
     },
 }
 
@@ -98,6 +102,9 @@ class TestSDPPools(SDPPoolsSource):
     def test_dup_product_names(self, pool_path):
         """Check for duplicate product names for a pool"""
 
+        pool = Path(pool_path).stem
+        special = SPECIAL_POOLS.get(pool, SPECIAL_DEFAULT)
+
         results = asn_generate([
             '--dry-run',
             '--no-merge',
@@ -117,7 +124,13 @@ class TestSDPPools(SDPPoolsSource):
             if count > 1
         ]
 
-        assert not multiples, 'Multiple product names: {}'.format(multiples)
+        try:
+            assert not multiples, 'Multiple product names: {}'.format(multiples)
+        except AssertionError:
+            if special['xfail']:
+                pytest.xfail(special['xfail'])
+            else:
+                raise
 
     def test_asns_by_pool(self, sdp_pool):
         """Test a command-line specified pool"""
