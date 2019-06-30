@@ -14,7 +14,7 @@ logger.addHandler(logging.NullHandler())
 # #########################
 # Define the types of diffs
 # #########################
-class DiffError(Exception):
+class DiffError(AssertionError):
     """Base Class for difference errors"""
 
 
@@ -294,15 +294,15 @@ def compare_membership(left, right):
                         ''.format(left_expname=left_member['expname'], left_exptype=left_member['exptype'])
                     ))
 
-                if len(members_right) != 0:
-                    diffs.append(MemberMismatchError(
-                        'Right has {len_over} unaccounted for members starting with'
-                        ' {right_expname}:{right_exptype}'
-                        ''.format(len_over=len(members_right),
-                                  right_expname=members_right[0]['expname'],
-                                  right_exptype=members_right[0]['exptype']
-                        )
-                    ))
+            if len(members_right) != 0:
+                diffs.append(MemberMismatchError(
+                    'Right has {len_over} unaccounted for members starting with'
+                    ' {right_expname}:{right_exptype}'
+                    ''.format(len_over=len(members_right),
+                              right_expname=members_right[0]['expname'],
+                              right_exptype=members_right[0]['exptype']
+                    )
+                ))
 
             products_right.remove(right_product)
             break
