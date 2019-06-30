@@ -90,21 +90,13 @@ IMAGE2_SCIENCE_EXP_TYPES = [
 
 IMAGE2_NONSCIENCE_EXP_TYPES = [
     'mir_coroncal',
-    'mir_tacq',
     'nis_focus',
-    'nis_tacq',
-    'nis_taconfirm',
-    'nrc_tacq',
-    'nrc_taconfirm',
     'nrc_focus',
-    'nrs_confirm',
     'nrs_focus',
     'nrs_image',
     'nrs_mimf',
-    'nrs_taslit',
-    'nrs_tacq',
-    'nrs_taconfirm',
 ]
+IMAGE2_NONSCIENCE_EXP_TYPES.extend(ACQ_EXP_TYPES)
 
 SPEC2_SCIENCE_EXP_TYPES = [
     'nrc_tsgrism',
