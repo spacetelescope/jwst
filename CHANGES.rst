@@ -16,6 +16,11 @@ group_scale
 
 - Updates to documentation and log messages. [#3738]
 
+lib
+---
+
+- A function to determine the dispersion direction has been added. [#3756]
+
 0.13.8 (Unreleased)
 ===================
 
