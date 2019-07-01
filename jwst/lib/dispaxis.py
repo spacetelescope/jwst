@@ -3,7 +3,7 @@ import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-def get_dispersion_direction(exposure_type, grating="ANY", filter="ANY",
+def get_dispersion_direction(exposure_type, grating="ANY", filter_wh="ANY",
                              pupil="ANY"):
     """Get the dispersion direction.
 
@@ -15,7 +15,7 @@ def get_dispersion_direction(exposure_type, grating="ANY", filter="ANY",
     grating : str
         The name of the optic in the grating wheel.
 
-    filter : str
+    filter_wh : str
         The name of the optic in the filter wheel.
 
     pupil : str
@@ -23,16 +23,16 @@ def get_dispersion_direction(exposure_type, grating="ANY", filter="ANY",
 
     Returns
     -------
-    int : The dispersion direction
+    int or None : The dispersion direction
 
--       0  the dispersion direction is not meaningful or not defined
+-    None  the dispersion direction is not meaningful or not defined
 -       1  the dispersion direction is horizontal ("sky" coordinates)
 -       2  the dispersion direction is vertical ("sky" coordinates)
     """
 
     exposure_type = exposure_type.upper()
     grating = grating.upper()
-    filter = filter.upper()
+    filter_wh = filter_wh.upper()
     pupil = pupil.upper()
 
     # The keys of the `by_exp_type` dictionary are values of exposure type.
@@ -45,87 +45,87 @@ def get_dispersion_direction(exposure_type, grating="ANY", filter="ANY",
     # that will be the dispersion direction.
     by_exp_type = {
         # FGS science
-        "FGS_DARK": 0,
-        "FGS_FOCUS": 0,
-        "FGS_IMAGE": 0,
-        "FGS_INTFLAT": 0,
-        "FGS_SKYFLAT": 0,
+        "FGS_DARK": None,
+        "FGS_FOCUS": None,
+        "FGS_IMAGE": None,
+        "FGS_INTFLAT": None,
+        "FGS_SKYFLAT": None,
         # FGS guide star
-        "FGS_ACQ1": 0,
-        "FGS_ACQ2": 0,
-        "FGS_FINEGUIDE": 0,
-        "FGS_ID-IMAGE": 0,
-        "FGS_ID-STACK": 0,
-        "FGS_TRACK": 0,
+        "FGS_ACQ1": None,
+        "FGS_ACQ2": None,
+        "FGS_FINEGUIDE": None,
+        "FGS_ID-IMAGE": None,
+        "FGS_ID-STACK": None,
+        "FGS_TRACK": None,
         # MIRI
-        "MIR_4QPM": 0,
-        "MIR_CORONCAL": 0,
-        "MIR_DARKALL": 0,
-        "MIR_DARKIMG": 0,
-        "MIR_DARKMRS": 0,
-        "MIR_FLATALL": 0,
-        "MIR_FLATIMAGE": 0,
-        "MIR_FLATIMAGE-EXT": 0,
+        "MIR_4QPM": None,
+        "MIR_CORONCAL": None,
+        "MIR_DARKALL": None,
+        "MIR_DARKIMG": None,
+        "MIR_DARKMRS": None,
+        "MIR_FLATALL": None,
+        "MIR_FLATIMAGE": None,
+        "MIR_FLATIMAGE-EXT": None,
         "MIR_FLATMRS": 2,
         "MIR_FLATMRS-EXT": 2,
-        "MIR_IMAGE": 0,
+        "MIR_IMAGE": None,
         "MIR_LRS-FIXEDSLIT": 2,
         "MIR_LRS-SLITLESS": 2,
-        "MIR_LYOT": 0,
+        "MIR_LYOT": None,
         "MIR_MRS": 2,
-        "MIR_TACQ": 0,
+        "MIR_TACQ": None,
         # NIRISS
-        "NIS_AMI": 0,
-        "NIS_DARK": 0,
-        "NIS_EXTCAL": 0,
-        "NIS_FOCUS": 0,
-        "NIS_IMAGE": 0,
-        "NIS_LAMP": 0,
+        "NIS_AMI": None,
+        "NIS_DARK": None,
+        "NIS_EXTCAL": None,
+        "NIS_FOCUS": None,
+        "NIS_IMAGE": None,
+        "NIS_LAMP": None,
         "NIS_SOSS": 1,
-        "NIS_TACQ": 0,
-        "NIS_TACONFIRM": 0,
-        "NIS_WFSS": (exposure_type, "ANY", filter, "ANY"),
+        "NIS_TACQ": None,
+        "NIS_TACONFIRM": None,
+        "NIS_WFSS": (exposure_type, "ANY", filter_wh, "ANY"),
         # NIRCam
-        "NRC_CORON": 0,
-        "NRC_DARK": 0,
-        "NRC_FLAT": 0,
-        "NRC_FOCUS": 0,
+        "NRC_CORON": None,
+        "NRC_DARK": None,
+        "NRC_FLAT": None,
+        "NRC_FOCUS": None,
         "NRC_GRISM": (exposure_type, "ANY", "ANY", pupil),
-        "NRC_IMAGE": 0,
+        "NRC_IMAGE": None,
         "NRC_WFSS": (exposure_type, "ANY", "ANY", pupil),
-        "NRC_LED": 0,
-        "NRC_WFSC": 0,
-        "NRC_TACONFIRM": 0,
-        "NRC_TACQ": 0,
+        "NRC_LED": None,
+        "NRC_WFSC": None,
+        "NRC_TACONFIRM": None,
+        "NRC_TACQ": None,
         "NRC_TSGRISM": (exposure_type, "ANY", "ANY", pupil),
-        "NRC_TSIMAGE": 0,
+        "NRC_TSIMAGE": None,
         # NIRSpec
-        "NRS_AUTOFLAT": 0,
+        "NRS_AUTOFLAT": None,
         "NRS_AUTOWAVE": 1,
         "NRS_BRIGHTOBJ": 1,
-        "NRS_CONFIRM": 0,
-        "NRS_DARK": 0,
+        "NRS_CONFIRM": None,
+        "NRS_DARK": None,
         "NRS_FIXEDSLIT": 1,
-        "NRS_FOCUS": 0,
+        "NRS_FOCUS": None,
         "NRS_IFU": 1,
-        "NRS_IMAGE": 0,
+        "NRS_IMAGE": None,
         "NRS_LAMP":  1,
-        "NRS_MIMF": 0,
+        "NRS_MIMF": None,
         "NRS_MSASPEC": 1,
-        "NRS_MSATA": 0,
-        "NRS_TACONFIRM": 0,
-        "NRS_TACQ": 0,
-        "NRS_TASLIT": 0,
-        "NRS_WATA": 0,
+        "NRS_MSATA": None,
+        "NRS_TACONFIRM": None,
+        "NRS_TACQ": None,
+        "NRS_TASLIT": None,
+        "NRS_WATA": None,
         # Misc
-        "N/A": 0,
-        "ANY": 0
+        "N/A": None,
+        "ANY": None
     }
 
     if exposure_type not in by_exp_type.keys():
-        return 0
+        return None
 
-    # The strings in each tuple are exposure_type, grating, filter, pupil.
+    # The strings in each tuple are exposure_type, grating, filter_wh, pupil.
     second_pass = {
         ("NIS_WFSS", "ANY", "GR150R", "ANY"): 2,
         ("NIS_WFSS", "ANY", "GR150C", "ANY"): 1,
@@ -149,4 +149,4 @@ def get_dispersion_direction(exposure_type, grating="ANY", filter="ANY",
             log.warning("Error in get_dispersion_direction:  {} not in "
                         "`second_pass`".format(select))
             log.warning("Dispersion direction could not be determined.")
-            return 0
+            return None
