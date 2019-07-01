@@ -4,6 +4,10 @@
 - Remove references to deprecated collections.* ABCs that will be removed in
   Python 3.8. [#3732]
 
+associations
+------------
+- Add a check that backgrounds are included in level 3 associations [#3678]
+
 datamodels
 ----------
 
