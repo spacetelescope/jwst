@@ -11,6 +11,8 @@ datamodels
 
 - Fixed corruption of FITS tables with unsigned int columns. [#3736]
 
+- Fixed missing TUNITn keywords caused by changes for unsigned int columns. [#3753]
+
 group_scale
 -----------
 
