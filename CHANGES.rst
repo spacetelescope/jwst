@@ -1,11 +1,20 @@
 0.14.0 (Unreleased)
 ===================
 
+- Remove references to deprecated collections.* ABCs that will be removed in
+  Python 3.8. [#3732]
+
 datamodels
 ----------
 
-- Use public API of jsonschema to ease upgrade to 3.x.
+- Use public API of jsonschema to ease upgrade to 3.x. [#3705]
 
+- Fixed corruption of FITS tables with unsigned int columns. [#3736]
+
+group_scale
+-----------
+
+- Updates to documentation and log messages. [#3738]
 
 0.13.8 (Unreleased)
 ===================

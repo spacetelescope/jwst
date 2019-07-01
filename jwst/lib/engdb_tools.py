@@ -17,7 +17,9 @@ logger.addHandler(logging.NullHandler())
 # #############################################
 # Where is the engineering service? Its HERE!!!
 # #############################################
-ENGDB_HOST = 'http://iwjwdmsbemweb.stsci.edu/'
+
+# This is currently set to the D-string hostname:
+ENGDB_HOST = 'http://twjwdmsemweb.stsci.edu/'
 ENGDB_BASE_URL = ''.join([
     ENGDB_HOST,
     'JWDMSEngFqAcc/',
