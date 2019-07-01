@@ -17,13 +17,14 @@ datamodels
 
 - Fixed missing TUNITn keywords caused by changes for unsigned int columns. [#3753]
 
+- Write ``siaf_xref_sci`` and ``siaf_yref_sci`` to FITS keywords ``XREF_SCI``
+  and ``YREF_SCI`` for ``NRC_TSGRISM`` exposures. [#3766]
+
 group_scale
 -----------
 
 - Updates to documentation and log messages. [#3738]
 
-0.13.8 (Unreleased)
-===================
 
 extract_1d
 ----------

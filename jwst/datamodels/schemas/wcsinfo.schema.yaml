@@ -301,6 +301,10 @@ properties:
           siaf_xref_sci:
             title: Aperture X reference point in SCI frame from SIAF (NRC_TSGRISM mode)
             type: number
-          siaf_xref_sci:
+            fits_keyword: XREF_SCI
+            fits_hdu: SCI
+          siaf_yref_sci:
             title: Aperture Y reference point in SCI frame from SIAF (NRC_TSGRISM mode)
             type: number
+            fits_keyword: YREF_SCI
+            fits_hdu: SCI
