@@ -2,7 +2,7 @@ Description
 ===========
  
 Steps in the pipelines calculate arrays for variances, or modify variance arrays 
-from <previous steps> in the pipeline.  In some cases these arrays are only used 
+from previous steps in the pipeline.  In some cases these arrays are only used 
 internally to the current step.  For several steps, these arrays must be propagated to
 subsequent steps in the pipeline, or included in the cumulate error array.
 
@@ -263,7 +263,7 @@ surface brightness of cube spaxels in units of mJy/arcsecond^2, and the ERR
 extension contains the uncertainty on the SCI values.
 
 
-Stage 3 Coronographic Processing Pipeline - calwebb_coron3
+Stage 3 Coronographic Processing Pipeline - calwebb_coron3 
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 The stage 3 coronagraphic pipeline is to be applied to associations of
 calibrated NIRCam coronagraphic and MIRI Lyot and 4QPM exposures, and is used 
@@ -275,7 +275,7 @@ For more details on this pipeline see `Calwebb_coron3
 <https://jwst-pipeline.readthedocs.io/en/latest/jwst/pipeline/calwebb_coron3.html>`_
 
 
-Outlier_detection 
+Outlier_detection
 ~~~~~~~~~~~~~~~~~
 This step uses the ERR array to make a local noise model, based on the readnoise
 and calibration errors of earlier steps in the pipeline. This step does not modify
@@ -350,25 +350,25 @@ the flat fielding correction, see `Flatfielding
 <https://jwst-pipeline.readthedocs.io/en/latest/jwst/flatfield/index.html>`_
 
 
-The table below is a summary of which steps create and output arrays related to 
-the cumulative error, modify and output the arrays, or use locally but do not
-output modified arrays, and which level pipelines each step is in.
+The table below is a summary of which steps create and output variance arrays,
+modify and output the cumulate error or variance arrays, use locally but do not output arrays,
+and which level pipelines each step is in.
 
 
-================= ===================== ========================== ========================== ==========================
-STEP                   Creates & output arrays       Modifies and outputs arrays    Step-specific use of arrays  Pipeline Level
-================= ===================== ========================== ========================== ==========================
-photom               None                            ERR, VAR_POISSON, VAR_RNOISE, VAR_FLAT    None      Stages 2,3
-flat field           VAR_FLAT                        ERR, VAR_POISSON, VAR_RNOISE              None      Stage 2, Guide Star
-wfs_combine          None                            ERR                                       None      Stage 3
-group_scale          None                            ERR, VAR_POISSON, VAR_RNOISE              None      Stage 1, Dark Pipeline
-fringe               None                            ERR                                       None      Stage 2
-cube_build           None                            ERR                                       None      Stages 2,3
-bar shadow           None                            ERR, VAR_POISSON, VAR_RNOISE, VAR_FLAT    None      Stage 2
-outlier detection    None                            None                                      ERR       Stage 3
-ramp_fitting         VAR_POISSON, VAR_RNOISE         None                                      None      Stage 1
+================= ======================= ====================================== ============================ ======================
+STEP              Creates arrays          Modifies arrays                        Step-specific use of arrays  Pipeline Level
+================= ======================= ====================================== ============================ ======================
+photom            None                    ERR, VAR_POISSON, VAR_RNOISE, VAR_FLAT None                         Stages 2,3
+flat field        VAR_FLAT                ERR, VAR_POISSON, VAR_RNOISE           None                         Stage 2, Guide Star
+wfs_combine       None                    ERR                                    None                         Stage 3
+group_scale       None                    ERR, VAR_POISSON, VAR_RNOISE           None                         Stage 1, Dark Pipeline
+fringe            None                    ERR                                    None                         Stage 2
+cube_build        None                    ERR                                    None                         Stages 2,3
+bar shadow        None                    ERR, VAR_POISSON, VAR_RNOISE, VAR_FLAT None                         Stage 2
+outlier detection None                    None                                   ERR                          Stage 3
+ramp_fitting      VAR_POISSON, VAR_RNOISE None                                   None                         Stage 1
 
-================= ===================== ========================== ========================== ==========================
+================= ======================= ====================================== ============================ ======================
 
 
 
