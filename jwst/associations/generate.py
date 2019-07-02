@@ -53,15 +53,15 @@ def generate(pool, rules, version_id=None):
     ])
 
     for process_list in process_queue:
-        logger.debug(
-            'Working process list:'
-            f'\n\t#items {len(process_list.items)}'
-            f' working over {process_list.work_over}'
-            f' matching on {process_list.only_on_match}'
-            f'\n\trules {process_list.rules}'
-        )
+        # logger.debug(
+        #     'Working process list:'
+        #     f'\n\t#items {len(process_list.items)}'
+        #     f' working over {process_list.work_over}'
+        #     f' matching on {process_list.only_on_match}'
+        #     f'\n\trules {process_list.rules}'
+        # )
         for item in process_list.items:
-            logger.debug(f'Processing item {item}')
+            # logger.debug(f'Processing item {item}')
             existing_asns, new_asns, to_process = generate_from_item(
                 item,
                 version_id,
@@ -69,8 +69,8 @@ def generate(pool, rules, version_id=None):
                 rules,
                 process_list
             )
-            logger.debug(f'Associations updated: {existing_asns}')
-            logger.debug(f'New associations: {new_asns}')
+            # logger.debug(f'Associations updated: {existing_asns}')
+            # logger.debug(f'New associations: {new_asns}')
             associations.extend(new_asns)
 
             # If working on a process list EXISTING
@@ -154,9 +154,9 @@ def generate_from_item(
             for asn in associations
             if type(asn) in allowed_rules
         ]
-        logger.debug(
-            f'Checking against {len(associations)} existing associations'
-        )
+        # logger.debug(
+        #     f'Checking against {len(associations)} existing associations'
+        # )
         existing_asns, reprocess_list = match_item(
             item, associations
         )
@@ -171,7 +171,7 @@ def generate_from_item(
             ProcessList.RULES,
     ) and rules is not None:
         ignore_asns = set([type(asn) for asn in existing_asns])
-        logger.debug(f'Ignore asns {ignore_asns}')
+        # logger.debug(f'Ignore asns {ignore_asns}')
         new_asns, reprocess = rules.match(
             item,
             version_id=version_id,
