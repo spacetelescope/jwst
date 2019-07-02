@@ -5,16 +5,14 @@ from os.path import (
 )
 
 import pytest
-import numpy as np
 
-from ..config_parser import ValidationError
+from jwst import datamodels
+from jwst.stpipe import Step
+from jwst.stpipe.config_parser import ValidationError
 
 
 def test_hook():
     """Test the running of hooks"""
-    from .. import Step
-    from ... import datamodels
-
     step_fn = join(dirname(__file__), 'steps', 'stepwithmodel_hook.cfg')
     step = Step.from_config_file(step_fn)
 
@@ -29,9 +27,6 @@ def test_hook():
 
 def test_hook_with_return():
     """Test the running of hooks"""
-    from .. import Step
-    from ... import datamodels
-
     step_fn = join(dirname(__file__), 'steps', 'stepwithmodel_hookreturn.cfg')
     step = Step.from_config_file(step_fn)
 
@@ -44,8 +39,6 @@ def test_hook_with_return():
 
 
 def test_step():
-    from .. import Step
-
     step_fn = join(dirname(__file__), 'steps', 'some_other_step.cfg')
     step = Step.from_config_file(step_fn)
 
@@ -92,8 +85,6 @@ def test_step_from_python_simple2():
 
 
 def test_step_from_commandline():
-    from .. import Step
-
     args = [
         abspath(join(dirname(__file__), 'steps', 'some_other_step.cfg')),
         '--par1=58', '--par2=hij klm'
@@ -109,8 +100,6 @@ def test_step_from_commandline():
 
 
 def test_step_from_commandline_class():
-    from .. import Step
-
     args = [
         'jwst.stpipe.tests.steps.AnotherDummyStep',
         '--par1=58', '--par2=hij klm'
@@ -126,7 +115,6 @@ def test_step_from_commandline_class():
 
 
 def test_step_from_commandline_invalid():
-    from .. import Step
     args = [
             '__foo__'
         ]
@@ -136,8 +124,6 @@ def test_step_from_commandline_invalid():
 
 
 def test_step_from_commandline_invalid2():
-    from .. import Step
-
     args = [
         '__foo__.__bar__'
         ]
@@ -146,8 +132,6 @@ def test_step_from_commandline_invalid2():
 
 
 def test_step_from_commandline_invalid3():
-    from .. import Step
-
     args = [
         'sys.foo'
         ]
@@ -156,8 +140,6 @@ def test_step_from_commandline_invalid3():
 
 
 def test_step_from_commandline_invalid4():
-    from .. import Step
-
     args = [
         'sys.argv'
         ]
@@ -165,26 +147,11 @@ def test_step_from_commandline_invalid4():
         Step.from_cmdline(args)
 
 
-@pytest.mark.skip(reason="This test does nothing")
-def test_step_print_spec():
-    import io
-    buf = io.BytesIO()
-
-    from .. import subproc
-
-    subproc.SystemCall.print_configspec(buf)
-
-    # content = buf.getvalue()
-    # TODO: Assert some things
-
-
 def test_step_with_local_class():
-    from .. import Step
-
     step_fn = join(dirname(__file__), 'steps', 'local_class.cfg')
     step = Step.from_config_file(step_fn)
 
-    step.run(np.array([[0, 0]]))
+    step.run(datamodels.ImageModel((2, 2)))
 
 
 def test_extra_parameter():
@@ -195,7 +162,6 @@ def test_extra_parameter():
 
 def test_crds_override():
     from .steps import AnotherDummyStep
-    from ... import datamodels
 
     step = AnotherDummyStep(
         "SomeOtherStepOriginal",
@@ -223,3 +189,8 @@ def test_search_attr():
     assert pipeline.stepwithmodel.search_attr('output_dir') == value
     assert pipeline.search_attr('junk') is None
     assert pipeline.stepwithmodel.search_attr('junk') is None
+
+
+def test_print_configspec():
+    step = Step()
+    step.print_configspec()
