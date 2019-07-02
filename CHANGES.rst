@@ -20,17 +20,21 @@ datamodels
 - Write ``siaf_xref_sci`` and ``siaf_yref_sci`` to FITS keywords ``XREF_SCI``
   and ``YREF_SCI`` for ``NRC_TSGRISM`` exposures. [#3766]
 
+extract_1d
+----------
+
+- Parameters were added to ``ExtractBase.__init__``, and most of the initialization
+  is done there rather than in the subclasses. [#3714]
+
 group_scale
 -----------
 
 - Updates to documentation and log messages. [#3738]
 
+stpipe
+------
 
-extract_1d
-----------
-
-- Parameters were added to ExtractBase.__init__, and most of the initialization
-  is done there rather than in the subclasses. [#3714]
+- Fix ``Step.print_configspec()`` method.  Add test.  [#3768]
 
 0.13.7 (2019-06-21)
 ===================

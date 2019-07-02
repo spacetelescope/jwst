@@ -80,18 +80,9 @@ class Step():
         return spec
 
     @classmethod
-    def print_configspec(cls, stream=sys.stdout):
-
-        # Python2/3 issue: Python3 doesn't like bytes
-        # going to stdout directly.
-        if stream == sys.stdout:
-            try:
-                stream = sys.stdout.buffer
-            except AttributeError:
-                pass
-
+    def print_configspec(cls):
         specfile = cls.load_spec_file(preserve_comments=True)
-        specfile.write(stream)
+        specfile.write(sys.stdout.buffer)
 
     @classmethod
     def from_config_file(cls, config_file, parent=None, name=None):
