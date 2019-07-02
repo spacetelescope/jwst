@@ -4,6 +4,11 @@
 - Remove references to deprecated collections.* ABCs that will be removed in
   Python 3.8. [#3732]
 
+associations
+------------
+
+- Ensured that all target acqs are processed by Level 2 [#3765]
+
 datamodels
 ----------
 
