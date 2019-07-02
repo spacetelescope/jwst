@@ -35,7 +35,7 @@ class MemberMismatchError(DiffError):
 
 
 class TypeMismatchError(DiffError):
-    """Associaiton type mismatch"""
+    """Association type mismatch"""
 
 
 class MultiDiffError(UserList, DiffError):
