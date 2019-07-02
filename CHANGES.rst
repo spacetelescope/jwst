@@ -6,6 +6,9 @@
 
 associations
 ------------
+
+- Ensured that all target acqs are processed by Level 2 [#3765]
+
 - Add a check that backgrounds are included in level 3 associations [#3678]
 
 datamodels

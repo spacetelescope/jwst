@@ -52,4 +52,4 @@ def test_targacq(pool_file):
                 member['exptype'].lower()
                 for member in product['members']
             ]
-            assert 'target_acquistion' in exptypes
+            assert 'target_acquisition' in exptypes
