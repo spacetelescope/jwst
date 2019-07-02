@@ -9,6 +9,8 @@ associations
 
 - Ensured that all target acqs are processed by Level 2 [#3765]
 
+- Add a check that backgrounds are included in level 3 associations [#3678]
+
 datamodels
 ----------
 
@@ -16,13 +18,16 @@ datamodels
 
 - Fixed corruption of FITS tables with unsigned int columns. [#3736]
 
+- Fixed missing TUNITn keywords caused by changes for unsigned int columns. [#3753]
+
+- Write ``siaf_xref_sci`` and ``siaf_yref_sci`` to FITS keywords ``XREF_SCI``
+  and ``YREF_SCI`` for ``NRC_TSGRISM`` exposures. [#3766]
+
 group_scale
 -----------
 
 - Updates to documentation and log messages. [#3738]
 
-0.13.8 (Unreleased)
-===================
 
 extract_1d
 ----------

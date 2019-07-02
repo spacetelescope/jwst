@@ -318,14 +318,23 @@ def gentle_asarray(a, dtype):
         elif in_dtype.fields is not None and out_dtype.fields is not None:
             # When a FITS file includes a pseudo-unsigned-int column, astropy will return
             # a FITS_rec with an incorrect table dtype.  The following code rebuilds
-            # in_dtype from the individual field dtypes, which are all correct.
+            # in_dtype from the individual fields, which are correctly labeled with an
+            # unsigned int dtype.
             # We can remove this once the issue is resolved in astropy:
             # https://github.com/astropy/astropy/issues/8862
             if isinstance(a, fits.fitsrec.FITS_rec):
                 new_in_dtype = []
+                updated = False
                 for field_name in in_dtype.fields:
-                    new_in_dtype.append((field_name, a.field(field_name).dtype))
-                in_dtype = np.dtype(new_in_dtype)
+                    table_dtype = in_dtype[field_name]
+                    field_dtype = a.field(field_name).dtype
+                    if np.issubdtype(table_dtype, np.signedinteger) and np.issubdtype(field_dtype, np.unsignedinteger):
+                        new_in_dtype.append((field_name, field_dtype))
+                        updated = True
+                    else:
+                        new_in_dtype.append((field_name, table_dtype))
+                if updated:
+                    in_dtype = np.dtype(new_in_dtype)
 
             if in_dtype == out_dtype:
                 return a
