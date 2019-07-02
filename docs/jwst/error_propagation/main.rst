@@ -355,20 +355,20 @@ the cumulative error, modify and output the arrays, or use locally but do not
 output modified arrays, and which level pipelines each step is in.
 
 
-================= ===================== ========================== ========================== ==========================
-STEP                   Creates & output arrays       Modifies and outputs arrays    Step-specific use of arrays  Pipeline Level
-================= ===================== ========================== ========================== ==========================
-photom               None                            ERR, VAR_POISSON, VAR_RNOISE, VAR_FLAT    None      Stages 2,3
-flat field           VAR_FLAT                        ERR, VAR_POISSON, VAR_RNOISE              None      Stage 2, Guide Star
-wfs_combine          None                            ERR                                       None      Stage 3
-group_scale          None                            ERR, VAR_POISSON, VAR_RNOISE              None      Stage 1, Dark Pipeline
-fringe               None                            ERR                                       None      Stage 2
-cube_build           None                            ERR                                       None      Stages 2,3
-bar shadow           None                            ERR, VAR_POISSON, VAR_RNOISE, VAR_FLAT    None      Stage 2
-outlier detection    None                            None                                      ERR       Stage 3
-ramp_fitting         VAR_POISSON, VAR_RNOISE         None                                      None      Stage 1
+================= ======================= ====================================== =========================== ==========================
+STEP              Creates arrays          Modifies arrays                        Step-specific use of arrays  Pipeline Level
+================= ======================= ====================================== =========================== ==========================
+photom            None                    ERR, VAR_POISSON, VAR_RNOISE, VAR_FLAT    None                     Stages 2,3
+flat field        VAR_FLAT                ERR, VAR_POISSON, VAR_RNOISE              None                     Stage 2, Guide Star
+wfs_combine       None                    ERR                                       None                     Stage 3
+group_scale       None                    ERR, VAR_POISSON, VAR_RNOISE              None                     Stage 1, Dark Pipeline
+fringe            None                    ERR                                       None                     Stage 2
+cube_build        None                    ERR                                       None                     Stages 2,3
+bar shadow        None                    ERR, VAR_POISSON, VAR_RNOISE, VAR_FLAT    None                     Stage 2
+outlier detection None                    None                                      ERR                      Stage 3
+ramp_fitting      VAR_POISSON, VAR_RNOISE None                                      None                     Stage 1
 
-================= ===================== ========================== ========================== ==========================
+================= ======================= ====================================== =========================== ==========================
 
 
 

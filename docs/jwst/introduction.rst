@@ -522,7 +522,8 @@ AMI normalized fringe and closure phases       aminorm
 
 
 For More Information
-====================
+--------------------
+
 More information on logging and running pipelines can be found in the ``stpipe``
 User's Guide at :ref:`stpipe-user-steps`.
 
@@ -532,4 +533,3 @@ in the ``stpipe`` Developer's Guide at :ref:`stpipe-devel-steps`.
 If you have questions or concerns regarding the software, please open an issue
 at https://github.com/spacetelescope/jwst/issues or contact
 the `JWST Help Desk <https://jwsthelp.stsci.edu>`_.
-

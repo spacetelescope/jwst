@@ -12,13 +12,14 @@ User Manual
    :maxdepth: 2
 
    jwst/introduction.rst
-
+   jwst/data_products/index.rst
+   jwst/error_propagation/index.rst
 
 =====================
 Package Documentation
 =====================
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    jwst/package_index.rst
