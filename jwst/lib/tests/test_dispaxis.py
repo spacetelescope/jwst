@@ -7,12 +7,12 @@ from .. import dispaxis
 def test_dispaxis_1():
     value = dispaxis.get_dispersion_direction("FGS_IMAGE", "junk", "junk",
                                               "junk")
-    assert value == 0
+    assert value == None
 
 def test_dispaxis_2():
     value = dispaxis.get_dispersion_direction("MIR_4QPM", "junk", "junk",
                                               "junk")
-    assert value == 0
+    assert value == None
 
 def test_dispaxis_3():
     value = dispaxis.get_dispersion_direction("MIR_LRS-SLITLESS", "junk",
@@ -82,4 +82,4 @@ def test_dispaxis_15():
 def test_dispaxis_16():
     value = dispaxis.get_dispersion_direction("nrc_grism", "junk", "junk",
                                               "missing")
-    assert value == 0
+    assert value == None
