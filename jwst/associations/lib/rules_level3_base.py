@@ -783,6 +783,7 @@ class Constraint_MSA(Constraint):
                 DMSAttrConstraint(
                     name='is_msa',
                     sources=['msametfl'],
+                    force_unique=False,
                 )
             ],
             name='msa_spectral'

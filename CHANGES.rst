@@ -2,7 +2,7 @@
 ===================
 
 assign_wcs
-----------
+=======
 
 - For NIRISS WFSS data, the wavelengths were incorrect because the function
   for horizontally oriented spectra was called for GR150R, and the function
