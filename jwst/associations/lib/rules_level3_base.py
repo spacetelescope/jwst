@@ -361,11 +361,11 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         """Add item to this association."""
         member = self.make_member(item)
         if self.is_member(member):
-            logger.debug(
-                'Member is already part of the association:'
-                '\n\tassociation: {}'
-                '\n]tmember: {}'.format(self, member)
-            )
+            # logger.debug(
+            #     'Member is already part of the association:'
+            #     '\n\tassociation: {}'
+            #     '\n]tmember: {}'.format(self, member)
+            # )
             return
 
         self.update_validity(member)
@@ -783,6 +783,7 @@ class Constraint_MSA(Constraint):
                 DMSAttrConstraint(
                     name='is_msa',
                     sources=['msametfl'],
+                    force_unique=False,
                 )
             ],
             name='msa_spectral'

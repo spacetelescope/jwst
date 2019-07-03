@@ -4,12 +4,32 @@
 - Remove references to deprecated collections.* ABCs that will be removed in
   Python 3.8. [#3732]
 
+associations
+------------
+
+- Ensured that all target acqs are processed by Level 2 [#3765]
+
+- Add a check that backgrounds are included in level 3 associations [#3678]
+
+- Will not constrain on uniqueness of the MSACONFIG keyword [#3770]
+
 datamodels
 ----------
 
 - Use public API of jsonschema to ease upgrade to 3.x. [#3705]
 
 - Fixed corruption of FITS tables with unsigned int columns. [#3736]
+
+- Fixed missing TUNITn keywords caused by changes for unsigned int columns. [#3753]
+
+- Write ``siaf_xref_sci`` and ``siaf_yref_sci`` to FITS keywords ``XREF_SCI``
+  and ``YREF_SCI`` for ``NRC_TSGRISM`` exposures. [#3766
+
+extract_1d
+----------
+
+- Parameters were added to ``ExtractBase.__init__``, and most of the initialization
+  is done there rather than in the subclasses. [#3714]
 
 group_scale
 -----------
@@ -21,14 +41,10 @@ lib
 
 - A function to determine the dispersion direction has been added. [#3756]
 
-0.13.8 (Unreleased)
-===================
+stpipe
+------
 
-extract_1d
-----------
-
-- Parameters were added to ExtractBase.__init__, and most of the initialization
-  is done there rather than in the subclasses. [#3714]
+- Fix ``Step.print_configspec()`` method.  Add test.  [#3768]
 
 0.13.7 (2019-06-21)
 ===================
