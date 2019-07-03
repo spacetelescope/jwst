@@ -1011,22 +1011,22 @@ properties:
           starting_set:
             title: Starting 4-point set number
             type: integer
-            enum: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+            enum: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
             fits_keyword: DSETSTRT
           number_of_sets:
             title: Total number of 4-point sets
             type: integer
-            enum: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+            enum: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
             fits_keyword: NUMDSETS
           direction:
             title: Direction of dither pattern offsets
             type: string
-            enum: [NEGATIVE, POSITIVE]
+            enum: [NEGATIVE, POSITIVE, NONE]
             fits_keyword: DITHDIRC
           optimized_for:
             title: Dither pattern optimization
             type: string
-            enum: ["POINT-SOURCE", "EXTENDED-SOURCE"]
+            enum: ["POINT-SOURCE", "EXTENDED-SOURCE", NONE]
             fits_keyword: DITHOPFR
           sparse_points:
             title: Sparse cycling dither points
