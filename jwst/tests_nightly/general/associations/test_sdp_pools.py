@@ -41,10 +41,6 @@ SPECIAL_POOLS = {
         'args': [],
         'xfail': 'PR #3450',
     },
-    'jw00626_20190625t115022_pool': {
-        'args': [],
-        'xfail': 'JP-829',
-    },
 }
 
 
