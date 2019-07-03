@@ -41,6 +41,11 @@ lib
 
 - A function to determine the dispersion direction has been added. [#3756]
 
+master_background
+-----------------
+
+- Updated the documentation to include more details. [#3776]
+
 stpipe
 ------
 
