@@ -34,6 +34,11 @@ group_scale
 
 - Updates to documentation and log messages. [#3738]
 
+master_background
+-----------------
+
+- Updated the documentation to include more details. [#3776]
+
 stpipe
 ------
 

@@ -170,6 +170,34 @@ The master background step will first combine the data from the two background
 members into a master background spectrum and then subtract it from each of the
 two science exposures.
 
+NIRSpec MOS with Background Slits
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+NIRSpec MOS exposures that have one or more slits defined as background only require
+unique processing. The background slits take the place of both nodding and off-target
+background exposures, because the background can be measured directly from the spectra
+resulting from those slits. In this observing scenario, all source and background
+slits are processed through all of the :ref:`calwebb_spec2 <calwebb_spec2>` steps,
+resulting in extracted spectra for the sources and backgrounds. The master_background
+step then combines the background spectra into a master background spectrum and
+performs background subtraction on all of the source slit data, the same as the
+other observing scenarios.
+
+There are, however, additional factors that must be taken into account in order to
+yield scientifically-correct results. This is due to the fact that background slits
+are processed as extended sources in :ref:`calwebb_spec2 <calwebb_spec2>`, but
+the background spectra must then be applied to some slits that were processed as
+point sources. Extended sources and point sources receive different corrections
+in steps like :ref:`pathloss <pathloss_step>` and :ref:`barshadow <barshadow_step>`,
+hence the data are not a one-to-one match. This requires additional operations to
+be performed on the background spectrum before it can be correctly applied to slits
+containing point sources.
+
+**These unique capabilities are not yet implemented in the master_background step,
+hence NIRSpec MOS observations can not be processed properly at this time.** The
+only workable option for NIRSpec MOS data at this time is to employ the
+user-supplied background spectrum option, which is then subtracted from every
+slit instance in a MOS exposure.
+
 Creating the 1-D Master Background Spectrum
 -------------------------------------------
 The 1-D master background spectrum is created by combining data contained in the
