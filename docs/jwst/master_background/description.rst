@@ -29,11 +29,11 @@ or a ``ModelContainer`` data model populated from a "spec3" ASN file. This is th
 as input to the :ref:`calwebb_spec3 <calwebb_spec3>` pipeline, which defines a stage 3 combined product
 and its input members. The list of input members includes both "science" and "background"
 exposure types. The master background subtraction step uses the input members designated
-with "exptype: background" to create the master background spectrum.
+with ``"exptype": "background"`` to create the master background spectrum (see example_asn1_).
 These need to be :ref:`x1d <x1d>` products created from individual exposures at the end of
 the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline, containing spectra of background regions.
 The master background signal will be subtracted from all input members designated as
-"exptype: science" in the ASN, resulting in a new version of each science input. These inputs
+``"exptype": "science"`` in the ASN, resulting in a new version of each science input. These inputs
 need to be :ref:`cal <cal>` products created from individual exposures by the
 :ref:`calwebb_spec2 <calwebb_spec2>` pipeline.
 
@@ -57,17 +57,22 @@ This in turn causes the :ref:`extract_1d <extract_1d_step>` step at
 the end of :ref:`calwebb_spec2 <calwebb_spec2>` to extract spectra for both source and
 background regions. For IFU exposures the background region is typically an annulus that is
 concentric with a circular source region. For slit-like modes, one or more background regions can
-flank the central source region. In both cases, the extraction regions are centered within
+be defined in the :ref:`extract1d <extract1d_reffile>` reference file, flanking the central source region.
+In both cases, the extraction regions are centered within
 the image/cube at the RA/Dec of the target. Hence for nodded exposures, the location of the
 extraction regions follows the movement of the source in each exposure. The extracted
 data from the source region are stored in the "FLUX" and "SURF_BRIGHT" (surface brightness)
 columns of the :ref:`x1d <x1d>` product, while the background extraction is stored in the
 "BACKGROUND" column. The master_background step recognizes when it's working with nodded
 exposures and in that case uses the data from the "BACKGROUND" column of each background
-"x1d" product.
+:ref:`x1d <x1d>` product.
 
-An example ASN file for a simple 2-point nodded observation consisting of two
-exposures looks like the following::
+Below is an example ASN file for a simple 2-point nodded observation consisting of two
+exposures.
+
+.. _example_asn1:
+
+::
 
   {
       "asn_type": "spec3",
@@ -105,7 +110,7 @@ being both "science" and "background" members, because they both contain the tar
 of interest and a region of background. The "science" members, which are the
 :ref:`cal <cal>` products created by the :ref:`calwebb_spec2 <calwebb_spec2>`
 pipeline, are the data files that will have the master background subtraction
-applied, while the "background" members are the :ref:`x1d <x1d>` 1-D spectral
+applied, while the "background" members are the :ref:`x1d <x1d>` spectral
 products from which the master background spectrum will be created.
 The combined master background spectrum will be subtracted from each of the 
 two science exposures.
@@ -123,13 +128,17 @@ the end of :ref:`calwebb_spec2 <calwebb_spec2>` to extract a spectrum in extende
 which uses the entire field-of-view (whether it be a slit image or an IFU cube) as the
 extraction region. The extracted spectral data are stored in the "FLUX" and "SURF_BRIGHT"
 columns of the resulting :ref:`x1d <x1d>` product, with the "BACKGROUND" column left blank.
-The master_background step recognizes when it's working with a background exposure
+The master_background step recognizes when it's working with a background exposure, which is
+always treated as an extended source,
 and in that case uses the data from the "SURF_BRIGHT" column of each background
-"x1d" product to construct the master background spectrum.
+:ref:`x1d <x1d>` product to construct the master background spectrum.
 
-An example ASN file for an extended source observation that includes background target
-exposures, using a 2-point dither for both the science and background targets,
-looks like the following::
+Below is an example ASN file for an extended source observation that includes background target
+exposures, using a 2-point dither for both the science and background targets.
+
+.. _example_asn2:
+
+::
 
   {
       "asn_type": "spec3",
@@ -172,8 +181,8 @@ two science exposures.
 
 NIRSpec MOS with Background Slits
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-NIRSpec MOS exposures that have one or more slits defined as background only require
-unique processing. The background slits take the place of both nodding and off-target
+NIRSpec MOS exposures that have one or more slits defined as background require
+unique processing. The background slits take the place of both nodded and off-target
 background exposures, because the background can be measured directly from the spectra
 resulting from those slits. In this observing scenario, all source and background
 slits are processed through all of the :ref:`calwebb_spec2 <calwebb_spec2>` steps,
@@ -201,7 +210,7 @@ slit instance in a MOS exposure.
 Creating the 1-D Master Background Spectrum
 -------------------------------------------
 The 1-D master background spectrum is created by combining data contained in the
-:ref:`x1d <x1d>` products listed in the input ASN as "exptype: background" members.
+:ref:`x1d <x1d>` products listed in the input ASN as ``"exptype": "background"`` members.
 As noted above, the background members can be exposures of dedicated background targets
 or can be a collection of exposures of a point-like source observed in a nod pattern.
 
