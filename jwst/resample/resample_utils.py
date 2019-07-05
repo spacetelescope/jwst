@@ -1,16 +1,16 @@
-import numpy as np
+import logging
+import warnings
 
+import numpy as np
 from astropy import wcs as fitswcs
 from astropy.coordinates import SkyCoord
 from astropy.modeling.models import Scale, AffineTransformation2D
 from astropy.modeling import Model
 from gwcs import WCS, wcstools
-
 from astropy.nddata.bitmask import interpret_bit_flags
 
 from ..assign_wcs.util import wcs_from_footprints, wcs_bbox_from_shape
 
-import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -156,7 +156,10 @@ def reproject(wcs1, wcs2):
         flat_sky = []
         for axis in sky:
             flat_sky.append(axis.flatten())
+        # Filter out RuntimeWarnings due to computed NaNs in the WCS
+        warnings.simplefilter("ignore")
         det = backward_transform(*tuple(flat_sky))
+        warnings.resetwarnings()
         det_reshaped = []
         for axis in det:
             det_reshaped.append(axis.reshape(x.shape))
