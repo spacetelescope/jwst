@@ -1,5 +1,6 @@
 import logging
 from collections import OrderedDict
+import warnings
 
 import numpy as np
 
@@ -103,7 +104,10 @@ class ResampleSpecData:
         tan = Pix2Sky_TAN()
         native2celestial = RotateNative2Celestial(lon, lat, 180)
         undist2sky = tan | native2celestial
+        # Filter out RuntimeWarnings due to computed NaNs in the WCS
+        warnings.simplefilter("ignore")
         x_tan, y_tan = undist2sky.inverse(ra, dec)
+        warnings.resetwarnings()
 
         spectral_axis = find_dispersion_axis(lam)
         spatial_axis = spectral_axis ^ 1
