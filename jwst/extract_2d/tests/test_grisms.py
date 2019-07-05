@@ -120,8 +120,7 @@ def create_wfss_image(pupil, filtername='F444W'):
                        pupil=pupil, wcskeys=wcs_wfss_kw)
     hdul['sci'].data = np.ones((hdul[0].header['SUBSIZE1'], hdul[0].header['SUBSIZE2']))
     im = ImageModel(hdul)
-    aswcs = AssignWcsStep()
-    return aswcs.process(im)
+    return AssignWcsStep.call(im)
 
 
 def create_tso_wcsimage(filtername="F277W", subarray=False):
@@ -339,7 +338,8 @@ def test_extract_wfss_object():
     refs = get_reference_files(wcsimage)
     outmodel = extract_grism_objects(wcsimage,
                                      use_fits_wcs=True,
-                                     reference_files=refs)
+                                     reference_files=refs,
+                                     compute_wavelength=False)
     assert isinstance(outmodel, MultiSlitModel)
     assert len(outmodel.slits) == 3
     ids = [slit.source_id for slit in outmodel.slits]
@@ -347,6 +347,3 @@ def test_extract_wfss_object():
 
     names = [slit.name for slit in outmodel.slits]
     assert names == ['9', '19', '19']
-
-    # check that bounding boxes exist
-    del outmodel
