@@ -103,7 +103,7 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
         indexz = np.where(abs(zcoord - wave[ipt]) <= roiw_pixel[ipt])
 
         # on the wavelength boundaries the point cloud may not be in the IFUCube
-        # the edge cases are skipped and not included in final IFUcube.
+        # the edge cases are skipped and not included in final IFUcube to avoid noisy results
         # Left commented code for checking later for NIRSPEC the spectral size
         # in the reference file may be too small
 #        if len(indexz[0]) == 0:

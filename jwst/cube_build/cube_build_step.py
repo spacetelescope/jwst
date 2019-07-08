@@ -37,6 +37,7 @@ class CubeBuildStep (Step):
          band = option('short','medium','long','all',default='all') # Band
          grating   = option('prism','g140m','g140h','g235m','g235h',g395m','g395h','all',default='all') # Grating
          filter   = option('clear','f100lp','f070lp','f170lp','f290lp','all',default='all') # Filter
+         output_type = option('band','channel','grating','multi',default='band') # Type IFUcube to create.
          scale1 = float(default=0.0) # cube sample size to use for axis 1, arc seconds
          scale2 = float(default=0.0) # cube sample size to use for axis 2, arc seconds
          scalew = float(default=0.0) # cube sample size to use for axis 3, microns
@@ -51,12 +52,12 @@ class CubeBuildStep (Step):
          xdebug = integer(default=None) # debug option, x spaxel value to report information on
          ydebug = integer(default=None) # debug option, y spaxel value to report information on
          zdebug = integer(default=None) # debug option, z spaxel value to report  information on
-         output_type = option('band','channel','grating','multi',default='band') # Type IFUcube to create.
+         debug_write = boolean(default=false) # Open and write information on FOV on sky for each file
          search_output_file = boolean(default=false)
          output_use_model = boolean(default=true) # Use filenames in the output models
        """
 
-    reference_file_types = ['cubepar', 'resol', 'regions']
+    reference_file_types = ['cubepar', 'resol']
 
 # ________________________________________________________________________________
     def process(self, input):
@@ -225,16 +226,6 @@ class CubeBuildStep (Step):
                 self.log.warning('No spectral resolution reference file found')
                 self.log.warning('Run again and turn off miripsf')
                 return
-
-# ________________________________________________________________________________
-# Read in regions reference file - only needed for MIRI Data
-
-#        regions_filename = self.get_reference_file(self.input_models[0], 'regions')
-
-#        if regions_filename == 'N/A':
-#            self.log.warning('No regions reference file found')
-#            self.log.warning('This must be NIRSPEC data')
-#            return
 # ________________________________________________________________________________
 # shove the input parameters in to pars to pull out in general cube_build.py
 
@@ -249,6 +240,7 @@ class CubeBuildStep (Step):
 
 # shove the input parameters in to pars_cube to pull out ifu_cube.py
 # these parameters are related to the building a single ifucube_model
+
         pars_cube = {
             'scale1': self.scale1,
             'scale2': self.scale2,
@@ -261,6 +253,7 @@ class CubeBuildStep (Step):
             'roiw': self.roiw,
             'wavemin': self.wavemin,
             'wavemax': self.wavemax,
+            'debug_write': self.debug_write,
             'xdebug': self.xdebug,
             'ydebug': self.ydebug,
             'zdebug': self.zdebug,
