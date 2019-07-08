@@ -1,1 +1,0 @@
-from jwst.jwpsf import *
