@@ -710,11 +710,11 @@ def gls_fit(ramp_data,
     try:
         # inverse of temp_var
         fitparam_cov = la.solve(temp_var, I_2)
-    except la.LinAlgError as msg:
+    except la.LinAlgError:
         # find the pixel with the singular matrix
         for z in range(nz):
             try:
-                dummy = la.solve(temp_var[z], I_2)
+                la.solve(temp_var[z], I_2)
             except la.LinAlgError as msg2:
                 log.warning("singular matrix, z = %d" % z)
                 raise la.LinAlgError(msg2)

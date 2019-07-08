@@ -113,7 +113,8 @@ class TestMethods:
 
     def test_subarray_5groups(self, method):
             #all pixel values are zero. So slope should be zero
-        model1, gdq, rnModel, pixdq, err, gain = setup_subarray_inputs(ngroups=5,subxstart=100, subystart=200, subxsize=50, subysize=150, readnoise=50)
+        model1, gdq, rnModel, pixdq, err, gain = setup_subarray_inputs(ngroups=5,
+            subxstart=100, subystart=200, subxsize=50, subysize=150, readnoise=50)
         model1.meta.exposure.ngroups = 11
         model1.data[0, 0, 125, 10] = 10.0
         model1.data[0, 1, 125, 10] = 15.0
@@ -182,7 +183,8 @@ class TestMethods:
         cds_slope = (model1.data[0,3,500,500] - model1.data[0,0,500,500])/ 3.0
         np.testing.assert_allclose(slopes[0].data[500, 500], cds_slope, 1e-2)
 
-    @pytest.mark.xfail(reason="Fails, bad last frame yields only one good one. This should not every happen. When ngroups==2 the last frame doesn't get flagged.")
+    @pytest.mark.xfail(reason="Fails, bad last frame yields only one good one. \
+        This should not every happen. When ngroups==2 the last frame doesn't get flagged.")
     def test_photon_noise_only_bad_last_frame_two_groups(self, method):
             #
         model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=2,gain=1000,readnoise=1)
@@ -307,16 +309,21 @@ class TestMethods:
         ingain = 2
         inreadnoise =10
         ngroups=2
-        model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups, gain=ingain, readnoise=inreadnoise,deltatime=grouptime)
+        model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
+            gain=ingain, readnoise=inreadnoise, deltatime=grouptime)
         model1.data[0, 0, 500, 500] = 10.0
         model1.data[0, 1, 500, 500] = 10.0 + deltaDN
         slopes = ramp_fit(model1, 1024*30000., True, rnModel, gain, 'OLS', 'optimal')
         # delta_electrons = deltaDN * ingain
         single_sample_readnoise = inreadnoise/np.sqrt(2)
-        np.testing.assert_allclose(slopes[0].var_poisson[500,500],((deltaDN/ingain)/grouptime**2), 1e-6)
-        np.testing.assert_allclose(slopes[0].var_rnoise[500,500],(inreadnoise**2/grouptime**2), 1e-6)
-        np.testing.assert_allclose(slopes[0].var_rnoise[500,500],(12*single_sample_readnoise**2/(ngroups*(ngroups**2 - 1)*grouptime**2)), 1e-6)
-        np.testing.assert_allclose(slopes[0].err[500,500],(np.sqrt((deltaDN/ingain)/grouptime**2+(inreadnoise**2/grouptime**2))), 1e-6)
+        np.testing.assert_allclose(slopes[0].var_poisson[500,500],
+            ((deltaDN/ingain)/grouptime**2), 1e-6)
+        np.testing.assert_allclose(slopes[0].var_rnoise[500,500],
+            (inreadnoise**2/grouptime**2), 1e-6)
+        np.testing.assert_allclose(slopes[0].var_rnoise[500,500],
+            (12*single_sample_readnoise**2/(ngroups*(ngroups**2 - 1)*grouptime**2)), 1e-6)
+        np.testing.assert_allclose(slopes[0].err[500,500],
+            (np.sqrt((deltaDN/ingain)/grouptime**2+(inreadnoise**2/grouptime**2))), 1e-6)
 
     def test_five_groups_unc(self, method):
         grouptime=3.0
@@ -325,7 +332,7 @@ class TestMethods:
         inreadnoise =7
         ngroups=5
         model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
-                                                              gain=ingain, readnoise=inreadnoise,deltatime=grouptime)
+            gain=ingain, readnoise=inreadnoise, deltatime=grouptime)
         model1.data[0, 0, 500, 500] = 10.0
         model1.data[0, 1, 500, 500] = 15.0
         model1.data[0, 2, 500, 500] = 25.0
@@ -338,9 +345,12 @@ class TestMethods:
         delta_time = (ngroups - 1) * grouptime
         # delta_electrons = median_slope * ingain *delta_time
         single_sample_readnoise = np.float64(inreadnoise/np.sqrt(2))
-        np.testing.assert_allclose(slopes[0].var_poisson[500,500],((median_slope)/(ingain*delta_time)), 1e-6)
-        np.testing.assert_allclose(slopes[0].var_rnoise[500,500],(12 * single_sample_readnoise**2/(ngroups * (ngroups**2 - 1) * grouptime**2)),  1e-6)
-        np.testing.assert_allclose(slopes[0].err[500,500],np.sqrt(slopes[0].var_poisson[500,500]  + slopes[0].var_rnoise[500,500] ),  1e-6)
+        np.testing.assert_allclose(slopes[0].var_poisson[500,500],
+            ((median_slope)/(ingain*delta_time)), 1e-6)
+        np.testing.assert_allclose(slopes[0].var_rnoise[500,500],
+            (12 * single_sample_readnoise**2/(ngroups * (ngroups**2 - 1) * grouptime**2)),  1e-6)
+        np.testing.assert_allclose(slopes[0].err[500,500],
+            np.sqrt(slopes[0].var_poisson[500,500]  + slopes[0].var_rnoise[500,500] ),  1e-6)
 
     def test_oneCR_10_groups_combination(self, method):
         grouptime=3.0
@@ -349,7 +359,7 @@ class TestMethods:
         inreadnoise = np.float64(7)
         ngroups=10
         model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
-                                                              gain=ingain, readnoise=inreadnoise,deltatime=grouptime)
+            gain=ingain, readnoise=inreadnoise, deltatime=grouptime)
         # two segments perfect fit, second segment has twice the slope
         model1.data[0, 0, 500, 500] = 15.0
         model1.data[0, 1, 500, 500] = 20.0
@@ -362,11 +372,13 @@ class TestMethods:
         model1.data[0, 8, 500, 500] = 170.0
         model1.data[0, 9, 500, 500] = 180.0
         model1.groupdq[0,5,500,500]=dqflags.group['JUMP_DET']
-        slopes, int_model, opt_model, gls_opt_model= ramp_fit(model1, 1024*30000.,  True, rnModel, gain, 'OLS', 'optimal')
+        slopes, int_model, opt_model, gls_opt_model = ramp_fit(model1,
+            1024*30000.,  True, rnModel, gain, 'OLS', 'optimal')
         segment_groups  = 5
-        single_sample_readnoise = np.float64( inreadnoise/np.sqrt(2))
+        single_sample_readnoise = np.float64(inreadnoise / np.sqrt(2))
         #check that the segment variance is as expected
-        np.testing.assert_allclose(opt_model.var_rnoise[0,0,500,500],(12.0 * single_sample_readnoise**2/(segment_groups * (segment_groups**2 - 1) * grouptime**2)), rtol=1e-6)
+        np.testing.assert_allclose(opt_model.var_rnoise[0,0,500,500],
+            (12.0 * single_sample_readnoise**2/(segment_groups * (segment_groups**2 - 1) * grouptime**2)), rtol=1e-6)
         # check the combined slope is the average of the two segments since they have the same number of groups
         np.testing.assert_allclose(slopes.data[500, 500], 2.5,rtol=1e-5)
         #check that the slopes of the two segments are correct
@@ -400,27 +412,27 @@ class TestMethods:
 
 
 def test_twenty_groups_two_segments():
-    ''' Test to verify weighting of multiple segments in combination: 
+    '''Test to verify weighting of multiple segments in combination:
         a) gdq all 0 ; b) 1 CR (2 segments) c) 1 CR then SAT (2 segments)
     '''
-    (ngroups, nints, nrows, ncols, deltatime) = (20, 1, 1, 3, 6.) 
-    model1, gdq, rnModel, pixdq, err, gain = setup_small_cube( ngroups, 
+    (ngroups, nints, nrows, ncols, deltatime) = (20, 1, 1, 3, 6.)
+    model1, gdq, rnModel, pixdq, err, gain = setup_small_cube( ngroups,
         nints, nrows, ncols, deltatime)
 
-    # a) ramp having gdq all 0 
-    model1.data[0,:,0,0] = np.arange(ngroups)*10. + 30. 
+    # a) ramp having gdq all 0
+    model1.data[0,:,0,0] = np.arange(ngroups)*10. + 30.
 
     # b) ramp having 1 CR at group 15; 2 segments
-    model1.data[0,:,0,1] = np.arange(ngroups)*10. + 50. 
+    model1.data[0,:,0,1] = np.arange(ngroups)*10. + 50.
     gdq[0,15,0,1] = dqflags.group['JUMP_DET']
     model1.data[0,15:,0,1] += 1000.
 
     # c) ramp having 1 CR at group 2; SAT starting in group 15
-    model1.data[0,:,0,2] = np.arange(ngroups)*10. + 70. 
+    model1.data[0,:,0,2] = np.arange(ngroups)*10. + 70.
     gdq[0,2,0,2] =  dqflags.group['JUMP_DET']
-    model1.data[0,2:,0,2] += 2000. 
+    model1.data[0,2:,0,2] += 2000.
     gdq[0,15:,0,2] = dqflags.group['SATURATED']
-    model1.data[0,15:,0,2] = 25000. 
+    model1.data[0,15:,0,2] = 25000.
 
     new_mod, int_model, opt_model, gls_opt_model = ramp_fit(model1, 1024*30000.,
         True, rnModel, gain, 'OLS', 'optimal')
@@ -431,21 +443,21 @@ def test_twenty_groups_two_segments():
     wh_data = opt_model.slope != 0. # only test existing segments
     np.testing.assert_allclose(opt_model.slope[wh_data], 10./deltatime, rtol=1E-4)
     np.testing.assert_allclose(opt_model.yint[0,0,0,:], model1.data[0,0,0,:], rtol=1E-5)
-    np.testing.assert_allclose(opt_model.pedestal[0,0,:], 
+    np.testing.assert_allclose(opt_model.pedestal[0,0,:],
         model1.data[0,0,0,:]-10., rtol=1E-5)
 
 
 def test_miri_all_sat():
-    ''' Test of all groups in all integrations being saturated; all output arrays 
+    ''' Test of all groups in all integrations being saturated; all output arrays
         (particularly variances) should be 0.
     '''
-    (ngroups, nints, nrows, ncols, deltatime) = (3, 2, 2, 2, 6.) 
-    model1, gdq, rnModel, pixdq, err, gain = setup_small_cube(ngroups, 
+    (ngroups, nints, nrows, ncols, deltatime) = (3, 2, 2, 2, 6.)
+    model1, gdq, rnModel, pixdq, err, gain = setup_small_cube(ngroups,
         nints, nrows, ncols, deltatime)
 
     model1.groupdq[:, :, :, :] = dqflags.group['SATURATED']
 
-    new_mod, int_model, opt_model, gls_opt_model = ramp_fit(model1, 1024*30000., 
+    new_mod, int_model, opt_model, gls_opt_model = ramp_fit(model1, 1024*30000.,
         True, rnModel, gain, 'OLS', 'optimal')
 
     # Check PRI output arrays
@@ -472,27 +484,27 @@ def test_miri_all_sat():
 
 
 def test_miri_first_last():
-    ''' This is a test of whether ramp fitting correctly handles having all 0th 
-        group dq flagged as DO_NOT_USE, and all final group dq flagged as 
-        DO_NOT_USE for MIRI data.  For 1 pixel ([1,1]) the 1st (again, 0-based) 
-        group is flagged as a CR.  For such a ramp, the code removes the CR-flag 
-        from such a CR-affected 1st group; so if it initially was 4 it is reset 
-        to 0 ("good"), in which case it's as if that CR was not even there. 
+    ''' This is a test of whether ramp fitting correctly handles having all 0th
+        group dq flagged as DO_NOT_USE, and all final group dq flagged as
+        DO_NOT_USE for MIRI data.  For 1 pixel ([1,1]) the 1st (again, 0-based)
+        group is flagged as a CR.  For such a ramp, the code removes the CR-flag
+        from such a CR-affected 1st group; so if it initially was 4 it is reset
+        to 0 ("good"), in which case it's as if that CR was not even there.
     '''
     (ngroups, nints, nrows, ncols, deltatime) = (10, 1, 2, 2, 3.)
-    model1, gdq, rnModel, pixdq, err, gain = setup_small_cube(ngroups, 
+    model1, gdq, rnModel, pixdq, err, gain = setup_small_cube(ngroups,
         nints, nrows, ncols, deltatime)
 
-    # Make smooth ramps having outlier SCI values in the 0th and final groups 
-    #   to reveal if they are included in the fit (they shouldn't be, as those 
-    #   groups are flagged as DO_NOT_USE) 
-    model1.data[0,:,0,0] = np.array([-200., 30., 40., 50., 60., 70., 80., 
+    # Make smooth ramps having outlier SCI values in the 0th and final groups
+    #   to reveal if they are included in the fit (they shouldn't be, as those
+    #   groups are flagged as DO_NOT_USE)
+    model1.data[0,:,0,0] = np.array([-200., 30., 40., 50., 60., 70., 80.,
         90., 100., -500.], dtype=np.float32)
-    model1.data[0,:,0,1] = np.array([-300.,  80., 90., 100., 110., 120., 
+    model1.data[0,:,0,1] = np.array([-300.,  80., 90., 100., 110., 120.,
         130., 140., 150., -600.], dtype=np.float32)
-    model1.data[0,:,1,0] = np.array([-200., 40., 50., 60., 70., 80., 90., 
+    model1.data[0,:,1,0] = np.array([-200., 40., 50., 60., 70., 80., 90.,
         100., 110., 900.], dtype=np.float32)
-    model1.data[0,:,1,1] = np.array([-600., 140., 150., 160., 170., 180., 
+    model1.data[0,:,1,1] = np.array([-600., 140., 150., 160., 170., 180.,
         190., 200., 210., -400.], dtype=np.float32)
 
     # For all pixels, set gdq for 0th and final groups to DO_NOT_USE
@@ -500,17 +512,17 @@ def test_miri_first_last():
     model1.groupdq[:,-1,:,:] = dqflags.group['DO_NOT_USE']
 
     # Put CR in 1st (0-based) group
-    model1.groupdq[0,1,1,1] = dqflags.group['JUMP_DET'] 
+    model1.groupdq[0,1,1,1] = dqflags.group['JUMP_DET']
 
-    new_mod, int_model, opt_model, gls_opt_model = ramp_fit(model1, 1024*30000., 
+    new_mod, int_model, opt_model, gls_opt_model = ramp_fit(model1, 1024*30000.,
         True, rnModel, gain, 'OLS', 'optimal')
 
-    np.testing.assert_allclose( new_mod.data, 10./3., rtol=1E-5  )
+    np.testing.assert_allclose( new_mod.data, 10./3., rtol=1E-5)
 
 
-def setup_small_cube(ngroups=10, nints=1, nrows=2, ncols=2, deltatime=10., 
+def setup_small_cube(ngroups=10, nints=1, nrows=2, ncols=2, deltatime=10.,
         gain=1., readnoise =10.):
-    ''' Create input MIRI datacube having the specified dimensions 
+    '''Create input MIRI datacube having the specified dimensions
     '''
     gain = np.ones(shape=(nrows, ncols), dtype=np.float64) * gain
     err = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.float64)

@@ -6,7 +6,7 @@ import sys
 import time
 import numpy as np
 from astropy.io import fits
-import os
+
 
 def do_comparison(found_file, created_file):
     """
@@ -125,26 +125,26 @@ def get_data(found_file, created_file):
     try:
         fh_f = fits.open(found_file)
         print('Found file has: ', fh_f.info())
-    except Exception as errmess:
+    except Exception:
         print(' FATAL ERROR: Unable to open found file ', found_file)
 
     try:
         fh_c = fits.open(created_file)
         print('Created file has: ', fh_c.info())
-    except Exception as errmess:
+    except Exception:
         print(' FATAL ERROR: Unable to open created file ', created_file)
 
     try:
         data_f = fh_f['SCI'].data
-    except Exception as errmess:
+    except Exception:
         print(' FATAL ERROR: data for found data was expected in SCI extension')
 
     try:
         data_c = fh_c['SCI'].data
-    except Exception as errmess:
+    except Exception:
         try:
             data_c = fh_c[0].data
-        except Exception as errmess:
+        except Exception:
             print(' FATAL ERROR: created data expected in either SCI or 0 extensions')
 
     return fh_f, fh_c, data_f, data_c
@@ -222,17 +222,11 @@ def write_to_file(data, filename):
     Returns
     ---------
     """
-
-    try:
-        os.remove(filename)
-    except:
-        pass
-
     fimg = fits.HDUList()
     fimghdu = fits.PrimaryHDU()
     fimghdu.data = data
     fimg.append(fimghdu)
-    fimg.writeto(filename)
+    fimg.writeto(filename, overwrite=True)
     print(' wrote output data to: ', filename)
 
 

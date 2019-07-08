@@ -4,6 +4,8 @@
 - Remove references to deprecated collections.* ABCs that will be removed in
   Python 3.8. [#3732]
 
+- Remove ``jwpsf`` module. [#3791]
+
 associations
 ------------
 
