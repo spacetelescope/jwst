@@ -33,6 +33,7 @@ def pytest_generate_tests(metafunc):
     if 'pool_path' in metafunc.fixturenames:
         SDPPoolsSource.inputs_root = metafunc.config.getini('inputs_root')[0]
         SDPPoolsSource.results_root = metafunc.config.getini('results_root')[0]
+        SDPPoolsSource.env = metafunc.config.getoption('env')
 
         pools = SDPPoolsSource()
 
