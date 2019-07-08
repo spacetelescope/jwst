@@ -1,4 +1,3 @@
-import pytest
 import numpy as np
 import numpy.testing as npt
 
@@ -48,7 +47,7 @@ def test_pix_0():
     assert_pri( p_true, new_mod )
     assert_opt( o_true, opt_mod )
 
- 
+
 def test_pix_1():
     """
     CASE H: the segment has a good 1st group and a bad 2nd group, so is a
@@ -413,7 +412,7 @@ def test_pix_11():
     new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit( RampMod, 1024*300., True,
                                                 RnMod, GMod, 'OLS', 'optimal' )
 
-    # Set truth values for PRIMARY results: 
+    # Set truth values for PRIMARY results:
     p_true = [ 1., 2, 1.042755, 0.01818182, 1.0691562 ]
 
     # Set truth values for OPTIONAL results:
@@ -446,7 +445,7 @@ def test_miri_0():
     p_true = [ 1.025854, 0, 0.12379601, 0.0025974, 0.01272805]
 
     # Set truth values for OPTIONAL results:
-    o_true = [1.025854, 6.450687, 0.0025974, 0.01272805, 26.439266, 27.842508, 
+    o_true = [1.025854, 6.450687, 0.0025974, 0.01272805, 26.439266, 27.842508,
               14.74146, 4257.684]
 
     assert_pri( p_true, new_mod )
@@ -455,7 +454,7 @@ def test_miri_0():
 
 def test_miri_1():
     """
-    MIRI data with ramp's 0th and final groups flagged as DO_NOT_USE; 0th group 
+    MIRI data with ramp's 0th and final groups flagged as DO_NOT_USE; 0th group
     is also as a cosmic ray
     SCI seg is: [7777., 125., 135., 154., 165., 175., 185., 204., 205., 777.]
     GROUPDQ is: [5, 0, 0, 0, 0, 0, 0, 0, 0, 1]
@@ -465,7 +464,7 @@ def test_miri_1():
                            nints, nrows, ncols, deltatime, gain, readnoise )
 
     # Populate pixel-specific SCI and GROUPDQ arrays
-    RampMod.data[0,:,0,0] = np.array([7777., 125., 135., 154., 165., 175., 
+    RampMod.data[0,:,0,0] = np.array([7777., 125., 135., 154., 165., 175.,
                                 185., 204., 205., 777.], dtype=np.float32)
     RampMod.groupdq[0,:,0,0] = np.array([5, 0, 0, 0, 0, 0, 0, 0, 0, 1])
 
@@ -476,7 +475,7 @@ def test_miri_1():
     p_true = [ 1.1996487, 0, 0.12379601, 0.0025974, 0.01272805]
 
     # Set truth values for OPTIONAL results:
-    o_true = [ 1.1996487, 6.450687, 0.0025974, 0.01272805, 126.110214, 
+    o_true = [ 1.1996487, 6.450687, 0.0025974, 0.01272805, 126.110214,
                27.842508, 113.00351, 4257.684 ]
 
     assert_pri( p_true, new_mod )
@@ -485,7 +484,7 @@ def test_miri_1():
 
 def test_miri_2():
     """
-    MIRI data with ramp's 0th and final groups flagged as both DO_NOT_USE 
+    MIRI data with ramp's 0th and final groups flagged as both DO_NOT_USE
     and as CR.
     SCI seg is: [4444., 25., 35., 54., 55., 65., 75., 94., 95., 444.]
     GROUPDQ is: [5, 0, 0, 0, 0, 0, 0, 0, 0, 5]
@@ -495,7 +494,7 @@ def test_miri_2():
                            nints, nrows, ncols, deltatime, gain, readnoise )
 
     # Populate pixel-specific SCI and GROUPDQ arrays
-    RampMod.data[0,:,0,0] = np.array([4444., 25., 35., 54., 55., 65., 75., 
+    RampMod.data[0,:,0,0] = np.array([4444., 25., 35., 54., 55., 65., 75.,
                                     94., 95., 444.], dtype=np.float32)
     RampMod.groupdq[0,:,0,0] = np.array([5, 0, 0, 0, 0, 0, 0, 0, 0, 5])
 
@@ -506,7 +505,7 @@ def test_miri_2():
     p_true = [ 1.025854, 0, 0.12379601, 0.0025974, 0.01272805]
 
     # Set truth values for OPTIONAL results:
-    o_true = [ 1.025854, 6.450687, 0.0025974, 0.01272805, 26.439266, 27.842508, 
+    o_true = [ 1.025854, 6.450687, 0.0025974, 0.01272805, 26.439266, 27.842508,
                14.74146, 4257.684]
 
     assert_pri( p_true, new_mod )
@@ -515,7 +514,7 @@ def test_miri_2():
 
 def test_miri_3():
     """
-    MIRI data with ramp's 0th and final groups flagged as DO_NOT_USE, and final 
+    MIRI data with ramp's 0th and final groups flagged as DO_NOT_USE, and final
     group also flagged as CR.
     SCI seg is: [6666., 25., 35., 54., 55., 65., 75., 94., 95., 666.]
     GROUPDQ is: [1, 0, 0, 0, 0, 0, 0, 0, 0, 5]
@@ -525,18 +524,18 @@ def test_miri_3():
                            nints, nrows, ncols, deltatime, gain, readnoise )
 
     # Populate pixel-specific SCI and GROUPDQ arrays
-    RampMod.data[0,:,0,0] = np.array([6666., 25., 35., 54., 55., 65., 75., 
+    RampMod.data[0,:,0,0] = np.array([6666., 25., 35., 54., 55., 65., 75.,
                                     94., 95., 666.], dtype=np.float32)
     RampMod.groupdq[0,:,0,0] = np.array([1, 0, 0, 0, 0, 0, 0, 0, 0, 5])
 
     new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit( RampMod, 1024*300., True,
                                                 RnMod, GMod, 'OLS', 'optimal' )
 
-    # Set truth values for PRIMARY results: 
+    # Set truth values for PRIMARY results:
     p_true = [ 1.025854, 0, 0.12379601, 0.0025974, 0.01272805]
 
     # Set truth values for OPTIONAL results:
-    o_true = [ 1.025854, 6.450687, 0.0025974, 0.01272805, 26.439266, 
+    o_true = [ 1.025854, 6.450687, 0.0025974, 0.01272805, 26.439266,
               27.842508, 14.74146, 4257.684]
 
     assert_pri( p_true, new_mod )
@@ -548,7 +547,7 @@ def assert_pri( p_true, new_mod ):
     Compare true and fit values of primary output for extensions
     SCI, DQ, ERR, VAR_POISSSON, VAR_RNOISE.
     """
-    
+
     npt.assert_allclose( new_mod.data,        p_true[0], atol=1E-6 )
     npt.assert_allclose( new_mod.dq,          p_true[1], atol=1E-1 )
     npt.assert_allclose( new_mod.err,         p_true[2], atol=1E-6 )
@@ -609,7 +608,7 @@ def create_mod_arrays(ngroups, nints, nrows, ncols, deltatime, gain, readnoise):
     For an input datacube (arbitrarily chosen to be MIRI), create arrays having
     the specified dimensions for the pixel DQ, the group DQ, and the
     ERR extensions, and create datamodels for the ramp, readnoise, and gain.
-    """ 
+    """
 
     gain = np.ones(shape=(nrows, ncols), dtype=np.float32) * gain
     err = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.float32)
@@ -656,6 +655,3 @@ def create_mod_arrays(ngroups, nints, nrows, ncols, deltatime, gain, readnoise):
     RnMod.meta.subarray.ysize = nrows
 
     return RampMod, RnMod, GMod, pixdq, gdq, err
-
-
-

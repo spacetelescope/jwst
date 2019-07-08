@@ -35,7 +35,10 @@
 # --> status = a1.compare()
 #
 # pragma: no cover
-import sys, os, time
+import os
+import sys
+import time
+
 from astropy.io import fits
 import numpy as N
 
@@ -111,23 +114,25 @@ class compare_cr_navg_files:
 
         # Check for compatibility of array sizes
         if ((xx_size_c != xx_size_f) or(yy_size_c != yy_size_f)):
-            print(' arrays in found and created files have incompatible sizes, so maybe using the wrong created file ')
+            print(' arrays in found and created files have incompatible sizes,'
+                'so maybe using the wrong created file ')
             sys.exit(ERROR_RETURN)
         if ((xx_size_c != xx_size_true) or(yy_size_c != yy_size_true)):
-            print(' arrays in true and created files have incompatible sizes, so maybe using the wrong created file ')
+            print(' arrays in true and created files have incompatible sizes,'
+                'so maybe using the wrong created file ')
             sys.exit(ERROR_RETURN)
         if ((xx_size_c != xx_size_avg) or(yy_size_c != yy_size_avg)):
-            print(' arrays in calculated(averaged) and created files have incompatible sizes, so maybe using the wrong created file ')
+            print(' arrays in calculated(averaged) and created files have',
+                'incompatible sizes, so maybe using the wrong created file ')
             sys.exit(ERROR_RETURN)
 
-        xx_size = xx_size_c; yy_size = yy_size_c # all sizes compatible, so use more generic names ?????
+        xx_size = xx_size_c; yy_size = yy_size_c # all sizes compatible, so use more generic names?
 
         NSTACK = data_c.shape[0]  # number of slices
 
         # create 1d arrays for later stats
         data_true_1 = data_true.ravel()
         data_avg_1 = data_avg.ravel()
-        data_diff_1 = data_avg_1 - data_true_1
 
         true_nonneg = N.where(data_true_1 >= 0.)
         avg_neg1 = N.where(data_avg_1 == -1.0)  # calculated slopes where data was insufficient
@@ -142,11 +147,17 @@ class compare_cr_navg_files:
         if (verb > 0):
             print('The total number of gcr/sps created in ', created_file, ' is ', total_c)
             print('For all data in which the true count rates are nonnegative: ')
-            print('  the calculated (avg) data: min, mean, max, std = ', avg_nonneg.min(), avg_nonneg.mean(), avg_nonneg.max(), avg_nonneg.std())
-            print('  the true data: min, mean, max, std = ', true_nonneg.min(), true_nonneg.mean(), true_nonneg.max(), true_nonneg.std())
-            print('  the navg*avg-true: min, mean, max, std = ', data_diff_nonneg.min(), data_diff_nonneg.mean(), data_diff_nonneg.max(), data_diff_nonneg.std())
+            print('  the calculated (avg) data: min, mean, max, std = ',
+                avg_nonneg.min(), avg_nonneg.mean(), avg_nonneg.max(),
+                avg_nonneg.std())
+            print('  the true data: min, mean, max, std = ', true_nonneg.min(),
+                true_nonneg.mean(), true_nonneg.max(), true_nonneg.std())
+            print('  the navg*avg-true: min, mean, max, std = ',
+                data_diff_nonneg.min(), data_diff_nonneg.mean(),
+                data_diff_nonneg.max(), data_diff_nonneg.std())
             print('   ')
-            print('The number of pixels for which there is insufficient data: ', len(data_avg_1[avg_neg1]))
+            print('The number of pixels for which there is insufficient data: ',
+                len(data_avg_1[avg_neg1]))
             print('  ')
 
         c_only_along_stack = N.zeros((yy_size, xx_size), dtype=N.int32)   # pixels with crs created but not found
@@ -193,13 +204,18 @@ class compare_cr_navg_files:
 
                     if verb > 1:
                         print(' The corresponding subvectors of :')
-                        print(' ... the averaged created data [', which_read, ']= ', c_navg_line[which_read])
-                        print(' ... the averaged found data for the current pixel: ', f_pix_whole_stack[which_read])
-                        print(' ... the averaged found data for the next pixel: ', f_pix_whole_stack[which_read + 1])
+                        print(' ... the averaged created data [', which_read, ']= ',
+                            c_navg_line[which_read])
+                        print(' ... the averaged found data for the current pixel: ',
+                            f_pix_whole_stack[which_read])
+                        print(' ... the averaged found data for the next pixel: ',
+                            f_pix_whole_stack[which_read + 1])
 
                     c_navg_pixel[which_read, yy_pix, xx_pix] = c_navg_line[which_read]
 
-                    if ((c_navg_line[which_read] > 0.0) and (f_pix_whole_stack[which_read] == 0.0) and (f_pix_whole_stack[which_read + 1] == 0.0)):
+                    if ((c_navg_line[which_read] > 0.0)
+                        and (f_pix_whole_stack[which_read] == 0.0)
+                        and (f_pix_whole_stack[which_read + 1] == 0.0)):
                         tot_c_only += 1
                         c_only_along_stack[yy_pix, xx_pix] += 1
                         if verb > 1: print('       The subvector above is created only ')
@@ -209,7 +225,9 @@ class compare_cr_navg_files:
                         f_only_along_stack[yy_pix, xx_pix] += 1
                         if verb > 1: print('       The subvector above is found only ')
 
-                    elif ((c_navg_line[which_read] > 0.0) and ((f_pix_whole_stack[which_read] > 0.0) or (f_pix_whole_stack[which_read + 1] > 0.0))):
+                    elif ((c_navg_line[which_read] > 0.0)
+                        and ((f_pix_whole_stack[which_read] > 0.0)
+                            or (f_pix_whole_stack[which_read + 1] > 0.0))):
                         tot_both += 1
                         both_along_stack[yy_pix, xx_pix] += 1
                         if verb > 1: print('       The subvector above is both ')
@@ -237,39 +255,42 @@ class compare_cr_navg_files:
                     if (yy_pix % 50 == 0):
                         print('xx, yy = : c_only, f_only , neither, both, [CFLAG / FFLAG]  ')
 
-                    print(xx_pix, yy_pix, ' : ', c_only_along_stack[yy_pix, xx_pix], f_only_along_stack[yy_pix, xx_pix], neither_along_stack[yy_pix, xx_pix], both_along_stack[yy_pix, xx_pix], c_only_flag, f_only_flag)
+                    print(xx_pix, yy_pix, ' : ', c_only_along_stack[yy_pix, xx_pix],
+                        f_only_along_stack[yy_pix, xx_pix],
+                        neither_along_stack[yy_pix, xx_pix],
+                        both_along_stack[yy_pix, xx_pix], c_only_flag, f_only_flag)
 
         try:
             os.remove('c_only.fits')
-        except:
+        except FileNotFoundError:
             pass
         print('  '); print(' For the 2d array of created only pixels:  ')
         write_to_file(c_only_along_stack, 'c_only.fits')
 
         try:
             os.remove('f_only.fits')
-        except:
+        except FileNotFoundError:
             pass
         print('  '); print(' For the 2d array of found only pixels:  ')
         write_to_file(f_only_along_stack, 'f_only.fits')
 
         try:
             os.remove('both.fits')
-        except:
+        except FileNotFoundError:
             pass
         print('  '); print(' For the 2d array of both created and found pixels:  ')
         write_to_file(both_along_stack, 'both.fits')
 
         try:
             os.remove('neither.fits')
-        except:
+        except FileNotFoundError:
             pass
         print('  '); print(' For the 2d array of neither created or found pixels:  ')
         write_to_file(neither_along_stack, 'neither.fits')
 
         try:
             os.remove('c_navg.fits')
-        except:
+        except FileNotFoundError:
             pass
         print('  '); print(' The created pixels, averaged over subvectors: ')
         write_to_file(c_navg_pixel, 'c_navg.fits')
@@ -281,10 +302,15 @@ class compare_cr_navg_files:
         print('The number of pixels with CRs that were both created and found: ', tot_both)
         print('The number of pixels not having CRs that were neither created nor found: ', tot_neither)
 
-        print('The fraction of all pixels with CRs that were found only: ', float(tot_f_only) / (tot_both + tot_neither + tot_f_only + tot_c_only))
-        print('The fraction of all pixels with CRs that were created only: ', float(tot_c_only) / (tot_both + tot_neither + tot_f_only + tot_c_only))
-        print('The ratio of the number of pixels that were created only to the total number of pixels that were created (in the created file):', float(tot_c_only) / total_c)
-        print('The total number of all pixels in all slices: ', tot_both + tot_neither + tot_f_only + tot_c_only)
+        print('The fraction of all pixels with CRs that were found only:',
+            float(tot_f_only) / (tot_both + tot_neither + tot_f_only + tot_c_only))
+        print('The fraction of all pixels with CRs that were created only:',
+            float(tot_c_only) / (tot_both + tot_neither + tot_f_only + tot_c_only))
+        print('The ratio of the number of pixels that were created only to the',
+            'total number of pixels that were created (in the created file):',
+            float(tot_c_only) / total_c)
+        print('The total number of all pixels in all slices:',
+            tot_both + tot_neither + tot_f_only + tot_c_only)
 
         tstop = time.time()
         print('The elapsed time: ', tstop - tstart, ' seconds')
