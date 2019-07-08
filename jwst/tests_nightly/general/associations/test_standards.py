@@ -18,15 +18,11 @@ from jwst.associations.main import Main
 # Setup environment
 # #################
 
-# Main test args
-TEST_ARGS = ['--no-merge']
-
 # Produce Level2b only associations
 LV2_ONLY_ARGS = [
     '-r',
     t_path('../lib/rules_level2b.py'),
     '--ignore-default',
-    '--no-merge'
 ]
 
 # Produce Level3 only associations
@@ -34,7 +30,6 @@ LV3_ONLY_ARGS = [
     '-r',
     t_path('../lib/rules_level3.py'),
     '--ignore-default',
-    '--no-merge'
 ]
 
 # Produce general associations
@@ -112,7 +107,7 @@ class TestAgainstStandards(BaseJWSTTest):
         generated_path = Path('generate')
         generated_path.mkdir()
         version_id = standard_pars.pool_root.replace('_', '-')
-        args = TEST_ARGS + standard_pars.main_args + [
+        args = standard_pars.main_args + [
             '-p', str(generated_path),
             '--version-id', version_id,
         ]
