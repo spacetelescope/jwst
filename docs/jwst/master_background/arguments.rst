@@ -14,7 +14,8 @@ The master background subtraction step uses the following optional arguments.
 
 ``--save_background``
   A boolean indicating whether the computed 1-D master background spectrum should be saved
-  to a file. If a user-supplied background is specified, this argument is ignored.
+  to a file. The file name uses a product type suffix of "masterbg".
+  If a user-supplied background is specified, this argument is ignored.
   Defaults to ``False``.
 
 ``--force_subtract``

@@ -38,6 +38,16 @@ group_scale
 
 - Updates to documentation and log messages. [#3738]
 
+lib
+---
+
+- A function to determine the dispersion direction has been added. [#3756]
+
+master_background
+-----------------
+
+- Updated the documentation to include more details. [#3776]
+
 stpipe
 ------
 
