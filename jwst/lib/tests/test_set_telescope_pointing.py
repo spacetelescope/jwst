@@ -105,7 +105,7 @@ def test_change_engdb_url():
     The given time and database should not find any values.
     """
     with pytest.raises(ValueError):
-        results = stp.get_pointing(
+        stp.get_pointing(
             STARTTIME.mjd,
             ENDTIME.mjd,
             engdb_url=engdb_tools.ENGDB_BASE_URL
@@ -115,7 +115,7 @@ def test_change_engdb_url():
 def test_change_engdb_url_fail():
     """Test changing the engineering database by call"""
     with pytest.raises(Exception):
-        results = stp.get_pointing(
+        stp.get_pointing(
             Time('2019-06-03T17:25:40', format='isot').mjd,
             Time('2019-06-03T17:25:56', format='isot').mjd,
             engdb_url='http://nonexistant.fake'
