@@ -7,6 +7,8 @@
 associations
 ------------
 
+- Return filename with extensions based on file type [#2671]
+
 - Ensured that all target acqs are processed by Level 2 [#3765]
 
 - Add a check that backgrounds are included in level 3 associations [#3678]
@@ -23,7 +25,7 @@ datamodels
 - Fixed missing TUNITn keywords caused by changes for unsigned int columns. [#3753]
 
 - Write ``siaf_xref_sci`` and ``siaf_yref_sci`` to FITS keywords ``XREF_SCI``
-  and ``YREF_SCI`` for ``NRC_TSGRISM`` exposures. [#3766
+  and ``YREF_SCI`` for ``NRC_TSGRISM`` exposures. [#3766]
 
 extract_1d
 ----------
