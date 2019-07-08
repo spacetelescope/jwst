@@ -297,7 +297,7 @@ def find_suffixes():
                 step = Step.from_config_file(
                     path.join(config_path, config_file)
                 )
-            except Exception as exception:
+            except Exception:
                 pass
             else:
                 suffixes.add(step.name.lower())
