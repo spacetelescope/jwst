@@ -72,11 +72,11 @@ logger.addHandler(logging.NullHandler())
 ASN_SCHEMA = RegistryMarker.schema(libpath('asn_schema_jw_level3.json'))
 
 # DMS file name templates
-_LEVEL1B_REGEX = '(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
-_DMS_POOLNAME_REGEX = 'jw(\d{5})_(\d{8}[Tt]\d{6})_pool'
+_LEVEL1B_REGEX = r'(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
+_DMS_POOLNAME_REGEX = r'jw(\d{5})_(\d{8}[Tt]\d{6})_pool'
 
 # Product name regex's
-_REGEX_ACID_VALUE = '(o\d{3}|(c|a)\d{4})'
+_REGEX_ACID_VALUE = r'(o\d{3}|(c|a)\d{4})'
 
 # Exposures that should have received Level2b processing
 LEVEL2B_EXPTYPES = []
