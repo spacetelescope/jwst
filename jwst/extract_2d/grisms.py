@@ -200,6 +200,8 @@ def extract_tso_object(input_model,
             output_model.meta.wcsinfo.siaf_yref_sci = 34  # update for the move, vals are the same
             output_model.meta.wcsinfo.siaf_xref_sci = input_model.meta.wcsinfo.siaf_xref_sci
             output_model.meta.wcsinfo.spectral_order = order
+            output_model.meta.wcsinfo.dispersion_direction = \
+                        input_model.meta.wcsinfo.dispersion_direction
             output_model.name = str('TSO object')
             output_model.xstart = 1  # fits pixels
             output_model.xsize = ext_data.shape[2]
@@ -415,6 +417,8 @@ def extract_grism_objects(input_model,
                                                 var_rnoise=var_rnoise,
                                                 var_flat=var_flat)
                 new_slit.meta.wcsinfo.spectral_order = order
+                new_slit.meta.wcsinfo.dispersion_direction = \
+                        input_model.meta.wcsinfo.dispersion_direction
                 new_slit.meta.wcs = subwcs
                 if compute_wavelength:
                     new_slit.wavelength = compute_wavelength_array(new_slit)

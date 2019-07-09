@@ -104,6 +104,11 @@ allOf:
             default: 1
             fits_keyword: SPORDER
             fits_hdu: EXTRACT1D
+          dispersion_direction:
+            title: Dispersion direction
+            type: integer
+            fits_keyword: DISPAXIS
+            fits_hdu: EXTRACT1D
           int_num:
             title: Integration number
             type: integer
