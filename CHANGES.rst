@@ -6,6 +6,11 @@
 
 - Remove ``jwpsf`` module. [#3791]
 
+assign_wcs
+----------
+
+- This step populates keyword DISPAXIS. [#3799]
+
 associations
 ------------
 
@@ -35,6 +40,18 @@ extract_1d
 - Parameters were added to ``ExtractBase.__init__``, and most of the initialization
   is done there rather than in the subclasses. [#3714]
 
+- This step uses keyword DISPAXIS. [#3799]
+
+extract_2d
+----------
+
+For grism data, this step copies keyword DISPAXIS from input to output. [#3799]
+
+flat_field
+----------
+
+- This step uses keyword DISPAXIS. [#3799]
+
 gain_scale
 ----------
 
@@ -54,6 +71,11 @@ master_background
 -----------------
 
 - Updated the documentation to include more details. [#3776]
+
+resample_spec
+-------------
+
+- This step uses keyword DISPAXIS and also copies it to output. [#3799]
 
 stpipe
 ------
