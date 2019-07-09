@@ -86,7 +86,7 @@ class BasePoolRule():
                 ppars.path + ': n_asns not expected {} {}'.format(len(asns), ppars.n_asns)
             for asn, candidates in zip(asns, ppars.candidates):
                 assert set(asn.candidates) == set(candidates)
-            file_regex = re.compile('.+_(?P<suffix>.+)\..+')
+            file_regex = re.compile(r'.+_(?P<suffix>.+)\..+')
             for asn in asns:
                 for product in asn['products']:
                     for member in product['members']:

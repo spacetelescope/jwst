@@ -43,30 +43,30 @@ EXPTYPE_MAP = {
     'mir_flatmrs':       'flat',
     'mir_flatimage-ext': 'flat',
     'mir_flatmrs-ext':   'flat',
-    'mir_tacq':          'target_acquistion',
+    'mir_tacq':          'target_acquisition',
     'nis_dark':          'dark',
     'nis_focus':         'engineering',
     'nis_lamp':          'engineering',
-    'nis_tacq':          'target_acquistion',
-    'nis_taconfirm':     'target_acquistion',
+    'nis_tacq':          'target_acquisition',
+    'nis_taconfirm':     'target_acquisition',
     'nrc_dark':          'dark',
     'nrc_flat':          'flat',
     'nrc_focus':         'engineering',
     'nrc_led':           'engineering',
-    'nrc_tacq':          'target_acquistion',
-    'nrc_taconfirm':     'target_acquistion',
+    'nrc_tacq':          'target_acquisition',
+    'nrc_taconfirm':     'target_acquisition',
     'nrs_autoflat':      'autoflat',
     'nrs_autowave':      'autowave',
-    'nrs_confirm':       'target_acquistion',
+    'nrs_confirm':       'target_acquisition',
     'nrs_dark':          'dark',
     'nrs_focus':         'engineering',
     'nrs_image':         'engineering',
     'nrs_lamp':          'engineering',
-    'nrs_msata':         'target_acquistion',
-    'nrs_tacq':          'target_acquistion',
-    'nrs_taconfirm':     'target_acquistion',
-    'nrs_taslit':        'target_acquistion',
-    'nrs_wata':          'target_acquistion',
+    'nrs_msata':         'target_acquisition',
+    'nrs_tacq':          'target_acquisition',
+    'nrs_taconfirm':     'target_acquisition',
+    'nrs_taslit':        'target_acquisition',
+    'nrs_wata':          'target_acquisition',
 }
 
 # Coronographic exposures
@@ -90,21 +90,13 @@ IMAGE2_SCIENCE_EXP_TYPES = [
 
 IMAGE2_NONSCIENCE_EXP_TYPES = [
     'mir_coroncal',
-    'mir_tacq',
     'nis_focus',
-    'nis_tacq',
-    'nis_taconfirm',
-    'nrc_tacq',
-    'nrc_taconfirm',
     'nrc_focus',
-    'nrs_confirm',
     'nrs_focus',
     'nrs_image',
     'nrs_mimf',
-    'nrs_taslit',
-    'nrs_tacq',
-    'nrs_taconfirm',
 ]
+IMAGE2_NONSCIENCE_EXP_TYPES.extend(ACQ_EXP_TYPES)
 
 SPEC2_SCIENCE_EXP_TYPES = [
     'nrc_tsgrism',
@@ -241,11 +233,14 @@ class DMSBaseMixin(ACIDMixin):
     @property
     def from_items(self):
         """List of items from which members were created"""
-        items = [
-            member.item
-            for product in self['products']
-            for member in product['members']
-        ]
+        try:
+            items = [
+                member.item
+                for product in self['products']
+                for member in product['members']
+            ]
+        except KeyError:
+            items = []
         return items
 
     @property
@@ -360,8 +355,7 @@ class DMSBaseMixin(ACIDMixin):
         is_item_member : bool
             True if item is a member.
         """
-        member = self.make_member(item)
-        return self.is_member(member)
+        return item in self.from_items
 
     def is_item_tso(self, item, other_exp_types=None):
         """Is the given item TSO

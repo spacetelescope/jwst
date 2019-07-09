@@ -1,4 +1,105 @@
-0.13.4 (Unreleased)
+0.14.0 (Unreleased)
+===================
+
+- Remove references to deprecated collections.* ABCs that will be removed in
+  Python 3.8. [#3732]
+
+- Remove ``jwpsf`` module. [#3791]
+
+associations
+------------
+
+- Return filename with extensions based on file type [#2671]
+
+- Ensured that all target acqs are processed by Level 2 [#3765]
+
+- Add a check that backgrounds are included in level 3 associations [#3678]
+
+- Will not constrain on uniqueness of the MSACONFIG keyword [#3770]
+
+datamodels
+----------
+
+- Use public API of jsonschema to ease upgrade to 3.x. [#3705]
+
+- Fixed corruption of FITS tables with unsigned int columns. [#3736]
+
+- Fixed missing TUNITn keywords caused by changes for unsigned int columns. [#3753]
+
+- Write ``siaf_xref_sci`` and ``siaf_yref_sci`` to FITS keywords ``XREF_SCI``
+  and ``YREF_SCI`` for ``NRC_TSGRISM`` exposures. [#3766]
+
+extract_1d
+----------
+
+- Parameters were added to ``ExtractBase.__init__``, and most of the initialization
+  is done there rather than in the subclasses. [#3714]
+
+gain_scale
+----------
+
+- Updated to apply gain factor to variance arrays. [#3794]
+
+group_scale
+-----------
+
+- Updates to documentation and log messages. [#3738]
+
+lib
+---
+
+- A function to determine the dispersion direction has been added. [#3756]
+
+master_background
+-----------------
+
+- Updated the documentation to include more details. [#3776]
+
+stpipe
+------
+
+- Fix ``Step.print_configspec()`` method.  Add test.  [#3768]
+
+0.13.7 (2019-06-21)
+===================
+
+datamodels
+----------
+
+- Reverted #3680 and #3709. [#3717, #3718]
+
+flatfield
+---------
+
+- Three new unit tests were added.  Two existing files were modified to
+  split the tests into separate functions. [#3704]
+
+0.13.6 (2019-06-20)
+===================
+
+associations
+------------
+
+- Fixed constraints on WFSC processing. [#3710]
+
+datamodels
+----------
+
+- Fixed corruption of FITS tables with unsigned int columns. [#3680]
+
+
+0.13.5 (2019-06-19)
+===================
+
+associations
+------------
+
+- Reverted over-restrictive constraints on WFSC processing. [#3691]
+
+- Removed the rule creating associations for NIRSpec LAMP exposures in image modes. [#3693]
+
+
+0.13.4 (2019-06-17)
 ===================
 
 assign_wcs
@@ -12,17 +113,54 @@ associations
 
 - MIRI MRS dedicated background exposures are now listed as science observations in
   a new association. [#3542]
-  
+
 - Generate will no longer merge Level2 associations by default [#3631]
 
 - Prevent inclusion of data files with exp_type="NIS_EXTCAL" in the association files [#3611]
-=======
+
+- Implemented Level 2 re-sequencing to prevent overwriting of associations [#3674]
+
+- Implemented Level 2 background exposure reprocessing [#3675]
+
+combine_1d
+----------
+
+The input DQ column is temporarily replaced by a zero-filled array of
+the right data type. [#3666]
+
 datamodels
 ----------
 
 - Changed PATTSIZE keyword data type from float to string. [#3606]
 
 - Added enumeration of allowed values of ``FXD_SLIT`` to the core schema. [#3584]
+
+- Changed ``WHT_TYPE`` keyword to ``RESWHT``. [#3653]
+
+- Add missing pattern/enum values to keyword_pband, keyword_pfilter, keyword_channel [#3653]
+
+- New keywords [#3653]
+   - ``DSETSTRT``
+   - ``NUMDSETS``
+   - ``DITHDIRC``
+   - ``DITHOPFR``
+   - ``DITHPNTS``
+   - ``MRSPRCHN``
+   - ``NDITHPTS``
+   - ``DWTSCL``
+   - ``DOUTUN``
+   - ``RESBITS``
+   - ``DFVAL``
+   - ``DPIXFR``
+   - ``DKERN``
+   - ``SCIEXT``
+   - ``CONEXT``
+   - ``WHTEXT``
+
+extract_1d
+----------
+
+- Checks for input from a SourceModelContainer. [#3649]
 
 exp_to_source
 -------------
@@ -31,10 +169,33 @@ exp_to_source
 
 - Removed the enum list for the SUBPXPAT keyword to allow validation of any value. [#3616]
 
+extract_1d
+----------
+
+- Checks for input from a SourceModelContainer. [#3649]
+
+extract_2d
+----------
+
+- Nircam ``TSGRISM`` extraction uses now ``wcsinfo.siaf_x(y)ref_sci`` as the source position
+  on the detector. [#3646]
+
+- For grism data, a wavelength array is computed and saved, and the variance
+  arrays are extracted and copied to output. [#3664]
+
+lib
+---
+
+- ``set_telescope_pointing`` now retrieves CRPIX1/2 from the SIAF for Nircam TSGRISM
+  observations and saves the values as ``meta.wcsinfo.siaf_x(y)ref_sci``. These are used
+  by ``extract_2d`` as the source position on the detector. [#3646]
+
 outlier_detection
 -----------------
 
 - Changed default value of good_pixel from 4 to 6 [#3638]
+
+- Don't use NaNs or masked values in weight image for blotting. [#3651]
 
 pipeline
 --------
@@ -44,6 +205,9 @@ pipeline
 
 - ``calwebb_tso3`` was changed to allow processing of exposures
   with ``EXP_TYPE=MIR_IMAGE.`` [#3633]
+
+- - ``calwebb_tso3`` was changed to allow tso photometry processing of exposures
+  with (``EXP_TYPE=MIR_IMAGE`` and tsovisit = True) or  with (``EXP_TYPE=MIR_IMAGE``) [#3650]
 
 - Changed the default value of good_pixel from 4 to 6 for all outlier
   detection steps and both resample steps [#3638]
@@ -88,6 +252,8 @@ associations
 - Orders the elements in Level3 naming in alphabetical order [#3614]
 
 - Ensured that higher-order candidates only exist for Level2 associations [#3629]
+
+- Improve member checking and removed duplicate product names [#3647]
 
 combine_1d
 ----------
@@ -134,6 +300,8 @@ extract_2d
 
 - Replaced a white space in the names of grism objects with an underscore. [#3517]
 
+- Update WFSS slit names to use simple integer value, and add accompanying unit
+  test for NIRCAM grism extract_2d [#3632].
 
 master_background
 -----------------

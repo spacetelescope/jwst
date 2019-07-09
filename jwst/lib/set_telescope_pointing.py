@@ -9,10 +9,7 @@ from astropy.time import Time
 import numpy as np
 
 from ..datamodels import Level1bModel
-from ..lib.engdb_tools import (
-    ENGDB_BASE_URL,
-    ENGDB_Service,
-)
+from ..lib.engdb_tools import ENGDB_Service
 from .exposure_types import IMAGING_TYPES, FGS_GUIDE_EXP_TYPES
 
 TYPES_TO_UPDATE = set(list(IMAGING_TYPES) + FGS_GUIDE_EXP_TYPES)
@@ -1452,6 +1449,9 @@ def populate_model_from_siaf(model, siaf):
         model.meta.wcsinfo.cdelt1 = siaf.cdelt1 / 3600  # in deg
         model.meta.wcsinfo.cdelt2 = siaf.cdelt2 / 3600  # in deg
         model.meta.coordinates.reference_frame = "ICRS"
+    elif model.meta.exposure.type.lower() == 'nrc_tsgrism':
+        model.meta.wcsinfo.siaf_xref_sci = siaf.crpix1
+        model.meta.wcsinfo.siaf_yref_sci = siaf.crpix2
 
 
 def first_pointing(mnemonics):

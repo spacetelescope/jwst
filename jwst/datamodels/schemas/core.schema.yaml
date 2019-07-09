@@ -155,7 +155,7 @@ properties:
             blend_rule: mindatetime
           date_end:
             type: string
-            title: "[yyyy-mm-dd] UTC date at end of exposure"
+            title: "Date-time end of data acquisition"
             fits_keyword: DATE-END
             blend_table: True
             # Despite what the title might lead you to believe, this keyword
@@ -1008,6 +1008,39 @@ properties:
             type: number
             fits_keyword: YOFFSET
             blend_table: True
+          starting_set:
+            title: Starting 4-point set number
+            type: integer
+            enum: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+            fits_keyword: DSETSTRT
+          number_of_sets:
+            title: Total number of 4-point sets
+            type: integer
+            enum: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+            fits_keyword: NUMDSETS
+          direction:
+            title: Direction of dither pattern offsets
+            type: string
+            enum: [NEGATIVE, POSITIVE, NONE]
+            fits_keyword: DITHDIRC
+          optimized_for:
+            title: Dither pattern optimization
+            type: string
+            enum: ["POINT-SOURCE", "EXTENDED-SOURCE", NONE]
+            fits_keyword: DITHOPFR
+          sparse_points:
+            title: Sparse cycling dither points
+            type: string
+            fits_keyword: DITHPNTS
+          primary_channel:
+            title: MRS primary channel
+            type: string
+            enum: [ALL, CHANNEL1, CHANNEL2, CHANNEL3, CHANNEL4]
+            fits_keyword: MRSPRCHN
+          dither_points:
+            title: Total number of points in primary dither pattern
+            type: string
+            fits_keyword: NDITHPTS
       ephemeris:
         title: JWST ephemeris information
         type: object

@@ -3,8 +3,8 @@ import pytest
 import numpy as np
 
 from . import helpers
-from ...datamodels import (MultiExposureModel, MultiSlitModel, ModelContainer)
-from ..exp_to_source import exp_to_source, multislit_to_container
+from jwst.datamodels import (MultiExposureModel, MultiSlitModel, ModelContainer)
+from jwst.exp_to_source import exp_to_source, multislit_to_container
 
 
 @pytest.fixture(scope='module')
@@ -37,22 +37,22 @@ def test_model_structure(run_exp_to_source):
             assert outputs[str(slit.source_id)].meta.filename != in_model.meta.filename
 
 
-def test_model_roundtrip(run_exp_to_source):
+def test_model_roundtrip(tmpdir, run_exp_to_source):
     inputs, outputs = run_exp_to_source
     files = []
-    with helpers.TemporaryDirectory() as path:
-        for output in outputs:
-            file_path = os.path.join(path, output) + '.fits'
-            outputs[output].save(file_path)
-            files.append(file_path)
-        for file_path in files:
-            multiexposure_model = MultiExposureModel(file_path)
-            assert len(multiexposure_model.exposures) == 3
-            exp_files = set()
-            for exposure in multiexposure_model.exposures:
-                exp_files.add(exposure.meta.filename)
-            assert len(exp_files) == len(multiexposure_model.exposures)
-            assert multiexposure_model.meta.filename not in exp_files
+    path = str(tmpdir)
+    for output in outputs:
+        file_path = os.path.join(path, output) + '.fits'
+        outputs[output].save(file_path)
+        files.append(file_path)
+    for file_path in files:
+        multiexposure_model = MultiExposureModel(file_path)
+        assert len(multiexposure_model.exposures) == 3
+        exp_files = set()
+        for exposure in multiexposure_model.exposures:
+            exp_files.add(exposure.meta.filename)
+        assert len(exp_files) == len(multiexposure_model.exposures)
+        assert multiexposure_model.meta.filename not in exp_files
 
 
 def test_container_structure(run_multislit_to_container):

@@ -37,7 +37,6 @@ class Tso3Pipeline(Pipeline):
                  'extract_1d': extract_1d_step.Extract1dStep,
                  'white_light': white_light_step.WhiteLightStep
                  }
-    image_exptypes = ['NRC_TSIMAGE', 'MIR_IMAGE']
     reference_file_types = ['gain', 'readnoise']
 
     def process(self, input):
@@ -110,8 +109,8 @@ class Tso3Pipeline(Pipeline):
         # Create final photometry results as a single output
         # regardless of how many members there may be...
         phot_result_list = []
-
-        if input_exptype in self.image_exptypes and input_tsovisit:
+        if (input_exptype == 'NRC_TSIMAGE' or
+            (input_exptype == 'MIR_IMAGE'  and input_tsovisit)):
             # Create name for extracted photometry (Level 3) product
             phot_tab_suffix = 'phot'
 
@@ -148,10 +147,13 @@ class Tso3Pipeline(Pipeline):
             # Save the final x1d Multispec model
             self.save_model(x1d_result, suffix='x1dints')
 
-        phot_results = vstack(phot_result_list)
-        phot_tab_name = self.make_output_path(suffix=phot_tab_suffix, ext='ecsv')
-        self.log.info("Writing Level 3 photometry catalog {}...".format(
+        if len(phot_result_list) == 1 and phot_result_list[0] is None:
+            self.log.info("Could not create a photometric catalog for data")
+        else:
+            phot_results = vstack(phot_result_list)
+            phot_tab_name = self.make_output_path(suffix=phot_tab_suffix, ext='ecsv')
+            self.log.info("Writing Level 3 photometry catalog {}...".format(
                       phot_tab_name))
-        phot_results.write(phot_tab_name, format='ascii.ecsv')
+            phot_results.write(phot_tab_name, format='ascii.ecsv')
 
         return

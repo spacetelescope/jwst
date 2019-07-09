@@ -48,7 +48,7 @@ class Asn_Image(AsnMixin_Science):
         # Setup constraints
         self.constraints = Constraint([
             Constraint_Optical_Path(),
-            Constraint_Target(),
+            Constraint_Target(association=self),
             Constraint_Image(),
             DMSAttrConstraint(
                 name='wfsvisit',
@@ -91,7 +91,7 @@ class Asn_WFSCMB(AsnMixin_Science):
         # Setup constraints
         self.constraints = Constraint([
             Constraint_Optical_Path(),
-            Constraint_Target(),
+            Constraint_Target(association=self),
             Constraint_Image(),
             DMSAttrConstraint(
                 name='patttype',
@@ -193,7 +193,7 @@ class Asn_SpectralTarget(AsnMixin_Spectrum):
                 reduce=Constraint.notany
             ),
             Constraint_Optical_Path(),
-            Constraint_Target(),
+            Constraint_Target(association=self),
             DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
@@ -203,6 +203,15 @@ class Asn_SpectralTarget(AsnMixin_Spectrum):
                     '|nis_soss'
                 ),
                 force_unique=False
+            ),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        name='patttype_spectarg',
+                        sources=['patttype'],
+                    ),
+                ],
+                reduce=Constraint.notany
             )
         ])
 
@@ -212,7 +221,7 @@ class Asn_SpectralTarget(AsnMixin_Spectrum):
     def finalize(self):
         """Finalize assocation
 
-        For NRS Fixed-slit, finalization means creating new associations for
+        For NRS Fixed-slit, finalization means creating new members for the
         background nods.
 
         Returns
@@ -248,7 +257,7 @@ class Asn_SpectralSource(AsnMixin_Spectrum):
                 reduce=Constraint.notany
             ),
             Constraint_Optical_Path(),
-            Constraint_Target(),
+            Constraint_Target(association=self),
             Constraint(
                 [
                     DMSAttrConstraint(
@@ -289,7 +298,7 @@ class Asn_IFU(AsnMixin_Spectrum):
     def __init__(self, *args, **kwargs):
         # Setup for checking.
         self.constraints = Constraint([
-            Constraint_Target(),
+            Constraint_Target(association=self),
             Constraint_IFU(),
             Constraint(
                 [
@@ -333,7 +342,7 @@ class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_BkgScience):
 
         # Setup for checking.
         self.constraints = Constraint([
-            Constraint_Target(),
+            Constraint_Target(association=self),
             Constraint_IFU(),
             Constraint(
                 [
@@ -465,6 +474,14 @@ class Asn_AMI(AsnMixin_Science):
             ),
         ])
 
+        # PSF is required
+        self.validity.update({
+            'has_psf': {
+                'validated': False,
+                'check': lambda entry: entry['exptype'] == 'psf'
+            }
+        })
+
         # Check and continue initialization.
         super(Asn_AMI, self).__init__(*args, **kwargs)
 
@@ -489,7 +506,7 @@ class Asn_WFSS_NIS(AsnMixin_Spectrum):
 
         # Setup for checking.
         self.constraints = Constraint([
-            Constraint_Target(),
+            Constraint_Target(association=self),
             DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
@@ -528,7 +545,7 @@ class Asn_TSO(AsnMixin_Science):
 
         # Setup for checking.
         self.constraints = Constraint([
-            Constraint_Target(),
+            Constraint_Target(association=self),
             Constraint_Optical_Path(),
             Constraint_TSO(),
             DMSAttrConstraint(

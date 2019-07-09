@@ -34,7 +34,7 @@ the steps are applied in a different order than for Near-IR (NIR) instrument exp
 +--------------------------------------------+---------+-----------------------------------------+---------+
 | calwebb_detector1                          | tso1    | calwebb_detector1                       | tso1    |
 +============================================+=========+=========================================+=========+
-| :ref:`group_scale <group_scale_step>`      | |check| | :ref:`group_scale <group_scale_step>`   | |check| |
+| :ref:`group_scale <group_scale_step>`      | |check| | :ref:`group_scale <group_scale_step>`   |         |
 +--------------------------------------------+---------+-----------------------------------------+---------+
 | :ref:`dq_init <dq_init_step>`              | |check| | :ref:`dq_init <dq_init_step>`           | |check| |
 +--------------------------------------------+---------+-----------------------------------------+---------+

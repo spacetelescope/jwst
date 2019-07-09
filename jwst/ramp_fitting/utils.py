@@ -582,7 +582,7 @@ def calc_slope_vars(rn_sect, gain_sect, gdq_sect, group_time, max_seg):
     #   Here the denominator of this quantity will be computed, which will be
     #   later multiplied by the estimated median slope.
 
-    # Suppress, then re-enable, harmless arithmetic warnings, as NaN will be 
+    # Suppress, then re-enable, harmless arithmetic warnings, as NaN will be
     #   checked for and handled later
     warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
     warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
@@ -605,8 +605,8 @@ def calc_slope_vars(rn_sect, gain_sect, gdq_sect, group_time, max_seg):
     #   longer segments, this value is overwritten below.
     den_r3 = num_r3.copy() * 0. + 1./6
     wh_seg_pos = np.where (segs_beg_3 > 1)
-    
-    # Suppress, then, re-enable harmless arithmetic warnings, as NaN will be 
+
+    # Suppress, then, re-enable harmless arithmetic warnings, as NaN will be
     #   checked for and handled later
     warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
     warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
@@ -1279,7 +1279,7 @@ def do_all_sat( model, imshape, n_int, save_opt):
     opt_model : RampFitOutputModel object or None
         DM object containing optional OLS-specific ramp fitting data for the
         exposure
-    """    
+    """
     # Create model for the primary output. Flag all pixels in the pixiel DQ
     #   extension as SATURATED and DO_NOT_USE.
     model.pixeldq = np.bitwise_or(model.pixeldq, dqflags.group['SATURATED'] )

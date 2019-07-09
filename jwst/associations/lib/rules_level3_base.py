@@ -73,11 +73,11 @@ logger.addHandler(logging.NullHandler())
 ASN_SCHEMA = RegistryMarker.schema(libpath('asn_schema_jw_level3.json'))
 
 # DMS file name templates
-_LEVEL1B_REGEX = '(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
-_DMS_POOLNAME_REGEX = 'jw(\d{5})_(\d{8}[Tt]\d{6})_pool'
+_LEVEL1B_REGEX = r'(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
+_DMS_POOLNAME_REGEX = r'jw(\d{5})_(\d{8}[Tt]\d{6})_pool'
 
 # Product name regex's
-_REGEX_ACID_VALUE = '(o\d{3}|(c|a)\d{4})'
+_REGEX_ACID_VALUE = r'(o\d{3}|(c|a)\d{4})'
 
 # Exposures that should have received Level2b processing
 LEVEL2B_EXPTYPES = []
@@ -112,10 +112,6 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
                 'validated': False,
                 'check': lambda member: member['exptype'] == 'science'
             },
-            'ok_candidate': {
-                'validated': False,
-                'check': self.ok_candidate
-            }
         })
 
         # Other presumptions on the association
@@ -287,7 +283,8 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         # Determine expected member name
         expname = Utility.rename_to_level2(
             item['filename'], exp_type=item['exp_type'],
-            is_tso=self.is_item_tso(item, other_exp_types=CORON_EXP_TYPES)
+            is_tso=self.is_item_tso(item, other_exp_types=CORON_EXP_TYPES),
+            member_exptype=exptype
         )
 
         member = Member(
@@ -303,6 +300,14 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
     def make_fixedslit_bkg(self):
         """Add a background to a MIR_lrs-fixedslit observation"""
+
+        # check to see if these are nodded backgrounds, if they are setup
+        # the background members, otherwise return the original association
+        if "nod" not in self.constraints['patttype_spectarg']:
+            results = []
+            results.append(self)
+            return results
+
         for product in self['products']:
             members = product['members']
             # Split out the science exposures
@@ -311,6 +316,11 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
                 for member in members
                 if member['exptype'] == 'science'
             ]
+            # if there is only one science observation it cannot be the background
+            # return with original association.
+            if len(science_exps) < 2:
+                return
+
             # Create new members for each science exposure in the association,
             # using the the base name + _x1d as background.
             results = []
@@ -351,11 +361,11 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         """Add item to this association."""
         member = self.make_member(item)
         if self.is_member(member):
-            logger.debug(
-                'Member is already part of the association:'
-                '\n\tassociation: {}'
-                '\n]tmember: {}'.format(self, member)
-            )
+            # logger.debug(
+            #     'Member is already part of the association:'
+            #     '\n\tassociation: {}'
+            #     '\n]tmember: {}'.format(self, member)
+            # )
             return
 
         self.update_validity(member)
@@ -484,7 +494,7 @@ class Utility():
             )
 
     @staticmethod
-    def rename_to_level2(level1b_name, exp_type=None, is_tso=False):
+    def rename_to_level2(level1b_name, exp_type=None, is_tso=False, member_exptype='science'):
         """Rename a Level 1b Exposure to a Level2 name.
 
         The basic transform is changing the suffix `uncal` to
@@ -504,6 +514,9 @@ class Utility():
             Use 'calints' instead of 'cal' as
             the suffix.
 
+        member_exptype: str
+            The assocition member exposure type, such as "science".
+
         Returns
         -------
         str
@@ -519,10 +532,14 @@ class Utility():
             ))
             return level1b_name
 
-        if exp_type in LEVEL2B_EXPTYPES:
-            suffix = 'cal'
+        if member_exptype == 'background':
+            suffix = 'x1d'
         else:
-            suffix = 'rate'
+            if exp_type in LEVEL2B_EXPTYPES:
+                suffix = 'cal'
+            else:
+                suffix = 'rate'
+
         if is_tso:
             suffix += 'ints'
 
@@ -766,6 +783,7 @@ class Constraint_MSA(Constraint):
                 DMSAttrConstraint(
                     name='is_msa',
                     sources=['msametfl'],
+                    force_unique=False,
                 )
             ],
             name='msa_spectral'
@@ -773,12 +791,29 @@ class Constraint_MSA(Constraint):
 
 
 class Constraint_Target(DMSAttrConstraint):
-    """Select on target"""
-    def __init__(self):
-        super(Constraint_Target, self).__init__(
-            name='target',
-            sources=['targetid'],
-        )
+    """Select on target
+
+    Parameters
+    ----------
+    association: Association
+        If specified, use the `get_exposure_type` method
+        to as part of the target selection.
+    """
+    def __init__(self, association=None):
+        if association is None:
+            super(Constraint_Target, self).__init__(
+                name='target',
+                sources=['targetid'],
+            )
+        else:
+            super(Constraint_Target, self).__init__(
+                name='target',
+                sources=['targetid'],
+                onlyif=lambda item: association.get_exposure_type(item) != 'background',
+                force_reprocess=ProcessList.EXISTING,
+                only_on_match=True,
+            )
+
 
 
 # -----------
@@ -816,7 +851,7 @@ class AsnMixin_Science(DMS_Level3_Base):
             [
                 Constraint_Base(),
                 DMSAttrConstraint(
-                    sources=['is_imprt', 'bkgdtarg'],
+                    sources=['is_imprt'],
                     force_undefined=True
                 ),
                 Constraint(

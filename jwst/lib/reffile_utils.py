@@ -149,7 +149,7 @@ def ref_matches_sci(sci_model, ref_model):
         xsize_sci = sci_model.xsize
         ystart_sci = sci_model.ystart
         ysize_sci = sci_model.ysize
-    except:
+    except AttributeError:
         # Otherwise the metadata is in the meta tree
         xstart_sci = sci_model.meta.subarray.xstart
         xsize_sci = sci_model.meta.subarray.xsize

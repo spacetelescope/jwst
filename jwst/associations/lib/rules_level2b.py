@@ -25,7 +25,6 @@ __all__ = [
     'Asn_Lv2MIRLRSFixedSlitNod',
     'Asn_Lv2NRSFSS',
     'Asn_Lv2NRSIFUNod',
-    'Asn_Lv2NRSLAMPImage',
     'Asn_Lv2NRSLAMPSpectral',
     'Asn_Lv2NRSMSA',
     'Asn_Lv2Spec',
@@ -235,6 +234,7 @@ class Asn_Lv2Spec(
                     SimpleConstraint(
                         value='science',
                         test=lambda value, item: self.get_exposure_type(item) != value,
+                        force_unique=False,
                     )
                 ],
                 reduce=Constraint.any
@@ -408,51 +408,6 @@ class Asn_Lv2MIRLRSFixedSlitNod(
             exp_type = 'background'
 
         return exp_type
-
-
-@RegistryMarker.rule
-class Asn_Lv2NRSLAMPImage(
-        AsnMixin_Lv2Special,
-        DMSLevel2bBase
-):
-    """Level2b NIRSpec Image Lamp calibrations Association
-
-    Characteristics:
-        - Association type: ``nrslamp-image2``
-        - Pipeline: ``calwebb_nrslamp-image2``
-        - Image-based NRS calibrations
-        - Single science exposure
-    """
-
-    def __init__(self, *args, **kwargs):
-
-        self.constraints = Constraint([
-            Constraint_Base(),
-            Constraint_Single_Science(self.has_science),
-            DMSAttrConstraint(
-                name='opt_elem2',
-                sources=['grating'],
-                value='mirror'
-            ),
-            DMSAttrConstraint(
-                name='instrument',
-                sources=['instrume'],
-                value='nirspec'
-            ),
-            DMSAttrConstraint(
-                name='opt_elem',
-                sources=['filter'],
-                value='opaque'
-            ),
-        ])
-
-        super(Asn_Lv2NRSLAMPImage, self).__init__(*args, **kwargs)
-
-    def _init_hook(self, item):
-        """Post-check and pre-add initialization"""
-
-        super(Asn_Lv2NRSLAMPImage, self)._init_hook(item)
-        self.data['asn_type'] = 'nrslamp-image2'
 
 
 @RegistryMarker.rule
@@ -899,7 +854,8 @@ class Asn_Lv2NRSIFUNod(
             `None` if a complete association cannot be produced.
 
         """
-        return self.make_nod_asns()
+        nodded_asns = self.make_nod_asns()
+        return nodded_asns
 
 
 @RegistryMarker.rule
@@ -924,10 +880,15 @@ class Asn_Lv2WFSC(
             DMSAttrConstraint(
                 name='wfsc',
                 sources=['visitype'],
-                value='prime_wfsc_sensing_control',
+                value='.+wfsc.+',
                 force_unique=True
+            ),
+            DMSAttrConstraint(
+                name='exclude',
+                sources=['exp_type'],
+                value='.+(?!nis_extcal).+',
+                force_unique=False,
             )
-
         ])
 
         # Now check and continue initialization.
@@ -938,3 +899,29 @@ class Asn_Lv2WFSC(
 
         super(Asn_Lv2WFSC, self)._init_hook(item)
         self.data['asn_type'] = 'wfs-image2'
+
+
+@RegistryMarker.rule
+class Asn_Force_Reprocess(DMSLevel2bBase):
+    """Force all backgrounds to reprocess"""
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup constraints
+        self.constraints = Constraint([
+            SimpleConstraint(
+                value='background',
+                sources=self.get_exposure_type,
+                force_unique=False,
+            ),
+            SimpleConstraint(
+                name='force_fail',
+                test=lambda x, y: False,
+                value='anything but None',
+                reprocess_on_fail=True,
+                work_over=ProcessList.EXISTING,
+                reprocess_rules=[]
+            )
+        ])
+
+        super(Asn_Force_Reprocess, self).__init__(*args, **kwargs)

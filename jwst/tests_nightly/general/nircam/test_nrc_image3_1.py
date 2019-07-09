@@ -33,18 +33,16 @@ class TestImage3Pipeline1(BaseJWSTTest):
 
         Step.from_cmdline(args)
 
-        outputs = [(# Compare level-2c crf product
-                             'nrca5_47Tuc_subpix_dither1_newpos_a3001_crf.fits',
-                             'nrca5_47Tuc_subpix_dither1_newpos_cal-a3001_ref.fits'),
-                   {'files':(# Compare i2d product
-                             'mosaic_long_i2d.fits',
-                             'mosaic_long_i2d_ref.fits'),
-                    'pars': {'ignore_keywords':
-                             self.ignore_keywords+['NAXIS1', 'TFORM*'],
-                             'ignore_fields':self.ignore_keywords,
-                             'rtol': 0.0001}
-                   },
-                   ('mosaic_long_cat.ecsv', 'mosaic_long_cat_ref.ecsv'),
+        self.ignore_keywords += ['NAXIS1', 'TFORM*']
+        self.ignore_fields = self.ignore_keywords
+        self.rtol = 0.0001
+
+        outputs = [('nrca5_47Tuc_subpix_dither1_newpos_a3001_crf.fits',
+                    'nrca5_47Tuc_subpix_dither1_newpos_cal-a3001_ref.fits'),
+                   ('mosaic_long_i2d.fits',
+                    'mosaic_long_i2d_ref.fits'),
+                   ('mosaic_long_cat.ecsv',
+                    'mosaic_long_cat_ref.ecsv'),
                   ]
         self.compare_outputs(outputs)
 
@@ -68,19 +66,19 @@ class TestImage3Pipeline1(BaseJWSTTest):
             '--steps.tweakreg.snr_threshold=5',
             '--steps.tweakreg.enforce_user_order=True',
             '--steps.tweakreg.searchrad=10',
-            '--steps.tweakreg.fitgeometry=rscale'
+            '--steps.tweakreg.fitgeometry=rscale',
         ]
 
         Step.from_cmdline(args)
 
+        self.ignore_keywords += ['NAXIS1', 'TFORM*']
+        self.ignore_fields = self.ignore_keywords
+        self.rtol = 0.0001
+
         outputs = [('jw10002001001_01101_00004_nrcblong_o001_crf.fits',
                     'jw10002001001_01101_00004_nrcblong_o001_crf_ref.fits'),
-                   {'files':('jw10002-o001_t002_nircam_f444w_i2d.fits',
+                   ('jw10002-o001_t002_nircam_f444w_i2d.fits',
                     'jw10002-o001_t002_nircam_f444w_i2d_ref.fits'),
-                    'pars':{'ignore_keywords':self.ignore_keywords+['NAXIS1','TFORM*'],
-                            'ignore_fields':self.ignore_keywords,
-                            'rtol':0.0001}
-                   },
                    ('jw10002-o001_t002_nircam_f444w_cat.ecsv',
                     'jw10002-o001_t002_nircam_f444w_cat_ref.ecsv'),
                   ]

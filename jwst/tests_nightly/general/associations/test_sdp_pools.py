@@ -30,7 +30,7 @@ EXPECTED_FAILS = {
 # Pools that require special handling
 SPECIAL_DEFAULT = {
     'args': [],
-    'xfail': None
+    'xfail': None,
 }
 SPECIAL_POOLS = {
     'jw80600_20171108T041522_pool': {
@@ -41,10 +41,6 @@ SPECIAL_POOLS = {
         'args': [],
         'xfail': 'PR #3450',
     },
-    'jw00625_20190603t233254_pool': {
-        'args': [],
-        'xfail': 'JP-767',
-    }
 }
 
 
@@ -68,7 +64,6 @@ class TestSDPPools(SDPPoolsSource):
         generated_path = Path('generate')
         generated_path.mkdir()
         args = special['args'] + [
-            '--no-merge',
             '-p', str(generated_path),
             '--version-id', version_id,
             self.get_data(pool_path)
@@ -102,9 +97,11 @@ class TestSDPPools(SDPPoolsSource):
     def test_dup_product_names(self, pool_path):
         """Check for duplicate product names for a pool"""
 
+        pool = Path(pool_path).stem
+        special = SPECIAL_POOLS.get(pool, SPECIAL_DEFAULT)
+
         results = asn_generate([
             '--dry-run',
-            '--no-merge',
             self.get_data(pool_path)
         ])
         asns = results.associations
@@ -121,12 +118,15 @@ class TestSDPPools(SDPPoolsSource):
             if count > 1
         ]
 
-        if multiples:
-            pytest.xfail('Multiple product names. See JP-767')
+        try:
+            assert not multiples, 'Multiple product names: {}'.format(multiples)
+        except AssertionError:
+            if special['xfail']:
+                pytest.xfail(special['xfail'])
+            else:
+                raise
 
-        assert not multiples, 'Multiple product names: {}'.format(multiples)
-
-    def test_specified_sdp_pool(self, sdp_pool):
+    def test_asns_by_pool(self, sdp_pool):
         """Test a command-line specified pool"""
         if sdp_pool:
             pool_path = Path(self.test_dir) / 'pools' / (sdp_pool + '.csv')
@@ -134,7 +134,7 @@ class TestSDPPools(SDPPoolsSource):
         else:
             pytest.skip('No SDP pool specified using `--sdp-pool` command-line option.')
 
-    def test_specified_sdp_pool_dup_product_names(self, sdp_pool):
+    def test_dup_products_by_pool(self, sdp_pool):
         """Test for duplicate product names for a specific pool"""
         if sdp_pool:
             pool_path = Path(self.test_dir) / 'pools' / (sdp_pool + '.csv')

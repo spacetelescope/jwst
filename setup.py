@@ -91,7 +91,6 @@ TESTS_REQUIRE = [
     'pytest-doctestplus',
     'requests_mock',
     'pytest-openfiles',
-    'pytest-faulthandler',
 ]
 
 def get_transforms_data():

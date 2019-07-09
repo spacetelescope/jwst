@@ -105,7 +105,7 @@ def test_change_engdb_url():
     The given time and database should not find any values.
     """
     with pytest.raises(ValueError):
-        results = stp.get_pointing(
+        stp.get_pointing(
             STARTTIME.mjd,
             ENDTIME.mjd,
             engdb_url=engdb_tools.ENGDB_BASE_URL
@@ -115,7 +115,7 @@ def test_change_engdb_url():
 def test_change_engdb_url_fail():
     """Test changing the engineering database by call"""
     with pytest.raises(Exception):
-        results = stp.get_pointing(
+        stp.get_pointing(
             Time('2019-06-03T17:25:40', format='isot').mjd,
             Time('2019-06-03T17:25:56', format='isot').mjd,
             engdb_url='http://nonexistant.fake'
@@ -431,3 +431,20 @@ def test_default_siaf_values(eng_db_ngas, data_file_nosiaf):
     assert model.meta.wcsinfo.crpix2 == 0
     assert model.meta.wcsinfo.cdelt1 == 1
     assert model.meta.wcsinfo.cdelt2 == 1
+
+
+def test_tsgrism_siaf_values(eng_db_ngas, data_file_nosiaf):
+    """
+    Test that FITS WCS default values were set.
+    """
+    model = datamodels.Level1bModel(data_file_nosiaf)
+    model.meta.exposure.start_time = STARTTIME.mjd
+    model.meta.exposure.end_time = ENDTIME.mjd
+    #model.meta.target.ra = TARG_RA
+    #model.meta.target.dec = TARG_DEC
+    model.meta.aperture.name = "NRCA5_GRISM256_F444W"
+    model.meta.observation.date = '1/1/2017'
+    model.meta.exposure.type = "NRC_TSGRISM"
+    stp.update_wcs(model, siaf_path=siaf_db)
+    assert model.meta.wcsinfo.siaf_xref_sci == 887
+    assert model.meta.wcsinfo.siaf_yref_sci == 35

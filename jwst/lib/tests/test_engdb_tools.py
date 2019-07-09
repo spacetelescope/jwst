@@ -57,7 +57,7 @@ def is_alive(url):
 @pytest.fixture
 def engdb():
     """Setup the service to operate through the mock service"""
-    with EngDB_Mocker() as mocker:
+    with EngDB_Mocker():
         engdb = engdb_tools.ENGDB_Service()
         yield engdb
 
@@ -100,7 +100,7 @@ def test_basic(engdb):
 
 def test_bad_server():
     with pytest.raises(Exception):
-        engdb = engdb_tools.ENGDB_Service(BAD_SERVER)
+        engdb_tools.ENGDB_Service(BAD_SERVER)
 
 
 def test_db_time():

@@ -9,7 +9,7 @@ __all__ = ["GroupScaleStep"]
 class GroupScaleStep(Step):
     """
     GroupScaleStep: Rescales group data to account for on-board
-    frame averaging that did not use NFRAMES that is a power of two.
+    frame averaging that did not use FRMDIVSR = NFRAMES.
     All groups in the exposure are rescaled by FRMDIVSR/NFRAMES.
     """
 
@@ -35,8 +35,7 @@ class GroupScaleStep(Step):
             # is a power of 2. If it is, rescaling isn't needed.
             if frame_divisor is None:
                 if (nframes & (nframes - 1) == 0):
-                    self.log.info('NFRAMES={} is a power of 2; ' +
-                                  'correction not needed'.format(nframes))
+                    self.log.info('NFRAMES={} is a power of 2; correction not needed'.format(nframes))
                     self.log.info('Step will be skipped')
                     input_model.meta.cal_step.group_scale = 'SKIPPED'
                     return input_model
@@ -44,8 +43,7 @@ class GroupScaleStep(Step):
             # Compare NFRAMES and FRMDIVSR. If they're equal,
             # rescaling isn't needed.
             elif (nframes == frame_divisor):
-                self.log.info('NFRAMES and FRMDIVSR are equal; ' +
-                              'correction not needed')
+                self.log.info('NFRAMES and FRMDIVSR are equal; correction not needed')
                 self.log.info('Step will be skipped')
                 input_model.meta.cal_step.group_scale = 'SKIPPED'
                 return input_model

@@ -41,7 +41,9 @@ class BaseJWSTTest:
     ignore_hdus = ['ASDF']
     ignore_keywords = ['DATE', 'CAL_VER', 'CAL_VCS', 'CRDS_VER', 'CRDS_CTX', 'FILENAME']
 
-    env = 'dev'
+    @pytest.fixture(autouse=True)
+    def config_env(self, pytestconfig, envopt):
+        self.env = pytestconfig.getoption('env')
 
     @pytest.fixture(autouse=True)
     def config_access(self, pytestconfig):

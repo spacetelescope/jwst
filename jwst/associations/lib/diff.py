@@ -1,6 +1,6 @@
 """"Diff and compare associations"""
 
-from collections import Counter
+from collections import Counter, UserList
 from copy import copy
 import logging
 import re
@@ -9,6 +9,47 @@ from ..load_asn import load_asn
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
+
+
+# #########################
+# Define the types of diffs
+# #########################
+class DiffError(AssertionError):
+    """Base Class for difference errors"""
+
+
+class CandidateLevelError(DiffError):
+    """Candidate level mismatch"""
+
+
+class DifferentProductSetsError(DiffError):
+    """Different product sets between groups of associations"""
+
+
+class DuplicateProductError(DiffError):
+    """Duplicate products found"""
+
+
+class MemberMismatchError(DiffError):
+    """Membership does not match"""
+
+
+class TypeMismatchError(DiffError):
+    """Association type mismatch"""
+
+
+class MultiDiffError(UserList, DiffError):
+    """List of diff errors"""
+    def __init__(self, *args, **kwargs):
+        super(MultiDiffError, self).__init__(*args, **kwargs)
+
+    def __str__(self):
+        message = ['Following diffs found:\n']
+        for diff in self:
+            message.extend([
+                '\n****\n', str(diff), '\n'
+            ])
+        return ''.join(message)
 
 
 def compare_asn_files(left_paths, right_paths):
@@ -24,7 +65,7 @@ def compare_asn_files(left_paths, right_paths):
 
     Raises
     ------
-    AssertionError
+    MultiDiffError
         If there are differences. The message will contain
         all the differences.
     """
@@ -68,23 +109,31 @@ def compare_asn_lists(left_asns, right_asns):
 
     Raises
     ------
-    AssertionError
+    MultiDiffError
         If there are differences. The message will contain
         all the differences.
     """
+    diffs = MultiDiffError()
 
     # Ensure that product names are unique
     left_product_names, left_duplicates = get_product_names(left_asns)
     right_product_names, right_duplicates = get_product_names(right_asns)
-    assert not left_duplicates, f'Left associations have duplicate products {left_duplicates} '
-    assert not right_duplicates, f'Right associations have duplicate products {left_duplicates} '
+    if left_duplicates:
+        diffs.append(DuplicateProductError(
+            f'Left associations have duplicate products {left_duplicates}'
+        ))
+    if right_duplicates:
+        diffs.append(DuplicateProductError(
+            f'Right associations have duplicate products {right_duplicates}'
+        ))
 
     # Ensure that the product name lists are the same.
     name_diff = left_product_names ^ right_product_names
-    assert not name_diff, (
-        'Associations do not share a common set of products: {}'
-        ''.format(name_diff)
-    )
+    if name_diff:
+        diffs.append(DifferentProductSetsError(
+            'Left and right associations do not share a common set of products: {}'
+            ''.format(name_diff)
+        ))
 
     # Compare like product associations
     left_asns_by_product = {
@@ -96,7 +145,16 @@ def compare_asn_lists(left_asns, right_asns):
         for asn in right_asns
     }
     for product_name in left_product_names:
-        compare_asns(left_asns_by_product[product_name], right_asns_by_product[product_name])
+        try:
+            compare_asns(left_asns_by_product[product_name], right_asns_by_product[product_name])
+        except MultiDiffError as compare_diffs:
+            diffs.extend(compare_diffs)
+        except KeyError:
+            # Most likely due to a previous error. Ignore
+            pass
+
+    if diffs:
+        raise diffs
 
 
 def compare_asns(left, right):
@@ -110,30 +168,12 @@ def compare_asns(left, right):
     left, right : dict
         Two, individual, associations to compare
 
-    Returns
-    -------
-    equality : boolean
-        True if matching.
-
     Raises
     ------
-    AssertionError
+    MultiDiffError
         If there is a difference.
     """
-
-    try:
-        _compare_asns(left, right)
-    except AssertionError as excp:
-        message = (
-            'Associations do not match. Mismatch because:'
-            '\n{reason}'
-            '\nLeft association = {left}'
-            '\nRight association = {right}'
-            ''.format(left=left, right=right, reason=excp)
-        )
-        raise AssertionError(message) from excp
-
-    return True
+    _compare_asns(left, right)
 
 
 def _compare_asns(left, right):
@@ -147,13 +187,11 @@ def _compare_asns(left, right):
     left, right : dict
         Two, individual, associations to compare
 
-    Returns
-    -------
-    equality : boolean
-
     Raises
     ------
-    AssertionError
+    MultiDiffError
+        If there are differences. The message will contain
+        all the differences.
 
     Note
     ----
@@ -170,18 +208,29 @@ def _compare_asns(left, right):
             - key `expname` for each member
             - key 'exptype` for each member
     """
+    diffs = MultiDiffError()
 
     # Assert that the same result type is the same.
-    assert left['asn_type'] == right['asn_type'], \
-        'Type mismatch {} != {}'.format(left['asn_type'], right['asn_type'])
+    if left['asn_type'] != right['asn_type']:
+        diffs.append(TypeMismatchError(
+            'Type mismatch {} != {}'.format(left['asn_type'], right['asn_type'])
+        ))
 
     # Assert that the level of association candidate is the same.
     # Cannot guarantee value, but that the 'a'/'c'/'o' levels are similar.
-    assert left['asn_id'][0] == right['asn_id'][0], \
-        f"Candidate level mismatch left '{left['asn_id'][0]}' != right '{right['asn_id'][0]}'"
+    if left['asn_id'][0] != right['asn_id'][0]:
+        diffs.append(CandidateLevelError(
+            f"Candidate level mismatch left '{left['asn_id'][0]}' != right '{right['asn_id'][0]}'"
+        ))
 
     # Membership
-    return compare_membership(left, right)
+    try:
+        compare_membership(left, right)
+    except MultiDiffError as compare_diffs:
+        diffs.extend(compare_diffs)
+
+    if diffs:
+        raise diffs
 
 
 def compare_membership(left, right):
@@ -192,21 +241,21 @@ def compare_membership(left, right):
     left, right : dict
         Two, individual, associations to compare
 
-    Returns
-    -------
-    equality : boolean
-
     Raises
     ------
-    AssertionError
+    MultiDiffError
+        If there are differences. The message will contain
+        all the differences.
     """
+    diffs = MultiDiffError()
     products_left = left['products']
     products_right = copy(right['products'])
 
-    assert len(products_left) == len(products_right), (
-        '# products differ: {left_len} != {right_len}'
-        ''.format(left_len=len(products_left), right_len=len(products_right))
-    )
+    if len(products_left) != len(products_right):
+        diffs.append(DifferentProductSetsError(
+            '# products differ: {left_len} != {right_len}'
+            ''.format(left_len=len(products_left), right_len=len(products_right))
+        ))
 
     for left_idx, left_product in enumerate(products_left):
         left_product_name = components(left_product['name'])
@@ -214,14 +263,14 @@ def compare_membership(left, right):
             if components(right_product['name']) != left_product_name:
                 continue
 
-            assert len(right_product['members']) == len(left_product['members']), (
-                'Product Member length differs:'
-                ' Left Product #{left_idx} len {left_len} !=  '
-                ' Right Product #{right_idx} len {right_len}'
-                ''.format(left_idx=left_idx, left_len=len(left_product['members']),
-                          right_idx=right_idx, right_len=len(right_product['members'])
-                )
-            )
+            if len(right_product['members']) != len(left_product['members']):
+                diffs.append(MemberMismatchError(
+                    'Product Member length differs:'
+                    ' Left Product #{left_idx} len {left_len} !=  '
+                    ' Right Product #{right_idx} len {right_len}'
+                    ''.format(left_idx=left_idx, left_len=len(left_product['members']),
+                              right_idx=right_idx, right_len=len(right_product['members']))
+                ))
 
             members_right = copy(right_product['members'])
             for left_member in left_product['members']:
@@ -229,45 +278,49 @@ def compare_membership(left, right):
                     if left_member['expname'] != right_member['expname']:
                         continue
 
-                    assert left_member['exptype'] == right_member['exptype'], (
-                        'Left {left_expname}:{left_exptype}'
-                        ' != Right {right_expname}:{right_exptype}'
-                        ''.format(left_expname=left_member['expname'], left_exptype=left_member['exptype'],
+                    if left_member['exptype'] != right_member['exptype']:
+                        diffs.append(MemberMismatchError(
+                            'Left {left_expname}:{left_exptype}'
+                            ' != Right {right_expname}:{right_exptype}'
+                            ''.format(left_expname=left_member['expname'], left_exptype=left_member['exptype'],
                                   right_expname=right_member['expname'], right_exptype=right_member['exptype'])
-                    )
+                        ))
 
                     members_right.remove(right_member)
                     break
                 else:
-                    raise AssertionError(
+                    diffs.append(MemberMismatchError(
                         'Left {left_expname}:{left_exptype} has no counterpart in right'
                         ''.format(left_expname=left_member['expname'], left_exptype=left_member['exptype'])
-                    )
+                    ))
 
-            assert len(members_right) == 0, (
-                'Right has {len_over} unaccounted for members starting with'
-                ' {right_expname}:{right_exptype}'
-                ''.format(len_over=len(members_right),
-                          right_expname=members_right[0]['expname'],
-                          rigth_exptype=members_right[0]['exptype']
-                )
-            )
+            if len(members_right) != 0:
+                diffs.append(MemberMismatchError(
+                    'Right has {len_over} unaccounted for members starting with'
+                    ' {right_expname}:{right_exptype}'
+                    ''.format(len_over=len(members_right),
+                              right_expname=members_right[0]['expname'],
+                              right_exptype=members_right[0]['exptype']
+                    )
+                ))
 
             products_right.remove(right_product)
             break
         else:
-            raise AssertionError(
+            diffs.append(DifferentProductSetsError(
                 'Left has {n_products} left over'
                 ''.format(n_products=len(products_left))
-            )
+            ))
 
 
-    assert len(products_right) == 0, (
-        'Right has {n_products} left over'
-        ''.format(n_products=len(products_right))
-    )
+    if len(products_right) != 0:
+        diffs.append(DifferentProductSetsError(
+            'Right has {n_products} left over'
+            ''.format(n_products=len(products_right))
+        ))
 
-    return True
+    if diffs:
+        raise diffs
 
 
 def components(s):

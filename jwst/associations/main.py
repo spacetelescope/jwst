@@ -342,10 +342,12 @@ class Main():
 class DeprecateNoMerge(argparse.Action):
     """Deprecate the `--no-merge` option"""
     def __init__(self, option_strings, dest, nargs=None, **kwargs):
-        logger.warning('The "--no-merge" option is deprecated in favor of the "--merge" option.')
         super(DeprecateNoMerge, self).__init__(option_strings, dest, const=True, nargs=0, **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):
+        logger.warning(
+            'The "--no-merge" option is now the default and deprecated.'
+            ' Use "--merge" to force merging.')
         setattr(namespace, self.dest, values)
 
 

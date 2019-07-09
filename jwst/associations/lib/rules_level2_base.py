@@ -67,8 +67,8 @@ FLAG_TO_EXPTYPE = {
 }
 
 # File templates
-_DMS_POOLNAME_REGEX = 'jw(\d{5})_(\d{3})_(\d{8}[Tt]\d{6})_pool'
-_LEVEL1B_REGEX = '(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
+_DMS_POOLNAME_REGEX = r'jw(\d{5})_(\d{3})_(\d{8}[Tt]\d{6})_pool'
+_LEVEL1B_REGEX = r'(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
 
 # Key that uniquely identfies items.
 KEY = 'expname'
@@ -99,6 +99,19 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
                 'check': self.validate_candidates
             }
         })
+
+    def check_and_set_constraints(self, item):
+        """Override of Association method
+
+        An addition check is made on candidate type.
+        Level 2 associations can only be created by
+        OBSERVATION and BACKGROUND candidates.
+        """
+        match, reprocess = super(DMSLevel2bBase, self).check_and_set_constraints(item)
+        if match and not self.acid.type in ['observation', 'background']:
+            return False, []
+        else:
+            return match, reprocess
 
     def members_by_type(self, member_type):
         """Get list of members by their exposure type"""
@@ -483,6 +496,9 @@ class Utility():
             else:
                 finalized_asns.append(asn)
         lv2_asns = Utility.prune_duplicate_products(lv2_asns)
+
+        # Ensure sequencing is correct.
+        Utility_Level3.resequence(lv2_asns)
 
         return finalized_asns + lv2_asns
 

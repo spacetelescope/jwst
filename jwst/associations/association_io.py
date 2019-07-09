@@ -83,11 +83,12 @@ class json():
         -------
         (name, str):
             Tuple where the first item is the suggested
-            base name for the JSON file.
+            Name for the JSON file.
             Second item is the string containing the JSON serialization.
         """
+        asn_filename = asn.asn_name+'.json'
         return (
-            asn.asn_name,
+            asn_filename,
             json_lib.dumps(asn.data, cls=AssociationEncoder, indent=4, separators=(',', ': '))
         )
 
@@ -146,11 +147,12 @@ class yaml():
         -------
         (name, str):
             Tuple where the first item is the suggested
-            base name for the YAML file.
+            Name for the YAML file.
             Second item is the string containing the YAML serialization.
         """
+        asn_filename = asn.asn_name+'.yaml'
         return (
-            asn.asn_name,
+            asn_filename,
             yaml_lib.dump(asn.data, default_flow_style=False)
         )
 
