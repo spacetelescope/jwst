@@ -33,6 +33,11 @@ extract_1d
 - Parameters were added to ``ExtractBase.__init__``, and most of the initialization
   is done there rather than in the subclasses. [#3714]
 
+gain_scale
+----------
+
+- Updated to apply gain factor to variance arrays. [#3794]
+
 group_scale
 -----------
 
