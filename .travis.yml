@@ -12,6 +12,10 @@ addons:
       - texlive-latex-extra
       - dvipng
       - graphviz
+      - libblas3
+      - liblapack3
+      - liblapack-dev
+      - libblas-dev
 
 env:
   global:
