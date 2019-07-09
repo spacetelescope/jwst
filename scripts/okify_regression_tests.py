@@ -25,8 +25,8 @@ NO_DIFFERENCES_RE = re.compile(r"^E\s+No differences found.*$")
 
 def parse_args():
     parser = ArgumentParser(description="Process regression test logs and prompt to okify results")
-    parser.add_argument('log_path', help="path to regression test log file")
-    parser.add_argument("--dry_run", action="store_true", help="pass the --dry-run flag to JFrog CLI")
+    parser.add_argument("log_path", help="path to regression test log file", metavar="log-path")
+    parser.add_argument("--dry-run", action="store_true", help="pass the --dry-run flag to JFrog CLI")
 
     return parser.parse_args()
 
