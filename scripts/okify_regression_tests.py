@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 Regression test okifying script.  Download the raw Jenkins output (right click
 on "View as plain text" to save locally).  This script will attempt to parse
@@ -16,12 +17,14 @@ import subprocess
 import os
 from argparse import ArgumentParser
 
+
 ARTIFACTORY_URL = "https://bytesalad.stsci.edu/artifactory"
 
 RESULT_PATH_RE = re.compile(r"^E\s+a: (.*)$")
 TRUTH_PATH_RE = re.compile(r"^E\s+b: (.*)$")
 FITSDIFF_RE = re.compile(r"E\s+fitsdiff.*$")
 DEPLOYING_RE = re.compile(r"^\[consumer_[0-9]+\] Deploying artifact: " + ARTIFACTORY_URL + "/jwst-pipeline-results/([^/]+)/.*$")
+NO_DIFFERENCES_RE = re.compile(r"^E\s+No differences found.*$")
 
 
 def parse_args():
@@ -35,13 +38,16 @@ def parse_args():
 def artifactory_copy(source_path, target_path, dry_run=False):
     jfrog_args = [
         "--url", ARTIFACTORY_URL,
-        "--apikey", get_api_key()
+        "--apikey", get_api_key(),
+        "--flat"
     ]
 
     if dry_run:
         jfrog_args.append("--dry-run")
 
     subprocess.check_call(["jfrog", "rt", "cp"] + jfrog_args + [source_path, target_path])
+
+    print("")
 
 
 def get_api_key():
@@ -122,56 +128,62 @@ def main():
                 block.append(lines[j])
                 j += 1
 
-            print("Fitsdiff output:\n")
-            print("".join(block))
+            no_differences = False
+            for line in block:
+                if NO_DIFFERENCES_RE.match(line):
+                    no_differences = True
 
-            result_match = RESULT_PATH_RE.match(block[1])
-            truth_match = TRUTH_PATH_RE.match(block[2])
+            if not no_differences:
+                print("Fitsdiff output:\n")
+                print("".join(block))
 
-            assert result_match and truth_match, "Expected result and truth file paths after fitsdiff version string"
+                result_match = RESULT_PATH_RE.match(block[1])
+                truth_match = TRUTH_PATH_RE.match(block[2])
 
-            result_path = result_match.group(1).strip()
-            truth_path = truth_match.group(1).strip()
+                assert result_match and truth_match, "Expected result and truth file paths after fitsdiff version string"
 
-            if not (result_path.startswith("/") and truth_path.startswith("/")):
-                k = i - 1
-                result_match = None
-                truth_match = None
-                while not (result_match and truth_match):
-                    if not result_match:
-                        result_match = RESULT_PATH_RE.match(lines[k])
-                    if not truth_match:
-                        truth_match = TRUTH_PATH_RE.match(lines[k])
-                    k -= 1
-                    assert i - k < 5, "Could not locate full result and truth file paths"
+                result_path = result_match.group(1).strip()
+                truth_path = truth_match.group(1).strip()
 
-                new_result_path = result_match.group(1).strip()
-                new_truth_path = truth_match.group(1).strip()
+                if not (result_path.startswith("/") and truth_path.startswith("/")):
+                    k = i - 1
+                    result_match = None
+                    truth_match = None
+                    while not (result_match and truth_match):
+                        if not result_match:
+                            result_match = RESULT_PATH_RE.match(lines[k])
+                        if not truth_match:
+                            truth_match = TRUTH_PATH_RE.match(lines[k])
+                        k -= 1
+                        assert i - k < 5, "Could not locate full result and truth file paths"
 
-                assert new_result_path.endswith(result_path)
-                assert new_truth_path.endswith(truth_path)
+                    new_result_path = result_match.group(1).strip()
+                    new_truth_path = truth_match.group(1).strip()
 
-                result_path = new_result_path
-                truth_path = new_truth_path
+                    assert new_result_path.endswith(result_path)
+                    assert new_truth_path.endswith(truth_path)
 
-            artifactory_result_path = get_artifactory_result_path(result_path, session_name)
-            artifactory_truth_path = get_artifactory_truth_path(truth_path, current_input_path)
+                    result_path = new_result_path
+                    truth_path = new_truth_path
 
-            print(f"Artifactory result path: {artifactory_result_path}")
-            print(f"Artifactory truth path: {artifactory_truth_path}\n")
+                artifactory_result_path = get_artifactory_result_path(result_path, session_name)
+                artifactory_truth_path = get_artifactory_truth_path(truth_path, current_input_path)
 
-            while True:
-                result = input("Enter 'o' to okify, 's' to skip: ")
-                if result not in ['o', 's']:
-                    print(f"Unrecognized command '{result}', try again")
+                print(f"Artifactory result path: {artifactory_result_path}")
+                print(f"Artifactory truth path: {artifactory_truth_path}\n")
+
+                while True:
+                    result = input("Enter 'o' to okify, 's' to skip: ")
+                    if result not in ['o', 's']:
+                        print(f"Unrecognized command '{result}', try again")
+                    else:
+                        break
+
+                if result == 's':
+                    print("Skipping\n")
                 else:
-                    break
-
-            if result == 's':
-                print("Skipping\n")
-            else:
-                print(f"Copying {artifactory_result_path} to {artifactory_truth_path}\n")
-                artifactory_copy(artifactory_result_path, artifactory_truth_path, dry_run=args.dry_run)
+                    print(f"Copying {artifactory_result_path} to {artifactory_truth_path}\n")
+                    artifactory_copy(artifactory_result_path, artifactory_truth_path, dry_run=args.dry_run)
 
             i = j
         else:
