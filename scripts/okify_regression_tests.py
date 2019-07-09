@@ -5,10 +5,8 @@ on "View as plain text" to save locally).  This script will attempt to parse
 that output for failed fitsdiff comparisons, and prompt the user to okify or
 skip each file.
 
-Requires JFrog CLI (https://jfrog.com/getcli/) and an artifactory API key
-with write permissions for the truth files.  Generate the API key from your
-profile (https://bytesalad.stsci.edu/artifactory/webapp/#/profile) and
-set the ARTIFACTORY_API_KEY environment variable.
+Requires JFrog CLI (https://jfrog.com/getcli/) configured with credentials
+that have write access to the jwst-pipeline repository.
 """
 
 import sys
@@ -18,12 +16,10 @@ import os
 from argparse import ArgumentParser
 
 
-ARTIFACTORY_URL = "https://bytesalad.stsci.edu/artifactory"
-
 RESULT_PATH_RE = re.compile(r"^E\s+a: (.*)$")
 TRUTH_PATH_RE = re.compile(r"^E\s+b: (.*)$")
 FITSDIFF_RE = re.compile(r"E\s+fitsdiff.*$")
-DEPLOYING_RE = re.compile(r"^\[consumer_[0-9]+\] Deploying artifact: " + ARTIFACTORY_URL + "/jwst-pipeline-results/([^/]+)/.*$")
+DEPLOYING_RE = re.compile(r"^\[consumer_[0-9]+\] Deploying artifact:.*/jwst-pipeline-results/([^/]+)/.*$")
 NO_DIFFERENCES_RE = re.compile(r"^E\s+No differences found.*$")
 
 
@@ -36,11 +32,7 @@ def parse_args():
 
 
 def artifactory_copy(source_path, target_path, dry_run=False):
-    jfrog_args = [
-        "--url", ARTIFACTORY_URL,
-        "--apikey", get_api_key(),
-        "--flat"
-    ]
+    jfrog_args = ["--flat"]
 
     if dry_run:
         jfrog_args.append("--dry-run")
@@ -48,12 +40,6 @@ def artifactory_copy(source_path, target_path, dry_run=False):
     subprocess.check_call(["jfrog", "rt", "cp"] + jfrog_args + [source_path, target_path])
 
     print("")
-
-
-def get_api_key():
-    api_key = os.environ.get("ARTIFACTORY_API_KEY")
-    assert api_key, "Missing Artifactory credentials.  Set ARTIFACTORY_API_KEY environment variable."
-    return api_key
 
 
 def get_artifactory_result_path(file_path, session_name):
@@ -98,8 +84,6 @@ def get_artifactory_truth_path(file_path, input_path):
 
 def main():
     args = parse_args()
-
-    get_api_key()
 
     with open(args.log_path) as f:
         lines = f.readlines()
