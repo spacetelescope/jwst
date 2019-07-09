@@ -32,7 +32,7 @@ reads that keyword value during its execution and stores the value in
 the science data keyword `GAINFACT`, so that the gain reference file
 does not have to be loaded again by the `gain_scale` step. If, however,
 the step does not find that keyword populated in the science data, it
-loads the gain reference file to retreive it. If all attempts to
+loads the gain reference file to retrieve it. If all attempts to
 find the scaling factor fail, the step is skipped.
 
 Gain reference files for instruments or modes that use the standard
