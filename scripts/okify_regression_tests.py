@@ -108,7 +108,23 @@ def main():
         elif FITSDIFF_RE.match(lines[i]):
             block = [lines[i]]
             j = i + 1
+            result_found = False
+            truth_found = False
             while lines[j].startswith("E   ") and not FITSDIFF_RE.match(lines[j]):
+                if RESULT_PATH_RE.match(lines[j]):
+                    if result_found:
+                        # Sometimes if there is no diff, the fitsdiff output will
+                        # omit the "fitsdiff: x.y.z" line that we're using to delineate
+                        # file comparisons.  This just says: stop if we have already seen
+                        # a result path and another one appears.
+                        break
+                    else:
+                        result_found = True
+                elif TRUTH_PATH_RE.match(lines[j]):
+                    if truth_found:
+                        break
+                    else:
+                        truth_found = True
                 block.append(lines[j])
                 j += 1
 
