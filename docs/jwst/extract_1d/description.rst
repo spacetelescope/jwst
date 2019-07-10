@@ -49,6 +49,9 @@ be an output table extension with the name EXTRACT1D.  This extension will
 have columns WAVELENGTH, FLUX, ERROR, SURF_BRIGHT, SB_ERROR, DQ,
 BACKGROUND, BERROR and NPIXELS.
 
+Some metadata will be written to the table header, including the dispersion
+direction (1 = horizontal, 2 = vertical) in the input 2-D or 3-D image.
+
 WAVELENGTH was copied from the wavelength attribute of the input 2-D data,
 if that attribute exists and was populated, or it was calculated from the
 WCS otherwise.
