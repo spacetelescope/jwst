@@ -16,9 +16,9 @@ import os
 from argparse import ArgumentParser
 
 
-RESULT_PATH_RE = re.compile(r"^E\s+a: (.*)$")
-TRUTH_PATH_RE = re.compile(r"^E\s+b: (.*)$")
-FITSDIFF_RE = re.compile(r"E\s+fitsdiff.*$")
+RESULT_PATH_RE = re.compile(r"^E\s+(a:|---) (.*)$")
+TRUTH_PATH_RE = re.compile(r"^E\s+(b:|\+\+\+) (.*)$")
+DIFF_RE = re.compile(r"E\s+(fitsdiff|@@.*@@).*$")
 DEPLOYING_RE = re.compile(r"^\[consumer_[0-9]+\] Deploying artifact:.*/jwst-pipeline-results/([^/]+)/.*$")
 NO_DIFFERENCES_RE = re.compile(r"^E\s+No differences found.*$")
 
@@ -105,12 +105,12 @@ def main():
             exec(lines[i], globals(), loc)
             current_input_path = loc['input_path']
             i += 1
-        elif FITSDIFF_RE.match(lines[i]):
+        elif DIFF_RE.match(lines[i]):
             block = [lines[i]]
             j = i + 1
             result_found = False
             truth_found = False
-            while lines[j].startswith("E   ") and not FITSDIFF_RE.match(lines[j]):
+            while lines[j].startswith("E   ") and not DIFF_RE.match(lines[j]):
                 if RESULT_PATH_RE.match(lines[j]):
                     if result_found:
                         # Sometimes if there is no diff, the fitsdiff output will
@@ -134,16 +134,18 @@ def main():
                     no_differences = True
 
             if not no_differences:
-                print("Fitsdiff output:\n")
+                print("Diff output:\n")
                 print("".join(block))
 
                 result_match = RESULT_PATH_RE.match(block[1])
                 truth_match = TRUTH_PATH_RE.match(block[2])
 
-                assert result_match and truth_match, "Expected result and truth file paths after fitsdiff version string"
-
-                result_path = result_match.group(1).strip()
-                truth_path = truth_match.group(1).strip()
+                if result_match and truth_match:
+                    result_path = result_match.group(2).strip()
+                    truth_path = truth_match.group(2).strip()
+                else:
+                    result_path = ""
+                    truth_path = ""
 
                 if not (result_path.startswith("/") and truth_path.startswith("/")):
                     k = i - 1
@@ -157,8 +159,8 @@ def main():
                         k -= 1
                         assert i - k < 5, "Could not locate full result and truth file paths"
 
-                    new_result_path = result_match.group(1).strip()
-                    new_truth_path = truth_match.group(1).strip()
+                    new_result_path = result_match.group(2).strip()
+                    new_truth_path = truth_match.group(2).strip()
 
                     assert new_result_path.endswith(result_path)
                     assert new_truth_path.endswith(truth_path)
