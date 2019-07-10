@@ -223,7 +223,7 @@ def get_extract_parameters(ref_dict,
         extract_params['smoothing_length'] = 0  # because no background sub.
         extract_params['bkg_order'] = 0         # because no background sub.
         # Note that extract_params['dispaxis'] is not assigned.  This will
-        # be done later by calling find_dispaxis().
+        # be done later, possibly slit by slit.
 
     elif ref_dict['ref_file_type'] == FILE_TYPE_JSON:
         extract_params['ref_file_type'] = ref_dict['ref_file_type']
@@ -246,15 +246,8 @@ def get_extract_parameters(ref_dict,
                 if spectral_order == sp_order or spectral_order == ANY:
                     extract_params['match'] = EXACT
                     extract_params['spectral_order'] = sp_order
-                    disp = aper.get('dispaxis')
-                    if disp is None:
-                        # Will be found later by calling find_dispaxis().
-                        log.warning("dispaxis not specified in reference file")
-                    elif disp != HORIZONTAL and disp != VERTICAL:
-                        log.error("dispaxis = %d is not valid.", disp)
-                        raise ValueError('dispaxis must be 1 or 2.')
-                    else:
-                        extract_params['dispaxis'] = disp
+                    # Note that extract_params['dispaxis'] is not assigned.
+                    # This will be done later, possibly slit by slit.
                     if meta.target.source_type.upper() == "EXTENDED":
                         log.info("Target is extended, so the entire region "
                                  "will be extracted.")
@@ -318,11 +311,8 @@ def get_extract_parameters(ref_dict,
 
         if foundit:
             extract_params['ref_image'] = im
-            if hasattr(im, "dispersion_axis"):
-                if (im.dispersion_axis == HORIZONTAL or
-                    im.dispersion_axis == VERTICAL):
-                    extract_params['dispaxis'] = im.dispersion_axis
-            # else dispaxis will be set by find_dispaxis()
+            # Note that extract_params['dispaxis'] is not assigned.  This will
+            # be done later, possibly slit by slit.
             if smoothing_length is None:
                 extract_params['smoothing_length'] = im.smoothing_length
             else:
@@ -339,230 +329,6 @@ def get_extract_parameters(ref_dict,
                   ref_dict['ref_file_type'])
 
     return extract_params
-
-
-def find_dispaxis(input_model, slit, spectral_order, extract_params):
-    """Get the location of the spectrum, based on the WCS.
-
-    Parameters:
-    -----------
-    input_model : data model
-        The input science file.
-
-    slit : data model or None
-        This is a slit from a `MultiSlitModel` (or similar), or None
-        if the input is not an array of 2-D cutouts.
-        We use the `meta.wcs` and `wavelength` attributes.
-
-    spectral_order : int
-        The spectral order number.
-
-    extract_params : dict, may be modified in-place
-        Parameters read from the 1-D extraction reference file.
-        The dispersion direction will be determined by comparing the
-        increment in wavelength from one pixel in `slit` to the next,
-        in the horizontal and vertical directions.
-        If key 'dispaxis' is present in `extract_params` and is not None,
-        that value will not be modified; however, if 'dispaxis' was not in
-        `extract_params` or if its value was None, then
-        `extract_params['dispaxis']` will be updated with the value
-        determined by this function.
-    """
-
-    if 'dispaxis' in extract_params:
-        initial_value = extract_params['dispaxis']
-    else:
-        initial_value = None
-        # There needs to be a default value for dispaxis.  If this can't be
-        # updated with a valid value, we will not extract the spectrum.
-        extract_params['dispaxis'] = None
-
-    if slit is None:
-        shape = input_model.data.shape[-2:]
-    else:
-        shape = slit.data.shape[-2:]
-
-    wcs = None                                  # initial value
-    if slit is None:
-        if input_model.meta.exposure.type == "NIS_SOSS":
-            if hasattr(input_model.meta, 'wcs'):
-                try:
-                    transform = niriss.niriss_soss_set_input(
-                                        input_model, spectral_order)
-                except ValueError:
-                    if spectral_order == 1:
-                        log.warning("Spectral order 1 not found")
-                        log.warning("Can't determine dispaxis from the WCS.")
-                        return
-                    else:
-                        log.warning("Spectral order %d not found, using 1",
-                                    spectral_order)
-                        transform = niriss.niriss_soss_set_input(
-                                        input_model, 1)
-                wcs = transform                 # not None
-        elif hasattr(input_model.meta, 'wcs'):
-            wcs = input_model.meta.wcs
-            transform = wcs.forward_transform
-    elif hasattr(slit, 'meta') and hasattr(slit.meta, 'wcs'):
-        wcs = slit.meta.wcs
-        transform = wcs.forward_transform
-
-    if wcs is None:
-        log.warning("find_dispaxis:  WCS not found")
-        return
-
-    n_inputs = None
-    if hasattr(transform, 'n_inputs'):
-        n_inputs = transform.n_inputs
-    elif (hasattr(transform, 'forward_transform') and
-          hasattr(transform.forward_transform, 'n_inputs')):
-            n_inputs = transform.forward_transform.n_inputs
-    elif (hasattr(wcs, 'forward_transform') and
-          hasattr(wcs.forward_transform, 'n_inputs')):
-            n_inputs = wcs.forward_transform.n_inputs
-    else:
-        log.warning("Can't find n_inputs, assuming n_inputs = 2")
-        n_inputs = 2
-    if n_inputs is None or n_inputs < 2 or n_inputs > 3:
-        log.warning("n_inputs for wcs is %s; should be 2 or 3", str(n_inputs))
-        log.warning("Can't determine dispaxis from the WCS.")
-        return
-
-    if slit is None:
-        got_wavelength = False
-    else:
-        if hasattr(slit, "wavelength"):
-            wl_array = slit.wavelength.copy()
-        else:
-            wl_array = None
-        if (wl_array is None or len(wl_array) == 0 or
-            wl_array.min() == 0. and wl_array.max() == 0.):
-                got_wavelength = False
-        else:
-            got_wavelength = True
-
-    bb = wcs.bounding_box
-    if bb is None:
-        x_cent = shape[-1] // 2
-        y_cent = shape[-2] // 2
-    else:
-        x_cent = float(bb[0][0] + bb[0][1]) / 2.
-        y_cent = float(bb[1][0] + bb[1][1]) / 2.
-        x_cent = math.floor(x_cent)
-        y_cent = math.floor(y_cent)
-
-    # Find which is the dispersion axis, by comparing the increment in
-    # wavelength from one pixel to the next, in the horizontal and
-    # vertical directions.
-    dispaxis = None                             # pessimistic value
-    if got_wavelength:
-        mask = (wl_array == 0)
-        if np.any(mask):
-            wl_array[mask] = np.nan
-        del mask
-        dwlx = wl_array[:, 1:] - wl_array[:, 0:-1]
-        dwly = wl_array[1:, :] - wl_array[0:-1, :]
-        dwlx = np.nanmean(dwlx)
-        dwly = np.nanmean(dwly)
-        log.debug("find_dispaxis, wavelength attribute:  dwlx = %s dwly = %s",
-                  str(dwlx), str(dwly))
-
-        dwlx = np.abs(dwlx)
-        dwly = np.abs(dwly)
-        if dwlx > dwly:
-            dispaxis = HORIZONTAL
-        elif dwlx < dwly:
-            dispaxis = VERTICAL
-    else:
-        if n_inputs > 2:
-            stuff = transform(x_cent, y_cent, spectral_order)
-            wl_00 = stuff[2]
-            stuff = transform(x_cent, y_cent + 1, spectral_order)
-            wl_01 = stuff[2]
-            stuff = transform(x_cent + 1, y_cent, spectral_order)
-            wl_10 = stuff[2]
-        else:
-            stuff = transform(x_cent, y_cent)
-            wl_00 = stuff[2]
-            stuff = transform(x_cent, y_cent + 1)
-            wl_01 = stuff[2]
-            stuff = transform(x_cent + 1, y_cent)
-            wl_10 = stuff[2]
-        dwlx = wl_10 - wl_00
-        dwly = wl_01 - wl_00
-        if (np.isnan(dwlx) or np.isnan(dwly) or dwlx == dwly or
-            wl_00 == 0 or wl_01 == 0 or wl_10 == 0):
-                if dwlx == dwly:
-                    log.warning("One-pixel offset gives dwlx = {}, dwly = {}"
-                                .format(dwlx, dwly))
-                else:
-                    log.warning("wavelength from WCS is NaN or 0 "
-                                "within the bounding box")
-                log.warning("    computing differences over "
-                            "the whole bounding box ...")
-                if input_model.meta.exposure.type in WFSS_EXPTYPES:
-                    wl_wcs = np.zeros(shape, dtype=np.float64)
-                    log.debug("Starting to compute wavelengths ...")
-                    if n_inputs > 2:
-                        for j in range(shape[0]):
-                            for i in range(shape[1]):
-                                stuff = transform(i, j, spectral_order)
-                                if stuff[2] == 0.:
-                                    wl_wcs[j, i] = np.nan
-                                else:
-                                    wl_wcs[j, i] = stuff[2]
-                    else:
-                        for j in range(shape[0]):
-                            for i in range(shape[1]):
-                                stuff = transform(i, j)
-                                if stuff[2] == 0.:
-                                    wl_wcs[j, i] = np.nan
-                                else:
-                                    wl_wcs[j, i] = stuff[2]
-                    log.debug("... finished computing wavelengths")
-                else:
-                    grid = np.indices(shape, dtype=np.float64)
-                    if n_inputs > 2:
-                        stuff = transform(grid[1], grid[0], spectral_order)
-                    else:
-                        stuff = transform(grid[1], grid[0])
-                    wl_wcs = stuff[2].copy()
-                    del grid, stuff
-                    # Flag wavelength = 0 as invalid.
-                    mask = (wl_wcs == 0)
-                    if np.any(mask):
-                        wl_wcs[mask] = np.nan
-                    del mask
-                dwlx = wl_wcs[:, 1:] - wl_wcs[:, 0:-1]
-                dwly = wl_wcs[1:, :] - wl_wcs[0:-1, :]
-                dwlx = np.nanmean(dwlx)
-                dwly = np.nanmean(dwly)
-        log.debug("find_dispaxis, using wcs:  dwlx = %s dwly = %s",
-                  str(dwlx), str(dwly))
-        if np.isnan(dwlx) or np.isnan(dwly):
-            log.warning("dwlx and/or dwly is STILL NaN!  "
-                        "Can't determine dispaxis from WCS")
-        else:
-            dwlx = np.abs(dwlx)
-            dwly = np.abs(dwly)
-            if dwlx > dwly:
-                dispaxis = HORIZONTAL
-            elif dwlx < dwly:
-                dispaxis = VERTICAL
-
-    if dispaxis is None:
-        log.warning("Can't determine dispaxis from the WCS.")
-    elif initial_value is None:
-        # Only assign this value if dispaxis wasn't present in the
-        # reference file, or if there was no reference file.
-        extract_params['dispaxis'] = dispaxis
-
-    if initial_value is None or initial_value == dispaxis:
-        log_fcn = log.debug
-    else:
-        log_fcn = log.warning
-    log_fcn("find_dispaxis:  dispaxis from ref file = %s, "
-            "from wavelengths = %s", str(initial_value), str(dispaxis))
 
 
 def log_initial_parameters(extract_params):
@@ -2980,10 +2746,11 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
             elif extract_params['match'] == PARTIAL:
                 log.info('Spectral order %d not found, skipping ...', sp_order)
                 continue
-            find_dispaxis(input_model, slit, sp_order, extract_params)
+            extract_params['dispaxis'] = \
+                        slit.meta.wcsinfo.dispersion_direction
             if extract_params['dispaxis'] is None:
-                log.warning("The dispersion direction couldn't be determined, "
-                            "so skipping ...")
+                log.warning("The dispersion direction information is "
+                            "missing, so skipping ...")
                 continue
 
             try:
@@ -3028,6 +2795,7 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
             spec.slit_ra = ra
             spec.slit_dec = dec
             spec.spectral_order = sp_order
+            spec.dispersion_direction = extract_params['dispaxis']
             copy_keyword_info(slit, slit.name, spec)
             output_model.spec.append(spec)
     else:
@@ -3068,10 +2836,11 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                     extract_params['subtract_background'] = subtract_background
                 if extract_params['match'] == EXACT:
                     slit = None
-                    find_dispaxis(input_model, slit, sp_order, extract_params)
+                    extract_params['dispaxis'] = \
+                                input_model.meta.wcsinfo.dispersion_direction
                     if extract_params['dispaxis'] is None:
-                        log.warning("The dispersion direction couldn't be "
-                                    "determined, so skipping ...")
+                        log.warning("The dispersion direction information is "
+                                    "missing, so skipping ...")
                         continue
                     try:
                         (ra, dec, wavelength, temp_flux, background,
@@ -3129,6 +2898,7 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                 spec.slit_ra = ra
                 spec.slit_dec = dec
                 spec.spectral_order = sp_order
+                spec.dispersion_direction = extract_params['dispaxis']
                 if slitname is not None and slitname != "ANY":
                     spec.name = slitname
                 output_model.spec.append(spec)
@@ -3162,10 +2932,11 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                     log.warning('Spectral order %d not found, skipping ...',
                                 sp_order)
                     continue
-                find_dispaxis(input_model, slit, sp_order, extract_params)
+                extract_params['dispaxis'] = \
+                                input_model.meta.wcsinfo.dispersion_direction
                 if extract_params['dispaxis'] is None:
-                    log.warning("The dispersion direction couldn't be "
-                                "determined, so skipping ...")
+                    log.warning("The dispersion direction information is "
+                                "missing, so skipping ...")
                     continue
 
                 # Loop over each integration in the input model
@@ -3233,6 +3004,7 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                     spec.slit_ra = ra
                     spec.slit_dec = dec
                     spec.spectral_order = sp_order
+                    spec.dispersion_direction = extract_params['dispaxis']
                     output_model.spec.append(spec)
 
                     if (log_increment > 0 and

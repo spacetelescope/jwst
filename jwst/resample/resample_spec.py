@@ -109,7 +109,7 @@ class ResampleSpecData:
         x_tan, y_tan = undist2sky.inverse(ra, dec)
         warnings.resetwarnings()
 
-        spectral_axis = find_dispersion_axis(lam)
+        spectral_axis = find_dispersion_axis(refmodel)
         spatial_axis = spectral_axis ^ 1
 
         # Compute the wavelength array, trimming NaNs from the ends
@@ -271,7 +271,7 @@ class ResampleSpecData:
             for attr in ['name', 'xstart', 'xsize', 'ystart', 'ysize',
                     'slitlet_id', 'source_id', 'source_name', 'source_alias',
                     'stellarity', 'source_type', 'source_xpos', 'source_ypos',
-                    'shutter_state']:
+                    'dispersion_direction', 'shutter_state']:
                 try:
                     val = getattr(img, attr)
                 except AttributeError:
@@ -284,18 +284,10 @@ class ResampleSpecData:
         return self.output_models
 
 
-def find_dispersion_axis(wavelength_array):
+def find_dispersion_axis(refmodel):
     """
     Find the dispersion axis (0-indexed) of the given 2D wavelength array
     """
-    diffx = wavelength_array[:, 1:] - wavelength_array[:, 0:-1]
-    diffy = wavelength_array[1:, :] - wavelength_array[0:-1, :]
-    dwlx = np.abs(np.nanmean(diffx))
-    dwly = np.abs(np.nanmean(diffy))
-    if dwlx > dwly:
-        return 0
-    elif dwlx < dwly:
-        return 1
-    else:
-        raise RuntimeError("Can't find dispersion axis.  dx: {}, dy: {}".format(
-            dwlx, dwly))
+    dispaxis = refmodel.meta.wcsinfo.dispersion_direction
+    # Change from 1 --> X and 2 --> Y to 0 --> X and 1 --> Y.
+    return dispaxis - 1

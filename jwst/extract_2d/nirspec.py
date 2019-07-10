@@ -138,6 +138,9 @@ def process_slit(input_model, slit, exp_type, apply_wavecorr, reffile):
     else:
         log.info("Slit {0}: Wavelength zero-point correction "
                  "was not applied.".format(slit.name))
+    # Copy the DISPAXIS keyword to the output slit.
+    new_model.meta.wcsinfo.dispersion_direction = \
+        input_model.meta.wcsinfo.dispersion_direction
     return new_model, xlo, xhi, ylo, yhi
 
 

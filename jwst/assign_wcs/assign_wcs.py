@@ -4,6 +4,7 @@ from gwcs.wcs import WCS
 from .util import (update_s_region_spectral, update_s_region_imaging,
                    update_s_region_nrs_ifu, update_s_region_mrs)
 from ..lib.exposure_types import IMAGING_TYPES, SPEC_TYPES
+from ..lib.dispaxis import get_dispersion_direction
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -39,6 +40,12 @@ def load_wcs(input_model, reference_files={}, nrs_slit_y_range=None):
 
     if input_model.meta.exposure.type.lower() in SPEC_TYPES:
         input_model.meta.wcsinfo.specsys = "BARYCENT"
+        input_model.meta.wcsinfo.dispersion_direction = \
+                        get_dispersion_direction(
+                                input_model.meta.exposure.type,
+                                input_model.meta.instrument.grating,
+                                input_model.meta.instrument.filter,
+                                input_model.meta.instrument.pupil)
 
     if instrument.lower() == 'nirspec':
         pipeline = mod.create_pipeline(input_model, reference_files, slit_y_range=nrs_slit_y_range)

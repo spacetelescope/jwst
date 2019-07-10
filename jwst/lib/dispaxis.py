@@ -31,9 +31,12 @@ def get_dispersion_direction(exposure_type, grating="ANY", filter_wh="ANY",
     """
 
     exposure_type = exposure_type.upper()
-    grating = grating.upper()
-    filter_wh = filter_wh.upper()
-    pupil = pupil.upper()
+    if grating is not None:
+        grating = grating.upper()
+    if filter_wh is not None:
+        filter_wh = filter_wh.upper()
+    if pupil is not None:
+        pupil = pupil.upper()
 
     # The keys of the `by_exp_type` dictionary are values of exposure type.
     # If the dispersion direction is uniquely determined by the exposure

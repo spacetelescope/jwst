@@ -52,7 +52,8 @@ are accounted for.
 The output MultiSlit data model will have the meta data associated with each
 slit region populated with the name and region characteristic for the slits,
 corresponding to the FITS keywords ``SLTNAME``, ``SLTSTRT1``, ``SLTSIZE1``,
-``SLTSTRT2``, and ``SLTSIZE2``.
+``SLTSTRT2``, and ``SLTSIZE2``.  Keyword ``DISPAXIS`` (dispersion direction)
+will be copied from the input file to each of the output cutout images.
 
 
 NIRCam WFSS and NIRISS WFSS
@@ -67,6 +68,9 @@ The ``GrismObject`` list can be created automatically by using the method in
 catalog saved in the input model's meta information. If it's better to construct a list
 of ``GrismObjects`` outside of these, the ``GrismObject`` itself can be imported from
 ``jwst.transforms.models``.
+
+The dispersion direction will be documented by copying keyword ``DISPAXIS``
+(1 = horizontal, 2 = vertical) from the input file to the output cutout.
 
 
 NIRCam TSGRISM
@@ -85,6 +89,10 @@ which is equal to the height of the smallest available subarray (2048 x 64).
 This is to allow area within the cutout for sampling the background in later steps,
 such as `extract_1d`. The slit height is a parameter that a user can set
 (during reprocessing) to tailor their results. 
+
+The dispersion direction is horizontal for this mode, and it will be
+documented by copying keyword ``DISPAXIS`` (with value 1) from the input file
+to the output cutout.
 
 
 Step Arguments

@@ -222,6 +222,10 @@ def do_nirspec_flat_field(output_model, f_flat_model, s_flat_model, d_flat_model
     log.debug("Flat field correction for NIRSpec spectrographic data.")
 
     exposure_type = output_model.meta.exposure.type
+    dispaxis = output_model.meta.wcsinfo.dispersion_direction
+    if dispaxis is None:
+        log.warning("Can't determine dispaxis, assuming horizontal.")
+        dispaxis = HORIZONTAL
 
     if exposure_type == "NRS_BRIGHTOBJ":
         if not isinstance(output_model, datamodels.SlitModel):
@@ -229,7 +233,8 @@ def do_nirspec_flat_field(output_model, f_flat_model, s_flat_model, d_flat_model
                       "don't know how to process it.")
             raise RuntimeError("Input is {}; expected SlitModel"
                                .format(type(output_model)))
-        return nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_model)
+        return nirspec_brightobj(output_model, f_flat_model, s_flat_model,
+                                 d_flat_model, dispaxis)
 
     # We expect NIRSpec IFU data to be an IFUImageModel, but it's conceivable
     # that the slices have been copied out into a MultiSlitModel, so
@@ -241,13 +246,16 @@ def do_nirspec_flat_field(output_model, f_flat_model, s_flat_model, d_flat_model
                           "don't know how to process it.")
                 raise RuntimeError("Input is {}; expected IFUImageModel"
                                    .format(type(output_model)))
-            return nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model)
+            return nirspec_ifu(output_model, f_flat_model, s_flat_model,
+                               d_flat_model, dispaxis)
     # For datamodels with slits, MSA and Fixed slit modes:
     else:
-        return nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model)
+        return nirspec_fs_msa(output_model, f_flat_model, s_flat_model,
+                              d_flat_model, dispaxis)
 
 
-def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model):
+def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model,
+                   dispaxis):
     """Apply flat-fielding for NIRSpec fixed slit and MSA data, in-place
 
     Parameters
@@ -263,6 +271,9 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model):
 
     d_flat_model : `~jwst.datamodels.NirspecFlatModel` or None
         Flat field for the detector.
+
+    dispaxis : int
+        1 means horizontal dispersion, 2 means vertical dispersion.
 
     Returns
     -------
@@ -364,7 +375,7 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model):
         flat_2d, flat_dq_2d, flat_err_2d = create_flat_field(wl,
                         f_flat_model, s_flat_model, d_flat_model,
                         xstart, xstop, ystart, ystop,
-                        exposure_type, slit.name, slit_nt)
+                        exposure_type, dispaxis, slit.name, slit_nt)
 
         # Mask bad flatfield values
         mask = (flat_2d <= 0.)
@@ -417,7 +428,8 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model):
     return interpolated_flats
 
 
-def nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_model):
+def nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_model,
+                      dispaxis):
     """Apply flat-fielding for NIRSpec BRIGHTOBJ data, in-place
 
     Parameters
@@ -433,6 +445,9 @@ def nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_model):
 
     d_flat_model : ~jwst.datamodels.NirspecFlatModel or None
         Flat field for the detector.
+
+    dispaxis : int
+        1 means horizontal dispersion, 2 means vertical dispersion.
 
     Returns
     -------
@@ -505,10 +520,10 @@ def nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_model):
 
     # Combine the three flat fields.  The same flat will be applied to
     # each plane (integration) in the cube.
-    flat_2d, flat_dq_2d, flat_err_2d = create_flat_field(wl, f_flat_model,
-                                                         s_flat_model, d_flat_model,
-                                                         xstart, xstop, ystart, ystop,
-                                                         exposure_type, slit_name, None)
+    flat_2d, flat_dq_2d, flat_err_2d = create_flat_field(
+                        wl, f_flat_model, s_flat_model, d_flat_model,
+                        xstart, xstop, ystart, ystop,
+                        exposure_type, dispaxis, slit_name, None)
     mask = (flat_2d <= 0.)
     nbad = mask.sum(dtype=np.intp)
     if nbad > 0:
@@ -541,7 +556,8 @@ def nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_model):
     return interpolated_flats
 
 
-def nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model):
+def nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model,
+                dispaxis):
     """Apply flat-fielding for NIRSpec IFU data, in-place
 
     Parameters
@@ -557,6 +573,9 @@ def nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model):
 
     d_flat_model : ~jwst.datamodels.NirspecFlatModel or None
         Flat field for the detector.
+
+    dispaxis : int
+        1 means horizontal dispersion, 2 means vertical dispersion.
 
     Returns
     -------
@@ -640,10 +659,10 @@ def nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model):
         # Set NaNs to a relatively harmless value, but don't modify nan_flag.
         wl[nan_flag] = 0.
 
-        flat_2d, flat_dq_2d, flat_err_2d = create_flat_field(wl, f_flat_model,
-                                                             s_flat_model, d_flat_model,
-                                                             xstart, xstop, ystart, ystop,
-                                                             exposure_type, None, None)
+        flat_2d, flat_dq_2d, flat_err_2d = create_flat_field(
+                        wl, f_flat_model, s_flat_model, d_flat_model,
+                        xstart, xstop, ystart, ystop,
+                        exposure_type, dispaxis, None, None)
         flat_2d[nan_flag] = 1.
         mask = (flat_2d <= 0.)
         nbad = mask.sum(dtype=np.intp)
@@ -692,7 +711,7 @@ def nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model):
 
 def create_flat_field(wl, f_flat_model, s_flat_model, d_flat_model,
                       xstart, xstop, ystart, ystop,
-                      exposure_type, slit_name, slit_nt=None):
+                      exposure_type, dispaxis, slit_name, slit_nt=None):
     """Extract and combine flat field components for NIRSpec
 
     Parameters
@@ -723,6 +742,9 @@ def create_flat_field(wl, f_flat_model, s_flat_model, d_flat_model,
         The exposure type refers to fixed_slit, IFU, or using the
         micro-shutter array.
 
+    dispaxis : int
+        1 means horizontal dispersion, 2 means vertical dispersion.
+
     slit_name : str
         The name of the slit currently being processed.
 
@@ -741,24 +763,15 @@ def create_flat_field(wl, f_flat_model, s_flat_model, d_flat_model,
         The error array corresponding to flat_2d.
     """
 
-    dispaxis = find_dispaxis(wl)
-    if dispaxis is None:
-        log.warning("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
-        log.warning("Can't determine dispaxis, assuming horizontal.")
-        log.warning("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
-        dispaxis = HORIZONTAL
-
-    f_flat, f_flat_dq, f_flat_err = fore_optics_flat(wl, f_flat_model,
-                                                     exposure_type, slit_name,
-                                                     slit_nt, dispaxis)
-    s_flat, s_flat_dq, s_flat_err = spectrograph_flat(wl, s_flat_model,
-                                                      xstart, xstop, ystart, ystop,
-                                                      exposure_type, slit_name,
-                                                      dispaxis)
-    d_flat, d_flat_dq, d_flat_err = detector_flat(wl, d_flat_model,
-                                                  xstart, xstop, ystart, ystop,
-                                                  exposure_type, slit_name,
-                                                  dispaxis)
+    f_flat, f_flat_dq, f_flat_err = fore_optics_flat(
+                        wl, f_flat_model, exposure_type, dispaxis,
+                        slit_name, slit_nt)
+    s_flat, s_flat_dq, s_flat_err = spectrograph_flat(
+                        wl, s_flat_model, xstart, xstop, ystart, ystop,
+                        exposure_type, dispaxis, slit_name)
+    d_flat, d_flat_dq, d_flat_err = detector_flat(
+                        wl, d_flat_model, xstart, xstop, ystart, ystop,
+                        exposure_type, dispaxis, slit_name)
 
     flat_2d = f_flat * s_flat * d_flat
 
@@ -785,44 +798,8 @@ def create_flat_field(wl, f_flat_model, s_flat_model, d_flat_model,
     return flat_2d, flat_dq, flat_err
 
 
-def find_dispaxis(wl):
-    """Find which axis is the dispersion direction
-
-    Parameters
-    ----------
-    wl : 2-D ndarray
-        Wavelength at each pixel of the 2-D slit array.
-
-    Returns
-    -------
-    dispaxis : int or None
-        1 is horizontal, 2 is vertical.  The value might be None, which
-        indicates that the dispersion direction could not be determined.
-    """
-
-    wl_array = wl.copy()
-    wl_array[wl==0.] = np.nan
-    delta_wl_x = wl_array[:, 1:] - wl_array[:, 0:-1]
-    delta_wl_y = wl_array[1:, :] - wl_array[0:-1, :]
-    dwlx = np.nanmedian(delta_wl_x)
-    dwly = np.nanmedian(delta_wl_y)
-    log.debug("find_dispaxis:  dwlx = %s dwly = %s", str(dwlx), str(dwly))
-
-    dwlx = np.abs(dwlx)
-    dwly = np.abs(dwly)
-    if dwlx > dwly:
-        dispaxis = HORIZONTAL
-    elif dwlx < dwly:
-        dispaxis = VERTICAL
-    else:
-        dispaxis = None
-    log.debug("dispaxis = %s", str(dispaxis))
-
-    return dispaxis
-
-
-def fore_optics_flat(wl, f_flat_model, exposure_type,
-                     slit_name, slit_nt, dispaxis):
+def fore_optics_flat(wl, f_flat_model, exposure_type, dispaxis,
+                     slit_name, slit_nt):
     """Extract the flat for the fore optics part.
 
     Parameters
@@ -836,15 +813,15 @@ def fore_optics_flat(wl, f_flat_model, exposure_type,
     exposure_type : str
         The exposure type refers to fixed_slit, IFU, or MSA.
 
+    dispaxis : int
+        1 means horizontal dispersion, 2 means vertical dispersion.
+
     slit_name : str
         The name of the slit currently being processed.
 
     slit_nt : namedtuple or None
         For MOS data (only), this is used to get the quadrant number and
         the indices of the current shutter in the Y and X directions.
-
-    dispaxis : int
-        1 is horizontal, 2 is vertical.
 
     Returns
     -------
@@ -923,7 +900,7 @@ def fore_optics_flat(wl, f_flat_model, exposure_type,
 
 def spectrograph_flat(wl, s_flat_model,
                       xstart, xstop, ystart, ystop,
-                      exposure_type, slit_name, dispaxis):
+                      exposure_type, dispaxis, slit_name):
     """Extract the flat for the spectrograph part.
 
     Parameters
@@ -947,11 +924,11 @@ def spectrograph_flat(wl, s_flat_model,
         The exposure type refers to fixed_slit, IFU, or using the
         micro-shutter array.
 
+    dispaxis : int
+        1 means horizontal dispersion, 2 means vertical dispersion.
+
     slit_name : str
         The name of the slit currently being processed.
-
-    dispaxis : int
-        1 is horizontal, 2 is vertical.
 
     Returns
     -------
@@ -1009,7 +986,7 @@ def spectrograph_flat(wl, s_flat_model,
 
 def detector_flat(wl, d_flat_model,
                   xstart, xstop, ystart, ystop,
-                  exposure_type, slit_name, dispaxis):
+                  exposure_type, dispaxis, slit_name):
     """Extract the flat for the detector part.
 
     Parameters
@@ -1033,11 +1010,11 @@ def detector_flat(wl, d_flat_model,
         The exposure type refers to fixed_slit, IFU, or using the
         micro-shutter array.
 
+    dispaxis : int
+        1 means horizontal dispersion, 2 means vertical dispersion.
+
     slit_name : str
         The name of the slit currently being processed.
-
-    dispaxis : int
-        1 is horizontal, 2 is vertical.
 
     Returns
     -------
