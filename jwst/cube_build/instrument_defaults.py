@@ -38,10 +38,11 @@ class InstrumentInfo():
         self.high_wroi = []
         self.high_power = []
         self.high_softrad = []
-#_______________________________________________________________________
+# _______________________________________________________________________
         # This is basic information on the MIRI channels
         # information that will not change:
-        #   number of slices, starting slice number, ending # slice number and default scales
+        # number of slices, starting slice number,
+        # ending # slice number and default scales
         self.Info = {}
         self.Info['psf_alpha_cuttoff'] = None
         self.Info['psf_alpha_a_short'] = None
@@ -53,7 +54,7 @@ class InstrumentInfo():
         self.Info['psf_beta_b_short'] = None
         self.Info['psf_beta_a_long'] = None
         self.Info['psf_beta_b_long'] = None
-#________________________________________________________________________________
+# _____________________________________________________________________
 # channel 1 parameters
         self.Info['1'] = {}
         self.Info['1']['nslices'] = 21
@@ -124,7 +125,7 @@ class InstrumentInfo():
         self.Info['1']['long']['rp_a_ave'] = None
         self.Info['1']['long']['rp_b_ave'] = None
         self.Info['1']['long']['rp_c_ave'] = None
-#________________________________________________________________________________
+# _______________________________________________________________________
 # channel 2 parameters
         self.Info['2'] = {}
         self.Info['2']['nslices'] = 17
@@ -195,7 +196,7 @@ class InstrumentInfo():
         self.Info['2']['long']['rp_a_ave'] = None
         self.Info['2']['long']['rp_b_ave'] = None
         self.Info['2']['long']['rp_c_ave'] = None
-#________________________________________________________________________________
+# ________________________________________________________________
 # channel 3 parameters
         self.Info['3'] = {}
         self.Info['3']['nslices'] = 16
@@ -266,7 +267,7 @@ class InstrumentInfo():
         self.Info['3']['long']['rp_a_ave'] = None
         self.Info['3']['long']['rp_b_ave'] = None
         self.Info['3']['long']['rp_c_ave'] = None
-#________________________________________________________________________________
+# _________________________________________________________________
 # channel 4 parameters
         self.Info['4'] = {}
         self.Info['4']['nslices'] = 12
@@ -338,8 +339,8 @@ class InstrumentInfo():
         self.Info['4']['long']['rp_b_ave'] = None
         self.Info['4']['long']['rp_c_ave'] = None
 
-#################################################################################
-#NIRSPEC Paramters
+# ####################################################################
+# NIRSPEC Paramters
         self.Info['prism'] = {}
         self.Info['prism']['clear'] = {}
         self.Info['prism']['clear']['nslices'] = 30
@@ -404,7 +405,6 @@ class InstrumentInfo():
         self.Info['g395m']['f290lp']['softrad'] = None
         self.Info['g395m']['f290lp']['msm_power'] = None
 
-
         self.Info['g140h'] = {}
         self.Info['g140h']['f070lp'] = {}
         self.Info['g140h']['f070lp']['nslices'] = 30
@@ -456,7 +456,7 @@ class InstrumentInfo():
         self.Info['g395h']['f290lp']['softrad'] = None
         self.Info['g395h']['f290lp']['msm_power'] = None
 
-#********************************************************************************
+# ******************************************************************
 # Functions
 
     def SetMultiChannelTable(self, wave, sroi, wroi, power, softrad):
@@ -494,7 +494,6 @@ class InstrumentInfo():
         else:
             self.Info[parameter1][parameter2]['ascale'] = value
             self.Info[parameter1][parameter2]['bscale'] = value
-
 
     def SetSpectralStep(self, value, parameter1, parameter2):
         self.Info[parameter1][parameter2]['wscale'] = value
@@ -550,7 +549,8 @@ class InstrumentInfo():
         self.Info['psf_beta_b_short'] = b_short
         self.Info['psf_beta_a_long'] = a_long
         self.Info['psf_beta_b_long'] = b_long
-#______________________________________________________________________
+# ______________________________________________________________________
+
     def Get_RP_ave_Wave(self, this_channel, this_band):
         w = self.Info[this_channel][this_band]['rp_wave_cuttoff']
         a = self.Info[this_channel][this_band]['rp_a_ave']
@@ -638,7 +638,6 @@ class InstrumentInfo():
                  self.high_power,
                  self.high_softrad)
         return table
-
 
     def GetMIRISliceEndPts(self, parameter1):
         slice_xstart = self.Info[parameter1]['xstart']
