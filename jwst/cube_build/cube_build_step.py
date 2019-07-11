@@ -52,7 +52,7 @@ class CubeBuildStep (Step):
          xdebug = integer(default=None) # debug option, x spaxel value to report information on
          ydebug = integer(default=None) # debug option, y spaxel value to report information on
          zdebug = integer(default=None) # debug option, z spaxel value to report  information on
-         skip_dqflag = boolean(default=false) # skip setting the DQ plane of the IFU  
+         skip_dqflag = boolean(default=false) # skip setting the DQ plane of the IFU
          search_output_file = boolean(default=false)
          output_use_model = boolean(default=true) # Use filenames in the output models
        """
@@ -150,7 +150,6 @@ class CubeBuildStep (Step):
         # 2. miripsf - weighting for MIRI based on PSF and LSF
         if self.coord_system == 'world':
             self.interpolation = 'pointcloud'  # can not be area
-
 
         self.log.info('Input interpolation: %s', self.interpolation)
         self.log.info('Coordinate system to use: %s', self.coord_system)

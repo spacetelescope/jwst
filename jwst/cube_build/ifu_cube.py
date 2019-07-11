@@ -43,7 +43,7 @@ class IFUCubeData():
         self.new_code = 0
         self.input_filenames = input_filenames
         self.pipeline = pipeline
-        
+
         self.input_models = input_models  # needed when building single mode IFU cubes
         self.output_name_base = output_name_base
         self.num_files = None
@@ -693,7 +693,7 @@ class IFUCubeData():
         n = len(self.input_models)
         log.info("Number of Single IFU cubes to create = %i" % n)
         this_par1 = self.list_par1[0]  # only one channel is used in this approach
-        this_par2 = None  # not important for this type of mapping
+#        this_par2 = None  # not important for this type of mapping
 
         self.weighting == 'msm'
 
@@ -1356,8 +1356,8 @@ class IFUCubeData():
                 footprint_all = self.four_corners(coord1_total, coord2_total)
                 isline, footprint = footprint_all
 
-                wmin = imin[0]
-                wmax = imax[0]
+#                wmin = imin[0]
+#                wmax = imax[0]
                 (xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4) = footprint
 
             # find the overlap of FOV footprint and with IFU Cube
@@ -1399,9 +1399,6 @@ class IFUCubeData():
 
                         footprint_all = self.four_corners(coord1_use, coord2_use)
                         isline, footprint = footprint_all
-                        line = 0
-                        if isline:
-                            line = 1
 
                         (xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4) = footprint
                         # find the overlap with IFU Cube
@@ -1536,17 +1533,21 @@ class IFUCubeData():
 
         """
 
-        ximin = np.amin(xi_corner)
-        ximax = np.amax(xi_corner)
-        etamin = np.amin(eta_corner)
-        etamax = np.amax(eta_corner)
-        index = np.where((self.xcenters > ximin) & (self.xcenters < ximax) &
-                          (self.ycenters > etamin) & (self.ycenters < etamax))
+#        ximin = np.amin(xi_corner)
+#        ximax = np.amax(xi_corner)
+#        etamin = np.amin(eta_corner)
+#        etamax = np.amax(eta_corner)
+#        index = np.where((self.xcenters > ximin) & (self.xcenters < ximax) &
+#                          (self.ycenters > etamin) & (self.ycenters < etamax))
 
         wave_slice_dq = np.zeros(self.naxis2 * self.naxis1, dtype=np.int32)
-        nxy = self.xcenters.size  # size of spatial plane
         # loop over spaxels in the spatial plane and set slice_dq
+        nxy = self.xcenters.size  # size of spatial plane
         for ixy in range(nxy):
+#        num = len(index[0])
+#        for inum in range(num):
+#            ixy = index[0][inum]
+
             area_box = self.cdelt1 * self.cdelt2
             area_overlap = cube_overlap.sh_find_overlap(self.xcenters[ixy],
                                                         self.ycenters[ixy],
@@ -1670,7 +1671,7 @@ class IFUCubeData():
         self.spaxel_dq[under_data] = self.overlap_partial
 
         # convert all remaining spaxel_dq of 0 to NON_SCIENCE + DO_NOT_USE
-        # these pixel should have no overlap with the data 
+        # these pixel should have no overlap with the data
         non_science = self.spaxel_dq == 0
         self.spaxel_dq[non_science] = np.bitwise_or(self.overlap_no_coverage,
                                                     dqflags.pixel['DO_NOT_USE'])
@@ -1678,10 +1679,6 @@ class IFUCubeData():
         # refine where good data should be
         ind_full = np.where(np.bitwise_and(self.spaxel_dq, self.overlap_full))
         ind_partial = np.where(np.bitwise_and(self.spaxel_dq, self.overlap_partial))
-                            
-#        ind_full = self.spaxel_dq == self.overlap_full
-#        ind_partial = self.spaxel_dq == self.overlap_partial
-        
 
         self.spaxel_dq[ind_full] = 0
         self.spaxel_dq[ind_partial] = 0
