@@ -1,5 +1,7 @@
-"""exp_to_source: Reformat Level2b MSA data to be source-based.
+"""exp_to_source: Reformat Level2b multi-source data to be source-based.
 """
+import logging
+
 from collections import OrderedDict
 from collections.abc import Callable
 
@@ -10,6 +12,9 @@ from ..datamodels import (
 from ..datamodels.properties import merge_tree
 
 __all__ = ['exp_to_source', 'multislit_to_container']
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 def exp_to_source(inputs):
@@ -29,7 +34,9 @@ def exp_to_source(inputs):
     """
     result = DefaultOrderedDict(MultiExposureModel)
     for exposure in inputs:
+        log.info('Reorganizing data from exposure {}'.format(exposure.meta.filename))
         for slit in exposure.slits:
+            log.debug('Copying slit {}'.format(slit.source_id))
             result[str(slit.source_id)].exposures.append(slit)
             merge_tree(
                 result[str(slit.source_id)].exposures[-1].meta.instance,
