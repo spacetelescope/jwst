@@ -262,7 +262,6 @@ def match_det2cube_miripsf(alpha_resol, beta_resol, wave_resol,
             istart = zz * nplane
             for ir, rr in enumerate(indexr[0]):
 # ______________________________________________________________________________
-# ______________________________________________________________________________
 # if weight is miripsf -distances determined in alpha-beta coordinate system
 
                 weights = FindNormalizationWeights(wave[ipt],

@@ -194,13 +194,13 @@ class CubeData():
                 for j in range(nsubchannels):
                     nfiles = len(master_table.FileMap['MIRI'][valid_channel[i]][valid_subchannel[j]])
                     if nfiles > 0:
-# ______________________________________________________________________________
+                        # ______________________________________________________
                         # neither parameters are set
                         if user_clen == 0 and user_slen == 0:
                             self.all_channel.append(valid_channel[i])
                             self.all_subchannel.append(valid_subchannel[j])
-# _______________________________________________________________________________
-# channel was set by user but not sub-channel
+                            # __________________________________________________
+                            # channel was set by user but not sub-channel
                         elif user_clen != 0 and user_slen == 0:
                             # now check if this channel was set by user
                             if (valid_channel[i] in self.channel):
