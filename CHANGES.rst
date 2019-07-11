@@ -34,6 +34,11 @@ datamodels
 - Write ``siaf_xref_sci`` and ``siaf_yref_sci`` to FITS keywords ``XREF_SCI``
   and ``YREF_SCI`` for ``NRC_TSGRISM`` exposures. [#3766]
 
+exp_to_source
+-------------
+
+- Updated the documentation and added some logging to the step. [#3803]
+
 extract_1d
 ----------
 

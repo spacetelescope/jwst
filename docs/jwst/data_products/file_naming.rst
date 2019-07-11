@@ -1,5 +1,10 @@
-File Naming Scheme
-------------------
+File Naming Schemes
+-------------------
+
+.. _exp_file_names:
+
+Stage 0 - 2 Naming
+^^^^^^^^^^^^^^^^^^
 The FITS file naming scheme for Stage 0, 1, and 2 "exposure-based" products is::
 
  jw<ppppp><ooo><vvv>_<gg><s><aa>_<eeeee>(-<"seg"NNN>)_<detector>_<prodType>.fits
@@ -21,6 +26,10 @@ An example Stage 1 product FITS file name is::
 
  jw93065002001_02101_00001_nrca1_rate.fits
 
+.. _src_file_names:
+
+Stage 3 Naming
+^^^^^^^^^^^^^^
 The FITS file naming scheme for Stage 3 "source-based" products is::
 
  jw<ppppp>-<AC_ID>_[<"t"TargID | "s"SourceID>](-<"epoch"X>)_<instr>_<optElements>(-<subarray>)_<prodType>(-<ACT_ID>).fits
