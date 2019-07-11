@@ -14,7 +14,7 @@ Stage 1 pipelines
 -----------------
 Stage 1 pipelines perform detector-level corrections and ramp fitting for
 individual exposures, for nearly all imaging and spectroscopic modes. Details 
-of the pipelines can be found at :ref:`Stage 1 Pipelines <calwebb_detector1>`
+of the pipelines can be found at :ref:`Stage 1 Pipelines <calwebb_detector1>`.
 
 Of all of the Stage 1 pipeline steps, below are the particular steps that alter the ERR,
 VAR_POISSON, or VAR_RNOISE arrays of the science countrate data and output those
@@ -65,7 +65,7 @@ and VAR_RNOISE arrays of the science data set. The variance in the flat is
 calculated in this step; the ERR array is then recalculated as these three 
 variances added in quadrature.  The newly created VAR_FLAT array and the updated 
 VAR_POISSON and VAR_RNOISE are output to the science products(s). For details of
-the flat fielding correction, see :ref:`flat_field <flat_field_step>`.
+the flat fielding correction, see :ref:`flat_field <flatfield_step>`.
 
 
 Photom
@@ -95,7 +95,7 @@ and VAR_RNOISE arrays of the science data set. The variance in the flat is
 calculated in this step; the ERR array is then recalculated as these three
 variances added in quadrature.  The newly created VAR_FLAT array and the updated
 VAR_POISSON and VAR_RNOISE are output to the science products(s). For details of
-the flat fielding correction, see :ref:`flat_field <flat_field_step>`.
+the flat fielding correction, see :ref:`flat_field <flatfield_step>`.
 
 
 Fringe 
