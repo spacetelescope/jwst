@@ -52,7 +52,7 @@ class CubeBuildStep (Step):
          xdebug = integer(default=None) # debug option, x spaxel value to report information on
          ydebug = integer(default=None) # debug option, y spaxel value to report information on
          zdebug = integer(default=None) # debug option, z spaxel value to report  information on
-         debug_write = boolean(default=false) # Open and write information on FOV on sky for each file
+         skip_dqflag = boolean(default=false) # skip setting the DQ plane of the IFU  
          search_output_file = boolean(default=false)
          output_use_model = boolean(default=true) # Use filenames in the output models
        """
@@ -253,7 +253,7 @@ class CubeBuildStep (Step):
             'roiw': self.roiw,
             'wavemin': self.wavemin,
             'wavemax': self.wavemax,
-            'debug_write': self.debug_write,
+            'skip_dqflag': self.skip_dqflag,
             'xdebug': self.xdebug,
             'ydebug': self.ydebug,
             'zdebug': self.zdebug,
