@@ -222,7 +222,13 @@ def do_nirspec_flat_field(output_model, f_flat_model, s_flat_model, d_flat_model
     log.debug("Flat field correction for NIRSpec spectrographic data.")
 
     exposure_type = output_model.meta.exposure.type
-    dispaxis = output_model.meta.wcsinfo.dispersion_direction
+    try:
+        dispaxis = output_model.meta.wcsinfo.dispersion_direction
+    except AttributeError:
+        if len(output_model.slits) > 0:
+            dispaxis = output_model.slits[0].meta.wcsinfo.dispersion_direction
+        else:
+            dispaxis = None
     if dispaxis is None:
         log.warning("Can't determine dispaxis, assuming horizontal.")
         dispaxis = HORIZONTAL
