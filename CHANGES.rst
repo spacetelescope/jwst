@@ -55,7 +55,9 @@ For grism data, this step copies keyword DISPAXIS from input to output. [#3799]
 flat_field
 ----------
 
-- This step uses keyword DISPAXIS. [#3799]
+- For NIRSpec spectroscopic data, the flat_field step needs the dispersion
+  direction.  The step now gets that information from keyword DISPAXIS.
+  [#3799, #3807]
 
 gain_scale
 ----------
