@@ -77,21 +77,63 @@ allOf:
               default: 0
               fits_keyword: SLTSIZE2
               fits_hdu: SCI
-            source_id:
-              title: Source ID
-              type: integer
-              default: 0
-              fits_keyword: SOURCEID
-              fits_hdu: SCI
-            shutter_state:
-              title: Shutter state
-              type: string
-              fits_keyword: SHUTTER
-              fits_hdu: SCI
             slitlet_id:
               title: Slitlet ID
               type: integer
               default: 0
               fits_keyword: SLITID
               fits_hdu: SCI
+            source_id:
+              title: Source ID
+              type: integer
+              default: 0
+              fits_keyword: SOURCEID
+              fits_hdu: SCI
+            source_name:
+              title: Source name
+              type: string
+              fits_keyword: SRCNAME
+              fits_hdu: SCI
+            source_alias:
+              title: Source alias
+              type: string
+              fits_keyword: SRCALIAS
+              fits_hdu: SCI
+            stellarity:
+              title: Source stellarity
+              type: number
+              fits_keyword: STLARITY
+              fits_hdu: SCI
+            source_type:
+              title: Source type (point/extended)
+              type: string
+              fits_keyword: SRCTYPE
+              fits_hdu: SCI
+            source_xpos:
+              title: Source position in slit (x-axis)
+              type: number
+              default: 0.0
+              fits_keyword: SRCXPOS
+              fits_hdu: SCI
+            source_ypos:
+              title: Source position in slit (y-axis)
+              type: number
+              default: 0.0
+              fits_keyword: SRCYPOS
+              fits_hdu: SCI
+            shutter_state:
+              title: All (open and closed) shutters in a slit
+              type: string
+              default: ""
+              fits_keyword: SHUTSTA
+              fits_hdu: SCI
+            quadrant:
+              title: MSA quadrant for slit
+              type: integer
+            xcen:
+              title: Center of shutter in MSA coordinates (X dir)
+              type: integer
+            ycen:
+              title: Center of shutter in MSA coordinates (Y dir)
+              type: integer
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema
