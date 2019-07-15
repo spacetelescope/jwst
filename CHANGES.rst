@@ -34,6 +34,8 @@ datamodels
 - Write ``siaf_xref_sci`` and ``siaf_yref_sci`` to FITS keywords ``XREF_SCI``
   and ``YREF_SCI`` for ``NRC_TSGRISM`` exposures. [#3766]
 
+- Removed unused BACKGRND keyword from multiexposure model schema. [#3809]
+
 exp_to_source
 -------------
 
