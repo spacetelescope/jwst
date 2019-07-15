@@ -83,11 +83,6 @@ allOf:
               default: 0
               fits_keyword: SOURCEID
               fits_hdu: SCI
-            background:
-              title: Background (T/F)
-              type: boolean
-              fits_keyword: BACKGRND
-              fits_hdu: SCI
             shutter_state:
               title: Shutter state
               type: string
