@@ -34,6 +34,9 @@ datamodels
 - Write ``siaf_xref_sci`` and ``siaf_yref_sci`` to FITS keywords ``XREF_SCI``
   and ``YREF_SCI`` for ``NRC_TSGRISM`` exposures. [#3766]
 
+- Updated multiexposure.schema to just import slitdata.schema instead of explicitly
+  specifying all of its attributes. [#3809]
+
 exp_to_source
 -------------
 
