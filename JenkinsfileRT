@@ -58,6 +58,7 @@ bc1 = utils.copy(bc0)
 bc1.nodetype = 'macos'
 bc1.name = 'macos-stable-deps'
 bc1.build_cmds = ["pip install -e .[test]"]
+bc1.test_cmds = []
 bc1.test_configs = []
 
 
