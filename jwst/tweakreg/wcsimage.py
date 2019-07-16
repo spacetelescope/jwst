@@ -62,7 +62,7 @@ class ImageWCS():
             DEC of the reference point in degrees.
 
         """
-        valid, message =  self._check_wcs_structure(wcs)
+        valid, message = self._check_wcs_structure(wcs)
         if not valid:
             raise ValueError("Unsupported WCS structure." + message)
 
@@ -107,7 +107,6 @@ class ImageWCS():
                 roll=roll_ref,
                 name='tangent-plane linear correction'
             )
-
 
         self._owcs = wcs
         self._wcs = deepcopy(wcs)
@@ -549,32 +548,10 @@ class WCSImageCatalog():
         else:
             return self._polygon.intersection(wcsim)
 
-    # TODO: due to a bug in the sphere package, see
-    #       https://github.com/spacetelescope/sphere/issues/74
-    #       intersections with polygons formed as union does not work.
-    #       For this reason I re-implement 'intersection_area' below with
-    #       a workaround for the bug.
-    #       The original implementation should be uncommented once the bug
-    #       is fixed.
-    #
-    #def intersection_area(self, wcsim):
-        #""" Calculate the area of the intersection polygon.
-        #"""
-        #return np.fabs(self.intersection(wcsim).area())
     def intersection_area(self, wcsim):
         """ Calculate the area of the intersection polygon.
         """
-        if isinstance(wcsim, (WCSImageCatalog, RefCatalog)):
-            return np.fabs(self.intersection(wcsim).area())
-
-        else:
-            # this is bug workaround for image groups (multi-unions):
-            area = 0.0
-            for wim in wcsim:
-                area += np.fabs(
-                    self.polygon.intersection(wim.polygon).area()
-                )
-            return area
+        return np.fabs(self.intersection(wcsim).area())
 
     def _calc_chip_bounding_polygon(self, stepsize=None):
         """
@@ -700,6 +677,7 @@ class WCSImageCatalog():
         """
         return self._bb_radec
 
+
 class WCSGroupCatalog():
     """
     A class that holds together `WCSImageCatalog` image catalog objects
@@ -785,25 +763,10 @@ class WCSGroupCatalog():
         else:
             return self._polygon.intersection(wcsim)
 
-    # TODO: due to a bug in the sphere package, see
-    #       https://github.com/spacetelescope/sphere/issues/74
-    #       intersections with polygons formed as union does not work.
-    #       For this reason I re-implement 'intersection_area' below with
-    #       a workaround for the bug.
-    #       The original implementation should be uncommented once the bug
-    #       is fixed.
-    #
-    #def intersection_area(self, wcsim):
-        #""" Calculate the area of the intersection polygon.
-        #"""
-        #return np.fabs(self.intersection(wcsim).area())
     def intersection_area(self, wcsim):
         """ Calculate the area of the intersection polygon.
         """
-        area = 0.0
-        for im in self._images:
-            area += im.intersection_area(wcsim)
-        return area
+        return np.fabs(self.intersection(wcsim).area())
 
     def update_bounding_polygon(self):
         """ Recompute bounding polygons of the member images.
@@ -1394,32 +1357,10 @@ class RefCatalog():
         else:
             return self._polygon.intersection(wcsim)
 
-    # TODO: due to a bug in the sphere package, see
-    #       https://github.com/spacetelescope/sphere/issues/74
-    #       intersections with polygons formed as union does not work.
-    #       For this reason I re-implement 'intersection_area' below with
-    #       a workaround for the bug.
-    #       The original implementation should be uncommented once the bug
-    #       is fixed.
-    #
-    #def intersection_area(self, wcsim):
-        #""" Calculate the area of the intersection polygon.
-        #"""
-        #return np.fabs(self.intersection(wcsim).area())
     def intersection_area(self, wcsim):
         """ Calculate the area of the intersection polygon.
         """
-        if isinstance(wcsim, (WCSImageCatalog, RefCatalog)):
-            return np.fabs(self.intersection(wcsim).area())
-
-        else:
-            # this is bug workaround:
-            area = 0.0
-            for wim in wcsim:
-                area += np.fabs(
-                    self.polygon.intersection(wim.polygon).area()
-                )
-            return area
+        return np.fabs(self.intersection(wcsim).area())
 
     def _calc_cat_convex_hull(self):
         """
@@ -1515,7 +1456,6 @@ class RefCatalog():
         """
         # create spherical polygon bounding the sources
         self._calc_cat_convex_hull()
-
 
     def expand_catalog(self, catalog):
         """
