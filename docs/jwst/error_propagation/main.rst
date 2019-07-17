@@ -1,5 +1,5 @@
 Description
-===========
+-----------
  
 Steps in the pipelines calculate arrays for variances, or modify variance arrays 
 from previous steps in the pipeline.  In some cases these arrays are only used 

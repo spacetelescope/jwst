@@ -9,5 +9,3 @@ Error Propagation
 
    main.rst
 
-.. automodapi:: jwst.error_propagation
-
