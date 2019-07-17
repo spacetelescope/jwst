@@ -37,3 +37,11 @@ def word_precision_check(str1, str2, length=5):
     else:
         return True
     return False
+
+
+fitsdiff_default_args = dict(
+    ignore_hdus=['ASDF'],
+    ignore_keywords=['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
+    rtol=0.00001,
+    atol=0.0000001, 
+)
