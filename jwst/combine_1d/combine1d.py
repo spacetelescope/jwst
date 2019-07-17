@@ -79,7 +79,7 @@ class InputSpectrumModel:
                                exptime_key)
 
         try:
-            self.right_ascension[:], self.declination[:], _ = spec.meta.wcs(0., 0.)
+            self.right_ascension[:], self.declination[:], _ = spec.meta.wcs(0.)
         except AttributeError:
             self.right_ascension[:] = ms.meta.target.ra
             self.declination[:] = ms.meta.target.dec

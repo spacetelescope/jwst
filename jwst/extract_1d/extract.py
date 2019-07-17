@@ -2769,7 +2769,12 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
             del npixels_temp
 
             # Convert to flux density (for a point source).
-            pixel_solid_angle = util.pixel_area(slit.meta.wcs, slit.data.shape)
+            wcs_shape = slit.data.shape
+            wcs = slit.meta.wcs
+            if len(wcs_shape) > 2:
+                # CubeModel
+                wcs_shape = wcs_shape[1:]
+            pixel_solid_angle = util.pixel_area(wcs, wcs_shape)
             if pixel_solid_angle is None:
                 log.warning("Pixel solid angle could not be determined")
                 pixel_solid_angle = 1.
@@ -2869,8 +2874,13 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                     wcs = niriss.niriss_soss_set_input(input_model, sp_order)
                 else:
                     wcs = input_model.meta.wcs
-                pixel_solid_angle = util.pixel_area(wcs,
-                                                    input_model.data.shape)
+
+                wcs_shape = input_model.data.shape
+                if len(wcs_shape) > 2:
+                    # CubeModel
+                    wcs_shape = wcs_shape[1:]
+
+                pixel_solid_angle = util.pixel_area(wcs, wcs_shape)
                 if pixel_solid_angle is None:
                     log.warning("Pixel solid angle could not be determined")
                     pixel_solid_angle = 1.
@@ -2971,8 +2981,13 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                                                            sp_order)
                     else:
                         wcs = input_model.meta.wcs
+
+                    wcs_shape = input_model.data.shape
+                    if len(wcs_shape) > 2:
+                        # CubeModel
+                        wcs_shape = wcs_shape[1:]
                     pixel_solid_angle = util.pixel_area(wcs,
-                                                        input_model.data.shape,
+                                                        wcs_shape,
                                                         verbose)
                     if pixel_solid_angle is None:
                         if verbose:

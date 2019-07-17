@@ -123,8 +123,10 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
         background = bkg.to(u.MJy / u.steradian).value
 
     # Compute the solid angle of a pixel in steradians.
-    pixel_solid_angle = util.pixel_area(input_model.meta.wcs,
-                                        input_model.data.shape)
+    wcs_shape = input_model.data.shape
+    wcs = input_model.meta.wcs
+
+    pixel_solid_angle = util.pixel_area(wcs, wcs_shape)
     if pixel_solid_angle is None:
         log.warning("Pixel solid angle could not be determined")
         pixel_solid_angle = 1.
