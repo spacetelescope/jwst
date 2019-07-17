@@ -84,7 +84,7 @@ class OutlierDetectionScaled(OutlierDetection):
             radius_outer = 5
 
         apertures = CircularAperture((xcenter, ycenter), r=radius)
-        # ApertureMask in photutils<=0.6 is indexable.  In >=0.6 it is scalar
+        # ApertureMask in photutils<=0.6 is indexable.  In >=0.7 it is scalar
         # if there is only one Aperture.  Handle both.
         try:
             aperture_mask = apertures.to_mask(method='center')[0]
