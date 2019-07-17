@@ -7,7 +7,7 @@ JWST Calibration Pipeline
 
 ![STScI Logo](docs/_static/stsci_logo.png)
 
-**JWST requires Python 3.5 or above**.
+**JWST requires Python 3.5 or above and a C compiler for dependencies**.
 
 Installation
 ------------
@@ -49,13 +49,14 @@ See the "Software vs DMS build version map" table below for a list of tags corre
 Fork and clone the repo:
 
     git clone https://github.com/spacetelescope/jwst
+    cd jwst
 
 Install from your local checked out copy as an "editable" install:
 
     pip install numpy
     pip install -e .
 
-This is like doing a ``setup.py develop`` install.  If you want to run the tests and/or build the docs, you can make sure those dependencies are installed too:
+If you want to run the tests and/or build the docs, you can make sure those dependencies are installed too:
 
     pip install -e .[test]
     pip install -e .[docs]
@@ -63,8 +64,7 @@ This is like doing a ``setup.py develop`` install.  If you want to run the tests
 
 Need other useful packages in your development environment?
 
-    pip install ipython
-    pip install flake8
+    pip install ipython flake8
 
 ### CRDS Setup ###
 
