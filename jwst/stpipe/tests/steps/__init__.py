@@ -34,6 +34,35 @@ class AnotherDummyStep(Step):
         return a + b
 
 
+class MakeListStep(Step):
+    """Make a list of all arguments and parameters"""
+
+    spec = """
+    par1 = float() # Control the frobulization
+
+    par2 = string() # Reticulate the splines
+
+    par3 = boolean(default=False) # Does it blend?
+
+    [foo]
+
+    """
+
+    def process(self, a=None, b=None):
+        self.log.info('Arguments a=%s b=%s', a, b)
+        self.log.info('Parameters par1=%s, par2=%s, par3=%s',
+                      self.par1, self.par2, self.par3)
+
+        result = [
+            item
+            for item in [a, b, self.par1, self.par2, self.par3]
+            if item is not None
+        ]
+
+        self.log.info('The list is %s', result)
+        return result
+
+
 class OptionalRefTypeStep(Step):
     """
     This is a do-nothing step that demonstrates optionally omitting
@@ -47,17 +76,61 @@ class OptionalRefTypeStep(Step):
         assert ref_file == ""
 
 
-class StepWithModel(Step):
-    """A step with a model"""
+class PostHookStep(Step):
+    """A step to try out hooks"""
 
     spec = """
     """
 
     def process(self, *args):
-        from ....datamodels import ImageModel
+        self.log.info('Received args: "{}"'.format(args))
+        self.log.info('Self.parent = "{}"'.format(self.parent))
 
-        input_path = self.open_model(args[0])
-        model = ImageModel(input_path)
+        args[0].post_hook_run = True
+        self.parent.post_hook_run = True
+
+
+class PostHookWithReturnStep(Step):
+    """A step to try out hooks"""
+
+    spec = """
+    """
+
+    def process(self, *args):
+        self.log.info('Received args: "{}"'.format(args))
+        self.log.info('Self.parent = "{}"'.format(self.parent))
+
+        self.parent.post_hook_run = True
+        return 'PostHookWithReturnStep executed'
+
+
+class PreHookStep(Step):
+    """A step to try out hooks"""
+
+    spec = """
+    """
+
+    def process(self, *args):
+        self.log.info('Received args: "{}"'.format(args))
+        self.log.info('Self.parent = "{}"'.format(self.parent))
+
+        args[0].pre_hook_run = True
+        self.parent.pre_hook_run = True
+
+
+class SaveStep(Step):
+    """
+    Step with explicit save.
+    """
+
+    spec = """
+    """
+
+    def process(self, *args):
+        model = ImageModel(args[0])
+
+        self.log.info('Saving model as "processed"')
+        self.save_model(model, 'processed')
 
         return model
 
@@ -82,41 +155,19 @@ class StepWithContainer(Step):
         return container
 
 
-class SaveStep(Step):
-    """
-    Step with explicit save.
-    """
+class StepWithModel(Step):
+    """A step with a model"""
 
     spec = """
     """
 
     def process(self, *args):
-        model = ImageModel(args[0])
+        from ....datamodels import ImageModel
 
-        self.log.info('Saving model as "processed"')
-        self.save_model(model, 'processed')
+        input_path = self.open_model(args[0])
+        model = ImageModel(input_path)
 
         return model
-
-
-class SavePipeline(Pipeline):
-    """Save model in pipeline"""
-
-    spec = """
-    """
-
-    step_defs = {
-        'stepwithmodel': StepWithModel,
-        'savestep': SaveStep
-    }
-
-    def process(self, *args):
-        model = ImageModel(args[0])
-
-        r = self.stepwithmodel(model)
-        r = self.savestep(r)
-
-        return r
 
 
 class ProperPipeline(Pipeline):
@@ -147,43 +198,21 @@ class ProperPipeline(Pipeline):
         return r
 
 
-class PreHookStep(Step):
-    """A step to try out hooks"""
+class SavePipeline(Pipeline):
+    """Save model in pipeline"""
 
     spec = """
     """
 
-    def process(self, *args):
-        self.log.info('Received args: "{}"'.format(args))
-        self.log.info('Self.parent = "{}"'.format(self.parent))
-
-        args[0].pre_hook_run = True
-        self.parent.pre_hook_run = True
-
-
-class PostHookStep(Step):
-    """A step to try out hooks"""
-
-    spec = """
-    """
+    step_defs = {
+        'stepwithmodel': StepWithModel,
+        'savestep': SaveStep
+    }
 
     def process(self, *args):
-        self.log.info('Received args: "{}"'.format(args))
-        self.log.info('Self.parent = "{}"'.format(self.parent))
+        model = ImageModel(args[0])
 
-        args[0].post_hook_run = True
-        self.parent.post_hook_run = True
+        r = self.stepwithmodel(model)
+        r = self.savestep(r)
 
-
-class PostHookWithReturnStep(Step):
-    """A step to try out hooks"""
-
-    spec = """
-    """
-
-    def process(self, *args):
-        self.log.info('Received args: "{}"'.format(args))
-        self.log.info('Self.parent = "{}"'.format(self.parent))
-
-        self.parent.post_hook_run = True
-        return 'PostHookWithReturnStep executed'
+        return r
