@@ -101,7 +101,7 @@ class ResampleStep(Step):
         then these will overwerite the defaults pulled from the reference file.
         """
         with datamodels.DrizParsModel(ref_filename) as drpt:
-            drizpars_table =drpt.data
+            drizpars_table = drpt.data
 
         num_groups = len(input_models.group_names)
         filtname = input_models[0].meta.instrument.filter
