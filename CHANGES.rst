@@ -42,6 +42,8 @@ exp_to_source
 
 - Updated the documentation and added some logging to the step. [#3803]
 
+- Close input files after creating the new outputs. [#3828]
+
 extract_1d
 ----------
 
