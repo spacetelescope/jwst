@@ -11,6 +11,7 @@ assign_wcs
 
 - This step populates keyword DISPAXIS. [#3799]
 
+
 associations
 ------------
 
@@ -21,6 +22,11 @@ associations
 - Add a check that backgrounds are included in level 3 associations [#3678]
 
 - Will not constrain on uniqueness of the MSACONFIG keyword [#3770]
+
+- combine_1d
+------------
+
+- Fixed the number of inputs to the spectral WCS - one expetced, two were passed. [#3827]
 
 datamodels
 ----------
@@ -49,6 +55,8 @@ extract_1d
   is done there rather than in the subclasses. [#3714]
 
 - This step uses keyword DISPAXIS. [#3799]
+
+- Fixed a bug in ``pixel_area`` when th einput is a ``CubeModel``. [#3827]
 
 extract_2d
 ----------
