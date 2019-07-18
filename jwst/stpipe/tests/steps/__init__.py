@@ -142,8 +142,6 @@ class StepWithContainer(Step):
     """
 
     def process(self, *args):
-        from ....datamodels import ImageModel
-
         container = ModelContainer()
         model1 = ImageModel(args[0]).copy()
         model2 = ImageModel(args[0]).copy()
@@ -162,8 +160,6 @@ class StepWithModel(Step):
     """
 
     def process(self, *args):
-        from ....datamodels import ImageModel
-
         input_path = self.open_model(args[0])
         model = ImageModel(input_path)
 
