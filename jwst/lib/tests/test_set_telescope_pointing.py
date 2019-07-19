@@ -80,6 +80,7 @@ def data_file():
     with TemporaryDirectory() as path:
         file_path = os.path.join(path, 'fits.fits')
         model.save(file_path)
+        model.close()
         yield file_path
 
 
@@ -96,6 +97,7 @@ def data_file_nosiaf():
     with TemporaryDirectory() as path:
         file_path = os.path.join(path, 'fits_nosiaf.fits')
         model.save(file_path)
+        model.close()
         yield file_path
 
 
