@@ -27,6 +27,7 @@ meta:
   title: MIRI imager tweakreg parameters
   useafter: '2019-10-11T00:00:00'
 parameters:
+  class: jwst.tweakreg.TweakRegStep
   brightest: 100
   catalog_format: ecsv
   enforce_user_order: false
