@@ -493,6 +493,11 @@ properties:
             type: string
             fits_keyword: LAMP
             blend_table: True
+          lamp_mode:
+            title: Operating mode for NIRSPEC internal lamp exposures
+            type: string
+            fits_keyword: OPMODE
+            blend_table: True
           gwa_xtilt:
             title: Grating Y tilt angle relative to mirror
             type: number
