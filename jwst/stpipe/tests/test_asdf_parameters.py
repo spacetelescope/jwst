@@ -60,3 +60,18 @@ def test_step_from_asdf_noname():
 
     results = step.run()
     assert results == [42.0, 'Yes, a string', False]
+
+
+def test_from_command_line():
+    """Test creating Step from command line using ASDF"""
+    config_file = t_path(
+        Path('data') / 'step_parameters' / 'jwst_generic_pars-makeliststep_0001.asdf'
+    )
+    args = [config_file]
+    step = Step.from_cmdline(args)
+    assert isinstance(step, MakeListStep)
+    assert step.par1 == 42.0
+    assert step.par2 == 'Yes, a string'
+
+    results = step.run()
+    assert results == [42.0, 'Yes, a string', False]
