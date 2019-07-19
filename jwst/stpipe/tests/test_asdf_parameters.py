@@ -23,6 +23,36 @@ def test_asdf_from_call():
     assert results == DEFAULT_RESULT
 
 
+def test_from_command_line():
+    """Test creating Step from command line using ASDF"""
+    config_file = t_path(
+        Path('data') / 'step_parameters' / 'jwst_generic_pars-makeliststep_0001.asdf'
+    )
+    args = [config_file]
+    step = Step.from_cmdline(args)
+    assert isinstance(step, MakeListStep)
+    assert step.par1 == 42.0
+    assert step.par2 == 'Yes, a string'
+
+    results = step.run()
+    assert results == DEFAULT_RESULT
+
+
+def test_from_command_line_override():
+    """Test creating Step from command line using ASDF"""
+    config_file = t_path(
+        Path('data') / 'step_parameters' / 'jwst_generic_pars-makeliststep_0001.asdf'
+    )
+    args = [config_file, '--par1=0.']
+    step = Step.from_cmdline(args)
+    assert isinstance(step, MakeListStep)
+    assert step.par1 == 0.
+    assert step.par2 == 'Yes, a string'
+
+    results = step.run()
+    assert results == [0., DEFAULT_PAR2, False]
+
+
 def test_makeliststep_missingpars():
     """Test the testing step class when given insufficient information"""
     with pytest.raises(ValidationError):
@@ -49,6 +79,15 @@ def test_step_from_asdf():
     assert results == DEFAULT_RESULT
 
 
+def test_step_from_asdf_api_override():
+    """Test initializing step completely from config"""
+    config_file = t_path(
+        Path('data') / 'step_parameters' / 'jwst_generic_pars-makeliststep_0001.asdf'
+    )
+    results = MakeListStep.call(config_file=config_file, par1=0.)
+    assert results == [0., DEFAULT_PAR2, False]
+
+
 def test_step_from_asdf_noname():
     """Test initializing step completely from config without a name specified"""
     root = 'jwst_generic_pars-makeliststep_0002'
@@ -58,21 +97,6 @@ def test_step_from_asdf_noname():
     step = Step.from_config_file(config_file)
     assert isinstance(step, MakeListStep)
     assert step.name == root
-
-    results = step.run()
-    assert results == DEFAULT_RESULT
-
-
-def test_from_command_line():
-    """Test creating Step from command line using ASDF"""
-    config_file = t_path(
-        Path('data') / 'step_parameters' / 'jwst_generic_pars-makeliststep_0001.asdf'
-    )
-    args = [config_file]
-    step = Step.from_cmdline(args)
-    assert isinstance(step, MakeListStep)
-    assert step.par1 == 42.0
-    assert step.par2 == 'Yes, a string'
 
     results = step.run()
     assert results == DEFAULT_RESULT
