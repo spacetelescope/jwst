@@ -10,6 +10,7 @@ from .util import t_path
 
 DEFAULT_PAR1 = 42.0
 DEFAULT_PAR2 = 'Yes, a string'
+DEFAULT_RESULT = [DEFAULT_PAR1, DEFAULT_PAR2, False]
 
 
 def test_asdf_from_call():
@@ -19,7 +20,7 @@ def test_asdf_from_call():
     )
     results = MakeListStep.call(config_file=config_file)
 
-    assert results == [42.0, 'Yes, a string', False]
+    assert results == DEFAULT_RESULT
 
 
 def test_makeliststep_missingpars():
@@ -32,7 +33,7 @@ def test_makeliststep_test():
     """Test the testing step class for basic operation"""
     result = MakeListStep.call(par1=DEFAULT_PAR1, par2=DEFAULT_PAR2)
 
-    assert result == [42.0, 'Yes, a string', False]
+    assert result == DEFAULT_RESULT
 
 
 def test_step_from_asdf():
@@ -45,7 +46,7 @@ def test_step_from_asdf():
     assert step.name == 'make_list'
 
     results = step.run()
-    assert results == [42.0, 'Yes, a string', False]
+    assert results == DEFAULT_RESULT
 
 
 def test_step_from_asdf_noname():
@@ -59,7 +60,7 @@ def test_step_from_asdf_noname():
     assert step.name == root
 
     results = step.run()
-    assert results == [42.0, 'Yes, a string', False]
+    assert results == DEFAULT_RESULT
 
 
 def test_from_command_line():
@@ -74,4 +75,4 @@ def test_from_command_line():
     assert step.par2 == 'Yes, a string'
 
     results = step.run()
-    assert results == [42.0, 'Yes, a string', False]
+    assert results == DEFAULT_RESULT
