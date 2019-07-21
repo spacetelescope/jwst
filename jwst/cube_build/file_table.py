@@ -95,7 +95,9 @@ class FileTable():
             with datamodels.IFUImageModel(input) as input_model:
 
                 detector = input_model.meta.instrument.detector
-                instrument = input_model.meta.instrument.name
+                instrument = input_model.meta.instrument.name.upper()
+                print('file_table:',instrument)
+
                 assign_wcs = input_model.meta.cal_step.assign_wcs
 
                 if(assign_wcs != 'COMPLETE'):
