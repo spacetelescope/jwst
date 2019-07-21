@@ -29,9 +29,13 @@
 """
 Our configuration files are ConfigObj/INI files.
 """
+import logging
 import os
 import os.path
 import textwrap
+
+from asdf import open as asdf_open
+from asdf import ValidationError as AsdfValidationError
 
 from ..extern.configobj.configobj import (
     ConfigObj, Section, flatten_errors, get_extra_values)
@@ -40,6 +44,11 @@ from ..extern.configobj.validate import Validator, ValidateError, VdtTypeError
 from ..datamodels.model_base import DataModel
 
 from . import utilities
+
+
+# Configure logger
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 
 class ValidationError(Exception):
@@ -120,7 +129,16 @@ def load_config_file(config_file):
     """
     if not os.path.isfile(config_file):
         raise ValueError("Config file {0} not found.".format(config_file))
-    return ConfigObj(config_file, raise_errors=True)
+    try:
+        cfg = asdf_open(config_file)
+    except (AsdfValidationError, ValueError):
+        logger.debug('Config file did not parse as ASDF. Trying as ConfigObj: %s', config_file)
+        return ConfigObj(config_file, raise_errors=True)
+
+    # Seems to be ASDF. Create the configobj from that.
+    configobj = ConfigObj()
+    configobj.merge(cfg['parameters'])
+    return configobj
 
 
 def get_merged_spec_file(cls, preserve_comments=False):

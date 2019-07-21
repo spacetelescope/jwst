@@ -14,32 +14,17 @@ history:
     extension_class: asdf.extension.BuiltinExtension
     software: {name: asdf, version: 2.3.3}
 meta:
-  author: Karl Gordon
-  date: '2019-02-30T01:02:03.456'
-  description: Tweakreg params for genreal JWST imaging
+  author: Alfred E. Neuman
+  date: '2019-07-17T10:56:23.456'
+  description: MakeListStep parameters
   instrument: {name: GENERIC}
   pedigree: GROUND
-  reftype: pars-tweakreg
+  reftype: pars-makeliststep
   telescope: JWST
-  title: MIRI imager tweakreg parameters
-  useafter: '2019-10-11T00:00:00'
+  title: MakeListStep default parameters
+  useafter: '1990-04-24T00:00:00'
 parameters:
-  class: jwst.tweakreg.TweakRegStep
-  brightest: 100
-  catalog_format: ecsv
-  enforce_user_order: false
-  expand_refcat: false
-  fitgeometry: general
-  kernel_fwhm: 2.5
-  minobj: 15
-  nclip: 3
-  save_catalogs: false
-  searchrad: 1.0
-  separation: 0.5
-  sigma: 3.0
-  snr_threshold: 10.0
-  tolerance: 1.0
-  use2dhist: true
-  xoffset: 0.0
-  yoffset: 0.0
+  class: jwst.stpipe.tests.steps.MakeListStep
+  par1: 42.0
+  par2: 'Yes, a string'
 ...
