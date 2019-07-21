@@ -73,7 +73,7 @@ class IFUCubeData():
         self.xdebug = pars_cube.get('xdebug')
         self.ydebug = pars_cube.get('ydebug')
         self.zdebug = pars_cube.get('zdebug')
-        self.skip_dqflag = pars_cube.get('skip_dqflag')
+        self.skip_dqflagging = pars_cube.get('skip_dqflagging')
         self.spaxel_debug = pars_cube.get('spaxel_debug')
 
         self.num_bands = 0
@@ -153,7 +153,7 @@ class IFUCubeData():
                 raise AreaInterpolation("When using interpolation = area, the output" +
                                         " coordinate system is alpha-beta" +
                                         " The beta dimension (naxis2) has a one to one" +
-                                        " mapping between slice and " +
+                                        " mapping between slice_no and " +
                                         " beta coordinate.")
 
         if(self.coord_system == "alpha-beta"):
@@ -494,7 +494,8 @@ class IFUCubeData():
         self.spaxel_flux = np.zeros(total_num)
         self.spaxel_weight = np.zeros(total_num)
         self.spaxel_iflux = np.zeros(total_num)
-        self.spaxel_dq = np.zeros((self.naxis3, self.naxis2 * self.naxis1), dtype=np.int32)
+#        self.spaxel_dq = np.zeros((self.naxis3, self.naxis2 * self.naxis1), dtype=np.int32)
+        self.spaxel_dq = np.zeros((self.naxis3, self.naxis2 * self.naxis1), dtype=np.uint32)
 
         spaxel_ra = None
         spaxel_dec = None
@@ -548,20 +549,20 @@ class IFUCubeData():
                                                                    subtract_background,
                                                                    ifile)
 
-                    coord1, coord2, wave, flux, slice, rois_pixel, roiw_pixel, weight_pixel,\
+                    coord1, coord2, wave, flux, slice_no, rois_pixel, roiw_pixel, weight_pixel,\
                         softrad_pixel, alpha_det, beta_det = pixelresult
                     t1 = time.time()
-                    log.info("Time to transform pixels to output frame = %.1f.s" % (t1 - t0,))
+                    log.info("Time to transform pixels to output frame = %.1f s" % (t1 - t0,))
 
-# If setting the DQ plane of the IFU
-                    if self.skip_dqflag:
+                    # If setting the DQ plane of the IFU
+                    if self.skip_dqflagging:
                         log.info("Skipping setting DQ flagging")
                     else:
                         t0 = time.time()
                         roiw_ave = np.mean(roiw_pixel)
-                        self.map_fov_to_dqplane(this_par1, coord1, coord2, wave, roiw_ave, slice)
+                        self.map_fov_to_dqplane(this_par1, coord1, coord2, wave, roiw_ave, slice_no)
                         t1 = time.time()
-                        log.info("Time to set initial dq values = %.1f.s" % (t1 - t0,))
+                        log.info("Time to set initial dq values = %.1f s" % (t1 - t0,))
                     if self.weighting == 'msm':
                         t0 = time.time()
 #                        if self.new_code:
@@ -590,7 +591,7 @@ class IFUCubeData():
                                                       softrad_pixel)
 
                         t1 = time.time()
-                        log.info("Time to match file to ifucube = %.1f.s" % (t1 - t0,))
+                        log.info("Time to match file to ifucube = %.1f s" % (t1 - t0,))
 # ________________________________________________________________________________
                     elif self.weighting == 'miripsf':
                         with datamodels.IFUImageModel(ifile) as input_model:
@@ -657,7 +658,7 @@ class IFUCubeData():
                                                         self.naxis1, self.naxis2)
                         t1 = time.time()
 
-                        log.info("Time to Map All slices on Detector to Cube = %.1f.s" % (t1 - t0,))
+                        log.info("Time to Map All slices on Detector to Cube = %.1f s" % (t1 - t0,))
 # _______________________________________________________________________
 # Mapped all data to cube or Point Cloud
 # now determine Cube Spaxel flux
@@ -667,7 +668,7 @@ class IFUCubeData():
 
         self.set_final_dq_flags()
         t1 = time.time()
-        log.info("Time to find Cube Flux = %.1f.s" % (t1 - t0,))
+        log.info("Time to find Cube Flux = %.1f s" % (t1 - t0,))
 
         ifucube_model = self.setup_final_ifucube_model(0)
 # _______________________________________________________________________
@@ -712,7 +713,7 @@ class IFUCubeData():
                                                            subtract_background,
                                                            self.input_models[j])
 
-            coord1, coord2, wave, flux, slice, rois_pixel, roiw_pixel, weight_pixel, \
+            coord1, coord2, wave, flux, slice_no, rois_pixel, roiw_pixel, weight_pixel, \
                 softrad_pixel, alpha_det, beta_det = pixelresult
 
             cube_cloud.match_det2cube_msm(self.naxis1,
@@ -738,7 +739,7 @@ class IFUCubeData():
             ifucube_model = self.setup_final_ifucube_model(j)
             self.update_ifucube(ifucube_model)
             t1 = time.time()
-            log.info("Time to Create Single ifucube = %.1f.s" % (t1 - t0,))
+            log.info("Time to Create Single ifucube = %.1f s" % (t1 - t0,))
 # _______________________________________________________________________
             single_ifucube_container.append(ifucube_model)
 
@@ -1082,7 +1083,7 @@ class IFUCubeData():
         coord2 = None
         flux = None
         wave = None
-        slice = None  # Slice number
+        slice_no = None  # Slice number
 # Open the input data model
         with datamodels.IFUImageModel(ifile) as input_model:
             # check if background sky matching as been done
@@ -1134,7 +1135,7 @@ class IFUCubeData():
                     yind = _toindex(y)
                     xind = np.ndarray.flatten(xind)
                     yind = np.ndarray.flatten(yind)
-                    slice = slice_det[yind, xind]
+                    slice_no = slice_det[yind, xind]
 
                     if self.weighting == 'miripsf':
                         alpha, beta, lam = det2ab_transform(x, y)
@@ -1149,8 +1150,8 @@ class IFUCubeData():
 # ________________________________________________________________________________
             elif self.instrument == 'NIRSPEC':
                 # initialize the ra,dec, and wavelength arrays
-                # we will loop over slices and fill in values
-                # the flag_det will be set when a slice pixel is filled in
+                # we will loop over slice_nos and fill in values
+                # the flag_det will be set when a slice_no pixel is filled in
                 #   at the end we will use this flag to pull out valid data
                 ra_det = np.zeros((2048, 2048))
                 dec_det = np.zeros((2048, 2048))
@@ -1195,7 +1196,7 @@ class IFUCubeData():
                 ra = ra_det[valid_data]
                 dec = dec_det[valid_data]
                 wave = lam_det[valid_data]
-                slice = slice_det[valid_data]
+                slice_no = slice_det[valid_data]
 
 # ______________________________________________________________________________
 # The following is for both MIRI and NIRSPEC
@@ -1226,16 +1227,21 @@ class IFUCubeData():
             all_flags = (dqflags.pixel['DO_NOT_USE'] +
                          dqflags.pixel['NON_SCIENCE'])
 
-            valid3 = np.bitwise_and((wave >= min_wave_tolerance),
+#            valid3 = np.bitwise_and((wave >= min_wave_tolerance),
+#                                     (wave <= max_wave_tolerance))
+
+            valid3 = np.logical_and((wave >= min_wave_tolerance),
                                      (wave <= max_wave_tolerance))
+
             # find the location of all the values to reject in cube building
             good_data = np.where((np.bitwise_and(dq_all, all_flags) == 0) &
-                                 (valid2 == True) & (valid3 == True))
+                                 (valid2) & (valid3))
+
 
             # good data holds the location of pixels we want to map to cube
             flux = flux_all[good_data]
             wave = wave[good_data]
-            slice = slice[good_data]
+            slice_no = slice_no[good_data]
 # based on the wavelength define the sroi, wroi, weight_power and
 # softrad to use in matching detector to spaxel values
             rois_det = np.zeros(wave.shape)
@@ -1270,11 +1276,11 @@ class IFUCubeData():
                 coord1 = alpha[good_data]
                 coord2 = beta[good_data]
 
-        return coord1, coord2, wave, flux, slice, rois_det, roiw_det, weight_det, \
+        return coord1, coord2, wave, flux, slice_no, rois_det, roiw_det, weight_det, \
             softrad_det, alpha_det, beta_det
 # ********************************************************************************
 
-    def map_fov_to_dqplane(self, this_par1, coord1, coord2, wave, roiw_ave, slice):
+    def map_fov_to_dqplane(self, this_par1, coord1, coord2, wave, roiw_ave, slice_no):
         """ Set an initial DQ flag for the IFU cube based on FOV of input data
 
         Map the FOV of channel (MIRI) or slice (NIRSPEC) to the DQ plane
@@ -1291,14 +1297,14 @@ class IFUCubeData():
         wave: wavelength of input data
         roiw_ave: average spectral roi used to determine which wavelength bins
             the input values would be mapped to
-        slice: integer slice value of input data (used in MIRI case to find
+        slice_no: integer slice value of input data (used in MIRI case to find
             the points of the edge slices.)
         """
 
         # MIRI mapping:
-        # The FOV is roughtly the same for all the wavelenth ranges.
+        # The FOV is roughtly the same for all the wavelength ranges.
         # The offset in the slices makes the calculation of the four corners
-        # of the FOV more comlicated. So we only use the two slices at
+        # of the FOV more complicated. So we only use the two slices at
         # the edges of the FOV to define the 4 corners.
         # Note we can not use the wcs.footprint (because this footprint only
         # consists of 4 values  ra min, ra max, dec min, dec max and we
@@ -1309,8 +1315,11 @@ class IFUCubeData():
             # find the wavelength boundaries of the band - use two extreme slices
             wavemin = np.amin(wave)
             wavemax = np.amax(wave)
-            iwavemin = np.absolute(np.array(wavemin - self.zcoord) / (self.cdelt3_normal/2.0))
-            iwavemax = np.absolute(np.array(wavemax - self.zcoord) / (self.cdelt3_normal/2.0))
+            
+            # self.zcoord holds the center of the wavelength bin 
+            iwavemin = np.absolute(np.array(wavemin - self.zcoord) / self.cdelt3_normal)
+            iwavemax = np.absolute(np.array(wavemax - self.zcoord) / self.cdelt3_normal)
+
             imin = np.where(iwavemin == np.amin(iwavemin))[0]
             imax = np.where(iwavemax == np.amin(iwavemax))[0]
 
@@ -1325,7 +1334,7 @@ class IFUCubeData():
                 istart = start_region
                 while istart < end_region:
 
-                    index_use = np.where((wave_distance < roiw_ave) & (slice == istart))
+                    index_use = np.where((wave_distance < roiw_ave) & (slice_no == istart))
                     if len(index_use[0]) > 0:
                         coord2_start = coord2[index_use]
                         coord1_start = coord1[index_use]
@@ -1335,7 +1344,7 @@ class IFUCubeData():
                 iend = end_region
 
                 while iend > start_region:
-                    index_use = np.where((wave_distance < roiw_ave) & (slice == iend))
+                    index_use = np.where((wave_distance < roiw_ave) & (slice_no == iend))
                     if len(index_use[0]) > 0:
                         coord2_end = coord2[index_use]
                         coord1_end = coord1[index_use]
@@ -1382,8 +1391,10 @@ class IFUCubeData():
                 # find the smaller set of wavelengths to search over for this slice
                 wavemin = np.amin(wave[index_slice])
                 wavemax = np.amax(wave[index_slice])
-                iwavemin = np.absolute(np.array(wavemin - self.zcoord) / (self.cdelt3_normal/2.0))
-                iwavemax = np.absolute(np.array(wavemax - self.zcoord) / (self.cdelt3_normal/2.0))
+#                iwavemin = np.absolute(np.array(wavemin - self.zcoord) / (self.cdelt3_normal/2.0))
+#                iwavemax = np.absolute(np.array(wavemax - self.zcoord) / (self.cdelt3_normal/2.0))
+                iwavemin = np.absolute(np.array(wavemin - self.zcoord) / (self.cdelt3_normal))
+                iwavemax = np.absolute(np.array(wavemax - self.zcoord) / (self.cdelt3_normal))
                 imin = np.where(iwavemin == np.amin(iwavemin))[0]
                 imax = np.where(iwavemax == np.amin(iwavemax))[0]
 
@@ -1392,7 +1403,7 @@ class IFUCubeData():
 
                 for w in range(imin[0], imax[0]):
                     wave_distance = np.absolute(self.zcoord[w] - wave)
-                    index_use = np.where((wave_distance < roiw_ave) & (slice == islice+1))
+                    index_use = np.where((wave_distance < roiw_ave) & (slice_no == islice+1))
                     if len(index_use[0]) > 0:
                         coord2_use = coord2[index_use]
                         coord1_use = coord1[index_use]
@@ -1490,7 +1501,7 @@ class IFUCubeData():
         if y1 < y2:
             ystep = 1
 
-        # iterate over grif to generate points between the start and end of line
+        # iterate over grid to generate points between the start and end of line
         y = y1
         points = []
         for x in range(x1, x2 + 1):
@@ -1523,7 +1534,7 @@ class IFUCubeData():
         Parameter
         ----------
         xi_corner: xi coordinates of the 4 corners of the FOV on the cube plane
-        eta_corner: xi coordinates of the 4 corners of the FOV on the cube plane
+        eta_corner: eta coordinates of the 4 corners of the FOV on the cube plane
         wmin: minimum wavelength bin in the IFU cube that this data covers
         wmax: maximum wavelength bin in the IFU cube that this data covers
 
