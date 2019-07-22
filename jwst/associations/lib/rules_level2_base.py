@@ -897,7 +897,7 @@ class Constraint_Target(DMSAttrConstraint):
 
 class Constraint_ExtCal(Constraint):
     """Remove any nis_extcals from the associations, they
-       are NOT to be processed in the pipline!"""
+       are NOT to receive level-2b or level-3 processing!"""
 
     def __init__(self):
         super(Constraint_ExtCal, self).__init__(
