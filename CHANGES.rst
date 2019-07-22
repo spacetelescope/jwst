@@ -713,6 +713,8 @@ csv_tools
 cube_build
 ----------
 
+- Added dq flagging [#3804]
+
 cube_skymatch
 -------------
 

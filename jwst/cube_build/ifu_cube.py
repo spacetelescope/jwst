@@ -1315,8 +1315,8 @@ class IFUCubeData():
             # find the wavelength boundaries of the band - use two extreme slices
             wavemin = np.amin(wave)
             wavemax = np.amax(wave)
-            
-            # self.zcoord holds the center of the wavelength bin 
+
+            # self.zcoord holds the center of the wavelength bin
             iwavemin = np.absolute(np.array(wavemin - self.zcoord) / self.cdelt3_normal)
             iwavemax = np.absolute(np.array(wavemax - self.zcoord) / self.cdelt3_normal)
 
