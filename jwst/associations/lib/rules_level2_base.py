@@ -46,6 +46,7 @@ __all__ = [
     'AsnMixin_Lv2Special',
     'AsnMixin_Lv2Spectral',
     'Constraint_Base',
+    'Constraint_ExtCal',
     'Constraint_Image_Nonscience',
     'Constraint_Image_Science',
     'Constraint_Mode',
@@ -894,6 +895,21 @@ class Constraint_Target(DMSAttrConstraint):
             sources=['targetid'],
         )
 
+class Constraint_ExtCal(Constraint):
+    """Remove any nis_extcals from the associations, they
+       are NOT to be processed in the pipline!"""
+
+    def __init__(self):
+        super(Constraint_ExtCal, self).__init__(
+            [
+                DMSAttrConstraint(
+                    name='exp_type',
+                    sources=['exp_type'],
+                    value='nis_extcal'
+                )
+            ],
+            reduce=Constraint.notany
+        )
 
 # ---------------------------------------------
 # Mixins to define the broad category of rules.
