@@ -112,6 +112,7 @@ class IFUCubeData():
         self.ycoord = None
         self.zcoord = None
 
+        self.tolerance_dq_overlap = 0.05  # spaxel has to have 5% overlap to flag in FOV
         self.overlap_partial = 4  # intermediate flag
         self.overlap_full  = 2    # intermediate flag
         self.overlap_hole = dqflags.pixel['DO_NOT_USE']
@@ -494,7 +495,6 @@ class IFUCubeData():
         self.spaxel_flux = np.zeros(total_num)
         self.spaxel_weight = np.zeros(total_num)
         self.spaxel_iflux = np.zeros(total_num)
-#        self.spaxel_dq = np.zeros((self.naxis3, self.naxis2 * self.naxis1), dtype=np.int32)
         self.spaxel_dq = np.zeros((self.naxis3, self.naxis2 * self.naxis1), dtype=np.uint32)
 
         spaxel_ra = None
@@ -1306,7 +1306,7 @@ class IFUCubeData():
         # The offset in the slices makes the calculation of the four corners
         # of the FOV more complicated. So we only use the two slices at
         # the edges of the FOV to define the 4 corners.
-        # Note we can not use the wcs.footprint (because this footprint only
+        # Note we can not use the wcs.footprint because this footprint only
         # consists of 4 values  ra min, ra max, dec min, dec max and we
         # need 4 corners made of 8 different values.
 
@@ -1323,6 +1323,7 @@ class IFUCubeData():
             imin = np.where(iwavemin == np.amin(iwavemin))[0]
             imax = np.where(iwavemax == np.amin(iwavemax))[0]
 
+            # for each wavelength plane - find the 2 extreme slices to set the FOV 
             for w in range(imin[0], imax[0]):
                 wave_distance = np.absolute(self.zcoord[w] - wave)
 
@@ -1333,7 +1334,6 @@ class IFUCubeData():
 
                 istart = start_region
                 while istart < end_region:
-
                     index_use = np.where((wave_distance < roiw_ave) & (slice_no == istart))
                     if len(index_use[0]) > 0:
                         coord2_start = coord2[index_use]
@@ -1566,7 +1566,7 @@ class IFUCubeData():
                                                         xi_corner, eta_corner)
 
             overlap_coverage = area_overlap/area_box
-            if overlap_coverage > 0:
+            if overlap_coverage >  self.tolerance_dq_overlap:
                 if overlap_coverage > 0.95:
                     wave_slice_dq[ixy] = self.overlap_full
                 else:
@@ -1693,10 +1693,71 @@ class IFUCubeData():
 
         self.spaxel_dq[ind_full] = 0
         self.spaxel_dq[ind_partial] = 0
-        location_holes = np.where((self.spaxel_dq == 0) & (self.spaxel_weight ==0))
-        log.info('Number of holes: %i', len(location_holes[0]))
 
+        location_holes = np.where((self.spaxel_dq == 0) & (self.spaxel_weight ==0))
         self.spaxel_dq[location_holes] = self.overlap_hole
+
+        # one last check. Remove pixels flagged as hole but have 1 adjacent spaxel
+        # that has no coverage (NON_SCIENCE).  If NON_SCIENCE flag is next to pixel
+        # flagged as hole then set the Hole flag to NON_SCIENCE
+        spaxel_dq_temp = self.spaxel_dq 
+        nxy = self.naxis1 * self.naxis2
+        index = np.where(self.spaxel_dq == self.overlap_hole)
+        for i in range(len(index[0])):
+            iwave = int(index[0][i]/nxy)
+            rem = index[0][i] - iwave*nxy
+            yrem = int(rem/self.naxis1)
+            xrem = rem - yrem * self.naxis1 
+
+            found  = 0
+            ij = 0
+            # do not allow holes to occur at the edge of IFU cube 
+            if (yrem == 0 or yrem == (self.naxis2-1) or 
+                xrem == 0 or xrem == (self.naxis1-1)):
+                spaxel_dq_temp[index[0][i]] = np.bitwise_or(self.overlap_no_coverage,
+                                                            dqflags.pixel['DO_NOT_USE'])
+                found = 1
+            # flag as NON_SCIENCE instead of hole if left, right, top, bottom pixel 
+            # is NON_SCIENCE
+            xcheck = np.zeros(4,dtype = int)
+            ycheck = np.zeros(4,dtype = int)
+            # left
+            xcheck[0] = xrem - 1
+            ycheck[0] = yrem
+            # right
+            xcheck[1] = xrem + 1
+            ycheck[1] = yrem
+            # bottom
+            xcheck[2] = xrem 
+            ycheck[2] = yrem -1
+            # top
+            xcheck[3] = xrem 
+            ycheck[3] = yrem +1
+            
+            while ((ij < 4) and (found ==0)):  
+                if(xcheck[ij] > 0 and xcheck[ij] < self.naxis1 and 
+                   ycheck[ij] > 0 and ycheck[ij] < self.naxis2):
+                    index_check = iwave*nxy + ycheck[ij]*self.naxis1 + xcheck[ij]
+                    # If the nearby spaxel_dq contains overlap_no_covrage
+                    # then unmark dq flag as hole. A hole has to have nearby
+                    # pixels all in FOV.
+                    check  = (np.bitwise_and(self.spaxel_dq[index_check],
+                                           self.overlap_no_coverage) == self.overlap_no_coverage)
+                    if check:
+                        spaxel_dq_temp[index[0][i]] = np.bitwise_or(self.overlap_no_coverage,
+                                                                    dqflags.pixel['DO_NOT_USE'])
+                        found = 1
+                ij = ij + 1
+        
+        self.spaxel_dq = spaxel_dq_temp
+        location_holes = np.where(self.spaxel_dq == self.overlap_hole)
+        ave_holes = len(location_holes[0])/self.naxis3
+        print(ave_holes)
+        if ave_holes < 1:
+            log.info('Average # of holes/wavelength plane is < 1')
+        else:
+            log.info('Average # of holes/wavelength plane: %i', ave_holes)
+        log.info('Total # of holes for IFU cube is : %i', len(location_holes[0]))
 
 # ********************************************************************************
 
