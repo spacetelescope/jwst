@@ -258,7 +258,7 @@ def addpoint(x, y, xnew, ynew, nvertices2):
 # ________________________________________________________________________________
 
 
-def SH_FindOverlap(xcenter, ycenter, xlength, ylength, xp_corner, yp_corner):
+def sh_find_overlap(xcenter, ycenter, xlength, ylength, xp_corner, yp_corner):
     """ Find overlap between pixel and spaxel
 
     Using the Sutherland_hedgeman Polygon Clipping Algorithm to solve the
@@ -410,10 +410,8 @@ def match_det2cube(x, y, sliceno, start_slice, input_model, transform,
 
     pixel_dq = input_model.dq[y, x]
 
-    all_flags = (dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['DROPOUT'] +
-                 dqflags.pixel['NON_SCIENCE'] +
-                 dqflags.pixel['DEAD'] + dqflags.pixel['HOT'] +
-                 dqflags.pixel['RC'] + dqflags.pixel['NONLINEAR'])
+    all_flags = (dqflags.pixel['DO_NOT_USE']  +
+                 dqflags.pixel['NON_SCIENCE'] )
     # find the location of all the values to reject in cube building
     good_data = np.where((np.bitwise_and(pixel_dq, all_flags) == 0))
 
@@ -495,12 +493,12 @@ def match_det2cube(x, y, sliceno, start_slice, input_model, transform,
             for xx in range(ix1, ix2 + 1):
                 cube_index = istart + yy * naxis1 + xx  # yy = slice # -1
                 xcenter = xcoord[xx]
-                AreaOverlap = SH_FindOverlap(xcenter, zcenter,
+                area_overlap = sh_find_overlap(xcenter, zcenter,
                                              cdelt1, cdelt3,
                                              alpha_corner, wave_corner)
 
-                if AreaOverlap > 0.0:
-                    AreaRatio = AreaOverlap / Area
+                if area_overlap > 0.0:
+                    AreaRatio = area_overlap / Area
                     spaxel_flux[cube_index] = spaxel_flux[cube_index] + \
                         (AreaRatio * pixel_flux[ipixel])
                     spaxel_weight[cube_index] = spaxel_weight[cube_index] + \

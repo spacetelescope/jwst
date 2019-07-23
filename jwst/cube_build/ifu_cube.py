@@ -69,10 +69,11 @@ class IFUCubeData():
         self.wavemax = pars_cube.get('wavemax')
         self.weighting = pars_cube.get('weighting')
         self.weight_power = pars_cube.get('weight_power')
+        self.debug = pars_cube.get('debug')
         self.xdebug = pars_cube.get('xdebug')
         self.ydebug = pars_cube.get('ydebug')
         self.zdebug = pars_cube.get('zdebug')
-        self.debug_pixel = pars_cube.get('debug_pixel')
+        self.skip_dqflagging = pars_cube.get('skip_dqflagging')
         self.spaxel_debug = pars_cube.get('spaxel_debug')
 
         self.num_bands = 0
@@ -111,7 +112,12 @@ class IFUCubeData():
         self.ycoord = None
         self.zcoord = None
 
-# ********************************************************************************
+        self.tolerance_dq_overlap = 0.05  # spaxel has to have 5% overlap to flag in FOV
+        self.overlap_partial = 4  # intermediate flag
+        self.overlap_full  = 2    # intermediate flag
+        self.overlap_hole = dqflags.pixel['DO_NOT_USE']
+        self.overlap_no_coverage = dqflags.pixel['NON_SCIENCE']
+# **************************************************************
 
     def check_ifucube(self):
 
@@ -132,6 +138,7 @@ class IFUCubeData():
         for i in range(num1):
             this_a = self.list_par1[i]
             this_b = self.list_par2[i]
+
             n = len(self.master_table.FileMap[self.instrument][this_a][this_b])
             num_files = num_files + n
         self.num_files = num_files
@@ -147,7 +154,7 @@ class IFUCubeData():
                 raise AreaInterpolation("When using interpolation = area, the output" +
                                         " coordinate system is alpha-beta" +
                                         " The beta dimension (naxis2) has a one to one" +
-                                        " mapping between slice and " +
+                                        " mapping between slice_no and " +
                                         " beta coordinate.")
 
         if(self.coord_system == "alpha-beta"):
@@ -315,13 +322,14 @@ class IFUCubeData():
             self.lambda_max = self.lambda_min + (self.naxis3) * self.cdelt3
 
             self.zcoord = np.zeros(self.naxis3)
-            self.crval3 = self.lambda_min
+            # CRPIX3 for FITS is 1 (center of first pixel)
+            # CRVAL3 then is lambda_min + self.cdelt3/ 2.0, which is also zcoord[0]
+            self.crval3 = self.lambda_min + self.cdelt3 / 2.0
             self.crpix3 = 1.0
             zstart = self.lambda_min + self.cdelt3 / 2.0
             for i in range(self.naxis3):
                 self.zcoord[i] = zstart
                 zstart = zstart + self.cdelt3
-
         else:
             self.naxis3 = len(self.wavelength_table)
             self.zcoord = np.asarray(self.wavelength_table)
@@ -372,7 +380,7 @@ class IFUCubeData():
         range_lambda = self.lambda_max - self.lambda_min
         self.naxis3 = int(math.ceil(range_lambda / self.cdelt3))
 
-         # adjust max based on integer value of naxis3
+        # adjust max based on integer value of naxis3
         lambda_center = (self.lambda_max + self.lambda_min) / 2.0
 
         self.lambda_min = lambda_center - (self.naxis3 / 2.0) * self.cdelt3
@@ -381,10 +389,10 @@ class IFUCubeData():
         self.lambda_max = self.lambda_min + (self.naxis3) * self.cdelt3
 
         self.zcoord = np.zeros(self.naxis3)
-        self.crval3 = self.lambda_min
-        self.crpix3 = 1.0
         zstart = self.lambda_min + self.cdelt3 / 2.0
-
+#        self.crval3 = self.lambda_min
+        self.crval3 = zstart
+        self.crpix3 = 1.0
         for i in range(self.naxis3):
             self.zcoord[i] = zstart
             zstart = zstart + self.cdelt3
@@ -473,7 +481,7 @@ class IFUCubeData():
         the overlap of between the detector pixel and spaxel. This method is simplified
         to determine the overlap in the alpha-wavelength plane.
         4. find_spaxel_flux: find the final flux assoicated with each spaxel
-        5. setup_ifucube
+        5. setup_final_ifucube_model
         6. output_ifucube
 
         Returns
@@ -487,6 +495,7 @@ class IFUCubeData():
         self.spaxel_flux = np.zeros(total_num)
         self.spaxel_weight = np.zeros(total_num)
         self.spaxel_iflux = np.zeros(total_num)
+        self.spaxel_dq = np.zeros((self.naxis3, self.naxis2 * self.naxis1), dtype=np.uint32)
 
         spaxel_ra = None
         spaxel_dec = None
@@ -514,7 +523,6 @@ class IFUCubeData():
                                                                     self.ycenters[ixy])
                     spaxel_wave[ii] = self.zcoord[iz]
 # ______________________________________________________________________________
-
         subtract_background = True
 
         # now need to loop over every file that covers this
@@ -523,7 +531,7 @@ class IFUCubeData():
         # and map the detector pixels to the cube spaxel
 
         number_bands = len(self.list_par1)
-        t0 = time.time()
+
         for i in range(number_bands):
             this_par1 = self.list_par1[i]
             this_par2 = self.list_par2[i]
@@ -538,14 +546,23 @@ class IFUCubeData():
                 if self.interpolation == 'pointcloud':
                     t0 = time.time()
                     pixelresult = self.map_detector_to_outputframe(this_par1,
-                                                                   this_par2,
                                                                    subtract_background,
                                                                    ifile)
 
-                    coord1, coord2, wave, flux, rois_pixel, roiw_pixel, weight_pixel,\
+                    coord1, coord2, wave, flux, slice_no, rois_pixel, roiw_pixel, weight_pixel,\
                         softrad_pixel, alpha_det, beta_det = pixelresult
                     t1 = time.time()
-                    log.info("Time to transform pixels to output frame = %.1f.s" % (t1 - t0,))
+                    log.info("Time to transform pixels to output frame = %.1f s" % (t1 - t0,))
+
+                    # If setting the DQ plane of the IFU
+                    if self.skip_dqflagging:
+                        log.info("Skipping setting DQ flagging")
+                    else:
+                        t0 = time.time()
+                        roiw_ave = np.mean(roiw_pixel)
+                        self.map_fov_to_dqplane(this_par1, coord1, coord2, wave, roiw_ave, slice_no)
+                        t1 = time.time()
+                        log.info("Time to set initial dq values = %.1f s" % (t1 - t0,))
                     if self.weighting == 'msm':
                         t0 = time.time()
 #                        if self.new_code:
@@ -574,7 +591,7 @@ class IFUCubeData():
                                                       softrad_pixel)
 
                         t1 = time.time()
-                        log.info("Time to match file to ifucube = %.1f.s" % (t1 - t0,))
+                        log.info("Time to match file to ifucube = %.1f s" % (t1 - t0,))
 # ________________________________________________________________________________
                     elif self.weighting == 'miripsf':
                         with datamodels.IFUImageModel(ifile) as input_model:
@@ -641,7 +658,7 @@ class IFUCubeData():
                                                         self.naxis1, self.naxis2)
                         t1 = time.time()
 
-                        log.info("Time to Map All slices on Detector to Cube = %.1f.s" % (t1 - t0,))
+                        log.info("Time to Map All slices on Detector to Cube = %.1f s" % (t1 - t0,))
 # _______________________________________________________________________
 # Mapped all data to cube or Point Cloud
 # now determine Cube Spaxel flux
@@ -649,10 +666,11 @@ class IFUCubeData():
         t0 = time.time()
         self.find_spaxel_flux()
 
+        self.set_final_dq_flags()
         t1 = time.time()
-        log.info("Time to find Cube Flux = %.1f.s" % (t1 - t0,))
+        log.info("Time to find Cube Flux = %.1f s" % (t1 - t0,))
 
-        ifucube_model = self.setup_ifucube(0)
+        ifucube_model = self.setup_final_ifucube_model(0)
 # _______________________________________________________________________
 # shove Flux and iflux in the  final IFU cube
         self.update_ifucube(ifucube_model)
@@ -676,7 +694,7 @@ class IFUCubeData():
         n = len(self.input_models)
         log.info("Number of Single IFU cubes to create = %i" % n)
         this_par1 = self.list_par1[0]  # only one channel is used in this approach
-        this_par2 = None  # not important for this type of mapping
+#        this_par2 = None  # not important for this type of mapping
 
         self.weighting == 'msm'
 
@@ -691,11 +709,11 @@ class IFUCubeData():
 
             subtract_background = False
 
-            pixelresult = self.map_detector_to_outputframe(this_par1, this_par2,
+            pixelresult = self.map_detector_to_outputframe(this_par1,
                                                            subtract_background,
                                                            self.input_models[j])
 
-            coord1, coord2, wave, flux, rois_pixel, roiw_pixel, weight_pixel, \
+            coord1, coord2, wave, flux, slice_no, rois_pixel, roiw_pixel, weight_pixel, \
                 softrad_pixel, alpha_det, beta_det = pixelresult
 
             cube_cloud.match_det2cube_msm(self.naxis1,
@@ -718,10 +736,10 @@ class IFUCubeData():
             self.find_spaxel_flux()
 # now determine Cube Spaxel flux
 
-            ifucube_model = self.setup_ifucube(j)
+            ifucube_model = self.setup_final_ifucube_model(j)
             self.update_ifucube(ifucube_model)
             t1 = time.time()
-            log.info("Time to Create Single ifucube = %.1f.s" % (t1 - t0,))
+            log.info("Time to Create Single ifucube = %.1f s" % (t1 - t0,))
 # _______________________________________________________________________
             single_ifucube_container.append(ifucube_model)
 
@@ -763,6 +781,7 @@ class IFUCubeData():
                 par1 = self.list_par1[i]
                 par2 = self.list_par2[i]
 
+            # pull out the values from the cube pars reference file
             roiw[i] = self.instrument_info.GetWaveRoi(par1, par2)
             rois[i] = self.instrument_info.GetSpatialRoi(par1, par2)
 
@@ -842,8 +861,8 @@ class IFUCubeData():
             if imin > 1 and table_wavelength[imin] > self.wavemin:
                 imin = imin - 1
             if (imax < len(table_wavelength) and
-                self.wavemax > table_wavelength[imax]): imax = imax + 1
-#            print('index of wavelength values',imin,imax)
+                self.wavemax > table_wavelength[imax]):
+                imax = imax + 1
 
             self.roiw_table = table_wroi[imin:imax]
             self.rois_table = table_sroi[imin:imax]
@@ -908,6 +927,7 @@ class IFUCubeData():
 
         parameter1 = self.list_par1
         parameter2 = self.list_par2
+
         a_min = []
         a_max = []
         b_min = []
@@ -946,9 +966,7 @@ class IFUCubeData():
                         # print('time to find footprint',t1-t0)
 
                         amin, amax, bmin, bmax, lmin, lmax = ch_footprint
-#                        amin, bmin, amax, bmin2, amax2, bmax, amin2, bmax2 = \
-#                            input_model.meta.wcsinfo.s_region
-#                        print(amin, amax, bmin, bmax, amin2, amax2, bmin2, bmax2)
+                        # We might be able to call cmpute_footprint from assign_wcs instead
 # ________________________________________________________________________________
                     if self.instrument == 'MIRI':
                         ch_footprint = cube_build_wcs_util.find_footprint_MIRI(
@@ -957,12 +975,8 @@ class IFUCubeData():
                             self.instrument_info,
                             self.coord_system)
                         amin, amax, bmin, bmax, lmin, lmax = ch_footprint
-#                        print(amin,amax,bmin,bmax)
-#                        region_footprint = input_model.meta.wcsinfo.s_region
-#                        print('region footprint', region_footprint)
-#                        print(type(region_footprint))
-#                        amin, bmin, amax, bmin2, amax2, bmax, amin2, bmax2 = region_footprint
-#                        print(amin, amax, bmin, bmax, amin2, amax2, bmin2, bmax2)
+                        # if we call compute_footprint from assign_wcs - need footprint
+                        # for band not both channels
                     a_min.append(amin)
                     a_max.append(amax)
                     b_min.append(bmin)
@@ -976,12 +990,10 @@ class IFUCubeData():
         final_a_max = max(a_max)
         final_b_min = min(b_min)
         final_b_max = max(b_max)
-        final_lambda_min = min(lambda_min)
-        final_lambda_max = max(lambda_max)
+#        final_lambda_min = min(lambda_min)
+#        final_lambda_max = max(lambda_max)
 
-#        print('wavelengths', final_lambda_min, final_lambda_max,
-#              self.wavemin, self.wavemax)
-
+        # wavelength range read in from cube pars reference file
         final_lambda_min = self.wavemin
         final_lambda_max = self.wavemax
 # ________________________________________________________________________________
@@ -1003,6 +1015,7 @@ class IFUCubeData():
 # ________________________________________________________________________________
         cube_footprint = (final_a_min, final_a_max, final_b_min, final_b_max,
                           final_lambda_min, final_lambda_max)
+
 # ________________________________________________________________________________
     # Based on Scaling and Min and Max values determine naxis1, naxis2, naxis3
     # set cube CRVALs, CRPIXs
@@ -1014,7 +1027,7 @@ class IFUCubeData():
         self.print_cube_geometry()
 # **************************************************************************
 
-    def map_detector_to_outputframe(self, this_par1, this_par2,
+    def map_detector_to_outputframe(self, this_par1,
                                     subtract_background,
                                     ifile):
         from ..mrs_imatch.mrs_imatch_step import apply_background_2d
@@ -1032,9 +1045,7 @@ class IFUCubeData():
         ----------
         this_par1 : str
            for MIRI this is the channel # for NIRSPEC this is the grating name
-        this_par2 : str
-           for MIRI this is the subchannel type for NIRSPEC this is the filter
-           name
+           only need for MIRI to distinguish which channel on the detector we have
         subtract_background : boolean
            if TRUE then subtract the background found in the mrs_imatch step
         ifile : datamodel
@@ -1072,6 +1083,7 @@ class IFUCubeData():
         coord2 = None
         flux = None
         wave = None
+        slice_no = None  # Slice number
 # Open the input data model
         with datamodels.IFUImageModel(ifile) as input_model:
             # check if background sky matching as been done
@@ -1088,10 +1100,28 @@ class IFUCubeData():
                         apply_background_2d(input_model, poly_ch, subtract=True)
 # --------------------------------------------------------------------------------
             if self.instrument == 'MIRI':
+
+                # find the slice number of each pixel and fill in slice_det
+                slice_det = np.zeros((1024, 1032), dtype=int)
+                det2ab_transform = input_model.meta.wcs.get_transform('detector',
+                                                                      'alpha_beta')
+                start_region = self.instrument_info.GetStartSlice(this_par1)
+                end_region = self.instrument_info.GetEndSlice(this_par1)
+                regions = list(range(start_region, end_region + 1))
+                for i in regions:
+                    ys, xs = (det2ab_transform.label_mapper.mapper == i).nonzero()
+                    xind = _toindex(xs)
+                    yind = _toindex(ys)
+                    xind = np.ndarray.flatten(xind)
+                    yind = np.ndarray.flatten(yind)
+                    slice_det[yind, xind] = i
+
+                # define the x,y detector values of channel to be mapped to desired coordinate system
                 xstart, xend = self.instrument_info.GetMIRISliceEndPts(this_par1)
                 y, x = np.mgrid[:1024, xstart:xend]
                 y = np.reshape(y, y.size)
                 x = np.reshape(x, x.size)
+
                 if self.coord_system == 'world':
                     ra, dec, wave = input_model.meta.wcs(x, y)
                     valid1 = ~np.isnan(ra)
@@ -1100,13 +1130,16 @@ class IFUCubeData():
                     wave = wave[valid1]
                     x = x[valid1]
                     y = y[valid1]
+
+                    xind = _toindex(x)
+                    yind = _toindex(y)
+                    xind = np.ndarray.flatten(xind)
+                    yind = np.ndarray.flatten(yind)
+                    slice_no = slice_det[yind, xind]
+
                     if self.weighting == 'miripsf':
-                        det2ab_transform = input_model.meta.wcs.get_transform('detector',
-                                                                              'alpha_beta')
                         alpha, beta, lam = det2ab_transform(x, y)
                 elif self.coord_system == 'alpha-beta':
-                    det2ab_transform = input_model.meta.wcs.get_transform('detector',
-                                                                          'alpha_beta')
                     alpha, beta, wave = det2ab_transform(x, y)
                     valid1 = ~np.isnan(coord1)
                     alpha = alpha[valid1]
@@ -1117,13 +1150,15 @@ class IFUCubeData():
 # ________________________________________________________________________________
             elif self.instrument == 'NIRSPEC':
                 # initialize the ra,dec, and wavelength arrays
-                # we will loop over slices and fill in values
-                # the flag_det will be set when a slice pixel is filled in
+                # we will loop over slice_nos and fill in values
+                # the flag_det will be set when a slice_no pixel is filled in
                 #   at the end we will use this flag to pull out valid data
                 ra_det = np.zeros((2048, 2048))
                 dec_det = np.zeros((2048, 2048))
                 lam_det = np.zeros((2048, 2048))
                 flag_det = np.zeros((2048, 2048))
+
+                slice_det = np.zeros((2048, 2048), dtype = int)
                 # for NIRSPEC each file has 30 slices
                 # wcs information access seperately for each slice
                 nslices = 30
@@ -1153,31 +1188,60 @@ class IFUCubeData():
                     dec_det[yind, xind] = dec
                     lam_det[yind, xind] = lam
                     flag_det[yind, xind] = 1
-                    # done looping  - pull out valid values
+                    slice_det[yind, xind] = ii+1
+
+                # after looping over slices  - pull out valid values
                 valid_data = np.where(flag_det == 1)
                 y, x = valid_data
                 ra = ra_det[valid_data]
                 dec = dec_det[valid_data]
                 wave = lam_det[valid_data]
+                slice_no = slice_det[valid_data]
 # ______________________________________________________________________________
 # The following is for both MIRI and NIRSPEC
 # grab the flux and DQ values for these pixles
             flux_all = input_model.data[y, x]
             dq_all = input_model.dq[y, x]
             valid2 = np.isfinite(flux_all)
+
+            min_wave_tolerance = self.crval3 - np.absolute(self.zcoord[1] - self.zcoord[0])
+            max_wave_tolerance = self.zcoord[-1] + np.absolute(self.zcoord[-1] - self.zcoord[-2])
+
+
+            valid_min = np.where(wave >= min_wave_tolerance)
+            not_mapped_low = wave.size - len(valid_min[0])
+
+            valid_max = np.where(wave <= max_wave_tolerance)
+            not_mapped_high = wave.size - len(valid_max[0])
+            if not_mapped_low > 0:
+                log.info('# of detector pixels not mapped to output plane: %i with wavelength below %f',
+                         not_mapped_low, min_wave_tolerance)
+
+            if not_mapped_high > 0:
+                log.info('# of detector pixels not mapped to output plane: %i with wavelength above  %f',
+                         not_mapped_high, max_wave_tolerance)
+
 # ______________________________________________________________________________
 # using the DQFlags from the input_image find pixels that should be excluded
 # from the cube mapping
             all_flags = (dqflags.pixel['DO_NOT_USE'] +
-                         dqflags.pixel['DROPOUT'] +
-                         dqflags.pixel['NON_SCIENCE'] +
-                         dqflags.pixel['DEAD'] + dqflags.pixel['HOT'] +
-                         dqflags.pixel['RC'] + dqflags.pixel['NONLINEAR'])
+                         dqflags.pixel['NON_SCIENCE'])
+
+#            valid3 = np.bitwise_and((wave >= min_wave_tolerance),
+#                                     (wave <= max_wave_tolerance))
+
+            valid3 = np.logical_and((wave >= min_wave_tolerance),
+                                     (wave <= max_wave_tolerance))
+
             # find the location of all the values to reject in cube building
-            good_data = np.where((np.bitwise_and(dq_all, all_flags) == 0) & (valid2 == True))
+            good_data = np.where((np.bitwise_and(dq_all, all_flags) == 0) &
+                                 (valid2) & (valid3))
+
+
             # good data holds the location of pixels we want to map to cube
             flux = flux_all[good_data]
             wave = wave[good_data]
+            slice_no = slice_no[good_data]
 # based on the wavelength define the sroi, wroi, weight_power and
 # softrad to use in matching detector to spaxel values
             rois_det = np.zeros(wave.shape)
@@ -1204,6 +1268,7 @@ class IFUCubeData():
                 coord1, coord2 = coord.radec2std(self.crval1,
                                                  self.crval2,
                                                  ra_use, dec_use)
+
                 if self.weighting == 'miripsf':
                     alpha_det = alpha[good_data]
                     beta_det = beta[good_data]
@@ -1211,8 +1276,368 @@ class IFUCubeData():
                 coord1 = alpha[good_data]
                 coord2 = beta[good_data]
 
-        return coord1, coord2, wave, flux, rois_det, roiw_det, weight_det, \
+        return coord1, coord2, wave, flux, slice_no, rois_det, roiw_det, weight_det, \
             softrad_det, alpha_det, beta_det
+# ********************************************************************************
+
+    def map_fov_to_dqplane(self, this_par1, coord1, coord2, wave, roiw_ave, slice_no):
+        """ Set an initial DQ flag for the IFU cube based on FOV of input data
+
+        Map the FOV of channel (MIRI) or slice (NIRSPEC) to the DQ plane
+        and set an initial DQ flagging. The process is different for MIRI and NIRSpec.
+        In the MIRI case all the slices map roughly to the same FOV across the
+        wavelength range covered by the IFU. This is not the case for NIRSpec the
+        30 different slices map to different FOV on the range of wavelengths.
+
+        Paramteter
+        ---------
+        this_par1: Channel (MIRI) or Grating (NIRSpec)
+        coord1: xi coordinates of input data (~x coordinate in IFU space)
+        coord2: eta coordinates of input data (~y coordinate in IFU space)
+        wave: wavelength of input data
+        roiw_ave: average spectral roi used to determine which wavelength bins
+            the input values would be mapped to
+        slice_no: integer slice value of input data (used in MIRI case to find
+            the points of the edge slices.)
+        """
+
+        # MIRI mapping:
+        # The FOV is roughtly the same for all the wavelength ranges.
+        # The offset in the slices makes the calculation of the four corners
+        # of the FOV more complicated. So we only use the two slices at
+        # the edges of the FOV to define the 4 corners.
+        # Note we can not use the wcs.footprint because this footprint only
+        # consists of 4 values  ra min, ra max, dec min, dec max and we
+        # need 4 corners made of 8 different values.
+
+        if self.instrument == 'MIRI':
+
+            # find the wavelength boundaries of the band - use two extreme slices
+            wavemin = np.amin(wave)
+            wavemax = np.amax(wave)
+
+            # self.zcoord holds the center of the wavelength bin
+            iwavemin = np.absolute(np.array(wavemin - self.zcoord) / self.cdelt3_normal)
+            iwavemax = np.absolute(np.array(wavemax - self.zcoord) / self.cdelt3_normal)
+
+            imin = np.where(iwavemin == np.amin(iwavemin))[0]
+            imax = np.where(iwavemax == np.amin(iwavemax))[0]
+
+            # for each wavelength plane - find the 2 extreme slices to set the FOV
+            for w in range(imin[0], imax[0]):
+                wave_distance = np.absolute(self.zcoord[w] - wave)
+
+                # pull out the two extreme slices in the FOV.
+                # use these points to set the FOV
+                start_region = self.instrument_info.GetStartSlice(this_par1)
+                end_region = self.instrument_info.GetEndSlice(this_par1)
+
+                istart = start_region
+                while istart < end_region:
+                    index_use = np.where((wave_distance < roiw_ave) & (slice_no == istart))
+                    if len(index_use[0]) > 0:
+                        coord2_start = coord2[index_use]
+                        coord1_start = coord1[index_use]
+                        break
+                    istart = istart + 1
+
+                iend = end_region
+
+                while iend > start_region:
+                    index_use = np.where((wave_distance < roiw_ave) & (slice_no == iend))
+                    if len(index_use[0]) > 0:
+                        coord2_end = coord2[index_use]
+                        coord1_end = coord1[index_use]
+                        break
+                    iend = iend - 1
+
+                coord1_total = np.concatenate((coord1_start, coord1_end), axis=0)
+                coord2_total = np.concatenate((coord2_start, coord2_end), axis=0)
+
+#            coord1_start = coord1[slice == start_region]
+#            coord2_start = coord2[slice == start_region]
+
+#            coord1_end = coord1[slice == end_region]
+#            coord2_end = coord2[slice == end_region]
+
+                # from an array of x and y values (contained in coord1_total and coord2_total)
+                # determine the footprint
+                footprint_all = self.four_corners(coord1_total, coord2_total)
+                isline, footprint = footprint_all
+
+#                wmin = imin[0]
+#                wmax = imax[0]
+                (xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4) = footprint
+
+            # find the overlap of FOV footprint and with IFU Cube
+                xi_corner = np.array([xi1, xi2, xi3, xi4])
+                eta_corner = np.array([eta1, eta2, eta3, eta4])
+                self.overlap_fov_with_spaxels(xi_corner, eta_corner, w, w)
+
+        # NIRSpec Mapping:
+        # The FOV of each NIRSpec slice varies across the wavelength range.
+        # Each slice is mapped to each IFU wavelength plane
+        # The FOV of the slice is really just a line, so instead of using
+        # the routines the finds the overlap between a polygon and regular grid-
+        # which is used for MIRI - an algorithm that determines the spaxels that
+        # the slice line intersects is used instead.
+
+        elif self.instrument == 'NIRSPEC':
+            # for each of the 30 slices - find the projection of this slice
+            # onto each of the IFU wavelength planes.
+            for islice in range(30):
+                index_slice = np.where(slice_no == islice+1)
+
+                # find the smaller set of wavelengths to search over for this slice
+                wavemin = np.amin(wave[index_slice])
+                wavemax = np.amax(wave[index_slice])
+
+                iwavemin = np.absolute(np.array(wavemin - self.zcoord) / (self.cdelt3_normal))
+                iwavemax = np.absolute(np.array(wavemax - self.zcoord) / (self.cdelt3_normal))
+                imin = np.where(iwavemin == np.amin(iwavemin))[0]
+                imax = np.where(iwavemax == np.amin(iwavemax))[0]
+
+                # loop over valid wavelengths for slice and find the projection of the
+                # slice on  the wavelength plane
+
+                for w in range(imin[0], imax[0]):
+                    wave_distance = np.absolute(self.zcoord[w] - wave)
+                    index_use = np.where((wave_distance < roiw_ave) & (slice_no == islice+1))
+                    if len(index_use[0]) > 0:
+                        coord2_use = coord2[index_use]
+                        coord1_use = coord1[index_use]
+
+                        footprint_all = self.four_corners(coord1_use, coord2_use)
+                        isline, footprint = footprint_all
+
+                        (xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4) = footprint
+                        # find the overlap with IFU Cube
+                        xi_corner = np.array([xi1, xi2, xi3, xi4])
+                        eta_corner = np.array([eta1, eta2, eta3, eta4])
+                        if isline:
+                            self.overlap_slice_with_spaxels(xi_corner, eta_corner, w)
+                        else:
+                            self.overlap_fov_with_spaxels(xi_corner, eta_corner, w, w)
+
+# ********************************************************************************
+
+    def overlap_slice_with_spaxels(self, xi_corner, eta_corner, w):
+        """ Set the initial dq plane of indicating if the input data falls on a spaxel
+
+        This algorithm assumes the input data falls on a line in the IFU cube, which is
+        the case for NIRSpec slices. The NIRSpec slice's endpoints are used to determine
+        which IFU spaxels the slice falls on to set an initial dq flag.
+
+        Parameters
+        ---------
+        xi_corner: holds the x starting and ending points of the slice
+        eta_corner: holds the y starting and ending points of the slice
+        wavelength: the wavelength bin of the IFU cube working with
+
+        Sets
+        ----
+        self.spaxel_dq : numpy.ndarray containing intermediate dq flag
+
+        """
+
+        points = self.findpoints_on_slice(xi_corner, eta_corner)
+        num = len(points)
+        for i in range(num):
+            xpt, ypt = points[i]
+            index = (ypt * self.naxis1) + xpt
+            self.spaxel_dq[w, index] = self.overlap_partial
+
+# ********************************************************************************
+
+    def findpoints_on_slice(self, xi_corner, eta_corner):
+        """ Bresenham's Line Algorithm to find points a line intersects with grid.
+
+        Given the endpoints of a line find the spaxels this line intersects.
+
+        Parameters
+        -----------
+        xi_corner: holds the started in ending x values
+        eta_corner: holds the started in ending y values
+
+
+        Returns
+        -------
+        Points: a tuple of x,y spaxel values that this line intersects
+
+        """
+
+        # set up line - convert to integer values
+        x1 = int((xi_corner[0] - self.xcoord[0])/self.cdelt1)
+        y1 = int((eta_corner[0] - self.ycoord[0])/self.cdelt2)
+        x2 = int((xi_corner[1] - self.xcoord[0])/self.cdelt1)
+        y2 = int((eta_corner[1] - self.ycoord[0])/self.cdelt2)
+
+        dx = x2 - x1
+        dy = y2 - y1
+
+        # how steep is it
+        is_steep = abs(dy) > abs(dx)
+
+        # Rotate line
+        if is_steep:
+            x1, y1 = y1, x1
+            x2, y2 = y2, x2
+
+        # Swap start and end points if necessary and store swap state
+        swapped = False
+        if x1 > x2:
+            x1, x2 = x2, x1
+            y1, y2 = y2, y1
+            swapped = True
+
+        # Recalculate differences
+        dx = x2 - x1
+        dy = y2 - y1
+
+        # calculate error
+        error = int(dx/2.0)
+        ystep = -1
+        if y1 < y2:
+            ystep = 1
+
+        # iterate over grid to generate points between the start and end of line
+        y = y1
+        points = []
+        for x in range(x1, x2 + 1):
+            coord = (y, x) if is_steep else (x, y)
+            points.append(coord)
+            error -= abs(dy)
+            if error < 0:
+                y += ystep
+                error += dx
+
+        # If coords were swapped then reverse
+        if swapped:
+            points.reverse()
+        return points
+# ********************************************************************************
+
+    def overlap_fov_with_spaxels(self, xi_corner, eta_corner, wmin, wmax):
+
+        """find the amount of overlap of FOV with each spaxel
+
+        Given the corners of the FOV  find the spaxels that
+        overlap with this FOV.  Set the intermediate spaxel  to
+        a value based on the overlap between the FOV for each exposure
+        and the spaxel area. The values assigned are:
+        a. self.overlap_partial = overlap partial
+        b  self.overlap_full = overlap_full
+        bit_wise combination of these values is allowed to account for
+        dithered FOVs.
+
+        Parameter
+        ----------
+        xi_corner: xi coordinates of the 4 corners of the FOV on the cube plane
+        eta_corner: eta coordinates of the 4 corners of the FOV on the cube plane
+        wmin: minimum wavelength bin in the IFU cube that this data covers
+        wmax: maximum wavelength bin in the IFU cube that this data covers
+
+        Sets
+        -------
+        self.spaxel_dq : numpy.ndarray containing intermediate dq flag
+
+        """
+
+#        ximin = np.amin(xi_corner)
+#        ximax = np.amax(xi_corner)
+#        etamin = np.amin(eta_corner)
+#        etamax = np.amax(eta_corner)
+#        index = np.where((self.xcenters > ximin) & (self.xcenters < ximax) &
+#                          (self.ycenters > etamin) & (self.ycenters < etamax))
+
+        wave_slice_dq = np.zeros(self.naxis2 * self.naxis1, dtype=np.int32)
+        # loop over spaxels in the spatial plane and set slice_dq
+        nxy = self.xcenters.size  # size of spatial plane
+        for ixy in range(nxy):
+#        num = len(index[0])
+#        for inum in range(num):
+#            ixy = index[0][inum]
+
+            area_box = self.cdelt1 * self.cdelt2
+            area_overlap = cube_overlap.sh_find_overlap(self.xcenters[ixy],
+                                                        self.ycenters[ixy],
+                                                        self.cdelt1, self.cdelt2,
+                                                        xi_corner, eta_corner)
+
+            overlap_coverage = area_overlap/area_box
+            if overlap_coverage >  self.tolerance_dq_overlap:
+                if overlap_coverage > 0.95:
+                    wave_slice_dq[ixy] = self.overlap_full
+                else:
+                    wave_slice_dq[ixy] = self.overlap_partial
+
+        # set for a range of wavelengths
+        if wmin != wmax:
+            self.spaxel_dq[wmin:wmax, :] = np.bitwise_or(self.spaxel_dq[wmin:wmax, :],
+                                                        wave_slice_dq)
+
+        # set for a single wavelength
+        else:
+            self.spaxel_dq[wmin, :] = np.bitwise_or(self.spaxel_dq[wmin, :],
+                                                   wave_slice_dq)
+# *******************************************************************************
+
+    def four_corners(self, coord1, coord2):
+        """ helper function to compute the four corners of the FOV
+
+        From an array of x and y values find the 4 corners enclosing these points
+        This routine defines the four corners as
+        corner 1: location of min coord2
+        corner 2: location of min coord1
+        corner 3: location of max coord2
+        corner 4: location of max coord1
+
+        Parameter
+        ----------
+        coord1: array of 4 x corners
+        coord2: array of 4 y corners
+
+        Returns
+        -------
+        Footprint of 4 corners
+        Is the data contained in coor1 and coord2 represented by a line if yes:
+          isline = True if not isline = False
+
+        """
+
+        isline = False
+        index = np.where(coord2 == np.amin(coord2))
+        xi_corner1 = coord1[index[0]]
+        eta_corner1 = coord2[index[0]]
+
+        index = np.where(coord1 == np.amax(coord1))
+        xi_corner2 = coord1[index[0]]
+        eta_corner2 = coord2[index[0]]
+
+        index = np.where(coord2 == np.amax(coord2))
+        xi_corner3 = coord1[index[0]]
+        eta_corner3 = coord2[index[0]]
+
+        index = np.where(coord1 == np.amin(coord1))
+        xi_corner4 = coord1[index[0]]
+        eta_corner4 = coord2[index[0]]
+        footprint = (xi_corner1[0], eta_corner1[0],
+                     xi_corner2[0], eta_corner2[0],
+                     xi_corner3[0], eta_corner3[0],
+                     xi_corner4[0], eta_corner4[0])
+
+        distance_min_points = math.sqrt((xi_corner1 - xi_corner4)**2 +
+                                        (eta_corner1 - eta_corner4)**2)
+
+        distance_max_points = math.sqrt((xi_corner2 - xi_corner3)**2 +
+                                        (eta_corner2 - eta_corner3)**2)
+        dist_tolerance = 0.0001  # tolerance used if points fall on a line
+        if ((distance_min_points < dist_tolerance) and
+            (distance_max_points < dist_tolerance)):
+            isline = True
+        footprint_all = (isline, footprint)
+
+        return footprint_all
 # ********************************************************************************
 
     def find_spaxel_flux(self):
@@ -1230,7 +1655,112 @@ class IFUCubeData():
             self.spaxel_flux[good] = self.spaxel_flux[good] / self.spaxel_weight[good]
 # ********************************************************************************
 
-    def setup_ifucube(self, j):
+    def set_final_dq_flags(self):
+
+        """ Set up the final dq flags, Good data(0) , NON_SCIENCE or DO_NOT_USE
+        """
+
+        # An initial set of dq flags was set in overlap_fov_with_spaxel or
+        # overlap_slice_with_spaxel. The initial dq dlags are defined in ifu_cube
+        # class:
+        # self.overlap_partial = 4  # intermediate flag
+        # self.overlap_full  = 2    # intermediate flag
+        # self.overlap_hole = dqflags.pixel['DO_NOT_USE']
+        # self.overlap_no_coverage = dqflags.pixel['NON_SCIENCE'] (also bitwise and with
+        # dqflags.pixel['DO_NOT_USE'] )
+
+        # compare the weight plane and spaxel_dq. The initial spaxel_dq flagging
+        # has too small a FOV in NIRSpec line mapping case.
+
+        # flatten to match the size of spaxel_weight
+        self.spaxel_dq = np.ndarray.flatten(self.spaxel_dq)
+
+        # the fov is an underestimate. Check the spaxel_weight plane
+        # if weight map > 0 then set spaxel_dq to overlap_partial
+        under_data = self.spaxel_weight > 0
+        self.spaxel_dq[under_data] = self.overlap_partial
+
+        # convert all remaining spaxel_dq of 0 to NON_SCIENCE + DO_NOT_USE
+        # these pixel should have no overlap with the data
+        non_science = self.spaxel_dq == 0
+        self.spaxel_dq[non_science] = np.bitwise_or(self.overlap_no_coverage,
+                                                    dqflags.pixel['DO_NOT_USE'])
+
+        # refine where good data should be
+        ind_full = np.where(np.bitwise_and(self.spaxel_dq, self.overlap_full))
+        ind_partial = np.where(np.bitwise_and(self.spaxel_dq, self.overlap_partial))
+
+        self.spaxel_dq[ind_full] = 0
+        self.spaxel_dq[ind_partial] = 0
+
+        location_holes = np.where((self.spaxel_dq == 0) & (self.spaxel_weight ==0))
+        self.spaxel_dq[location_holes] = self.overlap_hole
+
+        # one last check. Remove pixels flagged as hole but have 1 adjacent spaxel
+        # that has no coverage (NON_SCIENCE).  If NON_SCIENCE flag is next to pixel
+        # flagged as hole then set the Hole flag to NON_SCIENCE
+        spaxel_dq_temp = self.spaxel_dq
+        nxy = self.naxis1 * self.naxis2
+        index = np.where(self.spaxel_dq == self.overlap_hole)
+        for i in range(len(index[0])):
+            iwave = int(index[0][i]/nxy)
+            rem = index[0][i] - iwave*nxy
+            yrem = int(rem/self.naxis1)
+            xrem = rem - yrem * self.naxis1
+
+            found  = 0
+            ij = 0
+            # do not allow holes to occur at the edge of IFU cube
+            if (yrem == 0 or yrem == (self.naxis2-1) or
+                xrem == 0 or xrem == (self.naxis1-1)):
+                spaxel_dq_temp[index[0][i]] = np.bitwise_or(self.overlap_no_coverage,
+                                                            dqflags.pixel['DO_NOT_USE'])
+                found = 1
+            # flag as NON_SCIENCE instead of hole if left, right, top, bottom pixel
+            # is NON_SCIENCE
+            xcheck = np.zeros(4,dtype = int)
+            ycheck = np.zeros(4,dtype = int)
+            # left
+            xcheck[0] = xrem - 1
+            ycheck[0] = yrem
+            # right
+            xcheck[1] = xrem + 1
+            ycheck[1] = yrem
+            # bottom
+            xcheck[2] = xrem
+            ycheck[2] = yrem -1
+            # top
+            xcheck[3] = xrem
+            ycheck[3] = yrem +1
+
+            while ((ij < 4) and (found ==0)):
+                if(xcheck[ij] > 0 and xcheck[ij] < self.naxis1 and
+                   ycheck[ij] > 0 and ycheck[ij] < self.naxis2):
+                    index_check = iwave*nxy + ycheck[ij]*self.naxis1 + xcheck[ij]
+                    # If the nearby spaxel_dq contains overlap_no_covrage
+                    # then unmark dq flag as hole. A hole has to have nearby
+                    # pixels all in FOV.
+                    check  = (np.bitwise_and(self.spaxel_dq[index_check],
+                                           self.overlap_no_coverage) == self.overlap_no_coverage)
+                    if check:
+                        spaxel_dq_temp[index[0][i]] = np.bitwise_or(self.overlap_no_coverage,
+                                                                    dqflags.pixel['DO_NOT_USE'])
+                        found = 1
+                ij = ij + 1
+
+        self.spaxel_dq = spaxel_dq_temp
+        location_holes = np.where(self.spaxel_dq == self.overlap_hole)
+        ave_holes = len(location_holes[0])/self.naxis3
+
+        if ave_holes < 1:
+            log.info('Average # of holes/wavelength plane is < 1')
+        else:
+            log.info('Average # of holes/wavelength plane: %i', ave_holes)
+        log.info('Total # of holes for IFU cube is : %i', len(location_holes[0]))
+
+# ********************************************************************************
+
+    def setup_final_ifucube_model(self, j):
 
         """ Set up the final meta WCS info of IFUCube along with other fits keywords
 
@@ -1266,8 +1796,9 @@ class IFUCubeData():
             allwave[0, 0, :] = wave
 
             nelem = np.append(nelem, num)
-# to get the data in the correct format (an array in a single cell in the fit table)
-# I had to zip data.
+# to get the data in the correct format:
+#  (an array in a single cell in the fit table)
+# need to zip data.
             alldata = np.array(list(zip(np.array(nelem), np.array(allwave))),
                                dtype=datamodels.IFUCubeModel().wavetable.dtype)
 
@@ -1440,10 +1971,15 @@ class IFUCubeData():
         temp_wmap = self.spaxel_iflux.reshape((self.naxis3,
                                                self.naxis2, self.naxis1))
 
+        temp_dq = self.spaxel_dq.reshape((self.naxis3,
+                                          self.naxis2, self.naxis1))
+
         ifucube_model.data = temp_flux
         ifucube_model.weightmap = temp_wmap
+        ifucube_model.dq = temp_dq
         ifucube_model.meta.cal_step.cube_build = 'COMPLETE'
-# ********************************************************************************
+
+# ***************************************************************************
 
     def blend_output_metadata(self, IFUCube):
 

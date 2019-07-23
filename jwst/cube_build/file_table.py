@@ -57,12 +57,11 @@ class FileTable():
 
         self.FileMap['NIRSPEC']['g395h'] = {}
         self.FileMap['NIRSPEC']['g395h']['f290lp'] = []
+# ********************************************************************************
 
-#********************************************************************************
     def set_file_table(self,
                        input_models,
                        input_filenames):
-#********************************************************************************
         """
         Short Summary
         -------------
@@ -83,7 +82,7 @@ class FileTable():
         """
         num = 0
         num = len(input_filenames)
-#________________________________________________________________________________
+# ________________________________________________________________________________
 # Loop over input list of files and assign fill in the MasterTable with filename
 # for the correct (channel-subchannel) or (grating-subchannel)
         for i in range(num):
@@ -96,25 +95,23 @@ class FileTable():
             with datamodels.IFUImageModel(input) as input_model:
 
                 detector = input_model.meta.instrument.detector
-                instrument = input_model.meta.instrument.name
+                instrument = input_model.meta.instrument.name.upper()
+
                 assign_wcs = input_model.meta.cal_step.assign_wcs
 
                 if(assign_wcs != 'COMPLETE'):
                     raise ErrorNoAssignWCS("Assign WCS has not been run on file %s",
                                            ifile)
-            #________________________________________________________________________________
-            #MIRI instrument
-            #________________________________________________________________________________
+            # _____________________________________________________________________
+            # MIRI instrument
                 if instrument == 'MIRI':
                     channel = input_model.meta.instrument.channel
                     subchannel = input_model.meta.instrument.band.lower()
-            #________________________________________________________________________________
                     clenf = len(channel)
                     for k in range(clenf):
                         self.FileMap['MIRI'][channel[k]][subchannel].append(input_model)
-            #________________________________________________________________________________
-            #NIRSPEC instrument
-            #________________________________________________________________________________
+            # _____________________________________________________________________
+            # NIRSPEC instrument
                 elif instrument == 'NIRSPEC':
                     fwa = input_model.meta.instrument.filter.lower()
                     gwa = input_model.meta.instrument.grating.lower()
@@ -123,8 +120,8 @@ class FileTable():
                 else:
 
                     log.info('Instrument not valid for cube')
-
         return instrument, detector
+
 
 class ErrorNoAssignWCS(Exception):
     pass
