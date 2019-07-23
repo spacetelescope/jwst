@@ -1102,7 +1102,7 @@ class IFUCubeData():
             if self.instrument == 'MIRI':
 
                 # find the slice number of each pixel and fill in slice_det
-                slice_det = np.zeros((1024, 1032))
+                slice_det = np.zeros((1024, 1032), dtype=int)
                 det2ab_transform = input_model.meta.wcs.get_transform('detector',
                                                                       'alpha_beta')
                 start_region = self.instrument_info.GetStartSlice(this_par1)
@@ -1158,7 +1158,7 @@ class IFUCubeData():
                 lam_det = np.zeros((2048, 2048))
                 flag_det = np.zeros((2048, 2048))
 
-                slice_det = np.zeros((2048, 2048))
+                slice_det = np.zeros((2048, 2048), dtype = int)
                 # for NIRSPEC each file has 30 slices
                 # wcs information access seperately for each slice
                 nslices = 30
@@ -1197,7 +1197,6 @@ class IFUCubeData():
                 dec = dec_det[valid_data]
                 wave = lam_det[valid_data]
                 slice_no = slice_det[valid_data]
-
 # ______________________________________________________________________________
 # The following is for both MIRI and NIRSPEC
 # grab the flux and DQ values for these pixles
@@ -1207,6 +1206,7 @@ class IFUCubeData():
 
             min_wave_tolerance = self.crval3 - np.absolute(self.zcoord[1] - self.zcoord[0])
             max_wave_tolerance = self.zcoord[-1] + np.absolute(self.zcoord[-1] - self.zcoord[-2])
+
 
             valid_min = np.where(wave >= min_wave_tolerance)
             not_mapped_low = wave.size - len(valid_min[0])
@@ -1386,13 +1386,12 @@ class IFUCubeData():
             # for each of the 30 slices - find the projection of this slice
             # onto each of the IFU wavelength planes.
             for islice in range(30):
-                index_slice = np.where(slice == islice+1)
+                index_slice = np.where(slice_no == islice+1)
 
                 # find the smaller set of wavelengths to search over for this slice
                 wavemin = np.amin(wave[index_slice])
                 wavemax = np.amax(wave[index_slice])
-#                iwavemin = np.absolute(np.array(wavemin - self.zcoord) / (self.cdelt3_normal/2.0))
-#                iwavemax = np.absolute(np.array(wavemax - self.zcoord) / (self.cdelt3_normal/2.0))
+
                 iwavemin = np.absolute(np.array(wavemin - self.zcoord) / (self.cdelt3_normal))
                 iwavemax = np.absolute(np.array(wavemax - self.zcoord) / (self.cdelt3_normal))
                 imin = np.where(iwavemin == np.amin(iwavemin))[0]
@@ -1752,7 +1751,7 @@ class IFUCubeData():
         self.spaxel_dq = spaxel_dq_temp
         location_holes = np.where(self.spaxel_dq == self.overlap_hole)
         ave_holes = len(location_holes[0])/self.naxis3
-        print(ave_holes)
+
         if ave_holes < 1:
             log.info('Average # of holes/wavelength plane is < 1')
         else:
