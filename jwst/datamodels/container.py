@@ -2,6 +2,7 @@ import copy
 from collections import OrderedDict
 import os.path as op
 import warnings
+import re
 
 from asdf import AsdfFile
 from astropy.io import fits
@@ -69,6 +70,10 @@ class ModelContainer(model_base.DataModel):
         super(ModelContainer, self).__init__(init=None, **kwargs)
 
         self._models = []
+        self.allowed_exptypes = None
+        for key in kwargs.keys():
+            if key == 'allowed_exptypes':
+                self.allowed_exptypes = kwargs.get('allowed_exptypes')
 
         if init is None:
             # Don't populate the container with models
@@ -181,9 +186,20 @@ class ModelContainer(model_base.DataModel):
         asn_file_path: str
             Filepath of the association, if known.
         """
-        # make a list of all the input files
-        infiles = [member['expname'] for member
-                   in asn_data['products'][0]['members']]
+        # match the allowed_exptypes to the exptype in the association and retain
+        # only those file that match, as a list, if allowed_exptypes is set to none
+        # grab all the files
+        if self.allowed_exptypes:
+            infiles = []
+            print("Filtering datasets based on allowed exptypes:", self.allowed_exptypes)
+            for member in asn_data['products'][0]['members']:
+                if any([x for x in self.allowed_exptypes if re.match(member['exptype'], x, re.IGNORECASE)]):
+                        infiles.append(member['expname'])
+                        print("Files accepted for processing:", member['expname'])
+        else:
+            infiles = [member['expname'] for member
+            in asn_data['products'][0]['members']]
+
         if asn_file_path:
             asn_dir = op.dirname(asn_file_path)
             infiles = [op.join(asn_dir, f) for f in infiles]

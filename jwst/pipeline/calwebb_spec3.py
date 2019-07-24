@@ -61,12 +61,13 @@ class Spec3Pipeline(Pipeline):
             The exposure or association of exposures to process
         """
         self.log.info('Starting calwebb_spec3 ...')
+        self.allowed_exptypes = ['science']
 
         # Retrieve the inputs:
         # could either be done via LoadAsAssociation and then manually
         # load input members into models and ModelContainer, or just
         # do a direct open of all members in ASN file, e.g.
-        input_models = datamodels.open(input)
+        input_models = datamodels.open(input, allowed_exptypes=self.allowed_exptypes)
 
         # For the first round of development we will assume that the input
         # is ALWAYS an ASN. There's no use case for anyone ever running a
