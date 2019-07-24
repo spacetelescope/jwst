@@ -29,21 +29,23 @@ def run_pipeline(request, artifactory_repos, jail):
 
 @pytest.mark.bigdata
 def test_miri_image2_completion(run_pipeline):
-    files = glob('*.fits')
-    # There should be an input and 2 outputs
-    assert len(files) == 3
+    files = glob('*_cal.fits')
+    files += glob('*_i2d.fits')
+    # There should be 2 outputs
+    assert len(files) == 2
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize("output",
-    [
-        'jw00001001001_01101_00001_mirimage_cal.fits',
-        'jw00001001001_01101_00001_mirimage_i2d.fits',
-    ],
+@pytest.mark.parametrize("output", [
+    'jw00001001001_01101_00001_mirimage_cal.fits',
+    'jw00001001001_01101_00001_mirimage_i2d.fits',],
+    ids=['cal', 'i2d'],
 )
-def test_miri_image2(run_pipeline, output):
+def test_miri_image2(run_pipeline, request, output):
     """
     Regression test of calwebb_image2 pipeline performed on MIRI data.
     """
+    request.node.user_properties = [('output', output)]
     diff = fits.diff.FITSDiff(output, output, **fitsdiff_default_args)
     assert diff.identical, diff.report()
+    assert output == 'foo'
