@@ -93,3 +93,60 @@ def update_local_bigdata_from_artifactory(artifactory_repos):
         artifacts = [a['uri'] for a in r.json()['results']]
     paths = [urlparse(a).path.replace('/artifactory/api/storage/' + inputs_root + '/', '') for a in artifacts]
     local_paths = [os.path.join(_bigdata, path) for path in paths]
+
+
+class RemoteResource:
+    """Defines resource paths available on Artifactory with useful methods"""
+
+    def __init__(self, input=None, output=None, truth=None):
+        self._input = input
+        self._output = output
+        self._truth = truth
+
+    @property
+    def input(self):
+        return self._input
+
+    @input.setter
+    def input(self, value):
+        self._input = value
+
+    @property
+    def output(self):
+        return self._output
+
+    @output.setter
+    def output(self, value):
+        self._output = value
+
+    @property
+    def truth(self):
+        return self._truth
+
+    @truth.setter
+    def truth(self, value):
+        self._truth = value
+
+    def get_data(self, path):
+        return NotImplementedError
+
+    def get_association(self, asn):
+        return NotImplementedError
+
+    def generate_artifactory_json(self):
+        return NotImplementedError
+
+    def okify_truth(self):
+        return NotImplementedError
+
+    def okify_input(self):
+        return NotImplementedError
+
+
+@pytest.fixture(scope="function")
+def resource(artifactory_repos, request):
+    """Provides the RemoteResource class"""
+    inputs_root, results_root = artifactory_repos
+    resource = RemoteResource()
+
+    return resource
