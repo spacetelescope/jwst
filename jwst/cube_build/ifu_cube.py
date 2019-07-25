@@ -1332,7 +1332,16 @@ class IFUCubeData():
                 start_region = self.instrument_info.GetStartSlice(this_par1)
                 end_region = self.instrument_info.GetEndSlice(this_par1)
 
+                # if not wavelength dependent
+                # coord1_start = coord1[slice == start_region]
+                # coord2_start = coord2[slice == start_region]
+                # coord1_end = coord1[slice == end_region]
+                # coord2_end = coord2[slice == end_region]
+                # wmin = imin[0]
+                # wmax = imax[0]
+
                 istart = start_region
+                coord1_start = None
                 while istart < end_region:
                     index_use = np.where((wave_distance < roiw_ave) & (slice_no == istart))
                     if len(index_use[0]) > 0:
@@ -1343,6 +1352,7 @@ class IFUCubeData():
 
                 iend = end_region
 
+                coord1_end = None
                 while iend > start_region:
                     index_use = np.where((wave_distance < roiw_ave) & (slice_no == iend))
                     if len(index_use[0]) > 0:
@@ -1351,28 +1361,21 @@ class IFUCubeData():
                         break
                     iend = iend - 1
 
-                coord1_total = np.concatenate((coord1_start, coord1_end), axis=0)
-                coord2_total = np.concatenate((coord2_start, coord2_end), axis=0)
+                if coord1_start is not None and coord1_end is not None:
+                    coord1_total = np.concatenate((coord1_start, coord1_end), axis=0)
+                    coord2_total = np.concatenate((coord2_start, coord2_end), axis=0)
 
-#            coord1_start = coord1[slice == start_region]
-#            coord2_start = coord2[slice == start_region]
+                    # from an array of x and y values (contained in coord1_total and coord2_total)
+                    # determine the footprint
+                    footprint_all = self.four_corners(coord1_total, coord2_total)
+                    isline, footprint = footprint_all
 
-#            coord1_end = coord1[slice == end_region]
-#            coord2_end = coord2[slice == end_region]
+                    (xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4) = footprint
 
-                # from an array of x and y values (contained in coord1_total and coord2_total)
-                # determine the footprint
-                footprint_all = self.four_corners(coord1_total, coord2_total)
-                isline, footprint = footprint_all
-
-#                wmin = imin[0]
-#                wmax = imax[0]
-                (xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4) = footprint
-
-            # find the overlap of FOV footprint and with IFU Cube
-                xi_corner = np.array([xi1, xi2, xi3, xi4])
-                eta_corner = np.array([eta1, eta2, eta3, eta4])
-                self.overlap_fov_with_spaxels(xi_corner, eta_corner, w, w)
+                    # find the overlap of FOV footprint and with IFU Cube
+                    xi_corner = np.array([xi1, xi2, xi3, xi4])
+                    eta_corner = np.array([eta1, eta2, eta3, eta4])
+                    self.overlap_fov_with_spaxels(xi_corner, eta_corner, w, w)
 
         # NIRSpec Mapping:
         # The FOV of each NIRSpec slice varies across the wavelength range.
