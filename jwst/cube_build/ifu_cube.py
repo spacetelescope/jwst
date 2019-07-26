@@ -706,6 +706,7 @@ class IFUCubeData():
             self.spaxel_flux = np.zeros(total_num)
             self.spaxel_weight = np.zeros(total_num)
             self.spaxel_iflux = np.zeros(total_num)
+            self.spaxel_dq = np.zeros((self.naxis3, self.naxis2 * self.naxis1), dtype=np.uint32)
 
             subtract_background = False
 
@@ -1332,47 +1333,48 @@ class IFUCubeData():
                 start_region = self.instrument_info.GetStartSlice(this_par1)
                 end_region = self.instrument_info.GetEndSlice(this_par1)
 
+                # if not wavelength dependent
+                # coord1_start = coord1[slice == start_region]
+                # coord2_start = coord2[slice == start_region]
+                # coord1_end = coord1[slice == end_region]
+                # coord2_end = coord2[slice == end_region]
+                # wmin = imin[0]
+                # wmax = imax[0]
+
+                # the while loop should only be excuted 1 time if the slice matching
+                # start_region is located in the data (default mode).
+
                 istart = start_region
-                while istart < end_region:
-                    index_use = np.where((wave_distance < roiw_ave) & (slice_no == istart))
-                    if len(index_use[0]) > 0:
-                        coord2_start = coord2[index_use]
-                        coord1_start = coord1[index_use]
-                        break
-                    istart = istart + 1
+                coord1_start = None
+                index_use = np.where((wave_distance < roiw_ave) & (slice_no == istart))
+                if len(index_use[0]) > 0:
+                    coord2_start = coord2[index_use]
+                    coord1_start = coord1[index_use]
 
                 iend = end_region
+                coord1_end = None
+                index_use = np.where((wave_distance < roiw_ave) & (slice_no == iend))
+                if len(index_use[0]) > 0:
+                    coord2_end = coord2[index_use]
+                    coord1_end = coord1[index_use]
 
-                while iend > start_region:
-                    index_use = np.where((wave_distance < roiw_ave) & (slice_no == iend))
-                    if len(index_use[0]) > 0:
-                        coord2_end = coord2[index_use]
-                        coord1_end = coord1[index_use]
-                        break
-                    iend = iend - 1
+                # if there is valid data on this wavelength plane (not in a gap)
+                if coord1_start is not None and coord1_end is not None:
+                    coord1_total = np.concatenate((coord1_start, coord1_end), axis=0)
+                    coord2_total = np.concatenate((coord2_start, coord2_end), axis=0)
 
-                coord1_total = np.concatenate((coord1_start, coord1_end), axis=0)
-                coord2_total = np.concatenate((coord2_start, coord2_end), axis=0)
+                    # from an array of x and y values (contained in coord1_total and coord2_total)
+                    # determine the footprint
+                    footprint_all = self.four_corners(coord1_total, coord2_total)
+                    isline, footprint = footprint_all
 
-#            coord1_start = coord1[slice == start_region]
-#            coord2_start = coord2[slice == start_region]
+                    (xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4) = footprint
 
-#            coord1_end = coord1[slice == end_region]
-#            coord2_end = coord2[slice == end_region]
+                    # find the overlap of FOV footprint and with IFU Cube
+                    xi_corner = np.array([xi1, xi2, xi3, xi4])
+                    eta_corner = np.array([eta1, eta2, eta3, eta4])
+                    self.overlap_fov_with_spaxels(xi_corner, eta_corner, w, w)
 
-                # from an array of x and y values (contained in coord1_total and coord2_total)
-                # determine the footprint
-                footprint_all = self.four_corners(coord1_total, coord2_total)
-                isline, footprint = footprint_all
-
-#                wmin = imin[0]
-#                wmax = imax[0]
-                (xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4) = footprint
-
-            # find the overlap of FOV footprint and with IFU Cube
-                xi_corner = np.array([xi1, xi2, xi3, xi4])
-                eta_corner = np.array([eta1, eta2, eta3, eta4])
-                self.overlap_fov_with_spaxels(xi_corner, eta_corner, w, w)
 
         # NIRSpec Mapping:
         # The FOV of each NIRSpec slice varies across the wavelength range.
@@ -1995,6 +1997,7 @@ class IncorrectInput(Exception):
     when more than one file is used to build the cube.
     """
     pass
+
 
 
 class AreaInterpolation(Exception):
