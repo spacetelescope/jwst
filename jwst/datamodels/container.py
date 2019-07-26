@@ -71,7 +71,7 @@ class ModelContainer(model_base.DataModel):
 
     def __init__(self, init=None, allowed_exptypes=None, **kwargs):
 
-        super(ModelContainer, self).__init__(init=None, allowed_exptypes=None  , **kwargs)
+        super(ModelContainer, self).__init__(init=None, allowed_exptypes=None, **kwargs)
 
         self._models = []
         self.allowed_exptypes = allowed_exptypes
