@@ -102,6 +102,13 @@ stpipe
 
 - Fix ``Step.print_configspec()`` method.  Add test.  [#3768]
 
+tweakreg
+--------
+
+- removed original ``jwst.tweakreg`` alignment code and changed step's code
+  to call similar functionality from ``tweakwcs`` package. [#3689]
+
+
 0.13.7 (2019-06-21)
 ===================
 
@@ -258,6 +265,7 @@ resample
 --------
 
 - Changed default value of good_pixel from 4 to 6 [#3638]
+
 
 0.13.3 (2019-06-04)
 ===================
