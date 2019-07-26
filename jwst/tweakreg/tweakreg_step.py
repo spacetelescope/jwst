@@ -4,6 +4,8 @@ JWST pipeline step for image alignment.
 :Authors: Mihai Cara
 
 """
+from os import path
+
 from astropy.table import Table
 from tweakwcs.imalign import align_wcs
 from tweakwcs.tpwcs import JWSTgWCS
@@ -121,7 +123,17 @@ class TweakRegStep(Step):
         # group images by their "group id":
         grp_img = images.models_grouped
 
+        self.log.info('')
+        self.log.info("Number of image groups to be aligned: {:d}."
+                      .format(len(grp_img)))
+        self.log.info("Image groups:")
+
         if len(grp_img) == 1:
+            self.log.info("* Images in GROUP 1:")
+            for im in grp_img[0]:
+                self.log.info("     {}".format(im.meta.filename))
+            self.log.info('')
+
             # we need at least two exposures to perform image alignment
             self.log.info("At least two exposures are required for image "
                           "alignment.")
@@ -133,23 +145,24 @@ class TweakRegStep(Step):
 
         # create a list of WCS-Catalog-Images Info and/or their Groups:
         imcats = []
-        group_id = 1
         for g in grp_img:
             if len(g) == 0:
                 raise AssertionError("Logical error in the pipeline code.")
-            elif len(g) == 1:
-                imcats.append(self._imodel2wcsim(g[0]))
             else:
+                group_name = _common_name(g)
                 wcsimlist = list(map(self._imodel2wcsim, g))
+                self.log.info("* Images in GROUP '{}':".format(group_name))
                 for im in wcsimlist:
-                    im.meta['group_id'] = group_id
+                    im.meta['group_id'] = group_name
+                    self.log.info("     {}".format(im.meta['name']))
                 imcats.extend(wcsimlist)
-                group_id += 1
+
+        self.log.info('')
 
         # align images:
         tpmatch = TPMatch(
             searchrad=self.searchrad,
-            separation=self.searchrad,
+            separation=self.separation,
             use2dhist=self.use2dhist,
             tolerance=self.tolerance,
             xoffset=self.xoffset,
@@ -184,9 +197,17 @@ class TweakRegStep(Step):
         else:
             catalog = image_model.meta.tweakreg_catalog.filename
 
-        if not isinstance(catalog, Table):
+        model_name = path.splitext(image_model.meta.filename)[0].strip('_- ')
+
+        if isinstance(catalog, Table):
+            if not catalog.meta.get('name', None):
+                catalog.meta['name'] = model_name
+
+        else:
             try:
+                cat_name = str(catalog)
                 catalog = Table.read(catalog, format='ascii.ecsv')
+                catalog.meta['name'] = cat_name
             except IOError:
                 self.log.error("Cannot read catalog {}".format(catalog))
 
@@ -202,7 +223,17 @@ class TweakRegStep(Step):
                      'v2_ref': refang['v2_ref'],
                      'v3_ref': refang['v3_ref']},
             meta={'image_model': image_model, 'catalog': catalog,
-                  'name': image_model.meta.filename}
+                  'name': model_name}
         )
 
         return im
+
+
+def _common_name(group):
+    file_names = [path.splitext(im.meta.filename)[0].strip('_- ')
+                  for im in group]
+    fname_len = list(map(len, file_names))
+    assert all(fname_len[0] == l for l in fname_len)
+    cn = path.commonprefix(file_names)
+    assert cn
+    return cn
