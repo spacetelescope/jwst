@@ -198,7 +198,6 @@ setup(
         'spherical-geometry>=1.2',
         'stsci.image>=2.3',
         'stsci.imagestats>=1.4',
-        'stsci.stimage>=0.2',
         'tweakwcs>=0.5.1',
         'verhawk',
     ],
