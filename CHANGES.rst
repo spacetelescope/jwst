@@ -15,8 +15,6 @@ assign_wcs
 associations
 ------------
 
-- Update to prevent target_acquisitions from processing in the spec3 pipeline [#3777]
-
 - Return filename with extensions based on file type [#2671]
 
 - Ensured that all target acqs are processed by Level 2 [#3765]
@@ -32,6 +30,8 @@ associations
 
 datamodels
 ----------
+
+- Update to prevent target_acquisitions from processing in the spec3 pipeline [#3777]
 
 - Use public API of jsonschema to ease upgrade to 3.x. [#3705]
 

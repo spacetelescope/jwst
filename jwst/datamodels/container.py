@@ -3,6 +3,7 @@ from collections import OrderedDict
 import os.path as op
 import warnings
 import re
+import logging
 
 from asdf import AsdfFile
 from astropy.io import fits
@@ -19,6 +20,9 @@ __doctest_skip__ = ['ModelContainer']
 
 __all__ = ['ModelContainer']
 
+# Configure logging
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 class ModelContainer(model_base.DataModel):
     """
@@ -65,15 +69,12 @@ class ModelContainer(model_base.DataModel):
     # does not describe the data contents of the container.
     schema_url = "container.schema"
 
-    def __init__(self, init=None, **kwargs):
+    def __init__(self, init=None, allowed_exptypes=None, **kwargs):
 
-        super(ModelContainer, self).__init__(init=None, **kwargs)
+        super(ModelContainer, self).__init__(init=None, allowed_exptypes=None  , **kwargs)
 
         self._models = []
-        self.allowed_exptypes = None
-        for key in kwargs.keys():
-            if key == 'allowed_exptypes':
-                self.allowed_exptypes = kwargs.get('allowed_exptypes')
+        self.allowed_exptypes = allowed_exptypes
 
         if init is None:
             # Don't populate the container with models
@@ -191,11 +192,11 @@ class ModelContainer(model_base.DataModel):
         # grab all the files
         if self.allowed_exptypes:
             infiles = []
-            print("Filtering datasets based on allowed exptypes:", self.allowed_exptypes)
+            logger.debug("Filtering datasets based on allowed exptypes:", self.allowed_exptypes)
             for member in asn_data['products'][0]['members']:
                 if any([x for x in self.allowed_exptypes if re.match(member['exptype'], x, re.IGNORECASE)]):
                         infiles.append(member['expname'])
-                        print("Files accepted for processing:", member['expname'])
+                        logger.debug("Files accepted for processing:", member['expname'])
         else:
             infiles = [member['expname'] for member
             in asn_data['products'][0]['members']]

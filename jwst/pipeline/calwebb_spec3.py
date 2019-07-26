@@ -61,7 +61,7 @@ class Spec3Pipeline(Pipeline):
             The exposure or association of exposures to process
         """
         self.log.info('Starting calwebb_spec3 ...')
-        self.allowed_exptypes = ['science']
+        self.allowed_exptypes = ['science','background']
 
         # Retrieve the inputs:
         # could either be done via LoadAsAssociation and then manually
