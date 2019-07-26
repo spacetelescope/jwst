@@ -706,6 +706,7 @@ class IFUCubeData():
             self.spaxel_flux = np.zeros(total_num)
             self.spaxel_weight = np.zeros(total_num)
             self.spaxel_iflux = np.zeros(total_num)
+            self.spaxel_dq = np.zeros((self.naxis3, self.naxis2 * self.naxis1), dtype=np.uint32)
 
             subtract_background = False
 
@@ -1340,27 +1341,24 @@ class IFUCubeData():
                 # wmin = imin[0]
                 # wmax = imax[0]
 
+                # the while loop should only be excuted 1 time if the slice matching
+                # start_region is located in the data (default mode).
+
                 istart = start_region
                 coord1_start = None
-                while istart < end_region:
-                    index_use = np.where((wave_distance < roiw_ave) & (slice_no == istart))
-                    if len(index_use[0]) > 0:
-                        coord2_start = coord2[index_use]
-                        coord1_start = coord1[index_use]
-                        break
-                    istart = istart + 1
+                index_use = np.where((wave_distance < roiw_ave) & (slice_no == istart))
+                if len(index_use[0]) > 0:
+                    coord2_start = coord2[index_use]
+                    coord1_start = coord1[index_use]
 
                 iend = end_region
-
                 coord1_end = None
-                while iend > start_region:
-                    index_use = np.where((wave_distance < roiw_ave) & (slice_no == iend))
-                    if len(index_use[0]) > 0:
-                        coord2_end = coord2[index_use]
-                        coord1_end = coord1[index_use]
-                        break
-                    iend = iend - 1
+                index_use = np.where((wave_distance < roiw_ave) & (slice_no == iend))
+                if len(index_use[0]) > 0:
+                    coord2_end = coord2[index_use]
+                    coord1_end = coord1[index_use]
 
+                # if there is valid data on this wavelength plane (not in a gap)
                 if coord1_start is not None and coord1_end is not None:
                     coord1_total = np.concatenate((coord1_start, coord1_end), axis=0)
                     coord2_total = np.concatenate((coord2_start, coord2_end), axis=0)
@@ -1376,6 +1374,7 @@ class IFUCubeData():
                     xi_corner = np.array([xi1, xi2, xi3, xi4])
                     eta_corner = np.array([eta1, eta2, eta3, eta4])
                     self.overlap_fov_with_spaxels(xi_corner, eta_corner, w, w)
+
 
         # NIRSpec Mapping:
         # The FOV of each NIRSpec slice varies across the wavelength range.
@@ -1998,6 +1997,7 @@ class IncorrectInput(Exception):
     when more than one file is used to build the cube.
     """
     pass
+
 
 
 class AreaInterpolation(Exception):
