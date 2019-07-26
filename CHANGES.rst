@@ -58,12 +58,19 @@ extract_1d
 
 - This step uses keyword DISPAXIS. [#3799]
 
-- Fixed a bug in ``pixel_area`` when th einput is a ``CubeModel``. [#3827]
+- Fixed a bug in ``pixel_area`` when the input is a ``CubeModel``. [#3827]
+
+- Computing the solid angle of a pixel is only done for the first integration
+  of a multi-integration exposure, and it's not done at all for WFSS data
+  [#3863]
 
 extract_2d
 ----------
 
-For grism data, this step copies keyword DISPAXIS from input to output. [#3799]
+- For grism data, this step copies keyword DISPAXIS from input to output. [#3799]
+
+- For NIRCam TSO data, wavelengths are computed and assigned to the
+  wavelength attribute. [#3863]
 
 flat_field
 ----------
