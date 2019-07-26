@@ -45,6 +45,9 @@ class ModelContainer(model_base.DataModel):
         - None: initializes an empty `ModelContainer` instance, to which
           DataModels can be added via the ``append()`` method.
 
+       - asn_exptypes: list of exposure types from the asn file to read
+         into the pipeline, if None read all the given files.
+
     Examples
     --------
     >>> container = ModelContainer('example_asn.json')
@@ -69,12 +72,12 @@ class ModelContainer(model_base.DataModel):
     # does not describe the data contents of the container.
     schema_url = "container.schema"
 
-    def __init__(self, init=None, allowed_exptypes=None, **kwargs):
+    def __init__(self, init=None, asn_exptypes=None, **kwargs):
 
-        super(ModelContainer, self).__init__(init=None, allowed_exptypes=None, **kwargs)
+        super().__init__(init=None, asn_exptypes=None, **kwargs)
 
         self._models = []
-        self.allowed_exptypes = allowed_exptypes
+        self.asn_exptypes = asn_exptypes
 
         if init is None:
             # Don't populate the container with models
@@ -187,19 +190,21 @@ class ModelContainer(model_base.DataModel):
         asn_file_path: str
             Filepath of the association, if known.
         """
-        # match the allowed_exptypes to the exptype in the association and retain
-        # only those file that match, as a list, if allowed_exptypes is set to none
+        # match the asn_exptypes to the exptype in the association and retain
+        # only those file that match, as a list, if asn_exptypes is set to none
         # grab all the files
-        if self.allowed_exptypes:
+        if self.asn_exptypes:
             infiles = []
-            logger.debug("Filtering datasets based on allowed exptypes:", self.allowed_exptypes)
+            logger.debug('Filtering datasets based on allowed exptypes {}:'
+                         .format(self.asn_exptypes))
             for member in asn_data['products'][0]['members']:
-                if any([x for x in self.allowed_exptypes if re.match(member['exptype'], x, re.IGNORECASE)]):
-                        infiles.append(member['expname'])
-                        logger.debug("Files accepted for processing:", member['expname'])
+                if any([x for x in self.asn_exptypes if re.match(member['exptype'],
+                                                                 x, re.IGNORECASE)]):
+                    infiles.append(member['expname'])
+                    logger.debug('Files accepted for processing {}:'.format(member['expname']))
         else:
             infiles = [member['expname'] for member
-            in asn_data['products'][0]['members']]
+                       in asn_data['products'][0]['members']]
 
         if asn_file_path:
             asn_dir = op.dirname(asn_file_path)
@@ -315,7 +320,7 @@ class ModelContainer(model_base.DataModel):
                 params.append(getattr(model.meta.observation, param))
             try:
                 group_id = ('jw' + '_'.join([''.join(params[:3]),
-                        ''.join(params[3:6]), params[6]]))
+                                             ''.join(params[3:6]), params[6]]))
                 model.meta.group_id = group_id
             except TypeError:
                 params_dict = dict(zip(unique_exposure_parameters, params))
