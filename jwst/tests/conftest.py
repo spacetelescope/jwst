@@ -6,8 +6,9 @@ from glob import glob
 import pytest
 import requests
 from ci_watson.artifactory_helpers import (
-    generate_upload_schema,
     get_bigdata_root,
+    get_bigdata,
+    generate_upload_schema,
 )
 
 
@@ -96,12 +97,16 @@ def update_local_bigdata_from_artifactory(artifactory_repos):
 
 
 class RemoteResource:
-    """Defines resource paths available on Artifactory with useful methods"""
+    """Defines resource paths on Artifactory and data retrieval methods"""
 
-    def __init__(self, input=None, output=None, truth=None):
+    def __init__(self, input=None, output=None, truth=None, env=None,
+        bigdata_root=None, inputs_root=None):
         self._input = input
         self._output = output
         self._truth = truth
+        self._env = env
+        self._bigdata_root = bigdata_root
+        self._inputs_root = inputs_root
 
     @property
     def input(self):
@@ -110,6 +115,10 @@ class RemoteResource:
     @input.setter
     def input(self, value):
         self._input = value
+
+    @property
+    def repo_path(self):
+        return [self._inputs_root, self._env, self.input_loc]
 
     @property
     def output(self):
@@ -144,9 +153,12 @@ class RemoteResource:
 
 
 @pytest.fixture(scope="function")
-def resource(artifactory_repos, request):
+def resource(artifactory_repos, envopt):
     """Provides the RemoteResource class"""
+    bigdata_root = get_bigdata_root()
     inputs_root, results_root = artifactory_repos
-    resource = RemoteResource()
+    env = envopt
+    resource = RemoteResource(bigdata_root=bigdata_root, env=env,
+        inputs_root=inputs_root)
 
     return resource
