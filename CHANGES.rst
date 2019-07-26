@@ -148,8 +148,6 @@ associations
 - Removed the rule creating associations for NIRSpec LAMP exposures in image modes. [#3693]
 
 
-=======
->>>>>>> Move changelog entry to the unreleased section
 0.13.4 (2019-06-17)
 ===================
 
