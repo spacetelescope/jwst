@@ -31,6 +31,8 @@ associations
 datamodels
 ----------
 
+- Update to prevent target_acquisitions from processing in the spec3 pipeline [#3777]
+
 - Use public API of jsonschema to ease upgrade to 3.x. [#3705]
 
 - Fixed corruption of FITS tables with unsigned int columns. [#3736]
