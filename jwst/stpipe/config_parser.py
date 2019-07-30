@@ -29,6 +29,7 @@
 """
 Our configuration files are ConfigObj/INI files.
 """
+from inspect import isclass
 import logging
 import os
 import os.path
@@ -174,9 +175,24 @@ def get_merged_spec_file(cls, preserve_comments=False):
 def load_spec_file(cls, preserve_comments=False):
     """
     Load the spec file corresponding to the given class.
+
+    Parameters
+    ----------
+    cls: `Step`-derived or `Step` instance
+        A class or instance of a `Step`-based class.
+
+    preserve_comments: bool
+        True to keep comments in the resulting `ConfigObj`
+
+    Returns
+    -------
+    spec_file: ConfigObj
+        The resulting configuration objection.
     """
     # Don't use 'hasattr' here, because we don't want to inherit spec
     # from the base class.
+    if not isclass(cls):
+        cls = cls.__class__
     if 'spec' in cls.__dict__:
         spec = cls.spec.strip()
         spec_file = textwrap.dedent(spec)
