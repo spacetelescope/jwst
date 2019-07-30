@@ -41,6 +41,8 @@ data_path = os.path.split(os.path.abspath(data.__file__))[0]
 # Default wcs information
 # This is set for a standard nircam image just as an example
 # It does not test the validity of the absolute results
+# for create_tso_wcsimage, set the width of the output image to this value:
+NIRCAM_TSO_WIDTH = 10
 wcs_image_kw = {'wcsaxes': 2, 'ra_ref': 53.1490299775, 'dec_ref': -27.8168745624,
                 'v2_ref': 86.103458, 'v3_ref': -493.227512, 'roll_ref': 45.04234459270135,
                 'crpix1': 1024.5, 'crpix2': 1024.5,
@@ -132,7 +134,7 @@ def create_tso_wcsimage(filtername="F277W", subarray=False):
     hdul = create_hdul(exptype='NRC_TSGRISM', pupil='GRISMR',
                        filtername=filtername, detector='NRCALONG',
                        subarray=subarray, wcskeys=wcs_tso_kw)
-    hdul['sci'].header['SUBSIZE1'] = 2048
+    hdul['sci'].header['SUBSIZE1'] = NIRCAM_TSO_WIDTH
 
     if subarray:
         hdul['sci'].header['SUBSIZE2'] = 256
@@ -141,7 +143,7 @@ def create_tso_wcsimage(filtername="F277W", subarray=False):
         hdul['sci'].header['SUBSIZE2'] = 2048
         subsize = 2048
 
-    hdul['sci'].data = np.ones((2, subsize, 2048))
+    hdul['sci'].data = np.ones((2, subsize, NIRCAM_TSO_WIDTH))
     im = CubeModel(hdul)
     im.meta.wcsinfo.siaf_xref_sci = 887.0
     im.meta.wcsinfo.siaf_yref_sci = 35.0
@@ -318,7 +320,7 @@ def test_extract_tso_height():
     num, ysize, xsize = outmodel.data.shape
     assert num == wcsimage.data.shape[0]
     assert ysize == 50
-    assert xsize == 2048
+    assert xsize == NIRCAM_TSO_WIDTH
     del outmodel
 
 

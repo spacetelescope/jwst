@@ -2695,6 +2695,9 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
     # spectral order is zero.  That's only OK if the disperser is a prism.
     prism_mode = is_prism(input_model)
 
+    # GRISM data.
+    is_wfss = input_model.meta.exposure.type in WFSS_EXPTYPES
+
     if apply_nod_offset:
         exp_type = input_model.meta.exposure.type.upper()
         source_type = input_model.meta.target.source_type.upper()
@@ -2774,9 +2777,8 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
             if len(wcs_shape) > 2:
                 # CubeModel
                 wcs_shape = wcs_shape[1:]
-            pixel_solid_angle = util.pixel_area(wcs, wcs_shape)
+            pixel_solid_angle = util.pixel_area(wcs, wcs_shape, is_wfss)
             if pixel_solid_angle is None:
-                log.warning("Pixel solid angle could not be determined")
                 pixel_solid_angle = 1.
             # MJy / steradian --> Jy
             flux = temp_flux * pixel_solid_angle * 1.e6
@@ -2880,9 +2882,8 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                     # CubeModel
                     wcs_shape = wcs_shape[1:]
 
-                pixel_solid_angle = util.pixel_area(wcs, wcs_shape)
+                pixel_solid_angle = util.pixel_area(wcs, wcs_shape, is_wfss)
                 if pixel_solid_angle is None:
-                    log.warning("Pixel solid angle could not be determined")
                     pixel_solid_angle = 1.
                 # MJy / steradian --> Jy
                 flux = temp_flux * pixel_solid_angle * 1.e6
@@ -2981,19 +2982,19 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                                                            sp_order)
                     else:
                         wcs = input_model.meta.wcs
-
-                    wcs_shape = input_model.data.shape
-                    if len(wcs_shape) > 2:
-                        # CubeModel
-                        wcs_shape = wcs_shape[1:]
-                    pixel_solid_angle = util.pixel_area(wcs,
-                                                        wcs_shape,
-                                                        verbose)
-                    if pixel_solid_angle is None:
-                        if verbose:
-                            log.warning("Pixel solid angle could not "
-                                        "be determined")
-                        pixel_solid_angle = 1.
+                    # There's no need to repeat this for each integration.
+                    if integ == 0:
+                        wcs_shape = input_model.data.shape
+                        if len(wcs_shape) > 2:
+                            # CubeModel
+                            wcs_shape = wcs_shape[1:]
+                        pixel_solid_angle = util.pixel_area(
+                                wcs,
+                                wcs_shape,
+                                is_wfss,
+                                verbose)
+                        if pixel_solid_angle is None:
+                            pixel_solid_angle = 1.
                     # MJy / steradian --> Jy
                     flux = temp_flux * pixel_solid_angle * 1.e6
                     del temp_flux
