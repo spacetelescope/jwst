@@ -10,6 +10,20 @@ from jwst import datamodels
 from jwst.stpipe import Step
 from jwst.stpipe.config_parser import ValidationError
 
+from .steps import MakeListStep
+
+
+@pytest.mark.parametrize(
+    'step_obj, expected',
+    [
+        (MakeListStep, {'par1': None, 'par2': None, 'par3': False}),
+        (MakeListStep(par1=0., par2='from args'), {'par1': 0., 'par2': 'from args', 'par3': False}),
+    ]
+)
+def test_getpars(step_obj, expected):
+    """Test retreiving of configuration parameters"""
+    assert step_obj.pars == expected
+
 
 def test_hook():
     """Test the running of hooks"""

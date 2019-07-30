@@ -32,6 +32,7 @@ from ..associations.lib.format_template import FormatTemplate
 from ..associations.lib.update_path import update_key_value
 from ..datamodels import (DataModel, ModelContainer)
 from ..datamodels import open as dm_open
+from ..lib.class_property import ClassProperty
 from ..lib.suffix import remove_suffix
 
 
@@ -1092,6 +1093,21 @@ class Step():
             datamodel.meta.cal_step._instance[cal_step] = status
 
         # TODO: standardize cal_step naming to point to the offical step name
+
+    @ClassProperty
+    def pars(step):
+        """Retrieve the configuration parameters of a step
+
+        Parameters
+        ----------
+        step: `Step`-derived class or instance
+
+        Returns
+        -------
+        pars: dict
+            Keys are the parameters and values are the values.
+        """
+        return None
 
 
 # #########
