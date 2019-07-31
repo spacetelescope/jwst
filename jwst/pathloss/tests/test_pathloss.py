@@ -68,7 +68,7 @@ def test_get_app_from_model_null():
 
     result = get_aperture_from_model(datmod, None)
 
-    assert(result==None)
+    assert(result is None)
 
 
 def test_get_aper_from_model_fixedslit():
@@ -144,13 +144,13 @@ def test_calculate_pathloss_vector_uniform_data():
     wavelength, pathloss, _ = calculate_pathloss_vector(datmod.apertures[0].uniform_data,
                                                         datmod.apertures[0].uniform_wcs,
                                                         0.0, 0.0)
-    
+
     # Wavelength array is calculated with this: crval1 +(float(i+1) - crpix1)*cdelt1
     # Where i is the iteration of np.arange(wavesize) which is the shape of the uniform
     # data array.
     comparison = np.array([1 +(float(i+1) - 1)*1 for i in np.arange(10)])
     assert(np.all(wavelength==comparison))
-    
+
     # The same array is returned in this case
     assert(np.all(datmod.apertures[0].uniform_data == pathloss))
 
@@ -209,12 +209,11 @@ def test_is_pointsource():
     result = is_pointsource(point_source)
     assert(result == False)
 
-# Begin do_correction exception testing
 def test_do_correction_msa_slit_size_eq_0():
     """If slits have size 0, quit calibration.
     """
     datmod = MultiSlitModel()
-    datmod.slits.append({'data':np.empty((10,10,10))})
+    datmod.slits.append({'data':np.array([])})
     pathlossmod = PathlossModel()
     datmod.meta.exposure.type = 'NRS_MSASPEC'
 
@@ -227,7 +226,7 @@ def test_do_correction_fixed_slit_exception():
     """
     datmod = MultiSlitModel()
     # Give input_model aperture name
-    datmod.slits.append({'data':np.empty((10,10,10)), 'name':'S200A1'})
+    datmod.slits.append({'data':np.array([]), 'name':'S200A1'})
     # Do assign pathloss model aperture with similar name.
     pathlossmod = PathlossModel()
     datmod.meta.exposure.type = 'NRS_FIXEDSLIT'
@@ -259,7 +258,7 @@ def test_do_correction_nis_soss_pupil_position_is_none():
 
     result = do_correction(datmod, pathlossmod)
     assert(result.meta.cal_step.pathloss == 'SKIPPED')
-    
+
 
 def test_do_correction_nis_soss_aperture_is_none():
     """If no matching aperture is found, skip correction.
@@ -277,56 +276,30 @@ def test_do_correction_nis_soss_aperture_is_none():
     result = do_correction(datmod, pathlossmod)
     assert(result.meta.cal_step.pathloss == 'SKIPPED')
 
-# Work in progress
+@pytest.mark.skip(reason="Fraction calculation in interpolate_onto_grid needs refactoring.")
 def test_interpolate_onto_grid():    
-    datmod = MultiSlitModel()
-    datmod.slits.append({'data':np.ones((10,10,10),dtype=np.float32),
-                         'wavelength':np.arange(100).reshape(10,10),
-                         'err':np.ones((10,10,10), dtype=np.float32)*0.25,
-                         'var_poisson':np.ones((10,10,10), dtype=np.float32)*0.25,
-                         'var_rnoise':np.ones((10,10,10), dtype=np.float32)*0.25,
-                         'var_flat':np.ones((10,10,10), dtype=np.float32)*0.25,
-                         'shutters':1,'source_xpos':1, 'source_ypos':2, 
-                         'shutter_state':'1'})
-    datmod.meta.exposure.type = 'NRS_MSASPEC'
-    
-    pathlossmod = PathlossModel()
-    pathlossmod.meta.exposure.type = 'NRS_MSASPEC'
-    
-    ref_data = {'pointsource_data':np.ones((10,10,10), dtype=np.float32),
-                'pointsource_wcs': {'crval2': -0.5, 'crpix2': 1.0, 'cdelt2': 0.5, 
-                                    'cdelt3': 1, 'crval1': -0.5, 'crpix1': 1.0, 
-                                    'crpix3': 1.0, 'crval3': 1, 'cdelt1': 0.5},
-                'pointsource_err':np.ones((10,10,10), dtype=np.float32)*0.25,
-                'uniform_data':np.ones((10,), dtype=np.float32),
-                'uniform_err':np.ones((10,), dtype=np.float32)*0.25,
-                'uniform_wcs': {'crpix1': 1.0, 'cdelt1': 1, 'crval1': 1},
-                'shutters':1}
-    
-    pathlossmod.apertures.append(ref_data)
+    # Mock wavelength vector, grid and pathloss vector.
+    wavelength_grid = np.arange(1, 101).reshape(10,10) * 1.1
+    wavelength_vector = np.arange(1, 11, dtype='float64')
+    pathloss_vector = np.arange(1, 11, dtype='float64')
 
-    for aperture in pathlossmod.apertures:
+    # Call interpolate onto grid
+    result = interpolate_onto_grid(wavelength_grid, 
+                                   wavelength_vector, 
+                                   pathloss_vector)
 
-        (wavelength_pointsource, 
-        pathloss_pointsource_vector, 
-        is_inside_slitlet) = calculate_pathloss_vector(aperture.pointsource_data, 
-                                                        aperture.pointsource_wcs, 
-                                                        1, 2) 
-        (wavelength_uniformsource, 
-        pathloss_uniform_vector, 
-        dummy) = calculate_pathloss_vector(aperture.uniform_data, 
-                                           aperture.uniform_wcs, 
-                                           1, 2) 
+    # Before interpolation is done in interpolate_onto_grid, the vectors are padded
+    # so interpolation that happens outside of the grid are NaN.
+    extended_pathloss_vector = np.zeros(len(pathloss_vector) + 2)
+    extended_pathloss_vector[1:-1] = pathloss_vector
+    extended_pathloss_vector[0] = np.nan
+    extended_pathloss_vector[-1] = np.nan
+    extended_wavelength_vector = np.zeros(len(wavelength_vector) + 2)
+    extended_wavelength_vector[1:-1] = wavelength_vector
+    extended_wavelength_vector[0] = wavelength_vector[0] - 0.1
+    extended_wavelength_vector[-1] = wavelength_vector[-1] + 0.1
 
-    wavelength_array = datmod.slits[0].wavelength
-    
-    pathloss_2d = interpolate_onto_grid(wavelength_array, 
-                                        wavelength_pointsource, 
-                                        pathloss_pointsource_vector)
+    # Call numpy interpolation to get truth.
+    result_comparison = np.interp(wavelength_grid, extended_wavelength_vector, extended_pathloss_vector)
 
-
-    pathloss_2d = interpolate_onto_grid(wavelength_array, 
-                                        wavelength_uniformsource, 
-                                        pathloss_uniform_vector) 
-
-    print(pathloss_2d)
+    assert np.testing.assert_array_equal(result, result_comparison)
