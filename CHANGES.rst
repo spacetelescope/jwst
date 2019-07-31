@@ -28,10 +28,14 @@ associations
 
 - Fixed the number of inputs to the spectral WCS - one expetced, two were passed. [#3827]
 
-datamodels
-----------
+calwebb_tso3
+-------------
 
 - Update to exclude target_acquisitions from processing in the calwebb_tso3 pipeline [#3759]
+
+
+datamodels
+----------
 
 - Update to prevent target_acquisitions from processing in the spec3 pipeline [#3777]
 
