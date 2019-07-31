@@ -61,4 +61,4 @@ class ClassProperty:
         return self.fget(obj)
 
     def getter(self, fget):
-        return type(self)(fget, self.fset, self.fdel, self.__doc__)
+        return type(self)(fget, self.__doc__)
