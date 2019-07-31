@@ -31,6 +31,8 @@ associations
 datamodels
 ----------
 
+- Update to exclude target_acquisitions from processing in the calwebb_tso3 pipeline [#3759]
+
 - Update to prevent target_acquisitions from processing in the spec3 pipeline [#3777]
 
 - Use public API of jsonschema to ease upgrade to 3.x. [#3705]
