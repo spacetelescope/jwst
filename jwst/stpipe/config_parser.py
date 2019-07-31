@@ -240,26 +240,64 @@ def merge_config(into, new):
             into.comments[key] = new.comments[key]
 
 
-def config_from_dict(d, spec=None, root_dir=None):
+def config_from_dict(d, spec=None, root_dir=None, allow_missing=False):
     """
     Create a ConfigObj from a dict.
+
+    Parameters
+    ----------
+    d: dict
+        The dictionary to merge into the resulting ConfigObj.
+
+    spec: ConfigObj
+        The specification to validate against.
+        If None, just convert dictionary into a ConfigObj.
+
+    root_dir: str
+        The base directory to use for file-based parameters.
+
+    allow_missing: bool
+        If a parameter is not defined and has no default in the spec,
+        set that parameter to its specification.
     """
     config = ConfigObj()
 
     config.update(d)
 
     if spec:
-        validate(config, spec, root_dir=root_dir)
+        validate(config, spec, root_dir=root_dir, allow_missing=allow_missing)
     else:
         config.walk(string_to_python_type)
 
     return config
 
 
-def validate(config, spec, section=None, validator=None, root_dir=None, preserve_errors=True):
+def validate(config, spec, section=None, validator=None, root_dir=None, allow_missing=False):
     """
     Parse config_file, in INI format, and do validation with the
     provided specfile.
+
+    Parameters
+    ----------
+    config: ConfigObj
+        The configuration to validate.
+
+    spec: ConfigObj
+        The specification to validate against.
+
+    section: ConfigObj or None
+        The specific section of config to validate.
+        If None, then all sections are validated.
+
+    validator: extern.configobj.validator.Validator or None
+        The validator to use. If None, the default will be used.
+
+    root_dir: str
+        The directory to use as the basis for any file-based parameters.
+
+    allow_missing: bool
+        If a parameter is not defined and has no default in the spec,
+        set that parameter to its specification.
     """
     if spec is None:
         config.walk(string_to_python_type)
@@ -282,7 +320,7 @@ def validate(config, spec, section=None, validator=None, root_dir=None, preserve
             section = None
 
         errors = config.main.validate(
-            validator, preserve_errors=preserve_errors,
+            validator, preserve_errors=True,
             section=section)
 
         messages = []
@@ -294,7 +332,11 @@ def validate(config, spec, section=None, validator=None, root_dir=None, preserve
                     section_list.append('[missing section]')
                 section_string = '/'.join(section_list)
                 if err == False:
-                    err = 'missing'
+                    if allow_missing:
+                        config[key] = spec[key]
+                        continue
+                    else:
+                        err = 'missing'
 
                 messages.append(
                     "Config parameter {0!r}: {1}".format(

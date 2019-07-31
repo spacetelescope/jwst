@@ -1113,7 +1113,7 @@ class Step():
             for key in spec
             if hasattr(step, key)
         }
-        pars = config_parser.config_from_dict(instance_pars, spec)
+        pars = config_parser.config_from_dict(instance_pars, spec, allow_missing=True)
         return pars
 
 

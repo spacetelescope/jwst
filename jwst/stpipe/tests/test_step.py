@@ -16,7 +16,7 @@ from .steps import MakeListStep
 @pytest.mark.parametrize(
     'step_obj, expected',
     [
-        (MakeListStep, {'par1': None, 'par2': None, 'par3': False}),
+        (MakeListStep, {'par1': 'float() # Control the frobulization', 'par2': 'string() # Reticulate the splines', 'par3': False}),
         (MakeListStep(par1=0., par2='from args'), {'par1': 0., 'par2': 'from args', 'par3': False}),
     ]
 )
