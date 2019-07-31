@@ -256,7 +256,7 @@ def config_from_dict(d, spec=None, root_dir=None):
     return config
 
 
-def validate(config, spec, section=None, validator=None, root_dir=None):
+def validate(config, spec, section=None, validator=None, root_dir=None, preserve_errors=True):
     """
     Parse config_file, in INI format, and do validation with the
     provided specfile.
@@ -282,7 +282,7 @@ def validate(config, spec, section=None, validator=None, root_dir=None):
             section = None
 
         errors = config.main.validate(
-            validator, preserve_errors=True,
+            validator, preserve_errors=preserve_errors,
             section=section)
 
         messages = []

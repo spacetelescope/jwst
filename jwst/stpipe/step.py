@@ -1107,7 +1107,14 @@ class Step():
         pars: dict
             Keys are the parameters and values are the values.
         """
-        return None
+        spec = config_parser.load_spec_file(step)
+        instance_pars = {
+            key: getattr(step, key)
+            for key in spec
+            if hasattr(step, key)
+        }
+        pars = config_parser.config_from_dict(instance_pars, spec)
+        return pars
 
 
 # #########
