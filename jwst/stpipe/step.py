@@ -1119,6 +1119,8 @@ class Step():
             Keys are the parameters and values are the values.
         """
         spec = config_parser.load_spec_file(step)
+        if spec is None:
+            return {}
         instance_pars = {
             key: getattr(step, key)
             for key in spec
