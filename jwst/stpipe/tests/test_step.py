@@ -16,6 +16,22 @@ from .steps import MakeListStep
 @pytest.mark.parametrize(
     'step_obj, expected',
     [
+        (MakeListStep,
+         datamodels.StepParsModel({'parameters': {'par1': 'float() # Control the frobulization', 'par2': 'string() # Reticulate the splines', 'par3': False}})
+        ),
+        (MakeListStep(par1=0., par2='from args'),
+         datamodels.StepParsModel({'parameters': {'par1': 0., 'par2': 'from args', 'par3': False}})
+        ),
+    ]
+)
+def test_getpars_model(step_obj, expected):
+    """Test retreiving of configuration parameters"""
+    assert step_obj.pars_model.parameters == expected.parameters
+
+
+@pytest.mark.parametrize(
+    'step_obj, expected',
+    [
         (MakeListStep, {'par1': 'float() # Control the frobulization', 'par2': 'string() # Reticulate the splines', 'par3': False}),
         (MakeListStep(par1=0., par2='from args'), {'par1': 0., 'par2': 'from args', 'par3': False}),
     ]
