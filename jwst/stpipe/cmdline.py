@@ -182,6 +182,10 @@ def just_the_step_from_cmdline(args, cls=None):
     parser1.add_argument(
         "--debug", action="store_true",
         help="When an exception occurs, invoke the Python debugger, pdb")
+    parser1.add_argument(
+        '--save-parameters', type=str,
+        help='Save step parameters to specified file.'
+    )
     known, _ = parser1.parse_known_args(args)
 
     try:
@@ -235,6 +239,7 @@ def just_the_step_from_cmdline(args, cls=None):
     del args.logcfg
     del args.verbose
     del args.debug
+    del args.save_parameters
     positional = args.args
     del args.args
 
@@ -263,6 +268,10 @@ def just_the_step_from_cmdline(args, cls=None):
         step._pars_model = config.pars_model
     except AttributeError:
         pass
+
+    # Save the step configuration
+    if known.save_parameters:
+        step.pars_model.save(known.save_parameters)
 
     return step, step_class, positional, debug_on_exception
 

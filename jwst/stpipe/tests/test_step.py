@@ -13,9 +13,24 @@ from jwst.stpipe.config_parser import ValidationError
 from .steps import MakeListStep
 from .util import t_path
 
-
 ParsModelWithPar3 = datamodels.StepParsModel(t_path('data/step_parameters/jwst_generic_pars-makeliststep_0002.asdf'))
 ParsModelWithPar3.parameters.instance.update({'par3': False})
+
+
+def test_saving_pars(tmpdir):
+    """Save the step parameters from the commandline"""
+    cfg_path = t_path('data/step_parameters/jwst_generic_pars-makeliststep_0002.asdf')
+    saved_path = tmpdir.join('savepars.asdf')
+    Step.from_cmdline([
+        cfg_path,
+        '--save-parameters',
+        str(saved_path)
+    ])
+    assert saved_path.check()
+    saved = datamodels.StepParsModel(str(saved_path))
+    assert saved.parameters == ParsModelWithPar3.parameters
+
+
 @pytest.mark.parametrize(
     'step_obj, expected',
     [
