@@ -42,7 +42,7 @@ from ..extern.configobj.configobj import (
     ConfigObj, Section, flatten_errors, get_extra_values)
 from ..extern.configobj.validate import Validator, ValidateError, VdtTypeError
 
-from ..datamodels.model_base import DataModel
+from ..datamodels import DataModel, StepParsModel
 
 from . import utilities
 
@@ -139,6 +139,7 @@ def load_config_file(config_file):
     # Seems to be ASDF. Create the configobj from that.
     configobj = ConfigObj()
     configobj.merge(cfg['parameters'])
+    configobj.pars_model = StepParsModel(cfg)
     return configobj
 
 

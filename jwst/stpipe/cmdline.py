@@ -258,6 +258,12 @@ def just_the_step_from_cmdline(args, cls=None):
     log.log.info("Hostname: {0}".format(os.uname()[1]))
     log.log.info("OS: {0}".format(os.uname()[0]))
 
+    # If initialized from a StepParsModel, remember that.
+    try:
+        step._pars_model = config.pars_model
+    except AttributeError:
+        pass
+
     return step, step_class, positional, debug_on_exception
 
 
