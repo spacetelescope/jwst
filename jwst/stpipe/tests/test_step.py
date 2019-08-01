@@ -11,8 +11,11 @@ from jwst.stpipe import Step
 from jwst.stpipe.config_parser import ValidationError
 
 from .steps import MakeListStep
+from .util import t_path
 
 
+ParsModelWithPar3 = datamodels.StepParsModel(t_path('data/step_parameters/jwst_generic_pars-makeliststep_0002.asdf'))
+ParsModelWithPar3.parameters.instance.update({'par3': False})
 @pytest.mark.parametrize(
     'step_obj, expected',
     [
@@ -22,6 +25,9 @@ from .steps import MakeListStep
         (MakeListStep(par1=0., par2='from args'),
          datamodels.StepParsModel({'parameters': {'par1': 0., 'par2': 'from args', 'par3': False}})
         ),
+        (Step.from_config_file(t_path('data/step_parameters/jwst_generic_pars-makeliststep_0002.asdf')),
+         ParsModelWithPar3
+        )
     ]
 )
 def test_getpars_model(step_obj, expected):

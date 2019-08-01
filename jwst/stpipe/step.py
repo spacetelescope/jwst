@@ -236,12 +236,18 @@ class Step():
         if 'name' in config:
             del config['name']
 
-        return cls(
+        step = cls(
             name=name,
             parent=parent,
             config_file=config_file,
             _validate_kwds=False,
             **config)
+        try:
+            step._pars_model = config.pars_model
+        except AttributeError:
+            pass
+
+        return step
 
     def __init__(self, name=None, parent=None, config_file=None,
                  _validate_kwds=True, **kws):
@@ -523,6 +529,12 @@ class Step():
                 config, name=name, config_file=config_file)
         else:
             instance = cls(**kwargs)
+
+        try:
+            instance._pars_model = config.pars_model
+        except (AttributeError, UnboundLocalError):
+            pass
+
         return instance.run(*args)
 
     @property
