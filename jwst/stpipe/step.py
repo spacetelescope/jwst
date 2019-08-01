@@ -15,6 +15,7 @@ from os.path import (
     splitext,
 )
 import sys
+from types import MethodType
 
 try:
     from astropy.io import fits
@@ -30,11 +31,10 @@ from .. import __version_commit__, __version__
 from ..associations.load_as_asn import (LoadAsAssociation, LoadAsLevel2Asn)
 from ..associations.lib.format_template import FormatTemplate
 from ..associations.lib.update_path import update_key_value
-from ..datamodels import (DataModel, ModelContainer)
+from ..datamodels import (DataModel, ModelContainer, StepParsModel)
 from ..datamodels import open as dm_open
 from ..lib.class_property import ClassProperty
 from ..lib.suffix import remove_suffix
-
 
 class Step():
     """
@@ -268,7 +268,6 @@ class Step():
             Additional parameters to set.  These will be set as member
             variables on the new Step instance.
         """
-
         # Setup primary input
         self._reference_files_used = []
         self._input_filename = None
@@ -1114,7 +1113,27 @@ class Step():
             if hasattr(step, key)
         }
         pars = config_parser.config_from_dict(instance_pars, spec, allow_missing=True)
+        pars = dict(pars)
         return pars
+
+    @ClassProperty
+    def pars_model(step):
+        """Return Step parameters as StepParsModel
+
+        Parameters
+        ----------
+        step: `Step`-derived class or instance
+            The `Step` or `Step` instance to retrieve the parameters model for.
+
+        Returns
+        -------
+        model: `StepParsModel`
+            The `StepParsModel`.
+        """
+        pars_model = getattr(step, '_pars_model', StepParsModel())
+        pars_model.parameters.instance.update(step.pars)
+        step._pars_model = pars_model
+        return pars_model
 
 
 # #########
