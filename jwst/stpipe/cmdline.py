@@ -11,6 +11,11 @@ from . import log
 from . import Step
 from . import utilities
 
+from . import crds_client
+from . import class_dict # Step name, class name
+
+from ..extern.configobj.configobj import ConfigObj
+from .. import datamodels
 
 built_in_configuration_parameters = [
     'debug', 'logcfg', 'verbose'
@@ -188,6 +193,29 @@ def just_the_step_from_cmdline(args, cls=None):
     )
     known, _ = parser1.parse_known_args(args)
 
+    # Retrieve config file from CRDS and merge (should redo using argparse)
+    config_0 = known.cfg_file_or_class[0]  # local_config_file, or full class name
+    positional_0 = args[1] # input data file
+
+    if config_0.endswith('asdf'): # asdf config file given on command line
+        temp_0 = config_0.split('.asdf')[0]  # i.e. 'jwst_generic_pars-tweakreg_0001'
+        temp_1 = temp_0.split('_pars-') # i.e., ['jwst_generic', 'tweakreg_0001']
+        temp_2 = temp_1[1].split('_')  # i.e., ['tweakreg', '0001']
+        class_name = temp_2[0] 
+
+        if class_name not in class_dict_c_dict.values() # verify that name is valid
+             raise ValueError("Unsupported value for class name: %s" % class_name)
+
+    else: # from the full class Step name given, look up the class name
+        class_name = class_dict.c_dict[ config_0 ]
+
+    input_model = datamodels.open(positional_0)
+    config_crds = crds_client.get_reference_file( input_model, class_name )
+    config_from_files = config_crds.update( config_0 )
+    config_new = ConfObj()
+    config_new.update( config_crds )
+    config_final = config_new.update( config_0 ) # What do I do with this now ? 
+ 
     try:
         if cls is None:
             step_class, config, name, config_file = \
