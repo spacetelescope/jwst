@@ -259,14 +259,13 @@ def test_do_correction_nis_soss_pupil_position_is_none():
     result = do_correction(datmod, pathlossmod)
     assert(result.meta.cal_step.pathloss == 'SKIPPED')
 
-
 def test_do_correction_nis_soss_aperture_is_none():
     """If no matching aperture is found, skip correction.
     """
     datmod = MultiSlitModel()
     # Is FULL an option for NIRISS?
     # The test doesn't care but something to remember.
-    datmod.slits.append({'data':np.empty((10,10,10)), 'name':'FULL'})
+    datmod.slits.append({'data':np.array([]), 'name':'FULL'})
     # Don't assign pathloss model aperture with similar name
     pathlossmod = PathlossModel()
     datmod.meta.exposure.type = 'NIS_SOSS'
