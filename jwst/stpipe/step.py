@@ -15,7 +15,6 @@ from os.path import (
     splitext,
 )
 import sys
-from types import MethodType
 
 try:
     from astropy.io import fits
@@ -1121,11 +1120,12 @@ class Step():
         spec = config_parser.load_spec_file(step)
         if spec is None:
             return {}
-        instance_pars = {
-            key: getattr(step, key)
-            for key in spec
-            if hasattr(step, key)
-        }
+        instance_pars = {}
+        for key in spec:
+            if hasattr(step, key):
+                value = getattr(step, key)
+                if not isinstance(value, property):
+                    instance_pars[key] = value
         pars = config_parser.config_from_dict(instance_pars, spec, allow_missing=True)
         pars = dict(pars)
         return pars
