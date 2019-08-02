@@ -4,25 +4,14 @@ Unit tests for pathloss correction
 
 from jwst.datamodels import MultiSlitModel, PathlossModel, IFUImageModel
 from jwst.pathloss import PathLossStep
-from jwst.pathloss.pathloss import (get_center, 
-                                    get_aperture_from_model, 
-                                    calculate_pathloss_vector,
+from jwst.pathloss.pathloss import (calculate_pathloss_vector,
+                                    get_aperture_from_model,
+                                    get_center, 
+                                    interpolate_onto_grid,
                                     is_pointsource)
 from jwst.pathloss.pathloss import do_correction 
 import numpy as np
 import pytest
-
-
-# Begin get_center tests
-def test_skip_step(make_imagemodel):
-    """If no pathloss reference file is specified or given in the header,
-    make sure the step skips.
-    """
-
-    im = make_imagemodel(10, 10, 'NRS_AUTOWAVE')
-    result = PathLossStep.call(im)
-
-    assert(result.meta.cal_step.pathloss == 'SKIPPED')
 
 
 def test_get_center_ifu():
@@ -61,10 +50,11 @@ def test_get_center_exptype():
     datmod = MultiSlitModel()
     datmod.slits.append({'source_xpos':1, 'source_ypos':2})
     
-    x_pos, y_pos = get_center("NRS_FIXEDSLIT", datmod.slits[0])
+    for exptype in ["NRS_MSASPEC", "NRS_FIXEDSLIT", "NRS_BRIGHTOBJ"]:
+        x_pos, y_pos = get_center(exptype, datmod.slits[0])
 
-    assert(x_pos==1)
-    assert(y_pos==2)
+        assert(x_pos==1)
+        assert(y_pos==2)
 
 
 # Begin get_aperture_from_model tests
@@ -219,12 +209,12 @@ def test_is_pointsource():
     result = is_pointsource(point_source)
     assert(result == False)
 
-
+# Begin do_correction exception testing
 def test_do_correction_msa_slit_size_eq_0():
     """If slits have size 0, quit calibration.
     """
     datmod = MultiSlitModel()
-    datmod.slits.append({'data':np.empty((10,10))})
+    datmod.slits.append({'data':np.empty((10,10,10))})
     pathlossmod = PathlossModel()
     datmod.meta.exposure.type = 'NRS_MSASPEC'
 
@@ -232,18 +222,111 @@ def test_do_correction_msa_slit_size_eq_0():
     assert(result.meta.cal_step.pathloss == 'COMPLETE')
 
 
-@pytest.fixture(scope='function')
-def make_imagemodel():
-    '''Image model for testing'''
-    def _im(ysize, xsize, exptype):
-        # create the data arrays
-        im = IFUImageModel((ysize, xsize))
-        im.data = np.random.rand(ysize, xsize)
-        im.meta.instrument.name = 'NIRSPEC'
-        im.meta.exposure.type = exptype
-        im.meta.observation.date = '2018-01-01'
-        im.meta.observation.time = '00:00:00'
-        
-        return im
+def test_do_correction_fixed_slit_exception():
+    """If no matching aperture name found, exit.
+    """
+    datmod = MultiSlitModel()
+    # Give input_model aperture name
+    datmod.slits.append({'data':np.empty((10,10,10)), 'name':'S200A1'})
+    # Do assign pathloss model aperture with similar name.
+    pathlossmod = PathlossModel()
+    datmod.meta.exposure.type = 'NRS_FIXEDSLIT'
 
-    return _im
+    result = do_correction(datmod, pathlossmod)
+    assert(result.meta.cal_step.pathloss == 'COMPLETE')
+
+
+def test_do_correction_nis_soss_tso():
+    """If observation is tso, skip correction
+    """
+    datmod = MultiSlitModel()
+    pathlossmod = PathlossModel()
+    datmod.meta.exposure.type = 'NIS_SOSS'
+    datmod.meta.visit.tsovisit = True
+
+    result = do_correction(datmod, pathlossmod)
+    assert(result.meta.cal_step.pathloss == 'SKIPPED')
+
+
+def test_do_correction_nis_soss_pupil_position_is_none():
+    """If pupil_position is None, skip correction
+    """
+    datmod = MultiSlitModel()
+    pathlossmod = PathlossModel()
+    datmod.meta.exposure.type = 'NIS_SOSS'
+    datmod.meta.visit.tsovisit = False
+    datmod.meta.instrument.pupil_position = None
+
+    result = do_correction(datmod, pathlossmod)
+    assert(result.meta.cal_step.pathloss == 'SKIPPED')
+    
+
+def test_do_correction_nis_soss_aperture_is_none():
+    """If no matching aperture is found, skip correction.
+    """
+    datmod = MultiSlitModel()
+    # Is FULL an option for NIRISS?
+    # The test doesn't care but something to remember.
+    datmod.slits.append({'data':np.empty((10,10,10)), 'name':'FULL'})
+    # Don't assign pathloss model aperture with similar name
+    pathlossmod = PathlossModel()
+    datmod.meta.exposure.type = 'NIS_SOSS'
+    datmod.meta.visit.tsovisit = False
+    datmod.meta.instrument.pupil_position = 1
+
+    result = do_correction(datmod, pathlossmod)
+    assert(result.meta.cal_step.pathloss == 'SKIPPED')
+
+# Work in progress
+def test_interpolate_onto_grid():    
+    datmod = MultiSlitModel()
+    datmod.slits.append({'data':np.ones((10,10,10),dtype=np.float32),
+                         'wavelength':np.arange(100).reshape(10,10),
+                         'err':np.ones((10,10,10), dtype=np.float32)*0.25,
+                         'var_poisson':np.ones((10,10,10), dtype=np.float32)*0.25,
+                         'var_rnoise':np.ones((10,10,10), dtype=np.float32)*0.25,
+                         'var_flat':np.ones((10,10,10), dtype=np.float32)*0.25,
+                         'shutters':1,'source_xpos':1, 'source_ypos':2, 
+                         'shutter_state':'1'})
+    datmod.meta.exposure.type = 'NRS_MSASPEC'
+    
+    pathlossmod = PathlossModel()
+    pathlossmod.meta.exposure.type = 'NRS_MSASPEC'
+    
+    ref_data = {'pointsource_data':np.ones((10,10,10), dtype=np.float32),
+                'pointsource_wcs': {'crval2': -0.5, 'crpix2': 1.0, 'cdelt2': 0.5, 
+                                    'cdelt3': 1, 'crval1': -0.5, 'crpix1': 1.0, 
+                                    'crpix3': 1.0, 'crval3': 1, 'cdelt1': 0.5},
+                'pointsource_err':np.ones((10,10,10), dtype=np.float32)*0.25,
+                'uniform_data':np.ones((10,), dtype=np.float32),
+                'uniform_data':np.ones((10,), dtype=np.float32)*0.25,
+                'uniform_wcs': {'crpix1': 1.0, 'cdelt1': 1, 'crval1': 1},
+                'shutters':1}
+    
+    pathlossmod.apertures.append(ref_data)
+
+    for aperture in pathlossmod.apertures:
+
+        (wavelength_pointsource, 
+        pathloss_pointsource_vector, 
+        is_inside_slitlet) = calculate_pathloss_vector(aperture.pointsource_data, 
+                                                        aperture.pointsource_wcs, 
+                                                        1, 2) 
+        (wavelength_uniformsource, 
+        pathloss_uniform_vector, 
+        dummy) = calculate_pathloss_vector(aperture.uniform_data, 
+                                           aperture.uniform_wcs, 
+                                           1, 2) 
+
+    wavelength_array = datmod.slits[0].wavelength
+    
+    pathloss_2d = interpolate_onto_grid(wavelength_array, 
+                                        wavelength_pointsource, 
+                                        pathloss_pointsource_vector)
+
+
+    pathloss_2d = interpolate_onto_grid(wavelength_array, 
+                                        wavelength_uniformsource, 
+                                        pathloss_uniform_vector) 
+
+    print(pathloss_2d)
