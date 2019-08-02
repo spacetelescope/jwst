@@ -17,6 +17,12 @@ ParsModelWithPar3 = datamodels.StepParsModel(t_path('data/step_parameters/jwst_g
 ParsModelWithPar3.parameters.instance.update({'par3': False})
 
 
+def test_noproperty_pars():
+    """Ensure that property parameters are excluded"""
+    pars = Step.pars
+    assert pars['input_dir'] is None
+
+
 def test_saving_pars(tmpdir):
     """Save the step parameters from the commandline"""
     cfg_path = t_path('data/step_parameters/jwst_generic_pars-makeliststep_0002.asdf')
