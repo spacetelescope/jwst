@@ -56,7 +56,7 @@ class Step():
 
     # No parameter model has been created yet.
     _pars_model = None
-    
+
     # Reference types for both command line override
     # definition and reference prefetch
     reference_file_types = []
