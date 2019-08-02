@@ -54,6 +54,9 @@ class Step():
     input_dir          = string(default=None)        # Input directory
     """
 
+    # No parameter model has been created yet.
+    _pars_model = None
+    
     # Reference types for both command line override
     # definition and reference prefetch
     reference_file_types = []
@@ -1144,7 +1147,9 @@ class Step():
         model: `StepParsModel`
             The `StepParsModel`.
         """
-        pars_model = getattr(step, '_pars_model', StepParsModel())
+        pars_model = step._pars_model
+        if pars_model is None:
+            pars_model = StepParsModel()
         pars_model.parameters.instance.update(step.pars)
         step._pars_model = pars_model
         return pars_model
