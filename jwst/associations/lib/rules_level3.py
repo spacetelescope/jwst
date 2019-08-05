@@ -364,7 +364,8 @@ class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_BkgScience):
                     DMSAttrConstraint(
                         name='allowed_bkgdtarg',
                         sources=['exp_type'],
-                        value=['mir_mrs','nrs_ifu'],)
+                        value=['mir_mrs','nrs_ifu','mir_lrs-fixedslit',
+                               'nrs_fixedslit'],)
                 ],
             reduce=Constraint.any
                     ),
