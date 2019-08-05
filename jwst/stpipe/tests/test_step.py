@@ -13,8 +13,20 @@ from jwst.stpipe.config_parser import ValidationError
 from .steps import MakeListStep
 from .util import t_path
 
-ParsModelWithPar3 = datamodels.StepParsModel(t_path('data/step_parameters/jwst_generic_pars-makeliststep_0002.asdf'))
+ParsModelWithPar3 = datamodels.StepParsModel(t_path(join('steps','jwst_generic_pars-makeliststep_0002.asdf')))
 ParsModelWithPar3.parameters.instance.update({'par3': False})
+
+@pytest.mark.parametrize(
+    'cfg_file, expected',
+    [
+        ('local_class.cfg', 'TestLocallyInstalledStepClass'),
+        ('jwst_generic_pars-makeliststep_0002.asdf', 'jwst_generic_pars-makeliststep_0002'),
+    ]
+)
+def test_reftype(cfg_file, expected):
+    """Test that reftype is produce as expected"""
+    step = Step.from_config_file(t_path(join('steps', cfg_file)))
+    assert step.pars_model.meta.reftype == 'pars-' + expected.lower()
 
 
 def test_noproperty_pars():
@@ -25,7 +37,7 @@ def test_noproperty_pars():
 
 def test_saving_pars(tmpdir):
     """Save the step parameters from the commandline"""
-    cfg_path = t_path('data/step_parameters/jwst_generic_pars-makeliststep_0002.asdf')
+    cfg_path = t_path(join('steps', 'jwst_generic_pars-makeliststep_0002.asdf'))
     saved_path = tmpdir.join('savepars.asdf')
     Step.from_cmdline([
         cfg_path,
@@ -45,14 +57,20 @@ def test_saving_pars(tmpdir):
              {'parameters': {
                  'par1': 'float() # Control the frobulization',
                  'par2': 'string() # Reticulate the splines',
-                 'par3': False
+                 'par3': False,
+                 'class': 'jwst.stpipe.tests.steps.MakeListStep',
+                 'name': 'MakeListStep',
              }}
          )
         ),
         (MakeListStep(par1=0., par2='from args'),
-         datamodels.StepParsModel({'parameters': {'par1': 0., 'par2': 'from args', 'par3': False}})
+         datamodels.StepParsModel({'parameters': {
+             'par1': 0., 'par2': 'from args', 'par3': False,
+             'class': 'jwst.stpipe.tests.steps.MakeListStep',
+             'name': 'MakeListStep'
+         }})
         ),
-        (Step.from_config_file(t_path('data/step_parameters/jwst_generic_pars-makeliststep_0002.asdf')),
+        (Step.from_config_file(t_path(join('steps', 'jwst_generic_pars-makeliststep_0002.asdf'))),
          ParsModelWithPar3
         )
     ]

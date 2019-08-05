@@ -3,6 +3,7 @@ Step
 """
 from functools import partial
 import gc
+import inspect
 from os.path import (
     abspath,
     basename,
@@ -1151,6 +1152,15 @@ class Step():
         if pars_model is None:
             pars_model = StepParsModel()
         pars_model.parameters.instance.update(step.pars)
+
+        # Update class and name.
+        full_class_name = _full_class_name(step)
+        pars_model.parameters.instance.update({
+            'class': full_class_name,
+            'name': getattr(step, 'name', full_class_name.split('.')[-1])
+        })
+        pars_model.meta.reftype = 'pars-' + pars_model.parameters.name.lower()
+
         step._pars_model = pars_model
         return pars_model
 
@@ -1158,6 +1168,26 @@ class Step():
 # #########
 # Utilities
 # #########
+def _full_class_name(obj):
+    """Return the fully qualified class name
+
+    Parameters
+    ----------
+    obj: object
+        The object in question. Can be a class
+
+    Returns
+    class_name: str
+        The full name
+    """
+    cls = obj if inspect.isclass(obj) else obj.__class__
+    module = cls.__module__
+    if module is None or module == str.__class__.__module__:
+        return cls.__name__  # Avoid reporting __builtin__
+    else:
+        return module + '.' + cls.__name__
+
+
 def _get_suffix(suffix, step=None, default_suffix=None):
     """Retrieve either specified or pipeline-supplied suffix
 
