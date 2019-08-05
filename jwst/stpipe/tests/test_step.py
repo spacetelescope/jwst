@@ -10,6 +10,91 @@ from jwst import datamodels
 from jwst.stpipe import Step
 from jwst.stpipe.config_parser import ValidationError
 
+from .steps import MakeListStep
+from .util import t_path
+
+ParsModelWithPar3 = datamodels.StepParsModel(t_path(join('steps','jwst_generic_pars-makeliststep_0002.asdf')))
+ParsModelWithPar3.parameters.instance.update({'par3': False})
+
+@pytest.mark.parametrize(
+    'cfg_file, expected',
+    [
+        ('local_class.cfg', 'TestLocallyInstalledStepClass'),
+        ('jwst_generic_pars-makeliststep_0002.asdf', 'jwst_generic_pars-makeliststep_0002'),
+    ]
+)
+def test_reftype(cfg_file, expected):
+    """Test that reftype is produce as expected"""
+    step = Step.from_config_file(t_path(join('steps', cfg_file)))
+    assert step.pars_model.meta.reftype == 'pars-' + expected.lower()
+
+
+def test_noproperty_pars():
+    """Ensure that property parameters are excluded"""
+    pars = Step.pars
+    assert pars['input_dir'] is None
+
+
+def test_saving_pars(tmpdir):
+    """Save the step parameters from the commandline"""
+    cfg_path = t_path(join('steps', 'jwst_generic_pars-makeliststep_0002.asdf'))
+    saved_path = tmpdir.join('savepars.asdf')
+    Step.from_cmdline([
+        cfg_path,
+        '--save-parameters',
+        str(saved_path)
+    ])
+    assert saved_path.check()
+    saved = datamodels.StepParsModel(str(saved_path))
+    assert saved.parameters == ParsModelWithPar3.parameters
+
+
+@pytest.mark.parametrize(
+    'step_obj, expected',
+    [
+        (MakeListStep,
+         datamodels.StepParsModel(
+             {'parameters': {
+                 'par1': 'float() # Control the frobulization',
+                 'par2': 'string() # Reticulate the splines',
+                 'par3': False,
+                 'class': 'jwst.stpipe.tests.steps.MakeListStep',
+                 'name': 'MakeListStep',
+             }}
+         )
+        ),
+        (MakeListStep(par1=0., par2='from args'),
+         datamodels.StepParsModel({'parameters': {
+             'par1': 0., 'par2': 'from args', 'par3': False,
+             'class': 'jwst.stpipe.tests.steps.MakeListStep',
+             'name': 'MakeListStep'
+         }})
+        ),
+        (Step.from_config_file(t_path(join('steps', 'jwst_generic_pars-makeliststep_0002.asdf'))),
+         ParsModelWithPar3
+        )
+    ]
+)
+def test_getpars_model(step_obj, expected):
+    """Test retreiving of configuration parameters"""
+    assert step_obj.pars_model.parameters == expected.parameters
+
+
+@pytest.mark.parametrize(
+    'step_obj, expected',
+    [
+        (MakeListStep, {
+            'par1': 'float() # Control the frobulization',
+            'par2': 'string() # Reticulate the splines',
+            'par3': False
+        }),
+        (MakeListStep(par1=0., par2='from args'), {'par1': 0., 'par2': 'from args', 'par3': False}),
+    ]
+)
+def test_getpars(step_obj, expected):
+    """Test retreiving of configuration parameters"""
+    assert step_obj.pars == expected
+
 
 def test_hook():
     """Test the running of hooks"""

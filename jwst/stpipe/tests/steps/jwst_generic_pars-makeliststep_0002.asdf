@@ -25,6 +25,7 @@ meta:
   useafter: '1990-04-24T00:00:00'
 parameters:
   class: jwst.stpipe.tests.steps.MakeListStep
+  name: jwst_generic_pars-makeliststep_0002
   par1: 42.0
   par2: 'Yes, a string'
 ...

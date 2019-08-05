@@ -43,9 +43,6 @@ class MakeListStep(Step):
     par2 = string() # Reticulate the splines
 
     par3 = boolean(default=False) # Does it blend?
-
-    [foo]
-
     """
 
     def process(self, a=None, b=None):
