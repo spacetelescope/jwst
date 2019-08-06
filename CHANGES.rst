@@ -11,6 +11,10 @@ assign_wcs
 
 - This step populates keyword DISPAXIS. [#3799]
 
+- For NIRISS WFSS data, the wavelengths were incorrect because the function
+  for horizontally oriented spectra was called for GR150R, and the function
+  for vertically oriented spectra was called for GR150C. [#3891]
+
 
 associations
 ------------
