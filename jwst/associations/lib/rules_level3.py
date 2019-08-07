@@ -352,21 +352,22 @@ class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_BkgScience):
             ),
             Constraint(
                 [
-                DMSAttrConstraint(
-                name='bkgdtarg',
-                sources=['bkgdtarg'],
-                value=['T'],)
-                    ],
-                    reduce=Constraint.any
-                    ),
+                    DMSAttrConstraint(
+                        name='bkgdtarg',
+                        sources=['bkgdtarg'],
+                        value=['T'],)
+                ],
+                reduce=Constraint.any
+                                    ),
             Constraint(
                 [
-                DMSAttrConstraint(
-                name='mir_bkgdtarg',
-                sources=['exp_type'],
-                value=['mir_mrs'],)
-                    ],
-                    reduce=Constraint.any
+                    DMSAttrConstraint(
+                        name='allowed_bkgdtarg',
+                        sources=['exp_type'],
+                        value=['mir_mrs','nrs_ifu','mir_lrs-fixedslit',
+                               'nrs_fixedslit'],)
+                ],
+            reduce=Constraint.any
                     ),
                 ])
 
