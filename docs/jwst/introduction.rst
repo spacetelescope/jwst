@@ -433,6 +433,7 @@ logging level designations of ``DEBUG``, ``INFO``, ``WARNING``, ``ERROR``, and
 ``CRITICAL``. Only messages at or above the specified level
 will be displayed.
 
+.. _`Configuration Files`:
 
 Configuration Files
 ===================
