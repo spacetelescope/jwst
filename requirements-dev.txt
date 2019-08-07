@@ -1,4 +1,4 @@
-git+https://github.com/numpy/numpy#egg=numpy
+# git+https://github.com/numpy/numpy#egg=numpy
 git+https://github.com/astropy/astropy#a8f496b2#egg=astropy
 git+https://github.com/spacetelescope/asdf#egg=asdf
 git+https://github.com/spacetelescope/gwcs#3e2bc108e#egg=gwcs
