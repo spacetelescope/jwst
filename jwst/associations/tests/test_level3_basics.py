@@ -47,9 +47,11 @@ def test_targacq(pool_file):
     asns = generate(pool, rules)
     assert len(asns) > 0
     for asn in asns:
-        for product in asn['products']:
-            exptypes = [
-                member['exptype'].lower()
-                for member in product['members']
-            ]
-            assert 'target_acquisition' in exptypes
+        # Ignore reprocessed asn's with only science
+        if asn['asn_rule'] != "Asn_Lv3SpecAux":
+            for product in asn['products']:
+                exptypes = [
+                    member['exptype'].lower()
+                    for member in product['members']
+                    ]
+                assert 'target_acquisition' in exptypes

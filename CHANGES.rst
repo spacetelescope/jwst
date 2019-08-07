@@ -15,6 +15,8 @@ assign_wcs
 associations
 ------------
 
+- Update rules to have NRS_IFU backgrounds in science associations [#3824]
+
 - Return filename with extensions based on file type [#2671]
 
 - Ensured that all target acqs are processed by Level 2 [#3765]
