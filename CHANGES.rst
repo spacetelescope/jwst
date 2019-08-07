@@ -1,3 +1,27 @@
+0.13.8 (2019-08-29)
+===================
+
+assign_wcs
+----------
+
+- For NIRISS WFSS data, the wavelengths were incorrect because the function
+  for horizontally oriented spectra was called for GR150R, and the function
+  for vertically oriented spectra was called for GR150C. [#3891]
+
+
+associations
+------------
+
+- Update rules to have NRS_IFU backgrounds in science associations [#3824]
+
+- Return filename with extensions based on file type [#2671]
+
+- Ensured that all target acqs are processed by Level 2 [#3765]
+
+- Add a check that backgrounds are included in level 3 associations [#3678]
+
+- Will not constrain on uniqueness of the MSACONFIG keyword [#3770]
+
 0.13.7 (2019-06-21)
 ===================
 
