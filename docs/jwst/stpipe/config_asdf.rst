@@ -37,7 +37,7 @@ contains all the parameters to pass onto the step. All parameters should be
 indented. The amount of indentation does not matter, as long as they are all
 indented equally.
 
-See `Running a Step from a configuration file`_ for a full discussion of required and optional parameters that will be found in the ``parameters`` block.
+See :ref:`Running a Step from a configuration file<running_a_step_from_a_configuration_file>` for a full discussion of required and optional parameters that will be found in the ``parameters`` block.
 
 Configuration as Reference File
 -------------------------------

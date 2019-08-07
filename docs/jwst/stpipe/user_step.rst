@@ -15,6 +15,8 @@ Steps can be configured by either:
     - Writing a configuration file
     - Instantiating the Step directly from Python
 
+.. _running_a_step_from_a_configuration_file:
+
 Running a Step from a configuration file
 ========================================
 
