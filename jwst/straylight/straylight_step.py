@@ -14,8 +14,8 @@ class StraylightStep (Step):
 
     spec = """
          method = option('Nearest','ModShepard',default='ModShepard') #Algorithm method
-         roi = integer(default = 50) # Region of interest (even integer 2 to 1024) 
-         power = float(default = 1.0) # Power of weighting function (0.1 to 5) 
+         roi = integer(default = 50) # Region of interest 
+         power = float(default = 1.0) # Power of weighting function 
 
     """
 
