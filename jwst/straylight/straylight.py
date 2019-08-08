@@ -104,9 +104,6 @@ def correct_mrs(input_model, slice_map):
 
             #find the x locations of the slice gaps
             xuse = x[np.where(row_mask == 1)]
-            #if(j ==1):
-            #    print 'row ',j+1,yuse.shape,yuse
-            #    print 'xuse',xuse,xuse.shape,type(xuse)
 
             #find data in same gap area
             nn = len(xuse)
@@ -219,6 +216,7 @@ def correct_mrs_modshepard(input_model, slice_map, roi, power):
 
     # kernel matrix
     w = shepard_2d_kernel(roi, power)
+
     # mask is same size as slice_map - set = 0 everywhere
     mask = np.zeros_like(slice_map)
     # mask = 1 for slice gaps
@@ -226,27 +224,32 @@ def correct_mrs_modshepard(input_model, slice_map, roi, power):
 
     # find if any of the gap pixels are bad pixels - if so mark them
     mask_dq = input_model.dq.copy()
-    all_flags = (dqflags.pixel['DEAD'] + dqflags.pixel['HOT'])
+#    all_flags = (dqflags.pixel['DEAD'] + dqflags.pixel['HOT'])
+#    testflags = np.bitwise_and(mask_dq, all_flags)
     # where are pixels set to any one of the all_flags cases
-    testflags = np.bitwise_and(mask_dq, all_flags)
+    testflags = np.bitwise_and(mask_dq, dqflags.pixel['DO_NOT_USE'])
+
     # where are testflags ne 0 and mask == 1
     bad_flags = np.where((testflags != 0) & (mask == 1))
     mask[bad_flags] = 0
 
+    # find location of refpixels
+    refpixel = np.bitwise_and(mask_dq, dqflags.pixel['REFERENCE_PIXEL'])
+    index_refpixel = np.where(refpixel != 0)
+
     # apply mask to the data
     image_gap = output.data * mask
 
-    #avoid cosmic ray contamination
-    # only using the science data for this cosmic ray test
+    # avoid cosmic ray contamination. This check is used to screen out
+    # undetected cosmic rays. Only use the science data for this cosmic ray test.
     cosmic_ray_test = 0.02 * np.max(output.data[slice_map > 0])
     image_gap[image_gap > cosmic_ray_test] = 0
 
     image_gap[image_gap < 0] = 0   #set pixels less than zero to 0
     image_gap = convolve(image_gap, Box2DKernel(3))   #smooth gap pixels
-    image_gap *= mask   #reset science pixels to 0
+    image_gap *= mask   # reset science pixels to 0
     #we not not want the reference pixels to be used in the convolution
-    image_gap[:,1028:1032] = 0.0
-    image_gap[:,0:4] = 0.0
+    image_gap[index_refpixel] = 0.0
 
     #convolve gap pixel image with weight kernel
     astropy_conv = convolve(image_gap, w)
@@ -256,8 +259,7 @@ def correct_mrs_modshepard(input_model, slice_map, roi, power):
     astropy_conv /= norm_conv
 
     # remove the straylight correction for the reference pixels
-    astropy_conv[:,1028:1032] = 0.0
-    astropy_conv[:,0:4] = 0.0
+    astropy_conv[index_refpixel] = 0.0
     output.data = output.data - astropy_conv
 
     return output
@@ -280,12 +282,11 @@ def shepard_2d_kernel(roi, power):
     half_roi = roi / 2.0
     xk, yk = np.meshgrid(np.arange(-half_roi, half_roi + 1),
                          np.arange(-half_roi, half_roi + 1))
+
     d = np.sqrt(xk**2 + yk**2)
     dtol = np.where(d < distance_tolerance)
     d[dtol] = distance_tolerance
 
-#    print('number < tolerance',dtol[0])
     w = (np.maximum(0, roi - d) / (roi * d))**power
-    w[d == 0] = 0
 
     return w

@@ -14,8 +14,8 @@ class StraylightStep (Step):
 
     spec = """
          method = option('Nearest','ModShepard',default='ModShepard') #Algorithm method
-         roi = float(default = 50.0) # Region of interest
-         power = float(default = 1.0) # Power of weighting function
+         roi = integer(default = 50) # Region of interest (even integer 2 to 1024) 
+         power = float(default = 1.0) # Power of weighting function (0.1 to 5) 
 
     """
 
@@ -34,6 +34,34 @@ class StraylightStep (Step):
                                                                'regions')
                 self.log.info('Using regions reference file %s',
                               self.straylight_name)
+
+                # If Modified Shepard  test  input parameters for weighting
+                if self.method == 'ModShepard':
+                    #reasonable power varible defined as: 0.1 < power < 5
+                    if self.power < 0.1 or self.power > 5:
+                        self.log.error("The kernel power parameter is outside the reasonable range of"
+                                  " 0.1 to 5. It is set to {}".format(self.power))
+                        self.log.warning('Straylight step will be skipped')
+                        result = input_model.copy()
+                        result.meta.cal_step.straylight = 'SKIPPED'
+                        return result
+
+                    if self.roi < 2 or self.roi > 1024:
+                        self.log.error("The kernel roi parameter is outside the reasonable range of"
+                                  " 2 to 1024. It is set to {} ".format(self.roi))
+                        self.log.warning('Straylight step will be skipped')
+                        result = input_model.copy()
+                        result.meta.cal_step.straylight = 'SKIPPED'
+                        return result
+
+                    test = self.roi % 2 # test that ROI is an even number (so that the kernel will be odd integers in size)
+                    if test !=0 :
+                        self.log.error("The kernel roi parameter is odd value {}, must be even ".format(self.roi))
+                        self.log.warning('Straylight step will be skipped')
+                        result = input_model.copy()
+                        result.meta.cal_step.straylight = 'SKIPPED'
+                        return result
+
                 # Check for a valid reference file
                 if self.straylight_name == 'N/A':
                     self.log.warning('No REGIONS reference file found')
@@ -55,6 +83,7 @@ class StraylightStep (Step):
                     # Do the correction
                     self.log.info(' Modified Shepard weighting power %5.2f', self.power)
                     self.log.info(' Region of influence radius (pixels) %6.2f', self.roi)
+
                     result = straylight.correct_mrs_modshepard(input_model,
                                                                regions,
                                                                self.roi,
