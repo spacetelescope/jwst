@@ -216,7 +216,6 @@ def correct_mrs_modshepard(input_model, slice_map, roi, power):
 
     # kernel matrix
     w = shepard_2d_kernel(roi, power)
-
     # mask is same size as slice_map - set = 0 everywhere
     mask = np.zeros_like(slice_map)
     # mask = 1 for slice gaps
