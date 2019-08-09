@@ -14,8 +14,8 @@ class StraylightStep (Step):
 
     spec = """
          method = option('Nearest','ModShepard',default='ModShepard') #Algorithm method
-         roi = integer(default = 50) # Region of interest 
-         power = float(default = 1.0) # Power of weighting function 
+         roi = integer(default = 50) # Region of interest
+         power = float(default = 1.0) # Power of weighting function
 
     """
 
@@ -54,13 +54,15 @@ class StraylightStep (Step):
                         result.meta.cal_step.straylight = 'SKIPPED'
                         return result
 
-                    test = self.roi % 2 # test that ROI is an even number (so that the kernel will be odd integers in size)
+                    # test that ROI is an even number
+                    # so that the kernel will be odd rows,columns in size
+                    test = self.roi % 2
                     if test !=0 :
-                        self.log.error("The kernel roi parameter is odd value {}, must be even ".format(self.roi))
-                        self.log.warning('Straylight step will be skipped')
-                        result = input_model.copy()
-                        result.meta.cal_step.straylight = 'SKIPPED'
-                        return result
+                        self.log.info("The kernel roi parameter is odd value {}"
+                                      "must be even. Adding 1 to size ".format(self.roi))
+                        self.roi = self.roi + 1
+                        if self.roi  > 1024:
+                            self.roi = self.roi - 2
 
                 # Check for a valid reference file
                 if self.straylight_name == 'N/A':
