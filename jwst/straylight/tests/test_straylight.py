@@ -9,7 +9,6 @@ from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 import numpy as np
 
 
-
 def test_correct_mrs_modshepard():
     """ Test Correct Straylight routine gives expected results for small region """
 
@@ -125,28 +124,3 @@ def test_shepard_kernel2():
                          [1.07233047e-02, 3.88932023e-02, 6.25000000e-02,
                           3.88932023e-02, 1.07233047e-02]])
     assert(np.allclose(wkernel, kcompare))
-
-
-def test_correct_detector():
-    image = IFUImageModel((20,20))
-    image.data = np.random.random((20,20))
-    image.meta.instrument.name  = 'MIRI'
-    image.meta.instrument.detector = 'MIRIFULONG'
-    image.data = np.random.random((50,50))
-    collect_pipeline_cfgs('./config')
-    result = StraylightStep.call(image,
-                                 config_file='config/straylight.cfg')
-    assert result.meta.cal_step.straylight == 'SKIPPED'
-    assert type(image) is type(result)
-
-
-def test_not_nirspec():
-    image = IFUImageModel((20,20))
-    image.data = np.random.random((20,20))
-    image.meta.instrument.name  = 'NIRSPEC'
-    image.meta.instrument.detector = 'NRS1'
-    collect_pipeline_cfgs('./config')
-    result = StraylightStep.call(image,
-                                 config_file='config/straylight.cfg')
-    assert result.meta.cal_step.straylight == 'SKIPPED'
-    assert type(image) is type(result)
