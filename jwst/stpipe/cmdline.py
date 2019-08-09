@@ -201,16 +201,13 @@ def just_the_step_from_cmdline(args, cls=None):
     try:
         if config_0.endswith('asdf'): # asdf config file
             config = config_parser.load_config_file(config_0)
-            class_name = config['class'].split('.')[2]
-            ref_type = 'pars-'+ class_name #  pars-TweakRegStep, 
-            ref_type = ref_type.split('Step')[0] #  pars-TweakReg; remove trailing 'Step' for now
-
+            ref_type = config.pars_model.meta.instance['reftype']
             input_model = datamodels.open(positional_0)
+            pars_model = Step.pars_model
             pars_step_ref_file = crds_client.get_reference_file( input_model, ref_type )
             step_model = datamodels.open( pars_step_ref_file )
-            step_parameters = step_model.instance
-            pars_model = Step.pars_model
-            full_params = pars_model.update( step_parameters)
+            step_parameters = step_model.instance['parameters']
+            full_pars_model = pars_model.update( step_parameters )
         elif cls is None: 
             step_class, config, name, config_file = \
                 _get_config_and_class(known.cfg_file_or_class[0])
