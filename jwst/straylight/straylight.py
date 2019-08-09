@@ -255,12 +255,16 @@ def correct_mrs_modshepard(input_model, slice_map, roi, power):
 
     #normalize straylight flux by weights
     norm_conv = convolve(mask, w)
+
+
     astropy_conv /= norm_conv
 
     # remove the straylight correction for the reference pixels
     astropy_conv[index_refpixel] = 0.0
     output.data = output.data - astropy_conv
 
+#    print(output.data[0,:])
+#    print('output',output.data)
     return output
 #______________________________________________________________________
 def shepard_2d_kernel(roi, power):
@@ -287,5 +291,4 @@ def shepard_2d_kernel(roi, power):
     d[dtol] = distance_tolerance
 
     w = (np.maximum(0, roi - d) / (roi * d))**power
-
     return w
