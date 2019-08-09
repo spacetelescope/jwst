@@ -3,6 +3,7 @@ Test the srctype step on exposures with various settings
 """
 from jwst import datamodels
 from jwst.srctype import srctype
+import pytest
 
 def test_background_target_set():
 
@@ -151,3 +152,40 @@ def test_tso_types():
     input.meta.visit.tsovisit = True
     output = srctype.set_source_type(input)
     assert output.meta.target.source_type == 'POINT'
+
+def test_nrs_msaspec():
+    """Test for when exposure type is NRS_MSASPEC
+    """
+    input = datamodels.MultiSlitModel()
+    input.meta.exposure.type = "NRS_MSASPEC"
+    
+    slits = [{'source_id':1, 'stellarity':0.9},
+             {'source_id':2, 'stellarity':-1},
+             {'source_id':3, 'stellarity':0.5}]
+    
+    for slit in slits:
+        input.slits.append(slit)
+
+    result = srctype.set_source_type(input)
+    
+    assert(result.slits[0].source_type == 'POINT')
+    assert(result.slits[1].source_type == 'UNKNOWN')
+    assert(result.slits[2].source_type == 'EXTENDED')
+
+def test_is_tso():
+    """ Test for when visit is tso.
+    """
+    input = datamodels.ImageModel((10,10))
+    input.meta.exposure.type = "FGS_DARK"
+    input.meta.visit.tsovisit = True
+    result = srctype.set_source_type(input)
+
+    assert(result.meta.target.source_type == "POINT")
+
+@pytest.mark.xfail
+def test_exptype_is_none():
+    """ Test for when exposure type is None.
+    """
+    input = datamodels.ImageModel((10,10))
+    input.meta.exposure.type = None
+    srctype.set_source_type(input)
