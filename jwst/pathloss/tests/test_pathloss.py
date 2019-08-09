@@ -299,7 +299,7 @@ def test_interpolate_onto_grid():
                                     'crpix3': 1.0, 'crval3': 1, 'cdelt1': 0.5},
                 'pointsource_err':np.ones((10,10,10), dtype=np.float32)*0.25,
                 'uniform_data':np.ones((10,), dtype=np.float32),
-                'uniform_data':np.ones((10,), dtype=np.float32)*0.25,
+                'uniform_err':np.ones((10,), dtype=np.float32)*0.25,
                 'uniform_wcs': {'crpix1': 1.0, 'cdelt1': 1, 'crval1': 1},
                 'shutters':1}
     
