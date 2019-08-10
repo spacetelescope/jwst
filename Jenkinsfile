@@ -1,5 +1,9 @@
 if (utils.scm_checkout()) return
 
+withCredentials([string(
+    credentialsId: 'jwst-codecov',
+    variable: 'codecov_token')]) {
+
 env_vars = [
     "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
     "CRDS_PATH=./crds_cache",
@@ -32,7 +36,8 @@ bc1.build_cmds = [
     "pip install -e .[test]",
 ]
 bc1.test_cmds = [
-    "pytest -r sx --junitxml=results.xml"
+    "pytest --cov=./ -r sx --junitxml=results.xml",
+    "codecov --token=${codecov_token}"
 ]
 
 // Generate conda-free build with python 3.7
@@ -44,7 +49,9 @@ bc2.build_cmds = [
     "pip install -e .[test]",
 ]
 bc2.test_cmds = [
-    "pytest -r sx --junitxml=results.xml"
+    "pytest --cov=./ -r sx --junitxml=results.xml",
+    "codecov --token=${codecov_token}"
 ]
 
 utils.run([bc0, bc1, bc2])
+}  // withCredentials
