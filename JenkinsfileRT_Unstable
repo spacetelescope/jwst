@@ -3,6 +3,9 @@ if (utils.scm_checkout(['skip_disable':true])) return
 
 def PipInject(String reqs) {
     def result = []
+    if (!reqs.trim().isEmpty()) {
+	return result
+    }
     for (req in reqs.split('\n')) {
         result += "pip install $req"
     }
