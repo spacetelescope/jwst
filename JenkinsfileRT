@@ -46,7 +46,7 @@ bc0.test_cmds = [
     "pytest -r sxf -n 15 --bigdata --slow \
     --basetemp=${pytest_basetemp}  --junit-xml=results.xml \
     --log-level=INFO \
-    jwst/tests_nightly/general"
+    jwst"
 ]
 bc0.test_configs = [data_config]
 
@@ -61,41 +61,4 @@ bc1.build_cmds = ["pip install -e .[test]"]
 bc1.test_cmds = []
 bc1.test_configs = []
 
-
-// Build and test with python 3.6 and unreleased dependencies
-bc2 = new BuildConfig()
-bc2.nodetype = 'jwst'
-bc2.name = 'dev-deps'
-bc2.env_vars = env_vars
-bc2.conda_ver = '4.6.14'
-bc2.conda_packages = [
-    "python=${python_version}",
-]
-bc2.build_cmds = [
-    "pip install -r requirements-dev.txt",
-    "pip install -e .[test]",
-    "pip install pytest-xdist",
-]
-bc2.test_cmds = [
-    "pytest -r sxf -n 15 --bigdata --slow \
-    --basetemp=${pytest_basetemp}  --junit-xml=results.xml \
-    --log-level=INFO \
-    jwst/tests_nightly/general"
-]
-bc2.test_configs = [data_config]
-
-
-// macos-specific buildconfig to cause the creation of counterparts to the linux
-// environment dumps. Packages in a mininmal conda environment differ by OS
-// which is why this is needed.
-bc3 = utils.copy(bc2)
-bc3.nodetype = 'macos'
-bc3.name = 'macos-dev-deps'
-bc3.build_cmds = [
-    "pip install -r requirements-dev.txt",
-    "pip install -e .[test]",
-]
-bc3.test_cmds = []
-bc3.test_configs = []
-
-utils.run([jobconfig, bc0, bc1, bc2, bc3])
+utils.run([jobconfig, bc0, bc1])
