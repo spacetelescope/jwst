@@ -47,11 +47,11 @@ bc0.conda_packages = [
     "python=${python_version}",
 ]
 bc0.build_cmds = [
-    PipInject(env.OVERRIDE_REQUIREMENTS),
     "pip install -r requirements-dev.txt",
     "pip install -e .[test]",
     "pip install pytest-xdist",
 ]
+bc0.build_cmds = PipInject(env.OVERRIDE_REQUIREMENTS) + bc0.build_cmds
 bc0.test_cmds = [
     "pytest -r sx -v -n 30 --bigdata --slow \
     --basetemp=${pytest_basetemp}  --junit-xml=results.xml \
@@ -68,10 +68,10 @@ bc1 = utils.copy(bc0)
 bc1.nodetype = 'macos'
 bc1.name = 'macos-unstable-deps'
 bc1.build_cmds = [
-    PipInject(env.OVERRIDE_REQUIREMENTS),
     "pip install -r requirements-dev.txt",
     "pip install -e .[test]",
 ]
+bc1.build_cmds = PipInject(env.OVERRIDE_REQUIREMENTS) + bc1.build_cmds
 bc1.test_cmds = []
 bc1.test_configs = []
 
