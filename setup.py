@@ -91,6 +91,8 @@ TESTS_REQUIRE = [
     'pytest-doctestplus',
     'requests_mock',
     'pytest-openfiles',
+    'pytest-cov',
+    'codecov',
 ]
 
 def get_transforms_data():

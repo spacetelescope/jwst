@@ -12,6 +12,10 @@ def PipInject(String reqs) {
     return result
 }
 
+withCredentials([string(
+    credentialsId: 'jwst-codecov',
+    variable: 'codecov_token')]) {
+
 jobconfig = new JobConfig()
 jobconfig.enable_env_publication = true
 jobconfig.publish_env_on_success_only = true
@@ -56,10 +60,11 @@ bc0.build_cmds = [
 ]
 bc0.build_cmds = PipInject(env.OVERRIDE_REQUIREMENTS) + bc0.build_cmds
 bc0.test_cmds = [
-    "pytest -r sx -v -n 30 --bigdata --slow \
+    "pytest --cov=./ -r sx -v -n 30 --bigdata --slow \
     --basetemp=${pytest_basetemp}  --junit-xml=results.xml \
     --log-level=INFO \
-    jwst"
+    jwst",
+    "codecov --token=${codecov_token}"
 ]
 bc0.test_configs = [data_config]
 
@@ -79,3 +84,4 @@ bc1.test_cmds = []
 bc1.test_configs = []
 
 utils.run([jobconfig, bc0, bc1])
+}  // withCredentials
