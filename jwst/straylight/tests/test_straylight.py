@@ -3,9 +3,7 @@ Unit tests for straylight correction
 """
 
 from jwst.datamodels import IFUImageModel
-from jwst.straylight import StraylightStep
 from jwst.straylight.straylight import correct_mrs_modshepard, shepard_2d_kernel
-from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 import numpy as np
 
 
