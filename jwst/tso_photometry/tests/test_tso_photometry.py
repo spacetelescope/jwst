@@ -130,6 +130,8 @@ def test_tso_phot_1():
     assert catalog.meta['detector'] == datamodel.meta.instrument.detector
     assert catalog.meta['channel'] == datamodel.meta.instrument.channel
     assert catalog.meta['target_name'] == datamodel.meta.target.catalog_name
+    assert math.isclose(catalog.meta['xcenter'], xcenter, abs_tol=0.01)
+    assert math.isclose(catalog.meta['ycenter'], ycenter, abs_tol=0.01)
 
     assert np.allclose(catalog['aperture_sum'], 1263.4778, rtol=1.e-7)
     assert np.allclose(catalog['aperture_sum_err'], 0., atol=1.e-7)
@@ -137,8 +139,11 @@ def test_tso_phot_1():
     assert np.allclose(catalog['annulus_sum'], 143.256627, rtol=1.e-7)
     assert np.allclose(catalog['annulus_sum_err'], 0., atol=1.e-7)
     assert np.allclose(catalog['annulus_mean'], background, rtol=1.e-7)
-    assert math.isclose(catalog.meta['xcenter'], xcenter, abs_tol=0.01)
-    assert math.isclose(catalog.meta['ycenter'], ycenter, abs_tol=0.01)
+
+    assert np.allclose(catalog['annulus_mean'], 0.8, rtol=1.e-6)
+    assert np.allclose(catalog['annulus_mean_err'], 0., rtol=1.e-7)
+    assert np.allclose(catalog['net_aperture_sum'], 1173., rtol=1.e-7)
+    assert np.allclose(catalog['net_aperture_sum_err'], 0., atol=1.e-7)
 
 
 def test_tso_phot_2():
@@ -169,10 +174,10 @@ def test_tso_phot_2():
     assert math.isclose(catalog.meta['xcenter'], xcenter, abs_tol=0.01)
     assert math.isclose(catalog.meta['ycenter'], ycenter, abs_tol=0.01)
 
-    assert np.allclose(catalog['aperture_sum_err'], 0., atol=1.e-7)
     assert np.allclose(catalog['aperture_sum'],
                        (value + background) * shape[-1] * shape[-2],
                        rtol=1.e-6)
+    assert np.allclose(catalog['aperture_sum_err'], 0., atol=1.e-7)
 
 
 def test_tso_phot_3():
@@ -199,9 +204,37 @@ def test_tso_phot_3():
     assert np.allclose(catalog['MJD'], int_times[slc], atol=1.e-8)
 
 
-print("xxx test 1")
+def test_tso_phot_4():
+
+    global shape, xcenter, ycenter
+
+    value = 17.
+    background = 0.8
+    radius = 5.
+    radius_inner = 8.
+    radius_outer = 11.
+    data = mk_data_array(shape, value, background, xcenter, ycenter, radius)
+    datamodel = datamodels.CubeModel(data)
+    set_meta(datamodel, sub64p=False)
+
+    int_times = include_int_times(datamodel)
+    # Modify the column of integration numbers so that they extend outside
+    # the range of integration numbers in the science data.  This shouldn't
+    # happen, i.e. this is to test an edge case.
+    int_start = datamodel.meta.exposure.integration_start
+    datamodel.int_times['integration_number'] += (2 * int_start)
+
+    catalog = tso_aperture_photometry(datamodel, xcenter, ycenter,
+                                      radius + 1., radius_inner,
+                                      radius_outer)
+
+    int_times = np.array([58704.63293, 58704.641845, 58704.65076,
+                          58704.65968, 58704.6686, 58704.677512,
+                          58704.686428])
+    assert np.allclose(catalog['MJD'], int_times, rtol=1.e-8)
+
+
 test_tso_phot_1()
-print("xxx test 2")
 test_tso_phot_2()
-print("xxx test 3")
 test_tso_phot_3()
+test_tso_phot_4()
