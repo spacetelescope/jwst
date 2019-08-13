@@ -91,10 +91,10 @@ def test_get_aper_from_model_msa():
     """
 
     datmod = PathlossModel()
-    datmod.apertures.append({'shutters':1})
+    datmod.apertures.append({'shutters':5})
     datmod.meta.exposure.type = 'NRS_MSASPEC'
 
-    result = get_aperture_from_model(datmod, 1)
+    result = get_aperture_from_model(datmod, 5)
 
     assert(result == datmod.apertures[0])
 
@@ -121,7 +121,7 @@ def test_calculate_pathloss_vector_pointsource_data():
     # Where i is the iteration of np.arange(wavesize) which is the 1st dimension of the pointsource
     # data array.
     wavelength_comparison = np.array([1 + (float(i+1) - 1.0)*1 for i in np.arange(10)])
-    assert(np.all(wavelength==wavelength_comparison))
+    assert(np.allclose(wavelength,wavelength_comparison))
 
     # pathloss vector gets assigned at beginning of calculate_pathloss_vector and in this
     # case, doesnt change (np.zeros(wavesize, dtype=np.float32))
