@@ -404,10 +404,6 @@ of the stpipe-log.cfg file is:
     handler = file:pipeline.log
     level = INFO
 
-which specifies that all log messages will be directed to a file called
-"pipeline.log" and messages at a severity level of INFO and above will be
-recorded.
-
 If there's no ``stpipe-log.cfg`` file in the working directory, which specifies
 how to handle process log information, the default is to display log messages
 to stdout. If you want log information saved to a file, you can specify the
@@ -433,6 +429,14 @@ logging level designations of ``DEBUG``, ``INFO``, ``WARNING``, ``ERROR``, and
 ``CRITICAL``. Only messages at or above the specified level
 will be displayed.
 
+.. note::
+
+   Setting up ``stpipe-log.cfg`` can lead to confusion, especially if it is
+   forgotten about. If one has not run a pipeline in awhile, and then sees no
+   logging information, most likely it is because ``stpipe-log.cfg`` is
+   present. Consider using a different name and specifying it explicitly on the
+   command line.
+
 .. _`Configuration Files`:
 
 Configuration Files
@@ -446,9 +450,8 @@ overridden either by the command line options, as previously described, and by a
 local configuration file.
 
 A configuration file should be used when there are parameters a user wishes to
-change from the default/CRDS version, but will not be changed on every run of
-the step. To create a configuration file with the default
-values, use the command: ::
+change from the default/CRDS version for a custom run of the step. To create a
+configuration file with the default values, use the command: ::
 
  strun <step.class> --save-parameters <filename.asdf>
 

@@ -30,9 +30,9 @@ format. Refer to the :ref:`minimal example<asdf_minimal_file>` for a complete
 description of the contents. The rest of this documented will focus on the step
 parameters themselves.
 
-All step parameters appear under the ``parameters:`` section and indented. The
-amount of indentation does not matter, as long as all parameters are indented
-equally.
+All step parameters appear under the ``parameters:`` section, and they must be
+indented. The amount of indentation does not matter, as long as all parameters
+are indented equally.
 
 Every step configuration file must contain the parameter ``class``, followed by
 the optional ``name`` followed by any parameters that are specific to the step

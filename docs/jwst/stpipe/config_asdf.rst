@@ -67,7 +67,7 @@ configuration file. A basic reference configuration will look as follows:
       class: jwst.stpipe.tests.steps.MakeListStep
    ...
 
-All of the keys found under ``meta`` are required, most of which are
+All of the keys under ``meta`` are required, most of which are
 self-explanatory. For more information, refer to the `CRDS documentation
 <https://jwst-crds.stsci.edu/static/users_guide/>`_.
 
