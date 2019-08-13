@@ -14,6 +14,9 @@ required for running the calibration step.  Note that for some Steps the
 reference file types actually used vary so the minimal list of required types
 may not be known if no science data is defined.
 
+Note that the ``Step`` parameter reference files do not need to be specified.
+These are automatically requested in the ``Step`` architecture.
+
 CRDS Prefetch
 -------------
 
