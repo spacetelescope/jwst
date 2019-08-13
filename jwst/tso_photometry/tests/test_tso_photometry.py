@@ -232,9 +232,3 @@ def test_tso_phot_4():
                           58704.65968, 58704.6686, 58704.677512,
                           58704.686428])
     assert np.allclose(catalog['MJD'], int_times, rtol=1.e-8)
-
-
-test_tso_phot_1()
-test_tso_phot_2()
-test_tso_phot_3()
-test_tso_phot_4()
