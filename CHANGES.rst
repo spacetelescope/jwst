@@ -123,6 +123,11 @@ stpipe
 
 - Fix ``Step.print_configspec()`` method.  Add test.  [#3768]
 
+tso_photometry
+--------------
+
+- Unit tests were added to tso_photometry. [#3909]
+
 tweakreg
 --------
 
