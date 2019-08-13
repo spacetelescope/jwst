@@ -55,7 +55,7 @@ bc0.conda_packages = [
 ]
 bc0.build_cmds = [
     "pip install -r requirements-dev.txt",
-    "pip install -e .[test]",
+    "pip install -e .[test,ephem]",
     "pip install pytest-xdist",
 ]
 bc0.build_cmds = PipInject(env.OVERRIDE_REQUIREMENTS) + bc0.build_cmds
