@@ -78,6 +78,7 @@ def set_meta(datamodel, sub64p=False):
 
 
 def include_int_times(datamodel):
+    """Create an int_times table and copy it into the data model."""
 
     int_start = datamodel.meta.exposure.integration_start
 
