@@ -158,16 +158,16 @@ def test_nrs_msaspec():
     """
     input = datamodels.MultiSlitModel()
     input.meta.exposure.type = "NRS_MSASPEC"
-    
+
     slits = [{'source_id':1, 'stellarity':0.9},
              {'source_id':2, 'stellarity':-1},
              {'source_id':3, 'stellarity':0.5}]
-    
+
     for slit in slits:
         input.slits.append(slit)
 
     result = srctype.set_source_type(input)
-    
+
     assert(result.slits[0].source_type == 'POINT')
     assert(result.slits[1].source_type == 'UNKNOWN')
     assert(result.slits[2].source_type == 'EXTENDED')
