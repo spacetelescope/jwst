@@ -487,6 +487,10 @@ class InstrumentInfo():
         self.high_power.append(power)
         self.high_softrad.append(softrad)
 
+    def SetXSliceLimits(self, x1, x2, parameter1):
+        self.Info[parameter1]['xstart'] = x1
+        self.Info[parameter1]['xend'] = x2
+
     def SetSpatialSize(self, value, parameter1, parameter2=None):
         if parameter2 is None:
             self.Info[parameter1]['ascale'] = value

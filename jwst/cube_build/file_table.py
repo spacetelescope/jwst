@@ -76,9 +76,7 @@ class FileTable():
         Returns
         -------
         MasterTable filled in with files needed
-        num: number of files to create cube from
-        detector
-
+        instrument name
         """
         num = 0
         num = len(input_filenames)
@@ -94,7 +92,7 @@ class FileTable():
 
             with datamodels.IFUImageModel(input) as input_model:
 
-                detector = input_model.meta.instrument.detector
+                #detector = input_model.meta.instrument.detector
                 instrument = input_model.meta.instrument.name.upper()
 
                 assign_wcs = input_model.meta.cal_step.assign_wcs
@@ -120,7 +118,8 @@ class FileTable():
                 else:
 
                     log.info('Instrument not valid for cube')
-        return instrument, detector
+#        return instrument, detector
+        return instrument
 
 
 class ErrorNoAssignWCS(Exception):

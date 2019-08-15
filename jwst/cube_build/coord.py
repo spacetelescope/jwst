@@ -46,11 +46,12 @@ def radec2std(crval1, crval2, ra, dec):
            np.cos(decr) * math.sin(dec0) * np.cos(radiff)) / h
 
     xi = xi * rad2arcsec
+
 # xi is made negative so it increases in the opposite direction
 # of ra to match the images the Parity of the ifu_cube.
     xi = -xi
-
     eta = eta * rad2arcsec
+
     return xi, eta
 # ________________________________________________________________________________
 
