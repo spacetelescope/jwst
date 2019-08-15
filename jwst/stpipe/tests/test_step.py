@@ -7,14 +7,41 @@ from os.path import (
 import pytest
 
 from jwst import datamodels
+from jwst.refpix import RefPixStep
 from jwst.stpipe import Step
 from jwst.stpipe.config_parser import ValidationError
+from jwst.stpipe import crds_client
 
 from .steps import MakeListStep
 from .util import t_path
 
 ParsModelWithPar3 = datamodels.StepParsModel(t_path(join('steps','jwst_generic_pars-makeliststep_0002.asdf')))
 ParsModelWithPar3.parameters.instance.update({'par3': False})
+
+REFPIXSTEP_CRDS_MIRI_PARS = {
+    'class': 'jwst.refpix.refpix_step.RefPixStep',
+    'name': 'refpix',
+    'odd_even_columns': False,
+    'odd_even_rows': False,
+    'side_gain': 10.0,
+    'side_smoothing_length': 21,
+    'use_side_ref_pixels': False
+}
+
+def test_parameters_from_crds():
+    """Test retrieval of parameters from CRDS"""
+    data = datamodels.open(t_path(join('data', 'miri_data.fits')))
+    pars = crds_client.get_parameters_from_reference(RefPixStep, data)
+    assert pars == REFPIXSTEP_CRDS_MIRI_PARS
+
+
+def test_parameters_from_crds_fail():
+    """Test retrieval of parameters from CRDS"""
+    data = datamodels.open(t_path(join('data', 'miri_data.fits')))
+    data.meta.instrument.name = 'NIRSPEC'
+    pars = crds_client.get_parameters_from_reference(RefPixStep, data)
+    assert not len(pars)
+
 
 @pytest.mark.parametrize(
     'cfg_file, expected',
