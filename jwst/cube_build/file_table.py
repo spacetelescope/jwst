@@ -116,9 +116,8 @@ class FileTable():
 
                     self.FileMap['NIRSPEC'][gwa][fwa].append(input_model)
                 else:
-
-                    log.info('Instrument not valid for cube')
-#        return instrument, detector
+                    pass
+#                    log.info('Instrument not valid for cube')
         return instrument
 
 
