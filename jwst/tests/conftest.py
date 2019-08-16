@@ -9,6 +9,7 @@ from ci_watson.artifactory_helpers import (
     get_bigdata_root,
     get_bigdata,
     generate_upload_schema,
+    BigdataError
 )
 
 
@@ -51,7 +52,9 @@ def generate_artifactory_json(request, artifactory_repos):
         build_tag = os.environ.get('BUILD_TAG', user_tag)
         build_matrix_suffix = os.environ.get('BUILD_MATRIX_SUFFIX', '0')
         subdir = '{}_{}_{}'.format(TODAYS_DATE, build_tag, build_matrix_suffix)
-        results_path = os.path.join(results_root, subdir, request.node.originalname) + os.sep
+        testname = request.node.originalname or request.node.name
+        results_path = os.path.join(results_root, subdir, testname) + os.sep
+        cwd = os.path.abspath(os.path.curdir)
 
         generate_upload_schema(schema_pattern, results_path, request.node.name)
 
@@ -65,8 +68,6 @@ def generate_artifactory_json(request, artifactory_repos):
                 if name == 'output':
                     schema_pattern.append(os.path.abspath(pattern))
             _func(schema_pattern)
-
-
 
 
 @pytest.fixture(scope="module")
@@ -84,41 +85,57 @@ def jail(request, tmpdir_factory):
     os.chdir(old_dir)
 
 
-@pytest.fixture(scope="session")
-def update_local_bigdata_from_artifactory(artifactory_repos):
-    """Update files in locally-defined TEST_BIGDATA from Artifactory source"""
-    inputs_root, _ = artifactory_repos
-    params = {'name': "*.*", 'repos': inputs_root}
-    search_url = os.path.join(get_bigdata_root(), 'api/search/artifact')
-    with requests.get(search_url, params=params) as r:
-        artifacts = [a['uri'] for a in r.json()['results']]
-    paths = [urlparse(a).path.replace('/artifactory/api/storage/' + inputs_root + '/', '') for a in artifacts]
-    local_paths = [os.path.join(_bigdata, path) for path in paths]
+class RegtestData:
+    """Defines data paths on Artifactory and data retrieval methods"""
 
-
-class RemoteResource:
-    """Defines resource paths on Artifactory and data retrieval methods"""
-
-    def __init__(self, input=None, output=None, truth=None, env=None,
-        bigdata_root=None, inputs_root=None):
-        self._input = input
-        self._output = output
-        self._truth = truth
+    def __init__(self, env="dev", inputs_root="jwst-pipeline",
+        results_root="jwst-pipeline-results", docopy=True):
         self._env = env
-        self._bigdata_root = bigdata_root
         self._inputs_root = inputs_root
+        self._results_root = results_root
+
+        self.docopy = docopy
+
+        self._input_remote = None
+        self._truth_remote = None
+        self._input = None
+        self._truth = None
+        self._output = None
+        self._bigdata_root = get_bigdata_root()
+
+    @property
+    def input_remote(self):
+        if self._input_remote is not None:
+            return os.path.join(*self._input_remote)
+        else:
+            return None
+
+    @input_remote.setter
+    def input_remote(self, value):
+        self._input_remote = value.split(os.sep)
+
+    @property
+    def truth_remote(self):
+        if self._truth_remote is not None:
+            return os.path.join(*self._truth_remote)
+        else:
+            return None
+
+    @truth_remote.setter
+    def truth_remote(self, value):
+        try:
+            dirname = os.path.dirname(os.path.join(*self._input_remote))
+            self._truth_remote = os.path.join(dirname, 'truth', value)
+        except TypeError as e:
+            raise RuntimeError("Define self.input_remote first") from e
 
     @property
     def input(self):
         return self._input
 
-    @input.setter
-    def input(self, value):
-        self._input = value
-
     @property
-    def repo_path(self):
-        return [self._inputs_root, self._env, self.input_loc]
+    def truth(self):
+        return self._truth
 
     @property
     def output(self):
@@ -126,18 +143,48 @@ class RemoteResource:
 
     @output.setter
     def output(self, value):
-        self._output = value
+        self._output = os.path.abspath(value)
+
 
     @property
-    def truth(self):
-        return self._truth
+    def bigdata_root(self):
+        return self._bigdata_root
 
-    @truth.setter
-    def truth(self, value):
-        self._truth = value
+    @bigdata_root.setter
+    def bigdata_root(self, value):
+        return NotImplementedError("Set TEST_BIGDATA environment variable "
+            "to change this value.")
 
+    # The methods
     def get_data(self, path):
-        return NotImplementedError
+        """Copy data from Artifactory remote resource to the CWD
+
+        Updates self.input on completion
+        """
+        local_path = get_bigdata(self._inputs_root, self._env,
+            *path.split(os.sep), docopy=self.docopy)
+        self._input = local_path
+        return local_path
+
+    def get_truth(self, path=None):
+        """Copy truth data from Artifactory remote resource to the CWD/truth
+
+        Updates self.truth on completion
+        """
+        if path is None:
+            pass
+        else:
+            os.makedirs('truth', exist_ok=True)
+            os.chdir('truth')
+            try:
+                local_truth = get_bigdata(self._inputs_root, self._env,
+                    *path.split(os.sep), docopy=self.docopy)
+            except BigdataError:
+                os.chdir('..')
+                raise
+            os.chdir('..')
+            self._truth = local_truth
+            return local_truth
 
     def get_association(self, asn):
         return NotImplementedError
@@ -152,13 +199,31 @@ class RemoteResource:
         return NotImplementedError
 
 
-@pytest.fixture(scope="function")
-def resource(artifactory_repos, envopt):
+@pytest.fixture(scope='module')
+def rtdata_module(artifactory_repos, envopt):
     """Provides the RemoteResource class"""
-    bigdata_root = get_bigdata_root()
     inputs_root, results_root = artifactory_repos
-    env = envopt
-    resource = RemoteResource(bigdata_root=bigdata_root, env=env,
-        inputs_root=inputs_root)
+    resource = RegtestData(env=envopt, inputs_root=inputs_root,
+        results_root=results_root)
 
     return resource
+
+
+@pytest.fixture(scope='function')
+def rtdata(artifactory_repos, envopt):
+    """Provides the RemoteResource class"""
+    inputs_root, results_root = artifactory_repos
+    resource = RegtestData(env=envopt, inputs_root=inputs_root,
+        results_root=results_root)
+
+    return resource
+
+
+@pytest.fixture
+def fitsdiff_defaults():
+    return dict(
+        ignore_hdus=['ASDF'],
+        ignore_keywords=['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
+        rtol=0.00001,
+        atol=0.0000001,
+    )
