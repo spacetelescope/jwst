@@ -271,14 +271,11 @@ class CubeBuildStep (Step):
 # cubeinfo.setup:
 # read in all the input files, information from cube_pars, read in input data
 # and fill in master_table holding what files are associationed with each
-# ch/sub-ch or grating/filter. Also the footprint on the sky and wavelength range
-# of each file is stored in file_map.
-# Fill in all_channel, all_subchannel,all_filter, all_grating, instrument and
-# detector
+# ch/sub-ch or grating/filter.
+# Fill in all_channel, all_subchannel,all_filter, all_grating and instrument
 
         result = cubeinfo.setup()
         instrument = result['instrument']
-        detector = result['detector']
         instrument_info = result['instrument_info']
         master_table = result['master_table']
 # ________________________________________________________________________________
@@ -307,7 +304,6 @@ class CubeBuildStep (Step):
                 self.output_name_base,
                 self.output_type,
                 instrument,
-                detector,
                 list_par1,
                 list_par2,
                 instrument_info,
@@ -382,7 +378,7 @@ class CubeBuildStep (Step):
                      'g395m', 'g395h', 'prism', 'all']
 # ________________________________________________________________________________
 # For MIRI we can set the channel.
-# If channel is  set to 'all' then let the DetermineCubeCoverage figure out
+# If channel is  set to 'all' then let the determine_band_coverage figure out
 # which channels are covered by the data.
         if self.channel == 'all':
             self.channel = ''
@@ -407,7 +403,7 @@ class CubeBuildStep (Step):
             self.pars_input['channel'] = list(set(self.pars_input['channel']))
 # ________________________________________________________________________________
 # For MIRI we can set the subchannel
-# if set to all then let the DetermineCubeCoverage figure out what subchannels
+# if set to all then let the determine_band_coverage figure out what subchannels
 # are covered by the data
 
         if self.subchannel == 'all':
@@ -432,7 +428,7 @@ class CubeBuildStep (Step):
             self.pars_input['subchannel'] = list(set(self.pars_input['subchannel']))
 # ________________________________________________________________________________
 # For NIRSPEC we can set the filter
-# If set to all then let the DetermineCubeCoverage figure out what filters are
+# If set to all then let the determine_band_coverage figure out what filters are
 # covered by the data.
 
         if self.filter == 'all':
@@ -456,7 +452,7 @@ class CubeBuildStep (Step):
             self.pars_input['filter'] = list(set(self.pars_input['filter']))
 # ________________________________________________________________________________
 # For NIRSPEC we can set the grating
-# If set to all then let the DetermineCubeCoverage figure out what gratings are
+# If set to all then let the determine_band_coverage figure out what gratings are
 # covered by the data
         if self.grating == 'all':
             self.grating = ''

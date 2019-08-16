@@ -160,7 +160,9 @@ class CubeBlot():
 
                 # get the detector values for this model
                 xstart, xend = instrument_info.GetMIRISliceEndPts(this_par1)
-                ydet, xdet = np.mgrid[:1024, :1032]
+                ysize, xsize = model.data.shape
+
+                ydet, xdet = np.mgrid[:ysize, :xsize]
 
                 # mask out the side channel we aren not working on
                 pixel_mask = np.full(model.shape, False, dtype=bool)
@@ -173,10 +175,11 @@ class CubeBlot():
                 # we will loop over slices and fill in values
                 # the flag_det will be set when a slice pixel is filled in
                 #   at the end we will use this flag to pull out valid data
-                ra_det = np.zeros((2048, 2048))
-                dec_det = np.zeros((2048, 2048))
-                lam_det = np.zeros((2048, 2048))
-                flag_det = np.zeros((2048, 2048))
+                ysize, xsize = model.data.shape
+                ra_det = np.zeros((ysize, xsize))
+                dec_det = np.zeros((ysize, xsize))
+                lam_det = np.zeros((ysize, xsize))
+                flag_det = np.zeros((ysize, xsize))
 
                 # for NIRSPEC each file has 30 slices
                 # wcs information access seperately for each slice
