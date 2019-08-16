@@ -80,7 +80,7 @@ def test_correct_mrs_modshepard():
                      2.7704430e-01, 1.6659760e-01, 2.7708188e-01, 3.0663357e+01, 3.0652958e+01,
                      3.0638458e+01]
 
-    assert(np.allclose(compare, result.data))
+    assert(np.allclose(compare, result.data, rtol=1e-6))
 
 
 def test_shepard_kernel():
@@ -103,7 +103,7 @@ def test_shepard_kernel():
                  2.80546929e-01, 1.86886724e-01, 1.10683431e-01],
                 [6.90355937e-02, 1.10683431e-01, 1.49561099e-01, 1.66666667e-01,
                  1.49561099e-01, 1.10683431e-01, 6.90355937e-02]])
-    assert(np.allclose(wkernel, kcompare))
+    assert(np.allclose(wkernel, kcompare, rtol=1e-6))
 
 def test_shepard_kernel2():
     """ Test forming kernel gives expected results with power 2, roi 4"""
@@ -121,4 +121,4 @@ def test_shepard_kernel2():
                           2.08946609e-01, 3.88932023e-02],
                          [1.07233047e-02, 3.88932023e-02, 6.25000000e-02,
                           3.88932023e-02, 1.07233047e-02]])
-    assert(np.allclose(wkernel, kcompare))
+    assert(np.allclose(wkernel, kcompare, rtol=1e-6))
