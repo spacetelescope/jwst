@@ -32,7 +32,6 @@ class IFUCubeData():
                  output_name_base,
                  output_type,
                  instrument,
-                 detector,
                  list_par1,
                  list_par2,
                  instrument_info,
@@ -49,7 +48,6 @@ class IFUCubeData():
         self.num_files = None
 
         self.instrument = instrument
-        self.detector = detector
         self.list_par1 = list_par1
         self.list_par2 = list_par2
 
@@ -61,6 +59,7 @@ class IFUCubeData():
         self.scalew = pars_cube.get('scalew')
         self.rois = pars_cube.get('rois')
         self.roiw = pars_cube.get('roiw')
+
         self.spatial_size = None
         self.spectral_size = None
         self.interpolation = pars_cube.get('interpolation')
@@ -226,6 +225,7 @@ class IFUCubeData():
         """
 
         ra_min, ra_max, dec_min, dec_max, lambda_min, lambda_max = footprint
+
         dec_ave = (dec_min + dec_max) / 2.0
 
         # we can not average ra values because of the convergence
@@ -237,7 +237,6 @@ class IFUCubeData():
         # astropy circmean assumes angles are in radians,
         # we have angles in degrees
         ra_ave = circmean(ravalues * u.deg).value
-#       log.info('RA average %f12.8', ra_ave)
 
         self.crval1 = ra_ave
         self.crval2 = dec_ave
@@ -250,6 +249,7 @@ class IFUCubeData():
 # ________________________________________________________________________________
 # find the CRPIX1 CRPIX2 - xi and eta centered at 0,0
 # to find location of center abs of min values is how many pixels
+
         n1a = int(math.ceil(math.fabs(xi_min) / self.cdelt1))
         n2a = int(math.ceil(math.fabs(eta_min) / self.cdelt2))
 
@@ -272,7 +272,6 @@ class IFUCubeData():
         self.a_max = xi_max
         self.b_min = eta_min
         self.b_max = eta_max
-
 # center of spaxels
         self.xcoord = np.zeros(self.naxis1)
         xstart = xi_min + self.cdelt1 / 2.0
@@ -1103,7 +1102,8 @@ class IFUCubeData():
             if self.instrument == 'MIRI':
 
                 # find the slice number of each pixel and fill in slice_det
-                slice_det = np.zeros((1024, 1032), dtype=int)
+                ysize, xsize = input_model.data.shape
+                slice_det = np.zeros((ysize, xsize), dtype=int)
                 det2ab_transform = input_model.meta.wcs.get_transform('detector',
                                                                       'alpha_beta')
                 start_region = self.instrument_info.GetStartSlice(this_par1)
@@ -1119,7 +1119,7 @@ class IFUCubeData():
 
                 # define the x,y detector values of channel to be mapped to desired coordinate system
                 xstart, xend = self.instrument_info.GetMIRISliceEndPts(this_par1)
-                y, x = np.mgrid[:1024, xstart:xend]
+                y, x = np.mgrid[:ysize, xstart:xend]
                 y = np.reshape(y, y.size)
                 x = np.reshape(x, x.size)
 
@@ -1154,12 +1154,14 @@ class IFUCubeData():
                 # we will loop over slice_nos and fill in values
                 # the flag_det will be set when a slice_no pixel is filled in
                 #   at the end we will use this flag to pull out valid data
-                ra_det = np.zeros((2048, 2048))
-                dec_det = np.zeros((2048, 2048))
-                lam_det = np.zeros((2048, 2048))
-                flag_det = np.zeros((2048, 2048))
 
-                slice_det = np.zeros((2048, 2048), dtype = int)
+                ysize, xsize = input_model.data.shape
+                ra_det = np.zeros((ysize, xsize))
+                dec_det = np.zeros((ysize, xsize))
+                lam_det = np.zeros((ysize, xsize))
+                flag_det = np.zeros((ysize, xsize))
+
+                slice_det = np.zeros((ysize, xsize), dtype = int)
                 # for NIRSPEC each file has 30 slices
                 # wcs information access seperately for each slice
                 nslices = 30
@@ -1227,9 +1229,6 @@ class IFUCubeData():
 # from the cube mapping
             all_flags = (dqflags.pixel['DO_NOT_USE'] +
                          dqflags.pixel['NON_SCIENCE'])
-
-#            valid3 = np.bitwise_and((wave >= min_wave_tolerance),
-#                                     (wave <= max_wave_tolerance))
 
             valid3 = np.logical_and((wave >= min_wave_tolerance),
                                      (wave <= max_wave_tolerance))
