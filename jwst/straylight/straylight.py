@@ -223,9 +223,6 @@ def correct_mrs_modshepard(input_model, slice_map, roi, power):
 
     # find if any of the gap pixels are bad pixels - if so mark them
     mask_dq = input_model.dq.copy()
-#    all_flags = (dqflags.pixel['DEAD'] + dqflags.pixel['HOT'])
-#    testflags = np.bitwise_and(mask_dq, all_flags)
-    # where are pixels set to any one of the all_flags cases
     testflags = np.bitwise_and(mask_dq, dqflags.pixel['DO_NOT_USE'])
 
     # where are testflags ne 0 and mask == 1
@@ -247,7 +244,7 @@ def correct_mrs_modshepard(input_model, slice_map, roi, power):
     image_gap[image_gap < 0] = 0   #set pixels less than zero to 0
     image_gap = convolve(image_gap, Box2DKernel(3))   #smooth gap pixels
     image_gap *= mask   # reset science pixels to 0
-    #we not not want the reference pixels to be used in the convolution
+    # we do not want the reference pixels to be used in the convolution
     image_gap[index_refpixel] = 0.0
 
     #convolve gap pixel image with weight kernel
@@ -256,15 +253,11 @@ def correct_mrs_modshepard(input_model, slice_map, roi, power):
     #normalize straylight flux by weights
     norm_conv = convolve(mask, w)
 
-
     astropy_conv /= norm_conv
 
     # remove the straylight correction for the reference pixels
     astropy_conv[index_refpixel] = 0.0
     output.data = output.data - astropy_conv
-
-#    print(output.data[0,:])
-#    print('output',output.data)
     return output
 #______________________________________________________________________
 def shepard_2d_kernel(roi, power):
@@ -274,7 +267,7 @@ def shepard_2d_kernel(roi, power):
 
     Parameters
     ----------
-    roi : float
+    roi : int
         Region of influence.
     power : float
         Exponent of Shepard kernel.
@@ -282,7 +275,9 @@ def shepard_2d_kernel(roi, power):
 
     distance_tolerance = 0.001 # for very small distances set min distance
                                # so denominator does not -> 0 and make w invalid.
-    half_roi = roi / 2.0
+
+
+    half_roi = int(roi / 2)
     xk, yk = np.meshgrid(np.arange(-half_roi, half_roi + 1),
                          np.arange(-half_roi, half_roi + 1))
 
