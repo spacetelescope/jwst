@@ -29,8 +29,13 @@ associations
 
 - Will not constrain on uniqueness of the MSACONFIG keyword [#3770]
 
-- combine_1d
-------------
+barshadow
+---------
+
+- Unit tests were added. [#3930]
+
+combine_1d
+----------
 
 - Fixed the number of inputs to the spectral WCS - one expetced, two were passed. [#3827]
 
