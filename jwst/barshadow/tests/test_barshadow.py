@@ -85,30 +85,28 @@ def test_create_shadow():
     barshadow_model = datamodels.BarshadowModel(data1x1=d1x1, data1x3=d1x3)
     shutter_elements = bar.create_shutter_elements(barshadow_model)
 
-    shutter_status = "0001x1000"
+    shutter_status = "11001x11"
 
     shadow = bar.create_shadow(shutter_elements, shutter_status)
 
     # first
     assert np.allclose(shadow[0:500, :], d1x1[0:500, :], atol=1.e-10)
-    # open_closed
-    assert np.allclose(shadow[501:1000, :], d1x1[501:1000, :], atol=1.e-10)
-    # closed_closed
-    assert np.allclose(shadow[1001:1500, :], 0.01, atol=1.e-10)
-    # closed_open
-    assert np.allclose(shadow[1501:2000, :], d1x1[1:500, :], atol=1.e-10)
     # open_open
-    assert np.allclose(shadow[2001:2500, :], d1x3[1:500, :], atol=1.e-10)
+    assert np.allclose(shadow[501:1000, :], d1x3[1:500, :], atol=1.e-10)
+    # open_closed
+    assert np.allclose(shadow[1001:1500, :], d1x1[501:1000, :], atol=1.e-10)
+    # closed_closed
+    assert np.allclose(shadow[1501:2000, :], 0.01, atol=1.e-10)
+    # closed_open
+    assert np.allclose(shadow[2001:2500, :], d1x1[1:500, :], atol=1.e-10)
     # open_open
     assert np.allclose(shadow[2501:3000, :], d1x3[1:500, :], atol=1.e-10)
-    # open_closed
-    assert np.allclose(shadow[3001:3500, :], d1x1[501:1000, :], atol=1.e-10)
-    # closed_closed
-    assert np.allclose(shadow[3501:4000, :], 0.01, atol=1.e-10)
-    # closed_closed
-    assert np.allclose(shadow[4001:4500, :], 0.01, atol=1.e-10)
+    # open_open
+    assert np.allclose(shadow[3001:3500, :], d1x3[1:500, :], atol=1.e-10)
+    # open_open
+    assert np.allclose(shadow[3501:4000, :], d1x3[1:500, :], atol=1.e-10)
     # last
-    assert np.allclose(shadow[4501:5000, :], d1x1[502:1001, :], atol=1.e-10)
+    assert np.allclose(shadow[4001:4500, :], d1x1[502:1001, :], atol=1.e-10)
 
 
 def test_create_empty_shadow_array():
