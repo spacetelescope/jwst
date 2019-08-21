@@ -198,7 +198,7 @@ setup(
         'photutils @ git+http://github.com/astropy/photutils#99f101be#egg=photutils',
         'scipy>=1.0',
         'spherical-geometry>=1.2',
-        'stsci.image @ git+http://github.com/spacetelescope/stsci.image#551d0fc#egg=stsci.image',
+        'stsci.image>=2.3.3',
         'stsci.imagestats>=1.4',
         'tweakwcs>=0.5.1',
         'verhawk',
