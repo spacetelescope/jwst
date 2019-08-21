@@ -303,7 +303,8 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
         # check to see if these are nodded backgrounds, if they are setup
         # the background members, otherwise return the original association
-        if "nod" not in self.constraints['patttype_spectarg']:
+        # to test for the string 'nod' we need to copy and pop the value out of the set
+        if 'nod' not in self.constraints['patttype_spectarg'].found_values.copy().pop():
             results = []
             results.append(self)
             return results
