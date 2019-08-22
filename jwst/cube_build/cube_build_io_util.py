@@ -97,6 +97,7 @@ def read_cubepars(par_filename,
         ptab = datamodels.NirspecIFUCubeParsModel(par_filename)
         number_gratings = len(all_grating)
 
+        
         for i in range(number_gratings):
             this_gwa = all_grating[i]
             this_filter = all_filter[i]

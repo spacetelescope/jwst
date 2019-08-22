@@ -51,9 +51,12 @@ class IFUCubeData():
         self.list_par1 = list_par1
         self.list_par2 = list_par2
 
+        
         self.instrument_info = instrument_info  # dictionary class imported in cube_build.py
         self.master_table = master_table
         self.output_type = output_type
+
+
         self.scale1 = pars_cube.get('scale1')
         self.scale2 = pars_cube.get('scale2')
         self.scalew = pars_cube.get('scalew')
@@ -796,6 +799,7 @@ class IFUCubeData():
             maxwave[i] = self.instrument_info.GetWaveMax(par1, par2)
 # Check the spatial size. If it is the same for the array set up the parameters
         all_same = np.all(spaxelsize == spaxelsize[0])
+
         if all_same:
             self.spatial_size = spaxelsize[0]
             spatial_roi = rois[0]
@@ -858,28 +862,35 @@ class IFUCubeData():
             # find the closest table entries to the self.wavemin and self.wavemax limits
             imin = (np.abs(table_wavelength - self.wavemin)).argmin()
             imax = (np.abs(table_wavelength - self.wavemax)).argmin()
+
             if imin > 1 and table_wavelength[imin] > self.wavemin:
                 imin = imin - 1
             if (imax < len(table_wavelength) and
                 self.wavemax > table_wavelength[imax]):
                 imax = imax + 1
 
-            self.roiw_table = table_wroi[imin:imax]
-            self.rois_table = table_sroi[imin:imax]
+            print('wavelengths',self.wavemin,self.wavemax)
+            self.roiw_table = table_wroi[imin:imax+1]
+            self.rois_table = table_sroi[imin:imax+1]
             if self.num_files < 4:
                 self.rois_table = [i*1.5 for i in self.rois_table]
 
-            self.softrad_table = table_softrad[imin:imax]
-            self.weight_power_table = table_power[imin:imax]
-            self.wavelength_table = table_wavelength[imin:imax]
+            self.softrad_table = table_softrad[imin:imax+1]
+            self.weight_power_table = table_power[imin:imax+1]
+            self.wavelength_table = table_wavelength[imin:imax+1]
+        
+        # check if using default values from the table  (not user set) 
+        if self.rois == 0.0:
+            self.rois = spatial_roi 
+             # not set by use but determined from tables
+            # default rois in tables is designed with a 4 dither pattern
+            # increase rois if less than 4 file
 
-        # check if the user has set the cube parameters to use
-        if self.rois == 0:
-            self.rois = spatial_roi
-        if self.output_type == 'single' or self.num_files < 4:
-            self.rois = self.rois * 1.5
-            log.info('Increasing spatial region of interest ' +
-                     'default value set for 4 dithers %f', self.rois)
+            if self.output_type == 'single' or self.num_files < 4:
+                self.rois = self.rois * 1.5
+                log.info('Increasing spatial region of interest ' +
+                         'default value set for 4 dithers %f', self.rois)
+
         if self.scale1 != 0:
             self.spatial_size = self.scale1
 
