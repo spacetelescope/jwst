@@ -222,9 +222,12 @@ def correct_mrs_modshepard(input_model, slice_map, roi, power):
     mask[slice_map == 0] = 1
 
     # find if any of the gap pixels are bad pixels - if so mark them
+    # stick with dq init mask file flags
     mask_dq = input_model.dq.copy()
-    testflags = np.bitwise_and(mask_dq, dqflags.pixel['DO_NOT_USE'])
-
+    all_flags = (dqflags.pixel['DEAD'] + dqflags.pixel['HOT'] +
+                 dqflags.pixel['OPEN'] + dqflags.pixel['ADJ_OPEN'] +
+                 dqflags.pixel['RC'])
+    testflags = np.bitwise_and(mask_dq, all_flags)
     # where are testflags ne 0 and mask == 1
     bad_flags = np.where((testflags != 0) & (mask == 1))
     mask[bad_flags] = 0
@@ -232,7 +235,7 @@ def correct_mrs_modshepard(input_model, slice_map, roi, power):
     # find location of refpixels
     refpixel = np.bitwise_and(mask_dq, dqflags.pixel['REFERENCE_PIXEL'])
     index_refpixel = np.where(refpixel != 0)
-
+    #print("number ref pixels", len(index_refpixel[0]))
     # apply mask to the data
     image_gap = output.data * mask
 
