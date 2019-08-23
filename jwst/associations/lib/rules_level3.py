@@ -203,6 +203,16 @@ class Asn_SpectralTarget(AsnMixin_Spectrum):
                     '|nis_soss'
                 ),
                 force_unique=False
+            ),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        name='patttype_spectarg',
+                        sources=['patttype'],
+                        value=['2-point-nod|4-point-nod|along-slit-nod'],
+                    ),
+                ],
+                reduce=Constraint.any
             )
         ])
 
@@ -334,7 +344,7 @@ class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_BkgScience):
         # Setup for checking.
         self.constraints = Constraint([
             Constraint_Target(association=self),
-            Constraint_IFU(),
+            #Constraint_IFU(),
             Constraint(
                 [
                     Constraint_TSO(),

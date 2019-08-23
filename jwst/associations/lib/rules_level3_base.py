@@ -300,6 +300,15 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
     def make_fixedslit_bkg(self):
         """Add a background to a MIR_lrs-fixedslit observation"""
+
+        # check to see if these are nodded backgrounds, if they are setup
+        # the background members, otherwise return the original association
+        # to test for the string 'nod' we need to copy and pop the value out of the set
+        if 'nod' not in self.constraints['patttype_spectarg'].found_values.copy().pop():
+            results = []
+            results.append(self)
+            return results
+
         for product in self['products']:
             members = product['members']
             # Split out the science exposures
