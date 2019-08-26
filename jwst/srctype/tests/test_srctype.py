@@ -152,7 +152,7 @@ def test_tso_types(exptype):
     input.meta.dither.primary_type = 'NONE'
     input.meta.visit.tsovisit = True
     input.meta.exposure.type = exptype
-    
+
     result = srctype.set_source_type(input)
 
     assert(result.meta.target.source_type == "POINT")
