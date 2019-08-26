@@ -123,36 +123,6 @@ def test_no_sourcetype():
     # Result should be POINT regardless of other input settings
     assert output.meta.target.source_type == 'POINT'
 
-def test_tso_types():
-
-    # Exposure without the SRCTYPE keyword present at all,
-    # but it's a TSO mode
-    input = datamodels.ImageModel((10,10))
-    input.meta.observation.bkgdtarg = False
-    input.meta.dither.primary_type = 'NONE'
-
-    # All results should be POINT
-    input.meta.exposure.type = 'NRS_BRIGHTOBJ'
-    output = srctype.set_source_type(input)
-    assert output.meta.target.source_type == 'POINT'
-
-    del input.meta.target.source_type
-    input.meta.exposure.type = 'NRC_TSGRISM'
-    output = srctype.set_source_type(input)
-    assert output.meta.target.source_type == 'POINT'
-
-    del input.meta.target.source_type
-    input.meta.exposure.type = 'NIS_SOSS'
-    input.meta.visit.tsovisit = True
-    output = srctype.set_source_type(input)
-    assert output.meta.target.source_type == 'POINT'
-
-    del input.meta.target.source_type
-    input.meta.exposure.type = 'MIR_LRS-SLITLESS'
-    input.meta.visit.tsovisit = True
-    output = srctype.set_source_type(input)
-    assert output.meta.target.source_type == 'POINT'
-
 def test_nrs_msaspec():
     """Test for when exposure type is NRS_MSASPEC
     """
@@ -172,20 +142,25 @@ def test_nrs_msaspec():
     assert(result.slits[1].source_type == 'UNKNOWN')
     assert(result.slits[2].source_type == 'EXTENDED')
 
-def test_is_tso():
+@pytest.mark.parametrize("exptype", ["NRS_BRIGHTOBJ", "NRC_TSGRISM", "NIS_SOSS",
+    "MIR_LRS-SLITLESS"])
+def test_tso_types(exptype):
     """ Test for when visit is tso.
     """
-    input = datamodels.ImageModel((10,10))
-    input.meta.exposure.type = "FGS_DARK"
+    input = datamodels.ImageModel()
+    input.meta.observation.bkgdtarg = False
+    input.meta.dither.primary_type = 'NONE'
     input.meta.visit.tsovisit = True
+    input.meta.exposure.type = exptype
+    
     result = srctype.set_source_type(input)
 
     assert(result.meta.target.source_type == "POINT")
 
-@pytest.mark.xfail
 def test_exptype_is_none():
     """ Test for when exposure type is None.
     """
-    input = datamodels.ImageModel((10,10))
-    input.meta.exposure.type = None
-    srctype.set_source_type(input)
+    with pytest.raises(RuntimeError):
+        input = datamodels.ImageModel((10,10))
+        input.meta.exposure.type = None
+        srctype.set_source_type(input)
