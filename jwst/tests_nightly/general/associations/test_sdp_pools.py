@@ -33,6 +33,10 @@ SPECIAL_DEFAULT = {
     'xfail': None
 }
 SPECIAL_POOLS = {
+    'jw00632_20190819t190005_pool': {
+        'args': [],
+        'xfail': 'JSOCINT-TDB: WFSC ROUTINE VISIT issue'
+    },
     'jw80600_20171108T041522_pool': {
         'args': [],
         'xfail': 'PR #3450',

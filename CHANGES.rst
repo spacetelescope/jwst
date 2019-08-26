@@ -22,6 +22,7 @@ associations
 
 - Will not constrain on uniqueness of the MSACONFIG keyword [#3770]
 
+
 0.13.7 (2019-06-21)
 ===================
 
@@ -173,6 +174,15 @@ resample
 
 - Changed default value of good_pixel from 4 to 6 [#3638]
 
+<<<<<<< HEAD
+=======
+wfs_combine
+-----------
+
+- Allow handling of non-science members in input associations [#3947]
+
+
+>>>>>>> 0a9f5495... Jp946 Process non-science exposures taken during WFS&C observations (#3947)
 0.13.3 (2019-06-04)
 ===================
 
