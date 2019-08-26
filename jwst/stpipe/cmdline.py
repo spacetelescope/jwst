@@ -10,12 +10,12 @@ from . import config_parser
 from . import log
 from . import Step
 from . import utilities
+from . import crds_client
 
 
 built_in_configuration_parameters = [
     'debug', 'logcfg', 'verbose'
     ]
-
 
 def _print_important_message(header, message, no_wrap=None):
     print(u'-' * 70)
@@ -110,7 +110,6 @@ class FromCommandLine(str):
     use isinstance to see where the values came from.
     """
     pass
-
 
 def _override_config_from_args(config, args):
     """
@@ -227,11 +226,22 @@ def just_the_step_from_cmdline(args, cls=None):
 
     debug_on_exception = known.debug
 
+    #
+    # This creates a config object from the spec file of the step class merged with
+    # the spec files of the superclasses of the step class and adds arguments for
+    # all of the expected reference files
     spec = step_class.load_spec_file(preserve_comments=True)
 
+    input_datamodel = args[1]
+    parameter_cfg = crds_client.get_config_from_reference(step_class, input_datamodel)
+    if config:
+        config_parser.merge_config(parameter_cfg, config)
+
+    config = parameter_cfg
     parser2 = _build_arg_parser_from_spec(spec, step_class, parent=parser1)
 
     args = parser2.parse_args(args)
+
     if cls is None:
         del args.cfg_file_or_class
     else:
@@ -242,9 +252,14 @@ def just_the_step_from_cmdline(args, cls=None):
     del args.save_parameters
     positional = args.args
     del args.args
-
+    
+    #
+    # This updates config (a ConfigObj) with the values from the command line arguments
+    # Config is empty if class specified, otherwise contains values from config file specified
+    # on command line
     _override_config_from_args(config, args)
 
+    # This is where the step is instantiated
     try:
         step = step_class.from_config_section(
             config, name=name, config_file=config_file)
