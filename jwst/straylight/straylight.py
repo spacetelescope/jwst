@@ -226,7 +226,7 @@ def correct_mrs_modshepard(input_model, slice_map, roi, power):
     mask_dq = input_model.dq.copy()
     all_flags = (dqflags.pixel['DEAD'] + dqflags.pixel['HOT'] +
                  dqflags.pixel['OPEN'] + dqflags.pixel['ADJ_OPEN'] +
-                 dqflags.pixel['RC'])
+                 dqflags.pixel['RC']+ dqflags.pixel['REFERENCE_PIXEL'])
     testflags = np.bitwise_and(mask_dq, all_flags)
     # where are testflags ne 0 and mask == 1
     bad_flags = np.where((testflags != 0) & (mask == 1))
