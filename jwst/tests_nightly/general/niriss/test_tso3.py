@@ -20,13 +20,17 @@ class TestTso3Pipeline(BaseJWSTTest):
 
         Tso3Pipeline.call(asn_file)
 
-        outputs = [# Compare level-2c product
-                    ('jw87600024001_02101_00001_nis_a3001_crfints.fits',
-                     'jw87600-a3001_t1_niriss_clear-gr700xd_crfints_ref.fits',
-                     ['primary', 'sci', 'dq', 'err']),
-                   # Compare level-3 product
-                   ('jw87600-a3001_t1_niriss_clear-gr700xd_x1dints.fits',
-                    'jw87600-a3001_t1_niriss_clear-gr700xd_x1dints_ref.fits',
-                    ['primary', 'extract1d'])
-                   ]
+        outputs = [
+            # Compare level-2c product
+            ('jw87600024001_02101_00001_nis_a3001_crfints.fits',
+             'jw87600-a3001_t1_niriss_clear-gr700xd_crfints_ref.fits',
+             ['primary', 'sci', 'dq', 'err']),
+
+            # Compare level-3 product
+            ('jw87600-a3001_t1_niriss_clear-gr700xd_x1dints.fits',
+             'jw87600-a3001_t1_niriss_clear-gr700xd_x1dints_ref.fits',
+             ['primary', 'extract1d']),
+            ('jw87600-a3001_t1_niriss_clear-gr700xd_whtlt.ecsv',
+             'jw87600-a3001_t1_niriss_clear-gr700xd_whtlt_ref.ecsv'),
+        ]
         self.compare_outputs(outputs)

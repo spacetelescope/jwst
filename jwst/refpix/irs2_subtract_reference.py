@@ -497,7 +497,10 @@ def subtract_reference(data0, alpha, beta, irs2_mask,
     # ht is like href1, but extended over gaps and 1st and last norm pix.
     mask = (ht >= 0)
     ht = ht[mask]               # 1-D, length = 2 * refpix_r * 512 / scipix_n
-    # IDL:  hs[scipix_n/2 + 1-refpix_r/2:scipix_n/2 + refpix_r + refpix_r/2,*]=hs[reform([transpose(reform(indgen(refpix_r),refpix_r/2,2)),transpose(reform(indgen(refpix_r),refpix_r/2,2))],refpix_r * 2) + scipix_n/2 + 1,*]  ; WIRED for R=2^(int)
+    # IDL:  hs[scipix_n/2 + 1-refpix_r/2:scipix_n/2 + refpix_r + refpix_r/2,*] =
+    #       hs[reform([transpose(reform(indgen(refpix_r),refpix_r/2,2)),
+    #           transpose(reform(indgen(refpix_r),refpix_r/2,2))],refpix_r * 2)
+    #           + scipix_n/2 + 1,*]  ; WIRED for R=2^(int)
 
     indr = np.arange(refpix_r, dtype=np.intp).reshape((2, refpix_r // 2))
     # indr_t =

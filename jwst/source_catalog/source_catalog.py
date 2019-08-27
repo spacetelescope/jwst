@@ -1,7 +1,6 @@
 import numpy as np
 from astropy.convolution import Gaussian2DKernel
 from astropy.stats import sigma_clipped_stats, gaussian_fwhm_to_sigma
-from astropy.table import QTable
 import astropy.units as u
 import photutils
 
@@ -76,9 +75,10 @@ def make_source_catalog(model, kernel_fwhm, kernel_xsize, kernel_ysize,
 
     Returns
     -------
-    catalog : `~astropy.Table`
+    catalog : `~astropy.Table` or `None`
         An astropy Table containing the source photometry and
-        morphologies.
+        morphologies.  If no sources are detected then `None` is
+        returned.
     """
 
     if not isinstance(model, DrizProductModel):
@@ -106,6 +106,10 @@ def make_source_catalog(model, kernel_fwhm, kernel_xsize, kernel_ysize,
                                     filter_kernel=kernel,
                                     connectivity=connectivity)
 
+    # segm=None for photutils >= 0.7; segm.nlabels == 0 for photutils < 0.7
+    if segm is None or segm.nlabels == 0:
+        return None
+
     # source deblending requires scikit-image
     if deblend:
         segm = photutils.deblend_sources(model.data, segm, npixels=npixels,
@@ -128,9 +132,6 @@ def make_source_catalog(model, kernel_fwhm, kernel_xsize, kernel_ysize,
     wcs = model.get_fits_wcs()
     source_props = photutils.source_properties(
         model.data, segm, error=total_error, filter_kernel=kernel, wcs=wcs)
-
-    if len(source_props) == 0:
-        return QTable()    # empty table
 
     columns = ['id', 'xcentroid', 'ycentroid', 'sky_centroid', 'area',
                'source_sum', 'source_sum_err', 'semimajor_axis_sigma',

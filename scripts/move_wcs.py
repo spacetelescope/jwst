@@ -36,7 +36,7 @@ def _collect_wcs_keywords(f):
     # Get keywords to go in SCI header from the datamodels schema
     dm = datamodels.open(f, pass_invalid_values=True)
     stsci_wcs_kw = []
-    for k,v in datamodels.schema.build_schema2fits_dict(dm.meta._schema).items():
+    for k, v in datamodels.schema.build_schema2fits_dict(dm.meta._schema).items():
         if v[1] == 'SCI':
             if v[0] != 'WCSAXES':
                 stsci_wcs_kw.append(v[0])
@@ -96,14 +96,14 @@ def add_default_keywords(new_hdr):
     wcsaxes = new_hdr['WCSAXES']
     if wcsaxes == 3:
         default_pc = {"PC1_1": 1, "PC1_2": 0, "PC1_3": 0,
-                      "PC2_1": 0 , "PC2_2": 1, "PC2_3": 0,
+                      "PC2_1": 0, "PC2_2": 1, "PC2_3": 0,
                       "PC3_1": 0, "PC3_2": 0, "PC3_3": 1
                      }
         default_cunit = {"CUNIT1": "deg", "CUNIT2": "deg", "CUNIT3": "um"}
         default_ctype = {"CTYPE1": "RA---TAN", "CTYPE2": "DEC--TAN", "CTYPE3": "WAVE"}
     elif wcsaxes == 2:
         default_pc = {"PC1_1": 1, "PC1_2": 0,
-                      "PC2_1": 0 , "PC2_2": 1,
+                      "PC2_1": 0, "PC2_2": 1,
                      }
         default_cunit = {"CUNIT1": "deg", "CUNIT2": "deg"}
         default_ctype = {"CTYPE1": "RA---TAN", "CTYPE2": "DEC--TAN"}
@@ -136,5 +136,3 @@ if __name__ == '__main__':
             files = glob.glob(files)
 
     move_wcs(files)
-
-

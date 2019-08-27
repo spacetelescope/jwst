@@ -2,8 +2,7 @@
 import os
 import pytest
 
-from ..file_utils import pushdir
-from ...tests.helpers import abspath
+from jwst.lib.file_utils import pushdir
 
 
 def test_pushdir():
@@ -30,4 +29,4 @@ def test_pusdir_fail():
         with pushdir('Really_doesNOT-exist'):
             # Nothing should happen here. The assert should never be checked.
             assert False
-    assert current == os.getcwd()        
+    assert current == os.getcwd()

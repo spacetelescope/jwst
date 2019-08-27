@@ -25,7 +25,7 @@ class IFUCubeModel(DataModel):
     wavetable : numpy table
          Wavelength value for slices
     """
-    schema_url = "ifucube.schema.yaml"
+    schema_url = "ifucube.schema"
 
     def __init__(self, init=None, **kwargs):
         super(IFUCubeModel, self).__init__(init=init, **kwargs)

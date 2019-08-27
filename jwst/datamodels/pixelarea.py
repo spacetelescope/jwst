@@ -14,7 +14,7 @@ class PixelAreaModel(ReferenceFileModel):
     data : numpy float32 array
          The pixel area array
     """
-    schema_url = "pixelarea.schema.yaml"
+    schema_url = "pixelarea.schema"
 
 
 
@@ -33,7 +33,7 @@ class NirspecSlitAreaModel(ReferenceFileModel):
          - slit_id: str[15]
          - pixarea: float32
     """
-    schema_url = "nirspec_area_slit.schema.yaml"
+    schema_url = "nirspec_area_slit.schema"
 
 
 class NirspecMosAreaModel(ReferenceFileModel):
@@ -53,7 +53,7 @@ class NirspecMosAreaModel(ReferenceFileModel):
          - shutter_y: int16
          - pixarea: float32
     """
-    schema_url = "nirspec_area_mos.schema.yaml"
+    schema_url = "nirspec_area_mos.schema"
 
 
 class NirspecIfuAreaModel(ReferenceFileModel):
@@ -71,5 +71,4 @@ class NirspecIfuAreaModel(ReferenceFileModel):
          - slice_id: int16
          - pixarea: float32
     """
-    schema_url = "nirspec_area_ifu.schema.yaml"
-
+    schema_url = "nirspec_area_ifu.schema"

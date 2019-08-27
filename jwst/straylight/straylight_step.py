@@ -14,60 +14,83 @@ class StraylightStep (Step):
 
     spec = """
          method = option('Nearest','ModShepard',default='ModShepard') #Algorithm method
-         roi = float(default = 50.0) # Region of interest
+         roi = integer(default = 50) # Region of interest given as even integer
          power = float(default = 1.0) # Power of weighting function
 
     """
-    reference_file_types = ['straymask']
+
+    reference_file_types = ['regions']
+
+
     def process(self, input):
-
-
         # Open the input data model
         with datamodels.IFUImageModel(input) as input_model:
 
             # check the data is MIRI data
             detector = input_model.meta.instrument.detector
             if detector == 'MIRIFUSHORT':
+                # Use the Regions reference file set to 20% throughput threshhold
+                self.straylight_name = self.get_reference_file(input_model,
+                                                               'regions')
+                self.log.info('Using regions reference file %s',
+                              self.straylight_name)
 
-                if self.method == 'Nearest':
-                # Get the name of the straylight reference file
-                    self.straylight_name = self.get_reference_file(input_model,
-                                                                   'straymask')
-                    self.log.info('Using straylight reference file %s',
-                                  self.straylight_name)
-                # Check for a valid reference file
-                    if self.straylight_name == 'N/A':
-                        self.log.warning('No STRAYLIGHT reference file found')
+                # If Modified Shepard  test  input parameters for weighting
+                if self.method == 'ModShepard':
+                    #reasonable power varible defined as: 0.1 < power < 5
+                    if self.power < 0.1 or self.power > 5:
+                        self.log.error("The kernel power parameter is outside the reasonable range of"
+                                  " 0.1 to 5. It is set to {}".format(self.power))
                         self.log.warning('Straylight step will be skipped')
                         result = input_model.copy()
                         result.meta.cal_step.straylight = 'SKIPPED'
                         return result
 
-                # Open the straylight mask ref file data model
-                    straylight_model = datamodels.StrayLightModel(self.straylight_name)
-                    result = straylight.correct_MRS(input_model, straylight_model)
-                # Close the reference file and update the step status
-                    straylight_model.close()
-# ________________________________________________________________________________
-                if self.method == 'ModShepard':
-                    # going to use Regions file that is in the ASDF extension
-                    assign_wcs = input_model.meta.cal_step.assign_wcs
-                    if(assign_wcs != 'COMPLETE'):
-                        self.log.warning('Assign_WCS was not run on file, we  need the information of the slice gap locations')
-                        raise ErrorNoAssignWCS("Assign WCS has not been run on file")
+                    if self.roi < 2 or self.roi > 1024:
+                        self.log.error("The kernel roi parameter is outside the reasonable range of"
+                                  " 2 to 1024. It is set to {} ".format(self.roi))
+                        self.log.warning('Straylight step will be skipped')
+                        result = input_model.copy()
+                        result.meta.cal_step.straylight = 'SKIPPED'
+                        return result
 
-                    det2ab = input_model.meta.wcs.get_transform('detector', 'alpha_beta')
-                    #det2ab is a RegionsSelector model
-                    slices = det2ab.label_mapper.mapper
+                    # test that ROI is an even number
+                    # so that the kernel will be odd rows,columns in size
+                    test = self.roi % 2
+                    if test !=0 :
+                        self.log.info("The kernel roi parameter is odd value {}"
+                                      "must be even. Adding 1 to size ".format(self.roi))
+                        self.roi = self.roi + 1
+                        if self.roi  > 1024:
+                            self.roi = self.roi - 2
 
-                    self.log.info(' Region of influence radius (pixels) %6.2f', self.roi)
+                # Check for a valid reference file
+                if self.straylight_name == 'N/A':
+                    self.log.warning('No REGIONS reference file found')
+                    self.log.warning('Straylight step will be skipped')
+                    result = input_model.copy()
+                    result.meta.cal_step.straylight = 'SKIPPED'
+                    return result
+                allregions = datamodels.RegionsModel(self.straylight_name)
+                # Use 20% throughput array
+                regions=(allregions.regions)[2,:,:].copy()
+                self.log.info(' Using 20% throughput threshhold.')
+                allregions.close()
+
+                if self.method == 'Nearest':
+                    # Do the correction
+                    self.log.info(' Using row-by-row approach.')
+                    result = straylight.correct_mrs(input_model, regions)
+                elif self.method == 'ModShepard':
+                    # Do the correction
                     self.log.info(' Modified Shepard weighting power %5.2f', self.power)
-                # Do the correction
+                    self.log.info(' Region of influence radius (pixels) %6.2f', self.roi)
+
                     result = straylight.correct_mrs_modshepard(input_model,
-                                                               slices,
+                                                               regions,
                                                                self.roi,
                                                                self.power)
-# ________________________________________________________________________________
+
                 result.meta.cal_step.straylight = 'COMPLETE'
 
             else:

@@ -17,5 +17,4 @@ class IRS2Model(DataModel):
          and imaginary parts (real, imag, real, imag, ...) of complex
          values.  There are four columns for ALPHA and four for BETA.
     """
-    schema_url = "irs2.schema.yaml"
-
+    schema_url = "irs2.schema"

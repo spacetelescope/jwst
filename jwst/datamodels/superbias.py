@@ -23,7 +23,7 @@ class SuperBiasModel(ReferenceFileModel):
     dq_def : numpy table
          DQ flag definitions
     """
-    schema_url = "superbias.schema.yaml"
+    schema_url = "superbias.schema"
 
     def __init__(self, init=None, **kwargs):
         super(SuperBiasModel, self).__init__(init=init, **kwargs)

@@ -1,4 +1,5 @@
 """Base classes which define the Level2 Associations"""
+from collections import defaultdict
 import copy
 import logging
 from os.path import (
@@ -18,6 +19,7 @@ from jwst.associations.lib.constraint import (
     Constraint,
     SimpleConstraint,
 )
+from jwst.associations.lib.diff import get_product_names
 from jwst.associations.lib.dms_base import (
     CORON_EXP_TYPES,
     DMSAttrConstraint,
@@ -28,6 +30,7 @@ from jwst.associations.lib.dms_base import (
     SPEC2_SCIENCE_EXP_TYPES,
     TSO_EXP_TYPES
 )
+from jwst.associations.lib.member import Member
 from jwst.associations.lib.rules_level3_base import _EMPTY
 from jwst.associations.lib.rules_level3_base import Utility as Utility_Level3
 from jwst.lib.suffix import remove_suffix
@@ -43,6 +46,7 @@ __all__ = [
     'AsnMixin_Lv2Special',
     'AsnMixin_Lv2Spectral',
     'Constraint_Base',
+    'Constraint_ExtCal',
     'Constraint_Image_Nonscience',
     'Constraint_Image_Science',
     'Constraint_Mode',
@@ -64,8 +68,8 @@ FLAG_TO_EXPTYPE = {
 }
 
 # File templates
-_DMS_POOLNAME_REGEX = 'jw(\d{5})_(\d{3})_(\d{8}[Tt]\d{6})_pool'
-_LEVEL1B_REGEX = '(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
+_DMS_POOLNAME_REGEX = r'jw(\d{5})_(\d{3})_(\d{8}[Tt]\d{6})_pool'
+_LEVEL1B_REGEX = r'(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
 
 # Key that uniquely identfies items.
 KEY = 'expname'
@@ -96,6 +100,19 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
                 'check': self.validate_candidates
             }
         })
+
+    def check_and_set_constraints(self, item):
+        """Override of Association method
+
+        An addition check is made on candidate type.
+        Level 2 associations can only be created by
+        OBSERVATION and BACKGROUND candidates.
+        """
+        match, reprocess = super(DMSLevel2bBase, self).check_and_set_constraints(item)
+        if match and not self.acid.type in ['observation', 'background']:
+            return False, []
+        else:
+            return match, reprocess
 
     def members_by_type(self, member_type):
         """Get list of members by their exposure type"""
@@ -164,7 +181,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
         Returns
         -------
-        member : dict
+        member : Member
             The member
         """
 
@@ -174,20 +191,22 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         except KeyError:
             exposerr = None
 
-        # Times series and coronagraphic exposures
-        # process in integration space.
-        use_integrations = self.constraints['is_tso'].value == 't'
-        if not use_integrations:
-            use_integrations = item['exp_type'] in TSO_EXP_TYPES + CORON_EXP_TYPES
-
         # Create the member.
-        member = {
-            'expname': Utility.rename_to_level2a(
-                item['filename'], use_integrations=use_integrations
-            ),
-            'exptype': self.get_exposure_type(item),
-            'exposerr': exposerr,
-        }
+        # `is_item_tso` is used to determine whether the name should
+        # represent the integrations form of the data.
+        # Though coronagraphic data is not TSO,
+        # it does remain in the separate integrations.
+        member = Member(
+            {
+                'expname': Utility.rename_to_level2a(
+                    item['filename'],
+                    use_integrations=self.is_item_tso(item, other_exp_types=CORON_EXP_TYPES),
+                ),
+                'exptype': self.get_exposure_type(item),
+                'exposerr': exposerr,
+            },
+            item=item
+        )
 
         return member
 
@@ -213,7 +232,6 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         member = self.make_member(item)
         members = self.current_product['members']
         members.append(member)
-        self.from_items.append(item)
         self.update_validity(member)
 
         # Update association state due to new member
@@ -284,12 +302,11 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         for idx, item in enumerate(items, start=1):
             self.new_product()
             members = self.current_product['members']
-            member = {
+            member = Member({
                 'expname': item,
                 'exptype': 'science'
-            }
+            }, item=item)
             members.append(member)
-            self.from_items.append(item)
             self.update_validity(member)
             self.update_asn()
 
@@ -317,7 +334,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
         Parameters
         ----------
-        member : obj
+        member : Member
             Member being added. Ignored.
 
         Returns
@@ -395,7 +412,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
                 for other_science in science_exps:
                     if other_science['expname'] != science_exp['expname']:
-                        now_background = copy.copy(other_science)
+                        now_background = Member(other_science)
                         now_background['exptype'] = 'background'
                         new_members.append(now_background)
 
@@ -456,6 +473,101 @@ class Utility():
     """Utility functions that understand DMS Level 3 associations"""
 
     @staticmethod
+    @RegistryMarker.callback('finalize')
+    def finalize(associations):
+        """Check validity and duplications in an association list
+
+        Parameters
+        ----------
+        associations:[association[, ...]]
+            List of associations
+
+        Returns
+        -------
+        finalized_associations : [association[, ...]]
+            The validated list of associations
+        """
+        finalized_asns = []
+        lv2_asns = []
+        for asn in associations:
+            if isinstance(asn, DMSLevel2bBase):
+                finalized = asn.finalize()
+                if finalized is not None:
+                    lv2_asns.extend(finalized)
+            else:
+                finalized_asns.append(asn)
+        lv2_asns = Utility.prune_duplicate_products(lv2_asns)
+
+        # Ensure sequencing is correct.
+        Utility_Level3.resequence(lv2_asns)
+
+        return finalized_asns + lv2_asns
+
+    @staticmethod
+    def merge_asns(associations):
+        """merge level2 associations
+
+        Parameters
+        ----------
+        associations : [asn(, ...)]
+            Associations to search for merging.
+
+        Returns
+        -------
+        associatons : [association(, ...)]
+            List of associations, some of which may be merged.
+        """
+        others = []
+        lv2_asns = []
+        for asn in associations:
+            if isinstance(asn, DMSLevel2bBase):
+                lv2_asns.append(asn)
+            else:
+                others.append(asn)
+
+        lv2_asns = Utility._merge_asns(lv2_asns)
+
+        return others + lv2_asns
+
+    @staticmethod
+    def prune_duplicate_products(asns):
+        """Remove duplicate products in favor of higher level versions
+
+        For Level 2 associations, since the products are always just the input
+        exposures, different candidates can be created for each exposure. Remove
+        those associations of lesser candidates.
+
+        The assumption is that there is only one product per association, before merging
+
+        Parameters
+        ----------
+        asns: [Association[,...]]
+            Associations to prune
+
+        Returns
+        pruned: [Association[,...]]
+            Pruned list of associations
+        """
+        product_names, dups = get_product_names(asns)
+        if not dups:
+            return asns
+
+        pruned = copy.copy(asns)
+        to_prune = defaultdict(list)
+        for asn in asns:
+            product_name = asn['products'][0]['name']
+            if product_name in dups:
+                    to_prune[product_name].append(asn)
+
+        for product_name, asns_to_prune in to_prune.items():
+            asns_to_prune = Utility.sort_by_candidate(asns_to_prune)
+            for asn in asns_to_prune[1:]:
+                pruned.remove(asn)
+
+        return pruned
+
+
+    @staticmethod
     def rename_to_level2a(level1b_name, use_integrations=False):
         """Rename a Level 1b Exposure to another level
 
@@ -499,57 +611,28 @@ class Utility():
         return Utility_Level3.resequence(*args, **kwargs)
 
     @staticmethod
-    @RegistryMarker.callback('finalize')
-    def finalize(associations):
-        """Check validity and duplications in an association list
+    def sort_by_candidate(asns):
+        """Sort associations by candidate
 
         Parameters
         ----------
-        associations:[association[, ...]]
+        asns: [Association[,...]]
             List of associations
 
         Returns
         -------
-        finalized_associations : [association[, ...]]
-            The validated list of associations
+        sorted_by_candidate: [Associations[,...]]
+            New list of the associations sorted.
+
+        Notes
+        -----
+        The current definition of candidates allows strictly lexigraphical
+        sorting:
+        aXXXX > cXXXX > oXXX
+
+        If this changes, a comparision function will need be implemented
         """
-        finalized_asns = []
-        lv2_asns = []
-        for asn in associations:
-            if isinstance(asn, DMSLevel2bBase):
-                finalized = asn.finalize()
-                if finalized is not None:
-                    lv2_asns.extend(finalized)
-            else:
-                finalized_asns.append(asn)
-
-        return finalized_asns + lv2_asns
-
-    @staticmethod
-    def merge_asns(associations):
-        """merge level2 associations
-
-        Parameters
-        ----------
-        associations : [asn(, ...)]
-            Associations to search for merging.
-
-        Returns
-        -------
-        associatons : [association(, ...)]
-            List of associations, some of which may be merged.
-        """
-        others = []
-        lv2_asns = []
-        for asn in associations:
-            if isinstance(asn, DMSLevel2bBase):
-                lv2_asns.append(asn)
-            else:
-                others.append(asn)
-
-        lv2_asns = Utility._merge_asns(lv2_asns)
-
-        return others + lv2_asns
+        return sorted(asns, key=lambda asn: asn['asn_id'])
 
     @staticmethod
     def _merge_asns(asns):
@@ -644,6 +727,11 @@ class Constraint_Mode(Constraint):
             DMSAttrConstraint(
                 name='opt_elem2',
                 sources=['pupil', 'grating'],
+                required=False,
+            ),
+            DMSAttrConstraint(
+                name='opt_elem3',
+                sources=['fxd_slit'],
                 required=False,
             ),
             DMSAttrConstraint(
@@ -807,6 +895,21 @@ class Constraint_Target(DMSAttrConstraint):
             sources=['targetid'],
         )
 
+class Constraint_ExtCal(Constraint):
+    """Remove any nis_extcals from the associations, they
+       are NOT to receive level-2b or level-3 processing!"""
+
+    def __init__(self):
+        super(Constraint_ExtCal, self).__init__(
+            [
+                DMSAttrConstraint(
+                    name='exp_type',
+                    sources=['exp_type'],
+                    value='nis_extcal'
+                )
+            ],
+            reduce=Constraint.notany
+        )
 
 # ---------------------------------------------
 # Mixins to define the broad category of rules.

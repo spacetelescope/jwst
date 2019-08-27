@@ -26,9 +26,6 @@ class IFUImageModel(DataModel):
     area : numpy float32 array
          Pixel area map array
 
-    relsens2d : numpy float32 array
-         Sensitivity array
-
     var_poisson : numpy float32 array
          variance due to poisson noise
 
@@ -38,25 +35,10 @@ class IFUImageModel(DataModel):
     wavelength : numpy float32 array
          wavelength
 
-    pathloss_pointsource2d : numpy float32 array
-         2-d array for pathloss (point source)
-
-    pathloss_pointsource : numpy float32 array
-         pathloss array for point sources
-
-    wavelength_pointsource : numpy float32 array
-         wavelength array for point sources
-
-    pathloss_uniformsource2d : numpy float32 array
-         2-d array for pathloss (uniform source)
-
-    pathloss_uniformsource : numpy float32 array
-         pathloss_array for uniform sources
-
-    wavelength_uniformsource : numpy float32 array
-         wavelength array for uniform sources
+    pathloss : numpy float32 array
+         pathloss correction
     """
-    schema_url = "ifuimage.schema.yaml"
+    schema_url = "ifuimage.schema"
 
     def __init__(self, init=None, **kwargs):
         if isinstance(init, ImageModel):
@@ -67,8 +49,6 @@ class IFUImageModel(DataModel):
             self.err = init.err
             if init.hasattr('area'):
                 self.area = init.area
-            if init.hasattr('relsens2d'):
-                self.relsens2d = init.relsens2d
             if init.hasattr('var_poisson'):
                 self.var_poisson = init.var_poisson
             if init.hasattr('var_rnoise'):

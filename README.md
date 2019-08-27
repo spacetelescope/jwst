@@ -2,57 +2,70 @@ JWST Calibration Pipeline
 =========================
 [![Documentation Status](https://readthedocs.org/projects/jwst-pipeline/badge/?version=latest)](http://jwst-pipeline.readthedocs.io/en/latest/?badge=latest)
 [![Build Status](https://travis-ci.org/spacetelescope/jwst.svg?branch=master)](https://travis-ci.org/spacetelescope/jwst)
+[![codecov](https://codecov.io/gh/spacetelescope/jwst/branch/master/graph/badge.svg)](https://codecov.io/gh/spacetelescope/jwst)
 [![Powered by STScI Badge](https://img.shields.io/badge/powered%20by-STScI-blue.svg?colorA=707170&colorB=3e8ddd&style=flat)](http://www.stsci.edu)
 [![Powered by Astropy Badge](http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](http://www.astropy.org/)
 
 ![STScI Logo](docs/_static/stsci_logo.png)
 
-Note
-----
-Beginning with version 0.9.0, **JWST requires Python 3.5 or above**.
+**JWST requires Python 3.5 or above and a C compiler for dependencies**.
 
-Installing
-----------
+Installation
+------------
 
-### Installing a release version ###
+The ``jwst`` package can be installed into a virtualenv or conda environment via ``pip``.  We recommend creating a fresh environment with only python installed.  Via conda:
 
-To install a particular released version of the package, and all dependencies, we recommend using
-[conda](https://conda.io/docs/index.html) and a spec file that lists the exact versions of all packages to be installed.
-To create a new environment, use:
+    conda create -n jwst_env python=3.6
+    conda activate jwst_env
 
-    conda create -n jwst --file <URL>
-    source activate jwst
+### Installing for end-users ###
+
+To install a released (tagged) version, you can install directly from Github.  To install tagged release ``jwst 0.13.7``:
+
+    pip install numpy
+    pip install git+https://github.com/spacetelescope/jwst#0.13.7
+
+The same can be done to install the latest development version (from ``master``):
+
+    pip install git+https://github.com/spacetelescope/jwst
+
+### Installing a DMS release ###
+
+We still package our releases to DMS via a conda spec file that lists the exact versions of all packages to be installed.
+To create a new environment with a specific release, use:
+
+    conda create -n jwst_env --file <URL>
+    conda activate jwst_env
 
 where `<URL>` is of the form:
 
-    Linux: http://ssb.stsci.edu/releases/jwstdp/0.12.2/latest-linux
-    OS X: http://ssb.stsci.edu/releases/jwstdp/0.12.2/latest-osx
+    Linux: http://ssb.stsci.edu/releases/jwstdp/0.13.7/latest-linux
+    OS X: http://ssb.stsci.edu/releases/jwstdp/0.13.7/latest-osx
 
-Other particular versions can be installed by choosing a different version tag in place of "0.12.2" in the URL path.
+Other particular versions can be installed by choosing a different version tag in place of "0.13.7" in the URL path.
 See the "Software vs DMS build version map" table below for a list of tags corresponding to particular releases.
 
-To update to the latest nightly build:
+### Installing for developers ###
 
-    conda update -n jwst --override-channels -c http://ssb.stsci.edu/astroconda-dev -c defaults --all
+Fork and clone the repo:
 
-### Installing the latest development version ###
-
-To install the development version of the repository, we recommend creating a new
-environment, using the [astroconda](https://astroconda.readthedocs.io) channel
-to install the dependencies, and then installing from the github repository:
-
-    conda create -n jwst_dev --only-deps --override-channels -c http://ssb.stsci.edu/astroconda-dev -c defaults python=3.6 jwst
-    source activate jwst_dev
-    git clone https://github.com/spacetelescope/jwst.git
+    git clone https://github.com/spacetelescope/jwst
     cd jwst
-    python setup.py develop
 
-Once installed, the software can be updated to the lastest development version by updating the dependencies,
-pulling the latest version of `master` from the Github repository inside the `jwst` directory:
+Install from your local checked out copy as an "editable" install:
 
-    conda update -n jwst_dev --override-channels -c http://ssb.stsci.edu/astroconda-dev -c defaults --all
-    git pull origin master
-    python setup.py develop
+    pip install numpy
+    pip install -e .
+
+If you want to run the tests and/or build the docs, you can make sure those dependencies are installed too:
+
+    pip install -e .[test]
+    pip install -e .[docs]
+    pip install -e .[test,docs]
+
+Need other useful packages in your development environment?
+
+    pip install ipython flake8
 
 ### CRDS Setup ###
 
@@ -65,14 +78,16 @@ Inside the STScI network, the pipeline works with default CRDS setup with no mod
 Documentation
 -------------
 
-Documentation (built daily from `master`) is available here:
+Documentation (built daily from `master`) is available at:
 
 https://jwst-pipeline.readthedocs.io/en/latest/
 
-One can clone this repository and build the documentation with
+To build the docs yourself, clone this repository and build the documentation with:
 
-    pip install sphinx_rtd_theme stsci_rtd_theme sphinx_automodapi sphinxcontrib_programoutput
-    python setup.py build_sphinx
+    pip install -e .[docs]
+    cd docs
+    make html
+    make latexpdf
 
 
 Contributions and Feedback
@@ -90,6 +105,15 @@ Software vs DMS build version map
 
 | jwst tag | DMS build | CRDS_CONTEXT |   Date     |          Notes                           |
 | -------- | --------- | ------------ | ---------- | -----------------------------------------|
+|  0.13.7  | B7.3      | 0535         | 06/21/2019 | Final release candidate for Build 7.3    |
+|  0.13.6  | B7.3rc4   | 0534         | 06/20/2019 | Fourth release candidate for Build 7.3   |
+|  0.13.5  | B7.3rc3   | 0534         | 06/19/2019 | Third release candidate for Build 7.3    |
+|  0.13.4  | B7.3rc2   | 0534         | 06/18/2019 | Second release candidate for Build 7.3   |
+|  0.13.3  | B7.3rc1   | 0532         | 06/04/2019 | First release candidate for Build 7.3    |
+|  0.13.2  |           | 0500*        | 05/14/2019 | DMS test, no delivery to I&T             |
+|  0.13.1  |           | 0500*        | 03/08/2019 | DMS test, no delivery to I&T             |
+|  0.13.0  |           | 0500         | 02/15/2019 | DMS test, no delivery to I&T             |
+|  0.12.3  | B7.2.1    | 0500         | 01/15/2019 | DMS Build 7.2.1 patch release            |
 |  0.12.2  | B7.2      | 0495         | 11/07/2018 | Final release candidate for Build 7.2    |
 |  0.12.1  | B7.2rc2   | 0495         | 11/01/2018 | Second release candidate for Build 7.2   |
 |  0.12.0  | B7.2rc1   | 0493*        | 10/09/2018 | First release candidate for Build 7.2    |
@@ -112,35 +136,54 @@ Note: CRDS_CONTEXT values flagged with an asterisk in the above table are estima
 Unit Tests
 ----------
 
-Unit tests can be run via `pytest`.  All tests need a the `ci_watson` pytest plugin to run.
+Unit tests can be run via `pytest`.  Within the top level of your local `jwst` repo checkout:
 
-    pip install requests_mock ci_watson
-    pytest jwst
+    pip install -e .[test]
+    pytest
+
+Need to parallelize your test runs over 8 cores?
+
+    pip install pytest-xdist
+    pytest -n 8
 
 
 Regression Tests
 ----------------
 
-Regression tests - both the data and the result reports - are currently only accessible to STScI staff members. If you do need information about this, please open an issue.
+Latest regression test results can be found here (STScI staff only):
 
-Latest regression test results can be found here:
+https://plwishmaster.stsci.edu:8081/job/RT/job/JWST/
 
-https://boyle.stsci.edu:8081/job/RT/job/JWST/
+The test builds start at 6pm local Baltimore time Monday through Saturday on `jwcalibdev`.
 
-The test builds start at 11am and 6pm local Baltimore time every day on jwcalibdev.
+To run the regression tests on your local machine, get the test dependencies and set the environment variable TEST_BIGDATA to our Artifactory server (STSci staff members only)
 
-To run the regression tests on your local machine, you need the `ci_watson` pytest plugin as above.  Then set the environment variable TEST_BIGDATA to our Artifactory server (STSci staff members only)
+    pip install -e .[test]
+    export TEST_BIGDATA=https://bytesalad.stsci.edu/artifactory
 
-    export TEST_BIGDATA=https://bytesalad.stsci.edu/artifactory/
+When you run the tests, control where the test results are written with the `--basetemp` arg to `pytest`.  So to run all the regression tests:
 
-When you run the tests, the results will get written somewhere in `/tmp` or `/var` by default.  Control this with the `--basetemp` arg to `pytest`.  So to run all the regression tests:
-
-    pytest --bigdata --basetemp=<PATH> jwst/tests_nightly/general
+    pytest --bigdata --basetemp=<PATH> jwst/tests_nightly
 
 If you would like to run a specific test, find its name or ID and use the `-k` option:
 
-    pytest --bigdata --basetemp=<PATH> jwst/tests_nightly/general -k ami_pipeline
+    pytest --bigdata --basetemp=<PATH> jwst/tests_nightly -k image3_pipeline
 
 If developers need to update the truth files in our nightly regression tests, there are instructions in the repository wiki.
 
-https://github.com/spacetelescope/jwst/wiki/Updating-nightly-RT
+https://github.com/spacetelescope/jwst/wiki/Maintaining-Regression-Tests
+
+JupyterHub Access
+-----------------
+
+**Note:** This is currently still in research-and-development stage and is subject to change.
+
+To run a pre-installed pipeline in JupyterHub:
+
+* Click on https://dev.science.stsci.edu/hub/spawn?image=793754315137.dkr.ecr.us-east-1.amazonaws.com/datb-tc-pipeline-nb:jwstdp-snapshot and sign in.
+* Click "Terminal" to:
+    * Run `pip freeze` to see what is installed.
+    * Grab your notebooks (e.g., using `git clone`) and install any optional software (e.g., using `pip install`).
+* Launch your notebook to run the JWST pipeline.
+
+Latest release of any packages is not guaranteed in this environment. Amazon Web Services charges may apply.

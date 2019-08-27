@@ -13,7 +13,7 @@ class PhotomModel(ReferenceFileModel):
     phot_table : numpy table
          Photometric flux conversion factors table
     """
-    schema_url = "photom.schema.yaml"
+    schema_url = "photom.schema"
 
 
 class NircamPhotomModel(PhotomModel):
@@ -38,7 +38,7 @@ class NircamPhotomModel(PhotomModel):
         - relresponse: float32[3000]
 
     """
-    schema_url = "nircam_photom.schema.yaml"
+    schema_url = "nircam_photom.schema"
 
 
 class NirissPhotomModel(PhotomModel):
@@ -63,7 +63,7 @@ class NirissPhotomModel(PhotomModel):
         - relresponse: float32[5000]
 
     """
-    schema_url = "niriss_photom.schema.yaml"
+    schema_url = "niriss_photom.schema"
 
 
 class NirspecPhotomModel(PhotomModel):
@@ -88,7 +88,7 @@ class NirspecPhotomModel(PhotomModel):
         - reluncertainty: float32[150]
 
     """
-    schema_url = "nirspec_photom.schema.yaml"
+    schema_url = "nirspec_photom.schema"
 
 
 class NirspecFSPhotomModel(PhotomModel):
@@ -114,7 +114,7 @@ class NirspecFSPhotomModel(PhotomModel):
         - reluncertainty: float32[150]
 
     """
-    schema_url = "nirspecfs_photom.schema.yaml"
+    schema_url = "nirspecfs_photom.schema"
 
     def __init__(self, init=None, **kwargs):
         super(NirspecFSPhotomModel, self).__init__(init=init, **kwargs)
@@ -139,9 +139,10 @@ class MiriImgPhotomModel(PhotomModel):
        - nelem: int16
        - wavelength: float32[500]
        - relresponse: float32[500]
+       - relresperror: float32[500]
 
     """
-    schema_url = "mirimg_photom.schema.yaml"
+    schema_url = "mirimg_photom.schema"
 
 
 class MiriMrsPhotomModel(PhotomModel):
@@ -172,7 +173,7 @@ class MiriMrsPhotomModel(PhotomModel):
         An array-like object containing pixel-by-pixel size values, in units of
         square arcseconds (arcsec^2).
     """
-    schema_url = "mirmrs_photom.schema.yaml"
+    schema_url = "mirmrs_photom.schema"
 
     def __init__(self, init=None, **kwargs):
         super(MiriMrsPhotomModel, self).__init__(init=init, **kwargs)
@@ -198,4 +199,4 @@ class FgsPhotomModel(PhotomModel):
         - relresponse: float32[5000]
 
     """
-    schema_url = "fgs_photom.schema.yaml"
+    schema_url = "fgs_photom.schema"

@@ -41,7 +41,7 @@ def hook_from_string(step, type, num, command):
     try:
         step_class = utilities.import_class(
             command, Step, step.config_file)
-    except:
+    except Exception:
         pass
 
     if step_class is not None:
@@ -52,7 +52,7 @@ def hook_from_string(step, type, num, command):
     try:
         step_func = utilities.import_class(
             command, types.FunctionType, step.config_file)
-    except:
+    except Exception:
         pass
 
     if step_func is not None:

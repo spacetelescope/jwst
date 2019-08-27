@@ -14,4 +14,4 @@ class TrapsFilledModel(DataModel):
         The map of the number of traps filled over the detector, with
         one plane for each "trap family."
     """
-    schema_url = "trapsfilled.schema.yaml"
+    schema_url = "trapsfilled.schema"

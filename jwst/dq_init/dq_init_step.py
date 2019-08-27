@@ -54,7 +54,7 @@ class DQInitStep(Step):
                 self.log.info("Input opened as GuiderRawModel")
             except (TypeError, ValueError):
                 self.log.error("Unexpected or unknown input model type")
-        except:
+        except Exception:
             self.log.error("Can't open input")
             raise
 

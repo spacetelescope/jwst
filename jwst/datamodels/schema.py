@@ -3,11 +3,6 @@
 import re
 from collections import OrderedDict
 
-from asdf import AsdfFile
-from asdf import schema as asdf_schema
-
-from jwst.transforms.jwextension import JWSTExtension
-from gwcs.extension import GWCSExtension
 
 # return_result included for backward compatibility
 def find_fits_keyword(schema, keyword, return_result=False):
@@ -266,39 +261,8 @@ def merge_property_trees(schema):
 
     return newschema
 
-def read_schema(schema_file, extensions=None):
-    """
-    Read a schema file from disk in order to pass it as an argument
-    to a new datamodel.
-    """
-    def get_resolver(asdf_file):
-        extensions = asdf_file._extensions
-        def asdf_file_resolver(uri):
-            return extensions._url_mapping(extensions._tag_mapping(uri))
-        return asdf_file_resolver
 
-    default_extensions = [GWCSExtension(), JWSTExtension()]
-
-    if extensions is None:
-        extensions = default_extensions[:]
-    else:
-        extensions.extend(default_extensions)
-    asdf_file = AsdfFile(extensions=extensions)
-
-    if hasattr(asdf_file, 'resolver'):
-        file_resolver = asdf_file.resolver
-    else:
-        file_resolver = get_resolver(asdf_file)
-
-    schema = asdf_schema.load_schema(schema_file,
-                                     resolver=file_resolver,
-                                     resolve_references=True)
-
-    schema = merge_property_trees(schema)
-    return schema
-
-
-def build_docstring(klass, template):
+def build_docstring(klass, template="{fits_hdu} {title}"):
     """
     Build a docstring for the specified DataModel class from its schema.
 
@@ -366,7 +330,7 @@ def build_docstring(klass, template):
         for field in attr.split('.'):
             try:
                 instance = instance.get(field)
-            except:
+            except AttributeError:
                 instance = None
             if instance is None:
                 break
@@ -388,7 +352,7 @@ def build_docstring(klass, template):
             if type(value) == bool:
                 schema[field] = field
 
-        # Apply format to svhema fields
+        # Apply format to schema fields
         # Delete blank lines
         lines = template.format(**schema)
         for line in lines.split("\n"):
@@ -397,4 +361,3 @@ def build_docstring(klass, template):
 
     field_info = "\n".join(buffer) + "\n"
     return field_info
-

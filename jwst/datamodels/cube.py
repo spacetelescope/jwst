@@ -25,9 +25,6 @@ class CubeModel(DataModel):
     area : numpy float32 array
          Pixel area map array
 
-    relsens : numpy table
-         relative sensitivity table
-
     int_times : numpy table
          table of times for each integration
 
@@ -40,7 +37,7 @@ class CubeModel(DataModel):
     var_rnoise : numpy float32 array
          Integration-specific variances of slope due to read noise
     """
-    schema_url = "cube.schema.yaml"
+    schema_url = "cube.schema"
 
     def __init__(self, init=None, **kwargs):
 
@@ -49,4 +46,3 @@ class CubeModel(DataModel):
         # Implicitly create arrays
         self.dq = self.dq
         self.err = self.err
-

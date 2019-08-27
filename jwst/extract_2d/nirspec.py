@@ -45,6 +45,7 @@ def nrs_extract2d(input_model, slit_name=None, apply_wavecorr=False, reference_f
             apply_wavecorr = False
             warnings.warn("WAVECORR reference file missing - skipping correction")
     else:
+        reffile = None
         apply_wavecorr = False
         log.info("Skipping wavecorr correction for EXP_TYPE {0}".format(exp_type))
 
@@ -137,6 +138,9 @@ def process_slit(input_model, slit, exp_type, apply_wavecorr, reffile):
     else:
         log.info("Slit {0}: Wavelength zero-point correction "
                  "was not applied.".format(slit.name))
+    # Copy the DISPAXIS keyword to the output slit.
+    new_model.meta.wcsinfo.dispersion_direction = \
+        input_model.meta.wcsinfo.dispersion_direction
     return new_model, xlo, xhi, ylo, yhi
 
 
@@ -159,8 +163,9 @@ def set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi):
     output_model.xsize = (xhi - xlo)
     output_model.ystart = ylo + 1 # FITS 1-indexed
     output_model.ysize = (yhi - ylo)
+    output_model.source_id = int(slit.source_id)
     if output_model.meta.exposure.type.lower() in ['nrs_msaspec', 'nrs_autoflat']:
-        output_model.source_id = int(slit.source_id)
+        #output_model.source_id = int(slit.source_id)
         output_model.source_name = slit.source_name
         output_model.source_alias = slit.source_alias
         output_model.stellarity = float(slit.stellarity)
@@ -170,6 +175,7 @@ def set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi):
         output_model.quadrant = int(slit.quadrant)
         output_model.xcen = int(slit.xcen)
         output_model.ycen = int(slit.ycen)
+        output_model.dither_position = int(slit.dither_position)
         # for pathloss correction
         output_model.shutter_state = slit.shutter_state
     log.info('set slit_attributes completed')

@@ -29,6 +29,10 @@ WCS of each input image and the WCS of the define output product.
 This mapping function gets passed to cdriz to drive the actual
 drizzling to create the output product.
 
+Use the resample_spec step for spectroscopic data.  The dispersion
+direction is needed for this case, and this is obtained from the
+DISPAXIS keyword.
+
 A full description of the drizzling algorithm, and parameters for
 drizzling, can be found in the
 `DrizzlePac Handbook <http://drizzlepac.stsci.edu>`_.

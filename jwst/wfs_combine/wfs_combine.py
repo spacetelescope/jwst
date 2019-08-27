@@ -256,7 +256,7 @@ class DataSet():
         wcs2 = self.input_2.meta.wcs
         tr1 = wcs1.get_transform('detector', 'world')
         tr2 = wcs2.get_transform('world', 'detector')
- 
+
         # Get coords of center pixel
         xcen = int(self.input_1.data.shape[1]/2)
         ycen = int(self.input_1.data.shape[0]/2)
@@ -533,9 +533,10 @@ def create_griddata_array(sci_data, pixel):
         for y in range(ymin, ymax + 1):
             interp_list.append([y, x, sci_data[y, x]])
 
-    try:  # Remove identity element (central pixel)
+    # Remove identity element (central pixel)
+    try:
         interp_list.remove([pixel[0], pixel[1], sci_data[pixel[0], pixel[1]]])
-    except:
+    except ValueError:
         pass
 
     interp_arr = np.asarray(interp_list)  # griddata requires an array

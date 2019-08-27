@@ -36,7 +36,7 @@ It creates 2 pairs of 1-d arrays, a wavelength array (calculated from the WCS ap
 the index of the plane in the wavelength direction) and a pathloss array
 calculated by interpolating each plane of the pathloss cube at the position of
 the source (which is taken from datamodel).  There are pairs of these arrays for
-both pointsource and uniformsource data types.
+both point source and uniform source data types.
 
 For the uniform source pathloss calculation, there is no dependence on position
 in the aperture, so the array of pathlosses and calculated wavelengths are attached

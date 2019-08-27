@@ -184,9 +184,9 @@ class NrmModel:
             self.fov_sim = fov
 
         if hasattr(centering, '__iter__'):
-            if centering is 'PIXELCENTERED':
+            if centering == 'PIXELCENTERED':
                 centering=(0.5, 0.5)
-            elif centering is 'PIXELCORNER':
+            elif centering == 'PIXELCORNER':
                 centering=(0.0, 0.0)
 
         self.bandpass = bandpass
@@ -329,11 +329,11 @@ class NrmModel:
             self.model_over = leastsqnrm.multiplyenv(self.model_beam, self.fringes)
 
             self.model = np.zeros((self.fov,self.fov, self.model_over.shape[2]))
+
             # loop over slices "sl" in the model
             for sl in range(self.model_over.shape[2]):
                 self.model[:,:,sl] = utils.rebin( self.model_over[:,:,sl],
-                                                (self.over, self.over))
-
+                                            (self.over, self.over))
             return self.model
 
         else:
@@ -371,7 +371,7 @@ class NrmModel:
                     model_binned[:,:,sl] = utils.rebin(
                         self.model_over[:,:,sl], (self.over, self.over))
 
-                    self.model += w*model_binned
+                self.model += w*model_binned
 
             return self.model
 
@@ -489,7 +489,7 @@ class NrmModel:
         """
         try:
             self.modelpsf = np.zeros((self.fov, self.fov))
-        except:
+        except AttributeError:
             self.modelpsf = np.zeros((self.fov_sim, self.fov_sim))
 
         for ind, coeff in enumerate(self.soln):
@@ -583,7 +583,7 @@ class NrmModel:
 
         try:
             self.gof = goodness_of_fit(img,self.refpsf)
-        except:
+        except Exception:
             self.gof = False
 
         return self.pixscale_factor, self.rot_measured, self.gof

@@ -13,4 +13,4 @@ class ThroughputModel(ReferenceFileModel):
     filter_table : numpy table
          Filter throughput table
     """
-    schema_url = "throughput.schema.yaml"
+    schema_url = "throughput.schema"

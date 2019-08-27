@@ -27,6 +27,20 @@ def test_level2():
     assert name.startswith('jwnoprogram-o999_none')
     assert isinstance(serialized, str)
 
+def test_file_ext():
+    """check that the filename extension is correctly appended"""
+    items = ['a', 'b', 'c']
+    asn = asn_from_list(items, rule=DMSLevel2bBase)
+    #check that extension defaults to json
+    name, serialized = asn.dump()
+    #check that extension with format = 'json'  returns json
+    assert name.endswith('json')
+    name, serialized = asn.dump(format='json')
+    assert name.endswith('json')
+    #check that extension with format = 'yaml'  returns yaml
+    name, serialized = asn.dump(format='yaml')
+    assert name.endswith('yaml')
+   
 
 def test_level2_from_cmdline(tmpdir):
     """Create a level2 assocaition from the command line"""

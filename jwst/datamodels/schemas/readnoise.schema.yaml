@@ -3,6 +3,7 @@ allOf:
 - $ref: subarray.schema.yaml
 - $ref: keyword_readpatt.schema.yaml
 - $ref: keyword_gainfact.schema.yaml
+- $ref: bunit.schema.yaml
 - type: object
   properties:
     data:

@@ -21,18 +21,20 @@ from gwcs import utils as gwutils
 from . import pointing
 from ..lib.catalog_utils import SkyObject
 from ..transforms.models import GrismObject
-from ..datamodels import WavelengthrangeModel, DataModel, ImageModel, CubeModel
+from ..datamodels import WavelengthrangeModel, DataModel
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-__all__ = ["reproject", "wcs_from_footprints", "velocity_correction"]
+
+__all__ = ["reproject", "wcs_from_footprints", "velocity_correction",
+           "MSAFileError", "NoDataOnDetectorError"]
 
 
-class MissingMSAFileError(Exception):
+class MSAFileError(Exception):
 
     def __init__(self, message):
-        super(MissingMSAFileError, self).__init__(message)
+        super(MSAFileError, self).__init__(message)
 
 
 class NoDataOnDetectorError(Exception):
@@ -677,8 +679,8 @@ def transform_bbox_from_shape(shape):
     bbox : tuple
         Bounding box in y, x order.
     """
-    bbox = ((-0.5, shape[0] - 0.5),
-            (-0.5, shape[1] - 0.5))
+    bbox = ((-0.5, shape[-2] - 0.5),
+            (-0.5, shape[-1] - 0.5))
     return bbox
 
 
@@ -698,36 +700,6 @@ def wcs_bbox_from_shape(shape):
     """
     bbox = ((-0.5, shape[-1] - 0.5),
             (-0.5, shape[-2] - 0.5))
-    return bbox
-
-
-def transform_bbox_from_datamodel(input_model):
-    """Create a bounding box from the shape of the data base on the model.
-
-    Note: The bounding box of a ``CubeModel`` is the bounding_box
-    of one of the stacked images. A CubeModel is always treated as
-    a stack (in dimension 1) of 2D images, as opposed to actual 3D data.
-    In this case the bounding box is set to the 2nd and 3rd dimension.
-
-    Parameters
-    ----------
-    input_model : `~jwst.datamodels.DataModel`
-        The data model.
-
-    Returns
-    -------
-    bbox : tuple
-        Bounding box in y, x order.
-    """
-    shape = input_model.data.shape
-    if isinstance(input_model, CubeModel):
-        bbox = ((-0.5, shape[1] - 0.5),
-              (-0.5, shape[2] - 0.5))
-    elif isinstance(input_model, ImageModel):
-        bbox = ((-0.5, shape[0] - 0.5),
-              (-0.5, shape[1] - 0.5))
-    else:
-        raise TypeError("Input is not an ImageModel or CubeModel")
     return bbox
 
 
@@ -788,9 +760,16 @@ def update_s_region_imaging(model):
     update_s_region_keyword(model, footprint)
 
 
-def update_s_region_spectral(model):
-    swcs = model.meta.wcs
+def compute_footprint_spectral(model):
+    """
+    Determine spatial footprint for spectral observations using the instrument model.
 
+    Parameters
+    ----------
+    output_model : `~jwst.datamodels.IFUImageModel`
+        The output of assign_wcs.
+    """
+    swcs = model.meta.wcs
     bbox = swcs.bounding_box
     if bbox is None:
         bbox = wcs_bbox_from_shape(model.data.shape)
@@ -798,9 +777,16 @@ def update_s_region_spectral(model):
     x, y = grid_from_bounding_box(bbox)
     ra, dec, lam = swcs(x, y)
     footprint = np.array([[np.nanmin(ra), np.nanmin(dec)],
-                 [np.nanmax(ra), np.nanmin(dec)],
-                 [np.nanmax(ra), np.nanmax(dec)],
-                 [np.nanmin(ra), np.nanmax(dec)]])
+                          [np.nanmax(ra), np.nanmin(dec)],
+                          [np.nanmax(ra), np.nanmax(dec)],
+                          [np.nanmin(ra), np.nanmax(dec)]])
+    return footprint
+
+
+def update_s_region_spectral(model):
+    """ Update the S_REGION keyword.
+    """
+    footprint = compute_footprint_spectral(model)
     update_s_region_keyword(model, footprint)
 
 
@@ -827,9 +813,9 @@ def _nanminmax(wcsobj):
     return np.nanmin(ra), np.nanmax(ra), np.nanmin(dec), np.nanmax(dec)
 
 
-def update_s_region_nrs_ifu(output_model, mod):
+def compute_footprint_nrs_ifu(output_model, mod):
     """
-    Update S_REGION for NRS_IFU observations using the instrument model.
+    determine NIRSPEC ifu footprint observations using the instrument model.
 
     Parameters
     ----------
@@ -850,6 +836,21 @@ def update_s_region_nrs_ifu(output_model, mod):
     dec_max = np.asarray(dec_total)[:, 1].max()
     dec_min = np.asarray(dec_total)[:, 0].min()
     footprint = np.array([ra_min, dec_min, ra_max, dec_min, ra_max, dec_max, ra_min, dec_max])
+    return footprint
+
+
+def update_s_region_nrs_ifu(output_model, mod):
+    """
+    Update S_REGION for NRS_IFU observations using calculated footprint.
+
+    Parameters
+    ----------
+    output_model : `~jwst.datamodels.IFUImageModel`
+        The output of assign_wcs.
+    mod : module
+        The imported ``nirspec`` module.
+    """
+    footprint = compute_footprint_nrs_ifu(output_model, mod)
     update_s_region_keyword(output_model, footprint)
 
 
@@ -862,8 +863,7 @@ def update_s_region_mrs(output_model):
     output_model : `~jwst.datamodels.IFUImageModel`
         The output of assign_wcs.
     """
-    rmin, rmax, dmin, dmax = _nanminmax(output_model.meta.wcs)
-    footprint = np.array([rmin, dmin, rmax, dmin, rmax, dmax, rmin, dmax])
+    footprint = compute_footprint_spectral(output_model)
     update_s_region_keyword(output_model, footprint)
 
 

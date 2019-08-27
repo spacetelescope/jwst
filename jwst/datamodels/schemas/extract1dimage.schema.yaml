@@ -11,7 +11,7 @@ allOf:
     name:
       title: Name of the slit
       type: string
-      fits_keyword: SLTNAME 
+      fits_keyword: SLTNAME
       fits_hdu: SCI
     spectral_order:
       title: Spectral order number

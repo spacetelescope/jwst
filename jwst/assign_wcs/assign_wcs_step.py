@@ -3,7 +3,7 @@ from ..stpipe import Step
 from .. import datamodels
 import logging
 from .assign_wcs import load_wcs
-from .util import MissingMSAFileError
+from .util import MSAFileError
 
 
 log = logging.getLogger(__name__)
@@ -41,6 +41,9 @@ class AssignWcsStep(Step):
     """
 
     spec = """
+        slit_y_low = float(default=-.55)  # The lower edge of a slit.
+        slit_y_high = float(default=.55)  # The upper edge of a slit.
+
     """
 
     reference_file_types = ['distortion', 'filteroffset', 'specwcs', 'regions',
@@ -48,7 +51,7 @@ class AssignWcsStep(Step):
                             'fore', 'fpa', 'msa', 'ote', 'ifupost',
                             'ifufore', 'ifuslicer']
 
-    def process(self, input):
+    def process(self, input, *args, **kwargs):
         reference_file_names = {}
         with datamodels.open(input) as input_model:
             # If input type is not supported, log warning, set to 'skipped', exit
@@ -75,8 +78,9 @@ class AssignWcsStep(Step):
                 else:
                     message = "MSA metadata file (MSAMETFL) is required for NRS_MSASPEC exposures."
                     log.error(message)
-                    raise MissingMSAFileError(message)
+                    raise MSAFileError(message)
+            slit_y_range = [self.slit_y_low, self.slit_y_high]
+            result = load_wcs(input_model, reference_file_names, slit_y_range)
 
-            result = load_wcs(input_model, reference_file_names)
 
         return result

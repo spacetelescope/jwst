@@ -39,9 +39,12 @@
 # --> status = a1.compare()
 #
 
-import sys, os, time
+import os
+import sys
+import time
+
 from astropy.io import fits
-import numpy as N
+import numpy as np
 
 ERROR_RETURN = 2
 
@@ -90,9 +93,6 @@ class compare_cr_files:
         fh_avg = open_file(self.slope_file)  # file of calculated slope averages
 
         created_file = self.created_file
-        found_file = self.found_file
-        sim_file = self.sim_file
-        slope_file = self.slope_file
 
         data_c = fh_c[0].data
         data_f = fh_f[0].data
@@ -126,13 +126,16 @@ class compare_cr_files:
 
         # Check for compatibility of array sizes
         if ((xx_size_c != xx_size_f) or(yy_size_c != yy_size_f)):
-            print(' arrays in found and created files have incompatible sizes, so maybe using the wrong created file ')
+            print(' arrays in found and created files have incompatible sizes,',
+                'so maybe using the wrong created file ')
             sys.exit(ERROR_RETURN)
         if ((xx_size_c != xx_size_true) or(yy_size_c != yy_size_true)):
-            print(' arrays in true and created files have incompatible sizes, so maybe using the wrong created file ')
+            print(' arrays in true and created files have incompatible sizes,',
+                'so maybe using the wrong created file ')
             sys.exit(ERROR_RETURN)
         if ((xx_size_c != xx_size_avg) or(yy_size_c != yy_size_avg)):
-            print(' arrays in calculated(averaged) and created files have incompatible sizes, so maybe using the wrong created file ')
+            print(' arrays in calculated(averaged) and created files have',
+                'incompatible sizes, so maybe using the wrong created file ')
             sys.exit(ERROR_RETURN)
 
         xx_size = xx_size_c; yy_size = yy_size_c # all sizes compatible, so using more generic names
@@ -140,12 +143,11 @@ class compare_cr_files:
         # create 1d arrays for later stats
         data_true_1 = data_true.ravel()
         data_avg_1 = data_avg.ravel()
-        data_diff_1 = data_avg_1 - data_true_1
 
-        true_nonneg = N.where(data_true_1 >= 0.)
-        avg_neg1 = N.where(data_avg_1 == -1.0)  # calculated slopes where data was insufficient; flagged as -1 by ramp_fit
+        true_nonneg = np.where(data_true_1 >= 0.)
+        avg_neg1 = np.where(data_avg_1 == -1.0)  # calculated slopes where data was insufficient; flagged as -1 by ramp_fit
 
-        total_c = N.add.reduce(N.add.reduce(N.add.reduce(N.where(data_c > 0.0, 1, 0)))) # number of pixels in created GCR/SPs
+        total_c = np.add.reduce(np.add.reduce(np.add.reduce(np.where(data_c > 0.0, 1, 0)))) # number of pixels in created GCR/SPs
 
         # set arrays for nonnegative pixels values
         data_diff_nonneg = data_avg_1[true_nonneg] - data_true_1[true_nonneg]
@@ -153,19 +155,26 @@ class compare_cr_files:
         true_nonneg = data_true_1[true_nonneg]
 
         if (verb > 0):
-            print('The total number of pixels in gcr/sps that were created in ', created_file, ' is ', total_c)
+            print('The total number of pixels in gcr/sps that were created in ',
+                created_file, ' is ', total_c)
             print('For all data in which the true count rates are nonnegative: ')
-            print('  the calculated (avg) data: min, mean, max, std = ', avg_nonneg.min(), ',', avg_nonneg.mean(), ',', avg_nonneg.max(), ',', avg_nonneg.std())
-            print('  the true data: min, mean, max, std = ', true_nonneg.min(), ',', true_nonneg.mean(), ',', true_nonneg.max(), ',', true_nonneg.std())
-            print('  the avg-true: min, mean, max, std = ', data_diff_nonneg.min(), ',', data_diff_nonneg.mean(), ',', data_diff_nonneg.max(), ',', data_diff_nonneg.std())
+            print('  the calculated (avg) data: min, mean, max, std = ',
+                avg_nonneg.min(), ',', avg_nonneg.mean(), ',', avg_nonneg.max(),
+                ',', avg_nonneg.std())
+            print('  the true data: min, mean, max, std = ', true_nonneg.min(),
+                ',', true_nonneg.mean(), ',', true_nonneg.max(), ',', true_nonneg.std())
+            print('  the avg-true: min, mean, max, std = ', data_diff_nonneg.min(),
+                ',', data_diff_nonneg.mean(), ',', data_diff_nonneg.max(), ',',
+                data_diff_nonneg.std())
             print('   ')
-            print('The number of pixels for which there is insufficient data: ', len(data_avg_1[avg_neg1]))
+            print('The number of pixels for which there is insufficient data: ',
+                len(data_avg_1[avg_neg1]))
             print('  ')
 
-        c_only_along_stack = N.zeros((yy_size, xx_size), dtype=N.int32)   # pixels with crs created but not found
-        f_only_along_stack = N.zeros((yy_size, xx_size), dtype=N.int32)   # pixels with crs foundd but not created
-        neither_along_stack = N.zeros((yy_size, xx_size), dtype=N.int32)  # pixels with no crs created or found
-        both_along_stack = N.zeros((yy_size, xx_size), dtype=N.int32)     # pixels with crs both created and found
+        c_only_along_stack = np.zeros((yy_size, xx_size), dtype=np.int32)   # pixels with crs created but not found
+        f_only_along_stack = np.zeros((yy_size, xx_size), dtype=np.int32)   # pixels with crs foundd but not created
+        neither_along_stack = np.zeros((yy_size, xx_size), dtype=np.int32)  # pixels with no crs created or found
+        both_along_stack = np.zeros((yy_size, xx_size), dtype=np.int32)     # pixels with crs both created and found
 
         # the following apply to each pixel in each stack
         tot_c_only = 0 # number of pixels with crs created but not found within a subvector
@@ -174,14 +183,17 @@ class compare_cr_files:
         tot_both = 0    # number of pixels with crs both created and found within a subvector
 
         max_reads = int(NSTACK / navg) # number of reads in averaged data
-        c_navg_pixel = N.zeros((max_reads, yy_size, xx_size), dtype=N.int32) # average of created (subvectors)
+        c_navg_pixel = np.zeros((max_reads, yy_size, xx_size), dtype=np.int32) # average of created (subvectors)
 
         for xx_pix in range(xx_size):   # loop over all pixels for comparison
             for yy_pix in range(yy_size):
 
                 if verb > 1:
                     print(' xx, yy: ', xx_pix, ',', yy_pix)
-                    print('  the true and calculated slopes for this pixel are: ', data_true[yy_pix, xx_pix], ' , ', data_avg[yy_pix, xx_pix], ' difference true-calc :', data_true[yy_pix, xx_pix] - data_avg[yy_pix, xx_pix])
+                    print('  the true and calculated slopes for this pixel are: ',
+                        data_true[yy_pix, xx_pix], ' , ', data_avg[yy_pix, xx_pix],
+                        ' difference true-calc :',
+                        data_true[yy_pix, xx_pix] - data_avg[yy_pix, xx_pix])
 
 
                 c_pix_whole_stack = data_c[:, yy_pix, xx_pix]
@@ -193,7 +205,7 @@ class compare_cr_files:
                     print(' For this pixel, the found averaged stack values: ')
                     print(f_pix_whole_stack)
 
-                c_navg_line = N.zeros((max_reads), dtype=N.float32)
+                c_navg_line = np.zeros((max_reads), dtype=np.float32)
 
                 for which_read in range(0, max_reads - 1):
                     low_index = which_read * navg
@@ -210,7 +222,9 @@ class compare_cr_files:
 
                     c_navg_pixel[which_read, yy_pix, xx_pix] = c_navg_line[which_read]
 
-                    if ((c_navg_line[which_read] > 0.0) and (f_pix_whole_stack[which_read] == 0.0) and (f_pix_whole_stack[which_read + 1] == 0.0)):
+                    if ((c_navg_line[which_read] > 0.0)
+                        and (f_pix_whole_stack[which_read] == 0.0)
+                        and (f_pix_whole_stack[which_read + 1] == 0.0)):
                         tot_c_only += 1
                         c_only_along_stack[yy_pix, xx_pix] += 1
                         if verb > 1: print('       The subvector above is created only ')
@@ -225,7 +239,9 @@ class compare_cr_files:
                         neither_along_stack[yy_pix, xx_pix] += 1
                         if verb > 1: print('       The subvector above is neither ')
 
-                    if ((c_navg_line[which_read] > 0.0) and ((f_pix_whole_stack[which_read] > 0.0) or (f_pix_whole_stack[which_read + 1] > 0.0))):
+                    if ((c_navg_line[which_read] > 0.0)
+                        and ((f_pix_whole_stack[which_read] > 0.0)
+                            or (f_pix_whole_stack[which_read + 1] > 0.0))):
                         tot_both += 1
                         both_along_stack[yy_pix, xx_pix] += 1
                         if verb > 1: print('       The subvector above is both ')
@@ -246,13 +262,15 @@ class compare_cr_files:
                     if (yy_pix % 50 == 0):
                         print('xx, yy = : c_only, f_only , neither, both, [CFLAG / FLFAG]  ')
 
-                    print(xx_pix, yy_pix, ' : ', c_only_along_stack[yy_pix, xx_pix], f_only_along_stack[yy_pix, xx_pix], neither_along_stack[yy_pix, xx_pix], both_along_stack[yy_pix, xx_pix], c_only_flag, f_only_flag)
+                    print(xx_pix, yy_pix, ' : ', c_only_along_stack[yy_pix, xx_pix],
+                        f_only_along_stack[yy_pix, xx_pix], neither_along_stack[yy_pix, xx_pix],
+                        both_along_stack[yy_pix, xx_pix], c_only_flag, f_only_flag)
 
         # write relevant 2d arrays and data cubes
         print('Output arrays:')
         try:
             os.remove('c_only.fits')
-        except:
+        except FileNotFoundError:
             pass
         print('  ')
         write_to_file(c_only_along_stack, 'c_only.fits')
@@ -260,7 +278,7 @@ class compare_cr_files:
 
         try:
             os.remove('f_only.fits')
-        except:
+        except FileNotFoundError:
             pass
         print('  ')
         write_to_file(f_only_along_stack, 'f_only.fits')
@@ -268,7 +286,7 @@ class compare_cr_files:
 
         try:
             os.remove('both.fits')
-        except:
+        except FileNotFoundError:
             pass
         print('  ')
         write_to_file(both_along_stack, 'both.fits')
@@ -276,7 +294,7 @@ class compare_cr_files:
 
         try:
             os.remove('neither.fits')
-        except:
+        except FileNotFoundError:
             pass
         print('  ')
         write_to_file(neither_along_stack, 'neither.fits')
@@ -284,7 +302,7 @@ class compare_cr_files:
 
         try:
             os.remove('c_navg.fits')
-        except:
+        except FileNotFoundError:
             pass
         print('  ')
         write_to_file(c_navg_pixel, 'c_navg.fits')
@@ -297,11 +315,17 @@ class compare_cr_files:
         print('The number of pixels with CRs that were both created and found: ', tot_both)
         print('The number of pixels not having CRs that were neither created nor found: ', tot_neither)
 
-        print('The fraction of all pixels that were in found CR only: ', float(tot_f_only) / (tot_both + tot_neither + tot_f_only + tot_c_only))
-        print('The fraction of all pixels that were in created CR only: ', float(tot_c_only) / (tot_both + tot_neither + tot_f_only + tot_c_only))
-        print('The fraction of all pixels that were both created and found CR: ', float(tot_both) / (tot_both + tot_neither + tot_f_only + tot_c_only))
-        print('The ratio of the number of pixels that were created only to the total number of pixels that were created (in the created file):', float(tot_c_only) / total_c)
-        print('The total number of all pixels in all slices: ', tot_both + tot_neither + tot_f_only + tot_c_only)
+        print('The fraction of all pixels that were in found CR only: ',
+            float(tot_f_only) / (tot_both + tot_neither + tot_f_only + tot_c_only))
+        print('The fraction of all pixels that were in created CR only: ',
+            float(tot_c_only) / (tot_both + tot_neither + tot_f_only + tot_c_only))
+        print('The fraction of all pixels that were both created and found CR: ',
+            float(tot_both) / (tot_both + tot_neither + tot_f_only + tot_c_only))
+        print('The ratio of the number of pixels that were created only to the',
+            'total number of pixels that were created (in the created file):',
+            float(tot_c_only) / total_c)
+        print('The total number of all pixels in all slices: ',
+            tot_both + tot_neither + tot_f_only + tot_c_only)
 
         tstop = time.time()
         print('The elapsed time: ', tstop - tstart, ' seconds')
