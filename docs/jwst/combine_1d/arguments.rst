@@ -14,13 +14,3 @@ the exposure time (FITS keyword EFFEXPTM) is used as the weight.  If
 the string is "unit_weight" or "unit weight", the same weight (1) will
 be used for all input spectra.  If the string is anything else, a warning
 will be logged and unit weight will be used.
-
-*  ``--interpolation``
-
-This is a string that specifies how to interpolate between pixels of the
-input data.  The default value is "nearest", which means that no actual
-interpolation will be done; the pixel number will be rounded to an
-integer, and the input value at that pixel will be used.
-
-This argument is not currently used.  It is included as a placeholder
-for a possible future enhancement.

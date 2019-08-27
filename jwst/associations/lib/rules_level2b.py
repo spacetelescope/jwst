@@ -1,14 +1,18 @@
 """Association Definitions: DMS Level2b product associations
 """
+from collections import deque
 import logging
 
+from jwst.associations.exceptions import AssociationNotValidError
 from jwst.associations.registry import RegistryMarker
 from jwst.associations.lib.constraint import (Constraint, SimpleConstraint)
 from jwst.associations.lib.dms_base import (
     Constraint_TSO,
     format_list
 )
+from jwst.associations.lib.member import Member
 from jwst.associations.lib.process_list import ProcessList
+from jwst.associations.lib.utilities import (getattr_from_list, getattr_from_list_nofail)
 from jwst.associations.lib.rules_level2_base import *
 from jwst.associations.lib.rules_level3_base import DMS_Level3_Base
 
@@ -21,13 +25,12 @@ __all__ = [
     'Asn_Lv2MIRLRSFixedSlitNod',
     'Asn_Lv2NRSFSS',
     'Asn_Lv2NRSIFUNod',
-    'Asn_Lv2NRSLAMPImage',
     'Asn_Lv2NRSLAMPSpectral',
     'Asn_Lv2NRSMSA',
     'Asn_Lv2Spec',
     'Asn_Lv2SpecSpecial',
     'Asn_Lv2SpecTSO',
-    'Asn_Lv2WFSS_NIS',
+    'Asn_Lv2WFSS',
     'Asn_Lv2WFSC',
 ]
 
@@ -92,7 +95,6 @@ class Asn_Lv2ImageNonScience(
         # Setup constraints
         self.constraints = Constraint([
             Constraint_Base(),
-            Constraint_Mode(),
             Constraint_Image_Nonscience(),
             Constraint_Single_Science(self.has_science),
         ])
@@ -223,7 +225,7 @@ class Asn_Lv2Spec(
             Constraint_Base(),
             Constraint_Mode(),
             Constraint_Spectral_Science(
-                exclude_exp_types=['nrs_msaspec', 'nrs_fixedslit', 'nis_wfss']
+                exclude_exp_types=['nis_wfss', 'nrc_wfss', 'nrs_fixedslit', 'nrs_msaspec']
             ),
             Constraint(
                 [
@@ -231,6 +233,7 @@ class Asn_Lv2Spec(
                     SimpleConstraint(
                         value='science',
                         test=lambda value, item: self.get_exposure_type(item) != value,
+                        force_unique=False,
                     )
                 ],
                 reduce=Constraint.any
@@ -241,7 +244,7 @@ class Asn_Lv2Spec(
                     DMSAttrConstraint(
                         name='patttype',
                         sources=['patttype'],
-                        value=['2_point_nod|4_point_nod|along_slit_nod'],
+                        value=['2-point-nod|4-point-nod|along-slit-nod'],
                     )
                 ],
                 reduce=Constraint.notany
@@ -349,15 +352,15 @@ class Asn_Lv2MIRLRSFixedSlitNod(
             DMSAttrConstraint(
                 name='patttype',
                 sources=['patttype'],
-                value=['along_slit_nod'],
+                value=['along-slit-nod'],
             ),
             Constraint(
                 [
                     Constraint(
                         [
                             DMSAttrConstraint(
-                                name='dithptin',
-                                sources=['dithptin'],
+                                name='patt_num',
+                                sources=['patt_num'],
                             ),
                             Constraint_Single_Science(
                                 self.has_science,
@@ -369,9 +372,9 @@ class Asn_Lv2MIRLRSFixedSlitNod(
                     Constraint(
                         [
                             DMSAttrConstraint(
-                                name='is_current_dithptin',
-                                sources=['dithptin'],
-                                value=lambda: '((?!{}).)*'.format(self.constraints['dithptin'].value),
+                                name='is_current_patt_num',
+                                sources=['patt_num'],
+                                value=lambda: '((?!{}).)*'.format(self.constraints['patt_num'].value),
                             ),
                             SimpleConstraint(
                                 name='force_match',
@@ -394,61 +397,16 @@ class Asn_Lv2MIRLRSFixedSlitNod(
         """Modify exposure type depending on dither pointing index
 
         Behaves as the superclass method. However, if the constraint
-        `is_current_dithptin` is True, mark the exposure type as
+        `is_current_patt_num` is True, mark the exposure type as
         `background`.
         """
         exp_type = super(Asn_Lv2MIRLRSFixedSlitNod, self).get_exposure_type(
             item, default
         )
-        if exp_type == 'science' and self.constraints['is_current_dithptin'].matched:
+        if exp_type == 'science' and self.constraints['is_current_patt_num'].matched:
             exp_type = 'background'
 
         return exp_type
-
-
-@RegistryMarker.rule
-class Asn_Lv2NRSLAMPImage(
-        AsnMixin_Lv2Special,
-        DMSLevel2bBase
-):
-    """Level2b NIRSpec Image Lamp calibrations Association
-
-    Characteristics:
-        - Association type: ``nrslamp-image2``
-        - Pipeline: ``calwebb_nrslamp-image2``
-        - Image-based NRS calibrations
-        - Single science exposure
-    """
-
-    def __init__(self, *args, **kwargs):
-
-        self.constraints = Constraint([
-            Constraint_Base(),
-            Constraint_Single_Science(self.has_science),
-            DMSAttrConstraint(
-                name='opt_elem2',
-                sources=['grating'],
-                value='mirror'
-            ),
-            DMSAttrConstraint(
-                name='instrument',
-                sources=['instrume'],
-                value='nirspec'
-            ),
-            DMSAttrConstraint(
-                name='opt_elem',
-                sources=['filter'],
-                value='opaque'
-            ),
-        ])
-
-        super(Asn_Lv2NRSLAMPImage, self).__init__(*args, **kwargs)
-
-    def _init_hook(self, item):
-        """Post-check and pre-add initialization"""
-
-        super(Asn_Lv2NRSLAMPImage, self)._init_hook(item)
-        self.data['asn_type'] = 'nrslamp-image2'
 
 
 @RegistryMarker.rule
@@ -502,16 +460,16 @@ class Asn_Lv2NRSLAMPSpectral(
 
 
 @RegistryMarker.rule
-class Asn_Lv2WFSS_NIS(
+class Asn_Lv2WFSS(
         AsnMixin_Lv2Spectral,
         DMSLevel2bBase
 ):
-    """Level2b NIRISS WFSS/GRISM Association
+    """Level2b WFSS/GRISM Association
 
     Characteristics:
         - Association type: ``spec2``
         - Pipeline: ``calwebb_spec2``
-        - Spectral-based NIRISS mutli-object science exposures
+        - Mutli-object science exposures
         - Single science exposure
         - Require a source catalog from processing of the corresponding direct imagery.
     """
@@ -519,38 +477,145 @@ class Asn_Lv2WFSS_NIS(
     def __init__(self, *args, **kwargs):
 
         self.constraints = Constraint([
+
+            # Basic constraints
             Constraint_Base(),
-            Constraint_Mode(),
             Constraint_Target(),
-            Constraint_Single_Science(self.has_science),
-            DMSAttrConstraint(
-                name='exp_type',
-                sources=['exp_type'],
-                value='nis_wfss',
-            )
+
+            # Allow WFSS exposures but account for the direct imaging.
+            Constraint([
+
+                # Constrain on the WFSS exposure
+                Constraint([
+                    DMSAttrConstraint(
+                        name='exp_type',
+                        sources=['exp_type'],
+                        value='nis_wfss|nrc_wfss',
+                    ),
+                    Constraint_Mode(),
+                    Constraint_Single_Science(self.has_science),
+                ]),
+
+                # Or select related imaging exposures.
+                DMSAttrConstraint(
+                    name='image_exp_type',
+                    sources=['exp_type'],
+                    value='nis_image|nrc_image',
+                    force_reprocess=ProcessList.EXISTING,
+                    only_on_match=True,
+                ),
+            ], reduce=Constraint.any)
         ])
 
-        super(Asn_Lv2WFSS_NIS, self).__init__(*args, **kwargs)
+        super(Asn_Lv2WFSS, self).__init__(*args, **kwargs)
 
-    def _init_hook(self, item):
-        """Post-check and pre-add initialization"""
-        super(Asn_Lv2WFSS_NIS, self)._init_hook(item)
+    def add_catalog_members(self):
+        """Add catalog and direct image member based on direct image members"""
+        directs = self.members_by_type('direct_image')
+        if not directs:
+            raise AssociationNotValidError(
+                '{} has no required direct image exposures'.format(
+                    self.__class__.__name__
+                )
+            )
 
-        # Get the Level3 product name of this association.
-        # Except for the grism component, it should be what
-        # the Level3 direct image name is.
-        lv3_direct_image_catalog = DMS_Level3_Base._dms_product_name(self) + '_cat.ecsv'
+        sciences = self.members_by_type('science')
+        if not sciences:
+            raise AssociationNotValidError(
+                '{} has no required science exposure'.format(
+                    self.__class__.__name__
+                )
+            )
+        science = sciences[0]
 
-        # Insert the needed catalog member
-        member = {
-            'expname': lv3_direct_image_catalog,
-            'exptype': 'sourcecat'
-        }
+        # Get the exposure sequence for the science. Then, find
+        # the direct image greater than but closest to this value.
+        closest = directs[0]  # If the search fails, just use the first.
+        try:
+            expspcin = int(getattr_from_list(science.item, ['expspcin'], _EMPTY)[1])
+        except KeyError:
+            # If exposure sequence cannot be determined, just fall through.
+            logger.debug('Science exposure %s has no EXPSPCIN defined.', science)
+        else:
+            min_diff = -1         # Initialize to an invalid value.
+            for direct in directs:
+                try:
+                    direct_expspcin = int(getattr_from_list(
+                        direct.item, ['expspcin'], _EMPTY
+                    )[1])
+                except KeyError:
+                    # Try the next one.
+                    logger.debug('Direct image %s has no EXPSPCIN defined.', direct)
+                    continue
+                diff = direct_expspcin - expspcin
+                if diff > min_diff:
+                    min_diff = diff
+                    closest = direct
+
+        # Note the selected direct image. Used in `Asn_Lv2WFSS._get_opt_element`
+        self.direct_image = closest
+
+        # Remove all direct images from the association.
         members = self.current_product['members']
-        members.append(member)
+        direct_idxs = [
+            idx
+            for idx, member in enumerate(members)
+            if member['exptype'] == 'direct_image'
+        ]
+        deque((
+            list.pop(members, idx)
+            for idx in sorted(direct_idxs, reverse=True)
+        ))
+
+        # Add the Level3 catalog and direct image members
+        lv3_direct_image_root = DMS_Level3_Base._dms_product_name(self)
+        members.append(
+            Member({
+                'expname': lv3_direct_image_root + '_i2d.fits',
+                'exptype': 'direct_image'
+            })
+        )
+        members.append(
+            Member({
+                'expname': lv3_direct_image_root + '_cat.ecsv',
+                'exptype': 'sourcecat'
+            })
+        )
+
+    def finalize(self):
+        """Finalize the association
+
+        For WFSS, this involves taking all the direct image exposures,
+        determine which one is first after last science exposure,
+        and creating the catalog name from that image.
+        """
+        try:
+            self.add_catalog_members()
+        except AssociationNotValidError as err:
+            logger.debug(
+                '%s: %s',
+                self.__class__.__name__, str(err)
+            )
+            return None
+
+        return super(Asn_Lv2WFSS, self).finalize()
+
+    def get_exposure_type(self, item, default='science'):
+        """Modify exposure type depending on dither pointing index
+
+        If an imaging exposure as been found, treat is as a direct image.
+        """
+        exp_type = super(Asn_Lv2WFSS, self).get_exposure_type(
+            item, default
+        )
+        if exp_type == 'science' and item['exp_type'] in ['nis_image', 'nrc_image']:
+            exp_type = 'direct_image'
+
+        return exp_type
 
     def _get_opt_element(self):
         """Get string representation of the optical elements
+
         Returns
         -------
         opt_elem: str
@@ -559,20 +624,24 @@ class Asn_Lv2WFSS_NIS(
         Notes
         -----
         This is an override for the method in `DMSBaseMixin`.
-        The second optical element, the grism, would never be part
-        of the direct image Level3 name.
+        The optical element is retieved from the chosen direct image
+        found in `self.direct_image`, determined in the `self.finalize`
+        method.
         """
-        opt_elem = ''
-        try:
-            value = format_list(self.constraints['opt_elem2'].found_values)
-        except KeyError:
-            pass
-        else:
-            if value not in _EMPTY and value != 'clear':
-                opt_elem = value
-        if opt_elem == '':
-            opt_elem = 'clear'
-        return opt_elem
+        item = self.direct_image.item
+        opt_elems = []
+        for keys in [['filter', 'band'], ['pupil', 'grating']]:
+            opt_elem = getattr_from_list_nofail(
+                item, keys, _EMPTY
+            )[1]
+            if opt_elem:
+                opt_elems.append(opt_elem)
+        opt_elems.sort(key=str.lower)
+        full_opt_elem = '-'.join(opt_elems)
+        if full_opt_elem == '':
+            full_opt_elem = 'clear'
+
+        return full_opt_elem
 
 
 @RegistryMarker.rule
@@ -760,7 +829,7 @@ class Asn_Lv2NRSIFUNod(
                     DMSAttrConstraint(
                         name='patttype',
                         sources=['patttype'],
-                        value=['2_point_nod|4_point_nod'],
+                        value=['2-point-nod|4-point-nod'],
                         force_unique=True
                     )
                 ]
@@ -784,7 +853,8 @@ class Asn_Lv2NRSIFUNod(
             `None` if a complete association cannot be produced.
 
         """
-        return self.make_nod_asns()
+        nodded_asns = self.make_nod_asns()
+        return nodded_asns
 
 
 @RegistryMarker.rule
@@ -805,12 +875,18 @@ class Asn_Lv2WFSC(
         # Setup constraints
         self.constraints = Constraint([
             Constraint_Base(),
+            Constraint_Image_Science(),
             Constraint_Single_Science(self.has_science),
-            DMSAttrConstraint(
-                name='wfsc',
-                sources=['visitype'],
-                value='.+wfsc.+',
-                force_unique=True
+            Constraint_ExtCal(),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        name='wfsc',
+                        sources=['visitype'],
+                        value='.+wfsc.+',
+                        force_unique=True
+                    )
+                ]
             )
         ])
 
@@ -822,3 +898,29 @@ class Asn_Lv2WFSC(
 
         super(Asn_Lv2WFSC, self)._init_hook(item)
         self.data['asn_type'] = 'wfs-image2'
+
+
+@RegistryMarker.rule
+class Asn_Force_Reprocess(DMSLevel2bBase):
+    """Force all backgrounds to reprocess"""
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup constraints
+        self.constraints = Constraint([
+            SimpleConstraint(
+                value='background',
+                sources=self.get_exposure_type,
+                force_unique=False,
+            ),
+            SimpleConstraint(
+                name='force_fail',
+                test=lambda x, y: False,
+                value='anything but None',
+                reprocess_on_fail=True,
+                work_over=ProcessList.EXISTING,
+                reprocess_rules=[]
+            )
+        ])
+
+        super(Asn_Force_Reprocess, self).__init__(*args, **kwargs)

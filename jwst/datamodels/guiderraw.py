@@ -34,7 +34,7 @@ class GuiderRawModel(DataModel):
          Track subarray data table
     """
 
-    schema_url = "guider_raw.schema.yaml"
+    schema_url = "guider_raw.schema"
 
     def __init__(self, init=None, **kwargs):
 

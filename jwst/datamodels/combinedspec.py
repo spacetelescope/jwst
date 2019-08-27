@@ -12,4 +12,4 @@ class CombinedSpecModel(DataModel):
     spec_table : numpy table
          Combined, extracted spectral data table
     """
-    schema_url = "combinedspec.schema.yaml"
+    schema_url = "combinedspec.schema"

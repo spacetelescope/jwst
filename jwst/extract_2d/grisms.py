@@ -5,7 +5,10 @@
 import copy
 import logging
 
+import numpy as np
+
 from astropy.modeling.models import Shift, Const1D, Mapping, Identity
+from gwcs.wcstools import grid_from_bounding_box
 
 from .. import datamodels
 from ..assign_wcs import util
@@ -18,7 +21,8 @@ log.setLevel(logging.DEBUG)
 def extract_tso_object(input_model,
                        reference_files=None,
                        extract_height=None,
-                       extract_orders=None):
+                       extract_orders=None,
+                       compute_wavelength=True):
     """
     Extract the spectrum for a NIRCAM TSO observation.
 
@@ -42,6 +46,10 @@ def extract_tso_object(input_model,
         orders specified for extraction in the wavelengthrange
         reference file.
 
+    compute_wavelength : bool
+        Compute a wavelength array for the datamodel.  Computationally
+        expensive, but saves doing it repeatedly later on in pipeline.
+
     Returns
     -------
     output_model : `~jwst.datamodels.SlitModel`
@@ -53,6 +61,8 @@ def extract_tso_object(input_model,
     bright object is considered in the field, so there's
     no catalog of sources and the object is assumed to
     have been observed at the aperture location crpix1/2.
+    CRPIX1/2 are read from the SIAF and saved as
+    "meta.wcsinfo.siaf_xref_sci" and "meta.wcsinfo.siaf_yref_sci".
 
     GrismObject is a named tuple which contains distilled
     information about each catalog object and the bounding
@@ -116,8 +126,8 @@ def extract_tso_object(input_model,
         lmin, lmax = range_select.pop()
 
         # create the order bounding box
-        source_xpos = input_model.meta.wcsinfo.crpix1 - 1  # remove fits
-        source_ypos = input_model.meta.wcsinfo.crpix2 - 1  # remove fits
+        source_xpos = input_model.meta.wcsinfo.siaf_xref_sci - 1  # remove fits
+        source_ypos = input_model.meta.wcsinfo.siaf_yref_sci - 1  # remove fits
         transform = input_model.meta.wcs.get_transform('full_detector', 'grism_detector')
         xmin, ymin, _ = transform(source_xpos,
                                   source_ypos,
@@ -192,8 +202,13 @@ def extract_tso_object(input_model,
             output_model.dq = ext_dq
             output_model.meta.wcs = subwcs
             output_model.meta.wcs.bounding_box = util.wcs_bbox_from_shape(ext_data.shape)
-            output_model.meta.wcs.crpix2 = 34  # update for the move, vals are the same
+            output_model.meta.wcsinfo.siaf_yref_sci = 34  # update for the move, vals are the same
+            output_model.meta.wcsinfo.siaf_xref_sci = input_model.meta.wcsinfo.siaf_xref_sci
             output_model.meta.wcsinfo.spectral_order = order
+            output_model.meta.wcsinfo.dispersion_direction = \
+                        input_model.meta.wcsinfo.dispersion_direction
+            if compute_wavelength:
+                output_model.wavelength = compute_wavelength_array(output_model)
             output_model.name = str('TSO object')
             output_model.xstart = 1  # fits pixels
             output_model.xsize = ext_data.shape[2]
@@ -215,7 +230,8 @@ def extract_grism_objects(input_model,
                           reference_files=None,
                           extract_orders=None,
                           use_fits_wcs=False,
-                          mmag_extract=99.):
+                          mmag_extract=99.,
+                          compute_wavelength=True):
     """
     Extract 2d boxes around each objects spectra for each order.
 
@@ -229,6 +245,19 @@ def extract_grism_objects(input_model,
 
     reference_files : dict
         Needs to include the name of the wavelengthrange reference file
+
+    extract_orders : int
+        Spectral orders to extract
+
+    use_fits_wcs : bool
+
+    mmag_extract : float
+        Sources with magnitudes fainter than this minimum magnitude extraction
+        cutoff will not be extracted
+
+    compute_wavelength : bool
+        Compute a wavelength array for the datamodel.  Computationally
+        expensive, but saves doing it repeatedly later on in pipeline.
 
 
     Returns
@@ -372,18 +401,39 @@ def extract_grism_objects(input_model,
                 ext_data = input_model.data[ymin: ymax + 1, xmin: xmax + 1].copy()
                 ext_err = input_model.err[ymin: ymax + 1, xmin: xmax + 1].copy()
                 ext_dq = input_model.dq[ymin: ymax + 1, xmin: xmax + 1].copy()
+                if input_model.var_poisson is not None and np.size(input_model.var_poisson) > 0:
+                    var_poisson = input_model.var_poisson[ymin:ymax+1, xmin:xmax+1].copy()
+                else:
+                    var_poisson = None
+                if input_model.var_rnoise is not None and np.size(input_model.var_rnoise) > 0:
+                    var_rnoise = input_model.var_rnoise[ymin:ymax+1, xmin:xmax+1].copy()
+                else:
+                    var_rnoise = None
+                if input_model.var_flat is not None and np.size(input_model.var_flat) > 0:
+                    var_flat = input_model.var_flat[ymin:ymax+1, xmin:xmax+1].copy()
+                else:
+                    var_flat = None
 
                 tr.bounding_box = util.transform_bbox_from_shape(ext_data.shape)
                 subwcs.set_transform('grism_detector', 'detector', tr)
 
-                new_slit = datamodels.SlitModel(data=ext_data, err=ext_err, dq=ext_dq)
+                new_slit = datamodels.SlitModel(data=ext_data,
+                                                err=ext_err,
+                                                dq=ext_dq,
+                                                var_poisson=var_poisson,
+                                                var_rnoise=var_rnoise,
+                                                var_flat=var_flat)
                 new_slit.meta.wcsinfo.spectral_order = order
+                new_slit.meta.wcsinfo.dispersion_direction = \
+                        input_model.meta.wcsinfo.dispersion_direction
                 new_slit.meta.wcs = subwcs
+                if compute_wavelength:
+                    new_slit.wavelength = compute_wavelength_array(new_slit)
 
                 # set x/ystart values relative to the image (screen) frame.
                 # The overall subarray offset is recorded in model.meta.subarray.
                 # nslit = obj.sid - 1  # catalog id starts at zero
-                new_slit.name = "Object {0}".format(obj.sid)
+                new_slit.name = "{0}".format(obj.sid)
                 new_slit.xstart = 1  # fits pixels
                 new_slit.xsize = ext_data.shape[1]
                 new_slit.ystart = 1  # fits pixels
@@ -440,3 +490,27 @@ def compute_dispersion(wcs):
 
     """
     raise NotImplementedError
+
+
+def compute_wavelength_array(slit):
+    """
+    Compute the wavelength array for a slit with gwcs object
+
+    Parameters
+    ----------
+    slit : `~jwst.datamodels.SlitModel`
+        JWST slit datamodel containing a meta.wcs GWCS object
+
+    Returns
+    -------
+    wavelength : numpy.array
+        The wavelength array
+    """
+    grid = grid_from_bounding_box(slit.meta.wcs.bounding_box)
+    shape = grid[0].shape
+    wavelength = np.empty(shape, dtype=np.float64)
+    transform = slit.meta.wcs.forward_transform
+    for j in range(shape[0]):
+        for i in range(shape[1]):
+            wavelength[j, i] = transform(grid[0][j, i], grid[1][j, i])[2]
+    return wavelength

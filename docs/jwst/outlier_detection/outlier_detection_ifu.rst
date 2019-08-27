@@ -4,12 +4,12 @@ OutlierDetection for IFU Data
 ==============================
 
 This module serves as the interface for applying outlier_detection to IFU
- observations, like those taken with NIRSpec and MIRI.  The code implements the
- basic outlier detection algorithm used with HST data, as adapted to JWST IFU
- observations.
+observations, like those taken with NIRSpec and MIRI.  The code implements the
+basic outlier detection algorithm used with HST data, as adapted to JWST IFU
+observations.
 
- Specifically, this routine performs the following operations (modified from 
- :ref:`Default Outlier Detection Algorithm <outlier-detection-imaging>` ):
+Specifically, this routine performs the following operations (modified from 
+:ref:`Default Outlier Detection Algorithm <outlier-detection-imaging>` ):
 
  * Extract parameter settings from input model and merge them with any user-provided values
 

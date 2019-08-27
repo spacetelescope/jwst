@@ -4,20 +4,15 @@ Description
 
 Assumption
 ----------
-The current stray-light correction is only valid for MIRI MRS Short
-wavelength data.  The straylight step uses information about which pixels
+The current stray-light correction is only valid for MIRI MRS channel 1 and 2 data.
+The straylight step uses information in the regions reference file about which pixels
 belong to a slice and which pixels are located in the slice gaps.
-This informations  is contained meta data of the input image and was loaded
-from a reference file by the assign_wcs step. Thus running the assign_wcs on 
-the input data is a prerequisite to  the straylight step.  
 
 Overview
 --------
-This routine removes and/or otherwise corrects for stray-light that may
-contaminate a MIRI MRS short-wavelength spectrum, due a bright source
-in the MRS slice
-gaps. The current routine determines the stray-light by using signal
-in-between slices and  interpolates over the slice.
+This routine removes stray-light that may contaminate a MIRI MRS Channel 1/2
+spectrum by interpolating the measured signal in the inter-slice
+regions of the detector (that nominally should not receive light from the sky).
 
 The chief source of the MIRI MRS stray-light appears to be caused
 by scattering in optical components within the SMO. The stray-light is
@@ -37,18 +32,20 @@ should hit the detectors, and assume that all detected light is the stray-light.
 Using this measurement, we can interpolate the gap flux within the slice to
 estimate the amount of the stray-light in the slice. 
 
-There are two possible algorithms in the stray-light step. The first algorithm is
-a more simplistic approach by dealing with the stray-light estimation row-by-row
-and interpolating the gap flux linearly. An intermediate stray-light map is 
+There are two possible algorithms in the stray-light step, both of which use the
+regions reference file (20% throughput threshold) to define slice and inter-slice pixels.
+
+The first algorithm is a simplistic approach to deal with the stray-light estimation row-by-row
+and interpolate the gap flux linearly. An intermediate stray-light map is 
 generated row-by-row and then this map is further smoothed to remove row-by-row
-variations. This algorithm uses a stray-light mask reference file that contains
-1s for gap pixels and 0s for science pixels.  
+variations. 
 
 Given the extended nature of the smooth component of the MRS stray-light, it
 is obvious that a row-by-row handling of the stray-light could be replaced
 by a two-dimensional approach such that no additional smoothing is required.
 For the second algorithm we improved the technique by using the Modified Shepard's
-Method to interpolate the gap fluxes two dimensionally. The stray-light correction
+Method to interpolate the gap fluxes two dimensionally. This approach has the benefit
+of being more robust to outliers that can bias the first algorithm.  The stray-light correction
 for each science pixel is based on the flux of the gap pixels with a "region of influence"
 from the science pixel. The algorithm takes each science pixel and determines the 
 amount of stray-light to remove from the pixel  :math:`s`  by interpolating the fluxes :math:`p_i` measured

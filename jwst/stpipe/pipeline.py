@@ -28,7 +28,6 @@
 # DAMAGE.
 """
 Pipeline
-
 """
 from os.path import dirname, join
 
@@ -70,12 +69,11 @@ class Pipeline(Step):
 
             setattr(self, key, new_step)
 
-        self.reference_file_types = self._collect_active_reftypes()
-
-    def _collect_active_reftypes(self):
+    @property
+    def reference_file_types(self):
         """Collect the list of all reftypes for child Steps that are not skipped.
-        Overridden reftypes are included but handled normally later by the Pipeline
-        version of the get_ref_override() method defined below.
+        Overridden reftypes are included but handled normally later by the
+        Pipeline version of the get_ref_override() method defined below.
         """
         return [reftype for step in self._unskipped_steps
                 for reftype in step.reference_file_types]
@@ -206,7 +204,7 @@ class Pipeline(Step):
 
         fetch_types = sorted(set(self.reference_file_types) - set(ovr_refs.keys()))
 
-        self.log.info("Prefetching reference files for dataset: " + repr(model.meta.filename) + 
+        self.log.info("Prefetching reference files for dataset: " + repr(model.meta.filename) +
                       " reftypes = " + repr(fetch_types))
         crds_refs = crds_client.get_multiple_reference_paths(model, fetch_types)
 

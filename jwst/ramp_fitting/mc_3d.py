@@ -54,10 +54,13 @@
 # --> status = aa.add_crs_all_slices()
 #
 
-import fits, time, random
-import numpy as N
-import sys, os, math
+import math
+import random
+import sys
+import time
+
 from astropy.io import fits
+import numpy as np
 
 ERROR_RETURN = 2
 
@@ -109,7 +112,8 @@ class cr_add_3d:
             print('   input data cube file = ', data_cube_file)
             print('   m_flux = ', m_flux)
             print('   verb = ', verb)
-            print('   cr_flux = ', self._cr_flux, '/micron^2/sec, (recommended value for this solar activity level with 100 mil Al shielding) ')
+            print('   cr_flux = ', self._cr_flux, '/micron^2/sec, (recommended',
+                'value for this solar activity level with 100 mil Al shielding) ')
             print('   cr_lib_dir = ', cr_lib_dir)
             print('   solar_env = ', solar_env)
             print('   old CR file = ', old_cr_file)
@@ -136,7 +140,7 @@ class cr_add_3d:
             print(' Number of slices :', total_slices)
             try:
                 print(' READMODE specified in the input header : ', prihdr['READMODE'])
-            except Exception as errmess:
+            except Exception:
                 print('WARNING: unable to determine readmode from header ')
 
         # read 'NAVGIMAG'] from input header to later output to output header
@@ -145,19 +149,22 @@ class cr_add_3d:
             if (verb > 0):
                 print(' From the input header keyword NAVGIMAG, navg = ', self._navg)
                 print('  ')
-        except Exception as errmess:
-            print('WARNING: unable to access NAVGIMAG from primary header of data cube, so assuming that the number of samples averaged over is 1 - which may not be what you want ! ')
+        except Exception:
+            print('WARNING: unable to access NAVGIMAG from primary header of',
+                'data cube, so assuming that the number of samples averaged',
+                'over is 1 - which may not be what you want ! ')
             self._navg = 1
 
-        self.fh_data_cube[0].data = (self.fh_data_cube[0].data).astype(N.float64)
+        self.fh_data_cube[0].data = (self.fh_data_cube[0].data).astype(np.float64)
 
-        if (self._old_cr_file == None): # generate new GCRs and SPs
+        # generate new GCRs and SPs
+        if self._old_cr_file is None:
             if (verb > 0): print(' Generating GCRs and SPs...')
 
             try:
                 self._instrume = prihdr['INSTRUME']
                 print(' This data cube is for instrument : ', self._instrume)
-            except Exception as errmess:
+            except Exception:
                 print('WARNING: unable to determine the instrument from header, will default to NIRCAM ')
                 self._instrume = 'NIRCAM'
 
@@ -168,17 +175,17 @@ class cr_add_3d:
                 self._electron_per_adu = 2.2
                 self._pix_length = 25.
             else:
-                print('Fatal ERROR - unsupported instrument : ', errmess)
+                print('Fatal ERROR - unsupported instrument')
 
             self._half_pix_length = self._pix_length / 2.
             self._pix_area = self._pix_length**2.  # area in micron2
 
             self._grand_total_gcr = 0
 
-            self._tot_gcr_and_sp = N.zeros((asize_2, asize_1), dtype=N.float64)
+            self._tot_gcr_and_sp = np.zeros((asize_2, asize_1), dtype=np.float64)
 
             # data cube of created crs and sps :
-            self.cr_and_sp_only_cube = N.zeros((total_slices, asize_2, asize_1), dtype=N.float64)
+            self.cr_and_sp_only_cube = np.zeros((total_slices, asize_2, asize_1), dtype=np.float64)
 
             # generate number of cosmic rays
             exp_gcr = self._cr_flux * self._pix_area * EXP_TIME  # expected number of cosmic rays
@@ -197,7 +204,7 @@ class cr_add_3d:
                 if (verb > 0):
                     print('   ')
                     print('  ... beginning this slice:  ', ii_slice)
-                self._new_gcr_and_sp = N.zeros((asize_2, asize_1), dtype=N.float64)
+                self._new_gcr_and_sp = np.zeros((asize_2, asize_1), dtype=np.float64)
                 self._slice = ii_slice
                 self.add_crs_this_slice()  # add all GCRs for this slice
 
@@ -244,7 +251,7 @@ class cr_add_3d:
             input_data = pix_val.copy()
 
             if (self._slice > 0): # add cr/sp for all but 0th slice
-                tot_nz_gcr_and_sp = N.where(self._tot_gcr_and_sp > 0.0)
+                tot_nz_gcr_and_sp = np.where(self._tot_gcr_and_sp > 0.0)
                 pix_val += self._tot_gcr_and_sp
 
                 if (verb > 0):
@@ -258,8 +265,8 @@ class cr_add_3d:
             sys.exit(ERROR_RETURN)
 
         try:
-            prihdr = self.fh_data_cube[0].header
-        except Exception as errmess:
+            self.fh_data_cube[0].header
+        except Exception:
             print('Fatal ERROR : unable to open primary header of data cube')
             sys.exit(ERROR_RETURN)
 
@@ -316,13 +323,16 @@ class cr_add_3d:
 
                     cr_slice_data = cr_cube_data[slice_num, :, :]
 
-                    x_ctr_pix = int(cr_slice_data.shape[0] / 2); y_ctr_pix = int(cr_slice_data.shape[0] / 2) # center pixel of CR template
+                    # center pixel of CR template
+                    x_ctr_pix = int(cr_slice_data.shape[0] / 2)
+                    y_ctr_pix = int(cr_slice_data.shape[0] / 2)
 
                     if (verb > 1):
-                        print('  The CR template at its center is cr_slice_data[y_ctr_pix, x_ctr_pix] =', cr_slice_data[y_ctr_pix, x_ctr_pix])
+                        print('  The CR template at its center is cr_slice_data'
+                            '[y_ctr_pix, x_ctr_pix] =', cr_slice_data[y_ctr_pix, x_ctr_pix])
                         print('  The CR max deposited energy  =', cr_slice_data.max())
 
-                    wh_nz = N.where(cr_slice_data > 0.0)
+                    wh_nz = np.where(cr_slice_data > 0.0)
                     num_pix_affected = len(cr_slice_data[wh_nz])
 
                     if (verb > 1):
@@ -339,7 +349,8 @@ class cr_add_3d:
                         y_tpl = wh_nz[1][qq]  # template-centered coordinates
 
                         if (verb > 1):
-                            print(' The template-centered coordinates for this secondary affected pixel are (', x_tpl, ',', y_tpl, ')')
+                            print(' The template-centered coordinates for this',
+                                'secondary affected pixel are (', x_tpl, ',', y_tpl, ')')
 
                     # the secondary pixel coordinates to which energy is added are xval, yval, which are :
                         xval = ii_pix - x_ctr_pix + x_tpl
@@ -359,37 +370,53 @@ class cr_add_3d:
                                 print('    will include this secondary pixel, just incremented num_2nd_aff to be', num_2nd_aff)
                             delta_e_mev = cr_slice_data[wh_nz][qq]  # energy deposited in this pixel in MeV
 
-                        # convert this delta_e_mev from MeV to ADU before adding it to pix_val which is in ADU
+                            # convert this delta_e_mev from MeV to ADU before adding it to pix_val which is in ADU
                             delta_e_adu = (delta_e_mev * 1E6 / E_BAND) / (self._electron_per_adu) # ... in ADU
 
                             if (verb > 1):
-                                print('  the energy deposited by this GCR into this pixels is', delta_e_mev, ' MeV, which is', delta_e_adu, ' ADU')
+                                print('  the energy deposited by this GCR into',
+                                    'this pixels is', delta_e_mev, ' MeV, which is',
+                                    delta_e_adu, ' ADU')
                                 print('  ')
 
-                        # add energy deposit to arrays for this pixel
+                            # add energy deposit to arrays for this pixel
                             self._new_gcr_and_sp[yval, xval] += delta_e_adu
-                            self.cr_and_sp_only_cube[self._slice, yval, xval] += delta_e_adu # to compare to detections in a later program
+                            # to compare to detections in a later program
+                            self.cr_and_sp_only_cube[self._slice, yval, xval] += delta_e_adu
                         else:
                             if (verb > 1): print(' will *NOT* include this 2ndary pixel - beyond edge')
 
-                    if (verb > 1): print(' for this CR each_cr = ', each_cr, ' the number of secondary  pixels affected (including edge effects) = num_2nd_aff =', num_2nd_aff)
+                    if (verb > 1): print(' for this CR each_cr = ', each_cr,
+                        ' the number of secondary  pixels affected (including',
+                            'edge effects) = num_2nd_aff =', num_2nd_aff)
 
 
         if (verb > 1):
-            print(' just before adding the latest GCR and SP, the min, mean, and max (over the slice) of the cumulative total of the amplitudes of GCR and SP for the current slice: ', self._tot_gcr_and_sp.min(), self._tot_gcr_and_sp.mean(), self._tot_gcr_and_sp.max())
+            print(' just before adding the latest GCR and SP, the min, mean,',
+                'and max (over the slice) of the cumulative total of the',
+                'amplitudes of GCR and SP for the current slice: ',
+                self._tot_gcr_and_sp.min(), self._tot_gcr_and_sp.mean(),
+                self._tot_gcr_and_sp.max())
 
         self._tot_gcr_and_sp += self._new_gcr_and_sp  #  add all pixels of this slice to total
 
         if (verb > 1):
-            print(' just after adding the latest GCR and SP, the min, mean, and max (over the slice) of the cumulative total of the amplitudes of GCR and SP for the current slice: ', self._tot_gcr_and_sp.min(), self._tot_gcr_and_sp.mean(), self._tot_gcr_and_sp.max())
+            print(' just after adding the latest GCR and SP, the min, mean,',
+                'and max (over the slice) of the cumulative total of the',
+                'amplitudes of GCR and SP for the current slice: ',
+                self._tot_gcr_and_sp.min(), self._tot_gcr_and_sp.mean(),
+                self._tot_gcr_and_sp.max())
             print('         ')
             print(' original pix_val in ADU = ', input_data)
             print(' final pix_val in ADU : ', pix_val)
 
         if (verb > 1):
             final_minus_original_data = pix_val - input_data
-            print(' final minus original in ADU for this slice (slice number', self._slice, '): ', final_minus_original_data)
-            print(' ... final minus original has min, mean, max : ', final_minus_original_data.min(), final_minus_original_data.mean(), final_minus_original_data.max())
+            print(' final minus original in ADU for this slice (slice number',
+                self._slice, '): ', final_minus_original_data)
+            print(' ... final minus original has min, mean, max : ',
+                final_minus_original_data.min(), final_minus_original_data.mean(),
+                final_minus_original_data.max())
 
         if (verb > 1):
             print(' the total number of gcr hitting this slice (slice number', self._slice, '): ', total_gcr)
@@ -405,12 +432,6 @@ class cr_add_3d:
         @param output_fname: name of output file
         @type output_fname: string
         """
-        try:
-            os.remove(output_fname)
-            print(' removed previous output file:', output_fname)
-        except:
-            pass
-
         fitsobj = fits.HDUList()
         hdu = fits.PrimaryHDU()
 
@@ -420,7 +441,7 @@ class cr_add_3d:
 
         hdu.data = data
         fitsobj.append(hdu)
-        fitsobj.writeto(output_fname)
+        fitsobj.writeto(output_fname, overwrite=True)
         fitsobj.close()
 
 
@@ -432,8 +453,8 @@ def calc_poisson(exp_num):
     @rtype: float array
     """
 
-    pois = N.zeros(MAX_CR, dtype=N.float64)  # only allow a max of MAX_CR particles/pixel/integration
-    cumul_pois = N.zeros(MAX_CR, dtype=N.float64)
+    pois = np.zeros(MAX_CR, dtype=np.float64)  # only allow a max of MAX_CR particles/pixel/integration
+    cumul_pois = np.zeros(MAX_CR, dtype=np.float64)
 
     for ii in range(0, MAX_CR):
         if ii > 0:

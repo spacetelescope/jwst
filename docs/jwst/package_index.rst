@@ -32,6 +32,7 @@ Package Index
    jump/index.rst
    lastframe/index.rst
    linearity/index.rst
+   master_background/index.rst
    model_blender/index.rst
    mrs_imatch/index.rst
    msaflagopen/index.rst

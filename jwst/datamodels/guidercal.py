@@ -34,7 +34,7 @@ class GuiderCalModel(DataModel):
          Track subarray data table
     """
 
-    schema_url = "guider_cal.schema.yaml"
+    schema_url = "guider_cal.schema"
 
     def __init__(self, init=None, **kwargs):
 

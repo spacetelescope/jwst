@@ -37,7 +37,9 @@ def find_footprint_MIRI(input, this_channel, instrument_info, coord_system):
     # return the min & max of spatial coords and wavelength
 
     xstart, xend = instrument_info.GetMIRISliceEndPts(this_channel)
-    y, x = np.mgrid[:1024, xstart:xend]
+    ysize = input.data.shape[0]
+
+    y, x = np.mgrid[:ysize, xstart:xend]
 
     if coord_system == 'alpha-beta':
         detector2alpha_beta = input.meta.wcs.get_transform('detector',
@@ -45,6 +47,7 @@ def find_footprint_MIRI(input, this_channel, instrument_info, coord_system):
         coord1, coord2, lam = detector2alpha_beta(x, y)
     else:  # coord_system == 'world'
         coord1, coord2, lam = input.meta.wcs(x, y)
+
 # ________________________________________________________________________________
 # test for 0/360 wrapping in ra. if exists it makes it difficult to determine
 # ra range of IFU cube.
@@ -165,7 +168,6 @@ def wrap_ra(ravalues):
     index_good = np.where(valid == True)
     ravalues_wrap = ravalues[index_good].copy()
     median_ra = np.nanmedian(ravalues_wrap)
-#    print('median_ra',median_ra)
 
     # using median to test if there is any wrapping going on
     wrap_index = np.where(np.fabs(ravalues_wrap - median_ra) > 180.0)
@@ -179,7 +181,6 @@ def wrap_ra(ravalues):
         ravalues_wrap[wrap_index] = ravalues_wrap[wrap_index] + 360.0
 
     return ravalues_wrap
-
 # ________________________________________________________________________________
 # Errors
 

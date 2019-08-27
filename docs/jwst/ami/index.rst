@@ -6,6 +6,8 @@ AMI Processing
    :maxdepth: 2
 
    main.rst
-   reference_files.rst
+   ami_analyze.rst
+   ami_average.rst
+   ami_normalize.rst
 
 .. automodapi:: jwst.ami

@@ -18,7 +18,7 @@ class QuadModel(DataModel):
     err : numpy float32 array
          Error array
     """
-    schema_url = "quad.schema.yaml"
+    schema_url = "quad.schema"
 
     def __init__(self, init=None, **kwargs):
         super(QuadModel, self).__init__(init=init, **kwargs)

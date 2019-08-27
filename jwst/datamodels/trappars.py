@@ -16,4 +16,4 @@ class TrapParsModel(ReferenceFileModel):
          column for the trap-decay parameter.  Each row of the table is
          for a different trap family.
     """
-    schema_url = "trappars.schema.yaml"
+    schema_url = "trappars.schema"

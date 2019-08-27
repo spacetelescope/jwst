@@ -17,7 +17,7 @@ log.addHandler(logging.NullHandler())
 class NoTypeWarning(Warning):
     pass
 
-def open(init=None, extensions=None, **kwargs):
+def open(init=None, **kwargs):
     """
     Creates a DataModel from a number of different types
 
@@ -41,10 +41,6 @@ def open(init=None, extensions=None, **kwargs):
           to what was passed in.
 
         - dict: The object model tree for the data model
-
-    extensions : list of AsdfExtension
-        A list of extensions to the ASDF to support when reading
-        and writing ASDF files.
 
     Returns
     -------
@@ -71,11 +67,6 @@ def open(init=None, extensions=None, **kwargs):
         # Copy the object so it knows not to close here
         return init.__class__(init)
 
-    elif is_association(init):
-        from . import container
-        return container.ModelContainer(init, extensions=extensions,
-                                        **kwargs)
-
     elif isinstance(init, (str, bytes)) or hasattr(init, "read"):
         # If given a string, presume its a file path.
         # if it has a read method, assume a file descriptor
@@ -93,13 +84,11 @@ def open(init=None, extensions=None, **kwargs):
         elif file_type == "asn":
             # Read the file as an association / model container
             from . import container
-            return container.ModelContainer(init, extensions=extensions,
-                                            **kwargs)
+            return container.ModelContainer(init, **kwargs)
 
         elif file_type == "asdf":
             # Read the file as asdf, no need for a special class
-            return model_base.DataModel(init, extensions=extensions,
-                                        **kwargs)
+            return model_base.DataModel(init, **kwargs)
 
     elif isinstance(init, tuple):
         for item in init:
@@ -112,6 +101,10 @@ def open(init=None, extensions=None, **kwargs):
 
     elif isinstance(init, fits.HDUList):
         hdulist = init
+
+    elif is_association(init) or isinstance(init, list):
+        from . import container
+        return container.ModelContainer(init, **kwargs)
 
     # If we have it, determine the shape from the science hdu
     if hdulist:
@@ -158,7 +151,7 @@ def open(init=None, extensions=None, **kwargs):
         log.debug('Opening as {0}'.format(new_class))
 
     # Actually open the model
-    model = new_class(init, extensions=extensions, **kwargs)
+    model = new_class(init, **kwargs)
 
     # Close the hdulist if we opened it
     if file_to_close is not None:
@@ -210,17 +203,8 @@ def _class_from_ramp_type(hdulist, shape):
             try:
                 hdulist['DQ']
             except KeyError:
-                # It's a RampModel or MIRIRampModel
-                try:
-                    hdulist['REFOUT']
-                except KeyError:
-                    # It's a RampModel
-                    from . import ramp
-                    new_class = ramp.RampModel
-                else:
-                    # It's a MIRIRampModel
-                    from . import miri_ramp
-                    new_class = miri_ramp.MIRIRampModel
+                from . import ramp
+                new_class = ramp.RampModel
             else:
                 new_class = None
         else:
@@ -332,6 +316,26 @@ def gentle_asarray(a, dtype):
             else:
                 return np.asanyarray(a, dtype=out_dtype)
         elif in_dtype.fields is not None and out_dtype.fields is not None:
+            # When a FITS file includes a pseudo-unsigned-int column, astropy will return
+            # a FITS_rec with an incorrect table dtype.  The following code rebuilds
+            # in_dtype from the individual fields, which are correctly labeled with an
+            # unsigned int dtype.
+            # We can remove this once the issue is resolved in astropy:
+            # https://github.com/astropy/astropy/issues/8862
+            if isinstance(a, fits.fitsrec.FITS_rec):
+                new_in_dtype = []
+                updated = False
+                for field_name in in_dtype.fields:
+                    table_dtype = in_dtype[field_name]
+                    field_dtype = a.field(field_name).dtype
+                    if np.issubdtype(table_dtype, np.signedinteger) and np.issubdtype(field_dtype, np.unsignedinteger):
+                        new_in_dtype.append((field_name, field_dtype))
+                        updated = True
+                    else:
+                        new_in_dtype.append((field_name, table_dtype))
+                if updated:
+                    in_dtype = np.dtype(new_in_dtype)
+
             if in_dtype == out_dtype:
                 return a
             in_names = {n.lower() for n in in_dtype.names}

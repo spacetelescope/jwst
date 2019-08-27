@@ -28,67 +28,72 @@
 # DAMAGE.
 
 """This module defines functions that connect the core CRDS package to the
-JWST CAL code and STPIPE, tailoring it to work with DATAMODELS as inputs 
+JWST CAL code and STPIPE, tailoring it to work with DATAMODELS as inputs
 and provide results in the forms required by STPIPE.
 """
 
 import re
 
-# ----------------------------------------------------------------------
-
 import crds
-from crds.core import config, exceptions, heavy_client
+from crds.core import config, exceptions, heavy_client, log
 from crds.core import crds_cache_locking
 
-# ----------------------------------------------------------------------
-
-# from jwst import datamodels
-
-# ----------------------------------------------------------------------
-
-# This is really a testing and debug convenience function,  and notably now
+# This is really a testing and debug convenience function, and notably now
 # the only place in this module that a direct import of datamodels occurs
 # or datamodels open() occurs.
-def get_refpaths_from_filename(filename, reference_file_types):
-    """Test wrapper to open/close data model for get_multiple_reference_paths."""
+def get_refpaths_from_filename(filename, reference_file_types, observatory=None):
+    """Test wrapper to open/close data model for get_multiple_reference_paths.
+
+    See also get_multiple_reference_filepaths().
+    """
     from .. import datamodels
     with datamodels.open(filename) as model:
-        refpaths = get_multiple_reference_paths(model, reference_file_types)
+        refpaths = get_multiple_reference_paths(model, reference_file_types, observatory)
     return refpaths
 
-# ......................
-    
-# import memory_profiler
-# @memory_profiler.profile
-def get_multiple_reference_paths(dataset_model, reference_file_types):
+
+def get_multiple_reference_paths(dataset_model, reference_file_types, observatory=None):
     """Aligns JWST pipeline requirements with CRDS library top level interfaces.
-    
+
     `dataset_model` is an open data model.
+
+    `reference_file_types` is a list of reference file type name strings.
+
+    If `observatory` is not None,  it should be a string naming the
+    telescope and valid for CRDS, e.g. 'jwst' or 'hst'.
+
+    If `observatory` is None,  the data_model.telescope value will be
+    fetched and used if it is not None.
+
+    If both of the above fail,  observatory defaults to 'jwst'.
 
     Returns best references dict { filetype : filepath or "N/A", ... }
     """
+    log.set_log_time(True)
     data_dict = _get_data_dict(dataset_model)
-    refpaths = _get_refpaths(data_dict, tuple(reference_file_types))
+    if observatory is None:
+        observatory = dataset_model.meta.telescope or 'jwst'
+    observatory = observatory.lower()
+    refpaths = _get_refpaths(data_dict, tuple(reference_file_types), observatory)
     return refpaths
 
-# ......................
-    
+
 def _get_data_dict(dataset_model):
-    """Return the data models header dictionary based on open data 
+    """Return the data models header dictionary based on open data
     `dataset_model`.
     Returns a flat parameter dictionary used for CRDS bestrefs matching.
     """
     header = dataset_model.to_flat_dict(include_arrays=False)
     return _clean_flat_dict(header)
 
+
 def _clean_flat_dict(header):
     """Make sure all header items returned are simple, no complex objects."""
     return { key: val for (key,val) in header.items()
              if isinstance(val, (str,int,float,complex,bool)) }
 
-# ......................
 
-def _get_refpaths(data_dict, reference_file_types):
+def _get_refpaths(data_dict, reference_file_types, observatory):
     """Tailor the CRDS core library getreferences() call to the JWST CAL code by
     adding locking and truncating expected exceptions.   Also simplify 'NOT FOUND n/a' to
     'N/A'.  Re-interpret empty reference_file_types as "no types" instead of core
@@ -96,20 +101,13 @@ def _get_refpaths(data_dict, reference_file_types):
     """
     if not reference_file_types:   # [] interpreted as *all types*.
         return {}
-    try: # catch exceptions to truncate expected tracebacks
-        with crds_cache_locking.get_cache_lock():
-            bestrefs = crds.getreferences(data_dict, reftypes=reference_file_types, observatory="jwst")
-    except crds.CrdsBadRulesError as exc:
-        raise crds.CrdsBadRulesError(str(exc))
-    except crds.CrdsBadReferenceError as exc:
-        raise crds.CrdsBadReferenceError(str(exc))
-    except crds.CrdsLookupError as exc:
-        raise crds.CrdsLookupError(str(exc))
+    with crds_cache_locking.get_cache_lock():
+        bestrefs = crds.getreferences(
+            data_dict, reftypes=reference_file_types, observatory=observatory)
     refpaths = {filetype: filepath if "N/A" not in filepath.upper() else "N/A"
                 for (filetype, filepath) in bestrefs.items()}
     return refpaths
 
-# ----------------------------------------------------------------------
 
 def check_reference_open(refpath):
     """Verify that `refpath` exists and is readable for the current user.
@@ -121,14 +119,15 @@ def check_reference_open(refpath):
         opened.close()
     return refpath
 
-def get_reference_file(dataset, reference_file_type):
+
+def get_reference_file(dataset, reference_file_type, observatory=None):
     """
     Gets a reference file from CRDS as a readable file-like object.
     The actual file may be optionally overridden.
 
     Parameters
     ----------
-    input_file : jwst.datamodels.ModelBase instance
+    dataset : jwst.datamodels.ModelBase instance
         A model of the input file.  Metadata on this input file will
         be used by the CRDS "bestref" algorithm to obtain a reference
         file.
@@ -137,18 +136,26 @@ def get_reference_file(dataset, reference_file_type):
         The type of reference file to retrieve.  For example, to
         retrieve a flat field reference file, this would be 'flat'.
 
+    observatory: string
+        telescope name used with CRDS,  e.g. 'jwst'.
+
     Returns
     -------
     reference_filepath : string
         The path of the reference in the CRDS file cache.
+
+
+    See also get_multiple_reference_paths().
     """
     if isinstance(dataset, str):
         from jwst import datamodels
         with datamodels.open(dataset) as model:
-            return get_multiple_reference_paths(model, [reference_file_type])[reference_file_type]
+            return get_multiple_reference_paths(
+                model, [reference_file_type], observatory)[reference_file_type]
     else:
-        return get_multiple_reference_paths(dataset, [reference_file_type])[reference_file_type]
-        
+        return get_multiple_reference_paths(
+            dataset, [reference_file_type], observatory)[reference_file_type]
+
 
 def get_override_name(reference_file_type):
     """
@@ -178,12 +185,25 @@ def get_svn_version():
     return crds.__version__
 
 
-def reference_uri_to_cache_path(reference_uri):
+def reference_uri_to_cache_path(reference_uri, observatory=None):
     """Convert an abstract CRDS reference file URI into an absolute path for the
     file as located in the CRDS cache.
 
-    e.g. 'crds://jwst_miri_flat_0177.fits'  -->  
-            '/grp/crds/cache/references/jwst/jwst_miri_flat_0177.fits'
+    Parameters
+    ----------
+
+    reference_uri :  string identifying an abstract CRDS reference file,
+                      .e.g. 'crds://jwst_miri_flat_0177.fits'
+
+    observatory : string naming the telescope/project for CRDS, e.g. 'jwst'
+           `observatory` should be omitted, None,  or defined as a literal string value.
+           Omission and the value None are interpreted as 'jwst'.
+
+    Returns
+    -------
+
+    reference_path : absolute file path to reference_uri in the CRDS cache,
+           .e.g. '/grp/crds/cache/references/jwst/jwst_miri_flat_0177.fits'
 
     Standard CRDS cache paths are typically defined relative to the CRDS_PATH
     environment variable.  See https://jwst-crds.stsci.edu guide and top level
@@ -192,11 +212,20 @@ def reference_uri_to_cache_path(reference_uri):
     The default CRDS_PATH value is /grp/crds/cache, currently on the Central Store.
     """
     if not reference_uri.startswith("crds://"):
-        raise exceptions.CrdsError("CRDS reference URI's should start with 'crds://' but got", repr(reference_uri))
+        raise exceptions.CrdsError(
+            "CRDS reference URI's should start with 'crds://' but got", repr(reference_uri))
+    observatory = (observatory or 'jwst').lower()
     basename = config.pop_crds_uri(reference_uri)
-    return crds.locate_file(basename, "jwst")
+    return crds.locate_file(basename, observatory)
 
-def get_context_used():
-    """Return the context (.pmap) used for determining best references."""
-    _connected, final_context = heavy_client.get_processing_mode("jwst")
+
+def get_context_used(observatory=None):
+    """Return the context (.pmap) used for determining best references.
+
+    observatory : string naming the telescope/project for CRDS, e.g. 'jwst'
+           `observatory` should be omitted, None,  or defined as a literal string value.
+           Omission and the value None are interpreted as 'jwst'.
+    """
+    observatory = (observatory or 'jwst').lower()
+    _connected, final_context = heavy_client.get_processing_mode(observatory)
     return final_context

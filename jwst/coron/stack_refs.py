@@ -12,6 +12,7 @@ import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+
 def make_cube(input_models):
     """
     make_cube: Stack all of the integrations from multiple PSF
@@ -49,5 +50,6 @@ def make_cube(input_models):
 
     # Create the ouput Cube model
     output_model = datamodels.CubeModel(data=outdata, err=outerr, dq=outdq)
+    output_model.update(input_models[0])  # copy input meta data to output
 
     return output_model

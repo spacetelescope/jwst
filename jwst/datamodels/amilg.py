@@ -8,7 +8,8 @@ class AmiLgModel(DataModel):
     A data model for AMI LG analysis results.
 
     Parameters
-    __________
+    ----------
+
     fit_image : numpy float32 array
          Fitted image
 
@@ -33,7 +34,7 @@ class AmiLgModel(DataModel):
     solns_table : numpy table
          Solutions table
     """
-    schema_url = "amilg.schema.yaml"
+    schema_url = "amilg.schema"
 
     def get_primary_array_name(self):
         """

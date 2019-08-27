@@ -30,7 +30,7 @@ class ResampleStep(Step):
         kernel = string(default=None)
         fillval = string(default=None)
         weight_type = option('exptime', default=None)
-        good_bits = integer(min=0, default=4)
+        good_bits = integer(min=0, default=6)
         single = boolean(default=False)
         blendheaders = boolean(default=True)
     """
@@ -100,7 +100,8 @@ class ResampleStep(Step):
         used a resample.cfg file or run ResampleStep using command line args,
         then these will overwerite the defaults pulled from the reference file.
         """
-        drizpars_table = datamodels.DrizParsModel(ref_filename).data
+        with datamodels.DrizParsModel(ref_filename) as drpt:
+            drizpars_table = drpt.data
 
         num_groups = len(input_models.group_names)
         filtname = input_models[0].meta.instrument.filter

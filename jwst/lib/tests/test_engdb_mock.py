@@ -145,7 +145,7 @@ def test_cache_end_data(db_cache, engdb):
 
 
 def test_mocker_alive(db_cache):
-    with engdb_mock.EngDB_Mocker(db_path=db_cache.db_path) as mocker:
+    with engdb_mock.EngDB_Mocker(db_path=db_cache.db_path):
         query = ''.join([
             engdb_tools.ENGDB_BASE_URL,
             engdb_tools.ENGDB_METADATA
@@ -163,7 +163,7 @@ def test_mocker_alive(db_cache):
     ]
 )
 def test_mocker_meta(db_cache, mnemonic, count):
-    with engdb_mock.EngDB_Mocker(db_path=db_cache.db_path) as mocker:
+    with engdb_mock.EngDB_Mocker(db_path=db_cache.db_path):
         query = ''.join([
             engdb_tools.ENGDB_BASE_URL,
             engdb_tools.ENGDB_METADATA,
@@ -176,7 +176,7 @@ def test_mocker_meta(db_cache, mnemonic, count):
 
 
 def test_mocker_data(db_cache, engdb):
-    with engdb_mock.EngDB_Mocker(db_path=db_cache.db_path) as mocker:
+    with engdb_mock.EngDB_Mocker(db_path=db_cache.db_path):
         query = ''.join([
             engdb_tools.ENGDB_BASE_URL,
             engdb_tools.ENGDB_DATA,
@@ -202,7 +202,7 @@ def engdb(scope='module'):
     """
     try:
         engdb = engdb_tools.ENGDB_Service()
-    except:
+    except Exception:
         pytest.skip('ENGDB service is not accessible.')
     else:
         return engdb

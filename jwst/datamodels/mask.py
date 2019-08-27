@@ -16,7 +16,7 @@ class MaskModel(ReferenceFileModel):
     dq_def : numpy table
          DQ flag definitions
     """
-    schema_url = "mask.schema.yaml"
+    schema_url = "mask.schema"
 
     def __init__(self, init=None, **kwargs):
         super(MaskModel, self).__init__(init=init, **kwargs)

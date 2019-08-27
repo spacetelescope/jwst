@@ -15,6 +15,7 @@ __all__ = [
     'Asn_ACQ_Reprocess',
     'Asn_Coron',
     'Asn_IFU',
+    'Asn_Lv3SpecAux',
     'Asn_Image',
     'Asn_SpectralSource',
     'Asn_SpectralTarget',
@@ -47,7 +48,7 @@ class Asn_Image(AsnMixin_Science):
         # Setup constraints
         self.constraints = Constraint([
             Constraint_Optical_Path(),
-            Constraint_Target(),
+            Constraint_Target(association=self),
             Constraint_Image(),
             DMSAttrConstraint(
                 name='wfsvisit',
@@ -90,7 +91,7 @@ class Asn_WFSCMB(AsnMixin_Science):
         # Setup constraints
         self.constraints = Constraint([
             Constraint_Optical_Path(),
-            Constraint_Target(),
+            Constraint_Target(association=self),
             Constraint_Image(),
             DMSAttrConstraint(
                 name='patttype',
@@ -192,22 +193,50 @@ class Asn_SpectralTarget(AsnMixin_Spectrum):
                 reduce=Constraint.notany
             ),
             Constraint_Optical_Path(),
-            Constraint_Target(),
+            Constraint_Target(association=self),
             DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
                 value=(
                     'mir_lrs-fixedslit'
-                    '|mir_lrs_slitless'
+                    '|mir_lrs-slitless'
                     '|nis_soss'
                 ),
                 force_unique=False
+            ),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        name='patttype_spectarg',
+                        sources=['patttype'],
+                        value=['2-point-nod|4-point-nod|along-slit-nod'],
+                    ),
+                ],
+                reduce=Constraint.any
             )
         ])
 
         # Check and continue initialization.
         super(Asn_SpectralTarget, self).__init__(*args, **kwargs)
 
+    def finalize(self):
+        """Finalize assocation
+
+        For NRS Fixed-slit, finalization means creating new members for the
+        background nods.
+
+        Returns
+        -------
+        associations: [association[, ...]] or None
+            List of fully-qualified associations that this association
+            represents.
+            `None` if a complete association cannot be produced.
+
+        """
+        if self.is_valid:
+            return self.make_fixedslit_bkg()
+        else:
+            return None
 
 @RegistryMarker.rule
 class Asn_SpectralSource(AsnMixin_Spectrum):
@@ -229,7 +258,7 @@ class Asn_SpectralSource(AsnMixin_Spectrum):
                 reduce=Constraint.notany
             ),
             Constraint_Optical_Path(),
-            Constraint_Target(),
+            Constraint_Target(association=self),
             Constraint(
                 [
                     DMSAttrConstraint(
@@ -268,13 +297,21 @@ class Asn_IFU(AsnMixin_Spectrum):
     """
 
     def __init__(self, *args, **kwargs):
-
         # Setup for checking.
         self.constraints = Constraint([
-            Constraint_Target(),
+            Constraint_Target(association=self),
             Constraint_IFU(),
-        ])
-
+            Constraint(
+                [
+                    Constraint_TSO(),
+                    DMSAttrConstraint(
+                        name='patttype',
+                        sources=['patttype'],
+                        value=['2_point|4_point_nod|along_slit_nod'],
+                    )
+                ],
+                reduce=Constraint.notany
+            )        ])
         # Check and continue initialization.
         super(Asn_IFU, self).__init__(*args, **kwargs)
 
@@ -291,9 +328,52 @@ class Asn_IFU(AsnMixin_Spectrum):
             target,
             instrument
         )
-
         return product_name.lower()
 
+@RegistryMarker.rule
+class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_BkgScience):
+
+    """Level 3 Spectral Association
+
+    Characteristics:
+        - Association type: ``spec3``
+        - Pipeline: ``calwebb_spec3``
+    """
+    def __init__(self, *args, **kwargs):
+
+        # Setup for checking.
+        self.constraints = Constraint([
+            Constraint_Target(association=self),
+            #Constraint_IFU(),
+            Constraint(
+                [
+                    Constraint_TSO(),
+                ],
+                reduce=Constraint.notany
+            ),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        name='bkgdtarg',
+                        sources=['bkgdtarg'],
+                        value=['T'],)
+                ],
+                reduce=Constraint.any
+                                    ),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        name='allowed_bkgdtarg',
+                        sources=['exp_type'],
+                        value=['mir_mrs','nrs_ifu','mir_lrs-fixedslit',
+                               'nrs_fixedslit'],)
+                ],
+            reduce=Constraint.any
+                    ),
+                ])
+
+        # Check and continue initialization.
+        super(Asn_Lv3SpecAux, self).__init__(*args, **kwargs)
 
 @RegistryMarker.rule
 class Asn_Coron(AsnMixin_Science):
@@ -396,6 +476,14 @@ class Asn_AMI(AsnMixin_Science):
             ),
         ])
 
+        # PSF is required
+        self.validity.update({
+            'has_psf': {
+                'validated': False,
+                'check': lambda entry: entry['exptype'] == 'psf'
+            }
+        })
+
         # Check and continue initialization.
         super(Asn_AMI, self).__init__(*args, **kwargs)
 
@@ -420,7 +508,7 @@ class Asn_WFSS_NIS(AsnMixin_Spectrum):
 
         # Setup for checking.
         self.constraints = Constraint([
-            Constraint_Target(),
+            Constraint_Target(association=self),
             DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
@@ -459,7 +547,7 @@ class Asn_TSO(AsnMixin_Science):
 
         # Setup for checking.
         self.constraints = Constraint([
-            Constraint_Target(),
+            Constraint_Target(association=self),
             Constraint_Optical_Path(),
             Constraint_TSO(),
             DMSAttrConstraint(

@@ -38,7 +38,7 @@ class TestMIRISteps(BaseJWSTTestSteps):
                                      side_gain=1.0),
                       output_truth='jw00001001001_01101_00001_MIRIMAGE_bias_drift.fits',
                       output_hdus=[],
-                      id='test_refpix_miri'
+                      id='refpix_miri'
                      ),
                 # test_refpix_miri2: refpix step performed on MIRI data
                  dict(input='jw00025001001_01107_00001_MIRIMAGE_saturation.fits',
@@ -49,7 +49,7 @@ class TestMIRISteps(BaseJWSTTestSteps):
                                      side_gain=1.0),
                       output_truth='jw00025001001_01107_00001_MIRIMAGE_bias_drift.fits',
                       output_hdus=[],
-                      id='test_refpix_miri2'
+                      id='refpix_miri2'
                      ),
                 # test_dark_current_miri: dark current step performed on MIRI data
                  dict(input='jw00001001001_01101_00001_MIRIMAGE_bias_drift.fits',
@@ -58,7 +58,7 @@ class TestMIRISteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='jw00001001001_01101_00001_MIRIMAGE_dark_current.fits',
                       output_hdus=[],
-                      id='test_dark_current_miri'
+                      id='dark_current_miri'
                      ),
                 # test_dark_current_miri2: dark current step performed on MIRI data
                  dict(input='jw80600012001_02101_00003_mirimage_lastframe.fits',
@@ -67,7 +67,7 @@ class TestMIRISteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='jw80600012001_02101_00003_mirimage_dark.fits',
                       output_hdus=[],
-                      id='test_dark_current_miri2'
+                      id='dark_current_miri2'
                      ),
                 # test_dq_init_miri: dq_init step performed on uncalibrated MIRI data
                  dict(input='jw00001001001_01101_00001_MIRIMAGE_uncal.fits',
@@ -76,7 +76,7 @@ class TestMIRISteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='jw00001001001_01101_00001_MIRIMAGE_dq_init.fits',
                       output_hdus=[],
-                      id='test_dq_init_miri'
+                      id='dq_init_miri'
                      ),
                 # test_dq_init_miri2: dq_init step performed on uncalibrated MIRI data
                  dict(input='jw80600012001_02101_00003_mirimage_uncal.fits',
@@ -85,7 +85,7 @@ class TestMIRISteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='jw80600012001_02101_00003_mirimage_dqinit.fits',
                       output_hdus=[],
-                      id='test_dq_init_miri2'
+                      id='dq_init_miri2'
                      ),
                 # test_emission_miri: emission step performed on calibrated miri data
                  dict(input='jw00001001001_01101_00001_MIRIMAGE_flat_field.fits',
@@ -94,25 +94,25 @@ class TestMIRISteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='jw00001001001_01101_00001_MIRIMAGE_emission.fits',
                       output_hdus=[],
-                      id='test_emission_miri'
+                      id='emission_miri'
                      ),
                 # test_extract1d_miri: extract_1d step performed on MIRI LRS fixed-slit data
                  dict(input='jw00035001001_01101_00001_mirimage_photom.fits',
                       test_dir='test_extract1d',
                       step_class=Extract1dStep,
-                      step_pars=dict(smoothing_length=0),
+                      step_pars=dict(suffix='x1d'),
                       output_truth='jw00035001001_01101_00001_mirimage_x1d.fits',
                       output_hdus=[],
-                      id='test_extract1d_miri'
+                      id='extract1d_miri'
                      ),
                 # test_extract1d_miri2: extract_1d step performed on MIRI LRS slitless data
                  dict(input='jw80600012001_02101_00003_mirimage_photom.fits',
                       test_dir='test_extract1d',
                       step_class=Extract1dStep,
-                      step_pars=dict(smoothing_length=0),
+                      step_pars=dict(suffix='x1d'),
                       output_truth='jw80600012001_02101_00003_mirimage_x1d.fits',
-                      output_hdus=['primary',('extract1d',1),('extract1d',2),('extract1d',3),('extract1d',4)],
-                      id='test_extract1d_miri2'
+                      output_hdus=[],
+                      id='extract1d_miri2'
                      ),
                 # test_flat_field_miri: flat_field step performed on MIRI data.
                  dict(input='jw00001001001_01101_00001_MIRIMAGE_assign_wcs.fits',
@@ -121,7 +121,7 @@ class TestMIRISteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='jw00001001001_01101_00001_MIRIMAGE_flat_field.fits',
                       output_hdus=[],
-                      id='test_flat_field_miri'
+                      id='flat_field_miri'
                      ),
                 # test_flat_field_miri2: flat_field step performed on MIRI data.
                  dict(input='jw80600012001_02101_00003_mirimage_assign_wcs.fits',
@@ -130,7 +130,7 @@ class TestMIRISteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='jw80600012001_02101_00003_mirimage_flat_field.fits',
                       output_hdus=[],
-                      id='test_flat_field_miri2'
+                      id='flat_field_miri2'
                      ),
                 # test_fringe_miri: fringe performed on MIRI data.
                  dict(input='fringe1_input.fits',
@@ -139,7 +139,7 @@ class TestMIRISteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='baseline_fringe1.fits',
                       output_hdus=['primary','sci','err','dq'],
-                      id='test_fringe_miri'
+                      id='fringe_miri'
                      ),
                 # test_fringe_miri2: fringe performed on MIRI data.
                  dict(input='fringe2_input.fits',
@@ -148,7 +148,7 @@ class TestMIRISteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='baseline_fringe2.fits',
                       output_hdus=['primary','sci','err','dq'],
-                      id='test_fringe_miri2'
+                      id='fringe_miri2'
                      ),
                 # test_fringe_miri3: fringe performed on MIRI data.
                  dict(input='fringe3_input.fits',
@@ -157,7 +157,7 @@ class TestMIRISteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='baseline_fringe3.fits',
                       output_hdus=['primary','sci','err','dq'],
-                      id='test_fringe_miri3'
+                      id='fringe_miri3'
                      ),
                 # test_jump_miri: jump step performed on MIRI data.
                  dict(input='jw00001001001_01101_00001_MIRIMAGE_linearity.fits',
@@ -166,7 +166,7 @@ class TestMIRISteps(BaseJWSTTestSteps):
                       step_pars=dict(rejection_threshold=200.0),
                       output_truth='jw00001001001_01101_00001_MIRIMAGE_jump.fits',
                       output_hdus=[],
-                      id='test_jump_miri'
+                      id='jump_miri'
                      ),
                 # test_jump_miri2: jump step performed on MIRI data.
                  dict(input='jw80600012001_02101_00003_mirimage_dark.fits',
@@ -175,7 +175,7 @@ class TestMIRISteps(BaseJWSTTestSteps):
                       step_pars=dict(rejection_threshold=25.0),
                       output_truth='jw80600012001_02101_00003_mirimage_jump.fits',
                       output_hdus=[],
-                      id='test_jump_miri2'
+                      id='jump_miri2'
                      ),
                 # test_lastframe_miri2: lastframe step performed on MIRI data
                  dict(input='jw80600012001_02101_00003_mirimage_rscd.fits',
@@ -184,7 +184,7 @@ class TestMIRISteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='jw80600012001_02101_00003_mirimage_lastframe.fits',
                       output_hdus=[],
-                      id='test_lastframe_miri2'
+                      id='lastframe_miri2'
                      ),
                 # test_linearity_miri: linearity step performed on MIRI data
                  dict(input='jw00001001001_01101_00001_MIRIMAGE_dark_current.fits',
@@ -193,7 +193,7 @@ class TestMIRISteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='jw00001001001_01101_00001_MIRIMAGE_linearity.fits',
                       output_hdus=[],
-                      id='test_linearity_miri'
+                      id='linearity_miri'
                      ),
                 # test_linearity_miri2: linearity step performed on MIRI data
                  dict(input='jw80600012001_02101_00003_mirimage_saturation.fits',
@@ -202,7 +202,7 @@ class TestMIRISteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='jw80600012001_02101_00003_mirimage_linearity.fits',
                       output_hdus=[],
-                      id='test_linearity_miri2'
+                      id='linearity_miri2'
                      ),
                 # test_photom_miri: photom step performed on MIRI imaging data
                  dict(input='jw00001001001_01101_00001_MIRIMAGE_emission.fits',
@@ -211,7 +211,7 @@ class TestMIRISteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='jw00001001001_01101_00001_MIRIMAGE_photom.fits',
                       output_hdus=[],
-                      id='test_photom_miri'
+                      id='photom_miri'
                      ),
                  # test_photom_miri2: photom step performed on MIRI LRS slitless data
                  dict(input='jw80600012001_02101_00003_mirimage_srctype.fits',
@@ -220,7 +220,7 @@ class TestMIRISteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='jw80600012001_02101_00003_mirimage_photom.fits',
                       output_hdus=[],
-                      id='test_photom_miri2'
+                      id='photom_miri2'
                      ),
                  # test_rscd_miri2: RSCD step performed on MIRI data
                  dict(input='jw80600012001_02101_00003_mirimage_linearity.fits',
@@ -229,7 +229,7 @@ class TestMIRISteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='jw80600012001_02101_00003_mirimage_rscd.fits',
                       output_hdus=[],
-                      id='test_rscd_miri2'
+                      id='rscd_miri'
                      ),
                  # test_saturation_miri: saturation step performed on uncalibrated MIRI data
                  dict(input='jw00001001001_01101_00001_MIRIMAGE_dq_init.fits',
@@ -238,7 +238,7 @@ class TestMIRISteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='jw00001001001_01101_00001_MIRIMAGE_saturation.fits',
                       output_hdus=['primary','sci','err','pixeldq','groupdq'],
-                      id='test_saturation_miri'
+                      id='saturation_miri'
                      ),
                  # test_saturation_miri2: saturation step performed on uncalibrated MIRI data
                  dict(input='jw80600012001_02101_00003_mirimage_dqinit.fits',
@@ -247,7 +247,7 @@ class TestMIRISteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='jw80600012001_02101_00003_mirimage_saturation.fits',
                       output_hdus=[],
-                      id='test_saturation_miri2'
+                      id='saturation_miri2'
                      ),
                  # test_srctype2: srctype step performed on MIRI LRS slitless data
                  dict(input='jw80600012001_02101_00003_mirimage_flat_field.fits',
@@ -256,7 +256,7 @@ class TestMIRISteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='jw80600012001_02101_00003_mirimage_srctype.fits',
                       output_hdus=[],
-                      id='test_srctype2'
+                      id='srctype_miri'
                      ),
                  # test_straylight1_miri: straylight performed on MIRI IFUSHORT data
                  dict(input='jw80500018001_02101_00002_MIRIFUSHORT_flatfield.fits',
@@ -265,7 +265,7 @@ class TestMIRISteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='jw80500018001_02101_00002_MIRIFUSHORT_straylight.fits',
                       output_hdus=['primary','sci','err','dq'],
-                      id='test_straylight1_miri'
+                      id='straylight_miri'
                      ),
                  # test_straylight2_miri: straylight performed on MIRI IFULONG data
                  dict(input='jw80500018001_02101_00002_MIRIFULONG_flatfield.fits',
@@ -274,7 +274,7 @@ class TestMIRISteps(BaseJWSTTestSteps):
                       step_pars=dict(),
                       output_truth='jw80500018001_02101_00002_MIRIFULONG_straylight.fits',
                       output_hdus=[],
-                      id='test_straylight2_miri'
+                      id='straylight_miri2'
                      ),
                ]
              }

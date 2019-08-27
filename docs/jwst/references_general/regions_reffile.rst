@@ -20,12 +20,16 @@ Instrument Keywords
 MIRI       INSTRUME, DETECTOR, EXP_TYPE, CHANNEL, BAND, DATE-OBS, TIME-OBS
 ========== ===============================================================
 
-.. include:: ../includes/standard_keywords.rst
+.. include:: ../includes/standard_keywords.inc
 
 Reference File Format
 +++++++++++++++++++++
-The IFU takes a region reference file that defines the region over which the WCS is valid.
-The reference file should define a polygon and may consist of a set of X,Y coordinates that define the polygon.
+The IFU takes a region reference file that defines the pixels on the detector that map to the sky and which
+IFU slice they correspond to.  The reference file is a three-dimensional array
+measuring 1032 x 1024 x 9.  Each of the nine planes within the array represents
+a two-dimensional detector image for which each pixel has a value indicating the slice to which it belongs.
+The nine planes each correspond to different throughput thresholds ranging from 10% - 90%; these differ slightly
+in the effective along-slice size.
 
 :channel: The MIRI channels in the observation, e.g. "12".
 :band: The band for the observation (one of "LONG", "MEDIUM", "SHORT").

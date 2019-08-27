@@ -1,4 +1,4 @@
-from collections import MutableMapping
+from collections.abc import MutableMapping
 from copy import deepcopy
 from datetime import datetime
 import json
@@ -206,7 +206,8 @@ class Association(MutableMapping):
         try:
             jsonschema.validate(asn_data, asn_schema)
         except (AttributeError, jsonschema.ValidationError) as err:
-            raise AssociationNotValidError('Validation failed')
+            logger.debug('Validation failed:\n%s', err)
+            raise AssociationNotValidError('Validation failed') from err
         return True
 
     def dump(self, format='json', **kwargs):
@@ -341,7 +342,7 @@ class Association(MutableMapping):
                 - [ProcessList[, ...]]: List of items to process again.
         """
         if self.is_item_member(item):
-            return False, []
+            return True, []
 
         match = not check_constraints
         if check_constraints:

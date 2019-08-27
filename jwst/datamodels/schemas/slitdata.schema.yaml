@@ -92,6 +92,7 @@ allOf:
     data:
       title: The science data
       fits_hdu: SCI
+      max_ndim: 3
       default: 0.0
       datatype: float32
     dq:
@@ -121,18 +122,7 @@ allOf:
       fits_hdu: AREA
       default: 0.0
       datatype: float32
-    relsens:
-      $ref: relsens.schema.yaml
-    var_poisson:
-      title: variance due to poisson noise
-      fits_hdu: VAR_POISSON
-      default: 0.0
-      datatype: float32
-    var_rnoise:
-      title: variance due to read noise
-      fits_hdu: VAR_RNOISE
-      default: 0.0
-      datatype: float32
+- $ref: variance.schema.yaml
 - $ref: pathlosscorr.schema.yaml
 - $ref: bunit.schema.yaml
 - $ref: photometry.schema.yaml

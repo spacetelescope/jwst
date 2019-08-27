@@ -6,7 +6,7 @@ No images are needed here to check the location
 and size of bounding boxes.
 
 NIRCAM and NIRISS WFSS use the same code, testing with NIRCAM
-settings here for funcationality. In the future, full data
+settings here for functionality. In the future, full data
 regression tests will provide the truth between instruments.
 
 For the testing catalog:
@@ -40,7 +40,9 @@ data_path = os.path.split(os.path.abspath(data.__file__))[0]
 
 # Default wcs information
 # This is set for a standard nircam image just as an example
-# It does not test the validity of the absolute results 
+# It does not test the validity of the absolute results
+# for create_tso_wcsimage, set the width of the output image to this value:
+NIRCAM_TSO_WIDTH = 10
 wcs_image_kw = {'wcsaxes': 2, 'ra_ref': 53.1490299775, 'dec_ref': -27.8168745624,
                 'v2_ref': 86.103458, 'v3_ref': -493.227512, 'roll_ref': 45.04234459270135,
                 'crpix1': 1024.5, 'crpix2': 1024.5,
@@ -65,12 +67,6 @@ wcs_wfss_kw = {'wcsaxes': 2, 'ra_ref': 53.1423683802, 'dec_ref': -27.8171119969,
 
 wcs_tso_kw = {'wcsaxes': 2, 'ra_ref': 86.9875, 'dec_ref': 23.423,
               'v2_ref': 95.043034, 'v3_ref': -556.150466, 'roll_ref': 359.9521,
-              'crpix1': 887.0, 'crpix2': 35.0,
-              'cdelt1': 1.76686111111111e-05, 'cdelt2': 1.78527777777777e-05,
-              'ctype1': 'RA---TAN', 'ctype2': 'DEC--TAN',
-              'pc1_1': -1, 'pc1_2': 0,
-              'pc2_1': 0, 'pc2_2': 1,
-              'cunit1': 'deg', 'cunit2': 'deg',
               }
 
 
@@ -126,8 +122,7 @@ def create_wfss_image(pupil, filtername='F444W'):
                        pupil=pupil, wcskeys=wcs_wfss_kw)
     hdul['sci'].data = np.ones((hdul[0].header['SUBSIZE1'], hdul[0].header['SUBSIZE2']))
     im = ImageModel(hdul)
-    aswcs = AssignWcsStep()
-    return aswcs.process(im)
+    return AssignWcsStep.call(im)
 
 
 def create_tso_wcsimage(filtername="F277W", subarray=False):
@@ -139,7 +134,7 @@ def create_tso_wcsimage(filtername="F277W", subarray=False):
     hdul = create_hdul(exptype='NRC_TSGRISM', pupil='GRISMR',
                        filtername=filtername, detector='NRCALONG',
                        subarray=subarray, wcskeys=wcs_tso_kw)
-    hdul['sci'].header['SUBSIZE1'] = 2048
+    hdul['sci'].header['SUBSIZE1'] = NIRCAM_TSO_WIDTH
 
     if subarray:
         hdul['sci'].header['SUBSIZE2'] = 256
@@ -148,8 +143,10 @@ def create_tso_wcsimage(filtername="F277W", subarray=False):
         hdul['sci'].header['SUBSIZE2'] = 2048
         subsize = 2048
 
-    hdul['sci'].data = np.ones((2, subsize, 2048))
+    hdul['sci'].data = np.ones((2, subsize, NIRCAM_TSO_WIDTH))
     im = CubeModel(hdul)
+    im.meta.wcsinfo.siaf_xref_sci = 887.0
+    im.meta.wcsinfo.siaf_yref_sci = 35.0
     aswcs = AssignWcsStep()
     return aswcs.process(im)
 
@@ -181,7 +178,7 @@ def test_create_box_fits():
                                    use_fits_wcs=True,
                                    mmag_extract=99.)
 
-    assert len(test_boxes) >= 2  # the catalog has 4 objects  
+    assert len(test_boxes) >= 2  # the catalog has 4 objects
     for sid in [9, 19]:
         ids = [source for source in test_boxes if source.sid == sid]
         assert len(ids) == 1
@@ -211,7 +208,7 @@ def test_create_box_gwcs():
     test_boxes = create_grism_bbox(imwcs, refs,
                                    use_fits_wcs=False,
                                    mmag_extract=99.)
-    assert len(test_boxes) >= 2  # the catalog has 4 objects  
+    assert len(test_boxes) >= 2  # the catalog has 4 objects
     for sid in [9, 19]:
         ids = [source for source in test_boxes if source.sid == sid]
         assert len(ids) == 1
@@ -278,7 +275,7 @@ def test_extract_tso_subarray():
     outmodel = extract_tso_object(wcsimage,
                                   reference_files=refs)
     assert isinstance(outmodel, SlitModel)
-    assert outmodel.source_xpos == (outmodel.meta.wcsinfo.crpix1 - 1)
+    assert outmodel.source_xpos == (outmodel.meta.wcsinfo.siaf_xref_sci - 1)
     assert outmodel.source_ypos == 34
     assert outmodel.source_id == 1
     assert outmodel.xstart > 0
@@ -307,7 +304,7 @@ def test_extract_tso_height():
                                   extract_height=50,
                                   reference_files=refs)
     assert isinstance(outmodel, SlitModel)
-    assert outmodel.source_xpos == (outmodel.meta.wcsinfo.crpix1 - 1)
+    assert outmodel.source_xpos == (outmodel.meta.wcsinfo.siaf_xref_sci - 1)
     assert outmodel.source_ypos == 34
     assert outmodel.source_id == 1
     assert outmodel.xstart > 0
@@ -323,7 +320,7 @@ def test_extract_tso_height():
     num, ysize, xsize = outmodel.data.shape
     assert num == wcsimage.data.shape[0]
     assert ysize == 50
-    assert xsize == 2048
+    assert xsize == NIRCAM_TSO_WIDTH
     del outmodel
 
 
@@ -343,11 +340,12 @@ def test_extract_wfss_object():
     refs = get_reference_files(wcsimage)
     outmodel = extract_grism_objects(wcsimage,
                                      use_fits_wcs=True,
-                                     reference_files=refs)
+                                     reference_files=refs,
+                                     compute_wavelength=False)
     assert isinstance(outmodel, MultiSlitModel)
     assert len(outmodel.slits) == 3
     ids = [slit.source_id for slit in outmodel.slits]
     assert ids == [9, 19, 19]
 
-    # check that bounding boxes exist
-    del outmodel
+    names = [slit.name for slit in outmodel.slits]
+    assert names == ['9', '19', '19']

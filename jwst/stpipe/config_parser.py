@@ -35,7 +35,9 @@ import textwrap
 
 from ..extern.configobj.configobj import (
     ConfigObj, Section, flatten_errors, get_extra_values)
-from ..extern.configobj.validate import Validator, ValidateError
+from ..extern.configobj.validate import Validator, ValidateError, VdtTypeError
+
+from ..datamodels.model_base import DataModel
 
 from . import utilities
 
@@ -90,6 +92,26 @@ def _get_output_file_check(root_dir):
         return path
 
     return _output_file_check
+
+
+def _is_datamodel(value, default=None):
+    """Verify that value is either is a DataModel."""
+    if isinstance(value, DataModel):
+        return value
+    else:
+        raise VdtTypeError(value)
+
+
+def _is_string_or_datamodel(value, default=None):
+    """Verify that value is either a string (nominally a reference file path)
+    or a DataModel (possibly one with no corresponding file.)
+    """
+    if isinstance(value, DataModel):
+        return value
+    elif isinstance(value, str):
+        return value
+    else:
+        raise VdtTypeError(value)
 
 
 def load_config_file(config_file):
@@ -213,6 +235,8 @@ def validate(config, spec, section=None, validator=None, root_dir=None):
         validator = Validator()
         validator.functions['input_file'] = _get_input_file_check(root_dir)
         validator.functions['output_file'] = _get_output_file_check(root_dir)
+        validator.functions['is_datamodel'] = _is_datamodel
+        validator.functions['is_string_or_datamodel'] = _is_string_or_datamodel
 
     orig_configspec = config.main.configspec
     config.main.configspec = spec
@@ -277,7 +301,7 @@ def string_to_python_type(section, key):
 
 def _parse(val):
     """
-    Do the actual parsing of scalar strings into scalar python types.
+    Parse scalar strings into scalar python types.
     """
     if val.lower() == 'true':
         return True
@@ -285,10 +309,10 @@ def _parse(val):
         return False
     try:
         return int(val)
-    except:
+    except ValueError:
         pass
     try:
         return float(val)
-    except:
+    except ValueError:
         pass
     return str(val)

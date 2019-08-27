@@ -8,7 +8,7 @@ import gwcs.coordinate_frames as cf
 from gwcs import wcs
 
 from .util import (not_implemented_mode, subarray_transform,
-                   velocity_correction, bounding_box_from_subarray, transform_bbox_from_datamodel)
+                   velocity_correction, bounding_box_from_subarray, transform_bbox_from_shape)
 from . import pointing
 from ..transforms.models import (NirissSOSSModel,
                                  NIRISSForwardRowGrismDispersion,
@@ -114,9 +114,9 @@ def niriss_soss(input_model, reference_files):
     # Get the target RA and DEC, they will be used for setting the WCS RA
     # and DEC based on a conversation with Kevin Volk.
     try:
-        target_ra = float(input_model['meta.target.ra'])
-        target_dec = float(input_model['meta.target.dec'])
-    except:
+        target_ra = float(input_model.meta.target.ra)
+        target_dec = float(input_model.meta.target.dec)
+    except TypeError:
         # There was an error getting the target RA and DEC, so we are not going to continue.
         raise ValueError('Problem getting the TARG_RA or TARG_DEC from input model {}'.format(input_model))
 
@@ -167,8 +167,8 @@ def niriss_soss(input_model, reference_files):
         cm_order2 = subarray2full | cm_order2
         cm_order3 = subarray2full | cm_order3
 
-        bbox = ((0, input_model.meta.subarray.ysize),
-                (0, input_model.meta.subarray.xsize))
+        bbox = ((-0.5, input_model.meta.subarray.ysize - 0.5),
+                (-0.5, input_model.meta.subarray.xsize - 0.5))
         cm_order1.bounding_box = bbox
         cm_order2.bounding_box = bbox
         cm_order3.bounding_box = bbox
@@ -249,7 +249,7 @@ def imaging_distortion(input_model, reference_files):
         # Check if the model has a bounding box.
         distortion.bounding_box
     except NotImplementedError:
-        distortion.bounding_box = transform_bbox_from_datamodel(input_model)
+        distortion.bounding_box = transform_bbox_from_shape(input_model.data.shape)
 
     dist.close()
     return distortion
@@ -346,20 +346,28 @@ def wfss(input_model, reference_files):
 
     # This is the actual rotation from the input model
     fwcpos = input_model.meta.instrument.filter_position
+    if fwcpos is None:
+        raise ValueError('FWCPOS keyword value not found in input image')
 
     # sep the row and column grism models
-    if 'R' in input_model.meta.instrument.filter[-1]:
+    # In "DMS" orientation (same parity as the sky), the GR150C spectra
+    # are aligned more closely with the rows, and the GR150R spectra are
+    # aligned more closely with the columns.
+    if input_model.meta.instrument.filter.endswith('C'):
         det2det = NIRISSForwardRowGrismDispersion(orders,
                                                   lmodels=displ,
                                                   xmodels=dispx,
                                                   ymodels=dispy,
                                                   theta=fwcpos_ref - fwcpos)
-    else:
+    elif input_model.meta.instrument.filter.endswith('R'):
         det2det = NIRISSForwardColumnGrismDispersion(orders,
                                                      lmodels=displ,
                                                      xmodels=dispx,
                                                      ymodels=dispy,
                                                      theta=fwcpos_ref - fwcpos)
+    else:
+        raise ValueError("FILTER keyword {} is not valid."
+                         .format(input_model.meta.instrument.filter))
 
     backward = NIRISSBackwardGrismDispersion(orders,
                                              lmodels=invdispl,

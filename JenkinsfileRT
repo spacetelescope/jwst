@@ -1,29 +1,30 @@
 // [skip ci] and [ci skip] have no effect here.
 if (utils.scm_checkout(['skip_disable':true])) return
 
-def test_env = [
-    "HOME=./",
+withCredentials([string(
+    credentialsId: 'jwst-codecov',
+    variable: 'codecov_token')]) {
+
+jobconfig = new JobConfig()
+jobconfig.enable_env_publication = true
+jobconfig.publish_env_on_success_only = true
+
+// Define python version for conda
+python_version = '3.6'
+
+// pip related setup
+def pip_index = "https://bytesalad.stsci.edu/artifactory/api/pypi/datb-pypi-virtual/simple"
+def pip_install_args = "--index-url ${pip_index} --progress-bar=off"
+
+// Define environement variables needed for the regression tests
+env_vars = [
     "TEST_BIGDATA=https://bytesalad.stsci.edu/artifactory",
     "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
     "CRDS_CONTEXT=jwst-edit",
 ]
 
-// Pip related setup
-def PIP_ARGS = "-q"
-def PIP_INST = "pip install ${PIP_ARGS}"
-def PIP_DEPS = ""
-def PIP_TEST_DEPS = "requests_mock ci_watson"
-
-// Pytest wrapper
-def PYTEST_BASETEMP = "test_outputs"
-def PYTEST = "pytest \
-              -r s \
-              -v \
-              --bigdata \
-              --basetemp=${PYTEST_BASETEMP} \
-              --junit-xml=results.xml"
-
-def TEST_ROOT = "jwst/tests_nightly/general"
+// Set pytest basetemp output directory
+pytest_basetemp = "test_outputs"
 
 // Configure artifactory ingest
 data_config = new DataConfig()
@@ -31,41 +32,39 @@ data_config.server_id = 'bytesalad'
 data_config.root = '${PYTEST_BASETEMP}'
 data_config.match_prefix = '(.*)_result' // .json is appended automatically
 
-bc = new BuildConfig()
-bc.nodetype = 'jwst'
-bc.env_vars = test_env
-bc.name = '3.6'
-bc.conda_channels = ['http://ssb.stsci.edu/astroconda-dev']
-bc.conda_packages = ['asdf',
-                     'astropy',
-                     'crds',
-                     'drizzle',
-                     'flake8',
-                     'gwcs',
-                     'jsonschema',
-                     'jplephem',
-                     'matplotlib',
-                     'namedlist',
-                     'numpy',
-                     'photutils',
-                     'python=3.6',
-                     'pytest',
-                     'scipy',
-                     'six',
-                     'spherical-geometry',
-                     'stsci.image',
-                     'stsci.imagestats',
-                     'stsci.stimage',
-                     'stsci.tools',
-                     'verhawk'
+
+// Build and test with python 3.6 and released dependencies from astroconda
+bc0 = new BuildConfig()
+bc0.nodetype = 'jwst'
+bc0.name = 'stable-deps'
+bc0.env_vars = env_vars
+bc0.conda_ver = '4.6.14'
+bc0.conda_packages = [
+    "python=${python_version}",
 ]
-
-bc.test_cmds = ["printenv | sort",
-                "python setup.py develop",
-                "${PIP_INST} ${PIP_TEST_DEPS}",
-                "${PYTEST} ${TEST_ROOT}"
+bc0.build_cmds = [
+    "pip install -e .[test,ephem]",
+    "pip install pytest-xdist",
 ]
+bc0.test_cmds = [
+    "pytest --cov=./ -r sxf -n 30 --bigdata --slow \
+    --basetemp=${pytest_basetemp}  --junit-xml=results.xml \
+    --log-level=INFO \
+    jwst",
+    "codecov --token=${codecov_token}"
+]
+bc0.test_configs = [data_config]
 
-bc.test_configs = [data_config]
 
-utils.run([bc])
+// macos-specific buildconfig to cause the creation of counterparts to the linux
+// environment dumps. Packages in a mininmal conda environment differ by OS
+// which is why this is needed.
+bc1 = utils.copy(bc0)
+bc1.nodetype = 'macos'
+bc1.name = 'macos-stable-deps'
+bc1.build_cmds = ["pip install -e .[test]"]
+bc1.test_cmds = []
+bc1.test_configs = []
+
+utils.run([jobconfig, bc0, bc1])
+}  // withCredentials

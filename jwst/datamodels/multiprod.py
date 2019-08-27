@@ -19,7 +19,7 @@ class MultiProductModel(model_base.DataModel):
 
     If `init` is a file name or an `DrizProductModel` instance, an empty
     `DrizProductModel` will be created and assigned to attribute `products[0]`,
-    and the `data`, `wht`, `con`, and `relsens` attributes from the
+    and the `data`, `wht`, and `con` attributes from the
     input file or `DrizProductModel` will be copied to the first element of
     `products`.
 
@@ -33,11 +33,8 @@ class MultiProductModel(model_base.DataModel):
 
     products.items.con : numpy int32 array
          drizzle algorithm context array
-
-    products.items.relsens : numpy table
-         relative sensitivity table
     """
-    schema_url = "multiproduct.schema.yaml"
+    schema_url = "multiproduct.schema"
 
     def __init__(self, init=None, **kwargs):
         if isinstance(init, DrizProductModel):
@@ -47,7 +44,6 @@ class MultiProductModel(model_base.DataModel):
             self.products[0].data = init.data
             self.products[0].wht = init.wht
             self.products[0].con = init.con
-            self.products[0].relsens = init.relsens
             return
 
         super(MultiProductModel, self).__init__(init=init, **kwargs)

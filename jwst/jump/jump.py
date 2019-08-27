@@ -2,17 +2,17 @@ import time
 import logging
 
 import numpy as np
-from ..datamodels import dqflags 
+from ..datamodels import dqflags
 from ..lib import reffile_utils
 from . import twopoint_difference as twopt
 from . import yintercept as yint
-
+import multiprocessing
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 def detect_jumps (input_model, gain_model, readnoise_model,
-                  rejection_threshold, do_yint, signal_threshold):
+                  rejection_threshold, do_yint, signal_threshold, max_cores=None):
     """
     This is the high-level controlling routine for the jump detection process.
     It loads and sets the various input data and parameters needed by each of
@@ -30,6 +30,19 @@ def detect_jumps (input_model, gain_model, readnoise_model,
     image.  Also, a 2-dimensional read noise array with appropriate values for
     each pixel is passed to the detection methods.
     """
+    if max_cores is None:
+        numslices = 1
+    else:
+        num_cores = multiprocessing.cpu_count()
+        log.info("Found %d possible cores to use for jump detection " % num_cores)
+        if max_cores == 'quarter':
+            numslices = num_cores // 4 or 1
+        elif max_cores == 'half':
+            numslices = num_cores // 2 or 1
+        elif max_cores == 'all':
+            numslices = num_cores
+        else:
+            numslices = 1
 
     # Load the data arrays that we need from the input model
     output_model = input_model.copy()
@@ -55,18 +68,18 @@ def detect_jumps (input_model, gain_model, readnoise_model,
         readnoise_2d = reffile_utils.get_subarray_data(input_model, readnoise_model)
 
     # Flag the pixeldq where the gain is <=0 or NaN so they will be ignored
-    wh_g = np.where( gain_2d <= 0.)  
+    wh_g = np.where( gain_2d <= 0.)
     if len(wh_g[0] > 0):
         pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['NO_GAIN_VALUE'] )
-        pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['DO_NOT_USE'] ) 
+        pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['DO_NOT_USE'] )
 
     wh_g = np.where( np.isnan( gain_2d ))
     if len(wh_g[0] > 0):
         pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['NO_GAIN_VALUE'] )
-        pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['DO_NOT_USE'] ) 
+        pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['DO_NOT_USE'] )
 
-    # Apply gain to the SCI, ERR, and readnoise arrays so they're in units 
-    #   of electrons
+    # Apply gain to the SCI, ERR, and readnoise arrays so they're in units
+    # of electrons
 
     data *= gain_2d
     err  *= gain_2d
@@ -75,12 +88,45 @@ def detect_jumps (input_model, gain_model, readnoise_model,
     # Apply the 2-point difference method as a first pass
     log.info('Executing two-point difference method')
     start = time.time()
-
-    median_slopes = twopt.find_crs(data, gdq, readnoise_2d,
-                                           rejection_threshold, nframes)
-
-    elapsed = time.time() - start
-    log.debug('Elapsed time = %g sec' %elapsed)
+    numx = data.shape[-1]
+    numy = data.shape[-2]
+    median_slopes = np.zeros((numy, numx), dtype=np.float32)
+    yincrement = int(numy / numslices)
+    slices = []
+    # Slice up data, gdq, readnoise_2d into slices
+    # Each element of slices is a tuple of
+    # (data, gdq, readnoise_2d, rejection_threshold, nframes)
+    for i in range(numslices - 1):
+        slices.insert(i, (data[:, :, i * yincrement:(i + 1) * yincrement, :],
+                          gdq[:, :, i * yincrement:(i + 1) * yincrement, :],
+                          readnoise_2d[i * yincrement:(i + 1) * yincrement, :],
+                          rejection_threshold, nframes))
+    # last slice get the rest
+    slices.insert(numslices - 1, (data[:, :, (numslices - 1) * yincrement:numy, :],
+                                 gdq[:, :, (numslices - 1) * yincrement:numy, :],
+                                 readnoise_2d[(numslices - 1) * yincrement:numy, :],
+                                 rejection_threshold, nframes))
+    if numslices == 1:
+        median_slopes, gdq = twopt.find_crs(data, gdq, readnoise_2d, rejection_threshold, nframes)
+        elapsed = time.time() - start
+    else:
+        log.info("Creating %d processes for jump detection " % numslices)
+        pool = multiprocessing.Pool(processes=numslices)
+        real_result = pool.starmap(twopt.find_crs, slices)
+        k = 0
+        # Reconstruct median_slopes and gdq from the slice results
+        for resultslice in real_result:
+            if (len(real_result) == k + 1):  # last result
+                median_slopes[k * yincrement:numy, :] = resultslice[0]
+                gdq[:, :, k * yincrement:numy, :] = resultslice[1]
+            else:
+                median_slopes[k * yincrement:(k + 1) * yincrement, :] = resultslice[0]
+                gdq[:, :, k * yincrement:(k + 1) * yincrement, :] = resultslice[1]
+            k += 1
+        pool.terminate()
+        pool.close()
+        elapsed = time.time() - start
+    log.debug('Elapsed time = %g sec' % elapsed)
 
     # Apply the y-intercept method as a second pass, if requested
     if do_yint:
@@ -96,7 +142,7 @@ def detect_jumps (input_model, gain_model, readnoise_model,
         yint.find_crs(data, err, gdq, times, readnoise_2d,
                         rejection_threshold, signal_threshold, median_slopes)
         elapsed = time.time() - start
-        log.debug('Elapsed time = %g sec' %elapsed)
+        log.debug('Elapsed time = %g sec' % elapsed)
 
     # Update the DQ arrays of the output model with the jump detection results
     output_model.groupdq = gdq

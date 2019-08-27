@@ -47,4 +47,3 @@ class AlignRefsStep(Step):
             psf_model.close()
 
         return result
-

@@ -32,5 +32,4 @@ class MIRIRampModel(RampModel):
          group parameters table
 
     """
-    schema_url = "miri_ramp.schema.yaml"
-
+    schema_url = "miri_ramp.schema"

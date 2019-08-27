@@ -33,7 +33,7 @@ class MRSIMatchStep(Step):
     reference_file_types = []
 
     def process(self, images):
-        all_models2d = datamodels.ModelContainer(images, persist=True)
+        all_models2d = datamodels.ModelContainer(images)
 
         chm = {}
 
@@ -361,4 +361,3 @@ def _find_channel_bkg_index(model2d, channel):
         if m.channel == channel:
             index = k
     return index
-

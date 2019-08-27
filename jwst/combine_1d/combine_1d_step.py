@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 
+from .. import datamodels
 from ..stpipe import Step
 from . import combine1d
 
@@ -15,16 +16,13 @@ class Combine1dStep(Step):
     """
 
     spec = """
-    # integration_time or exposure_time.
-    exptime_key = string(default="integration_time")
-    # Interpolation between pixels.
-    interpolation = string(default="nearest")
+    exptime_key = string(default="exposure_time") # use for weight
     """
 
     def process(self, input_file):
 
-        result = combine1d.do_correction(input_file,
-                                         self.exptime_key,
-                                         self.interpolation)
+        with datamodels.open(input_file) as input_model:
+            result = combine1d.combine_1d_spectra(input_model,
+                                                  self.exptime_key)
 
         return result

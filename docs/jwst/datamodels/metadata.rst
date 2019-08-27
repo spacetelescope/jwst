@@ -152,7 +152,7 @@ The following keywords have to do with validating n-dimensional arrays:
   For defining a table, it should be a list.
 
 - **array**: ``datatype`` should be one of the following strings,
-  representing fixed-length datatypes::
+  representing fixed-length datatypes:
 
   bool8, int8, int16, int32, int64, uint8, uint16, uint32,
   uint64, float16, float32, float64, float128, complex64,

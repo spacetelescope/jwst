@@ -29,10 +29,6 @@ ZEROTIME_END = Time('2014-01-02')
 # Header defaults
 TARG_RA = 345.0
 TARG_DEC = -87.0
-V2_REF = 200.0
-V3_REF = -350.0
-V3I_YANG = 42.0
-VPARITY = -1
 
 # Get the mock databases
 db_ngas_path = os.path.join(os.path.dirname(__file__), 'data', 'engdb_ngas')
@@ -77,32 +73,31 @@ def data_file():
     model.meta.exposure.end_time = ENDTIME.mjd
     model.meta.target.ra = TARG_RA
     model.meta.target.dec = TARG_DEC
-    model.meta.wcsinfo.v2_ref = V2_REF
-    model.meta.wcsinfo.v3_ref = V3_REF
-    model.meta.wcsinfo.v3yangle = V3I_YANG
-    model.meta.wcsinfo.vparity = VPARITY
     model.meta.aperture.name = "MIRIM_FULL"
     model.meta.observation.date = '1/1/2017'
+    model.meta.exposure.type = "MIR_IMAGE"
 
     with TemporaryDirectory() as path:
         file_path = os.path.join(path, 'fits.fits')
         model.save(file_path)
+        model.close()
         yield file_path
 
 
 @pytest.fixture(scope='module')
-def data_file_nosaif():
+def data_file_nosiaf():
     model = datamodels.Level1bModel()
     model.meta.exposure.start_time = STARTTIME.mjd
     model.meta.exposure.end_time = ENDTIME.mjd
     model.meta.target.ra = TARG_RA
     model.meta.target.dec = TARG_DEC
-    model.meta.aperture.name = "MIRIM_FULL"
+    model.meta.aperture.name = "UNKNOWN"
     model.meta.observation.date = '1/1/2017'
 
     with TemporaryDirectory() as path:
         file_path = os.path.join(path, 'fits_nosiaf.fits')
         model.save(file_path)
+        model.close()
         yield file_path
 
 
@@ -112,7 +107,7 @@ def test_change_engdb_url():
     The given time and database should not find any values.
     """
     with pytest.raises(ValueError):
-        results = stp.get_pointing(
+        stp.get_pointing(
             STARTTIME.mjd,
             ENDTIME.mjd,
             engdb_url=engdb_tools.ENGDB_BASE_URL
@@ -122,9 +117,9 @@ def test_change_engdb_url():
 def test_change_engdb_url_fail():
     """Test changing the engineering database by call"""
     with pytest.raises(Exception):
-        results = stp.get_pointing(
-             Time('2019-06-03T17:25:40', format='isot').mjd,
-             Time('2019-06-03T17:25:56', format='isot').mjd,
+        stp.get_pointing(
+            Time('2019-06-03T17:25:40', format='isot').mjd,
+            Time('2019-06-03T17:25:56', format='isot').mjd,
             engdb_url='http://nonexistant.fake'
         )
 
@@ -132,7 +127,7 @@ def test_change_engdb_url_fail():
 def test_strict_pointing(data_file, eng_db_jw703):
     """Test failure on strict pointing"""
     with pytest.raises(ValueError):
-        stp.add_wcs(data_file, tolerance=0)
+        stp.add_wcs(data_file, siaf_path=siaf_db, tolerance=0)
 
 
 def test_pointing_averaging(eng_db_jw703):
@@ -193,13 +188,13 @@ def test_logging(eng_db_ngas, caplog):
 
 
 def test_get_pointing_list(eng_db_ngas):
-        results = stp.get_pointing(STARTTIME.mjd, ENDTIME.mjd, reduce_func=stp.all_pointings)
-        assert isinstance(results, list)
-        assert len(results) > 0
-        assert np.isclose(results[0].q, Q_EXPECTED).all()
-        assert np.isclose(results[0].j2fgs_matrix, J2FGS_MATRIX_EXPECTED).all()
-        assert np.isclose(results[0].fsmcorr, FSMCORR_EXPECTED).all()
-        assert STARTTIME <= results[0].obstime <= ENDTIME
+    results = stp.get_pointing(STARTTIME.mjd, ENDTIME.mjd, reduce_func=stp.all_pointings)
+    assert isinstance(results, list)
+    assert len(results) > 0
+    assert np.isclose(results[0].q, Q_EXPECTED).all()
+    assert np.isclose(results[0].j2fgs_matrix, J2FGS_MATRIX_EXPECTED).all()
+    assert np.isclose(results[0].fsmcorr, FSMCORR_EXPECTED).all()
+    assert STARTTIME <= results[0].obstime <= ENDTIME
 
 
 def test_get_pointing_with_zeros(eng_db_ngas):
@@ -237,58 +232,46 @@ def test_add_wcs_default(data_file):
     assert model.meta.pointing.ra_v1 == TARG_RA
     assert model.meta.pointing.dec_v1 == TARG_DEC
     assert model.meta.pointing.pa_v3 == 0.
+    assert model.meta.wcsinfo.wcsaxes == 2
+    assert model.meta.wcsinfo.crpix1 == 693.5
+    assert model.meta.wcsinfo.crpix2 == 512.5
     assert model.meta.wcsinfo.crval1 == TARG_RA
     assert model.meta.wcsinfo.crval2 == TARG_DEC
+    assert model.meta.wcsinfo.ctype1 == "RA---TAN"
+    assert model.meta.wcsinfo.ctype2 == "DEC--TAN"
+    assert model.meta.wcsinfo.cunit1 == 'deg'
+    assert model.meta.wcsinfo.cunit2 == 'deg'
+    assert np.isclose(model.meta.wcsinfo.cdelt1, 3.0555555e-5)
+    assert np.isclose(model.meta.wcsinfo.cdelt2, 3.0555555e-5)
     assert np.isclose(model.meta.wcsinfo.pc1_1, -1.0)
     assert np.isclose(model.meta.wcsinfo.pc1_2, 0.0)
     assert np.isclose(model.meta.wcsinfo.pc2_1, 0.0)
     assert np.isclose(model.meta.wcsinfo.pc2_2, 1.0)
+    assert model.meta.wcsinfo.v2_ref == 200.0
+    assert model.meta.wcsinfo.v3_ref == -350.0
+    assert model.meta.wcsinfo.vparity == -1
+    assert model.meta.wcsinfo.v3yangle == 42.0
     assert model.meta.wcsinfo.ra_ref == TARG_RA
     assert model.meta.wcsinfo.dec_ref == TARG_DEC
     assert np.isclose(model.meta.wcsinfo.roll_ref, 358.9045979379)
-    assert model.meta.wcsinfo.wcsaxes == 2
     assert word_precision_check(
         model.meta.wcsinfo.s_region,
         (
             'POLYGON ICRS'
-            ' 345.0516057166881 -86.87312441299257'
-            ' 344.61737392066823 -86.85221531104224'
-            ' 344.99072891662956 -86.82863042295425'
-            ' 345.42745662836063 -86.84915871318734'
+            ' 345.11054995209815 -87.02586884935684'
+            ' 344.6537904121288 -87.00498014679253'
+            ' 345.04569816117015 -86.98138111042982'
+            ' 345.50498899320183 -87.00187988107017'
         )
     )
 
 
-def test_add_wcs_default_nosiaf(data_file_nosaif, caplog):
+def test_add_wcs_default_nosiaf(data_file_nosiaf, caplog):
     """Handle when no pointing exists and the default is used and no SIAF specified."""
-    try:
+    with pytest.raises(ValueError):
         stp.add_wcs(
-            data_file_nosaif, siaf_path=siaf_db, tolerance=0, allow_default=True
+            data_file_nosiaf, siaf_path=siaf_db, tolerance=0, allow_default=True
         )
-    except ValueError:
-        pass  # This is what we want for the test.
-    except Exception as e:
-        pytest.skip(
-            'Live ENGDB service is not accessible.'
-            '\nException={}'.format(e)
-        )
-
-    model = datamodels.Level1bModel(data_file_nosaif)
-    assert model.meta.pointing.ra_v1 == TARG_RA
-    assert model.meta.pointing.dec_v1 == TARG_DEC
-    assert model.meta.pointing.pa_v3 == 0.
-    assert model.meta.wcsinfo.crval1 == TARG_RA
-    assert model.meta.wcsinfo.crval2 == TARG_DEC
-    assert np.isclose(model.meta.wcsinfo.pc1_1, 1.0)
-    assert np.isclose(model.meta.wcsinfo.pc1_2, 0.0)
-    assert np.isclose(model.meta.wcsinfo.pc2_1, 0.0)
-    assert np.isclose(model.meta.wcsinfo.pc2_2, 1.0)
-    assert model.meta.wcsinfo.ra_ref == TARG_RA
-    assert model.meta.wcsinfo.dec_ref == TARG_DEC
-    assert np.isclose(model.meta.wcsinfo.roll_ref, 360.)
-    assert model.meta.wcsinfo.wcsaxes == 2
-
-    assert 'Insufficient SIAF information found in header' in caplog.text
 
 
 @pytest.mark.skipif(sys.version_info.major<3,
@@ -311,24 +294,36 @@ def test_add_wcs_fsmcorr_v1(data_file):
     assert model.meta.pointing.ra_v1 == TARG_RA
     assert model.meta.pointing.dec_v1 == TARG_DEC
     assert model.meta.pointing.pa_v3 == 0.
+    assert model.meta.wcsinfo.wcsaxes == 2
+    assert model.meta.wcsinfo.crpix1 == 693.5
+    assert model.meta.wcsinfo.crpix2 == 512.5
     assert model.meta.wcsinfo.crval1 == TARG_RA
     assert model.meta.wcsinfo.crval2 == TARG_DEC
+    assert model.meta.wcsinfo.ctype1 == "RA---TAN"
+    assert model.meta.wcsinfo.ctype2 == "DEC--TAN"
+    assert model.meta.wcsinfo.cunit1 == 'deg'
+    assert model.meta.wcsinfo.cunit2 == 'deg'
+    assert np.isclose(model.meta.wcsinfo.cdelt1, 3.0555555e-5)
+    assert np.isclose(model.meta.wcsinfo.cdelt2, 3.0555555e-5)
     assert np.isclose(model.meta.wcsinfo.pc1_1, -1.0)
     assert np.isclose(model.meta.wcsinfo.pc1_2, 0.0)
     assert np.isclose(model.meta.wcsinfo.pc2_1, 0.0)
     assert np.isclose(model.meta.wcsinfo.pc2_2, 1.0)
+    assert model.meta.wcsinfo.v2_ref == 200.0
+    assert model.meta.wcsinfo.v3_ref == -350.0
+    assert model.meta.wcsinfo.vparity == -1
+    assert model.meta.wcsinfo.v3yangle == 42.0
     assert model.meta.wcsinfo.ra_ref == TARG_RA
     assert model.meta.wcsinfo.dec_ref == TARG_DEC
     assert np.isclose(model.meta.wcsinfo.roll_ref, 358.9045979379)
-    assert model.meta.wcsinfo.wcsaxes == 2
     assert word_precision_check(
         model.meta.wcsinfo.s_region,
         (
             'POLYGON ICRS'
-            ' 345.0516057166881 -86.87312441299257'
-            ' 344.61737392066823 -86.85221531104224'
-            ' 344.99072891662956 -86.82863042295425'
-            ' 345.42745662836063 -86.84915871318734'
+            ' 345.11054995209815 -87.02586884935684'
+            ' 344.6537904121288 -87.00498014679253'
+            ' 345.04569816117015 -86.98138111042982'
+            ' 345.50498899320183 -87.00187988107017'
         )
     )
 
@@ -343,24 +338,36 @@ def test_add_wcs_with_db(eng_db_ngas, data_file, siaf_file=siaf_db):
     assert np.isclose(model.meta.pointing.ra_v1, 348.9278669)
     assert np.isclose(model.meta.pointing.dec_v1, -38.749239)
     assert np.isclose(model.meta.pointing.pa_v3, 50.1767077)
+    assert model.meta.wcsinfo.wcsaxes == 2
+    assert model.meta.wcsinfo.crpix1 == 693.5
+    assert model.meta.wcsinfo.crpix2 == 512.5
     assert np.isclose(model.meta.wcsinfo.crval1, 348.8776709)
     assert np.isclose(model.meta.wcsinfo.crval2, -38.854159)
+    assert model.meta.wcsinfo.ctype1 == "RA---TAN"
+    assert model.meta.wcsinfo.ctype2 == "DEC--TAN"
+    assert model.meta.wcsinfo.cunit1 == 'deg'
+    assert model.meta.wcsinfo.cunit2 == 'deg'
+    assert np.isclose(model.meta.wcsinfo.cdelt1, 3.0555555e-5)
+    assert np.isclose(model.meta.wcsinfo.cdelt2, 3.0555555e-5)
     assert np.isclose(model.meta.wcsinfo.pc1_1, 0.0385309)
     assert np.isclose(model.meta.wcsinfo.pc1_2, 0.9992574)
     assert np.isclose(model.meta.wcsinfo.pc2_1, 0.9992574)
     assert np.isclose(model.meta.wcsinfo.pc2_2, -0.0385309)
+    assert model.meta.wcsinfo.v2_ref == 200.0
+    assert model.meta.wcsinfo.v3_ref == -350.0
+    assert model.meta.wcsinfo.vparity == -1
+    assert model.meta.wcsinfo.v3yangle == 42.0
     assert np.isclose(model.meta.wcsinfo.ra_ref, 348.8776709)
     assert np.isclose(model.meta.wcsinfo.dec_ref, -38.854159)
     assert np.isclose(model.meta.wcsinfo.roll_ref, 50.20832726650)
-    assert model.meta.wcsinfo.wcsaxes == 2
     assert word_precision_check(
         model.meta.wcsinfo.s_region,
         (
             'POLYGON ICRS'
-            ' 349.00694612561705 -38.776964589744054'
-            ' 349.0086451128466 -38.74533844552814'
-            ' 349.04874980331374 -38.746495669763334'
-            ' 349.0474396482846 -38.77812380255898'
+            ' 348.8563379013152 -38.874810886750495'
+            ' 348.85810582665334 -38.84318773861823'
+            ' 348.8982592685148 -38.84439628911871'
+            ' 348.89688051688233 -38.876020020321164'
         )
     )
 
@@ -375,23 +382,71 @@ def test_add_wcs_with_db_fsmcorr_v1(eng_db_ngas, data_file):
     assert np.isclose(model.meta.pointing.ra_v1, 348.9278669)
     assert np.isclose(model.meta.pointing.dec_v1, -38.749239)
     assert np.isclose(model.meta.pointing.pa_v3, 50.1767077)
+    assert model.meta.wcsinfo.wcsaxes == 2
+    assert model.meta.wcsinfo.crpix1 == 693.5
+    assert model.meta.wcsinfo.crpix2 == 512.5
     assert np.isclose(model.meta.wcsinfo.crval1, 348.8776709)
     assert np.isclose(model.meta.wcsinfo.crval2, -38.854159)
+    assert model.meta.wcsinfo.ctype1 == "RA---TAN"
+    assert model.meta.wcsinfo.ctype2 == "DEC--TAN"
+    assert model.meta.wcsinfo.cunit1 == 'deg'
+    assert model.meta.wcsinfo.cunit2 == 'deg'
+    assert np.isclose(model.meta.wcsinfo.cdelt1, 3.0555555e-5)
+    assert np.isclose(model.meta.wcsinfo.cdelt2, 3.0555555e-5)
     assert np.isclose(model.meta.wcsinfo.pc1_1, 0.0385309)
     assert np.isclose(model.meta.wcsinfo.pc1_2, 0.9992574)
     assert np.isclose(model.meta.wcsinfo.pc2_1, 0.9992574)
     assert np.isclose(model.meta.wcsinfo.pc2_2, -0.0385309)
+    assert model.meta.wcsinfo.v2_ref == 200.0
+    assert model.meta.wcsinfo.v3_ref == -350.0
+    assert model.meta.wcsinfo.vparity == -1
+    assert model.meta.wcsinfo.v3yangle == 42.0
     assert np.isclose(model.meta.wcsinfo.ra_ref, 348.8776709)
     assert np.isclose(model.meta.wcsinfo.dec_ref, -38.854159)
     assert np.isclose(model.meta.wcsinfo.roll_ref, 50.20832726650)
-    assert model.meta.wcsinfo.wcsaxes == 2
     assert word_precision_check(
         model.meta.wcsinfo.s_region,
         (
             'POLYGON ICRS'
-            ' 349.00694612561705 -38.776964589744054'
-            ' 349.0086451128466 -38.74533844552814'
-            ' 349.04874980331374 -38.746495669763334'
-            ' 349.0474396482846 -38.77812380255898'
+            ' 348.8563379013152 -38.874810886750495'
+            ' 348.85810582665334 -38.84318773861823'
+            ' 348.8982592685148 -38.84439628911871'
+            ' 348.89688051688233 -38.876020020321164'
         )
     )
+
+
+def test_default_siaf_values(eng_db_ngas, data_file_nosiaf):
+    """
+    Test that FITS WCS default values were set.
+    """
+    model = datamodels.Level1bModel(data_file_nosiaf)
+    model.meta.exposure.start_time = STARTTIME.mjd
+    model.meta.exposure.end_time = ENDTIME.mjd
+    model.meta.target.ra = TARG_RA
+    model.meta.target.dec = TARG_DEC
+    model.meta.aperture.name = "MIRIM_TAFULL"
+    model.meta.observation.date = '1/1/2017'
+    model.meta.exposure.type = "MIR_IMAGE"
+    stp.update_wcs(model, siaf_path=siaf_db, allow_default=False)
+    assert model.meta.wcsinfo.crpix1 == 0
+    assert model.meta.wcsinfo.crpix2 == 0
+    assert model.meta.wcsinfo.cdelt1 == 1
+    assert model.meta.wcsinfo.cdelt2 == 1
+
+
+def test_tsgrism_siaf_values(eng_db_ngas, data_file_nosiaf):
+    """
+    Test that FITS WCS default values were set.
+    """
+    model = datamodels.Level1bModel(data_file_nosiaf)
+    model.meta.exposure.start_time = STARTTIME.mjd
+    model.meta.exposure.end_time = ENDTIME.mjd
+    #model.meta.target.ra = TARG_RA
+    #model.meta.target.dec = TARG_DEC
+    model.meta.aperture.name = "NRCA5_GRISM256_F444W"
+    model.meta.observation.date = '1/1/2017'
+    model.meta.exposure.type = "NRC_TSGRISM"
+    stp.update_wcs(model, siaf_path=siaf_db)
+    assert model.meta.wcsinfo.siaf_xref_sci == 887
+    assert model.meta.wcsinfo.siaf_yref_sci == 35

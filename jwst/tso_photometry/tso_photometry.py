@@ -1,10 +1,12 @@
 from collections import OrderedDict
+from distutils.version import LooseVersion
 
 import logging
 
 import numpy as np
 from astropy.table import QTable
 from astropy.time import Time, TimeDelta
+import photutils
 from photutils import CircularAperture, CircularAnnulus
 
 from ..datamodels import CubeModel
@@ -66,7 +68,7 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner,
 
     if sub64p_wlp8:
         info = ('Photometry measured as the sum of all values in the '
-               'subarray.  No background subtraction was performed.')
+                'subarray.  No background subtraction was performed.')
 
         for i in np.arange(nimg):
             aperture_sum.append(np.sum(datamodel.data[i, :, :]))
@@ -147,7 +149,8 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner,
             log.debug("Times are from the INT_TIMES table.")
             time_arr = mid_utc[offset: offset + num_integ]
             int_times = Time(time_arr, format='mjd', scale='utc')
-    else:
+
+    if nrows == 0:
         log.debug("Times were computed from EXPSTART and TGROUP.")
 
         dt = (datamodel.meta.exposure.group_time *
@@ -167,13 +170,22 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner,
         tbl['annulus_sum'] = annulus_sum
         tbl['annulus_sum_err'] = annulus_sum_err
 
-        annulus_mean = annulus_sum / bkg_aper.area()
-        annulus_mean_err = annulus_sum_err / bkg_aper.area()
+        if LooseVersion(photutils.__version__) >= '0.7':
+            annulus_mean = annulus_sum / bkg_aper.area
+            annulus_mean_err = annulus_sum_err / bkg_aper.area
+
+            aperture_bkg = annulus_mean * phot_aper.area
+            aperture_bkg_err = annulus_mean_err * phot_aper.area
+        else:
+            annulus_mean = annulus_sum / bkg_aper.area()
+            annulus_mean_err = annulus_sum_err / bkg_aper.area()
+
+            aperture_bkg = annulus_mean * phot_aper.area()
+            aperture_bkg_err = annulus_mean_err * phot_aper.area()
+
         tbl['annulus_mean'] = annulus_mean
         tbl['annulus_mean_err'] = annulus_mean_err
 
-        aperture_bkg = annulus_mean * phot_aper.area()
-        aperture_bkg_err = annulus_mean_err * phot_aper.area()
         tbl['aperture_bkg'] = aperture_bkg
         tbl['aperture_bkg_err'] = aperture_bkg_err
 

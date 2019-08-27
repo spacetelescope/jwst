@@ -33,10 +33,11 @@ class CubeBuildStep (Step):
     """
 
     spec = """
-         channel = option('1','2','3','4','all',default='all') # Options: 1,2,3,4, or all
-         band = option('short','medium','long','all',default='all') # Options: short, medium, long, all
-         grating   = option('prism','g140m','g140h','g235m','g235h',g395m','g395h','all',default='all') # Options: prism,g140m,g140h,g235m,g235h,g395m,g395h, or all
-         filter   = option('clear','f100lp','f070lp','f170lp','f290lp','all',default='all') # Options: clear,f100lp,f070lp,f170lp,f290lp, or all
+         channel = option('1','2','3','4','all',default='all') # Channel
+         band = option('short','medium','long','all',default='all') # Band
+         grating   = option('prism','g140m','g140h','g235m','g235h',g395m','g395h','all',default='all') # Grating
+         filter   = option('clear','f100lp','f070lp','f170lp','f290lp','all',default='all') # Filter
+         output_type = option('band','channel','grating','multi',default='band') # Type IFUcube to create.
          scale1 = float(default=0.0) # cube sample size to use for axis 1, arc seconds
          scale2 = float(default=0.0) # cube sample size to use for axis 2, arc seconds
          scalew = float(default=0.0) # cube sample size to use for axis 3, microns
@@ -51,7 +52,7 @@ class CubeBuildStep (Step):
          xdebug = integer(default=None) # debug option, x spaxel value to report information on
          ydebug = integer(default=None) # debug option, y spaxel value to report information on
          zdebug = integer(default=None) # debug option, z spaxel value to report  information on
-         output_type = option('band','channel','grating','multi',default='band') # Type IFUcube to create. Options=band,channel,grating,multi
+         skip_dqflagging = boolean(default=false) # skip setting the DQ plane of the IFU
          search_output_file = boolean(default=false)
          output_use_model = boolean(default=true) # Use filenames in the output models
        """
@@ -238,6 +239,7 @@ class CubeBuildStep (Step):
 
 # shove the input parameters in to pars_cube to pull out ifu_cube.py
 # these parameters are related to the building a single ifucube_model
+
         pars_cube = {
             'scale1': self.scale1,
             'scale2': self.scale2,
@@ -250,6 +252,7 @@ class CubeBuildStep (Step):
             'roiw': self.roiw,
             'wavemin': self.wavemin,
             'wavemax': self.wavemax,
+            'skip_dqflagging': self.skip_dqflagging,
             'xdebug': self.xdebug,
             'ydebug': self.ydebug,
             'zdebug': self.zdebug,
@@ -269,12 +272,10 @@ class CubeBuildStep (Step):
 # read in all the input files, information from cube_pars, read in input data
 # and fill in master_table holding what files are associationed with each
 # ch/sub-ch or grating/filter.
-# Fill in all_channel, all_subchannel,all_filter, all_grating, instrument and
-# detector
+# Fill in all_channel, all_subchannel,all_filter, all_grating and instrument
 
         result = cubeinfo.setup()
         instrument = result['instrument']
-        detector = result['detector']
         instrument_info = result['instrument_info']
         master_table = result['master_table']
 # ________________________________________________________________________________
@@ -303,7 +304,6 @@ class CubeBuildStep (Step):
                 self.output_name_base,
                 self.output_type,
                 instrument,
-                detector,
                 list_par1,
                 list_par2,
                 instrument_info,
@@ -378,7 +378,7 @@ class CubeBuildStep (Step):
                      'g395m', 'g395h', 'prism', 'all']
 # ________________________________________________________________________________
 # For MIRI we can set the channel.
-# If channel is  set to 'all' then let the DetermineCubeCoverage figure out
+# If channel is  set to 'all' then let the determine_band_coverage figure out
 # which channels are covered by the data.
         if self.channel == 'all':
             self.channel = ''
@@ -403,7 +403,7 @@ class CubeBuildStep (Step):
             self.pars_input['channel'] = list(set(self.pars_input['channel']))
 # ________________________________________________________________________________
 # For MIRI we can set the subchannel
-# if set to all then let the DetermineCubeCoverage figure out what subchannels
+# if set to all then let the determine_band_coverage figure out what subchannels
 # are covered by the data
 
         if self.subchannel == 'all':
@@ -428,7 +428,7 @@ class CubeBuildStep (Step):
             self.pars_input['subchannel'] = list(set(self.pars_input['subchannel']))
 # ________________________________________________________________________________
 # For NIRSPEC we can set the filter
-# If set to all then let the DetermineCubeCoverage figure out what filters are
+# If set to all then let the determine_band_coverage figure out what filters are
 # covered by the data.
 
         if self.filter == 'all':
@@ -452,7 +452,7 @@ class CubeBuildStep (Step):
             self.pars_input['filter'] = list(set(self.pars_input['filter']))
 # ________________________________________________________________________________
 # For NIRSPEC we can set the grating
-# If set to all then let the DetermineCubeCoverage figure out what gratings are
+# If set to all then let the determine_band_coverage figure out what gratings are
 # covered by the data
         if self.grating == 'all':
             self.grating = ''

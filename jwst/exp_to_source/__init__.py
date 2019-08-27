@@ -1,3 +1,6 @@
-from .exp_to_source import *
+from .exp_to_source import (
+    exp_to_source,
+    multislit_to_container,
+)
 
-__version__ = '0.9.3'
+__all__ = ['exp_to_source', 'multislit_to_container']

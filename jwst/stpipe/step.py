@@ -73,25 +73,16 @@ class Step():
         # Add arguments for all of the expected reference files
         for reference_file_type in cls.reference_file_types:
             override_name = crds_client.get_override_name(reference_file_type)
-            spec[override_name] = 'string(default=None)'
+            spec[override_name] = 'is_string_or_datamodel(default=None)'
             spec.inline_comments[override_name] = (
                 '# Override the {0} reference file'.format(
                     reference_file_type))
         return spec
 
     @classmethod
-    def print_configspec(cls, stream=sys.stdout):
-
-        # Python2/3 issue: Python3 doesn't like bytes
-        # going to stdout directly.
-        if stream == sys.stdout:
-            try:
-                stream = sys.stdout.buffer
-            except AttributeError:
-                pass
-
+    def print_configspec(cls):
         specfile = cls.load_spec_file(preserve_comments=True)
-        specfile.write(stream)
+        specfile.write(sys.stdout.buffer)
 
     @classmethod
     def from_config_file(cls, config_file, parent=None, name=None):
@@ -270,7 +261,7 @@ class Step():
 
         config_file : str path, optional
             The path to the config file that this step was initialized
-            with.  Use to determine relative path names.
+            with.  Use to determine relative path names of other config files.
 
         **kws : dict
             Additional parameters to set.  These will be set as member
@@ -310,7 +301,7 @@ class Step():
         # Log the fact that we have been init-ed.
         self.log.info('{0} instance created.'.format(self.__class__.__name__))
 
-        # Store the config file path so filenames can be resolved
+        # Store the config file path so config filenames can be resolved
         # against it.
         self.config_file = config_file
 
@@ -363,14 +354,6 @@ class Step():
             self.set_primary_input(args[0])
 
         try:
-            # prefetch truly occurs at the Pipeline (or subclass) level.
-            if (
-                    len(args) and len(self.reference_file_types) and
-                    not self.skip and
-                    self.prefetch_references
-            ):
-                self._precache_references(args[0])
-
             # Default output file configuration
             if self.output_file is not None:
                 self.save_results = True
@@ -396,6 +379,8 @@ class Step():
                 self.log.info('Step skipped.')
                 step_result = args[0]
             else:
+                if self.prefetch_references:
+                    self.prefetch(*args)
                 try:
                     step_result = self.process(*args)
                 except TypeError as e:
@@ -429,7 +414,8 @@ class Step():
                             if hasattr(result.meta.ref_file, ref_name):
                                 getattr(result.meta.ref_file, ref_name).name = filename
                         result.meta.ref_file.crds.sw_version = crds_client.get_svn_version()
-                        result.meta.ref_file.crds.context_used = crds_client.get_context_used()
+                        result.meta.ref_file.crds.context_used = \
+                            crds_client.get_context_used(result.meta.telescope)
                 self._reference_files_used = []
 
             # Mark versions
@@ -478,6 +464,15 @@ class Step():
         return step_result
 
     __call__ = run
+
+    def prefetch(self, *args):
+        """Prefetch reference files,  nominally called when
+        self.prefetch_references is True.  Can be called explictly
+        when self.prefetch_refences is False.
+        """
+        # prefetch truly occurs at the Pipeline (or subclass) level.
+        if len(args) and len(self.reference_file_types) and not self.skip:
+            self._precache_references(args[0])
 
     def process(self, *args):
         """
@@ -613,7 +608,10 @@ class Step():
         """
         override_name = crds_client.get_override_name(reference_file_type)
         path = getattr(self, override_name, None)
-        return abspath(path) if path else path
+        if isinstance(path, DataModel):
+            return path
+        else:
+            return abspath(path) if path else path
 
     def get_reference_file(self, input_file, reference_file_type):
         """
@@ -640,7 +638,11 @@ class Step():
         """
         override = self.get_ref_override(reference_file_type)
         if override is not None:
-            if override.strip() != "":
+            if isinstance(override, DataModel):
+                self._reference_files_used.append(
+                    (reference_file_type, override.override_handle))
+                return override
+            elif override.strip() != "":
                 self._reference_files_used.append(
                     (reference_file_type, basename(override)))
                 reference_name = override
@@ -657,7 +659,8 @@ class Step():
                 (reference_file_type, hdr_name))
         return crds_client.check_reference_open(reference_name)
 
-    def reference_uri_to_cache_path(self, reference_uri):
+    @classmethod
+    def reference_uri_to_cache_path(cls, reference_uri):
         """Convert an abstract CRDS reference URI to an absolute file path in the CRDS
         cache.  Reference URI's are typically output to dataset headers to record the
         reference files used.
@@ -1061,6 +1064,34 @@ class Step():
             except Exception:
                 # Not a file-checkable object. Ignore.
                 pass
+
+    @staticmethod
+    def record_step_status(datamodel, cal_step, success=True):
+        """Record whether or not a step completed in meta.cal_step
+
+        Parameters
+        ----------
+        datamodel : `~jwst.datamodels.Datamodel` instance
+            This is the datamodel or container of datamodels to modify in place
+
+        cal_step : str
+            The attribute in meta.cal_step for recording the status of the step
+
+        success : bool
+            If True, then 'COMPLETE' is recorded.  If False, then 'SKIPPED'
+        """
+        if success:
+            status = 'COMPLETE'
+        else:
+            status = 'SKIPPED'
+
+        if isinstance(datamodel, ModelContainer):
+            for model in datamodel:
+                model.meta.cal_step._instance[cal_step] = status
+        else:
+            datamodel.meta.cal_step._instance[cal_step] = status
+
+        # TODO: standardize cal_step naming to point to the offical step name
 
 
 # #########

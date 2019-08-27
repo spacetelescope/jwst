@@ -13,4 +13,4 @@ class GainModel(ReferenceFileModel):
     data : numpy float32 array
          The gain
     """
-    schema_url = "gain.schema.yaml"
+    schema_url = "gain.schema"

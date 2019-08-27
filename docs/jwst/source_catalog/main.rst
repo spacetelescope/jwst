@@ -8,11 +8,11 @@ Source Detection
 ^^^^^^^^^^^^^^^^
 
 Sources are detected using `image segmentation
-<http://en.wikipedia.org/wiki/Image_segmentation>`_, which is a
+<https://en.wikipedia.org/wiki/Image_segmentation>`_, which is a
 process of assigning a label to every pixel in an image such that
 pixels with the same label are part of the same source.  The
-segmentation procedure used is from `Photutils
-<http://photutils.readthedocs.org/en/latest/photutils/detection.html#source-extraction-using-image-segmentation>`_
+segmentation procedure used is from `Photutils source extraction
+<https://photutils.readthedocs.io/en/latest/segmentation.html>`_
 and is called the threshold method, where detected sources must have a
 minimum number of connected pixels that are each greater than a
 specified threshold value in an image.  The threshold level is usually
@@ -28,10 +28,11 @@ Source Deblending
 Note that overlapping sources are detected as single sources.
 Separating those sources requires a deblending procedure, such as a
 multi-thresholding technique used by `SExtractor
-<http://www.astromatic.net/software/sextractor>`_.  Here we use the
-Photutils deblender, which is an experimental algorithm that deblends
-sources using a combination of multi-thresholding and `watershed
-segmentation
+<https://www.astromatic.net/software/sextractor>`_.  Here we use the
+`Photutils deblender
+<https://photutils.readthedocs.io/en/latest/segmentation.html#source-deblending>`_,
+which is an algorithm that deblends sources using a combination of
+multi-thresholding and `watershed segmentation
 <https://en.wikipedia.org/wiki/Watershed_(image_processing)>`_.  In
 order to deblend sources, they must be separated enough such that
 there is a saddle between them.
@@ -43,8 +44,9 @@ Source Photometry and Properties
 After detecting sources using image segmentation, we can measure their
 photometry, centroids, and morphological properties.  Here we use the
 functions in `Photutils
-<http://photutils.readthedocs.org/en/latest/photutils/segmentation.html>`_.
-Please see the Photutils `SourceProperties
-<http://photutils.readthedocs.org/en/latest/api/photutils.segmentation.SourceProperties.html#photutils.segmentation.SourceProperties>`_
-class for the list of the properties that are calculated for each
-source.
+<https://photutils.readthedocs.org/en/latest/segmentation.html>`_.  The
+properties that are currently calculated for each source include
+source centroids (both in pixel and sky coordinates), fluxes (and
+errors), AB magnitudes (and errors), area, semimajor and semiminor
+axis lengths, orientation, and sky coordinates at bounding box
+corners.

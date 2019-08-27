@@ -7,80 +7,9 @@ allOf:
       title: An array of slits
       items:
         allOf:
-        - $ref: photometry.schema.yaml
-        - $ref: wcsinfo.schema.yaml
+        - $ref: slitdata.schema.yaml
         - type: object
           properties:
             meta:
               title: META info from the exposure source file
-            data:
-              fits_hdu: SCI
-              default: 0.0
-              ndim: 2
-              datatype: float32
-            dq:
-              fits_hdu: DQ
-              default: 0
-              datatype: uint32
-            err:
-              fits_hdu: ERR
-              default: 0.0
-              datatype: float32
-            relsens:
-              $ref: relsens.schema.yaml
-            area:
-              fits_hdu: AREA
-              default: 0.0
-              datatype: float32
-            name:
-              title: Name of the slit
-              type: string
-              fits_keyword: SLTNAME
-              fits_hdu: SCI
-            xstart:
-              title: Starting pixel in x direction
-              type: integer
-              default: 1
-              fits_keyword: SLTSTRT1
-              fits_hdu: SCI
-            xsize:
-              title: Number of pixels in x direction
-              type: integer
-              default: 0
-              fits_keyword: SLTSIZE1
-              fits_hdu: SCI
-            ystart:
-              title: Starting pixel in y direction
-              type: integer
-              default: 1
-              fits_keyword: SLTSTRT2
-              fits_hdu: SCI
-            ysize:
-              title: Number of pixels in y direction
-              type: integer
-              default: 0
-              fits_keyword: SLTSIZE2
-              fits_hdu: SCI
-            source_id:
-              title: Source ID
-              type: integer
-              default: 0
-              fits_keyword: SOURCEID
-              fits_hdu: SCI
-            background:
-              title: Background (T/F)
-              type: boolean
-              fits_keyword: BACKGRND
-              fits_hdu: SCI
-            shutter_state:
-              title: Shutter state
-              type: string
-              fits_keyword: SHUTTER
-              fits_hdu: SCI
-            slitlet_id:
-              title: Slitlet ID
-              type: integer
-              default: 0
-              fits_keyword: SLITID
-              fits_hdu: SCI
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

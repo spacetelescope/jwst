@@ -8,7 +8,7 @@ from astropy import coordinates as coord
 from gwcs import coordinate_frames as cf
 
 from .util import (not_implemented_mode, subarray_transform,
-                   transform_bbox_from_datamodel, bounding_box_from_subarray)
+                   transform_bbox_from_shape, bounding_box_from_subarray)
 from . import pointing
 from ..datamodels import DistortionModel
 
@@ -94,7 +94,7 @@ def imaging_distortion(input_model, reference_files):
     try:
         transform.bounding_box
     except NotImplementedError:
-        transform.bounding_box = transform_bbox_from_datamodel(input_model)
+        transform.bounding_box = transform_bbox_from_shape(input_model.data.shape)
     dist.close()
     return transform
 

@@ -1,92 +1,57 @@
 if (utils.scm_checkout()) return
 
-matrix_python = ['3.6']
-matrix_numpy = ['1.15']
-matrix_astropy = ['4']
-matrix = []
+withCredentials([string(
+    credentialsId: 'jwst-codecov',
+    variable: 'codecov_token')]) {
 
-def test_env = [
+env_vars = [
     "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
     "CRDS_PATH=./crds_cache",
 ]
 
-def conda_packages = [
-    "asdf",
-    "astropy",
-    "crds",
-    "drizzle",
-    "flake8",
-    "gwcs",
-    "jsonschema",
-    "jplephem",
-    "matplotlib",
-    "namedlist",
-    "photutils",
-    "scipy",
-    "six",
-    "spherical-geometry",
-    "stsci.image",
-    "stsci.imagestats",
-    "stsci.stimage",
-    "stsci.tools",
-    "verhawk",
-    "pytest"
-]
-def conda_packages_docs = [
-    "sphinx",
-    "sphinx_rtd_theme",
-    "stsci_rtd_theme"
-]
+// pip related setup for local index, not used currently
+def pip_index = "https://bytesalad.stsci.edu/artifactory/api/pypi/datb-pypi-virtual/simple"
+def pip_install_args = "--index-url ${pip_index} --progress-bar=off"
 
-// Pip related setup
-def pip_packages_docs = "sphinx-automodapi"
-def pip_packages_tests = "requests_mock ci_watson"
 
-// Generate distributions
-dist = new BuildConfig()
-dist.nodetype = 'linux'
-dist.name = 'dist'
-dist.conda_packages = ["numpy=${matrix_numpy[0]}"] + ["python=${matrix_python[0]}"]
-dist.build_cmds = [
+// Generate distributions build
+bc0 = new BuildConfig()
+bc0.nodetype = 'linux'
+bc0.name = 'wheel-sdist'
+bc0.conda_ver = '4.6.14'
+bc0.conda_packages = [
+    "python=3.6",
+]
+bc0.build_cmds = [
+    "pip install numpy",
+    "pip wheel .",
     "python setup.py sdist",
-    "python setup.py bdist_egg",
-    "python setup.py bdist_wheel"
 ]
-matrix += dist
 
-
-// Compile documentation
-docs = new BuildConfig()
-docs.nodetype = 'linux'
-docs.name = 'docs'
-docs.conda_channels = ['http://ssb.stsci.edu/astroconda-dev']
-docs.conda_packages = conda_packages + conda_packages_docs + ["numpy=${matrix_numpy[0]}"] + ["python=${matrix_python[0]}"]
-docs.build_cmds = [
-    "pip install -q ${pip_packages_docs}",
-    "python setup.py build_sphinx"
+// Generate pip build/test with released upstream dependencies
+bc1 = utils.copy(bc0)
+bc1.name = "stable-deps"
+bc1.env_vars = env_vars
+bc1.build_cmds = [
+    "pip install -e .[test]",
 ]
-matrix += docs
+bc1.test_cmds = [
+    "pytest --cov=./ -r sx --junitxml=results.xml",
+    "codecov --token=${codecov_token}"
+]
 
+// Generate conda-free build with python 3.7
+bc2 = new BuildConfig()
+bc2.nodetype = 'python3.7'
+bc2.name = 'conda-free'
+bc2.env_vars = env_vars
+bc2.build_cmds = [
+    "pip install -e .[test]",
+]
+bc2.test_cmds = [
+    "pytest --cov=./ -r sx --junitxml=results.xml",
+    "codecov --token=${codecov_token}"
+]
 
-// Generate the build and test matrix
-for (python_ver in matrix_python) {
-    for (numpy_ver in matrix_numpy) {
-        for (astropy_ver in matrix_astropy) {
-            def name = "py${python_ver}np${numpy_ver}ap${astropy_ver}"
-            bc = new BuildConfig()
-            bc.nodetype = 'linux'
-            bc.env_vars = test_env
-            bc.name = name
-            bc.conda_channels = ['http://ssb.stsci.edu/astroconda-dev']
-            bc.conda_packages = conda_packages + ["python=${python_ver}"] + ["numpy=${numpy_ver}"]
-            bc.build_cmds = [
-                "pip install -q ${pip_packages_tests}",
-                "python setup.py install"
-            ]
-            bc.test_cmds = ["pytest -r s --basetemp=test_results --junitxml=results.xml"]
-            matrix += bc
-        }
-    }
-}
-
-utils.run(matrix)
+utils.run([bc0, bc1, bc2])
+}  // withCredentials

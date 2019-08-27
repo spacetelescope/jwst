@@ -1,4 +1,711 @@
-0.13.0 (Unreleased)
+0.14.0 (Unreleased)
+===================
+
+- Remove references to deprecated collections.* ABCs that will be removed in
+  Python 3.8. [#3732]
+
+- Remove ``jwpsf`` module. [#3791]
+
+assign_wcs
+----------
+
+- This step populates keyword DISPAXIS. [#3799]
+
+- For NIRISS WFSS data, the wavelengths were incorrect because the function
+  for horizontally oriented spectra was called for GR150R, and the function
+  for vertically oriented spectra was called for GR150C. [#3891]
+
+
+associations
+------------
+
+- Update rules to have NRS_IFU backgrounds in science associations [#3824]
+
+- Return filename with extensions based on file type [#2671]
+
+- Ensured that all target acqs are processed by Level 2 [#3765]
+
+- Add a check that backgrounds are included in level 3 associations [#3678]
+
+- Will not constrain on uniqueness of the MSACONFIG keyword [#3770]
+
+- Process non-science exposures taken during WFS&C observations [#3947]
+
+barshadow
+---------
+
+- Unit tests were added. [#3930]
+
+combine_1d
+----------
+
+- Fixed the number of inputs to the spectral WCS - one expetced, two were passed. [#3827]
+
+calwebb_tso3
+-------------
+
+- Update to exclude target_acquisitions from processing in the calwebb_tso3 pipeline [#3759]
+
+
+datamodels
+----------
+
+- Update to prevent target_acquisitions from processing in the spec3 pipeline [#3777]
+
+- Use public API of jsonschema to ease upgrade to 3.x. [#3705]
+
+- Fixed corruption of FITS tables with unsigned int columns. [#3736]
+
+- Fixed missing TUNITn keywords caused by changes for unsigned int columns. [#3753]
+
+- Write ``siaf_xref_sci`` and ``siaf_yref_sci`` to FITS keywords ``XREF_SCI``
+  and ``YREF_SCI`` for ``NRC_TSGRISM`` exposures. [#3766]
+
+- Updated multiexposure.schema to just import slitdata.schema instead of explicitly
+  specifying all of its attributes. [#3809]
+
+exp_to_source
+-------------
+
+- Updated the documentation and added some logging to the step. [#3803]
+
+- Close input files after creating the new outputs. [#3828]
+
+extract_1d
+----------
+
+- Parameters were added to ``ExtractBase.__init__``, and most of the initialization
+  is done there rather than in the subclasses. [#3714]
+
+- This step uses keyword DISPAXIS. [#3799]
+
+- Fixed a bug in ``pixel_area`` when the input is a ``CubeModel``. [#3827]
+
+- Computing the solid angle of a pixel is only done for the first integration
+  of a multi-integration exposure, and it's not done at all for WFSS data
+  [#3863]
+
+extract_2d
+----------
+
+- For grism data, this step copies keyword DISPAXIS from input to output. [#3799]
+
+- For NIRCam TSO data, wavelengths are computed and assigned to the
+  wavelength attribute. [#3863]
+
+flat_field
+----------
+
+- For NIRSpec spectroscopic data, the flat_field step needs the dispersion
+  direction.  The step now gets that information from keyword DISPAXIS.
+  [#3799, #3807]
+
+gain_scale
+----------
+
+- Updated to apply gain factor to variance arrays. [#3794]
+
+group_scale
+-----------
+
+- Updates to documentation and log messages. [#3738]
+
+lib
+---
+
+- A function to determine the dispersion direction has been added. [#3756]
+
+master_background
+-----------------
+
+- Updated the documentation to include more details. [#3776]
+
+resample_spec
+-------------
+
+- This step uses keyword DISPAXIS and also copies it to output. [#3799]
+
+stpipe
+------
+
+- Fix ``Step.print_configspec()`` method.  Add test.  [#3768]
+
+tso_photometry
+--------------
+
+- Unit tests were added to tso_photometry. [#3909]
+
+tweakreg
+--------
+
+- removed original ``jwst.tweakreg`` alignment code and changed step's code
+  to call similar functionality from ``tweakwcs`` package. [#3689]
+
+
+0.13.7 (2019-06-21)
+===================
+
+datamodels
+----------
+
+- Reverted #3680 and #3709. [#3717, #3718]
+
+flatfield
+---------
+
+- Three new unit tests were added.  Two existing files were modified to
+  split the tests into separate functions. [#3704]
+
+0.13.6 (2019-06-20)
+===================
+
+associations
+------------
+
+- Fixed constraints on WFSC processing. [#3710]
+
+datamodels
+----------
+
+- Fixed corruption of FITS tables with unsigned int columns. [#3680]
+
+
+0.13.5 (2019-06-19)
+===================
+
+associations
+------------
+
+- Reverted over-restrictive constraints on WFSC processing. [#3691]
+
+- Removed the rule creating associations for NIRSpec LAMP exposures in image modes. [#3693]
+
+
+0.13.4 (2019-06-17)
+===================
+
+assign_wcs
+----------
+
+- A unique integer ``source_id`` is now assigned to all MOS background slitlets
+  and NRS Fixed Slits. [#3584]
+
+associations
+------------
+
+- MIRI MRS dedicated background exposures are now listed as science observations in
+  a new association. [#3542]
+
+- Generate will no longer merge Level2 associations by default [#3631]
+
+- Prevent inclusion of data files with exp_type="NIS_EXTCAL" in the association files [#3611]
+
+- Implemented Level 2 re-sequencing to prevent overwriting of associations [#3674]
+
+- Implemented Level 2 background exposure reprocessing [#3675]
+
+combine_1d
+----------
+
+The input DQ column is temporarily replaced by a zero-filled array of
+the right data type. [#3666]
+
+datamodels
+----------
+
+- Changed PATTSIZE keyword data type from float to string. [#3606]
+
+- Added enumeration of allowed values of ``FXD_SLIT`` to the core schema. [#3584]
+
+- Changed ``WHT_TYPE`` keyword to ``RESWHT``. [#3653]
+
+- Add missing pattern/enum values to keyword_pband, keyword_pfilter, keyword_channel [#3653]
+
+- New keywords [#3653]
+   - ``DSETSTRT``
+   - ``NUMDSETS``
+   - ``DITHDIRC``
+   - ``DITHOPFR``
+   - ``DITHPNTS``
+   - ``MRSPRCHN``
+   - ``NDITHPTS``
+   - ``DWTSCL``
+   - ``DOUTUN``
+   - ``RESBITS``
+   - ``DFVAL``
+   - ``DPIXFR``
+   - ``DKERN``
+   - ``SCIEXT``
+   - ``CONEXT``
+   - ``WHTEXT``
+
+extract_1d
+----------
+
+- Checks for input from a SourceModelContainer. [#3649]
+
+exp_to_source
+-------------
+
+- Changed `exp_to_source`` to use ``source_id`` to group exposures. [#3584]
+
+- Removed the enum list for the SUBPXPAT keyword to allow validation of any value. [#3616]
+
+extract_1d
+----------
+
+- Checks for input from a SourceModelContainer. [#3649]
+
+extract_2d
+----------
+
+- Nircam ``TSGRISM`` extraction uses now ``wcsinfo.siaf_x(y)ref_sci`` as the source position
+  on the detector. [#3646]
+
+- For grism data, a wavelength array is computed and saved, and the variance
+  arrays are extracted and copied to output. [#3664]
+
+lib
+---
+
+- ``set_telescope_pointing`` now retrieves CRPIX1/2 from the SIAF for Nircam TSGRISM
+  observations and saves the values as ``meta.wcsinfo.siaf_x(y)ref_sci``. These are used
+  by ``extract_2d`` as the source position on the detector. [#3646]
+
+outlier_detection
+-----------------
+
+- Changed default value of good_pixel from 4 to 6 [#3638]
+
+- Don't use NaNs or masked values in weight image for blotting. [#3651]
+
+pipeline
+--------
+
+- ``calwebb_spec2`` was changed to allow processing of exposures
+  with ``EXP_TYPE=NRS_LAMP.`` [#3603]
+
+- ``calwebb_tso3`` was changed to allow processing of exposures
+  with ``EXP_TYPE=MIR_IMAGE.`` [#3633]
+
+- - ``calwebb_tso3`` was changed to allow tso photometry processing of exposures
+  with (``EXP_TYPE=MIR_IMAGE`` and tsovisit = True) or  with (``EXP_TYPE=MIR_IMAGE``) [#3650]
+
+- Changed the default value of good_pixel from 4 to 6 for all outlier
+  detection steps and both resample steps [#3638]
+
+resample
+--------
+
+- Changed default value of good_pixel from 4 to 6 [#3638]
+
+wfs_combine
+-----------
+
+- Allow handling of non-science members in input associations [#3947]
+
+
+0.13.3 (2019-06-04)
+===================
+
+ami
+---
+
+- Fixed indentation bug in ami_analyze, so now all results are sufficiently
+  close to the results of the stand-alone prototype. Other modifications include
+  minor tweaks to more closely match those in the prototype code: changed some of
+  initial values of the estimation parameters, and the filtering routine
+  arguments.  [#3487]
+
+- Updated ami_analyze.cfg to use default value of zero for rotation. [#3520]
+
+- ``ami_analyze`` now emits a RuntimeError if the input is _calints or if a
+  throughput reference file cannot be found.  [#3567]
+
+- Remove change to filtering routine arguments of #3487.  [#3612]
+
+assign_wcs
+----------
+
+- Fix a one pixel off problem with the NIRSpec NRS2 WCS transforms. [#3473]
+
+- Raise a ``ValueError`` if the FWCPOS keyword isn't found in input NIRISS
+  WFSS images. [#3574]
+
+associations
+------------
+
+- Added the fxd_slit keyword as the third optical component [#3607]
+
+- Orders the elements in Level3 naming in alphabetical order [#3614]
+
+- Ensured that higher-order candidates only exist for Level2 associations [#3629]
+
+- Improve member checking and removed duplicate product names [#3647]
+
+combine_1d
+----------
+
+- Unit tests were added to combine_1d.  [#3490]
+
+datamodels
+----------
+
+- Datamodels schemas should now be referenced with
+  ``http://stsci.edu/schemas/jwst_datamodel/image.schema`` instead of
+  ``http://jwst.stsci.edu/schemas/image.schema.yaml``.  The datamodels
+  ``BaseExtension`` is renamed internally to ``DataModelExtension``. [#3437]
+
+- Added the new column "relresperror" to the "MiriImgPhotomModel" data
+  model schema. [#3512]
+
+- Added all ``SlitModel`` data arrays to ``MultiExposureModel``, so that all input
+  arrays appear in the output of ``exp_to_source``. [#3572]
+
+extract_1d
+----------
+
+- An indexing bug was fixed. [#3497]
+
+- Pixels with wavelength = NaN are no longer used. [#3539]
+
+flatfield
+---------
+
+- Remove flatfield step parameter `flat_suffix`.  Add boolean step parameter
+  `save_interpolated_flat`.  Refactor flatfield internals. [#3493]
+
+- Propagate uncertainty from FFLAT, SFLAT and DFLAT flat fields into science
+  ERR array and VAR_FLAT array for NIRSpec spectroscopic modes.  [#3538]
+
+jump
+----
+
+- Add multiprocessing capability to JumpStep [#3440]
+
+extract_2d
+----------
+
+- Replaced a white space in the names of grism objects with an underscore. [#3517]
+
+- Update WFSS slit names to use simple integer value, and add accompanying unit
+  test for NIRCAM grism extract_2d [#3632].
+
+master_background
+-----------------
+
+- Fix bug in master_background where the flux from the input x1d files
+  was being combined instead of the background columns.  [#3468]
+
+- Use the surf_bright column instead of flux in master_background.  [#3476]
+
+model_blender
+-------------
+
+- Allow blendmodels to ignore attributes in asdf tree not in schema [#3480]
+- Add new rules for dates and times [#3554]
+
+photom
+------
+
+- Updated to zero-out pixels outside the wavelength range of flux calibration
+  and set DQ=DO_NOT_USE. [#3475, #3489]
+
+pipeline
+--------
+
+- ``calwebb_spec3`` was changed to allow processing of WFSS modes. [#3517]
+
+- ``calwebb_image2`` was changed to prevent 3D data from being sent to
+  ``resample``. [#3544]
+
+- ``calwebb_spec2`` was changed to check for an error in ``assign_wcs`` processing
+  before executing the ``background`` step. [#3574]
+
+refpix
+------
+
+- Fixed a bug where pixeldq arrays were being transformed from DMS to detector
+  coordinates for every group instead of just once
+
+skymatch
+--------
+
+- Improved reliability when matching sky in images with very close sky
+  footprints. [#3557]
+
+stpipe
+------
+
+- Capability to define reference overrides using a ``DataModel`` instead of
+  a file path was added.  [#3514]
+
+tweakreg
+--------
+
+- Mask and do not use NON-SCIENCE regions in tweakreg source detection. [#3461]
+
+
+0.13.2 (2019-05-14)
+===================
+
+assign_wcs
+----------
+
+- The MIRI LRS WCS was updated to include an nverse transform. [#3106, #3360]
+
+- The MIRI LRS spectral distortion is implemented now using a spline model. [#3106]
+
+- Both ``dither_point_index`` and ``metadata_id`` are used now to match rows
+  into the MSA meta file. [#3448]
+
+- ``MissingMSAFileError`` was renamed to ``MSAFileError`` [#3448]
+
+- Added two parameters to ``assign_wcs``, ``slit_y_low`` and ``slit_y_high``,
+  to allow changing the lower and upper limit of a Nirspec slit in the instrument
+  model. [#2819]
+
+background
+----------
+
+- Verify the exposures to be used as background have the same NIRSpec GWA
+  tilt values as the science exposures. If the background and science
+  exposures do not have matching GWA tilt values, then skip the background
+  subtraction step in calspec2. [#3252]
+
+barshadow
+---------
+
+- Updated to apply the correction to the science data arrays, in addition
+  to attaching as an extension. [#3319]
+
+- Updated to apply the square of the correction to VAR_FLAT [#3427]
+
+calwebb_spec3
+-------------
+
+- Add the ``master_background`` subtraction step to the pipeline. [#3296]
+
+combine_1d
+----------
+
+- Fix call to wcs.invert, and don't weight flux by sensitivity if the net
+  column is all zeros. [#3274]
+
+- Modified to use the same columns as now written by extract_1d.
+  The background parameter has been removed, since dividing by npixels
+  is now done in extract_1d. [#3412]
+
+datamodels
+----------
+
+- Fix ``url_mapper`` for fits-schema to allow URLs with of the format
+  http://stsci.edu/schemas/fits-schema/ to map to the correct location
+  in the ``jwst`` package. [#3239]
+
+- Change ``ModelContainer`` to load and instantiate datamodels from an
+  association on init.  This reverts #1027. [#3264]
+
+- Keyword updates to data model schemas, including OBSFOLDR, MIRNGRPS,
+  MIRNFRMS, and new PATTTYPE values. [#3266]
+
+- Keyword updates to remove GS_STATE and change GUIDESTA to string
+  type. [#3314]
+
+- Added BUNIT keyword to gain and readnoise reference file schemas.
+  [#3322]
+
+- Update ``dq_def.schema``, ``group.schema`` and ``int_times.schema`` to comply
+  with ASDF standard.  Remove unused ``extract1d.schema``.  [#3386]
+
+- Update schemas to add new READPATT and BAND allowed values. [#3463]
+
+extract_1d
+----------
+
+- This step can now use a reference image for IFU data.  The reference
+  image (for IFU) may be either 2-D or 3-D.  When using a reference image
+  for non-IFU data, background smoothing is now done after scaling the
+  background count rate. [#3258]
+
+- Unit tests were added for IFU data. [#3285]
+
+- The target coordinates are used (for some modes) to determine the
+  extraction location, i.e. correcting for nod/dither offset.  For IFU,
+  the areas of the source aperture and background annulus are computed
+  differently. [#3362
+
+- For IFU data for an extended source, the extraction parameters are
+  assigned values so that the entire image will be extracted, with no
+  background subtraction.  For non-IFU data, a try/except block was added
+  to check for a WCS that does not have an inverse.  Some code (but not
+  all) for the now-obsolete RELSENS extension has been deleted. [#3390]
+
+- This now writes columns SURF_BRIGHT and SB_ERROR instead of NET and
+  NERROR.  The BACKGROUND column is divided by NPIXELS, so the units will
+  be surface brightness.  This step no longer looks for a RELSENS
+  extension. [#3412]
+
+- The keywords that describe the units for the FLUX and ERROR columns
+  have been corrected; the units are now specified as "Jy". [#3447]
+
+extract_2d
+----------
+
+- An attribute ``dither_point`` was added to each slit in a ``MultiSlitModel``
+  for MOS observations. [#3448]
+
+flatfield
+---------
+
+- Propagate uncertainty from flat field into science ERR array and new
+  VAR_FLAT array which holds the variance due to the flat field.  [#3384]
+
+master_background
+-----------------
+
+- Modified the unit tests for ``expand_to_2d``. [#3242]
+
+- Modified ``MasterBackgroundStep`` to be skipped if ``BackgroundStep``
+  was already run on the data.  A new ``force_subtract`` parameter is
+  added to override this logic.  [#3263]
+
+- ``MasterBackgroundStep`` now can handle BACKGROUND association members
+  that come from nodded exposures of the source. [#3311]
+
+- Updated the DQFlags of the background subtracted data to be DO_NOT_USE
+  for the pixels that have wavelenghts outside the master background [#3326]
+
+- Modified ``expand_to_2d`` to loop over pixels for WFSS data. [#3408]
+
+outlier_detection
+-----------------
+
+- Fixed a bug that was causing the step to crash when calling the
+  ``cube_build`` step for MIRI MRS data. [#3296]
+
+pathloss
+--------
+
+- Updated to apply the correction to the science data and err arrays. [#3323]
+
+- Updated to apply the square of the correction to VAR_FLAT [#3427]
+
+photom
+------
+
+- Updated to apply the flux calibration to the science data and err arrays.
+  [#3359]
+
+- Updated to compute a wavelength array for NIRISS SOSS exposures using
+  spectral order 1. [#3387]
+
+- Updated to apply the square of the correction to VAR_FLAT [#3427]
+
+reffile_utils
+-------------
+
+- Improved error messages when problems are encountered in extracting
+  subarrays from reference files. [#3268]
+
+resample_spec
+-------------
+
+- Fixed an issue with the spatial component of the WCS where the inverse
+  transform gave different results for negative ``RA`` and ``360 + RA``. [#3404]
+
+
+set_telescope_pointing
+----------------------
+
+- Fix ``populate_model_from_siaf`` to convert SIAF pixel scale from
+  arcsec to degress for CDELTn keywords. [#3248]
+
+- Updates to prevent crashes when SIAF values needed for crpix or
+  cdelt keywords are missing. [#3316]
+
+- Convert FSM correction values from arcsec to radians. [#3367]
+
+srctype
+-------
+
+- Updated logic for background targets and nodded exposures. [#3310]
+
+
+transforms
+----------
+
+- A field ``dither_point`` was added to the ``Slit`` structure. [#3448]
+
+
+tweakreg
+--------
+
+- Bug fix: Improved 2D Histogram (pre-match shift) algorithm in Python. [#3281]
+
+- Fixed a bug in handling situations when no useable sources are
+  detected in any of the input images. [#3286]
+
+- Enhanced source catalog extraction algorithm to filter out sources outside
+  the WCS domain of definition (when available). [#3292]
+
+- Changed the type of exception raised when input has incorrect type. [#3297]
+
+0.13.1 (2019-03-07)
+===================
+
+combine_1d
+----------
+
+- Added parameter ``background``; for background data, scale the flux,
+  error, and net by 1 / NPIXELS, and include NPIXELS in the weight;
+  changed the default for ``exptime_key`` to "exposure_time". [#3180]
+
+- There is now a direct interface for calling the step.  This function,
+  ``combine_1d_spectra``, may be passed either a ModelContainer or a
+  MultiSpecModel object.  Previously this function expected the name of
+  an association file. [#3220]
+
+datamodels
+----------
+
+- Add back BaseExtension class so url-to-schema mapping works again [#3227]
+
+extract_1d
+----------
+
+- If flux conversion is done, the FLUX is now set to zero (instead of
+  copying the NET) if the wavelength of a pixel is outside the range of
+  the RELSENS array. [#3190]
+
+- Added a parameter ``subtract_background`` to ``extract_1d`` indicating
+  whether the local background should be subtracted. If None, the value
+  in the extract_1d reference file is used. [#3157, #3186]
+
+- ``extract_1d`` can be run by calling ``extract.do_extract1d`` and
+  passing a dictionary of reference file information. [#3202]
+
+- ``ref_dict`` was None in ``run_extract1d``, and a check for that was
+  missing. [#3233]
+
+master_background
+-----------------
+
+- Added unit tests for expand_to_2d.  Support CombinedSpecModel data
+  for the 1-D user-supplied background spectrum. [#3188]
+
+set_bary_helio_times
+--------------------
+
+- Raise an exception when unable to compute converted times. [#3197]
+
+set_telescope_pointing
+----------------------
+
+- Added population of CDELTn keywords based on SIAF values and fixed bug in calculation
+  of S_REGION corners. [#3184]
+
+0.13.0 (2019-02-15)
 ===================
 
 ami
@@ -6,17 +713,30 @@ ami
 
 assign_wcs
 ----------
- - Added velocity correction model to the WFSS and TSGRISM wcs pipelines [#2801]
 
- - Refactored how the pipeline handles subarrays in the WCS. Fixed a bug
-   where the bounding box was overwritten in full frame mode. [#2980]
+- Removed ``transform_bbox_from_datamodels`` in favor of
+  ``transform_bbox_from_shape`` which now works by using last two dimensions
+  in the ``shape``. [#3040]
 
- - Rename several functions dealing with calculating bounding boxes for clarity [#3014]
+- Added velocity correction model to the WFSS and TSGRISM wcs pipelines. [#2801]
+
+- Refactored how the pipeline handles subarrays in the WCS. Fixed a bug
+  where the bounding box was overwritten in full frame mode. [#2980]
+
+- Rename several functions dealing with calculating bounding boxes for clarity. [#3014]
+
+- The bounding box of the MIRI LRS WCS is now in "image" coordinates, not full frame. [#3063]
+
+- FITS WCS keywords are written out only if the observation is one of the IMAGING_MODES. [#3066]
 
 associations
 ------------
 
 - Updated docstrings and written documentation. [#2856, #2862]
+
+- Fixed NIRISS WFSS catalog naming and implement NIRCam WFSS [#3515]
+
+- Fixed treating non-science as TSO [#3601]
 
 background
 ----------
@@ -24,18 +744,22 @@ background
 barshadow
 ---------
 
-
 combine_1d
 ----------
 
 coron
 -----
 
+- Updated the `stack_refs` routine to update the output data model with metadata
+  from the first input model. [#3111]
+
 csv_tools
 ---------
 
 cube_build
 ----------
+
+- Added dq flagging [#3804]
 
 cube_skymatch
 -------------
@@ -58,6 +782,10 @@ engdblog
 exp_to_source
 -------------
 
+- Updated SourceContainer to wrap each exposure of a MultiExposure in a
+  SlitModel, allowing pipeline code to simply treat each as DataModel.
+  [#3438]
+
 extract_1d
 ----------
 - Updated to recognize NRC_TSGRISM as WFSS data.  SlitDataModel schema now
@@ -66,6 +794,15 @@ extract_1d
 
 - Reverse order of RELSENS wavelength and response if the wavelengths are
   not increasing. [#3005]
+
+- Add a test for constant wavelengths (or constant slope). [#3032]
+
+- Fix issue regarding mixing of the syntax for Boolean arrays and for
+  integer index arrays. [#3045]
+
+- Changed the names of time-related keywords for extracted spectra. [#3058]
+
+- A new NPIXELS column has been added to the output table. [#3108]
 
 extract_2d
 ----------
@@ -105,6 +842,7 @@ ipc
 
 jump
 ----
+ - Updated twopoint_difference.py to not use groups with groupdq set to DO_NOT_USE [#3495]
 
 jwpsf
 -----
@@ -115,8 +853,21 @@ lastframe
 lib
 ---
 
+- ``set_telescope_pointing`` now populates WCS keywords from the SIAF file. [#3066]
+
 linearity
 ---------
+
+master_background
+-----------------
+
+- Implement the basic step scaffolding for `MasterBackgroundStep`. [#3090]
+
+- Record user-supplied master background in MSTRBKGD keyword [#3101]
+
+- Add step documentation for master background subtraction [#3102]
+
+- Make master background step actually work [#3110]
 
 model_blender
 -------------
@@ -204,6 +955,9 @@ scripts
 stpipe
 ------
 
+- Add `Step.record_step_status()` method for use by this step (and any other
+  pipeline or pipeline step) [#3110]
+
 straylight
 ----------
 
@@ -212,15 +966,25 @@ superbias
 
 timeconversion
 --------------
+- Updated the docstrings [#3020]
 
 transforms
 ----------
+
+- The `LRSWavelength` model was removed as obsolete.
+  Instead a spline is used for the wavelength solution. [#3106]
 
 tso_photometry
 --------------
 
 tweakreg
 --------
+
+- Use a more numerically stable ``numpy.linalg.inv`` instead of own matrix
+  inversion. [#3033]
+
+- Bug fix: Use integer division in Python 3. [#3072]
+
 
 wfs_combine
 -----------
@@ -731,7 +1495,6 @@ datamodels
 
 - Removed BaseExtension class, it was not being used [#2430]
 
-
 dq_init
 -------
 
@@ -1183,4 +1946,3 @@ white_light
 
 wiimatch
 --------
-

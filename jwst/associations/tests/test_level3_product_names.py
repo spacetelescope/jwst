@@ -33,7 +33,7 @@ LEVEL3_PRODUCT_NAME_NO_OPTELEM_REGEX = (
 )
 
 # Null values
-EMPTY = (None, '', 'NULL', 'Null', 'null', 'CLEAR', 'Clear', 'clear', 'F', 'f', 'N', 'n')
+EMPTY = (None, '', 'NULL', 'Null', 'null', 'F', 'f', 'N', 'n')
 
 
 pool_file = func_fixture(
@@ -97,19 +97,6 @@ def test_level3_productname_components_acid():
     assert matches['target'] == 't001'
     assert matches['instrument'] == 'miri'
     assert matches['opt_elem'] == 'f560w'
-
-
-def test_level35_names(pool_file):
-    rules = registry_level3_only()
-    pool = AssociationPool.read(pool_file)
-    asns = generate(pool, rules)
-    for asn in asns:
-        product_name = asn['products'][0]['name']
-        if asn['asn_rule'] == 'Asn_IFU':
-            m = re.match(LEVEL3_PRODUCT_NAME_NO_OPTELEM_REGEX, product_name)
-        else:
-            m = re.match(LEVEL3_PRODUCT_NAME_REGEX, product_name)
-        assert m is not None
 
 
 def test_level3_names(pool_file, global_constraints):
