@@ -52,6 +52,8 @@ Fork and clone the repo:
     git clone https://github.com/spacetelescope/jwst
     cd jwst
 
+*Note: `setup.py install` and `setup.py develop` commands no longer works! Use `pip install` as stated below.*
+
 Install from your local checked out copy as an "editable" install:
 
     pip install numpy
