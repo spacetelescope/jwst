@@ -27,23 +27,23 @@ def test_data_correction( setup_inputs ):
     #  Do the correction()
     output_model = fringe.do_correction( input_model, fringe_model )
 
-    # Check that correction was done on pixels with valid values for both 
+    # Check that correction was done on pixels with valid values for both
     #    SCI and ERR arrays
     good_pix = np.where( np.isfinite(input_model.data) )
 
-    assert (output_model.data[good_pix] == 
+    assert (output_model.data[good_pix] ==
         (input_model.data * FRINGE_CONSTANT)[good_pix]).all()
-    assert (output_model.err[good_pix] == 
+    assert (output_model.err[good_pix] ==
         (input_model.err * FRINGE_CONSTANT)[good_pix]).all()
 
-    # Check that correction was not done on pixel with NaN values for both SCI 
+    # Check that correction was not done on pixel with NaN values for both SCI
     #     and ERR arrays (i.e. these pixels have not been corrected)
     assert( np.isnan(output_model.data[0,0] ))
     assert( np.isnan(output_model.err[0,0] ))
 
 
 @pytest.fixture
-def setup_inputs():   
+def setup_inputs():
     ''' Create input and fringe models.'''
     def _setup( shape=(2,2)):
 
