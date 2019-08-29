@@ -49,7 +49,7 @@ def test_get_center_exptype():
     
     datmod = MultiSlitModel()
     datmod.slits.append({'source_xpos':1, 'source_ypos':2})
-    
+
     for exptype in ["NRS_MSASPEC", "NRS_FIXEDSLIT", "NRS_BRIGHTOBJ"]:
         x_pos, y_pos = get_center(exptype, datmod.slits[0])
 
