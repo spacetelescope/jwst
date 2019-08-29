@@ -165,8 +165,8 @@ def correct_mrs(input_model, slice_map):
     simage = convolve(straylight_image, Box2DKernel(25))
 
     # remove the straylight correction for the reference pixels
-    simage[:,1028:1032] = 0.0
-    simage[:,0:4] = 0.0
+    simage[:, 1028:1032] = 0.0
+    simage[:, 0:4] = 0.0
     output.data = output.data - simage
     return output
 
@@ -212,7 +212,7 @@ def correct_mrs_modshepard(input_model, slice_map, roi, power):
     # the science data in the slices.
 
     # Create output as a copy of the input science data model
-    output = input_model.copy() # this is used in algorithm to
+    output = input_model.copy()  # this is used in algorithm to
 
     # kernel matrix
     w = shepard_2d_kernel(roi, power)
@@ -226,7 +226,7 @@ def correct_mrs_modshepard(input_model, slice_map, roi, power):
     mask_dq = input_model.dq.copy()
     all_flags = (dqflags.pixel['DEAD'] + dqflags.pixel['HOT'] +
                  dqflags.pixel['OPEN'] + dqflags.pixel['ADJ_OPEN'] +
-                 dqflags.pixel['RC']+ dqflags.pixel['REFERENCE_PIXEL'])
+                 dqflags.pixel['RC'] + dqflags.pixel['REFERENCE_PIXEL'])
     testflags = np.bitwise_and(mask_dq, all_flags)
     # where are testflags ne 0 and mask == 1
     bad_flags = np.where((testflags != 0) & (mask == 1))
@@ -235,7 +235,7 @@ def correct_mrs_modshepard(input_model, slice_map, roi, power):
     # find location of refpixels
     refpixel = np.bitwise_and(mask_dq, dqflags.pixel['REFERENCE_PIXEL'])
     index_refpixel = np.where(refpixel != 0)
-    #print("number ref pixels", len(index_refpixel[0]))
+
     # apply mask to the data
     image_gap = output.data * mask
 
@@ -244,16 +244,16 @@ def correct_mrs_modshepard(input_model, slice_map, roi, power):
     cosmic_ray_test = 0.02 * np.max(output.data[slice_map > 0])
     image_gap[image_gap > cosmic_ray_test] = 0
 
-    image_gap[image_gap < 0] = 0   #set pixels less than zero to 0
-    image_gap = convolve(image_gap, Box2DKernel(3))   #smooth gap pixels
+    image_gap[image_gap < 0] = 0   # set pixels less than zero to 0
+    image_gap = convolve(image_gap, Box2DKernel(3))   # smooth gap pixels
     image_gap *= mask   # reset science pixels to 0
     # we do not want the reference pixels to be used in the convolution
     image_gap[index_refpixel] = 0.0
 
-    #convolve gap pixel image with weight kernel
+    # convolve gap pixel image with weight kernel
     astropy_conv = convolve(image_gap, w)
 
-    #normalize straylight flux by weights
+    # normalize straylight flux by weights
     norm_conv = convolve(mask, w)
 
     astropy_conv /= norm_conv
@@ -262,7 +262,8 @@ def correct_mrs_modshepard(input_model, slice_map, roi, power):
     astropy_conv[index_refpixel] = 0.0
     output.data = output.data - astropy_conv
     return output
-#______________________________________________________________________
+
+
 def shepard_2d_kernel(roi, power):
 
     """
@@ -276,9 +277,8 @@ def shepard_2d_kernel(roi, power):
         Exponent of Shepard kernel.
     """
 
-    distance_tolerance = 0.001 # for very small distances set min distance
-                               # so denominator does not -> 0 and make w invalid.
-
+    distance_tolerance = 0.001  # for very small distances set min distance
+    # so denominator does not -> 0 and make w invalid.
 
     half_roi = int(roi / 2)
     xk, yk = np.meshgrid(np.arange(-half_roi, half_roi + 1),
