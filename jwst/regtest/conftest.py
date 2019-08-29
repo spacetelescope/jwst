@@ -162,7 +162,7 @@ class RegtestData:
         Updates self.input on completion
         """
         local_path = get_bigdata(self._inputs_root, self._env,
-            *path.split(os.sep), docopy=self.docopy)
+            os.path.dirname(path), os.path.basename(path), docopy=self.docopy)
         self._input = local_path
         return local_path
 
@@ -178,7 +178,7 @@ class RegtestData:
             os.chdir('truth')
             try:
                 local_truth = get_bigdata(self._inputs_root, self._env,
-                    *path.split(os.sep), docopy=self.docopy)
+                    os.path.dirname(path), os.path.basename(path), docopy=self.docopy)
             except BigdataError:
                 os.chdir('..')
                 raise
