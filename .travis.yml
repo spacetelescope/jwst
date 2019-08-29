@@ -14,11 +14,13 @@ addons:
       - graphviz
       - liblapack-dev
 
+# TODO: Unlock jwst/regtest
+# TODO: Unlock coverage
 env:
   global:
     - CRDS_SERVER_URL='https://jwst-crds.stsci.edu'
     - CRDS_PATH='/tmp/crds_cache'
-    - TEST_COMMAND='pytest --cov=./'
+    - TEST_COMMAND='pytest --cov=./ jwst/regtest'
 
 matrix:
   # Don't wait for allowed failures
@@ -70,5 +72,5 @@ install:
 script:
   - $TEST_COMMAND
 
-after_script:
-  - if [ "${TEST_COMMAND:0:6}" = "pytest" ]; then codecov; fi
+#after_script:
+#  - if [ "${TEST_COMMAND:0:6}" = "pytest" ]; then codecov; fi

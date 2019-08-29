@@ -35,9 +35,11 @@ bc1.env_vars = env_vars
 bc1.build_cmds = [
     "pip install --src=../src -e .[test]",
 ]
+// TODO: Unlock jwst/regtest
+// TODO: Enable coverage
 bc1.test_cmds = [
-    "pytest --cov=./ -r sx --junitxml=results.xml",
-    "codecov --token=${codecov_token}"
+    "pytest --cov=./ -r sx --junitxml=results.xml jwst/regtest",
+    //"codecov --token=${codecov_token}"
 ]
 
 // Generate conda-free build with python 3.7
@@ -48,9 +50,11 @@ bc2.env_vars = env_vars
 bc2.build_cmds = [
     "pip install --src=../src -e .[test]",
 ]
+// TODO: Unlock jwst/regtest
+// TODO: Enable coverage
 bc2.test_cmds = [
-    "pytest --cov=./ -r sx --junitxml=results.xml",
-    "codecov --token=${codecov_token}"
+    "pytest --cov=./ -r sx --junitxml=results.xml jwst/regtest",
+    //"codecov --token=${codecov_token}"
 ]
 
 

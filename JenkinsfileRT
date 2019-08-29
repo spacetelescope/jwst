@@ -47,10 +47,14 @@ bc0.build_cmds = [
     "pip install -e .[ephem]",
     "pip install pytest-xdist",
 ]
+// TODO: Unlock jwst/regtest
+// TODO: Unlock coverage
 bc0.test_cmds = [
     "pytest --cov=./ -r sxf -n 30 --bigdata --slow \
-    --basetemp=${pytest_basetemp}  --junit-xml=results.xml jwst",
-    "codecov --token=${codecov_token}"
+    --basetemp=${pytest_basetemp}  --junit-xml=results.xml \
+    --log-level=INFO \
+    jwst/regtest",
+    //"codecov --token=${codecov_token}"
 ]
 bc0.test_configs = [data_config]
 
