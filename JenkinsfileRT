@@ -65,5 +65,16 @@ bc1.build_cmds = ["pip install -e ."]
 bc1.test_cmds = []
 bc1.test_configs = []
 
+
+// Build and test with new regtest system
+bc2 = utils.copy(bc0)
+bc2.test_cmds = [
+    "pytest --cov-report=xml --cov=./ -r sxf -n 30 --bigdata --slow \
+    --basetemp=${pytest_basetemp} --junit-xml=results.xml jwst",
+    "codecov --token=${codecov_token} -F newnightly"
+]
+
+
 utils.run([jobconfig, bc0, bc1])
+utils.run([bc2])
 }  // withCredentials
