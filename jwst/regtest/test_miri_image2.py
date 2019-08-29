@@ -20,7 +20,7 @@ def test_foo(request, rtdata, fitsdiff_defaults, _jail):
     rtdata.output = "jw00001001001_01101_00001_mirimage_cal.fits"
     rtdata.truth_local = rtdata.get_truth(rtdata.output)
 
-    diff = FITSDiff(output, truth, **fitsdiff_defaults)
+    diff = FITSDiff(rtdata.output, rtdata.truth_local, **fitsdiff_defaults)
     assert diff.identical, diff.report
 
 
