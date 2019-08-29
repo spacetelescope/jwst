@@ -11,7 +11,7 @@ This is MUCH faster than doing all the work on a pixel-by-pixel basis.
 
 import logging
 import numpy as np
-
+import astropy.io.fits as fits
 from ..datamodels import dqflags
 
 log = logging.getLogger(__name__)
@@ -81,7 +81,7 @@ def find_crs(data, group_dq, read_noise, rej_threshold, nframes):
         sort_index = np.argsort(positive_first_diffs)
         #median_diffs is a 2D array with the clipped median of each pixel
         median_diffs = get_clipped_median(ndiffs, number_sat_groups, first_diffs, sort_index)
-
+        fits.writeto("median_diff.fits", median_diffs, overwrite=True)
         # Save initial estimate of the median slope for all pixels
         median_slopes[integration] = median_diffs
 
@@ -150,13 +150,19 @@ def find_crs(data, group_dq, read_noise, rej_threshold, nframes):
                 # the number of saturated groups
                 pixel_med_diff = get_clipped_median(ndiffs, number_CRs_found + pixel_sat_groups,
                                                        pixel_masked_diffs, pixel_sorted_index)
+                print("returned single med diff", pixel_med_diff)
                 #recalculate the noise and ratio for this pixel now that we have rejected a CR
                 pixel_poisson_noise = np.sqrt(np.abs(pixel_med_diff))
                 pixel_sigma = np.sqrt(pixel_poisson_noise * pixel_poisson_noise + pixel_rn2 / nframes)
                 pixel_ratio = np.abs(pixel_masked_diffs - pixel_med_diff) / pixel_sigma
-
+                print("number crs found",number_CRs_found)
+                print("pixel ratios ", pixel_ratio)
+                print("ratio sorted ", pixel_ratio[pixel_sorted_index])
+                print("checking index ",ndiffs - number_CRs_found - pixel_sat_groups - 1)
+                print("ratio of largest ",pixel_ratio[pixel_sorted_index[ndiffs - number_CRs_found - pixel_sat_groups - 1]])
                 # Check if largest remaining difference is above threshold
                 if pixel_ratio[pixel_sorted_index[ndiffs - number_CRs_found - pixel_sat_groups - 1]] > rej_threshold:
+                    print("extra CR found @ ",pixel_sorted_index[ndiffs - number_CRs_found - pixel_sat_groups - 1])
                     new_CR_found = True
                     pixel_cr_mask[pixel_sorted_index[ndiffs - number_CRs_found - pixel_sat_groups - 1]] = 0
                     number_CRs_found += 1
@@ -187,32 +193,48 @@ def get_clipped_median(num_differences, diffs_to_ignore, differences, sorted_ind
     # ignore largest value and number of CRs found when finding new median
     # Check to see if this is a 2-D array or 1-D
     if sorted_index.ndim > 1:
-
+        print("diffs to ignore 100 100",diffs_to_ignore[100, 100])
+        print("diffs of 100 100 ",differences[100, 100, :])
+        print("sorted index ",sorted_index[100, 100])
+        print("sorted diffs ",differences[100, 100, sorted_index[100, 100]])
+        print("raw median index ",(num_differences - ( 1)//2)//2)
+        print("diff_to_ignore shift in median",(diffs_to_ignore[100,100] +1)//2)
+        print("index of median ",(num_differences - (diffs_to_ignore[100, 100] + 1))//2)
         # Get the index of the median value always excluding the highest value
-        pixel_med_index = sorted_index[:, :, int((num_differences - 1) / 2)]
+        #pixel_med_index = sorted_index[:, :, int((num_differences - 1) / 2)]
+        row, col = np.indices(diffs_to_ignore.shape)
+        pixel_med_index = sorted_index[row, col, (num_differences - (diffs_to_ignore[row, col] + 1))//2]
+        pixel_med_diff = differences[row, col, pixel_med_index]
         # Get the row and column of each pixel.
-        row, col = np.indices(pixel_med_index.shape)
+        print("median diff in routine", pixel_med_diff[100, 100])
 
         # In addition, decrease the index by 1 for every two diffs_to_ignore,
         # these will be saturated values in this case
-        pixel_med_diff = differences[row, col, pixel_med_index - (diffs_to_ignore / 2).astype(int)]
+        #pixel_med_diff = differences[row, col, pixel_med_index - (diffs_to_ignore / 2).astype(int)]
         # For pixels with an even number of differences the median is the mean of the two central values
         # So we need to get the
         even_group_rows, even_group_cols = np.where((num_differences - diffs_to_ignore - 1) % 2 == 0)
         pixel_med_index2 = np.zeros_like(pixel_med_index)
+        print("index of 2nd diff", (num_differences - (diffs_to_ignore[100, 100] + 3))//2)
+        print("value of 2nd diff", differences[100, 100, (num_differences - (diffs_to_ignore[100, 100] + 3))//2])
         pixel_med_index2[even_group_rows, even_group_cols] = sorted_index[even_group_rows,
                                                                           even_group_cols,
-                                                                          int((num_differences - 1) / 2) - 1]
+                                                                          (num_differences
+                                                                           - (diffs_to_ignore[even_group_rows, even_group_cols] + 3))//2]
         # Average together the two central values
+        print("2nd difference ",differences[100, 100, pixel_med_index2[100, 100]] )
         pixel_med_diff[even_group_rows, even_group_cols] = (pixel_med_diff[even_group_rows, even_group_cols] +
                                                             differences[even_group_rows, even_group_cols,
-                                                            pixel_med_index2[even_group_rows, even_group_cols]
-                                                            - ((diffs_to_ignore[even_group_rows, even_group_cols])
-                                                               / 2).astype(int)]) / 2.0
+                                                            pixel_med_index2[even_group_rows, even_group_cols]])/2.0
+
+        print("median diff in routine after averaging", pixel_med_diff[100, 100])
     # The 1-D array case is a lot simplier.
     else:
+        print("single numdiffs, diffs to ignore", num_differences, diffs_to_ignore)
         pixel_med_index = sorted_index[int(((num_differences - 1 - diffs_to_ignore) / 2))]
+        print("median index of single pixel ", pixel_med_index)
         pixel_med_diff = differences[pixel_med_index]
+        print("median diff of single pixel ",pixel_med_diff)
         if (num_differences - diffs_to_ignore - 1) % 2 == 0:  # even number of differences
             pixel_med_index2 = sorted_index[int((num_differences - 1 - diffs_to_ignore) / 2) - 1]
             pixel_med_diff = (pixel_med_diff + differences[pixel_med_index2]) / 2.0
