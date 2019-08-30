@@ -19,6 +19,11 @@ assign_wcs
 associations
 ------------
 
+- Update rules to make level 3 associations for slitless LRS mode [#3940]
+
+- Update rules so that nOPS5 observations with "ALONG-SLIT-NOD" dither
+   pattern generates level 3 associations [#3912]
+
 - Update rules to have NRS_IFU backgrounds in science associations [#3824]
 
 - Return filename with extensions based on file type [#2671]
