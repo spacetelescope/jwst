@@ -2,6 +2,7 @@
 
 import copy
 import numpy as np
+import collections
 from astropy.io import fits
 
 from astropy.utils.compat.misc import override__dir__
@@ -22,29 +23,67 @@ __all__ = ['ObjectNode', 'ListNode']
 
 def _cast(val, schema):
     val = _unmake_node(val)
-    if val is not None:
-        if 'datatype' in schema:
-            # Handle lazy array
-            if isinstance(val, ndarray.NDArrayType):
-                val = val._make_array()
+    if val is None:
+        return None
 
-            dtype = ndarray.asdf_datatype_to_numpy_dtype(schema['datatype'])
-            val = util.gentle_asarray(val, dtype)
-            if dtype.fields is not None:
-                val = _as_fitsrec(val)
+    if 'datatype' in schema:
+        # Handle lazy array
+        if isinstance(val, ndarray.NDArrayType):
+            val = val._make_array()
 
-        if 'ndim' in schema and len(val.shape) != schema['ndim']:
-            raise ValueError(
-                "Array has wrong number of dimensions.  Expected {0}, got {1}".format(
-                    schema['ndim'], len(val.shape)))
+        if (isinstance(schema['datatype'], list) and
+            any('name' in t for t in schema['datatype']) and len(val)):
+            # we are dealing with a structured array. Because we may
+            # modify schema (to add shape), we make a deep copy of the
+            # schema here:
+            schema = copy.deepcopy(schema)
 
-        if 'max_ndim' in schema and len(val.shape) > schema['max_ndim']:
-            raise ValueError(
-                "Array has wrong number of dimensions.  Expected <= {0}, got {1}".format(
-                    schema['max_ndim'], len(val.shape)))
+            for t, v in zip(schema['datatype'], val[0]):
+                if not isinstance(t, collections.Mapping):
+                    continue
 
-        if isinstance(val, np.generic) and np.isscalar(val):
-            val = val.item()
+                aval = np.asanyarray(v)
+                shape = aval.shape
+                val_ndim = len(shape)
+
+                # make sure that if 'ndim' is specified for a field,
+                # it matches the dimensionality of val's field:
+                if 'ndim' in t and val_ndim != t['ndim']:
+                    raise ValueError(
+                        "Array has wrong number of dimensions. "
+                        "Expected {}, got {}".format(t['ndim'], val_ndim)
+                    )
+
+                if 'max_ndim' in t and val_ndim > t['max_ndim']:
+                    raise ValueError(
+                        "Array has wrong number of dimensions. "
+                        "Expected <= {}, got {}".format(t['max_ndim'], val_ndim)
+                    )
+
+                # if shape of a field's value is not specified in the schema,
+                # add it to the schema based on the shape of the actual data:
+                if 'shape' not in t:
+                    t['shape'] = shape
+
+        dtype = ndarray.asdf_datatype_to_numpy_dtype(schema['datatype'])
+        val = util.gentle_asarray(val, dtype)
+
+        if dtype.fields is not None:
+            val = _as_fitsrec(val)
+
+    if 'ndim' in schema and len(val.shape) != schema['ndim']:
+        raise ValueError(
+            "Array has wrong number of dimensions.  Expected {}, got {}"
+            .format(schema['ndim'], len(val.shape)))
+
+    if 'max_ndim' in schema and len(val.shape) > schema['max_ndim']:
+        raise ValueError(
+            "Array has wrong number of dimensions.  Expected <= {}, got {}"
+            .format(schema['max_ndim'], len(val.shape)))
+
+    if isinstance(val, np.generic) and np.isscalar(val):
+        val = val.item()
+
     return val
 
 
