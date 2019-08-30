@@ -189,7 +189,7 @@ setup(
     package_data=PACKAGE_DATA,
     install_requires=[
         'asdf>=2.3.2',
-        'astropy @ git+https://github.com/astropy/astropy@a8f496b2#egg=astropy',
+        'astropy @ git+https://github.com/astropy/astropy@5f7c192#egg=astropy',
         'crds>=7.2.7',
         'drizzle>=1.13',
         'gwcs @ git+https://github.com/spacetelescope/gwcs@3e2bc108e#egg=gwcs',
