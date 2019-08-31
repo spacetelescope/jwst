@@ -374,11 +374,11 @@ def test_replace_table():
     }
 
     x = np.array([("string", 1., 2., 3., 4.)],
-                 dtype=[(str('TYPE'), str('S16')),
-                        (str('T_OFFSET'), np.float32),
-                        (str('DECAY_PEAK'), np.float32),
-                        (str('DECAY_FREQ'), np.float32),
-                        (str('TAU'), np.float32)])
+                 dtype=[('TYPE', 'S16'),
+                        ('T_OFFSET', np.float32),
+                        ('DECAY_PEAK', np.float32),
+                        ('DECAY_FREQ', np.float32),
+                        ('TAU', np.float32)])
 
     m = DataModel(schema=schema_narrow)
     m.data = x
