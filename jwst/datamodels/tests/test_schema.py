@@ -293,22 +293,22 @@ def test_table_array():
     with DataModel(schema=table_schema) as x:
         x.table = [(True, 42, 37.5, 'STRING')]
         assert x.table.dtype == [
-            (str('f0'), str('?')),
-            (str('my_int'), str('=i2')),
-            (str('my_float'), str('=f4'), (3, 2)),
-            (str('my_string'), str('S64'))
-            ]
+            ('f0', '?'),
+            ('my_int', '=i2'),
+            ('my_float', '=f4', (3, 2)),
+            ('my_string', 'S64')
+        ]
 
         x.to_fits(TMP_FITS, overwrite=True)
 
     with DataModel(TMP_FITS, schema=table_schema) as x:
         table = x.table
         assert table.dtype == [
-            (str('f0'), str('?')),
-            (str('my_int'), str('=i2')),
-            (str('my_float'), str('=f4'), (3, 2)),
-            (str('my_string'), str('S64'))
-            ]
+            ('f0', '?'),
+            ('my_int', '=i2'),
+            ('my_float', '=f4', (3, 2)),
+            ('my_string', 'S64')
+        ]
 
 
 def test_table_array_convert():
@@ -344,17 +344,13 @@ def test_table_array_convert():
 
     table = np.array(
         [(42, 32000, 'foo')],
-        dtype=[
-            (str('f0'), str('?')),
-            (str('my_int'), str('=i2')),
-            (str('my_string'), str('S64'))
-            ])
+        dtype=[('f0', '?'), ('my_int', '=i2'), ('my_string', 'S64')]
+    )
 
-    x = util.gentle_asarray(table, dtype=[
-        (str('f0'), str('?')),
-        (str('my_int'), str('=i2')),
-        (str('my_string'), str('S64'))
-    ])
+    x = util.gentle_asarray(
+        table,
+        dtype=[('f0', '?'), ('my_int', '=i2'), ('my_string', 'S64')]
+    )
 
     assert x is table
 
@@ -364,11 +360,8 @@ def test_table_array_convert():
 
     table = np.array(
         [(42, 32000, 'foo')],
-        dtype=[
-            (str('f0'), str('?')),
-            (str('my_int'), str('=i2')),
-            (str('my_string'), str('S3'))
-            ])
+        dtype=[('f0', '?'), ('my_int', '=i2'), ('my_string', 'S3')]
+    )
 
     with DataModel(schema=table_schema) as x:
         x.table = table
