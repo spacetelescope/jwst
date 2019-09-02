@@ -146,6 +146,8 @@ tweakreg
 - removed original ``jwst.tweakreg`` alignment code and changed step's code
   to call similar functionality from ``tweakwcs`` package. [#3689]
 
+- Fix deprecated call to photutils.detect_threshold [#3982]
+
 
 0.13.7 (2019-06-21)
 ===================
