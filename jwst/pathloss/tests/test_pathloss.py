@@ -46,7 +46,7 @@ def test_get_center_exptype():
     """ If exptype is "NRS_MSASPEC" | "NRS_FIXEDSLIT" | "NRS_BRIGHTOBJ" and
     source_xpos and source_ypos exist in datamod.slits, make sure it's returned
     """
-    
+
     datmod = MultiSlitModel()
     datmod.slits.append({'source_xpos':1, 'source_ypos':2})
 
@@ -274,6 +274,7 @@ def test_do_correction_nis_soss_aperture_is_none():
 
     result = do_correction(datmod, pathlossmod)
     assert(result.meta.cal_step.pathloss == 'SKIPPED')
+
 
 @pytest.mark.skip(reason="Fraction calculation in interpolate_onto_grid needs refactoring.")
 def test_interpolate_onto_grid():    
