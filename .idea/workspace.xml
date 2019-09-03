@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="87cd0bb7-fcda-4a2f-b871-52d1f68ecae3" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/jwst/jump/tests/test_twopoint_difference.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/jwst.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/jwst.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    <list default="true" id="87cd0bb7-fcda-4a2f-b871-52d1f68ecae3" name="Default" comment="Removed print statements from the routine.">
       <change beforePath="$PROJECT_DIR$/jwst/jump/twopoint_difference.py" beforeDir="false" afterPath="$PROJECT_DIR$/jwst/jump/twopoint_difference.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -381,7 +377,7 @@
       <workItem from="1550510954502" duration="34000" />
       <workItem from="1566924081450" duration="10329000" />
       <workItem from="1566946625934" duration="2034000" />
-      <workItem from="1567006061145" duration="15557000" />
+      <workItem from="1567006061145" duration="15790000" />
     </task>
     <task id="LOCAL-00001" summary="This is a fix for the incorrect median calculation GitHub issue #3958.">
       <created>1567091816302</created>
@@ -390,7 +386,14 @@
       <option name="project" value="LOCAL" />
       <updated>1567091816302</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="Removed print statements from the routine.">
+      <created>1567538152568</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1567538152568</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -414,7 +417,8 @@
       <path value="$PROJECT_DIR$/relic" />
     </ignored-roots>
     <MESSAGE value="This is a fix for the incorrect median calculation GitHub issue #3958." />
-    <option name="LAST_COMMIT_MESSAGE" value="This is a fix for the incorrect median calculation GitHub issue #3958." />
+    <MESSAGE value="Removed print statements from the routine." />
+    <option name="LAST_COMMIT_MESSAGE" value="Removed print statements from the routine." />
   </component>
   <component name="WindowStateProjectService">
     <state width="455" height="763" key="Git.Branch.Popup" />
