@@ -1782,26 +1782,12 @@ class IFUCubeData():
                                                     err=err_cube,
                                                     weightmap=idata)
         else:
-            nelem = np.array([])
             wave = np.asarray(self.wavelength_table, dtype=np.float32)
-            # for now we need to pad wavelength to fix datamodel size
             num = len(wave)
-            nn = 10420   # This number needs to match the shape of the
-            # wavetable['wavelength'] value in the ifucube.schema.
-            # In the future it would be good to remove that we have to
-            # set the size of this value in the schema.
-
-            wave = np.pad(wave, (0, nn - num), 'constant')
-            newnum = len(wave)
-            allwave = np.zeros((1, 1, newnum))
-            allwave[0, 0, :] = wave
-
-            nelem = np.append(nelem, num)
-# to get the data in the correct format:
-#  (an array in a single cell in the fit table)
-# need to zip data.
-            alldata = np.array(list(zip(np.array(nelem), np.array(allwave))),
-                               dtype=datamodels.IFUCubeModel().wavetable.dtype)
+            alldata = np.array(
+                [(wave[None].T, )],
+                dtype=[('wavelength', '<f4', (num, 1))]
+            )
 
             ifucube_model = datamodels.IFUCubeModel(data=data, dq=dq_cube,
                                                     err=err_cube,
@@ -1863,7 +1849,7 @@ class IFUCubeData():
             ifucube_model.meta.wcsinfo.crpix3 = 1.0
             ifucube_model.meta.wcsinfo.cdelt3 = None
             ifucube_model.meta.ifu.roi_wave = np.mean(self.roiw_table)
-            ifucube_model.wavedim = '(1,10420)'
+            ifucube_model.wavedim = '(1,{:d})'.format(num)
 
         ifucube_model.meta.wcsinfo.ctype1 = 'RA---TAN'
         ifucube_model.meta.wcsinfo.ctype2 = 'DEC--TAN'
