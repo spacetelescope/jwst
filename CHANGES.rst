@@ -51,6 +51,12 @@ calwebb_tso3
 
 - Update to exclude target_acquisitions from processing in the calwebb_tso3 pipeline [#3759]
 
+cube_build
+----------
+
+- Schema for the ``WAVE-TAB`` WCS no longer requires fixed-length arrays for
+  the wavelength "coordinates". The ``'nelem'`` field therefore is no longer
+  necessary and has been removed. [#3976]
 
 datamodels
 ----------
@@ -68,6 +74,11 @@ datamodels
 
 - Updated multiexposure.schema to just import slitdata.schema instead of explicitly
   specifying all of its attributes. [#3809]
+
+- Improved ``properties._cast()`` to be able to handle structured arrays
+  schemas without a specified (in schema) shape. In addition, ``ndim``
+  can be used to constrain the dimensionality of data in structured array
+  fields. [#3976]
 
 exp_to_source
 -------------
