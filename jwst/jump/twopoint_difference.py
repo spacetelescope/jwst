@@ -11,7 +11,6 @@ This is MUCH faster than doing all the work on a pixel-by-pixel basis.
 
 import logging
 import numpy as np
-import astropy.io.fits as fits
 from ..datamodels import dqflags
 
 log = logging.getLogger(__name__)
@@ -81,7 +80,7 @@ def find_crs(data, group_dq, read_noise, rej_threshold, nframes):
         sort_index = np.argsort(positive_first_diffs)
         #median_diffs is a 2D array with the clipped median of each pixel
         median_diffs = get_clipped_median(ndiffs, number_sat_groups, first_diffs, sort_index)
-        fits.writeto("median_diff.fits", median_diffs, overwrite=True)
+
         # Save initial estimate of the median slope for all pixels
         median_slopes[integration] = median_diffs
 
@@ -154,6 +153,7 @@ def find_crs(data, group_dq, read_noise, rej_threshold, nframes):
                 pixel_poisson_noise = np.sqrt(np.abs(pixel_med_diff))
                 pixel_sigma = np.sqrt(pixel_poisson_noise * pixel_poisson_noise + pixel_rn2 / nframes)
                 pixel_ratio = np.abs(pixel_masked_diffs - pixel_med_diff) / pixel_sigma
+
                 # Check if largest remaining difference is above threshold
                 if pixel_ratio[pixel_sorted_index[ndiffs - number_CRs_found - pixel_sat_groups - 1]] > rej_threshold:
                     new_CR_found = True
@@ -187,7 +187,6 @@ def get_clipped_median(num_differences, diffs_to_ignore, differences, sorted_ind
     # Check to see if this is a 2-D array or 1-D
     if sorted_index.ndim > 1:
         # Get the index of the median value always excluding the highest value
-        #pixel_med_index = sorted_index[:, :, int((num_differences - 1) / 2)]
         row, col = np.indices(diffs_to_ignore.shape)
         pixel_med_index = sorted_index[row, col, (num_differences - (diffs_to_ignore[row, col] + 1))//2]
         pixel_med_diff = differences[row, col, pixel_med_index]
@@ -195,7 +194,6 @@ def get_clipped_median(num_differences, diffs_to_ignore, differences, sorted_ind
 
         # In addition, decrease the index by 1 for every two diffs_to_ignore,
         # these will be saturated values in this case
-        #pixel_med_diff = differences[row, col, pixel_med_index - (diffs_to_ignore / 2).astype(int)]
         # For pixels with an even number of differences the median is the mean of the two central values
         # So we need to get the
         even_group_rows, even_group_cols = np.where((num_differences - diffs_to_ignore - 1) % 2 == 0)
