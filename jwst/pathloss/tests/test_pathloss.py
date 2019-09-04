@@ -14,8 +14,7 @@ import pytest
 
 
 def test_get_center_ifu():
-    """get_center assumes IFU targets are centered @ (0.0, 0.0)
-    """
+    """get_center assumes IFU targets are centered @ (0.0, 0.0)"""
 
     x_pos,y_pos = get_center("NRS_IFU", None)
 
@@ -24,8 +23,8 @@ def test_get_center_ifu():
 
 def test_get_center_attr_err():
     """if no center provided for modes that are not IFU,
-    center is assigned to (0.0, 0.0)
-    """
+    center is assigned to (0.0, 0.0)"""
+
     datmod = MultiSlitModel()
     x_pos, y_pos = get_center("NRS_MSASPEC", datmod)
 
@@ -33,8 +32,7 @@ def test_get_center_attr_err():
 
 
 def test_get_center_exp_type():
-    """if exp_type is not in NRS, center is returned (0.0,0.0) 
-    """
+    """if exp_type is not in NRS, center is returned (0.0,0.0)"""
     datmod = MultiSlitModel()
     x_pos, y_pos = get_center("NRC_IMAGE", datmod)
 
@@ -43,8 +41,7 @@ def test_get_center_exp_type():
 
 def test_get_center_exptype():
     """ If exptype is "NRS_MSASPEC" | "NRS_FIXEDSLIT" | "NRS_BRIGHTOBJ" and
-    source_xpos and source_ypos exist in datamod.slits, make sure it's returned
-    """
+    source_xpos and source_ypos exist in datamod.slits, make sure it's returned"""
 
     datmod = MultiSlitModel()
     datmod.slits.append({'source_xpos':1, 'source_ypos':2})
@@ -59,8 +56,7 @@ def test_get_center_exptype():
 # Begin get_aperture_from_model tests
 def test_get_app_from_model_null():
     """If exp_type isn't the NRS or NIS specific mode,
-    routine returns None
-    """
+    routine returns None"""
 
     datmod = MultiSlitModel()
     datmod.meta.exposure.type = 'NRC_IMAGE'
@@ -72,8 +68,7 @@ def test_get_app_from_model_null():
 
 def test_get_aper_from_model_fixedslit():
     """For a given exposures aperture, make sure the correct
-    aperture reference data is returned for fixedslit mode
-    """
+    aperture reference data is returned for fixedslit mode"""
 
     datmod = PathlossModel()
     datmod.apertures.append({'name':'S200A1'})
@@ -86,8 +81,7 @@ def test_get_aper_from_model_fixedslit():
 
 def test_get_aper_from_model_msa():
     """For a given exposures aperture, make sure the correct
-    aperture reference data is returned for MSA mode
-    """
+    aperture reference data is returned for MSA mode"""
 
     datmod = PathlossModel()
     datmod.apertures.append({'shutters':5})
@@ -100,8 +94,8 @@ def test_get_aper_from_model_msa():
 
 # Begin calculate_pathloss_vector tests.
 def test_calculate_pathloss_vector_pointsource_data():
-    """Calculate pathloss vector for 3D pathloss data
-    """
+    """Calculate pathloss vector for 3D pathloss data"""
+
     datmod = PathlossModel()
 
     ref_data = {'pointsource_data':np.ones((10,10,10), dtype=np.float32),
@@ -130,8 +124,8 @@ def test_calculate_pathloss_vector_pointsource_data():
     assert(is_inside_slitlet==False)
 
 def test_calculate_pathloss_vector_uniform_data():
-    """Calculate the pathloss vector for uniform data arrays.
-    """
+    """Calculate the pathloss vector for uniform data arrays."""
+
     datmod = PathlossModel()
 
     ref_data = {'uniform_data':np.ones((10,), dtype=np.float32),
@@ -154,8 +148,8 @@ def test_calculate_pathloss_vector_uniform_data():
 
 
 def test_calculate_pathloss_vector_interpolation():
-    """Calculate the pathloss vector for when interpolation is necessary.
-    """
+    """Calculate the pathloss vector for when interpolation is necessary."""
+
     datmod = PathlossModel()
 
     ref_data = {'pointsource_data':np.ones((10,10,10), dtype=np.float32),
@@ -193,8 +187,8 @@ def test_calculate_pathloss_vector_interpolation():
 
 
 def test_is_pointsource():
-    """Check to see if object it point source
-    """
+    """Check to see if object it point source"""
+
     point_source = None
     result = is_pointsource(point_source)
     assert(result == False)
@@ -208,8 +202,8 @@ def test_is_pointsource():
     assert(result == False)
 
 def test_do_correction_msa_slit_size_eq_0():
-    """If slits have size 0, quit calibration.
-    """
+    """If slits have size 0, quit calibration."""
+
     datmod = MultiSlitModel()
     datmod.slits.append({'data':np.array([])})
     pathlossmod = PathlossModel()
@@ -220,8 +214,8 @@ def test_do_correction_msa_slit_size_eq_0():
 
 
 def test_do_correction_fixed_slit_exception():
-    """If no matching aperture name found, exit.
-    """
+    """If no matching aperture name found, exit."""
+
     datmod = MultiSlitModel()
     # Give input_model aperture name
     datmod.slits.append({'data':np.array([]), 'name':'S200A1'})
@@ -234,8 +228,8 @@ def test_do_correction_fixed_slit_exception():
 
 
 def test_do_correction_nis_soss_tso():
-    """If observation is tso, skip correction
-    """
+    """If observation is tso, skip correction"""
+
     datmod = MultiSlitModel()
     pathlossmod = PathlossModel()
     datmod.meta.exposure.type = 'NIS_SOSS'
@@ -246,8 +240,8 @@ def test_do_correction_nis_soss_tso():
 
 
 def test_do_correction_nis_soss_pupil_position_is_none():
-    """If pupil_position is None, skip correction
-    """
+    """If pupil_position is None, skip correction"""
+
     datmod = MultiSlitModel()
     pathlossmod = PathlossModel()
     datmod.meta.exposure.type = 'NIS_SOSS'
@@ -258,8 +252,8 @@ def test_do_correction_nis_soss_pupil_position_is_none():
     assert(result.meta.cal_step.pathloss == 'SKIPPED')
 
 def test_do_correction_nis_soss_aperture_is_none():
-    """If no matching aperture is found, skip correction.
-    """
+    """If no matching aperture is found, skip correction."""
+
     datmod = MultiSlitModel()
     # Is FULL an option for NIRISS?
     # The test doesn't care but something to remember.
