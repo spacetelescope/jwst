@@ -1,6 +1,6 @@
 """Base classes which define the Level3 Associations"""
 from collections import defaultdict
-import copy
+#import copy
 import logging
 from os.path import (
     basename,
@@ -11,7 +11,7 @@ import re
 
 from jwst.associations import (
     Association,
-    AssociationRegistry,
+    #AssociationRegistry,
     ProcessList,
     libpath
 )
@@ -21,7 +21,7 @@ from jwst.associations.lib.utilities import (
     is_iterable
 )
 from jwst.associations.exceptions import (
-    AssociationNotAConstraint,
+    #AssociationNotAConstraint,
     AssociationNotValidError,
 )
 from jwst.associations.lib.acid import ACID
@@ -39,8 +39,7 @@ from jwst.associations.lib.dms_base import (
     IMAGE2_SCIENCE_EXP_TYPES,
     IMAGE2_NONSCIENCE_EXP_TYPES,
     SPEC2_SCIENCE_EXP_TYPES,
-    TSO_EXP_TYPES,
-)
+    )
 from jwst.associations.lib.format_template import FormatTemplate
 from jwst.associations.lib.member import Member
 
@@ -73,11 +72,11 @@ logger.addHandler(logging.NullHandler())
 ASN_SCHEMA = RegistryMarker.schema(libpath('asn_schema_jw_level3.json'))
 
 # DMS file name templates
-_LEVEL1B_REGEX = '(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
-_DMS_POOLNAME_REGEX = 'jw(\d{5})_(\d{8}[Tt]\d{6})_pool'
+_LEVEL1B_REGEX = r'(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
+_DMS_POOLNAME_REGEX = r'jw(\d{5})_(\d{8}[Tt]\d{6})_pool'
 
 # Product name regex's
-_REGEX_ACID_VALUE = '(o\d{3}|(c|a)\d{4})'
+_REGEX_ACID_VALUE = r'(o\d{3}|(c|a)\d{4})'
 
 # Exposures that should have received Level2b processing
 LEVEL2B_EXPTYPES = []
@@ -136,8 +135,8 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             result = self.data['asn_type'] == other.data['asn_type']
             result = result and (self.member_ids == other.member_ids)
             return result
-        else:
-            return NotImplemented
+
+        return NotImplemented
 
     def __ne__(self, other):
         """Compare inequality of two associations"""
@@ -178,11 +177,11 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         opt_elem = association._get_opt_element()
 
         exposure = association._get_exposure()
-        if len(exposure):
+        if exposure:
             exposure = '-' + exposure
 
         subarray = association._get_subarray()
-        if len(subarray):
+        if subarray:
             subarray = '-' + subarray
 
         product_name = (
@@ -300,6 +299,15 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
     def make_fixedslit_bkg(self):
         """Add a background to a MIR_lrs-fixedslit observation"""
+
+        # check to see if these are nodded backgrounds, if they are setup
+        # the background members, otherwise return the original association
+        # to test for the string 'nod' we need to copy and pop the value out of the set
+        if 'nod' not in self.constraints['patttype_spectarg'].found_values.copy().pop():
+            results = []
+            results.append(self)
+            return results
+
         for product in self['products']:
             members = product['members']
             # Split out the science exposures
@@ -308,6 +316,11 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
                 for member in members
                 if member['exptype'] == 'science'
             ]
+            # if there is only one science observation it cannot be the background
+            # return with original association.
+            if len(science_exps) < 2:
+                return results
+
             # Create new members for each science exposure in the association,
             # using the the base name + _x1d as background.
             results = []
@@ -348,11 +361,11 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         """Add item to this association."""
         member = self.make_member(item)
         if self.is_member(member):
-            logger.debug(
-                'Member is already part of the association:'
-                '\n\tassociation: {}'
-                '\n]tmember: {}'.format(self, member)
-            )
+            # logger.debug(
+            #     'Member is already part of the association:'
+            #     '\n\tassociation: {}'
+            #     '\n]tmember: {}'.format(self, member)
+            # )
             return
 
         self.update_validity(member)
@@ -625,7 +638,7 @@ def dms_product_name_sources(asn):
     opt_elem = asn._get_opt_element()
 
     subarray = asn._get_subarray()
-    if len(subarray):
+    if subarray:
         subarray = '-' + subarray
 
     product_name_format = (
@@ -770,6 +783,7 @@ class Constraint_MSA(Constraint):
                 DMSAttrConstraint(
                     name='is_msa',
                     sources=['msametfl'],
+                    force_unique=False,
                 )
             ],
             name='msa_spectral'
@@ -823,8 +837,8 @@ class AsnMixin_Science(DMS_Level3_Base):
                     name='acq_obsnum',
                     sources=['obs_num'],
                     value=lambda: '('
-                             + '|'.join(self.constraints['obs_num'].found_values)
-                             + ')',
+                    + '|'.join(self.constraints['obs_num'].found_values)
+                    + ')',
                     force_unique=False,
                 )
             ],
@@ -878,8 +892,8 @@ class AsnMixin_BkgScience(DMS_Level3_Base):
                     name='acq_obsnum',
                     sources=['obs_num'],
                     value=lambda: '('
-                             + '|'.join(self.constraints['obs_num'].found_values)
-                             + ')',
+                    + '|'.join(self.constraints['obs_num'].found_values)
+                    + ')',
                     force_unique=False,
                 )
             ],
@@ -925,7 +939,7 @@ class AsnMixin_Spectrum(AsnMixin_Science):
         self.data['asn_type'] = 'spec3'
         super(AsnMixin_Spectrum, self)._init_hook(item)
 
-class AsnMixin_AuxData:
+class AsnMixin_AuxData(AsnMixin_Science):
     """Process special and non-science exposures as science.
     """
     def get_exposure_type(self, item, default='science'):

@@ -12,6 +12,11 @@ assign_wcs
 associations
 ------------
 
+- Update rules to make level 3 associations for slitless LRS mode [#3940]
+
+- Update rules so that nOPS5 observations with "ALONG-SLIT-NOD" dither
+   pattern generates level 3 associations [#3912]
+
 - Update rules to have NRS_IFU backgrounds in science associations [#3824]
 
 - Return filename with extensions based on file type [#2671]
@@ -21,6 +26,7 @@ associations
 - Add a check that backgrounds are included in level 3 associations [#3678]
 
 - Will not constrain on uniqueness of the MSACONFIG keyword [#3770]
+
 
 0.13.7 (2019-06-21)
 ===================
@@ -172,6 +178,12 @@ resample
 --------
 
 - Changed default value of good_pixel from 4 to 6 [#3638]
+
+wfs_combine
+-----------
+
+- Allow handling of non-science members in input associations [#3947]
+
 
 0.13.3 (2019-06-04)
 ===================

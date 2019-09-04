@@ -19,6 +19,7 @@ __all__ = [
     'Asn_Image',
     'Asn_SpectralSource',
     'Asn_SpectralTarget',
+    'Asn_SlitlessSpectral',
     'Asn_TSO',
     'Asn_WFSCMB',
     'Asn_WFSS_NIS',
@@ -203,6 +204,16 @@ class Asn_SpectralTarget(AsnMixin_Spectrum):
                     '|nis_soss'
                 ),
                 force_unique=False
+            ),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        name='patttype_spectarg',
+                        sources=['patttype'],
+                        value=['2-point-nod|4-point-nod|along-slit-nod'],
+                    ),
+                ],
+                reduce=Constraint.any
             )
         ])
 
@@ -225,8 +236,52 @@ class Asn_SpectralTarget(AsnMixin_Spectrum):
         """
         if self.is_valid:
             return self.make_fixedslit_bkg()
-        else:
-            return None
+
+        return None
+
+@RegistryMarker.rule
+class Asn_SlitlessSpectral(AsnMixin_Spectrum):
+    """Level 3 slitless, target-based or single-object spectrographic Association
+
+    Characteristics:
+        - Association type: ``spec3``
+        - Pipeline: ``calwebb_spec3``
+        - Single target
+        - Non-TSO
+    """
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup for checking.
+        self.constraints = Constraint([
+            Constraint(
+                [Constraint_TSO()],
+                reduce=Constraint.notany
+            ),
+            Constraint_Optical_Path(),
+            Constraint_Target(association=self),
+            DMSAttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+                value=(
+                    'mir_lrs-slitless'
+                    '|nis_soss'
+                ),
+                force_unique=False
+            ),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        name='patttype_spectarg',
+                        sources=['patttype'],
+                    ),
+                ],
+                reduce=Constraint.notany
+            )
+        ])
+
+        # Check and continue initialization.
+        super(Asn_SlitlessSpectral, self).__init__(*args, **kwargs)
 
 @RegistryMarker.rule
 class Asn_SpectralSource(AsnMixin_Spectrum):
@@ -334,7 +389,6 @@ class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_BkgScience):
         # Setup for checking.
         self.constraints = Constraint([
             Constraint_Target(association=self),
-            Constraint_IFU(),
             Constraint(
                 [
                     Constraint_TSO(),
@@ -349,7 +403,7 @@ class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_BkgScience):
                         value=['T'],)
                 ],
                 reduce=Constraint.any
-                                    ),
+                ),
             Constraint(
                 [
                     DMSAttrConstraint(
@@ -358,8 +412,8 @@ class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_BkgScience):
                         value=['mir_mrs','nrs_ifu','mir_lrs-fixedslit',
                                'nrs_fixedslit'],)
                 ],
-            reduce=Constraint.any
-                    ),
+                reduce=Constraint.any
+                ),
                 ])
 
         # Check and continue initialization.
