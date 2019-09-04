@@ -152,13 +152,9 @@ class yaml():
             Name for the YAML file.
             Second item is the string containing the YAML serialization.
         """
-<<<<<<< HEAD
         asn_filename = asn.asn_name
         if not asn.asn_name.endswith('.yaml'):
             asn_filename = asn.asn_name+'.yaml'
-=======
-        asn_filename = asn.asn_name+'.yaml'
->>>>>>> ccdae315... JP-839 Return filename with extensions based on output format (#3779)
         return (
             asn_filename,
             yaml_lib.dump(asn.data, default_flow_style=False)
