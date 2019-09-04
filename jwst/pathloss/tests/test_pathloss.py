@@ -5,10 +5,10 @@ Unit tests for pathloss correction
 from jwst.datamodels import MultiSlitModel, PathlossModel
 from jwst.pathloss.pathloss import (calculate_pathloss_vector,
                                     get_aperture_from_model,
-                                    get_center, 
+                                    get_center,
                                     interpolate_onto_grid,
                                     is_pointsource)
-from jwst.pathloss.pathloss import do_correction 
+from jwst.pathloss.pathloss import do_correction
 import numpy as np
 import pytest
 
@@ -99,8 +99,8 @@ def test_calculate_pathloss_vector_pointsource_data():
     datmod = PathlossModel()
 
     ref_data = {'pointsource_data':np.ones((10,10,10), dtype=np.float32),
-                'pointsource_wcs': {'crval2': -0.5, 'crpix2': 1.0, 'cdelt2': 0.05, 
-                                    'cdelt3': 1, 'crval1': -0.5, 'crpix1': 1.0, 
+                'pointsource_wcs': {'crval2': -0.5, 'crpix2': 1.0, 'cdelt2': 0.05,
+                                    'cdelt3': 1, 'crval1': -0.5, 'crpix1': 1.0,
                                     'crpix3': 1.0, 'crval3': 1, 'cdelt1': 0.05}}
 
     datmod.apertures.append(ref_data)
@@ -153,8 +153,8 @@ def test_calculate_pathloss_vector_interpolation():
     datmod = PathlossModel()
 
     ref_data = {'pointsource_data':np.ones((10,10,10), dtype=np.float32),
-                'pointsource_wcs': {'crval2': -0.5, 'crpix2': 1.0, 'cdelt2': 0.5, 
-                                    'cdelt3': 1.0, 'crval1': -0.5, 'crpix1': 1.0, 
+                'pointsource_wcs': {'crval2': -0.5, 'crpix2': 1.0, 'cdelt2': 0.5,
+                                    'cdelt3': 1.0, 'crval1': -0.5, 'crpix1': 1.0,
                                     'crpix3': 1.0, 'crval3': 1.0, 'cdelt1': 0.5}}
 
     datmod.apertures.append(ref_data)
@@ -269,15 +269,15 @@ def test_do_correction_nis_soss_aperture_is_none():
 
 
 @pytest.mark.skip(reason="Fraction calculation in interpolate_onto_grid needs refactoring.")
-def test_interpolate_onto_grid():    
+def test_interpolate_onto_grid():
     # Mock wavelength vector, grid and pathloss vector.
     wavelength_grid = np.arange(1, 101).reshape(10,10) * 1.1
     wavelength_vector = np.arange(1, 11, dtype='float64')
     pathloss_vector = np.arange(1, 11, dtype='float64')
 
     # Call interpolate onto grid
-    result = interpolate_onto_grid(wavelength_grid, 
-                                   wavelength_vector, 
+    result = interpolate_onto_grid(wavelength_grid,
+                                   wavelength_vector,
                                    pathloss_vector)
 
     # Before interpolation is done in interpolate_onto_grid, the vectors are padded
