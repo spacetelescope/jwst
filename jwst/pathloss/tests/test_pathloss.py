@@ -107,8 +107,7 @@ def test_calculate_pathloss_vector_pointsource_data():
     ref_data = {'pointsource_data':np.ones((10,10,10), dtype=np.float32),
                 'pointsource_wcs': {'crval2': -0.5, 'crpix2': 1.0, 'cdelt2': 0.05, 
                                     'cdelt3': 1, 'crval1': -0.5, 'crpix1': 1.0, 
-                                    'crpix3': 1.0, 'crval3': 1, 'cdelt1': 0.05}                  
-                }
+                                    'crpix3': 1.0, 'crval3': 1, 'cdelt1': 0.05}}
 
     datmod.apertures.append(ref_data)
 
