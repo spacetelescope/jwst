@@ -2,8 +2,7 @@
 Unit tests for pathloss correction
 """
 
-from jwst.datamodels import MultiSlitModel, PathlossModel, IFUImageModel
-from jwst.pathloss import PathLossStep
+from jwst.datamodels import MultiSlitModel, PathlossModel
 from jwst.pathloss.pathloss import (calculate_pathloss_vector,
                                     get_aperture_from_model,
                                     get_center, 
