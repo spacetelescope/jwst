@@ -32,7 +32,10 @@ def _cast(val, schema):
             val = val._make_array()
 
         if (isinstance(schema['datatype'], list) and
-            any('name' in t for t in schema['datatype']) and len(val)):
+            any('name' in t for t in schema['datatype']) and
+            len(val) and
+            ((isinstance(val, list) and isinstance(val[0], tuple)) or
+             isinstance(val, fits.FITS_rec))):
             # we are dealing with a structured array. Because we may
             # modify schema (to add shape), we make a deep copy of the
             # schema here:
