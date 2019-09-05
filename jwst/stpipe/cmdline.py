@@ -230,10 +230,14 @@ def just_the_step_from_cmdline(args, cls=None):
     # This creates a config object from the spec file of the step class merged with
     # the spec files of the superclasses of the step class and adds arguments for
     # all of the expected reference files
+    # load_spec_file is a method of both Step and Pipeline
     spec = step_class.load_spec_file(preserve_comments=True)
 
     input_datamodel = args[1]
-    parameter_cfg = crds_client.get_config_from_reference(step_class, input_datamodel)
+
+    # If step_class is a pipeline, this function lives in pipeline.py, otherwise
+    # in step.py
+    parameter_cfg = step_class.get_config_from_reference(input_datamodel)
     if config:
         config_parser.merge_config(parameter_cfg, config)
 
