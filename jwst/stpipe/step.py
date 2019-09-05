@@ -27,6 +27,7 @@ from . import config_parser
 from . import crds_client
 from . import log
 from . import utilities
+from . import crds_client
 from .. import __version_commit__, __version__
 from ..associations.load_as_asn import (LoadAsAssociation, LoadAsLevel2Asn)
 from ..associations.lib.format_template import FormatTemplate
@@ -36,6 +37,7 @@ from ..datamodels import open as dm_open
 from ..lib.class_property import ClassProperty
 from ..lib.suffix import remove_suffix
 
+from crds.core import exceptions
 class Step():
     """
     Step
@@ -674,11 +676,12 @@ class Step():
                 (reference_file_type, hdr_name))
         return crds_client.check_reference_open(reference_name)
 
-    def get_config_from_reference(self, dataset, observatory=None):
+    @classmethod
+    def get_config_from_reference(cls, dataset, observatory=None):
         """Retrieve step parameters from reference database
         Parameters
         ----------
-        step: jwst.stpipe.step.Step
+        cls: jwst.stpipe.step.Step
             Either a class or instance of a class derived
             from `Step`.
         dataset : jwst.datamodels.ModelBase instance
@@ -693,16 +696,16 @@ class Step():
             The parameters as retrieved from CRDS. If there is an issue, log as such
             and return an empty config obj.
         """
-        log.info(f'Retrieving step {step.pars_model.meta.reftype} parameters from CRDS')
+        log.log.info(f'Retrieving step {cls.pars_model.meta.reftype} parameters from CRDS')
         try:
             ref_file = crds_client.get_reference_file(dataset,
-                                                      step.pars_model.meta.reftype,
+                                                      cls.pars_model.meta.reftype,
                                                       observatory=observatory)
         except exceptions.CrdsLookupError:
-            log.info('\tNo parameters found')
+            log.log.info('\tNo parameters found')
             return config_parser.ConfigObj()
 
-        log.info(f'\tReference parameters found: {ref_file}')
+        log.log.info(f'\tReference parameters found: {ref_file}')
         ref = config_parser.load_config_file(ref_file)
         return ref
 
