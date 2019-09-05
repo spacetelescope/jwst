@@ -356,7 +356,6 @@ def test_table_array_shape_ndim():
         assert str(e.value).startswith("Array has wrong number of dimensions.")
 
 
-
 def test_table_array_convert():
     """
     Test that structured arrays are converted when necessary, and
@@ -501,7 +500,7 @@ def test_data_array():
         for hdu in hdulist:
             x.add((hdu.header.get('EXTNAME'),
                    hdu.header.get('EXTVER')))
-        print(x)
+
         assert x == set(
             [('FOO', 2), ('FOO', 1), ('ASDF', None), ('DQ', 2),
              (None, None)])
