@@ -13,22 +13,22 @@ from jwst.associations.lib.dms_base import DMSAttrConstraint
 
 
 LEVEL3_PRODUCT_NAME_REGEX = (
-    'jw'
-    '(?P<program>\d{5})'
-    '-(?P<acid>[a-z]\d{3,4})'
-    '_(?P<target>(?:t\d{3})|(?:\{source_id\}))'
-    '(?:-(?P<epoch>epoch\d+))?'
-    '_(?P<instrument>.+?)'
-    '_(?P<opt_elem>.+)'
+    r'jw'
+    r'(?P<program>\d{5})'
+    r'-(?P<acid>[a-z]\d{3,4})'
+    r'_(?P<target>(?:t\d{3})|(?:\{source_id\}))'
+    r'(?:-(?P<epoch>epoch\d+))?'
+    r'_(?P<instrument>.+?)'
+    r'_(?P<opt_elem>.+)'
 )
 
 LEVEL3_PRODUCT_NAME_NO_OPTELEM_REGEX = (
-    'jw'
-    '(?P<program>\d{5})'
-    '-(?P<acid>[a-z]\d{3,4})'
-    '_(?P<target>(?:t\d{3})|(?:s\d{5}))'
-    '(?:-(?P<epoch>epoch\d+))?'
-    '_(?P<instrument>.+?)'
+    r'jw'
+    r'(?P<program>\d{5})'
+    r'-(?P<acid>[a-z]\d{3,4})'
+    r'_(?P<target>(?:t\d{3})|(?:s\d{5}))'
+    r'(?:-(?P<epoch>epoch\d+))?'
+    r'_(?P<instrument>.+?)'
 )
 
 # Null values

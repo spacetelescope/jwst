@@ -46,6 +46,7 @@ __all__ = [
     'AsnMixin_Lv2Special',
     'AsnMixin_Lv2Spectral',
     'Constraint_Base',
+    'Constraint_ExtCal',
     'Constraint_Image_Nonscience',
     'Constraint_Image_Science',
     'Constraint_Mode',
@@ -67,8 +68,8 @@ FLAG_TO_EXPTYPE = {
 }
 
 # File templates
-_DMS_POOLNAME_REGEX = 'jw(\d{5})_(\d{3})_(\d{8}[Tt]\d{6})_pool'
-_LEVEL1B_REGEX = '(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
+_DMS_POOLNAME_REGEX = r'jw(\d{5})_(\d{3})_(\d{8}[Tt]\d{6})_pool'
+_LEVEL1B_REGEX = r'(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
 
 # Key that uniquely identfies items.
 KEY = 'expname'
@@ -894,6 +895,21 @@ class Constraint_Target(DMSAttrConstraint):
             sources=['targetid'],
         )
 
+class Constraint_ExtCal(Constraint):
+    """Remove any nis_extcals from the associations, they
+       are NOT to receive level-2b or level-3 processing!"""
+
+    def __init__(self):
+        super(Constraint_ExtCal, self).__init__(
+            [
+                DMSAttrConstraint(
+                    name='exp_type',
+                    sources=['exp_type'],
+                    value='nis_extcal'
+                )
+            ],
+            reduce=Constraint.notany
+        )
 
 # ---------------------------------------------
 # Mixins to define the broad category of rules.

@@ -95,7 +95,6 @@ class Asn_Lv2ImageNonScience(
         # Setup constraints
         self.constraints = Constraint([
             Constraint_Base(),
-            Constraint_Mode(),
             Constraint_Image_Nonscience(),
             Constraint_Single_Science(self.has_science),
         ])
@@ -876,18 +875,18 @@ class Asn_Lv2WFSC(
         # Setup constraints
         self.constraints = Constraint([
             Constraint_Base(),
+            Constraint_Image_Science(),
             Constraint_Single_Science(self.has_science),
-            DMSAttrConstraint(
-                name='wfsc',
-                sources=['visitype'],
-                value='.+wfsc.+',
-                force_unique=True
-            ),
-            DMSAttrConstraint(
-                name='exclude',
-                sources=['exp_type'],
-                value='.+(?!nis_extcal).+',
-                force_unique=False,
+            Constraint_ExtCal(),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        name='wfsc',
+                        sources=['visitype'],
+                        value='.+wfsc.+',
+                        force_unique=True
+                    )
+                ]
             )
         ])
 
