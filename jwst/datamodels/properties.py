@@ -2,7 +2,7 @@
 
 import copy
 import numpy as np
-import collections
+from collections.abc import Mapping
 from astropy.io import fits
 
 from astropy.utils.compat.misc import override__dir__
@@ -39,7 +39,7 @@ def _cast(val, schema):
             schema = copy.deepcopy(schema)
 
             for t, v in zip(schema['datatype'], val[0]):
-                if not isinstance(t, collections.Mapping):
+                if not isinstance(t, Mapping):
                     continue
 
                 aval = np.asanyarray(v)
