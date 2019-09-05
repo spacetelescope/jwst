@@ -2,7 +2,7 @@
 
 import copy
 import numpy as np
-import collections
+from collections.abc import Mapping
 from astropy.io import fits
 
 from astropy.utils.compat.misc import override__dir__
@@ -32,14 +32,17 @@ def _cast(val, schema):
             val = val._make_array()
 
         if (isinstance(schema['datatype'], list) and
-            any('name' in t for t in schema['datatype']) and len(val)):
+            any('name' in t for t in schema['datatype']) and
+            len(val) and
+            ((isinstance(val, list) and isinstance(val[0], tuple)) or
+             isinstance(val, fits.FITS_rec))):
             # we are dealing with a structured array. Because we may
             # modify schema (to add shape), we make a deep copy of the
             # schema here:
             schema = copy.deepcopy(schema)
 
             for t, v in zip(schema['datatype'], val[0]):
-                if not isinstance(t, collections.Mapping):
+                if not isinstance(t, Mapping):
                     continue
 
                 aval = np.asanyarray(v)

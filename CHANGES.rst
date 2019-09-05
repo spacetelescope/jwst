@@ -80,6 +80,10 @@ datamodels
   can be used to constrain the dimensionality of data in structured array
   fields. [#3976]
 
+- Fixed an issue with the fix from [#3976] that was affecting "casting" to
+  data types defined by schema of structured arrays when input values are not
+  native Python types (tuples). [#3995]
+
 exp_to_source
 -------------
 
