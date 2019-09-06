@@ -585,8 +585,8 @@ def test_median_with_saturation(setup_cube):
     data[0, 5, 100, 100] = 40000 #CR
     data[0, 6, 100, 100] = 44850
     data[0, 7, 100, 100] = 49900
-    data[0, 8:11, 100, 100] = 60000
-    gdq[0, 7:11, 100, 100] = dqflags.group['SATURATED']
+    data[0, 8:9, 100, 100] = 60000
+    gdq[0, 7:9, 100, 100] = dqflags.group['SATURATED']
     print(np.diff(data[0,:,100,100]))
     median_diff, out_gdq = find_crs(data, gdq, read_noise, rej_threshold, nframes)
     print(median_diff.shape)
@@ -606,8 +606,8 @@ def test_median_with_saturation_even_num_sat_frames(setup_cube):
     data[0, 5, 100, 100] = 40000 #CR
     data[0, 6, 100, 100] = 44850
     data[0, 7, 100, 100] = 49900
-    data[0, 8:11, 100, 100] = 60000
-    gdq[0, 6:11, 100, 100] = dqflags.group['SATURATED']
+    data[0, 8:9, 100, 100] = 60000
+    gdq[0, 6:9, 100, 100] = dqflags.group['SATURATED']
     print(np.diff(data[0,:,100,100]))
     median_diff, out_gdq = find_crs(data, gdq, read_noise, rej_threshold, nframes)
     print(median_diff.shape)
@@ -627,8 +627,8 @@ def test_median_with_saturation_odd_number_final_difference(setup_cube):
     data[0, 5, 100, 100] = 40000 #CR
     data[0, 6, 100, 100] = 44850
     data[0, 7, 100, 100] = 49900
-    data[0, 8:10, 100, 100] = 60000
-    gdq[0, 6:10, 100, 100] = dqflags.group['SATURATED']
+    data[0, 8:9, 100, 100] = 60000
+    gdq[0, 6:9, 100, 100] = dqflags.group['SATURATED']
     print(np.diff(data[0,:,100,100]))
     median_diff, out_gdq = find_crs(data, gdq, read_noise, rej_threshold, nframes)
     print(median_diff.shape)
