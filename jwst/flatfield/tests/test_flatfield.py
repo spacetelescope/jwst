@@ -22,6 +22,7 @@ from jwst.flatfield.flat_field_step import NRS_IMAGING_MODES, NRS_SPEC_MODES
         ("FGS", "FGS_IMAGE"),
     ] + [("NIRSPEC", exptype) for exptype in NRS_IMAGING_MODES]
 )
+@pytest.mark.skip(reason="modifying reference_file_types caused other tests to fail")
 def test_flatfield_step_interface(instrument, exptype):
     """Test that the basic inferface works for data requiring a FLAT reffile"""
 
@@ -45,7 +46,6 @@ def test_flatfield_step_interface(instrument, exptype):
     flat.data[0,0] = np.nan
     flat.err = np.random.random(shape) * 0.05
 
-    """ Temporarily disable this test.
     # override class attribute so only the `flat` type needs to be overriden
     # in the step call.  Otherwise CRDS calls will be made for the other 3
     # types of flat reference file not used in this test.
@@ -55,7 +55,6 @@ def test_flatfield_step_interface(instrument, exptype):
     assert (result.data == data.data).all()
     assert result.var_flat.shape == shape
     assert result.meta.cal_step.flat_field == 'COMPLETE'
-    """
 
 def exptypes():
     """Generate NRS EXPTYPES from the schema enum, removing spec types"""
