@@ -34,6 +34,23 @@ class AnotherDummyStep(Step):
         return a + b
 
 
+class WithDefaultsStep(Step):
+    """A step that contains defaults for each of its pars."""
+
+    spec = """
+    par1 = string(default='default par1 value')
+    par2 = string(default='default par2 value')
+    par3 = string(default='default par3 value')
+    par4 = string(default='default par4 value')
+    """
+
+    def process(self, input):
+        self.log.info("Parameters par1=%s, par2=%s, par3=%s, par4=%s",
+                      self.par1, self.par2, self.par3, self.par3)
+
+        return input
+
+
 class MakeListStep(Step):
     """Make a list of all arguments and parameters"""
 
