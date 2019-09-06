@@ -120,6 +120,9 @@ flat_field
   direction.  The step now gets that information from keyword DISPAXIS.
   [#3799, #3807]
 
+- The test_flatfield_step_interface unit test in test_flatfield.py has been
+  temporarily disabled. [#3997]
+
 gain_scale
 ----------
 
