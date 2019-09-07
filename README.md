@@ -52,7 +52,7 @@ Fork and clone the repo:
     git clone https://github.com/spacetelescope/jwst
     cd jwst
 
-*Note: `setup.py install` and `setup.py develop` commands no longer works! Use `pip install` as stated below.*
+*Note: `python setup.py install` and `python setup.py develop` commands do not work.*
 
 Install from your local checked out copy as an "editable" install:
 
