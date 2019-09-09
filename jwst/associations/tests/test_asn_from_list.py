@@ -1,5 +1,6 @@
 """Tests for asn_from_list"""
 
+import os
 import pytest
 
 from .. import (Association, AssociationRegistry, load_asn)
@@ -27,6 +28,24 @@ def test_level2():
     assert name.startswith('jwnoprogram-o999_none')
     assert isinstance(serialized, str)
 
+def test_level2_tuple():
+    """Test level 2 association when passing in a tuple"""
+    items = [('file_1.fits', 'science'), ('file_2.fits', 'background'),
+             ('file_3.fits', 'target_aquisition')]
+    asn = asn_from_list(items, rule=DMSLevel2bBase)
+    assert asn['asn_rule'] == 'DMSLevel2bBase'
+    assert asn['asn_type'] == 'None'
+    products = asn['products']
+    assert len(products) == len(items)
+    for product in products:
+        assert product['name'] in ','.join(','.join(map(str, row)) for row in items)
+        members = product['members']
+        assert len(members) == 1
+        member = members[0]
+        #assert member['expname'] == product['name']
+        assert os.path.splitext(member['expname'])[0] == product['name']
+        assert member['exptype'] == product['members'][0]['exptype']
+
 def test_file_ext():
     """check that the filename extension is correctly appended"""
     items = ['a', 'b', 'c']
@@ -40,7 +59,7 @@ def test_file_ext():
     #check that extension with format = 'yaml'  returns yaml
     name, serialized = asn.dump(format='yaml')
     assert name.endswith('yaml')
-   
+
 
 def test_level2_from_cmdline(tmpdir):
     """Create a level2 assocaition from the command line"""
