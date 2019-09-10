@@ -313,7 +313,10 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             #check to see if kwargs are passed and if exptype is given
             if kwargs:
                 if 'with_exptype' in kwargs:
-                    exptype = item[1]
+                    if item[1]:
+                        exptype = item[1]
+                    else:
+                        exptype='science'
             member = Member({
                 'expname': expname,
                 'exptype': exptype

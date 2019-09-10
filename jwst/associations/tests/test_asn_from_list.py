@@ -2,6 +2,7 @@
 
 import os
 import pytest
+import pdb
 
 from .. import (Association, AssociationRegistry, load_asn)
 from ..asn_from_list import (Main, asn_from_list)
@@ -31,13 +32,14 @@ def test_level2():
 def test_level2_tuple():
     """Test level 2 association when passing in a tuple"""
     items = [('file_1.fits', 'science'), ('file_2.fits', 'background'),
-             ('file_3.fits', 'target_aquisition')]
+             ('file_3.fits', 'target_acquisition'),('file_4.fits', '')]
     asn = asn_from_list(items, rule=DMSLevel2bBase)
     assert asn['asn_rule'] == 'DMSLevel2bBase'
     assert asn['asn_type'] == 'None'
     products = asn['products']
     assert len(products) == len(items)
     for product in products:
+        #pdb.set_trace()
         assert product['name'] in ','.join(','.join(map(str, row)) for row in items)
         members = product['members']
         assert len(members) == 1
@@ -45,6 +47,9 @@ def test_level2_tuple():
         #assert member['expname'] == product['name']
         assert os.path.splitext(member['expname'])[0] == product['name']
         assert member['exptype'] == product['members'][0]['exptype']
+        # make sure '' defaults to 'science'
+        if not items[3][1]:
+            assert product['members'][0]['exptype'] == 'science'
 
 def test_file_ext():
     """check that the filename extension is correctly appended"""
