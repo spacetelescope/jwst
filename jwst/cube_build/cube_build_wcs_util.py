@@ -181,6 +181,42 @@ def wrap_ra(ravalues):
         ravalues_wrap[wrap_index] = ravalues_wrap[wrap_index] + 360.0
 
     return ravalues_wrap
+
+
+def form_archive_footprint(cube_footprint):
+
+    """Convert cube_footprint to footprint the archive needs
+
+    rearrage the ordering of the elements to match what the
+    archive needs. The elements are in degrees
+
+    Parameters
+    ----------
+    cube_footprint: tuple
+        (ra_min, ra_max, dec_min, dec_max, wave_min, wave_max)
+
+    Returns
+    -------
+    footprint : ndarray
+       ordered in the way the archive needs it
+    """
+
+    (final_ra_min, final_ra_max, final_dec_min, final_dec_max,
+     final_lambda_min, final_lambda_max) = cube_footprint
+    if final_ra_min < 0:
+        final_ra_min = final_ra_min + 360.0
+
+    if final_ra_max < 0:
+        final_ra_max = final_ra_max + 360.0
+
+    footprint = [[final_ra_max, final_dec_min],
+                 [final_ra_max, final_dec_max],
+                 [final_ra_min, final_dec_max],
+                 [final_ra_min, final_dec_min]]
+
+    footprint = np.asarray(footprint)
+    return footprint
+
 # ________________________________________________________________________________
 # Errors
 

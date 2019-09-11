@@ -969,7 +969,7 @@ class IFUCubeData():
                         # print('time to find footprint',t1-t0)
 
                         amin, amax, bmin, bmax, lmin, lmax = ch_footprint
-                        # We might be able to call cmpute_footprint from assign_wcs instead
+                        # We might be able to call compute_footprint from assign_wcs instead
 # ________________________________________________________________________________
                     if self.instrument == 'MIRI':
                         ch_footprint = cube_build_wcs_util.find_footprint_MIRI(
@@ -1027,6 +1027,8 @@ class IFUCubeData():
         else:
             self.set_geometryAB(cube_footprint)
         self.print_cube_geometry()
+
+        return cube_footprint
 # **************************************************************************
 
     def map_detector_to_outputframe(self, this_par1,

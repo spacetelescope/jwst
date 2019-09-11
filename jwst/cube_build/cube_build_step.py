@@ -6,7 +6,7 @@ from . import cube_build
 from . import ifu_cube
 from . import data_types
 from ..assign_wcs.util import update_s_region_keyword
-
+from . import cube_build_wcs_util
 
 __all__ = ["CubeBuildStep"]
 
@@ -324,7 +324,7 @@ class CubeBuildStep (Step):
 
             thiscube.determine_cube_parameters()
 
-            thiscube.setup_ifucube_wcs()
+            cube_footprint = thiscube.setup_ifucube_wcs()
 # _______________________________________________________________________________
 # build the IFU Cube
 
@@ -340,12 +340,14 @@ class CubeBuildStep (Step):
 # Else standard IFU cube building
             else:
                 result = thiscube.build_ifucube()
+                # footprint_old = result.meta.wcs.footprint(axis_type="spatial")
+                # print('old footprint',footprint_old)
+                footprint_archive = cube_build_wcs_util.form_archive_footprint(cube_footprint)
+                # print('new footprint', footprint_archive)
+                update_s_region_keyword(result, footprint_archive)
                 cube_container.append(result)
             if self.debug_pixel == 1:
                 self.spaxel_debug.close()
-        for cube in cube_container:
-            footprint = cube.meta.wcs.footprint(axis_type="spatial")
-            update_s_region_keyword(cube, footprint)
 
         return cube_container
 # ******************************************************************************
