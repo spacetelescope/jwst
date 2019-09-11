@@ -2,7 +2,6 @@
 
 import os
 import pytest
-import pdb
 
 from .. import (Association, AssociationRegistry, load_asn)
 from ..asn_from_list import (Main, asn_from_list)
@@ -39,12 +38,10 @@ def test_level2_tuple():
     products = asn['products']
     assert len(products) == len(items)
     for product in products:
-        #pdb.set_trace()
         assert product['name'] in ','.join(','.join(map(str, row)) for row in items)
         members = product['members']
         assert len(members) == 1
         member = members[0]
-        #assert member['expname'] == product['name']
         assert os.path.splitext(member['expname'])[0] == product['name']
         assert member['exptype'] == product['members'][0]['exptype']
         # make sure '' defaults to 'science'
