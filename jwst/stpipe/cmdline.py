@@ -10,7 +10,6 @@ from . import config_parser
 from . import log
 from . import Step
 from . import utilities
-from . import crds_client
 
 
 built_in_configuration_parameters = [
@@ -262,7 +261,6 @@ def just_the_step_from_cmdline(args, cls=None):
             config = parameter_cfg
         except FileNotFoundError:
             log.log.warning("Unable to open input file, cannot get cfg from CRDS")
-    
     else:
         log.log.info("No input file specified, unable to retrieve parameters from CRDS")
     #

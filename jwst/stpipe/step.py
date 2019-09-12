@@ -27,7 +27,6 @@ from . import config_parser
 from . import crds_client
 from . import log
 from . import utilities
-from . import crds_client
 from .. import __version_commit__, __version__
 from ..associations.load_as_asn import (LoadAsAssociation, LoadAsLevel2Asn)
 from ..associations.lib.format_template import FormatTemplate

@@ -37,7 +37,6 @@ from . import config_parser
 from . import Step
 from . import crds_client
 from . import log
-from . import utilities
 
 from crds.core import exceptions
 

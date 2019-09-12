@@ -38,8 +38,6 @@ import crds
 from crds.core import config, exceptions, heavy_client, log
 from crds.core import crds_cache_locking
 
-from . import config_parser
-
 # This is really a testing and debug convenience function, and notably now
 # the only place in this module that a direct import of datamodels occurs
 # or datamodels open() occurs.
