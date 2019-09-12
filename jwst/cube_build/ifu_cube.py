@@ -256,11 +256,12 @@ class IFUCubeData():
         n1b = int(math.ceil(math.fabs(xi_max) / self.cdelt1))
         n2b = int(math.ceil(math.fabs(eta_max) / self.cdelt2))
 
-        xi_min = 0.0 - (n1a * self.cdelt1)  # - (self.cdelt1 / 2.0)
-        xi_max = (n1b * self.cdelt1)  # + (self.cdelt1 / 2.0)
+        # center of xi-eta system 0,0
+        xi_min = - (n1a * self.cdelt1)
+        xi_max = (n1b * self.cdelt1)
 
-        eta_min = 0.0 - (n2a * self.cdelt2)  # - (self.cdelt2 / 2.0)
-        eta_max = (n2b * self.cdelt2)  # + (self.cdelt2 / 2.0)
+        eta_min = - (n2a * self.cdelt2)
+        eta_max = (n2b * self.cdelt2)
 
         self.crpix1 = float(n1a) + 1.0
         self.crpix2 = float(n2a) + 1.0
@@ -1211,14 +1212,12 @@ class IFUCubeData():
             dq_all = input_model.dq[y, x]
             valid2 = np.isfinite(flux_all)
 
-#            min_wave_tolerance  = self.lambda_min
-#            max_wave_tolerance  = self.lambda_max
-
             valid_min = np.where(wave >= self.lambda_min)
             not_mapped_low = wave.size - len(valid_min[0])
 
             valid_max = np.where(wave <= self.lambda_max)
             not_mapped_high = wave.size - len(valid_max[0])
+
             if not_mapped_low > 0:
                 log.info('# of detector pixels not mapped to output plane: %i with wavelength below %f',
                          not_mapped_low, self.lambda_min)
@@ -1934,9 +1933,9 @@ class IFUCubeData():
 # set WCS information
         wcsobj = pointing.create_fitswcs(ifucube_model)
         ifucube_model.meta.wcs = wcsobj
-        ifucube_model.meta.wcs.bounding_box = ((0, naxis1 - 1),
-                                               (0, naxis2 - 1),
-                                               (0, naxis3 - 1))
+        ifucube_model.meta.wcs.bounding_box = ((0.5, naxis1 - 0.5),
+                                               (0.5, naxis2 - 0.5),
+                                               (0.5, naxis3 - 0.5))
 
         return ifucube_model
 # ********************************************************************************

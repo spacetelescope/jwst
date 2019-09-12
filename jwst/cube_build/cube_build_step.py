@@ -340,12 +340,14 @@ class CubeBuildStep (Step):
 # Else standard IFU cube building
             else:
                 result = thiscube.build_ifucube()
-                # footprint_old = result.meta.wcs.footprint(axis_type="spatial")
-                # print('old footprint',footprint_old)
+                #print('bounding box',result.meta.wcs.bounding_box)
+                #footprint_old = result.meta.wcs.footprint(axis_type="spatial")
+                #print('old footprint',footprint_old)
                 footprint_archive = cube_build_wcs_util.form_archive_footprint(cube_footprint)
-                # print('new footprint', footprint_archive)
                 update_s_region_keyword(result, footprint_archive)
                 cube_container.append(result)
+                #print('new footprint',footprint_archive)
+
             if self.debug_pixel == 1:
                 self.spaxel_debug.close()
 
