@@ -11,14 +11,13 @@ from gwcs.wcstools import grid_from_bounding_box
 
 def test_spatial_transform_nirspec():
     wcsinfo = {
-    'dec_ref': -0.00601415671349804,
-    'ra_ref': -0.02073605215697509,
-    'roll_ref': -0.0,
-    'v2_ref': -453.5134,
-    'v3_ref': -373.4826,
-    'v3yangle': 0.0,
-    'vparity': -1
-    }
+        'dec_ref': -0.00601415671349804,
+        'ra_ref': -0.02073605215697509,
+        'roll_ref': -0.0,
+        'v2_ref': -453.5134,
+        'v3_ref': -373.4826,
+        'v3yangle': 0.0,
+        'vparity': -1}
 
     instrument = {
         'detector': 'NRS1',
@@ -27,8 +26,7 @@ def test_spatial_transform_nirspec():
         'name': 'NIRSPEC',
         'gwa_tilt': 37.0610,
         'gwa_xtilt': 0.0001,
-        'gwa_ytilt': 0.0001
-    }
+        'gwa_ytilt': 0.0001}
 
     subarray = {
         'fastaxis': 1,
@@ -37,8 +35,7 @@ def test_spatial_transform_nirspec():
         'xsize': 72,
         'xstart': 1,
         'ysize': 416,
-        'ystart': 529
-    }
+        'ystart': 529}
 
     observation = {
         'date': '2016-09-05',
@@ -63,8 +60,6 @@ def test_spatial_transform_nirspec():
         'type': 'NRS_FIXEDSLIT',
         'zero_frame': False}
 
-
-
     im = ImageModel()
     im.data = np.random.rand(2048, 2048)
     im.error = np.random.rand(2048, 2048)
@@ -82,7 +77,6 @@ def test_spatial_transform_nirspec():
     im = ResampleSpecStep.call(im)
 
     for slit in im.products:
-
         x, y =grid_from_bounding_box(slit.meta.wcs.bounding_box)
         ra, dec, lam = slit.meta.wcs(x, y)
 
@@ -92,27 +86,22 @@ def test_spatial_transform_nirspec():
 
 def test_spatial_transform_miri():
     wcsinfo = {
-    'dec_ref': -0.00601415671349804,
-    'ra_ref': -0.02073605215697509,
-    'roll_ref': -0.0,
-    'v2_ref': -453.5134,
-    'v3_ref': -373.4826,
-    'v3yangle': 0.0,
-    'vparity': -1
-    }
-
+        'dec_ref': -0.00601415671349804,
+        'ra_ref': -0.02073605215697509,
+        'roll_ref': -0.0,
+        'v2_ref': -453.5134,
+        'v3_ref': -373.4826,
+        'v3yangle': 0.0,
+        'vparity': -1}
 
     instrument = {
         'detector': 'MIRIMAGE',
         'filter': 'P750L',
-        'name': 'MIRI'
-        }
-
+        'name': 'MIRI'}
 
     observation = {
         'date': '2019-01-01',
         'time': '17:00:00'}
-
 
     subarray = {
         'fastaxis': 1,
@@ -121,9 +110,7 @@ def test_spatial_transform_miri():
         'xsize': 72,
         'xstart': 1,
         'ysize': 416,
-        'ystart': 529
-        }
-
+        'ystart': 529}
 
     exposure = {
         'duration': 11.805952,
@@ -161,4 +148,3 @@ def test_spatial_transform_miri():
     ra, dec, lam = out.meta.wcs(x, y)
     ra1 = np.where(ra < 0, 360 + ra, ra)
     assert_allclose(out.meta.wcs.invert(ra, dec, lam), out.meta.wcs.invert(ra1, dec, lam))
-
