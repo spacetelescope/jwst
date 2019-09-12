@@ -36,6 +36,7 @@ import os.path
 import textwrap
 
 from asdf import open as asdf_open
+
 from asdf import ValidationError as AsdfValidationError
 
 from ..extern.configobj.configobj import (
@@ -140,6 +141,7 @@ def load_config_file(config_file):
     configobj = ConfigObj()
     configobj.merge(cfg['parameters'])
     configobj.pars_model = StepParsModel(cfg)
+    cfg.close()
     return configobj
 
 

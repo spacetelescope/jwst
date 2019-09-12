@@ -31,11 +31,14 @@ Pipeline
 """
 from os.path import dirname, join
 
-from ..extern.configobj.configobj import Section
+from ..extern.configobj.configobj import Section, ConfigObj
 
 from . import config_parser
 from . import Step
 from . import crds_client
+from . import log
+
+from crds.core import exceptions
 
 class Pipeline(Step):
     """
@@ -143,6 +146,44 @@ class Pipeline(Step):
             step['class'] = "string(default='')"
 
         return spec
+
+    @classmethod
+    def get_config_from_reference(cls, dataset, observatory=None):
+        """Retrieve step parameters from reference database
+        Parameters
+        ----------
+        step: jwst.stpipe.step.Step
+            Either a class or instance of a class derived
+            from `Step`.
+        dataset : jwst.datamodels.ModelBase instance
+            A model of the input file.  Metadata on this input file will
+            be used by the CRDS "bestref" algorithm to obtain a reference
+            file.
+        observatory: string
+            telescope name used with CRDS,  e.g. 'jwst'.
+        Returns
+        -------
+        step_parameters: configobj
+            The parameters as retrieved from CRDS. If there is an issue, log as such
+            and return an empty config obj.
+        """
+        refcfg = ConfigObj()
+        refcfg['steps'] = Section(refcfg, refcfg.depth + 1, refcfg.main, name="steps")
+        log.log.info(f'Retrieving step {cls.pars_model.meta.reftype} parameters from CRDS')
+        for cal_step in cls.step_defs.keys():
+            cal_step_class = cls.step_defs[cal_step]
+            try:
+                ref_file = crds_client.get_reference_file(dataset,
+                                                          cal_step_class.pars_model.meta.reftype,
+                                                          observatory=observatory)
+                log.log.info(f'\tReference parameters found: {ref_file}')
+                step_cfg = config_parser.load_config_file(ref_file)
+                refcfg['steps'][cal_step] = step_cfg
+            except exceptions.CrdsLookupError:
+                log.log.info('\tNo parameters found')
+                refcfg['steps'][cal_step] = ConfigObj()
+
+        return refcfg
 
     def set_input_filename(self, path):
         self._input_filename = path

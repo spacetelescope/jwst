@@ -38,8 +38,6 @@ import crds
 from crds.core import config, exceptions, heavy_client, log
 from crds.core import crds_cache_locking
 
-from . import config_parser
-
 # This is really a testing and debug convenience function, and notably now
 # the only place in this module that a direct import of datamodels occurs
 # or datamodels open() occurs.
@@ -157,36 +155,6 @@ def get_reference_file(dataset, reference_file_type, observatory=None):
     else:
         return get_multiple_reference_paths(
             dataset, [reference_file_type], observatory)[reference_file_type]
-
-def get_config_from_reference(step, dataset, observatory=None):
-    """Retrieve step parameters from reference database
-    Parameters
-    ----------
-    step: jwst.stpipe.step.Step
-        Either a class or instance of a class derived
-        from `Step`.
-    dataset : jwst.datamodels.ModelBase instance
-        A model of the input file.  Metadata on this input file will
-        be used by the CRDS "bestref" algorithm to obtain a reference
-        file.
-    observatory: string
-        telescope name used with CRDS,  e.g. 'jwst'.
-    Returns
-    -------
-    step_parameters: configobj
-        The parameters as retrieved from CRDS. If there is an issue, log as such
-        and return an empty config obj.
-    """
-    log.info(f'Retrieving step {step.pars_model.meta.reftype} parameters from CRDS')
-    try:
-        ref_file = get_reference_file(dataset, step.pars_model.meta.reftype, observatory=observatory)
-    except exceptions.CrdsLookupError:
-        log.info('\tNo parameters found')
-        return config_parser.ConfigObj()
-
-    log.info(f'\tReference parameters found: {ref_file}')
-    ref = config_parser.load_config_file(ref_file)
-    return ref
 
 
 def get_override_name(reference_file_type):

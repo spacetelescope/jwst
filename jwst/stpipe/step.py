@@ -36,6 +36,7 @@ from ..datamodels import open as dm_open
 from ..lib.class_property import ClassProperty
 from ..lib.suffix import remove_suffix
 
+from crds.core import exceptions
 class Step():
     """
     Step
@@ -673,6 +674,45 @@ class Step():
             self._reference_files_used.append(
                 (reference_file_type, hdr_name))
         return crds_client.check_reference_open(reference_name)
+
+    @classmethod
+    def get_config_from_reference(cls, dataset, observatory=None):
+        """Retrieve step parameters from reference database
+        Parameters
+        ----------
+        cls: jwst.stpipe.step.Step
+            Either a class or instance of a class derived
+            from `Step`.
+        dataset : jwst.datamodels.ModelBase instance
+            A model of the input file.  Metadata on this input file will
+            be used by the CRDS "bestref" algorithm to obtain a reference
+            file.
+        observatory: string
+            telescope name used with CRDS,  e.g. 'jwst'.
+        Returns
+        -------
+        step_parameters: configobj
+            The parameters as retrieved from CRDS. If there is an issue, log as such
+            and return an empty config obj.
+        """
+        # Create a new logger for this step
+        cls.log = log.getLogger('step')
+
+        cls.log.setLevel(log.logging.DEBUG)
+
+
+        cls.log.info(f'Retrieving step {cls.pars_model.meta.reftype} parameters from CRDS')
+        try:
+            ref_file = crds_client.get_reference_file(dataset,
+                                                      cls.pars_model.meta.reftype,
+                                                      observatory=observatory)
+        except exceptions.CrdsLookupError:
+            cls.log.info('\tNo parameters found')
+            return config_parser.ConfigObj()
+
+        cls.log.info(f'\tReference parameters found: {ref_file}')
+        ref = config_parser.load_config_file(ref_file)
+        return ref
 
     @classmethod
     def reference_uri_to_cache_path(cls, reference_uri):
