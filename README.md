@@ -15,19 +15,23 @@ Installation
 
 The ``jwst`` package can be installed into a virtualenv or conda environment via ``pip``.  We recommend creating a fresh environment with only python installed.  Via conda:
 
-    conda create -n jwst_env python=3.6
+    conda create -n jwst_env python
     conda activate jwst_env
 
 ### Installing for end-users ###
 
-To install a released (tagged) version, you can install directly from Github.  To install tagged release ``jwst 0.13.7``:
+To install a released (tagged) version, you can install directly from Github.  To install tagged release ``jwst 0.13.8``:
 
     pip install numpy
-    pip install git+https://github.com/spacetelescope/jwst#0.13.7
+    pip install git+https://github.com/spacetelescope/jwst@0.13.7
 
-The same can be done to install the latest development version (from ``master``):
+The latest development version (from ``master``) can also be installed from Github:
 
     pip install git+https://github.com/spacetelescope/jwst
+
+As can a particular commit hash:
+
+    pip install git+https://github.com/spacetelescope/jwst@3f03323c7ac874b15654c6713feadb621c269b46
 
 ### Installing a DMS release ###
 
