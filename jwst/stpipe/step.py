@@ -696,16 +696,22 @@ class Step():
             The parameters as retrieved from CRDS. If there is an issue, log as such
             and return an empty config obj.
         """
-        log.log.info(f'Retrieving step {cls.pars_model.meta.reftype} parameters from CRDS')
+        # Create a new logger for this step
+        cls.log = log.getLogger('step')
+
+        cls.log.setLevel(log.logging.DEBUG)
+
+
+        cls.log.info(f'Retrieving step {cls.pars_model.meta.reftype} parameters from CRDS')
         try:
             ref_file = crds_client.get_reference_file(dataset,
                                                       cls.pars_model.meta.reftype,
                                                       observatory=observatory)
         except exceptions.CrdsLookupError:
-            log.log.info('\tNo parameters found')
+            cls.log.info('\tNo parameters found')
             return config_parser.ConfigObj()
 
-        log.log.info(f'\tReference parameters found: {ref_file}')
+        cls.log.info(f'\tReference parameters found: {ref_file}')
         ref = config_parser.load_config_file(ref_file)
         return ref
 

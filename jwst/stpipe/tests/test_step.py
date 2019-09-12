@@ -5,7 +5,7 @@ from os.path import (
 )
 
 import pytest
-
+import jwst
 from jwst import datamodels
 from jwst.refpix import RefPixStep
 from jwst.stpipe import Step
@@ -19,7 +19,7 @@ ParsModelWithPar3 = datamodels.StepParsModel(t_path(join('steps','jwst_generic_p
 ParsModelWithPar3.parameters.instance.update({'par3': False})
 
 REFPIXSTEP_CRDS_MIRI_PARS = {
-    'class': 'jwst.refpix.refpix_step.RefPixStep',
+    'class': jwst.refpix.refpix_step.RefPixStep,
     'name': 'refpix',
     'odd_even_columns': False,
     'odd_even_rows': False,
@@ -30,8 +30,9 @@ REFPIXSTEP_CRDS_MIRI_PARS = {
 
 def test_parameters_from_crds():
     """Test retrieval of parameters from CRDS"""
+    step_class = REFPIXSTEP_CRDS_MIRI_PARS['class']
     data = datamodels.open(t_path(join('data', 'miri_data.fits')))
-    pars = crds_client.get_parameters_from_reference(RefPixStep, data)
+    pars = step_class.get_config_from_reference(data)
     assert pars == REFPIXSTEP_CRDS_MIRI_PARS
 
 
