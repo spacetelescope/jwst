@@ -195,7 +195,7 @@ setup(
         'gwcs @ git+https://github.com/spacetelescope/gwcs@3e2bc108e#egg=gwcs',
         'jsonschema>=2.3,<=2.6',
         'numpy>=1.13',
-        'photutils @ git+https://github.com/astropy/photutils@99f101be#egg=photutils',
+        'photutils>=0.7',
         'scipy>=1.0',
         'spherical-geometry>=1.2',
         'stsci.image>=2.3.3',
