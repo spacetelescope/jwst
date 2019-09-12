@@ -10,7 +10,6 @@ from . import config_parser
 from . import log
 from . import Step
 from . import utilities
-from . import crds_client
 
 
 built_in_configuration_parameters = [
@@ -230,14 +229,10 @@ def just_the_step_from_cmdline(args, cls=None):
     # This creates a config object from the spec file of the step class merged with
     # the spec files of the superclasses of the step class and adds arguments for
     # all of the expected reference files
+
+    # load_spec_file is a method of both Step and Pipeline
     spec = step_class.load_spec_file(preserve_comments=True)
 
-    input_datamodel = args[1]
-    parameter_cfg = crds_client.get_config_from_reference(step_class, input_datamodel)
-    if config:
-        config_parser.merge_config(parameter_cfg, config)
-
-    config = parameter_cfg
     parser2 = _build_arg_parser_from_spec(spec, step_class, parent=parser1)
 
     args = parser2.parse_args(args)
@@ -252,7 +247,22 @@ def just_the_step_from_cmdline(args, cls=None):
     del args.save_parameters
     positional = args.args
     del args.args
-    
+
+    if len(positional):
+        input_file = positional[0]
+        if args.input_dir:
+            input_file = args.input_dir + '/' + input_file
+        try:
+            # If step_class is a pipeline, this function lives in pipeline.py, otherwise
+            # in step.py
+            parameter_cfg = step_class.get_config_from_reference(input_file)
+            if config:
+                config_parser.merge_config(parameter_cfg, config)
+            config = parameter_cfg
+        except FileNotFoundError:
+            log.log.warning("Unable to open input file, cannot get cfg from CRDS")
+    else:
+        log.log.info("No input file specified, unable to retrieve parameters from CRDS")
     #
     # This updates config (a ConfigObj) with the values from the command line arguments
     # Config is empty if class specified, otherwise contains values from config file specified
