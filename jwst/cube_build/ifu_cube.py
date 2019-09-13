@@ -113,7 +113,7 @@ class IFUCubeData():
 
         self.tolerance_dq_overlap = 0.05  # spaxel has to have 5% overlap to flag in FOV
         self.overlap_partial = 4  # intermediate flag
-        self.overlap_full = 2    # intermediate flag
+        self.overlap_full  = 2    # intermediate flag
         self.overlap_hole = dqflags.pixel['DO_NOT_USE']
         self.overlap_no_coverage = dqflags.pixel['NON_SCIENCE']
 # **************************************************************
@@ -256,12 +256,11 @@ class IFUCubeData():
         n1b = int(math.ceil(math.fabs(xi_max) / self.cdelt1))
         n2b = int(math.ceil(math.fabs(eta_max) / self.cdelt2))
 
-        # center of xi-eta system 0,0
-        xi_min = - (n1a * self.cdelt1)
-        xi_max = (n1b * self.cdelt1)
+        xi_min = 0.0 - (n1a * self.cdelt1) - (self.cdelt1 / 2.0)
+        xi_max = (n1b * self.cdelt1) + (self.cdelt1 / 2.0)
 
-        eta_min = - (n2a * self.cdelt2)
-        eta_max = (n2b * self.cdelt2)
+        eta_min = 0.0 - (n2a * self.cdelt2) - (self.cdelt2 / 2.0)
+        eta_max = (n2b * self.cdelt2) + (self.cdelt2 / 2.0)
 
         self.crpix1 = float(n1a) + 1.0
         self.crpix2 = float(n2a) + 1.0
@@ -342,8 +341,6 @@ class IFUCubeData():
 
         cdelt3_normal[self.naxis3 - 1] = cdelt3_normal[self.naxis3 - 2]
         self.cdelt3_normal = cdelt3_normal
-        self.lambda_min = self.wavemin
-        self.lambda_max = self.wavemax
 # _______________________________________________________________________
 
     def set_geometryAB(self, footprint):
@@ -442,7 +439,7 @@ class IFUCubeData():
             if not self.linear_wavelength:
                 log.info('Non-linear wavelength dimension; CDELT3 variable')
                 log.info('axis#  Naxis  CRPIX    CRVAL     Min & Max (microns)')
-                log.info('Axis 3 %5d  %5.2f %12.4f %12.4f %12.4f',
+                log.info('Axis 3 %5d  %5.2f %12.8f %12.8f %12.8f',
                          self.naxis3, self.crpix3, self.crval3,
                          self.wavelength_table[0], self.wavelength_table[self.naxis3 - 1])
 
@@ -773,8 +770,8 @@ class IFUCubeData():
         roiw = np.zeros(number_bands)
         power = np.zeros(number_bands)
         softrad = np.zeros(number_bands)
-        minwave = np.zeros(number_bands, dtype=np.float32)
-        maxwave = np.zeros(number_bands, dtype=np.float32)
+        minwave = np.zeros(number_bands)
+        maxwave = np.zeros(number_bands)
 
         for i in range(number_bands):
             if self.instrument == 'MIRI':
@@ -797,8 +794,7 @@ class IFUCubeData():
             softrad[i] = self.instrument_info.GetSoftRad(par1, par2)
             minwave[i] = self.instrument_info.GetWaveMin(par1, par2)
             maxwave[i] = self.instrument_info.GetWaveMax(par1, par2)
-
-        # Check the spatial size. If it is the same for the array set up the parameters
+# Check the spatial size. If it is the same for the array set up the parameters
         all_same = np.all(spaxelsize == spaxelsize[0])
         if all_same:
             self.spatial_size = spaxelsize[0]
@@ -807,7 +803,7 @@ class IFUCubeData():
             index_min = np.argmin(spaxelsize)
             self.spatial_size = spaxelsize[index_min]
             spatial_roi = rois[index_min]
-        # find min and max wavelength
+# find min and max wavelength
         min_wave = np.amin(minwave)
         max_wave = np.amax(maxwave)
 
@@ -821,10 +817,10 @@ class IFUCubeData():
         else:
             self.wavemax = np.float64(self.wavemax)
 
-        # now check spectral step
+# now check spectral step
         all_same_spectral = np.all(spectralsize == spectralsize[0])
 
-        # check if scalew has been set - if yes then linear scale
+# check if scalew has been set - if yes then linear scale
         if self.scalew != 0:
             self.spectral_size = self.scalew
             self.linear_wavelength = True
@@ -970,7 +966,7 @@ class IFUCubeData():
                         # print('time to find footprint',t1-t0)
 
                         amin, amax, bmin, bmax, lmin, lmax = ch_footprint
-                        # We might be able to call compute_footprint from assign_wcs instead
+                        # We might be able to call cmpute_footprint from assign_wcs instead
 # ________________________________________________________________________________
                     if self.instrument == 'MIRI':
                         ch_footprint = cube_build_wcs_util.find_footprint_MIRI(
@@ -1019,6 +1015,7 @@ class IFUCubeData():
 # ________________________________________________________________________________
         cube_footprint = (final_a_min, final_a_max, final_b_min, final_b_max,
                           final_lambda_min, final_lambda_max)
+
 # ________________________________________________________________________________
     # Based on Scaling and Min and Max values determine naxis1, naxis2, naxis3
     # set cube CRVALs, CRPIXs
@@ -1028,8 +1025,6 @@ class IFUCubeData():
         else:
             self.set_geometryAB(cube_footprint)
         self.print_cube_geometry()
-
-        return cube_footprint
 # **************************************************************************
 
     def map_detector_to_outputframe(self, this_par1,
@@ -1166,7 +1161,7 @@ class IFUCubeData():
                 lam_det = np.zeros((ysize, xsize))
                 flag_det = np.zeros((ysize, xsize))
 
-                slice_det = np.zeros((ysize, xsize), dtype=int)
+                slice_det = np.zeros((ysize, xsize), dtype = int)
                 # for NIRSPEC each file has 30 slices
                 # wcs information access seperately for each slice
                 nslices = 30
@@ -1212,39 +1207,43 @@ class IFUCubeData():
             dq_all = input_model.dq[y, x]
             valid2 = np.isfinite(flux_all)
 
-            valid_min = np.where(wave >= self.lambda_min)
+            min_wave_tolerance = self.crval3 - np.absolute(self.zcoord[1] - self.zcoord[0])
+            max_wave_tolerance = self.zcoord[-1] + np.absolute(self.zcoord[-1] - self.zcoord[-2])
+
+
+            valid_min = np.where(wave >= min_wave_tolerance)
             not_mapped_low = wave.size - len(valid_min[0])
 
-            valid_max = np.where(wave <= self.lambda_max)
+            valid_max = np.where(wave <= max_wave_tolerance)
             not_mapped_high = wave.size - len(valid_max[0])
-
             if not_mapped_low > 0:
                 log.info('# of detector pixels not mapped to output plane: %i with wavelength below %f',
-                         not_mapped_low, self.lambda_min)
+                         not_mapped_low, min_wave_tolerance)
 
             if not_mapped_high > 0:
                 log.info('# of detector pixels not mapped to output plane: %i with wavelength above  %f',
-                         not_mapped_high, self.lambda_max)
+                         not_mapped_high, max_wave_tolerance)
 
-            # ______________________________________________________________________________
-            # using the DQFlags from the input_image find pixels that should be excluded
-            # from the cube mapping
+# ______________________________________________________________________________
+# using the DQFlags from the input_image find pixels that should be excluded
+# from the cube mapping
             all_flags = (dqflags.pixel['DO_NOT_USE'] +
                          dqflags.pixel['NON_SCIENCE'])
 
-            valid3 = np.logical_and((wave >= self.lambda_min),
-                                     (wave <= self.lambda_max))
+            valid3 = np.logical_and((wave >= min_wave_tolerance),
+                                     (wave <= max_wave_tolerance))
 
             # find the location of all the values to reject in cube building
             good_data = np.where((np.bitwise_and(dq_all, all_flags) == 0) &
                                  (valid2) & (valid3))
 
+
             # good data holds the location of pixels we want to map to cube
             flux = flux_all[good_data]
             wave = wave[good_data]
             slice_no = slice_no[good_data]
-            # based on the wavelength define the sroi, wroi, weight_power and
-            # softrad to use in matching detector to spaxel values
+# based on the wavelength define the sroi, wroi, weight_power and
+# softrad to use in matching detector to spaxel values
             rois_det = np.zeros(wave.shape)
             roiw_det = np.zeros(wave.shape)
             weight_det = np.zeros(wave.shape)
@@ -1374,6 +1373,7 @@ class IFUCubeData():
                     xi_corner = np.array([xi1, xi2, xi3, xi4])
                     eta_corner = np.array([eta1, eta2, eta3, eta4])
                     self.overlap_fov_with_spaxels(xi_corner, eta_corner, w, w)
+
 
         # NIRSpec Mapping:
         # The FOV of each NIRSpec slice varies across the wavelength range.
@@ -1555,9 +1555,9 @@ class IFUCubeData():
         # loop over spaxels in the spatial plane and set slice_dq
         nxy = self.xcenters.size  # size of spatial plane
         for ixy in range(nxy):
-            #        num = len(index[0])
-            #        for inum in range(num):
-            #            ixy = index[0][inum]
+#        num = len(index[0])
+#        for inum in range(num):
+#            ixy = index[0][inum]
 
             area_box = self.cdelt1 * self.cdelt2
             area_overlap = cube_overlap.sh_find_overlap(self.xcenters[ixy],
@@ -1575,13 +1575,13 @@ class IFUCubeData():
         # set for a range of wavelengths
         if wmin != wmax:
             self.spaxel_dq[wmin:wmax, :] = np.bitwise_or(self.spaxel_dq[wmin:wmax, :],
-                                                         wave_slice_dq)
+                                                        wave_slice_dq)
 
         # set for a single wavelength
         else:
             self.spaxel_dq[wmin, :] = np.bitwise_or(self.spaxel_dq[wmin, :],
-                                                    wave_slice_dq)
-    # *******************************************************************************
+                                                   wave_slice_dq)
+# *******************************************************************************
 
     def four_corners(self, coord1, coord2):
         """ helper function to compute the four corners of the FOV
@@ -1645,8 +1645,8 @@ class IFUCubeData():
 
         """Depending on the interpolation method, find the flux for each spaxel value
         """
-        # currently these are the same but in the future there could be a difference in
-        # how the spaxel flux is determined according to self.interpolation.
+# currently these are the same but in the future there could be a difference in
+# how the spaxel flux is determined according to self.interpolation.
 
         if self.interpolation == 'area':
             good = self.spaxel_iflux > 0
@@ -1709,7 +1709,7 @@ class IFUCubeData():
             yrem = int(rem/self.naxis1)
             xrem = rem - yrem * self.naxis1
 
-            found = 0
+            found  = 0
             ij = 0
             # do not allow holes to occur at the edge of IFU cube
             if (yrem == 0 or yrem == (self.naxis2-1) or
@@ -1719,8 +1719,8 @@ class IFUCubeData():
                 found = 1
             # flag as NON_SCIENCE instead of hole if left, right, top, bottom pixel
             # is NON_SCIENCE
-            xcheck = np.zeros(4, dtype=int)
-            ycheck = np.zeros(4, dtype=int)
+            xcheck = np.zeros(4,dtype = int)
+            ycheck = np.zeros(4,dtype = int)
             # left
             xcheck[0] = xrem - 1
             ycheck[0] = yrem
@@ -1729,10 +1729,10 @@ class IFUCubeData():
             ycheck[1] = yrem
             # bottom
             xcheck[2] = xrem
-            ycheck[2] = yrem - 1
+            ycheck[2] = yrem -1
             # top
             xcheck[3] = xrem
-            ycheck[3] = yrem + 1
+            ycheck[3] = yrem +1
 
             while ((ij < 4) and (found ==0)):
                 if(xcheck[ij] > 0 and xcheck[ij] < self.naxis1 and
@@ -1741,7 +1741,7 @@ class IFUCubeData():
                     # If the nearby spaxel_dq contains overlap_no_covrage
                     # then unmark dq flag as hole. A hole has to have nearby
                     # pixels all in FOV.
-                    check = (np.bitwise_and(self.spaxel_dq[index_check],
+                    check  = (np.bitwise_and(self.spaxel_dq[index_check],
                                            self.overlap_no_coverage) == self.overlap_no_coverage)
                     if check:
                         spaxel_dq_temp[index[0][i]] = np.bitwise_or(self.overlap_no_coverage,
@@ -1933,9 +1933,9 @@ class IFUCubeData():
 # set WCS information
         wcsobj = pointing.create_fitswcs(ifucube_model)
         ifucube_model.meta.wcs = wcsobj
-        ifucube_model.meta.wcs.bounding_box = ((0.5, naxis1 - 0.5),
-                                               (0.5, naxis2 - 0.5),
-                                               (0.5, naxis3 - 0.5))
+        ifucube_model.meta.wcs.bounding_box = ((0, naxis1 - 1),
+                                               (0, naxis2 - 1),
+                                               (0, naxis3 - 1))
 
         return ifucube_model
 # ********************************************************************************
@@ -1982,6 +1982,7 @@ class IncorrectInput(Exception):
     when more than one file is used to build the cube.
     """
     pass
+
 
 
 class AreaInterpolation(Exception):
