@@ -1,6 +1,6 @@
 """ Dictionary of basic instrument parameters
 """
-import numpy as np
+
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -503,10 +503,10 @@ class InstrumentInfo():
         self.Info[parameter1][parameter2]['wscale'] = value
 
     def SetWaveMin(self, value, parameter1, parameter2):
-        self.Info[parameter1][parameter2]['wavemin'] = np.float32(value)
+        self.Info[parameter1][parameter2]['wavemin'] = value
 
     def SetWaveMax(self, value, parameter1, parameter2):
-        self.Info[parameter1][parameter2]['wavemax'] = np.float32(value)
+        self.Info[parameter1][parameter2]['wavemax'] = value
 
     def SetSpatialROI(self, value, parameter1, parameter2):
         self.Info[parameter1][parameter2]['sroi'] = value
@@ -590,11 +590,11 @@ class InstrumentInfo():
         return rois
 
     def GetWaveMin(self, parameter1, parameter2):
-        wavemin = np.float32(self.Info[parameter1][parameter2]['wavemin'])
+        wavemin = self.Info[parameter1][parameter2]['wavemin']
         return wavemin
 
     def GetWaveMax(self, parameter1, parameter2):
-        wavemax = np.float32(self.Info[parameter1][parameter2]['wavemax'])
+        wavemax = self.Info[parameter1][parameter2]['wavemax']
         return wavemax
 
     def GetMSMPower(self, parameter1, parameter2):
