@@ -150,7 +150,7 @@ def fitswcs_transform_from_model(wcsinfo, wavetable=None):
         else :
             # Wave dimension is an array that needs to be converted to a table
             waves = wavetable['wavelength'].flatten()
-            spectral_transform = astmodels.Tabular1D(lookup_table=waves)
+            spectral_transform = astmodels.Tabular1D(lookup_table=waves, bounds_error=False)
 
         transform = transform & spectral_transform
 
