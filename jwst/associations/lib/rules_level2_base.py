@@ -146,15 +146,15 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             result = self.data['asn_type'] == other.data['asn_type']
             result = result and (self.member_ids == other.member_ids)
             return result
-        else:
-            return NotImplemented
+
+        return NotImplemented
 
     def __ne__(self, other):
         """Compare inequality of two associations"""
         if isinstance(other, DMSLevel2bBase):
             return not self.__eq__(other)
-        else:
-            return NotImplemented
+
+        return NotImplemented
 
     def dms_product_name(self):
         """Define product name."""
@@ -299,12 +299,27 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             )
         self._acid = ACID((acid, ac_type))
 
+        #set the default exptype
+        exptype = 'science'
+
         for idx, item in enumerate(items, start=1):
             self.new_product()
             members = self.current_product['members']
+            if isinstance(item, tuple):
+                expname = item[0]
+            else:
+                expname = item
+
+            #check to see if kwargs are passed and if exptype is given
+            if kwargs:
+                if 'with_exptype' in kwargs:
+                    if item[1]:
+                        exptype = item[1]
+                    else:
+                        exptype='science'
             member = Member({
-                'expname': item,
-                'exptype': 'science'
+                'expname': expname,
+                'exptype': exptype
             }, item=item)
             members.append(member)
             self.update_validity(member)
@@ -352,8 +367,8 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         # If a background, check that there is a background
         # exposure
         if self.acid.type.lower() == 'background':
-            for member in self.current_product['members']:
-                if member['exptype'].lower() == 'background':
+            for entry in self.current_product['members']:
+                if entry['exptype'].lower() == 'background':
                     return True
 
         # If not background member, or some other candidate type,
@@ -557,7 +572,7 @@ class Utility():
         for asn in asns:
             product_name = asn['products'][0]['name']
             if product_name in dups:
-                    to_prune[product_name].append(asn)
+                to_prune[product_name].append(asn)
 
         for product_name, asns_to_prune in to_prune.items():
             asns_to_prune = Utility.sort_by_candidate(asns_to_prune)
@@ -608,6 +623,7 @@ class Utility():
 
     @staticmethod
     def resequence(*args, **kwargs):
+        """Resquence the numbers to conform to level 3 asns"""
         return Utility_Level3.resequence(*args, **kwargs)
 
     @staticmethod
