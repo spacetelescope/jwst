@@ -235,12 +235,12 @@ class DataSet():
 
                         # Divide the science data and uncertainty arrays by the
                         # conversion factors
-                        self.input.data /= sens2d
-                        self.input.err /= sens2d
-                        self.input.var_poisson /= sens2d**2
-                        self.input.var_rnoise /= sens2d**2
+                        self.input.data *= sens2d
+                        self.input.err *= sens2d
+                        self.input.var_poisson *= sens2d**2
+                        self.input.var_rnoise *= sens2d**2
                         if self.input.var_flat is not None and np.size(self.input.var_flat) > 0:
-                            self.input.var_flat /= sens2d**2
+                            self.input.var_flat *= sens2d**2
 
                         # Update BUNIT values for the science data and err
                         self.input.meta.bunit_data = 'mJy/arcsec^2'
@@ -426,12 +426,12 @@ class DataSet():
             sens2d = ftab.data * ftab.pixsiz
 
             # Divide the science data and uncertainty arrays by the 2D sensitivity factors
-            self.input.data /= sens2d
-            self.input.err /= sens2d
-            self.input.var_poisson /= sens2d**2
-            self.input.var_rnoise /= sens2d**2
+            self.input.data *= sens2d
+            self.input.err *= sens2d
+            self.input.var_poisson *= sens2d**2
+            self.input.var_rnoise *= sens2d**2
             if self.input.var_flat is not None and np.size(self.input.var_flat) > 0:
-                self.input.var_flat /= sens2d**2
+                self.input.var_flat *= sens2d**2
 
             # Update the science dq
             self.input.dq = np.bitwise_or(self.input.dq, ftab.dq)
@@ -685,7 +685,7 @@ class DataSet():
             # Combine the scalar and 2-D conversions
             # NOTE: the 2-D conversion is divided into the data for now, until the
             # instrument teams deliver multiplicative conversions in photom ref files
-            conversion = conversion / conv_2d
+            conversion = conversion * conv_2d
             conversion[no_cal] = 0.
 
         # Apply the conversion to the data and all uncertainty arrays
