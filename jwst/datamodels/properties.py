@@ -21,6 +21,21 @@ log.addHandler(logging.NullHandler())
 
 __all__ = ['ObjectNode', 'ListNode']
 
+
+def _is_struct_array(val):
+    return (isinstance(val, (np.ndarray, fits.FITS_rec)) and
+            val.dtype.names is not None and val.dtype.fields is not None)
+
+
+def _is_struct_array_precursor(val):
+    return isinstance(val, list) and isinstance(val[0], tuple)
+
+
+def _is_struct_array_schema(schema):
+    return (isinstance(schema['datatype'], list) and
+            any('name' in t for t in schema['datatype']))
+
+
 def _cast(val, schema):
     val = _unmake_node(val)
     if val is None:
@@ -31,11 +46,8 @@ def _cast(val, schema):
         if isinstance(val, ndarray.NDArrayType):
             val = val._make_array()
 
-        if (isinstance(schema['datatype'], list) and
-            any('name' in t for t in schema['datatype']) and
-            len(val) and
-            ((isinstance(val, list) and isinstance(val[0], tuple)) or
-             isinstance(val, fits.FITS_rec))):
+        if (_is_struct_array_schema(schema) and len(val) and
+            (_is_struct_array_precursor(val) or _is_struct_array(val))):
             # we are dealing with a structured array. Because we may
             # modify schema (to add shape), we make a deep copy of the
             # schema here:
