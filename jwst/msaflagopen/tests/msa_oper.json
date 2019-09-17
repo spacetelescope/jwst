@@ -1,0 +1,18 @@
+{
+    "title": " MSA Shutter Operability File ",
+    "reftype" : "MSAOPER",
+    "pedigree": "GROUND",
+    "author": "M. Hill",
+    "instrument": "NIRSPEC",
+    "exp_type": "NRS_IFU|NRS_MSASPEC",
+    "telescope" : "JWST",
+    "useafter": "2014-01-01T00:00:00",
+    "descrip": "Created with input from the NIRSpec team using ground data",
+    "msaoper": [
+        {"Q": 1,"x": 1,"y": 1,"state": "closed","TA state": "closed","Internal state": "normal","Vignetted": "yes"},
+        {"Q": 1,"x": 1,"y": 6,"state": "closed","TA state": "closed","Internal state": "closed","Vignetted": "yes"},
+        {"Q": 1,"x": 38,"y": 25,"state": "open","TA state": "open","Internal state": "open","Vignetted": "no"}
+        
+    ]
+
+}
