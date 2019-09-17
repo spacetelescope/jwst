@@ -144,6 +144,11 @@ master_background
 
 - Updated the documentation to include more details. [#3776]
 
+photom
+------
+
+- Add unit tests [#4022]
+
 resample_spec
 -------------
 
