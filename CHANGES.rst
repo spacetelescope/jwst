@@ -85,6 +85,10 @@ datamodels
   data types defined by schema of structured arrays when input values are not
   native Python types (tuples). [#3995]
 
+- Fixed an issue with the fix from [#3995] that was affecting "casting" to
+  data types defined by schema of structured arrays when input values are
+  already structured arrays. [#4030]
+
 exp_to_source
 -------------
 
