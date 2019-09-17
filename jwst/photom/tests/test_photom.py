@@ -154,7 +154,7 @@ def create_input(instrument, detector, exptype,
             input_model.var_poisson = var_p
             input_model.var_rnoise = var_r
             input_model.var_flat = var_f
-        else:
+        else:                                   # NIS_IMAGE
             shape = (96, 128)
             (data, dq, err, var_p, var_r, var_f) = mk_data(shape)
             input_model = datamodels.ImageModel(data=data, dq=dq, err=err)
@@ -202,7 +202,7 @@ def create_input(instrument, detector, exptype,
                 slit.var_flat = var_f
                 input_model.slits.append(slit.copy())
         else:
-            # This needs the wcs, so we won't cover this case.  Use a
+            # NRS_IFU needs the wcs, so we won't cover this case.  Use a
             # regression test instead.
             raise RuntimeError("exp_type {} is not currently tested"
                                .format(exptype))
@@ -642,7 +642,7 @@ def create_photom_miri_lrs(min_wl=5.0, max_wl=10.0, min_r=8.0, max_r=9.0):
         An open data model for a MIRI LRS photom reference file.
     """
 
-    filter = ["F560W", "F770W", "F1000W"]
+    filter = ["F560W", "P750L", "F1000W"]
     subarray = ["GENERIC", "GENERIC", "GENERIC"]
 
     nrows = len(filter)
@@ -1296,7 +1296,7 @@ def test_miri_lrs():
     """Test calc_miri, LRS data"""
 
     input_model = create_input('MIRI', 'MIRIMAGE', 'MIR_LRS-FIXEDSLIT',
-                               filter='F770W')
+                               filter='P750L')
     save_input = input_model.copy()
     ds = photom.DataSet(input_model)
     ftab = create_photom_miri_lrs(min_wl=5.0, max_wl=10.0,
