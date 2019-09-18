@@ -20,19 +20,19 @@ mirifushort_short = {
 def miri_dither_ch12():
     """ Generate 4 dithered channel 12 data  """
 
-    input_model1 = datamodels.IFUImageModel((20,20))
+    input_model1 = datamodels.IFUImageModel((20, 20))
     input_model1.meta.instrument._instance.update(mirifushort_short)
     input_model1.meta.cal_step.assign_wcs = 'COMPLETE'
 
-    input_model2 = datamodels.IFUImageModel()
+    input_model2 = datamodels.IFUImageModel((20, 20))
     input_model2.meta.instrument._instance.update(mirifushort_short)
     input_model2.meta.cal_step.assign_wcs = 'COMPLETE'
 
-    input_model3 = datamodels.IFUImageModel()
+    input_model3 = datamodels.IFUImageModel((20, 20))
     input_model3.meta.instrument._instance.update(mirifushort_short)
     input_model3.meta.cal_step.assign_wcs = 'COMPLETE'
 
-    input_model4 = datamodels.IFUImageModel()
+    input_model4 = datamodels.IFUImageModel((20, 20))
     input_model4.meta.instrument._instance.update(mirifushort_short)
     input_model4.meta.cal_step.assign_wcs = 'COMPLETE'
 
@@ -63,8 +63,8 @@ def test_imatch_background_test(_jail, miri_dither_ch12):
 
     # added a background and test is if it reset
     new_container = []
-    degree = (1,1,1,)
-    center = (5,5,5,)
+    degree = (1, 1, 1,)
+    center = (5, 5, 5,)
     poly = np.ndarray(9)
     poly[:] = 1.3
     channel = '2'
@@ -94,8 +94,8 @@ def test_imatch_degree_test(_jail, miri_dither_ch12):
 
     all_models = datamodels.ModelContainer(miri_dither_ch12)
     new_container = []
-    degree = (1,1,1,)
-    center = (5,5,5,)
+    degree = (1, 1, 1,)
+    center = (5, 5, 5,)
     poly = np.ndarray(9)
     poly[:] = 1.3
     channel = '2'
@@ -114,5 +114,5 @@ def test_imatch_degree_test(_jail, miri_dither_ch12):
     #  check that degree must be a 3 element tuple
     with pytest.raises(ValueError):
         step = MRSIMatchStep()
-        step.bkg_degree = (1,1,)
+        step.bkg_degree = (1, 1,)
         step.run(new_container)

@@ -6,6 +6,7 @@ import pytest
 
 from jwst import datamodels
 from jwst.mrs_imatch.mrs_imatch_step import MRSIMatchStep
+from jwst.assign_wcs import AssignWcsStep
 from jwst.mrs_imatch.mrs_imatch_step import apply_background_2d
 import numpy as np
 
@@ -40,41 +41,42 @@ subarray = {
     'ystart': 1
 }
 
+
 @pytest.fixture(scope='function')
 def miri_dither_ch12():
     """ Generate 4 dithered channel 12 data  """
 
-    input_model1 = datamodels.IFUImageModel((20,20))
+    input_model1 = datamodels.IFUImageModel((30, 30))
     input_model1.meta.wcsinfo._instance.update(wcsinfo)
     input_model1.meta.instrument._instance.update(mirifushort_short)
     input_model1.meta.observation._instance.update(observation)
-#    input_model1.meta.subarray._instance.update(subarray)
-    input_model1.meta.cal_step.assign_wcs = 'COMPLETE'
-    input_model1.data[:,:] = 10
+    input_model1.meta.subarray._instance.update(subarray)
+    input_model1.meta.exposure.type = 'MIR_MRS'
+    input_model1.data[:, :] = 10
 
-    input_model2 = datamodels.IFUImageModel()
+    input_model2 = datamodels.IFUImageModel((30, 30))
     input_model2.meta.wcsinfo._instance.update(wcsinfo)
     input_model2.meta.instrument._instance.update(mirifushort_short)
     input_model2.meta.observation._instance.update(observation)
-#    input_model2.meta.subarray._instance.update(subarray)
-    input_model2.meta.cal_step.assign_wcs = 'COMPLETE'
-    input_model2.data[:,:] = 10
+    input_model2.meta.subarray._instance.update(subarray)
+    input_model2.meta.exposure.type = 'MIR_MRS'
+    input_model2.data[:, :] = 10
 
-    input_model3 = datamodels.IFUImageModel()
+    input_model3 = datamodels.IFUImageModel((30, 30))
     input_model3.meta.wcsinfo._instance.update(wcsinfo)
     input_model3.meta.instrument._instance.update(mirifushort_short)
     input_model3.meta.observation._instance.update(observation)
-#    input_model3.meta.subarray._instance.update(subarray)
-    input_model3.meta.cal_step.assign_wcs = 'COMPLETE'
-    input_model3.data[:,:] = 20
+    input_model3.meta.subarray._instance.update(subarray)
+    input_model3.meta.exposure.type = 'MIR_MRS'
+    input_model3.data[:, :] = 20
 
-    input_model4 = datamodels.IFUImageModel()
+    input_model4 = datamodels.IFUImageModel((30, 30))
     input_model4.meta.wcsinfo._instance.update(wcsinfo)
     input_model4.meta.instrument._instance.update(mirifushort_short)
     input_model4.meta.observation._instance.update(observation)
-#    input_model4.meta.subarray._instance.update(subarray)
-    input_model4.meta.cal_step.assign_wcs = 'COMPLETE'
-    input_model4.data[:,:] = 10
+    input_model4.meta.subarray._instance.update(subarray)
+    input_model4.meta.exposure.type = 'MIR_MRS'
+    input_model4.data[:, :] = 10
 
     # stuff in model container
     input_models = []
@@ -90,25 +92,27 @@ def test_apply_background_2d(_jail, miri_dither_ch12):
     """ Test if background subtract set or background exist correct thing is done"""
 
     all_models = datamodels.ModelContainer(miri_dither_ch12)
-    
+
     # test if given a background polynomial - apply_background_2d gives the correct answer
     # Polynomial information was created by running a faked full array data set to determine
-    # what the polnomial values should be 
+    # what the polynomial values should be
     new_container = []
-    degree = (1,1,1,)
+    degree = (1, 1, 1,)
     center = (9.99999408089876, -4.668612949274985e-06, 4.889999912818894)
     poly = np.ndarray(9)
 
     channel = '1'
     for im, m in enumerate(all_models):
+        m = AssignWcsStep.call(m)
+
         if im == 0:
             poly = [-2.50000000e+00, -6.66518331e-15,  5.67845589e-12, -1.23549218e-11,
                     3.26209108e-12, -5.43180357e-12, -2.54903452e-09,  6.21614553e-09]
-        elif im  == 1:
+        elif im == 1:
             poly = [-2.50000000e+00, -9.29031986e-15,  1.74437380e-12, -3.94894956e-12,
                      4.71729481e-13,  5.42031845e-13, -9.96151554e-10,  2.78281950e-09]
         elif im == 2:
-            poly = [ 7.50000000e+00,  2.22921836e-14, -6.97131279e-12,  1.58336906e-11,
+            poly = [7.50000000e+00,  2.22921836e-14, -6.97131279e-12,  1.58336906e-11,
                      -5.43704212e-12,  6.79109678e-12,  2.63515372e-09, -8.00226976e-09]
         else:
             poly = [-2.50000000e+00, -6.33668043e-15, -4.51516905e-13,  4.70180795e-13,
@@ -124,19 +128,20 @@ def test_apply_background_2d(_jail, miri_dither_ch12):
                 }
             )
 
-        mtest = np.zeros((20,20))
+        # input 10 output 12.5 for all images
+        apply_background_2d(m, channel, subtract=True)
+        new_container.append(m)
 
-        mtest[:,:] = 12.5
+    # all the data should now be the same for the science pixels
+    # the edge pixels are located in non-science region and no
+    # background subtraction is done on these pixels
 
-        apply_background_2d(m,channel,subtract = True)
-        
-        # input 10 output 12.5 for all images 
+    data1 = new_container[0].data[:, 16:]
+    data2 = new_container[1].data[:, 16:]
+    data3 = new_container[2].data[:, 16:]
+    data4 = new_container[3].data[:, 16:]
 
-        assert(np.allclose(mtest,m, rtol = 1e-6))
-
-            
-                   
-
-        
-
-
+    assert(np.allclose(data1, data2, rtol=1e-6))
+    assert(np.allclose(data2, data3, rtol=1e-6))
+    assert(np.allclose(data3, data4, rtol=1e-6))
+    assert(np.allclose(data1, data4, rtol=1e-6))
