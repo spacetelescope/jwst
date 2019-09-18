@@ -233,7 +233,7 @@ class DataSet():
                         sens2d[where_dq > 0] = 1.
                         self.input.dq = np.bitwise_or(self.input.dq, dqmap)
 
-                        # Divide the science data and uncertainty arrays by the
+                        # Multiply the science data and uncertainty arrays by the
                         # conversion factors
                         self.input.data *= sens2d
                         self.input.err *= sens2d
@@ -425,7 +425,8 @@ class DataSet():
             # Compute the combined 2D sensitivity factors
             sens2d = ftab.data * ftab.pixsiz
 
-            # Divide the science data and uncertainty arrays by the 2D sensitivity factors
+            # Multiply the science data and uncertainty arrays by the 2D 
+            #  sensitivity factors
             self.input.data *= sens2d
             self.input.err *= sens2d
             self.input.var_poisson *= sens2d**2
@@ -683,8 +684,7 @@ class DataSet():
             no_cal = np.isnan(conv_2d)
 
             # Combine the scalar and 2-D conversions
-            # NOTE: the 2-D conversion is divided into the data for now, until the
-            # instrument teams deliver multiplicative conversions in photom ref files
+            # NOTE: the data is now multiplied by the 2-D conversion
             conversion = conversion * conv_2d
             conversion[no_cal] = 0.
 
