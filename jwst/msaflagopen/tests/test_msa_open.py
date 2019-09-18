@@ -1,10 +1,20 @@
 import numpy as np
 
-from jwst.datamodels import MSAModel
+from jwst.assign_wcs.nirspec import slitlets_wcs, nrs_wcs_set_input
+from jwst.assign_wcs import AssignWcsStep
+from jwst.datamodels import ImageModel
+from jwst.extract_2d import Extract2dStep
 from jwst.msaflagopen.msaflag_open import (or_subarray_with_array,
                                            id_from_xy,
                                            get_failed_open_shutters,
-                                           create_slitlets)
+                                           create_slitlets,
+                                           boundingbox_to_indices,
+                                           flag,
+                                           wcs_to_dq)
+from jwst.msaflagopen.msaflagopen_step import create_reference_filename_dictionary
+from jwst.transforms.models import Slit 
+from jwst.stpipe import Step
+
 
 def test_or_subarray_with_array():
     """test bitwise or with array and subarray."""
@@ -27,12 +37,12 @@ def test_or_subarray_with_array():
 def test_id_from_xy():
     """Test id from x y location of shutter"""
 
-    shutters_per_row = 365
-
     # First row of msaoper.json
     data = {"Q": 1,"x": 1,"y": 1,"state": "closed","TA state": "closed",
             "Internal state": "normal",
             "Vignetted": "yes"}
+
+    shutters_per_row = 365
 
     x = data['x']
     y = data['y']
@@ -50,9 +60,102 @@ def test_get_failed_open_shutters():
         assert (shutter['state'] == 'open')
 
 def test_create_slitlets():
+    """Test that slitlets are Slit type and have all the necessary fields"""
     
-    dm = MSAModel()
+    dm = ImageModel()
 
     result = create_slitlets(dm, 'msa_oper.json')
 
-    return result
+    slit_fields = ('name','shutter_id','dither_position','xcen',
+                   'ycen','ymin','ymax','quadrant','source_id',
+                   'shutter_state','source_name','source_alias',
+                   'stellarity','source_xpos','source_ypos')
+
+    for slit in result:
+        # Test the returned data type and fields.
+        assert type(slit) == jwst.transforms.models.Slit
+        assert slit._fields == slit_fields
+
+def test_wcs_to_dq():
+    """Test that non nan values are assigned the values of flags"""
+    
+    # data = np.array([0, np.nan, 0, np.nan])
+    
+    wcs_array = np.array([0, np.nan, 0, np.nan])
+    dq = np.zeros((wcs_array[0].shape), dtype=np.uint32)
+    non_nan = np.where(~np.isnan(wcs_array))
+    print(non_nan)
+    # nan_indices = np.where(np.isnan(data))
+    # print(nan_indices)
+    # result = wcs_to_dq(data, 1024)
+    # print(result)
+
+def test_flag():
+    wcsinfo = {
+        'dec_ref': -0.00601415671349804,
+        'ra_ref': -0.02073605215697509,
+        'roll_ref': -0.0,
+        'v2_ref': -453.5134,
+        'v3_ref': -373.4826,
+        'v3yangle': 0.0,
+        'vparity': -1}
+
+    instrument = {
+        'detector': 'NRS1',
+        'filter': 'CLEAR',
+        'grating': 'PRISM',
+        'name': 'NIRSPEC',
+        'gwa_tilt': 37.0610,
+        'gwa_xtilt': 0.0001,
+        'gwa_ytilt': 0.0001}
+
+    subarray = {
+        'fastaxis': 1,
+        'name': 'SUBS200A1',
+        'slowaxis': 2,
+        'xsize': 2048,
+        'xstart': 1,
+        'ysize': 2048,
+        'ystart': 1}
+
+    observation = {
+        'date': '2016-09-05',
+        'time': '8:59:37'}
+
+    exposure = {
+        'duration': 11.805952,
+        'end_time': 58119.85416,
+        'exposure_time': 11.776,
+        'frame_time': 0.11776,
+        'group_time': 0.11776,
+        'groupgap': 0,
+        'integration_time': 11.776,
+        'nframes': 1,
+        'ngroups': 100,
+        'nints': 1,
+        'nresets_between_ints': 0,
+        'nsamples': 1,
+        'readpatt': 'NRSRAPID',
+        'sample_time': 10.0,
+        'start_time': 58119.8333,
+        'type': 'NRS_MSASPEC',
+        'zero_frame': False}
+
+    im = ImageModel()
+    im.data = np.random.rand(2048, 2048)
+    im.error = np.random.rand(2048, 2048)
+    im.dq = np.random.rand(2048, 2048)
+
+    im.meta.wcsinfo._instance.update(wcsinfo)
+    im.meta.instrument._instance.update(instrument)
+    im.meta.observation._instance.update(observation)
+    im.meta.exposure._instance.update(exposure)
+    im.meta.subarray._instance.update(subarray)
+    im = AssignWcsStep.call(im)
+    im = Extract2dStep.call(im)
+
+    wcs_ref_files = create_reference_filename_dictionary(im)
+
+    failed_slitlets = create_slitlets(im, 'msa_oper.json')
+
+    result = flag(im, failed_slitlets, wcs_ref_files)
