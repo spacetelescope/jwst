@@ -388,6 +388,8 @@ photom
 - Updated to zero-out pixels outside the wavelength range of flux calibration
   and set DQ=DO_NOT_USE. [#3475, #3489]
 
+- Updated to multiply by conversion factor instead of divide. [#4033]
+
 pipeline
 --------
 
