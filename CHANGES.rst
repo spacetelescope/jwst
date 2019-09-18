@@ -11,9 +11,21 @@ assign_wcs
 
 - This step populates keyword DISPAXIS. [#3799]
 
+- For NIRISS WFSS data, the wavelengths were incorrect because the function
+  for horizontally oriented spectra was called for GR150R, and the function
+  for vertically oriented spectra was called for GR150C. [#3891]
+
 
 associations
 ------------
+- asn_from_list fills the level2  member exptype correctly if the input is a tuple [#2942]
+
+- Update rules to make level 3 associations for slitless LRS mode [#3940]
+
+- Update rules so that nOPS5 observations with "ALONG-SLIT-NOD" dither
+   pattern generates level 3 associations [#3912]
+
+- Update rules to have NRS_IFU backgrounds in science associations [#3824]
 
 - Return filename with extensions based on file type [#2671]
 
@@ -23,8 +35,15 @@ associations
 
 - Will not constrain on uniqueness of the MSACONFIG keyword [#3770]
 
-- combine_1d
-------------
+- Process non-science exposures taken during WFS&C observations [#3947]
+
+barshadow
+---------
+
+- Unit tests were added. [#3930]
+
+combine_1d
+----------
 
 - Fixed the number of inputs to the spectral WCS - one expetced, two were passed. [#3827]
 
@@ -33,6 +52,12 @@ calwebb_tso3
 
 - Update to exclude target_acquisitions from processing in the calwebb_tso3 pipeline [#3759]
 
+cube_build
+----------
+
+- Schema for the ``WAVE-TAB`` WCS no longer requires fixed-length arrays for
+  the wavelength "coordinates". The ``'nelem'`` field therefore is no longer
+  necessary and has been removed. [#3976]
 
 datamodels
 ----------
@@ -50,6 +75,19 @@ datamodels
 
 - Updated multiexposure.schema to just import slitdata.schema instead of explicitly
   specifying all of its attributes. [#3809]
+
+- Improved ``properties._cast()`` to be able to handle structured arrays
+  schemas without a specified (in schema) shape. In addition, ``ndim``
+  can be used to constrain the dimensionality of data in structured array
+  fields. [#3976]
+
+- Fixed an issue with the fix from [#3976] that was affecting "casting" to
+  data types defined by schema of structured arrays when input values are not
+  native Python types (tuples). [#3995]
+
+- Fixed an issue with the fix from [#3995] that was affecting "casting" to
+  data types defined by schema of structured arrays when input values are
+  already structured arrays. [#4030]
 
 exp_to_source
 -------------
@@ -87,6 +125,9 @@ flat_field
   direction.  The step now gets that information from keyword DISPAXIS.
   [#3799, #3807]
 
+- The test_flatfield_step_interface unit test in test_flatfield.py has been
+  temporarily disabled. [#3997]
+
 gain_scale
 ----------
 
@@ -107,6 +148,11 @@ master_background
 
 - Updated the documentation to include more details. [#3776]
 
+photom
+------
+
+- Add unit tests [#4022]
+
 resample_spec
 -------------
 
@@ -117,11 +163,18 @@ stpipe
 
 - Fix ``Step.print_configspec()`` method.  Add test.  [#3768]
 
+tso_photometry
+--------------
+
+- Unit tests were added to tso_photometry. [#3909]
+
 tweakreg
 --------
 
 - removed original ``jwst.tweakreg`` alignment code and changed step's code
   to call similar functionality from ``tweakwcs`` package. [#3689]
+
+- Fix deprecated call to photutils.detect_threshold [#3982]
 
 
 0.13.7 (2019-06-21)
@@ -280,6 +333,11 @@ resample
 --------
 
 - Changed default value of good_pixel from 4 to 6 [#3638]
+
+wfs_combine
+-----------
+
+- Allow handling of non-science members in input associations [#3947]
 
 
 0.13.3 (2019-06-04)

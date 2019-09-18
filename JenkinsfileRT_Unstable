@@ -1,6 +1,17 @@
 // [skip ci] and [ci skip] have no effect here.
 if (utils.scm_checkout(['skip_disable':true])) return
 
+def PipInject(String reqs) {
+    def result = []
+    if (reqs.trim().isEmpty()) {
+	return result
+    }
+    for (req in reqs.split('\n')) {
+        result += "pip install $req"
+    }
+    return result
+}
+
 withCredentials([string(
     credentialsId: 'jwst-codecov',
     variable: 'codecov_token')]) {
@@ -33,21 +44,23 @@ data_config.root = '${PYTEST_BASETEMP}'
 data_config.match_prefix = '(.*)_result' // .json is appended automatically
 
 
-// Build and test with python 3.6 and released dependencies from astroconda
+// Build and test with python 3.6 and unreleased dependencies
 bc0 = new BuildConfig()
 bc0.nodetype = 'jwst'
-bc0.name = 'stable-deps'
+bc0.name = 'unstable-deps'
 bc0.env_vars = env_vars
 bc0.conda_ver = '4.6.14'
 bc0.conda_packages = [
     "python=${python_version}",
 ]
 bc0.build_cmds = [
+    "pip install -r requirements-dev.txt",
     "pip install -e .[test,ephem]",
     "pip install pytest-xdist",
 ]
+bc0.build_cmds = PipInject(env.OVERRIDE_REQUIREMENTS) + bc0.build_cmds
 bc0.test_cmds = [
-    "pytest --cov=./ -r sxf -n 30 --bigdata --slow \
+    "pytest --cov=./ -r sx -v -n 30 --bigdata --slow \
     --basetemp=${pytest_basetemp}  --junit-xml=results.xml \
     --log-level=INFO \
     jwst",
@@ -61,8 +74,12 @@ bc0.test_configs = [data_config]
 // which is why this is needed.
 bc1 = utils.copy(bc0)
 bc1.nodetype = 'macos'
-bc1.name = 'macos-stable-deps'
-bc1.build_cmds = ["pip install -e .[test]"]
+bc1.name = 'macos-unstable-deps'
+bc1.build_cmds = [
+    "pip install -r requirements-dev.txt",
+    "pip install -e .[test]",
+]
+bc1.build_cmds = PipInject(env.OVERRIDE_REQUIREMENTS) + bc1.build_cmds
 bc1.test_cmds = []
 bc1.test_configs = []
 

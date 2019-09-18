@@ -209,7 +209,7 @@ def extract_tso_object(input_model,
                         input_model.meta.wcsinfo.dispersion_direction
             if compute_wavelength:
                 output_model.wavelength = compute_wavelength_array(output_model)
-            output_model.name = str('TSO object')
+            output_model.name = 'TSO object'
             output_model.xstart = 1  # fits pixels
             output_model.xsize = ext_data.shape[2]
             output_model.ystart = 1  # fits pixels

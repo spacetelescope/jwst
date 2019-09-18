@@ -1014,7 +1014,9 @@ def test_nirspec_fs():
         wl = slit.wavelength[iy, ix]
         rel_resp = np.interp(wl, wavelength, relresponse,
                              left=np.nan, right=np.nan)
+
         compare = photmjsr * rel_resp
+
         # Compare the values at the center pixel.
         ratio = output[iy, ix] / input[iy, ix]
         result.append(np.allclose(ratio, compare, rtol=1.e-7))
@@ -1077,6 +1079,7 @@ def test_nirspec_bright():
                          left=np.nan, right=np.nan)
 
     compare = photmjsr * rel_resp
+
     ratio = output[:, iy, ix] / input[:, iy, ix]
     result = []
     result.append(np.allclose(ratio, compare, rtol=1.e-7))
@@ -1136,6 +1139,7 @@ def test_nirspec_msa():
         wl = slit.wavelength[iy, ix]
         rel_resp = np.interp(wl, wavelength, relresponse,
                              left=np.nan, right=np.nan)
+
         compare = photmjsr * rel_resp
 
         ratio = output[iy, ix] / input[iy, ix]
@@ -1181,7 +1185,9 @@ def test_niriss_wfss():
         wl = slit.wavelength[iy, ix]
         rel_resp = np.interp(wl, wavelength, relresponse,
                              left=np.nan, right=np.nan)
+
         compare = photmjsr * rel_resp
+
         # Compare the values at the center pixel.
         ratio = output[iy, ix] / input[iy, ix]
         result.append(np.allclose(ratio, compare, rtol=1.e-7))
@@ -1214,7 +1220,9 @@ def test_niriss_soss():
     wl = input_model.wavelength[iy, ix]
     rel_resp = np.interp(wl, wavelength, relresponse,
                          left=np.nan, right=np.nan)
+
     compare = photmjsr * rel_resp
+
     # Compare the values at the center pixel.
     ratio = output[iy, ix] / input[iy, ix]
     assert(np.allclose(ratio, compare, rtol=1.e-7))
@@ -1274,8 +1282,9 @@ def test_miri_mrs():
                                ds.input.meta.photometry.conversion_microjanskys,
                                rel_tol=1.e-12))
     # Check the data values.
+
     compare = value * pixel_area
-    # xxx compare = value / pixel_area
+
     ratio = output[iy, ix] / input[iy, ix]
     result.append(math.isclose(ratio, compare, rel_tol=1.e-7))
     assert np.alltrue(result)
@@ -1307,8 +1316,9 @@ def test_miri_lrs():
     wl = input_model.wavelength[iy, ix]
     rel_resp = np.interp(wl, wavelength, relresponse,
                          left=np.nan, right=np.nan)
-    # change `compare` to photmjsr * rel_resp.
+
     compare = photmjsr * rel_resp
+
     # Compare the values at the center pixel.
     ratio = output[iy, ix] / input[iy, ix]
     assert(np.allclose(ratio, compare, rtol=1.e-7))
@@ -1393,7 +1403,9 @@ def test_nircam_spec():
         wl = slit.wavelength[iy, ix]
         rel_resp = np.interp(wl, wavelength, relresponse,
                              left=np.nan, right=np.nan)
+
         compare = photmjsr * rel_resp
+
         # Compare the values at the center pixel.
         ratio = output[iy, ix] / input[iy, ix]
         assert(np.allclose(ratio, compare, rtol=1.e-7))

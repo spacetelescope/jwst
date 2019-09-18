@@ -68,7 +68,7 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner,
 
     if sub64p_wlp8:
         info = ('Photometry measured as the sum of all values in the '
-               'subarray.  No background subtraction was performed.')
+                'subarray.  No background subtraction was performed.')
 
         for i in np.arange(nimg):
             aperture_sum.append(np.sum(datamodel.data[i, :, :]))
@@ -149,7 +149,8 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner,
             log.debug("Times are from the INT_TIMES table.")
             time_arr = mid_utc[offset: offset + num_integ]
             int_times = Time(time_arr, format='mjd', scale='utc')
-    else:
+
+    if nrows == 0:
         log.debug("Times were computed from EXPSTART and TGROUP.")
 
         dt = (datamodel.meta.exposure.group_time *

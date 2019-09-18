@@ -247,7 +247,7 @@ def create_closed_closed():
 
     The array to use as shutter_elements['closed_closed']
     """
-    return 0.01*np.ones(500)
+    return 0.01 * np.ones((501, 101))
 
 
 def create_last(shadow1x1):
@@ -463,7 +463,7 @@ def interpolate(rows, columns, array, default=np.nan):
                 iy = int(array_row)
                 a11 = augmented_array[iy, ix]
                 a12 = augmented_array[iy, ix+1]
-                a21 = augmented_array[iy+1, ix+1]
+                a21 = augmented_array[iy+1, ix]
                 a22 = augmented_array[iy+1, ix+1]
                 dx = array_column - ix
                 dy = array_row - iy

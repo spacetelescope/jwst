@@ -2,6 +2,7 @@ JWST Calibration Pipeline
 =========================
 [![Documentation Status](https://readthedocs.org/projects/jwst-pipeline/badge/?version=latest)](http://jwst-pipeline.readthedocs.io/en/latest/?badge=latest)
 [![Build Status](https://travis-ci.org/spacetelescope/jwst.svg?branch=master)](https://travis-ci.org/spacetelescope/jwst)
+[![codecov](https://codecov.io/gh/spacetelescope/jwst/branch/master/graph/badge.svg)](https://codecov.io/gh/spacetelescope/jwst)
 [![Powered by STScI Badge](https://img.shields.io/badge/powered%20by-STScI-blue.svg?colorA=707170&colorB=3e8ddd&style=flat)](http://www.stsci.edu)
 [![Powered by Astropy Badge](http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](http://www.astropy.org/)
 
@@ -14,19 +15,23 @@ Installation
 
 The ``jwst`` package can be installed into a virtualenv or conda environment via ``pip``.  We recommend creating a fresh environment with only python installed.  Via conda:
 
-    conda create -n jwst_env python=3.6
+    conda create -n jwst_env python
     conda activate jwst_env
 
 ### Installing for end-users ###
 
-To install a released (tagged) version, you can install directly from Github.  To install tagged release ``jwst 0.13.7``:
+To install a released (tagged) version, you can install directly from Github.  To install tagged release ``jwst 0.13.8``:
 
     pip install numpy
-    pip install git+https://github.com/spacetelescope/jwst#0.13.7
+    pip install git+https://github.com/spacetelescope/jwst@0.13.8
 
-The same can be done to install the latest development version (from ``master``):
+The latest development version (from ``master``) can also be installed from Github:
 
     pip install git+https://github.com/spacetelescope/jwst
+
+As can a particular commit hash:
+
+    pip install git+https://github.com/spacetelescope/jwst@3f03323c
 
 ### Installing a DMS release ###
 
@@ -50,6 +55,8 @@ Fork and clone the repo:
 
     git clone https://github.com/spacetelescope/jwst
     cd jwst
+
+*Note: `python setup.py install` and `python setup.py develop` commands do not work.*
 
 Install from your local checked out copy as an "editable" install:
 
