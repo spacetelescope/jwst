@@ -525,9 +525,15 @@ class Step():
         a new instance but simply runs the existing instance of the `Step`
         class.
         """
+        logger_name = cls.pars_model.instance['parameters']['name']
+        log_cls = log.getLogger(logger_name)
         spec = cls.load_spec_file(preserve_comments=True)
-        filename = args[0]
-        crds_config = cls.get_config_from_reference(filename)
+        if len(args) > 0:
+            filename = args[0]
+            crds_config = cls.get_config_from_reference(filename)
+        else:
+            log_cls.info("No filename given, cannot retrieve config from CRDS")
+            crds_config = {}
         if 'config_file' in kwargs:
             config_file = kwargs['config_file']
             del kwargs['config_file']
@@ -540,8 +546,6 @@ class Step():
             del crds_config['class']
         if 'name' in crds_config:
             del crds_config['name']
-
-        config_parser.validate(crds_config, spec)
 
         instance = cls(**crds_config)
 

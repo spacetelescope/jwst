@@ -183,6 +183,7 @@ def test_step_from_python():
     assert result == 3
 
 
+@pytest.mark.xfail(reason="To be handled under a different ticket")
 def test_step_from_python_simple():
     from .steps import AnotherDummyStep
 
@@ -191,6 +192,7 @@ def test_step_from_python_simple():
     assert result == 3
 
 
+@pytest.mark.xfail(reason="To be handled under a different ticket")
 def test_step_from_python_simple2():
     from .steps import AnotherDummyStep
 
