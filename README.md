@@ -68,6 +68,10 @@ If you want to run the tests and/or build the docs, you can make sure those depe
     pip install -e .[test]
     pip install -e .[docs]
     pip install -e .[test,docs]
+    
+Note: If you wish to install directly from github, but also include the extra dependencies, the syntax is as follows:
+
+    pip install "jwst[test] @ git+https://github.com/spacetelescope/jwst"
 
 Need other useful packages in your development environment?
 
