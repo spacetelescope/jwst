@@ -527,7 +527,6 @@ class Step():
         """
         logger_name = cls.pars_model.instance['parameters']['name']
         log_cls = log.getLogger(logger_name)
-        spec = cls.load_spec_file(preserve_comments=True)
         if len(args) > 0:
             filename = args[0]
             crds_config = cls.get_config_from_reference(filename)
