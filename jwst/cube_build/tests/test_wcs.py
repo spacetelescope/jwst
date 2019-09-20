@@ -173,15 +173,15 @@ def test_setup_wcs():
     footprint = (ra_min, ra_max, dec_min, dec_max, lambda_min, lambda_max)
 
     pars_cube = {
-        'scale1': None,
-        'scale2': None,
-        'scalew': None,
+        'scale1': 0.0,
+        'scale2': 0.0,
+        'scalew': 0.0,
         'interpolation': 'pointcloud',
         'weighting': 'msm',
         'weight_power': 2,
         'coord_system': 'world',
-        'rois': None,
-        'roiw': None,
+        'rois': 0.0,
+        'roiw': 0.0,
         'wavemin': lambda_min,
         'wavemax': lambda_max,
         'skip_dqflagging': False,
