@@ -37,7 +37,7 @@ def test_ami_analyze_no_reffile_fail(monkeypatch):
     model.meta.observation.date = "2019-01-01"
     model.meta.observation.time = "00:00:00"
 
-    def mockreturn(input_model, reftype):
+    def mockreturn(input_model, reftype, observatory=None):
         return("N/A")
     monkeypatch.setattr(jwst.stpipe.crds_client, 'get_reference_file', mockreturn)
 

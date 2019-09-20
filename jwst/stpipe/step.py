@@ -282,7 +282,7 @@ class Step():
         self._reference_files_used = []
         self._input_filename = None
         self._input_dir = None
-
+        self._keywords = kws
         if _validate_kwds:
             spec = self.load_spec_file()
             kws = config_parser.config_from_dict(
@@ -504,6 +504,8 @@ class Step():
         """
         Creates and runs a new instance of the class.
 
+        Gets a config file from CRDS if one is available
+
         To set configuration parameters, pass a `config_file` path or
         keyword arguments.  Keyword arguments override those in the
         specified `config_file`.
@@ -523,19 +525,31 @@ class Step():
         a new instance but simply runs the existing instance of the `Step`
         class.
         """
+        logger_name = cls.pars_model.instance['parameters']['name']
+        log_cls = log.getLogger(logger_name)
+        if len(args) > 0:
+            filename = args[0]
+            crds_config = cls.get_config_from_reference(filename)
+        else:
+            log_cls.info("No filename given, cannot retrieve config from CRDS")
+            crds_config = {}
         if 'config_file' in kwargs:
             config_file = kwargs['config_file']
             del kwargs['config_file']
-            config = config_parser.load_config_file(config_file)
-            auto_cls, name = cls._parse_class_and_name(config)
-            config.update(kwargs)
-            instance = cls.from_config_section(
-                config, name=name, config_file=config_file)
-        else:
-            instance = cls(**kwargs)
+            config_from_file = config_parser.load_config_file(config_file)
+            crds_config.update(config_from_file)
+
+        crds_config.update(kwargs)
+
+        if 'class' in crds_config:
+            del crds_config['class']
+        if 'name' in crds_config:
+            del crds_config['name']
+
+        instance = cls(**crds_config)
 
         try:
-            instance._pars_model = config.pars_model
+            instance._pars_model = crds_config.pars_model
         except (AttributeError, UnboundLocalError):
             pass
 
@@ -709,10 +723,12 @@ class Step():
         except exceptions.CrdsLookupError:
             cls.log.info('\tNo parameters found')
             return config_parser.ConfigObj()
-
-        cls.log.info(f'\tReference parameters found: {ref_file}')
-        ref = config_parser.load_config_file(ref_file)
-        return ref
+        if ref_file != 'N/A':
+            cls.log.info(f'\tReference parameters found: {ref_file}')
+            ref = config_parser.load_config_file(ref_file)
+            return ref
+        else:
+            return config_parser.ConfigObj()
 
     @classmethod
     def reference_uri_to_cache_path(cls, reference_uri):
