@@ -18,6 +18,9 @@ assign_wcs
 
 associations
 ------------
+
+- Fix in load_as_asn for UTF-8 errors [#3942]
+
 - asn_from_list fills the level2  member exptype correctly if the input is a tuple [#2942]
 
 - Update rules to make level 3 associations for slitless LRS mode [#3940]
