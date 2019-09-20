@@ -730,7 +730,6 @@ class Step():
         else:
             return config_parser.ConfigObj()
 
-
     @classmethod
     def reference_uri_to_cache_path(cls, reference_uri):
         """Convert an abstract CRDS reference URI to an absolute file path in the CRDS
