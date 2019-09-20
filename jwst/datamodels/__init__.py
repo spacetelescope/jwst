@@ -41,9 +41,9 @@ from .nirspec_flat import NirspecFlatModel, NirspecQuadFlatModel
 from .outlierpars import OutlierParsModel
 from .pathloss import PathlossModel
 from .persat import PersistenceSatModel
-from .photom import PhotomModel, FgsPhotomModel, NircamPhotomModel, NirissPhotomModel
+from .photom import PhotomModel, FgsPhotomModel, NircamPhotomModel, NrcImgPhotomModel, NirissPhotomModel, NisImgPhotomModel
 from .photom import NirspecPhotomModel, NirspecFSPhotomModel
-from .photom import MiriImgPhotomModel, MiriMrsPhotomModel
+from .photom import MiriImgPhotomModel, MirImgPhotomModel, MiriMrsPhotomModel
 from .pixelarea import PixelAreaModel, NirspecSlitAreaModel, NirspecMosAreaModel, NirspecIfuAreaModel
 from .psfmask import PsfMaskModel
 from .quad import QuadModel
