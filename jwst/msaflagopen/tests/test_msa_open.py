@@ -78,10 +78,10 @@ def test_create_slitlets():
 
 def test_wcs_to_dq():
     """Test that non nan values are assigned the values of flags"""
-    
+
     # Make data array
     wcs_array = np.random.randn(100,100)
-    
+
     # Put in some nans randomly in the data.
     wcs_array.ravel()[np.random.choice(wcs_array.size, 100, replace=False)] = np.nan
 
@@ -95,6 +95,16 @@ def test_wcs_to_dq():
     # of FLAG.
     assert (all(x == 0 for x in result[nans]))
     assert (all(x == FLAG for x in result[non_nan]))
+
+def test_boundingbox_from_indices():
+    dm = ImageModel()
+    dm.data = np.ones((10,10))
+
+    bbox = ((1,2), (3,4))
+
+    result = boundingbox_to_indices(dm, bbox)
+
+    assert (result == (1, 3, 3, 5))
 
 @pytest.mark.skip()
 def test_flag():
