@@ -724,10 +724,13 @@ class Step():
         except exceptions.CrdsLookupError:
             cls.log.info('\tNo parameters found')
             return config_parser.ConfigObj()
+        if ref_file != 'N/A':
+            cls.log.info(f'\tReference parameters found: {ref_file}')
+            ref = config_parser.load_config_file(ref_file)
+            return ref
+        else:
+            return config_parser.ConfigObj()
 
-        cls.log.info(f'\tReference parameters found: {ref_file}')
-        ref = config_parser.load_config_file(ref_file)
-        return ref
 
     @classmethod
     def reference_uri_to_cache_path(cls, reference_uri):

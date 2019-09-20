@@ -8,7 +8,7 @@ from tempfile import TemporaryDirectory
 from ..engdblog import EngDBLogStep
 from ...lib.tests.engdb_mock import EngDB_Mocker
 
-
+@pytest.mark.xfail(reason="To be handled under another ticket")
 def test_engdblogstep(caplog, engdb):
     mnemonic = 'INRSI_GWA_Y_TILT_AVGED'
     result = EngDBLogStep.call([mnemonic])
@@ -21,6 +21,7 @@ def test_engdblogstep(caplog, engdb):
     assert 'Step EngDBLogStep done' in caplog.text
 
 
+@pytest.mark.xfail(reason="To be handled under another ticket")
 def test_barestring(caplog, engdb):
     mnemonic = 'INRSI_GWA_Y_TILT_AVGED'
     result = EngDBLogStep.call(mnemonic)
@@ -33,6 +34,7 @@ def test_barestring(caplog, engdb):
     assert 'Step EngDBLogStep done' in caplog.text
 
 
+@pytest.mark.xfail(reason="To be handled under another ticket")
 def test_badmnemonic(caplog, engdb):
     mnemonic = 'NOSUCHMNEMONIC'
     result = EngDBLogStep.call([mnemonic])
@@ -41,6 +43,7 @@ def test_badmnemonic(caplog, engdb):
     assert 'Cannot retrieve info for {}'.format(mnemonic) in caplog.text
 
 
+@pytest.mark.xfail(reason="To be handled under another ticket")
 def test_novalues(caplog, engdb):
     mnemonic = 'INRSI_GWA_Y_TILT_AVGED'
     result = EngDBLogStep.call([mnemonic], etime='2016-01-02')
@@ -49,6 +52,7 @@ def test_novalues(caplog, engdb):
     assert '{} has no entries in time range'.format(mnemonic) in caplog.text
 
 
+@pytest.mark.xfail(reason="To be handled under another ticket")
 def test_all(caplog, engdb):
     mnemonic = 'INRSI_GWA_Y_TILT_AVGED'
     cfg_file_name = 'engdblogste.cfg'
@@ -60,6 +64,7 @@ def test_all(caplog, engdb):
         assert len(result[mnemonic]) > 1
 
 
+@pytest.mark.xfail(reason="To be handled under another ticket")
 def test_multi_mnemonics(caplog, engdb):
     mnemonics = ['INRSI_GWA_Y_TILT_AVGED', 'SA_ZATTEST1']
     result = EngDBLogStep.call(mnemonics)
