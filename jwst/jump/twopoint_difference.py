@@ -202,7 +202,7 @@ def get_clipped_median(num_differences, diffs_to_ignore, differences, sorted_ind
         pixel_med_index2[even_group_rows, even_group_cols] = sorted_index[even_group_rows,
                                                                           even_group_cols,
                                                                           (num_differences
-                                                                           - (diffs_to_ignore[even_group_rows, 
+                                                                           - (diffs_to_ignore[even_group_rows,
                                                                                               even_group_cols] + 3))//2]
         # Average together the two central values
         pixel_med_diff[even_group_rows, even_group_cols] = (pixel_med_diff[even_group_rows, even_group_cols] +
