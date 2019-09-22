@@ -5,7 +5,6 @@ Unit test for Cube Build testing setting up configuration
 import pytest
 
 from jwst import datamodels
-from jwst.mrs_imatch.mrs_imatch_step import MRSIMatchStep
 from jwst.assign_wcs import AssignWcsStep
 from jwst.mrs_imatch.mrs_imatch_step import apply_background_2d
 import numpy as np
@@ -84,12 +83,11 @@ def miri_dither_ch12():
     input_models.append(input_model2)
     input_models.append(input_model3)
     input_models.append(input_model4)
-
     return input_models
 
 
 def test_apply_background_2d(_jail, miri_dither_ch12):
-    """ Test if background subtract set or background exist correct thing is done"""
+    """ Test if  background polynomial is set it is subtracted correctly"""
 
     all_models = datamodels.ModelContainer(miri_dither_ch12)
 
