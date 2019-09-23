@@ -68,6 +68,10 @@ If you want to run the tests and/or build the docs, you can make sure those depe
     pip install -e .[test]
     pip install -e .[docs]
     pip install -e .[test,docs]
+    
+Note: If you wish to install directly from github, but also include the extra dependencies, the syntax is as follows:
+
+    pip install "jwst[test] @ git+https://github.com/spacetelescope/jwst"
 
 Need other useful packages in your development environment?
 
@@ -111,6 +115,7 @@ Software vs DMS build version map
 
 | jwst tag | DMS build | CRDS_CONTEXT |   Date     |          Notes                           |
 | -------- | --------- | ------------ | ---------- | -----------------------------------------|
+|  0.13.8  | B7.3.1    | 0541         | 09/05/2019 | Patch for Build 7.3 released as Build 7.3.1     |
 |  0.13.7  | B7.3      | 0535         | 06/21/2019 | Final release candidate for Build 7.3    |
 |  0.13.6  | B7.3rc4   | 0534         | 06/20/2019 | Fourth release candidate for Build 7.3   |
 |  0.13.5  | B7.3rc3   | 0534         | 06/19/2019 | Third release candidate for Build 7.3    |

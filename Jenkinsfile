@@ -53,5 +53,17 @@ bc2.test_cmds = [
     "codecov --token=${codecov_token}"
 ]
 
-utils.run([bc0, bc1, bc2])
+
+// Audit code with bandit
+bc3 = new BuildConfig()
+bc3.nodetype = 'python3.7'
+bc3.name = 'security-audit'
+bc3.build_cmds = [
+    "pip install -e .[test] bandit",
+]
+bc3.test_cmds = [
+    "bandit --exclude 'jwst/*test*' -r jwst scripts",
+]
+
+utils.run([bc0, bc1, bc2, bc3])
 }  // withCredentials

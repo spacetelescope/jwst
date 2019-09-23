@@ -285,6 +285,104 @@ def test_7grps_1cr(setup_cube):
     assert(4 == out_gdq[0, 6,100,100])
     assert(11.5 == median_diff[0, 100, 100])
 
+def test_8grps_1cr(setup_cube):
+    ngroups = 8
+    data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups,readnoise=10)
+    nframes = 1
+    data[0, 0, 100, 100] = 0
+    data[0, 1, 100, 100] = 10
+    data[0, 2, 100, 100] = 21
+    data[0, 3, 100, 100] = 33
+    data[0, 4, 100, 100] = 46
+    data[0, 5, 100, 100] = 60
+    data[0, 6, 100, 100] = 1160
+    data[0, 7, 100, 100] = 1175
+    median_diff, out_gdq = find_crs(data, gdq, read_noise, rej_threshold, nframes)
+    assert(4 == out_gdq[0, 6,100,100])
+    assert(12.0 == median_diff[0, 100, 100])
+
+def test_9grps_1cr_1sat(setup_cube):
+    ngroups = 9
+    data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups,readnoise=10)
+    nframes = 1
+    data[0, 0, 100, 100] = 0
+    data[0, 1, 100, 100] = 10
+    data[0, 2, 100, 100] = 21
+    data[0, 3, 100, 100] = 33
+    data[0, 4, 100, 100] = 46
+    data[0, 5, 100, 100] = 60
+    data[0, 6, 100, 100] = 1160
+    data[0, 7, 100, 100] = 1175
+    data[0, 8, 100, 100] = 6175
+    gdq[0, 8, 100, 100] = dqflags.group['SATURATED']
+    median_diff, out_gdq = find_crs(data, gdq, read_noise, rej_threshold, nframes)
+    assert(4 == out_gdq[0, 6,100,100])
+    assert(12.0 == median_diff[0, 100, 100])
+
+def test_10grps_1cr_2sat(setup_cube):
+    ngroups = 10
+    data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups,readnoise=10)
+    nframes = 1
+    data[0, 0, 100, 100] = 0
+    data[0, 1, 100, 100] = 10
+    data[0, 2, 100, 100] = 21
+    data[0, 3, 100, 100] = 33
+    data[0, 4, 100, 100] = 46
+    data[0, 5, 100, 100] = 60
+    data[0, 6, 100, 100] = 1160
+    data[0, 7, 100, 100] = 1175
+    data[0, 8, 100, 100] = 6175
+    data[0, 9, 100, 100] = 6175
+    gdq[0, 8, 100, 100] = dqflags.group['SATURATED']
+    gdq[0, 9, 100, 100] = dqflags.group['SATURATED']
+    median_diff, out_gdq = find_crs(data, gdq, read_noise, rej_threshold, nframes)
+    assert(4 == out_gdq[0, 6,100,100])
+    assert(12.0 == median_diff[0, 100, 100])
+
+def test_11grps_1cr_3sat(setup_cube):
+    ngroups = 11
+    data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups,readnoise=10)
+    nframes = 1
+    data[0, 0, 100, 100] = 0
+    data[0, 1, 100, 100] = 20
+    data[0, 2, 100, 100] = 39
+    data[0, 3, 100, 100] = 57
+    data[0, 4, 100, 100] = 74
+    data[0, 5, 100, 100] = 90
+    data[0, 6, 100, 100] = 1160
+    data[0, 7, 100, 100] = 1175
+    data[0, 8, 100, 100] = 6175
+    data[0, 9, 100, 100] = 6175
+    data[0, 10, 100, 100] = 6175
+    gdq[0, 8, 100, 100] = dqflags.group['SATURATED']
+    gdq[0, 9, 100, 100] = dqflags.group['SATURATED']
+    gdq[0, 10, 100, 100] = dqflags.group['SATURATED']
+    median_diff, out_gdq = find_crs(data, gdq, read_noise, rej_threshold, nframes)
+    assert(4 == out_gdq[0, 6,100,100])
+    assert(17.0 == median_diff[0, 100, 100])
+
+def test_11grps_0cr_3donotuse(setup_cube):
+    ngroups = 11
+    data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups,readnoise=10)
+    nframes = 1
+    data[0, 0, 100, 100] = 0
+    data[0, 1, 100, 100] = 18
+    data[0, 2, 100, 100] = 39
+    data[0, 3, 100, 100] = 57
+    data[0, 4, 100, 100] = 74
+    data[0, 5, 100, 100] = 90
+    data[0, 6, 100, 100] = 115
+    data[0, 7, 100, 100] = 131
+    data[0, 8, 100, 100] = 150
+    data[0, 9, 100, 100] = 6175
+    data[0, 10, 100, 100] = 6175
+    gdq[0, 0, 100, 100] = dqflags.group['DO_NOT_USE']
+    gdq[0, 9, 100, 100] = dqflags.group['DO_NOT_USE']
+    gdq[0, 10, 100, 100] = dqflags.group['DO_NOT_USE']
+    median_diff, out_gdq = find_crs(data, gdq, read_noise, rej_threshold, nframes)
+    assert (np.array_equal([0, 0, 0, 0, 0, 0, 0, 0], out_gdq[0, 1:-2, 100, 100]))
+    assert(median_diff[0, 100, 100] == 17.5)
+
 def test_5grps_nocr(setup_cube):
     ngroups = 6
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups,readnoise=10)
@@ -446,7 +544,7 @@ def test_6grps_satat6_crat1_flagadjpixels(setup_cube):
     gdq[0, 5, 100, 100] = dqflags.group['SATURATED']
     median_diff, out_gdq = find_crs(data, gdq, read_noise, rej_threshold, nframes)
     # assert(4 == np.max(out_gdq))  # no CR was found
-    assert (np.array_equal([0, dqflags.group['JUMP_DET'], 0,0,0, dqflags.group['SATURATED']], out_gdq[0, :, 100, 100]))
+    assert (np.array_equal([0, dqflags.group['JUMP_DET'], 0, 0, 0, dqflags.group['SATURATED']], out_gdq[0, :, 100, 100]))
     assert (np.array_equal([0, dqflags.group['JUMP_DET'], 0, 0, 0, dqflags.group['SATURATED']], out_gdq[0, :, 99, 100]))
     assert (np.array_equal([0, dqflags.group['JUMP_DET'], 0, 0, 0, dqflags.group['SATURATED']], out_gdq[0, :, 101, 100]))
     assert (np.array_equal([0, dqflags.group['JUMP_DET'], 0, 0, 0, dqflags.group['SATURATED']], out_gdq[0, :, 100, 99]))
@@ -473,6 +571,69 @@ def test_10grps_satat8_crsat3and6(setup_cube):
         [0, 0, dqflags.group['JUMP_DET'], 0, 0, dqflags.group['JUMP_DET'], 0,
             dqflags.group['SATURATED'], dqflags.group['SATURATED'], dqflags.group['SATURATED']],
         out_gdq[0, :, 100, 100])
+
+def test_median_with_saturation(setup_cube):
+    ngroups = 10
+    #crmag = 1000
+    data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups, readnoise=5 * np.sqrt(2))
+    nframes=1
+    data[0, 0, 100, 100] = 0
+    data[0, 1, 100, 100] = 4500
+    data[0, 2, 100, 100] = 9100
+    data[0, 3, 100, 100] = 13800
+    data[0, 4, 100, 100] = 18600
+    data[0, 5, 100, 100] = 40000 #CR
+    data[0, 6, 100, 100] = 44850
+    data[0, 7, 100, 100] = 49900
+    data[0, 8:10, 100, 100] = 60000
+    gdq[0, 7:10, 100, 100] = dqflags.group['SATURATED']
+    print(np.diff(data[0,:,100,100]))
+    median_diff, out_gdq = find_crs(data, gdq, read_noise, rej_threshold, nframes)
+    print(median_diff.shape)
+    assert (np.array_equal([0, 0, 0, 0, 0, 4, 0, 2, 2, 2], out_gdq[0, :, 100, 100]))
+    assert (median_diff[0, 100, 100] == 4650)
+
+def test_median_with_saturation_even_num_sat_frames(setup_cube):
+    ngroups = 10
+    #crmag = 1000
+    data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups, readnoise=5 * np.sqrt(2))
+    nframes=1
+    data[0, 0, 100, 100] = 0
+    data[0, 1, 100, 100] = 4500
+    data[0, 2, 100, 100] = 9100
+    data[0, 3, 100, 100] = 13800
+    data[0, 4, 100, 100] = 18600
+    data[0, 5, 100, 100] = 40000 #CR
+    data[0, 6, 100, 100] = 44850
+    data[0, 7, 100, 100] = 49900
+    data[0, 8:10, 100, 100] = 60000
+    gdq[0, 6:10, 100, 100] = dqflags.group['SATURATED']
+    print(np.diff(data[0,:,100,100]))
+    median_diff, out_gdq = find_crs(data, gdq, read_noise, rej_threshold, nframes)
+    print(median_diff.shape)
+    assert (np.array_equal([0, 0, 0, 0, 0, 4, 2, 2, 2, 2], out_gdq[0, :, 100, 100]))
+    assert (median_diff[0, 100, 100] == 4600)
+
+def test_median_with_saturation_odd_number_final_difference(setup_cube):
+    ngroups = 9
+    #crmag = 1000
+    data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups, readnoise=5 * np.sqrt(2))
+    nframes=1
+    data[0, 0, 100, 100] = 0
+    data[0, 1, 100, 100] = 4500
+    data[0, 2, 100, 100] = 9100
+    data[0, 3, 100, 100] = 13800
+    data[0, 4, 100, 100] = 18600
+    data[0, 5, 100, 100] = 40000 #CR
+    data[0, 6, 100, 100] = 44850
+    data[0, 7, 100, 100] = 49900
+    data[0, 8:9, 100, 100] = 60000
+    gdq[0, 6:9, 100, 100] = dqflags.group['SATURATED']
+    print(np.diff(data[0,:,100,100]))
+    median_diff, out_gdq = find_crs(data, gdq, read_noise, rej_threshold, nframes)
+    print(median_diff.shape)
+    assert (np.array_equal([0, 0, 0, 0, 0, 4, 2, 2, 2], out_gdq[0, :, 100, 100]))
+    assert (median_diff[0, 100, 100] == 4600)
 
 
 def test_first_last_group(setup_cube):

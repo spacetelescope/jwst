@@ -92,6 +92,9 @@ datamodels
   data types defined by schema of structured arrays when input values are
   already structured arrays. [#4030]
 
+- Added "MIR_TACONFIRM" to the list of allowed EXP_TYPE values in the
+  keyword schemas. [#4039]
+
 exp_to_source
 -------------
 
