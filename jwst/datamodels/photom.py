@@ -244,7 +244,30 @@ class MiriMrsPhotomModel(PhotomModel):
 
         self.dq = dynamic_mask(self)
 
-class FgsPhotomModel(ReferenceFileModel):
+
+class FgsPhotomModel(PhotomModel):
+    """
+    A data model for FGS photom reference files.
+
+    Parameters
+    __________
+    phot_table : numpy table
+        Photometric flux conversion factors table
+        A table-like object containing row selection criteria made up
+        of instrument mode parameters and photometric conversion
+        factors associated with those modes.
+
+        - photmjsr: float32
+        - uncertainty: float32
+        - nelem: int16
+        - wavelength: float32[5000]
+        - relresponse: float32[5000]
+
+    """
+    schema_url = "fgs_photom.schema"
+
+
+class FgsImgPhotomModel(ReferenceFileModel):
     """
     A data model for FGS photom reference files.
 
@@ -260,4 +283,4 @@ class FgsPhotomModel(ReferenceFileModel):
         - uncertainty: float32
 
     """
-    schema_url = "fgs_photom.schema"
+    schema_url = "fgsimg_photom.schema"

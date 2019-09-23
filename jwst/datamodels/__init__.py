@@ -41,8 +41,8 @@ from .nirspec_flat import NirspecFlatModel, NirspecQuadFlatModel
 from .outlierpars import OutlierParsModel
 from .pathloss import PathlossModel
 from .persat import PersistenceSatModel
-from .photom import PhotomModel, FgsPhotomModel, NircamPhotomModel, NrcImgPhotomModel, NirissPhotomModel, NisImgPhotomModel
-from .photom import NirspecPhotomModel, NirspecFSPhotomModel
+from .photom import PhotomModel, FgsPhotomModel, FgsImgPhotomModel, NircamPhotomModel, NrcImgPhotomModel
+from .photom import NirissPhotomModel, NisImgPhotomModel, NirspecPhotomModel, NirspecFSPhotomModel
 from .photom import MiriImgPhotomModel, MirImgPhotomModel, MiriMrsPhotomModel
 from .pixelarea import PixelAreaModel, NirspecSlitAreaModel, NirspecMosAreaModel, NirspecIfuAreaModel
 from .psfmask import PsfMaskModel
@@ -103,7 +103,7 @@ __all__ = [
     'PathlossModel',
     'PersistenceSatModel',
     'PixelAreaModel', 'NirspecSlitAreaModel', 'NirspecMosAreaModel', 'NirspecIfuAreaModel',
-    'PhotomModel', 'FgsPhotomModel', 'MiriImgPhotomModel', 'MirImgPhotomModel', 'MiriMrsPhotomModel',
+    'PhotomModel', 'FgsPhotomModel', 'FgsImgPhotomModel', 'MiriImgPhotomModel', 'MirImgPhotomModel', 'MiriMrsPhotomModel',
     'NircamPhotomModel', 'NrcImgPhotomModel', 'NirissPhotomModel', 'NisImgPhotomModel',
     'NirspecPhotomModel', 'NirspecFSPhotomModel',
     'PsfMaskModel',

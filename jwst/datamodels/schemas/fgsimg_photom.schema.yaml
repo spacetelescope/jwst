@@ -1,6 +1,6 @@
 title: FGS photometric flux conversion data model
 allOf:
-- $ref: photom.schema.yaml
+- $ref: referencefile.schema.yaml
 - $ref: keyword_pixelarea.schema.yaml
 - type: object
   properties:
@@ -11,13 +11,5 @@ allOf:
       - name: photmjsr
         datatype: float32
       - name: uncertainty
-        datatype: float32
-      - name: nelem
-        datatype: int16
-      - name: wavelength
-        shape: [5000]
-        datatype: float32
-      - name: relresponse
-        shape: [5000]
         datatype: float32
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema
