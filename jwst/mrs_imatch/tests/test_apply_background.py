@@ -99,20 +99,25 @@ def test_apply_background_2d(_jail, miri_dither_ch12):
     center = (9.99999408089876, -4.668612949274985e-06, 4.889999912818894)
     poly = np.ndarray(9)
 
+    # run AssignWcsStep on first file and set wcs of other files to this
+
     channel = '1'
     for im, m in enumerate(all_models):
-        m = AssignWcsStep.call(m)
-
         if im == 0:
+            m = AssignWcsStep.call(m)
+            wcs1 = m.meta.wcs
             poly = [-2.50000000e+00, -6.66518331e-15,  5.67845589e-12, -1.23549218e-11,
                     3.26209108e-12, -5.43180357e-12, -2.54903452e-09,  6.21614553e-09]
         elif im == 1:
+            m.meta.wcs = wcs1
             poly = [-2.50000000e+00, -9.29031986e-15,  1.74437380e-12, -3.94894956e-12,
                      4.71729481e-13,  5.42031845e-13, -9.96151554e-10,  2.78281950e-09]
         elif im == 2:
+            m.meta.wcs = wcs1
             poly = [7.50000000e+00,  2.22921836e-14, -6.97131279e-12,  1.58336906e-11,
                      -5.43704212e-12,  6.79109678e-12,  2.63515372e-09, -8.00226976e-09]
         else:
+            m.meta.wcs = wcs1
             poly = [-2.50000000e+00, -6.33668043e-15, -4.51516905e-13,  4.70180795e-13,
                      1.70322157e-12, -1.90132506e-12,  9.10032350e-10, -9.96695272e-10]
 
