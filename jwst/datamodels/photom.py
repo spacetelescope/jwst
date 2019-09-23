@@ -55,7 +55,6 @@ class NrcImgPhotomModel(ReferenceFileModel):
 
         - filter: str[12]
         - pupil: str[12]
-        - order: int16
         - photmjsr: float32
         - uncertainty: float32
 
