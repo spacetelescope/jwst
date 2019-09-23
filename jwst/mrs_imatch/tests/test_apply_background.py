@@ -1,5 +1,5 @@
 """
-Unit test for Cube Build testing setting up configuration
+Unit test for mrs_imatch apply background
 """
 
 import pytest
