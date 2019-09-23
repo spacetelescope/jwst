@@ -856,21 +856,12 @@ def create_photom_fgs_image(value):
         An open data model for a NIRSpec fixed-slit photom reference file.
     """
 
-    nx = 3
-
     photmjsr = [value]
     uncertainty = [0.0]
-    nelem = [0]
-    wavelength = [1., 1., 1.]
-    relresponse = [0., 0., 0.]
 
     dtype = np.dtype([('photmjsr', '<f4'),
-                      ('uncertainty', '<f4'),
-                      ('nelem', '<i2'),
-                      ('wavelength', '<f4', (nx,)),
-                      ('relresponse', '<f4', (nx,))])
-    reftab = np.array(list(zip(photmjsr, uncertainty, nelem,
-                               wavelength, relresponse)),
+                      ('uncertainty', '<f4')])
+    reftab = np.array(list(zip(photmjsr, uncertainty)),
                       dtype=dtype)
     ftab = datamodels.FgsPhotomModel(phot_table=reftab)
 
