@@ -5,12 +5,12 @@ from jwst.assign_wcs.nirspec import slitlets_wcs, nrs_wcs_set_input
 from jwst.assign_wcs import AssignWcsStep
 from jwst.datamodels import ImageModel
 from jwst.extract_2d import Extract2dStep
-from jwst.msaflagopen.msaflag_open import (or_subarray_with_array,
-                                           id_from_xy,
-                                           get_failed_open_shutters,
+from jwst.msaflagopen.msaflag_open import (boundingbox_to_indices,
                                            create_slitlets,
-                                           boundingbox_to_indices,
                                            flag,
+                                           get_failed_open_shutters,
+                                           id_from_xy,
+                                           or_subarray_with_array,
                                            wcs_to_dq)
 from jwst.msaflagopen.msaflagopen_step import create_reference_filename_dictionary
 from jwst.transforms.models import Slit 
@@ -54,7 +54,7 @@ def test_id_from_xy():
 def test_get_failed_open_shutters():
     """test that failed open shutters are returned from reference file"""
 
-    result = get_failed_open_shutters('msa_oper.json')
+    result = get_failed_open_shutters('/Users/mfix/Desktop/jwst/jwst/msaflagopen/tests/msa_oper.json')
 
     for shutter in result:
         assert (shutter['state'] == 'open')
@@ -64,7 +64,7 @@ def test_create_slitlets():
     
     dm = ImageModel()
 
-    result = create_slitlets(dm, 'msa_oper.json')
+    result = create_slitlets(dm, '/Users/mfix/Desktop/jwst/jwst/msaflagopen/tests/msa_oper.json')
 
     slit_fields = ('name','shutter_id','dither_position','xcen',
                    'ycen','ymin','ymax','quadrant','source_id',
@@ -106,7 +106,6 @@ def test_boundingbox_from_indices():
 
     assert (result == (1, 3, 3, 5))
 
-@pytest.mark.skip()
 def test_flag():
     wcsinfo = {
         'dec_ref': -0.00601415671349804,
@@ -119,21 +118,13 @@ def test_flag():
 
     instrument = {
         'detector': 'NRS1',
-        'filter': 'CLEAR',
-        'grating': 'PRISM',
+        'filter': 'F100LP',
+        'grating': 'G140M',
         'name': 'NIRSPEC',
         'gwa_tilt': 37.0610,
         'gwa_xtilt': 0.0001,
-        'gwa_ytilt': 0.0001}
-
-    subarray = {
-        'fastaxis': 1,
-        'name': 'SUBS200A1',
-        'slowaxis': 2,
-        'xsize': 2048,
-        'xstart': 1,
-        'ysize': 2048,
-        'ystart': 1}
+        'gwa_ytilt': 0.0001,
+        'msa_metadata_id':12}
 
     observation = {
         'date': '2016-09-05',
@@ -161,18 +152,28 @@ def test_flag():
     im = ImageModel()
     im.data = np.random.rand(2048, 2048)
     im.error = np.random.rand(2048, 2048)
-    im.dq = np.random.rand(2048, 2048)
+    im.dq = np.zeros((2048, 2048))
 
     im.meta.wcsinfo._instance.update(wcsinfo)
     im.meta.instrument._instance.update(instrument)
     im.meta.observation._instance.update(observation)
     im.meta.exposure._instance.update(exposure)
-    im.meta.subarray._instance.update(subarray)
+
+    im.meta.instrument.msa_metadata_file = '/Users/mfix/Desktop/msa_configuration_nadia.fits'
+    im.meta.dither.position_number = 1
+    
     im = AssignWcsStep.call(im)
-    im = Extract2dStep.call(im)
 
     wcs_ref_files = create_reference_filename_dictionary(im)
-
-    failed_slitlets = create_slitlets(im, 'msa_oper.json')
+        
+    failed_slitlets = create_slitlets(im, '/grp/crds/cache/references/jwst/jwst_nirspec_msaoper_0001.json')
 
     result = flag(im, failed_slitlets, wcs_ref_files)
+
+    msa_open_dq = 536870912
+
+    # Get all dqflags that are nonzero
+    nonzero = np.nonzero(result.dq)
+
+    # Make sure that all nonzero dqs are equal to the msa_open_dq
+    assert (all(x == msa_open_dq for x in result.dq[nonzero]))
