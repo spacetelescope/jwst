@@ -104,7 +104,7 @@ __all__ = [
     'PersistenceSatModel',
     'PixelAreaModel', 'NirspecSlitAreaModel', 'NirspecMosAreaModel', 'NirspecIfuAreaModel',
     'PhotomModel', 'FgsPhotomModel', 'MiriImgPhotomModel', 'MirImgPhotomModel', 'MiriMrsPhotomModel',
-    'NircamPhotomModel', 'NrcImgPhotomModel', 'NirissPhotomModel', 'NisPhotomModel',
+    'NircamPhotomModel', 'NrcImgPhotomModel', 'NirissPhotomModel', 'NisImgPhotomModel',
     'NirspecPhotomModel', 'NirspecFSPhotomModel',
     'PsfMaskModel',
     'QuadModel', 'RampModel', 'MIRIRampModel',
