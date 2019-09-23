@@ -89,9 +89,6 @@ datamodels
   data types defined by schema of structured arrays when input values are
   already structured arrays. [#4030]
 
-- Added "MIR_TACONFIRM" to the list of allowed EXP_TYPE values in the
-  keyword schemas. [#4039]
-
 exp_to_source
 -------------
 
@@ -141,10 +138,19 @@ group_scale
 
 - Updates to documentation and log messages. [#3738]
 
+ipc
+---
+
+Function is_irs2 has been removed from x_irs2.py.  The version of this funtion
+that is now in lib/pipe_utils.py is used instead. [#4054]
+
 lib
 ---
 
 - A function to determine the dispersion direction has been added. [#3756]
+
+- Function is_irs2 has been added to pipe_utils.py, and unit tests were
+  added to tests/test_pipe_utils.py. [#4054]
 
 master_background
 -----------------
@@ -156,10 +162,22 @@ photom
 
 - Add unit tests [#4022]
 
+refpix
+------
+
+- Call is_irs2 from lib/pipe_utils.py instead of using PATTTYPE keyword to
+  check for IRS2 readout mode. [#4054]
+
 resample_spec
 -------------
 
 - This step uses keyword DISPAXIS and also copies it to output. [#3799]
+
+saturation
+----------
+
+Function is_irs2 has been removed from x_irs2.py.  The version of this funtion
+that is now in lib/pipe_utils.py is used instead. [#4054]
 
 stpipe
 ------
