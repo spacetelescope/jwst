@@ -92,6 +92,9 @@ datamodels
 - Added "MIR_TACONFIRM" to the list of allowed EXP_TYPE values in the
   keyword schemas. [#4039]
 
+- Added new imaging-specific photom reference file data models ``FgsImgPhotomModel``,
+  ``MirImgPhotomModel``, ``NrcImgPhotomModel``, and ``NisImgPhotomModel``. [#4052]
+
 exp_to_source
 -------------
 
