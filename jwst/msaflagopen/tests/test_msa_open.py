@@ -1,11 +1,8 @@
 import numpy as np
 import os
-import pytest
 
-from jwst.assign_wcs.nirspec import slitlets_wcs, nrs_wcs_set_input
 from jwst.assign_wcs import AssignWcsStep
 from jwst.datamodels import ImageModel
-from jwst.extract_2d import Extract2dStep
 from jwst.msaflagopen.msaflag_open import (boundingbox_to_indices,
                                            create_slitlets,
                                            flag,
@@ -15,8 +12,7 @@ from jwst.msaflagopen.msaflag_open import (boundingbox_to_indices,
                                            wcs_to_dq)
 from jwst.msaflagopen.msaflagopen_step import create_reference_filename_dictionary
 from jwst.msaflagopen.tests import data
-from jwst.transforms.models import Slit 
-from jwst.stpipe import Step
+from jwst.transforms.models import Slit
 
 data_path = os.path.split(os.path.abspath(data.__file__))[0]
 
@@ -97,7 +93,7 @@ def test_wcs_to_dq():
     FLAG = 1024
     result = wcs_to_dq(wcs_array, FLAG)
 
-    nans = np.where(np.isnan(wcs_array[0]))    
+    nans = np.where(np.isnan(wcs_array[0]))
     non_nan = np.where(~np.isnan(wcs_array[0]))
     # wcs_to_dq create an array of zeros and if nans are present they
     # will have value zero where are non nan elements will have the value
@@ -169,7 +165,7 @@ def test_flag():
     im.meta.exposure._instance.update(exposure)
 
     metafl = get_file_path('msa_configuration.fits')
-    im.meta.instrument.msa_metadata_file = metafl 
+    im.meta.instrument.msa_metadata_file = metafl
     im.meta.dither.position_number = 1
 
     im = AssignWcsStep.call(im)
