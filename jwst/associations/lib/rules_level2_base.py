@@ -8,7 +8,6 @@ from os.path import (
     splitext
 )
 import re
-import pdb
 
 from jwst.associations import (
     Association,
