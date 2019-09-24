@@ -1,4 +1,5 @@
 import numpy as np
+import os
 import pytest
 
 from jwst.assign_wcs.nirspec import slitlets_wcs, nrs_wcs_set_input
@@ -13,8 +14,15 @@ from jwst.msaflagopen.msaflag_open import (boundingbox_to_indices,
                                            or_subarray_with_array,
                                            wcs_to_dq)
 from jwst.msaflagopen.msaflagopen_step import create_reference_filename_dictionary
+from jwst.msaflagopen.tests import data
 from jwst.transforms.models import Slit 
 from jwst.stpipe import Step
+
+data_path = os.path.split(os.path.abspath(data.__file__))[0]
+
+def get_file_path(filename):
+    """Construct an absolute path."""
+    return os.path.join(data_path, filename)
 
 def test_or_subarray_with_array():
     """test bitwise or with array and subarray."""
@@ -27,7 +35,7 @@ def test_or_subarray_with_array():
 
     # Uses numpy.bitwise_or to compute the array
     result = or_subarray_with_array(dq_array, dq_subarray, xmin, xmax, ymin, ymax)
-    
+
     # Use python built in bitwise or | to verify. Just overwrite the
     # array since we wont be using it anymore in this test.
     dq_array[ymin:ymax, xmin:xmax] = dq_array[ymin:ymax, xmin:xmax] | dq_subarray
@@ -54,17 +62,18 @@ def test_id_from_xy():
 def test_get_failed_open_shutters():
     """test that failed open shutters are returned from reference file"""
 
-    result = get_failed_open_shutters('/Users/mfix/Desktop/jwst/jwst/msaflagopen/tests/msa_oper.json')
+    msa_oper = get_file_path('msa_oper.json')
+    result = get_failed_open_shutters(msa_oper)
 
     for shutter in result:
         assert (shutter['state'] == 'open')
 
 def test_create_slitlets():
     """Test that slitlets are Slit type and have all the necessary fields"""
-    
-    dm = ImageModel()
 
-    result = create_slitlets(dm, '/Users/mfix/Desktop/jwst/jwst/msaflagopen/tests/msa_oper.json')
+    dm = ImageModel()
+    msa_oper = get_file_path('msa_oper.json')
+    result = create_slitlets(dm, msa_oper)
 
     slit_fields = ('name','shutter_id','dither_position','xcen',
                    'ycen','ymin','ymax','quadrant','source_id',
@@ -159,14 +168,16 @@ def test_flag():
     im.meta.observation._instance.update(observation)
     im.meta.exposure._instance.update(exposure)
 
-    im.meta.instrument.msa_metadata_file = '/Users/mfix/Desktop/msa_configuration_nadia.fits'
+    metafl = get_file_path('msa_configuration.fits')
+    im.meta.instrument.msa_metadata_file = metafl 
     im.meta.dither.position_number = 1
-    
+
     im = AssignWcsStep.call(im)
 
     wcs_ref_files = create_reference_filename_dictionary(im)
-        
-    failed_slitlets = create_slitlets(im, '/grp/crds/cache/references/jwst/jwst_nirspec_msaoper_0001.json')
+    
+    msa_oper = get_file_path('jwst_nirspec_msaoper_0001.json')
+    failed_slitlets = create_slitlets(im, msa_oper)
 
     result = flag(im, failed_slitlets, wcs_ref_files)
 
