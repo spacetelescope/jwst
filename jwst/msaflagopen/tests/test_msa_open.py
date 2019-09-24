@@ -171,7 +171,7 @@ def test_flag():
     im = AssignWcsStep.call(im)
 
     wcs_ref_files = create_reference_filename_dictionary(im)
-    
+
     msa_oper = get_file_path('jwst_nirspec_msaoper_0001.json')
     failed_slitlets = create_slitlets(im, msa_oper)
 
