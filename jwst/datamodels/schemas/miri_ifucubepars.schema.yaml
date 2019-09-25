@@ -19,8 +19,8 @@ allOf:
         datatype: float32
       - name: wavemax
         datatype: float32
-    ifucubepars_msn_table:
-      title: default IFU cube msn parameters table
+    ifucubepars_msm_table:
+      title: default IFU cube msm parameters table
       fits_hdu: CUBEPAR_MSM
       datatype:
       - name: channel
@@ -48,5 +48,31 @@ allOf:
       - name: power
         datatype: float32
       - name: softrad
+        datatype: float32
+    ifucubepars_emsm_table:
+      title: default IFU cube emsm parameters table
+      fits_hdu: CUBEPAR_EMSM
+      datatype:
+      - name: channel
+        datatype: [ascii,3]
+      - name: band
+        datatype: [ascii, 6]
+      - name: roispatial
+        datatype: float32
+      - name: roispectral
+        datatype: float32
+      - name: scalerad
+        datatype: float32
+    ifucubepars_multichannel_ewavetable:
+      title: default IFU cube multi channel emsm wavetable
+      fits_hdu: MULTICHANNEL_EMSM
+      datatype:
+      - name: wavelength
+        datatype: float32
+      - name: roispatial
+        datatype: float32
+      - name: roispectral
+        datatype: float32
+      - name: scalerad
         datatype: float32
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema
