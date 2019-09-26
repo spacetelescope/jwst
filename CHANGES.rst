@@ -95,6 +95,9 @@ datamodels
 - Added new imaging-specific photom reference file data models ``FgsImgPhotomModel``,
   ``MirImgPhotomModel``, ``NrcImgPhotomModel``, and ``NisImgPhotomModel``. [#4052]
 
+- Add EXP_TYPE and P_EXP_TY keywords to new imaging photom reference file
+  data model schemas. [#4068]
+
 exp_to_source
 -------------
 
