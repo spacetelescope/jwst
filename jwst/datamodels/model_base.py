@@ -40,7 +40,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
     def __init__(self, init=None, schema=None,
                  pass_invalid_values=False, strict_validation=False,
-                 **kwargs):
+                 ignore_missing_extensions=True, **kwargs):
         """
         Parameters
         ----------
@@ -74,6 +74,11 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         strict_validation: if true, an schema validation errors will generate
             an excption. If false, they will generate a warning.
 
+        ignore_missing_extensions : bool
+            When `False`, raise warnings when a file is read that
+            contains metadata about extensions that are not available. Defaults
+            to `True`.
+
         kwargs: Aadditional arguments passed to lower level functions
         """
 
@@ -83,6 +88,8 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                                                     pass_invalid_values)
         self._strict_validation = self.get_envar("STRICT_VALIDATION",
                                                  strict_validation)
+
+        kwargs.update({'ignore_missing_extensions': ignore_missing_extensions})
 
         # Load the schema files
         if schema is None:
@@ -138,7 +145,8 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             asdffile = init
 
         elif isinstance(init, fits.HDUList):
-            asdffile = fits_support.from_fits(init, self._schema, self._ctx)
+            asdffile = fits_support.from_fits(init, self._schema, self._ctx,
+                                              **kwargs)
 
         elif isinstance(init, (str, bytes)):
             if isinstance(init, bytes):
