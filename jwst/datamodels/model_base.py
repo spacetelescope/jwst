@@ -88,6 +88,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                                                     pass_invalid_values)
         self._strict_validation = self.get_envar("STRICT_VALIDATION",
                                                  strict_validation)
+        self._ignore_missing_extensions = ignore_missing_extensions
 
         kwargs.update({'ignore_missing_extensions': ignore_missing_extensions})
 
@@ -1063,7 +1064,8 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             hdu = fits.ImageHDU(name=hdu_name, header=header)
         hdulist = fits.HDUList([hdu])
 
-        ff = fits_support.from_fits(hdulist, self._schema, self._ctx)
+        ff = fits_support.from_fits(hdulist, self._schema, self._ctx,
+                                    ignore_missing_extensions=self._ignore_missing_extensions)
 
         self._instance = properties.merge_tree(self._instance, ff.tree)
 
