@@ -39,37 +39,6 @@ def miri_mrs_long():
     return image
 
 
-def test_call_straylight1(_jail, miri_mrs):
-    """ test possible user options are set up correctly """
-
-    collect_pipeline_cfgs('./config')
-
-    # Test the ModShepard power is in the correct range
-    # set the power to outside the upper range
-    step = StraylightStep.from_config_file('config/straylight.cfg')
-    step.override_straylight = 'dummy.asdf'
-    step.method = 'ModShepard'
-    step.power = 6
-    result = step.run(miri_mrs)
-    assert result.meta.cal_step.straylight == 'SKIPPED'
-
-    # set the power to outside the lower range
-    step.power = 0.01
-    result = step.run(miri_mrs)
-    assert result.meta.cal_step.straylight == 'SKIPPED'
-
-    # Test that roi is in the correct range
-    step.power = 2  # reasonable value
-    step.roi = 1
-    result = step.run(miri_mrs)
-    assert result.meta.cal_step.straylight == 'SKIPPED'
-
-    step.power = 2  # reasonable value
-    step.roi = 1500
-    result = step.run(miri_mrs)
-    assert result.meta.cal_step.straylight == 'SKIPPED'
-
-
 def test_call_straylight2(_jail, miri_mrs_long):
     """ test step is skipped for MRS IFULONG data """
 
