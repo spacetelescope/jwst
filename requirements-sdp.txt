@@ -1,5 +1,5 @@
 asdf==2.4.2
--e git+https://github.com/astropy/astropy@5f7c192#egg=astropy
+astropy @ git+https://github.com/astropy/astropy@5f7c192
 atomicwrites==1.3.0
 attrs==19.1.0
 certifi==2019.9.11
@@ -11,7 +11,7 @@ crds==7.4.1.1
 Cython==0.29.13
 drizzle==1.13.1
 filelock==3.0.12
--e git+https://github.com/spacetelescope/gwcs@3e2bc108e#egg=gwcs
+gwcs @ git+https://github.com/spacetelescope/gwcs@3e2bc108e
 idna==2.8
 importlib-metadata==0.23
 jsonschema==3.0.2
