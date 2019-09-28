@@ -1,6 +1,10 @@
 // [skip ci] and [ci skip] have no effect here.
 if (utils.scm_checkout(['skip_disable':true])) return
 
+withCredentials([string(
+    credentialsId: 'jwst-codecov',
+    variable: 'codecov_token')]) {
+
 jobconfig = new JobConfig()
 jobconfig.enable_env_publication = true
 jobconfig.publish_env_on_success_only = true
@@ -39,27 +43,26 @@ bc0.conda_packages = [
     "python=${python_version}",
 ]
 bc0.build_cmds = [
-    "pip install -e .[test]",
+    "pip install -r requirements-sdp.txt -e .[ephem]",
     "pip install pytest-xdist",
 ]
 bc0.test_cmds = [
-    "pytest -r sx -v -n 30 --bigdata --slow \
-    --basetemp=${pytest_basetemp}  --junit-xml=results.xml \
-    --log-level=INFO \
-    jwst/tests_nightly/general"
+    "pytest --cov=./ -r sxf -n 30 --bigdata --slow \
+    --basetemp=${pytest_basetemp}  --junit-xml=results.xml jwst",
+    "codecov --token=${codecov_token}"
 ]
 bc0.test_configs = [data_config]
 
 
-# macos-specific buildconfig to cause the creation of counterparts to the linux
-# environment dumps. Packages in a mininmal conda environment differ by OS
-# which is why this is needed.
+// macos-specific buildconfig to cause the creation of counterparts to the linux
+// environment dumps. Packages in a mininmal conda environment differ by OS
+// which is why this is needed.
 bc1 = utils.copy(bc0)
 bc1.nodetype = 'macos'
 bc1.name = 'macos-stable-deps'
-bc1.build_cmds = ["pip install -e .[test]"]
+bc1.build_cmds = ["pip install -r requirements-sdp.txt -e ."]
 bc1.test_cmds = []
 bc1.test_configs = []
 
-
 utils.run([jobconfig, bc0, bc1])
+}  // withCredentials

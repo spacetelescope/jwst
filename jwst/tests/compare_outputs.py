@@ -134,6 +134,7 @@ def compare_outputs(outputs, raise_error=True, ignore_keywords=[],
     .. note:: Each ``outputs`` entry in the list gets interpreted and processed
               separately.
     """
+    __tracebackhide__ = True
     default_kwargs = {'rtol': rtol, 'atol': atol,
                       'ignore_keywords': ignore_keywords,
                       'ignore_fields': ignore_fields,

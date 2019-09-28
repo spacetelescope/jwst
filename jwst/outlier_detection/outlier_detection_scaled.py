@@ -84,7 +84,12 @@ class OutlierDetectionScaled(OutlierDetection):
             radius_outer = 5
 
         apertures = CircularAperture((xcenter, ycenter), r=radius)
-        aperture_mask = apertures.to_mask(method='center')[0]
+        # ApertureMask in photutils<=0.6 is indexable.  In >=0.7 it is scalar
+        # if there is only one Aperture.  Handle both.
+        try:
+            aperture_mask = apertures.to_mask(method='center')[0]
+        except TypeError:
+            aperture_mask = apertures.to_mask(method='center')
         # This mask has 1 for mask region, 0 for outside of mask
         median_mask = aperture_mask.to_image((ny, nx))
         inv_median_mask = np.abs(median_mask - 1)

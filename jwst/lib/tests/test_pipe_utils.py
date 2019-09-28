@@ -2,6 +2,8 @@
 import inspect
 import pytest
 
+import numpy as np
+
 from .. import pipe_utils
 from ... import datamodels
 from ...associations.lib import dms_base
@@ -78,3 +80,21 @@ def test_is_tso_from_tsoflag(tsovisit, expected):
     model = datamodels.DataModel()
     model.meta.visit.tsovisit = tsovisit
     assert pipe_utils.is_tso(model) is expected
+
+
+def test_is_irs2_1():
+    """Test is_irs2 using a numpy array"""
+    x = np.ones((2048, 2), dtype=np.float32)
+    assert not pipe_utils.is_irs2(x)
+    x = np.ones((3200, 2), dtype=np.float32)
+    assert pipe_utils.is_irs2(x)
+
+
+def test_is_irs2_2():
+    """Test is_irs2 using a jwst data model"""
+    x = np.ones((2048, 2), dtype=np.float32)
+    model = datamodels.ImageModel(data=x)
+    assert not pipe_utils.is_irs2(model)
+    x = np.ones((3200, 2), dtype=np.float32)
+    model = datamodels.ImageModel(data=x)
+    assert pipe_utils.is_irs2(model)

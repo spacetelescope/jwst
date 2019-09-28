@@ -325,7 +325,7 @@ class Main():
         """
         for asn in self.associations:
             (fname, serialized) = asn.dump(format=format)
-            with open(os.path.join(path, fname + '.' + format), 'w') as f:
+            with open(os.path.join(path, fname), 'w') as f:
                 f.write(serialized)
 
         if save_orphans:

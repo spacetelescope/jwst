@@ -21,7 +21,8 @@ log.setLevel(logging.DEBUG)
 def extract_tso_object(input_model,
                        reference_files=None,
                        extract_height=None,
-                       extract_orders=None):
+                       extract_orders=None,
+                       compute_wavelength=True):
     """
     Extract the spectrum for a NIRCAM TSO observation.
 
@@ -44,6 +45,10 @@ def extract_tso_object(input_model,
         This is an optional parameter that will override the
         orders specified for extraction in the wavelengthrange
         reference file.
+
+    compute_wavelength : bool
+        Compute a wavelength array for the datamodel.  Computationally
+        expensive, but saves doing it repeatedly later on in pipeline.
 
     Returns
     -------
@@ -202,7 +207,9 @@ def extract_tso_object(input_model,
             output_model.meta.wcsinfo.spectral_order = order
             output_model.meta.wcsinfo.dispersion_direction = \
                         input_model.meta.wcsinfo.dispersion_direction
-            output_model.name = str('TSO object')
+            if compute_wavelength:
+                output_model.wavelength = compute_wavelength_array(output_model)
+            output_model.name = 'TSO object'
             output_model.xstart = 1  # fits pixels
             output_model.xsize = ext_data.shape[2]
             output_model.ystart = 1  # fits pixels

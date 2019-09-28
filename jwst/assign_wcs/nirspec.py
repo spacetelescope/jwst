@@ -115,7 +115,11 @@ def imaging(input_model, reference_files):
         # MSA to OTEIP transform
         msa2ote = msa_to_oteip(reference_files)
         msa2oteip = msa2ote | Mapping((0, 1), n_inputs=3)
-        msa2oteip.inverse = Mapping((0, 1, 0, 1)) | msa2ote.inverse | Mapping((0, 1), n_inputs=3)
+        map1 = Mapping((0, 1, 0, 1))
+        minv = msa2ote.inverse
+        del minv.inverse
+        msa2oteip.inverse = map1 | minv | Mapping((0, 1), n_inputs=3)
+
         # OTEIP to V2,V3 transform
         with OTEModel(reference_files['ote']) as f:
             oteip2v23 = f.model

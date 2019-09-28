@@ -11,8 +11,21 @@ assign_wcs
 
 - This step populates keyword DISPAXIS. [#3799]
 
+- For NIRISS WFSS data, the wavelengths were incorrect because the function
+  for horizontally oriented spectra was called for GR150R, and the function
+  for vertically oriented spectra was called for GR150C. [#3891]
+
+
 associations
 ------------
+- asn_from_list fills the level2  member exptype correctly if the input is a tuple [#2942]
+
+- Update rules to make level 3 associations for slitless LRS mode [#3940]
+
+- Update rules so that nOPS5 observations with "ALONG-SLIT-NOD" dither
+   pattern generates level 3 associations [#3912]
+
+- Update rules to have NRS_IFU backgrounds in science associations [#3824]
 
 - Return filename with extensions based on file type [#2671]
 
@@ -22,8 +35,34 @@ associations
 
 - Will not constrain on uniqueness of the MSACONFIG keyword [#3770]
 
+- Process non-science exposures taken during WFS&C observations [#3947]
+
+barshadow
+---------
+
+- Unit tests were added. [#3930]
+
+combine_1d
+----------
+
+- Fixed the number of inputs to the spectral WCS - one expetced, two were passed. [#3827]
+
+calwebb_tso3
+-------------
+
+- Update to exclude target_acquisitions from processing in the calwebb_tso3 pipeline [#3759]
+
+cube_build
+----------
+
+- Schema for the ``WAVE-TAB`` WCS no longer requires fixed-length arrays for
+  the wavelength "coordinates". The ``'nelem'`` field therefore is no longer
+  necessary and has been removed. [#3976]
+
 datamodels
 ----------
+
+- Update to prevent target_acquisitions from processing in the spec3 pipeline [#3777]
 
 - Use public API of jsonschema to ease upgrade to 3.x. [#3705]
 
@@ -37,10 +76,34 @@ datamodels
 - Updated multiexposure.schema to just import slitdata.schema instead of explicitly
   specifying all of its attributes. [#3809]
 
+- Improved ``properties._cast()`` to be able to handle structured arrays
+  schemas without a specified (in schema) shape. In addition, ``ndim``
+  can be used to constrain the dimensionality of data in structured array
+  fields. [#3976]
+
+- Fixed an issue with the fix from [#3976] that was affecting "casting" to
+  data types defined by schema of structured arrays when input values are not
+  native Python types (tuples). [#3995]
+
+- Fixed an issue with the fix from [#3995] that was affecting "casting" to
+  data types defined by schema of structured arrays when input values are
+  already structured arrays. [#4030]
+
+- Added "MIR_TACONFIRM" to the list of allowed EXP_TYPE values in the
+  keyword schemas. [#4039]
+
+- Added new imaging-specific photom reference file data models ``FgsImgPhotomModel``,
+  ``MirImgPhotomModel``, ``NrcImgPhotomModel``, and ``NisImgPhotomModel``. [#4052]
+
+- Add EXP_TYPE and P_EXP_TY keywords to new imaging photom reference file
+  data model schemas. [#4068]
+
 exp_to_source
 -------------
 
 - Updated the documentation and added some logging to the step. [#3803]
+
+- Close input files after creating the new outputs. [#3828]
 
 extract_1d
 ----------
@@ -50,10 +113,19 @@ extract_1d
 
 - This step uses keyword DISPAXIS. [#3799]
 
+- Fixed a bug in ``pixel_area`` when the input is a ``CubeModel``. [#3827]
+
+- Computing the solid angle of a pixel is only done for the first integration
+  of a multi-integration exposure, and it's not done at all for WFSS data
+  [#3863]
+
 extract_2d
 ----------
 
-For grism data, this step copies keyword DISPAXIS from input to output. [#3799]
+- For grism data, this step copies keyword DISPAXIS from input to output. [#3799]
+
+- For NIRCam TSO data, wavelengths are computed and assigned to the
+  wavelength attribute. [#3863]
 
 flat_field
 ----------
@@ -61,6 +133,9 @@ flat_field
 - For NIRSpec spectroscopic data, the flat_field step needs the dispersion
   direction.  The step now gets that information from keyword DISPAXIS.
   [#3799, #3807]
+
+- The test_flatfield_step_interface unit test in test_flatfield.py has been
+  temporarily disabled. [#3997]
 
 gain_scale
 ----------
@@ -72,25 +147,65 @@ group_scale
 
 - Updates to documentation and log messages. [#3738]
 
+ipc
+---
+
+Function is_irs2 has been removed from x_irs2.py.  The version of this funtion
+that is now in lib/pipe_utils.py is used instead. [#4054]
+
 lib
 ---
 
 - A function to determine the dispersion direction has been added. [#3756]
+
+- Function is_irs2 has been added to pipe_utils.py, and unit tests were
+  added to tests/test_pipe_utils.py. [#4054]
 
 master_background
 -----------------
 
 - Updated the documentation to include more details. [#3776]
 
+photom
+------
+
+- Add unit tests [#4022]
+
+refpix
+------
+
+- Call is_irs2 from lib/pipe_utils.py instead of using PATTTYPE keyword to
+  check for IRS2 readout mode. [#4054]
+
 resample_spec
 -------------
 
 - This step uses keyword DISPAXIS and also copies it to output. [#3799]
 
+saturation
+----------
+
+Function is_irs2 has been removed from x_irs2.py.  The version of this funtion
+that is now in lib/pipe_utils.py is used instead. [#4054]
+
 stpipe
 ------
 
 - Fix ``Step.print_configspec()`` method.  Add test.  [#3768]
+
+tso_photometry
+--------------
+
+- Unit tests were added to tso_photometry. [#3909]
+
+tweakreg
+--------
+
+- removed original ``jwst.tweakreg`` alignment code and changed step's code
+  to call similar functionality from ``tweakwcs`` package. [#3689]
+
+- Fix deprecated call to photutils.detect_threshold [#3982]
+
 
 0.13.7 (2019-06-21)
 ===================
@@ -248,6 +363,12 @@ resample
 --------
 
 - Changed default value of good_pixel from 4 to 6 [#3638]
+
+wfs_combine
+-----------
+
+- Allow handling of non-science members in input associations [#3947]
+
 
 0.13.3 (2019-06-04)
 ===================
@@ -702,6 +823,8 @@ csv_tools
 
 cube_build
 ----------
+
+- Added dq flagging [#3804]
 
 cube_skymatch
 -------------

@@ -7,7 +7,7 @@ from gwcs.wcstools import grid_from_bounding_box
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-def pixel_area(wcs, shape, verbose=True):
+def pixel_area(wcs, shape, is_wfss, verbose=True):
     """Compute the solid angle of a pixel.
 
     Parameters
@@ -21,6 +21,9 @@ def pixel_area(wcs, shape, verbose=True):
         The shape of the data array.  The bounding box from the wcs will be
         used instead, if it exists.
 
+    is_wfss : bool
+        True if the input file contains WFSS data.
+
     verbose : bool
         If True, log messages.
 
@@ -30,6 +33,12 @@ def pixel_area(wcs, shape, verbose=True):
         The average solid angle of a pixel, in steradians.  None will be
         returned if this value could not be determined.
     """
+
+    if is_wfss:
+        if verbose:
+            log.warning("The solid angle of a pixel cannot currently "
+                        "be determined for WFSS data.")
+        return None
 
     if shape is not None and len(shape) != 2 and len(shape) != 3:
         if verbose:
@@ -81,6 +90,8 @@ def pixel_area(wcs, shape, verbose=True):
                   .format(cdelt1 * 3600., cdelt2 * 3600.))
 
     if cdelt1 == 0. and cdelt2 == 0:
+        if verbose:
+            log.warning("Pixel solid angle could not be determined")
         pixel_solid_angle = None
     else:
         if cdelt1 < 0.01 * cdelt2:
@@ -114,9 +125,6 @@ def temp_wcs(wcs, x, y, z=None):
         If the data are 3-D, e.g. IFU or CubeModel, this should be an array
         of values for one plane in axis 0 (wavelength for IFU, multiple
         exposures for CubeModel).
-
-    verbose : bool
-        If True, log messages.
 
     Returns
     -------

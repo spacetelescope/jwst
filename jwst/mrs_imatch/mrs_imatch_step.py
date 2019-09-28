@@ -238,9 +238,12 @@ def _get_2d_pixgrid(model2d, channel):
     # cannot use WCS domain to find the range of pixel indices that
     # belong to a given channel. Therefore, for now we have this hardcoded
     # in this function.
+    # Channel 1 and 4 are on the left-side of the detector
+    # Channel 2 and 3 are on the right_side of the detector
+
     y, x = np.indices((1024, 512))
 
-    if channel in ['1', '3']:
+    if channel in ['1', '4']:
         return (x + 4, y)
     else:
         return (x + 516, y)

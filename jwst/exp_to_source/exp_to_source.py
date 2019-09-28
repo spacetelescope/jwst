@@ -36,12 +36,13 @@ def exp_to_source(inputs):
     for exposure in inputs:
         log.info('Reorganizing data from exposure {}'.format(exposure.meta.filename))
         for slit in exposure.slits:
-            log.debug('Copying slit {}'.format(slit.source_id))
+            log.debug('Copying source {}'.format(slit.source_id))
             result[str(slit.source_id)].exposures.append(slit)
             merge_tree(
                 result[str(slit.source_id)].exposures[-1].meta.instance,
                 exposure.meta.instance
             )
+        exposure.close()
 
     # Turn off the default factory
     result.default_factory = None

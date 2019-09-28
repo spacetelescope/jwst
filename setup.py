@@ -91,6 +91,8 @@ TESTS_REQUIRE = [
     'pytest-doctestplus',
     'requests_mock',
     'pytest-openfiles',
+    'pytest-cov',
+    'codecov',
 ]
 
 def get_transforms_data():
@@ -186,24 +188,23 @@ setup(
     packages=find_packages(),
     package_data=PACKAGE_DATA,
     install_requires=[
-        'asdf>=2.3.2',
-        'astropy>=3.1',
+        'asdf>=2.4',
+        'astropy @ git+https://github.com/astropy/astropy@5f7c192#egg=astropy',
         'crds>=7.2.7',
         'drizzle>=1.13',
-        'gwcs>=0.10',
-        'jsonschema>=2.3,<=2.6',
+        'gwcs @ git+https://github.com/spacetelescope/gwcs@3e2bc108e#egg=gwcs',
+        'jsonschema>=2.3,<4',
         'numpy>=1.13',
-        'photutils>=0.6',
+        'photutils>=0.7',
         'scipy>=1.0',
         'spherical-geometry>=1.2',
-        'stsci.image>=2.3',
+        'stsci.image>=2.3.3',
         'stsci.imagestats>=1.4',
-        'stsci.stimage>=0.2',
-        'verhawk',
+        'tweakwcs>=0.5.1',
     ],
     extras_require={
         'docs': DOCS_REQUIRE,
-        'ephem': ['pymssql>=2.1', 'jplephem>=2.8'],
+        'ephem': ['pymssql==2.1.4', 'jplephem==2.9'], # for timeconversion
         'test': TESTS_REQUIRE,
     },
     tests_require=TESTS_REQUIRE,

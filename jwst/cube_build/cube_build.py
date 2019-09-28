@@ -51,7 +51,6 @@ class CubeData():
         self.filter = pars.get('filter')
         self.weighting = pars.get('weighting')
         self.output_type = pars.get('output_type')
-        self.detector = None
         self.instrument = None
 
         self.all_channel = []
@@ -87,13 +86,12 @@ class CubeData():
 # Fill in MasterTable   based on Channel/Subchannel  or filter/grating
 # ______________________________________________________________________________
         master_table = file_table.FileTable()
-        instrument, detector = master_table.set_file_table(self.input_models,
-                                                           self.input_filenames)
+        instrument = master_table.set_file_table(self.input_models,
+                                                 self.input_filenames)
 # _______________________________________________________________________________
 # find out how many files are in the association table or if it is an single
 # file store the input_filenames and input_models
 
-        self.detector = detector
         self.instrument = instrument
 # _______________________________________________________________________________
 # Determine which channels/subchannels or filter/grating will be covered by the
@@ -133,7 +131,6 @@ class CubeData():
         self.master_table = master_table
 
         return {'instrument': self.instrument,
-                'detector': self.detector,
                 'instrument_info': self.instrument_info,
                 'master_table': self.master_table}
 
@@ -178,7 +175,6 @@ class CubeData():
 # ________________________________________________________________________________
 # IF INSTRUMENT = MIRI
 # loop over the file names
-
         if self.instrument == 'MIRI':
             valid_channel = ['1', '2', '3', '4']
             valid_subchannel = ['short', 'medium', 'long']
@@ -194,13 +190,13 @@ class CubeData():
                 for j in range(nsubchannels):
                     nfiles = len(master_table.FileMap['MIRI'][valid_channel[i]][valid_subchannel[j]])
                     if nfiles > 0:
-# ______________________________________________________________________________
+                        # ______________________________________________________
                         # neither parameters are set
                         if user_clen == 0 and user_slen == 0:
                             self.all_channel.append(valid_channel[i])
                             self.all_subchannel.append(valid_subchannel[j])
-# _______________________________________________________________________________
-# channel was set by user but not sub-channel
+                            # __________________________________________________
+                            # channel was set by user but not sub-channel
                         elif user_clen != 0 and user_slen == 0:
                             # now check if this channel was set by user
                             if (valid_channel[i] in self.channel):
@@ -217,7 +213,6 @@ class CubeData():
                         else:
                             if (valid_channel[i] in self.channel and
                                 valid_subchannel[j] in self.subchannel):
-
                                 self.all_channel.append(valid_channel[i])
                                 self.all_subchannel.append(valid_subchannel[j])
 
@@ -235,7 +230,6 @@ class CubeData():
             if number_subchannels == 0:
                 raise ErrorNoSubchannels(
                     "The cube does not cover any subchannels, change band parameter")
-
 # ______________________________________________________________________
         if self.instrument == 'NIRSPEC':
             # 1 to 1 mapping valid_gwa[i] -> valid_fwa[i]
@@ -264,7 +258,6 @@ class CubeData():
                     if nfiles > 0:
                         self.all_grating.append(valid_gwa[i])
                         self.all_filter.append(valid_fwa[i])
-
         # Both filter and grating input parameter have been set
         # Find the files that have these parameters set
 
@@ -300,7 +293,7 @@ class CubeData():
             band_channel = self.all_channel
             band_subchannel = self.all_subchannel
 
-# user and single
+# user, single, or multi
             if (self.output_type == 'user' or self.output_type == 'single' or
                 self.output_type == 'multi'):
 
@@ -322,6 +315,7 @@ class CubeData():
 # default band cubes
             if self.output_type == 'band':
                 log.info('Output Cubes are single channel, single sub-channel IFU Cubes')
+
                 for i in range(len(band_channel)):
                     num_cubes = num_cubes + 1
                     cube_no = str(num_cubes)
@@ -358,8 +352,9 @@ class CubeData():
 # ______________________________________________________________________
         if self.instrument == 'NIRSPEC':
 
-            band_grating = list(set(self.all_grating))
-            band_filter = list(set(self.all_filter))
+            band_grating = self.all_grating
+            band_filter = self.all_filter
+
             if (self.output_type == 'user' or self.output_type == 'single' or
                 self.output_type == 'multi'):
                 if self.output_type == 'multi':
@@ -381,18 +376,17 @@ class CubeData():
             if self.output_type == 'band':
                 log.info('Output Cubes are single grating, single filter IFU Cubes')
                 for i in range(len(band_grating)):
-                    for j in range(len(band_filter)):
-                        num_cubes = num_cubes + 1
-                        cube_no = str(num_cubes)
-                        cube_pars[cube_no] = {}
-                        cube_pars[cube_no]['pars1'] = {}
-                        cube_pars[cube_no]['pars2'] = {}
-                        this_grating = []
-                        this_filter = []
-                        this_grating.append(band_grating[i])
-                        this_filter.append(band_filter[j])
-                        cube_pars[cube_no]['par1'] = this_grating
-                        cube_pars[cube_no]['par2'] = this_filter
+                    num_cubes = num_cubes + 1
+                    cube_no = str(num_cubes)
+                    cube_pars[cube_no] = {}
+                    cube_pars[cube_no]['pars1'] = {}
+                    cube_pars[cube_no]['pars2'] = {}
+                    this_grating = []
+                    this_filter = []
+                    this_grating.append(band_grating[i])
+                    this_filter.append(band_filter[i])
+                    cube_pars[cube_no]['par1'] = this_grating
+                    cube_pars[cube_no]['par2'] = this_filter
 # default grating cubes
             if self.output_type == 'grating':
                 log.info('Output cubes are single grating & all filters in data')
@@ -412,7 +406,6 @@ class CubeData():
         self.num_cubes = num_cubes
         self.cube_pars = cube_pars
         return self.num_cubes, self.cube_pars
-
 # _____________________________________________________________________________
 
 
