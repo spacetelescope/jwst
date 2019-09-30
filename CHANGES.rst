@@ -98,6 +98,9 @@ datamodels
 - Add EXP_TYPE and P_EXP_TY keywords to new imaging photom reference file
   data model schemas. [#4068]
 
+- Add SUBARRAY (and related) keywords to the new MIRI imaging photom reference file
+  data model schema. [#4081]
+
 exp_to_source
 -------------
 
