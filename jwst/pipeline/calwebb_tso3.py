@@ -50,7 +50,9 @@ class Tso3Pipeline(Pipeline):
         """
 
         self.log.info('Starting calwebb_tso3...')
-        input_models = datamodels.open(input)
+        asn_exptypes = ['science']
+
+        input_models = datamodels.open(input, asn_exptypes=asn_exptypes)
 
         if self.output_file is None:
             self.output_file = input_models.meta.asn_table.products[0].name

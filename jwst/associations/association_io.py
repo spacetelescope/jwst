@@ -86,7 +86,9 @@ class json():
             Name for the JSON file.
             Second item is the string containing the JSON serialization.
         """
-        asn_filename = asn.asn_name+'.json'
+        asn_filename = asn.asn_name
+        if not asn_filename.endswith('.json'):
+            asn_filename = asn_filename+'.json'
         return (
             asn_filename,
             json_lib.dumps(asn.data, cls=AssociationEncoder, indent=4, separators=(',', ': '))
@@ -150,7 +152,9 @@ class yaml():
             Name for the YAML file.
             Second item is the string containing the YAML serialization.
         """
-        asn_filename = asn.asn_name+'.yaml'
+        asn_filename = asn.asn_name
+        if not asn.asn_name.endswith('.yaml'):
+            asn_filename = asn.asn_name+'.yaml'
         return (
             asn_filename,
             yaml_lib.dump(asn.data, default_flow_style=False)

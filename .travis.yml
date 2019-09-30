@@ -18,7 +18,7 @@ env:
     - CRDS_SERVER_URL='https://jwst-crds.stsci.edu'
     - CRDS_PATH='/tmp/crds_cache'
     - NUMPY_VERSION=1.16
-    - TEST_COMMAND='pytest'
+    - TEST_COMMAND='pytest --cov=./'
 
 matrix:
   # Don't wait for allowed failures
@@ -64,4 +64,8 @@ install:
   - pip install numpy~=$NUMPY_VERSION
   - pip install $PIP_DEPENDENCIES
 
-script: $TEST_COMMAND
+script:
+  - $TEST_COMMAND
+
+after_script:
+  - if [ "${TEST_COMMAND:0:6}" = "pytest" ]; then codecov; fi
