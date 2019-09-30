@@ -34,6 +34,7 @@ matrix:
 
     # Test with numpy 1.16
     - env: NUMPY_VERSION=1.16
+           PIP_DEPENDENCIES='.[test]'
 
     # Test with SDP pinned dependencies
     - env: PIP_DEPENDENCIES='-r requirements-sdp.txt .'
