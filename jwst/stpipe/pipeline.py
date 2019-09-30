@@ -170,6 +170,8 @@ class Pipeline(Step):
         refcfg = ConfigObj()
         refcfg['steps'] = Section(refcfg, refcfg.depth + 1, refcfg.main, name="steps")
         log.log.info(f'Retrieving step {cls.pars_model.meta.reftype} parameters from CRDS')
+        #
+        # Iterate over the steps in the pipeline
         for cal_step in cls.step_defs.keys():
             cal_step_class = cls.step_defs[cal_step]
             try:
@@ -182,7 +184,47 @@ class Pipeline(Step):
             except exceptions.CrdsLookupError:
                 log.log.info('\tNo parameters found')
                 refcfg['steps'][cal_step] = ConfigObj()
+        #
+        # Now merge any config parameters from the step cfg file
+        log.log.info('Merging parameters from pipeline config file')
+        try:
+            ref_file = crds_client.get_reference_file(dataset, 
+                                                      cls.pars_model.meta.reftype,
+                                                      observatory=observatory)
+            log.log.info(f'\tReference parameters found: {ref_file}')
+            refcfg = cls.merge_pipeline_config(refcfg, ref_file)
+        except exceptions.CrdsLookupError:
+            log.log.info('\tNo parameters found for pipeline')
+        return refcfg
 
+    @classmethod
+    def merge_pipeline_config(cls, refcfg, ref_file):
+        """
+        Merge the config parameters from a pipeline config reference file into the
+        config obtained from each step
+
+        Parameters:
+        -----------
+
+        cls: jwst.stpipe.pipeline.Pipeline class
+            The pipeline class 
+
+        refcfg: ConfigObj object
+            The ConfigObj created from crds cfg files from each of the steps
+            in the pipeline
+
+        ref_file: string
+            The name of the pipeline crds step config file
+
+        Returns:
+        --------
+
+        ConfigObj of the merged parameters, with those from the pipeline cfg having
+        precedence over those from the individual steps
+        """
+
+        pipeline_cfg = config_parser.load_config_file(ref_file)
+        config_parser.merge_config(refcfg, pipeline_cfg)
         return refcfg
 
     def set_input_filename(self, path):
