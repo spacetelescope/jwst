@@ -18,6 +18,8 @@ assign_wcs
 
 associations
 ------------
+- Update association rules so that MIMF exposures are processed as WFS observations [#4034]
+
 - asn_from_list fills the level2  member exptype correctly if the input is a tuple [#2942]
 
 - Update rules to make level 3 associations for slitless LRS mode [#3940]
