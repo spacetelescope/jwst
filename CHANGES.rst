@@ -203,6 +203,8 @@ stpipe
 
 - Fix ``Step.print_configspec()`` method.  Add test.  [#3768]
 
+- Integrate retrieval of Step parameters from CRDS. [#4090]
+
 tso_photometry
 --------------
 
