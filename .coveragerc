@@ -16,3 +16,4 @@ omit =
     jwst/conftest.py
     jwst/tests*
     jwst/*/tests/*
+    jwst/extern/*
