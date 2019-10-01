@@ -551,4 +551,3 @@ def test_leastsqnrm_multiplyenv():
                            [ 4.00e-06, 3.00e-07, -9.00e-07, 1.30e-06, 1.00e+00]]])
 
     assert_allclose( full, true_full, atol=1E-8 )
-
