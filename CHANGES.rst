@@ -18,6 +18,9 @@ assign_wcs
 
 associations
 ------------
+
+- Fix in load_as_asn for UTF-8 errors [#3942]
+
 - Update association rules so that MIMF exposures are processed as WFS observations [#4034]
 
 - asn_from_list fills the level2  member exptype correctly if the input is a tuple [#2942]
