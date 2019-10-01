@@ -181,7 +181,7 @@ class Pipeline(Step):
                 log.log.info(f'\tReference parameters found: {ref_file}')
                 step_cfg = config_parser.load_config_file(ref_file)
                 refcfg['steps'][cal_step] = step_cfg
-            except exceptions.CrdsLookupError:
+            except (AttributeError, exceptions.CrdsError, exceptions.CrdsLookupError):
                 log.log.info('\tNo parameters found')
                 refcfg['steps'][cal_step] = ConfigObj()
         #
@@ -193,7 +193,7 @@ class Pipeline(Step):
                                                       observatory=observatory)
             log.log.info(f'\tReference parameters found: {ref_file}')
             refcfg = cls.merge_pipeline_config(refcfg, ref_file)
-        except exceptions.CrdsLookupError:
+        except (AttributeError, exceptions.CrdsError, exceptions.CrdsLookupError):
             log.log.info('\tNo parameters found for pipeline')
         return refcfg
 
