@@ -188,7 +188,7 @@ class Pipeline(Step):
         # Now merge any config parameters from the step cfg file
         log.log.info('Merging parameters from pipeline config file')
         try:
-            ref_file = crds_client.get_reference_file(dataset, 
+            ref_file = crds_client.get_reference_file(dataset,
                                                       cls.pars_model.meta.reftype,
                                                       observatory=observatory)
             log.log.info(f'\tReference parameters found: {ref_file}')
@@ -207,7 +207,7 @@ class Pipeline(Step):
         -----------
 
         cls: jwst.stpipe.pipeline.Pipeline class
-            The pipeline class 
+            The pipeline class
 
         refcfg: ConfigObj object
             The ConfigObj created from crds cfg files from each of the steps

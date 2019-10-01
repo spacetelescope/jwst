@@ -720,7 +720,7 @@ class Step():
             ref_file = crds_client.get_reference_file(dataset,
                                                       cls.pars_model.meta.reftype,
                                                       observatory=observatory)
-        except exceptions.CrdsLookupError:
+        except (exceptions.CrdsError, exceptions.CrdsLookupError):
             cls.log.info('\tNo parameters found')
             return config_parser.ConfigObj()
         if ref_file != 'N/A':
