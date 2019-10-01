@@ -551,9 +551,11 @@ def from_fits_asdf(hdulist,
     """
     Wrap asdf call to extract optional argumentscommet
     """
+    ignore_missing_extensions = kwargs.pop('ignore_missing_extensions')
     return fits_embed.AsdfInFits.open(hdulist,
                                       ignore_version_mismatch=ignore_version_mismatch,
-                                      ignore_unrecognized_tag=ignore_unrecognized_tag)
+                                      ignore_unrecognized_tag=ignore_unrecognized_tag,
+                                      ignore_missing_extensions=ignore_missing_extensions)
 
 
 def from_fits_hdu(hdu, schema):

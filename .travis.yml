@@ -17,7 +17,7 @@ env:
   global:
     - CRDS_SERVER_URL='https://jwst-crds.stsci.edu'
     - CRDS_PATH='/tmp/crds_cache'
-    - NUMPY_VERSION=1.16
+    - NUMPY_VERSION=1.17
     - TEST_COMMAND='pytest --cov=./'
 
 matrix:
@@ -31,6 +31,13 @@ matrix:
     # Test with python 3.7
     - python: 3.7
       env: PIP_DEPENDENCIES='.[test]'
+
+    # Test with numpy 1.16
+    - env: NUMPY_VERSION=1.16
+           PIP_DEPENDENCIES='.[test]'
+
+    # Test with SDP pinned dependencies
+    - env: PIP_DEPENDENCIES='-r requirements-sdp.txt .'
 
     # Test with dev dependencies
     - env: PIP_DEPENDENCIES="-r requirements-dev.txt .[test]"
