@@ -6,6 +6,7 @@ from collections import namedtuple
 import logging
 import numpy as np
 
+from ..lib import pipe_utils
 from . import x_irs2
 
 log = logging.getLogger(__name__)
@@ -77,7 +78,7 @@ def ipc_correction(input_model, ipc_model):
     output = input_model.copy()
 
     # Was IRS2 readout used?
-    is_irs2_format = x_irs2.is_irs2(input_model)
+    is_irs2_format = pipe_utils.is_irs2(input_model)
     if is_irs2_format:
         irs2_mask = x_irs2.make_mask(input_model)
 

@@ -201,11 +201,10 @@ setup(
         'stsci.image>=2.3.3',
         'stsci.imagestats>=1.4',
         'tweakwcs>=0.5.1',
-        'verhawk',
     ],
     extras_require={
         'docs': DOCS_REQUIRE,
-        'ephem': ['pymssql>=2.1', 'jplephem>=2.8'],
+        'ephem': ['pymssql==2.1.4', 'jplephem==2.9'], # for timeconversion
         'test': TESTS_REQUIRE,
     },
     tests_require=TESTS_REQUIRE,

@@ -21,6 +21,8 @@ associations
 
 - Fix in load_as_asn for UTF-8 errors [#3942]
 
+- Update association rules so that MIMF exposures are processed as WFS observations [#4034]
+
 - asn_from_list fills the level2  member exptype correctly if the input is a tuple [#2942]
 
 - Update rules to make level 3 associations for slitless LRS mode [#3940]
@@ -95,6 +97,22 @@ datamodels
 - Added "MIR_TACONFIRM" to the list of allowed EXP_TYPE values in the
   keyword schemas. [#4039]
 
+- Added new imaging-specific photom reference file data models ``FgsImgPhotomModel``,
+  ``MirImgPhotomModel``, ``NrcImgPhotomModel``, and ``NisImgPhotomModel``. [#4052]
+
+- Add EXP_TYPE and P_EXP_TY keywords to new imaging photom reference file
+  data model schemas. [#4068]
+
+- Introduced a flag ``ignore_missing_extensions=True`` to the `DataModel` initializer
+  which is propagated to the ``asdf.open`` function. It allows control over a warning
+  asdf issues when opening files written with an extension version older than the
+  extension version the file was written with. An example message is
+
+  ``asdf/asdf.py:202: UserWarning: File was created with extension
+  'astropy.io.misc.asdf.extension.AstropyAsdfExtension' from package astropy-4.0.dev24515,
+  but older version astropy-3.2.1 is installed``. [#4070]
+
+
 exp_to_source
 -------------
 
@@ -144,10 +162,19 @@ group_scale
 
 - Updates to documentation and log messages. [#3738]
 
+ipc
+---
+
+Function is_irs2 has been removed from x_irs2.py.  The version of this funtion
+that is now in lib/pipe_utils.py is used instead. [#4054]
+
 lib
 ---
 
 - A function to determine the dispersion direction has been added. [#3756]
+
+- Function is_irs2 has been added to pipe_utils.py, and unit tests were
+  added to tests/test_pipe_utils.py. [#4054]
 
 master_background
 -----------------
@@ -159,10 +186,22 @@ photom
 
 - Add unit tests [#4022]
 
+refpix
+------
+
+- Call is_irs2 from lib/pipe_utils.py instead of using PATTTYPE keyword to
+  check for IRS2 readout mode. [#4054]
+
 resample_spec
 -------------
 
 - This step uses keyword DISPAXIS and also copies it to output. [#3799]
+
+saturation
+----------
+
+Function is_irs2 has been removed from x_irs2.py.  The version of this funtion
+that is now in lib/pipe_utils.py is used instead. [#4054]
 
 stpipe
 ------

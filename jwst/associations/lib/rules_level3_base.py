@@ -707,6 +707,7 @@ class Constraint_Image(DMSAttrConstraint):
                 '|mir_image'
                 '|nis_image'
                 '|fgs_image'
+                '|nrs_mimf'
             ),
         )
 

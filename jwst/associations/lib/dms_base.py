@@ -86,6 +86,7 @@ IMAGE2_SCIENCE_EXP_TYPES = [
     'nrc_image',
     'nrc_coron',
     'nrc_tsimage',
+    'nrs_mimf',
 ]
 
 IMAGE2_NONSCIENCE_EXP_TYPES = [
@@ -94,7 +95,6 @@ IMAGE2_NONSCIENCE_EXP_TYPES = [
     'nrc_focus',
     'nrs_focus',
     'nrs_image',
-    'nrs_mimf',
 ]
 IMAGE2_NONSCIENCE_EXP_TYPES.extend(ACQ_EXP_TYPES)
 

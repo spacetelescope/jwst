@@ -1,9 +1,8 @@
-title: MIRI imaging photometric flux conversion data model
+title: NIRCam imaging photometric flux conversion data model
 allOf:
 - $ref: referencefile.schema.yaml
 - $ref: keyword_exptype.schema.yaml
 - $ref: keyword_pexptype.schema.yaml
-- $ref: keyword_band.schema.yaml
 - $ref: keyword_pixelarea.schema.yaml
 - type: object
   properties:
@@ -13,8 +12,8 @@ allOf:
       datatype:
       - name: filter
         datatype: [ascii, 12]
-      - name: subarray
-        datatype: [ascii, 15]
+      - name: pupil
+        datatype: [ascii, 12]
       - name: photmjsr
         datatype: float32
       - name: uncertainty

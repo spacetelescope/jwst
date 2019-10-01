@@ -1,9 +1,6 @@
-title: MIRI imaging photometric flux conversion data model
+title: MIRI imager photometric flux conversion data model
 allOf:
-- $ref: referencefile.schema.yaml
-- $ref: keyword_exptype.schema.yaml
-- $ref: keyword_pexptype.schema.yaml
-- $ref: keyword_band.schema.yaml
+- $ref: photom.schema.yaml
 - $ref: keyword_pixelarea.schema.yaml
 - type: object
   properties:
@@ -18,5 +15,16 @@ allOf:
       - name: photmjsr
         datatype: float32
       - name: uncertainty
+        datatype: float32
+      - name: nelem
+        datatype: int16
+      - name: wavelength
+        shape: [500]
+        datatype: float32
+      - name: relresponse
+        shape: [500]
+        datatype: float32
+      - name: relresperror
+        shape: [500]
         datatype: float32
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema
