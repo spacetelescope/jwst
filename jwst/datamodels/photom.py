@@ -175,8 +175,7 @@ class NisSossPhotomModel(ReferenceFileModel):
         - filter: str[12]
         - pupil: str[15]
         - order: int16
-        - srctype: str[15]
-        - photcorr: float32
+        - photmj: float32
         - uncertainty: float32
         - nelem: int16
         - wavelength: float32[*]
@@ -226,8 +225,7 @@ class NrsMosPhotomModel(ReferenceFileModel):
 
         - filter: str[12]
         - grating: str[15]
-        - srctype: str[15]
-        - photcorr: float32
+        - photmj: float32
         - uncertainty: float32
         - nelem: int16
         - wavelength: float32[*]
@@ -282,8 +280,7 @@ class NrsFsPhotomModel(ReferenceFileModel):
         - filter: str[12]
         - grating: str[15]
         - slit: str[15]
-        - srctype: str[15]
-        - photcorr: float32
+        - photmj: float32
         - uncertainty: float32
         - nelem: int16
         - wavelength: float32[*]

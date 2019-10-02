@@ -16,9 +16,7 @@ allOf:
         datatype: [ascii, 15]
       - name: order
         datatype: int16
-      - name: srctype
-        datatype: [ascii, 15]
-      - name: photcorr
+      - name: photmj
         datatype: float32
       - name: uncertainty
         datatype: float32
