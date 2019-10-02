@@ -14,8 +14,8 @@ class StraylightStep (Step):
 
     spec = """
          method = option('Nearest','ModShepard',default='ModShepard') #Algorithm method
-         roi = integer(default = 50) # Region of interest given as even integer
-         power = float(default = 1.0) # Power of weighting function
+         roi = integer(2, 1024, default = 50) # Region of interest given as even integer
+         power = float(0.1, 5, default = 1.0) # Power of weighting function
 
     """
 
@@ -33,7 +33,7 @@ class StraylightStep (Step):
                 if self.method == 'ModShepard':
                     # reasonable power varible defined as: 0.1 < power < 5
                     if self.power < 0.1 or self.power > 5:
-                        self.log.error("The kernel power parameter is outside the reasonable range of"
+                        self.log.warning("The kernel power parameter is outside the reasonable range of"
                                   " 0.1 to 5. It is set to {}".format(self.power))
                         self.log.warning('Straylight step will be skipped')
                         result = input_model.copy()
@@ -41,7 +41,7 @@ class StraylightStep (Step):
                         return result
 
                     if self.roi < 2 or self.roi > 1024:
-                        self.log.error("The kernel roi parameter is outside the reasonable range of"
+                        self.log.warning("The kernel roi parameter is outside the reasonable range of"
                                   " 2 to 1024. It is set to {} ".format(self.roi))
                         self.log.warning('Straylight step will be skipped')
                         result = input_model.copy()
