@@ -1,0 +1,34 @@
+title: NIRSpec MOS and IFU photometric flux conversion data model
+allOf:
+- $ref: referencefile.schema.yaml
+- $ref: keyword_exptype.schema.yaml
+- $ref: keyword_pexptype.schema.yaml
+- $ref: keyword_pixelarea.schema.yaml
+- type: object
+  properties:
+    phot_table:
+      title: Photometric flux conversion factors table
+      fits_hdu: PHOTOM
+      datatype:
+      - name: filter
+        datatype: [ascii, 12]
+      - name: grating
+        datatype: [ascii, 15]
+      - name: srctype
+        datatype: [ascii, 15]
+      - name: photcorr
+        datatype: float32
+      - name: uncertainty
+        datatype: float32
+      - name: nelem
+        datatype: int16
+      - name: wavelength
+        datatype: float32
+        ndim: 1
+      - name: relresponse
+        datatype: float32
+        ndim: 1
+      - name: reluncertainty
+        datatype: float32
+        ndim: 1
+$schema: http://stsci.edu/schemas/fits-schema/fits-schema

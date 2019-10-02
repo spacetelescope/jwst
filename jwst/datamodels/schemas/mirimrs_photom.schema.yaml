@@ -1,11 +1,8 @@
 title: MIRI MRS photometric flux conversion data model
 allOf:
-- $ref: referencefile.schema.yaml
-- $ref: keyword_exptype.schema.yaml
-- $ref: keyword_pexptype.schema.yaml
+- $ref: photom.schema.yaml
 - $ref: keyword_band.schema.yaml
 - $ref: keyword_photmjsr.schema.yaml
-- $ref: keyword_pixelarea.schema.yaml
 - type: object
   properties:
     data:

@@ -41,9 +41,13 @@ from .nirspec_flat import NirspecFlatModel, NirspecQuadFlatModel
 from .outlierpars import OutlierParsModel
 from .pathloss import PathlossModel
 from .persat import PersistenceSatModel
-from .photom import PhotomModel, FgsPhotomModel, FgsImgPhotomModel, NircamPhotomModel, NrcImgPhotomModel
-from .photom import NirissPhotomModel, NisImgPhotomModel, NirspecPhotomModel, NirspecFSPhotomModel
-from .photom import MiriImgPhotomModel, MirImgPhotomModel, MiriMrsPhotomModel
+from .photom import PhotomModel, FgsPhotomModel, FgsImgPhotomModel
+from .photom import MiriImgPhotomModel, MirImgPhotomModel, MirLrsPhotomModel
+from .photom import MiriMrsPhotomModel, MirMrsPhotomModel
+from .photom import NircamPhotomModel, NrcImgPhotomModel, NrcWfssPhotomModel
+from .photom import NirissPhotomModel, NisImgPhotomModel, NisSossPhotomModel, NisWfssPhotomModel
+from .photom import NirspecPhotomModel, NirspecFSPhotomModel
+from .photom import NrsFsPhotomModel, NrsMosPhotomModel
 from .pixelarea import PixelAreaModel, NirspecSlitAreaModel, NirspecMosAreaModel, NirspecIfuAreaModel
 from .psfmask import PsfMaskModel
 from .quad import QuadModel
@@ -103,9 +107,13 @@ __all__ = [
     'PathlossModel',
     'PersistenceSatModel',
     'PixelAreaModel', 'NirspecSlitAreaModel', 'NirspecMosAreaModel', 'NirspecIfuAreaModel',
-    'PhotomModel', 'FgsPhotomModel', 'FgsImgPhotomModel', 'MiriImgPhotomModel', 'MirImgPhotomModel', 'MiriMrsPhotomModel',
-    'NircamPhotomModel', 'NrcImgPhotomModel', 'NirissPhotomModel', 'NisImgPhotomModel',
+    'PhotomModel', 'FgsPhotomModel', 'FgsImgPhotomModel',
+    'MiriImgPhotomModel', 'MirImgPhotomModel', 'MirLrsPhotomModel',
+    'MiriMrsPhotomModel', 'MirMrsPhotomModel',
+    'NircamPhotomModel', 'NrcImgPhotomModel', 'NrcWfssPhotomModel',
+    'NirissPhotomModel', 'NisImgPhotomModel', 'NisSossPhotomModel', 'NisWfssPhotomModel',
     'NirspecPhotomModel', 'NirspecFSPhotomModel',
+    'NrsFsPhotomModel', 'NrsMosPhotomModel',
     'PsfMaskModel',
     'QuadModel', 'RampModel', 'MIRIRampModel',
     'RampFitOutputModel', 'ReadnoiseModel',
