@@ -763,6 +763,8 @@ associations
 barshadow
 ---------
 
+- Update barshadow position [#3897]
+
 - Unit tests were added. [#3930]
 
 combine_1d
