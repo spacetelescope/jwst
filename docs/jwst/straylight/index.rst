@@ -1,3 +1,5 @@
+.. _straylight_step:
+
 ======================
 Stray Light Correction
 ======================

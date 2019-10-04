@@ -6,63 +6,41 @@ __all__ = ['IFUCubeParsModel']
 class IFUCubeParsModel(ReferenceFileModel):
     """
     A data model for IFU Cube  parameters reference tables.
+
+    Parameters
+    __________
+    ifucubepars_table : numpy table
+         IFU Cube default parameters table
     """
-    schema_url = "ifucubepars.schema.yaml"
-
-    def __init__(self, init=None, ifucubepars_table=None, ifucubepars_msn_table=None,**kwargs):
-        super(IFUCubeParsModel, self).__init__(init=init, **kwargs)
-
-        if ifucubepars_table is not None:
-            self.ifucubepars_table = ifucubepars_table
-
-        if ifucubepars_msn_table is not None:
-            self.ifucubepars_msn_table = ifucubepars_msn_table
+    schema_url = "ifucubepars.schema"
 
 
-class NirspecIFUCubeParsModel(IFUCubeParsModel):
+class NirspecIFUCubeParsModel(ReferenceFileModel):
     """
     A data model for Nirspec ifucubepars reference files.
     """
-    schema_url = "nirspec_ifucubepars.schema.yaml"
-
-    def __init__(self, init=None, ifucubepars_table=None,
-                 ifucubepars_msn_table=None,
-                 ifucubepars_prism_wavetable=None,
-                 ifucubepars_med_wavetable=None,
-                 ifucubepars_high_wavetable=None,
-                 **kwargs):
-        super(NirspecIFUCubeParsModel, self).__init__(init=init, **kwargs)
-
-        if ifucubepars_table is not None:
-            self.ifucubepars_table = ifucubepars_table
-
-        if ifucubepars_msn_table is not None:
-            self.ifucubepars_msn_table = ifucubepars_msn_table
-
-        if ifucubepars_prism_wavetable is not None:
-            self.ifucubepars_prism_wavetable = ifucubepars_prism_wavetable
-        if ifucubepars_med_wavetable is not None:
-            self.ifucubepars_med_wavetable = ifucubepars_med_wavetable
-        if ifucubepars_high_wavetable is not None:
-            self.ifucubepars_high_wavetable = ifucubepars_high_wavetable
+    schema_url = "nirspec_ifucubepars.schema"
 
 
-class MiriIFUCubeParsModel(IFUCubeParsModel):
+class MiriIFUCubeParsModel(ReferenceFileModel):
     """
     A data model for MIRI mrs ifucubepars reference files.
+
+    Parameters
+    __________
+    ifucubepars_table : numpy table
+         default IFU cube  parameters table
+
+    ifucubepars_msn_table : numpy table
+         default IFU cube msn parameters table
+
+    ifucubepars_prism_wavetable : numpy table
+         default IFU cube prism wavetable
+
+    ifucubepars_med_wavetable : numpy table
+         default IFU cube med resolution wavetable
+
+    ifucubepars_high_wavetable : numpy table
+         default IFU cube high resolution wavetable
     """
-    schema_url = "miri_ifucubepars.schema.yaml"
-
-    def __init__(self, init=None, ifucubepars_table=None,
-                 ifucubepars_msn_table=None,
-                 ifucubepars_multichannel_wavetable=None,**kwargs):
-        super(MiriIFUCubeParsModel, self).__init__(init=init, **kwargs)
-
-        if ifucubepars_table is not None:
-            self.ifucubepars_table = ifucubepars_table
-
-        if ifucubepars_msn_table is not None:
-            self.ifucubepars_msn_table = ifucubepars_msn_table
-
-        if ifucubepars_multichannel_wavetable is not None:
-            self.ifucubepars_multichannel_wavetable = ifucubepars_multichannel_wavetable
+    schema_url = "miri_ifucubepars.schema"

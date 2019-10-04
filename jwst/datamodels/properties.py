@@ -2,6 +2,7 @@
 
 import copy
 import numpy as np
+from collections.abc import Mapping
 from astropy.io import fits
 
 from astropy.utils.compat.misc import override__dir__
@@ -11,6 +12,7 @@ from asdf.tags.core import ndarray
 
 from . import util
 from . import validate
+from . import schema as mschema
 
 import logging
 log = logging.getLogger(__name__)
@@ -19,31 +21,84 @@ log.addHandler(logging.NullHandler())
 
 __all__ = ['ObjectNode', 'ListNode']
 
+
+def _is_struct_array(val):
+    return (isinstance(val, (np.ndarray, fits.FITS_rec)) and
+            val.dtype.names is not None and val.dtype.fields is not None)
+
+
+def _is_struct_array_precursor(val):
+    return isinstance(val, list) and isinstance(val[0], tuple)
+
+
+def _is_struct_array_schema(schema):
+    return (isinstance(schema['datatype'], list) and
+            any('name' in t for t in schema['datatype']))
+
+
 def _cast(val, schema):
     val = _unmake_node(val)
-    if val is not None:
-        if 'datatype' in schema:
-            # Handle lazy array
-            if isinstance(val, ndarray.NDArrayType):
-                val = val._make_array()
+    if val is None:
+        return None
 
-            dtype = ndarray.asdf_datatype_to_numpy_dtype(schema['datatype'])
-            val = util.gentle_asarray(val, dtype)
-            if dtype.fields is not None:
-                val = _as_fitsrec(val)
+    if 'datatype' in schema:
+        # Handle lazy array
+        if isinstance(val, ndarray.NDArrayType):
+            val = val._make_array()
 
-        if 'ndim' in schema and len(val.shape) != schema['ndim']:
-            raise ValueError(
-                "Array has wrong number of dimensions.  Expected {0}, got {1}".format(
-                    schema['ndim'], len(val.shape)))
+        if (_is_struct_array_schema(schema) and len(val) and
+            (_is_struct_array_precursor(val) or _is_struct_array(val))):
+            # we are dealing with a structured array. Because we may
+            # modify schema (to add shape), we make a deep copy of the
+            # schema here:
+            schema = copy.deepcopy(schema)
 
-        if 'max_ndim' in schema and len(val.shape) > schema['max_ndim']:
-            raise ValueError(
-                "Array has wrong number of dimensions.  Expected <= {0}, got {1}".format(
-                    schema['max_ndim'], len(val.shape)))
+            for t, v in zip(schema['datatype'], val[0]):
+                if not isinstance(t, Mapping):
+                    continue
 
-        if isinstance(val, np.generic) and np.isscalar(val):
-            val = np.asscalar(val)
+                aval = np.asanyarray(v)
+                shape = aval.shape
+                val_ndim = len(shape)
+
+                # make sure that if 'ndim' is specified for a field,
+                # it matches the dimensionality of val's field:
+                if 'ndim' in t and val_ndim != t['ndim']:
+                    raise ValueError(
+                        "Array has wrong number of dimensions. "
+                        "Expected {}, got {}".format(t['ndim'], val_ndim)
+                    )
+
+                if 'max_ndim' in t and val_ndim > t['max_ndim']:
+                    raise ValueError(
+                        "Array has wrong number of dimensions. "
+                        "Expected <= {}, got {}".format(t['max_ndim'], val_ndim)
+                    )
+
+                # if shape of a field's value is not specified in the schema,
+                # add it to the schema based on the shape of the actual data:
+                if 'shape' not in t:
+                    t['shape'] = shape
+
+        dtype = ndarray.asdf_datatype_to_numpy_dtype(schema['datatype'])
+        val = util.gentle_asarray(val, dtype)
+
+        if dtype.fields is not None:
+            val = _as_fitsrec(val)
+
+    if 'ndim' in schema and len(val.shape) != schema['ndim']:
+        raise ValueError(
+            "Array has wrong number of dimensions.  Expected {}, got {}"
+            .format(schema['ndim'], len(val.shape)))
+
+    if 'max_ndim' in schema and len(val.shape) > schema['max_ndim']:
+        raise ValueError(
+            "Array has wrong number of dimensions.  Expected <= {}, got {}"
+            .format(schema['max_ndim'], len(val.shape)))
+
+    if isinstance(val, np.generic) and np.isscalar(val):
+        val = val.item()
+
     return val
 
 
@@ -55,9 +110,40 @@ def _as_fitsrec(val):
         return val
     else:
         coldefs = fits.ColDefs(val)
+        uint = any(c._pseudo_unsigned_ints for c in coldefs)
         fits_rec = fits.FITS_rec(val)
         fits_rec._coldefs = coldefs
+        # FITS_rec needs to know if it should be operating in pseudo-unsigned-ints mode,
+        # otherwise it won't properly convert integer columns with TZEROn before saving.
+        fits_rec._uint = uint
         return fits_rec
+
+
+def _get_schema_type(schema):
+    """
+    Create a list of types used by a schema and its subschemas when
+    the subschemas are joined by combiners. Then return a type string
+    if all the types are the same or 'mixed' if they differ
+    """
+    def callback(subschema, path, combiner, types, recurse):
+        if 'type' in subschema:
+            types.append(subschema['type'])
+
+        has_combiner = ('anyOf' in subschema.keys() or
+                        'allOf' in subschema.keys())
+        return not has_combiner
+
+    types = []
+    mschema.walk_schema(schema, callback, types)
+
+    schema_type = None
+    for a_type in types:
+        if schema_type is None:
+            schema_type = a_type
+        elif schema_type != a_type:
+            schema_type = 'mixed'
+            break
+    return schema_type
 
 
 def _make_default_array(attr, schema, ctx):
@@ -109,13 +195,14 @@ def _make_default(attr, schema, ctx):
         return _make_default_array(attr, schema, ctx)
     elif 'default' in schema:
         return schema['default']
-    elif (schema.get('type') == 'object' or
-          schema.get('allOf') or
-          schema.get('anyOf')):
-        return {}
-    elif schema.get('type') == 'array':
-        return []
-    return None
+    else:
+        schema_type = _get_schema_type(schema)
+        if schema_type == 'object':
+            return {}
+        elif schema_type == 'array':
+            return []
+        else:
+            return None
 
 
 def _make_node(attr, instance, schema, ctx):
@@ -163,7 +250,7 @@ def _find_property(schema, attr):
         find = 'default' in subschema
     return find
 
-class Node(object):
+class Node():
     def __init__(self, attr, instance, schema, ctx):
         self._name = attr
         self._instance = instance
@@ -445,4 +532,3 @@ def merge_tree(a, b):
 
     recurse(a, b)
     return a
-

@@ -1,3 +1,5 @@
+# Licensed under a 3-clause BSD style license - see LICENSE.rst
+# -*- coding: utf-8 -*-
 """
 Models used by the JWST pipeline.
 
@@ -6,7 +8,7 @@ Since they are specific to JWST, the models and their ASDF schemas
 are kept here separately from astropy. An ASDF extension for this package is
 registered with ASDF through entry points.
 """
-# -*- coding: utf-8 -*-
+
 
 import math
 from collections import namedtuple
@@ -30,14 +32,14 @@ N_SHUTTERS_QUADRANT = 62415
 """ Number of shutters per quadrant in the NIRSPEC MSA shutter array"""
 
 
-Slit = namedtuple('Slit', ["name", "shutter_id", "xcen", "ycen",
+Slit = namedtuple('Slit', ["name", "shutter_id", "dither_position", "xcen", "ycen",
                            "ymin", "ymax", "quadrant", "source_id", "shutter_state",
                            "source_name", "source_alias", "stellarity",
-                           "source_xpos", "source_ypos"])
+                           "source_xpos", "source_ypos", ])
 """ Nirspec Slit structure definition"""
 
 
-Slit.__new__.__defaults__ = ("", 0, 0.0, 0.0, 0.0, 0.0, 0, 0, "", "", "", "",
+Slit.__new__.__defaults__ = ("", 0, 0, 0.0, 0.0, 0.0, 0.0, 0, 0, "", "", "", "",
                              0.0, 0.0, 0.0)
 
 
@@ -55,6 +57,32 @@ class GrismObject(namedtuple('GrismObject', ("sid",
                                              ), rename=False)):
     """ Grism Objects identified from a direct image catalog and segment map.
 
+    Parameters
+    ----------
+    sid : int
+        source identifed
+    xcentroid : float
+        x center of object in pixels
+    ycentroid : float
+        y center of object in pixels
+    order_bounding : dict{order: tuple}
+        Contains the object x,y bounding locations on the image
+        keyed on spectral order
+    partial_order : bool
+        True if the order is only partially contained on the image
+    waverange : list
+        wavelength range for the order
+    sky_centroid: `~astropy.coordinates.SkyCoord`
+        ra and dec of the center of the object
+    sky_bbox_ll : `~astropy.coordinates.SkyCoord`
+        Lower left corner of the minimum bounding box
+    sky_bbox_lr : `~astropy.coordinates.SkyCoord`
+        Lower right corder of the minimum bounding box
+    sky_bbox_ul : `~astropy.coordinates.SkyCoord`
+        Upper left corner of the minimum bounding box
+    sky_bbox_ur : `~astropy.coordinates.SkyCoord`
+        Upper right corner of the minimum bounding box
+
     Notes
     -----
     The object bounding box is computed from the segementation map,
@@ -65,14 +93,9 @@ class GrismObject(namedtuple('GrismObject', ("sid",
     ra and dec are the sky ra and dec of the center of the object as measured
     from the non-dispersed image.
 
-    the segment_[ra/dec][min/max] are also as measured on the direct image
-
     order_bounding is stored as a lookup dictionary per order and contains
     the object x,y bounding location on the grism image
     GrismObject(order_bounding={"+1":((xmin,xmax),(ymin,ymax)),"+2":((2,3),(2,3))})
-
-
-    ``sky_bbox_??`` contains the ra,dec,frame information for the bbox from the catalog
 
     """
     __slots__ = ()  # prevent instance dictionary for lower memory
@@ -81,7 +104,7 @@ class GrismObject(namedtuple('GrismObject', ("sid",
                 sid=None,
                 order_bounding={},
                 sky_centroid=None,
-                partial_order=False,
+                partial_order={},
                 waverange=None,
                 sky_bbox_ll=None,
                 sky_bbox_lr=None,
@@ -153,7 +176,6 @@ class MIRI_AB2Slice(Model):
     channel = Parameter("channel", default=1)
     """ MIRI MRS channel: one of 1, 2, 3, 4"""
 
-
     @staticmethod
     def evaluate(beta, beta_zero, beta_del, channel):
         s = channel * 100 + (beta - beta_zero) / beta_del + 1
@@ -191,7 +213,6 @@ class Snell(Model):
 
     inputs = ("lam", "alpha_in", "beta_in", "zin")
     outputs = ("alpha_out", "beta_out", "zout")
-
 
     def __init__(self, angle, kcoef, lcoef, tcoef, tref, pref,
                  temperature, pressure, name=None):
@@ -240,11 +261,10 @@ class Snell(Model):
             # Compute the relative index of the glass at Tref and Pref using Sellmeier equation I.
             lamrel = lam * nair_obs / nair_ref
 
-
             nrel = np.sqrt(1. +
                            K1 * lamrel ** 2 / (lamrel ** 2 - L1) +
                            K2 * lamrel ** 2 / (lamrel ** 2 - L2) +
-                           K3 * lamrel ** 2 / (lamrel ** 2 -L3)
+                           K3 * lamrel ** 2 / (lamrel ** 2 - L3)
                            )
             # Convert the relative index of refraction at the reference temperature and pressure
             # to absolute.
@@ -610,69 +630,6 @@ class Rotation3D(Model):
         return x, y, z
 
 
-class LRSWavelength(Model):
-    """
-    The MIRI LRS wavelength solution implemented as an astropy.modeling.Model.
-
-    Parameters
-    ----------
-    wavetable : ndarray
-        Array of wavelengths.
-    zero_point : tuple
-        The (X, Y) pixel coordinates of the wavelength zero point.
-    """
-
-    standard_broadcasting = False
-    _separable = False
-
-    linear = False
-    fittable = False
-
-    inputs = ('x', 'y')
-    outputs = ('lambda',)
-
-    def __init__(self, wavetable, zero_point, name=None):
-        self._wavetable = wavetable
-        self._zero_point = zero_point
-        super(LRSWavelength, self).__init__(name=name)
-
-    @property
-    def wavetable(self):
-        return self._wavetable
-
-    @property
-    def zero_point(self):
-        return self._zero_point
-
-    def evaluate(self, x, y):
-        slitsize = 1.00076751 # The MIRI LRS slit size.
-        imx, imy = self.zero_point
-        dx = x - imx
-        dy = y - imy
-        if x.shape != y.shape:
-            raise ValueError("Inputs have different shape.")
-        x0 = self._wavetable[:, 3]
-        y0 = self._wavetable[:, 4]
-        x1 = self._wavetable[:, 5]
-        #y1 = self._wavetable[:, 6]
-        wave = self._wavetable[:, 2]
-
-        diff0 = (dy - y0[0])
-        ind = np.abs(np.asarray(diff0 / slitsize, dtype=np.int))
-        condition = np.logical_and(dy < y0[0], dy > y0[-1])  #, dx>x0, dx<x1)
-        xyind = condition.nonzero()
-        wavelength = np.zeros(condition.shape)
-        wavelength += np.nan
-        wavelength[xyind] = wave[ind[xyind]]
-        wavelength = wavelength.flatten()
-
-        wavelength[(dx[xyind] < x0[ind[xyind]]).nonzero()[0]] = np.nan
-        wavelength[(dx[xyind] > x1[ind[xyind]]).nonzero()[0]] = np.nan
-        wavelength.shape = condition.shape
-
-        return wavelength
-
-
 class Gwa2Slit(Model):
     """
     NIRSpec GWA to slit transform.
@@ -682,7 +639,7 @@ class Gwa2Slit(Model):
     slits : list
         A list of open slits.
         A slit is a namedtupe of type `~jwst.transforms.models.Slit`
-        Slit("name", "shutter_id", "xcen", "ycen", "ymin", "ymax",
+        Slit("name", "shutter_id", "dither_position", "xcen", "ycen", "ymin", "ymax",
         "quadrant", "source_id", "shutter_state", "source_name",
         "source_alias", "stellarity", "source_xpos", "source_ypos"])
     models : list
@@ -732,7 +689,7 @@ class Slit2Msa(Model):
     slits : list
         A list of open slits.
         A slit is a namedtupe, `~jwst.transforms.models.Slit`
-        Slit("name", "shutter_id", "xcen", "ycen", "ymin", "ymax",
+        Slit("name", "shutter_id", "dither_position", "xcen", "ycen", "ymin", "ymax",
         "quadrant", "source_id", "shutter_state", "source_name",
         "source_alias", "stellarity", "source_xpos", "source_ypos")
     models : list
@@ -807,7 +764,7 @@ class NirissSOSSModel(Model):
         # So, we are going to just take the 0'th element and use that as the index.
         try:
             order_number = int(spectral_order[0])
-        except Exception as e:
+        except Exception:
             raise ValueError('Spectral order is not between 1 and 3, {}'.format(spectral_order))
 
         return self.models[order_number](x, y)
@@ -919,13 +876,12 @@ class V23ToSky(Rotation3D):
 
         return ra, dec
 
-    def __call__(self, v2, v3):
+    def __call__(self, v2, v3, **kwargs):
         from itertools import chain
         inputs, format_info = self.prepare_inputs(v2, v3)
         parameters = self._param_sets(raw=True)
 
-        outputs = self.evaluate(*chain([v2, v3], parameters))
-
+        outputs = self.evaluate(*chain(inputs, parameters))
         if self.n_outputs == 1:
             outputs = (outputs,)
 
@@ -1487,7 +1443,7 @@ class NIRISSForwardRowGrismDispersion(Model):
         except KeyError:
             raise ValueError("Specified order is not available")
 
-        dxr = x-x0  # delta x in rotated trace coordinates
+        dxr = x - x0  # delta x in rotated trace coordinates
 
         t = np.linspace(0, 1, 10)  #sample t
         dx = self.xmodels[iorder][0](x0, y0) + t * self.xmodels[iorder][1](x0, y0)

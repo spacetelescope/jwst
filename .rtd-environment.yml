@@ -1,29 +1,9 @@
-channels:
-  - http://ssb.stsci.edu/astroconda-dev
-
+name: jwst
 dependencies:
-  - python>=3
-  - setuptools
-  - asdf
-  - astropy
-  - crds
-  - drizzle
-  - gwcs
-  - jsonschema
-  - jplephem
-  - matplotlib
-  - namedlist
+  - "python>=3"
+  - "pip>=10.0"
+  - "nomkl"
   - numpy
-  - photutils
-  - scipy
-  - six
-  - spherical-geometry
-  - stsci.image
-  - stsci.imagestats
-  - stsci.stimage
-  - stsci.tools
-  - verhawk
-  - sphinx_rtd_theme
+  - setuptools
   - pip:
-    - sphinx-automodapi
-    - stsci_rtd_theme
+    - ".[docs]"

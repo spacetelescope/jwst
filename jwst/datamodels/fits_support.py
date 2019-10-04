@@ -293,7 +293,7 @@ def _fits_item_recurse(validator, items, instance, schema):
 def _fits_type(validator, items, instance, schema):
     if instance in ('N/A', '#TODO', '', None):
         return
-    return validators._validators.type_draft4(validator, items, instance, schema)
+    return validators.Draft4Validator.VALIDATORS["type"](validator, items, instance, schema)
 
 
 FITS_VALIDATORS = HashableDict(asdf_schema.YAML_VALIDATORS)
@@ -379,7 +379,7 @@ def _save_history(hdulist, tree):
                 history[i] = HistoryEntry({'description': str(history[i])})
         hdulist[0].header['HISTORY'] = history[i]['description']
 
-def to_fits(tree, schema, extensions=None):
+def to_fits(tree, schema):
     hdulist = fits.HDUList()
     hdulist.append(fits.PrimaryHDU())
 
@@ -387,7 +387,7 @@ def to_fits(tree, schema, extensions=None):
     _save_extra_fits(hdulist, tree)
     _save_history(hdulist, tree)
 
-    asdf = fits_embed.AsdfInFits(hdulist, tree, extensions=extensions)
+    asdf = fits_embed.AsdfInFits(hdulist, tree)
     return asdf
 
 
@@ -531,9 +531,9 @@ def _load_history(hdulist, tree):
         history['entries'].append(HistoryEntry({'description': entry}))
 
 
-def from_fits(hdulist, schema, extensions, context):
+def from_fits(hdulist, schema, context, **kwargs):
     try:
-        ff = fits_embed.AsdfInFits.open(hdulist, extensions=extensions)
+        ff = from_fits_asdf(hdulist, **kwargs)
     except Exception as exc:
         raise exc.__class__("ERROR loading embedded ASDF: " + str(exc)) from exc
 
@@ -544,17 +544,37 @@ def from_fits(hdulist, schema, extensions, context):
 
     return ff
 
+def from_fits_asdf(hdulist,
+                  ignore_version_mismatch=True,
+                  ignore_unrecognized_tag=False,
+                  **kwargs):
+    """
+    Wrap asdf call to extract optional argumentscommet
+    """
+    ignore_missing_extensions = kwargs.pop('ignore_missing_extensions')
+    return fits_embed.AsdfInFits.open(hdulist,
+                                      ignore_version_mismatch=ignore_version_mismatch,
+                                      ignore_unrecognized_tag=ignore_unrecognized_tag,
+                                      ignore_missing_extensions=ignore_missing_extensions)
+
+
 def from_fits_hdu(hdu, schema):
     """
     Read the data from a fits hdu into a numpy ndarray
     """
     data = hdu.data
-    data2 = properties._cast(data, schema)
 
-    # Casting a table loses the listeners, so restore them
+    # Save the column listeners for possible restoration
     if hasattr(data, '_coldefs'):
-        coldefs = data._coldefs
-        coldefs2 = data2._coldefs
-        coldefs2._listeners = coldefs._listeners
+        listeners = data._coldefs._listeners
+    else:
+        listeners = None
 
-    return data2
+    # Cast array to type mentioned in schema
+    data = properties._cast(data, schema)
+
+    # Casting a table loses the column listeners, so restore them
+    if listeners is not None:
+        data._coldefs._listeners = listeners
+
+    return data

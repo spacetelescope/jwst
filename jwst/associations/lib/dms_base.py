@@ -19,35 +19,6 @@ PRODUCT_NAME_DEFAULT = 'undefined'
 _ASN_NAME_TEMPLATE_STAMP = 'jw{program}-{acid}_{stamp}_{type}_{sequence:03d}_asn'
 _ASN_NAME_TEMPLATE = 'jw{program}-{acid}_{type}_{sequence:03d}_asn'
 
-# Exposure EXP_TYPE to Association EXPTYPE mapping
-EXPTYPE_MAP = {
-    'mir_dark':      'dark',
-    'mir_flatimage': 'flat',
-    'mir_flatmrs':   'flat',
-    'mir_tacq':      'target_acquistion',
-    'nis_dark':      'dark',
-    'nis_focus':     'engineering',
-    'nis_lamp':      'engineering',
-    'nis_tacq':      'target_acquistion',
-    'nis_taconfirm': 'target_acquistion',
-    'nrc_dark':      'dark',
-    'nrc_flat':      'flat',
-    'nrc_focus':     'engineering',
-    'nrc_led':       'engineering',
-    'nrc_tacq':      'target_acquistion',
-    'nrc_taconfirm': 'target_acquistion',
-    'nrs_autoflat':  'autoflat',
-    'nrs_autowave':  'autowave',
-    'nrs_confirm':   'target_acquistion',
-    'nrs_dark':      'dark',
-    'nrs_focus':     'engineering',
-    'nrs_image':     'engineering',
-    'nrs_lamp':      'engineering',
-    'nrs_tacq':      'target_acquistion',
-    'nrs_taconfirm': 'target_acquistion',
-    'nrs_taslit':    'target_acquistion',
-}
-
 # Acquistions and Confirmation images
 ACQ_EXP_TYPES = (
     'mir_tacq',
@@ -56,19 +27,54 @@ ACQ_EXP_TYPES = (
     'nrc_taconfirm',
     'nrc_tacq',
     'nrs_confirm',
+    'nrs_msata',
     'nrs_taconfirm',
     'nrs_tacq',
     'nrs_taslit',
+    'nrs_wata',
 )
 
-# Exposures that are always TSO
-TSO_EXP_TYPES = (
-    'mir_lrs-slitless',
-    'nis_soss',
-    'nrc_tsimage',
-    'nrc_tsgrism',
-    'nrs_brightobj'
-)
+# Exposure EXP_TYPE to Association EXPTYPE mapping
+EXPTYPE_MAP = {
+    'mir_darkall':       'dark',
+    'mir_darkimg':       'dark',
+    'mir_darkmrs':       'dark',
+    'mir_flatimage':     'flat',
+    'mir_flatmrs':       'flat',
+    'mir_flatimage-ext': 'flat',
+    'mir_flatmrs-ext':   'flat',
+    'mir_tacq':          'target_acquisition',
+    'nis_dark':          'dark',
+    'nis_focus':         'engineering',
+    'nis_lamp':          'engineering',
+    'nis_tacq':          'target_acquisition',
+    'nis_taconfirm':     'target_acquisition',
+    'nrc_dark':          'dark',
+    'nrc_flat':          'flat',
+    'nrc_focus':         'engineering',
+    'nrc_led':           'engineering',
+    'nrc_tacq':          'target_acquisition',
+    'nrc_taconfirm':     'target_acquisition',
+    'nrs_autoflat':      'autoflat',
+    'nrs_autowave':      'autowave',
+    'nrs_confirm':       'target_acquisition',
+    'nrs_dark':          'dark',
+    'nrs_focus':         'engineering',
+    'nrs_image':         'engineering',
+    'nrs_lamp':          'engineering',
+    'nrs_msata':         'target_acquisition',
+    'nrs_tacq':          'target_acquisition',
+    'nrs_taconfirm':     'target_acquisition',
+    'nrs_taslit':        'target_acquisition',
+    'nrs_wata':          'target_acquisition',
+}
+
+# Coronographic exposures
+CORON_EXP_TYPES = [
+    'mir_lyot',
+    'mir_4qpm',
+    'nrc_coron'
+]
 
 # Exposures that get Level2b processing
 IMAGE2_SCIENCE_EXP_TYPES = [
@@ -80,29 +86,19 @@ IMAGE2_SCIENCE_EXP_TYPES = [
     'nrc_image',
     'nrc_coron',
     'nrc_tsimage',
+    'nrs_mimf',
 ]
 
 IMAGE2_NONSCIENCE_EXP_TYPES = [
     'mir_coroncal',
-    'mir_tacq',
     'nis_focus',
-    'nis_tacq',
-    'nis_taconfirm',
-    'nrc_tacq',
-    'nrc_taconfirm',
     'nrc_focus',
-    'nrs_bota',
-    'nrs_confirm',
     'nrs_focus',
     'nrs_image',
-    'nrs_mimf',
-    'nrs_taslit',
-    'nrs_tacq',
-    'nrs_taconfirm',
 ]
+IMAGE2_NONSCIENCE_EXP_TYPES.extend(ACQ_EXP_TYPES)
 
 SPEC2_SCIENCE_EXP_TYPES = [
-    'nrc_grism',
     'nrc_tsgrism',
     'nrc_wfss',
     'mir_lrs-fixedslit',
@@ -122,11 +118,18 @@ SPECIAL_EXPTYPES = {
     'background': ['bkgdtarg']
 }
 
+# Exposures that are always TSO
+TSO_EXP_TYPES = [
+    'nrc_tsimage',
+    'nrc_tsgrism',
+    'nrs_brightobj'
+]
+
 # Key that uniquely identfies members.
 MEMBER_KEY = 'expname'
 
 # Non-specified values found in DMS Association Pools
-_EMPTY = (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f')
+_EMPTY = (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f', 'N/A', 'n/a')
 
 # Degraded status information
 _DEGRADED_STATUS_OK = (
@@ -143,10 +146,10 @@ class DMSBaseMixin(ACIDMixin):
 
     Attributes
     ----------
-    from_items: [item[,...]]
+    from_items : [item[,...]]
         The list of items that contributed to the association.
 
-    sequence: int
+    sequence : int
         The sequence number of the current association
     """
 
@@ -157,7 +160,6 @@ class DMSBaseMixin(ACIDMixin):
         super(DMSBaseMixin, self).__init__(*args, **kwargs)
 
         self._acid = None
-        self.from_items = []
         self.sequence = None
         if 'degraded_status' not in self.data:
             self.data['degraded_status'] = _DEGRADED_STATUS_OK
@@ -170,10 +172,10 @@ class DMSBaseMixin(ACIDMixin):
 
         Parameters
         ----------
-        item: dict
+        item : dict
             The item to initialize the association with.
 
-        version_id: str or None
+        version_id : str or None
             Version_Id to use in the name of this association.
             If None, nothing is added.
 
@@ -181,9 +183,10 @@ class DMSBaseMixin(ACIDMixin):
         -------
         (association, reprocess_list)
             2-tuple consisting of:
-            - association: The association or, if the item does not
-                this rule, None
-            - [ProcessList[, ...]]: List of items to process again.
+
+                - association : The association or, if the item does not
+                  match this rule, None
+                - [ProcessList[, ...]]: List of items to process again.
         """
         asn, reprocess = super(DMSBaseMixin, cls).create(item, version_id)
         if not asn:
@@ -228,6 +231,19 @@ class DMSBaseMixin(ACIDMixin):
         return self.data['products'][-1]
 
     @property
+    def from_items(self):
+        """List of items from which members were created"""
+        try:
+            items = [
+                member.item
+                for product in self['products']
+                for member in product['members']
+            ]
+        except KeyError:
+            items = []
+        return items
+
+    @property
     def member_ids(self):
         """Set of all member ids in all products of this association"""
         member_ids = set(
@@ -257,23 +273,24 @@ class DMSBaseMixin(ACIDMixin):
 
         Parameters
         ----------
-        item: dict
+        item : dict
             The pool entry to determine the exposure type of
 
-        default: str or None
+        default : str or None
             The default exposure type.
             If None, routine will raise LookupError
 
         Returns
         -------
-        exposure_type: str
+        exposure_type : str
             Exposure type. Can be one of
-                'science': Item contains science data
-                'target_aquisition': Item contains target acquisition data.
-                'autoflat': NIRSpec AUTOFLAT
-                'autowave': NIRSpec AUTOWAVE
-                'psf': PSF
-                'imprint': MSA/IFU Imprint/Leakcal
+
+                - 'science': Item contains science data
+                - 'target_aquisition': Item contains target acquisition data.
+                - 'autoflat': NIRSpec AUTOFLAT
+                - 'autowave': NIRSpec AUTOWAVE
+                - 'psf': PSF
+                - 'imprint': MSA/IFU Imprint/Leakcal
 
         Raises
         ------
@@ -312,7 +329,7 @@ class DMSBaseMixin(ACIDMixin):
 
         Parameters
         ----------
-        new_member: dict
+        new_member : Member
             The member to check for
         """
         try:
@@ -330,26 +347,72 @@ class DMSBaseMixin(ACIDMixin):
 
         Parameters
         ----------
-        item: dict
+        item : dict
             The item to check for.
 
         Returns
         -------
-        is_item_member: bool
+        is_item_member : bool
             True if item is a member.
         """
-        member = self.make_member(item)
-        return self.is_member(member)
+        return item in self.from_items
+
+    def is_item_tso(self, item, other_exp_types=None):
+        """Is the given item TSO
+
+        Determine whether the specific item represents
+        TSO data or not. When used to determine naming
+        of files, coronagraphic data will be included through
+        the `other_exp_types` parameter.
+
+        Parameters
+        ----------
+        item : dict
+            The item to check for.
+
+        other_exp_types: [str[,...]] or None
+            List of other exposure types to consider TSO.
+
+        Returns
+        -------
+        is_item_tso : bool
+            Item represents a TSO exposure.
+        """
+        # If not a science exposure, such as target aquisitions,
+        # then other TSO indicators do not apply.
+        if item['pntgtype'] != 'science':
+            return False
+
+        # Setup exposure list
+        all_exp_types = TSO_EXP_TYPES.copy()
+        if other_exp_types:
+            all_exp_types += other_exp_types
+
+        # Go through all other TSO indicators.
+        try:
+            is_tso = self.constraints['is_tso'].value == 't'
+        except (AttributeError, KeyError):
+            # No such constraint is defined. Just continue on.
+            is_tso = False
+        try:
+            is_tso = is_tso or self.item_getattr(item, ['tsovisit'])[1] == 't'
+        except KeyError:
+            pass
+        try:
+            is_tso = is_tso or self.item_getattr(item, ['exp_type'])[1] in all_exp_types
+        except KeyError:
+            pass
+        return is_tso
 
     def item_getattr(self, item, attributes):
         """Return value from any of a list of attributes
 
         Parameters
         ----------
-        item: dict
+        item : dict
             item to retrieve from
 
-        attributes: list
+        attributes : list
             List of attributes
 
         Returns
@@ -385,11 +448,11 @@ class DMSBaseMixin(ACIDMixin):
 
         Parameters
         ----------
-        item: dict or None
+        item : dict or None
             Item to use as a source. If not given, item-specific
             information will be left unchanged.
 
-        member: dict or None
+        member : Member or None
             An association member to use as source.
             If not given, member-specific information will be update
             from current association/product membership.
@@ -450,7 +513,7 @@ class DMSBaseMixin(ACIDMixin):
 
         Returns
         -------
-        exposure: str
+        exposure : str
             The Level3 Product name representation
             of the exposure & activity id.
         """
@@ -471,7 +534,7 @@ class DMSBaseMixin(ACIDMixin):
 
         Returns
         -------
-        instrument: str
+        instrument : str
             The Level3 Product name representation
             of the instrument
         """
@@ -483,31 +546,30 @@ class DMSBaseMixin(ACIDMixin):
 
         Returns
         -------
-        opt_elem: str
+        opt_elem : str
             The Level3 Product name representation
             of the optical elements.
         """
-        opt_elem = ''
-        join_char = ''
-        try:
-            value = format_list(self.constraints['opt_elem'].found_values)
-        except KeyError:
-            pass
-        else:
-            if value not in _EMPTY and value != 'clear':
-                opt_elem = value
-                join_char = '-'
-        try:
-            value = format_list(self.constraints['opt_elem2'].found_values)
-        except KeyError:
-            pass
-        else:
-            if value not in _EMPTY and value != 'clear':
-                opt_elem = join_char.join(
-                    [opt_elem, value]
-                )
+        # Retrieve all the optical elements
+        opt_elems = []
+        for opt_elem in ['opt_elem', 'opt_elem2', 'opt_elem3']:
+            try:
+                values = list(self.constraints[opt_elem].found_values)
+            except KeyError:
+                pass
+            else:
+                values.sort(key=str.lower)
+                value = format_list(values)
+                if value not in _EMPTY:
+                    opt_elems.append(value)
+
+        # Build the string. Sort the elements in order to
+        # create data-independent results
+        opt_elems.sort(key=str.lower)
+        opt_elem = '-'.join(opt_elems)
         if opt_elem == '':
             opt_elem = 'clear'
+
         return opt_elem
 
     def _get_subarray(self):
@@ -515,7 +577,7 @@ class DMSBaseMixin(ACIDMixin):
 
         Returns
         -------
-        subarray: str
+        subarray : str
             The Level3 Product name representation
             of the subarray.
         """
@@ -536,7 +598,7 @@ class DMSBaseMixin(ACIDMixin):
 
         Returns
         -------
-        target: str
+        target : str
             The Level3 Product name representation
             of the target or source ID.
         """
@@ -567,15 +629,23 @@ class Constraint_TSO(Constraint):
         super(Constraint_TSO, self).__init__(
             [
                 DMSAttrConstraint(
-                    sources=['tsovisit'],
-                    value='t',
+                    sources=['pntgtype'],
+                    value='science'
                 ),
-                DMSAttrConstraint(
-                    sources=['exp_type'],
-                    value='|'.join(TSO_EXP_TYPES),
-                ),
+                Constraint(
+                    [
+                        DMSAttrConstraint(
+                            sources=['tsovisit'],
+                            value='t',
+                        ),
+                        DMSAttrConstraint(
+                            sources=['exp_type'],
+                            value='|'.join(TSO_EXP_TYPES),
+                        ),
+                    ],
+                    reduce=Constraint.any
+                )
             ],
-            reduce=Constraint.any,
             name='is_tso'
         )
 

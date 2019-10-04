@@ -1,3 +1,5 @@
+.. _data-models:
+
 ===========
 Data Models
 ===========
@@ -9,7 +11,6 @@ Data Models
    attributes.rst
    metadata.rst
    new_model.rst
-   fits_files.rst
-
+   structure.rst
 
 .. automodapi:: jwst.datamodels

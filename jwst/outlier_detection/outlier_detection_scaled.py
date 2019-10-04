@@ -1,9 +1,10 @@
 """Class definition for performing outlier detection with scaling."""
 
 from copy import deepcopy
-from functools import partial
+from distutils.version import LooseVersion
 import numpy as np
 
+import photutils
 from photutils import aperture_photometry, CircularAperture, CircularAnnulus
 import astropy.units as u
 
@@ -83,7 +84,12 @@ class OutlierDetectionScaled(OutlierDetection):
             radius_outer = 5
 
         apertures = CircularAperture((xcenter, ycenter), r=radius)
-        aperture_mask = apertures.to_mask(method='center')[0]
+        # ApertureMask in photutils<=0.6 is indexable.  In >=0.7 it is scalar
+        # if there is only one Aperture.  Handle both.
+        try:
+            aperture_mask = apertures.to_mask(method='center')[0]
+        except TypeError:
+            aperture_mask = apertures.to_mask(method='center')
         # This mask has 1 for mask region, 0 for outside of mask
         median_mask = aperture_mask.to_image((ny, nx))
         inv_median_mask = np.abs(median_mask - 1)
@@ -126,8 +132,13 @@ class OutlierDetectionScaled(OutlierDetection):
 
         aperture_sum = u.Quantity(tbl1['aperture_sum'][0])
         annulus_sum = u.Quantity(tbl2['aperture_sum'][0])
-        annulus_mean = annulus_sum / aper2.area()
-        aperture_bkg = annulus_mean * apertures.area()
+        if LooseVersion(photutils.__version__) >= '0.7':
+            annulus_mean = annulus_sum / aper2.area
+            aperture_bkg = annulus_mean * apertures.area
+        else:
+            annulus_mean = annulus_sum / aper2.area()
+            aperture_bkg = annulus_mean * apertures.area()
+
         median_phot_value = aperture_sum - aperture_bkg
 
         if save_intermediate_results:

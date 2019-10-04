@@ -1,35 +1,28 @@
-from . import model_base
+from .model_base import DataModel
 
 __all__ = ['GLS_RampFitModel']
 
 
-class GLS_RampFitModel(model_base.DataModel):
+class GLS_RampFitModel(DataModel):
     """
     A data model for the optional output of the ramp fitting step
     for the GLS algorithm.
+
+    Parameters
+    __________
+    yint : numpy float32 array
+         Y-intercept
+
+    sigyint : numpy float32 array
+         Sigma for Y-intercept
+
+    pedestal : numpy float32 array
+         Pedestal
+
+    crmag : numpy float32 array
+         CR magnitudes
+
+    sigcrmag : numpy float32 array
+         Sigma for CR magnitudes
     """
-    schema_url = "gls_rampfit.schema.yaml"
-
-    def __init__(self, init=None,
-                 yint=None,
-                 sigyint=None,
-                 pedestal=None,
-                 crmag=None,
-                 sigcrmag=None,
-                 **kwargs):
-        super(GLS_RampFitModel, self).__init__(init=init, **kwargs)
-
-        if yint is not None:
-            self.yint = yint
-
-        if sigyint is not None:
-            self.sigyint = sigyint
-
-        if pedestal is not None:
-            self.pedestal = pedestal
-
-        if crmag is not None:
-            self.crmag = crmag
-
-        if sigcrmag is not None:
-            self.sigcrmag = sigcrmag
+    schema_url = "gls_rampfit.schema"

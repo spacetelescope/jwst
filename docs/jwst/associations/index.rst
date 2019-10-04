@@ -37,8 +37,10 @@ Reference
 .. toctree::
    :maxdepth: 2
 
-   asn_generate.rst
-   asn_from_list.rst
+   commands.rst
    association_reference.rst
-
-.. automodapi:: jwst.associations
+   association_api.rst
+   rules_level2.rst
+   rules_level3.rst
+   lib_dmsbase.rst
+   lib_constraint.rst

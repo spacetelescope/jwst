@@ -1,3 +1,5 @@
+.. _msaflagopen_step:
+
 ======================
 MSAFlagOpen Correction
 ======================

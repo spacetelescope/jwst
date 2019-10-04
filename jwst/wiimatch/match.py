@@ -8,10 +8,7 @@ N-dimensional image intensity data using (multivariate) polynomials.
 """
 
 # STDLIB
-import copy
-
 import numpy as np
-from stsci.tools.bitmask import interpret_bit_flags
 
 from .lsq_optimizer import build_lsq_eqs, pinv_solve, rlu_solve
 
@@ -132,8 +129,8 @@ def match_lsq(images, masks=None, sigmas=None, degree=0,
 
     .. math::
         L = \sum^N_{n,m=1,n \\neq m} \sum_k\
-\\frac{\\left[I_n(k) - I_m(k) - P_n(k) + P_m(k)\\right]^2}\
-{\sigma^2_n(k) + \sigma^2_m(k)}.
+    \\frac{\\left[I_n(k) - I_m(k) - P_n(k) + P_m(k)\\right]^2}\
+    {\sigma^2_n(k) + \sigma^2_m(k)}.
 
     In the above equation, index :math:`k=(k_1,k_2,...)` labels a position
     in input image's pixel grid [NOTE: all input images share a common
@@ -158,23 +155,21 @@ c_{1,0,\\ldots}^2,\\ldots).
 
     Examples
     --------
->>> import wiimatch
->>> import numpy as np
->>> im1 = np.zeros((5, 5, 4), dtype=np.float)
->>> cbg = 1.32 * np.ones_like(im1)
->>> ind = np.indices(im1.shape, dtype=np.float)
->>> im3 = cbg + 0.15 * ind[0] + 0.62 * ind[1] + 0.74 * ind[2]
->>> mask = np.ones_like(im1, dtype=np.int8)
->>> sigma = np.ones_like(im1, dtype=np.float)
->>> wiimatch.match.match_lsq([im1, im3], [mask, mask], [sigma, sigma],
-... degree=(1, 1, 1), center=(0, 0, 0))
-array([[ -6.60000000e-01,  -7.50000000e-02,  -3.10000000e-01,
-          3.33066907e-15,  -3.70000000e-01,   5.44009282e-15,
-          7.88258347e-15,  -2.33146835e-15],
-       [  6.60000000e-01,   7.50000000e-02,   3.10000000e-01,
-         -4.44089210e-15,   3.70000000e-01,  -4.21884749e-15,
-         -7.43849426e-15,   1.77635684e-15]])
-
+    >>> import numpy as np
+    >>> im1 = np.zeros((5, 5, 4), dtype=np.float)
+    >>> cbg = 1.32 * np.ones_like(im1)
+    >>> ind = np.indices(im1.shape, dtype=np.float)
+    >>> im3 = cbg + 0.15 * ind[0] + 0.62 * ind[1] + 0.74 * ind[2]
+    >>> mask = np.ones_like(im1, dtype=np.int8)
+    >>> sigma = np.ones_like(im1, dtype=np.float)
+    >>> match_lsq([im1, im3], [mask, mask], [sigma, sigma],   #doctest: +FLOAT_CMP
+    ... degree=(1, 1, 1), center=(0, 0, 0))
+    array([[-6.60000000e-01, -7.50000000e-02, -3.10000000e-01,
+            -1.19371180e-15, -3.70000000e-01, -1.62003744e-15,
+            -1.10844667e-15,  5.11590770e-16],
+           [ 6.60000000e-01,  7.50000000e-02,  3.10000000e-01,
+             1.19371180e-15,  3.70000000e-01,  1.62003744e-15,
+             1.10844667e-15, -5.11590770e-16]])
     """
     solver = solver.upper()
     if solver not in SUPPORTED_SOLVERS:

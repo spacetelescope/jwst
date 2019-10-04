@@ -1,22 +1,28 @@
 import copy
 from collections import OrderedDict
 import os.path as op
+import warnings
+import re
+import logging
 
 from asdf import AsdfFile
+from astropy.io import fits
 
 from ..associations import (
-    AssociationError,
-    AssociationNotValidError, load_asn)
+    AssociationNotValidError,
+    load_asn)
+
 from . import model_base
 from .util import open as datamodel_open
+from .util import is_association
 
-import logging
-log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
-
+__doctest_skip__ = ['ModelContainer']
 
 __all__ = ['ModelContainer']
 
+# Configure logging
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 class ModelContainer(model_base.DataModel):
     """
@@ -39,11 +45,12 @@ class ModelContainer(model_base.DataModel):
         - None: initializes an empty `ModelContainer` instance, to which
           DataModels can be added via the ``append()`` method.
 
-    persist: boolean. If True, do not close model after opening it
+       - asn_exptypes: list of exposure types from the asn file to read
+         into the pipeline, if None read all the given files.
 
     Examples
     --------
-    >>> container = datamodels.ModelContainer('example_asn.json')
+    >>> container = ModelContainer('example_asn.json')
     >>> for dm in container:
     ...     print(dm.meta.filename)
 
@@ -56,115 +63,92 @@ class ModelContainer(model_base.DataModel):
     >>> for group in container.models_grouped:
     ...     total_exposure_time += group[0].meta.exposure.exposure_time
 
-    >>> c = datamodels.ModelContainer()
+    >>> c = ModelContainer()
     >>> m = datamodels.open('myfile.fits')
     >>> c.append(m)
     """
 
     # This schema merely extends the 'meta' part of the datamodel, and
     # does not describe the data contents of the container.
-    schema_url = "container.schema.yaml"
+    schema_url = "container.schema"
 
-    def __init__(self, init=None, persist=True, **kwargs):
+    def __init__(self, init=None, asn_exptypes=None, **kwargs):
 
-        super(ModelContainer, self).__init__(init=None, **kwargs)
-        self._persist = persist
+        super().__init__(init=None, asn_exptypes=None, **kwargs)
+
+        self._models = []
+        self.asn_exptypes = asn_exptypes
 
         if init is None:
-            self._models = []
+            # Don't populate the container with models
+            pass
+        elif isinstance(init, fits.HDUList):
+            self._models.append([datamodel_open(init)])
         elif isinstance(init, list):
-            self._validate_model(init)
-            self._models = init[:]
+            if all(isinstance(x, (str, fits.HDUList)) for x in init):
+                # Try opening the list of files as datamodels
+                try:
+                    init = [datamodel_open(m) for m in init]
+                except (FileNotFoundError, ValueError):
+                    raise
+            elif not all(isinstance(x, model_base.DataModel) for x in init):
+                raise TypeError('list must contain DataModels')
+            self._models = init
         elif isinstance(init, self.__class__):
             instance = copy.deepcopy(init._instance)
             self._schema = init._schema
             self._shape = init._shape
-            self._asdf = AsdfFile(instance, extensions=self._extensions)
+            self._asdf = AsdfFile(instance)
             self._instance = instance
             self._ctx = self
             self.__class__ = init.__class__
             self._models = init._models
+        elif is_association(init):
+            self.from_asn(init)
         elif isinstance(init, str):
-            try:
-                self.from_asn(init, **kwargs)
-            except (IOError):
-                raise IOError('Cannot open files.')
-            except AssociationError:
-                raise AssociationError('{0} must be an ASN file'.format(init))
+            init_from_asn = self.read_asn(init)
+            self.from_asn(init_from_asn, asn_file_path=init)
         else:
             raise TypeError('Input {0!r} is not a list of DataModels or '
                             'an ASN file'.format(init))
-
-    def _open_model(self, index):
-        model = self._models[index]
-        if isinstance(model, str):
-            model = datamodel_open(
-                model,
-                extensions=self._extensions,
-                pass_invalid_values=self._pass_invalid_values
-            )
-            self._models[index] = model
-
-        return model
-
-    def _close_model(self, filename, index):
-        if not self._persist:
-            self._models[index].close()
-            self._models[index] = filename
-
-    def _validate_model(self, models):
-        if not isinstance(models, list):
-            models = [models]
-        for model in models:
-            if isinstance(model, ModelContainer):
-                raise ValueError(
-                    "ModelContainer cannot contain ModelContainer"
-                )
-            if not isinstance(model, (str, model_base.DataModel)):
-                raise ValueError('model must be string or DataModel')
 
     def __len__(self):
         return len(self._models)
 
     def __getitem__(self, index):
-        return self._open_model(index)
+        return self._models[index]
 
     def __setitem__(self, index, model):
-        self._validate_model(model)
         self._models[index] = model
 
     def __delitem__(self, index):
         del self._models[index]
 
     def __iter__(self):
-        return ModelContainerIterator(self)
+        for model in self._models:
+            yield model
 
     def insert(self, index, model):
-        self._validate_model(model)
         self._models.insert(index, model)
 
     def append(self, model):
-        self._validate_model(model)
         self._models.append(model)
 
-    def extend(self, models):
-        self._validate_model(models)
-        self._models.extend(models)
+    def extend(self, model):
+        self._models.extend(model)
 
     def pop(self, index=-1):
-        self._open_model(index)
-        return self._models.pop(index)
+        self._models.pop(index)
 
     def copy(self, memo=None):
         """
         Returns a deep copy of the models in this model container.
         """
         result = self.__class__(init=None,
-                                extensions=self._extensions,
                                 pass_invalid_values=self._pass_invalid_values,
                                 strict_validation=self._strict_validation)
         instance = copy.deepcopy(self._instance, memo=memo)
-        result._asdf = AsdfFile(instance, extensions=self._extensions)
+        result._asdf = AsdfFile(instance)
         result._instance = instance
         result._iscopy = self._iscopy
         result._schema = result._schema
@@ -176,7 +160,7 @@ class ModelContainer(model_base.DataModel):
                 result.append(m)
         return result
 
-    def from_asn(self, filepath, **kwargs):
+    def read_asn(self, filepath):
         """
         Load fits files from a JWST association file.
 
@@ -187,18 +171,48 @@ class ModelContainer(model_base.DataModel):
         """
 
         filepath = op.abspath(op.expanduser(op.expandvars(filepath)))
-        basedir = op.dirname(filepath)
-        filename = op.basename(filepath)
         try:
             with open(filepath) as asn_file:
                 asn_data = load_asn(asn_file)
         except AssociationNotValidError:
             raise IOError("Cannot read ASN file.")
+        return asn_data
 
-        # make a list of all the input files
-        infiles = [op.join(basedir, member['expname']) for member
-                   in asn_data['products'][0]['members']]
-        self._models = infiles
+    def from_asn(self, asn_data, asn_file_path=None):
+        """
+        Load fits files from a JWST association file.
+
+        Parameters
+        ----------
+        asn_data : Association
+            An association dictionary
+
+        asn_file_path: str
+            Filepath of the association, if known.
+        """
+        # match the asn_exptypes to the exptype in the association and retain
+        # only those file that match, as a list, if asn_exptypes is set to none
+        # grab all the files
+        if self.asn_exptypes:
+            infiles = []
+            logger.debug('Filtering datasets based on allowed exptypes {}:'
+                         .format(self.asn_exptypes))
+            for member in asn_data['products'][0]['members']:
+                if any([x for x in self.asn_exptypes if re.match(member['exptype'],
+                                                                 x, re.IGNORECASE)]):
+                    infiles.append(member['expname'])
+                    logger.debug('Files accepted for processing {}:'.format(member['expname']))
+        else:
+            infiles = [member['expname'] for member
+                       in asn_data['products'][0]['members']]
+
+        if asn_file_path:
+            asn_dir = op.dirname(asn_file_path)
+            infiles = [op.join(asn_dir, f) for f in infiles]
+        try:
+            self._models = [datamodel_open(infile) for infile in infiles]
+        except IOError:
+            raise IOError('Cannot open {}'.format(infiles))
 
         # Pull the whole association table into meta.asn_table
         self.meta.asn_table = {}
@@ -207,7 +221,10 @@ class ModelContainer(model_base.DataModel):
         )
 
         self.meta.resample.output = asn_data['products'][0]['name']
-        self.meta.table_name = filename
+        if asn_file_path is None:
+            self.meta.table_name = 'not specified'
+        else:
+            self.meta.table_name = op.basename(asn_file_path)
         self.meta.pool_name = asn_data['asn_pool']
 
     def save(self,
@@ -271,10 +288,9 @@ class ModelContainer(model_base.DataModel):
 
         return output_paths
 
-    @property
-    def models_grouped(self):
+    def _assign_group_ids(self):
         """
-        Returns a list of a list of datamodels grouped by exposure.
+        Assign an ID grouping by exposure.
 
         Data from different detectors of the same exposure will have the
         same group id, which allows grouping by exposure.  The following
@@ -297,32 +313,37 @@ class ModelContainer(model_base.DataModel):
             'activity_id',
             'exposure_number'
             ]
-        group_dict = OrderedDict()
 
-        for i in range(len(self)):
-            model = self._open_model(i)
+        for i, model in enumerate(self._models):
             params = []
             for param in unique_exposure_parameters:
                 params.append(getattr(model.meta.observation, param))
             try:
                 group_id = ('jw' + '_'.join([''.join(params[:3]),
-                        ''.join(params[3:6]), params[6]]))
+                                             ''.join(params[3:6]), params[6]]))
                 model.meta.group_id = group_id
             except TypeError:
                 params_dict = dict(zip(unique_exposure_parameters, params))
                 bad_params = {'meta.observation.'+k:v for k, v in params_dict.items() if not v}
-                log.warn(
+                warnings.warn(
                     'Cannot determine grouping of exposures: '
                     '{}'.format(bad_params)
                     )
                 model.meta.group_id = 'exposure{0:04d}'.format(i + 1)
 
+    @property
+    def models_grouped(self):
+        """
+        Returns a list of a list of datamodels grouped by exposure.
+        """
+        self._assign_group_ids()
+        group_dict = OrderedDict()
+        for model in self._models:
             group_id = model.meta.group_id
             if group_id in group_dict:
                 group_dict[group_id].append(model)
             else:
                 group_dict[group_id] = [model]
-
         return group_dict.values()
 
     @property
@@ -335,66 +356,7 @@ class ModelContainer(model_base.DataModel):
             result.append(group[0].meta.group_id)
         return result
 
-    def __get_recursively(self, field, search_dict):
-        """
-        Takes a dict with nested lists and dicts, and searches all dicts for
-        a key of the field provided.
-        """
-        values_found = []
-        for key, value in search_dict.items():
-            if key == field:
-                values_found.append(value)
-            elif isinstance(value, dict):
-                results = self.__get_recursively(field, value)
-                for result in results:
-                    values_found.append(result)
-            elif isinstance(value, list):
-                for item in value:
-                    if isinstance(item, dict):
-                        more_results = self.__get_recursively(field, item)
-                        for another_result in more_results:
-                            values_found.append(another_result)
-        return values_found
 
-    def get_recursively(self, field):
-        """
-        Returns a list of values of the specified field from meta.
-        """
-        return self.__get_recursively(field, self.meta._instance)
-
-
-class ModelContainerIterator:
-    """
-    An iterator for model containers that opens one model at a time
-    """
-    def __init__(self, container):
-        self.index = -1
-        self.open_filename = None
-        self.container = container
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        if self.open_filename is not None:
-            self.container._close_model(self.open_filename, self.index)
-            self.open_filename = None
-
-        self.index += 1
-        if self.index < len(self.container._models):
-            model = self.container._models[self.index]
-            if isinstance(model, str):
-                name = model
-                model = self.container._open_model(self.index)
-                self.open_filename = name
-            return model
-        else:
-            raise StopIteration
-
-
-# #########
-# Utilities
-# #########
 def make_file_with_index(file_path, idx):
     """Append an index to a filename
 

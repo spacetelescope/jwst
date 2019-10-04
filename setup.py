@@ -1,24 +1,15 @@
 import os
-from os.path import basename
-import subprocess
 import sys
-from setuptools import setup, find_packages, Extension, Command
+import pkgutil
+from os.path import basename
+from subprocess import check_call, CalledProcessError
+from setuptools import setup, find_packages, Command
 from setuptools.command.test import test as TestCommand
-from numpy import get_include as np_include
 from glob import glob
-
-# hack building the sphinx docs with C source
-from setuptools.command.build_ext import build_ext
 
 if sys.version_info < (3, 5):
     error = """
-    JWST 0.9+ does not support Python 2.x, 3.0, 3.1, 3.2, 3.3 or 3.4.
     Beginning with JWST 0.9, Python 3.5 and above is required.
-
-    This may be due to an out of date pip
-
-    Make sure you have pip >= 9.0.1.
-
     """
     sys.exit(error)
 
@@ -32,6 +23,16 @@ try:
 
         description = 'Build Sphinx documentation'
 
+        user_options = BuildDoc.user_options[:]
+
+        user_options.append(
+            ('keep-going', 'k',
+             'Parses the sphinx output and sets the return code to 1 if there '
+             'are any warnings. Note that this will cause the sphinx log to '
+             'only update when it completes, rather than continuously as is '
+             'normally the case.'))
+
+
         def initialize_options(self):
             BuildDoc.initialize_options(self)
 
@@ -42,7 +43,9 @@ try:
             build_cmd = self.reinitialize_command('build_ext')
             build_cmd.inplace = 1
             self.run_command('build_ext')
-            build_main(['-b', 'html', './docs', './docs/_build/html'])
+            retcode = build_main(['-W', '--keep-going', '-b', 'html', './docs', './docs/_build/html'])
+            if retcode != 0:
+                sys.exit(retcode)
 
 except ImportError:
     class BuildSphinx(Command):
@@ -73,7 +76,24 @@ PACKAGE_DATA = {
         '*.asdf'
     ]
 }
-
+DOCS_REQUIRE = [
+    'matplotlib',
+    'sphinx',
+    'sphinx-automodapi',
+    'sphinx-rtd-theme',
+    'stsci-rtd-theme',
+    'sphinx-astropy',
+    'sphinx-asdf',
+]
+TESTS_REQUIRE = [
+    'ci-watson>=0.3.0',
+    'pytest',
+    'pytest-doctestplus',
+    'requests_mock',
+    'pytest-openfiles',
+    'pytest-cov',
+    'codecov',
+]
 
 def get_transforms_data():
     # Installs the schema files in jwst/transforms
@@ -119,36 +139,36 @@ class PyTest(TestCommand):
         sys.exit(errno)
 
 
-if os.path.exists('relic'):
-    sys.path.insert(1, 'relic')
-    import relic.release
-else:
+if not pkgutil.find_loader('relic'):
+    relic_local = os.path.exists('relic')
+    relic_submodule = (relic_local and
+                       os.path.exists('.gitmodules') and
+                       not os.listdir('relic'))
     try:
-        import relic.release
-    except ImportError:
-        try:
-            subprocess.check_call(['git', 'clone',
-                'https://github.com/jhunkeler/relic.git'])
-            sys.path.insert(1, 'relic')
-            import relic.release
-        except subprocess.CalledProcessError as e:
-            print(e)
-            exit(1)
+        if relic_submodule:
+            check_call(['git', 'submodule', 'update', '--init', '--recursive'])
+        elif not relic_local:
+            check_call(['git', 'clone', 'https://github.com/spacetelescope/relic.git'])
 
+        sys.path.insert(1, 'relic')
+    except CalledProcessError as e:
+        print(e)
+        exit(1)
+
+import relic.release # noqa: E402
 
 version = relic.release.get_info()
 relic.release.write_template(version, NAME)
 
 entry_points = dict(asdf_extensions=['jwst_pipeline = jwst.transforms.jwextension:JWSTExtension',
-                                     'model_extensions = jwst.datamodels.extension:BaseExtension'])
+                                     'jwst_datamodel = jwst.datamodels.extension:DataModelExtension'])
 
 setup(
     name=NAME,
     version=version.pep386,
     author='JWST Pipeline developers',
-    author_email='help@stsci.edu',
     description='Python library for science observations from the James Webb Space Telescope',
-    long_desctiption=('The JWST Data Reduction Pipeline is a Python '
+    long_description=('The JWST Data Reduction Pipeline is a Python '
                       'software suite that automatically processes the '
                       'data taken by the JWST instruments NIRCam, NIRSpec, '
                       'NIRISS, MIRI, and FGS to remove instrumental signatures '
@@ -160,26 +180,34 @@ setup(
         'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 3',
-         'Programming Language :: C',
+        'Programming Language :: C',
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
     python_requires='>=3.5',
     scripts=SCRIPTS,
     packages=find_packages(),
     package_data=PACKAGE_DATA,
-    ext_modules=[
-        Extension('jwst.tweakreg.chelp',
-            glob('src/tweakreg/*.c'),
-            include_dirs=[np_include()],
-            define_macros=[('NUMPY', '1')]),
-    ],
     install_requires=[
-        'namedlist'
+        'asdf>=2.4',
+        'astropy @ git+https://github.com/astropy/astropy@5f7c192#egg=astropy',
+        'crds>=7.2.7',
+        'drizzle>=1.13',
+        'gwcs @ git+https://github.com/spacetelescope/gwcs@3e2bc108e#egg=gwcs',
+        'jsonschema>=2.3,<4',
+        'numpy>=1.13',
+        'photutils>=0.7',
+        'scipy>=1.0',
+        'spherical-geometry>=1.2',
+        'stsci.image>=2.3.3',
+        'stsci.imagestats>=1.4',
+        'tweakwcs>=0.5.1',
     ],
-    tests_require=[
-        'pytest',
-        'requests_mock'
-    ],
+    extras_require={
+        'docs': DOCS_REQUIRE,
+        'ephem': ['pymssql==2.1.4', 'jplephem==2.9'], # for timeconversion
+        'test': TESTS_REQUIRE,
+    },
+    tests_require=TESTS_REQUIRE,
     cmdclass={
         'test': PyTest,
         'build_sphinx': BuildSphinx

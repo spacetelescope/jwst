@@ -6,15 +6,17 @@ from astropy import coordinates as coord
 from astropy import units as u
 from astropy.io import fits
 
+from scipy.interpolate import UnivariateSpline
 import gwcs.coordinate_frames as cf
 from gwcs import selector
-from gwcs.utils import _toindex
 from . import pointing
 from ..transforms import models as jwmodels
-from .util import not_implemented_mode, subarray_transform
+from .util import (not_implemented_mode, subarray_transform,
+                   velocity_correction, transform_bbox_from_shape, bounding_box_from_subarray)
 from ..datamodels import (DistortionModel, FilteroffsetModel,
                           DistortionMRSModel, WavelengthrangeModel,
                           RegionsModel, SpecwcsModel)
+
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -29,7 +31,8 @@ def create_pipeline(input_model, reference_files):
 
     Parameters
     ----------
-    input_model : `jwst.datamodels.ImagingModel`, `~jwst.datamodels.IFUImageModel`, `~jwst.datamodels.CubeModel`
+    input_model : `jwst.datamodels.ImagingModel`, `~jwst.datamodels.IFUImageModel`,
+                  `~jwst.datamodels.CubeModel`
         Data model.
     reference_files : dict
         {reftype: reference file name} mapping.
@@ -37,7 +40,9 @@ def create_pipeline(input_model, reference_files):
     """
     exp_type = input_model.meta.exposure.type.lower()
     pipeline = exp_type2transform[exp_type](input_model, reference_files)
-
+    if pipeline:
+        log.info("Created a MIRI {0} pipeline with references {1}".format(
+            exp_type, reference_files))
     return pipeline
 
 
@@ -64,19 +69,23 @@ def imaging(input_model, reference_files):
     world = cf.CelestialFrame(reference_frame=coord.ICRS(), name='world')
 
     # Create the transforms
+    distortion = imaging_distortion(input_model, reference_files)
     subarray2full = subarray_transform(input_model)
-    imdistortion = imaging_distortion(input_model, reference_files)
-    distortion = subarray2full | imdistortion
+    if subarray2full is not None:
+        distortion = subarray2full | distortion
+        distortion.bounding_box = bounding_box_from_subarray(input_model)
+    else:
+        # TODO: remove setting the bounding box if it is set in the new ref file.
+        try:
+            bb = distortion.bounding_box
+        except NotImplementedError:
+            shape = input_model.data.shape
+            # Note: Since bounding_box is attached to the model here it's in reverse order.
+            bb = ((-0.5, shape[0] - 0.5), (3.5, shape[1] - 4.5))
+            distortion.bounding_box = bb
+
     tel2sky = pointing.v23tosky(input_model)
 
-    # TODO: remove setting the bounding box when it is set in the new ref file.
-    try:
-        bb = distortion.bounding_box
-    except NotImplementedError:
-        shape = input_model.data.shape
-        # Note: Since bounding_box is attached to the model here it's in reverse order.
-        bb = ((-0.5, shape[0] - 0.5), (3.5, shape[1] - 4.5))
-    distortion.bounding_box = bb
     # Create the pipeline
     pipeline = [(detector, distortion),
                 (v2v3, tel2sky),
@@ -94,19 +103,26 @@ def imaging_distortion(input_model, reference_files):
        sign to that delivered by the IT) (uses the "filteroffset" ref file)
     2. Apply MI (uses "distortion" ref file)
     3. Apply Ai and BI matrices (uses "distortion" ref file)
-    4. Apply the TI matrix (this gives Xan/Yan coordinates) (uses "distortion" ref file)
-    5. Aply the XanYan --> V2V3 transform (uses "distortion" ref file)
-    6. Apply V2V3 --> sky transform
+    4. Apply the TI matrix (this gives V2/V3 coordinates) (uses "distortion" ref file)
+    5. Apply V2V3 --> sky transform
 
     """
     # Read in the distortion.
     with DistortionModel(reference_files['distortion']) as dist:
         distortion = dist.model
-    obsfilter = input_model.meta.instrument.filter
+
+    # Check if the transform in the reference file has a ``bounding_box``.
+    # If not set a ``bounding_box`` equal to the size of the image.
+    try:
+        distortion.bounding_box
+    except NotImplementedError:
+        distortion.bounding_box = transform_bbox_from_shape(input_model.data.shape)
 
     # Add an offset for the filter
+    obsfilter = input_model.meta.instrument.filter
     with FilteroffsetModel(reference_files['filteroffset']) as filter_offset:
         filters = filter_offset.filters
+
     col_offset = None
     row_offset = None
     for f in filters:
@@ -125,90 +141,199 @@ def lrs(input_model, reference_files):
     """
     The LRS-FIXEDSLIT and LRS-SLITLESS WCS pipeline.
 
-    It has two coordinate frames: "detecor" and "world".
+    Notes
+    -----
+    It includes three coordinate frames -
+    "detector", "v2v3" and "world".
+    "v2v3" and "world" each have (spatial, spatial, spectral) components.
+
     Uses the "specwcs" and "distortion" reference files.
 
     """
-
-    # Setup the frames.
+    # Define the various coordinate frames.
+    # Original detector frame
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
-    spec = cf.SpectralFrame(name='wavelength', axes_order=(2,), unit=(u.micron,),
-                            axes_names=('lambda',))
-    sky = cf.CelestialFrame(reference_frame=coord.ICRS(), name='sky')
-    world = cf.CompositeFrame(name="world", frames=[sky, spec])
+    # Spectral component
+    spec = cf.SpectralFrame(name='spec', axes_order=(2,), unit=(u.micron,), axes_names=('lambda',))
+    # v2v3 spatial component
+    v2v3_spatial = cf.Frame2D(name='v2v3_spatial', axes_order=(0, 1), unit=(u.arcsec, u.arcsec),
+                              axes_names=('v2', 'v3'))
+    # v2v3 spatial+spectra
+    v2v3 = cf.CompositeFrame([v2v3_spatial, spec], name='v2v3')
+    # 'icrs' frame which is the spatial sky component
+    icrs = cf.CelestialFrame(name='icrs', reference_frame=coord.ICRS(),
+                             axes_order=(0, 1), unit=(u.deg, u.deg), axes_names=('RA', 'DEC'))
+    # Final 'world' composite frame with spatial and spectral components
+    world = cf.CompositeFrame(name="world", frames=[icrs, spec])
+
+    # Create the transforms
+    dettotel = lrs_distortion(input_model, reference_files)
+    v2v3tosky = pointing.v23tosky(input_model)
+    teltosky = v2v3tosky & models.Identity(1)
+
+    # Put the transforms together into a single pipeline
+    pipeline = [(detector, dettotel),
+                (v2v3, teltosky),
+                (world, None)]
+
+    return pipeline
 
 
-    # Determine the distortion model.
+def lrs_distortion(input_model, reference_files):
+    """
+    The LRS-FIXEDSLIT and LRS-SLITLESS WCS pipeline.
+
+    Transform from subarray (x, y) to (v2, v3, lambda) using
+    the "specwcs" and "distortion" reference files.
+
+    """
+
+    # subarray to full array transform
     subarray2full = subarray_transform(input_model)
+
+    # full array to v2v3 transform for the ordinary imager
     with DistortionModel(reference_files['distortion']) as dist:
         distortion = dist.model
 
-    full_distortion = subarray2full | distortion
+    # Combine models to create subarray to v2v3 distortion
+    if subarray2full is not None:
+        subarray_dist = subarray2full | distortion
+    else:
+        subarray_dist = distortion
 
-    # Load and process the reference data.
+    # Read in the reference table data and get the zero point (SIAF reference point)
+    # of the LRS in the subarray ref frame
     with fits.open(reference_files['specwcs']) as ref:
         lrsdata = np.array([l for l in ref[1].data])
-
         # Get the zero point from the reference data.
         # The zero_point is X, Y  (which should be COLUMN, ROW)
-        # TODO: Are imx, imy 0- or 1-indexed?  We are treating them here as
-        # 0-indexed.  Since they are FITS, they are probably 1-indexed.
+        # These are 1-indexed in CDP-7 (i.e., SIAF convention) so must be converted to 0-indexed
         if input_model.meta.exposure.type.lower() == 'mir_lrs-fixedslit':
-            zero_point = ref[1].header['imx'], ref[1].header['imy']
+            zero_point = ref[0].header['imx'] - 1, ref[0].header['imy'] - 1
         elif input_model.meta.exposure.type.lower() == 'mir_lrs-slitless':
-            #zero_point = ref[1].header['imxsltl'], ref[1].header['imysltl']
-            zero_point = [35, 442]  # [35, 763] # account for subarray
+            zero_point = ref[0].header['imxsltl'] - 1, ref[0].header['imysltl'] - 1
+            # Transform to slitless subarray from full array
+            zero_point = subarray2full.inverse(zero_point[0], zero_point[1])
 
-    # Create the bounding_box
+    # In the lrsdata reference table, X_center,y_center,wavelength describe the location of the
+    # centroid trace along the detector in pixels relative to nominal location.
+    # x0,y0(ul) x1,y1 (ur) x2,y2(lr) x3,y3(ll) define corners of the box within which the distortion
+    # and wavelength calibration was derived
+    xcen = lrsdata[:, 0]
+    ycen = lrsdata[:, 1]
+    wavetab = lrsdata[:, 2]
     x0 = lrsdata[:, 3]
     y0 = lrsdata[:, 4]
     x1 = lrsdata[:, 5]
+    y2 = lrsdata[:, 8]
 
-    bb = ((x0.min() - 0.5 + zero_point[0], x1.max() + 0.5 + zero_point[0]),
-          (y0.min() - 0.5 + zero_point[1], y0.max() + 0.5 + zero_point[1]))
-    # Find the ROW of the zero point which should be the [1] of zero_point
+    # If in fixed slit mode, define the bounding box using the corner locations provided in
+    # the CDP reference file.
+    if input_model.meta.exposure.type.lower() == 'mir_lrs-fixedslit':
+
+        bb_sub = ((np.floor(x0.min() + zero_point[0]) - 0.5, np.ceil(x1.max() + zero_point[0]) + 0.5),
+                  (np.floor(y2.min() + zero_point[1]) - 0.5, np.ceil(y0.max() + zero_point[1]) + 0.5))
+
+    # If in slitless mode, define the bounding box X locations using the subarray x boundaries
+    # and the y locations using the corner locations in the CDP reference file.  Make sure to
+    # omit the 4 reference pixels on the left edge of slitless subarray.
+    if input_model.meta.exposure.type.lower() == 'mir_lrs-slitless':
+        bb_sub = ((input_model.meta.subarray.xstart - 1 + 4 - 0.5, input_model.meta.subarray.xsize - 1 + 0.5),
+                  (np.floor(y2.min() + zero_point[1]) - 0.5, np.ceil(y0.max() + zero_point[1]) + 0.5))
+
+    # Find the ROW of the zero point
     row_zero_point = zero_point[1]
 
-    # Compute the v2v3 to sky.
-    tel2sky = pointing.v23tosky(input_model)
+    # The inputs to the "detector_to_v2v3" transform are
+    # - the indices in x spanning the entire image row
+    # - y is the y-value of the zero point
+    # This is equivalent of making a vector of x, y locations for
+    # every pixel in the reference row
+    const1d = models.Const1D(row_zero_point)
+    const1d.inverse = models.Const1D(row_zero_point)
+    det_to_v2v3 = models.Identity(1) & const1d | subarray_dist
 
-    # Compute the V2/V3 for each pixel in this row
-    # x.shape will be something like (1, 388)
-    y, x = np.mgrid[row_zero_point:row_zero_point + 1, 0:input_model.data.shape[1]]
+    # Now deal with the fact that the spectral trace isn't perfectly up and down along detector.
+    # This information is contained in the xcenter/ycenter values in the CDP table, but we'll handle it
+    # as a simple rotation using a linear fit to this relation provided by the CDP.
 
-    spatial_transform = full_distortion | tel2sky
-    radec = np.array(spatial_transform(x, y))[:, 0, :]
+    z = np.polyfit(xcen, ycen, 1)
+    slope = 1. / z[0]
+    traceangle = np.arctan(slope) * 180. / np.pi  # trace angle in degrees
+    rot = models.Rotation2D(traceangle)  # Rotation model
 
-    ra_full = np.matlib.repmat(radec[0], _toindex(bb[1][1]) + 1 - _toindex(bb[1][0]), 1)
-    dec_full = np.matlib.repmat(radec[1], _toindex(bb[1][1]) + 1 - _toindex(bb[1][0]), 1)
+    # Now include this rotation in our overall transform
+    # First shift to a frame relative to the trace zeropoint, then apply the rotation
+    # to correct for the curved trace.  End in a rotated frame relative to zero at the reference point
+    # and where yrot is aligned with the spectral trace)
+    xysubtoxyrot = models.Shift(-zero_point[0]) & models.Shift(-zero_point[1]) | rot
 
-    ra_t2d = models.Tabular2D(lookup_table=ra_full, name='xtable',
-        bounds_error=False, fill_value=np.nan)
-    dec_t2d = models.Tabular2D(lookup_table=dec_full, name='ytable',
-        bounds_error=False, fill_value=np.nan)
+    # Next shift back to the subarray frame, and then map to v2v3
+    xyrottov2v3 = models.Shift(zero_point[0]) & models.Shift(zero_point[1]) | det_to_v2v3
 
-    # Create the model transforms.
-    lrs_wav_model = jwmodels.LRSWavelength(lrsdata, zero_point)
+    # The two models together
+    xysubtov2v3 = xysubtoxyrot | xyrottov2v3
 
-    # Incorporate the small rotation
-    angle = np.arctan(0.00421924)
-    rot = models.Rotation2D(angle)
-    radec_t2d = ra_t2d & dec_t2d | rot
+    # Work out the spectral component of the transform
+    # First compute the reference trace in the rotated-Y frame
+    xcenrot, ycenrot = rot(xcen, ycen)
+    # The input table of wavelengths isn't perfect, and the delta-wavelength
+    # steps show some unphysical behaviour
+    # Therefore fit with a spline for the ycenrot->wavelength transform
+    # Reverse vectors so that yinv is increasing (needed for spline fitting function)
+    yrev = ycenrot[::-1]
+    wrev = wavetab[::-1]
+    # Spline fit with enforced smoothness
+    spl = UnivariateSpline(yrev, wrev, s=0.002)
+    # Evaluate the fit at the rotated-y reference points
+    wavereference = spl(yrev)
+    # wavereference now contains the wavelengths corresponding to regularly-sampled ycenrot, create the model
+    wavemodel = models.Tabular1D(lookup_table=wavereference, points=yrev, name='waveref',
+                                 bounds_error=False, fill_value=np.nan)
 
-    # Account for the subarray when computing spatial coordinates.
-    xshift = -bb[0][0]
-    yshift = -bb[1][0]
-    det2world = models.Mapping((1, 0, 1, 0, 0, 1)) | models.Shift(yshift, name='yshift1') & \
-              models.Shift(xshift, name='xshift1') & \
-              models.Shift(yshift, name='yshift2') & models.Shift(xshift, name='xshift2') & \
-              models.Identity(2) | radec_t2d & lrs_wav_model
-    det2world.bounding_box = bb[::-1]
-    # Now the actual pipeline.
-    pipeline = [(detector, det2world),
-                (world, None)
-                ]
+    # Now construct the inverse spectral transform.
+    # First we need to create a spline going from wavereference -> ycenrot
+    spl2 = UnivariateSpline(wavereference[::-1], ycenrot, s=0.002)
+    # Make a uniform grid of wavelength points from min to max, sampled according
+    # to the minimum delta in the input table
+    dw = np.amin(np.absolute(np.diff(wavereference)))
+    wmin = np.amin(wavereference)
+    wmax = np.amax(wavereference)
+    wgrid = np.arange(wmin, wmax, dw)
+    # Evaluate the rotated y locations of the grid
+    ygrid = spl2(wgrid)
+    # ygrid now contains the rotated y pixel locations corresponding to
+    # regularly-sampled wavelengths, create the model
+    wavemodel.inverse = models.Tabular1D(lookup_table=ygrid, points=wgrid, name='waverefinv',
+                                         bounds_error=False, fill_value=np.nan)
 
-    return pipeline
+    # Wavelength barycentric correction
+    try:
+        velosys = input_model.meta.wcsinfo.velosys
+    except AttributeError:
+        pass
+    else:
+        if velosys is not None:
+            velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
+            wavemodel = wavemodel | velocity_corr
+            log.info("Applied Barycentric velocity correction : {}".format(velocity_corr[1].amplitude.value))
+
+    # Construct the full distortion model (xsub,ysub -> v2,v3,wavelength)
+    lrs_wav_model = xysubtoxyrot | models.Mapping([1], n_inputs=2) | wavemodel
+    dettotel = models.Mapping((0, 1, 0, 1)) | xysubtov2v3 & lrs_wav_model
+
+    # Construct the inverse distortion model (v2,v3,wavelength -> xsub,ysub)
+    # Transform to get xrot from v2,v3
+    v2v3toxrot = subarray_dist.inverse | xysubtoxyrot | models.Mapping([0], n_inputs=2)
+    # wavemodel.inverse gives yrot from wavelength
+    # v2,v3,lambda -> xrot,yrot
+    xform1 = v2v3toxrot & wavemodel.inverse
+    dettotel.inverse = xform1 | xysubtoxyrot.inverse
+
+    # Bounding box is the subarray bounding box, because we're assuming subarray coordinates passed in
+    dettotel.bounding_box = bb_sub[::-1]
+
+    return dettotel
 
 
 def ifu(input_model, reference_files):
@@ -223,10 +348,13 @@ def ifu(input_model, reference_files):
     """
     # Define coordinate frames.
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
-    alpha_beta = cf.Frame2D(name='alpha_beta_spatial', axes_order=(0, 1), unit=(u.arcsec, u.arcsec), axes_names=('alpha', 'beta'))
-    spec_local = cf.SpectralFrame(name='alpha_beta_spectral', axes_order=(2,), unit=(u.micron,), axes_names=('lambda',))
+    alpha_beta = cf.Frame2D(name='alpha_beta_spatial', axes_order=(0, 1),
+                            unit=(u.arcsec, u.arcsec), axes_names=('alpha', 'beta'))
+    spec_local = cf.SpectralFrame(name='alpha_beta_spectral', axes_order=(2,),
+                                  unit=(u.micron,), axes_names=('lambda',))
     miri_focal = cf.CompositeFrame([alpha_beta, spec_local], name='alpha_beta')
-    v23_spatial = cf.Frame2D(name='V2_V3_spatial', axes_order=(0, 1), unit=(u.arcsec, u.arcsec), axes_names=('v2', 'v3'))
+    v23_spatial = cf.Frame2D(name='V2_V3_spatial', axes_order=(0, 1),
+                             unit=(u.arcsec, u.arcsec), axes_names=('v2', 'v3'))
     spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.micron,), axes_names=('lambda',))
     v2v3 = cf.CompositeFrame([v23_spatial, spec], name='v2v3')
     icrs = cf.CelestialFrame(name='icrs', reference_frame=coord.ICRS(),
@@ -237,6 +365,7 @@ def ifu(input_model, reference_files):
     det2abl = (detector_to_abl(input_model, reference_files)).rename(
         "detector_to_abl")
     abl2v2v3l = (abl_to_v2v3l(input_model, reference_files)).rename("abl_to_v2v3l")
+
     tel2sky = pointing.v23tosky(input_model) & models.Identity(1)
 
     # Put the transforms together into a single transform
@@ -281,8 +410,20 @@ def detector_to_abl(input_model, reference_files):
     with SpecwcsModel(reference_files['specwcs']) as f:
         lambda_model = f.model
 
+    try:
+        velosys = input_model.meta.wcsinfo.velosys
+    except AttributeError:
+        pass
+    else:
+        if velosys is not None:
+            velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
+            lambda_model = [m | velocity_corr for m in lambda_model]
+            log.info("Applied Barycentric velocity correction : {}".format(velocity_corr[1].amplitude.value))
+
     with RegionsModel(reference_files['regions']) as f:
-        regions = f.regions.copy()
+        allregions = f.regions.copy()
+        # Use the 80% throughput slice mask
+        regions=allregions[7,:,:]
 
     label_mapper = selector.LabelMapperArray(regions)
     transforms = {}
@@ -305,11 +446,9 @@ def detector_to_abl(input_model, reference_files):
                                   mapper=mapper, inputs_mapping=models.Mapping((1,), n_inputs=3))
         ch_dict[tuple(wr[cb])] = lm
 
-
     alpha_beta_mapper = selector.LabelMapperRange(('alpha', 'beta', 'lam'), ch_dict,
                                                   models.Mapping((2,)))
     label_mapper.inverse = alpha_beta_mapper
-
 
     det2alpha_beta = selector.RegionsSelector(('x', 'y'), ('alpha', 'beta', 'lam'),
                                               label_mapper=label_mapper, selector=transforms)
@@ -348,8 +487,8 @@ def abl_to_v2v3l(input_model, reference_files):
     # Since there are two channels in each reference file we need to loop over them
     for c in channels:
         ch = int(c[0])
-        dict_mapper[tuple(wr[c])] = models.Mapping((2,), name="mapping_lam") | \
-                   models.Const1D(ch, name="channel #")
+        dict_mapper[tuple(wr[c])] = (models.Mapping((2,), name="mapping_lam") |
+                                     models.Const1D(ch, name="channel #"))
         ident1 = models.Identity(1, name='identity_lam')
         ident1._inputs = ('lam',)
         chan_v23 = v23[c]
@@ -365,8 +504,8 @@ def abl_to_v2v3l(input_model, reference_files):
                                                   inputs_mapping=models.Mapping([2, ]))
     wave_range_mapper.inverse = wave_range_mapper.copy()
     abl2v2v3l = selector.RegionsSelector(('alpha', 'beta', 'lam'), ('v2', 'v3', 'lam'),
-                                      label_mapper=wave_range_mapper,
-                                      selector=sel)
+                                         label_mapper=wave_range_mapper,
+                                         selector=sel)
 
     return abl2v2v3l
 

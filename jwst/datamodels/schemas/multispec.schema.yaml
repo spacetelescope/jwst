@@ -1,9 +1,8 @@
 allOf:
 - $ref: core.schema.yaml
+- $ref: int_times.schema.yaml
 - type: object
   properties:
-    int_times:
-      $ref: int_times.schema.yaml
     spec:
       type: array
       title: An array of spectra
@@ -20,15 +19,17 @@ allOf:
               datatype: float64
             - name: ERROR
               datatype: float64
+            - name: SURF_BRIGHT
+              datatype: float64
+            - name: SB_ERROR
+              datatype: float64
             - name: DQ
-              datatype: int32
-            - name: NET
-              datatype: float64
-            - name: NERROR
-              datatype: float64
+              datatype: uint32
             - name: BACKGROUND
               datatype: float64
             - name: BERROR
+              datatype: float64
+            - name: NPIXELS
               datatype: float64
           name:
             title: Name of the slit
@@ -103,39 +104,50 @@ allOf:
             default: 1
             fits_keyword: SPORDER
             fits_hdu: EXTRACT1D
+          dispersion_direction:
+            title: Dispersion direction
+            type: integer
+            fits_keyword: DISPAXIS
+            fits_hdu: EXTRACT1D
           int_num:
             title: Integration number
             type: integer
             fits_keyword: INT_NUM
             fits_hdu: EXTRACT1D
+          time_scale:
+            title: "principal time system for time-related keywords"
+            type: string
+            default: "UTC"
+            fits_keyword: TIMESYS
+            fits_hdu: EXTRACT1D
           start_utc:
             title: "UTC at start of integration [MJD]"
             type: number
-            fits_keyword: STRT_UTC
+            fits_keyword: MJD-BEG
             fits_hdu: EXTRACT1D
           mid_utc:
             title: "UTC at middle of integration [MJD]"
             type: number
-            fits_keyword: MID_UTC
+            fits_keyword: MJD-AVG
             fits_hdu: EXTRACT1D
           end_utc:
             title: "UTC at end of integration [MJD]"
             type: number
-            fits_keyword: END_UTC
+            fits_keyword: MJD-END
             fits_hdu: EXTRACT1D
           start_tdb:
             title: "TDB at start of integration [MJD]"
             type: number
-            fits_keyword: STRT_TDB
+            fits_keyword: TDB-BEG
             fits_hdu: EXTRACT1D
           mid_tdb:
             title: "TDB at middle of integration [MJD]"
             type: number
-            fits_keyword: MID_TDB
+            fits_keyword: TDB-MID
             fits_hdu: EXTRACT1D
           end_tdb:
             title: "TDB at end of integration [MJD]"
             type: number
-            fits_keyword: END_TDB
+            fits_keyword: TDB-END
             fits_hdu: EXTRACT1D
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

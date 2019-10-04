@@ -1,5 +1,9 @@
 import warnings
+import sys
+import traceback
+
 from .model_base import DataModel
+from .dynamicdq import dynamic_mask
 from .validate import ValidationWarning
 
 __all__ = ['ReferenceFileModel']
@@ -9,12 +13,8 @@ class ReferenceFileModel(DataModel):
     """
     A data model for reference tables
 
-    Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
     """
-    schema_url = "referencefile.schema.yaml"
+    schema_url = "referencefile.schema"
 
     def __init__(self, init=None, **kwargs):
         super(ReferenceFileModel, self).__init__(init=init, **kwargs)
@@ -28,56 +28,52 @@ class ReferenceFileModel(DataModel):
         """
         try:
             assert self.meta.description is not None
-            assert (self.meta.telescope == 'JWST')
+            assert self.meta.telescope == 'JWST'
             assert self.meta.reftype is not None
             assert self.meta.author is not None
             assert self.meta.pedigree is not None
             assert self.meta.useafter is not None
             assert self.meta.instrument.name is not None
-        except AssertionError as errmsg:
+        except AssertionError:
             if self._strict_validation:
-                raise AssertionError(errmsg)
+                raise
             else:
-                warnings.warn(str(errmsg), ValidationWarning)
+                tb = sys.exc_info()[-1]
+                tb_info = traceback.extract_tb(tb)
+                text = tb_info[-1][-1]
+                warnings.warn(text, ValidationWarning)
 
         super(ReferenceFileModel, self).validate()
 
 
 class ReferenceImageModel(ReferenceFileModel):
     """
-    A data model for 2D reference images
+    A data model for 2D reference images.
+
+    Reference image data model.
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
+    data : numpy float32 array
+         The science data
 
-    data : numpy array
-        The science data.
+    dq : numpy uint32 array
+         Data quality array
 
-    dq : numpy array
-        The data quality array.
-
-    err : numpy array
-        The error array.
+    err : numpy float32 array
+         Error array
     """
-    schema_url = "referenceimage.schema.yaml"
+    schema_url = "referenceimage.schema"
 
-    def __init__(self, init=None, data=None, dq=None, err=None, **kwargs):
+    def __init__(self, init=None, **kwargs):
         super(ReferenceImageModel, self).__init__(init=init, **kwargs)
-
-        if data is not None:
-            self.data = data
-
-        if dq is not None:
-            self.dq = dq
-
-        if err is not None:
-            self.err = err
 
         # Implicitly create arrays
         self.dq = self.dq
         self.err = self.err
+
+        if self.hasattr('dq_def'):
+            self.dq = dynamic_mask(self)
 
 
 class ReferenceCubeModel(ReferenceFileModel):
@@ -85,32 +81,20 @@ class ReferenceCubeModel(ReferenceFileModel):
     A data model for 3D reference images
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
+    data : numpy float32 array
+         The science data
 
-    data : numpy array
-        The science data.
+    dq : numpy uint32 array
+         Data quality array
 
-    dq : numpy array
-        The data quality array.
-
-    err : numpy array
-        The error array.
+    err : numpy float32 array
+         Error array
     """
-    schema_url = "referencecube.schema.yaml"
+    schema_url = "referencecube.schema"
 
-    def __init__(self, init=None, data=None, dq=None, err=None, **kwargs):
+    def __init__(self, init=None, **kwargs):
         super(ReferenceCubeModel, self).__init__(init=init, **kwargs)
-
-        if data is not None:
-            self.data = data
-
-        if dq is not None:
-            self.dq = dq
-
-        if err is not None:
-            self.err = err
 
         # Implicitly create arrays
         self.dq = self.dq
@@ -121,32 +105,20 @@ class ReferenceQuadModel(ReferenceFileModel):
     A data model for 4D reference images
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
+    data : numpy float32 array
+         The science data
 
-    data : numpy array
-        The science data.
+    dq : numpy uint32 array
+         Data quality array
 
-    dq : numpy array
-        The data quality array.
-
-    err : numpy array
-        The error array.
+    err : numpy float32 array
+         Error array
     """
-    schema_url = "referencequad.schema.yaml"
+    schema_url = "referencequad.schema"
 
-    def __init__(self, init=None, data=None, dq=None, err=None, **kwargs):
+    def __init__(self, init=None, **kwargs):
         super(ReferenceQuadModel, self).__init__(init=init, **kwargs)
-
-        if data is not None:
-            self.data = data
-
-        if dq is not None:
-            self.dq = dq
-
-        if err is not None:
-            self.err = err
 
         # Implicitly create arrays
         self.dq = self.dq

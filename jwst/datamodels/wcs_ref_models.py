@@ -62,7 +62,7 @@ class DistortionModel(_SimpleModel):
     """
     A model for a reference file of type "distortion".
     """
-    schema_url = "distortion.schema.yaml"
+    schema_url = "distortion.schema"
     reftype = "distortion"
 
     def validate(self):
@@ -84,7 +84,7 @@ class DistortionMRSModel(ReferenceFileModel):
     """
     A model for a reference file of type "distortion" for the MIRI MRS.
     """
-    schema_url = "distortion_mrs.schema.yaml"
+    schema_url = "distortion_mrs.schema"
     reftype = "distortion"
 
     def __init__(self, init=None, x_model=None, y_model=None, alpha_model=None, beta_model=None,
@@ -151,8 +151,14 @@ class DistortionMRSModel(ReferenceFileModel):
 class SpecwcsModel(_SimpleModel):
     """
     A model for a reference file of type "specwcs".
+
+    Notes
+    -----
+    For NIRISS and NIRCAM WFSS modes the specwcs file is
+    used during extract_2D. See NIRCAMGrismModel and
+    NIRISSGrismModel.
     """
-    schema_url = "specwcs.schema.yaml"
+    schema_url = "specwcs.schema"
     reftype = "specwcs"
 
     def validate(self):
@@ -174,12 +180,31 @@ class SpecwcsModel(_SimpleModel):
 
 class NIRCAMGrismModel(ReferenceFileModel):
     """
-    A model for a reference file of type "specwcs" for NIRCAM grisms.
+    A model for a reference file of type "specwcs" for NIRCAM WFSS.
 
     This reference file contains the models for wave, x, and y polynomial
-    solutions that describe dispersion through the grism
+    solutions that describe dispersion through the grism.
+
+    Parameters
+    ----------
+    displ: `~astropy.modeling.Model`
+          Nircam Grism wavelength dispersion model
+    dispx : `~astropy.modeling.Model`
+          Nircam Grism row dispersion model
+    dispy : `~astropy.modeling.Model`
+          Nircam Grism column dispersion model
+    invdispl : `~astropy.modeling.Model`
+          Nircam Grism inverse wavelength dispersion model
+    invdispx : `~astropy.modeling.Model`
+          Nircam Grism inverse row dispersion model
+    invdispy : `~astropy.modeling.Model`
+          Nircam Grism inverse column dispersion model
+    orders : `~astropy.modeling.Model`
+          NIRCAM Grism orders, matched to the array locations of the
+          dispersion models
+
     """
-    schema_url = "specwcs_nircam_grism.schema.yaml"
+    schema_url = "specwcs_nircam_grism.schema"
     reftype = "specwcs"
 
     def __init__(self, init=None,
@@ -236,8 +261,28 @@ class NIRCAMGrismModel(ReferenceFileModel):
 class NIRISSGrismModel(ReferenceFileModel):
     """
     A model for a reference file of type "specwcs" for NIRISS grisms.
+
+    Parameters
+    ----------
+    displ: `~astropy.modeling.Model`
+          NIRISS Grism wavelength dispersion model
+    dispx : `~astropy.modeling.Model`
+          NIRISS Grism row dispersion model
+    dispy : `~astropy.modeling.Model`
+          NIRISS Grism column dispersion model
+    invdispl : `~astropy.modeling.Model`
+          NIRISS Grism inverse wavelength dispersion model
+    invdispx : `~astropy.modeling.Model`
+          NIRISS Grism inverse row dispersion model
+    invdispy : `~astropy.modeling.Model`
+          NIRISS Grism inverse column dispersion model
+    orders : `~astropy.modeling.Model`
+          NIRISS Grism orders, matched to the array locations of the
+          dispersion models
+    fwcpos_ref : float
+        The reference value for the filter wheel position
     """
-    schema_url = "specwcs_niriss_grism.schema.yaml"
+    schema_url = "specwcs_niriss_grism.schema"
     reftype = "specwcs"
 
     def __init__(self, init=None,
@@ -294,7 +339,7 @@ class RegionsModel(ReferenceFileModel):
     """
     A model for a reference file of type "regions".
     """
-    schema_url = "regions.schema.yaml"
+    schema_url = "regions.schema"
     reftype = "regions"
 
     def __init__(self, init=None, regions=None, **kwargs):
@@ -317,7 +362,7 @@ class RegionsModel(ReferenceFileModel):
     def validate(self):
         super(RegionsModel, self).validate()
         try:
-            assert isinstance(self.regions.copy(), np.ndarray)
+            assert isinstance(self.regions, np.ndarray)
             assert self.meta.instrument.name == "MIRI"
             assert self.meta.exposure.type == "MIR_MRS"
             assert self.meta.instrument.channel in ("12", "34", "1", "2", "3", "4")
@@ -333,12 +378,27 @@ class RegionsModel(ReferenceFileModel):
 class WavelengthrangeModel(ReferenceFileModel):
     """
     A model for a reference file of type "wavelengthrange".
+
     The model is used by MIRI, NIRSPEC, NIRCAM, and NIRISS
+
+
+    Parameters
+    ----------
+    wrange : list
+        Contains a list of [order, filter, min wave, max wave]
+    order : list
+        A list of orders that are available and described in the file
+    extract_orders : list
+        A list of filters and the orders that should be extracted by default
+    wunits : `~astropy.units`
+        The units for the wavelength data
+
     """
-    schema_url = "wavelengthrange.schema.yaml"
+    schema_url = "wavelengthrange.schema"
     reftype = "wavelengthrange"
 
-    def __init__(self, init=None, wrange_selector=None, wrange=None, order=None, wunits=None, **kwargs):
+    def __init__(self, init=None, wrange_selector=None, wrange=None,
+                 order=None, extract_orders=None, wunits=None, **kwargs):
 
         super(WavelengthrangeModel, self).__init__(init=init, **kwargs)
         if wrange_selector is not None:
@@ -347,6 +407,8 @@ class WavelengthrangeModel(ReferenceFileModel):
             self.wavelengthrange = wrange
         if order is not None:
             self.order = order
+        if extract_orders is not None:
+            self.extract_orders = extract_orders
         if wunits is not None:
             self.meta.wavelength_units = wunits
 
@@ -371,7 +433,7 @@ class FPAModel(ReferenceFileModel):
     """
     A model for a NIRSPEC reference file of type "fpa".
     """
-    schema_url = "fpa.schema.yaml"
+    schema_url = "fpa.schema"
     reftype = "fpa"
 
     def __init__(self, init=None, nrs1_model=None, nrs2_model=None, **kwargs):
@@ -392,7 +454,7 @@ class FPAModel(ReferenceFileModel):
         self.meta.instrument.p_detector = "NRS1|NRS2|"
         self.meta.exposure.p_exptype = "NRS_TACQ|NRS_TASLIT|NRS_TACONFIRM|\
         NRS_CONFIRM|NRS_FIXEDSLIT|NRS_IFU|NRS_MSASPEC|NRS_IMAGE|NRS_FOCUS|\
-        NRS_MIMF|NRS_BOTA|NRS_LAMP|NRS_BRIGHTOBJ|"
+        NRS_MIMF|NRS_MSATA|NRS_WATA|NRS_LAMP|NRS_BRIGHTOBJ|"
         self.meta.exposure.type = "N/A"
 
     def to_fits(self):
@@ -419,16 +481,17 @@ class IFUPostModel(ReferenceFileModel):
     init : str
         A file name.
     slice_models : dict
-        A dictionary with slice transforms with the following entries:
+        A dictionary with slice transforms with the following entries
         {"slice_N": {'linear': astropy.modeling.Model,
-                     'xpoly': astropy.modeling.Model,
-                     'xpoly_distortion': astropy.modeling.Model,
-                     'ypoly': astropy.modeling.Model,
-                     'ypoly_distortion': astropy.modeling.Model,
-                     }
-        }
+        ...         'xpoly': astropy.modeling.Model,
+        ...         'xpoly_distortion': astropy.modeling.Model,
+        ...         'ypoly': astropy.modeling.Model,
+        ...         'ypoly_distortion': astropy.modeling.Model,
+        ...         }}
+
     """
-    schema_url = "ifupost.schema.yaml"
+
+    schema_url = "ifupost.schema"
     reftype = "ifupost"
 
     def __init__(self, init=None, slice_models=None, **kwargs):
@@ -463,7 +526,7 @@ class IFUSlicerModel(ReferenceFileModel):
     """
     A model for a NIRSPEC reference file of type "ifuslicer".
     """
-    schema_url = "ifuslicer.schema.yaml"
+    schema_url = "ifuslicer.schema"
     reftype = "ifuslicer"
 
     def __init__(self, init=None, model=None, data=None, **kwargs):
@@ -496,7 +559,7 @@ class MSAModel(ReferenceFileModel):
     """
     A model for a NIRSPEC reference file of type "msa".
     """
-    schema_url = "msa.schema.yaml"
+    schema_url = "msa.schema"
     reftype = "msa"
 
     def __init__(self, init=None, models=None, data=None, **kwargs):
@@ -518,7 +581,7 @@ class MSAModel(ReferenceFileModel):
         self.meta.instrument.p_detector = "NRS1|NRS2|"
         self.meta.exposure.p_exptype = "NRS_TACQ|NRS_TASLIT|NRS_TACONFIRM|\
         NRS_CONFIRM|NRS_FIXEDSLIT|NRS_IFU|NRS_MSASPEC|NRS_IMAGE|NRS_FOCUS|\
-        NRS_MIMF|NRS_BOTA|NRS_LAMP|NRS_BRIGHTOBJ|"
+        NRS_MIMF|NRS_MSATA|NRS_WATA|NRS_LAMP|NRS_BRIGHTOBJ|"
         self.meta.exposure.type = "N/A"
 
     def to_fits(self):
@@ -532,7 +595,7 @@ class DisperserModel(ReferenceFileModel):
     """
     A model for a NIRSPEC reference file of type "disperser".
     """
-    schema_url = "disperser.schema.yaml"
+    schema_url = "disperser.schema"
     reftype = "disperser"
 
     def __init__(self, init=None, angle=None, gwa_tiltx=None, gwa_tilty=None,
@@ -579,7 +642,7 @@ class DisperserModel(ReferenceFileModel):
         self.meta.instrument.p_detector = "NRS1|NRS2|"
         self.meta.exposure.p_exptype = "NRS_TACQ|NRS_TASLIT|NRS_TACONFIRM|\
         NRS_CONFIRM|NRS_FIXEDSLIT|NRS_IFU|NRS_MSASPEC|NRS_IMAGE|NRS_FOCUS|\
-        NRS_MIMF|NRS_BOTA|NRS_LAMP|NRS_BRIGHTOBJ|"
+        NRS_MIMF|NRS_MSATA|NRS_WATA|NRS_LAMP|NRS_BRIGHTOBJ|"
         self.meta.exposure.type = "N/A"
 
     def to_fits(self):
@@ -601,7 +664,7 @@ class FilteroffsetModel(ReferenceFileModel):
     """
     A model for a NIRSPEC reference file of type "disperser".
     """
-    schema_url = "filteroffset.schema.yaml"
+    schema_url = "filteroffset.schema"
     reftype = "filteroffset"
 
     def __init__(self, init=None, filters=None, **kwargs):
@@ -634,7 +697,7 @@ class IFUFOREModel(_SimpleModel):
     """
     A model for a NIRSPEC reference file of type "ifufore".
     """
-    schema_url = "ifufore.schema.yaml"
+    schema_url = "ifufore.schema"
     reftype = "ifufore"
 
     def populate_meta(self):
@@ -648,7 +711,7 @@ class CameraModel(_SimpleModel):
     """
     A model for a reference file of type "camera".
     """
-    schema_url = "camera.schema.yaml"
+    schema_url = "camera.schema"
     reftype = 'camera'
 
     def populate_meta(self):
@@ -656,7 +719,7 @@ class CameraModel(_SimpleModel):
         self.meta.instrument.p_detector = "NRS1|NRS2|"
         self.meta.exposure.p_exptype = "NRS_TACQ|NRS_TASLIT|NRS_TACONFIRM|\
         NRS_CONFIRM|NRS_FIXEDSLIT|NRS_IFU|NRS_MSASPEC|NRS_IMAGE|NRS_FOCUS|\
-        NRS_MIMF|NRS_BOTA|NRS_LAMP|NRS_BRIGHTOBJ|"
+        NRS_MIMF|NRS_MSATA|NRS_WATA|NRS_LAMP|NRS_BRIGHTOBJ|"
         self.meta.exposure.type = "N/A"
 
 
@@ -664,7 +727,7 @@ class CollimatorModel(_SimpleModel):
     """
     A model for a reference file of type "collimator".
     """
-    schema_url = "collimator.schema.yaml"
+    schema_url = "collimator.schema"
     reftype = 'collimator'
 
     def populate_meta(self):
@@ -672,7 +735,7 @@ class CollimatorModel(_SimpleModel):
         self.meta.instrument.p_detector = "NRS1|NRS2|"
         self.meta.exposure.p_exptype = "NRS_TACQ|NRS_TASLIT|NRS_TACONFIRM|\
         NRS_CONFIRM|NRS_FIXEDSLIT|NRS_IFU|NRS_MSASPEC|NRS_IMAGE|NRS_FOCUS|\
-        NRS_MIMF|NRS_BOTA|NRS_LAMP|NRS_BRIGHTOBJ|"
+        NRS_MIMF|NRS_MSATA|NRS_WATA|NRS_LAMP|NRS_BRIGHTOBJ|"
         self.meta.exposure.type = "N/A"
 
 
@@ -680,7 +743,7 @@ class OTEModel(_SimpleModel):
     """
     A model for a reference file of type "ote".
     """
-    schema_url = "ote.schema.yaml"
+    schema_url = "ote.schema"
     reftype = 'ote'
 
     def populate_meta(self):
@@ -688,7 +751,7 @@ class OTEModel(_SimpleModel):
         self.meta.instrument.p_detector = "NRS1|NRS2|"
         self.meta.exposure.p_exptype = "NRS_TACQ|NRS_TASLIT|NRS_TACONFIRM|\
         NRS_CONFIRM|NRS_FIXEDSLIT|NRS_IFU|NRS_MSASPEC|NRS_IMAGE|NRS_FOCUS|\
-        NRS_MIMF|NRS_BOTA|NRS_LAMP|NRS_BRIGHTOBJ|"
+        NRS_MIMF|NRS_MSATA|NRS_WATA|NRS_LAMP|NRS_BRIGHTOBJ|"
         self.meta.exposure.type = "N/A"
 
 
@@ -696,7 +759,7 @@ class FOREModel(_SimpleModel):
     """
     A model for a reference file of type "fore".
     """
-    schema_url = "fore.schema.yaml"
+    schema_url = "fore.schema"
     reftype = 'fore'
 
     def populate_meta(self):
@@ -704,7 +767,7 @@ class FOREModel(_SimpleModel):
         self.meta.instrument.p_detector = "NRS1|NRS2|"
         self.meta.exposure.p_exptype = "NRS_TACQ|NRS_TASLIT|NRS_TACONFIRM|\
         NRS_CONFIRM|NRS_FIXEDSLIT|NRS_IFU|NRS_MSASPEC|NRS_IMAGE|NRS_FOCUS|\
-        NRS_MIMF|NRS_BOTA|NRS_LAMP|NRS_BRIGHTOBJ|"
+        NRS_MIMF|NRS_MSATA|NRS_WATA|NRS_LAMP|NRS_BRIGHTOBJ|"
         self.meta.exposure.type = "N/A"
 
     def on_save(self, path=None):
@@ -725,7 +788,7 @@ class FOREModel(_SimpleModel):
 class WaveCorrModel(ReferenceFileModel):
 
     reftype = "wavecorr"
-    schema_url = "wavecorr.schema.yaml"
+    schema_url = "wavecorr.schema"
 
     def __init__(self, init=None, apertures=None, **kwargs):
         super(WaveCorrModel, self).__init__(init, **kwargs)

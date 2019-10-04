@@ -2,6 +2,7 @@ allOf:
 - $ref: referencefile.schema.yaml
 - $ref: subarray.schema.yaml
 - $ref: keyword_readpatt.schema.yaml
+- $ref: keyword_preadpatt.schema.yaml
 - $ref: keyword_gainfact.schema.yaml
 - type: object
   properties:
@@ -21,6 +22,5 @@ allOf:
       fits_hdu: ERR
       default: 0.0
       datatype: float32
-    dq_def:
-      $ref: dq_def.schema.yaml
+- $ref: dq_def.schema.yaml
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

@@ -2,7 +2,6 @@
 #  Module for appyling emission correction
 #
 
-import numpy as np
 import logging
 from .. import datamodels
 
@@ -19,7 +18,7 @@ class DataSet():
 
     """
 
-    def __init__(self, input_DM):
+    def __init__(self, input_dm):
 
         """
         Short Summary
@@ -28,19 +27,19 @@ class DataSet():
 
         Parameters
         ----------
-        input_DM: data model object
+        input_dm: data model object
             input Data Model object
 
         """
 
         try:
-            model = datamodels.open(input_DM)
-        except Exception as errmess:
-            log.info('Error opening: %s ', input_DM)
+            model = datamodels.open(input_dm)
+        except Exception:
+            log.info('Error opening: %s ', input_dm)
             model = None
 
         self.input = model
-        self.input_file = input_DM
+        self.input_file = input_dm
 
 
     def do_all(self):

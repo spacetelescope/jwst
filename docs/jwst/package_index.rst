@@ -32,6 +32,7 @@ Package Index
    jump/index.rst
    lastframe/index.rst
    linearity/index.rst
+   master_background/index.rst
    model_blender/index.rst
    mrs_imatch/index.rst
    msaflagopen/index.rst
@@ -41,7 +42,7 @@ Package Index
    photom/index.rst
    pipeline/index.rst
    ramp_fitting/index.rst
-   ref_file_doc_DMS_653/index.rst
+   references_general/index.rst
    refpix/index.rst
    resample/index.rst
    reset/index.rst

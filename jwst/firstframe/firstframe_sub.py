@@ -4,7 +4,6 @@
 
 import numpy as np
 import logging
-from .. import datamodels
 from ..datamodels import dqflags
 
 log = logging.getLogger(__name__)
@@ -15,10 +14,10 @@ def do_correction(input_model):
     """
     Short Summary
     -------------
-    The sole correction is to add the DO_NOT_USE flat to the GROUP data 
-    quality flags for the first group, if the number of groups is greater 
+    The sole correction is to add the DO_NOT_USE flat to the GROUP data
+    quality flags for the first group, if the number of groups is greater
     than 3.
-    
+
     Parameters
     ----------
     input_model: data model object

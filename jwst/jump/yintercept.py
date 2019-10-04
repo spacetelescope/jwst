@@ -1,3 +1,4 @@
+import logging
 import numpy as np
 from math import sqrt
 
@@ -6,7 +7,6 @@ from ..datamodels import dqflags
 import warnings
 warnings.simplefilter('ignore', np.RankWarning)
 
-import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -54,7 +54,8 @@ class PixelRamp():
                 self.num_semiramps += 1
 
 
-def find_CRs(data, err, gdq, times, read_noise, rejection_threshold, signal_threshold, median_slopes):
+def find_crs(data, err, gdq, times, read_noise, rejection_threshold,
+    signal_threshold, median_slopes):
 
     # Get the attributes of the input data array
     (nints, ngroups, nrows, ncols) = data.shape
@@ -85,7 +86,7 @@ def find_CRs(data, err, gdq, times, read_noise, rejection_threshold, signal_thre
 
                     # Add any new CR flags to input DQ array
                     gdq[integration, :, row, col] = np.bitwise_or(
-                                                        gdq[integration, :, row, col], ramp.dqs)
+                        gdq[integration, :, row, col], ramp.dqs)
 
         # next pixel
     # next integration

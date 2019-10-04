@@ -53,7 +53,7 @@ class CSVHeaderKeywords(ascii.BasicHeader):
     '''Class to search the csv file for keywords.'''
 
     def update_meta(self, lines, meta):
-        pattern = re.compile('\s+'.join((self.comment, self.keywords)))
+        pattern = re.compile(r'\s+'.join((self.comment, self.keywords)))
         for line in lines:
             matches = pattern.match(line)
             if matches is not None:

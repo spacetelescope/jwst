@@ -1,8 +1,11 @@
 title: MIRI MRS photometric flux conversion data model
 allOf:
-- $ref: photom.schema.yaml
+- $ref: referencefile.schema.yaml
+- $ref: keyword_exptype.schema.yaml
+- $ref: keyword_pexptype.schema.yaml
 - $ref: keyword_band.schema.yaml
 - $ref: keyword_photmjsr.schema.yaml
+- $ref: keyword_pixelarea.schema.yaml
 - type: object
   properties:
     data:
@@ -23,8 +26,9 @@ allOf:
       default: 0
       ndim: 2
       datatype: uint32
-    dq_def:
-      $ref: dq_def.schema.yaml
+- $ref: dq_def.schema.yaml
+- type: object
+  properties:
     pixsiz:
       title: Pixel size array
       fits_hdu: PIXSIZ

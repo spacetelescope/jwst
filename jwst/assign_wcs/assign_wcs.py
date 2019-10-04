@@ -1,14 +1,10 @@
 import logging
 import importlib
 from gwcs.wcs import WCS
-from .util import update_s_region_spectral, update_s_region_imaging
-from ..associations.lib.dms_base import (ACQ_EXP_TYPES, IMAGE2_SCIENCE_EXP_TYPES,
-                                         IMAGE2_NONSCIENCE_EXP_TYPES)
-
-IMAGING_TYPES = set(tuple(ACQ_EXP_TYPES) + tuple(IMAGE2_SCIENCE_EXP_TYPES)
-                    + tuple(IMAGE2_NONSCIENCE_EXP_TYPES) +
-                    ('fgs_image', 'fgs_focus'))
-
+from .util import (update_s_region_spectral, update_s_region_imaging,
+                   update_s_region_nrs_ifu, update_s_region_mrs)
+from ..lib.exposure_types import IMAGING_TYPES, SPEC_TYPES
+from ..lib.dispaxis import get_dispersion_direction
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -16,7 +12,7 @@ log.setLevel(logging.DEBUG)
 __all__ = ["load_wcs"]
 
 
-def load_wcs(input_model, reference_files={}):
+def load_wcs(input_model, reference_files={}, nrs_slit_y_range=None):
     """
     Create a gWCS object and store it in ``Model.meta``.
 
@@ -27,6 +23,8 @@ def load_wcs(input_model, reference_files={}):
     reference_files : dict
         A dict {reftype: reference_file_name} containing all
         reference files that apply to this exposure.
+    nrs_slit_y_range : list
+        The slit y-range for a Nirspec slit. The center is (0, 0).
     """
     if reference_files:
         for ref_type, ref_file in reference_files.items():
@@ -40,12 +38,19 @@ def load_wcs(input_model, reference_files={}):
     instrument = input_model.meta.instrument.name.lower()
     mod = importlib.import_module('.' + instrument, 'jwst.assign_wcs')
 
-    # Add WCS keywords for the spectral axis.
-    if input_model.meta.wcsinfo.wcsaxes == 3:
-        _add_3rd_axis(input_model)
+    if input_model.meta.exposure.type.lower() in SPEC_TYPES:
+        input_model.meta.wcsinfo.specsys = "BARYCENT"
+        input_model.meta.wcsinfo.dispersion_direction = \
+                        get_dispersion_direction(
+                                input_model.meta.exposure.type,
+                                input_model.meta.instrument.grating,
+                                input_model.meta.instrument.filter,
+                                input_model.meta.instrument.pupil)
 
-    pipeline = mod.create_pipeline(input_model, reference_files)
-
+    if instrument.lower() == 'nirspec':
+        pipeline = mod.create_pipeline(input_model, reference_files, slit_y_range=nrs_slit_y_range)
+    else:
+        pipeline = mod.create_pipeline(input_model, reference_files)
     # Initialize the output model as a copy of the input
     # Make the copy after the WCS pipeline is created in order to pass updates to the model.
     if pipeline is None:
@@ -58,13 +63,14 @@ def load_wcs(input_model, reference_files={}):
         output_model.meta.wcs = wcs
         output_model.meta.cal_step.assign_wcs = 'COMPLETE'
         exclude_types = ['nrc_wfss', 'nrc_tsgrism', 'nis_wfss',
-                         'nrs_fixedslit', 'nrs_ifu', 'nrs_msaspec',
+                         'nrs_fixedslit', 'nrs_msaspec',
                          'nrs_autowave', 'nrs_autoflat', 'nrs_lamp',
-                         'nrs_brightobj', 'mir_lrs-fixedslit', 'mir_lrs-slitless',
-                         'mir_mrs', 'nis_soss']
+                         'nrs_brightobj', 'nis_soss']
 
         if output_model.meta.exposure.type.lower() not in exclude_types:
-            if output_model.meta.exposure.type.lower() in IMAGING_TYPES:
+            imaging_types = IMAGING_TYPES.copy()
+            imaging_types.update(['mir_lrs-fixedslit', 'mir_lrs-slitless'])
+            if output_model.meta.exposure.type.lower() in imaging_types:
                 try:
                     update_s_region_imaging(output_model)
                 except Exception as exc:
@@ -73,6 +79,10 @@ def load_wcs(input_model, reference_files={}):
                 else:
                     log.info("assign_wcs updated S_REGION to {0}".format(
                         output_model.meta.wcsinfo.s_region))
+            elif  output_model.meta.exposure.type.lower() == "nrs_ifu":
+                update_s_region_nrs_ifu(output_model, mod)
+            elif output_model.meta.exposure.type.lower() == 'mir_mrs':
+                update_s_region_mrs(output_model)
             else:
                 try:
                     update_s_region_spectral(output_model)
@@ -81,18 +91,3 @@ def load_wcs(input_model, reference_files={}):
                         output_model.meta.exposure.type, exc))
     log.info("COMPLETED assign_wcs")
     return output_model
-
-
-def _add_3rd_axis(input_model):
-    """
-    Add WCS keywords and their default values for the spectral axis.
-
-    SDP adds CTYPE3 and CUNIT3.
-
-    """
-    input_model.meta.wcsinfo.pc1_3 = 0.
-    input_model.meta.wcsinfo.pc2_3 = 0.
-    input_model.meta.wcsinfo.pc3_3 = 1.
-    input_model.meta.wcsinfo.crval3 = 0.
-    input_model.meta.wcsinfo.crpix3 = 0.
-    input_model.meta.wcsinfo.cdelt3 = 1.

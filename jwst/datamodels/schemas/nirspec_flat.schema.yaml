@@ -1,5 +1,8 @@
 allOf:
 - $ref: referencefile.schema.yaml
+- $ref: keyword_filter.schema.yaml
+- $ref: keyword_grating.schema.yaml
+- $ref: keyword_pexptype.schema.yaml
 - $ref: subarray.schema.yaml
 - type: object
   properties:
@@ -41,6 +44,5 @@ allOf:
       - name: data
         shape: [130000]
         datatype: float32
-    dq_def:   
-      $ref: dq_def.schema.yaml
+- $ref: dq_def.schema.yaml
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

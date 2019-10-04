@@ -1,3 +1,5 @@
+.. _ramp_fitting_step:
+
 ============
 Ramp Fitting
 ============

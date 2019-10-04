@@ -2,20 +2,23 @@ from collections import namedtuple
 
 import numpy as np
 
+from ..lib import pipe_utils
+
 """ This is the interface:
-    bool = is_irs2(input_model)
-        True if the data in input_model were taken using the IRS2 readout
-         pattern.
     mask = make_mask(input_model)
-        Create a mask for extracting normal pixels; used by from_irs2 and
-        to_irs2.
-        n and r can be specified as keyword arguments to override the
-        default values.  This option is primarily useful if `input_model`
-        is a numpy.ndarray rather than a jwst.datamodels object.
+        Create a mask for extracting normal pixels; used by `from_irs2` and
+        `to_irs2`.
+        Parameters `n` and `r` can be gotten from metadata if `input_model`
+        is a `jwst.datamodels` object.  If `input_model` is instead a
+        numpy.ndarray, `n` and `r` can be specified as keyword arguments.
+        If they are not specified, function `_get_irs2_parameters` will
+        assign values that at the time of writing are correct.  If there
+        is any doubt about using the default values, they should be
+        specified explicitly.
     shape = normal_shape(input_model, n=n, r=r)
-        The shape of the data array when excluding interleaved reference
-        pixels.
-        n and r can be specified as keyword arguments.
+        Return the shape of the data array when excluding interleaved
+        reference pixels.
+        `n` and `r` can be specified as keyword arguments.
     normal_data = from_irs2(irs2_data, mask, detector)
         Extract the normal pixels from data in IRS2 format.
     to_irs2(irs2_data, normal_data, mask, detector)
@@ -34,29 +37,35 @@ def _get_irs2_parameters(input_model, n=None, r=None):
 
     Parameters
     ----------
-    input_model: most likely a RampModel object
-        This is used for getting the width of the reference output and
-        the values of NRS_NORM and NRS_REF.
+    input_model : JWST data model
+        This is most likely a RampModel object; it's used for getting the
+        width of the reference output and the values of NRS_NORM and
+        NRS_REF.
 
-    n: int or None (default is None)
-        If not None, overrides the default.
+    n : int or None
+        If not None, this value will be used for the `nrs_normal`
+        parameter.  If `n` is None, the value will be obtained from the
+        metadata for `input_model`, or, if this fails (e.g. if
+        `input_model` is actually an ndarray), a default value of 16 will
+        be used.  None is the default.
 
-    r: int or None (default is None)
-        If not None, overrides the default.
+    r : int or None
+        If not None, this value will be used for the `nrs_reference`
+        parameter.  See also the description for `n`.  None is the default.
 
     Returns
     -------
-    param: a ReadoutParam object
-        param.refout: int
+    param : namedtuple
+        param.refout : int
             The length (in the last image axis) of the reference output
             section.  The reference output is assumed to be on the left
             side of the IRS2-format image.
 
-        param.n: int
+        param.n : int
             The number of "normal" (as opposed to reference) pixels read
             out before jumping to the reference pixel region.
 
-        param.r: int
+        param.r : int
             The number of reference pixels read out before jumping back to
             the normal pixel region.
     """
@@ -81,31 +90,39 @@ def _get_irs2_parameters(input_model, n=None, r=None):
 
     return param
 
-def is_irs2(input_model):
-    """Check whether the data are in IRS2 format."""
 
-    if isinstance(input_model, np.ndarray):
-        shape = input_model.shape
-        can_check_for_MIRI = False
-    else:
-        # use:  if input_model.meta.exposure.readpatt.find("IRS2") >= 0
-        shape = input_model.data.shape
-        can_check_for_MIRI = True
-
-    if can_check_for_MIRI and input_model.meta.instrument.name == 'MIRI':
-        max_height = 1032                       # perhaps should use 1024
-    else:
-        max_height = 2048
-
-    y_axis_length = max(shape[-1], shape[-2])
-
-    if y_axis_length > max_height:
-        return True
-    else:
-        return False
 
 def normal_shape(input_model, n=None, r=None, detector=None):
-    """Determine the shape of the 'normal' pixel data."""
+    """Determine the shape of the 'normal' pixel data.
+
+    Parameters
+    ----------
+    input_model : JWST data model, or an ndarray
+        Either the input science data model or the data array from the
+        input data model.
+
+    n : int or None
+        If not None, this value will be used for the `nrs_normal`
+        parameter.  If `n` is None, the value will be obtained from the
+        metadata for `input_model`, or, if this fails (e.g. if
+        `input_model` is actually an ndarray), a default value will
+        be used.  None is the default.
+
+    r : int or None
+        If not None, this value will be used for the `nrs_reference`
+        parameter.  See also the description for `n`.  None is the default.
+
+    detector : str or None
+        When `input_model` is a JWST data model, the detector name can be
+        gotten from the metadata.  If `input_model` is an ndarray, the
+        detector name should be explicitly specified.  For NIRSpec data,
+        the value should be either "NRS1" or "NRS2".
+
+    Returns
+    -------
+    tuple of int
+        The shape of the input science data array.
+    """
 
     if isinstance(input_model, np.ndarray):
         shape = input_model.shape
@@ -114,7 +131,7 @@ def normal_shape(input_model, n=None, r=None, detector=None):
         if detector is None:
             detector = input_model.meta.instrument.detector
 
-    if not is_irs2(input_model):                # not IRS2 format
+    if not pipe_utils.is_irs2(input_model):     # not IRS2 format
         return shape
 
     param = _get_irs2_parameters(input_model, n=n, r=r)
@@ -137,26 +154,32 @@ def normal_shape(input_model, n=None, r=None, detector=None):
 
     return data_shape
 
+
 def make_mask(input_model, n=None, r=None):
     """Create a mask to extract "normal" pixels.
 
     Parameters
     ----------
-    input_model: the model for the input data, or a numpy.ndarray
-        This is used for getting the IRS2 parameters and the length of
-        the X image axis.
+    input_model : JWST data model, or an ndarray
+        Either the input science data model or the data array from the
+        input data model.  This is used for getting the IRS2 parameters
+        and the length of the longer image axis.
 
-    n: int or None (default is None)
-        If not None, overrides the default.
+    n : int or None (default is None)
+        If not None, this value will be used for the `nrs_normal`
+        parameter.  If `n` is None, the value will be obtained from the
+        metadata for `input_model`; if this fails (e.g. if `input_model`
+        is actually an ndarray), a default value of 16 will be used.
 
-    r: int or None (default is None)
-        If not None, overrides the default.
+    r : int or None (default is None)
+        If not None, this value will be used for the `nrs_reference`
+        parameter.  See also the description for `n`.  None is the default.
 
     Returns
     -------
-    irs2_mask: 1-D boolean array
+    irs2_mask : 1-D boolean array
         Boolean index mask with length equal to the last axis of
-        the data shape.
+        the science data shape.
     """
 
     param = _get_irs2_parameters(input_model, n=n, r=r)
@@ -203,21 +226,22 @@ def make_mask(input_model, n=None, r=None):
 
     return irs2_mask
 
+
 def from_irs2(irs2_data, irs2_mask, detector=None):
     """Extract 'normal' pixel data from an IRS2 image.
 
     Parameters
     ----------
-    irs2_data: ndarray
+    irs2_data : ndarray
         Data in IRS2 format.  This can be a slice in the Y direction, but
         it should include the entire X (last) axis.
 
-    irs2_mask: 1-D array, boolean
+    irs2_mask : 1-D array, boolean
         Boolean mask to extract the "normal" pixels.  This is a 1-D array
         with length equal to the size of the next-to-last axis (for data
         in DMS orientation) of `irs2_data`.
 
-    detector: str or None
+    detector : str or None
         For IRS2 data in DMS orientation, `detector` should be either
         "NRS1" or "NRS2"; NIRSpec is currently the only instrument
         supported in this module.  The mask will be applied to the rows,
@@ -227,7 +251,8 @@ def from_irs2(irs2_data, irs2_mask, detector=None):
 
     Returns
     -------
-    The normal pixel data (i.e. without embedded reference pixels).
+    ndarray
+        The normal pixel data (i.e. without embedded reference pixels).
     """
 
     if detector is None:
@@ -246,25 +271,26 @@ def from_irs2(irs2_data, irs2_mask, detector=None):
 
     return norm_data
 
+
 def to_irs2(irs2_data, norm_data, irs2_mask, detector=None):
     """Copy 'normal' pixel data into an IRS2 image.
 
     Parameters
     ----------
-    irs2_data: ndarray
+    irs2_data : ndarray
         Data in IRS2 format.  This will be modified in-place.
 
-    norm_data: ndarray
-        The normal data, for example previously extracted from irs2_data
+    norm_data : ndarray
+        The normal data, for example previously extracted from `irs2_data`
         but then modified in some way.  This will be copied back into
-        irs2_data in the correct locations, as specified by `irs2_mask`.
+        `irs2_data` in the correct locations, as specified by `irs2_mask`.
 
-    irs2_mask: 1-D array, boolean
+    irs2_mask : 1-D array, boolean
         Boolean mask identifying the locations of the "normal" pixels
-        within irs2_data.  The length is equal to the size of the
+        within `irs2_data`.  The length is equal to the size of the
         next-to-last axis (for data in DMS orientation) of `irs2_data`.
 
-    detector: str or None
+    detector : str or None
         For IRS2 data in DMS orientation, `detector` should be either
         "NRS1" or "NRS2"; NIRSpec is currently the only instrument
         supported in this module.  The mask will be applied to the rows,

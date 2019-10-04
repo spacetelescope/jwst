@@ -1,72 +1,68 @@
-//@Library('utils@master') _  // For development only.
-
+// [skip ci] and [ci skip] have no effect here.
 if (utils.scm_checkout(['skip_disable':true])) return
 
-def test_env = [
-    "HOME=./",
-    "PATH=./miniconda/bin:/bin:/usr/bin",
-    "TEST_BIGDATA=/data4/jwst_test_data",
+withCredentials([string(
+    credentialsId: 'jwst-codecov',
+    variable: 'codecov_token')]) {
+
+jobconfig = new JobConfig()
+jobconfig.enable_env_publication = true
+jobconfig.publish_env_on_success_only = true
+
+// Define python version for conda
+python_version = '3.6'
+
+// pip related setup
+def pip_index = "https://bytesalad.stsci.edu/artifactory/api/pypi/datb-pypi-virtual/simple"
+def pip_install_args = "--index-url ${pip_index} --progress-bar=off"
+
+// Define environement variables needed for the regression tests
+env_vars = [
+    "TEST_BIGDATA=https://bytesalad.stsci.edu/artifactory",
     "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
     "CRDS_CONTEXT=jwst-edit",
 ]
 
-//def python_version = ['3.5', '3.6']
-//def numpy_version = ['1.13', '1.14']
+// Set pytest basetemp output directory
+pytest_basetemp = "test_outputs"
 
-def CONDA_DEPS = "asdf \
-                  astropy \
-                  crds \
-                  dask \
-                  drizzle \
-                  flake8 \
-                  gwcs \
-                  jsonschema \
-                  jplephem \
-                  matplotlib \
-                  namedlist \
-                  numpy \
-                  photutils \
-                  scipy \
-                  six \
-                  spherical-geometry \
-                  stsci.image \
-                  stsci.imagestats \
-                  stsci.stimage \
-                  stsci.tools \
-                  verhawk"
-def CONDA_CHANNEL = "http://ssb.stsci.edu/conda-dev"
-def PY_SETUP = "python setup.py"
-def PYTEST = "pytest -r s --bigdata --basetemp=test_outputs --junit-xml=results.xml"
-def PY_VER = '3.6'
-def CONDA_ENV = 'py${PY_VER}'
-def CONDA_CREATE = "conda create -y -q"
-def WRAPPER = "with_env -n ${CONDA_ENV}"
-def TEST_ROOT = "jwst/tests_nightly/general"
-def matrix = []
+// Configure artifactory ingest
+data_config = new DataConfig()
+data_config.server_id = 'bytesalad'
+data_config.root = '${PYTEST_BASETEMP}'
+data_config.match_prefix = '(.*)_result' // .json is appended automatically
 
-conda.CONDA_INSTALLER_VERSION = '4.4.10'
-node("jwst") {
-    stage("Conda") {
-        deleteDir()
-        conda.install()
-        sh "curl -L https://raw.githubusercontent.com/astroconda/docker-buildsys/master/with_env >miniconda/bin/with_env"
-        sh "chmod 755 miniconda/bin/with_env"
-        sh "printenv | sort"
-    }
-}
 
-bc = new BuildConfig()
-bc.nodetype = 'jwst'
-bc.env_vars = test_env
-bc.name = PY_VER
-
-bc.test_cmds = [
-    "conda config --add channels ${CONDA_CHANNEL}",
-    "${CONDA_CREATE} -n ${CONDA_ENV} python=${PY_VER} ${CONDA_DEPS}",
-    "${WRAPPER} printenv | sort",
-    "${WRAPPER} ${PY_SETUP} develop",
-    "${WRAPPER} ${PYTEST} ${TEST_ROOT}",
+// Build and test with python 3.6 and released dependencies from astroconda
+bc0 = new BuildConfig()
+bc0.nodetype = 'jwst'
+bc0.name = 'stable-deps'
+bc0.env_vars = env_vars
+bc0.conda_ver = '4.6.14'
+bc0.conda_packages = [
+    "python=${python_version}",
 ]
-matrix += bc
+bc0.build_cmds = [
+    "pip install -r requirements-sdp.txt -e .[ephem]",
+    "pip install pytest-xdist",
+]
+bc0.test_cmds = [
+    "pytest --cov=./ -r sxf -n 30 --bigdata --slow \
+    --basetemp=${pytest_basetemp}  --junit-xml=results.xml jwst",
+    "codecov --token=${codecov_token}"
+]
+bc0.test_configs = [data_config]
 
-utils.run(matrix)
+
+// macos-specific buildconfig to cause the creation of counterparts to the linux
+// environment dumps. Packages in a mininmal conda environment differ by OS
+// which is why this is needed.
+bc1 = utils.copy(bc0)
+bc1.nodetype = 'macos'
+bc1.name = 'macos-stable-deps'
+bc1.build_cmds = ["pip install -r requirements-sdp.txt -e ."]
+bc1.test_cmds = []
+bc1.test_configs = []
+
+utils.run([jobconfig, bc0, bc1])
+}  // withCredentials

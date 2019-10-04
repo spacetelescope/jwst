@@ -1,4 +1,3 @@
-
 Description
 ===========
 At its basic level this step flat-fields an input science data set by dividing
@@ -34,8 +33,8 @@ If any part of the input data model gets flat-fielded (e.g. at least one
 slit of a MultiSlit model), the status keyword S_FLAT will be set to
 COMPLETE in the output science data.
 
-NIRSpec Data
-------------
+NIRSpec Spectroscopic Data
+--------------------------
 Flat-fielding of NIRSpec spectrographic data differs from other modes
 in that the flat field array that will be
 divided into the SCI and ERR arrays of the input science data set is not
@@ -45,8 +44,10 @@ depends on mode and on which slit or slits are open.  The flat-field array
 that is divided into the SCI and ERR arrays is constructed on-the-fly
 by extracting the relevant section from the reference files, and then --
 for each pixel -- interpolating to the appropriate wavelength for that
-pixel.  See the Reference File section for further details.  There is
-an option to save the on-the-fly flat field to a file.
+pixel.  This interpolation requires knowledge of the dispersion direction,
+which is gotten from keyword DISPAXIS.  See the Reference File section for
+further details.  There is an option to save the on-the-fly flat field to
+a file.
 
 NIRSpec NRS_BRIGHTOBJ data are processed much like other NIRSpec
 spectrographic data, except that NRS_BRIGHTOBJ data are in a CubeModel,

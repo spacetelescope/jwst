@@ -164,6 +164,54 @@ def sanitize(header, keyword, type=float, default=0.0):
         return type(default)
     return converted_value
 
+def get_nircam_subarray(header):
+    """Get subarray parameters from NIRCAM data header
+
+    Parameters
+    ----------
+
+    header : fits Header object
+        The header of the data whose subarray parameters are to be determined
+
+    Returns
+    -------
+
+    detector_row_start, detector_column_start : tuple of ints
+        The 1-indexed values of the starting row and column
+    """
+
+    #
+    # ROWSTART and COLSTART are zero-indexed, ROWCORNR and COLCORNR
+    # are 1-indexed
+    # Try to get ROWCORNR from header.  If that doesn't work, try ROWSTART
+    detector_row_start = None
+    try:
+        detector_row_start = int(header['ROWCORNR'])
+    except KeyError:
+        try:
+            detector_row_start = int(float(header['ROWSTART'])) + 1
+        except KeyError:
+            pass
+    if detector_row_start is None:
+        print('Unable to get subarray ROWSTART, using 1')
+        detector_row_start = 1
+
+    #
+    # Now try to get COLCORNR from header.  If that doesn't work, try COLSTART
+    detector_column_start = None
+    try:
+        detector_column_start = int(header['COLCORNR'])
+    except KeyError:
+        try:
+            detector_column_start = int(float(header['COLSTART'])) + 1
+        except KeyError:
+            pass
+    if detector_column_start is None:
+        print('Unable to get subarray COLSTART, using 1')
+        detector_column_start = 1
+
+    return detector_row_start, detector_column_start
+
 def flip_rotate(input_hdulist):
     """Given a FITS HDUList, flip and rotate the data as appropriate.
     Decide on how to flip and rotate by the SCA_ID keyword.
@@ -238,29 +286,7 @@ def flip_rotate(input_hdulist):
         # Flip horizontally
         #
         rcube = cube[:, :, ::-1]
-        #
-        # ROWSTART and COLSTART are zero-indexed
-        #
-        try:
-            detector_row_start = header['ROWSTART']
-        except KeyError:
-            print('Unable to get subarray ROWSTART, using 1')
-            detector_row_start = '0.000000'
-        try:
-            detector_row_start = int(float(detector_row_start)) + 1
-        except ValueError:
-            print('Unable to translate ROWSTART to a valid integer, using 1')
-            detector_row_start = 1
-        try:
-            detector_column_start = header['COLSTART']
-        except KeyError:
-            print('Unable to get subarray COLSTART, using 1')
-            detector_column_start = '0.00000'
-        try:
-            detector_column_start = int(float(detector_column_start)) + 1
-        except ValueError:
-            print('Unable to translate COLSTART to a valid integer, using 1')
-            detector_column_start = 1
+        detector_row_start, detector_column_start = get_nircam_subarray(header)
 
         ncols = header['NAXIS1']
         nrows = header['NAXIS2']
@@ -281,29 +307,7 @@ def flip_rotate(input_hdulist):
         # Flip vertically
         #
         rcube = cube[:, ::-1]
-        #
-        # ROWSTART and COLSTART are zero-indexed
-        #
-        try:
-            detector_row_start = header['ROWSTART']
-        except KeyError:
-            print('Unable to get subarray ROWSTART, using 1')
-            detector_row_start = '0.000000'
-        try:
-            detector_row_start = int(float(detector_row_start)) + 1
-        except ValueError:
-            print('Unable to convert ROWSTART to a valid integer, using 1')
-            detector_row_start = 1
-        try:
-            detector_column_start = header['COLSTART']
-        except KeyError:
-            print('Unable to get subarray COLSTART, using 1')
-            detector_column_start = '0.00000'
-        try:
-            detector_column_start = int(float(detector_column_start)) + 1
-        except ValueError:
-            print('Unable to convert COLSTART to a valid integer, using 1')
-            detector_column_start = 1
+        detector_row_start, detector_column_start = get_nircam_subarray(header)
 
         ncols = header['NAXIS1']
         nrows = header['NAXIS2']
@@ -369,8 +373,10 @@ def flip_rotate(input_hdulist):
         slowaxis = 1
         gwaxtilt = sanitize(header, 'GWA_XTIL', type=float)
         gwaytilt = sanitize(header, 'GWA_YTIL', type=float)
+        gwa_tilt = sanitize(header, 'GWA_TTIL', type=float)
         header['GWA_XTIL'] = gwaxtilt
         header['GWA_YTIL'] = gwaytilt
+        header['GWA_TTIL'] = gwa_tilt
     elif sca == 492:
         #
         # NIRSpec NRS2
@@ -426,8 +432,10 @@ def flip_rotate(input_hdulist):
         slowaxis = -1
         gwaxtilt = sanitize(header, 'GWA_XTIL', type=float)
         gwaytilt = sanitize(header, 'GWA_YTIL', type=float)
+        gwa_tilt = sanitize(header, 'GWA_TTIL', type=float)
         header['GWA_XTIL'] = gwaxtilt
         header['GWA_YTIL'] = gwaytilt
+        header['GWA_TTIL'] = gwa_tilt
     elif sca == 496:
         #
         # TFI/NIRISS is like NRS2: flipped across the line X=Y and then

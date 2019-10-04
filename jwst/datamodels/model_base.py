@@ -4,7 +4,6 @@ Data model class heirarchy
 
 import copy
 import datetime
-import inspect
 import os
 import sys
 import warnings
@@ -15,9 +14,11 @@ from astropy.io import fits
 from astropy.time import Time
 from astropy.wcs import WCS
 
+import asdf
 from asdf import AsdfFile
 from asdf import yamlutil
 from asdf import schema as asdf_schema
+from asdf.tags.core.ndarray import numpy_dtype_to_asdf_datatype
 
 from . import ndmodel
 from . import filetype
@@ -28,53 +29,62 @@ from . import validate
 
 from .history import HistoryList
 
+from .extension import URL_PREFIX
+
 
 class DataModel(properties.ObjectNode, ndmodel.NDModel):
     """
     Base class of all of the data models.
     """
-    schema_url = "core.schema.yaml"
+    schema_url = "core.schema"
 
-    def __init__(self, init=None, schema=None, extensions=None,
-                 pass_invalid_values=False, strict_validation=False):
+    def __init__(self, init=None, schema=None,
+                 pass_invalid_values=False, strict_validation=False,
+                 ignore_missing_extensions=True, **kwargs):
         """
         Parameters
         ----------
-        init : shape tuple, file path, file object, astropy.io.fits.HDUList, numpy array, None
+        init : str, tuple, `~astropy.io.fits.HDUList`, ndarray, dict, None
 
-            - None: A default data model with no shape
+            - None : Create a default data model with no shape.
 
-            - shape tuple: Initialize with empty data of the given
-              shape
+            - tuple : Shape of the data array.
+              Initialize with empty data array with shape specified by the.
 
             - file path: Initialize from the given file (FITS or ASDF)
 
             - readable file object: Initialize from the given file
               object
 
-            - ``astropy.io.fits.HDUList``: Initialize from the given
+            - `~astropy.io.fits.HDUList` : Initialize from the given
               `~astropy.io.fits.HDUList`.
 
             - A numpy array: Used to initialize the data array
 
             - dict: The object model tree for the data model
 
-        schema : tree of objects representing a JSON schema, or string naming a schema, optional
+        schema : dict, str (optional)
+            Tree of objects representing a JSON schema, or string naming a schema.
             The schema to use to understand the elements on the model.
             If not provided, the schema associated with this class
             will be used.
 
-        extensions: classes extending the standard set of extensions, optional.
-            If an extension is defined, the prefix used should be 'url'.
+        pass_invalid_values : bool
+            If `True`, values that do not validate the schema
+            will be added to the metadata. If `False`, they will be set to `None`.
 
-        pass_invalid_values: If true, values that do not validate the schema
-            will be added to the metadata. If false, they will be set to None
+        strict_validation : bool
+            If `True`, schema validation errors will generate
+            an exception. If `False`, they will generate a warning.
 
-        strict_validation: if true, an schema validation errors will generate
-            an excption. If false, they will generate a warning.
+        ignore_missing_extensions : bool
+            When `False`, raise warnings when a file is read that
+            contains metadata about extensions that are not available.
+            Defaults to `True`.
+
+        kwargs : dict
+            Additional arguments passed to lower level functions.
         """
-        # Set the extensions
-        self._extensions = extensions
 
         # Override value of validation parameters
         # if environment value set
@@ -82,26 +92,20 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                                                     pass_invalid_values)
         self._strict_validation = self.get_envar("STRICT_VALIDATION",
                                                  strict_validation)
+        self._ignore_missing_extensions = ignore_missing_extensions
 
-        # Construct the path to the schema files
-        filename = os.path.abspath(inspect.getfile(self.__class__))
-        base_url = os.path.join(
-            os.path.dirname(filename), 'schemas', '')
+        kwargs.update({'ignore_missing_extensions': ignore_missing_extensions})
 
         # Load the schema files
         if schema is None:
-            schema_path = os.path.join(base_url, self.schema_url)
+            schema_path = os.path.join(URL_PREFIX, self.schema_url)
             # Create an AsdfFile so we can use its resolver for loading schemas
-            asdf_file = AsdfFile(extensions=self._extensions)
-            if hasattr(asdf_file, 'resolver'):
-                file_resolver = asdf_file.resolver
-            else:
-                file_resolver = self.get_resolver(asdf_file)
+            asdf_file = AsdfFile()
             schema = asdf_schema.load_schema(schema_path,
-                                             resolver=file_resolver,
+                                             resolver=asdf_file.resolver,
                                              resolve_references=True)
 
-        self._schema = mschema.flatten_combiners(schema)
+        self._schema = mschema.merge_property_trees(schema)
 
         # Provide the object as context to other classes and functions
         self._ctx = self
@@ -115,13 +119,14 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         shape = None
 
         if init is None:
-            asdf = AsdfFile(extensions=extensions)
+            asdffile = self.open_asdf(init=None, **kwargs)
 
         elif isinstance(init, dict):
-            asdf = AsdfFile(init, extensions=self._extensions)
+            asdffile = self.open_asdf(init=init, **kwargs)
 
         elif isinstance(init, np.ndarray):
-            asdf = AsdfFile(extensions=self._extensions)
+            asdffile = self.open_asdf(init=None, **kwargs)
+
             shape = init.shape
             is_array = True
 
@@ -131,21 +136,22 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                     raise ValueError("shape must be a tuple of ints")
 
             shape = init
-            asdf = AsdfFile()
             is_shape = True
+            asdffile = self.open_asdf(init=None, **kwargs)
 
         elif isinstance(init, DataModel):
+            asdffile = None
             self.clone(self, init)
             if not isinstance(init, self.__class__):
                 self.validate()
             return
 
         elif isinstance(init, AsdfFile):
-            asdf = init
+            asdffile = init
 
         elif isinstance(init, fits.HDUList):
-            asdf = fits_support.from_fits(init, self._schema,
-                                          self._extensions, self._ctx)
+            asdffile = fits_support.from_fits(init, self._schema, self._ctx,
+                                              **kwargs)
 
         elif isinstance(init, (str, bytes)):
             if isinstance(init, bytes):
@@ -154,13 +160,14 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
             if file_type == "fits":
                 hdulist = fits.open(init)
-                asdf = fits_support.from_fits(hdulist, self._schema,
-                                              self._extensions, self._ctx)
-
+                asdffile = fits_support.from_fits(hdulist,
+                                              self._schema,
+                                              self._ctx,
+                                              **kwargs)
                 self._files_to_close.append(hdulist)
 
             elif file_type == "asdf":
-                asdf = AsdfFile.open(init, extensions=self._extensions)
+                asdffile = self.open_asdf(init=init, **kwargs)
 
             else:
                 # TODO handle json files as well
@@ -173,8 +180,8 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         # Initialize object fields as determined from the code above
         self._shape = shape
-        self._instance = asdf.tree
-        self._asdf = asdf
+        self._instance = asdffile.tree
+        self._asdf = asdffile
 
         # Initalize class dependent hidden fields
         self._no_asdf_extension = False
@@ -216,6 +223,16 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             if not self.meta.hasattr('model_type'):
                 self.meta.model_type = klass
 
+        # initialize arrays from keyword arguments when they are present
+
+        for attr, value in kwargs.items():
+            if value is not None:
+                subschema = properties._get_schema_for_property(self._schema,
+                                                                attr)
+                if 'datatype' in subschema:
+                    setattr(self, attr, value)
+
+
     def __repr__(self):
         import re
 
@@ -240,18 +257,43 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         return "".join(buf)
 
+    @property
+    def override_handle(self):
+        """override_handle identifies in-memory models where a filepath
+        would normally be used.
+        """
+        # Arbitrary choice to look something like crds://
+        return "override://" + self.__class__.__name__
+
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
 
+    def _drop_arrays(self):
+        def _drop_array(d):
+            # Walk tree and delete numpy arrays
+            if isinstance(d, dict):
+                for val in d.values():
+                    _drop_array(val)
+            elif isinstance(d, list):
+                for val in d:
+                    _drop_array(val)
+            elif isinstance(d, np.ndarray):
+                del d
+            else:
+                pass
+        _drop_array(self._instance)
+
     def close(self):
+        if not self._iscopy and self._asdf is not None:
+            self._asdf.close()
+            self._drop_arrays()
+
         for fd in self._files_to_close:
             if fd is not None:
                 fd.close()
-        if not self._iscopy and self._asdf is not None:
-            self._asdf.close()
 
     def get_envar(self, name, value):
         if name in os.environ:
@@ -262,17 +304,11 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                 value = True
         return value
 
-    def get_resolver(self, asdf_file):
-        extensions = asdf_file._extensions
-        def asdf_file_resolver(uri):
-            return extensions._url_mapping(extensions._tag_mapping(uri))
-        return asdf_file_resolver
-
     @staticmethod
     def clone(target, source, deepcopy=False, memo=None):
         if deepcopy:
             instance = copy.deepcopy(source._instance, memo=memo)
-            target._asdf = AsdfFile(instance, extensions=source._extensions)
+            target._asdf = AsdfFile(instance)
             target._instance = instance
             target._iscopy = source._iscopy
         else:
@@ -290,7 +326,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         Returns a deep copy of this model.
         """
         result = self.__class__(init=None,
-                                extensions=self._extensions,
                                 pass_invalid_values=self._pass_invalid_values,
                                 strict_validation=self._strict_validation)
         self.clone(result, self, deepcopy=True, memo=memo)
@@ -305,6 +340,96 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         validate.value_change(str(self), self._instance, self._schema,
                               self._pass_invalid_values,
                               self._strict_validation)
+
+    def validate_required_fields(self):
+        """
+        Walk the schema and make sure all required fields are
+        in the model
+        """
+        def callback(schema, path, combiner, ctx, recurse):
+            if 'fits_required' not in schema:
+                return
+
+            # Get the value pointed at by the path to the node,
+            # or None in case there is no entry for the node
+
+            node = ctx
+            for attr in path:
+                node = getattr(node, attr)
+                if node is None:
+                    break
+
+            validate.value_change(path, node, schema,
+                                  ctx._pass_invalid_values,
+                                  ctx._strict_validation)
+
+        mschema.walk_schema(self._schema, callback, ctx=self)
+
+    def info(self):
+        """
+        Return datatype and dimension for each array or table
+        """
+        def get_field_info(path, instance):
+            field_info = []
+            if isinstance(instance, dict):
+                if path:
+                    path += '.'
+                for name, val in instance.items():
+                    new_path = path + name.lower()
+                    field_info.extend(get_field_info(new_path, val))
+            elif isinstance(instance, list):
+                for index, val in enumerate(instance):
+                    new_path = "%s[%d]" % (path, index)
+                    field_info.extend(get_field_info(new_path, val))
+            elif isinstance(instance, np.ndarray):
+                if instance.shape[0] > 0:
+                    shape_info = get_shape_info(instance)
+                    type_info = get_type_info(instance)
+                    field_info = [(path, shape_info, type_info)]
+            return field_info
+
+        def get_meta_info(meta):
+            meta_info = []
+            for attribute in ('filename', 'date', 'model_type'):
+                if hasattr(meta, attribute):
+                    value = getattr(meta, attribute)
+                    if value is not None:
+                        meta_info.append(attribute + ': ' + value)
+            return meta_info
+
+        def get_shape_info(instance):
+            if hasattr(instance, '_coldefs'):
+                nrows = instance.shape[0]
+                ncols = len(instance._coldefs)
+                shape_info = "{}R x {}C".format(nrows, ncols)
+            else:
+                # Display shape in fits order (reversed)
+                shape = [str(s) for s in reversed(instance.shape)]
+                shape_info = '(' + ','.join(shape) + ')'
+            return shape_info
+
+        def get_type_info(instance):
+            if hasattr(instance, '_coldefs'):
+                col_info = []
+                for coldef in instance._coldefs:
+                    col_info.append(coldef.name + ':' + coldef.format)
+                type_info = '(' + ','.join(col_info) + ')'
+            else:
+                type_info = numpy_dtype_to_asdf_datatype(instance.dtype)[0]
+            return type_info
+
+        meta_info = get_meta_info(self.meta)
+        field_info = get_field_info('', self._instance)
+
+
+        buffer = meta_info
+        format_string = "%-40s%-20s%s"
+        buffer.append(70 * '-')
+        buffer.append(format_string % ('attribute', 'size', 'type'))
+        buffer.append(70 * '-')
+        for field in field_info:
+            buffer.append(format_string % field)
+        return "\n".join(buffer) + "\n"
 
     def get_primary_array_name(self):
         """
@@ -386,46 +511,69 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         return output_path
 
-    @classmethod
-    def from_asdf(cls, init, schema=None):
+    @staticmethod
+    def open_asdf(init=None,
+                  ignore_version_mismatch=True,
+                  ignore_unrecognized_tag=False,
+                  **kwargs):
         """
-        Load a data model from a ASDF file.
+        Open an asdf object from a filename or create a new asdf object
+        """
+        if isinstance(init, str):
+            asdffile = asdf.open(init,
+                                 ignore_version_mismatch=ignore_version_mismatch,
+                                 ignore_unrecognized_tag=ignore_unrecognized_tag)
+
+        else:
+            asdffile = AsdfFile(init,
+                            ignore_version_mismatch=ignore_version_mismatch,
+                            ignore_unrecognized_tag=ignore_unrecognized_tag
+                            )
+        return asdffile
+
+    @classmethod
+    def from_asdf(cls, init, schema=None, **kwargs):
+        """
+        Load a data model from an ASDF file.
 
         Parameters
         ----------
-        init : file path, file object, asdf.AsdfFile object
-            - file path: Initialize from the given file
+        init : str, file object, `~asdf.AsdfFile`
+            - str : file path: initialize from the given file
             - readable file object: Initialize from the given file object
-            - asdf.AsdfFile: Initialize from the given
-              `~asdf.AsdfFile`.
-
+            - `~asdf.AsdfFile` : Initialize from the given`~asdf.AsdfFile`.
         schema :
             Same as for `__init__`
+        kwargs : dict
+            Aadditional arguments passed to lower level functions
 
         Returns
         -------
-        model : DataModel instance
+        model : `~jwst.datamodels.DataModel` instance
+            A data model.
         """
-        return cls(init, schema=schema)
+        return cls(init, schema=schema, **kwargs)
+
 
     def to_asdf(self, init, *args, **kwargs):
         """
-        Write a DataModel to an ASDF file.
+        Write a data model to an ASDF file.
 
         Parameters
         ----------
         init : file path or file object
-
-        args, kwargs
-            Any additional arguments are passed along to
-            `asdf.AsdfFile.write_to`.
+        args : tuple, list
+            Additional positional arguments passed to `~asdf.AsdfFile.write_to`.
+        kwargs : dict
+            Any additional keyword arguments are passed along to
+            `~asdf.AsdfFile.write_to`.
         """
         self.on_save(init)
-
-        AsdfFile(self._instance, extensions=self._extensions).write_to(init, *args, **kwargs)
+        asdffile = self.open_asdf(self._instance, **kwargs)
+        asdffile.write_to(init, *args, **kwargs)
 
     @classmethod
-    def from_fits(cls, init, schema=None):
+    def from_fits(cls, init, schema=None, **kwargs):
         """
         Load a model from a FITS file.
 
@@ -437,18 +585,22 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             - astropy.io.fits.HDUList: Initialize from the given
               `~astropy.io.fits.HDUList`.
 
-        schema :
+        schema : dict, str
             Same as for `__init__`
+
+        kwargs : dict
+            Aadditional arguments passed to lower level functions.
 
         Returns
         -------
-        model : DataModel instance
+        model : `~jwst.datamodels.DataModel`
+            A data model.
         """
-        return cls(init, schema=schema)
+        return cls(init, schema=schema, **kwargs)
 
     def to_fits(self, init, *args, **kwargs):
         """
-        Write a DataModel to a FITS file.
+        Write a data model to a FITS file.
 
         Parameters
         ----------
@@ -460,8 +612,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         """
         self.on_save(init)
 
-        with fits_support.to_fits(self._instance, self._schema,
-                                  extensions=self._extensions) as ff:
+        with fits_support.to_fits(self._instance, self._schema) as ff:
             with warnings.catch_warnings():
                 warnings.filterwarnings('ignore', message='Card is too long')
                 if self._no_asdf_extension:
@@ -497,10 +648,11 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         Parameters
         ----------
-        new_schema : schema tree
+        new_schema : dict
+            Schema tree.
         """
         schema = {'allOf': [self._schema, new_schema]}
-        self._schema = mschema.flatten_combiners(schema)
+        self._schema = mschema.merge_property_trees(schema)
         self.validate()
         return self
 
@@ -512,8 +664,9 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         Parameters
         ----------
         position : str
-
-        new_schema : schema tree
+            Dot separated string indicating the position, e.g. ``meta.instrument.name``.
+        new_schema : dict
+            Schema tree.
         """
         parts = position.split('.')
         schema = new_schema
@@ -531,20 +684,20 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         Parameters
         ----------
         keyword : str
-            A FITS keyword name
+            A FITS keyword name.
 
         Returns
         -------
         locations : list of str
-
             If `return_result` is `True`, a list of the locations in
             the schema where this FITS keyword is used.  Each element
             is a dot-separated path.
 
         Example
         -------
+        >>> model = DataModel()
         >>> model.find_fits_keyword('DATE-OBS')
-        ['observation.date']
+        ['meta.observation.date']
         """
         from . import schema
         return schema.find_fits_keyword(self.schema, keyword)
@@ -680,13 +833,16 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         """
         Updates this model with the metadata elements from another model.
 
+        Note: The ``update`` method skips a WCS object, if present.
+
         Parameters
         ----------
-        d : model or dictionary-like object
+        d : `~jwst.datamodels.DataModel` or dictionary-like object
             The model to copy the metadata elements from. Can also be a
             dictionary or dictionary of dictionaries or lists.
-        only: only update the named hdu from extra_fits, e.g.
-            only='PRIMARY'. Can either be a list of hdu names
+        only: str
+            Only update the named hdu from ``extra_fits``, e.g.
+            ``only='PRIMARY'``. Can either be a list of hdu names
             or a single string. If left blank, update all the hdus.
         """
         def hdu_keywords_from_data(d, path, hdu_keywords):
@@ -888,9 +1044,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             The type will depend on what libraries are installed on
             this system.
         """
-        extensions = self._asdf._extensions
-        ff = fits_support.to_fits(self._instance, self._schema,
-                                  extensions=extensions)
+        ff = fits_support.to_fits(self._instance, self._schema)
         hdu = fits_support.get_hdu(ff._hdulist, hdu_name, index=hdu_ver-1)
         header = hdu.header
         return WCS(header, key=key, relax=True, fix=True)
@@ -920,8 +1074,8 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             hdu = fits.ImageHDU(name=hdu_name, header=header)
         hdulist = fits.HDUList([hdu])
 
-        ff = fits_support.from_fits(hdulist, self._schema,
-                                    self._extensions, self._ctx)
+        ff = fits_support.from_fits(hdulist, self._schema, self._ctx,
+                                    ignore_missing_extensions=self._ignore_missing_extensions)
 
         self._instance = properties.merge_tree(self._instance, ff.tree)
 

@@ -1,10 +1,10 @@
-from . import model_base
+from .model_base import DataModel
 
 
 __all__ = ['RampFitOutputModel']
 
 
-class RampFitOutputModel(model_base.DataModel):
+class RampFitOutputModel(DataModel):
     """
     A data model for the optional output of the ramp fitting step.
 
@@ -14,66 +14,33 @@ class RampFitOutputModel(model_base.DataModel):
     `ny` and `nx` are the height and width of the image.
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
 
-    slope : numpy array (n_int, max_seg, ny, nx)
+    slope : numpy float32 array (n_int, max_seg, ny, nx)
+        Segment-specific slope
 
-    sigslope : numpy array (n_int, max_seg, ny, nx)
+    sigslope : numpy float32 array (n_int, max_seg, ny, nx)
+        Sigma for segment-specific slope
 
-    var_poisson : numpy array (n_int, max_seg, ny, nx)
+    var_poisson : numpy float32 array (n_int, max_seg, ny, nx)
+        Variance due to poisson noise for segment-specific slope
 
-    var_rnoise : numpy array (n_int, max_seg, ny, nx)
+    var_rnoise : numpy float32 array (n_int, max_seg, ny, nx)
+        Variance due to read noise for segment-specific slope
 
-    yint : numpy array (n_int, max_seg, ny, nx)
+    yint : numpy float32 array (n_int, max_seg, ny, nx)
+        Segment-specific y-intercept
 
-    sigyint : numpy array (n_int, max_seg, ny, nx)
+    sigyint : numpy float32 array (n_int, max_seg, ny, nx)
+        Sigma for segment-specific y-intercept
 
-    pedestal : numpy array (n_int, max_seg, ny, nx)
+    pedestal : numpy float32 array (n_int, max_seg, ny, nx)
+        Pedestal array
 
-    weights : numpy array (n_int, max_seg, ny, nx)
+    weights : numpy float32 array (n_int, max_seg, ny, nx)
+        Weights for segment-specific fits
 
-    crmag : numpy array (n_int, max_seg, ny, nx)
+    crmag : numpy float32 array (n_int, max_seg, ny, nx)
+        Approximate CR magnitudes
     """
-    schema_url = "rampfitoutput.schema.yaml"
-
-    def __init__(self, init=None,
-                 slope=None,
-                 sigslope=None,
-                 var_poisson=None,
-                 var_rnoise=None,
-                 yint=None,
-                 sigyint=None,
-                 pedestal=None,
-                 weights=None,
-                 crmag=None,
-                 **kwargs):
-        super(RampFitOutputModel, self).__init__(init=init, **kwargs)
-
-        if slope is not None:
-            self.slope = slope
-
-        if sigslope is not None:
-            self.sigslope = sigslope
-
-        if var_poisson is not None:
-            self.var_poisson = var_poisson
-
-        if var_rnoise is not None:
-            self.var_rnoise = var_rnoise
-
-        if yint is not None:
-            self.yint = yint
-
-        if sigyint is not None:
-            self.sigyint = sigyint
-
-        if pedestal is not None:
-            self.pedestal = pedestal
-
-        if weights is not None:
-            self.weights = weights
-
-        if crmag is not None:
-            self.crmag = crmag
+    schema_url = "rampfitoutput.schema"

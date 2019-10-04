@@ -4,7 +4,7 @@ properties:
     type: object
     properties:
       table_name:
-        title: Name of ASN table 
+        title: Name of ASN table
         type: string
         fits_keyword: ASNTAB
       pool_name:

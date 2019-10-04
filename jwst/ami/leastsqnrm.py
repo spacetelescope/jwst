@@ -150,7 +150,7 @@ def cos2deltapistons(coeffs):
 
     Returns
     -------
-    delta: 1D float array 
+    delta: 1D float array
         cosine of piston differences
     """
     asize = int((len(coeffs) -1)/2)
@@ -461,7 +461,6 @@ def weighted_operations(img, model, weights):
     data_vector = np.dot(flatmodeltransp, Cdotb)
     # inv(At.C.A)
     inverse = linalg.inv(modelproduct)
-    cond = np.linalg.cond(inverse)
 
     x = np.dot(inverse, data_vector)
     res = np.dot(flatmodel, x) - flatimg
@@ -546,7 +545,7 @@ def matrix_operations(img, model, flux=None):
               flatimg.sum(), np.shape(flatmodel))
     log.debug('flat image dimensions:%s model transpose dimensions:%s ',
               np.shape(flatimg), np.shape(flatmodeltransp))
-    log.debug('transpose * image data dimensions:%s flatimg * transpose'+ 
+    log.debug('transpose * image data dimensions:%s flatimg * transpose' +
               'dimensions:%s ', np.shape(data_vector), np.shape(inverse))
 
     return x, res, cond

@@ -62,13 +62,13 @@ from . import model_base
 
 
 def enquote(value):
-     """
-     Put quote marks around value if it contains special characters
-     """
-     if re.search(r'[^a-zA-Z0-9_ \t\v\(\)]', value):
-         value = re.sub("'", "''", value)
-         value = "'" + value + "'"
-     return value
+    """
+    Put quote marks around value if it contains special characters
+    """
+    if re.search(r'[^a-zA-Z0-9_ \t\v\(\)]', value):
+        value = re.sub("'", "''", value)
+        value = "'" + value + "'"
+    return value
 
 def is_long_line(prefix, value, sep, max_length=80):
     """
@@ -244,7 +244,7 @@ class Keyword_db:
                     this_subschema = this_schema[name]
 
                     if "properties" not in this_subschema:
-                         raise ValueError(error_msg + name)
+                        raise ValueError(error_msg + name)
 
                     if ("allOf" in this_subschema["properties"] or
                         "allOf" in other_subschema["properties"]):
@@ -380,8 +380,8 @@ class Keyword_db:
 
 
         def merge_enums(merged_subschema, dictionary):
-           merged_subschema["enum"] = list(set(merged_subschema["enum"]) |
-                                              set(dictionary["enum"]))
+            merged_subschema["enum"] = list(set(merged_subschema["enum"]) |
+                                            set(dictionary["enum"]))
 
         merged_subschema = OrderedDict()
         for dictionary in schema:
@@ -415,7 +415,7 @@ class Keyword_db:
                     subschema = aschema.load_schema(suburl_path,
                                                     resolver,
                                                     True)
-                except IOError as err:
+                except IOError:
                     print("Could not read " + suburl_path)
                     subschema = OrderedDict()
 

@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-import asdf
-from ..stpipe import Step, cmdline
+from ..stpipe import Step
 from ..datamodels import CubeModel
 from ..datamodels import TsoPhotModel
 from ..lib.catalog_utils import replace_suffix_ext
@@ -41,8 +40,12 @@ class TSOPhotometryStep(Step):
                 self.log.warning('the tso_photometry step will be skipped.')
                 return None
 
+            pupil_name = 'ANY'
+            if model.meta.instrument.pupil is not None:
+                pupil_name = model.meta.instrument.pupil
+
             (radius, radius_inner, radius_outer) = get_ref_data(
-                        tsophot_filename, pupil=model.meta.instrument.pupil)
+                        tsophot_filename, pupil=pupil_name)
             self.log.debug('Using reference file {}'.format(tsophot_filename))
             self.log.debug('radius = {}'.format(radius))
             self.log.debug('radius_inner = {}'.format(radius_inner))
@@ -85,11 +88,11 @@ def get_ref_data(reffile, pupil='ANY'):
                              item.radius_inner, item.radius_outer)
 
     if value is not None:
-         (radius, radius_inner, radius_outer) = value
+        (radius, radius_inner, radius_outer) = value
     elif val_any_pupil is not None:
-         (radius, radius_inner, radius_outer) = val_any_pupil
+        (radius, radius_inner, radius_outer) = val_any_pupil
     else:
-         (radius, radius_inner, radius_outer) = (0., 0., 0.)
+        (radius, radius_inner, radius_outer) = (0., 0., 0.)
 
     ref_model.close()
 

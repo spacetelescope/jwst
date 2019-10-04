@@ -31,7 +31,7 @@ class LoadAsAssociation(dict):
 
     Parameters
     ----------
-    asn: dict or Association
+    asn : dict or Association
         An already existing association
 
     Notes
@@ -53,16 +53,16 @@ class LoadAsAssociation(dict):
 
         Parameters
         ----------
-        obj: Association, str, Datamodel, [str[,...]], [Datamodel[,...]]
+        obj : Association, str, Datamodel, [str[,...]], [Datamodel[,...]]
             The obj to return as an association
 
-        registry: AssociationRegistry
+        registry : AssociationRegistry
             The registry to use to load an association file with
 
-        rule: Association
+        rule : Association
             The rule to use if an association needs to be created
 
-        product_name_func: func
+        product_name_func : func
             A function, when given the argument of `obj`, or
             if `obj` is a list, each item in `obj`, returns
             a string that will be used as the product name in
@@ -73,13 +73,13 @@ class LoadAsAssociation(dict):
         Along with the attributes belonging to an association, the
         following are added:
 
-        filename: str
+        filename : str
             The name of the association file, if such a file
             where passed in. Otherwise a default value is given.
 
         Returns
         -------
-        association: Association
+        association : Association
             An association created using given obj
         """
         try:
@@ -112,10 +112,10 @@ class LoadAsLevel2Asn(LoadAsAssociation):
 
         Parameters
         ----------
-        obj: Association, str, Datamodel, [str[,...]], [Datamodel[,...]]
+        obj : Association, str, Datamodel, [str[,...]], [Datamodel[,...]]
             The obj to return as an association
 
-        basename: str
+        basename : str
             If specified, use as the basename, with an index appended.
 
         Attributes
@@ -123,18 +123,29 @@ class LoadAsLevel2Asn(LoadAsAssociation):
         Along with the attributes belonging to a Level2 association, the
         following are added:
 
-        filename: str
+        filename : str
             The name of the association file, if such a file
             where passed in. Otherwise a default value is given.
 
         Returns
         -------
-        association: DMSLevel2bBase
+        association : DMSLevel2bBase
             An association created using given obj
         """
         product_name_func = cls.model_product_name
         if basename is not None:
             product_name_func = partial(cls.name_with_index, basename)
+
+        # if the input string is a FITS file create an asn and return
+        if isinstance(obj, str):
+            file_name, file_ext = os_path.splitext(obj)
+
+            if file_ext == '.fits':
+                items = [(obj, 'science')]
+                asn = asn_from_list(items, product_name=file_name,
+                                    rule=DMSLevel2bBase, with_exptype=True,
+                                    meta={"asn_pool":"singleton"})
+                return asn
 
         asn = super(LoadAsLevel2Asn, cls).load(
             obj,
@@ -153,12 +164,12 @@ class LoadAsLevel2Asn(LoadAsAssociation):
 
         Parameters
         ----------
-        model: DataModel
+        model : DataModel
             The model to get the name from
 
         Returns
         -------
-        product_name: str
+        product_name : str
             The basename of filename from the model
         """
         product_name, ext = os_path.splitext(model.meta.filename)
@@ -170,18 +181,18 @@ class LoadAsLevel2Asn(LoadAsAssociation):
 
         Parameters
         ----------
-        basename: str
+        basename : str
             The base of the file name
 
-        obj: object
+        obj : object
             The object being added to the association _(unused)_
 
-        idx: int
+        idx : int
             The current index of the added item.
 
         Returns
         -------
-        product_name: str
+        product_name : str
             The concatentation of basename, '_', idx
 
         Notes

@@ -73,25 +73,16 @@ class Step():
         # Add arguments for all of the expected reference files
         for reference_file_type in cls.reference_file_types:
             override_name = crds_client.get_override_name(reference_file_type)
-            spec[override_name] = 'string(default=None)'
+            spec[override_name] = 'is_string_or_datamodel(default=None)'
             spec.inline_comments[override_name] = (
                 '# Override the {0} reference file'.format(
                     reference_file_type))
         return spec
 
     @classmethod
-    def print_configspec(cls, stream=sys.stdout):
-
-        # Python2/3 issue: Python3 doesn't like bytes
-        # going to stdout directly.
-        if stream == sys.stdout:
-            try:
-                stream = sys.stdout.buffer
-            except AttributeError:
-                pass
-
+    def print_configspec(cls):
         specfile = cls.load_spec_file(preserve_comments=True)
-        specfile.write(stream)
+        specfile.write(sys.stdout.buffer)
 
     @classmethod
     def from_config_file(cls, config_file, parent=None, name=None):
@@ -270,7 +261,7 @@ class Step():
 
         config_file : str path, optional
             The path to the config file that this step was initialized
-            with.  Use to determine relative path names.
+            with.  Use to determine relative path names of other config files.
 
         **kws : dict
             Additional parameters to set.  These will be set as member
@@ -310,7 +301,7 @@ class Step():
         # Log the fact that we have been init-ed.
         self.log.info('{0} instance created.'.format(self.__class__.__name__))
 
-        # Store the config file path so filenames can be resolved
+        # Store the config file path so config filenames can be resolved
         # against it.
         self.config_file = config_file
 
@@ -363,14 +354,6 @@ class Step():
             self.set_primary_input(args[0])
 
         try:
-            # prefetch truly occurs at the Pipeline (or subclass) level.
-            if (
-                    len(args) and len(self.reference_file_types) and
-                    not self.skip and
-                    self.prefetch_references
-            ):
-                self._precache_references(args[0])
-
             # Default output file configuration
             if self.output_file is not None:
                 self.save_results = True
@@ -396,6 +379,8 @@ class Step():
                 self.log.info('Step skipped.')
                 step_result = args[0]
             else:
+                if self.prefetch_references:
+                    self.prefetch(*args)
                 try:
                     step_result = self.process(*args)
                 except TypeError as e:
@@ -429,7 +414,8 @@ class Step():
                             if hasattr(result.meta.ref_file, ref_name):
                                 getattr(result.meta.ref_file, ref_name).name = filename
                         result.meta.ref_file.crds.sw_version = crds_client.get_svn_version()
-                        result.meta.ref_file.crds.context_used = crds_client.get_context_used()
+                        result.meta.ref_file.crds.context_used = \
+                            crds_client.get_context_used(result.meta.telescope)
                 self._reference_files_used = []
 
             # Mark versions
@@ -478,6 +464,15 @@ class Step():
         return step_result
 
     __call__ = run
+
+    def prefetch(self, *args):
+        """Prefetch reference files,  nominally called when
+        self.prefetch_references is True.  Can be called explictly
+        when self.prefetch_refences is False.
+        """
+        # prefetch truly occurs at the Pipeline (or subclass) level.
+        if len(args) and len(self.reference_file_types) and not self.skip:
+            self._precache_references(args[0])
 
     def process(self, *args):
         """
@@ -613,7 +608,10 @@ class Step():
         """
         override_name = crds_client.get_override_name(reference_file_type)
         path = getattr(self, override_name, None)
-        return abspath(path) if path else path
+        if isinstance(path, DataModel):
+            return path
+        else:
+            return abspath(path) if path else path
 
     def get_reference_file(self, input_file, reference_file_type):
         """
@@ -640,7 +638,11 @@ class Step():
         """
         override = self.get_ref_override(reference_file_type)
         if override is not None:
-            if override.strip() != "":
+            if isinstance(override, DataModel):
+                self._reference_files_used.append(
+                    (reference_file_type, override.override_handle))
+                return override
+            elif override.strip() != "":
                 self._reference_files_used.append(
                     (reference_file_type, basename(override)))
                 reference_name = override
@@ -657,7 +659,8 @@ class Step():
                 (reference_file_type, hdr_name))
         return crds_client.check_reference_open(reference_name)
 
-    def reference_uri_to_cache_path(self, reference_uri):
+    @classmethod
+    def reference_uri_to_cache_path(cls, reference_uri):
         """Convert an abstract CRDS reference URI to an absolute file path in the CRDS
         cache.  Reference URI's are typically output to dataset headers to record the
         reference files used.
@@ -687,17 +690,21 @@ class Step():
         """
         self._set_input_dir(obj, exclusive=exclusive)
 
+        err_message = (
+            'Cannot set master input file name from object'
+            ' {}'.format(obj)
+        )
         parent_input_filename = self.search_attr('_input_filename')
         if not exclusive or parent_input_filename is None:
             if isinstance(obj, str):
                 self._input_filename = obj
             elif isinstance(obj, DataModel):
-                self._input_filename = obj.meta.filename
+                try:
+                    self._input_filename = obj.meta.filename
+                except AttributeError:
+                    self.log.debug(err_message)
             else:
-                self.log.debug(
-                    'Cannot set master input file name from object'
-                    ' {}'.format(obj)
-                )
+                self.log.debug(err_message)
 
     def save_model(self,
                    model,
@@ -732,7 +739,9 @@ class Step():
         format: str
             The format of the file name.  This is a format
             string that defines where `suffix` and the other
-            components go in the file name.
+            components go in the file name. If False,
+            it will be presumed `output_file` will have
+            all the necessary formatting.
 
         components: dict
             Other components to add to the file name.
@@ -763,6 +772,8 @@ class Step():
                 path=output_file,
                 save_model_func=save_model_func)
         else:
+
+            # Search for an output file name.
             if (
                     self.output_use_model or
                     (output_file is None and not self.search_output_file)
@@ -817,8 +828,15 @@ class Step():
             The extension to use. If none, `output_ext` is used.
             Can include the leading period or not.
 
+        suffix: str or None or False
+            Suffix to append to the filename.
+            If None, the `Step` default will be used.
+            If False, no suffix replacement will be done.
+
         name_format: str or None
             The format string to use to form the base name.
+            If False, it will be presumed that `basepath`
+            has all the necessary formatting.
 
         component_format: str
             Format to use for the components
@@ -845,13 +863,6 @@ class Step():
         if basepath is None:
             basepath = step.default_output_file()
 
-        if name_format is None:
-            name_format = '{basename}{components}{suffix_sep}{suffix}.{ext}'
-        formatter = FormatTemplate(
-            separator=separator,
-            remove_unused=True
-        )
-
         basename, basepath_ext = splitext(split(basepath)[1])
         if ext is None:
             ext = step.output_ext
@@ -860,12 +871,33 @@ class Step():
         if ext.startswith('.'):
             ext = ext[1:]
 
+        # Suffix check. An explicit check on `False` is necessary
+        # because `None` is also allowed.
         suffix = _get_suffix(suffix, step=step)
-        suffix_sep = None
-        if suffix is not None:
-            basename, suffix_sep = remove_suffix(basename)
-        if suffix_sep is None:
-            suffix_sep = separator
+        if suffix is not False:
+            default_name_format = '{basename}{components}{suffix_sep}{suffix}.{ext}'
+            suffix_sep = None
+            if suffix is not None:
+                basename, suffix_sep = remove_suffix(basename)
+            if suffix_sep is None:
+                suffix_sep = separator
+        else:
+            default_name_format = '{basename}{components}.{ext}'
+            suffix = None
+            suffix_sep = None
+
+        # Setup formatting
+        if name_format is None:
+            name_format = default_name_format
+        elif not name_format:
+            name_format = basename + '.{ext}'
+            basename = ''
+            suffix_sep = ''
+            separator = ''
+        formatter = FormatTemplate(
+            separator=separator,
+            remove_unused=True
+        )
 
         if len(components):
             component_str = formatter(component_format, **components)
@@ -920,11 +952,8 @@ class Step():
         for item in to_del:
             try:
                 del item
-            except Exception as exception:
-                self.log.debug(
-                    'Could not delete "{}"'
-                    'Reason:\n{}'.format(item, exception)
-                )
+            except NameError as error:
+                self.log.debug("An error has occurred: %s", error)
         gc.collect()
 
     def open_model(self, obj):
@@ -1035,6 +1064,34 @@ class Step():
             except Exception:
                 # Not a file-checkable object. Ignore.
                 pass
+
+    @staticmethod
+    def record_step_status(datamodel, cal_step, success=True):
+        """Record whether or not a step completed in meta.cal_step
+
+        Parameters
+        ----------
+        datamodel : `~jwst.datamodels.Datamodel` instance
+            This is the datamodel or container of datamodels to modify in place
+
+        cal_step : str
+            The attribute in meta.cal_step for recording the status of the step
+
+        success : bool
+            If True, then 'COMPLETE' is recorded.  If False, then 'SKIPPED'
+        """
+        if success:
+            status = 'COMPLETE'
+        else:
+            status = 'SKIPPED'
+
+        if isinstance(datamodel, ModelContainer):
+            for model in datamodel:
+                model.meta.cal_step._instance[cal_step] = status
+        else:
+            datamodel.meta.cal_step._instance[cal_step] = status
+
+        # TODO: standardize cal_step naming to point to the offical step name
 
 
 # #########

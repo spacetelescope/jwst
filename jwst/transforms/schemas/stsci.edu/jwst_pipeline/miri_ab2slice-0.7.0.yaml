@@ -12,7 +12,7 @@ description: |
   that the coordinate belongs to in detector coordinates.
 
 allOf:
-  - $ref: ../asdf/transform/transform-1.1.0
+  - $ref: "tag:stsci.edu:asdf/transform/transform-1.1.0"
   - type: object
     properties:
       beta_zero:

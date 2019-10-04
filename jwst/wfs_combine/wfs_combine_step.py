@@ -25,10 +25,15 @@ class WfsCombineStep(Step):
         self.log.info('The number of pairs of input files: %g', num_sets)
 
         # Process each pair of input images listed in the association table
-        for which_set in range(num_sets):
-            infile_1 = asn_table['products'][which_set]['members'][0]['expname']
-            infile_2 = asn_table['products'][which_set]['members'][1]['expname']
-            outfile = asn_table['products'][which_set]['name']
+        for which_set in asn_table['products']:
+            science_members = [
+                member
+                for member in which_set['members']
+                if member['exptype'].lower() == 'science'
+            ]
+            infile_1 = science_members[0]['expname']
+            infile_2 = science_members[1]['expname']
+            outfile = which_set['name']
 
             wfs = wfs_combine.DataSet(
                 infile_1, infile_2, outfile, self.do_refine
@@ -37,7 +42,7 @@ class WfsCombineStep(Step):
             output_model = wfs.do_all()
             output_model.meta.cal_step.wfs_combine = 'COMPLETE'
             self.save_model(
-                output_model, suffix='wfscmb', output_file=outfile
+                output_model, suffix='wfscmb', output_file=outfile, format=False
             )
 
         return None

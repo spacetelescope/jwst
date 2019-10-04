@@ -252,31 +252,19 @@ class DataSet():
         off_y: integer
             difference (#2 -#1) in pointing in pixels in the y-direction
         """
+        wcs1 = self.input_1.meta.wcs
+        wcs2 = self.input_2.meta.wcs
+        tr1 = wcs1.get_transform('detector', 'world')
+        tr2 = wcs2.get_transform('world', 'detector')
 
-        #crval1 = self.input_1.meta.wcs.crval
-        #crval2 = self.input_2.meta.wcs.crval
-        #crpix2_in_1 = self.input_1.meta.wcs.invert(*crval2)
-        #crpix = self.input_1.meta.wcs.crpix
+        # Get coords of center pixel
+        xcen = int(self.input_1.data.shape[1]/2)
+        ycen = int(self.input_1.data.shape[0]/2)
 
-        crval1_model = self.input_1.meta.wcs.forward_transform['crval']
-        crval1 = crval1_model.lon.value, crval1_model.lat.value
-        crval2_model = self.input_2.meta.wcs.forward_transform['crval']
-        crval2 = crval2_model.lon.value, crval2_model.lat.value
-        # exclude the distortion as the inverse does not give sensible numbers yet
-        # but may be include it after this is fixed?
-        fits_wcs_transform = self.input_1.meta.wcs.forward_transform['crpix1':]
-        #crpix2_in_1 = self.input_1.meta.wcs.backward_transform(*crval2)
-        crpix2_in_1 = fits_wcs_transform.inverse(*crval2)
-        crpix = np.array((self.input_1.meta.wcs.forward_transform['crpix1'].offset.value,
-                self.input_1.meta.wcs.forward_transform['crpix2'].offset.value), dtype=np.float)
-        off_x, off_y = crpix2_in_1 + crpix
-
-        log.info('CRVAL of Image 1 in WCS of #1 has pixel coords:%s %s',
-                 crval1[0], crval1[1])
-        log.info('CRVAL of Image 2 in WCS of #2 has pixel coords:%s %s',
-                 crval2[0], crval2[1])
-        log.info('Image 2 has these nominal offsets relative to image 1\
-                 (x,y): %s %s', off_x, off_y)
+        radec = tr1(xcen, ycen)
+        pixels = tr2(radec[0], radec[1])
+        off_x = pixels[0] - xcen
+        off_y = pixels[1] - ycen
 
         off_x = int(round(off_x)) # Offsets required to be integers
         off_y = int(round(off_y))
@@ -545,9 +533,10 @@ def create_griddata_array(sci_data, pixel):
         for y in range(ymin, ymax + 1):
             interp_list.append([y, x, sci_data[y, x]])
 
-    try:  # Remove identity element (central pixel)
+    # Remove identity element (central pixel)
+    try:
         interp_list.remove([pixel[0], pixel[1], sci_data[pixel[0], pixel[1]]])
-    except:
+    except ValueError:
         pass
 
     interp_arr = np.asarray(interp_list)  # griddata requires an array

@@ -14,7 +14,7 @@ description: |
   Ouput of this model are corrected (V2, V3) coordinates.
 
 anyOf:
-  - $ref: ../asdf/transform/transform-1.1.0
+  - $ref: "tag:stsci.edu:asdf/transform/transform-1.1.0"
   - type: object
     properties:
       v2ref:
@@ -38,7 +38,7 @@ anyOf:
               type: array
               items:
                 type: number
-          - $ref: http://stsci.edu/schemas/asdf/core/ndarray-1.0.0
+          - $ref: "tag:stsci.edu:asdf/core/ndarray-1.0.0"
       shift:
         description: |
           Translational correction.
@@ -46,5 +46,5 @@ anyOf:
           - type: array
             items:
               type: number
-          - $ref: http://stsci.edu/schemas/asdf/core/ndarray-1.0.0
+          - $ref: "tag:stsci.edu:asdf/core/ndarray-1.0.0"
     required: [v2ref, v3ref, roll, matrix, shift]

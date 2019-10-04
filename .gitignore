@@ -7,8 +7,10 @@ dist/
 *.pyc
 *.egg-info/
 *.so
+.coverage
 */version.py
 docs/*/source/*.txt.rst
+docs/generated
 docs/fits_generator/source/templates.rst
 docs/jwst_git/
 docs/_build/
@@ -19,3 +21,14 @@ relic/
 *wpu
 .pytest_cache
 results.xml
+pip-wheel-metadata/
+.DS_Store
+.project
+.pydevproject
+.vscode
+*code-workspace
+src/
+scripts/launch.json
+*.orig
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*.ipynb

@@ -5,6 +5,7 @@ import os
 import pytest
 import requests
 from tempfile import TemporaryDirectory
+import warnings
 
 from astropy.time import Time
 
@@ -125,6 +126,9 @@ def test_cache_end_data(db_cache, engdb):
     # We only check counts because the actual data may be different.
     assert data_short['Count'] == live_data_short['Count']
 
+    # Filter ERFA warnings for times far into the future, LATE_STARTTIME and
+    # LATE_ENDTIME.  We don't know leap seconds between now and 2034.
+    warnings.filterwarnings('ignore', message='ERFA function ')
     # Now for post data
     data_short = db_cache.fetch_data(
         GOOD_MNEMONIC,
@@ -141,7 +145,7 @@ def test_cache_end_data(db_cache, engdb):
 
 
 def test_mocker_alive(db_cache):
-    with engdb_mock.EngDB_Mocker(db_path=db_cache.db_path) as mocker:
+    with engdb_mock.EngDB_Mocker(db_path=db_cache.db_path):
         query = ''.join([
             engdb_tools.ENGDB_BASE_URL,
             engdb_tools.ENGDB_METADATA
@@ -159,7 +163,7 @@ def test_mocker_alive(db_cache):
     ]
 )
 def test_mocker_meta(db_cache, mnemonic, count):
-    with engdb_mock.EngDB_Mocker(db_path=db_cache.db_path) as mocker:
+    with engdb_mock.EngDB_Mocker(db_path=db_cache.db_path):
         query = ''.join([
             engdb_tools.ENGDB_BASE_URL,
             engdb_tools.ENGDB_METADATA,
@@ -172,7 +176,7 @@ def test_mocker_meta(db_cache, mnemonic, count):
 
 
 def test_mocker_data(db_cache, engdb):
-    with engdb_mock.EngDB_Mocker(db_path=db_cache.db_path) as mocker:
+    with engdb_mock.EngDB_Mocker(db_path=db_cache.db_path):
         query = ''.join([
             engdb_tools.ENGDB_BASE_URL,
             engdb_tools.ENGDB_DATA,
@@ -198,7 +202,7 @@ def engdb(scope='module'):
     """
     try:
         engdb = engdb_tools.ENGDB_Service()
-    except:
+    except Exception:
         pytest.skip('ENGDB service is not accessible.')
     else:
         return engdb

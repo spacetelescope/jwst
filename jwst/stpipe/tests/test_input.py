@@ -1,11 +1,49 @@
-"""Test input directory usage"""
-from os import path
-import pytest
+"""Test input directory usage and input defaults"""
 
+from os import path
+
+import pytest
 from .steps import StepWithModel
-from .util import (mk_tmp_dirs, t_path)
+from .util import t_path
+
 from ..step import Step
+from ...datamodels import (DataModel, ModelContainer)
 from ...datamodels import open as dm_open
+
+
+def test_default_input_with_container(mk_tmp_dirs):
+    """Test default input name from a ModelContainer"""
+
+    model_path = t_path('data/flat.fits')
+    model = dm_open(model_path)
+    container = ModelContainer([model])
+
+    step = StepWithModel()
+    step.run(container)
+
+    assert step._input_filename is None
+
+
+def test_default_input_with_full_model():
+    """Test default input name retrieval with actual model"""
+    model_path = t_path('data/flat.fits')
+    model = dm_open(model_path)
+
+    step = StepWithModel()
+    step.run(model)
+
+    assert step._input_filename == model.meta.filename
+
+
+def test_default_input_with_new_model():
+    """Test getting input name with new model"""
+
+    step = StepWithModel()
+
+    model = DataModel()
+    step.run(model)
+
+    assert step._input_filename is None
 
 
 def test_default_input_dir(mk_tmp_dirs):
@@ -56,7 +94,7 @@ def test_fail_input_dir(mk_tmp_dirs):
     input_file = 'flat.fits'
 
     with pytest.raises(FileNotFoundError):
-        step = Step.from_cmdline([
+        Step.from_cmdline([
             'jwst.stpipe.tests.steps.StepWithModel',
             input_file,
         ])

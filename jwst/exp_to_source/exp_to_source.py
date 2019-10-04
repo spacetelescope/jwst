@@ -1,6 +1,9 @@
-"""exp_to_source: Reformat Level2b MSA data to be source-based.
+"""exp_to_source: Reformat Level2b multi-source data to be source-based.
 """
-from collections import OrderedDict, Callable
+import logging
+
+from collections import OrderedDict
+from collections.abc import Callable
 
 from ..datamodels import (
     MultiExposureModel,
@@ -9,6 +12,9 @@ from ..datamodels import (
 from ..datamodels.properties import merge_tree
 
 __all__ = ['exp_to_source', 'multislit_to_container']
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 def exp_to_source(inputs):
@@ -24,16 +30,19 @@ def exp_to_source(inputs):
     {str: MultiExposureModel, }
         Returns a dict of MultiExposureModel instances wherein each
         instance contains slits belonging to the same source.
-        The key is the name of each source.
+        The key is the ID of each source, i.e. ``source_id``.
     """
     result = DefaultOrderedDict(MultiExposureModel)
     for exposure in inputs:
+        log.info('Reorganizing data from exposure {}'.format(exposure.meta.filename))
         for slit in exposure.slits:
-            result[slit.name].exposures.append(slit)
+            log.debug('Copying source {}'.format(slit.source_id))
+            result[str(slit.source_id)].exposures.append(slit)
             merge_tree(
-                result[slit.name].exposures[-1].meta.instance,
+                result[str(slit.source_id)].exposures[-1].meta.instance,
                 exposure.meta.instance
             )
+        exposure.close()
 
     # Turn off the default factory
     result.default_factory = None
@@ -55,7 +64,7 @@ def multislit_to_container(inputs):
     {str: ModelContainer, }
         Returns a dict of ModelContainer instances wherein each
         instance contains ImageModels of slits belonging to the same source.
-        The key is the name of each slit.
+        The key is the ID of each slit, i.e. 11source_id``.
     """
     containers = exp_to_source(inputs)
     for id in containers:

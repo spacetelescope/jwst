@@ -20,7 +20,7 @@ properties:
         type: object
         properties:
           position_angle:
-            title: Position angle of aperture used (deg)
+            title: "[deg] Position angle of aperture used"
             type: number
             fits_keyword: PA_APER
             fits_hdu: SCI
@@ -30,19 +30,19 @@ properties:
         type: object
         properties:
           ra_v1:
-            title: RA of telescope V1 axis [deg]
+            title: "[deg] RA of telescope V1 axis"
             type: number
             fits_keyword: RA_V1
             fits_hdu: SCI
             blend_table: True
           dec_v1:
-            title: Dec of telescope V1 axis [deg]
+            title: "[deg] Dec of telescope V1 axis"
             type: number
             fits_keyword: DEC_V1
             fits_hdu: SCI
             blend_table: True
           pa_v3:
-            title: Position angle of telescope V3 axis [deg]
+            title: "[deg] Position angle of telescope V3 axis"
             type: number
             fits_keyword: PA_V3
             fits_hdu: SCI
@@ -211,6 +211,16 @@ properties:
             fits_keyword: PC3_3
             fits_hdu: SCI
             blend_table: True
+          ps3_0:
+            title: Coordinate table extension name
+            type: string
+            fits_keyword: PS3_0
+            fits_hdu: SCI
+          ps3_1:
+            title: Coordinate table column name
+            type: string
+            fits_keyword: PS3_1
+            fits_hdu: SCI
           s_region:
             title: spatial extent of the observation
             type: string
@@ -230,20 +240,26 @@ properties:
             fits_keyword: WAVEND
             fits_hdu: SCI
             blend_table: True
-          spectral_order:
-            title: default spectral order
+          dispersion_direction:
+            title: Dispersion direction
             type: number
+            fits_keyword: DISPAXIS
+            fits_hdu: SCI
+            blend_table: True
+          spectral_order:
+            title: Spectral order number
+            type: integer
             fits_keyword: SPORDER
             fits_hdu: SCI
             blend_table: True
           v2_ref:
-            title: Telescope v2 coordinate of the reference point (arcsec)
+            title: "[arcsec] Telescope v2 coordinate of the reference point"
             type: number
             fits_keyword: V2_REF
             fits_hdu: SCI
             blend_table: True
           v3_ref:
-            title: Telescope v3 coordinate of the reference point (arcsec)
+            title: "[arcsec] Telescope v3 coordinate of the reference point"
             type: number
             fits_keyword: V3_REF
             fits_hdu: SCI
@@ -255,26 +271,46 @@ properties:
             fits_hdu: SCI
             blend_table: True
           v3yangle:
-            title: Angle from V3 axis to Ideal y axis (deg)
+            title: "[deg] Angle from V3 axis to Ideal y axis"
             type: number
             fits_keyword: V3I_YANG
             fits_hdu: SCI
             blend_table: True
           ra_ref:
-            title: Right ascension of the reference point (deg)
+            title: "[deg] Right ascension of the reference point"
             type: number
             fits_keyword: RA_REF
             fits_hdu: SCI
             blend_table: True
           dec_ref:
-            title: Declination of the reference point (deg)
+            title: "[deg] Declination of the reference point"
             type: number
             fits_keyword: DEC_REF
             fits_hdu: SCI
             blend_table: True
           roll_ref:
-            title: Telescope roll angle of V3 measured from North over East at the ref. point (deg)
+            title: "[deg] Telescope roll angle of V3 measured from North over East at the ref. point"
             type: number
             fits_keyword: ROLL_REF
             fits_hdu: SCI
             blend_table: True
+          velosys:
+            title: "[m/s] Radial velocity wrt Barycenter"
+            type: number
+            fits_keyword: VELOSYS
+            fits_hdu: SCI
+          specsys:
+            title: Spectral reference frame
+            type: string
+            fits_keyword: SPECSYS
+            fits_hdu: SCI
+          siaf_xref_sci:
+            title: Aperture X reference point in SCI frame from SIAF (NRC_TSGRISM mode)
+            type: number
+            fits_keyword: XREF_SCI
+            fits_hdu: SCI
+          siaf_yref_sci:
+            title: Aperture Y reference point in SCI frame from SIAF (NRC_TSGRISM mode)
+            type: number
+            fits_keyword: YREF_SCI
+            fits_hdu: SCI

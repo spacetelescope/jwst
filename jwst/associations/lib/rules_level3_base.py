@@ -1,12 +1,17 @@
 """Base classes which define the Level3 Associations"""
 from collections import defaultdict
+#import copy
 import logging
-from os.path import basename
+from os.path import (
+    basename,
+    split,
+    splitext
+    )
 import re
 
 from jwst.associations import (
     Association,
-    AssociationRegistry,
+    #AssociationRegistry,
     ProcessList,
     libpath
 )
@@ -16,7 +21,7 @@ from jwst.associations.lib.utilities import (
     is_iterable
 )
 from jwst.associations.exceptions import (
-    AssociationNotAConstraint,
+    #AssociationNotAConstraint,
     AssociationNotValidError,
 )
 from jwst.associations.lib.acid import ACID
@@ -28,19 +33,22 @@ from jwst.associations.lib.counter import Counter
 from jwst.associations.lib.dms_base import (
     _EMPTY,
     ACQ_EXP_TYPES,
+    CORON_EXP_TYPES,
     DMSAttrConstraint,
     DMSBaseMixin,
     IMAGE2_SCIENCE_EXP_TYPES,
     IMAGE2_NONSCIENCE_EXP_TYPES,
     SPEC2_SCIENCE_EXP_TYPES,
-    TSO_EXP_TYPES,
-)
+    )
 from jwst.associations.lib.format_template import FormatTemplate
+from jwst.associations.lib.member import Member
 
 __all__ = [
     'ASN_SCHEMA',
     'AsnMixin_Science',
     'AsnMixin_Spectrum',
+    'AsnMixin_BkgScience',
+    'AsnMixin_AuxData',
     'Constraint_Base',
     'Constraint_IFU',
     'Constraint_Image',
@@ -55,7 +63,7 @@ __all__ = [
     'SimpleConstraint',
     'Utility',
 ]
-
+from jwst.lib.suffix import remove_suffix
 # Configure logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -64,11 +72,11 @@ logger.addHandler(logging.NullHandler())
 ASN_SCHEMA = RegistryMarker.schema(libpath('asn_schema_jw_level3.json'))
 
 # DMS file name templates
-_LEVEL1B_REGEX = '(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
-_DMS_POOLNAME_REGEX = 'jw(\d{5})_(\d{8}[Tt]\d{6})_pool'
+_LEVEL1B_REGEX = r'(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
+_DMS_POOLNAME_REGEX = r'jw(\d{5})_(\d{8}[Tt]\d{6})_pool'
 
 # Product name regex's
-_REGEX_ACID_VALUE = '(o\d{3}|(c|a)\d{4})'
+_REGEX_ACID_VALUE = r'(o\d{3}|(c|a)\d{4})'
 
 # Exposures that should have received Level2b processing
 LEVEL2B_EXPTYPES = []
@@ -103,10 +111,6 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
                 'validated': False,
                 'check': lambda member: member['exptype'] == 'science'
             },
-            'ok_candidate': {
-                'validated': False,
-                'check': self.ok_candidate
-            }
         })
 
         # Other presumptions on the association
@@ -131,8 +135,8 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             result = self.data['asn_type'] == other.data['asn_type']
             result = result and (self.member_ids == other.member_ids)
             return result
-        else:
-            return NotImplemented
+
+        return NotImplemented
 
     def __ne__(self, other):
         """Compare inequality of two associations"""
@@ -141,12 +145,13 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             result = not result
         return result
 
+    @property
     def dms_product_name(self):
         """Define product name.
 
         Returns
         -------
-        product_name: str
+        product_name : str
             The product name
         """
         return self._dms_product_name(self)
@@ -157,12 +162,12 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
         Parameters
         ----------
-        association: `Association`
+        association : `Association`
             Association to get the name from.
 
         Returns
         -------
-        product_name: str
+        product_name : str
             The product name
         """
         target = association._get_target()
@@ -172,11 +177,11 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         opt_elem = association._get_opt_element()
 
         exposure = association._get_exposure()
-        if len(exposure):
+        if exposure:
             exposure = '-' + exposure
 
         subarray = association._get_subarray()
-        if len(subarray):
+        if subarray:
             subarray = '-' + subarray
 
         product_name = (
@@ -202,11 +207,11 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
         Parameters
         ----------
-        item: dict or None
+        item : dict or None
             Item to use as a source. If not given, item-specific
             information will be left unchanged.
 
-        member: dict or None
+        member : Member or None
             An association member to use as source.
             If not given, member-specific information will be update
             from current association/product membership.
@@ -251,19 +256,19 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
         # Product-based updates
         product = self.current_product
-        product['name'] = self.dms_product_name()
+        product['name'] = self.dms_product_name
 
     def make_member(self, item):
         """Create a member from the item
 
         Parameters
         ----------
-        item: dict
+        item : dict
             The item to create member from.
 
         Returns
         -------
-        member: dict
+        member : Member
             The member
         """
         try:
@@ -272,25 +277,72 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             exposerr = None
 
         # Get exposure type
-        try:
-            is_tso = self.constraints['is_tso'].matched
-        except KeyError:
-            is_tso = item['exp_type'] in TSO_EXP_TYPES
-
         exptype = self.get_exposure_type(item)
 
         # Determine expected member name
         expname = Utility.rename_to_level2(
-                item['filename'], exp_type=item['exp_type'], is_tso=is_tso
-            )
+            item['filename'], exp_type=item['exp_type'],
+            is_tso=self.is_item_tso(item, other_exp_types=CORON_EXP_TYPES),
+            member_exptype=exptype
+        )
 
-        member = {
-            'expname': expname,
-            'exptype': exptype,
-            'exposerr': exposerr,
-            'asn_candidate': item['asn_candidate']
-        }
+        member = Member(
+            {
+                'expname': expname,
+                'exptype': exptype,
+                'exposerr': exposerr,
+                'asn_candidate': item['asn_candidate']
+            },
+            item=item
+        )
         return member
+
+    def make_fixedslit_bkg(self):
+        """Add a background to a MIR_lrs-fixedslit observation"""
+
+        # check to see if these are nodded backgrounds, if they are setup
+        # the background members, otherwise return the original association
+        # to test for the string 'nod' we need to copy and pop the value out of the set
+        if 'nod' not in self.constraints['patttype_spectarg'].found_values.copy().pop():
+            results = []
+            results.append(self)
+            return results
+
+        for product in self['products']:
+            members = product['members']
+            # Split out the science exposures
+            science_exps = [
+                member
+                for member in members
+                if member['exptype'] == 'science'
+            ]
+            # if there is only one science observation it cannot be the background
+            # return with original association.
+            if len(science_exps) < 2:
+                return results
+
+            # Create new members for each science exposure in the association,
+            # using the the base name + _x1d as background.
+            results = []
+            # Loop over all science exposures in the association
+            for science_exp in science_exps:
+                sci_name = science_exp['expname']
+                science_exp['expname'] = sci_name
+                # Construct the name for the background file
+                bkg_name = remove_suffix(
+                    splitext(split(science_exp['expname'])[1])[0])[0]
+                bkg_name = bkg_name+'_x1d.fits'
+                now_background = Member(science_exp)
+                now_background['expname'] = bkg_name
+                now_background['exptype'] = 'background'
+                # Add the background file to the association table
+                members.append(now_background)
+
+            if self.is_valid:
+                results.append(self)
+
+            return results
+
 
     def _init_hook(self, item):
         """Post-check and pre-add initialization"""
@@ -309,22 +361,21 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         """Add item to this association."""
         member = self.make_member(item)
         if self.is_member(member):
-            logger.debug(
-                'Member is already part of the association:'
-                '\n\tassociation: {}'
-                '\n]tmember: {}'.format(self, member)
-            )
+            # logger.debug(
+            #     'Member is already part of the association:'
+            #     '\n\tassociation: {}'
+            #     '\n]tmember: {}'.format(self, member)
+            # )
             return
 
         self.update_validity(member)
         members = self.current_product['members']
         members.append(member)
         if member['exposerr'] not in _EMPTY:
-            logger.warn('Member {} has exposure error "{}"'.format(
+            logger.warning('Member {} has exposure error "{}"'.format(
                 item['filename'],
                 member['exposerr']
             ))
-        self.from_items.append(item)
 
         # Update meta info
         self.update_asn(item=item, member=member)
@@ -338,21 +389,21 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
         Parameters
         ----------
-        items: [object[, ...]]
+        items : [object[, ...]]
             A list of items to make members of the association.
 
-        product_name: str or None
+        product_name : str or None
             The name of the product to add the items to.
             If the product does not already exist, it will be created.
             If None, the default DMS Level3 naming
             conventions will be attempted.
 
-        with_exptype: bool
+        with_exptype : bool
             If True, each item is expected to be a 2-tuple with
             the first element being the item to add as `expname`
             and the second items is the `exptype`
 
-        kwargs: dict
+        kwargs : dict
             Allows other keyword arguments used by other subclasses.
 
         Notes
@@ -372,13 +423,15 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             exptype = 'science'
             if with_exptype:
                 item, exptype = item
-            member = {
-                'expname': item,
-                'exptype': exptype
-            }
+            member = Member(
+                {
+                    'expname': item,
+                    'exptype': exptype
+                },
+                item=item
+            )
             self.update_validity(member)
             members.append(member)
-            self.from_items.append(item)
         self.sequence = next(self._sequence)
 
     def __repr__(self):
@@ -416,13 +469,13 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
         Parameters
         ----------
-        member: dict
+        member : Member
             Member being added causing check.
             Not used
 
         Returns
         -------
-        is_valid: bool
+        is_valid : bool
         """
         return self.acid.type.lower() not in INVALID_AC_TYPES
 
@@ -441,7 +494,7 @@ class Utility():
             )
 
     @staticmethod
-    def rename_to_level2(level1b_name, exp_type=None, is_tso=False):
+    def rename_to_level2(level1b_name, exp_type=None, is_tso=False, member_exptype='science'):
         """Rename a Level 1b Exposure to a Level2 name.
 
         The basic transform is changing the suffix `uncal` to
@@ -449,7 +502,7 @@ class Utility():
 
         Parameters
         ----------
-        level1b_name: str
+        level1b_name : str
             The Level 1b exposure name.
 
         exp_type:
@@ -457,9 +510,12 @@ class Utility():
             it will be presumed that the name
             should get a Level2b name
 
-        is_tso: boolean
+        is_tso : boolean
             Use 'calints' instead of 'cal' as
             the suffix.
+
+        member_exptype: str
+            The assocition member exposure type, such as "science".
 
         Returns
         -------
@@ -468,7 +524,7 @@ class Utility():
         """
         match = re.match(_LEVEL1B_REGEX, level1b_name)
         if match is None or match.group('type') != '_uncal':
-            logger.warn((
+            logger.warning((
                 'Item FILENAME="{}" is not a Level 1b name. '
                 'Cannot transform to Level 2b.'
             ).format(
@@ -476,10 +532,14 @@ class Utility():
             ))
             return level1b_name
 
-        if exp_type in LEVEL2B_EXPTYPES:
-            suffix = 'cal'
+        if member_exptype == 'background':
+            suffix = 'x1d'
         else:
-            suffix = 'rate'
+            if exp_type in LEVEL2B_EXPTYPES:
+                suffix = 'cal'
+            else:
+                suffix = 'rate'
+
         if is_tso:
             suffix += 'ints'
 
@@ -497,7 +557,7 @@ class Utility():
 
         Parameters
         ----------
-        value: str
+        value : str
             The value from the item to parse. Usually
             item['ASN_CANDIDATE']
 
@@ -527,7 +587,7 @@ class Utility():
 
         Returns
         -------
-        finalized_associations: [association[, ...]]
+        finalized_associations : [association[, ...]]
             The validated list of associations
         """
         finalized_asns = []
@@ -553,9 +613,50 @@ class Utility():
 # Define default product name filling
 format_product = FormatTemplate(
     key_formats={
-        'source_id': 's{:05d}'
+        'source_id': ['s{:05d}', 's{:s}'],
+        'expspcin': ['{:02d}']
     }
 )
+
+
+def dms_product_name_sources(asn):
+    """Produce source-based product names
+
+    Parameters
+    ---------
+    asn : Association
+        The association for which the product
+        name is to be created.
+
+    Returns
+    -------
+    product_name : str
+        The product name
+    """
+    instrument = asn._get_instrument()
+
+    opt_elem = asn._get_opt_element()
+
+    subarray = asn._get_subarray()
+    if subarray:
+        subarray = '-' + subarray
+
+    product_name_format = (
+        'jw{program}-{acid}'
+        '_{source_id}'
+        '_{instrument}'
+        '_{opt_elem}{subarray}'
+    )
+    product_name = format_product(
+        product_name_format,
+        program=asn.data['program'],
+        acid=asn.acid.id,
+        instrument=instrument,
+        opt_elem=opt_elem,
+        subarray=subarray,
+    )
+
+    return product_name.lower()
 
 
 # -----------------
@@ -606,6 +707,7 @@ class Constraint_Image(DMSAttrConstraint):
                 '|mir_image'
                 '|nis_image'
                 '|fgs_image'
+                '|nrs_mimf'
             ),
         )
 
@@ -632,6 +734,11 @@ class Constraint_Optical_Path(Constraint):
             DMSAttrConstraint(
                 name='opt_elem2',
                 sources=['pupil', 'grating'],
+                required=False,
+            ),
+            DMSAttrConstraint(
+                name='opt_elem3',
+                sources=['fxd_slit'],
                 required=False,
             ),
             DMSAttrConstraint(
@@ -677,6 +784,7 @@ class Constraint_MSA(Constraint):
                 DMSAttrConstraint(
                     name='is_msa',
                     sources=['msametfl'],
+                    force_unique=False,
                 )
             ],
             name='msa_spectral'
@@ -684,12 +792,29 @@ class Constraint_MSA(Constraint):
 
 
 class Constraint_Target(DMSAttrConstraint):
-    """Select on target"""
-    def __init__(self):
-        super(Constraint_Target, self).__init__(
-            name='target',
-            sources=['targetid'],
-        )
+    """Select on target
+
+    Parameters
+    ----------
+    association: Association
+        If specified, use the `get_exposure_type` method
+        to as part of the target selection.
+    """
+    def __init__(self, association=None):
+        if association is None:
+            super(Constraint_Target, self).__init__(
+                name='target',
+                sources=['targetid'],
+            )
+        else:
+            super(Constraint_Target, self).__init__(
+                name='target',
+                sources=['targetid'],
+                onlyif=lambda item: association.get_exposure_type(item) != 'background',
+                force_reprocess=ProcessList.EXISTING,
+                only_on_match=True,
+            )
+
 
 
 # -----------
@@ -713,8 +838,8 @@ class AsnMixin_Science(DMS_Level3_Base):
                     name='acq_obsnum',
                     sources=['obs_num'],
                     value=lambda: '('
-                             + '|'.join(self.constraints['obs_num'].found_values)
-                             + ')',
+                    + '|'.join(self.constraints['obs_num'].found_values)
+                    + ')',
                     force_unique=False,
                 )
             ],
@@ -727,7 +852,7 @@ class AsnMixin_Science(DMS_Level3_Base):
             [
                 Constraint_Base(),
                 DMSAttrConstraint(
-                    sources=['is_imprt', 'bkgdtarg'],
+                    sources=['is_imprt'],
                     force_undefined=True
                 ),
                 Constraint(
@@ -750,6 +875,61 @@ class AsnMixin_Science(DMS_Level3_Base):
 
         super(AsnMixin_Science, self).__init__(*args, **kwargs)
 
+class AsnMixin_BkgScience(DMS_Level3_Base):
+    """Basic science constraints for background targets"""
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup target acquisition inclusion
+        constraint_acqs = Constraint(
+            [
+                DMSAttrConstraint(
+                    name='acq_exp',
+                    sources=['exp_type'],
+                    value='|'.join(ACQ_EXP_TYPES),
+                    force_unique=False
+                ),
+                DMSAttrConstraint(
+                    name='acq_obsnum',
+                    sources=['obs_num'],
+                    value=lambda: '('
+                    + '|'.join(self.constraints['obs_num'].found_values)
+                    + ')',
+                    force_unique=False,
+                )
+            ],
+            name='acq_constraint',
+            work_over=ProcessList.EXISTING
+        )
+
+        # Put all constraints together.
+        self.constraints = Constraint(
+            [
+                Constraint_Base(),
+                DMSAttrConstraint(
+                    sources=['is_imprt'],
+                    force_undefined=True
+                ),
+                Constraint(
+                    [
+                        Constraint(
+                            [
+                                self.constraints,
+                                Constraint_Obsnum()
+                            ],
+                            name='rule'
+                        ),
+                        constraint_acqs
+                    ],
+                    name='acq_check',
+                    reduce=Constraint.any
+                ),
+            ],
+            name='dmsbase_bkg'
+        )
+
+        super(AsnMixin_BkgScience, self).__init__(*args, **kwargs)
+
 
 class AsnMixin_Spectrum(AsnMixin_Science):
     """All things that are spectrum"""
@@ -759,3 +939,27 @@ class AsnMixin_Spectrum(AsnMixin_Science):
 
         self.data['asn_type'] = 'spec3'
         super(AsnMixin_Spectrum, self)._init_hook(item)
+
+class AsnMixin_AuxData(AsnMixin_Science):
+    """Process special and non-science exposures as science.
+    """
+    def get_exposure_type(self, item, default='science'):
+        """Override to force exposure type to always be science
+        Parameters
+        ----------
+        item : dict
+            The pool entry for which the exposure type is determined
+        default : str or None
+            The default exposure type.
+            If None, routine will raise LookupError
+        Returns
+        -------
+        exposure_type : 'science'
+            Always returns as science
+        """
+        return 'science'
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        self.data['asn_type'] = 'spec3'
+        super(AsnMixin_AuxData, self)._init_hook(item)

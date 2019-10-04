@@ -31,29 +31,11 @@ allOf:
       fits_hdu: AREA
       default: 0.0
       datatype: float32
-    relsens:
-      $ref: relsens.schema.yaml
-    relsens2d:
-      title: Sensitivity array
-      fits_hdu: RELSENS2D
-      default: 1.0
-      datatype: float32
-    var_poisson:
-      title: variance due to poisson noise
-      fits_hdu: VAR_POISSON
-      ndim: 2
-      default: 0.0
-      datatype: float32
-    var_rnoise:
-      title: variance due to read noise
-      fits_hdu: VAR_RNOISE
-      ndim: 2
-      default: 0.0
-      datatype: float32
+- $ref: variance.schema.yaml
+- $ref: pathlosscorr.schema.yaml
 - type: object
   properties:
     meta:
-      title: Level 3 Schema Metadata
       type: object
       properties:
         tweakreg_catalog:

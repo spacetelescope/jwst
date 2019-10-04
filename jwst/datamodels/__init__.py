@@ -37,13 +37,17 @@ from .multiextract1d import MultiExtract1dImageModel
 from .multiprod import MultiProductModel
 from .multislit import MultiSlitModel
 from .multispec import MultiSpecModel
-from .nirspec_flat import NRSFlatModel, NirspecFlatModel, NirspecQuadFlatModel
+from .nirspec_flat import NirspecFlatModel, NirspecQuadFlatModel
 from .outlierpars import OutlierParsModel
 from .pathloss import PathlossModel
 from .persat import PersistenceSatModel
-from .photom import PhotomModel, FgsPhotomModel, NircamPhotomModel, NirissPhotomModel
+from .photom import PhotomModel, FgsPhotomModel, FgsImgPhotomModel
+from .photom import MiriImgPhotomModel, MirImgPhotomModel, MirLrsPhotomModel
+from .photom import MiriMrsPhotomModel, MirMrsPhotomModel
+from .photom import NircamPhotomModel, NrcImgPhotomModel, NrcWfssPhotomModel
+from .photom import NirissPhotomModel, NisImgPhotomModel, NisSossPhotomModel, NisWfssPhotomModel
 from .photom import NirspecPhotomModel, NirspecFSPhotomModel
-from .photom import MiriImgPhotomModel, MiriMrsPhotomModel
+from .photom import NrsFsPhotomModel, NrsMosPhotomModel
 from .pixelarea import PixelAreaModel, NirspecSlitAreaModel, NirspecMosAreaModel, NirspecIfuAreaModel
 from .psfmask import PsfMaskModel
 from .quad import QuadModel
@@ -87,7 +91,7 @@ __all__ = [
     'DrizParsModel',
     'Extract1dImageModel',
     'FilteroffsetModel',
-    'FlatModel', 'NRSFlatModel', 'NirspecFlatModel', 'NirspecQuadFlatModel',
+    'FlatModel', 'NirspecFlatModel', 'NirspecQuadFlatModel',
     'FOREModel', 'FPAModel',
     'FringeModel', 'GainModel', 'GLS_RampFitModel',
     'GuiderRawModel', 'GuiderCalModel',
@@ -103,8 +107,13 @@ __all__ = [
     'PathlossModel',
     'PersistenceSatModel',
     'PixelAreaModel', 'NirspecSlitAreaModel', 'NirspecMosAreaModel', 'NirspecIfuAreaModel',
-    'PhotomModel', 'FgsPhotomModel', 'MiriImgPhotomModel', 'MiriMrsPhotomModel',
-    'NircamPhotomModel', 'NirissPhotomModel', 'NirspecPhotomModel', 'NirspecFSPhotomModel',
+    'PhotomModel', 'FgsPhotomModel', 'FgsImgPhotomModel',
+    'MiriImgPhotomModel', 'MirImgPhotomModel', 'MirLrsPhotomModel',
+    'MiriMrsPhotomModel', 'MirMrsPhotomModel',
+    'NircamPhotomModel', 'NrcImgPhotomModel', 'NrcWfssPhotomModel',
+    'NirissPhotomModel', 'NisImgPhotomModel', 'NisSossPhotomModel', 'NisWfssPhotomModel',
+    'NirspecPhotomModel', 'NirspecFSPhotomModel',
+    'NrsFsPhotomModel', 'NrsMosPhotomModel',
     'PsfMaskModel',
     'QuadModel', 'RampModel', 'MIRIRampModel',
     'RampFitOutputModel', 'ReadnoiseModel',

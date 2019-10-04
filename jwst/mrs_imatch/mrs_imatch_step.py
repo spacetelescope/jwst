@@ -9,16 +9,9 @@ JWST pipeline step for image intensity matching for MIRI images.
 
 import numpy as np
 
-from .. stpipe import Step, cmdline
+from .. stpipe import Step
 from .. import datamodels
-from .. wiimatch.match import *
-
-try:
-    from stsci.tools.bitmask import bitfield_to_boolean_mask
-    from stsci.tools.bitmask import interpret_bit_flags
-except ImportError:
-    from stsci.tools.bitmask import bitmask2mask as bitfield_to_boolean_mask
-    from stsci.tools.bitmask import interpret_bits_value as interpret_bit_flags
+from .. wiimatch.match import match_lsq
 
 
 __all__ = ['MRSIMatchStep', 'apply_background_2d']
@@ -40,7 +33,7 @@ class MRSIMatchStep(Step):
     reference_file_types = []
 
     def process(self, images):
-        all_models2d = datamodels.ModelContainer(images, persist=True)
+        all_models2d = datamodels.ModelContainer(images)
 
         chm = {}
 
@@ -87,8 +80,7 @@ class MRSIMatchStep(Step):
 
         # match background for images from a single channel
         for c in sorted(single_ch.keys()):
-            matched_models = _match_models(single_ch[c], channel=str(c),
-                                           degree=degree)
+            _match_models(single_ch[c], channel=str(c), degree=degree)
 
         # subtract the background, if requested
         if self.subtract:
@@ -246,9 +238,12 @@ def _get_2d_pixgrid(model2d, channel):
     # cannot use WCS domain to find the range of pixel indices that
     # belong to a given channel. Therefore, for now we have this hardcoded
     # in this function.
+    # Channel 1 and 4 are on the left-side of the detector
+    # Channel 2 and 3 are on the right_side of the detector
+
     y, x = np.indices((1024, 512))
 
-    if channel in ['1', '3']:
+    if channel in ['1', '4']:
         return (x + 4, y)
     else:
         return (x + 516, y)
@@ -369,4 +364,3 @@ def _find_channel_bkg_index(model2d, channel):
         if m.channel == channel:
             index = k
     return index
-

@@ -12,14 +12,12 @@ from .. import associations
 from ..datamodels import fits_support
 from ..datamodels import schema as dm_schema
 
-
 from .blendrules import KeywordRules
 
-__version__ = '0.9.3'
-__vdate__ = '11-May-2018'
 
 EMPTY_LIST = [None, '', ' ', 'INDEF', 'None']
 
+__doctest_skip__ = ['blendmodels']
 
 # Primary functional interface for the code
 def blendmodels(product, inputs=None, output=None, verbose=False):
@@ -73,7 +71,6 @@ def blendmodels(product, inputs=None, output=None, verbose=False):
     verbose : bool, optional [Default: False]
         Print out additional messages during processing when specified.
 
-
     Example
     -------
     This example shows how to blend the metadata from a set of DataModels
@@ -82,8 +79,7 @@ def blendmodels(product, inputs=None, output=None, verbose=False):
     `resample` step to specify all the inputs for blending using the
     following syntax::
 
-    >>> from jwst.model_blender.blender import blendmodels
-    >>> from jwst import datamodels
+    >>> from .. import datamodels
     >>> asnfile = "jw99999-a3001_20170327t121212_coron3_001_asn.json"
     >>> asn = datamodels.open(asnfile)
     >>> input_models = [asn[3],asn[4]]  # we know the last datasets are SCIENCE
@@ -92,7 +88,7 @@ def blendmodels(product, inputs=None, output=None, verbose=False):
     Alternatively, the filenames for all the inputs could be provided directly
     instead using::
 
-    >>> from jwst.associations import load_asn
+    >>> from ..associations import load_asn
     >>> asn = load_asn(open(asnfile))
     >>> input_names = [i['expname'] for i in asn['products'][0]['members'][3:]]
     >>> blendmodels(asn['products'][0]['name'], inputs=input_names)
@@ -137,7 +133,11 @@ def blendmodels(product, inputs=None, output=None, verbose=False):
     for attr in flat_new_metadata:
         attr_use = not [attr.startswith(i) for i in ignore_list].count(True)
         if attr.startswith('meta') and attr_use:
-            output_model[attr] = newmeta[attr]
+            try:
+                output_model[attr] = newmeta[attr]
+            except KeyError:
+                # Ignore keys that are in the asdf tree but not in the schema
+                pass
 
     # Apply any user-specified filename for output product
     if output:

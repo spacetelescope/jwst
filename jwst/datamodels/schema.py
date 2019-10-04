@@ -1,13 +1,8 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
+import re
 from collections import OrderedDict
 
-from asdf import AsdfFile
-from asdf import schema as asdf_schema
-
-from .extension import BaseExtension
-from jwst.transforms.jwextension import JWSTExtension
-from gwcs.extension import GWCSExtension
 
 # return_result included for backward compatibility
 def find_fits_keyword(schema, keyword, return_result=False):
@@ -195,7 +190,7 @@ def walk_schema(schema, callback, ctx={}):
 
         for c in ['anyOf', 'oneOf']:
             for i, sub in enumerate(schema.get(c, [])):
-                recurse(sub, path + [i], c, ctx)
+                recurse(sub, path + [c], c, ctx)
 
         if schema.get('type') == 'object':
             for key, val in schema.get('properties', {}).items():
@@ -212,11 +207,17 @@ def walk_schema(schema, callback, ctx={}):
     recurse(schema, [], None, ctx)
 
 
-def flatten_combiners(schema):
+def merge_property_trees(schema):
     """
-    Flattens the allOf and anyOf operations in a JSON schema.
+    Recursively merges property trees that are governed by the "allOf" combiner.
 
-    TODO: Write caveats -- there's a lot
+    The main purpose of this function is to allow multiple subschemas to be
+    combined into a single schema. All of the properties at each level of each
+    subschema are merged together to form a single coherent tree.
+
+    This allows datamodel schemas to be more modular, since various components
+    can be represented in individual files and then referenced elsewhere. They
+    are then combined by this function into a single schema data structure.
     """
     newschema = OrderedDict()
 
@@ -225,7 +226,10 @@ def flatten_combiners(schema):
         cursor = newschema
         for i in range(len(path)):
             part = path[i]
-            if isinstance(part, int):
+            if part == combiner:
+                cursor = cursor.setdefault(combiner, [])
+                return
+            elif isinstance(part, int):
                 cursor = cursor.setdefault('items', [])
                 while len(cursor) <= part:
                     cursor.append({})
@@ -250,8 +254,6 @@ def flatten_combiners(schema):
             del schema['items']
         if 'allOf' in schema:
             del schema['allOf']
-        if 'anyOf' in schema:
-            del schema['anyOf']
 
         add_entry(path, schema, combiner)
 
@@ -259,34 +261,103 @@ def flatten_combiners(schema):
 
     return newschema
 
-def read_schema(schema_file, extensions=None):
+
+def build_docstring(klass, template="{fits_hdu} {title}"):
     """
-    Read a schema file from disk in order to pass it as an argument
-    to a new datamodel.
+    Build a docstring for the specified DataModel class from its schema.
+
+
+    Parameters
+    ----------
+
+    klass : Python class
+        A class instance of a datamodel
+    template : str
+        A string format template to be applied to each schema item
+
+    Returns
+    -------
+    field_info : str
+        Information about each schema item associated with a FITS hdu
     """
-    def get_resolver(asdf_file):
-        extensions = asdf_file._extensions
-        def asdf_file_resolver(uri):
-            return extensions._url_mapping(extensions._tag_mapping(uri))
-        return asdf_file_resolver
+    from . import model_base
 
-    default_extensions = [GWCSExtension(), JWSTExtension(),
-                          BaseExtension()]
 
-    if extensions is None:
-        extensions = default_extensions[:]
+    def get_field_info(subschema, path, combiner, info, recurse):
+        # Return all schema fields representing fits hdus
+        if 'fits_hdu' in subschema and not 'fits_keyword' in subschema:
+            attr = '.'.join(path)
+            info[attr] = subschema
+        return 'fits_hdu' in subschema or 'fits_keyword' in subschema
+
+    # Silly rabbit, only datamodels have schemas
+    if not (klass == model_base.DataModel or
+            issubclass(klass, model_base.DataModel)):
+        raise ValueError("Class must be a subclass of DataModel: %s",
+                          klass.__name__)
+
+    # Create a new model just to get its shape
+    null_object = klass(init=None)
+    shape = null_object.shape
+    if shape is None:
+        shaped_object = null_object
     else:
-        extensions.extend(default_extensions)
-    asdf_file = AsdfFile(extensions=extensions)
+        # Instantiate an object with correctly dimensioned shape
+        null_object.close()
+        shape = tuple([1 for i in range(len(shape))])
+        shaped_object = klass(init=shape)
 
-    if hasattr(asdf_file, 'resolver'):
-        file_resolver = asdf_file.resolver
-    else:
-        file_resolver = get_resolver(asdf_file)
+    # Get schema fields which have an associated hdu
+    info = {}
+    walk_schema(shaped_object._schema, get_field_info, ctx=info)
 
-    schema = asdf_schema.load_schema(schema_file,
-                                     resolver=file_resolver,
-                                     resolve_references=True)
+    # Extract field names from template to set defaults
+    # so format won't crash while using them when they aren't there
+    default_schema = {}
+    fields = re.findall(r'\{([^\\:}]*)[\:\}]', template)
+    for field in fields:
+        default_schema[field] = ''
 
-    schema = flatten_combiners(schema)
-    return schema
+    buffer = []
+    for attr, subschema in info.items():
+        schema = {}
+        schema.update(default_schema)
+        schema.update(subschema)
+        schema['path'] = attr
+
+        # Determine if attribute has a default value
+        instance = shaped_object.instance
+        for field in attr.split('.'):
+            try:
+                instance = instance.get(field)
+            except AttributeError:
+                instance = None
+            if instance is None:
+                break
+        schema['default'] = instance is not None
+
+        # Extract table field names from datatype
+        if type(schema['datatype']) == str:
+            schema['array'] = True
+        else:
+            schema['records'] = True
+            fields = []
+            for field_info in schema['datatype']:
+                fields.append(field_info['name'])
+            schema['fields'] = ', '.join(fields)
+            schema['datatype'] = 'table'
+
+        # Convert boolean fields to their field names
+        for field, value in schema.items():
+            if type(value) == bool:
+                schema[field] = field
+
+        # Apply format to schema fields
+        # Delete blank lines
+        lines = template.format(**schema)
+        for line in lines.split("\n"):
+            if line and not line.isspace():
+                buffer.append(line)
+
+    field_info = "\n".join(buffer) + "\n"
+    return field_info

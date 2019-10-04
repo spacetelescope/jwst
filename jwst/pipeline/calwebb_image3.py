@@ -9,7 +9,7 @@ from ..resample import resample_step
 from ..outlier_detection import outlier_detection_step
 from ..source_catalog import source_catalog_step
 
-__version__ = '0.9.3'
+__all__ = ['Image3Pipeline']
 
 
 class Image3Pipeline(Pipeline):
@@ -62,7 +62,7 @@ class Image3Pipeline(Pipeline):
         is_container = isinstance(input_models, datamodels.ModelContainer)
         try:
             has_groups = len(input_models.group_names) > 1
-        except:
+        except Exception:
             has_groups = False
         if is_container and has_groups:
 
@@ -94,13 +94,13 @@ class Image3Pipeline(Pipeline):
             result.meta.asn.pool_name = input_models.meta.asn_table.asn_pool
             result.meta.asn.table_name = os.path.basename(input)
             result.meta.filename = input_models.meta.asn_table.products[0].name
-        except:
+        except Exception:
             pass
 
         self.save_model(result, suffix=self.suffix)
 
         self.log.info("Creating source catalog...")
-        out_catalog = self.source_catalog(result)
+        self.source_catalog(result)
         # NOTE: source_catalog step writes out the catalog in .ecsv format
         # In the future it would be nice if it was returned to the pipeline,
         # and then written here.  A datamodel for .ecsv might be required.

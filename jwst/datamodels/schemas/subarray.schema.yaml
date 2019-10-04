@@ -13,22 +13,32 @@ properties:
             anyOf:
               # FGS
               - enum:
-                 [8X8, 32X32, 128X128, 2048X64, SUB128CENTER, SUB128DIAGONAL,
-                  SUB128LLCORNER, SUB32CENTER, SUB32DIAGONAL, SUB32LLCORNER,
-                  SUB8CENTER, SUB8DIAGONAL, SUB8LLCORNER]
+                 [8X8, 32X32, 128X128, 2048X64,
+                  SUB128CNTR, SUB128DIAG, SUB128LL,
+                  SUB32CNTR, SUB32DIAG, SUB32LL,
+                  SUB8CNTR, SUB8DIAG, SUB8LL]
               # MIRI
               - enum:
                  [BRIGHTSKY, MASK1065, MASK1140, MASK1550, MASKLYOT,
                   SLITLESSPRISM, SUB128, SUB256, SUB64, SUBPRISM]
               # NIRCam
               - enum:
-                  [SUB160, SUB160P, SUB320, SUB320A335R, SUB320A430R,
-                   SUB320ALWB, SUB32TATS, SUB32TATSGRISM, SUB400P, SUB640,
-                   SUB640A210R, SUB640ASWB, SUB64FP1A, SUB64FP1B, SUB64P,
-                   SUB8FP1A, SUB8FP1B, SUB96DHSPILA, SUB96DHSPILB, SUBFSA210R,
-                   SUBFSA335R, SUBFSA430R, SUBFSALWB, SUBFSASWB, SUBGRISM128,
-                   SUBGRISM256, SUBGRISM64, SUBNDA210R, SUBNDA335R, SUBNDA430R,
-                   SUBNDALWBL, SUBNDALWBS, SUBNDASWBL, SUBNDASWBS]
+                  [MASK210R, MASK335R, MASK430R, MASKLWB, MASKSWB,
+                   SUB160, SUB160P, SUB320,
+                   SUB320A335R, SUB320A430R, SUB320ALWB,
+                   SUB320B335R, SUB320B430R, SUB320BLWB,
+                   SUB32TATS, SUB32TATSGRISM,
+                   SUB400P, SUB640,
+                   SUB640A210R, SUB640ASWB, SUB640B210R, SUB640BSWB,
+                   SUB64FP1A, SUB64FP1B, SUB64P,
+                   SUB8FP1A, SUB8FP1B,
+                   SUB96DHSPILA, SUB96DHSPILB,
+                   SUBFSA210R, SUBFSA335R, SUBFSA430R, SUBFSALWB, SUBFSASWB,
+                   SUBGRISM128, SUBGRISM256, SUBGRISM64,
+                   SUBNDA210R, SUBNDA335R, SUBNDA430R,
+                   SUBNDALWBL, SUBNDALWBS, SUBNDASWBL, SUBNDASWBS,
+                   SUBNDB210R, SUBNDB335R, SUBNDB430R,
+                   SUBNDBLWBL, SUBNDBLWBS, SUBNDBSWBL, SUBNDBSWBS]
               # Obsolete NIRCam
               - enum:
                   [MASKA210R, MASKA430R, MASKBLWB, MASKBSWB]
@@ -43,7 +53,7 @@ properties:
               # NIRSpec
               - enum:
                   [ALLSLITS, SUBS200A1, SUBS200A2, SUBS200B1, SUBS400A1,
-                   SUB1024A, SUB1024B, SUB512, SUB32, SUB512S, SUB2048, STRIPE]
+                   SUB1024A, SUB1024B, SUB512, SUB32, SUB512S, SUB2048]
               # Obsolete NIRSpec
               - enum:
                   [FULL_IRS2, S200A1, S200A2, S200B1, S400A1]

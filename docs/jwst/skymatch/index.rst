@@ -1,3 +1,5 @@
+.. _skymatch_step:
+
 ========
 SkyMatch
 ========

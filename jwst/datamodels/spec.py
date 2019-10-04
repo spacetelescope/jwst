@@ -1,26 +1,18 @@
-from . import model_base
+from .model_base import DataModel
 
 
 __all__ = ['SpecModel']
 
 
-class SpecModel(model_base.DataModel):
+class SpecModel(DataModel):
     """
     A data model for 1D spectra.
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
-
-    spec_table : numpy array
+    __________
+    spec_table : numpy table
+        Extracted spectral data table
         A table with at least four columns:  wavelength, flux, an error
         estimate for the flux, and data quality flags.
     """
-    schema_url = "spec.schema.yaml"
-
-    def __init__(self, init=None, spec_table=None, **kwargs):
-        super(SpecModel, self).__init__(init=init, **kwargs)
-
-        if spec_table is not None:
-            self.spec_table = spec_table
+    schema_url = "spec.schema"

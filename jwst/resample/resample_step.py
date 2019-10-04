@@ -9,6 +9,8 @@ from .. import datamodels
 from . import resample
 from ..assign_wcs import util
 
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 __all__ = ["ResampleStep"]
 
@@ -28,7 +30,7 @@ class ResampleStep(Step):
         kernel = string(default=None)
         fillval = string(default=None)
         weight_type = option('exptime', default=None)
-        good_bits = integer(min=0, default=4)
+        good_bits = integer(min=0, default=6)
         single = boolean(default=False)
         blendheaders = boolean(default=True)
     """
@@ -47,6 +49,12 @@ class ResampleStep(Step):
         else:
             input_models = input
 
+        # Check that input models are 2D images
+        if len(input_models[0].data.shape) != 2:
+            # resample can only handle 2D images, not 3D cubes, etc
+            raise RuntimeError("Input {} is not a 2D image.".format(input_models[0]))
+
+        # Get drizzle parameters reference file
         for reftype in self.reference_file_types:
             ref_filename = self.get_reference_file(input_models[0], reftype)
 
@@ -55,6 +63,7 @@ class ResampleStep(Step):
             kwargs = self.get_drizpars(ref_filename, input_models)
         else:
             # Deal with NIRSpec which currently has no default drizpars reffile
+            self.log.info("No NIRSpec DIRZPARS reffile")
             kwargs = self._set_spec_defaults()
 
         # Call the resampling routine
@@ -67,14 +76,12 @@ class ResampleStep(Step):
             model.meta.asn.pool_name = input_models.meta.pool_name
             model.meta.asn.table_name = input_models.meta.table_name
 
-
         if len(resamp.output_models) == 1:
             result = resamp.output_models[0]
         else:
             result = resamp.output_models
 
         return result
-
 
     def get_drizpars(self, ref_filename, input_models):
         """
@@ -93,7 +100,8 @@ class ResampleStep(Step):
         used a resample.cfg file or run ResampleStep using command line args,
         then these will overwerite the defaults pulled from the reference file.
         """
-        drizpars_table = datamodels.DrizParsModel(ref_filename).data
+        with datamodels.DrizParsModel(ref_filename) as drpt:
+            drizpars_table = drpt.data
 
         num_groups = len(input_models.group_names)
         filtname = input_models[0].meta.instrument.filter
@@ -171,7 +179,6 @@ class ResampleStep(Step):
 
         return kwargs
 
-
     @classmethod
     def _set_spec_defaults(cls):
         """NIRSpec currently has no default drizpars reference file, so default
@@ -192,5 +199,9 @@ class ResampleStep(Step):
             kwargs['fillval'] = 'INDEF'
         if kwargs['weight_type'] is None:
             kwargs['weight_type'] = 'exptime'
+
+        for k,v in kwargs.items():
+            if k in ['pixfrac', 'kernel', 'fillval', 'weight_type']:
+                log.info('  setting: %s=%s', k, repr(v))
 
         return kwargs

@@ -1,4 +1,5 @@
 """Base classes which define the Level2 Associations"""
+from collections import defaultdict
 import copy
 import logging
 from os.path import (
@@ -18,7 +19,9 @@ from jwst.associations.lib.constraint import (
     Constraint,
     SimpleConstraint,
 )
+from jwst.associations.lib.diff import get_product_names
 from jwst.associations.lib.dms_base import (
+    CORON_EXP_TYPES,
     DMSAttrConstraint,
     DMSBaseMixin,
     IMAGE2_NONSCIENCE_EXP_TYPES,
@@ -27,6 +30,7 @@ from jwst.associations.lib.dms_base import (
     SPEC2_SCIENCE_EXP_TYPES,
     TSO_EXP_TYPES
 )
+from jwst.associations.lib.member import Member
 from jwst.associations.lib.rules_level3_base import _EMPTY
 from jwst.associations.lib.rules_level3_base import Utility as Utility_Level3
 from jwst.lib.suffix import remove_suffix
@@ -39,15 +43,17 @@ __all__ = [
     '_EMPTY',
     'ASN_SCHEMA',
     'AsnMixin_Lv2Image',
-    'AsnMixin_Lv2Singleton',
     'AsnMixin_Lv2Special',
     'AsnMixin_Lv2Spectral',
     'Constraint_Base',
+    'Constraint_ExtCal',
     'Constraint_Image_Nonscience',
     'Constraint_Image_Science',
     'Constraint_Mode',
+    'Constraint_Single_Science',
     'Constraint_Special',
     'Constraint_Spectral_Science',
+    'Constraint_Target',
     'DMSLevel2bBase',
     'DMSAttrConstraint',
     'Utility'
@@ -62,9 +68,8 @@ FLAG_TO_EXPTYPE = {
 }
 
 # File templates
-_DMS_POOLNAME_REGEX = 'jw(\d{5})_(\d{3})_(\d{8}[Tt]\d{6})_pool'
-_LEVEL1B_REGEX = '(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
-_REGEX_LEVEL2A = '(?P<path>.+)(?P<type>_rate(ints)?)'
+_DMS_POOLNAME_REGEX = r'jw(\d{5})_(\d{3})_(\d{8}[Tt]\d{6})_pool'
+_LEVEL1B_REGEX = r'(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
 
 # Key that uniquely identfies items.
 KEY = 'expname'
@@ -96,6 +101,19 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             }
         })
 
+    def check_and_set_constraints(self, item):
+        """Override of Association method
+
+        An addition check is made on candidate type.
+        Level 2 associations can only be created by
+        OBSERVATION and BACKGROUND candidates.
+        """
+        match, reprocess = super(DMSLevel2bBase, self).check_and_set_constraints(item)
+        if match and not self.acid.type in ['observation', 'background']:
+            return False, []
+        else:
+            return match, reprocess
+
     def members_by_type(self, member_type):
         """Get list of members by their exposure type"""
         member_type = member_type.lower()
@@ -112,22 +130,14 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
         return result
 
-    def has_science(self, item):
-        """Only allow a single science in the association
+    def has_science(self):
+        """Does association have a science member
 
-        Parameters
-        ----------
-        item: dict
-            The item in question
-
-        Returns
         -------
         bool
-            True if item can be added
+            True if it does.
         """
-        exptype = self.get_exposure_type(item)
         limit_reached = len(self.members_by_type('science')) >= 1
-        limit_reached = limit_reached and exptype == 'science'
         return limit_reached
 
     def __eq__(self, other):
@@ -136,15 +146,15 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             result = self.data['asn_type'] == other.data['asn_type']
             result = result and (self.member_ids == other.member_ids)
             return result
-        else:
-            return NotImplemented
+
+        return NotImplemented
 
     def __ne__(self, other):
         """Compare inequality of two associations"""
         if isinstance(other, DMSLevel2bBase):
             return not self.__eq__(other)
-        else:
-            return NotImplemented
+
+        return NotImplemented
 
     def dms_product_name(self):
         """Define product name."""
@@ -158,23 +168,20 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         except Exception:
             return PRODUCT_NAME_DEFAULT
 
-        match = re.match(_REGEX_LEVEL2A, science_path)
-        if match:
-            return match.groupdict()['path']
-        else:
-            return science_path
+        no_suffix_path, separator = remove_suffix(science_path)
+        return no_suffix_path
 
     def make_member(self, item):
         """Create a member from the item
 
         Parameters
         ----------
-        item: dict
+        item : dict
             The item to create member from.
 
         Returns
         -------
-        member: dict
+        member : Member
             The member
         """
 
@@ -184,19 +191,22 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         except KeyError:
             exposerr = None
 
-        # Handle time-series file naming
-        is_tso = self.constraints['is_tso'].value == 't'
-        if not is_tso:
-            is_tso = item['exp_type'] in TSO_EXP_TYPES
-
         # Create the member.
-        member = {
-            'expname': Utility.rename_to_level2a(
-                item['filename'], is_tso=is_tso
-            ),
-            'exptype': self.get_exposure_type(item),
-            'exposerr': exposerr,
-        }
+        # `is_item_tso` is used to determine whether the name should
+        # represent the integrations form of the data.
+        # Though coronagraphic data is not TSO,
+        # it does remain in the separate integrations.
+        member = Member(
+            {
+                'expname': Utility.rename_to_level2a(
+                    item['filename'],
+                    use_integrations=self.is_item_tso(item, other_exp_types=CORON_EXP_TYPES),
+                ),
+                'exptype': self.get_exposure_type(item),
+                'exposerr': exposerr,
+            },
+            item=item
+        )
 
         return member
 
@@ -216,13 +226,12 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
         Parameters
         ----------
-        item: dict
+        item : dict
             The item to be adding.
         """
         member = self.make_member(item)
         members = self.current_product['members']
         members.append(member)
-        self.from_items.append(item)
         self.update_validity(member)
 
         # Update association state due to new member
@@ -238,10 +247,10 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
         Parameters
         ----------
-        items: [object[, ...]]
+        items : [object[, ...]]
             A list of items to make members of the association.
 
-        meta: dict
+        meta : dict
             A dict to be merged into the association meta information.
             The following are suggested to be assigned:
                 - `asn_type`
@@ -253,11 +262,11 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
                 - `program`
                     Originating observing program
 
-        product_name_func: func
+        product_name_func : func
             Used if product name is 'undefined' using
             the class's procedures.
 
-        acid: str
+        acid : str
             The association candidate id to use. Since Level2
             associations require it, one must be specified.
 
@@ -290,15 +299,29 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             )
         self._acid = ACID((acid, ac_type))
 
+        #set the default exptype
+        exptype = 'science'
+
         for idx, item in enumerate(items, start=1):
             self.new_product()
             members = self.current_product['members']
-            member = {
-                'expname': item,
-                'exptype': 'science'
-            }
+            if isinstance(item, tuple):
+                expname = item[0]
+            else:
+                expname = item
+
+            #check to see if kwargs are passed and if exptype is given
+            if kwargs:
+                if 'with_exptype' in kwargs:
+                    if item[1]:
+                        exptype = item[1]
+                    else:
+                        exptype='science'
+            member = Member({
+                'expname': expname,
+                'exptype': exptype
+            }, item=item)
             members.append(member)
-            self.from_items.append(item)
             self.update_validity(member)
             self.update_asn()
 
@@ -326,7 +349,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
         Parameters
         ----------
-        member: obj
+        member : Member
             Member being added. Ignored.
 
         Returns
@@ -344,8 +367,8 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         # If a background, check that there is a background
         # exposure
         if self.acid.type.lower() == 'background':
-            for member in self.current_product['members']:
-                if member['exptype'].lower() == 'background':
+            for entry in self.current_product['members']:
+                if entry['exptype'].lower() == 'background':
                     return True
 
         # If not background member, or some other candidate type,
@@ -365,7 +388,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
         Returns
         -------
-        associations: [association[, ...]]
+        associations : [association[, ...]]
             List of new associations to be used in place of
             the current one.
 
@@ -404,7 +427,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
                 for other_science in science_exps:
                     if other_science['expname'] != science_exp['expname']:
-                        now_background = copy.copy(other_science)
+                        now_background = Member(other_science)
                         now_background['exptype'] = 'background'
                         new_members.append(now_background)
 
@@ -465,49 +488,6 @@ class Utility():
     """Utility functions that understand DMS Level 3 associations"""
 
     @staticmethod
-    def rename_to_level2a(level1b_name, is_tso=False):
-        """Rename a Level 1b Exposure to another level
-
-        Parameters
-        ----------
-        level1b_name: str
-            The Level 1b exposure name.
-
-        is_tso: boolean
-            Use 'rateints' instead of 'rate' as
-            the suffix.
-
-        Returns
-        -------
-        str
-            The Level 2a name
-        """
-        match = re.match(_LEVEL1B_REGEX, level1b_name)
-        if match is None or match.group('type') != '_uncal':
-            logger.warn((
-                'Item FILENAME="{}" is not a Level 1b name. '
-                'Cannot transform to Level 2a.'
-            ).format(
-                level1b_name
-            ))
-            return level1b_name
-
-        suffix = 'rate'
-        if is_tso:
-            suffix = 'rateints'
-        level2a_name = ''.join([
-            match.group('path'),
-            '_',
-            suffix,
-            match.group('extension')
-        ])
-        return level2a_name
-
-    @staticmethod
-    def resequence(*args, **kwargs):
-        return Utility_Level3.resequence(*args, **kwargs)
-
-    @staticmethod
     @RegistryMarker.callback('finalize')
     def finalize(associations):
         """Check validity and duplications in an association list
@@ -519,7 +499,7 @@ class Utility():
 
         Returns
         -------
-        finalized_associations: [association[, ...]]
+        finalized_associations : [association[, ...]]
             The validated list of associations
         """
         finalized_asns = []
@@ -531,6 +511,10 @@ class Utility():
                     lv2_asns.extend(finalized)
             else:
                 finalized_asns.append(asn)
+        lv2_asns = Utility.prune_duplicate_products(lv2_asns)
+
+        # Ensure sequencing is correct.
+        Utility_Level3.resequence(lv2_asns)
 
         return finalized_asns + lv2_asns
 
@@ -540,12 +524,12 @@ class Utility():
 
         Parameters
         ----------
-        associations: [asn(, ...)]
+        associations : [asn(, ...)]
             Associations to search for merging.
 
         Returns
         -------
-        associatons: [association(, ...)]
+        associatons : [association(, ...)]
             List of associations, some of which may be merged.
         """
         others = []
@@ -561,17 +545,123 @@ class Utility():
         return others + lv2_asns
 
     @staticmethod
+    def prune_duplicate_products(asns):
+        """Remove duplicate products in favor of higher level versions
+
+        For Level 2 associations, since the products are always just the input
+        exposures, different candidates can be created for each exposure. Remove
+        those associations of lesser candidates.
+
+        The assumption is that there is only one product per association, before merging
+
+        Parameters
+        ----------
+        asns: [Association[,...]]
+            Associations to prune
+
+        Returns
+        pruned: [Association[,...]]
+            Pruned list of associations
+        """
+        product_names, dups = get_product_names(asns)
+        if not dups:
+            return asns
+
+        pruned = copy.copy(asns)
+        to_prune = defaultdict(list)
+        for asn in asns:
+            product_name = asn['products'][0]['name']
+            if product_name in dups:
+                to_prune[product_name].append(asn)
+
+        for product_name, asns_to_prune in to_prune.items():
+            asns_to_prune = Utility.sort_by_candidate(asns_to_prune)
+            for asn in asns_to_prune[1:]:
+                pruned.remove(asn)
+
+        return pruned
+
+
+    @staticmethod
+    def rename_to_level2a(level1b_name, use_integrations=False):
+        """Rename a Level 1b Exposure to another level
+
+        Parameters
+        ----------
+        level1b_name : str
+            The Level 1b exposure name.
+
+        is_integrations : boolean
+            Use 'rateints' instead of 'rate' as
+            the suffix.
+
+        Returns
+        -------
+        str
+            The Level 2a name
+        """
+        match = re.match(_LEVEL1B_REGEX, level1b_name)
+        if match is None or match.group('type') != '_uncal':
+            logger.warning((
+                'Item FILENAME="{}" is not a Level 1b name. '
+                'Cannot transform to Level 2a.'
+            ).format(
+                level1b_name
+            ))
+            return level1b_name
+
+        suffix = 'rate'
+        if use_integrations:
+            suffix = 'rateints'
+        level2a_name = ''.join([
+            match.group('path'),
+            '_',
+            suffix,
+            match.group('extension')
+        ])
+        return level2a_name
+
+    @staticmethod
+    def resequence(*args, **kwargs):
+        """Resquence the numbers to conform to level 3 asns"""
+        return Utility_Level3.resequence(*args, **kwargs)
+
+    @staticmethod
+    def sort_by_candidate(asns):
+        """Sort associations by candidate
+
+        Parameters
+        ----------
+        asns: [Association[,...]]
+            List of associations
+
+        Returns
+        -------
+        sorted_by_candidate: [Associations[,...]]
+            New list of the associations sorted.
+
+        Notes
+        -----
+        The current definition of candidates allows strictly lexigraphical
+        sorting:
+        aXXXX > cXXXX > oXXX
+
+        If this changes, a comparision function will need be implemented
+        """
+        return sorted(asns, key=lambda asn: asn['asn_id'])
+
+    @staticmethod
     def _merge_asns(asns):
         """Merge associations by `asn_type` and `asn_id`
 
         Parameters
         ----------
-        associations: [asn(, ...)]
+        associations : [asn(, ...)]
             Associations to search for merging.
 
         Returns
         -------
-        associatons: [association(, ...)]
+        associatons : [association(, ...)]
             List of associations, some of which may be merged.
         """
         merged = {}
@@ -639,14 +729,6 @@ class Constraint_Mode(Constraint):
     def __init__(self):
         super(Constraint_Mode, self).__init__([
             DMSAttrConstraint(
-                name='program',
-                sources=['program']
-            ),
-            DMSAttrConstraint(
-                name='target',
-                sources=['targetid'],
-            ),
-            DMSAttrConstraint(
                 name='instrument',
                 sources=['instrume']
             ),
@@ -664,6 +746,11 @@ class Constraint_Mode(Constraint):
                 required=False,
             ),
             DMSAttrConstraint(
+                name='opt_elem3',
+                sources=['fxd_slit'],
+                required=False,
+            ),
+            DMSAttrConstraint(
                 name='subarray',
                 sources=['subarray'],
                 required=False,
@@ -672,6 +759,28 @@ class Constraint_Mode(Constraint):
                 name='channel',
                 sources=['channel'],
                 required=False,
+            ),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        sources=['detector'],
+                        value='nirspec'
+                    ),
+                    DMSAttrConstraint(
+                        sources=['filter'],
+                        value='opaque'
+                    ),
+                ],
+                reduce=Constraint.notany
+            ),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        sources=['visitype'],
+                        value='.+wfsc.+',
+                    ),
+                ],
+                reduce=Constraint.notany
             ),
             DMSAttrConstraint(
                 name='slit',
@@ -723,6 +832,35 @@ class Constraint_Image_Nonscience(Constraint):
         )
 
 
+class Constraint_Single_Science(SimpleConstraint):
+    """Allow only single science exposure
+
+    Parameters
+    ----------
+    has_science_fn : func
+        Function to determine whether the association
+        has a science member already. No arguments are provided.
+
+    sc_kwargs : dict
+        Keyword arguments to pass to the parent class `SimpleConstraint`
+
+    Notes
+    -----
+    The `has_science_fn` is further wrapped in a lambda function
+    to provide a closure. Otherwise if the function is a bound method,
+    that method may end up pointing to an instance that is not calling
+    this constraint.
+    """
+
+    def __init__(self, has_science_fn, **sc_kwargs):
+        super(Constraint_Single_Science, self).__init__(
+            name='single_science',
+            value=False,
+            sources=lambda item: has_science_fn(),
+            **sc_kwargs
+        )
+
+
 class Constraint_Special(DMSAttrConstraint):
     """Select on backgrounds and other auxilliary images"""
     def __init__(self):
@@ -739,7 +877,7 @@ class Constraint_Spectral_Science(Constraint):
     """Select on spectral science
 
     Parameters
-    exclude_exp_types: [exp_type[, ...]]
+    exclude_exp_types : [exp_type[, ...]]
         List of exposure types to not consider from
         from the general list.
     """
@@ -764,6 +902,31 @@ class Constraint_Spectral_Science(Constraint):
         )
 
 
+class Constraint_Target(DMSAttrConstraint):
+    """Select on target id"""
+
+    def __init__(self):
+        super(Constraint_Target, self).__init__(
+            name='target',
+            sources=['targetid'],
+        )
+
+class Constraint_ExtCal(Constraint):
+    """Remove any nis_extcals from the associations, they
+       are NOT to receive level-2b or level-3 processing!"""
+
+    def __init__(self):
+        super(Constraint_ExtCal, self).__init__(
+            [
+                DMSAttrConstraint(
+                    name='exp_type',
+                    sources=['exp_type'],
+                    value='nis_extcal'
+                )
+            ],
+            reduce=Constraint.notany
+        )
+
 # ---------------------------------------------
 # Mixins to define the broad category of rules.
 # ---------------------------------------------
@@ -775,28 +938,6 @@ class AsnMixin_Lv2Image:
 
         super(AsnMixin_Lv2Image, self)._init_hook(item)
         self.data['asn_type'] = 'image2'
-
-
-class AsnMixin_Lv2Singleton(DMSLevel2bBase):
-    """Allow only single science exposure"""
-
-    def __init__(self, *args, **kwargs):
-
-        constraints = SimpleConstraint(
-            name='single_science',
-            value=False,
-            sources=lambda item: self.has_science(item)
-        )
-        if self.constraints is None:
-            self.constraints = constraints
-        else:
-            self.constraints = Constraint([
-                self.constraints,
-                constraints
-            ])
-
-        # Now, lets see if item belongs to us.
-        super(AsnMixin_Lv2Singleton, self).__init__(*args, **kwargs)
 
 
 class AsnMixin_Lv2Spectral(DMSLevel2bBase):
@@ -816,14 +957,14 @@ class AsnMixin_Lv2Special:
         """Override to force exposure type to always be science
         Parameters
         ----------
-        item: dict
+        item : dict
             The pool entry to determine the exposure type of
-        default: str or None
+        default : str or None
             The default exposure type.
             If None, routine will raise LookupError
         Returns
         -------
-        exposure_type: 'science'
+        exposure_type : 'science'
             Always returns as science
         """
         return 'science'

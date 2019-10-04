@@ -1,16 +1,16 @@
-import numpy as np
+import logging
+import warnings
 
+import numpy as np
 from astropy import wcs as fitswcs
 from astropy.coordinates import SkyCoord
 from astropy.modeling.models import Scale, AffineTransformation2D
 from astropy.modeling import Model
 from gwcs import WCS, wcstools
+from astropy.nddata.bitmask import interpret_bit_flags
 
-from ..assign_wcs.util import wcs_from_footprints
+from ..assign_wcs.util import wcs_from_footprints, wcs_bbox_from_shape
 
-from . import bitmask
-
-import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -37,7 +37,7 @@ def make_output_wcs(input_models):
     wcslist = [i.meta.wcs for i in input_models]
     for w, i in zip(wcslist, input_models):
         if w.bounding_box is None:
-            w.bounding_box = bounding_box_from_shape(i.data.shape)
+            w.bounding_box = wcs_bbox_from_shape(i.data.shape)
     naxes = wcslist[0].output_frame.naxes
 
     if naxes == 3:
@@ -85,15 +85,6 @@ def compute_output_transform(refwcs, filename, fiducial):
     return pc_matrix | cdelt
 
 
-def bounding_box_from_shape(shape):
-    """ Return a bounding_box for WCS based on a numpy shape
-    """
-    bb = []
-    for s in reversed(shape):
-        bb.append((-0.5, s - 0.5))
-    return tuple(bb)
-
-
 def shape_from_bounding_box(bounding_box):
     """ Return a numpy shape based on the provided bounding_box
     """
@@ -108,14 +99,16 @@ def calc_gwcs_pixmap(in_wcs, out_wcs, shape=None):
     """ Return a pixel grid map from input frame to output frame.
     """
     if shape:
-        bb = bounding_box_from_shape(shape)
+        bb = wcs_bbox_from_shape(shape)
         log.debug("Bounding box from data shape: {}".format(bb))
     else:
         bb = in_wcs.bounding_box
         log.debug("Bounding box from WCS: {}".format(in_wcs.bounding_box))
 
-    grid = wcstools.grid_from_bounding_box(bb, step=(1, 1))
+    grid = wcstools.grid_from_bounding_box(bb)
     pixmap = np.dstack(reproject(in_wcs, out_wcs)(grid[0], grid[1]))
+    pixmap[np.isnan(pixmap)] = -1
+
     return pixmap
 
 
@@ -163,7 +156,10 @@ def reproject(wcs1, wcs2):
         flat_sky = []
         for axis in sky:
             flat_sky.append(axis.flatten())
+        # Filter out RuntimeWarnings due to computed NaNs in the WCS
+        warnings.simplefilter("ignore")
         det = backward_transform(*tuple(flat_sky))
+        warnings.resetwarnings()
         det_reshaped = []
         for axis in det:
             det_reshaped.append(axis.reshape(x.shape))
@@ -193,8 +189,7 @@ def build_driz_weight(model, weight_type=None, good_bits=None):
 def build_mask(dqarr, bitvalue):
     """ Builds a bit-mask from an input DQ array and a bitvalue flag
     """
-
-    bitvalue = bitmask.interpret_bits_value(bitvalue)
+    bitvalue = interpret_bit_flags(bitvalue)
 
     if bitvalue is None:
         return (np.ones(dqarr.shape, dtype=np.uint8))

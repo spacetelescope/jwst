@@ -72,4 +72,16 @@ allOf:
       default: 0.0
       ndim: 3
       datatype: float32
+    wavetable:
+      title: Wavelength value for slices
+      fits_hdu: WCS-TABLE
+      datatype:
+      - name: wavelength
+        datatype: float32
+        ndim: 2
+    wavedim:
+      title: Wavetable dimension
+      type: string
+      fits_keyword: TDIM2
+      fits_hdu: WCS-TABLE
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

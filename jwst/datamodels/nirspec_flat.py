@@ -1,71 +1,37 @@
 from .reference import ReferenceFileModel
 from .dynamicdq import dynamic_mask
 
-__all__ = ['NRSFlatModel']
-
-class NRSFlatModel(ReferenceFileModel):
-    """A base class for NIRSpec flat-field reference file models."""
-
-    schema_url = "nirspec.flat.schema.yaml"
-
-    def __init__(self, init=None, flat_table=None, **kwargs):
-        super(NRSFlatModel, self).__init__(init=init, **kwargs)
-
-        if flat_table is not None:
-            self.flat_table = flat_table
+__all__ = ['NirspecFlatModel', 'NirspecQuadFlatModel']
 
 
-class NirspecFlatModel(NRSFlatModel):
+class NirspecFlatModel(ReferenceFileModel):
     """A data model for NIRSpec flat-field reference files.
 
     Parameters
-    ----------
-    init: any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
+    data : numpy float32 array
+         NIRSpec flat-field reference data
 
-    data: numpy array
-        The science data.  2-D or 3-D.
+    dq : numpy uint32 array
+         Data quality array
 
-    dq: numpy array
-        The data quality array.  2-D or 3-D.
+    err : numpy float32 array
+         Error estimate
 
-    err: numpy array
-        The error array.  2-D or 3-D.
+    wavelength : numpy table
+         Table of wavelengths for image planes
 
-    wavelength: numpy array
-        The wavelength for each plane of the `data` array.  This will
-        only be needed if `data` is 3-D.
+    flat_table : numpy table
+         Table for quickly varying component of flat field
 
-    flat_table: numpy array
-        A table of wavelengths and flat-field values, to specify the
-        component of the flat field that can vary over a relatively short
-        distance (can be pixel-to-pixel).
+    dq_def : numpy table
+         DQ flag definitions
     """
 
-    schema_url = "nirspec_flat.schema.yaml"
+    schema_url = "nirspec_flat.schema"
 
-    def __init__(self, init=None, data=None, dq=None, err=None,
-                 wavelength=None, flat_table=None, dq_def=None,
-                 **kwargs):
+    def __init__(self, init=None, **kwargs):
         super(NirspecFlatModel, self).__init__(init=init, **kwargs)
-
-        if data is not None:
-            self.data = data
-
-        if dq is not None:
-            self.dq = dq
-
-        if err is not None:
-            self.err = err
-
-        if wavelength is not None:
-            self.wavelength = wavelength
-
-        if flat_table is not None:
-            self.flat_table = flat_table
-
-        if dq_def is not None:
-            self.dq_def = dq_def
 
         if self.dq is not None or self.dq_def is not None:
             self.dq = dynamic_mask(self)
@@ -75,37 +41,31 @@ class NirspecFlatModel(NRSFlatModel):
         self.err = self.err
 
 
-class NirspecQuadFlatModel(NRSFlatModel):
+class NirspecQuadFlatModel(ReferenceFileModel):
     """A data model for NIRSpec flat-field files that differ by quadrant.
 
     Parameters
-    ----------
-    init: any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
+    quadrants.items.data : numpy float32 array
 
-    data: numpy array
-        The science data.  2-D or 3-D.
 
-    dq: numpy array
-        The data quality array.  2-D or 3-D.
+    quadrants.items.dq : numpy uint32 array
 
-    err: numpy array
-        The error array.  2-D or 3-D.
 
-    wavelength: numpy array
-        The wavelength for each plane of the `data` array.  This will
-        only be needed if `data` is 3-D.
+    quadrants.items.err : numpy float32 array
 
-    flat_table: numpy array
-        A table of wavelengths and flat-field values, to specify the
-        component of the flat field that can vary over a relatively short
-        distance (can be pixel-to-pixel).
 
-    dq_def: numpy array
-        The data quality definitions table.
+    quadrants.items.wavelength : numpy table
+         Table of wavelengths for image planes
+
+    quadrants.items.flat_table : numpy table
+         Table for quickly varying component of flat field
+
+    dq_def : numpy table
+         DQ flag definitions
     """
 
-    schema_url = "nirspec_quad_flat.schema.yaml"
+    schema_url = "nirspec_quad_flat.schema"
 
     def __init__(self, init=None, **kwargs):
         if isinstance(init, NirspecFlatModel):

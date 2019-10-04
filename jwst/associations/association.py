@@ -1,15 +1,19 @@
-from collections import MutableMapping
+from collections.abc import MutableMapping
 from copy import deepcopy
 from datetime import datetime
 import json
 import jsonschema
 import logging
+import re
 
 from . import __version__
 from .exceptions import (
     AssociationNotValidError
 )
-from .lib.constraint import Constraint
+from .lib.constraint import (
+    Constraint,
+    meets_conditions
+)
 from .lib.format_template import FormatTemplate
 from .lib.ioregistry import IORegistry
 
@@ -29,65 +33,67 @@ class Association(MutableMapping):
 
     Parameters
     ----------
-    version_id: str or None
-        Version_Id to use in the name of this association.
+    version_id : str or None
+        Version ID to use in the name of this association.
         If None, nothing is added.
 
     Raises
     ------
     AssociationError
-        If a item doesn't match any of the registered associations.
+        If an item doesn't match.
 
     Attributes
     ----------
-    instance: dict-like
+    instance : dict-like
         The instance is the association data structure.
         See `data` below
 
-    meta: dict
+    meta : dict
         Information about the association.
 
-    data: dict
+    data : dict
         The association. The format of this data structure
         is determined by the individual assocations and, if
-        defined, valided against their specified schema.
+        defined, validated against their specified schema.
 
-    schema_file: str
+    schema_file : str
         The name of the output schema that an association
         must adhere to.
 
-    registry: AssociationRegistry
+    registry : AssociationRegistry
         The registry this association came from.
 
-    asn_name: str
+    asn_name : str
         The suggested file name of association
 
-    asn_rule: str
+    asn_rule : str
         The name of the rule
     """
 
-    # Assume no registry
     registry = None
+    """Registry this rule has been placed in."""
 
-    # Default force a constraint to use first value.
     DEFAULT_FORCE_UNIQUE = False
+    """Default whether to force constraints to use unique values."""
 
-    # Default require that the constraint exists or otherwise
-    # can be explicitly checked.
     DEFAULT_REQUIRE_CONSTRAINT = True
+    """Default require that the constraint exists or otherwise
+    can be explicitly checked.
+    """
 
-    # Default do not evaluate input values
     DEFAULT_EVALUATE = False
+    """Default do not evaluate input values"""
 
-    # Global constraints
     GLOBAL_CONSTRAINT = None
+    """Global constraints"""
 
-    # Attribute values that are indicate the
-    # attribute is not specified.
     INVALID_VALUES = None
+    """Attribute values that indicate the
+    attribute is not specified.
+    """
 
-    # Initialize a global IO registry
     ioregistry = IORegistry()
+    """The association IO registry"""
 
     def __init__(
             self,
@@ -123,20 +129,20 @@ class Association(MutableMapping):
 
         Parameters
         ----------
-        item: dict
+        item : dict
             The item to initialize the association with.
 
-        version_id: str or None
-            Version_Id to use in the name of this association.
+        version_id : str or None
+            Version ID to use in the name of this association.
             If None, nothing is added.
 
         Returns
         -------
         (association, reprocess_list)
             2-tuple consisting of:
-            - association: The association or, if the item does not
-                this rule, None
-            - [ProcessList[, ...]]: List of items to process again.
+                - association or None: The association or, if the item does not
+                  match this rule, None
+                - [ProcessList[, ...]]: List of items to process again.
         """
         asn = cls(version_id=version_id)
         matches, reprocess = asn.add(item)
@@ -146,7 +152,8 @@ class Association(MutableMapping):
 
     @property
     def asn_name(self):
-        return 'unamed_association'
+        """Suggest filename for the association"""
+        return 'unnamed_association'
 
     @classmethod
     def _asn_rule(cls):
@@ -154,6 +161,7 @@ class Association(MutableMapping):
 
     @property
     def asn_rule(self):
+        """Name of the rule"""
         return self._asn_rule()
 
     @classmethod
@@ -162,12 +170,12 @@ class Association(MutableMapping):
 
         Parameters
         ----------
-        asn: Association or association-like
+        asn : Association or association-like
             The association structure to examine
 
         Returns
         -------
-        valid: bool
+        valid : bool
             True if valid. Otherwise the `AssociationNotValidError` is raised
 
         Raises
@@ -198,7 +206,8 @@ class Association(MutableMapping):
         try:
             jsonschema.validate(asn_data, asn_schema)
         except (AttributeError, jsonschema.ValidationError) as err:
-            raise AssociationNotValidError('Validation failed')
+            logger.debug('Validation failed:\n%s', err)
+            raise AssociationNotValidError('Validation failed') from err
         return True
 
     def dump(self, format='json', **kwargs):
@@ -206,10 +215,10 @@ class Association(MutableMapping):
 
         Parameters
         ----------
-        format: str
+        format : str
             The format to use to dump the association into.
 
-        kwargs: dict
+        kwargs : dict
             List of arguments to pass to the registered
             routines for the current association type.
 
@@ -247,21 +256,22 @@ class Association(MutableMapping):
 
         Parameters
         ----------
-        serialized: object
+        serialized : object
             The serialized form of the association.
 
-        format: str or None
+        format : str or None
             The format to force. If None, try all available.
 
-        validate: bool
+        validate : bool
             Validate against the class' defined schema, if any.
 
-        kwargs: dict
+        kwargs : dict
             Other arguments to pass to the `load` method
 
         Returns
         -------
-        The Association object
+        association : Association
+            The association.
 
         Raises
         ------
@@ -317,24 +327,24 @@ class Association(MutableMapping):
 
         Parameters
         ----------
-        item: dict
+        item : dict
             The item to add.
 
-        check_constraints: bool
+        check_constraints : bool
             If True, see if the item should belong to this association.
             If False, just add it.
 
         Returns
         -------
-        (matching_constraint, reprocess_list)
+        (match, reprocess_list)
             2-tuple consisting of:
-            - bool: True if match
-            - [ProcessList[, ...]]: List of items to process again.
+                - bool : True if match
+                - [ProcessList[, ...]]: List of items to process again.
         """
         if self.is_item_member(item):
-            return False, []
+            return True, []
 
-        match = False
+        match = not check_constraints
         if check_constraints:
             match, reprocess = self.check_and_set_constraints(item)
 
@@ -344,6 +354,16 @@ class Association(MutableMapping):
                 self.run_init_hook = False
             self._add(item)
 
+        # If a constraint `force_match` exists, set the `match`
+        # result to the value of the constraint.
+        try:
+            force_match = self.constraints['force_match'].value
+        except (KeyError, TypeError):
+            pass
+        else:
+            if force_match is not None:
+                match = force_match
+
         return match, reprocess
 
     def check_and_set_constraints(self, item):
@@ -352,7 +372,7 @@ class Association(MutableMapping):
 
         Parameters
         ----------
-        item: dict
+        item : dict
             The parameters to check/set for this association.
             This can be a list of dictionaries.
 
@@ -360,9 +380,8 @@ class Association(MutableMapping):
         -------
         (match, reprocess)
             2-tuple consisting of:
-            - Constraint or False: The successfully matching constraint
-              or False if not matching.
-            - [ProcessItem[, ...]]: List of items to process again.
+                - bool : Did constraint match?
+                - [ProcessItem[, ...]]: List of items to process again.
 
         """
         cached_constraints = deepcopy(self.constraints)
@@ -382,21 +401,21 @@ class Association(MutableMapping):
 
         Parameters
         ----------
-        item: dict
+        item : dict
             The item to retrieve the values from
 
-        constraint: str
+        constraint : str
             The name of the constraint
 
-        conditions: dict
+        conditions : dict
             The conditions structure
 
         Returns
         -------
         (matches, reprocess_list)
             2-tuple consisting of:
-            - bool: True if the all constraints are satisfied
-            - [ProcessList[, ...]]: List of items to process again.
+                - bool : True if the all constraints are satisfied
+                - [ProcessList[, ...]]: List of items to process again.
         """
         reprocess = []
         evaled_str = conditions['inputs'](item)
@@ -427,7 +446,7 @@ class Association(MutableMapping):
 
         Returns
         -------
-        associations: [association[, ...]] or None
+        associations : [association[, ...]] or None
             List of fully-qualified associations that this association
             represents.
             `None` if a complete association cannot be produced.
@@ -443,12 +462,12 @@ class Association(MutableMapping):
 
         Parameters
         ----------
-        item: dict
+        item : dict
             The item to add.
 
         Returns
         -------
-        is_item_member: bool
+        is_item_member : bool
             True if item is a member.
         """
         raise NotImplementedError(
@@ -470,7 +489,7 @@ class Association(MutableMapping):
 
         Parameters
         ----------
-        items: [object[, ...]]
+        items : [object[, ...]]
             A list of items to make members of the association.
 
         Notes

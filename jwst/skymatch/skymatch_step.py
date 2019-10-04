@@ -11,20 +11,18 @@ import collections
 import numpy as np
 import logging
 
-from ..stpipe import Step, cmdline
+from ..stpipe import Step
 from .. import datamodels
 
-try:
-    from stsci.tools.bitmask import bitfield_to_boolean_mask
-    from stsci.tools.bitmask import interpret_bit_flags
-except ImportError:
-    from stsci.tools.bitmask import bitmask2mask as bitfield_to_boolean_mask
-    from stsci.tools.bitmask import interpret_bits_value as interpret_bit_flags
+from astropy.nddata.bitmask import (
+    bitfield_to_boolean_mask,
+    interpret_bit_flags,
+)
 
 #LOCAL:
-from . skymatch import match
-from . skyimage import SkyImage, SkyGroup
-from . skystatistics import SkyStats
+from .skymatch import match
+from .skyimage import SkyImage, SkyGroup
+from .skystatistics import SkyStats
 
 __all__ = ['SkyMatchStep']
 
@@ -101,10 +99,21 @@ class SkyMatchStep(Step):
         # set sky background value in each image's meta:
         for im in images:
             if isinstance(im, SkyImage):
-                self._set_sky_background(im.meta['imagemodel'], im.sky)
+                if im.is_sky_valid:
+                    self._set_sky_background(im.meta['image_model'], im.sky)
+                    im.meta['image_model'].meta.cal_step.skymatch = "COMPLETE"
+                else:
+                    im.meta['image_model'].meta.cal_step.skymatch = "SKIPPED"
             else:
                 for gim in im:
-                    self._set_sky_background(gim.meta['imagemodel'], gim.sky)
+                    if gim.is_sky_valid:
+                        self._set_sky_background(
+                            gim.meta['image_model'],
+                            gim.sky
+                        )
+                        gim.meta['image_model'].meta.cal_step.skymatch = "COMPLETE"
+                    else:
+                        gim.meta['image_model'].meta.cal_step.skymatch = "SKIPPED"
 
         return img
 
@@ -177,7 +186,7 @@ class SkyMatchStep(Step):
             id=image_model.meta.filename, # file name?
             skystat=self._skystat,
             stepsize=self.stepsize,
-            meta={'imagemodel': image_model}
+            meta={'image_model': image_model}
         )
 
         if self.subtract:
@@ -188,4 +197,3 @@ class SkyMatchStep(Step):
     def _set_sky_background(self, image, sky):
         image.meta.background.level = sky
         image.meta.background.subtracted = self.subtract
-

@@ -1,38 +1,74 @@
 type: object
 properties:
   meta:
-    title: Level 3 Schema Metadata
     type: object
     properties:
       resample:
-          title: Metadata describing resampling done using this data
-          type: object
-          properties:
-            pointings:
-              title: Number of pointings included in resampled product
-              type: integer
-              fits_keyword:  NDRIZ
-            product_exposure_time:
-              title: Total exposure time for product
-              type: number
-              fits_keyword: TEXPTIME
-            weight_type:
-              title: Type of drizzle weighting to use in resampling input
-              type: string
-              enum: ['exptime','error']
-              fits_keyword: WHT_TYPE
+        title: Resampling parameter information
+        type: object
+        properties:
+          pointings:
+            title: "Number of groups/pointings included in resampled product"
+            type: integer
+            fits_keyword: NDRIZ
+          product_exposure_time:
+            title: "[s] Total exposure time for product"
+            type: number
+            fits_keyword: TEXPTIME
+          weight_type:
+            title: Type of drizzle weighting to use in resampling input
+            type: string
+            enum: [exptime, error]
+            fits_keyword: RESWHT
+          drizzle_weight_scale:
+            title: Drizzle weight scale used to created resampled product
+            type: string
+            fits_keyword: DWTSCL
+          drizzle_output_units:
+            title: Units for resampled output product
+            type: string
+            enum: [counts, cps]
+            fits_keyword: DOUTUN
+          resample_bits:
+            title: Bit values to consider good when interpreting input DQ arrays
+            type: integer
+            fits_keyword: RESBITS
+          drizzle_fill_value:
+            title: Value used in pixels without any valid input data
+            type: string
+            fits_keyword: DFVAL
+          drizzle_pixel_fraction:
+            title: Drizzle pixel fraction used to create resampled product
+            type: number
+            fits_keyword: DPIXFR
+          drizzle_kernel:
+            title: Drizzle kernel used to create resampled product
+            type: string
+            fits_keyword: DKERN
+          product_data_extname:
+            title: Extname of the SCI extension
+            type: string
+            fits_keyword: SCIEXT
+          product_context_extname:
+            title: Extname of the CON extension
+            type: string
+            fits_keyword: CONEXT
+          product_weight_extname:
+            title: Extname of the WHT extension
+            type: string
+            fits_keyword: WHTEXT
       tweakreg_catalog:
-          type: object
-          properties:
-            filename:
-              title: Output tweakreg catalog filename
-              type: string
-              fits_keyword: TCATFILE
+        type: object
+        properties:
+          filename:
+            title: Output tweakreg catalog filename
+            type: string
+            fits_keyword: TCATFILE
       source_catalog:
-          type: object
-          properties:
-            filename:
-              title: Output source catalog filename
-              type: string
-              fits_keyword: SCATFILE
+        type: object
+        properties:
+          filename:
+            title: Output source catalog filename
+            type: string
+            fits_keyword: SCATFILE
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

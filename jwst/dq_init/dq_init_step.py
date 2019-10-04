@@ -9,16 +9,31 @@ __all__ = ["DQInitStep"]
 
 
 class DQInitStep(Step):
-    """
+    """Initialize the Data Quality extension from the
+    mask reference file.
 
-    DQInitStep:  Initialize the Data Quality extension from the
-    mask reference file.  Also initialize the error extension
-
+    The dq_init step initializes the pixeldq attribute of the
+    input datamodel using the MASK reference file.  For some
+    FGS exp_types, initalize the dq attribute of the input model
+    instead.  The dq attribute of the MASK model is bitwise OR'd
+    with the pixeldq (or dq) attribute of the input model.
     """
 
     reference_file_types = ['mask']
 
     def process(self, input):
+        """Perform the dq_init calibration step
+
+        Parameters
+        ----------
+        input : JWST datamodel
+            input jwst datamodel
+
+        Returns
+        -------
+        output_model : JWST datamodel
+            result JWST datamodel
+        """
 
         # Try to open the input as a regular RampModel
         try:
@@ -31,15 +46,15 @@ class DQInitStep(Step):
                 input_model = datamodels.GuiderRawModel(input)
                 self.log.info("Input opened as GuiderRawModel")
 
-        except TypeError:
+        except (TypeError, ValueError):
             # If the initial open attempt fails,
             # try to open as a GuiderRawModel
             try:
                 input_model = datamodels.GuiderRawModel(input)
                 self.log.info("Input opened as GuiderRawModel")
-            except TypeError:
+            except (TypeError, ValueError):
                 self.log.error("Unexpected or unknown input model type")
-        except:
+        except Exception:
             self.log.error("Can't open input")
             raise
 

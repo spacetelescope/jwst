@@ -29,19 +29,13 @@ def write_file(data, bitpix, output_fname):
     _______
 
     """
-
-    try:
-        os.remove(output_fname)
-    except:
-        pass
-
     fitsobj = fits.HDUList()
     hdu = fits.PrimaryHDU()
     prihdr = hdu.header
     prihdr['BITPIX'] = bitpix
     hdu.data = data
     fitsobj.append(hdu)
-    fitsobj.writeto(output_fname)
+    fitsobj.writeto(output_fname, overwrite=True)
     fitsobj.close()
 
 
@@ -250,7 +244,7 @@ def glue_all():
 
     try:
         os.remove("temp_all_ext.fits")
-    except:
+    except FileNotFoundError:
         pass
 
     fimg.writeto("temp_all_ext.fits")
@@ -299,17 +293,11 @@ def append_data(data, out_file):
     _______
 
     """
-
-    try:
-        os.remove(out_file)
-    except:
-        pass
-
     fitsobj = fits.HDUList()
     hdu = fits.PrimaryHDU()
     hdu.data = data
     fitsobj.append(hdu)
-    fitsobj.writeto(out_file)
+    fitsobj.writeto(out_file, overwrite=True)
 
 
 def rot_all_ext(nfiles):

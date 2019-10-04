@@ -2,21 +2,17 @@
                    a new metadata instance and table
 
 """
-import os
-import glob
-import copy
-import json
-from io import StringIO
 from collections import OrderedDict
 
 import numpy as np
+from datetime import time
 from astropy.io import fits
+from astropy.time import Time
 
 from jwst import __version__
 from .. import datamodels
 from ..datamodels import schema as dm_schema
 from . import blender
-from . import textutil
 
 # Version of rules file format supported by this version of the code
 # All changes should be backwards compatible to older rules versions
@@ -87,6 +83,39 @@ def last(items):
         return items[-1]
     return None
 
+def mindate(items):
+    """Return the minimum date from a list of date strings in yyyy-mm-dd format."""
+    time_list = Time(items, format="iso", in_subfmt="date", out_subfmt="date")
+    return str(time_list.min())
+
+def maxdate(items):
+    """Return the maximum date from a list of date strings in yyyy-mm-dd format."""
+    time_list = Time(items, format="iso", in_subfmt="date", out_subfmt="date")
+    return str(time_list.max())
+
+def mindatetime(items):
+    """Return the minimum datetime from a list of datetime strings in ISO-8601 format."""
+    time_list = Time(items, format="isot")
+    return str(time_list.min())
+
+def maxdatetime(items):
+    """Return the maximum datetime from a list of datetime strings in ISO-8601 format."""
+    time_list = Time(items, format="isot")
+    return str(time_list.max())
+
+def mintime(items):
+    times = [_isotime(time_str) for time_str in items]
+    return min(times).isoformat()
+
+def maxtime(items):
+    times = [_isotime(time_str) for time_str in items]
+    return max(times).isoformat()
+
+def _isotime(time_str):
+    hms = [float(i) for i in time_str.split(':')]
+    sec_ms = hms[2] - int(hms[2])
+    isotime = time(int(hms[0]), int(hms[1]), int(hms[2]), int(sec_ms * 1000000))
+    return isotime
 
 # translation dictionary for function entries from rules files
 blender_funcs = {'first': first,
@@ -100,7 +129,13 @@ blender_funcs = {'first': first,
                  'sum': np.sum,
                  'max': np.max,
                  'min': np.min,
-                 'stddev': np.std}
+                 'stddev': np.std,
+                 'mintime': mintime,
+                 'maxtime': maxtime,
+                 'mindate': mindate,
+                 'maxdate': maxdate,
+                 'mindatetime': mindatetime,
+                 'maxdatetime': maxdatetime}
 
 
 # Classes for managing keyword rules
@@ -330,7 +365,7 @@ def _build_schema_rules_dict(schema):
 
     Returns
     -------
-    results : dict
+    results : OrderedDict
         Dictionary with schema attributes as keys and blend rules
         as values
 
@@ -338,6 +373,10 @@ def _build_schema_rules_dict(schema):
     def build_rules_dict(subschema, path, combiner, ctx, recurse):
         # Only interpret elements of the meta component of the model
         if len(path) > 1 and path[0] == 'meta' and 'items' not in path:
+            for combiner in ['anyOf', 'oneOf']:
+                if combiner in path:
+                    path = path[:path.index(combiner)]
+                    break
             attr = '.'.join(path)
             if subschema.get('properties'):
                 return # Ignore ObjectNodes

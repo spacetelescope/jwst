@@ -3,4 +3,4 @@ from .align_refs_step import AlignRefsStep
 from .klip_step import KlipStep
 from .hlsp_step import HlspStep
 
-__version__ = '0.9.3'
+__all__ = ['StackRefsStep', 'AlignRefsStep', 'KlipStep', 'HlspStep']

@@ -8,24 +8,25 @@ __all__ = ['SuperBiasModel']
 class SuperBiasModel(ReferenceFileModel):
     """
     A data model for 2D super-bias images.
+
+    Parameters
+    __________
+    data : numpy float32 array
+         The science data
+
+    dq : numpy uint32 array
+         Data quality array
+
+    err : numpy float32 array
+         Error array
+
+    dq_def : numpy table
+         DQ flag definitions
     """
-    schema_url = "superbias.schema.yaml"
+    schema_url = "superbias.schema"
 
-    def __init__(self, init=None, data=None, dq=None, err=None,
-                 dq_def=None, **kwargs):
+    def __init__(self, init=None, **kwargs):
         super(SuperBiasModel, self).__init__(init=init, **kwargs)
-
-        if data is not None:
-            self.data = data
-
-        if dq is not None:
-            self.dq = dq
-
-        if err is not None:
-            self.err = err
-
-        if dq_def is not None:
-            self.dq_def = dq_def
 
         self.dq = dynamic_mask(self)
 

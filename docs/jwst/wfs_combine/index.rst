@@ -1,3 +1,5 @@
+.. _wfs_combine_step:
+
 ===========
 WFS Combine
 ===========
@@ -7,6 +9,6 @@ WFS Combine
 
    main.rst
    reference_files.rst
-   wfs_combine.rst
+   arguments.rst
 
 .. automodapi:: jwst.wfs_combine

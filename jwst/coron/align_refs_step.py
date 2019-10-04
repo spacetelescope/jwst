@@ -1,6 +1,4 @@
-#! /usr/bin/env python
-
-from ..stpipe import Step, cmdline
+from ..stpipe import Step
 from .. import datamodels
 from . import imageregistration
 
@@ -49,4 +47,3 @@ class AlignRefsStep(Step):
             psf_model.close()
 
         return result
-

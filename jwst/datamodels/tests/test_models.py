@@ -1,6 +1,9 @@
 import os
+from os import path as op
 import shutil
 import tempfile
+import warnings
+import jsonschema
 
 import pytest
 from astropy.time import Time
@@ -11,10 +14,12 @@ from .. import (DataModel, ImageModel, MaskModel, QuadModel,
                 MultiSlitModel, ModelContainer, SlitModel,
                 SlitDataModel, IFUImageModel)
 from ..util import open as open_model
+from ...lib.file_utils import pushdir
 
 
 ROOT_DIR = os.path.join(os.path.dirname(__file__), 'data')
 FITS_FILE = os.path.join(ROOT_DIR, 'test.fits')
+ASDF_FILE = os.path.join(ROOT_DIR, 'collimator_fake.asdf')
 ASN_FILE = os.path.join(ROOT_DIR, 'association.json')
 
 
@@ -65,6 +70,7 @@ def test_broadcast2():
 
 def test_from_hdulist():
     from astropy.io import fits
+    warnings.simplefilter("ignore")
     with fits.open(FITS_FILE) as hdulist:
         with open_model(hdulist) as dm:
             dm.data
@@ -126,8 +132,23 @@ def test_open():
     with open_model((50, 50)) as dm:
         pass
 
+    warnings.simplefilter("ignore")
     with open_model(FITS_FILE) as dm:
         assert isinstance(dm, QuadModel)
+
+def test_open_warning():
+    with warnings.catch_warnings(record=True) as warners:
+        # Cause all warnings to always be triggered.
+        warnings.simplefilter("always")
+        with open_model(FITS_FILE) as model:
+            pass
+
+        class_name = model.__class__.__name__
+        j = None
+        for i, w in enumerate(warners):
+            if class_name in str(w.message):
+                j = i
+        assert j is not None
 
 
 def test_copy():
@@ -219,6 +240,17 @@ def test_copy_model():
 def test_dtype_match():
     with ImageModel() as dm:
         dm.data = np.array([[1, 2, 3]], np.float32)
+
+
+def test_default_value_anyof_schema():
+    """Make sure default values are set properly when anyOf in schema"""
+    with ImageModel((100, 100)) as im:
+        val = im.meta.instrument.channel
+        assert val is None
+        val = im.meta.observation.date
+        assert val is None
+        val = im.meta.guidestar
+        assert val.instance == {}
 
 
 def test_multislit():
@@ -335,11 +367,35 @@ def test_model_with_nonstandard_primary_array():
     m = NonstandardPrimaryArrayModel()
     list(m.keys())
 
+def test_initialize_arrays_with_arglist():
+    shape = (10,10)
+    thirteen = np.full(shape, 13.0)
+    bitz = np.full(shape, 7)
 
-def test_relsens():
-    with ImageModel() as im:
-        assert len(im.relsens.dtype) == 2
+    im = ImageModel(shape, zeroframe=thirteen, dq=bitz)
+    assert np.array_equal(im.zeroframe, thirteen)
+    assert np.array_equal(im.dq, bitz)
 
+def test_open_asdf_model():
+    # Open an empty asdf file, pass extra arguments
+
+    model = DataModel(init=None,
+                     ignore_version_mismatch=False,
+                     ignore_unrecognized_tag=True)
+
+    assert model._asdf._ignore_version_mismatch == False
+    assert model._asdf._ignore_unrecognized_tag == True
+    model.close()
+
+    # Open an existing asdf file
+
+    model = DataModel(ASDF_FILE,
+                     ignore_version_mismatch=False,
+                     ignore_unrecognized_tag=True)
+
+    assert model._asdf._ignore_version_mismatch == False
+    assert model._asdf._ignore_unrecognized_tag == True
+    model.close()
 
 def test_image_with_extra_keyword_to_multislit():
     with ImageModel(data=np.empty((32, 32))) as im:
@@ -366,18 +422,21 @@ def test_image_with_extra_keyword_to_multislit():
 
 @pytest.fixture(scope="module")
 def container():
-    with ModelContainer(ASN_FILE, persist=True) as c:
-        for m in c:
-            m.meta.observation.program_number = '0001'
-            m.meta.observation.observation_number = '1'
-            m.meta.observation.visit_number = '1'
-            m.meta.observation.visit_group = '1'
-            m.meta.observation.sequence_id = '01'
-            m.meta.observation.activity_id = '1'
-            m.meta.observation.exposure_number = '1'
-            m.meta.instrument.name = 'NIRCAM'
-            m.meta.instrument.channel = 'SHORT'
-        yield c
+    warnings.simplefilter("ignore")
+    asn_file_path, asn_file_name = op.split(ASN_FILE)
+    with pushdir(asn_file_path):
+        with ModelContainer(asn_file_name, persist=True) as c:
+            for m in c:
+                m.meta.observation.program_number = '0001'
+                m.meta.observation.observation_number = '1'
+                m.meta.observation.visit_number = '1'
+                m.meta.observation.visit_group = '1'
+                m.meta.observation.sequence_id = '01'
+                m.meta.observation.activity_id = '1'
+                m.meta.observation.exposure_number = '1'
+                m.meta.instrument.name = 'NIRCAM'
+                m.meta.instrument.channel = 'SHORT'
+            yield c
 
 
 def test_modelcontainer_iteration(container):
@@ -434,6 +493,68 @@ def test_hasattr():
     has_filename = model.meta.hasattr('filename')
     assert not has_filename, "Check that filename does not exist"
 
+def test_info():
+    warnings.simplefilter("ignore")
+    with open_model(FITS_FILE) as model:
+        info = model.info()
+    matches = 0
+    for line in info.split("\n"):
+        words = line.split()
+        if len(words) > 0:
+            if words[0] == "data":
+                matches += 1
+                assert words[1] == "(32,40,35,5)", "Correct size for data"
+                assert words[2] == "float32", "Correct type for data"
+            elif words[0] == "dq":
+                matches += 1
+                assert words[1] == "(32,40,35,5)", "Correct size for dq"
+                assert words[2] == "uint32", "Correct type for dq"
+            elif words[0] == "err":
+                matches += 1
+                assert words[1] == "(32,40,35,5)", "Correct size for err"
+                assert words[2] == "float32", "Correct type for err"
+    assert matches== 3, "Check all extensions are described"
+
+def test_validate_on_read():
+    im1 = ImageModel((10,10))
+    schema = im1.meta._schema
+    schema['properties']['calibration_software_version']['fits_required'] = True
+
+    try:
+        im2 = ImageModel(FITS_FILE,
+                          schema=im1._schema,
+                          strict_validation=True)
+    except jsonschema.ValidationError:
+        caught = True
+    else:
+        caught = False
+        im2.close()
+
+    im1.close()
+    assert caught, "Test of validation while reading image"
+
+def test_validate_required_field():
+    im = ImageModel((10,10), strict_validation=True)
+    schema = im.meta._schema
+    schema['properties']['telescope']['fits_required'] = True
+
+    try:
+        im.validate_required_fields()
+    except jsonschema.ValidationError:
+        caught = True
+    else:
+        caught = False
+    assert caught, "Test of validate_required_fields"
+
+    im.meta.telescope = 'JWST'
+    try:
+        im.validate_required_fields()
+    except jsonschema.ValidationError:
+        caught = True
+    else:
+        caught = False
+    assert not caught, "Test of validate_required_fields"
+
 def test_multislit_model():
     data = np.arange(24, dtype=np.float32).reshape((6, 4))
     err = np.arange(24, dtype=np.float32).reshape((6, 4)) + 2
@@ -460,14 +581,14 @@ def test_slit_from_image():
     im.meta.instrument.name = "MIRI"
     slit_dm = SlitDataModel(im)
     assert_allclose(im.data, slit_dm.data)
-    assert hasattr(slit_dm, 'pathloss_pointsource')
+    assert hasattr(slit_dm, 'wavelength')
     # this should be enabled after gwcs starts using non-coordinate inputs
     #assert not hasattr(slit_dm, 'meta')
 
     slit = SlitModel(im)
     assert_allclose(im.data, slit.data)
     assert_allclose(im.err, slit.err)
-    assert hasattr(slit, 'pathloss_pointsource')
+    assert hasattr(slit, 'wavelength')
     assert slit.meta.instrument.name == "MIRI"
 
     im = ImageModel(slit)

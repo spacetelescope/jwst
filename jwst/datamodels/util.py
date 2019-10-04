@@ -3,6 +3,7 @@ Various utility functions and data types
 """
 
 import sys
+import warnings
 from os.path import basename
 
 import numpy as np
@@ -13,7 +14,10 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 log.addHandler(logging.NullHandler())
 
-def open(init=None, extensions=None, **kwargs):
+class NoTypeWarning(Warning):
+    pass
+
+def open(init=None, **kwargs):
     """
     Creates a DataModel from a number of different types
 
@@ -38,10 +42,6 @@ def open(init=None, extensions=None, **kwargs):
 
         - dict: The object model tree for the data model
 
-    extensions : list of AsdfExtension
-        A list of extensions to the ASDF to support when reading
-        and writing ASDF files.
-
     Returns
     -------
     model : DataModel instance
@@ -54,6 +54,7 @@ def open(init=None, extensions=None, **kwargs):
 
     hdulist = {}
     shape = ()
+    file_name = None
     file_to_close = None
 
     # Get special cases for opening a model out of the way
@@ -73,6 +74,7 @@ def open(init=None, extensions=None, **kwargs):
         if isinstance(init, bytes):
             init = init.decode(sys.getfilesystemencoding())
 
+        file_name = basename(init)
         file_type = filetype.check(init)
 
         if file_type == "fits":
@@ -82,13 +84,11 @@ def open(init=None, extensions=None, **kwargs):
         elif file_type == "asn":
             # Read the file as an association / model container
             from . import container
-            return container.ModelContainer(init, extensions=extensions,
-                                            **kwargs)
+            return container.ModelContainer(init, **kwargs)
 
         elif file_type == "asdf":
             # Read the file as asdf, no need for a special class
-            return model_base.DataModel(init, extensions=extensions,
-                                        **kwargs)
+            return model_base.DataModel(init, **kwargs)
 
     elif isinstance(init, tuple):
         for item in init:
@@ -102,10 +102,17 @@ def open(init=None, extensions=None, **kwargs):
     elif isinstance(init, fits.HDUList):
         hdulist = init
 
+    elif is_association(init) or isinstance(init, list):
+        from . import container
+        return container.ModelContainer(init, **kwargs)
+
     # If we have it, determine the shape from the science hdu
     if hdulist:
         # So we don't need to open the image twice
         init = hdulist
+        info = init.fileinfo(0)
+        if info is not None:
+            file_name = info.get('filename')
 
         try:
             hdu = hdulist[('SCI', 1)]
@@ -138,22 +145,29 @@ def open(init=None, extensions=None, **kwargs):
         raise TypeError("Can't determine datamodel class from argument to open")
 
     # Log a message about how the model was opened
-    if isinstance(init, str):
-        log.debug('Opening {0} as {1}'.format(basename(init), new_class))
+    if file_name:
+        log.debug('Opening {0} as {1}'.format(file_name, new_class))
     else:
         log.debug('Opening as {0}'.format(new_class))
 
     # Actually open the model
-    model = new_class(init, extensions=extensions, **kwargs)
-    if not has_model_type:
-        try:
-            delattr(model.meta, 'model_type')
-        except AttributeError:
-            pass
+    model = new_class(init, **kwargs)
 
     # Close the hdulist if we opened it
     if file_to_close is not None:
         model._files_to_close.append(file_to_close)
+
+    if not has_model_type:
+        class_name = new_class.__name__.split('.')[-1]
+        if file_name:
+            errmsg = \
+                "model_type not found. Opening {} as a {}".format(file_name, class_name)
+            warnings.warn(errmsg, NoTypeWarning)
+
+        try:
+            delattr(model.meta, 'model_type')
+        except AttributeError:
+            pass
 
     return model
 
@@ -189,17 +203,8 @@ def _class_from_ramp_type(hdulist, shape):
             try:
                 hdulist['DQ']
             except KeyError:
-                # It's a RampModel or MIRIRampModel
-                try:
-                    hdulist['REFOUT']
-                except KeyError:
-                    # It's a RampModel
-                    from . import ramp
-                    new_class = ramp.RampModel
-                else:
-                    # It's a MIRIRampModel
-                    from . import miri_ramp
-                    new_class = miri_ramp.MIRIRampModel
+                from . import ramp
+                new_class = ramp.RampModel
             else:
                 new_class = None
         else:
@@ -285,6 +290,16 @@ def to_camelcase(token):
     return ''.join(x.capitalize() for x in token.split('_-'))
 
 
+def is_association(asn_data):
+    """
+    Test if an object is an association by checking for required fields
+    """
+    if isinstance(asn_data, dict):
+        if 'asn_id' in asn_data and 'asn_pool' in asn_data:
+            return True
+    return False
+
+
 def gentle_asarray(a, dtype):
     """
     Performs an asarray that doesn't cause a copy if the byteorder is
@@ -301,17 +316,42 @@ def gentle_asarray(a, dtype):
             else:
                 return np.asanyarray(a, dtype=out_dtype)
         elif in_dtype.fields is not None and out_dtype.fields is not None:
+            # When a FITS file includes a pseudo-unsigned-int column, astropy will return
+            # a FITS_rec with an incorrect table dtype.  The following code rebuilds
+            # in_dtype from the individual fields, which are correctly labeled with an
+            # unsigned int dtype.
+            # We can remove this once the issue is resolved in astropy:
+            # https://github.com/astropy/astropy/issues/8862
+            if isinstance(a, fits.fitsrec.FITS_rec):
+                new_in_dtype = []
+                updated = False
+                for field_name in in_dtype.fields:
+                    table_dtype = in_dtype[field_name]
+                    field_dtype = a.field(field_name).dtype
+                    if np.issubdtype(table_dtype, np.signedinteger) and np.issubdtype(field_dtype, np.unsignedinteger):
+                        new_in_dtype.append((field_name, field_dtype))
+                        updated = True
+                    else:
+                        new_in_dtype.append((field_name, table_dtype))
+                if updated:
+                    in_dtype = np.dtype(new_in_dtype)
+
             if in_dtype == out_dtype:
                 return a
-            if len(in_dtype) != len(out_dtype):
-                raise ValueError(
-                    "Wrong number of columns.  Expected {0}, got {1}".format(
-                        len(out_dtype), len(in_dtype)))
-            new_dtype = []
-            # Change the dtype name to match the fits record names
-            # as the mismatch causes case insensitive access to fail
-            if hasattr(in_dtype, 'names') and hasattr(out_dtype, 'names'):
+            in_names = {n.lower() for n in in_dtype.names}
+            out_names = {n.lower() for n in out_dtype.names}
+            if in_names == out_names:
+                # Change the dtype name to match the fits record names
+                # as the mismatch causes case insensitive access to fail
                 out_dtype.names = in_dtype.names
+            else:
+                raise ValueError(
+                    "Column names don't match schema. "
+                    "Schema has {0}. Data has {1}".format(
+                        str(out_names.difference(in_names)),
+                        str(in_names.difference(out_names))))
+
+            new_dtype = []
             for i in range(len(out_dtype.fields)):
                 in_type = in_dtype[i]
                 out_type = out_dtype[i]
@@ -332,7 +372,7 @@ def gentle_asarray(a, dtype):
     else:
         try:
             a = np.asarray(a, dtype=out_dtype)
-        except:
+        except Exception:
             raise ValueError("Can't convert {0!s} to ndarray".format(type(a)))
         return a
 
@@ -375,7 +415,7 @@ def create_history_entry(description, software=None):
 
     Examples
     --------
-    >>> soft = {'name': 'jwreftools', 'author': 'STSCI',
+    >>> soft = {'name': 'jwreftools', 'author': 'STSCI', \
                 'homepage': 'https://github.com/spacetelescope/jwreftools', 'version': "0.7"}
     >>> entry = create_history_entry(description="HISTORY of this file", software=soft)
 

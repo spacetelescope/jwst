@@ -1,86 +1,48 @@
-from . import model_base
+from .model_base import DataModel
 
 
 __all__ = ['CubeModel']
 
 
-class CubeModel(model_base.DataModel):
+class CubeModel(DataModel):
     """
     A data model for 3D image cubes.
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
+    data : numpy float32 array
+         The science data
 
-    data : numpy array
-        The science data.  3-D.
+    dq : numpy uint32 array
+         Data quality array
 
-    dq : numpy array
-        The data quality array.  3-D.
+    err : numpy float32 array
+         Error array
 
-    err : numpy array
-        The error array.  3-D
+    zeroframe : numpy float32 array
+         Zero frame array
 
-    zeroframe: numpy array
-        The zero-frame array.  3-D
+    area : numpy float32 array
+         Pixel area map array
 
-    relsens: numpy array
-        The relative sensitivity array.
+    int_times : numpy table
+         table of times for each integration
 
-    int_times : table
-        The int_times table
+    wavelength : numpy float32 array
+         Wavelength array
 
-    area: numpy array
-        The pixel area array.  2-D
+    var_poisson : numpy float32 array
+         Integration-specific variances of slope due to Poisson noise
 
-    wavelength: numpy array
-        The wavelength array.  2-D
-
-    var_poisson: numpy array
-        The variance due to Poisson noise array.  3-D
-
-    var_rnoise: numpy array
-        The variance due to read noise array.  3-D
+    var_rnoise : numpy float32 array
+         Integration-specific variances of slope due to read noise
     """
-    schema_url = "cube.schema.yaml"
+    schema_url = "cube.schema"
 
-    def __init__(self, init=None, data=None, dq=None, err=None, zeroframe=None,
-                 relsens=None, int_times=None, area=None, wavelength=None,
-                 var_poisson=None, var_rnoise=None, **kwargs):
-      
+    def __init__(self, init=None, **kwargs):
+
         super(CubeModel, self).__init__(init=init, **kwargs)
 
-        if data is not None:
-            self.data = data
-
-        if dq is not None:
-            self.dq = dq
-
-        if err is not None:
-            self.err = err
-
-        if zeroframe is not None:
-            self.zeroframe = zeroframe
-
-        if relsens is not None:
-            self.relsens = relsens
-
-        if int_times is not None:
-            self.int_times = int_times
-
-        if area is not None:
-            self.area = area
-
-        if wavelength is not None:
-            self.wavelength = wavelength
-
-        if var_poisson is not None:
-            self.var_poisson = var_poisson
-
-        if var_rnoise is not None:
-            self.var_rnoise = var_rnoise
-   
         # Implicitly create arrays
         self.dq = self.dq
         self.err = self.err

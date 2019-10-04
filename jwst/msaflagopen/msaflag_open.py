@@ -3,14 +3,12 @@
 #  open MSA shutters in nirspec science data sets
 #
 import json
-import math
 import numpy as np
 import logging
 from .. import datamodels
 from ..assign_wcs.nirspec import slitlets_wcs, nrs_wcs_set_input
 from ..transforms.models import Slit
 from gwcs.wcs import WCS
-from gwcs import wcstools
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -196,13 +194,13 @@ def create_slitlets(input_model, shutter_refname):
 
     A slit is:
 
-    Slit = namedtuple('Slit', ["name", "shutter_id", "xcen", "ycen",
+    Slit = namedtuple('Slit', ["name", "shutter_id", "dither_position", "xcen", "ycen",
                            "ymin", "ymax", "quadrant", "source_id", "shutter_state",
                            "source_name", "source_alias", "stellarity",
                            "source_xpos", "source_ypos"])
     "shutter_id" is an integer that uniquely defines the shutter in the quadrant, it is calculated
     from the x and y using the function
-    Slit.__new__.__defaults__= ("", 0, 0.0, 0.0, 0.0, 0.0, 0, 0, "", "", "", 0.0, 0.0, 0.0)
+    Slit.__new__.__defaults__= ("", 0, 0, 0.0, 0.0, 0.0, 0.0, 0, 0, "", "", "", 0.0, 0.0, 0.0)
 
     The only ones that matter are "name" (must be unique), xcen, ycen, quadrant (from msaoper
     file), ymin, ymax (should be -0.5, 0.5), nshutters (should be 1)
@@ -217,7 +215,7 @@ def create_slitlets(input_model, shutter_refname):
         x = shutter['x']
         y = shutter['y']
         shutter_id = id_from_xy(x, y)
-        slitlets.append(Slit(str(counter), shutter_id, x, y, -0.5, 0.5,
+        slitlets.append(Slit(str(counter), shutter_id, 0, x, y, -0.5, 0.5,
                              shutter['Q'], 0, 1, "", "", 0.0, 0.0, 0.0)
                         )
     return slitlets

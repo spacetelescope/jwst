@@ -46,7 +46,6 @@ import zipfile
 
 # THIRD-PARTY
 from astropy.io import fits as pyfits
-import six
 
 # LOCAL
 from ..fits_generator import objects
@@ -83,7 +82,7 @@ class FITSGetter:
             use_hdu = hdu
         return self._mapping[use_hdu].header.get(use_key, default)
 
-class InputFileType(object):
+class InputFileType():
     """
     Base class for an input file type.
     """
@@ -239,7 +238,7 @@ def get_inputfiles(input_files):
 
     for f in input_files:
         obj = None
-        if isinstance(f, (six.string_types)):
+        if isinstance(f, str):
             with open(f, 'rb') as fd:
                 file_id = fd.read(6)
             for file_type in input_file_types:

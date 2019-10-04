@@ -3,8 +3,6 @@
 
 :Authors: Mihai Cara (contact: help@stsci.edu)
 
-:License: :doc:`../LICENSE`
-
 """
 
 # STDLIB
@@ -18,8 +16,6 @@ from astropy.modeling import models, fitting
 
 __all__ = ['extract1d']
 __taskname__ = 'extract1d'
-__version__ = '0.9.3'
-__vdate__ = '22-December-2015'
 __author__ = 'Mihai Cara'
 
 log = logging.getLogger(__name__)
@@ -32,33 +28,61 @@ def extract1d(image, lambdas, disp_range,
 
     Parameters:
     -----------
-    image: 2-D ndarray
+    image : 2-D ndarray
         The array may have been transposed so that the dispersion direction
-        is the second index (i.e. the more rapidly varying direction).
-    lambdas: 1-D array
+        is the second index.
+
+    lambdas : 1-D array
         Wavelength at each pixel within `disp_range`.  For example,
         lambdas[0] is the wavelength for image[:, disp_range[0]].
-    disp_range: two-element list
+
+    disp_range : two-element list
         Limits of a slice for extracting the spectrum from `image`.
-    p_src: list of two-element lists of functions
-    p_bkg: list of two-element lists of functions, or None
-    independent_var: string
-        The values may be "wavelength" or "pixel", indicating whether the
-        independent variable for the `srclim` and `bkglim` functions is
-        wavelength or pixel number.
-    smoothing_length: int
-        If this is greater than one, the background regions will be boxcar
-        smoothed by this length (must be an odd integer).
-    bkg_order: int
-    weights:
+
+    p_src : list of two-element lists of functions
+        These are Astropy polynomial functions defining the limits in the
+        cross-dispersion direction of the source extraction region(s).
+
+    p_bkg : list of two-element lists of functions, or None
+        These are Astropy polynomial functions defining the limits in the
+        cross-dispersion direction of the background extraction regions.
+
+    independent_var : string
+        The value may be "wavelength" or "pixel", indicating whether the
+        independent variable for the source and background polynomial
+        functions is wavelength or pixel number.
+
+    smoothing_length : int
+        If this is greater than one and background regions have been
+        specified, the background regions will be boxcar smoothed by this
+        length (must be zero or an odd integer).
+        This argument is only used if background regions have been
+        specified.
+
+    bkg_order : int
+        Polynomial order for fitting to each column of background.  A value
+        of 0 means that a simple average of the background regions, column
+        by column, will be used.
+        This argument must be positive or zero, and it is only used if
+        background regions have been specified.
+
+    weights : function or None
+        If not None, this computes the weights for the source extraction
+        region as a function of the wavelength (a single float) for the
+        current column and an array of Y pixel coordinates.
 
     Returns:
     --------
-    (countrate, background): tuple of 1-D ndarrays
-        countrate is the extracted spectrum in units of counts / s.
-        background is the background that was subtracted from the source
-    """
+    countrate : ndarray, 1-D, float64
+        The extracted spectrum in units of counts / s.
 
+    background : ndarray, 1-D, float64
+        The background that was subtracted from the source.
+
+    npixels : ndarray, 1-D, float64
+        For each column, this is the number of pixels that were added
+        together to get `countrate`.
+    """
     nl = lambdas.shape[0]
 
     # Evaluate the functions for source and (optionally) background limits,
@@ -172,10 +196,12 @@ def extract1d(image, lambdas, disp_range,
 
     bkg_model = None
 
-    countrate = np.zeros(nl, dtype=np.float32)
-    background = np.zeros(nl, dtype=np.float32)
+    countrate = np.zeros(nl, dtype=np.float64)
+    background = np.zeros(nl, dtype=np.float64)
+    npixels = np.zeros(nl, dtype=np.float64)
     # x is an index (column number) within `image`, while j is an index in
-    # lambdas, countrate, background, and the arrays in srclim and bkglim.
+    # lambdas, countrate, background, npixels, and the arrays in
+    # srclim and bkglim.
     x = disp_range[0]
     for j in range(nl):
         lam = lambdas[j]
@@ -202,24 +228,42 @@ def extract1d(image, lambdas, disp_range,
 
         # Extract the source, and optionally subtract background using the
         # polynomial fit to the background for this column.  Even if
-        # background smoothing was done, we must extract from the original,
-        # unsmoothed image.
+        # background smoothing was done, we must extract the source from
+        # the original, unsmoothed image.
         # source total flux, background total flux, area, total weight
         (total_flux, bkg_flux, tarea, twht) = _extract_src_flux(
             image, x, j, lam, srclim,
             weights=weights, bkgmodel=bkg_model
         )
         countrate[j] = total_flux
+        npixels[j] = tarea
         if nbkglim > 0:
             background[j] = bkg_flux
 
         x += 1
         continue
 
-    return (countrate, background)
+    return (countrate, background, npixels)
 
 def bxcar(image, smoothing_length):
-    """Smooth with a 1-D interval, along the last axis."""
+    """Smooth with a 1-D interval, along the last axis.
+
+    Extended summary
+    ----------------
+    Note that the entire input array will be smoothed, including the
+    region containing the source.  The source extraction must therefore
+    be done from the original, unsmoothed array.
+
+    Parameters:
+    -----------
+    image : 2-D ndarray
+        The input data array.
+
+    Returns:
+    --------
+    ndarray, 1-D
+        The smoothed input array.
+    """
 
     half = smoothing_length // 2
 
@@ -239,13 +283,71 @@ def bxcar(image, smoothing_length):
 
 def _extract_src_flux(image, x, j, lam, srclim,
                       weights, bkgmodel):
+    """Subtract the background and extract the source.
+
+    Parameters:
+    -----------
+    image : 2-D ndarray
+        The input data array.
+
+    x : int
+        This is an index (column number) within `image`.
+
+    j : int
+        This is an index starting with 0 at the first pixel of the
+        extracted spectrum.  See `disp_range` in function `extract1d`.
+        j = 0 when x = disp_range[0].
+
+    lam : float
+
+    srclim : list of lists of ndarrays
+        For each i, srclim[i] is a two-element list.  Those two elements
+        are arrays of the lower and upper limits of one of the extraction
+        regions.  Of course, there may only be one extraction region.
+
+    weights : function or None
+        If not None, this function gives the weights for pixels within
+        an extraction region.
+
+    bkgmodel : function
+
+    Returns:
+    --------
+    total_flux : float or NaN
+        Sum of counts within the source extraction region for the current
+        column.  This will be NaN if there is no data in the source
+        extraction region for the current column.
+
+    bkg_flux : float
+        Sum of counts within the background extraction regions for the
+        current column.
+
+    tarea : float
+        The sum of the number of pixels in the source extraction region for
+        the current column.  If only a fraction of a pixel is included at
+        an endpoint, that fraction is what would be included in the sum.
+        For example, if the source limits (in `srclim`) are (3, 7), then
+        the extraction region extends from the middle of pixel 3 to the
+        middle of pixel 7, so the pixel areas in the extraction region
+        would be:  0.5, 1.0, 1.0, 1.0, 0.5, resulting in `tarea` = 4.
+
+    twht : float
+        Two different weights are applied to the pixels.  One is the
+        fraction of a pixel that is included in the extraction (this will
+        be 1.0 except possibly at the endpoints); see also `tarea`.  The
+        other weight depends on the `weights` argument.  If `weights` is
+        None, then this weight will be 1.0 for each pixel, and `twht` will
+        be the sum of these values.  If the source limits are (3, 7) as in
+        the example for `tarea`, `twht` would be 5.0.
+    """
+
     # extract pixel values along the column that are within
     # source limits:
     y, val, area = _extract_colpix(image, x, j, srclim)
 
     # find indices of "good" (finite) values:
     good = np.isfinite(val)
-    npts = good.shape[0]
+    npts = good.sum()
 
     if npts == 0:
         return (np.nan, 0.0, 0.0, 0.0) # src total flux, bkg, area, total weight
@@ -284,18 +386,53 @@ def _extract_src_flux(image, x, j, lam, srclim,
     total_flux = (val * wht).sum(dtype=np.float64) / mwht
     bkg_flux = bkg.sum(dtype=np.float64)
 
-    # src total flux, bkg total flux, area, total weight
     return (total_flux, bkg_flux, tarea, twht)
 
 
 def _fit_background_model(image, x, j, bkglim, bkg_order):
+    """Extract background pixels and fit a polynomial.
+
+    Parameters:
+    -----------
+    image : 2-D ndarray
+        The input data array.
+
+    x : int
+        This is an index (column number) within `image`.
+
+    j : int
+        This is an index starting with 0 at the first pixel of the
+        extracted spectrum.  See `disp_range` in function `extract1d`.
+        j = 0 when x = disp_range[0].
+
+    bkglim : list of lists of arrays
+        For each i, bkglim[i] is a two-element list.  Those two elements
+        are arrays of the lower and upper limits of one of the background
+        extraction regions.
+
+    bkg_order : int
+        Polynomial order for fitting to the background regions of the
+        current column.
+
+    Returns:
+    --------
+    bkg_model : function
+        Polynomial fit to the background regions for the current column.
+
+    npts : int
+        This is intended to be the number of good values in the background
+        regions.  If the background limits are at pixel edges, however,
+        `npts` can include a pixel with zero weight; that is, `npts` can be
+        1 larger than one might expect.
+    """
+
     # extract pixel values along the column that are within
     # background limits:
     y, val, wht = _extract_colpix(image, x, j, bkglim)
 
     # find indices of "good" (finite) values:
     good = np.isfinite(val)
-    npts = good.shape[0]
+    npts = good.sum()
 
     if npts == 0 or not np.any(good):
         return (models.Polynomial1D(0), 0)
@@ -313,6 +450,51 @@ def _fit_background_model(image, x, j, bkglim, bkg_order):
 
 
 def _extract_colpix(image_data, x, j, limits):
+    """Extract either the source or background data.
+
+    Parameters:
+    -----------
+    image_data : 2-D ndarray
+        The input data array.
+
+    x : int
+        This is an index (column number) within `image_data`.
+
+    j : int
+        This is an index starting with 0 at the first pixel of the
+        extracted spectrum.  See `disp_range` in function `extract1d`.
+        j = 0 when x = disp_range[0].
+
+    limits : list of lists of ndarrays
+        For each i, limits[i] is a two-element list.  Those two elements
+        are 1-D arrays of the pixel coordinates for the lower and upper
+        limits of one of the source or background extraction regions.  The
+        number of elements in each of these arrays is the number of pixels
+        in the domain from disp_range[0] to and including disp_range[1].
+
+    Returns:
+    --------
+    y : ndarray, float64
+        Y pixel coordinates within the current column, for every pixel that
+        is included in any of the intervals in `limits`.
+
+    val : ndarray, float64
+        The image values at the pixels given by `y`.  That is,
+        val[i] = image_data[y[i], x].
+
+    wht : ndarray, float64
+        The weight associated with each element in `val`.  The weight
+        ranges from 0 to 1, giving the fraction of a pixel that is included
+        within an interval.  For example, suppose one of the elements in
+        `limits` has values 3.0 and 9.0 for the lower and upper limits for
+        pixel number `x`.  That corresponds to this list of Y pixel values:
+        [3., 4., 5., 6., 7., 8., 9.].  (You would then see this list as a
+        section in `y`.)  Because the integer value is the center of the
+        pixel, the lower and upper limits are in the middle of those
+        pixels, so the corresponding weights would be:
+        [0.5, 1., 1., 1., 1., 1., 0.5].
+    """
+
     # These are the extraction limits in image pixel coordinates:
     intervals = []
     for l in limits:
@@ -334,9 +516,9 @@ def _extract_colpix(image_data, x, j, limits):
     npts = max(npts, 1)
 
     # pre-allocate data arrays:
-    y = np.empty(npts, dtype=np.float32)
-    val = np.empty(npts, dtype=np.float32)
-    wht = np.ones(npts, dtype=np.float32)
+    y = np.empty(npts, dtype=np.float64)
+    val = np.empty(npts, dtype=np.float64)
+    wht = np.ones(npts, dtype=np.float64)
 
     # populate data and weights:
     k = 0
@@ -370,7 +552,7 @@ def _extract_colpix(image_data, x, j, limits):
 
         # c. all other intermediate pixels:
         val[k + 1:kn] = image_data[ii1 + 1:ii2, x]
-        y[k:kn + 1] = np.arange(ii1, ii2 + 1, 1, dtype=np.float32)
+        y[k:kn + 1] = np.arange(ii1, ii2 + 1, 1, dtype=np.float64)
 
         k += ii2 - ii1 + 1
 
@@ -378,6 +560,21 @@ def _extract_colpix(image_data, x, j, limits):
 
 
 def _coalesce_bounds(segments):
+    """Optimize limits.
+
+    Parameters:
+    -----------
+    segments : list of two-element lists of float
+        Each element of `segments` is a list containing the lower and upper
+        limits of a source or background extraction region for one of the
+        columns in the input image.
+
+    Returns:
+    --------
+    list of two-element lists of float
+        A copy of `segments`, but sorted, and with overlapping intervals
+        merged into a smaller number of equivalent intervals.
+    """
     if not isinstance(segments, list):
         raise TypeError("'segments' must be a list")
 

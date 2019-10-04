@@ -15,8 +15,8 @@ class ProcessItem:
 
     Parameters
     ----------
-    obj: object
-        The object to make a `ProcessItem`
+    obj : object
+        The object to make a `ProcessItem`.
         Objects must be equatable.
     """
     def __init__(self, obj):
@@ -28,7 +28,7 @@ class ProcessItem:
 
         Parameters
         ----------
-        iterable: iterable
+        iterable : iterable
             A source of objects to convert
 
         Returns
@@ -59,19 +59,20 @@ class ProcessList:
 
     Parameters
     ----------
-    items: [item[, ...]]
+    items : [item[, ...]]
         The list of items to process
 
-    rules: [Association[, ...]]
+    rules : [Association[, ...]]
         List of rules to process the items against.
 
-    work_over: int
+    work_over : int
         What the reprocessing should work on:
-        - `ProcessList.EXISTING`: Only existing associations
-        - `ProcessList.RULES`: Only on the rules to create new associations
-        - `ProcessList.BOTH`: Compare to both existing and rules
+        - `ProcessList.EXISTING`:   Only existing associations
+        - `ProcessList.RULES`:      Only on the rules to create new associations
+        - `ProcessList.BOTH`:       Compare to both existing and rules
+        - `ProcessList.NONSCIENCE`: Only on non-science items
 
-    only_on_match: bool
+    only_on_match : bool
         Only use this object if the overall condition
         is True.
     """
@@ -82,6 +83,10 @@ class ProcessList:
         EXISTING,
         NONSCIENCE,
     ) = range(0, 4)
+    """
+    Categories of different sets of associations or items
+    to process
+    """
 
     _str_attrs = ('rules', 'work_over', 'only_on_match')
 
@@ -125,7 +130,7 @@ class ProcessQueueNoDups:
 
     Parameters
     ----------
-    init: [obj[,...]] or None
+    init : [obj[,...]] or None
         List of objects to put on the queue
     """
     def __init__(self, init=None):
@@ -172,7 +177,7 @@ class ProcessQueueSorted:
 
     Parameters
     ----------
-    init: [ProcessList[,...]]
+    init : [ProcessList[,...]]
         List of `ProcessList` to start the queue with.
     """
     def __init__(self, init=None):

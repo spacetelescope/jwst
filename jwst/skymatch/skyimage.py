@@ -21,11 +21,9 @@ from . import region
 
 
 __all__ = ['SkyImage', 'SkyGroup']
-__version__ = '0.9.3'
-__vdate__ = '01-March-2016'
 
 
-class SkyImage():
+class SkyImage:
     """
     Container that holds information about properties of a *single*
     image such as:
@@ -114,6 +112,7 @@ class SkyImage():
 
         # initial sky value:
         self._sky = 0.0
+        self._sky_is_valid = False
 
         # check that mask has the same shape as image:
         if mask is None:
@@ -183,6 +182,19 @@ class SkyImage():
     @sky.setter
     def sky(self, sky):
         self._sky = sky
+
+
+    @property
+    def is_sky_valid(self):
+        """
+        Indicates whether sky value was successfully computed.
+        Must be set externally.
+        """
+        return self._sky_is_valid
+
+    @is_sky_valid.setter
+    def is_sky_valid(self, valid):
+        self._sky_is_valid = valid
 
     @property
     def radec(self):
@@ -581,7 +593,7 @@ None, optional
         return si
 
 
-class SkyGroup():
+class SkyGroup:
     """
     Holds multiple :py:class:`SkyImage` objects whose sky background values
     must be adjusted together.
@@ -669,15 +681,24 @@ class SkyGroup():
 
         Returns
         -------
-        polygon : SphericalPolygon
+        intersect_poly : SphericalPolygon
             A :py:class:`~spherical_geometry.polygon.SphericalPolygon` that is
             the intersection of this `SkyImage` and `skyimage`.
 
         """
         if isinstance(skyimage, (SkyImage, SkyGroup)):
-            return self._polygon.intersection(skyimage.polygon)
+            other = skyimage.polygon
         else:
-            return self._polygon.intersection(skyimage)
+            other = skyimage
+
+        pts1 = np.sort(list(self._polygon.points)[0], axis=0)
+        pts2 = np.sort(list(other.points)[0], axis=0)
+        if np.allclose(pts1, pts2, rtol=0, atol=5e-9):
+            intersect_poly = self._polygon.copy()
+        else:
+            intersect_poly = self._polygon.intersection(other)
+        return intersect_poly
+
 
     def _update_bounding_polygon(self):
         polygons = [im.polygon for im in self._images]

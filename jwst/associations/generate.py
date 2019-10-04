@@ -12,19 +12,21 @@ from .lib.process_list import (
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
+__all__ = ['generate']
+
 
 def generate(pool, rules, version_id=None):
     """Generate associations in the pool according to the rules.
 
     Parameters
     ----------
-    pool: AssociationPool
+    pool : AssociationPool
         The pool to generate from.
 
-    rules: Associations
+    rules : AssociationRegistry
         The associaton rule set.
 
-    version_id: None, True, or str
+    version_id : None, True, or str
         The string to use to tag associations and products.
         If None, no tagging occurs.
         If True, use a timestamp
@@ -32,12 +34,12 @@ def generate(pool, rules, version_id=None):
 
     Returns
     -------
-    associations: [association[,...]]
+    associations : [Association[,...]]
         List of associations
 
     Notes
     -----
-    Refer to the :ref:`Association Generator <association-generator>`
+    Refer to the :ref:`Association Generator <design-generator>`
     documentation for a full description.
     """
     associations = []
@@ -51,8 +53,15 @@ def generate(pool, rules, version_id=None):
     ])
 
     for process_list in process_queue:
+        # logger.debug(
+        #     'Working process list:'
+        #     f'\n\t#items {len(process_list.items)}'
+        #     f' working over {process_list.work_over}'
+        #     f' matching on {process_list.only_on_match}'
+        #     f'\n\trules {process_list.rules}'
+        # )
         for item in process_list.items:
-
+            # logger.debug(f'Processing item {item}')
             existing_asns, new_asns, to_process = generate_from_item(
                 item,
                 version_id,
@@ -60,6 +69,8 @@ def generate(pool, rules, version_id=None):
                 rules,
                 process_list
             )
+            # logger.debug(f'Associations updated: {existing_asns}')
+            # logger.debug(f'New associations: {new_asns}')
             associations.extend(new_asns)
 
             # If working on a process list EXISTING
@@ -72,9 +83,9 @@ def generate(pool, rules, version_id=None):
                     if to_process_list.work_over != process_list.work_over
                 ]
             process_queue.extend(to_process)
-            pass
 
     # Finalize found associations
+    logger.debug('# associations before finalization: %s', len(associations))
     try:
         finalized_asns = rules.callback.reduce('finalize', associations)
     except KeyError:
@@ -93,34 +104,34 @@ def generate_from_item(
 
     Parameters
     ----------
-    item: dict
+    item : dict
         The item to match to existing associations
         or generate new associations from
 
-    version_id: str or None
+    version_id : str or None
         Version id to use with association creation.
         If None, no versioning is used.
 
-    associations: [association, ...]
+    associations : [association, ...]
         List of already existing associations.
         If the item matches any of these, it will be added
         to them.
 
-    rules: AssociationRegistry or None
+    rules : AssociationRegistry or None
         List of rules to create new associations
 
-    process_list: ProcessList
+    process_list : ProcessList
         The `ProcessList` from which the current item belongs to.
 
     Returns
     -------
     (associations, process_list): 3-tuple where
-        existing_asns: [association,...]
+        existing_asns : [association,...]
             List of existing associations item belongs to.
             Empty if none match
-        new_asns: [association,...]
+        new_asns : [association,...]
             List of new associations item creates. Empty if none match
-        process_list: [ProcessList, ...]
+        process_list : [ProcessList, ...]
             List of process events.
     """
 
@@ -143,6 +154,9 @@ def generate_from_item(
             for asn in associations
             if type(asn) in allowed_rules
         ]
+        # logger.debug(
+        #     f'Checking against {len(associations)} existing associations'
+        # )
         existing_asns, reprocess_list = match_item(
             item, associations
         )
@@ -157,6 +171,7 @@ def generate_from_item(
             ProcessList.RULES,
     ) and rules is not None:
         ignore_asns = set([type(asn) for asn in existing_asns])
+        # logger.debug(f'Ignore asns {ignore_asns}')
         new_asns, reprocess = rules.match(
             item,
             version_id=version_id,
@@ -173,10 +188,10 @@ def match_item(item, associations):
 
     Parameters
     ----------
-    item: dict
+    item : dict
         The item to match to the associations.
 
-    associations: [association, ...]
+    associations : [association, ...]
         List of already existing associations.
         If the item matches any of these, it will be added
         to them.
@@ -184,9 +199,9 @@ def match_item(item, associations):
     Returns
     -------
     (associations, process_list): 2-tuple where
-        associations: [association,...]
+        associations : [association,...]
             List of associations item belongs to. Empty if none match
-        process_list: [ProcessList, ...]
+        process_list : [ProcessList, ...]
             List of process events.
     """
     item_associations = []

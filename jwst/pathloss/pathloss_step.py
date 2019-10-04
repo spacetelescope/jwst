@@ -1,6 +1,6 @@
 from ..stpipe import Step
 from .. import datamodels
-from . import path_loss
+from . import pathloss
 
 __all__ = ["PathLossStep"]
 
@@ -11,20 +11,7 @@ class PathLossStep(Step):
     into the data.
 
     Pathloss depends on the centering of the source in the aperture if the
-    source is a point source. This step fills the following attributes in the
-    datamodel:
-
-    - for exposure type `NRS_IFU`, the 1-d arrays .wavelength_pointsource,
-      .pathloss_pointsource, .wavelength_uniformsource and
-      .pathloss_uniformsource
-
-    - for exposure types NRS_FIXEDSLIT, NRS_BRIGHTOBJ, and NRS_MSASPEC, the
-      1-d arrays .slits[n].wavelength_pointsource,
-      .slits[n].pathloss_pointsource, .slits[n].wavelength_uniformsource and
-      .slits[n].pathloss_uniformsource
-
-    In all of these `EXP_TYPES`, these arrays are added to each
-    member of the `slits` attribute.
+    source is a point source.
     """
 
     spec = """
@@ -51,12 +38,11 @@ class PathLossStep(Step):
                 result.meta.cal_step.pathloss = 'SKIPPED'
                 return result
 
-            instrument = input_model.meta.instrument.name
             # Open the pathloss ref file data model
             pathloss_model = datamodels.PathlossModel(self.pathloss_name)
 
             # Do the pathloss correction
-            result = path_loss.do_correction(input_model, pathloss_model)
+            result = pathloss.do_correction(input_model, pathloss_model)
 
             pathloss_model.close()
 

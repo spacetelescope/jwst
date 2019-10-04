@@ -1,23 +1,14 @@
-Reference File Types
-====================
-The default algorithm  in the MIRI MRS stray-light correction step uses information contained
-in the  meta data of the input image which maps each pixels to a slice or the  region between the
-slices, also known as the slice gaps. This information was previously loaded from a reference file into the meta data by the assign_wcs
-step. 
-There is an option to use a more simplistic algorithm that uses  stray-light mask reference file.
+Reference Files
+===============
 
-CRDS Selection Criteria
------------------------
-If --method = "Nearest" option is used then the  MIRI MRS stray-light reference file is  selected on the basis of INSTRUME, DETECTOR, 
-and BAND values of the input science data set.
+:ref:`REGIONS: <regions_reffile>` Stores location of the regions on the detector
 
-MIRI MRS stray-light  Reference File Format
--------------------------------------------
-The stray-light mask  reference files are FITS files with  and empty primary data
-array and one IMAGE extension. This IMAGE extension is
-a 2-D integer image  mask file of size 
-1032 X 1024. The mask contains values of 1 for pixels that fall in 
-the slice gaps and values of 0 for science pixels. The stray-light 
-algorithm only uses pixels that fall in the slice gaps to determine 
-the correction.
-
+The ``straylight`` step uses the :ref:`REGIONS <regions_reffile>` reference
+file to determine the location of the MRS slices on the detector. This
+reference file provides 2-D detector images in which each pixel is set to
+the number of the corresponding slice (or 0 for inter-slice pixels) at each of 9
+different throughput levels ranging from 10% - 90%.  While ``assign_wcs``
+uses a fairly exclusive slice mask (selecting only pixels with high
+throughput for science analysis), the ``straylight`` step uses a very
+inclusive 20% threshhold to define slice pixels and obtain a cleaner
+sample of inter-slice pixels.

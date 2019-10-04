@@ -16,7 +16,7 @@ string will raise an exception::
 
     >>> from jwst.datamodels import ImageModel
     >>> model = ImageModel()
-    >>> model.meta.target.ra = "foo"
+    >>> model.meta.target.ra = "foo"    # doctest: +SKIP
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
       File "site-packages/jwst.datamodels/schema.py", line 672, in __setattr__
@@ -36,16 +36,41 @@ substring in metadata names as well as their documentation.  The
 search is case-insensitive::
 
     >>> from jwst.datamodels import ImageModel
-    # Create a model of the desired type
+    >>> # Create a model of the desired type
     >>> model = ImageModel()
-    # Call `search_schema` on it to find possibly related elements.
+    >>> # Call `search_schema` on it to find possibly related elements.
     >>> model.search_schema('target')
-    target: Information about the target
-    target.dec: DEC of the target
-    target.name: Standard astronomical catalog name for the target
-    target.proposer: Proposer's name for the target
-    target.ra: RA of the target
-    target.type: Fixed target, moving target, or generic target
+    meta.target
+    <BLANKLINE>
+    meta.target.catalog_name
+    <BLANKLINE>
+    meta.target.dec
+    <BLANKLINE>
+    meta.target.dec_uncertainty
+    <BLANKLINE>
+    meta.target.proper_motion_dec
+    <BLANKLINE>
+    meta.target.proper_motion_epoch
+    <BLANKLINE>
+    meta.target.proper_motion_ra
+    <BLANKLINE>
+    meta.target.proposer_dec
+    <BLANKLINE>
+    meta.target.proposer_name
+    <BLANKLINE>
+    meta.target.proposer_ra
+    <BLANKLINE>
+    meta.target.ra
+    <BLANKLINE>
+    meta.target.ra_uncertainty
+    <BLANKLINE>
+    meta.target.source_type
+    <BLANKLINE>
+    meta.target.type
+    <BLANKLINE>
+    meta.visit.internal_target
+    <BLANKLINE>
+
 
 An alternative method to get and set metadata values is to use a
 dot-separated name as a dictionary lookup.  This is useful for
@@ -70,16 +95,19 @@ list of transformation objects, each of which has a `type` (string)
 and a `coeff` (number) member.  We can assign elements to the list in
 the following equivalent ways::
 
+.. doctest-skip::
+
     >>> trans = model.meta.transformations.item()
     >>> trans.type = 'SIN'
     >>> trans.coeff = 42.0
     >>> model.meta.transformations.append(trans)
-
     >>> model.meta.transformations.append({'type': 'SIN', 'coeff': 42.0})
 
 When accessing the items of the list, the result is a normal metadata
 object where the attributes are type-checked::
 
+.. doctest-skip::
+  
     >>> trans = model.meta.transformations[0]
     >>> print(trans)
     <jwst.datamodels.schema.Transformations object at 0x123a810>
@@ -124,7 +152,7 @@ The following keywords have to do with validating n-dimensional arrays:
   For defining a table, it should be a list.
 
 - **array**: ``datatype`` should be one of the following strings,
-  representing fixed-length datatypes::
+  representing fixed-length datatypes:
 
   bool8, int8, int16, int32, int64, uint8, uint16, uint32,
   uint64, float16, float32, float64, float128, complex64,

@@ -2,6 +2,7 @@ import re
 import inspect
 import jsonschema
 import numpy as np
+from os import path as os_path
 from asdf.tags.core import ndarray
 
 from . import validate
@@ -186,11 +187,11 @@ def choose_pipeline(defaults):
             'NRC_CORON':5, 'NRC_FOCUS':6, 'NRC_DARK':2, 'NRC_FLAT':6,
             'NRC_LED':0, 'NRC_TACONFIRM':6, 'NRC_TSIMAGE':4,
             'NRC_WFSS':9, 'NRC_TSGRISM':4, 'NRS_AUTOFLAT':0,
-            'NRS_AUTOWAVE':0, 'NRS_BOTA':0, 'NRS_BRIGHTOBJ':4,
-            'NRS_CONFIRM':0, 'NRS_DARK':2, 'NRS_FIXEDSLIT':9,
-            'NRS_FOCUS':0, 'NRS_IFU':9, 'NRS_IMAGE':6, 'NRS_LAMP':0,
-            'NRS_MIMF':0, 'NRS_MSASPEC':9, 'NRS_TACONFIRM':0,
-            'NRS_TACQ':0, 'NRS_TASLIT':9}
+            'NRS_AUTOWAVE':0, 'NRS_BRIGHTOBJ':4, 'NRS_CONFIRM':0,
+            'NRS_DARK':2, 'NRS_FIXEDSLIT':9, 'NRS_FOCUS':0, 'NRS_IFU':9,
+            'NRS_IMAGE':6, 'NRS_LAMP':0, 'NRS_MIMF':0, 'NRS_MSASPEC':9,
+            'NRS_MSATA':0, 'NRS_TACONFIRM':0, 'NRS_TACQ':0, 'NRS_TASLIT':9,
+            'NRS_WATA':0}
 
     pipelines = [None, GuiderPipeline, DarkPipeline,
                  Ami3Pipeline, Tso3Pipeline, Coron3Pipeline,
@@ -282,7 +283,13 @@ def get_package(obj):
     else:
         path = ''
     path = path.split('.')
-    path.pop()
+
+    # Do not pop the module name if the source
+    # comes from an `_init_.py` file.
+    source_file = inspect.getfile(obj)
+    if os_path.basename(source_file) != '__init__.py':
+        path.pop()
+
     return '.'.join(path)
 
 def get_shape(im, defaults):

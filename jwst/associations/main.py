@@ -18,6 +18,8 @@ from jwst.associations.lib.constraint import (
 )
 from jwst.associations.lib.log_config import (log_config, DMS_config)
 
+__all__ = ['Main']
+
 # Configure logging
 logger = log_config(name=__package__)
 
@@ -32,34 +34,35 @@ class Main():
 
     Parameters
     ----------
-    args: [str, ...], or None
+    args : [str, ...], or None
         The command line arguments. Can be one of
-            - `None`: `sys.argv` is then used.
-            - `[str, ...]`: A list of strings which create the command line
-              with the similar structure as `sys.argv`
 
-    pool: None or AssociationPool
+        - `None`: `sys.argv` is then used.
+        - `[str, ...]`: A list of strings which create the command line
+          with the similar structure as `sys.argv`
+
+    pool : None or AssociationPool
         If `None`, a pool file must be specified in the `args`.
         Otherwise, an `AssociationPool`
 
     Attributes
     ----------
-    pool: `AssociationPool`
+    pool : `AssociationPool`
         The pool read in, or passed in through the parameter `pool`
 
-    rules: `AssociationRegistry`
+    rules : `AssociationRegistry`
         The rules used for association creation.
 
-    associations: [`Association`, ...]
+    associations : [`Association`, ...]
         The list of generated associations.
 
-    orphaned: `AssociationPool`
+    orphaned : `AssociationPool`
         The pool of exposures that do not belong
         to any association.
 
     Notes
     -----
-    Refer to the :ref:`Association Generator <association-generator>`
+    Refer to the :ref:`Association Generator <associations>`
     documentation for a full description.
     """
 
@@ -173,8 +176,12 @@ class Main():
             help='Version of the generator.'
         )
         parser.add_argument(
-            '--no-merge', action='store_true',
-            help='Do not merge Level2 associations into one'
+            '--merge', action='store_true',
+            help='Merge associations into single associations with multiple products'
+        )
+        parser.add_argument(
+            '--no-merge', action=DeprecateNoMerge,
+            help='Deprecated: Default is to not merge. See "--merge".'
         )
 
         parsed = parser.parse_args(args=args)
@@ -262,7 +269,7 @@ class Main():
 
         # Do a grand merging. This is done particularly for
         # Level2 associations.
-        if not parsed.no_merge:
+        if parsed.merge:
             try:
                 self.associations = self.rules.Utility.merge_asns(self.associations)
             except AttributeError:
@@ -307,18 +314,18 @@ class Main():
 
         Parameters
         ----------
-        path: str
+        path : str
             The path to save the associations to.
 
-        format: str
+        format : str
             The format of the associations
 
-        save_orphans: bool
+        save_orphans : bool
             If true, save the orphans to an astropy.table.Table
         """
         for asn in self.associations:
             (fname, serialized) = asn.dump(format=format)
-            with open(os.path.join(path, fname + '.' + format), 'w') as f:
+            with open(os.path.join(path, fname), 'w') as f:
                 f.write(serialized)
 
         if save_orphans:
@@ -332,12 +339,24 @@ class Main():
 # #########
 # Utilities
 # #########
+class DeprecateNoMerge(argparse.Action):
+    """Deprecate the `--no-merge` option"""
+    def __init__(self, option_strings, dest, nargs=None, **kwargs):
+        super(DeprecateNoMerge, self).__init__(option_strings, dest, const=True, nargs=0, **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        logger.warning(
+            'The "--no-merge" option is now the default and deprecated.'
+            ' Use "--merge" to force merging.')
+        setattr(namespace, self.dest, values)
+
+
 def constrain_on_candidates(candidates):
     """Create a constraint based on a list of candidates
 
     Parameters
     ----------
-    candidates: (str, ...) or None
+    candidates : (str, ...) or None
         List of candidate id's.
         If None, then all candidates are matched.
     """
@@ -370,17 +389,17 @@ def filter_discovered_only(
 
     Parameters
     ----------
-    associations: iterable
+    associations : iterable
         The list of associations to check. The list
         is that returned by the `generate` function.
 
-    discover_ruleset: str
+    discover_ruleset : str
         The name of the ruleset that has the discover rules
 
-    candidate_ruleset: str
+    candidate_ruleset : str
         The name of the ruleset that finds just candidates
 
-    keep_candidates: bool
+    keep_candidates : bool
         Keep explicit candidate associations in the list.
 
     Returns

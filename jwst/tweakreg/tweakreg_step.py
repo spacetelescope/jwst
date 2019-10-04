@@ -1,26 +1,20 @@
-#! /usr/bin/env python
 """
 JWST pipeline step for image alignment.
 
 :Authors: Mihai Cara
 
-
 """
+from os import path
 
-import os
-import logging
-
-import numpy as np
 from astropy.table import Table
+from tweakwcs.imalign import align_wcs
+from tweakwcs.tpwcs import JWSTgWCS
+from tweakwcs.matchutils import TPMatch
 
 # LOCAL
-from . import __version__
-from . import __vdate__
 from ..stpipe import Step
 from .. import datamodels
 
-from .imalign import align
-from .wcsimage import *
 from .tweakreg_catalog import make_tweakreg_catalog
 
 
@@ -36,9 +30,11 @@ class TweakRegStep(Step):
     spec = """
         # Source finding parameters:
         save_catalogs = boolean(default=False) # Write out catalogs?
-        catalog_format = string(default='ecsv')   # Catalog output file format
-        kernel_fwhm = float(default=2.5)    # Gaussian kernel FWHM in pixels
-        snr_threshold = float(default=5.0)  # SNR threshold above the bkg
+        catalog_format = string(default='ecsv') # Catalog output file format
+        kernel_fwhm = float(default=2.5) # Gaussian kernel FWHM in pixels
+        snr_threshold = float(default=10.0) # SNR threshold above the bkg
+        brightest = integer(default=100) # Keep top ``brightest`` objects
+        peakmax = float(default=None) # Filter out objects with pixel values >= ``peakmax``
 
         # Optimize alignment order:
         enforce_user_order = boolean(default=False) # Align images in user specified order?
@@ -48,7 +44,7 @@ class TweakRegStep(Step):
 
         # Object matching parameters:
         minobj = integer(default=15) # Minimum number of objects acceptable for matching
-        searchrad = float(default=10.0) # The search radius in arcsec for a match
+        searchrad = float(default=1.0) # The search radius in arcsec for a match
         use2dhist = boolean(default=True) # Use 2d histogram to find initial offset?
         separation = float(default=0.5) # Minimum object separation in arcsec
         tolerance = float(default=1.0) # Matching tolerance for xyxymatch in arcsec
@@ -66,7 +62,7 @@ class TweakRegStep(Step):
     def process(self, input):
 
         try:
-            images = datamodels.ModelContainer(input, persist=True)
+            images = datamodels.ModelContainer(input)
         except TypeError as te:
             raise te("Input to tweakreg must be a list of DataModels, an "
                 "association, or an already open ModelContainer containing "
@@ -74,14 +70,35 @@ class TweakRegStep(Step):
 
         # Build the catalogs for input images
         for image_model in images:
-            catalog = make_tweakreg_catalog(image_model, self.kernel_fwhm,
-                                            self.snr_threshold)
+            catalog = make_tweakreg_catalog(
+                image_model, self.kernel_fwhm, self.snr_threshold,
+                brightest=self.brightest, peakmax=self.peakmax
+            )
+
+            # filter out sources outside the image array if WCS validity
+            # region is provided:
+            wcs_bounds = image_model.meta.wcs.pixel_bounds
+            if wcs_bounds is not None:
+                ((xmin, xmax), (ymin, ymax)) = wcs_bounds
+                xname = 'xcentroid' if 'xcentroid' in catalog.colnames else 'x'
+                yname = 'ycentroid' if 'ycentroid' in catalog.colnames else 'y'
+                x = catalog[xname]
+                y = catalog[yname]
+                mask = (x > xmin) & (x < xmax) & (y > ymin) & (y < ymax)
+                catalog = catalog[mask]
+
             filename = image_model.meta.filename
-            self.log.info('Detected {0} sources in {1}.'.format(len(catalog), filename))
+            nsources = len(catalog)
+            if nsources == 0:
+                self.log.warning('No sources found in {}.'.format(filename))
+            else:
+                self.log.info('Detected {} sources in {}.'
+                              .format(len(catalog), filename))
 
             if self.save_catalogs:
-                catalog_filename = filename.replace('.fits', '_cat.{0}'.
-                                                    format(self.catalog_format))
+                catalog_filename = filename.replace(
+                    '.fits', '_cat.{}'.format(self.catalog_format)
+                )
                 if self.catalog_format == 'ecsv':
                     fmt = 'ascii.ecsv'
                 elif self.catalog_format == 'fits':
@@ -89,10 +106,12 @@ class TweakRegStep(Step):
                     #       FITS will also not clobber existing files.
                     fmt = 'fits'
                 else:
-                    raise ValueError('catalog_format must be "ecsv" or "fits".')
+                    raise ValueError(
+                        '\'catalog_format\' must be "ecsv" or "fits".'
+                    )
                 catalog.write(catalog_filename, format=fmt, overwrite=True)
-                self.log.info('Wrote source catalog: {0}'.
-                              format(catalog_filename))
+                self.log.info('Wrote source catalog: {}'
+                              .format(catalog_filename))
                 image_model.meta.tweakreg_catalog.filename = catalog_filename
 
             image_model.catalog = catalog
@@ -104,10 +123,20 @@ class TweakRegStep(Step):
         # group images by their "group id":
         grp_img = images.models_grouped
 
+        self.log.info('')
+        self.log.info("Number of image groups to be aligned: {:d}."
+                      .format(len(grp_img)))
+        self.log.info("Image groups:")
+
         if len(grp_img) == 1:
+            self.log.info("* Images in GROUP 1:")
+            for im in grp_img[0]:
+                self.log.info("     {}".format(im.meta.filename))
+            self.log.info('')
+
             # we need at least two exposures to perform image alignment
             self.log.info("At least two exposures are required for image "
-                     "alignment.")
+                          "alignment.")
             self.log.info("Nothing to do. Skipping 'TweakRegStep'...")
             self.skip = True
             for model in images:
@@ -119,34 +148,47 @@ class TweakRegStep(Step):
         for g in grp_img:
             if len(g) == 0:
                 raise AssertionError("Logical error in the pipeline code.")
+            else:
+                group_name = _common_name(g)
+                wcsimlist = list(map(self._imodel2wcsim, g))
+                self.log.info("* Images in GROUP '{}':".format(group_name))
+                for im in wcsimlist:
+                    im.meta['group_id'] = group_name
+                    self.log.info("     {}".format(im.meta['name']))
+                imcats.extend(wcsimlist)
 
-            wcsimlist = list(map(self._imodel2wcsim, g))
-            wgroup = WCSGroupCatalog(wcsimlist, name=wcsimlist[0].name)
-            imcats.append(wgroup)
+        self.log.info('')
 
         # align images:
-        align(
-            imcat=imcats,
+        tpmatch = TPMatch(
+            searchrad=self.searchrad,
+            separation=self.separation,
+            use2dhist=self.use2dhist,
+            tolerance=self.tolerance,
+            xoffset=self.xoffset,
+            yoffset=self.yoffset
+        )
+
+        align_wcs(
+            imcats,
             refcat=None,
             enforce_user_order=self.enforce_user_order,
             expand_refcat=self.expand_refcat,
             minobj=self.minobj,
-            searchrad=self.searchrad,
-            use2dhist=self.use2dhist,
-            separation=self.separation,
-            tolerance=self.tolerance,
-            xoffset=self.xoffset,
-            yoffset=self.yoffset,
+            match=tpmatch,
             fitgeom=self.fitgeometry,
             nclip=self.nclip,
-            sigma=self.sigma
+            sigma=(self.sigma, 'rmse')
         )
 
-        for model in images:
-            model.meta.cal_step.tweakreg = "COMPLETE"
+        for imcat in imcats:
+            imcat.meta['image_model'].meta.cal_step.tweakreg = 'COMPLETE'
+            # retrieve fit status and update wcs if fit is successful:
+            fit_info = imcat.meta.get('fit_info')
+            if fit_info['status'] in 'SUCCESS':
+                imcat.meta['image_model'].meta.wcs = imcat.wcs
 
         return images
-
 
     def _imodel2wcsim(self, image_model):
         # make sure that we have a catalog:
@@ -155,9 +197,17 @@ class TweakRegStep(Step):
         else:
             catalog = image_model.meta.tweakreg_catalog.filename
 
-        if not isinstance(catalog, Table):
+        model_name = path.splitext(image_model.meta.filename)[0].strip('_- ')
+
+        if isinstance(catalog, Table):
+            if not catalog.meta.get('name', None):
+                catalog.meta['name'] = model_name
+
+        else:
             try:
+                cat_name = str(catalog)
                 catalog = Table.read(catalog, format='ascii.ecsv')
+                catalog.meta['name'] = cat_name
             except IOError:
                 self.log.error("Cannot read catalog {}".format(catalog))
 
@@ -167,17 +217,23 @@ class TweakRegStep(Step):
 
         # create WCSImageCatalog object:
         refang = image_model.meta.wcsinfo.instance
-        im = WCSImageCatalog(
-            shape=image_model.data.shape,
+        im = JWSTgWCS(
             wcs=image_model.meta.wcs,
-            ref_angles={'roll_ref': refang['roll_ref'],
-                        'ra_ref': refang['ra_ref'],
-                        'dec_ref': refang['dec_ref'],
-                        'v2_ref': refang['v2_ref'] / 3600.0,
-                        'v3_ref': refang['v3_ref'] / 3600.0},
-            catalog=catalog,
-            name=image_model.meta.filename,
-            meta={'image_model': image_model}
+            wcsinfo={'roll_ref': refang['roll_ref'],
+                     'v2_ref': refang['v2_ref'],
+                     'v3_ref': refang['v3_ref']},
+            meta={'image_model': image_model, 'catalog': catalog,
+                  'name': model_name}
         )
 
         return im
+
+
+def _common_name(group):
+    file_names = [path.splitext(im.meta.filename)[0].strip('_- ')
+                  for im in group]
+    fname_len = list(map(len, file_names))
+    assert all(fname_len[0] == l for l in fname_len)
+    cn = path.commonprefix(file_names)
+    assert cn
+    return cn

@@ -3,28 +3,18 @@ A module that provides functions for matching sky in overlapping images.
 
 :Authors: Mihai Cara
 
-:License: :doc:`../LICENSE`
-
 """
-
-# STDLIB
-import os
-import sys
 import logging
 from datetime import datetime
-
-# THIRD PARTY
 import numpy as np
 
 # LOCAL
-from . skystatistics import SkyStats
-from . skyimage import *
+from . skyimage import SkyImage, SkyGroup
 
 
 __all__ = ['match']
 
-__version__ = '0.9.3'
-__vdate__ = '07-April-2017'
+
 __author__ = 'Mihai Cara'
 
 
@@ -251,7 +241,6 @@ stsci_python_sphinxdocs_2.13/drizzlepac/astrodrizzle.html>`_\ .
     log.info(" ")
     log.info("***** {:s}.{:s}() started on {}"
              .format(__name__, function_name, runtime_begin))
-    log.info("      Version {} ({})".format(__version__, __vdate__))
     log.info(" ")
 
     # check sky method:
@@ -323,12 +312,13 @@ stsci_python_sphinxdocs_2.13/drizzlepac/astrodrizzle.html>`_\ .
         sky_deltas = _find_optimum_sky_deltas(images, apply_sky=not subtract)
         sky_good = np.isfinite(sky_deltas)
 
-        # match sky "Up" or "Down":
-        if match_down:
-            refsky = np.amin(sky_deltas[sky_good])
-        else:
-            refsky = np.amax(sky_deltas[sky_good])
-        sky_deltas[sky_good] -= refsky
+        if np.any(sky_good):
+            # match sky "Up" or "Down":
+            if match_down:
+                refsky = np.amin(sky_deltas[sky_good])
+            else:
+                refsky = np.amax(sky_deltas[sky_good])
+            sky_deltas[sky_good] -= refsky
 
         # convert to Python list and replace numpy.nan with None
         sky_deltas = [
@@ -372,7 +362,7 @@ stsci_python_sphinxdocs_2.13/drizzlepac/astrodrizzle.html>`_\ .
             log.info(" ")
             if minsky is None:
                 log.warning("   Unable to compute \"global\" sky value")
-                sky_deltas = len(sky_deltas) * [0.0]
+                sky_deltas = len(sky_deltas) * [None]
             else:
                 sky_deltas = len(sky_deltas) * [minsky]
             log.info("   \"Global\" sky value correction: {} "
@@ -398,10 +388,19 @@ def _apply_sky(images, sky_deltas, do_global, do_skysub, show_old):
     for img, sky in zip(images, sky_deltas):
         img_type = 'Image' if isinstance(img, SkyImage) else 'Group'
 
-        if not do_global and sky is None:
-            log.warning("   *  {:s} ID={}: Unable to compute sky value"
-                        .format(img_type, img.id))
-            sky = 0.0
+        if do_global:
+            if sky is None:
+                valid = img.is_sky_valid
+                sky = 0.0
+            else:
+                valid = True
+
+        else:
+            valid = sky is None
+            if valid:
+                log.warning("   *  {:s} ID={}: Unable to compute sky value"
+                            .format(img_type, img.id))
+                sky = 0.0
 
         if img_type == 'Group':
             # apply sky change:
@@ -426,6 +425,8 @@ def _apply_sky(images, sky_deltas, do_global, do_skysub, show_old):
                     log.info("      - Image ID={}. Sky background: {:G}"
                              .format(im.id, c * new_sky))
 
+                im.is_sky_valid = valid
+
         else:
             # apply sky change:
             old_sky = img.sky
@@ -443,6 +444,8 @@ def _apply_sky(images, sky_deltas, do_global, do_skysub, show_old):
             else:
                 log.info("   *  Image ID={}. Sky background: {:G}"
                          .format(img.id, c * new_sky))
+
+            img.is_sky_valid = valid
 
 
 # TODO: due to a bug in the sphere package, see

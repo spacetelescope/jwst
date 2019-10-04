@@ -16,9 +16,15 @@ from astropy.modeling import models
 from astropy import time
 
 from .. import util, validate
+from .. import _defined_models as defined_models
 from .. import (DataModel, ImageModel, RampModel, MaskModel,
-                MultiSlitModel, AsnModel, CollimatorModel)
+                MultiSlitModel, AsnModel, CollimatorModel,
+                SourceModelContainer, MultiExposureModel)
+from ..schema import merge_property_trees, build_docstring
 
+from ..extension import URL_PREFIX
+
+import asdf
 from asdf import schema as mschema
 
 FITS_FILE = None
@@ -70,9 +76,8 @@ def test_date2():
 
 TRANSFORMATION_SCHEMA = {
     "allOf": [
-        mschema.load_schema(
-            os.path.join(os.path.dirname(__file__),
-                         "../schemas/image.schema.yaml"),
+        mschema.load_schema(os.path.join(URL_PREFIX, "image.schema"),
+            resolver=asdf.AsdfFile().resolver,
             resolve_references=True),
         {
             "type": "object",
@@ -257,12 +262,11 @@ def test_to_flat_dict():
         assert d['meta.origin'] == 'FOO'
 
 
-def test_table_array():
+def test_table_array_shape_ndim():
     table_schema = {
         "allOf": [
-            mschema.load_schema(
-                os.path.join(os.path.dirname(__file__),
-                             "../schemas/image.schema.yaml"),
+            mschema.load_schema(os.path.join(URL_PREFIX, "image.schema"),
+                resolver=asdf.AsdfFile().resolver,
                 resolve_references=True),
             {
                 "type": "object",
@@ -275,8 +279,17 @@ def test_table_array():
                             {'datatype': 'int16',
                              'name': 'my_int'},
                             {'datatype': 'float32',
-                             'name': 'my_float',
+                             'name': 'my_float1',
                              'shape': [3, 2]},
+                            {'datatype': 'float32',
+                             'name': 'my_float2',
+                             'ndim': 2},
+                            {'datatype': 'float32',
+                             'name': 'my_float3'},
+                            {'datatype': 'float32',
+                             'name': 'my_float4'},
+                            {'datatype': 'float32',
+                             'name': 'my_float5'},
                             {'datatype': ['ascii', 64],
                              'name': 'my_string'}
                         ]
@@ -287,24 +300,60 @@ def test_table_array():
     }
 
     with DataModel(schema=table_schema) as x:
-        x.table = [(True, 42, 37.5, 'STRING')]
+        x.table = [
+            (
+                True,
+                42,
+                [[37.5, 38.0], [39.0, 40.0], [41.0, 42.0]],
+                [[37.5, 38.0], [39.0, 40.0], [41.0, 42.0]],
+                [[37.5, 38.0], [39.0, 40.0], [41.0, 42.0]],
+                [37.5, 38.0],
+                37.5,
+                'STRING'
+            )
+        ]
         assert x.table.dtype == [
-            (str('f0'), str('?')),
-            (str('my_int'), str('=i2')),
-            (str('my_float'), str('=f4'), (3, 2)),
-            (str('my_string'), str('S64'))
-            ]
+            ('f0', '?'),
+            ('my_int', '=i2'),
+            ('my_float1', '=f4', (3, 2)),
+            ('my_float2', '=f4', (3, 2)),
+            ('my_float3', '=f4', (3, 2)),
+            ('my_float4', '=f4', (2,)),
+            ('my_float5', '=f4'),
+            ('my_string', 'S64')
+        ]
 
         x.to_fits(TMP_FITS, overwrite=True)
 
     with DataModel(TMP_FITS, schema=table_schema) as x:
-        table = x.table
-        assert table.dtype == [
-            (str('f0'), str('?')),
-            (str('my_int'), str('=i2')),
-            (str('my_float'), str('=f4'), (3, 2)),
-            (str('my_string'), str('S64'))
+        assert x.table.dtype == [
+            ('f0', '?'),
+            ('my_int', '=i2'),
+            ('my_float1', '=f4', (3, 2)),
+            ('my_float2', '=f4', (3, 2)),
+            ('my_float3', '=f4', (3, 2)),
+            ('my_float4', '=f4', (2,)),
+            ('my_float5', '=f4'),
+            ('my_string', 'S64')
+        ]
+
+    table_schema['allOf'][1]['properties']['table']['datatype'][3]['ndim'] = 3
+    with DataModel(schema=table_schema) as x:
+        with pytest.raises(ValueError) as e:
+            x.table = [
+                (
+                    True,
+                    42,
+                    [[37.5, 38.0], [39.0, 40.0], [41.0, 42.0]],
+                    [[37.5, 38.0], [39.0, 40.0], [41.0, 42.0]],
+                    [[37.5, 38.0], [39.0, 40.0], [41.0, 42.0]],
+                    [37.5, 38.0],
+                    37.5,
+                    'STRING'
+                )
             ]
+
+        assert str(e.value).startswith("Array has wrong number of dimensions.")
 
 
 def test_table_array_convert():
@@ -316,9 +365,8 @@ def test_table_array_convert():
 
     table_schema = {
         "allOf": [
-            mschema.load_schema(
-                os.path.join(os.path.dirname(__file__),
-                             "../schemas/image.schema.yaml"),
+            mschema.load_schema(os.path.join(URL_PREFIX, "image.schema"),
+                resolver=asdf.AsdfFile().resolver,
                 resolve_references=True),
             {
                 "type": "object",
@@ -341,17 +389,13 @@ def test_table_array_convert():
 
     table = np.array(
         [(42, 32000, 'foo')],
-        dtype=[
-            (str('f0'), str('?')),
-            (str('my_int'), str('=i2')),
-            (str('my_string'), str('S64'))
-            ])
+        dtype=[('f0', '?'), ('my_int', '=i2'), ('my_string', 'S64')]
+    )
 
-    x = util.gentle_asarray(table, dtype=[
-        (str('f0'), str('?')),
-        (str('my_int'), str('=i2')),
-        (str('my_string'), str('S64'))
-    ])
+    x = util.gentle_asarray(
+        table,
+        dtype=[('f0', '?'), ('my_int', '=i2'), ('my_string', 'S64')]
+    )
 
     assert x is table
 
@@ -361,11 +405,8 @@ def test_table_array_convert():
 
     table = np.array(
         [(42, 32000, 'foo')],
-        dtype=[
-            (str('f0'), str('?')),
-            (str('my_int'), str('=i2')),
-            (str('my_string'), str('S3'))
-            ])
+        dtype=[('f0', '?'), ('my_int', '=i2'), ('my_string', 'S3')]
+    )
 
     with DataModel(schema=table_schema) as x:
         x.table = table
@@ -381,9 +422,8 @@ def test_mask_model():
 def test_data_array():
     data_array_schema = {
         "allOf": [
-            mschema.load_schema(
-                os.path.join(os.path.dirname(__file__),
-                         "../schemas/core.schema.yaml"),
+            mschema.load_schema(os.path.join(URL_PREFIX, "core.schema"),
+                resolver=asdf.AsdfFile().resolver,
                 resolve_references=True),
             {
                 "type": "object",
@@ -460,7 +500,7 @@ def test_data_array():
         for hdu in hdulist:
             x.add((hdu.header.get('EXTNAME'),
                    hdu.header.get('EXTVER')))
-        print(x)
+
         assert x == set(
             [('FOO', 2), ('FOO', 1), ('ASDF', None), ('DQ', 2),
              (None, None)])
@@ -582,3 +622,63 @@ def test_multislit_append_string():
     with pytest.raises(jsonschema.ValidationError):
         m = MultiSlitModel(strict_validation=True)
         m.slits.append('junk')
+
+
+@pytest.mark.parametrize('combiner', ['anyOf', 'oneOf'])
+def test_merge_property_trees(combiner):
+
+    s = {
+         'type': 'object',
+         'properties': {
+             'foobar': {
+                 combiner: [
+                     {
+                         'type': 'array',
+                         'items': [ {'type': 'string'}, {'type': 'number'} ],
+                         'minItems': 2,
+                         'maxItems': 2,
+                     },
+                     {
+                         'type': 'array',
+                         'items': [
+                             {'type': 'number'},
+                             {'type': 'string'},
+                             {'type': 'number'}
+                         ],
+                         'minItems': 3,
+                         'maxItems': 3,
+                     }
+                 ]
+             }
+         }
+    }
+
+    # Make sure that merge_property_trees does not destructively modify schemas
+    f = merge_property_trees(s)
+    assert f == s
+
+
+def test_schema_docstring():
+    template = "{fits_hdu} {title}"
+    docstring = build_docstring(ImageModel, template).split("\n")
+    for i, hdu in enumerate(('SCI', 'DQ', 'ERR', 'ZEROFRAME')):
+        assert docstring[i].startswith(hdu)
+
+@pytest.mark.parametrize("model", [m for m in defined_models.values()])
+def test_all_datamodels_init(model):
+    """
+    Test that all current datamodels can be initialized.
+    """
+    if model is SourceModelContainer:
+        # SourceModelContainer cannot have init=None
+        m = model(MultiExposureModel())
+    else:
+        m = model()
+    del m
+
+
+def test_datamodel_schema_entry_points():
+    """Test that entry points for DataModelExtension works as expected"""
+    resolver = asdf.AsdfFile().resolver
+    mschema.load_schema('http://stsci.edu/schemas/jwst_datamodel/image.schema',
+        resolver=resolver, resolve_references=True)

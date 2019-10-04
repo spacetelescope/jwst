@@ -1,8 +1,7 @@
 #! /usr/bin/env python
 
-from ..stpipe import Step, cmdline
+from ..stpipe import Step
 from .. import datamodels
-from ..gain_scale import gain_scale
 from . import ramp_fit
 
 import logging
@@ -84,11 +83,12 @@ class RampFitStep (Step):
                 gls_opt_model, 'fitoptgls', output_file=self.opt_name
             )
 
-        out_model.meta.cal_step.ramp_fit = 'COMPLETE'
+        if out_model is not None:
+            out_model.meta.cal_step.ramp_fit = 'COMPLETE'
+            if input_model.meta.exposure.type in ('NRS_IFU', 'MIR_MRS'):
+                out_model = datamodels.IFUImageModel(out_model)
+
         if int_model is not None:
             int_model.meta.cal_step.ramp_fit = 'COMPLETE'
-
-        if input_model.meta.exposure.type in ('NRS_IFU', 'MIR_MRS'):
-            out_model = datamodels.IFUImageModel(out_model)
 
         return out_model, int_model

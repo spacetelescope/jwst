@@ -74,5 +74,5 @@ def test_multi_mnemonics(caplog, engdb):
 # #####################
 @pytest.fixture
 def engdb():
-    with EngDB_Mocker() as mocker:
+    with EngDB_Mocker() as mocker: # noqa: F841
         yield
