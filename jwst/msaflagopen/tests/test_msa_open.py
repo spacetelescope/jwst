@@ -11,8 +11,9 @@ from jwst.msaflagopen.msaflag_open import (boundingbox_to_indices,
                                            or_subarray_with_array,
                                            wcs_to_dq)
 from jwst.msaflagopen.msaflagopen_step import create_reference_filename_dictionary
-from jwst.msaflagopen.tests import data
+from jwst.assign_wcs.tests import data
 from jwst.transforms.models import Slit
+from jwst.stpipe.step import Step
 
 data_path = os.path.split(os.path.abspath(data.__file__))[0]
 
@@ -58,17 +59,31 @@ def test_id_from_xy():
 def test_get_failed_open_shutters():
     """test that failed open shutters are returned from reference file"""
 
-    msa_oper = get_file_path('msa_oper.json')
+    # Set up data model to retrieve reference file
+    dm = ImageModel()
+    dm.meta.instrument.name = 'NIRSPEC'
+    dm.meta.observation.date = '2016-09-05'
+    dm.meta.observation.time = '8:59:37'
+    
+    # Get reference file and return all failed open shutters
+    msa_oper = Step().get_reference_file(dm, 'msaoper')
     result = get_failed_open_shutters(msa_oper)
 
+    # get_failed_open_shutters returns 3 flaggable states
+    # state, Internal state, and TA state.
     for shutter in result:
-        assert (shutter['state'] == 'open')
+        assert (shutter['state'] == 'open' or 
+                shutter['Internal state'] == 'open' or
+                shutter['TA state'] == 'open')
 
 def test_create_slitlets():
     """Test that slitlets are Slit type and have all the necessary fields"""
 
     dm = ImageModel()
-    msa_oper = get_file_path('msa_oper.json')
+    dm.meta.instrument.name = 'NIRSPEC'
+    dm.meta.observation.date = '2016-09-05'
+    dm.meta.observation.time = '8:59:37'
+    msa_oper = Step().get_reference_file(dm, 'msaoper')
     result = create_slitlets(dm, msa_oper)
 
     slit_fields = ('name','shutter_id','dither_position','xcen',
@@ -168,11 +183,13 @@ def test_flag():
     im.meta.instrument.msa_metadata_file = metafl
     im.meta.dither.position_number = 1
 
-    im = AssignWcsStep.call(im)
+    step = AssignWcsStep()
+    msa_oper = step.get_reference_file(im, 'msaoper')
+
+    im = step.call(im)
 
     wcs_ref_files = create_reference_filename_dictionary(im)
 
-    msa_oper = get_file_path('jwst_nirspec_msaoper_0001.json')
     failed_slitlets = create_slitlets(im, msa_oper)
 
     result = flag(im, failed_slitlets, wcs_ref_files)
