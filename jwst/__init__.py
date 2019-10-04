@@ -1,9 +1,19 @@
-try:
-    from .version import * # noqa: F403, F401
-except ImportError:  # Not available for RTD
-    __version_commit__ = 'unknown'
-    __version__ = 'dev'
+import re
 import sys
+from pkg_resources import get_distribution, DistributionNotFound
+
+__version_commit__ = ''
+_regex_git_hash = re.compile(r'.*\+g(\w+)')
+
+try:
+    __version__ = get_distribution(__name__).version
+except DistributionNotFound:
+    __version__ = 'dev'
+
+if '+' in __version__:
+    commit = _regex_git_hash.match(__version__).groups()
+    if commit:
+        __version_commit__ = commit
 
 if sys.version_info < (3, 5):
     raise ImportError("JWST requires Python 3.5 and above.")
