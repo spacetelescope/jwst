@@ -112,6 +112,7 @@ datamodels
   'astropy.io.misc.asdf.extension.AstropyAsdfExtension' from package astropy-4.0.dev24515,
   but older version astropy-3.2.1 is installed``. [#4070]
 
+- Added new spectroscopic mode photom reference file data models. [#4096]
 
 exp_to_source
 -------------
