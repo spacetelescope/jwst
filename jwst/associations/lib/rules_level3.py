@@ -200,7 +200,6 @@ class Asn_SpectralTarget(AsnMixin_Spectrum):
                 sources=['exp_type'],
                 value=(
                     'mir_lrs-fixedslit'
-                    '|mir_lrs-slitless'
                     '|nis_soss'
                 ),
                 force_unique=False
@@ -264,8 +263,7 @@ class Asn_SlitlessSpectral(AsnMixin_Spectrum):
                 name='exp_type',
                 sources=['exp_type'],
                 value=(
-                    'mir_lrs-slitless'
-                    '|nis_soss'
+                    'nis_soss'
                 ),
                 force_unique=False
             ),
