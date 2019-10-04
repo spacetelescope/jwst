@@ -62,6 +62,7 @@ from .saturation import SaturationModel
 from .slit import SlitModel, SlitDataModel
 from .source_container import SourceModelContainer
 from .spec import SpecModel
+from .steppars import StepParsModel
 from .straylight import StrayLightModel
 from .superbias import SuperBiasModel
 from .throughput import ThroughputModel
@@ -121,7 +122,7 @@ __all__ = [
     'RegionsModel', 'ResetModel',
     'ResolutionModel', 'MiriResolutionModel',
     'RSCDModel', 'SaturationModel', 'SlitDataModel', 'SlitModel', 'SpecModel',
-    'SourceModelContainer',
+    'SourceModelContainer', 'StepParsModel',
     'StrayLightModel', 'SuperBiasModel', 'SpecwcsModel',
     'ThroughputModel',
     'TrapDensityModel', 'TrapParsModel', 'TrapsFilledModel',

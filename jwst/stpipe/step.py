@@ -3,6 +3,7 @@ Step
 """
 from functools import partial
 import gc
+import inspect
 from os.path import (
     abspath,
     basename,
@@ -30,11 +31,12 @@ from .. import __version_commit__, __version__
 from ..associations.load_as_asn import (LoadAsAssociation, LoadAsLevel2Asn)
 from ..associations.lib.format_template import FormatTemplate
 from ..associations.lib.update_path import update_key_value
-from ..datamodels import (DataModel, ModelContainer)
+from ..datamodels import (DataModel, ModelContainer, StepParsModel)
 from ..datamodels import open as dm_open
+from ..lib.class_property import ClassProperty
 from ..lib.suffix import remove_suffix
 
-
+from crds.core import exceptions
 class Step():
     """
     Step
@@ -53,6 +55,9 @@ class Step():
     search_output_file = boolean(default=True)       # Use outputfile define in parent step
     input_dir          = string(default=None)        # Input directory
     """
+
+    # No parameter model has been created yet.
+    _pars_model = None
 
     # Reference types for both command line override
     # definition and reference prefetch
@@ -235,12 +240,18 @@ class Step():
         if 'name' in config:
             del config['name']
 
-        return cls(
+        step = cls(
             name=name,
             parent=parent,
             config_file=config_file,
             _validate_kwds=False,
             **config)
+        try:
+            step._pars_model = config.pars_model
+        except AttributeError:
+            pass
+
+        return step
 
     def __init__(self, name=None, parent=None, config_file=None,
                  _validate_kwds=True, **kws):
@@ -267,12 +278,11 @@ class Step():
             Additional parameters to set.  These will be set as member
             variables on the new Step instance.
         """
-
         # Setup primary input
         self._reference_files_used = []
         self._input_filename = None
         self._input_dir = None
-
+        self._keywords = kws
         if _validate_kwds:
             spec = self.load_spec_file()
             kws = config_parser.config_from_dict(
@@ -494,6 +504,8 @@ class Step():
         """
         Creates and runs a new instance of the class.
 
+        Gets a config file from CRDS if one is available
+
         To set configuration parameters, pass a `config_file` path or
         keyword arguments.  Keyword arguments override those in the
         specified `config_file`.
@@ -513,16 +525,34 @@ class Step():
         a new instance but simply runs the existing instance of the `Step`
         class.
         """
+        logger_name = cls.pars_model.instance['parameters']['name']
+        log_cls = log.getLogger(logger_name)
+        if len(args) > 0:
+            filename = args[0]
+            crds_config = cls.get_config_from_reference(filename)
+        else:
+            log_cls.info("No filename given, cannot retrieve config from CRDS")
+            crds_config = {}
         if 'config_file' in kwargs:
             config_file = kwargs['config_file']
             del kwargs['config_file']
-            config = config_parser.load_config_file(config_file)
-            auto_cls, name = cls._parse_class_and_name(config)
-            config.update(kwargs)
-            instance = cls.from_config_section(
-                config, name=name, config_file=config_file)
-        else:
-            instance = cls(**kwargs)
+            config_from_file = config_parser.load_config_file(config_file)
+            crds_config.update(config_from_file)
+
+        crds_config.update(kwargs)
+
+        if 'class' in crds_config:
+            del crds_config['class']
+        if 'name' in crds_config:
+            del crds_config['name']
+
+        instance = cls(**crds_config)
+
+        try:
+            instance._pars_model = crds_config.pars_model
+        except (AttributeError, UnboundLocalError):
+            pass
+
         return instance.run(*args)
 
     @property
@@ -658,6 +688,47 @@ class Step():
             self._reference_files_used.append(
                 (reference_file_type, hdr_name))
         return crds_client.check_reference_open(reference_name)
+
+    @classmethod
+    def get_config_from_reference(cls, dataset, observatory=None):
+        """Retrieve step parameters from reference database
+        Parameters
+        ----------
+        cls: jwst.stpipe.step.Step
+            Either a class or instance of a class derived
+            from `Step`.
+        dataset : jwst.datamodels.ModelBase instance
+            A model of the input file.  Metadata on this input file will
+            be used by the CRDS "bestref" algorithm to obtain a reference
+            file.
+        observatory: string
+            telescope name used with CRDS,  e.g. 'jwst'.
+        Returns
+        -------
+        step_parameters: configobj
+            The parameters as retrieved from CRDS. If there is an issue, log as such
+            and return an empty config obj.
+        """
+        # Create a new logger for this step
+        cls.log = log.getLogger('step')
+
+        cls.log.setLevel(log.logging.DEBUG)
+
+
+        cls.log.info(f'Retrieving step {cls.pars_model.meta.reftype} parameters from CRDS')
+        try:
+            ref_file = crds_client.get_reference_file(dataset,
+                                                      cls.pars_model.meta.reftype,
+                                                      observatory=observatory)
+        except (AttributeError, exceptions.CrdsError, exceptions.CrdsLookupError):
+            cls.log.info('\tNo parameters found')
+            return config_parser.ConfigObj()
+        if ref_file != 'N/A':
+            cls.log.info(f'\tReference parameters found: {ref_file}')
+            ref = config_parser.load_config_file(ref_file)
+            return ref
+        else:
+            return config_parser.ConfigObj()
 
     @classmethod
     def reference_uri_to_cache_path(cls, reference_uri):
@@ -1093,10 +1164,86 @@ class Step():
 
         # TODO: standardize cal_step naming to point to the offical step name
 
+    @ClassProperty
+    def pars(step):
+        """Retrieve the configuration parameters of a step
+
+        Parameters
+        ----------
+        step: `Step`-derived class or instance
+
+        Returns
+        -------
+        pars: dict
+            Keys are the parameters and values are the values.
+        """
+        spec = config_parser.load_spec_file(step)
+        if spec is None:
+            return {}
+        instance_pars = {}
+        for key in spec:
+            if hasattr(step, key):
+                value = getattr(step, key)
+                if not isinstance(value, property):
+                    instance_pars[key] = value
+        pars = config_parser.config_from_dict(instance_pars, spec, allow_missing=True)
+        pars = dict(pars)
+        return pars
+
+    @ClassProperty
+    def pars_model(step):
+        """Return Step parameters as StepParsModel
+
+        Parameters
+        ----------
+        step: `Step`-derived class or instance
+            The `Step` or `Step` instance to retrieve the parameters model for.
+
+        Returns
+        -------
+        model: `StepParsModel`
+            The `StepParsModel`.
+        """
+        pars_model = step._pars_model
+        if pars_model is None:
+            pars_model = StepParsModel()
+        pars_model.parameters.instance.update(step.pars)
+
+        # Update class and name.
+        full_class_name = _full_class_name(step)
+        pars_model.parameters.instance.update({
+            'class': full_class_name,
+            'name': getattr(step, 'name', full_class_name.split('.')[-1])
+        })
+        pars_model.meta.reftype = 'pars-' + pars_model.parameters.name.lower()
+
+        step._pars_model = pars_model
+        return pars_model
+
 
 # #########
 # Utilities
 # #########
+def _full_class_name(obj):
+    """Return the fully qualified class name
+
+    Parameters
+    ----------
+    obj: object
+        The object in question. Can be a class
+
+    Returns
+    class_name: str
+        The full name
+    """
+    cls = obj if inspect.isclass(obj) else obj.__class__
+    module = cls.__module__
+    if module is None or module == str.__class__.__module__:
+        return cls.__name__  # Avoid reporting __builtin__
+    else:
+        return module + '.' + cls.__name__
+
+
 def _get_suffix(suffix, step=None, default_suffix=None):
     """Retrieve either specified or pipeline-supplied suffix
 

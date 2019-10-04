@@ -35,6 +35,7 @@ undergone by the files before being ingested in CRDS.
 Reference File Types
 ====================
 
+
 Most reference files have a one-to-one relationship with calibration steps, e.g.
 there is one step that uses one type of reference file. Some steps, however, use
 several types of reference files and some reference file types are used by more
@@ -258,6 +259,17 @@ documentation on each reference file.
 +--------------------------------------------------+---------------------------------------------+
 | :ref:`WFSSBKG <wfssbkg_reffile>`                 | :ref:`background <background_step>`         |
 +--------------------------------------------------+---------------------------------------------+
+
+Step Parameters Reference Types
++++++++++++++++++++++++++++++++
+
+When each ``Step`` is instantiated, a CRDS look-up, based on the ``Step`` class
+name and input data, is made to retrieve a configuration file. The ``reftype``
+for such configuration files is ``pars-<class name>``. For example, for the step
+``jwst.persistence.PersistenceStep``, the ``reftype`` would be
+``pars-persistencestep``.
+
+For more information, see :ref:`Configuration Files`.
 
 .. _`Standard Required Keywords`:
 
