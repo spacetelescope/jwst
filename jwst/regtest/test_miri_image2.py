@@ -13,7 +13,7 @@ from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 @pytest.mark.bigdata
 def test_foo(request, rtdata, fitsdiff_defaults, _jail):
     request.node.user_properties = [('output', rtdata.output)]
-    rtdata.input_remote = "miri/test_image2pipeline/jw00001001001_01101_00001_mirimage_rate.fits"
+    rtdata.input_remote = "miri/image/jw00001001001_01101_00001_mirimage_rate.fits"
     input_data = rtdata.get_data(rtdata.input_remote)
     Image2Pipeline.call(input_data, save_results=True)
 
@@ -28,7 +28,7 @@ def test_foo(request, rtdata, fitsdiff_defaults, _jail):
 def run_pipeline(rtdata_module, jail):
     """Run calwebb_image2 pipeline on MIRI imaging data."""
     rtdata = rtdata_module
-    rtdata.input_remote = "miri/test_image2pipeline/jw00001001001_01101_00001_mirimage_rate.fits"
+    rtdata.input_remote = "miri/image/jw00001001001_01101_00001_mirimage_rate.fits"
     input_data = rtdata.get_data(rtdata.input_remote)
 
     collect_pipeline_cfgs('config')
