@@ -421,7 +421,7 @@ class Step():
             # Mark versions
             for result in results:
                 if isinstance(result, datamodels.DataModel):
-                    result.meta.calibration_software_revision = __version_commit__
+                    result.meta.calibration_software_revision = __version_commit__ or 'RELEASE'
                     result.meta.calibration_software_version = __version__
 
             # Save the output file if one was specified
