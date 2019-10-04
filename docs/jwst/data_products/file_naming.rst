@@ -5,7 +5,7 @@ File Naming Schemes
 
 Stage 0 - 2 Naming
 ^^^^^^^^^^^^^^^^^^
-The FITS file naming scheme for Stage 0, 1, and 2 "exposure-based" products is::
+The names of the exposure level data is constructed with information from the science header of the exposure, allowing users to map it to the observation in ther corresponding APT files. For Stage 0, 1, and 2 "exposure-based" products is:
 
  jw<ppppp><ooo><vvv>_<gg><s><aa>_<eeeee>(-<"seg"NNN>)_<detector>_<prodType>.fits
 
@@ -46,6 +46,8 @@ where
  - subarray: optional indicator of subarray name
  - prodType: product type identifier (e.g. 'i2d', 's3d', 'x1d')
  - ACT_ID: a 2-digit activity ID
+
+The observation number from the APT proposal entry is preserved as the observation number in the science telemetry, making it easier for the proposer to determine the observation that gave rise to an individual exposure. Since the exposure number resets with each new activity, the visit group, parallel sequence ID, and activity are included to make it possible to trace the exposure to the commanding request. All the products of the calibration pipeline that derive from this exposure have this naming convention, with the file name suffix distinguishing the different file products in the data set.
 
 An example Stage 3 product FITS file name is::
 
