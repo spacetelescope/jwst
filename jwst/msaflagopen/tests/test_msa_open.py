@@ -64,7 +64,7 @@ def test_get_failed_open_shutters():
     dm.meta.instrument.name = 'NIRSPEC'
     dm.meta.observation.date = '2016-09-05'
     dm.meta.observation.time = '8:59:37'
-    
+
     # Get reference file and return all failed open shutters
     msa_oper = Step().get_reference_file(dm, 'msaoper')
     result = get_failed_open_shutters(msa_oper)
@@ -72,7 +72,7 @@ def test_get_failed_open_shutters():
     # get_failed_open_shutters returns 3 flaggable states
     # state, Internal state, and TA state.
     for shutter in result:
-        assert (shutter['state'] == 'open' or 
+        assert (shutter['state'] == 'open' or
                 shutter['Internal state'] == 'open' or
                 shutter['TA state'] == 'open')
 
