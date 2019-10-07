@@ -33,7 +33,7 @@ bc1 = utils.copy(bc0)
 bc1.name = "stable-deps"
 bc1.env_vars = env_vars
 bc1.build_cmds = [
-    "pip install -e .[test]",
+    "pip install --src=../src -e .[test]",
 ]
 bc1.test_cmds = [
     "pytest --cov=./ -r sx --junitxml=results.xml",
@@ -46,7 +46,7 @@ bc2.nodetype = 'python3.7'
 bc2.name = 'conda-free'
 bc2.env_vars = env_vars
 bc2.build_cmds = [
-    "pip install -e .[test]",
+    "pip install --src=../src -e .[test]",
 ]
 bc2.test_cmds = [
     "pytest --cov=./ -r sx --junitxml=results.xml",
