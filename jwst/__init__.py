@@ -13,7 +13,7 @@ except DistributionNotFound:
 if '+' in __version__:
     commit = _regex_git_hash.match(__version__).groups()
     if commit:
-        __version_commit__ = commit
+        __version_commit__ = commit[0]
 
 if sys.version_info < (3, 5):
     raise ImportError("JWST requires Python 3.5 and above.")
