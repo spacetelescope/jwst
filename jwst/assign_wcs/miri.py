@@ -523,6 +523,7 @@ exp_type2transform = {'mir_image': imaging,
                       'mir_flat-mrs': not_implemented_mode,
                       'mir_flat-image': not_implemented_mode,
                       'mir_dark': not_implemented_mode,
+                      'mir_taconfirm': imaging,
                       }
 
 
