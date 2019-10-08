@@ -200,7 +200,7 @@ def make_wfss_datamodel():
 def test_wfss_background():
     """Test background subtraction for NIRISS WFSS modes."""
     data = make_wfss_datamodel()
-    bkg = make_wfss_datamodel()
+    bkg = datamodels.ImageModel()
     
     wcs_corrected = AssignWcsStep.call(data)
 
