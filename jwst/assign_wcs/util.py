@@ -790,6 +790,28 @@ def update_s_region_spectral(model):
     update_s_region_keyword(model, footprint)
 
 
+def compute_footprint_nrs_slit(slit):
+    """ Compute the footprint of a Nirspec slit using the instrument model.
+    
+    Parameters
+    ----------
+    slit : `~jwst.datamodels.SlitModel`
+    """
+    slit2world = slit.meta.wcs.get_transform("slit_frame", "world")
+    virtual_corners_x = [-.5, -.5, .5, .5]
+    virtual_corners_y = [slit.slit_ymin, slit.slit_ymax, slit.slit_ymax, slit.slit_ymin]
+    input_lam = [2e-6] * 4
+    ra, dec, lam = slit2world(virtual_corners_x,
+                              virtual_corners_y,
+                              input_lam)
+    return np.array([ra, dec]).T
+
+
+def update_s_region_nrs_slit(slit):
+    footprint = compute_footprint_nrs_slit(slit)
+    update_s_region_keyword(slit, footprint)
+    
+
 def update_s_region_keyword(model, footprint):
     """ Update the S_REGION keyword.
     """
