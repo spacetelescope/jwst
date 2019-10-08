@@ -36,7 +36,6 @@ from ..datamodels import open as dm_open
 from ..lib.class_property import ClassProperty
 from ..lib.suffix import remove_suffix
 
-from crds.core import exceptions
 class Step():
     """
     Step
@@ -716,6 +715,7 @@ class Step():
 
 
         cls.log.info(f'Retrieving step {cls.pars_model.meta.reftype} parameters from CRDS')
+        exceptions = crds_client.get_exceptions_module()
         try:
             ref_file = crds_client.get_reference_file(dataset,
                                                       cls.pars_model.meta.reftype,

@@ -30,6 +30,10 @@
 """This module defines functions that connect the core CRDS package to the
 JWST CAL code and STPIPE, tailoring it to work with DATAMODELS as inputs
 and provide results in the forms required by STPIPE.
+
+WARNING:  JWST CAL and CRDS have circular dependencies.  Do not use CRDS imports
+directly in modules other than this crds_client so that dependency order and
+general integration can be managed here.
 """
 
 import re
@@ -37,6 +41,12 @@ import re
 import crds
 from crds.core import config, exceptions, heavy_client, log
 from crds.core import crds_cache_locking
+
+def get_exceptions_module():
+    """Provide external indirect access to the crds.core.exceptions module to
+    alleviate issues with circular dependencies.
+    """
+    return exceptions
 
 # This is really a testing and debug convenience function, and notably now
 # the only place in this module that a direct import of datamodels occurs
