@@ -94,7 +94,7 @@ def nrs_extract2d(input_model, slit_name=None, apply_wavecorr=False, reference_f
             util.update_s_region_nrs_slit(new_model)
             if orig_s_region != new_model.meta.wcsinfo.s_region.strip():
                 log.info('extract_2d updated S_REGION to {0}'.format(new_model.meta.wcsinfo.s_region))
-            
+
             # Copy BUNIT values to output slit
             new_model.meta.bunit_data = input_model.meta.bunit_data
             new_model.meta.bunit_err = input_model.meta.bunit_err

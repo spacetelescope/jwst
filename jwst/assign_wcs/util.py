@@ -792,7 +792,7 @@ def update_s_region_spectral(model):
 
 def compute_footprint_nrs_slit(slit):
     """ Compute the footprint of a Nirspec slit using the instrument model.
-    
+
     Parameters
     ----------
     slit : `~jwst.datamodels.SlitModel`
@@ -810,7 +810,7 @@ def compute_footprint_nrs_slit(slit):
 def update_s_region_nrs_slit(slit):
     footprint = compute_footprint_nrs_slit(slit)
     update_s_region_keyword(slit, footprint)
-    
+
 
 def update_s_region_keyword(model, footprint):
     """ Update the S_REGION keyword.

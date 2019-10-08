@@ -433,8 +433,8 @@ def test_shutter_size_on_sky():
     virtual_corners_x = [-.5, -.5, .5, .5, -.5]
     virtual_corners_y = [-.5, .5, .5, -.5, -.5]
     input_lam = [2e-6] * 5
-    
-    slit2world = wslit.get_transform('slit_frame', 'world')    
+
+    slit2world = wslit.get_transform('slit_frame', 'world')
     ra, dec, lam = slit2world(virtual_corners_x,
                               virtual_corners_y,
                               input_lam)
@@ -446,4 +446,3 @@ def test_shutter_size_on_sky():
     assert sep_x.value < 0.194
     assert sep_y.value > 0.45
     assert sep_y.value < 0.46
-    
