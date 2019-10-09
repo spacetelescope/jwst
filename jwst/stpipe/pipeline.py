@@ -150,17 +150,21 @@ class Pipeline(Step):
     @classmethod
     def get_config_from_reference(cls, dataset, observatory=None):
         """Retrieve step parameters from reference database
+
         Parameters
         ----------
-        step: jwst.stpipe.step.Step
+        cls: `jwst.stpipe.step.Step`
             Either a class or instance of a class derived
             from `Step`.
-        dataset : jwst.datamodels.ModelBase instance
+
+        dataset: `jwst.datamodels.ModelBase`
             A model of the input file.  Metadata on this input file will
             be used by the CRDS "bestref" algorithm to obtain a reference
             file.
-        observatory: string
+
+        observatory: str
             telescope name used with CRDS,  e.g. 'jwst'.
+
         Returns
         -------
         step_parameters: configobj
@@ -196,9 +200,8 @@ class Pipeline(Step):
         Merge the config parameters from a pipeline config reference file into the
         config obtained from each step
 
-        Parameters:
-        -----------
-
+        Parameters
+        ----------
         cls: jwst.stpipe.pipeline.Pipeline class
             The pipeline class
 
@@ -209,9 +212,8 @@ class Pipeline(Step):
         ref_file: string
             The name of the pipeline crds step config file
 
-        Returns:
-        --------
-
+        Returns
+        -------
         ConfigObj of the merged parameters, with those from the pipeline cfg having
         precedence over those from the individual steps
         """

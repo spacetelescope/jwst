@@ -23,6 +23,8 @@ try:
 except ImportError:
     DISCOURAGED_TYPES = None
 
+from crds.core import exceptions
+
 from . import config_parser
 from . import crds_client
 from . import log
@@ -36,7 +38,9 @@ from ..datamodels import open as dm_open
 from ..lib.class_property import ClassProperty
 from ..lib.suffix import remove_suffix
 
-from crds.core import exceptions
+__all__ = ['Step']
+
+
 class Step():
     """
     Step
@@ -692,17 +696,19 @@ class Step():
     @classmethod
     def get_config_from_reference(cls, dataset, observatory=None):
         """Retrieve step parameters from reference database
+
         Parameters
         ----------
-        cls: jwst.stpipe.step.Step
+        cls: `jwst.stpipe.step.Step`
             Either a class or instance of a class derived
             from `Step`.
-        dataset : jwst.datamodels.ModelBase instance
+        dataset: `jwst.datamodels.ModelBase`
             A model of the input file.  Metadata on this input file will
             be used by the CRDS "bestref" algorithm to obtain a reference
             file.
-        observatory: string
+        observatory: str
             telescope name used with CRDS,  e.g. 'jwst'.
+
         Returns
         -------
         step_parameters: configobj

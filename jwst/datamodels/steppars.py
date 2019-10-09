@@ -25,10 +25,9 @@ class StepParsModel(DataModel):
     A data model for `Step` parameters.
     """
     schema_url = "steppars.schema"
-    supported_formats = ['yaml', 'json', 'asdf']
 
     def __init__(self, init=None, **kwargs):
-        super().__init__(init=init, **kwargs)
+        super(StepParsModel, self).__init__(init=init, **kwargs)
         meta = copy(DEFAULT_META)
         meta.update(self.meta.instance)
         self.meta.instance.update(meta)
