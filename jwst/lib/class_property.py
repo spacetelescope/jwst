@@ -1,6 +1,65 @@
 """Allow property access to both instance and class attributes"""
+from functools import partial
 
-class ClassProperty:
+
+class ClassInstanceMethod:
+    """Allow a method to be both class and instance
+
+    This defines a descriptor that maps a function to
+    both the class and instance.
+
+    Parameters
+    ----------
+    fget: function
+        The function to use as the `__get__` method.
+
+    Notes
+    -----
+    On class access, only the `__get__` method of a descriptor is used.
+    All other descriptor methods are ignored. As such, allowing the definitions
+    of `__set__` and `__delete__` are not allowed.
+
+    Examples
+    --------
+    Usage is the same as any other class or instance method. However, access
+    is available from both the class and instances.
+
+    >>> class MyClass:
+    ...     @ClassInstanceMethod
+    ...     def baz(obj):
+    ...         return obj._baz
+    ...
+    ...     _baz = 'class'
+
+    >>> MyClass.baz
+    'class'
+
+    >>> mc = MyClass()
+    >>> mc.baz()
+    'class'
+
+    >>> mc._baz = 'instance'
+    >>> mc.baz()
+    'instance'
+
+    >>> MyClass.baz()
+    'class'
+    """
+    def __init__(self, fget=None, doc=None):
+        self.fget = fget
+        if doc is None and fget is not None:
+            doc = fget.__doc__
+        self.__doc__ = doc
+
+    def __get__(self, obj, objtype=None):
+        if obj is None:
+            obj = objtype
+        if self.fget is None:
+            raise AttributeError("unreadable attribute")
+        return partial(self.fget, obj)
+
+
+class ClassProperty(ClassInstanceMethod):
     """Allow class-level property descriptors
 
     This property allows definition of a non-data descriptor to
@@ -47,12 +106,6 @@ class ClassProperty:
     >>> MyClass.baz
     'class'
     """
-    def __init__(self, fget=None, doc=None):
-        self.fget = fget
-        if doc is None and fget is not None:
-            doc = fget.__doc__
-        self.__doc__ = doc
-
     def __get__(self, obj, objtype=None):
         if obj is None:
             obj = objtype
