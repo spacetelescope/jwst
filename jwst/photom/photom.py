@@ -14,6 +14,9 @@ PHOT_TOL = 0.001  # relative tolerance between PIXAR_* keys
 # Conversion factor from MJy/sr to uJy/arcsec^2
 MJSR_TO_UJA2 = (u.megajansky/u.steradian).to(u.microjansky/u.arcsecond/u.arcsecond)
 
+# Conversion factor from square arcseconds to steradians
+A2_TO_SR = (np.pi / (180. * 3600.))**2
+
 
 class DataSet():
     """
@@ -82,7 +85,7 @@ class DataSet():
 
         Parameters
         ----------
-        ftab : `~jwst.datamodels.NirspecPhotomModel` or `~jwst.datamodels.NirspecFSPhotomModel`
+        ftab : `~jwst.datamodels.NrsFsPhotomModel` or `~jwst.datamodels.NrsMosPhotomModel`
             NIRSpec photom reference file data model
 
         area_fname : str
@@ -192,21 +195,25 @@ class DataSet():
                             conv_factor * MJSR_TO_UJA2
 
                         # Get the length of the relative response arrays in
-                        # this table row
-                        nelem = tabdata['nelem']
+                        # this table row.  If the nelem column is not present,
+                        # we'll use the entire wavelength and relresponse
+                        # arrays.
+                        try:
+                            nelem = tabdata['nelem']
+                        except KeyError:
+                            nelem = None
 
-                        # If the relative response arrays have length > 0,
-                        # load them for use in creating a 2-d array of
-                        # flux conversion factors
-                        if nelem > 0:
-                            waves = tabdata['wavelength'][:nelem]
-                            relresps = tabdata['relresponse'][:nelem]
+                        waves = tabdata['wavelength']
+                        relresps = tabdata['relresponse']
+                        if nelem is not None:
+                            waves = waves[:nelem]
+                            relresps = relresps[:nelem]
 
-                            # Convert wavelengths from meters to microns,
-                            # if necessary
-                            microns_100 = 1.e-4    # 100 microns, in meters
-                            if waves.max() > 0. and waves.max() < microns_100:
-                                waves *= 1.e+6
+                        # Convert wavelengths from meters to microns,
+                        # if necessary
+                        microns_100 = 1.e-4    # 100 microns, in meters
+                        if waves.max() > 0. and waves.max() < microns_100:
+                            waves *= 1.e+6
 
                         # Load the pixel area table for the IFU slices
                         area_model = datamodels.NirspecIfuAreaModel(area_fname)
@@ -233,14 +240,14 @@ class DataSet():
                         sens2d[where_dq > 0] = 1.
                         self.input.dq = np.bitwise_or(self.input.dq, dqmap)
 
-                        # Divide the science data and uncertainty arrays by the
-                        # conversion factors
-                        self.input.data /= sens2d
-                        self.input.err /= sens2d
-                        self.input.var_poisson /= sens2d**2
-                        self.input.var_rnoise /= sens2d**2
+                        # Multiply the science data and uncertainty arrays by
+                        # the conversion factors
+                        self.input.data *= sens2d
+                        self.input.err *= sens2d
+                        self.input.var_poisson *= sens2d**2
+                        self.input.var_rnoise *= sens2d**2
                         if self.input.var_flat is not None and np.size(self.input.var_flat) > 0:
-                            self.input.var_flat /= sens2d**2
+                            self.input.var_flat *= sens2d**2
 
                         # Update BUNIT values for the science data and err
                         self.input.meta.bunit_data = 'mJy/arcsec^2'
@@ -273,7 +280,9 @@ class DataSet():
 
         Parameters
         ----------
-        ftab : `~jwst.datamodels.NirissPhotomModel`
+        ftab : `~jwst.datamodels.NisSossPhotomModel` or
+               `~jwst.datamodels.NisWfssPhotomModel` or
+               `~jwst.datamodels.NisImgPhotomModel`
             NIRISS photom reference file data model
 
         Returns
@@ -323,7 +332,10 @@ class DataSet():
             for tabdata in ftab.phot_table:
                 ref_filter = tabdata['filter'].strip().upper()
                 ref_pupil = tabdata['pupil'].strip().upper()
-                ref_order = tabdata['order']
+                try:
+                    ref_order = tabdata['order']
+                except KeyError:
+                    ref_order = order
 
                 # SOSS mode
                 if self.exptype in ['NIS_SOSS']:
@@ -363,7 +375,9 @@ class DataSet():
 
         Parameters
         ----------
-        ftab : `~jwst.datamodels.MiriImgPhotomModel` or `~jwst.datamodels.MiriMrsPhotomModel`
+        ftab : `~jwst.datamodels.MirImgPhotomModel` or
+               `~jwst.datamodels.MirMrsPhotomModel` or
+               `~jwst.datamodels.MirLrsPhotomModel`
             MIRI photom reference file data model
 
         Returns
@@ -425,13 +439,14 @@ class DataSet():
             # Compute the combined 2D sensitivity factors
             sens2d = ftab.data * ftab.pixsiz
 
-            # Divide the science data and uncertainty arrays by the 2D sensitivity factors
-            self.input.data /= sens2d
-            self.input.err /= sens2d
-            self.input.var_poisson /= sens2d**2
-            self.input.var_rnoise /= sens2d**2
+            # Multiply the science data and uncertainty arrays by the 2D
+            # sensitivity factors
+            self.input.data *= sens2d
+            self.input.err *= sens2d
+            self.input.var_poisson *= sens2d**2
+            self.input.var_rnoise *= sens2d**2
             if self.input.var_flat is not None and np.size(self.input.var_flat) > 0:
-                self.input.var_flat /= sens2d**2
+                self.input.var_flat *= sens2d**2
 
             # Update the science dq
             self.input.dq = np.bitwise_or(self.input.dq, ftab.dq)
@@ -519,7 +534,7 @@ class DataSet():
 
         Parameters
         ----------
-        ftab : `~jwst.datamodels.FgsPhotomModel`
+        ftab : `~jwst.datamodels.FgsImgPhotomModel`
             FGS photom reference file data model
 
         Returns
@@ -634,7 +649,24 @@ class DataSet():
 
         """
         # Get the scalar conversion factor from the PHOTMJSR column of the table row
-        conversion = tabdata['photmjsr']
+        try:
+            conversion = tabdata['photmjsr']    # unit is MJy / sr
+        except KeyError:
+            conversion = tabdata['photmj']      # unit is MJy
+            if (isinstance(self.input, datamodels.MultiSlitModel) and
+                self.input.meta.exposure.type == 'NRS_MSASPEC'):
+                    slit = self.input.slits[self.slitnum]
+                    srctype = slit.source_type
+                    if srctype is not None and not srctype.upper() == 'POINT':
+                        log.debug('Converting conversion factor from flux '
+                                  'to surface brightness')
+                        conversion /= slit.meta.photometry.pixelarea_steradians
+            else:
+                    srctype = self.input.meta.target.source_type
+                    if srctype is not None and not srctype.upper() == 'POINT':
+                        log.debug('Converting conversion factor from flux '
+                                  'to surface brightness')
+                        conversion /= self.input.meta.photometry.pixelarea_steradians
 
         # Store the conversion factor in the meta data
         log.info('PHOTMJSR value: %g', conversion)
@@ -647,15 +679,36 @@ class DataSet():
             self.input.meta.photometry.conversion_megajanskys = conversion
             self.input.meta.photometry.conversion_microjanskys = conversion * MJSR_TO_UJA2
 
-        # Get the length of the relative response arrays in this row
-        nelem = tabdata['nelem']
+        # If the photom reference file is for spectroscopic data, the table
+        # in the reference file should contain a 'wavelength' column (among
+        # other columns).
+        try:
+            wl_test = tabdata['wavelength']
+            is_spectroscopic = True
+            del wl_test
+        except KeyError:
+            is_spectroscopic = False
 
-        # If the relative response arrays have length > 0,
-        # load and include them in the flux conversion
+        # Get the length of the relative response arrays in this row.  If the
+        # nelem column is not present, we'll use the entire wavelength and
+        # relresponse arrays.
+        if is_spectroscopic:
+            try:
+                nelem = tabdata['nelem']
+            except KeyError:
+                nelem = None
+        else:
+            nelem = None
+
+        # For spectroscopic data, include the relative response array in
+        # the flux conversion.
         no_cal = None
-        if nelem > 0:
-            waves = tabdata['wavelength'][:nelem]
-            relresps = tabdata['relresponse'][:nelem]
+        if is_spectroscopic:
+            waves = tabdata['wavelength']
+            relresps = tabdata['relresponse']
+            if nelem is not None:
+                waves = waves[:nelem]
+                relresps = relresps[:nelem]
 
             # Make sure waves and relresps are in increasing wavelength order
             if not np.all(np.diff(waves) > 0):
@@ -683,9 +736,8 @@ class DataSet():
             no_cal = np.isnan(conv_2d)
 
             # Combine the scalar and 2-D conversions
-            # NOTE: the 2-D conversion is divided into the data for now, until the
-            # instrument teams deliver multiplicative conversions in photom ref files
-            conversion = conversion / conv_2d
+            # NOTE: the data are now multiplied by the 2-D conversion
+            conversion = conversion * conv_2d
             conversion[no_cal] = 0.
 
         # Apply the conversion to the data and all uncertainty arrays
@@ -721,88 +773,137 @@ class DataSet():
 
         return
 
-    def save_area_info(self, ftab, area_fname):
+    def save_area_info(self, area_fname):
         """
         Short Summary
         -------------
         Read the pixel area values in the PIXAR_A2 and PIXAR_SR keys from the
-        meta data in the photom reference file and the pixel area reference
-        file. Copy the values from the pixel area reference file header
-        keywords to the output product. If the difference between the values
-        of the pixel area (in units of arc seconds) between the two reference
-        files exceeds a defined threshold, issue a warning.
+        pixel area reference file or (for NIRSpec data) from the PIXAREA column
+        in the selected row of the AREA table in the area reference file.
+        Use that information to populate the pixel area keywords in the output
+        product.
 
-        Also copy the pixel area data array from the pixel area reference file
-        to the area extension of the output product.
+        Except for NIRSpec data, also copy the pixel area data array from the
+        pixel area reference file to the area extension of the output product.
 
         Parameters
         ----------
-        ftab : `~jwst.datamodels.DataModel`
-            Photom reference file data model
-
         area_fname : str
             Pixel area reference file name
-
-        Returns
-        -------
-
         """
 
+        # We need the instrument name in order to check for NIRSpec.
+        instrument = self.input.meta.instrument.name.upper()
+
         # Load the pixel area reference file
-        pix_area = datamodels.PixelAreaModel(area_fname)
+        pix_area = datamodels.open(area_fname)
 
         # Copy the pixel area data array to the appropriate attribute
         # of the science data model
-        if isinstance(self.input, datamodels.MultiSlitModel):
-            self.input.slits[0].area = pix_area.data
+        if instrument != 'NIRSPEC':
+            if isinstance(self.input, datamodels.MultiSlitModel):
+                # Note that this only copied to the first slit.
+                self.input.slits[0].area = pix_area.data
+            else:
+                self.input.area = pix_area.data
+            log.info('Pixel area map copied to output.')
+
+        if instrument == 'NIRSPEC':
+            self.save_area_nirspec(pix_area)
         else:
-            self.input.area = pix_area.data
-        log.info('Pixel area map copied to output.')
+            # Load the average pixel area values from the pixel area reference
+            try:
+                area_ster = pix_area.meta.photometry.pixelarea_steradians
+            except AttributeError:
+                area_ster = None
+                log.warning('The PIXAR_SR keyword is missing from %s',
+                            area_fname)
+            try:
+                area_a2 = pix_area.meta.photometry.pixelarea_arcsecsq
+            except AttributeError:
+                area_a2 = None
+                log.warning('The PIXAR_A2 keyword is missing from %s',
+                            area_fname)
 
-        # Load the average pixel area values from the photom reference file
-        try:
-            #tab_ster = None
-            tab_a2 = None
-            #tab_ster = ftab.meta.photometry.pixelarea_steradians
-            tab_a2 = ftab.meta.photometry.pixelarea_arcsecsq
-        except AttributeError:
-            # If one or both of them are missing, issue a warning, but carry on
-            log.warning('At least one of the PIXAR_nn keyword values is')
-            log.warning('missing from the photom reference file')
+            # Copy the pixel area values to the output
+            log.debug('PIXAR_SR = %s, PIXAR_A2 = %s', str(area_ster), str(area_a2))
+            if area_a2 is not None:
+                self.input.meta.photometry.pixelarea_arcsecsq = float(area_a2)
+            if area_ster is not None:
+                self.input.meta.photometry.pixelarea_steradians = float(area_ster)
 
-        # Load the average pixel area values from the pixel area reference file
-        try:
-            area_ster = None
-            area_a2 = None
-            area_ster = pix_area.meta.photometry.pixelarea_steradians
-            area_a2 = pix_area.meta.photometry.pixelarea_arcsecsq
-        except AttributeError:
-            # If one or both of them are missing, issue a warning
-            log.warning('At least one of the PIXAR_nn keyword values is')
-            log.warning('missing from the reference file %s', area_fname)
-            log.warning('Pixel area keyword values will not be set in output')
+        pix_area.close()
 
-        # Compute the relative difference between the pixel area values from
-        # the two different sources, if they exist
-        if (tab_a2 is not None) and (area_a2 is not None):
-            a2_tol = abs(tab_a2 - area_a2) / ((tab_a2 + area_a2) / 2)
+    def save_area_nirspec(self, pix_area):
+        """
+        Short Summary
+        -------------
+        Read the pixel area value from the PIXAREA column in the selected row
+        of the AREA table in the area reference file.
+        Use that information to populate the pixel area keywords in the output
+        product.
 
-            # If the difference is greater than the defined tolerance,
-            # issue a warning
-            if (a2_tol > PHOT_TOL):
-                log.warning('The relative difference between the values for')
-                log.warning('the pixel area in sq arcsec (%s)', a2_tol)
-                log.warning('exceeds the defined tolerance (%s)', PHOT_TOL)
+        Parameters
+        ----------
+        pix_area : `~jwst.datamodels.DataModel`
+            Pixel area reference file data model
+        """
 
-        # Copy the pixel area values to the output
-        log.debug('The values of the pixel areas (PIXAR_A2 and PIXAR_SR)')
-        log.debug('will be copied to the output.')
-        if area_a2 is not None:
-            self.input.meta.photometry.pixelarea_arcsecsq = float(area_a2)
-        if area_ster is not None:
-            self.input.meta.photometry.pixelarea_steradians = float(area_ster)
+        exp_type = self.input.meta.exposure.type
+        pixarea = pix_area.area_table['pixarea']
+        if exp_type == 'NRS_MSASPEC':
+            quadrant = pix_area.area_table['quadrant']
+            shutter_x = pix_area.area_table['shutter_x']
+            shutter_y = pix_area.area_table['shutter_y']
+            n_failures = 0
+            for slit in self.input.slits:
+                match_q = (quadrant == slit.quadrant)
+                match_x = (shutter_x == slit.xcen)
+                match_y = (shutter_y == slit.ycen)
+                match = np.logical_and(match_q,
+                                       np.logical_and(match_x, match_y))
+                n_matches = match.sum(dtype=np.int64)
+                if n_matches != 1:
+                    n_failures += 1
+                    # Obviously not a real value.
+                    slit.meta.photometry.pixelarea_arcsecsq = 1000.
+                    slit.meta.photometry.pixelarea_steradians = 1000.
+                else:
+                    slit.meta.photometry.pixelarea_arcsecsq = float(pixarea[match])
+                    slit.meta.photometry.pixelarea_steradians = \
+                        slit.meta.photometry.pixelarea_arcsecsq * A2_TO_SR
+            if n_failures > 0:
+                log.warning('%d failures out of %d, matching MSA data to '
+                            'area reference file',
+                            n_failures, len(self.input.slits))
 
-        return
+        elif exp_type in ['NRS_LAMP', 'NRS_BRIGHTOBJ', 'NRS_FIXEDSLIT']:
+            slit_id = pix_area.area_table['slit_id']
+            foundit = False
+            for k, slit in enumerate(self.input.slits):
+                if slit_id[k] == slit.name:
+                    foundit = True
+                    slit.meta.photometry.pixelarea_arcsecsq = float(pixarea[k])
+                    slit.meta.photometry.pixelarea_steradians = \
+                        slit.meta.photometry.pixelarea_arcsecsq * A2_TO_SR
+            if not foundit:
+                slit.meta.photometry.pixelarea_arcsecsq = 1000.
+                slit.meta.photometry.pixelarea_steradians = 1000.
+
+        elif exp_type == 'NRS_IFU':
+            # There is a slice_id column for selecting a matching slice, but
+            # we're just going to average the pixel area for all slices.
+            pixel_area = np.nanmean(pixarea)
+            slit.meta.photometry.pixelarea_arcsecsq = pixel_area
+            slit.meta.photometry.pixelarea_steradians = \
+                slit.meta.photometry.pixelarea_arcsecsq * A2_TO_SR
+
+        else:
+            log.warning('EXP_TYPE of NIRSpec data is %s, which is not an '
+                        'expected value; pixel area keywords will be set to 1.',
+                        exp_type)
+            self.input.meta.photometry.pixelarea_arcsecsq = 1000.
+            self.input.meta.photometry.pixelarea_steradians = 1000.
 
     def apply_photom(self, photom_fname, area_fname):
         """
@@ -831,40 +932,31 @@ class DataSet():
 
         """
 
-        # Load the photom reference file into the appropriate type of datamodel
-        # for the instrument mode in use and then call the calculation routine
-        # for that instrument mode
-        if self.instrument == 'NIRISS':
-            ftab = datamodels.NirissPhotomModel(photom_fname)
-            self.calc_niriss(ftab)
-
-        if self.instrument == 'NIRSPEC':
-            if self.exptype in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
-                ftab = datamodels.NirspecFSPhotomModel(photom_fname)
-            else:
-                ftab = datamodels.NirspecPhotomModel(photom_fname)
-            self.calc_nirspec(ftab, area_fname)
-
-        if self.instrument == 'NIRCAM':
-            ftab = datamodels.NircamPhotomModel(photom_fname)
-            self.calc_nircam(ftab)
-
-        if self.instrument == 'MIRI':
-            if self.detector == 'MIRIMAGE':
-                ftab = datamodels.MiriImgPhotomModel(photom_fname)
-            else:
-                ftab = datamodels.MiriMrsPhotomModel(photom_fname)
-            self.calc_miri(ftab)
-
-        if self.instrument == 'FGS':
-            ftab = datamodels.FgsPhotomModel(photom_fname)
-            self.calc_fgs(ftab)
+        ftab = datamodels.open(photom_fname)
 
         # Load the pixel area reference file, if it exists, and attach the
         # reference data to the science model
-        if area_fname:
-            if 'IMAGE' in self.exptype and area_fname != 'N/A':
-                self.save_area_info(ftab, area_fname)
+        if area_fname != 'N/A':
+            self.save_area_info(area_fname)
+
+        if self.instrument == 'NIRISS':
+            self.calc_niriss(ftab)
+
+        elif self.instrument == 'NIRSPEC':
+            self.calc_nirspec(ftab, area_fname)
+
+        elif self.instrument == 'NIRCAM':
+            self.calc_nircam(ftab)
+
+        elif self.instrument == 'MIRI':
+            self.calc_miri(ftab)
+
+        elif self.instrument == 'FGS':
+            self.calc_fgs(ftab)
+
+        else:
+            raise RuntimeError('Instrument {} is not recognized'
+                               .format(self.instrument))
 
         ftab.close()  # Close the photom reference table
 
