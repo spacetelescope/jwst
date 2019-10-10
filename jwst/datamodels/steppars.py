@@ -27,7 +27,7 @@ class StepParsModel(DataModel):
     schema_url = "steppars.schema"
 
     def __init__(self, init=None, **kwargs):
-        super(StepParsModel, self).__init__(init=init, **kwargs)
+        super().__init__(init=init, **kwargs)
         meta = copy(DEFAULT_META)
         meta.update(self.meta.instance)
         self.meta.instance.update(meta)
