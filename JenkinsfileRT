@@ -70,7 +70,7 @@ bc1.test_configs = []
 bc2 = utils.copy(bc0)
 bc2.test_cmds = [
     "pytest --cov-report=xml --cov=./ -r sxf -n 30 --bigdata --slow \
-    --basetemp=${pytest_basetemp} --junit-xml=results.xml jwst",
+    --basetemp=${pytest_basetemp} --junit-xml=results.xml --env=newdev jwst",
     "codecov --token=${codecov_token} -F newnightly"
 ]
 
