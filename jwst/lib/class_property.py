@@ -31,7 +31,7 @@ class ClassInstanceMethod:
     ...
     ...     _baz = 'class'
 
-    >>> MyClass.baz
+    >>> MyClass.baz()
     'class'
 
     >>> mc = MyClass()

@@ -59,12 +59,12 @@ def test_parameters_from_crds_fail():
 def test_reftype(cfg_file, expected):
     """Test that reftype is produce as expected"""
     step = Step.from_config_file(t_path(join('steps', cfg_file)))
-    assert step.pars_model.meta.reftype == 'pars-' + expected.lower()
+    assert step.get_pars_model().meta.reftype == 'pars-' + expected.lower()
 
 
 def test_noproperty_pars():
     """Ensure that property parameters are excluded"""
-    pars = Step.pars
+    pars = Step.get_pars()
     assert pars['input_dir'] is None
 
 
@@ -110,7 +110,7 @@ def test_saving_pars(tmpdir):
 )
 def test_getpars_model(step_obj, expected):
     """Test retreiving of configuration parameters"""
-    assert step_obj.pars_model.parameters == expected.parameters
+    assert step_obj.get_pars_model().parameters == expected.parameters
 
 
 @pytest.mark.parametrize(
@@ -126,7 +126,7 @@ def test_getpars_model(step_obj, expected):
 )
 def test_getpars(step_obj, expected):
     """Test retreiving of configuration parameters"""
-    assert step_obj.pars == expected
+    assert step_obj.get_pars() == expected
 
 
 def test_hook():

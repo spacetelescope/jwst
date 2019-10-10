@@ -183,10 +183,11 @@ class Pipeline(Step):
             )
         #
         # Now merge any config parameters from the step cfg file
-        log.log.info(f'Retrieving pipeline {cls.pars_model.meta.reftype} parameters from CRDS')
+        pars_model = cls.get_pars_model()
+        log.log.info(f'Retrieving pipeline {pars_model.meta.reftype} parameters from CRDS')
         try:
             ref_file = crds_client.get_reference_file(dataset,
-                                                      cls.pars_model.meta.reftype,
+                                                      pars_model.meta.reftype,
                                                       observatory=observatory)
             log.log.info(f'\tReference parameters found: {ref_file}')
             refcfg = cls.merge_pipeline_config(refcfg, ref_file)
