@@ -1,10 +1,8 @@
 from datetime import datetime
 import os
-from urllib.parse import urlparse
-from glob import glob
 
+import getpass
 import pytest
-import requests
 from ci_watson.artifactory_helpers import (
     get_bigdata_root,
     get_bigdata,
@@ -44,8 +42,6 @@ def generate_artifactory_json(request, artifactory_repos):
     inputs_root, results_root = artifactory_repos
 
     def _func(schema_pattern=[]):
-        import getpass
-
         # Generate the Artifactory target path
         whoami = getpass.getuser() or 'nobody'
         user_tag = 'NOT_CI_{}'.format(whoami)
@@ -54,7 +50,6 @@ def generate_artifactory_json(request, artifactory_repos):
         subdir = '{}_{}_{}'.format(TODAYS_DATE, build_tag, build_matrix_suffix)
         testname = request.node.originalname or request.node.name
         results_path = os.path.join(results_root, subdir, testname) + os.sep
-        cwd = os.path.abspath(os.path.curdir)
 
         generate_upload_schema(schema_pattern, results_path, request.node.name)
 
@@ -206,7 +201,7 @@ def rtdata_module(artifactory_repos, envopt):
     resource = RegtestData(env=envopt, inputs_root=inputs_root,
         results_root=results_root)
 
-    return resource
+    yield resource
 
 
 @pytest.fixture(scope='function')
@@ -216,7 +211,7 @@ def rtdata(artifactory_repos, envopt):
     resource = RegtestData(env=envopt, inputs_root=inputs_root,
         results_root=results_root)
 
-    return resource
+    yield resource
 
 
 @pytest.fixture
