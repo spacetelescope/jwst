@@ -2,9 +2,7 @@ from glob import glob
 import os
 
 import pytest
-from astropy.io import fits
 from astropy.io.fits.diff import FITSDiff
-from ci_watson.artifactory_helpers import get_bigdata
 
 from jwst.pipeline import Image2Pipeline
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
@@ -59,3 +57,4 @@ def test_miri_image2(run_pipeline, request, fitsdiff_defaults, output):
     request.node.user_properties = [('output', output)]
     diff = FITSDiff(output, output, **fitsdiff_defaults)
     assert diff.identical, diff.report()
+    assert 0
