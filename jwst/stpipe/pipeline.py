@@ -37,8 +37,8 @@ from . import config_parser
 from . import Step
 from . import crds_client
 from . import log
+from .crds_client import exceptions
 
-from crds.core import exceptions
 
 class Pipeline(Step):
     """
@@ -150,20 +150,24 @@ class Pipeline(Step):
     @classmethod
     def get_config_from_reference(cls, dataset, observatory=None):
         """Retrieve step parameters from reference database
+
         Parameters
         ----------
-        step: jwst.stpipe.step.Step
+        cls : `jwst.stpipe.step.Step`
             Either a class or instance of a class derived
             from `Step`.
-        dataset : jwst.datamodels.ModelBase instance
+
+        dataset : `jwst.datamodels.ModelBase`
             A model of the input file.  Metadata on this input file will
             be used by the CRDS "bestref" algorithm to obtain a reference
             file.
-        observatory: string
+
+        observatory : str
             telescope name used with CRDS,  e.g. 'jwst'.
+
         Returns
         -------
-        step_parameters: configobj
+        step_parameters : configobj
             The parameters as retrieved from CRDS. If there is an issue, log as such
             and return an empty config obj.
         """
@@ -196,22 +200,20 @@ class Pipeline(Step):
         Merge the config parameters from a pipeline config reference file into the
         config obtained from each step
 
-        Parameters:
-        -----------
-
-        cls: jwst.stpipe.pipeline.Pipeline class
+        Parameters
+        ----------
+        cls : jwst.stpipe.pipeline.Pipeline class
             The pipeline class
 
-        refcfg: ConfigObj object
+        refcfg : ConfigObj object
             The ConfigObj created from crds cfg files from each of the steps
             in the pipeline
 
-        ref_file: string
+        ref_file : string
             The name of the pipeline crds step config file
 
-        Returns:
-        --------
-
+        Returns
+        -------
         ConfigObj of the merged parameters, with those from the pipeline cfg having
         precedence over those from the individual steps
         """
@@ -234,7 +236,9 @@ class Pipeline(Step):
 
         input_file:  filename, model container, or model
 
-        returns:  None
+        Returns
+        -------
+        None
         """
         from .. import datamodels
         try:
@@ -270,7 +274,11 @@ class Pipeline(Step):
 
         Verify that all CRDS and overridden reference files are readable.
 
-        model:  An open Model object;  not a filename, ModelContainer, etc.
+        Parameters
+        ----------
+        model :  `DataModel`
+            Only a `DataModel` instnace is allowed.
+            Cannot be a filename, ModelContainer, etc.
         """
         ovr_refs = {
             reftype: self.get_ref_override(reftype)

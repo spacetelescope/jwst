@@ -23,10 +23,12 @@ try:
 except ImportError:
     DISCOURAGED_TYPES = None
 
+
 from . import config_parser
 from . import crds_client
 from . import log
 from . import utilities
+from .crds_client import exceptions
 from .. import __version_commit__, __version__
 from ..associations.load_as_asn import (LoadAsAssociation, LoadAsLevel2Asn)
 from ..associations.lib.format_template import FormatTemplate
@@ -36,7 +38,9 @@ from ..datamodels import open as dm_open
 from ..lib.class_property import ClassProperty
 from ..lib.suffix import remove_suffix
 
-from crds.core import exceptions
+__all__ = ['Step']
+
+
 class Step():
     """
     Step
@@ -584,18 +588,18 @@ class Step():
 
         Parameters
         ----------
-        attribute: str
+        attribute : str
             The attribute to retrieve
 
-        default: obj
+        default : obj
             If attribute is not found, the value to use
 
-        parent_first: bool
+        parent_first : bool
             If `True`, allow parent definition to override step version
 
         Returns
         -------
-        value: obj
+        value : obj
             Attribute value or `default` if not found
         """
         if parent_first:
@@ -692,20 +696,22 @@ class Step():
     @classmethod
     def get_config_from_reference(cls, dataset, observatory=None):
         """Retrieve step parameters from reference database
+
         Parameters
         ----------
-        cls: jwst.stpipe.step.Step
+        cls : `jwst.stpipe.step.Step`
             Either a class or instance of a class derived
             from `Step`.
-        dataset : jwst.datamodels.ModelBase instance
+        dataset : `jwst.datamodels.ModelBase`
             A model of the input file.  Metadata on this input file will
             be used by the CRDS "bestref" algorithm to obtain a reference
             file.
-        observatory: string
+        observatory : str
             telescope name used with CRDS,  e.g. 'jwst'.
+
         Returns
         -------
-        step_parameters: configobj
+        step_parameters : configobj
             The parameters as retrieved from CRDS. If there is an issue, log as such
             and return an empty config obj.
         """
@@ -751,11 +757,11 @@ class Step():
 
         Parameters
         ----------
-        obj: str or DataModel
+        obj : str or DataModel
             The object to base the name on. If a datamodel,
             use Datamodel.meta.filename.
 
-        exclusive: bool
+        exclusive : bool
             If True, only set if an input name is not already used
             by a parent Step. Otherwise, always set.
         """
@@ -796,30 +802,30 @@ class Step():
         suffix : str
             The suffix to add to the filename.
 
-        idx: object
+        idx : object
             Index identifier.
 
-        output_file: str
+        output_file : str
             Use this file name instead of what the Step
             default would be.
 
-        force: bool
+        force : bool
             Regardless of whether `save_results` is `False`
             and no `output_file` is specified, try saving.
 
-        format: str
+        format : str
             The format of the file name.  This is a format
             string that defines where `suffix` and the other
             components go in the file name. If False,
             it will be presumed `output_file` will have
             all the necessary formatting.
 
-        components: dict
+        components : dict
             Other components to add to the file name.
 
         Returns
         -------
-        output_paths: [str[, ...]]
+        output_paths : [str[, ...]]
             List of output file paths the model(s) were saved in.
         """
         if output_file is None or output_file == '':
@@ -887,35 +893,35 @@ class Step():
 
         Parameters
         ----------
-        step: Step
+        step : Step
             The `Step` in question.
 
-        basepath: str or None
+        basepath : str or None
             The basepath to use. If None, `output_file`
             is used. Only the basename component of the path
             is used.
 
-        ext: str or None
+        ext : str or None
             The extension to use. If none, `output_ext` is used.
             Can include the leading period or not.
 
-        suffix: str or None or False
+        suffix : str or None or False
             Suffix to append to the filename.
             If None, the `Step` default will be used.
             If False, no suffix replacement will be done.
 
-        name_format: str or None
+        name_format : str or None
             The format string to use to form the base name.
             If False, it will be presumed that `basepath`
             has all the necessary formatting.
 
-        component_format: str
+        component_format : str
             Format to use for the components
 
-        separator: str
+        separator : str
             Separator to use between replacement components
 
-        components: dict
+        components : dict
             dict of string replacements.
 
         Returns
@@ -995,11 +1001,11 @@ class Step():
 
         Parameters
         ----------
-        to_close: [object(, ...)]
+        to_close : [object(, ...)]
             List of objects with a `close` method to execute
             The objects will also be deleted
 
-        to_del: [object(, ...)]
+        to_del : [object(, ...)]
             List of objects to simply delete
 
         Notes
@@ -1035,12 +1041,12 @@ class Step():
 
         Parameters
         ----------
-        obj: object
+        obj : object
             The object to open
 
         Returns
         -------
-        datamodel: DataModel
+        datamodel : DataModel
             Object opened as a datamodel
         """
         return dm_open(self.make_input_path(obj))
@@ -1053,14 +1059,14 @@ class Step():
 
         Parameters
         ----------
-        file_path: str or obj
+        file_path : str or obj
             The supplied file path to check and modify.
             If anything other than `str`, the object
             is simply passed back.
 
         Returns
         -------
-        full_path: str or obj
+        full_path : str or obj
             File path using `input_dir` if the input
             had no directory path.
         """
@@ -1080,12 +1086,12 @@ class Step():
 
         Parameters
         ----------
-        obj: object
+        obj : object
             Object to load as a Level2 association
 
         Returns
         -------
-        association: jwst.associations.lib.rules_level2_base.DMSLevel2bBase
+        association : jwst.associations.lib.rules_level2_base.DMSLevel2bBase
             Association
         """
         asn = LoadAsLevel2Asn.load(obj, basename=self.output_file)
@@ -1100,12 +1106,12 @@ class Step():
 
         Parameters
         ----------
-        obj: object
+        obj : object
             Object to load as a Level3 association
 
         Returns
         -------
-        association: jwst.associations.lib.rules_level3_base.DMS_Level3_Base
+        association : jwst.associations.lib.rules_level3_base.DMS_Level3_Base
             Association
         """
         asn = LoadAsAssociation.load(obj)
@@ -1120,10 +1126,10 @@ class Step():
 
         Parameters
         ----------
-        input: str
+        input : str
             Input to determine path from.
 
-        exclusive: bool
+        exclusive : bool
             If True, only set if an input directory is not already
             defined by a parent Step. Otherwise, always set.
 
@@ -1170,11 +1176,11 @@ class Step():
 
         Parameters
         ----------
-        step: `Step`-derived class or instance
+        step : `Step`-derived class or instance
 
         Returns
         -------
-        pars: dict
+        pars : dict
             Keys are the parameters and values are the values.
         """
         spec = config_parser.load_spec_file(step)
@@ -1196,12 +1202,12 @@ class Step():
 
         Parameters
         ----------
-        step: `Step`-derived class or instance
+        step : `Step`-derived class or instance
             The `Step` or `Step` instance to retrieve the parameters model for.
 
         Returns
         -------
-        model: `StepParsModel`
+        model : `StepParsModel`
             The `StepParsModel`.
         """
         pars_model = step._pars_model
@@ -1229,11 +1235,11 @@ def _full_class_name(obj):
 
     Parameters
     ----------
-    obj: object
+    obj : object
         The object in question. Can be a class
 
     Returns
-    class_name: str
+    class_name : str
         The full name
     """
     cls = obj if inspect.isclass(obj) else obj.__class__
@@ -1249,19 +1255,19 @@ def _get_suffix(suffix, step=None, default_suffix=None):
 
     Parameters
     ----------
-    suffix: str or None
+    suffix : str or None
         Suffix to use if specified.
 
-    step: Step or None
+    step : Step or None
         The step to retrieve the suffux.
 
-    default_suffix: str
+    default_suffix : str
         If the pipeline does not supply a suffix,
         use this.
 
     Returns
     -------
-    suffix: str or None
+    suffix : str or None
         Suffix to use
     """
     if suffix is None and step is not None:
