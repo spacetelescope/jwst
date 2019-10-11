@@ -798,8 +798,10 @@ def compute_footprint_nrs_slit(slit):
     slit : `~jwst.datamodels.SlitModel`
     """
     slit2world = slit.meta.wcs.get_transform("slit_frame", "world")
+    # Define the corners of a virtual slit. The center of the slit is (0, 0).
     virtual_corners_x = [-.5, -.5, .5, .5]
     virtual_corners_y = [slit.slit_ymin, slit.slit_ymax, slit.slit_ymax, slit.slit_ymin]
+    # Use a default wavelength or 2 microns as input to the transform.
     input_lam = [2e-6] * 4
     ra, dec, lam = slit2world(virtual_corners_x,
                               virtual_corners_y,
