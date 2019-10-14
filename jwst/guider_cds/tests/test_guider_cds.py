@@ -66,7 +66,7 @@ def test_guider_cds(exptype):
             slope_int_cube[num_int, :, :] = grp_last - grp_first
     
     if exptype[:6] == 'FGS_ID':
-        truth = np.minimum(diff_int1, diff_int0) / model.meta.exposure.group_time
+        truth[0, :, :] = np.minimum(diff_int1, diff_int0) / model.meta.exposure.group_time
     else:
         truth = slope_int_cube /  model.meta.exposure.group_time
 
