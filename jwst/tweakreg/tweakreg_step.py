@@ -63,10 +63,11 @@ class TweakRegStep(Step):
 
         try:
             images = datamodels.ModelContainer(input)
-        except TypeError as te:
-            raise te("Input to tweakreg must be a list of DataModels, an "
-                "association, or an already open ModelContainer containing "
-                "one or more DataModels.")
+        except TypeError as e:
+            e.args = ("Input to tweakreg must be a list of DataModels, an "
+                      "association, or an already open ModelContainer "
+                      "containing one or more DataModels.", ) + e.args[1:]
+            raise e
 
         # Build the catalogs for input images
         for image_model in images:
