@@ -43,7 +43,7 @@ bc0.conda_packages = [
     "python=${python_version}",
 ]
 bc0.build_cmds = [
-    "pip install -r requirements-sdp.txt -e .[ephem]",
+    "pip install -r requirements-sdp.txt --src=../src -e .[ephem]",
     "pip install pytest-xdist",
 ]
 bc0.test_cmds = [

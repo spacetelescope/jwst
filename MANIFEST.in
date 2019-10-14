@@ -1,6 +1,3 @@
-include RELIC-INFO
-exclude jwst/version.py
-recursive-include relic *.* *.py
 recursive-include jwst *.fits
 recursive-include jwst *.inc
 recursive-include jwst *.json
@@ -9,6 +6,3 @@ recursive-include jwst *.cfg
 recursive-include jwst *.csv
 recursive-include jwst *.yaml
 recursive-include jwst *.asdf
-prune relic/tests
-prune relic/relic/__pycache__
-prune relic/.git
