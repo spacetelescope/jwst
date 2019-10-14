@@ -9,7 +9,7 @@ from jwst.photom import photom
 
 MJSR_TO_UJA2 = (u.megajansky / u.steradian).to(u.microjansky / (u.arcsecond**2))
 
-# Conversion factor from square arcseconds to steradians
+# Multiply by this to convert from square arcseconds to steradians
 A2_TO_SR = (np.pi / (180. * 3600.))**2
 
 
@@ -139,6 +139,7 @@ def create_input(instrument, detector, exptype,
             else:
                 shape = (5, 69)
                 dispaxis = 1                    # horizontal
+            input_model.meta.target.source_type = 'POINT'
             (data, dq, err, var_p, var_r, var_f) = mk_data(shape)
             wl = mk_wavelength(shape, 1.0, 5.0, dispaxis)
             for k in range(nslits):
@@ -148,6 +149,9 @@ def create_input(instrument, detector, exptype,
                 slit.var_rnoise = var_r
                 slit.var_flat = var_f
                 slit.meta.wcsinfo.spectral_order = k + 1
+                # Not realistic, just something for a default.
+                slit.meta.photometry.pixelarea_arcsecsq = 0.0025
+                slit.meta.photometry.pixelarea_steradians = 0.0025 * A2_TO_SR
                 input_model.slits.append(slit.copy())
         elif exptype == 'NIS_SOSS':
             shape = (96, 2048)
@@ -156,10 +160,13 @@ def create_input(instrument, detector, exptype,
             # There is no wavelength attribute for ImageModel, but this
             # should work anyway.
             wl = mk_wavelength(shape, 0.6, 4.0, dispaxis=1)
+            input_model.meta.target.source_type = 'POINT'  # output will be MJy
             input_model.wavelength = wl.copy()
             input_model.var_poisson = var_p
             input_model.var_rnoise = var_r
             input_model.var_flat = var_f
+            input_model.meta.photometry.pixelarea_arcsecsq = 0.0025
+            input_model.meta.photometry.pixelarea_steradians = 0.0025 * A2_TO_SR
         else:                                   # NIS_IMAGE
             shape = (96, 128)
             (data, dq, err, var_p, var_r, var_f) = mk_data(shape)
@@ -167,6 +174,9 @@ def create_input(instrument, detector, exptype,
             input_model.var_poisson = var_p
             input_model.var_rnoise = var_r
             input_model.var_flat = var_f
+            input_model.meta.target.source_type = 'POINT'
+            input_model.meta.photometry.pixelarea_arcsecsq = 0.0025
+            input_model.meta.photometry.pixelarea_steradians = 0.0025 * A2_TO_SR
     elif instrument == 'NIRSPEC':
         if exptype == 'NRS_FIXEDSLIT':
             nslits = 5
@@ -174,6 +184,7 @@ def create_input(instrument, detector, exptype,
             shape = (5, 69)
             (data, dq, err, var_p, var_r, var_f) = mk_data(shape)
             wl = mk_wavelength(shape, 1.0, 5.0, dispaxis=1)
+            input_model.meta.target.source_type = 'POINT'  # output will be MJy
             slitnames = ['S200A1', 'S200A2', 'S400A1', 'S1600A1', 'S200B1']
             for k in range(nslits):
                 slit = datamodels.SlitModel(data=data, dq=dq, err=err,
@@ -182,6 +193,8 @@ def create_input(instrument, detector, exptype,
                 slit.var_poisson = var_p
                 slit.var_rnoise = var_r
                 slit.var_flat = var_f
+                slit.meta.photometry.pixelarea_arcsecsq = 0.0025
+                slit.meta.photometry.pixelarea_steradians = 0.0025 * A2_TO_SR
                 input_model.slits.append(slit.copy())
         elif exptype == 'NRS_BRIGHTOBJ':
             shape = (3, 5, 69)
@@ -189,9 +202,12 @@ def create_input(instrument, detector, exptype,
             wl = mk_wavelength(shape, 1.0, 5.0, dispaxis=1)
             input_model = datamodels.SlitModel(data=data, dq=dq, err=err,
                                                wavelength=wl)
+            input_model.meta.target.source_type = 'POINT'  # output will be MJy
             input_model.var_poisson = var_p
             input_model.var_rnoise = var_r
             input_model.var_flat = var_f
+            input_model.meta.photometry.pixelarea_arcsecsq = 0.0025
+            input_model.meta.photometry.pixelarea_steradians = 0.0025 * A2_TO_SR
             input_model.name = 'S1600A1'
         elif exptype == 'NRS_MSASPEC':
             nslits = 3
@@ -206,6 +222,11 @@ def create_input(instrument, detector, exptype,
                 slit.var_poisson = var_p
                 slit.var_rnoise = var_r
                 slit.var_flat = var_f
+                # This may be the only case where the source type is specified
+                # in the slit attributes rather than in the primary header.
+                slit.source_type = 'POINT'
+                slit.meta.photometry.pixelarea_arcsecsq = 0.0025
+                slit.meta.photometry.pixelarea_steradians = 0.0025 * A2_TO_SR
                 input_model.slits.append(slit.copy())
         else:
             # NRS_IFU needs the wcs, so we won't cover this case.  Use a
@@ -224,6 +245,7 @@ def create_input(instrument, detector, exptype,
                 dispaxis = 1                    # horizontal
             (data, dq, err, var_p, var_r, var_f) = mk_data(shape)
             wl = mk_wavelength(shape, 2.4, 5.0, dispaxis)
+            input_model.meta.target.source_type = 'POINT'
             for k in range(nslits):
                 slit = datamodels.SlitModel(data=data, dq=dq, err=err,
                                             wavelength=wl)
@@ -231,6 +253,8 @@ def create_input(instrument, detector, exptype,
                 slit.var_poisson = var_p
                 slit.var_rnoise = var_r
                 slit.var_flat = var_f
+                slit.meta.photometry.pixelarea_arcsecsq = 0.0025
+                slit.meta.photometry.pixelarea_steradians = 0.0025 * A2_TO_SR
                 input_model.slits.append(slit.copy())
         else:                                   # NRC_IMAGE
             (data, dq, err, var_p, var_r, var_f) = mk_data((128, 256))
@@ -238,6 +262,9 @@ def create_input(instrument, detector, exptype,
             input_model.var_poisson = var_p
             input_model.var_rnoise = var_r
             input_model.var_flat = var_f
+            input_model.meta.target.source_type = 'POINT'
+            input_model.meta.photometry.pixelarea_arcsecsq = 0.0025
+            input_model.meta.photometry.pixelarea_steradians = 0.0025 * A2_TO_SR
     elif instrument == 'MIRI':
         if exptype == 'MIR_MRS':
             (data, dq, err, var_p, var_r, var_f) = mk_data((128, 256))
@@ -245,6 +272,9 @@ def create_input(instrument, detector, exptype,
             input_model.var_poisson = var_p
             input_model.var_rnoise = var_r
             input_model.var_flat = var_f
+            input_model.meta.target.source_type = 'POINT'
+            input_model.meta.photometry.pixelarea_arcsecsq = 0.0025
+            input_model.meta.photometry.pixelarea_steradians = 0.0025 * A2_TO_SR
         elif exptype == 'MIR_LRS-FIXEDSLIT':
             shape = (120, 100)
             array = np.zeros(shape, dtype=np.float32)
@@ -261,6 +291,9 @@ def create_input(instrument, detector, exptype,
             input_model.var_rnoise = np.ones(shape, dtype=np.float32)
             input_model.var_flat = np.ones(shape, dtype=np.float32)
             input_model.meta.subarray.name = 'SUBPRISM'     # matches 'GENERIC'
+            input_model.meta.target.source_type = 'POINT'
+            input_model.meta.photometry.pixelarea_arcsecsq = 0.0025
+            input_model.meta.photometry.pixelarea_steradians = 0.0025 * A2_TO_SR
         else:                                   # MIR_IMAGE
             shape = (128, 256)
             data = np.arange(128 * 256, dtype=np.float32).reshape(shape)
@@ -271,6 +304,9 @@ def create_input(instrument, detector, exptype,
             input_model.var_rnoise = np.ones(shape, dtype=np.float32)
             input_model.var_flat = np.ones(shape, dtype=np.float32)
             input_model.meta.subarray.name = 'SUB256'       # matches 'GENERIC'
+            input_model.meta.target.source_type = 'POINT'
+            input_model.meta.photometry.pixelarea_arcsecsq = 0.0025
+            input_model.meta.photometry.pixelarea_steradians = 0.0025 * A2_TO_SR
     elif instrument == 'FGS':
         shape = (64, 64)
         data = np.arange(64 * 64, dtype=np.float32).reshape(shape)
@@ -280,6 +316,9 @@ def create_input(instrument, detector, exptype,
         input_model.var_poisson = np.ones(shape, dtype=np.float32)
         input_model.var_rnoise = np.ones(shape, dtype=np.float32)
         input_model.var_flat = np.ones(shape, dtype=np.float32)
+        input_model.meta.target.source_type = 'POINT'
+        input_model.meta.photometry.pixelarea_arcsecsq = 0.0025
+        input_model.meta.photometry.pixelarea_steradians = 0.0025 * A2_TO_SR
     else:
         raise RuntimeError("instrument {} is not recognized".format(instrument))
 
@@ -1038,8 +1077,10 @@ def test_nirspec_fs():
         ratio_var_f = np.sqrt(ds.input.slits[k].var_flat[iy, ix] /
                               slit.var_flat[iy, ix])
         result.append(np.allclose(ratio_var_f, compare, rtol=1.e-7))
-        result.append(ds.input.slits[k].meta.bunit_data == 'MJy/sr')
-        result.append(ds.input.slits[k].meta.bunit_err == 'MJy/sr')
+        # The output units are flux density rather than surface brightness
+        # because this is NIRSpec data for a point source.
+        result.append(ds.input.slits[k].meta.bunit_data == 'MJy')
+        result.append(ds.input.slits[k].meta.bunit_err == 'MJy')
 
     assert np.alltrue(result)
 
@@ -1099,8 +1140,8 @@ def test_nirspec_bright():
     ratio_var_f = np.sqrt(ds.input.var_flat[:, iy, ix] /
                           save_input.var_flat[:, iy, ix])
     result.append(np.allclose(ratio_var_f, compare, rtol=1.e-7))
-    result.append(ds.input.meta.bunit_data == 'MJy/sr')
-    result.append(ds.input.meta.bunit_err == 'MJy/sr')
+    result.append(ds.input.meta.bunit_data == 'MJy')
+    result.append(ds.input.meta.bunit_err == 'MJy')
 
     assert np.alltrue(result)
 
@@ -1490,7 +1531,8 @@ def test_apply_photom_2(srctype):
     ftab = create_photom_nrs_msa(min_wl=1.0, max_wl=5.0,
                                  min_r=8.0, max_r=9.0)
 
-    # A pixel area of 2 sr is not realistic, but it's different from 1.
+    # A pixel area of 2 sr is not realistic, but it's different from 1,
+    # i.e. so it will make a difference when it's applied.
 
     quadrant = np.array([1, 2, q, 3, 4], dtype=np.int16)
     shutter_x = np.array([4, 2, xc, 11, 5], dtype=np.int16)
@@ -1523,7 +1565,7 @@ def test_apply_photom_2(srctype):
         wl = slit.wavelength[iy, ix]
         rel_resp = np.interp(wl, wavelength, relresponse,
                              left=np.nan, right=np.nan)
-        if slit.source_type == 'EXTENDED':
+        if slit.source_type != 'POINT':
             rel_resp /= output_model.slits[k].meta.photometry.pixelarea_steradians
         compare = photmj * rel_resp
 

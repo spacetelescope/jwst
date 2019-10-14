@@ -36,7 +36,7 @@ The FITS primary HDU does not contain a data array.
 The contents of the table extension vary a bit for different
 instrument modes, as shown in the tables below.
 
-:Data model: `~jwst.datamodels.FgsPhotomModel`
+:Data model: `~jwst.datamodels.FgsImgPhotomModel`
 
 +------------+-------+----------------+-----------+------------+------------------------+
 | Instrument | Mode  | Column name    | Data type | Dimensions | Units                  |
@@ -44,42 +44,88 @@ instrument modes, as shown in the tables below.
 | FGS        | Image | photmjsr       | float     | scalar     | MJy/steradian/(DN/sec) |
 +            +       +----------------+-----------+------------+------------------------+
 |            |       | uncertainty    | float     | scalar     | MJy/steradian/(DN/sec) |
-+            +       +----------------+-----------+------------+------------------------+
-|            |       | nelem          | integer   | scalar     | N/A                    |
-+            +       +----------------+-----------+------------+------------------------+
-|            |       | wavelength     | float     | 5000       | microns                |
-+            +       +----------------+-----------+------------+------------------------+
-|            |       | relresponse    | float     | 5000       | unitless               |
 +------------+-------+----------------+-----------+------------+------------------------+
 
-:Data model: `~jwst.datamodels.MiriImgPhotomModel`
+:Data model: `~jwst.datamodels.MirImgPhotomModel`
 
 +------------+-------+----------------+-----------+------------+------------------------+
 | Instrument | Mode  | Column name    | Data type | Dimensions | Units                  |
 +============+=======+================+===========+============+========================+
 | MIRI       | Image | filter         | string    | 12         | N/A                    |
 +            +       +----------------+-----------+------------+------------------------+
-|            | and   | subarray       | string    | 15         | N/A                    |
+|            |       | subarray       | string    | 15         | N/A                    |
 +            +       +----------------+-----------+------------+------------------------+
-|            | LRS   | photmjsr       | float     | scalar     | MJy/steradian/(DN/sec) |
+|            |       | photmjsr       | float     | scalar     | MJy/steradian/(DN/sec) |
++            +       +----------------+-----------+------------+------------------------+
+|            |       | uncertainty    | float     | scalar     | MJy/steradian/(DN/sec) |
++------------+-------+----------------+-----------+------------+------------------------+
+
+:Data model: `~jwst.datamodels.MirLrsPhotomModel`
+
++------------+-------+----------------+-----------+------------+------------------------+
+| Instrument | Mode  | Column name    | Data type | Dimensions | Units                  |
++============+=======+================+===========+============+========================+
+| MIRI       | LRS   | filter         | string    | 12         | N/A                    |
++            +       +----------------+-----------+------------+------------------------+
+|            |       | subarray       | string    | 15         | N/A                    |
++            +       +----------------+-----------+------------+------------------------+
+|            |       | photmjsr       | float     | scalar     | MJy/steradian/(DN/sec) |
 +            +       +----------------+-----------+------------+------------------------+
 |            |       | uncertainty    | float     | scalar     | MJy/steradian/(DN/sec) |
 +            +       +----------------+-----------+------------+------------------------+
 |            |       | nelem          | integer   | scalar     | N/A                    |
 +            +       +----------------+-----------+------------+------------------------+
-|            |       | wavelength     | float     | 500        | microns                |
+|            |       | wavelength     | float     | array      | microns                |
 +            +       +----------------+-----------+------------+------------------------+
-|            |       | relresponse    | float     | 500        | unitless               |
+|            |       | relresponse    | float     | array      | unitless               |
++            +       +----------------+-----------+------------+------------------------+
+|            |       | reluncertainty | float     | array      | unitless               |
 +------------+-------+----------------+-----------+------------+------------------------+
 
-:Data model: `~jwst.datamodels.NircamPhotomModel`
+:Data model: `~jwst.datamodels.MirMrsPhotomModel`
 
 +------------+-------+----------------+-----------+------------+------------------------+
 | Instrument | Mode  | Column name    | Data type | Dimensions | Units                  |
 +============+=======+================+===========+============+========================+
-| NIRCam     | All   | filter         | string    | 12         | N/A                    |
+| MIRI       | MRS   | filter         | string    | 12         | N/A                    |
++            +       +----------------+-----------+------------+------------------------+
+|            |       | subarray       | string    | 15         | N/A                    |
++            +       +----------------+-----------+------------+------------------------+
+|            |       | photmjsr       | float     | scalar     | MJy/steradian/(DN/sec) |
++            +       +----------------+-----------+------------+------------------------+
+|            |       | uncertainty    | float     | scalar     | MJy/steradian/(DN/sec) |
++            +       +----------------+-----------+------------+------------------------+
+|            |       | nelem          | integer   | scalar     | N/A                    |
++            +       +----------------+-----------+------------+------------------------+
+|            |       | wavelength     | float     | array      | microns                |
++            +       +----------------+-----------+------------+------------------------+
+|            |       | relresponse    | float     | array      | unitless               |
++            +       +----------------+-----------+------------+------------------------+
+|            |       | reluncertainty | float     | array      | unitless               |
++------------+-------+----------------+-----------+------------+------------------------+
+
+:Data model: `~jwst.datamodels.NrcImgPhotomModel`
+
++------------+-------+----------------+-----------+------------+------------------------+
+| Instrument | Mode  | Column name    | Data type | Dimensions | Units                  |
++============+=======+================+===========+============+========================+
+| NIRCam     | Image | filter         | string    | 12         | N/A                    |
 +            +       +----------------+-----------+------------+------------------------+
 |            |       | pupil          | string    | 12         | N/A                    |
++            +       +----------------+-----------+------------+------------------------+
+|            |       | photmjsr       | float     | scalar     | MJy/steradian/(DN/sec) |
++            +       +----------------+-----------+------------+------------------------+
+|            |       | uncertainty    | float     | scalar     | MJy/steradian/(DN/sec) |
++------------+-------+----------------+-----------+------------+------------------------+
+
+:Data model: `~jwst.datamodels.NrcWfssPhotomModel`
+
++------------+-------+----------------+-----------+------------+------------------------+
+| Instrument | Mode  | Column name    | Data type | Dimensions | Units                  |
++============+=======+================+===========+============+========================+
+| NIRCam     | WFSS  | filter         | string    | 12         | N/A                    |
++            +       +----------------+-----------+------------+------------------------+
+|            |       | pupil          | string    | 15         | N/A                    |
 +            +       +----------------+-----------+------------+------------------------+
 |            |       | photmjsr       | float     | scalar     | MJy/steradian/(DN/sec) |
 +            +       +----------------+-----------+------------+------------------------+
@@ -89,19 +135,59 @@ instrument modes, as shown in the tables below.
 +            +       +----------------+-----------+------------+------------------------+
 |            |       | nelem          | integer   | scalar     | N/A                    |
 +            +       +----------------+-----------+------------+------------------------+
-|            |       | wavelength     | float     | 3000       | microns                |
+|            |       | wavelength     | float     | array      | microns                |
 +            +       +----------------+-----------+------------+------------------------+
-|            |       | relresponse    | float     | 3000       | unitless               |
+|            |       | relresponse    | float     | array      | unitless               |
++            +       +----------------+-----------+------------+------------------------+
+|            |       | reluncertainty | float     | array      | unitless               |
 +------------+-------+----------------+-----------+------------+------------------------+
 
-:Data model: `~jwst.datamodels.NirissPhotomModel`
+:Data model: `~jwst.datamodels.NisImgPhotomModel`
 
 +------------+-------+----------------+-----------+------------+------------------------+
 | Instrument | Mode  | Column name    | Data type | Dimensions | Units                  |
 +============+=======+================+===========+============+========================+
-| NIRISS     | All   | filter         | string    | 12         | N/A                    |
+| NIRISS     | Image | filter         | string    | 12         | N/A                    |
 +            +       +----------------+-----------+------------+------------------------+
 |            |       | pupil          | string    | 12         | N/A                    |
++            +       +----------------+-----------+------------+------------------------+
+|            |       | photmjsr       | float     | scalar     | MJy/steradian/(DN/sec) |
++            +       +----------------+-----------+------------+------------------------+
+|            |       | uncertainty    | float     | scalar     | MJy/steradian/(DN/sec) |
++------------+-------+----------------+-----------+------------+------------------------+
+
+:Data model: `~jwst.datamodels.NisSossPhotomModel`
+
++------------+-------+----------------+-----------+------------+------------------------+
+| Instrument | Mode  | Column name    | Data type | Dimensions | Units                  |
++============+=======+================+===========+============+========================+
+| NIRISS     | SOSS  | filter         | string    | 12         | N/A                    |
++            +       +----------------+-----------+------------+------------------------+
+|            |       | pupil          | string    | 15         | N/A                    |
++            +       +----------------+-----------+------------+------------------------+
+|            |       | order          | integer   | scalar     | N/A                    |
++            +       +----------------+-----------+------------+------------------------+
+|            |       | photmj         | float     | scalar     | MJy/(DN/sec)           |
++            +       +----------------+-----------+------------+------------------------+
+|            |       | uncertainty    | float     | scalar     | MJy/(DN/sec)           |
++            +       +----------------+-----------+------------+------------------------+
+|            |       | nelem          | integer   | scalar     | N/A                    |
++            +       +----------------+-----------+------------+------------------------+
+|            |       | wavelength     | float     | array      | microns                |
++            +       +----------------+-----------+------------+------------------------+
+|            |       | relresponse    | float     | array      | unitless               |
++            +       +----------------+-----------+------------+------------------------+
+|            |       | reluncertainty | float     | array      | unitless               |
++------------+-------+----------------+-----------+------------+------------------------+
+
+:Data model: `~jwst.datamodels.NisWfssPhotomModel`
+
++------------+-------+----------------+-----------+------------+------------------------+
+| Instrument | Mode  | Column name    | Data type | Dimensions | Units                  |
++============+=======+================+===========+============+========================+
+| NIRISS     | WFSS  | filter         | string    | 12         | N/A                    |
++            +       +----------------+-----------+------------+------------------------+
+|            |       | pupil          | string    | 15         | N/A                    |
 +            +       +----------------+-----------+------------+------------------------+
 |            |       | order          | integer   | scalar     | N/A                    |
 +            +       +----------------+-----------+------------+------------------------+
@@ -111,55 +197,57 @@ instrument modes, as shown in the tables below.
 +            +       +----------------+-----------+------------+------------------------+
 |            |       | nelem          | integer   | scalar     | N/A                    |
 +            +       +----------------+-----------+------------+------------------------+
-|            |       | wavelength     | float     | 5000       | microns                |
+|            |       | wavelength     | float     | array      | microns                |
 +            +       +----------------+-----------+------------+------------------------+
-|            |       | relresponse    | float     | 5000       | unitless               |
+|            |       | relresponse    | float     | array      | unitless               |
++            +       +----------------+-----------+------------+------------------------+
+|            |       | reluncertainty | float     | array      | unitless               |
 +------------+-------+----------------+-----------+------------+------------------------+
 
-:Data model: `~jwst.datamodels.NirspecPhotomModel`
-
-+------------+-------+----------------+-----------+------------+------------------------+
-| Instrument | Mode  | Column name    | Data type | Dimensions | Units                  |
-+============+=======+================+===========+============+========================+
-| NIRSpec    | IFU   | filter         | string    | 12         | N/A                    |
-+            +       +----------------+-----------+------------+------------------------+
-|            | and   | grating        | string    | 12         | N/A                    |
-+            +       +----------------+-----------+------------+------------------------+
-|            | MOS   | photmjsr       | float     | scalar     | MJy/steradian/(DN/sec) |
-+            +       +----------------+-----------+------------+------------------------+
-|            |       | uncertainty    | float     | scalar     | MJy/steradian/(DN/sec) |
-+            +       +----------------+-----------+------------+------------------------+
-|            |       | nelem          | integer   | scalar     | N/A                    |
-+            +       +----------------+-----------+------------+------------------------+
-|            |       | wavelength     | float     | 150        | microns                |
-+            +       +----------------+-----------+------------+------------------------+
-|            |       | relresponse    | float     | 150        | unitless               |
-+            +       +----------------+-----------+------------+------------------------+
-|            |       | reluncertainty | float     | 150        | unitless               |
-+------------+-------+----------------+-----------+------------+------------------------+
-
-:Data model: `~jwst.datamodels.NirspecFSPhotomModel`
+:Data model: `~jwst.datamodels.NrsFsPhotomModel`
 
 +------------+-------+----------------+-----------+------------+------------------------+
 | Instrument | Mode  | Column name    | Data type | Dimensions | Units                  |
 +============+=======+================+===========+============+========================+
 | NIRSpec    | Fixed | filter         | string    | 12         | N/A                    |
 +            +       +----------------+-----------+------------+------------------------+
-|            | Slit  | grating        | string    | 12         | N/A                    |
+|            | Slit  | grating        | string    | 15         | N/A                    |
 +            +       +----------------+-----------+------------+------------------------+
-|            |       | slit           | string    | 12         | N/A                    |
+|            |       | slit           | string    | 15         | N/A                    |
 +            +       +----------------+-----------+------------+------------------------+
-|            |       | photmjsr       | float     | scalar     | MJy/steradian/(DN/sec) |
+|            |       | photmj         | float     | scalar     | MJy/(DN/sec)           |
 +            +       +----------------+-----------+------------+------------------------+
-|            |       | uncertainty    | float     | scalar     | MJy/steradian/(DN/sec) |
+|            |       | uncertainty    | float     | scalar     | MJy/(DN/sec)           |
 +            +       +----------------+-----------+------------+------------------------+
 |            |       | nelem          | integer   | scalar     | N/A                    |
 +            +       +----------------+-----------+------------+------------------------+
-|            |       | wavelength     | float     | 150        | microns                |
+|            |       | wavelength     | float     | array      | microns                |
 +            +       +----------------+-----------+------------+------------------------+
-|            |       | relresponse    | float     | 150        | unitless               |
+|            |       | relresponse    | float     | array      | unitless               |
 +            +       +----------------+-----------+------------+------------------------+
-|            |       | reluncertainty | float     | 150        | unitless               |
+|            |       | reluncertainty | float     | array      | unitless               |
++------------+-------+----------------+-----------+------------+------------------------+
+
+:Data model: `~jwst.datamodels.NrsMosPhotomModel`
+
++------------+-------+----------------+-----------+------------+------------------------+
+| Instrument | Mode  | Column name    | Data type | Dimensions | Units                  |
++============+=======+================+===========+============+========================+
+| NIRSpec    | MOS   | filter         | string    | 12         | N/A                    |
++            +       +----------------+-----------+------------+------------------------+
+|            | and   | grating        | string    | 15         | N/A                    |
++            +       +----------------+-----------+------------+------------------------+
+|            | IFU   | photmj         | float     | scalar     | MJy/(DN/sec)           |
++            +       +----------------+-----------+------------+------------------------+
+|            |       | uncertainty    | float     | scalar     | MJy/(DN/sec)           |
++            +       +----------------+-----------+------------+------------------------+
+|            |       | nelem          | integer   | scalar     | N/A                    |
++            +       +----------------+-----------+------------+------------------------+
+|            |       | wavelength     | float     | array      | microns                |
++            +       +----------------+-----------+------------+------------------------+
+|            |       | relresponse    | float     | array      | unitless               |
++            +       +----------------+-----------+------------+------------------------+
+|            |       | reluncertainty | float     | array      | unitless               |
 +------------+-------+----------------+-----------+------------+------------------------+
 
 Row Selection
@@ -184,9 +272,9 @@ The row selection criteria for each instrument/mode are:
    - IFU and MOS: Filter and Grating
    - Fixed Slits: Filter, Grating, and Slit name
 
-Note: If Nelem = 0 in a given row, then no data are read from the Wavelength
-and Relresponse columns. If Nelem > 0, then Nelem entries are read from each
-of the Wavelength and Relresponse arrays.
+Note: For spectroscopic data the Nelem column should be present. Its value must be
+greater than 0, and Nelem entries are read from each of the Wavelength and Relresponse
+arrays. Nelem is not used for imaging data because there are no columns containing arrays.
 
 The primary header of the tabular PHOTOM reference files contains the keywords PIXAR_SR
 and PIXAR_A2, which give the average pixel area in units of steradians and
@@ -219,7 +307,7 @@ uncertainties for the SCI values, in the same units. The DQ extension
 contains a 2D array of bit-encoded data quality flags for the SCI values.
 The DQ_DEF extension contains a table listing the definitions of the values
 used in the DQ array. The PIXSIZ extension contains a 2D array of pixel
-sizes, in units of square-arcsec.
+sizes (i.e. solid angles), in units of square-arcsec.
 
 The SCI and PIXSIZ array values are both divided into the science product
 SCI and ERR arrays, yielding surface brightness in units of mJy/sq-arcsec.
@@ -235,22 +323,36 @@ populate a data model within python and then save the data model to a
 FITS file. Each instrument has its own photom data model, as listed above,
 which contains the columns of information unique to that instrument.
 
-A NIRISS photom reference file, for example, could be constructed as follows
+A NIRISS WFSS photom reference file, for example, could be constructed as follows
 from within the python environment::
 
- >>> from jwst import datamodels
  >>> import numpy as np
- >>> output = datamodels.NirissPhotomModel()
- >>> filter = np.array(['F277W','F356W','CLEAR'])
- >>> pupil = np.array(['CLEARP','CLEARP','F090W'])
- >>> photf = np.array([1.e-15,2.e-15,3.e-15])
- >>> uncer = np.array([1.e-17,2.e-17,3.e-17])
- >>> nelem = np.zeros(3, dtype=np.int16)
- >>> wave = np.zeros((3, 5000))
- >>> resp = np.zeros((3, 5000))
- >>> order = np.array([1, 2, 3], dtype=np.int16)
- >>> data = np.array(list(zip(filter, pupil, order, photf, uncer, nelem, wave, resp)), dtype=output.phot_table.dtype)
- >>> output.phot_table = data
+ >>> from jwst import datamodels
+ >>> filter = np.array(['GR150C', 'GR150R'])
+ >>> pupil = np.array(['F140M', 'F200W'])
+ >>> order = np.array([1, 1], dtype=np.int16)
+ >>> photf = np.array([1.e-15, 3.e-15], dtype=np.float32)
+ >>> uncer = np.array([1.e-17, 3.e-17], dtype=np.float32)
+ >>> nrows = len(filter)
+ >>> nx = 437
+ >>> nelem = np.zeros(nrows, dtype=np.int16) + nx
+ >>> temp_wl = np.linspace(1.0, 5.0, nx, dtype=np.float32).reshape(1, nx)
+ >>> wave = np.zeros((nrows, nx), np.float32)
+ >>> wave[:] = temp_wl.copy()
+ >>> resp = np.ones((nrows, nx), dtype=np.float32)
+ >>> resp_unc = np.zeros((nrows, nx), dtype=np.float32)
+ >>> dtype = np.dtype([('filter', 'S12'),
+ ...                   ('pupil', 'S15'),
+ ...                   ('order', '<i2'),
+ ...                   ('photmjsr', '<f4'),
+ ...                   ('uncertainty', '<f4'),
+ ...                   ('nelem', '<i2'),
+ ...                   ('wavelength', '<f4', (nx,)),
+ ...                   ('relresponse', '<f4', (nx,)),
+ ...                   ('reluncertainty', '<f4', (nx,))])
+ >>> data = np.array(list(zip(filter, pupil, order, photf, uncer,
+ ...                          nelem, wave, resp, resp_unc)),
+ ...                 dtype=dtype)
+ >>> output = datamodels.NisWfssPhotomModel(phot_table=data)
  >>> output.save('niriss_photom_0001.fits')
  'niriss_photom_0001.fits'
-

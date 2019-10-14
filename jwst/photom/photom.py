@@ -216,7 +216,7 @@ class DataSet():
                             waves *= 1.e+6
 
                         # Load the pixel area table for the IFU slices
-                        area_model = datamodels.NirspecIfuAreaModel(area_fname)
+                        area_model = datamodels.open(area_fname)
                         area_data = area_model.area_table
 
                         # Compute 2D wavelength and pixel area arrays for the
@@ -437,7 +437,7 @@ class DataSet():
                                                 dqflags.pixel['NON_SCIENCE'])
 
             # Compute the combined 2D sensitivity factors
-            sens2d = ftab.data * ftab.pixsiz
+            sens2d = ftab.data / ftab.pixsiz
 
             # Multiply the science data and uncertainty arrays by the 2D
             # sensitivity factors
@@ -480,7 +480,8 @@ class DataSet():
 
         Parameters
         ----------
-        ftab : `~jwst.datamodels.NircamPhotomModel`
+        ftab : `~jwst.datamodels.NrcImgPhotomModel` or
+               `~jwst.datamodels.NrcWfssPhotomModel`
             NIRCam photom reference file data model
 
         Returns
@@ -648,25 +649,42 @@ class DataSet():
         -------
 
         """
-        # Get the scalar conversion factor from the PHOTMJSR column of the table row
+        # First get the scalar conversion factor.
+        # For most modes, the scalar conversion factor in the photom reference
+        # file is in units of (MJy / sr) / (DN / s), and the output from
+        # the photom step will be in units of surface brightness, specifically
+        # MJy / sr.  For NIRSpec and NIRISS SOSS, however, the scalar
+        # conversion factor is in units of MJy / (DN / s); for point-source
+        # targets, the output will be in units of flux density, MJy.  For an
+        # extended source (or if the source type is unknown), the conversion
+        # factor will be divided by the solid angle of a pixel, so the output
+        # of the photom step will be in units of surface brightness, as for
+        # other types of data.
+        unit_is_surface_brightness = True               # default
         try:
-            conversion = tabdata['photmjsr']    # unit is MJy / sr
+            conversion = tabdata['photmjsr']            # unit is MJy / sr
         except KeyError:
-            conversion = tabdata['photmj']      # unit is MJy
-            if (isinstance(self.input, datamodels.MultiSlitModel) and
-                self.input.meta.exposure.type == 'NRS_MSASPEC'):
-                    slit = self.input.slits[self.slitnum]
+            conversion = tabdata['photmj']              # unit is MJy
+            if isinstance(self.input, datamodels.MultiSlitModel):
+                slit = self.input.slits[self.slitnum]
+                if self.input.meta.exposure.type == 'NRS_MSASPEC':
                     srctype = slit.source_type
-                    if srctype is not None and not srctype.upper() == 'POINT':
-                        log.debug('Converting conversion factor from flux '
-                                  'to surface brightness')
-                        conversion /= slit.meta.photometry.pixelarea_steradians
-            else:
+                else:
                     srctype = self.input.meta.target.source_type
-                    if srctype is not None and not srctype.upper() == 'POINT':
-                        log.debug('Converting conversion factor from flux '
-                                  'to surface brightness')
-                        conversion /= self.input.meta.photometry.pixelarea_steradians
+                if srctype is None or srctype.upper() != 'POINT':
+                    log.debug('Converting conversion factor from flux '
+                              'to surface brightness')
+                    conversion /= slit.meta.photometry.pixelarea_steradians
+                else:
+                    unit_is_surface_brightness = False
+            else:
+                srctype = self.input.meta.target.source_type
+                if srctype is None or srctype.upper() != 'POINT':
+                    log.debug('Converting conversion factor from flux '
+                              'to surface brightness')
+                    conversion /= self.input.meta.photometry.pixelarea_steradians
+                else:
+                    unit_is_surface_brightness = False
 
         # Store the conversion factor in the meta data
         log.info('PHOTMJSR value: %g', conversion)
@@ -754,8 +772,12 @@ class DataSet():
             if no_cal is not None:
                 slit.dq[..., no_cal] = np.bitwise_or(slit.dq[..., no_cal],
                                                      dqflags.pixel['DO_NOT_USE'])
-            slit.meta.bunit_data = 'MJy/sr'
-            slit.meta.bunit_err = 'MJy/sr'
+            if unit_is_surface_brightness:
+                slit.meta.bunit_data = 'MJy/sr'
+                slit.meta.bunit_err = 'MJy/sr'
+            else:
+                slit.meta.bunit_data = 'MJy'
+                slit.meta.bunit_err = 'MJy'
         else:
             self.input.data *= conversion
             self.input.err *= conversion
@@ -768,8 +790,12 @@ class DataSet():
             if no_cal is not None:
                 self.input.dq[..., no_cal] = np.bitwise_or(self.input.dq[..., no_cal],
                                                            dqflags.pixel['DO_NOT_USE'])
-            self.input.meta.bunit_data = 'MJy/sr'
-            self.input.meta.bunit_err = 'MJy/sr'
+            if unit_is_surface_brightness:
+                self.input.meta.bunit_data = 'MJy/sr'
+                self.input.meta.bunit_err = 'MJy/sr'
+            else:
+                self.input.meta.bunit_data = 'MJy'
+                self.input.meta.bunit_err = 'MJy'
 
         return
 
@@ -778,10 +804,10 @@ class DataSet():
         Short Summary
         -------------
         Read the pixel area values in the PIXAR_A2 and PIXAR_SR keys from the
-        pixel area reference file or (for NIRSpec data) from the PIXAREA column
-        in the selected row of the AREA table in the area reference file.
-        Use that information to populate the pixel area keywords in the output
-        product.
+        primary header of the pixel area reference file or (for NIRSpec data)
+        from the PIXAREA column in the selected row of the AREA table in the
+        area reference file.  Use that information to populate the pixel area
+        keywords in the output product.
 
         Except for NIRSpec data, also copy the pixel area data array from the
         pixel area reference file to the area extension of the output product.
@@ -865,9 +891,8 @@ class DataSet():
                 n_matches = match.sum(dtype=np.int64)
                 if n_matches != 1:
                     n_failures += 1
-                    # Obviously not a real value.
-                    slit.meta.photometry.pixelarea_arcsecsq = 1000.
-                    slit.meta.photometry.pixelarea_steradians = 1000.
+                    slit.meta.photometry.pixelarea_arcsecsq = 1.
+                    slit.meta.photometry.pixelarea_steradians = 1.
                 else:
                     slit.meta.photometry.pixelarea_arcsecsq = float(pixarea[match])
                     slit.meta.photometry.pixelarea_steradians = \
@@ -887,8 +912,8 @@ class DataSet():
                     slit.meta.photometry.pixelarea_steradians = \
                         slit.meta.photometry.pixelarea_arcsecsq * A2_TO_SR
             if not foundit:
-                slit.meta.photometry.pixelarea_arcsecsq = 1000.
-                slit.meta.photometry.pixelarea_steradians = 1000.
+                slit.meta.photometry.pixelarea_arcsecsq = 1.
+                slit.meta.photometry.pixelarea_steradians = 1.
 
         elif exp_type == 'NRS_IFU':
             # There is a slice_id column for selecting a matching slice, but
@@ -902,8 +927,8 @@ class DataSet():
             log.warning('EXP_TYPE of NIRSpec data is %s, which is not an '
                         'expected value; pixel area keywords will be set to 1.',
                         exp_type)
-            self.input.meta.photometry.pixelarea_arcsecsq = 1000.
-            self.input.meta.photometry.pixelarea_steradians = 1000.
+            self.input.meta.photometry.pixelarea_arcsecsq = 1.
+            self.input.meta.photometry.pixelarea_steradians = 1.
 
     def apply_photom(self, photom_fname, area_fname):
         """
