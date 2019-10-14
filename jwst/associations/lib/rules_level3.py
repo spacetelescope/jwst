@@ -275,6 +275,22 @@ class Asn_SlitlessSpectral(AsnMixin_Spectrum):
                     ),
                 ],
                 reduce=Constraint.notany
+            ),
+            # Constaint to prevent calibration data from level 3 processing
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        name='restricted_slitless',
+                        sources=['exp_type'],
+                        value = ('mir_lrs-slitless')
+                    ),
+                    DMSAttrConstraint(
+                        name='tso_obs',
+                        sources=['tso_visit'],
+                        value = ('T')
+                    ),
+                ],
+                reduce=Constraint.notany
             )
         ])
 
