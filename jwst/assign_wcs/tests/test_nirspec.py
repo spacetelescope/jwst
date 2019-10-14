@@ -7,6 +7,8 @@ from numpy.testing.utils import assert_allclose
 from astropy.io import fits
 from astropy.modeling import models as astmodels
 from astropy import wcs as astwcs
+import astropy.units as u
+import astropy.coordinates as coords
 from gwcs import wcs
 from ... import datamodels
 from ...transforms.models import Slit
@@ -408,3 +410,39 @@ def test_open_slits():
 
     slits = nirspec.get_open_slits(model)
     assert len(slits) == 1
+
+
+def test_shutter_size_on_sky():
+    """
+    Test the size of a MOS shutter on sky is ~ .2 x .4 arcsec.
+    """
+    image = create_nirspec_mos_file()
+    model = datamodels.ImageModel(image)
+    msaconfl = get_file_path('msa_configuration.fits')
+
+    model.meta.instrument.msa_metadata_file = msaconfl
+    model.meta.instrument.msa_metadata_id = 12
+
+    refs = create_reference_files(model)
+
+    pipe = nirspec.create_pipeline(model, refs, slit_y_range=(-.5, .5))
+    w = wcs.WCS(pipe)
+    model.meta.wcs = w
+    slit = w.get_transform('slit_frame', 'msa_frame').slits[0]
+    wslit = nirspec.nrs_wcs_set_input(model, slit.name)
+    virtual_corners_x = [-.5, -.5, .5, .5, -.5]
+    virtual_corners_y = [-.5, .5, .5, -.5, -.5]
+    input_lam = [2e-6] * 5
+
+    slit2world = wslit.get_transform('slit_frame', 'world')
+    ra, dec, lam = slit2world(virtual_corners_x,
+                              virtual_corners_y,
+                              input_lam)
+    sky = coords.SkyCoord(ra*u.deg, dec*u.deg)
+    sep_x = sky[0].separation(sky[3]).to(u.arcsec)
+    sep_y = sky[0].separation(sky[1]).to(u.arcsec)
+
+    assert sep_x.value > 0.193
+    assert sep_x.value < 0.194
+    assert sep_y.value > 0.45
+    assert sep_y.value < 0.46

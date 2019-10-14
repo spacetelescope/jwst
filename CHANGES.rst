@@ -143,6 +143,8 @@ extract_2d
 - For NIRCam TSO data, wavelengths are computed and assigned to the
   wavelength attribute. [#3863]
 
+- Improved the computation of ``S_REGION`` of a slit. [#4111]
+
 flat_field
 ----------
 
