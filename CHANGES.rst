@@ -221,6 +221,8 @@ tso_photometry
 tweakreg
 --------
 
+- Fixed a bug in a ``try-except`` block in the ``tweakreg`` step. [#4133]
+
 - removed original ``jwst.tweakreg`` alignment code and changed step's code
   to call similar functionality from ``tweakwcs`` package. [#3689]
 
