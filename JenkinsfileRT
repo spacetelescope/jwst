@@ -10,7 +10,7 @@ jobconfig.enable_env_publication = true
 jobconfig.publish_env_on_success_only = true
 
 // Define python version for conda
-python_version = '3.6'
+python_version = "3.7.4"
 
 // pip related setup
 def pip_index = "https://bytesalad.stsci.edu/artifactory/api/pypi/datb-pypi-virtual/simple"
@@ -38,7 +38,7 @@ bc0 = new BuildConfig()
 bc0.nodetype = 'jwst'
 bc0.name = 'stable-deps'
 bc0.env_vars = env_vars
-bc0.conda_ver = '4.6.14'
+bc0.conda_ver = '4.7.12'
 bc0.conda_packages = [
     "python=${python_version}",
 ]
