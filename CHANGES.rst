@@ -6,6 +6,8 @@
 
 - Remove ``jwpsf`` module. [#3791]
 
+- Update dependencies ``python>=3.6`` and ``numpy>=1.16``. [#4134]
+
 assign_wcs
 ----------
 
