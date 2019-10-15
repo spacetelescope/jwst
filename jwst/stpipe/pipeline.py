@@ -37,8 +37,6 @@ from . import config_parser
 from . import Step
 from . import crds_client
 from . import log
-from .crds_client import exceptions
-
 
 class Pipeline(Step):
     """
@@ -184,6 +182,7 @@ class Pipeline(Step):
         #
         # Now merge any config parameters from the step cfg file
         log.log.info(f'Retrieving pipeline {cls.pars_model.meta.reftype} parameters from CRDS')
+        exceptions = crds_client.get_exceptions_module()
         try:
             ref_file = crds_client.get_reference_file(dataset,
                                                       cls.pars_model.meta.reftype,

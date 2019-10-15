@@ -28,7 +28,6 @@ from . import config_parser
 from . import crds_client
 from . import log
 from . import utilities
-from .crds_client import exceptions
 from .. import __version_commit__, __version__
 from ..associations.load_as_asn import (LoadAsAssociation, LoadAsLevel2Asn)
 from ..associations.lib.format_template import FormatTemplate
@@ -37,9 +36,6 @@ from ..datamodels import (DataModel, ModelContainer, StepParsModel)
 from ..datamodels import open as dm_open
 from ..lib.class_property import ClassProperty
 from ..lib.suffix import remove_suffix
-
-__all__ = ['Step']
-
 
 class Step():
     """
@@ -722,6 +718,7 @@ class Step():
 
 
         cls.log.info(f'Retrieving step {cls.pars_model.meta.reftype} parameters from CRDS')
+        exceptions = crds_client.get_exceptions_module()
         try:
             ref_file = crds_client.get_reference_file(dataset,
                                                       cls.pars_model.meta.reftype,
