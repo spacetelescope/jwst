@@ -379,7 +379,8 @@ class TestMIRIMasterBackgroundMRSDedicated(BaseJWSTTest):
             asn_file,
             config_file='config/master_background.cfg',
             save_background=True,
-            save_results=True
+            save_results=True,
+            suffix='master_background'
             )
 
         # test 1
@@ -387,11 +388,9 @@ class TestMIRIMasterBackgroundMRSDedicated(BaseJWSTTest):
         # check that the  cal_step master_background ran to complete
         for model in result:
             assert model.meta.cal_step.master_background == 'COMPLETE'
-
-            result_file = model.meta.filename.replace('cal', 'master_background')
             truth_file = self.get_data(*self.ref_loc,
-                                        result_file)
-            outputs = [(result_file, truth_file)]
+                                        model.meta.filename)
+            outputs = [(model.meta.filename, truth_file)]
             self.compare_outputs(outputs)
 
         # test 2
@@ -423,7 +422,8 @@ class TestMIRIMasterBackgroundMRSNodded(BaseJWSTTest):
             asn_file,
             config_file='config/master_background.cfg',
             save_background=True,
-            save_results=True
+            save_results=True,
+            suffix='master_background'
             )
 
         # test 1
@@ -431,12 +431,9 @@ class TestMIRIMasterBackgroundMRSNodded(BaseJWSTTest):
         # check that the  cal_step master_background ran to complete
         for model in result:
             assert model.meta.cal_step.master_background == 'COMPLETE'
-
-            result_file = model.meta.filename.replace('cal', 'master_background')
             truth_file = self.get_data(*self.ref_loc,
-                                        result_file)
-
-            outputs = [(result_file, truth_file)]
+                                        model.meta.filename)
+            outputs = [(model.meta.filename, truth_file)]
             self.compare_outputs(outputs)
 
         # test 2
@@ -468,19 +465,17 @@ class TestMIRIMasterBackgroundLRSNodded(BaseJWSTTest):
             asn_file,
             config_file='config/master_background.cfg',
             save_background=True,
-            save_results=True
+            save_results=True,
+            suffix='master_background'
             )
 
         # test 1
         # loop over the background subtracted data and compare to truth files
         for model in result:
             assert model.meta.cal_step.master_background == 'COMPLETE'
-
-            result_file = model.meta.filename.replace('cal', 'master_background')
             truth_file = self.get_data(*self.ref_loc,
-                                        result_file)
-
-            outputs = [(result_file, truth_file)]
+                                        model.meta.filename)
+            outputs = [(model.meta.filename, truth_file)]
             self.compare_outputs(outputs)
 
         # test 2
@@ -511,19 +506,18 @@ class TestMIRIMasterBackgroundLRSDedicated(BaseJWSTTest):
         result = MasterBackgroundStep.call(
             asn_file,
             config_file='config/master_background.cfg',
-            save_background = True,
-            save_results = True)
+            save_background=True,
+            save_results=True,
+            suffix='master_background'
+            )
 
         # test 1
         # loop over the background subtracted data and compare to truth files
         for model in result:
             assert model.meta.cal_step.master_background == 'COMPLETE'
-
-            result_file = model.meta.filename.replace('cal', 'master_background')
             truth_file = self.get_data(*self.ref_loc,
-                                        result_file)
-
-            outputs = [(result_file, truth_file)]
+                                        model.meta.filename)
+            outputs = [(model.meta.filename, truth_file)]
             self.compare_outputs(outputs)
 
         # test 2
