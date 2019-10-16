@@ -1315,7 +1315,7 @@ def test_miri_mrs():
                                ds.input.meta.photometry.conversion_microjanskys,
                                rel_tol=1.e-12))
     # Check the data values.
-    compare = value / pixel_area
+    compare = value
     ratio = output[iy, ix] / input[iy, ix]
     result.append(math.isclose(ratio, compare, rel_tol=1.e-7))
     assert np.alltrue(result)

@@ -420,24 +420,17 @@ class DataSet():
             # so no conversion is applied
             where_dq = np.bitwise_and(ftab.dq, dqflags.pixel['NON_SCIENCE'])
             ftab.data[where_dq > 0] = 1.0
-            ftab.pixsiz[where_dq > 0] = 1.0
 
             # Reset NaN's in conversion array to 1
             where_nan = np.isnan(ftab.data)
             ftab.data[where_nan] = 1.0
 
-            # Reset zeros in pixsiz array to 1
-            where_zero = np.where(ftab.pixsiz == 0.0)
-            ftab.pixsiz[where_zero] = 1.0
-
             # Make sure all NaN's and zeros have DQ flags set
             ftab.dq[where_nan] = np.bitwise_or(ftab.dq[where_nan],
                                                dqflags.pixel['NON_SCIENCE'])
-            ftab.dq[where_zero] = np.bitwise_or(ftab.dq[where_zero],
-                                                dqflags.pixel['NON_SCIENCE'])
 
             # Compute the combined 2D sensitivity factors
-            sens2d = ftab.data / ftab.pixsiz
+            sens2d = ftab.data
 
             # Multiply the science data and uncertainty arrays by the 2D
             # sensitivity factors
