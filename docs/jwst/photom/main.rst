@@ -49,7 +49,13 @@ For NIRSpec spectroscopic data and for NIRISS SOSS, the conversion terms in
 the photom reference file give results in flux density (MJy).  For point
 sources, the output of the photom step will be in these units.  For extended
 sources, however, the values will be divided by the average solid angle of a
-pixel to give results in surface brightness, MJy / sr.
+pixel to give results in surface brightness, MJy / sr.  The photom step
+determines whether the target was a point source or extended source from the
+SRCTYPE keyword, and that keyword was set by the srctype step, which was run
+at an earlier point in Spec2Pipeline.  The SRCTYPE keyword is usually in the
+primary header; however, for NIRSpec MOS data, the source type can vary from
+slit to slit, so for NIRSpec MOS data SRCTYPE will be populated in the SCI
+extension of the MultiSlitModel data (output of extract_2d).
 
 The combination of the scalar conversion factor and the 2-D response values are
 then applied to the science data, including the SCI and ERR arrays, as well as
@@ -59,8 +65,8 @@ of the correction values are multiplied into the variance arrays.
 
 The scalar conversion constant is copied to the header keyword PHOTMJSR, which
 gives the conversion from DN/s to megaJy/steradian (or to megajanskys, for
-NIRSpec and NIRISS SOSS extended sources, as described above) that was
-applied to the data.
+NIRSpec and NIRISS SOSS point sources, as described above) that was applied
+to the data.
 The step also computes the equivalent conversion factor to units of
 microJy/square-arcsecond (or microjanskys) and stores it in the header
 keyword PHOTUJA2.
@@ -98,7 +104,7 @@ It then uses the scalar conversion constant, the 1-D wavelength and relative
 response, and pixel area data to compute a 2-D sensitivity map (pixel-by-pixel)
 for the entire science image. The 2-D SCI and ERR arrays in the science
 exposure are multiplied by the 2D sensitivity map, which converts the science
-pixels from units of DN/sec to mJy/arcsec\ :sup:`2`\ .
+pixels from units of DN/sec to MJy/sr.
 Variance arrays are multiplied by the square of the conversion factors.
 
 MIRI MRS
@@ -109,5 +115,5 @@ factors and pixel sizes that are loaded into the step. As with NIRSpec IFU, the
 sensitivity and pixel size data are used to compute a 2-D sensitivity map
 (pixel-by-pixel) for the entire science image. This is multiplied into both
 the SCI and ERR arrays of the science exposure, which converts the pixel values
-from units of DN/sec to mJy/arcsec\ :sup:`2`\ .
+from units of DN/sec to MJy/sr
 Variance arrays are multiplied by the square of the conversion factors.

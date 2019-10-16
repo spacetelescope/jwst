@@ -250,8 +250,8 @@ class DataSet():
                             self.input.var_flat *= sens2d**2
 
                         # Update BUNIT values for the science data and err
-                        self.input.meta.bunit_data = 'mJy/arcsec^2'
-                        self.input.meta.bunit_err = 'mJy/arcsec^2'
+                        self.input.meta.bunit_data = 'MJy/sr'
+                        self.input.meta.bunit_err = 'MJy/sr'
 
                         area_model.close()
 
