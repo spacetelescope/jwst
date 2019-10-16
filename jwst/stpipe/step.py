@@ -162,8 +162,7 @@ class Step():
         return cmdline.step_from_cmdline(args)
 
     @classmethod
-    def _parse_class_and_name(
-            cls, config, parent=None, name=None, config_file=None):
+    def _parse_class_and_name(cls, config, parent=None, name=None, config_file=None):
         if 'class' in config:
             step_class = utilities.import_class(config['class'],
                                                 config_file=config_file)
@@ -547,8 +546,6 @@ class Step():
 
         if 'class' in crds_config:
             del crds_config['class']
-        if 'name' in crds_config:
-            del crds_config['name']
 
         instance = cls(**crds_config)
 

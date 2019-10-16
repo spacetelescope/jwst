@@ -380,7 +380,6 @@ class TestMIRIMasterBackgroundMRSDedicated(BaseJWSTTest):
             config_file='config/master_background.cfg',
             save_background=True,
             save_results=True,
-            suffix='master_background'
             )
 
         # test 1
@@ -423,7 +422,6 @@ class TestMIRIMasterBackgroundMRSNodded(BaseJWSTTest):
             config_file='config/master_background.cfg',
             save_background=True,
             save_results=True,
-            suffix='master_background'
             )
 
         # test 1
@@ -466,7 +464,6 @@ class TestMIRIMasterBackgroundLRSNodded(BaseJWSTTest):
             config_file='config/master_background.cfg',
             save_background=True,
             save_results=True,
-            suffix='master_background'
             )
 
         # test 1
@@ -508,7 +505,6 @@ class TestMIRIMasterBackgroundLRSDedicated(BaseJWSTTest):
             config_file='config/master_background.cfg',
             save_background=True,
             save_results=True,
-            suffix='master_background'
             )
 
         # test 1
