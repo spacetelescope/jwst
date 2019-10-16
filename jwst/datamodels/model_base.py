@@ -7,6 +7,7 @@ import datetime
 import os
 import sys
 import warnings
+from pathlib import Path
 
 import numpy as np
 
@@ -459,7 +460,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         path : str
             The path to the file that we're about to save to.
         """
-        if isinstance(path, str):
+        if isinstance(path, (str, Path)):
             self.meta.filename = os.path.basename(path)
 
         current_date = Time(datetime.datetime.now())
