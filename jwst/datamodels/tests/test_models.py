@@ -3,9 +3,8 @@ from os import path as op
 import shutil
 import tempfile
 import warnings
-from pathlib import Path
-
 import jsonschema
+
 import pytest
 from astropy.time import Time
 import numpy as np
@@ -612,13 +611,3 @@ def test_ifuimage():
     im = ImageModel(ifuimage)
     assert type(im) == ImageModel
     im.close()
-
-
-def test_write_to_pathlib_file(_jail):
-    im = ImageModel((5, 5))
-    path = Path('output.fits')
-    im.save(path)
-    im.close()
-
-    assert path.exists()
-    assert im.meta.filename == str(path)
