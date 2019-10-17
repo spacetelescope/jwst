@@ -192,6 +192,8 @@ photom
 
 - Add unit tests [#4022]
 
+- The code was modified to work with the new photom reference files. [#4118]
+
 refpix
 ------
 
