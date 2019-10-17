@@ -19,7 +19,7 @@ def pip_install_args = "--index-url ${pip_index} --progress-bar=off"
 // Define environement variables needed for the regression tests
 env_vars = [
     "TEST_BIGDATA=https://bytesalad.stsci.edu/artifactory",
-    "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
+    "CRDS_SERVER_URL=https://jwst-crds-test.stsci.edu",
     "CRDS_CONTEXT=jwst-edit",
 ]
 
