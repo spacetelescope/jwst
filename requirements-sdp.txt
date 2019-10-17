@@ -7,7 +7,7 @@ chardet==3.0.4
 ci-watson==0.4
 codecov==2.0.15
 coverage==4.5.4
--e git+https://github.com/spacetelescope/crds@b9a88d6#egg=crds
+-e git+https://github.com/spacetelescope/crds@7.4.1.2#egg=crds
 Cython==0.29.13
 drizzle==1.13.1
 filelock==3.0.12
@@ -15,9 +15,11 @@ filelock==3.0.12
 idna==2.8
 importlib-metadata==0.23
 jsonschema==3.0.2
+lxml==4.4.1
 more-itertools==7.2.0
 numpy==1.17.2
 packaging==19.2
+Parsley==1.3
 photutils==0.7
 pluggy==0.13.0
 psutil==5.6.3
