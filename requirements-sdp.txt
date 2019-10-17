@@ -7,7 +7,7 @@ chardet==3.0.4
 ci-watson==0.4
 codecov==2.0.15
 coverage==4.5.4
-crds==7.4.1.1
+-e git+https://github.com/spacetelescope/crds@b9a88d6#egg=crds
 Cython==0.29.13
 drizzle==1.13.1
 filelock==3.0.12
