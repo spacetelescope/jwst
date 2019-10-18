@@ -6,10 +6,12 @@ Unit tests for ami_analyze
 import numpy as np
 import math
 
-from jwst.ami import utils, leastsqnrm, hexee
+from jwst import datamodels
+from jwst.ami import utils, leastsqnrm, hexee, webb_psf
 from jwst.ami.leastsqnrm import hexpb, ffc, ffs, return_CAs
 from jwst.ami.leastsqnrm import closurephase, redundant_cps
-from jwst.ami.leastsqnrm import populate_symmamparray, populate_antisymmphasearray
+from jwst.ami.leastsqnrm import populate_symmamparray
+from jwst.ami.leastsqnrm import populate_antisymmphasearray
 from jwst.ami.leastsqnrm import tan2visibilities, model_array
 from jwst.ami.analyticnrm2 import interf, PSF, phasor, ASFhex
 
@@ -268,7 +270,7 @@ def test_leastsqnrm_hexpb():
     true_hexpb_arr = np.array( [[0.01520087, 0.01901502, 0.02328432],
                                 [0.01912038, 0.02356723, 0.02850747],
                                 [0.02349951, 0.02861771, 0.03426836]] )
-    assert_allclose( hexpb_arr, true_hexpb_arr, atol=1E-8)
+    assert_allclose( hexpb_arr, true_hexpb_arr, atol=1E-7)
 
     # Clean up attributes that have been added
     for kk in list( (hexpb.__dict__).keys()):
@@ -419,7 +421,7 @@ def test_leastsqnrm_return_CAs():
     CAs = return_CAs(amps, N=N)
 
     true_CAs = np.array([ 0.7, 0.04545455, 0.3030303, 6.66666667, 18.])
-    assert_allclose( CAs, true_CAs, atol=1E-8 )
+    assert_allclose( CAs, true_CAs, atol=1E-7 )
 
 
 def test_leastsqnrm_closurephase():
@@ -615,7 +617,7 @@ def test_analyticnrm2_PSF():
          [ 0.87093812, 3.05720862, 7.95659204, 9.32707852, 5.13790691, 0.55676539]]
          )
 
-    assert_allclose(psf, true_psf, atol=1E-8 )
+    assert_allclose(psf, true_psf, atol=1E-7 )
 
 
 def test_analyticnrm2_ASFhex():
@@ -637,9 +639,10 @@ def test_analyticnrm2_ASFhex():
          [ 0.85814396-0.29934852j, 2.95391668-0.74894583j, 4.39936028-0.9414124j,
            4.66263759-0.840202j,   3.6397516 -0.48892695j, 1.69794671+0.00647795j],
          [-0.53224117-0.7665882j,  1.09507456-1.3630922j,  2.35075667-1.55901736j,
-           2.7532696 -1.32158428j, 2.14239062-0.74031707j, 0.74611461+0.00885311j]] )
+           2.7532696 -1.32158428j, 2.14239062-0.74031707j, 0.74611461+0.00885311j]]
+    )
 
-    assert_allclose(asf, true_asf, atol=1E-8 )
+    assert_allclose(asf, true_asf, atol=1E-7 )
 
 
 def test_analyticnrm2_interf():
@@ -681,7 +684,7 @@ def test_analyticnrm2_interf():
          1.98827833+0.00758561j, 0.87949091+0.01043571j]]
         )
 
-    assert_allclose(interference, true_interference, atol=1E-8 )
+    assert_allclose(interference, true_interference, atol=1E-7 )
 
 
 def test_analyticnrm2_phasor():
@@ -715,12 +718,39 @@ def test_analyticnrm2_phasor():
         -0.50277564+0.86441695j ]]
       )
 
-    assert_allclose( result, true_result, atol=1E-8 )
+    assert_allclose( result, true_result, atol=1E-7 )
+
+
+#---------------------------------------------------------------
+# webb_psf module tests:
+#
+def test_webb_psf():
+    ''' Test of PSF() in the webb_psf module:
+        Load the filter bandpass data using files from WebbPSF
+    '''
+    throughput_reffile = "jwst_niriss_throughput_0005.fits"
+    filter_model = datamodels.ThroughputModel( throughput_reffile )
+    bindown = 80
+
+    band = webb_psf.get_webbpsf_filter(filter_model, specbin=bindown)
+
+    true_band = np.array( [[5.67496444e-01, 2.43628541e-06],
+                           [9.63244237e-01, 2.52823216e-06],
+                           [9.81308160e-01, 2.62091254e-06],
+                           [9.91945652e-01, 2.71358291e-06],
+                           [9.95462789e-01, 2.80542716e-06],
+                           [9.97632039e-01, 2.89832141e-06],
+                           [9.93685586e-01, 2.99110166e-06],
+                           [8.23528508e-01, 3.08399842e-06]] )
+
+    assert_allclose( band, true_band, atol=1E-7 )
 
 
 def setup_SF():
-    ''' Initialize values for these parameters needed for the analyticnrm2 tests:
+    ''' Initialize values for these parameters needed for the analyticnrm2 tests.
 
+        Returns
+        -------
         pixel (optional, via **kwargs) : float
             pixel scale
 
@@ -767,8 +797,10 @@ def setup_SF():
 
 
 def setup_hexee():
-    ''' Initialize values for parameters needed for the hexee tests:
+    ''' Initialize values for parameters needed for the hexee tests.
 
+        Returns
+        -------
         xi : 2D float array
             hexagon's coordinate center at center of symmetry, along flat edge
 
