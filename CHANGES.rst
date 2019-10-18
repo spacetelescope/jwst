@@ -20,6 +20,8 @@ assign_wcs
 
 associations
 ------------
+- Add mir_taconfirm to the target acquisition exp_types [#4135]
+
 - Exclude mir_lrs-slitless calibration data from level 3 processing [#3990]
 
 - Fix in load_as_asn for UTF-8 errors [#3942]
