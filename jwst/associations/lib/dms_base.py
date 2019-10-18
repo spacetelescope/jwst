@@ -22,6 +22,7 @@ _ASN_NAME_TEMPLATE = 'jw{program}-{acid}_{type}_{sequence:03d}_asn'
 # Acquistions and Confirmation images
 ACQ_EXP_TYPES = (
     'mir_tacq',
+    'mir_taconfirm',
     'nis_taconfirm',
     'nis_tacq',
     'nrc_taconfirm',
@@ -44,6 +45,7 @@ EXPTYPE_MAP = {
     'mir_flatimage-ext': 'flat',
     'mir_flatmrs-ext':   'flat',
     'mir_tacq':          'target_acquisition',
+    'mir_taconfirm':     'target_acquisition',
     'nis_dark':          'dark',
     'nis_focus':         'engineering',
     'nis_lamp':          'engineering',
