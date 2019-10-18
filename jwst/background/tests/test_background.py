@@ -236,10 +236,11 @@ def test_wfss_background(filters, pupils, make_wfss_datamodel):
 
 def test_robust_mean():
     """Test robust mean calculation"""
-    data = np.array([1,2,3,4,5,6])
+    data = np.random.rand(2048, 2048)
     result = robust_mean(data)
+    test = np.mean(data)
     
-    assert result == np.mean(data)
+    assert np.isclose([test], [result], rtol=1e-3)
 
 
 def test_no_Nan():
