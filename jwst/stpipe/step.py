@@ -716,6 +716,7 @@ class Step():
         cls.log = log.getLogger('step')
         cls.log.setLevel(log.logging.DEBUG)
 
+        # Retrieve step parameters from CRDS
         pars_model = cls.get_pars_model()
         cls.log.info(f'Retrieving step {pars_model.meta.reftype} parameters from CRDS')
         exceptions = crds_client.get_exceptions_module()
