@@ -200,7 +200,6 @@ class Asn_SpectralTarget(AsnMixin_Spectrum):
                 sources=['exp_type'],
                 value=(
                     'mir_lrs-fixedslit'
-                    '|mir_lrs-slitless'
                     '|nis_soss'
                 ),
                 force_unique=False
@@ -264,8 +263,7 @@ class Asn_SlitlessSpectral(AsnMixin_Spectrum):
                 name='exp_type',
                 sources=['exp_type'],
                 value=(
-                    'mir_lrs-slitless'
-                    '|nis_soss'
+                    'nis_soss'
                 ),
                 force_unique=False
             ),
@@ -274,6 +272,22 @@ class Asn_SlitlessSpectral(AsnMixin_Spectrum):
                     DMSAttrConstraint(
                         name='patttype_spectarg',
                         sources=['patttype'],
+                    ),
+                ],
+                reduce=Constraint.notany
+            ),
+            # Constaint to prevent calibration data from level 3 processing
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        name='restricted_slitless',
+                        sources=['exp_type'],
+                        value = ('mir_lrs-slitless')
+                    ),
+                    DMSAttrConstraint(
+                        name='tso_obs',
+                        sources=['tso_visit'],
+                        value = ('T')
                     ),
                 ],
                 reduce=Constraint.notany

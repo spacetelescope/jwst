@@ -6,6 +6,8 @@
 
 - Remove ``jwpsf`` module. [#3791]
 
+- Update dependencies ``python>=3.6`` and ``numpy>=1.16``. [#4134]
+
 assign_wcs
 ----------
 
@@ -18,6 +20,9 @@ assign_wcs
 
 associations
 ------------
+- Add mir_taconfirm to the target acquisition exp_types [#4135]
+
+- Exclude mir_lrs-slitless calibration data from level 3 processing [#3990]
 
 - Fix in load_as_asn for UTF-8 errors [#3942]
 
@@ -143,6 +148,8 @@ extract_2d
 - For NIRCam TSO data, wavelengths are computed and assigned to the
   wavelength attribute. [#3863]
 
+- Improved the computation of ``S_REGION`` of a slit. [#4111]
+
 flat_field
 ----------
 
@@ -187,6 +194,8 @@ photom
 
 - Add unit tests [#4022]
 
+- The code was modified to work with the new photom reference files. [#4118]
+
 refpix
 ------
 
@@ -220,6 +229,8 @@ tso_photometry
 
 tweakreg
 --------
+
+- Fixed a bug in a ``try-except`` block in the ``tweakreg`` step. [#4133]
 
 - removed original ``jwst.tweakreg`` alignment code and changed step's code
   to call similar functionality from ``tweakwcs`` package. [#3689]

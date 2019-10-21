@@ -4,12 +4,6 @@ from os.path import basename
 from setuptools import setup, find_packages
 from glob import glob
 
-if sys.version_info < (3, 5):
-    error = """
-    Beginning with JWST 0.9, Python 3.5 and above is required.
-    """
-    sys.exit(error)
-
 
 def get_transforms_data():
     # Installs the schema files in jwst/transforms
@@ -85,7 +79,7 @@ setup(
         'Programming Language :: C',
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
-    python_requires='>=3.5',
+    python_requires='>=3.6',
     scripts=SCRIPTS,
     packages=find_packages(),
     package_data=PACKAGE_DATA,
@@ -99,7 +93,7 @@ setup(
         'drizzle>=1.13',
         'gwcs @ git+https://github.com/spacetelescope/gwcs@3e2bc108e#egg=gwcs',
         'jsonschema>=2.3,<4',
-        'numpy>=1.13',
+        'numpy>=1.16',
         'photutils>=0.7',
         'scipy>=1.0',
         'spherical-geometry>=1.2',
