@@ -712,9 +712,9 @@ class Step():
             The parameters as retrieved from CRDS. If there is an issue, log as such
             and return an empty config obj.
         """
-        # Create a new logger for this step
-        cls.log = log.getLogger('step')
-        cls.log.setLevel(log.logging.DEBUG)
+        # Get the root logger, since the following operations
+        # are happening in the surrounding architecture.
+        logger = log.delegator.log
 
         # Retrieve step parameters from CRDS
         pars_model = cls.get_pars_model()
@@ -725,13 +725,14 @@ class Step():
                                                       pars_model.meta.reftype,
                                                       observatory=observatory)
         except (AttributeError, exceptions.CrdsError, exceptions.CrdsLookupError):
-            cls.log.info('\tNo parameters found')
+            logger.debug('\tNo parameters found')
             return config_parser.ConfigObj()
         if ref_file != 'N/A':
-            cls.log.info(f'\tReference parameters found: {ref_file}')
+            logger.info(f'\tReference parameters found: {ref_file}')
             ref = config_parser.load_config_file(ref_file)
             return ref
         else:
+            logger.debug('No step parameter reference files found.')
             return config_parser.ConfigObj()
 
     @classmethod
