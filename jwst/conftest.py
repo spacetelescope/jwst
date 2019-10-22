@@ -5,6 +5,8 @@ import pytest
 
 from jwst.associations import (AssociationRegistry, AssociationPool)
 from jwst.associations.tests.helpers import t_path
+from jwst.lib.tests import helpers as lib_helpers
+from jwst.lib import s3_utils
 
 
 @pytest.fixture
@@ -30,3 +32,8 @@ def full_pool_rules(request):
     rules = AssociationRegistry()
 
     return (pool, rules, pool_fname)
+
+
+@pytest.fixture(autouse=True)
+def monkey_patch_s3_client(monkeypatch):
+    monkeypatch.setattr(s3_utils, "_CLIENT", lib_helpers.MockS3Client())

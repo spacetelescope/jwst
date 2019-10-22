@@ -123,6 +123,8 @@ datamodels
   models ``FgsImgApcorrModel``, ``MirImgApcorrModel``, ``NrcImgApcorrModel``,
   and ``NisImgApcorrModel``. [#4168]
 
+- Add support for streaming reference files directly from S3. [#4170]
+
 exp_to_source
 -------------
 
