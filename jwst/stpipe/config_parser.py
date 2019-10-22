@@ -190,7 +190,7 @@ def load_spec_file(cls, preserve_comments=False):
     Returns
     -------
     spec_file: ConfigObj
-        The resulting configuration objection.
+        The resulting configuration object
     """
     # Don't use 'hasattr' here, because we don't want to inherit spec
     # from the base class.

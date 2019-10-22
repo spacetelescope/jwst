@@ -531,19 +531,23 @@ class Step():
             crds_config = cls.get_config_from_reference(filename)
         else:
             log_cls.info("No filename given, cannot retrieve config from CRDS")
-            crds_config = {}
+            crds_config = config_parser.ConfigObj()
         if 'config_file' in kwargs:
             config_file = kwargs['config_file']
             del kwargs['config_file']
             config_from_file = config_parser.load_config_file(config_file)
-            crds_config.update(config_from_file)
+            config_parser.merge_config(crds_config, config_from_file)
+        else:
+            config_file = None
 
         crds_config.update(kwargs)
 
         if 'class' in crds_config:
             del crds_config['class']
 
-        instance = cls(**crds_config)
+        name = crds_config.get('name', None)
+        instance = cls.from_config_section(crds_config,
+            name=name, config_file=config_file)
 
         try:
             instance._pars_model = crds_config.pars_model
@@ -710,7 +714,6 @@ class Step():
         """
         # Create a new logger for this step
         cls.log = log.getLogger('step')
-
         cls.log.setLevel(log.logging.DEBUG)
 
         pars_model = cls.get_pars_model()
