@@ -44,6 +44,7 @@ from ..extern.configobj.configobj import (
 from ..extern.configobj.validate import Validator, ValidateError, VdtTypeError
 
 from ..datamodels import DataModel, StepParsModel
+from ..lib import s3_utils
 
 from . import utilities
 
@@ -129,6 +130,13 @@ def load_config_file(config_file):
     """
     Read the file `config_file` and return the parsed configuration.
     """
+    if s3_utils.is_s3_uri(config_file):
+        return _load_config_file_s3(config_file)
+    else:
+        return _load_config_file_filesystem(config_file)
+
+
+def _load_config_file_filesystem(config_file):
     if not os.path.isfile(config_file):
         raise ValueError("Config file {0} not found.".format(config_file))
     try:
@@ -138,6 +146,26 @@ def load_config_file(config_file):
         return ConfigObj(config_file, raise_errors=True)
 
     # Seems to be ASDF. Create the configobj from that.
+    return _config_obj_from_asdf(cfg)
+
+
+def _load_config_file_s3(config_file):
+    if not s3_utils.object_exists(config_file):
+        raise ValueError("Config file {0} not found.".format(config_file))
+
+    content = s3_utils.get_object(config_file)
+    try:
+        cfg = asdf_open(content)
+    except (AsdfValidationError, ValueError):
+        logger.debug('Config file did not parse as ASDF. Trying as ConfigObj: %s', config_file)
+        content.seek(0)
+        return ConfigObj(content, raise_errors=True)
+
+    # Seems to be ASDF. Create the configobj from that.
+    return _config_obj_from_asdf(cfg)
+
+
+def _config_obj_from_asdf(cfg):
     configobj = ConfigObj()
     configobj.merge(cfg['parameters'])
     configobj.pars_model = StepParsModel(cfg)

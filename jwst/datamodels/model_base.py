@@ -26,6 +26,7 @@ from . import fits_support
 from . import properties
 from . import schema as mschema
 from . import validate
+from ..lib import s3_utils
 
 from .history import HistoryList
 
@@ -159,7 +160,11 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             file_type = filetype.check(init)
 
             if file_type == "fits":
-                hdulist = fits.open(init)
+                if s3_utils.is_s3_uri(init):
+                    hdulist = fits.open(s3_utils.get_object(init))
+                else:
+                    hdulist = fits.open(init)
+
                 asdffile = fits_support.from_fits(hdulist,
                                               self._schema,
                                               self._ctx,
@@ -520,6 +525,8 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         Open an asdf object from a filename or create a new asdf object
         """
         if isinstance(init, str):
+            if s3_utils.is_s3_uri(init):
+                init = s3_utils.get_object(init)
             asdffile = asdf.open(init,
                                  ignore_version_mismatch=ignore_version_mismatch,
                                  ignore_unrecognized_tag=ignore_unrecognized_tag)

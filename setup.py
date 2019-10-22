@@ -53,6 +53,9 @@ TESTS_REQUIRE = [
     'pytest-cov',
     'codecov',
 ]
+AWS_REQUIRE = [
+    'stsci-aws-utils @ git+https://github.com/spacetelescope/stsci-aws-utils@0.1.1'
+]
 ENTRY_POINTS = dict(asdf_extensions=['jwst_pipeline = jwst.transforms.jwextension:JWSTExtension',
                                      'jwst_datamodel = jwst.datamodels.extension:DataModelExtension'])
 
@@ -105,6 +108,7 @@ setup(
         'docs': DOCS_REQUIRE,
         'ephem': ['pymssql==2.1.4', 'jplephem==2.9'], # for timeconversion
         'test': TESTS_REQUIRE,
+        'aws': AWS_REQUIRE,
     },
     tests_require=TESTS_REQUIRE,
     entry_points=ENTRY_POINTS,
