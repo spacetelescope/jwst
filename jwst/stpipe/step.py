@@ -718,7 +718,7 @@ class Step():
 
         # Retrieve step parameters from CRDS
         pars_model = cls.get_pars_model()
-        cls.log.info(f'Retrieving step {pars_model.meta.reftype} parameters from CRDS')
+        logger.debug(f'Retrieving step {pars_model.meta.reftype} parameters from CRDS')
         exceptions = crds_client.get_exceptions_module()
         try:
             ref_file = crds_client.get_reference_file(dataset,
