@@ -1139,8 +1139,7 @@ class Step():
                 # Not a file-checkable object. Ignore.
                 pass
 
-    @staticmethod
-    def record_step_status(datamodel, cal_step, success=True):
+    def record_step_status(self, datamodel, cal_step, success=True):
         """Record whether or not a step completed in meta.cal_step
 
         Parameters
@@ -1158,6 +1157,7 @@ class Step():
             status = 'COMPLETE'
         else:
             status = 'SKIPPED'
+            self.skip = True
 
         if isinstance(datamodel, ModelContainer):
             for model in datamodel:
