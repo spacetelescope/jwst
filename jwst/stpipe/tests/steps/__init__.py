@@ -56,9 +56,7 @@ class MakeListStep(Step):
 
     spec = """
     par1 = float() # Control the frobulization
-
     par2 = string() # Reticulate the splines
-
     par3 = boolean(default=False) # Does it blend?
     """
 
@@ -181,7 +179,7 @@ class StepWithModel(Step):
 
 
 class ProperPipeline(Pipeline):
-    """Pipeline with proper output setupt"""
+    """Pipeline with proper output setup"""
 
     spec = """
     """
@@ -226,3 +224,17 @@ class SavePipeline(Pipeline):
         r = self.savestep(r)
 
         return r
+
+
+class FooPipeline(Pipeline):
+    """A pipeline that calls MakeListStep"""
+
+    spec = ""
+
+    step_defs = {
+        'make_list': MakeListStep,
+    }
+
+    def process(self, *args):
+
+        return self.make_list(*args)

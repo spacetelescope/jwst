@@ -222,6 +222,9 @@ stpipe
 
 - Change properties ``Step.pars`` and ``Step.pars_model`` to methods. [#4117]
 
+- Fix bug in ``Step.call()`` where a config file referencing another config
+  file was not merged into the final spec properly. [#4161]
+
 tso_photometry
 --------------
 
