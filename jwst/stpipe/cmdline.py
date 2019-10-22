@@ -290,13 +290,13 @@ def just_the_step_from_cmdline(args, cls=None):
 
     # If initialized from a StepParsModel, remember that.
     try:
-        step._pars_model = config.pars_model
+        step._pars_model = config.get_pars_model()
     except AttributeError:
         pass
 
     # Save the step configuration
     if known.save_parameters:
-        step.pars_model.save(known.save_parameters)
+        step.get_pars_model().save(known.save_parameters)
 
     return step, step_class, positional, debug_on_exception
 

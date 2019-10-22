@@ -220,6 +220,8 @@ stpipe
 
 - Integrate retrieval of Step parameters from CRDS. [#4090]
 
+- Change properties ``Step.pars`` and ``Step.pars_model`` to methods. [#4117]
+
 tso_photometry
 --------------
 

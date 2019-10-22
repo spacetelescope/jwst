@@ -34,7 +34,7 @@ from ..associations.lib.format_template import FormatTemplate
 from ..associations.lib.update_path import update_key_value
 from ..datamodels import (DataModel, ModelContainer, StepParsModel)
 from ..datamodels import open as dm_open
-from ..lib.class_property import ClassProperty
+from ..lib.class_property import ClassInstanceMethod
 from ..lib.suffix import remove_suffix
 
 class Step():
@@ -524,7 +524,7 @@ class Step():
         a new instance but simply runs the existing instance of the `Step`
         class.
         """
-        logger_name = cls.pars_model.instance['parameters']['name']
+        logger_name = cls.get_pars_model().instance['parameters']['name']
         log_cls = log.getLogger(logger_name)
         if len(args) > 0:
             filename = args[0]
@@ -713,12 +713,12 @@ class Step():
 
         cls.log.setLevel(log.logging.DEBUG)
 
-
-        cls.log.info(f'Retrieving step {cls.pars_model.meta.reftype} parameters from CRDS')
+        pars_model = cls.get_pars_model()
+        cls.log.info(f'Retrieving step {pars_model.meta.reftype} parameters from CRDS')
         exceptions = crds_client.get_exceptions_module()
         try:
             ref_file = crds_client.get_reference_file(dataset,
-                                                      cls.pars_model.meta.reftype,
+                                                      pars_model.meta.reftype,
                                                       observatory=observatory)
         except (AttributeError, exceptions.CrdsError, exceptions.CrdsLookupError):
             cls.log.info('\tNo parameters found')
@@ -1164,8 +1164,8 @@ class Step():
 
         # TODO: standardize cal_step naming to point to the offical step name
 
-    @ClassProperty
-    def pars(step):
+    @ClassInstanceMethod
+    def get_pars(step):
         """Retrieve the configuration parameters of a step
 
         Parameters
@@ -1190,8 +1190,8 @@ class Step():
         pars = dict(pars)
         return pars
 
-    @ClassProperty
-    def pars_model(step):
+    @ClassInstanceMethod
+    def get_pars_model(step):
         """Return Step parameters as StepParsModel
 
         Parameters
@@ -1207,7 +1207,7 @@ class Step():
         pars_model = step._pars_model
         if pars_model is None:
             pars_model = StepParsModel()
-        pars_model.parameters.instance.update(step.pars)
+        pars_model.parameters.instance.update(step.get_pars())
 
         # Update class and name.
         full_class_name = _full_class_name(step)
