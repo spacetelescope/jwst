@@ -225,6 +225,9 @@ stpipe
 - Fix bug in ``Step.call()`` where a config file referencing another config
   file was not merged into the final spec properly. [#4161]
 
+- Set ``Step.skip = True`` in ``Step.record_step_status()`` if
+  ``success == False``. [#4165]
+
 tso_photometry
 --------------
 
