@@ -4,6 +4,8 @@ from . import ndmodel
 
 from .model_base import DataModel
 from .amilg import AmiLgModel
+from .apcorr import FgsImgApcorrModel, MirImgApcorrModel
+from .apcorr import NrcImgApcorrModel, NisImgApcorrModel
 from .asn import AsnModel
 from .barshadow import BarshadowModel
 from .combinedspec import CombinedSpecModel
@@ -83,7 +85,9 @@ from .util import open
 __all__ = [
     'open',
     'DataModel',
-    'AmiLgModel', 'AsnModel',
+    'AmiLgModel',
+    'FgsImgApcorrModel', 'MirImgApcorrModel', 'NrcImgApcorrModel', 'NisImgApcorrModel',
+    'AsnModel',
     'BarshadowModel', 'CameraModel', 'CollimatorModel',
     'CombinedSpecModel', 'ContrastModel', 'CubeModel',
     'DarkModel', 'DarkMIRIModel',

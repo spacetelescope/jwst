@@ -119,6 +119,10 @@ datamodels
 
 - Added new spectroscopic mode photom reference file data models. [#4096]
 
+- Added new imaging mode aperture correction (apcorr) reference file data
+  models ``FgsImgApcorrModel``, ``MirImgApcorrModel``, ``NrcImgApcorrModel``,
+  and ``NisImgApcorrModel``. [#4168]
+
 exp_to_source
 -------------
 
