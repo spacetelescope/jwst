@@ -200,6 +200,11 @@ photom
 
 - The code was modified to work with the new photom reference files. [#4118]
 
+- Two bugs were fixed.  For NIRSpec IFU data the code was trying to access
+  an attribute of a "slit", but there were no slits for this type of data.
+  For NIRISS extended-source data, the code tried to divide by the pixel
+  area, but the pixel area was undefined.  [#4174]
+
 refpix
 ------
 
