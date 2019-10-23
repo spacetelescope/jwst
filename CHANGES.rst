@@ -123,6 +123,8 @@ datamodels
   models ``FgsImgApcorrModel``, ``MirImgApcorrModel``, ``NrcImgApcorrModel``,
   and ``NisImgApcorrModel``. [#4168]
 
+- Removed old photom reference file data models. [#4173]
+
 exp_to_source
 -------------
 
