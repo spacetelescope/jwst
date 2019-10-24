@@ -8,6 +8,12 @@
 
 - Update dependencies ``python>=3.6`` and ``numpy>=1.16``. [#4134]
 
+
+ami
+---
+
+- Unit tests were added for the ami_analyze pipeline. [#4176]
+
 assign_wcs
 ----------
 
