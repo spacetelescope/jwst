@@ -128,7 +128,7 @@ class DataSet():
                 if not match:
                     log.warning('No match in reference file')
 
-        # Bright object fixed-slit exposures use a CubeModel
+        # Bright object fixed-slit exposures use a SlitModel
         elif self.exptype == 'NRS_BRIGHTOBJ':
 
             match = False
@@ -665,17 +665,25 @@ class DataSet():
                 else:
                     srctype = self.input.meta.target.source_type
                 if srctype is None or srctype.upper() != 'POINT':
-                    log.debug('Converting conversion factor from flux '
-                              'to surface brightness')
-                    conversion /= slit.meta.photometry.pixelarea_steradians
+                    if slit.meta.photometry.pixelarea_steradians is None:
+                        log.warning("Pixel area is None, so can't convert "
+                                    "flux to surface brightness!")
+                    else:
+                        log.debug("Converting conversion factor from flux "
+                                  "to surface brightness")
+                        conversion /= slit.meta.photometry.pixelarea_steradians
                 else:
                     unit_is_surface_brightness = False
             else:
                 srctype = self.input.meta.target.source_type
                 if srctype is None or srctype.upper() != 'POINT':
-                    log.debug('Converting conversion factor from flux '
-                              'to surface brightness')
-                    conversion /= self.input.meta.photometry.pixelarea_steradians
+                    if self.input.meta.photometry.pixelarea_steradians is None:
+                        log.warning("Pixel area is None, so can't convert "
+                                    "flux to surface brightness!")
+                    else:
+                        log.debug("Converting conversion factor from flux "
+                                  "to surface brightness")
+                        conversion /= self.input.meta.photometry.pixelarea_steradians
                 else:
                     unit_is_surface_brightness = False
 
@@ -846,9 +854,13 @@ class DataSet():
 
             # Copy the pixel area values to the output
             log.debug('PIXAR_SR = %s, PIXAR_A2 = %s', str(area_ster), str(area_a2))
-            if area_a2 is not None:
+            if area_a2 is None:
+                self.input.meta.photometry.pixelarea_arcsecsq = None
+            else:
                 self.input.meta.photometry.pixelarea_arcsecsq = float(area_a2)
-            if area_ster is not None:
+            if area_ster is None:
+                self.input.meta.photometry.pixelarea_steradians = None
+            else:
                 self.input.meta.photometry.pixelarea_steradians = float(area_ster)
 
         pix_area.close()
@@ -895,26 +907,47 @@ class DataSet():
                             'area reference file',
                             n_failures, len(self.input.slits))
 
-        elif exp_type in ['NRS_LAMP', 'NRS_BRIGHTOBJ', 'NRS_FIXEDSLIT']:
+        elif exp_type == 'NRS_BRIGHTOBJ':
             slit_id = pix_area.area_table['slit_id']
+            nrows = len(slit_id)
+            slit_name = self.input.name                 # 'S1600A1'
             foundit = False
-            for k, slit in enumerate(self.input.slits):
-                if slit_id[k] == slit.name:
+            for k in range(nrows):
+                if slit_id[k] == slit_name:
                     foundit = True
-                    slit.meta.photometry.pixelarea_arcsecsq = float(pixarea[k])
-                    slit.meta.photometry.pixelarea_steradians = \
-                        slit.meta.photometry.pixelarea_arcsecsq * A2_TO_SR
+                    self.input.meta.photometry.pixelarea_arcsecsq = float(pixarea[k])
+                    self.input.meta.photometry.pixelarea_steradians = \
+                        self.input.meta.photometry.pixelarea_arcsecsq * A2_TO_SR
+                    break
             if not foundit:
-                slit.meta.photometry.pixelarea_arcsecsq = 1.
-                slit.meta.photometry.pixelarea_steradians = 1.
+                log.warning('%s not found in pixel area table', slit_name)
+                self.input.meta.photometry.pixelarea_arcsecsq = 1.
+                self.input.meta.photometry.pixelarea_steradians = 1.
+
+        elif exp_type in ['NRS_LAMP', 'NRS_FIXEDSLIT']:
+            slit_id = pix_area.area_table['slit_id']
+            nrows = len(slit_id)
+            for slit in self.input.slits:
+                foundit = False
+                for k in range(nrows):
+                    if slit_id[k] == slit.name:
+                        foundit = True
+                        slit.meta.photometry.pixelarea_arcsecsq = float(pixarea[k])
+                        slit.meta.photometry.pixelarea_steradians = \
+                            slit.meta.photometry.pixelarea_arcsecsq * A2_TO_SR
+                        break
+                if not foundit:
+                    log.warning('%s not found in pixel area table', slit.name)
+                    slit.meta.photometry.pixelarea_arcsecsq = 1.
+                    slit.meta.photometry.pixelarea_steradians = 1.
 
         elif exp_type == 'NRS_IFU':
             # There is a slice_id column for selecting a matching slice, but
             # we're just going to average the pixel area for all slices.
             pixel_area = np.nanmean(pixarea)
-            slit.meta.photometry.pixelarea_arcsecsq = pixel_area
-            slit.meta.photometry.pixelarea_steradians = \
-                slit.meta.photometry.pixelarea_arcsecsq * A2_TO_SR
+            self.input.meta.photometry.pixelarea_arcsecsq = pixel_area
+            self.input.meta.photometry.pixelarea_steradians = \
+                self.input.meta.photometry.pixelarea_arcsecsq * A2_TO_SR
 
         else:
             log.warning('EXP_TYPE of NIRSpec data is %s, which is not an '

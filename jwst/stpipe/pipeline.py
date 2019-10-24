@@ -171,7 +171,7 @@ class Pipeline(Step):
         """
         refcfg = ConfigObj()
         refcfg['steps'] = Section(refcfg, refcfg.depth + 1, refcfg.main, name="steps")
-        log.log.info('Retrieving all substep parameters from CRDS')
+        log.log.debug('Retrieving all substep parameters from CRDS')
         #
         # Iterate over the steps in the pipeline
         for cal_step in cls.step_defs.keys():
@@ -182,16 +182,21 @@ class Pipeline(Step):
         #
         # Now merge any config parameters from the step cfg file
         pars_model = cls.get_pars_model()
-        log.log.info(f'Retrieving pipeline {pars_model.meta.reftype} parameters from CRDS')
+        log.log.debug(f'Retrieving pipeline {pars_model.meta.reftype.upper()} parameters from CRDS')
         exceptions = crds_client.get_exceptions_module()
         try:
             ref_file = crds_client.get_reference_file(dataset,
                                                       pars_model.meta.reftype,
                                                       observatory=observatory)
-            log.log.info(f'\tReference parameters found: {ref_file}')
-            refcfg = cls.merge_pipeline_config(refcfg, ref_file)
         except (AttributeError, exceptions.CrdsError, exceptions.CrdsLookupError):
-            log.log.info('\tNo parameters found for pipeline')
+            log.log.debug(f'{pars_model.meta.reftype.upper()}: No parameters found')
+        else:
+            if ref_file != 'N/A':
+                log.log.info(f'{pars_model.meta.reftype.upper()} parameters found: {ref_file}')
+                refcfg = cls.merge_pipeline_config(refcfg, ref_file)
+            else:
+                log.log.debug(f'No {pars_model.meta.reftype.upper()} reference files found.')
+
         return refcfg
 
     @classmethod

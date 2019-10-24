@@ -26,6 +26,16 @@ def test_open_fits():
     m = open(fits_file)
     assert isinstance(m, DataModel)
 
+def test_open_fits_s3():
+    """Test opening a model from a FITS file on S3"""
+    m = open("s3://test-s3-data/data_model.fits")
+    assert isinstance(m, DataModel)
+
+def test_open_asdf_s3():
+    """Test opening a model from an ASDF file on S3"""
+    m = open("s3://test-s3-data/data_model.asdf")
+    assert isinstance(m, DataModel)
+
 def test_open_association():
     """Test for opening an association"""
 

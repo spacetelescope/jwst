@@ -359,6 +359,10 @@ class Step():
             'Step {0} running with args {1}.'.format(
                 self.name, args))
 
+        self.log.info(
+            f'Step {self.name} parameters are: {self.get_pars()}'
+        )
+
         if len(args):
             self.set_primary_input(args[0])
 
@@ -712,25 +716,35 @@ class Step():
             The parameters as retrieved from CRDS. If there is an issue, log as such
             and return an empty config obj.
         """
-        # Create a new logger for this step
-        cls.log = log.getLogger('step')
-        cls.log.setLevel(log.logging.DEBUG)
+        # Get the root logger, since the following operations
+        # are happening in the surrounding architecture.
+        logger = log.delegator.log
 
+        # Retrieve step parameters from CRDS
         pars_model = cls.get_pars_model()
-        cls.log.info(f'Retrieving step {pars_model.meta.reftype} parameters from CRDS')
+        logger.debug(f'Retrieving step {pars_model.meta.reftype.upper()} parameters from CRDS')
         exceptions = crds_client.get_exceptions_module()
         try:
             ref_file = crds_client.get_reference_file(dataset,
                                                       pars_model.meta.reftype,
                                                       observatory=observatory)
         except (AttributeError, exceptions.CrdsError, exceptions.CrdsLookupError):
-            cls.log.info('\tNo parameters found')
+            logger.debug(f'{pars_model.meta.reftype.upper()}: No parameters found')
             return config_parser.ConfigObj()
         if ref_file != 'N/A':
-            cls.log.info(f'\tReference parameters found: {ref_file}')
+            logger.info(f'{pars_model.meta.reftype.upper()} parameters found: {ref_file}')
             ref = config_parser.load_config_file(ref_file)
+
+            ref_pars = {
+                par: value
+                for par, value in ref.items()
+                if par not in ['class', 'name']
+            }
+            logger.info(f'{pars_model.meta.reftype.upper()} parameters are {ref_pars}')
+
             return ref
         else:
+            logger.debug(f'No {pars_model.meta.reftype.upper()} reference files found.')
             return config_parser.ConfigObj()
 
     @classmethod

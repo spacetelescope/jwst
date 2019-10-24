@@ -8,6 +8,12 @@
 
 - Update dependencies ``python>=3.6`` and ``numpy>=1.16``. [#4134]
 
+
+ami
+---
+
+- Unit tests were added for the ami_analyze pipeline. [#4176]
+
 assign_wcs
 ----------
 
@@ -125,6 +131,8 @@ datamodels
 
 - Removed old photom reference file data models. [#4173]
 
+- Add support for streaming reference files directly from S3. [#4170]
+
 exp_to_source
 -------------
 
@@ -202,6 +210,15 @@ photom
 
 - The code was modified to work with the new photom reference files. [#4118]
 
+- Two bugs were fixed.  For NIRSpec IFU data the code was trying to access
+  an attribute of a "slit", but there were no slits for this type of data.
+  For NIRISS extended-source data, the code tried to divide by the pixel
+  area, but the pixel area was undefined.  [#4174]
+
+- NRS_BRIGHTOBJ data were incorrectly treated the same as fixed-slit, but
+  the data models are actually not the same.  Also, the logic for pixel area
+  for fixed-slit data was incorrect. [#4179]
+
 refpix
 ------
 
@@ -233,6 +250,12 @@ stpipe
 
 - Set ``Step.skip = True`` in ``Step.record_step_status()`` if
   ``success == False``. [#4165]
+
+tests_nightly
+-------------
+
+- Some tests in general/nirspec/ were marked as "expected to fail" because
+  the new reference files are not being selected. [#4180]
 
 tso_photometry
 --------------

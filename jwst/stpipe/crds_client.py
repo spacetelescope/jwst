@@ -42,6 +42,8 @@ import crds
 from crds.core import config, exceptions, heavy_client, log
 from crds.core import crds_cache_locking
 
+from ..lib import s3_utils
+
 def get_exceptions_module():
     """Provide external indirect access to the crds.core.exceptions module to
     alleviate issues with circular dependencies.
@@ -125,8 +127,12 @@ def check_reference_open(refpath):
     Ignore reference path values of "N/A" or "" for checking.
     """
     if refpath != "N/A" and refpath.strip() != "":
-        opened = open(refpath, "rb")
-        opened.close()
+        if s3_utils.is_s3_uri(refpath):
+            if not s3_utils.object_exists(refpath):
+                raise RuntimeError("S3 object does not exist: " + refpath)
+        else:
+            opened = open(refpath, "rb")
+            opened.close()
     return refpath
 
 

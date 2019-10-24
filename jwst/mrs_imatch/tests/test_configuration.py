@@ -104,35 +104,6 @@ def test_imatch_background_reset(_jail, miri_dither_ch12):
         assert test == 0
 
 
-def test_imatch_degree(_jail, miri_dither_ch12):
-    """ Test if polynomial degree is not a 3 element tuple or integer then raise error """
-
-    all_models = datamodels.ModelContainer(miri_dither_ch12)
-    new_container = []
-    degree = (1, 1, 1,)
-    center = (5, 5, 5,)
-    poly = np.ndarray(9)
-    poly[:] = 1.3
-    channel = '2'
-    for m in all_models:
-        m.meta.background.polynomial_info.append(
-            {
-                'degree': degree,
-                'refpoint': center,
-                'coefficients': poly.ravel().tolist(),
-                'channel': channel
-                }
-            )
-        new_container.append(m)
-
-    # test catches degree set incorrectly - raise error
-    #  check that degree must be a 3 element tuple
-    with pytest.raises(ValueError):
-        step = MRSIMatchStep()
-        step.bkg_degree = (1, 1,)
-        step.run(new_container)
-
-
 def test_find_channel_index(_jail, miri_dither_ch12):
     """ Test if correct channel index is returned """
 
