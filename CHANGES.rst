@@ -207,7 +207,7 @@ photom
 
 - NRS_BRIGHTOBJ data were incorrectly treated the same as fixed-slit, but
   the data models are actually not the same.  Also, the logic for pixel area
-  for fixed-slit data was incorrect. [#4178]
+  for fixed-slit data was incorrect. [#4179]
 
 refpix
 ------
