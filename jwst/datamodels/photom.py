@@ -83,7 +83,7 @@ class MirMrsPhotomModel(ReferenceFileModel):
 
     data : numpy array
         An array-like object containing the pixel-by-pixel conversion values
-        in units of DN / sec / mJy / pixel.
+        in units of (MJy / pixel) / (DN / sec).
 
     err : numpy array
         An array-like object containing the uncertainties in the conversion
