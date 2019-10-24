@@ -885,7 +885,7 @@ class V23ToSky(Rotation3D):
     _separable = False
 
     def __init__(self, angles, axes_order, name=None):
-        self.n_inputs = 2
+        self._n_inputs = 2
         self._n_outputs = 2
         super(V23ToSky, self).__init__(angles, axes_order=axes_order, name=name)
         self._inputs = ("v2", "v3")
