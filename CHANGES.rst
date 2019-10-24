@@ -213,6 +213,10 @@ photom
   For NIRISS extended-source data, the code tried to divide by the pixel
   area, but the pixel area was undefined.  [#4174]
 
+- NRS_BRIGHTOBJ data were incorrectly treated the same as fixed-slit, but
+  the data models are actually not the same.  Also, the logic for pixel area
+  for fixed-slit data was incorrect. [#4179]
+
 refpix
 ------
 

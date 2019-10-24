@@ -128,7 +128,7 @@ class DataSet():
                 if not match:
                     log.warning('No match in reference file')
 
-        # Bright object fixed-slit exposures use a CubeModel
+        # Bright object fixed-slit exposures use a SlitModel
         elif self.exptype == 'NRS_BRIGHTOBJ':
 
             match = False
@@ -907,18 +907,39 @@ class DataSet():
                             'area reference file',
                             n_failures, len(self.input.slits))
 
-        elif exp_type in ['NRS_LAMP', 'NRS_BRIGHTOBJ', 'NRS_FIXEDSLIT']:
+        elif exp_type == 'NRS_BRIGHTOBJ':
             slit_id = pix_area.area_table['slit_id']
+            nrows = len(slit_id)
+            slit_name = self.input.name                 # 'S1600A1'
             foundit = False
-            for k, slit in enumerate(self.input.slits):
-                if slit_id[k] == slit.name:
+            for k in range(nrows):
+                if slit_id[k] == slit_name:
                     foundit = True
-                    slit.meta.photometry.pixelarea_arcsecsq = float(pixarea[k])
-                    slit.meta.photometry.pixelarea_steradians = \
-                        slit.meta.photometry.pixelarea_arcsecsq * A2_TO_SR
+                    self.input.meta.photometry.pixelarea_arcsecsq = float(pixarea[k])
+                    self.input.meta.photometry.pixelarea_steradians = \
+                        self.input.meta.photometry.pixelarea_arcsecsq * A2_TO_SR
+                    break
             if not foundit:
-                slit.meta.photometry.pixelarea_arcsecsq = 1.
-                slit.meta.photometry.pixelarea_steradians = 1.
+                log.warning('%s not found in pixel area table', slit_name)
+                self.input.meta.photometry.pixelarea_arcsecsq = 1.
+                self.input.meta.photometry.pixelarea_steradians = 1.
+
+        elif exp_type in ['NRS_LAMP', 'NRS_FIXEDSLIT']:
+            slit_id = pix_area.area_table['slit_id']
+            nrows = len(slit_id)
+            for slit in self.input.slits:
+                foundit = False
+                for k in range(nrows):
+                    if slit_id[k] == slit.name:
+                        foundit = True
+                        slit.meta.photometry.pixelarea_arcsecsq = float(pixarea[k])
+                        slit.meta.photometry.pixelarea_steradians = \
+                            slit.meta.photometry.pixelarea_arcsecsq * A2_TO_SR
+                        break
+                if not foundit:
+                    log.warning('%s not found in pixel area table', slit.name)
+                    slit.meta.photometry.pixelarea_arcsecsq = 1.
+                    slit.meta.photometry.pixelarea_steradians = 1.
 
         elif exp_type == 'NRS_IFU':
             # There is a slice_id column for selecting a matching slice, but
