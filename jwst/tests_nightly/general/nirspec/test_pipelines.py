@@ -38,6 +38,7 @@ class TestNIRSpecPipelines(BaseJWSTTest):
                     ['primary','sci','err','pixeldq','groupdq'])]
         self.compare_outputs(outputs)
 
+    @pytest.mark.xfail
     def test_nrs_fs_brightobj_spec2(self):
         """
         Regression test of calwebb_spec2 pipeline performed on NIRSpec
@@ -59,6 +60,7 @@ class TestNIRSpecPipelines(BaseJWSTTest):
                   ]
         self.compare_outputs(outputs)
 
+    @pytest.mark.xfail
     def test_nrs_msa_spec2(self):
         """
         Regression test of calwebb_spec2 pipeline performed on NIRSpec MSA data.
@@ -87,6 +89,7 @@ class TestNIRSpecPipelines(BaseJWSTTest):
                   ]
         self.compare_outputs(outputs)
 
+    @pytest.mark.xfail
     def test_nrs_msa_spec2b(self):
         """
         Regression test of calwebb_spec2 pipeline performed on NIRSpec MSA data,

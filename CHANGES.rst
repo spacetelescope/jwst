@@ -241,6 +241,12 @@ stpipe
 - Set ``Step.skip = True`` in ``Step.record_step_status()`` if
   ``success == False``. [#4165]
 
+tests_nightly
+-------------
+
+- Some tests in general/nirspec/ were marked as "expected to fail" because
+  the new reference files are not being selected. [#4180]
+
 tso_photometry
 --------------
 
