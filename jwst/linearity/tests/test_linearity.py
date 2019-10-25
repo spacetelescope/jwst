@@ -16,8 +16,8 @@ def test_coeff_dq():
     # size of integration
     nints = 1
     ngroups = 160
-    xsize = 1032
-    ysize = 1024
+    xsize = 103
+    ysize = 102
 
     # create the data and groupdq arrays
     # create a JWST datamodel for MIRI data
@@ -49,47 +49,47 @@ def test_coeff_dq():
 
     coeffs = np.asfarray([0.0e+00,  0.85, 4.62e-06,  -6.16e-11, 7.23e-16])
 
-    ref_model.data[:, 300, 500] = coeffs
+    ref_model.data[:, 30, 50] = coeffs
 
     # check behavior with NaN coefficients: should not alter pixel values
     coeffs2 = np.asfarray([L0, np.nan, L2, L3, L4])
-    ref_model.data[:, 200, 500] = coeffs2
-    im.data[0, 50, 200, 500] = 500.0
+    ref_model.data[:, 20, 50] = coeffs2
+    im.data[0, 50, 20, 50] = 500.0
 
     tgroup = 2.775
 
     # set pixel values (DN) for specific pixels up the ramp
-    im.data[0, :, 300, 500] = np.arange(ngroups) * 100 * tgroup
+    im.data[0, :, 30, 50] = np.arange(ngroups) * 100 * tgroup
 
     scival = 40000.0
-    im.data[0, 45, 300, 500] = scival  # to check linearity multiplication is done correctly
-    im.data[0, 30, 350, 360] = 35  # pixel to check that dq=2 meant no correction was applied
+    im.data[0, 45, 30, 50] = scival  # to check linearity multiplication is done correctly
+    im.data[0, 30, 35, 36] = 35  # pixel to check that dq=2 meant no correction was applied
 
     # check if dq flags in pixeldq are correctly populated in output
-    im.pixeldq[50, 40] = 1
-    im.pixeldq[50, 41] = 2
-    im.pixeldq[50, 42] = 1024
-    im.pixeldq[50, 43] = 2048
+    im.pixeldq[50, 40] = dqflags.pixel['DO_NOT_USE']
+    im.pixeldq[50, 41] = dqflags.pixel['SATURATED']
+    im.pixeldq[50, 42] = dqflags.pixel['DEAD']
+    im.pixeldq[50, 43] = dqflags.pixel['HOT']
 
     # set dq flags in DQ of reference file
-    ref_model.dq[350, 350] = dqflags.pixel['DO_NOT_USE']
-    ref_model.dq[350, 360] = dqflags.pixel['NO_LIN_CORR']
-    ref_model.dq[300, 500] = dqflags.pixel['GOOD']
+    ref_model.dq[35, 35] = dqflags.pixel['DO_NOT_USE']
+    ref_model.dq[35, 36] = dqflags.pixel['NO_LIN_CORR']
+    ref_model.dq[30, 50] = dqflags.pixel['GOOD']
 
     # run through Linearity pipeline
     outfile = lincorr(im, ref_model)
 
     # check that multiplication of polynomial was done correctly for specified pixel
     outval = L0+(L1*scival)+(L2*scival**2)+(L3*scival**3)+(L4*scival**4)
-
-    assert(np.isclose(outfile.data[0, 45, 300, 500], outval, rtol=0.00001))
+    assert(np.isclose(outfile.data[0, 45, 30, 50], outval, rtol=0.00001))
 
     # check that dq value was handled correctly
-
-    assert(outfile.pixeldq[350, 350] == 1)
-    assert(outfile.pixeldq[350, 360] == dqflags.pixel['NO_LIN_CORR'])  # NO_LIN_CORR flag
-    assert(outfile.data[0, 30, 350, 360] == 35)  # NO_LIN_CORR, sci value should not change
-    assert(outfile.data[0, 50, 200, 500] == 500.0)  # NaN coefficient should not change data value
+    assert outfile.pixeldq[35, 35] == dqflags.pixel['DO_NOT_USE']
+    assert outfile.pixeldq[35, 36] == dqflags.pixel['NO_LIN_CORR']
+    # NO_LIN_CORR, sci value should not change
+    assert outfile.data[0, 30, 35, 36] == 35
+    # NaN coefficient should not change data value
+    assert outfile.data[0, 50, 20, 50] == 500.0
 
 
 def test_saturation():
@@ -112,7 +112,8 @@ def test_saturation():
     # run through Linearity pipeline
     outfile = LinearityStep.call(im)
 
-    assert(outfile.data[0, 15, 200, 150] == 1000.0)  # pixel flagged as saturated, shouldn't change
+    # pixel flagged as saturated, shouldn't change
+    assert outfile.data[0, 15, 200, 150] == 1000.0
 
 
 def test_nolincorr():
@@ -243,6 +244,11 @@ def test_lin_subarray():
 
     ref_model.meta.instrument.name = 'MIRI'
     ref_model.meta.instrument.detector = 'MIRIMAGE'
+    ref_model.meta.description = "MIRI LINEARITY Correction"
+    ref_model.meta.reftype = "LINEARITY"
+    ref_model.meta.author = "Monty Pytest"
+    ref_model.meta.pedigree = "GROUND"
+    ref_model.meta.useafter = '2015-08-01T00:00:00'
     ref_model.meta.subarray.xstart = 1
     ref_model.meta.subarray.xsize = 1032
     ref_model.meta.subarray.ystart = 1

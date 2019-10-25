@@ -397,6 +397,14 @@ def test_open_asdf_model():
     assert model._asdf._ignore_unrecognized_tag == True
     model.close()
 
+def test_open_asdf_model_s3():
+    model = DataModel("s3://test-s3-data/data_model.asdf")
+    assert isinstance(model, DataModel)
+
+def test_open_fits_model_s3():
+    model = DataModel("s3://test-s3-data/data_model.fits")
+    assert isinstance(model, DataModel)
+
 def test_image_with_extra_keyword_to_multislit():
     with ImageModel(data=np.empty((32, 32))) as im:
         im.save(TMP_FITS, overwrite=True)

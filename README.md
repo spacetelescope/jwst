@@ -2,31 +2,36 @@ JWST Calibration Pipeline
 =========================
 [![Documentation Status](https://readthedocs.org/projects/jwst-pipeline/badge/?version=latest)](http://jwst-pipeline.readthedocs.io/en/latest/?badge=latest)
 [![Build Status](https://travis-ci.org/spacetelescope/jwst.svg?branch=master)](https://travis-ci.org/spacetelescope/jwst)
+[![codecov](https://codecov.io/gh/spacetelescope/jwst/branch/master/graph/badge.svg)](https://codecov.io/gh/spacetelescope/jwst)
 [![Powered by STScI Badge](https://img.shields.io/badge/powered%20by-STScI-blue.svg?colorA=707170&colorB=3e8ddd&style=flat)](http://www.stsci.edu)
 [![Powered by Astropy Badge](http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](http://www.astropy.org/)
 
 ![STScI Logo](docs/_static/stsci_logo.png)
 
-**JWST requires Python 3.5 or above**.
+**JWST requires Python 3.5 or above and a C compiler for dependencies**.
 
 Installation
 ------------
 
 The ``jwst`` package can be installed into a virtualenv or conda environment via ``pip``.  We recommend creating a fresh environment with only python installed.  Via conda:
 
-    conda create -n jwst_env python=3.6
-    source activate jwst_env
+    conda create -n jwst_env python
+    conda activate jwst_env
 
 ### Installing for end-users ###
 
-To install a released (tagged) version, you can install directly from Github.  To install ``jwst 0.13.4``:
+To install a released (tagged) version, you can install directly from Github.  To install tagged release ``jwst 0.13.8``:
 
     pip install numpy
-    pip install git+https://github.com/spacetelescope/jwst#0.13.4
+    pip install git+https://github.com/spacetelescope/jwst@0.13.8
 
-The same can be done to install the latest development version (from ``master``):
+The latest development version (from ``master``) can also be installed from Github:
 
     pip install git+https://github.com/spacetelescope/jwst
+
+As can a particular commit hash:
+
+    pip install git+https://github.com/spacetelescope/jwst@3f03323c
 
 ### Installing a DMS release ###
 
@@ -34,36 +39,43 @@ We still package our releases to DMS via a conda spec file that lists the exact 
 To create a new environment with a specific release, use:
 
     conda create -n jwst_env --file <URL>
-    source activate jwst_env
+    conda activate jwst_env
 
 where `<URL>` is of the form:
 
-    Linux: http://ssb.stsci.edu/releases/jwstdp/0.13.4/latest-linux
-    OS X: http://ssb.stsci.edu/releases/jwstdp/0.13.4/latest-osx
+    Linux: http://ssb.stsci.edu/releases/jwstdp/0.13.7/latest-linux
+    OS X: http://ssb.stsci.edu/releases/jwstdp/0.13.7/latest-osx
 
-Other particular versions can be installed by choosing a different version tag in place of "0.13.4" in the URL path.
+Other particular versions can be installed by choosing a different version tag in place of "0.13.7" in the URL path.
 See the "Software vs DMS build version map" table below for a list of tags corresponding to particular releases.
 
 ### Installing for developers ###
 
 Fork and clone the repo:
 
-    git clone https://github.com/spacetelescope/asdf
+    git clone https://github.com/spacetelescope/jwst
+    cd jwst
+
+*Note: `python setup.py install` and `python setup.py develop` commands do not work.*
 
 Install from your local checked out copy as an "editable" install:
 
     pip install numpy
     pip install -e .
 
-This is like doing a ``setup.py develop`` install.  If you want to run the tests and/or build the docs, you can make sure those dependencies are installed too:
+If you want to run the tests and/or build the docs, you can make sure those dependencies are installed too:
 
     pip install -e .[test]
     pip install -e .[docs]
     pip install -e .[test,docs]
+    
+Note: If you wish to install directly from github, but also include the extra dependencies, the syntax is as follows:
+
+    pip install "jwst[test] @ git+https://github.com/spacetelescope/jwst"
 
 Need other useful packages in your development environment?
 
-    pip install ipython, flake8
+    pip install ipython flake8
 
 ### CRDS Setup ###
 
@@ -103,7 +115,9 @@ Software vs DMS build version map
 
 | jwst tag | DMS build | CRDS_CONTEXT |   Date     |          Notes                           |
 | -------- | --------- | ------------ | ---------- | -----------------------------------------|
-|  0.13.6  | B7.3      | 0534         | 06/19/2019 | Final release candidate for Build 7.3    |
+|  0.13.8  | B7.3.1    | 0541         | 09/05/2019 | Patch for Build 7.3 released as Build 7.3.1     |
+|  0.13.7  | B7.3      | 0535         | 06/21/2019 | Final release candidate for Build 7.3    |
+|  0.13.6  | B7.3rc4   | 0534         | 06/20/2019 | Fourth release candidate for Build 7.3   |
 |  0.13.5  | B7.3rc3   | 0534         | 06/19/2019 | Third release candidate for Build 7.3    |
 |  0.13.4  | B7.3rc2   | 0534         | 06/18/2019 | Second release candidate for Build 7.3   |
 |  0.13.3  | B7.3rc1   | 0532         | 06/04/2019 | First release candidate for Build 7.3    |

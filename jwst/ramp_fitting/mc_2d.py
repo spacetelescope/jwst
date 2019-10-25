@@ -40,11 +40,14 @@
 # --> status = aa.add_crs_all_slices()
 #
 
-import time, random
-import numpy as N
-import sys, os, math
 import energy_dists
+import math
+import random
+import sys
+import time
+
 from astropy.io import fits
+import numpy as np
 
 global GCR_FLUX
 global SP_FLUX
@@ -123,7 +126,7 @@ class cr_add_2d:
             print(' Number of slices :', total_slices)
             try:
                 print(' READMODE specified in the input header : ', prihdr['READMODE'])
-            except Exception as errmess:
+            except Exception:
                 print('WARNING: unable to determine readmode from header ')
 
         # read 'NAVGIMAG'] from input header to later output to output header
@@ -132,17 +135,18 @@ class cr_add_2d:
             if (verb > 0):
                 print(' From the input header keyword NAVGIMAG, navg = ', self._navg)
                 print('  ')
-        except Exception as errmess:
+        except Exception:
             print('Fatal ERROR : unable to access NAVGIMAG fromx primary header of data cube')
             sys.exit(ERROR_RETURN)
 
-        if (self._old_cr_file == None): # generate new GCRs and SPs
+        # generate new GCRs and SPs
+        if self._old_cr_file is None:
             if (verb > 0): print(' Generating GCRs and SPs...')
 
             try:
                 self._instrume = prihdr['INSTRUME']
                 print(' This data cube is for instrument : ', self._instrume)
-            except Exception as errmess:
+            except Exception:
                 print('WARNING: unable to determine the instrument from header, will default to NIRCAM ')
                 self._instrume = 'NIRCAM'
 
@@ -153,7 +157,7 @@ class cr_add_2d:
                 self._electron_per_adu = 2.2
                 self._pix_length = 25.
             else:
-                print('Fatal ERROR - unsupported instrument : ', errmess)
+                print('Fatal ERROR - unsupported instrument')
 
             self._half_pix_length = self._pix_length / 2.
             self._pix_area = self._pix_length**2.  # area in micron2
@@ -161,10 +165,10 @@ class cr_add_2d:
             self._grand_total_gcr = 0
             self._grand_total_sp = 0
 
-            self._tot_gcr_and_sp = N.zeros((asize_1, asize_2), dtype=N.float32) # cumulative total for all slices
+            self._tot_gcr_and_sp = np.zeros((asize_1, asize_2), dtype=np.float32) # cumulative total for all slices
 
             # data cube of created crs and sps :
-            self.cr_and_sp_only_cube = N.zeros((total_slices, asize_1, asize_2), dtype=N.float32)
+            self.cr_and_sp_only_cube = np.zeros((total_slices, asize_1, asize_2), dtype=np.float32)
 
             # generate number of galactic cosmic rays
             exp_gcr = self._gcr_flux * self._pix_area * EXP_TIME  # expected number of galactic cosmic rays
@@ -194,7 +198,7 @@ class cr_add_2d:
                 if (verb > 1):
                     print('   ')
                     print('  ... beginning this slice:  ', ii_slice)
-                self._new_gcr_and_sp = N.zeros((asize_1, asize_2), dtype=N.float32)  # .... for the current slice
+                self._new_gcr_and_sp = np.zeros((asize_1, asize_2), dtype=np.float32)  # .... for the current slice
                 self._slice = ii_slice
                 self.add_crs_this_slice()  # add all GCR/SPs for this slice
 
@@ -242,7 +246,7 @@ class cr_add_2d:
             input_data = pix_val.copy()
 
             if (self._slice > 0): # add cr/sp for all but 0th slice
-                tot_nz_gcr_and_sp = N.where(self._tot_gcr_and_sp > 0.0)
+                tot_nz_gcr_and_sp = np.where(self._tot_gcr_and_sp > 0.0)
                 pix_val += self._tot_gcr_and_sp   # add the gcrs and sps from ALL previous slices
 
                 if (verb > 0):
@@ -256,8 +260,8 @@ class cr_add_2d:
             sys.exit(ERROR_RETURN)
 
         try:
-            prihdr = self.fh_data_cube[0].header
-        except Exception as errmess:
+            self.fh_data_cube[0].header
+        except Exception:
             print('Fatal ERROR : unable to open primary header of data cube')
             sys.exit(ERROR_RETURN)
 
@@ -267,8 +271,9 @@ class cr_add_2d:
         tot_pix_done = 0  # number of pixels looped over
 
         # force CR to be normally incident at center of pixel
-        theta = HALF_PI; phi = 0.0
-        self._in_x = self._half_pix_length; self._in_y = self._half_pix_length; self._in_z = PIX_HEIGHT
+        self._in_x = self._half_pix_length
+        self._in_y = self._half_pix_length
+        self._in_z = PIX_HEIGHT
 
         for ii_pix in range(0, self._asize_1):
             for jj_pix in range(0, self._asize_2):
@@ -308,7 +313,8 @@ class cr_add_2d:
 
                     # add energy deposit to arrays for this pixel
                     self._new_gcr_and_sp[jj_pix, ii_pix] += delta_e_adu
-                    self.cr_and_sp_only_cube[self._slice, jj_pix, ii_pix] += delta_e_adu # to compare to detections in a later program
+                    # to compare to detections in a later program
+                    self.cr_and_sp_only_cube[self._slice, jj_pix, ii_pix] += delta_e_adu
 
                 # generate and trace SPs
                 got_num = 0 # 0 for not yet generated number of solar particles, reset to 1 when generated
@@ -344,20 +350,31 @@ class cr_add_2d:
                     self.cr_and_sp_only_cube[self._slice, jj_pix, ii_pix] += delta_e_adu
 
         if (verb > 1):
-            print(' just before adding the latest GCR and SP, the min, mean, and max (over the slice) of the cumulative total of the amplitudes of GCR and SP for the current slice: ', self._tot_gcr_and_sp.min(), self._tot_gcr_and_sp.mean(), self._tot_gcr_and_sp.max())
+            print(' just before adding the latest GCR and SP, the min, mean,',
+                'and max (over the slice) of the cumulative total of the',
+                'amplitudes of GCR and SP for the current slice: ',
+                self._tot_gcr_and_sp.min(), self._tot_gcr_and_sp.mean(),
+                self._tot_gcr_and_sp.max())
 
         self._tot_gcr_and_sp += self._new_gcr_and_sp  #  add all pixels of this slice to total
 
         if (verb > 1):
-            print(' just after adding the latest GCR and SP, the min, mean, and max (over the slice) of the cumulative total of the amplitudes of GCR and SP for the current slice: ', self._tot_gcr_and_sp.min(), self._tot_gcr_and_sp.mean(), self._tot_gcr_and_sp.max())
+            print(' just after adding the latest GCR and SP, the min, mean,',
+                'and max (over the slice) of the cumulative total of the',
+                'amplitudes of GCR and SP for the current slice: ',
+                self._tot_gcr_and_sp.min(), self._tot_gcr_and_sp.mean(),
+                self._tot_gcr_and_sp.max())
             print('         ')
             print(' original pix_val in ADU = ', input_data)
             print(' final pix_val in ADU : ', pix_val)
 
         if (verb > 1):
             final_minus_original_data = pix_val - input_data
-            print(' final minus original in ADU for this slice (slice number', self._slice, '): ', final_minus_original_data)
-            print(' ... final minus original has min, mean, max : ', final_minus_original_data.min(), final_minus_original_data.mean(), final_minus_original_data.max())
+            print(' final minus original in ADU for this slice (slice number',
+                self._slice, '): ', final_minus_original_data)
+            print(' ... final minus original has min, mean, max : ',
+                final_minus_original_data.min(), final_minus_original_data.mean(),
+                final_minus_original_data.max())
 
         if (verb > 1):
             print(' the total number of gcr hitting this slice (slice number', self._slice, '): ', total_gcr)
@@ -459,12 +476,6 @@ class cr_add_2d:
         @param output_fname: name of output file
         @type output_fname: string
         """
-        try:
-            os.remove(output_fname)
-            print(' removed output file:', output_fname)
-        except:
-            pass
-
         fitsobj = fits.HDUList()
         hdu = fits.PrimaryHDU()
 
@@ -475,7 +486,7 @@ class cr_add_2d:
 
         hdu.data = data
         fitsobj.append(hdu)
-        fitsobj.writeto(output_fname)
+        fitsobj.writeto(output_fname, overwrite=True)
         fitsobj.close()
 
 # Calculate stopping power in MeV/micron for this energy in Silicon; removed density dependence
@@ -505,8 +516,8 @@ def calc_poisson(exp_num):
     @rtype: float array
     """
 
-    pois = N.zeros(MAX_CR, dtype=N.float32)  # only allow a max of MAX_CR particles/pixel/integration
-    cumul_pois = N.zeros(MAX_CR, dtype=N.float32)
+    pois = np.zeros(MAX_CR, dtype=np.float32)  # only allow a max of MAX_CR particles/pixel/integration
+    cumul_pois = np.zeros(MAX_CR, dtype=np.float32)
 
     for ii in range(0, MAX_CR):
         if ii > 0:

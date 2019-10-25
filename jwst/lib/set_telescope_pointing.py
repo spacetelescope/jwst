@@ -9,10 +9,7 @@ from astropy.time import Time
 import numpy as np
 
 from ..datamodels import Level1bModel
-from ..lib.engdb_tools import (
-    ENGDB_BASE_URL,
-    ENGDB_Service,
-)
+from ..lib.engdb_tools import ENGDB_Service
 from .exposure_types import IMAGING_TYPES, FGS_GUIDE_EXP_TYPES
 
 TYPES_TO_UPDATE = set(list(IMAGING_TYPES) + FGS_GUIDE_EXP_TYPES)

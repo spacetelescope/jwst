@@ -63,7 +63,7 @@ def make_tweakreg_catalog(model, kernel_fwhm, snr_threshold, sharplo=0.2,
     if not isinstance(model, ImageModel):
         raise TypeError('The input model must be an ImageModel.')
 
-    threshold_img = detect_threshold(model.data, snr=snr_threshold)
+    threshold_img = detect_threshold(model.data, nsigma=snr_threshold)
     # TODO:  use threshold image based on error array
     threshold = threshold_img[0, 0]     # constant image
 

@@ -5,6 +5,7 @@ import logging
 
 from ..datamodels import dqflags
 from ..lib import reffile_utils
+from ..lib import pipe_utils
 from . import x_irs2
 
 import numpy as np
@@ -37,7 +38,7 @@ def do_correction(input_model, ref_model):
 
     ramparr = input_model.data
     # Was IRS2 readout used?
-    is_irs2_format = x_irs2.is_irs2(input_model)
+    is_irs2_format = pipe_utils.is_irs2(input_model)
     if is_irs2_format:
         irs2_mask = x_irs2.make_mask(input_model)
 

@@ -7,6 +7,7 @@ dist/
 *.pyc
 *.egg-info/
 *.so
+.coverage
 */version.py
 docs/*/source/*.txt.rst
 docs/generated
@@ -26,7 +27,7 @@ pip-wheel-metadata/
 .pydevproject
 .vscode
 *code-workspace
-src/launch.json
+src/
 scripts/launch.json
 *.orig
 .ipynb_checkpoints

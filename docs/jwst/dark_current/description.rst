@@ -60,3 +60,13 @@ It is assumed that dark current will be subarray-dependent, therefore this
 step makes no attempt to extract subarrays from the dark reference file to
 match input subarrays. It instead relies on the presence of matching subarray
 dark reference files in CRDS.
+
+NIRCam Target Acq Subarrays
+---------------------------
+Due to the very large number of available NIRCam target acquisition (TA) subarrays,
+the instrument team has chosen to not provide dark reference files for any of
+the TA subarrays in CRDS.
+Requests from the calibration pipeline to CRDS for matching dark reference
+files to use when processing a NIRCam TA will result in a reference file name of
+"N/A" being returned, which causes the dark subtraction step to skip processing.
+Hence dark current will not be subtracted from NIRCam TA subarray exposures.

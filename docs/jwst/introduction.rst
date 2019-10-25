@@ -85,17 +85,13 @@ referencing their class names is done as follows:
   $ strun jwst.dq_init.DQInitStep jw00017001001_01101_00001_nrca1_uncal.fits
 
 When a pipeline or step is executed in this manner (i.e. by referencing the
-class name), it will be run using all default parameter values. The same thing
-can be accomplished by using the default configuration file corresponding to
-each:
-::
-
-  $ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
-  $ strun dq_init.cfg jw00017001001_01101_00001_nrca1_uncal.fits
+class name), it will be run using a CRDS-supplied configuration merged with
+default values
 
 If you want to use non-default parameter values, you can specify them as
 keyword arguments on the command line or set them in the appropriate
-cfg file.
+configuration file.
+
 To specify parameter values for an individual step when running a pipeline
 use the syntax ``--steps.<step_name>.<parameter>=value``.
 For example, to override the default selection of a dark current reference
@@ -114,14 +110,12 @@ step by using the '-h' (help) argument to strun:
     $ strun dq_init.cfg -h
     $ strun jwst.pipeline.Detector1Pipeline -h
 
-If you want to consistently override the default values of certain arguments
-and don't want to specify them on the command line every time you
-execute ``strun``, you can specify them in the configuration (.cfg) file for
-the pipeline or the individual step.
-For example, to always run ``Detector1Pipeline`` using the override in the
-previous example, you could edit your ``calwebb_detector1.cfg`` file to
-contain the following:
-::
+If you want to consistently override the default values of certain arguments and
+don't want to specify them on the command line every time you execute ``strun``,
+you can specify them in the configuration (.cfg or .asdf) file for the pipeline
+or the individual step. For example, to always run ``Detector1Pipeline`` using
+the override in the previous example, you could edit your
+``calwebb_detector1.cfg`` file to contain the following: ::
 
  name = "Detector1Pipeline"
  class = "jwst.pipeline.Detector1Pipeline"
@@ -154,6 +148,17 @@ where ``my_dark_current.cfg`` contains:
  class = "jwst.dark_current.DarkCurrentStep"
  override_dark = 'my_dark.fits'
 
+The configuration parameters for each step can be saved to an ASDF file using
+the ``--save-parameters <filename>`` option. For example, to save the
+configuration for the `tweakreg` step, one would do the following:
+::
+
+ strun jwst.tweakreg.PersistenceStep --save-parameters persistence.asdf
+
+This file can be edited and then used to run the step with the new configuration:
+::
+
+ strun persistence.asdf jw00017001001_01101_00001_nrca1_uncal.fits
 
 Exit Status
 -----------
@@ -387,6 +392,18 @@ Alternatively you can specify the ``skip`` argument on the command line:
 Logging Configuration
 ---------------------
 
+The name of a file in which to save log information, as well as the desired
+level of logging messages, can be specified in an optional configuration file
+"stpipe-log.cfg". This file must be in the same directory in which you run the
+pipeline in order for it to be used. If this file does not exist, the default
+logging mechanism is STDOUT, with a level of INFO. An example of the contents
+of the stpipe-log.cfg file is:
+::
+
+    [*]
+    handler = file:pipeline.log
+    level = INFO
+
 If there's no ``stpipe-log.cfg`` file in the working directory, which specifies
 how to handle process log information, the default is to display log messages
 to stdout. If you want log information saved to a file, you can specify the
@@ -412,60 +429,46 @@ logging level designations of ``DEBUG``, ``INFO``, ``WARNING``, ``ERROR``, and
 ``CRITICAL``. Only messages at or above the specified level
 will be displayed.
 
+.. note::
+
+   Setting up ``stpipe-log.cfg`` can lead to confusion, especially if it is
+   forgotten about. If one has not run a pipeline in awhile, and then sees no
+   logging information, most likely it is because ``stpipe-log.cfg`` is
+   present. Consider using a different name and specifying it explicitly on the
+   command line.
+
+.. _`Configuration Files`:
 
 Configuration Files
 ===================
 
-Configuration (.cfg) files can be used to specify parameter values
-when running a pipeline or individual steps, as well as for
-specifying logging options.
+Configuration files can be used to specify parameter values when running a
+pipeline or individual steps. For JWST, configuration files are retrieved from
+CRDS, just as with other reference files. If there is no match between a step,
+the input data, and CRDS, the coded defaults are used. These values can be
+overridden either by the command line options, as previously described, and by a
+local configuration file.
 
-You can use the ``collect_pipeline_cfgs`` task to get copies of all the cfg
-files currently in use by the jwst pipeline software. The task takes a single
-argument, which is the name of the directory to which you want the cfg files
-copied. Use '.' to specify the current working directory, e.g.
+A configuration file should be used when there are parameters a user wishes to
+change from the default/CRDS version for a custom run of the step. To create a
+configuration file with the default values, use the command: ::
+
+ strun <step.class> --save-parameters <filename.asdf>
+
+For example, to get the parameters for the jump step, use:
 ::
 
- $ collect_pipeline_cfgs .
+ strun jwst.jump.JumpStep --save-parameters jump_pars.asdf
 
-Each step and pipeline has their own cfg file, which are used to specify
-relevant parameter values. For each step in a pipeline, the pipeline cfg file
-specifies either the step's arguments or the cfg file containing the step's
-arguments.
+Once retrieved, the file can be edited, removing parameters that should be left
+at their default/CRDS values, and setting the remaining parameters to the
+desired values. 
 
-The name of a file in which to save log information, as well as the desired
-level of logging messages, can be specified in an optional configuration file
-"stpipe-log.cfg". This file must be in the same directory in which you run the
-pipeline in order for it to be used. If this file does not exist, the default
-logging mechanism is STDOUT, with a level of INFO. An example of the contents
-of the stpipe-log.cfg file is:
-::
+For more information, see :ref:`config_asdf_files`. Note that the older
+:ref:`config_cfg_files` format is still an option, understanding that this
+format will be deprecated.
 
-    [*]
-    handler = file:pipeline.log
-    level = INFO
 
-which specifies that all log messages will be directed to a file called
-"pipeline.log" and messages at a severity level of INFO and above will be
-recorded.
-
-For a given step, the step's cfg file specifies parameters and their default
-values; it includes parameters that are typically not changed between runs.
-Parameters that are usually reset for each run are not included in the cfg file,
-but instead specified on the command line. An example of a cfg file for the
-jump detection step is:
-::
-
-    name = "jump"
-    class = "jwst.jump.JumpStep"
-    rejection_threshold = 4.0
-
-You can list all of the parameters for this step using:
-::
-
- $ strun jump.cfg -h
-
-which gives the usage, the positional arguments, and the optional arguments.
 More information on configuration files can be found in the ``stpipe`` User's
 Guide at :ref:`stpipe-user-steps`.
 

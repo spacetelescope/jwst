@@ -1,5 +1,9 @@
 if (utils.scm_checkout()) return
 
+withCredentials([string(
+    credentialsId: 'jwst-codecov',
+    variable: 'codecov_token')]) {
+
 env_vars = [
     "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
     "CRDS_PATH=./crds_cache",
@@ -29,10 +33,11 @@ bc1 = utils.copy(bc0)
 bc1.name = "stable-deps"
 bc1.env_vars = env_vars
 bc1.build_cmds = [
-    "pip install -e .[test]",
+    "pip install --src=../src -e .[test]",
 ]
 bc1.test_cmds = [
-    "pytest -r sx --junitxml=results.xml"
+    "pytest --cov=./ -r sx --junitxml=results.xml",
+    "codecov --token=${codecov_token}"
 ]
 
 // Generate conda-free build with python 3.7
@@ -41,10 +46,24 @@ bc2.nodetype = 'python3.7'
 bc2.name = 'conda-free'
 bc2.env_vars = env_vars
 bc2.build_cmds = [
-    "pip install -e .[test]",
+    "pip install --src=../src -e .[test]",
 ]
 bc2.test_cmds = [
-    "pytest -r sx --junitxml=results.xml"
+    "pytest --cov=./ -r sx --junitxml=results.xml",
+    "codecov --token=${codecov_token}"
 ]
 
-utils.run([bc0, bc1, bc2])
+
+// Audit code with bandit
+bc3 = new BuildConfig()
+bc3.nodetype = 'python3.7'
+bc3.name = 'security-audit'
+bc3.build_cmds = [
+    "pip install -e .[test] bandit",
+]
+bc3.test_cmds = [
+    "bandit --exclude 'jwst/*test*' -r jwst scripts",
+]
+
+utils.run([bc0, bc1, bc2, bc3])
+}  // withCredentials

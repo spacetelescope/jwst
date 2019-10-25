@@ -9,6 +9,8 @@ from os.path import basename
 import numpy as np
 from astropy.io import fits
 
+from ..lib import s3_utils
+
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -78,7 +80,10 @@ def open(init=None, **kwargs):
         file_type = filetype.check(init)
 
         if file_type == "fits":
-            hdulist = fits.open(init)
+            if s3_utils.is_s3_uri(init):
+                hdulist = fits.open(s3_utils.get_object(init))
+            else:
+                hdulist = fits.open(init)
             file_to_close = hdulist
 
         elif file_type == "asn":
@@ -316,6 +321,26 @@ def gentle_asarray(a, dtype):
             else:
                 return np.asanyarray(a, dtype=out_dtype)
         elif in_dtype.fields is not None and out_dtype.fields is not None:
+            # When a FITS file includes a pseudo-unsigned-int column, astropy will return
+            # a FITS_rec with an incorrect table dtype.  The following code rebuilds
+            # in_dtype from the individual fields, which are correctly labeled with an
+            # unsigned int dtype.
+            # We can remove this once the issue is resolved in astropy:
+            # https://github.com/astropy/astropy/issues/8862
+            if isinstance(a, fits.fitsrec.FITS_rec):
+                new_in_dtype = []
+                updated = False
+                for field_name in in_dtype.fields:
+                    table_dtype = in_dtype[field_name]
+                    field_dtype = a.field(field_name).dtype
+                    if np.issubdtype(table_dtype, np.signedinteger) and np.issubdtype(field_dtype, np.unsignedinteger):
+                        new_in_dtype.append((field_name, field_dtype))
+                        updated = True
+                    else:
+                        new_in_dtype.append((field_name, table_dtype))
+                if updated:
+                    in_dtype = np.dtype(new_in_dtype)
+
             if in_dtype == out_dtype:
                 return a
             in_names = {n.lower() for n in in_dtype.names}

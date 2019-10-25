@@ -24,7 +24,7 @@ class TestSpec2Pipeline(BaseJWSTTest):
             self.get_data(self.test_dir, file)
 
         step = Spec2Pipeline()
-        step.save_bsub=True,
+        step.save_bsub=True
         step.save_results=True
         step.resample_spec.save_results = True
         step.cube_build.save_results = True
@@ -61,7 +61,7 @@ class TestSpec2Pipeline(BaseJWSTTest):
                                    'jw00035001001_01101_00001_MIRIMAGE_rate.fits')
 
         step = Spec2Pipeline()
-        step.save_bsub=True,
+        step.save_bsub=True
         step.save_results=True
         step.resample_spec.save_results = True
         step.cube_build.save_results = True
@@ -86,7 +86,7 @@ class TestSpec2Pipeline(BaseJWSTTest):
                                    'jw00035001001_01101_00001_MIRIMAGE_rateints.fits')
 
         step = Spec2Pipeline()
-        step.save_bsub=True,
+        step.save_bsub=True
         step.save_results=True
         step.extract_1d.save_results = True
         step.run(input_file)
@@ -113,7 +113,7 @@ class TestSpec2Pipeline(BaseJWSTTest):
         input_file = self.get_data(test_dir,
                                    'jw80500018001_02101_00002_MIRIFUSHORT_rate.fits')
         step = Spec2Pipeline()
-        step.save_bsub=True,
+        step.save_bsub=True
         step.save_results=True
         step.resample_spec.save_results = True
         step.cube_build.save_results = True
@@ -142,7 +142,7 @@ class TestSpec2Pipeline(BaseJWSTTest):
         input_file = self.get_data(self.test_dir,
                                    'jw10001001001_01101_00001_mirifushort_rate.fits')
         step = Spec2Pipeline()
-        step.save_bsub=True,
+        step.save_bsub=True
         step.save_results=True
         step.resample_spec.save_results = True
         step.cube_build.save_results = True

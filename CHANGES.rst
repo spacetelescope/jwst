@@ -1,8 +1,23 @@
-0.13.8 (2019-08-29)
+0.14.0 (2019-10-25)
 ===================
+
+- Remove references to deprecated collections.* ABCs that will be removed in
+  Python 3.8. [#3732]
+
+- Remove ``jwpsf`` module. [#3791]
+
+- Update dependencies ``python>=3.6`` and ``numpy>=1.16``. [#4134]
+
+
+ami
+---
+
+- Unit tests were added for the ami_analyze pipeline. [#4176]
 
 assign_wcs
 ----------
+
+- This step populates keyword DISPAXIS. [#3799]
 
 - For NIRISS WFSS data, the wavelengths were incorrect because the function
   for horizontally oriented spectra was called for GR150R, and the function
@@ -11,6 +26,15 @@ assign_wcs
 
 associations
 ------------
+- Add mir_taconfirm to the target acquisition exp_types [#4135]
+
+- Exclude mir_lrs-slitless calibration data from level 3 processing [#3990]
+
+- Fix in load_as_asn for UTF-8 errors [#3942]
+
+- Update association rules so that MIMF exposures are processed as WFS observations [#4034]
+
+- asn_from_list fills the level2  member exptype correctly if the input is a tuple [#2942]
 
 - Update rules to make level 3 associations for slitless LRS mode [#3940]
 
@@ -27,6 +51,225 @@ associations
 
 - Will not constrain on uniqueness of the MSACONFIG keyword [#3770]
 
+- Process non-science exposures taken during WFS&C observations [#3947]
+
+barshadow
+---------
+
+- Unit tests were added. [#3930]
+
+combine_1d
+----------
+
+- Fixed the number of inputs to the spectral WCS - one expetced, two were passed. [#3827]
+
+calwebb_tso3
+-------------
+
+- Update to exclude target_acquisitions from processing in the calwebb_tso3 pipeline [#3759]
+
+cube_build
+----------
+
+- Schema for the ``WAVE-TAB`` WCS no longer requires fixed-length arrays for
+  the wavelength "coordinates". The ``'nelem'`` field therefore is no longer
+  necessary and has been removed. [#3976]
+
+datamodels
+----------
+
+- Update to prevent target_acquisitions from processing in the spec3 pipeline [#3777]
+
+- Use public API of jsonschema to ease upgrade to 3.x. [#3705]
+
+- Fixed corruption of FITS tables with unsigned int columns. [#3736]
+
+- Fixed missing TUNITn keywords caused by changes for unsigned int columns. [#3753]
+
+- Write ``siaf_xref_sci`` and ``siaf_yref_sci`` to FITS keywords ``XREF_SCI``
+  and ``YREF_SCI`` for ``NRC_TSGRISM`` exposures. [#3766]
+
+- Updated multiexposure.schema to just import slitdata.schema instead of explicitly
+  specifying all of its attributes. [#3809]
+
+- Improved ``properties._cast()`` to be able to handle structured arrays
+  schemas without a specified (in schema) shape. In addition, ``ndim``
+  can be used to constrain the dimensionality of data in structured array
+  fields. [#3976]
+
+- Fixed an issue with the fix from [#3976] that was affecting "casting" to
+  data types defined by schema of structured arrays when input values are not
+  native Python types (tuples). [#3995]
+
+- Fixed an issue with the fix from [#3995] that was affecting "casting" to
+  data types defined by schema of structured arrays when input values are
+  already structured arrays. [#4030]
+
+- Added "MIR_TACONFIRM" to the list of allowed EXP_TYPE values in the
+  keyword schemas. [#4039]
+
+- Added new imaging-specific photom reference file data models ``FgsImgPhotomModel``,
+  ``MirImgPhotomModel``, ``NrcImgPhotomModel``, and ``NisImgPhotomModel``. [#4052]
+
+- Add EXP_TYPE and P_EXP_TY keywords to new imaging photom reference file
+  data model schemas. [#4068]
+
+- Introduced a flag ``ignore_missing_extensions=True`` to the `DataModel` initializer
+  which is propagated to the ``asdf.open`` function. It allows control over a warning
+  asdf issues when opening files written with an extension version older than the
+  extension version the file was written with. An example message is
+
+  ``asdf/asdf.py:202: UserWarning: File was created with extension
+  'astropy.io.misc.asdf.extension.AstropyAsdfExtension' from package astropy-4.0.dev24515,
+  but older version astropy-3.2.1 is installed``. [#4070]
+
+- Added new spectroscopic mode photom reference file data models. [#4096]
+
+- Added new imaging mode aperture correction (apcorr) reference file data
+  models ``FgsImgApcorrModel``, ``MirImgApcorrModel``, ``NrcImgApcorrModel``,
+  and ``NisImgApcorrModel``. [#4168]
+
+- Add support for streaming reference files directly from S3. [#4170]
+
+exp_to_source
+-------------
+
+- Updated the documentation and added some logging to the step. [#3803]
+
+- Close input files after creating the new outputs. [#3828]
+
+extract_1d
+----------
+
+- Parameters were added to ``ExtractBase.__init__``, and most of the initialization
+  is done there rather than in the subclasses. [#3714]
+
+- This step uses keyword DISPAXIS. [#3799]
+
+- Fixed a bug in ``pixel_area`` when the input is a ``CubeModel``. [#3827]
+
+- Computing the solid angle of a pixel is only done for the first integration
+  of a multi-integration exposure, and it's not done at all for WFSS data
+  [#3863]
+
+extract_2d
+----------
+
+- For grism data, this step copies keyword DISPAXIS from input to output. [#3799]
+
+- For NIRCam TSO data, wavelengths are computed and assigned to the
+  wavelength attribute. [#3863]
+
+- Improved the computation of ``S_REGION`` of a slit. [#4111]
+
+flat_field
+----------
+
+- For NIRSpec spectroscopic data, the flat_field step needs the dispersion
+  direction.  The step now gets that information from keyword DISPAXIS.
+  [#3799, #3807]
+
+- The test_flatfield_step_interface unit test in test_flatfield.py has been
+  temporarily disabled. [#3997]
+
+gain_scale
+----------
+
+- Updated to apply gain factor to variance arrays. [#3794]
+
+group_scale
+-----------
+
+- Updates to documentation and log messages. [#3738]
+
+ipc
+---
+
+Function is_irs2 has been removed from x_irs2.py.  The version of this funtion
+that is now in lib/pipe_utils.py is used instead. [#4054]
+
+lib
+---
+
+- A function to determine the dispersion direction has been added. [#3756]
+
+- Function is_irs2 has been added to pipe_utils.py, and unit tests were
+  added to tests/test_pipe_utils.py. [#4054]
+
+master_background
+-----------------
+
+- Updated the documentation to include more details. [#3776]
+
+photom
+------
+
+- Add unit tests [#4022]
+
+- The code was modified to work with the new photom reference files. [#4118]
+
+- Two bugs were fixed.  For NIRSpec IFU data the code was trying to access
+  an attribute of a "slit", but there were no slits for this type of data.
+  For NIRISS extended-source data, the code tried to divide by the pixel
+  area, but the pixel area was undefined.  [#4174]
+
+- NRS_BRIGHTOBJ data were incorrectly treated the same as fixed-slit, but
+  the data models are actually not the same.  Also, the logic for pixel area
+  for fixed-slit data was incorrect. [#4179]
+
+refpix
+------
+
+- Call is_irs2 from lib/pipe_utils.py instead of using PATTTYPE keyword to
+  check for IRS2 readout mode. [#4054]
+
+resample_spec
+-------------
+
+- This step uses keyword DISPAXIS and also copies it to output. [#3799]
+
+saturation
+----------
+
+Function is_irs2 has been removed from x_irs2.py.  The version of this funtion
+that is now in lib/pipe_utils.py is used instead. [#4054]
+
+stpipe
+------
+
+- Fix ``Step.print_configspec()`` method.  Add test.  [#3768]
+
+- Integrate retrieval of Step parameters from CRDS. [#4090]
+
+- Change properties ``Step.pars`` and ``Step.pars_model`` to methods. [#4117]
+
+- Fix bug in ``Step.call()`` where a config file referencing another config
+  file was not merged into the final spec properly. [#4161]
+
+- Set ``Step.skip = True`` in ``Step.record_step_status()`` if
+  ``success == False``. [#4165]
+
+tests_nightly
+-------------
+
+- Some tests in general/nirspec/ were marked as "expected to fail" because
+  the new reference files are not being selected. [#4180]
+
+tso_photometry
+--------------
+
+- Unit tests were added to tso_photometry. [#3909]
+
+tweakreg
+--------
+
+- Fixed a bug in a ``try-except`` block in the ``tweakreg`` step. [#4133]
+
+- removed original ``jwst.tweakreg`` alignment code and changed step's code
+  to call similar functionality from ``tweakwcs`` package. [#3689]
+
+- Fix deprecated call to photutils.detect_threshold [#3982]
+
 
 0.13.7 (2019-06-21)
 ===================
@@ -35,6 +278,12 @@ datamodels
 ----------
 
 - Reverted #3680 and #3709. [#3717, #3718]
+
+flatfield
+---------
+
+- Three new unit tests were added.  Two existing files were modified to
+  split the tests into separate functions. [#3704]
 
 0.13.6 (2019-06-20)
 ===================
@@ -47,9 +296,9 @@ associations
 datamodels
 ----------
 
-- Fixed corruption of FITS tables wiht unsigned int columns. [#3680]
+- Fixed corruption of FITS tables with unsigned int columns. [#3680]
 
-  
+
 0.13.5 (2019-06-19)
 ===================
 
@@ -268,7 +517,7 @@ extract_2d
 
 - Replaced a white space in the names of grism objects with an underscore. [#3517]
 
-- Update WFSS slit names to use simple integer value, and add accompanying unit 
+- Update WFSS slit names to use simple integer value, and add accompanying unit
   test for NIRCAM grism extract_2d [#3632].
 
 master_background
@@ -638,6 +887,8 @@ csv_tools
 
 cube_build
 ----------
+
+- Added dq flagging [#3804]
 
 cube_skymatch
 -------------

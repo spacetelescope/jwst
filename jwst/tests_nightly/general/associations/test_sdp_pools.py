@@ -45,10 +45,6 @@ SPECIAL_POOLS = {
         'args': [],
         'xfail': 'PR #3450',
     },
-    'jw00626_20190625t115022_pool': {
-        'args': [],
-        'xfail': 'JP-829',
-    },
 }
 
 
@@ -72,7 +68,6 @@ class TestSDPPools(SDPPoolsSource):
         generated_path = Path('generate')
         generated_path.mkdir()
         args = special['args'] + [
-            '--no-merge',
             '-p', str(generated_path),
             '--version-id', version_id,
             self.get_data(pool_path)
@@ -111,7 +106,6 @@ class TestSDPPools(SDPPoolsSource):
 
         results = asn_generate([
             '--dry-run',
-            '--no-merge',
             self.get_data(pool_path)
         ])
         asns = results.associations

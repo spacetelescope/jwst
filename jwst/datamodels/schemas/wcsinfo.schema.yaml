@@ -240,6 +240,12 @@ properties:
             fits_keyword: WAVEND
             fits_hdu: SCI
             blend_table: True
+          dispersion_direction:
+            title: Dispersion direction
+            type: number
+            fits_keyword: DISPAXIS
+            fits_hdu: SCI
+            blend_table: True
           spectral_order:
             title: Spectral order number
             type: integer
@@ -301,6 +307,10 @@ properties:
           siaf_xref_sci:
             title: Aperture X reference point in SCI frame from SIAF (NRC_TSGRISM mode)
             type: number
-          siaf_xref_sci:
+            fits_keyword: XREF_SCI
+            fits_hdu: SCI
+          siaf_yref_sci:
             title: Aperture Y reference point in SCI frame from SIAF (NRC_TSGRISM mode)
             type: number
+            fits_keyword: YREF_SCI
+            fits_hdu: SCI

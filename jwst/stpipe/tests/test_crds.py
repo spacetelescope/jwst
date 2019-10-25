@@ -7,6 +7,7 @@ import pytest
 from astropy.io import fits
 
 from .. import Step
+from ..import crds_client
 import crds
 
 TMP_DIR = None
@@ -131,3 +132,9 @@ def test_crds_failed_getreferences_bad_context():
         }
     with pytest.raises(crds.CrdsError):
         crds.getreferences(header, reftypes=["flat"], context="jwst_9942.pmap")
+
+
+def test_check_reference_open_s3():
+    assert crds_client.check_reference_open("s3://test-s3-data/data_model.fits") == "s3://test-s3-data/data_model.fits"
+    with pytest.raises(Exception):
+        assert crds_client.check_reference_open("s3://test-s3-data/missing.fits")

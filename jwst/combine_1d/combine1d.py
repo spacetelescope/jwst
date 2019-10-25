@@ -47,7 +47,10 @@ class InputSpectrumModel:
             to use weight = 1.
         """
 
-        self.wavelength = spec.spec_table.field("wavelength").copy()
+        # We're casting this from dtype('>f8') to dtype('float64') because our version
+        # of gwcs has a bug that prevents it from recognizing big-endian dtypes as
+        # numeric.  Once we upgrade to gwcs 0.11 we can remove the cast.
+        self.wavelength = spec.spec_table.field("wavelength").copy().astype(np.float64)
 
         self.flux = spec.spec_table.field("flux").copy()
         self.error = spec.spec_table.field("error").copy()
@@ -58,11 +61,7 @@ class InputSpectrumModel:
             self.surf_bright = np.zeros_like(self.flux)
             self.sb_error = np.zeros_like(self.flux)
             log.warning("There is no SURF_BRIGHT column in the input.")
-        # xxx temporary self.dq = spec.spec_table.field("dq").copy()
-        # xxx This is a workaround which should be deleted after the
-        # bug described in JP-789, GitHub issues #3655 and #3179 have
-        # been fixed.
-        self.dq = np.zeros(self.wavelength.shape, dtype=np.uint32)  # xxx
+        self.dq = spec.spec_table.field("dq").copy()
         self.nelem = self.wavelength.shape[0]
         self.unit_weight = False        # may be reset below
         self.right_ascension = np.zeros_like(self.wavelength)
@@ -80,7 +79,7 @@ class InputSpectrumModel:
                                exptime_key)
 
         try:
-            self.right_ascension[:], self.declination[:], _ = spec.meta.wcs(0., 0.)
+            self.right_ascension[:], self.declination[:], _ = spec.meta.wcs(0.)
         except AttributeError:
             self.right_ascension[:] = ms.meta.target.ra
             self.declination[:] = ms.meta.target.dec

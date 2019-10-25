@@ -293,7 +293,7 @@ def _fits_item_recurse(validator, items, instance, schema):
 def _fits_type(validator, items, instance, schema):
     if instance in ('N/A', '#TODO', '', None):
         return
-    return validators._validators.type_draft4(validator, items, instance, schema)
+    return validators.Draft4Validator.VALIDATORS["type"](validator, items, instance, schema)
 
 
 FITS_VALIDATORS = HashableDict(asdf_schema.YAML_VALIDATORS)
@@ -551,9 +551,11 @@ def from_fits_asdf(hdulist,
     """
     Wrap asdf call to extract optional argumentscommet
     """
+    ignore_missing_extensions = kwargs.pop('ignore_missing_extensions')
     return fits_embed.AsdfInFits.open(hdulist,
                                       ignore_version_mismatch=ignore_version_mismatch,
-                                      ignore_unrecognized_tag=ignore_unrecognized_tag)
+                                      ignore_unrecognized_tag=ignore_unrecognized_tag,
+                                      ignore_missing_extensions=ignore_missing_extensions)
 
 
 def from_fits_hdu(hdu, schema):

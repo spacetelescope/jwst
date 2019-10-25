@@ -76,11 +76,9 @@ allOf:
       title: Wavelength value for slices
       fits_hdu: WCS-TABLE
       datatype:
-      - name: nelem
-        datatype: int16
       - name: wavelength
         datatype: float32
-        shape: [10420]
+        ndim: 2
     wavedim:
       title: Wavetable dimension
       type: string

@@ -155,8 +155,7 @@ properties:
             blend_rule: mindatetime
           date_end:
             type: string
-            # 2019-06-12: Title has changed to "Date-time end of data acquisition" in keyword dictionary.
-            title: "[yyyy-mm-dd] UTC date at end of exposure"
+            title: "Date-time end of data acquisition"
             fits_keyword: DATE-END
             blend_table: True
             # Despite what the title might lead you to believe, this keyword
@@ -494,6 +493,11 @@ properties:
             type: string
             fits_keyword: LAMP
             blend_table: True
+          lamp_mode:
+            title: Lamp operating mode
+            type: string
+            fits_keyword: OPMODE
+            blend_table: True
           gwa_xtilt:
             title: Grating Y tilt angle relative to mirror
             type: number
@@ -565,7 +569,8 @@ properties:
               # MIRI
               MIR_4QPM, MIR_CORONCAL, MIR_DARKALL, MIR_DARKIMG, MIR_DARKMRS,
               MIR_FLATALL, MIR_FLATIMAGE, MIR_FLATIMAGE-EXT, MIR_FLATMRS, MIR_FLATMRS-EXT,
-              MIR_IMAGE, MIR_LRS-FIXEDSLIT, MIR_LRS-SLITLESS, MIR_LYOT, MIR_MRS, MIR_TACQ,
+              MIR_IMAGE, MIR_LRS-FIXEDSLIT, MIR_LRS-SLITLESS, MIR_LYOT, MIR_MRS,
+              MIR_TACONFIRM, MIR_TACQ,
               # NIRISS
               NIS_AMI, NIS_DARK, NIS_EXTCAL, NIS_FOCUS, NIS_IMAGE, NIS_LAMP,
               NIS_SOSS, NIS_TACQ, NIS_TACONFIRM, NIS_WFSS,
@@ -1012,34 +1017,22 @@ properties:
           starting_set:
             title: Starting 4-point set number
             type: integer
-            # 2019-06-12: The keyword dictionary specifies an enum constraint for this field, but
-            # due to discrepancies in the dictionary JSON we're going to leave this unconstrained
-            # for now.
-            # enum: [1, 3, 5]
+            enum: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
             fits_keyword: DSETSTRT
           number_of_sets:
             title: Total number of 4-point sets
             type: integer
-            # 2019-06-12: The keyword dictionary specifies an enum constraint for this field, but
-            # due to discrepancies in the dictionary JSON we're going to leave this unconstrained
-            # for now.
-            # enum: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+            enum: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
             fits_keyword: NUMDSETS
           direction:
             title: Direction of dither pattern offsets
             type: string
-            # 2019-06-12: The keyword dictionary specifies an enum constraint for this field, but
-            # due to discrepancies in the dictionary JSON we're going to leave this unconstrained
-            # for now.
-            # enum: [NEGATIVE, POSITIVE]
+            enum: [NEGATIVE, POSITIVE, NONE]
             fits_keyword: DITHDIRC
           optimized_for:
             title: Dither pattern optimization
             type: string
-            # 2019-06-12: The keyword dictionary specifies an enum constraint for this field, but
-            # due to discrepancies in the dictionary JSON we're going to leave this unconstrained
-            # for now.
-            # enum: ["POINT-SOURCE", "EXTENDED-SOURCE"]
+            enum: ["POINT-SOURCE", "EXTENDED-SOURCE", NONE]
             fits_keyword: DITHOPFR
           sparse_points:
             title: Sparse cycling dither points
@@ -1048,10 +1041,7 @@ properties:
           primary_channel:
             title: MRS primary channel
             type: string
-            # 2019-06-12: The keyword dictionary specifies an enum constraint for this field, but
-            # due to discrepancies in the dictionary JSON we're going to leave this unconstrained
-            # for now.
-            # enum: [ALL, CHANNEL1, CHANNEL2, CHANNEL3, CHANNEL4]
+            enum: [ALL, CHANNEL1, CHANNEL2, CHANNEL3, CHANNEL4]
             fits_keyword: MRSPRCHN
           dither_points:
             title: Total number of points in primary dither pattern

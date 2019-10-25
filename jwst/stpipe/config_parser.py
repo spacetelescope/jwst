@@ -29,17 +29,29 @@
 """
 Our configuration files are ConfigObj/INI files.
 """
+from inspect import isclass
+import logging
 import os
 import os.path
 import textwrap
+
+from asdf import open as asdf_open
+
+from asdf import ValidationError as AsdfValidationError
 
 from ..extern.configobj.configobj import (
     ConfigObj, Section, flatten_errors, get_extra_values)
 from ..extern.configobj.validate import Validator, ValidateError, VdtTypeError
 
-from ..datamodels.model_base import DataModel
+from ..datamodels import DataModel, StepParsModel
+from ..lib import s3_utils
 
 from . import utilities
+
+
+# Configure logger
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 
 class ValidationError(Exception):
@@ -118,9 +130,47 @@ def load_config_file(config_file):
     """
     Read the file `config_file` and return the parsed configuration.
     """
+    if s3_utils.is_s3_uri(config_file):
+        return _load_config_file_s3(config_file)
+    else:
+        return _load_config_file_filesystem(config_file)
+
+
+def _load_config_file_filesystem(config_file):
     if not os.path.isfile(config_file):
         raise ValueError("Config file {0} not found.".format(config_file))
-    return ConfigObj(config_file, raise_errors=True)
+    try:
+        cfg = asdf_open(config_file)
+    except (AsdfValidationError, ValueError):
+        logger.debug('Config file did not parse as ASDF. Trying as ConfigObj: %s', config_file)
+        return ConfigObj(config_file, raise_errors=True)
+
+    # Seems to be ASDF. Create the configobj from that.
+    return _config_obj_from_asdf(cfg)
+
+
+def _load_config_file_s3(config_file):
+    if not s3_utils.object_exists(config_file):
+        raise ValueError("Config file {0} not found.".format(config_file))
+
+    content = s3_utils.get_object(config_file)
+    try:
+        cfg = asdf_open(content)
+    except (AsdfValidationError, ValueError):
+        logger.debug('Config file did not parse as ASDF. Trying as ConfigObj: %s', config_file)
+        content.seek(0)
+        return ConfigObj(content, raise_errors=True)
+
+    # Seems to be ASDF. Create the configobj from that.
+    return _config_obj_from_asdf(cfg)
+
+
+def _config_obj_from_asdf(cfg):
+    configobj = ConfigObj()
+    configobj.merge(cfg['parameters'])
+    configobj.pars_model = StepParsModel(cfg)
+    cfg.close()
+    return configobj
 
 
 def get_merged_spec_file(cls, preserve_comments=False):
@@ -156,9 +206,24 @@ def get_merged_spec_file(cls, preserve_comments=False):
 def load_spec_file(cls, preserve_comments=False):
     """
     Load the spec file corresponding to the given class.
+
+    Parameters
+    ----------
+    cls: `Step`-derived or `Step` instance
+        A class or instance of a `Step`-based class.
+
+    preserve_comments: bool
+        True to keep comments in the resulting `ConfigObj`
+
+    Returns
+    -------
+    spec_file: ConfigObj
+        The resulting configuration object
     """
     # Don't use 'hasattr' here, because we don't want to inherit spec
     # from the base class.
+    if not isclass(cls):
+        cls = cls.__class__
     if 'spec' in cls.__dict__:
         spec = cls.spec.strip()
         spec_file = textwrap.dedent(spec)
@@ -206,26 +271,64 @@ def merge_config(into, new):
             into.comments[key] = new.comments[key]
 
 
-def config_from_dict(d, spec=None, root_dir=None):
+def config_from_dict(d, spec=None, root_dir=None, allow_missing=False):
     """
     Create a ConfigObj from a dict.
+
+    Parameters
+    ----------
+    d: dict
+        The dictionary to merge into the resulting ConfigObj.
+
+    spec: ConfigObj
+        The specification to validate against.
+        If None, just convert dictionary into a ConfigObj.
+
+    root_dir: str
+        The base directory to use for file-based parameters.
+
+    allow_missing: bool
+        If a parameter is not defined and has no default in the spec,
+        set that parameter to its specification.
     """
     config = ConfigObj()
 
     config.update(d)
 
     if spec:
-        validate(config, spec, root_dir=root_dir)
+        validate(config, spec, root_dir=root_dir, allow_missing=allow_missing)
     else:
         config.walk(string_to_python_type)
 
     return config
 
 
-def validate(config, spec, section=None, validator=None, root_dir=None):
+def validate(config, spec, section=None, validator=None, root_dir=None, allow_missing=False):
     """
     Parse config_file, in INI format, and do validation with the
     provided specfile.
+
+    Parameters
+    ----------
+    config: ConfigObj
+        The configuration to validate.
+
+    spec: ConfigObj
+        The specification to validate against.
+
+    section: ConfigObj or None
+        The specific section of config to validate.
+        If None, then all sections are validated.
+
+    validator: extern.configobj.validator.Validator or None
+        The validator to use. If None, the default will be used.
+
+    root_dir: str
+        The directory to use as the basis for any file-based parameters.
+
+    allow_missing: bool
+        If a parameter is not defined and has no default in the spec,
+        set that parameter to its specification.
     """
     if spec is None:
         config.walk(string_to_python_type)
@@ -260,7 +363,11 @@ def validate(config, spec, section=None, validator=None, root_dir=None):
                     section_list.append('[missing section]')
                 section_string = '/'.join(section_list)
                 if err == False:
-                    err = 'missing'
+                    if allow_missing:
+                        config[key] = spec[key]
+                        continue
+                    else:
+                        err = 'missing'
 
                 messages.append(
                     "Config parameter {0!r}: {1}".format(

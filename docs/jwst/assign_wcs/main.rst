@@ -41,6 +41,11 @@ define the transform from ``v2v3`` to ``world``:
 These quantities are used to create a 3D Euler angle rotation between the V2V3 spherical system,
 associated with the telescope, and a standard celestial system.
 
+For spectroscopic data, ``jwst.assign_wcs`` populates keyword ``DISPAXIS``
+with an integer value that indicates whether the dispersion direction is
+oriented more nearly along the horizontal (DISPAXIS = 1) or vertical
+(DISPAXIS = 2) direction.
+
 
 Using the WCS interactively
 ---------------------------

@@ -99,7 +99,7 @@ if sys.hexversion >= 0x02060000:
         """
         Returns True if object quacks like a callable.
         """
-        return isinstance(obj, collections.Callable)
+        return isinstance(obj, collections.abc.Callable)
 else:
     def iscallable(obj):
         """
