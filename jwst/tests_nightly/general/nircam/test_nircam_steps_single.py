@@ -7,6 +7,7 @@ from jwst.tests.base_classes import BaseJWSTTest, raw_from_asn
 from jwst.ramp_fitting import RampFitStep
 from jwst.wfs_combine import WfsCombineStep
 from jwst.pipeline import Detector1Pipeline
+from jwst.lib.set_telescope_pointing import add_wcs
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 
 from jwst.stpipe import Step
@@ -185,4 +186,31 @@ class TestWFSCombine(BaseJWSTTest):
                    ('test_wfscom3b_wfscmb.fits',
                     'test_wfscomb_do_ref.fits')
                   ]
+        self.compare_outputs(outputs)
+
+
+@pytest.mark.bigdata
+class TestNrcGrismSetPointing(BaseJWSTTest):
+    input_loc = 'nircam'
+    ref_loc = ['test_pointing', 'truth']
+    test_dir = 'test_pointing'
+    rtol = 0.000001
+
+    def test_nircam_setpointing(self):
+        """
+        Regression test of the set_telescope_pointing script on a level-1b NIRCam file.
+        """
+
+        # Copy original version of file to test file, which will get overwritten by test
+        input_file = self.get_data(self.test_dir,
+                                   'jw00721012001_03103_00001-seg001_nrcalong_uncal_orig.fits')
+
+        # Get SIAF PRD database file
+        siaf_prd_loc = ['jwst-pipeline', self.env, 'common', 'prd.db']
+        siaf_path = get_bigdata(*siaf_prd_loc)
+
+        add_wcs(input_file, siaf_path=siaf_path, engdb_url='http://twjwdmsemwebag.stsci.edu/JWDMSEngFqAccSide1/TlmMnemonicDataSrv.svc/')
+
+        outputs = [(input_file,
+                    'jw00721012001_03103_00001-seg001_nrcalong_uncal_ref.fits')]
         self.compare_outputs(outputs)
