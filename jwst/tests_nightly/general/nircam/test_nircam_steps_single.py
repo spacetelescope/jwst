@@ -4,6 +4,8 @@ import glob
 import pytest
 
 from jwst.tests.base_classes import BaseJWSTTest, raw_from_asn
+from ci_watson.artifactory_helpers import get_bigdata
+
 from jwst.ramp_fitting import RampFitStep
 from jwst.wfs_combine import WfsCombineStep
 from jwst.pipeline import Detector1Pipeline
@@ -209,7 +211,8 @@ class TestNrcGrismSetPointing(BaseJWSTTest):
         siaf_prd_loc = ['jwst-pipeline', self.env, 'common', 'prd.db']
         siaf_path = get_bigdata(*siaf_prd_loc)
 
-        add_wcs(input_file, siaf_path=siaf_path, engdb_url='http://twjwdmsemwebag.stsci.edu/JWDMSEngFqAccSide1/TlmMnemonicDataSrv.svc/')
+        add_wcs(input_file, siaf_path=siaf_path,
+                engdb_url='http://twjwdmsemwebag.stsci.edu/JWDMSEngFqAccSide1/TlmMnemonicDataSrv.svc/')
 
         outputs = [(input_file,
                     'jw00721012001_03103_00001-seg001_nrcalong_uncal_ref.fits')]
