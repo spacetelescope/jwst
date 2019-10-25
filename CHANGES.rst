@@ -1,4 +1,4 @@
-0.14.0 (Unreleased)
+0.14.0 (2019-10-27)
 ===================
 
 - Remove references to deprecated collections.* ABCs that will be removed in
