@@ -10,6 +10,7 @@ from jwst.ramp_fitting import RampFitStep
 from jwst.wfs_combine import WfsCombineStep
 from jwst.pipeline import Detector1Pipeline
 from jwst.lib.set_telescope_pointing import add_wcs
+from jwst.lib.engdb_tools import ENGDB_Service
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 
 from jwst.stpipe import Step
@@ -211,8 +212,8 @@ class TestNrcGrismSetPointing(BaseJWSTTest):
         siaf_prd_loc = ['jwst-pipeline', self.env, 'common', 'prd.db']
         siaf_path = get_bigdata(*siaf_prd_loc)
 
-        add_wcs(input_file, siaf_path=siaf_path,
-                engdb_url='http://twjwdmsemwebag.stsci.edu/JWDMSEngFqAccSide1/TlmMnemonicDataSrv.svc/')
+        # Call the WCS routine, using the ENGDB_Service
+        add_wcs(input_file, siaf_path=siaf_path)
 
         outputs = [(input_file,
                     'jw00721012001_03103_00001-seg001_nrcalong_uncal_ref.fits')]

@@ -1,6 +1,16 @@
 0.14.1 (Unreleased)
 ===================
 
+lib
+---
+
+- Updated the EngDB web service url in ``engdb_tools``. [#4187]
+
+tests_nightly
+-------------
+
+- Added a ``set_telescope_pointing`` test for a NIRCam TSGRISM exposure.
+  [#4187]
 
 0.14.0 (2019-10-25)
 ===================
