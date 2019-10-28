@@ -22,7 +22,7 @@ __all__ = ['Spec3Pipeline']
 # Group exposure types
 MULTISOURCE_MODELS = ['MultiSlitModel']
 IFU_EXPTYPES = ['MIR_MRS', 'NRS_IFU']
-SLITLESS_TYPES = ['NIS_WFSS', 'NRC_WFSS']
+SLITLESS_TYPES = ['NIS_SOSS', 'NIS_WFSS', 'NRC_WFSS']
 
 
 class Spec3Pipeline(Pipeline):
@@ -30,11 +30,13 @@ class Spec3Pipeline(Pipeline):
     Spec3Pipeline: Processes JWST spectroscopic exposures from Level 2b to 3.
 
     Included steps are:
-    MIRI MRS background matching (skymatch)
+    master background subtraction (master_background)
+    MIRI MRS background matching (mrs_imatch)
     outlier detection (outlier_detection)
     2-D spectroscopic resampling (resample_spec)
     3-D spectroscopic resampling (cube_build)
     1-D spectral extraction (extract_1d)
+    1-D spectral combination (combine_1d)
     """
 
     spec = """
@@ -150,8 +152,7 @@ class Spec3Pipeline(Pipeline):
             if exptype not in SLITLESS_TYPES:
                 result = self.outlier_detection(result)
 
-                # Resample time. Dependent on whether the data is IFU or
-                # not.
+                # Resample time. Dependent on whether the data is IFU or not.
                 resample_complete = None
                 if exptype in IFU_EXPTYPES:
                     result = self.cube_build(result)
