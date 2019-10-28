@@ -153,7 +153,7 @@ the ``--save-parameters <filename>`` option. For example, to save the
 configuration for the `tweakreg` step, one would do the following:
 ::
 
- strun jwst.tweakreg.PersistenceStep --save-parameters persistence.asdf
+ strun jwst.tweakreg.PersistenceStep jw00017001001_01101_00001_nrca1_uncal.fits --save-parameters persistence.asdf
 
 This file can be edited and then used to run the step with the new configuration:
 ::
@@ -451,18 +451,23 @@ local configuration file.
 
 A configuration file should be used when there are parameters a user wishes to
 change from the default/CRDS version for a custom run of the step. To create a
-configuration file with the default values, use the command: ::
+configuration file add ``--save-parameters <filename.asdf`` to the command:
 
- strun <step.class> --save-parameters <filename.asdf>
+ strun <step.class> <required-input-files> --save-parameters <filename.asdf>
 
 For example, to get the parameters for the jump step, use:
 ::
 
- strun jwst.jump.JumpStep --save-parameters jump_pars.asdf
+ strun jwst.jump.JumpStep jw82500001003_02101_00001_NRCALONG_uncal.fits --save-parameters jump_pars.asdf
 
 Once retrieved, the file can be edited, removing parameters that should be left
 at their default/CRDS values, and setting the remaining parameters to the
-desired values. 
+desired values.
+
+Note that the parameter values will reflect whatever was set on the
+command-line, through a specified local configuration file, and what was
+retrieved from CRDS. In short, the values will be those actually used in the
+running of the step.
 
 For more information, see :ref:`config_asdf_files`. Note that the older
 :ref:`config_cfg_files` format is still an option, understanding that this
