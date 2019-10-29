@@ -150,10 +150,10 @@ where ``my_dark_current.cfg`` contains:
 
 The configuration parameters for each step can be saved to an ASDF file using
 the ``--save-parameters <filename>`` option. For example, to save the
-configuration for the `tweakreg` step, one would do the following:
+configuration for the `persistence` step, one would do the following:
 ::
 
- strun jwst.tweakreg.PersistenceStep jw00017001001_01101_00001_nrca1_uncal.fits --save-parameters persistence.asdf
+ strun jwst.persistence.PersistenceStep jw00017001001_01101_00001_nrca1_uncal.fits --save-parameters persistence.asdf
 
 This file can be edited and then used to run the step with the new configuration:
 ::
@@ -451,16 +451,16 @@ local configuration file.
 
 A configuration file should be used when there are parameters a user wishes to
 change from the default/CRDS version for a custom run of the step. To create a
-configuration file add ``--save-parameters <filename.asdf`` to the command:
+configuration file add ``--save-parameters <filename.asdf>`` to the command:
 
  strun <step.class> <required-input-files> --save-parameters <filename.asdf>
 
-For example, to get the parameters for the jump step, use:
+For example, to save the parameters used for a run of the ``jump`` step, use:
 ::
 
  strun jwst.jump.JumpStep jw82500001003_02101_00001_NRCALONG_uncal.fits --save-parameters jump_pars.asdf
 
-Once retrieved, the file can be edited, removing parameters that should be left
+Once saved, the file can be edited, removing parameters that should be left
 at their default/CRDS values, and setting the remaining parameters to the
 desired values.
 
