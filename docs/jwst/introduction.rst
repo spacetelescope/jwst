@@ -88,7 +88,8 @@ When a pipeline or step is executed in this manner (i.e. by referencing the
 class name), it will be run using a CRDS-supplied configuration merged with
 default values
 
-If you want to use non-default parameter values, you can specify them as
+If you want to use non-default parameter
+values, you can specify them as
 keyword arguments on the command line or set them in the appropriate
 configuration file.
 
@@ -133,7 +134,7 @@ the following:
 $ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
 
 These configuration files can be edited as needed, or created completely from
-scratch. For more information, see the `Configuration Files`_ file section below
+scratch. For more information, see the `Configuration Files`_ file section below.
 
 Exit Status
 -----------
@@ -452,9 +453,9 @@ command-line, through a specified local configuration file, and what was
 retrieved from CRDS. In short, the values will be those actually used in the
 running of the step.
 
-For more information, see :ref:`config_asdf_files`. Note that the older
-:ref:`config_cfg_files` format is still an option, understanding that this
-format will be deprecated.
+For more information about and editing of configuration files, see
+:ref:`config_asdf_files`. Note that the older :ref:`config_cfg_files` format is
+still an option, understanding that this format will be deprecated.
 
 
 More information on configuration files can be found in the ``stpipe`` User's
