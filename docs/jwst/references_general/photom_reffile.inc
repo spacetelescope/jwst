@@ -23,8 +23,8 @@ because they are used as CRDS selectors
 Keyword    Data Model Name                 Instruments
 =========  ==============================  =========================
 DETECTOR   model.meta.instrument.detector  FGS, MIRI, NIRCam, NIRISS
+EXP_TYPE   model.meta.exposure.type        All
 BAND       model.meta.instrument.band      MIRI
-EXP_TYPE   model.meta.exposure.type        NIRSpec
 =========  ==============================  =========================
 
 Tabular PHOTOM Reference File Format
@@ -66,28 +66,6 @@ instrument modes, as shown in the tables below.
 | Instrument | Mode  | Column name    | Data type | Dimensions | Units                  |
 +============+=======+================+===========+============+========================+
 | MIRI       | LRS   | filter         | string    | 12         | N/A                    |
-+            +       +----------------+-----------+------------+------------------------+
-|            |       | subarray       | string    | 15         | N/A                    |
-+            +       +----------------+-----------+------------+------------------------+
-|            |       | photmjsr       | float     | scalar     | MJy/steradian/(DN/sec) |
-+            +       +----------------+-----------+------------+------------------------+
-|            |       | uncertainty    | float     | scalar     | MJy/steradian/(DN/sec) |
-+            +       +----------------+-----------+------------+------------------------+
-|            |       | nelem          | integer   | scalar     | N/A                    |
-+            +       +----------------+-----------+------------+------------------------+
-|            |       | wavelength     | float     | array      | microns                |
-+            +       +----------------+-----------+------------+------------------------+
-|            |       | relresponse    | float     | array      | unitless               |
-+            +       +----------------+-----------+------------+------------------------+
-|            |       | reluncertainty | float     | array      | unitless               |
-+------------+-------+----------------+-----------+------------+------------------------+
-
-:Data model: `~jwst.datamodels.MirMrsPhotomModel`
-
-+------------+-------+----------------+-----------+------------+------------------------+
-| Instrument | Mode  | Column name    | Data type | Dimensions | Units                  |
-+============+=======+================+===========+============+========================+
-| MIRI       | MRS   | filter         | string    | 12         | N/A                    |
 +            +       +----------------+-----------+------------+------------------------+
 |            |       | subarray       | string    | 15         | N/A                    |
 +            +       +----------------+-----------+------------+------------------------+
@@ -283,7 +261,7 @@ square arcseconds, respectively.
 MIRI MRS Photom Reference File Format
 +++++++++++++++++++++++++++++++++++++
 
-:Data model: `~jwst.datamodels.MiriMrsPhotomModel`
+:Data model: `~jwst.datamodels.MirMrsPhotomModel`
 
 For MIRI MRS, the PHOTOM file contains 2-D arrays of conversion factors in
 IMAGE extensions.
@@ -300,9 +278,9 @@ PIXSIZ   IMAGE       2    1032 x 1024  float
 DQ_DEF   BINTABLE    2    TFIELDS = 4  N/A
 =======  ========  =====  ===========  =========
 
-The SCI extension contains a 2D array of spectral sensitivity factors
+The SCI extension contains a 2D array of inverse sensitivity factors
 corresponding to each pixel in a 2D MRS slice image. The sensitivity factors
-are in units of (DN/sec)/(mJy/pixel). The ERR extension contains a 2D array of
+are in units of (MJy/pixel)/(DN/sec). The ERR extension contains a 2D array of
 uncertainties for the SCI values, in the same units. The DQ extension
 contains a 2D array of bit-encoded data quality flags for the SCI values.
 The DQ_DEF extension contains a table listing the definitions of the values
@@ -320,10 +298,10 @@ Constructing a PHOTOM Reference File
 ------------------------------------
 The most straight-forward way to construct a tabular PHOTOM reference file is to
 populate a data model within python and then save the data model to a
-FITS file. Each instrument has its own photom data model, as listed above,
+FITS file. Each instrument mode has its own photom data model, as listed above,
 which contains the columns of information unique to that instrument.
 
-A NIRISS WFSS photom reference file, for example, could be constructed as follows
+A NIRCam WFSS photom reference file, for example, could be constructed as follows
 from within the python environment::
 
  >>> import numpy as np
@@ -341,18 +319,18 @@ from within the python environment::
  >>> wave[:] = temp_wl.copy()
  >>> resp = np.ones((nrows, nx), dtype=np.float32)
  >>> resp_unc = np.zeros((nrows, nx), dtype=np.float32)
- >>> dtype = np.dtype([('filter', 'S12'),
- ...                   ('pupil', 'S15'),
- ...                   ('order', '<i2'),
- ...                   ('photmjsr', '<f4'),
- ...                   ('uncertainty', '<f4'),
- ...                   ('nelem', '<i2'),
- ...                   ('wavelength', '<f4', (nx,)),
- ...                   ('relresponse', '<f4', (nx,)),
- ...                   ('reluncertainty', '<f4', (nx,))])
- >>> data = np.array(list(zip(filter, pupil, order, photf, uncer,
- ...                          nelem, wave, resp, resp_unc)),
- ...                 dtype=dtype)
- >>> output = datamodels.NisWfssPhotomModel(phot_table=data)
- >>> output.save('niriss_photom_0001.fits')
- 'niriss_photom_0001.fits'
+ >>> data_list = [(filter[i], pupil[i], order[i], photf[i], uncer[i], nelem[i],
+ ...               wave[i], resp[i], resp_unc[i]) for i in range(nrows)]
+ >>> data = np.array(data_list,
+ ...                 dtype=[('filter', 'S12'),
+ ...                        ('pupil', 'S15'),
+ ...                        ('order', '<i2'),
+ ...                        ('photmjsr', '<f4'),
+ ...                        ('uncertainty', '<f4'),
+ ...                        ('nelem', '<i2'),
+ ...                        ('wavelength', '<f4', (nx,)),
+ ...                        ('relresponse', '<f4', (nx,)),
+ ...                        ('reluncertainty', '<f4', (nx,))])
+ >>> output = datamodels.NrcWfssPhotomModel(phot_table=data)
+ >>> output.save('nircam_photom_0001.fits')
+ 'nircam_photom_0001.fits'
