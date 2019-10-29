@@ -18,6 +18,14 @@ The ``jwst`` package can be installed into a virtualenv or conda environment via
     conda create -n jwst_env python
     conda activate jwst_env
 
+*Note: The conda create command above will obtain the latest available python
+version which may newer than the version against which the jwst package has been
+most extensivesly tested. An explicit version pin may be used here to obtain a
+particular python version. i.e*
+
+    conda create -n jwst_env python=3.7.4
+    conda activate jwst_env
+
 ### Installing for end-users ###
 
 To install a released (tagged) version, you can install directly from Github.  To install tagged release ``jwst 0.13.8``:
@@ -35,19 +43,21 @@ As can a particular commit hash:
 
 ### Installing a DMS release ###
 
-We still package our releases to DMS via a conda spec file that lists the exact versions of all packages to be installed.
-To create a new environment with a specific release, use:
+We still package our releases to DMS via environment snapshots that specify the
+exact versions of all packages to be installed.  Each such delivery has its own
+installation instructions which may be found in the corresponding release
+documentation linked from this page:
 
-    conda create -n jwst_env --file <URL>
-    conda activate jwst_env
+    https://github.com/astroconda/astroconda-releases/tree/master/jwstdp
 
-where `<URL>` is of the form:
+The version values shown there are the JWSTDP releases available to install.
+Installation procedures for each version are in the README.md file for that
+version. See the "Software vs DMS build version map" table below for a
+list of version tags corresponding to particular releases.
 
-    Linux: http://ssb.stsci.edu/releases/jwstdp/0.13.7/latest-linux
-    OS X: http://ssb.stsci.edu/releases/jwstdp/0.13.7/latest-osx
-
-Other particular versions can be installed by choosing a different version tag in place of "0.13.7" in the URL path.
-See the "Software vs DMS build version map" table below for a list of tags corresponding to particular releases.
+The installation procedures may change from time to time, so consulting the
+documentation page for the specific version in question is the best way to get
+that version installed.
 
 ### Installing for developers ###
 
