@@ -17,27 +17,42 @@ processed using the :ref:`calwebb_tso3 <calwebb_tso3>` pipeline.
 
 .. |c| unicode:: U+2713 .. checkmark
 
-+---------------------------------------------------+-----+-----+-----+-----+-----+--------+--------+
-| Instrument/Mode                                   |     NIRSpec     |    MIRI   | NIRISS | NIRCam |
-+---------------------------------------------------+-----+-----+-----+-----+-----+--------+--------+
-| Step                                              | FS  | MOS | IFU | FS  | MRS | WFSS   | WFSS   |
-+===================================================+=====+=====+=====+=====+=====+========+========+
-| :ref:`master_background <master_background_step>` | |c| | |c| | |c| | |c| | |c| |        |        |
-+---------------------------------------------------+-----+-----+-----+-----+-----+--------+--------+
-| :ref:`exp_to_source <exp_to_source>`              | |c| | |c| |     |     |     |  |c|   |  |c|   |
-+---------------------------------------------------+-----+-----+-----+-----+-----+--------+--------+
-| :ref:`mrs_imatch <mrs_imatch_step>`               |     |     |     |     | |c| |        |        |
-+---------------------------------------------------+-----+-----+-----+-----+-----+--------+--------+
-| :ref:`outlier_detection <outlier_detection_step>` | |c| | |c| | |c| | |c| | |c| |        |        |
-+---------------------------------------------------+-----+-----+-----+-----+-----+--------+--------+
-| :ref:`resample_spec <resample_step>`              | |c| | |c| |     | |c| |     |        |        |
-+---------------------------------------------------+-----+-----+-----+-----+-----+--------+--------+
-| :ref:`cube_build <cube_build_step>`               |     |     | |c| |     | |c| |        |        |
-+---------------------------------------------------+-----+-----+-----+-----+-----+--------+--------+
-| :ref:`extract_1d <extract_1d_step>`               | |c| | |c| | |c| | |c| | |c| |  |c|   |  |c|   |
-+---------------------------------------------------+-----+-----+-----+-----+-----+--------+--------+
-| :ref:`combine_1d <combine_1d_step>`               |     |     |     |     |     |  |c|   |  |c|   |
-+---------------------------------------------------+-----+-----+-----+-----+-----+--------+--------+
++---------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
+| Instrument/Mode                                   |     NIRSpec     |    MIRI   |   NIRISS    | NIRCam |
++---------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
+| Step                                              | FS  | MOS | IFU | FS  | MRS | SOSS | WFSS | WFSS   |
++===================================================+=====+=====+=====+=====+=====+======+======+========+
+| :ref:`master_background <master_background_step>` | |c| | |c| | |c| | |c| | |c| |      |      |        |
++---------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
+| :ref:`exp_to_source <exp_to_source>`              | |c| | |c| |     |     |     |      | |c|  |  |c|   |
++---------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
+| :ref:`mrs_imatch <mrs_imatch_step>`               |     |     |     |     | |c| |      |      |        |
++---------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
+| :ref:`outlier_detection <outlier_detection_step>` | |c| | |c| | |c| | |c| | |c| |      |      |        |
++---------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
+| :ref:`resample_spec <resample_step>`              | |c| | |c| |     | |c| |     |      |      |        |
++---------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
+| :ref:`cube_build <cube_build_step>`               |     |     | |c| |     | |c| |      |      |        |
++---------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
+| :ref:`extract_1d <extract_1d_step>`               | |c| | |c| | |c| | |c| | |c| | |c|  | |c|  |  |c|   |
++---------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
+| :ref:`combine_1d <combine_1d_step>`               |     |     |     |     |     | |c|  | |c|  |  |c|   |
++---------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
+
+Notice that NIRCam and NIRISS WFSS, as well as NIRISS SOSS data, receive only minimal
+processing by ``calwebb_spec3``.
+WFSS 2D input data are reorganized into source-based products by the
+:ref:`exp_to_source <exp_to_source>` step (see below), have 1D
+extracted spectra produced for each source, and then the 1D spectra for each source
+are combined into a final 1D spectrum.
+NIRISS SOSS inputs do not go through the :ref:`exp_to_source <exp_to_source>` step,
+because they contain data for a single source.
+Hence the only processing that they receive is to extract a 1D spectrum from each
+input and then combine those spectra into a final 1D spectrum.
+This type of processing is intended only for NIRISS SOSS exposures that are not
+obtained in TSO mode.
+TSO mode NIRISS SOSS exposures should be processed with the
+:ref:`calwebb_tso3 <calwebb_tso3>` pipeline.
 
 Arguments
 ---------
@@ -60,7 +75,7 @@ The individual exposures should be calibrated the ("_cal") products from
 ``calwebb_spec2`` processing.
 
 The member list for each product in the ASN file can also contain exposures
-of dedicated background targets, that are intended for use in the
+of dedicated background targets, which are intended for use in the
 :ref:`master_background <master_background_step>` step. These input exposures
 must be the "x1d" products (extracted 1-D spectra) of the background target(s)
 and are usually the "x1d" files produced by the
@@ -80,8 +95,8 @@ Source-based calibrated data
 
 For NIRSpec fixed-slit, NIRSpec MOS, and NIRCam and NIRISS WFSS, which have a defined
 set of slits or sources, the data from the input calibrated exposures is reorganized
-by :ref:`exp_to_source <exp_to_source>` so that all of the instances of data for a
-particular source/slit are contained in a
+by the :ref:`exp_to_source <exp_to_source>` step so that all of the instances of data
+for a particular source/slit are contained in a
 single product. These are referred to as "source-based" products, as opposed to the
 input exposure-based products. The source-based collections of data are saved in
 intermediate files, one per source/slit. The root names of the source-based files
@@ -122,7 +137,7 @@ slit/source, which is the output of the :ref:`resample_spec <resample_step>` ste
 :Data model: `~jwst.datamodels.IFUCubeModel`
 :File suffix: _s3d
 
-When processing IFU exposures, a resampled/rectified 3D IFU cube product
+When processing IFU exposures, a resampled and combined 3D IFU cube product
 created by the :ref:`cube_build <cube_build_step>` step is saved as an "_s3d" file.
 
 1D extracted spectral data
@@ -132,9 +147,10 @@ created by the :ref:`cube_build <cube_build_step>` step is saved as an "_s3d" fi
 :File suffix: _x1d
 
 All types of inputs result in a 1D extracted spectral data product, which is
-saved as a "_x1d" file, which is normally the result of performing the
+saved as a "_x1d" file, and is normally the result of performing the
 :ref:`extract_1d <extract_1d_step>` step on the combined "_s2d" or "_s3d" product.
-For NIRCam and NIRISS WFSS data, the :ref:`extract_1d <extract_1d_step>` is
-performed on the individual unresampled 2D cutout images, and then the
-:ref:`combine_1d <combine_1d_step>` is used to combine those spectra into a
-final combined "x1d" product for each source.
+
+For NIRCam and NIRISS WFSS, as well as NIRISS SOSS data, the
+:ref:`extract_1d <extract_1d_step>` is performed on the individual unresampled 2D
+cutout images, and then the :ref:`combine_1d <combine_1d_step>` step is used to
+combine those spectra into a single combined "x1d" product for each source.
