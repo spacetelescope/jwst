@@ -63,7 +63,7 @@ class Spec3Pipeline(Pipeline):
             The exposure or association of exposures to process
         """
         self.log.info('Starting calwebb_spec3 ...')
-        asn_exptypes = ['science','background']
+        asn_exptypes = ['science', 'background']
 
         # Retrieve the inputs:
         # could either be done via LoadAsAssociation and then manually
@@ -124,7 +124,7 @@ class Spec3Pipeline(Pipeline):
             self.log.info('Convert from exposure-based to source-based data.')
             sources = [
                 (name, model)
-                        for name, model in multislit_to_container(source_models).items()
+                    for name, model in multislit_to_container(source_models).items()
                 ]
 
         # Process each source
@@ -169,13 +169,24 @@ class Spec3Pipeline(Pipeline):
 
             # Do 1-D spectral extraction
             if exptype in SLITLESS_TYPES:
+
+                # For slitless data, extract 1D spectra and then combine them
+
+                if exptype in ['NIS_SOSS']:
+                    # For NIRISS SOSS, don't save the extract_1d results,
+                    # they're identical to the calwebb_spec2 x1d products
+                    self.extract_1d.save_results = False
+
                 result = self.extract_1d(result)
                 result = self.combine_1d(result)
-            elif resample_complete is not None and \
-               resample_complete.upper() == 'COMPLETE':
+
+            elif resample_complete is not None and resample_complete.upper() == 'COMPLETE':
+
+                # If 2D data were resampled and combined, just do a 1D extraction
                 if exptype in IFU_EXPTYPES:
                     self.extract_1d.search_output_file = False
                 result = self.extract_1d(result)
+
             else:
                 self.log.warning(
                     'Resampling was not completed. Skipping extract_1d.'
