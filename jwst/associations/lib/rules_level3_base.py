@@ -730,6 +730,7 @@ class Constraint_Optical_Path(Constraint):
             DMSAttrConstraint(
                 name='opt_elem',
                 sources=['filter'],
+                required=False,
             ),
             DMSAttrConstraint(
                 name='opt_elem2',

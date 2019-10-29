@@ -40,6 +40,8 @@ assign_wcs
 
 associations
 ------------
+- Update level 3 rules to create image3 associations for FGS_IMAGE exposures [#3920]
+
 - Add mir_taconfirm to the target acquisition exp_types [#4135]
 
 - Exclude mir_lrs-slitless calibration data from level 3 processing [#3990]
