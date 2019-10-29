@@ -70,7 +70,7 @@ Individual steps and pipelines (consisting of a series of steps) can be run
 from the command line using the ``strun`` command:
 ::
 
-    $ strun <class_name or cfg_file> <input_file>
+    $ strun <class_name or configuration_file> <input_file>
 
 The first argument to ``strun`` must be either the python class name of the
 step or pipeline to be run, or the name of a configuration (.asdf or .cfg) file for the
@@ -166,8 +166,8 @@ You can execute a pipeline or a step from within python by using the
  result = LinearityStep.call('jw00001001001_01101_00001_mirimage_uncal.fits')
 
 The easiest way to use optional arguments when calling a pipeline from
-within python is to set those parameters in the pipeline cfg file and
-then supply the cfg file as a keyword argument:
+within python is to set those parameters in the pipeline configuration file and
+then supply the file as a keyword argument:
 ::
 
  Detector1Pipeline.call('jw00017001001_01101_00001_nrca1_uncal.fits', config_file='calwebb_detector1.cfg')
@@ -442,7 +442,7 @@ $ strun calwebb_image2.cfg jw82500001003_02101_00001_NRCALONG_rate.fits --save-p
 
 Once saved, the file can be edited, removing parameters that should be left
 at their default/CRDS values, and setting the remaining parameters to the
-desired values. Once modified, the new parameter file can be used:
+desired values. Once modified, the new configuration file can be used:
 ::
 
 $ strun my_image2.asdf jw82500001003_02101_00001_NRCALONG_rate.fits
