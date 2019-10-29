@@ -153,6 +153,8 @@ Finally, the parameters a ``Step`` actually ran with can be saved to a new
 configuration file using the `--save-parameters` option. This file will have all
 the parameters, specific to the step, and the final values used.
 
+.. _`Parameter Precedence`:
+
 Parameter Precedence
 ````````````````````
 
@@ -164,6 +166,20 @@ assignment is as follows:
     2. Value found in the user-specified configuration file
     3. CRDS-retrieved configuration
     4. ``Step``-coded default, determined by the parameter definition ``Step.spec``
+
+For pipelines, if a pipeline parameter file specifies a value for a step in the
+pipeline, that takes precedence over any step-specific value found, either from
+a step-specific parameter file or CRDS-retrieved step-specific parameter file.
+The full order of precedence for a pipeline and its sub steps is as follows:
+
+    1. Value specified on the command-line: ``strun pipeline.asdf --steps.step.par=value_that_will_be_used``
+    2. Value found in the user-specified pipeline configuration file: ``strun pipeline.asdf``
+    3. Value found in the step configuration file specified in a pipeline configuration file
+    4. CRDS-retrieved configuration for the pipeline
+    5. CRDS-retrieved configuration for each sub-step
+    6. ``Pipeline``-coded default for itself and all sub-steps
+    7. ``Step``-coded default for each sub-step
+
 
 Debugging
 `````````
