@@ -6,6 +6,12 @@ lib
 
 - Updated the EngDB web service url in ``engdb_tools``. [#4187]
 
+pipeline
+--------
+
+- Updated ``calwebb_spec3`` to allow for processing of non-TSO
+  NIRISS SOSS exposures. [#4194]
+
 tests_nightly
 -------------
 
