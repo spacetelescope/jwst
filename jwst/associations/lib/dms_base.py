@@ -89,6 +89,7 @@ IMAGE2_SCIENCE_EXP_TYPES = [
     'nrc_coron',
     'nrc_tsimage',
     'nrs_mimf',
+    'fgs_image',
 ]
 
 IMAGE2_NONSCIENCE_EXP_TYPES = [
