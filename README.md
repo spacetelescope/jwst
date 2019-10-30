@@ -15,15 +15,15 @@ Installation
 
 The ``jwst`` package can be installed into a virtualenv or conda environment via ``pip``.  We recommend creating a fresh environment with only python installed.  Via conda:
 
-    conda create -n jwst_env python
+    conda create -n jwst_env python=3.7.4
     conda activate jwst_env
 
 ### Installing for end-users ###
 
-To install a released (tagged) version, you can install directly from Github.  To install tagged release ``jwst 0.13.8``:
+To install a released (tagged) version, you can install directly from Github.  To install tagged release ``jwst 0.14.0``:
 
     pip install numpy
-    pip install git+https://github.com/spacetelescope/jwst@0.13.8
+    pip install git+https://github.com/spacetelescope/jwst@0.14.0
 
 The latest development version (from ``master``) can also be installed from Github:
 
@@ -35,19 +35,36 @@ As can a particular commit hash:
 
 ### Installing a DMS release ###
 
-We still package our releases to DMS via a conda spec file that lists the exact versions of all packages to be installed.
-To create a new environment with a specific release, use:
+We still package our releases to DMS via environment snapshots that specify the exact versions of all packages to be installed.
 
-    conda create -n jwst_env --file <URL>
-    conda activate jwst_env
+The latest release 0.14.0 may be installed in two stages by running the following commands:
 
-where `<URL>` is of the form:
+Stage 1:
 
-    Linux: http://ssb.stsci.edu/releases/jwstdp/0.13.7/latest-linux
-    OS X: http://ssb.stsci.edu/releases/jwstdp/0.13.7/latest-osx
+    conda create -n jwstdp-0.14.0 --file https://ssb.stsci.edu/releases/jwstdp/0.14.0/[env_file]
+    source activate jwstdp-0.14.0
 
-Other particular versions can be installed by choosing a different version tag in place of "0.13.7" in the URL path.
-See the "Software vs DMS build version map" table below for a list of tags corresponding to particular releases.
+Where `[env_file]` = `conda_env_dump_stable-deps.txt` for Linux
+and   `[env_file]` = `conda_env_dump_osx-stable-deps.txt` for Macos
+
+Stage 2:
+
+    pip install -r https://ssb.stsci.edu/releases/jwstdp/0.14.0/[pkgs_file]
+
+Where `[pkgs_file]` = `reqs_stable-deps.txt` for Linux
+and   `[pkgs_file]` = `reqs_macos-stable-deps.txt` for Macos
+
+Each such delivery has its own installation instructions which may be found in
+the corresponding release documentation linked from this page: https://github.com/astroconda/astroconda-releases/tree/master/jwstdp
+
+The version values shown there are the JWSTDP releases available to install.
+Installation procedures for each version are in the README.md file for that
+version. See the "Software vs DMS build version map" table below for a
+list of version tags corresponding to particular releases.
+
+The installation procedures may change from time to time, so consulting the
+documentation page for the specific version in question is the best way to get
+that version installed.
 
 ### Installing for developers ###
 
@@ -115,6 +132,7 @@ Software vs DMS build version map
 
 | jwst tag | DMS build | CRDS_CONTEXT |   Date     |          Notes                           |
 | -------- | --------- | ------------ | ---------- | -----------------------------------------|
+|  0.14.0  | B7.4rc1   | 0560         | 10/25/2019 | First release candidate for B7.4         |
 |  0.13.8  | B7.3.1    | 0541         | 09/05/2019 | Patch for Build 7.3 released as Build 7.3.1     |
 |  0.13.7  | B7.3      | 0535         | 06/21/2019 | Final release candidate for Build 7.3    |
 |  0.13.6  | B7.3rc4   | 0534         | 06/20/2019 | Fourth release candidate for Build 7.3   |
