@@ -20,10 +20,10 @@ The ``jwst`` package can be installed into a virtualenv or conda environment via
 
 ### Installing for end-users ###
 
-To install a released (tagged) version, you can install directly from Github.  To install tagged release ``jwst 0.13.8``:
+To install a released (tagged) version, you can install directly from Github.  To install tagged release ``jwst 0.14.0``:
 
     pip install numpy
-    pip install git+https://github.com/spacetelescope/jwst@0.13.8
+    pip install git+https://github.com/spacetelescope/jwst@0.14.0
 
 The latest development version (from ``master``) can also be installed from Github:
 
