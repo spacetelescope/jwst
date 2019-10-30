@@ -125,6 +125,7 @@ Software vs DMS build version map
 
 | jwst tag | DMS build | CRDS_CONTEXT |   Date     |          Notes                           |
 | -------- | --------- | ------------ | ---------- | -----------------------------------------|
+|  0.14.0  | B7.4rc1   | 0560         | 10/25/2019 | First release candidate for B7.4         |
 |  0.13.8  | B7.3.1    | 0541         | 09/05/2019 | Patch for Build 7.3 released as Build 7.3.1     |
 |  0.13.7  | B7.3      | 0535         | 06/21/2019 | Final release candidate for Build 7.3    |
 |  0.13.6  | B7.3rc4   | 0534         | 06/20/2019 | Fourth release candidate for Build 7.3   |
