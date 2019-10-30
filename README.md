@@ -15,14 +15,6 @@ Installation
 
 The ``jwst`` package can be installed into a virtualenv or conda environment via ``pip``.  We recommend creating a fresh environment with only python installed.  Via conda:
 
-    conda create -n jwst_env python
-    conda activate jwst_env
-
-*Note: The conda create command above will obtain the latest available python
-version which may newer than the version against which the jwst package has been
-most extensivesly tested. An explicit version pin may be used here to obtain a
-particular python version. i.e*
-
     conda create -n jwst_env python=3.7.4
     conda activate jwst_env
 
@@ -43,12 +35,27 @@ As can a particular commit hash:
 
 ### Installing a DMS release ###
 
-We still package our releases to DMS via environment snapshots that specify the
-exact versions of all packages to be installed.  Each such delivery has its own
-installation instructions which may be found in the corresponding release
-documentation linked from this page:
+We still package our releases to DMS via environment snapshots that specify the exact versions of all packages to be installed.
 
-    https://github.com/astroconda/astroconda-releases/tree/master/jwstdp
+The latest release 0.14.0 may be installed in two stages by running the following commands:
+
+Stage 1:
+
+    conda create -n jwstdp-0.14.0 --file https://ssb.stsci.edu/releases/jwstdp/0.14.0/[env_file]
+    source activate jwstdp-0.14.0
+
+Where `[env_file]` = `conda_env_dump_stable-deps.txt` for Linux
+and   `[env_file]` = `conda_env_dump_osx-stable-deps.txt` for Macos
+
+Stage 2:
+
+    pip install -r https://ssb.stsci.edu/releases/jwstdp/0.14.0/[pkgs_file]
+
+Where `[pkgs_file]` = `reqs_stable-deps.txt` for Linux
+and   `[pkgs_file]` = `reqs_macos-stable-deps.txt` for Macos
+
+Each such delivery has its own installation instructions which may be found in
+the corresponding release documentation linked from this page: https://github.com/astroconda/astroconda-releases/tree/master/jwstdp
 
 The version values shown there are the JWSTDP releases available to install.
 Installation procedures for each version are in the README.md file for that
