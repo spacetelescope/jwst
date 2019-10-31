@@ -105,7 +105,7 @@ def test_spatial_transform_miri():
 
     subarray = {
         'fastaxis': 1,
-        'name': 'SUBPRISM',
+        'name': 'SLITLESSPRISM',
         'slowaxis': 2,
         'xsize': 72,
         'xstart': 1,
