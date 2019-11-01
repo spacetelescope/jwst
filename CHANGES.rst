@@ -6,11 +6,30 @@ lib
 
 - Updated the EngDB web service url in ``engdb_tools``. [#4187]
 
+photom
+------
+
+- Updated unit tests to use proper names for the MIRI LRS fixedslit
+  subarray. [#4205]
+
 pipeline
 --------
 
 - Updated ``calwebb_spec3`` to allow for processing of non-TSO
   NIRISS SOSS exposures. [#4194]
+
+resample_spec
+-------------
+
+- Updated unit tests for new name of MIRI LRS slitless subarray
+  ('SUBPRISM' -> 'SLITLESSPRISM'). [#4205]
+
+rscd
+----
+
+- Updated to handle science data and reference files that use the old
+  'SUBPRISM' name for the MIRI LRS slitless subarray and update the values
+  to 'SLITLESSPRISM'. [#4205]
 
 tests_nightly
 -------------
