@@ -22,7 +22,6 @@ The ``jwst`` package can be installed into a virtualenv or conda environment via
 
 To install a released (tagged) version, you can install directly from Github.  To install tagged release ``jwst 0.14.0``:
 
-    pip install numpy
     pip install git+https://github.com/spacetelescope/jwst@0.14.0
 
 The latest development version (from ``master``) can also be installed from Github:
@@ -77,7 +76,6 @@ Fork and clone the repo:
 
 Install from your local checked out copy as an "editable" install:
 
-    pip install numpy
     pip install -e .
 
 If you want to run the tests and/or build the docs, you can make sure those dependencies are installed too:
@@ -132,7 +130,7 @@ Software vs DMS build version map
 
 | jwst tag | DMS build | CRDS_CONTEXT |   Date     |          Notes                           |
 | -------- | --------- | ------------ | ---------- | -----------------------------------------|
-|  0.14.0  | B7.4rc1   | 0560         | 10/25/2019 | First release candidate for B7.4         |
+|  0.14.0  | B7.4rc1   | 0563         | 10/25/2019 | First release candidate for B7.4         |
 |  0.13.8  | B7.3.1    | 0541         | 09/05/2019 | Patch for Build 7.3 released as Build 7.3.1     |
 |  0.13.7  | B7.3      | 0535         | 06/21/2019 | Final release candidate for Build 7.3    |
 |  0.13.6  | B7.3rc4   | 0534         | 06/20/2019 | Fourth release candidate for Build 7.3   |
@@ -190,9 +188,11 @@ To run the regression tests on your local machine, get the test dependencies and
     pip install -e .[test]
     export TEST_BIGDATA=https://bytesalad.stsci.edu/artifactory
 
-When you run the tests, control where the test results are written with the `--basetemp` arg to `pytest`.  So to run all the regression tests:
+To run all the regression tests:
 
-    pytest --bigdata --basetemp=<PATH> jwst/tests_nightly
+    pytest --bigdata jwst/tests_nightly
+
+You can control where the test results are written with the `--basetemp=<PATH>` arg to `pytest`.  Note that `pytest` will wipe this directory clean for each test session, so make sure it is a scratch area.
 
 If you would like to run a specific test, find its name or ID and use the `-k` option:
 
