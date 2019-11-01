@@ -297,6 +297,7 @@ def just_the_step_from_cmdline(args, cls=None):
     # Save the step configuration
     if known.save_parameters:
         step.get_pars_model().save(known.save_parameters)
+        log.log.info(f"Step/Pipeline parameters saved to '{known.save_parameters}'")
 
     return step, step_class, positional, debug_on_exception
 
