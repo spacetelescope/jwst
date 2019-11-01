@@ -282,9 +282,9 @@ Parameter reference files also require at least one history entry. This can be f
       - !core/history_entry-1.0.0 {description: Base values, time: !!timestamp '2019-10-29
           21:20:50'}
 
-It is highly suggested to use the Python API to add history entries::
+It is highly suggested to use the Python API to add history entries:
 
-.. doctest_skip::
+.. doctest-skip::
 
    >>> import asdf
    >>> cfg = asdf.open('config.asdf')

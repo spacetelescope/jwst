@@ -94,18 +94,20 @@ the result will be saved in a file called::
   input_data_mystep.fits
 
 Similarly, the same code can be used in a Python script or interactive
-environment as follows::
+environment as follows:
+
+.. doctest-skip::
 
   >>> import jwst
-  >>> input = jwst.datamodels.open('input_data.fits') # doctest: +SKIP
-  >>> result = MyStep.call(input) # doctest: +SKIP
+  >>> input = jwst.datamodels.open('input_data.fits')
+  >>> result = MyStep.call(input)
       # `result` contains the resulting data
       # which can then be used by further `Steps`'s or
       # other functions.
       #
       # when done, the data can be saved with the `DataModel.save`
       # method
-  >>> result.save('my_final_results.fits') # doctest: +SKIP
+  >>> result.save('my_final_results.fits')
 
 
 Input and JWST Conventions
