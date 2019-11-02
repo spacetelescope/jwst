@@ -133,7 +133,16 @@ def test_getpars_model(step_obj, expected):
                 'par3': False
             }
         }),
-
+        (MakeListPipeline(
+            par1='Instantiated', steps={'make_list': {'par1': 0., 'par2': 'sub-instantiated'}}
+        ), {
+            'par1': 'Instantiated',
+            'MakeListStep': {
+                'par1': 0,
+                'par2': 'sub-instantiated',
+                'par3': False
+            }
+        }),
     ]
 )
 def test_getpars(step_obj, expected):

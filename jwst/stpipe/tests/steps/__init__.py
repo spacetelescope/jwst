@@ -229,7 +229,9 @@ class SavePipeline(Pipeline):
 class MakeListPipeline(Pipeline):
     """A pipeline that calls MakeListStep"""
 
-    spec = ""
+    spec = """
+    par1 = string(default='Name the atomizer') # Control the frobulization
+    """
 
     step_defs = {
         'make_list': MakeListStep,
