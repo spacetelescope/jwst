@@ -32,7 +32,11 @@ REFPIXSTEP_CRDS_MIRI_PARS = {
     'use_side_ref_pixels': False
 }
 
-@pytest.mark.xfail(reason="To be handled under a different ticket")
+
+@pytest.mark.xfail(
+    reason='Need to make regression with actual CRDS data',
+    run=False,
+)
 def test_parameters_from_crds():
     """Test retrieval of parameters from CRDS"""
     step_class = REFPIXSTEP_CRDS_MIRI_PARS['class']
@@ -40,12 +44,12 @@ def test_parameters_from_crds():
     pars = step_class.get_config_from_reference(data)
     assert pars == REFPIXSTEP_CRDS_MIRI_PARS
 
-@pytest.mark.xfail(reason="To be handled under a different ticket")
+
 def test_parameters_from_crds_fail():
     """Test retrieval of parameters from CRDS"""
     data = datamodels.open(t_path(join('data', 'miri_data.fits')))
     data.meta.instrument.name = 'NIRSPEC'
-    pars = crds_client.get_parameters_from_reference(RefPixStep, data)
+    pars = RefPixStep.get_config_from_reference(data)
     assert not len(pars)
 
 
@@ -183,7 +187,6 @@ def test_step_from_python():
     assert result == 3
 
 
-@pytest.mark.xfail(reason="To be handled under a different ticket")
 def test_step_from_python_simple():
     from .steps import AnotherDummyStep
 
@@ -192,7 +195,6 @@ def test_step_from_python_simple():
     assert result == 3
 
 
-@pytest.mark.xfail(reason="To be handled under a different ticket")
 def test_step_from_python_simple2():
     from .steps import AnotherDummyStep
 
