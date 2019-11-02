@@ -226,7 +226,7 @@ class SavePipeline(Pipeline):
         return r
 
 
-class FooPipeline(Pipeline):
+class MakeListPipeline(Pipeline):
     """A pipeline that calls MakeListStep"""
 
     spec = ""
