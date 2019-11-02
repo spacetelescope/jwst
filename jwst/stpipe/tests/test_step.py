@@ -13,7 +13,7 @@ from jwst.stpipe.config_parser import ValidationError
 from jwst.stpipe import crds_client
 from jwst.extern.configobj.configobj import ConfigObj
 
-from .steps import MakeListStep
+from .steps import MakeListPipeline, MakeListStep
 from .util import t_path
 
 from crds.core.exceptions import CrdsLookupError
@@ -126,6 +126,14 @@ def test_getpars_model(step_obj, expected):
             'par3': False
         }),
         (MakeListStep(par1=0., par2='from args'), {'par1': 0., 'par2': 'from args', 'par3': False}),
+        (MakeListPipeline, {
+            'MakeListStep' : {
+                'par1': 'float() # Control the frobulization',
+                'par2': 'string() # Reticulate the splines',
+                'par3': False
+            }
+        }),
+
     ]
 )
 def test_getpars(step_obj, expected):
