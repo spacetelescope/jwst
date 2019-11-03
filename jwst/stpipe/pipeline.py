@@ -37,6 +37,8 @@ from . import config_parser
 from . import Step
 from . import crds_client
 from . import log
+from ..lib.class_property import ClassInstanceMethod
+
 
 class Pipeline(Step):
     """
@@ -321,3 +323,21 @@ class Pipeline(Step):
             return False
         else:
             return True
+
+    @ClassInstanceMethod
+    def get_pars(pipeline):
+        """Retrieve the configuration parameters of a pipeline
+
+        The pipeline, and all referenced substeps, parameters
+        are retrieved.
+
+        Parameters
+        ----------
+        step : `Pipeline`-derived class or instance
+
+        Returns
+        -------
+        pars : dict
+            Keys are the parameters and values are the values.
+        """
+        return super().get_pars()
