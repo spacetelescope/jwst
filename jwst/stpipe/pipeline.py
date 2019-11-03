@@ -340,4 +340,7 @@ class Pipeline(Step):
         pars : dict
             Keys are the parameters and values are the values.
         """
-        return super().get_pars()
+        pars = super().get_pars()
+        for step_name, step_class in pipeline.step_defs.items():
+            pars[step_name] = step_class.get_pars()
+        return pars

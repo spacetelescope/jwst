@@ -178,6 +178,18 @@ class StepWithModel(Step):
         return model
 
 
+class EmptyPipeline(Pipeline):
+    """A pipeline that has no substeps"""
+
+    spec = """
+    par1 = string(default='Name the atomizer') # Control the frobulization
+    """
+
+    def process(self, *args):
+
+        return args
+
+
 class ProperPipeline(Pipeline):
     """Pipeline with proper output setup"""
 
