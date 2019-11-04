@@ -60,10 +60,9 @@ def test_spatial_transform_nirspec():
         'type': 'NRS_FIXEDSLIT',
         'zero_frame': False}
 
-    im = ImageModel()
+    im = ImageModel((2048, 2048))
     im.data = np.random.rand(2048, 2048)
-    im.error = np.random.rand(2048, 2048)
-    im.dq = np.random.rand(2048, 2048)
+    im.error = np.random.rand(2048, 2048) / 100
 
     im.meta.wcsinfo._instance.update(wcsinfo)
     im.meta.instrument._instance.update(instrument)
@@ -131,10 +130,9 @@ def test_spatial_transform_miri():
         'type': 'MIR_LRS-SLITLESS',
         'zero_frame': False}
 
-    im = ImageModel()
+    im = ImageModel((416, 72))
     im.data = np.random.rand(416, 72)
-    im.error = np.random.rand(416, 72)
-    im.dq = np.random.rand(416, 72)
+    im.error = np.random.rand(416, 72) / 100
 
     im.meta.wcsinfo._instance.update(wcsinfo)
     im.meta.instrument._instance.update(instrument)

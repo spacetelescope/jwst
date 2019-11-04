@@ -97,7 +97,7 @@ transforms the spatial coordinates to celestial coordinates and needs to pass th
 with all inputs and the operator is applied to the results, e.g. ``model = m1 + m2 * m3 – m4/m5**m6``
 
 >>> model = shift_x + shift_y
->>> model(1, 1)
+>>> model(1)
     -152.2
 
 Create the reference file
@@ -106,12 +106,13 @@ Create the reference file
 The DictortionModel in jwst.datamodels is used as an example of how to create a reference file. Similarly data models should be used to create other types of reference files as this process provides validaiton of the file structure.
 
 >>> from jwst.datamodels import DistortionModel
+>>>
 >>> dist = DistortionModel(model=model, strict_validation=True)
 >>> dist.meta.description = "New distortion model"
 >>> dist.meta.author = "INS team"
 >>> dist.meta.useafter = "2012/01/21"
 >>> dist.meta.instrument.name = "MIRI"
->>> dist .meta.instrument.detector = "MIRIMAGE"
+>>> dist.meta.instrument.detector = "MIRIMAGE"
 >>> dist.meta.pedigree = "GROUND"
 >>> dist.meta.reftype = "distortion"
 >>> dist.meta.input_units = "pixel"
@@ -128,6 +129,7 @@ Save a transform to an ASDF file
 
 >>> import asdf
 >>> from asdf import AsdfFile
+>>>
 >>> f = AsdfFile()
 >>> f.tree['model'] = model
 >>> f.write_to('reffile.asdf')
@@ -139,7 +141,7 @@ To test the file, it can be read in again using the ``asdf.open()`` function:
 
 >>> ff = asdf.open('reffile.asdf')
 >>> model = ff.tree['model']
->>> model(1, 1)
+>>> model(1)
     -152.2
 
 
