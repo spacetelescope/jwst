@@ -1,4 +1,4 @@
-asdf==2.4.2
+-e git+https://github.com/spacetelescope/asdf@1b41c6d04f657940c3fc02443dd3bdfd78619ba8#egg=asdf
 -e git+https://github.com/nden/astropy@11386e2df7af8cd934a6e0483b0ef8657fdd5721#egg=astropy
 atomicwrites==1.3.0
 attrs==19.1.0

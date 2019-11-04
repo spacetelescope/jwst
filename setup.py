@@ -90,7 +90,7 @@ setup(
         'setuptools_scm',
     ],
     install_requires=[
-        'asdf>=2.4',
+        'asdf @ git+https://github.com/spacetelescope/asdf@1b41c6d04f657',
         'astropy @ git+https://github.com/nden/astropy@11386e2df7af8',
         'crds>=7.2.7',
         'drizzle>=1.13',
