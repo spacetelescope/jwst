@@ -87,34 +87,77 @@ def test_saving_pars(tmpdir):
 
 
 @pytest.mark.parametrize(
-    'step_obj, expected',
+    'step_obj, full_spec, expected',
     [
-        (MakeListStep,
-         datamodels.StepParsModel(
-             {'parameters': {
-                 'par1': 'float() # Control the frobulization',
-                 'par2': 'string() # Reticulate the splines',
-                 'par3': False,
-                 'class': 'jwst.stpipe.tests.steps.MakeListStep',
-                 'name': 'MakeListStep',
-             }}
-         )
+        # #############################################
+        # Test `get_pars_model` with `full_spec = True`
+        # #############################################
+        #
+        # Step Class with mix of required and optional parameters
+        (MakeListStep, True,
+         {'class': 'jwst.stpipe.tests.steps.MakeListStep',
+          'name': 'MakeListStep',
+          'pre_hooks': [],
+          'post_hooks': [],
+          'output_file': None,
+          'output_dir': None,
+          'output_ext': '.fits',
+          'output_use_model': False,
+          'output_use_index': True,
+          'save_results': False,
+          'skip': False,
+          'suffix': None,
+          'search_output_file': True,
+          'input_dir': None,
+          'par3': False,
+          'par1': 'float() # Control the frobulization',
+          'par2': 'string() # Reticulate the splines'}
         ),
-        (MakeListStep(par1=0., par2='from args'),
-         datamodels.StepParsModel({'parameters': {
-             'par1': 0., 'par2': 'from args', 'par3': False,
-             'class': 'jwst.stpipe.tests.steps.MakeListStep',
-             'name': 'MakeListStep'
-         }})
+        # Instance with parameters set
+        (MakeListStep(par1=0., par2='from args'), True,
+         {'class': 'jwst.stpipe.tests.steps.MakeListStep',
+          'name': 'MakeListStep',
+          'pre_hooks': [],
+          'post_hooks': [],
+          'output_file': None,
+          'output_dir': None,
+          'output_ext': '.fits',
+          'output_use_model': False,
+          'output_use_index': True,
+          'save_results': False,
+          'skip': False,
+          'suffix': None,
+          'search_output_file': True,
+          'input_dir': '',
+          'par1': 0.0,
+          'par2': 'from args',
+          'par3': False}
         ),
-        (Step.from_config_file(t_path(join('steps', 'jwst_generic_pars-makeliststep_0002.asdf'))),
-         ParsModelWithPar3
-        )
+        # ##############################################
+        # Test `get_pars_model` with `full_spec = False`
+        # ##############################################
+        #
+        # Step Class with mix of required and optional parameters
+        (MakeListStep, False,
+         {'class': 'jwst.stpipe.tests.steps.MakeListStep',
+          'name': 'MakeListStep',
+          'par3': False,
+          'par1': 'float() # Control the frobulization',
+          'par2': 'string() # Reticulate the splines'}
+        ),
+        # Instance with parameters set
+        (MakeListStep(par1=0., par2='from args'), False,
+         {'class': 'jwst.stpipe.tests.steps.MakeListStep',
+          'name': 'MakeListStep',
+          'par1': 0.0,
+          'par2': 'from args',
+          'par3': False}
+        ),
     ]
 )
-def test_getpars_model(step_obj, expected):
+def test_getpars_model(step_obj, full_spec, expected):
     """Test retreiving of configuration parameters"""
-    assert step_obj.get_pars_model().parameters == expected.parameters
+    assert step_obj.get_pars_model(full_spec=full_spec).parameters.instance == expected
 
 
 @pytest.mark.parametrize(
@@ -125,7 +168,6 @@ def test_getpars_model(step_obj, expected):
         # #######################################
         #
         # Step Class with mix of required and optional parameters
-        #
         (MakeListStep, True, {
             'pre_hooks': [],
             'post_hooks': [],
@@ -143,9 +185,7 @@ def test_getpars_model(step_obj, expected):
             'par1': 'float() # Control the frobulization',
             'par2': 'string() # Reticulate the splines'
         }),
-        #
         # Instance with parameters set
-        #
         (MakeListStep(par1=0., par2='from args'), True, {
             'pre_hooks': [],
             'post_hooks': [],

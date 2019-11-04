@@ -26,6 +26,16 @@ meta:
 parameters:
   class: jwst.stpipe.tests.steps.MakeListStep
   name: jwst_generic_pars-makeliststep_0002
+  input_dir: ''
+  output_ext: .fits
+  output_use_index: true
+  output_use_model: false
   par1: 42.0
-  par2: 'Yes, a string'
+  par2: Yes, a string
+  par3: false
+  post_hooks: []
+  pre_hooks: []
+  save_results: false
+  search_output_file: true
+  skip: false
 ...
