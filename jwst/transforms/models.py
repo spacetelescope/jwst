@@ -885,11 +885,27 @@ class V23ToSky(Rotation3D):
     
     def __init__(self, angles, axes_order, name=None):
         super(V23ToSky, self).__init__(angles, axes_order=axes_order, name=name)
-        self.inputs = ("v2", "v3")
+        self._inputs = ("v2", "v3")
         """ ("v2", "v3"): Coordinates in the (V2, V3) telescope frame."""
-        self.outputs = ("ra", "dec")
+        self._outputs = ("ra", "dec")
         """ ("ra", "dec"): RA, DEC cooridnates in ICRS."""
-        
+
+    @property
+    def inputs(self):
+        return self._inputs
+
+    @inputs.setter
+    def inputs(self, val):
+        self._inputs = val
+
+    @property
+    def outputs(self):
+        return self._outputs
+
+    @outputs.setter
+    def outputs(self, val):
+        self._outputs = val
+    
     @staticmethod
     def spherical2cartesian(alpha, delta):
         """
