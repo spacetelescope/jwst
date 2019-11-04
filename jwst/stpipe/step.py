@@ -1217,13 +1217,17 @@ class Step():
         return pars
 
     @ClassInstanceMethod
-    def get_pars_model(step):
+    def get_pars_model(step, full_spec=True):
         """Return Step parameters as StepParsModel
 
         Parameters
         ----------
         step : `Step`-derived class or instance
             The `Step` or `Step` instance to retrieve the parameters model for.
+
+        full_spec : bool
+            Return all parameters, including parent-specified parameters.
+            If `False`, return only parameters specific to the class/instance.
 
         Returns
         -------
@@ -1233,7 +1237,7 @@ class Step():
         pars_model = step._pars_model
         if pars_model is None:
             pars_model = StepParsModel()
-        pars_model.parameters.instance.update(step.get_pars())
+        pars_model.parameters.instance.update(step.get_pars(full_spec=full_spec))
 
         # Update class and name.
         full_class_name = _full_class_name(step)
