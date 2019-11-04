@@ -56,9 +56,6 @@ class Step():
     input_dir          = string(default=None)        # Input directory
     """
 
-    # No parameter model has been created yet.
-    _pars_model = None
-
     # Reference types for both command line override
     # definition and reference prefetch
     reference_file_types = []
@@ -245,10 +242,6 @@ class Step():
             config_file=config_file,
             _validate_kwds=False,
             **config)
-        try:
-            step._pars_model = config.pars_model
-        except AttributeError:
-            pass
 
         return step
 
@@ -552,11 +545,6 @@ class Step():
         name = crds_config.get('name', None)
         instance = cls.from_config_section(crds_config,
             name=name, config_file=config_file)
-
-        try:
-            instance._pars_model = crds_config.pars_model
-        except (AttributeError, UnboundLocalError):
-            pass
 
         return instance.run(*args)
 
@@ -1234,9 +1222,7 @@ class Step():
         model : `StepParsModel`
             The `StepParsModel`.
         """
-        pars_model = step._pars_model
-        if pars_model is None:
-            pars_model = StepParsModel()
+        pars_model = StepParsModel()
         pars_model.parameters.instance.update(step.get_pars(full_spec=full_spec))
 
         # Update class and name.
@@ -1247,7 +1233,6 @@ class Step():
         })
         pars_model.meta.reftype = 'pars-' + pars_model.parameters.name.lower()
 
-        step._pars_model = pars_model
         return pars_model
 
 
