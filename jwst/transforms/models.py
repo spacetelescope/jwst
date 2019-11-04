@@ -175,7 +175,7 @@ class MIRI_AB2Slice(Model):
     channel = Parameter("channel", default=1)
     """ MIRI MRS channel: one of 1, 2, 3, 4"""
 
-    def __init__(self, beta_zero, beta_del, channel, **kwargs):
+    def __init__(self, beta_zero=beta_zero, beta_del=beta_del, channel=channel, **kwargs):
         super().__init__(beta_zero=beta_zero, beta_del=beta_del,
                          channel=channel, **kwargs)
         self.inputs = ("beta",)
