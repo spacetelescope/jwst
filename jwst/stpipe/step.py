@@ -1182,19 +1182,28 @@ class Step():
         # TODO: standardize cal_step naming to point to the offical step name
 
     @ClassInstanceMethod
-    def get_pars(step):
+    def get_pars(step, full_spec=True):
         """Retrieve the configuration parameters of a step
 
         Parameters
         ----------
         step : `Step`-derived class or instance
+            The class or instance to retrieve the parameters for.
+
+        full_spec : bool
+            Return all parameters, including parent-specified parameters.
+            If `False`, return only parameters specific to the class/instance.
 
         Returns
         -------
         pars : dict
             Keys are the parameters and values are the values.
         """
-        spec = config_parser.load_spec_file(step)
+        if full_spec:
+            spec_file_func = config_parser.get_merged_spec_file
+        else:
+            spec_file_func = config_parser.load_spec_file
+        spec = spec_file_func(step)
         if spec is None:
             return {}
         instance_pars = {}

@@ -118,45 +118,219 @@ def test_getpars_model(step_obj, expected):
 
 
 @pytest.mark.parametrize(
-    'step_obj, expected',
+    'step_obj, full_spec, expected',
     [
-        (MakeListStep, {
+        # #######################################
+        # Test `get_pars` with `full_spec = True`
+        # #######################################
+        #
+        # Step Class with mix of required and optional parameters
+        #
+        (MakeListStep, True, {
+            'pre_hooks': [],
+            'post_hooks': [],
+            'output_file': None,
+            'output_dir': None,
+            'output_ext': '.fits',
+            'output_use_model': False,
+            'output_use_index': True,
+            'save_results': False,
+            'skip': False,
+            'suffix': None,
+            'search_output_file': True,
+            'input_dir': None,
+            'par3': False,
             'par1': 'float() # Control the frobulization',
-            'par2': 'string() # Reticulate the splines',
+            'par2': 'string() # Reticulate the splines'
+        }),
+        #
+        # Instance with parameters set
+        #
+        (MakeListStep(par1=0., par2='from args'), True, {
+            'pre_hooks': [],
+            'post_hooks': [],
+            'output_file': None,
+            'output_dir': None,
+            'output_ext': '.fits',
+            'output_use_model': False,
+            'output_use_index': True,
+            'save_results': False,
+            'skip': False,
+            'suffix': None,
+            'search_output_file': True,
+            'input_dir': '',
+            'par1': 0.0,
+            'par2': 'from args',
             'par3': False
         }),
-        (MakeListStep(par1=0., par2='from args'), {'par1': 0., 'par2': 'from args', 'par3': False}),
-        (MakeListPipeline, {
+        #
+        # Pipeline Class with sub-step with mix of required and optional parameters
+        #
+        (MakeListPipeline, True, {
+            'pre_hooks': [],
+            'post_hooks': [],
+            'output_file': None,
+            'output_dir': None,
+            'output_ext': '.fits',
+            'output_use_model': False,
+            'output_use_index': True,
+            'save_results': False,
+            'skip': False,
+            'suffix': None,
+            'search_output_file': True,
+            'input_dir': None,
             'par1': 'Name the atomizer',
-            'make_list' : {
+            'make_list': {
+                'pre_hooks': [],
+                'post_hooks': [],
+                'output_file': None,
+                'output_dir': None,
+                'output_ext': '.fits',
+                'output_use_model': False,
+                'output_use_index': True,
+                'save_results': False,
+                'skip': False,
+                'suffix': None,
+                'search_output_file': True,
+                'input_dir': None,
+                'par3': False,
                 'par1': 'float() # Control the frobulization',
-                'par2': 'string() # Reticulate the splines',
-                'par3': False
+                'par2': 'string() # Reticulate the splines'
             }
         }),
+        #
+        # Pipeline Instance with all parameters set
+        #
         (MakeListPipeline(
             par1='Instantiated', steps={'make_list': {'par1': 0., 'par2': 'sub-instantiated'}}
-        ), {
+        ), True, {
+            'pre_hooks': [],
+            'post_hooks': [],
+            'output_file': None,
+            'output_dir': None,
+            'output_ext': '.fits',
+            'output_use_model': False,
+            'output_use_index': True,
+            'save_results': False,
+            'skip': False,
+            'suffix': None,
+            'search_output_file': True,
+            'input_dir': '',
             'par1': 'Instantiated',
             'make_list': {
-                'par1': 0.,
+                'pre_hooks': [],
+                'post_hooks': [],
+                'output_file': None,
+                'output_dir': None,
+                'output_ext': '.fits',
+                'output_use_model': False,
+                'output_use_index': True,
+                'save_results': False,
+                'skip': False,
+                'suffix': None,
+                'search_output_file': True,
+                'input_dir': '',
+                'par1': 0.0,
                 'par2': 'sub-instantiated',
                 'par3': False
             }
         }),
-        (EmptyPipeline, {
-            'par1': 'Name the atomizer',
+        #
+        # Pipeline class without any sub-steps
+        #
+        (EmptyPipeline, True, {
+            'pre_hooks': [],
+            'post_hooks': [],
+            'output_file': None,
+            'output_dir': None,
+            'output_ext': '.fits',
+            'output_use_model': False,
+            'output_use_index': True,
+            'save_results': False,
+            'skip': False,
+            'suffix': None,
+            'search_output_file': True,
+            'input_dir': None,
+            'par1': 'Name the atomizer'
         }),
-        (EmptyPipeline(
-            par1='Instantiated'
-        ), {
+        #
+        # Pipeline instance without any sub-steps
+        #
+        (EmptyPipeline(par1='Instantiated'), True, {
+            'pre_hooks': [],
+            'post_hooks': [],
+            'output_file': None,
+            'output_dir': None,
+            'output_ext': '.fits',
+            'output_use_model': False,
+            'output_use_index': True,
+            'save_results': False,
+            'skip': False,
+            'suffix': None,
+            'search_output_file': True,
+            'input_dir': '',
+            'par1': 'Instantiated'
+        }),
+        # ######################################
+        # Test `get_pars` with `full_spec=False`
+        # ######################################
+        #
+        # Step Class with mix of required and optional parameters
+        #
+        (MakeListStep, False, {
+            'par3': False,
+            'par1': 'float() # Control the frobulization',
+            'par2': 'string() # Reticulate the splines'
+        }),
+        #
+        # Instance with parameters set
+        #
+        (MakeListStep(par1=0., par2='from args'), False, {
+            'par1': 0.0,
+            'par2': 'from args',
+            'par3': False
+        }),
+        #
+        # Pipeline Class with sub-step with mix of required and optional parameters
+        #
+        (MakeListPipeline, False, {
+            'par1': 'Name the atomizer',
+            'make_list': {
+                'par3': False,
+                'par1': 'float() # Control the frobulization',
+                'par2': 'string() # Reticulate the splines'
+            }
+        }),
+        #
+        # Pipeline Instance with all parameters set
+        #
+        (MakeListPipeline(
+            par1='Instantiated', steps={'make_list': {'par1': 0., 'par2': 'sub-instantiated'}}
+        ), False, {
             'par1': 'Instantiated',
+            'make_list': {
+                'par1': 0.0,
+                'par2': 'sub-instantiated',
+                'par3': False
+            }
+        }),
+        #
+        # Pipeline class without any sub-steps
+        #
+        (EmptyPipeline, False, {
+            'par1': 'Name the atomizer'
+        }),
+        #
+        # Pipeline instance without any sub-steps
+        #
+        (EmptyPipeline(par1='Instantiated'), False, {
+            'par1': 'Instantiated'
         }),
     ]
 )
-def test_getpars(step_obj, expected):
+def test_getpars(step_obj, full_spec, expected):
     """Test retreiving of configuration parameters"""
-    assert step_obj.get_pars() == expected
+    assert step_obj.get_pars(full_spec=full_spec) == expected
 
 
 def test_hook():

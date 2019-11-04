@@ -325,7 +325,7 @@ class Pipeline(Step):
             return True
 
     @ClassInstanceMethod
-    def get_pars(pipeline):
+    def get_pars(pipeline, full_spec=True):
         """Retrieve the configuration parameters of a pipeline
 
         The pipeline, and all referenced substeps, parameters
@@ -335,19 +335,23 @@ class Pipeline(Step):
         ----------
         step : `Pipeline`-derived class or instance
 
+        full_spec : bool
+            Return all parameters, including parent-specified parameters.
+            If `False`, return only parameters specific to the class/instance.
+
         Returns
         -------
         pars : dict
             Keys are the parameters and values are the values.
         """
-        pars = super().get_pars()
+        pars = super().get_pars(full_spec=full_spec)
         for step_name, step_class in pipeline.step_defs.items():
 
             # If a step has already been instantiated, get its parameters
             # from the instantiation. Otherwise, retrieve from the class
             # itself.
             try:
-                pars[step_name] = getattr(pipeline, step_name).get_pars()
+                pars[step_name] = getattr(pipeline, step_name).get_pars(full_spec=full_spec)
             except AttributeError:
-                pars[step_name] = step_class.get_pars()
+                pars[step_name] = step_class.get_pars(full_spec=full_spec)
         return pars
