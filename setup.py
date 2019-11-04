@@ -94,7 +94,7 @@ setup(
         'astropy @ git+https://github.com/nden/astropy@11386e2df7af8',
         'crds>=7.2.7',
         'drizzle>=1.13',
-        'gwcs @ git+https://github.com/spacetelescope/gwcs@3e2bc108e',
+        'gwcs @ git+https://github.com/spacetelescope/gwcs@ace1c2c30a658',
         'jsonschema>=2.3,<4',
         'numpy>=1.16',
         'photutils>=0.7',

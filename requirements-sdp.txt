@@ -11,7 +11,7 @@ crds==7.4.1.2
 Cython==0.29.13
 drizzle==1.13.1
 filelock==3.0.12
--e git+https://github.com/spacetelescope/gwcs@3e2bc108e#egg=gwcs
+-e git+https://github.com/spacetelescope/gwcs@ace1c2c30a658264a15339b2edbea1af32f6adff#egg=gwcs
 idna==2.8
 importlib-metadata==0.23
 jsonschema==3.0.2
