@@ -164,7 +164,7 @@ class MIRI_AB2Slice(Model):
     standard_broadcasting = False
     _separable = False
     fittable = False
-    
+
     n_inputs = 1
     n_outputs = 1
 
@@ -332,14 +332,14 @@ class RefractionIndexFromPrism(Model):
 
     n_inputs = 3
     n_outputs = 1
-    
+
     prism_angle = Parameter(setter=np.deg2rad, getter=np.rad2deg)
 
     def __init__(self, prism_angle, name=None):
         super(RefractionIndexFromPrism, self).__init__(prism_angle=prism_angle, name=name)
         self.inputs = ("alpha_in", "beta_in", "alpha_out",)
         self.outputs = ("n",)
-        
+
     def evaluate(self, alpha_in, beta_in, alpha_out, prism_angle):
         sangle = (math.sin(prism_angle))
         cangle = (math.cos(prism_angle))
@@ -369,7 +369,7 @@ class AngleFromGratingEquation(Model):
 
     order = Parameter(default=-1)
     """ Spectral order."""
-    
+
     def __init__(self, groove_density, order, **kwargs):
         super().__init__(groove_density=groove_density, order=order, **kwargs)
         self.inputs = ("lam", "alpha_in", "beta_in", "z")
@@ -377,7 +377,7 @@ class AngleFromGratingEquation(Model):
 
         self.outputs = ("alpha_out", "beta_out", "zout")
         """ Three angles coming out of the grating. """
-        
+
     def evaluate(self, lam, alpha_in, beta_in, z, groove_density, order):
         if alpha_in.shape != beta_in.shape != z.shape:
             raise ValueError("Expected input arrays to have the same shape")
@@ -404,7 +404,7 @@ class WavelengthFromGratingEquation(Model):
     _separable = False
     n_inputs = 3
     n_outputs = 1
-    
+
     groove_density = Parameter()
     """ Grating ruling density."""
     order = Parameter(default=1)
@@ -416,7 +416,7 @@ class WavelengthFromGratingEquation(Model):
         """ three angle - alpha_in and beta_in going into the grating and alpha_out coming out of the grating."""
         self.outputs = ("lam",)
         """ Wavelength."""
-        
+
     def evaluate(self, alpha_in, beta_in, alpha_out, groove_density, order):
         # beta_in is not used in this equation but is here because it's
         # needed for the prism computation. Currently these two computations
@@ -437,7 +437,6 @@ class Unitless2DirCos(Model):
         self.inputs = ('x', 'y')
         self.outputs = ('x', 'y', 'z')
 
-    
     def evaluate(self, x, y):
         vabs = np.sqrt(1. + x**2 + y**2)
         cosa = x / vabs
@@ -461,7 +460,7 @@ class DirCos2Unitless(Model):
         super().__init__(**kwargs)
         self.inputs = ('x', 'y', 'z')
         self.outputs = ('x', 'y')
-        
+
     def evaluate(self, x, y, z):
 
         return x / z, y / z
@@ -575,7 +574,7 @@ class Rotation3D(Model):
 
     n_inputs = 3
     n_outputs = 3
-    
+
     angles = Parameter(getter=np.rad2deg, setter=np.deg2rad)
 
     def __init__(self, angles, axes_order, name=None):
@@ -791,7 +790,7 @@ class NirissSOSSModel(Model):
         """ x and y pixel coordinates and spectral order"""
         self.outputs = ('ra', 'dec', 'lam')
         """ RA and DEC coordinates and wavelength"""
-        
+
         self.spectral_orders = spectral_orders
         self.models = dict(zip(spectral_orders, models))
 
@@ -882,7 +881,7 @@ class V23ToSky(Rotation3D):
 
     n_inputs = 2
     n_outputs = 2
-    
+
     def __init__(self, angles, axes_order, name=None):
         super(V23ToSky, self).__init__(angles, axes_order=axes_order, name=name)
         self._inputs = ("v2", "v3")
@@ -905,7 +904,7 @@ class V23ToSky(Rotation3D):
     @outputs.setter
     def outputs(self, val):
         self._outputs = val
-    
+
     @staticmethod
     def spherical2cartesian(alpha, delta):
         """
@@ -957,7 +956,7 @@ class IdealToV2V3(Model):
     _separable = False
     n_inputs = 2
     n_outputs = 2
-    
+
     v3idlyangle = Parameter() # in deg
     v2ref = Parameter() # in arcsec
     v3ref = Parameter() # in arcsec
@@ -1119,7 +1118,7 @@ class NIRCAMForwardRowGrismDispersion(Model):
 
     n_inputs = 5
     n_outputs = 4
-    
+
     def __init__(self, orders, lmodels=None, xmodels=None,
                  ymodels=None, name=None, meta=None):
         self.orders = orders
@@ -1278,7 +1277,7 @@ class NIRCAMBackwardGrismDispersion(Model):
 
     n_inputs = 4
     n_outputs = 5
-    
+
     def __init__(self, orders, lmodels=None, xmodels=None,
                  ymodels=None, name=None, meta=None):
         self._order_mapping = {int(k): v for v, k in enumerate(orders)}
@@ -1360,7 +1359,7 @@ class NIRISSBackwardGrismDispersion(Model):
 
     n_inputs = 4
     n_outputs = 5
-    
+
     def __init__(self, orders, lmodels=None, xmodels=None,
                  ymodels=None, theta=None, name=None, meta=None):
         self._order_mapping = {int(k): v for v, k in enumerate(orders)}
@@ -1460,7 +1459,7 @@ class NIRISSForwardRowGrismDispersion(Model):
 
     n_inputs = 5
     n_outputs = 4
-    
+
     def __init__(self, orders, lmodels=None, xmodels=None,
                  ymodels=None, theta=0., name=None, meta=None):
         self._order_mapping = {int(k): v for v, k in enumerate(orders)}
