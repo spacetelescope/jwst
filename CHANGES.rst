@@ -1,6 +1,11 @@
 0.14.1 (Unreleased)
 ===================
 
+datamodels
+----------
+
+- Updated the list of allowed NIRCam CORONMSK values in model schemas. [#4234]
+
 lib
 ---
 
