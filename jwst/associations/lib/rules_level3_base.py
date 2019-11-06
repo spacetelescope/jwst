@@ -962,7 +962,7 @@ class AsnMixin_AuxData(AsnMixin_Science):
         """
         try:
             exp_type = item['exp_type']
-            if exp_type =='mir_tacq':
+            if any(x == exp_type for x in ACQ_EXP_TYPES):
                 return 'target_acquisition'
         except KeyError:
             raise LookupError('Exposure type cannot be determined')

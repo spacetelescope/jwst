@@ -1,6 +1,13 @@
 0.14.1 (Unreleased)
 ===================
 
+associations
+------------
+
+- Updated level 3 rules so that target acquisitions in the pool files are listed as
+  exp_type = 'target_acquisition', not as science exposures. [#4223]
+
+
 lib
 ---
 
