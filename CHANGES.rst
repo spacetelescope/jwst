@@ -7,6 +7,11 @@ associations
 - Updated level 3 rules so that target acquisitions in the pool files are listed as
   exp_type = 'target_acquisition', not as science exposures. [#4223]
 
+=======
+datamodels
+----------
+
+- Updated the list of allowed NIRCam CORONMSK values in model schemas. [#4234]
 
 lib
 ---
@@ -38,11 +43,25 @@ rscd
   'SUBPRISM' name for the MIRI LRS slitless subarray and update the values
   to 'SLITLESSPRISM'. [#4205]
 
+stpipe
+------
+
+- get_pars returns all available parameters for a step and all sub-steps [#4215]
+
 tests_nightly
 -------------
 
 - Added a ``set_telescope_pointing`` test for a NIRCam TSGRISM exposure.
   [#4187]
+
+transforms
+----------
+
+- Updated all transforms to be consistent with astropy v 4.0.
+  Transform classes define now two class variables - ``n_inputs``
+  and `n_outputs``. The variables ``inputs`` and ``outputs`` are
+  now instance variables (previously they were class variables). [#4216]
+
 
 0.14.0 (2019-10-25)
 ===================
