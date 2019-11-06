@@ -37,6 +37,15 @@ tests_nightly
 - Added a ``set_telescope_pointing`` test for a NIRCam TSGRISM exposure.
   [#4187]
 
+transforms
+----------
+
+- Updated all transforms to be consistent with astropy v 4.0.
+  Transform classes define now two class variables - ``n_inputs``
+  and `n_outputs``. The variables ``inputs`` and ``outputs`` are
+  now instance variables (previously they were class variables). [#4216]
+
+
 0.14.0 (2019-10-25)
 ===================
 
