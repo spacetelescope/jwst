@@ -189,7 +189,8 @@ class Pipeline(Step):
         try:
             ref_file = crds_client.get_reference_file(dataset,
                                                       pars_model.meta.reftype,
-                                                      observatory=observatory)
+                                                      observatory=observatory,
+                                                      asn_exptypes=['science'])
         except (AttributeError, exceptions.CrdsError, exceptions.CrdsLookupError):
             log.log.debug(f'{pars_model.meta.reftype.upper()}: No parameters found')
         else:

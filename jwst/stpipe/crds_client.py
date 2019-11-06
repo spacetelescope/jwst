@@ -136,7 +136,7 @@ def check_reference_open(refpath):
     return refpath
 
 
-def get_reference_file(dataset, reference_file_type, observatory=None):
+def get_reference_file(dataset, reference_file_type, observatory=None, asn_exptypes=None):
     """
     Gets a reference file from CRDS as a readable file-like object.
     The actual file may be optionally overridden.
@@ -155,6 +155,11 @@ def get_reference_file(dataset, reference_file_type, observatory=None):
     observatory: string
         telescope name used with CRDS,  e.g. 'jwst'.
 
+    asn_exptypes: [str[,...]]
+        List of exposure types from an association file to read.
+        None read all the given files. Passed to
+        `jwst.datamodels.open`
+
     Returns
     -------
     reference_filepath : string
@@ -165,7 +170,7 @@ def get_reference_file(dataset, reference_file_type, observatory=None):
     """
     if isinstance(dataset, str):
         from jwst import datamodels
-        with datamodels.open(dataset) as model:
+        with datamodels.open(dataset, asn_exptypes=asn_exptypes) as model:
             return get_multiple_reference_paths(
                 model, [reference_file_type], observatory)[reference_file_type]
     else:
