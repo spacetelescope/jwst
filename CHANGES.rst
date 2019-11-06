@@ -31,6 +31,11 @@ rscd
   'SUBPRISM' name for the MIRI LRS slitless subarray and update the values
   to 'SLITLESSPRISM'. [#4205]
 
+stpipe
+------
+
+- get_pars returns all available parameters for a step and all sub-steps [#4215]
+
 tests_nightly
 -------------
 

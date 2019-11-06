@@ -5,7 +5,7 @@ import pytest
 from jwst.stpipe.config_parser import ValidationError
 from jwst.stpipe.step import Step
 
-from .steps import MakeListStep, FooPipeline
+from .steps import MakeListStep, MakeListPipeline
 from .util import t_path
 
 DEFAULT_PAR1 = 42.0
@@ -100,9 +100,9 @@ def test_makeliststep_call_config_file():
 def test_makeliststep_call_from_within_pipeline():
     """Test override step asdf with .cfg"""
     config_file = t_path(
-        Path('steps') / 'foo_pipeline.cfg'
+        Path('steps') / 'makelist_pipeline.cfg'
     )
-    results = FooPipeline.call(config_file=config_file)
+    results = MakeListPipeline.call(config_file=config_file)
     assert results == [43.0, 'My hovercraft is full of eels.', False]
 
 

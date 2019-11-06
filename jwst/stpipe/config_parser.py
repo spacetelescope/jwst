@@ -180,12 +180,14 @@ def get_merged_spec_file(cls, preserve_comments=False):
 
     Parameters
     ----------
-    cls : class
-        The class to load the merged spec file for
+    cls: `Step`-derived or `Step` instance
+        A class or instance of a `Step`-based class.
 
     preserve_comments : bool, optional
         When True, preserve the comments in the spec file
     """
+    if not isclass(cls):
+        cls = cls.__class__
     subclasses = cls.mro()
     subclasses.reverse()
 
