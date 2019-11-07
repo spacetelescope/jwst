@@ -91,7 +91,7 @@ setup(
     ],
     install_requires=[
         'asdf @ git+https://github.com/spacetelescope/asdf@1b41c6d04f65794',
-        'astropy @ git+https://github.com/astropy/astropy@a1c65299b78d402',
+        'astropy @ git+https://github.com/astropy/astropy@df61bbc22ed2fd5c8',
         'crds>=7.2.7',
         'drizzle>=1.13',
         'gwcs @ git+https://github.com/spacetelescope/gwcs@ace1c2c30a658',
