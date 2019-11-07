@@ -1,5 +1,5 @@
 asdf @ git+https://github.com/spacetelescope/asdf@1b41c6d04f65794
-astropy @ git+https://github.com/astropy/astropy@a1c65299b78d402
+astropy @ git+https://github.com/astropy/astropy@df61bbc22ed2fd5c8
 atomicwrites==1.3.0
 attrs==19.1.0
 certifi==2019.9.11
