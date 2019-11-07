@@ -490,12 +490,15 @@ class InstrumentInfo():
         self.multich_wroi.append(wroi)
         self.multich_power.append(power)
         self.multich_softrad.append(softrad)
+        self.multich_scalerad.append(None)
 
     def SetMultiChannelEMSMTable(self, wave, sroi, wroi, scalerad):
         self.multich_wavelength.append(wave)
         self.multich_sroi.append(sroi)
         self.multich_wroi.append(wroi)
         self.multich_scalerad.append(scalerad)
+        self.multich_power.append(None)
+        self.multich_softrad.append(None)
 
     def SetPrismTable(self, wave, sroi, wroi, power, softrad):
         self.prism_wavelength.append(wave)
@@ -503,6 +506,7 @@ class InstrumentInfo():
         self.prism_wroi.append(wroi)
         self.prism_power.append(power)
         self.prism_softrad.append(softrad)
+        self.prism_scalerad.append(None)
 
     def SetMedTable(self, wave, sroi, wroi, power, softrad):
         self.med_wavelength.append(wave)
@@ -510,6 +514,7 @@ class InstrumentInfo():
         self.med_wroi.append(wroi)
         self.med_power.append(power)
         self.med_softrad.append(softrad)
+        self.med_scalerad.append(None)
 
     def SetHighTable(self, wave, sroi, wroi, power, softrad):
         self.high_wavelength.append(wave)
@@ -517,24 +522,31 @@ class InstrumentInfo():
         self.high_wroi.append(wroi)
         self.high_power.append(power)
         self.high_softrad.append(softrad)
+        self.high_scalerad.append(None)
 
     def SetPrismEMSMTable(self, wave, sroi, wroi, scalerad):
         self.prism_wavelength.append(wave)
         self.prism_sroi.append(sroi)
         self.prism_wroi.append(wroi)
-        self.prism_scale.append(scalerad)
+        self.prism_scalerad.append(scalerad)
+        self.prism_power.append(None)
+        self.prism_softrad.append(None)
 
     def SetMedEMSMTable(self, wave, sroi, wroi, scalerad):
         self.med_wavelength.append(wave)
         self.med_sroi.append(sroi)
         self.med_wroi.append(wroi)
         self.med_scalerad.append(scalerad)
+        self.med_power.append(None)
+        self.med_softrad.append(None)
 
     def SetHighEMSMTable(self, wave, sroi, wroi, scalerad):
         self.high_wavelength.append(wave)
         self.high_sroi.append(sroi)
         self.high_wroi.append(wroi)
         self.high_scalerad.append(scalerad)
+        self.high_softrad.append(None)
+        self.high_power.append(None)
 
     def SetXSliceLimits(self, x1, x2, parameter1):
         self.Info[parameter1]['xstart'] = x1
@@ -654,18 +666,23 @@ class InstrumentInfo():
         softrad = self.Info[parameter1][parameter2]['softrad']
         return softrad
 
+    def GetScaleRad(self, parameter1, parameter2):
+        scalerad = self.Info[parameter1][parameter2]['scalerad']
+        return scalerad
+
     def GetScale(self, parameter1, parameter2):
         scale = (self.Info[parameter1][parameter2]['ascale'],
                  self.Info[parameter1][parameter2]['bscale'],
                  self.Info[parameter1][parameter2]['wscale'])
         return scale
 
-    def Get_multichannel_table(self):
+    def Get_multichannel_table(self, weighting):
         table = (self.multich_wavelength,
                  self.multich_sroi,
                  self.multich_wroi,
                  self.multich_power,
-                 self.multich_softrad)
+                 self.multich_softrad,
+                 self.multich_scalrad)
         return table
 
     def Get_prism_table(self):
@@ -673,7 +690,8 @@ class InstrumentInfo():
                  self.prism_sroi,
                  self.prism_wroi,
                  self.prism_power,
-                 self.prism_softrad)
+                 self.prism_softrad,
+                 self.prism_scalerad)
         return table
 
     def Get_med_table(self):
@@ -681,7 +699,8 @@ class InstrumentInfo():
                  self.med_sroi,
                  self.med_wroi,
                  self.med_power,
-                 self.med_softrad)
+                 self.med_softrad,
+                 self.med_scalerad)
         return table
 
     def Get_high_table(self):
@@ -689,7 +708,8 @@ class InstrumentInfo():
                  self.high_sroi,
                  self.high_wroi,
                  self.high_power,
-                 self.high_softrad)
+                 self.high_softrad,
+                 self.hight_scalerad)
         return table
 
     def GetMIRISliceEndPts(self, parameter1):

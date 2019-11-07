@@ -16,7 +16,9 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
                        spaxel_iflux,
                        flux,
                        coord1, coord2, wave,
-                       rois_pixel, roiw_pixel, weight_pixel, softrad_pixel):
+                       weighting_type, 
+                       rois_pixel, roiw_pixel, weight_pixel, 
+                       softrad_pixel, scalerad_pixel):
 
     """ Map the detector pixels to the cube spaxels using the MSM parameters
 
@@ -134,9 +136,13 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
             d3_matrix = np.tile(d3 * d3, [dxy_matrix.shape[0], 1])
 
             wdistance = dxy_matrix + d3_matrix
-            weight_distance = np.power(np.sqrt(wdistance), weight_pixel[ipt])
-            weight_distance[weight_distance < lower_limit] = lower_limit
-            weight_distance = 1.0 / weight_distance
+            if weighting_type == 'msm':
+                weight_distance = np.power(np.sqrt(wdistance), weight_pixel[ipt])
+                weight_distance[weight_distance < lower_limit] = lower_limit
+                weight_distance = 1.0 / weight_distance
+            elif weighting_type == 'emsm':
+                weight_distance = scalerad_pixel[ipt] * np.exp(1.0/wdistance)
+
             weight_distance = weight_distance.flatten('F')
             weighted_flux = weight_distance * flux[ipt]
 
@@ -160,8 +166,11 @@ def match_det2cube_miripsf(alpha_resol, beta_resol, wave_resol,
                            spaxel_alpha, spaxel_beta, spaxel_wave,
                            flux,
                            coord1, coord2, wave, alpha_det, beta_det,
-                           rois_pixel, roiw_pixel, weight_pixel,
-                           softrad_pixel):
+                           weigthing_type,
+                           rois_pixel, roiw_pixel,
+                           weight_pixel,
+                           softrad_pixel,
+                           scalerad_pixel):
     """ Map the detector pixels to the cube spaxels using miri PSF weighting
 
     Map coordinates coord1,coord2, and wave of the point cloud to which
@@ -282,13 +291,16 @@ def match_det2cube_miripsf(alpha_resol, beta_resol, wave_resol,
 
                 # only included the spatial dimensions
                 wdistance = (xn * xn + yn * yn + wn * wn)
-                weight_distance = np.power(np.sqrt(wdistance), weight_pixel[ipt])
-# ________________________________________________________________________________
-# We have found the weight_distance based on instrument type
 
-                if weight_distance < lower_limit:
-                    weight_distance = lower_limit
-                weight_distance = 1.0 / weight_distance
+# ________________________________________________________________________________
+                # MSM weighting based on 1/r**power
+                if weighting_type == 'msm':
+                    weight_distance = np.power(np.sqrt(wdistance), weight_pixel[ipt])
+                    if weight_distance < lower_limit:
+                        weight_distance = lower_limit
+                        weight_distance = 1.0 / weight_distance
+                elif weighting_type == 'emsm':
+                    weight_distance = scalerad_pixel[ipt] * np.exp(1.0/wdistance)
 
                 spaxel_flux[cube_index] = spaxel_flux[cube_index] + weight_distance * flux[ipt]
                 spaxel_weight[cube_index] = spaxel_weight[cube_index] + weight_distance
