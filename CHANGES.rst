@@ -46,6 +46,8 @@ rscd
 stpipe
 ------
 
+- Only allow science members in step parameter reference call [#4236]
+
 - get_pars returns all available parameters for a step and all sub-steps [#4215]
 
 tests_nightly
