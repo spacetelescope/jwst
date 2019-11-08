@@ -91,9 +91,10 @@ def nrs_extract2d(input_model, slit_name=None, apply_wavecorr=False, reference_f
             # The overall subarray offset is recorded in model.meta.subarray.
             set_slit_attributes(new_model, slit, xlo, xhi, ylo, yhi)
 
-            util.update_s_region_nrs_slit(new_model)
-            if orig_s_region != new_model.meta.wcsinfo.s_region.strip():
-                log.info('extract_2d updated S_REGION to {0}'.format(new_model.meta.wcsinfo.s_region))
+            if 'world' in input_model.meta.wcs.available_frames:
+                util.update_s_region_nrs_slit(new_model)
+                if orig_s_region != new_model.meta.wcsinfo.s_region.strip():
+                    log.info('extract_2d updated S_REGION to {0}'.format(new_model.meta.wcsinfo.s_region))
 
             # Copy BUNIT values to output slit
             new_model.meta.bunit_data = input_model.meta.bunit_data
