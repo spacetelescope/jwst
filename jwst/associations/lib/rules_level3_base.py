@@ -39,6 +39,7 @@ from jwst.associations.lib.dms_base import (
     IMAGE2_SCIENCE_EXP_TYPES,
     IMAGE2_NONSCIENCE_EXP_TYPES,
     SPEC2_SCIENCE_EXP_TYPES,
+    get_exposure_type,
     )
 from jwst.associations.lib.format_template import FormatTemplate
 from jwst.associations.lib.member import Member
@@ -817,6 +818,28 @@ class Constraint_Target(DMSAttrConstraint):
             )
 
 
+class Constraint_TargetAcq(DMSAttrConstraint):
+    """Select on Target Acquisition Exposures
+
+    Parameters
+    ----------
+    association: Association
+        If specified, use the `get_exposure_type` method
+        to determine if an exposure is a target acquisition.
+        Otherwise, use the direct utility function.
+    """
+    def __init__(self, association=None):
+        if association is None:
+            get_exposure_type_func = get_exposure_type
+        else:
+            get_exposure_type_func = association.get_exposure_type
+
+        super(Constraint_TargetAcq, self).__init__(
+            name='target_acq',
+            onlyif=lambda item: get_exposure_type_func(item) == 'target_acquisition',
+            force_reprocess=ProcessList.EXISTING,
+            only_on_match=True
+        )
 
 # -----------
 # Base Mixins
