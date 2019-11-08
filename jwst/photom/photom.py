@@ -823,7 +823,7 @@ class DataSet():
         instrument = self.input.meta.instrument.name.upper()
 
         # Load the pixel area reference file
-        pix_area = datamodels.open(area_fname)
+        pix_area = datamodels.PixelAreaModel(area_fname)
 
         # Copy the pixel area data array to the appropriate attribute
         # of the science data model
