@@ -115,7 +115,7 @@ SPEC2_SCIENCE_EXP_TYPES = [
     'nis_wfss',
 ]
 
-SPECIAL_EXPTYPES = {
+SPECIAL_EXPOSURE_MODIFIERS = {
     'psf': ['is_psf'],
     'imprint': ['is_imprt'],
     'background': ['bkgdtarg']
@@ -679,7 +679,7 @@ def get_exposure_type(item, default='science', association=None):
     # For `science` data, compare against special modifiers
     # to further refine the type.
     if result == 'science':
-        for special, source in SPECIAL_EXPTYPES.items():
+        for special, source in SPECIAL_EXPOSURE_MODIFIERS.items():
             try:
                 item_getattr(item, source, association=association)
             except KeyError:
