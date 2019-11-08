@@ -48,7 +48,7 @@ def test_guider_cds_fineguide_mode(make_guider_image):
 
     n_int = model.data.shape[0]
     imshape = (model.data.shape[2], model.data.shape[3])
-    
+
     slope_int_cube = np.zeros((n_int,) + imshape, dtype=np.float32)
 
     for num_int in range(0, n_int):
@@ -56,16 +56,16 @@ def test_guider_cds_fineguide_mode(make_guider_image):
         first_4 = data_sect[:4, :, :].mean(axis=0)
         last_4 = data_sect[-4:, :, :].mean(axis=0)
         slope_int_cube[num_int, :, :] = last_4 - first_4
-        
+
         truth = slope_int_cube /  model.meta.exposure.group_time
 
-    assert np.array_equal(result.data, truth) 
+    assert np.array_equal(result.data, truth)
 
 
 @pytest.mark.parametrize("exptype", ['FGS_ACQ1', 'FGS_ACQ2', 'FGS_TRACK'])
 def test_guider_cds_acq_track_modes(exptype, make_guider_image):
     """Test acq and track exptypes"""
-    
+
     model = make_guider_image
     model.meta.exposure.type = exptype
 
@@ -85,7 +85,7 @@ def test_guider_cds_acq_track_modes(exptype, make_guider_image):
 
         truth = slope_int_cube /  model.meta.exposure.group_time
 
-    assert np.array_equal(result.data, truth) 
+    assert np.array_equal(result.data, truth)
 
 @pytest.mark.parametrize("exptype", ['FGS_ID-IMAGE', 'FGS_ID-STACK'])
 def test_guider_cds_id_modes(exptype, make_guider_image):
@@ -108,10 +108,10 @@ def test_guider_cds_id_modes(exptype, make_guider_image):
             diff_int0 = grp_last - grp_first
         if num_int == 1:
             diff_int1 = grp_last - grp_first
-    
+
     truth[0, :, :] = np.minimum(diff_int1, diff_int0) / model.meta.exposure.group_time
-    
-    assert np.array_equal(result.data[0,:,:], truth[0,:,:]) 
+
+    assert np.array_equal(result.data[0,:,:], truth[0,:,:])
 
 def test_unit_assignment(make_guider_image):
     """Test that correct units are returned"""
@@ -136,7 +136,7 @@ def test_table_extensions(make_guider_image):
 
     result = guider_cds(model)
 
-    assert(hasattr(result, 'planned_star_table') and 
+    assert(hasattr(result, 'planned_star_table') and
            hasattr(result, 'flight_star_table') and
            hasattr(result, 'pointing_table') and
            hasattr(result, 'centroid_table') and
