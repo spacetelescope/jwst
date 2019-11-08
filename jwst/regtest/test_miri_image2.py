@@ -33,7 +33,7 @@ def run_pipeline(rtdata_module, jail):
     config_file = os.path.join('config', 'calwebb_image2.cfg')
     Image2Pipeline.call(input_data, config_file=config_file)
 
-    return jail
+    return rtdata
 
 
 @pytest.mark.bigdata
@@ -57,4 +57,3 @@ def test_miri_image2(run_pipeline, request, fitsdiff_defaults, output):
     request.node.user_properties = [('output', output)]
     diff = FITSDiff(output, output, **fitsdiff_defaults)
     assert diff.identical, diff.report()
-    assert 0
