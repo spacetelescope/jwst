@@ -669,20 +669,21 @@ def get_exposure_type(item, default='science', association=None):
 
         This simplifies the call to `item_getattr`
         """
-        return item_getattr(item, sources, association=association)[1]
+        source, value = item_getattr(item, sources, association=association)
+        return value
 
     # Define default type.
     result = default
 
     # Retrieve pointing type. This decides the basic exposure type.
     # If the pointing is not science, we're done.
-    #try:
-    #    result = _item_attr(item, ['pntgtype'])
-    #except KeyError:
-    #    pass
-    #else:
-    #    if result != 'science':
-    #        return result
+    try:
+        result = _item_attr(item, ['pntgtype'])
+    except KeyError:
+        pass
+    else:
+        if result != 'science':
+            return result
 
     # We have a science exposure. Refine further.
     #
