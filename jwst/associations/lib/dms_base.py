@@ -663,11 +663,32 @@ def get_exposure_type(item, default='science', association=None):
     LookupError
         When `default` is None and an exposure type cannot be determined
     """
+    # Specify how attributes of the item are retrieved.
+    def _item_attr(item, sources):
+        """Get attribute value of an item
+
+        This simplifies the call to `item_getattr`
+        """
+        return item_getattr(item, sources, association=association)[1]
+
+    # Define default type.
     result = default
 
+    # Retrieve pointing type. This decides the basic exposure type.
+    # If the pointing is not science, we're done.
+    #try:
+    #    result = _item_attr(item, ['pntgtype'])
+    #except KeyError:
+    #    pass
+    #else:
+    #    if result != 'science':
+    #        return result
+
+    # We have a science exposure. Refine further.
+    #
     # Base type off of exposure type.
     try:
-        exp_type = item['exp_type']
+        exp_type = _item_attr(item, ['exp_type'])
     except KeyError:
         raise LookupError('Exposure type cannot be determined')
 
@@ -676,17 +697,20 @@ def get_exposure_type(item, default='science', association=None):
     if result is None:
         raise LookupError('Cannot determine exposure type')
 
+    # If result is not science, we're done.
+    if result != 'science':
+        return result
+
     # For `science` data, compare against special modifiers
     # to further refine the type.
-    if result == 'science':
-        for special, source in SPECIAL_EXPOSURE_MODIFIERS.items():
-            try:
-                item_getattr(item, source, association=association)
-            except KeyError:
-                pass
-            else:
-                result = special
-                break
+    for special, source in SPECIAL_EXPOSURE_MODIFIERS.items():
+        try:
+            _item_attr(item, source)
+        except KeyError:
+            pass
+        else:
+            result = special
+            break
 
     return result
 
