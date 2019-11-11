@@ -58,7 +58,7 @@ def test_guider_cds_fineguide_mode(make_guider_image):
 
         truth = slope_int_cube /  model.meta.exposure.group_time
 
-    assert np.array_equal(result.data, truth)
+    assert np.allclose(result.data, truth)
 
 
 @pytest.mark.parametrize("exptype", ['FGS_ACQ1', 'FGS_ACQ2', 'FGS_TRACK'])
@@ -84,7 +84,7 @@ def test_guider_cds_acq_track_modes(exptype, make_guider_image):
 
         truth = slope_int_cube /  model.meta.exposure.group_time
 
-    assert np.array_equal(result.data, truth)
+    assert np.allclose(result.data, truth)
 
 @pytest.mark.parametrize("exptype", ['FGS_ID-IMAGE', 'FGS_ID-STACK'])
 def test_guider_cds_id_modes(exptype, make_guider_image):
@@ -112,7 +112,7 @@ def test_guider_cds_id_modes(exptype, make_guider_image):
 
     truth[0, :, :] = np.minimum(diff_int1, diff_int0) / model.meta.exposure.group_time
 
-    assert np.array_equal(result.data[0,:,:], truth[0,:,:])
+    assert np.allclose(result.data[0,:,:], truth[0,:,:])
 
 def test_unit_assignment(make_guider_image):
     """Test that correct units are returned"""
