@@ -29,15 +29,14 @@ def test_get_dataset_info(make_guider_image):
 
     imshape, n_int, grp_time, exp_type = get_dataset_info(model)
 
-    assert (imshape == (10,10) and
-            n_int == model.data.shape[0] and
-            grp_time == model.meta.exposure.group_time and
-            exp_type == model.meta.exposure.type)
+    assert imshape == (10,10)
+    assert n_int == model.data.shape[0]
+    assert grp_time == model.meta.exposure.group_time
+    assert exp_type == model.meta.exposure.type
 
 
 def test_guider_cds_fineguide_mode(make_guider_image):
-    """Test the fine guiding mode
-    """
+    """Test the fine guiding mode"""
 
     model = make_guider_image
     model.meta.exposure.type = 'FGS_FINEGUIDE'
@@ -89,6 +88,8 @@ def test_guider_cds_acq_track_modes(exptype, make_guider_image):
 
 @pytest.mark.parametrize("exptype", ['FGS_ID-IMAGE', 'FGS_ID-STACK'])
 def test_guider_cds_id_modes(exptype, make_guider_image):
+    """Test fgs id exptypes"""
+
     model = make_guider_image
     model.meta.exposure.type = exptype
 
@@ -136,8 +137,8 @@ def test_table_extensions(make_guider_image):
 
     result = guider_cds(model)
 
-    assert(hasattr(result, 'planned_star_table') and
-           hasattr(result, 'flight_star_table') and
-           hasattr(result, 'pointing_table') and
-           hasattr(result, 'centroid_table') and
-           hasattr(result, 'track_sub_table'))
+    assert 'planned_star_table' in result
+    assert 'flight_star_table' in result
+    assert 'pointing_table' in result
+    assert 'centroid_table' in result
+    assert 'track_sub_table' in result
