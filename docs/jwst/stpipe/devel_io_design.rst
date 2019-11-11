@@ -94,9 +94,9 @@ the result will be saved in a file called::
   input_data_mystep.fits
 
 Similarly, the same code can be used in a Python script or interactive
-environment as follows::
+environment as follows:
 
-.. doctest_skip::
+.. doctest-skip::
 
   >>> import jwst
   >>> input = jwst.datamodels.open('input_data.fits')

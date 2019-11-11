@@ -19,10 +19,10 @@ logger.addHandler(logging.NullHandler())
 # #############################################
 
 # This is currently set to the D-string hostname:
-ENGDB_HOST = 'http://twjwdmsemweb.stsci.edu/'
+ENGDB_HOST = 'http://twjwdmsemwebag.stsci.edu/'
 ENGDB_BASE_URL = ''.join([
     ENGDB_HOST,
-    'JWDMSEngFqAcc/',
+    'JWDMSEngFqAccSide2/',
     'TlmMnemonicDataSrv.svc/',
 ])
 

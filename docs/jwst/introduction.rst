@@ -70,10 +70,10 @@ Individual steps and pipelines (consisting of a series of steps) can be run
 from the command line using the ``strun`` command:
 ::
 
-    $ strun <class_name or cfg_file> <input_file>
+    $ strun <class_name or configuration_file> <input_file>
 
 The first argument to ``strun`` must be either the python class name of the
-step or pipeline to be run, or the name of a configuration (.cfg) file for the
+step or pipeline to be run, or the name of a configuration (.asdf or .cfg) file for the
 desired step or pipeline (see `Configuration Files`_ below for more details).
 The second argument to ``strun`` is the name of the input data file to be processed.
 
@@ -88,7 +88,8 @@ When a pipeline or step is executed in this manner (i.e. by referencing the
 class name), it will be run using a CRDS-supplied configuration merged with
 default values
 
-If you want to use non-default parameter values, you can specify them as
+If you want to use non-default parameter
+values, you can specify them as
 keyword arguments on the command line or set them in the appropriate
 configuration file.
 
@@ -110,55 +111,30 @@ step by using the '-h' (help) argument to strun:
     $ strun dq_init.cfg -h
     $ strun jwst.pipeline.Detector1Pipeline -h
 
-If you want to consistently override the default values of certain arguments and
-don't want to specify them on the command line every time you execute ``strun``,
-you can specify them in the configuration (.cfg or .asdf) file for the pipeline
-or the individual step. For example, to always run ``Detector1Pipeline`` using
-the override in the previous example, you could edit your
-``calwebb_detector1.cfg`` file to contain the following: ::
-
- name = "Detector1Pipeline"
- class = "jwst.pipeline.Detector1Pipeline"
-
-    [steps]
-      [[dark_current]]
-        override_dark = 'my_dark.fits'
-
-Note that simply removing the entry for a step from a pipeline cfg file will
-**NOT** cause that step to be skipped when you run the pipeline (it will simply
-run the step with all default parameters). In order to skip a step you must
-use the ``skip = True`` argument for that step (see `Skip`_ below).
-
-Alternatively, you can specify arguments for individual steps within the
-step's configuration file and then reference those step cfg files in the pipeline
-cfg file, such as:
+JWST automatic processing uses configuration files to determine the
+pipeline/step parameters to use. To retrieve these files, use the
+``collect_pipeline_cfgs`` command. The general form of the command is:
 ::
 
- name = "Detector1Pipeline"
- class = "jwst.pipeline.Detector1Pipeline"
+$ collect_pipeline_cfgs <dir>
 
-    [steps]
-      [[dark_current]]
-        config_file = my_dark_current.cfg
-
-where ``my_dark_current.cfg`` contains:
+Where ``<dir>`` is the destination directory. If the directory does not exist,
+it will be created. For example, to place the configuration files in the current
+working directory, use:
 ::
 
- name = "dark_current"
- class = "jwst.dark_current.DarkCurrentStep"
- override_dark = 'my_dark.fits'
+$ collect_pipeline_cfgs .
 
-The configuration parameters for each step can be saved to an ASDF file using
-the ``--save-parameters <filename>`` option. For example, to save the
-configuration for the `tweakreg` step, one would do the following:
+To use a configuration, specify the desired file in place of the ``class_name``
+specification in the ``strun`` command. For example, to run the
+``Detector1Pipeline`` using the ``calwebb_detector1.cfg`` configuration file, use
+the following:
 ::
 
- strun jwst.tweakreg.PersistenceStep --save-parameters persistence.asdf
+$ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
 
-This file can be edited and then used to run the step with the new configuration:
-::
-
- strun persistence.asdf jw00017001001_01101_00001_nrca1_uncal.fits
+These configuration files can be edited as needed, or created completely from
+scratch. For more information, see the `Configuration Files`_ file section below.
 
 Exit Status
 -----------
@@ -169,10 +145,11 @@ Exit Status
 - 64: No science data found
 
 The "No science data found" condition is returned by the ``assign_wcs`` step of
-``calwebb_spec2`` when, after successfully determining the WCS solution for a
-file, the WCS indicates that no science data will be found. This condition is
-most often found with NIRSpec's NRS2 detector. There are certain optical and MSA
-configurations in which dispersion will not cross to the NRS2 detector.
+``calwebb_spec2.cfg`` pipeline when, after successfully determining the WCS
+solution for a file, the WCS indicates that no science data will be found. This
+condition most often occurs with NIRSpec's NRS2 detector: There are certain
+optical and MSA configurations in which dispersion will not cross to the NRS2
+detector.
 
 .. _run_from_python:
 
@@ -190,8 +167,8 @@ You can execute a pipeline or a step from within python by using the
  result = LinearityStep.call('jw00001001001_01101_00001_mirimage_uncal.fits')
 
 The easiest way to use optional arguments when calling a pipeline from
-within python is to set those parameters in the pipeline cfg file and
-then supply the cfg file as a keyword argument:
+within python is to set those parameters in the pipeline configuration file and
+then supply the file as a keyword argument:
 ::
 
  Detector1Pipeline.call('jw00017001001_01101_00001_nrca1_uncal.fits', config_file='calwebb_detector1.cfg')
@@ -246,7 +223,7 @@ Output File and Associations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Stage 2 pipelines can take an individual file or an :ref:`association
-<associations>` as input. Nearly all Stage 3 pipelines require an associaiton as
+<associations>` as input. Nearly all Stage 3 pipelines require an association as
 input. Normally, the output file is defined in each association's "product name"
 which defines the basename that will be used for output file naming.
 
@@ -447,26 +424,38 @@ pipeline or individual steps. For JWST, configuration files are retrieved from
 CRDS, just as with other reference files. If there is no match between a step,
 the input data, and CRDS, the coded defaults are used. These values can be
 overridden either by the command line options, as previously described, and by a
-local configuration file.
+local configuration file. See :ref:`Parameter Precedence` for a full description of
+how a parameter gets its final value.
+
 
 A configuration file should be used when there are parameters a user wishes to
 change from the default/CRDS version for a custom run of the step. To create a
-configuration file with the default values, use the command: ::
-
- strun <step.class> --save-parameters <filename.asdf>
-
-For example, to get the parameters for the jump step, use:
+configuration file add ``--save-parameters <filename.asdf>`` to the command:
 ::
 
- strun jwst.jump.JumpStep --save-parameters jump_pars.asdf
+$ strun <step.class> <required-input-files> --save-parameters <filename.asdf>
 
-Once retrieved, the file can be edited, removing parameters that should be left
+For example, to save the parameters used for a run of the ``calwebb_image2.cfg`` pipeline, use:
+::
+
+$ collect_pipeline_cfgs .
+$ strun calwebb_image2.cfg jw82500001003_02101_00001_NRCALONG_rate.fits --save-parameters my_image2.asdf
+
+Once saved, the file can be edited, removing parameters that should be left
 at their default/CRDS values, and setting the remaining parameters to the
-desired values. 
+desired values. Once modified, the new configuration file can be used:
+::
 
-For more information, see :ref:`config_asdf_files`. Note that the older
-:ref:`config_cfg_files` format is still an option, understanding that this
-format will be deprecated.
+$ strun my_image2.asdf jw82500001003_02101_00001_NRCALONG_rate.fits
+
+Note that the parameter values will reflect whatever was set on the
+command-line, through a specified local configuration file, and what was
+retrieved from CRDS. In short, the values will be those actually used in the
+running of the step.
+
+For more information about and editing of configuration files, see
+:ref:`config_asdf_files`. Note that the older :ref:`config_cfg_files` format is
+still an option, understanding that this format will be deprecated.
 
 
 More information on configuration files can be found in the ``stpipe`` User's
@@ -535,4 +524,3 @@ in the ``stpipe`` Developer's Guide at :ref:`stpipe-devel-steps`.
 If you have questions or concerns regarding the software, please open an issue
 at https://github.com/spacetelescope/jwst/issues or contact
 the `JWST Help Desk <https://jwsthelp.stsci.edu>`_.
-

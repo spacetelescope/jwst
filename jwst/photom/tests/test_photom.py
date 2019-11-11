@@ -290,7 +290,7 @@ def create_input(instrument, detector, exptype,
             input_model.var_poisson = np.ones(shape, dtype=np.float32)
             input_model.var_rnoise = np.ones(shape, dtype=np.float32)
             input_model.var_flat = np.ones(shape, dtype=np.float32)
-            input_model.meta.subarray.name = 'SUBPRISM'     # matches 'GENERIC'
+            input_model.meta.subarray.name = 'FULL'
             input_model.meta.target.source_type = 'POINT'
             input_model.meta.photometry.pixelarea_arcsecsq = 0.0025
             input_model.meta.photometry.pixelarea_steradians = 0.0025 * A2_TO_SR
@@ -681,7 +681,7 @@ def create_photom_miri_lrs(min_wl=5.0, max_wl=10.0, min_r=8.0, max_r=9.0):
     """
 
     filter = ["F560W", "P750L", "F1000W"]
-    subarray = ["GENERIC", "GENERIC", "GENERIC"]
+    subarray = ["GENERIC", "FULL", "GENERIC"]
 
     nrows = len(filter)
     nx = 3

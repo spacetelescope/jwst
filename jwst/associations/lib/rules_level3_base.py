@@ -730,6 +730,7 @@ class Constraint_Optical_Path(Constraint):
             DMSAttrConstraint(
                 name='opt_elem',
                 sources=['filter'],
+                required=False,
             ),
             DMSAttrConstraint(
                 name='opt_elem2',
@@ -955,8 +956,17 @@ class AsnMixin_AuxData(AsnMixin_Science):
         Returns
         -------
         exposure_type : 'science'
-            Always returns as science
+            Returns as science for most Exposures
+        exposure_type : 'target_acquisition'
+            Returns target_acquisition for mir_tacq
         """
+        try:
+            exp_type = item['exp_type']
+            if any(x == exp_type for x in ACQ_EXP_TYPES):
+                return 'target_acquisition'
+        except KeyError:
+            raise LookupError('Exposure type cannot be determined')
+
         return 'science'
     def _init_hook(self, item):
         """Post-check and pre-add initialization"""

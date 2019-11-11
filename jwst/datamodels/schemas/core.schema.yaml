@@ -461,10 +461,20 @@ properties:
           coronagraph:
             title: coronagraph mask used
             type: string
-            enum: [4QPM, 4QPM_1065, 4QPM_1140, 4QPM_1550,
-                   LYOT, LYOT_2300,
-                   MASK210R, MASKSWB, MASK335R, MASK430R, MASKLWB,
-                   NONE]
+            anyOf:
+              # MIRI
+              - enum:
+                  [4QPM, 4QPM_1065, 4QPM_1140, 4QPM_1550,
+                   LYOT, LYOT_2300]
+              # NIRCam
+              - enum:
+                  [MASKA210R, MASKA335R, MASKA430R, MASKALWB, MASKASWB]
+              # All
+              - enum:
+                  [NONE]
+              # Obsolete NIRCam
+              - enum:
+                  [MASK210R, MASK335R, MASK430R, MASKLWB, MASKSWB]
             fits_keyword: CORONMSK
             blend_table: True
           msa_state:

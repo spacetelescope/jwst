@@ -22,7 +22,7 @@ __all__ = ['Spec3Pipeline']
 # Group exposure types
 MULTISOURCE_MODELS = ['MultiSlitModel']
 IFU_EXPTYPES = ['MIR_MRS', 'NRS_IFU']
-SLITLESS_TYPES = ['NIS_WFSS', 'NRC_WFSS']
+SLITLESS_TYPES = ['NIS_SOSS', 'NIS_WFSS', 'NRC_WFSS']
 
 
 class Spec3Pipeline(Pipeline):
@@ -30,11 +30,13 @@ class Spec3Pipeline(Pipeline):
     Spec3Pipeline: Processes JWST spectroscopic exposures from Level 2b to 3.
 
     Included steps are:
-    MIRI MRS background matching (skymatch)
+    master background subtraction (master_background)
+    MIRI MRS background matching (mrs_imatch)
     outlier detection (outlier_detection)
     2-D spectroscopic resampling (resample_spec)
     3-D spectroscopic resampling (cube_build)
     1-D spectral extraction (extract_1d)
+    1-D spectral combination (combine_1d)
     """
 
     spec = """
@@ -61,7 +63,7 @@ class Spec3Pipeline(Pipeline):
             The exposure or association of exposures to process
         """
         self.log.info('Starting calwebb_spec3 ...')
-        asn_exptypes = ['science','background']
+        asn_exptypes = ['science', 'background']
 
         # Retrieve the inputs:
         # could either be done via LoadAsAssociation and then manually
@@ -122,7 +124,7 @@ class Spec3Pipeline(Pipeline):
             self.log.info('Convert from exposure-based to source-based data.')
             sources = [
                 (name, model)
-                        for name, model in multislit_to_container(source_models).items()
+                    for name, model in multislit_to_container(source_models).items()
                 ]
 
         # Process each source
@@ -150,8 +152,7 @@ class Spec3Pipeline(Pipeline):
             if exptype not in SLITLESS_TYPES:
                 result = self.outlier_detection(result)
 
-                # Resample time. Dependent on whether the data is IFU or
-                # not.
+                # Resample time. Dependent on whether the data is IFU or not.
                 resample_complete = None
                 if exptype in IFU_EXPTYPES:
                     result = self.cube_build(result)
@@ -168,13 +169,24 @@ class Spec3Pipeline(Pipeline):
 
             # Do 1-D spectral extraction
             if exptype in SLITLESS_TYPES:
+
+                # For slitless data, extract 1D spectra and then combine them
+
+                if exptype in ['NIS_SOSS']:
+                    # For NIRISS SOSS, don't save the extract_1d results,
+                    # they're identical to the calwebb_spec2 x1d products
+                    self.extract_1d.save_results = False
+
                 result = self.extract_1d(result)
                 result = self.combine_1d(result)
-            elif resample_complete is not None and \
-               resample_complete.upper() == 'COMPLETE':
+
+            elif resample_complete is not None and resample_complete.upper() == 'COMPLETE':
+
+                # If 2D data were resampled and combined, just do a 1D extraction
                 if exptype in IFU_EXPTYPES:
                     self.extract_1d.search_output_file = False
                 result = self.extract_1d(result)
+
             else:
                 self.log.warning(
                     'Resampling was not completed. Skipping extract_1d.'

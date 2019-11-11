@@ -1,3 +1,70 @@
+0.14.1 (2019-11-11)
+===================
+
+associations
+------------
+
+- Updated level 3 rules so that target acquisitions in the pool files are listed as
+  exp_type = 'target_acquisition', not as science exposures. [#4223]
+
+=======
+datamodels
+----------
+
+- Updated the list of allowed NIRCam CORONMSK values in model schemas. [#4234]
+
+lib
+---
+
+- Updated the EngDB web service url in ``engdb_tools``. [#4187]
+
+photom
+------
+
+- Updated unit tests to use proper names for the MIRI LRS fixedslit
+  subarray. [#4205]
+
+pipeline
+--------
+
+- Updated ``calwebb_spec3`` to allow for processing of non-TSO
+  NIRISS SOSS exposures. [#4194]
+
+resample_spec
+-------------
+
+- Updated unit tests for new name of MIRI LRS slitless subarray
+  ('SUBPRISM' -> 'SLITLESSPRISM'). [#4205]
+
+rscd
+----
+
+- Updated to handle science data and reference files that use the old
+  'SUBPRISM' name for the MIRI LRS slitless subarray and update the values
+  to 'SLITLESSPRISM'. [#4205]
+
+stpipe
+------
+
+- Only allow science members in step parameter reference call [#4236]
+
+- get_pars returns all available parameters for a step and all sub-steps [#4215]
+
+tests_nightly
+-------------
+
+- Added a ``set_telescope_pointing`` test for a NIRCam TSGRISM exposure.
+  [#4187]
+
+transforms
+----------
+
+- Updated all transforms to be consistent with astropy v 4.0.
+  Transform classes define now two class variables - ``n_inputs``
+  and `n_outputs``. The variables ``inputs`` and ``outputs`` are
+  now instance variables (previously they were class variables). [#4216]
+
+
 0.14.0 (2019-10-25)
 ===================
 
@@ -26,6 +93,8 @@ assign_wcs
 
 associations
 ------------
+- Update level 3 rules to create image3 associations for FGS_IMAGE exposures [#3920]
+
 - Add mir_taconfirm to the target acquisition exp_types [#4135]
 
 - Exclude mir_lrs-slitless calibration data from level 3 processing [#3990]
@@ -128,6 +197,8 @@ datamodels
 - Added new imaging mode aperture correction (apcorr) reference file data
   models ``FgsImgApcorrModel``, ``MirImgApcorrModel``, ``NrcImgApcorrModel``,
   and ``NisImgApcorrModel``. [#4168]
+
+- Removed old photom reference file data models. [#4173]
 
 - Add support for streaming reference files directly from S3. [#4170]
 

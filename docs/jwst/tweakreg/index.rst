@@ -16,10 +16,6 @@ TweakReg
 .. toctree::
    :maxdepth: 2
 
-   imalign
-   wcsimage
-   linearfit
-   matchutils
    tweakreg_catalog
    tweakreg_step
 

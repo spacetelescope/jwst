@@ -56,9 +56,6 @@ class Step():
     input_dir          = string(default=None)        # Input directory
     """
 
-    # No parameter model has been created yet.
-    _pars_model = None
-
     # Reference types for both command line override
     # definition and reference prefetch
     reference_file_types = []
@@ -245,10 +242,6 @@ class Step():
             config_file=config_file,
             _validate_kwds=False,
             **config)
-        try:
-            step._pars_model = config.pars_model
-        except AttributeError:
-            pass
 
         return step
 
@@ -553,11 +546,6 @@ class Step():
         instance = cls.from_config_section(crds_config,
             name=name, config_file=config_file)
 
-        try:
-            instance._pars_model = crds_config.pars_model
-        except (AttributeError, UnboundLocalError):
-            pass
-
         return instance.run(*args)
 
     @property
@@ -727,7 +715,8 @@ class Step():
         try:
             ref_file = crds_client.get_reference_file(dataset,
                                                       pars_model.meta.reftype,
-                                                      observatory=observatory)
+                                                      observatory=observatory,
+                                                      asn_exptypes=['science'])
         except (AttributeError, exceptions.CrdsError, exceptions.CrdsLookupError):
             logger.debug(f'{pars_model.meta.reftype.upper()}: No parameters found')
             return config_parser.ConfigObj()
@@ -1182,19 +1171,28 @@ class Step():
         # TODO: standardize cal_step naming to point to the offical step name
 
     @ClassInstanceMethod
-    def get_pars(step):
+    def get_pars(step, full_spec=True):
         """Retrieve the configuration parameters of a step
 
         Parameters
         ----------
         step : `Step`-derived class or instance
+            The class or instance to retrieve the parameters for.
+
+        full_spec : bool
+            Return all parameters, including parent-specified parameters.
+            If `False`, return only parameters specific to the class/instance.
 
         Returns
         -------
         pars : dict
             Keys are the parameters and values are the values.
         """
-        spec = config_parser.load_spec_file(step)
+        if full_spec:
+            spec_file_func = config_parser.get_merged_spec_file
+        else:
+            spec_file_func = config_parser.load_spec_file
+        spec = spec_file_func(step)
         if spec is None:
             return {}
         instance_pars = {}
@@ -1208,7 +1206,7 @@ class Step():
         return pars
 
     @ClassInstanceMethod
-    def get_pars_model(step):
+    def get_pars_model(step, full_spec=True):
         """Return Step parameters as StepParsModel
 
         Parameters
@@ -1216,15 +1214,17 @@ class Step():
         step : `Step`-derived class or instance
             The `Step` or `Step` instance to retrieve the parameters model for.
 
+        full_spec : bool
+            Return all parameters, including parent-specified parameters.
+            If `False`, return only parameters specific to the class/instance.
+
         Returns
         -------
         model : `StepParsModel`
             The `StepParsModel`.
         """
-        pars_model = step._pars_model
-        if pars_model is None:
-            pars_model = StepParsModel()
-        pars_model.parameters.instance.update(step.get_pars())
+        pars_model = StepParsModel()
+        pars_model.parameters.instance.update(step.get_pars(full_spec=full_spec))
 
         # Update class and name.
         full_class_name = _full_class_name(step)
@@ -1234,7 +1234,6 @@ class Step():
         })
         pars_model.meta.reftype = 'pars-' + pars_model.parameters.name.lower()
 
-        step._pars_model = pars_model
         return pars_model
 
 

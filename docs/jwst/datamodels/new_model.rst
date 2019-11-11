@@ -391,14 +391,17 @@ A table-based model
 
 In addition to n-dimensional data arrays, models can also contain tabular
 data. For example, the photometric correction reference file used in the
-JWST calibration pipeline consists of a table with 7 columns. The schema
-file for this model looks like this:
+JWST calibration pipeline consists of a table with several columns. The schema
+file for one of these models looks like this:
 
 .. code-block:: yaml
 
-    title: Photometric flux conversion data model
+    title: NIRISS SOSS photometric flux conversion data model
     allOf:
-      - $ref: "core.schema.yaml"
+      - $ref: "referencefile.schema.yaml"
+      - $ref: "keyword_exptype.schema.yaml"
+      - $ref: "keyword_pexptype.schema.yaml"
+      - $ref: "keyword_pixelarea.schema.yaml"
       - type: object
         properties:
           phot_table:
@@ -407,40 +410,39 @@ file for this model looks like this:
             datatype:
               - name: filter
                 datatype: [ascii, 12]
-              - name: photflam
+              - name: pupil
+                datatype: [ascii, 15]
+              - name: order
+                datatype: int16
+              - name: photmj
                 datatype: float32
-              - name: photerr
+              - name: uncertainty
                 datatype: float32
               - name: nelem
                 datatype: int16
               - name: wavelength
                 datatype: float32
-                shape: [50]
-              - name: response
+                ndim: 1
+              - name: relresponse
                 datatype: float32
-                shape: [50]
-              - name: resperr
+                ndim: 1
+              - name: reluncertainty
                 datatype: float32
-                shape: [50]
+                ndim: 1
 
-In this particular table the first 4 columns contain scalar entries of types
+In this particular table the first 6 columns contain scalar entries of types
 string, float, and integer. The entries in the final 3 columns, on the other
-hand, contain 1-D float arrays (vectors). The "shape" attribute is used to
-designate the dimensions of the arrays.
+hand, contain 1-D float arrays (vectors). The "ndim" attribute is used to
+specify the number of dimensions the arrays are allowed to have.
 
 The corresponding python module containing the data model class is quite
 simple:
 
 .. code-block:: python
 
-    class PhotomModel(model_base.DataModel):
+    class NisSossPhotomModel(ReferenceFileModel):
         """
-        A data model for photom reference files.
+        A data model for NIRISS SOSS photom reference files.
         """
-        schema_url = "photom.schema.json"
+        schema_url = "nissoss_photom.schema"
 
-        def __init__(self, init=None, phot_table=None, **kwargs):
-            super(PhotomModel, self).__init__(init=init, **kwargs)
-
-            if phot_table is not None:
-                self.phot_table = phot_table
