@@ -435,7 +435,7 @@ def get_msa_metadata(input_model, reference_files):
         raise MSAFileError(message)
     dither_position = input_model.meta.dither.position_number
     if dither_position is None:
-        message = "Missing dither position_number (keyword PATT_NUM)."
+        message = "Missing dither pattern number (keyword PATT_NUM)."
         log.critical(message)
         raise MSAFileError(message)
     return msa_config, msa_metadata_id, dither_position
@@ -559,8 +559,8 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
     bkg_counter = 0
 
     log.debug('msa_data with msa_metadata_id = {}   {}'.format(msa_metadata_id, msa_data))
-    log.info('Retrieving open slitlets for msa_metadata_id {} '
-             'and dither_position {}'.format(msa_metadata_id, dither_position))
+    log.info('Retrieving open slitlets for msa_metadata_id = {} '
+             'and dither_index = {}'.format(msa_metadata_id, dither_position))
 
     # Get the unique slitlet_ids
     slitlet_ids_unique = list(set([x['slitlet_id'] for x in msa_data]))
@@ -618,9 +618,11 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
             source_id = slitlets_sid[0]['source_id']
         # Not allowed....
         else:
-            message = ("MSA configuration file has more than 1 shutter with "
-                       "sources for metadata_id = {}".format(msa_metadata_id))
-            log.info(message)
+            message = ("For slitlet_id = {}, metadata_id = {}, "
+                       "and dither_index = {}".format(slitlet_id, msa_metadata_id, dither_position))
+            log.warning(message)
+            message = ("MSA configuration file has more than 1 shutter with primary source")
+            log.warning(message)
             raise MSAFileError(message)
 
         # subtract 1 because shutter numbers in the MSA reference file are 1-based.
