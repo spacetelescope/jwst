@@ -7,6 +7,11 @@ emission
 - Removed the emission step, documentation, and tests from the jwst package.
   [#4253]
 
+associations
+------------
+
+- Refactor target acquistion handling [#4254]
+
 
 0.14.1 (2019-11-11)
 ===================
@@ -16,6 +21,8 @@ associations
 
 - Updated level 3 rules so that target acquisitions in the pool files are listed as
   exp_type = 'target_acquisition', not as science exposures. [#4223]
+
+- Refactor target acquistion handling [#4254]
 
 =======
 datamodels
