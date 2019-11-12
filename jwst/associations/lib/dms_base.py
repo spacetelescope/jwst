@@ -6,11 +6,11 @@ from jwst.associations.exceptions import (
     AssociationNotValidError,
 )
 from jwst.associations.lib.acid import ACIDMixin
-from jwst.associations.lib.constraint import (Constraint, AttrConstraint)
+from jwst.associations.lib.constraint import (Constraint, AttrConstraint, SimpleConstraint)
 from jwst.associations.lib.utilities import getattr_from_list
 
 
-__all__ = ['Constraint_TSO', 'DMSBaseMixin']
+__all__ = ['Constraint_TargetAcq', 'Constraint_TSO', 'DMSBaseMixin']
 
 # Default product name
 PRODUCT_NAME_DEFAULT = 'undefined'
@@ -595,6 +595,28 @@ class DMSAttrConstraint(AttrConstraint):
             kwargs['invalid_values'] = _EMPTY
 
         super(DMSAttrConstraint, self).__init__(**kwargs)
+
+
+class Constraint_TargetAcq(SimpleConstraint):
+    """Select on target acquisition exposures
+
+    Parameters
+    ----------
+    association: Association
+        If specified, use the `get_exposure_type` method
+        of the association rather than the utility version.
+    """
+    def __init__(self, association=None):
+        if association is None:
+            _get_exposure_type = get_exposure_type
+        else:
+            _get_exposure_type = association.get_exposure_type
+
+        super(Constraint_TargetAcq, self).__init__(
+            name='target_acq',
+            value='target_acquisition',
+            sources=_get_exposure_type
+        )
 
 
 class Constraint_TSO(Constraint):

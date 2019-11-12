@@ -21,6 +21,7 @@ from jwst.associations.lib.constraint import (
 )
 from jwst.associations.lib.diff import get_product_names
 from jwst.associations.lib.dms_base import (
+    Constraint_TargetAcq,
     CORON_EXP_TYPES,
     DMSAttrConstraint,
     DMSBaseMixin,
@@ -28,8 +29,6 @@ from jwst.associations.lib.dms_base import (
     IMAGE2_SCIENCE_EXP_TYPES,
     PRODUCT_NAME_DEFAULT,
     SPEC2_SCIENCE_EXP_TYPES,
-    TSO_EXP_TYPES,
-    get_exposure_type
 )
 from jwst.associations.lib.member import Member
 from jwst.associations.lib.rules_level3_base import _EMPTY
@@ -927,15 +926,6 @@ class Constraint_ExtCal(Constraint):
                 )
             ],
             reduce=Constraint.notany
-        )
-
-class Constraint_TargetAcq(SimpleConstraint):
-    """Select on target acquisition exposures"""
-    def __init__(self):
-        super(Constraint_TargetAcq, self).__init__(
-            name='target_acq',
-            value='target_acquisition',
-            sources=get_exposure_type
         )
 
 # ---------------------------------------------
