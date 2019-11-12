@@ -21,6 +21,7 @@ from jwst.associations.lib.constraint import (
 )
 from jwst.associations.lib.diff import get_product_names
 from jwst.associations.lib.dms_base import (
+    Constraint_TargetAcq,
     CORON_EXP_TYPES,
     DMSAttrConstraint,
     DMSBaseMixin,
@@ -28,7 +29,6 @@ from jwst.associations.lib.dms_base import (
     IMAGE2_SCIENCE_EXP_TYPES,
     PRODUCT_NAME_DEFAULT,
     SPEC2_SCIENCE_EXP_TYPES,
-    TSO_EXP_TYPES
 )
 from jwst.associations.lib.member import Member
 from jwst.associations.lib.rules_level3_base import _EMPTY
@@ -805,6 +805,7 @@ class Constraint_Image_Nonscience(Constraint):
     def __init__(self):
         super(Constraint_Image_Nonscience, self).__init__(
             [
+                Constraint_TargetAcq(),
                 DMSAttrConstraint(
                     name='non_science',
                     sources=['exp_type'],
