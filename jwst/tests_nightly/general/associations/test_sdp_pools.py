@@ -31,19 +31,68 @@ EXPECTED_FAILS = {
 SPECIAL_DEFAULT = {
     'args': [],
     'xfail': None,
+    'slow': False,
 }
 SPECIAL_POOLS = {
+    'jw00623_20190607t021101_pool': {
+        'args': [],
+        'xfail': None,
+        'slow': True,
+    },
+    'jw00628_20191102t153956_pool': {
+        'args': [],
+        'xfail': None,
+        'slow': True,
+    },
+    'jw00629_20190605t025157_pool': {
+        'args': [],
+        'xfail': None,
+        'slow': True,
+    },
     'jw00632_20190819t190005_pool': {
         'args': [],
-        'xfail': 'JSOCINT-TDB: WFSC ROUTINE VISIT issue'
+        'xfail': 'JSOCINT-TDB: WFSC ROUTINE VISIT issue',
+        'slow': False,
     },
     'jw80600_20171108T041522_pool': {
         'args': [],
         'xfail': 'PR #3450',
+        'slow': False,
+    },
+    'jw82600_20180921T023255_pool': {
+        'args': [],
+        'xfail': None,
+        'slow': True
+    },
+    'jw93065_20171108T041402_pool': {
+        'args': [],
+        'xfail': None,
+        'slow': True,
+    },
+    'jw93135_20171108T041617_pool': {
+        'args': [],
+        'xfail': None,
+        'slow': True,
+    },
+    'jw93135_20171108T041617-fixed_pool': {
+        'args': [],
+        'xfail': None,
+        'slow': True,
+    },
+    'jw94015_20171108T041516_pool': {
+        'args': [],
+        'xfail': None,
+        'slow': True,
+    },
+    'jw98005_20171108T041409_pool': {
+        'args': [],
+        'xfail': None,
+        'slow': True,
     },
     'jw98010_20171108T062332_pool': {
         'args': [],
         'xfail': 'PR #3450',
+        'slow': False,
     },
 }
 
@@ -52,8 +101,8 @@ SPECIAL_POOLS = {
 # Tests
 # #####
 class TestSDPPools(SDPPoolsSource):
-    """Test createion of association from SDP-created pools"""
-    def test_against_standard(self, pool_path):
+    """Test creation of association from SDP-created pools"""
+    def test_against_standard(self, pool_path, slow):
         """Compare a generated association against a standard
 
         Success is when no other AssertionError occurs.
@@ -63,6 +112,9 @@ class TestSDPPools(SDPPoolsSource):
         pool = Path(pool_path).stem
         proposal, version_id = pool_regex.match(pool).group('proposal', 'versionid')
         special = SPECIAL_POOLS.get(pool, SPECIAL_DEFAULT)
+
+        if special['slow'] and not slow:
+            pytest.skip('Pool {pool} requires "--slow" option')
 
         # Create the generator running arguments
         generated_path = Path('generate')
@@ -134,7 +186,7 @@ class TestSDPPools(SDPPoolsSource):
         """Test a command-line specified pool"""
         if sdp_pool:
             pool_path = Path(self.test_dir) / 'pools' / (sdp_pool + '.csv')
-            self.test_against_standard(pool_path)
+            self.test_against_standard(pool_path, True)
         else:
             pytest.skip('No SDP pool specified using `--sdp-pool` command-line option.')
 
