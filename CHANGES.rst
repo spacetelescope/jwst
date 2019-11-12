@@ -1579,6 +1579,8 @@ wfs_combine
 white_light
 -----------
 
+- Fixed bug which produces NaN results when only some input has NaN [#4256]
+
 wiimatch
 --------
 
