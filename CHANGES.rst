@@ -1,6 +1,11 @@
 0.14.2 (Unreleased)
 ===================
 
+emission
+--------
+
+- Removed the emission step, documentation, and tests from the jwst package.
+  [#4253]
 
 
 0.14.1 (2019-11-11)
