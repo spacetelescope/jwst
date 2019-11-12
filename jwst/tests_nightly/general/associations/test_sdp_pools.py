@@ -150,38 +150,6 @@ class TestSDPPools(SDPPoolsSource):
             else:
                 raise
 
-    def test_dup_product_names(self, pool_path):
-        """Check for duplicate product names for a pool"""
-
-        pool = Path(pool_path).stem
-        special = SPECIAL_POOLS.get(pool, SPECIAL_DEFAULT)
-
-        results = asn_generate([
-            '--dry-run',
-            self.get_data(pool_path)
-        ])
-        asns = results.associations
-
-        product_names = Counter(
-            product['name']
-            for asn in asns
-            for product in asn['products']
-        )
-
-        multiples = [
-            product_name
-            for product_name, count in product_names.items()
-            if count > 1
-        ]
-
-        try:
-            assert not multiples, 'Multiple product names: {}'.format(multiples)
-        except AssertionError:
-            if special['xfail']:
-                pytest.xfail(special['xfail'])
-            else:
-                raise
-
     def test_asns_by_pool(self, sdp_pool):
         """Test a command-line specified pool"""
         if sdp_pool:
