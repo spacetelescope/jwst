@@ -3,7 +3,7 @@
 import logging
 
 from jwst.associations.registry import RegistryMarker
-from jwst.associations.lib.dms_base import (ACQ_EXP_TYPES, Constraint_TSO)
+from jwst.associations.lib.dms_base import (Constraint_TargetAcq, Constraint_TSO)
 from jwst.associations.lib.rules_level3_base import *
 from jwst.associations.lib.rules_level3_base import (
     dms_product_name_sources,
@@ -641,11 +641,7 @@ class Asn_ACQ_Reprocess(DMS_Level3_Base):
 
         # Setup for checking.
         self.constraints = Constraint([
-            DMSAttrConstraint(
-                sources=['exp_type'],
-                value='|'.join(ACQ_EXP_TYPES),
-                force_unique=False
-            ),
+            Constraint_TargetAcq(),
             SimpleConstraint(
                 name='force_fail',
                 test=lambda x, y: False,

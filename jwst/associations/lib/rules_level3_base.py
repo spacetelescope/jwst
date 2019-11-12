@@ -878,12 +878,7 @@ class AsnMixin_BkgScience(DMS_Level3_Base):
         # Setup target acquisition inclusion
         constraint_acqs = Constraint(
             [
-                DMSAttrConstraint(
-                    name='acq_exp',
-                    sources=['exp_type'],
-                    value='|'.join(ACQ_EXP_TYPES),
-                    force_unique=False
-                ),
+                Constraint_TargetAcq(),
                 DMSAttrConstraint(
                     name='acq_obsnum',
                     sources=['obs_num'],
@@ -954,14 +949,12 @@ class AsnMixin_AuxData(AsnMixin_Science):
         exposure_type : 'target_acquisition'
             Returns target_acquisition for mir_tacq
         """
-        try:
-            exp_type = item['exp_type']
-            if any(x == exp_type for x in ACQ_EXP_TYPES):
-                return 'target_acquisition'
-        except KeyError:
-            raise LookupError('Exposure type cannot be determined')
-
+        NEVER_CHANGE = ['target_acquisition']
+        exp_type = super().get_exposure_type(item, default=default)
+        if exp_type in NEVER_CHANGE:
+            return exp_type
         return 'science'
+
     def _init_hook(self, item):
         """Post-check and pre-add initialization"""
 
