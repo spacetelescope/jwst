@@ -21,7 +21,6 @@ from jwst.associations.lib.utilities import (
     is_iterable
 )
 from jwst.associations.exceptions import (
-    #AssociationNotAConstraint,
     AssociationNotValidError,
 )
 from jwst.associations.lib.acid import ACID
@@ -33,14 +32,14 @@ from jwst.associations.lib.counter import Counter
 from jwst.associations.lib.dms_base import (
     _EMPTY,
     ACQ_EXP_TYPES,
+    Constraint_TargetAcq,
     CORON_EXP_TYPES,
     DMSAttrConstraint,
     DMSBaseMixin,
     IMAGE2_SCIENCE_EXP_TYPES,
     IMAGE2_NONSCIENCE_EXP_TYPES,
     SPEC2_SCIENCE_EXP_TYPES,
-    get_exposure_type,
-    )
+)
 from jwst.associations.lib.format_template import FormatTemplate
 from jwst.associations.lib.member import Member
 
@@ -829,12 +828,7 @@ class AsnMixin_Science(DMS_Level3_Base):
         # Setup target acquisition inclusion
         constraint_acqs = Constraint(
             [
-                DMSAttrConstraint(
-                    name='acq_exp',
-                    sources=['exp_type'],
-                    value='|'.join(ACQ_EXP_TYPES),
-                    force_unique=False
-                ),
+                Constraint_TargetAcq(),
                 DMSAttrConstraint(
                     name='acq_obsnum',
                     sources=['obs_num'],
