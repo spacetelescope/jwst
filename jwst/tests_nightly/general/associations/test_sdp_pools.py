@@ -1,6 +1,5 @@
 """Test using SDP-generated pools
 """
-from collections import Counter
 import logging
 from pathlib import Path
 import re
