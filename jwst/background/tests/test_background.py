@@ -9,11 +9,10 @@ from numpy.testing.utils import assert_allclose
 
 from jwst import datamodels
 from jwst.assign_wcs import AssignWcsStep
-from jwst.assign_wcs.util import create_grism_bbox
 from jwst.background import BackgroundStep
 from jwst.background.tests import data
 from jwst.stpipe.step import Step
-from jwst.background.background_sub import robust_mean, subtract_wfss_bkg, mask_from_source_cat, no_NaN
+from jwst.background.background_sub import robust_mean, mask_from_source_cat, no_NaN
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 
 data_path = os.path.split(os.path.abspath(data.__file__))[0]
@@ -202,7 +201,8 @@ def make_wfss_datamodel():
 
 @pytest.mark.skip(reason="Algorithm to calculate WFSS background needs refactoring, see jira ticket JP-1136")
 @pytest.mark.parametrize("pupils", ['GRISMC', 'GRISMR'])
-@pytest.mark.parametrize("filters", ['F250M', 'F277W', 'F300M', 'F322W2', 'F335M', 'F356W', 'F356W', 'F410M', 'F430M', 'F444W', 'F460M', 'F480M'])
+@pytest.mark.parametrize("filters", ['F250M', 'F277W', 'F300M', 'F322W2', 'F335M', 'F356W',
+                                     'F356W', 'F410M', 'F430M', 'F444W', 'F460M', 'F480M'])
 @pytest.mark.parametrize("detectors", ['NRCALONG', 'NRCBLONG'])
 def test_nrc_wfss_background(filters, pupils, detectors, make_wfss_datamodel):
     """Test background subtraction for NIRCAM WFSS modes."""
@@ -214,7 +214,7 @@ def test_nrc_wfss_background(filters, pupils, detectors, make_wfss_datamodel):
     data.meta.instrument.channel = 'LONG'
     data.meta.instrument.name = 'NIRCAM'
     data.meta.exposure.type = 'NRC_WFSS'
-    
+
     if data.meta.instrument.detector == 'NRCALONG':
         data.meta.instrument.module = 'A'
     elif data.meta.instrument.detector == 'NRCBLONG':
