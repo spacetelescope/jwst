@@ -1,13 +1,15 @@
 from datetime import datetime
 import os
+import copy
+import json
 
 import getpass
 import pytest
 from ci_watson.artifactory_helpers import (
     get_bigdata_root,
     get_bigdata,
-    generate_upload_schema,
-    BigdataError
+    BigdataError,
+    UPLOAD_SCHEMA,
 )
 
 
@@ -28,20 +30,23 @@ def artifactory_repos(pytestconfig):
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
 def pytest_runtest_makereport(item, call):
+    """Create request.node.report_setup and request.node.report_call to be
+    used in generate_artifactory_json() fixture.
+    """
     # execute all other hooks to obtain the report object
     outcome = yield
     rep = outcome.get_result()
 
     # set a report attribute for each phase of a call, which can
     # be "setup", "call", "teardown"
-    setattr(item, "rep_" + rep.when, rep)
+    setattr(item, "report_" + rep.when, rep)
 
 
 @pytest.fixture(scope='function', autouse=True)
 def generate_artifactory_json(request, artifactory_repos):
     inputs_root, results_root = artifactory_repos
 
-    def _func(schema_pattern=[]):
+    def _func(schema_pattern):
         # Generate the Artifactory target path
         whoami = getpass.getuser() or 'nobody'
         user_tag = 'NOT_CI_{}'.format(whoami)
@@ -49,20 +54,139 @@ def generate_artifactory_json(request, artifactory_repos):
         build_matrix_suffix = os.environ.get('BUILD_MATRIX_SUFFIX', '0')
         subdir = '{}_{}_{}'.format(TODAYS_DATE, build_tag, build_matrix_suffix)
         testname = request.node.originalname or request.node.name
-        results_path = os.path.join(results_root, subdir, testname) + os.sep
+        remote_results_path = os.path.join(results_root, subdir, testname) + os.sep
 
-        generate_upload_schema(schema_pattern, results_path, request.node.name)
+        # Generate an upload schema
+        return generate_upload_schema(schema_pattern, remote_results_path)
 
     yield
     # Execute the following at test teardown
-    if request.node.rep_setup.passed:
-        if request.node.rep_call.failed:
+    if request.node.report_setup.passed:
+        if request.node.report_call.failed:
+            schema_pattern = []
+            for prop in request.node.user_properties:
+                name, filepath = prop
+                if name == 'output':
+                    path = os.path.abspath(filepath)
+                    schema_pattern.append(path)
+                    cwd, _ = os.path.split(path)
+            upload_schema = _func(schema_pattern)
+
+            # Write the schema to JSON
+            jsonfile = os.path.join(cwd, "{}_results.json".format(request.node.name))
+            with open(jsonfile, 'w') as outfile:
+                json.dump(upload_schema, outfile, indent=2)
+
+
+# @pytest.fixture(scope='function', autouse=True)
+def generate_artifactory_okify_json(request, artifactory_repos):
+    inputs_root, results_root = artifactory_repos
+
+    yield
+    # Execute the following at test teardown
+    if request.node.report_setup.passed:
+        if request.node.report_call.failed:
             schema_pattern = []
             for prop in request.node.user_properties:
                 name, pattern = prop
                 if name == 'output':
                     schema_pattern.append(os.path.abspath(pattern))
-            _func(schema_pattern)
+            generate_okify_schema(schema_pattern)
+
+
+def generate_upload_schema(pattern, target, recursive=False):
+    """
+    Write out JSON file to upload Jenkins results from test to
+    Artifactory storage area.
+
+    This function relies on the JFROG JSON schema for uploading data into
+    artifactory using the Jenkins plugin.  Docs can be found at
+    https://www.jfrog.com/confluence/display/RTF/Using+File+Specs
+
+    Parameters
+    ----------
+    pattern : str or list of strings
+        Specifies the local file system path to test results which should be
+        uploaded to Artifactory. You can specify multiple artifacts by using
+        wildcards or a regular expression as designated by the regexp property.
+
+    target : str
+        Specifies the target path in Artifactory in the following format::
+
+            [repository_name]/[repository_path]
+
+    recursive : bool, optional
+        Specify whether or not to identify files listed in sub-directories
+        for uploading.  Default: `False`
+
+    """
+    recursive = repr(recursive).lower()
+
+    if not isinstance(pattern, str):
+        # Populate schema for this test's data
+        upload_schema = {"files": []}
+
+        for p in pattern:
+            temp_schema = copy.deepcopy(UPLOAD_SCHEMA["files"][0])
+            temp_schema.update({"pattern": p, "target": target,
+                                "recursive": recursive})
+            upload_schema["files"].append(temp_schema)
+    else:
+        # Populate schema for this test's data
+        upload_schema = copy.deepcopy(UPLOAD_SCHEMA)
+        upload_schema["files"][0].update({"pattern": pattern, "target": target,
+                                          "recursive": recursive})
+    return upload_schema
+
+
+# The following function can eventually be moved to ci-watson perhaps
+def generate_okify_schema(pattern, target, testname, recursive=False):
+    """
+    Build an upload schema for updating truth files on Artifactory.
+
+    This function uses Artifactory JSON spec files for uploading data using
+    the Artifactory Jenkins plugin.  Docs can be found at
+    https://www.jfrog.com/confluence/display/RTF/Using+File+Specs
+
+    Parameters
+    ----------
+    pattern : str or list of strings
+        Specifies the local file system path to test results which should be
+        uploaded to Artifactory. You can specify multiple artifacts by using
+        wildcards or a regular expression as designated by the regexp property.
+    target : str
+        Specifies the target path in Artifactory in the following format::
+            [repository_name]/[repository_path]
+    testname : str
+        Name of test that generate the results. This will be used to create the
+        name of the JSON file to enable these results to be uploaded to
+        Artifactory.
+    recursive : bool, optional
+        Specify whether or not to identify files listed in sub-directories
+        for uploading.  Default: `False`
+    """
+    jsonfile = "{}_update_truth.json".format(testname)
+    recursive = repr(recursive).lower()
+
+    if not isinstance(pattern, str):
+        # Populate schema for this test's data
+        upload_schema = {"files": []}
+
+        for p in pattern:
+            temp_schema = copy.deepcopy(UPLOAD_SCHEMA["files"][0])
+            temp_schema.update({"pattern": p, "target": target,
+                                "recursive": recursive})
+            upload_schema["files"].append(temp_schema)
+
+    else:
+        # Populate schema for this test's data
+        upload_schema = copy.deepcopy(UPLOAD_SCHEMA)
+        upload_schema["files"][0].update({"pattern": pattern, "target": target,
+                                          "recursive": recursive})
+
+    # Write out JSON file with description of test results
+    with open(jsonfile, 'w') as outfile:
+        json.dump(upload_schema, outfile, indent=2)
 
 
 @pytest.fixture(scope="module")
@@ -118,19 +242,23 @@ class RegtestData:
 
     @truth_remote.setter
     def truth_remote(self, value):
-        try:
-            dirname = os.path.dirname(os.path.join(*self._input_remote))
-            self._truth_remote = os.path.join(dirname, 'truth', value)
-        except TypeError as e:
-            raise RuntimeError("Define self.input_remote first") from e
+        self._truth_remote = value.split(os.sep)
 
     @property
     def input(self):
         return self._input
 
+    @input.setter
+    def input(self, value):
+        self._input = os.path.abspath(value)
+
     @property
     def truth(self):
         return self._truth
+
+    @truth.setter
+    def truth(self, value):
+        self._truth = os.path.abspath(value)
 
     @property
     def output(self):
@@ -139,7 +267,6 @@ class RegtestData:
     @output.setter
     def output(self, value):
         self._output = os.path.abspath(value)
-
 
     @property
     def bigdata_root(self):
@@ -151,35 +278,40 @@ class RegtestData:
             "to change this value.")
 
     # The methods
-    def get_data(self, path):
+    def get_data(self, path=None):
         """Copy data from Artifactory remote resource to the CWD
 
-        Updates self.input on completion
+        Updates self.input and self.input_remote upon completion
         """
-        local_path = get_bigdata(self._inputs_root, self._env,
+        if path is None:
+            path = self.input_remote
+        else:
+            self.input_remote = path
+        self.input = get_bigdata(self._inputs_root, self._env,
             os.path.dirname(path), os.path.basename(path), docopy=self.docopy)
-        self._input = local_path
-        return local_path
+
+        return self.input
 
     def get_truth(self, path=None):
         """Copy truth data from Artifactory remote resource to the CWD/truth
 
-        Updates self.truth on completion
+        Updates self.truth and self.truth_remote on completion
         """
         if path is None:
-            pass
+            path = self.truth_remote
         else:
-            os.makedirs('truth', exist_ok=True)
-            os.chdir('truth')
-            try:
-                local_truth = get_bigdata(self._inputs_root, self._env,
-                    os.path.dirname(path), os.path.basename(path), docopy=self.docopy)
-            except BigdataError:
-                os.chdir('..')
-                raise
+            self.truth_remote = path
+        os.makedirs('truth', exist_ok=True)
+        os.chdir('truth')
+        try:
+            self.truth = get_bigdata(self._inputs_root, self._env,
+                os.path.dirname(path), os.path.basename(path), docopy=self.docopy)
+        except BigdataError:
             os.chdir('..')
-            self._truth = local_truth
-            return local_truth
+            raise
+        os.chdir('..')
+
+        return self.truth
 
     def get_association(self, asn):
         return NotImplementedError
@@ -215,7 +347,7 @@ def rtdata(artifactory_repos, envopt):
 
 
 @pytest.fixture
-def fitsdiff_defaults():
+def fitsdiff_default_kwargs():
     return dict(
         ignore_hdus=['ASDF'],
         ignore_keywords=['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
