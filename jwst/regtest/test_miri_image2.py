@@ -9,29 +9,32 @@ from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 
 
 @pytest.mark.bigdata
-def test_foo(request, rtdata, fitsdiff_defaults, _jail):
-    request.node.user_properties = [('output', rtdata.output)]
-    rtdata.input_remote = "miri/image/jw00001001001_01101_00001_mirimage_rate.fits"
-    input_data = rtdata.get_data(rtdata.input_remote)
-    Image2Pipeline.call(input_data, save_results=True)
+def test_foo(request, rtdata, fitsdiff_default_kwargs, _jail):
+    rtdata.get_data("miri/image/jw00001001001_01101_00001_mirimage_rate.fits")
 
+    Image2Pipeline.call(rtdata.input, save_results=True)
     rtdata.output = "jw00001001001_01101_00001_mirimage_cal.fits"
-    rtdata.truth_local = rtdata.get_truth(rtdata.output)
+    # Boilerplate needed for every test that interacts with Artifactory
+    request.node.user_properties = [('output', rtdata.output)]
 
-    diff = FITSDiff(rtdata.output, rtdata.truth_local, **fitsdiff_defaults)
+    rtdata.get_truth("truth/test_foo/jw00001001001_01101_00001_mirimage_cal.fits")
+    assert rtdata.output != rtdata.truth
+
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report
+    assert 0
 
 
 @pytest.fixture(scope="module")
 def run_pipeline(rtdata_module, jail):
     """Run calwebb_image2 pipeline on MIRI imaging data."""
     rtdata = rtdata_module
-    rtdata.input_remote = "miri/image/jw00001001001_01101_00001_mirimage_rate.fits"
-    input_data = rtdata.get_data(rtdata.input_remote)
+    rtdata.get_data("miri/image/jw00001001001_01101_00001_mirimage_rate.fits")
 
     collect_pipeline_cfgs('config')
     config_file = os.path.join('config', 'calwebb_image2.cfg')
-    Image2Pipeline.call(input_data, config_file=config_file)
+    Image2Pipeline.call(rtdata.input, config_file=config_file,
+        save_results=True)
 
     return rtdata
 
@@ -48,12 +51,18 @@ def test_miri_image2_completion(run_pipeline):
 @pytest.mark.parametrize("output", [
     'jw00001001001_01101_00001_mirimage_cal.fits',
     'jw00001001001_01101_00001_mirimage_i2d.fits',],
-    ids=['cal', 'i2d'],
-)
-def test_miri_image2(run_pipeline, request, fitsdiff_defaults, output):
+    ids=['cal', 'i2d'])
+def test_miri_image2(run_pipeline, request, fitsdiff_default_kwargs, output):
     """
     Regression test of calwebb_image2 pipeline performed on MIRI data.
     """
-    request.node.user_properties = [('output', output)]
-    diff = FITSDiff(output, output, **fitsdiff_defaults)
+    rtdata = run_pipeline
+    rtdata.output = output
+    # Boilerplate needed for every test that interacts with Artifactory
+    request.node.user_properties = [('output', rtdata.output)]
+
+    rtdata.get_truth(os.path.join("truth/test_foo", output))
+
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
+    assert 0
