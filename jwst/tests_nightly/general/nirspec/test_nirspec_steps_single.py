@@ -145,7 +145,6 @@ class TestNIRSpecWCS(BaseJWSTTest):
 
 
 @pytest.mark.bigdata
-@pytest.mark.xfail
 class TestNRSSpec2(BaseJWSTTest):
     input_loc = 'nirspec'
     ref_loc = ['test_pipelines', 'truth']
