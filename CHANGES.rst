@@ -1,17 +1,22 @@
 0.14.2 (Unreleased)
 ===================
 
+associations
+------------
+
+- Refactor target acquistion handling [#4254]
+
 emission
 --------
 
 - Removed the emission step, documentation, and tests from the jwst package.
   [#4253]
 
-associations
-------------
+photom
+------
 
-- Refactor target acquistion handling [#4254]
-
+- Fixed a bug so that the reference table column "PHOTMJ" is used for NIRSpec IFU
+  exposures. [#4263]
 
 0.14.1 (2019-11-11)
 ===================

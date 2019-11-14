@@ -46,10 +46,6 @@ class TestSpec3Pipeline(BaseJWSTTest):
             assert False
 
 
-    @pytest.mark.xfail(
-        reason='Dataset fails at outlier_detection',
-        run=False
-    )
     def test_nrs_fs_spec3(self):
         """
         Regression test of calwebb_spec3 pipeline performed on

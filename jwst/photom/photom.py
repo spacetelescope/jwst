@@ -185,8 +185,8 @@ class DataSet():
                     # IFU data
                     else:
 
-                        # Get the conversion factor from the PHOTMJSR column
-                        conv_factor = tabdata['photmjsr']
+                        # Get the conversion factor from the PHOTMJ column
+                        conv_factor = tabdata['photmj']
 
                         # Populate the photometry keywords
                         self.input.meta.photometry.conversion_megajanskys = \
