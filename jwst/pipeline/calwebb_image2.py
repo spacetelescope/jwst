@@ -153,7 +153,6 @@ class Image2Pipeline(Pipeline):
         # regular 2D science image types
         if input.meta.exposure.type.upper() in self.image_exptypes and \
         len(input.data.shape) == 2:
-            self.resample.suffix = 'i2d'
             self.resample(input)
 
         # That's all folks
