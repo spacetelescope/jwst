@@ -42,6 +42,15 @@ def pytest_runtest_makereport(item, call):
     setattr(item, "report_" + rep.when, rep)
 
 
+def postmortem(request, want_property):
+    if request.node.report_setup.passed:
+        if request.node.report_call.failed:
+            for prop in request.node.user_properties:
+                name, filepath = prop
+                if name == want_property:
+                    yield prop
+
+
 @pytest.fixture(scope='function', autouse=True)
 def generate_artifactory_json(request, artifactory_repos):
     inputs_root, results_root = artifactory_repos
@@ -61,21 +70,17 @@ def generate_artifactory_json(request, artifactory_repos):
 
     yield
     # Execute the following at test teardown
-    if request.node.report_setup.passed:
-        if request.node.report_call.failed:
-            schema_pattern = []
-            for prop in request.node.user_properties:
-                name, filepath = prop
-                if name == 'output':
-                    path = os.path.abspath(filepath)
-                    schema_pattern.append(path)
-                    cwd, _ = os.path.split(path)
-            upload_schema = _func(schema_pattern)
+    schema_pattern = []
+    for key, value in postmortem(request, 'output'):
+        path = os.path.abspath(value)
+        schema_pattern.append(path)
+        cwd, _ = os.path.split(path)
+    upload_schema = _func(schema_pattern)
 
-            # Write the schema to JSON
-            jsonfile = os.path.join(cwd, "{}_results.json".format(request.node.name))
-            with open(jsonfile, 'w') as outfile:
-                json.dump(upload_schema, outfile, indent=2)
+    # Write the schema to JSON
+    jsonfile = os.path.join(cwd, "{}_results.json".format(request.node.name))
+    with open(jsonfile, 'w') as outfile:
+        json.dump(upload_schema, outfile, indent=2)
 
 
 # @pytest.fixture(scope='function', autouse=True)
@@ -84,14 +89,10 @@ def generate_artifactory_okify_json(request, artifactory_repos):
 
     yield
     # Execute the following at test teardown
-    if request.node.report_setup.passed:
-        if request.node.report_call.failed:
-            schema_pattern = []
-            for prop in request.node.user_properties:
-                name, pattern = prop
-                if name == 'output':
-                    schema_pattern.append(os.path.abspath(pattern))
-            generate_okify_schema(schema_pattern)
+    schema_pattern = []
+    for key, value in postmortem(request, 'output'):
+        schema_pattern.append(os.path.abspath(value))
+    generate_okify_schema(schema_pattern)
 
 
 def generate_upload_schema(pattern, target, recursive=False):
