@@ -185,7 +185,7 @@ class DataSet():
                     # IFU data
                     else:
 
-                        # Get the conversion factor from the PHOTMJSR column
+                        # Get the conversion factor from the PHOTMJ column
                         conv_factor = tabdata['photmj']
 
                         # Populate the photometry keywords
