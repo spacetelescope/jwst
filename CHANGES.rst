@@ -18,6 +18,8 @@ photom
 - Fixed a bug so that the reference table column "PHOTMJ" is used for NIRSpec IFU
   exposures. [#4263]
 
+- The pixel area is now gotten from the photom reference file. [#4270]
+
 0.14.1 (2019-11-11)
 ===================
 
