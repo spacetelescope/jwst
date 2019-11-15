@@ -50,7 +50,7 @@ bc0.build_cmds = [
 bc0.test_cmds = [
     "pytest --cov=./ -r sxf -n 30 --bigdata --slow \
     --basetemp=${pytest_basetemp}  --junit-xml=results.xml jwst",
-    "codecov --token=${codecov_token}"
+    "codecov --token=${codecov_token} -F nightly"
 ]
 bc0.test_configs = [data_config]
 

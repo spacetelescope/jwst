@@ -71,4 +71,4 @@ script:
   - $TEST_COMMAND
 
 after_script:
-  - if [ "${TEST_COMMAND:0:6}" = "pytest" ]; then codecov; fi
+  - if [ "${TEST_COMMAND:0:6}" = "pytest" ]; then codecov -F unittests; fi

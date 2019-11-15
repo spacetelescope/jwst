@@ -49,8 +49,7 @@ bc2.build_cmds = [
     "pip install --src=../src -e .[test]",
 ]
 bc2.test_cmds = [
-    "pytest --cov=./ -r sx --junitxml=results.xml",
-    "codecov --token=${codecov_token}"
+    "pytest --cov=./ -r sx --junitxml=results.xml"
 ]
 
 
