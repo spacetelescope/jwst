@@ -83,12 +83,10 @@ The process of attaching the pixel
 area data also populates the keywords PIXAR_SR and PIXAR_A2 in the primary
 header of the science product, which give the average pixel area in units of
 steradians and square arcseconds, respectively.
-The photom step copies the values from the pixel area reference file to
-populate the PIXAR_SR and PIXAR_A2 keywords in the science data.  The values
-are taken either from the primary header or, for NIRSpec data, from a binary
-table extension.
-Note that while both the photom and pixel area reference files contain these
-keywords, the values are taken only from the pixel area reference file.
+For NIRSpec, the photom step obtains the values from a binary table extension
+of the pixel area reference file.
+For all other instruments, the photom step copies the values from the primary
+header of the photom reference file.
 
 NIRSpec IFU
 -----------
