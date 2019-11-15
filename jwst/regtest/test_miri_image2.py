@@ -22,7 +22,6 @@ def test_foo(request, rtdata, fitsdiff_default_kwargs, _jail):
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report
-    assert 0
 
 
 @pytest.fixture(scope="module")
@@ -65,4 +64,3 @@ def test_miri_image2(run_pipeline, request, fitsdiff_default_kwargs, output):
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
-    assert 0
