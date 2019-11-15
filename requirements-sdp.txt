@@ -40,7 +40,7 @@ spherical-geometry==1.2.18
 stsci.image==2.3.3
 stsci.imagestats==1.6.2
 stsci.stimage==0.2.4
-tweakwcs==0.5.1
+tweakwcs==0.5.3
 urllib3==1.25.6
 wcwidth==0.1.7
 zipp==0.6.0
