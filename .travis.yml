@@ -18,6 +18,8 @@ env:
   global:
     - CRDS_SERVER_URL='https://jwst-crds.stsci.edu'
     - CRDS_PATH='/tmp/crds_cache'
+    - CRDS_CLIENT_RETRY_COUNT=3
+    - CRDS_CLIENT_RETRY_DELAY_SECONDS=20
     - TEST_COMMAND='pytest --cov-report=xml --cov=./'
 
 matrix:
@@ -34,7 +36,7 @@ matrix:
       env: PIP_DEPENDENCIES='.[test]'
 
     - env: PIP_DEPENDENCIES='numpy~=1.16.0 .[test]'
-      python: 3.6.8
+      python: 3.6
 
     # Test with SDP pinned dependencies
     - env: PIP_DEPENDENCIES='-r requirements-sdp.txt .'
