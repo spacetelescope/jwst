@@ -60,11 +60,8 @@ bc0.build_cmds = [
 ]
 bc0.build_cmds = PipInject(env.OVERRIDE_REQUIREMENTS) + bc0.build_cmds
 bc0.test_cmds = [
-    "pytest --cov=./ -r sx -v -n 30 --bigdata --slow \
-    --basetemp=${pytest_basetemp}  --junit-xml=results.xml \
-    --log-level=INFO \
-    jwst",
-    "codecov --token=${codecov_token}"
+    "pytest -r sxf -n 30 --bigdata --slow \
+    --basetemp=${pytest_basetemp} --junit-xml=results.xml jwst"
 ]
 bc0.test_configs = [data_config]
 

@@ -1,3 +1,31 @@
+0.14.2 (2019-11-18)
+===================
+
+associations
+------------
+
+- Refactor target acquistion handling [#4254]
+
+emission
+--------
+
+- Removed the emission step, documentation, and tests from the jwst package.
+  [#4253]
+
+photom
+------
+
+- Fixed a bug so that the reference table column "PHOTMJ" is used for NIRSpec IFU
+  exposures. [#4263]
+
+- The pixel area is now gotten from the photom reference file. [#4270]
+
+white_light
+-----------
+
+- Fixed bug which produces NaN results when only some input has NaN [#4256]
+
+
 0.14.1 (2019-11-11)
 ===================
 
@@ -7,7 +35,6 @@ associations
 - Updated level 3 rules so that target acquisitions in the pool files are listed as
   exp_type = 'target_acquisition', not as science exposures. [#4223]
 
-=======
 datamodels
 ----------
 
@@ -1574,9 +1601,6 @@ tweakreg
   saturated sources (instrument-specific value).[#2706]
 
 wfs_combine
------------
-
-white_light
 -----------
 
 wiimatch

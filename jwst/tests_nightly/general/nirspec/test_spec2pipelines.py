@@ -63,7 +63,6 @@ class TestSpec2Pipeline(BaseJWSTTest):
                 ]
             }
 
-    @pytest.mark.xfail
     def test_spec2(self, input, outputs):
         """
         Regression test of calwebb_spec2 pipeline performed on NIRSpec data.

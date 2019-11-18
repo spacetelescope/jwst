@@ -185,8 +185,8 @@ class DataSet():
                     # IFU data
                     else:
 
-                        # Get the conversion factor from the PHOTMJSR column
-                        conv_factor = tabdata['photmjsr']
+                        # Get the conversion factor from the PHOTMJ column
+                        conv_factor = tabdata['photmj']
 
                         # Populate the photometry keywords
                         self.input.meta.photometry.conversion_megajanskys = \
@@ -800,7 +800,7 @@ class DataSet():
 
         return
 
-    def save_area_info(self, area_fname):
+    def save_area_info(self, ftab, area_fname):
         """
         Short Summary
         -------------
@@ -815,6 +815,9 @@ class DataSet():
 
         Parameters
         ----------
+        ftab : `~jwst.datamodels.DataModel`
+            A photom reference file data model
+
         area_fname : str
             Pixel area reference file name
         """
@@ -838,19 +841,19 @@ class DataSet():
         if instrument == 'NIRSPEC':
             self.save_area_nirspec(pix_area)
         else:
-            # Load the average pixel area values from the pixel area reference
+            # Load the average pixel area values from the photom reference file
             try:
-                area_ster = pix_area.meta.photometry.pixelarea_steradians
+                area_ster = ftab.meta.photometry.pixelarea_steradians
             except AttributeError:
                 area_ster = None
                 log.warning('The PIXAR_SR keyword is missing from %s',
-                            area_fname)
+                            ftab.meta.filename)
             try:
-                area_a2 = pix_area.meta.photometry.pixelarea_arcsecsq
+                area_a2 = ftab.meta.photometry.pixelarea_arcsecsq
             except AttributeError:
                 area_a2 = None
                 log.warning('The PIXAR_A2 keyword is missing from %s',
-                            area_fname)
+                            ftab.meta.filename)
 
             # Copy the pixel area values to the output
             log.debug('PIXAR_SR = %s, PIXAR_A2 = %s', str(area_ster), str(area_a2))
@@ -988,7 +991,7 @@ class DataSet():
         # Load the pixel area reference file, if it exists, and attach the
         # reference data to the science model
         if area_fname != 'N/A':
-            self.save_area_info(area_fname)
+            self.save_area_info(ftab, area_fname)
 
         if self.instrument == 'NIRISS':
             self.calc_niriss(ftab)
