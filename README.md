@@ -8,7 +8,7 @@ JWST Calibration Pipeline
 
 ![STScI Logo](docs/_static/stsci_logo.png)
 
-**JWST requires Python 3.5 or above and a C compiler for dependencies**.
+**JWST requires Python 3.6 or above and a C compiler for dependencies**.
 
 Installation
 ------------
