@@ -20,6 +20,12 @@ photom
 
 - The pixel area is now gotten from the photom reference file. [#4270]
 
+white_light
+-----------
+
+- Fixed bug which produces NaN results when only some input has NaN [#4256]
+
+
 0.14.1 (2019-11-11)
 ===================
 
@@ -28,8 +34,6 @@ associations
 
 - Updated level 3 rules so that target acquisitions in the pool files are listed as
   exp_type = 'target_acquisition', not as science exposures. [#4223]
-
-- Refactor target acquistion handling [#4254]
 
 datamodels
 ----------
@@ -1598,11 +1602,6 @@ tweakreg
 
 wfs_combine
 -----------
-
-white_light
------------
-
-- Fixed bug which produces NaN results when only some input has NaN [#4256]
 
 wiimatch
 --------
