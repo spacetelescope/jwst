@@ -1,4 +1,4 @@
-0.14.2 (Unreleased)
+0.14.2 (2019-11-18)
 ===================
 
 associations
@@ -31,7 +31,6 @@ associations
 
 - Refactor target acquistion handling [#4254]
 
-=======
 datamodels
 ----------
 
