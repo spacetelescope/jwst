@@ -1,7 +1,10 @@
 0.14.3 (Unreleased)
 ===================
 
+associations
+------------
 
+- Update act_id format to allow base 36 values in product name [#4282]
 
 
 
