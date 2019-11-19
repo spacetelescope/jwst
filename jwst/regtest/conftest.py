@@ -43,6 +43,8 @@ def pytest_runtest_makereport(item, call):
 
 
 def postmortem(request, want_property):
+    """Get a property from a pytest request fixture
+    """
     if isinstance(want_property, str):
         want_property = [want_property]
 
@@ -78,9 +80,9 @@ def generate_artifactory_json(request, artifactory_repos):
     # Execute the following at test teardown
     schema_pattern = []
 
-    props = postmortem(request, 'output')
+    props = postmortem(request, 'rtdata')
     if props:
-        path = os.path.abspath(props['output'])
+        path = props['rtdata'].output
         schema_pattern.append(path)
         cwd, _ = os.path.split(path)
 
@@ -92,17 +94,25 @@ def generate_artifactory_json(request, artifactory_repos):
             json.dump(upload_schema, outfile, indent=2)
 
 
-# @pytest.fixture(scope='function', autouse=True)
+@pytest.fixture(scope='function', autouse=True)
 def generate_artifactory_okify_json(request, artifactory_repos):
     inputs_root, results_root = artifactory_repos
 
     yield
     # Execute the following at test teardown
     schema_pattern = []
-    props = postmortem(request, 'output')
+    props = postmortem(request, 'rtdata')
     if props:
-        schema_pattern.append(os.path.abspath(props['output']))
-        generate_okify_schema(schema_pattern)
+        rtdata = props['rtdata']
+        schema_pattern.append(rtdata.truth)
+        cwd, _ = os.path.split(rtdata.output)
+
+        upload_schema = generate_upload_schema(schema_pattern, rtdata.truth_remote)
+
+        # Write the schema to JSON
+        jsonfile = os.path.join(cwd, "{}_okify.json".format(request.node.name))
+        with open(jsonfile, 'w') as outfile:
+            json.dump(upload_schema, outfile, indent=2)
 
 
 def generate_upload_schema(pattern, target, recursive=False):
@@ -148,56 +158,6 @@ def generate_upload_schema(pattern, target, recursive=False):
         upload_schema["files"][0].update({"pattern": pattern, "target": target,
                                           "recursive": recursive})
     return upload_schema
-
-
-# The following function can eventually be moved to ci-watson perhaps
-def generate_okify_schema(pattern, target, testname, recursive=False):
-    """
-    Build an upload schema for updating truth files on Artifactory.
-
-    This function uses Artifactory JSON spec files for uploading data using
-    the Artifactory Jenkins plugin.  Docs can be found at
-    https://www.jfrog.com/confluence/display/RTF/Using+File+Specs
-
-    Parameters
-    ----------
-    pattern : str or list of strings
-        Specifies the local file system path to test results which should be
-        uploaded to Artifactory. You can specify multiple artifacts by using
-        wildcards or a regular expression as designated by the regexp property.
-    target : str
-        Specifies the target path in Artifactory in the following format::
-            [repository_name]/[repository_path]
-    testname : str
-        Name of test that generate the results. This will be used to create the
-        name of the JSON file to enable these results to be uploaded to
-        Artifactory.
-    recursive : bool, optional
-        Specify whether or not to identify files listed in sub-directories
-        for uploading.  Default: `False`
-    """
-    jsonfile = "{}_update_truth.json".format(testname)
-    recursive = repr(recursive).lower()
-
-    if not isinstance(pattern, str):
-        # Populate schema for this test's data
-        upload_schema = {"files": []}
-
-        for p in pattern:
-            temp_schema = copy.deepcopy(UPLOAD_SCHEMA["files"][0])
-            temp_schema.update({"pattern": p, "target": target,
-                                "recursive": recursive})
-            upload_schema["files"].append(temp_schema)
-
-    else:
-        # Populate schema for this test's data
-        upload_schema = copy.deepcopy(UPLOAD_SCHEMA)
-        upload_schema["files"][0].update({"pattern": pattern, "target": target,
-                                          "recursive": recursive})
-
-    # Write out JSON file with description of test results
-    with open(jsonfile, 'w') as outfile:
-        json.dump(upload_schema, outfile, indent=2)
 
 
 @pytest.fixture(scope="module")
