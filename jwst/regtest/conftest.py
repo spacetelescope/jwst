@@ -17,11 +17,6 @@ from ci_watson.artifactory_helpers import (
 TODAYS_DATE = datetime.now().strftime("%Y-%m-%d")
 
 
-# def pytest_runtest_logreport(report):
-#     test_name = report.nodeid.replace('[', '_').replace(']', '')
-#     if report.when == 'call' and report.failed:
-#         _func(test_name)
-
 @pytest.fixture(scope="session")
 def artifactory_repos(pytestconfig):
     inputs_root = pytestconfig.getini('inputs_root')[0]
@@ -53,16 +48,22 @@ def postmortem(request, fixturename):
 
 @pytest.fixture(scope='function', autouse=True)
 def generate_artifactory_json(request, artifactory_repos):
+    """Pytest fixture that leaves behind JSON upload and okify specfiles
+    if the rtdata or rtdata_module fixtures are used in either a test or a
+    module-scoped fixture that runs a pipeline and provides the results to a
+    series of test.
+    """
     inputs_root, results_root = artifactory_repos
 
     def artifactory_result_path():
-        # Generate the Artifactory target path
+        # Generate the Artifactory result path
         whoami = getpass.getuser() or 'nobody'
         user_tag = 'NOT_CI_{}'.format(whoami)
         build_tag = os.environ.get('BUILD_TAG', user_tag)
         build_matrix_suffix = os.environ.get('BUILD_MATRIX_SUFFIX', '0')
         subdir = '{}_{}_{}'.format(TODAYS_DATE, build_tag, build_matrix_suffix)
         testname = request.node.originalname or request.node.name
+
         return os.path.join(results_root, subdir, testname) + os.sep
 
     yield
@@ -150,7 +151,8 @@ def jail(request, tmpdir_factory):
     temporary directory, and then have the tests access them.
     """
     old_dir = os.getcwd()
-    newpath = tmpdir_factory.mktemp(request.module.__name__.split('.')[-1])
+    newpath = tmpdir_factory.mktemp(request.module.__name__.split('.')[-1] +
+        "_" + request._parent_request.fixturename)
     os.chdir(str(newpath))
     yield newpath
     os.chdir(old_dir)
