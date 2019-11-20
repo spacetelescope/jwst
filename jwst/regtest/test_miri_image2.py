@@ -57,8 +57,5 @@ def test_miri_image2(run_pipeline, request, fitsdiff_default_kwargs, output):
     rtdata.output = output
     rtdata.get_truth(os.path.join("truth/test_foo", output))
 
-    # Boilerplate needed for every module-scope test that interacts with Artifactory
-    request.node.user_properties = [('rtdata', rtdata)]
-
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()

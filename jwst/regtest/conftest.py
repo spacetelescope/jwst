@@ -43,28 +43,19 @@ def pytest_runtest_makereport(item, call):
     setattr(item, "report_" + rep.when, rep)
 
 
-def postmortem(request, want_property):
-    """Get user_properties items for a test using the pytest request fixture
+def postmortem(request, fixturename):
+    """Retrieve a fixture object if a test failed
     """
-    if isinstance(want_property, str):
-        want_property = [want_property]
-
-    result = {}
     if request.node.report_setup.passed:
         if request.node.report_call.failed:
-            for prop in request.node.user_properties:
-                name, data = prop
-                for wanted in want_property:
-                    if name == wanted:
-                        result.update([prop])
-    return result
+            return request.node.funcargs.get(fixturename)
 
 
 @pytest.fixture(scope='function', autouse=True)
 def generate_artifactory_json(request, artifactory_repos):
     inputs_root, results_root = artifactory_repos
 
-    def _func(schema_pattern):
+    def artifactory_result_path():
         # Generate the Artifactory target path
         whoami = getpass.getuser() or 'nobody'
         user_tag = 'NOT_CI_{}'.format(whoami)
@@ -72,48 +63,35 @@ def generate_artifactory_json(request, artifactory_repos):
         build_matrix_suffix = os.environ.get('BUILD_MATRIX_SUFFIX', '0')
         subdir = '{}_{}_{}'.format(TODAYS_DATE, build_tag, build_matrix_suffix)
         testname = request.node.originalname or request.node.name
-        remote_results_path = os.path.join(results_root, subdir, testname) + os.sep
-
-        # Generate an upload schema
-        return generate_upload_schema(schema_pattern, remote_results_path)
+        return os.path.join(results_root, subdir, testname) + os.sep
 
     yield
     # Execute the following at test teardown
-    schema_pattern = []
+    upload_schema_pattern = []
+    okify_schema_pattern = []
 
-    props = postmortem(request, 'rtdata')
-    if props:
-        path = props['rtdata'].output
-        schema_pattern.append(path)
+    rtdata = postmortem(request, 'rtdata') or postmortem(request, 'rtdata_module')
+    if rtdata:
+        path = rtdata.output
         cwd, _ = os.path.split(path)
+        remote_results_path = artifactory_result_path()
 
-        upload_schema = _func(schema_pattern)
+        upload_schema_pattern.append(path)
+        upload_schema = generate_upload_schema(upload_schema_pattern, remote_results_path)
 
-        # Write the schema to JSON
+        # Write the upload schema to JSON file
         jsonfile = os.path.join(cwd, "{}_results.json".format(request.node.name))
         with open(jsonfile, 'w') as outfile:
             json.dump(upload_schema, outfile, indent=2)
 
 
-@pytest.fixture(scope='function', autouse=True)
-def generate_artifactory_okify_json(request, artifactory_repos):
-    inputs_root, results_root = artifactory_repos
+        okify_schema_pattern.append(rtdata.truth)
+        okify_schema = generate_upload_schema(okify_schema_pattern, rtdata.truth_remote)
 
-    yield
-    # Execute the following at test teardown
-    schema_pattern = []
-    props = postmortem(request, 'rtdata')
-    if props:
-        rtdata = props['rtdata']
-        schema_pattern.append(rtdata.truth)
-        cwd, _ = os.path.split(rtdata.output)
-
-        upload_schema = generate_upload_schema(schema_pattern, rtdata.truth_remote)
-
-        # Write the schema to JSON
+        # Write the okify schema to JSON file
         jsonfile = os.path.join(cwd, "{}_okify.json".format(request.node.name))
         with open(jsonfile, 'w') as outfile:
-            json.dump(upload_schema, outfile, indent=2)
+            json.dump(okify_schema, outfile, indent=2)
 
 
 def generate_upload_schema(pattern, target, recursive=False):
@@ -304,7 +282,6 @@ def _rtdata_fixture_implementation(artifactory_repos, envopt, request):
     inputs_root, results_root = artifactory_repos
     rtdata = RegtestData(env=envopt, inputs_root=inputs_root,
         results_root=results_root)
-    request.node.user_properties = [('rtdata', rtdata)]
 
     yield rtdata
 
