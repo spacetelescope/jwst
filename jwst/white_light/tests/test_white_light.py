@@ -2,7 +2,6 @@ from jwst import datamodels
 from jwst.white_light.white_light import white_light
 
 from astropy.time import Time, TimeDelta
-import math
 import numpy as np
 import pytest
 
@@ -106,5 +105,5 @@ def test_white_light_with_expstart(make_datamodel):
     # Sum the fluxes
     fluxsums = data.spec[0].spec_table['FLUX'].sum()
 
-    assert math.isclose(result['MJD'][0], int_times.mjd[0])
-    assert math.isclose(result['whitelight_flux'], fluxsums)
+    assert result['MJD'][0] == int_times.mjd[0]
+    assert result['whitelight_flux'] == fluxsums
