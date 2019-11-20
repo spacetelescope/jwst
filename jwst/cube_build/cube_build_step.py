@@ -206,7 +206,7 @@ class CubeBuildStep (Step):
         self.pipeline = 3
         if self.output_type == 'multi' and len(self.input_filenames) == 1:
             self.pipeline = 2
-
+        print('in cube build the self.pipeline',self.pipeline)
 # ________________________________________________________________________________
 # Read in Cube Parameter Reference file
 # identify what reference file has been associated with these input
