@@ -9,7 +9,7 @@ from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 
 
 @pytest.mark.bigdata
-def test_foo(request, rtdata, fitsdiff_default_kwargs, _jail):
+def test_miri_image2_cal(request, rtdata, fitsdiff_default_kwargs, _jail):
     rtdata.get_data("miri/image/jw00001001001_01101_00001_mirimage_rate.fits")
 
     Image2Pipeline.call(rtdata.input, save_results=True)
