@@ -5,7 +5,7 @@ from jwst import datamodels
 from jwst.guider_cds.guider_cds import get_dataset_info, guider_cds
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture
 def make_guider_image():
     """Generate science image"""
 
@@ -15,6 +15,7 @@ def make_guider_image():
     image.meta.exposure.frame_time = 234.3423235
     image.meta.exposure.ngroups = 4
     image.meta.exposure.group_time = 465.643643
+    image.meta.exposure.type = "FGS_FINEGUIDE"
 
     image.data = np.random.rand(4,10,10,10)
 
@@ -25,7 +26,6 @@ def test_get_dataset_info(make_guider_image):
     """Make sure information assigned to datamodel is retrieved correctly."""
 
     model = make_guider_image
-    model.meta.exposure.type = 'FGS_FINEGUIDE'
 
     imshape, n_int, grp_time, exp_type = get_dataset_info(model)
 
@@ -39,7 +39,6 @@ def test_guider_cds_fineguide_mode(make_guider_image):
     """Test the fine guiding mode"""
 
     model = make_guider_image
-    model.meta.exposure.type = 'FGS_FINEGUIDE'
 
     truth = np.zeros(model.data.shape)
 
@@ -118,7 +117,6 @@ def test_unit_assignment(make_guider_image):
     """Test that correct units are returned"""
 
     model = make_guider_image
-    model.meta.exposure.type = "FGS_FINEGUIDE"
 
     result = guider_cds(model)
 
