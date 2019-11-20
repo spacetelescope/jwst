@@ -2,6 +2,7 @@ from datetime import datetime
 import os
 import copy
 import json
+import pprint
 
 import getpass
 import pytest
@@ -43,7 +44,7 @@ def pytest_runtest_makereport(item, call):
 
 
 def postmortem(request, want_property):
-    """Get a property from a pytest request fixture
+    """Get user_properties items for a test using the pytest request fixture
     """
     if isinstance(want_property, str):
         want_property = [want_property]
@@ -117,11 +118,9 @@ def generate_artifactory_okify_json(request, artifactory_repos):
 
 def generate_upload_schema(pattern, target, recursive=False):
     """
-    Write out JSON file to upload Jenkins results from test to
-    Artifactory storage area.
+    Generate JSON schema for Artifactory upload specfile using JFROG.
 
-    This function relies on the JFROG JSON schema for uploading data into
-    artifactory using the Jenkins plugin.  Docs can be found at
+    Docs can be found at
     https://www.jfrog.com/confluence/display/RTF/Using+File+Specs
 
     Parameters
@@ -140,6 +139,10 @@ def generate_upload_schema(pattern, target, recursive=False):
         Specify whether or not to identify files listed in sub-directories
         for uploading.  Default: `False`
 
+    Returns
+    -------
+    upload_schema : dict
+        Dictionary specifying the upload schema
     """
     recursive = repr(recursive).lower()
 
@@ -192,6 +195,13 @@ class RegtestData:
         self._truth = None
         self._output = None
         self._bigdata_root = get_bigdata_root()
+
+    def __repr__(self):
+        return pprint.pformat(
+            dict(input=self.input, output=self.output, truth=self.truth,
+            input_remote=self.input_remote, truth_remote=self.truth_remote),
+            indent=2
+        )
 
     @property
     def input_remote(self):
@@ -277,6 +287,7 @@ class RegtestData:
         try:
             self.truth = get_bigdata(self._inputs_root, self._env,
                 os.path.dirname(path), os.path.basename(path), docopy=self.docopy)
+            self.truth_remote = os.path.join(self._bigdata_root, self._inputs_root, self._env, path)
         except BigdataError:
             os.chdir('..')
             raise
@@ -285,36 +296,27 @@ class RegtestData:
         return self.truth
 
     def get_association(self, asn):
-        return NotImplementedError
-
-    def generate_artifactory_json(self):
-        return NotImplementedError
-
-    def okify_truth(self):
-        return NotImplementedError
-
-    def okify_input(self):
-        return NotImplementedError
+        raise NotImplementedError()
 
 
-@pytest.fixture(scope='module')
-def rtdata_module(artifactory_repos, envopt):
+def _rtdata_fixture_implementation(artifactory_repos, envopt, request):
     """Provides the RemoteResource class"""
     inputs_root, results_root = artifactory_repos
-    resource = RegtestData(env=envopt, inputs_root=inputs_root,
+    rtdata = RegtestData(env=envopt, inputs_root=inputs_root,
         results_root=results_root)
+    request.node.user_properties = [('rtdata', rtdata)]
 
-    yield resource
+    yield rtdata
 
 
 @pytest.fixture(scope='function')
-def rtdata(artifactory_repos, envopt):
-    """Provides the RemoteResource class"""
-    inputs_root, results_root = artifactory_repos
-    resource = RegtestData(env=envopt, inputs_root=inputs_root,
-        results_root=results_root)
+def rtdata(artifactory_repos, envopt, request):
+    yield from _rtdata_fixture_implementation(artifactory_repos, envopt, request)
 
-    yield resource
+
+@pytest.fixture(scope='module')
+def rtdata_module(artifactory_repos, envopt, request):
+    yield from _rtdata_fixture_implementation(artifactory_repos, envopt, request)
 
 
 @pytest.fixture

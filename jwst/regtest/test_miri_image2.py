@@ -18,9 +18,6 @@ def test_foo(request, rtdata, fitsdiff_default_kwargs, _jail):
     rtdata.get_truth("truth/test_foo/jw00001001001_01101_00001_mirimage_cal.fits")
     assert rtdata.output != rtdata.truth
 
-    # Boilerplate needed for every test that interacts with Artifactory
-    request.node.user_properties = [('rtdata', rtdata)]
-
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report
 
@@ -60,7 +57,7 @@ def test_miri_image2(run_pipeline, request, fitsdiff_default_kwargs, output):
     rtdata.output = output
     rtdata.get_truth(os.path.join("truth/test_foo", output))
 
-    # Boilerplate needed for every test that interacts with Artifactory
+    # Boilerplate needed for every module-scope test that interacts with Artifactory
     request.node.user_properties = [('rtdata', rtdata)]
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
