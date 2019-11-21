@@ -64,7 +64,7 @@ def test_data_glob_local(glob_filter, nfiles, _jail):
         ('*', 1),
         ('*.txt', 0),
         ('*.fits', 1)
-    ], ids=['all', 'txt', 'fits']
+    ]
 )
 def test_data_glob_url(glob_filter, nfiles, pytestconfig, request):
     """Test globbing over a URL
@@ -80,7 +80,6 @@ def test_data_glob_url(glob_filter, nfiles, pytestconfig, request):
     inputs_root = pytestconfig.getini('inputs_root')[0]
     env = request.config.getoption('env')
     path = os.path.join(inputs_root, env, 'infrastructure/test_data_glob')
-    print(path)
 
     files = _data_glob_url(path, glob_filter, root=get_bigdata_root())
     assert len(files) == nfiles
@@ -95,9 +94,9 @@ class TestBaseJWSTTest(BaseJWSTTest):
     @pytest.mark.parametrize(
         'glob_filter, nfiles',
         [
-            ('*', [1, 2]),
-            ('*.txt', [0]),
-            ('*.fits', [1])
+            ('*', 1),
+            ('*.txt', 0),
+            ('*.fits', 1)
         ], ids=['all', 'txt', 'fits']
     )
     def test_data_glob_from_class(self, glob_filter, nfiles):
@@ -116,7 +115,7 @@ class TestBaseJWSTTest(BaseJWSTTest):
             url-based artifactory location or local.
         """
         files = self.data_glob('test_data_glob', glob=glob_filter)
-        assert len(files) in nfiles
+        assert len(files) == nfiles
 
 
 def test_submodules_can_be_imported():
