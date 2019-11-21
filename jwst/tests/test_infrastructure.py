@@ -1,8 +1,11 @@
 from pathlib import Path
 import importlib
 from pkgutil import iter_modules
+import os
 
 import pytest
+
+from ci_watson.artifactory_helpers import get_bigdata_root
 
 from .base_classes import (
     BaseJWSTTest,
@@ -25,16 +28,15 @@ def test_word_precision_check():
     assert word_precision_check(s2, s4, length=2)
 
 
-@pytest.mark.usefixtures('_jail')
 @pytest.mark.parametrize(
     'glob_filter, nfiles',
     [
         ('*', 3),
         ('*.txt', 3),
         ('*.fits', 0)
-    ]
+    ], ids=['all', 'txt', 'fits']
 )
-def test_data_glob_local(glob_filter, nfiles):
+def test_data_glob_local(glob_filter, nfiles, _jail):
     """Test working of local globbing
 
     Parameters
@@ -62,9 +64,9 @@ def test_data_glob_local(glob_filter, nfiles):
         ('*', 1),
         ('*.txt', 0),
         ('*.fits', 1)
-    ]
+    ], ids=['all', 'txt', 'fits']
 )
-def test_data_glob_url(glob_filter, nfiles):
+def test_data_glob_url(glob_filter, nfiles, pytestconfig, request):
     """Test globbing over a URL
 
     Parameters
@@ -75,18 +77,20 @@ def test_data_glob_url(glob_filter, nfiles):
     nfiles: int
         The number of files expected to find.
     """
-    root = 'https://bytesalad.stsci.edu/artifactory/'
-    path = 'jwst-pipeline/dev/nircam/test_bias_drift'
+    inputs_root = pytestconfig.getini('inputs_root')[0]
+    env = request.config.getoption('env')
+    path = os.path.join(inputs_root, env, 'infrastructure/test_data_glob')
+    print(path)
 
-    files = _data_glob_url(path, glob_filter, root=root)
+    files = _data_glob_url(path, glob_filter, root=get_bigdata_root())
     assert len(files) == nfiles
 
 
 class TestBaseJWSTTest(BaseJWSTTest):
     """Test globbing from the class"""
 
-    input_loc = 'nircam'
-    ref_loc = ['test_bias_drift', 'truth']
+    input_loc = 'infrastructure'
+    ref_loc = ['test_data_glob']
 
     @pytest.mark.parametrize(
         'glob_filter, nfiles',
@@ -94,9 +98,9 @@ class TestBaseJWSTTest(BaseJWSTTest):
             ('*', [1, 2]),
             ('*.txt', [0]),
             ('*.fits', [1])
-        ]
+        ], ids=['all', 'txt', 'fits']
     )
-    def test_glob(self, glob_filter, nfiles):
+    def test_data_glob_from_class(self, glob_filter, nfiles):
         """Test data globbing
 
         Ensure glob gets the right files.
@@ -111,7 +115,7 @@ class TestBaseJWSTTest(BaseJWSTTest):
             List because the number can change depending on whether
             url-based artifactory location or local.
         """
-        files = self.data_glob('test_bias_drift', glob=glob_filter)
+        files = self.data_glob('test_data_glob', glob=glob_filter)
         assert len(files) in nfiles
 
 
