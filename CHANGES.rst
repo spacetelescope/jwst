@@ -6,6 +6,12 @@ associations
 
 - Update act_id format to allow base 36 values in product name [#4282]
 
+master_background
+-----------------
+
+- Updated to fill the asn table and asn pool names. [#4240]
+
+=======
 tweakreg
 --------
 

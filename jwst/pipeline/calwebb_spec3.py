@@ -150,6 +150,11 @@ class Spec3Pipeline(Pipeline):
 
             # Call outlier detection
             if exptype not in SLITLESS_TYPES:
+                # Update the asn table name to the level 3 instance so that
+                # the downstream products have the correct table name since
+                # the _cal files are not saved they will not be updated
+                for cal_array in result:
+                    cal_array.meta.asn.table_name = result.meta.table_name
                 result = self.outlier_detection(result)
 
                 # Resample time. Dependent on whether the data is IFU or not.
