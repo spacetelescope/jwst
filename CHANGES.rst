@@ -11,6 +11,15 @@ master_background
 
 - Updated to fill the asn table and asn pool names. [#4240]
 
+=======
+tweakreg
+--------
+
+- Improved code to be more resilient to the case when none of the
+  image groups has valid sources that can be used for image alignment.
+  Now the code will gracefully skip the ``tweakreg`` step altogether in such
+  situations. [#4299]
+
 
 0.14.2 (2019-11-18)
 ===================

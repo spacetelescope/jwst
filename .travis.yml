@@ -27,12 +27,12 @@ matrix:
   fast_finish: true
 
   include:
-    - python: 3.6
-    - python: 3.7
-    - python: 3.8
+    - python: 3.6.9
+    - python: 3.7.5
+    - python: 3.8.0
 
     - env: PIP_DEPENDENCIES='numpy~=1.16.0 .[test]'
-      python: 3.6
+      python: 3.6.9
 
     # Test with SDP pinned dependencies
     - env: PIP_DEPENDENCIES='-r requirements-sdp.txt .'
