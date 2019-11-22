@@ -320,7 +320,7 @@ class CubeBlot():
         # print('blot_overlap_quick Number of elements on sky mapped to detector going to loop over',num)
         # TODO need to move this value (roi_det)  to reference file  or at least in spec ?
         roi_det = 0.5  # 1/2 a pixel
-        for ipt in range(0, num - 1):
+        for ipt in range(num):
             # search xcenter and ycenter seperately. These arrays are smallsh.
             # xcenter size = naxis1 (naxis1/2 for MIRI)
             # ycenter size = naxis2

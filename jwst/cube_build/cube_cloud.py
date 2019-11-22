@@ -80,7 +80,7 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
     nplane = naxis1 * naxis2
 
     # now loop over the pixel values for this region and find the spaxels that fall
-    # withing the region of interest.
+    # within the region of interest.
     nn = coord1.size
     # Left this commented code in to check when we get new cube par reference files
     # The roi size was too small at long wavelength that may pixels did not match
@@ -237,7 +237,7 @@ def match_det2cube_miripsf(alpha_resol, beta_resol, wave_resol,
 
     nplane = naxis1 * naxis2
     # now loop over the pixel values for this region and find the spaxels
-    # that fall withing the region of interest.
+    # that fall within the region of interest.
     nn = coord1.size
     #    print('looping over n points mapping to cloud',nn)
     # _______________________________________________________________________
