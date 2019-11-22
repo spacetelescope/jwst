@@ -206,7 +206,7 @@ class IFUCubeData():
                 fg_name = fg_name.lower()
                 newname = self.output_name_base + fg_name + '_s3d.fits'
                 if self.output_type == 'single':
-                    newname = self.output_name_base + fg_name + 'single_s3d.fits'
+                    newname = self.output_name_base + fg_name + '_single_s3d.fits'
 # ______________________________________________________________________________
         if self.output_type != 'single':
             log.info('Output Name: %s', newname)

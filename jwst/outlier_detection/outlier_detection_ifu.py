@@ -67,15 +67,6 @@ class OutlierDetectionIFU(OutlierDetection):
         """
         OutlierDetection.__init__(self, input_models,
                                   reffiles=reffiles, **pars)
-        # NOTE:  Need to confirm that this attribute accurately reports the
-        #        channel 'names' for both types of IFU data; MIRI and NRS
-
-#        try:
-#            self.channels = input_models[0].meta.instrument.channel
-#            if self.channels is None:  # account for NIRSpec IFU data
-#                self.channels = '1'
-#        except AttributeError:
-#            self.channels = '1'
 
     def _find_ifu_coverage(self):
         self.channels = []
@@ -96,11 +87,11 @@ class OutlierDetectionIFU(OutlierDetection):
         self.channels = list(set(self.channels))
         self.gratings = list(set(self.gratings))
         self.ifu_band = []
-        if self.instrument == 'MIRI': 
+        if self.instrument == 'MIRI':
             self.ifu_band = self.channels
         elif self.instrument == 'NIRSPEC':
             self.ifu_band = self.gratings
-        
+
     def _convert_inputs(self):
         self.input_models = self.inputs
         self.converted = False
@@ -133,11 +124,11 @@ class OutlierDetectionIFU(OutlierDetection):
                                          channel=band,
                                          single='true')
 
-            if self.instrument == 'NIRSPEC' :
+            if self.instrument == 'NIRSPEC':
                 cubestep = CubeBuildStep(config_file=cube_build_config,
                                          grating=band,
                                          single='true')
-    
+
             single_IFUCube_result = cubestep.process(self.input_models)
 
             for model in single_IFUCube_result:
@@ -171,8 +162,9 @@ class OutlierDetectionIFU(OutlierDetection):
             # in the original input list/ASN/ModelContainer
             #
             # need to override with IFU-specific version of blot for
-            # each channel/grating this will need to combine the multiple channels
-            # of data into a single frame to match the original input...
+            # each channel/grating this will need to combine the multiple
+            # channels (MIRI) of data into a single frame to match the
+            # original input...
             self.blot_median(median_model)
             if save_intermediate_results:
                 log.info("Writing out BLOT images...")
@@ -227,3 +219,9 @@ class OutlierDetectionIFU(OutlierDetection):
         for j in range(len(blot_models)):
             self.blot_models[j].data += blot_models[j].data
             self.blot_models[j].meta = blot_models[j].meta
+
+
+class ErrorWrongInstrument(Exception):
+    """ Raises an exception if the instrument is not MIRI or NIRSPEC
+    """
+    pass
