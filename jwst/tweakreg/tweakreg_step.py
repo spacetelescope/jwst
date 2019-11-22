@@ -195,7 +195,7 @@ class TweakRegStep(Step):
                 self.skip = True
                 for model in images:
                     model.meta.cal_step.tweakreg = "SKIPPED"
-                return input
+                return images
 
             else:
                 raise e
