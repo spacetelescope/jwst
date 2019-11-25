@@ -1,0 +1,101 @@
+name: ci
+
+on: [push, pull_request]
+
+env:
+  PYTHONUNBUFFERED: 1
+  CRDS_SERVER_URL: "https://jwst-crds.stsci.edu"
+  CRDS_PATH: "/tmp/crds_cache"
+  CRDS_CLIENT_RETRY_COUNT: 3
+  CRDS_CLIENT_RETRY_DELAY_SECONDS: 30
+
+jobs:
+  lint:
+    runs-on: [ubuntu-latest]
+
+    steps:
+    - uses: actions/setup-python@v1
+      with:
+        python-version: 3.7
+    - name: Lint with flake8
+      run: |
+        pip install flake8
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 jwst --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 jwst --exit-zero
+     
+  build:
+    name: "Build: ${{ matrix.name }}:${{ matrix.python_version }}"
+    runs-on: ubuntu-latest
+    
+    strategy:
+      max-parallel: 2
+      matrix:
+        python_version: [3.6, 3.7]
+        name: [BUILTIN, SDP, DEV]
+        include:
+          - name: BUILTIN
+            pip_args: ".[test]"
+          - name: SDP
+            pip_args: "-r requirements-sdp.txt .[test]"
+          - name: DEV
+            pip_args: "-r requirements-dev.txt .[test]"
+
+    env:
+      PIP_ARGS: ${{ matrix.pip_args }}
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python ${{ matrix.python_version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python_version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install ${PIP_ARGS}
+        
+  tests:
+    needs: [build]
+    name: "Test: ${{ matrix.name }}:${{ matrix.python_version }}"
+    runs-on: ubuntu-latest
+    
+    strategy:
+      max-parallel: 1
+      matrix:
+        python_version: [3.6, 3.7]
+        name: [BUILTIN, SDP, DEV]    
+        include:
+          - name: BUILTIN
+            pip_args: ".[test]"
+          - name: SDP
+            pip_args: "-r requirements-sdp.txt .[test]"
+          - name: DEV
+            python_version: "3.7"
+            pip_args: "-r requirements-dev.txt .[test]"
+        exclude:
+          - name: DEV
+            python_version: "3.6"
+
+    env:
+      PIP_ARGS: "${{ matrix.pip_args }}"
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python ${{ matrix.python_version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python_version }}
+    
+    - name: Build
+      run: |
+        pip install --upgrade pip
+        pip install ${PIP_ARGS}
+          
+    - name: Test
+      run: pytest --cov-report=xml --cov=./
+
+    - uses: codecov/codecov-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        flags: unittests
