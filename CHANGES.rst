@@ -194,6 +194,9 @@ cube_build
   the wavelength "coordinates". The ``'nelem'`` field therefore is no longer
   necessary and has been removed. [#3976]
 
+- To support outlier detection the blotting from the sky back to the detector was
+  improved [#4301]
+
 datamodels
 ----------
 
@@ -528,6 +531,9 @@ outlier_detection
 - Changed default value of good_pixel from 4 to 6 [#3638]
 
 - Don't use NaNs or masked values in weight image for blotting. [#3651]
+
+- When calling cube_build for IFU data fixed selecting correct channels (MIRI) or 
+  correct grating (NIRSPEC) [#4301]
 
 pipeline
 --------

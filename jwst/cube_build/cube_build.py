@@ -181,11 +181,11 @@ class CubeData():
 
             nchannels = len(valid_channel)
             nsubchannels = len(valid_subchannel)
-# _______________________________________________________________________________
-# for MIRI we can set the channel and subchannel
+            # _______________________________________________________________________________
+            # for MIRI we can set the channel and subchannel
             user_clen = len(self.channel)
             user_slen = len(self.subchannel)
-# _______________________________________________________________________________
+            # _______________________________________________________________________________
             for i in range(nchannels):
                 for j in range(nsubchannels):
                     nfiles = len(master_table.FileMap['MIRI'][valid_channel[i]][valid_subchannel[j]])
@@ -195,21 +195,17 @@ class CubeData():
                         if user_clen == 0 and user_slen == 0:
                             self.all_channel.append(valid_channel[i])
                             self.all_subchannel.append(valid_subchannel[j])
-                            # __________________________________________________
-                            # channel was set by user but not sub-channel
+                        # channel was set by user but not sub-channel
                         elif user_clen != 0 and user_slen == 0:
-                            # now check if this channel was set by user
-                            if (valid_channel[i] in self.channel):
+                            if valid_channel[i] in self.channel:
                                 self.all_channel.append(valid_channel[i])
                                 self.all_subchannel.append(valid_subchannel[j])
-# _______________________________________________________________________________
-# sub-channel was set by user but not channel
+                        # sub-channel was set by user but not channel
                         elif user_clen == 0 and user_slen != 0:
-                            if (valid_subchannel[j] in self.subchannel):
+                            if valid_subchannel[j] in self.subchannel:
                                 self.all_channel.append(valid_channel[i])
                                 self.all_subchannel.append(valid_subchannel[j])
-# _______________________________________________________________________________
-# both parameters set
+                        # both parameters set
                         else:
                             if (valid_channel[i] in self.channel and
                                 valid_subchannel[j] in self.subchannel):
@@ -230,7 +226,7 @@ class CubeData():
             if number_subchannels == 0:
                 raise ErrorNoSubchannels(
                     "The cube does not cover any subchannels, change band parameter")
-# ______________________________________________________________________
+        # _______________________________________________________________
         if self.instrument == 'NIRSPEC':
             # 1 to 1 mapping valid_gwa[i] -> valid_fwa[i]
             valid_gwa = ['g140m', 'g140h', 'g140m', 'g140h', 'g235m',
@@ -239,33 +235,30 @@ class CubeData():
                         'f170lp', 'f290lp', 'f290lp', 'clear']
 
             nbands = len(valid_fwa)
-# _____________________________________________________________________________
-        # check if input filter or grating has been set
+
             user_glen = len(self.grating)
             user_flen = len(self.filter)
-
+            # check if input filter or grating has been set
             if user_glen == 0 and user_flen != 0:
                 raise ErrorMissingParameter("Filter specified, but Grating was not")
 
-            if user_glen != 0 and user_flen == 0:
-                raise ErrorMissingParameter("Grating specified, but Filter was not")
-        # Grating and Filter not set - read in from files and create a list of
-        # all the filters and grating contained in the files
-            if user_glen == 0 and user_flen == 0:
-                for i in range(nbands):
-
-                    nfiles = len(master_table.FileMap['NIRSPEC'][valid_gwa[i]][valid_fwa[i]])
-                    if nfiles > 0:
+            for i in range(nbands):
+                nfiles = len(master_table.FileMap['NIRSPEC'][valid_gwa[i]][valid_fwa[i]])
+                if nfiles > 0:
+                    # _________________________________________________
+                    # neither parameters are set
+                    if user_glen == 0 and user_flen == 0:
                         self.all_grating.append(valid_gwa[i])
                         self.all_filter.append(valid_fwa[i])
-        # Both filter and grating input parameter have been set
-        # Find the files that have these parameters set
-
-            else:
-                for i in range(nbands):
-                    nfiles = len(master_table.FileMap['NIRSPEC'][valid_gwa[i]][valid_fwa[i]])
-                    if nfiles > 0:
-                        # now check if THESE Filter and Grating input parameters were set
+                    # __________________________________________________
+                    # grating was set by user but not filter
+                    elif user_glen != 0 and user_flen == 0:
+                        if valid_gwa[i] in self.grating:
+                            self.all_grating.append(valid_gwa[i])
+                            self.all_filter.append(valid_fwa[i])
+                    # __________________________________________________
+                    # both parameters set
+                    else:
                         if (valid_fwa[i] in self.filter and
                             valid_gwa[i] in self.grating):
                             self.all_grating.append(valid_gwa[i])
