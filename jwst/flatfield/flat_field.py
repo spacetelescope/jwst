@@ -176,7 +176,7 @@ def apply_flat_field(science, flat):
     # on array broadcasting to handle the cubes
     science.data /= flat_data
 
-    # Update the variances using BASELINE algorithm.  For guider data, it has 
+    # Update the variances using BASELINE algorithm.  For guider data, it has
     # not gone through ramp fitting so there is no Poisson noise or readnoise
     if not isinstance(science, datamodels.GuiderCalModel):
         flat_data_squared = flat_data**2
