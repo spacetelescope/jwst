@@ -15,8 +15,8 @@ datamodels
 
 flat_field
 ----------
- - Updated handling of FGS Guider data, which has not been run through ramp
-   fitting. [#4309]
+ - Updated handling of error arrays for FGS Guider data, which has not been run
+   through ramp fitting [#4309]
 
 lib
 ---
