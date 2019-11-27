@@ -13,6 +13,11 @@ datamodels
 
 - Updated the list of allowed NIRCam CORONMSK values in model schemas. [#4234]
 
+flat_field
+----------
+ - Updated handling of FGS Guider data, which has not been run through ramp
+   fitting. [#4309]
+
 lib
 ---
 
