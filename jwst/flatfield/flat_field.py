@@ -184,7 +184,7 @@ def apply_flat_field(science, flat):
         science.var_rnoise /= flat_data_squared
         science.var_flat = science.data**2 / flat_data_squared * flat_err**2
         science.err = np.sqrt(science.var_poisson + science.var_rnoise + science.var_flat)
-    else: 
+    else:
         flat_data_squared = flat_data**2
         science.var_flat = science.data**2 / flat_data_squared * flat_err**2
         science.err = np.sqrt(science.var_flat)
