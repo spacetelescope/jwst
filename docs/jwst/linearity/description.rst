@@ -1,15 +1,13 @@
-
 Description
 ============
 
 Assumptions
 -----------
 
-Beginning with the Build 5 pipeline, it is assumed that the input science
-exposure data from near-IR instruments have had the superbias subtraction
-applied, therefore the correction coefficients stored in the linearity
-reference files for those instruments must also have been
-derived from data that had the zero group subtracted.
+It is assumed that the input science exposure data for near-IR instruments
+have had the superbias subtraction applied, therefore the correction
+coefficients stored in the linearity reference files for those instruments
+must have been derived from data that also had the zero group subtracted.
 
 It is also assumed that the saturation step has already been applied to
 the science data, so that saturation flags are set in the GROUPDQ array of
@@ -21,14 +19,7 @@ Algorithm
 The linearity step applies the "classic" linearity correction adapted from
 the HST WFC3/IR linearity correction routine, correcting science data values
 for detector non-linearity. The correction is applied pixel-by-pixel,
-group-by-group, integration-by-integration within a science exposure.  Pixels
-having at least one correction coefficient equal to NaN (not a number), or are
-flagged with "Linearity Correction not determined for pixel" (NO_LIN_CORR) in
-the PIXELDQ
-array will not have the linearity correction applied. Pixel values flagged as
-saturated in the GROUPDQ array for a given group will not have the linearity
-correction applied. All non-saturated groups for such a pixel will have the
-correction applied.
+group-by-group, integration-by-integration within a science exposure.
 
 The correction is represented by an nth-order polynomial for
 each pixel in the detector, with n+1 arrays of coefficients read from the
@@ -43,10 +34,29 @@ coefficients, and :math:`F_\text{c}` is the corrected counts. There is no
 limit to the order of the polynomial correction; all coefficients contained in
 the reference file will be applied.
 
+Upon successful completion of the linearity correction the S_LINEAR keyword is
+set to "COMPLETE."
+
+Special Handling
+++++++++++++++++
+
+- Pixels having at least one correction coefficient equal to NaN will not have
+  the linearity correction applied and the DQ flag "NO_LIN_CORR" is added to
+  the science exposure PIXELDQ array.
+
+- Pixels that have the "NO_LIN_CORR" flag set in the DQ array of the linearity
+  reference file will not have the correction applied and the "NO_LIN_CORR" flag
+  is added to the science exposure PIXELDQ array.
+
+- Pixel values that have the "SATURATED" flag set in a particular group of the
+  science exposure GROUPDQ array will not have the linearity correction
+  applied to that group. Any groups for that pixel that are not flagged as
+  saturated will be corrected.
+
 The ERR array of the input science exposure is not modified.
 
-The values from the linearity reference file DQ array are propagated into the
-PIXELDQ array of the input science exposure using a bitwise OR operation.
+The flags from the linearity reference file DQ array are propagated into the
+PIXELDQ array of the science exposure using a bit-wise OR operation.
 
 Subarrays
 ---------
@@ -57,4 +67,4 @@ science data, they will be applied directly. If there is a mismatch, the
 routine will extract a matching subarray from the reference file data arrays
 and apply them to the science data. Hence full-frame reference files can be
 used for both full-frame and subarray science exposures, or
-subarray-dependent reference files can be provided if necessary.
+subarray-dependent reference files can be provided if desired.

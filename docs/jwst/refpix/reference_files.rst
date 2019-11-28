@@ -7,4 +7,3 @@ readout pattern. No other instruments or exposure modes require a
 reference file for this step.
 
 .. include:: ../references_general/refpix_reffile.inc
-
