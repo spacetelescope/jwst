@@ -104,41 +104,52 @@ class Spec3Pipeline(Pipeline):
             # so we use all the inputs in subsequent steps
             source_models = input_models
 
-        # `sources` is the list of astronomical sources that need be
-        # processed. Each element is a ModelContainer, which contains
-        # models for all exposures that belong to a single source.
-        #
         # For JWST spectral modes, the input associations can contain
-        # one of two types of collections. If the exposure type is
-        # considered single-source, then the association contains only
-        # exposures of that source.
+        # one of two types of collections: Single Object or Multi-Object.
         #
-        # However, there are modes in which the exposures contain data
-        # from multiple sources. In that case, the data must be
-        # rearranged, collecting the exposures representing each
-        # source into its own ModelContainer. This produces a list of
-        # sources, each represented by a MultiExposureModel instead of
-        # a single ModelContainer.
-        sources = [source_models]
+        # For Single Object, sometimes referred to as "target-based", data, the input
+        # list of exposures contain data for just the one object.
+        #
+        # For Multi-Object, each exposure in the input list of exposures contain data
+        # for all the objects.
+        #
+        # For uniformity of processing, the input is arranged by source.
+        # For Single Object, the source id is simply the target id.
+        # For Multi-Object, the data is rearranged from the exposure-centric models,
+        # to a source-centric model where each model contains the part of the exposure
+        # only relevant to that source.
+        #
+        # The rest of the processing is then done on a source-by-source basis.
+
+        # Arrange the data in a source-based hierarchy.
+        # `sources` will be a 2-tuple consisting of:
+        #    (id, ModelContainer)
+        #
+        #     `id`: A `str` with the source name. If single-source,
+        #     then this will have the target identifier
+        #     `ModelContainer`: The list of data belonging to the source.
+        #
+        # If target-based, `id` will be `target`
         if model_type in MULTISOURCE_MODELS:
+            # Multi-source information. Invert the data structure.
             self.log.info('Convert from exposure-based to source-based data.')
             sources = [
                 (name, model)
                     for name, model in multislit_to_container(source_models).items()
                 ]
+        else:
+            # Single-source. The source ID is simply the target name.
+            sources = [('target', source_models)]
 
         # Process each source
         for source in sources:
+            source_id, result = source
 
-            # If each source is a SourceModelContainer
-            # the output name needs to be updated with the source name.
-            if isinstance(source, tuple):
-                source_id, result = source
+            # If multi-object data, reformat the output name.
+            if source_id != 'target':
                 self.output_file = format_product(
                     output_file, source_id=source_id.lower()
                 )
-            else:
-                result = source
 
             # The MultiExposureModel is a required output.
             if isinstance(result, datamodels.SourceModelContainer):
