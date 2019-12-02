@@ -11,17 +11,29 @@ class NirspecIFUCubeParsModel(ReferenceFileModel):
     ifucubepars_table : numpy table
          default IFU cube  parameters table
 
-    ifucubepars_msn_table : numpy table
-         default IFU cube msn parameters table
+    ifucubepars_msm_table : numpy table
+         default IFU cube msm parameters table
 
-    ifucubepars_prism_wavetable : numpy table
-         default IFU cube prism wavetable
+    ifucubepars_prism_msm_wavetable : numpy table
+         default IFU cube prism msm wavetable
 
-    ifucubepars_med_wavetable : numpy table
-         default IFU cube med resolution wavetable
+    ifucubepars_med_msm_wavetable : numpy table
+         default IFU cube med resolution msm  wavetable
 
-    ifucubepars_high_wavetable : numpy table
-         default IFU cube high resolution wavetable
+    ifucubepars_high_msm_wavetable : numpy table
+         default IFU cube high resolution msm wavetable
+
+    ifucubepars_emsm_table : numpy table
+         default IFU cube emsm parameters table
+
+    ifucubepars_prism_emsm_wavetable : numpy table
+         default IFU cube prism emsm wavetable
+
+    ifucubepars_med_emsm_wavetable : numpy table
+         default IFU cube med resolution emsm wavetable
+
+    ifucubepars_high_emsm_wavetable : numpy table
+         default IFU cube high resolution emsm  wavetable
     """
     schema_url = "nirspec_ifucubepars.schema"
 
@@ -35,11 +47,17 @@ class MiriIFUCubeParsModel(ReferenceFileModel):
     ifucubepars_table : numpy table
          default IFU cube  parameters table
 
-    ifucubepars_msn_table : numpy table
-         default IFU cube msn parameters table
+    ifucubepars_msm_table : numpy table
+         default IFU cube msm parameters table
 
-    ifucubepars_multichannel_wavetable : numpy table
-         default IFU cube prism wavetable
+    ifucubepars_multichannel_msm_wavetable : numpy table
+         default IFU cube msm wavetable
+
+    ifucubepars_emsm_table : numpy table
+         default IFU cube emsm parameters table
+
+    ifucubepars_multichannel_emsm_wavetable : numpy table
+         default IFU cube emsm wavetable
 
     """
     schema_url = "miri_ifucubepars.schema"

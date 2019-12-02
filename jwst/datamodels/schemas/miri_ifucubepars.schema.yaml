@@ -35,8 +35,8 @@ allOf:
         datatype: float32
       - name: softrad
         datatype: float32
-    ifucubepars_multichannel_wavetable:
-      title: default IFU cube multi channel wavetable
+    ifucubepars_multichannel_msm_wavetable:
+      title: default IFU cube multi channel msm  wavetable
       fits_hdu: MULTICHANNEL_MSM
       datatype:
       - name: wavelength
@@ -63,7 +63,7 @@ allOf:
         datatype: float32
       - name: scalerad
         datatype: float32
-    ifucubepars_multichannel_ewavetable:
+    ifucubepars_multichannel_emsm_wavetable:
       title: default IFU cube multi channel emsm wavetable
       fits_hdu: MULTICHANNEL_EMSM
       datatype:

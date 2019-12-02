@@ -35,8 +35,8 @@ allOf:
         datatype: float32
       - name: softrad
         datatype: float32
-    ifucubepars_prism_wavetable:
-      title: default IFU cube prism wavetable
+    ifucubepars_prism_msm_wavetable:
+      title: default IFU cube prism msm wavetable
       fits_hdu: MULTICHAN_PRISM_MSM
       datatype:
       - name: wavelength
@@ -49,8 +49,8 @@ allOf:
         datatype: float32
       - name: softrad
         datatype: float32
-    ifucubepars_med_wavetable:
-      title: default IFU cube med resolution wavetable
+    ifucubepars_med_msm_wavetable:
+      title: default IFU cube med resolution msm  wavetable
       fits_hdu: MULTICHAN_MED_MSM
       datatype:
       - name: wavelength
@@ -63,8 +63,8 @@ allOf:
         datatype: float32
       - name: softrad
         datatype: float32
-    ifucubepars_high_wavetable:
-      title: default IFU cube high resolution wavetable
+    ifucubepars_high_msm_wavetable:
+      title: default IFU cube high resolution msm wavetable
       fits_hdu: MULTICHAN_HIGH_MSM
       datatype:
       - name: wavelength
@@ -77,7 +77,7 @@ allOf:
         datatype: float32
       - name: softrad
         datatype: float32
-    ifucubepars_emsM_table:
+    ifucubepars_emsm_table:
       title: default IFU cube emsm parameters table
       fits_hdu: CUBEPAR_EMSM
       datatype:
@@ -91,7 +91,7 @@ allOf:
         datatype: float32
       - name: scalerad
         datatype: float32
-    ifucubepars_prism_ewavetable:
+    ifucubepars_prism_emsm_wavetable:
       title: default IFU cube emsm prism wavetable
       fits_hdu: MULTICHAN_PRISM_MSM
       datatype:
@@ -103,7 +103,7 @@ allOf:
         datatype: float32
       - name: scalerad
         datatype: float32
-    ifucubepars_med_ewavetable:
+    ifucubepars_med_emsm_wavetable:
       title: default IFU cube emsm med resolution wavetable
       fits_hdu: MULTICHAN_MED_EMSM
       datatype:
@@ -115,7 +115,7 @@ allOf:
         datatype: float32
       - name: scalerad
         datatype: float32
-    ifucubepars_high_ewavetable:
+    ifucubepars_high_emsm_wavetable:
       title: default IFU cube emsm high resolution wavetable
       fits_hdu: MULTICHAN_HIGH_EMSM
       datatype:
