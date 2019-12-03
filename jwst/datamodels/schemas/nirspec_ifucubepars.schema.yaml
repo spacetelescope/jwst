@@ -11,13 +11,13 @@ allOf:
         datatype: [ascii,5]
       - name: filter
         datatype: [ascii, 6]
-      - name: spaxelsize
-        datatype: float32
-      - name: spectralstep
-        datatype: float32
       - name: wavemin
         datatype: float32
       - name: wavemax
+        datatype: float32
+      - name: spaxelsize
+        datatype: float32
+      - name: spectralstep
         datatype: float32
     ifucubepars_msm_table:
       title: default IFU cube msn parameters table
@@ -93,7 +93,7 @@ allOf:
         datatype: float32
     ifucubepars_prism_emsm_wavetable:
       title: default IFU cube emsm prism wavetable
-      fits_hdu: MULTICHAN_PRISM_MSM
+      fits_hdu: MULTICHAN_PRISM_EMSM
       datatype:
       - name: wavelength
         datatype: float32

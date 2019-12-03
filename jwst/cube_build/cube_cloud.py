@@ -16,8 +16,8 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
                        spaxel_iflux,
                        flux,
                        coord1, coord2, wave,
-                       weighting_type, 
-                       rois_pixel, roiw_pixel, weight_pixel, 
+                       weighting_type,
+                       rois_pixel, roiw_pixel, weight_pixel,
                        softrad_pixel, scalerad_pixel):
 
     """ Map the detector pixels to the cube spaxels using the MSM parameters
@@ -103,7 +103,6 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
         radius = np.sqrt(xdistance * xdistance + ydistance * ydistance)
         indexr = np.where(radius <= rois_pixel[ipt])
         indexz = np.where(abs(zcoord - wave[ipt]) <= roiw_pixel[ipt])
-
         # on the wavelength boundaries the point cloud may not be in the IFUCube
         # the edge cases are skipped and not included in final IFUcube to avoid noisy results
         # Left commented code for checking later for NIRSPEC the spectral size
@@ -141,7 +140,7 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
                 weight_distance[weight_distance < lower_limit] = lower_limit
                 weight_distance = 1.0 / weight_distance
             elif weighting_type == 'emsm':
-                weight_distance = scalerad_pixel[ipt] * np.exp(1.0/wdistance)
+                weight_distance = np.exp(-wdistance/scalerad_pixel[ipt])
 
             weight_distance = weight_distance.flatten('F')
             weighted_flux = weight_distance * flux[ipt]
@@ -166,7 +165,7 @@ def match_det2cube_miripsf(alpha_resol, beta_resol, wave_resol,
                            spaxel_alpha, spaxel_beta, spaxel_wave,
                            flux,
                            coord1, coord2, wave, alpha_det, beta_det,
-                           weigthing_type,
+                           weighting_type,
                            rois_pixel, roiw_pixel,
                            weight_pixel,
                            softrad_pixel,

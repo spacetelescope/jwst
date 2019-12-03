@@ -552,6 +552,20 @@ class InstrumentInfo():
         self.Info[parameter1]['xstart'] = x1
         self.Info[parameter1]['xend'] = x2
 
+    def SetMSM(self, parameter1, parameter2, sroi, wroi, power, softrad):
+        self.Info[parameter1][parameter2]['sroi'] = sroi
+        self.Info[parameter1][parameter2]['wroi'] = wroi
+        self.Info[parameter1][parameter2]['msm_power'] = power
+        self.Info[parameter1][parameter2]['softrad'] = softrad
+        self.Info[parameter1][parameter2]['scalerad'] = None
+
+    def SetEMSM(self, parameter1, parameter2, sroi, wroi, scalerad):
+        self.Info[parameter1][parameter2]['sroi'] = sroi
+        self.Info[parameter1][parameter2]['wroi'] = wroi
+        self.Info[parameter1][parameter2]['msm_power'] = None
+        self.Info[parameter1][parameter2]['softrad'] = None
+        self.Info[parameter1][parameter2]['scalerad'] = scalerad
+
     def SetSpatialSize(self, value, parameter1, parameter2=None):
         if parameter2 is None:
             self.Info[parameter1]['ascale'] = value
@@ -580,6 +594,9 @@ class InstrumentInfo():
 
     def SetSoftRad(self, value, parameter1, parameter2):
         self.Info[parameter1][parameter2]['softrad'] = value
+
+    def SetScaleRad(self, value, parameter1, parameter2):
+        self.Info[parameter1][parameter2]['scalerad'] = value
 
     def Set_RP_Wave_Cutoff(self, table_wave_center, this_channel, this_band):
         self.Info[this_channel][this_band]['rp_wave_cuttoff'] = table_wave_center
@@ -682,7 +699,7 @@ class InstrumentInfo():
                  self.multich_wroi,
                  self.multich_power,
                  self.multich_softrad,
-                 self.multich_scalrad)
+                 self.multich_scalerad)
         return table
 
     def Get_prism_table(self):

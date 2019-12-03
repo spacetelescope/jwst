@@ -564,21 +564,8 @@ class IFUCubeData():
                         self.map_fov_to_dqplane(this_par1, coord1, coord2, wave, roiw_ave, slice_no)
                         t1 = time.time()
                         log.info("Time to set initial dq values = %.1f s" % (t1 - t0,))
-                    if self.weighting == 'msm':
+                    if self.weighting == 'msm' or self.weighting == 'emsm':
                         t0 = time.time()
-#                        if self.new_code:
-#                            print('calling new cube_cloud')
-#                            cube_cloud_quick.match_det2cube_msm(self.naxis1,self.naxis2,self.naxis3,
-#                                                              self.cdelt1,self.cdelt2,self.cdelt3,
-#                                                              self.rois,self.roiw,self.weight_power,
-#                                                              self.xcoord,self.ycoord,self.zcoord,
-#                                                              self.spaxel_flux,
-#                                                              self.spaxel_weight,
-#                                                              self.spaxel_iflux,
-#                                                              flux,
-#                                                              coord1,coord2,wave)
-#                        else:
-#                            print('calling old cube_cloud')
                         cube_cloud.match_det2cube_msm(self.naxis1, self.naxis2, self.naxis3,
                                                       self.cdelt1, self.cdelt2,
                                                       self.cdelt3_normal,
@@ -703,8 +690,6 @@ class IFUCubeData():
         this_par1 = self.list_par1[0]  # only one channel is used in this approach
 #        this_par2 = None  # not important for this type of mapping
 
-        self.weighting == 'msm'
-
         for j in range(n):
             log.info("Working on next Single IFU Cube = %i" % (j + 1))
             t0 = time.time()
@@ -804,12 +789,11 @@ class IFUCubeData():
 
             minwave[i] = self.instrument_info.GetWaveMin(par1, par2)
             maxwave[i] = self.instrument_info.GetWaveMax(par1, par2)
-            # values will be set to NONE is cube pars table does not contain them 
-            
+            # values will be set to NONE is cube pars table does not contain them
+
             power[i] = self.instrument_info.GetMSMPower(par1, par2)
             softrad[i] = self.instrument_info.GetSoftRad(par1, par2)
             scalerad[i] = self.instrument_info.GetScaleRad(par1, par2)
-            
         # Check the spatial size. If it is the same for the array set up the parameters
         all_same = np.all(spaxelsize == spaxelsize[0])
 
@@ -847,23 +831,23 @@ class IFUCubeData():
             weight_power = np.amin(power)
             self.soft_rad = np.amin(softrad)
             self.scalerad = np.amin(scalerad)
-            
+
         # if all bands have the same spectral size then linear_wavelength
         elif all_same_spectral:
             self.spectral_size = spectralsize[0]
             wave_roi = roiw[0]
             weight_power = power[0]
-            self.linear_wavelength = True # added this 10/01/19
+            self.linear_wavelength = True  # added this 10/01/19
             self.soft_rad = softrad[0]
             self.scalerad = scalerad[0]
         else:
             self.linear_wavelength = False
             if self.instrument == 'MIRI':
-                
+
                 table = self.instrument_info.Get_multichannel_table(self.weighting)
-                (table_wavelength, table_sroi, 
-                 table_wroi, table_power, 
-                 table_softrad, table_scalerad)  = table
+                (table_wavelength, table_sroi,
+                 table_wroi, table_power,
+                 table_softrad, table_scalerad) = table
 
             # getting NIRSPEC Table Values
             elif self.instrument == 'NIRSPEC':
@@ -880,9 +864,9 @@ class IFUCubeData():
                         table = self.instrument_info.Get_med_table()
                     if par1 in high:
                         table = self.instrument_info.Get_high_table()
-                    (table_wavelength, table_sroi, 
-                     table_wroi, table_power, 
-                     table_softrad, table_scalerad)  = table
+                    (table_wavelength, table_sroi,
+                     table_wroi, table_power,
+                     table_softrad, table_scalerad) = table
             # based on Min and Max wavelength - pull out the tables values that fall in this range
             # find the closest table entries to the self.wavemin and self.wavemax limits
             imin = (np.abs(table_wavelength - self.wavemin)).argmin()
@@ -923,6 +907,7 @@ class IFUCubeData():
         # set wave_roi and  weight_power to same values if they are in  list
         if self.roiw == 0:
             self.roiw = wave_roi
+
         if self.weight_power == 0:
             self.weight_power = weight_power
 
@@ -941,10 +926,9 @@ class IFUCubeData():
 #        print('linear wavelength', self.linear_wavelength)
 #        print('roiw', self.roiw)
 #        print('output_type',self.output_type)
-
-        print('weight_power',self.weight_power)
-        print('softrad',self.soft_rad)
-        print('scalerad',self.scalerad)
+#        print('weight_power',self.weight_power)
+#        print('softrad',self.soft_rad)
+#        print('scalerad',self.scalerad)
 # ******************************************************************************
 
     def setup_ifucube_wcs(self):
@@ -1295,7 +1279,6 @@ class IFUCubeData():
             softrad_det = np.zeros(wave.shape)
             scalerad_det = np.zeros(wave.shape)
 
-            
             if self.linear_wavelength:
                 rois_det[:] = self.rois
                 roiw_det[:] = self.roiw
@@ -1923,7 +1906,7 @@ class IFUCubeData():
 
         # weight_power is needed for single cubes. Linear Wavelengths
         # if non-linear wavelengths then this will be None
-        ifucube_model.meta.ifu.weight_power = float(self.weight_power)
+        ifucube_model.meta.ifu.weight_power = self.weight_power
 
         with datamodels.open(self.input_models[j]) as input:
             ifucube_model.meta.bunit_data = input.meta.bunit_data
