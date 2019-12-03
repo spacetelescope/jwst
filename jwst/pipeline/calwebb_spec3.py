@@ -3,7 +3,7 @@ from collections import defaultdict
 
 from .. import datamodels
 from ..associations.lib.rules_level3_base import format_product
-from ..exp_to_source import multislit_to_container
+from ..exp_to_source import exp_to_source
 from ..master_background.master_background_step import split_container
 from ..stpipe import Pipeline
 
@@ -135,7 +135,7 @@ class Spec3Pipeline(Pipeline):
             self.log.info('Convert from exposure-based to source-based data.')
             sources = [
                 (name, model)
-                    for name, model in multislit_to_container(source_models).items()
+                    for name, model in exp_to_source(source_models).items()
                 ]
         else:
             # Single-source. The source ID is simply the target name.
@@ -152,9 +152,9 @@ class Spec3Pipeline(Pipeline):
                 )
 
             # The MultiExposureModel is a required output.
-            if isinstance(result, datamodels.SourceModelContainer):
+            if isinstance(result, datamodels.MultiExposureModel):
                 self.save_model(result, 'cal')
-
+            breakpoint()
             # Call the skymatch step for MIRI MRS data
             if exptype in ['MIR_MRS']:
                 result = self.mrs_imatch(result)

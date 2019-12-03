@@ -35,13 +35,20 @@ def exp_to_source(inputs):
     result = DefaultOrderedDict(MultiExposureModel)
     for exposure in inputs:
         log.info('Reorganizing data from exposure {}'.format(exposure.meta.filename))
+        initial = True
         for slit in exposure.slits:
             log.debug('Copying source {}'.format(slit.source_id))
-            result[str(slit.source_id)].exposures.append(slit)
+            result_slit = result[str(slit.source_id)]
+            result_slit.exposures.append(slit)
             merge_tree(
-                result[str(slit.source_id)].exposures[-1].meta.instance,
+                result_slit.exposures[-1].meta.instance,
                 exposure.meta.instance
             )
+            if result_slit.meta.instrument.name is None:
+                merge_tree(
+                    result_slit.meta.instance,
+                    exposure.meta.instance
+                )
         exposure.close()
 
     # Turn off the default factory

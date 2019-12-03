@@ -471,6 +471,9 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         current_date.format = 'isot'
         self.meta.date = current_date.value
 
+        # Force the model_type to be what this model actually is.
+        self.meta.model_type = self.__class__.__name__
+
     def save(self, path, dir_path=None, *args, **kwargs):
         """
         Save to either a FITS or ASDF file, depending on the path.

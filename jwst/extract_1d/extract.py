@@ -2716,12 +2716,15 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
 
     if (was_source_model or
         isinstance(input_model, datamodels.MultiSlitModel) or
+        isinstance(input_model, datamodels.MultiExposureModel) or
         isinstance(input_model, datamodels.MultiProductModel)):
 
         if was_source_model:            # from a SourceModelContainer?
             slits = [input_model]
         elif isinstance(input_model, datamodels.MultiSlitModel):
             slits = input_model.slits
+        elif isinstance(input_model, datamodels.MultiExposureModel):
+            slits = input_model.exposures
         else:                           # MultiProductModel
             slits = input_model.products
 
