@@ -9,7 +9,7 @@ The ``mrs_imatch`` step "matches" image intensities of several input
 2D MIRI MRS images by fitting polynomials to cube intensities (cubes built
 from the input 2D images), in such a way as to minimize - in the least squares
 sense - inter-image mismatches in intensity. The "background matching" polynomials
-are defined in the frame of world coordinates (e.g. ``RA``, ``DEC``, ``lambda``).
+are defined in the frame of world coordinates (e.g. RA, DEC, lambda).
 
 Assumptions
 -----------
@@ -46,10 +46,12 @@ Step Arguments
 ==============
 The ``mrs_imatch`` step has two optional arguments:
 
-* ``bkg_degree``: (int) The background polynomial degree (Default: 1)
+``bkg_degree``
+  The background polynomial degree (int; default=1)
 
-* ``subtract``: (boolean) Indicates whether the computed matching
-  "backgrounds" should be subtracted from the image data (Default: False)
+``subtract``
+  Indicates whether the computed matching "backgrounds" should be subtracted
+  from the image data (bool; default=False)
 
 Reference Files
 ===============

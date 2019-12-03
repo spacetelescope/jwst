@@ -3,7 +3,6 @@ Description
 
 Assumptions
 -----------
-
 It is assumed that the input science exposure data for near-IR instruments
 have had the superbias subtraction applied, therefore the correction
 coefficients stored in the linearity reference files for those instruments
@@ -15,7 +14,6 @@ the input science data.
 
 Algorithm
 ---------
-
 The linearity step applies the "classic" linearity correction adapted from
 the HST WFC3/IR linearity correction routine, correcting science data values
 for detector non-linearity. The correction is applied pixel-by-pixel,
@@ -26,8 +24,10 @@ each pixel in the detector, with n+1 arrays of coefficients read from the
 linearity reference file.
 
 The algorithm for correcting the observed pixel value in each group of an
-integration is currently of the form
-:math:`F_\text{c} = c_{0} + c_{1}F + c_{2}F^2 + c_{3}F^3 ...`
+integration is currently of the form:
+
+.. math::
+   F_\text{c} = c_{0} + c_{1}F + c_{2}F^2 + c_{3}F^3 + ... + c_{n}F^n
 
 where :math:`F` is the observed counts (in DN), :math:`c_n` are the polynomial
 coefficients, and :math:`F_\text{c}` is the corrected counts. There is no
