@@ -239,15 +239,12 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                     setattr(self, attr, value)
 
     @property
-    def model_type(self):
-        match = re.search(r"(\w+)'", str(type(self)))
-        if match:
-            return match.group(1)
-        return "DataModel"
-        
+    def _model_type(self):
+        return self.__class__.__name__
+
     def __repr__(self):
         buf = ['<']
-        buf.append(self.model_type)
+        buf.append(self._model_type)
 
         if self.shape:
             buf.append(str(self.shape))
@@ -473,7 +470,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         self.meta.date = current_date.value
 
         # Enforce model_type to be the actual type of model being saved.
-        self.meta.model_type = self.model_type
+        self.meta.model_type = self._model_type
 
     def save(self, path, dir_path=None, *args, **kwargs):
         """

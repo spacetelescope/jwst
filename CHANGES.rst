@@ -6,6 +6,11 @@ associations
 
 - Update act_id format to allow base 36 values in product name [#4282]
 
+datamodels
+----------
+
+- Force data model type setting on save [#4318]
+
 master_background
 -----------------
 
