@@ -43,8 +43,8 @@ Stage 1:
     conda create -n jwstdp-0.14.2 --file https://ssb.stsci.edu/releases/jwstdp/0.14.2/[env_file]
     source activate jwstdp-0.14.2
 
-Where `[env_file]` = `conda_env_dump_stable-deps.txt` for Linux
-and   `[env_file]` = `conda_env_dump_osx-stable-deps.txt` for Macos
+Where `[env_file]` = `conda_python_stable-deps.txt` for Linux
+and   `[env_file]` = `conda_python_macos-stable-deps.txt` for Macos
 
 Stage 2:
 
@@ -130,7 +130,7 @@ Software vs DMS build version map
 
 | jwst tag | DMS build | CRDS_CONTEXT |   Date     |          Notes                           |
 | -------- | --------- | ------------ | ---------- | -----------------------------------------|
-|  0.14.2  | B7.4      | 0569         | 11/18/2019 | Final release candidate for B7.4         |
+|  0.14.2  | B7.4      | 0570         | 11/18/2019 | Final release candidate for B7.4         |
 |  0.14.1  | B7.4rc2   | 0568         | 11/11/2019 | Second release candidate for B7.4        |
 |  0.14.0  | B7.4rc1   | 0563         | 10/25/2019 | First release candidate for B7.4         |
 |  0.13.8  | B7.3.1    | 0541         | 09/05/2019 | Patch for Build 7.3 released as Build 7.3.1     |
