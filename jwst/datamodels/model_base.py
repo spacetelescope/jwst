@@ -5,6 +5,7 @@ Data model class heirarchy
 import copy
 import datetime
 import os
+import re
 import sys
 import warnings
 
@@ -237,16 +238,16 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                 if 'datatype' in subschema:
                     setattr(self, attr, value)
 
-
-    def __repr__(self):
-        import re
-
-        buf = ['<']
+    @property
+    def model_type(self):
         match = re.search(r"(\w+)'", str(type(self)))
         if match:
-            buf.append(match.group(1))
-        else:
-            buf.append("DataModel")
+            return match.group(1)
+        return "DataModel"
+        
+    def __repr__(self):
+        buf = ['<']
+        buf.append(self.model_type)
 
         if self.shape:
             buf.append(str(self.shape))
@@ -470,6 +471,9 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         current_date = Time(datetime.datetime.now())
         current_date.format = 'isot'
         self.meta.date = current_date.value
+
+        # Enforce model_type to be the actual type of model being saved.
+        self.meta.model_type = self.model_type
 
     def save(self, path, dir_path=None, *args, **kwargs):
         """
