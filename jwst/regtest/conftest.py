@@ -3,11 +3,12 @@ import os
 import copy
 import json
 
+import asdf
 import getpass
 import pytest
 from ci_watson.artifactory_helpers import UPLOAD_SCHEMA
 
-from regtestdata import RegtestData
+from .regtestdata import RegtestData
 
 
 TODAYS_DATE = datetime.now().strftime("%Y-%m-%d")
@@ -69,12 +70,13 @@ def generate_artifactory_json(request, artifactory_repos):
 
     rtdata = postmortem(request, 'rtdata') or postmortem(request, 'rtdata_module')
     if rtdata:
-        path = rtdata.output
-        cwd, _ = os.path.split(path)
-        remote_results_path = artifactory_result_path()
+        cwd = os.path.dirname(rtdata.output)
+        rtdata.remote_results_path = artifactory_result_path()
 
-        upload_schema_pattern.append(path)
-        upload_schema = generate_upload_schema(upload_schema_pattern, remote_results_path)
+        upload_schema_pattern.append(rtdata.input)
+        upload_schema_pattern.append(rtdata.output)
+        upload_schema = generate_upload_schema(upload_schema_pattern,
+            rtdata.remote_results_path)
 
         # Write the upload schema to JSON file
         jsonfile = os.path.join(cwd, "{}_results.json".format(request.node.name))
@@ -82,13 +84,19 @@ def generate_artifactory_json(request, artifactory_repos):
             json.dump(upload_schema, outfile, indent=2)
 
 
-        okify_schema_pattern.append(rtdata.truth)
+        pattern = os.path.join(rtdata.remote_results_path, os.path.basename(rtdata.output))
+        okify_schema_pattern.append(pattern)
         okify_schema = generate_upload_schema(okify_schema_pattern, rtdata.truth_remote)
 
         # Write the okify schema to JSON file
         jsonfile = os.path.join(cwd, "{}_okify.json".format(request.node.name))
         with open(jsonfile, 'w') as outfile:
             json.dump(okify_schema, outfile, indent=2)
+
+        # Write the rtdata class out as an ASDF file
+        path = os.path.join(cwd, "{}_rtdata.asdf".format(request.node.name))
+        rtdata.to_asdf(path)
+        print(rtdata)
 
 
 def generate_upload_schema(pattern, target, recursive=False):
