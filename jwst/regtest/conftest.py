@@ -3,7 +3,6 @@ import os
 import copy
 import json
 
-import asdf
 import getpass
 import pytest
 from ci_watson.artifactory_helpers import UPLOAD_SCHEMA
