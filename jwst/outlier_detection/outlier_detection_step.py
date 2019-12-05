@@ -68,6 +68,8 @@ class OutlierDetectionStep(Step):
         """Perform outlier detection processing on input data."""
         with datamodels.open(input) as input_models:
             self.input_models = input_models
+            if isinstance(self.input_models, datamodels.MultiExposureModel):
+                self.input_models = datamodels.SourceModelContainer(self.input_models)
             if not isinstance(self.input_models, datamodels.ModelContainer):
                 self.input_container = False
             else:
@@ -169,6 +171,9 @@ class OutlierDetectionStep(Step):
                 for model in self.input_models:
                     model.meta.cal_step.outlier_detection = 'COMPLETE'
             else:
+                self.input_models.meta.cal_step.outlier_detection = 'COMPLETE'
+            if isinstance(self.input_models, datamodels.SourceModelContainer):
+                self.input_models = self.input_models._multiexposure
                 self.input_models.meta.cal_step.outlier_detection = 'COMPLETE'
 
             return self.input_models
