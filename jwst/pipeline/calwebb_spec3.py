@@ -154,7 +154,7 @@ class Spec3Pipeline(Pipeline):
             # The MultiExposureModel is a required output.
             if isinstance(result, datamodels.MultiExposureModel):
                 self.save_model(result, 'cal')
-            breakpoint()
+
             # Call the skymatch step for MIRI MRS data
             if exptype in ['MIR_MRS']:
                 result = self.mrs_imatch(result)
@@ -164,7 +164,10 @@ class Spec3Pipeline(Pipeline):
                 # Update the asn table name to the level 3 instance so that
                 # the downstream products have the correct table name since
                 # the _cal files are not saved they will not be updated
-                for cal_array in result:
+                result_iterator = result
+                if isinstance(result, datamodels.MultiExposureModel):
+                    result_iterator = result.exposures
+                for cal_array in result_iterator:
                     cal_array.meta.asn.table_name = result.meta.table_name
                 result = self.outlier_detection(result)
 

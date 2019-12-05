@@ -6,6 +6,7 @@ from collections import OrderedDict
 from collections.abc import Callable
 
 from ..datamodels import (
+    DataModel,
     MultiExposureModel,
     SourceModelContainer
 )
@@ -45,10 +46,10 @@ def exp_to_source(inputs):
                 exposure.meta.instance
             )
             if result_slit.meta.instrument.name is None:
-                merge_tree(
-                    result_slit.meta.instance,
-                    exposure.meta.instance
-                )
+                if isinstance(inputs, DataModel):
+                    result_slit.update(inputs)
+                result_slit.update(exposure)
+
         exposure.close()
 
     # Turn off the default factory
