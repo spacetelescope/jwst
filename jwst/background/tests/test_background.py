@@ -199,10 +199,10 @@ def make_wfss_datamodel():
 
     return image
 
-@pytest.mark.skip(reason="Algorithm to calculate WFSS background needs refactoring, see jira ticket JP-1136")
+filter_list = ['F250M', 'F277W', 'F335M', 'F356W', 'F460M',
+               'F356W', 'F410M', 'F430M', 'F444W'] #+ ['F480M', 'F322W2', 'F300M']
 @pytest.mark.parametrize("pupils", ['GRISMC', 'GRISMR'])
-@pytest.mark.parametrize("filters", ['F250M', 'F277W', 'F300M', 'F322W2', 'F335M', 'F356W',
-                                     'F356W', 'F410M', 'F430M', 'F444W', 'F460M', 'F480M'])
+@pytest.mark.parametrize("filters", filter_list)
 @pytest.mark.parametrize("detectors", ['NRCALONG', 'NRCBLONG'])
 def test_nrc_wfss_background(filters, pupils, detectors, make_wfss_datamodel):
     """Test background subtraction for NIRCAM WFSS modes."""
