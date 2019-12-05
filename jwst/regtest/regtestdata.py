@@ -2,7 +2,6 @@ import os
 import pprint
 
 import asdf
-from asdf import util
 from ci_watson.artifactory_helpers import (
     get_bigdata_root,
     get_bigdata,
@@ -16,24 +15,26 @@ class RegtestData:
     def __init__(self, env="dev", inputs_root="jwst-pipeline",
         results_root="jwst-pipeline-results", docopy=True,
         input=None, input_remote=None, output=None, truth=None,
-        truth_remote=None):
+        truth_remote=None, **kwargs):
         self._env = env
         self._inputs_root = inputs_root
         self._results_root = results_root
 
         self.docopy = docopy
 
-        self._input = input
-        self._input_remote = input_remote
-        self._output = output
-        self._truth = truth
-        self._truth_remote = truth_remote
+        self.input = input
+        self.input_remote = input_remote
+        self.output = output
+        self.truth = truth
+        self.truth_remote = truth_remote
+        self.remote_results_path = None
         self._bigdata_root = get_bigdata_root()
 
     def __repr__(self):
         return pprint.pformat(
             dict(input=self.input, output=self.output, truth=self.truth,
-            input_remote=self.input_remote, truth_remote=self.truth_remote),
+            input_remote=self.input_remote, truth_remote=self.truth_remote,
+            remote_results_path=self.remote_results_path),
             indent=2
         )
 
@@ -46,7 +47,10 @@ class RegtestData:
 
     @input_remote.setter
     def input_remote(self, value):
-        self._input_remote = value.split(os.sep)
+        if value:
+            self._input_remote = value.split(os.sep)
+        else:
+            self._input_remote = value
 
     @property
     def truth_remote(self):
@@ -57,7 +61,10 @@ class RegtestData:
 
     @truth_remote.setter
     def truth_remote(self, value):
-        self._truth_remote = value.split(os.sep)
+        if value:
+            self._truth_remote = value.split(os.sep)
+        else:
+            self._truth_remote = value
 
     @property
     def input(self):
@@ -65,7 +72,10 @@ class RegtestData:
 
     @input.setter
     def input(self, value):
-        self._input = os.path.abspath(value)
+        if value:
+            self._input = os.path.abspath(value)
+        else:
+            self._input = value
 
     @property
     def truth(self):
@@ -73,7 +83,10 @@ class RegtestData:
 
     @truth.setter
     def truth(self, value):
-        self._truth = os.path.abspath(value)
+        if value:
+            self._truth = os.path.abspath(value)
+        else:
+            self._truth = value
 
     @property
     def output(self):
@@ -81,7 +94,18 @@ class RegtestData:
 
     @output.setter
     def output(self, value):
-        self._output = os.path.abspath(value)
+        if value:
+            self._output = os.path.abspath(value)
+        else:
+            self._output = value
+
+    @property
+    def remote_results_path(self):
+        return self._remote_results_path
+
+    @remote_results_path.setter
+    def remote_results_path(self, value):
+        self._remote_results_path = value
 
     @property
     def bigdata_root(self):
@@ -102,8 +126,8 @@ class RegtestData:
             path = self.input_remote
         else:
             self.input_remote = path
-        self.input = get_bigdata(self._inputs_root, self._env,
-            os.path.dirname(path), os.path.basename(path), docopy=self.docopy)
+        self.input = get_bigdata(self._inputs_root, self._env, path,
+            docopy=self.docopy)
 
         return self.input
 
@@ -119,9 +143,9 @@ class RegtestData:
         os.makedirs('truth', exist_ok=True)
         os.chdir('truth')
         try:
-            self.truth = get_bigdata(self._inputs_root, self._env,
-                os.path.dirname(path), os.path.basename(path), docopy=self.docopy)
-            self.truth_remote = os.path.join(self._bigdata_root, self._inputs_root, self._env, path)
+            self.truth = get_bigdata(self._inputs_root, self._env, path,
+                docopy=self.docopy)
+            self.truth_remote = os.path.join(self._inputs_root, self._env, path)
         except BigdataError:
             os.chdir('..')
             raise
@@ -132,9 +156,12 @@ class RegtestData:
     def get_association(self, asn):
         return NotImplemented
 
-    def to_asdf(self):
-        tree = eval(self.__repr__())
+    def to_asdf(self, path):
+        tree = eval(str(self))
         af = asdf.AsdfFile(tree=tree)
+        af.write_to(path)
 
-    def read(self, filename):
-        return NotImplemented
+    @classmethod
+    def open(cls, filename):
+        with asdf.open(filename) as af:
+            return cls(**af.tree)
