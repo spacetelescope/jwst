@@ -107,8 +107,8 @@ class Extract1dStep(Step):
         elif isinstance(input_model, datamodels.MultiSlitModel):
             self.log.debug('Input is a MultiSlitModel')
         elif isinstance(input_model, datamodels.MultiExposureModel):
-            self.log.warning('Input is a MultiExposureModel, '
-                             'which is not currently supported')
+            self.log.debug('Input is a MultiExposureModel, '
+                           'which is only supported for multi-object modes')
         elif isinstance(input_model, datamodels.MultiProductModel):
             self.log.debug('Input is a MultiProductModel')
         elif isinstance(input_model, datamodels.IFUCubeModel):
@@ -195,5 +195,8 @@ class Extract1dStep(Step):
             result.meta.cal_step.extract_1d = 'COMPLETE'
 
         input_model.close()
+
+        if len(result) and result[0].meta.exposure.type == 'NIS_SOSS':
+            result = datamodels.MultiExposureModel(result)
 
         return result

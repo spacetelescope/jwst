@@ -190,12 +190,6 @@ class Spec3Pipeline(Pipeline):
             if exptype in SLITLESS_TYPES:
 
                 # For slitless data, extract 1D spectra and then combine them
-
-                if exptype in ['NIS_SOSS']:
-                    # For NIRISS SOSS, don't save the extract_1d results,
-                    # they're identical to the calwebb_spec2 x1d products
-                    self.extract_1d.save_results = False
-
                 result = self.extract_1d(result)
                 result = self.combine_1d(result)
 
