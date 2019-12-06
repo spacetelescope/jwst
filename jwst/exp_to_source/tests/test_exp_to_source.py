@@ -34,7 +34,6 @@ def test_model_structure(run_exp_to_source):
             assert (exposure.data == slit.data).all()
             assert len(exposure.meta._instance) >= len(in_model.meta._instance)
             assert exposure.meta.filename == in_model.meta.filename
-            assert outputs[str(slit.source_id)].meta.filename != in_model.meta.filename
 
 
 def test_model_roundtrip(tmpdir, run_exp_to_source):
