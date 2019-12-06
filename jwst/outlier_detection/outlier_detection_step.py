@@ -153,7 +153,11 @@ class OutlierDetectionStep(Step):
 
             if not self.valid_input:
                 result = input_models
-                for input in result:
+                if isinstance(result, datamodels.ModelContainer):
+                    result_iter = result
+                else:
+                    result_iter = [result]
+                for input in result_iter:
                     input.meta.cal_step.outlier_detection = "SKIPPED"
                     self.skip = True
                 return result

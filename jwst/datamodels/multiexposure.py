@@ -3,8 +3,10 @@ from copy import deepcopy
 from asdf import schema as asdf_schema
 from asdf import treeutil, AsdfFile
 
+from .container import ModelContainer
 from .model_base import DataModel
 from .image import ImageModel
+from .properties import merge_tree
 from .slit import SlitModel, SlitDataModel
 
 __all__ = ['MultiExposureModel']
@@ -57,18 +59,13 @@ class MultiExposureModel(DataModel):
                 schema=schema,
                 **kwargs
             )
-            self.update(init)
-            self.exposures.append(self.exposures.item())
-            self.exposures[0].data = init.data
-            self.exposures[0].dq = init.dq
-            self.exposures[0].err = init.err
-            self.exposures[0].wavelength = init.wavelength
-            self.exposures[0].barshadow = init.barshadow
-            self.exposures[0].area = init.area
-            self.exposures[0].var_poisson = init.var_poisson
-            self.exposures[0].var_rnoise = init.var_rnoise
-            self.exposures[0].var_flat = init.var_flat
-            self.exposures[0].pathloss = init.pathloss
+            self.append(init)
+            return
+
+        if isinstance(init, ModelContainer):
+            self.__init__(init[0])
+            for idx in range(1, len(init)):
+                self.append(init[idx])
             return
 
         super(MultiExposureModel, self).__init__(
@@ -76,6 +73,19 @@ class MultiExposureModel(DataModel):
             schema=schema,
             **kwargs
         )
+
+    def append(self, model):
+        """Append a new model to the exposures list
+
+        Parameters
+        ----------
+        model: `DataModel`
+            The model to append
+        """
+        if not len(self.exposures):
+            self.update(model)
+
+        self.exposures.append(model)
 
     def _build_schema(self):
         """Build the schema, encorporating the core."""
