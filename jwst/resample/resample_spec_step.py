@@ -22,7 +22,9 @@ class ResampleSpecStep(ResampleStep):
         input = datamodels.open(input)
 
         # If single DataModel input, wrap in a ModelContainer
-        if not isinstance(input, ModelContainer):
+        if isinstance(input, datamodels.MultiExposureModel):
+            input_models = datamodels.SourceModelContainer(input)
+        elif not isinstance(input, ModelContainer):
             input_models = datamodels.ModelContainer([input])
             input_models.meta.resample.output = input.meta.filename
             self.blendheaders = False

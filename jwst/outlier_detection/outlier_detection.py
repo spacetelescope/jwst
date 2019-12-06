@@ -98,6 +98,9 @@ class OutlierDetection:
         if isinstance(self.inputs, datamodels.ModelContainer):
             self.input_models = self.inputs
             self.converted = False
+        elif isinstance(self.inputs, datamodels.MultiExposureModel):
+            self.input_models = datamodels.SourceModelContainer(self.inputs)
+            self.converted = True
         else:
             self.input_models = datamodels.ModelContainer()
             num_inputs = self.inputs.data.shape[0]
