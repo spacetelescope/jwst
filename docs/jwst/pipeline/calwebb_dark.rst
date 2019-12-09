@@ -45,7 +45,7 @@ Inputs
 4D raw data
 +++++++++++
 
-:Data model: `~jwst.datamodels.RampModel` or `~jwst.datamodels.MIRIRampModel`
+:Data model: `~jwst.datamodels.RampModel`
 :File suffix: _uncal
 
 The input to ``DarkPipeline`` is a single raw dark exposure,
@@ -58,7 +58,7 @@ Outputs
 4D corrected ramp
 +++++++++++++++++
 
-:Data model: `~jwst.datamodels.RampModel` or `~jwst.datamodels.MIRIRampModel`
+:Data model: `~jwst.datamodels.RampModel`
 :File suffix: _dark
 
 Result of applying all pipeline steps listed above.

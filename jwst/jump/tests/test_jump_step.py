@@ -3,7 +3,7 @@ from itertools import cycle
 import pytest
 import numpy as np
 
-from jwst.datamodels import MIRIRampModel
+from jwst.datamodels import RampModel
 from jwst.datamodels import GainModel, ReadnoiseModel
 from jwst.jump import JumpStep
 
@@ -84,7 +84,7 @@ def setup_inputs():
         read_noise = np.full((nrows, ncols), readnoise, dtype=np.float64)
         gdq = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.int32)
 
-        rampmodel = MIRIRampModel(data=data, err=err, pixeldq=pixdq, groupdq=gdq, times=times)
+        rampmodel = RampModel(data=data, err=err, pixeldq=pixdq, groupdq=gdq, times=times)
         rampmodel.meta.instrument.name = 'MIRI'
         rampmodel.meta.instrument.detector = 'MIRIMAGE'
         rampmodel.meta.instrument.filter = 'F480M'
