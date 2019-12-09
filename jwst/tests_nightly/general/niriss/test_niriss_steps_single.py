@@ -79,8 +79,8 @@ class TestDetector1Pipeline(BaseJWSTTest):
 @pytest.mark.bigdata
 class TestNIRISSSOSS2Pipeline(BaseJWSTTest):
     input_loc = 'niriss'
-    ref_loc = ['test_detector1pipeline', 'truth']
-    test_dir = 'test_detector1pipeline'
+    ref_loc = ['test_spec2pipeline', 'truth']
+    test_dir = 'test_spec2pipeline'
 
     def test_nirisssoss2pipeline1(self):
         """

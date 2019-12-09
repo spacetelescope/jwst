@@ -1,0 +1,41 @@
+#ASDF 1.0.0
+#ASDF_STANDARD 1.3.0
+%YAML 1.1
+%TAG ! tag:stsci.edu:asdf/
+--- !core/asdf-1.1.0
+asdf_library: !core/software-1.0.0 {author: Space Telescope Science Institute, homepage: 'http://github.com/spacetelescope/asdf',
+  name: asdf, version: 2.3.3}
+history:
+  entries:
+  - !core/history_entry-1.0.0 {description: Baseline configuration file., time: !!timestamp '2019-07-18
+      20:01:09'}
+  extensions:
+  - !core/extension_metadata-1.0.0
+    extension_class: asdf.extension.BuiltinExtension
+    software: {name: asdf, version: 2.3.3}
+meta:
+  author: Alfred E. Neuman
+  date: '2019-07-17T10:56:23.456'
+  description: MakeListStep parameters
+  instrument: {name: GENERIC}
+  pedigree: GROUND
+  reftype: pars-makeliststep
+  telescope: JWST
+  title: MakeListStep default parameters
+  useafter: '1990-04-24T00:00:00'
+parameters:
+  class: jwst.stpipe.tests.steps.MakeListStep
+  name: jwst_generic_pars-makeliststep_0002
+  input_dir: ''
+  output_ext: .fits
+  output_use_index: true
+  output_use_model: false
+  par1: 42.0
+  par2: Yes, a string
+  par3: false
+  post_hooks: []
+  pre_hooks: []
+  save_results: false
+  search_output_file: true
+  skip: false
+...

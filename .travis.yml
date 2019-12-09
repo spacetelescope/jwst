@@ -1,9 +1,8 @@
 dist: xenial
 language: python
-python: 3.6.8
+python: 3.7.5
 
 sudo: false
-#os: linux
 
 # The apt packages below are needed for sphinx builds
 addons:
@@ -12,32 +11,35 @@ addons:
       - texlive-latex-extra
       - dvipng
       - graphviz
+      - liblapack-dev
 
 env:
   global:
     - CRDS_SERVER_URL='https://jwst-crds.stsci.edu'
     - CRDS_PATH='/tmp/crds_cache'
-    - NUMPY_VERSION=1.16
-    - TEST_COMMAND='pytest --cov=./'
+    - CRDS_CLIENT_RETRY_COUNT=3
+    - CRDS_CLIENT_RETRY_DELAY_SECONDS=20
+    - TEST_COMMAND='pytest --cov-report=xml --cov=./'
+    - PIP_DEPENDENCIES='.[test]'
 
 matrix:
   # Don't wait for allowed failures
   fast_finish: true
 
   include:
-    # Run tests
-    - env: PIP_DEPENDENCIES='.[test]'
+    - python: 3.6.9
+    - python: 3.7.5
+    - python: 3.8.0
 
-    # Test with python 3.7
-    - python: 3.7
-      env: PIP_DEPENDENCIES='.[test]'
+    - env: PIP_DEPENDENCIES='numpy~=1.16.0 .[test]'
+      python: 3.6.9
+
+    # Test with SDP pinned dependencies
+    - env: PIP_DEPENDENCIES='-r requirements-sdp.txt .'
+      python: 3.7.4
 
     # Test with dev dependencies
     - env: PIP_DEPENDENCIES="-r requirements-dev.txt .[test]"
-
-    # Test with python 3.7 and dev dependencies
-    - python: 3.7
-      env: PIP_DEPENDENCIES="-r requirements-dev.txt .[test]"
 
     # Test with latest delivered CRDS_CONTEXT, as in regressions tests
     - env: CRDS_CONTEXT="jwst-edit"
@@ -54,18 +56,14 @@ matrix:
   allow_failures:
     - env: PIP_DEPENDENCIES="-r requirements-dev.txt .[test]"
 
-    - python: 3.7
-      env: PIP_DEPENDENCIES="-r requirements-dev.txt .[test]"
-
     - env: CRDS_CONTEXT="jwst-edit"
            PIP_DEPENDENCIES=".[test]"
 
 install:
-  - pip install numpy~=$NUMPY_VERSION
   - pip install $PIP_DEPENDENCIES
 
 script:
   - $TEST_COMMAND
 
-after_script:
-  - if [ "${TEST_COMMAND:0:6}" = "pytest" ]; then codecov; fi
+after_success:
+  - if [[ ${TEST_COMMAND} =~ ^pytest ]]; then codecov -F unittests; fi

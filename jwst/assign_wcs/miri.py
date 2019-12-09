@@ -16,6 +16,7 @@ from .util import (not_implemented_mode, subarray_transform,
 from ..datamodels import (DistortionModel, FilteroffsetModel,
                           DistortionMRSModel, WavelengthrangeModel,
                           RegionsModel, SpecwcsModel)
+from ..lib import s3_utils
 
 
 log = logging.getLogger(__name__)
@@ -203,7 +204,14 @@ def lrs_distortion(input_model, reference_files):
 
     # Read in the reference table data and get the zero point (SIAF reference point)
     # of the LRS in the subarray ref frame
-    with fits.open(reference_files['specwcs']) as ref:
+    # We'd like to open this file as a DataModel, so we can consolidate
+    # the S3 URI handling to one place.  The S3-related code here can
+    # be removed once that has been changed.
+    if s3_utils.is_s3_uri(reference_files['specwcs']):
+        ref = fits.open(s3_utils.get_object(reference_files['specwcs']))
+    else:
+        ref = fits.open(reference_files['specwcs'])
+    with ref:
         lrsdata = np.array([l for l in ref[1].data])
         # Get the zero point from the reference data.
         # The zero_point is X, Y  (which should be COLUMN, ROW)
@@ -523,6 +531,7 @@ exp_type2transform = {'mir_image': imaging,
                       'mir_flat-mrs': not_implemented_mode,
                       'mir_flat-image': not_implemented_mode,
                       'mir_dark': not_implemented_mode,
+                      'mir_taconfirm': imaging,
                       }
 
 

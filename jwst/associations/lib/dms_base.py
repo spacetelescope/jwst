@@ -6,11 +6,11 @@ from jwst.associations.exceptions import (
     AssociationNotValidError,
 )
 from jwst.associations.lib.acid import ACIDMixin
-from jwst.associations.lib.constraint import (Constraint, AttrConstraint)
+from jwst.associations.lib.constraint import (Constraint, AttrConstraint, SimpleConstraint)
 from jwst.associations.lib.utilities import getattr_from_list
 
 
-__all__ = ['Constraint_TSO', 'DMSBaseMixin']
+__all__ = ['Constraint_TargetAcq', 'Constraint_TSO', 'DMSBaseMixin']
 
 # Default product name
 PRODUCT_NAME_DEFAULT = 'undefined'
@@ -22,6 +22,7 @@ _ASN_NAME_TEMPLATE = 'jw{program}-{acid}_{type}_{sequence:03d}_asn'
 # Acquistions and Confirmation images
 ACQ_EXP_TYPES = (
     'mir_tacq',
+    'mir_taconfirm',
     'nis_taconfirm',
     'nis_tacq',
     'nrc_taconfirm',
@@ -44,6 +45,7 @@ EXPTYPE_MAP = {
     'mir_flatimage-ext': 'flat',
     'mir_flatmrs-ext':   'flat',
     'mir_tacq':          'target_acquisition',
+    'mir_taconfirm':     'target_acquisition',
     'nis_dark':          'dark',
     'nis_focus':         'engineering',
     'nis_lamp':          'engineering',
@@ -86,6 +88,8 @@ IMAGE2_SCIENCE_EXP_TYPES = [
     'nrc_image',
     'nrc_coron',
     'nrc_tsimage',
+    'nrs_mimf',
+    'fgs_image',
 ]
 
 IMAGE2_NONSCIENCE_EXP_TYPES = [
@@ -94,7 +98,6 @@ IMAGE2_NONSCIENCE_EXP_TYPES = [
     'nrc_focus',
     'nrs_focus',
     'nrs_image',
-    'nrs_mimf',
 ]
 IMAGE2_NONSCIENCE_EXP_TYPES.extend(ACQ_EXP_TYPES)
 
@@ -112,7 +115,7 @@ SPEC2_SCIENCE_EXP_TYPES = [
     'nis_wfss',
 ]
 
-SPECIAL_EXPTYPES = {
+SPECIAL_EXPOSURE_MODIFIERS = {
     'psf': ['is_psf'],
     'imprint': ['is_imprt'],
     'background': ['bkgdtarg']
@@ -297,32 +300,7 @@ class DMSBaseMixin(ACIDMixin):
         LookupError
             When `default` is None and an exposure type cannot be determined
         """
-        result = default
-
-        # Base type off of exposure type.
-        try:
-            exp_type = item['exp_type']
-        except KeyError:
-            raise LookupError('Exposure type cannot be determined')
-
-        result = EXPTYPE_MAP.get(exp_type, default)
-
-        if result is None:
-            raise LookupError('Cannot determine exposure type')
-
-        # For `science` data, compare against special modifiers
-        # to further refine the type.
-        if result == 'science':
-            for special, source in SPECIAL_EXPTYPES.items():
-                try:
-                    self.item_getattr(item, source)
-                except KeyError:
-                    pass
-                else:
-                    result = special
-                    break
-
-        return result
+        return get_exposure_type(item, default=default, association=self)
 
     def is_member(self, new_member):
         """Check if member is already a member
@@ -426,11 +404,7 @@ class DMSBaseMixin(ACIDMixin):
         KeyError
             None of the attributes are found in the dict.
         """
-        return getattr_from_list(
-            item,
-            attributes,
-            invalid_values=self.INVALID_VALUES
-        )
+        return item_getattr(item, attributes, self)
 
     def new_product(self, product_name=PRODUCT_NAME_DEFAULT):
         """Start a new product"""
@@ -623,6 +597,28 @@ class DMSAttrConstraint(AttrConstraint):
         super(DMSAttrConstraint, self).__init__(**kwargs)
 
 
+class Constraint_TargetAcq(SimpleConstraint):
+    """Select on target acquisition exposures
+
+    Parameters
+    ----------
+    association: Association
+        If specified, use the `get_exposure_type` method
+        of the association rather than the utility version.
+    """
+    def __init__(self, association=None):
+        if association is None:
+            _get_exposure_type = get_exposure_type
+        else:
+            _get_exposure_type = association.get_exposure_type
+
+        super(Constraint_TargetAcq, self).__init__(
+            name='target_acq',
+            value='target_acquisition',
+            sources=_get_exposure_type
+        )
+
+
 class Constraint_TSO(Constraint):
     """Match on Time-Series Observations"""
     def __init__(self, *args, **kwargs):
@@ -656,3 +652,120 @@ class Constraint_TSO(Constraint):
 def format_list(alist):
     """Format a list according to DMS naming specs"""
     return '-'.join(alist)
+
+
+def get_exposure_type(item, default='science', association=None):
+    """Determine the exposure type of a pool item
+
+    Parameters
+    ----------
+    item : dict
+        The pool entry to determine the exposure type of
+
+    default : str or None
+        The default exposure type.
+        If None, routine will raise LookupError
+
+
+
+    Returns
+    -------
+    exposure_type : str
+        Exposure type. Can be one of
+
+        - 'science': Item contains science data
+        - 'target_aquisition': Item contains target acquisition data.
+        - 'autoflat': NIRSpec AUTOFLAT
+        - 'autowave': NIRSpec AUTOWAVE
+        - 'psf': PSF
+        - 'imprint': MSA/IFU Imprint/Leakcal
+
+    Raises
+    ------
+    LookupError
+        When `default` is None and an exposure type cannot be determined
+    """
+    # Specify how attributes of the item are retrieved.
+    def _item_attr(item, sources):
+        """Get attribute value of an item
+
+        This simplifies the call to `item_getattr`
+        """
+        source, value = item_getattr(item, sources, association=association)
+        return value
+
+    # Define default type.
+    result = default
+
+    # Retrieve pointing type. This decides the basic exposure type.
+    # If the pointing is not science, we're done.
+    try:
+        result = _item_attr(item, ['pntgtype'])
+    except KeyError:
+        pass
+    else:
+        if result != 'science':
+            return result
+
+    # We have a science exposure. Refine further.
+    #
+    # Base type off of exposure type.
+    try:
+        exp_type = _item_attr(item, ['exp_type'])
+    except KeyError:
+        raise LookupError('Exposure type cannot be determined')
+
+    result = EXPTYPE_MAP.get(exp_type, default)
+
+    if result is None:
+        raise LookupError('Cannot determine exposure type')
+
+    # If result is not science, we're done.
+    if result != 'science':
+        return result
+
+    # For `science` data, compare against special modifiers
+    # to further refine the type.
+    for special, source in SPECIAL_EXPOSURE_MODIFIERS.items():
+        try:
+            _item_attr(item, source)
+        except KeyError:
+            pass
+        else:
+            result = special
+            break
+
+    return result
+
+
+def item_getattr(item, attributes, association=None):
+    """Return value from any of a list of attributes
+
+    Parameters
+    ----------
+    item : dict
+        item to retrieve from
+
+    attributes : list
+        List of attributes
+
+    Returns
+    -------
+    (attribute, value)
+        Returns the value and the attribute from
+        which the value was taken.
+
+    Raises
+    ------
+    KeyError
+        None of the attributes are found in the dict.
+    """
+    if association is None:
+        invalid_values = _EMPTY
+    else:
+        invalid_values = association.INVALID_VALUES
+    return getattr_from_list(
+        item,
+        attributes,
+        invalid_values=invalid_values
+    )

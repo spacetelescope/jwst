@@ -6,7 +6,6 @@ from jwst.tests.base_classes import pytest_generate_tests # noqa: F401
 from jwst.refpix import RefPixStep
 from jwst.dark_current import DarkCurrentStep
 from jwst.dq_init import DQInitStep
-from jwst.emission import EmissionStep
 from jwst.flatfield import FlatFieldStep
 from jwst.ipc import IPCStep
 from jwst.jump import JumpStep
@@ -53,14 +52,6 @@ class TestNIRCamSteps(BaseJWSTTestSteps):
                       output_truth='jw00017001001_01101_00001_NRCA1_dq_init.fits',
                       output_hdus=[],
                       id='dq_init_nircam'
-                      ),
-                 dict(input='jw00017001001_01101_00001_NRCA1_persistence.fits',
-                      test_dir='test_emission',
-                      step_class=EmissionStep,
-                      step_pars=dict(),
-                      output_truth='jw00017001001_01101_00001_NRCA1_emission.fits',
-                      output_hdus=[],
-                      id='emission_nircam'
                       ),
                  dict(input='jw00017001001_01101_00001_NRCA1_ramp_fit.fits',
                       test_dir='test_flat_field',

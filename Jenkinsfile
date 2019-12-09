@@ -7,6 +7,8 @@ withCredentials([string(
 env_vars = [
     "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
     "CRDS_PATH=./crds_cache",
+    "CRDS_CLIENT_RETRY_COUNT=3",
+    "CRDS_CLIENT_RETRY_DELAY_SECONDS=20",
 ]
 
 // pip related setup for local index, not used currently
@@ -36,8 +38,7 @@ bc1.build_cmds = [
     "pip install -e .[test]",
 ]
 bc1.test_cmds = [
-    "pytest --cov=./ -r sx --junitxml=results.xml",
-    "codecov --token=${codecov_token}"
+    "pytest -r sxf --junitxml=results.xml",
 ]
 
 // Generate conda-free build with python 3.7
@@ -49,9 +50,20 @@ bc2.build_cmds = [
     "pip install -e .[test]",
 ]
 bc2.test_cmds = [
-    "pytest --cov=./ -r sx --junitxml=results.xml",
-    "codecov --token=${codecov_token}"
+    "pytest -r sxf --junitxml=results.xml"
 ]
 
-utils.run([bc0, bc1, bc2])
+
+// Audit code with bandit
+bc3 = new BuildConfig()
+bc3.nodetype = 'python3.7'
+bc3.name = 'security-audit'
+bc3.build_cmds = [
+    "pip install -e .[test] bandit",
+]
+bc3.test_cmds = [
+    "bandit --exclude 'jwst/*test*' -r jwst scripts",
+]
+
+utils.run([bc0, bc1, bc2, bc3])
 }  // withCredentials

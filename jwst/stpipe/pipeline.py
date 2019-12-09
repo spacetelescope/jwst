@@ -31,11 +31,14 @@ Pipeline
 """
 from os.path import dirname, join
 
-from ..extern.configobj.configobj import Section
+from ..extern.configobj.configobj import Section, ConfigObj
 
 from . import config_parser
 from . import Step
 from . import crds_client
+from . import log
+from ..lib.class_property import ClassInstanceMethod
+
 
 class Pipeline(Step):
     """
@@ -144,6 +147,89 @@ class Pipeline(Step):
 
         return spec
 
+    @classmethod
+    def get_config_from_reference(cls, dataset, observatory=None):
+        """Retrieve step parameters from reference database
+
+        Parameters
+        ----------
+        cls : `jwst.stpipe.step.Step`
+            Either a class or instance of a class derived
+            from `Step`.
+
+        dataset : `jwst.datamodels.ModelBase`
+            A model of the input file.  Metadata on this input file will
+            be used by the CRDS "bestref" algorithm to obtain a reference
+            file.
+
+        observatory : str
+            telescope name used with CRDS,  e.g. 'jwst'.
+
+        Returns
+        -------
+        step_parameters : configobj
+            The parameters as retrieved from CRDS. If there is an issue, log as such
+            and return an empty config obj.
+        """
+        refcfg = ConfigObj()
+        refcfg['steps'] = Section(refcfg, refcfg.depth + 1, refcfg.main, name="steps")
+        log.log.debug('Retrieving all substep parameters from CRDS')
+        #
+        # Iterate over the steps in the pipeline
+        for cal_step in cls.step_defs.keys():
+            cal_step_class = cls.step_defs[cal_step]
+            refcfg['steps'][cal_step] = cal_step_class.get_config_from_reference(
+                dataset, observatory=observatory
+            )
+        #
+        # Now merge any config parameters from the step cfg file
+        pars_model = cls.get_pars_model()
+        log.log.debug(f'Retrieving pipeline {pars_model.meta.reftype.upper()} parameters from CRDS')
+        exceptions = crds_client.get_exceptions_module()
+        try:
+            ref_file = crds_client.get_reference_file(dataset,
+                                                      pars_model.meta.reftype,
+                                                      observatory=observatory,
+                                                      asn_exptypes=['science'])
+        except (AttributeError, exceptions.CrdsError, exceptions.CrdsLookupError):
+            log.log.debug(f'{pars_model.meta.reftype.upper()}: No parameters found')
+        else:
+            if ref_file != 'N/A':
+                log.log.info(f'{pars_model.meta.reftype.upper()} parameters found: {ref_file}')
+                refcfg = cls.merge_pipeline_config(refcfg, ref_file)
+            else:
+                log.log.debug(f'No {pars_model.meta.reftype.upper()} reference files found.')
+
+        return refcfg
+
+    @classmethod
+    def merge_pipeline_config(cls, refcfg, ref_file):
+        """
+        Merge the config parameters from a pipeline config reference file into the
+        config obtained from each step
+
+        Parameters
+        ----------
+        cls : jwst.stpipe.pipeline.Pipeline class
+            The pipeline class
+
+        refcfg : ConfigObj object
+            The ConfigObj created from crds cfg files from each of the steps
+            in the pipeline
+
+        ref_file : string
+            The name of the pipeline crds step config file
+
+        Returns
+        -------
+        ConfigObj of the merged parameters, with those from the pipeline cfg having
+        precedence over those from the individual steps
+        """
+
+        pipeline_cfg = config_parser.load_config_file(ref_file)
+        config_parser.merge_config(refcfg, pipeline_cfg)
+        return refcfg
+
     def set_input_filename(self, path):
         self._input_filename = path
         for key in self.step_defs:
@@ -158,7 +244,9 @@ class Pipeline(Step):
 
         input_file:  filename, model container, or model
 
-        returns:  None
+        Returns
+        -------
+        None
         """
         from .. import datamodels
         try:
@@ -194,7 +282,11 @@ class Pipeline(Step):
 
         Verify that all CRDS and overridden reference files are readable.
 
-        model:  An open Model object;  not a filename, ModelContainer, etc.
+        Parameters
+        ----------
+        model :  `DataModel`
+            Only a `DataModel` instnace is allowed.
+            Cannot be a filename, ModelContainer, etc.
         """
         ovr_refs = {
             reftype: self.get_ref_override(reftype)
@@ -232,3 +324,35 @@ class Pipeline(Step):
             return False
         else:
             return True
+
+    @ClassInstanceMethod
+    def get_pars(pipeline, full_spec=True):
+        """Retrieve the configuration parameters of a pipeline
+
+        The pipeline, and all referenced substeps, parameters
+        are retrieved.
+
+        Parameters
+        ----------
+        step : `Pipeline`-derived class or instance
+
+        full_spec : bool
+            Return all parameters, including parent-specified parameters.
+            If `False`, return only parameters specific to the class/instance.
+
+        Returns
+        -------
+        pars : dict
+            Keys are the parameters and values are the values.
+        """
+        pars = super().get_pars(full_spec=full_spec)
+        for step_name, step_class in pipeline.step_defs.items():
+
+            # If a step has already been instantiated, get its parameters
+            # from the instantiation. Otherwise, retrieve from the class
+            # itself.
+            try:
+                pars[step_name] = getattr(pipeline, step_name).get_pars(full_spec=full_spec)
+            except AttributeError:
+                pars[step_name] = step_class.get_pars(full_spec=full_spec)
+        return pars

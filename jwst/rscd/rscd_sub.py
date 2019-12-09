@@ -196,7 +196,10 @@ def get_rscd_parameters(input_model, rscd_model):
     readpatt = input_model.meta.exposure.readpatt
     subarray = input_model.meta.subarray.name
 
-#    if subarray == 'SUBPRISM': subarray = 'SLITLESSPRISM'
+    # Check for old values of the MIRI LRS slitless subarray name
+    # in the science data and change to the new
+    if subarray.upper() == 'SUBPRISM': subarray = 'SLITLESSPRISM'
+
     # Load the reference table columns of parameters
     readpatt_table = rscd_model.rscd_table['READPATT']
     subarray_table = rscd_model.rscd_table['SUBARRAY']
@@ -215,6 +218,12 @@ def get_rscd_parameters(input_model, rscd_model):
     sat_mzp_table = rscd_model.rscd_table['SAT_MZP']
     sat_rowterm_table = rscd_model.rscd_table['SAT_ROWTERM']
     sat_scale_table = rscd_model.rscd_table['SAT_SCALE']
+
+    # Check for old values of the MIRI LRS slitless subarray name
+    # in the reference file and change to the new
+    for i in range(len(subarray_table)):
+        if subarray_table[i].upper() == 'SUBPRISM':
+            subarray_table[i] = 'SLITLESSPRISM'
 
     # Find the matching table row index for even row parameters:
     # the match is based on READPATT, SUBARRAY, and row type (even/odd)

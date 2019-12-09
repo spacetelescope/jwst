@@ -30,6 +30,10 @@
 """This module defines functions that connect the core CRDS package to the
 JWST CAL code and STPIPE, tailoring it to work with DATAMODELS as inputs
 and provide results in the forms required by STPIPE.
+
+WARNING:  JWST CAL and CRDS have circular dependencies.  Do not use CRDS imports
+directly in modules other than this crds_client so that dependency order and
+general integration can be managed here.
 """
 
 import re
@@ -37,6 +41,14 @@ import re
 import crds
 from crds.core import config, exceptions, heavy_client, log
 from crds.core import crds_cache_locking
+
+from ..lib import s3_utils
+
+def get_exceptions_module():
+    """Provide external indirect access to the crds.core.exceptions module to
+    alleviate issues with circular dependencies.
+    """
+    return exceptions
 
 # This is really a testing and debug convenience function, and notably now
 # the only place in this module that a direct import of datamodels occurs
@@ -115,12 +127,16 @@ def check_reference_open(refpath):
     Ignore reference path values of "N/A" or "" for checking.
     """
     if refpath != "N/A" and refpath.strip() != "":
-        opened = open(refpath, "rb")
-        opened.close()
+        if s3_utils.is_s3_uri(refpath):
+            if not s3_utils.object_exists(refpath):
+                raise RuntimeError("S3 object does not exist: " + refpath)
+        else:
+            opened = open(refpath, "rb")
+            opened.close()
     return refpath
 
 
-def get_reference_file(dataset, reference_file_type, observatory=None):
+def get_reference_file(dataset, reference_file_type, observatory=None, asn_exptypes=None):
     """
     Gets a reference file from CRDS as a readable file-like object.
     The actual file may be optionally overridden.
@@ -139,6 +155,11 @@ def get_reference_file(dataset, reference_file_type, observatory=None):
     observatory: string
         telescope name used with CRDS,  e.g. 'jwst'.
 
+    asn_exptypes: [str[,...]]
+        List of exposure types from an association file to read.
+        None read all the given files. Passed to
+        `jwst.datamodels.open`
+
     Returns
     -------
     reference_filepath : string
@@ -149,7 +170,7 @@ def get_reference_file(dataset, reference_file_type, observatory=None):
     """
     if isinstance(dataset, str):
         from jwst import datamodels
-        with datamodels.open(dataset) as model:
+        with datamodels.open(dataset, asn_exptypes=asn_exptypes) as model:
             return get_multiple_reference_paths(
                 model, [reference_file_type], observatory)[reference_file_type]
     else:

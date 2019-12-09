@@ -14,6 +14,8 @@ List of current models
 The current models are as follows:
 
     `AmiLgModel`,
+    `FgsImgApcorrModel`, `MirImgApcorrModel`,
+    `NrcImgApcorrModel`, `NisImgApcorrModel`,
     `AsnModel`,
     `BarshadowModel`,
     `CameraModel`,
@@ -51,8 +53,10 @@ The current models are as follows:
     `OutlierParsModel`,
     `PathlossModel`,
     `PersistenceSatModel`,
-    `PhotomModel`, `FgsPhotomModel`, `MiriImgPhotomModel`, `MiriMrsPhotomModel`,
-    `NircamPhotomModel`, `NirissPhotomModel`, `NirspecPhotomModel`, `NirspecFSPhotomModel`,
+    `FgsImgPhotomModel`, `MirImgPhotomModel`, `NrcImgPhotomModel`, `NisImgPhotomModel`,
+    `MirLrsPhotomModel`, `MirMrsPhotomModel`,
+    `NrcWfssPhotomModel`, `NisWfssPhotomModel`, `NisSossPhotomModel`,
+    `NrsMosPhotomModel`, `NrsFsPhotomModel`,
     `PixelAreaModel`,
     `PsfMaskModel`,
     `QuadModel`,

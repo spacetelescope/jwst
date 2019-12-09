@@ -13,7 +13,7 @@ from astropy.io import fits
 from ..util import open
 from .. import (DataModel, ModelContainer, ImageModel, ReferenceFileModel,
                 ReferenceImageModel, ReferenceCubeModel, ReferenceQuadModel,
-                FlatModel, MaskModel, NircamPhotomModel, GainModel,
+                FlatModel, MaskModel, NrcImgPhotomModel, GainModel,
                 ReadnoiseModel, DistortionModel)
 from jwst import datamodels
 
@@ -24,6 +24,16 @@ def test_open_fits():
     warnings.simplefilter("ignore")
     fits_file = t_path('test.fits')
     m = open(fits_file)
+    assert isinstance(m, DataModel)
+
+def test_open_fits_s3():
+    """Test opening a model from a FITS file on S3"""
+    m = open("s3://test-s3-data/data_model.fits")
+    assert isinstance(m, DataModel)
+
+def test_open_asdf_s3():
+    """Test opening a model from an ASDF file on S3"""
+    m = open("s3://test-s3-data/data_model.asdf")
     assert isinstance(m, DataModel)
 
 def test_open_association():
@@ -69,7 +79,7 @@ def test_open_image():
 def test_open_reference_files():
     files = {'nircam_flat.fits' : FlatModel,
              'nircam_mask.fits' : MaskModel,
-             'nircam_photom.fits' : NircamPhotomModel,
+             'nircam_photom.fits' : NrcImgPhotomModel,
              'nircam_gain.fits' : GainModel,
              'nircam_readnoise.fits' : ReadnoiseModel}
 

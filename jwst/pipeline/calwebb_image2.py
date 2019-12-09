@@ -56,6 +56,11 @@ class Image2Pipeline(Pipeline):
             self.log.info('Processing product {}'.format(product['name']))
             if self.save_results:
                 self.output_file = product['name']
+            try:
+                getattr(asn, 'filename')
+            except AttributeError:
+                asn.filename = "singleton"
+
             result = self.process_exposure_product(
                 product,
                 asn['asn_pool'],
