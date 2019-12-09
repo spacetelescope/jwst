@@ -2,6 +2,7 @@ from datetime import datetime
 import os
 import copy
 import json
+import sys
 
 import getpass
 import pytest
@@ -99,7 +100,7 @@ def generate_artifactory_json(request, artifactory_repos):
         # Write the rtdata class out as an ASDF file
         path = os.path.join(cwd, "{}_rtdata.asdf".format(request.node.name))
         rtdata.to_asdf(path)
-        print(rtdata)
+        print(rtdata, file=sys.stderr)
 
 
 def generate_upload_schema(pattern, target, recursive=False):
