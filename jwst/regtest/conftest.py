@@ -15,6 +15,7 @@ TODAYS_DATE = datetime.now().strftime("%Y-%m-%d")
 
 @pytest.fixture(scope="session")
 def artifactory_repos(pytestconfig):
+    """Provides Artifactory inputs_root and results_root"""
     inputs_root = pytestconfig.getini('inputs_root')[0]
     results_root = pytestconfig.getini('results_root')[0]
     return inputs_root, results_root
@@ -39,7 +40,7 @@ def postmortem(request, fixturename):
     """
     if request.node.report_setup.passed:
         if request.node.report_call.failed:
-            return request.node.funcargs.get(fixturename)
+            return request.node.funcargs.get(fixturename, None)
 
 
 @pytest.fixture(scope='function', autouse=True)
@@ -71,6 +72,9 @@ def generate_artifactory_json(request, artifactory_repos):
     if rtdata:
         cwd = os.path.dirname(rtdata.output)
         rtdata.remote_results_path = artifactory_result_path()
+        rtdata.test_name = request.node.name
+        # Dump the failed test traceback into rtdata
+        rtdata.traceback = str(request.node.report_call.longrepr)
 
         upload_schema_pattern.append(rtdata.input)
         upload_schema_pattern.append(rtdata.output)
@@ -154,8 +158,10 @@ def jail(request, tmpdir_factory):
     temporary directory, and then have the tests access them.
     """
     old_dir = os.getcwd()
-    newpath = tmpdir_factory.mktemp(request.module.__name__.split('.')[-1] +
-        "_" + request._parent_request.fixturename)
+    path = request.module.__name__.split('.')[-1]
+    if request._parent_request.fixturename is not None:
+        path = path + "_" + request._parent_request.fixturename
+    newpath = tmpdir_factory.mktemp(path)
     os.chdir(str(newpath))
     yield newpath
     os.chdir(old_dir)

@@ -15,27 +15,35 @@ class RegtestData:
     def __init__(self, env="dev", inputs_root="jwst-pipeline",
         results_root="jwst-pipeline-results", docopy=True,
         input=None, input_remote=None, output=None, truth=None,
-        truth_remote=None, **kwargs):
+        truth_remote=None, remote_results_path=None, test_name=None,
+        traceback=None, **kwargs):
         self._env = env
         self._inputs_root = inputs_root
         self._results_root = results_root
+        self._bigdata_root = get_bigdata_root()
 
         self.docopy = docopy
 
+        # Initialize @property attributes
         self.input = input
         self.input_remote = input_remote
         self.output = output
         self.truth = truth
         self.truth_remote = truth_remote
-        self.remote_results_path = None
-        self._bigdata_root = get_bigdata_root()
+
+        # No @properties for the following attributes
+        self.remote_results_path = remote_results_path
+        self.test_name = test_name
+        self.traceback = traceback
+
 
     def __repr__(self):
         return pprint.pformat(
             dict(input=self.input, output=self.output, truth=self.truth,
             input_remote=self.input_remote, truth_remote=self.truth_remote,
-            remote_results_path=self.remote_results_path),
-            indent=2
+            remote_results_path=self.remote_results_path,
+            traceback=self.traceback),
+            indent=1
         )
 
     @property
@@ -100,24 +108,11 @@ class RegtestData:
             self._output = value
 
     @property
-    def remote_results_path(self):
-        return self._remote_results_path
-
-    @remote_results_path.setter
-    def remote_results_path(self, value):
-        self._remote_results_path = value
-
-    @property
     def bigdata_root(self):
         return self._bigdata_root
 
-    @bigdata_root.setter
-    def bigdata_root(self, value):
-        return NotImplementedError("Set TEST_BIGDATA environment variable "
-            "to change this value.")
-
     # The methods
-    def get_data(self, path=None):
+    def get_data(self, path=None, docopy=None):
         """Copy data from Artifactory remote resource to the CWD
 
         Updates self.input and self.input_remote upon completion
@@ -126,12 +121,14 @@ class RegtestData:
             path = self.input_remote
         else:
             self.input_remote = path
+        if docopy is None:
+            docopy = self.docopy
         self.input = get_bigdata(self._inputs_root, self._env, path,
-            docopy=self.docopy)
+            docopy=docopy)
 
         return self.input
 
-    def get_truth(self, path=None):
+    def get_truth(self, path=None, docopy=None):
         """Copy truth data from Artifactory remote resource to the CWD/truth
 
         Updates self.truth and self.truth_remote on completion
@@ -140,11 +137,13 @@ class RegtestData:
             path = self.truth_remote
         else:
             self.truth_remote = path
+        if docopy is None:
+            docopy = self.docopy
         os.makedirs('truth', exist_ok=True)
         os.chdir('truth')
         try:
             self.truth = get_bigdata(self._inputs_root, self._env, path,
-                docopy=self.docopy)
+                docopy=docopy)
             self.truth_remote = os.path.join(self._inputs_root, self._env, path)
         except BigdataError:
             os.chdir('..')
