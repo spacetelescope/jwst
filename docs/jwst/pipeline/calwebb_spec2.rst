@@ -77,7 +77,7 @@ The instrument mode abbreviations used in the table are as follows:
 :sup:`1`\ Note that for NIRISS and NIRCam WFSS, as well as NIRCam TSO grism exposures,
 the order of the :ref:`extract_2d <extract_2d_step>` and :ref:`flat_field <flatfield_step>`
 steps is reversed: :ref:`flat_field <flatfield_step>` is performed first, then
-:ref:`background <background_step>`.
+:ref:`extract_2d <extract_2d_step>`.
 
 The :ref:`resample_spec <resample_step>` step produces a resampled/rectified product for
 non-IFU modes of some spectroscopic exposures. If the :ref:`resample_spec <resample_step>` step

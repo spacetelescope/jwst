@@ -26,6 +26,7 @@ from . import fits_support
 from . import properties
 from . import schema as mschema
 from . import validate
+from ..lib import s3_utils
 
 from .history import HistoryList
 
@@ -159,7 +160,11 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             file_type = filetype.check(init)
 
             if file_type == "fits":
-                hdulist = fits.open(init)
+                if s3_utils.is_s3_uri(init):
+                    hdulist = fits.open(s3_utils.get_object(init))
+                else:
+                    hdulist = fits.open(init)
+
                 asdffile = fits_support.from_fits(hdulist,
                                               self._schema,
                                               self._ctx,
@@ -232,16 +237,13 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                 if 'datatype' in subschema:
                     setattr(self, attr, value)
 
+    @property
+    def _model_type(self):
+        return self.__class__.__name__
 
     def __repr__(self):
-        import re
-
         buf = ['<']
-        match = re.search(r"(\w+)'", str(type(self)))
-        if match:
-            buf.append(match.group(1))
-        else:
-            buf.append("DataModel")
+        buf.append(self._model_type)
 
         if self.shape:
             buf.append(str(self.shape))
@@ -466,6 +468,9 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         current_date.format = 'isot'
         self.meta.date = current_date.value
 
+        # Enforce model_type to be the actual type of model being saved.
+        self.meta.model_type = self._model_type
+
     def save(self, path, dir_path=None, *args, **kwargs):
         """
         Save to either a FITS or ASDF file, depending on the path.
@@ -520,6 +525,8 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         Open an asdf object from a filename or create a new asdf object
         """
         if isinstance(init, str):
+            if s3_utils.is_s3_uri(init):
+                init = s3_utils.get_object(init)
             asdffile = asdf.open(init,
                                  ignore_version_mismatch=ignore_version_mismatch,
                                  ignore_unrecognized_tag=ignore_unrecognized_tag)

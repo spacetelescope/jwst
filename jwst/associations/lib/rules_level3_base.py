@@ -21,7 +21,6 @@ from jwst.associations.lib.utilities import (
     is_iterable
 )
 from jwst.associations.exceptions import (
-    #AssociationNotAConstraint,
     AssociationNotValidError,
 )
 from jwst.associations.lib.acid import ACID
@@ -33,13 +32,14 @@ from jwst.associations.lib.counter import Counter
 from jwst.associations.lib.dms_base import (
     _EMPTY,
     ACQ_EXP_TYPES,
+    Constraint_TargetAcq,
     CORON_EXP_TYPES,
     DMSAttrConstraint,
     DMSBaseMixin,
     IMAGE2_SCIENCE_EXP_TYPES,
     IMAGE2_NONSCIENCE_EXP_TYPES,
     SPEC2_SCIENCE_EXP_TYPES,
-    )
+)
 from jwst.associations.lib.format_template import FormatTemplate
 from jwst.associations.lib.member import Member
 
@@ -614,7 +614,8 @@ class Utility():
 format_product = FormatTemplate(
     key_formats={
         'source_id': ['s{:05d}', 's{:s}'],
-        'expspcin': ['{:02d}']
+        'expspcin': ['{:0>2s}']
+
     }
 )
 
@@ -730,6 +731,7 @@ class Constraint_Optical_Path(Constraint):
             DMSAttrConstraint(
                 name='opt_elem',
                 sources=['filter'],
+                required=False,
             ),
             DMSAttrConstraint(
                 name='opt_elem2',
@@ -816,7 +818,6 @@ class Constraint_Target(DMSAttrConstraint):
             )
 
 
-
 # -----------
 # Base Mixins
 # -----------
@@ -828,12 +829,7 @@ class AsnMixin_Science(DMS_Level3_Base):
         # Setup target acquisition inclusion
         constraint_acqs = Constraint(
             [
-                DMSAttrConstraint(
-                    name='acq_exp',
-                    sources=['exp_type'],
-                    value='|'.join(ACQ_EXP_TYPES),
-                    force_unique=False
-                ),
+                Constraint_TargetAcq(),
                 DMSAttrConstraint(
                     name='acq_obsnum',
                     sources=['obs_num'],
@@ -883,12 +879,7 @@ class AsnMixin_BkgScience(DMS_Level3_Base):
         # Setup target acquisition inclusion
         constraint_acqs = Constraint(
             [
-                DMSAttrConstraint(
-                    name='acq_exp',
-                    sources=['exp_type'],
-                    value='|'.join(ACQ_EXP_TYPES),
-                    force_unique=False
-                ),
+                Constraint_TargetAcq(),
                 DMSAttrConstraint(
                     name='acq_obsnum',
                     sources=['obs_num'],
@@ -955,9 +946,16 @@ class AsnMixin_AuxData(AsnMixin_Science):
         Returns
         -------
         exposure_type : 'science'
-            Always returns as science
+            Returns as science for most Exposures
+        exposure_type : 'target_acquisition'
+            Returns target_acquisition for mir_tacq
         """
+        NEVER_CHANGE = ['target_acquisition']
+        exp_type = super().get_exposure_type(item, default=default)
+        if exp_type in NEVER_CHANGE:
+            return exp_type
         return 'science'
+
     def _init_hook(self, item):
         """Post-check and pre-add initialization"""
 

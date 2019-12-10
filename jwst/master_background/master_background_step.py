@@ -216,6 +216,8 @@ def split_container(container):
 
     # Pass along the association table to the output science container
     science.meta.asn_table = {}
+    science.meta.pool_name = container.meta.pool_name
+    science.meta.table_name = container.meta.table_name
     datamodels.model_base.properties.merge_tree(
         science.meta.asn_table._instance, asn
     )

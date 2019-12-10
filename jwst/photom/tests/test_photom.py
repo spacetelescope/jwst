@@ -1,4 +1,5 @@
 import math
+import pytest
 import numpy as np
 
 from astropy import units as u
@@ -7,6 +8,9 @@ from jwst import datamodels
 from jwst.photom import photom
 
 MJSR_TO_UJA2 = (u.megajansky / u.steradian).to(u.microjansky / (u.arcsecond**2))
+
+# Multiply by this to convert from square arcseconds to steradians
+A2_TO_SR = (np.pi / (180. * 3600.))**2
 
 
 def mk_data(shape):
@@ -98,9 +102,11 @@ def create_input(instrument, detector, exptype,
         Detector name.  This is only used for populating a keyword.
 
     exptype : str
-        Exposure type.  These are explicitly checked for:
-        'NIS_WFSS', 'NIS_SOSS', 'NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ',
-        'NRS_MSASPEC', 'NRC_WFSS', 'MIR_MRS', 'MIR_LRS-FIXEDSLIT'.
+        Exposure type.  These can be explicitly checked for:
+        'MIR_MRS', 'MIR_LRS-FIXEDSLIT',
+        'NIS_SOSS', 'NIS_WFSS',
+        'NRC_WFSS',
+        'NRS_BRIGHTOBJ', 'NRS_FIXEDSLIT', 'NRS_IFU', 'NRS_MSASPEC'.
 
     filter : str or None
         Name of the element in the filter wheel.  For NIRISS WFSS, this
@@ -133,6 +139,7 @@ def create_input(instrument, detector, exptype,
             else:
                 shape = (5, 69)
                 dispaxis = 1                    # horizontal
+            input_model.meta.target.source_type = 'POINT'
             (data, dq, err, var_p, var_r, var_f) = mk_data(shape)
             wl = mk_wavelength(shape, 1.0, 5.0, dispaxis)
             for k in range(nslits):
@@ -142,6 +149,9 @@ def create_input(instrument, detector, exptype,
                 slit.var_rnoise = var_r
                 slit.var_flat = var_f
                 slit.meta.wcsinfo.spectral_order = k + 1
+                # Not realistic, just something for a default.
+                slit.meta.photometry.pixelarea_arcsecsq = 0.0025
+                slit.meta.photometry.pixelarea_steradians = 0.0025 * A2_TO_SR
                 input_model.slits.append(slit.copy())
         elif exptype == 'NIS_SOSS':
             shape = (96, 2048)
@@ -150,10 +160,13 @@ def create_input(instrument, detector, exptype,
             # There is no wavelength attribute for ImageModel, but this
             # should work anyway.
             wl = mk_wavelength(shape, 0.6, 4.0, dispaxis=1)
+            input_model.meta.target.source_type = 'POINT'  # output will be MJy
             input_model.wavelength = wl.copy()
             input_model.var_poisson = var_p
             input_model.var_rnoise = var_r
             input_model.var_flat = var_f
+            input_model.meta.photometry.pixelarea_arcsecsq = 0.0025
+            input_model.meta.photometry.pixelarea_steradians = 0.0025 * A2_TO_SR
         else:                                   # NIS_IMAGE
             shape = (96, 128)
             (data, dq, err, var_p, var_r, var_f) = mk_data(shape)
@@ -161,6 +174,9 @@ def create_input(instrument, detector, exptype,
             input_model.var_poisson = var_p
             input_model.var_rnoise = var_r
             input_model.var_flat = var_f
+            input_model.meta.target.source_type = 'POINT'
+            input_model.meta.photometry.pixelarea_arcsecsq = 0.0025
+            input_model.meta.photometry.pixelarea_steradians = 0.0025 * A2_TO_SR
     elif instrument == 'NIRSPEC':
         if exptype == 'NRS_FIXEDSLIT':
             nslits = 5
@@ -168,6 +184,7 @@ def create_input(instrument, detector, exptype,
             shape = (5, 69)
             (data, dq, err, var_p, var_r, var_f) = mk_data(shape)
             wl = mk_wavelength(shape, 1.0, 5.0, dispaxis=1)
+            input_model.meta.target.source_type = 'POINT'  # output will be MJy
             slitnames = ['S200A1', 'S200A2', 'S400A1', 'S1600A1', 'S200B1']
             for k in range(nslits):
                 slit = datamodels.SlitModel(data=data, dq=dq, err=err,
@@ -176,6 +193,8 @@ def create_input(instrument, detector, exptype,
                 slit.var_poisson = var_p
                 slit.var_rnoise = var_r
                 slit.var_flat = var_f
+                slit.meta.photometry.pixelarea_arcsecsq = 0.0025
+                slit.meta.photometry.pixelarea_steradians = 0.0025 * A2_TO_SR
                 input_model.slits.append(slit.copy())
         elif exptype == 'NRS_BRIGHTOBJ':
             shape = (3, 5, 69)
@@ -183,9 +202,12 @@ def create_input(instrument, detector, exptype,
             wl = mk_wavelength(shape, 1.0, 5.0, dispaxis=1)
             input_model = datamodels.SlitModel(data=data, dq=dq, err=err,
                                                wavelength=wl)
+            input_model.meta.target.source_type = 'POINT'  # output will be MJy
             input_model.var_poisson = var_p
             input_model.var_rnoise = var_r
             input_model.var_flat = var_f
+            input_model.meta.photometry.pixelarea_arcsecsq = 0.0025
+            input_model.meta.photometry.pixelarea_steradians = 0.0025 * A2_TO_SR
             input_model.name = 'S1600A1'
         elif exptype == 'NRS_MSASPEC':
             nslits = 3
@@ -200,6 +222,11 @@ def create_input(instrument, detector, exptype,
                 slit.var_poisson = var_p
                 slit.var_rnoise = var_r
                 slit.var_flat = var_f
+                # This may be the only case where the source type is specified
+                # in the slit attributes rather than in the primary header.
+                slit.source_type = 'POINT'
+                slit.meta.photometry.pixelarea_arcsecsq = 0.0025
+                slit.meta.photometry.pixelarea_steradians = 0.0025 * A2_TO_SR
                 input_model.slits.append(slit.copy())
         else:
             # NRS_IFU needs the wcs, so we won't cover this case.  Use a
@@ -218,6 +245,7 @@ def create_input(instrument, detector, exptype,
                 dispaxis = 1                    # horizontal
             (data, dq, err, var_p, var_r, var_f) = mk_data(shape)
             wl = mk_wavelength(shape, 2.4, 5.0, dispaxis)
+            input_model.meta.target.source_type = 'POINT'
             for k in range(nslits):
                 slit = datamodels.SlitModel(data=data, dq=dq, err=err,
                                             wavelength=wl)
@@ -225,6 +253,8 @@ def create_input(instrument, detector, exptype,
                 slit.var_poisson = var_p
                 slit.var_rnoise = var_r
                 slit.var_flat = var_f
+                slit.meta.photometry.pixelarea_arcsecsq = 0.0025
+                slit.meta.photometry.pixelarea_steradians = 0.0025 * A2_TO_SR
                 input_model.slits.append(slit.copy())
         else:                                   # NRC_IMAGE
             (data, dq, err, var_p, var_r, var_f) = mk_data((128, 256))
@@ -232,6 +262,9 @@ def create_input(instrument, detector, exptype,
             input_model.var_poisson = var_p
             input_model.var_rnoise = var_r
             input_model.var_flat = var_f
+            input_model.meta.target.source_type = 'POINT'
+            input_model.meta.photometry.pixelarea_arcsecsq = 0.0025
+            input_model.meta.photometry.pixelarea_steradians = 0.0025 * A2_TO_SR
     elif instrument == 'MIRI':
         if exptype == 'MIR_MRS':
             (data, dq, err, var_p, var_r, var_f) = mk_data((128, 256))
@@ -239,6 +272,9 @@ def create_input(instrument, detector, exptype,
             input_model.var_poisson = var_p
             input_model.var_rnoise = var_r
             input_model.var_flat = var_f
+            input_model.meta.target.source_type = 'POINT'
+            input_model.meta.photometry.pixelarea_arcsecsq = 0.0025
+            input_model.meta.photometry.pixelarea_steradians = 0.0025 * A2_TO_SR
         elif exptype == 'MIR_LRS-FIXEDSLIT':
             shape = (120, 100)
             array = np.zeros(shape, dtype=np.float32)
@@ -254,7 +290,10 @@ def create_input(instrument, detector, exptype,
             input_model.var_poisson = np.ones(shape, dtype=np.float32)
             input_model.var_rnoise = np.ones(shape, dtype=np.float32)
             input_model.var_flat = np.ones(shape, dtype=np.float32)
-            input_model.meta.subarray.name = 'SUBPRISM'     # matches 'GENERIC'
+            input_model.meta.subarray.name = 'FULL'
+            input_model.meta.target.source_type = 'POINT'
+            input_model.meta.photometry.pixelarea_arcsecsq = 0.0025
+            input_model.meta.photometry.pixelarea_steradians = 0.0025 * A2_TO_SR
         else:                                   # MIR_IMAGE
             shape = (128, 256)
             data = np.arange(128 * 256, dtype=np.float32).reshape(shape)
@@ -265,6 +304,9 @@ def create_input(instrument, detector, exptype,
             input_model.var_rnoise = np.ones(shape, dtype=np.float32)
             input_model.var_flat = np.ones(shape, dtype=np.float32)
             input_model.meta.subarray.name = 'SUB256'       # matches 'GENERIC'
+            input_model.meta.target.source_type = 'POINT'
+            input_model.meta.photometry.pixelarea_arcsecsq = 0.0025
+            input_model.meta.photometry.pixelarea_steradians = 0.0025 * A2_TO_SR
     elif instrument == 'FGS':
         shape = (64, 64)
         data = np.arange(64 * 64, dtype=np.float32).reshape(shape)
@@ -274,6 +316,9 @@ def create_input(instrument, detector, exptype,
         input_model.var_poisson = np.ones(shape, dtype=np.float32)
         input_model.var_rnoise = np.ones(shape, dtype=np.float32)
         input_model.var_flat = np.ones(shape, dtype=np.float32)
+        input_model.meta.target.source_type = 'POINT'
+        input_model.meta.photometry.pixelarea_arcsecsq = 0.0025
+        input_model.meta.photometry.pixelarea_steradians = 0.0025 * A2_TO_SR
     else:
         raise RuntimeError("instrument {} is not recognized".format(instrument))
 
@@ -334,7 +379,7 @@ def create_photom_nrs_fs(min_wl=1.0, max_wl=5.0, min_r=8.0, max_r=9.0):
 
     # [3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9, 4.0,
     #  4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9, 5.0]
-    photmjsr = np.linspace(3.1, 3.1 + (nrows - 1.) * 0.1, nrows)
+    photmj = np.linspace(3.1, 3.1 + (nrows - 1.) * 0.1, nrows)
     uncertainty = np.zeros(nrows, np.float32)
     nelem = np.zeros(nrows, np.int32) + nx
     x = np.linspace(min_wl, max_wl, nx, dtype=np.float32).reshape(1, nx)
@@ -348,19 +393,19 @@ def create_photom_nrs_fs(min_wl=1.0, max_wl=5.0, min_r=8.0, max_r=9.0):
     nx = wavelength.shape[-1]
 
     dtype = np.dtype([('filter', 'S12'),
-                      ('grating', 'S12'),
-                      ('slit', 'S12'),
-                      ('photmjsr', '<f4'),
+                      ('grating', 'S15'),
+                      ('slit', 'S15'),
+                      ('photmj', '<f4'),
                       ('uncertainty', '<f4'),
                       ('nelem', '<i2'),
                       ('wavelength', '<f4', (nx,)),
                       ('relresponse', '<f4', (nx,)),
                       ('reluncertainty', '<f4', (nx,))])
     reftab = np.array(list(zip(filter, grating, slit,
-                               photmjsr, uncertainty, nelem,
+                               photmj, uncertainty, nelem,
                                wavelength, relresponse, reluncertainty)),
                       dtype=dtype)
-    ftab = datamodels.NirspecFSPhotomModel(phot_table=reftab)
+    ftab = datamodels.NrsFsPhotomModel(phot_table=reftab)
 
     return ftab
 
@@ -395,7 +440,7 @@ def create_photom_nrs_msa(min_wl=1.0, max_wl=5.0, min_r=8.0, max_r=9.0):
     nx = 3
 
     # [3.1, 3.2, 3.3, 3.4]
-    photmjsr = np.linspace(3.1, 3.1 + (nrows - 1.) * 0.1, nrows)
+    photmj = np.linspace(3.1, 3.1 + (nrows - 1.) * 0.1, nrows)
     uncertainty = np.zeros(nrows, np.float32)
     nelem = np.zeros(nrows, np.int32) + nx
     x = np.linspace(min_wl, max_wl, nx, dtype=np.float32).reshape(1, nx)
@@ -407,18 +452,18 @@ def create_photom_nrs_msa(min_wl=1.0, max_wl=5.0, min_r=8.0, max_r=9.0):
     reluncertainty = np.ones((nrows, nx), np.float32)
 
     dtype = np.dtype([('filter', 'S12'),
-                      ('grating', 'S12'),
-                      ('photmjsr', '<f4'),
+                      ('grating', 'S15'),
+                      ('photmj', '<f4'),
                       ('uncertainty', '<f4'),
                       ('nelem', '<i2'),
                       ('wavelength', '<f4', (nx,)),
                       ('relresponse', '<f4', (nx,)),
                       ('reluncertainty', '<f4', (nx,))])
     reftab = np.array(list(zip(filter, grating,
-                               photmjsr, uncertainty, nelem,
+                               photmj, uncertainty, nelem,
                                wavelength, relresponse, reluncertainty)),
                       dtype=dtype)
-    ftab = datamodels.NirspecPhotomModel(phot_table=reftab)
+    ftab = datamodels.NrsMosPhotomModel(phot_table=reftab)
 
     return ftab
 
@@ -465,20 +510,22 @@ def create_photom_niriss_wfss(min_wl=1.0, max_wl=5.0, min_r=8.0, max_r=9.0):
     y = np.linspace(min_r, max_r, nx, dtype=np.float32).reshape(1, nx)
     relresponse = np.zeros((nrows, nx), np.float32)
     relresponse[:] = y.copy()
+    reluncertainty = np.ones((nrows, nx), np.float32)
 
     dtype = np.dtype([('filter', 'S12'),
-                      ('pupil', 'S12'),
+                      ('pupil', 'S15'),
                       ('order', '<i2'),
                       ('photmjsr', '<f4'),
                       ('uncertainty', '<f4'),
                       ('nelem', '<i2'),
                       ('wavelength', '<f4', (nx,)),
-                      ('relresponse', '<f4', (nx,))])
+                      ('relresponse', '<f4', (nx,)),
+                      ('reluncertainty', '<f4', (nx,))])
     reftab = np.array(list(zip(filter, pupil, order,
                                photmjsr, uncertainty, nelem,
-                               wavelength, relresponse)),
+                               wavelength, relresponse, reluncertainty)),
                       dtype=dtype)
-    ftab = datamodels.NirissPhotomModel(phot_table=reftab)
+    ftab = datamodels.NisWfssPhotomModel(phot_table=reftab)
 
     return ftab
 
@@ -508,7 +555,7 @@ def create_photom_niriss_soss(min_r=8.0, max_r=9.0):
     nx = 3
 
     # [3.1, 3.2]
-    photmjsr = np.linspace(3.1, 3.1 + (nrows - 1.) * 0.1, nrows)
+    photmj = np.linspace(3.1, 3.1 + (nrows - 1.) * 0.1, nrows)
     uncertainty = np.zeros(nrows, np.float32)
     nelem = np.zeros(nrows, np.int32) + nx
     wavelength = np.zeros((nrows, nx), np.float32)
@@ -517,20 +564,22 @@ def create_photom_niriss_soss(min_r=8.0, max_r=9.0):
     y = np.linspace(min_r, max_r, nx, dtype=np.float32).reshape(1, nx)
     relresponse = np.zeros((nrows, nx), np.float32)
     relresponse[:] = y.copy()
+    reluncertainty = np.ones((nrows, nx), np.float32)
 
     dtype = np.dtype([('filter', 'S12'),
                       ('pupil', 'S12'),
                       ('order', '<i2'),
-                      ('photmjsr', '<f4'),
+                      ('photmj', '<f4'),
                       ('uncertainty', '<f4'),
                       ('nelem', '<i2'),
                       ('wavelength', '<f4', (nx,)),
-                      ('relresponse', '<f4', (nx,))])
+                      ('relresponse', '<f4', (nx,)),
+                      ('reluncertainty', '<f4', (nx,))])
     reftab = np.array(list(zip(filter, pupil, order,
-                               photmjsr, uncertainty, nelem,
-                               wavelength, relresponse)),
+                               photmj, uncertainty, nelem,
+                               wavelength, relresponse, reluncertainty)),
                       dtype=dtype)
-    ftab = datamodels.NirissPhotomModel(phot_table=reftab)
+    ftab = datamodels.NisSossPhotomModel(phot_table=reftab)
 
     return ftab
 
@@ -555,31 +604,20 @@ def create_photom_niriss_image(min_r=8.0, max_r=9.0):
     # The middle row should be selected.
     filter = ["F430M", "CLEAR", "CLEAR"]
     pupil = ["F090W", "F140M", "F140W"]
-    order = [0, 0, 1]
 
     nrows = len(filter)
-    nx = 3
 
     # [3.1, 3.2, 3.3]
     photmjsr = np.linspace(3.1, 3.1 + (nrows - 1.) * 0.1, nrows)
     uncertainty = np.zeros(nrows, np.float32)
-    nelem = np.zeros(nrows, np.int32)           # must be zero for image data
-    wavelength = np.ones((nrows, nx), np.float32)
-    relresponse = np.zeros((nrows, nx), np.float32)
 
     dtype = np.dtype([('filter', 'S12'),
                       ('pupil', 'S12'),
-                      ('order', '<i2'),
                       ('photmjsr', '<f4'),
-                      ('uncertainty', '<f4'),
-                      ('nelem', '<i2'),
-                      ('wavelength', '<f4', (nx,)),
-                      ('relresponse', '<f4', (nx,))])
-    reftab = np.array(list(zip(filter, pupil, order,
-                               photmjsr, uncertainty, nelem,
-                               wavelength, relresponse)),
+                      ('uncertainty', '<f4')])
+    reftab = np.array(list(zip(filter, pupil, photmjsr, uncertainty)),
                       dtype=dtype)
-    ftab = datamodels.NirissPhotomModel(phot_table=reftab)
+    ftab = datamodels.NisImgPhotomModel(phot_table=reftab)
 
     return ftab
 
@@ -612,8 +650,8 @@ def create_photom_miri_mrs(shape, value, pixel_area, photmjsr):
     dq = np.zeros(shape, dtype=np.uint32)
     pixsiz = np.zeros(shape, dtype=np.float32) + pixel_area
 
-    ftab = datamodels.MiriMrsPhotomModel(data=data, err=err, dq=dq,
-                                         pixsiz=pixsiz)
+    ftab = datamodels.MirMrsPhotomModel(data=data, err=err, dq=dq,
+                                        pixsiz=pixsiz)
     ftab.meta.photometry.conversion_megajanskys = photmjsr
 
     return ftab
@@ -643,7 +681,7 @@ def create_photom_miri_lrs(min_wl=5.0, max_wl=10.0, min_r=8.0, max_r=9.0):
     """
 
     filter = ["F560W", "P750L", "F1000W"]
-    subarray = ["GENERIC", "GENERIC", "GENERIC"]
+    subarray = ["GENERIC", "FULL", "GENERIC"]
 
     nrows = len(filter)
     nx = 3
@@ -658,7 +696,7 @@ def create_photom_miri_lrs(min_wl=5.0, max_wl=10.0, min_r=8.0, max_r=9.0):
     y = np.linspace(min_r, max_r, nx, dtype=np.float32).reshape(1, nx)
     relresponse = np.zeros((nrows, nx), np.float32)
     relresponse[:] = y.copy()
-    relresperror = np.ones((nrows, nx), np.float32)
+    reluncertainty = np.ones((nrows, nx), np.float32)
 
     dtype = np.dtype([('filter', 'S12'),
                       ('subarray', 'S15'),
@@ -667,12 +705,12 @@ def create_photom_miri_lrs(min_wl=5.0, max_wl=10.0, min_r=8.0, max_r=9.0):
                       ('nelem', '<i2'),
                       ('wavelength', '<f4', (nx,)),
                       ('relresponse', '<f4', (nx,)),
-                      ('relresperror', '<f4', (nx,))])
+                      ('reluncertainty', '<f4', (nx,))])
     reftab = np.array(list(zip(filter, subarray,
                                photmjsr, uncertainty, nelem,
-                               wavelength, relresponse, relresperror)),
+                               wavelength, relresponse, reluncertainty)),
                       dtype=dtype)
-    ftab = datamodels.MiriImgPhotomModel(phot_table=reftab)
+    ftab = datamodels.MirLrsPhotomModel(phot_table=reftab)
 
     return ftab
 
@@ -705,33 +743,18 @@ def create_photom_miri_image(min_wl=16.5, max_wl=19.5,
     subarray = ["GENERIC", "GENERIC", "GENERIC"]
 
     nrows = len(filter)
-    nx = 3
 
     # [3.1, 3.2, 3.3]
     photmjsr = np.linspace(3.1, 3.1 + (nrows - 1.) * 0.1, nrows)
     uncertainty = np.zeros(nrows, np.float32)
-    nelem = np.zeros(nrows, np.int32)   # relresponse not used for imaging
-    x = np.linspace(min_wl, max_wl, nx, dtype=np.float32).reshape(1, nx)
-    wavelength = np.zeros((nrows, nx), np.float32)
-    wavelength[:] = x.copy()
-    y = np.linspace(min_r, max_r, nx, dtype=np.float32).reshape(1, nx)
-    relresponse = np.zeros((nrows, nx), np.float32)
-    relresponse[:] = y.copy()
-    relresperror = np.ones((nrows, nx), np.float32)
 
     dtype = np.dtype([('filter', 'S12'),
                       ('subarray', 'S15'),
                       ('photmjsr', '<f4'),
-                      ('uncertainty', '<f4'),
-                      ('nelem', '<i2'),
-                      ('wavelength', '<f4', (nx,)),
-                      ('relresponse', '<f4', (nx,)),
-                      ('relresperror', '<f4', (nx,))])
-    reftab = np.array(list(zip(filter, subarray,
-                               photmjsr, uncertainty, nelem,
-                               wavelength, relresponse, relresperror)),
+                      ('uncertainty', '<f4')])
+    reftab = np.array(list(zip(filter, subarray, photmjsr, uncertainty)),
                       dtype=dtype)
-    ftab = datamodels.MiriImgPhotomModel(phot_table=reftab)
+    ftab = datamodels.MirImgPhotomModel(phot_table=reftab)
 
     return ftab
 
@@ -755,31 +778,21 @@ def create_photom_nircam_image(min_r=8.0, max_r=9.0):
 
     filter = ["F090W", "F115W", "F150W", "F200W"]
     pupil = ["F162M", "F164N", "CLEAR", "WLP8"]
-    order = [0, 1, 0, 0]
 
     nrows = len(filter)
-    nx = 3
 
     # [3.1, 3.2, 3.3, 3.4]
     photmjsr = np.linspace(3.1, 3.1 + (nrows - 1.) * 0.1, nrows)
     uncertainty = np.zeros(nrows, np.float32)
-    nelem = np.zeros(nrows, np.int32)           # must be zero for image data
-    wavelength = np.ones((nrows, nx), np.float32)
-    relresponse = np.zeros((nrows, nx), np.float32)
 
     dtype = np.dtype([('filter', 'S12'),
                       ('pupil', 'S12'),
                       ('photmjsr', '<f4'),
-                      ('uncertainty', '<f4'),
-                      ('order', '<i2'),
-                      ('nelem', '<i2'),
-                      ('wavelength', '<f4', (nx,)),
-                      ('relresponse', '<f4', (nx,))])
-    reftab = np.array(list(zip(filter, pupil, photmjsr, uncertainty, order,
-                               nelem, wavelength, relresponse)),
+                      ('uncertainty', '<f4')])
+    reftab = np.array(list(zip(filter, pupil, photmjsr, uncertainty)),
                       dtype=dtype)
 
-    ftab = datamodels.NircamPhotomModel(phot_table=reftab)
+    ftab = datamodels.NrcImgPhotomModel(phot_table=reftab)
 
     return ftab
 
@@ -824,20 +837,22 @@ def create_photom_nircam_wfss(min_wl=2.4, max_wl=5.0, min_r=8.0, max_r=9.0):
     y = np.linspace(min_r, max_r, nx, dtype=np.float32).reshape(1, nx)
     relresponse = np.zeros((nrows, nx), np.float32)
     relresponse[:] = y.copy()
+    relunc = np.zeros((nrows, nx), np.float32)
 
     dtype = np.dtype([('filter', 'S12'),
-                      ('pupil', 'S12'),
+                      ('pupil', 'S15'),
+                      ('order', '<i2'),
                       ('photmjsr', '<f4'),
                       ('uncertainty', '<f4'),
-                      ('order', '<i2'),
                       ('nelem', '<i2'),
                       ('wavelength', '<f4', (nx,)),
-                      ('relresponse', '<f4', (nx,))])
-    reftab = np.array(list(zip(filter, pupil, photmjsr, uncertainty, order,
-                               nelem, wavelength, relresponse)),
+                      ('relresponse', '<f4', (nx,)),
+                      ('reluncertainty', '<f4', (nx,))])
+    reftab = np.array(list(zip(filter, pupil, order, photmjsr, uncertainty,
+                               nelem, wavelength, relresponse, relunc)),
                       dtype=dtype)
 
-    ftab = datamodels.NircamPhotomModel(phot_table=reftab)
+    ftab = datamodels.NrcWfssPhotomModel(phot_table=reftab)
 
     return ftab
 
@@ -856,23 +871,14 @@ def create_photom_fgs_image(value):
         An open data model for a NIRSpec fixed-slit photom reference file.
     """
 
-    nx = 3
-
     photmjsr = [value]
     uncertainty = [0.0]
-    nelem = [0]
-    wavelength = [1., 1., 1.]
-    relresponse = [0., 0., 0.]
 
     dtype = np.dtype([('photmjsr', '<f4'),
-                      ('uncertainty', '<f4'),
-                      ('nelem', '<i2'),
-                      ('wavelength', '<f4', (nx,)),
-                      ('relresponse', '<f4', (nx,))])
-    reftab = np.array(list(zip(photmjsr, uncertainty, nelem,
-                               wavelength, relresponse)),
+                      ('uncertainty', '<f4')])
+    reftab = np.array(list(zip(photmjsr, uncertainty)),
                       dtype=dtype)
-    ftab = datamodels.FgsPhotomModel(phot_table=reftab)
+    ftab = datamodels.FgsImgPhotomModel(phot_table=reftab)
 
     return ftab
 
@@ -893,16 +899,50 @@ def create_pixel_area_ref(shape, area_ster, area_a2):
 
     Returns
     -------
-    pix_area : `~jwst.datamodels.DataModel`
+    area_ref : `~jwst.datamodels.DataModel`
         An open data model for a pixel area reference file.
     """
 
     data = np.ones(shape, dtype=np.float32)
-    pix_area = datamodels.PixelAreaModel(data=data)
-    pix_area.meta.photometry.pixelarea_steradians = area_ster
-    pix_area.meta.photometry.pixelarea_arcsecsq = area_a2
+    area_ref = datamodels.PixelAreaModel(data=data)
+    area_ref.meta.photometry.pixelarea_steradians = area_ster
+    area_ref.meta.photometry.pixelarea_arcsecsq = area_a2
 
-    return pix_area
+    return area_ref
+
+
+def create_msa_pixel_area_ref(quadrant, shutter_x, shutter_y, pixarea):
+    """Create a pixel area (solid angle) reference file for NIRSpec MSA.
+
+    Parameters
+    ----------
+    quadrant : ndarray, int16
+        Array of MOS quadrant indices.
+
+    shutter_x : ndarray, int16
+        Array of X shutter locations.
+
+    shutter_y : ndarray, int16
+        Array of Y shutter locations.
+
+    pixarea : ndarray, float32
+        Array of pixel area values (arcsec^2).
+
+    Returns
+    -------
+    area_ref : `~jwst.datamodels.DataModel`
+        An open data model for a pixel area reference file.
+    """
+
+    dtype = np.dtype([('quadrant', '<i2'),
+                      ('shutter_x', '<i2'),
+                      ('shutter_y', '<i2'),
+                      ('pixarea', '<f4')])
+    reftab = np.array(list(zip(quadrant, shutter_x, shutter_y, pixarea)),
+                      dtype=dtype)
+    area_ref = datamodels.NirspecMosAreaModel(area_table=reftab)
+
+    return area_ref
 
 
 def find_row_in_ftab(input_model, ftab, select, slitname=None, order=None):
@@ -1004,7 +1044,7 @@ def test_nirspec_fs():
         output = ds.input.slits[k].data         # ds.input is the output
         rownum = find_row_in_ftab(save_input, ftab, ['filter', 'grating'],
                                   slitname, order=None)
-        photmjsr = ftab.phot_table['photmjsr'][rownum]
+        photmj = ftab.phot_table['photmj'][rownum]
         nelem = ftab.phot_table['nelem'][rownum]
         wavelength = ftab.phot_table['wavelength'][rownum][0:nelem]
         relresponse = ftab.phot_table['relresponse'][rownum][0:nelem]
@@ -1014,9 +1054,7 @@ def test_nirspec_fs():
         wl = slit.wavelength[iy, ix]
         rel_resp = np.interp(wl, wavelength, relresponse,
                              left=np.nan, right=np.nan)
-        # xxx After `photom` is modified to multiply rather than divide,
-        # change `compare` to photmjsr * rel_resp.
-        compare = photmjsr / rel_resp
+        compare = photmj * rel_resp
         # Compare the values at the center pixel.
         ratio = output[iy, ix] / input[iy, ix]
         result.append(np.allclose(ratio, compare, rtol=1.e-7))
@@ -1039,8 +1077,10 @@ def test_nirspec_fs():
         ratio_var_f = np.sqrt(ds.input.slits[k].var_flat[iy, ix] /
                               slit.var_flat[iy, ix])
         result.append(np.allclose(ratio_var_f, compare, rtol=1.e-7))
-        result.append(ds.input.slits[k].meta.bunit_data == 'MJy/sr')
-        result.append(ds.input.slits[k].meta.bunit_err == 'MJy/sr')
+        # The output units are flux density rather than surface brightness
+        # because this is NIRSpec data for a point source.
+        result.append(ds.input.slits[k].meta.bunit_data == 'MJy')
+        result.append(ds.input.slits[k].meta.bunit_err == 'MJy')
 
     assert np.alltrue(result)
 
@@ -1068,7 +1108,7 @@ def test_nirspec_bright():
     output = ds.input.data
     rownum = find_row_in_ftab(save_input, ftab, ['filter', 'grating'],
                               slitname, order=None)
-    photmjsr = ftab.phot_table['photmjsr'][rownum]
+    photmj = ftab.phot_table['photmj'][rownum]
     nelem = ftab.phot_table['nelem'][rownum]
     wavelength = ftab.phot_table['wavelength'][rownum][0:nelem]
     relresponse = ftab.phot_table['relresponse'][rownum][0:nelem]
@@ -1078,9 +1118,7 @@ def test_nirspec_bright():
     rel_resp = np.interp(wl, wavelength, relresponse,
                          left=np.nan, right=np.nan)
 
-    # xxx After `photom` is modified to multiply rather than divide,
-    # change `compare` to photmjsr * rel_resp.
-    compare = photmjsr / rel_resp
+    compare = photmj * rel_resp
     ratio = output[:, iy, ix] / input[:, iy, ix]
     result = []
     result.append(np.allclose(ratio, compare, rtol=1.e-7))
@@ -1102,8 +1140,8 @@ def test_nirspec_bright():
     ratio_var_f = np.sqrt(ds.input.var_flat[:, iy, ix] /
                           save_input.var_flat[:, iy, ix])
     result.append(np.allclose(ratio_var_f, compare, rtol=1.e-7))
-    result.append(ds.input.meta.bunit_data == 'MJy/sr')
-    result.append(ds.input.meta.bunit_err == 'MJy/sr')
+    result.append(ds.input.meta.bunit_data == 'MJy')
+    result.append(ds.input.meta.bunit_err == 'MJy')
 
     assert np.alltrue(result)
 
@@ -1124,7 +1162,7 @@ def test_nirspec_msa():
     # it probably will be used at some time in the future.
     rownum = find_row_in_ftab(save_input, ftab, ['filter', 'grating'],
                               slitname=None, order=None)
-    photmjsr = ftab.phot_table['photmjsr'][rownum]
+    photmj = ftab.phot_table['photmj'][rownum]
     nelem = ftab.phot_table['nelem'][rownum]
     wavelength = ftab.phot_table['wavelength'][rownum][0:nelem]
     relresponse = ftab.phot_table['relresponse'][rownum][0:nelem]
@@ -1140,9 +1178,7 @@ def test_nirspec_msa():
         wl = slit.wavelength[iy, ix]
         rel_resp = np.interp(wl, wavelength, relresponse,
                              left=np.nan, right=np.nan)
-        # xxx After `photom` is modified to multiply rather than divide,
-        # change `compare` to photmjsr * rel_resp.
-        compare = photmjsr / rel_resp
+        compare = photmj * rel_resp
 
         ratio = output[iy, ix] / input[iy, ix]
         result.append(np.allclose(ratio, compare, rtol=1.e-7))
@@ -1187,9 +1223,7 @@ def test_niriss_wfss():
         wl = slit.wavelength[iy, ix]
         rel_resp = np.interp(wl, wavelength, relresponse,
                              left=np.nan, right=np.nan)
-        # xxx After `photom` is modified to multiply rather than divide,
-        # change `compare` to photmjsr * rel_resp.
-        compare = photmjsr / rel_resp
+        compare = photmjsr * rel_resp
         # Compare the values at the center pixel.
         ratio = output[iy, ix] / input[iy, ix]
         result.append(np.allclose(ratio, compare, rtol=1.e-7))
@@ -1212,7 +1246,7 @@ def test_niriss_soss():
     sp_order = 1                                # to agree with photom.py
     rownum = find_row_in_ftab(save_input, ftab, ['filter', 'pupil'],
                               slitname=None, order=sp_order)
-    photmjsr = ftab.phot_table['photmjsr'][rownum]
+    photmj = ftab.phot_table['photmj'][rownum]
     nelem = ftab.phot_table['nelem'][rownum]
     wavelength = ftab.phot_table['wavelength'][rownum][0:nelem]
     relresponse = ftab.phot_table['relresponse'][rownum][0:nelem]
@@ -1222,9 +1256,7 @@ def test_niriss_soss():
     wl = input_model.wavelength[iy, ix]
     rel_resp = np.interp(wl, wavelength, relresponse,
                          left=np.nan, right=np.nan)
-    # xxx After `photom` is modified to multiply rather than divide,
-    # change `compare` to photmjsr * rel_resp.
-    compare = photmjsr / rel_resp
+    compare = photmj * rel_resp
     # Compare the values at the center pixel.
     ratio = output[iy, ix] / input[iy, ix]
     assert(np.allclose(ratio, compare, rtol=1.e-7))
@@ -1242,9 +1274,8 @@ def test_niriss_image():
 
     input = save_input.data
     output = ds.input.data                      # ds.input is the output
-    sp_order = 0                                # image type
     rownum = find_row_in_ftab(save_input, ftab, ['filter', 'pupil'],
-                              slitname=None, order=sp_order)
+                              slitname=None)
     photmjsr = ftab.phot_table['photmjsr'][rownum]
     shape = input.shape
     ix = shape[1] // 2
@@ -1284,9 +1315,7 @@ def test_miri_mrs():
                                ds.input.meta.photometry.conversion_microjanskys,
                                rel_tol=1.e-12))
     # Check the data values.
-    # xxx After `photom` is modified to multiply rather than divide,
-    # change `compare` to value / pixel_area.
-    compare = 1. / (value * pixel_area)
+    compare = value
     ratio = output[iy, ix] / input[iy, ix]
     result.append(math.isclose(ratio, compare, rel_tol=1.e-7))
     assert np.alltrue(result)
@@ -1318,9 +1347,7 @@ def test_miri_lrs():
     wl = input_model.wavelength[iy, ix]
     rel_resp = np.interp(wl, wavelength, relresponse,
                          left=np.nan, right=np.nan)
-    # xxx After `photom` is modified to multiply rather than divide,
-    # change `compare` to photmjsr * rel_resp.
-    compare = photmjsr / rel_resp
+    compare = photmjsr * rel_resp
     # Compare the values at the center pixel.
     ratio = output[iy, ix] / input[iy, ix]
     assert(np.allclose(ratio, compare, rtol=1.e-7))
@@ -1405,9 +1432,7 @@ def test_nircam_spec():
         wl = slit.wavelength[iy, ix]
         rel_resp = np.interp(wl, wavelength, relresponse,
                              left=np.nan, right=np.nan)
-        # xxx After `photom` is modified to multiply rather than divide,
-        # change `compare` to photmjsr * rel_resp.
-        compare = photmjsr / rel_resp
+        compare = photmjsr * rel_resp
         # Compare the values at the center pixel.
         ratio = output[iy, ix] / input[iy, ix]
         assert(np.allclose(ratio, compare, rtol=1.e-7))
@@ -1438,12 +1463,12 @@ def test_fgs():
     assert(np.allclose(ratio, compare, rtol=1.e-7))
 
 
-def test_apply_photom():
+def test_apply_photom_1():
     """Test apply_photom"""
 
     # apply_photom() calls calc_niriss, etc., depending on EXP_TYPE.  We've
     # already tested each of these above.  The unique test in this function
-    # is that (for imaging data) save_area_info will be called.
+    # is checking that the pixel area keywords are populated correctly.
 
     input_model = create_input('NIRCAM', 'NRCA3', 'NRC_IMAGE',
                                filter='F150W', pupil='CLEAR')
@@ -1456,15 +1481,95 @@ def test_apply_photom():
     ftab.meta.photometry.pixelarea_arcsecsq = area_a2
 
     shape = input_model.data.shape
-    pix_area = create_pixel_area_ref(shape, area_ster, area_a2)
+    area_ref = create_pixel_area_ref(shape, area_ster, area_a2)
 
     # `apply_photom` expects its arguments to both be strings.  We're passing
     # open data models instead, to avoid the need for actual files on disk.
     # We can get away with this only because datamodels.NircamPhotomModel
     # (and other photom models) can take either an open model or the name of
     # a file as input.
-    output_model = ds.apply_photom(ftab, pix_area)
+    output_model = ds.apply_photom(ftab, area_ref)
     assert(math.isclose(output_model.meta.photometry.pixelarea_steradians,
            area_ster, rel_tol=1.e-7))
     assert(math.isclose(output_model.meta.photometry.pixelarea_arcsecsq,
            area_a2, rel_tol=1.e-7))
+
+
+@pytest.mark.parametrize('srctype', ['POINT', 'EXTENDED'])
+def test_apply_photom_2(srctype):
+    """Test apply_photom"""
+
+    # Check that for NIRSpec data and for an extended source, the conversion
+    # factor is divided by the pixel area.
+
+    # `apply_photom` expects its arguments to both be strings.  We're passing
+    # open data models instead, to avoid the need for actual files on disk.
+    # We can get away with this only because datamodels.NircamPhotomModel
+    # (and other photom models) can take either an open model or the name of
+    # a file as input.
+
+    input_model = create_input('NIRSPEC', 'NRS1', 'NRS_MSASPEC',
+                               filter='F170LP', grating='G235M')
+    # For MSA data, the source type can vary from slit to slit, so srctype
+    # is an attribute of the slit.  For other types of data, srctype is a
+    # primary header keyword.
+    q = 2
+    xc = 7
+    yc = 13
+    for (k, slit) in enumerate(input_model.slits):
+        # These values would normally be different for each slit,
+        # but this is just a test.
+        slit.source_type = srctype
+        slit.quadrant = q
+        slit.xcen = xc
+        slit.ycen = yc
+
+    save_input = input_model.copy()
+
+    ds = photom.DataSet(input_model)
+
+    ftab = create_photom_nrs_msa(min_wl=1.0, max_wl=5.0,
+                                 min_r=8.0, max_r=9.0)
+
+    # A pixel area of 2 sr is not realistic, but it's different from 1,
+    # i.e. so it will make a difference when it's applied.
+
+    quadrant = np.array([1, 2, q, 3, 4], dtype=np.int16)
+    shutter_x = np.array([4, 2, xc, 11, 5], dtype=np.int16)
+    shutter_y = np.array([9, 1, yc, 17, 3], dtype=np.int16)
+    # I want these to be the values in steradians, but the column in the
+    # pixel area reference file has values in arcsec^2.
+    pixarea = np.array([991., 992., 2., 994., 995.], dtype=np.float32)
+    pixarea /= A2_TO_SR                 # convert from sr to arcsec^2
+
+    area_ref = create_msa_pixel_area_ref(quadrant, shutter_x, shutter_y,
+                                         pixarea)
+
+    output_model = ds.apply_photom(ftab, area_ref)
+
+    rownum = find_row_in_ftab(save_input, ftab, ['filter', 'grating'],
+                              slitname=None, order=None)
+    photmj = ftab.phot_table['photmj'][rownum]
+    nelem = ftab.phot_table['nelem'][rownum]
+    wavelength = ftab.phot_table['wavelength'][rownum][0:nelem]
+    relresponse = ftab.phot_table['relresponse'][rownum][0:nelem]
+
+    result = []
+    for (k, slit) in enumerate(save_input.slits):
+        input = slit.data                       # this is from save_input
+        output = output_model.slits[k].data
+
+        shape = input.shape
+        ix = shape[1] // 2
+        iy = shape[0] // 2
+        wl = slit.wavelength[iy, ix]
+        rel_resp = np.interp(wl, wavelength, relresponse,
+                             left=np.nan, right=np.nan)
+        if slit.source_type != 'POINT':
+            rel_resp /= output_model.slits[k].meta.photometry.pixelarea_steradians
+        compare = photmj * rel_resp
+
+        ratio = output[iy, ix] / input[iy, ix]
+        result.append(np.allclose(ratio, compare, rtol=1.e-7))
+
+    assert np.alltrue(result)

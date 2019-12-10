@@ -15,6 +15,7 @@ from ..transforms.models import (NirissSOSSModel,
                                  NIRISSBackwardGrismDispersion,
                                  NIRISSForwardColumnGrismDispersion)
 from ..datamodels import ImageModel, NIRISSGrismModel, DistortionModel
+from ..lib import s3_utils
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -130,7 +131,14 @@ def niriss_soss(input_model, reference_files):
     world = cf.CompositeFrame([sky, spec], name='world')
 
     try:
-        with asdf.open(reference_files['specwcs']) as wl:
+        # We'd like to open this file as a DataModel, so we can consolidate
+        # the S3 URI handling to one place.  The S3-related code here can
+        # be removed once that has been changed.
+        if s3_utils.is_s3_uri(reference_files['specwcs']):
+            wl = asdf.open(s3_utils.get_object(reference_files['specwcs']))
+        else:
+            wl = asdf.open(reference_files['specwcs'])
+        with wl:
             wl1 = wl.tree[1].copy()
             wl2 = wl.tree[2].copy()
             wl3 = wl.tree[3].copy()

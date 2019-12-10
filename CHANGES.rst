@@ -1,10 +1,145 @@
-0.14.0 (Unreleased)
+0.14.3 (Unreleased)
+===================
+
+associations
+------------
+
+- Update act_id format to allow base 36 values in product name [#4282]
+
+datamodels
+----------
+
+- Force data model type setting on save [#4318]
+
+master_background
+-----------------
+
+- Updated to fill the asn table and asn pool names. [#4240]
+
+=======
+tweakreg
+--------
+
+- Improved code to be more resilient to the case when none of the
+  image groups has valid sources that can be used for image alignment.
+  Now the code will gracefully skip the ``tweakreg`` step altogether in such
+  situations. [#4299]
+
+
+0.14.2 (2019-11-18)
+===================
+
+associations
+------------
+
+- Refactor target acquistion handling [#4254]
+
+emission
+--------
+
+- Removed the emission step, documentation, and tests from the jwst package.
+  [#4253]
+
+photom
+------
+
+- Fixed a bug so that the reference table column "PHOTMJ" is used for NIRSpec IFU
+  exposures. [#4263]
+
+- The pixel area is now gotten from the photom reference file. [#4270]
+
+white_light
+-----------
+
+- Fixed bug which produces NaN results when only some input has NaN [#4256]
+
+
+0.14.1 (2019-11-11)
+===================
+
+associations
+------------
+
+- Updated level 3 rules so that target acquisitions in the pool files are listed as
+  exp_type = 'target_acquisition', not as science exposures. [#4223]
+
+datamodels
+----------
+
+- Updated the list of allowed NIRCam CORONMSK values in model schemas. [#4234]
+
+flat_field
+----------
+ - Updated handling of error arrays for FGS Guider data, which has not been run
+   through ramp fitting [#4309]
+
+lib
+---
+
+- Updated the EngDB web service url in ``engdb_tools``. [#4187]
+
+photom
+------
+
+- Updated unit tests to use proper names for the MIRI LRS fixedslit
+  subarray. [#4205]
+
+pipeline
+--------
+
+- Updated ``calwebb_spec3`` to allow for processing of non-TSO
+  NIRISS SOSS exposures. [#4194]
+
+resample_spec
+-------------
+
+- Updated unit tests for new name of MIRI LRS slitless subarray
+  ('SUBPRISM' -> 'SLITLESSPRISM'). [#4205]
+
+rscd
+----
+
+- Updated to handle science data and reference files that use the old
+  'SUBPRISM' name for the MIRI LRS slitless subarray and update the values
+  to 'SLITLESSPRISM'. [#4205]
+
+stpipe
+------
+
+- Only allow science members in step parameter reference call [#4236]
+
+- get_pars returns all available parameters for a step and all sub-steps [#4215]
+
+tests_nightly
+-------------
+
+- Added a ``set_telescope_pointing`` test for a NIRCam TSGRISM exposure.
+  [#4187]
+
+transforms
+----------
+
+- Updated all transforms to be consistent with astropy v 4.0.
+  Transform classes define now two class variables - ``n_inputs``
+  and `n_outputs``. The variables ``inputs`` and ``outputs`` are
+  now instance variables (previously they were class variables). [#4216]
+
+
+0.14.0 (2019-10-25)
 ===================
 
 - Remove references to deprecated collections.* ABCs that will be removed in
   Python 3.8. [#3732]
 
 - Remove ``jwpsf`` module. [#3791]
+
+- Update dependencies ``python>=3.6`` and ``numpy>=1.16``. [#4134]
+
+
+ami
+---
+
+- Unit tests were added for the ami_analyze pipeline. [#4176]
 
 assign_wcs
 ----------
@@ -18,6 +153,11 @@ assign_wcs
 
 associations
 ------------
+- Update level 3 rules to create image3 associations for FGS_IMAGE exposures [#3920]
+
+- Add mir_taconfirm to the target acquisition exp_types [#4135]
+
+- Exclude mir_lrs-slitless calibration data from level 3 processing [#3990]
 
 - Fix in load_as_asn for UTF-8 errors [#3942]
 
@@ -63,6 +203,9 @@ cube_build
 - Schema for the ``WAVE-TAB`` WCS no longer requires fixed-length arrays for
   the wavelength "coordinates". The ``'nelem'`` field therefore is no longer
   necessary and has been removed. [#3976]
+
+- To support outlier detection the blotting from the sky back to the detector was
+  improved [#4301]
 
 datamodels
 ----------
@@ -114,6 +257,14 @@ datamodels
 
 - Added new spectroscopic mode photom reference file data models. [#4096]
 
+- Added new imaging mode aperture correction (apcorr) reference file data
+  models ``FgsImgApcorrModel``, ``MirImgApcorrModel``, ``NrcImgApcorrModel``,
+  and ``NisImgApcorrModel``. [#4168]
+
+- Removed old photom reference file data models. [#4173]
+
+- Add support for streaming reference files directly from S3. [#4170]
+
 exp_to_source
 -------------
 
@@ -142,6 +293,8 @@ extract_2d
 
 - For NIRCam TSO data, wavelengths are computed and assigned to the
   wavelength attribute. [#3863]
+
+- Improved the computation of ``S_REGION`` of a slit. [#4111]
 
 flat_field
 ----------
@@ -187,6 +340,17 @@ photom
 
 - Add unit tests [#4022]
 
+- The code was modified to work with the new photom reference files. [#4118]
+
+- Two bugs were fixed.  For NIRSpec IFU data the code was trying to access
+  an attribute of a "slit", but there were no slits for this type of data.
+  For NIRISS extended-source data, the code tried to divide by the pixel
+  area, but the pixel area was undefined.  [#4174]
+
+- NRS_BRIGHTOBJ data were incorrectly treated the same as fixed-slit, but
+  the data models are actually not the same.  Also, the logic for pixel area
+  for fixed-slit data was incorrect. [#4179]
+
 refpix
 ------
 
@@ -209,6 +373,22 @@ stpipe
 
 - Fix ``Step.print_configspec()`` method.  Add test.  [#3768]
 
+- Integrate retrieval of Step parameters from CRDS. [#4090]
+
+- Change properties ``Step.pars`` and ``Step.pars_model`` to methods. [#4117]
+
+- Fix bug in ``Step.call()`` where a config file referencing another config
+  file was not merged into the final spec properly. [#4161]
+
+- Set ``Step.skip = True`` in ``Step.record_step_status()`` if
+  ``success == False``. [#4165]
+
+tests_nightly
+-------------
+
+- Some tests in general/nirspec/ were marked as "expected to fail" because
+  the new reference files are not being selected. [#4180]
+
 tso_photometry
 --------------
 
@@ -216,6 +396,8 @@ tso_photometry
 
 tweakreg
 --------
+
+- Fixed a bug in a ``try-except`` block in the ``tweakreg`` step. [#4133]
 
 - removed original ``jwst.tweakreg`` alignment code and changed step's code
   to call similar functionality from ``tweakwcs`` package. [#3689]
@@ -359,6 +541,9 @@ outlier_detection
 - Changed default value of good_pixel from 4 to 6 [#3638]
 
 - Don't use NaNs or masked values in weight image for blotting. [#3651]
+
+- When calling cube_build for IFU data fixed selecting correct channels (MIRI) or 
+  correct grating (NIRSPEC) [#4301]
 
 pipeline
 --------
@@ -1455,9 +1640,6 @@ tweakreg
   saturated sources (instrument-specific value).[#2706]
 
 wfs_combine
------------
-
-white_light
 -----------
 
 wiimatch

@@ -154,10 +154,10 @@ def test_pointing_averaging(eng_db_jw703):
          Time('2019-06-03T17:25:56', format='isot').mjd,
      )
 
-    assert np.isclose(q, q_exp).all()
-    assert np.isclose(j2fgs_matrix, j2fgs_exp).all()
-    assert np.isclose(fsmcorr, fsmcorr_exp).all()
-    assert obstime == obstime_exp
+    assert np.allclose(q, q_exp)
+    assert np.allclose(j2fgs_matrix, j2fgs_exp)
+    assert np.allclose(fsmcorr, fsmcorr_exp)
+    assert np.isclose(obstime.value, obstime_exp.value)
 
 
 def test_get_pointing_fail():

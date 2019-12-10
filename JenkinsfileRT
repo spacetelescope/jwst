@@ -10,7 +10,7 @@ jobconfig.enable_env_publication = true
 jobconfig.publish_env_on_success_only = true
 
 // Define python version for conda
-python_version = '3.6'
+python_version = "3.7.4"
 
 // pip related setup
 def pip_index = "https://bytesalad.stsci.edu/artifactory/api/pypi/datb-pypi-virtual/simple"
@@ -38,18 +38,20 @@ bc0 = new BuildConfig()
 bc0.nodetype = 'jwst'
 bc0.name = 'stable-deps'
 bc0.env_vars = env_vars
-bc0.conda_ver = '4.6.14'
+bc0.conda_ver = '4.7.12'
 bc0.conda_packages = [
     "python=${python_version}",
 ]
+bc0.pip_reqs_files = ['requirements-sdp.txt']
 bc0.build_cmds = [
-    "pip install -r requirements-sdp.txt -e .[ephem]",
+    "pip install -e .[ephem]",
     "pip install pytest-xdist",
 ]
 bc0.test_cmds = [
-    "pytest --cov=./ -r sxf -n 30 --bigdata --slow \
-    --basetemp=${pytest_basetemp}  --junit-xml=results.xml jwst",
-    "codecov --token=${codecov_token}"
+    "pytest --cov-report=xml --cov=./ -r sxf -n 30 --bigdata --slow \
+    --basetemp=${pytest_basetemp} --junit-xml=results.xml \
+    -k 'not regtest' jwst",
+    "codecov --token=${codecov_token} -F nightly"
 ]
 bc0.test_configs = [data_config]
 
@@ -60,9 +62,21 @@ bc0.test_configs = [data_config]
 bc1 = utils.copy(bc0)
 bc1.nodetype = 'macos'
 bc1.name = 'macos-stable-deps'
-bc1.build_cmds = ["pip install -r requirements-sdp.txt -e ."]
+bc1.build_cmds = ["pip install -e ."]
 bc1.test_cmds = []
 bc1.test_configs = []
 
+
+// Build and test with new regtest system
+bc2 = utils.copy(bc0)
+bc2.test_cmds = [
+    "pytest --cov-report=xml --cov=./ -r sxf -n 30 --bigdata --slow \
+    --basetemp=${pytest_basetemp} --junit-xml=results.xml --env=newdev \
+    -k 'not tests_nightly' jwst",
+    "codecov --token=${codecov_token} -F newnightly"
+]
+
+
 utils.run([jobconfig, bc0, bc1])
+utils.run([bc2])
 }  // withCredentials

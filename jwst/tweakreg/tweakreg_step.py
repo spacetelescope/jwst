@@ -63,10 +63,11 @@ class TweakRegStep(Step):
 
         try:
             images = datamodels.ModelContainer(input)
-        except TypeError as te:
-            raise te("Input to tweakreg must be a list of DataModels, an "
-                "association, or an already open ModelContainer containing "
-                "one or more DataModels.")
+        except TypeError as e:
+            e.args = ("Input to tweakreg must be a list of DataModels, an "
+                      "association, or an already open ModelContainer "
+                      "containing one or more DataModels.", ) + e.args[1:]
+            raise e
 
         # Build the catalogs for input images
         for image_model in images:
@@ -135,9 +136,9 @@ class TweakRegStep(Step):
             self.log.info('')
 
             # we need at least two exposures to perform image alignment
-            self.log.info("At least two exposures are required for image "
-                          "alignment.")
-            self.log.info("Nothing to do. Skipping 'TweakRegStep'...")
+            self.log.warning("At least two exposures are required for image "
+                             "alignment.")
+            self.log.warning("Nothing to do. Skipping 'TweakRegStep'...")
             self.skip = True
             for model in images:
                 model.meta.cal_step.tweakreg = "SKIPPED"
@@ -169,17 +170,35 @@ class TweakRegStep(Step):
             yoffset=self.yoffset
         )
 
-        align_wcs(
-            imcats,
-            refcat=None,
-            enforce_user_order=self.enforce_user_order,
-            expand_refcat=self.expand_refcat,
-            minobj=self.minobj,
-            match=tpmatch,
-            fitgeom=self.fitgeometry,
-            nclip=self.nclip,
-            sigma=(self.sigma, 'rmse')
-        )
+        try:
+            align_wcs(
+                imcats,
+                refcat=None,
+                enforce_user_order=self.enforce_user_order,
+                expand_refcat=self.expand_refcat,
+                minobj=self.minobj,
+                match=tpmatch,
+                fitgeom=self.fitgeometry,
+                nclip=self.nclip,
+                sigma=(self.sigma, 'rmse')
+            )
+
+        except ValueError as e:
+            msg = e.args[0]
+            if (msg == "Too few input images (or groups of images) with "
+                "non-empty catalogs."):
+                # we need at least two exposures to perform image alignment
+                self.log.warning(msg)
+                self.log.warning("At least two exposures are required for "
+                                 "image alignment.")
+                self.log.warning("Nothing to do. Skipping 'TweakRegStep'...")
+                self.skip = True
+                for model in images:
+                    model.meta.cal_step.tweakreg = "SKIPPED"
+                return images
+
+            else:
+                raise e
 
         for imcat in imcats:
             imcat.meta['image_model'].meta.cal_step.tweakreg = 'COMPLETE'

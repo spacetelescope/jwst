@@ -6,13 +6,17 @@ Unit tests for ami_analyze
 import numpy as np
 import math
 
-from jwst.ami import utils, leastsqnrm, hexee
+from jwst import datamodels
+from jwst.ami import utils, leastsqnrm, hexee, webb_psf
 from jwst.ami.leastsqnrm import hexpb, ffc, ffs, return_CAs
 from jwst.ami.leastsqnrm import closurephase, redundant_cps
-from jwst.ami.leastsqnrm import populate_symmamparray, populate_antisymmphasearray
+from jwst.ami.leastsqnrm import populate_symmamparray
+from jwst.ami.leastsqnrm import populate_antisymmphasearray
 from jwst.ami.leastsqnrm import tan2visibilities, model_array
+from jwst.ami.analyticnrm2 import interf, PSF, phasor, ASFhex
 
 from numpy.testing import assert_allclose
+
 
 #---------------------------------------------------------------
 # utils module tests:
@@ -267,7 +271,7 @@ def test_leastsqnrm_hexpb():
     true_hexpb_arr = np.array( [[0.01520087, 0.01901502, 0.02328432],
                                 [0.01912038, 0.02356723, 0.02850747],
                                 [0.02349951, 0.02861771, 0.03426836]] )
-    assert_allclose( hexpb_arr, true_hexpb_arr, atol=1E-8)
+    assert_allclose( hexpb_arr, true_hexpb_arr, atol=1E-7)
 
     # Clean up attributes that have been added
     for kk in list( (hexpb.__dict__).keys()):
@@ -367,6 +371,7 @@ def test_leastsqnrm_ffc():
     for kk in list( (ffc.__dict__).keys()):
         delattr( ffc, kk )
 
+
 def test_leastsqnrm_ffs():
     ''' Test of ffs in leastsqnrm module.
         Calculate sine terms of analytic model.
@@ -417,7 +422,7 @@ def test_leastsqnrm_return_CAs():
     CAs = return_CAs(amps, N=N)
 
     true_CAs = np.array([ 0.7, 0.04545455, 0.3030303, 6.66666667, 18.])
-    assert_allclose( CAs, true_CAs, atol=1E-8 )
+    assert_allclose( CAs, true_CAs, atol=1E-7 )
 
 
 def test_leastsqnrm_closurephase():
@@ -592,29 +597,244 @@ def test_hexee_glimit():
     assert_allclose( g, true_g )
 
 
-def setup_hexee():
-    ''' Initialize values for these parameters needed for the hexee tests:
+#---------------------------------------------------------------
+# analyticnrm2 module tests:
+#
+def test_analyticnrm2_PSF():
+    ''' Test of PSF() in the analyticnrm2 module '''
 
-        xi: 2D float array
+    pixel, fov, oversample, ctrs, d, lam, phi, centering = setup_SF()
+
+    shape = "hex"
+
+    psf =  PSF( pixel, fov, oversample, ctrs, d, lam, phi, centering = centering, shape = shape)
+
+    true_psf = np.array(
+        [[ 0.55676539, 5.13790691, 9.32707852, 7.95659204, 3.05720862, 0.87093812],
+         [ 2.883065, 13.4868413, 22.44612867, 20.24062814, 9.2865436, 0.8260206 ],
+         [ 4.66981271, 19.68183766, 33.25399012, 32.22248535, 17.64512595, 3.49243422],
+         [ 3.49243422, 17.64512595, 32.22248535, 33.25399012, 19.68183766, 4.66981271],
+         [ 0.8260206, 9.2865436, 20.24062814, 22.44612867, 13.4868413, 2.883065 ],
+         [ 0.87093812, 3.05720862, 7.95659204, 9.32707852, 5.13790691, 0.55676539]]
+         )
+
+    assert_allclose(psf, true_psf, atol=1E-7 )
+
+
+def test_analyticnrm2_ASFhex():
+    ''' Test of ASFhex() in the analyticnrm2 module FOR HEX '''
+
+    pixel, fov, oversample, ctrs, d, lam, phi, centering = setup_SF()
+
+    asf = ASFhex(pixel, fov, oversample, ctrs, d, lam, phi, centering)
+
+    true_asf = np.array(
+        [[ 0.74611461-0.00885311j, 2.14239062+0.74031707j, 2.7532696 +1.32158428j,
+           2.35075667+1.55901736j, 1.09507456+1.3630922j, -0.53224117+0.7665882j ],
+         [ 1.69794671-0.00647795j, 3.6397516 +0.48892695j, 4.66263759+0.840202j,
+           4.39936028+0.9414124j,  2.95391668+0.74894583j, 0.85814396+0.29934852j],
+         [ 2.16095243+0.00986439j, 4.43309812+0.17169358j, 5.75956679+0.28527278j,
+           5.66797969+0.31063092j, 4.19436059+0.22905275j, 1.86810611+0.05112528j],
+         [ 1.86810611-0.05112528j, 4.19436059-0.22905275j, 5.66797969-0.31063092j,
+           5.75956679-0.28527278j, 4.43309812-0.17169358j, 2.16095243-0.00986439j],
+         [ 0.85814396-0.29934852j, 2.95391668-0.74894583j, 4.39936028-0.9414124j,
+           4.66263759-0.840202j,   3.6397516 -0.48892695j, 1.69794671+0.00647795j],
+         [-0.53224117-0.7665882j,  1.09507456-1.3630922j,  2.35075667-1.55901736j,
+           2.7532696 -1.32158428j, 2.14239062-0.74031707j, 0.74611461+0.00885311j]]
+    )
+
+    assert_allclose(asf, true_asf, atol=1E-7 )
+
+
+def test_analyticnrm2_interf():
+    ''' Test of interf() in the analyticnrm2 module '''
+
+    ASIZE = 4
+    kx = np.arange(ASIZE * ASIZE).reshape((ASIZE, ASIZE))
+    ky = np.arange(ASIZE * ASIZE).reshape((ASIZE, ASIZE))
+    vv = np.arange(ASIZE)
+
+    for ii in np.arange(ASIZE):
+        kx[:,ii] = vv
+        ky[ii,:] = vv
+
+    # Clean up any attributes that may have been added earlier
+    for kk in list( (interf.__dict__).keys()):
+        delattr( interf, kk )
+
+    pixel, fov, oversample, ctrs, d, lam, phi, centering = setup_SF()
+
+    interf.lam = lam
+    interf.offx = 0.5
+    interf.offy = 0.5
+    interf.ctrs = ctrs
+    interf.d = d
+    interf.phi = phi
+    interf.pitch = pixel / float(oversample)
+
+    interference = interf(kx, ky)
+
+    true_interference = np.array(
+       [[6.65604548+0.32967559j, 6.55020282-0.35898074j,
+         5.10088264-1.09153011j, 2.74363797-1.81957549j ],
+        [6.55020282+0.35898074j, 6.65604548-0.32967559j,
+         5.40614218-0.97418068j, 3.21342278-1.5424603j ],
+        [4.86319369+0.26557752j, 5.14000033-0.19907186j,
+         4.23407392-0.56876212j, 2.50871764-0.86690377j ],
+        [2.18032216+0.05966983j, 2.52211181-0.01151302j,
+         1.98827833+0.00758561j, 0.87949091+0.01043571j]]
+        )
+
+    assert_allclose(interference, true_interference, atol=1E-7 )
+
+
+def test_analyticnrm2_phasor():
+    ''' Test of phasor() in the analyticnrm2 module '''
+
+    ASIZE = 4
+    kx = np.arange(ASIZE * ASIZE).reshape((ASIZE, ASIZE))
+
+    for ii in np.arange(ASIZE):
+        kx[:,ii] = ii
+
+    ky = kx.transpose()
+
+    hx = 0.06864653345335156
+    hy = -2.6391073592116028
+
+    lam = 2.3965000082171173e-06
+    phi = 0.0
+    pitch = 1.0375012775744072e-07
+
+    result = phasor( kx, ky, hx, hy, lam, phi, pitch )
+
+    true_result = np.array(
+      [[ 1. -0.j, 0.99982567-0.01867173j, 0.99930273-0.03733694j,
+         0.99843138-0.05598914j ],
+       [ 0.75320598+0.65778473j, 0.76535665+0.6436064j, 0.77724047+0.62920367j,
+         0.78885329+0.61458156j ],
+       [ 0.1346385+0.99089478j, 0.15311675+0.98820811j, 0.1715416+0.98517688j,
+         0.18990665+0.98180215j ],
+       [-0.55038493+0.83491103j, -0.53469975+0.84504211j, -0.51882814+0.85487856j,
+        -0.50277564+0.86441695j ]]
+      )
+
+    assert_allclose( result, true_result, atol=1E-7 )
+
+
+#---------------------------------------------------------------
+# webb_psf module test:
+#
+
+def test_webb_psf():
+    ''' Test of PSF() in the webb_psf module:
+        Create a Throughput datamodel, having a dummy filter bandpass data
+        that peaks at 1.0 at the center and decreases in the wings.
+    '''
+    min_wl = 5000. # lowest wavelength
+    max_wl = 100000. # highest wavelength
+
+    nelem = 28
+
+    wavelength = np.linspace( min_wl, max_wl, nelem, endpoint=True,
+                     dtype=np.float32 )
+    throughput = create_throughput( nelem )
+    dtype = np.dtype([('wavelength', '<f4'), ('throughput', '<f4')])
+
+    filt_tab = np.array(list(zip(wavelength, throughput)), dtype=dtype)
+    filter_model = datamodels.ThroughputModel( filter_table = filt_tab )
+
+    bindown = 4
+
+    band = webb_psf.get_webbpsf_filter( filter_model, specbin=bindown )
+    true_band = np.array( [[4.05621603e-01, 1.37962969e-06],
+                           [8.10614496e-01, 2.78703703e-06],
+                           [9.50576201e-01, 4.19444444e-06],
+                           [9.74027127e-01, 5.60185185e-06],
+                           [9.01925057e-01, 7.00925932e-06],
+                           [6.51473783e-01, 8.41666679e-06]] )
+
+    assert_allclose( band, true_band, atol=1E-7 )
+
+#---------------------------------------------------------------
+# utility functions:
+#
+
+def setup_SF():
+    ''' Initialize values for these parameters needed for the analyticnrm2 tests.
+
+        Returns
+        -------
+        pixel (optional, via **kwargs) : float
+            pixel scale
+
+        fov : integer
+            number of detector pixels on a side
+
+        oversample : integer
+            oversampling factor
+
+        ctrs : float, float
+            coordinates of hole centers
+
+        d : float
+            hole diameter
+
+        lam : float
+            wavelength
+
+        phi : float
+            distance of fringe from hole center in units of waves
+
+        centering : string
+            if set to 'PIXELCENTERED' or unspecified, the offsets will be set to
+            (0.5,0.5); if set to 'PIXELCORNER', the offsets will be set to
+            (0.0,0.0).
+    '''
+    pixel = 3.1125038327232215e-07
+    fov = 2
+    oversample = 3
+    ctrs = np.array( [[ 0.06864653, -2.63910736],
+                      [-2.28553695, -0.05944972],
+                      [ 2.31986022, -1.26010406],
+                      [-2.31986022,  1.26010406],
+                      [-1.19424838,  1.94960579],
+                      [ 2.25121368,  1.3790035 ],
+                      [ 1.09127858,  2.00905525]]
+                   )
+    d = 0.8
+    lam =  2.3965000082171173e-06
+    phi = np.zeros(7, dtype=np.float32)
+    centering = (0.5, 0.5)
+
+    return pixel, fov, oversample, ctrs, d, lam, phi, centering
+
+
+def setup_hexee():
+    ''' Initialize values for parameters needed for the hexee tests.
+
+        Returns
+        -------
+        xi : 2D float array
             hexagon's coordinate center at center of symmetry, along flat edge
 
-        eta: 2D float array
+        eta : 2D float array
             hexagon's coordinate center at center of symmetry, normal to xi;
             (not currently used)
 
-        c (optional, via **kwargs): tuple(float, float)
+        c (optional, via **kwargs) : tuple(float, float)
             coordinates of center
 
-        pixel (optional, via **kwargs): float
+        pixel (optional, via **kwargs) : float
             pixel scale
 
-        d (optional, via **kwargs): float
+        d (optional, via **kwargs) : float
             flat-to-flat distance across hexagon
 
-        lam: (optional, via **kwargs): float
+        lam : (optional, via **kwargs) : float
             wavelength
 
-        minus: (optional, via **kwargs) boolean
+        minus : (optional, via **kwargs) boolean
             if set, use flipped sign of xi in calculation
     '''
     xdim, ydim = 3, 3
@@ -629,3 +849,18 @@ def setup_hexee():
                 'pixel': 1.0375012775744072e-07, 'minus': False}
 
     return xi, eta, kwargs
+
+
+def create_throughput( nelem ):
+    ''' Create a symmetric dummy throughput function that has values near
+        0 on the wings and near 1 at the center.
+    '''
+    ctr = int(nelem/2.)
+
+    lower_half = [2./(1.+ math.e**(-5.*i/ctr)) -1. for i in range(ctr)]
+
+    throughput = np.zeros( nelem, dtype=np.float32 )
+    throughput[ :ctr ] = lower_half
+    throughput[ ctr: ] = lower_half[::-1] # mirror image for upper half
+
+    return throughput

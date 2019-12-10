@@ -73,7 +73,7 @@ def nrs_extract2d(input_model, slit_name=None, apply_wavecorr=False, reference_f
                                                         exp_type, apply_wavecorr, reffile)
         set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi)
         orig_s_region = output_model.meta.wcsinfo.s_region.strip()
-        util.update_s_region_spectral(output_model)
+        util.update_s_region_nrs_slit(output_model)
         if orig_s_region != output_model.meta.wcsinfo.s_region.strip():
             log.info('extract_2d updated S_REGION to '
                      '{0}'.format(output_model.meta.wcsinfo.s_region))
@@ -87,12 +87,14 @@ def nrs_extract2d(input_model, slit_name=None, apply_wavecorr=False, reference_f
 
             slits.append(new_model)
             orig_s_region = new_model.meta.wcsinfo.s_region.strip()
-            util.update_s_region_spectral(new_model)
-            if orig_s_region != new_model.meta.wcsinfo.s_region.strip():
-                log.info('extract_2d updated S_REGION to {0}'.format(new_model.meta.wcsinfo.s_region))
             # set x/ystart values relative to the image (screen) frame.
             # The overall subarray offset is recorded in model.meta.subarray.
             set_slit_attributes(new_model, slit, xlo, xhi, ylo, yhi)
+
+            if 'world' in input_model.meta.wcs.available_frames:
+                util.update_s_region_nrs_slit(new_model)
+                if orig_s_region != new_model.meta.wcsinfo.s_region.strip():
+                    log.info('extract_2d updated S_REGION to {0}'.format(new_model.meta.wcsinfo.s_region))
 
             # Copy BUNIT values to output slit
             new_model.meta.bunit_data = input_model.meta.bunit_data
@@ -164,6 +166,9 @@ def set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi):
     output_model.ystart = ylo + 1 # FITS 1-indexed
     output_model.ysize = (yhi - ylo)
     output_model.source_id = int(slit.source_id)
+    output_model.slit_ymin = slit.ymin
+    output_model.slit_ymax = slit.ymax
+    log.info('slit.ymin {}'.format(slit.ymin))
     if output_model.meta.exposure.type.lower() in ['nrs_msaspec', 'nrs_autoflat']:
         #output_model.source_id = int(slit.source_id)
         output_model.source_name = slit.source_name
