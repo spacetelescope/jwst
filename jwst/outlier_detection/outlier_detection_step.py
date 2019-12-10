@@ -85,6 +85,7 @@ class OutlierDetectionStep(Step):
                 _make_output_path = self.search_attr(
                     '_make_output_path', parent_first=True
                 )
+
                 self._make_output_path = partial(
                     _make_output_path,
                     asn_id=asn_id
