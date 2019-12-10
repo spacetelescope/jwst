@@ -8,6 +8,8 @@ from ci_watson.artifactory_helpers import (
     BigdataError,
 )
 
+from jwst.associations import load_asn
+
 
 class RegtestData:
     """Defines data paths on Artifactory and data retrieval methods"""
@@ -152,8 +154,33 @@ class RegtestData:
 
         return self.truth
 
-    def get_association(self, asn):
-        return NotImplemented
+    def get_asn(self, path=None, docopy=None):
+        """Copy association and association members from Artifactory remote
+        resource to the CWD/truth.
+
+        Updates self.input and self.input_remote upon completion
+        """
+        if path is None:
+            path = self.input_remote
+        else:
+            self.input_remote = path
+        if docopy is None:
+            docopy = self.docopy
+
+        # Get the association JSON file
+        self.input = get_bigdata(self._inputs_root, self._env, path,
+            docopy=docopy)
+
+        # Get each member in the association as well
+        with open(self.input) as fp:
+            asn = load_asn(fp)
+        for product in asn['products']:
+            for member in product['members']:
+                fullpath = os.path.join(
+                    os.path.dirname(self.input_remote),
+                    member['expname'])
+                get_bigdata(self._inputs_root, self._env, fullpath,
+                    docopy=self.docopy)
 
     def to_asdf(self, path):
         tree = eval(str(self))
