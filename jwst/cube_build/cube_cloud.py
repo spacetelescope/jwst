@@ -140,7 +140,7 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
                 weight_distance[weight_distance < lower_limit] = lower_limit
                 weight_distance = 1.0 / weight_distance
             elif weighting_type == 'emsm':
-                weight_distance = np.exp(-wdistance/scalerad_pixel[ipt])
+                weight_distance = np.exp(-wdistance/(scalerad_pixel[ipt]/cdelt1))
 
             weight_distance = weight_distance.flatten('F')
             weighted_flux = weight_distance * flux[ipt]
