@@ -4,7 +4,6 @@ import time
 import numpy as np
 import logging
 
-#from jwst.transforms.models import _toindex
 from .. import datamodels
 from ..assign_wcs import nirspec
 from gwcs import wcstools
@@ -64,15 +63,6 @@ class CubeBlot():
             self.grating = median_model.meta.instrument.grating
             self.filter = median_model.meta.instrument.filter
 
-        # find the ra,dec,lambda of each element of the IFUCube
-        #self.naxis1 = self.median_skycube.data.shape[2]
-        #self.naxis2 = self.median_skycube.data.shape[1]
-        #self.naxis3 = self.median_skycube.data.shape[0]
-        #self.cdelt1 = median_model.meta.wcsinfo.cdelt1 * 3600.0
-        #self.cdelt2 = median_model.meta.wcsinfo.cdelt2 * 3600.0
-        #self.cdelt3 = median_model.meta.wcsinfo.cdelt3
-        #self.crval1 = median_model.meta.wcsinfo.crval1
-        #self.crval2 = median_model.meta.wcsinfo.crval2
         # ________________________________________________________________
         # set up x,y,z of Median Cube
         # Median cube shoud have linear wavelength
@@ -94,7 +84,7 @@ class CubeBlot():
         # initialize blotted images to be original input images
         self.input_models = input_models
 
-    # ***********************************************************************
+    # **********************************************************************
 
     def blot_info(self):
         """ Prints the basic paramters of the blot image and median sky cube
@@ -106,8 +96,6 @@ class CubeBlot():
                  self.median_skycube.data.shape[2],
                  self.median_skycube.data.shape[1],
                  self.median_skycube.data.shape[0])
-                 #self.naxis1, self.naxis2,
-                 #self.naxis3)
 
         log.info('Instrument %s ', self.instrument)
         if self.instrument == 'MIRI':
@@ -120,7 +108,7 @@ class CubeBlot():
         log.info('Spatial ROI size  %f', self.rois)
         log.info('Number of input models %i ', len(self.input_models))
 
-# *****************************************************************************
+    # ************************************************************************
     def blot_images(self):
         """ Core blotting routine
 
@@ -154,9 +142,6 @@ class CubeBlot():
             blot.err = None
             blot.dq = None
 
-            filename = model.meta.filename
-            indx = filename.rfind('.fits')
-
             blot_flux = np.zeros(model.shape, dtype=np.float32)
             # ___________________________________________________________________
             # For MIRI we only work on one channel at a time
@@ -164,32 +149,26 @@ class CubeBlot():
             if self.instrument == 'MIRI':
                 # only one channel is blotted at a time
                 this_par1 = self.channel
-                ch_name = '_ch' + this_par1
-                #print ('ch_name',ch_name,this_par1)
-                #blot.meta.filename = filename[:indx] + ch_name + '_blot.fits'
-                #print('filename',blot.meta.filename)
 
                 # get the detector values for this model
                 xstart, xend = instrument_info.GetMIRISliceEndPts(this_par1)
-                #print('xstart xend',xstart,xend)
 
                 ysize, xsize = model.data.shape
                 ydet, xdet = np.mgrid[:ysize, :xsize]
                 ydet = ydet.flatten()
                 xdet = xdet.flatten()
 
+                self.ycenter_grid, self.xcenter_grid = np.mgrid[0:ysize,
+                                                                0:xsize]
+
                 xsize = xend - xstart + 1
                 xcenter = np.arange(xsize) + xstart
                 ycenter = np.arange(ysize)
-                #print('size centers',xcenter.size,ycenter.size)
 
                 valid_channel = np.logical_and(xdet >= xstart, xdet <= xend)
-                #print('Valid channel',valid_channel)
 
                 xdet = xdet[valid_channel]
                 ydet = ydet[valid_channel]
-                #print('xdet',xdet.size)
-                #print('xdet',xdet[0:100])
                 # cube spaxel ra,dec values --> x, y on detector
                 x_cube, y_cube = model.meta.wcs.backward_transform(self.cube_ra,
                                                                    self.cube_dec,
@@ -205,11 +184,9 @@ class CubeBlot():
                 x_cube = x_cube[valid_channel]
                 y_cube = y_cube[valid_channel]
                 flux_cube = flux_cube[valid_channel]
-                print('x_cube size',x_cube.size)
             # ___________________________________________________________________
             # For NIRSPEC we need to work 1 slice at a time
             elif self.instrument == 'NIRSPEC':
-                #blot.meta.filename = filename[:indx] + '_blot.fits'
                 # initialize the x_cube,y_cube, and flux_cube arrays
                 # we will loop over slices and fill in values
                 # the flag_det will be set when a slice pixel is filled in
@@ -221,43 +198,34 @@ class CubeBlot():
 
                 ycenter = np.arange(ysize)
                 xcenter = np.arange(xsize)
+                self.ycenter_grid,self.xcenter_grid = np.mgrid[0:ysize,
+                                                     xstart:xsize]
+
                 # for NIRSPEC each file has 30 slices
                 # wcs information accessed seperately for each slice
 
                 nslices = 30
                 log.info('Looping over 30 slices on NIRSPEC detector, this takes a little while')
                 for ii in range(nslices):
+                    # for each slice pull out the blotted values that actually fall on the slice region
+                    # used the bounding box of each slice to determine the slice limits
                     slice_wcs = nirspec.nrs_wcs_set_input(model, ii)
-                    print('bounding box',slice_wcs.bounding_box)
                     x_slice, y_slice = slice_wcs.invert(self.cube_ra, self.cube_dec, self.cube_wave)
-                    print('max and min',np.amax(x_slice), np.amin(x_slice), np.amax(y_slice), np.amin(y_slice))
-                    print('slice size',x_slice.size,y_slice.size)
-                    print('slice size',x_slice.shape,y_slice.shape)
                     x_slice = np.ndarray.flatten(x_slice)
                     y_slice = np.ndarray.flatten(y_slice)
-                    print('slice size',x_slice.size,y_slice.size)
-                    print('slice size',x_slice.shape,y_slice.shape)
-
+                    flux_slice = np.ndarray.flatten(self.cube_flux)
+                    print('number of original values',flux_slice.size)
                     xlimit, ylimit = slice_wcs.bounding_box
+                    print('on slice ',ii, xlimit[0],xlimit[1],ylimit[0],ylimit[1])
+
                     xuse = np.logical_and(x_slice >= xlimit[0], x_slice <= xlimit[1])
                     yuse = np.logical_and(y_slice >= ylimit[0], y_slice <= ylimit[1])
-                    fuse = np.logical_and(xuse,yuse)
+                    fuse = np.logical_and(xuse, yuse)
                     x_slice = x_slice[fuse]
-                    y_slixe = y_slice[fuse]
-
-                    print('xlimit',xlimit)
-                    print('ylimit',ylimit)
-                    print('slice size',x_slice.size,y_slice.size)
-                    print('min and max',np.amax(x_slice), np.amin(x_slice), np.amax(y_slice), np.amin(y_slice))
-                    # there could be values that are nan because they do not fall on this slice.
-
-                    flux_slice = np.ndarray.flatten(self.cube_flux)
-                    print('number of original cube values mapped',flux_slice.size)
-                    valid = ~np.isnan(y_slice)
-                    x_slice = x_slice[valid]
-                    y_slice = y_slice[valid]
-                    flux_slice = flux_slice[valid]
-                    print('number of valid cube values mapped',flux_slice.size)
+                    y_slice = y_slice[fuse]
+                    flux_slice = flux_slice[fuse]
+                    
+                    print('number for slice',flux_slice.size)
                     if ii == 0:
                         x_cube = x_slice
                         y_cube = y_slice
@@ -284,95 +252,72 @@ class CubeBlot():
         return blot_models
     # ________________________________________________________________________________
 
-    def blot_overlap(self, xdet, ydet, x_cube, y_cube, flux_cube, blot_flux):
-        # blot_overlap finds to overlap between the blotted sky values (x_cube, y_cube)
-        # and the detector pixels.
-        # The looping is done over the x,y detector pixels (regular grid). The
-        # distance to the x_cube, y_cube array is determiend  for each pixel to to find
-        # the values in the roi of the detector pixel.
-        # It was determiend the since x_cube and y_cube are large this method takes too
-        # long. For now this routine was kept - maybe a techinque can be found to
-        # speed it up.
-
-        #t0 = time.time()
-        # looping over detector pixels finding blotted values within roi (take a long time)
-        num = xdet.size
-        # print('Number of pixels on detector going to loop over',num)
-        # print('Number of elements on sky mapped to detector going to search over',x_cube.size)
-
-        roi_det = 0.5  # 1/2  a pixel
-        for ipt in range(0, num - 1):
-
-            # find the cube values that fall withing ROI of detector xdet, ydet
-            xdistance = (x_cube - xdet[ipt])
-            ydistance = (y_cube - ydet[ipt])
-            radius = np.sqrt(xdistance * xdistance + ydistance * ydistance)
-            # indexr holds the index of the sky median spaxels that fall
-            # within the spatial  ROI of xx,yy location
-            indexr = np.where(radius <= roi_det)
-            num_roi = len(indexr[0])
-            if num_roi > 0:
-                x_found = x_cube[indexr]
-                y_found = y_cube[indexr]
-                # form the arrays to be used calculated the weighting
-                d1 = np.array(x_found - xdet[ipt])
-                d2 = np.array(y_found - ydet[ipt])
-
-                dxy = d1 * d1 + d2 * d2
-                dxy = np.sqrt(dxy)
-                weight_distance = np.exp(-dxy)
-                blot_flux[ydet[ipt], xdet[ipt]] = np.sum(weight_distance * flux_cube[indexr])
-                blot_weight = np.sum(weight_distance)
-
-                # check for blot_weight !=0
-                if blot_weight == 0:
-                    blot_flux[ydet[ipt], xdet[ipt]] = 0
-                else:
-                    blot_flux[ydet[ipt], xdet[ipt]] =  \
-                        (blot_flux[ydet[ipt], xdet[ipt]] / blot_weight)
-
-        #  after all looping
-        # t1 = time.time()
-        # print('Time to call blot_overlap',t1 - t0)
-        return blot_flux
-    # ________________________________________________________________________________
-
     def blot_overlap_quick(self, xcenter, ycenter, x_cube, y_cube,
                            flux_cube, blot_flux):
 
         # blot_overlap_quick finds to overlap between the blotted sky values (x_cube, y_cube)
-        # and the detector pixels. This is faster than blot_overlap.
+        # and the detector pixels.
         # Looping is done over irregular arrays (x_cube, y_cube) and mapping to xcenter, ycenter
         # is quicker than looping over detector x,y and finding overlap with large array for
         # x_cube, y_cube
         # t0 = time.time()
         blot_weight = np.zeros_like(blot_flux)
+
+        blot_ysize, blot_xsize = blot_flux.size
+
+        blot_flux = np.flatten(blot_flux)
+        blot_weight = np.flattnen(blot_flux)
         num = x_cube.size
+
 
         print('blot_overlap_quick Number of elements on sky mapped to detector going to loop over',num)
         # TODO need to move this value (roi_det)  to reference file  or at least in spec ?
         roi_det = 0.5  # 1/2 a pixel
         for ipt in range(num):
             # search xcenter and ycenter seperately. These arrays are smallsh.
-            # xcenter size = naxis1 (naxis1/2 for MIRI)
-            # ycenter size = naxis2
+            # xcenter size = naxis1 on detector (for MIRI only 1/2 array) 
+            # ycenter size = naxis2 on detector
             xdistance = np.absolute(x_cube[ipt] - xcenter)
             ydistance = np.absolute(y_cube[ipt] - ycenter)
+
             index_x = np.where(xdistance <= roi_det)
             index_y = np.where(ydistance <= roi_det)
 
             if len(index_x[0]) > 0 and len(index_y[0]) > 0:
-                for ix in index_x:
-                    for iy in index_y:
+
+                d1 = np.array(x_cube[ipt] - xcenters[index_x])
+                d2 = np.array(y_cube[ipt] - ycenters[index_y])
+                dxy = (d1 * d1) + (d2 * d2)
+                dxy = np.sqrt(dxy)
+                weight_distance = np.exp(-dxy)
+                weighted_flux = weight_distance * flux_cube[ipt]
+                index2d = [ iy * blot_xsize + ix for iy in index_y[0] for ix in index_x[0]] 
+
+                blot_flux[index2d] = blot_flux[index2d] + weighted_flux
+                blot_weight[index2d] = blot_weight[index2d] + weighted_distance
+
+                if(ipt < 10) :
+                    print('x y cube',x_cube[ipt], y_cube[ipt])
+                    print('xcenters',xcenters[index_x])
+                    print('ycenters',ycenters[index_y])
+                    print('test',self.xcenter_grid[index2d], self.ycenter_grid[index2d])
+                # form 
+            #    for ix in index_x:
+            #        for iy in index_y:
                         # form the arrays to be used calculated the weighting
-                        d1 = np.array(xcenter[ix] - x_cube[ipt])
-                        d2 = np.array(ycenter[iy] - y_cube[ipt])
-                        dxy = d1 * d1 + d2 * d2
-                        dxy = np.sqrt(dxy)
-                        weight_distance = np.exp(-dxy)
-                        weighted_flux = weight_distance * flux_cube[ipt]
-                        blot_flux[ycenter[iy], xcenter[ix]] = blot_flux[ycenter[iy], xcenter[ix]] + weighted_flux
-                        blot_weight[ycenter[iy], xcenter[ix]] = blot_weight[ycenter[iy], xcenter[ix]] + weight_distance
+            #            d1 = np.array(xcenter[ix] - x_cube[ipt])
+            #            d2 = np.array(ycenter[iy] - y_cube[ipt])
+            #            dxy = d1 * d1 + d2 * d2
+            #            dxy = np.sqrt(dxy)
+            #            weight_distance = np.exp(-dxy)
+            #            weighted_flux = weight_distance * flux_cube[ipt]
+            #            blot_flux[ycenter[iy], xcenter[ix]] = blot_flux[ycenter[iy], xcenter[ix]] + weighted_flux
+            #            blot_weight[ycenter[iy], xcenter[ix]] = blot_weight[ycenter[iy], xcenter[ix]] + weight_distance
+
+
+
+
+
 
         # done mapping blotted x,y (x_cube, y_cube) to detector
         good = blot_weight > 0
