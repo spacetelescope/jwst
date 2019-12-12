@@ -1,6 +1,5 @@
 Description
 -----------
- 
 Steps in the various pipeline modules calculate variances due to different sources of
 noise or modify variances that were computed by previous steps.  In some cases the
 variance arrays are only used internally within a given step.  For several steps,
@@ -21,6 +20,7 @@ gain_scale          1   None                    ERR, VAR_POISSON, VAR_RNOISE    
 flat_field          2   VAR_FLAT                ERR, VAR_POISSON, VAR_RNOISE           None
 fringe              2   None                    ERR                                    None
 barshadow           2   None                    ERR, VAR_POISSON, VAR_RNOISE, VAR_FLAT None
+pathloss            2   None                    ERR, VAR_POISSON, VAR_RNOISE, VAR_FLAT None
 photom              2   None                    ERR, VAR_POISSON, VAR_RNOISE, VAR_FLAT None
 outlier_detection   3   None                    None                                   ERR
 wfs_combine         3   None                    ERR                                    None
@@ -89,6 +89,13 @@ arrays of the slit.  The correction values are divided into the SCI and ERR
 arrays, and the square of the correction values are divided into the variance 
 arrays.   For details of the bar shadow correction, see
 :ref:`barshadow <barshadow_step>`.
+
+pathloss
+++++++++
+The ``pathloss`` step corrects NIRSpec and NIRISS SOSS data for various types of
+light losses. The correction factors are divided into the SCI and ERR arrays of
+the science data, and the square of the correction values are divided into the
+variance arrays. For details of this step, see :ref:`pathloss <pathloss_step>`.
 
 photom
 ++++++ 
