@@ -8,4 +8,3 @@ imaging and NIRSpec IFU observations.
 .. include:: ../references_general/photom_reffile.inc
 
 .. include:: ../references_general/area_reffile.inc
-

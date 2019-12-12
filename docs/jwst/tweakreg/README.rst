@@ -1,23 +1,23 @@
 Description
-============
+===========
 
 Overview
 --------
-This step creates "image" catalogs of point-like sources whose
+This step creates image catalogs of point-like sources whose
 centroids are then used to compute corrections to the WCS of
-the input images such that "sky" catalogs obtained from the
-"image" catalogs using corrected WCS align on sky.
+the input images such that sky catalogs obtained from the
+image catalogs using the corrected WCS will align on the sky.
 
-Source detection
+Source Detection
 ----------------
-Stars are detected in the image using Photutils' "daofind" function.
+Stars are detected in the image using the Photutils "daofind" function.
 Photutils.daofind is an implementation of the `DAOFIND`_ algorithm
 (`Stetson 1987, PASP 99, 191
 <http://adsabs.harvard.edu/abs/1987PASP...99..191S>`_).  It searches
 images for local density maxima that have a peak amplitude greater
 than a specified threshold (the threshold is applied to a convolved
 image) and have a size and shape similar to a defined 2D Gaussian
-kernel.  Photutils.daofind also provides an estimate of the objects'
+kernel.  Photutils.daofind also provides an estimate of the objects
 roundness and sharpness, whose lower and upper bounds can be
 specified.
 
@@ -34,7 +34,7 @@ WCS Correction
 The linear coordinate transformation computed in the previous step
 is used to define tangent-plane corrections that need to be applied
 to the GWCS pipeline in order to correct input image WCS.
-This correction is implemented using `~jwst.transforms.tpcorr.TPCorr`
+This correction is implemented using the `~jwst.transforms.tpcorr.TPCorr`
 class and a correcponding object is inserted into the GWCS pipeline
 of the image's WCS.
 
@@ -100,9 +100,8 @@ The ``tweakreg`` step has the following optional arguments:
 * ``sigma``: A positive `float` indicating the clipping limit, in sigma units,
   used when performing fit. (Default=3.0)
 
-Further documentation
+Further Documentation
 ---------------------
-
 The underlying algorithms are described in more detail at
 
 https://tweakwcs.readthedocs.io/en/latest/

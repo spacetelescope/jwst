@@ -1,12 +1,10 @@
 Description
 ===========
-
-This step creates a final catalog of source photometry and morphologies.
+This step creates a catalog of source photometry and morphologies.
 
 
 Source Detection
 ^^^^^^^^^^^^^^^^
-
 Sources are detected using `image segmentation
 <https://en.wikipedia.org/wiki/Image_segmentation>`_, which is a
 process of assigning a label to every pixel in an image such that
@@ -21,11 +19,9 @@ above the background.  The image can also be filtered before
 thresholding to smooth the noise and maximize the detectability of
 objects with a shape similar to the filter kernel.
 
-
 Source Deblending
 ^^^^^^^^^^^^^^^^^
-
-Note that overlapping sources are detected as single sources.
+Overlapping sources are detected as single sources.
 Separating those sources requires a deblending procedure, such as a
 multi-thresholding technique used by `SExtractor
 <https://www.astromatic.net/software/sextractor>`_.  Here we use the
@@ -37,10 +33,8 @@ multi-thresholding and `watershed segmentation
 order to deblend sources, they must be separated enough such that
 there is a saddle between them.
 
-
 Source Photometry and Properties
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
 After detecting sources using image segmentation, we can measure their
 photometry, centroids, and morphological properties.  Here we use the
 functions in `Photutils

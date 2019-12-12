@@ -8,7 +8,7 @@ WFS Combine
    :maxdepth: 2
 
    main.rst
-   reference_files.rst
    arguments.rst
+   reference_files.rst
 
 .. automodapi:: jwst.wfs_combine
