@@ -27,7 +27,7 @@ def exp_to_source(inputs):
 
     Returns
     -------
-    {str: MultiExposureModel, }
+    multiexposures: {str: MultiExposureModel[,...]}
         Returns a dict of MultiExposureModel instances wherein each
         instance contains slits belonging to the same source.
         The key is the ID of each source, i.e. ``source_id``.

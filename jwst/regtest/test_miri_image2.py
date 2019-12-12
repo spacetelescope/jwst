@@ -15,7 +15,7 @@ def test_miri_image2_cal(request, rtdata, fitsdiff_default_kwargs, _jail):
     Image2Pipeline.call(rtdata.input, save_results=True)
     rtdata.output = "jw00001001001_01101_00001_mirimage_cal.fits"
 
-    rtdata.get_truth("truth/test_foo/jw00001001001_01101_00001_mirimage_cal.fits")
+    rtdata.get_truth("truth/test_miri_image2_cal/jw00001001001_01101_00001_mirimage_cal.fits")
     assert rtdata.output != rtdata.truth
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
@@ -55,7 +55,7 @@ def test_miri_image2(run_pipeline, request, fitsdiff_default_kwargs, output):
     """
     rtdata = run_pipeline
     rtdata.output = output
-    rtdata.get_truth(os.path.join("truth/test_foo", output))
+    rtdata.get_truth(os.path.join("truth/test_miri_image2_cal", output))
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()

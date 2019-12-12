@@ -15,14 +15,14 @@ Installation
 
 The ``jwst`` package can be installed into a virtualenv or conda environment via ``pip``.  We recommend creating a fresh environment with only python installed.  Via conda:
 
-    conda create -n jwst_env python=3.7.4
+    conda create -n jwst_env python=3.7
     conda activate jwst_env
 
 ### Installing for end-users ###
 
-To install a released (tagged) version, you can install directly from Github.  To install tagged release ``jwst 0.14.0``:
+To install a released (tagged) version, you can install directly from Github.  To install tagged release ``jwst 0.14.2``:
 
-    pip install git+https://github.com/spacetelescope/jwst@0.14.0
+    pip install git+https://github.com/spacetelescope/jwst@0.14.2
 
 The latest development version (from ``master``) can also be installed from Github:
 
@@ -36,19 +36,19 @@ As can a particular commit hash:
 
 We still package our releases to DMS via environment snapshots that specify the exact versions of all packages to be installed.
 
-The latest release 0.14.0 may be installed in two stages by running the following commands:
+The latest release 0.14.2 may be installed in two stages by running the following commands:
 
 Stage 1:
 
-    conda create -n jwstdp-0.14.0 --file https://ssb.stsci.edu/releases/jwstdp/0.14.0/[env_file]
-    source activate jwstdp-0.14.0
+    conda create -n jwstdp-0.14.2 --file https://ssb.stsci.edu/releases/jwstdp/0.14.2/[env_file]
+    source activate jwstdp-0.14.2
 
-Where `[env_file]` = `conda_env_dump_stable-deps.txt` for Linux
-and   `[env_file]` = `conda_env_dump_osx-stable-deps.txt` for Macos
+Where `[env_file]` = `conda_python_stable-deps.txt` for Linux
+and   `[env_file]` = `conda_python_macos-stable-deps.txt` for Macos
 
 Stage 2:
 
-    pip install -r https://ssb.stsci.edu/releases/jwstdp/0.14.0/[pkgs_file]
+    pip install -r https://ssb.stsci.edu/releases/jwstdp/0.14.2/[pkgs_file]
 
 Where `[pkgs_file]` = `reqs_stable-deps.txt` for Linux
 and   `[pkgs_file]` = `reqs_macos-stable-deps.txt` for Macos
@@ -90,7 +90,7 @@ Note: If you wish to install directly from github, but also include the extra de
 
 Need other useful packages in your development environment?
 
-    pip install ipython flake8
+    pip install ipython flake8 pytest-xdist
 
 ### CRDS Setup ###
 
@@ -130,7 +130,7 @@ Software vs DMS build version map
 
 | jwst tag | DMS build | CRDS_CONTEXT |   Date     |          Notes                           |
 | -------- | --------- | ------------ | ---------- | -----------------------------------------|
-|  0.14.2  | B7.4rc3   | 0569         | 11/18/2019 | Third release candidate for B7.4         |
+|  0.14.2  | B7.4      | 0570         | 11/18/2019 | Final release candidate for B7.4         |
 |  0.14.1  | B7.4rc2   | 0568         | 11/11/2019 | Second release candidate for B7.4        |
 |  0.14.0  | B7.4rc1   | 0563         | 10/25/2019 | First release candidate for B7.4         |
 |  0.13.8  | B7.3.1    | 0541         | 09/05/2019 | Patch for Build 7.3 released as Build 7.3.1     |
@@ -194,7 +194,7 @@ To run all the regression tests:
 
     pytest --bigdata jwst/tests_nightly
 
-You can control where the test results are written with the `--basetemp=<PATH>` arg to `pytest`.  Note that `pytest` will wipe this directory clean for each test session, so make sure it is a scratch area.
+You can control where the test results are written with the `--basetemp=<PATH>` arg to `pytest`.  _Note that `pytest` will wipe this directory clean for each test session, so make sure it is a scratch area._
 
 If you would like to run a specific test, find its name or ID and use the `-k` option:
 

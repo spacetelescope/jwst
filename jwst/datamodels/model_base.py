@@ -237,16 +237,13 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                 if 'datatype' in subschema:
                     setattr(self, attr, value)
 
+    @property
+    def _model_type(self):
+        return self.__class__.__name__
 
     def __repr__(self):
-        import re
-
         buf = ['<']
-        match = re.search(r"(\w+)'", str(type(self)))
-        if match:
-            buf.append(match.group(1))
-        else:
-            buf.append("DataModel")
+        buf.append(self._model_type)
 
         if self.shape:
             buf.append(str(self.shape))
@@ -470,6 +467,9 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         current_date = Time(datetime.datetime.now())
         current_date.format = 'isot'
         self.meta.date = current_date.value
+
+        # Enforce model_type to be the actual type of model being saved.
+        self.meta.model_type = self._model_type
 
     def save(self, path, dir_path=None, *args, **kwargs):
         """

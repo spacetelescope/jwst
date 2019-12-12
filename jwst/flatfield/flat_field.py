@@ -176,14 +176,18 @@ def apply_flat_field(science, flat):
     # on array broadcasting to handle the cubes
     science.data /= flat_data
 
-    # Update the variances using BASELINE algorithm
-    # Skip for guider data, as it has not gone through ramp fitting
+    # Update the variances using BASELINE algorithm.  For guider data, it has
+    # not gone through ramp fitting so there is no Poisson noise or readnoise
     if not isinstance(science, datamodels.GuiderCalModel):
         flat_data_squared = flat_data**2
         science.var_poisson /= flat_data_squared
         science.var_rnoise /= flat_data_squared
         science.var_flat = science.data**2 / flat_data_squared * flat_err**2
         science.err = np.sqrt(science.var_poisson + science.var_rnoise + science.var_flat)
+    else:
+        flat_data_squared = flat_data**2
+        science.var_flat = science.data**2 / flat_data_squared * flat_err**2
+        science.err = np.sqrt(science.var_flat)
 
     # Combine the science and flat DQ arrays
     science.dq = np.bitwise_or(science.dq, flat_dq)
