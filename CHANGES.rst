@@ -16,7 +16,12 @@ master_background
 
 - Updated to fill the asn table and asn pool names. [#4240]
 
-=======
+pipeline
+--------
+
+- Make the naming and writing out of the resampled results to an `i2d` file
+  in `Image2Pipeline` consistent between config and class invocations [#4333]
+
 tweakreg
 --------
 
