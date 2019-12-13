@@ -153,9 +153,9 @@ class Image2Pipeline(Pipeline):
         # regular 2D science image types
         if input.meta.exposure.type.upper() in self.image_exptypes and \
         len(input.data.shape) == 2:
-            i2d = self.resample(input)
-            if self.save_results:
-                self.save_model(i2d, suffix="i2d")
+            self.resample.save_results = self.save_results
+            self.resample.suffix = 'i2d'
+            self.resample(input)
 
         # That's all folks
         self.log.info(
