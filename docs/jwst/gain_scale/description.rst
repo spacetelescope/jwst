@@ -42,4 +42,4 @@ gain reference files for modes that use the standard gain can have
 GAINFACT=1.0, in which case the correction is benign.
 
 Upon successful completion of the step, the "S_GANSCL" keyword in the
-science data is set to "COMPLETE."
+science data is set to "COMPLETE".

@@ -33,7 +33,7 @@ then the on-board averaging was computed correctly and this step
 is skipped. In this case, the calibration step status keyword
 ``S_GRPSCL`` is set to "SKIPPED." If the keyword values are not
 equal, rescaling is applied and the ``S_GRPSCL`` keyword is set
-to "COMPLETE."
+to "COMPLETE".
 
 It is assumed that this step is always applied to raw data
 before any other processing is done to the pixel values and hence

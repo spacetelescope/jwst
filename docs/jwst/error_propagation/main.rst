@@ -5,8 +5,9 @@ noise or modify variances that were computed by previous steps.  In some cases t
 variance arrays are only used internally within a given step.  For several steps,
 these arrays must be propagated to subsequent steps in the pipeline. Anytime a step
 creates or updates variances, the total error (ERR) array values are always recomputed
-as the quadratic sum of all variances available at the time. Note that the ERR array
-values are always expressed as standard deviation (i.e. square-root of the variances).
+as the square root of the quadratic sum of all variances available at the time.
+Note that the ERR array values are always expressed as standard deviation
+(i.e. square root of the variance).
 
 The table below is a summary of which steps create or update variance and error arrays,
 as well as which steps make use of these data. Details of how each step computes or
@@ -40,8 +41,8 @@ in any way and simply propagates the information to the next step.
 ramp_fitting
 ++++++++++++
 This step calculates and populates the VAR_POISSON and VAR_RNOISE arrays
-in the 'rate' and 'rateints' files, and updates the ERR array as the quadratic sum
-of the variances. VAR_POISSON and VAR_RNOISE represent the uncertainty in the
+in the 'rate' and 'rateints' files, and updates the ERR array as the square root of the
+quadratic sum of the variances. VAR_POISSON and VAR_RNOISE represent the uncertainty in the
 computed slopes (per pixel) due to Poisson and read noise, respectively.
 The details of the calculations can be found at :ref:`ramp_fitting <ramp_fitting_step>`.
 
@@ -70,8 +71,8 @@ The SCI array of the exposure being processed is divided by the flat-field refer
 image, and the VAR_POISSON and VAR_RNOISE arrays are divided by the square of the flat.
 A VAR_FLAT array is created, computed from the science data and the flat-field
 reference file ERR array.
-The science data ERR array is then updated to be the quadratic sum of the three
-variance arrays.
+The science data ERR array is then updated to be the square root of the quadratic sum of
+the three variance arrays.
 For more details see :ref:`flat_field <flatfield_step>`.
 
 fringe 

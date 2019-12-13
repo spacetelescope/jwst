@@ -48,7 +48,8 @@ NIR Detector Data
    in the telescope focal plane.  The first step is to transform them back to
    the detector frame so that all NIR and MIR detectors can be treated equivalently.
 #. It is assumed that a superbias correction has been performed.
-#. For each integration, and for each group:
+#. For each integration and for each group:
+
     #. Calculate the mean value in the top and bottom reference pixels.
        The reference pixel means for each amplifier are calculated separately,
        and the top and bottom means are calculated separately.
@@ -79,6 +80,7 @@ MIR Detector Data
 #. MIR data are always in the detector frame, so no flipping/rotation is needed.
 #. Subtract the first group from each group within an integration.
 #. For each integration, and for each group after the first:
+
     #. Calculate the mean value in the reference pixels for each amplifier.
        The left and right side reference signals are calculated separately.
        Optionally, the user can choose to calculate the means of odd and even
@@ -94,7 +96,7 @@ MIR Detector Data
        mean for even row pixels if this option is selected.
     #. Add the first group of each integration back to each group.
 
-At the end of the refpix step, the S_REFPIX keyword is set to 'COMPLETE'.
+At the end of the refpix step, the S_REFPIX keyword is set to "COMPLETE".
 
 Subarrays
 ---------
@@ -192,5 +194,5 @@ For each ``k``, the inverse Fourier transform of ``ft_refpix_corr[k]`` is
 the processed array of reference pixel data, which is then subtracted from
 the normal pixel data over the range of pixels for output ``k``.
 
-.. _JdoxIRS2: https://jwst-docs.stsci.edu/display/JTI/NIRSpec+IRS2+Detector+Readout+Mode
+.. _JdoxIRS2: https://jwst-docs.stsci.edu/display/JDOX/NIRSpec+IRS2+Detector+Readout+Mode
 .. _Rauscher2017: http://adsabs.harvard.edu/abs/2017PASP..129j5003R

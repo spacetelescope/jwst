@@ -28,7 +28,7 @@ level in the last frame of the previous integration in the exposure. Between exp
 are continually reset; however for a multiple integration exposure there is a single reset between integrations.
 The reset switch charge decay has an e-folding time scale ~ 1.3 * frame time. The affects of this decay are
 not measurable in the first integration  because a number of resets have occurred from the last exposure and
-the effect has decayed away by the time it takes to  readout the last exposure, set up the next exposure and begin
+the effect has decayed away by the time it takes to read out the last exposure, set up the next exposure and begin
 exposing. There are low level reset effects in the first integration that are related to the strength of the dark
 current and can be removed with an integration-dependent dark. 
 

@@ -4,7 +4,7 @@ Arguments
 The ``source_catalog`` step uses the following user-settable arguments:
 
 * ``--kernel_fwhm``: A floating-point value giving the Gaussian kernel
-  FWHM in pixel [default=2.0]
+  FWHM in pixels [default=2.0]
 
 * ``--kernel_xsize``: A floating-point value giving the kernel x size
   in pixels [default=5]

@@ -12,4 +12,4 @@ file that matches the input detector (MIRIFUSHORT or MIRIFULONG) and wavelength
 band (SHORT, MEDIUM, or LONG, as specified by GRATNG14) is used.
 
 Upon successful application of this correction, the status keyword "S_FRINGE" is
-set to "COMPLETE."
+set to "COMPLETE".

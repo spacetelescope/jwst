@@ -12,11 +12,11 @@ group 7 is the first one to cross the saturation threshold for a given pixel,
 then groups 7 through 10 will all be flagged for that pixel.
 
 NIRSpec data acquired using the "IRS2" readout pattern require special
-handling in this step, due to the extra reference pixel values that interleaved
+handling in this step, due to the extra reference pixel values that are interleaved
 within the science data. The saturation reference file data does not contain
 extra entries for these pixels. The step-by-step process is as follows:
 
-- Retreive and load data from the appropriate "SATURATION" reference file from CRDS
+- Retrieve and load data from the appropriate "SATURATION" reference file from CRDS
 
 - If the input science exposure used the NIRSpec IRS2 readout pattern:
 

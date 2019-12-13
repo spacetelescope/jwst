@@ -13,7 +13,7 @@ in the superbias image are set to a value of zero before being subtracted
 from the science data, such that those pixels effectively receive no correction.
 
 The DQ array from the superbias reference file is combined with the science
-exposure "PIXELDQ" array using a bit-wise OR operation.
+exposure "PIXELDQ" array using a bitwise OR operation.
 
 The ERR and GROUPDQ arrays in the science ramp data are unchanged.
 

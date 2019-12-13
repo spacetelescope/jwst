@@ -28,7 +28,7 @@ The average background image is produced as follows:
  * Sum in quadrature the ERR arrays of all background exposures, clipping the
    same input values as determined for the SCI arrays, and convert the result
    to an uncertainty in the mean
- * Combine the DQ arrays of all background exposures using a bit-wise OR
+ * Combine the DQ arrays of all background exposures using a bitwise OR
    operation
 
 The average background exposure is then subtracted from the target exposure.
@@ -41,7 +41,7 @@ The subtraction consists of the following operations:
    error propagation is implemented in the entire pipeline
 
  * The DQ arrays of the average background and the target exposure are
-   combined using a bit-wise OR operation
+   combined using a bitwise OR operation
 
 If the target exposure is a simple ImageModel, the background image is
 subtracted from it. If the target exposure is in the form of a 3-D CubeModel

@@ -37,16 +37,16 @@ The frame-averaged dark is constructed using the following scheme:
 
 For each integration in the input science exposure, the averaged dark data are
 then subtracted, group-by-group, from the science exposure groups, in which
-each SCI group of the dark data are subtracted from the corresponding SCI
+each SCI group of the dark data is subtracted from the corresponding SCI
 group of the science data.
 
 The ERR arrays of the science data are not modified.
 
 The DQ flags from the dark reference file are propagated into science
-exposure PIXELDQ array using a bit-wise OR operion.
+exposure PIXELDQ array using a bitwise OR operation.
 
 Upon successful completion of the dark subtraction the S_DARK keyword is
-set to "COMPLETE."
+set to "COMPLETE".
 
 Special Handling
 ++++++++++++++++

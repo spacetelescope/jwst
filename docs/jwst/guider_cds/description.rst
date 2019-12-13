@@ -39,4 +39,4 @@ dividing by the group time. The output data array is
 
 After successful completion of the step, the "BUNIT" keyword in
 the output data is updated to "DN/s" and the "S_GUICDS"
-keyword is set to "COMPLETE."
+keyword is set to "COMPLETE".

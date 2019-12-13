@@ -20,7 +20,7 @@ or extended source and therefore the
 the ``photom`` step.
 
 Upon successful completion of this step, the status keyword S_PHOTOM will be
-set to COMPLETE.
+set to "COMPLETE".
 Furthermore, the BUNIT keyword value in the SCI and ERR extension
 headers of the science product are updated to reflect the change in units.
 

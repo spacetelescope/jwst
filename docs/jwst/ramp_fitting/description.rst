@@ -71,7 +71,7 @@ After computing the slopes for all segments for a given pixel, the final slope i
 determined as a weighted average from all segments in all integrations, and is
 written as the primary output product.  In this output product, the
 4-D GROUPDQ from all integrations is collapsed into 2-D, merged
-(using a bit-wise OR) with the input 2-D PIXELDQ, and stored as a 2-D DQ array. 
+(using a bitwise OR) with the input 2-D PIXELDQ, and stored as a 2-D DQ array. 
 The 3-D VAR_POISSON and VAR_RNOISE arrays from all integrations are averaged
 into corresponding 2-D output arrays.
 
@@ -204,7 +204,7 @@ segments, so is a sum over integrations and segments:
 
 
 Upon successful completion of this step, the status keyword S_RAMP will be set
-to "COMPLETE."
+to "COMPLETE".
 
 Error Propagation
 =================

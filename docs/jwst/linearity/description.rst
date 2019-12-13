@@ -35,7 +35,7 @@ limit to the order of the polynomial correction; all coefficients contained in
 the reference file will be applied.
 
 Upon successful completion of the linearity correction the S_LINEAR keyword is
-set to "COMPLETE."
+set to "COMPLETE".
 
 Special Handling
 ++++++++++++++++
@@ -56,7 +56,7 @@ Special Handling
 The ERR array of the input science exposure is not modified.
 
 The flags from the linearity reference file DQ array are propagated into the
-PIXELDQ array of the science exposure using a bit-wise OR operation.
+PIXELDQ array of the science exposure using a bitwise OR operation.
 
 Subarrays
 ---------

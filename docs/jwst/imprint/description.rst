@@ -11,7 +11,7 @@ or a JWST data model.
 
 The SCI data array of the imprint exposure is subtracted from the SCI array
 of the target exposure. The DQ arrays of the two exposures are combined using
-a bit-wise logical OR operation. The ERR and variance arrays are not
+a bitwise logical OR operation. The ERR and variance arrays are not
 currently used or modified.
 
 Step Arguments

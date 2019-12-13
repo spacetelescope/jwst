@@ -4,7 +4,7 @@ At its basic level this step flat-fields an input science data set by dividing
 by a flat-field reference image. In particular, the SCI array from the
 flat-field reference file is divided into both the SCI and ERR arrays of the
 science data set, and the flat-field DQ array is combined with the science DQ
-array using a bit-wise OR operation. Details for particular modes are given
+array using a bitwise OR operation. Details for particular modes are given
 in the sections below.
 
 Imaging and Non-NIRSpec Spectroscopic Data
@@ -21,7 +21,7 @@ follows:
 - Apply the flat by dividing it into the science exposure SCI and ERR arrays.
 
 - Propagate the FLAT reference file DQ values into the science exposure
-  DQ array using a bit-wise OR operation.
+  DQ array using a bitwise OR operation.
 
 Spectroscopic data in the form of MultiSlit data models are handled as follows:
 
@@ -84,7 +84,7 @@ VAR_FLAT, is created from the science exposure and flat-field reference
 file data using the following formula:
 
 .. math::
-   VAR\_FLAT = SCI_{science}^{2} / SCI_{flat}^{2} * ERR_{flat}^{2}
+   VAR\_FLAT = ( SCI_{science}^{2} / SCI_{flat}^{2} ) * ERR_{flat}^{2}
 
-The total ERR array is updated as the quadratic sum of VAR_POISSON,
-VAR_RNOISE, and VAR_FLAT.
+The total ERR array is updated as the square root of the quadratic sum of
+VAR_POISSON, VAR_RNOISE, and VAR_FLAT.

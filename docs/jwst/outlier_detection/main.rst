@@ -3,7 +3,7 @@ Description
 
 Processing multiple datasets together allows for the identification of bad pixels
 or cosmic-rays that remain in each of the input images, many times at levels which
-were ambiguous for detection during ramp fitting.  The outlier detection step 
+were not detectable by the :ref:`jump <jump_step>` step. The ``outlier_detection`` step 
 implements the following algorithm to identify and flag any remaining cosmic-rays or
 other artifacts left over from previous calibrations:
 
@@ -23,7 +23,7 @@ other artifacts left over from previous calibrations:
   - create "blotted" data from the median image to exactly match each original
     input dataset
   
-  - perform a statistical comparison (pixel-by-pixel) between the median,blotted
+  - perform a statistical comparison (pixel-by-pixel) between the median blotted
     data with the original input data to look for pixels with values that are  
     different from the mean value by more than some specified sigma 
     based on the noise model
