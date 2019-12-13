@@ -199,7 +199,7 @@ class CubeBlot():
                 ycenter = np.arange(ysize)
                 xcenter = np.arange(xsize)
                 self.ycenter_grid,self.xcenter_grid = np.mgrid[0:ysize,
-                                                     xstart:xsize]
+                                                               0:xsize]
 
                 # for NIRSPEC each file has 30 slices
                 # wcs information accessed seperately for each slice
@@ -211,6 +211,7 @@ class CubeBlot():
                     # used the bounding box of each slice to determine the slice limits
                     slice_wcs = nirspec.nrs_wcs_set_input(model, ii)
                     x_slice, y_slice = slice_wcs.invert(self.cube_ra, self.cube_dec, self.cube_wave)
+                    print('org min max',np.amin(x_slice),np.amax(x_slice),np.amin(y_slice),np.amax(y_slice))
                     x_slice = np.ndarray.flatten(x_slice)
                     y_slice = np.ndarray.flatten(y_slice)
                     flux_slice = np.ndarray.flatten(self.cube_flux)
@@ -223,6 +224,9 @@ class CubeBlot():
                     fuse = np.logical_and(xuse, yuse)
                     x_slice = x_slice[fuse]
                     y_slice = y_slice[fuse]
+                    print('min max of xslice',np.amin(x_slice),np.amax(x_slice))
+                    print('min max of yslice',np.amin(y_slice),np.amax(y_slice))
+
                     flux_slice = flux_slice[fuse]
                     
                     print('number for slice',flux_slice.size)
@@ -263,10 +267,10 @@ class CubeBlot():
         # t0 = time.time()
         blot_weight = np.zeros_like(blot_flux)
 
-        blot_ysize, blot_xsize = blot_flux.size
+        blot_ysize, blot_xsize = blot_flux.shape
 
-        blot_flux = np.flatten(blot_flux)
-        blot_weight = np.flattnen(blot_flux)
+        blot_flux = np.ndarray.flatten(blot_flux)
+        blot_weight = np.ndarray.flatten(blot_weight)
         num = x_cube.size
 
 
