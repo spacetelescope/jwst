@@ -289,8 +289,8 @@ class CubeBlot():
 
             if len(index_x[0]) > 0 and len(index_y[0]) > 0:
 
-                d1 = np.array(x_cube[ipt] - xcenters[index_x])
-                d2 = np.array(y_cube[ipt] - ycenters[index_y])
+                d1 = np.array(x_cube[ipt] - xcenter[index_x])
+                d2 = np.array(y_cube[ipt] - ycenter[index_y])
                 dxy = (d1 * d1) + (d2 * d2)
                 dxy = np.sqrt(dxy)
                 weight_distance = np.exp(-dxy)
@@ -298,12 +298,12 @@ class CubeBlot():
                 index2d = [ iy * blot_xsize + ix for iy in index_y[0] for ix in index_x[0]] 
 
                 blot_flux[index2d] = blot_flux[index2d] + weighted_flux
-                blot_weight[index2d] = blot_weight[index2d] + weighted_distance
+                blot_weight[index2d] = blot_weight[index2d] + weight_distance
 
                 if(ipt < 10) :
                     print('x y cube',x_cube[ipt], y_cube[ipt])
-                    print('xcenters',xcenters[index_x])
-                    print('ycenters',ycenters[index_y])
+                    print('xcenters',xcenter[index_x])
+                    print('ycenters',ycenter[index_y])
                     print('test',self.xcenter_grid[index2d], self.ycenter_grid[index2d])
                 # form 
             #    for ix in index_x:
@@ -317,10 +317,6 @@ class CubeBlot():
             #            weighted_flux = weight_distance * flux_cube[ipt]
             #            blot_flux[ycenter[iy], xcenter[ix]] = blot_flux[ycenter[iy], xcenter[ix]] + weighted_flux
             #            blot_weight[ycenter[iy], xcenter[ix]] = blot_weight[ycenter[iy], xcenter[ix]] + weight_distance
-
-
-
-
 
 
         # done mapping blotted x,y (x_cube, y_cube) to detector
