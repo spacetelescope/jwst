@@ -2983,7 +2983,7 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                     else:
                         wcs = input_model.meta.wcs
                     # There's no need to repeat this for each integration.
-                    if integ == 0:
+                    if integ <= 1:
                         wcs_shape = input_model.data.shape
                         if len(wcs_shape) > 2:
                             # CubeModel

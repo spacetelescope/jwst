@@ -142,8 +142,8 @@ def tsgrism(input_model, reference_files):
     """
 
     # The input is the grism image
-    if not isinstance(input_model, CubeModel):
-        raise TypeError('The input data model must be a CubeModel.')
+    #if not isinstance(input_model, CubeModel):
+    #    raise TypeError('The input data model must be a CubeModel.')
 
     # make sure this is a grism image
     if "NRC_TSGRISM" != input_model.meta.exposure.type:
