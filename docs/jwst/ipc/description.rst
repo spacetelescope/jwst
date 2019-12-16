@@ -1,8 +1,7 @@
-
 Description
 ===========
 
-The IPC step corrects a JWST exposure for interpixel capacitance by
+The ``ipc`` step corrects a JWST exposure for interpixel capacitance by
 convolving with an IPC reference image.
 
 The current implementation uses an IPC reference file that is normally
@@ -17,7 +16,8 @@ and when the kernel overlaps a region of reference pixels, those pixels
 contribute a value of zero to the convolution.  The ERR and DQ arrays
 will not be modified.
 
-SUBARRAYS:
+Subarrays
+=========
 
 Subarrays are treated the same as full-frame data, with the exception
 that the reference pixels may be absent.

@@ -56,12 +56,12 @@ Trap capture is more involved than is trap decay.  The computation of trap
 capture is different for an impulse (e.g. a cosmic-ray event) than for a
 ramp, and saturation also affects capture.  Computing trap capture needs
 an estimate of the ramp slope, and it needs the locations (pixel number and
-group number) of cosmic-ray jumps.  At the time of writing, the persistence
-step is run before the jump step, so the GROUPDQ array in the input to
-persistence does not contain the information that is required to account
+group number) of cosmic-ray jumps.  At the time of writing, the ``persistence``
+step is run before the ``jump`` step, so the GROUPDQ array in the input to
+``persistence`` does not contain the information that is required to account
 for cosmic-ray events.
 
-Since the persistence step is run before ramp_fit, the persistence step does
+Because the ``persistence`` step is run before ``ramp_fit``, the persistence step does
 not have the value of the slope, so the step must compute its own estimate
 of the slope.  The algorithm is as follows.  First of all, the slope must be
 computed before the loop over groups in which trap decay is computed and
@@ -204,7 +204,7 @@ was specified.  This file should be passed as input to the next run of the
 persistence step for data that used the same detector as the current run.
 Pass this file using the input_trapsfilled argument.
 
-If the user specified ``save_persistence=True``, a third output file will
+If the user specifies ``save_persistence=True``, a third output file will
 be written, with suffix "_output_pers".  This is a RampModel matching the
 output science file, but this gives the persistence that was subtracted
 from each group in each integration.

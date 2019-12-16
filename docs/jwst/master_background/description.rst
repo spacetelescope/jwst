@@ -11,14 +11,14 @@ versus wavelength - is projected into the
 Logic built into the step checks to see if the exposure-based :ref:`background <background_step>`
 subtraction step in the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline has already been
 performed on the input images, based on the value of the S_BKDSUB keyword. If S_BKGSUB is
-set to 'COMPLETE', the master background step is skipped. If the :ref:`calwebb_spec2 <calwebb_spec2>`
+set to "COMPLETE", the master background step is skipped. If the :ref:`calwebb_spec2 <calwebb_spec2>`
 background step was not applied, the master background step will proceed.
 The user can override this logic, if desired, by setting the step argument ``--force_subtract``
 to ``True``, in which case master
 background subtraction will be applied regardless of the value of S_BKDSUB (see
 :ref:`msb_step_args`).
 
-Upon successful completion of the step, the S_MSBSUB keyword is set to 'COMPLETE' in the
+Upon successful completion of the step, the S_MSBSUB keyword is set to "COMPLETE" in the
 output product. The background-subtracted results are returned as a new data model, leaving
 the input model unchanged.
 
@@ -51,7 +51,7 @@ for measuring background. Exposures of this type are identified by the pipeline 
 substring "NOD" somewhere within the name (e.g. "2-POINT-NOD" or "ALONG-SLIT-NOD"), or will
 be set to "POINT-SOURCE" (for MIRI MRS).  The :ref:`calwebb_spec2 <calwebb_spec2>`
 :ref:`srctype <srctype_step>` step recognizes these PATTTYPE values and sets the
-source type to "POINT".
+source type to "POINT."
 
 This in turn causes the :ref:`extract_1d <extract_1d_step>` step at
 the end of :ref:`calwebb_spec2 <calwebb_spec2>` to extract spectra for both source and
@@ -63,9 +63,9 @@ the image/cube at the RA/Dec of the target. Hence for nodded exposures, the loca
 extraction regions follows the movement of the source in each exposure. The extracted
 data from the source region are stored in the "FLUX" and "SURF_BRIGHT" (surface brightness)
 columns of the :ref:`x1d <x1d>` product, while the background extraction is stored in the
-"BACKGROUND" column. The master_background step recognizes when it's working with nodded
+"BACKGROUND" column. The ``master_background`` step recognizes when it's working with nodded
 exposures and in that case uses the data from the "BACKGROUND" column of each background
-:ref:`x1d <x1d>` product.
+:ref:`x1d <x1d>` product to create the 1-D master background spectrum.
 
 Below is an example ASN file for a simple 2-point nodded observation consisting of two
 exposures.
@@ -119,7 +119,7 @@ Extended Source with Dedicated Background Exposures
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Observations of extended sources must obtain exposures of a separate background target/field in
 order to measure the background. Exposures of a background target are identified by the keyword
-"BKGDTARG" set to True in the header. During :ref:`calwebb_spec2 <calwebb_spec2>` processing,
+"BKGDTARG" set to `True` in the header. During :ref:`calwebb_spec2 <calwebb_spec2>` processing,
 the :ref:`srctype <srctype_step>` step recognizes these and sets their source type to
 "EXTENDED", because all dedicated background exposures are to be processed as extended sources.
 
@@ -128,7 +128,7 @@ the end of :ref:`calwebb_spec2 <calwebb_spec2>` to extract a spectrum in extende
 which uses the entire field-of-view (whether it be a slit image or an IFU cube) as the
 extraction region. The extracted spectral data are stored in the "FLUX" and "SURF_BRIGHT"
 columns of the resulting :ref:`x1d <x1d>` product, with the "BACKGROUND" column left blank.
-The master_background step recognizes when it's working with a background exposure, which is
+The ``master_background`` step recognizes when it's working with a background exposure, which is
 always treated as an extended source,
 and in that case uses the data from the "SURF_BRIGHT" column of each background
 :ref:`x1d <x1d>` product to construct the master background spectrum.
@@ -201,7 +201,7 @@ hence the data are not a one-to-one match. This requires additional operations t
 be performed on the background spectrum before it can be correctly applied to slits
 containing point sources.
 
-**These unique capabilities are not yet implemented in the master_background step,
+**These unique capabilities are not yet implemented in the ``master_background`` step,
 hence NIRSpec MOS observations can not be processed properly at this time.** The
 only workable option for NIRSpec MOS data at this time is to employ the
 user-supplied background spectrum option, which is then subtracted from every
@@ -237,19 +237,19 @@ each containing data from multiple slits, the subtraction is applied one-by-one 
 instances in all exposures. For each data instance to be subtracted the following steps are
 performed:
 
- - Compute a 2-D wavelength grid corresponding to the 2-D source data. For some observing modes,
-   such as NIRSpec MOS and fixed-slit, a 2-D wavelength array is already computed and attached to the data
-   in the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline :ref:`extract_2d <extract_2d_step>` step.
-   If such a wavelength array is present, it is used. For modes that don't have a 2-D
-   wavelength array contained in the data, it is computed on the fly using the WCS object
-   for each source data instance.
+- Compute a 2-D wavelength grid corresponding to the 2-D source data. For some observing modes,
+  such as NIRSpec MOS and fixed-slit, a 2-D wavelength array is already computed and attached to the data
+  in the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline :ref:`extract_2d <extract_2d_step>` step.
+  If such a wavelength array is present, it is used. For modes that don't have a 2-D
+  wavelength array contained in the data, it is computed on the fly using the WCS object
+  for each source data instance.
 
- - Compute the background signal at each pixel in the 2-D wavelength grid by interpolating within
-   the 1-D master background spectrum as a function of wavelength.
-   Pixels in the 2-D source data with an undefined wavelength (e.g. wavelength array value
-   of NaN) or a wavelength that is beyond the limits of the master background spectrum receive
-   special handling. The interpolated background value is set to zero and a DQ flag of
-   "DO_NOT_USE" is set.
+- Compute the background signal at each pixel in the 2-D wavelength grid by interpolating within
+  the 1-D master background spectrum as a function of wavelength.
+  Pixels in the 2-D source data with an undefined wavelength (e.g. wavelength array value
+  of NaN) or a wavelength that is beyond the limits of the master background spectrum receive
+  special handling. The interpolated background value is set to zero and a DQ flag of
+  "DO_NOT_USE" is set.
 
- - Subtract the resulting 2-D background image from the 2-D source data. DQ values from the
-   2-D background image are propagated into the DQ array of the subtracted science data.
+- Subtract the resulting 2-D background image from the 2-D source data. DQ values from the
+  2-D background image are propagated into the DQ array of the subtracted science data.

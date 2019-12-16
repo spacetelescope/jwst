@@ -1,5 +1,3 @@
 Step Arguments
 ==============
-
-The white light curve generation step has no step-specific arguments.
-
+The ``white_light`` step has no step-specific arguments.

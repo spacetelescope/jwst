@@ -37,4 +37,3 @@ data only when the ``--use_side_ref_pixels`` option is selected.
 If the ``odd_even_rows`` argument is selected, the reference signal is
 calculated and applied separately for even- and odd-numbered rows.  The
 default value is True, and this argument applies to MIR data only.
-

@@ -8,8 +8,7 @@ TSO Aperture Photometry
    :maxdepth: 2
 
    description.rst
-   reference_files.rst
    arguments.rst
-
+   reference_files.rst
 
 .. automodapi:: jwst.tso_photometry

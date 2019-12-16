@@ -1,20 +1,21 @@
-
 Description
 ===========
 
 Assumptions
 -----------
-This correction is currently only implemented for MIRI data and is only for integrations
-after the first integration (i.e. this step does not correct the first integration).
-It is assumed this step occurs before the dark subtraction, but after linearity.
+This correction is currently only implemented for MIRI data and is only applied
+to integrations after the first integration (i.e. this step does not correct the
+first integration).
+It is assumed this step occurs before the dark subtraction, but after linearity
+correction.
 
 Background
 __________
 
 The MIRI Focal Plane System (FPS) consists of the detectors and the electronics to control them.
-There are a number of non-ideal detector and readout effects which produce reset offsets,
+There are a number of non-ideal detector and readout effects that produce reset offsets,
 nonlinearities at the start of an integration, non-linear ramps with increasing signal,
-latent images and drifts in the slopes. 
+latent images, and drifts in the slopes. 
 
 The manner in which the MIRI readout electronics operate have been
 shown to be the source of the reset offsets and nonlinearities at the start of the integration.
@@ -27,10 +28,9 @@ level in the last frame of the previous integration in the exposure. Between exp
 are continually reset; however for a multiple integration exposure there is a single reset between integrations.
 The reset switch charge decay has an e-folding time scale ~ 1.3 * frame time. The affects of this decay are
 not measurable in the first integration  because a number of resets have occurred from the last exposure and
-the effect has decayed away by the time it takes to  readout out the last exposure, set up the next exposure and begin
+the effect has decayed away by the time it takes to read out the last exposure, set up the next exposure and begin
 exposing. There are low level reset effects in the first integration that are related to the strength of the dark
 current and can be removed with an integration-dependent dark. 
-
 
 For MIRI multiple integration data, the reset switch decay causes the
 the initial groups  in  integrations after the first one  to be offset from
@@ -43,22 +43,18 @@ the first integration start at a lower DN level. The amplitude of this offset is
 to the signal level in the previous integration. Fortunately this offset is constant for all the groups in the integration,
 thus has no impact on the slopes determined for each integration.
 
-
-
-
 Algorithm
 _________
 This correction is only applied to integrations > 1. 
-The RSCD correction step applies an exponential decay correction based on coefficients in the  reset switch 
-charge decay reference file. The reference files are selected based on READOUT pattern
-(FAST or SLOW) and  Subarray type (FULL or one of the  MIRI defined subarray types).
+The step applies an exponential decay correction based on coefficients in the "RSCD"
+reference file. The reference files are selected based on readout pattern
+(READPATT=FAST or SLOW) and subarray type (FULL or one of the MIRI defined subarray types).
 The reference file contains the information necessary to derive the scale factor and decay time 
 to correct for the reset effects. The correction differs for even and odd row numbers. 
 
 The correction to be added to the input data has the form::
 
     corrected data = input data data + dn_accumulated * scale * exp(-T / tau)  (Equation 1) 
-
 
 where T is the time since the last group in the previous integration, tau is the exponential time constant and 
 dn_accumulated is the DN level that was accumulated for the pixel from the previous integration.
@@ -91,14 +87,13 @@ saturation did not exist. The :math:`slope` in equation 3  is calculated accordi
 
    :math:`slope = sat_{zp} + sat_{slope} * N + sat_2*N^2 + evenrow_{corrections} \; \; (Equation 3.1)`.
 
-The terms :math:`sat_\text{mzp}`, :math:`sat_{zp}`, :math:`sat_2`, :math:`evenrow_{corrections}`   are read in from the reference file. 
-
-
+The terms :math:`sat_\text{mzp}`, :math:`sat_{zp}`, :math:`sat_2`, :math:`evenrow_{corrections}`
+are read in from the RSCD reference file. 
 
 All fourteen  parameters :math:`tau`, :math:`b{1}`, :math:`b{2}`, :math:`b{3}`, :math:`illum_{zpt}`,
 :math:`illum_{slope}`, :math:`illum2`, :math:`Crossover Point`, :math:`sat_{zp}`, :math:`sat_{slope}`, :math:`sat_2`,
 :math:`sat_{scale}`, :math:`sat_\text{mzp}`, and :math:`evenrow_{corrections}` are found in the RSCD reference files. 
-There is a seperate set for even and odd rows for each  READOUT mode and  SUBARRAY type. 
+There is a seperate set for even and odd rows for each readout (READPATT) mode and subarray type. 
 
 Subarrays
 ----------
