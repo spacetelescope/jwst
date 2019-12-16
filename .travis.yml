@@ -66,4 +66,4 @@ script:
   - $TEST_COMMAND
 
 after_success:
-  - if [[ ${TEST_COMMAND} =~ ^pytest ]]; then codecov -F unittests; fi
+  - if [[ ${TEST_COMMAND} =~ ^pytest ]]; then codecov -F unit; fi
