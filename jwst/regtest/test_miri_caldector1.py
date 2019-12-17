@@ -6,13 +6,15 @@ from astropy.io.fits.diff import FITSDiff
 
 from jwst.pipeline import Detector1Pipeline
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
-
+from jwst.stpipe import Step
 
 @pytest.mark.bigdata
-def test_miri_caldetector1_rate(request, rtdata, fitsdiff_default_kwargs, _jail):
+def test_miri_caldetector1_rate(_jail, rtdata, fitsdiff_default_kwargs):
     rtdata.get_data("miri/image/jw00001001001_01101_00001_MIRIMAGE_uncal.fits")
 
-    Detector1Pipeline.call(rtdata.input, save_results=True)
+    collect_pipeline_cfgs("config")
+    args = ["config/calwebb_detector1.cfg", rtdata.input]
+    Step.from_cmdline(args)
     rtdata.output = "jw00001001001_01101_00001_MIRIMAGE_rate.fits"
 
     rtdata.get_truth("truth/test_miri_caldetector1/jw00001001001_01101_00001_MIRIMAGE_rate.fits")
@@ -38,31 +40,34 @@ def run_pipeline(rtdata_module, jail):
     step.dark_current.save_results = True
     step.refpix.save_results = True
     step.jump.save_results = True
-    save_results = True
-    save_calibrated_ramp = True
+    step.save_results = True
+    step.save_calibrated_ramp = True
 
     step.run(rtdata.input)
+    return rtdata
 
 #    collect_pipeline_cfgs('config')
 #    config_file = os.path.join('config', 'calwebb_detector1.cfg')
 #    Detector1Pipeline.call(rtdata.input, config_file=config_file,
 #        save_results=True, save_calibrated_ramp=True)
 
-    return rtdata
-
 
 @pytest.mark.bigdata
 def test_miri_caldetector1_completion(run_pipeline):
     files = glob('*_rate.fits')
-    files += glob('*_rate_ints.fits')
-    files += glob('*_dark_current.fits')
-    files += glob('*_linearity.fits')
-    files += glob('*_refpixel.fits')
-    files += glob('*_rscd.fits')
-    files += glob('*_ramp.fits')
+    files += glob('*_rateints.fits')
+    files += glob('*_dq_init.fits')
     files += glob('*_saturation.fits')
-    # There should be 8 outputs
-    assert len(files) == 8
+    files += glob('*_rscd.fits')
+    files += glob('*_firstframe.fits')
+    files += glob('*_lastframe.fits')
+    files += glob('*_linearity.fits')
+    files += glob('*_jump.fits')
+    files += glob('*_dark_current.fits')
+    files += glob('*_refpix.fits')
+    files += glob('*_ramp.fits')
+    # There should be 12 outputs
+    assert len(files) == 12
 
 
 @pytest.mark.bigdata
