@@ -4,18 +4,18 @@ import os
 import pytest
 from astropy.io.fits.diff import FITSDiff
 
-from jwst.pipeline import Image2Pipeline
+from jwst.pipeline import Detector1Pipeline
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 
 
 @pytest.mark.bigdata
-def test_miri_image2_cal(request, rtdata, fitsdiff_default_kwargs, _jail):
-    rtdata.get_data("miri/image/jw00001001001_01101_00001_mirimage_rate.fits")
+def test_miri_caldetector1_rate(request, rtdata, fitsdiff_default_kwargs, _jail):
+    rtdata.get_data("miri/image/jw00001001001_01101_00001_MIRIMAGE_uncal.fits")
 
-    Image2Pipeline.call(rtdata.input, save_results=True)
-    rtdata.output = "jw00001001001_01101_00001_mirimage_cal.fits"
+    Detector1Pipeline.call(rtdata.input, save_results=True)
+    rtdata.output = "jw00001001001_01101_00001_MIRIMAGE_rate.fits"
 
-    rtdata.get_truth("truth/test_miri_image2_cal/jw00001001001_01101_00001_mirimage_cal.fits")
+    rtdata.get_truth("truth/test_miri_caldetector1/jw00001001001_01101_00001_MIRIMAGE_rate.fits")
     assert rtdata.output != rtdata.truth
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
@@ -24,38 +24,66 @@ def test_miri_image2_cal(request, rtdata, fitsdiff_default_kwargs, _jail):
 
 @pytest.fixture(scope="module")
 def run_pipeline(rtdata_module, jail):
-    """Run calwebb_image2 pipeline on MIRI imaging data."""
+    """Run calwebb_detector1 pipeline on MIRI imaging data."""
     rtdata = rtdata_module
-    rtdata.get_data("miri/image/jw00001001001_01101_00001_mirimage_rate.fits")
+    rtdata.get_data("miri/image/jw00001001001_01101_00001_MIRIMAGE_uncal.fits")
 
-    collect_pipeline_cfgs('config')
-    config_file = os.path.join('config', 'calwebb_image2.cfg')
-    Image2Pipeline.call(rtdata.input, config_file=config_file,
-        save_results=True)
+    step = Detector1Pipeline()
+    step.lastframe.save_results = True
+    step.firstframe.save_results = True
+    step.dq_init.save_results = True
+    step.saturation.save_results = True
+    step.rscd.save_results = True
+    step.linearity.save_results = True
+    step.dark_current.save_results = True
+    step.refpix.save_results = True
+    step.jump.save_results = True
+    save_results = True
+    save_calibrated_ramp = True
+
+    step.run(rtdata.input)
+
+#    collect_pipeline_cfgs('config')
+#    config_file = os.path.join('config', 'calwebb_detector1.cfg')
+#    Detector1Pipeline.call(rtdata.input, config_file=config_file,
+#        save_results=True, save_calibrated_ramp=True)
 
     return rtdata
 
 
 @pytest.mark.bigdata
-def test_miri_image2_completion(run_pipeline):
-    files = glob('*_cal.fits')
-    files += glob('*_i2d.fits')
-    # There should be 2 outputs
-    assert len(files) == 2
+def test_miri_caldetector1_completion(run_pipeline):
+    files = glob('*_rate.fits')
+    files += glob('*_rate_ints.fits')
+    files += glob('*_dark_current.fits')
+    files += glob('*_linearity.fits')
+    files += glob('*_refpixel.fits')
+    files += glob('*_rscd.fits')
+    files += glob('*_ramp.fits')
+    files += glob('*_saturation.fits')
+    # There should be 8 outputs
+    assert len(files) == 8
 
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("output", [
-    'jw00001001001_01101_00001_mirimage_cal.fits',
-    'jw00001001001_01101_00001_mirimage_i2d.fits',],
-    ids=['cal', 'i2d'])
-def test_miri_image2(run_pipeline, request, fitsdiff_default_kwargs, output):
+    'jw80600012001_02101_00003_mirimage_rate.fits',
+    'jw80600012001_02101_00003_mirimage_rateints.fits',
+    'jw80600012001_02101_00003_mirimage_linearity.fits',
+    'jw80600012001_02101_00003_mirimage_rscd.fits',
+    'jw80600012001_02101_00003_mirimage_saturation.fits',
+    'jw80600012001_02101_00003_mirimage_dark_current.fits',
+    'jw80600012001_02101_00003_mirimage_refpixel.fits',
+    'jw80600012001_02101_00003_mirimage_ramp.fits',],
+    ids=['rate', 'rateints', 'linearity', 'rscd', 'saturation',
+         'dark_current', 'ref_pixel', 'ramp'])
+def test_miri_detector1(run_pipeline, request, fitsdiff_default_kwargs, output):
     """
-    Regression test of calwebb_image2 pipeline performed on MIRI data.
+    Regression test of calwebb_detector1 pipeline performed on MIRI data.
     """
     rtdata = run_pipeline
     rtdata.output = output
-    rtdata.get_truth(os.path.join("truth/test_miri_image2_cal", output))
+    rtdata.get_truth(os.path.join("truth/test_miri_detector1", output))
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
