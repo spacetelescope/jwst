@@ -88,7 +88,7 @@ Inputs
 4D raw data
 +++++++++++
 
-:Data model: `~jwst.datamodels.RampModel` or `~jwst.datamodels.MIRIRampModel`
+:Data model: `~jwst.datamodels.RampModel`
 :File suffix: _uncal
 
 The input to ``Detector1Pipeline`` is a single raw exposure,
@@ -100,8 +100,7 @@ Note that in the operational environment, the
 input will be in the form of a `~jwst.datamodels.Level1bModel`, which only
 contains the 4D array of detector pixel values, along with some optional
 extensions. When such a file is loaded into the pipeline, it is immediately
-converted into either a `~jwst.datamodels.RampModel` or `~jwst.datamodels.MIRIRampModel`,
-depending on whether or not it is MIRI data, and has all additional data arrays
+converted into a `~jwst.datamodels.RampModel`, and has all additional data arrays
 for errors and Data Quality flags created and initialized to zero.
 
 Outputs
@@ -110,7 +109,7 @@ Outputs
 4D corrected ramp
 +++++++++++++++++
 
-:Data model: `~jwst.datamodels.RampModel` or `~jwst.datamodels.MIRIRampModel`
+:Data model: `~jwst.datamodels.RampModel`
 :File suffix: _ramp
 
 Result of applying all pipeline steps up through the :ref:`jump <jump_step>` step,

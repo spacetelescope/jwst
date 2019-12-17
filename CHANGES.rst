@@ -11,6 +11,8 @@ datamodels
 
 - Force data model type setting on save [#4318]
 
+- Deprecate MIRIRampModel [#4328]
+
 master_background
 -----------------
 

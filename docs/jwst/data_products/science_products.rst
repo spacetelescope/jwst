@@ -68,8 +68,8 @@ dimensions based on the shape of the SCI array (see `~jwst.datamodels.RampModel`
 Ramp data: ``ramp``
 ^^^^^^^^^^^^^^^^^^^
 As raw data progress through the :ref:`calwebb_detector1 <calwebb_detector1>` pipeline
-they are stored internally in a `~jwst.datamodels.RampModel` (or `~jwst.datamodels.MIRIRampModel`
-for MIRI exposures). This type of data model is serialized to a ``ramp`` type FITS
+they are stored internally in a `~jwst.datamodels.RampModel`.
+This type of data model is serialized to a ``ramp`` type FITS
 file on disk. The original detector pixel values (in the SCI extension) are converted
 from integer to floating-point data type. The same is true for the ZEROFRAME and REFOUT
 data extensions, if they are present. An ERR array and two types of data quality arrays are
