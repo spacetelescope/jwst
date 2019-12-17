@@ -68,6 +68,11 @@ class Tso3Pipeline(Pipeline):
             if input_tsovisit is None:
                 input_tsovisit = cube.meta.visit.tsovisit
 
+            # Can't do outlier detection if there isn't a stack of images
+            if len(cube.data.shape) < 3:
+                self.log.warning('Input data are 2D; skipping outlier_detection')
+                break
+
             # Convert CubeModel into ModelContainer of 2-D DataModels
             input_2dmodels = datamodels.ModelContainer()
             for i in range(cube.data.shape[0]):

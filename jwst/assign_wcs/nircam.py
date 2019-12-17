@@ -8,8 +8,7 @@ import gwcs.coordinate_frames as cf
 from . import pointing
 from .util import (not_implemented_mode, subarray_transform, velocity_correction,
                    transform_bbox_from_shape, bounding_box_from_subarray)
-from ..datamodels import (ImageModel, NIRCAMGrismModel, DistortionModel,
-                          CubeModel)
+from ..datamodels import (ImageModel, NIRCAMGrismModel, DistortionModel)
 from ..transforms.models import (NIRCAMForwardRowGrismDispersion,
                                  NIRCAMForwardColumnGrismDispersion,
                                  NIRCAMBackwardGrismDispersion)
@@ -140,10 +139,6 @@ def tsgrism(input_model, reference_files):
 
     TSGRISM is only slated to work with GRISMR and Mod A
     """
-
-    # The input is the grism image
-    #if not isinstance(input_model, CubeModel):
-    #    raise TypeError('The input data model must be a CubeModel.')
 
     # make sure this is a grism image
     if "NRC_TSGRISM" != input_model.meta.exposure.type:

@@ -36,6 +36,10 @@ def is_tso(model):
     except AttributeError:
         pass
 
+    # Check on number of integrations
+    if model.meta.exposure.nints < 2:
+        is_tso = False
+
     # Check on model type
     is_tso = is_tso or isinstance(model, TSO_MODEL_TYPES)
 

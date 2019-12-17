@@ -843,33 +843,36 @@ class DataSet():
 
             pix_area.close()
 
-        # Load the average pixel area values from the photom reference file
-        # Skip for NIRSpec, because the pixel area keywords in the science
-        # product have already been populated by save_area_nirspec (above)
+        # Load the average pixel area values from the photom reference file header
+        # Don't need to do this for NIRSpec, because pixel areas come from
+        # the AREA ref file, which have already been copied using save_area_nirspec
         if instrument != 'NIRSPEC':
             try:
                 area_ster = ftab.meta.photometry.pixelarea_steradians
             except AttributeError:
                 area_ster = None
-                log.warning('The PIXAR_SR keyword is missing from %s',
-                            ftab.meta.filename)
+                log.warning('The PIXAR_SR keyword is missing from %s', ftab.meta.filename)
             try:
                 area_a2 = ftab.meta.photometry.pixelarea_arcsecsq
             except AttributeError:
                 area_a2 = None
-                log.warning('The PIXAR_A2 keyword is missing from %s',
-                            ftab.meta.filename)
+                log.warning('The PIXAR_A2 keyword is missing from %s', ftab.meta.filename)
 
             # Copy the pixel area values to the output
             log.debug('PIXAR_SR = %s, PIXAR_A2 = %s', str(area_ster), str(area_a2))
-            if area_a2 is None:
-                self.input.meta.photometry.pixelarea_arcsecsq = None
+            if area_a2 is not None:
+                area_a2 = float(area_a2)
+            if area_ster is not None:
+                area_ster = float(area_ster)
+
+            # For MultiSlitModels, copy to each slit attribute
+            if isinstance(self.input, datamodels.MultiSlitModel):
+                for slit in self.input.slits:
+                    slit.meta.photometry.pixelarea_arcsecsq = area_a2
+                    slit.meta.photometry.pixelarea_steradians = area_ster
             else:
-                self.input.meta.photometry.pixelarea_arcsecsq = float(area_a2)
-            if area_ster is None:
-                self.input.meta.photometry.pixelarea_steradians = None
-            else:
-                self.input.meta.photometry.pixelarea_steradians = float(area_ster)
+                self.input.meta.photometry.pixelarea_arcsecsq = area_a2
+                self.input.meta.photometry.pixelarea_steradians = area_ster
 
 
     def save_area_nirspec(self, pix_area):

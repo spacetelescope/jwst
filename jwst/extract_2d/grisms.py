@@ -12,7 +12,7 @@ from gwcs.wcstools import grid_from_bounding_box
 
 from .. import datamodels
 from ..assign_wcs import util
-from ..datamodels import CubeModel, WavelengthrangeModel
+from ..datamodels import WavelengthrangeModel
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -28,8 +28,8 @@ def extract_tso_object(input_model,
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.CubeModel`
-        The input TSO image as an instance of a CubeModel
+    input_model : `~jwst.datamodels.CubeModel` or `~jwst.datamodels.ImageModel`
+        The input TSO image as an instance of a CubeModel (3D) or ImageModel (2D)
 
     reference_files : dict
         Needs to include the name of the wavelengthrange reference file
@@ -80,9 +80,6 @@ def extract_tso_object(input_model,
 
     if 'wavelengthrange' not in reference_files.keys():
         raise KeyError("No wavelengthrange reference file specified")
-
-    #if not isinstance(input_model, CubeModel):
-    #    raise TypeError('The input data model is not a CubeModel.')
 
     if extract_height is None:
         extract_height = input_model.meta.subarray.ysize
