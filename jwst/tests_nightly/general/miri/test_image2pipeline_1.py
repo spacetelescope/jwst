@@ -18,7 +18,8 @@ class TestImage2Pipeline(BaseJWSTTest):
                                    'jw00001001001_01101_00001_mirimage_rate.fits')
         collect_pipeline_cfgs('cfgs')
         Image2Pipeline.call(input_file,
-                            config_file='cfgs/calwebb_image2.cfg'
+                            config_file='cfgs/calwebb_image2.cfg',
+                            save_results=True
                            )
 
         outputs = [('jw00001001001_01101_00001_mirimage_cal.fits',
