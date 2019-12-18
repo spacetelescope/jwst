@@ -9,10 +9,8 @@ Requires JFrog CLI (https://jfrog.com/getcli/) configured with credentials
 that have write access to the jwst-pipeline repository.
 """
 
-import sys
 import re
 import subprocess
-import os
 from argparse import ArgumentParser
 
 

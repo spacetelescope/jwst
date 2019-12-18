@@ -1,5 +1,4 @@
 import os
-import sys
 from os.path import basename
 from setuptools import setup, find_packages
 from glob import glob
