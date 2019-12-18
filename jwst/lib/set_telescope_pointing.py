@@ -1439,6 +1439,7 @@ def populate_model_from_siaf(model, siaf):
     if model.meta.exposure.type.lower() in TYPES_TO_UPDATE:
         # For imaging modes update the pointing and
         # the FITS WCS keywords.
+        logger.info('Setting basic FITS WCS keywords for imaging')
         model.meta.wcsinfo.ctype1 = 'RA---TAN'
         model.meta.wcsinfo.ctype2 = 'DEC--TAN'
         model.meta.wcsinfo.wcsaxes = 2
@@ -1450,6 +1451,9 @@ def populate_model_from_siaf(model, siaf):
         model.meta.wcsinfo.cdelt2 = siaf.cdelt2 / 3600  # in deg
         model.meta.coordinates.reference_frame = "ICRS"
     elif model.meta.exposure.type.lower() == 'nrc_tsgrism':
+        logger.info('NRC_TSGRISM:')
+        logger.info(' setting xref_sci to {}'.format(siaf.crpix1))
+        logger.info(' setting yref_sci to {}'.format(siaf.crpix2))
         model.meta.wcsinfo.siaf_xref_sci = siaf.crpix1
         model.meta.wcsinfo.siaf_yref_sci = siaf.crpix2
 

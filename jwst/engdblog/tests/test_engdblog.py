@@ -21,6 +21,10 @@ def test_engdblogstep(caplog, engdb):
     assert 'Step EngDBLogStep done' in caplog.text
 
 
+@pytest.mark.xfail(
+    reason='See Jira JP-1108',
+    run=False
+)
 def test_barestring(caplog, engdb):
     mnemonic = 'INRSI_GWA_Y_TILT_AVGED'
     result = EngDBLogStep.call(mnemonic)

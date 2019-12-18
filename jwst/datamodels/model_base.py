@@ -26,6 +26,7 @@ from . import fits_support
 from . import properties
 from . import schema as mschema
 from . import validate
+from ..lib import s3_utils
 
 from .history import HistoryList
 
@@ -40,41 +41,50 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
     def __init__(self, init=None, schema=None,
                  pass_invalid_values=False, strict_validation=False,
-                 **kwargs):
+                 ignore_missing_extensions=True, **kwargs):
         """
         Parameters
         ----------
-        init : shape tuple, file path, file object, astropy.io.fits.HDUList, numpy array, None
+        init : str, tuple, `~astropy.io.fits.HDUList`, ndarray, dict, None
 
-            - None: A default data model with no shape
+            - None : Create a default data model with no shape.
 
-            - shape tuple: Initialize with empty data of the given
-              shape
+            - tuple : Shape of the data array.
+              Initialize with empty data array with shape specified by the.
 
             - file path: Initialize from the given file (FITS or ASDF)
 
             - readable file object: Initialize from the given file
               object
 
-            - ``astropy.io.fits.HDUList``: Initialize from the given
+            - `~astropy.io.fits.HDUList` : Initialize from the given
               `~astropy.io.fits.HDUList`.
 
             - A numpy array: Used to initialize the data array
 
             - dict: The object model tree for the data model
 
-        schema : tree of objects representing a JSON schema, or string naming a schema, optional
+        schema : dict, str (optional)
+            Tree of objects representing a JSON schema, or string naming a schema.
             The schema to use to understand the elements on the model.
             If not provided, the schema associated with this class
             will be used.
 
-        pass_invalid_values: If true, values that do not validate the schema
-            will be added to the metadata. If false, they will be set to None
+        pass_invalid_values : bool
+            If `True`, values that do not validate the schema
+            will be added to the metadata. If `False`, they will be set to `None`.
 
-        strict_validation: if true, an schema validation errors will generate
-            an excption. If false, they will generate a warning.
+        strict_validation : bool
+            If `True`, schema validation errors will generate
+            an exception. If `False`, they will generate a warning.
 
-        kwargs: Aadditional arguments passed to lower level functions
+        ignore_missing_extensions : bool
+            When `False`, raise warnings when a file is read that
+            contains metadata about extensions that are not available.
+            Defaults to `True`.
+
+        kwargs : dict
+            Additional arguments passed to lower level functions.
         """
 
         # Override value of validation parameters
@@ -83,6 +93,9 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                                                     pass_invalid_values)
         self._strict_validation = self.get_envar("STRICT_VALIDATION",
                                                  strict_validation)
+        self._ignore_missing_extensions = ignore_missing_extensions
+
+        kwargs.update({'ignore_missing_extensions': ignore_missing_extensions})
 
         # Load the schema files
         if schema is None:
@@ -138,7 +151,8 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             asdffile = init
 
         elif isinstance(init, fits.HDUList):
-            asdffile = fits_support.from_fits(init, self._schema, self._ctx)
+            asdffile = fits_support.from_fits(init, self._schema, self._ctx,
+                                              **kwargs)
 
         elif isinstance(init, (str, bytes)):
             if isinstance(init, bytes):
@@ -146,7 +160,11 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             file_type = filetype.check(init)
 
             if file_type == "fits":
-                hdulist = fits.open(init)
+                if s3_utils.is_s3_uri(init):
+                    hdulist = fits.open(s3_utils.get_object(init))
+                else:
+                    hdulist = fits.open(init)
+
                 asdffile = fits_support.from_fits(hdulist,
                                               self._schema,
                                               self._ctx,
@@ -219,16 +237,13 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                 if 'datatype' in subschema:
                     setattr(self, attr, value)
 
+    @property
+    def _model_type(self):
+        return self.__class__.__name__
 
     def __repr__(self):
-        import re
-
         buf = ['<']
-        match = re.search(r"(\w+)'", str(type(self)))
-        if match:
-            buf.append(match.group(1))
-        else:
-            buf.append("DataModel")
+        buf.append(self._model_type)
 
         if self.shape:
             buf.append(str(self.shape))
@@ -453,6 +468,9 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         current_date.format = 'isot'
         self.meta.date = current_date.value
 
+        # Enforce model_type to be the actual type of model being saved.
+        self.meta.model_type = self._model_type
+
     def save(self, path, dir_path=None, *args, **kwargs):
         """
         Save to either a FITS or ASDF file, depending on the path.
@@ -507,6 +525,8 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         Open an asdf object from a filename or create a new asdf object
         """
         if isinstance(init, str):
+            if s3_utils.is_s3_uri(init):
+                init = s3_utils.get_object(init)
             asdffile = asdf.open(init,
                                  ignore_version_mismatch=ignore_version_mismatch,
                                  ignore_unrecognized_tag=ignore_unrecognized_tag)
@@ -521,38 +541,39 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
     @classmethod
     def from_asdf(cls, init, schema=None, **kwargs):
         """
-        Load a data model from a ASDF file.
+        Load a data model from an ASDF file.
 
         Parameters
         ----------
-        init : file path, file object, asdf.AsdfFile object
-            - file path: Initialize from the given file
+        init : str, file object, `~asdf.AsdfFile`
+            - str : file path: initialize from the given file
             - readable file object: Initialize from the given file object
-            - asdf.AsdfFile: Initialize from the given
-              `~asdf.AsdfFile`.
+            - `~asdf.AsdfFile` : Initialize from the given`~asdf.AsdfFile`.
         schema :
             Same as for `__init__`
-        kwargs:
+        kwargs : dict
             Aadditional arguments passed to lower level functions
 
         Returns
         -------
-        model : DataModel instance
+        model : `~jwst.datamodels.DataModel` instance
+            A data model.
         """
         return cls(init, schema=schema, **kwargs)
 
 
     def to_asdf(self, init, *args, **kwargs):
         """
-        Write a DataModel to an ASDF file.
+        Write a data model to an ASDF file.
 
         Parameters
         ----------
         init : file path or file object
-
-        args, kwargs
-            Any additional arguments are passed along to
-            `asdf.AsdfFile.write_to`.
+        args : tuple, list
+            Additional positional arguments passed to `~asdf.AsdfFile.write_to`.
+        kwargs : dict
+            Any additional keyword arguments are passed along to
+            `~asdf.AsdfFile.write_to`.
         """
         self.on_save(init)
         asdffile = self.open_asdf(self._instance, **kwargs)
@@ -571,21 +592,22 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             - astropy.io.fits.HDUList: Initialize from the given
               `~astropy.io.fits.HDUList`.
 
-        schema :
+        schema : dict, str
             Same as for `__init__`
 
-        kwargs:
-            Aadditional arguments passed to lower level functions
+        kwargs : dict
+            Aadditional arguments passed to lower level functions.
 
         Returns
         -------
-        model : DataModel instance
+        model : `~jwst.datamodels.DataModel`
+            A data model.
         """
         return cls(init, schema=schema, **kwargs)
 
     def to_fits(self, init, *args, **kwargs):
         """
-        Write a DataModel to a FITS file.
+        Write a data model to a FITS file.
 
         Parameters
         ----------
@@ -633,7 +655,8 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         Parameters
         ----------
-        new_schema : schema tree
+        new_schema : dict
+            Schema tree.
         """
         schema = {'allOf': [self._schema, new_schema]}
         self._schema = mschema.merge_property_trees(schema)
@@ -648,8 +671,9 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         Parameters
         ----------
         position : str
-
-        new_schema : schema tree
+            Dot separated string indicating the position, e.g. ``meta.instrument.name``.
+        new_schema : dict
+            Schema tree.
         """
         parts = position.split('.')
         schema = new_schema
@@ -667,12 +691,11 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         Parameters
         ----------
         keyword : str
-            A FITS keyword name
+            A FITS keyword name.
 
         Returns
         -------
         locations : list of str
-
             If `return_result` is `True`, a list of the locations in
             the schema where this FITS keyword is used.  Each element
             is a dot-separated path.
@@ -817,13 +840,16 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         """
         Updates this model with the metadata elements from another model.
 
+        Note: The ``update`` method skips a WCS object, if present.
+
         Parameters
         ----------
-        d : model or dictionary-like object
+        d : `~jwst.datamodels.DataModel` or dictionary-like object
             The model to copy the metadata elements from. Can also be a
             dictionary or dictionary of dictionaries or lists.
-        only: only update the named hdu from extra_fits, e.g.
-            only='PRIMARY'. Can either be a list of hdu names
+        only: str
+            Only update the named hdu from ``extra_fits``, e.g.
+            ``only='PRIMARY'``. Can either be a list of hdu names
             or a single string. If left blank, update all the hdus.
         """
         def hdu_keywords_from_data(d, path, hdu_keywords):
@@ -1055,7 +1081,8 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             hdu = fits.ImageHDU(name=hdu_name, header=header)
         hdulist = fits.HDUList([hdu])
 
-        ff = fits_support.from_fits(hdulist, self._schema, self._ctx)
+        ff = fits_support.from_fits(hdulist, self._schema, self._ctx,
+                                    ignore_missing_extensions=self._ignore_missing_extensions)
 
         self._instance = properties.merge_tree(self._instance, ff.tree)
 

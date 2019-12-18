@@ -42,7 +42,7 @@ def white_light(input):
 
     # Compute the flux sum for each integration in the input
     for i in range(ntables):
-        fluxsums.append(input.spec[i].spec_table['FLUX'].sum())
+        fluxsums.append(np.nansum(input.spec[i].spec_table['FLUX']))
 
     # Populate meta data for the output table
     tbl_meta = OrderedDict()

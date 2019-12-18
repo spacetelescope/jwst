@@ -3,7 +3,7 @@
 import logging
 
 from jwst.associations.registry import RegistryMarker
-from jwst.associations.lib.dms_base import (ACQ_EXP_TYPES, Constraint_TSO)
+from jwst.associations.lib.dms_base import (Constraint_TargetAcq, Constraint_TSO)
 from jwst.associations.lib.rules_level3_base import *
 from jwst.associations.lib.rules_level3_base import (
     dms_product_name_sources,
@@ -19,6 +19,7 @@ __all__ = [
     'Asn_Image',
     'Asn_SpectralSource',
     'Asn_SpectralTarget',
+    'Asn_SlitlessSpectral',
     'Asn_TSO',
     'Asn_WFSCMB',
     'Asn_WFSS_NIS',
@@ -199,7 +200,6 @@ class Asn_SpectralTarget(AsnMixin_Spectrum):
                 sources=['exp_type'],
                 value=(
                     'mir_lrs-fixedslit'
-                    '|mir_lrs-slitless'
                     '|nis_soss'
                 ),
                 force_unique=False
@@ -235,8 +235,67 @@ class Asn_SpectralTarget(AsnMixin_Spectrum):
         """
         if self.is_valid:
             return self.make_fixedslit_bkg()
-        else:
-            return None
+
+        return None
+
+@RegistryMarker.rule
+class Asn_SlitlessSpectral(AsnMixin_Spectrum):
+    """Level 3 slitless, target-based or single-object spectrographic Association
+
+    Characteristics:
+        - Association type: ``spec3``
+        - Pipeline: ``calwebb_spec3``
+        - Single target
+        - Non-TSO
+    """
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup for checking.
+        self.constraints = Constraint([
+            Constraint(
+                [Constraint_TSO()],
+                reduce=Constraint.notany
+            ),
+            Constraint_Optical_Path(),
+            Constraint_Target(association=self),
+            DMSAttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+                value=(
+                    'nis_soss'
+                ),
+                force_unique=False
+            ),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        name='patttype_spectarg',
+                        sources=['patttype'],
+                    ),
+                ],
+                reduce=Constraint.notany
+            ),
+            # Constaint to prevent calibration data from level 3 processing
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        name='restricted_slitless',
+                        sources=['exp_type'],
+                        value = ('mir_lrs-slitless')
+                    ),
+                    DMSAttrConstraint(
+                        name='tso_obs',
+                        sources=['tso_visit'],
+                        value = ('T')
+                    ),
+                ],
+                reduce=Constraint.notany
+            )
+        ])
+
+        # Check and continue initialization.
+        super(Asn_SlitlessSpectral, self).__init__(*args, **kwargs)
 
 @RegistryMarker.rule
 class Asn_SpectralSource(AsnMixin_Spectrum):
@@ -344,7 +403,6 @@ class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_BkgScience):
         # Setup for checking.
         self.constraints = Constraint([
             Constraint_Target(association=self),
-            #Constraint_IFU(),
             Constraint(
                 [
                     Constraint_TSO(),
@@ -359,7 +417,7 @@ class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_BkgScience):
                         value=['T'],)
                 ],
                 reduce=Constraint.any
-                                    ),
+                ),
             Constraint(
                 [
                     DMSAttrConstraint(
@@ -368,8 +426,8 @@ class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_BkgScience):
                         value=['mir_mrs','nrs_ifu','mir_lrs-fixedslit',
                                'nrs_fixedslit'],)
                 ],
-            reduce=Constraint.any
-                    ),
+                reduce=Constraint.any
+                ),
                 ])
 
         # Check and continue initialization.
@@ -583,11 +641,7 @@ class Asn_ACQ_Reprocess(DMS_Level3_Base):
 
         # Setup for checking.
         self.constraints = Constraint([
-            DMSAttrConstraint(
-                sources=['exp_type'],
-                value='|'.join(ACQ_EXP_TYPES),
-                force_unique=False
-            ),
+            Constraint_TargetAcq(),
             SimpleConstraint(
                 name='force_fail',
                 test=lambda x, y: False,

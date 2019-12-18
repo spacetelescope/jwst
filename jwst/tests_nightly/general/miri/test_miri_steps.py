@@ -6,7 +6,6 @@ from jwst.tests.base_classes import pytest_generate_tests # noqa: F401
 from jwst.refpix import RefPixStep
 from jwst.dark_current import DarkCurrentStep
 from jwst.dq_init import DQInitStep
-from jwst.emission import EmissionStep
 from jwst.extract_1d import Extract1dStep
 from jwst.flatfield import FlatFieldStep
 from jwst.fringe import FringeStep
@@ -86,15 +85,6 @@ class TestMIRISteps(BaseJWSTTestSteps):
                       output_truth='jw80600012001_02101_00003_mirimage_dqinit.fits',
                       output_hdus=[],
                       id='dq_init_miri2'
-                     ),
-                # test_emission_miri: emission step performed on calibrated miri data
-                 dict(input='jw00001001001_01101_00001_MIRIMAGE_flat_field.fits',
-                      test_dir='test_emission',
-                      step_class=EmissionStep,
-                      step_pars=dict(),
-                      output_truth='jw00001001001_01101_00001_MIRIMAGE_emission.fits',
-                      output_hdus=[],
-                      id='emission_miri'
                      ),
                 # test_extract1d_miri: extract_1d step performed on MIRI LRS fixed-slit data
                  dict(input='jw00035001001_01101_00001_mirimage_photom.fits',

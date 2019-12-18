@@ -337,6 +337,6 @@ For example::
 
     > ExampleStep
 
-    > ExampleStep --config-file=example_step.cfg
+    > ExampleStep --config-file=example_step.asdf
 
     > ExampleStep --parameter1=42.0 input_file.fits

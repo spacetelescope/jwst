@@ -1,6 +1,6 @@
 """Base classes which define the Level3 Associations"""
 from collections import defaultdict
-import copy
+#import copy
 import logging
 from os.path import (
     basename,
@@ -11,7 +11,7 @@ import re
 
 from jwst.associations import (
     Association,
-    AssociationRegistry,
+    #AssociationRegistry,
     ProcessList,
     libpath
 )
@@ -21,7 +21,6 @@ from jwst.associations.lib.utilities import (
     is_iterable
 )
 from jwst.associations.exceptions import (
-    AssociationNotAConstraint,
     AssociationNotValidError,
 )
 from jwst.associations.lib.acid import ACID
@@ -33,13 +32,13 @@ from jwst.associations.lib.counter import Counter
 from jwst.associations.lib.dms_base import (
     _EMPTY,
     ACQ_EXP_TYPES,
+    Constraint_TargetAcq,
     CORON_EXP_TYPES,
     DMSAttrConstraint,
     DMSBaseMixin,
     IMAGE2_SCIENCE_EXP_TYPES,
     IMAGE2_NONSCIENCE_EXP_TYPES,
     SPEC2_SCIENCE_EXP_TYPES,
-    TSO_EXP_TYPES,
 )
 from jwst.associations.lib.format_template import FormatTemplate
 from jwst.associations.lib.member import Member
@@ -136,8 +135,8 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             result = self.data['asn_type'] == other.data['asn_type']
             result = result and (self.member_ids == other.member_ids)
             return result
-        else:
-            return NotImplemented
+
+        return NotImplemented
 
     def __ne__(self, other):
         """Compare inequality of two associations"""
@@ -178,11 +177,11 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         opt_elem = association._get_opt_element()
 
         exposure = association._get_exposure()
-        if len(exposure):
+        if exposure:
             exposure = '-' + exposure
 
         subarray = association._get_subarray()
-        if len(subarray):
+        if subarray:
             subarray = '-' + subarray
 
         product_name = (
@@ -320,7 +319,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             # if there is only one science observation it cannot be the background
             # return with original association.
             if len(science_exps) < 2:
-                return
+                return results
 
             # Create new members for each science exposure in the association,
             # using the the base name + _x1d as background.
@@ -615,7 +614,8 @@ class Utility():
 format_product = FormatTemplate(
     key_formats={
         'source_id': ['s{:05d}', 's{:s}'],
-        'expspcin': ['{:02d}']
+        'expspcin': ['{:0>2s}']
+
     }
 )
 
@@ -639,7 +639,7 @@ def dms_product_name_sources(asn):
     opt_elem = asn._get_opt_element()
 
     subarray = asn._get_subarray()
-    if len(subarray):
+    if subarray:
         subarray = '-' + subarray
 
     product_name_format = (
@@ -708,6 +708,7 @@ class Constraint_Image(DMSAttrConstraint):
                 '|mir_image'
                 '|nis_image'
                 '|fgs_image'
+                '|nrs_mimf'
             ),
         )
 
@@ -730,6 +731,7 @@ class Constraint_Optical_Path(Constraint):
             DMSAttrConstraint(
                 name='opt_elem',
                 sources=['filter'],
+                required=False,
             ),
             DMSAttrConstraint(
                 name='opt_elem2',
@@ -816,7 +818,6 @@ class Constraint_Target(DMSAttrConstraint):
             )
 
 
-
 # -----------
 # Base Mixins
 # -----------
@@ -828,18 +829,13 @@ class AsnMixin_Science(DMS_Level3_Base):
         # Setup target acquisition inclusion
         constraint_acqs = Constraint(
             [
-                DMSAttrConstraint(
-                    name='acq_exp',
-                    sources=['exp_type'],
-                    value='|'.join(ACQ_EXP_TYPES),
-                    force_unique=False
-                ),
+                Constraint_TargetAcq(),
                 DMSAttrConstraint(
                     name='acq_obsnum',
                     sources=['obs_num'],
                     value=lambda: '('
-                             + '|'.join(self.constraints['obs_num'].found_values)
-                             + ')',
+                    + '|'.join(self.constraints['obs_num'].found_values)
+                    + ')',
                     force_unique=False,
                 )
             ],
@@ -883,18 +879,13 @@ class AsnMixin_BkgScience(DMS_Level3_Base):
         # Setup target acquisition inclusion
         constraint_acqs = Constraint(
             [
-                DMSAttrConstraint(
-                    name='acq_exp',
-                    sources=['exp_type'],
-                    value='|'.join(ACQ_EXP_TYPES),
-                    force_unique=False
-                ),
+                Constraint_TargetAcq(),
                 DMSAttrConstraint(
                     name='acq_obsnum',
                     sources=['obs_num'],
                     value=lambda: '('
-                             + '|'.join(self.constraints['obs_num'].found_values)
-                             + ')',
+                    + '|'.join(self.constraints['obs_num'].found_values)
+                    + ')',
                     force_unique=False,
                 )
             ],
@@ -940,7 +931,7 @@ class AsnMixin_Spectrum(AsnMixin_Science):
         self.data['asn_type'] = 'spec3'
         super(AsnMixin_Spectrum, self)._init_hook(item)
 
-class AsnMixin_AuxData:
+class AsnMixin_AuxData(AsnMixin_Science):
     """Process special and non-science exposures as science.
     """
     def get_exposure_type(self, item, default='science'):
@@ -955,9 +946,16 @@ class AsnMixin_AuxData:
         Returns
         -------
         exposure_type : 'science'
-            Always returns as science
+            Returns as science for most Exposures
+        exposure_type : 'target_acquisition'
+            Returns target_acquisition for mir_tacq
         """
+        NEVER_CHANGE = ['target_acquisition']
+        exp_type = super().get_exposure_type(item, default=default)
+        if exp_type in NEVER_CHANGE:
+            return exp_type
         return 'science'
+
     def _init_hook(self, item):
         """Post-check and pre-add initialization"""
 

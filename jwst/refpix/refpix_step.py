@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 from ..stpipe import Step
+from ..lib import pipe_utils
 from .. import datamodels
 from . import reference_pixels
 from . import irs2_subtract_reference
@@ -29,8 +30,8 @@ class RefPixStep(Step):
     def process(self, input):
 
         with datamodels.RampModel(input) as input_model:
-            if input_model.meta.exposure.readpatt is not None and \
-               input_model.meta.exposure.readpatt.find("IRS2") >= 0:
+            # shape[-2] will be 3200 for IRS2 data.
+            if pipe_utils.is_irs2(input_model):
                 self.irs2_name = self.get_reference_file(input_model, 'refpix')
                 self.log.info('Using refpix reference file: %s' %
                               self.irs2_name)

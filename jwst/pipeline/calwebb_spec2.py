@@ -85,6 +85,10 @@ class Spec2Pipeline(Pipeline):
             self.log.info('Processing product {}'.format(product['name']))
             self.output_file = product['name']
             try:
+                getattr(asn, 'filename')
+            except AttributeError:
+                asn.filename = "singleton"
+            try:
                 result = self.process_exposure_product(
                     product,
                     asn['asn_pool'],

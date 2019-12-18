@@ -16,7 +16,6 @@ Package Index
    dark_current/index.rst
    datamodels/index.rst
    dq_init/index.rst
-   emission/index.rst
    exp_to_source/index.rst
    extract_1d/index.rst
    extract_2d/index.rst

@@ -2,10 +2,9 @@ from collections import namedtuple
 
 import numpy as np
 
+from ..lib import pipe_utils
+
 """ This is the interface:
-    bool = is_irs2(input_model)
-        True if the data in input_model were taken using the IRS2 readout
-         pattern.
     mask = make_mask(input_model)
         Create a mask for extracting normal pixels; used by from_irs2 and
         to_irs2.
@@ -81,29 +80,6 @@ def _get_irs2_parameters(input_model, n=None, r=None):
 
     return param
 
-def is_irs2(input_model):
-    """Check whether the data are in IRS2 format."""
-
-    if isinstance(input_model, np.ndarray):
-        shape = input_model.shape
-        can_check_for_MIRI = False
-    else:
-        # use:  if input_model.meta.exposure.readpatt.find("IRS2") >= 0
-        shape = input_model.data.shape
-        can_check_for_MIRI = True
-
-    if can_check_for_MIRI and input_model.meta.instrument.name == 'MIRI':
-        max_height = 1032                       # perhaps should use 1024
-    else:
-        max_height = 2048
-
-    y_axis_length = max(shape[-1], shape[-2])
-
-    if y_axis_length > max_height:
-        return True
-    else:
-        return False
-
 def normal_shape(input_model, n=None, r=None, detector=None):
     """Determine the shape of the 'normal' pixel data."""
 
@@ -114,7 +90,7 @@ def normal_shape(input_model, n=None, r=None, detector=None):
         if detector is None:
             detector = input_model.meta.instrument.detector
 
-    if not is_irs2(input_model):                # not IRS2 format
+    if not pipe_utils.is_irs2(input_model):     # not IRS2 format
         return shape
 
     param = _get_irs2_parameters(input_model, n=n, r=r)

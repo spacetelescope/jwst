@@ -12,6 +12,8 @@ For Users
    user_step.rst
    user_pipeline.rst
    user_logging.rst
+   config_asdf.rst
+   config_cfg.rst 
 
 
 .. _stpipe-devel-steps:

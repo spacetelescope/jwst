@@ -79,17 +79,17 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
 
     nplane = naxis1 * naxis2
 
-# now loop over the pixel values for this region and find the spaxels that fall
-# withing the region of interest.
+    # now loop over the pixel values for this region and find the spaxels that fall
+    # within the region of interest.
     nn = coord1.size
-# Left this commented code in to check when we get new cube par reference files
-# The roi size was too small at long wavelength that may pixels did not match
-# to a spaxel.
-#    ilow = 0
-#    ihigh = 0
-#    imatch  = 0
-#    print('looping over n points mapping to cloud',nn)
-# ________________________________________________________________________________
+    # Left this commented code in to check when we get new cube par reference files
+    # The roi size was too small at long wavelength that may pixels did not match
+    # to a spaxel.
+    #    ilow = 0
+    #    ihigh = 0
+    #    imatch  = 0
+    #    print('looping over n points mapping to cloud',nn)
+    # ________________________________________________________________________________
     for ipt in range(0, nn - 1):
         # xcenters, ycenters is a flattened 1-D array of the 2 X 2 xy plane
         # cube coordinates.
@@ -236,17 +236,17 @@ def match_det2cube_miripsf(alpha_resol, beta_resol, wave_resol,
     """
 
     nplane = naxis1 * naxis2
-# now loop over the pixel values for this region and find the spaxels that fall
-# withing the region of interest.
+    # now loop over the pixel values for this region and find the spaxels
+    # that fall within the region of interest.
     nn = coord1.size
-#    print('looping over n points mapping to cloud',nn)
-# ______________________________________________________________________________
+    #    print('looping over n points mapping to cloud',nn)
+    # _______________________________________________________________________
     for ipt in range(0, nn - 1):
         lower_limit = softrad_pixel[ipt]
-# ______________________________________________________________________________
+        # ___________________________________________________________________
         # xcenters, ycenters is a flattened 1-D array of the 2 X 2 xy plane
         # cube coordinates.
-        # find the spaxels that fall withing ROI of point cloud defined  by
+        # find the spaxels that fall withing ROI of point cloud defined by
         # coord1,coord2,wave
 
         xdistance = (xcenters - coord1[ipt])
@@ -256,13 +256,14 @@ def match_det2cube_miripsf(alpha_resol, beta_resol, wave_resol,
         indexr = np.where(radius <= rois_pixel[ipt])
         indexz = np.where(abs(zcoord - wave[ipt]) <= roiw_pixel[ipt])
 
-# ______________________________________________________________________________
-# loop over the points in the ROI
+        # _______________________________________________________________
+        # loop over the points in the ROI
         for iz, zz in enumerate(indexz[0]):
             istart = zz * nplane
             for ir, rr in enumerate(indexr[0]):
-# ______________________________________________________________________________
-# if weight is miripsf -distances determined in alpha-beta coordinate system
+                # ________________________________________________________
+                # if weight is miripsf -distances determined in alpha-beta
+                # coordinate system
 
                 weights = FindNormalizationWeights(wave[ipt],
                                                    wave_resol,
@@ -296,9 +297,9 @@ def match_det2cube_miripsf(alpha_resol, beta_resol, wave_resol,
 
 
 def FindNormalizationWeights(wavelength,
-                              wave_resol,
-                              alpha_resol,
-                              beta_resol):
+                             wave_resol,
+                             alpha_resol,
+                             beta_resol):
     """ Routine used in MIRI PSF weighting to normalize data
 
 

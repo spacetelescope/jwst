@@ -8,42 +8,62 @@ JWST Calibration Pipeline
 
 ![STScI Logo](docs/_static/stsci_logo.png)
 
-**JWST requires Python 3.5 or above and a C compiler for dependencies**.
+**JWST requires Python 3.6 or above and a C compiler for dependencies**.
 
 Installation
 ------------
 
 The ``jwst`` package can be installed into a virtualenv or conda environment via ``pip``.  We recommend creating a fresh environment with only python installed.  Via conda:
 
-    conda create -n jwst_env python=3.6
+    conda create -n jwst_env python=3.7
     conda activate jwst_env
 
 ### Installing for end-users ###
 
-To install a released (tagged) version, you can install directly from Github.  To install tagged release ``jwst 0.13.7``:
+To install a released (tagged) version, you can install directly from Github.  To install tagged release ``jwst 0.14.2``:
 
-    pip install numpy
-    pip install git+https://github.com/spacetelescope/jwst#0.13.7
+    pip install git+https://github.com/spacetelescope/jwst@0.14.2
 
-The same can be done to install the latest development version (from ``master``):
+The latest development version (from ``master``) can also be installed from Github:
 
     pip install git+https://github.com/spacetelescope/jwst
 
+As can a particular commit hash:
+
+    pip install git+https://github.com/spacetelescope/jwst@3f03323c
+
 ### Installing a DMS release ###
 
-We still package our releases to DMS via a conda spec file that lists the exact versions of all packages to be installed.
-To create a new environment with a specific release, use:
+We still package our releases to DMS via environment snapshots that specify the exact versions of all packages to be installed.
 
-    conda create -n jwst_env --file <URL>
-    conda activate jwst_env
+The latest release 0.14.2 may be installed in two stages by running the following commands:
 
-where `<URL>` is of the form:
+Stage 1:
 
-    Linux: http://ssb.stsci.edu/releases/jwstdp/0.13.7/latest-linux
-    OS X: http://ssb.stsci.edu/releases/jwstdp/0.13.7/latest-osx
+    conda create -n jwstdp-0.14.2 --file https://ssb.stsci.edu/releases/jwstdp/0.14.2/[env_file]
+    source activate jwstdp-0.14.2
 
-Other particular versions can be installed by choosing a different version tag in place of "0.13.7" in the URL path.
-See the "Software vs DMS build version map" table below for a list of tags corresponding to particular releases.
+Where `[env_file]` = `conda_python_stable-deps.txt` for Linux
+and   `[env_file]` = `conda_python_macos-stable-deps.txt` for Macos
+
+Stage 2:
+
+    pip install -r https://ssb.stsci.edu/releases/jwstdp/0.14.2/[pkgs_file]
+
+Where `[pkgs_file]` = `reqs_stable-deps.txt` for Linux
+and   `[pkgs_file]` = `reqs_macos-stable-deps.txt` for Macos
+
+Each such delivery has its own installation instructions which may be found in
+the corresponding release documentation linked from this page: https://github.com/astroconda/astroconda-releases/tree/master/jwstdp
+
+The version values shown there are the JWSTDP releases available to install.
+Installation procedures for each version are in the README.md file for that
+version. See the "Software vs DMS build version map" table below for a
+list of version tags corresponding to particular releases.
+
+The installation procedures may change from time to time, so consulting the
+documentation page for the specific version in question is the best way to get
+that version installed.
 
 ### Installing for developers ###
 
@@ -52,9 +72,10 @@ Fork and clone the repo:
     git clone https://github.com/spacetelescope/jwst
     cd jwst
 
+*Note: `python setup.py install` and `python setup.py develop` commands do not work.*
+
 Install from your local checked out copy as an "editable" install:
 
-    pip install numpy
     pip install -e .
 
 If you want to run the tests and/or build the docs, you can make sure those dependencies are installed too:
@@ -62,10 +83,14 @@ If you want to run the tests and/or build the docs, you can make sure those depe
     pip install -e .[test]
     pip install -e .[docs]
     pip install -e .[test,docs]
+    
+Note: If you wish to install directly from github, but also include the extra dependencies, the syntax is as follows:
+
+    pip install "jwst[test] @ git+https://github.com/spacetelescope/jwst"
 
 Need other useful packages in your development environment?
 
-    pip install ipython flake8
+    pip install ipython flake8 pytest-xdist
 
 ### CRDS Setup ###
 
@@ -105,6 +130,10 @@ Software vs DMS build version map
 
 | jwst tag | DMS build | CRDS_CONTEXT |   Date     |          Notes                           |
 | -------- | --------- | ------------ | ---------- | -----------------------------------------|
+|  0.14.2  | B7.4      | 0570         | 11/18/2019 | Final release candidate for B7.4         |
+|  0.14.1  | B7.4rc2   | 0568         | 11/11/2019 | Second release candidate for B7.4        |
+|  0.14.0  | B7.4rc1   | 0563         | 10/25/2019 | First release candidate for B7.4         |
+|  0.13.8  | B7.3.1    | 0541         | 09/05/2019 | Patch for Build 7.3 released as Build 7.3.1     |
 |  0.13.7  | B7.3      | 0535         | 06/21/2019 | Final release candidate for Build 7.3    |
 |  0.13.6  | B7.3rc4   | 0534         | 06/20/2019 | Fourth release candidate for Build 7.3   |
 |  0.13.5  | B7.3rc3   | 0534         | 06/19/2019 | Third release candidate for Build 7.3    |
@@ -161,9 +190,11 @@ To run the regression tests on your local machine, get the test dependencies and
     pip install -e .[test]
     export TEST_BIGDATA=https://bytesalad.stsci.edu/artifactory
 
-When you run the tests, control where the test results are written with the `--basetemp` arg to `pytest`.  So to run all the regression tests:
+To run all the regression tests:
 
-    pytest --bigdata --basetemp=<PATH> jwst/tests_nightly
+    pytest --bigdata jwst/tests_nightly
+
+You can control where the test results are written with the `--basetemp=<PATH>` arg to `pytest`.  _Note that `pytest` will wipe this directory clean for each test session, so make sure it is a scratch area._
 
 If you would like to run a specific test, find its name or ID and use the `-k` option:
 

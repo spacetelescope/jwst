@@ -9,6 +9,8 @@ from os.path import basename
 import numpy as np
 from astropy.io import fits
 
+from ..lib import s3_utils
+
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -78,7 +80,10 @@ def open(init=None, **kwargs):
         file_type = filetype.check(init)
 
         if file_type == "fits":
-            hdulist = fits.open(init)
+            if s3_utils.is_s3_uri(init):
+                hdulist = fits.open(s3_utils.get_object(init))
+            else:
+                hdulist = fits.open(init)
             file_to_close = hdulist
 
         elif file_type == "asn":

@@ -100,6 +100,14 @@ The ``tweakreg`` step has the following optional arguments:
 * ``sigma``: A positive `float` indicating the clipping limit, in sigma units,
   used when performing fit. (Default=3.0)
 
+Further documentation
+---------------------
+
+The underlying algorithms are described in more detail at
+
+https://tweakwcs.readthedocs.io/en/latest/
+
+
 Reference Files
 ===============
 This step does not require any reference files.

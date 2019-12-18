@@ -47,7 +47,7 @@ class TestSpec3Pipeline(BaseJWSTTest):
 
 
     @pytest.mark.xfail(
-        reason='Dataset fails at outlier_detection',
+        reason='See Issue JP-1144',
         run=False
     )
     def test_nrs_fs_spec3(self):

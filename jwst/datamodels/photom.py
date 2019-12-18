@@ -1,24 +1,15 @@
 from .reference import ReferenceFileModel
 from .dynamicdq import dynamic_mask
 
-__all__ = ['PhotomModel']
+__all__ = ['FgsImgPhotomModel', 'MirImgPhotomModel', 'MirLrsPhotomModel',
+           'MirMrsPhotomModel', 'NrcImgPhotomModel', 'NrcWfssPhotomModel',
+           'NisImgPhotomModel', 'NisSossPhotomModel', 'NisWfssPhotomModel',
+           'NrsFsPhotomModel', 'NrsMosPhotomModel']
 
 
-class PhotomModel(ReferenceFileModel):
+class FgsImgPhotomModel(ReferenceFileModel):
     """
-    A base class for photometric reference file models.
-
-    Parameters
-    __________
-    phot_table : numpy table
-         Photometric flux conversion factors table
-    """
-    schema_url = "photom.schema"
-
-
-class NircamPhotomModel(PhotomModel):
-    """
-    A data model for NIRCam photom reference files.
+    A data model for FGS photom reference files.
 
     Parameters
     __________
@@ -28,99 +19,14 @@ class NircamPhotomModel(PhotomModel):
         of instrument mode parameters and photometric conversion
         factors associated with those modes.
 
-        - filter: str[12]
-        - pupil: str[12]
-        - order: int16
         - photmjsr: float32
         - uncertainty: float32
-        - nelem: int16
-        - wavelength: float32[3000]
-        - relresponse: float32[3000]
 
     """
-    schema_url = "nircam_photom.schema"
+    schema_url = "fgsimg_photom.schema"
 
 
-class NirissPhotomModel(PhotomModel):
-    """
-    A data model for NIRISS photom reference files.
-
-    Parameters
-    __________
-    phot_table : numpy table
-        Photometric flux conversion factors table
-        A table-like object containing row selection criteria made up
-        of instrument mode parameters and photometric conversion
-        factors associated with those modes.
-
-        - filter: str[12]
-        - pupil: str[12]
-        - order: int16
-        - photmjsr: float32
-        - uncertainty: float32
-        - nelem: int16
-        - wavelength: float32[5000]
-        - relresponse: float32[5000]
-
-    """
-    schema_url = "niriss_photom.schema"
-
-
-class NirspecPhotomModel(PhotomModel):
-    """
-    A data model for NIRSpec imaging, IFU, and MOS photom reference files.
-
-    Parameters
-    __________
-    phot_table : numpy table
-        Photometric flux conversion factors table
-        A table-like object containing row selection criteria made up
-        of instrument mode parameters and photometric conversion
-        factors associated with those modes.
-
-        - filter: str[12]
-        - grating: str[12]
-        - photmjsr: float32
-        - uncertainty: float32
-        - nelem: int16
-        - wavelength: float32[150]
-        - relresponse: float32[150]
-        - reluncertainty: float32[150]
-
-    """
-    schema_url = "nirspec_photom.schema"
-
-
-class NirspecFSPhotomModel(PhotomModel):
-    """
-    A data model for NIRSpec Fixed-Slit (FS) photom reference files.
-
-    Parameters
-    __________
-    phot_table : numpy table
-        Photometric flux conversion factors table
-        A table-like object containing row selection criteria made up
-        of instrument mode parameters and photometric conversion
-        factors associated with those modes.
-
-        - filter: str[12]
-        - grating: str[12]
-        - slit: str[12]
-        - photmjsr: float32
-        - uncertainty: float32
-        - nelem: int16
-        - wavelength: float32[150]
-        - relresponse: float32[150]
-        - reluncertainty: float32[150]
-
-    """
-    schema_url = "nirspecfs_photom.schema"
-
-    def __init__(self, init=None, **kwargs):
-        super(NirspecFSPhotomModel, self).__init__(init=init, **kwargs)
-
-
-class MiriImgPhotomModel(PhotomModel):
+class MirImgPhotomModel(ReferenceFileModel):
     """
     A data model for MIRI imaging photom reference files.
 
@@ -136,16 +42,37 @@ class MiriImgPhotomModel(PhotomModel):
        - subarray: str[15]
        - photmjsr: float32
        - uncertainty: float32
-       - nelem: int16
-       - wavelength: float32[500]
-       - relresponse: float32[500]
-       - relresperror: float32[500]
 
     """
     schema_url = "mirimg_photom.schema"
 
 
-class MiriMrsPhotomModel(PhotomModel):
+class MirLrsPhotomModel(ReferenceFileModel):
+    """
+    A data model for MIRI LRS photom reference files.
+
+    Parameters
+    __________
+    phot_table : numpy table
+        Photometric flux conversion factors table
+        A table-like object containing row selection criteria made up
+        of instrument mode parameters and photometric conversion
+        factors associated with those modes.
+
+       - filter: str[12]
+       - subarray: str[15]
+       - photmjsr: float32
+       - uncertainty: float32
+       - nelem: int16
+       - wavelength: float32[*]
+       - relresponse: float32[*]
+       - reluncertainty: float32[*]
+
+    """
+    schema_url = "mirlrs_photom.schema"
+
+
+class MirMrsPhotomModel(ReferenceFileModel):
     """
     A data model for MIRI MRS photom reference files.
 
@@ -156,7 +83,7 @@ class MiriMrsPhotomModel(PhotomModel):
 
     data : numpy array
         An array-like object containing the pixel-by-pixel conversion values
-        in units of DN / sec / mJy / pixel.
+        in units of (MJy / pixel) / (DN / sec).
 
     err : numpy array
         An array-like object containing the uncertainties in the conversion
@@ -176,13 +103,14 @@ class MiriMrsPhotomModel(PhotomModel):
     schema_url = "mirmrs_photom.schema"
 
     def __init__(self, init=None, **kwargs):
-        super(MiriMrsPhotomModel, self).__init__(init=init, **kwargs)
+        super(MirMrsPhotomModel, self).__init__(init=init, **kwargs)
 
         self.dq = dynamic_mask(self)
 
-class FgsPhotomModel(PhotomModel):
+
+class NrcImgPhotomModel(ReferenceFileModel):
     """
-    A data model for FGS photom reference files.
+    A data model for NIRCam imaging photom reference files.
 
     Parameters
     __________
@@ -192,11 +120,160 @@ class FgsPhotomModel(PhotomModel):
         of instrument mode parameters and photometric conversion
         factors associated with those modes.
 
+        - filter: str[12]
+        - pupil: str[12]
+        - photmjsr: float32
+        - uncertainty: float32
+
+    """
+    schema_url = "nrcimg_photom.schema"
+
+
+class NrcWfssPhotomModel(ReferenceFileModel):
+    """
+    A data model for NIRCam WFSS photom reference files.
+
+    Parameters
+    __________
+    phot_table : numpy table
+        Photometric flux conversion factors table
+        A table-like object containing row selection criteria made up
+        of instrument mode parameters and photometric conversion
+        factors associated with those modes.
+
+        - filter: str[12]
+        - pupil: str[15]
+        - order: int16
         - photmjsr: float32
         - uncertainty: float32
         - nelem: int16
-        - wavelength: float32[5000]
-        - relresponse: float32[5000]
+        - wavelength: float32[*]
+        - relresponse: float32[*]
+        - reluncertainty: float32[*]
 
     """
-    schema_url = "fgs_photom.schema"
+    schema_url = "nrcwfss_photom.schema"
+
+
+class NisImgPhotomModel(ReferenceFileModel):
+    """
+    A data model for NIRISS imaging photom reference files.
+
+    Parameters
+    __________
+    phot_table : numpy table
+        Photometric flux conversion factors table
+        A table-like object containing row selection criteria made up
+        of instrument mode parameters and photometric conversion
+        factors associated with those modes.
+
+        - filter: str[12]
+        - pupil: str[12]
+        - photmjsr: float32
+        - uncertainty: float32
+
+    """
+    schema_url = "nisimg_photom.schema"
+
+
+class NisWfssPhotomModel(ReferenceFileModel):
+    """
+    A data model for NIRISS WFSS photom reference files.
+
+    Parameters
+    __________
+    phot_table : numpy table
+        Photometric flux conversion factors table
+        A table-like object containing row selection criteria made up
+        of instrument mode parameters and photometric conversion
+        factors associated with those modes.
+
+        - filter: str[12]
+        - pupil: str[15]
+        - order: int16
+        - photmjsr: float32
+        - uncertainty: float32
+        - nelem: int16
+        - wavelength: float32[*]
+        - relresponse: float32[*]
+        - reluncertainty: float32[*]
+
+    """
+    schema_url = "niswfss_photom.schema"
+
+
+class NisSossPhotomModel(ReferenceFileModel):
+    """
+    A data model for NIRISS SOSS photom reference files.
+
+    Parameters
+    __________
+    phot_table : numpy table
+        Photometric flux conversion factors table
+        A table-like object containing row selection criteria made up
+        of instrument mode parameters and photometric conversion
+        factors associated with those modes.
+
+        - filter: str[12]
+        - pupil: str[15]
+        - order: int16
+        - photmj: float32
+        - uncertainty: float32
+        - nelem: int16
+        - wavelength: float32[*]
+        - relresponse: float32[*]
+        - reluncertainty: float32[*]
+
+    """
+    schema_url = "nissoss_photom.schema"
+
+
+class NrsFsPhotomModel(ReferenceFileModel):
+    """
+    A data model for NIRSpec Fixed-Slit photom reference files.
+
+    Parameters
+    __________
+    phot_table : numpy table
+        Photometric flux conversion factors table
+        A table-like object containing row selection criteria made up
+        of instrument mode parameters and photometric conversion
+        factors associated with those modes.
+
+        - filter: str[12]
+        - grating: str[15]
+        - slit: str[15]
+        - photmj: float32
+        - uncertainty: float32
+        - nelem: int16
+        - wavelength: float32[*]
+        - relresponse: float32[*]
+        - reluncertainty: float32[*]
+
+    """
+    schema_url = "nrsfs_photom.schema"
+
+
+class NrsMosPhotomModel(ReferenceFileModel):
+    """
+    A data model for NIRSpec MOS and IFU photom reference files.
+
+    Parameters
+    __________
+    phot_table : numpy table
+        Photometric flux conversion factors table
+        A table-like object containing row selection criteria made up
+        of instrument mode parameters and photometric conversion
+        factors associated with those modes.
+
+        - filter: str[12]
+        - grating: str[15]
+        - photmj: float32
+        - uncertainty: float32
+        - nelem: int16
+        - wavelength: float32[*]
+        - relresponse: float32[*]
+        - reluncertainty: float32[*]
+
+    """
+    schema_url = "nrsmos_photom.schema"

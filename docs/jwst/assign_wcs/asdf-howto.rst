@@ -97,7 +97,7 @@ transforms the spatial coordinates to celestial coordinates and needs to pass th
 with all inputs and the operator is applied to the results, e.g. ``model = m1 + m2 * m3 – m4/m5**m6``
 
 >>> model = shift_x + shift_y
->>> model(1, 1)
+>>> model(1)
     -152.2
 
 Create the reference file
@@ -139,7 +139,7 @@ To test the file, it can be read in again using the ``asdf.open()`` function:
 
 >>> ff = asdf.open('reffile.asdf')
 >>> model = ff.tree['model']
->>> model(1, 1)
+>>> model(1)
     -152.2
 
 
