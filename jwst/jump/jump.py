@@ -2,6 +2,8 @@ import time
 import logging
 
 import numpy as np
+#import scipy as sp
+import scipy.ndimage.filters as flt
 from ..datamodels import dqflags
 from ..lib import reffile_utils
 from . import twopoint_difference as twopt
@@ -126,6 +128,30 @@ def detect_jumps (input_model, gain_model, readnoise_model,
         pool.terminate()
         pool.close()
         elapsed = time.time() - start
+    log.debug('Elapsed time of twopoint difference = %g sec' % elapsed)
+    nrows = gdq.shape[3]
+    ncols = gdq.shape[2]
+    cr_int, cr_group, cr_row, cr_col = np.where(np.bitwise_and(gdq, dqflags.group['JUMP_DET']))
+    number_pixels_with_cr = len(cr_int)
+    for j in range(number_pixels_with_cr):
+        if cr_row[j] != 0:
+            gdq[cr_int[j], cr_group[j], cr_row[j]-1, cr_col[j]] = np.bitwise_or(
+                gdq[cr_int[j], cr_group[j], cr_row[j]-1, cr_col[j]],
+                dqflags.group['JUMP_DET'])
+        if cr_row[j] != nrows-1:
+            gdq[cr_int[j], cr_group[j], cr_row[j] + 1, cr_col[j]] = np.bitwise_or(
+                gdq[cr_int[j], cr_group[j], cr_row[j] + 1, cr_col[j]],
+                dqflags.group['JUMP_DET'])
+        if cr_col[j] != 0:
+            gdq[cr_int[j], cr_group[j], cr_row[j], cr_col[j]- 1] = np.bitwise_or(
+                gdq[cr_int[j], cr_group[j], cr_row[j], cr_col[j]-1],
+                dqflags.group['JUMP_DET'])
+        if cr_col[j] !=  ncols -1:
+            gdq[cr_int[j], cr_group[j], cr_row[j], cr_col[j] + 1] = np.bitwise_or(
+                gdq[cr_int[j], cr_group[j], cr_row[j], cr_col[j] + 1],
+                dqflags.group['JUMP_DET'])
+
+    elapsed = time.time() - start
     log.debug('Elapsed time = %g sec' % elapsed)
 
     # Apply the y-intercept method as a second pass, if requested
@@ -149,3 +175,16 @@ def detect_jumps (input_model, gain_model, readnoise_model,
     output_model.pixeldq = pdq
 
     return output_model
+
+
+def flag_4_neighbors(inregion):
+    intregion = inregion.astype('uint8')
+    if (np.bitwise_and(intregion[0], dqflags.group['JUMP_DET']) or
+        np.bitwise_and(intregion[1], dqflags.group['JUMP_DET']) or
+        np.bitwise_and(intregion[2], dqflags.group['JUMP_DET']) or
+        np.bitwise_and(intregion[3], dqflags.group['JUMP_DET'])):
+        return 1.0
+    else:
+        return 0.0
+
+
