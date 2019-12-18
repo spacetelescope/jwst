@@ -50,7 +50,7 @@ matrix:
            PIP_DEPENDENCIES='.[docs]'
 
     # PEP8 check
-    - env: TEST_COMMAND='flake8 jwst'
+    - env: TEST_COMMAND='flake8'
            PIP_DEPENDENCIES='flake8'
 
   allow_failures:

@@ -15,6 +15,5 @@ omit =
     docs/*
     jwst/conftest.py
     jwst/tests*
-    jwst/regtest
-    jwst/**/tests
+    jwst/**/test*
     jwst/extern/*
