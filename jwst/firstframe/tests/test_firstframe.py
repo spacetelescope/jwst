@@ -1,6 +1,5 @@
 import numpy as np
 
-from jwst.datamodels.miri_ramp import MIRIRampModel
 from jwst.datamodels import RampModel
 from jwst.datamodels import dqflags
 from jwst.firstframe.firstframe_sub import do_correction
@@ -24,7 +23,7 @@ def test_firstframe_set_groupdq():
     groupdq = np.zeros(csize, dtype=int)
 
     # create a JWST datamodel for MIRI data
-    dm_ramp = MIRIRampModel(data=data, groupdq=groupdq)
+    dm_ramp = RampModel(data=data, groupdq=groupdq)
 
     # run the first frame correction step
     dm_ramp_firstframe = do_correction(dm_ramp)
@@ -68,7 +67,7 @@ def test_firstframe_single_group():
     groupdq = np.zeros(csize, dtype=int)
 
     # create a JWST datamodel for MIRI data
-    dm_ramp = MIRIRampModel(data=data, groupdq=groupdq)
+    dm_ramp = RampModel(data=data, groupdq=groupdq)
 
     # run the first frame correction step
     dm_ramp_firstframe = do_correction(dm_ramp)
@@ -103,7 +102,7 @@ def test_firstframe_add1_groupdq():
     groupdq = np.zeros(csize, dtype=int)
 
     # create a JWST datamodel for MIRI data
-    dm_ramp = MIRIRampModel(data=data, groupdq=groupdq)
+    dm_ramp = RampModel(data=data, groupdq=groupdq)
 
     # set a flag in the groupdq, first frame
     dm_ramp.groupdq[0, 0, 500:510, 500:510] = 4
@@ -132,7 +131,7 @@ def test_firstframe_3groups():
     groupdq = np.zeros(csize, dtype=int)
 
     # create a JWST datamodel for MIRI data
-    dm_ramp = MIRIRampModel(data=data, groupdq=groupdq)
+    dm_ramp = RampModel(data=data, groupdq=groupdq)
 
     # run the first frame correction step
     dm_ramp_firstframe = do_correction(dm_ramp)
