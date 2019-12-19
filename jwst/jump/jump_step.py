@@ -17,6 +17,9 @@ class JumpStep(Step):
     spec = """
         rejection_threshold = float(default=4.0,min=0) # CR rejection threshold
         maximum_cores = option('quarter', 'half', 'all', default=None) # max number of processes to create
+        flag_4_neighbors = boolean(default=True) #flag the four perpendicular neighbors of each CR
+        max_jump_to_flag_neighbors = float(default=10) #maximum jump that will trigger neighbor flagging
+        min_jump_to_flag_neighbors = float(default=10) #minimum jump that will trigger neighbor flagging
     """
 
     # Prior to 04/26/17, the following were also in the spec above:
@@ -45,8 +48,12 @@ class JumpStep(Step):
             # Retrieve the parameter values
             rej_thresh = self.rejection_threshold
             max_cores = self.maximum_cores
+            max_jump_to_flag_neighbors = self.max_jump_to_flag_neighbors
+            min_jump_to_flag_neighbors = self.min_jump_to_flag_neighbors
+            flag_4_neighbors = self.flag_4.neighbors
             do_yint = self.do_yintercept
             sig_thresh = self.yint_threshold
+
             self.log.info('CR rejection threshold = %g sigma', rej_thresh)
             if self.maximum_cores is not None:
                 self.log.info('Maximum cores to use = %s', max_cores)
@@ -67,7 +74,9 @@ class JumpStep(Step):
 
             # Call the jump detection routine
             result = detect_jumps(input_model, gain_model, readnoise_model,
-                                   rej_thresh, do_yint, sig_thresh, max_cores)
+                                rej_thresh, do_yint, sig_thresh, max_cores,
+                                max_jump_to_flag_neighbors, min_jump_to_flag_neighbors,
+                                flag_4_neighbors)
 
             gain_model.close()
             readnoise_model.close()
