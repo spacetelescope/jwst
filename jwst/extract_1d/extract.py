@@ -15,7 +15,6 @@ from ..lib.wcs_utils import get_wavelengths
 from . import extract1d
 from . import ifu
 from . import spec_wcs
-from . import util
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -248,7 +247,7 @@ def get_extract_parameters(ref_dict,
                     extract_params['spectral_order'] = sp_order
                     # Note that extract_params['dispaxis'] is not assigned.
                     # This will be done later, possibly slit by slit.
-                    if meta.target.source_type.upper() == "EXTENDED":
+                    if meta.target.source_type == "EXTENDED":
                         log.info("Target is extended, so the entire region "
                                  "will be extracted.")
                         shape = input_model.data.shape
@@ -2695,24 +2694,34 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
     # spectral order is zero.  That's only OK if the disperser is a prism.
     prism_mode = is_prism(input_model)
 
-    # GRISM data.
-    is_wfss = input_model.meta.exposure.type in WFSS_EXPTYPES
+    instrument = input_model.meta.instrument.name
+    exp_type = input_model.meta.exposure.type
+    if instrument is not None:
+        instrument = instrument.upper()
+
+    # We need a flag to indicate whether the photom step has been run.  If
+    # it hasn't, we'll copy the count rate to the flux column.
+    try:
+        s_photom = input_model.meta.cal_step.photom
+    except AttributeError:
+        s_photom = None
+    if s_photom is not None and s_photom.upper() == 'COMPLETE':
+        photom_has_been_run = True
+        flux_units = 'Jy'
+        sb_units = 'MJy/sr'
+    else:
+        photom_has_been_run = False
+        flux_units = 'DN/s'
+        sb_units = 'DN/s'
+        log.warning("The photom step has not been run.")
 
     if apply_nod_offset:
-        exp_type = input_model.meta.exposure.type.upper()
-        source_type = input_model.meta.target.source_type.upper()
         if exp_type in WFSS_EXPTYPES + ['NRS_FIXEDSLIT', 'NRS_MSASPEC']:
             apply_nod_offset = False
             log.warning("Correcting for nod/dither offset is currently "
                         "not supported for exp_type = %s, so "
                         "apply_nod_offset will be set to False",
                         input_model.meta.exposure.type)
-        if source_type != 'POINT':
-            apply_nod_offset = False
-            log.warning("SRCTYPE = '%s'; correcting for nod/dither "
-                        "offset will only be done for a point source, ",
-                        "so apply_nod_offset will be set to False",
-                        input_model.meta.target.source_type)
 
     if (was_source_model or
         isinstance(input_model, datamodels.MultiSlitModel) or
@@ -2736,6 +2745,13 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
             if sp_order == 0 and not prism_mode:
                 log.info("Spectral order 0 is a direct image, skipping ...")
                 continue
+            source_type = slit.source_type
+            if source_type != 'POINT':
+                apply_nod_offset = False
+                log.warning("SRCTYPE = '%s'; correcting for nod/dither "
+                            "offset will only be done for a point source, ",
+                            "so apply_nod_offset will be set to False",
+                            source_type)
             extract_params = get_extract_parameters(
                                 ref_dict,
                                 slit, slit.name, sp_order,
@@ -2755,6 +2771,14 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                 log.warning("The dispersion direction information is "
                             "missing, so skipping ...")
                 continue
+            if photom_has_been_run:
+                pixel_solid_angle = slit.meta.photometry.pixelarea_steradians
+                if pixel_solid_angle is None:
+                    pixel_solid_angle = 1.
+                    log.warning("Pixel area (solid angle) is not populated; "
+                                "the flux will not be correct.")
+            else:
+                pixel_solid_angle = 1.                  # not needed
 
             try:
                 (ra, dec, wavelength, temp_flux, background,
@@ -2767,23 +2791,32 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
 
             # Convert the sum to an average, for surface brightness.
             npixels_temp = np.where(npixels > 0., npixels, 1.)
-            surf_bright = temp_flux / npixels_temp
+            surf_bright = temp_flux / npixels_temp      # may be reset below
             background /= npixels_temp
             del npixels_temp
 
-            # Convert to flux density (for a point source).
-            wcs_shape = slit.data.shape
-            wcs = slit.meta.wcs
-            if len(wcs_shape) > 2:
-                # CubeModel
-                wcs_shape = wcs_shape[1:]
-            pixel_solid_angle = util.pixel_area(wcs, wcs_shape, is_wfss)
-            if pixel_solid_angle is None:
-                pixel_solid_angle = 1.
-            # MJy / steradian --> Jy
-            flux = temp_flux * pixel_solid_angle * 1.e6
+            # Convert to flux density.
+            # The input units will normally be MJy / sr, but for NIRSpec and
+            # NIRISS SOSS point-source spectra the units will be MJy.
+            input_units_are_megajanskys = (photom_has_been_run and
+                                           source_type == 'POINT' and
+                                           (instrument == 'NIRSPEC' or
+                                            exp_type == 'NIS_SOSS'))
+            if photom_has_been_run:
+                # for NIRSpec data and NIRISS SOSS, point source
+                if input_units_are_megajanskys:
+                    # MJy --> Jy
+                    flux = temp_flux * 1.e6
+                    surf_bright[:] = 0.
+                    background[:] = 0.
+                else:
+                    # MJy / steradian --> Jy
+                    flux = temp_flux * pixel_solid_angle * 1.e6
+                    # surf_bright was assigned above
+            else:
+                flux = temp_flux                        # count rate
             del temp_flux
-            error = np.zeros_like(flux) * pixel_solid_angle * 1.e6
+            error = np.zeros_like(flux)
             sb_error = np.zeros_like(flux)
             berror = np.zeros_like(flux)
             otab = np.array(list(zip(wavelength,
@@ -2793,12 +2826,12 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
             spec = datamodels.SpecModel(spec_table=otab)
             spec.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec, wavelength)
             spec.spec_table.columns['wavelength'].unit = 'um'
-            spec.spec_table.columns['flux'].unit = 'Jy'
-            spec.spec_table.columns['error'].unit = 'Jy'
-            spec.spec_table.columns['surf_bright'].unit = 'MJy/sr'
-            spec.spec_table.columns['sb_error'].unit = 'MJy/sr'
-            spec.spec_table.columns['background'].unit = 'MJy/sr'
-            spec.spec_table.columns['berror'].unit = 'MJy/sr'
+            spec.spec_table.columns['flux'].unit = flux_units
+            spec.spec_table.columns['error'].unit = flux_units
+            spec.spec_table.columns['surf_bright'].unit = sb_units
+            spec.spec_table.columns['sb_error'].unit = sb_units
+            spec.spec_table.columns['background'].unit = sb_units
+            spec.spec_table.columns['berror'].unit = sb_units
             spec.slit_ra = ra
             spec.slit_dec = dec
             spec.spectral_order = sp_order
@@ -2821,6 +2854,27 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
         else:
             # For this case, we'll call get_spectral_order to get the order.
             spectral_order_list = ["not set yet"]
+
+        if photom_has_been_run:
+            pixel_solid_angle = input_model.meta.photometry.pixelarea_steradians
+            if pixel_solid_angle is None:
+                log.warning("Pixel area (solid angle) is not populated; "
+                            "the flux will not be correct.")
+                pixel_solid_angle = 1.
+        else:
+            pixel_solid_angle = 1.                      # not needed
+
+        source_type = input_model.meta.target.source_type
+        input_units_are_megajanskys = (photom_has_been_run and
+                                       source_type == 'POINT' and
+                                       (instrument == 'NIRSPEC' or
+                                        exp_type == 'NIS_SOSS'))
+        if source_type != 'POINT':
+            apply_nod_offset = False
+            log.warning("SRCTYPE = '%s'; correcting for nod/dither "
+                        "offset will only be done for a point source, ",
+                        "so apply_nod_offset will be set to False",
+                        source_type)
 
         if isinstance(input_model, (datamodels.ImageModel,
                                     datamodels.DrizProductModel)):
@@ -2871,24 +2925,22 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                 background /= npixels_temp
                 del npixels_temp
 
-                # Convert to flux density (for a point source).
-                if input_model.meta.exposure.type == "NIS_SOSS":
-                    wcs = niriss.niriss_soss_set_input(input_model, sp_order)
+                # Convert to flux density.
+                if photom_has_been_run:
+                    # for NIRSpec data and NIRISS SOSS, point source
+                    if input_units_are_megajanskys:
+                        # MJy --> Jy
+                        flux = temp_flux * 1.e6
+                        surf_bright[:] = 0.
+                        background[:] = 0.
+                    else:
+                        # MJy / steradian --> Jy
+                        flux = temp_flux * pixel_solid_angle * 1.e6
+                        # surf_bright was assigned above
                 else:
-                    wcs = input_model.meta.wcs
-
-                wcs_shape = input_model.data.shape
-                if len(wcs_shape) > 2:
-                    # CubeModel
-                    wcs_shape = wcs_shape[1:]
-
-                pixel_solid_angle = util.pixel_area(wcs, wcs_shape, is_wfss)
-                if pixel_solid_angle is None:
-                    pixel_solid_angle = 1.
-                # MJy / steradian --> Jy
-                flux = temp_flux * pixel_solid_angle * 1.e6
+                    flux = temp_flux                        # count rate
                 del temp_flux
-                error = np.zeros_like(flux) * pixel_solid_angle * 1.e6
+                error = np.zeros_like(flux)
                 sb_error = np.zeros_like(flux)
                 berror = np.zeros_like(flux)
                 otab = np.array(list(zip(wavelength,
@@ -2900,12 +2952,12 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                 spec.meta.wcs = spec_wcs.create_spectral_wcs(
                                         ra, dec, wavelength)
                 spec.spec_table.columns['wavelength'].unit = 'um'
-                spec.spec_table.columns['flux'].unit = 'Jy'
-                spec.spec_table.columns['error'].unit = 'Jy'
-                spec.spec_table.columns['surf_bright'].unit = 'MJy/sr'
-                spec.spec_table.columns['sb_error'].unit = 'MJy/sr'
-                spec.spec_table.columns['background'].unit = 'MJy/sr'
-                spec.spec_table.columns['berror'].unit = 'MJy/sr'
+                spec.spec_table.columns['flux'].unit = flux_units
+                spec.spec_table.columns['error'].unit = flux_units
+                spec.spec_table.columns['surf_bright'].unit = sb_units
+                spec.spec_table.columns['sb_error'].unit = sb_units
+                spec.spec_table.columns['background'].unit = sb_units
+                spec.spec_table.columns['berror'].unit = sb_units
                 spec.slit_ra = ra
                 spec.slit_dec = dec
                 spec.spectral_order = sp_order
@@ -2918,6 +2970,14 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                                       datamodels.SlitModel)):
 
             slit = None
+            if photom_has_been_run:
+                pixel_solid_angle = input_model.meta.photometry.pixelarea_steradians
+                if pixel_solid_angle is None:
+                    log.warning("Pixel area (solid angle) is not populated; "
+                                "the flux will not be correct.")
+                    pixel_solid_angle = 1.
+            else:
+                pixel_solid_angle = 1.                  # not needed
             # NRS_BRIGHTOBJ exposures are instances of SlitModel.
             prev_offset = OFFSET_NOT_ASSIGNED_YET
             for sp_order in spectral_order_list:
@@ -2976,29 +3036,22 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                     background /= npixels_temp
                     del npixels_temp
 
-                    # Convert to flux density (for a point source).
-                    if input_model.meta.exposure.type == "NIS_SOSS":
-                        wcs = niriss.niriss_soss_set_input(input_model,
-                                                           sp_order)
+                    # Convert to flux density.
+                    if photom_has_been_run:
+                        # for NIRSpec data and NIRISS SOSS, point source
+                        if input_units_are_megajanskys:
+                            # MJy --> Jy
+                            flux = temp_flux * 1.e6
+                            surf_bright[:] = 0.
+                            background[:] = 0.
+                        else:
+                            # MJy / steradian --> Jy
+                            flux = temp_flux * pixel_solid_angle * 1.e6
+                            # surf_bright was assigned above
                     else:
-                        wcs = input_model.meta.wcs
-                    # There's no need to repeat this for each integration.
-                    if integ == 0:
-                        wcs_shape = input_model.data.shape
-                        if len(wcs_shape) > 2:
-                            # CubeModel
-                            wcs_shape = wcs_shape[1:]
-                        pixel_solid_angle = util.pixel_area(
-                                wcs,
-                                wcs_shape,
-                                is_wfss,
-                                verbose)
-                        if pixel_solid_angle is None:
-                            pixel_solid_angle = 1.
-                    # MJy / steradian --> Jy
-                    flux = temp_flux * pixel_solid_angle * 1.e6
+                        flux = temp_flux                # count rate
                     del temp_flux
-                    error = np.zeros_like(flux) * pixel_solid_angle * 1.e6
+                    error = np.zeros_like(flux)
                     sb_error = np.zeros_like(flux)
                     berror = np.zeros_like(flux)
                     otab = np.array(list(zip(wavelength,
@@ -3011,12 +3064,12 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                     spec.meta.wcs = spec_wcs.create_spectral_wcs(
                                         ra, dec, wavelength)
                     spec.spec_table.columns['wavelength'].unit = 'um'
-                    spec.spec_table.columns['flux'].unit = 'Jy'
-                    spec.spec_table.columns['error'].unit = 'Jy'
-                    spec.spec_table.columns['surf_bright'].unit = 'MJy/sr'
-                    spec.spec_table.columns['sb_error'].unit = 'MJy/sr'
-                    spec.spec_table.columns['background'].unit = 'MJy/sr'
-                    spec.spec_table.columns['berror'].unit = 'MJy/sr'
+                    spec.spec_table.columns['flux'].unit = flux_units
+                    spec.spec_table.columns['error'].unit = flux_units
+                    spec.spec_table.columns['surf_bright'].unit = sb_units
+                    spec.spec_table.columns['sb_error'].unit = sb_units
+                    spec.spec_table.columns['background'].unit = sb_units
+                    spec.spec_table.columns['berror'].unit = sb_units
                     spec.slit_ra = ra
                     spec.slit_dec = dec
                     spec.spectral_order = sp_order
@@ -3050,12 +3103,13 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
         elif isinstance(input_model, datamodels.IFUCubeModel):
 
             try:
-                source_type = input_model.meta.target.source_type.lower()
+                source_type = input_model.meta.target.source_type
             except AttributeError:
-                source_type = "unknown"
+                source_type = "UNKNOWN"
+            if source_type is None:
+                source_type = "UNKNOWN"
             output_model = ifu.ifu_extract1d(input_model, ref_dict,
-                                             source_type, subtract_background,
-                                             apply_nod_offset)
+                                             source_type, subtract_background)
 
         else:
             log.error("The input file is not supported for this step.")
@@ -3272,8 +3326,8 @@ def is_prism(input_model):
         True if the exposure used a prism; False otherwise.
     """
 
-    detector = input_model.meta.instrument.detector
-    if detector is None:
+    instrument = input_model.meta.instrument.name
+    if instrument is None:
         return False
 
     filter = input_model.meta.instrument.filter
@@ -3288,8 +3342,8 @@ def is_prism(input_model):
         grating = grating.upper()
 
     prism_mode = False
-    if (detector.startswith("MIR") and filter.find("P750L") >= 0 or
-        detector.startswith("NRS") and grating.find("PRISM") >= 0):
+    if (instrument == "MIRI" and filter.find("P750L") >= 0 or
+        instrument == "NIRSPEC" and grating.find("PRISM") >= 0):
             prism_mode = True
 
     return prism_mode

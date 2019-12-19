@@ -3,7 +3,6 @@ import logging
 import math
 
 import numpy as np
-from astropy import units as u
 import photutils
 from photutils import CircularAperture, CircularAnnulus, \
                       RectangularAperture, aperture_photometry
@@ -11,7 +10,6 @@ from photutils import CircularAperture, CircularAnnulus, \
 from .. import datamodels
 from ..datamodels import dqflags
 from . import spec_wcs
-from . import util
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -29,8 +27,7 @@ OFFSET_NOT_ASSIGNED_YET = "not assigned yet"
 # between the target and any point in the image; used by locn_from_wcs().
 HUGE_DIST = 1.e10
 
-def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
-                  apply_nod_offset):
+def ifu_extract1d(input_model, ref_dict, source_type, subtract_background):
     """Extract a 1-D spectrum from an IFU cube.
 
     Parameters
@@ -42,18 +39,13 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
         The contents of the reference file.
 
     source_type : string
-        "point" or "extended"
+        "POINT" or "EXTENDED"
 
     subtract_background : bool or None
         User supplied flag indicating whether the background should be subtracted.
         If None, the value in the extract_1d reference file will be used.
         If not None, this parameter overrides the value in the
         extract_1d reference file.
-
-    apply_nod_offset : bool or None
-        If True, the target and background positions specified in the
-        reference file (or the default position, if there is no reference
-        file) will be shifted to account for nod and/or dither offset.
 
     Returns
     -------
@@ -65,12 +57,25 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
         log.error("Expected an IFU cube.")
         raise RuntimeError("Expected an IFU cube.")
 
-    source_type = source_type.lower()
-    if source_type != "point" and source_type != "extended":
-        log.warning("source_type was '%s', setting to 'point'.", source_type)
-        source_type = "point"
+    instrument = input_model.meta.instrument.name
+    if instrument is not None:
+        instrument = instrument.upper()
+    if source_type is not None:
+        source_type = source_type.upper()
+    if source_type != 'POINT' and source_type != 'EXTENDED':
+        if instrument == 'MIRI':
+            default_source_type = 'EXTENDED'
+        else:
+            default_source_type = 'POINT'
+        log.warning("source_type was '%s', setting it to '%s'.",
+                    source_type, default_source_type)
+        source_type = default_source_type
     else:
         log.info("source_type = %s", source_type)
+
+    # The input units will normally be MJy / sr, but for NIRSpec point-source
+    # spectra the units will be MJy.
+    input_units_are_megajanskys = (source_type == 'POINT' and instrument == 'NIRSPEC')
 
     output_model = datamodels.MultiSpecModel()
     output_model.update(input_model)
@@ -81,7 +86,7 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
 
     extract_params = get_extract_parameters(ref_dict, slitname)
     if subtract_background is not None:
-        if subtract_background and source_type == "extended":
+        if subtract_background and source_type == "EXTENDED":
             subtract_background = False
             log.info("Turning off background subtraction because "
                      "the source is extended.")
@@ -98,45 +103,26 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
         log.critical('Missing extraction parameters.')
         raise ValueError('Missing extraction parameters.')
 
-    # Check the units.  We expect either "MJy / sr" or "mJy / arcsec^2".
-    try:
-        bunit = input_model.meta.bunit_data
-    except AttributeError:
-        bunit = None
-    megajanskys = True                          # initial value
-    if bunit is not None:
-        if bunit.find("M") < 0 or bunit.find("arcsec") >= 0:
-            megajanskys = False
-
     # Convert the sum to an average, for surface brightness.
     npixels_temp = np.where(npixels > 0., npixels, 1.)
     surf_bright = temp_flux / npixels_temp
     background /= npixels_temp
     del npixels_temp
-    if not megajanskys:
-        # Not MJy / sr?  Then assume the units are mJy / arcsec^2.
-        # Target spectrum in units of surface brightness.
-        sb = surf_bright * u.mJy / (u.arcsec**2)
-        surf_bright = sb.to(u.MJy / u.steradian).value
-        # Background spectrum.
-        bkg = background * u.mJy / (u.arcsec**2)
-        background = bkg.to(u.MJy / u.steradian).value
 
-    # Compute the solid angle of a pixel in steradians.
-    pixel_solid_angle = util.pixel_area(input_model.meta.wcs,
-                                        input_model.data.shape,
-                                        False)
-    if pixel_solid_angle is None:
-        log.warning("Pixel solid angle could not be determined")
-        pixel_solid_angle = 1.
-    if megajanskys:
+    if input_units_are_megajanskys:
+        # Convert flux from MJy to Jy.
+        flux = temp_flux * 1.e6
+        surf_bright[:] = 0.
+        background[:] = 0.
+    else:
+        pixel_solid_angle = input_model.meta.photometry.pixelarea_steradians
+        if pixel_solid_angle is None:
+            log.warning("Pixel area (solid angle) is not populated; "
+                        "the flux will not be correct.")
+            pixel_solid_angle = 1.
         # Convert flux from MJy / steradian to Jy.
         flux = temp_flux * pixel_solid_angle * 1.e6
-    else:
-        # Convert flux from mJy / arcsec**2 to Jy.
-        psa = pixel_solid_angle * u.steradian
-        pixel_solid_angle = psa.to(u.arcsec**2).value
-        flux = temp_flux * pixel_solid_angle * 1.e-3
+        # surf_bright and background were computed above
     del temp_flux
 
     error = np.zeros_like(flux)
@@ -242,7 +228,7 @@ def extract_ifu(input_model, source_type, extract_params):
         The input model.
 
     source_type : string
-        "point" or "extended"
+        "POINT" or "EXTENDED"
 
     extract_params : dict
         The extraction parameters for aperture photometry.
@@ -295,7 +281,7 @@ def extract_ifu(input_model, source_type, extract_params):
 
     # For an extended target, the entire aperture will be extracted, so
     # it makes no sense to shift the extraction location.
-    if source_type != "extended":
+    if source_type != "EXTENDED":
         ra_targ = input_model.meta.target.ra
         dec_targ = input_model.meta.target.dec
         locn = locn_from_wcs(input_model, ra_targ, dec_targ)
@@ -327,7 +313,7 @@ def extract_ifu(input_model, source_type, extract_params):
     inner_bkg = None
     outer_bkg = None
 
-    if source_type == 'extended':
+    if source_type == 'EXTENDED':
         # Ignore any input parameters, and extract the whole image.
         width = float(shape[-1])
         height = float(shape[-2])
@@ -358,7 +344,7 @@ def extract_ifu(input_model, source_type, extract_params):
     log.debug("IFU 1-D extraction parameters:")
     log.debug("  x_center = %s", str(x_center))
     log.debug("  y_center = %s", str(y_center))
-    if source_type == 'point':
+    if source_type == 'POINT':
         log.debug("  radius = %s", str(radius))
         log.debug("  subtract_background = %s", str(subtract_background))
         log.debug("  inner_bkg = %s", str(inner_bkg))
@@ -380,7 +366,7 @@ def extract_ifu(input_model, source_type, extract_params):
     (ra, dec, wavelength) = get_coordinates(input_model, x0, y0)
 
     position = (x_center, y_center)
-    if source_type == 'point':
+    if source_type == 'POINT':
         aperture = CircularAperture(position, r=radius)
     else:
         aperture = RectangularAperture(position, width, height, theta)
@@ -551,7 +537,7 @@ def image_extract_ifu(input_model, source_type, extract_params):
         The input model.
 
     source_type : string
-        "point" or "extended"
+        "POINT" or "EXTENDED"
 
     extract_params : dict
         The extraction parameters.  One of these is an open file handle
