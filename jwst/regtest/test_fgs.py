@@ -69,7 +69,7 @@ def run_guider_pipelines(jail, rtdata_module, request):
     ['cal', 'dq_init', 'flat_field', 'guider_cds'],
     ids=['cal', 'dq_init', 'flat_field', 'guider_cds']
 )
-def test_fgs_id_image(run_guider_pipelines, fitsdiff_default_kwargs, suffix):
+def test_fgs_guider(run_guider_pipelines, fitsdiff_default_kwargs, suffix):
     rtdata = run_guider_pipelines
     output = replace_suffix(
         os.path.splitext(os.path.basename(rtdata.input))[0], suffix
