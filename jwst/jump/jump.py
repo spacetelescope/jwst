@@ -2,8 +2,6 @@ import time
 import logging
 
 import numpy as np
-#import scipy as sp
-import scipy.ndimage.filters as flt
 from ..datamodels import dqflags
 from ..lib import reffile_utils
 from . import twopoint_difference as twopt
@@ -14,7 +12,9 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 def detect_jumps (input_model, gain_model, readnoise_model,
-                  rejection_threshold, do_yint, signal_threshold, max_cores=None):
+                  rejection_threshold, do_yint, signal_threshold, max_cores,
+                  max_jump_to_flag_neighbors, min_jump_to_flag_neighbors,
+                  flag_4_neighbors):
     """
     This is the high-level controlling routine for the jump detection process.
     It loads and sets the various input data and parameters needed by each of
@@ -53,8 +53,6 @@ def detect_jumps (input_model, gain_model, readnoise_model,
     gdq  = input_model.groupdq
     pdq  = input_model.pixeldq
 
-    ngroups = data.shape[1]
-    nframes = input_model.meta.exposure.nframes
 
     # Get 2D gain and read noise values from their respective models
     if reffile_utils.ref_matches_sci(input_model, gain_model):
@@ -90,10 +88,15 @@ def detect_jumps (input_model, gain_model, readnoise_model,
     # Apply the 2-point difference method as a first pass
     log.info('Executing two-point difference method')
     start = time.time()
-    numx = data.shape[-1]
-    numy = data.shape[-2]
-    median_slopes = np.zeros((numy, numx), dtype=np.float32)
-    yincrement = int(numy / numslices)
+    nrows = data.shape[-2]
+    ncols = data.shape[-1]
+    num_groups = data.shape[1]
+    num_ints = data.shape[0]
+    median_slopes = np.zeros((num_ints, nrows, ncols), dtype=np.float32)
+    all_ratios = np.zeros((num_ints, nrows, ncols, num_groups-1), dtype=np.float32)
+    yincrement = int(nrows / numslices)
+    print("yincrement ", yincrement)
+    print("num slices ",numslices)
     slices = []
     # Slice up data, gdq, readnoise_2d into slices
     # Each element of slices is a tuple of
@@ -102,14 +105,14 @@ def detect_jumps (input_model, gain_model, readnoise_model,
         slices.insert(i, (data[:, :, i * yincrement:(i + 1) * yincrement, :],
                           gdq[:, :, i * yincrement:(i + 1) * yincrement, :],
                           readnoise_2d[i * yincrement:(i + 1) * yincrement, :],
-                          rejection_threshold, nframes))
+                          rejection_threshold, num_groups))
     # last slice get the rest
-    slices.insert(numslices - 1, (data[:, :, (numslices - 1) * yincrement:numy, :],
-                                 gdq[:, :, (numslices - 1) * yincrement:numy, :],
-                                 readnoise_2d[(numslices - 1) * yincrement:numy, :],
-                                 rejection_threshold, nframes))
+    slices.insert(numslices - 1, (data[:, :, (numslices - 1) * yincrement:nrows, :],
+                                 gdq[:, :, (numslices - 1) * yincrement:nrows, :],
+                                 readnoise_2d[(numslices - 1) * yincrement:nrows, :],
+                                 rejection_threshold, num_groups))
     if numslices == 1:
-        median_slopes, gdq = twopt.find_crs(data, gdq, readnoise_2d, rejection_threshold, nframes)
+        median_slopes, gdq, all_ratios = twopt.find_crs(data, gdq, readnoise_2d, rejection_threshold, num_groups)
         elapsed = time.time() - start
     else:
         log.info("Creating %d processes for jump detection " % numslices)
@@ -118,48 +121,53 @@ def detect_jumps (input_model, gain_model, readnoise_model,
         k = 0
         # Reconstruct median_slopes and gdq from the slice results
         for resultslice in real_result:
-            if (len(real_result) == k + 1):  # last result
-                median_slopes[k * yincrement:numy, :] = resultslice[0]
-                gdq[:, :, k * yincrement:numy, :] = resultslice[1]
+            print("k ",k,"yincrement ",yincrement)
+            if len(real_result) == k + 1:  # last result
+                median_slopes[:, k * yincrement:nrows, :] = resultslice[0]
+                gdq[:, :, k * yincrement:nrows, :] = resultslice[1]
+                all_ratios[:, k * yincrement:nrows, :, :] = resultslice[2]
             else:
-                median_slopes[k * yincrement:(k + 1) * yincrement, :] = resultslice[0]
+                print("k ", k, "yincrement ", yincrement,resultslice[0].shape, resultslice[1].shape, resultslice[2].shape)
+                median_slopes[:, k * yincrement:(k + 1) * yincrement, :] = resultslice[0]
                 gdq[:, :, k * yincrement:(k + 1) * yincrement, :] = resultslice[1]
+                all_ratios[:,  k * yincrement:(k + 1) * yincrement, :, :] = resultslice[2]
             k += 1
         pool.terminate()
         pool.close()
         elapsed = time.time() - start
-    log.debug('Elapsed time of twopoint difference = %g sec' % elapsed)
-    nrows = gdq.shape[3]
-    ncols = gdq.shape[2]
-    cr_int, cr_group, cr_row, cr_col = np.where(np.bitwise_and(gdq, dqflags.group['JUMP_DET']))
-    number_pixels_with_cr = len(cr_int)
-    for j in range(number_pixels_with_cr):
-        if cr_row[j] != 0:
-            gdq[cr_int[j], cr_group[j], cr_row[j]-1, cr_col[j]] = np.bitwise_or(
-                gdq[cr_int[j], cr_group[j], cr_row[j]-1, cr_col[j]],
-                dqflags.group['JUMP_DET'])
-        if cr_row[j] != nrows-1:
-            gdq[cr_int[j], cr_group[j], cr_row[j] + 1, cr_col[j]] = np.bitwise_or(
-                gdq[cr_int[j], cr_group[j], cr_row[j] + 1, cr_col[j]],
-                dqflags.group['JUMP_DET'])
-        if cr_col[j] != 0:
-            gdq[cr_int[j], cr_group[j], cr_row[j], cr_col[j]- 1] = np.bitwise_or(
-                gdq[cr_int[j], cr_group[j], cr_row[j], cr_col[j]-1],
-                dqflags.group['JUMP_DET'])
-        if cr_col[j] !=  ncols -1:
-            gdq[cr_int[j], cr_group[j], cr_row[j], cr_col[j] + 1] = np.bitwise_or(
-                gdq[cr_int[j], cr_group[j], cr_row[j], cr_col[j] + 1],
-                dqflags.group['JUMP_DET'])
+    log.info('Elapsed time of twopoint difference = %g sec' % elapsed)
+    if flag_4_neighbors:
+        cr_int, cr_group, cr_row, cr_col = np.where(np.bitwise_and(gdq, dqflags.group['JUMP_DET']))
+        number_pixels_with_cr = len(cr_int)
+        for j in range(number_pixels_with_cr):
+            if all_ratios[cr_int[j],  cr_row[j], cr_col[j], cr_group[j]-1] < max_jump_to_flag_neighbors and \
+                all_ratios[cr_int[j], cr_row[j], cr_col[j], cr_group[j]-1] > min_jump_to_flag_neighbors:
+                    if cr_row[j] != 0:
+                        gdq[cr_int[j], cr_group[j], cr_row[j]-1, cr_col[j]] = np.bitwise_or(
+                            gdq[cr_int[j], cr_group[j], cr_row[j]-1, cr_col[j]],
+                            dqflags.group['JUMP_DET'])
+                    if cr_row[j] != nrows-1:
+                        gdq[cr_int[j], cr_group[j], cr_row[j] + 1, cr_col[j]] = np.bitwise_or(
+                            gdq[cr_int[j], cr_group[j], cr_row[j] + 1, cr_col[j]],
+                            dqflags.group['JUMP_DET'])
+                    if cr_col[j] != 0:
+                        gdq[cr_int[j], cr_group[j], cr_row[j], cr_col[j]- 1] = np.bitwise_or(
+                            gdq[cr_int[j], cr_group[j], cr_row[j], cr_col[j]-1],
+                            dqflags.group['JUMP_DET'])
+                    if cr_col[j] != ncols -1:
+                        gdq[cr_int[j], cr_group[j], cr_row[j], cr_col[j] + 1] = np.bitwise_or(
+                            gdq[cr_int[j], cr_group[j], cr_row[j], cr_col[j] + 1],
+                            dqflags.group['JUMP_DET'])
 
     elapsed = time.time() - start
-    log.debug('Elapsed time = %g sec' % elapsed)
+    log.info('Total elapsed time = %g sec' % elapsed)
 
     # Apply the y-intercept method as a second pass, if requested
     if do_yint:
 
         # Set up the ramp time array for the y-intercept method
         group_time = output_model.meta.exposure.group_time
-        times = np.array([(k+1)*group_time for k in range(ngroups)])
+        times = np.array([(k+1)*group_time for k in range(num_groups)])
         median_slopes /= group_time
 
         # Now apply the y-intercept method
@@ -175,16 +183,3 @@ def detect_jumps (input_model, gain_model, readnoise_model,
     output_model.pixeldq = pdq
 
     return output_model
-
-
-def flag_4_neighbors(inregion):
-    intregion = inregion.astype('uint8')
-    if (np.bitwise_and(intregion[0], dqflags.group['JUMP_DET']) or
-        np.bitwise_and(intregion[1], dqflags.group['JUMP_DET']) or
-        np.bitwise_and(intregion[2], dqflags.group['JUMP_DET']) or
-        np.bitwise_and(intregion[3], dqflags.group['JUMP_DET'])):
-        return 1.0
-    else:
-        return 0.0
-
-
