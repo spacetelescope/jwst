@@ -38,7 +38,10 @@ def run_fgs_imaging_pipelines(jail, rtdata_module):
     return rtdata
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(
+    scope='module',
+    params=['exptype_fgs_acq1', 'exptype_fgs_id_image', 'exptype_fgs_id_stack']
+)
 def run_guider_pipelines(jail, rtdata_module, request):
     """Run pipeline for guider data"""
     rtdata = rtdata_module
@@ -58,12 +61,6 @@ def run_guider_pipelines(jail, rtdata_module, request):
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize(
-    'run_guider_pipelines',
-    ['exptype_fgs_acq1', 'exptype_fgs_id_image', 'exptype_fgs_id_stack'],
-    ids=['fgs_acq1', 'fgs_id_image', 'fgs_id_stack'],
-    indirect=True
-)
 @pytest.mark.parametrize(
     'suffix',
     ['cal', 'dq_init', 'flat_field', 'guider_cds'],
