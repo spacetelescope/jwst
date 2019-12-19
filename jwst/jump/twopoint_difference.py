@@ -32,6 +32,7 @@ def find_crs(data, group_dq, read_noise, rej_threshold, nframes):
 
     # Create array for output median slope images
     median_slopes = np.zeros((nints, nrows, ncols), dtype=np.float32)
+    all_ratios =  np.zeros((nints, nrows, ncols, ngroups-1), dtype=np.float32)
 
     # Square the read noise values, for use later
     read_noise_2 = read_noise**2
@@ -105,6 +106,7 @@ def find_crs(data, group_dq, read_noise, rej_threshold, nframes):
         # negative outliers.
         #ratio is a 2D array with the units of sigma deviation of the difference from the median.
         ratio = np.abs(first_diffs - median_diffs[:, :, np.newaxis]) / sigma[:, :, np.newaxis]
+        all_ratios[integration] = ratio
 
         # get the rows and columns of pixels of all pixels
         # This seems like an obtuse way to set row and column.
@@ -172,7 +174,7 @@ def find_crs(data, group_dq, read_noise, rej_threshold, nframes):
         # Next pixel with an outlier (j loop)
     # Next integration (integration loop)
 
-    return median_slopes, gdq
+    return median_slopes, gdq, all_ratios
 
 
 def get_clipped_median(num_differences, diffs_to_ignore, differences, sorted_index):
