@@ -4,7 +4,7 @@ import pytest
 from jwst.datamodels import GainModel, ReadnoiseModel
 from jwst.datamodels import MIRIRampModel
 from jwst.jump.jump import detect_jumps
-
+import multiprocessing
 
 def test_nocrs_noflux(setup_inputs):
     # all pixel values are zero. So slope should be zero
@@ -37,6 +37,139 @@ def test_onecr_10_groups_neighbors_flagged(setup_inputs):
     assert (4 == out_model.groupdq[0, 5, 5, 4])
     assert (4 == out_model.groupdq[0, 5, 6, 5])
     assert (4 == out_model.groupdq[0, 5, 4, 5])
+
+def test_twoints_onecr_each_10_groups_neighbors_flagged(setup_inputs):
+    grouptime = 3.0
+    ingain = 200  # use large gain to show that Poisson noise doesn't affect the recombination
+    inreadnoise = np.float64(7)
+    ngroups = 10
+    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups, nints=2,
+                                                          gain=ingain, readnoise=inreadnoise, deltatime=grouptime)
+    # two segments perfect fit, second segment has twice the slope
+    model1.data[0, 0, 5, 5] = 15.0
+    model1.data[0, 1, 5, 5] = 20.0
+    model1.data[0, 2, 5, 5] = 25.0
+    model1.data[0, 3, 5, 5] = 30.0
+    model1.data[0, 4, 5, 5] = 35.0
+    model1.data[0, 5, 5, 5] = 140.0
+    model1.data[0, 6, 5, 5] = 150.0
+    model1.data[0, 7, 5, 5] = 160.0
+    model1.data[0, 8, 5, 5] = 170.0
+    model1.data[0, 9, 5, 5] = 180.0
+    model1.data[1, 0, 15, 5] = 15.0
+    model1.data[1, 1, 15, 5] = 20.0
+    model1.data[1, 2, 15, 5] = 25.0
+    model1.data[1, 3, 15, 5] = 30.0
+    model1.data[1, 4, 15, 5] = 35.0
+    model1.data[1, 5, 15, 5] = 40.0
+    model1.data[1, 6, 15, 5] = 50.0
+    model1.data[1, 7, 15, 5] = 160.0
+    model1.data[1, 8, 15, 5] = 170.0
+    model1.data[1, 9, 15, 5] = 180.0
+    out_model = detect_jumps(model1, gain, rnModel, 4.0, False, 4.0, 1, 200, 4, True)
+    assert (4 == np.max(out_model.groupdq[0, 5, 5, 5]))
+    assert (4 == out_model.groupdq[0, 5, 5, 6])
+    assert (4 == out_model.groupdq[0, 5, 5, 4])
+    assert (4 == out_model.groupdq[0, 5, 6, 5])
+    assert (4 == out_model.groupdq[0, 5, 4, 5])
+    assert (4 == out_model.groupdq[1, 7, 15, 5])
+    assert (4 == out_model.groupdq[1, 7, 15, 6])
+    assert (4 == out_model.groupdq[1, 7, 15, 4])
+    assert (4 == out_model.groupdq[1, 7, 16, 5])
+    assert (4 == out_model.groupdq[1, 7, 14, 5])
+
+def test_flagging_of_CRs_across_slice_boundaries(setup_inputs):
+    grouptime = 3.0
+    ingain = 200  # use large gain to show that Poisson noise doesn't affect the recombination
+    inreadnoise = np.float64(7)
+    ngroups = 10
+
+    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups, nints=2,
+                                                          gain=ingain, readnoise=inreadnoise,
+                                                          deltatime=grouptime)
+    nrows = model1.data.shape[3]
+    num_cores = multiprocessing.cpu_count()
+    max_cores = 'half'
+    numslices = num_cores // 2
+    yincrement = int(nrows / numslices)
+    # two segments perfect fit, second segment has twice the slope
+    #add a CR on the last row of the first slice
+    model1.data[0, 0, yincrement-1, 5] = 15.0
+    model1.data[0, 1, yincrement-1, 5] = 20.0
+    model1.data[0, 2, yincrement-1, 5] = 25.0
+    model1.data[0, 3, yincrement-1, 5] = 30.0
+    model1.data[0, 4, yincrement-1, 5] = 35.0
+    model1.data[0, 5, yincrement-1, 5] = 140.0
+    model1.data[0, 6, yincrement-1, 5] = 150.0
+    model1.data[0, 7, yincrement-1, 5] = 160.0
+    model1.data[0, 8, yincrement-1, 5] = 170.0
+    model1.data[0, 9, yincrement-1, 5] = 180.0
+    #add a CR on the first row of the second slice
+    model1.data[1, 0, yincrement, 5] = 15.0
+    model1.data[1, 1, yincrement, 5] = 20.0
+    model1.data[1, 2, yincrement, 5] = 25.0
+    model1.data[1, 3, yincrement, 5] = 30.0
+    model1.data[1, 4, yincrement, 5] = 35.0
+    model1.data[1, 5, yincrement, 5] = 40.0
+    model1.data[1, 6, yincrement, 5] = 50.0
+    model1.data[1, 7, yincrement, 5] = 160.0
+    model1.data[1, 8, yincrement, 5] = 170.0
+    model1.data[1, 9, yincrement, 5] = 180.0
+    out_model = detect_jumps(model1, gain, rnModel, 4.0, False, 4.0, max_cores, 200, 4, True)
+    #check that the neighbors of the CR on the last row were flagged
+    assert (4 == out_model.groupdq[0, 5, yincrement-1, 5])
+    assert (4 == out_model.groupdq[0, 5, yincrement-1, 6])
+    assert (4 == out_model.groupdq[0, 5, yincrement-1, 4])
+    assert (4 == out_model.groupdq[0, 5, yincrement, 5])
+    assert (4 == out_model.groupdq[0, 5, yincrement-2, 5])
+    # check that the neighbors of the CR on the first row were flagged
+    assert (4 == out_model.groupdq[1, 7, yincrement, 5])
+    assert (4 == out_model.groupdq[1, 7, yincrement, 6])
+    assert (4 == out_model.groupdq[1, 7, yincrement, 4])
+    assert (4 == out_model.groupdq[1, 7, yincrement+1, 5])
+    assert (4 == out_model.groupdq[1, 7, yincrement-1, 5])
+
+
+def test_twoints_onecr_10_groups_neighbors_flagged_multi(setup_inputs):
+    grouptime = 3.0
+    ingain = 200  # use large gain to show that Poisson noise doesn't affect the recombination
+    inreadnoise = np.float64(7)
+    ngroups = 10
+    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups, nints=2,
+                                                          gain=ingain, readnoise=inreadnoise, deltatime=grouptime)
+    # two segments perfect fit, second segment has twice the slope
+    model1.data[0, 0, 5, 5] = 15.0
+    model1.data[0, 1, 5, 5] = 20.0
+    model1.data[0, 2, 5, 5] = 25.0
+    model1.data[0, 3, 5, 5] = 30.0
+    model1.data[0, 4, 5, 5] = 35.0
+    model1.data[0, 5, 5, 5] = 140.0
+    model1.data[0, 6, 5, 5] = 150.0
+    model1.data[0, 7, 5, 5] = 160.0
+    model1.data[0, 8, 5, 5] = 170.0
+    model1.data[0, 9, 5, 5] = 180.0
+    model1.data[1, 0, 15, 5] = 15.0
+    model1.data[1, 1, 15, 5] = 20.0
+    model1.data[1, 2, 15, 5] = 25.0
+    model1.data[1, 3, 15, 5] = 30.0
+    model1.data[1, 4, 15, 5] = 35.0
+    model1.data[1, 5, 15, 5] = 40.0
+    model1.data[1, 6, 15, 5] = 50.0
+    model1.data[1, 7, 15, 5] = 160.0
+    model1.data[1, 8, 15, 5] = 170.0
+    model1.data[1, 9, 15, 5] = 180.0
+    out_model = detect_jumps(model1, gain, rnModel, 4.0, False, 4.0, 'half', 200, 4, True)
+    assert (4 == np.max(out_model.groupdq[0, 5, 5, 5]))
+    assert (4 == out_model.groupdq[0, 5, 5, 6])
+    assert (4 == out_model.groupdq[0, 5, 5, 4])
+    assert (4 == out_model.groupdq[0, 5, 6, 5])
+    assert (4 == out_model.groupdq[0, 5, 4, 5])
+    assert (4 == out_model.groupdq[1, 7, 15, 5])
+    assert (4 == out_model.groupdq[1, 7, 15, 6])
+    assert (4 == out_model.groupdq[1, 7, 15, 4])
+    assert (4 == out_model.groupdq[1, 7, 16, 5])
+    assert (4 == out_model.groupdq[1, 7, 14, 5])
+
 
 def test_every_pixel_CR_neighbors_flagged(setup_inputs):
     grouptime = 3.0
