@@ -60,8 +60,8 @@ def run_guider_pipelines(jail, rtdata_module, request):
 @pytest.mark.bigdata
 @pytest.mark.parametrize(
     'run_guider_pipelines',
-    ['exptype_fgs_id_image'],
-    ids=['fgs_id_image'],
+    ['exptype_fgs_acq1', 'exptype_fgs_id_image', 'exptype_fgs_id_stack'],
+    ids=['fgs_acq1', 'fgs_id_image', 'fgs_id_stack'],
     indirect=True
 )
 @pytest.mark.parametrize(
@@ -71,11 +71,12 @@ def run_guider_pipelines(jail, rtdata_module, request):
 )
 def test_fgs_id_image(run_guider_pipelines, fitsdiff_default_kwargs, suffix):
     rtdata = run_guider_pipelines
-    rtdata.output = replace_suffix(
+    output = replace_suffix(
         os.path.splitext(os.path.basename(rtdata.input))[0], suffix
     ) + '.fits'
+    rtdata.output = output
 
-    rtdata.get_truth(os.path.join('fgs/truth/test_fgs', rtdata.output))
+    rtdata.get_truth(os.path.join('fgs/truth/test_fgs', output))
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
