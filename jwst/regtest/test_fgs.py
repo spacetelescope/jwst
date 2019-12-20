@@ -9,6 +9,19 @@ from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
 
+def is_like_truth(rtdata, fitsdiff_default_kwargs, suffix, truth_path='truth/fgs/test_fgs'):
+    """Compare step outputs with truth"""
+    output = replace_suffix(
+        os.path.splitext(os.path.basename(rtdata.input))[0], suffix
+    ) + '.fits'
+    rtdata.output = output
+
+    rtdata.get_truth(os.path.join(truth_path, output))
+
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
+
+
 @pytest.fixture(scope='module')
 def run_fgs_imaging_pipelines(jail, rtdata_module):
     """Run the pipelines"""
@@ -57,37 +70,19 @@ def run_guider_pipelines(jail, rtdata_module, request):
 
     return rtdata
 
-suffixes = ['cal', 'dq_init', 'flat_field', 'guider_cds']
+guider_suffixes = ['cal', 'dq_init', 'flat_field', 'guider_cds']
 @pytest.mark.bigdata
-@pytest.mark.parametrize('suffix', suffixes, ids=suffixes)
+@pytest.mark.parametrize('suffix', guider_suffixes, ids=guider_suffixes)
 def test_fgs_guider(run_guider_pipelines, fitsdiff_default_kwargs, suffix):
     """Regression for FGS Guider data"""
-    rtdata = run_guider_pipelines
-    output = replace_suffix(
-        os.path.splitext(os.path.basename(rtdata.input))[0], suffix
-    ) + '.fits'
-    rtdata.output = output
-
-    rtdata.get_truth(os.path.join('fgs/truth/test_fgs', output))
-
-    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
-    assert diff.identical, diff.report()
+    is_like_truth(run_guider_pipelines, fitsdiff_default_kwargs, suffix)
 
 
+imaging_suffixes = ['0_ramp_fit', '1_ramp_fit', 'dark_current', 'dq_init', 'gain_scale',
+            'gain_scaleints', 'group_scale', 'jump', 'linearity', 'persistence',
+            'rate', 'rateints', 'refpix', 'saturation', 'superbias', 'trapsfilled']
 @pytest.mark.bigdata
-@pytest.mark.parametrize(
-    'output',
-    [
-        'exptype_fgs_image_cal.fits',
-    ],
-    ids=['cal']
-)
-def test_fgs_imaging(run_fgs_imaging_pipelines, fitsdiff_default_kwargs, output):
+@pytest.mark.parametrize('suffix', imaging_suffixes, ids=imaging_suffixes)
+def test_fgs_imaging(run_fgs_imaging_pipelines, fitsdiff_default_kwargs, suffix):
     """Regression test matching output files"""
-    rtdata = run_fgs_imaging_pipelines
-    rtdata.output = output
-
-    rtdata.get_truth(os.path.join('fgs/truth/test_fgs', output))
-
-    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
-    assert diff.identical, diff.report()
+    is_like_truth(run_fgs_imaging_pipelines, fitsdiff_default_kwargs, suffix)
