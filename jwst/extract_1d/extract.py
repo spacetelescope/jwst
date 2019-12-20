@@ -2749,7 +2749,7 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
             if source_type != 'POINT':
                 apply_nod_offset = False
                 log.warning("SRCTYPE = '%s'; correcting for nod/dither "
-                            "offset will only be done for a point source, ",
+                            "offset will only be done for a point source, "
                             "so apply_nod_offset will be set to False",
                             source_type)
             extract_params = get_extract_parameters(
@@ -2872,7 +2872,7 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
         if source_type != 'POINT':
             apply_nod_offset = False
             log.warning("SRCTYPE = '%s'; correcting for nod/dither "
-                        "offset will only be done for a point source, ",
+                        "offset will only be done for a point source, "
                         "so apply_nod_offset will be set to False",
                         source_type)
 
