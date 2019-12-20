@@ -134,16 +134,17 @@ def detect_jumps (input_model, gain_model, readnoise_model,
                 median_slopes[:, k * yincrement:nrows, :] = resultslice[0]
                 gdq[:, :, k * yincrement:nrows, :] = resultslice[1]
             else:
-                print("k ", k, "yincrement ", yincrement,resultslice[0].shape, resultslice[1].shape, resultslice[2].shape)
                 median_slopes[:, k * yincrement:(k + 1) * yincrement, :] = resultslice[0]
                 gdq[:, :, k * yincrement:(k + 1) * yincrement, :] = resultslice[1]
             row_below_gdq[:, :, :] = resultslice[2]
             row_above_gdq[:, :, :] = resultslice[3]
-            if k != 0:
+            if k != 0: #for all but the first slice, flag any CR neighbors in the top row of the previous slice and
+                #flag any neighbors in the bottom row of this slice saved from the top of the previous slice
                 gdq[:, :, k * yincrement - 1, :] = np.bitwise_or(gdq[:, :, k * yincrement - 1, :],
                                                                      row_below_gdq[:, :, :])
                 gdq[:, :, k * yincrement, :] = np.bitwise_or(gdq[:, :, k * yincrement, :],
                                                                      previous_row_above_gdq[:, :, :])
+            #save the neighbors to be flagged that will be in the next slice
             previous_row_above_gdq = row_above_gdq.copy()
             k += 1
         pool.terminate()

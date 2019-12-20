@@ -176,12 +176,19 @@ def find_crs(data, group_dq, read_noise, rej_threshold, nframes, flag_4_neighbor
 
         # Next pixel with an outlier (j loop)
     # Next integration (integration loop)
-    if flag_4_neighbors:
+    if flag_4_neighbors: # We need to flag the neighbors of jumps
+
         cr_int, cr_group, cr_row, cr_col = np.where(np.bitwise_and(gdq, dqflags.group['JUMP_DET']))
         number_pixels_with_cr = len(cr_int)
+        #loop over all jumps
         for j in range(number_pixels_with_cr):
+            #jumps must be within a certain range to have neighbors flagged
             if all_ratios[cr_int[j], cr_row[j], cr_col[j], cr_group[j] - 1] < max_jump_to_flag_neighbors and \
                     all_ratios[cr_int[j], cr_row[j], cr_col[j], cr_group[j] - 1] > min_jump_to_flag_neighbors:
+                # This section saves flagged neighbors that are above or below the current range of row. If this
+                # method is running in a single process, the row above and below are not used. If it is running in
+                # multiprocessing mode, then the rows above and below need to be returned to find_jumps to use when
+                # it reconstructs the full group dq array from the slices.
                 if cr_row[j] != 0:
                     gdq[cr_int[j], cr_group[j], cr_row[j] - 1, cr_col[j]] = np.bitwise_or(
                         gdq[cr_int[j], cr_group[j], cr_row[j] - 1, cr_col[j]],
@@ -194,6 +201,7 @@ def find_crs(data, group_dq, read_noise, rej_threshold, nframes, flag_4_neighbor
                         dqflags.group['JUMP_DET'])
                 else:
                     row_above_gdq[cr_int[j], cr_group[j], cr_col[j]] = dqflags.group['JUMP_DET']
+                # Here we are just checking that we don't flag neighbors of jumps that are off the detector.
                 if cr_col[j] != 0:
                     gdq[cr_int[j], cr_group[j], cr_row[j], cr_col[j] - 1] = np.bitwise_or(
                         gdq[cr_int[j], cr_group[j], cr_row[j], cr_col[j] - 1],
