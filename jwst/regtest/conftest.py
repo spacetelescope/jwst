@@ -70,7 +70,12 @@ def generate_artifactory_json(request, artifactory_repos):
 
     rtdata = postmortem(request, 'rtdata') or postmortem(request, 'rtdata_module')
     if rtdata:
-        cwd = os.path.dirname(rtdata.output)
+        try:
+            # The _jail fixture from ci_watson sets tmp_path
+            cwd = str(request.node.funcargs['tmp_path'])
+        except KeyError:
+            # The jail fixture (module-scoped) returns the path
+            cwd = str(request.node.funcargs['jail'])
         rtdata.remote_results_path = artifactory_result_path()
         rtdata.test_name = request.node.name
         # Dump the failed test traceback into rtdata
@@ -82,22 +87,21 @@ def generate_artifactory_json(request, artifactory_repos):
             rtdata.remote_results_path)
 
         # Write the upload schema to JSON file
-        jsonfile = os.path.join(cwd, "{}_results.json".format(request.node.name))
+        jsonfile = os.path.join(cwd, f"{request.node.name}_results.json")
         with open(jsonfile, 'w') as outfile:
             json.dump(upload_schema, outfile, indent=2)
-
 
         pattern = os.path.join(rtdata.remote_results_path, os.path.basename(rtdata.output))
         okify_schema_pattern.append(pattern)
         okify_schema = generate_upload_schema(okify_schema_pattern, rtdata.truth_remote)
 
         # Write the okify schema to JSON file
-        jsonfile = os.path.join(cwd, "{}_okify.json".format(request.node.name))
+        jsonfile = os.path.join(cwd, f"{request.node.name}_okify.json")
         with open(jsonfile, 'w') as outfile:
             json.dump(okify_schema, outfile, indent=2)
 
         # Write the rtdata class out as an ASDF file
-        path = os.path.join(cwd, "{}_rtdata.asdf".format(request.node.name))
+        path = os.path.join(cwd, f"{request.node.name}_rtdata.asdf")
         rtdata.to_asdf(path)
 
 
