@@ -93,7 +93,10 @@ def detect_jumps (input_model, gain_model, readnoise_model,
     num_groups = data.shape[1]
     num_ints = data.shape[0]
     median_slopes = np.zeros((num_ints, nrows, ncols), dtype=np.float32)
-    all_ratios = np.zeros((num_ints, nrows, ncols, num_groups-1), dtype=np.float32)
+    row_above_gdq = np.zeros((num_ints, num_groups, ncols), dtype=np.uint8)
+    previous_row_above_gdq = np.zeros((num_ints, num_groups, ncols), dtype=np.uint8)
+    row_below_gdq = np.zeros((num_ints, num_groups, ncols), dtype=np.uint8)
+
     yincrement = int(nrows / numslices)
     print("yincrement ", yincrement)
     print("num slices ",numslices)
@@ -105,14 +108,19 @@ def detect_jumps (input_model, gain_model, readnoise_model,
         slices.insert(i, (data[:, :, i * yincrement:(i + 1) * yincrement, :],
                           gdq[:, :, i * yincrement:(i + 1) * yincrement, :],
                           readnoise_2d[i * yincrement:(i + 1) * yincrement, :],
-                          rejection_threshold, num_groups))
+                          rejection_threshold, num_groups, flag_4_neighbors,
+                          max_jump_to_flag_neighbors, min_jump_to_flag_neighbors))
     # last slice get the rest
     slices.insert(numslices - 1, (data[:, :, (numslices - 1) * yincrement:nrows, :],
                                  gdq[:, :, (numslices - 1) * yincrement:nrows, :],
                                  readnoise_2d[(numslices - 1) * yincrement:nrows, :],
-                                 rejection_threshold, num_groups))
+                                 rejection_threshold, num_groups, flag_4_neighbors,
+                                 max_jump_to_flag_neighbors, min_jump_to_flag_neighbors))
     if numslices == 1:
-        median_slopes, gdq, all_ratios = twopt.find_crs(data, gdq, readnoise_2d, rejection_threshold, num_groups)
+        median_slopes, gdq, row_below_dq, row_above_dq = twopt.find_crs(data, gdq, readnoise_2d, rejection_threshold,
+                                                                        num_groups, flag_4_neighbors,
+                                                                        max_jump_to_flag_neighbors,
+                                                                        min_jump_to_flag_neighbors)
         elapsed = time.time() - start
     else:
         log.info("Creating %d processes for jump detection " % numslices)
@@ -121,43 +129,27 @@ def detect_jumps (input_model, gain_model, readnoise_model,
         k = 0
         # Reconstruct median_slopes and gdq from the slice results
         for resultslice in real_result:
-            print("k ",k,"yincrement ",yincrement)
+
             if len(real_result) == k + 1:  # last result
                 median_slopes[:, k * yincrement:nrows, :] = resultslice[0]
                 gdq[:, :, k * yincrement:nrows, :] = resultslice[1]
-                all_ratios[:, k * yincrement:nrows, :, :] = resultslice[2]
             else:
                 print("k ", k, "yincrement ", yincrement,resultslice[0].shape, resultslice[1].shape, resultslice[2].shape)
                 median_slopes[:, k * yincrement:(k + 1) * yincrement, :] = resultslice[0]
                 gdq[:, :, k * yincrement:(k + 1) * yincrement, :] = resultslice[1]
-                all_ratios[:,  k * yincrement:(k + 1) * yincrement, :, :] = resultslice[2]
+            row_below_gdq[:, :, :] = resultslice[2]
+            row_above_gdq[:, :, :] = resultslice[3]
+            if k != 0:
+                gdq[:, :, k * yincrement - 1, :] = np.bitwise_or(gdq[:, :, k * yincrement - 1, :],
+                                                                     row_below_gdq[:, :, :])
+                gdq[:, :, k * yincrement, :] = np.bitwise_or(gdq[:, :, k * yincrement, :],
+                                                                     previous_row_above_gdq[:, :, :])
+            previous_row_above_gdq = row_above_gdq.copy()
             k += 1
         pool.terminate()
         pool.close()
         elapsed = time.time() - start
     log.info('Elapsed time of twopoint difference = %g sec' % elapsed)
-    if flag_4_neighbors:
-        cr_int, cr_group, cr_row, cr_col = np.where(np.bitwise_and(gdq, dqflags.group['JUMP_DET']))
-        number_pixels_with_cr = len(cr_int)
-        for j in range(number_pixels_with_cr):
-            if all_ratios[cr_int[j],  cr_row[j], cr_col[j], cr_group[j]-1] < max_jump_to_flag_neighbors and \
-                all_ratios[cr_int[j], cr_row[j], cr_col[j], cr_group[j]-1] > min_jump_to_flag_neighbors:
-                    if cr_row[j] != 0:
-                        gdq[cr_int[j], cr_group[j], cr_row[j]-1, cr_col[j]] = np.bitwise_or(
-                            gdq[cr_int[j], cr_group[j], cr_row[j]-1, cr_col[j]],
-                            dqflags.group['JUMP_DET'])
-                    if cr_row[j] != nrows-1:
-                        gdq[cr_int[j], cr_group[j], cr_row[j] + 1, cr_col[j]] = np.bitwise_or(
-                            gdq[cr_int[j], cr_group[j], cr_row[j] + 1, cr_col[j]],
-                            dqflags.group['JUMP_DET'])
-                    if cr_col[j] != 0:
-                        gdq[cr_int[j], cr_group[j], cr_row[j], cr_col[j]- 1] = np.bitwise_or(
-                            gdq[cr_int[j], cr_group[j], cr_row[j], cr_col[j]-1],
-                            dqflags.group['JUMP_DET'])
-                    if cr_col[j] != ncols -1:
-                        gdq[cr_int[j], cr_group[j], cr_row[j], cr_col[j] + 1] = np.bitwise_or(
-                            gdq[cr_int[j], cr_group[j], cr_row[j], cr_col[j] + 1],
-                            dqflags.group['JUMP_DET'])
 
     elapsed = time.time() - start
     log.info('Total elapsed time = %g sec' % elapsed)

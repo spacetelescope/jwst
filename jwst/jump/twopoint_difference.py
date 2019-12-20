@@ -19,7 +19,8 @@ log.setLevel(logging.DEBUG)
 HUGE_NUM = np.finfo(np.float32).max
 
 
-def find_crs(data, group_dq, read_noise, rej_threshold, nframes):
+def find_crs(data, group_dq, read_noise, rej_threshold, nframes, flag_4_neighbors,
+             max_jump_to_flag_neighbors, min_jump_to_flag_neighbors):
     """
     Find CRs/Jumps in each integration within the input data array.
     The input data array is assumed to be in units of electrons, i.e. already
@@ -30,9 +31,11 @@ def find_crs(data, group_dq, read_noise, rej_threshold, nframes):
     # Get data characteristics
     (nints, ngroups, nrows, ncols) = data.shape
 
-    # Create array for output median slope images
+    # Create arrays for output
     median_slopes = np.zeros((nints, nrows, ncols), dtype=np.float32)
     all_ratios =  np.zeros((nints, nrows, ncols, ngroups-1), dtype=np.float32)
+    row_above_gdq = np.zeros((nints, ngroups, ncols), dtype=np.uint8)
+    row_below_gdq = np.zeros((nints, ngroups, ncols), dtype=np.uint8)
 
     # Square the read noise values, for use later
     read_noise_2 = read_noise**2
@@ -173,8 +176,34 @@ def find_crs(data, group_dq, read_noise, rej_threshold, nframes):
 
         # Next pixel with an outlier (j loop)
     # Next integration (integration loop)
+    if flag_4_neighbors:
+        cr_int, cr_group, cr_row, cr_col = np.where(np.bitwise_and(gdq, dqflags.group['JUMP_DET']))
+        number_pixels_with_cr = len(cr_int)
+        for j in range(number_pixels_with_cr):
+            if all_ratios[cr_int[j], cr_row[j], cr_col[j], cr_group[j] - 1] < max_jump_to_flag_neighbors and \
+                    all_ratios[cr_int[j], cr_row[j], cr_col[j], cr_group[j] - 1] > min_jump_to_flag_neighbors:
+                if cr_row[j] != 0:
+                    gdq[cr_int[j], cr_group[j], cr_row[j] - 1, cr_col[j]] = np.bitwise_or(
+                        gdq[cr_int[j], cr_group[j], cr_row[j] - 1, cr_col[j]],
+                        dqflags.group['JUMP_DET'])
+                else:
+                    row_below_gdq[cr_int[j], cr_group[j], cr_col[j]] =  dqflags.group['JUMP_DET']
+                if cr_row[j] != nrows - 1:
+                    gdq[cr_int[j], cr_group[j], cr_row[j] + 1, cr_col[j]] = np.bitwise_or(
+                        gdq[cr_int[j], cr_group[j], cr_row[j] + 1, cr_col[j]],
+                        dqflags.group['JUMP_DET'])
+                else:
+                    row_above_gdq[cr_int[j], cr_group[j], cr_col[j]] = dqflags.group['JUMP_DET']
+                if cr_col[j] != 0:
+                    gdq[cr_int[j], cr_group[j], cr_row[j], cr_col[j] - 1] = np.bitwise_or(
+                        gdq[cr_int[j], cr_group[j], cr_row[j], cr_col[j] - 1],
+                        dqflags.group['JUMP_DET'])
+                if cr_col[j] != ncols - 1:
+                    gdq[cr_int[j], cr_group[j], cr_row[j], cr_col[j] + 1] = np.bitwise_or(
+                        gdq[cr_int[j], cr_group[j], cr_row[j], cr_col[j] + 1],
+                        dqflags.group['JUMP_DET'])
 
-    return median_slopes, gdq, all_ratios
+    return median_slopes, gdq, row_below_gdq, row_above_gdq
 
 
 def get_clipped_median(num_differences, diffs_to_ignore, differences, sorted_index):
