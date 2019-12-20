@@ -6,11 +6,11 @@ withCredentials([string(
     variable: 'codecov_token')]) {
 
 jobconfig = new JobConfig()
-jobconfig.enable_env_publication = true
+jobconfig.enable_env_publication = false
 jobconfig.publish_env_on_success_only = true
 
 // Define python version for conda
-python_version = "3.7.4"
+python_version = "3.7.5"
 
 // pip related setup
 def pip_index = "https://bytesalad.stsci.edu/artifactory/api/pypi/datb-pypi-virtual/simple"
@@ -50,8 +50,8 @@ bc0.build_cmds = [
 bc0.test_cmds = [
     "pytest --cov-report=xml --cov -r sxf -n 30 --bigdata --slow \
     --basetemp=${pytest_basetemp} --junit-xml=results.xml \
-    -k 'not regtest' jwst",
-    "codecov --token=${codecov_token} -F nightly"
+    -k 'not tests_nightly' --env=newdev jwst",
+    "codecov --token=${codecov_token} -F newnightly"
 ]
 bc0.test_configs = [data_config]
 

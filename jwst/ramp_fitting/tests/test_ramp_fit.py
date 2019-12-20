@@ -3,7 +3,7 @@ import numpy as np
 
 from jwst.ramp_fitting.ramp_fit import ramp_fit
 from jwst.datamodels import dqflags
-from jwst.datamodels import MIRIRampModel
+from jwst.datamodels import RampModel
 from jwst.datamodels import GainModel, ReadnoiseModel
 
 # single group intergrations fail in the GLS fitting
@@ -530,7 +530,7 @@ def setup_small_cube(ngroups=10, nints=1, nrows=2, ncols=2, deltatime=10.,
     pixdq = np.zeros(shape=(nrows, ncols), dtype=np.int32)
     read_noise = np.full((nrows, ncols), readnoise, dtype=np.float64)
     gdq = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.uint8)
-    model1 = MIRIRampModel(data=data, err=err, pixeldq=pixdq, groupdq=gdq)
+    model1 = RampModel(data=data, err=err, pixeldq=pixdq, groupdq=gdq)
 
     model1.meta.instrument.name='MIRI'
     model1.meta.instrument.detector='MIRIMAGE'
@@ -580,7 +580,7 @@ def setup_inputs(ngroups=10, readnoise=10, nints=1,
     pixdq = np.zeros(shape=(nrows, ncols), dtype= np.float64)
     read_noise = np.full((nrows, ncols), readnoise, dtype=np.float64)
     gdq = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.int32)
-    model1 = MIRIRampModel(data=data, err=err, pixeldq=pixdq, groupdq=gdq, times=times)
+    model1 = RampModel(data=data, err=err, pixeldq=pixdq, groupdq=gdq, times=times)
     model1.meta.instrument.name='MIRI'
     model1.meta.instrument.detector='MIRIMAGE'
     model1.meta.instrument.filter='F480M'
@@ -624,7 +624,7 @@ def setup_subarray_inputs(ngroups=10, readnoise=10, nints=1,
     pixdq = np.zeros(shape=(subysize, subxsize), dtype= np.float64)
     read_noise = np.full((nrows, ncols), readnoise, dtype=np.float64)
     gdq = np.zeros(shape=(nints, ngroups, subysize, subxsize), dtype=np.int32)
-    model1 = MIRIRampModel(data=data, err=err, pixeldq=pixdq, groupdq=gdq, times=times)
+    model1 = RampModel(data=data, err=err, pixeldq=pixdq, groupdq=gdq, times=times)
     model1.meta.instrument.name='MIRI'
     model1.meta.instrument.detector='MIRIMAGE'
     model1.meta.instrument.filter='F480M'

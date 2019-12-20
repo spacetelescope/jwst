@@ -60,7 +60,7 @@ The current models are as follows:
     `PixelAreaModel`,
     `PsfMaskModel`,
     `QuadModel`,
-    `RampModel`, `MIRIRampModel`, `RampFitOutputModel`,
+    `RampModel`, `RampFitOutputModel`,
     `ReadnoiseModel`,
     `ReferenceFileModel`, `ReferenceImageModel`, `ReferenceCubeModel`, `ReferenceQuadModel`,
     `RegionsModel`,

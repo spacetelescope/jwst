@@ -2,7 +2,7 @@ import warnings
 import pytest
 from jwst.dq_init import DQInitStep
 from jwst.dq_init.dq_initialization import do_dqinit
-from jwst.datamodels import MIRIRampModel, MaskModel, GuiderRawModel, RampModel, dqflags
+from jwst.datamodels import MaskModel, GuiderRawModel, RampModel, dqflags
 from jwst.datamodels.validate import ValidationWarning
 import numpy as np
 
@@ -13,7 +13,7 @@ test_data = [(1, 1, 2304, 2048, 2, 2, 'FGS', 'FGS_ID-STACK'),
              (1, 1, 2048, 2048, 2, 2, 'FGS', 'FGS_ID-IMAGE'),
              (1, 1, 2048, 2048, 2, 2, 'NIRCAM', 'NRC_IMAGE'),
              (1, 1, 1032, 1024, 1, 5, 'MIRI', 'MIR_IMAGE')]
-ids = ["GuiderRawModel-Stack", "GuiderRawModel-Image", "RampModel", "MIRIRampModel"]
+ids = ["GuiderRawModel-Stack", "GuiderRawModel-Image", "RampModel", "RampModel"]
 
 
 @pytest.mark.parametrize(args, test_data, ids=ids)
@@ -163,7 +163,7 @@ def test_dq_subarray():
     groupdq = np.zeros(csize, dtype=int)
 
     # create a JWST datamodel for MIRI data
-    im = MIRIRampModel(data=data, pixeldq=pixeldq, groupdq=groupdq)
+    im = RampModel(data=data, pixeldq=pixeldq, groupdq=groupdq)
 
     im.meta.instrument.name = 'MIRI'
     im.meta.instrument.detector = 'MIRIMAGE'
@@ -257,7 +257,7 @@ def test_dq_add1_groupdq():
 args = "xstart, ystart, xsize, ysize, nints, ngroups, instrument, exp_type, detector"
 test_data = [(1, 1, 2048, 2048, 2, 2, 'FGS', 'FGS_ID-IMAGE', 'GUIDER1'),
              (1, 1, 1032, 1024, 1, 5, 'MIRI', 'MIR_IMAGE', 'MIRIMAGE')]
-ids = ["GuiderRawModel-Image", "MIRIRampModel"]
+ids = ["GuiderRawModel-Image", "RampModel"]
 
 
 @pytest.mark.parametrize(args, test_data, ids=ids)
@@ -292,7 +292,7 @@ def make_rawramp(instrument, nints, ngroups, ysize, xsize, ystart, xstart, exp_t
         dm_ramp = GuiderRawModel(data=data)
         dm_ramp.meta.exposure.type = exp_type
     elif instrument == "MIRI":
-        dm_ramp = MIRIRampModel(data=data)
+        dm_ramp = RampModel(data=data)
     else:
         dm_ramp = RampModel(data=data)
 
@@ -312,7 +312,7 @@ def make_rampmodel(nints, ngroups, ysize, xsize):
     groupdq = np.zeros(csize, dtype=int)
 
     # create a JWST datamodel for MIRI data
-    dm_ramp = MIRIRampModel(data=data, pixeldq=pixeldq, groupdq=groupdq)
+    dm_ramp = RampModel(data=data, pixeldq=pixeldq, groupdq=groupdq)
 
     dm_ramp.meta.instrument.name = 'MIRI'
     dm_ramp.meta.observation.date = '2018-01-01'

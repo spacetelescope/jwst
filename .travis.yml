@@ -50,7 +50,7 @@ matrix:
            PIP_DEPENDENCIES='.[docs]'
 
     # PEP8 check
-    - env: TEST_COMMAND='flake8 jwst'
+    - env: TEST_COMMAND='flake8'
            PIP_DEPENDENCIES='flake8'
 
   allow_failures:
@@ -66,4 +66,4 @@ script:
   - $TEST_COMMAND
 
 after_success:
-  - if [[ ${TEST_COMMAND} =~ ^pytest ]]; then codecov -F unittests; fi
+  - if [[ ${TEST_COMMAND} =~ ^pytest ]]; then codecov -F unit; fi

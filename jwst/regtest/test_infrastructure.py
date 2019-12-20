@@ -1,34 +1,33 @@
-from pathlib import Path
+from glob import glob
+import os
 
 import pytest
 
 
-@pytest.fixture(autouse=True)
-def patch_bigdata(tmpdir, monkeypatch):
-    monkeypatch.setenv("TEST_BIGDATA", str(tmpdir))
+@pytest.mark.bigdata
+def test_regtestdata_get_data(rtdata, _jail):
+    rtdata.get_data("infrastructure/test_regtestdata/file1_rate.fits")
+    rtdata.output = "file1_cal.fits"
+
+    assert rtdata.input == os.path.join(os.getcwd(), "file1_rate.fits")
 
 
-def test_regtestdata_get_data(rtdata, tmpdir, _jail):
-    rtdata._env = ''
-    rtdata._inputs_root = ''
-    rtdata.output = "foo.fits"
-    Path(tmpdir.join("foo_uncal.fits")).touch()
-    rtdata.get_data("foo_uncal.fits", docopy=False)
+@pytest.mark.bigdata
+def test_regtestdata_get_truth(rtdata, _jail):
+    rtdata.get_truth("infrastructure/test_regtestdata/file1_rate.fits")
+    rtdata.output = "file1_rate.fits"
 
-    assert rtdata.input == str(tmpdir.join("foo_uncal.fits"))
+    assert rtdata.truth == os.path.join(os.getcwd(), "truth", "file1_rate.fits")
 
 
-def test_regtestdata_get_truth(rtdata, tmpdir, _jail):
-    rtdata._env = ''
-    rtdata._inputs_root = ''
-    Path("truth").mkdir()
-    pt = Path("truth/foo_cal.fits").resolve()
-    pt.touch()
-    rtdata.get_truth("truth/foo_cal.fits", docopy=False)
-    rtdata.output = "foo.fits"
+@pytest.mark.bigdata
+def test_regtestdata_get_asn(_jail, rtdata):
+    rtdata.get_asn("infrastructure/test_regtestdata/my_asn.json")
+    files = glob("*.fits")
+    rtdata.output = "file1_rate.fits"
 
-    assert rtdata.truth == str(tmpdir.join("truth/foo_cal.fits"))
-    assert rtdata.bigdata_root is not None
+    assert os.path.isfile("my_asn.json")
+    assert len(files) == 3
 
 
 def test_fitsdiff_defaults(fitsdiff_default_kwargs):
