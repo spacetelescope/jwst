@@ -38,10 +38,8 @@ def run_fgs_imaging_pipelines(jail, rtdata_module):
     return rtdata
 
 
-@pytest.fixture(
-    scope='module',
-    params=['exptype_fgs_acq1', 'exptype_fgs_id_image', 'exptype_fgs_id_stack']
-)
+file_roots = ['exptype_fgs_acq1', 'exptype_fgs_id_image', 'exptype_fgs_id_stack']
+@pytest.fixture(scope='module', params=file_roots, ids=file_roots)
 def run_guider_pipelines(jail, rtdata_module, request):
     """Run pipeline for guider data"""
     rtdata = rtdata_module
@@ -59,14 +57,11 @@ def run_guider_pipelines(jail, rtdata_module, request):
 
     return rtdata
 
-
+suffixes = ['cal', 'dq_init', 'flat_field', 'guider_cds']
 @pytest.mark.bigdata
-@pytest.mark.parametrize(
-    'suffix',
-    ['cal', 'dq_init', 'flat_field', 'guider_cds'],
-    ids=['cal', 'dq_init', 'flat_field', 'guider_cds']
-)
+@pytest.mark.parametrize('suffix', suffixes, ids=suffixes)
 def test_fgs_guider(run_guider_pipelines, fitsdiff_default_kwargs, suffix):
+    """Regression for FGS Guider data"""
     rtdata = run_guider_pipelines
     output = replace_suffix(
         os.path.splitext(os.path.basename(rtdata.input))[0], suffix
