@@ -9,7 +9,7 @@ import multiprocessing
 def test_nocrs_noflux(setup_inputs):
     # all pixel values are zero. So slope should be zero
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=5)
-    out_model = detect_jumps(model1, gain, rnModel, 4.0, False, 4.0)
+    out_model = detect_jumps(model1, gain, rnModel, 4.0, False, 4.0, 1, 200, 4, True)
     assert (0 == np.max(out_model.groupdq))
 
 
