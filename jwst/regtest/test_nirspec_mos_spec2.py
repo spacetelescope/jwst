@@ -47,7 +47,8 @@ def test_nirspec_mos_spec2(run_pipeline, fitsdiff_default_kwargs, output):
     rtdata.output = "f170lp-g235m_mos_observation-6-c0e0_001_dn_nrs1_mod_" + output + ".fits"
 
     # Get the truth files
-    rtdata.get_truth(os.path.join("truth", "test_nirspec_mos_spec2", rtdata.output))
+    rtdata.get_truth(os.path.join("truth/test_nirspec_mos_spec2",
+                                  "f170lp-g235m_mos_observation-6-c0e0_001_dn_nrs1_mod_" + output + ".fits"))
 
     # Compare the results
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
