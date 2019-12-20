@@ -2,8 +2,8 @@ import os
 
 import pytest
 from astropy.io.fits.diff import FITSDiff
-from jwst.pipeline import Detector1Pipeline
-
+from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
+from jwst.stpipe import Step
 
 @pytest.fixture(scope="module")
 def run_pipeline(jail, rtdata_module):
@@ -11,18 +11,19 @@ def run_pipeline(jail, rtdata_module):
     rtdata = rtdata_module
     rtdata.get_data("miri/image/jw00001001001_01101_00001_MIRIMAGE_uncal.fits")
 
-    step = Detector1Pipeline()
-    step.lastframe.save_results = True
-    step.firstframe.save_results = True
-    step.dq_init.save_results = True
-    step.saturation.save_results = True
-    step.rscd.save_results = True
-    step.linearity.save_results = True
-    step.dark_current.save_results = True
-    step.refpix.save_results = True
-    step.jump.save_results = True
-    step.save_results = True
-    step.run(rtdata.input)
+    collect_pipeline_cfgs("config")
+    args = ["config/calwebb_detector1.cfg", rtdata.input, 
+            "--steps.dq_init.save_results=True",
+            "--steps.lastframe.save_results=True",
+            "--steps.firstframe.save_results=True",
+            "--steps.saturation.save_results=True",
+            "--steps.rscd.save_results=True",
+            "--steps.linearity.save_results=True",
+            "--steps.dark_current.save_results=True",
+            "--steps.refpix.save_results=True",
+            "--steps.jump.save_results=True"]
+
+    Step.from_cmdline(args)
     return rtdata
 
 
