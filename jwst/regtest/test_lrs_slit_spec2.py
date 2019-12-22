@@ -44,7 +44,8 @@ def test_miri_lrs_slit_spec2(run_pipeline, fitsdiff_default_kwargs, output):
     rtdata.output = "jw00623032001_03102_00001_mirimage_" + output + ".fits"
 
     # Get the truth files
-    rtdata.get_truth(os.path.join("truth", "test_miri_lrs_slit_spec2", rtdata.output))
+    rtdata.get_truth(os.path.join("truth/test_miri_lrs_slit_spec2",
+                                  "jw00623032001_03102_00001_mirimage_" + output + ".fits"))
 
     # Compare the results
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
