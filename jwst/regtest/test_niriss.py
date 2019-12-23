@@ -58,9 +58,11 @@ def run_nrs_wfss_spectral(jail, rtdata_module):
     return rtdata
 
 
-wfss_suffixes = ['assign_wcs', 'bsub', 'cal', 'extract_2d', 'flat_field', 'photom', 'srctype', 'x1d']
 @pytest.mark.bigdata
-@pytest.mark.parametrize('suffix', wfss_suffixes, ids=wfss_suffixes)
+@pytest.mark.parametrize(
+    'suffix',
+    ['assign_wcs', 'bsub', 'cal', 'extract_2d', 'flat_field', 'photom', 'srctype', 'x1d']
+)
 def test_nrs_wfss_spectral(run_nrs_wfss_spectral, fitsdiff_default_kwargs, suffix):
     """Regression test matching output files"""
     fitsdiff_default_kwargs['ignore_keywords'].append('SCATFILE')

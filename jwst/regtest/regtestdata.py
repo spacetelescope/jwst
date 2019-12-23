@@ -38,7 +38,7 @@ class RegtestData:
         self.test_name = test_name
         self.traceback = traceback
 
-        # Initialize non-initialized attriburtes
+        # Initialize non-initialized attributes
         self.asn = None
 
     def __repr__(self):
