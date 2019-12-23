@@ -5,25 +5,7 @@ from glob import glob
 import pytest
 
 from astropy.io.fits.diff import FITSDiff
-from jwst.pipeline import Detector1Pipeline
-
-@pytest.mark.bigdata
-def test_NIRcam_stage1_rate(rtdata, fitsdiff_default_kwargs, _jail):
-    """
-        Check to make sure that the input and outout files exist and that they are not the
-        same file. Then verify that the pipeline output matches the truth file.
-    """
-
-    rtdata.get_data("nircam/test_detector1pipeline/jw82500001003_02101_00001_NRCALONG_uncal.fits")
-    Detector1Pipeline.call(rtdata.input, steps={'jump': {'rejection_threshold': 150}},
-                           save_results=True)
-    rtdata.output = "jw82500001003_02101_00001_NRCALONG_rate.fits"
-
-    rtdata.get_truth("truth/nircam/test_detector1pipeline/jw82500001003_02101_00001_NRCALONG_rate.fits")
-    assert rtdata.output != rtdata.truth
-
-    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
-    assert diff.identical, diff.report
+from jwst.stpipe import Step
 
 @pytest.fixture(scope="module")
 def run_pipeline(jail, rtdata_module):
@@ -33,8 +15,24 @@ def run_pipeline(jail, rtdata_module):
     rtdata = rtdata_module
     rtdata.get_data("nircam/test_detector1pipeline/jw82500001003_02101_00001_NRCALONG_uncal.fits")
 
-    Detector1Pipeline.call(rtdata.input, steps={'jump': {'rejection_threshold': 150}},
-                           save_results=True)
+    Step.from_cmdline(["jwst.pipeline.Detector1Pipeline", rtdata.input,
+                       "--save_calibrated_ramp=True",
+                       "--steps.group_scale.save_results=True",
+                       "--steps.dq_init.save_results=True",
+                       "--steps.saturation.save_results=True",
+                       "--steps.ipc.save_results=True",
+                       "--steps.superbias.save_results=True",
+                       "--steps.refpix.save_results=True",
+                       "--steps.rscd.save_results=True",
+                       "--steps.firstframe.save_results=True",
+                       "--steps.lastframe.save_results=True",
+                       "--steps.linearity.save_results=True",
+                       "--steps.dark_current.save_results=True",
+                       "--steps.persistence.save_result=True",
+                       "--steps.jump.save_results=True",
+                       "--steps.ramp_fit.save_results=True",
+                       "--steps.gain_scale.save_results=True",
+                       "--steps.jump.rejection_threshold=20.0"])
 
     return rtdata
 
@@ -44,15 +42,51 @@ def test_NIRCam_stage1_completion(run_pipeline):
     files = glob('*_rate.fits')
     files += glob('*_rateints.fits')
     files += glob('*_trapsfilled.fits')
-    # There should be 3 outputs
-    assert len(files) == 3
+    files += glob('*_ramp.fits')
+    files += glob('*_dark_current.fits')
+    files += glob('*_dq_init.fits')
+    files += glob('*_gain_scale.fits')
+    files += glob('*_gain_scaleints.fits')
+    files += glob('*_group_scale.fits')
+    files += glob('*_ipc.fits')
+    files += glob('*_jump.fits')
+    files += glob('*_linearity.fits')
+    files += glob('*_persistence.fits')
+    files += glob('*_refpix.fits')
+    files += glob('*_saturation.fits')
+    files += glob('*_superbias.fits')
+    files += glob('*_0_ramp_fit.fits')
+    files += glob('*_1_ramp_fit.fits')
+    # There should be 18 outputs
+    assert len(files) == 18
 
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("output", [
     'jw82500001003_02101_00001_NRCALONG_rate.fits',
     'jw82500001003_02101_00001_NRCALONG_rateints.fits',
-    'jw82500001003_02101_00001_NRCALONG_trapsfilled.fits'], ids=['rate', 'rateints','trapsfilled'])
+    'jw82500001003_02101_00001_NRCALONG_trapsfilled.fits',
+    'jw82500001003_02101_00001_NRCALONG_ramp.fits',
+    'jw82500001003_02101_00001_NRCALONG_dark_current.fits',
+    'jw82500001003_02101_00001_NRCALONG_dq_init.fits',
+    'jw82500001003_02101_00001_NRCALONG_gain_scale.fits',
+    'jw82500001003_02101_00001_NRCALONG_gain_scaleints.fits',
+    'jw82500001003_02101_00001_NRCALONG_group_scale.fits',
+    'jw82500001003_02101_00001_NRCALONG_ipc.fits',
+    'jw82500001003_02101_00001_NRCALONG_jump.fits',
+    'jw82500001003_02101_00001_NRCALONG_linearity.fits',
+    'jw82500001003_02101_00001_NRCALONG_persistence.fits',
+    'jw82500001003_02101_00001_NRCALONG_refpix.fits',
+    'jw82500001003_02101_00001_NRCALONG_saturation.fits',
+    'jw82500001003_02101_00001_NRCALONG_superbias.fits',
+    'jw82500001003_02101_00001_NRCALONG_0_ramp_fit.fits',
+    'jw82500001003_02101_00001_NRCALONG_1_ramp_fit.fits'],
+                         ids=['rate', 'rateints','trapsfilled','ramp',
+                              'dark_current','dq_init','gain_scale',
+                              'gain_scaleinits','group_scale','ipc',
+                              'jump','linearity','persistence','refpix',
+                              'saturation','superbias','0_ramp_fit',
+                              '1_ramp_fit'])
 def test_NIRCam_stage1(run_pipeline, fitsdiff_default_kwargs, output):
     """
     Regression test of calwebb_detector1 pipeline performed on NIRCam data.
