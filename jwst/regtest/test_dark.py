@@ -18,4 +18,4 @@ def test_miri_dark_cal( _jail, rtdata, fitsdiff_default_kwargs ):
         jw00001001001_01101_00001_MIRIMAGE_dark.fits")
 
     diff = FITSDiff( rtdata.output, rtdata.truth, **fitsdiff_default_kwargs )
-    assert diff.identical, diff.report
+    assert diff.identical, diff.report()
