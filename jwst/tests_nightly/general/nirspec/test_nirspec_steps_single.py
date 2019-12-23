@@ -229,49 +229,6 @@ class TestNIRSpecMasterBackground_IFU(BaseJWSTTest):
                                            user_background=user_background,
                                            save_results=True)
 
-        # Test 1 compare extracted spectra data with
-        # no background added to extracted spectra from the output
-        # from MasterBackground subtraction. First cube_build has to be run
-        # on the data.
-        result_s3d = CubeBuildStep.call(result)
-        # run 1-D extract on results from MasterBackground step
-        result_1d = Extract1dStep.call(result_s3d, subtract_background=False)
-
-        # get the 1-D extracted spectrum from the science data in truth directory
-        input_sci_1d_file = self.get_data(*self.ref_loc, 'prism_sci_extract1d.fits')
-        sci_1d = datamodels.open(input_sci_1d_file)
-
-        # read in the valid wavelengths of the user-1d
-        user_background_model = datamodels.open(user_background)
-        user_wave = user_background_model.spec[0].spec_table['wavelength']
-        user_flux = user_background_model.spec[0].spec_table['flux']
-        user_wave_valid = np.where(user_flux > 0)
-        min_user_wave = np.amin(user_wave[user_wave_valid])
-        max_user_wave = np.amax(user_wave[user_wave_valid])
-        user_background_model.close()
-        # find the waverange covered by both user and science
-        sci_spec_1d = sci_1d.spec[0].spec_table['flux']
-        sci_spec_wave = sci_1d.spec[0].spec_table['wavelength']
-
-        result_spec_1d = result_1d.spec[0].spec_table['flux']
-
-        sci_wave_valid = np.where(sci_spec_1d > 0)
-        min_wave = np.amin(sci_spec_wave[sci_wave_valid])
-        max_wave = np.amax(sci_spec_wave[sci_wave_valid])
-        if min_user_wave > min_wave:
-            min_wave = min_user_wave
-        if max_user_wave < max_wave:
-            max_wave = max_user_wave
-
-        sub_spec = sci_spec_1d - result_spec_1d
-        valid = np.where(np.logical_and(sci_spec_wave > min_wave, sci_spec_wave < max_wave))
-        sub_spec = sub_spec[valid]
-        sub_spec = sub_spec[1:-2]  # endpoints are wacky
-
-        mean_sub = np.absolute(np.nanmean(sub_spec))
-        atol = 5.0
-        assert_allclose(mean_sub, 0, atol=atol)
-
         # Test 2  compare the science  data with no background
         # to the output from the masterBackground Subtraction step
         # background subtracted science image.
