@@ -9,7 +9,7 @@ from ci_watson.artifactory_helpers import (
     BigdataError,
 )
 
-from jwst.associations import load_asn
+from jwst.associations import AssociationNotValidError, load_asn
 from jwst.lib.suffix import replace_suffix
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
@@ -222,7 +222,10 @@ def run_step_from_dict(rtdata, **step_params):
     """
 
     # Get the data
-    rtdata.get_asn(step_params['input_path'])
+    try:
+        rtdata.get_asn(step_params['input_path'])
+    except AssociationNotValidError:
+        rtdata.get_data(step_params['input_path'])
 
     # Figure out whether we have a config or class
     step = step_params['step']
