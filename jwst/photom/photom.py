@@ -826,47 +826,54 @@ class DataSet():
         instrument = self.input.meta.instrument.name.upper()
 
         # Load the pixel area reference file
-        pix_area = datamodels.open(area_fname)
+        if area_fname is not None and area_fname != "N/A":
+            pix_area = datamodels.open(area_fname)
 
-        # Copy the pixel area data array to the appropriate attribute
-        # of the science data model
-        if instrument != 'NIRSPEC':
-            if isinstance(self.input, datamodels.MultiSlitModel):
-                # Note that this only copied to the first slit.
-                self.input.slits[0].area = pix_area.data
+            # Copy the pixel area data array to the appropriate attribute
+            # of the science data model
+            if instrument != 'NIRSPEC':
+                if isinstance(self.input, datamodels.MultiSlitModel):
+                    # Note that this only copied to the first slit.
+                    self.input.slits[0].area = pix_area.data
+                else:
+                    self.input.area = pix_area.data
+                log.info('Pixel area map copied to output.')
             else:
-                self.input.area = pix_area.data
-            log.info('Pixel area map copied to output.')
+                self.save_area_nirspec(pix_area)
 
-        if instrument == 'NIRSPEC':
-            self.save_area_nirspec(pix_area)
-        else:
-            # Load the average pixel area values from the photom reference file
+            pix_area.close()
+
+        # Load the average pixel area values from the photom reference file header
+        # Don't need to do this for NIRSpec, because pixel areas come from
+        # the AREA ref file, which have already been copied using save_area_nirspec
+        if instrument != 'NIRSPEC':
             try:
                 area_ster = ftab.meta.photometry.pixelarea_steradians
             except AttributeError:
                 area_ster = None
-                log.warning('The PIXAR_SR keyword is missing from %s',
-                            ftab.meta.filename)
+                log.warning('The PIXAR_SR keyword is missing from %s', ftab.meta.filename)
             try:
                 area_a2 = ftab.meta.photometry.pixelarea_arcsecsq
             except AttributeError:
                 area_a2 = None
-                log.warning('The PIXAR_A2 keyword is missing from %s',
-                            ftab.meta.filename)
+                log.warning('The PIXAR_A2 keyword is missing from %s', ftab.meta.filename)
 
             # Copy the pixel area values to the output
             log.debug('PIXAR_SR = %s, PIXAR_A2 = %s', str(area_ster), str(area_a2))
-            if area_a2 is None:
-                self.input.meta.photometry.pixelarea_arcsecsq = None
-            else:
-                self.input.meta.photometry.pixelarea_arcsecsq = float(area_a2)
-            if area_ster is None:
-                self.input.meta.photometry.pixelarea_steradians = None
-            else:
-                self.input.meta.photometry.pixelarea_steradians = float(area_ster)
+            if area_a2 is not None:
+                area_a2 = float(area_a2)
+            if area_ster is not None:
+                area_ster = float(area_ster)
 
-        pix_area.close()
+            # For MultiSlitModels, copy to each slit attribute
+            if isinstance(self.input, datamodels.MultiSlitModel):
+                for slit in self.input.slits:
+                    slit.meta.photometry.pixelarea_arcsecsq = area_a2
+                    slit.meta.photometry.pixelarea_steradians = area_ster
+            else:
+                self.input.meta.photometry.pixelarea_arcsecsq = area_a2
+                self.input.meta.photometry.pixelarea_steradians = area_ster
+
 
     def save_area_nirspec(self, pix_area):
         """
@@ -990,8 +997,8 @@ class DataSet():
 
         # Load the pixel area reference file, if it exists, and attach the
         # reference data to the science model
-        if area_fname != 'N/A':
-            self.save_area_info(ftab, area_fname)
+        #if area_fname != 'N/A':
+        self.save_area_info(ftab, area_fname)
 
         if self.instrument == 'NIRISS':
             self.calc_niriss(ftab)

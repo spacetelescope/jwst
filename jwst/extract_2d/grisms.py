@@ -12,7 +12,7 @@ from gwcs.wcstools import grid_from_bounding_box
 
 from .. import datamodels
 from ..assign_wcs import util
-from ..datamodels import CubeModel, WavelengthrangeModel
+from ..datamodels import WavelengthrangeModel
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -28,8 +28,8 @@ def extract_tso_object(input_model,
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.CubeModel`
-        The input TSO image as an instance of a CubeModel
+    input_model : `~jwst.datamodels.CubeModel` or `~jwst.datamodels.ImageModel`
+        The input TSO image as an instance of a CubeModel (3D) or ImageModel (2D)
 
     reference_files : dict
         Needs to include the name of the wavelengthrange reference file
@@ -80,9 +80,6 @@ def extract_tso_object(input_model,
 
     if 'wavelengthrange' not in reference_files.keys():
         raise KeyError("No wavelengthrange reference file specified")
-
-    if not isinstance(input_model, CubeModel):
-        raise TypeError('The input data model is not a CubeModel.')
 
     if extract_height is None:
         extract_height = input_model.meta.subarray.ysize
@@ -189,9 +186,9 @@ def extract_tso_object(input_model,
         ymax = int(ymax)
 
         # cut it out, keep the entire row though
-        ext_data = input_model.data[:, ymin: ymax + 1, :].copy()
-        ext_err = input_model.err[:, ymin: ymax + 1, :].copy()
-        ext_dq = input_model.dq[:, ymin: ymax + 1, :].copy()
+        ext_data = input_model.data[..., ymin: ymax + 1, :].copy()
+        ext_err = input_model.err[..., ymin: ymax + 1, :].copy()
+        ext_dq = input_model.dq[..., ymin: ymax + 1, :].copy()
 
         log.info("WCS made explicit for order: {}".format(order))
         log.info("Trace extents are: (xmin:{}, ymin:{}), (xmax:{}, ymax:{})".format(xmin, ymin, xmax, ymax))
@@ -211,9 +208,9 @@ def extract_tso_object(input_model,
                 output_model.wavelength = compute_wavelength_array(output_model)
             output_model.name = 'TSO object'
             output_model.xstart = 1  # fits pixels
-            output_model.xsize = ext_data.shape[2]
+            output_model.xsize = ext_data.shape[-1]
             output_model.ystart = 1  # fits pixels
-            output_model.ysize = ext_data.shape[1]
+            output_model.ysize = ext_data.shape[-2]
             output_model.source_xpos = source_xpos
             output_model.source_ypos = 34
             output_model.source_id = 1

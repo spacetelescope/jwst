@@ -38,6 +38,8 @@ class RegtestData:
         self.test_name = test_name
         self.traceback = traceback
 
+        # Initialize non-initialized attributes
+        self.asn = None
 
     def __repr__(self):
         return pprint.pformat(
@@ -174,6 +176,7 @@ class RegtestData:
         # Get each member in the association as well
         with open(self.input) as fp:
             asn = load_asn(fp)
+        self.asn = asn
         for product in asn['products']:
             for member in product['members']:
                 fullpath = os.path.join(

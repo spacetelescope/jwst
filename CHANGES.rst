@@ -13,6 +13,11 @@ datamodels
 
 - Deprecate MIRIRampModel [#4328]
 
+extract_1d
+----------
+
+- Updated to work with the current output from photom [#4369]
+
 master_background
 -----------------
 
