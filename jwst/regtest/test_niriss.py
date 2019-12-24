@@ -7,7 +7,7 @@ from . import regtestdata as rt
 
 
 @pytest.fixture(scope='module')
-def run_nrs_wfss_spectral(jail, rtdata_module):
+def run_nis_wfss_spectral(jail, rtdata_module):
     """Run the pipelines"""
     step_params = {
         'input_path': 'niriss/level2a/nir_wfss_spec2_asn.json',
@@ -39,7 +39,7 @@ def run_nrs_wfss_spectral(jail, rtdata_module):
     'suffix',
     ['assign_wcs', 'bsub', 'cal', 'extract_2d', 'flat_field', 'photom', 'srctype', 'x1d']
 )
-def test_nrs_wfss_spectral(run_nrs_wfss_spectral, fitsdiff_default_kwargs, suffix):
+def test_nis_wfss_spectral(run_nis_wfss_spectral, fitsdiff_default_kwargs, suffix):
     """Regression test matching output files"""
     fitsdiff_default_kwargs['ignore_keywords'].append('SCATFILE')
-    rt.is_like_truth(run_nrs_wfss_spectral, fitsdiff_default_kwargs, suffix)
+    rt.is_like_truth(run_nis_wfss_spectral, fitsdiff_default_kwargs, suffix)
