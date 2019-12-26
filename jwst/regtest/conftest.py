@@ -194,6 +194,7 @@ def fitsdiff_default_kwargs():
     return dict(
         ignore_hdus=['ASDF'],
         ignore_keywords=['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
+        ignore_fields=['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
         rtol=0.00001,
         atol=0.0000001,
     )
