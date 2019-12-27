@@ -3,9 +3,12 @@ import os
 import pytest
 from astropy.io.fits.diff import FITSDiff
 from astropy.table import Table, setdiff
+from gwcs.wcstools import grid_from_bounding_box
+from numpy.testing import assert_allclose
 
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
+from jwst import datamodels
 
 
 @pytest.fixture(scope="module")
@@ -33,12 +36,13 @@ def run_pipelines(jail, rtdata_module):
     rtdata.input = "jw42424001001_01101_00001_nrca5_rate.fits"
     args = ["config/calwebb_image2.cfg", rtdata.input,
         "--steps.assign_wcs.save_results=True",
+        "--steps.flat_field.save_results=True",
         ]
     Step.from_cmdline(args)
 
     # Grab rest of _rate files for the asn and run image2 pipeline on each to
     # produce fresh _cal files for the image3 pipeline.  We won't check these
-    # or look at intermediate products
+    # or look at intermediate products, including the resampled i2d
     rate_files = [
     "nircam/image/jw42424001001_01101_00001_nrcb5_rate.fits",
     "nircam/image/jw42424001001_01101_00002_nrca5_rate.fits",
@@ -68,15 +72,13 @@ def run_pipelines(jail, rtdata_module):
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["dq_init", "saturation", "superbias",
     "refpix", "linearity", "trapsfilled", "dark_current", "jump", "rate",
-    "assign_wcs", "cal", "i2d"])
+    "flat_field", "cal", "i2d"])
 def test_nircam_image_stages12(run_pipelines, fitsdiff_default_kwargs, suffix):
     """Regression test of detector1 and image2 pipelines performed on NIRCam data."""
     rtdata = run_pipelines
     rtdata.input = "jw42424001001_01101_00001_nrca5_uncal.fits"
     output = "jw42424001001_01101_00001_nrca5_" + suffix + ".fits"
     rtdata.output = output
-    assert os.path.exists(rtdata.output)
-
     rtdata.get_truth("truth/test_nircam_image_stages/" + output)
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
@@ -84,13 +86,34 @@ def test_nircam_image_stages12(run_pipelines, fitsdiff_default_kwargs, suffix):
 
 
 @pytest.mark.bigdata
+def test_nircam_image_stage2_wcs(run_pipelines):
+    """Test that WCS object works as expected"""
+    rtdata = run_pipelines
+    rtdata.input = "jw42424001001_01101_00001_nrca5_uncal.fits"
+    output = "jw42424001001_01101_00001_nrca5_assign_wcs.fits"
+    rtdata.output = output
+    rtdata.get_truth("truth/test_nircam_image_stages/" + output)
+
+    model = datamodels.open(rtdata.output)
+    model_truth = datamodels.open(rtdata.truth)
+    grid = grid_from_bounding_box(model.meta.wcs.bounding_box)
+
+    ra, dec = model.meta.wcs(*grid)
+    ra_truth, dec_truth = model_truth.meta.wcs(*grid)
+
+    assert_allclose(ra, ra_truth)
+    assert_allclose(dec, dec_truth)
+
+
+@pytest.mark.bigdata
 def test_nircam_image_stage3_i2d(run_pipelines, fitsdiff_default_kwargs):
+    """Test that resampled i2d looks good for NIRCam imaging"""
     rtdata = run_pipelines
     rtdata.input = "jw42424-o002_20191220t214154_image3_001_asn.json"
     rtdata.output = "jw42424-o002_t001_nircam_clear-f444w_i2d.fits"
     rtdata.get_truth("truth/test_nircam_image_stages/jw42424-o002_t001_nircam_clear-f444w_i2d.fits")
 
-    fitsdiff_default_kwargs['ignore_fields'] = ['date', 'filename']
+    fitsdiff_default_kwargs['ignore_fields'] += ['filename']
     fitsdiff_default_kwargs['ignore_keywords'] += ['naxis1', 'tform*']
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
