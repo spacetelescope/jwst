@@ -1,5 +1,3 @@
-import os
-
 import pytest
 from astropy.io.fits.diff import FITSDiff
 from astropy.table import Table, setdiff
