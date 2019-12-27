@@ -55,9 +55,10 @@ def run_pipelines(jail, rtdata_module):
     # image3 pipeline on all _cal files listed in association
     rtdata.get_data("miri/image/det_dithered_5stars_image3_asn.json")
     args = ["config/calwebb_image3.cfg", rtdata.input,
-        # Set some unique tweakreg param values needed for these data
+        # Set some unique param values needed for this data
         "--steps.tweakreg.snr_threshold=200",
-        "--steps.tweakreg.use2dhist=False"
+        "--steps.tweakreg.use2dhist=False",
+        "--steps.source_catalog.snr_threshold=20",
         ]
     Step.from_cmdline(args)
 
