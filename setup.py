@@ -89,11 +89,11 @@ setup(
         'setuptools_scm',
     ],
     install_requires=[
-        'asdf @ git+https://github.com/spacetelescope/asdf@c1373db953c77b62541',
-        'astropy @ git+https://github.com/astropy/astropy@df61bbc22ed2fd5c8',
+        'asdf>=2.5',
+        'astropy>=4.0',
         'crds>=7.2.7',
         'drizzle>=1.13',
-        'gwcs @ git+https://github.com/spacetelescope/gwcs@ace1c2c30a658',
+        'gwcs>=0.12',
         'jsonschema>=2.3,<4',
         'numpy>=1.16',
         'photutils>=0.7',
@@ -101,7 +101,7 @@ setup(
         'spherical-geometry>=1.2',
         'stsci.image>=2.3.3',
         'stsci.imagestats>=1.4',
-        'tweakwcs>=0.5.1',
+        'tweakwcs>=0.5.3',
     ],
     extras_require={
         'docs': DOCS_REQUIRE,
