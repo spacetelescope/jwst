@@ -61,6 +61,7 @@ def run_pipelines(jail, rtdata_module):
         # Comment out following lines, as the dataset is currently broken
         # "--steps.tweakreg.save_results=True",
         # "--steps.skymatch.save_results=True",
+        "--steps.source_catalog.snr_threshold=20",
         ]
     Step.from_cmdline(args)
 
@@ -113,6 +114,8 @@ def test_nircam_image_stage3_i2d(run_pipelines, fitsdiff_default_kwargs):
 
     fitsdiff_default_kwargs['ignore_fields'] += ['filename']
     fitsdiff_default_kwargs['ignore_keywords'] += ['naxis1', 'tform*']
+    fitsdiff_default_kwargs['rtol'] = 0.00001
+    fitsdiff_default_kwargs['atol'] = 0.00001
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
