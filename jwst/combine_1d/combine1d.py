@@ -196,12 +196,13 @@ class OutputSpectrumModel:
                                         in_spec.wavelength)
             # i is a pixel number in the current input spectrum, and
             # k is the corresponding pixel number in the output spectrum.
+            nan_flag = np.isnan(out_pixel)
+            n_nan += nan_flag.sum()
             for i in range(len(out_pixel)):
                 if in_spec.dq[i] & datamodels.dqflags.pixel['DO_NOT_USE'] > 0:
                     continue
                 # Round to the nearest pixel.
-                if np.isnan(out_pixel[i]):
-                    n_nan += 1
+                if nan_flag[i]:         # skip if the pixel number is NaN
                     continue
                 k = round(float(out_pixel[i]))
                 if k < 0 or k >= nelem:
