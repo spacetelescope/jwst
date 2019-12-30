@@ -9,7 +9,7 @@ from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
 
-def is_like_truth(rtdata, fitsdiff_default_kwargs, suffix, truth_path='truth/fgs/test_fgs'):
+def is_like_truth(rtdata, fitsdiff_default_kwargs, suffix, truth_path='truth/fgs/test_fgs_guider'):
     """Compare step outputs with truth"""
     output = replace_suffix(
         os.path.splitext(os.path.basename(rtdata.input))[0], suffix
@@ -22,7 +22,7 @@ def is_like_truth(rtdata, fitsdiff_default_kwargs, suffix, truth_path='truth/fgs
     assert diff.identical, diff.report()
 
 
-file_roots = ['exptype_fgs_acq1', 'exptype_fgs_id_image', 'exptype_fgs_id_stack']
+file_roots = ['exptype_fgs_acq1', 'exptype_fgs_fineguide', 'exptype_fgs_id_image', 'exptype_fgs_id_stack']
 @pytest.fixture(scope='module', params=file_roots, ids=file_roots)
 def run_guider_pipelines(jail, rtdata_module, request):
     """Run pipeline for guider data"""
