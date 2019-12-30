@@ -187,6 +187,7 @@ class OutputSpectrumModel:
         self.weight = np.zeros(nelem, dtype=np.float64)
         self.count = np.zeros(nelem, dtype=np.float64)
 
+        n_nan = 0                                       # initial value
         for in_spec in input_spectra:
             # Get the pixel numbers in the output corresponding to the
             # wavelengths of the current input spectrum.
@@ -199,7 +200,12 @@ class OutputSpectrumModel:
                 if in_spec.dq[i] & datamodels.dqflags.pixel['DO_NOT_USE'] > 0:
                     continue
                 # Round to the nearest pixel.
+                if np.isnan(out_pixel[i]):
+                    n_nan += 1
+                    continue
                 k = round(float(out_pixel[i]))
+                if k < 0 or k >= nelem:
+                    continue
                 weight = in_spec.weight[i]
                 self.dq[k] |= in_spec.dq[i]
                 self.flux[k] += in_spec.flux[i] * weight
@@ -208,6 +214,8 @@ class OutputSpectrumModel:
                 self.sb_error[k] += (in_spec.sb_error[i] * weight)**2
                 self.weight[k] += weight
                 self.count[k] += 1.
+        if n_nan > 0:
+            log.warning("%d output pixel numbers were NaN", n_nan)
 
         # Since the output wavelengths will not usually be exactly the same
         # as the input wavelengths, it's possible that there will be output
@@ -223,7 +231,7 @@ class OutputSpectrumModel:
             self.flux = self.flux[index]
             self.error = self.error[index]
             self.surf_bright = self.surf_bright[index]
-            self.sb_error = self.error[index]
+            self.sb_error = self.sb_error[index]
             self.dq = self.dq[index]
             self.weight = self.weight[index]
             self.count = self.count[index]

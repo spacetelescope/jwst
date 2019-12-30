@@ -6,6 +6,11 @@ associations
 
 - Update act_id format to allow base 36 values in product name [#4282]
 
+combine_1d
+----------
+
+- Check output pixel numbers for NaN [#4409]
+
 datamodels
 ----------
 
