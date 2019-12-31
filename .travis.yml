@@ -34,9 +34,12 @@ matrix:
     - env: PIP_DEPENDENCIES='numpy~=1.16.0 .[test]'
       python: 3.6.9
 
+    - env: PIP_DEPENDENCIES='numpy~=1.17.0 .[test]'
+      python: 3.7.5
+
     # Test with SDP pinned dependencies
     - env: PIP_DEPENDENCIES='-r requirements-sdp.txt .'
-      python: 3.7.4
+      python: 3.7.5
 
     # Test with dev dependencies
     - env: PIP_DEPENDENCIES="-r requirements-dev.txt .[test]"
