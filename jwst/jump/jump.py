@@ -5,7 +5,6 @@ import numpy as np
 from ..datamodels import dqflags
 from ..lib import reffile_utils
 from . import twopoint_difference as twopt
-from . import yintercept as yint
 import multiprocessing
 
 log = logging.getLogger(__name__)
@@ -154,22 +153,6 @@ def detect_jumps (input_model, gain_model, readnoise_model,
 
     elapsed = time.time() - start
     log.info('Total elapsed time = %g sec' % elapsed)
-
-    # Apply the y-intercept method as a second pass, if requested
-    if do_yint:
-
-        # Set up the ramp time array for the y-intercept method
-        group_time = output_model.meta.exposure.group_time
-        times = np.array([(k+1)*group_time for k in range(num_groups)])
-        median_slopes /= group_time
-
-        # Now apply the y-intercept method
-        log.info('Executing yintercept method')
-        start = time.time()
-        yint.find_crs(data, err, gdq, times, readnoise_2d,
-                        rejection_threshold, signal_threshold, median_slopes)
-        elapsed = time.time() - start
-        log.debug('Elapsed time = %g sec' % elapsed)
 
     # Update the DQ arrays of the output model with the jump detection results
     output_model.groupdq = gdq
