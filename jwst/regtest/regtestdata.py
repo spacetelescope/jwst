@@ -2,13 +2,17 @@ import os
 import pprint
 
 import asdf
+from astropy.io.fits.diff import FITSDiff
 from ci_watson.artifactory_helpers import (
     get_bigdata_root,
     get_bigdata,
     BigdataError,
 )
 
-from jwst.associations import load_asn
+from jwst.associations import AssociationNotValidError, load_asn
+from jwst.lib.suffix import replace_suffix
+from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
+from jwst.stpipe import Step
 
 
 class RegtestData:
@@ -194,3 +198,63 @@ class RegtestData:
     def open(cls, filename):
         with asdf.open(filename) as af:
             return cls(**af.tree)
+
+
+def run_step_from_dict(rtdata, **step_params):
+    """Run Steps with given parameter
+
+    Parameters
+    ----------
+    rtdata: RegistryData
+        The artifactory instance
+
+    step_params: dict
+        The parameters defining what step to run with what input
+
+    Notes
+    -----
+    `step_params` looks like this:
+    {
+        'input_path': str or None  # The input file path, relative to artifactory
+        'step': str                # The step to run, either a class or a config file
+        'args': list,              # The arguments passed to `Step.from_cmdline`
+    }
+    """
+
+    # Get the data
+    try:
+        rtdata.get_asn(step_params['input_path'])
+    except AssociationNotValidError:
+        rtdata.get_data(step_params['input_path'])
+
+    # Figure out whether we have a config or class
+    step = step_params['step']
+    if step.endswith(('.asdf', '.cfg')):
+        step = os.path.join('config', step)
+
+    # Run the step
+    collect_pipeline_cfgs('config')
+    full_args = [step, rtdata.input]
+    full_args.extend(step_params['args'])
+
+    Step.from_cmdline(full_args)
+
+    return rtdata
+
+
+def is_like_truth(rtdata, fitsdiff_default_kwargs, suffix, truth_path):
+    """Compare step outputs with truth"""
+
+    # If the input was an association, the output should be the name of the product
+    # Otherwise, output is based on input.
+    if rtdata.asn:
+        output = rtdata.asn['products'][0]['name']
+    else:
+        output = os.path.splitext(os.path.basename(rtdata.input))[0]
+    output = replace_suffix(output, suffix) + '.fits'
+    rtdata.output = output
+
+    rtdata.get_truth(os.path.join(truth_path, output))
+
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
