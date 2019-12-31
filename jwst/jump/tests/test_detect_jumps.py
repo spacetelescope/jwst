@@ -7,15 +7,20 @@ from jwst.jump.jump import detect_jumps
 import multiprocessing
 
 def test_nocrs_noflux(setup_inputs):
-    # all pixel values are zero. So slope should be zero
+    """"
+    all pixel values are zero. So slope should be zero
+    """
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=5)
     out_model = detect_jumps(model1, gain, rnModel, 4.0, False, 4.0, 1, 200, 4, True)
     assert (0 == np.max(out_model.groupdq))
 
 
 def test_onecr_10_groups_neighbors_flagged(setup_inputs):
+    """"
+    A single CR in a 10 group exposure
+    """
     grouptime = 3.0
-    ingain = 200  # use large gain to show that Poisson noise doesn't affect the recombination
+    ingain = 200
     inreadnoise = np.float64(7)
     ngroups = 10
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
@@ -39,8 +44,12 @@ def test_onecr_10_groups_neighbors_flagged(setup_inputs):
     assert (4 == out_model.groupdq[0, 5, 4, 5])
 
 def test_twoints_onecr_each_10_groups_neighbors_flagged(setup_inputs):
+    """"
+        Two integrations with CRs in different locations. This makes sure we are correctly
+        dealing with integrations.
+    """
     grouptime = 3.0
-    ingain = 200  # use large gain to show that Poisson noise doesn't affect the recombination
+    ingain = 200
     inreadnoise = np.float64(7)
     ngroups = 10
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups, nints=2,
@@ -79,8 +88,13 @@ def test_twoints_onecr_each_10_groups_neighbors_flagged(setup_inputs):
     assert (4 == out_model.groupdq[1, 7, 14, 5])
 
 def test_flagging_of_CRs_across_slice_boundaries(setup_inputs):
+    """"
+            A multiprocesssing test that has two CRs on the boundary between two
+            slices. This makes sure that we are correctly flagging neighbors in different
+            slices.
+    """
     grouptime = 3.0
-    ingain = 200  # use large gain to show that Poisson noise doesn't affect the recombination
+    ingain = 200
     inreadnoise = np.float64(7)
     ngroups = 10
 
@@ -131,8 +145,14 @@ def test_flagging_of_CRs_across_slice_boundaries(setup_inputs):
 
 
 def test_twoints_onecr_10_groups_neighbors_flagged_multi(setup_inputs):
+    """"
+               A multiprocesssing test that has two CRs on the boundary between two
+               slices in different integrations. This makes sure that we are correctly
+               flagging neighbors in different slices and the we are parsing the integrations
+               correctly.
+    """
     grouptime = 3.0
-    ingain = 200  # use large gain to show that Poisson noise doesn't affect the recombination
+    ingain = 200
     inreadnoise = np.float64(7)
     ngroups = 10
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups, nints=2,
@@ -172,8 +192,12 @@ def test_twoints_onecr_10_groups_neighbors_flagged_multi(setup_inputs):
 
 
 def test_every_pixel_CR_neighbors_flagged(setup_inputs):
+    """"
+                   A multiprocesssing test that has a jump in every pixel. This is used
+                   to test the performace gain from multiprocessing.
+    """
     grouptime = 3.0
-    ingain = 200  # use large gain to show that Poisson noise doesn't affect the recombination
+    ingain = 200
     inreadnoise = np.float64(7)
     ngroups = 10
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
@@ -197,8 +221,12 @@ def test_every_pixel_CR_neighbors_flagged(setup_inputs):
     assert (4 == out_model.groupdq[0, 5, 4, 5])
 
 def test_crs_on_edge_with_neighbor_flagging(setup_inputs):
+    """"
+                   A test to make sure that the neighbors of CRs on the edges of the
+                   array are flagged correctly.
+        """
     grouptime = 3.0
-    ingain = 200  # use large gain to show that Poisson noise doesn't affect the recombination
+    ingain = 200
     inreadnoise = np.float64(7)
     ngroups = 10
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
@@ -206,16 +234,16 @@ def test_crs_on_edge_with_neighbor_flagging(setup_inputs):
                                                           deltatime=grouptime)
     # two segments perfect fit, second segment has twice the slope
     #CR on 1st row
-    model1.data[0, 0, 0, 5] = 15.0
-    model1.data[0, 1, 0, 5] = 20.0
-    model1.data[0, 2, 0, 5] = 25.0
-    model1.data[0, 3, 0, 5] = 30.0
-    model1.data[0, 4, 0, 5] = 35.0
-    model1.data[0, 5, 0, 5] = 140.0
-    model1.data[0, 6, 0, 5] = 150.0
-    model1.data[0, 7, 0, 5] = 160.0
-    model1.data[0, 8, 0, 5] = 170.0
-    model1.data[0, 9, 0, 5] = 180.0
+    model1.data[0, 0, 0, 15] = 15.0
+    model1.data[0, 1, 0, 15] = 20.0
+    model1.data[0, 2, 0, 15] = 25.0
+    model1.data[0, 3, 0, 15] = 30.0
+    model1.data[0, 4, 0, 15] = 35.0
+    model1.data[0, 5, 0, 15] = 140.0
+    model1.data[0, 6, 0, 15] = 150.0
+    model1.data[0, 7, 0, 15] = 160.0
+    model1.data[0, 8, 0, 15] = 170.0
+    model1.data[0, 9, 0, 15] = 180.0
     #CR on last row
     model1.data[0, 0, 1023, 5] = 15.0
     model1.data[0, 1, 1023, 5] = 20.0
@@ -238,28 +266,48 @@ def test_crs_on_edge_with_neighbor_flagging(setup_inputs):
     model1.data[0, 7, 5, 0] = 160.0
     model1.data[0, 8, 5, 0] = 170.0
     model1.data[0, 9, 5, 0] = 180.0
-    model1.data[0, 0, 5, 0] = 15.0
     #CR on last column
-    model1.data[0, 0, 5, 1027] = 15.0
-    model1.data[0, 1, 5, 1027] = 20.0
-    model1.data[0, 2, 5, 1027] = 25.0
-    model1.data[0, 3, 5, 1027] = 30.0
-    model1.data[0, 4, 5, 1027] = 35.0
-    model1.data[0, 5, 5, 1027] = 140.0
-    model1.data[0, 6, 5, 1027] = 150.0
-    model1.data[0, 7, 5, 1027] = 160.0
-    model1.data[0, 8, 5, 1027] = 170.0
-    model1.data[0, 9, 5, 1027] = 180.0
+    model1.data[0, 0, 15, 1027] = 15.0
+    model1.data[0, 1, 15, 1027] = 20.0
+    model1.data[0, 2, 15, 1027] = 25.0
+    model1.data[0, 3, 15, 1027] = 30.0
+    model1.data[0, 4, 15, 1027] = 35.0
+    model1.data[0, 5, 15, 1027] = 140.0
+    model1.data[0, 6, 15, 1027] = 150.0
+    model1.data[0, 7, 15, 1027] = 160.0
+    model1.data[0, 8, 15, 1027] = 170.0
+    model1.data[0, 9, 15, 1027] = 180.0
     out_model = detect_jumps(model1, gain, rnModel, 4.0, False, 4.0, 1, 200, 10, True)
     #flag CR and three neighbors of first row CR
-    assert (4 == out_model.groupdq[0, 5, 0, 5])
-    assert (4 == out_model.groupdq[0, 5, 1, 5])
-    assert (4 == out_model.groupdq[0, 5, 0, 4])
-    assert (4 == out_model.groupdq[0, 5, 0, 6])
+    assert (4 == out_model.groupdq[0, 5, 0, 15])
+    assert (4 == out_model.groupdq[0, 5, 1, 15])
+    assert (4 == out_model.groupdq[0, 5, 0, 14])
+    assert (4 == out_model.groupdq[0, 5, 0, 16])
+    assert (out_model.groupdq[0, 5, -1, 15] == 0) # The one not to flag
+    # flag CR and three neighbors of last row CR
+    assert (4 == out_model.groupdq[0, 5, 1023, 5])
+    assert (4 == out_model.groupdq[0, 5, 1022, 5])
+    assert (4 == out_model.groupdq[0, 5, 1023, 4])
+    assert (4 == out_model.groupdq[0, 5, 1023, 6])
+    # flag CR and three neighbors of first column CR
+    assert (4 == out_model.groupdq[0, 5, 5, 0])
+    assert (4 == out_model.groupdq[0, 5, 6, 0])
+    assert (4 == out_model.groupdq[0, 5, 4, 0])
+    assert (4 == out_model.groupdq[0, 5, 5, 1])
+    assert (out_model.groupdq[0, 5, 5, -1] == 0)# The one not to flag
+    # flag CR and three neighbors of last column CR
+    assert (4 == out_model.groupdq[0, 5, 15, 1027])
+    assert (4 == out_model.groupdq[0, 5, 15, 1026])
+    assert (4 == out_model.groupdq[0, 5, 16, 1027])
+    assert (4 == out_model.groupdq[0, 5, 14, 1027])
+
 
 def test_onecr_10_groups(setup_inputs):
+    """"
+    A test to make sure that neighbors are not flagged when they are not requested to be flagged.
+    """
     grouptime = 3.0
-    ingain = 200  # use large gain to show that Poisson noise doesn't affect the recombination
+    ingain = 200
     inreadnoise = np.float64(7)
     ngroups = 10
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
@@ -275,18 +323,25 @@ def test_onecr_10_groups(setup_inputs):
     model1.data[0, 7, 5, 5] = 160.0
     model1.data[0, 8, 5, 5] = 170.0
     model1.data[0, 9, 5, 5] = 180.0
-    out_model = detect_jumps(model1, gain, rnModel, 4.0, False, 4.0, 1, 200, 10, True)
-    assert (4 == np.max(out_model.groupdq[0, 5, 5, 5]))
-
+    out_model = detect_jumps(model1, gain, rnModel, 4.0, False, 4.0, 1, 200, 10, False)
+    assert (out_model.groupdq[0, 5, 5, 5] == 4)
+    assert (out_model.groupdq[0, 5, 4, 5] == 0)
+    assert (out_model.groupdq[0, 5, 6, 5] == 0)
+    assert (out_model.groupdq[0, 5, 5, 6] == 0)
+    assert (out_model.groupdq[0, 5, 5, 4] == 0)
 
 def test_onecr_10_groups_fullarray(setup_inputs):
+    """"
+      A test to that has a cosmic ray in the 5th group for all pixels except row 10. In row
+      10 the jump is in the 7th group.
+    """
     grouptime = 3.0
-    ingain = 5  # use large gain to show that Poisson noise doesn't affect the recombination
+    ingain = 5
     inreadnoise = np.float64(7)
     ngroups = 10
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
                                                           gain=ingain, readnoise=inreadnoise, deltatime=grouptime)
-    # two segments perfect fit, second segment has twice the slope
+    #
     model1.data[0, 0, 5, :] = 15.0
     model1.data[0, 1, 5, :] = 20.0
     model1.data[0, 2, 5, :] = 25.0
@@ -297,26 +352,34 @@ def test_onecr_10_groups_fullarray(setup_inputs):
     model1.data[0, 7, 5, :] = 160.0
     model1.data[0, 8, 5, :] = 170.0
     model1.data[0, 9, 5, :] = 180.0
-    # move the CR to group 3 for row 10 and make difference be 30
+    # move the CR to group 7 for row 10 and make difference be 300
     model1.data[0, 3, 5, 10] = 100
     model1.data[0, 4, 5, 10] = 130
     model1.data[0, 5, 5, 10] = 160
     model1.data[0, 6, 5, 10] = 190
-    model1.data[0, 7, 5, 10] = 220
-    model1.data[0, 8, 5, 10] = 250
-    model1.data[0, 9, 5, 10] = 280
-    out_model = detect_jumps(model1, gain, rnModel, 4.0, False, 4.0, 1, 200, 10, True)
-    assert (4 == np.max(out_model.groupdq[0, 5, :, :]))
+    model1.data[0, 7, 5, 10] = 400
+    model1.data[0, 8, 5, 10] = 410
+    model1.data[0, 9, 5, 10] = 420
+    out_model = detect_jumps(model1, gain, rnModel, 4.0, False, 4.0, 1, 200, 10, False)
+    print(np.max(out_model.groupdq[0,5,:,0]==4))
+    first_row = out_model.groupdq[0,5,:,0]
+    assert (np.all(out_model.groupdq[0, 5, 5, 0:10] == 4)) # The jump is in group 5 for rows 0-9
+    assert (out_model.groupdq[0, 7, 5, 10] == 4)  # The jump is in group 7 for row 10
+    assert (np.all(out_model.groupdq[0, 5, 5, 11:] == 4)) # The jump is in group 5 for rows 11+
 
 
 def test_onecr_50_groups(setup_inputs):
+    """"
+      A test with a fifty group integration. There are two jumps in pixel 5,5. One in group 5 and
+      one in group 30.
+    """
     grouptime = 3.0
-    ingain = 5  # use large gain to show that Poisson noise doesn't affect the recombination
+    ingain = 5
     inreadnoise = np.float64(7)
     ngroups = 50
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
                                                           gain=ingain, readnoise=inreadnoise, deltatime=grouptime)
-    # two segments perfect fit, second segment has twice the slope
+
     model1.data[0, 0, 5, 5] = 15.0
     model1.data[0, 1, 5, 5] = 20.0
     model1.data[0, 2, 5, 5] = 25.0
@@ -327,12 +390,14 @@ def test_onecr_50_groups(setup_inputs):
     model1.data[0, 7, 5, 5] = 160.0
     model1.data[0, 8, 5, 5] = 170.0
     model1.data[0, 9, 5, 5] = 180.0
-    model1.data[0, 10:29, 5, 5] = 190.0
-    model1.data[0, 30:49, 5, 5] = 490.0
-    out_model = detect_jumps(model1, gain, rnModel, 4.0, False, 4.0, 1, 200, 10, True)
-    assert (4 == np.max(out_model.groupdq[0, 5, 5, 5]))
-    outdqcr = out_model.groupdq[0, 5, 5, 5]
-    np.testing.assert_allclose(4, outdqcr)
+    print(np.arange(190, 290, 5))
+    model1.data[0, 10:30, 5, 5] = np.arange(190, 290, 5)
+    model1.data[0, 30:50, 5, 5] = np.arange(500, 600, 5)
+    out_model = detect_jumps(model1, gain, rnModel, 4.0, False, 4.0, 1, 200, 10, False)
+    assert (out_model.groupdq[0, 5, 5, 5] == 4) # CR in group 5
+    assert (out_model.groupdq[0, 30, 5, 5] == 4) # CR in group 30
+    assert (np.all(out_model.groupdq[0, 6:30, 5, 5] == 0)) # groups inbetween are not flagged
+
 
 # Need test for multi-ints near zero with positive and negative slopes
 
