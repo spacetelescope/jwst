@@ -5,6 +5,7 @@ from jwst.datamodels import GainModel, ReadnoiseModel
 from jwst.datamodels import MIRIRampModel
 from jwst.jump.jump import detect_jumps
 import multiprocessing
+from jwst.datamodels import dqflags
 
 def test_nocrs_noflux(setup_inputs):
     """"
@@ -14,6 +15,29 @@ def test_nocrs_noflux(setup_inputs):
     out_model = detect_jumps(model1, gain, rnModel, 4.0, False, 4.0, 1, 200, 4, True)
     assert (0 == np.max(out_model.groupdq))
 
+def test_nocrs_noflux_badgain_pixel(setup_inputs):
+    """"
+    all pixel values are zero. So slope should be zero, pixel with bad gain should
+    have pixel dq set to 'NO_GAIN_VALUE' and 'DO_NOT_USE'
+    """
+    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=5)
+    gain.data[7, 7] = -10 #bad gain
+    gain.data[17, 17] = np.nan  # bad gain
+    out_model = detect_jumps(model1, gain, rnModel, 4.0, False, 4.0, 1, 200, 4, True)
+    assert(np.bitwise_and(out_model.pixeldq[7, 7], dqflags.pixel['NO_GAIN_VALUE']))
+    assert (np.bitwise_and(out_model.pixeldq[7, 7], dqflags.pixel['DO_NOT_USE']))
+    assert (np.bitwise_and(out_model.pixeldq[17, 17], dqflags.pixel['NO_GAIN_VALUE']))
+    assert (np.bitwise_and(out_model.pixeldq[17, 17], dqflags.pixel['DO_NOT_USE']))
+
+
+def test_nocrs_noflux_subarray(setup_inputs):
+    """"
+    all pixel values are zero. This shows that the subarray reference files get extracted from the full frame
+    versions.
+    """
+    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=5, subarray=True)
+    out_model = detect_jumps(model1, gain, rnModel, 4.0, False, 4.0, 1, 200, 4, True)
+    assert (0 == np.max(out_model.groupdq))
 
 def test_onecr_10_groups_neighbors_flagged(setup_inputs):
     """"
@@ -404,14 +428,21 @@ def test_onecr_50_groups(setup_inputs):
 @pytest.fixture
 def setup_inputs():
     def _setup(ngroups=10, readnoise=10, nints=1,
-                 nrows=1024, ncols=1032, nframes=1, grouptime=1.0, gain=1, deltatime=1):
+               nrows=1024, ncols=1032, nframes=1, grouptime=1.0, gain=1, deltatime=1,
+               gain_subarray = False, readnoise_subarray = False, subarray = False):
         times = np.array(list(range(ngroups)), dtype=np.float64) * deltatime
         gain = np.ones(shape=(nrows, ncols), dtype=np.float64) * gain
-        err = np.ones(shape=(nints, ngroups, nrows, ncols), dtype=np.float64)
-        data = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.float64)
+
+
         pixdq = np.zeros(shape=(nrows, ncols), dtype=np.float64)
         read_noise = np.full((nrows, ncols), readnoise, dtype=np.float64)
         gdq = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.int32)
+        if subarray:
+            data = np.zeros(shape=(nints, ngroups, 20, 20), dtype=np.float64)
+            err = np.ones(shape=(nints, ngroups, 20, 20), dtype=np.float64)
+        else:
+            data = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.float64)
+            err = np.ones(shape=(nints, ngroups, nrows, ncols), dtype=np.float64)
         model1 = MIRIRampModel(data=data, err=err, pixeldq=pixdq, groupdq=gdq, times=times)
         model1.meta.instrument.name = 'MIRI'
         model1.meta.instrument.detector = 'MIRIMAGE'
@@ -422,8 +453,12 @@ def setup_inputs():
         model1.meta.subarray.name = 'FULL'
         model1.meta.subarray.xstart = 1
         model1.meta.subarray.ystart = 1
-        model1.meta.subarray.xsize = 20
-        model1.meta.subarray.ysize = 20
+        if subarray:
+            model1.meta.subarray.xsize = 20
+            model1.meta.subarray.ysize = 20
+        else:
+            model1.meta.subarray.xsize = ncols
+            model1.meta.subarray.ysize = nrows
         model1.meta.exposure.frame_time = deltatime
         model1.meta.exposure.ngroups = ngroups
         model1.meta.exposure.group_time = deltatime
@@ -433,14 +468,18 @@ def setup_inputs():
         gain.meta.instrument.name = 'MIRI'
         gain.meta.subarray.xstart = 1
         gain.meta.subarray.ystart = 1
-        gain.meta.subarray.xsize = 20
-        gain.meta.subarray.ysize = 20
+        if gain_subarray:
+            gain.meta.subarray.xsize = 20
+            gain.meta.subarray.ysize = 20
+        else:
+            gain.meta.subarray.xsize = ncols
+            gain.meta.subarray.ysize = nrows
         rnModel = ReadnoiseModel(data=read_noise)
         rnModel.meta.instrument.name = 'MIRI'
         rnModel.meta.subarray.xstart = 1
         rnModel.meta.subarray.ystart = 1
-        rnModel.meta.subarray.xsize = 20
-        rnModel.meta.subarray.ysize = 20
+        rnModel.meta.subarray.xsize = ncols
+        rnModel.meta.subarray.ysize = nrows
         return model1, gdq, rnModel, pixdq, err, gain
 
     return _setup
