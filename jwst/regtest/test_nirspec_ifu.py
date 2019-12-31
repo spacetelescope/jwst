@@ -5,7 +5,7 @@ from . import regtestdata as rt
 
 
 @pytest.fixture(scope='module')
-def run_nrs_ifu(jail, rtdata_module):
+def run_spec2(jail, rtdata_module):
     """Run the pipelines"""
     step_params = {
         'input_path': 'nirspec/ifu/nrs_ifu_nrs1_rate.fits',
@@ -37,7 +37,7 @@ def run_nrs_ifu(jail, rtdata_module):
     'suffix',
     ['assign_wcs', 'cal', 'flat_field', 'msa_flagging', 'pathloss', 'photom', 's3d', 'srctype', 'x1d']
 )
-def test_nrs_ifu(run_nrs_ifu, fitsdiff_default_kwargs, suffix):
+def test_nrs_ifu(run_spec2, fitsdiff_default_kwargs, suffix):
     """Regression test matching output files"""
-    rt.is_like_truth(run_nrs_ifu, fitsdiff_default_kwargs, suffix,
+    rt.is_like_truth(run_spec2, fitsdiff_default_kwargs, suffix,
                      truth_path='truth/nirspec/test_nirspec_ifu_spec2')
