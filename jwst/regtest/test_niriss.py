@@ -1,6 +1,4 @@
 """Regression tests for NIRISS"""
-import os
-
 import pytest
 
 from . import regtestdata as rt
