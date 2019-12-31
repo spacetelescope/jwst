@@ -20,14 +20,18 @@ def run_tso_spec2_pipeline(jail, rtdata_module, request):
 
     # Run the calwebb_spec2 pipeline;
     collect_pipeline_cfgs("config")
-    args = ["config/calwebb_tso-spec2.cfg", rtdata.input]
+    args = ["config/calwebb_tso-spec2.cfg", rtdata.input,
+            "--steps.assign_wcs.save_results=True",
+            "--steps.flat_field.save_results=True",
+            "--steps.extract_2d.save_results=True",
+            "--steps.photom.save_results=True"]
     Step.from_cmdline(args)
 
     return rtdata
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize("suffix",['calints', 'x1dints'])
+@pytest.mark.parametrize("suffix",['assign_wcs', 'extract_2d', 'flat_field', 'photom', 'calints', 'x1dints'])
 def test_nirspec_brightobj_spec2(run_tso_spec2_pipeline, fitsdiff_default_kwargs, suffix):
     """
         Regression test of calwebb_spec2 pipeline performed on NIRSpec
