@@ -242,7 +242,7 @@ def run_step_from_dict(rtdata, **step_params):
     return rtdata
 
 
-def is_like_truth(rtdata, fitsdiff_default_kwargs, suffix, truth_path='truth/niriss/test_niriss'):
+def is_like_truth(rtdata, fitsdiff_default_kwargs, suffix, truth_path):
     """Compare step outputs with truth"""
 
     # If the input was an association, the output should be the name of the product

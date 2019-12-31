@@ -8,7 +8,7 @@ from . import regtestdata as rt
 def run_nrs_ifu(jail, rtdata_module):
     """Run the pipelines"""
     step_params = {
-        'input_path': 'nirspec/spectroscopic/ifu/nrs_ifu_nrs1_rate.fits',
+        'input_path': 'nirspec/ifu/nrs_ifu_nrs1_rate.fits',
         'step': 'calwebb_spec2.cfg',
         'args': [
             '--steps.bkg_subtract.save_results=true',
