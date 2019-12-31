@@ -50,7 +50,7 @@ class JumpStep(Step):
             max_cores = self.maximum_cores
             max_jump_to_flag_neighbors = self.max_jump_to_flag_neighbors
             min_jump_to_flag_neighbors = self.min_jump_to_flag_neighbors
-            flag_4_neighbors = self.flag_4.neighbors
+            flag_4_neighbors = self.flag_4_neighbors
             do_yint = self.do_yintercept
             sig_thresh = self.yint_threshold
 
