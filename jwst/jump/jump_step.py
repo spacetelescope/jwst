@@ -57,7 +57,7 @@ class JumpStep(Step):
             self.log.info('CR rejection threshold = %g sigma', rej_thresh)
             if self.maximum_cores is not None:
                 self.log.info('Maximum cores to use = %s', max_cores)
-            
+
             # Get the gain and readnoise reference files
             gain_filename = self.get_reference_file(input_model, 'gain')
             self.log.info('Using GAIN reference file: %s', gain_filename)
