@@ -32,12 +32,43 @@ def run_spec2(jail, rtdata_module):
     return rt.run_step_from_dict(rtdata_module, **step_params)
 
 
+@pytest.fixture(scope='module')
+def run_spec3(jail, rtdata_module):
+    """Run Spec3Pipeline"""
+    step_params = {
+        'input_path': 'nirspec/ifu/nrs_ifu_spec3_asn.json',
+        'step': 'calwebb_spec3.cfg',
+        'args': {
+            '--steps.master_background.save_results=true',
+            '--steps.mrs_imatch.save_results=true',
+            '--steps.outlier_detection.save_results=true',
+            '--steps.resample_spec.save_results=true',
+            '--steps.cube_build.save_results=true',
+            '--steps.extract_1d.save_results=true',
+            '--steps.combine_1d.save_results=true',
+        }
+    }
+
+    return rt.run_step_from_dict(rtdata_module, **step_params)
+
+
 @pytest.mark.bigdata
 @pytest.mark.parametrize(
     'suffix',
     ['assign_wcs', 'cal', 'flat_field', 'msa_flagging', 'pathloss', 'photom', 's3d', 'srctype', 'x1d']
 )
-def test_nrs_ifu(run_spec2, fitsdiff_default_kwargs, suffix):
+def test_spec2(run_spec2, fitsdiff_default_kwargs, suffix):
     """Regression test matching output files"""
     rt.is_like_truth(run_spec2, fitsdiff_default_kwargs, suffix,
-                     truth_path='truth/nirspec/test_nirspec_ifu_spec2')
+                     truth_path='truth/nirspec/test_nirspec_ifu')
+
+
+@pytest.mark.bigdata
+@pytest.mark.parametrize(
+    'suffix',
+    ['assign_wcs']
+)
+def test_spec3(run_spec3, fitsdiff_default_kwargs, suffix):
+    """Regression test matching output files"""
+    rt.is_like_truth(run_spec3, fitsdiff_default_kwargs, suffix,
+                     truth_path='truth/nirspec/test_nirspec_ifu')
