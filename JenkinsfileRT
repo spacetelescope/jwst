@@ -33,7 +33,7 @@ data_config.root = '${PYTEST_BASETEMP}'
 data_config.match_prefix = '(.*)_result' // .json is appended automatically
 
 
-// Build and test with python 3.6 and released dependencies from astroconda
+// Build and test with dependencies specified in requirements-sdp.txt
 bc0 = new BuildConfig()
 bc0.nodetype = 'jwst'
 bc0.name = 'stable-deps'
@@ -55,7 +55,6 @@ bc0.test_cmds = [
 ]
 bc0.test_configs = [data_config]
 
-
 // macos-specific buildconfig to cause the creation of counterparts to the linux
 // environment dumps. Packages in a mininmal conda environment differ by OS
 // which is why this is needed.
@@ -65,7 +64,6 @@ bc1.name = 'macos-stable-deps'
 bc1.build_cmds = ["pip install -e ."]
 bc1.test_cmds = []
 bc1.test_configs = []
-
 
 utils.run([jobconfig, bc0, bc1])
 }  // withCredentials
