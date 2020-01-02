@@ -50,7 +50,7 @@ class RegtestData:
         return pprint.pformat(
             dict(input=self.input, output=self.output, truth=self.truth,
             input_remote=self.input_remote, truth_remote=self.truth_remote,
-            remote_results_path=self.remote_results_path,
+            remote_results_path=self.remote_results_path, test_name=self.test_name,
             traceback=self.traceback),
             indent=1
         )
