@@ -32,6 +32,26 @@ def run_spec2(jail, rtdata_module):
     return rt.run_step_from_dict(rtdata_module, **step_params)
 
 
+@pytest.fixture(scope='module')
+def run_spec3(jail, rtdata_module):
+    """Run the pipelines"""
+    step_params = {
+        'input_path': 'miri/mrs/ifushort_set2_asn3.json',
+        'step': 'calwebb_spec3.cfg',
+        'args': [
+            '--steps.master_background.save_results=true',
+            '--steps.mrs_imatch.save_results=true',
+            '--steps.outlier_detection.save_results=true',
+            '--steps.resample_spec.save_results=true',
+            '--steps.cube_build.save_results=true',
+            '--steps.extract_1d.save_results=true',
+            '--steps.combine_1d.save_results=true',
+        ]
+    }
+
+    return rt.run_step_from_dict(rtdata_module, **step_params)
+
+
 @pytest.mark.bigdata
 @pytest.mark.parametrize(
     'suffix',
@@ -39,5 +59,16 @@ def run_spec2(jail, rtdata_module):
 )
 def test_spec2(run_spec2, fitsdiff_default_kwargs, suffix):
     """Test ensuring the callwebb_spec2 is operating appropriately for MIRI MRS data"""
+    rt.is_like_truth(run_spec2, fitsdiff_default_kwargs, suffix,
+                     truth_path='truth/test_miri_mrs')
+
+
+@pytest.mark.bigdata
+@pytest.mark.parametrize(
+    'suffix',
+    ['assign_wcs']
+)
+def test_spec3(run_spec2, fitsdiff_default_kwargs, suffix):
+    """Test ensuring the callwebb_spec3 is operating appropriately for MIRI MRS data"""
     rt.is_like_truth(run_spec2, fitsdiff_default_kwargs, suffix,
                      truth_path='truth/test_miri_mrs')
