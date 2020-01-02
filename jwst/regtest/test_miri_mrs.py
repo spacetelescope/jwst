@@ -1,4 +1,4 @@
-"""Regression tests for NIRSpec"""
+"""Regression tests for MIRI MRS modes"""
 import pytest
 
 from . import regtestdata as rt
@@ -37,7 +37,7 @@ def run_spec2(jail, rtdata_module):
     'suffix',
     ['assign_wcs', 'cal', 'flat_field', 'fringe', 'photom', 's3d', 'srctype', 'straylight', 'x1d']
 )
-def test_nrs_ifu(run_spec2, fitsdiff_default_kwargs, suffix):
-    """Regression test matching output files"""
+def test_spec2(run_spec2, fitsdiff_default_kwargs, suffix):
+    """Test ensuring the callwebb_spec2 is operating appropriately for MIRI MRS data"""
     rt.is_like_truth(run_spec2, fitsdiff_default_kwargs, suffix,
                      truth_path='truth/test_miri_mrs')
