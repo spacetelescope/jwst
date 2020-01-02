@@ -15,12 +15,12 @@ addons:
 
 env:
   global:
-    - CRDS_SERVER_URL='https://jwst-crds.stsci.edu'
-    - CRDS_PATH='/tmp/crds_cache'
+    - CRDS_SERVER_URL="https://jwst-crds.stsci.edu"
+    - CRDS_PATH="/tmp/crds_cache"
     - CRDS_CLIENT_RETRY_COUNT=3
     - CRDS_CLIENT_RETRY_DELAY_SECONDS=20
-    - TEST_COMMAND='pytest --cov-report=xml --cov=./'
-    - PIP_DEPENDENCIES='.[test]'
+    - TEST_COMMAND="pytest --cov-report=xml --cov=./"
+    - PIP_DEPENDENCIES=".[test]"
 
 matrix:
   # Don't wait for allowed failures
@@ -31,14 +31,14 @@ matrix:
     - python: 3.7.5
     - python: 3.8.0
 
-    - env: PIP_DEPENDENCIES='numpy~=1.16.0 .[test]'
+    - env: PIP_DEPENDENCIES="numpy~=1.16.0 .[test]"
       python: 3.6.9
 
-    - env: PIP_DEPENDENCIES='numpy~=1.17.0 .[test]'
+    - env: PIP_DEPENDENCIES="numpy~=1.17.0 .[test]"
       python: 3.7.5
 
     # Test with SDP pinned dependencies
-    - env: PIP_DEPENDENCIES='-r requirements-sdp.txt .'
+    - env: PIP_DEPENDENCIES="-r requirements-sdp.txt .[test]"
       python: 3.7.5
 
     # Test with dev dependencies
@@ -49,12 +49,12 @@ matrix:
            PIP_DEPENDENCIES=".[test]"
 
     # Build sphinx documentation with warnings
-    - env: TEST_COMMAND='make --directory=docs html'
-           PIP_DEPENDENCIES='.[docs]'
+    - env: TEST_COMMAND="make --directory=docs html"
+           PIP_DEPENDENCIES=".[docs]"
 
     # PEP8 check
-    - env: TEST_COMMAND='flake8'
-           PIP_DEPENDENCIES='flake8'
+    - env: TEST_COMMAND="flake8"
+           PIP_DEPENDENCIES="flake8"
 
   allow_failures:
     - env: PIP_DEPENDENCIES="-r requirements-dev.txt .[test]"
