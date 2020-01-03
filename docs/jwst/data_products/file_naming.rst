@@ -38,9 +38,9 @@ exposures like dithers or mosaics.
 
 The format for the file name of a Stage 3 association product has all alphabetic characters in lower case, underscores 
 are only used to delineate between major fields, and dashes can be used as separators for optional fields. 
-Just as for Stage 2, the suffix distinguishes the different file products of Stage 3 of the calibration pipeline:
+Just as for Stage 2, the suffix distinguishes the different file products of Stage 3 of the calibration pipeline.
 
-The FITS file naming scheme for Stage 3 "source-based" products is::
+The FITS file naming scheme for Stage 3 "source-based" products is:
 
  jw<ppppp>-<AC_ID>_[<"t"TargID | "s"SourceID>](-<"epoch"X>)_<instr>_<optElements>(-<subarray>)_<prodType>(-<ACT_ID>).fits
 
