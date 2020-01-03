@@ -34,7 +34,7 @@ def run_pipeline(jail, rtdata_module):
                                     'dq_init', 'firstframe', 'lastframe',
                                     'saturation', 'dark_current', 'refpix',
                                     'jump'])
-def test_miri_image_caldetector1(run_pipeline, request, fitsdiff_default_kwargs, output):
+def test_miri_image_detector1(run_pipeline, request, fitsdiff_default_kwargs, output):
     """
     Regression test of calwebb_detector1 pipeline performed on MIRI data.
     """
@@ -42,7 +42,7 @@ def test_miri_image_caldetector1(run_pipeline, request, fitsdiff_default_kwargs,
     rtdata = run_pipeline
     rtdata.output = "jw00001001001_01101_00001_MIRIMAGE_" + output + ".fits"
 
-    rtdata.get_truth(os.path.join("truth/test_miri_image_caldetector1",
+    rtdata.get_truth(os.path.join("truth/test_miri_image_detector1",
                                   "jw00001001001_01101_00001_MIRIMAGE_" + output + ".fits"))
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
