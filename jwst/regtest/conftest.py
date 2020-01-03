@@ -6,6 +6,8 @@ import json
 import getpass
 import pytest
 from ci_watson.artifactory_helpers import UPLOAD_SCHEMA
+import numpy as np
+from astropy.table import Table
 
 from .regtestdata import RegtestData
 
@@ -198,3 +200,49 @@ def fitsdiff_default_kwargs():
         rtol=0.00001,
         atol=0.0000001,
     )
+
+
+@pytest.fixture
+def diff_astropy_tables():
+    """Compare astropy tables with tolerances for float columns."""
+
+    def _diff_astropy_tables(actual_path, truth_path, rtol=0.00001, atol=0.0000001):
+        actual = Table.read(actual_path)
+        truth = Table.read(truth_path)
+
+        diffs = []
+
+        if actual.colnames != truth.colnames:
+            diffs.append("Column names (or order) do not match")
+
+        if len(actual) != len(truth):
+            diffs.append("Row count does not match")
+
+        # If either the columns or the row count is mismatched, then don't
+        # bother checking the individual column values.
+        if len(diffs) > 0:
+            return diffs
+
+        if actual.meta != truth.meta:
+            diffs.append("Metadata does not match")
+
+        for col_name in truth.colnames:
+            if actual[col_name].dtype != truth[col_name].dtype:
+                diffs.append(f"Column '{col_name}' dtype does not match")
+                continue
+
+            dtype = actual[col_name].dtype
+            if dtype.kind == "f":
+                if not np.allclose(
+                    truth[col_name], actual[col_name], rtol=rtol, atol=atol
+                ):
+                    diffs.append(
+                        "Column '{col_name}' values do not match (within tolerances)"
+                    )
+            else:
+                if not (actual[col_name] == truth[col_name]).all():
+                    diffs.append("Column '{col_name}' values do not match")
+
+        return diffs
+
+    return _diff_astropy_tables
