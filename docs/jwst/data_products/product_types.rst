@@ -1,9 +1,9 @@
 Data Product Types
 ------------------
-The following tables contain a list of all data product types, as given by their file name suffix. There is one table per stage of processing.
-All tables indicate whether the file naming is exposure-based (Exp) or source-based (Srce).
+The following tables contain lists of all data product types, as given by their file name suffix. There is one table per stage of processing.
+All tables indicate whether the file naming is exposure-based (Exp) or source-based (Src).
 When the product is not created by default, the flag *Optional* is indicated in the
-description. The different stages of the calibration pipeline and are as defined in
+description. The different stages of the calibration pipeline are as defined in
 the `Algorithms Documentation <https://jwst-docs.stsci.edu/jwst-data-reduction-pipeline/algorithm-documentation>`_.
 The product name suffixes are active links to detailed descriptions in the following sections.
 
@@ -81,7 +81,7 @@ Stage 3 Data Products
 |                    +-----------------------+----------------------------+      |                   +-----------------------------------------+
 |                    | :ref:`rate <rate>`    | :ref:`crf <crf>`           |      |                   | | 2-D CR-flagged calibrated data        |
 |                    +-----------------------+----------------------------+------+                   +-----------------------------------------+
-|                    | :ref:`cal <cal>`      | :ref:`i2d <i2d>`           | Srce |                   | | 2-D resampled imaging data            |
+|                    | :ref:`cal <cal>`      | :ref:`i2d <i2d>`           | Src  |                   | | 2-D resampled imaging data            |
 |                    |                       +----------------------------+      |                   +-----------------------------------------+
 |                    |                       | :ref:`cat <cat>`           |      |                   | | Source catalog                        |
 +--------------------+-----------------------+----------------------------+------+-------------------+-----------------------------------------+
@@ -90,7 +90,7 @@ Stage 3 Data Products
 |                    | :ref:`rateints <rate>`| :ref:`crfints <crf>`       |      |                   | | 3-D CR-flagged calibrated data,       |
 |                    |                       |                            |      |                   | | cornagraphy, TSO                      |
 |                    +-----------------------+----------------------------+------+                   +-----------------------------------------+
-|                    | :ref:`cal <cal>`      | :ref:`s2d <s2d>`           | Srce |                   | | 2-D resampled spectroscopic data.     |
+|                    | :ref:`cal <cal>`      | :ref:`s2d <s2d>`           | Src  |                   | | 2-D resampled spectroscopic data.     |
 |                    |                       |                            |      |                   | | No IFU                                |
 |                    |                       +----------------------------+      |                   +-----------------------------------------+
 |                    |                       | :ref:`s3d <s3d>`           |      |                   | | 3-D resampled spectroscopic data.     |
@@ -98,7 +98,7 @@ Stage 3 Data Products
 |                    |                       +----------------------------+      +-------------------+-----------------------------------------+
 |                    |                       | :ref:`x1d <x1d>`           |      | various           | | 1-D extracted spectroscopic data      |
 +--------------------+-----------------------+----------------------------+------+-------------------+-----------------------------------------+
-| calwebb_ami3       | :ref:`cal <cal>`      | :ref:`ami <ami>`           | Srce | MJy/sr, MJy [#1]_ | | Fringe parameters                     |
+| calwebb_ami3       | :ref:`cal <cal>`      | :ref:`ami <ami>`           | Src  | MJy/sr, MJy [#1]_ | | Fringe parameters                     |
 |                    |                       +----------------------------+      |                   +-----------------------------------------+
 |                    |                       | :ref:`amiavg <ami>`        |      |                   | | Averaged fringe parameters            |
 |                    |                       +----------------------------+      |                   +-----------------------------------------+
@@ -106,23 +106,23 @@ Stage 3 Data Products
 +--------------------+-----------------------+----------------------------+------+-------------------+-----------------------------------------+
 | calwebb_coron3     | :ref:`rateints <rate>`| :ref:`crfints <crf>`       | Exp  | MJy/sr, MJy [#1]_ | | 3-D CR-flagged calibrated data        |
 |                    +-----------------------+----------------------------+------+                   +-----------------------------------------+
-|                    | :ref:`calints <cal>`  | :ref:`psfstack <psfstack>` | Srce |                   | | PSF library images                    |
+|                    | :ref:`calints <cal>`  | :ref:`psfstack <psfstack>` | Src  |                   | | PSF library images                    |
 |                    |                       +----------------------------+      |                   +-----------------------------------------+
 |                    |                       | :ref:`psfalign <psfalign>` | Exp  |                   | | Aligned PSF images                    |
 |                    |                       +----------------------------+      |                   +-----------------------------------------+
 |                    |                       | :ref:`psfsub <psfsub>`     | Exp  |                   | | PSF-subtracted images                 |
 |                    |                       +----------------------------+      |                   +-----------------------------------------+
-|                    |                       | :ref:`i2d <i2d>`           | Srce |                   | | 2-D resampled PSF-subtracted image    |
+|                    |                       | :ref:`i2d <i2d>`           | Src  |                   | | 2-D resampled PSF-subtracted image    |
 +--------------------+-----------------------+----------------------------+------+-------------------+-----------------------------------------+
 | calwebb_tso3       | :ref:`rateints <rate>`| :ref:`crfints <crfints>`   | Exp  | MJy/sr, MJy [#1]_ | | 3-D CR-flagged calibrated data        |
 |                    +-----------------------+----------------------------+------+-------------------+-----------------------------------------+
-|                    | :ref:`calints <cal>`  | :ref:`phot <phot>`         | Srce | mag               | | TSO imaging photometry catalog        |
+|                    | :ref:`calints <cal>`  | :ref:`phot <phot>`         | Src  | mag               | | TSO imaging photometry catalog        |
 |                    |                       +----------------------------+      +-------------------+-----------------------------------------+
 |                    |                       | :ref:`x1dints <x1dints>`   |      | various           | | TSO 1-D extracted spectra             |
 |                    |                       +----------------------------+      +-------------------+-----------------------------------------+
 |                    |                       | :ref:`whtlt <whtlt>`       |      | N/A               | | TSO spectral white-light catalog      |
 +--------------------+-----------------------+----------------------------+------+-------------------+-----------------------------------------+
-| calwebb_wfs-image3 |  :ref:`cal <cal>`     | :ref:`wfscmb <wfscmb>`     | Srce | MJy/sr, MJy [#1]_ | | 2-D combined WFS&C image              |
+| calwebb_wfs-image3 |  :ref:`cal <cal>`     | :ref:`wfscmb <wfscmb>`     | Src  | MJy/sr, MJy [#1]_ | | 2-D combined WFS&C image              |
 +--------------------+-----------------------+----------------------------+------+-------------------+-----------------------------------------+
 
 .. rubric :: Footnotes
