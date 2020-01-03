@@ -9,7 +9,7 @@ Notes:
 import numpy as np
 from astropy.io import fits
 from gwcs import wcs
-from numpy.testing import utils
+from numpy.testing import assert_allclose
 
 from ...datamodels.image import ImageModel
 from .. import miri
@@ -87,26 +87,26 @@ def run_test(model):
         for i, s in enumerate(ref_data['s']):
             sl = int(ch) * 100 + s
             alpha, beta, lam = detector_to_alpha_beta.set_input(sl)(x[i], y[i])
-            utils.assert_allclose(alpha, ref_alpha[i], atol=0.05)
-            utils.assert_allclose(beta, ref_beta[i], atol=0.05)
-            utils.assert_allclose(lam, ref_lam[i], atol=0.05)
+            assert_allclose(alpha, ref_alpha[i], atol=0.05)
+            assert_allclose(beta, ref_beta[i], atol=0.05)
+            assert_allclose(lam, ref_lam[i], atol=0.05)
 
         v2, v3, lam = ab_to_v2v3(ref_alpha, ref_beta, ref_lam)
-        utils.assert_allclose(v2, ref_v2, atol=0.05)
-        utils.assert_allclose(v3, ref_v3, atol=0.05)
-        utils.assert_allclose(lam, ref_lam, atol=0.05)
+        assert_allclose(v2, ref_v2, atol=0.05)
+        assert_allclose(v3, ref_v3, atol=0.05)
+        assert_allclose(lam, ref_lam, atol=0.05)
 
         # Test the reverse transform
         alpha_back, beta_back, lam_back = v2v3_to_ab(v2,v3,lam)
-        utils.assert_allclose(alpha_back, ref_alpha, atol=0.05)
-        utils.assert_allclose(beta_back, ref_beta, atol=0.05)
-        utils.assert_allclose(lam_back, ref_lam, atol=0.05)
+        assert_allclose(alpha_back, ref_alpha, atol=0.05)
+        assert_allclose(beta_back, ref_beta, atol=0.05)
+        assert_allclose(lam_back, ref_lam, atol=0.05)
 
         for i, s in enumerate(ref_data['s']):
             sl = int(ch) * 100 + s
             x_back, y_back = ab_to_detector.set_input(sl)(alpha_back[i],beta_back[i],lam_back[i])
-            utils.assert_allclose(x_back, x[i], atol=0.08)
-            utils.assert_allclose(y_back, y[i], atol=0.08)
+            assert_allclose(x_back, x[i], atol=0.08)
+            assert_allclose(y_back, y[i], atol=0.08)
 
 
 def test_miri_mrs_12A():

@@ -327,7 +327,7 @@ def load_local_pkg(fpath):
     sys.path.insert(0, package_fpath)
     try:
         for module_fpath in folder_traverse(
-            fpath, basename_regex='[^_].+\.py$', path_exclude_regex='tests'
+            fpath, basename_regex=r'[^_].+\.py$', path_exclude_regex='tests'
         ):
             folder_path, fname = path.split(module_fpath[package_fpath_len:])
             module_path = folder_path.split('/')

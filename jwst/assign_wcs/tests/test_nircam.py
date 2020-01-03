@@ -8,7 +8,7 @@ of the results is verified by the team based on the specwcs reference
 file.
 
 """
-from numpy.testing.utils import assert_allclose
+from numpy.testing import assert_allclose
 import pytest
 
 
