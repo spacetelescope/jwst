@@ -7,7 +7,7 @@ File Naming Schemes
 
 Exposure file names
 ^^^^^^^^^^^^^^^^^^^
-The names of the exposure level data (stage 0 to 2) is constructed with information from the science header of the exposure, allowing users to map it to the observation in ther corresponding APT files. For Stage 0, 1, and 2 "exposure-based" products is:
+The names of the exposure level data (stage 0 to 2) are constructed with information from the science header of the exposure, allowing users to map it to the observation in their corresponding APT files. The FITS file naming scheme for Stage 0, 1, and 2 "exposure-based" products is:
 
  jw<ppppp><ooo><vvv>_<gg><s><aa>_<eeeee>(-<"seg"NNN>)_<detector>_<prodType>.fits
 
