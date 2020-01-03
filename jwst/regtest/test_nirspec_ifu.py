@@ -65,10 +65,18 @@ def test_spec2(run_spec2, fitsdiff_default_kwargs, suffix):
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize(
-    'suffix',
-    ['assign_wcs']
+    'output',
+    [
+        'nrs_ifu_g395h-f290lp_s3d.fits',
+        'nrs_ifu_g395h-f290lp_x1d.fits',
+        'nrs_ifu_nrs1_o028_crf.fits',
+        'nrs_ifu_nrs2_o028_crf.fits',
+    ]
 )
-def test_spec3(run_spec3, fitsdiff_default_kwargs, suffix):
+def test_spec3(run_spec3, fitsdiff_default_kwargs, output):
     """Regression test matching output files"""
-    rt.is_like_truth(run_spec3, fitsdiff_default_kwargs, suffix,
-                     truth_path='truth/nirspec/test_nirspec_ifu')
+    rt.is_like_truth(
+        run_spec3, fitsdiff_default_kwargs, output,
+        truth_path='truth/nirspec/test_nirspec_ifu',
+        is_suffix=False
+    )

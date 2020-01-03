@@ -1,5 +1,6 @@
 import os
 import pprint
+import shutil
 
 import asdf
 from astropy.io.fits.diff import FITSDiff
@@ -242,16 +243,80 @@ def run_step_from_dict(rtdata, **step_params):
     return rtdata
 
 
-def is_like_truth(rtdata, fitsdiff_default_kwargs, suffix, truth_path):
-    """Compare step outputs with truth"""
+def run_step_from_dict_mock(rtdata, source,  **step_params):
+    """Pretend to run Steps with given parameter but just copy data
 
+    For long running steps where the result already exists, just
+    copy the data from source
+
+    Parameters
+    ----------
+    rtdata: RegistryData
+        The artifactory instance
+
+    step_params: dict
+        The parameters defining what step to run with what input
+
+    source: Path-like folder
+        The folder to copy from. All regular files are copied.
+
+    Notes
+    -----
+    `step_params` looks like this:
+    {
+        'input_path': str or None  # The input file path, relative to artifactory
+        'step': str                # The step to run, either a class or a config file
+        'args': list,              # The arguments passed to `Step.from_cmdline`
+    }
+    """
+
+    # Get the data
+    try:
+        rtdata.get_asn(step_params['input_path'])
+    except AssociationNotValidError:
+        rtdata.get_data(step_params['input_path'])
+
+    # Copy the data
+    for file_name in os.listdir(source):
+        file_path = os.path.join(source, file_name)
+        if os.path.isfile(file_path):
+            shutil.copy(file_path, '.')
+
+    return rtdata
+
+
+def is_like_truth(rtdata, fitsdiff_default_kwargs, output, truth_path, is_suffix=True):
+    """Compare step outputs with truth
+
+    Parameters
+    ----------
+    rtdata: RegistryData
+        The artifactory object from the step run.
+
+    fitsdiff_default_kwargs: dict
+        The `fitsdiff` keyword arguments
+
+    output: str
+        The suffix or full file name to check on.
+
+    truth_path: str
+        Location of the truth files.
+
+    is_suffix: bool
+        Interpret `output` as just a suffix on the expected output root.
+        Otherwise, assume it is a full file name
+    """
+
+    # If given only a suffix, get the root to change the suffix of.
     # If the input was an association, the output should be the name of the product
     # Otherwise, output is based on input.
-    if rtdata.asn:
-        output = rtdata.asn['products'][0]['name']
-    else:
-        output = os.path.splitext(os.path.basename(rtdata.input))[0]
-    output = replace_suffix(output, suffix) + '.fits'
+    if is_suffix:
+        suffix = output
+        if rtdata.asn:
+            output = rtdata.asn['products'][0]['name']
+        else:
+            output = os.path.splitext(os.path.basename(rtdata.input))[0]
+        output = replace_suffix(output, suffix) + '.fits'
     rtdata.output = output
 
     rtdata.get_truth(os.path.join(truth_path, output))
