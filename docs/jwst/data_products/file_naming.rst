@@ -58,7 +58,7 @@ where
  - ACT_ID: a 2-digit activity ID
 
 
-An example Stage 3 product FITS file name is::
+An example Stage 3 product FITS file name is:
 
  jw87600-a3001_t001_niriss_f480m-nrm_amiavg.fits
 
