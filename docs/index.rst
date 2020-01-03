@@ -14,9 +14,9 @@ User Manual
    jwst/introduction.rst
 
 
-==========================
-Dataproducts Documentation
-==========================
+===========================
+Data products Documentation
+===========================
 
 .. toctree::
    :maxdepth: 1
