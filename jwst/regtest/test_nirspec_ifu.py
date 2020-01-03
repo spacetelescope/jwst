@@ -60,7 +60,7 @@ def run_spec3(jail, rtdata_module):
 def test_spec2(run_spec2, fitsdiff_default_kwargs, suffix):
     """Regression test matching output files"""
     rt.is_like_truth(run_spec2, fitsdiff_default_kwargs, suffix,
-                     truth_path='truth/nirspec/test_nirspec_ifu')
+                     truth_path='truth/test_nirspec_ifu')
 
 
 @pytest.mark.bigdata
@@ -77,6 +77,6 @@ def test_spec3(run_spec3, fitsdiff_default_kwargs, output):
     """Regression test matching output files"""
     rt.is_like_truth(
         run_spec3, fitsdiff_default_kwargs, output,
-        truth_path='truth/nirspec/test_nirspec_ifu',
+        truth_path='truth/test_nirspec_ifu',
         is_suffix=False
     )
