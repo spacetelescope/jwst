@@ -51,7 +51,6 @@ def run_spec3(jail, rtdata_module):
 
     return rt.run_step_from_dict(rtdata_module, **step_params)
 
-
 @pytest.mark.bigdata
 @pytest.mark.parametrize(
     'suffix',
@@ -65,10 +64,22 @@ def test_spec2(run_spec2, fitsdiff_default_kwargs, suffix):
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize(
-    'suffix',
-    ['assign_wcs']
+    'output',
+    [
+        'ifushort_set2_0_a3001_crf.fits',
+        'ifushort_set2_0_mrs_imatch.fits',
+        'ifushort_set2_1_a3001_crf.fits',
+        'ifushort_set2_1_mrs_imatch.fits',
+        'ifushort_set2_ch1-short_s3d.fits',
+        'ifushort_set2_ch1-short_x1d.fits',
+        'ifushort_set2_ch2-short_s3d.fits',
+        'ifushort_set2_ch2-short_x1d.fits'
+    ]
 )
-def test_spec3(run_spec2, fitsdiff_default_kwargs, suffix):
-    """Test ensuring the callwebb_spec3 is operating appropriately for MIRI MRS data"""
-    rt.is_like_truth(run_spec2, fitsdiff_default_kwargs, suffix,
-                     truth_path='truth/test_miri_mrs')
+def test_spec3(run_spec3, fitsdiff_default_kwargs, output):
+    """Regression test matching output files"""
+    rt.is_like_truth(
+        run_spec3, fitsdiff_default_kwargs, output,
+        truth_path='truth/test_miri_mrs',
+        is_suffix=False
+    )
