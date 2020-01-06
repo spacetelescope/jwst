@@ -42,6 +42,12 @@ tweakreg
   Now the code will gracefully skip the ``tweakreg`` step altogether in such
   situations. [#4299]
 
+wfs_combine
+-----------
+
+- Use float64 data types internally in ``wfs_combine`` so as not to cause an
+  error in ``scipy.signal.convolve``. [#4432]
+
 
 0.14.2 (2019-11-18)
 ===================

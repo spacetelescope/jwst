@@ -8,7 +8,7 @@ from .. import datamodels
 from ..datamodels import dqflags
 import scipy
 from scipy.interpolate import griddata
-from scipy import signal
+
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -138,13 +138,16 @@ class DataSet():
             # 1. Create smoothed image of input SCI data of image #1
             # 1a. create image to smooth by first setting bad DQ pixels equal
             #     to mean of good pixels
-            data_1 = self.input_1.data.copy()
+            data_1 = self.input_1.data.astype(np.float64)
             wh_bad_1 = np.where(self.input_1.dq != 0)
             wh_good_1 = np.where(self.input_1.dq == 0)
-            data_1[wh_bad_1] = self.input_1.data[wh_good_1].mean()
+            data_1[wh_bad_1] = data_1[wh_good_1].mean()
 
             # 1b. Create smoothed image by smoothing this 'repaired' image
-            s_data_1 = smooth_image(data_1, BLUR_SIZE)
+            g = gauss_kern(BLUR_SIZE, sizey=None)
+            s_data_1 = scipy.signal.convolve(data_1, g, mode='valid')
+
+
 
             # 2. Find approximate center of PSF in umsmoothed frame by taking
             #    all pixels in smoothed image exceeding 50% of the maximum
@@ -315,8 +318,8 @@ class DataSet():
             combined ERR array
         """
 
-        sci_data_1 = im_1_a.data.copy()
-        sci_data_2 = im_2_a.data.copy()
+        sci_data_1 = im_1_a.data.astype(np.float64)
+        sci_data_2 = im_2_a.data.astype(np.float64)
 
         dq_data_1 = im_1_a.dq.copy()
         dq_data_2 = im_2_a.dq.copy()
@@ -409,41 +412,9 @@ def gauss_kern(size, sizey=None):
         sizey = int(sizey)
 
     x, y = scipy.mgrid[-size:size + 1, -sizey:sizey + 1]
-    g = scipy.exp(-(x**2 / float(size) + y**2 / float(sizey)))
+    g = np.exp(-(x**2 / float(size) + y**2 / float(sizey)))
 
     return g / g.sum()
-
-
-def smooth_image(im, n, ny=None):
-    """
-    Short Summary
-    -------------
-    Smooths the image by convolving with a gaussian kernel of typical
-    size n. The optional keyword argument ny allows for a different
-    size in the y direction.  The 'valid' mode signifies that the
-    output consists only of those elements that do not rely on the
-    zero-padding (not the default).
-
-    Parameters
-    ----------
-    im: 2D array
-        1st input array
-    n: int
-        size of gaussian kernel in x-dim
-    ny: int
-        size of gaussian kernel in y-dim
-
-    Returns
-    -------
-    improc: 2D array
-        2D array containing a subset of the discrete linear
-        cross-correlation of the input image with the gaussian kernel
-
-    """
-    g = gauss_kern(n, sizey=ny)
-    improc = signal.convolve(im, g, mode='valid')
-
-    return improc
 
 
 def interp_array(sci_data, dq_data):
