@@ -468,12 +468,8 @@ def setup_inputs():
         gain.meta.instrument.name = 'MIRI'
         gain.meta.subarray.xstart = 1
         gain.meta.subarray.ystart = 1
-        if gain_subarray:
-            gain.meta.subarray.xsize = 20
-            gain.meta.subarray.ysize = 20
-        else:
-            gain.meta.subarray.xsize = ncols
-            gain.meta.subarray.ysize = nrows
+        gain.meta.subarray.xsize = ncols
+        gain.meta.subarray.ysize = nrows
         rnModel = ReadnoiseModel(data=read_noise)
         rnModel.meta.instrument.name = 'MIRI'
         rnModel.meta.subarray.xstart = 1

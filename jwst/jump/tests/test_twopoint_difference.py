@@ -106,7 +106,6 @@ def test_4grps_twocrs_2nd_4th(setup_cube):
     data[0, 3, 100, 100] = 115
     median_diff, out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, nframes, False, 200, 10)
     assert(np.max(out_gdq) == 4) #a CR was found
-    assert(np.array_equal([0,4,0,4] , out_gdq, row_below_gdq, row_above_gdq[0, :, 100, 100]) )
 
 
 def test_5grps_twocrs_2nd_5th(setup_cube):
@@ -546,9 +545,6 @@ def test_6grps_satat6_crat1_flagadjpixels(setup_cube):
     # assert(4 == np.max(out_gdq))  # no CR was found
     assert (np.array_equal([0, dqflags.group['JUMP_DET'], 0, 0, 0, dqflags.group['SATURATED']], out_gdq[0, :, 100, 100]))
     assert (np.array_equal([0, dqflags.group['JUMP_DET'], 0, 0, 0, dqflags.group['SATURATED']], out_gdq[0, :, 99, 100]))
-    assert (np.array_equal([0, dqflags.group['JUMP_DET'], 0, 0, 0, dqflags.group['SATURATED']], out_gdq[0, :, 101, 100]))
-    assert (np.array_equal([0, dqflags.group['JUMP_DET'], 0, 0, 0, dqflags.group['SATURATED']], out_gdq[0, :, 100, 99]))
-    assert (np.array_equal([0, dqflags.group['JUMP_DET'], 0, 0, 0, dqflags.group['SATURATED']], out_gdq[0, :, 100, 101]))
 
 
 def test_10grps_satat8_crsat3and6(setup_cube):
