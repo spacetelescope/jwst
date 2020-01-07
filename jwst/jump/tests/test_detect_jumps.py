@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from jwst.datamodels import GainModel, ReadnoiseModel
-from jwst.datamodels import MIRIRampModel
+from jwst.datamodels import RampModel
 from jwst.jump.jump import detect_jumps
 import multiprocessing
 from jwst.datamodels import dqflags
@@ -214,7 +214,7 @@ def test_twoints_onecr_10_groups_neighbors_flagged_multi(setup_inputs):
     assert (4 == out_model.groupdq[1, 7, 16, 5])
     assert (4 == out_model.groupdq[1, 7, 14, 5])
 
-
+@pytest.mark.skip(reason="Test is only used to test performance issue. No need to run every time.")
 def test_every_pixel_CR_neighbors_flagged(setup_inputs):
     """"
                    A multiprocesssing test that has a jump in every pixel. This is used
@@ -443,7 +443,7 @@ def setup_inputs():
         else:
             data = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.float64)
             err = np.ones(shape=(nints, ngroups, nrows, ncols), dtype=np.float64)
-        model1 = MIRIRampModel(data=data, err=err, pixeldq=pixdq, groupdq=gdq, times=times)
+        model1 = RampModel(data=data, err=err, pixeldq=pixdq, groupdq=gdq, times=times)
         model1.meta.instrument.name = 'MIRI'
         model1.meta.instrument.detector = 'MIRIMAGE'
         model1.meta.instrument.filter = 'F480M'
