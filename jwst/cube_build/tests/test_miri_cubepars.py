@@ -199,7 +199,7 @@ def test_miri_cubepars_user_defaults(_jail, miri_cube_pars):
 
     cube_build_io_util.read_cubepars(miri_cube_pars,
                                      'MIRI',
-                                     'msm'
+                                     'msm',
                                      all_channel,
                                      all_subchannel,
                                      all_grating,
