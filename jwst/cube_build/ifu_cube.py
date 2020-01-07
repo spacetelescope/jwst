@@ -913,7 +913,7 @@ class IFUCubeData():
 
         # catch where self.weight_power, softrad or scalerad could be nan and
         # set to None - this should not happen - these varibles
-        if self.weight_power is not None: 
+        if self.weight_power is not None:
             if np.isnan(self.weight_power):
                 self.weight_power = None
         if self.soft_rad is not None:
