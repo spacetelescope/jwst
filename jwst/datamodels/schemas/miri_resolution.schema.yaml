@@ -1,6 +1,10 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/miri_resolution.schema"
 title: Miri Resolution Reference file
 allOf:
-- $ref: referencefile.schema.yaml
+- $ref: referencefile.schema
 - type: object
   properties:
     resolving_power_table:
@@ -57,4 +61,3 @@ allOf:
          datatype: float32
        - name: B_B_LONG
          datatype: float32
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

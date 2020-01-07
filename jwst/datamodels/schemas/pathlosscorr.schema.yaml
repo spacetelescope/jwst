@@ -1,3 +1,7 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/pathlosscorr.schema"
 type: object
 properties:
   pathloss:
@@ -5,4 +9,3 @@ properties:
     fits_hdu: PATHLOSS
     ndim: 2
     datatype: float32
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

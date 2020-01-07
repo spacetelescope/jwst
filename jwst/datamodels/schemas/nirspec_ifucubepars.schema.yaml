@@ -1,6 +1,10 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/nirspec_ifucubepars.schema"
 title: Default NIRSPEC IFU cube parameters data model
 allOf:
-- $ref: ifucubepars.schema.yaml
+- $ref: ifucubepars.schema
 - type: object
   properties:
     ifucubepars_table:
@@ -127,4 +131,3 @@ allOf:
         datatype: float32
       - name: scalerad
         datatype: float32
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

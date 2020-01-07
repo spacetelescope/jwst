@@ -15,4 +15,4 @@ class RSCDModel(ReferenceFileModel):
         A table with seven columns, three string-valued that identify which
         row to select, and four float columns containing coefficients.
     """
-    schema_url = "rscd.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/rscd.schema"

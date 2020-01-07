@@ -20,6 +20,10 @@ datamodels
 
 - Make memmap=False be the default in datamodels [#4445]
 
+- Update schemas to add the ``id`` field and switch relative references
+  from filesystem paths to URIs.  Make ``schema_url`` absolute to facilitate
+  subclassing DataModel with schemas from other asdf extensions. [#4435]
+
 extract_1d
 ----------
 
@@ -569,7 +573,7 @@ outlier_detection
 
 - Don't use NaNs or masked values in weight image for blotting. [#3651]
 
-- When calling cube_build for IFU data fixed selecting correct channels (MIRI) or 
+- When calling cube_build for IFU data fixed selecting correct channels (MIRI) or
   correct grating (NIRSPEC) [#4301]
 
 pipeline

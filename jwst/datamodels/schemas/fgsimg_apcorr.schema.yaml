@@ -1,8 +1,12 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/fgsimg_apcorr.schema"
 title: FGS aperture correction data model
 allOf:
-- $ref: referencefile.schema.yaml
-- $ref: keyword_exptype.schema.yaml
-- $ref: keyword_pexptype.schema.yaml
+- $ref: referencefile.schema
+- $ref: keyword_exptype.schema
+- $ref: keyword_pexptype.schema
 - type: object
   properties:
     apcorr_table:
@@ -19,4 +23,3 @@ allOf:
         datatype: float32
       - name: skyout
         datatype: float32
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

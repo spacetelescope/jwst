@@ -1,6 +1,10 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/drizpars.schema"
 title: Default Drizzle parameters data model
 allOf:
-- $ref: referencefile.schema.yaml
+- $ref: referencefile.schema
 - type: object
   properties:
     data:
@@ -21,4 +25,3 @@ allOf:
         datatype: [ascii, 10]
       - name: stepsize
         datatype: int32
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

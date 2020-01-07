@@ -1,7 +1,11 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/guider_raw.schema"
 allOf:
-- $ref: core.schema.yaml
-- $ref: bunit.schema.yaml
-- $ref: wcsinfo.schema.yaml
+- $ref: core.schema
+- $ref: bunit.schema
+- $ref: wcsinfo.schema
 - type: object
   properties:
     meta:
@@ -222,4 +226,3 @@ allOf:
         datatype: int32
       - name: y_size
         datatype: int32
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

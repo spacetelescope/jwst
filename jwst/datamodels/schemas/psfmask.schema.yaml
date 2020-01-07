@@ -1,9 +1,13 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/psfmask.schema"
 title: Coronagraphic PSF mask data model
 allOf:
-- $ref: referencefile.schema.yaml
-- $ref: keyword_filter.schema.yaml
-- $ref: keyword_coronmsk.schema.yaml
-- $ref: subarray.schema.yaml
+- $ref: referencefile.schema
+- $ref: keyword_filter.schema
+- $ref: keyword_coronmsk.schema
+- $ref: subarray.schema
 - type: object
   properties:
     data:
@@ -12,4 +16,3 @@ allOf:
       default: 1.0
       ndim: 2
       datatype: float32
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

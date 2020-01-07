@@ -43,4 +43,4 @@ class RampFitOutputModel(DataModel):
     crmag : numpy float32 array (n_int, max_seg, ny, nx)
         Approximate CR magnitudes
     """
-    schema_url = "rampfitoutput.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/rampfitoutput.schema"

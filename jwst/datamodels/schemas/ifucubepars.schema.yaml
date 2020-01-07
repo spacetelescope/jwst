@@ -1,6 +1,10 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/ifucubepars.schema"
 title: Default IFU CUBE parameters data model
 allOf:
-- $ref: referencefile.schema.yaml
+- $ref: referencefile.schema
 - type: object
   properties:
     ifucubepars_table:
@@ -19,4 +23,3 @@ allOf:
         datatype: float32
       - name: wave_roi
         datatype: float32
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

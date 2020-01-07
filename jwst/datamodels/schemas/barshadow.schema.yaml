@@ -1,8 +1,12 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/barshadow.schema"
 title: Bar shadow correction data model
 allOf:
-- $ref: referencefile.schema.yaml
-- $ref: keyword_pexptype.schema.yaml
-- $ref: keyword_exptype.schema.yaml
+- $ref: referencefile.schema
+- $ref: keyword_pexptype.schema
+- $ref: keyword_exptype.schema
 - type: object
   properties:
     data1x1:
@@ -45,4 +49,3 @@ allOf:
       type: number
       fits_keyword: CDELT2
       fits_hdu: data1x1
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

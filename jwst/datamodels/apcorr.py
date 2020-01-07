@@ -23,7 +23,7 @@ class FgsImgApcorrModel(ReferenceFileModel):
         - skyout: float32
 
     """
-    schema_url = "fgsimg_apcorr.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/fgsimg_apcorr.schema"
 
 
 class MirImgApcorrModel(ReferenceFileModel):
@@ -47,7 +47,7 @@ class MirImgApcorrModel(ReferenceFileModel):
         - skyout: float32
 
     """
-    schema_url = "mirimg_apcorr.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/mirimg_apcorr.schema"
 
 
 class NrcImgApcorrModel(ReferenceFileModel):
@@ -71,7 +71,7 @@ class NrcImgApcorrModel(ReferenceFileModel):
         - skyout: float32
 
     """
-    schema_url = "nrcimg_apcorr.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/nrcimg_apcorr.schema"
 
 
 class NisImgApcorrModel(ReferenceFileModel):
@@ -95,4 +95,4 @@ class NisImgApcorrModel(ReferenceFileModel):
         - skyout: float32
 
     """
-    schema_url = "nisimg_apcorr.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/nisimg_apcorr.schema"

@@ -1,3 +1,7 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/slitdata.schema"
 allOf:
 - type: object
   properties:
@@ -122,9 +126,8 @@ allOf:
       fits_hdu: AREA
       default: 0.0
       datatype: float32
-- $ref: variance.schema.yaml
-- $ref: pathlosscorr.schema.yaml
-- $ref: bunit.schema.yaml
-- $ref: photometry.schema.yaml
-- $ref: wcsinfo.schema.yaml
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema
+- $ref: variance.schema
+- $ref: pathlosscorr.schema
+- $ref: bunit.schema
+- $ref: photometry.schema
+- $ref: wcsinfo.schema

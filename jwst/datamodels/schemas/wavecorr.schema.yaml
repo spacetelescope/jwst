@@ -1,3 +1,7 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/asdf/asdf-schema-1.0.0"
+id: "http://stsci.edu/schemas/jwst_datamodel/wavecorr.schema"
 title: NirSpec WAVECORR (wavelength zero-point correction) reference file model
 definitions:
   zero_point_correction:
@@ -26,8 +30,8 @@ definitions:
         type: number
         title: Aperture or pitch width [in m]
 allOf:
-- $ref: referencefile.schema.yaml
-- $ref: keyword_exptype.schema.yaml
+- $ref: referencefile.schema
+- $ref: keyword_exptype.schema
 - type: object
   properties:
     apertures:

@@ -1,3 +1,7 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/dq_def.schema"
 type: object
 properties:
   dq_def:
@@ -12,4 +16,3 @@ properties:
       datatype: [ascii, 40]
     - name: DESCRIPTION
       datatype: [ascii, 80]
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

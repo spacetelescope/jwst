@@ -16,4 +16,4 @@ class TrapParsModel(ReferenceFileModel):
          column for the trap-decay parameter.  Each row of the table is
          for a different trap family.
     """
-    schema_url = "trappars.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/trappars.schema"

@@ -40,7 +40,7 @@ class SlitDataModel(DataModel):
 
     """
 
-    schema_url = "slitdata.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/slitdata.schema"
 
     def __init__(self, init=None, **kwargs):
         if isinstance(init, (SlitModel, ImageModel)):
@@ -106,7 +106,7 @@ class SlitModel(DataModel):
          table of times for each integration
 
     """
-    schema_url = "slit.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/slit.schema"
 
     def __init__(self, init=None, **kwargs):
         if isinstance(init, (SlitModel, ImageModel)):

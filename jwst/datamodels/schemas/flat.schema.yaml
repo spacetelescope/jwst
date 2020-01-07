@@ -1,11 +1,15 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/flat.schema"
 allOf:
-- $ref: referencefile.schema.yaml
-- $ref: subarray.schema.yaml
-- $ref: keyword_filter.schema.yaml
-- $ref: keyword_pfilter.schema.yaml
-- $ref: keyword_pupil.schema.yaml
-- $ref: keyword_ppupil.schema.yaml
-- $ref: keyword_channel.schema.yaml
+- $ref: referencefile.schema
+- $ref: subarray.schema
+- $ref: keyword_filter.schema
+- $ref: keyword_pfilter.schema
+- $ref: keyword_pupil.schema
+- $ref: keyword_ppupil.schema
+- $ref: keyword_channel.schema
 - type: object
   properties:
     data:
@@ -24,5 +28,4 @@ allOf:
       fits_hdu: ERR
       default: 0.0
       datatype: float32
-- $ref: dq_def.schema.yaml
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema
+- $ref: dq_def.schema

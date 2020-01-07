@@ -70,7 +70,7 @@ class ModelContainer(model_base.DataModel):
 
     # This schema merely extends the 'meta' part of the datamodel, and
     # does not describe the data contents of the container.
-    schema_url = "container.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/container.schema"
 
     def __init__(self, init=None, asn_exptypes=None, **kwargs):
 

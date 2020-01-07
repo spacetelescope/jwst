@@ -30,14 +30,12 @@ from ..lib import s3_utils
 
 from .history import HistoryList
 
-from .extension import URL_PREFIX
-
 
 class DataModel(properties.ObjectNode, ndmodel.NDModel):
     """
     Base class of all of the data models.
     """
-    schema_url = "core.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/core.schema"
 
     def __init__(self, init=None, schema=None, memmap=False,
                  pass_invalid_values=False, strict_validation=False,
@@ -103,10 +101,9 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         # Load the schema files
         if schema is None:
-            schema_path = os.path.join(URL_PREFIX, self.schema_url)
             # Create an AsdfFile so we can use its resolver for loading schemas
             asdf_file = AsdfFile()
-            schema = asdf_schema.load_schema(schema_path,
+            schema = asdf_schema.load_schema(self.schema_url,
                                              resolver=asdf_file.resolver,
                                              resolve_references=True)
 
