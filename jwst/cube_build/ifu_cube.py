@@ -912,13 +912,16 @@ class IFUCubeData():
             self.weight_power = weight_power
 
         # catch where self.weight_power, softrad or scalerad could be nan and
-        # set to None
-        if np.isnan(self.weight_power):
-            self.weight_power = None
-        if np.isnan(self.soft_rad):
-            self.soft_rad = None
-        if np.isnan(self.scalerad):
-            self.scalerad = None
+        # set to None - this should not happen - these varibles
+        if self.weight_power is not None: 
+            if np.isnan(self.weight_power):
+                self.weight_power = None
+        if self.soft_rad is not None:
+            if np.isnan(self.soft_rad):
+                self.soft_rad = None
+        if self.scalerad is not None:
+            if np.isnan(self.scalerad):
+                self.scalerad = None
 #        print('spatial size', self.spatial_size)
 #        print('spectral size', self.spectral_size)
 #        print('spatial roi', self.rois)
