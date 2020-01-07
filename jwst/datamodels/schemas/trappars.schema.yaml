@@ -1,6 +1,10 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/trappars.schema"
 title: TrapPars data model
 allOf:
-- $ref: referencefile.schema.yaml
+- $ref: referencefile.schema
 - type: object
   properties:
     trappars_table:
@@ -15,4 +19,3 @@ allOf:
         datatype: float64
       - name: decay_param
         datatype: float64
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

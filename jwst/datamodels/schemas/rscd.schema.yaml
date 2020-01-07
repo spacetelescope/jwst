@@ -1,6 +1,10 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/rscd.schema"
 title: RSCD reference file model
 allOf:
-- $ref: referencefile.schema.yaml
+- $ref: referencefile.schema
 - type: object
   properties:
     rscd_table:
@@ -41,4 +45,3 @@ allOf:
         datatype: float32
       - name:  sat_scale
         datatype: float32
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

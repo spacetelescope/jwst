@@ -23,7 +23,7 @@ class FgsImgPhotomModel(ReferenceFileModel):
         - uncertainty: float32
 
     """
-    schema_url = "fgsimg_photom.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/fgsimg_photom.schema"
 
 
 class MirImgPhotomModel(ReferenceFileModel):
@@ -44,7 +44,7 @@ class MirImgPhotomModel(ReferenceFileModel):
        - uncertainty: float32
 
     """
-    schema_url = "mirimg_photom.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/mirimg_photom.schema"
 
 
 class MirLrsPhotomModel(ReferenceFileModel):
@@ -69,7 +69,7 @@ class MirLrsPhotomModel(ReferenceFileModel):
        - reluncertainty: float32[*]
 
     """
-    schema_url = "mirlrs_photom.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/mirlrs_photom.schema"
 
 
 class MirMrsPhotomModel(ReferenceFileModel):
@@ -100,7 +100,7 @@ class MirMrsPhotomModel(ReferenceFileModel):
         An array-like object containing pixel-by-pixel size values, in units of
         square arcseconds (arcsec^2).
     """
-    schema_url = "mirmrs_photom.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/mirmrs_photom.schema"
 
     def __init__(self, init=None, **kwargs):
         super(MirMrsPhotomModel, self).__init__(init=init, **kwargs)
@@ -126,7 +126,7 @@ class NrcImgPhotomModel(ReferenceFileModel):
         - uncertainty: float32
 
     """
-    schema_url = "nrcimg_photom.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/nrcimg_photom.schema"
 
 
 class NrcWfssPhotomModel(ReferenceFileModel):
@@ -152,7 +152,7 @@ class NrcWfssPhotomModel(ReferenceFileModel):
         - reluncertainty: float32[*]
 
     """
-    schema_url = "nrcwfss_photom.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/nrcwfss_photom.schema"
 
 
 class NisImgPhotomModel(ReferenceFileModel):
@@ -173,7 +173,7 @@ class NisImgPhotomModel(ReferenceFileModel):
         - uncertainty: float32
 
     """
-    schema_url = "nisimg_photom.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/nisimg_photom.schema"
 
 
 class NisWfssPhotomModel(ReferenceFileModel):
@@ -199,7 +199,7 @@ class NisWfssPhotomModel(ReferenceFileModel):
         - reluncertainty: float32[*]
 
     """
-    schema_url = "niswfss_photom.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/niswfss_photom.schema"
 
 
 class NisSossPhotomModel(ReferenceFileModel):
@@ -225,7 +225,7 @@ class NisSossPhotomModel(ReferenceFileModel):
         - reluncertainty: float32[*]
 
     """
-    schema_url = "nissoss_photom.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/nissoss_photom.schema"
 
 
 class NrsFsPhotomModel(ReferenceFileModel):
@@ -251,7 +251,7 @@ class NrsFsPhotomModel(ReferenceFileModel):
         - reluncertainty: float32[*]
 
     """
-    schema_url = "nrsfs_photom.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/nrsfs_photom.schema"
 
 
 class NrsMosPhotomModel(ReferenceFileModel):
@@ -276,4 +276,4 @@ class NrsMosPhotomModel(ReferenceFileModel):
         - reluncertainty: float32[*]
 
     """
-    schema_url = "nrsmos_photom.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/nrsmos_photom.schema"

@@ -11,4 +11,4 @@ class Extract1dImageModel(DataModel):
     data : numpy float32 array
          1-D extraction regions array
     """
-    schema_url = "extract1dimage.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/extract1dimage.schema"

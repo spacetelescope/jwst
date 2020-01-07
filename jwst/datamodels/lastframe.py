@@ -23,7 +23,7 @@ class LastFrameModel(ReferenceFileModel):
     dq_def : numpy table
          DQ flag definitions
     """
-    schema_url = "lastframe.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/lastframe.schema"
 
     def __init__(self, init=None, **kwargs):
         super(LastFrameModel, self).__init__(init=init, **kwargs)

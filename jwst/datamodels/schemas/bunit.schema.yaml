@@ -1,3 +1,7 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/bunit.schema"
 allOf:
 - type: object
   properties:
@@ -15,4 +19,3 @@ allOf:
           type: string
           fits_hdu: ERR
           fits_keyword: BUNIT
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

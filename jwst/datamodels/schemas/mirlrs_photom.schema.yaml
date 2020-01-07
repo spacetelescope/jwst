@@ -1,10 +1,14 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/mirlrs_photom.schema"
 title: MIRI LRS photometric flux conversion data model
 allOf:
-- $ref: referencefile.schema.yaml
-- $ref: keyword_exptype.schema.yaml
-- $ref: keyword_pexptype.schema.yaml
-- $ref: keyword_band.schema.yaml
-- $ref: keyword_pixelarea.schema.yaml
+- $ref: referencefile.schema
+- $ref: keyword_exptype.schema
+- $ref: keyword_pexptype.schema
+- $ref: keyword_band.schema
+- $ref: keyword_pixelarea.schema
 - type: object
   properties:
     phot_table:
@@ -30,4 +34,3 @@ allOf:
       - name: reluncertainty
         datatype: float32
         ndim: 1
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

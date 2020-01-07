@@ -11,4 +11,4 @@ class IPCModel(ReferenceFileModel):
     data : numpy float32 array
          IPC deconvolution kernel
     """
-    schema_url = "ipc.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/ipc.schema"

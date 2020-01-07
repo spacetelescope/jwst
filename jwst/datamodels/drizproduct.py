@@ -19,7 +19,7 @@ class DrizProductModel(DataModel):
     wht : numpy float32 array
          Drizzle Weight array
     """
-    schema_url = "drizproduct.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/drizproduct.schema"
 
     @property
     def hdrtab(self):

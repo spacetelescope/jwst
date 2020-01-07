@@ -14,4 +14,4 @@ class TrapsFilledModel(DataModel):
         The map of the number of traps filled over the detector, with
         one plane for each "trap family."
     """
-    schema_url = "trapsfilled.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/trapsfilled.schema"

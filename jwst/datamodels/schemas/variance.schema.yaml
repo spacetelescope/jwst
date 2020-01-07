@@ -1,3 +1,7 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/variance.schema"
 type: object
 properties:
     var_poisson:
@@ -18,4 +22,3 @@ properties:
       max_ndim: 3
       default: 0.0
       datatype: float32
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

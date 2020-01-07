@@ -1,6 +1,10 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/outlierpars.schema"
 title: Default Oulier Detection parameters data model
 allOf:
-- $ref: referencefile.schema.yaml
+- $ref: referencefile.schema
 - type: object
   properties:
     outlierpars_table:
@@ -54,4 +58,3 @@ allOf:
       - name: backg
         datatype: float32
 
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

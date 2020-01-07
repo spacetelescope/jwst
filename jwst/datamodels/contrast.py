@@ -12,4 +12,4 @@ class ContrastModel(DataModel):
     contrast_table : numpy table
          Contrast curve table
     """
-    schema_url = "contrast.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/contrast.schema"

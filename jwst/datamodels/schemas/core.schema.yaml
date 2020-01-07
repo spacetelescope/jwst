@@ -1,3 +1,7 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/core.schema"
 type: object
 properties:
   meta:
@@ -2196,4 +2200,3 @@ properties:
             title: Master background file used
             type: string
             fits_keyword: MASTERBG
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

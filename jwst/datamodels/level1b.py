@@ -25,7 +25,7 @@ class Level1bModel(DataModel):
          table of times for each integration
 
     """
-    schema_url = "level1b.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/level1b.schema"
 
     def __init__(self, init=None, **kwargs):
         super(Level1bModel, self).__init__(init=init, **kwargs)
