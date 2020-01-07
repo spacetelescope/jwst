@@ -789,7 +789,7 @@ class IFUCubeData():
 
             minwave[i] = self.instrument_info.GetWaveMin(par1, par2)
             maxwave[i] = self.instrument_info.GetWaveMax(par1, par2)
-            # values will be set to NONE is cube pars table does not contain them
+            # values will be set to NONE if cube pars table does not contain them
 
             power[i] = self.instrument_info.GetMSMPower(par1, par2)
             softrad[i] = self.instrument_info.GetSoftRad(par1, par2)

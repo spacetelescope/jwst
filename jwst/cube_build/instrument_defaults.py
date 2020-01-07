@@ -726,7 +726,7 @@ class InstrumentInfo():
                  self.high_wroi,
                  self.high_power,
                  self.high_softrad,
-                 self.hight_scalerad)
+                 self.high_scalerad)
         return table
 
     def GetMIRISliceEndPts(self, parameter1):
