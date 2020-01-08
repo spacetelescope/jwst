@@ -6,8 +6,9 @@ import numpy as np
 import logging
 from .. import datamodels
 from ..datamodels import dqflags
-import scipy
 from scipy.interpolate import griddata
+from scipy.signal import convolve
+from scipy import mgrid
 
 
 log = logging.getLogger(__name__)
@@ -145,7 +146,7 @@ class DataSet():
 
             # 1b. Create smoothed image by smoothing this 'repaired' image
             g = gauss_kern(BLUR_SIZE, sizey=None)
-            s_data_1 = scipy.signal.convolve(data_1, g, mode='valid')
+            s_data_1 = convolve(data_1, g, mode='valid')
 
 
 
@@ -411,7 +412,7 @@ def gauss_kern(size, sizey=None):
     else:
         sizey = int(sizey)
 
-    x, y = scipy.mgrid[-size:size + 1, -sizey:sizey + 1]
+    x, y = mgrid[-size:size + 1, -sizey:sizey + 1]
     g = np.exp(-(x**2 / float(size) + y**2 / float(sizey)))
 
     return g / g.sum()
