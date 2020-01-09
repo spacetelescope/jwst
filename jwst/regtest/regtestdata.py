@@ -212,6 +212,11 @@ def run_step_from_dict(rtdata, **step_params):
     step_params: dict
         The parameters defining what step to run with what input
 
+    Returns
+    -------
+    rtdata: RegistryData
+        Updated `RegistryData` object with inputs set.
+
     Notes
     -----
     `step_params` looks like this:
@@ -259,6 +264,11 @@ def run_step_from_dict_mock(rtdata, source,  **step_params):
 
     source: Path-like folder
         The folder to copy from. All regular files are copied.
+
+    Returns
+    -------
+    rtdata: RegistryData
+        Updated `RegistryData` object with inputs set.
 
     Notes
     -----
