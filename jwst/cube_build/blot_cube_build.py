@@ -43,12 +43,6 @@ class CubeBlot():
         self.instrument = median_model.meta.instrument.name
         self.detector = median_model.meta.instrument.detector
 
-        # information on how the IFUCube was constructed
-        # self.weight_power = median_model.meta.ifu.weight_power
-        # self.weighting = median_model.meta.ifu.weighting
-        self.rois = median_model.meta.ifu.roi_spatial
-        # self.roiw = median_model.meta.ifu.roi_wave
-
         # basic information about the type of data
         self.grating = None
         self.filter = None
@@ -104,7 +98,7 @@ class CubeBlot():
         elif self.instrument == 'NIRSPEC':
             log.info('Grating %s', self.grating)
             log.info('Filter %s', self.filter)
-        log.info('Spatial ROI size  %f', self.rois)
+
         log.info('Number of input models %i ', len(self.input_models))
 
     # ************************************************************************
@@ -210,14 +204,19 @@ class CubeBlot():
                     x_slice = np.ndarray.flatten(x_slice)
                     y_slice = np.ndarray.flatten(y_slice)
                     flux_slice = np.ndarray.flatten(self.cube_flux)
-                    # print('number of original values', flux_slice.size)
                     xlimit, ylimit = slice_wcs.bounding_box
-                    # print('on slice ', ii, xlimit[0], xlimit[1], ylimit[0], ylimit[1])
+
                     xuse = np.logical_and(x_slice >= xlimit[0], x_slice <= xlimit[1])
                     yuse = np.logical_and(y_slice >= ylimit[0], y_slice <= ylimit[1])
                     fuse = np.logical_and(xuse, yuse)
                     x_slice = x_slice[fuse]
                     y_slice = y_slice[fuse]
+                    # For now keeping these print statements in case we need to revise
+                    # how blotting is done for NIRSPEC. It is very slow. After the NIRSPEC team
+                    # confirms the blotting routine is working these can be take out.
+                    
+                    # print('number of original values', flux_slice.size)
+                    # print('on slice ', ii, xlimit[0], xlimit[1], ylimit[0], ylimit[1])
                     # print('min max of xslice', np.amin(x_slice), np.amax(x_slice))
                     # print('min max of yslice', np.amin(y_slice), np.amax(y_slice))
                     flux_slice = flux_slice[fuse]
