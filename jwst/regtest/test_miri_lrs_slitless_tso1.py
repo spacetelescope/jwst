@@ -32,9 +32,10 @@ def run_tso1_pipeline(jail, rtdata_module):
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize("step_suffix", ['rate', 'rateints', 'linearity', 'rscd',
+@pytest.mark.parametrize("step_suffix", ['rate', 'rateints', 'linearity',
+                                         'rscd',
                                          'dq_init',
-                                         'saturation', 'dark_current', 'refpix',
+                                     'saturation', 'dark_current', 'refpix',
                                          'jump'])
 def test_miri_lrs_slitless_tso1(run_tso1_pipeline, fitsdiff_default_kwargs, step_suffix):
     """
