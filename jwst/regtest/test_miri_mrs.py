@@ -1,14 +1,26 @@
 """Regression tests for MIRI MRS modes"""
+from pathlib import Path
 import pytest
+
+from jwst.lib.suffix import replace_suffix
 
 from . import regtestdata as rt
 
 
 @pytest.fixture(scope='module')
-def run_spec2(jail, rtdata_module):
+def run_spec2_spec3(jail, rtdata_module):
     """Run the pipelines"""
-    step_params = {
-        'input_path': 'miri/mrs/ifushort_ch12_rate.fits',
+    rtdata = rtdata_module
+
+    # Setup the inputs
+    rtdata.get_asn('miri/mrs/ifushort_ch12_rate_asn3.json', get_members=False)
+    member_path = Path(rtdata.asn['products'][0]['members'][0]['expname'])
+    rate_path = member_path.stem
+    rate_path = replace_suffix(rate_path, 'rate')
+    rate_path = 'miri/mrs/' + rate_path + member_path.suffix
+
+    spec2_step_params = {
+        'input_path': rate_path,
         'step': 'calwebb_spec2.cfg',
         'args': [
             '--steps.bkg_subtract.save_results=true',
@@ -29,7 +41,7 @@ def run_spec2(jail, rtdata_module):
         ]
     }
 
-    return rt.run_step_from_dict(rtdata_module, **step_params)
+    return rt.run_step_from_dict(rtdata_module, **spec2_step_params)
 
 
 @pytest.fixture(scope='module')
@@ -56,9 +68,9 @@ def run_spec3(jail, rtdata_module):
     'suffix',
     ['assign_wcs', 'cal', 'flat_field', 'fringe', 'photom', 's3d', 'srctype', 'straylight', 'x1d']
 )
-def test_spec2(run_spec2, fitsdiff_default_kwargs, suffix):
+def test_spec2(run_spec2_spec3, fitsdiff_default_kwargs, suffix):
     """Test ensuring the callwebb_spec2 is operating appropriately for MIRI MRS data"""
-    rt.is_like_truth(run_spec2, fitsdiff_default_kwargs, suffix,
+    rt.is_like_truth(run_spec2_spec3, fitsdiff_default_kwargs, suffix,
                      truth_path='truth/test_miri_mrs')
 
 
