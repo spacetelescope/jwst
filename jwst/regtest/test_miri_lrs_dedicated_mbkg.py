@@ -26,7 +26,6 @@ def run_pipeline(jail, rtdata_module):
 def test_miri_lrs_dedicated_mbkg(run_pipeline, fitsdiff_default_kwargs):
     """Run a test for MIRI LRS data with dedicated background exposures."""
 
-    # Run the step and retrieve the output
     rtdata = run_pipeline
     rtdata.output = "miri_lrs_seq2_exp2_master_background.fits"
 

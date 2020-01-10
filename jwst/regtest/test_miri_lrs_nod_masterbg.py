@@ -27,7 +27,6 @@ def run_pipeline(jail, rtdata_module):
 def test_miri_lrs_nod_masterbg(run_pipeline, fitsdiff_default_kwargs, nod_seq):
     """Run a regression test for nodded MIRI LRS data."""
 
-    # Run the step and retrieve the output
     rtdata = run_pipeline
     rtdata.output = "miri_lrs_nod_" + nod_seq + "_exp1_master_background.fits"
 

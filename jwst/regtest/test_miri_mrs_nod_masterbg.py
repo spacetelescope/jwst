@@ -27,7 +27,6 @@ def run_pipeline(jail, rtdata_module):
 def test_miri_mrs_nod_masterbg(run_pipeline, fitsdiff_default_kwargs, nod_seq):
     """Run a test for MIRI MRS data with nodded background exposures."""
 
-    # Run the step and retrieve the output
     rtdata = run_pipeline
     rtdata.output = "miri_mrs_nod_" + nod_seq + \
                     "_short12_exp1_master_background.fits"

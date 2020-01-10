@@ -28,7 +28,6 @@ def test_miri_mrs_dedicated_mbkg(run_pipeline, fitsdiff_default_kwargs,
                                  exp_seq):
     """Run a test for MIRI MRS data with dedicated background exposures."""
 
-    # Run the step and retrieve the output
     rtdata = run_pipeline
     rtdata.output = "miri_mrs_seq1_long_34_" + exp_seq + \
                     "_master_background.fits"

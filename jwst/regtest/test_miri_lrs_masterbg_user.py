@@ -32,7 +32,6 @@ def run_pipeline(jail, rtdata_module):
 def test_miri_lrs_masterbg_user(run_pipeline, fitsdiff_default_kwargs):
     """Run a test for MIRI LRS data with a user-supplied background file."""
 
-    # Run the step and retrieve the output
     rtdata = run_pipeline
     rtdata.output = "miri_lrs_sci+bkg_master_background.fits"
 
