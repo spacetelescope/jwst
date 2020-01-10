@@ -39,7 +39,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
     """
     schema_url = "core.schema"
 
-    def __init__(self, init=None, schema=None,
+    def __init__(self, init=None, schema=None, memmap=False,
                  pass_invalid_values=False, strict_validation=False,
                  ignore_missing_extensions=True, **kwargs):
         """
@@ -69,6 +69,10 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             The schema to use to understand the elements on the model.
             If not provided, the schema associated with this class
             will be used.
+
+        memmap : bool
+            Turn memmap of FITS file on or off.  (default: False).  Ignored for
+            ASDF files.
 
         pass_invalid_values : bool
             If `True`, values that do not validate the schema
@@ -163,7 +167,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                 if s3_utils.is_s3_uri(init):
                     hdulist = fits.open(s3_utils.get_object(init))
                 else:
-                    hdulist = fits.open(init)
+                    hdulist = fits.open(init, memmap=memmap)
 
                 asdffile = fits_support.from_fits(hdulist,
                                               self._schema,
