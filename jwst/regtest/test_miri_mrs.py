@@ -9,7 +9,7 @@ from . import regtestdata as rt
 
 
 # Define artifactory source and truth
-BIGDATA_PATH = 'miri/mrs'
+INPUT_PATH = 'miri/mrs'
 TRUTH_PATH = 'truth/test_miri_mrs'
 
 @pytest.fixture(scope='module')
@@ -19,14 +19,14 @@ def run_spec2(jail, rtdata_module):
 
     # Setup the inputs
     asn_name = 'ifushort_ch12_rate_asn3.json'
-    rtdata.get_data(BIGDATA_PATH + '/' + asn_name)
+    rtdata.get_data(INPUT_PATH + '/' + asn_name)
     asn_path = rtdata.input
     with open(asn_path, 'r') as asn_fh:
         asn = load_asn(asn_fh)
     member_path = Path(asn['products'][0]['members'][0]['expname'])
     rate_path = member_path.stem
     rate_path = replace_suffix(rate_path, 'rate')
-    rate_path = BIGDATA_PATH + '/' + rate_path + member_path.suffix
+    rate_path = INPUT_PATH + '/' + rate_path + member_path.suffix
 
     # Run the pipeline
     step_params = {
@@ -84,7 +84,7 @@ def run_spec3(jail, run_spec2):
 def run_spec3_multi(jail, rtdata_module):
     """Run the Spec3Pipeline on multi channel/multi filter data"""
     step_params = {
-        'input_path': BIGDATA_PATH + '/' + 'ifushort_set2_asn3.json',
+        'input_path': INPUT_PATH + '/' + 'ifushort_set2_asn3.json',
         'step': 'calwebb_spec3.cfg',
         'args': [
             '--steps.master_background.save_results=true',

@@ -161,7 +161,7 @@ class RegtestData:
 
         return self.truth
 
-    def get_asn(self, path=None, docopy=None, get_members=True):
+    def get_asn(self, path=None, docopy=True, get_members=True):
         """Copy association and association members from Artifactory remote
         resource to the CWD/truth.
 
@@ -176,7 +176,7 @@ class RegtestData:
             Switch to control whether or not to copy a file
             into the test output directory when running the test.
             If you wish to open the file directly from remote
-            location or just to see path to source, set this to `False`.
+            location or just to set path to source, set this to `False`.
             Default: `True`
 
         get_members: bool
@@ -231,8 +231,8 @@ def run_step_from_dict(rtdata, **step_params):
 
     Returns
     -------
-    rtdata: RegistryData
-        Updated `RegistryData` object with inputs set.
+    rtdata: RegtestData
+        Updated `RegtestData` object with inputs set.
 
     Notes
     -----
@@ -288,8 +288,8 @@ def run_step_from_dict_mock(rtdata, source,  **step_params):
 
     Returns
     -------
-    rtdata: RegistryData
-        Updated `RegistryData` object with inputs set.
+    rtdata: RegtestData
+        Updated `RegtestData` object with inputs set.
 
     Notes
     -----
