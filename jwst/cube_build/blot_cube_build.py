@@ -214,7 +214,6 @@ class CubeBlot():
                     # For now keeping these print statements in case we need to revise
                     # how blotting is done for NIRSPEC. It is very slow. After the NIRSPEC team
                     # confirms the blotting routine is working these can be take out.
-                    
                     # print('number of original values', flux_slice.size)
                     # print('on slice ', ii, xlimit[0], xlimit[1], ylimit[0], ylimit[1])
                     # print('min max of xslice', np.amin(x_slice), np.amax(x_slice))
