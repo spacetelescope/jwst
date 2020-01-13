@@ -244,11 +244,15 @@ def run_step_from_dict(rtdata, **step_params):
     }
     """
 
-    # Get the data
-    try:
-        rtdata.get_asn(step_params['input_path'])
-    except AssociationNotValidError:
-        rtdata.get_data(step_params['input_path'])
+    # Get the data. If `step_params['input_path]` is not
+    # specified, the presumption is that `rtdata.input` has
+    # already been retrieved.
+    input_path = step_params.get('input_path', None)
+    if input_path:
+        try:
+            rtdata.get_asn(step_params['input_path'])
+        except AssociationNotValidError:
+            rtdata.get_data(step_params['input_path'])
 
     # Figure out whether we have a config or class
     step = step_params['step']
