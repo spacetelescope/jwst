@@ -51,8 +51,7 @@ def run_spec2(jail, rtdata_module):
         ]
     }
 
-    return rt.run_step_from_dict(rtdata, **step_params)
-
+    rtdata = rt.run_step_from_dict(rtdata, **step_params)
     return rtdata, asn_path
 
 
