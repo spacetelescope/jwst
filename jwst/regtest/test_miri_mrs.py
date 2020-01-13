@@ -101,6 +101,7 @@ def run_spec3_multi(jail, rtdata_module):
 
     return rt.run_step_from_dict(rtdata_module, **step_params)
 
+
 @pytest.mark.bigdata
 @pytest.mark.parametrize(
     'suffix',
@@ -127,6 +128,29 @@ def test_spec3(run_spec3, fitsdiff_default_kwargs, output):
     """Regression test matching output files"""
     rt.is_like_truth(
         run_spec3, fitsdiff_default_kwargs, output,
+        truth_path='truth/test_miri_mrs',
+        is_suffix=False
+    )
+
+
+@pytest.mark.bigdata
+@pytest.mark.parametrize(
+    'output',
+    [
+        'ifushort_set2_0_a3001_crf.fits',
+        'ifushort_set2_0_mrs_imatch.fits',
+        'ifushort_set2_1_a3001_crf.fits',
+        'ifushort_set2_1_mrs_imatch.fits',
+        'ifushort_set2_ch1-short_s3d.fits',
+        'ifushort_set2_ch1-short_x1d.fits',
+        'ifushort_set2_ch2-short_s3d.fits',
+        'ifushort_set2_ch2-short_x1d.fits',
+    ]
+)
+def test_spec3_multi(run_spec3_multi, fitsdiff_default_kwargs, output):
+    """Regression test matching output files"""
+    rt.is_like_truth(
+        run_spec3_multi, fitsdiff_default_kwargs, output,
         truth_path='truth/test_miri_mrs',
         is_suffix=False
     )
