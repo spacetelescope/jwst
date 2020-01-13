@@ -2,10 +2,15 @@
 from pathlib import Path
 import pytest
 
+from jwst.associations import load_asn
 from jwst.lib.suffix import replace_suffix
 
 from . import regtestdata as rt
 
+
+# Define artifactory source and truth
+BIGDATA_PATH = 'miri/mrs'
+TRUTH_PATH = 'truth/test_miri_mrs'
 
 @pytest.fixture(scope='module')
 def run_spec2(jail, rtdata_module):
@@ -14,12 +19,14 @@ def run_spec2(jail, rtdata_module):
 
     # Setup the inputs
     asn_name = 'ifushort_ch12_rate_asn3.json'
-    rtdata.get_asn('miri/mrs/' + asn_name, get_members=False)
+    rtdata.get_data(BIGDATA_PATH + '/' + asn_name)
     asn_path = rtdata.input
-    member_path = Path(rtdata.asn['products'][0]['members'][0]['expname'])
+    with open(asn_path, 'r') as asn_fh:
+        asn = load_asn(asn_fh)
+    member_path = Path(asn['products'][0]['members'][0]['expname'])
     rate_path = member_path.stem
     rate_path = replace_suffix(rate_path, 'rate')
-    rate_path = 'miri/mrs/' + rate_path + member_path.suffix
+    rate_path = BIGDATA_PATH + '/' + rate_path + member_path.suffix
 
     # Run the pipeline
     step_params = {
@@ -44,28 +51,20 @@ def run_spec2(jail, rtdata_module):
         ]
     }
 
-    # return rt.run_step_from_dict(rtdata, **step_params)
-    rt.run_step_from_dict_mock(
-        rtdata,
-        '/Users/eisenham/Downloads/artifactory/jwst-pipeline/newdev/truth/test_miri_mrs',
-        **step_params
-    )
+    return rt.run_step_from_dict(rtdata, **step_params)
 
-    # Set RT input back to the association path for the next pipeline run.
-    rtdata.input = asn_path
-
-    # That's all folks
-    return rtdata
+    return rtdata, asn_path
 
 
 @pytest.fixture(scope='module')
 def run_spec3(jail, run_spec2):
     """Run the Spec3Pipeline on the results from the Spec2Pipeline run"""
-    rtdata = run_spec2
+    rtdata, asn_path = run_spec2
 
     # The presumption is that `run_spec2` has set the input to the
     # original association. To use this default, and not re-download
     # the association, simply do not specify `step_params["input_path"]`
+    rtdata.input = asn_path
     step_params = {
         'step': 'calwebb_spec3.cfg',
         'args': [
@@ -86,7 +85,7 @@ def run_spec3(jail, run_spec2):
 def run_spec3_multi(jail, rtdata_module):
     """Run the Spec3Pipeline on multi channel/multi filter data"""
     step_params = {
-        'input_path': 'miri/mrs/ifushort_set2_asn3.json',
+        'input_path': BIGDATA_PATH + '/' + 'ifushort_set2_asn3.json',
         'step': 'calwebb_spec3.cfg',
         'args': [
             '--steps.master_background.save_results=true',
@@ -109,8 +108,9 @@ def run_spec3_multi(jail, rtdata_module):
 )
 def test_spec2(run_spec2, fitsdiff_default_kwargs, suffix):
     """Test ensuring the callwebb_spec2 is operating appropriately for MIRI MRS data"""
-    rt.is_like_truth(run_spec2, fitsdiff_default_kwargs, suffix,
-                     truth_path='truth/test_miri_mrs')
+    rtdata, asn_path = run_spec2
+    rt.is_like_truth(rtdata, fitsdiff_default_kwargs, suffix,
+                     truth_path=TRUTH_PATH)
 
 
 @pytest.mark.bigdata
@@ -128,7 +128,7 @@ def test_spec3(run_spec3, fitsdiff_default_kwargs, output):
     """Regression test matching output files"""
     rt.is_like_truth(
         run_spec3, fitsdiff_default_kwargs, output,
-        truth_path='truth/test_miri_mrs',
+        truth_path=TRUTH_PATH,
         is_suffix=False
     )
 
@@ -151,6 +151,6 @@ def test_spec3_multi(run_spec3_multi, fitsdiff_default_kwargs, output):
     """Regression test matching output files"""
     rt.is_like_truth(
         run_spec3_multi, fitsdiff_default_kwargs, output,
-        truth_path='truth/test_miri_mrs',
+        truth_path=TRUTH_PATH,
         is_suffix=False
     )
