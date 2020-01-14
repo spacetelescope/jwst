@@ -10,12 +10,12 @@ from numpy.testing.utils import assert_allclose
 from jwst import datamodels
 from jwst.assign_wcs import AssignWcsStep
 from jwst.background import BackgroundStep
-from jwst.background.tests import data
+from jwst.background.tests import data as data_directory
 from jwst.stpipe.step import Step
 from jwst.background.background_sub import robust_mean, mask_from_source_cat, no_NaN
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 
-data_path = os.path.split(os.path.abspath(data.__file__))[0]
+data_path = os.path.split(os.path.abspath(data_directory.__file__))[0]
 
 def get_file_path(filename):
     """Construct an absolute path."""
@@ -181,7 +181,9 @@ def make_wfss_datamodel():
         'zero_frame': False}
 
     subarray = {'xsize':2048,
-                'ysize':2048}
+                'ysize':2048,
+                'xstart':1,
+                'ystart':1}
 
     instrument = {
         'filter_position':1,
