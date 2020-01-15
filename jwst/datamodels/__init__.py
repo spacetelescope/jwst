@@ -24,7 +24,7 @@ from .gls_rampfit import GLS_RampFitModel
 from .guiderraw import GuiderRawModel
 from .guidercal import GuiderCalModel
 from .ifucube import IFUCubeModel
-from .ifucubepars import IFUCubeParsModel, NirspecIFUCubeParsModel, MiriIFUCubeParsModel
+from .ifucubepars import NirspecIFUCubeParsModel, MiriIFUCubeParsModel
 from .ifuimage import IFUImageModel
 from .image import ImageModel
 from .ipc import IPCModel
@@ -99,7 +99,7 @@ __all__ = [
     'FringeModel', 'GainModel', 'GLS_RampFitModel',
     'GuiderRawModel', 'GuiderCalModel',
     'IFUCubeModel',
-    'IFUCubeParsModel', 'NirspecIFUCubeParsModel', 'MiriIFUCubeParsModel',
+    'NirspecIFUCubeParsModel', 'MiriIFUCubeParsModel',
     'IFUFOREModel', 'IFUImageModel', 'IFUPostModel', 'IFUSlicerModel',
     'ImageModel', 'IPCModel', 'IRS2Model', 'LastFrameModel', 'Level1bModel',
     'LinearityModel', 'MaskModel', 'ModelContainer', 'MSAModel',

@@ -97,6 +97,7 @@ def test_miri_use_cubepars(_jail, miri_cube_pars):
 
     cube_build_io_util.read_cubepars(miri_cube_pars,
                                      'MIRI',
+                                     'msm',
                                      all_channel,
                                      all_subchannel,
                                      all_grating,
@@ -198,6 +199,7 @@ def test_miri_cubepars_user_defaults(_jail, miri_cube_pars):
 
     cube_build_io_util.read_cubepars(miri_cube_pars,
                                      'MIRI',
+                                     'msm',
                                      all_channel,
                                      all_subchannel,
                                      all_grating,
@@ -370,6 +372,7 @@ def test_miri_cubepars_multiple_bands(_jail, miri_cube_pars):
 
     cube_build_io_util.read_cubepars(miri_cube_pars,
                                      'MIRI',
+                                     'msm',
                                      all_channel,
                                      all_subchannel,
                                      all_grating,
