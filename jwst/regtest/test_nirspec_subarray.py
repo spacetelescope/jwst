@@ -17,7 +17,7 @@ nrs1_group_subarray_rate.fits           output
 def run_pipeline(jail, rtdata_module):
     """Run calwebb_detector1 pipeline on NIRSpec subarray data."""
     rtdata = rtdata_module
-    rtdata.get_data("nirspec/spectroscopic/nrs1_group_subarray.fits")
+    rtdata.get_data("nirspec/fs/nrs1_group_subarray.fits")
 
     collect_pipeline_cfgs('config')
     args = ["config/calwebb_detector1.cfg", rtdata.input,

@@ -22,7 +22,7 @@ def run_pipeline(jail, rtdata_module, request):
     collect_pipeline_cfgs("config")
 
     # Get the input exposure
-    rtdata.get_data('nirspec/spectroscopic/' + request.param + 'rate.fits')
+    rtdata.get_data('nirspec/fs/' + request.param + 'rate.fits')
 
     # Run the calwebb_spec2 pipeline; save results from intermediate steps
     args = ["config/calwebb_spec2.cfg", rtdata.input,
