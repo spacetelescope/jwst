@@ -40,7 +40,7 @@ class Image2Pipeline(Pipeline):
         }
 
     # List of normal imaging exp_types
-    image_exptypes = ['MIR_IMAGE', 'NRC_IMAGE', 'NIS_IMAGE']
+    image_exptypes = ['MIR_IMAGE', 'NRC_IMAGE', 'NIS_IMAGE', 'FGS_IMAGE']
 
     def process(self, input):
 
