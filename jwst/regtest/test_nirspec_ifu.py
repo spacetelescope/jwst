@@ -8,7 +8,7 @@ from . import regtestdata as rt
 def run_spec2(jail, rtdata_module):
     """Run the pipelines"""
     step_params = {
-        'input_path': 'nirspec/ifu/nrs_ifu_nrs1_rate.fits',
+        'input_path': 'nirspec/ifu/nrs_ifu_spec2_asn.json',
         'step': 'calwebb_spec2.cfg',
         'args': [
             '--steps.bkg_subtract.save_results=true',
@@ -55,7 +55,7 @@ def run_spec3(jail, rtdata_module):
 @pytest.mark.bigdata
 @pytest.mark.parametrize(
     'suffix',
-    ['assign_wcs', 'cal', 'flat_field', 'msa_flagging', 'pathloss', 'photom', 's3d', 'srctype', 'x1d']
+    ['assign_wcs', 'cal', 'flat_field', 'imprint_subtract', 'msa_flagging', 'pathloss', 'photom', 's3d', 'srctype', 'x1d']
 )
 def test_spec2(run_spec2, fitsdiff_default_kwargs, suffix):
     """Regression test matching output files"""

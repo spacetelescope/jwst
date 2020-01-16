@@ -11,6 +11,7 @@ test_data = [
     ('ifu_nrs2', 'jw00011001001_01120_00003_nrs2_rate.fits', 'jw00011001001_01120_00003_nrs2_assign_wcs.fits'),
     ('fs_nrs1', 'jw00023001001_01101_00001_nrs1_rate.fits', 'jw00023001001_01101_00001_nrs1_assign_wcs.fits')]
 
+
 @pytest.mark.bigdata
 @pytest.mark.parametrize("test_id, input_file, truth_file", test_data)
 def test_nirspec_wcs(_jail, rtdata, test_id, input_file, truth_file):
