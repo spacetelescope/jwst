@@ -15,10 +15,10 @@ def run_pipeline(jail, rtdata_module):
     collect_pipeline_cfgs("config")
 
     # Get the MSA metadata file referenced in the input exposure
-    rtdata.get_data("nirspec/spectroscopic/jw95065006001_0_short_msa.fits")
+    rtdata.get_data("nirspec/mos/jw95065006001_0_short_msa.fits")
 
     # Get the input exposure
-    rtdata.get_data("nirspec/spectroscopic/f170lp-g235m_mos_observation-6-c0e0_001_dn_nrs1_mod.fits")
+    rtdata.get_data("nirspec/mos/f170lp-g235m_mos_observation-6-c0e0_001_dn_nrs1_mod.fits")
 
     # Run the calwebb_spec2 pipeline; save results from intermediate steps
     args = ["config/calwebb_spec2.cfg", rtdata.input,
