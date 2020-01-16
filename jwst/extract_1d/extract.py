@@ -2879,14 +2879,13 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
         if isinstance(input_model, (datamodels.ImageModel,
                                     datamodels.DrizProductModel)):
 
-            # The following 3 lines are a temporary hack to get NIRSpec
+            # The following 2 lines are a temporary hack to get NIRSpec
             # fixed-slit exposures containing just 1 slit to make it
             # through processing. Once the DrizProductModel schema is
             # updated to carry over the necessary slit meta data, this
             # should no longer be needed. See JP-1144.
             if input_model.meta.exposure.type == 'NRS_FIXEDSLIT':
                 slitname = input_model.meta.instrument.fixed_slit
-                slit = None
 
             prev_offset = OFFSET_NOT_ASSIGNED_YET
             for sp_order in spectral_order_list:
@@ -2906,6 +2905,7 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                 if subtract_background is not None:
                     extract_params['subtract_background'] = subtract_background
                 if extract_params['match'] == EXACT:
+                    slit = None
                     extract_params['dispaxis'] = \
                                 input_model.meta.wcsinfo.dispersion_direction
                     if extract_params['dispaxis'] is None:
