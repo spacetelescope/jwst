@@ -31,6 +31,8 @@ master_background
 pipeline
 --------
 
+- Added FGS_IMAGE to the exposure types to apply resampling in calwebb_image2.py [#4421]
+
 - Make the naming and writing out of the resampled results to an `i2d` file
   in `Image2Pipeline` consistent between config and class invocations [#4333]
 
