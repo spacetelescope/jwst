@@ -18,6 +18,8 @@ datamodels
 
 - Deprecate MIRIRampModel [#4328]
 
+- Make memmap=False be the default in datamodels [#4445]
+
 extract_1d
 ----------
 
