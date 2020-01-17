@@ -2,6 +2,10 @@ import pytest
 from astropy.io.fits.diff import FITSDiff
 from astropy.table import Table, setdiff
 
+from ci_watson.artifactory_helpers import get_bigdata
+
+from jwst.lib.set_telescope_pointing import add_wcs
+from jwst.lib import engdb_tools
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
@@ -69,3 +73,30 @@ def test_nircam_tsgrism_stage3_whtlt(run_pipelines):
 
     # setdiff returns a table of length zero if there is no difference
     assert len(setdiff(table, table_truth)) == 0
+
+
+@pytest.mark.bigdata
+def test_nircam_setpointing(_jail, rtdata, fitsdiff_default_kwargs):
+    """
+    Regression test of the set_telescope_pointing script on a level-1b NIRCam file.
+    """
+
+    # Copy original version of file to test file, which will get overwritten by test
+    input_file = rtdata.get_data("nircam/tsgrism/\
+       jw00721012001x_03103_00001-seg001_nrcalong_uncal_orig.fits")
+
+    # Get SIAF PRD database file
+    siaf_prd_loc = ['common', 'prd.db']
+    siaf_path = get_bigdata(*siaf_prd_loc)
+
+    # Call the WCS routine, using the ENGDB_Service
+    add_wcs(input_file, siaf_path=siaf_path, engdb_url=engdb_tools.ENGDB_BASE_URxL)
+    rtdata.output = input_file
+
+    rtdata.get_truth("truth/test_nircam_tsgrism_stages/
+        jw00721012001_03103_00001-seg001_nrcalong_uncal_ref.fits")
+
+    fitsdiff_default_kwargs['rtol'] = 0.000001
+
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
