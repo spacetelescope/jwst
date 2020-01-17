@@ -5,7 +5,7 @@ from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 from jwst.associations.asn_from_list import asn_from_list
 
-DATASET1_ID = "jw00623026001_03106_00005_mirimage_uncal"
+DATASET1_ID = "jw00623026001_03106_00005_mirimage"
 
 DATASET_ID = "jw80600012001_02101_00003_mirimage"
 PRODUCT_NAME = "jw80600-o012_t001_miri_p750l-slitlessprism"
@@ -16,7 +16,7 @@ def run_tso1_pipeline(jail, rtdata_module):
     """Run the calwebb_tso1 pipeline on a MIRI LRS slitless exposure."""
     rtdata = rtdata_module
     collect_pipeline_cfgs("config")
-    rtdata.get_data(f"miri/lrs/{DATASET1_ID}.fits")
+    rtdata.get_data(f"miri/lrs/{DATASET1_ID}_uncal.fits")
 
     args = [
         "config/calwebb_tso1.cfg",
