@@ -137,9 +137,9 @@ catch any errors due to inconsistent inputs/outputs or invalid parameters.
 
 To test the file, it can be read in again using the ``asdf.open()`` function:
 
->>> ff = asdf.open('reffile.asdf')
->>> model = ff.tree['model']
->>> model(1)
+>>> with asdf.open('reffile.asdf') as ff:
+...     model = ff.tree['model']
+...     model(1)
     -152.2
 
 
