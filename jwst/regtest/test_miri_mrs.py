@@ -7,10 +7,10 @@ from jwst.lib.suffix import replace_suffix
 
 from . import regtestdata as rt
 
-
 # Define artifactory source and truth
 INPUT_PATH = 'miri/mrs'
 TRUTH_PATH = 'truth/test_miri_mrs'
+
 
 @pytest.fixture(scope='module')
 def run_spec2(jail, rtdata_module):
