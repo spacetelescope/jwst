@@ -1,4 +1,4 @@
-"""Regression tests for NIRSpec"""
+"""Regression tests for NIRSpec IFU"""
 from pathlib import Path
 import pytest
 
@@ -142,7 +142,7 @@ def test_spec3(run_spec3, fitsdiff_default_kwargs, output):
 def test_spec3_multi(run_spec3_multi, fitsdiff_default_kwargs, output):
     """Regression test matching output files"""
     rt.is_like_truth(
-        run_spec3, fitsdiff_default_kwargs, output,
+        run_spec3_multi, fitsdiff_default_kwargs, output,
         truth_path=TRUTH_PATH,
         is_suffix=False
     )
