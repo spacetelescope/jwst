@@ -23,6 +23,9 @@ extract_1d
 
 - Updated to work with the current output from photom [#4369]
 
+- Fixed bug regarding background for NIRSpec or NIRISS (SOSS) point source
+  spectra. [#4459]
+
 master_background
 -----------------
 
