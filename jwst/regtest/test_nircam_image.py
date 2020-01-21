@@ -112,10 +112,6 @@ def test_nircam_image_stage3_i2d(run_pipelines, fitsdiff_default_kwargs):
     rtdata.output = "jw42424-o002_t001_nircam_clear-f444w_i2d.fits"
     rtdata.get_truth("truth/test_nircam_image_stages/jw42424-o002_t001_nircam_clear-f444w_i2d.fits")
 
-    fitsdiff_default_kwargs['ignore_fields'] += ['filename']
-    fitsdiff_default_kwargs['ignore_keywords'] += ['naxis1', 'tform*']
-    fitsdiff_default_kwargs['rtol'] = 0.00001
-    fitsdiff_default_kwargs['atol'] = 0.00001
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 

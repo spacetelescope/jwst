@@ -12,7 +12,6 @@ def run_pipeline(jail, rtdata_module):
     psfmask = rtdata.get_data("nircam/coron/jwst_nircam_psfmask_somb.fits")
     rtdata.get_asn("nircam/coron/jw99999-a3001_20170327t121212_coron3_001_asn.json")
 
-
     # Run the calwebb_coron3 pipeline on the association
     collect_pipeline_cfgs("config")
     args = ["config/calwebb_coron3.cfg", rtdata.input,
@@ -48,7 +47,6 @@ def test_nircam_coron3_product(run_pipeline, suffix, fitsdiff_default_kwargs):
     rtdata.output = output
     rtdata.get_truth("truth/test_nircam_coron3/" + output)
 
-    fitsdiff_default_kwargs['rtol'] = 0.00001
     fitsdiff_default_kwargs['atol'] = 0.00001
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()

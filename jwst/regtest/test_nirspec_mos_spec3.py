@@ -31,7 +31,6 @@ def test_nirspec_mos_spec3(run_pipeline, suffix, source_id, fitsdiff_default_kwa
     rtdata.output = output
     rtdata.get_truth("truth/test_nirspec_mos_spec3/" + output)
 
-    fitsdiff_default_kwargs['rtol'] = 0.00001
     fitsdiff_default_kwargs['atol'] = 0.00001
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
