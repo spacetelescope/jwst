@@ -31,13 +31,14 @@ def run_spec2_pipeline(jail, rtdata_module):
 @pytest.fixture(scope="module")
 def generate_tso3_asn():
     """Generate an association file that references the output of run_spec2_pipeline."""
-    asn = asn_from_list([f"{DATASET_ID}_calints.fits"], product_name=PRODUCT_NAME,)
+    asn = asn_from_list([f"{DATASET_ID}_calints.fits"], product_name=PRODUCT_NAME)
+    asn["program"] = "80600"
 
     name, serialized = asn.dump(format="json")
     with open(name, "w") as f:
         f.write(serialized)
 
-    return name, asn.acid.id
+    return name, asn["asn_id"]
 
 
 @pytest.fixture(scope="module")
@@ -55,9 +56,8 @@ def run_spec3_pipeline(run_spec2_pipeline, generate_tso3_asn):
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("step_suffix", ["flat_field", "srctype", "calints", "x1dints"])
-def test_miri_lrs_slitless_spec2(
-    run_spec2_pipeline, rtdata_module, fitsdiff_default_kwargs, step_suffix
-):
+def test_miri_lrs_slitless_spec2(rtdata_module, fitsdiff_default_kwargs,
+    step_suffix):
     """Compare the output of a MIRI LRS slitless calwebb_tso-spec2 step."""
     rtdata = rtdata_module
 
@@ -71,7 +71,7 @@ def test_miri_lrs_slitless_spec2(
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize(
-    "step_suffix,filename_extension,is_product",
+    "step_suffix, filename_extension, is_product",
     [
         ("outlier_detection", "fits", False),
         ("crfints", "fits", False),
@@ -80,9 +80,8 @@ def test_miri_lrs_slitless_spec2(
     ],
 )
 def test_miri_lrs_slitless_tso3(
-    run_spec3_pipeline,
-    generate_tso3_asn,
     rtdata_module,
+    generate_tso3_asn,
     fitsdiff_default_kwargs,
     step_suffix,
     filename_extension,

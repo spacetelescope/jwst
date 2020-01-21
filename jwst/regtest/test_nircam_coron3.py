@@ -33,6 +33,7 @@ def test_nircam_coron3_exp(run_pipeline, suffix, exposure, fitsdiff_default_kwar
     rtdata.output = output
     rtdata.get_truth("truth/test_nircam_coron3/" + output)
 
+    fitsdiff_default_kwargs["atol"] = 1e-5
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
@@ -47,6 +48,6 @@ def test_nircam_coron3_product(run_pipeline, suffix, fitsdiff_default_kwargs):
     rtdata.output = output
     rtdata.get_truth("truth/test_nircam_coron3/" + output)
 
-    fitsdiff_default_kwargs['atol'] = 0.00001
+    fitsdiff_default_kwargs['atol'] = 1e-5
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()

@@ -1,6 +1,5 @@
 import pytest
 from astropy.io.fits.diff import FITSDiff
-from astropy.table import Table, setdiff
 
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
@@ -77,10 +76,13 @@ def test_miri_image_stages123(run_pipelines, fitsdiff_default_kwargs, suffix):
     rtdata.input = "det_image_1_MIRIMAGE_F770Wexp1_5stars_uncal.fits"
     output = "det_image_1_MIRIMAGE_F770Wexp1_5stars_" + suffix + ".fits"
     rtdata.output = output
-    #assert os.path.exists(rtdata.output)
 
     rtdata.get_truth("truth/test_miri_image_stages/" + output)
 
+    # Set tolerances so the crf, rscd and rateints file comparisons work across
+    # architectures
+    fitsdiff_default_kwargs["rtol"] = 1e-4
+    fitsdiff_default_kwargs["atol"] = 1e-4
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
@@ -92,6 +94,7 @@ def test_miri_image_stage3_i2d(run_pipelines, fitsdiff_default_kwargs):
     rtdata.output = "det_dithered_5stars_f770w_i2d.fits"
     rtdata.get_truth("truth/test_miri_image_stages/det_dithered_5stars_f770w_i2d.fits")
 
+    fitsdiff_default_kwargs["rtol"] = 1e-4
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
