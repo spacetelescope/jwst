@@ -1,21 +1,10 @@
-import os.path
-import shutil
-import tempfile
 from astropy.modeling import models
 from astropy import units as u
-from ...datamodels import DistortionModel
+from jwst.datamodels import DistortionModel
 
 
-def setup():
-    global tmpdir
-    tmpdir = tempfile.mkdtemp()
-
-
-def teardown():
-    shutil.rmtree(tmpdir)
-
-
-def test_distortion_schema():
+def test_distortion_schema(tmpdir):
+    """Make sure DistortionModel roundtrips"""
     m = models.Shift(1) & models.Shift(2)
     dist = DistortionModel(model=m, input_units=u.pixel, output_units=u.arcsec)
     dist.meta.instrument.name = "NIRCAM"
@@ -26,12 +15,13 @@ def test_distortion_schema():
     dist.meta.exposure.type = "NRC_IMAGE"
     dist.meta.psubarray = "FULL|SUB64P|SUB160)|SUB160P|SUB320|SUB400P|SUB640|"
     dist.meta.subarray.name = "FULL"
-    path = os.path.join(tmpdir, "test_dist.asdf")
+    path = str(tmpdir.join("test_dist.asdf"))
     dist.save(path)
-    dist1 = DistortionModel(path)
-    assert dist1.meta.instrument.p_pupil == dist.meta.instrument.p_pupil
-    assert dist1.meta.instrument.pupil == dist.meta.instrument.pupil
-    assert dist1.meta.exposure.p_exptype == dist.meta.exposure.p_exptype
-    assert dist1.meta.exposure.type == dist.meta.exposure.type
-    assert dist1.meta.psubarray == dist.meta.psubarray
-    assert dist1.meta.subarray.name == dist.meta.subarray.name
+
+    with DistortionModel(path) as dist1:
+        assert dist1.meta.instrument.p_pupil == dist.meta.instrument.p_pupil
+        assert dist1.meta.instrument.pupil == dist.meta.instrument.pupil
+        assert dist1.meta.exposure.p_exptype == dist.meta.exposure.p_exptype
+        assert dist1.meta.exposure.type == dist.meta.exposure.type
+        assert dist1.meta.psubarray == dist.meta.psubarray
+        assert dist1.meta.subarray.name == dist.meta.subarray.name

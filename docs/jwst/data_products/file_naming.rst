@@ -1,11 +1,13 @@
+.. _file_naming_schemes:
+
 File Naming Schemes
 -------------------
 
 .. _exp_file_names:
 
-Stage 0 - 2 Naming
-^^^^^^^^^^^^^^^^^^
-The FITS file naming scheme for Stage 0, 1, and 2 "exposure-based" products is::
+Exposure file names
+^^^^^^^^^^^^^^^^^^^
+The names of the exposure level data (stage 0 to 2) are constructed with information from the science header of the exposure, allowing users to map it to the observation in their corresponding APT files. The FITS file naming scheme for Stage 0, 1, and 2 "exposure-based" products is:
 
  jw<ppppp><ooo><vvv>_<gg><s><aa>_<eeeee>(-<"seg"NNN>)_<detector>_<prodType>.fits
 
@@ -28,9 +30,17 @@ An example Stage 1 product FITS file name is::
 
 .. _src_file_names:
 
-Stage 3 Naming
-^^^^^^^^^^^^^^
-The FITS file naming scheme for Stage 3 "source-based" products is::
+Stage 3 file names
+^^^^^^^^^^^^^^^^^^
+In this stage, the calibration pipeline uses the association information to identify the relationship between exposures 
+that are to be combined by design to form a single product. These data products result from the combination of multiple 
+exposures like dithers or mosaics.
+
+The format for the file name of a Stage 3 association product has all alphabetic characters in lower case, underscores 
+are only used to delineate between major fields, and dashes can be used as separators for optional fields. 
+Just as for Stage 2, the suffix distinguishes the different file products of Stage 3 of the calibration pipeline.
+
+The FITS file naming scheme for Stage 3 "source-based" products is:
 
  jw<ppppp>-<AC_ID>_[<"t"TargID | "s"SourceID>](-<"epoch"X>)_<instr>_<optElements>(-<subarray>)_<prodType>(-<ACT_ID>).fits
 
@@ -47,9 +57,12 @@ where
  - prodType: product type identifier (e.g. 'i2d', 's3d', 'x1d')
  - ACT_ID: a 2-digit activity ID
 
-An example Stage 3 product FITS file name is::
+
+An example Stage 3 product FITS file name is:
 
  jw87600-a3001_t001_niriss_f480m-nrm_amiavg.fits
+
+In this case, the EPOCH is an optional parameter that is used for observations of the same target that are taken at different epochs.
 
 .. _segmented_files:
 
