@@ -18,19 +18,12 @@ def run_spec2(jail, rtdata_module):
     rtdata = rtdata_module
 
     # Setup the inputs
-    asn_name = 'single_nrs1_spec3_asn.json'
-    rtdata.get_data(INPUT_PATH + '/' + asn_name)
-    asn_path = rtdata.input
-    with open(asn_path, 'r') as asn_fh:
-        asn = load_asn(asn_fh)
-    member_path = Path(asn['products'][0]['members'][0]['expname'])
-    rate_path = member_path.stem
-    rate_path = replace_suffix(rate_path, 'rate')
-    rate_path = INPUT_PATH + '/' + rate_path + member_path.suffix
+    asn_name = 'single_nrs1_ifu_spec2_asn.json'
+    asn_path = INPUT_PATH + '/' + asn_name
 
     # Run the pipeline
     step_params = {
-        'input_path': rate_path,
+        'input_path': asn_path,
         'step': 'calwebb_spec2.cfg',
         'args': [
             '--steps.bkg_subtract.save_results=true',
@@ -51,8 +44,13 @@ def run_spec2(jail, rtdata_module):
         ]
     }
 
-    rtdata = rt.run_step_from_dict(rtdata, **step_params)
-    return rtdata, asn_path
+    #rtdata = rt.run_step_from_dict(rtdata, **step_params)
+    rtdata = rt.run_step_from_dict_mock(
+        rtdata,
+        '/Users/eisenham/Downloads/artifactory/jwst-pipeline/newdev/truth/test_nirspec_ifu',
+        **step_params
+    )
+    return rtdata
 
 
 @pytest.fixture(scope='module')
@@ -103,12 +101,11 @@ def run_spec3_multi(jail, rtdata_module):
 @pytest.mark.bigdata
 @pytest.mark.parametrize(
     'suffix',
-    ['assign_wcs', 'cal', 'flat_field', 'imprint_subtract', 'msa_flagging', 'pathloss', 'photom', 's3d', 'srctype', 'x1d']
+    ['assign_wcs', 'cal', 'flat_field', 'msa_flagging', 'pathloss', 'photom', 's3d', 'srctype', 'x1d']
 )
 def test_spec2(run_spec2, fitsdiff_default_kwargs, suffix):
     """Regression test matching output files"""
-    rtdata, asn_path = run_spec2
-    rt.is_like_truth(rtdata, fitsdiff_default_kwargs, suffix,
+    rt.is_like_truth(run_spec2, fitsdiff_default_kwargs, suffix,
                      truth_path=TRUTH_PATH)
 
 
