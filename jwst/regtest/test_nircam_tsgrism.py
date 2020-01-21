@@ -90,11 +90,10 @@ def test_nircam_setpointing(_jail, rtdata, fitsdiff_default_kwargs):
     siaf_path = get_bigdata(*siaf_prd_loc)
 
     # Call the WCS routine, using the ENGDB_Service
-    add_wcs(input_file, siaf_path=siaf_path, engdb_url=engdb_tools.ENGDB_BASE_URxL)
+    add_wcs(input_file, siaf_path=siaf_path, engdb_url=engdb_tools.ENGDB_BASE_URL)
     rtdata.output = input_file
 
-    rtdata.get_truth("truth/test_nircam_tsgrism_stages/
-        jw00721012001_03103_00001-seg001_nrcalong_uncal_ref.fits")
+    rtdata.get_truth("truth/test_nircam_tsgrism_stages/jw00721012001_03103_00001-seg001_nrcalong_uncal_ref.fits")
 
     fitsdiff_default_kwargs['rtol'] = 0.000001
 
