@@ -6,7 +6,6 @@ import json
 import getpass
 import pytest
 from ci_watson.artifactory_helpers import UPLOAD_SCHEMA
-import numpy as np
 from astropy.table import Table
 from numpy.testing import assert_allclose
 
@@ -183,12 +182,12 @@ def _rtdata_fixture_implementation(artifactory_repos, envopt, request):
 
 
 @pytest.fixture(scope='function')
-def rtdata(artifactory_repos, envopt, request):
+def rtdata(artifactory_repos, envopt, request, _jail):
     yield from _rtdata_fixture_implementation(artifactory_repos, envopt, request)
 
 
 @pytest.fixture(scope='module')
-def rtdata_module(artifactory_repos, envopt, request):
+def rtdata_module(artifactory_repos, envopt, request, jail):
     yield from _rtdata_fixture_implementation(artifactory_repos, envopt, request)
 
 
@@ -215,10 +214,10 @@ def diff_astropy_tables():
 
         diffs = []
 
-        if truth.colnames != truth.colnames:
+        if result.colnames != truth.colnames:
             diffs.append("Column names (or order) do not match")
 
-        if len(truth) != len(truth):
+        if len(result) != len(truth):
             diffs.append("Row count does not match")
 
         # If either the columns or the row count is mismatched, then don't
@@ -226,26 +225,26 @@ def diff_astropy_tables():
         if len(diffs) > 0:
             return diffs
 
-        if truth.meta != truth.meta:
+        if result.meta != truth.meta:
             diffs.append("Metadata does not match")
 
         for col_name in truth.colnames:
             try:
-                if truth[col_name].dtype != truth[col_name].dtype:
+                if result[col_name].dtype != truth[col_name].dtype:
                     diffs.append(f"Column '{col_name}' dtype does not match")
                     continue
 
                 dtype = truth[col_name].dtype
                 if dtype.kind == "f":
                     try:
-                        assert_allclose(truth[col_name], truth[col_name],
+                        assert_allclose(result[col_name], truth[col_name],
                             rtol=rtol, atol=atol)
                     except AssertionError as err:
                         diffs.append(
                             f"Column '{col_name}' values do not match (within tolerances) \n{str(err)}"
                         )
                 else:
-                    if not (truth[col_name] == truth[col_name]).all():
+                    if not (result[col_name] == truth[col_name]).all():
                         diffs.append(f"Column '{col_name}' values do not match")
             except AttributeError:
                 # Ignore case where a column does not have a dtype, as in the case
