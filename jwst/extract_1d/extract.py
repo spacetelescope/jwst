@@ -2805,10 +2805,9 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
             if photom_has_been_run:
                 # for NIRSpec data and NIRISS SOSS, point source
                 if input_units_are_megajanskys:
-                    # MJy --> Jy
-                    flux = temp_flux * 1.e6
+                    flux = temp_flux * 1.e6             # MJy --> Jy
                     surf_bright[:] = 0.
-                    background[:] = 0.
+                    background[:] /= pixel_solid_angle  # MJy / sr
                 else:
                     # MJy / steradian --> Jy
                     flux = temp_flux * pixel_solid_angle * 1.e6
@@ -2938,10 +2937,9 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                 if photom_has_been_run:
                     # for NIRSpec data and NIRISS SOSS, point source
                     if input_units_are_megajanskys:
-                        # MJy --> Jy
-                        flux = temp_flux * 1.e6
+                        flux = temp_flux * 1.e6             # MJy --> Jy
                         surf_bright[:] = 0.
-                        background[:] = 0.
+                        background[:] /= pixel_solid_angle  # MJy / sr
                     else:
                         # MJy / steradian --> Jy
                         flux = temp_flux * pixel_solid_angle * 1.e6
@@ -3049,10 +3047,9 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                     if photom_has_been_run:
                         # for NIRSpec data and NIRISS SOSS, point source
                         if input_units_are_megajanskys:
-                            # MJy --> Jy
-                            flux = temp_flux * 1.e6
+                            flux = temp_flux * 1.e6             # MJy --> Jy
                             surf_bright[:] = 0.
-                            background[:] = 0.
+                            background[:] /= pixel_solid_angle  # MJy / sr
                         else:
                             # MJy / steradian --> Jy
                             flux = temp_flux * pixel_solid_angle * 1.e6

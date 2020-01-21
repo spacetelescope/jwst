@@ -109,17 +109,17 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background):
     background /= npixels_temp
     del npixels_temp
 
+    pixel_solid_angle = input_model.meta.photometry.pixelarea_steradians
+    if pixel_solid_angle is None:
+        log.warning("Pixel area (solid angle) is not populated; "
+                    "the flux will not be correct.")
+        pixel_solid_angle = 1.
     if input_units_are_megajanskys:
-        # Convert flux from MJy to Jy.
+        # Convert flux from MJy to Jy, and convert background to MJy / sr.
         flux = temp_flux * 1.e6
         surf_bright[:] = 0.
-        background[:] = 0.
+        background[:] /= pixel_solid_angle
     else:
-        pixel_solid_angle = input_model.meta.photometry.pixelarea_steradians
-        if pixel_solid_angle is None:
-            log.warning("Pixel area (solid angle) is not populated; "
-                        "the flux will not be correct.")
-            pixel_solid_angle = 1.
         # Convert flux from MJy / steradian to Jy.
         flux = temp_flux * pixel_solid_angle * 1.e6
         # surf_bright and background were computed above
