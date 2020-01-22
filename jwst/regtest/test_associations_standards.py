@@ -37,6 +37,7 @@ DEF_ARGS = []
 
 # Define the standards
 class MakePars():
+    """Setup the test parameters """
     def __init__(
             self,
             pool_root,
@@ -86,6 +87,7 @@ standards = [
 # Tests
 # #####
 class TestAgainstStandards(BaseJWSTTest):
+    """Generate tests and compare with standard results"""
     input_loc = 'associations'
     test_dir = 'standards'
     ref_loc = [test_dir, 'truth']
@@ -95,8 +97,7 @@ class TestAgainstStandards(BaseJWSTTest):
         standards,
     )
     def test_against_standard(self, standard_pars):
-        """Compare a generated assocaition against a standard
-
+        """Compare a generated association against a standard
         Success is when no other AssertionError occurs.
         """
         if standard_pars.xfail is not None:

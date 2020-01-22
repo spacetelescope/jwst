@@ -10,7 +10,7 @@ from astropy.table import Table
 from numpy.testing import assert_allclose
 
 from .regtestdata import RegtestData
-from jwst.tests_nightly.general.associations.sdp_pools_source import SDPPoolsSource
+from jwst.regtest.sdp_pools_source import SDPPoolsSource
 
 
 TODAYS_DATE = datetime.now().strftime("%Y-%m-%d")

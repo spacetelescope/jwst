@@ -11,7 +11,7 @@ from jwst.associations.lib.diff import (
 )
 from jwst.associations.main import Main as asn_generate
 
-from jwst.tests_nightly.general.associations.sdp_pools_source import SDPPoolsSource
+from jwst.regtest.sdp_pools_source import SDPPoolsSource
 
 # Configure logging
 logger = logging.getLogger(__name__)
