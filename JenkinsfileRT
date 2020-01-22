@@ -21,7 +21,6 @@ env_vars = [
     "TEST_BIGDATA=https://bytesalad.stsci.edu/artifactory",
     "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
     "CRDS_CONTEXT=jwst-edit",
-    "CRDS_VERBOSITY=50",
 ]
 
 // Set pytest basetemp output directory
