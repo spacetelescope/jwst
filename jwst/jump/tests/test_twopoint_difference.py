@@ -672,7 +672,7 @@ def setup_cube():
         nframes = 1
         data = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.float32)
         read_noise = np.full((nrows, ncols), readnoise, dtype=np.float32)
-        gdq = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.int32)
+        gdq = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.uint32)
 
         return data, gdq, nframes, read_noise, rej_threshold
 

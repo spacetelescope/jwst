@@ -18,7 +18,7 @@ class JumpStep(Step):
         rejection_threshold = float(default=4.0,min=0) # CR rejection threshold
         maximum_cores = option('quarter', 'half', 'all', default=None) # max number of processes to create
         flag_4_neighbors = boolean(default=True) #flag the four perpendicular neighbors of each CR
-        max_jump_to_flag_neighbors = float(default=10) #maximum jump that will trigger neighbor flagging
+        max_jump_to_flag_neighbors = float(default=200) #maximum jump that will trigger neighbor flagging
         min_jump_to_flag_neighbors = float(default=10) #minimum jump that will trigger neighbor flagging
     """
 

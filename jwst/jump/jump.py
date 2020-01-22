@@ -97,8 +97,6 @@ def detect_jumps (input_model, gain_model, readnoise_model,
     row_below_gdq = np.zeros((num_ints, num_groups, ncols), dtype=np.uint8)
 
     yincrement = int(nrows / numslices)
-    print("yincrement ", yincrement)
-    print("num slices ",numslices)
     slices = []
     # Slice up data, gdq, readnoise_2d into slices
     # Each element of slices is a tuple of

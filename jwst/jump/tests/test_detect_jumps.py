@@ -95,7 +95,7 @@ def test_twoints_onecr_each_10_groups_neighbors_flagged(setup_inputs):
     model1.data[1, 3, 15, 5] = 30.0
     model1.data[1, 4, 15, 5] = 35.0
     model1.data[1, 5, 15, 5] = 40.0
-    model1.data[1, 6, 15, 5] = 50.0
+    model1.data[1, 6, 15, 5] = 45.0
     model1.data[1, 7, 15, 5] = 160.0
     model1.data[1, 8, 15, 5] = 170.0
     model1.data[1, 9, 15, 5] = 180.0
@@ -113,7 +113,7 @@ def test_twoints_onecr_each_10_groups_neighbors_flagged(setup_inputs):
 
 def test_flagging_of_CRs_across_slice_boundaries(setup_inputs):
     """"
-            A multiprocesssing test that has two CRs on the boundary between two
+            A multiprocessing test that has two CRs on the boundary between two
             slices. This makes sure that we are correctly flagging neighbors in different
             slices.
     """
@@ -129,48 +129,49 @@ def test_flagging_of_CRs_across_slice_boundaries(setup_inputs):
     num_cores = multiprocessing.cpu_count()
     max_cores = 'half'
     numslices = num_cores // 2
-    yincrement = int(nrows / numslices)
-    # two segments perfect fit, second segment has twice the slope
-    #add a CR on the last row of the first slice
-    model1.data[0, 0, yincrement-1, 5] = 15.0
-    model1.data[0, 1, yincrement-1, 5] = 20.0
-    model1.data[0, 2, yincrement-1, 5] = 25.0
-    model1.data[0, 3, yincrement-1, 5] = 30.0
-    model1.data[0, 4, yincrement-1, 5] = 35.0
-    model1.data[0, 5, yincrement-1, 5] = 140.0
-    model1.data[0, 6, yincrement-1, 5] = 150.0
-    model1.data[0, 7, yincrement-1, 5] = 160.0
-    model1.data[0, 8, yincrement-1, 5] = 170.0
-    model1.data[0, 9, yincrement-1, 5] = 180.0
-    #add a CR on the first row of the second slice
-    model1.data[1, 0, yincrement, 5] = 15.0
-    model1.data[1, 1, yincrement, 5] = 20.0
-    model1.data[1, 2, yincrement, 5] = 25.0
-    model1.data[1, 3, yincrement, 5] = 30.0
-    model1.data[1, 4, yincrement, 5] = 35.0
-    model1.data[1, 5, yincrement, 5] = 40.0
-    model1.data[1, 6, yincrement, 5] = 50.0
-    model1.data[1, 7, yincrement, 5] = 160.0
-    model1.data[1, 8, yincrement, 5] = 170.0
-    model1.data[1, 9, yincrement, 5] = 180.0
-    out_model = detect_jumps(model1, gain, rnModel, 4.0, False, 4.0, max_cores, 200, 4, True)
-    #check that the neighbors of the CR on the last row were flagged
-    assert (4 == out_model.groupdq[0, 5, yincrement-1, 5])
-    assert (4 == out_model.groupdq[0, 5, yincrement-1, 6])
-    assert (4 == out_model.groupdq[0, 5, yincrement-1, 4])
-    assert (4 == out_model.groupdq[0, 5, yincrement, 5])
-    assert (4 == out_model.groupdq[0, 5, yincrement-2, 5])
-    # check that the neighbors of the CR on the first row were flagged
-    assert (4 == out_model.groupdq[1, 7, yincrement, 5])
-    assert (4 == out_model.groupdq[1, 7, yincrement, 6])
-    assert (4 == out_model.groupdq[1, 7, yincrement, 4])
-    assert (4 == out_model.groupdq[1, 7, yincrement+1, 5])
-    assert (4 == out_model.groupdq[1, 7, yincrement-1, 5])
+    if numslices > 1:
+        yincrement = int(nrows / numslices)
+        # two segments perfect fit, second segment has twice the slope
+        #add a CR on the last row of the first slice
+        model1.data[0, 0, yincrement-1, 5] = 15.0
+        model1.data[0, 1, yincrement-1, 5] = 20.0
+        model1.data[0, 2, yincrement-1, 5] = 25.0
+        model1.data[0, 3, yincrement-1, 5] = 30.0
+        model1.data[0, 4, yincrement-1, 5] = 35.0
+        model1.data[0, 5, yincrement-1, 5] = 140.0
+        model1.data[0, 6, yincrement-1, 5] = 150.0
+        model1.data[0, 7, yincrement-1, 5] = 160.0
+        model1.data[0, 8, yincrement-1, 5] = 170.0
+        model1.data[0, 9, yincrement-1, 5] = 180.0
+        #add a CR on the first row of the second slice
+        model1.data[1, 0, yincrement, 25] = 15.0
+        model1.data[1, 1, yincrement, 25] = 20.0
+        model1.data[1, 2, yincrement, 25] = 25.0
+        model1.data[1, 3, yincrement, 25] = 30.0
+        model1.data[1, 4, yincrement, 25] = 35.0
+        model1.data[1, 5, yincrement, 25] = 40.0
+        model1.data[1, 6, yincrement, 25] = 50.0
+        model1.data[1, 7, yincrement, 25] = 160.0
+        model1.data[1, 8, yincrement, 25] = 170.0
+        model1.data[1, 9, yincrement, 25] = 180.0
+        out_model = detect_jumps(model1, gain, rnModel, 4.0, False, 4.0, max_cores, 200, 4, True)
+        #check that the neighbors of the CR on the last row were flagged
+        assert (4 == out_model.groupdq[0, 5, yincrement-1, 5])
+        assert (4 == out_model.groupdq[0, 5, yincrement-1, 6])
+        assert (4 == out_model.groupdq[0, 5, yincrement-1, 4])
+        assert (4 == out_model.groupdq[0, 5, yincrement, 5])
+        assert (4 == out_model.groupdq[0, 5, yincrement-2, 5])
+        # check that the neighbors of the CR on the first row were flagged
+        assert (4 == out_model.groupdq[1, 7, yincrement, 25])
+        assert (4 == out_model.groupdq[1, 7, yincrement, 26])
+        assert (4 == out_model.groupdq[1, 7, yincrement, 24])
+        assert (4 == out_model.groupdq[1, 7, yincrement+1, 25])
+        assert (4 == out_model.groupdq[1, 7, yincrement-1, 25])
 
 
 def test_twoints_onecr_10_groups_neighbors_flagged_multi(setup_inputs):
     """"
-               A multiprocesssing test that has two CRs on the boundary between two
+               A multiprocessing test that has two CRs on the boundary between two
                slices in different integrations. This makes sure that we are correctly
                flagging neighbors in different slices and the we are parsing the integrations
                correctly.
@@ -198,7 +199,7 @@ def test_twoints_onecr_10_groups_neighbors_flagged_multi(setup_inputs):
     model1.data[1, 3, 15, 5] = 30.0
     model1.data[1, 4, 15, 5] = 35.0
     model1.data[1, 5, 15, 5] = 40.0
-    model1.data[1, 6, 15, 5] = 50.0
+    model1.data[1, 6, 15, 5] = 45.0
     model1.data[1, 7, 15, 5] = 160.0
     model1.data[1, 8, 15, 5] = 170.0
     model1.data[1, 9, 15, 5] = 180.0
@@ -217,8 +218,8 @@ def test_twoints_onecr_10_groups_neighbors_flagged_multi(setup_inputs):
 @pytest.mark.skip(reason="Test is only used to test performance issue. No need to run every time.")
 def test_every_pixel_CR_neighbors_flagged(setup_inputs):
     """"
-                   A multiprocesssing test that has a jump in every pixel. This is used
-                   to test the performace gain from multiprocessing.
+                   A multiprocessing test that has a jump in every pixel. This is used
+                   to test the performance gain from multiprocessing.
     """
     grouptime = 3.0
     ingain = 200
@@ -356,7 +357,7 @@ def test_onecr_10_groups(setup_inputs):
 
 def test_onecr_10_groups_fullarray(setup_inputs):
     """"
-      A test to that has a cosmic ray in the 5th group for all pixels except row 10. In row
+      A test that has a cosmic ray in the 5th group for all pixels except column 10. In column
       10 the jump is in the 7th group.
     """
     grouptime = 3.0
@@ -385,11 +386,10 @@ def test_onecr_10_groups_fullarray(setup_inputs):
     model1.data[0, 8, 5, 10] = 410
     model1.data[0, 9, 5, 10] = 420
     out_model = detect_jumps(model1, gain, rnModel, 4.0, False, 4.0, 1, 200, 10, False)
-    print(np.max(out_model.groupdq[0,5,:,0]==4))
     first_row = out_model.groupdq[0,5,:,0]
-    assert (np.all(out_model.groupdq[0, 5, 5, 0:10] == 4)) # The jump is in group 5 for rows 0-9
-    assert (out_model.groupdq[0, 7, 5, 10] == 4)  # The jump is in group 7 for row 10
-    assert (np.all(out_model.groupdq[0, 5, 5, 11:] == 4)) # The jump is in group 5 for rows 11+
+    assert (np.all(out_model.groupdq[0, 5, 5, 0:10] == 4)) # The jump is in group 5 for columns 0-9
+    assert (out_model.groupdq[0, 7, 5, 10] == 4)  # The jump is in group 7 for column 10
+    assert (np.all(out_model.groupdq[0, 5, 5, 11:] == 4)) # The jump is in group 5 for columns 11+
 
 
 def test_onecr_50_groups(setup_inputs):
@@ -414,7 +414,6 @@ def test_onecr_50_groups(setup_inputs):
     model1.data[0, 7, 5, 5] = 160.0
     model1.data[0, 8, 5, 5] = 170.0
     model1.data[0, 9, 5, 5] = 180.0
-    print(np.arange(190, 290, 5))
     model1.data[0, 10:30, 5, 5] = np.arange(190, 290, 5)
     model1.data[0, 30:50, 5, 5] = np.arange(500, 600, 5)
     out_model = detect_jumps(model1, gain, rnModel, 4.0, False, 4.0, 1, 200, 10, False)
@@ -436,7 +435,7 @@ def setup_inputs():
 
         pixdq = np.zeros(shape=(nrows, ncols), dtype=np.float64)
         read_noise = np.full((nrows, ncols), readnoise, dtype=np.float64)
-        gdq = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.int32)
+        gdq = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.uint32)
         if subarray:
             data = np.zeros(shape=(nints, ngroups, 20, 20), dtype=np.float64)
             err = np.ones(shape=(nints, ngroups, 20, 20), dtype=np.float64)

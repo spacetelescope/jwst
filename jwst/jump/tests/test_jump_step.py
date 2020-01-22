@@ -80,9 +80,9 @@ def setup_inputs():
         gain = np.ones(shape=(nrows, ncols), dtype=np.float64) * gain
         err = np.ones(shape=(nints, ngroups, nrows, ncols), dtype=np.float64)
         data = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.float64)
-        pixdq = np.zeros(shape=(nrows, ncols), dtype=np.float64)
+        pixdq = np.zeros(shape=(nrows, ncols), dtype=np.uint32)
         read_noise = np.full((nrows, ncols), readnoise, dtype=np.float64)
-        gdq = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.int32)
+        gdq = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.uint32)
 
         rampmodel = MIRIRampModel(data=data, err=err, pixeldq=pixdq, groupdq=gdq, times=times)
         rampmodel.meta.instrument.name = 'MIRI'
