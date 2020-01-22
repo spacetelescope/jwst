@@ -2,7 +2,8 @@
 from pathlib import Path
 import pytest
 
-from jwst.associations import load_asn
+from jwst.associations.asn_from_list import asn_from_list
+from jwst.associations.lib.rules_level2_base import DMSLevel2bBase
 from jwst.lib.suffix import replace_suffix
 
 from . import regtestdata as rt
@@ -44,24 +45,27 @@ def run_spec2(jail, rtdata_module):
         ]
     }
 
-    #rtdata = rt.run_step_from_dict(rtdata, **step_params)
-    rtdata = rt.run_step_from_dict_mock(
-        rtdata,
-        '/Users/eisenham/Downloads/artifactory/jwst-pipeline/newdev/truth/test_nirspec_ifu',
-        **step_params
-    )
+    rtdata = rt.run_step_from_dict(rtdata, **step_params)
     return rtdata
 
 
 @pytest.fixture(scope='module')
 def run_spec3(jail, run_spec2):
     """Run the Spec3Pipeline on the results from the Spec2Pipeline run"""
-    rtdata, asn_path = run_spec2
+    rtdata = run_spec2
 
-    # The presumption is that `run_spec2` has set the input to the
-    # original association. To use this default, and not re-download
-    # the association, simply do not specify `step_params["input_path"]`
-    rtdata.input = asn_path
+    # Create the level 3 `spec3` association from the output product
+    # name of `run_spec2`
+    product = run_spec2.asn['products'][0]['name']
+    input_name = replace_suffix(product, 'cal') + '.fits'
+    asn = asn_from_list([input_name], product_name=product)
+    _, serialized = asn.dump()
+    asn_name = product + '_spec3_asn.json'
+    with open(asn_name, 'w') as asn_fh:
+        asn_fh.write(serialized)
+
+    # Set the input in the RegtestData instance to avoid download.
+    rtdata.input = asn_name
     step_params = {
         'step': 'calwebb_spec3.cfg',
         'args': [
@@ -76,11 +80,14 @@ def run_spec3(jail, run_spec2):
     }
 
     return rt.run_step_from_dict(rtdata, **step_params)
+    return rtdata
 
 
 @pytest.fixture(scope='module')
 def run_spec3_multi(jail, rtdata_module):
     """Run Spec3Pipeline"""
+    rtdata = rtdata_module
+
     step_params = {
         'input_path': 'nirspec/ifu/single_nrs1-nrs2_spec3_asn.json',
         'step': 'calwebb_spec3.cfg',
@@ -95,7 +102,8 @@ def run_spec3_multi(jail, rtdata_module):
         }
     }
 
-    return rt.run_step_from_dict(rtdata_module, **step_params)
+    return rt.run_step_from_dict(rtdata, **step_params)
+    return rtdata
 
 
 @pytest.mark.bigdata
@@ -113,8 +121,8 @@ def test_spec2(run_spec2, fitsdiff_default_kwargs, suffix):
 @pytest.mark.parametrize(
     'output',
     [
-        'single_nrs1_g395h-f290lp_s3d.fits',
-        'single_nrs1_g395h-f290lp_x1d.fits',
+        'single_nrs1_ifu_g395h-f290lp_s3d.fits',
+        'single_nrs1_ifu_g395h-f290lp_x1d.fits',
     ]
 )
 def test_spec3(run_spec3, fitsdiff_default_kwargs, output):
