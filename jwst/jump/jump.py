@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 def detect_jumps (input_model, gain_model, readnoise_model,
-                  rejection_threshold, do_yint, signal_threshold, max_cores,
+                  rejection_threshold, max_cores,
                   max_jump_to_flag_neighbors, min_jump_to_flag_neighbors,
                   flag_4_neighbors):
     """
@@ -91,7 +91,6 @@ def detect_jumps (input_model, gain_model, readnoise_model,
     ncols = data.shape[-1]
     num_groups = data.shape[1]
     num_ints = data.shape[0]
-    median_slopes = np.zeros((num_ints, nrows, ncols), dtype=np.float32)
     row_above_gdq = np.zeros((num_ints, num_groups, ncols), dtype=np.uint8)
     previous_row_above_gdq = np.zeros((num_ints, num_groups, ncols), dtype=np.uint8)
     row_below_gdq = np.zeros((num_ints, num_groups, ncols), dtype=np.uint8)
@@ -114,7 +113,7 @@ def detect_jumps (input_model, gain_model, readnoise_model,
                                  rejection_threshold, num_groups, flag_4_neighbors,
                                  max_jump_to_flag_neighbors, min_jump_to_flag_neighbors))
     if numslices == 1:
-        median_slopes, gdq, row_below_dq, row_above_dq = twopt.find_crs(data, gdq, readnoise_2d, rejection_threshold,
+        gdq, row_below_dq, row_above_dq = twopt.find_crs(data, gdq, readnoise_2d, rejection_threshold,
                                                                         num_groups, flag_4_neighbors,
                                                                         max_jump_to_flag_neighbors,
                                                                         min_jump_to_flag_neighbors)
@@ -128,13 +127,11 @@ def detect_jumps (input_model, gain_model, readnoise_model,
         for resultslice in real_result:
 
             if len(real_result) == k + 1:  # last result
-                median_slopes[:, k * yincrement:nrows, :] = resultslice[0]
-                gdq[:, :, k * yincrement:nrows, :] = resultslice[1]
+                gdq[:, :, k * yincrement:nrows, :] = resultslice[0]
             else:
-                median_slopes[:, k * yincrement:(k + 1) * yincrement, :] = resultslice[0]
-                gdq[:, :, k * yincrement:(k + 1) * yincrement, :] = resultslice[1]
-            row_below_gdq[:, :, :] = resultslice[2]
-            row_above_gdq[:, :, :] = resultslice[3]
+                gdq[:, :, k * yincrement:(k + 1) * yincrement, :] = resultslice[0]
+            row_below_gdq[:, :, :] = resultslice[1]
+            row_above_gdq[:, :, :] = resultslice[2]
             if k != 0: #for all but the first slice, flag any CR neighbors in the top row of the previous slice and
                 #flag any neighbors in the bottom row of this slice saved from the top of the previous slice
                 gdq[:, :, k * yincrement - 1, :] = np.bitwise_or(gdq[:, :, k * yincrement - 1, :],
@@ -147,7 +144,6 @@ def detect_jumps (input_model, gain_model, readnoise_model,
         pool.terminate()
         pool.close()
         elapsed = time.time() - start
-    log.info('Elapsed time of twopoint difference = %g sec' % elapsed)
 
     elapsed = time.time() - start
     log.info('Total elapsed time = %g sec' % elapsed)

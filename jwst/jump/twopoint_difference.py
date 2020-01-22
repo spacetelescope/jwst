@@ -211,7 +211,7 @@ def find_crs(data, group_dq, read_noise, rej_threshold, nframes, flag_4_neighbor
                         gdq[cr_int[j], cr_group[j], cr_row[j], cr_col[j] + 1],
                         dqflags.group['JUMP_DET'])
 
-    return median_slopes, gdq, row_below_gdq, row_above_gdq
+    return gdq, row_below_gdq, row_above_gdq
 
 
 def get_clipped_median(num_differences, diffs_to_ignore, differences, sorted_index):
