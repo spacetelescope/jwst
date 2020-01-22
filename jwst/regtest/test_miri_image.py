@@ -1,6 +1,5 @@
 import pytest
 from astropy.io.fits.diff import FITSDiff
-from astropy.table import Table, setdiff
 
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
@@ -66,19 +65,24 @@ def run_pipelines(jail, rtdata_module):
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize("suffix", ["a3001_crf", "assign_wcs", "cal", "dark_current",
-    "dq_init", "firstframe", "flat_field", "i2d", "lastframe", "linearity", "ramp",
-    "rate", "rateints", "refpix", "rscd", "saturation"])
-def test_miri_image_stages12(run_pipelines, fitsdiff_default_kwargs, suffix):
+@pytest.mark.parametrize("suffix", ["dq_init", "saturation", "refpix", "rscd",
+    "firstframe", "lastframe", "linearity", "dark_current", "ramp", "rate",
+    "rateints",
+    "assign_wcs", "flat_field", "cal", "i2d",
+    "a3001_crf"])
+def test_miri_image_stages123(run_pipelines, fitsdiff_default_kwargs, suffix):
     """Regression test of detector1 and image2 pipelines performed on MIRI data."""
     rtdata = run_pipelines
     rtdata.input = "det_image_1_MIRIMAGE_F770Wexp1_5stars_uncal.fits"
     output = "det_image_1_MIRIMAGE_F770Wexp1_5stars_" + suffix + ".fits"
     rtdata.output = output
-    #assert os.path.exists(rtdata.output)
 
     rtdata.get_truth("truth/test_miri_image_stages/" + output)
 
+    # Set tolerances so the crf, rscd and rateints file comparisons work across
+    # architectures
+    fitsdiff_default_kwargs["rtol"] = 1e-4
+    fitsdiff_default_kwargs["atol"] = 1e-4
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
@@ -90,26 +94,17 @@ def test_miri_image_stage3_i2d(run_pipelines, fitsdiff_default_kwargs):
     rtdata.output = "det_dithered_5stars_f770w_i2d.fits"
     rtdata.get_truth("truth/test_miri_image_stages/det_dithered_5stars_f770w_i2d.fits")
 
-    fitsdiff_default_kwargs['ignore_fields'] = ['date', 'filename']
-    fitsdiff_default_kwargs['ignore_keywords'] += ['naxis1', 'tform*']
+    fitsdiff_default_kwargs["rtol"] = 1e-4
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
 
 @pytest.mark.bigdata
-def test_miri_image_stage3_catalog(run_pipelines):
+def test_miri_image_stage3_catalog(run_pipelines, diff_astropy_tables):
     rtdata = run_pipelines
     rtdata.input = "det_dithered_5stars_image3_asn.json"
     rtdata.output = "det_dithered_5stars_f770w_cat.ecsv"
     rtdata.get_truth("truth/test_miri_image_stages/det_dithered_5stars_f770w_cat.ecsv")
 
-    t = Table.read(rtdata.output)
-    tt = Table.read(rtdata.truth)
-
-    # Compare the first 3 columns only, as the RA/DEC columns cannot be sorted
-    # and thus setdiff cannot work on the whole table
-    table = Table([t[col] for col in ['id', 'xcentroid', 'ycentroid']])
-    table_truth = Table([tt[col] for col in ['id', 'xcentroid', 'ycentroid']])
-
-    # setdiff returns a table of length zero if there is no difference
-    assert len(setdiff(table, table_truth)) == 0
+    diff = diff_astropy_tables(rtdata.output, rtdata.truth, rtol=1e-4)
+    assert len(diff) == 0, "\n".join(diff)

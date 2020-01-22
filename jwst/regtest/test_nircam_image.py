@@ -1,6 +1,5 @@
 import pytest
 from astropy.io.fits.diff import FITSDiff
-from astropy.table import Table, setdiff
 from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose
 
@@ -10,8 +9,8 @@ from jwst import datamodels
 
 
 @pytest.fixture(scope="module")
-def run_pipelines(jail, rtdata_module):
-    """Run stages 1-3 pipelines on NIRCam imaging data."""
+def run_detector1pipeline(jail, rtdata_module):
+    """Run calwebb_detector1 on NIRCam imaging long data"""
     rtdata = rtdata_module
     rtdata.get_data("nircam/image/jw42424001001_01101_00001_nrca5_uncal.fits")
 
@@ -30,7 +29,10 @@ def run_pipelines(jail, rtdata_module):
         ]
     Step.from_cmdline(args)
 
-    # And run image2 pipeline on the produced _rate file
+@pytest.fixture(scope="module")
+def run_image2pipeline(run_detector1pipeline, jail, rtdata_module):
+    """Run calwebb_image2 on NIRCam imaging long data"""
+    rtdata = rtdata_module
     rtdata.input = "jw42424001001_01101_00001_nrca5_rate.fits"
     args = ["config/calwebb_image2.cfg", rtdata.input,
         "--steps.assign_wcs.save_results=True",
@@ -38,6 +40,10 @@ def run_pipelines(jail, rtdata_module):
         ]
     Step.from_cmdline(args)
 
+@pytest.fixture(scope="module")
+def run_image3pipeline(run_image2pipeline, rtdata_module, jail):
+    """Run calwebb_image3 on NIRCam imaging long data"""
+    rtdata = rtdata_module
     # Grab rest of _rate files for the asn and run image2 pipeline on each to
     # produce fresh _cal files for the image3 pipeline.  We won't check these
     # or look at intermediate products, including the resampled i2d
@@ -65,16 +71,14 @@ def run_pipelines(jail, rtdata_module):
         ]
     Step.from_cmdline(args)
 
-    return rtdata
-
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["dq_init", "saturation", "superbias",
     "refpix", "linearity", "trapsfilled", "dark_current", "jump", "rate",
     "flat_field", "cal", "i2d"])
-def test_nircam_image_stages12(run_pipelines, fitsdiff_default_kwargs, suffix):
+def test_nircam_image_stages12(run_image2pipeline, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Regression test of detector1 and image2 pipelines performed on NIRCam data."""
-    rtdata = run_pipelines
+    rtdata = rtdata_module
     rtdata.input = "jw42424001001_01101_00001_nrca5_uncal.fits"
     output = "jw42424001001_01101_00001_nrca5_" + suffix + ".fits"
     rtdata.output = output
@@ -85,9 +89,9 @@ def test_nircam_image_stages12(run_pipelines, fitsdiff_default_kwargs, suffix):
 
 
 @pytest.mark.bigdata
-def test_nircam_image_stage2_wcs(run_pipelines):
+def test_nircam_image_stage2_wcs(run_image2pipeline, rtdata_module):
     """Test that WCS object works as expected"""
-    rtdata = run_pipelines
+    rtdata = rtdata_module
     rtdata.input = "jw42424001001_01101_00001_nrca5_uncal.fits"
     output = "jw42424001001_01101_00001_nrca5_assign_wcs.fits"
     rtdata.output = output
@@ -105,35 +109,24 @@ def test_nircam_image_stage2_wcs(run_pipelines):
 
 
 @pytest.mark.bigdata
-def test_nircam_image_stage3_i2d(run_pipelines, fitsdiff_default_kwargs):
+def test_nircam_image_stage3_i2d(run_image3pipeline, rtdata_module, fitsdiff_default_kwargs):
     """Test that resampled i2d looks good for NIRCam imaging"""
-    rtdata = run_pipelines
+    rtdata = rtdata_module
     rtdata.input = "jw42424-o002_20191220t214154_image3_001_asn.json"
     rtdata.output = "jw42424-o002_t001_nircam_clear-f444w_i2d.fits"
     rtdata.get_truth("truth/test_nircam_image_stages/jw42424-o002_t001_nircam_clear-f444w_i2d.fits")
 
-    fitsdiff_default_kwargs['ignore_fields'] += ['filename']
-    fitsdiff_default_kwargs['ignore_keywords'] += ['naxis1', 'tform*']
-    fitsdiff_default_kwargs['rtol'] = 0.00001
-    fitsdiff_default_kwargs['atol'] = 0.00001
+    fitsdiff_default_kwargs["atol"] = 1e-5
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
 
 @pytest.mark.bigdata
-def test_nircam_image_stage3_catalog(run_pipelines):
-    rtdata = run_pipelines
+def test_nircam_image_stage3_catalog(run_image3pipeline, rtdata_module, diff_astropy_tables):
+    rtdata = rtdata_module
     rtdata.input = "jw42424-o002_20191220t214154_image3_001_asn.json"
     rtdata.output = "jw42424-o002_t001_nircam_clear-f444w_cat.ecsv"
     rtdata.get_truth("truth/test_nircam_image_stages/jw42424-o002_t001_nircam_clear-f444w_cat.ecsv")
 
-    t = Table.read(rtdata.output)
-    tt = Table.read(rtdata.truth)
-
-    # Compare the first 3 columns only, as the RA/DEC columns cannot be sorted
-    # and thus setdiff cannot work on the whole table
-    table = Table([t[col] for col in ['id', 'xcentroid', 'ycentroid']])
-    table_truth = Table([tt[col] for col in ['id', 'xcentroid', 'ycentroid']])
-
-    # setdiff returns a table of length zero if there is no difference
-    assert len(setdiff(table, table_truth)) == 0
+    diff = diff_astropy_tables(rtdata.output, rtdata.truth, atol=1e-5)
+    assert len(diff) == 0, "\n".join(diff)
