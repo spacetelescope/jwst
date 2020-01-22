@@ -1,9 +1,7 @@
 """Regression tests for NIRSpec IFU"""
-from pathlib import Path
 import pytest
 
 from jwst.associations.asn_from_list import asn_from_list
-from jwst.associations.lib.rules_level2_base import DMSLevel2bBase
 from jwst.lib.suffix import replace_suffix
 
 from . import regtestdata as rt
@@ -79,7 +77,7 @@ def run_spec3(jail, run_spec2):
         ]
     }
 
-    return rt.run_step_from_dict(rtdata, **step_params)
+    rtdata = rt.run_step_from_dict(rtdata, **step_params)
     return rtdata
 
 
@@ -102,7 +100,7 @@ def run_spec3_multi(jail, rtdata_module):
         }
     }
 
-    return rt.run_step_from_dict(rtdata, **step_params)
+    rtdata = rt.run_step_from_dict(rtdata, **step_params)
     return rtdata
 
 
