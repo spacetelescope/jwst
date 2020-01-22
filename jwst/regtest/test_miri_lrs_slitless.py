@@ -56,7 +56,7 @@ def run_spec3_pipeline(run_spec2_pipeline, generate_tso3_asn):
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("step_suffix", ["flat_field", "srctype", "calints", "x1dints"])
-def test_miri_lrs_slitless_spec2(rtdata_module, fitsdiff_default_kwargs,
+def test_miri_lrs_slitless_spec2(run_spec2_pipeline, rtdata_module, fitsdiff_default_kwargs,
     step_suffix):
     """Compare the output of a MIRI LRS slitless calwebb_tso-spec2 step."""
     rtdata = rtdata_module
@@ -70,8 +70,7 @@ def test_miri_lrs_slitless_spec2(rtdata_module, fitsdiff_default_kwargs,
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize(
-    "step_suffix, filename_extension, is_product",
+@pytest.mark.parametrize("step_suffix, filename_extension, is_product",
     [
         ("outlier_detection", "fits", False),
         ("crfints", "fits", False),
@@ -79,15 +78,9 @@ def test_miri_lrs_slitless_spec2(rtdata_module, fitsdiff_default_kwargs,
         ("whtlt", "ecsv", True),
     ],
 )
-def test_miri_lrs_slitless_tso3(
-    rtdata_module,
-    generate_tso3_asn,
-    fitsdiff_default_kwargs,
-    step_suffix,
-    filename_extension,
-    is_product,
-    diff_astropy_tables,
-):
+def test_miri_lrs_slitless_tso3(run_spec3_pipeline, generate_tso3_asn, rtdata_module,
+    fitsdiff_default_kwargs, diff_astropy_tables, step_suffix, filename_extension,
+    is_product):
     """Compare the output of a MIRI LRS slitless calwebb_tso3 step."""
     rtdata = rtdata_module
     _, asn_id = generate_tso3_asn
