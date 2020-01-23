@@ -24,6 +24,8 @@ datamodels
   from filesystem paths to URIs.  Make ``schema_url`` absolute to facilitate
   subclassing DataModel with schemas from other asdf extensions. [#4435]
 
+- Update core.schema.yaml to include new NIRCam entries for PATTTYPE [#xxxx]
+
 extract_1d
 ----------
 
