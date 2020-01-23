@@ -16,9 +16,9 @@ datamodels
 
 - Force data model type setting on save [#4318]
 
-- Deprecate MIRIRampModel [#4328]
+- Deprecate ``MIRIRampModel`` [#4328]
 
-- Make memmap=False be the default in datamodels [#4445]
+- Make ``memmap=False`` be the default in ``datamodels`` [#4445]
 
 - Update schemas to add the ``id`` field and switch relative references
   from filesystem paths to URIs.  Make ``schema_url`` absolute to facilitate
@@ -46,6 +46,11 @@ pipeline
 
 - Make the naming and writing out of the resampled results to an `i2d` file
   in `Image2Pipeline` consistent between config and class invocations [#4333]
+
+set_telescope_pointing
+----------------------
+
+- Round S_REGION values in ``set_telescope_pointing`` [#4476]
 
 tweakreg
 --------
