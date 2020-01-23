@@ -8,6 +8,7 @@ from collections import namedtuple
 from astropy.time import Time
 import numpy as np
 
+from ..assign_wcs.util import update_s_region_keyword
 from ..datamodels import Level1bModel
 from ..lib.engdb_tools import ENGDB_Service
 from .exposure_types import IMAGING_TYPES, FGS_GUIDE_EXP_TYPES
@@ -502,13 +503,7 @@ def update_s_region(model, siaf):
     ra_vert[negative_ind] = ra_vert[negative_ind] + 360
     # Do not do any sorting, use the vertices in the SIAF order.
     footprint = np.array([ra_vert, dec_vert]).T
-    s_region = (
-        "POLYGON ICRS "
-        " {0} {1}"
-        " {2} {3}"
-        " {4} {5}"
-        " {6} {7}".format(*footprint.flatten()))
-    model.meta.wcsinfo.s_region = s_region
+    update_s_region_keyword(model, footprint)
 
 
 def calc_wcs(pointing, siaf, **transform_kwargs):
