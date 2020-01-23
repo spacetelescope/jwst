@@ -107,7 +107,7 @@ def run_spec3_multi(jail, rtdata_module):
 @pytest.mark.bigdata
 @pytest.mark.parametrize(
     'suffix',
-    ['assign_wcs', 'cal', 'flat_field', 'msa_flagging', 'pathloss', 'photom', 's3d', 'srctype', 'x1d']
+    ['assign_wcs', 'cal', 'flat_field', 'imprint_subtract', 'msa_flagging', 'pathloss', 'photom', 's3d', 'srctype', 'x1d']
 )
 def test_spec2(run_spec2, fitsdiff_default_kwargs, suffix):
     """Regression test matching output files"""
@@ -119,8 +119,8 @@ def test_spec2(run_spec2, fitsdiff_default_kwargs, suffix):
 @pytest.mark.parametrize(
     'output',
     [
-        'single_nrs1_ifu_g395h-f290lp_s3d.fits',
-        'single_nrs1_ifu_g395h-f290lp_x1d.fits',
+        'jw00626009002_02101_00001_nrs1_run_spec2_g395h-f290lp_s3d.fits',
+        'jw00626009002_02101_00001_nrs1_run_spec2_g395h-f290lp_x1d.fits',
     ]
 )
 def test_spec3(run_spec3, fitsdiff_default_kwargs, output):
