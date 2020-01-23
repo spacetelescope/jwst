@@ -56,9 +56,13 @@ def run_spec2_pipeline(jail, rtdata_module):
 def generate_tso3_asn():
     """Generate an association file that references the output of run_spec2_pipeline."""
     asn = asn_from_list([f"{DATASET_ID}_calints.fits"], product_name=PRODUCT_NAME)
-    asn["program"] = "80600"
+    asn.data["program"] = "80600"
+    asn.data["asn_id"] = "o012"
+    asn.data["asn_type"] = "tso-spec3"
+    asn.sequence = 1
 
     name, serialized = asn.dump(format="json")
+    name = "jw80600-o012_tso-spec3_001_asn.json"
     with open(name, "w") as f:
         f.write(serialized)
 
