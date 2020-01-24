@@ -23,7 +23,9 @@ def run_pipeline(jail, rtdata_module):
             "--steps.dark_current.save_results=True",
             "--steps.refpix.save_results=True",
             "--steps.jump.rejection_threshold=25",
-            "--steps.jump.save_results=True"]
+            "--steps.jump.save_results=True",
+            "--steps.ramp_fit.save_opt=True",
+            "--steps.ramp_fit.save_results=True"]
 
     Step.from_cmdline(args)
     return rtdata
@@ -33,7 +35,7 @@ def run_pipeline(jail, rtdata_module):
 @pytest.mark.parametrize("output", ['rate', 'rateints', 'linearity', 'rscd',
                                     'dq_init', 'firstframe', 'lastframe',
                                     'saturation', 'dark_current', 'refpix',
-                                    'jump'])
+                                    'jump', 'fitopt'])
 def test_miri_image_detector1(run_pipeline, request, fitsdiff_default_kwargs, output):
     """
     Regression test of calwebb_detector1 pipeline performed on MIRI data.
