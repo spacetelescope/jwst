@@ -295,7 +295,8 @@ class Spec2Pipeline(Pipeline):
             self.cube_build.suffix = 's3d'
             self.cube_build.save_results = False
             result_extra = self.cube_build(result)
-            self.save_model(result_extra[0], 's3d')
+            if self.cube_build.skip == False:
+                self.save_model(result_extra[0], 's3d')
         else:
             result_extra = result
 

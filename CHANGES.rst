@@ -47,6 +47,9 @@ pipeline
 - Make the naming and writing out of the resampled results to an `i2d` file
   in `Image2Pipeline` consistent between config and class invocations [#4333]
 
+- Don't try to save the ``cube_build`` result if the step is skipped in the
+  ``calwebb_spec2`` pipeline. [#4478]
+
 set_telescope_pointing
 ----------------------
 
