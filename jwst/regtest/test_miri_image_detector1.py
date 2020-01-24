@@ -24,6 +24,7 @@ def run_pipeline(jail, rtdata_module):
             "--steps.refpix.save_results=True",
             "--steps.jump.rejection_threshold=25",
             "--steps.jump.save_results=True",
+            "--steps.ramp_fit.save_opt=True",
             "--steps.ramp_fit.save_results=True"]
 
     Step.from_cmdline(args)
