@@ -5,10 +5,8 @@ from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 from jwst.associations.asn_from_list import asn_from_list
 
-DATASET1_ID = "jw00623026001_03106_00005_mirimage"
-
-DATASET_ID = "jw80600012001_02101_00003_mirimage"
-PRODUCT_NAME = "jw80600-o012_t001_miri_p750l-slitlessprism"
+DATASET_ID = "jw00623026001_03106_00005_mirimage"
+PRODUCT_NAME = "jw00623-a3001_t001_miri_p750l-slitlessprism"
 
 
 @pytest.fixture(scope="module")
@@ -16,7 +14,7 @@ def run_tso1_pipeline(jail, rtdata_module):
     """Run the calwebb_tso1 pipeline on a MIRI LRS slitless exposure."""
     rtdata = rtdata_module
     collect_pipeline_cfgs("config")
-    rtdata.get_data(f"miri/lrs/{DATASET1_ID}_uncal.fits")
+    rtdata.get_data(f"miri/lrs/{DATASET_ID}_uncal.fits")
 
     args = [
         "config/calwebb_tso1.cfg",
@@ -27,21 +25,20 @@ def run_tso1_pipeline(jail, rtdata_module):
         "--steps.linearity.save_results=True",
         "--steps.dark_current.save_results=True",
         "--steps.refpix.save_results=True",
-        "--steps.jump.rejection_threshold=25",
+        "--steps.jump.rejection_threshold=150",
         "--steps.jump.save_results=True"
     ]
     Step.from_cmdline(args)
-    return rtdata
 
 
 @pytest.fixture(scope="module")
-def run_spec2_pipeline(jail, rtdata_module):
+def run_tso_spec2_pipeline(run_tso1_pipeline, jail, rtdata_module):
     """Run the calwebb_tso-spec2 pipeline on a MIRI LRS slitless exposure."""
     rtdata = rtdata_module
 
-    collect_pipeline_cfgs("config")
+    rtdata.input = f"{DATASET_ID}_rateints.fits"
 
-    rtdata.get_data(f"miri/lrs/{DATASET_ID}_rateints.fits")
+    collect_pipeline_cfgs("config")
 
     args = [
         "config/calwebb_tso-spec2.cfg",
@@ -57,12 +54,10 @@ def generate_tso3_asn():
     """Generate an association file that references the output of run_spec2_pipeline."""
     asn = asn_from_list([f"{DATASET_ID}_calints.fits"], product_name=PRODUCT_NAME)
     asn.data["program"] = "80600"
-    asn.data["asn_id"] = "o012"
     asn.data["asn_type"] = "tso-spec3"
     asn.sequence = 1
 
     name, serialized = asn.dump(format="json")
-    name = "jw80600-o012_tso-spec3_001_asn.json"
     with open(name, "w") as f:
         f.write(serialized)
 
@@ -70,7 +65,7 @@ def generate_tso3_asn():
 
 
 @pytest.fixture(scope="module")
-def run_spec3_pipeline(run_spec2_pipeline, generate_tso3_asn):
+def run_tso3_pipeline(run_tso_spec2_pipeline, generate_tso3_asn):
     """Run the calwebb_tso3 pipeline on the output of run_spec2_pipeline."""
     asn_filename, _ = generate_tso3_asn
 
@@ -83,17 +78,14 @@ def run_spec3_pipeline(run_spec2_pipeline, generate_tso3_asn):
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize("step_suffix", ['rate', 'rateints', 'linearity',
-                                         'rscd',
-                                         'dq_init',
-                                         'saturation', 'dark_current', 'refpix',
-                                         'jump'])
-def test_miri_lrs_slitless_tso1(run_tso1_pipeline, fitsdiff_default_kwargs, step_suffix):
+@pytest.mark.parametrize("step_suffix", ['dq_init', 'saturation', 'refpix',
+    'rscd', 'linearity', 'dark_current', 'jump', 'rate', 'rateints',])
+def test_miri_lrs_slitless_tso1(run_tso1_pipeline, rtdata_module, fitsdiff_default_kwargs, step_suffix):
     """
-    Regression test of tso1 pipeline performed on MIRI LRS slitless data.
+    Regression test of tso1 pipeline performed on MIRI LRS slitless TSO data.
     """
-    rtdata = run_tso1_pipeline
-    output_filename = f"{DATASET1_ID}_{step_suffix}.fits"
+    rtdata = rtdata_module
+    output_filename = f"{DATASET_ID}_{step_suffix}.fits"
     rtdata.output = output_filename
 
     rtdata.get_truth(f"truth/test_miri_lrs_slitless_tso1/{output_filename}")
@@ -104,14 +96,14 @@ def test_miri_lrs_slitless_tso1(run_tso1_pipeline, fitsdiff_default_kwargs, step
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("step_suffix", ["flat_field", "srctype", "calints", "x1dints"])
-def test_miri_lrs_slitless_spec2(run_spec2_pipeline, rtdata_module, fitsdiff_default_kwargs,
+def test_miri_lrs_slitless_tso_spec2(run_tso_spec2_pipeline, rtdata_module, fitsdiff_default_kwargs,
     step_suffix):
     """Compare the output of a MIRI LRS slitless calwebb_tso-spec2 step."""
     rtdata = rtdata_module
 
     output_filename = f"{DATASET_ID}_{step_suffix}.fits"
     rtdata.output = output_filename
-    rtdata.get_truth(f"truth/test_miri_lrs_slitless_spec2/{output_filename}")
+    rtdata.get_truth(f"truth/test_miri_lrs_slitless_tso_spec2/{output_filename}")
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
@@ -126,7 +118,7 @@ def test_miri_lrs_slitless_spec2(run_spec2_pipeline, rtdata_module, fitsdiff_def
         ("whtlt", "ecsv", True),
     ],
 )
-def test_miri_lrs_slitless_tso3(run_spec3_pipeline, generate_tso3_asn, rtdata_module,
+def test_miri_lrs_slitless_tso3(run_tso3_pipeline, generate_tso3_asn, rtdata_module,
     fitsdiff_default_kwargs, diff_astropy_tables, step_suffix, filename_extension,
     is_product):
     """Compare the output of a MIRI LRS slitless calwebb_tso3 step."""
