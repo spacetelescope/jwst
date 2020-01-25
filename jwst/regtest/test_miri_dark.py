@@ -4,6 +4,7 @@ from astropy.io.fits.diff import FITSDiff
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
+
 @pytest.mark.bigdata
 def test_miri_dark_pipeline(_jail, rtdata, fitsdiff_default_kwargs):
     rtdata.get_data("miri/image/jw00001001001_01101_00001_mirimage_uncal.fits")
