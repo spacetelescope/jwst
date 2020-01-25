@@ -111,31 +111,45 @@ def test_miri_lrs_slitless_tso_spec2(run_tso_spec2_pipeline, rtdata_module, fits
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize("step_suffix, filename_extension, is_product",
-    [
-        ("outlier_detection", "fits", False),
-        ("crfints", "fits", False),
-        ("x1dints", "fits", True),
-        ("whtlt", "ecsv", True),
-    ],
-)
+@pytest.mark.parametrize("step_suffix", ["outlier_detection", "crfints"])
 def test_miri_lrs_slitless_tso3(run_tso3_pipeline, generate_tso3_asn, rtdata_module,
-    fitsdiff_default_kwargs, diff_astropy_tables, step_suffix, filename_extension,
-    is_product):
-    """Compare the output of a MIRI LRS slitless calwebb_tso3 step."""
+    fitsdiff_default_kwargs, step_suffix):
+    """Compare the output of a MIRI LRS slitless calwebb_tso3 pipeline."""
     rtdata = rtdata_module
     _, asn_id = generate_tso3_asn
 
-    if is_product:
-        output_filename = f"{PRODUCT_NAME}_{step_suffix}.{filename_extension}"
-    else:
-        output_filename = f"{DATASET_ID}_{asn_id}_{step_suffix}.{filename_extension}"
+    output_filename = f"{DATASET_ID}_{asn_id}_{step_suffix}.fits"
     rtdata.output = output_filename
     rtdata.get_truth(f"truth/test_miri_lrs_slitless_tso3/{output_filename}")
 
-    if filename_extension == "fits":
-        diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
-        assert diff.identical, diff.report()
-    else:
-        diff = diff_astropy_tables(rtdata.output, rtdata.truth)
-        assert len(diff) == 0, "\n".join(diff)
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
+
+
+@pytest.mark.bigdata
+def test_miri_lrs_slitless_tso3_x1dints(run_tso3_pipeline, rtdata_module,
+    fitsdiff_default_kwargs):
+    """Compare the output of a MIRI LRS slitless calwebb_tso3 pipeline."""
+    rtdata = rtdata_module
+
+    output_filename = f"{PRODUCT_NAME}_x1dints.fits"
+    rtdata.output = output_filename
+    rtdata.get_truth(f"truth/test_miri_lrs_slitless_tso3/{output_filename}")
+
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
+
+
+@pytest.mark.bigdata
+def test_miri_lrs_slitless_tso3_whtlt(run_tso3_pipeline, generate_tso3_asn,
+    rtdata_module, diff_astropy_tables):
+    """Compare the output of a MIRI LRS slitless calwebb_tso3 pipeline."""
+    rtdata = rtdata_module
+    _, asn_id = generate_tso3_asn
+
+    output_filename = f"{PRODUCT_NAME}_whtlt.ecsv"
+    rtdata.output = output_filename
+    rtdata.get_truth(f"truth/test_miri_lrs_slitless_tso3/{output_filename}")
+
+    diff = diff_astropy_tables(rtdata.output, rtdata.truth)
+    assert len(diff) == 0, "\n".join(diff)
