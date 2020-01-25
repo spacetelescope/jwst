@@ -7,6 +7,7 @@ from jwst.associations.asn_from_list import asn_from_list
 
 DATASET_ID = "jw00623026001_03106_00005_mirimage"
 PRODUCT_NAME = "jw00623-a3001_t001_miri_p750l-slitlessprism"
+PROGRAM = "00623"
 
 
 @pytest.fixture(scope="module")
@@ -53,8 +54,8 @@ def run_tso_spec2_pipeline(run_tso1_pipeline, jail, rtdata_module):
 def generate_tso3_asn():
     """Generate an association file that references the output of run_spec2_pipeline."""
     asn = asn_from_list([f"{DATASET_ID}_calints.fits"], product_name=PRODUCT_NAME)
-    asn.data["program"] = "80600"
-    asn.data["asn_type"] = "tso-spec3"
+    asn.data["program"] = PROGRAM
+    asn.data["asn_type"] = "tso3"
     asn.sequence = 1
 
     name, serialized = asn.dump(format="json")
@@ -79,7 +80,7 @@ def run_tso3_pipeline(run_tso_spec2_pipeline, generate_tso3_asn):
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("step_suffix", ['dq_init', 'saturation', 'refpix',
-    'rscd', 'linearity', 'dark_current', 'jump', 'rate', 'rateints',])
+    'rscd', 'linearity', 'dark_current', 'jump', 'rate', 'rateints'])
 def test_miri_lrs_slitless_tso1(run_tso1_pipeline, rtdata_module, fitsdiff_default_kwargs, step_suffix):
     """
     Regression test of tso1 pipeline performed on MIRI LRS slitless TSO data.
@@ -98,7 +99,7 @@ def test_miri_lrs_slitless_tso1(run_tso1_pipeline, rtdata_module, fitsdiff_defau
 @pytest.mark.parametrize("step_suffix", ["flat_field", "srctype", "calints", "x1dints"])
 def test_miri_lrs_slitless_tso_spec2(run_tso_spec2_pipeline, rtdata_module, fitsdiff_default_kwargs,
     step_suffix):
-    """Compare the output of a MIRI LRS slitless calwebb_tso-spec2 step."""
+    """Compare the output of a MIRI LRS slitless calwebb_tso-spec2 pipeline."""
     rtdata = rtdata_module
 
     output_filename = f"{DATASET_ID}_{step_suffix}.fits"
