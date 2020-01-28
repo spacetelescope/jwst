@@ -55,6 +55,11 @@ set_telescope_pointing
 
 - Round S_REGION values in ``set_telescope_pointing`` [#4476]
 
+stpipe
+------
+
+- Fix sub-step nesting in parameter reference files [#4488]
+
 tweakreg
 --------
 
