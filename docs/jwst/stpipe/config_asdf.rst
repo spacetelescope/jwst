@@ -157,19 +157,21 @@ Pipeline Configuration
 ~~~~~~~~~~~~~~~~~~~~~~
 
 Pipelines are essentially steps that refer to sub-steps. As in the original cfg
-format, parameters for sub-steps can also be specified. Sub-step parameters are
-specified by using the sub-step name as the key, then underneath and indented,
-the parameters to change for that sub-step. For example, to define the
-``weight_power`` of the ``cube_build`` step in ``Spec2Pipeline`` configuration
-file, the parameter block would look as follows:
+format, parameters for sub-steps can also be specified. All sub-step parameters
+appear in a key calles `steps`. Sub-step parameters are specified by using the
+sub-step name as the key, then underneath and indented, the parameters to change
+for that sub-step. For example, to define the ``weight_power`` of the
+``cube_build`` step in ``Spec2Pipeline`` configuration file, the parameter block
+would look as follows:
 
 .. code-block::
 
    parameters:
        class: jwst.pipeline.Spec2Pipeline
        name: calwebb_spec2
-       cube_build:
-           weight_power: 4.0
+       steps:
+           cube_build:
+               weight_power: 4.0
 
 As with step configuration files, not all sub-steps need to be specified. If
 left unspecified, the sub-steps will be run with their default parameter sets.
@@ -185,10 +187,11 @@ the configuration file would look like:
    parameters:
        class: jwst.pipeline.Spec2Pipeline
        name: calwebb_spec2
-       msa_flagging:
-           skip: true
-       cube_build:
-           weight_power: 4.0
+       steps:
+           msa_flagging:
+               skip: true
+           cube_build:
+               weight_power: 4.0
 
 Python API
 ----------
@@ -200,9 +203,9 @@ Configuration files can be created and modified through the use of the `asdf` pa
    import asdf
 
    parameters = {'class': 'jwst.pipeline.Spec2Pipeline',
-                 'name': 'calwebb_spec2',
+                 'name': 'calwebb_spec2', 'steps': {
                  'msa_flagging': {'skip': True},
-                 'cube_build': {'weight_power': 4.0}
+                 'cube_build': {'weight_power': 4.0}}
                 }
 
    cfg = asdf.AsdfFile({'parameters': parameters})
@@ -216,7 +219,7 @@ The following example show modifying the ``weight_power`` value to ``8.0``:
 
    cfg = asdf.open('my_spec2_weight_40.asdf')
 
-   cfg['parameters']['cube_build']['weight_power'] = 8.0
+   cfg['parameters']['steps']['cube_build']['weight_power'] = 8.0
 
    cfg.write_to('my_spec2_weight_80.asdf')
               
