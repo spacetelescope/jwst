@@ -192,13 +192,13 @@ To run the regression tests on your local machine, get the test dependencies and
 
 To run all the regression tests:
 
-    pytest --bigdata jwst/tests_nightly
+    pytest --bigdata jwst/regtest
 
 You can control where the test results are written with the `--basetemp=<PATH>` arg to `pytest`.  _Note that `pytest` will wipe this directory clean for each test session, so make sure it is a scratch area._
 
 If you would like to run a specific test, find its name or ID and use the `-k` option:
 
-    pytest --bigdata --basetemp=<PATH> jwst/tests_nightly -k image3_pipeline
+    pytest --bigdata --basetemp=<PATH> jwst/regtest -k wcs
 
 If developers need to update the truth files in our nightly regression tests, there are instructions in the repository wiki.
 
