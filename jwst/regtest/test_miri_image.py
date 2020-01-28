@@ -1,9 +1,10 @@
 import pytest
 from astropy.io.fits.diff import FITSDiff
-
+from numpy.testing import assert_allclose
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
+from gwcs.wcstools import grid_from_bounding_box
 from jwst.stpipe import Step
-
+from jwst.datamodels import ImageModel
 
 @pytest.fixture(scope="module")
 def run_pipelines(jail, rtdata_module):
@@ -108,3 +109,22 @@ def test_miri_image_stage3_catalog(run_pipelines, diff_astropy_tables):
 
     diff = diff_astropy_tables(rtdata.output, rtdata.truth, rtol=1e-4)
     assert len(diff) == 0, "\n".join(diff)
+
+
+@pytest.mark.bigdata
+def test_miri_image_wcs(run_pipelines, fitsdiff_default_kwargs):
+    rtdata = run_pipelines
+
+    # get input assign_wcs and truth file
+    output = "det_image_1_MIRIMAGE_F770Wexp1_5stars_assign_wcs.fits"
+    truth_file = rtdata.get_truth('truth/test_miri_image_stages/'+output)
+
+    # Open the output and truth file
+    im = ImageModel(output)
+    im_ref = ImageModel(truth_file)
+
+    x, y = grid_from_bounding_box(im.meta.wcs.bounding_box)
+    ra, dec = im.meta.wcs(x, y)
+    raref, decref = im_ref.meta.wcs(x, y)
+    assert_allclose(ra, raref)
+    assert_allclose(dec, decref)
