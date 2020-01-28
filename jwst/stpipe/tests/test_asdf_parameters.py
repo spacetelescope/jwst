@@ -16,11 +16,11 @@ DEFAULT_RESULT = [DEFAULT_PAR1, DEFAULT_PAR2, False]
 def test_asdf_roundtrip_pipeline(_jail):
     """Save a Pipeline pars and re-instantiate with the save parameters"""
     args = [
-        'jwst.stpipe.tests.steps.MakeListStep',
+        'jwst.stpipe.tests.steps.MakeListPipeline',
         'a.fits',
         'b',
-        '--par1', '10.',
-        '--par2', 'par2',
+        '--steps.make_list.par1', '10.',
+        '--steps.make_list.par2', 'par2',
         '--save-parameters',
         'mkp_pars.asdf'
     ]
