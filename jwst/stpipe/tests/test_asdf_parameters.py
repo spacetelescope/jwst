@@ -15,6 +15,9 @@ DEFAULT_RESULT = [DEFAULT_PAR1, DEFAULT_PAR2, False]
 
 def test_asdf_roundtrip_pipeline(_jail):
     """Save a Pipeline pars and re-instantiate with the save parameters"""
+
+    # Save the parameters
+    par_path = 'mkp_pars.asdf'
     args = [
         'jwst.stpipe.tests.steps.MakeListPipeline',
         'a.fits',
@@ -22,11 +25,23 @@ def test_asdf_roundtrip_pipeline(_jail):
         '--steps.make_list.par1', '10.',
         '--steps.make_list.par2', 'par2',
         '--save-parameters',
-        'mkp_pars.asdf'
+        par_path
     ]
     Step.from_cmdline(args)
-    assert False
 
+    # Rerun with the parameter file
+    # Initial condition is that `Step.from_cmdline`
+    # succeeds.
+    args = [
+        par_path,
+        'a.fits',
+        'b'
+    ]
+    step = Step.from_cmdline(args)
+
+    # As a secondary condition, ensure the required parameter
+    # `par2` is set.
+    assert step.make_list.par2 == 'par2'
 
 def test_asdf_from_call():
     """Test using an ASDF file from call"""
