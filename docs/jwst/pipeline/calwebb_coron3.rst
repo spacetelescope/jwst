@@ -75,13 +75,13 @@ indicated by the "exptype" values for each::
       {"name": "jw10005-c1001_t001_nircam_f430m-maskrnd-sub320a430r",
        "members": [
            {"expname": "jw10005009001_02102_00001_nrcalong_calints.fits",
-            "exptype": "psf",
+            "exptype": "psf"
            },
            {"expname": "jw10005006001_02102_00001_nrcalong_calints.fits",
-            "exptype": "science",
+            "exptype": "science"
            },
            {"expname": "jw10005003001_02102_00001_nrcalong_calints.fits",
-            "exptype": "science",
+            "exptype": "science"
            }
        ]
       }

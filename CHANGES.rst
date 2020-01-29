@@ -53,6 +53,9 @@ pipeline
 - Use the `overwrite` option when saving the white-light photometry catalog in
   the ``calwebb_tso3`` pipeline. [#4493]
 
+- Fixed error in formatting of example ASN file contents in the documents for
+  the ``calwebb_coron3`` and ``calwebb_ami3`` pipelines. [#4496]
+
 set_telescope_pointing
 ----------------------
 
