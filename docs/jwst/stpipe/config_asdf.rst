@@ -158,11 +158,11 @@ Pipeline Configuration
 
 Pipelines are essentially steps that refer to sub-steps. As in the original cfg
 format, parameters for sub-steps can also be specified. All sub-step parameters
-appear in a key calles `steps`. Sub-step parameters are specified by using the
+appear in a key called `steps`. Sub-step parameters are specified by using the
 sub-step name as the key, then underneath and indented, the parameters to change
 for that sub-step. For example, to define the ``weight_power`` of the
-``cube_build`` step in ``Spec2Pipeline`` configuration file, the parameter block
-would look as follows:
+``cube_build`` step in a ``Spec2Pipeline`` configuration file, the parameter
+block would look as follows:
 
 .. code-block::
 
