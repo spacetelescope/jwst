@@ -23,7 +23,6 @@ try:
 except ImportError:
     DISCOURAGED_TYPES = None
 
-
 from . import config_parser
 from . import crds_client
 from . import log
@@ -152,6 +151,7 @@ class Step():
             as member variables on the returned `Step` instance.
         """
         from . import cmdline
+
         return cmdline.step_from_cmdline(args)
 
     @classmethod
@@ -1188,6 +1188,8 @@ class Step():
         pars : dict
             Keys are the parameters and values are the values.
         """
+        from . import cmdline
+
         if full_spec:
             spec_file_func = config_parser.get_merged_spec_file
         else:
@@ -1202,8 +1204,15 @@ class Step():
                 if not isinstance(value, property):
                     instance_pars[key] = value
         pars = config_parser.config_from_dict(instance_pars, spec, allow_missing=True)
-        pars = dict(pars)
-        return pars
+
+        # Convert the config to a pure dict.
+        pars_dict = {}
+        for key, value in pars.items():
+            if isinstance(value, cmdline.FromCommandLine):
+                pars_dict[key] = str(value)
+            else:
+                pars_dict[key] = value
+        return pars_dict
 
     @ClassInstanceMethod
     def get_pars_model(step, full_spec=True):

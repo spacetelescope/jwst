@@ -13,6 +13,36 @@ DEFAULT_PAR2 = 'Yes, a string'
 DEFAULT_RESULT = [DEFAULT_PAR1, DEFAULT_PAR2, False]
 
 
+def test_asdf_roundtrip_pipeline(_jail):
+    """Save a Pipeline pars and re-instantiate with the save parameters"""
+
+    # Save the parameters
+    par_path = 'mkp_pars.asdf'
+    args = [
+        'jwst.stpipe.tests.steps.MakeListPipeline',
+        'a.fits',
+        'b',
+        '--steps.make_list.par1', '10.',
+        '--steps.make_list.par2', 'par2',
+        '--save-parameters',
+        par_path
+    ]
+    Step.from_cmdline(args)
+
+    # Rerun with the parameter file
+    # Initial condition is that `Step.from_cmdline`
+    # succeeds.
+    args = [
+        par_path,
+        'a.fits',
+        'b'
+    ]
+    step = Step.from_cmdline(args)
+
+    # As a secondary condition, ensure the required parameter
+    # `par2` is set.
+    assert step.make_list.par2 == 'par2'
+
 def test_asdf_from_call():
     """Test using an ASDF file from call"""
     config_file = t_path(
