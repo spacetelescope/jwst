@@ -8,11 +8,11 @@ from .jwst_models import (
     GratingEquationType, CoordsType, RotationSequenceType, Gwa2SlitType,
     Slit2MsaType, LogicalType, NirissSOSSType, V23ToSkyType,
     RefractionIndexType, SnellType, MIRI_AB2SliceType, NIRCAMGrismDispersionType,
-    NIRISSGrismDispersionType, TPCorrType
+    NIRISSGrismDispersionType
 )
 
 
 __all__ = ['GratingEquationType', 'CoordsType', 'RotationSequenceType',
            'Gwa2SlitType', 'Slit2MsaType', 'LogicalType', 'NirissSOSSType', 'V23ToSkyType',
            'RefractionIndexType', 'SnellType', 'MIRI_AB2SliceType', 'NIRCAMGrismDispersionType',
-           'NIRISSGrismDispersionType', 'TPCorrType']
+           'NIRISSGrismDispersionType']
