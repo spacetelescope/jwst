@@ -3,15 +3,6 @@ dist: xenial
 language: python
 python: 3.7.7
 
-# The apt packages below are needed for sphinx builds
-addons:
-  apt:
-    packages:
-      - texlive-latex-extra
-      - dvipng
-      - graphviz
-      - liblapack-dev
-
 env:
   global:
     - CRDS_SERVER_URL="https://jwst-crds.stsci.edu"
@@ -47,9 +38,15 @@ jobs:
     - env: CRDS_CONTEXT="jwst-edit"
            PIP_DEPENDENCIES=".[test]"
 
-    # Build sphinx documentation with warnings
-    - env: TEST_COMMAND="make --directory=docs html"
-           PIP_DEPENDENCIES=".[docs]"
+    # Build documentation
+    - env: PIP_DEPENDENCIES=".[docs]"
+           TEST_COMMAND="make --directory=docs html"
+      addons:
+        apt:
+          packages:
+            - texlive-latex-extra
+            - dvipng
+            - graphviz
 
     # PEP8 check
     - env: TEST_COMMAND="flake8"
