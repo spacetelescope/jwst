@@ -50,6 +50,9 @@ pipeline
 - Don't try to save the ``cube_build`` result if the step is skipped in the
   ``calwebb_spec2`` pipeline. [#4478]
 
+- Use the `overwrite` option when saving the white-light photometry catalog in
+  the ``calwebb_tso3`` pipeline. [#4493]
+
 set_telescope_pointing
 ----------------------
 
