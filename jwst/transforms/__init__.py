@@ -6,6 +6,7 @@ from .models import (AngleFromGratingEquation, WavelengthFromGratingEquation,
                      NIRCAMBackwardGrismDispersion, MIRI_AB2Slice, GrismObject,
                      NIRISSForwardRowGrismDispersion, NIRISSForwardColumnGrismDispersion,
                      NIRISSBackwardGrismDispersion, V2V3ToIdeal, IdealToV2V3)
+from .tpcorr import (TPCorr, rot_mat3D, IncompatibleCorrections)
 
 
 __all__ = ['AngleFromGratingEquation', 'WavelengthFromGratingEquation',
@@ -14,4 +15,5 @@ __all__ = ['AngleFromGratingEquation', 'WavelengthFromGratingEquation',
            'NIRCAMForwardRowGrismDispersion', 'NIRCAMForwardColumnGrismDispersion',
            'NIRCAMBackwardGrismDispersion', 'MIRI_AB2Slice', 'GrismObject',
            'NIRISSForwardRowGrismDispersion', 'NIRISSForwardColumnGrismDispersion',
-           'NIRISSBackwardGrismDispersion', 'V2V3ToIdeal', 'IdealToV2V3']
+           'NIRISSBackwardGrismDispersion', 'V2V3ToIdeal', 'IdealToV2V3',
+           'IncompatibleCorrections', 'rot_mat3D', 'TPCorr']
