@@ -116,10 +116,11 @@ def test_miri_image_wcs(run_pipelines, fitsdiff_default_kwargs):
     rtdata = run_pipelines
 
     # get input assign_wcs and truth file
-    rtdata.output = "det_image_1_MIRIMAGE_F770Wexp1_5stars_assign_wcs.fits"
-    rtdata.get_truth("truth/test_miri_image_stages/" + rtdata.output)
+    output = "det_image_1_MIRIMAGE_F770Wexp1_5stars_assign_wcs.fits"
+    rtdata.output = output
+    rtdata.get_truth("truth/test_miri_image_stages/" + output)
     # Open the output and truth file
-    im = datamodels.open(rtdata.output)
+    im = datamodels.open(output)
     im_truth = datamodels.open(rtdata.truth)
 
     x, y = grid_from_bounding_box(im.meta.wcs.bounding_box)

@@ -2,9 +2,11 @@
 from pathlib import Path
 import pytest
 
+from numpy.testing import assert_allclose
 from jwst.associations import load_asn
 from jwst.lib.suffix import replace_suffix
-
+from jwst  import datamodels
+from gwcs.wcstools import grid_from_bounding_box
 from . import regtestdata as rt
 
 # Define artifactory source and truth
@@ -156,16 +158,16 @@ def test_spec3_multi(run_spec3_multi, fitsdiff_default_kwargs, output):
 
 
 @pytest.mark.bigdata
-def test_miri_mrs_wcs(run_spec2, fitsdiff_default_kwargs, suffix):
-    rtdata = run_specs
-
+def test_miri_mrs_wcs(run_spec2, fitsdiff_default_kwargs):
+    rtdata, asn_path = run_spec2
     # get input assign_wcs and truth file
-    rtdata.output = "ifushort_ch12_assign_wcs.fits"
-    rtdata.truth("truth/test_miri_mrs/"+rtdata.output)
+    output = "ifushort_ch12_assign_wcs.fits"
+    rtdata.output = output
+    rtdata.get_truth("truth/test_miri_mrs/"+output)
 
     # Open the output and truth file
     im = datamodels.open(rtdata.output)
-    im_truth = datamodels.open(rtdata.truth_file)
+    im_truth = datamodels.open(rtdata.truth)
 
     x, y = grid_from_bounding_box(im.meta.wcs.bounding_box)
     ra, dec, lam = im.meta.wcs(x, y)

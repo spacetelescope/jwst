@@ -2,8 +2,11 @@ import os
 import pytest
 from astropy.io.fits.diff import FITSDiff
 
+from numpy.testing import assert_allclose
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
+from jwst  import datamodels
+from gwcs.wcstools import grid_from_bounding_box
 
 @pytest.fixture(scope="module")
 def run_pipeline(jail, rtdata_module):
@@ -34,7 +37,7 @@ def run_pipeline(jail, rtdata_module):
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("output",[
-    "bsub", "flat_field", "srctype", "cal", "x1d"])
+    "bsub", "flat_field", "assign_wcs","srctype", "cal", "x1d"])
 def test_miri_lrs_slit_spec2(run_pipeline, fitsdiff_default_kwargs, output):
     """Regression test of the calwebb_spec2 pipeline on MIRI
        LRS fixedslit data using along-slit-nod pattern for
@@ -51,3 +54,29 @@ def test_miri_lrs_slit_spec2(run_pipeline, fitsdiff_default_kwargs, output):
     # Compare the results
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
+
+
+@pytest.mark.bigdata
+def test_miri_lrs_slit_wcs(run_pipeline, fitsdiff_default_kwargs):
+    rtdata = run_pipeline
+
+    # get input assign_wcs and truth file
+    output = "jw00623032001_03102_00001_mirimage_assign_wcs.fits"
+    rtdata.output = output
+    rtdata.get_truth("truth/test_miri_lrs_slit_spec2/" + output)
+    # Open the output and truth file
+    im = datamodels.open(output)
+    im_truth = datamodels.open(rtdata.truth)
+
+    x, y = grid_from_bounding_box(im.meta.wcs.bounding_box)
+    ra, dec, lam = im.meta.wcs(x, y)
+    ratruth, dectruth, lamtruth = im_truth.meta.wcs(x, y)
+    assert_allclose(ra, ratruth)
+    assert_allclose(dec, dectruth)
+    assert_allclose(lam, lamtruth)
+
+    # Test the inverse transform
+    xtest, ytest = im.meta.wcs.backward_transform(ra, dec, lam)
+    xtruth, ytruth = im_truth.meta.wcs.backward_transform (ratruth, dectruth, lamtruth)
+    assert_allclose(xtest, xtruth)
+    assert_allclose(ytest, ytruth)

@@ -1,9 +1,12 @@
 import pytest
 from astropy.io.fits.diff import FITSDiff
+from numpy.testing import assert_allclose
 
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
+from gwcs.wcstools import grid_from_bounding_box
 from jwst.associations.asn_from_list import asn_from_list
+from jwst  import datamodels
 
 DATASET_ID = "jw00623026001_03106_00005_mirimage"
 PRODUCT_NAME = "jw00623-a3001_t001_miri_p750l-slitlessprism"
@@ -157,17 +160,18 @@ def test_miri_lrs_slitless_tso3_whtlt(run_tso3_pipeline, generate_tso3_asn,
 
 
 @pytest.mark.bigdata
-def test_miri_lrsslitless_wcs(run_tso_spec2_pipeline, fitsdiff_default_kwargs):
-    rtdata = run_tso_spec2_pipeline
+def test_miri_lrs_slitless_wcs(run_tso_spec2_pipeline, fitsdiff_default_kwargs,
+                               rtdata_module):
 
-    output_filename = f"{PRODUCT_NAME}_assign_wcs.fits"
+    rtdata = rtdata_module
+    output = f"{DATASET_ID}_assign_wcs.fits"
     # get input assign_wcs and truth file
-    rtdata.output = output_filename
-    rtdata.truth("truth/test_miri_lrs_slitless_tso2/"+rtdata.output)
+    rtdata.output = output
+    rtdata.get_truth("truth/test_miri_lrs_slitless_tso_spec2/"+output)
 
     # Open the output and truth file
     im = datamodels.open(rtdata.output)
-    im_truth = datamodels.open(rtdata.truth_file)
+    im_truth = datamodels.open(rtdata.truth)
 
     x, y = grid_from_bounding_box(im.meta.wcs.bounding_box)
     ra, dec, lam = im.meta.wcs(x, y)
@@ -175,4 +179,3 @@ def test_miri_lrsslitless_wcs(run_tso_spec2_pipeline, fitsdiff_default_kwargs):
     assert_allclose(ra, ratruth)
     assert_allclose(dec, dectruth)
     assert_allclose(lam, lamtruth)
-
