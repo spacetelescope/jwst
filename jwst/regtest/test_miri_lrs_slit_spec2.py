@@ -24,6 +24,7 @@ def run_pipeline(jail, rtdata_module):
     args = ["config/calwebb_spec2.cfg", rtdata.input,
             "--steps.resample_spec.skip=true",       # remove when bug fixed
             "--save_bsub=true",
+            "--steps.assign_wcs.save_results=true",
             "--steps.flat_field.save_results=true",
             "--steps.srctype.save_results=true"]
     Step.from_cmdline(args)

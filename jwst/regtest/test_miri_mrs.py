@@ -153,3 +153,29 @@ def test_spec3_multi(run_spec3_multi, fitsdiff_default_kwargs, output):
         truth_path=TRUTH_PATH,
         is_suffix=False
     )
+
+
+@pytest.mark.bigdata
+def test_miri_mrs_wcs(run_spec2, fitsdiff_default_kwargs, suffix):
+    rtdata = run_specs
+
+    # get input assign_wcs and truth file
+    rtdata.output = "ifushort_ch12_assign_wcs.fits"
+    rtdata.truth("truth/test_miri_mrs/"+rtdata.output)
+
+    # Open the output and truth file
+    im = datamodels.open(rtdata.output)
+    im_truth = datamodels.open(rtdata.truth_file)
+
+    x, y = grid_from_bounding_box(im.meta.wcs.bounding_box)
+    ra, dec, lam = im.meta.wcs(x, y)
+    ratruth, dectruth, lamtruth = im_truth.meta.wcs(x, y)
+    assert_allclose(ra, ratruth)
+    assert_allclose(dec, dectruth)
+    assert_allclose(lam, lamtruth)
+
+    # Test the inverse transform
+    xtest, ytest = im.meta.wcs.backward_transform(ra, dec, lam)
+    xtruth, ytruth = im_truth.meta.wcs.backward_transform (ratruth, dectruth, lamtruth)
+    assert_allclose(xtest, xtruth)
+    assert_allclose(ytest, ytruth)

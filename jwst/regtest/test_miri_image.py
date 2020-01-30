@@ -4,7 +4,7 @@ from numpy.testing import assert_allclose
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from gwcs.wcstools import grid_from_bounding_box
 from jwst.stpipe import Step
-from jwst.datamodels import ImageModel
+from jwst  import datamodels
 
 @pytest.fixture(scope="module")
 def run_pipelines(jail, rtdata_module):
@@ -116,15 +116,20 @@ def test_miri_image_wcs(run_pipelines, fitsdiff_default_kwargs):
     rtdata = run_pipelines
 
     # get input assign_wcs and truth file
-    output = "det_image_1_MIRIMAGE_F770Wexp1_5stars_assign_wcs.fits"
-    truth_file = rtdata.get_truth('truth/test_miri_image_stages/'+output)
-
+    rtdata.output = "det_image_1_MIRIMAGE_F770Wexp1_5stars_assign_wcs.fits"
+    rtdata.get_truth("truth/test_miri_image_stages/" + rtdata.output)
     # Open the output and truth file
-    im = ImageModel(output)
-    im_ref = ImageModel(truth_file)
+    im = datamodels.open(rtdata.output)
+    im_truth = datamodels.open(rtdata.truth)
 
     x, y = grid_from_bounding_box(im.meta.wcs.bounding_box)
     ra, dec = im.meta.wcs(x, y)
-    raref, decref = im_ref.meta.wcs(x, y)
-    assert_allclose(ra, raref)
-    assert_allclose(dec, decref)
+    ratruth, dectruth = im_truth.meta.wcs(x, y)
+    assert_allclose(ra, ratruth)
+    assert_allclose(dec, dectruth)
+
+    # Test the inverse transform
+    xtest, ytest = im.meta.wcs.backward_transform(ra, dec)
+    xtruth, ytruth = im_truth.meta.wcs.backward_transform (ratruth, dectruth)
+    assert_allclose(xtest, xtruth)
+    assert_allclose(ytest, ytruth)
