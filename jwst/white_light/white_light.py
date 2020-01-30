@@ -53,7 +53,6 @@ def white_light(input):
     tbl_meta['filter'] = input.meta.instrument.filter
     tbl_meta['pupil'] = input.meta.instrument.pupil
     tbl_meta['target_name'] = input.meta.target.catalog_name
-    tbl_meta['number_of_integrations'] = nints
 
     # Create the output table
     tbl = QTable(meta=tbl_meta)

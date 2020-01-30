@@ -158,6 +158,7 @@ class Tso3Pipeline(Pipeline):
             self.log.info("Could not create a photometric catalog for data")
         else:
             phot_results = vstack(phot_result_list)
+            phot_results.meta['number_of_integrations'] = len(phot_results)
             phot_tab_name = self.make_output_path(suffix=phot_tab_suffix, ext='ecsv')
             self.log.info("Writing Level 3 photometry catalog {}...".format(
                       phot_tab_name))
