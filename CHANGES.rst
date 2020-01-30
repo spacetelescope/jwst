@@ -33,7 +33,7 @@ extract_2d
 
 - For GRISM data, the variance arrays and INT_TIMES table are copied to output,
   and keywords SLTSTRT1 and SLTSTRT2 are set to the pixel location of the
-  cutout in the input file. [#4503]
+  cutout in the input file. [#4504]
 
 master_background
 -----------------
