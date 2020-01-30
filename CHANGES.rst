@@ -34,6 +34,13 @@ extract_1d
 - Fixed bug regarding background for NIRSpec or NIRISS (SOSS) point source
   spectra. [#4459]
 
+extract_2d
+----------
+
+- For GRISM data, the variance arrays and INT_TIMES table are copied to output,
+  and keywords SLTSTRT1 and SLTSTRT2 are set to the pixel location of the
+  cutout in the input file. [#4504]
+
 master_background
 -----------------
 
