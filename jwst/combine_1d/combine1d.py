@@ -47,10 +47,7 @@ class InputSpectrumModel:
             to use weight = 1.
         """
 
-        # We're casting this from dtype('>f8') to dtype('float64') because our version
-        # of gwcs has a bug that prevents it from recognizing big-endian dtypes as
-        # numeric.  Once we upgrade to gwcs 0.11 we can remove the cast.
-        self.wavelength = spec.spec_table.field("wavelength").copy().astype(np.float64)
+        self.wavelength = spec.spec_table.field("wavelength").copy()
 
         self.flux = spec.spec_table.field("flux").copy()
         self.error = spec.spec_table.field("error").copy()
