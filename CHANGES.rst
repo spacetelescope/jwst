@@ -16,15 +16,9 @@ datamodels
 
 - Force data model type setting on save [#4318]
 
-- Deprecate ``MIRIRampModel`` [#4328]
+- Deprecate MIRIRampModel [#4328]
 
-- Make ``memmap=False`` be the default in ``datamodels`` [#4445]
-
-- Update schemas to add the ``id`` field and switch relative references
-  from filesystem paths to URIs.  Make ``schema_url`` absolute to facilitate
-  subclassing DataModel with schemas from other asdf extensions. [#4435]
-
-- Update core.schema.yaml to include new NIRCam entries for PATTTYPE [#4475]
+- Make memmap=False be the default in datamodels [#4445]
 
 extract_1d
 ----------
@@ -33,6 +27,13 @@ extract_1d
 
 - Fixed bug regarding background for NIRSpec or NIRISS (SOSS) point source
   spectra. [#4459]
+
+extract_2d
+----------
+
+- For GRISM data, the variance arrays and INT_TIMES table are copied to output,
+  and keywords SLTSTRT1 and SLTSTRT2 are set to the pixel location of the
+  cutout in the input file. [#4503]
 
 master_background
 -----------------
@@ -46,29 +47,6 @@ pipeline
 
 - Make the naming and writing out of the resampled results to an `i2d` file
   in `Image2Pipeline` consistent between config and class invocations [#4333]
-
-- Don't try to save the ``cube_build`` result if the step is skipped in the
-  ``calwebb_spec2`` pipeline. [#4478]
-
-- Use the `overwrite` option when saving the white-light photometry catalog in
-  the ``calwebb_tso3`` pipeline. [#4493]
-
-- Fixed error in formatting of example ASN file contents in the documents for
-  the ``calwebb_coron3`` and ``calwebb_ami3`` pipelines. [#4496]
-
-- Fixed the ``calwebb_tso3`` calculation of the number_of_integrations recorded
-  in the photometric table product to avoid ``astropy.table`` merge conflicts.
-  [#4502]
-
-set_telescope_pointing
-----------------------
-
-- Round S_REGION values in ``set_telescope_pointing`` [#4476]
-
-stpipe
-------
-
-- Fix sub-step nesting in parameter reference files [#4488]
 
 tweakreg
 --------
@@ -601,7 +579,7 @@ outlier_detection
 
 - Don't use NaNs or masked values in weight image for blotting. [#3651]
 
-- When calling cube_build for IFU data fixed selecting correct channels (MIRI) or
+- When calling cube_build for IFU data fixed selecting correct channels (MIRI) or 
   correct grating (NIRSPEC) [#4301]
 
 pipeline
