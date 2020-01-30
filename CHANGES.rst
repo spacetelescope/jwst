@@ -56,6 +56,10 @@ pipeline
 - Fixed error in formatting of example ASN file contents in the documents for
   the ``calwebb_coron3`` and ``calwebb_ami3`` pipelines. [#4496]
 
+- Fixed the ``calwebb_tso3`` calculation of the number_of_integrations recorded
+  in the photometric table product to avoid ``astropy.table`` merge conflicts.
+  [#4502]
+
 set_telescope_pointing
 ----------------------
 
