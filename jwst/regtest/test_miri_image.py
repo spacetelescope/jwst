@@ -58,11 +58,10 @@ def run_pipelines(jail, rtdata_module):
         # Set some unique param values needed for these data
         "--steps.tweakreg.snr_threshold=200",
         "--steps.tweakreg.use2dhist=False",
+        "--steps.tweakreg.minobj=4",
         "--steps.source_catalog.snr_threshold=20",
         ]
     Step.from_cmdline(args)
-
-    return rtdata
 
 
 @pytest.mark.bigdata
@@ -71,14 +70,14 @@ def run_pipelines(jail, rtdata_module):
     "rateints",
     "assign_wcs", "flat_field", "cal", "i2d",
     "a3001_crf"])
-def test_miri_image_stages123(run_pipelines, fitsdiff_default_kwargs, suffix):
+def test_miri_image(run_pipelines, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Regression test of detector1 and image2 pipelines performed on MIRI data."""
-    rtdata = run_pipelines
+    rtdata = rtdata_module
     rtdata.input = "det_image_1_MIRIMAGE_F770Wexp1_5stars_uncal.fits"
-    output = "det_image_1_MIRIMAGE_F770Wexp1_5stars_" + suffix + ".fits"
+    output = f"det_image_1_MIRIMAGE_F770Wexp1_5stars_{suffix}.fits"
     rtdata.output = output
 
-    rtdata.get_truth("truth/test_miri_image_stages/" + output)
+    rtdata.get_truth(f"truth/test_miri_image_stages/{output}")
 
     # Set tolerances so the crf, rscd and rateints file comparisons work across
     # architectures
@@ -89,8 +88,8 @@ def test_miri_image_stages123(run_pipelines, fitsdiff_default_kwargs, suffix):
 
 
 @pytest.mark.bigdata
-def test_miri_image_stage3_i2d(run_pipelines, fitsdiff_default_kwargs):
-    rtdata = run_pipelines
+def test_miri_image3_i2d(run_pipelines, rtdata_module, fitsdiff_default_kwargs):
+    rtdata = rtdata_module
     rtdata.input = "det_dithered_5stars_image3_asn.json"
     rtdata.output = "det_dithered_5stars_f770w_i2d.fits"
     rtdata.get_truth("truth/test_miri_image_stages/det_dithered_5stars_f770w_i2d.fits")
@@ -101,8 +100,8 @@ def test_miri_image_stage3_i2d(run_pipelines, fitsdiff_default_kwargs):
 
 
 @pytest.mark.bigdata
-def test_miri_image_stage3_catalog(run_pipelines, diff_astropy_tables):
-    rtdata = run_pipelines
+def test_miri_image3_catalog(run_pipelines, rtdata_module, diff_astropy_tables):
+    rtdata = rtdata_module
     rtdata.input = "det_dithered_5stars_image3_asn.json"
     rtdata.output = "det_dithered_5stars_f770w_cat.ecsv"
     rtdata.get_truth("truth/test_miri_image_stages/det_dithered_5stars_f770w_cat.ecsv")
