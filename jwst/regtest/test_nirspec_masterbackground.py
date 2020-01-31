@@ -102,7 +102,7 @@ def test_nirspec_mos_mbkg_user(run_nirspec_mbkg, fitsdiff_default_kwargs):
 @pytest.mark.parametrize(
     'output_file', ['ifu_prism_source_on_NRS1_master_background.fits', 'ifu_prism_source_off_NRS1_o001_masterbg.fits']
 )
-def test_nirspec_ifu_nod_mbkg(run_nirspec_mbkg, fitsdiff_default_kwargs, output_file):
+def test_nirspec_ifu_mbkg_nod(run_nirspec_mbkg, fitsdiff_default_kwargs, output_file):
     """Test NIRSpec IFU nodded data."""
     rtdata = run_nirspec_mbkg(
         'nirspec/ifu/nirspec_spec3_asn.json',
@@ -114,7 +114,7 @@ def test_nirspec_ifu_nod_mbkg(run_nirspec_mbkg, fitsdiff_default_kwargs, output_
 
     # Get the truth file
     rtdata.get_truth(
-        os.path.join("truth/test_nirspec_ifu_nod_mbkg", output_file)
+        os.path.join("truth/test_nirspec_ifu_mbkg_nod", output_file)
     )
 
     # Compare the results
