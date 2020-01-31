@@ -4,7 +4,7 @@ from numpy.testing import assert_allclose
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from gwcs.wcstools import grid_from_bounding_box
 from jwst.stpipe import Step
-from jwst  import datamodels
+from jwst import datamodels
 
 @pytest.fixture(scope="module")
 def run_pipelines(jail, rtdata_module):

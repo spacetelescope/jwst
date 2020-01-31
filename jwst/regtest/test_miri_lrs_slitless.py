@@ -6,7 +6,7 @@ from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 from gwcs.wcstools import grid_from_bounding_box
 from jwst.associations.asn_from_list import asn_from_list
-from jwst  import datamodels
+from jwst import datamodels
 
 DATASET_ID = "jw00623026001_03106_00005_mirimage"
 PRODUCT_NAME = "jw00623-a3001_t001_miri_p750l-slitlessprism"
