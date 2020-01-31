@@ -1,9 +1,12 @@
 import pytest
 from astropy.io.fits.diff import FITSDiff
+from numpy.testing import assert_allclose
 
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
+from gwcs.wcstools import grid_from_bounding_box
 from jwst.associations.asn_from_list import asn_from_list
+from jwst import datamodels
 
 DATASET_ID = "jw00623026001_03106_00005_mirimage"
 PRODUCT_NAME = "jw00623-a3001_t001_miri_p750l-slitlessprism"
@@ -45,6 +48,7 @@ def run_tso_spec2_pipeline(run_tso1_pipeline, jail, rtdata_module):
         "config/calwebb_tso-spec2.cfg",
         rtdata.input,
         "--steps.flat_field.save_results=true",
+        "--steps.assign_wcs.save_results=true",
         "--steps.srctype.save_results=true",
     ]
     Step.from_cmdline(args)
@@ -96,7 +100,7 @@ def test_miri_lrs_slitless_tso1(run_tso1_pipeline, rtdata_module, fitsdiff_defau
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize("step_suffix", ["flat_field", "srctype", "calints", "x1dints"])
+@pytest.mark.parametrize("step_suffix", ["flat_field", "srctype", "calints", "assign_wcs", "x1dints"])
 def test_miri_lrs_slitless_tso_spec2(run_tso_spec2_pipeline, rtdata_module, fitsdiff_default_kwargs,
     step_suffix):
     """Compare the output of a MIRI LRS slitless calwebb_tso-spec2 pipeline."""
@@ -153,3 +157,25 @@ def test_miri_lrs_slitless_tso3_whtlt(run_tso3_pipeline, generate_tso3_asn,
 
     diff = diff_astropy_tables(rtdata.output, rtdata.truth)
     assert len(diff) == 0, "\n".join(diff)
+
+
+@pytest.mark.bigdata
+def test_miri_lrs_slitless_wcs(run_tso_spec2_pipeline, fitsdiff_default_kwargs,
+                               rtdata_module):
+
+    rtdata = rtdata_module
+    output = f"{DATASET_ID}_assign_wcs.fits"
+    # get input assign_wcs and truth file
+    rtdata.output = output
+    rtdata.get_truth("truth/test_miri_lrs_slitless_tso_spec2/"+output)
+
+    # Open the output and truth file
+    im = datamodels.open(rtdata.output)
+    im_truth = datamodels.open(rtdata.truth)
+
+    x, y = grid_from_bounding_box(im.meta.wcs.bounding_box)
+    ra, dec, lam = im.meta.wcs(x, y)
+    ratruth, dectruth, lamtruth = im_truth.meta.wcs(x, y)
+    assert_allclose(ra, ratruth)
+    assert_allclose(dec, dectruth)
+    assert_allclose(lam, lamtruth)
