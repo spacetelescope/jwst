@@ -90,7 +90,7 @@ Note: If you wish to install directly from github, but also include the extra de
 
 Need other useful packages in your development environment?
 
-    pip install ipython flake8 pytest-xdist
+    pip install ipython flake8 pytest-xdist pytest_astropy_header
 
 ### CRDS Setup ###
 
