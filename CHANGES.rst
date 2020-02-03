@@ -27,6 +27,8 @@ datamodels
 
 - Update core.schema.yaml to include new NIRCam entries for PATTTYPE [#4475]
 
+- Update core.schema.yaml to include NIRISS PATTTYPE values [#4xxx]
+
 extract_1d
 ----------
 
