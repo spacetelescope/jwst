@@ -28,6 +28,6 @@ Reference File Format
 The filter offset reference file is an ASDF file that contains a dictionary of row and column offsets for the MIRI imaging dataset. The filter offset reference file contains a dictionary in the tree that is indexed by the instrument filter. Each filter points to two fields - row_offset and column_offset. The format is
 
 :miri_filter_name:
-    :column_offset: Offset in x (in arcmin)
-    :row_offset: Offset in y (in arcmin)
+    :column_offset: Offset in x (in pix)
+    :row_offset: Offset in y (in pix)
 
