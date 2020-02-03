@@ -925,13 +925,26 @@ properties:
           primary_type:
             title: Primary dither pattern type
             type: string
-            enum: [2-POINT, 2-POINT-NOD, 3-POINT-NOD,
-              4-POINT, 4-POINT-NOD, 4-POINT-DITHER, 4-POINT-SETS,
-              5-POINT-NOD, 5-POINT-SMALL-GRID, 9-POINT-SMALL-GRID,
-              ALONG-SLIT-NOD, CYCLING, EXTENDED-SOURCE, FULL, FULLBOX,
-              FULL-TIGHT, GAUSSIAN, INTRAMODULE, INTRAMODULEBOX,
-              INTRAMODULEX, INTRASCA, MAPPING, NONE, POINT-SOURCE,
-              REULEAUX, SPARSE-CYCLING, WFSC]
+            enum:
+              # MIRI coron
+             [5-POINT-SMALL-GRID, 9-POINT-SMALL-GRID,
+              # MIRI imaging
+              4-POINT-SETS, CYCLING, GAUSSIAN, REULEAUX, WFSC,
+              # MIRI LRS
+              ALONG-SLIT-NOD, MAPPING,
+              # MIRI MRS
+              2-POINT, 4-POINT, EXTENDED-SOURCE, POINT-SOURCE,
+              # NIRCam
+              FULL, FULLBOX, FULL-TIGHT,
+              INTRAMODULE, INTRAMODULEBOX, INTRAMODULEX, INTRASCA,
+              # NIRISS
+              AMI, IMAGING, MIMF, PARALLEL, WFSS,
+              # NIRSpec FS, IFU, and MOS
+              2-POINT-NOD, 3-POINT-NOD, 5-POINT-NOD,
+              # NIRSpec IFU
+              4-POINT-NOD, 4-POINT-DITHER, CYCLING, SPARSE-CYCLING,
+              # Misc
+              N/A, NONE, ANY]
             fits_keyword: PATTTYPE
             blend_table: True
           position_number:
