@@ -19,6 +19,26 @@ def full_pool_rules(request):
     return (pool, rules, pool_fname)
 
 
+@pytest.fixture(scope="module")
+def jail(request, tmpdir_factory):
+    """Run test in a pristine temporary working directory, scoped to module.
+
+    This fixture is the same as _jail in ci_watson, but scoped to module
+    instead of function.  This allows a fixture using it to produce files in a
+    temporary directory, and then have the tests access them.
+    """
+    old_dir = os.getcwd()
+    path = request.module.__name__.split('.')[-1]
+    if request._parent_request.fixturename is not None:
+        path = path + "_" + request._parent_request.fixturename
+    newpath = tmpdir_factory.mktemp(path)
+    try:
+        os.chdir(str(newpath))
+        yield newpath
+    finally:
+        os.chdir(old_dir)
+
+
 @pytest.fixture
 def mk_tmp_dirs():
     """Create a set of temporary directorys and change to one of them."""
