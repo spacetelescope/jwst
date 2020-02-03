@@ -6,6 +6,7 @@ associations
 
 - Update act_id format to allow base 36 values in product name [#4282]
 
+- Refactor association logging configuration [#4510]
 combine_1d
 ----------
 

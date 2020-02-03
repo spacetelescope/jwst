@@ -127,11 +127,7 @@ base_config = {
             '()': LogLevelFilter,
             'level': logging.DEBUG
         }
-    }
-}
-
-# DMS-specific configuration
-DMS_config = {
+    },
     'DMS': {
         'datefmt': '%Y%m%d%H%M',
         'logformat': (
@@ -140,7 +136,11 @@ DMS_config = {
             ' pid=%(process)d'
             ' src=%(name)s.%(funcName)s'
         )
-    },
+    }
+}
+
+# DMS-specific configuration
+DMS_config = {
     'formatters': {
         'info': {
             '()': DMSFormatter,
