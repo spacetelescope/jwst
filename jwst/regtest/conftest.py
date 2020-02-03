@@ -84,28 +84,34 @@ def generate_artifactory_json(request, artifactory_repos):
         # Dump the failed test traceback into rtdata
         rtdata.traceback = str(request.node.report_call.longrepr)
 
-        upload_schema_pattern.append(rtdata.input)
-        upload_schema_pattern.append(rtdata.output)
-        upload_schema = generate_upload_schema(upload_schema_pattern,
-            rtdata.remote_results_path)
+        # Upload and allow okify of truth by rtdata.output, if the test did not
+        # fail before producing rtdata.output
+        if os.path.exists(rtdata.output):
+            # Write the rtdata class out as an ASDF file
+            path_asdf = os.path.join(cwd, f"{request.node.name}_rtdata.asdf")
+            rtdata.to_asdf(path_asdf)
 
-        # Write the upload schema to JSON file
-        jsonfile = os.path.join(cwd, f"{request.node.name}_results.json")
-        with open(jsonfile, 'w') as outfile:
-            json.dump(upload_schema, outfile, indent=2)
+            # Generate an OKify JSON file
+            pattern = os.path.join(rtdata.remote_results_path,
+                os.path.basename(rtdata.output))
+            okify_schema_pattern.append(pattern)
+            okify_schema = generate_upload_schema(okify_schema_pattern,
+                f"{os.path.dirname(rtdata.truth_remote)}/")
 
-        pattern = os.path.join(rtdata.remote_results_path, os.path.basename(rtdata.output))
-        okify_schema_pattern.append(pattern)
-        okify_schema = generate_upload_schema(okify_schema_pattern, rtdata.truth_remote)
+            jsonfile = os.path.join(cwd, f"{request.node.name}_okify.json")
+            with open(jsonfile, 'w') as fd:
+                json.dump(okify_schema, fd, indent=2)
 
-        # Write the okify schema to JSON file
-        jsonfile = os.path.join(cwd, f"{request.node.name}_okify.json")
-        with open(jsonfile, 'w') as outfile:
-            json.dump(okify_schema, outfile, indent=2)
+            # Generate an upload JSON file, including the OKify, asdf file
+            upload_schema_pattern.append(rtdata.output)
+            upload_schema_pattern.append(os.path.abspath(jsonfile))
+            upload_schema_pattern.append(path_asdf)
+            upload_schema = generate_upload_schema(upload_schema_pattern,
+                rtdata.remote_results_path)
 
-        # Write the rtdata class out as an ASDF file
-        path = os.path.join(cwd, f"{request.node.name}_rtdata.asdf")
-        rtdata.to_asdf(path)
+            jsonfile = os.path.join(cwd, f"{request.node.name}_results.json")
+            with open(jsonfile, 'w') as fd:
+                json.dump(upload_schema, fd, indent=2)
 
 
 def generate_upload_schema(pattern, target, recursive=False):

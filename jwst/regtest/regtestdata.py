@@ -134,6 +134,7 @@ class RegtestData:
             docopy = self.docopy
         self.input = get_bigdata(self._inputs_root, self._env, path,
             docopy=docopy)
+        self.input_remote = os.path.join(self._inputs_root, self._env, path)
 
         return self.input
 
@@ -223,7 +224,7 @@ def run_step_from_dict(rtdata, **step_params):
 
     Parameters
     ----------
-    rtdata: RegistryData
+    rtdata: RegtestData
         The artifactory instance
 
     step_params: dict
@@ -277,7 +278,7 @@ def run_step_from_dict_mock(rtdata, source,  **step_params):
 
     Parameters
     ----------
-    rtdata: RegistryData
+    rtdata: RegtestData
         The artifactory instance
 
     step_params: dict
@@ -325,7 +326,7 @@ def is_like_truth(rtdata, fitsdiff_default_kwargs, output, truth_path, is_suffix
 
     Parameters
     ----------
-    rtdata: RegistryData
+    rtdata: RegtestData
         The artifactory object from the step run.
 
     fitsdiff_default_kwargs: dict
