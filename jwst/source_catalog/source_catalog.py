@@ -39,12 +39,11 @@ def make_kernel(kernel_fwhm, kernel_xsize, kernel_ysize):
     return kernel
 
 
-def make_source_catalog(model, kernel, snr_threshold, npixels,
-                        deblend_nlevels=32, deblend_contrast=0.001,
-                        deblend_mode='exponential', connectivity=8,
-                        deblend=False):
+def detect_sources(model, kernel, snr_threshold, npixels, deblend_nlevels=32,
+                   deblend_contrast=0.001, deblend_mode='exponential',
+                   connectivity=8, deblend=False):
     """
-    Create a final catalog of source photometry and morphologies.
+    Detect sources in an image.
 
     Parameters
     ----------
@@ -98,10 +97,11 @@ def make_source_catalog(model, kernel, snr_threshold, npixels,
 
     Returns
     -------
-    catalog : `~astropy.Table` or `None`
-        An astropy Table containing the source photometry and
-        morphologies.  If no sources are detected then `None` is
-        returned.
+    segment_image : `~photutils.segmentation.SegmentationImage` or `None`
+        A 2D segmentation image, with the same shape as the input data
+        where sources are marked by different positive integer values.
+        A value of zero is reserved for the background.  If no sources
+        are found then `None` is returned.
     """
 
     if not isinstance(model, ImageModel):
@@ -139,6 +139,38 @@ def make_source_catalog(model, kernel, snr_threshold, npixels,
                                          connectivity=connectivity,
                                          relabel=True)
 
+    return segm
+
+
+def make_source_catalog(model, segm, kernel=None):
+    """
+    Create a final catalog of source photometry and morphologies.
+
+    Parameters
+    ----------
+    model : `ImageModel`
+        The input `ImageModel` of a single drizzled image.  The
+        input image is assumed to be background subtracted.
+
+    segment_image : `~photutils.segmentation.SegmentationImage` or `None`
+        A 2D segmentation image, with the same shape as the input data
+        where sources are marked by different positive integer values.
+        A value of zero is reserved for the background.
+
+    kernel : `astropy.convolution.Kernel2D`
+        The smoothing kernel, normalized such that it sums to 1.
+
+    Returns
+    -------
+    catalog : `~astropy.Table` or `None`
+        An astropy Table containing the source photometry and
+        morphologies.  If no sources are detected then `None` is
+        returned.
+    """
+
+    if not isinstance(model, ImageModel):
+        raise ValueError('The input model must be a ImageModel.')
+
     # Calculate total error, including source Poisson noise.
     # This calculation assumes that the data and bkg_error images are in
     # units of electron/s.  Poisson noise is not included for pixels
@@ -146,6 +178,9 @@ def make_source_catalog(model, kernel, snr_threshold, npixels,
     exptime = model.meta.resample.product_exposure_time    # total exptime
     # total_error = np.sqrt(bkg_error**2 +
     #                       np.maximum(model.data / exptime, 0))
+    mask = (model.wht == 0)
+    data_mean, data_median, data_std = sigma_clipped_stats(
+        model.data, mask=mask, sigma=3.0, maxiters=10)
     total_error = np.sqrt(data_std**2 + np.maximum(model.data / exptime, 0))
 
     wcs = model.get_fits_wcs()
