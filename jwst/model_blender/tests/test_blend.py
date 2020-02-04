@@ -1,9 +1,11 @@
 """Test blend_models"""
 import pytest
 
+from astropy.table import Table
 import numpy as np
 
 from jwst.datamodels import ImageModel
+from jwst.datamodels.schema import build_fits_dict
 
 from .. import blendmeta
 
@@ -18,17 +20,11 @@ DATETIMES = ['2017-11-30T13:52:20.367', '2017-11-11T15:14:29.176',
              '2017-11-11T15:15:06.118']
 DATES = ['2017-11-30', '2017-11-11', '2017-12-10']
 INSTRUMENT_NAMES = ['NIRCAM'] * 3
+CORONAGRAPHS = ['4QPM', '4QPM_1065', '4QPM_1140']
 
 
-@pytest.fixture(scope='module')
-def make_data(jail):
+def _make_data():
     """Create a set of input models to blendmeta
-
-    Parameters
-    ----------
-    jail: None
-        A `pytest` fixture that changes the current working directory
-        to a temporary folder
 
     Returns
     -------
@@ -48,16 +44,18 @@ def make_data(jail):
         'meta.exposure.exposure_time': EXP_TIMES,
         'meta.exposure.end_time': END_TIMES,
         'meta.filename': FILENAMES,
+        'meta.instrument.coronagraph': CORONAGRAPHS,
         'meta.instrument.name': INSTRUMENT_NAMES,
         'meta.date': DATETIMES,
         'meta.observation.date': DATES,
-        'meta.observation.date_beg': DATETIMES
+        'meta.observation.date_beg': DATETIMES,
     }
     output_values = {
         'meta.exposure.start_time': START_TIMES[0],
         'meta.exposure.exposure_time': np.sum(EXP_TIMES),
         'meta.exposure.end_time': END_TIMES[-1],
         'meta.filename': FILENAMES[0],
+        'meta.instrument.coronagraph': CORONAGRAPHS[0],
         'meta.instrument.name': INSTRUMENT_NAMES[0],
         'meta.date': DATETIMES[0],
         'meta.observation.date': DATES[1],
@@ -71,10 +69,62 @@ def make_data(jail):
     return models, input_values, output_values
 
 
-def test_blendmeta(make_data):
-    """Blend data and compare to expected output"""
-    models, input_values, output_values = make_data
+# The fixture decorator is separated from the actual
+# function to allow access to `_make_data` outside the
+# `pytest` framework.
+@pytest.fixture(scope='module')
+def make_data():
+    return _make_data()
 
+
+@pytest.fixture(scope='module')
+def blend(make_data):
+    """Blend the meta data
+
+    Parameters
+    ----------
+    make_data: (models, input_values, output_values)
+        Results either from the `pytest.fixture.make_data`
+        or from the results of `_make_data` directly.
+    """
+    models, input_values, output_values = make_data
     newmeta, newtab = blendmeta.get_blended_metadata(models)
+    return newmeta, newtab, models, input_values, output_values
+
+
+def test_blendmeta(blend):
+    """Test blended metadata
+
+    Parameters
+    ----------
+    blend: (newmeta, newtab, input_values, output_values)
+        Results from `pytest.fixture.blend`
+    """
+    newmeta, newtab, models, input_values, output_values = blend
+
     for attr in input_values:
         assert newmeta[attr] == output_values[attr]
+
+
+def test_blendtab(blend):
+    """Test blended table
+
+    Parameters
+    ----------
+    blend: (newmeta, newtab, input_values, output_values)
+        Results from `pytest.fixture.blend`
+    """
+    newmeta, newtab, models, input_values, output_values = blend
+
+    # Since the table is of FITS keywords, the meta-to-FITS mapping
+    # needs to be determined.
+    fits_to_meta = build_fits_dict(models[0].schema)
+    meta_to_fits = dict(map(reversed, fits_to_meta.items()))
+    fits_expected = set(
+        meta_to_fits[meta]
+        for meta in input_values
+    )
+
+    # Ensure all the expected FITS keywords are in the table.
+    table = Table(newtab.data)
+    assert not fits_expected.difference(table.colnames)
