@@ -7,10 +7,42 @@ import photutils
 from ..datamodels import ImageModel
 
 
-def make_source_catalog(model, kernel_fwhm, kernel_xsize, kernel_ysize,
-                        snr_threshold, npixels, deblend_nlevels=32,
-                        deblend_contrast=0.001, deblend_mode='exponential',
-                        connectivity=8, deblend=False):
+def make_kernel(kernel_fwhm, kernel_xsize, kernel_ysize):
+    """
+    Make a 2D Gaussian smoothing kernel that is used to filter the image
+    before thresholding.
+
+    Filtering the image will smooth the noise and maximize detectability
+    of objects with a shape similar to the kernel.
+
+    Parameters
+    ----------
+    kernel_fwhm : float
+        The full-width at half-maximum (FWHM) of the 2D Gaussian kernel.
+
+    kernel_xsize : odd int
+        The size in the x dimension (columns) of the kernel array.
+
+    kernel_ysize : odd int
+        The size in the y dimension (row) of the kernel array.
+
+    Returns
+    -------
+    kernel : `astropy.convolution.Kernel2D`
+        The output smoothing kernel, normalized such that it sums to 1.
+    """
+
+    sigma = kernel_fwhm * gaussian_fwhm_to_sigma
+    kernel = Gaussian2DKernel(sigma, x_size=kernel_xsize, y_size=kernel_ysize)
+    kernel.normalize(mode='integral')
+
+    return kernel
+
+
+def make_source_catalog(model, kernel, snr_threshold, npixels,
+                        deblend_nlevels=32, deblend_contrast=0.001,
+                        deblend_mode='exponential', connectivity=8,
+                        deblend=False):
     """
     Create a final catalog of source photometry and morphologies.
 
@@ -20,17 +52,8 @@ def make_source_catalog(model, kernel_fwhm, kernel_xsize, kernel_ysize,
         The input `ImageModel` of a single drizzled image.  The
         input image is assumed to be background subtracted.
 
-    kernel_fwhm : float
-        The full-width at half-maximum (FWHM) of the 2D Gaussian kernel
-        used to filter the image before thresholding.  Filtering the
-        image will smooth the noise and maximize detectability of
-        objects with a shape similar to the kernel.
-
-    kernel_xsize : odd int
-        The size in the x dimension (columns) of the kernel array.
-
-    kernel_ysize : odd int
-        The size in the y dimension (row) of the kernel array.
+    kernel : `astropy.convolution.Kernel2D`
+        The filtering kernel.
 
     snr_threshold : float
         The signal-to-noise ratio per pixel above the ``background`` for
@@ -97,10 +120,6 @@ def make_source_catalog(model, kernel_fwhm, kernel_xsize, kernel_ysize,
     data_mean, data_median, data_std = sigma_clipped_stats(
         model.data, mask=mask, sigma=3.0, maxiters=10)
     threshold = data_median + (data_std * snr_threshold)
-
-    sigma = kernel_fwhm * gaussian_fwhm_to_sigma
-    kernel = Gaussian2DKernel(sigma, x_size=kernel_xsize, y_size=kernel_ysize)
-    kernel.normalize()
 
     segm = photutils.detect_sources(model.data, threshold, npixels=npixels,
                                     filter_kernel=kernel,
