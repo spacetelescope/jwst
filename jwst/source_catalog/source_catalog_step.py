@@ -40,8 +40,9 @@ class SourceCatalogStep(Step):
         with datamodels.open(input)  as model:
             kernel = source_catalog.make_kernel(kernel_fwhm, kernel_xsize,
                                                 kernel_ysize)
-            catalog = source_catalog.make_source_catalog(
+            segm = source_catalog.detect_sources(
                 model, kernel, snr_threshold, npixels, deblend=deblend)
+            catalog = source_catalog.make_source_catalog(model, segm, kernel)
 
             if catalog is None:
                 self.log.info('No sources were found.  Source catalog will '
