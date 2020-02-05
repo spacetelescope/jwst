@@ -7,7 +7,7 @@ from jwst.stpipe import Step
 from jwst import datamodels
 
 @pytest.fixture(scope="module")
-def run_pipelines(jail, rtdata_module):
+def run_detector1(rtdata_module):
     """Run stage 1-3 pipelines on MIRI imaging data."""
     rtdata = rtdata_module
     rtdata.get_data("miri/image/det_image_1_MIRIMAGE_F770Wexp1_5stars_uncal.fits")
@@ -25,11 +25,15 @@ def run_pipelines(jail, rtdata_module):
         "--steps.firstframe.save_results=True",
         "--steps.linearity.save_results=True",
         "--steps.dark_current.save_results=True",
-        "--steps.jump.rejection_threshold=10.0",
+        "--steps.jump.rejection_threshold=200",
         ]
     Step.from_cmdline(args)
 
-    # Now run image2 pipeline on the _rate file, saving intermediate products
+
+@pytest.fixture(scope="module")
+def run_image2(run_detector1, rtdata_module):
+    """Run image2 pipeline on the _rate file, saving intermediate products"""
+    rtdata = rtdata_module
     rtdata.input = 'det_image_1_MIRIMAGE_F770Wexp1_5stars_rate.fits'
     args = ["config/calwebb_image2.cfg", rtdata.input,
         "--steps.assign_wcs.save_results=True",
@@ -51,8 +55,11 @@ def run_pipelines(jail, rtdata_module):
             "--steps.resample.skip=True"]
         Step.from_cmdline(args)
 
-    # Get the level3 assocation json file (though not its members) and run
-    # image3 pipeline on all _cal files listed in association
+
+@pytest.fixture(scope="module")
+def run_image3(run_image2, rtdata_module):
+    """Get the level3 assocation json file (though not its members) and run
+    image3 pipeline on all _cal files listed in association"""
     rtdata.get_data("miri/image/det_dithered_5stars_image3_asn.json")
     args = ["config/calwebb_image3.cfg", rtdata.input,
         # Set some unique param values needed for these data
@@ -70,7 +77,7 @@ def run_pipelines(jail, rtdata_module):
     "rateints",
     "assign_wcs", "flat_field", "cal", "i2d",
     "a3001_crf"])
-def test_miri_image(run_pipelines, rtdata_module, fitsdiff_default_kwargs, suffix):
+def test_miri_image(run_image3, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Regression test of detector1 and image2 pipelines performed on MIRI data."""
     rtdata = rtdata_module
     rtdata.input = "det_image_1_MIRIMAGE_F770Wexp1_5stars_uncal.fits"
@@ -88,7 +95,7 @@ def test_miri_image(run_pipelines, rtdata_module, fitsdiff_default_kwargs, suffi
 
 
 @pytest.mark.bigdata
-def test_miri_image3_i2d(run_pipelines, rtdata_module, fitsdiff_default_kwargs):
+def test_miri_image3_i2d(run_image3, rtdata_module, fitsdiff_default_kwargs):
     rtdata = rtdata_module
     rtdata.input = "det_dithered_5stars_image3_asn.json"
     rtdata.output = "det_dithered_5stars_f770w_i2d.fits"
@@ -100,7 +107,7 @@ def test_miri_image3_i2d(run_pipelines, rtdata_module, fitsdiff_default_kwargs):
 
 
 @pytest.mark.bigdata
-def test_miri_image3_catalog(run_pipelines, rtdata_module, diff_astropy_tables):
+def test_miri_image3_catalog(run_image3, rtdata_module, diff_astropy_tables):
     rtdata = rtdata_module
     rtdata.input = "det_dithered_5stars_image3_asn.json"
     rtdata.output = "det_dithered_5stars_f770w_cat.ecsv"
@@ -111,8 +118,8 @@ def test_miri_image3_catalog(run_pipelines, rtdata_module, diff_astropy_tables):
 
 
 @pytest.mark.bigdata
-def test_miri_image_wcs(run_pipelines, fitsdiff_default_kwargs):
-    rtdata = run_pipelines
+def test_miri_image_wcs(run_image2, rtdata_module, fitsdiff_default_kwargs):
+    rtdata = rtdata_module
 
     # get input assign_wcs and truth file
     output = "det_image_1_MIRIMAGE_F770Wexp1_5stars_assign_wcs.fits"
