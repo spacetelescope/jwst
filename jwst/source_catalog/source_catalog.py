@@ -1,8 +1,9 @@
 import numpy as np
 from astropy.convolution import Gaussian2DKernel
-from astropy.stats import sigma_clipped_stats, gaussian_fwhm_to_sigma
+from astropy.stats import gaussian_fwhm_to_sigma, SigmaClip
 import astropy.units as u
 import photutils
+from photutils import Background2D, MedianBackground
 
 from ..datamodels import ImageModel
 
@@ -39,7 +40,32 @@ def make_kernel(kernel_fwhm, kernel_xsize, kernel_ysize):
     return kernel
 
 
-def detect_sources(model, kernel, snr_threshold, npixels, deblend_nlevels=32,
+def estimate_background(model, box_size=(50, 50)):
+    """
+    Estimate the 2D background and background RMS noise in an image.
+
+    Parameters
+    ----------
+    box_size : int or array_like (int)
+        The box size along each axis.  If ``box_size`` is a scalar then
+        a square box of size ``box_size`` will be used.  If ``box_size``
+        has two elements, they should be in ``(ny, nx)`` order.
+
+    Returns
+    -------
+    background : `photutils.background.Background2D`
+        A Background2D object containing the 2D background and
+        background RMS noise estimates.
+    """
+
+    sigma_clip = SigmaClip(sigma=3.)
+    bkg_estimator = MedianBackground()
+
+    return Background2D(model.data, box_size, filter_size=(3, 3),
+                        sigma_clip=sigma_clip, bkg_estimator=bkg_estimator)
+
+
+def detect_sources(model, threshold, npixels, kernel, deblend_nlevels=32,
                    deblend_contrast=0.001, deblend_mode='exponential',
                    connectivity=8, deblend=False):
     """
@@ -51,17 +77,18 @@ def detect_sources(model, kernel, snr_threshold, npixels, deblend_nlevels=32,
         The input `ImageModel` of a single drizzled image.  The
         input image is assumed to be background subtracted.
 
-    kernel : `astropy.convolution.Kernel2D`
-        The filtering kernel.
-
-    snr_threshold : float
-        The signal-to-noise ratio per pixel above the ``background`` for
-        which to consider a pixel as possibly being part of a source.
+    threshold : float
+        The data value or pixel-wise data values to be used for the
+        detection threshold. A 2D threshold must have the same shape as
+        ``model.data``.
 
     npixels : int
         The number of connected pixels, each greater than the threshold
         that an object must have to be detected.  ``npixels`` must be a
         positive integer.
+
+    kernel : `astropy.convolution.Kernel2D`
+        The filtering kernel.
 
     deblend_nlevels : int, optional
         The number of multi-thresholding levels to use for deblending
@@ -106,20 +133,6 @@ def detect_sources(model, kernel, snr_threshold, npixels, deblend_nlevels=32,
 
     if not isinstance(model, ImageModel):
         raise ValueError('The input model must be a ImageModel.')
-
-    # Use this when model.wht contains an IVM map
-    # Calculate "background-only" error assuming the weight image is an
-    # inverse-variance map (IVM).  The weight image is clipped because it
-    # may contain zeros.
-    # bkg_error = np.sqrt(1.0 / np.clip(model.wht, 1.0e-20, 1.0e20))
-    # threshold = snr_threshold * bkg_error
-
-    # Estimate the 1-sigma noise in the image empirically because model.wht
-    # does not yet contain an IVM map
-    mask = (model.wht == 0)
-    data_mean, data_median, data_std = sigma_clipped_stats(
-        model.data, mask=mask, sigma=3.0, maxiters=10)
-    threshold = data_median + (data_std * snr_threshold)
 
     segm = photutils.detect_sources(model.data, threshold, npixels=npixels,
                                     filter_kernel=kernel,
@@ -171,17 +184,10 @@ def make_source_catalog(model, segm, kernel=None):
     if not isinstance(model, ImageModel):
         raise ValueError('The input model must be a ImageModel.')
 
-    # Calculate total error, including source Poisson noise.
-    # This calculation assumes that the data and bkg_error images are in
-    # units of electron/s.  Poisson noise is not included for pixels
-    # where data < 0.
-    exptime = model.meta.resample.product_exposure_time    # total exptime
-    # total_error = np.sqrt(bkg_error**2 +
-    #                       np.maximum(model.data / exptime, 0))
-    mask = (model.wht == 0)
-    data_mean, data_median, data_std = sigma_clipped_stats(
-        model.data, mask=mask, sigma=3.0, maxiters=10)
-    total_error = np.sqrt(data_std**2 + np.maximum(model.data / exptime, 0))
+    # The resample step still does not allow for background-only
+    # inverse-variance maps.  Set the errors to zero until there is a
+    # way to get background-only errors for the resampled image.
+    total_error = np.zeros_like(model.data)
 
     wcs = model.get_fits_wcs()
     source_props = photutils.source_properties(
