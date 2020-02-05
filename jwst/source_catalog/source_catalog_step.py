@@ -38,10 +38,16 @@ class SourceCatalogStep(Step):
         deblend = self.deblend
 
         with datamodels.open(input)  as model:
+            bkg = source_catalog.estimate_background(model, box_size=128)
+            model.data -= bkg.background
+
+            threshold = snr_threshold * bkg.background_rms
+
             kernel = source_catalog.make_kernel(kernel_fwhm, kernel_xsize,
                                                 kernel_ysize)
+
             segm = source_catalog.detect_sources(
-                model, kernel, snr_threshold, npixels, deblend=deblend)
+                model, threshold, npixels, kernel, deblend=deblend)
             catalog = source_catalog.make_source_catalog(model, segm, kernel)
 
             if catalog is None:
