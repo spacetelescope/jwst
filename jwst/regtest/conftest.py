@@ -39,7 +39,7 @@ def pytest_runtest_makereport(item, call):
 
 
 def postmortem(request, fixturename):
-    """Retrieve a fixture object if a test failed
+    """Retrieve a fixture object if a test failed, else return None
     """
     if request.node.report_setup.passed:
         try:
@@ -222,6 +222,7 @@ def diff_astropy_tables():
     """Compare astropy tables with tolerances for float columns."""
 
     def _diff_astropy_tables(result_path, truth_path, rtol=1e-5, atol=1e-7):
+        __tracebackhide__ = True
         result = Table.read(result_path)
         truth = Table.read(truth_path)
 
@@ -253,8 +254,9 @@ def diff_astropy_tables():
                         assert_allclose(result[col_name], truth[col_name],
                             rtol=rtol, atol=atol)
                     except AssertionError as err:
-                        diffs.append(
-                            f"Column '{col_name}' values do not match (within tolerances) \n{str(err)}"
+                        diffs.append("\n----------------------------------\n"
+                            + f"Column '{col_name}' values do not "
+                            + f"match (within tolerances) \n{str(err)}"
                         )
                 else:
                     if not (result[col_name] == truth[col_name]).all():
@@ -264,7 +266,9 @@ def diff_astropy_tables():
                 # of SkyCoord objects
                 pass
 
-        return diffs
+        if len(diffs) != 0:
+            raise AssertionError("\n".join(diffs))
+
 
     return _diff_astropy_tables
 

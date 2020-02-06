@@ -60,6 +60,7 @@ def run_image2(run_detector1, rtdata_module):
 def run_image3(run_image2, rtdata_module):
     """Get the level3 assocation json file (though not its members) and run
     image3 pipeline on all _cal files listed in association"""
+    rtdata = rtdata_module
     rtdata.get_data("miri/image/det_dithered_5stars_image3_asn.json")
     args = ["config/calwebb_image3.cfg", rtdata.input,
         # Set some unique param values needed for these data
@@ -113,8 +114,7 @@ def test_miri_image3_catalog(run_image3, rtdata_module, diff_astropy_tables):
     rtdata.output = "det_dithered_5stars_f770w_cat.ecsv"
     rtdata.get_truth("truth/test_miri_image_stages/det_dithered_5stars_f770w_cat.ecsv")
 
-    diff = diff_astropy_tables(rtdata.output, rtdata.truth, rtol=1e-4)
-    assert len(diff) == 0, "\n".join(diff)
+    assert diff_astropy_tables(rtdata.output, rtdata.truth, rtol=1e-4)
 
 
 @pytest.mark.bigdata
