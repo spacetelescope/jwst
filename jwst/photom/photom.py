@@ -1,4 +1,7 @@
 import logging
+import functools
+import warnings
+
 import numpy as np
 from astropy import units as u
 
@@ -16,6 +19,53 @@ MJSR_TO_UJA2 = (u.megajansky/u.steradian).to(u.microjansky/u.arcsecond/u.arcseco
 
 # Conversion factor from square arcseconds to steradians
 A2_TO_SR = (np.pi / (180. * 3600.))**2
+
+
+class MatchFitsTableRowError(Exception):
+
+    def __init__(self, message):
+        if message is None:
+            message = "Expected to match one row in FITS table."
+        super().__init__(message)
+
+
+def find_row(fits_table, match_fields):
+    """
+    Find a row in a FITS table matching fields.
+
+    Parameters
+    ----------
+    fits_table : `~astropy.io.fits.fitsrec.FITS_rec`
+        FITS table
+    match_fields : dict
+        {field_name: value} pair to use as a matching criteria.
+
+    Raises
+    ------
+    Warning
+        When a field name is not in the table.
+    MatchFitsTableRowError
+        When more than one rows match.
+
+    Returns
+    -------
+    row : int, or None
+        FITS table row index, None if no match.
+    """
+    def _normalize_strings(field):
+        if isinstance(field[0], str):
+            return np.array([s.upper() for s in field])
+        return field
+
+    # item[1] is always converted to upper case in the `DataSet` initializer.
+    results = [_normalize_strings(fits_table.field(item[0])) == item[1] for item in match_fields.items()]
+    row = functools.reduce(np.logical_and, results).nonzero()[0]
+    if len(row) > 1:
+        raise MatchFitsTableRowError(f"Expected to find one matching row in table, found {len(row)}.")
+    if len(row) == 0:
+        warnings.warn("Expected to find one matching row in table, found 0.")
+        return None
+    return row[0]
 
 
 class DataSet():
@@ -96,9 +146,6 @@ class DataSet():
 
         """
 
-        # Get the GRATING value from the input data model
-        grating = self.input.meta.instrument.grating.upper()
-
         # Normal fixed-slit exposures get handled as a MultiSlitModel
         if self.exptype == 'NRS_FIXEDSLIT':
 
@@ -107,160 +154,115 @@ class DataSet():
             for slit in self.input.slits:
 
                 log.info('Working on slit %s' % slit.name)
-                match = False
                 self.slitnum += 1
 
-                # Loop through reference table to find matching row
-                for tabdata in ftab.phot_table:
-                    ref_filter = tabdata['filter'].strip().upper()
-                    ref_grating = tabdata['grating'].strip().upper()
-                    ref_slit = tabdata['slit'].strip().upper()
-                    log.debug(' Ref table data: %s %s %s' %
-                              (ref_filter, ref_grating, ref_slit))
-
-                    # Match on filter, grating, and slit name
-                    if (self.filter == ref_filter and
-                            grating == ref_grating and slit.name == ref_slit):
-                        self.photom_io(tabdata)
-                        match = True
-                        break
-
-                if not match:
-                    log.warning('No match in reference file')
-
+                fields_to_match = {'filter': self.filter, 'grating': self.grating, 'slit': slit.name}
+                row = find_row(ftab.phot_table, fields_to_match)
+                if row is None:
+                    continue
+                self.photom_io(ftab.phot_table[row])
         # Bright object fixed-slit exposures use a SlitModel
         elif self.exptype == 'NRS_BRIGHTOBJ':
-
-            match = False
 
             # Bright object always uses S1600A1 slit
             slit_name = 'S1600A1'
             log.info('Working on slit %s' % slit_name)
-
-            # Loop through reference table to find matching row
-            for tabdata in ftab.phot_table:
-                ref_filter = tabdata['filter'].strip().upper()
-                ref_grating = tabdata['grating'].strip().upper()
-                ref_slit = tabdata['slit'].strip().upper()
-                log.debug(' Ref table data: %s %s %s' %
-                          (ref_filter, ref_grating, ref_slit))
-
-                # Match on filter, grating, and slit name
-                if (self.filter == ref_filter and
-                        grating == ref_grating and slit_name == ref_slit):
-                    self.photom_io(tabdata)
-                    match = True
-                    break
-
-            if not match:
-                log.warning('No match in reference file')
+            fields_to_match = {'filter': self.filter, 'grating': self.grating, 'slit': slit_name}
+            row = find_row(ftab.phot_table, fields_to_match)
+            if row is None:
+                return
+            self.photom_io(ftab.phot_table[row])
 
         # IFU and MSA exposures use one set of flux cal data
         else:
+            fields_to_match = {'filter': self.filter, 'grating': self.grating}
+            row = find_row(ftab.phot_table, fields_to_match)
+            if row is None:
+                return
+            if (isinstance(self.input, datamodels.MultiSlitModel) and
+                self.exptype == 'NRS_MSASPEC'):
 
-            match = False
+                # Loop over the MSA slits, applying the same photom
+                # ref data to all slits
+                for slit in self.input.slits:
+                    log.info('Working on slit %s' % slit.name)
+                    self.slitnum += 1
+                    self.photom_io(ftab.phot_table[row])
 
-            # Loop through the reference table to find matching row
-            for tabdata in ftab.phot_table:
+            # IFU data
+            else:
+                tabdata = ftab.phot_table[row]
 
-                ref_filter = tabdata['filter'].strip().upper()
-                ref_grating = tabdata['grating'].strip().upper()
+                # Get the conversion factor from the PHOTMJ column
+                conv_factor = tabdata['photmj']
 
-                # Match on filter and grating only
-                if self.filter == ref_filter and grating == ref_grating:
+                # Populate the photometry keywords
+                self.input.meta.photometry.conversion_megajanskys = \
+                    conv_factor
+                self.input.meta.photometry.conversion_microjanskys = \
+                    conv_factor * MJSR_TO_UJA2
 
-                    match = True
+                # Get the length of the relative response arrays in
+                # this table row.  If the nelem column is not present,
+                # we'll use the entire wavelength and relresponse
+                # arrays.
+                try:
+                    nelem = tabdata['nelem']
+                except KeyError:
+                    nelem = None
 
-                    # MSA data
-                    if (isinstance(self.input, datamodels.MultiSlitModel) and
-                            self.exptype == 'NRS_MSASPEC'):
+                waves = tabdata['wavelength']
+                relresps = tabdata['relresponse']
+                if nelem is not None:
+                    waves = waves[:nelem]
+                    relresps = relresps[:nelem]
 
-                        # Loop over the MSA slits, applying the same photom
-                        # ref data to all slits
-                        for slit in self.input.slits:
-                            log.info('Working on slit %s' % slit.name)
-                            self.slitnum += 1
-                            self.photom_io(tabdata)
+                # Convert wavelengths from meters to microns,
+                # if necessary
+                microns_100 = 1.e-4    # 100 microns, in meters
+                if waves.max() > 0. and waves.max() < microns_100:
+                    waves *= 1.e+6
 
-                    # IFU data
-                    else:
+                # Load the pixel area table for the IFU slices
+                area_model = datamodels.open(area_fname)
+                area_data = area_model.area_table
 
-                        # Get the conversion factor from the PHOTMJ column
-                        conv_factor = tabdata['photmj']
+                # Compute 2D wavelength and pixel area arrays for the
+                # whole image
+                wave2d, area2d, dqmap = self.calc_nrs_ifu_sens2d(area_data)
 
-                        # Populate the photometry keywords
-                        self.input.meta.photometry.conversion_megajanskys = \
-                            conv_factor
-                        self.input.meta.photometry.conversion_microjanskys = \
-                            conv_factor * MJSR_TO_UJA2
+                # Compute relative sensitivity for each pixel based
+                # on its wavelength
+                sens2d = np.interp(wave2d, waves, relresps)
 
-                        # Get the length of the relative response arrays in
-                        # this table row.  If the nelem column is not present,
-                        # we'll use the entire wavelength and relresponse
-                        # arrays.
-                        try:
-                            nelem = tabdata['nelem']
-                        except KeyError:
-                            nelem = None
+                # Include the scalar conversion factor
+                sens2d *= conv_factor
 
-                        waves = tabdata['wavelength']
-                        relresps = tabdata['relresponse']
-                        if nelem is not None:
-                            waves = waves[:nelem]
-                            relresps = relresps[:nelem]
+                # Divide by pixel area
+                sens2d /= area2d
 
-                        # Convert wavelengths from meters to microns,
-                        # if necessary
-                        microns_100 = 1.e-4    # 100 microns, in meters
-                        if waves.max() > 0. and waves.max() < microns_100:
-                            waves *= 1.e+6
+                # Reset NON_SCIENCE pixels to 1 in sens2d array and flag
+                # them in the science data DQ array
+                where_dq = \
+                    np.bitwise_and(dqmap, dqflags.pixel['NON_SCIENCE'])
+                sens2d[where_dq > 0] = 1.
+                self.input.dq = np.bitwise_or(self.input.dq, dqmap)
 
-                        # Load the pixel area table for the IFU slices
-                        area_model = datamodels.open(area_fname)
-                        area_data = area_model.area_table
+                # Multiply the science data and uncertainty arrays by
+                # the conversion factors
+                self.input.data *= sens2d
+                self.input.err *= sens2d
+                self.input.var_poisson *= sens2d**2
+                self.input.var_rnoise *= sens2d**2
+                if self.input.var_flat is not None and np.size(self.input.var_flat) > 0:
+                    self.input.var_flat *= sens2d**2
 
-                        # Compute 2D wavelength and pixel area arrays for the
-                        # whole image
-                        wave2d, area2d, dqmap = self.calc_nrs_ifu_sens2d(area_data)
+                # Update BUNIT values for the science data and err
+                self.input.meta.bunit_data = 'MJy/sr'
+                self.input.meta.bunit_err = 'MJy/sr'
 
-                        # Compute relative sensitivity for each pixel based
-                        # on its wavelength
-                        sens2d = np.interp(wave2d, waves, relresps)
+                area_model.close()
 
-                        # Include the scalar conversion factor
-                        sens2d *= conv_factor
-
-                        # Divide by pixel area
-                        sens2d /= area2d
-
-                        # Reset NON_SCIENCE pixels to 1 in sens2d array and flag
-                        # them in the science data DQ array
-                        where_dq = \
-                            np.bitwise_and(dqmap, dqflags.pixel['NON_SCIENCE'])
-                        sens2d[where_dq > 0] = 1.
-                        self.input.dq = np.bitwise_or(self.input.dq, dqmap)
-
-                        # Multiply the science data and uncertainty arrays by
-                        # the conversion factors
-                        self.input.data *= sens2d
-                        self.input.err *= sens2d
-                        self.input.var_poisson *= sens2d**2
-                        self.input.var_rnoise *= sens2d**2
-                        if self.input.var_flat is not None and np.size(self.input.var_flat) > 0:
-                            self.input.var_flat *= sens2d**2
-
-                        # Update BUNIT values for the science data and err
-                        self.input.meta.bunit_data = 'MJy/sr'
-                        self.input.meta.bunit_err = 'MJy/sr'
-
-                        area_model.close()
-
-                    break
-
-            if not match:
-                log.warning('No match in reference file')
-
-        return
 
     def calc_niriss(self, ftab):
         """
@@ -296,69 +298,34 @@ class DataSet():
             # data for each of the slits/orders in the input
             for slit in self.input.slits:
 
-                # Initialize the output conversion factor and increment slit number
-                match = False
+                # Increment slit number
                 self.slitnum += 1
 
                 # Get the spectral order number for this slit
                 order = slit.meta.wcsinfo.spectral_order
-
                 log.info("Working on slit: {} order: {}".format(slit.name, order))
 
-                # Locate matching row in reference file
-                for tabdata in ftab.phot_table:
+                fields_to_match = {'filter': self.filter, 'pupil': self.pupil, 'order': order}
+                row = find_row(ftab.phot_table, fields_to_match)
+                if row is None:
+                    continue
+                self.photom_io(ftab.phot_table[row])
 
-                    ref_filter = tabdata['filter'].strip().upper()
-                    ref_pupil = tabdata['pupil'].strip().upper()
-                    ref_order = tabdata['order']
-
-                    # Find matching values of FILTER, PUPIL, ORDER
-                    if (self.filter == ref_filter and self.pupil == ref_pupil and order == ref_order):
-                        self.photom_io(tabdata)
-                        match = True
-                        break
-
-                if not match:
-                    log.warning('No match in reference file')
-
-        # NIRISS imaging and SOSS modes
-        else:
-
+        elif self.exptype in ['NIS_SOSS']:
+            # NIRISS SOSS
             # Hardwire the science data order number to 1 for now
             order = 1
-            match = False
-
-            # Locate matching row in reference file
-            for tabdata in ftab.phot_table:
-                ref_filter = tabdata['filter'].strip().upper()
-                ref_pupil = tabdata['pupil'].strip().upper()
-                try:
-                    ref_order = tabdata['order']
-                except KeyError:
-                    ref_order = order
-
-                # SOSS mode
-                if self.exptype in ['NIS_SOSS']:
-
-                    # Find matching values of FILTER, PUPIL, and ORDER
-                    if (self.filter == ref_filter and self.pupil == ref_pupil and order == ref_order):
-                        self.photom_io(tabdata, order)
-                        match = True
-                        break
-
-                # Imaging mode
-                else:
-
-                    # Find matching values of FILTER and PUPIL
-                    if (self.filter == ref_filter and self.pupil == ref_pupil):
-                        self.photom_io(tabdata)
-                        match = True
-                        break
-
-            if not match:
-                log.warning('No match in reference file')
-
-        return
+            fields_to_match = {'filter': self.filter, 'pupil': self.pupil, 'order': order}
+            row = find_row(ftab.phot_table, fields_to_match)
+            if row is None:
+                return
+            self.photom_io(ftab.phot_table[row], order)
+        else:
+            fields_to_match = {'filter': self.filter, 'pupil': self.pupil}
+            row = find_row(ftab.phot_table, fields_to_match)
+            if row is None:
+                return
+            self.photom_io(ftab.phot_table[row])
 
     def calc_miri(self, ftab):
         """
@@ -384,35 +351,25 @@ class DataSet():
         -------
         """
 
-        match = False
-
         # Imaging detector
         if self.detector == 'MIRIMAGE':
 
             # Get the subarray value of the input data model
-            subarray = self.input.meta.subarray.name
+            subarray = self.input.meta.subarray.name.upper()
             log.info(' subarray: %s', subarray)
+            fields_to_match = {'subarray': self.input.meta.subarray.name,
+                               'filter': self.filter}
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                row = find_row(ftab.phot_table, fields_to_match)
+            if row is None:
 
-            # Find the matching row in the reference file
-            for tabdata in ftab.phot_table:
-
-                ref_filter = tabdata['filter'].strip().upper()
-                ref_subarray = tabdata['subarray'].strip().upper()
-
-                # If the ref file subarray entry is GENERIC, it's an automatic
-                # match to the science data subarray value
-                if ref_subarray == 'GENERIC':
-                    ref_subarray = subarray
-
-                # Find matching FILTER and SUBARRAY values
-                if self.filter == ref_filter and subarray == ref_subarray:
-                    self.photom_io(tabdata)
-                    match = True
-                    break
-
-            if not match:
-                log.warning('No match in reference file')
-
+                fields_to_match = {'subarray': 'GENERIC',
+                                   'filter': self.filter}
+                row = find_row(ftab.phot_table, fields_to_match)
+                if row is None:
+                    return
+            self.photom_io(ftab.phot_table[row])
         # MRS detectors
         elif self.detector == 'MIRIFUSHORT' or self.detector == 'MIRIFULONG':
 
@@ -480,40 +437,27 @@ class DataSet():
         Returns
         -------
         """
-
-        match = False
-
-        # Locate relevant information in reference file
-        for tabdata in ftab.phot_table:
-
-            ref_filter = tabdata['filter'].strip().upper()
-            ref_pupil = tabdata['pupil'].strip().upper()
-
-            # Finding matching FILTER and PUPIL values
-            if self.filter == ref_filter and self.pupil == ref_pupil:
-                match = True
-
-                # Handle WFSS data separately from regular imaging
-                if (isinstance(self.input, datamodels.MultiSlitModel) and self.exptype == 'NRC_WFSS'):
-
-                    # Loop over the WFSS slits, applying the same photom
-                    # ref data to all slits
-                    for slit in self.input.slits:
-                        log.info('Working on slit %s' % slit.name)
-                        self.slitnum += 1
-                        self.photom_io(tabdata)
-
-                else:
-
-                    # Regular imaging data only requires 1 call
-                    self.photom_io(tabdata)
-
-                break
-
-        if not match:
-            log.warning('No match in reference file')
-
-        return
+        log.debug('Starting cal_nircam')
+        # Handle WFSS data separately from regular imaging
+        if (isinstance(self.input, datamodels.MultiSlitModel) and self.exptype == 'NRC_WFSS'):
+            # Loop over the WFSS slits, applying the correct photom ref data
+            for slit in self.input.slits:
+                log.info('Working on slit %s' % slit.name)
+                self.slitnum += 1
+                order = slit.meta.wcsinfo.spectral_order
+                # TODO: If it's reasonable to hardcode the list of orders for Nircam WFSS,
+                # the code matching the two rows can be taken outside the loop.
+                fields_to_match = {'filter': self.filter, 'pupil': self.pupil, 'order': order}
+                row = find_row(ftab.phot_table, fields_to_match)
+                if row is None:
+                    continue
+                self.photom_io(ftab.phot_table[row])
+        else:
+            fields_to_match = {'filter': self.filter, 'pupil': self.pupil}
+            row = find_row(ftab.phot_table, fields_to_match)
+            if row is None:
+                return
+            self.photom_io(ftab.phot_table[row])
 
     def calc_fgs(self, ftab):
         """
@@ -536,11 +480,7 @@ class DataSet():
         """
 
         # Read the first (and only) row in the reference file
-        for tabdata in ftab.phot_table:
-            self.photom_io(tabdata)
-            break
-
-        return
+        self.photom_io(ftab.phot_table[0])
 
     def calc_nrs_ifu_sens2d(self, area_data):
         """Create the 2-D wavelength and pixel area arrays needed for
