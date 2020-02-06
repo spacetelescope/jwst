@@ -386,8 +386,8 @@ def flag_cr(sci_image, blot_image, **pars):
     snr1, snr2 = [float(val) for val in pars.get('snr', '5.0 4.0').split()]
     scl1, scl2 = [float(val) for val in pars.get('scale', '1.2 0.7').split()]
 
-    # Include subtracted background back into blotted image for comparison
-    if (sci_image.meta.background.subtracted is False and
+    # Get background level if it has been subtracted
+    if (sci_image.meta.background.subtracted is True and
         sci_image.meta.background.level is not None):
         subtracted_background = sci_image.meta.background.level
         log.debug(f"Including subtracted background ({subtracted_background}) "
