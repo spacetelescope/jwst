@@ -355,7 +355,7 @@ class OutlierDetection:
 
 
 def flag_cr(sci_image, blot_image, **pars):
-    """Masks outliers in science image.
+    """Masks outliers in science image by updating DQ in-place
 
     Mask blemishes in dithered data by comparing a science image
     with a model image and the derivative of the model image.
