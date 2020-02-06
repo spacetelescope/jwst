@@ -55,6 +55,12 @@ model_blender
 
 - Do not overwrite rules with defaults. [#4521]
 
+outlier_detection
+-----------------
+
+- Fix bug and logic pertaining to detecting if the background has been
+  subtracted or not. [#4523]
+
 pipeline
 --------
 
