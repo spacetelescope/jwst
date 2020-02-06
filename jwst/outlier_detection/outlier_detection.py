@@ -386,11 +386,14 @@ def flag_cr(sci_image, blot_image, **pars):
     snr1, snr2 = [float(val) for val in pars.get('snr', '5.0 4.0').split()]
     scl1, scl2 = [float(val) for val in pars.get('scale', '1.2 0.7').split()]
 
-    if not sci_image.meta.background.subtracted:
-        # Include background back into blotted image for comparison
+    # Include subtracted background back into blotted image for comparison
+    if (sci_image.meta.background.subtracted is False and
+        sci_image.meta.background.level is not None):
         subtracted_background = sci_image.meta.background.level
-        log.debug("Subtracted background: {}".format(subtracted_background))
-    if subtracted_background is None:
+        log.debug(f"Including subtracted background ({subtracted_background}) "
+            "back into blotted image")
+    else:
+        # No subtracted background.  Allow user-set value, which defaults to 0
         subtracted_background = backg
 
     exptime = sci_image.meta.exposure.exposure_time
