@@ -92,6 +92,12 @@ stpipe
 
 - Fix sub-step nesting in parameter reference files [#4488]
 
+transforms
+----------
+
+- Removed ``TPCorr`` WCS correction model as it is now defined in ``tweakwcs``
+  as a compound model of elementary ``astropy`` and ``gwcs`` models. [#4491]
+
 tweakreg
 --------
 
