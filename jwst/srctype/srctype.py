@@ -13,12 +13,16 @@ def set_source_type(input_model):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`, or `~jwst.datamodels.MultiSlitModel`
+    input_model : `~jwst.datamodels.CubeModel`, `~jwst.datamodels.ImageModel`,
+                  `~jwst.datamodels.IFUImageModel`, `~jwst.datamodels.MultiSlitModel`,
+                  or `~jwst.datamodels.SlitModel`
         The data model to be processed.
 
     Returns
     -------
-    input_model : `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`, `~jwst.datamodels.MultiSlitModel`
+    input_model : `~jwst.datamodels.CubeModel`, `~jwst.datamodels.ImageModel`,
+                  `~jwst.datamodels.IFUImageModel`, `~jwst.datamodels.MultiSlitModel`,
+                  or `~jwst.datamodels.SlitModel`
         The updated model.
     """
 
@@ -95,7 +99,7 @@ def set_source_type(input_model):
                     slit.source_type = src_type
                 else:
                     slit.source_type = default_type
-                log.debug(' slit {} = {}'.format(slit.name,slit.source_type))
+                log.debug(' slit {} = {}'.format(slit.name, slit.source_type))
 
     # For NIRSpec MSA exposures, read the stellarity value for the
     # source in each extracted slit and set the point/extended value
