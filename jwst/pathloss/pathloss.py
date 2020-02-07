@@ -176,7 +176,7 @@ def do_correction(input_model, pathloss_model):
 
     """
     exp_type = input_model.meta.exposure.type
-    log.info(exp_type)
+    log.info('Input exposure type is {}'.format(exp_type))
     output_model = input_model.copy()
     if exp_type == 'NRS_MSASPEC':
         slit_number = 0
@@ -249,7 +249,7 @@ def do_correction(input_model, pathloss_model):
         is_inside_slit = True
         # For each slit
         for slit in output_model.slits:
-            log.info(slit.name)
+            log.info('Working on slit {}'.format(slit.name))
             slit_number = slit_number + 1
             # Get centering
             xcenter, ycenter = get_center(exp_type, slit)
