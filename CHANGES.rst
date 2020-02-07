@@ -96,7 +96,7 @@ transforms
 ----------
 
 - Removed ``TPCorr`` WCS correction model as it is now defined in ``tweakwcs``
-  as a compound model of elementary ``astropy`` and ``gwcs`` models. [#4491]
+  as a compound model of elementary ``astropy`` and ``gwcs`` models. [#4542]
 
 tweakreg
 --------
