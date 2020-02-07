@@ -5,7 +5,6 @@ Transforms
 .. toctree::
    :maxdepth: 2
 
-   tpcorr
 
 ASDF Schema Definitions
 -----------------------
@@ -32,7 +31,6 @@ these transform definitions.
    rotation_sequence-0.7.0
    slit_to_msa-0.7.0
    snell-0.7.0
-   tpcorr-0.7.0
    v23tosky-0.7.0
 
 
