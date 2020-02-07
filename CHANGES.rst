@@ -28,7 +28,7 @@ datamodels
 
 - Update core.schema.yaml to include new NIRCam entries for PATTTYPE [#4475]
 
-- Update core.schema.yaml to include NIRISS PATTTYPE values [#4xxx]
+- Update core.schema.yaml to include NIRISS PATTTYPE values [#4517]
 
 extract_1d
 ----------
@@ -80,6 +80,12 @@ set_telescope_pointing
 ----------------------
 
 - Round S_REGION values in ``set_telescope_pointing`` [#4476]
+
+srctype
+-------
+
+- Updated logic to populate SRCTYPE in all slit instances of slit-based
+  data models. [#4541]
 
 stpipe
 ------

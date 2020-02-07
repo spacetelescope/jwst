@@ -106,8 +106,8 @@ def test_exptype():
 
     output = srctype.set_source_type(input)
 
-    # Result should be EXTENDED regardless of other input settings
-    assert output.meta.target.source_type == 'EXTENDED'
+    # Result should be UNKNOWN regardless of other input settings
+    assert output.meta.target.source_type == 'UNKNOWN'
 
 def test_no_sourcetype():
 
@@ -141,6 +141,27 @@ def test_nrs_msaspec():
     assert(result.slits[0].source_type == 'POINT')
     assert(result.slits[1].source_type == 'UNKNOWN')
     assert(result.slits[2].source_type == 'EXTENDED')
+
+def test_nrs_fixedslit():
+    """Test for when exposure type is NRS_FIXEDSLIT
+    """
+    input = datamodels.MultiSlitModel()
+    input.meta.exposure.type = "NRS_FIXEDSLIT"
+    input.meta.instrument.fixed_slit = "S200A1"
+    input.meta.target.source_type = 'EXTENDED'
+
+    slits = [{'name':'S200A2'},
+             {'name':'S200A1'},
+             {'name':'S1600A1'}]
+
+    for slit in slits:
+        input.slits.append(slit)
+
+    result = srctype.set_source_type(input)
+
+    assert(result.slits[0].source_type == 'POINT')
+    assert(result.slits[1].source_type == 'EXTENDED')
+    assert(result.slits[2].source_type == 'POINT')
 
 @pytest.mark.parametrize("exptype", ["NRS_BRIGHTOBJ", "NRC_TSGRISM", "NIS_SOSS",
     "MIR_LRS-SLITLESS"])
