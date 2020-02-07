@@ -157,8 +157,7 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
             spaxel_flux[icube_index] = spaxel_flux[icube_index] + weighted_flux
             spaxel_weight[icube_index] = spaxel_weight[icube_index] + weight_distance
             spaxel_iflux[icube_index] = spaxel_iflux[icube_index] + 1
-            spaxel_var[icube_index] = spaxel_var[icube_index] + weighted_var          
-            
+            spaxel_var[icube_index] = spaxel_var[icube_index] + weighted_var
 #    print('Number of pixels not in ifu cube too low wavelength', ilow)
 #    print('Number of pixels not in ifu cube too high wavelength', ihigh)
 #    print('Number of pixels not in ifu cube not match', imatch)

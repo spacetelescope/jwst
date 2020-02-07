@@ -906,10 +906,12 @@ class IFUCubeData():
             # increase rois if less than 4 file
 
             if self.output_type == 'single' or self.num_files < 4:
-                self.rois = self.rois * 1.5
-                log.info('Increasing spatial region of interest ' +
-                         'default value set for 4 dithers %f', self.rois)
-
+                # We don't need to increase it if using 'emsm' weighting
+                if self.weighting.lower() != 'emsm':
+                    self.rois = self.rois * 1.5
+                    log.info('Increasing spatial region of interest ' +
+                             'default value set for 4 dithers %f', self.rois)
+                    
         if self.scale1 != 0:
             self.spatial_size = self.scale1
 
