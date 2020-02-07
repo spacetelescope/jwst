@@ -14,7 +14,9 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
                        spaxel_flux,
                        spaxel_weight,
                        spaxel_iflux,
+                       spaxel_var,
                        flux,
+                       err,
                        coord1, coord2, wave):
 
 
@@ -37,11 +39,13 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
     spaxel_flux: contains the weighted summed detector fluxes that fall withi the roi
     spaxel_weight:  contains the summed weights assocated with the detector fluxes
     spaxel_iflux: number of detector pixels falling with roi of spaxel center
+    spaxel_var: contains the weighted summed detector variances that fall withi the roi
     flux: array of detector fluxes associated with each position in  coorr1, coord2, wave
+    err: array of detector errors associated with each position in  coorr1, coord2, wave
     coord1, coord2, wave
     Returns
     -------
-    spaxel_flux, spaxel_weight, and spaxel_ifux updated with the information from the
+    spaxel_flux, spaxel_weight, spaxel_ifux, spaxel_var updated with the information from the
     detector pixels that fall within the roi if the spaxel center.
     """
 
@@ -128,9 +132,11 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
         weight_distance = 1.0 / weight_distance
         weight_distance = weight_distance.flatten('F')
         weighted_flux = weight_distance * flux[ipt]
-
+        weighted_var = (weight_distance * err[ipt]) * (weight_distance * err[ipt])
+        
         icube_index = [iz * nplane + ixy for iz in zindex_good for ixy in xyindex_good]
         spaxel_flux[icube_index] = spaxel_flux[icube_index] + weighted_flux
         spaxel_weight[icube_index] = spaxel_weight[icube_index] + weight_distance
         spaxel_iflux[icube_index] = spaxel_iflux[icube_index] + 1
+        spaxel_var[icube_index] = spaxel_var[icube_index] + weighted_var
 #_______________________________________________________________________

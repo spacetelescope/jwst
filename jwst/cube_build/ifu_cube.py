@@ -496,6 +496,7 @@ class IFUCubeData():
         self.spaxel_flux = np.zeros(total_num)
         self.spaxel_weight = np.zeros(total_num)
         self.spaxel_iflux = np.zeros(total_num)
+        self.spaxel_var = np.zeros(total_num)
         self.spaxel_dq = np.zeros((self.naxis3, self.naxis2 * self.naxis1), dtype=np.uint32)
 
         spaxel_ra = None
@@ -550,7 +551,7 @@ class IFUCubeData():
                                                                    subtract_background,
                                                                    ifile)
 
-                    coord1, coord2, wave, flux, slice_no, rois_pixel, roiw_pixel, weight_pixel,\
+                    coord1, coord2, wave, flux, err, slice_no, rois_pixel, roiw_pixel, weight_pixel,\
                         softrad_pixel, scalerad_pixel, alpha_det, beta_det = pixelresult
                     t1 = time.time()
                     log.info("Time to transform pixels to output frame = %.1f s" % (t1 - t0,))
@@ -573,7 +574,9 @@ class IFUCubeData():
                                                       self.spaxel_flux,
                                                       self.spaxel_weight,
                                                       self.spaxel_iflux,
+                                                      self.spaxel_var,
                                                       flux,
+                                                      err,
                                                       coord1, coord2, wave,
                                                       self.weighting,
                                                       rois_pixel, roiw_pixel,
@@ -611,8 +614,10 @@ class IFUCubeData():
                                                               self.spaxel_flux,
                                                               self.spaxel_weight,
                                                               self.spaxel_iflux,
+                                                              self.spaxel_var,
                                                               spaxel_alpha, spaxel_beta, spaxel_wave,
                                                               flux,
+                                                              err,
                                                               coord1, coord2, wave,
                                                               alpha_det, beta_det,
                                                               self.weighting,
@@ -646,6 +651,7 @@ class IFUCubeData():
                                                         self.spaxel_flux,
                                                         self.spaxel_weight,
                                                         self.spaxel_iflux,
+                                                        self.spaxel_var,
                                                         self.xcoord, self.zcoord,
                                                         self.crval1, self.crval3,
                                                         self.cdelt1, self.cdelt3,
@@ -699,6 +705,7 @@ class IFUCubeData():
             self.spaxel_weight = np.zeros(total_num)
             self.spaxel_iflux = np.zeros(total_num)
             self.spaxel_dq = np.zeros((self.naxis3, self.naxis2 * self.naxis1), dtype=np.uint32)
+            self.spaxel_var = np.zeros(total_num)
 
             subtract_background = False
 
@@ -706,7 +713,7 @@ class IFUCubeData():
                                                            subtract_background,
                                                            self.input_models[j])
 
-            coord1, coord2, wave, flux, slice_no, rois_pixel, roiw_pixel, weight_pixel, \
+            coord1, coord2, wave, flux, err, slice_no, rois_pixel, roiw_pixel, weight_pixel, \
                 softrad_pixel, scalerad_pixel, alpha_det, beta_det = pixelresult
 
             cube_cloud.match_det2cube_msm(self.naxis1,
@@ -720,7 +727,9 @@ class IFUCubeData():
                                           self.spaxel_flux,
                                           self.spaxel_weight,
                                           self.spaxel_iflux,
+                                          self.spaxel_var,
                                           flux,
+                                          err,
                                           coord1, coord2, wave,
                                           self.weighting,
                                           rois_pixel, roiw_pixel,
@@ -1096,6 +1105,8 @@ class IFUCubeData():
            wavelength associated with coord1,coord2
         flux: numpy.ndarray
            flux associated with coord1, coord2
+        err: numpy.ndarray
+           err associated with coord1, coord2
         rois_det: float
            spatial roi size to use
         roiw_det: numpy.ndarray
@@ -1117,6 +1128,7 @@ class IFUCubeData():
         coord1 = None
         coord2 = None
         flux = None
+        err = None
         wave = None
         slice_no = None  # Slice number
 # Open the input data model
@@ -1238,6 +1250,7 @@ class IFUCubeData():
 # The following is for both MIRI and NIRSPEC
 # grab the flux and DQ values for these pixles
             flux_all = input_model.data[y, x]
+            err_all = input_model.err[y, x]
             dq_all = input_model.dq[y, x]
             valid2 = np.isfinite(flux_all)
 
@@ -1272,6 +1285,7 @@ class IFUCubeData():
 
             # good data holds the location of pixels we want to map to cube
             flux = flux_all[good_data]
+            err = err_all[good_data]
             wave = wave[good_data]
             slice_no = slice_no[good_data]
             # based on the wavelength define the sroi, wroi, weight_power and
@@ -1312,7 +1326,7 @@ class IFUCubeData():
                 coord1 = alpha[good_data]
                 coord2 = beta[good_data]
 
-        return coord1, coord2, wave, flux, slice_no, rois_det, roiw_det, weight_det, \
+        return coord1, coord2, wave, flux, err, slice_no, rois_det, roiw_det, weight_det, \
             softrad_det, scalerad_det, alpha_det, beta_det
 # ********************************************************************************
 
@@ -1682,9 +1696,11 @@ class IFUCubeData():
         if self.interpolation == 'area':
             good = self.spaxel_iflux > 0
             self.spaxel_flux[good] = self.spaxel_flux[good] / self.spaxel_weight[good]
+            self.spaxel_var[good] = self.spaxel_var[good] / (self.spaxel_weight[good] * self.spaxel_weight[good])
         elif self.interpolation == 'pointcloud':
             good = self.spaxel_iflux > 0
             self.spaxel_flux[good] = self.spaxel_flux[good] / self.spaxel_weight[good]
+            self.spaxel_var[good] = self.spaxel_var[good] / (self.spaxel_weight[good] * self.spaxel_weight[good])
 # ********************************************************************************
 
     def set_final_dq_flags(self):
@@ -1988,13 +2004,15 @@ class IFUCubeData():
                                               self.naxis2, self.naxis1))
         temp_wmap = self.spaxel_iflux.reshape((self.naxis3,
                                                self.naxis2, self.naxis1))
-
         temp_dq = self.spaxel_dq.reshape((self.naxis3,
                                           self.naxis2, self.naxis1))
-
+        temp_var = self.spaxel_var.reshape((self.naxis3,
+                                              self.naxis2, self.naxis1))
+        
         ifucube_model.data = temp_flux
         ifucube_model.weightmap = temp_wmap
         ifucube_model.dq = temp_dq
+        ifucube_model.err = np.sqrt(temp_var)
         ifucube_model.meta.cal_step.cube_build = 'COMPLETE'
 
 # ***************************************************************************

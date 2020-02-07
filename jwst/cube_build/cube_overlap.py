@@ -370,6 +370,7 @@ def match_det2cube(x, y, sliceno, start_slice, input_model, transform,
                    spaxel_flux,
                    spaxel_weight,
                    spaxel_iflux,
+                   spaxel_var,
                    xcoord, zcoord,
                    crval1, crval3, cdelt1, cdelt3, naxis1, naxis2):
     """ Match detector pixels to output plane in alpha-beta coordinate system
@@ -423,6 +424,7 @@ def match_det2cube(x, y, sliceno, start_slice, input_model, transform,
     # but we want the pixel corners, x,y values passed into this
     # routine to start at 0
     pixel_flux = input_model.data[y, x]
+    pixel_err = input_model.err[y, x]
 
     yy_bot = y
     yy_top = y + 1
@@ -504,6 +506,8 @@ def match_det2cube(x, y, sliceno, start_slice, input_model, transform,
                     spaxel_weight[cube_index] = spaxel_weight[cube_index] + \
                         AreaRatio
                     spaxel_iflux[cube_index] = spaxel_iflux[cube_index] + 1
+                    spaxel_var[cube_index] = spaxel_var[cube_index] + \
+                        (AreaRatio * pixel_err[ipixel]) * (AreaRatio * pixel_err[ipixel])
 # ________________________________________________________________________________
 
 
