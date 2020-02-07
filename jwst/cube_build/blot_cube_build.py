@@ -65,7 +65,7 @@ class CubeBlot():
 
         # using wcs of ifu cube determine ra,dec,lambda
         self.cube_ra, self.cube_dec, self.cube_wave = \
-            self.median_skycube.meta.wcs(xcube, ycube, zcube)
+            self.median_skycube.meta.wcs(xcube + 1, ycube + 1, zcube + 1)
 
         # pull out flux from the median sky cube that matches with
         # cube_ra,dec,wave
