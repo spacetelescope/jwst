@@ -16,6 +16,8 @@ combine_1d
 datamodels
 ----------
 
+- Skip reading and validating non-datamodel members [#3946]
+
 - Force data model type setting on save [#4318]
 
 - Deprecate ``MIRIRampModel`` [#4328]

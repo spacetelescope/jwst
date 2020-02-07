@@ -8,6 +8,14 @@ import logging
 from asdf import AsdfFile
 from astropy.io import fits
 
+from jwst.associations.lib.dms_base import (
+    CORON_EXP_TYPES,
+    IMAGE2_NONSCIENCE_EXP_TYPES,
+    IMAGE2_SCIENCE_EXP_TYPES,
+    SPEC2_SCIENCE_EXP_TYPES,
+    ACQ_EXP_TYPES
+)
+
 from ..associations import (
     AssociationNotValidError,
     load_asn)
@@ -106,6 +114,12 @@ class ModelContainer(model_base.DataModel):
         elif is_association(init):
             self.from_asn(init)
         elif isinstance(init, str):
+            self.asn_exptypes = (CORON_EXP_TYPES +
+                                 IMAGE2_NONSCIENCE_EXP_TYPES +
+                                 IMAGE2_SCIENCE_EXP_TYPES +
+                                 SPEC2_SCIENCE_EXP_TYPES +
+                                 list(ACQ_EXP_TYPES))
+
             init_from_asn = self.read_asn(init)
             self.from_asn(init_from_asn, asn_file_path=init)
         else:
