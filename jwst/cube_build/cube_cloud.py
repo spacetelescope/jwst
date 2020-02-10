@@ -316,9 +316,9 @@ def match_det2cube_miripsf(alpha_resol, beta_resol, wave_resol,
                 elif weighting_type == 'emsm':
                     weight_distance = scalerad_pixel[ipt] * np.exp(1.0/wdistance)
 
-                weighted_flux = weight_distance * flux[ipt]    
+                weighted_flux = weight_distance * flux[ipt]
                 weighted_var = (weight_distance * err[ipt]) * (weight_distance * err[ipt])
-                    
+
                 spaxel_flux[cube_index] = spaxel_flux[cube_index] + weighted_flux
                 spaxel_weight[cube_index] = spaxel_weight[cube_index] + weight_distance
                 spaxel_iflux[cube_index] = spaxel_iflux[cube_index] + 1
