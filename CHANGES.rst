@@ -82,6 +82,12 @@ pipeline
   in the photometric table product to avoid ``astropy.table`` merge conflicts.
   [#4502]
 
+photom
+------
+
+- Added ``spectral_order`` to the fields matching the ``photom`` reference files
+  for NIRCAM WFSS mode. [#4538]
+
 set_telescope_pointing
 ----------------------
 
