@@ -93,7 +93,7 @@ setup(
         'astropy>=4.0',
         'crds>=7.2.7',
         'drizzle>=1.13',
-        'gwcs @ git+https://github.com/spacetelescope/gwcs@f638a8db55b8dc1d00bcfbc4c43a109a7cb79b2c',
+        'gwcs @ git+https://github.com/spacetelescope/gwcs@1c1cb3bb35caddef80fb760ea68bc71e189d32de',
         'jsonschema>=2.3,<4',
         'numpy>=1.16',
         'photutils>=0.7',
