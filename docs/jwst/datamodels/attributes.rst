@@ -38,7 +38,7 @@ The current models are as follows:
     `NIRCAMGrismModel`, `NIRISSGrismModel`,
     `GuiderCalModel`, `GuiderRawModel`,
     `ImageModel`, `IFUImageModel`,
-    `IFUCubeParsModel`, `NirspecIFUCubeParsModel`, `MiriIFUCubeParsModel`,
+    `NirspecIFUCubeParsModel`, `MiriIFUCubeParsModel`,
     `IFUFOREModel`, `IFUPostModel`, `IFUSlicerModel`,
     `IPCModel`,
     `IRS2Model`,

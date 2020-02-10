@@ -357,6 +357,7 @@ properties:
           source_type:
             title: Advised source type (point/extended)
             type: string
+            enum: [EXTENDED, POINT, UNKNOWN]
             fits_keyword: SRCTYPE
             blend_table: True
       instrument:

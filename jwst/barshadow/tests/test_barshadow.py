@@ -227,7 +227,7 @@ def test_has_uniform_source():
     slitlet.source_type = 'POINT'
     assert not bar.has_uniform_source(slitlet)          # not extended
 
-    slitlet.source_type = 'other'
+    slitlet.source_type = 'UNKNOWN'
     # Since source_type is not 'POINT', the step will assume that the
     # source is extended.
     assert bar.has_uniform_source(slitlet)
