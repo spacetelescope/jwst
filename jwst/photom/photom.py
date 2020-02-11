@@ -452,6 +452,13 @@ class DataSet():
                 if row is None:
                     continue
                 self.photom_io(ftab.phot_table[row])
+        elif self.exptype == 'NRC_TSGRISM':
+            order = self.input.meta.wcsinfo.spectral_order
+            fields_to_match = {'filter': self.filter, 'pupil': self.pupil, 'order': order}
+            row = find_row(ftab.phot_table, fields_to_match)
+            if row is None:
+                return
+            self.photom_io(ftab.phot_table[row])
         else:
             fields_to_match = {'filter': self.filter, 'pupil': self.pupil}
             row = find_row(ftab.phot_table, fields_to_match)

@@ -86,7 +86,7 @@ photom
 ------
 
 - Added ``spectral_order`` to the fields matching the ``photom`` reference files
-  for NIRCAM WFSS mode. [#4538]
+  for NIRCAM WFSS and TSGRISM modes. [#4538, 4558]
 
 set_telescope_pointing
 ----------------------
