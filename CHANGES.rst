@@ -2076,6 +2076,9 @@ assign_wcs
 
 - fix input units to meters when filter=OPAQUE [#2134]
 
+- A ``ValueError`` is now raised if input data is missing ``xref_sci`` or ``yref_sci`` keywords. [#4561]
+
+
 associations
 ------------
 
@@ -2139,6 +2142,7 @@ extract_1d
 extract_2d
 ----------
 
+- A ``ValueError`` is now raised if the input data is missing ``xref_sci`` or ``yref_sci`` keywords. [#4561]
 
 firstframe
 ----------
@@ -2290,6 +2294,9 @@ tso_photometry
 - Added a new model for setting parameters for TSO photometry [#2239]
 
 - Add a  reference file for use with tso_photometry [#2254, #2264]
+
+- - A ``ValueError`` is now raised if the input data for ``call`` is missing ``crpix1`` or ``crpix2`` keywords. [#4561]
+
 
 tweakreg
 --------
