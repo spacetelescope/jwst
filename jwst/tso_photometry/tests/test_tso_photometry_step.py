@@ -2,7 +2,7 @@ import pytest
 
 from astropy.io import fits
 
-from jwst.tso_photometry.tso_photometry_step import TSOPhotometryStep
+from ..tso_photometry_step import TSOPhotometryStep
 
 
 @pytest.fixture
