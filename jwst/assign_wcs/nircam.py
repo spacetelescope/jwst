@@ -198,6 +198,13 @@ def tsgrism(input_model, reference_files):
     # begin at 0,0, so no need to translate the crpix to full frame
     # because they already are in full frame coordinates.
     xc, yc = (input_model.meta.wcsinfo.siaf_xref_sci, input_model.meta.wcsinfo.siaf_yref_sci)
+
+    if xc is None:
+        raise ValueError('XREF_SCI is missing.')
+
+    if yc is None:
+        raise ValueError('YREF_SCI is missing.')
+
     xcenter = Const1D(xc)
     xcenter.inverse = Const1D(xc)
     ycenter = Const1D(yc)

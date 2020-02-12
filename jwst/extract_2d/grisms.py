@@ -111,6 +111,12 @@ def extract_tso_object(input_model,
     if len(available_orders) > 1:
         raise NotImplementedError("Multiple order extraction for TSO not currently implemented")
 
+    if input_model.meta.wcsinfo.siaf_xref_sci is None:
+        raise ValueError('XREF_SCI is missing.')
+
+    if input_model.meta.wcsinfo.siaf_yref_sci is None:
+        raise  ValueError('YREF_SCI is missing.')
+
     log.info("Extracting order: {}".format(available_orders))
     output_model = datamodels.SlitModel()
     output_model.update(input_model)
