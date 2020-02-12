@@ -191,7 +191,7 @@ def tsgrism_inputs(request):
 def test_extract_tso_object_fails_without_xref_yref(tsgrism_inputs, key):
     with pytest.raises(ValueError):
         image_model, refs = tsgrism_inputs(missing_key=key)
-        extract_grism_objects(image_model, reference_files=refs)
+        extract_tso_object(image_model, reference_files=refs)
 
 
 @pytest.mark.filterwarnings("ignore: Card is too long")
