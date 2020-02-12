@@ -932,16 +932,17 @@ properties:
               # MIRI imaging
               4-POINT-SETS, CYCLING, GAUSSIAN, REULEAUX, WFSC,
               # MIRI LRS
-              ALONG-SLIT-NOD, MAPPING,
+              2PIXEL-SLITLESS-SCAN-SHORT, ALONG-SLIT-NOD, MAPPING,
               # MIRI MRS
               2-POINT, 4-POINT, EXTENDED-SOURCE, POINT-SOURCE,
               # NIRCam
               FULL, FULLBOX, FULL-TIGHT,
               INTRAMODULE, INTRAMODULEBOX, INTRAMODULEX, INTRASCA,
+              SUBARRAY-DITHER,
               # NIRISS
               AMI, IMAGING, MIMF, PARALLEL, WFSS,
               # NIRSpec FS, IFU, and MOS
-              2-POINT-NOD, 3-POINT-NOD, 5-POINT-NOD,
+              2-POINT-WITH-NIRCAM-SIZE2, 2-POINT-NOD, 3-POINT-NOD, 5-POINT-NOD,
               # NIRSpec IFU
               4-POINT-NOD, 4-POINT-DITHER, CYCLING, SPARSE-CYCLING,
               # Misc
