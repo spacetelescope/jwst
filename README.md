@@ -13,7 +13,7 @@ JWST Calibration Pipeline
 Installation
 ------------
 
-The ``jwst`` package can be installed into a virtualenv or conda environment via ``pip``.  We recommend creating a fresh environment with only python installed.  Via conda:
+The ``jwst`` package can be installed into a virtualenv or conda environment via ``pip``.  We recommend creating a fresh environment with only python installed.  If using conda, make sure you have a recent version of Anaconda or Miniconda installed.  Via conda:
 
     conda create -n jwst_env python=3.7
     conda activate jwst_env
@@ -36,17 +36,17 @@ As can a particular commit hash:
 
 We still package our releases to DMS via environment snapshots that specify the exact versions of all packages to be installed.
 
-The latest release 0.14.2 may be installed in two stages by running the following commands:
+The latest release 0.14.2 may be installed in two steps by running the following commands:
 
-Stage 1:
+Step 1:
 
     conda create -n jwstdp-0.14.2 --file https://ssb.stsci.edu/releases/jwstdp/0.14.2/[env_file]
-    source activate jwstdp-0.14.2
+    conda activate jwstdp-0.14.2
 
 Where `[env_file]` = `conda_python_stable-deps.txt` for Linux
 and   `[env_file]` = `conda_python_macos-stable-deps.txt` for Macos
 
-Stage 2:
+Step 2:
 
     pip install -r https://ssb.stsci.edu/releases/jwstdp/0.14.2/[pkgs_file]
 
